@@ -1,6 +1,6 @@
 <script lang="ts">
 	import PrincipleCard from '$lib/components/PrincipleCard.svelte';
-	import QuoteBlock from '$lib/components/QuoteBlock.svelte';
+	import { QuoteBlock } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

@@ -1,7 +1,11 @@
 <script lang="ts">
-	import type { Quote } from '$lib/types';
+	import type { Quote } from '../types/common.js';
 
-	let { quote }: { quote: Quote } = $props();
+	interface Props {
+		quote: Quote;
+	}
+
+	let { quote }: Props = $props();
 </script>
 
 <blockquote class="border-l-2 border-white pl-6 py-2">
