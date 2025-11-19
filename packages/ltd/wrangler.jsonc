@@ -1,0 +1,19 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "createsomething-ltd",
+	"compatibility_date": "2025-11-17",
+	"compatibility_flags": ["nodejs_compat"],
+	"pages_build_output_dir": ".svelte-kit/cloudflare",
+
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "create-something-db",
+			"database_id": "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+		}
+	],
+
+	"vars": {
+		"ENVIRONMENT": "production"
+	}
+}
