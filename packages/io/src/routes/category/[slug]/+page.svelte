@@ -2,7 +2,7 @@
   import { fly } from 'svelte/transition';
   import { Navigation } from '@create-something/components';
   import Footer from '$lib/components/Footer.svelte';
-  import PaperCard from '$lib/components/PaperCard.svelte';
+  import { PaperCard } from '@create-something/components';
   import type { PageData } from './$types';
 
   export let data: PageData;

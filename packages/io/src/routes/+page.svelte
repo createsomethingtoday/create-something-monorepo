@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import CategorySection from '$lib/components/CategorySection.svelte';
-	import PapersGrid from '$lib/components/PapersGrid.svelte';
+	import { CategorySection, PapersGrid } from '@create-something/components';
 	import Footer from '$lib/components/Footer.svelte';
 
 	export let data: PageData;

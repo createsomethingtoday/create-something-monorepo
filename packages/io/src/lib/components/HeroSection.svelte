@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
-	import PaperCard from './PaperCard.svelte';
+	import { PaperCard } from '@create-something/components';
 	import type { Paper } from '@create-something/components/types';
 
 	interface Props {
