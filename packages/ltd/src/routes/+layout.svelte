@@ -1,9 +1,15 @@
 <script lang="ts">
-	import Navigation from '$lib/components/Navigation.svelte';
+	import { Navigation } from '@create-something/components';
 	import Footer from '$lib/components/Footer.svelte';
 	import '../app.css';
 
 	let { children, data } = $props();
+
+	const navLinks = [
+		{ label: 'Masters', href: '/masters' },
+		{ label: 'Principles', href: '/principles' },
+		{ label: 'Ethos', href: '/ethos' }
+	];
 </script>
 
 <svelte:head>
@@ -29,7 +35,12 @@
 </svelte:head>
 
 <div class="min-h-screen flex flex-col">
-	<Navigation currentPath={data?.pathname || '/'} />
+	<Navigation
+		logo="CREATE SOMETHING"
+		logoSuffix=".ltd"
+		links={navLinks}
+		currentPath={data?.pathname || '/'}
+	/>
 
 	<main class="flex-1">
 		{@render children()}

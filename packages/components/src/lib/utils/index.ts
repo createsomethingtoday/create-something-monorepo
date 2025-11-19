@@ -1,4 +1,7 @@
 // Utility exports
-// Add utilities here as they are created
-
-export {};
+export {
+    markExperimentCompleted,
+    isExperimentCompleted,
+    clearExperimentCompletion,
+    validateCompletionToken
+} from './completion.js';

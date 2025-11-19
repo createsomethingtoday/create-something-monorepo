@@ -1,4 +1,2 @@
 // Type exports
-// Add types here as they are created
-
-export {};
+export type { Paper } from './paper.js';
