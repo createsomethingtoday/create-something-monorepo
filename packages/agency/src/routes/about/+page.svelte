@@ -11,17 +11,17 @@
 </script>
 
 <svelte:head>
-	<title>About | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="CREATE SOMETHING SPACE is a community playground for testing AI-native development ideas. Fork experiments, break things, learn in public." />
-	<meta name="keywords" content="AI experiments, community playground, fork experiments, learn in public, Claude Code, experimental development" />
+	<title>About | CREATE SOMETHING Agency</title>
+	<meta name="description" content="Agentic systems engineering: building AI automation workflows and autonomous systems that run businesses. Research-backed, production-tested methodologies." />
+	<meta name="keywords" content="agentic engineering, AI automation, autonomous systems, Cloudflare Workers, Claude Code, AI agents, background automation" />
 	<!-- Open Graph -->
-	<meta property="og:title" content="About CREATE SOMETHING SPACE | The Experimental Layer" />
-	<meta property="og:description" content="Community playground for AI-native development experiments. Every experiment feeds back into createsomething.io research." />
-	<meta property="og:url" content="https://createsomething.space/about" />
+	<meta property="og:title" content="About CREATE SOMETHING Agency | Agentic Systems Engineering" />
+	<meta property="og:description" content="We build AI systems that run businesses autonomously. From automation workflows to intelligent agents, backed by research from createsomething.io." />
+	<meta property="og:url" content="https://createsomething.agency/about" />
 	<!-- Twitter -->
-	<meta name="twitter:title" content="About CREATE SOMETHING SPACE" />
-	<meta name="twitter:description" content="The experimental layer for testing AI-native development ideas with the community." />
-	<link rel="canonical" href="https://createsomething.space/about" />
+	<meta name="twitter:title" content="About CREATE SOMETHING Agency" />
+	<meta name="twitter:description" content="Agentic systems engineering: AI automation and autonomous systems for production use." />
+	<link rel="canonical" href="https://createsomething.agency/about" />
 </svelte:head>
 
 <!-- Hero Section -->
@@ -29,40 +29,40 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8" in:fly={{ y: 20, duration: 600 }}>
 				<h1 class="text-4xl md:text-6xl font-bold text-white mb-8">
-					The Experimental Layer
+					Agentic Systems Engineering
 				</h1>
 
 				<div class="space-y-8">
 					<!-- Core Identity -->
 					<div class="space-y-6 text-lg text-white/70 leading-relaxed">
 						<p class="text-xl text-white/90 font-medium">
-							CREATE SOMETHING SPACE is a community playground for testing ideas around AI-native development. Fork experiments, break things, learn in public.
+							We build AI systems that run businesses autonomously — from background automation workflows to long-running intelligent agents.
 						</p>
 
 						<p>
-							This is the experimental layer that sits alongside <a href="https://createsomething.io" class="text-white hover:underline">createsomething.io</a> — where the rigorous research happens. While the main site documents tracked experiments with precise metrics, .space is where the community can fork those experiments, try variations, and share learnings.
+							This isn't generic "AI consulting." We're systems engineers who build production infrastructure. Every project is backed by research from <a href="https://createsomething.io" class="text-white hover:underline">createsomething.io</a>, tracked with real metrics (time, cost, errors), and published as case studies.
 						</p>
 
 						<p>
-							Every experiment here feeds back into the research. Your forks, modifications, and results help inform what works in AI-native development. It's a collaborative space for testing what happens when humans and AI build together.
+							Web development is our entry point. During builds, we discover workflow inefficiencies in your operations. Then we propose automation systems. Eventually, we build autonomous agents that make decisions and orchestrate complex processes while you sleep.
 						</p>
 					</div>
 
 					<!-- Philosophy -->
 					<div class="p-6 bg-white/5 border border-white/10 rounded-lg space-y-4">
-						<h3 class="text-xl font-semibold text-white">How it works</h3>
+						<h3 class="text-xl font-semibold text-white">Our Approach</h3>
 						<p class="text-white/70 leading-relaxed">
-							Browse experiments, fork the ones that interest you, modify them however you want, and share what you learn. Break things. Try crazy ideas. Test edge cases. The goal is to collectively understand what works in AI-native development — not through theory, but through actual experimentation with real systems.
+							Every system we build becomes a research experiment. We track precise metrics. We document what works and what doesn't. We publish honest results. Your production systems contribute to the collective knowledge of AI-native engineering — and you benefit from insights across our entire client base.
 						</p>
 					</div>
 
 					<!-- Background -->
 					<div class="space-y-4 text-white/60 text-base">
 						<p>
-							I studied at Texas A&M and earned a UI/UX Design Certification from Boulder Digital Arts. My career has taken me through Webflow development, API integrations, marketplace architecture, and now full-time system design at Webflow — always with a focus on automation and developer experience.
+							Led by Micah Johnson — Texas A&M graduate, UI/UX Design certified (Boulder Digital Arts), systems architect at Webflow. Career spanning Webflow development, API integrations, marketplace architecture, and now full-time agentic systems engineering.
 						</p>
 						<p>
-							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-white hover:underline" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration and conversation about systems.
+							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-white hover:underline" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration on complex automation challenges.
 						</p>
 					</div>
 				</div>
@@ -75,11 +75,11 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-6" in:fly={{ y: 20, duration: 600, delay: 200 }}>
 				<h2 class="text-2xl md:text-3xl font-bold text-white">
-					What You'll Find Here
+					What We Build
 				</h2>
 
 				<p class="text-lg text-white/70 leading-relaxed">
-					Community experiments testing AI-native development patterns. Real implementations you can fork, modify, and learn from. Each experiment documents what was tried, what worked, what didn't, and why. No theory — just practical tests of building production systems with AI.
+					Production-grade automation systems and autonomous AI agents. Multi-user OAuth integrations. Background processing pipelines. Long-running workflows with durable execution. These aren't experiments — they're business-critical infrastructure running on Cloudflare's global edge network.
 				</p>
 			</div>
 		</div>
@@ -90,26 +90,26 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8">
 				<h2 class="text-2xl md:text-3xl font-bold text-white">
-					Experiment Categories
+					Service Categories
 				</h2>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each [
 						{
-							title: 'Browser Automation',
-							description: 'Testing AI-generated browser automation scripts with Cloudflare Workers and Puppeteer'
+							title: 'Web Development',
+							description: 'Fast, template-based websites that serve as your entry point to automation discovery'
 						},
 						{
-							title: 'API Integration',
-							description: 'Experiments connecting various APIs and services using AI-assisted development'
+							title: 'AI Automation Systems',
+							description: 'Background workflows with OAuth, API orchestration, and intelligent data processing'
 						},
 						{
-							title: 'Database Patterns',
-							description: 'Testing different database patterns with D1, KV, and other Cloudflare services'
+							title: 'Agentic Engineering',
+							description: 'Long-running AI agents with autonomous decision-making and workflow orchestration'
 						},
 						{
-							title: 'UI Components',
-							description: 'Building and testing reusable UI components with AI assistance'
+							title: 'Systems Partnership',
+							description: 'Ongoing optimization and expansion of your AI infrastructure with tracked experiments'
 						}
 					] as topic, index}
 						<div

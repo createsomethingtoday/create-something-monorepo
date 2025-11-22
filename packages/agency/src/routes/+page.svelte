@@ -10,10 +10,10 @@
 </script>
 
 <svelte:head>
-	<title>CREATE SOMETHING Agency | AI-Native Development Services</title>
+	<title>CREATE SOMETHING Agency | Agentic Systems Engineering</title>
 	<meta
 		name="description"
-		content="Professional services applying AI-native development to real business challenges. The research from createsomething.io, applied to your reality."
+		content="We build AI systems that run your business autonomously. From web development to automation workflows to long-running AI agents. Research-backed agentic engineering."
 	/>
 </svelte:head>
 
@@ -22,14 +22,14 @@
 		<div class="max-w-7xl mx-auto">
 			<div class="text-center max-w-4xl mx-auto">
 				<h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-					We build AI-native<br />systems that work
+					AI systems that run<br />your business autonomously
 				</h1>
 				<p class="text-xl md:text-2xl text-white/70 mb-8 max-w-3xl mx-auto">
-					The research from
+					Start with web development. Scale to automation workflows. Evolve into intelligent agents.
+					<br />Research from
 					<a href="https://createsomething.io" class="text-white hover:text-white/80 underline"
 						>createsomething.io</a
-					>.
-					<br />Applied to your business reality.
+					>, applied to your operations.
 				</p>
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
 					<a
