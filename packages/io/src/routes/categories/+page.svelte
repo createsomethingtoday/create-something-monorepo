@@ -1,11 +1,17 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { Navigation } from '@create-something/components';
-  import Footer from '$lib/components/Footer.svelte';
+  import { Footer } from '@create-something/components';
   import type { PageData } from './$types';
 
   export let data: PageData;
   const { categories } = data;
+
+  const quickLinks = [
+    { label: 'Home', href: '/' },
+    { label: 'All Experiments', href: '/experiments' },
+    { label: 'Methodology', href: '/methodology' },
+    { label: 'About', href: '/about' }
+  ];
 </script>
 
 <svelte:head>
@@ -14,8 +20,6 @@
   <link rel="canonical" href="https://createsomething.io/categories" />
 </svelte:head>
 
-<div class="min-h-screen bg-black">
-  <Navigation />
 
   <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
@@ -81,4 +85,3 @@
   </section>
 
   <Footer />
-</div>

@@ -21,24 +21,25 @@
 	// For markdown content, configure marked
 	let renderedContent = $state("");
 
-	onMount(() => {
+	onMount(async () => {
 		if (!hasHtmlContent && contentToRender) {
 			// Configure marked for GitHub-flavored markdown
 			marked.setOptions({
 				gfm: true,
-				breaks: true,
-				highlight: function (code, lang) {
-					if (lang && hljs.getLanguage(lang)) {
-						try {
-							return hljs.highlight(code, { language: lang })
-								.value;
-						} catch (err) {}
-					}
-					return code;
-				},
+				breaks: true
 			});
 
-			renderedContent = marked(contentToRender);
+			// Render markdown (marked now returns a Promise)
+			renderedContent = await marked(contentToRender);
+
+			// Apply syntax highlighting to code blocks after rendering
+			if (typeof document !== 'undefined') {
+				setTimeout(() => {
+					document.querySelectorAll('pre code').forEach((block) => {
+						hljs.highlightElement(block as HTMLElement);
+					});
+				}, 0);
+			}
 		} else if (hasHtmlContent) {
 			renderedContent = contentToRender;
 		}

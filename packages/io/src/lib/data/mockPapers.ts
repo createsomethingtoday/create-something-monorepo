@@ -49,4 +49,4 @@ const pathwayAssignments: Record<string, { pathway: string; order: number }> = {
 export const mockPapers = mockPapersData.map(p => ({
   ...p,
   ...(pathwayAssignments[p.slug] || {})
-})) as Paper[];
+})) as unknown as Paper[];

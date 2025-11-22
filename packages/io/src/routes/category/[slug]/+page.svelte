@@ -1,7 +1,6 @@
 <script lang="ts">
+  import { Footer } from "@create-something/components";
   import { fly } from 'svelte/transition';
-  import { Navigation } from '@create-something/components';
-  import Footer from '$lib/components/Footer.svelte';
   import { PaperCard } from '@create-something/components';
   import type { PageData } from './$types';
 
@@ -56,8 +55,6 @@
   })}<\/script>`}
 </svelte:head>
 
-<div class="min-h-screen bg-black">
-  <Navigation />
 
   <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
@@ -93,4 +90,3 @@
   </section>
 
   <Footer />
-</div>

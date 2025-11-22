@@ -1,7 +1,6 @@
 <script lang="ts">
+  import { Footer } from "@create-something/components";
 	import { fly } from 'svelte/transition';
-	import { Navigation } from '@create-something/components';
-	import Footer from '$lib/components/Footer.svelte';
 </script>
 
 <svelte:head>
@@ -18,8 +17,6 @@
 	<link rel="canonical" href="https://createsomething.io/contact" />
 </svelte:head>
 
-<div class="min-h-screen bg-black">
-	<Navigation />
 
 	<!-- Hero Section -->
 	<section class="relative pt-32 pb-16 px-6">
@@ -133,4 +130,3 @@
 	</section>
 
 	<Footer />
-</div>

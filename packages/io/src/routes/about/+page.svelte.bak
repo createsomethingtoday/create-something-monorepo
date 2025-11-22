@@ -1,13 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { Footer } from '@create-something/components';
-
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'All Experiments', href: '/experiments' },
-		{ label: 'Methodology', href: '/methodology' },
-		{ label: 'About', href: '/about' }
-	];
+	import { Navigation } from '@create-something/components';
+	import Footer from '$lib/components/Footer.svelte';
 </script>
 
 <svelte:head>
@@ -24,7 +18,10 @@
 	<link rel="canonical" href="https://createsomething.io/about" />
 </svelte:head>
 
-<!-- Hero Section -->
+<div class="min-h-screen bg-black">
+	<Navigation />
+
+	<!-- Hero Section -->
 	<section class="relative pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8" in:fly={{ y: 20, duration: 600 }}>
@@ -129,12 +126,5 @@
 		</div>
 	</section>
 
-<!-- Footer -->
-<Footer
-	mode="io"
-	showNewsletter={true}
-	aboutText="AI-native development research with tracked experiments. Every paper includes real metrics: time, costs, errors, and learnings."
-	quickLinks={quickLinks}
-	showSocial={true}
-	copyrightText="© {new Date().getFullYear()} Micah Johnson. All rights reserved."
-/>
+	<Footer />
+</div>

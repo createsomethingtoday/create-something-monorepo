@@ -84,10 +84,19 @@ code, pre, .font-mono {
   --shadow-xl: 0 20px 25px -5px rgba(255, 255, 255, 0.1);
   --shadow-2xl: 0 25px 50px -12px rgba(255, 255, 255, 0.25);
 
-  /* Spacing (based on Webflow inspiration) */
-  --spacing-section: 7.5rem;
-  --spacing-headline: 2.5rem;
-  --spacing-card: 2rem;
+  /* Spacing - Golden Ratio (φ = 1.618) System */
+  --space-xs: 0.5rem;      /* 8px - Base unit */
+  --space-sm: 1rem;        /* 16px - 2x base */
+  --space-md: 1.618rem;    /* ~26px - φ¹ */
+  --space-lg: 2.618rem;    /* ~42px - φ² */
+  --space-xl: 4.236rem;    /* ~68px - φ³ */
+  --space-2xl: 6.854rem;   /* ~110px - φ⁴ */
+  --space-3xl: 11.089rem;  /* ~177px - φ⁵ */
+
+  /* Legacy aliases for backward compatibility */
+  --spacing-section: var(--space-2xl);  /* 6.854rem ≈ 7.5rem (was arbitrary) */
+  --spacing-headline: var(--space-lg);  /* 2.618rem ≈ 2.5rem (was arbitrary) */
+  --spacing-card: var(--space-sm);      /* 1rem = 2rem (was arbitrary, using smaller) */
 
   /* Border radius */
   --radius-sm: 6px;
@@ -185,15 +194,53 @@ code, pre, .font-mono {
   }
 }
 
-/* Typography refinements */
-h1, h2, h3, h4, h5, h6 {
+/* Fluid Typography Scale - Standards Compliant */
+h1 {
+  font-size: clamp(3.5rem, 9vw, 7rem);    /* 56px → 112px */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: clamp(2rem, 5vw, 3.5rem);    /* 32px → 56px */
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
+h3 {
+  font-size: clamp(1.5rem, 3vw, 2.25rem); /* 24px → 36px */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h4 {
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem); /* 20px → 28px */
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+h5 {
+  font-size: clamp(1.125rem, 2vw, 1.5rem); /* 18px → 24px */
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+h6 {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);  /* 16px → 20px */
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
 p {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);  /* 16px → 20px */
   line-height: 1.6;
+  letter-spacing: -0.01em;
 }
 
 /* Selection styling */

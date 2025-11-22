@@ -2,8 +2,17 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
+	import { Navigation } from '@create-something/components';
+	import { page } from '$app/stores';
 
 	let { children } = $props();
+
+	const navLinks = [
+		{ label: 'Home', href: '/' },
+		{ label: 'Experiments', href: '/experiments' },
+		{ label: 'Methodology', href: '/methodology' },
+		{ label: 'About', href: '/about' }
+	];
 
 	// Handle hash scrolling
 	function scrollToHash(hash: string) {
@@ -140,4 +149,18 @@
 	</script>`}
 </svelte:head>
 
-{@render children()}
+<div class="min-h-screen bg-black">
+	<Navigation
+		logo="CREATE SOMETHING"
+		links={navLinks}
+		currentPath={$page.url.pathname}
+		fixed={true}
+		ctaLabel="Contact"
+		ctaHref="/contact"
+	/>
+
+	<!-- Add top padding to account for fixed navigation -->
+	<div class="pt-[72px]">
+		{@render children()}
+	</div>
+</div>
