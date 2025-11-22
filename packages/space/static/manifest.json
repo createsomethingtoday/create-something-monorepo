@@ -1,0 +1,18 @@
+{
+  "short_name": "CREATE SOMETHING",
+  "name": "CREATE SOMETHING | AI-Native Development Research",
+  "description": "Systematic evaluation of AI-native development with tracked experiments and real data",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": ["development", "research", "technology"]
+}

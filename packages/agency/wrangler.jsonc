@@ -1,0 +1,43 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "create-something-agency",
+	"compatibility_date": "2025-11-15",
+	"compatibility_flags": ["nodejs_compat"],
+	"pages_build_output_dir": ".svelte-kit/cloudflare",
+
+	"dev": {
+		"port": 3003
+	},
+
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "create-something-db",
+			"database_id": "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+		}
+	],
+
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "973b18397c4d4b068313152a642f1ad5"
+		},
+		{
+			"binding": "CACHE",
+			"id": "bcb39a6258fe49b79da9dc9b09440934"
+		}
+	],
+
+	"r2_buckets": [
+		{
+			"binding": "STORAGE",
+			"bucket_name": "create-something-assets"
+		}
+	],
+
+	"vars": {
+		"ENVIRONMENT": "production",
+		"TERMINAL_VERSION": "2.0.0",
+		"DEFAULT_THEME": "dark"
+	}
+}

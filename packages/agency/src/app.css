@@ -1,0 +1,335 @@
+/*
+  Font Stack: Stack Sans Notch (Google Font - variable weight 200-700)
+  Pairing: Stack Sans Notch (headings/body) + JetBrains Mono (code)
+  Note: Fonts loaded via link tag in +layout.svelte for better performance
+*/
+
+/* Tailwind CSS directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern base styles - Black & White Theme */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #000000;
+  color: #ffffff;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+}
+
+/* Headings - Fluid typography with optical precision */
+h1 {
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-optical-sizing: auto;
+}
+
+h2 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-optical-sizing: auto;
+}
+
+h3 {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-optical-sizing: auto;
+}
+
+h4 {
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.3;
+  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-optical-sizing: auto;
+}
+
+h5, h6 {
+  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-optical-sizing: auto;
+}
+
+/* Code and monospace elements */
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+/* Custom scrollbar - Minimal white theme */
+::-webkit-scrollbar {
+  width: 10px;
+  background-color: #000000;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  border: 2px solid #000000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* CSS variables - Canonical Standards (Pure Opacity + Golden Ratio) */
+:root {
+  /* Base colors - Pure black and white only */
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+
+  /* Golden Ratio Spacing Scale (φ = 1.618) */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.618rem;
+  --space-lg: 2.618rem;
+  --space-xl: 4.236rem;
+  --space-2xl: 6.854rem;
+  --space-3xl: 11.089rem;
+
+  /* Border Radius (Standards-aligned) */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+}
+
+/* Modern card animations */
+@layer components {
+  /* Smooth entrance animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Card hover lift effect */
+  .card-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-2xl);
+  }
+
+  /* Smooth page transitions */
+  .page-transition {
+    animation: pageEnter 0.4s ease-out;
+  }
+
+  @keyframes pageEnter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  /* Text shadows for depth */
+  .text-shadow-soft {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-dark {
+    background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+  }
+
+  .bg-gradient-subtle {
+    background: linear-gradient(135deg, #0a0a0a 0%, #111111 100%);
+  }
+
+  /* Border gradients */
+  .border-gradient {
+    border: 1px solid transparent;
+    background-image: linear-gradient(#111111, #111111),
+                      linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Text truncation */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Typography refinements */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* Selection styling */
+::selection {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Focus states */
+*:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Ensure proper text rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Syntax Highlighting Styles - Dark theme with white/gray colors */
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #666666;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #a0a0a0;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #c0c0c0;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #d0d0d0;
+  font-weight: 600;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #ffffff;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #c0c0c0;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #a0a0a0;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #e0e0e0;
+}
+
+.hljs-meta {
+  color: #888888;
+  font-weight: 600;
+}
+
+.hljs-deletion {
+  background: rgba(255, 0, 0, 0.1);
+  color: #ff6666;
+}
+
+.hljs-addition {
+  background: rgba(0, 255, 0, 0.05);
+  color: #88ff88;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+/* Code block styling */
+pre code.hljs {
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
