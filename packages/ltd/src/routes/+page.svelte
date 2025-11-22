@@ -71,8 +71,8 @@
 	<div class="max-w-7xl mx-auto">
 		<h3 class="mb-12 text-center">Featured Masters</h3>
 
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-			{#each [ { name: 'Dieter Rams', discipline: 'Industrial Design', tagline: '10 Principles of Good Design', slug: 'dieter-rams' }, { name: 'Ludwig Mies van der Rohe', discipline: 'Architecture', tagline: 'Less is more', slug: 'mies-van-der-rohe' }, { name: 'Charles & Ray Eames', discipline: 'Design', tagline: 'The best for the most for the least', slug: 'charles-ray-eames' } ] as master}
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+			{#each [ { name: 'Dieter Rams', discipline: 'Industrial Design', tagline: '10 Principles of Good Design', slug: 'dieter-rams' }, { name: 'Ludwig Mies van der Rohe', discipline: 'Architecture', tagline: 'Less is more', slug: 'mies-van-der-rohe' } ] as master}
 				<a
 					href="/masters/{master.slug}"
 					class="block p-8 border border-white/10 hover:border-white transition-colors group"
