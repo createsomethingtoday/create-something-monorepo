@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation } from '@create-something/components';
+	import { Navigation, Footer } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
@@ -153,4 +153,19 @@
 	<div class="pt-[72px]">
 		{@render children()}
 	</div>
+
+	<Footer
+		mode="space"
+		showNewsletter={true}
+		newsletterTitle="Join the experimental layer"
+		newsletterDescription="Get notified when new experiments are added. Fork, break, learn in public."
+		aboutText="Community playground for AI-native development experiments. Every experiment feeds back into the research at createsomething.io."
+		quickLinks={[
+			{ label: 'Experiments', href: '/experiments' },
+			{ label: 'Methodology', href: '/methodology' },
+			{ label: 'About', href: '/about' },
+			{ label: 'Contact', href: '/contact' }
+		]}
+		showSocial={true}
+	/>
 </div>
