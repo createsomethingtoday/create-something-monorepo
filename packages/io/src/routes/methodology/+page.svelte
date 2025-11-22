@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Footer } from "@create-something/components";
   import { fly } from 'svelte/transition';
 </script>
 
@@ -430,5 +429,3 @@
       </div>
     </div>
   </section>
-
-  <Footer />

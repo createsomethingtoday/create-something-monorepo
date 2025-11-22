@@ -145,7 +145,7 @@
 	</div>
 
 	<!-- Footer -->
-	<Footer />
+	
 
 	<!-- Sticky CTA for Interactive Experiments -->
 	{#if hasInteractive && paper.interactive_demo_url}

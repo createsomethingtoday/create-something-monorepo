@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { Footer } from '@create-something/components';
+	
 
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
@@ -130,11 +130,3 @@
 	</section>
 
 <!-- Footer -->
-<Footer
-	mode="io"
-	showNewsletter={true}
-	aboutText="AI-native development research with tracked experiments. Every paper includes real metrics: time, costs, errors, and learnings."
-	quickLinks={quickLinks}
-	showSocial={true}
-	copyrightText="© {new Date().getFullYear()} Micah Johnson. All rights reserved."
-/>

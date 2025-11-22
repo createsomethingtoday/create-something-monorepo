@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Footer } from "@create-something/components";
+  
   import { fly } from 'svelte/transition';
   import { PaperCard } from '@create-something/components';
   import type { PageData } from './$types';
@@ -89,4 +89,4 @@
     </div>
   </section>
 
-  <Footer />
+  

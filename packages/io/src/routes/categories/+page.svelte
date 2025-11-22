@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import { Footer } from '@create-something/components';
+  
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -84,4 +84,4 @@
     </div>
   </section>
 
-  <Footer />
+  

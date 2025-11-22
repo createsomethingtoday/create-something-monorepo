@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
-	import { Navigation } from '@create-something/components';
+	import { Navigation, Footer } from '@create-something/components';
 	import { page } from '$app/stores';
 
 	let { children } = $props();
@@ -163,4 +163,20 @@
 	<div class="pt-[72px]">
 		{@render children()}
 	</div>
+
+	<Footer
+		mode="io"
+		showNewsletter={true}
+		newsletterTitle="Stay updated with new experiments"
+		newsletterDescription="Get notified when new research is published. Real metrics, tracked experiments, honest learnings."
+		aboutText="Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare."
+		quickLinks={[
+			{ label: 'Experiments', href: '/experiments' },
+			{ label: 'Methodology', href: '/methodology' },
+			{ label: 'Categories', href: '/categories' },
+			{ label: 'About', href: '/about' },
+			{ label: 'Contact', href: '/contact' }
+		]}
+		showSocial={true}
+	/>
 </div>

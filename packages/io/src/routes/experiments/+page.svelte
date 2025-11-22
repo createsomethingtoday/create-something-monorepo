@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { PapersGrid, Footer } from '@create-something/components';
+	import { PapersGrid } from '@create-something/components';
 
 	export let data: PageData;
 	const { papers } = data;
@@ -37,11 +37,3 @@
 <PapersGrid {papers} title="" subtitle="" />
 
 <!-- Footer -->
-<Footer
-	mode="io"
-	showNewsletter={true}
-	aboutText="AI-native development research with tracked experiments. Every paper includes real metrics: time, costs, errors, and learnings."
-	quickLinks={quickLinks}
-	showSocial={true}
-	copyrightText="© {new Date().getFullYear()} Micah Johnson. All rights reserved."
-/>
