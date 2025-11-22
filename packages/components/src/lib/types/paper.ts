@@ -7,36 +7,38 @@ export interface Paper {
   title: string
   category: string
   content: string
-  html_content?: string
+  html_content?: string | null
   reading_time: number
-  difficulty_level?: string
-  technical_focus?: string
-  published_on?: string
-  excerpt_short?: string
-  excerpt_long?: string
+  difficulty_level?: string | null
+  technical_focus?: string | null
+  published_on?: string | null
+  excerpt_short?: string | null
+  excerpt_long?: string | null
   slug: string
   featured: number
   published: number
   is_hidden: number
   archived: number
-  date?: string
-  excerpt?: string
-  description?: string
-  thumbnail_image?: string
-  featured_card_image?: string
-  featured_image?: string
-  video_walkthrough_url?: string
-  interactive_demo_url?: string
-  resource_downloads?: string
-  prerequisites?: string
-  meta_title?: string
-  meta_description?: string
-  focus_keywords?: string
-  ascii_art?: string
-  ascii_thumbnail?: string
+  date?: string | null
+  excerpt?: string | null
+  description?: string | null
+  thumbnail_image?: string | null
+  featured_card_image?: string | null
+  featured_image?: string | null
+  video_walkthrough_url?: string | null
+  interactive_demo_url?: string | null
+  resource_downloads?: string | null
+  prerequisites?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  focus_keywords?: string | null
+  ascii_art?: string | null
+  ascii_thumbnail?: string | null
   created_at: string
   updated_at: string
-  published_at?: string
+  published_at?: string | null
   pathway?: string
   order?: number
+  summary?: string | null
+  code_snippet?: string | null
 }
