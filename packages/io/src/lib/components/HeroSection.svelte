@@ -54,11 +54,11 @@
 			</div>
 
 			<h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight" in:fly={{ y: 20, duration: 600, delay: 1000 }}>
-				Building systems with AI agents
+				Systems Thinking for AI-Native Development
 			</h1>
 
 			<p class="text-lg md:text-xl text-white/60 max-w-3xl mx-auto" in:fly={{ y: 20, duration: 600, delay: 1200 }}>
-				Testing what works when building production systems agentically with LLMs. Papers documenting experiments, proofs, and honest results — what I'm learning about AI-native development
+				Research papers with tracked experiments and rigorous methodology. Each paper documents what was built, measured results, and honest learnings. Interactive versions available on <a href="https://createsomething.space" class="text-white/80 hover:text-white underline">createsomething.space</a>
 			</p>
 
 			<!-- Methodology Call-Out -->

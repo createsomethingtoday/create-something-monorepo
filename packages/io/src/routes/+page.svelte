@@ -12,7 +12,7 @@
 
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
-		{ label: 'All Experiments', href: '/experiments' },
+		{ label: 'All Research', href: '/experiments' },
 		{ label: 'Methodology', href: '/methodology' },
 		{ label: 'About', href: '/about' }
 	];
@@ -35,8 +35,8 @@
 <!-- Papers Grid -->
 <PapersGrid
 	papers={latestPapers}
-	title="Experiments"
-	subtitle="Tracked experiments with real data — time, costs, errors, and learnings"
+	title="Research Papers"
+	subtitle="Rigorous methodology with tracked metrics — time, costs, errors, and learnings"
 />
 
 <!-- Footer -->

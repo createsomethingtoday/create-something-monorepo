@@ -54,12 +54,11 @@
 			</div>
 
 			<h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight" in:fly={{ y: 20, duration: 600, delay: 1000 }}>
-				The Experimental Layer
+				Interactive Tutorials for AI-Native Development
 			</h1>
 
 			<p class="text-lg md:text-xl text-white/60 max-w-3xl mx-auto" in:fly={{ y: 20, duration: 600, delay: 1200 }}>
-				Community playground for testing ideas. Fork experiments, break things, learn in public.
-				Every experiment here feeds back into the research at <a href="https://createsomething.io" class="text-white hover:text-white/80 underline">createsomething.io</a>
+				Learn by doing with runnable code examples and hands-on experiments. Fork, modify, and run these tutorials directly in your browser. Research methodology and full papers available on <a href="https://createsomething.io" class="text-white/80 hover:text-white underline">createsomething.io</a>
 			</p>
 
 			<!-- CTA to Research -->

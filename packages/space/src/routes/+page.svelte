@@ -13,17 +13,17 @@
 	const latestPapers = papers.slice(0, 12);
 
 	const quickLinks = [
-		{ label: 'All Experiments', href: '/experiments' },
+		{ label: 'All Tutorials', href: '/experiments' },
 		{ label: 'Methodology', href: '/methodology' },
 		{ label: 'About', href: '/about' }
 	];
 </script>
 
 <svelte:head>
-	<title>CREATE SOMETHING SPACE | The Experimental Layer</title>
+	<title>CREATE SOMETHING SPACE | Interactive Tutorials for AI-Native Development</title>
 	<meta
 		name="description"
-		content="Community playground for testing AI-native development ideas. Fork experiments, break things, learn in public. Every experiment feeds back into createsomething.io research."
+		content="Learn AI-native development by doing. Interactive tutorials with runnable code — fork, modify, and run directly in your browser. Research papers available on createsomething.io"
 	/>
 </svelte:head>
 
@@ -36,8 +36,8 @@
 <!-- Papers Grid -->
 <PapersGrid
 	papers={latestPapers}
-	title="Community Experiments"
-	subtitle="Real experiments from the community — fork them, try them, break them, learn from them"
+	title="Interactive Tutorials"
+	subtitle="Learn by doing — fork these tutorials, run the code, modify and experiment"
 />
 
 <Footer
