@@ -61,14 +61,14 @@
 		return `M ${points.join(' L ')}`;
 	}
 
-	// Default colors for up to 6 series (can be overridden)
+	// Default colors - brighter/more saturated for better visibility
 	const defaultColors = [
-		'rgb(59, 130, 246)', // blue
-		'rgb(16, 185, 129)', // green
-		'rgb(168, 85, 247)', // purple
-		'rgb(251, 146, 60)', // orange
-		'rgb(236, 72, 153)', // pink
-		'rgb(234, 179, 8)' // yellow
+		'rgb(96, 165, 250)', // bright blue
+		'rgb(34, 197, 94)', // bright green
+		'rgb(192, 132, 252)', // bright purple
+		'rgb(251, 191, 36)', // bright yellow/orange
+		'rgb(244, 114, 182)', // bright pink
+		'rgb(250, 204, 21)' // bright yellow
 	];
 </script>
 
@@ -79,19 +79,19 @@
 	3. Integrate text and data (inline legend)
 	4. Small multiples concept (multiple series, same scale)
 -->
-<div class="space-y-2">
+<div class="space-y-4">
 	{#if showLegend}
 		<!-- Legend (Tufte: integrate with visualization) -->
-		<div class="flex flex-wrap gap-3 text-xs">
+		<div class="flex flex-wrap gap-4 text-sm">
 			{#each paths as series, i}
-				<div class="flex items-center gap-1.5">
+				<div class="flex items-center gap-2">
 					<div
-						class="w-3 h-0.5 rounded"
+						class="w-4 h-1 rounded"
 						style="background-color: {series.color === 'white'
 							? defaultColors[i % defaultColors.length]
-							: series.color}; opacity: {series.opacity}"
+							: series.color};"
 					/>
-					<span class="text-white/60">{series.label}</span>
+					<span class="text-white/80 font-medium">{series.label}</span>
 				</div>
 			{/each}
 		</div>
@@ -122,8 +122,8 @@
 					d={s.path}
 					fill="none"
 					stroke={s.color === 'white' ? defaultColors[i % defaultColors.length] : s.color}
-					stroke-opacity={s.opacity}
-					stroke-width="1.5"
+					stroke-opacity={s.opacity || 0.9}
+					stroke-width="2.5"
 					vector-effect="non-scaling-stroke"
 				/>
 			{/if}
