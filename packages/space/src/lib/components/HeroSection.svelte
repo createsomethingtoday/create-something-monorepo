@@ -12,57 +12,22 @@
 
 <section class="relative pt-32 pb-24 px-6 overflow-hidden">
 	<div class="max-w-7xl mx-auto">
-		<!-- Newsletter Signup - Top -->
-		<div class="flex justify-center mb-12" in:fly={{ y: -20, duration: 600 }}>
-			<a
-				href="#newsletter"
-				class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-full text-white/90 text-sm hover:bg-white/20 hover:border-white/30 transition-all"
-			>
-				<span>Get weekly updates with our Newsletter</span>
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-				</svg>
-			</a>
-		</div>
-
-		<!-- Featured Cards - Horizontal Layout -->
-		{#if featuredPapers.length > 0}
-			<div class="mt-11 mb-16 hidden md:flex justify-center items-center gap-6 max-w-6xl mx-auto">
-				{#each featuredPapers.slice(0, 3) as paper, index (paper.id)}
-					<div class="flex-1 max-w-xs" in:fly={{ y: 20, duration: 600, delay: 200 + index * 100 }}>
-						<PaperCard {paper} rotation={0} {index} />
-					</div>
-				{/each}
-			</div>
-		{/if}
-
-		<!-- Mobile Featured Cards - Simple Stack -->
-		{#if featuredPapers.length > 0}
-			<div class="grid grid-cols-1 gap-6 mb-16 md:hidden">
-				{#each featuredPapers.slice(0, 2) as paper, index (paper.id)}
-					<div in:fly={{ y: 20, duration: 600, delay: 200 + index * 100 }}>
-						<PaperCard {paper} rotation={0} {index} />
-					</div>
-				{/each}
-			</div>
-		{/if}
-
-		<!-- Hero Text -->
-		<div class="text-center space-y-6 mt-16">
-			<div class="text-base md:text-lg font-medium text-white/90" in:fly={{ y: 20, duration: 600, delay: 800 }}>
+		<!-- Hero Text - Now First -->
+		<div class="text-center space-y-6 mb-16">
+			<div class="text-base md:text-lg font-medium text-white/90" in:fly={{ y: 20, duration: 600 }}>
 				CREATE SOMETHING SPACE
 			</div>
 
-			<h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight" in:fly={{ y: 20, duration: 600, delay: 1000 }}>
+			<h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight" in:fly={{ y: 20, duration: 600, delay: 200 }}>
 				Interactive Tutorials for AI-Native Development
 			</h1>
 
-			<p class="text-lg md:text-xl text-white/60 max-w-3xl mx-auto" in:fly={{ y: 20, duration: 600, delay: 1200 }}>
+			<p class="text-lg md:text-xl text-white/60 max-w-3xl mx-auto" in:fly={{ y: 20, duration: 600, delay: 400 }}>
 				Learn by doing with runnable code examples and hands-on experiments. Fork, modify, and run these tutorials directly in your browser. Research methodology and full papers available on <a href="https://createsomething.io" class="text-white/80 hover:text-white underline">createsomething.io</a>
 			</p>
 
 			<!-- CTA to Research -->
-			<div class="mt-8" in:fly={{ y: 20, duration: 600, delay: 1400 }}>
+			<div class="mt-8" in:fly={{ y: 20, duration: 600, delay: 600 }}>
 				<a
 					href="https://createsomething.io"
 					target="_blank"
@@ -76,6 +41,32 @@
 				</a>
 			</div>
 		</div>
+
+		<!-- Featured Tutorials Section -->
+		{#if featuredPapers.length > 0}
+			<div class="text-center mb-8" in:fly={{ y: 20, duration: 600, delay: 800 }}>
+				<h2 class="text-2xl md:text-3xl font-bold text-white">Featured Tutorials</h2>
+				<p class="text-white/60 mt-2">Start with these hands-on experiments</p>
+			</div>
+
+			<!-- Desktop Layout - Horizontal -->
+			<div class="hidden md:flex justify-center items-center gap-6 max-w-6xl mx-auto">
+				{#each featuredPapers.slice(0, 3) as paper, index (paper.id)}
+					<div class="flex-1 max-w-xs" in:fly={{ y: 20, duration: 600, delay: 1000 + index * 100 }}>
+						<PaperCard {paper} rotation={0} {index} />
+					</div>
+				{/each}
+			</div>
+
+			<!-- Mobile Layout - Simple Stack -->
+			<div class="grid grid-cols-1 gap-6 md:hidden">
+				{#each featuredPapers.slice(0, 2) as paper, index (paper.id)}
+					<div in:fly={{ y: 20, duration: 600, delay: 1000 + index * 100 }}>
+						<PaperCard {paper} rotation={0} {index} />
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</div>
 
 	<!-- Background Gradient -->
