@@ -27,8 +27,10 @@
 			{/if}
 		</div>
 
-		<!-- Responsive Grid - Matches Webflow inspiration -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+		<!-- Adaptive Grid - Adjusts layout based on item count -->
+		<div class="{papers.length <= 3
+			? 'grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto'
+			: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'}">
 			{#each papers as paper, index (paper.id)}
 				<PaperCard
 					{paper}
