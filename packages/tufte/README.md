@@ -125,6 +125,104 @@ Small multiples pattern for daily data comparison.
 - `data: DataPoint[]` - Array with `date` and `count` properties (required)
 - `days: number` - Number of days to display (default: 7)
 
+### ComparativeSparklines
+
+Overlay multiple data series for direct comparison with shared scale.
+
+```svelte
+<script>
+  import { ComparativeSparklines } from '@create-something/tufte';
+
+  const series = [
+    { label: '.agency', data: agencyViews, color: 'rgb(59, 130, 246)' },
+    { label: '.io', data: ioViews, color: 'rgb(16, 185, 129)' }
+  ];
+</script>
+
+<ComparativeSparklines {series} />
+```
+
+**Props:**
+- `series: Series[]` - Array of series with `label`, `data`, optional `color` and `opacity` (required)
+- `width: number` - SVG viewBox width (default: 100)
+- `height: number` - SVG viewBox height (default: 30)
+- `showLegend: boolean` - Display legend with series labels (default: true)
+
+**Reveals:** Relative performance, divergence/convergence, which metrics are growing/declining
+
+### DistributionBar
+
+Visualize proportional distribution with automatic percentage calculation.
+
+```svelte
+<script>
+  import { DistributionBar } from '@create-something/tufte';
+
+  const segments = [
+    { label: '.agency', count: 1234 },
+    { label: '.io', count: 2456 },
+    { label: '.space', count: 890 }
+  ];
+</script>
+
+<DistributionBar {segments} />
+```
+
+**Props:**
+- `segments: Segment[]` - Array with `label`, `count`, optional `color` (required)
+- `showLabels: boolean` - Show legend below bar (default: true)
+- `showPercentages: boolean` - Show percentages in legend (default: true)
+- `height: string` - Tailwind height class (default: 'h-8')
+- `minLabelWidth: number` - Minimum % width to show inline label (default: 8)
+
+**Reveals:** Proportional breakdown at a glance, imbalances in distribution
+
+### TrendIndicator
+
+Show direction and magnitude of change between two values.
+
+```svelte
+<script>
+  import { TrendIndicator } from '@create-something/tufte';
+</script>
+
+<TrendIndicator current={5432} previous={4800} format="percentage" />
+```
+
+**Props:**
+- `current: number` - Current period value (required)
+- `previous: number` - Previous period value (required)
+- `format: 'number' | 'percentage' | 'compact'` - Display format (default: 'percentage')
+- `showDirection: boolean` - Show arrow indicator (default: true)
+- `flatThreshold: number` - Changes below this % are "flat" (default: 0.5)
+
+**Reveals:** Whether metrics are improving (↑), declining (↓), or stable (→)
+
+### HourlyHeatmap
+
+Show patterns across time dimensions using small multiples (hour × day grid).
+
+```svelte
+<script>
+  import { HourlyHeatmap } from '@create-something/tufte';
+
+  const hourlyData = [
+    { date: '2024-01-01', hour: 9, count: 45 },
+    { date: '2024-01-01', hour: 14, count: 89 },
+    // ... more hours
+  ];
+</script>
+
+<HourlyHeatmap data={hourlyData} days={7} />
+```
+
+**Props:**
+- `data: HourlyDataPoint[]` - Array with `date`, `hour` (0-23), `count` (required)
+- `days: number` - Number of days to display (default: 7)
+- `showLabels: boolean` - Show day/hour labels and legend (default: true)
+
+**Reveals:** When users are most active, daily/weekly patterns, peak traffic hours
+
 ## Utilities
 
 ### Sparkline Path Generation
