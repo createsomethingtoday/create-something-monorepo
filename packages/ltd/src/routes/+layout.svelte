@@ -9,6 +9,7 @@
 		{ label: 'Principles', href: '/principles' },
 		{ label: 'Patterns', href: '/patterns' },
 		{ label: 'Standards', href: '/standards' },
+		{ label: 'Voice', href: '/voice' },
 		{ label: 'Ethos', href: '/ethos' }
 	];
 
@@ -17,6 +18,7 @@
 		{ label: 'Principles', href: '/principles' },
 		{ label: 'Patterns', href: '/patterns' },
 		{ label: 'Standards', href: '/standards' },
+		{ label: 'Voice', href: '/voice' },
 		{ label: 'Ethos', href: '/ethos' }
 	];
 </script>
