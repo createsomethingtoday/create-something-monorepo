@@ -35,12 +35,12 @@
 		width: total > 0 ? (s.count / total) * 100 : 0
 	}));
 
-	// Default colors (CREATE SOMETHING palette)
+	// Default colors - brighter/more saturated for better visibility
 	const defaultColors = [
-		'rgb(59, 130, 246)', // blue
-		'rgb(16, 185, 129)', // green
-		'rgb(168, 85, 247)', // purple
-		'rgb(251, 146, 60)' // orange
+		'rgb(96, 165, 250)', // bright blue
+		'rgb(34, 197, 94)', // bright green
+		'rgb(192, 132, 252)', // bright purple
+		'rgb(251, 191, 36)' // bright yellow/orange
 	];
 </script>
 
@@ -74,19 +74,19 @@
 
 	<!-- Legend below (Tufte: integrate supporting information) -->
 	{#if showLabels}
-		<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+		<div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
 			{#each segmentsWithPercentages as segment, i}
-				<div class="flex items-center gap-1.5">
+				<div class="flex items-center gap-2">
 					<div
-						class="w-3 h-3 rounded"
+						class="w-4 h-4 rounded"
 						style="background-color: {segment.color ||
 							defaultColors[i % defaultColors.length]};"
 					/>
-					<span class="text-white/80">{segment.label}</span>
-					<span class="text-white/40 font-mono">
+					<span class="text-white/90 font-medium">{segment.label}</span>
+					<span class="text-white/60 font-mono">
 						{formatNumber(segment.count)}
 						{#if showPercentages}
-							<span class="text-white/30">({segment.percentage}%)</span>
+							<span class="text-white/50">({segment.percentage}%)</span>
 						{/if}
 					</span>
 				</div>

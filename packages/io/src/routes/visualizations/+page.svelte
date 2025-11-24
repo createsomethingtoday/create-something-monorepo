@@ -78,12 +78,12 @@
 		{ label: '.ltd', count: propertyData.ltd.views }
 	];
 
-	// Comparative sparklines data
+	// Comparative sparklines data - Using brighter, more saturated colors for better visibility
 	const comparativeData = [
-		{ label: '.agency', data: propertyData.agency.dailyViews, color: 'rgb(59, 130, 246)' },
-		{ label: '.io', data: propertyData.io.dailyViews, color: 'rgb(16, 185, 129)' },
-		{ label: '.space', data: propertyData.space.dailyViews, color: 'rgb(168, 85, 247)' },
-		{ label: '.ltd', data: propertyData.ltd.dailyViews, color: 'rgb(251, 146, 60)' }
+		{ label: '.agency', data: propertyData.agency.dailyViews, color: 'rgb(96, 165, 250)', opacity: 0.9 },
+		{ label: '.io', data: propertyData.io.dailyViews, color: 'rgb(34, 197, 94)', opacity: 0.9 },
+		{ label: '.space', data: propertyData.space.dailyViews, color: 'rgb(192, 132, 252)', opacity: 0.9 },
+		{ label: '.ltd', data: propertyData.ltd.dailyViews, color: 'rgb(251, 191, 36)', opacity: 0.9 }
 	];
 </script>
 
@@ -106,16 +106,16 @@
 		<section class="space-y-4">
 			<div>
 				<h2 class="text-2xl font-bold mb-2">Comparative Trends</h2>
-				<p class="text-white/60 text-sm">
+				<p class="text-white/70 text-base">
 					ComparativeSparklines component - Multiple data series overlaid for direct comparison
 				</p>
 			</div>
-			<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-				<div class="h-32">
+			<div class="p-8 bg-white/5 border border-white/10 rounded-lg">
+				<div class="h-48">
 					<ComparativeSparklines series={comparativeData} width={100} height={30} />
 				</div>
-				<p class="text-xs text-white/40 mt-4">
-					<strong>Reveals:</strong> .io and .agency are growing, .space is declining, .ltd is
+				<p class="text-sm text-white/60 mt-6">
+					<strong class="text-white/80">Reveals:</strong> .io and .agency are growing, .space is declining, .ltd is
 					emerging. Relative performance visible at a glance.
 				</p>
 			</div>
@@ -125,14 +125,14 @@
 		<section class="space-y-4">
 			<div>
 				<h2 class="text-2xl font-bold mb-2">Proportional Distribution</h2>
-				<p class="text-white/60 text-sm">
+				<p class="text-white/70 text-base">
 					DistributionBar component - Visual representation of how total is divided
 				</p>
 			</div>
-			<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-				<DistributionBar segments={distribution} />
-				<p class="text-xs text-white/40 mt-4">
-					<strong>Reveals:</strong> .io dominates (47%), followed by .agency (24%), .space (17%),
+			<div class="p-8 bg-white/5 border border-white/10 rounded-lg">
+				<DistributionBar segments={distribution} height="h-12" />
+				<p class="text-sm text-white/60 mt-6">
+					<strong class="text-white/80">Reveals:</strong> .io dominates (47%), followed by .agency (24%), .space (17%),
 					and .ltd (11%). Distribution imbalance immediately obvious.
 				</p>
 			</div>
@@ -142,7 +142,7 @@
 		<section class="space-y-4">
 			<div>
 				<h2 class="text-2xl font-bold mb-2">Change Direction & Magnitude</h2>
-				<p class="text-white/60 text-sm">
+				<p class="text-white/70 text-base">
 					TrendIndicator component - Shows whether metrics are up, down, or flat
 				</p>
 			</div>
