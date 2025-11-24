@@ -148,6 +148,7 @@
 								current={metrics.avgResponseTime}
 								previous={metrics.previousAvg}
 								format="number"
+								inverse={true}
 							/>
 						</div>
 					</div>

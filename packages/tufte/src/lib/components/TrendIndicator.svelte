@@ -20,6 +20,7 @@
 	export let format: 'number' | 'percentage' | 'compact' = 'percentage';
 	export let showDirection: boolean = true;
 	export let flatThreshold: number = 0.5; // Changes below this % are considered "flat"
+	export let inverse: boolean = false; // For metrics where lower is better (e.g., response time, errors)
 
 	// Agentic: calculate change automatically
 	$: absoluteChange = current - previous;
@@ -40,16 +41,16 @@
 				? formatCompact(Math.abs(absoluteChange))
 				: `${Math.abs(percentageChange)}%`;
 
-	// Visual indicators
-	const indicators = {
+	// Visual indicators (reactive to handle inverse mode)
+	$: indicators = {
 		up: {
 			icon: '↑',
-			color: 'text-green-400',
+			color: inverse ? 'text-red-400' : 'text-green-400',
 			label: 'increase'
 		},
 		down: {
 			icon: '↓',
-			color: 'text-red-400',
+			color: inverse ? 'text-green-400' : 'text-red-400',
 			label: 'decrease'
 		},
 		flat: {
