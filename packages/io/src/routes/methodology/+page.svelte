@@ -194,6 +194,118 @@
     </div>
   </section>
 
+  <!-- Displaying Evidence (Tufte Section) -->
+  <section class="py-16 px-6 border-t border-white/10 bg-[#0a0a0a]">
+    <div class="max-w-4xl mx-auto">
+      <div class="space-y-8">
+        <h2 class="text-3xl font-bold text-white mb-8">
+          Displaying Evidence
+        </h2>
+
+        <p class="text-lg text-white/80 leading-relaxed">
+          Tracking data isn't enough—how you <strong>display</strong> that data determines whether your research is credible or dismissed. We follow Edward Tufte's principles for quantitative information design.
+        </p>
+
+        <div class="p-6 bg-white/5 border border-white/20 rounded-lg">
+          <p class="text-white/70 leading-relaxed italic">
+            "Excellence in statistical graphics consists of complex ideas communicated with clarity, precision, and efficiency."
+            <span class="block mt-2 text-white/40 text-sm">— Edward Tufte, The Visual Display of Quantitative Information</span>
+          </p>
+        </div>
+
+        <!-- Tufte's Principles Applied -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          {#each [
+            {
+              principle: 'Maximize Data-Ink Ratio',
+              description: 'Every pixel should convey information. Remove decoration that obscures data.',
+              application: 'Sparklines show trends in 12 pixels instead of full charts with axes and labels.'
+            },
+            {
+              principle: 'Show Data Variation',
+              description: 'Display change and patterns, not just static numbers.',
+              application: 'Inline trends on metrics show movement over time, not just current values.'
+            },
+            {
+              principle: 'High Data Density',
+              description: 'Maximize meaningful information per unit area.',
+              application: 'Tables show 10 experiments with counts + percentages instead of 3 with decoration.'
+            },
+            {
+              principle: 'Integrate Text & Data',
+              description: 'Labels, numbers, and context should appear together.',
+              application: 'Property stats show count, percentage, and trend inline—no separate legend needed.'
+            },
+            {
+              principle: 'Small Multiples',
+              description: 'Show multiple dimensions side-by-side for comparison.',
+              application: '7-day grid lets you spot patterns across the week at a glance.'
+            },
+            {
+              principle: 'Remove Chartjunk',
+              description: 'Eliminate visual noise that distracts from data.',
+              application: 'Subtle borders and minimal backgrounds—data stands out, not design.'
+            }
+          ] as item, index}
+            <div
+              in:fly={{ y: 20, duration: 500, delay: index * 50 }}
+              class="p-5 bg-[#111111] border border-white/10 rounded-lg"
+            >
+              <h3 class="text-lg font-semibold text-white mb-2">
+                {item.principle}
+              </h3>
+              <p class="text-white/60 text-sm mb-3">
+                {item.description}
+              </p>
+              <div class="pt-3 border-t border-white/5">
+                <p class="text-xs text-white/40">
+                  <strong class="text-white/60">In our analytics:</strong> {item.application}
+                </p>
+              </div>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Why This Matters for Research -->
+        <div class="mt-8 p-6 bg-[#111111] border border-white/10 rounded-lg">
+          <h3 class="text-xl font-semibold text-white mb-4">
+            Why Visualization Standards Matter
+          </h3>
+          <div class="space-y-4 text-white/70">
+            <p>
+              <strong class="text-white">Credibility:</strong> Poor visualization makes readers question your data.
+              If metrics are buried under decoration, they assume you're hiding something.
+            </p>
+            <p>
+              <strong class="text-white">Reproducibility:</strong> Clear presentation lets others verify your work.
+              Sparklines and small multiples make patterns obvious without interpretation.
+            </p>
+            <p>
+              <strong class="text-white">Efficiency:</strong> Researchers need to extract insights quickly.
+              High data density means less scrolling, more understanding.
+            </p>
+          </div>
+        </div>
+
+        <!-- See It In Action -->
+        <div class="text-center mt-8">
+          <p class="text-white/60 mb-4">
+            These principles are applied throughout our analytics dashboard and experiment results.
+          </p>
+          <a
+            href="/admin/analytics"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white border border-white/20 font-semibold rounded-full hover:bg-white/20 hover:border-white/30 transition-all"
+          >
+            <span>View Analytics Dashboard</span>
+            <svg class="w-4 h-4" stroke-width="2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Three Tracking Modes -->
   <section class="py-16 px-6 border-t border-white/10">
     <div class="max-w-4xl mx-auto">
@@ -445,6 +557,109 @@
               <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Canon & Influences -->
+  <section class="py-16 px-6 border-t border-white/10">
+    <div class="max-w-4xl mx-auto">
+      <div class="space-y-8">
+        <h2 class="text-3xl font-bold text-white mb-8">
+          Canon & Influences
+        </h2>
+
+        <p class="text-lg text-white/70 leading-relaxed">
+          CREATE SOMETHING's methodology doesn't exist in isolation. We build on foundational work from researchers, practitioners, and thinkers who established standards for rigorous knowledge production.
+        </p>
+
+        <!-- Masters -->
+        <div class="mt-8">
+          <h3 class="text-2xl font-semibold text-white mb-6">Masters</h3>
+
+          <!-- Edward Tufte -->
+          <div class="p-6 bg-[#111111] border border-white/10 rounded-lg">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h4 class="text-xl font-semibold text-white">Edward R. Tufte</h4>
+                <p class="text-sm text-white/40 mt-1">Professor Emeritus, Yale University</p>
+              </div>
+              <div class="text-xs px-3 py-1 bg-white/10 text-white/60 rounded-full">
+                Data Visualization
+              </div>
+            </div>
+
+            <div class="space-y-4 text-white/70">
+              <p>
+                <strong class="text-white">Work:</strong> <em>The Visual Display of Quantitative Information</em> (1983)
+              </p>
+
+              <p>
+                <strong class="text-white">Influence on CREATE SOMETHING:</strong>
+                Tufte's principles for displaying quantitative data define how we present experiment results, analytics dashboards, and research findings. His concept of the data-ink ratio—maximizing information while minimizing decoration—is fundamental to our visualization standards.
+              </p>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p class="text-sm text-white/60 mb-2"><strong>Core Principles We Apply:</strong></p>
+                  <ul class="text-sm text-white/60 space-y-1 list-disc list-inside">
+                    <li>Maximize data-ink ratio</li>
+                    <li>Show data variation, not design variation</li>
+                    <li>Remove chartjunk</li>
+                  </ul>
+                </div>
+                <div>
+                  <p class="text-sm text-white/60 mb-2"><strong>Implemented In:</strong></p>
+                  <ul class="text-sm text-white/60 space-y-1 list-disc list-inside">
+                    <li>Analytics dashboard design</li>
+                    <li>Experiment metrics visualization</li>
+                    <li>Research paper data presentation</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-white/5 flex gap-4 text-sm">
+                <a
+                  href="https://www.edwardtufte.com/tufte/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-white/60 hover:text-white transition-colors inline-flex items-center gap-1"
+                >
+                  <span>Official Site</span>
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- How We Build Canon -->
+        <div class="mt-8 p-6 bg-white/5 border border-white/20 rounded-lg">
+          <h4 class="text-lg font-semibold text-white mb-3">How Work Enters the Canon</h4>
+          <div class="text-white/70 space-y-3 text-sm">
+            <p>
+              A "Master" in the CREATE SOMETHING canon represents someone whose work has:
+            </p>
+            <ul class="space-y-2 list-disc list-inside ml-2">
+              <li><strong class="text-white">Foundational impact</strong> — Established principles we build upon</li>
+              <li><strong class="text-white">Practical application</strong> — Not just theory; implemented in our work</li>
+              <li><strong class="text-white">Evidence-based approach</strong> — Research-backed, not opinion</li>
+              <li><strong class="text-white">Timeless relevance</strong> — Principles that withstand technological change</li>
+            </ul>
+            <p class="pt-3 border-t border-white/10 mt-4">
+              The canon grows through practice, not planning. We don't add influences speculatively—only after we've applied their work and proven its value in our methodology.
+            </p>
+          </div>
+        </div>
+
+        <!-- Future Additions -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-white/40">
+            This canon expands as CREATE SOMETHING's methodology evolves. Check back as we document additional influences.
+          </p>
         </div>
       </div>
     </div>
