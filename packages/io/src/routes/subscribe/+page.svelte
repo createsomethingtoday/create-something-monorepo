@@ -1,5 +1,16 @@
 <script lang="ts">
 	import { SEO } from '@create-something/components';
+	import {
+		Bot,
+		Component,
+		Video,
+		BookOpen,
+		Zap,
+		MessageCircle,
+		Check,
+		Circle,
+		ArrowRight
+	} from 'lucide-svelte';
 
 	let email = '';
 	let submitted = false;
@@ -60,26 +71,26 @@
 			<div class="grid md:grid-cols-2 gap-6">
 				<!-- Autonomous Agents -->
 				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<div class="text-3xl mb-3">🤖</div>
+					<Bot class="w-8 h-8 mb-3 text-white/80" />
 					<h3 class="text-lg font-bold mb-2">Autonomous Agents</h3>
 					<p class="text-white/60 text-sm mb-4">
 						Production-ready agents built from real client projects
 					</p>
 					<ul class="space-y-2 text-sm text-white/70">
 						<li class="flex items-start gap-2">
-							<span class="text-green-400 mt-0.5">✓</span>
+							<Check class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
 							<span>Gmail to Notion sync agent</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400 mt-0.5">✓</span>
+							<Check class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
 							<span>Notion deduplication agent</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400 mt-0.5">✓</span>
+							<Check class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
 							<span>Claude Code skills & patterns</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>More agents added as projects complete</span>
 						</li>
 					</ul>
@@ -87,26 +98,26 @@
 
 				<!-- Component Libraries -->
 				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<div class="text-3xl mb-3">🧩</div>
+					<Component class="w-8 h-8 mb-3 text-white/80" />
 					<h3 class="text-lg font-bold mb-2">Agentic Components</h3>
 					<p class="text-white/60 text-sm mb-4">
 						UI components that embody expert knowledge
 					</p>
 					<ul class="space-y-2 text-sm text-white/70">
 						<li class="flex items-start gap-2">
-							<span class="text-green-400 mt-0.5">✓</span>
+							<Check class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
 							<span>@create-something/tufte (visualization)</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400 mt-0.5">✓</span>
+							<Check class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
 							<span>@create-something/components (UI primitives)</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>@create-something/agents (coming soon)</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>@create-something/claude-patterns (coming soon)</span>
 						</li>
 					</ul>
@@ -114,22 +125,22 @@
 
 				<!-- Video Walkthroughs -->
 				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<div class="text-3xl mb-3">🎥</div>
+					<Video class="w-8 h-8 mb-3 text-white/80" />
 					<h3 class="text-lg font-bold mb-2">Video Walkthroughs</h3>
 					<p class="text-white/60 text-sm mb-4">
 						Recorded tutorials showing how to use and extend each agent
 					</p>
 					<ul class="space-y-2 text-sm text-white/70">
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Installation & configuration (15-20 min each)</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Extension & customization (20-30 min each)</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Real-world deployment examples</span>
 						</li>
 					</ul>
@@ -137,22 +148,22 @@
 
 				<!-- Recorded Workshops -->
 				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<div class="text-3xl mb-3">📚</div>
+					<BookOpen class="w-8 h-8 mb-3 text-white/80" />
 					<h3 class="text-lg font-bold mb-2">Recorded Workshops</h3>
 					<p class="text-white/60 text-sm mb-4">
 						Deep-dive workshops on building agentic systems (60-90 min)
 					</p>
 					<ul class="space-y-2 text-sm text-white/70">
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Building agentic integrations</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Cloudflare Workers AI patterns</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Claude Code skills development</span>
 						</li>
 					</ul>
@@ -160,22 +171,22 @@
 
 				<!-- Templates & Starter Projects -->
 				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<div class="text-3xl mb-3">⚡</div>
+					<Zap class="w-8 h-8 mb-3 text-white/80" />
 					<h3 class="text-lg font-bold mb-2">Templates & Starters</h3>
 					<p class="text-white/60 text-sm mb-4">
 						Ready-to-deploy infrastructure and configuration templates
 					</p>
 					<ul class="space-y-2 text-sm text-white/70">
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Cloudflare Workers deployment templates</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>SvelteKit + Cloudflare starter</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Agent architecture patterns</span>
 						</li>
 					</ul>
@@ -183,22 +194,22 @@
 
 				<!-- Support & Community -->
 				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<div class="text-3xl mb-3">💬</div>
+					<MessageCircle class="w-8 h-8 mb-3 text-white/80" />
 					<h3 class="text-lg font-bold mb-2">Async Support</h3>
 					<p class="text-white/60 text-sm mb-4">
 						Email support and asynchronous community resources
 					</p>
 					<ul class="space-y-2 text-sm text-white/70">
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Priority email support (24-48hr response)</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>GitHub Discussions access</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/30 mt-0.5">○</span>
+							<Circle class="w-4 h-4 text-white/30 mt-0.5 flex-shrink-0" />
 							<span>Quarterly recorded Q&A sessions</span>
 						</li>
 					</ul>
@@ -241,15 +252,15 @@
 					<div class="text-3xl font-bold mb-4">Free</div>
 					<ul class="space-y-3 text-sm text-white/70 mb-6">
 						<li class="flex items-start gap-2">
-							<span class="text-white/40">✓</span>
+							<Check class="w-4 h-4 text-white/40 flex-shrink-0" />
 							<span>Component documentation</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/40">✓</span>
+							<Check class="w-4 h-4 text-white/40 flex-shrink-0" />
 							<span>Selected experiments & papers</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/40">✓</span>
+							<Check class="w-4 h-4 text-white/40 flex-shrink-0" />
 							<span>Sample agent code</span>
 						</li>
 					</ul>
@@ -267,27 +278,27 @@
 					<div class="text-xs text-white/40 mb-4">/month</div>
 					<ul class="space-y-3 text-sm text-white/70 mb-6">
 						<li class="flex items-start gap-2">
-							<span class="text-green-400">✓</span>
+							<Check class="w-4 h-4 text-green-400 flex-shrink-0" />
 							<span>Full agent library</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400">✓</span>
+							<Check class="w-4 h-4 text-green-400 flex-shrink-0" />
 							<span>All video walkthroughs</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400">✓</span>
+							<Check class="w-4 h-4 text-green-400 flex-shrink-0" />
 							<span>All recorded workshops</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400">✓</span>
+							<Check class="w-4 h-4 text-green-400 flex-shrink-0" />
 							<span>Template repositories</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400">✓</span>
+							<Check class="w-4 h-4 text-green-400 flex-shrink-0" />
 							<span>Email support</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-green-400">✓</span>
+							<Check class="w-4 h-4 text-green-400 flex-shrink-0" />
 							<span>Early access to new releases</span>
 						</li>
 					</ul>
@@ -299,19 +310,19 @@
 					<div class="text-3xl font-bold mb-4">Custom</div>
 					<ul class="space-y-3 text-sm text-white/70 mb-6">
 						<li class="flex items-start gap-2">
-							<span class="text-white/40">✓</span>
+							<Check class="w-4 h-4 text-white/40 flex-shrink-0" />
 							<span>Everything in Build</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/40">✓</span>
+							<Check class="w-4 h-4 text-white/40 flex-shrink-0" />
 							<span>Consultancy hours</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/40">✓</span>
+							<Check class="w-4 h-4 text-white/40 flex-shrink-0" />
 							<span>Custom agent development</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<span class="text-white/40">✓</span>
+							<Check class="w-4 h-4 text-white/40 flex-shrink-0" />
 							<span>Private repository access</span>
 						</li>
 					</ul>
