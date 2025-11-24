@@ -75,9 +75,9 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ║                                           ║
     ║   Trends:    ↗  ↘  ↗  →  ↗               ║
     ║            ────────────────────           ║
-    ║   Auth:     ▁▂▃▄▅▆▇ ✓ improving          ║
-    ║   Cache:    ▇▇▇▇▇▇▇ ✓ stable             ║
-    ║   Database: ▇▆▅▄▃▂▁ ⚠ degrading          ║
+    ║   Auth:     ▇▆▅▄▃▂▁ ✓ improving          ║
+    ║   Cache:    ▂▂▂▂▂▂▂ ✓ stable             ║
+    ║   Database: ▁▂▃▄▅▆▇ ⚠ degrading          ║
     ║   Storage:  ▄▄▄▄▄▄▄ → flat               ║
     ║            ────────────────────           ║
     ║                                           ║
