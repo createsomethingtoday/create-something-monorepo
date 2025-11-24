@@ -619,7 +619,16 @@
                 </div>
               </div>
 
-              <div class="pt-4 border-t border-white/5 flex gap-4 text-sm">
+              <div class="pt-4 border-t border-white/5 flex gap-4 text-sm flex-wrap">
+                <a
+                  href="https://createsomething.ltd/masters/edward-tufte"
+                  class="text-white/80 hover:text-white transition-colors inline-flex items-center gap-1 font-medium"
+                >
+                  <span>Full Canon Entry</span>
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
                 <a
                   href="https://www.edwardtufte.com/tufte/"
                   target="_blank"
@@ -655,10 +664,22 @@
           </div>
         </div>
 
-        <!-- Future Additions -->
-        <div class="mt-6 text-center">
-          <p class="text-sm text-white/40">
-            This canon expands as CREATE SOMETHING's methodology evolves. Check back as we document additional influences.
+        <!-- Full Canon Reference -->
+        <div class="mt-8 text-center">
+          <p class="text-sm text-white/60 mb-4">
+            The complete canon—with full biographies, principles, quotes, and resources—lives on CREATE SOMETHING.ltd
+          </p>
+          <a
+            href="https://createsomething.ltd/masters"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white border border-white/20 font-semibold rounded-full hover:bg-white/20 hover:border-white/30 transition-all"
+          >
+            <span>Explore All Masters</span>
+            <svg class="w-4 h-4" stroke-width="2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+          <p class="text-xs text-white/40 mt-4">
+            Dieter Rams • Mies van der Rohe • Edward Tufte
           </p>
         </div>
       </div>
