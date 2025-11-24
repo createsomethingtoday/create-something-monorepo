@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { ArrowRight } from 'lucide-svelte';
 
 	let email = '';
 	let submitted = false;
@@ -95,9 +96,10 @@
 					/>
 					<button
 						type="submit"
-						class="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors whitespace-nowrap"
+						class="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors whitespace-nowrap inline-flex items-center gap-2"
 					>
-						Subscribe →
+						Subscribe
+						<ArrowRight class="w-4 h-4" />
 					</button>
 				</form>
 

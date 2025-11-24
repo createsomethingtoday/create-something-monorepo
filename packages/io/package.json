@@ -17,7 +17,8 @@
 		"@create-something/components": "workspace:*",
 		"@create-something/tufte": "workspace:*",
 		"@types/canvas-confetti": "^1.9.0",
-		"canvas-confetti": "^1.9.4"
+		"canvas-confetti": "^1.9.4",
+		"lucide-svelte": "^0.554.0"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
