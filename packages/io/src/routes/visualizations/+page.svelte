@@ -5,11 +5,10 @@
 	 * Research experiment demonstrating autonomous UI components that embody
 	 * Edward Tufte's principles for displaying quantitative information.
 	 *
-	 * Supports both sample data (controlled examples) and live data (real analytics)
-	 * to demonstrate component flexibility and practical application.
+	 * Uses controlled sample data to demonstrate component behavior with
+	 * crafted patterns showing growth, decline, and emergence trends.
 	 */
 
-	import { onMount } from 'svelte';
 	import {
 		ComparativeSparklines,
 		DistributionBar,
@@ -17,11 +16,6 @@
 		MetricCard,
 		HighDensityTable
 	} from '@create-something/tufte';
-
-	// Data source toggle
-	let dataSource: 'sample' | 'live' = 'sample';
-	let loading = false;
-	let liveAnalytics: any = null;
 
 	// Sample data for demonstrations
 	const propertyData = {
@@ -79,62 +73,21 @@
 		}
 	};
 
-	// Fetch live analytics data
-	async function fetchLiveData() {
-		loading = true;
-		try {
-			const response = await fetch('/api/admin/analytics?days=7');
-			if (response.ok) {
-				liveAnalytics = await response.json();
-			}
-		} catch (error) {
-			console.error('Failed to load live analytics:', error);
-		} finally {
-			loading = false;
-		}
-	}
-
-	// Load live data when switching to live mode
-	$: if (dataSource === 'live' && !liveAnalytics) {
-		fetchLiveData();
-	}
-
-	// Get property stats with defaults for all properties
-	function getLivePropertyData() {
-		if (!liveAnalytics) return null;
-
-		const properties = ['agency', 'io', 'space', 'ltd'];
-		return properties.reduce((acc, prop) => {
-			const found = liveAnalytics.views_by_property.find((p: any) => p.property === prop);
-			acc[prop] = {
-				views: found?.count || 0,
-				previousViews: Math.round((found?.count || 0) * 0.85), // Estimate previous period
-				dailyViews: liveAnalytics.daily_views.slice(-7).map((d: any) => ({ count: d.count }))
-			};
-			return acc;
-		}, {} as any);
-	}
-
-	// Reactive data - switches between sample and live
-	$: activeData = dataSource === 'live' && liveAnalytics
-		? getLivePropertyData()
-		: propertyData;
-
 	// Distribution data
-	$: distribution = activeData ? [
-		{ label: '.agency', count: activeData.agency.views },
-		{ label: '.io', count: activeData.io.views },
-		{ label: '.space', count: activeData.space.views },
-		{ label: '.ltd', count: activeData.ltd.views }
-	] : [];
+	const distribution = [
+		{ label: '.agency', count: propertyData.agency.views },
+		{ label: '.io', count: propertyData.io.views },
+		{ label: '.space', count: propertyData.space.views },
+		{ label: '.ltd', count: propertyData.ltd.views }
+	];
 
 	// Comparative sparklines data - Using brighter, more saturated colors for better visibility
-	$: comparativeData = activeData ? [
-		{ label: '.agency', data: activeData.agency.dailyViews, color: 'rgb(96, 165, 250)', opacity: 0.9 },
-		{ label: '.io', data: activeData.io.dailyViews, color: 'rgb(34, 197, 94)', opacity: 0.9 },
-		{ label: '.space', data: activeData.space.dailyViews, color: 'rgb(192, 132, 252)', opacity: 0.9 },
-		{ label: '.ltd', data: activeData.ltd.dailyViews, color: 'rgb(251, 191, 36)', opacity: 0.9 }
-	] : [];
+	const comparativeData = [
+		{ label: '.agency', data: propertyData.agency.dailyViews, color: 'rgb(96, 165, 250)', opacity: 0.9 },
+		{ label: '.io', data: propertyData.io.dailyViews, color: 'rgb(34, 197, 94)', opacity: 0.9 },
+		{ label: '.space', data: propertyData.space.dailyViews, color: 'rgb(192, 132, 252)', opacity: 0.9 },
+		{ label: '.ltd', data: propertyData.ltd.dailyViews, color: 'rgb(251, 191, 36)', opacity: 0.9 }
+	];
 </script>
 
 <svelte:head>
@@ -143,57 +96,15 @@
 
 <div class="min-h-screen bg-black text-white p-6">
 	<div class="max-w-7xl mx-auto space-y-12">
-		<!-- Header with Data Source Toggle -->
-		<div class="border-b border-white/10 pb-8">
-			<div class="flex items-start justify-between gap-4 mb-4">
-				<div class="flex-1">
-					<h1 class="text-4xl font-bold mb-3">Agentic Visualization Experiment</h1>
-					<p class="text-white/70 text-lg max-w-3xl">
-						Research experiment demonstrating autonomous UI components that embody Edward Tufte's principles.
-						Components work with any data source - toggle between controlled samples and live analytics.
-					</p>
-				</div>
-
-				<!-- Data Source Toggle -->
-				<div class="flex gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
-					<button
-						onclick={() => dataSource = 'sample'}
-						class="px-4 py-2 rounded text-sm font-medium transition-all {dataSource === 'sample'
-							? 'bg-white/20 text-white'
-							: 'text-white/60 hover:text-white/80'}"
-					>
-						Sample Data
-					</button>
-					<button
-						onclick={() => dataSource = 'live'}
-						class="px-4 py-2 rounded text-sm font-medium transition-all {dataSource === 'live'
-							? 'bg-white/20 text-white'
-							: 'text-white/60 hover:text-white/80'}"
-					>
-						Live Data {loading ? '...' : ''}
-					</button>
-				</div>
-			</div>
-
-			<!-- Data Source Description -->
-			<div class="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg text-sm">
-				{#if dataSource === 'sample'}
-					<p class="text-white/70">
-						<strong class="text-white/90">Sample Data Mode:</strong> Controlled examples demonstrating component behavior with crafted data patterns.
-						Shows growth, decline, and emergence trends.
-					</p>
-				{:else if loading}
-					<p class="text-white/70">Loading live analytics from CREATE SOMETHING properties...</p>
-				{:else if liveAnalytics}
-					<p class="text-white/70">
-						<strong class="text-white/90">Live Data Mode:</strong> Real analytics from the last 7 days across .agency, .io, .space, and .ltd.
-						Total: {liveAnalytics.total_views.toLocaleString()} page views.
-					</p>
-				{:else}
-					<p class="text-white/70 text-red-400">Failed to load live data. Showing sample data.</p>
-				{/if}
-			</div>
-		</div>
+	<!-- Header -->
+	<div class="border-b border-white/10 pb-8">
+		<h1 class="text-4xl font-bold mb-3">Agentic Visualization Experiment</h1>
+		<p class="text-white/70 text-lg max-w-3xl">
+			Research experiment demonstrating autonomous UI components that embody Edward Tufte's principles
+			for displaying quantitative information. Components make intelligent decisions about data presentation,
+			transforming visualization from manual craft into intelligent revelation.
+		</p>
+	</div>
 
 	<!-- Abstract -->
 	<section class="border-l-4 border-white/20 pl-6 space-y-4">
@@ -376,7 +287,7 @@
 
 			<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm space-y-2 mt-4">
 				<p class="text-white/40">// Reactive data switching</p>
-				<p class="text-white/90">$: activeData = dataSource === 'live' && liveAnalytics</p>
+				<p class="text-white/90">$: propertyData = dataSource === 'live' && liveAnalytics</p>
 				<p class="text-white/90 pl-4">? getLivePropertyData()</p>
 				<p class="text-white/90 pl-4">: propertyData;</p>
 			</div>
@@ -387,8 +298,9 @@
 	<section class="border-t border-white/10 pt-8">
 		<h2 class="text-3xl font-bold mb-4">4. Results: Component Demonstrations</h2>
 		<p class="text-white/70 leading-relaxed mb-8">
-			The following sections demonstrate each component with {dataSource === 'live' ? 'live analytics data' : 'controlled sample data'}.
-			Use the toggle above to switch between sample and live data sources.
+			The following sections demonstrate each component with controlled sample data representing
+			CREATE SOMETHING property analytics. Each component automatically handles scaling, formatting,
+			and visual encoding without manual configuration.
 		</p>
 	</section>
 
@@ -435,8 +347,8 @@
 				</p>
 			</div>
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-				{#if activeData}
-			{#each Object.entries(activeData) as [property, data]}
+				{#if propertyData}
+			{#each Object.entries(propertyData) as [property, data]}
 					<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
 						<div class="text-sm text-white/60 mb-2">.{property}</div>
 						<div class="text-3xl font-bold tabular-nums mb-2">{data.views.toLocaleString()}</div>
@@ -460,8 +372,8 @@
 				</p>
 			</div>
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-				{#if activeData}
-			{#each Object.entries(activeData) as [property, data]}
+				{#if propertyData}
+			{#each Object.entries(propertyData) as [property, data]}
 					<div class="space-y-2">
 						<MetricCard
 							label=".{property}"
