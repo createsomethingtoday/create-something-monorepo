@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 			.prepare(
 				`
 			SELECT * FROM masters
-			ORDER BY name ASC
+			ORDER BY created_at ASC
 		`
 			)
 			.all<Master>();
