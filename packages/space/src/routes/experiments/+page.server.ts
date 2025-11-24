@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		console.log('✅ Using D1 database for experiments');
 
-		// Fetch all published papers, ordered by featured first, then by created_at DESC
+		// Fetch all published papers that are interactive/executable
 		const result = await platform.env.DB.prepare(
 			`
       SELECT
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ platform }) => {
         date, excerpt, description, created_at, updated_at, published_at, ascii_art,
         is_executable
       FROM papers
-      WHERE published = 1 AND is_hidden = 0 AND archived = 0
+      WHERE published = 1 AND is_hidden = 0 AND archived = 0 AND is_executable = 1
       ORDER BY featured DESC, created_at DESC
     `
 		).all();
