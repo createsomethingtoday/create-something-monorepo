@@ -124,12 +124,12 @@
 			</div>
 		</section>
 
-		<!-- Pattern 2: Service Health Comparison -->
+		<!-- Pattern 2: AI-Powered Service Health -->
 		<section class="space-y-6">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">Pattern Revealed: Relative Service Health</h2>
+				<h2 class="text-2xl font-bold mb-2">Pattern Revealed: AI-Powered Service Health</h2>
 				<p class="text-white/70">
-					MetricCard + TrendIndicator shows absolute performance and direction
+					MetricCard + TrendIndicator with automatic semantic understanding via Cloudflare Workers AI
 				</p>
 			</div>
 
@@ -148,17 +148,30 @@
 								current={metrics.avgResponseTime}
 								previous={metrics.previousAvg}
 								format="number"
-								inverse={true}
+								aiEnhanced={true}
+								metric="{service}_response_time"
+								label="{service} response time"
+								context="api_performance_monitoring"
 							/>
 						</div>
 					</div>
 				{/each}
 			</div>
 
-			<p class="text-sm text-white/60">
-				<strong class="text-white/80">What it reveals:</strong> Database response time increased
-				+26%, indicating a problem. Auth improved -13%, cache improved -20%, storage flat.
-			</p>
+			<div class="p-6 bg-white/5 border border-white/10 rounded-lg space-y-3 text-white/70 text-sm">
+				<p>
+					<strong class="text-white/90">What it reveals:</strong> Database response time increased
+					+26%, indicating a problem. Auth improved -13%, cache improved -20%, storage flat.
+				</p>
+				<p>
+					<strong class="text-white/90">AI Enhancement:</strong> The component uses Cloudflare Workers AI
+					to understand that "response_time" semantically means "lower is better"—automatically inverting
+					colors without manual configuration.
+				</p>
+				<p class="text-white/50">
+					First load calls AI API. Subsequent loads use cached results. Falls back to heuristics if AI unavailable.
+				</p>
+			</div>
 		</section>
 
 		<!-- Pattern 3: Error Distribution -->
