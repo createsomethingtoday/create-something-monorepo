@@ -31,14 +31,14 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		const papers = (result.results || []) as Paper[];
 
-		// Get category counts
+		// Get category counts for interactive experiments only
 		const categoryResult = await platform.env.DB.prepare(
 			`
       SELECT
         category,
         COUNT(*) as count
       FROM papers
-      WHERE published = 1 AND is_hidden = 0 AND archived = 0
+      WHERE published = 1 AND is_hidden = 0 AND archived = 0 AND is_executable = 1
       GROUP BY category
       ORDER BY count DESC
     `
