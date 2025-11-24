@@ -100,7 +100,7 @@
 	<!-- Comparative visualization -->
 	<svg
 		viewBox="0 0 {width} {height}"
-		class="w-full h-full"
+		class="w-full h-32"
 		preserveAspectRatio="none"
 		aria-label="Comparative trend visualization with {series.length} data series"
 	>

@@ -110,11 +110,9 @@
 					ComparativeSparklines component - Multiple data series overlaid for direct comparison
 				</p>
 			</div>
-			<div class="p-8 bg-white/5 border border-white/10 rounded-lg">
-				<div class="h-48">
-					<ComparativeSparklines series={comparativeData} width={100} height={30} />
-				</div>
-				<p class="text-sm text-white/60 mt-6">
+			<div class="p-8 bg-white/5 border border-white/10 rounded-lg space-y-6">
+				<ComparativeSparklines series={comparativeData} width={100} height={30} />
+				<p class="text-sm text-white/60">
 					<strong class="text-white/80">Reveals:</strong> .io and .agency are growing, .space is declining, .ltd is
 					emerging. Relative performance visible at a glance.
 				</p>
