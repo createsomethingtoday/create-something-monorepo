@@ -44,8 +44,27 @@ export const load: PageServerLoad = async ({ platform }) => {
     `
 		).all();
 
+		// Format category names with proper capitalization
+		const formatCategoryName = (slug: string): string => {
+			// Common acronyms that should be uppercase
+			const acronyms = ['api', 'url', 'seo', 'ui', 'ux', 'css', 'html', 'js', 'ts'];
+
+			return slug
+				.replace(/[-_]/g, ' ') // Replace hyphens and underscores with spaces
+				.split(' ')
+				.map(word => {
+					// Check if word is an acronym
+					if (acronyms.includes(word.toLowerCase())) {
+						return word.toUpperCase();
+					}
+					// Otherwise, capitalize first letter
+					return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+				})
+				.join(' ');
+		};
+
 		const categories = (categoryResult.results || []).map((row: any) => ({
-			name: row.category.charAt(0).toUpperCase() + row.category.slice(1),
+			name: formatCategoryName(row.category),
 			slug: row.category,
 			count: row.count
 		}));
