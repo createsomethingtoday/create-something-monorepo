@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Footer } from '@create-something/components';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
@@ -181,15 +182,25 @@
 			note: 'For teams who have completed AI-Native Transformation or have existing AI infrastructure. Advisory only — no implementation work included.'
 		}
 	];
+
+	// Service schema data for SEO
+	const serviceSchemaData = services.map(service => ({
+		name: service.title,
+		description: service.description,
+		type: 'ProfessionalService',
+		price: service.pricing.replace('Starting at ', '').replace(/[\$,+\/mo]/g, ''),
+		priceDescription: service.pricing
+	}));
 </script>
 
-<svelte:head>
-	<title>Services | CREATE SOMETHING Agency</title>
-	<meta
-		name="description"
-		content="Agentic systems engineering: AI automation, background workflows, and autonomous systems. Web development that becomes intelligent infrastructure."
-	/>
-</svelte:head>
+<SEO
+	title="Services"
+	description="Agentic systems engineering: AI automation, background workflows, and autonomous systems. Web development that becomes intelligent infrastructure."
+	keywords="agentic systems, AI automation, autonomous systems, web development, transformation consulting, strategic advisory, Cloudflare Workers"
+	ogImage="/og-image.svg"
+	propertyName="agency"
+	services={serviceSchemaData}
+/>
 
 <!-- Hero Section -->
 	<section class="relative pt-32 pb-16 px-6">

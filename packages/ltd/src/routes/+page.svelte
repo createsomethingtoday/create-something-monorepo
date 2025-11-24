@@ -1,10 +1,14 @@
-<svelte:head>
-	<title>CREATE SOMETHING.ltd — The Canon for "Less, But Better"</title>
-	<meta
-		name="description"
-		content="The philosophical foundation for Create Something. Curated wisdom from masters who embody 'less, but better.'"
-	/>
-</svelte:head>
+<script lang="ts">
+	import { SEO } from '@create-something/components';
+</script>
+
+<SEO
+	title="The Canon for Less, But Better"
+	description="The philosophical foundation for Create Something. Curated wisdom from masters who embody 'less, but better.' Dieter Rams, Mies van der Rohe, and more."
+	keywords="design principles, less but better, Dieter Rams, minimalism, good design, design philosophy, systems thinking"
+	ogImage="/og-image.svg"
+	propertyName="ltd"
+/>
 
 <!-- Hero -->
 <section class="pt-24 pb-32 px-6">

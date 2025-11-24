@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Footer } from '@create-something/components';
+	import { Navigation, Footer, Analytics } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
@@ -138,6 +138,8 @@
 		}
 	</script>`}
 </svelte:head>
+
+<Analytics property="space" />
 
 <div class="min-h-screen bg-black">
 	<Navigation

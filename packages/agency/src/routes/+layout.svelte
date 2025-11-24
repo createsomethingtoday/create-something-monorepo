@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation } from '@create-something/components';
+	import { Navigation, Analytics } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
@@ -67,6 +67,8 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 </svelte:head>
+
+<Analytics property="agency" />
 
 <div class="min-h-screen bg-black">
 	<Navigation

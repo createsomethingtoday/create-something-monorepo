@@ -2,7 +2,7 @@
 	import type { PageData } from "./$types";
 	import ArticleHeader from "$lib/components/ArticleHeader.svelte";
 	import ArticleContent from "$lib/components/ArticleContent.svelte";
-	import { ShareButtons } from "@create-something/components";
+	import { ShareButtons, SEO } from "@create-something/components";
 	import RelatedArticles from "$lib/components/RelatedArticles.svelte";
 	import Footer from "$lib/components/Footer.svelte";
 	import StickyCTA from "$lib/components/StickyCTA.svelte";
@@ -38,6 +38,14 @@
 	}
 
 	onMount(() => {
+		// Track experiment view
+		if (typeof window !== 'undefined' && (window as any).trackEvent) {
+			(window as any).trackEvent('experiment_view', {
+				experiment_id: paper.id,
+				path: `/experiments/${paper.slug}`
+			});
+		}
+
 		// Check if we just returned from SPACE with a completion token
 		if (validateCompletionToken($page.url)) {
 			markExperimentCompleted(paper.slug);
@@ -60,44 +68,23 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{paper.title} | CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content={paper.description ||
-			paper.excerpt_long ||
-			paper.excerpt_short ||
-			"Technical experiment on modern development practices"}
-	/>
-	<meta
-		name="keywords"
-		content={paper.focus_keywords ||
-			`${paper.category}, automation, development, tutorial`}
-	/>
-
-	<!-- Open Graph / Facebook -->
-	<meta property="og:type" content="article" />
-	<meta property="og:url" content={fullUrl} />
-	<meta property="og:title" content={paper.title} />
-	<meta
-		property="og:description"
-		content={paper.description ||
-			paper.excerpt_long ||
-			"Technical experiment on modern development practices"}
-	/>
-	<meta property="og:site_name" content="CREATE SOMETHING" />
-
-	<!-- Twitter -->
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:url" content={fullUrl} />
-	<meta name="twitter:title" content={paper.title} />
-	<meta
-		name="twitter:description"
-		content={paper.description ||
-			paper.excerpt_short ||
-			"Technical experiment"}
-	/>
-</svelte:head>
+<SEO
+	title={paper.title}
+	description={paper.description || paper.excerpt_long || paper.excerpt_short || "Technical experiment on modern development practices"}
+	keywords={paper.focus_keywords || `${paper.category}, automation, development, tutorial`}
+	canonical={fullUrl}
+	ogType="article"
+	publishedTime={paper.created_at}
+	modifiedTime={paper.updated_at}
+	articleSection={paper.category}
+	articleTags={paper.tags ? paper.tags.map((t: any) => t.name) : []}
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io/' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: paper.title, url: fullUrl }
+	]}
+/>
 
 <div class="min-h-screen bg-black">
 	<!-- Article Header -->

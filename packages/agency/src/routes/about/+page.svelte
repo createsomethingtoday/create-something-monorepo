@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { Footer } from '@create-something/components';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
@@ -10,19 +11,13 @@
 	];
 </script>
 
-<svelte:head>
-	<title>About | CREATE SOMETHING Agency</title>
-	<meta name="description" content="Agentic systems engineering: building AI automation workflows and autonomous systems that run businesses. Research-backed, production-tested methodologies." />
-	<meta name="keywords" content="agentic engineering, AI automation, autonomous systems, Cloudflare Workers, Claude Code, AI agents, background automation" />
-	<!-- Open Graph -->
-	<meta property="og:title" content="About CREATE SOMETHING Agency | Agentic Systems Engineering" />
-	<meta property="og:description" content="We build AI systems that run businesses autonomously. From automation workflows to intelligent agents, backed by research from createsomething.io." />
-	<meta property="og:url" content="https://createsomething.agency/about" />
-	<!-- Twitter -->
-	<meta name="twitter:title" content="About CREATE SOMETHING Agency" />
-	<meta name="twitter:description" content="Agentic systems engineering: AI automation and autonomous systems for production use." />
-	<link rel="canonical" href="https://createsomething.agency/about" />
-</svelte:head>
+<SEO
+	title="About"
+	description="Agentic systems engineering: building AI automation workflows and autonomous systems that run businesses. Research-backed, production-tested methodologies."
+	keywords="agentic engineering, AI automation, autonomous systems, Cloudflare Workers, Claude Code, AI agents, background automation"
+	ogImage="/og-image.svg"
+	propertyName="agency"
+/>
 
 <!-- Hero Section -->
 	<section class="relative pt-32 pb-16 px-6">

@@ -1,23 +1,43 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
+  import { SEO } from '@create-something/components';
+
+  const faqItems = [
+    {
+      question: "How do you track AI development experiments?",
+      answer: "Every experiment uses automated logging to capture real-time data: API costs, time measurements, errors, and human interventions. This transforms subjective blog posts into reproducible experiments with precise metrics."
+    },
+    {
+      question: "What makes this different from AI development blogs?",
+      answer: "We document the process, not just results. Every experiment includes tracked metrics (time, costs, errors), methodology details, and intervention documentation. This provides reproducible, credible knowledge instead of anecdotes."
+    },
+    {
+      question: "Why focus on AI-native development?",
+      answer: "Traditional development practices don't account for AI agents that generate code, make architectural decisions, and require human oversight. AI-native development requires new methodologies for evaluation and reproducibility."
+    },
+    {
+      question: "How do you measure experiment success?",
+      answer: "Success is measured across multiple dimensions: completion time, API costs, error rates, human intervention frequency, and quality of final output. We track both objective metrics and qualitative learnings."
+    },
+    {
+      question: "Can I reproduce your experiments?",
+      answer: "Yes. Each experiment documents the exact process, tools used, prompts given, and interventions made. We provide enough detail for others to reproduce our work and validate our findings."
+    }
+  ];
 </script>
 
-<svelte:head>
-  <title>Research Methodology | CREATE SOMETHING</title>
-  <meta name="description" content="How CREATE SOMETHING produces credible knowledge about AI-native development through rigorous experiment tracking, real-time logging, and reproducible results." />
-  <meta name="keywords" content="research methodology, experiment tracking, AI-native development, reproducible research, scientific method, Claude Code, systems thinking" />
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="Research Methodology | CREATE SOMETHING" />
-  <meta property="og:description" content="The systematic approach that transforms blog posts into experiments—real-time tracking, precise costs, honest results." />
-  <meta property="og:url" content="https://createsomething.io/methodology" />
-
-  <!-- Twitter -->
-  <meta name="twitter:title" content="Research Methodology | CREATE SOMETHING" />
-  <meta name="twitter:description" content="How we transform AI development from 'prompting and hoping' into systematic evaluation with reproducible results." />
-
-  <link rel="canonical" href="https://createsomething.io/methodology" />
-</svelte:head>
+<SEO
+  title="Research Methodology"
+  description="How CREATE SOMETHING produces credible knowledge about AI-native development through rigorous experiment tracking, real-time logging, and reproducible results."
+  keywords="research methodology, experiment tracking, AI-native development, reproducible research, scientific method, Claude Code, systems thinking"
+  canonical="https://createsomething.io/methodology"
+  propertyName="io"
+  faqItems={faqItems}
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.io/' },
+    { name: 'Methodology', url: 'https://createsomething.io/methodology' }
+  ]}
+/>
 
 
   <!-- Hero Section -->
