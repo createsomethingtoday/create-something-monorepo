@@ -2,9 +2,15 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/components/types';
 import { getMockPaperBySlug, getMockPapersByCategory } from '$lib/data/mockPapers';
+import { isFileBasedExperiment } from '$lib/config/fileBasedExperiments';
 
 export const load: PageServerLoad = async ({ params, platform }) => {
 	const { slug } = params;
+
+	// Skip this route for file-based experiments - they have their own routes
+	if (isFileBasedExperiment(slug)) {
+		throw error(404, 'Not found');
+	}
 
 	try {
 		// Access Cloudflare bindings via platform.env (NOT from 'cloudflare:workers')
