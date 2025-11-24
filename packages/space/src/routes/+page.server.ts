@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		console.log('✅ Using D1 database');
 
-		// Fetch only featured experiments for homepage
+		// Fetch only featured interactive experiments for homepage
 		const result = await platform.env.DB.prepare(
 			`
       SELECT
@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ platform }) => {
         excerpt_long, slug, featured, published, is_hidden, archived,
         date, excerpt, description, created_at, updated_at, published_at, ascii_art
       FROM papers
-      WHERE published = 1 AND is_hidden = 0 AND archived = 0 AND featured = 1
+      WHERE published = 1 AND is_hidden = 0 AND archived = 0 AND featured = 1 AND is_executable = 1
       ORDER BY reading_time DESC
     `
 		).all();
