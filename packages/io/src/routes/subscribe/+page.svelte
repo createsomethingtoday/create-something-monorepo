@@ -263,7 +263,7 @@
 						RECOMMENDED
 					</div>
 					<div class="text-sm font-mono text-white/60 mb-2">BUILD</div>
-					<div class="text-3xl font-bold mb-1">$40-60</div>
+					<div class="text-3xl font-bold mb-1">$40</div>
 					<div class="text-xs text-white/40 mb-4">/month</div>
 					<ul class="space-y-3 text-sm text-white/70 mb-6">
 						<li class="flex items-start gap-2">
