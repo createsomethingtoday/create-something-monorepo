@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
-	import { Navigation, Footer } from '@create-something/components';
+	import { Navigation, Footer, Analytics } from '@create-something/components';
 	import { page } from '$app/stores';
 
 	let { children } = $props();
@@ -148,6 +148,8 @@
 		}
 	</script>`}
 </svelte:head>
+
+<Analytics property="io" />
 
 <div class="min-h-screen bg-black">
 	<Navigation

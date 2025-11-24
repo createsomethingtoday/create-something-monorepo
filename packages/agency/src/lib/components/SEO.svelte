@@ -27,31 +27,36 @@
   export let noindex: boolean = false;
   export let nofollow: boolean = false;
 
+  // Additional AEO schemas
+  export let services: any[] = []; // Service schema for .agency
+  export let faqItems: any[] = []; // FAQ schema for AEO
+  export let breadcrumbs: any[] = []; // Breadcrumb schema
+
   // Property-specific config
   export let propertyName: 'io' | 'space' | 'agency' | 'ltd' = 'space';
 
   const propertyConfig = {
     io: {
       domain: 'https://createsomething.io',
-      name: 'Create Something Research',
-      tagline: 'Interactive papers on design, technology, and creativity',
+      name: 'CREATE SOMETHING',
+      tagline: 'Systems Thinking for AI-Native Development - Research papers with tracked experiments and rigorous methodology',
       color: '#000000',
     },
     space: {
       domain: 'https://createsomething.space',
-      name: 'Create Something Practice',
-      tagline: 'Live experiments in design and development',
+      name: 'CREATE SOMETHING SPACE',
+      tagline: 'Interactive Tutorials for AI-Native Development - Learn by doing with runnable code examples',
       color: '#000000',
     },
     agency: {
       domain: 'https://createsomething.agency',
-      name: 'Create Something Agency',
-      tagline: 'Design services for the digital age',
+      name: 'CREATE SOMETHING Agency',
+      tagline: 'Agentic Systems Engineering - AI automation workflows and autonomous systems that run businesses',
       color: '#000000',
     },
     ltd: {
       domain: 'https://createsomething.ltd',
-      name: 'Create Something',
+      name: 'CREATE SOMETHING',
       tagline: 'Weniger, aber besser',
       color: '#000000',
     }
@@ -67,24 +72,40 @@
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Create Something',
-    url: 'https://createsomething.ltd',
-    logo: 'https://createsomething.ltd/favicon.png',
+    name: 'CREATE SOMETHING',
+    alternateName: 'Create Something Agency',
+    url: config.domain,
+    logo: `${config.domain}/favicon.png`,
     sameAs: [
-      // Add social media profiles here
+      'https://www.linkedin.com/in/micahryanjohnson/',
+      'https://github.com/createsomethingtoday'
     ],
-    description: 'Design practice following Dieter Rams principles',
+    description: propertyName === 'agency'
+      ? 'Agentic systems engineering consultancy building AI automation workflows and autonomous systems for businesses'
+      : propertyName === 'io'
+      ? 'Research papers on AI-native development with tracked experiments and rigorous methodology'
+      : propertyName === 'space'
+      ? 'Interactive tutorials for learning AI-native development by doing'
+      : 'Design and technology practice',
     founder: {
       '@type': 'Person',
-      name: 'Micah Johnson'
+      name: 'Micah Johnson',
+      jobTitle: 'Systems Architect',
+      sameAs: 'https://www.linkedin.com/in/micahryanjohnson/'
     },
     knowsAbout: [
-      'Design Systems',
-      'Interactive Media',
-      'Computational Design',
-      'Minimalism',
-      'Dieter Rams'
-    ]
+      'Agentic Systems Engineering',
+      'AI-Native Development',
+      'Claude Code',
+      'Cloudflare Workers',
+      'Automation Systems',
+      'Autonomous AI Agents',
+      'Systems Thinking'
+    ],
+    areaServed: {
+      '@type': 'Place',
+      name: 'Worldwide'
+    }
   };
 
   // Schema.org WebSite
@@ -118,6 +139,54 @@
     },
     articleSection: articleSection,
     keywords: articleTags.join(', ')
+  } : null;
+
+  // Service schema (for .agency services page)
+  const serviceSchemas = services.length > 0 ? services.map(service => ({
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.name,
+    description: service.description,
+    provider: organizationSchema,
+    serviceType: service.type || 'Professional Service',
+    areaServed: {
+      '@type': 'Place',
+      name: 'Worldwide'
+    },
+    ...(service.price && {
+      offers: {
+        '@type': 'Offer',
+        price: service.price,
+        priceCurrency: 'USD',
+        description: service.priceDescription
+      }
+    })
+  })) : [];
+
+  // FAQ schema (for AEO)
+  const faqSchema = faqItems.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map(item => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer
+      }
+    }))
+  } : null;
+
+  // Breadcrumb schema
+  const breadcrumbSchema = breadcrumbs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url
+    }))
   } : null;
 
   // Robots directive
@@ -181,6 +250,27 @@
   {#if articleSchema}
     <script type="application/ld+json">
       {JSON.stringify(articleSchema)}
+    </script>
+  {/if}
+
+  <!-- Service Schemas -->
+  {#each serviceSchemas as serviceSchema}
+    <script type="application/ld+json">
+      {JSON.stringify(serviceSchema)}
+    </script>
+  {/each}
+
+  <!-- FAQ Schema -->
+  {#if faqSchema}
+    <script type="application/ld+json">
+      {JSON.stringify(faqSchema)}
+    </script>
+  {/if}
+
+  <!-- Breadcrumb Schema -->
+  {#if breadcrumbSchema}
+    <script type="application/ld+json">
+      {JSON.stringify(breadcrumbSchema)}
     </script>
   {/if}
 

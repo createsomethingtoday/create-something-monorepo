@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import { CategorySection, PapersGrid } from '@create-something/components';
+	import { CategorySection, PapersGrid, SEO } from '@create-something/components';
 
 	export let data: PageData;
 	const { papers, categories } = data;
@@ -18,13 +18,13 @@
 	];
 </script>
 
-<svelte:head>
-	<title>CREATE SOMETHING | Systems Thinking for AI-Native Development</title>
-	<meta
-		name="description"
-		content="Systematic evaluation of AI-native development with real data. Tracked experiments using Claude Code + Cloudflare — not just blog posts, but honest results with precise metrics."
-	/>
-</svelte:head>
+<SEO
+	title="AI-Native Development Research"
+	description="Systematic evaluation of AI-native development with real data. Tracked experiments using Claude Code + Cloudflare — not just blog posts, but honest results with precise metrics."
+	keywords="AI-native development, Claude Code, Cloudflare Workers, tracked experiments, research papers, systems thinking, development metrics"
+	ogImage="/og-image.svg"
+	propertyName="io"
+/>
 
 <!-- Hero Section -->
 <HeroSection {featuredPapers} />

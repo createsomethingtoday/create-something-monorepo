@@ -5,12 +5,14 @@ interface ContactRequest {
 	name: string;
 	email: string;
 	message: string;
+	service?: string;
+	company?: string;
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		const body = (await request.json()) as ContactRequest;
-		const { name, email, message } = body;
+		const { name, email, message, service, company } = body;
 
 		// Validate inputs
 		if (!name || !name.trim()) {
@@ -65,11 +67,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		try {
 			await env.DB.prepare(
 				`
-        INSERT INTO contact_submissions (name, email, message, submitted_at)
-        VALUES (?, ?, ?, datetime('now'))
+        INSERT INTO contact_submissions (name, email, message, service, company, submitted_at)
+        VALUES (?, ?, ?, ?, ?, datetime('now'))
       `
 			)
-				.bind(name, email, message)
+				.bind(name, email, message, service || null, company || null)
 				.run();
 		} catch (dbError) {
 			console.warn('Contact submissions table not found - skipping DB insert');
@@ -79,13 +81,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const autoResponsePromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${env.RESEND_API_KEY}`,
+				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				from: 'Micah Johnson <hello@createsomething.io>',
+				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
 				to: email,
-				subject: 'Thanks for reaching out',
+				subject: service ? `Re: ${service} Inquiry` : 'Thanks for reaching out',
 				html: `<!DOCTYPE html>
 <html>
 <head>
@@ -102,12 +104,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     <div class="content">
       <h1>Thanks for reaching out</h1>
       <p>Hi ${name},</p>
-      <p>I've received your message and will get back to you as soon as possible — typically within 24-48 hours.</p>
+      <p>I've received your inquiry${service ? ` about ${service}` : ''} and will get back to you within 24 hours to discuss your project.</p>
       <div class="message-box">
+        ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${service}</p>` : ''}
         <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+        <p style="color: rgba(255, 255, 255, 0.9);">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
       </div>
-      <p>— Micah Johnson</p>
+      <p>— Micah Johnson<br>CREATE SOMETHING Agency</p>
     </div>
   </div>
 </body>
@@ -119,14 +122,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const notificationPromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${env.RESEND_API_KEY}`,
+				Authorization: `Bearer ${env.RESEND_API_KEY || 're_JbMtKyRz_3n55bLDPciMmZfgaez38WzM7'}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				from: 'CREATE SOMETHING <hello@createsomething.io>',
-				to: 'hello@createsomething.io',
+				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
+				to: 'micah@createsomething.agency',
 				replyTo: email,
-				subject: `New Contact Form Submission from ${name}`,
+				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
 				html: `<!DOCTYPE html>
 <html>
 <head>
@@ -139,10 +142,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 </head>
 <body>
   <div class="header">
-    <h2>New Contact Form Submission</h2>
+    <h2>${service ? `Service Inquiry: ${service}` : 'New Contact Form Submission'}</h2>
   </div>
   <div class="content">
     <p><strong>From:</strong> ${name} (${email})</p>
+    ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
+    ${service ? `<p><strong>Service:</strong> ${service}</p>` : ''}
     <p><strong>Message:</strong><br>${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
     <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
   </div>

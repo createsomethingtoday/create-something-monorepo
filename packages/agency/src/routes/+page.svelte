@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Footer } from '@create-something/components';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
@@ -9,13 +10,13 @@
 	];
 </script>
 
-<svelte:head>
-	<title>CREATE SOMETHING Agency | Agentic Systems Engineering</title>
-	<meta
-		name="description"
-		content="We build AI systems that run your business autonomously. From web development to automation workflows to long-running AI agents. Research-backed agentic engineering."
-	/>
-</svelte:head>
+<SEO
+	title="Agentic Systems Engineering"
+	description="We build AI systems that run your business autonomously. From web development to automation workflows to long-running AI agents. Research-backed agentic engineering."
+	keywords="agentic systems, AI automation, autonomous systems, Cloudflare Workers, Claude Code, web development, AI agents"
+	ogImage="/og-image.svg"
+	propertyName="agency"
+/>
 
 <!-- Hero Section -->
 	<section class="relative pt-32 pb-24 px-6 overflow-hidden">

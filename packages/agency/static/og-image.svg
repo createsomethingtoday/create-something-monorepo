@@ -1,70 +1,28 @@
-<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="630" fill="#000000"/>
 
-  <!-- Grid pattern -->
-  <defs>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
-    </pattern>
-  </defs>
-  <rect width="1200" height="630" fill="url(#grid)"/>
-
-  <!-- Gradient overlay -->
-  <defs>
-    <radialGradient id="gradient" cx="50%" cy="50%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.05"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <ellipse cx="600" cy="315" rx="600" ry="400" fill="url(#gradient)"/>
-
-  <!-- Logo/Icon (Lucide Box - same as favicon, scaled up) -->
-  <g transform="translate(520, 140) scale(4)">
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-          fill="none"
-          stroke="#FFFFFF"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
-    <polyline points="3.29 7 12 12 20.71 7"
-              fill="none"
-              stroke="#FFFFFF"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"/>
-    <line x1="12" y1="22" x2="12" y2="12"
-          stroke="#FFFFFF"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
-  </g>
-
-  <!-- Main heading -->
-  <text x="600" y="420"
-        font-family="system-ui, -apple-system, sans-serif"
-        font-size="72"
-        font-weight="700"
-        fill="#FFFFFF"
-        text-anchor="middle"
-        letter-spacing="-0.02em">
+  <text x="600" y="150" font-family="JetBrains Mono, Courier, monospace" font-size="48" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.05em">
     CREATE SOMETHING
   </text>
 
-  <!-- Subheading -->
-  <text x="600" y="480"
-        font-family="system-ui, -apple-system, sans-serif"
-        font-size="28"
-        font-weight="400"
-        fill="#FFFFFF"
-        fill-opacity="0.6"
-        text-anchor="middle">
-    AI-Native Development • Tracked Experiments • Real Data
+  <text x="600" y="200" font-family="JetBrains Mono, Courier, monospace" font-size="24" fill="#ffffff" fill-opacity="0.5" text-anchor="middle">
+    .agency
   </text>
 
-  <!-- Bottom accent line -->
-  <line x1="300" y1="560" x2="900" y2="560"
-        stroke="#FFFFFF"
-        stroke-opacity="0.15"
-        stroke-width="2"/>
+  <!-- ASCII Art Box -->
+  <text font-family="JetBrains Mono, Courier, monospace" font-size="14" fill="#00ff00" xml:space="preserve">
+    <tspan x="200" y="280">┌───────────────────────────────────────────────────────┐</tspan>
+    <tspan x="200" y="305">│                                                       │</tspan>
+    <tspan x="200" y="330">│   █████╗  ██████╗ ███████╗███╗   ██╗████████╗██╗ ██████╗</tspan>
+    <tspan x="200" y="355">│  ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██║██╔════╝</tspan>
+    <tspan x="200" y="380">│  ███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ██║██║     </tspan>
+    <tspan x="200" y="405">│  ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ██║██║     </tspan>
+    <tspan x="200" y="430">│  ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ██║╚██████╗</tspan>
+    <tspan x="200" y="455">│  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝</tspan>
+    <tspan x="200" y="480">│                                                       │</tspan>
+    <tspan x="200" y="505">│  → Agentic Systems Engineering                        │</tspan>
+    <tspan x="200" y="530">│  → AI Automation • Autonomous Systems                 │</tspan>
+    <tspan x="200" y="555">│                                                       │</tspan>
+    <tspan x="200" y="580">└───────────────────────────────────────────────────────┘</tspan>
+  </text>
 </svg>

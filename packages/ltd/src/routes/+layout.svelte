@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Navigation } from '@create-something/components';
-	import Footer from '$lib/components/Footer.svelte';
+	import { Navigation, Footer, Analytics } from '@create-something/components';
 	import '../app.css';
 
 	let { children, data } = $props();
@@ -8,6 +7,16 @@
 	const navLinks = [
 		{ label: 'Masters', href: '/masters' },
 		{ label: 'Principles', href: '/principles' },
+		{ label: 'Patterns', href: '/patterns' },
+		{ label: 'Standards', href: '/standards' },
+		{ label: 'Ethos', href: '/ethos' }
+	];
+
+	const quickLinks = [
+		{ label: 'Masters', href: '/masters' },
+		{ label: 'Principles', href: '/principles' },
+		{ label: 'Patterns', href: '/patterns' },
+		{ label: 'Standards', href: '/standards' },
 		{ label: 'Ethos', href: '/ethos' }
 	];
 </script>
@@ -34,6 +43,8 @@
 	/>
 </svelte:head>
 
+<Analytics property="ltd" />
+
 <div class="min-h-screen flex flex-col">
 	<Navigation
 		logo="CREATE SOMETHING"
@@ -46,5 +57,11 @@
 		{@render children()}
 	</main>
 
-	<Footer />
+	<Footer
+		mode="ltd"
+		showNewsletter={false}
+		aboutText="The philosophical foundation for the Create Something ecosystem. Curated wisdom from masters who embody 'less, but better.'"
+		quickLinks={quickLinks}
+		showSocial={true}
+	/>
 </div>

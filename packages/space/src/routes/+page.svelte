@@ -3,7 +3,7 @@
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import CategorySection from '$lib/components/CategorySection.svelte';
 	import PapersGrid from '$lib/components/PapersGrid.svelte';
-	import { Footer } from '@create-something/components';
+	import { Footer, SEO } from '@create-something/components';
 
 	export let data: PageData;
 	const { papers, categories } = data;
@@ -19,13 +19,13 @@
 	];
 </script>
 
-<svelte:head>
-	<title>CREATE SOMETHING SPACE | Interactive Tutorials for AI-Native Development</title>
-	<meta
-		name="description"
-		content="Learn AI-native development by doing. Interactive tutorials with runnable code — fork, modify, and run directly in your browser. Research papers available on createsomething.io"
-	/>
-</svelte:head>
+<SEO
+	title="Interactive AI Development Tutorials"
+	description="Learn AI-native development by doing. Interactive tutorials with runnable code — fork, modify, and run directly in your browser. Research papers available on createsomething.io"
+	keywords="AI-native development, interactive tutorials, Claude Code, Cloudflare Workers, runnable code, hands-on learning, developer education"
+	ogImage="/og-image.svg"
+	propertyName="space"
+/>
 
 <!-- Hero Section -->
 <HeroSection {featuredPapers} />
