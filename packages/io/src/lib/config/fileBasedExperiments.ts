@@ -20,6 +20,7 @@ export interface FileBasedExperiment {
 	reading_time_minutes: number;
 	difficulty: 'beginner' | 'intermediate' | 'advanced';
 	is_file_based: true; // Marker to distinguish from database experiments
+	ascii_art?: string;
 }
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
@@ -36,7 +37,23 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		updated_at: '2025-01-23T00:00:00Z',
 		reading_time_minutes: 15,
 		difficulty: 'advanced',
-		is_file_based: true
+		is_file_based: true,
+		ascii_art: `
+    ╔═══════════════════════════════════════════╗
+    ║   AGENTIC VISUALIZATION                   ║
+    ║                                           ║
+    ║     ┌─────────────────────────────┐       ║
+    ║  ▲  │         ╱╲                  │       ║
+    ║  │  │        ╱  ╲      ╱╲         │       ║
+    ║  │  │       ╱    ╲    ╱  ╲   ╱╲   │       ║
+    ║  │  │      ╱      ╲  ╱    ╲ ╱  ╲  │       ║
+    ║  │  │─────────────────────────────┤       ║
+    ║     │  Data → Intelligence → Insight│      ║
+    ║     └─────────────────────────────┘       ║
+    ║                                           ║
+    ║   Components that think, decide, reveal   ║
+    ╚═══════════════════════════════════════════╝
+`
 	},
 	{
 		id: 'file-data-patterns',
@@ -51,7 +68,22 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		updated_at: '2025-01-23T00:00:00Z',
 		reading_time_minutes: 5,
 		difficulty: 'beginner',
-		is_file_based: true
+		is_file_based: true,
+		ascii_art: `
+    ╔═══════════════════════════════════════════╗
+    ║   DATA PATTERNS                           ║
+    ║                                           ║
+    ║   Trends:    ↗  ↘  ↗  →  ↗               ║
+    ║            ────────────────────           ║
+    ║   Auth:     ▁▂▃▄▅▆▇ ✓ improving          ║
+    ║   Cache:    ▇▇▇▇▇▇▇ ✓ stable             ║
+    ║   Database: ▇▆▅▄▃▂▁ ⚠ degrading          ║
+    ║   Storage:  ▄▄▄▄▄▄▄ → flat               ║
+    ║            ────────────────────           ║
+    ║                                           ║
+    ║   Patterns emerge without analysis        ║
+    ╚═══════════════════════════════════════════╝
+`
 	}
 ];
 
