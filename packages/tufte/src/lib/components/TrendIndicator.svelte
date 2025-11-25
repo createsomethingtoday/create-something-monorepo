@@ -10,9 +10,11 @@
 	 * - Determines direction (up/down/flat)
 	 * - Chooses appropriate visual indicator
 	 * - Formats numbers contextually
+	 * - (AI-enhanced) Understands metric semantics automatically
 	 */
 
 	import { formatNumber, formatCompact } from '$lib/utils/formatters.js';
+	import { onMount } from 'svelte';
 
 	// Props
 	export let current: number;
@@ -20,7 +22,81 @@
 	export let format: 'number' | 'percentage' | 'compact' = 'percentage';
 	export let showDirection: boolean = true;
 	export let flatThreshold: number = 0.5; // Changes below this % are considered "flat"
-	export let inverse: boolean = false; // For metrics where lower is better (e.g., response time, errors)
+	export let inverse: boolean | undefined = undefined; // For metrics where lower is better (e.g., response time, errors)
+
+	// AI Enhancement props
+	export let aiEnhanced: boolean = false; // Enable AI-powered semantic understanding
+	export let metric: string | undefined = undefined; // Metric name for AI analysis
+	export let label: string | undefined = undefined; // Metric label for AI analysis
+	export let context: string | undefined = undefined; // Additional context for AI
+	export let aiEndpoint: string = '/api/ai/analyze-metric'; // AI analysis endpoint
+
+	let shouldInverse = false;
+	let aiAnalysisComplete = false;
+
+	// AI-powered semantic analysis
+	async function analyzeMetricSemantics() {
+		if (!aiEnhanced || (!metric && !label)) {
+			aiAnalysisComplete = true;
+			return;
+		}
+
+		// Check cache first
+		const cacheKey = `metric:${metric || label}`;
+		const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
+
+		if (cached) {
+			try {
+				const { lowerIsBetter } = JSON.parse(cached);
+				shouldInverse = lowerIsBetter;
+				aiAnalysisComplete = true;
+				return;
+			} catch (e) {
+				// Invalid cache, continue to API call
+			}
+		}
+
+		// Call AI API
+		try {
+			const response = await fetch(aiEndpoint, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ metric, label, context })
+			});
+
+			if (!response.ok) throw new Error('AI analysis failed');
+
+			const result = await response.json();
+
+			if (result.confidence > 0.7) {
+				shouldInverse = result.lowerIsBetter;
+
+				// Cache high-confidence results
+				if (typeof window !== 'undefined') {
+					localStorage.setItem(cacheKey, JSON.stringify(result));
+				}
+			}
+		} catch (error) {
+			console.warn('AI metric analysis failed, using default behavior:', error);
+		} finally {
+			aiAnalysisComplete = true;
+		}
+	}
+
+	onMount(() => {
+		// Explicit inverse takes precedence
+		if (inverse !== undefined) {
+			shouldInverse = inverse;
+			aiAnalysisComplete = true;
+		} else if (aiEnhanced) {
+			analyzeMetricSemantics();
+		} else {
+			aiAnalysisComplete = true;
+		}
+	});
+
+	// Determine final inverse value
+	$: finalInverse = inverse !== undefined ? inverse : shouldInverse;
 
 	// Agentic: calculate change automatically
 	$: absoluteChange = current - previous;
@@ -45,12 +121,12 @@
 	$: indicators = {
 		up: {
 			icon: '↑',
-			color: inverse ? 'text-red-400' : 'text-green-400',
+			color: finalInverse ? 'text-red-400' : 'text-green-400',
 			label: 'increase'
 		},
 		down: {
 			icon: '↓',
-			color: inverse ? 'text-green-400' : 'text-red-400',
+			color: finalInverse ? 'text-green-400' : 'text-red-400',
 			label: 'decrease'
 		},
 		flat: {
