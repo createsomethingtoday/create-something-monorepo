@@ -7,9 +7,9 @@
  * - Experiment database for relevant references
  * - Draft creation (stored in KV for review)
  * - Escalation workflow
+ *
+ * Uses Workers AI-compatible tool format instead of the agents package.
  */
-
-import type { Tool } from 'agents';
 
 export interface PMAgentEnv {
 	DB: D1Database;
@@ -19,29 +19,180 @@ export interface PMAgentEnv {
 }
 
 /**
- * Tool: Query Contact Submissions
- * Retrieves contact form submissions from the database
+ * Tool definition for Workers AI tool calling
  */
-export const queryContactSubmissions: Tool<PMAgentEnv> = {
-	name: 'query_contact_submissions',
-	description:
-		'Retrieve contact form submissions from CREATE SOMETHING website. Use this to see who has reached out and what they need. Returns: id, name, email, message, submitted_at, status.',
-	parameters: {
-		type: 'object',
-		properties: {
-			status: {
-				type: 'string',
-				enum: ['new', 'in_progress', 'responded', 'escalated'],
-				description: 'Filter by submission status. Omit to get all.'
-			},
-			limit: {
-				type: 'number',
-				default: 10,
-				description: 'Maximum number of submissions to return'
+export interface WorkersAITool {
+	type: 'function';
+	function: {
+		name: string;
+		description: string;
+		parameters: {
+			type: 'object';
+			properties: Record<string, any>;
+			required?: string[];
+		};
+	};
+}
+
+/**
+ * Tool definitions for Workers AI
+ */
+export const toolDefinitions: WorkersAITool[] = [
+	{
+		type: 'function',
+		function: {
+			name: 'query_contact_submissions',
+			description:
+				'Retrieve contact form submissions from CREATE SOMETHING website. Use this to see who has reached out and what they need. Returns: id, name, email, message, submitted_at, status.',
+			parameters: {
+				type: 'object',
+				properties: {
+					status: {
+						type: 'string',
+						enum: ['new', 'in_progress', 'responded', 'escalated'],
+						description: 'Filter by submission status. Omit to get all.'
+					},
+					limit: {
+						type: 'number',
+						description: 'Maximum number of submissions to return (default: 10)'
+					}
+				}
 			}
 		}
 	},
-	async execute({ status, limit = 10 }, env) {
+	{
+		type: 'function',
+		function: {
+			name: 'get_voice_guidelines',
+			description:
+				'Get CREATE SOMETHING voice guidelines to ensure responses match brand voice. ALWAYS use this before drafting any client communication.',
+			parameters: {
+				type: 'object',
+				properties: {}
+			}
+		}
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'search_experiments',
+			description:
+				'Search CREATE SOMETHING experiments (.io) to reference relevant work when responding to client inquiries. Use this when inquiry relates to AI, design, development, or specific technologies.',
+			parameters: {
+				type: 'object',
+				properties: {
+					keywords: {
+						type: 'string',
+						description: 'Search keywords (e.g., "AI design analysis", "Claude Code", "TypeScript")'
+					}
+				},
+				required: ['keywords']
+			}
+		}
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'get_canon_context',
+			description:
+				'Get context from CREATE SOMETHING canon (.ltd) - masters, principles, or patterns. Use when inquiry relates to design philosophy, development standards, or theoretical foundations.',
+			parameters: {
+				type: 'object',
+				properties: {
+					topic: {
+						type: 'string',
+						description: 'Topic to search (e.g., "design principles", "data visualization", "Tufte")'
+					}
+				},
+				required: ['topic']
+			}
+		}
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'draft_response',
+			description:
+				'Draft a response email following CREATE SOMETHING voice. DOES NOT SEND - stores draft in KV for human review and approval. Always include relevant experiment or canon references when appropriate.',
+			parameters: {
+				type: 'object',
+				properties: {
+					contact_id: {
+						type: 'number',
+						description: 'ID of the contact submission'
+					},
+					to_email: {
+						type: 'string',
+						description: 'Recipient email address'
+					},
+					to_name: {
+						type: 'string',
+						description: 'Recipient name'
+					},
+					subject: {
+						type: 'string',
+						description: 'Email subject line'
+					},
+					body: {
+						type: 'string',
+						description: 'Email body in plain text (will be formatted as needed)'
+					},
+					reasoning: {
+						type: 'string',
+						description: 'Why you drafted this response this way (for human reviewer context)'
+					}
+				},
+				required: ['contact_id', 'to_email', 'to_name', 'subject', 'body', 'reasoning']
+			}
+		}
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'escalate_to_human',
+			description:
+				'Escalate inquiry to human for review. Use when: pricing questions, strategic decisions, relationship-building, ambiguous requirements, or when uncertain. Better to escalate than make wrong assumption.',
+			parameters: {
+				type: 'object',
+				properties: {
+					contact_id: {
+						type: 'number',
+						description: 'ID of the contact submission'
+					},
+					reason: {
+						type: 'string',
+						enum: [
+							'pricing_question',
+							'strategic_decision',
+							'relationship_building',
+							'ambiguous_requirements',
+							'technical_uncertainty',
+							'scope_unclear',
+							'other'
+						],
+						description: 'Reason for escalation'
+					},
+					context: {
+						type: 'string',
+						description: 'Additional context for human reviewer - what you learned, what you need clarified'
+					},
+					urgency: {
+						type: 'string',
+						enum: ['low', 'medium', 'high'],
+						description: 'Urgency level for human review (default: medium)'
+					}
+				},
+				required: ['contact_id', 'reason', 'context']
+			}
+		}
+	}
+];
+
+/**
+ * Tool execution functions
+ */
+export const toolExecutors: Record<string, (args: any, env: PMAgentEnv) => Promise<any>> = {
+	async query_contact_submissions({ status, limit = 10 }: { status?: string; limit?: number }, env: PMAgentEnv) {
 		try {
 			let query: D1PreparedStatement;
 
@@ -74,22 +225,9 @@ export const queryContactSubmissions: Tool<PMAgentEnv> = {
 				error: error instanceof Error ? error.message : 'Unknown error querying submissions'
 			};
 		}
-	}
-};
-
-/**
- * Tool: Get Voice Guidelines
- * Returns CREATE SOMETHING brand voice principles
- */
-export const getVoiceGuidelines: Tool<PMAgentEnv> = {
-	name: 'get_voice_guidelines',
-	description:
-		'Get CREATE SOMETHING voice guidelines to ensure responses match brand voice. ALWAYS use this before drafting any client communication.',
-	parameters: {
-		type: 'object',
-		properties: {}
 	},
-	async execute({}, _env) {
+
+	async get_voice_guidelines(_args: any, _env: PMAgentEnv) {
 		return {
 			success: true,
 			voice: {
@@ -125,28 +263,9 @@ export const getVoiceGuidelines: Tool<PMAgentEnv> = {
 				]
 			}
 		};
-	}
-};
-
-/**
- * Tool: Search Experiments
- * Searches the experiments database for relevant work
- */
-export const searchExperiments: Tool<PMAgentEnv> = {
-	name: 'search_experiments',
-	description:
-		'Search CREATE SOMETHING experiments (.io) to reference relevant work when responding to client inquiries. Use this when inquiry relates to AI, design, development, or specific technologies.',
-	parameters: {
-		type: 'object',
-		properties: {
-			keywords: {
-				type: 'string',
-				description: 'Search keywords (e.g., "AI design analysis", "Claude Code", "TypeScript")'
-			}
-		},
-		required: ['keywords']
 	},
-	async execute({ keywords }, env) {
+
+	async search_experiments({ keywords }: { keywords: string }, env: PMAgentEnv) {
 		try {
 			const searchPattern = `%${keywords}%`;
 			const result = await env.DB.prepare(
@@ -180,28 +299,9 @@ export const searchExperiments: Tool<PMAgentEnv> = {
 				error: error instanceof Error ? error.message : 'Unknown error searching experiments'
 			};
 		}
-	}
-};
-
-/**
- * Tool: Get Canon Context
- * Retrieves relevant masters, principles, or patterns from .ltd canon
- */
-export const getCanonContext: Tool<PMAgentEnv> = {
-	name: 'get_canon_context',
-	description:
-		'Get context from CREATE SOMETHING canon (.ltd) - masters, principles, or patterns. Use when inquiry relates to design philosophy, development standards, or theoretical foundations.',
-	parameters: {
-		type: 'object',
-		properties: {
-			topic: {
-				type: 'string',
-				description: 'Topic to search (e.g., "design principles", "data visualization", "Tufte")'
-			}
-		},
-		required: ['topic']
 	},
-	async execute({ topic }, env) {
+
+	async get_canon_context({ topic }: { topic: string }, env: PMAgentEnv) {
 		try {
 			const searchPattern = `%${topic}%`;
 
@@ -246,48 +346,26 @@ export const getCanonContext: Tool<PMAgentEnv> = {
 				error: error instanceof Error ? error.message : 'Unknown error getting canon context'
 			};
 		}
-	}
-};
-
-/**
- * Tool: Draft Response
- * Creates a draft response and stores it for human review
- */
-export const draftResponse: Tool<PMAgentEnv> = {
-	name: 'draft_response',
-	description:
-		'Draft a response email following CREATE SOMETHING voice. DOES NOT SEND - stores draft in KV for human review and approval. Always include relevant experiment or canon references when appropriate.',
-	parameters: {
-		type: 'object',
-		properties: {
-			contact_id: {
-				type: 'number',
-				description: 'ID of the contact submission'
-			},
-			to_email: {
-				type: 'string',
-				description: 'Recipient email address'
-			},
-			to_name: {
-				type: 'string',
-				description: 'Recipient name'
-			},
-			subject: {
-				type: 'string',
-				description: 'Email subject line'
-			},
-			body: {
-				type: 'string',
-				description: 'Email body in plain text (will be formatted as needed)'
-			},
-			reasoning: {
-				type: 'string',
-				description: 'Why you drafted this response this way (for human reviewer context)'
-			}
-		},
-		required: ['contact_id', 'to_email', 'to_name', 'subject', 'body', 'reasoning']
 	},
-	async execute({ contact_id, to_email, to_name, subject, body, reasoning }, env) {
+
+	async draft_response(
+		{
+			contact_id,
+			to_email,
+			to_name,
+			subject,
+			body,
+			reasoning
+		}: {
+			contact_id: number;
+			to_email: string;
+			to_name: string;
+			subject: string;
+			body: string;
+			reasoning: string;
+		},
+		env: PMAgentEnv
+	) {
 		try {
 			const draft = {
 				contact_id,
@@ -298,7 +376,7 @@ export const draftResponse: Tool<PMAgentEnv> = {
 				reasoning,
 				created_at: new Date().toISOString(),
 				status: 'pending_review',
-				agent_version: 'pm-agent-v1'
+				agent_version: 'pm-agent-v2'
 			};
 
 			// Store draft in KV for 7 days
@@ -327,51 +405,22 @@ export const draftResponse: Tool<PMAgentEnv> = {
 				error: error instanceof Error ? error.message : 'Unknown error creating draft'
 			};
 		}
-	}
-};
-
-/**
- * Tool: Escalate to Human
- * Escalates complex inquiries that require human judgment
- */
-export const escalateToHuman: Tool<PMAgentEnv> = {
-	name: 'escalate_to_human',
-	description:
-		'Escalate inquiry to human for review. Use when: pricing questions, strategic decisions, relationship-building, ambiguous requirements, or when uncertain. Better to escalate than make wrong assumption.',
-	parameters: {
-		type: 'object',
-		properties: {
-			contact_id: {
-				type: 'number',
-				description: 'ID of the contact submission'
-			},
-			reason: {
-				type: 'string',
-				enum: [
-					'pricing_question',
-					'strategic_decision',
-					'relationship_building',
-					'ambiguous_requirements',
-					'technical_uncertainty',
-					'scope_unclear',
-					'other'
-				],
-				description: 'Reason for escalation'
-			},
-			context: {
-				type: 'string',
-				description: 'Additional context for human reviewer - what you learned, what you need clarified'
-			},
-			urgency: {
-				type: 'string',
-				enum: ['low', 'medium', 'high'],
-				default: 'medium',
-				description: 'Urgency level for human review'
-			}
-		},
-		required: ['contact_id', 'reason', 'context']
 	},
-	async execute({ contact_id, reason, context, urgency = 'medium' }, env) {
+
+	async escalate_to_human(
+		{
+			contact_id,
+			reason,
+			context,
+			urgency = 'medium'
+		}: {
+			contact_id: number;
+			reason: string;
+			context: string;
+			urgency?: string;
+		},
+		env: PMAgentEnv
+	) {
 		try {
 			const escalation = {
 				contact_id,
@@ -379,7 +428,7 @@ export const escalateToHuman: Tool<PMAgentEnv> = {
 				context,
 				urgency,
 				escalated_at: new Date().toISOString(),
-				agent_version: 'pm-agent-v1'
+				agent_version: 'pm-agent-v2'
 			};
 
 			// Store escalation details in KV
@@ -413,13 +462,12 @@ export const escalateToHuman: Tool<PMAgentEnv> = {
 };
 
 /**
- * All tools available to the PM agent
+ * Execute a tool by name
  */
-export const pmAgentTools: Tool<PMAgentEnv>[] = [
-	queryContactSubmissions,
-	getVoiceGuidelines,
-	searchExperiments,
-	getCanonContext,
-	draftResponse,
-	escalateToHuman
-];
+export async function executeTool(name: string, args: any, env: PMAgentEnv): Promise<any> {
+	const executor = toolExecutors[name];
+	if (!executor) {
+		return { success: false, error: `Unknown tool: ${name}` };
+	}
+	return executor(args, env);
+}
