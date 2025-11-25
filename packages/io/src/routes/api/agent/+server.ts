@@ -6,22 +6,25 @@
  * - Processing specific contacts
  * - Reviewing drafts
  * - Approving/rejecting drafts
+ *
+ * Note: Uses dynamic imports to avoid loading cloudflare:* modules during build.
+ * The agents package uses cloudflare-specific imports that only work at runtime.
  */
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
-	triageNewSubmissions,
-	processContactSubmission,
-	getDraft,
-	getEscalation,
-	approveDraft,
-	triageGmailInbox,
-	processGmailThread,
-	triageAll
-} from '$lib/agents/pm-agent';
+
+// Type imports are safe - they're erased at compile time
 import type { PMAgentEnv } from '$lib/agents/pm-agent/tools';
 import type { PMAgentWithGmailEnv } from '$lib/agents/pm-agent/gmail-tools';
+
+/**
+ * Dynamically import the PM agent module
+ * This ensures cloudflare:* imports only happen at runtime in Workers
+ */
+async function getPMAgentModule() {
+	return import('$lib/agents/pm-agent');
+}
 
 /**
  * POST /api/agent
@@ -35,11 +38,14 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 	const env = platform.env as unknown as PMAgentWithGmailEnv;
 	const { action, contact_id, approved, thread_id, gmail_query } = await request.json();
 
+	// Dynamically import agent module at runtime
+	const pmAgent = await getPMAgentModule();
+
 	try {
 		switch (action) {
 			case 'triage': {
 				// Triage all new submissions
-				const result = await triageNewSubmissions(env);
+				const result = await pmAgent.triageNewSubmissions(env);
 				return json({
 					success: true,
 					action: 'triage',
@@ -53,7 +59,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 					throw error(400, 'contact_id required for process action');
 				}
 
-				const result = await processContactSubmission(contact_id, env);
+				const result = await pmAgent.processContactSubmission(contact_id, env);
 				return json({
 					success: true,
 					action: 'process',
@@ -68,7 +74,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 					throw error(400, 'contact_id required for get_draft action');
 				}
 
-				const draft = await getDraft(contact_id, env);
+				const draft = await pmAgent.getDraft(contact_id, env);
 				if (!draft) {
 					throw error(404, 'Draft not found');
 				}
@@ -87,7 +93,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 					throw error(400, 'contact_id required for get_escalation action');
 				}
 
-				const escalation = await getEscalation(contact_id, env);
+				const escalation = await pmAgent.getEscalation(contact_id, env);
 				if (!escalation) {
 					throw error(404, 'Escalation not found');
 				}
@@ -109,7 +115,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 					throw error(400, 'approved (boolean) required for approve_draft action');
 				}
 
-				const decision = await approveDraft(contact_id, approved, env);
+				const decision = await pmAgent.approveDraft(contact_id, approved, env);
 				return json({
 					success: true,
 					action: 'approve_draft',
@@ -123,7 +129,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 			case 'gmail_triage': {
 				// Triage Gmail inbox for new client inquiries
 				const query = gmail_query || 'is:unread in:inbox category:primary';
-				const result = await triageGmailInbox(env, query);
+				const result = await pmAgent.triageGmailInbox(env, query);
 				return json({
 					success: true,
 					action: 'gmail_triage',
@@ -138,7 +144,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 					throw error(400, 'thread_id required for gmail_process_thread action');
 				}
 
-				const result = await processGmailThread(thread_id, env);
+				const result = await pmAgent.processGmailThread(thread_id, env);
 				return json({
 					success: true,
 					action: 'gmail_process_thread',
@@ -149,7 +155,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 
 			case 'triage_all': {
 				// Triage both contact forms and Gmail
-				const result = await triageAll(env);
+				const result = await pmAgent.triageAll(env);
 				return json({
 					success: true,
 					action: 'triage_all',
@@ -187,12 +193,15 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 		throw error(400, 'contact_id must be a number');
 	}
 
+	// Dynamically import agent module at runtime
+	const pmAgent = await getPMAgentModule();
+
 	try {
 		// Check for draft
-		const draft = await getDraft(contactId, env);
+		const draft = await pmAgent.getDraft(contactId, env);
 
 		// Check for escalation
-		const escalation = await getEscalation(contactId, env);
+		const escalation = await pmAgent.getEscalation(contactId, env);
 
 		// Get contact submission details
 		const contact = await env.DB.prepare(

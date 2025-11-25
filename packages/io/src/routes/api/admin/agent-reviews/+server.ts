@@ -1,12 +1,20 @@
 /**
  * Admin API: Get pending agent reviews
  * Returns contacts with drafts or escalations needing human attention
+ *
+ * Note: Uses dynamic imports to avoid loading cloudflare:* modules during build.
  */
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDraft, getEscalation } from '$lib/agents/pm-agent';
 import type { PMAgentEnv } from '$lib/agents/pm-agent/tools';
+
+/**
+ * Dynamically import the PM agent module
+ */
+async function getPMAgentModule() {
+	return import('$lib/agents/pm-agent');
+}
 
 export const GET: RequestHandler = async ({ platform }) => {
 	if (!platform?.env) {
@@ -14,6 +22,9 @@ export const GET: RequestHandler = async ({ platform }) => {
 	}
 
 	const env = platform.env as unknown as PMAgentEnv;
+
+	// Dynamically import agent module
+	const pmAgent = await getPMAgentModule();
 
 	try {
 		// Get all contacts that are in_progress or escalated
@@ -29,8 +40,8 @@ export const GET: RequestHandler = async ({ platform }) => {
 		// For each contact, get draft or escalation details
 		const contactsWithDetails = await Promise.all(
 			contacts.map(async (contact: any) => {
-				const draft = await getDraft(contact.id, env);
-				const escalation = await getEscalation(contact.id, env);
+				const draft = await pmAgent.getDraft(contact.id, env);
+				const escalation = await pmAgent.getEscalation(contact.id, env);
 
 				return {
 					contact,
