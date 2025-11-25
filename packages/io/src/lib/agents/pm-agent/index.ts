@@ -207,6 +207,31 @@ interface WorkersAIToolCall {
 }
 
 /**
+ * Try to extract tool calls from text response
+ * Some models output tool calls as JSON in the response text
+ */
+function extractToolCallsFromText(text: string): WorkersAIToolCall[] {
+	const toolCalls: WorkersAIToolCall[] = [];
+
+	// Try to find JSON objects that look like tool calls
+	const jsonRegex = /\{[\s]*"name"[\s]*:[\s]*"([^"]+)"[\s]*,[\s]*"(?:arguments|parameters)"[\s]*:[\s]*(\{[^}]*\})/g;
+	let match;
+
+	while ((match = jsonRegex.exec(text)) !== null) {
+		try {
+			const name = match[1];
+			const argsStr = match[2];
+			const args = JSON.parse(argsStr);
+			toolCalls.push({ name, arguments: args });
+		} catch {
+			// Skip malformed JSON
+		}
+	}
+
+	return toolCalls;
+}
+
+/**
  * Run the PM agent with a task
  * Uses Workers AI with tool calling
  */
@@ -235,16 +260,23 @@ export async function runAgent(task: string, env: PMAgentWithGmailEnv): Promise<
 				temperature: 0.2
 			}) as { response?: string; tool_calls?: WorkersAIToolCall[] };
 
-			// Check for tool calls
-			if (response.tool_calls && response.tool_calls.length > 0) {
+			// Check for structured tool calls first
+			let toolCalls = response.tool_calls || [];
+
+			// If no structured tool calls, try to extract from text response
+			if (toolCalls.length === 0 && response.response) {
+				toolCalls = extractToolCallsFromText(response.response);
+			}
+
+			if (toolCalls.length > 0) {
 				// Add assistant message with tool calls
 				messages.push({
 					role: 'assistant',
-					content: JSON.stringify(response.tool_calls)
+					content: JSON.stringify(toolCalls)
 				});
 
 				// Execute each tool call
-				for (const toolCall of response.tool_calls) {
+				for (const toolCall of toolCalls) {
 					// Handle different tool call formats from Workers AI
 					const toolName = toolCall.name || toolCall.function?.name;
 					const rawArgs = toolCall.arguments || toolCall.function?.arguments;
