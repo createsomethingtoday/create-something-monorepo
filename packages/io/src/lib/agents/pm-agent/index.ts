@@ -12,11 +12,12 @@
  *
  * Hypothesis: AI can handle 60-80% of PM duties (triage, drafting, research)
  * while maintaining voice consistency, with human review for approval.
+ *
+ * Uses Cloudflare Workers AI directly with tool calling (not the agents package).
  */
 
-import { Agent } from 'agents';
-import { pmAgentTools, type PMAgentEnv } from './tools';
-import { gmailTools, type PMAgentWithGmailEnv } from './gmail-tools';
+import { toolDefinitions, toolExecutors, executeTool, type PMAgentEnv } from './tools';
+import { gmailToolDefinitions, gmailToolExecutors, executeGmailTool, type PMAgentWithGmailEnv } from './gmail-tools';
 
 // Re-export types
 export type { PMAgentEnv } from './tools';
@@ -126,27 +127,6 @@ Key principles:
 - Always include thread_id when replying to keep the conversation together
 - Drafts appear in Gmail's Drafts folder - human must click Send
 
-## Response Template
-
-When drafting, structure as:
-
-\`\`\`
-Subject: Re: [their topic] - CREATE SOMETHING
-
-Hi [Name],
-
-[Acknowledge their specific question/request]
-
-[Provide specific, empirical answer]
-[Reference relevant experiment or canon if applicable]
-
-[Clear next step or call to action]
-
-[Signature]
-\`\`\`
-
-**Tone:** Professional but direct. Not formal, not casual. Empirical engineer sharing findings.
-
 ## Important Constraints
 
 - **NEVER send emails directly** - All drafts go to human review
@@ -165,34 +145,107 @@ function hasGmailConfig(env: PMAgentEnv | PMAgentWithGmailEnv): env is PMAgentWi
 }
 
 /**
- * Create the PM Agent instance
- * Automatically includes Gmail tools if Gmail secrets are configured
+ * Get all tool definitions based on environment
  */
-export function createPMAgent(env: PMAgentEnv | PMAgentWithGmailEnv) {
-	// Combine base tools with Gmail tools if configured
-	const tools = hasGmailConfig(env)
-		? [...pmAgentTools, ...gmailTools]
-		: pmAgentTools;
+function getToolDefinitions(env: PMAgentEnv | PMAgentWithGmailEnv) {
+	if (hasGmailConfig(env)) {
+		return [...toolDefinitions, ...gmailToolDefinitions];
+	}
+	return toolDefinitions;
+}
 
-	return new Agent({
-		name: 'CREATE SOMETHING PM Agent',
-		description: 'Triages client inquiries and drafts responses following brand voice',
-		instructions: PM_AGENT_SYSTEM_PROMPT,
-		tools,
-		model: '@cf/meta/llama-3.1-8b-instruct', // Can upgrade to Sonnet when available via Workers AI
-		temperature: 0.2, // Lower temperature for more consistent, guideline-adherent responses
-		maxTokens: 2000
-	});
+/**
+ * Execute a tool call
+ */
+async function executeToolCall(
+	name: string,
+	args: any,
+	env: PMAgentEnv | PMAgentWithGmailEnv
+): Promise<any> {
+	// Check if it's a Gmail tool
+	if (name.startsWith('read_gmail') || name.startsWith('get_email') ||
+	    name.startsWith('create_gmail') || name.startsWith('mark_email') ||
+	    name.startsWith('archive_email') || name === 'list_gmail_labels') {
+		return executeGmailTool(name, args, env as PMAgentWithGmailEnv);
+	}
+	return executeTool(name, args, env);
+}
+
+/**
+ * Message type for agent conversation
+ */
+interface AgentMessage {
+	role: 'system' | 'user' | 'assistant' | 'tool';
+	content: string;
+	tool_call_id?: string;
+	name?: string;
+}
+
+/**
+ * Run the PM agent with a task
+ * Uses Workers AI with tool calling
+ */
+export async function runAgent(task: string, env: PMAgentWithGmailEnv): Promise<string> {
+	const tools = getToolDefinitions(env);
+	const messages: AgentMessage[] = [
+		{ role: 'system', content: PM_AGENT_SYSTEM_PROMPT },
+		{ role: 'user', content: task }
+	];
+
+	const maxIterations = 10;
+	let iterations = 0;
+
+	while (iterations < maxIterations) {
+		iterations++;
+
+		// Call Workers AI
+		const response = await env.AI.run('@cf/meta/llama-3.1-70b-instruct', {
+			messages: messages.map(m => ({
+				role: m.role === 'tool' ? 'user' : m.role,
+				content: m.role === 'tool' ? `Tool result for ${m.name}: ${m.content}` : m.content
+			})),
+			tools,
+			max_tokens: 2000,
+			temperature: 0.2
+		}) as { response?: string; tool_calls?: Array<{ name: string; arguments: any }> };
+
+		// Check for tool calls
+		if (response.tool_calls && response.tool_calls.length > 0) {
+			// Add assistant message with tool calls
+			messages.push({
+				role: 'assistant',
+				content: JSON.stringify(response.tool_calls)
+			});
+
+			// Execute each tool call
+			for (const toolCall of response.tool_calls) {
+				const toolArgs = typeof toolCall.arguments === 'string'
+					? JSON.parse(toolCall.arguments)
+					: toolCall.arguments;
+
+				const result = await executeToolCall(toolCall.name, toolArgs, env);
+
+				messages.push({
+					role: 'tool',
+					name: toolCall.name,
+					tool_call_id: `${toolCall.name}_${iterations}`,
+					content: JSON.stringify(result)
+				});
+			}
+		} else {
+			// No more tool calls, return final response
+			return response.response || 'Agent completed without response';
+		}
+	}
+
+	return 'Agent reached maximum iterations without completing';
 }
 
 /**
  * Helper: Process a specific contact submission
  */
 export async function processContactSubmission(contactId: number, env: PMAgentEnv) {
-	const agent = createPMAgent(env);
-
-	const result = await agent.run(
-		`Process contact submission #${contactId}:
+	const task = `Process contact submission #${contactId}:
 
 1. Query the contact submission details
 2. Get voice guidelines
@@ -201,21 +254,16 @@ export async function processContactSubmission(contactId: number, env: PMAgentEn
 5. Either draft_response OR escalate_to_human
 6. Provide clear reasoning for your decision
 
-Remember: When in doubt, escalate. Better to have human review than make wrong assumption.`,
-		{ env }
-	);
+Remember: When in doubt, escalate. Better to have human review than make wrong assumption.`;
 
-	return result;
+	return runAgent(task, env as PMAgentWithGmailEnv);
 }
 
 /**
  * Helper: Triage all new contact submissions
  */
 export async function triageNewSubmissions(env: PMAgentEnv) {
-	const agent = createPMAgent(env);
-
-	const result = await agent.run(
-		`Triage all new contact submissions:
+	const task = `Triage all new contact submissions:
 
 1. Query contact submissions with status='new'
 2. Get voice guidelines
@@ -227,11 +275,9 @@ export async function triageNewSubmissions(env: PMAgentEnv) {
 
 Provide a summary of actions taken for each submission.
 
-If there are no new submissions, simply report that.`,
-		{ env }
-	);
+If there are no new submissions, simply report that.`;
 
-	return result;
+	return runAgent(task, env as PMAgentWithGmailEnv);
 }
 
 /**
@@ -281,7 +327,7 @@ export async function approveDraft(contactId: number, approved: boolean, env: PM
 		draft_created_at: draft.created_at
 	};
 
-	// Store decision in D1 for metrics tracking (will create table in next step)
+	// Store decision in D1 for metrics tracking
 	await env.DB.prepare(
 		`INSERT INTO agent_decisions (contact_id, draft_id, approved, reviewed_at, draft_created_at, draft_body)
      VALUES (?, ?, ?, ?, ?, ?)`
@@ -322,10 +368,7 @@ export async function triageGmailInbox(env: PMAgentWithGmailEnv, query: string =
 		throw new Error('Gmail not configured. Set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN secrets.');
 	}
 
-	const agent = createPMAgent(env);
-
-	const result = await agent.run(
-		`Triage Gmail inbox for new client inquiries:
+	const task = `Triage Gmail inbox for new client inquiries:
 
 1. Read emails using query: "${query}"
 2. Get voice guidelines
@@ -344,11 +387,9 @@ Skip emails that are:
 
 Provide a summary of actions taken for each email processed.
 
-If there are no new client inquiries, simply report that.`,
-		{ env }
-	);
+If there are no new client inquiries, simply report that.`;
 
-	return result;
+	return runAgent(task, env);
 }
 
 /**
@@ -359,10 +400,7 @@ export async function processGmailThread(threadId: string, env: PMAgentWithGmail
 		throw new Error('Gmail not configured. Set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN secrets.');
 	}
 
-	const agent = createPMAgent(env);
-
-	const result = await agent.run(
-		`Process Gmail thread ${threadId}:
+	const task = `Process Gmail thread ${threadId}:
 
 1. Get the full thread using get_email_thread
 2. Get voice guidelines
@@ -373,11 +411,9 @@ export async function processGmailThread(threadId: string, env: PMAgentWithGmail
 7. Mark latest message as read
 8. Provide reasoning for your decision
 
-Remember: When in doubt, escalate. Better to have human review than make wrong assumption.`,
-		{ env }
-	);
+Remember: When in doubt, escalate. Better to have human review than make wrong assumption.`;
 
-	return result;
+	return runAgent(task, env);
 }
 
 /**
