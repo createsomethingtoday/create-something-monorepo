@@ -1,0 +1,48 @@
+<svg width="1200" height="627" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap');
+      .ascii-text {
+        font-family: 'JetBrains Mono', 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+        fill: #ffffff;
+        white-space: pre;
+      }
+    </style>
+  </defs>
+
+  <rect width="1200" height="627" fill="#000000"/>
+
+  <text x="600" y="40" class="ascii-text" text-anchor="middle">╔═══════════════════════════════════════════════════════════╗</text>
+  <text x="600" y="58" class="ascii-text" text-anchor="middle">║                                                           ║</text>
+  <text x="600" y="76" class="ascii-text" text-anchor="middle">║  EXPERIMENT: AI-NATIVE DESIGN ANALYSIS                    ║</text>
+  <text x="600" y="94" class="ascii-text" text-anchor="middle">║  ─────────────────────────────────────────────────────    ║</text>
+  <text x="600" y="112" class="ascii-text" text-anchor="middle">║                                                           ║</text>
+  <text x="600" y="130" class="ascii-text" text-anchor="middle">║  CLIENT MOCKUP → CODEBASE AUDIT → IMPLEMENTATION PLAN    ║</text>
+  <text x="600" y="148" class="ascii-text" text-anchor="middle">║                                                           ║</text>
+  <text x="600" y="166" class="ascii-text" text-anchor="middle">║  ┌─────────────────────────────────────────────────────┐ ║</text>
+  <text x="600" y="184" class="ascii-text" text-anchor="middle">║  │  TRADITIONAL APPROACH          AI-NATIVE APPROACH   │ ║</text>
+  <text x="600" y="202" class="ascii-text" text-anchor="middle">║  │  ─────────────────────         ─────────────────    │ ║</text>
+  <text x="600" y="220" class="ascii-text" text-anchor="middle">║  │  Designer review:   2-3hrs     Mockup analysis: 25m │ ║</text>
+  <text x="600" y="238" class="ascii-text" text-anchor="middle">║  │  Developer review:  2-3hrs     Codebase audit:  20m │ ║</text>
+  <text x="600" y="256" class="ascii-text" text-anchor="middle">║  │  Team meeting:      1-2hrs     Gap analysis:    30m │ ║</text>
+  <text x="600" y="274" class="ascii-text" text-anchor="middle">║  │  Create estimates:  1-2hrs     Roadmap:         35m │ ║</text>
+  <text x="600" y="292" class="ascii-text" text-anchor="middle">║  │  ─────────────────────         Component build: 30m │ ║</text>
+  <text x="600" y="310" class="ascii-text" text-anchor="middle">║  │  TOTAL: 6-10 hours             Research:        20m │ ║</text>
+  <text x="600" y="328" class="ascii-text" text-anchor="middle">║  │                                 Documentation:   20m │ ║</text>
+  <text x="600" y="346" class="ascii-text" text-anchor="middle">║  │                                 ─────────────────    │ ║</text>
+  <text x="600" y="364" class="ascii-text" text-anchor="middle">║  │                                 TOTAL: 2.7 hours    │ ║</text>
+  <text x="600" y="382" class="ascii-text" text-anchor="middle">║  └─────────────────────────────────────────────────────┘ ║</text>
+  <text x="600" y="400" class="ascii-text" text-anchor="middle">║                                                           ║</text>
+  <text x="600" y="418" class="ascii-text" text-anchor="middle">║  RESULTS                                                  ║</text>
+  <text x="600" y="436" class="ascii-text" text-anchor="middle">║  ────────────────────────────────────────────────────     ║</text>
+  <text x="600" y="454" class="ascii-text" text-anchor="middle">║                                                           ║</text>
+  <text x="600" y="472" class="ascii-text" text-anchor="middle">║  ✓ 30+ design gaps identified                            ║</text>
+  <text x="600" y="490" class="ascii-text" text-anchor="middle">║  ✓ 5 production components built (TypeScript + a11y)     ║</text>
+  <text x="600" y="508" class="ascii-text" text-anchor="middle">║  ✓ 2,500+ lines documentation generated                  ║</text>
+  <text x="600" y="526" class="ascii-text" text-anchor="middle">║  ✓ 3-phase implementation roadmap                        ║</text>
+  <text x="600" y="544" class="ascii-text" text-anchor="middle">║                                                           ║</text>
+  <text x="600" y="562" class="ascii-text" text-anchor="middle">║  ⚡ TIME SAVINGS: 88% (5-9 hours saved)                   ║</text>
+  <text x="600" y="580" class="ascii-text" text-anchor="middle">║  💰 COST: $2.50 in AI tokens                             ║</text>
+  <text x="600" y="598" class="ascii-text" text-anchor="middle">╚═══════════════════════════════════════════════════════════╝</text>
+</svg>
