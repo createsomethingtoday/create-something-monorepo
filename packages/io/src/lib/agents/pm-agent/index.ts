@@ -158,14 +158,26 @@ function getToolDefinitions(env: PMAgentEnv | PMAgentWithGmailEnv) {
  * Execute a tool call
  */
 async function executeToolCall(
-	name: string,
+	name: string | undefined,
 	args: any,
 	env: PMAgentEnv | PMAgentWithGmailEnv
 ): Promise<any> {
+	// Handle undefined name
+	if (!name) {
+		return { success: false, error: 'Tool name is undefined' };
+	}
+
 	// Check if it's a Gmail tool
-	if (name.startsWith('read_gmail') || name.startsWith('get_email') ||
-	    name.startsWith('create_gmail') || name.startsWith('mark_email') ||
-	    name.startsWith('archive_email') || name === 'list_gmail_labels') {
+	const gmailToolNames = [
+		'read_gmail_inbox',
+		'get_email_thread',
+		'create_gmail_draft',
+		'mark_email_read',
+		'archive_email',
+		'list_gmail_labels'
+	];
+
+	if (gmailToolNames.includes(name)) {
 		return executeGmailTool(name, args, env as PMAgentWithGmailEnv);
 	}
 	return executeTool(name, args, env);
@@ -179,6 +191,19 @@ interface AgentMessage {
 	content: string;
 	tool_call_id?: string;
 	name?: string;
+}
+
+/**
+ * Workers AI tool call response structure
+ */
+interface WorkersAIToolCall {
+	name?: string;
+	arguments?: any;
+	// Alternative format
+	function?: {
+		name: string;
+		arguments: string | object;
+	};
 }
 
 /**
@@ -198,43 +223,49 @@ export async function runAgent(task: string, env: PMAgentWithGmailEnv): Promise<
 	while (iterations < maxIterations) {
 		iterations++;
 
-		// Call Workers AI
-		const response = await env.AI.run('@cf/meta/llama-3.1-70b-instruct', {
-			messages: messages.map(m => ({
-				role: m.role === 'tool' ? 'user' : m.role,
-				content: m.role === 'tool' ? `Tool result for ${m.name}: ${m.content}` : m.content
-			})),
-			tools,
-			max_tokens: 2000,
-			temperature: 0.2
-		}) as { response?: string; tool_calls?: Array<{ name: string; arguments: any }> };
+		try {
+			// Call Workers AI
+			const response = await env.AI.run('@cf/meta/llama-3.1-70b-instruct', {
+				messages: messages.map(m => ({
+					role: m.role === 'tool' ? 'user' : m.role,
+					content: m.role === 'tool' ? `Tool result for ${m.name}: ${m.content}` : m.content
+				})),
+				tools,
+				max_tokens: 2000,
+				temperature: 0.2
+			}) as { response?: string; tool_calls?: WorkersAIToolCall[] };
 
-		// Check for tool calls
-		if (response.tool_calls && response.tool_calls.length > 0) {
-			// Add assistant message with tool calls
-			messages.push({
-				role: 'assistant',
-				content: JSON.stringify(response.tool_calls)
-			});
-
-			// Execute each tool call
-			for (const toolCall of response.tool_calls) {
-				const toolArgs = typeof toolCall.arguments === 'string'
-					? JSON.parse(toolCall.arguments)
-					: toolCall.arguments;
-
-				const result = await executeToolCall(toolCall.name, toolArgs, env);
-
+			// Check for tool calls
+			if (response.tool_calls && response.tool_calls.length > 0) {
+				// Add assistant message with tool calls
 				messages.push({
-					role: 'tool',
-					name: toolCall.name,
-					tool_call_id: `${toolCall.name}_${iterations}`,
-					content: JSON.stringify(result)
+					role: 'assistant',
+					content: JSON.stringify(response.tool_calls)
 				});
+
+				// Execute each tool call
+				for (const toolCall of response.tool_calls) {
+					// Handle different tool call formats from Workers AI
+					const toolName = toolCall.name || toolCall.function?.name;
+					const rawArgs = toolCall.arguments || toolCall.function?.arguments;
+					const toolArgs = typeof rawArgs === 'string' ? JSON.parse(rawArgs) : (rawArgs || {});
+
+					const result = await executeToolCall(toolName, toolArgs, env);
+
+					messages.push({
+						role: 'tool',
+						name: toolName || 'unknown',
+						tool_call_id: `${toolName || 'unknown'}_${iterations}`,
+						content: JSON.stringify(result)
+					});
+				}
+			} else {
+				// No more tool calls, return final response
+				return response.response || 'Agent completed without response';
 			}
-		} else {
-			// No more tool calls, return final response
-			return response.response || 'Agent completed without response';
+		} catch (error) {
+			console.error('Agent iteration error:', error);
+			return `Agent error: ${error instanceof Error ? error.message : 'Unknown error'}`;
 		}
 	}
 
