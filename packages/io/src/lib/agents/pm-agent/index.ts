@@ -224,8 +224,8 @@ export async function runAgent(task: string, env: PMAgentWithGmailEnv): Promise<
 		iterations++;
 
 		try {
-			// Call Workers AI
-			const response = await env.AI.run('@cf/meta/llama-3.1-70b-instruct', {
+			// Call Workers AI with qwen model which has native tool calling support
+			const response = await env.AI.run('@cf/qwen/qwen2.5-coder-32b-instruct', {
 				messages: messages.map(m => ({
 					role: m.role === 'tool' ? 'user' : m.role,
 					content: m.role === 'tool' ? `Tool result for ${m.name}: ${m.content}` : m.content
