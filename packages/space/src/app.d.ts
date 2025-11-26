@@ -12,7 +12,9 @@ declare global {
 				SESSIONS: KVNamespace;
 				CACHE: KVNamespace;
 				STORAGE: R2Bucket;
-				SANDBOX: any; // Cloudflare Sandbox binding
+				BROWSER: Fetcher; // Cloudflare Browser Rendering binding
+				AI: Ai; // Cloudflare Workers AI binding
+				SANDBOX: unknown; // Cloudflare Sandbox binding
 				RESEND_API_KEY: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;

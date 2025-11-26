@@ -35,6 +35,14 @@
 		}
 	],
 
+	"browser": {
+		"binding": "BROWSER"
+	},
+
+	"ai": {
+		"binding": "AI"
+	},
+
 	"vars": {
 		"ENVIRONMENT": "production",
 		"TERMINAL_VERSION": "2.0.0",
