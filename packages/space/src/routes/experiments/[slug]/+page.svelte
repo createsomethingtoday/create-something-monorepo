@@ -30,7 +30,7 @@
 
 	// Pathway data
 	const pathwayInfo = paper.pathway ? pathways[paper.pathway] : null;
-	const nextPaper = getNextPaper(paper.slug);
+	const nextPaper = getNextPaper([paper, ...relatedPapers], paper.slug);
 
 	// Generate URLs
 	const fullUrl = `https://createsomething.space/experiments/${paper.slug}`;

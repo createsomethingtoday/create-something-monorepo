@@ -25,6 +25,38 @@ export interface FileBasedExperiment {
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
 	{
+		id: 'file-understanding-graphs',
+		slug: 'understanding-graphs',
+		title: 'Understanding Graphs: "Less, But Better" Codebase Navigation',
+		description: 'Research experiment applying Heidegger\'s hermeneutic circle to develop minimal dependency documentation that captures only understanding-critical relationships.',
+		excerpt_short: 'Minimal dependency documentation embodying "Weniger, aber besser"',
+		excerpt_long: 'This paper presents Understanding Graphs: a minimal, human-readable approach to documenting codebase relationships that embodies Dieter Rams\' principle "less, but better." Through hermeneutic analysis, we developed a canonical format (UNDERSTANDING.md) that captures bidirectional semantic relationships without tooling.',
+		category: 'Research',
+		tags: ['Hermeneutics', 'Codebase Navigation', 'Less But Better', 'Heidegger', 'Documentation', 'Methodology'],
+		created_at: '2024-11-25T00:00:00Z',
+		updated_at: '2024-11-25T00:00:00Z',
+		reading_time_minutes: 15,
+		difficulty: 'advanced',
+		is_file_based: true,
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════╗
+    ║   UNDERSTANDING GRAPHS                                ║
+    ║                                                       ║
+    ║   Traditional:        Understanding:                  ║
+    ║   ┌───┐              ┌───────────────┐                ║
+    ║   │ A │──imports──►  │ Purpose       │                ║
+    ║   │   │──calls────►  │ Entry Points  │                ║
+    ║   │   │──types────►  │ Key Concepts  │                ║
+    ║   │   │──refs─────►  │ Depends On ↔  │                ║
+    ║   └───┘              │ Enables       │                ║
+    ║   (exhaustive)       └───────────────┘                ║
+    ║                      (sufficient)                     ║
+    ║                                                       ║
+    ║   "Less, but better" — Dieter Rams                    ║
+    ╚═══════════════════════════════════════════════════════╝
+`
+	},
+	{
 		id: 'file-agentic-viz',
 		slug: 'agentic-visualization',
 		title: 'Agentic Visualization: Autonomous UI Components Embodying Tufte\'s Principles',
@@ -88,10 +120,16 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 ];
 
 /**
- * Get all file-based experiments
+ * Get all file-based experiments, transformed to match Paper interface
  */
-export function getFileBasedExperiments(): FileBasedExperiment[] {
-	return fileBasedExperiments;
+export function getFileBasedExperiments() {
+	return fileBasedExperiments.map(exp => ({
+		...exp,
+		// Map to Paper interface fields
+		reading_time: exp.reading_time_minutes,
+		published_at: exp.created_at,
+		difficulty_level: exp.difficulty,
+	}));
 }
 
 /**

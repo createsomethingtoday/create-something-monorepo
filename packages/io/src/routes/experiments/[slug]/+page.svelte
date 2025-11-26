@@ -27,8 +27,8 @@
 	// Check if this has an interactive SPACE version
 	const hasInteractive = !!paper.interactive_demo_url;
 
-	// Find the next paper in the horizon
-	const nextPaper = getNextPaper(paper.slug);
+	// Find the next paper in the horizon (include current paper + related for full category context)
+	const nextPaper = getNextPaper([paper, ...relatedPapers], paper.slug);
 
 	let isCompleted = $state(false);
 

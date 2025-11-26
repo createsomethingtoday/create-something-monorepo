@@ -8,7 +8,10 @@
 
 	// Split papers for different sections
 	const featuredPapers = papers.filter((p) => p.featured).slice(0, 3);
-	const latestPapers = papers.slice(0, 12);
+	// Exclude featured papers from latest (they're in HeroSection) and sort by date
+	const latestPapers = papers
+		.filter((p) => !p.featured)
+		.slice(0, 12);
 
 	const quickLinks = [
 		{ label: 'Home', href: '/' },

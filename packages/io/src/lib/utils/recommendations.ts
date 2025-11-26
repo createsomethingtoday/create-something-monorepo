@@ -1,17 +1,17 @@
-import { mockPapers } from '$lib/data/mockPapers';
 import type { Paper } from '@create-something/components/types';
 
 /**
- * Finds the next paper in the same category.
+ * Finds the next paper in the same category from provided papers array.
+ * @param papers Array of all papers (from D1 or mock data)
  * @param currentSlug The slug of the current paper
  * @returns The next paper object or null if none exists
  */
-export function getNextPaper(currentSlug: string): Paper | null {
-    const currentPaper = mockPapers.find(p => p.slug === currentSlug);
+export function getNextPaper(papers: Paper[], currentSlug: string): Paper | null {
+    const currentPaper = papers.find(p => p.slug === currentSlug);
     if (!currentPaper) return null;
 
     // Get all papers in the same category
-    const categoryPapers = mockPapers.filter(p => p.category === currentPaper.category);
+    const categoryPapers = papers.filter(p => p.category === currentPaper.category);
 
     // Find index of current paper
     const currentIndex = categoryPapers.findIndex(p => p.slug === currentSlug);
