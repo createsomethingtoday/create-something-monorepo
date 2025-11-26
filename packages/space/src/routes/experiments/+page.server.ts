@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ platform }) => {
         is_executable
       FROM papers
       WHERE published = 1 AND is_hidden = 0 AND archived = 0 AND is_executable = 1
-      ORDER BY featured DESC, created_at DESC
+      ORDER BY featured DESC, COALESCE(published_at, created_at) DESC
     `
 		).all();
 

@@ -19,6 +19,10 @@
 		automation: 'Automation',
 		webflow: 'Webflow',
 		development: 'Development',
+		infrastructure: 'Infrastructure',
+		analytics: 'Analytics',
+		authentication: 'Authentication',
+		dashboard: 'Dashboard',
 	};
 
 	const getCategoryDisplayName = (category: string) => {
@@ -26,7 +30,7 @@
 	};
 
 	// Format date
-	const formatDate = (dateString?: string) => {
+	const formatDate = (dateString?: string | null) => {
 		if (!dateString) return '';
 		const date = new Date(dateString);
 		return date.toLocaleDateString('en-US', {
@@ -69,8 +73,10 @@
 									<!-- Metadata -->
 									<div class="flex items-center gap-2 text-xs text-white/50">
 										<span class="capitalize">{getCategoryDisplayName(paper.category)}</span>
-										<span class="text-white/20">•</span>
-										<span>{formatDate(paper.published_at || paper.date)}</span>
+										{#if paper.published_at || paper.date}
+											<span class="text-white/20">•</span>
+											<span>{formatDate(paper.published_at || paper.date)}</span>
+										{/if}
 										<span class="text-white/20">•</span>
 										<span>{paper.reading_time} min</span>
 									</div>
