@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ platform }) => {
         date, excerpt, description, created_at, updated_at, published_at, ascii_art
       FROM papers
       WHERE published = 1 AND is_hidden = 0 AND archived = 0 AND featured = 1 AND is_executable = 1
-      ORDER BY reading_time DESC
+      ORDER BY COALESCE(published_at, created_at) DESC
     `
 		).all();
 

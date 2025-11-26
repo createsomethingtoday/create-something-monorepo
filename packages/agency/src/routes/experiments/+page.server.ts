@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		console.log('✅ Using D1 database for experiments');
 
-		// Fetch all published papers, ordered by featured first, then by created_at DESC
+		// Fetch all published papers, ordered by featured first, then by date DESC
 		const result = await platform.env.DB.prepare(
 			`
       SELECT
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ platform }) => {
         date, excerpt, description, created_at, updated_at, published_at, ascii_art
       FROM papers
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
-      ORDER BY featured DESC, created_at DESC
+      ORDER BY featured DESC, COALESCE(published_at, created_at) DESC
     `
 		).all();
 
