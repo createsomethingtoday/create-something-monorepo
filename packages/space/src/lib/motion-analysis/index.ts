@@ -135,9 +135,12 @@ import type {
  * (Unification of Being and Meaning)
  *
  * This function performs the complete hermeneutic circle:
- * 1. Extract technical data (SEIN - what IS)
- * 2. Interpret phenomenologically (ALETHEIA - what DISCLOSES)
+ * 1. Extract technical data (SEIN - what IS) via Puppeteer Worker
+ * 2. Interpret phenomenologically (ALETHEIA - what DISCLOSES) via Workers AI
  * 3. Produce judgment (URTEIL - what SHOULD BE)
+ *
+ * The Motion Extractor Worker uses real Puppeteer with page.hover() to
+ * trigger actual CSS :hover states and capture animations mid-flight.
  */
 export async function analyzeMotion(
 	env: MotionAnalysisEnv,
@@ -145,11 +148,12 @@ export async function analyzeMotion(
 ): Promise<MotionAnalysisResult> {
 	const startTime = Date.now();
 
-	// Dynamic import to avoid build-time issues with cloudflare: protocol
+	// Dynamic import for code splitting
 	const { MotionExtractor } = await import('$lib/server/motion-extractor');
 
-	// SEIN: Extract technical being of the animation
-	const extractor = new MotionExtractor(env.BROWSER);
+	// SEIN: Extract technical being of the animation via Puppeteer Worker
+	// Note: Account ID and API Token are no longer needed - Worker handles auth
+	const extractor = new MotionExtractor();
 	const extraction = await extractor.extract(request.url, request.trigger, request.options);
 
 	if (!extraction.success || !extraction.technical) {
@@ -184,15 +188,17 @@ export async function analyzeMotion(
  * Extract technical data only (without interpretation)
  *
  * For batch processing or when only technical analysis is needed.
+ * Uses the Puppeteer Worker for real browser interactions.
  */
 export async function extractMotion(
-	env: Pick<MotionAnalysisEnv, 'BROWSER'>,
+	_env: Record<string, unknown>,
 	request: AnalysisRequest
 ): Promise<TechnicalAnalysis> {
-	// Dynamic import to avoid build-time issues with cloudflare: protocol
+	// Dynamic import for code splitting
 	const { MotionExtractor } = await import('$lib/server/motion-extractor');
 
-	const extractor = new MotionExtractor(env.BROWSER);
+	// Note: Worker handles auth internally
+	const extractor = new MotionExtractor();
 	const result = await extractor.extract(request.url, request.trigger, request.options);
 
 	if (!result.success || !result.technical) {

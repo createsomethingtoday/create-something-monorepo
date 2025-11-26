@@ -35,9 +35,8 @@
 		}
 	],
 
-	"browser": {
-		"binding": "BROWSER"
-	},
+	// Browser Rendering uses REST API with CF_ACCOUNT_ID and CF_API_TOKEN secrets
+	// instead of the browser binding (which doesn't work with SvelteKit Pages adapter)
 
 	"ai": {
 		"binding": "AI"

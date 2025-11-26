@@ -41,6 +41,47 @@ export interface TimingProfile {
 	sequentialChains: number;
 }
 
+export interface CSSDefinition {
+	type: 'keyframes' | 'rule';
+	name?: string;
+	selector?: string;
+	keyframes?: Array<{ offset: string; style: string }>;
+	animation?: string | null;
+	animationName?: string | null;
+	animationDuration?: string | null;
+	transition?: string | null;
+	transitionProperty?: string | null;
+	transitionDuration?: string | null;
+	transform?: string | null;
+}
+
+export interface WebflowIXData {
+	hasData?: boolean;
+	siteId?: string;
+	eventCount?: number;
+	actionCount?: number;
+	events?: string[];
+	sampleAction?: unknown;
+}
+
+export interface ExtractionDebug {
+	// Puppeteer Worker debug info
+	elementFound?: boolean;
+	hoverTriggered?: boolean;
+	animationsBeforeHover?: number;
+	animationsAfterHover?: number;
+	captureTime?: number;
+	puppeteerUsed?: boolean;
+	realHoverTriggered?: boolean;
+	// Legacy REST API debug info (deprecated)
+	animationsError?: string;
+	transitionsError?: string;
+	cssDefinitionsError?: string;
+	webflowError?: string;
+	webflowInteractionElements?: number;
+	sampleIxIds?: Array<{ id: string; tag: string; classes: string }>;
+}
+
 export interface TechnicalAnalysis {
 	animations: AnimationData[];
 	transitions: TransitionData[];
@@ -48,6 +89,10 @@ export interface TechnicalAnalysis {
 	propertiesAnimated: string[];
 	triggerType: TriggerType;
 	extractedAt: string;
+	// Extended data
+	cssDefinitions?: CSSDefinition[];
+	webflowIX?: WebflowIXData | null;
+	debug?: ExtractionDebug;
 }
 
 // ============================================================================
@@ -166,9 +211,10 @@ export interface CorpusStats {
 // ============================================================================
 
 export interface MotionAnalysisEnv {
-	BROWSER: Fetcher;
 	AI: Ai;
 	DB: D1Database;
 	STORAGE: R2Bucket;
 	CACHE: KVNamespace;
+	// Note: CF_ACCOUNT_ID and CF_API_TOKEN no longer needed
+	// Technical extraction now happens via Puppeteer Worker which handles auth internally
 }

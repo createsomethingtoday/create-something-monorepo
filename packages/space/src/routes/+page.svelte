@@ -1,14 +1,17 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import CategorySection from '$lib/components/CategorySection.svelte';
 	import { SEO } from '@create-something/components';
 
-	export let data: PageData;
-	const { papers, categories } = data;
+	let { data }: { data: PageData } = $props();
+	const { papers } = data;
 
-	// Get featured papers for hero section
-	const featuredPapers = papers.filter((p) => p.featured).slice(0, 3);
+	// Sort all papers by date (newest first) for hero display
+	const sortedPapers = [...papers].sort((a, b) => {
+		const aDate = new Date(a.published_at || a.created_at || 0).getTime();
+		const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+		return bDate - aDate;
+	});
 </script>
 
 <SEO
@@ -19,9 +22,6 @@
 	propertyName="space"
 />
 
-<!-- Hero Section with Featured Tutorials -->
-<HeroSection {featuredPapers} />
-
-<!-- Categories Section -->
-<CategorySection {categories} />
+<!-- Hero Section with All Tutorials -->
+<HeroSection featuredPapers={sortedPapers} />
 

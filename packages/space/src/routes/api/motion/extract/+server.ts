@@ -60,11 +60,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		// Check platform bindings
-		if (!platform?.env?.BROWSER) {
+		if (!platform?.env?.CF_ACCOUNT_ID || !platform?.env?.CF_API_TOKEN) {
 			return json(
 				{
 					success: false,
-					error: 'Browser Rendering binding not available'
+					error: 'Browser Rendering API credentials not configured (CF_ACCOUNT_ID, CF_API_TOKEN)'
 				},
 				{ status: 500 }
 			);
@@ -80,7 +80,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// Perform extraction
 		const technical = await extractMotion(
-			{ BROWSER: platform.env.BROWSER },
+			{
+				CF_ACCOUNT_ID: platform.env.CF_ACCOUNT_ID,
+				CF_API_TOKEN: platform.env.CF_API_TOKEN
+			},
 			{
 				url: body.url,
 				trigger,

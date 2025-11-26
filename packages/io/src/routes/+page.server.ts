@@ -1,19 +1,24 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/components/types';
 import { mockPapers, mockCategories } from '$lib/data/mockPapers';
+import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
 
 export const load: PageServerLoad = async ({ platform }) => {
 	try {
+		// Get file-based experiments (always available)
+		const fileBasedExperiments = getFileBasedExperiments();
+
 		// Access Cloudflare bindings via platform.env
 		if (!platform?.env?.DB) {
-			console.log('⚠️  No DB binding - using mock data');
+			console.log('⚠️  No DB binding - using mock data + file-based experiments');
+			const merged = [...fileBasedExperiments, ...mockPapers];
 			return {
-				papers: mockPapers,
+				papers: merged,
 				categories: mockCategories
 			};
 		}
 
-		console.log('✅ Using D1 database');
+		console.log('✅ Using D1 database + file-based experiments');
 
 		// Fetch all published papers
 		const result = await platform.env.DB.prepare(
@@ -29,7 +34,10 @@ export const load: PageServerLoad = async ({ platform }) => {
     `
 		).all();
 
-		const papers = (result.results || []) as Paper[];
+		const dbPapers = (result.results || []) as Paper[];
+
+		// Merge file-based experiments with DB papers
+		const papers = [...fileBasedExperiments, ...dbPapers];
 
 		// Get category counts
 		const categoryResult = await platform.env.DB.prepare(
@@ -56,9 +64,10 @@ export const load: PageServerLoad = async ({ platform }) => {
 		};
 	} catch (error) {
 		console.error('Error fetching papers:', error);
-		// Fallback to mock data on error
+		// Fallback to mock data + file-based experiments on error
+		const fileBasedExperiments = getFileBasedExperiments();
 		return {
-			papers: mockPapers,
+			papers: [...fileBasedExperiments, ...mockPapers],
 			categories: mockCategories
 		};
 	}
