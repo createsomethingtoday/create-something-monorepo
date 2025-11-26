@@ -25,36 +25,6 @@ export interface FileBasedExperiment {
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
 	{
-		id: 'file-motion-analyzer',
-		slug: 'motion-analyzer',
-		title: 'Motion Analyzer: CSS Animation Extraction Tool',
-		description:
-			'Extract and analyze CSS animations and transitions from any website using real browser automation with Puppeteer.',
-		excerpt_short: 'Extract CSS animations from any website',
-		excerpt_long:
-			'Motion Analyzer uses Cloudflare Browser Rendering with real Puppeteer to visit URLs, trigger interactions like hover and click, and capture running CSS animations and transitions via the Web Animations API.',
-		category: 'tool',
-		tags: ['Animation', 'CSS', 'Puppeteer', 'Browser Automation', 'Motion Design'],
-		created_at: '2025-11-26T00:00:00Z',
-		updated_at: '2025-11-26T00:00:00Z',
-		reading_time_minutes: 5,
-		difficulty: 'beginner',
-		is_file_based: true,
-		ascii_art: `
-    +-------------------------------------------------+
-    |   MOTION ANALYZER                               |
-    |                                                 |
-    |   URL -----> [Puppeteer] -----> Animations      |
-    |                  |                              |
-    |              page.hover()                       |
-    |                  |                              |
-    |              getAnimations()                    |
-    |                  |                              |
-    |   Output: transitions, keyframes, timing        |
-    +-------------------------------------------------+
-`
-	},
-	{
 		id: 'file-understanding-graphs',
 		slug: 'understanding-graphs',
 		title: 'Understanding Graphs: "Less, But Better" Codebase Navigation',
