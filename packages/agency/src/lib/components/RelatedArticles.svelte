@@ -23,6 +23,9 @@
 		analytics: 'Analytics',
 		authentication: 'Authentication',
 		dashboard: 'Dashboard',
+		research: 'Research',
+		tutorial: 'Tutorial',
+		methodology: 'Methodology',
 	};
 
 	const getCategoryDisplayName = (category: string) => {
