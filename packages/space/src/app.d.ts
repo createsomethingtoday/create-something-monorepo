@@ -12,7 +12,6 @@ declare global {
 				SESSIONS: KVNamespace;
 				CACHE: KVNamespace;
 				STORAGE: R2Bucket;
-				BROWSER: Fetcher; // Cloudflare Browser Rendering binding
 				AI: Ai; // Cloudflare Workers AI binding
 				SANDBOX: unknown; // Cloudflare Sandbox binding
 				RESEND_API_KEY: string;
@@ -23,6 +22,9 @@ declare global {
 				SANDBOX_TIER: string;
 				MAX_EXECUTION_TIME: string;
 				MAX_MEMORY: string;
+				// Browser Rendering REST API credentials
+				CF_ACCOUNT_ID: string;
+				CF_API_TOKEN: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

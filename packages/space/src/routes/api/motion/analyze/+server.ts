@@ -4,7 +4,7 @@
  * POST /api/motion/analyze
  *
  * Performs complete motion analysis:
- * - Technical extraction via Browser Rendering
+ * - Technical extraction via Puppeteer Worker (real page.hover())
  * - Phenomenological interpretation via Workers AI
  *
  * Embodies the hermeneutic circle: understanding Being through disclosure.
@@ -74,16 +74,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		// Check platform bindings
-		if (!platform?.env?.BROWSER) {
-			return json(
-				{
-					success: false,
-					error: 'Browser Rendering binding not available'
-				},
-				{ status: 500 }
-			);
-		}
-
+		// Note: CF_ACCOUNT_ID and CF_API_TOKEN no longer needed - Puppeteer Worker handles auth
 		if (!platform?.env?.AI) {
 			return json(
 				{
@@ -103,9 +94,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		};
 
 		// Perform analysis
+		// Technical extraction happens via Puppeteer Worker
+		// Phenomenological interpretation happens via Workers AI
 		const result = await analyzeMotion(
 			{
-				BROWSER: platform.env.BROWSER,
 				AI: platform.env.AI,
 				DB: platform.env.DB,
 				STORAGE: platform.env.STORAGE,

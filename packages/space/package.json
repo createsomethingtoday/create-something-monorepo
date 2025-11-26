@@ -36,7 +36,6 @@
 		"wrangler": "^4.50.0"
 	},
 	"dependencies": {
-		"@cloudflare/playwright": "^1.0.0",
 		"@cloudflare/sandbox": "^0.4.18",
 		"@codemirror/autocomplete": "^6.19.1",
 		"@codemirror/commands": "^6.10.0",

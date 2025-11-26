@@ -1,24 +1,30 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import { CategorySection, PapersGrid, SEO } from '@create-something/components';
+	import { PapersGrid, SEO } from '@create-something/components';
 
-	export let data: PageData;
-	const { papers, categories } = data;
+	let { data }: { data: PageData } = $props();
+	const { papers } = data;
 
-	// Split papers for different sections
-	const featuredPapers = papers.filter((p) => p.featured).slice(0, 3);
-	// Exclude featured papers from latest (they're in HeroSection) and sort by date
+	// Featured papers sorted by newest first
+	const featuredPapers = papers
+		.filter((p) => p.featured)
+		.sort((a, b) => {
+			const aDate = new Date(a.published_at || a.created_at || 0).getTime();
+			const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+			return bDate - aDate;
+		})
+		.slice(0, 3);
+
+	// Exclude featured papers and sort by newest first
 	const latestPapers = papers
 		.filter((p) => !p.featured)
+		.sort((a, b) => {
+			const aDate = new Date(a.published_at || a.created_at || 0).getTime();
+			const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+			return bDate - aDate;
+		})
 		.slice(0, 12);
-
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'All Research', href: '/experiments' },
-		{ label: 'Methodology', href: '/methodology' },
-		{ label: 'About', href: '/about' }
-	];
 </script>
 
 <SEO
@@ -31,9 +37,6 @@
 
 <!-- Hero Section -->
 <HeroSection {featuredPapers} />
-
-<!-- Categories Section -->
-<CategorySection {categories} />
 
 <!-- Papers Grid -->
 <PapersGrid

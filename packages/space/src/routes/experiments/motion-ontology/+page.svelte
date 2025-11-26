@@ -93,14 +93,17 @@
 				})
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as MotionAnalysisResult & {
+				success: boolean;
+				error?: string;
+			};
 
 			if (!data.success) {
 				error = data.error || 'Analysis failed';
 				return;
 			}
 
-			result = data as MotionAnalysisResult;
+			result = data;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Unknown error occurred';
 		} finally {
@@ -279,14 +282,60 @@
 				<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
 					<div class="flex items-center justify-between">
 						<h2 class="text-xl font-bold text-white">Technical Analysis</h2>
-						<span class="text-sm text-white/40">SEIN</span>
+						<div class="flex items-center gap-2">
+							{#if result.technical.debug?.puppeteerUsed}
+								<span class="text-xs px-2 py-1 bg-green-400/20 text-green-400 rounded">Puppeteer</span>
+							{/if}
+							<span class="text-sm text-white/40">SEIN</span>
+						</div>
 					</div>
+
+					<!-- Puppeteer Debug Info -->
+					{#if result.technical.debug?.puppeteerUsed}
+						<div class="p-3 bg-black/30 rounded-lg text-sm space-y-2">
+							<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+								<div>
+									<div class="text-white/50 text-xs">Element Found</div>
+									<div class="text-lg font-medium {result.technical.debug.elementFound ? 'text-green-400' : 'text-red-400'}">
+										{result.technical.debug.elementFound ? 'Yes' : 'No'}
+									</div>
+								</div>
+								<div>
+									<div class="text-white/50 text-xs">Hover Triggered</div>
+									<div class="text-lg font-medium {result.technical.debug.realHoverTriggered ? 'text-green-400' : 'text-amber-400'}">
+										{result.technical.debug.realHoverTriggered ? 'Yes' : 'No'}
+									</div>
+								</div>
+								<div>
+									<div class="text-white/50 text-xs">Animations Before</div>
+									<div class="text-lg font-medium text-white">
+										{result.technical.debug.animationsBeforeHover ?? 0}
+									</div>
+								</div>
+								<div>
+									<div class="text-white/50 text-xs">Animations After</div>
+									<div class="text-lg font-medium text-white">
+										{result.technical.debug.animationsAfterHover ?? 0}
+									</div>
+								</div>
+							</div>
+							{#if result.technical.debug.captureTime}
+								<div class="text-white/40 text-xs">Captured in {result.technical.debug.captureTime}ms</div>
+							{/if}
+						</div>
+					{/if}
 
 					<div class="grid md:grid-cols-3 gap-4 text-sm">
 						<div class="p-3 bg-black/30 rounded-lg">
-							<div class="text-white/50">Animations</div>
+							<div class="text-white/50">Running Animations</div>
 							<div class="text-2xl font-bold text-white">
 								{result.technical.animations.length}
+							</div>
+						</div>
+						<div class="p-3 bg-black/30 rounded-lg">
+							<div class="text-white/50">CSS Transitions</div>
+							<div class="text-2xl font-bold text-white">
+								{result.technical.transitions.length}
 							</div>
 						</div>
 						<div class="p-3 bg-black/30 rounded-lg">
@@ -295,18 +344,32 @@
 								{result.technical.timing.totalDuration}ms
 							</div>
 						</div>
-						<div class="p-3 bg-black/30 rounded-lg">
-							<div class="text-white/50">Properties</div>
-							<div class="text-2xl font-bold text-white">
-								{result.technical.propertiesAnimated.length}
-							</div>
-						</div>
 					</div>
 
-					<!-- Animations List -->
+					<!-- Transitions List -->
+					{#if result.technical.transitions.length > 0}
+						<div class="space-y-2">
+							<h3 class="text-sm font-medium text-white/50">CSS Transitions</h3>
+							<div class="grid md:grid-cols-2 gap-2">
+								{#each result.technical.transitions.slice(0, 10) as trans}
+									<div class="p-3 bg-black/30 rounded-lg text-sm font-mono">
+										<div class="text-white">{trans.property}</div>
+										<div class="text-white/50">
+											{trans.duration}ms • {trans.easing}
+										</div>
+									</div>
+								{/each}
+							</div>
+							{#if result.technical.transitions.length > 10}
+								<div class="text-white/40 text-sm">+ {result.technical.transitions.length - 10} more transitions</div>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- Running Animations List -->
 					{#if result.technical.animations.length > 0}
 						<div class="space-y-2">
-							<h3 class="text-sm font-medium text-white/50">Animations Detected</h3>
+							<h3 class="text-sm font-medium text-white/50">Running Animations</h3>
 							<div class="space-y-2">
 								{#each result.technical.animations as anim}
 									<div class="p-3 bg-black/30 rounded-lg text-sm font-mono">
@@ -320,6 +383,34 @@
 									</div>
 								{/each}
 							</div>
+						</div>
+					{/if}
+
+					<!-- CSS Definitions -->
+					{#if result.technical.cssDefinitions && result.technical.cssDefinitions.length > 0}
+						<div class="space-y-2">
+							<h3 class="text-sm font-medium text-white/50">CSS Animation/Transition Definitions</h3>
+							<div class="space-y-2 max-h-64 overflow-y-auto">
+								{#each result.technical.cssDefinitions.slice(0, 20) as def}
+									<div class="p-3 bg-black/30 rounded-lg text-sm font-mono">
+										{#if def.type === 'keyframes'}
+											<div class="text-purple-400">@keyframes {def.name}</div>
+											<div class="text-white/50">{def.keyframes?.length || 0} keyframes</div>
+										{:else}
+											<div class="text-cyan-400 truncate">{def.selector}</div>
+											{#if def.transition}
+												<div class="text-white/50">transition: {def.transition}</div>
+											{/if}
+											{#if def.animation}
+												<div class="text-white/50">animation: {def.animation}</div>
+											{/if}
+										{/if}
+									</div>
+								{/each}
+							</div>
+							{#if result.technical.cssDefinitions.length > 20}
+								<div class="text-white/40 text-sm">+ {result.technical.cssDefinitions.length - 20} more definitions</div>
+							{/if}
 						</div>
 					{/if}
 
