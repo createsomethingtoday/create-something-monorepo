@@ -1,21 +1,23 @@
 <script lang="ts">
     import type { Paper } from "$lib/types/paper";
-    import { mockPapers, pathways } from "$lib/data/mockPapers";
+    import { pathways } from "$lib/data/mockPapers";
     import { fly } from "svelte/transition";
 
     interface Props {
         paper: Paper;
+        allPapers?: Paper[]; // Optional: if provided, use for pathway; otherwise skip
     }
 
-    let { paper }: Props = $props();
+    let { paper, allPapers = [] }: Props = $props();
 
     // Get pathway details
     const pathwayKey = paper.pathway;
     const pathway = pathwayKey ? pathways[pathwayKey] : null;
 
     // Get all papers in this pathway, sorted by order
-    const pathwayPapers = pathwayKey
-        ? mockPapers
+    // Uses provided papers array (from D1) instead of mockPapers
+    const pathwayPapers = pathwayKey && allPapers.length > 0
+        ? allPapers
               .filter((p) => p.pathway === pathwayKey)
               .sort((a, b) => (a.order || 0) - (b.order || 0))
         : [];
@@ -25,7 +27,7 @@
     );
     const currentStep = currentStepIndex + 1;
     const totalSteps = pathwayPapers.length;
-    const progressPercentage = (currentStep / totalSteps) * 100;
+    const progressPercentage = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
 </script>
 
 {#if pathway && totalSteps > 0}
