@@ -1,0 +1,68 @@
+{
+  "name": "@createsomething/triad-audit",
+  "version": "0.1.0",
+  "description": "Subtractive Triad Audit: DRY, Rams, Heidegger analysis for codebases. Less, but better.",
+  "type": "module",
+  "bin": {
+    "triad-audit": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts src/cli.ts --format esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.2",
+    "jscpd": "^4.0.5",
+    "madge": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "keywords": [
+    "audit",
+    "code-quality",
+    "dry",
+    "minimalism",
+    "analysis",
+    "linter",
+    "static-analysis",
+    "dead-code",
+    "duplicate-code",
+    "circular-dependencies",
+    "dieter-rams"
+  ],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.io"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/create-something/create-something-monorepo.git",
+    "directory": "packages/triad-audit"
+  },
+  "homepage": "https://createsomething.ltd/ethos#subtractive-triad",
+  "bugs": {
+    "url": "https://github.com/create-something/create-something-monorepo/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

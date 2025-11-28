@@ -1,0 +1,127 @@
+# Subtractive Triad Audit - GitHub Actions Workflow
+#
+# This workflow runs the Subtractive Triad audit on pull requests
+# and commits to main, comparing against the baseline.
+#
+# Add this file to your repository at:
+#   .github/workflows/triad-audit.yml
+
+name: Subtractive Triad Audit
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  # Optional: run weekly
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    name: Run Triad Audit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install triad-audit
+        run: npm install -g @create-something/triad-audit
+
+      - name: Run audit
+        id: audit
+        run: |
+          triad-audit . --format json --output audit-result.json --compare
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          cat audit-result.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Extract scores
+        id: scores
+        run: |
+          DRY=$(jq '.scores.dry' audit-result.json)
+          RAMS=$(jq '.scores.rams' audit-result.json)
+          HEIDEGGER=$(jq '.scores.heidegger' audit-result.json)
+          OVERALL=$(jq '.scores.overall' audit-result.json)
+          VIOLATIONS=$(jq '.summary.totalViolations' audit-result.json)
+
+          echo "dry=$DRY" >> $GITHUB_OUTPUT
+          echo "rams=$RAMS" >> $GITHUB_OUTPUT
+          echo "heidegger=$HEIDEGGER" >> $GITHUB_OUTPUT
+          echo "overall=$OVERALL" >> $GITHUB_OUTPUT
+          echo "violations=$VIOLATIONS" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const scores = {
+              dry: ${{ steps.scores.outputs.dry }},
+              rams: ${{ steps.scores.outputs.rams }},
+              heidegger: ${{ steps.scores.outputs.heidegger }},
+              overall: ${{ steps.scores.outputs.overall }},
+              violations: ${{ steps.scores.outputs.violations }}
+            };
+
+            const getEmoji = (score) => {
+              if (score >= 8) return '🟢';
+              if (score >= 6) return '🟡';
+              return '🔴';
+            };
+
+            const body = `## Subtractive Triad Audit
+
+            | Level | Score | Status |
+            |-------|-------|--------|
+            | DRY (Implementation) | ${scores.dry}/10 | ${getEmoji(scores.dry)} |
+            | Rams (Artifact) | ${scores.rams}/10 | ${getEmoji(scores.rams)} |
+            | Heidegger (System) | ${scores.heidegger}/10 | ${getEmoji(scores.heidegger)} |
+            | **Overall** | **${scores.overall}/10** | ${getEmoji(scores.overall)} |
+
+            **Violations:** ${scores.violations}
+
+            ---
+            *"Creation is the discipline of removing what obscures."*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Check thresholds
+        run: |
+          OVERALL=${{ steps.scores.outputs.overall }}
+          VIOLATIONS=${{ steps.scores.outputs.violations }}
+
+          # Fail if overall score is below 5
+          if (( $(echo "$OVERALL < 5" | bc -l) )); then
+            echo "::error::Overall score ($OVERALL) is below threshold (5)"
+            exit 1
+          fi
+
+          # Warn if there are critical violations
+          CRITICAL=$(jq '.summary.criticalCount' audit-result.json)
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "::error::Found $CRITICAL critical violations"
+            exit 1
+          fi
+
+          echo "✅ Audit passed with score: $OVERALL/10"
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: triad-audit-report
+          path: audit-result.json
+          retention-days: 30
