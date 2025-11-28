@@ -100,6 +100,144 @@
 					<p>✓ Functions that do one thing</p>
 				</div>
 			</div>
+
+			<!-- Pattern: Tool Complementarity -->
+			<div class="border border-white/10 p-6">
+				<h3 class="text-lg font-semibold mb-3">Tool Complementarity</h3>
+				<p class="text-sm opacity-60 mb-4">
+					Tools should not compete for the same ontological space. Each has a domain. Heidegger's Zuhandenheit—ready-to-hand tools recede from consciousness.
+				</p>
+				<div class="text-xs opacity-40 font-mono">
+					<p class="mb-1">✓ Clear boundaries between tools</p>
+					<p class="mb-1">✓ Handoff protocols, not redundancy</p>
+					<p>✓ Creation vs. operation domains</p>
+				</div>
+			</div>
+
+			<!-- Pattern: Dwelling in Tools -->
+			<div class="border border-white/10 p-6">
+				<h3 class="text-lg font-semibold mb-3">Dwelling in Tools</h3>
+				<p class="text-sm opacity-60 mb-4">
+					Build habits that make tools transparent. A carpenter forgets the hammer exists. Infrastructure should be invisible.
+				</p>
+				<div class="text-xs opacity-40 font-mono">
+					<p class="mb-1">✓ Workflows that become automatic</p>
+					<p class="mb-1">✓ Configuration once, use forever</p>
+					<p>✓ Minimize conspicuousness, obtrusiveness, obstinacy</p>
+				</div>
+			</div>
+
+			<!-- Pattern: Principled Defaults -->
+			<div class="border border-white/10 p-6">
+				<h3 class="text-lg font-semibold mb-3">Principled Defaults</h3>
+				<p class="text-sm opacity-60 mb-4">
+					Every configuration value traces to a principle. Arbitrary numbers are decoration in disguise. 20px padding? Why 20?
+				</p>
+				<div class="text-xs opacity-40 font-mono">
+					<p class="mb-1">✓ Spacing from golden ratio (1.618rem)</p>
+					<p class="mb-1">✓ Colors from functional meaning, not trends</p>
+					<p>✓ Typography from readability research</p>
+				</div>
+			</div>
+
+			<!-- Pattern: Subtractive Triad Audit -->
+			<div class="border border-white/10 p-6">
+				<h3 class="text-lg font-semibold mb-3">Subtractive Triad Audit</h3>
+				<p class="text-sm opacity-60 mb-4">
+					Three questions at three levels. DRY for implementation, Rams for artifacts, Heidegger for systems. Apply in order.
+				</p>
+				<div class="text-xs opacity-40 font-mono">
+					<p class="mb-1">✓ "Have I built this before?" → Unify</p>
+					<p class="mb-1">✓ "Does this earn its existence?" → Remove</p>
+					<p>✓ "Does this serve the whole?" → Reconnect</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Reference Implementation -->
+<section class="py-16 px-6 border-t border-white/10">
+	<div class="max-w-5xl mx-auto">
+		<h2 class="mb-6">Reference Implementation</h2>
+		<p class="text-base opacity-60 mb-12 max-w-3xl">
+			How patterns combine in practice. A terminal configuration applying hermeneutic analysis.
+		</p>
+
+		<div class="border border-white/10 p-8">
+			<div class="flex items-start justify-between mb-6">
+				<div>
+					<h3 class="text-xl font-semibold mb-2">Terminal as Dwelling</h3>
+					<p class="text-sm opacity-50">WezTerm + Shell Configuration</p>
+				</div>
+				<div class="text-xs opacity-40 font-mono text-right">
+					<p>Patterns applied: 5</p>
+					<p>Elements removed: 2</p>
+					<p>Values derived: 4</p>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+				<!-- What was derived -->
+				<div>
+					<h4 class="text-sm font-semibold mb-4 opacity-70">Derived from Canon</h4>
+					<div class="space-y-3 text-xs font-mono opacity-50">
+						<div class="flex justify-between">
+							<span>font_size</span>
+							<span>15pt ← canonical body (16-20px)</span>
+						</div>
+						<div class="flex justify-between">
+							<span>line_height</span>
+							<span>1.5 ← canonical body (1.5-1.6)</span>
+						</div>
+						<div class="flex justify-between">
+							<span>padding</span>
+							<span>26px ← golden ratio (--space-md)</span>
+						</div>
+						<div class="flex justify-between">
+							<span>colors</span>
+							<span>muted ← functional, not iOS</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- What was removed -->
+				<div>
+					<h4 class="text-sm font-semibold mb-4 opacity-70">Removed (Failed Justification)</h4>
+					<div class="space-y-3 text-xs font-mono opacity-50">
+						<div class="flex justify-between">
+							<span class="line-through">Claude launcher</span>
+							<span>feature creep</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="line-through">Resize keybindings</span>
+							<span>system conflict</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Patterns demonstrated -->
+			<div class="border-t border-white/10 pt-6">
+				<h4 class="text-sm font-semibold mb-4 opacity-70">Patterns Demonstrated</h4>
+				<div class="flex flex-wrap gap-2">
+					<span class="text-xs px-3 py-1 border border-white/20">Dwelling in Tools</span>
+					<span class="text-xs px-3 py-1 border border-white/20">Principled Defaults</span>
+					<span class="text-xs px-3 py-1 border border-white/20">Iterative Reduction</span>
+					<span class="text-xs px-3 py-1 border border-white/20">Constraint as Liberation</span>
+					<span class="text-xs px-3 py-1 border border-white/20">Functional Transparency</span>
+				</div>
+			</div>
+
+			<!-- The hermeneutic test -->
+			<div class="border-t border-white/10 pt-6 mt-6">
+				<h4 class="text-sm font-semibold mb-4 opacity-70">Hermeneutic Verification</h4>
+				<div class="text-xs opacity-50 space-y-2">
+					<p><strong>Part → Whole:</strong> Does this config reveal the CREATE SOMETHING ethos? Yes—black/white palette, mathematical spacing, no decoration.</p>
+					<p><strong>Whole → Part:</strong> Can every value trace to canon? Yes—typography, spacing, colors all derive from .ltd standards.</p>
+					<p><strong>Circle Closes:</strong> The tool recedes. The user dwells. Zuhandenheit achieved.</p>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
@@ -205,6 +343,22 @@
 					</div>
 				</div>
 			</div>
+
+			<!-- Anti-Pattern: Tool Redundancy -->
+			<div class="border border-red-500/20 bg-red-500/5 p-6">
+				<div class="flex items-start gap-4">
+					<span class="text-2xl">⚠</span>
+					<div class="flex-1">
+						<h3 class="text-lg font-semibold mb-2">Tool Redundancy</h3>
+						<p class="text-sm opacity-70 mb-3">
+							Multiple tools competing for the same task. Confusion about which to use. Duplicated capabilities without differentiation.
+						</p>
+						<div class="text-xs opacity-50">
+							<strong>Instead:</strong> Assign clear domains. Define handoff protocols. Eliminate overlap.
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
@@ -229,6 +383,10 @@
 
 			<p>
 				When code needs no comments because the structure is self-evident, that's <strong>Functional Transparency</strong>.
+			</p>
+
+			<p>
+				When you stop asking "which tool should I use?" because each has a clear domain, that's <strong>Tool Complementarity</strong>.
 			</p>
 
 			<div class="mt-12 p-6 border border-white/10">

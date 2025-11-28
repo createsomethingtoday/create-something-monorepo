@@ -2,11 +2,35 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let email = $state('');
+	let website = $state(''); // Honeypot - hidden from users, filled by bots
+	let status = $state<'idle' | 'loading' | 'success' | 'error'>('idle');
+	let message = $state('');
 
-	function handleSubmit(e: Event) {
+	async function handleSubmit(e: Event) {
 		e.preventDefault();
-		// TODO: Implement newsletter subscription
-		console.log('Newsletter subscription:', email);
+		status = 'loading';
+
+		try {
+			const response = await fetch('/api/newsletter', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email, website })
+			});
+
+			const data = await response.json();
+
+			if (data.success) {
+				status = 'success';
+				message = 'Welcome aboard. Check your inbox.';
+				email = '';
+			} else {
+				status = 'error';
+				message = data.message || 'Something went wrong. Try again.';
+			}
+		} catch (err) {
+			status = 'error';
+			message = 'Connection failed. Try again.';
+		}
 	}
 </script>
 
@@ -24,6 +48,23 @@
 
 				<!-- Newsletter Form -->
 				<form onsubmit={handleSubmit} class="max-w-lg mx-auto">
+					<!-- Honeypot field - hidden from users, bots fill it -->
+					<input
+						type="text"
+						bind:value={website}
+						name="website"
+						autocomplete="off"
+						tabindex="-1"
+						class="absolute -left-[9999px] opacity-0 pointer-events-none"
+						aria-hidden="true"
+					/>
+
+					{#if status === 'success'}
+						<p class="text-green-400 mb-4" transition:fade>{message}</p>
+					{:else if status === 'error'}
+						<p class="text-red-400 mb-4" transition:fade>{message}</p>
+					{/if}
+
 					<div class="flex flex-col sm:flex-row gap-3">
 						<input
 							type="email"
@@ -31,15 +72,19 @@
 							placeholder="Enter your email address"
 							class="flex-1 px-6 py-4 bg-white/[0.07] border border-white/10 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors"
 							required
+							disabled={status === 'loading' || status === 'success'}
 						/>
 						<button
 							type="submit"
-							class="group px-8 py-4 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-all flex items-center justify-center gap-2"
+							class="group px-8 py-4 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+							disabled={status === 'loading' || status === 'success'}
 						>
-							<span>Subscribe</span>
-							<svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-							</svg>
+							<span>{status === 'loading' ? 'Subscribing...' : 'Subscribe'}</span>
+							{#if status !== 'loading'}
+								<svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+								</svg>
+							{/if}
 						</button>
 					</div>
 				</form>

@@ -46,6 +46,66 @@
 	</div>
 </section>
 
+<!-- The Subtractive Triad -->
+<section class="py-16 px-6 border-t border-white/10">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">The Subtractive Triad</h2>
+
+		<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<p>
+				<strong>Creation is the discipline of removing what obscures.</strong> This meta-principle
+				manifests at three levels, each with its own question:
+			</p>
+		</div>
+
+		<div class="mt-8 border border-white/10">
+			<table class="w-full text-left">
+				<thead class="border-b border-white/10">
+					<tr>
+						<th class="px-6 py-4 text-sm font-semibold opacity-60">Level</th>
+						<th class="px-6 py-4 text-sm font-semibold opacity-60">Discipline</th>
+						<th class="px-6 py-4 text-sm font-semibold opacity-60">Question</th>
+						<th class="px-6 py-4 text-sm font-semibold opacity-60">Action</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-white/10">
+					<tr>
+						<td class="px-6 py-4 font-medium">Implementation</td>
+						<td class="px-6 py-4 opacity-70">DRY</td>
+						<td class="px-6 py-4 opacity-70">"Have I built this before?"</td>
+						<td class="px-6 py-4 opacity-70">Unify</td>
+					</tr>
+					<tr>
+						<td class="px-6 py-4 font-medium">Artifact</td>
+						<td class="px-6 py-4 opacity-70">Rams</td>
+						<td class="px-6 py-4 opacity-70">"Does this earn its existence?"</td>
+						<td class="px-6 py-4 opacity-70">Remove</td>
+					</tr>
+					<tr>
+						<td class="px-6 py-4 font-medium">System</td>
+						<td class="px-6 py-4 opacity-70">Heidegger</td>
+						<td class="px-6 py-4 opacity-70">"Does this serve the whole?"</td>
+						<td class="px-6 py-4 opacity-70">Reconnect</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="mt-8 space-y-6 text-lg opacity-80 leading-relaxed">
+			<p>
+				The triad is coherent because it's <strong>one principle</strong>—subtractive
+				revelation—applied at <strong>three scales</strong>. Truth emerges through disciplined
+				removal at every level of abstraction.
+			</p>
+
+			<p>
+				For any decision, ask the three questions in order. If you've built it before, unify. If it
+				doesn't earn its place, remove. If it doesn't serve the whole, reconnect—or remove.
+			</p>
+		</div>
+	</div>
+</section>
+
 <!-- Standards for Each Domain -->
 <section class="py-16 px-6 border-t border-white/10">
 	<div class="max-w-5xl mx-auto">
