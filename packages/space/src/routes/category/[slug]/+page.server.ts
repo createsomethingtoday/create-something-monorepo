@@ -1,49 +1,38 @@
 import type { PageServerLoad } from './$types';
-import { mockPapers, mockCategories } from '$lib/data/mockPapers';
-import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params, platform }) => {
-  const { slug } = params;
-  const env = platform?.env;
+	const { slug } = params;
 
-  console.log('Loading category:', slug);
-  console.log('Available categories:', mockCategories.map(c => c.slug));
+	if (!platform?.env?.DB) {
+		return {
+			papers: [],
+			category: { name: slug.charAt(0).toUpperCase() + slug.slice(1), slug, count: 0 }
+		};
+	}
 
-  // Find category info
-  const category = mockCategories.find(c => c.slug === slug);
-  if (!category) {
-    console.error('Category not found:', slug);
-    // Return empty state instead of throwing
-    return {
-      papers: [],
-      category: { name: slug, slug, count: 0 }
-    };
-  }
-
-  if (!env?.DB) {
-    // Use mock data
-    console.log('Using mock data for category:', slug);
-    const papers = mockPapers.filter(p => p.category === slug && p.published);
-    console.log('Found papers:', papers.length);
-    return { papers, category };
-  }
-
-  try {
-    // Fetch from D1 database
-    const result = await env.DB.prepare(`
+	try {
+		// Fetch papers and category info from D1
+		const result = await platform.env.DB.prepare(`
       SELECT * FROM papers
-      WHERE category = ? AND published = 1
+      WHERE category = ? AND published = 1 AND is_hidden = 0 AND archived = 0
       ORDER BY created_at DESC
     `).bind(slug).all();
 
-    return {
-      papers: result.results || [],
-      category
-    };
-  } catch (dbError) {
-    console.error('Database error:', dbError);
-    // Fallback to mock data
-    const papers = mockPapers.filter(p => p.category === slug && p.published);
-    return { papers, category };
-  }
+		const papers = result.results || [];
+
+		return {
+			papers,
+			category: {
+				name: slug.charAt(0).toUpperCase() + slug.slice(1),
+				slug,
+				count: papers.length
+			}
+		};
+	} catch (error) {
+		console.error('Error fetching category from D1:', error);
+		return {
+			papers: [],
+			category: { name: slug.charAt(0).toUpperCase() + slug.slice(1), slug, count: 0 }
+		};
+	}
 };

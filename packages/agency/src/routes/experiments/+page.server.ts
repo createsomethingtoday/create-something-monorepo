@@ -1,18 +1,12 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '$lib/types/paper';
-import { mockPapers } from '$lib/data/mockPapers';
 
 export const load: PageServerLoad = async ({ platform }) => {
+	if (!platform?.env?.DB) {
+		return { papers: [] };
+	}
+
 	try {
-		// Try to use D1, fallback to mock data if unavailable
-		if (!platform?.env?.DB) {
-			console.log('⚠️  No DB binding - using mock data');
-			return { papers: mockPapers.filter((p) => p.published) };
-		}
-
-		console.log('✅ Using D1 database for experiments');
-
-		// Fetch all published papers, ordered by featured first, then by date DESC
 		const result = await platform.env.DB.prepare(
 			`
       SELECT
@@ -28,7 +22,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		return { papers: (result.results || []) as Paper[] };
 	} catch (error) {
-		console.error('Error fetching experiments:', error);
-		return { papers: mockPapers.filter((p) => p.published) };
+		console.error('Error fetching experiments from D1:', error);
+		return { papers: [] };
 	}
 };

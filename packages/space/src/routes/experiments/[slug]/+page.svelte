@@ -4,11 +4,9 @@
 	import ExperimentRuntime from '$lib/components/ExperimentRuntime.svelte';
 	import ExperimentCodeEditor from '$lib/components/ExperimentCodeEditor.svelte';
 	import RelatedArticles from '$lib/components/RelatedArticles.svelte';
-	import PathwayProgress from '$lib/components/PathwayProgress.svelte';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
 	import { isExecutable, isCodeExperiment } from '$lib/types/paper';
-	import { pathways } from '$lib/data/mockPapers';
 	import { getNextPaper } from '$lib/utils/recommendations';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
@@ -28,8 +26,7 @@
 	// Completion tracking
 	let isCompleted = $state(false);
 
-	// Pathway data
-	const pathwayInfo = paper.pathway ? pathways[paper.pathway] : null;
+	// Next paper recommendation
 	const nextPaper = getNextPaper([paper, ...relatedPapers], paper.slug);
 
 	// Generate URLs
@@ -94,15 +91,6 @@
 </svelte:head>
 
 <div class="min-h-screen bg-black">
-	<!-- Pathway Progress -->
-	{#if pathwayInfo && paper.pathway && paper.order}
-		<PathwayProgress
-			pathwayTitle={pathwayInfo.title}
-			currentStep={paper.order}
-			totalSteps={2}
-		/>
-	{/if}
-
 	<!-- Article Header -->
 	<ArticleHeader {paper} />
 

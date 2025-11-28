@@ -1,26 +1,16 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/components/types';
-import { mockPapers, mockCategories } from '$lib/data/mockPapers';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
 
 export const load: PageServerLoad = async ({ platform }) => {
+	const fileBasedExperiments = getFileBasedExperiments();
+
+	if (!platform?.env?.DB) {
+		return { papers: fileBasedExperiments, categories: [] };
+	}
+
 	try {
-		// Get file-based experiments (always available)
-		const fileBasedExperiments = getFileBasedExperiments();
-
-		// Access Cloudflare bindings via platform.env
-		if (!platform?.env?.DB) {
-			console.log('⚠️  No DB binding - using mock data + file-based experiments');
-			const merged = [...fileBasedExperiments, ...mockPapers];
-			return {
-				papers: merged,
-				categories: mockCategories
-			};
-		}
-
-		console.log('✅ Using D1 database + file-based experiments');
-
-		// Fetch all published papers
+		// Fetch all published papers from D1
 		const result = await platform.env.DB.prepare(
 			`
       SELECT
@@ -35,16 +25,12 @@ export const load: PageServerLoad = async ({ platform }) => {
 		).all();
 
 		const dbPapers = (result.results || []) as Paper[];
-
-		// Merge file-based experiments with DB papers
 		const papers = [...fileBasedExperiments, ...dbPapers];
 
 		// Get category counts
 		const categoryResult = await platform.env.DB.prepare(
 			`
-      SELECT
-        category,
-        COUNT(*) as count
+      SELECT category, COUNT(*) as count
       FROM papers
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
       GROUP BY category
@@ -58,17 +44,9 @@ export const load: PageServerLoad = async ({ platform }) => {
 			count: row.count
 		}));
 
-		return {
-			papers,
-			categories
-		};
+		return { papers, categories };
 	} catch (error) {
-		console.error('Error fetching papers:', error);
-		// Fallback to mock data + file-based experiments on error
-		const fileBasedExperiments = getFileBasedExperiments();
-		return {
-			papers: [...fileBasedExperiments, ...mockPapers],
-			categories: mockCategories
-		};
+		console.error('Error fetching papers from D1:', error);
+		return { papers: fileBasedExperiments, categories: [] };
 	}
 };
