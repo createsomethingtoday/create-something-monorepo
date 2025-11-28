@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { fly } from "svelte/transition";
 	import TrackedExperimentBadge from "./TrackedExperimentBadge.svelte";
-	import PathwayProgress from "./PathwayProgress.svelte";
 	import type { Paper } from "$lib/types/paper";
 
 	interface Props {
@@ -64,9 +63,6 @@
 			{/if}
 		</div>
 	</div>
-
-	<!-- Pathway Progress -->
-	<PathwayProgress {paper} />
 
 	<!-- Category Tag -->
 	<div class="mb-6" in:fly={{ x: -20, duration: 500, delay: 200 }}>
