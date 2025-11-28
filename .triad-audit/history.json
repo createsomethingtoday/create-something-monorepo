@@ -1,0 +1,82 @@
+[
+  {
+    "timestamp": "2025-11-28T21:43:44.016Z",
+    "scores": {
+      "dry": 10,
+      "rams": 5.7,
+      "heidegger": 4.6,
+      "overall": 6.6
+    },
+    "violations": {
+      "total": 52,
+      "critical": 0,
+      "high": 3,
+      "medium": 41,
+      "low": 8
+    }
+  },
+  {
+    "timestamp": "2025-11-28T21:48:42.482Z",
+    "scores": {
+      "dry": 10,
+      "rams": 5.7,
+      "heidegger": 7.6,
+      "overall": 7.8
+    },
+    "violations": {
+      "total": 49,
+      "critical": 0,
+      "high": 0,
+      "medium": 41,
+      "low": 8
+    }
+  },
+  {
+    "timestamp": "2025-11-28T21:50:14.224Z",
+    "scores": {
+      "dry": 10,
+      "rams": 5.7,
+      "heidegger": 7.6,
+      "overall": 7.8
+    },
+    "violations": {
+      "total": 49,
+      "critical": 0,
+      "high": 0,
+      "medium": 41,
+      "low": 8
+    }
+  },
+  {
+    "timestamp": "2025-11-28T21:52:24.348Z",
+    "scores": {
+      "dry": 10,
+      "rams": 5.7,
+      "heidegger": 7.6,
+      "overall": 7.8
+    },
+    "violations": {
+      "total": 49,
+      "critical": 0,
+      "high": 0,
+      "medium": 41,
+      "low": 8
+    }
+  },
+  {
+    "timestamp": "2025-11-28T21:54:48.722Z",
+    "scores": {
+      "dry": 10,
+      "rams": 5.7,
+      "heidegger": 7.6,
+      "overall": 7.8
+    },
+    "violations": {
+      "total": 49,
+      "critical": 0,
+      "high": 0,
+      "medium": 41,
+      "low": 8
+    }
+  }
+]

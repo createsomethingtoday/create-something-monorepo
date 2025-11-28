@@ -212,7 +212,12 @@ function findDeadExports(
 
 	for (const [file, fileExports] of exports) {
 		// Skip index files and entry points
-		if (file.includes('index.') || file.includes('+page') || file.includes('+server')) {
+		if (file.includes('index.') || file.includes('+page') || file.includes('+server') || file.includes('+layout')) {
+			continue;
+		}
+
+		// Skip SvelteKit hooks files (handle, handleError, handleFetch are framework exports)
+		if (file.includes('hooks.server') || file.includes('hooks.client')) {
 			continue;
 		}
 
@@ -221,8 +226,23 @@ function findDeadExports(
 			continue;
 		}
 
+		// Skip Svelte component files - their exports are component props
+		if (file.endsWith('.svelte')) {
+			continue;
+		}
+
 		// Skip type definition files
 		if (file.endsWith('.d.ts')) {
+			continue;
+		}
+
+		// Skip config files (exports are consumed by CLI via index.ts re-exports)
+		if (file.includes('/config.ts') || file.includes('/config.js')) {
+			continue;
+		}
+
+		// Skip reporter files (exports are consumed by CLI via index.ts re-exports)
+		if (file.includes('/reporters/')) {
 			continue;
 		}
 

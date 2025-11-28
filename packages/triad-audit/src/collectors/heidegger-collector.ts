@@ -265,6 +265,21 @@ async function findOrphanedFiles(rootPath: string, ignore: string[]): Promise<Or
 			continue;
 		}
 
+		// Skip TypeScript declaration files (ambient types)
+		if (relativePath.endsWith('.d.ts')) {
+			continue;
+		}
+
+		// Skip scripts directory (standalone utilities)
+		if (relativePath.includes('/scripts/')) {
+			continue;
+		}
+
+		// Skip SvelteKit hooks (framework entry points)
+		if (relativePath.includes('hooks.server') || relativePath.includes('hooks.client')) {
+			continue;
+		}
+
 		const isImported = importedFiles.has(file) || importedFiles.has(file.replace(/\.[^.]+$/, ''));
 
 		if (!isImported) {
@@ -358,6 +373,12 @@ async function detectCircularDependencies(
 	const seen = new Set<string>();
 
 	for (const cycle of cycles) {
+		// Skip self-referencing "cycles" (single node pointing to itself via index re-export)
+		const uniqueNodes = new Set(cycle.cycle);
+		if (uniqueNodes.size < 2) {
+			continue;
+		}
+
 		const key = [...cycle.cycle].sort().join('|');
 		if (!seen.has(key)) {
 			seen.add(key);
