@@ -1,28 +1,15 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Paper } from '$lib/types/paper';
-import { getMockPaperBySlug, getMockPapersByCategory } from '$lib/data/mockPapers';
 
 export const load: PageServerLoad = async ({ params, platform }) => {
 	const { slug } = params;
 
-	// If running in local dev mode without D1, use mock data
 	if (!platform?.env?.DB) {
-		console.log('⚠️  Running in local dev mode - using mock data for experiment:', slug);
-		const paper = getMockPaperBySlug(slug);
-		if (!paper) {
-			throw error(404, 'Experiment not found');
-		}
-		const relatedPapers = getMockPapersByCategory(paper.category)
-			.filter((p) => p.id !== paper.id)
-			.slice(0, 4);
-		return { paper, relatedPapers };
+		throw error(503, 'Database unavailable');
 	}
 
-	// Try to use D1 database, fall back to mock data on any error
 	try {
-		console.log(`✅ Attempting to query D1 database for experiment: ${slug}`);
-
 		// Fetch the specific paper by slug from D1
 		const paperResult = await platform.env.DB.prepare(
 			`
@@ -45,16 +32,7 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 			.first();
 
 		if (!paperResult) {
-			// DB query succeeded but returned no data - fall back to mock data
-			console.log('⚠️  No data in D1 - falling back to mock data for:', slug);
-			const paper = getMockPaperBySlug(slug);
-			if (!paper) {
-				throw error(404, 'Experiment not found');
-			}
-			const relatedPapers = getMockPapersByCategory(paper.category)
-				.filter((p) => p.id !== paper.id)
-				.slice(0, 4);
-			return { paper, relatedPapers };
+			throw error(404, 'Experiment not found');
 		}
 
 		// Fetch related papers from the same category
@@ -77,21 +55,15 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 			.bind(paperResult.category, paperResult.id)
 			.all();
 
-		console.log(`✅ Successfully fetched experiment from D1: ${slug}`);
 		return {
 			paper: paperResult as Paper,
 			relatedPapers: (relatedResult.results || []) as Paper[]
 		};
-	} catch (dbError) {
-		// D1 query failed - fall back to mock data
-		console.error('⚠️  D1 query failed, falling back to mock data:', dbError);
-		const paper = getMockPaperBySlug(slug);
-		if (!paper) {
-			throw error(404, 'Experiment not found');
+	} catch (err) {
+		if (err && typeof err === 'object' && 'status' in err) {
+			throw err; // Re-throw SvelteKit errors
 		}
-		const relatedPapers = getMockPapersByCategory(paper.category)
-			.filter((p) => p.id !== paper.id)
-			.slice(0, 4);
-		return { paper, relatedPapers };
+		console.error('Error fetching experiment from D1:', err);
+		throw error(500, 'Failed to load experiment');
 	}
 };

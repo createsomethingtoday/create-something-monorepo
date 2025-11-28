@@ -1,21 +1,12 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '$lib/types/paper';
-import { mockPapers, mockCategories } from '$lib/data/mockPapers';
 
 export const load: PageServerLoad = async ({ platform }) => {
+	if (!platform?.env?.DB) {
+		return { papers: [], categories: [] };
+	}
+
 	try {
-		// Access Cloudflare bindings via platform.env
-		if (!platform?.env?.DB) {
-			console.log('⚠️  No DB binding - using mock data');
-			return {
-				papers: mockPapers,
-				categories: mockCategories
-			};
-		}
-
-		console.log('✅ Using D1 database');
-
-		// Fetch all published papers
 		const result = await platform.env.DB.prepare(
 			`
       SELECT
@@ -31,12 +22,9 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		const papers = (result.results || []) as Paper[];
 
-		// Get category counts
 		const categoryResult = await platform.env.DB.prepare(
 			`
-      SELECT
-        category,
-        COUNT(*) as count
+      SELECT category, COUNT(*) as count
       FROM papers
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
       GROUP BY category
@@ -50,16 +38,9 @@ export const load: PageServerLoad = async ({ platform }) => {
 			count: row.count
 		}));
 
-		return {
-			papers,
-			categories
-		};
+		return { papers, categories };
 	} catch (error) {
-		console.error('Error fetching papers:', error);
-		// Fallback to mock data on error
-		return {
-			papers: mockPapers,
-			categories: mockCategories
-		};
+		console.error('Error fetching papers from D1:', error);
+		return { papers: [], categories: [] };
 	}
 };

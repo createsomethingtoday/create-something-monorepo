@@ -1,6 +1,5 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '$lib/types/paper';
-import { mockPapers } from '$lib/data/mockPapers';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
 
 // Sort by: featured DESC, then by most recent date DESC
@@ -18,20 +17,15 @@ function sortByFeaturedThenDate<
 }
 
 export const load: PageServerLoad = async ({ platform }) => {
+	// File-based experiments always available
+	const fileBasedExperiments = getFileBasedExperiments();
+
+	if (!platform?.env?.DB) {
+		console.log('⚠️ No DB binding - using file-based experiments only');
+		return { papers: sortByFeaturedThenDate(fileBasedExperiments) };
+	}
+
 	try {
-		// File-based experiments always available
-		const fileBasedExperiments = getFileBasedExperiments();
-
-		// Try to use D1, fallback to mock data if unavailable
-		if (!platform?.env?.DB) {
-			console.log('⚠️  No DB binding - using mock data + file-based experiments');
-			const mockExperiments = mockPapers.filter((p) => p.published);
-			const merged = [...fileBasedExperiments, ...mockExperiments];
-			return { papers: sortByFeaturedThenDate(merged) };
-		}
-
-		console.log('✅ Using D1 database for experiments + file-based experiments');
-
 		// Fetch all published papers that are interactive/executable
 		const result = await platform.env.DB.prepare(
 			`
@@ -50,10 +44,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 		const merged = [...fileBasedExperiments, ...databaseExperiments];
 		return { papers: sortByFeaturedThenDate(merged) };
 	} catch (error) {
-		console.error('Error fetching experiments:', error);
-		const mockExperiments = mockPapers.filter((p) => p.published);
-		const fileBasedExperiments = getFileBasedExperiments();
-		const merged = [...fileBasedExperiments, ...mockExperiments];
-		return { papers: sortByFeaturedThenDate(merged) };
+		console.error('Error fetching experiments from D1:', error);
+		return { papers: sortByFeaturedThenDate(fileBasedExperiments) };
 	}
 };

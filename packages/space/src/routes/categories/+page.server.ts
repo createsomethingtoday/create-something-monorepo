@@ -1,15 +1,12 @@
 import type { PageServerLoad } from './$types';
-import { mockCategories } from '$lib/data/mockPapers';
 
 export const load: PageServerLoad = async ({ platform }) => {
-  const env = platform?.env;
+	if (!platform?.env?.DB) {
+		return { categories: [] };
+	}
 
-  if (!env?.DB) {
-    return { categories: mockCategories };
-  }
-
-  try {
-    const result = await env.DB.prepare(`
+	try {
+		const result = await platform.env.DB.prepare(`
       SELECT
         category,
         COUNT(*) as count
@@ -19,15 +16,15 @@ export const load: PageServerLoad = async ({ platform }) => {
       ORDER BY count DESC
     `).all();
 
-    const categories = (result.results || []).map((row: any) => ({
-      name: row.category.charAt(0).toUpperCase() + row.category.slice(1),
-      slug: row.category,
-      count: row.count
-    }));
+		const categories = (result.results || []).map((row: any) => ({
+			name: row.category.charAt(0).toUpperCase() + row.category.slice(1),
+			slug: row.category,
+			count: row.count
+		}));
 
-    return { categories };
-  } catch (error) {
-    console.error('Database error:', error);
-    return { categories: mockCategories };
-  }
+		return { categories };
+	} catch (error) {
+		console.error('Error fetching categories from D1:', error);
+		return { categories: [] };
+	}
 };

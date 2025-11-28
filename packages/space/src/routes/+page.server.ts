@@ -1,20 +1,14 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '$lib/types/paper';
-import { mockPapers } from '$lib/data/mockPapers';
 
 export const load: PageServerLoad = async ({ platform }) => {
+	if (!platform?.env?.DB) {
+		console.log('⚠️ No DB binding available');
+		return { papers: [] };
+	}
+
 	try {
-		// Access Cloudflare bindings via platform.env
-		if (!platform?.env?.DB) {
-			console.log('⚠️  No DB binding - using mock data');
-			return {
-				papers: mockPapers.filter(p => p.is_executable)
-			};
-		}
-
-		console.log('✅ Using D1 database');
-
-		// Fetch all interactive experiments (tutorials)
+		// Fetch all interactive experiments (tutorials) from D1
 		const result = await platform.env.DB.prepare(
 			`
       SELECT
@@ -28,13 +22,9 @@ export const load: PageServerLoad = async ({ platform }) => {
     `
 		).all();
 
-		const papers = (result.results || []) as Paper[];
-
-		return { papers };
+		return { papers: (result.results || []) as Paper[] };
 	} catch (error) {
-		console.error('Error fetching papers:', error);
-		return {
-			papers: mockPapers.filter(p => p.is_executable)
-		};
+		console.error('Error fetching papers from D1:', error);
+		return { papers: [] };
 	}
 };
