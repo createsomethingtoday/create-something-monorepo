@@ -3,12 +3,25 @@ import type { RequestHandler } from './$types';
 
 interface NewsletterRequest {
 	email: string;
+	website?: string; // Honeypot field - should be empty
 }
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+const RATE_LIMIT_WINDOW = 60 * 60; // 1 hour in seconds
+const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
+
+export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	try {
 		const body = (await request.json()) as NewsletterRequest;
-		const { email } = body;
+		const { email, website } = body;
+
+		// Honeypot check - if filled, silently reject (bots fill hidden fields)
+		if (website) {
+			// Return success to not tip off the bot
+			return json({
+				success: true,
+				message: 'Successfully subscribed!'
+			});
+		}
 
 		// Validate email
 		if (!email || !email.trim()) {
@@ -38,6 +51,33 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const env = platform.env;
+
+		// Rate limiting via KV
+		const clientIP = getClientAddress();
+		const rateLimitKey = `newsletter_rate:${clientIP}`;
+
+		try {
+			const currentCount = await env.CACHE.get(rateLimitKey);
+			const count = currentCount ? parseInt(currentCount, 10) : 0;
+
+			if (count >= RATE_LIMIT_MAX) {
+				return json(
+					{
+						success: false,
+						message: 'Too many signup attempts. Please try again later.'
+					},
+					{ status: 429 }
+				);
+			}
+
+			// Increment count with TTL
+			await env.CACHE.put(rateLimitKey, String(count + 1), {
+				expirationTtl: RATE_LIMIT_WINDOW
+			});
+		} catch (kvError) {
+			// KV might not be available in dev - continue without rate limiting
+			console.warn('Rate limiting unavailable:', kvError);
+		}
 
 		// Generate unsubscribe token
 		const unsubscribeToken = btoa(`${email}:${Date.now()}`);
@@ -76,32 +116,32 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   <style>
     body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff; }
     .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-    .header { text-align: center; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-    .logo { font-size: 24px; font-weight: bold; color: #ffffff; margin-bottom: 10px; }
+    .header { margin-bottom: 40px; }
+    .logo { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.1em; text-transform: uppercase; }
     .content { line-height: 1.8; }
-    .content h1 { font-size: 28px; margin-bottom: 20px; color: #ffffff; }
     .content p { color: rgba(255, 255, 255, 0.7); margin-bottom: 20px; }
-    .footer { margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 14px; }
+    .quote { font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0; }
+    .cta { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500; }
+    .footer { margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.3); font-size: 13px; }
+    .footer a { color: rgba(255, 255, 255, 0.4); }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div class="logo">CREATE SOMETHING</div>
-      <p style="color: rgba(255, 255, 255, 0.6); margin: 0;">Systems thinking for AI-native development</p>
     </div>
 
     <div class="content">
-      <h1>Welcome to CREATE SOMETHING</h1>
-      <p>Thanks for subscribing, ${email}!</p>
-      <p>You're now part of a community focused on <strong>systematic evaluation of AI-native development</strong>.</p>
+      <p class="quote">"Weniger, aber besser."</p>
+      <p>Less, but better. This guides everything we build.</p>
+      <p>You'll receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
+      <a href="https://createsomething.ltd/ethos" class="cta">Read the Ethos</a>
     </div>
 
     <div class="footer">
-      <p>
-        <a href="https://createsomething.io">createsomething.io</a> •
-        <a href="https://createsomething.io/unsubscribe?token=${unsubscribeToken}">Unsubscribe</a>
-      </p>
+      <p>CREATE SOMETHING</p>
+      <p><a href="https://createsomething.io/unsubscribe?token=${unsubscribeToken}">Unsubscribe</a></p>
     </div>
   </div>
 </body>
