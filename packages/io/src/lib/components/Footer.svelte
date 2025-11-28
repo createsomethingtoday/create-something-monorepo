@@ -2,6 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let email = $state('');
+	let website = $state(''); // Honeypot - hidden from users, filled by bots
 	let isSubmitting = $state(false);
 	let message = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -19,7 +20,7 @@
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ email })
+				body: JSON.stringify({ email, website })
 			});
 
 			const data = await response.json();
@@ -55,6 +56,16 @@
 
 				<!-- Newsletter Form -->
 				<form onsubmit={handleSubmit} class="max-w-lg mx-auto">
+					<!-- Honeypot field - hidden from users, bots fill it -->
+					<input
+						type="text"
+						bind:value={website}
+						name="website"
+						autocomplete="off"
+						tabindex="-1"
+						class="absolute -left-[9999px] opacity-0 pointer-events-none"
+						aria-hidden="true"
+					/>
 					<div class="flex flex-col sm:flex-row gap-3">
 						<input
 							type="email"

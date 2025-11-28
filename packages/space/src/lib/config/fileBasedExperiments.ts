@@ -27,6 +27,37 @@ export interface FileBasedExperiment {
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
 	{
+		id: 'file-minimal-capture',
+		slug: 'minimal-capture',
+		title: 'Minimal Capture: The Canon\'s Reach',
+		description:
+			'An experiment in propagation: when tools built for others absorb the ethos. QR → Form → Storage → Retrieval, stripped to essence.',
+		excerpt_short: 'When the canon propagates beyond the boundary',
+		excerpt_long:
+			'Minimal Capture explores what happens when CREATE SOMETHING principles are applied to external projects. Built as a gift for someone outside the practice, the tool unconsciously absorbed the design canon—proving that "weniger, aber besser" is not a style but a way of seeing.',
+		category: 'practice',
+		tags: ['Hermeneutics', 'Design Canon', 'Heidegger', 'Gift', 'Propagation'],
+		created_at: '2025-11-27T00:00:00Z',
+		updated_at: '2025-11-27T00:00:00Z',
+		reading_time_minutes: 5,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 1,
+		ascii_art: `
+    +-------------------------------------------------+
+    |   MINIMAL CAPTURE                               |
+    |                                                 |
+    |   [QR] ──► [Form] ──► [D1] ──► [Admin]          |
+    |                                                 |
+    |   Built for another,                            |
+    |   absorbed the canon.                           |
+    |                                                 |
+    |   The ethos propagates                          |
+    |   beyond the boundary.                          |
+    +-------------------------------------------------+
+`
+	},
+	{
 		id: 'file-motion-ontology',
 		slug: 'motion-ontology',
 		title: 'Motion Ontology: Phenomenological Animation Analysis',
