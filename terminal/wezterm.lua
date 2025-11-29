@@ -95,8 +95,16 @@ end)
 config.default_cursor_style = "SteadyBar"
 
 -- Performance
+config.front_end = "WebGpu"
 config.max_fps = 120
 config.animation_fps = 1
+config.scrollback_lines = 10000
+
+-- Subtractive
+config.audible_bell = "Disabled"
+
+-- Hyperlinks: tool disappears
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
 
 -- Keys: Pane management
 config.keys = {
@@ -115,6 +123,9 @@ config.keys = {
 
 	-- Clear screen
 	{ key = "k", mods = "CMD", action = wezterm.action.ClearScrollback("ScrollbackAndViewport") },
+
+	-- Quick select (grab paths, hashes, URLs)
+	{ key = "Space", mods = "CMD|SHIFT", action = wezterm.action.QuickSelect },
 
 	-- Tab management
 	{ key = "t", mods = "CMD", action = wezterm.action.SpawnTab("CurrentPaneDomain") },

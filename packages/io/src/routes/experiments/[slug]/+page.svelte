@@ -7,7 +7,6 @@
 	import Footer from "$lib/components/Footer.svelte";
 	import StickyCTA from "$lib/components/StickyCTA.svelte";
 	import NextExperimentCard from "$lib/components/NextExperimentCard.svelte";
-	import { onMount } from "svelte";
 	import { page } from "$app/stores";
 	import confetti from "canvas-confetti";
 	import {
@@ -19,16 +18,19 @@
 	import { getNextPaper } from "$lib/utils/recommendations";
 
 	let { data }: { data: PageData } = $props();
-	const { paper, relatedPapers } = data;
 
-	// Generate full URL for sharing
-	const fullUrl = `https://createsomething.io/experiments/${paper.slug}`;
+	// Use $derived to ensure reactivity on client-side navigation
+	const paper = $derived(data.paper);
+	const relatedPapers = $derived(data.relatedPapers);
 
-	// Check if this has an interactive SPACE version
-	const hasInteractive = !!paper.interactive_demo_url;
+	// Generate full URL for sharing (must also be derived)
+	const fullUrl = $derived(`https://createsomething.io/experiments/${paper.slug}`);
 
-	// Find the next paper in the horizon (include current paper + related for full category context)
-	const nextPaper = getNextPaper([paper, ...relatedPapers], paper.slug);
+	// Check if this has an interactive SPACE version (must also be derived)
+	const hasInteractive = $derived(!!paper.interactive_demo_url);
+
+	// Find the next paper in the horizon (must also be derived)
+	const nextPaper = $derived(getNextPaper([paper, ...relatedPapers], paper.slug));
 
 	let isCompleted = $state(false);
 
@@ -37,18 +39,22 @@
 		isCompleted = false;
 	}
 
-	onMount(() => {
+	// Use $effect to handle completion state and tracking on route changes
+	$effect(() => {
+		// Track paper.slug to re-run when navigating between articles
+		const currentSlug = paper.slug;
+
 		// Track experiment view
 		if (typeof window !== 'undefined' && (window as any).trackEvent) {
 			(window as any).trackEvent('experiment_view', {
 				experiment_id: paper.id,
-				path: `/experiments/${paper.slug}`
+				path: `/experiments/${currentSlug}`
 			});
 		}
 
 		// Check if we just returned from SPACE with a completion token
 		if (validateCompletionToken($page.url)) {
-			markExperimentCompleted(paper.slug);
+			markExperimentCompleted(currentSlug);
 
 			// Trigger celebration!
 			confetti({
@@ -61,10 +67,12 @@
 			const newUrl = new URL($page.url);
 			newUrl.searchParams.delete("completed");
 			window.history.replaceState({}, "", newUrl);
-		}
 
-		// Check persistent state
-		isCompleted = isExperimentCompleted(paper.slug);
+			isCompleted = true;
+		} else {
+			// Check persistent state for this specific slug
+			isCompleted = isExperimentCompleted(currentSlug);
+		}
 	});
 </script>
 
