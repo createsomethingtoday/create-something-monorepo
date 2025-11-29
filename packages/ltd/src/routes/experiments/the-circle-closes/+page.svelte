@@ -251,7 +251,7 @@
 	.title {
 		font-size: 2.5rem;
 		font-weight: 700;
-		margin: 0 0 0.5rem 0;
+		margin: 0 auto 0.5rem auto;
 		letter-spacing: -0.02em;
 	}
 
