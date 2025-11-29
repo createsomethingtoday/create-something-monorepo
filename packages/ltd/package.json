@@ -17,6 +17,7 @@
 		"@create-something/components": "workspace:*"
 	},
 	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20251121.0",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.2.4",
 		"@sveltejs/kit": "^2.47.1",

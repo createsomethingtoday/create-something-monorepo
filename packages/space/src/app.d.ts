@@ -1,3 +1,4 @@
+/// <reference types="@cloudflare/workers-types" />
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
@@ -22,6 +23,8 @@ declare global {
 				SANDBOX_TIER: string;
 				MAX_EXECUTION_TIME: string;
 				MAX_MEMORY: string;
+				// Newsletter
+				NEWSLETTER_API_KEY: string;
 				// Browser Rendering REST API credentials
 				CF_ACCOUNT_ID: string;
 				CF_API_TOKEN: string;
