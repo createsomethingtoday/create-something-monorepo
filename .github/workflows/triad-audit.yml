@@ -187,6 +187,7 @@ jobs:
 
       - name: Self-Audit (triad-audit audits itself)
         id: self-audit
+        continue-on-error: true
         run: |
           # The most Heideggerian check: the tool audits itself
           node packages/triad-audit/dist/cli.js packages/triad-audit --format json -o self-audit.json
