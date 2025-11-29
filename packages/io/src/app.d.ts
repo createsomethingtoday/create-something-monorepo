@@ -1,3 +1,4 @@
+/// <reference types="@cloudflare/workers-types" />
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
@@ -19,6 +20,7 @@ declare global {
 				SESSIONS: KVNamespace;
 				CACHE: KVNamespace;
 				STORAGE: R2Bucket;
+				AI: Ai;
 				RESEND_API_KEY: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
