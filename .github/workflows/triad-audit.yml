@@ -49,7 +49,7 @@ jobs:
         id: audit
         run: |
           # Run audit and capture output
-          pnpm --filter=@createsomething/triad-audit exec triad-audit . --format json -o audit-result.json
+          node packages/triad-audit/dist/cli.js . --format json -o audit-result.json
 
           # Extract scores for summary
           echo "dry_score=$(jq '.scores.dry' audit-result.json)" >> $GITHUB_OUTPUT
@@ -189,7 +189,7 @@ jobs:
         id: self-audit
         run: |
           # The most Heideggerian check: the tool audits itself
-          pnpm --filter=@createsomething/triad-audit exec triad-audit packages/triad-audit --format json -o self-audit.json
+          node packages/triad-audit/dist/cli.js packages/triad-audit --format json -o self-audit.json
 
           # Extract self-score
           SELF_SCORE=$(jq '.scores.overall' self-audit.json)
