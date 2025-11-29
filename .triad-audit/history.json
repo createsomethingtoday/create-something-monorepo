@@ -126,5 +126,117 @@
       "medium": 39,
       "low": 8
     }
+  },
+  {
+    "timestamp": "2025-11-29T13:44:56.184Z",
+    "scores": {
+      "dry": 10,
+      "rams": 5.9,
+      "heidegger": 7.6,
+      "overall": 7.8
+    },
+    "violations": {
+      "total": 48,
+      "critical": 0,
+      "high": 0,
+      "medium": 40,
+      "low": 8
+    }
+  },
+  {
+    "timestamp": "2025-11-29T13:49:19.592Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.2,
+      "heidegger": 7.6,
+      "overall": 7.9
+    },
+    "violations": {
+      "total": 45,
+      "critical": 0,
+      "high": 0,
+      "medium": 40,
+      "low": 5
+    }
+  },
+  {
+    "timestamp": "2025-11-29T13:50:53.486Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.2,
+      "heidegger": 7.6,
+      "overall": 7.9
+    },
+    "violations": {
+      "total": 45,
+      "critical": 0,
+      "high": 0,
+      "medium": 40,
+      "low": 5
+    }
+  },
+  {
+    "timestamp": "2025-11-29T13:52:47.727Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.2,
+      "heidegger": 7.6,
+      "overall": 7.9
+    },
+    "violations": {
+      "total": 45,
+      "critical": 0,
+      "high": 0,
+      "medium": 40,
+      "low": 5
+    }
+  },
+  {
+    "timestamp": "2025-11-29T13:54:30.440Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.2,
+      "heidegger": 7.6,
+      "overall": 7.9
+    },
+    "violations": {
+      "total": 45,
+      "critical": 0,
+      "high": 0,
+      "medium": 40,
+      "low": 5
+    }
+  },
+  {
+    "timestamp": "2025-11-29T13:57:48.194Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.2,
+      "heidegger": 9.2,
+      "overall": 8.5
+    },
+    "violations": {
+      "total": 37,
+      "critical": 0,
+      "high": 0,
+      "medium": 32,
+      "low": 5
+    }
+  },
+  {
+    "timestamp": "2025-11-29T14:00:28.697Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.2,
+      "heidegger": 9.6,
+      "overall": 8.7
+    },
+    "violations": {
+      "total": 35,
+      "critical": 0,
+      "high": 0,
+      "medium": 30,
+      "low": 5
+    }
   }
 ]

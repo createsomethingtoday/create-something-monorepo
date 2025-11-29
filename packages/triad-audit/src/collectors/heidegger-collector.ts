@@ -185,29 +185,80 @@ function buildCompletenessHint(pkg: PackageCompleteness): string {
 async function findOrphanedFiles(rootPath: string, ignore: string[]): Promise<OrphanedFile[]> {
 	const orphaned: OrphanedFile[] = [];
 
-	// Get all source files
-	const files = await fg(['**/*.{ts,tsx,js,jsx}'], {
+	// Get all source files (including index files and Svelte for import graph building)
+	const allFiles = await fg(['**/*.{ts,tsx,js,jsx,svelte}'], {
 		cwd: rootPath,
-		ignore: [...ignore, '**/*.test.*', '**/*.spec.*', '**/index.*'],
+		ignore: [...ignore, '**/*.test.*', '**/*.spec.*'],
 		absolute: true
 	});
+
+	// Files to check for orphan status (exclude index files and Svelte files - they're entry points)
+	const files = allFiles.filter(
+		(f) => !path.basename(f).startsWith('index.') && !f.endsWith('.svelte')
+	);
 
 	// Build import graph
 	const importedFiles = new Set<string>();
 
-	for (const file of files) {
+	// Find all packages with $lib aliases (SvelteKit convention)
+	const libAliasMap = new Map<string, string>();
+	const packagesDir = path.join(rootPath, 'packages');
+	if (fs.existsSync(packagesDir)) {
+		const packages = fs.readdirSync(packagesDir).filter((name) => {
+			const pkgPath = path.join(packagesDir, name);
+			return fs.statSync(pkgPath).isDirectory();
+		});
+		for (const pkg of packages) {
+			const libPath = path.join(packagesDir, pkg, 'src', 'lib');
+			if (fs.existsSync(libPath)) {
+				libAliasMap.set(pkg, libPath);
+			}
+		}
+	}
+
+	// Use ALL files (including index) for building import graph
+	for (const file of allFiles) {
 		try {
 			const content = fs.readFileSync(file, 'utf-8');
-			const importRegex = /(?:import|from)\s*['"]([^'"]+)['"]/g;
+			// Match: import X from, import { X } from, import type { X } from, export * from, export { X } from
+			const importRegex = /(?:import\s+(?:type\s+)?(?:\*\s+as\s+\w+|(?:\{[^}]*\}|\w+)(?:\s*,\s*(?:\{[^}]*\}|\w+))*)\s+from|export\s+(?:\*|\{[^}]*\})\s+from)\s*['"]([^'"]+)['"]/g;
 			let match;
 
+			// Determine which package this file belongs to (for $lib resolution)
+			const relativePath = path.relative(rootPath, file);
+			const packageMatch = relativePath.match(/^packages\/([^/]+)/);
+			const currentPackage = packageMatch ? packageMatch[1] : null;
+
 			while ((match = importRegex.exec(content)) !== null) {
-				const importPath = match[1];
+				let importPath = match[1];
+
+				// Handle SvelteKit $lib alias
+				if (importPath.startsWith('$lib') && currentPackage && libAliasMap.has(currentPackage)) {
+					const libPath = libAliasMap.get(currentPackage)!;
+					importPath = importPath.replace('$lib', libPath);
+					// Now it's an absolute path, resolve extensions
+					const basePath = importPath.replace(/\.(js|ts)$/, '');
+					for (const ext of ['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.js']) {
+						importedFiles.add(basePath + ext);
+					}
+					continue;
+				}
+
 				if (importPath.startsWith('.')) {
-					const resolved = path.resolve(path.dirname(file), importPath);
+					// Handle ESM .js imports pointing to .ts source files
+					let resolved = path.resolve(path.dirname(file), importPath);
+
+					// If import ends with .js, also check for .ts version
+					if (resolved.endsWith('.js')) {
+						const tsVersion = resolved.replace(/\.js$/, '.ts');
+						importedFiles.add(tsVersion);
+						importedFiles.add(resolved);
+					}
+
 					// Try common extensions
+					const basePath = resolved.replace(/\.(js|ts|tsx|jsx)$/, '');
 					for (const ext of ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.js']) {
-						importedFiles.add(resolved + ext);
+						importedFiles.add(basePath + ext);
 					}
 				}
 			}

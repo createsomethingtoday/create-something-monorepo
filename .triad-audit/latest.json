@@ -1,0 +1,530 @@
+{
+  "timestamp": "2025-11-29T14:00:28.697Z",
+  "project": "create-something-monorepo",
+  "path": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo",
+  "scores": {
+    "dry": 10,
+    "rams": 6.2,
+    "heidegger": 9.6,
+    "overall": 8.7
+  },
+  "dry": {
+    "duplicateBlocks": [],
+    "similarFiles": [],
+    "duplicateConstants": [
+      {
+        "name": "ACCOUNT_ID",
+        "locations": [
+          "packages/agency/scripts/verify-bindings.ts",
+          "packages/ltd/scripts/verify-bindings.ts",
+          "packages/io/scripts/verify-bindings.ts",
+          "packages/space/scripts/verify-bindings.ts"
+        ]
+      },
+      {
+        "name": "STORAGE_KEY_PREFIX",
+        "locations": [
+          "packages/components/src/lib/utils/completion.ts",
+          "packages/space/src/lib/utils/completion.ts"
+        ]
+      }
+    ],
+    "score": 10,
+    "violations": [
+      {
+        "type": "duplicate_constant",
+        "severity": "medium",
+        "message": "Constant \"ACCOUNT_ID\" defined in 4 locations",
+        "files": [
+          "packages/agency/scripts/verify-bindings.ts",
+          "packages/ltd/scripts/verify-bindings.ts",
+          "packages/io/scripts/verify-bindings.ts",
+          "packages/space/scripts/verify-bindings.ts"
+        ],
+        "suggestion": "Move to a shared constants file"
+      }
+    ]
+  },
+  "rams": {
+    "deadExports": [
+      {
+        "file": "packages/triad-audit/src/collectors/heidegger-collector.ts",
+        "export": "X"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "animation"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "EaseKey"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "DurationKey"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "getEase"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "getDuration"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "animationVars"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "generateAnimationCSS"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "transitions"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "TransitionKey"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "export": "getTransition"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "export": "breakpoints"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "export": "BreakpointKey"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "export": "containers"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "export": "media"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "export": "breakpointVars"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "export": "generateBreakpointsCSS"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "export": "matchesBreakpoint"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/colors.ts",
+        "export": "colors"
+      },
+      {
+        "file": "packages/components/src/lib/tokens/colors.ts",
+        "export": "ColorCategory"
+      }
+    ],
+    "unusedDependencies": [],
+    "largeFiles": [
+      {
+        "file": "packages/io/src/routes/api/tufte/dashboard/+server.ts",
+        "lines": 854,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/space/src/lib/components/TerminalExperience.svelte",
+        "lines": 814,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/io/src/routes/methodology/+page.svelte",
+        "lines": 688,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/ltd/src/routes/experiments/the-circle-closes/+page.svelte",
+        "lines": 572,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/io/src/routes/experiments/agentic-visualization/+page.svelte",
+        "lines": 546,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/space/src/lib/components/ExperimentCodeEditor.svelte",
+        "lines": 523,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/space/src/routes/experiments/motion-ontology/+page.svelte",
+        "lines": 509,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/io/src/lib/components/TufteDashboard.svelte",
+        "lines": 506,
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "file": "packages/io/src/lib/agents/pm-agent/index.ts",
+        "lines": 503,
+        "suggestion": "Monitor for growth, consider refactoring"
+      }
+    ],
+    "emptyFiles": [],
+    "score": 6.2,
+    "violations": [
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"X\" is never imported",
+        "file": "packages/triad-audit/src/collectors/heidegger-collector.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"animation\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"EaseKey\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"DurationKey\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"getEase\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"getDuration\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"animationVars\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"generateAnimationCSS\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"transitions\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"TransitionKey\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"getTransition\" is never imported",
+        "file": "packages/components/src/lib/tokens/animation.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"breakpoints\" is never imported",
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"BreakpointKey\" is never imported",
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"containers\" is never imported",
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"media\" is never imported",
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"breakpointVars\" is never imported",
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"generateBreakpointsCSS\" is never imported",
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"matchesBreakpoint\" is never imported",
+        "file": "packages/components/src/lib/tokens/breakpoints.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"colors\" is never imported",
+        "file": "packages/components/src/lib/tokens/colors.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "dead_export",
+        "severity": "medium",
+        "message": "Export \"ColorCategory\" is never imported",
+        "file": "packages/components/src/lib/tokens/colors.ts",
+        "suggestion": "Remove unused export or verify it's needed externally"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 854 lines",
+        "file": "packages/io/src/routes/api/tufte/dashboard/+server.ts",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 814 lines",
+        "file": "packages/space/src/lib/components/TerminalExperience.svelte",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 688 lines",
+        "file": "packages/io/src/routes/methodology/+page.svelte",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 572 lines",
+        "file": "packages/ltd/src/routes/experiments/the-circle-closes/+page.svelte",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 546 lines",
+        "file": "packages/io/src/routes/experiments/agentic-visualization/+page.svelte",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 523 lines",
+        "file": "packages/space/src/lib/components/ExperimentCodeEditor.svelte",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 509 lines",
+        "file": "packages/space/src/routes/experiments/motion-ontology/+page.svelte",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 506 lines",
+        "file": "packages/io/src/lib/components/TufteDashboard.svelte",
+        "suggestion": "Monitor for growth, consider refactoring"
+      },
+      {
+        "type": "large_file",
+        "severity": "medium",
+        "message": "File has 503 lines",
+        "file": "packages/io/src/lib/agents/pm-agent/index.ts",
+        "suggestion": "Monitor for growth, consider refactoring"
+      }
+    ]
+  },
+  "heidegger": {
+    "packageCompleteness": [
+      {
+        "package": "agency",
+        "hasSrc": true,
+        "hasTests": true,
+        "hasReadme": true,
+        "hasPackageJson": true,
+        "completeness": 0.9999999999999999
+      },
+      {
+        "package": "components",
+        "hasSrc": true,
+        "hasTests": false,
+        "hasReadme": true,
+        "hasPackageJson": true,
+        "completeness": 0.8999999999999999
+      },
+      {
+        "package": "io",
+        "hasSrc": true,
+        "hasTests": true,
+        "hasReadme": true,
+        "hasPackageJson": true,
+        "completeness": 0.9999999999999999
+      },
+      {
+        "package": "ltd",
+        "hasSrc": true,
+        "hasTests": true,
+        "hasReadme": true,
+        "hasPackageJson": true,
+        "completeness": 0.9999999999999999
+      },
+      {
+        "package": "space",
+        "hasSrc": true,
+        "hasTests": true,
+        "hasReadme": true,
+        "hasPackageJson": true,
+        "completeness": 0.9999999999999999
+      },
+      {
+        "package": "triad-audit",
+        "hasSrc": true,
+        "hasTests": false,
+        "hasReadme": true,
+        "hasPackageJson": true,
+        "completeness": 0.8999999999999999
+      },
+      {
+        "package": "tufte",
+        "hasSrc": true,
+        "hasTests": false,
+        "hasReadme": true,
+        "hasPackageJson": true,
+        "completeness": 0.8999999999999999
+      }
+    ],
+    "orphanedFiles": [],
+    "circularDependencies": [],
+    "missingDocumentation": [
+      "packages/triad-audit/src/audit.ts",
+      "packages/triad-audit/src/collectors/dry-collector.ts",
+      "packages/triad-audit/src/collectors/heidegger-collector.ts",
+      "packages/triad-audit/src/collectors/rams-collector.ts",
+      "packages/triad-audit/src/reporters/json-reporter.ts",
+      "packages/triad-audit/src/reporters/markdown-reporter.ts",
+      "packages/space/src/lib/types/paper.ts"
+    ],
+    "score": 9.6,
+    "violations": [
+      {
+        "type": "missing_documentation",
+        "severity": "low",
+        "message": "Public exports lack JSDoc documentation",
+        "file": "packages/triad-audit/src/audit.ts",
+        "suggestion": "Add JSDoc comments to exported functions and types"
+      },
+      {
+        "type": "missing_documentation",
+        "severity": "low",
+        "message": "Public exports lack JSDoc documentation",
+        "file": "packages/triad-audit/src/collectors/dry-collector.ts",
+        "suggestion": "Add JSDoc comments to exported functions and types"
+      },
+      {
+        "type": "missing_documentation",
+        "severity": "low",
+        "message": "Public exports lack JSDoc documentation",
+        "file": "packages/triad-audit/src/collectors/heidegger-collector.ts",
+        "suggestion": "Add JSDoc comments to exported functions and types"
+      },
+      {
+        "type": "missing_documentation",
+        "severity": "low",
+        "message": "Public exports lack JSDoc documentation",
+        "file": "packages/triad-audit/src/collectors/rams-collector.ts",
+        "suggestion": "Add JSDoc comments to exported functions and types"
+      },
+      {
+        "type": "missing_documentation",
+        "severity": "low",
+        "message": "Public exports lack JSDoc documentation",
+        "file": "packages/triad-audit/src/reporters/json-reporter.ts",
+        "suggestion": "Add JSDoc comments to exported functions and types"
+      }
+    ]
+  },
+  "commendations": [
+    {
+      "level": "dry",
+      "component": "Codebase",
+      "reason": "Minimal code duplication detected"
+    },
+    {
+      "level": "rams",
+      "component": "Dependencies",
+      "reason": "No unused dependencies detected"
+    },
+    {
+      "level": "rams",
+      "component": "Files",
+      "reason": "No empty files found"
+    },
+    {
+      "level": "heidegger",
+      "component": "Architecture",
+      "reason": "No circular dependencies detected"
+    },
+    {
+      "level": "heidegger",
+      "component": "File Structure",
+      "reason": "All files are connected to the import graph"
+    }
+  ],
+  "summary": {
+    "totalViolations": 35,
+    "criticalCount": 0,
+    "highCount": 0,
+    "mediumCount": 30,
+    "lowCount": 5
+  }
+}

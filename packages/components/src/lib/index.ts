@@ -12,6 +12,3 @@ export * from './types/index.js';
 
 // Tokens (design system foundation)
 export * from './tokens/index.js';
-
-// Patterns (design system documentation)
-export * from './patterns/index.js';
