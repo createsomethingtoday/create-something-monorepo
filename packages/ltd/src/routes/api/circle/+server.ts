@@ -127,19 +127,18 @@ export const GET: RequestHandler = async ({ platform }) => {
 		];
 
 		// Count cross-references for each edge
-		// canon_references.reference_domain indicates where content lives
-		// We infer edges based on which domains have references to which principles
+		// canon_references.reference_domain indicates where the reference COMES FROM
+		// Edge strength = how many references originate from the 'from' domain
 		const edgeStrengths = await Promise.all(
 			EXPECTED_EDGES.map(async ([from, to]) => {
-				// Count references FROM one domain TO another
-				// This is simplified - a proper implementation would track principle citations
+				// Count references FROM the source domain (references to principles)
 				const result = await db
 					.prepare(
 						`SELECT COUNT(*) as count
 						 FROM canon_references
 						 WHERE reference_domain = ?`
 					)
-					.bind(to)
+					.bind(from)
 					.first<{ count: number }>();
 
 				// Normalize to 0-10 scale (cap at 10)
