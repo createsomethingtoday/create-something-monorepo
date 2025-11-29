@@ -6,10 +6,13 @@
 	import RelatedArticles from '$lib/components/RelatedArticles.svelte';
 
 	export let data: PageData;
-	const { paper, relatedPapers } = data;
 
-	// Generate full URL for sharing
-	const fullUrl = `https://createsomething.space/experiments/${paper.slug}`;
+	// Use reactive declarations to ensure reactivity on client-side navigation
+	$: paper = data.paper;
+	$: relatedPapers = data.relatedPapers;
+
+	// Generate full URL for sharing (must also be reactive)
+	$: fullUrl = `https://createsomething.agency/experiments/${paper.slug}`;
 </script>
 
 <svelte:head>

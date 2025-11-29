@@ -8,7 +8,6 @@
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
 	import { isExecutable, isCodeExperiment } from '$lib/types/paper';
 	import { getNextPaper } from '$lib/utils/recommendations';
-	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import {
 		markExperimentCompleted,
@@ -17,42 +16,49 @@
 	} from '$lib/utils/completion';
 
 	let { data }: { data: PageData } = $props();
-	const { paper, relatedPapers } = data;
 
-	// Check experiment type
-	const canRunTerminal = isExecutable(paper);
-	const isCodeEditor = isCodeExperiment(paper);
+	// Use $derived to ensure reactivity on client-side navigation
+	const paper = $derived(data.paper);
+	const relatedPapers = $derived(data.relatedPapers);
+
+	// Check experiment type (must also be derived)
+	const canRunTerminal = $derived(isExecutable(paper));
+	const isCodeEditor = $derived(isCodeExperiment(paper));
 
 	// Completion tracking
 	let isCompleted = $state(false);
 
-	// Next paper recommendation
-	const nextPaper = getNextPaper([paper, ...relatedPapers], paper.slug);
+	// Next paper recommendation (must also be derived)
+	const nextPaper = $derived(getNextPaper([paper, ...relatedPapers], paper.slug));
 
-	// Generate URLs
-	const fullUrl = `https://createsomething.space/experiments/${paper.slug}`;
-	const ioUrl = `https://createsomething.io/experiments/${paper.slug}`;
-	const returnUrl = `${ioUrl}?completed=true`;
+	// Generate URLs (must also be derived)
+	const fullUrl = $derived(`https://createsomething.space/experiments/${paper.slug}`);
+	const ioUrl = $derived(`https://createsomething.io/experiments/${paper.slug}`);
+	const returnUrl = $derived(`${ioUrl}?completed=true`);
 
 	function handleComplete() {
 		isCompleted = true;
 		markExperimentCompleted(paper.slug);
 	}
 
-	onMount(() => {
+	// Use $effect to handle completion state on route changes
+	$effect(() => {
+		// Track paper.slug to re-run when navigating between articles
+		const currentSlug = paper.slug;
+
 		// Check if we just returned from .io with a completion token
 		if (validateCompletionToken($page.url)) {
-			markExperimentCompleted(paper.slug);
+			markExperimentCompleted(currentSlug);
 			isCompleted = true;
 
 			// Clean up URL without reloading
 			const newUrl = new URL($page.url);
 			newUrl.searchParams.delete('completed');
 			window.history.replaceState({}, '', newUrl);
+		} else {
+			// Check persistent state for this specific slug
+			isCompleted = isExperimentCompleted(currentSlug);
 		}
-
-		// Check persistent state
-		isCompleted = isExperimentCompleted(paper.slug);
 	});
 </script>
 

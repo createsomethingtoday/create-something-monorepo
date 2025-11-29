@@ -1,15 +1,18 @@
 /**
  * Base Paper interface used across all Create Something properties.
  * Represents research papers, experiments, and articles.
+ *
+ * Note: Some fields are optional to support both list views (minimal fields)
+ * and detail views (full content).
  */
 export interface Paper {
   id: string
   title: string
   category: string
-  content: string
+  content?: string | null  // Optional for list views
   html_content?: string | null
   reading_time: number
-  difficulty_level?: string | null
+  difficulty_level?: 'beginner' | 'intermediate' | 'advanced' | string | null
   technical_focus?: string | null
   published_on?: string | null
   excerpt_short?: string | null
@@ -41,4 +44,6 @@ export interface Paper {
   order?: number
   summary?: string | null
   code_snippet?: string | null
+  // Optional tags for papers with tag relationships
+  tags?: Array<{ id: string; name: string; slug: string }> | null
 }

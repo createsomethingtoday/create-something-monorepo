@@ -4,16 +4,21 @@
 	interface Props {
 		title: string;
 		url: string;
+		isCompleted?: boolean;
 	}
 
-	let { title, url }: Props = $props();
+	let { title, url, isCompleted = false }: Props = $props();
 
-	const shareLinks = {
-		twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
-		facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+	let shareText = $derived(
+		isCompleted ? `I just completed ${title} on Create Something!` : title
+	);
+
+	const shareLinks = $derived({
+		twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`,
+		facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(shareText)}`,
 		linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-		reddit: `https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
-	};
+		reddit: `https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(shareText)}`,
+	});
 
 	const copyToClipboard = async () => {
 		try {
