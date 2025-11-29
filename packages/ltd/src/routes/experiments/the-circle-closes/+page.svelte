@@ -313,6 +313,7 @@
 		margin: 0 0 0.5rem 0;
 		display: flex;
 		align-items: baseline;
+		justify-content: center;
 		gap: 0.75rem;
 	}
 
@@ -327,6 +328,7 @@
 		color: rgba(255, 255, 255, 0.5);
 		margin: 0 0 1.5rem 0;
 		line-height: 1.5;
+		text-align: center;
 	}
 
 	.proof-content {
