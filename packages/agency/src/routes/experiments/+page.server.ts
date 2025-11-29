@@ -18,9 +18,9 @@ export const load: PageServerLoad = async ({ platform }) => {
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
       ORDER BY featured DESC, COALESCE(published_at, created_at) DESC
     `
-		).all();
+		).all<Paper>();
 
-		return { papers: (result.results || []) as Paper[] };
+		return { papers: result.results || [] };
 	} catch (error) {
 		console.error('Error fetching experiments from D1:', error);
 		return { papers: [] };

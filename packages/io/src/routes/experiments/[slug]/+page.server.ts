@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ params, platform }) => {
       `
 		)
 			.bind(slug)
-			.first();
+			.first<Paper>();
 
 		if (!paperResult) {
 			throw error(404, 'Experiment not found');
@@ -48,11 +48,11 @@ export const load: PageServerLoad = async ({ params, platform }) => {
       `
 		)
 			.bind(paperResult.category, paperResult.id)
-			.all();
+			.all<Paper>();
 
 		return {
-			paper: paperResult as Paper,
-			relatedPapers: (relatedResult.results || []) as Paper[]
+			paper: paperResult,
+			relatedPapers: relatedResult.results || []
 		};
 	} catch (err) {
 		if (err && typeof err === 'object' && 'status' in err) {

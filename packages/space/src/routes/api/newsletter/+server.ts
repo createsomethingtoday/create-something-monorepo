@@ -161,7 +161,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			);
 		}
 
-		const resendData = await resendResponse.json();
+		const resendData = (await resendResponse.json()) as { id: string };
 
 		return json({
 			success: true,

@@ -1,6 +1,11 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
+interface TagRequest {
+	paper_id?: string;
+	tag_ids?: string[];
+}
+
 export const GET: RequestHandler = async ({ platform }) => {
 	const db = platform?.env?.DB;
 
@@ -29,7 +34,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { paper_id } = await request.json();
+		const { paper_id } = (await request.json()) as TagRequest;
 
 		if (!paper_id) {
 			return json({ error: 'Paper ID required' }, { status: 400 });
@@ -60,7 +65,7 @@ export const PATCH: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { paper_id, tag_ids } = await request.json();
+		const { paper_id, tag_ids } = (await request.json()) as TagRequest;
 
 		if (!paper_id) {
 			return json({ error: 'Paper ID required' }, { status: 400 });

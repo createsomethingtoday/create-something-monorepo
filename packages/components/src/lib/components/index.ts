@@ -11,3 +11,4 @@ export { default as CategorySection } from './CategorySection.svelte';
 export { default as ShareButtons } from './ShareButtons.svelte';
 export { default as QuoteBlock } from './QuoteBlock.svelte';
 export { default as Analytics } from './Analytics.svelte';
+export { default as RelatedArticles } from './RelatedArticles.svelte';

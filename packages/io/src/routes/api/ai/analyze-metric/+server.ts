@@ -1,9 +1,15 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
 
+interface MetricAnalysisRequest {
+	metric?: string;
+	label?: string;
+	context?: string;
+}
+
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
-		const { metric, label, context } = await request.json();
+		const { metric, label, context } = (await request.json()) as MetricAnalysisRequest;
 
 		if (!metric && !label) {
 			return json({ error: 'metric or label required' }, { status: 400 });
@@ -65,8 +71,10 @@ Respond with ONLY a JSON object (no markdown, no explanation) in this exact form
 	} catch (error) {
 		console.error('Error in AI metric analysis:', error);
 		// Fallback to heuristic-based analysis
-		const { metric, label } = await request.json().catch(() => ({ metric: '', label: '' }));
-		return json(analyzeMetricHeuristic(metric, label));
+		const { metric, label } = (await request
+			.json()
+			.catch(() => ({ metric: '', label: '' }))) as MetricAnalysisRequest;
+		return json(analyzeMetricHeuristic(metric || '', label || ''));
 	}
 };
 

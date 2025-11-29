@@ -38,7 +38,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 export const POST: RequestHandler = async ({ request, platform }) => {
   try {
-    const { key, state, ttl } = await request.json()
+    const { key, state, ttl } = (await request.json()) as { key?: string; state?: unknown; ttl?: number }
 
     if (!key || !state) {
       return json({ error: 'Missing key or state' }, { status: 400 })
@@ -63,7 +63,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 export const DELETE: RequestHandler = async ({ request, platform }) => {
   try {
-    const { key } = await request.json()
+    const { key } = (await request.json()) as { key?: string }
 
     if (!key) {
       return json({ error: 'Missing key parameter' }, { status: 400 })

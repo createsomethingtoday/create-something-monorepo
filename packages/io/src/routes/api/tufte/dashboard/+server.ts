@@ -792,17 +792,17 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 				}
 			},
 
-			topPages: (topPagesResult.results || []) as TableItem[],
-			topExperiments: (topExperimentsResult.results || []) as TableItem[],
-			topCountries: (topCountriesResult.results || []) as TableItem[],
-			topReferrers: (topReferrersResult.results || []) as TableItem[],
+			topPages: (topPagesResult.results || []) as unknown as TableItem[],
+			topExperiments: (topExperimentsResult.results || []) as unknown as TableItem[],
+			topCountries: (topCountriesResult.results || []) as unknown as TableItem[],
+			topReferrers: (topReferrersResult.results || []) as unknown as TableItem[],
 
-			dailyViews: (dailyViewsResult.results || []) as DailyData[],
+			dailyViews: (dailyViewsResult.results || []) as unknown as DailyData[],
 
 			propertySeries,
 			viewsByProperty,
 
-			hourlyActivity: (hourlyViewsResult.results || []) as HourlyData[],
+			hourlyActivity: (hourlyViewsResult.results || []) as unknown as HourlyData[],
 
 			actionsByType: (actionsByTypeResult.results || []) as DistributionSegment[],
 

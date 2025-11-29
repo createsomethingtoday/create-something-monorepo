@@ -1,6 +1,11 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
+interface SubmissionRequest {
+	id?: string;
+	status?: 'unread' | 'read' | 'archived';
+}
+
 export const GET: RequestHandler = async ({ platform }) => {
 	const db = platform?.env?.DB;
 
@@ -31,7 +36,7 @@ export const PATCH: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { id, status } = await request.json();
+		const { id, status } = (await request.json()) as SubmissionRequest;
 
 		if (!id || !status) {
 			return json({ error: 'Submission ID and status required' }, { status: 400 });
@@ -61,7 +66,7 @@ export const DELETE: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { id } = await request.json();
+		const { id } = (await request.json()) as SubmissionRequest;
 
 		if (!id) {
 			return json({ error: 'Submission ID required' }, { status: 400 });

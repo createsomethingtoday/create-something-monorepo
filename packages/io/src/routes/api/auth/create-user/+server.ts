@@ -10,9 +10,16 @@ async function hashPassword(password: string): Promise<string> {
 	return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+interface CreateUserRequest {
+	email?: string;
+	username?: string;
+	password?: string;
+	role?: string;
+}
+
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
-		const { email, username, password, role = 'user' } = await request.json();
+		const { email, username, password, role = 'user' } = (await request.json()) as CreateUserRequest;
 
 		if (!email || !password) {
 			return json({ error: 'Email and password are required' }, { status: 400 });
