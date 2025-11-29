@@ -53,33 +53,15 @@ export async function interpretMotion(
 			url
 		);
 
-		// Convert screenshot to base64 for multimodal input
-		const screenshotBase64 = arrayBufferToBase64(screenshot);
-
 		// Call Workers AI with vision model
-		// Cloudflare format: type 'image' with raw base64 (no data URL prefix)
-		const response = await ai.run('@cf/meta/llama-3.2-11b-vision-instruct', {
-			messages: [
-				{
-					role: 'system',
-					content: PHENOMENOLOGICAL_SYSTEM_PROMPT
-				},
-				{
-					role: 'user',
-					content: [
-						{
-							type: 'text',
-							text: `Analyze this UI motion:\n\n${technicalContext}\n\nProvide your analysis in JSON format as specified.`
-						},
-						{
-							type: 'image',
-							image: screenshotBase64
-						}
-					]
-				}
-			],
-			max_tokens: 1024,
-			temperature: 0.3 // Lower temperature for more consistent analysis
+		// Using LLaVA - no license agreement required unlike Llama 3.2 vision
+		// LLaVA uses simpler format: image (as number array) + prompt
+		const fullPrompt = `${PHENOMENOLOGICAL_SYSTEM_PROMPT}\n\nAnalyze this UI motion:\n\n${technicalContext}\n\nProvide your analysis in JSON format as specified.`;
+
+		const response = await ai.run('@cf/llava-hf/llava-1.5-7b-hf', {
+			image: Array.from(new Uint8Array(screenshot)),
+			prompt: fullPrompt,
+			max_tokens: 1024
 		});
 
 		// Extract response text
