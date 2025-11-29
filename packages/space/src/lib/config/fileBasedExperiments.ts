@@ -45,8 +45,9 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		difficulty: 'intermediate',
 		is_file_based: true,
 		is_executable: 1,
-		// Hermeneutic Circle: Tests how canon propagates
-		tests_principles: ['rams-principle-2', 'rams-principle-4', 'rams-principle-10'], // Useful, Understandable, As little as possible
+		// Hermeneutic Circle: Evidence is QUALITATIVE, not quantitative
+		// The artifact's existence proves canon propagation - no execution metrics needed
+		// "The tool already embodies the principles. Measuring clicks adds noise."
 		ascii_art: `
     +-------------------------------------------------+
     |   MINIMAL CAPTURE                               |
