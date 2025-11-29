@@ -22,9 +22,9 @@ export const load: PageServerLoad = async ({ platform }) => {
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
       ORDER BY featured DESC, COALESCE(published_at, created_at) DESC
     `
-		).all();
+		).all<Paper>();
 
-		const dbPapers = (result.results || []) as Paper[];
+		const dbPapers = result.results || [];
 		const papers = [...fileBasedExperiments, ...dbPapers];
 
 		// Get category counts

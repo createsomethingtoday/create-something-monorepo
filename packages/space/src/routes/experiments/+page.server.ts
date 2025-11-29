@@ -38,9 +38,9 @@ export const load: PageServerLoad = async ({ platform }) => {
       FROM papers
       WHERE published = 1 AND is_hidden = 0 AND archived = 0 AND is_executable = 1
     `
-		).all();
+		).all<Paper>();
 
-		const databaseExperiments = (result.results || []) as Paper[];
+		const databaseExperiments = result.results || [];
 		const merged = [...fileBasedExperiments, ...databaseExperiments];
 		return { papers: sortByFeaturedThenDate(merged) };
 	} catch (error) {

@@ -33,7 +33,17 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 	}
 
 	const env = platform.env as unknown as PMAgentWithGmailEnv;
-	const { action, contact_id, approved, thread_id, gmail_query } = await request.json();
+
+	interface AgentRequest {
+		action?: string;
+		contact_id?: number;
+		approved?: boolean;
+		thread_id?: string;
+		gmail_query?: string;
+	}
+
+	const { action, contact_id, approved, thread_id, gmail_query } =
+		(await request.json()) as AgentRequest;
 
 	try {
 		switch (action) {

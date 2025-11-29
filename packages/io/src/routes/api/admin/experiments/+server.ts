@@ -1,6 +1,17 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
+interface ExperimentRequest {
+	id?: string;
+	title?: string;
+	description?: string;
+	content?: string;
+	category?: string;
+	url?: string;
+	featured?: boolean;
+	published?: boolean;
+}
+
 export const GET: RequestHandler = async ({ platform }) => {
 	const db = platform?.env?.DB;
 
@@ -35,7 +46,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	try {
 		const { title, description, content, category, url, featured, published } =
-			await request.json();
+			(await request.json()) as ExperimentRequest;
 
 		if (!title) {
 			return json({ error: 'Title is required' }, { status: 400 });
@@ -83,7 +94,8 @@ export const PATCH: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { id, featured, title, description, content, category, url, published } = await request.json();
+		const { id, featured, title, description, content, category, url, published } =
+			(await request.json()) as ExperimentRequest;
 
 		if (!id) {
 			return json({ error: 'Experiment ID required' }, { status: 400 });
@@ -149,7 +161,7 @@ export const DELETE: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { id } = await request.json();
+		const { id } = (await request.json()) as ExperimentRequest;
 
 		if (!id) {
 			return json({ error: 'Experiment ID required' }, { status: 400 });

@@ -1,6 +1,19 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
+interface Tag {
+	id: string;
+	name: string;
+	slug: string;
+}
+
+interface PaperBasic {
+	id: string;
+	title: string;
+	category: string;
+	content: string;
+}
+
 export const POST: RequestHandler = async ({ platform }) => {
 	const db = platform?.env?.DB;
 
@@ -10,11 +23,13 @@ export const POST: RequestHandler = async ({ platform }) => {
 
 	try {
 		// Get all tags
-		const tagsResult = await db.prepare('SELECT * FROM tags').all();
+		const tagsResult = await db.prepare('SELECT * FROM tags').all<Tag>();
 		const tags = tagsResult.results || [];
 
 		// Get all experiments/papers
-		const papersResult = await db.prepare('SELECT id, title, category, content FROM papers').all();
+		const papersResult = await db
+			.prepare('SELECT id, title, category, content FROM papers')
+			.all<PaperBasic>();
 		const papers = papersResult.results || [];
 
 		let tagsApplied = 0;

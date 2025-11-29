@@ -3,7 +3,7 @@
 	import ArticleHeader from '$lib/components/ArticleHeader.svelte';
 	import ExperimentRuntime from '$lib/components/ExperimentRuntime.svelte';
 	import ExperimentCodeEditor from '$lib/components/ExperimentCodeEditor.svelte';
-	import RelatedArticles from '$lib/components/RelatedArticles.svelte';
+	import { RelatedArticles } from '@create-something/components';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
 	import { isExecutable, isCodeExperiment } from '$lib/types/paper';

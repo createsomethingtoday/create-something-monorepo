@@ -2,8 +2,7 @@
 	import type { PageData } from "./$types";
 	import ArticleHeader from "$lib/components/ArticleHeader.svelte";
 	import ArticleContent from "$lib/components/ArticleContent.svelte";
-	import { ShareButtons, SEO } from "@create-something/components";
-	import RelatedArticles from "$lib/components/RelatedArticles.svelte";
+	import { ShareButtons, SEO, RelatedArticles } from "@create-something/components";
 	import Footer from "$lib/components/Footer.svelte";
 	import StickyCTA from "$lib/components/StickyCTA.svelte";
 	import NextExperimentCard from "$lib/components/NextExperimentCard.svelte";

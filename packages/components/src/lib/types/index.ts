@@ -1,3 +1,3 @@
 // Type exports
-export type { Paper } from './paper.js';
+export type { Paper, AnalyticsEventRequest } from './paper.js';
 export type { Quote } from './common.js';

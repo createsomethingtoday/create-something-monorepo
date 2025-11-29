@@ -3,7 +3,7 @@
 	import ArticleHeader from '$lib/components/ArticleHeader.svelte';
 	import ArticleContent from '$lib/components/ArticleContent.svelte';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
-	import RelatedArticles from '$lib/components/RelatedArticles.svelte';
+	import { RelatedArticles } from '@create-something/components';
 
 	export let data: PageData;
 

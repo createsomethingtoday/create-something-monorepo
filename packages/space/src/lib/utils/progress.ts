@@ -71,8 +71,8 @@ export async function loadProgress(paperId: string): Promise<ProgressState | nul
       return null
     }
 
-    const data = await response.json()
-    return data.state as ProgressState
+    const data = (await response.json()) as { state: ProgressState }
+    return data.state
   } catch (error) {
     console.warn('Failed to load progress:', error)
     return null

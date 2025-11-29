@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import type { AnalyticsEventRequest } from '@create-something/components/types';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const db = platform?.env?.DB;
@@ -10,7 +11,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	try {
 		const { event_type, property, path, experiment_id, tag_id, referrer } =
-			await request.json();
+			(await request.json()) as AnalyticsEventRequest;
 
 		if (!event_type) {
 			return json({ error: 'event_type is required' }, { status: 400 });

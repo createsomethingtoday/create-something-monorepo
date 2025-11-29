@@ -19,9 +19,14 @@ function generateSessionToken(): string {
 	return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+interface LoginRequest {
+	email?: string;
+	password?: string;
+}
+
 export const POST: RequestHandler = async ({ request, platform, cookies }) => {
 	try {
-		const { email, password } = await request.json();
+		const { email, password } = (await request.json()) as LoginRequest;
 
 		if (!email || !password) {
 			return json({ error: 'Email and password are required' }, { status: 400 });

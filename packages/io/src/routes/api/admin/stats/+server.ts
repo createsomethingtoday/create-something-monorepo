@@ -9,12 +9,14 @@ export const GET: RequestHandler = async ({ platform }) => {
 	}
 
 	try {
+		type CountResult = { count: number };
+
 		// Get experiments count (from papers table)
 		let experimentsCount = 0;
 		try {
 			const experimentsResult = await db
 				.prepare('SELECT COUNT(*) as count FROM papers WHERE published = 1')
-				.first();
+				.first<CountResult>();
 			experimentsCount = experimentsResult?.count || 0;
 		} catch (e) {
 			console.error('Error counting experiments:', e);
@@ -25,7 +27,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 		try {
 			const submissionsResult = await db
 				.prepare('SELECT COUNT(*) as count FROM contact_submissions')
-				.first();
+				.first<CountResult>();
 			submissionsCount = submissionsResult?.count || 0;
 		} catch (e) {
 			console.error('Error counting submissions:', e);
@@ -36,7 +38,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 		try {
 			const subscribersResult = await db
 				.prepare('SELECT COUNT(*) as count FROM newsletter_subscribers WHERE active = 1')
-				.first();
+				.first<CountResult>();
 			subscribersCount = subscribersResult?.count || 0;
 		} catch (e) {
 			console.error('Error counting subscribers:', e);
@@ -50,7 +52,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 					`SELECT COUNT(*) as count FROM experiment_executions
 					WHERE created_at >= datetime('now', '-30 days')`
 				)
-				.first();
+				.first<CountResult>();
 			executionsCount = executionsResult?.count || 0;
 		} catch (e) {
 			console.error('Error counting executions:', e);

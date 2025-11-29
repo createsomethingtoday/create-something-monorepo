@@ -18,9 +18,9 @@ export const load: PageServerLoad = async ({ platform }) => {
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
       ORDER BY featured DESC, COALESCE(published_at, created_at) DESC
     `
-		).all();
+		).all<Paper>();
 
-		const papers = (result.results || []) as Paper[];
+		const papers = result.results || [];
 
 		const categoryResult = await platform.env.DB.prepare(
 			`

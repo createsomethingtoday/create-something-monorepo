@@ -1,4 +1,17 @@
 /**
+ * Analytics Event Request - shared across all properties
+ * Used for tracking page views, experiments, etc.
+ */
+export interface AnalyticsEventRequest {
+  event_type?: string;
+  property?: string;
+  path?: string;
+  experiment_id?: string;
+  tag_id?: string;
+  referrer?: string;
+}
+
+/**
  * Base Paper interface used across all Create Something properties.
  * Represents research papers, experiments, and articles.
  *
