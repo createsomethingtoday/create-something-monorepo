@@ -18,6 +18,27 @@
 
 	let { data }: { data: PageData } = $props();
 
+	// Experiment tracking
+	const PAPER_ID = 'file-motion-ontology';
+	const sessionId = crypto.randomUUID();
+
+	async function trackExperiment(action: 'start' | 'complete' | 'error', extra?: Record<string, unknown>) {
+		try {
+			await fetch('/api/experiments/track', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					action,
+					paper_id: PAPER_ID,
+					session_id: sessionId,
+					...extra
+				})
+			});
+		} catch {
+			// Silent fail - tracking shouldn't break the experiment
+		}
+	}
+
 	// Form state
 	let url = $state('');
 	let triggerType: TriggerType = $state('load');
@@ -80,6 +101,9 @@
 		error = null;
 		result = null;
 
+		// Track experiment start
+		await trackExperiment('start');
+
 		try {
 			const response = await fetch('/api/motion/analyze', {
 				method: 'POST',
@@ -100,12 +124,27 @@
 
 			if (!data.success) {
 				error = data.error || 'Analysis failed';
+				await trackExperiment('error', { error_message: error });
 				return;
 			}
 
 			result = data;
+
+			// Track successful completion
+			await trackExperiment('complete', {
+				metrics: {
+					url,
+					triggerType,
+					judgment: data.phenomenological?.judgment,
+					disclosure: data.phenomenological?.disclosure,
+					animationsFound: data.technical?.animations?.length || 0,
+					transitionsFound: data.technical?.transitions?.length || 0,
+					duration: data.metadata?.duration
+				}
+			});
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Unknown error occurred';
+			await trackExperiment('error', { error_message: error });
 		} finally {
 			isAnalyzing = false;
 		}
