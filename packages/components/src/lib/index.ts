@@ -1,5 +1,5 @@
 // Main library exports
-// Re-export all components, utils, and types
+// Re-export all components, utils, types, tokens, and patterns
 
 // Components
 export * from './components/index.js';
@@ -9,3 +9,9 @@ export * from './utils/index.js';
 
 // Types
 export * from './types/index.js';
+
+// Tokens (design system foundation)
+export * from './tokens/index.js';
+
+// Patterns (design system documentation)
+export * from './patterns/index.js';
