@@ -72,6 +72,31 @@
 				<span class="tag">{tag}</span>
 			{/each}
 		</div>
+
+		<!-- ASCII Art -->
+		<pre class="ascii-art">{`
+       ┌─────────────────────────────────────────────────────┐
+       │                                                     │
+       │            .ltd ◄──────────────────┐                │
+       │          (Philosophy)              │                │
+       │              │                     │                │
+       │              ▼                     │                │
+       │            .io                     │                │
+       │          (Research)            feedback             │
+       │              │                     │                │
+       │              ▼                     │                │
+       │          .space                    │                │
+       │         (Practice)                 │                │
+       │              │                     │                │
+       │              ▼                     │                │
+       │          .agency ──────────────────┘                │
+       │         (Services)                                  │
+       │                                                     │
+       │         The hermeneutic circle closes               │
+       │         when practice informs philosophy            │
+       │                                                     │
+       └─────────────────────────────────────────────────────┘
+`}</pre>
 	</header>
 
 	<div class="three-proofs">
@@ -235,6 +260,21 @@
 	.header {
 		margin-bottom: 4rem;
 		text-align: center;
+	}
+
+	.ascii-art {
+		margin: 2rem auto;
+		padding: 1rem;
+		background: rgba(0, 0, 0, 0.3);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 8px;
+		font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+		font-size: 0.65rem;
+		line-height: 1.3;
+		color: rgba(255, 255, 255, 0.6);
+		overflow-x: auto;
+		white-space: pre;
+		text-align: left;
 	}
 
 	.meta {
