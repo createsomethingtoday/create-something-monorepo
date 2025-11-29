@@ -166,13 +166,16 @@ All code in this monorepo follows **Dieter Rams' 10 Principles of Good Design**:
 
 ## Contributing
 
-This is a private monorepo. For collaborators:
+Contributions are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
-1. Create a feature branch
-2. Make changes in relevant packages
-3. Run `pnpm check` and `pnpm format`
-4. Submit PR with clear description
-5. Reference which canonical principles your changes embody
+Quick start for contributors:
+
+1. Fork and clone the repository
+2. Create a feature branch
+3. Make changes in relevant packages
+4. Run `pnpm check` and `pnpm format`
+5. Submit PR with clear description
+6. Reference which canonical principles your changes embody
 
 ## License
 
