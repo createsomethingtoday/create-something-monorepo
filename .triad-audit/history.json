@@ -78,5 +78,21 @@
       "medium": 41,
       "low": 8
     }
+  },
+  {
+    "timestamp": "2025-11-28T22:48:51.729Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.3,
+      "heidegger": 7.6,
+      "overall": 7.9
+    },
+    "violations": {
+      "total": 46,
+      "critical": 0,
+      "high": 0,
+      "medium": 38,
+      "low": 8
+    }
   }
 ]
