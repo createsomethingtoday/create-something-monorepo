@@ -13,6 +13,13 @@
 		}
 	],
 
+	"kv_namespaces": [
+		{
+			"binding": "CIRCLE_DATA",
+			"id": "f8cdafbe08954630abef1266d437ce77"
+		}
+	],
+
 	"vars": {
 		"ENVIRONMENT": "production"
 	}

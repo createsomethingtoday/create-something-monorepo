@@ -23,6 +23,8 @@ export interface FileBasedExperiment {
 	is_file_based: true;
 	is_executable: 1;
 	ascii_art?: string;
+	// Hermeneutic Circle: Which principles does this experiment test?
+	tests_principles?: string[];
 }
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
@@ -43,6 +45,8 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		difficulty: 'intermediate',
 		is_file_based: true,
 		is_executable: 1,
+		// Hermeneutic Circle: Tests how canon propagates
+		tests_principles: ['rams-principle-2', 'rams-principle-4', 'rams-principle-10'], // Useful, Understandable, As little as possible
 		ascii_art: `
     +-------------------------------------------------+
     |   MINIMAL CAPTURE                               |
@@ -74,6 +78,8 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		difficulty: 'advanced',
 		is_file_based: true,
 		is_executable: 1,
+		// Hermeneutic Circle: Tests Rams principles on animation
+		tests_principles: ['rams-principle-5', 'rams-principle-10'], // Unobtrusive, As little as possible
 		ascii_art: `
     +-------------------------------------------------+
     |   MOTION ONTOLOGY                               |
