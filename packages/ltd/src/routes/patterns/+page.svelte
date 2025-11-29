@@ -238,6 +238,19 @@
 					<p><strong>Circle Closes:</strong> The tool recedes. The user dwells. Zuhandenheit achieved.</p>
 				</div>
 			</div>
+
+			<!-- Source -->
+			<div class="border-t border-white/10 pt-6 mt-6">
+				<h4 class="text-sm font-semibold mb-4 opacity-70">Source</h4>
+				<a
+					href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/terminal"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-xs font-mono opacity-50 hover:opacity-100 transition-opacity"
+				>
+					/terminal/wezterm.lua · shell-config.zsh
+				</a>
+			</div>
 		</div>
 	</div>
 </section>

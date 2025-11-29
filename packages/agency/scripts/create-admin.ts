@@ -1,6 +1,9 @@
 /**
  * Script to create the admin user in the database
  * Run this once to seed the admin user
+ *
+ * Usage:
+ *   ADMIN_EMAIL=you@example.com ADMIN_USERNAME=you ADMIN_PASSWORD=secure123 npx tsx create-admin.ts
  */
 
 // Simple password hashing using Web Crypto API (matches the hash in create-user API)
@@ -13,10 +16,24 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function createAdminUser() {
-	const email = 'micah@createsomething.io';
-	const password = '***REMOVED***';
-	const username = 'micah';
+	const email = process.env.ADMIN_EMAIL;
+	const password = process.env.ADMIN_PASSWORD;
+	const username = process.env.ADMIN_USERNAME;
 	const role = 'admin';
+
+	// Validate required environment variables
+	if (!email || !password || !username) {
+		console.error('Error: Missing required environment variables.\n');
+		console.error('Usage:');
+		console.error(
+			'  ADMIN_EMAIL=you@example.com ADMIN_USERNAME=you ADMIN_PASSWORD=secure123 npx tsx create-admin.ts\n'
+		);
+		console.error('Required variables:');
+		console.error('  ADMIN_EMAIL    - Admin user email address');
+		console.error('  ADMIN_USERNAME - Admin username');
+		console.error('  ADMIN_PASSWORD - Admin password (use a strong password)');
+		process.exit(1);
+	}
 
 	console.log('Creating admin user...');
 	console.log('Email:', email);
@@ -41,15 +58,8 @@ VALUES (
 );`);
 	console.log('\n=== END SQL ===\n');
 
-	console.log('\nYou can run this SQL statement directly in Cloudflare D1 or use the API:');
-	console.log(`\ncurl -X POST https://your-domain.com/api/auth/create-user \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "email": "${email}",
-    "username": "${username}",
-    "password": "${password}",
-    "role": "${role}"
-  }'`);
+	console.log('Run this SQL statement in Cloudflare D1 dashboard or via wrangler:');
+	console.log('  wrangler d1 execute DB_NAME --command "INSERT INTO users ..."');
 }
 
 createAdminUser();
