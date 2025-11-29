@@ -226,7 +226,7 @@
 
 <style>
 	.experiment {
-		max-width: 900px;
+		max-width: 720px;
 		margin: 0 auto;
 		padding: 2rem;
 		font-family:
@@ -291,18 +291,12 @@
 		color: rgba(255, 255, 255, 0.6);
 	}
 
-	/* Three Proofs Grid */
+	/* Three Proofs - Stacked Layout */
 	.three-proofs {
-		display: grid;
+		display: flex;
+		flex-direction: column;
 		gap: 3rem;
 		margin-bottom: 4rem;
-	}
-
-	@media (min-width: 768px) {
-		.three-proofs {
-			grid-template-columns: repeat(3, 1fr);
-			gap: 2rem;
-		}
 	}
 
 	/* Proof Sections */
@@ -310,7 +304,7 @@
 		background: rgba(10, 10, 10, 0.6);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 12px;
-		padding: 1.5rem;
+		padding: 2rem;
 	}
 
 	.section-title {
