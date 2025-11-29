@@ -1,7 +1,9 @@
 /*
-  Font Stack: Stack Sans Notch (Google Font - variable weight 200-700)
-  Pairing: Stack Sans Notch (headings/body) + JetBrains Mono (code)
-  Note: Fonts loaded via link tag in +layout.svelte for better performance
+  CREATE SOMETHING Design System
+  Property: .io (Research)
+
+  Font Stack: Stack Sans Notch (variable weight 200-700) + JetBrains Mono (code)
+  Philosophy: "Weniger, aber besser" - Dieter Rams
 */
 
 /* Tailwind CSS directives */
@@ -9,107 +11,254 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Modern base styles - Black & White Theme */
+/* ==========================================================================
+   CREATE SOMETHING Design Tokens
+   "Weniger, aber besser" - Dieter Rams
+   ========================================================================== */
+
+:root {
+  /* Colors - Functional Minimalism */
+  --color-bg-pure: #000000;
+  --color-bg-elevated: #0a0a0a;
+  --color-bg-surface: #111111;
+  --color-bg-subtle: #1a1a1a;
+  --color-fg-primary: #ffffff;
+  --color-fg-secondary: rgba(255, 255, 255, 0.8);
+  --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+  --color-fg-muted: rgba(255, 255, 255, 0.4);
+  --color-fg-subtle: rgba(255, 255, 255, 0.2);
+  --color-border-default: rgba(255, 255, 255, 0.1);
+  --color-border-emphasis: rgba(255, 255, 255, 0.2);
+  --color-border-strong: rgba(255, 255, 255, 0.3);
+  --color-success: #44aa44;
+  --color-success-muted: rgba(68, 170, 68, 0.2);
+  --color-error: #cc4444;
+  --color-error-muted: rgba(204, 68, 68, 0.2);
+  --color-warning: #aa8844;
+  --color-warning-muted: rgba(170, 136, 68, 0.2);
+  --color-info: #4477aa;
+  --color-info-muted: rgba(68, 119, 170, 0.2);
+  --color-hover: rgba(255, 255, 255, 0.05);
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-focus: rgba(255, 255, 255, 0.2);
+
+  /* Legacy aliases for backward compatibility */
+  --bg-primary: var(--color-bg-pure);
+  --bg-secondary: var(--color-bg-elevated);
+  --bg-tertiary: var(--color-bg-surface);
+  --bg-elevated: var(--color-bg-subtle);
+  --text-primary: var(--color-fg-primary);
+  --text-secondary: var(--color-fg-secondary);
+  --text-tertiary: var(--color-fg-tertiary);
+  --text-muted: var(--color-fg-muted);
+  --border-primary: var(--color-border-default);
+  --border-secondary: var(--color-border-default);
+  --border-hover: var(--color-border-strong);
+
+  /* Typography - Fluid & Canonical */
+  --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 1.75;
+  --tracking-tighter: -0.025em;
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+  --text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem);
+  --text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);
+  --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);
+  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);
+  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);
+  --text-h4: clamp(1.125rem, 1vw + 0.5rem, 1.5rem);
+  --text-h5: clamp(1rem, 0.5vw + 0.75rem, 1.25rem);
+  --text-h6: clamp(0.875rem, 0.25vw + 0.75rem, 1rem);
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+  --text-overline: 0.6875rem;
+
+  /* Spacing - Golden Ratio (φ = 1.618) */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.618rem;
+  --space-lg: 2.618rem;
+  --space-xl: 4.236rem;
+  --space-2xl: 6.854rem;
+  --space-3xl: 11.089rem;
+
+  /* Legacy aliases */
+  --spacing-section: var(--space-2xl);
+  --spacing-headline: var(--space-lg);
+  --spacing-card: var(--space-sm);
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows & Elevation */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+  --shadow-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
+  --shadow-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
+  --shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
+  --shadow-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+
+  /* Animation & Motion */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --duration-micro: 200ms;
+  --duration-standard: 300ms;
+  --duration-complex: 500ms;
+
+  /* Z-Index Layers */
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 50;
+  --z-modal: 100;
+  --z-popover: 200;
+  --z-tooltip: 300;
+
+  /* Breakpoints & Containers */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1400px;
+  --container-prose: 65ch;
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #000000;
-  color: #ffffff;
+  background: var(--color-bg-pure);
+  color: var(--color-fg-primary);
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
 }
 
-/* Headings - Bold weights for impact */
+/* Typography - Using token variables */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-optical-sizing: auto;
+}
+
+h1 {
+  font-size: var(--text-display-xl);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
+}
+
+h2 {
+  font-size: var(--text-h1);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
+}
+
+h3 {
+  font-size: var(--text-h2);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
+}
+
+h4 {
+  font-size: var(--text-h3);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+h5 {
+  font-size: var(--text-h4);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+h6 {
+  font-size: var(--text-h5);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-normal);
+}
+
+p {
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  letter-spacing: var(--tracking-tight);
 }
 
 /* Code and monospace elements */
 code, pre, .font-mono {
-  font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-family: var(--font-mono);
 }
 
-/* Custom scrollbar - Minimal white theme */
+/* Custom scrollbar - Minimal theme */
 ::-webkit-scrollbar {
   width: 10px;
-  background-color: #000000;
+  background-color: var(--color-bg-pure);
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #000000;
+  background-color: var(--color-bg-pure);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--color-border-strong);
   border-radius: 5px;
-  border: 2px solid #000000;
+  border: 2px solid var(--color-bg-pure);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: var(--color-fg-muted);
 }
 
-/* CSS variables - Modern Black & White Theme */
-:root {
-  /* Core colors */
-  --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --bg-tertiary: #111111;
-  --bg-elevated: #1a1a1a;
+/* ==========================================================================
+   Component Layer
+   ========================================================================== */
 
-  /* Text colors */
-  --text-primary: #ffffff;
-  --text-secondary: #e0e0e0;
-  --text-tertiary: #a0a0a0;
-  --text-muted: #666666;
-
-  /* Border colors */
-  --border-primary: rgba(255, 255, 255, 0.1);
-  --border-secondary: rgba(255, 255, 255, 0.05);
-  --border-hover: rgba(255, 255, 255, 0.3);
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(255, 255, 255, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(255, 255, 255, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(255, 255, 255, 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgba(255, 255, 255, 0.25);
-
-  /* Spacing - Golden Ratio (φ = 1.618) System */
-  --space-xs: 0.5rem;      /* 8px - Base unit */
-  --space-sm: 1rem;        /* 16px - 2x base */
-  --space-md: 1.618rem;    /* ~26px - φ¹ */
-  --space-lg: 2.618rem;    /* ~42px - φ² */
-  --space-xl: 4.236rem;    /* ~68px - φ³ */
-  --space-2xl: 6.854rem;   /* ~110px - φ⁴ */
-  --space-3xl: 11.089rem;  /* ~177px - φ⁵ */
-
-  /* Legacy aliases for backward compatibility */
-  --spacing-section: var(--space-2xl);  /* 6.854rem ≈ 7.5rem (was arbitrary) */
-  --spacing-headline: var(--space-lg);  /* 2.618rem ≈ 2.5rem (was arbitrary) */
-  --spacing-card: var(--space-sm);      /* 1rem = 2rem (was arbitrary, using smaller) */
-
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-}
-
-/* Modern card animations */
 @layer components {
   /* Smooth entrance animations */
   .fade-in {
-    animation: fadeIn 0.6s ease-out;
+    animation: fadeIn var(--duration-complex) ease-out;
   }
 
   @keyframes fadeIn {
@@ -125,7 +274,7 @@ code, pre, .font-mono {
 
   /* Card hover lift effect */
   .card-lift {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--duration-standard) var(--ease-standard);
   }
 
   .card-lift:hover {
@@ -148,7 +297,10 @@ code, pre, .font-mono {
   }
 }
 
-/* Utility classes */
+/* ==========================================================================
+   Utility Layer
+   ========================================================================== */
+
 @layer utilities {
   /* Text shadows for depth */
   .text-shadow-soft {
@@ -157,25 +309,25 @@ code, pre, .font-mono {
 
   /* Gradient backgrounds */
   .bg-gradient-dark {
-    background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+    background: linear-gradient(180deg, var(--color-bg-pure) 0%, var(--color-bg-elevated) 100%);
   }
 
   .bg-gradient-subtle {
-    background: linear-gradient(135deg, #0a0a0a 0%, #111111 100%);
+    background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-surface) 100%);
   }
 
   /* Border gradients */
   .border-gradient {
     border: 1px solid transparent;
-    background-image: linear-gradient(#111111, #111111),
-                      linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    background-image: linear-gradient(var(--color-bg-surface), var(--color-bg-surface)),
+                      linear-gradient(135deg, var(--color-border-emphasis), var(--color-border-default));
     background-origin: border-box;
     background-clip: padding-box, border-box;
   }
 
   /* Smooth transitions */
   .transition-smooth {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--duration-standard) var(--ease-standard);
   }
 
   /* Text truncation */
@@ -194,93 +346,48 @@ code, pre, .font-mono {
   }
 }
 
-/* Fluid Typography Scale - Standards Compliant */
-h1 {
-  font-size: clamp(3.5rem, 9vw, 7rem);    /* 56px → 112px */
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.2;
-}
+/* ==========================================================================
+   Selection & Focus States
+   ========================================================================== */
 
-h2 {
-  font-size: clamp(2rem, 5vw, 3.5rem);    /* 32px → 56px */
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-h3 {
-  font-size: clamp(1.5rem, 3vw, 2.25rem); /* 24px → 36px */
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-h4 {
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem); /* 20px → 28px */
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-}
-
-h5 {
-  font-size: clamp(1.125rem, 2vw, 1.5rem); /* 18px → 24px */
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-}
-
-h6 {
-  font-size: clamp(1rem, 1.5vw, 1.25rem);  /* 16px → 20px */
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-p {
-  font-size: clamp(1rem, 1.5vw, 1.25rem);  /* 16px → 20px */
-  line-height: 1.6;
-  letter-spacing: -0.01em;
-}
-
-/* Selection styling */
 ::selection {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background-color: var(--color-focus);
+  color: var(--color-fg-primary);
 }
 
-/* Focus states */
 *:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline: 2px solid var(--color-fg-muted);
   outline-offset: 2px;
 }
 
-/* Ensure proper text rendering */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Syntax Highlighting Styles - Dark theme with white/gray colors */
+/* ==========================================================================
+   Syntax Highlighting - Monochrome Theme
+   ========================================================================== */
+
 .hljs {
   display: block;
   overflow-x: auto;
   padding: 1em;
-  background: #1a1a1a;
-  color: #e0e0e0;
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-secondary);
 }
 
 .hljs-comment,
 .hljs-quote {
-  color: #666666;
+  color: var(--color-fg-muted);
   font-style: italic;
 }
 
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-subst {
-  color: #ffffff;
-  font-weight: 600;
+  color: var(--color-fg-primary);
+  font-weight: var(--font-semibold);
 }
 
 .hljs-number,
@@ -288,62 +395,62 @@ p {
 .hljs-variable,
 .hljs-template-variable,
 .hljs-tag .hljs-attr {
-  color: #a0a0a0;
+  color: var(--color-fg-tertiary);
 }
 
 .hljs-string,
 .hljs-doctag {
-  color: #c0c0c0;
+  color: var(--color-fg-secondary);
 }
 
 .hljs-title,
 .hljs-section,
 .hljs-selector-id {
-  color: #ffffff;
-  font-weight: 700;
+  color: var(--color-fg-primary);
+  font-weight: var(--font-bold);
 }
 
 .hljs-type,
 .hljs-class .hljs-title {
-  color: #d0d0d0;
-  font-weight: 600;
+  color: var(--color-fg-secondary);
+  font-weight: var(--font-semibold);
 }
 
 .hljs-tag,
 .hljs-name,
 .hljs-attribute {
-  color: #ffffff;
-  font-weight: normal;
+  color: var(--color-fg-primary);
+  font-weight: var(--font-regular);
 }
 
 .hljs-regexp,
 .hljs-link {
-  color: #c0c0c0;
+  color: var(--color-fg-secondary);
 }
 
 .hljs-symbol,
 .hljs-bullet {
-  color: #a0a0a0;
+  color: var(--color-fg-tertiary);
 }
 
 .hljs-built_in,
 .hljs-builtin-name {
-  color: #e0e0e0;
+  color: var(--color-fg-secondary);
 }
 
 .hljs-meta {
-  color: #888888;
-  font-weight: 600;
+  color: var(--color-fg-muted);
+  font-weight: var(--font-semibold);
 }
 
 .hljs-deletion {
-  background: rgba(255, 0, 0, 0.1);
-  color: #ff6666;
+  background: var(--color-error-muted);
+  color: var(--color-error);
 }
 
 .hljs-addition {
-  background: rgba(0, 255, 0, 0.05);
-  color: #88ff88;
+  background: var(--color-success-muted);
+  color: var(--color-success);
 }
 
 .hljs-emphasis {
@@ -356,7 +463,7 @@ p {
 
 /* Code block styling */
 pre code.hljs {
-  border-radius: 8px;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-relaxed);
 }
