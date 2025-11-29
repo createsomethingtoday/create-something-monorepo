@@ -25,6 +25,10 @@
 		{
 			"binding": "CACHE",
 			"id": "bcb39a6258fe49b79da9dc9b09440934"
+		},
+		{
+			"binding": "CIRCLE_DATA",
+			"id": "f8cdafbe08954630abef1266d437ce77"
 		}
 	],
 

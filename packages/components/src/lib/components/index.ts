@@ -12,3 +12,5 @@ export { default as ShareButtons } from './ShareButtons.svelte';
 export { default as QuoteBlock } from './QuoteBlock.svelte';
 export { default as Analytics } from './Analytics.svelte';
 export { default as RelatedArticles } from './RelatedArticles.svelte';
+export { default as TriadHealth } from './TriadHealth.svelte';
+export { default as HermeneuticCircle } from './HermeneuticCircle.svelte';
