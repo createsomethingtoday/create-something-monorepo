@@ -13,6 +13,18 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { fileBasedExperiments } from '$lib/config/fileBasedExperiments';
 
+// CORS headers for cross-origin requests from .ltd
+const corsHeaders = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'GET, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type'
+};
+
+// Handle preflight requests
+export const OPTIONS: RequestHandler = async () => {
+	return new Response(null, { headers: corsHeaders });
+};
+
 interface PrincipleEvidence {
 	principleId: string;
 	experiments: {
@@ -37,10 +49,10 @@ const THRESHOLDS = {
 
 export const GET: RequestHandler = async ({ url, platform }) => {
 	const db = platform?.env?.DB;
-	const kv = platform?.env?.CIRCLE_DATA;
+	const kv = platform?.env?.CACHE; // Use CACHE, not CIRCLE_DATA (which is .ltd only)
 
 	if (!db) {
-		return json({ error: 'Database not available' }, { status: 500 });
+		return json({ error: 'Database not available' }, { status: 500, headers: corsHeaders });
 	}
 
 	// Optional: filter by specific principle
@@ -51,7 +63,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		if (kv && !principleId) {
 			const cached = await kv.get('evidence:all', 'json');
 			if (cached) {
-				return json(cached);
+				return json(cached, { headers: corsHeaders });
 			}
 		}
 
@@ -155,9 +167,9 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			});
 		}
 
-		return json(evidence);
+		return json(evidence, { headers: corsHeaders });
 	} catch (error) {
 		console.error('Failed to collect evidence:', error);
-		return json({ error: 'Failed to collect evidence' }, { status: 500 });
+		return json({ error: 'Failed to collect evidence' }, { status: 500, headers: corsHeaders });
 	}
 };
