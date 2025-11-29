@@ -64,17 +64,30 @@
 					</div>
 				</a>
 
-				<!-- Coming Soon -->
-				<div class="p-12 bg-white/[0.07] border border-white/10 rounded-xl opacity-30">
+				<!-- Maverick X -->
+				<a
+					href="/work/maverick-x"
+					class="block p-12 bg-white/[0.07] border border-white/10 rounded-xl hover:border-white transition-colors group"
+				>
 					<div class="mb-6">
-						<span class="text-xs font-mono text-white/40">COMING SOON</span>
+						<span class="text-xs font-mono text-white/40">CLIENT: MAVERICK X</span>
 					</div>
-					<h2 class="text-3xl font-semibold text-white mb-4">Future Projects</h2>
+					<h2 class="text-3xl font-semibold text-white mb-4 group-hover:opacity-70 transition-opacity">
+						Maverick X
+					</h2>
 					<p class="text-lg text-white/60 mb-8 leading-relaxed">
-						New case studies will be published as client work is completed and validated through
-						production deployment.
+						Corporate website for industrial chemistry company with product showcases across oil & gas, mining, and water treatment
 					</p>
-				</div>
+					<div class="space-y-3 text-sm text-white/50">
+						<p>→ Next.js 14 + Tailwind CSS</p>
+						<p>→ Sector-specific landing pages</p>
+						<p>→ Production-deployed on Vercel</p>
+					</div>
+					<div class="mt-8 pt-6 border-t border-white/10">
+						<p class="text-xs text-white/40 uppercase tracking-wider mb-2">Pattern Applied</p>
+						<p class="text-sm text-white/60">Weniger, aber besser: Less, but better</p>
+					</div>
+				</a>
 			</div>
 		</div>
 	</section>
