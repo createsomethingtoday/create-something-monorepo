@@ -211,8 +211,6 @@
 						<li>
 							<a
 								href="https://createsomething.space"
-								target="_blank"
-								rel="noopener"
 								class="block text-sm {mode === 'space'
 									? 'text-white'
 									: 'text-white/60 hover:text-white'} transition-colors"
@@ -223,8 +221,6 @@
 						<li>
 							<a
 								href="https://createsomething.io"
-								target="_blank"
-								rel="noopener"
 								class="block text-sm {mode === 'io'
 									? 'text-white'
 									: 'text-white/60 hover:text-white'} transition-colors"
@@ -235,8 +231,6 @@
 						<li>
 							<a
 								href="https://createsomething.agency"
-								target="_blank"
-								rel="noopener"
 								class="block text-sm {mode === 'agency'
 									? 'text-white'
 									: 'text-white/60 hover:text-white'} transition-colors"
