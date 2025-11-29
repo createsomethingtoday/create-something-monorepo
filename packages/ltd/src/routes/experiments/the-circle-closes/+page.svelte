@@ -14,23 +14,47 @@
 
 	let { data } = $props();
 
-	// Principle descriptions for display
+	// Principle descriptions for display (all 10 Rams principles)
 	const principleDescriptions: Record<string, { title: string; description: string }> = {
-		'rams-2': {
+		'rams-principle-1': {
+			title: 'Innovative',
+			description: 'Good design is innovative'
+		},
+		'rams-principle-2': {
 			title: 'Useful',
-			description: 'Every element serves a purpose'
+			description: 'Good design makes a product useful'
 		},
-		'rams-4': {
+		'rams-principle-3': {
+			title: 'Aesthetic',
+			description: 'Good design is aesthetic'
+		},
+		'rams-principle-4': {
 			title: 'Understandable',
-			description: 'Self-evident interfaces'
+			description: 'Good design makes a product understandable'
 		},
-		'rams-5': {
+		'rams-principle-5': {
 			title: 'Unobtrusive',
-			description: 'Tools recede to background (Zuhandenheit)'
+			description: 'Good design is unobtrusive'
 		},
-		'rams-10': {
-			title: 'As Little As Possible',
-			description: 'Remove until it breaks'
+		'rams-principle-6': {
+			title: 'Honest',
+			description: 'Good design is honest'
+		},
+		'rams-principle-7': {
+			title: 'Long-lasting',
+			description: 'Good design is long-lasting'
+		},
+		'rams-principle-8': {
+			title: 'Thorough',
+			description: 'Good design is thorough down to the last detail'
+		},
+		'rams-principle-9': {
+			title: 'Environmentally Friendly',
+			description: 'Good design is environmentally friendly'
+		},
+		'rams-principle-10': {
+			title: 'As Little Design As Possible',
+			description: 'Less, but better'
 		}
 	};
 

@@ -57,7 +57,8 @@ export async function interpretMotion(
 		const screenshotBase64 = arrayBufferToBase64(screenshot);
 
 		// Call Workers AI with vision model
-		const response = await ai.run('@cf/meta/llama-4-scout-17b-16e-instruct', {
+		// Cloudflare format: type 'image' with raw base64 (no data URL prefix)
+		const response = await ai.run('@cf/meta/llama-3.2-11b-vision-instruct', {
 			messages: [
 				{
 					role: 'system',
@@ -71,10 +72,8 @@ export async function interpretMotion(
 							text: `Analyze this UI motion:\n\n${technicalContext}\n\nProvide your analysis in JSON format as specified.`
 						},
 						{
-							type: 'image_url',
-							image_url: {
-								url: `data:image/png;base64,${screenshotBase64}`
-							}
+							type: 'image',
+							image: screenshotBase64
 						}
 					]
 				}
