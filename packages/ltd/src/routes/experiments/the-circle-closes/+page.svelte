@@ -93,12 +93,6 @@
 					loading={!data.auditData}
 				/>
 			</div>
-
-			{#if data.selfAuditData && data.selfAuditData.scores.overall >= 7}
-				<p class="proof-verdict valid">The tool validates itself.</p>
-			{:else if !data.auditData}
-				<p class="proof-verdict pending">Awaiting first audit run.</p>
-			{/if}
 		</section>
 
 		<!-- Section 2: Visibility -->
