@@ -94,5 +94,37 @@
       "medium": 38,
       "low": 8
     }
+  },
+  {
+    "timestamp": "2025-11-29T04:42:51.959Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.1,
+      "heidegger": 7.6,
+      "overall": 7.9
+    },
+    "violations": {
+      "total": 47,
+      "critical": 0,
+      "high": 0,
+      "medium": 39,
+      "low": 8
+    }
+  },
+  {
+    "timestamp": "2025-11-29T04:43:31.339Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6.1,
+      "heidegger": 7.6,
+      "overall": 7.9
+    },
+    "violations": {
+      "total": 47,
+      "critical": 0,
+      "high": 0,
+      "medium": 39,
+      "low": 8
+    }
   }
 ]
