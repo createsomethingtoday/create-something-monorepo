@@ -59,7 +59,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	const principleId = url.searchParams.get('principle');
 
 	try {
-		// Try to get cached evidence from KV first
+		// Short-lived cache to reduce DB load while staying fresh
 		if (kv && !principleId) {
 			const cached = await kv.get('evidence:all', 'json');
 			if (cached) {
@@ -160,10 +160,10 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			});
 		}
 
-		// Cache the full result
+		// Cache the full result (short TTL for now during development)
 		if (kv && !principleId) {
 			await kv.put('evidence:all', JSON.stringify(evidence), {
-				expirationTtl: 3600 // 1 hour cache
+				expirationTtl: 300 // 5 minute cache
 			});
 		}
 
