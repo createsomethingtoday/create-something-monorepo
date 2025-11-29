@@ -6,7 +6,7 @@
  */
 
 import type { TechnicalAnalysis, PhenomenologicalAnalysis, DisclosureType } from './types';
-import { PHENOMENOLOGICAL_SYSTEM_PROMPT, formatTechnicalContext } from './heideggerian-framework';
+import { formatTechnicalContext } from './heideggerian-framework';
 
 export interface InterpretationResult {
 	success: boolean;
@@ -34,6 +34,20 @@ const DEFAULT_ANALYSIS: PhenomenologicalAnalysis = {
 };
 
 /**
+ * Simplified prompt for structured JSON output
+ */
+const SIMPLE_ANALYSIS_PROMPT = `You analyze UI animations. Given CSS animation data, output ONLY valid JSON.
+
+RULES:
+- disclosure: "state_transition" (loading/hover states), "spatial_relationship" (shows connection), "user_confirmation" (feedback), "hierarchy_reveal" (importance), "temporal_sequence" (order), or "none"
+- mode: "zuhandenheit" (animation recedes, user focuses on content) or "vorhandenheit" (animation noticed, interrupts flow)
+- judgment: "functional" (serves purpose), "decorative" (visual flair only), or "ambiguous"
+- action: "keep", "modify", or "remove"
+
+Output ONLY this JSON structure, no other text:
+{"disclosure":"...","disclosureDescription":"...","mode":"...","modeRationale":"...","judgment":"...","justification":"...","recommendation":{"action":"...","reasoning":"..."},"confidence":0.8}`;
+
+/**
  * Interpret motion phenomenologically using Workers AI
  */
 export async function interpretMotion(
@@ -53,15 +67,16 @@ export async function interpretMotion(
 			url
 		);
 
-		// Call Workers AI with vision model
-		// Using LLaVA - no license agreement required unlike Llama 3.2 vision
-		// LLaVA uses simpler format: image (as number array) + prompt
-		const fullPrompt = `${PHENOMENOLOGICAL_SYSTEM_PROMPT}\n\nAnalyze this UI motion:\n\n${technicalContext}\n\nProvide your analysis in JSON format as specified.`;
+		// Use Mistral for structured JSON output - much better at following formats
+		// Technical data provides enough context; image not strictly required
+		const prompt = `${SIMPLE_ANALYSIS_PROMPT}\n\nAnimation data:\n${technicalContext}`;
 
-		const response = await ai.run('@cf/llava-hf/llava-1.5-7b-hf', {
-			image: Array.from(new Uint8Array(screenshot)),
-			prompt: fullPrompt,
-			max_tokens: 1024
+		const response = await ai.run('@cf/mistral/mistral-7b-instruct-v0.1', {
+			messages: [
+				{ role: 'user', content: prompt }
+			],
+			max_tokens: 512,
+			temperature: 0.2
 		});
 
 		// Extract response text
