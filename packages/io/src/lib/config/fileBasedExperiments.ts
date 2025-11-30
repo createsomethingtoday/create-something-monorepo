@@ -6,24 +6,46 @@
  * Svelte components for interactive visualizations.
  */
 
-export interface FileBasedExperiment {
-	id: string;
-	slug: string;
-	title: string;
-	description: string;
-	excerpt_short: string;
-	excerpt_long: string;
-	category: string;
-	tags: string[];
-	created_at: string;
-	updated_at: string;
-	reading_time_minutes: number;
-	difficulty: 'beginner' | 'intermediate' | 'advanced';
-	is_file_based: true; // Marker to distinguish from database experiments
-	ascii_art?: string;
-}
+import type { FileBasedExperiment } from '@create-something/components';
+import { transformExperimentToPaper } from '@create-something/components';
+
+// Re-export for consumers
+export type { FileBasedExperiment };
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
+	{
+		id: 'file-kickstand-triad-audit',
+		slug: 'kickstand-triad-audit',
+		title: 'Subtractive Triad Audit: Kickstand',
+		description: 'Applied the Subtractive Triad framework (DRY → Rams → Heidegger) to audit a production venue intelligence system, achieving 48% health score improvement.',
+		excerpt_short: 'Production system audit using the Subtractive Triad framework',
+		excerpt_long: 'This paper documents the application of the Subtractive Triad framework to Kickstand, a venue intelligence system. Through systematic application of DRY (Unify), Rams (Remove), and Heidegger (Reconnect), we reduced active scripts by 92%, fixed 30 TypeScript errors, and improved documentation coherence.',
+		category: 'case-study',
+		tags: ['Subtractive Triad', 'Code Audit', 'DRY', 'Dieter Rams', 'Heidegger', 'Cloudflare Workers', 'TypeScript'],
+		created_at: '2025-11-29T00:00:00Z',
+		updated_at: '2025-11-29T00:00:00Z',
+		reading_time_minutes: 12,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════╗
+    ║   SUBTRACTIVE TRIAD AUDIT                             ║
+    ║                                                       ║
+    ║   DRY        Rams       Heidegger                     ║
+    ║   ─────      ─────      ─────────                     ║
+    ║   Unify      Remove     Reconnect                     ║
+    ║                                                       ║
+    ║   Before:    After:                                   ║
+    ║   ┌─────┐    ┌─────┐                                  ║
+    ║   │█████│    │██   │  Scripts: 155 → 13              ║
+    ║   │█████│    │     │  TS Errors: 30 → 0              ║
+    ║   │█████│    │     │  Health: 6.2 → 9.2              ║
+    ║   └─────┘    └─────┘                                  ║
+    ║                                                       ║
+    ║   "Creation is removing what obscures"                ║
+    ╚═══════════════════════════════════════════════════════╝
+`
+	},
 	{
 		id: 'file-understanding-graphs',
 		slug: 'understanding-graphs',
@@ -123,13 +145,7 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
  * Get all file-based experiments, transformed to match Paper interface
  */
 export function getFileBasedExperiments() {
-	return fileBasedExperiments.map(exp => ({
-		...exp,
-		// Map to Paper interface fields
-		reading_time: exp.reading_time_minutes,
-		published_at: exp.created_at,
-		difficulty_level: exp.difficulty,
-	}));
+	return fileBasedExperiments.map(transformExperimentToPaper);
 }
 
 /**
