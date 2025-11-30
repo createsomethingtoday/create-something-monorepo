@@ -7,25 +7,11 @@
  * "Weniger, aber besser" - Less, but better.
  */
 
-export interface FileBasedExperiment {
-	id: string;
-	slug: string;
-	title: string;
-	description: string;
-	excerpt_short: string;
-	excerpt_long: string;
-	category: string;
-	tags: string[];
-	created_at: string;
-	updated_at: string;
-	reading_time_minutes: number;
-	difficulty: 'beginner' | 'intermediate' | 'advanced';
-	is_file_based: true;
-	is_executable: 1;
-	ascii_art?: string;
-	// Hermeneutic Circle: Which principles does this experiment test?
-	tests_principles?: string[];
-}
+import type { FileBasedExperiment } from '@create-something/components';
+import { transformExperimentToPaper } from '@create-something/components';
+
+// Re-export for consumers
+export type { FileBasedExperiment };
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
 	{
@@ -97,6 +83,51 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     |   The being of animation revealed               |
     +-------------------------------------------------+
 `
+	},
+	{
+		id: 'file-workway-canon-audit',
+		slug: 'workway-canon-audit',
+		title: 'WORKWAY SDK: The Hermeneutic Circle in Practice',
+		description:
+			"Applying Dieter Rams' 10 Principles to integration SDK development. Score improved from 41/50 to 48/50 through iterative implementation.",
+		excerpt_short: 'Canon maintenance applied to SDK development',
+		excerpt_long:
+			"The WORKWAY SDK Canon Audit demonstrates the hermeneutic circle in action: pre-understanding (README) meets emergent understanding (implementation). Through building integrations, gaps revealed themselves—ActionResult error structure, timeout patterns, retry logic. The canon doesn't exist in isolation; it's validated through practice.",
+		category: 'canon',
+		tags: ['Dieter Rams', 'Canon Maintenance', 'SDK Design', 'Hermeneutic Circle', 'DX'],
+		created_at: '2025-11-29T00:00:00Z',
+		updated_at: '2025-11-29T00:00:00Z',
+		reading_time_minutes: 15,
+		difficulty: 'advanced',
+		is_file_based: true,
+		is_executable: 0,
+		tests_principles: [
+			'rams-principle-2', // Useful
+			'rams-principle-6', // Honest
+			'rams-principle-7', // Long-lasting
+			'rams-principle-8', // Thorough
+			'rams-principle-10' // As little as possible
+		],
+		ascii_art: `
+    +-------------------------------------------------+
+    |   WORKWAY SDK CANON AUDIT                       |
+    |                                                 |
+    |   Pre-understanding    Emergent understanding   |
+    |   (README)             (Implementation)         |
+    |                                                 |
+    |        |                      |                 |
+    |        v                      v                 |
+    |   ActionResult  ──────►  DX Helpers             |
+    |   IntegrationError ───►  Error Taxonomy         |
+    |   Timeout ────────────►  AbortController        |
+    |   Retry ──────────────►  Exponential Backoff    |
+    |                                                 |
+    |   Score: 41/50 ──────────────────► 48/50        |
+    |                                                 |
+    |   "The circle closes: implementation            |
+    |    reveals what documentation cannot."          |
+    +-------------------------------------------------+
+`
 	}
 ];
 
@@ -104,15 +135,7 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
  * Get all file-based experiments, transformed to match Paper interface
  */
 export function getFileBasedExperiments() {
-	return fileBasedExperiments.map((exp) => ({
-		...exp,
-		reading_time: exp.reading_time_minutes,
-		published_at: exp.created_at,
-		difficulty_level: exp.difficulty,
-		published: 1,
-		is_hidden: 0,
-		archived: 0
-	}));
+	return fileBasedExperiments.map(transformExperimentToPaper);
 }
 
 /**
