@@ -15,9 +15,11 @@
 	let code = $state(exercises[0].starterCode);
 	let output = $state<string[]>([]);
 	let isRunning = $state(false);
-	let showPattern = $state(false);
+	let isValid = $state(false);
+	let hasReflected = $state(false);
 
 	let exercise = $derived(exercises[currentExerciseIndex]);
+	let showPattern = $derived(isValid && hasReflected);
 	let progress = $derived(`${currentExerciseIndex + 1}/${exercises.length}`);
 	let canNext = $derived(currentExerciseIndex < exercises.length - 1);
 	let canPrev = $derived(currentExerciseIndex > 0);
@@ -42,8 +44,10 @@
 			});
 			const result = await response.json();
 			output = result.success ? result.output : [`Error: ${result.error}`];
+			isValid = result.valid === true;
 		} catch (err) {
 			output = [`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`];
+			isValid = false;
 		} finally {
 			isRunning = false;
 		}
@@ -56,14 +60,20 @@
 		code = exercises[currentExerciseIndex].starterCode;
 		editor?.setCode(code);
 		output = [];
-		showPattern = false;
+		isValid = false;
+		hasReflected = false;
 	}
 
 	function reset() {
 		code = exercise.starterCode;
 		editor?.setCode(code);
 		output = [];
-		showPattern = false;
+		isValid = false;
+		hasReflected = false;
+	}
+
+	function confirmReflection() {
+		hasReflected = true;
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -139,10 +149,28 @@
 				<pre class="output">{output.length > 0 ? output.join('\n') : 'Run code to see output'}</pre>
 			</div>
 
-			{#if showPattern}
+			{#if isValid && !hasReflected}
+				<div class="section reflection">
+					<div class="section-header">
+						<span class="label">Apply the Subtractive Triad</span>
+					</div>
+					<div class="section-content">
+						<p class="triad-intro">Before the pattern reveals, consider your solution:</p>
+						<div class="triad-questions">
+							<p><strong>DRY:</strong> Is there duplication to unify?</p>
+							<p><strong>Rams:</strong> Is there anything to remove?</p>
+							<p><strong>Heidegger:</strong> Does this serve the whole?</p>
+						</div>
+						<p class="triad-note">If you used AI, apply these questions to its output.</p>
+						<button class="btn-continue" onclick={confirmReflection}>
+							Continue to Pattern
+						</button>
+					</div>
+				</div>
+			{:else if showPattern}
 				<div class="section pattern-reveal">
 					<div class="section-header">
-						<span class="label">Pattern</span>
+						<span class="label">Pattern Earned</span>
 					</div>
 					<div class="section-content">
 						<p class="discovery">{exercise.patternReveal.discovery}</p>
@@ -152,8 +180,6 @@
 						<p class="reference">{exercise.patternReveal.reference}</p>
 					</div>
 				</div>
-			{:else}
-				<button class="btn-reveal" onclick={() => (showPattern = true)}>Show Pattern</button>
 			{/if}
 		</section>
 	</div>
@@ -310,18 +336,6 @@
 		border-color: var(--color-border-emphasis);
 	}
 
-	.btn-reveal {
-		margin: var(--space-sm);
-		background: transparent;
-		color: var(--color-fg-muted);
-		border: 1px dashed var(--color-border-default);
-	}
-
-	.btn-reveal:hover {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-tertiary);
-	}
-
 	button:disabled {
 		opacity: 0.3;
 		cursor: not-allowed;
@@ -372,8 +386,56 @@
 		word-wrap: break-word;
 	}
 
+	.reflection .section-content,
 	.pattern-reveal .section-content {
 		background: var(--color-bg-surface);
+	}
+
+	.triad-intro {
+		color: var(--color-fg-secondary) !important;
+		margin-bottom: var(--space-sm) !important;
+	}
+
+	.triad-questions {
+		padding: var(--space-sm);
+		background: var(--color-bg-pure);
+		border-radius: var(--radius-sm);
+		margin-bottom: var(--space-sm);
+	}
+
+	.triad-questions p {
+		margin: var(--space-xs) 0 !important;
+		font-size: var(--text-body-sm);
+	}
+
+	.triad-questions strong {
+		color: var(--color-fg-primary);
+		font-weight: var(--font-semibold);
+	}
+
+	.triad-note {
+		font-size: var(--text-caption) !important;
+		color: var(--color-fg-muted) !important;
+		font-style: italic;
+		margin-bottom: var(--space-sm) !important;
+	}
+
+	.btn-continue {
+		width: 100%;
+		padding: var(--space-sm);
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border: none;
+		border-radius: var(--radius-sm);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		font-family: var(--font-sans);
+		cursor: pointer;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-continue:hover {
+		opacity: 0.9;
 	}
 
 	.discovery {
