@@ -34,7 +34,7 @@
 	class="sticky top-24 space-y-4"
 	transition:fly={{ x: -20, duration: 500, delay: 300 }}
 >
-	<h3 class="text-lg font-semibold text-white mb-4">Share:</h3>
+	<h3 class="share-title text-lg font-semibold mb-4">Share:</h3>
 
 	<div class="flex flex-col gap-3">
 		<!-- X (formerly Twitter) -->
@@ -42,11 +42,11 @@
 			href={shareLinks.twitter}
 			target="_blank"
 			rel="noopener noreferrer"
-			class="flex items-center justify-center w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 group"
+			class="share-button flex items-center justify-center w-12 h-12 group"
 			aria-label="Share on X"
 		>
 			<svg
-				class="w-5 h-5 text-white/60 group-hover:text-white transition-colors"
+				class="share-icon w-5 h-5"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -61,11 +61,11 @@
 			href={shareLinks.facebook}
 			target="_blank"
 			rel="noopener noreferrer"
-			class="flex items-center justify-center w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 group"
+			class="share-button flex items-center justify-center w-12 h-12 group"
 			aria-label="Share on Facebook"
 		>
 			<svg
-				class="w-5 h-5 text-white/60 group-hover:text-white transition-colors"
+				class="share-icon w-5 h-5"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -80,11 +80,11 @@
 			href={shareLinks.linkedin}
 			target="_blank"
 			rel="noopener noreferrer"
-			class="flex items-center justify-center w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 group"
+			class="share-button flex items-center justify-center w-12 h-12 group"
 			aria-label="Share on LinkedIn"
 		>
 			<svg
-				class="w-5 h-5 text-white/60 group-hover:text-white transition-colors"
+				class="share-icon w-5 h-5"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -99,11 +99,11 @@
 			href={shareLinks.reddit}
 			target="_blank"
 			rel="noopener noreferrer"
-			class="flex items-center justify-center w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 group"
+			class="share-button flex items-center justify-center w-12 h-12 group"
 			aria-label="Share on Reddit"
 		>
 			<svg
-				class="w-5 h-5 text-white/60 group-hover:text-white transition-colors"
+				class="share-icon w-5 h-5"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -116,11 +116,11 @@
 		<!-- Copy Link -->
 		<button
 			onclick={copyToClipboard}
-			class="flex items-center justify-center w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 group"
+			class="share-button flex items-center justify-center w-12 h-12 group"
 			aria-label="Copy link"
 		>
 			<svg
-				class="w-5 h-5 text-white/60 group-hover:text-white transition-colors"
+				class="share-icon w-5 h-5"
 				fill="none"
 				stroke="currentColor"
 				viewBox="0 0 24 24"
@@ -135,3 +135,33 @@
 		</button>
 	</div>
 </div>
+
+<style>
+	/* Title */
+	.share-title {
+		color: var(--color-fg-primary);
+	}
+
+	/* Share Button */
+	.share-button {
+		background: var(--color-hover);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.share-button:hover {
+		background: var(--color-active);
+		border-color: var(--color-border-emphasis);
+	}
+
+	/* Icon */
+	.share-icon {
+		color: var(--color-fg-tertiary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.group:hover .share-icon {
+		color: var(--color-fg-primary);
+	}
+</style>

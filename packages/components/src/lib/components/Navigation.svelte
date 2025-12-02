@@ -46,14 +46,14 @@
 	}
 </script>
 
-<nav class="{fixed ? 'fixed top-0 left-0 right-0 z-50 bg-black' : ''} border-b border-white/10">
+<nav class="nav" class:fixed>
 	<div class="max-w-7xl mx-auto px-6 py-4">
 		<div class="flex items-center justify-between">
 			<!-- Logo / Home -->
-			<a href={logoHref} class="text-xl font-bold tracking-tight">
+			<a href={logoHref} class="nav-logo text-xl font-bold tracking-tight">
 				{logo}
 				{#if logoSuffix}
-					<span class="font-normal opacity-60">{logoSuffix}</span>
+					<span class="logo-suffix font-normal">{logoSuffix}</span>
 				{/if}
 			</a>
 
@@ -62,18 +62,14 @@
 				{#each links as link}
 					<a
 						href={link.href}
-						class="text-sm font-medium transition-colors {isActive(link)
-							? 'text-white'
-							: 'text-white/80 hover:text-white'}"
+						class="nav-link text-sm font-medium"
+						class:active={isActive(link)}
 					>
 						{link.label}
 					</a>
 				{/each}
 				{#if ctaLabel && ctaHref}
-					<a
-						href={ctaHref}
-						class="px-6 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
-					>
+					<a href={ctaHref} class="nav-cta px-6 py-2 text-sm font-semibold">
 						{ctaLabel}
 					</a>
 				{/if}
@@ -82,7 +78,7 @@
 			<!-- Mobile Menu Button (44px minimum touch target) -->
 			<button
 				onclick={toggleMobileMenu}
-				class="md:hidden w-11 h-11 flex items-center justify-center text-white hover:text-white/80 transition-colors"
+				class="mobile-menu-btn md:hidden w-11 h-11 flex items-center justify-center"
 				aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
 				aria-expanded={mobileMenuOpen}
 			>
@@ -114,15 +110,14 @@
 		{#if mobileMenuOpen}
 			<div
 				transition:slide={{ duration: 200 }}
-				class="md:hidden pt-4 pb-2 flex flex-col gap-4 border-t border-white/10 mt-4"
+				class="mobile-menu md:hidden pt-4 pb-2 flex flex-col gap-4 mt-4"
 			>
 				{#each links as link}
 					<a
 						href={link.href}
 						onclick={closeMobileMenu}
-						class="text-sm font-medium transition-colors py-2 {isActive(link)
-							? 'text-white'
-							: 'text-white/80 hover:text-white'}"
+						class="nav-link text-sm font-medium py-2"
+						class:active={isActive(link)}
 					>
 						{link.label}
 					</a>
@@ -131,7 +126,7 @@
 					<a
 						href={ctaHref}
 						onclick={closeMobileMenu}
-						class="px-6 py-3 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors text-center"
+						class="nav-cta px-6 py-3 text-sm font-semibold text-center"
 					>
 						{ctaLabel}
 					</a>
@@ -140,3 +135,66 @@
 		{/if}
 	</div>
 </nav>
+
+<style>
+	/* Navigation Container */
+	.nav {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.nav.fixed {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: var(--z-fixed);
+		background: var(--color-bg-pure);
+	}
+
+	/* Logo */
+	.nav-logo {
+		color: var(--color-fg-primary);
+	}
+
+	.logo-suffix {
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Navigation Links */
+	.nav-link {
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.nav-link:hover,
+	.nav-link.active {
+		color: var(--color-fg-primary);
+	}
+
+	/* CTA Button */
+	.nav-cta {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-radius: var(--radius-full);
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.nav-cta:hover {
+		opacity: 0.9;
+	}
+
+	/* Mobile Menu Button */
+	.mobile-menu-btn {
+		color: var(--color-fg-primary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.mobile-menu-btn:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Mobile Menu */
+	.mobile-menu {
+		border-top: 1px solid var(--color-border-default);
+	}
+</style>
