@@ -52,17 +52,36 @@ interface CircleState {
 
 interface PrincipleEvidence {
 	principleId: string;
+	principleTitle: string;
+	masterName: string;
 	experiments: {
 		slug: string;
 		title: string;
-		executionCount: number;
-		completionRate: number;
-		avgTimeSeconds: number;
-		errorRate: number;
+		domain: 'io' | 'space' | 'agency';
 	}[];
-	totalExecutions: number;
-	avgCompletionRate: number;
+	evidenceCount: number;
 	status: 'corroborating' | 'refuting' | 'insufficient';
+}
+
+interface EvidenceState {
+	evidence: {
+		principleId: string;
+		principleTitle: string;
+		masterId: string;
+		masterName: string;
+		experiments: {
+			slug: string;
+			title: string;
+			domain: 'io' | 'space' | 'agency';
+		}[];
+		evidenceCount: number;
+	}[];
+	summary: {
+		totalPrinciples: number;
+		principlesWithEvidence: number;
+		totalExperiments: number;
+		coveragePercent: number;
+	};
 }
 
 export const load: PageServerLoad = async ({ platform, fetch }) => {
@@ -92,13 +111,26 @@ export const load: PageServerLoad = async ({ platform, fetch }) => {
 			circleState = await circleResponse.json();
 		}
 
-		// Load evidence from .space API
-		// Note: In production, this would be a cross-origin fetch or KV cache
-		// For now, we'll try to fetch and fall back to empty if it fails
+		// Load evidence from local API (which aggregates canon_references)
 		try {
-			const evidenceResponse = await fetch('https://createsomething.space/api/evidence');
+			const evidenceResponse = await fetch('/api/evidence');
 			if (evidenceResponse.ok) {
-				evidence = await evidenceResponse.json();
+				const evidenceState: EvidenceState = await evidenceResponse.json();
+				// Transform to PrincipleEvidence format
+				evidence = evidenceState.evidence.map((e) => ({
+					principleId: e.principleId,
+					principleTitle: e.principleTitle,
+					masterName: e.masterName,
+					experiments: e.experiments,
+					evidenceCount: e.evidenceCount,
+					// Status based on evidence count
+					status:
+						e.evidenceCount >= 2
+							? 'corroborating'
+							: e.evidenceCount === 1
+								? 'insufficient'
+								: 'insufficient'
+				}));
 			}
 		} catch {
 			// Fall back to mock data for development
@@ -140,43 +172,55 @@ export const load: PageServerLoad = async ({ platform, fetch }) => {
 function getMockEvidence(): PrincipleEvidence[] {
 	return [
 		{
-			principleId: 'rams-10',
+			principleId: 'rams-principle-10',
+			principleTitle: 'Good design is as little design as possible',
+			masterName: 'Dieter Rams',
 			experiments: [
 				{
 					slug: 'motion-ontology',
 					title: 'Motion Ontology',
-					executionCount: 47,
-					completionRate: 0.82,
-					avgTimeSeconds: 245,
-					errorRate: 0.05
+					domain: 'space'
 				},
 				{
 					slug: 'minimal-capture',
 					title: 'Minimal Capture',
-					executionCount: 23,
-					completionRate: 0.91,
-					avgTimeSeconds: 180,
-					errorRate: 0.02
+					domain: 'space'
 				}
 			],
-			totalExecutions: 70,
-			avgCompletionRate: 0.85,
+			evidenceCount: 2,
 			status: 'corroborating'
 		},
 		{
-			principleId: 'rams-5',
+			principleId: 'rams-principle-5',
+			principleTitle: 'Good design is unobtrusive',
+			masterName: 'Dieter Rams',
 			experiments: [
 				{
 					slug: 'motion-ontology',
 					title: 'Motion Ontology',
-					executionCount: 47,
-					completionRate: 0.82,
-					avgTimeSeconds: 245,
-					errorRate: 0.05
+					domain: 'space'
 				}
 			],
-			totalExecutions: 47,
-			avgCompletionRate: 0.82,
+			evidenceCount: 1,
+			status: 'insufficient'
+		},
+		{
+			principleId: 'heidegger-hermeneutic-circle',
+			principleTitle: 'The Hermeneutic Circle',
+			masterName: 'Martin Heidegger',
+			experiments: [
+				{
+					slug: 'praxis',
+					title: 'Integration Praxis',
+					domain: 'space'
+				},
+				{
+					slug: 'understanding-graphs',
+					title: 'Understanding Graphs',
+					domain: 'io'
+				}
+			],
+			evidenceCount: 2,
 			status: 'corroborating'
 		}
 	];

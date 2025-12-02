@@ -2,7 +2,7 @@
 
 > **How to use Claude Code Skills within the CREATE Something methodology**
 
-This document explains how the nine Claude Code Skills support the CREATE Something hermeneutic workflow—a circular interpretive process where understanding emerges through movement between parts and whole.
+This document explains how Claude Code Skills support the CREATE Something hermeneutic workflow—a circular interpretive process where understanding emerges through movement between parts and whole.
 
 ## The Hermeneutic Circle
 
@@ -14,9 +14,9 @@ This document explains how the nine Claude Code Skills support the CREATE Someth
                                   │
               ┌───────────────────┼───────────────────┐
               │                   │                   │
-              │    canon-maintenance                  │
+              │    canon-maintenance ◄────────────────┤
+              │    voice-validator                    │
               │    design-ux-improvement              │
-              │    sveltekit-project-manager          │
               │                   │                   │
               │                   ▼                   │
               │         ┌─────────────────┐           │
@@ -24,6 +24,7 @@ This document explains how the nine Claude Code Skills support the CREATE Someth
               │         │ Being-as-Document│          │
               │         └────────┬────────┘           │
               │                  │                    │
+              │    experiment-scaffold                │
               │    create-something-experiments       │
               │    technical-report-writing           │
               │                  │                    │
@@ -33,6 +34,7 @@ This document explains how the nine Claude Code Skills support the CREATE Someth
               │         │Being-as-Experience│         │
               │         └────────┬────────┘           │
               │                  │                    │
+              │    architectural-visualization        │
               │    cloudflare-notion-sync             │
               │    cloudflare-workers-optimization    │
               │    sveltekit-project-manager          │
@@ -48,22 +50,54 @@ This document explains how the nine Claude Code Skills support the CREATE Someth
               └──────────────────┴────────────────────┘
                                  │
                                  ▼
+              ┌─────────────────────────────────────┐
+              │  subtractive-review                 │
+              │  (Applies at ALL levels)            │
+              └─────────────────────────────────────┘
+                                 │
+                                 ▼
                     Feeds back to refine Canon
 ```
 
 ## Skill Inventory
 
+### Core Canon Skills (Define Standards)
+
 | Skill | Primary Mode | Purpose |
 |-------|--------------|---------|
-| `canon-maintenance` | .ltd | Enforce Dieter Rams principles, audit implementations |
-| `design-ux-improvement` | .ltd | Creative-forward design analysis and improvement |
-| `sveltekit-project-manager` | All | Deploy and manage SvelteKit projects with canonical standards |
+| `canon-maintenance` | .ltd | **Full Subtractive Triad**: DRY → Rams → Heidegger auditing |
+| `voice-validator` | .ltd | Validate content against the Five Principles of Communication |
+| `subtractive-review` | All | Apply the Subtractive Triad as code review methodology |
+
+### Research Skills (Document Findings)
+
+| Skill | Primary Mode | Purpose |
+|-------|--------------|---------|
+| `experiment-scaffold` | .io/.space | Generate experiment structure with all required elements |
 | `create-something-experiments` | .io/.space | Track experiments, generate research papers |
 | `technical-report-writing` | .io | Convert projects into formal technical papers |
+
+### Implementation Skills (Build Systems)
+
+| Skill | Primary Mode | Purpose |
+|-------|--------------|---------|
+| `architectural-visualization` | .space | Floor plan visualization with Heidegger threshold zones |
 | `cloudflare-notion-sync` | .space/.agency | Build OAuth-based API integrations |
 | `cloudflare-workers-optimization` | .space/.agency | Optimize code for Workers runtime |
+| `sveltekit-project-manager` | All | Deploy and manage SvelteKit projects |
+| `design-ux-improvement` | .ltd | Creative-forward design analysis and improvement |
+
+### Service Skills (Deliver Value)
+
+| Skill | Primary Mode | Purpose |
+|-------|--------------|---------|
 | `service-delivery-patterns` | .agency | Client engagement and commercial delivery |
-| `understanding-graphs` | All | Create UNDERSTANDING.md files for codebase navigation ([Research Paper](/experiments/understanding-graphs)) |
+
+### Navigation Skills (Understand Context)
+
+| Skill | Primary Mode | Purpose |
+|-------|--------------|---------|
+| `understanding-graphs` | All | Create UNDERSTANDING.md files for codebase navigation |
 
 ## When to Use Each Skill
 
@@ -228,8 +262,12 @@ Skills activate automatically when context matches:
 
 | If you mention... | Skill activates |
 |-------------------|-----------------|
-| "Dieter Rams", "canonical", "principles" | `canon-maintenance` |
+| "Subtractive Triad", "Dieter Rams", "canonical", "principles", "audit" | `canon-maintenance` |
+| "voice", "clarity over cleverness", "marketing jargon", "forbidden patterns" | `voice-validator` |
+| "code review", "PR review", "earns existence", "remove", "unify" | `subtractive-review` |
+| "new experiment", "hypothesis", "success criteria", "scaffold" | `experiment-scaffold` |
 | "Awwwards", "design review", "UX audit" | `design-ux-improvement` |
+| "floor plan", "threshold zones", "dwelling", "architecture" | `architectural-visualization` |
 | "deploy to Cloudflare", "Pages", "SvelteKit build" | `sveltekit-project-manager` |
 | "track this experiment", "write paper" | `create-something-experiments` |
 | "formal report", "technical paper", "IEEE" | `technical-report-writing` |

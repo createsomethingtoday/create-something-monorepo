@@ -1,3 +1,7 @@
+<script lang="ts">
+	import SubtractiveTriadAnimation from '$lib/components/SubtractiveTriadAnimation.svelte';
+</script>
+
 <svelte:head>
 	<title>Ethos — CREATE SOMETHING.ltd</title>
 	<meta
@@ -101,6 +105,16 @@
 			<p>
 				For any decision, ask the three questions in order. If you've built it before, unify. If it
 				doesn't earn its place, remove. If it doesn't serve the whole, reconnect—or remove.
+			</p>
+		</div>
+
+		<!-- Visual Demonstration -->
+		<div class="mt-12">
+			<p class="text-sm uppercase tracking-widest opacity-40 mb-4">Visual Demonstration</p>
+			<SubtractiveTriadAnimation />
+			<p class="mt-4 text-sm opacity-50 italic">
+				Inspired by Gabriel Santos (Stone Story RPG): "I start with the full pyramid and I erase it
+				layer by layer."
 			</p>
 		</div>
 	</div>

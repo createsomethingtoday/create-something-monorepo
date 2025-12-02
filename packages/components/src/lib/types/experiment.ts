@@ -5,6 +5,17 @@
  * rather than database entries. Used by both .io and .space.
  *
  * DRY: Single source of truth for experiment metadata.
+ *
+ * ASCII Art Visual Dialects:
+ * --------------------------
+ * .space (Practice) uses simple ASCII: +-|
+ *   → Portable, terminal-friendly, emphasizes simplicity
+ *
+ * .io (Research) uses Unicode box-drawing: ╔═╗║╚╝┌─┐│└┘
+ *   → Richer visual, publication-quality, emphasizes rigor
+ *
+ * This distinction is intentional: each property speaks
+ * in a visual register appropriate to its purpose.
  */
 
 export interface FileBasedExperiment {
@@ -27,6 +38,8 @@ export interface FileBasedExperiment {
 	// Note: Some experiments have QUALITATIVE evidence (existence proves principle)
 	// rather than quantitative metrics
 	tests_principles?: string[];
+	// Optional: Override default route (default: /experiments/{slug})
+	route?: string;
 }
 
 /**
@@ -40,6 +53,8 @@ export function transformExperimentToPaper(exp: FileBasedExperiment) {
 		difficulty_level: exp.difficulty,
 		published: 1,
 		is_hidden: 0,
-		archived: 0
+		archived: 0,
+		// Route override: use exp.route if set, otherwise default to /experiments/{slug}
+		route: exp.route || `/experiments/${exp.slug}`
 	};
 }
