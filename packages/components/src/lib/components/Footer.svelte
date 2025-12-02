@@ -71,16 +71,16 @@
 	const defaultCopyright = `© ${currentYear} Create Something. The canon for "less, but better."`;
 </script>
 
-<footer class="border-t border-white/10 bg-black">
+<footer class="footer">
 	<!-- Newsletter Section (Optional) -->
 	{#if showNewsletter}
 		<section id="newsletter" class="py-20 px-6">
 			<div class="max-w-4xl mx-auto">
 				<div class="text-center">
-					<h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+					<h2 class="newsletter-title mb-4">
 						{newsletterTitle}
 					</h2>
-					<p class="text-white/60 mb-8 max-w-2xl mx-auto">
+					<p class="newsletter-description mb-8 max-w-2xl mx-auto">
 						{newsletterDescription}
 					</p>
 
@@ -90,14 +90,14 @@
 								type="email"
 								bind:value={email}
 								placeholder="Enter your email address"
-								class="flex-1 px-6 py-4 bg-[#111111] border border-white/10 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+								class="newsletter-input flex-1 px-6 py-4"
 								required
 								disabled={isSubmitting}
 							/>
 							<button
 								type="submit"
 								disabled={isSubmitting}
-								class="group px-8 py-4 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+								class="newsletter-button group px-8 py-4 flex items-center justify-center gap-2"
 							>
 								<span>{isSubmitting ? 'Subscribing...' : 'Subscribe'}</span>
 								{#if !isSubmitting}
@@ -119,11 +119,7 @@
 						</div>
 
 						{#if message}
-							<div
-								class="mt-4 p-4 rounded-lg text-sm {message.type === 'success'
-									? 'bg-green-500/10 text-green-400 border border-green-500/20'
-									: 'bg-red-500/10 text-red-400 border border-red-500/20'}"
-							>
+							<div class="mt-4 p-4 text-sm message-{message.type}">
 								{message.text}
 							</div>
 						{/if}
@@ -134,19 +130,19 @@
 	{/if}
 
 	<!-- Footer Links -->
-	<div class="py-12 px-6 {showNewsletter ? 'border-t border-white/10' : ''}">
+	<div class="footer-links py-12 px-6" class:with-newsletter={showNewsletter}>
 		<div class="max-w-7xl mx-auto">
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
 				<!-- About / Brand Column -->
 				<div>
 					{#if aboutText}
-						<div class="text-2xl font-bold text-white mb-4">CREATE SOMETHING</div>
-						<p class="text-white/60 text-sm max-w-md mb-6">
+						<div class="brand-title mb-4">CREATE SOMETHING</div>
+						<p class="brand-description text-sm max-w-md mb-6">
 							{aboutText}
 						</p>
 					{:else}
-						<h4 class="text-sm font-bold mb-4">About</h4>
-						<p class="text-sm opacity-60 leading-relaxed">
+						<h4 class="section-title text-sm mb-4">About</h4>
+						<p class="section-description text-sm leading-relaxed">
 							The philosophical foundation for the Create Something ecosystem. Curated wisdom from
 							masters who embody "less, but better."
 						</p>
@@ -159,7 +155,7 @@
 								href="https://github.com/createsomethingtoday"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all"
+								class="social-link w-10 h-10 flex items-center justify-center"
 								aria-label="GitHub"
 							>
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -172,7 +168,7 @@
 								href="https://www.linkedin.com/in/micahryanjohnson/"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all"
+								class="social-link w-10 h-10 flex items-center justify-center"
 								aria-label="LinkedIn"
 							>
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -188,14 +184,11 @@
 				<!-- Quick Links (Optional) -->
 				{#if quickLinks.length > 0}
 					<div>
-						<h3 class="text-white font-semibold mb-4 text-sm">Quick Links</h3>
+						<h3 class="section-title text-sm mb-4">Quick Links</h3>
 						<ul class="space-y-3">
 							{#each quickLinks as link}
 								<li>
-									<a
-										href={link.href}
-										class="text-white/60 hover:text-white text-sm transition-colors"
-									>
+									<a href={link.href} class="footer-link text-sm">
 										{link.label}
 									</a>
 								</li>
@@ -206,46 +199,42 @@
 
 				<!-- Modes of Being (REQUIRED) -->
 				<div>
-					<h3 class="text-white font-semibold mb-4 text-sm">Modes of Being</h3>
+					<h3 class="section-title text-sm mb-4">Modes of Being</h3>
 					<ul class="space-y-3">
 						<li>
 							<a
 								href="https://createsomething.space"
-								class="block text-sm {mode === 'space'
-									? 'text-white'
-									: 'text-white/60 hover:text-white'} transition-colors"
+								class="footer-link block text-sm"
+								class:active={mode === 'space'}
 							>
-								.space <span class="opacity-40">— Explore</span>
+								.space <span class="link-label">— Explore</span>
 							</a>
 						</li>
 						<li>
 							<a
 								href="https://createsomething.io"
-								class="block text-sm {mode === 'io'
-									? 'text-white'
-									: 'text-white/60 hover:text-white'} transition-colors"
+								class="footer-link block text-sm"
+								class:active={mode === 'io'}
 							>
-								.io <span class="opacity-40">— Learn</span>
+								.io <span class="link-label">— Learn</span>
 							</a>
 						</li>
 						<li>
 							<a
 								href="https://createsomething.agency"
-								class="block text-sm {mode === 'agency'
-									? 'text-white'
-									: 'text-white/60 hover:text-white'} transition-colors"
+								class="footer-link block text-sm"
+								class:active={mode === 'agency'}
 							>
-								.agency <span class="opacity-40">— Build</span>
+								.agency <span class="link-label">— Build</span>
 							</a>
 						</li>
 						<li>
 							<a
 								href="https://createsomething.ltd"
-								class="block text-sm {mode === 'ltd'
-									? 'text-white'
-									: 'text-white/60 hover:text-white'} transition-colors"
+								class="footer-link block text-sm"
+								class:active={mode === 'ltd'}
 							>
-								.ltd <span class="opacity-40">— Canon</span>
+								.ltd <span class="link-label">— Canon</span>
 							</a>
 						</li>
 						<li>
@@ -253,9 +242,9 @@
 								href="https://github.com/createsomethingtoday"
 								target="_blank"
 								rel="noopener"
-								class="block text-sm text-white/60 hover:text-white transition-colors"
+								class="footer-link block text-sm"
 							>
-								GitHub <span class="opacity-40">— Source</span>
+								GitHub <span class="link-label">— Source</span>
 							</a>
 						</li>
 					</ul>
@@ -265,9 +254,9 @@
 	</div>
 
 	<!-- Copyright -->
-	<div class="border-t border-white/10 py-6 px-6">
+	<div class="footer-copyright py-6 px-6">
 		<div class="max-w-7xl mx-auto">
-			<p class="text-xs opacity-40 text-center">
+			<p class="copyright-text text-xs text-center">
 				{copyrightText || defaultCopyright}
 			</p>
 		</div>
@@ -275,12 +264,158 @@
 
 	<!-- Standards (Optional) -->
 	{#if showRamsQuote}
-		<div class="border-t border-white/10 py-8 px-6">
+		<div class="footer-quote py-8 px-6">
 			<div class="max-w-7xl mx-auto text-center">
-				<p class="text-xs text-white/40 leading-relaxed">
+				<p class="quote-text text-xs leading-relaxed">
 					Less, but better. · Weniger, aber besser. · — Dieter Rams
 				</p>
 			</div>
 		</div>
 	{/if}
 </footer>
+
+<style>
+	/* Footer Container */
+	.footer {
+		border-top: 1px solid var(--color-border-default);
+		background: var(--color-bg-pure);
+	}
+
+	/* Newsletter Section */
+	.newsletter-title {
+		font-size: clamp(1.875rem, 3vw, 2.25rem);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.newsletter-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	.newsletter-input {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.newsletter-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.newsletter-input:focus {
+		outline: none;
+		border-color: var(--color-border-strong);
+	}
+
+	.newsletter-input:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.newsletter-button {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-weight: var(--font-semibold);
+		border-radius: var(--radius-full);
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.newsletter-button:hover {
+		opacity: 0.9;
+	}
+
+	.newsletter-button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	/* Message States */
+	.message-success {
+		background: var(--color-success-muted);
+		color: var(--color-success);
+		border: 1px solid var(--color-success);
+		border-radius: var(--radius-lg);
+	}
+
+	.message-error {
+		background: var(--color-error-muted);
+		color: var(--color-error);
+		border: 1px solid var(--color-error);
+		border-radius: var(--radius-lg);
+	}
+
+	/* Footer Links Section */
+	.footer-links.with-newsletter {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	/* Brand */
+	.brand-title {
+		font-size: 1.5rem;
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.brand-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Section Titles */
+	.section-title {
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.section-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Social Links */
+	.social-link {
+		background: var(--color-hover);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		color: var(--color-fg-tertiary);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.social-link:hover {
+		background: var(--color-active);
+		color: var(--color-fg-primary);
+	}
+
+	/* Footer Links */
+	.footer-link {
+		color: var(--color-fg-tertiary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.footer-link:hover,
+	.footer-link.active {
+		color: var(--color-fg-primary);
+	}
+
+	.link-label {
+		color: var(--color-fg-muted);
+	}
+
+	/* Copyright */
+	.footer-copyright {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.copyright-text {
+		color: var(--color-fg-muted);
+	}
+
+	/* Quote */
+	.footer-quote {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.quote-text {
+		color: var(--color-fg-muted);
+	}
+</style>
