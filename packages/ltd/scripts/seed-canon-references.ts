@@ -24,6 +24,14 @@ interface ExperimentReference {
 	principleMatches: string[]; // Principle IDs that match
 }
 
+interface PaperReference {
+	slug: string;
+	domain: 'io'; // Papers are research (.io domain)
+	title: string;
+	tags: string[];
+	principleMatches: string[]; // Principle IDs that match
+}
+
 // Known experiments and their principle connections
 // This mapping was created by analyzing experiment content against the canon
 // Updated 2025-12-02 to include all file-based experiments with tests_principles
@@ -141,6 +149,26 @@ const EXPERIMENT_REFERENCES: ExperimentReference[] = [
 	}
 ];
 
+// ═══════════════════════════════════════════════════════════════════
+// Research Papers (Vorhandenheit mode - theoretical analysis)
+// Papers DESCRIBE the hermeneutic circle; experiments DEMONSTRATE it
+// ═══════════════════════════════════════════════════════════════════
+const PAPER_REFERENCES: PaperReference[] = [
+	{
+		slug: 'code-mode-hermeneutic-analysis',
+		domain: 'io',
+		title: 'Code-Mediated Tool Use: A Hermeneutic Analysis of LLM-Tool Interaction',
+		tags: ['Phenomenology', 'Heidegger', 'LLM Agents', 'Code Mode', 'Hermeneutics'],
+		principleMatches: [
+			'heidegger-zuhandenheit', // Core thesis: Code Mode achieves ready-to-hand
+			'heidegger-vorhandenheit', // Contrasts with present-at-hand tool calling
+			'heidegger-hermeneutic-circle', // Section V traces the circle explicitly
+			'rams-principle-5', // Unobtrusive - tools recede from attention
+			'rams-principle-10' // As little as possible - minimal cognitive overhead
+		]
+	}
+];
+
 // Principle descriptions for reference comments
 const PRINCIPLE_DESCRIPTIONS: Record<string, string> = {
 	// Dieter Rams
@@ -197,6 +225,14 @@ function generateSQL(): string {
 		''
 	];
 
+	// ─────────────────────────────────────────────────────────────────
+	// Experiments (Zuhandenheit - practical demonstration)
+	// ─────────────────────────────────────────────────────────────────
+	statements.push('-- ═══════════════════════════════════════════════════════════════');
+	statements.push('-- EXPERIMENTS (Zuhandenheit - ready-to-hand demonstration)');
+	statements.push('-- ═══════════════════════════════════════════════════════════════');
+	statements.push('');
+
 	for (const exp of EXPERIMENT_REFERENCES) {
 		statements.push(`-- ${exp.title} (${exp.domain}/${exp.slug})`);
 
@@ -216,9 +252,42 @@ function generateSQL(): string {
 		statements.push('');
 	}
 
+	// ─────────────────────────────────────────────────────────────────
+	// Papers (Vorhandenheit - theoretical analysis)
+	// ─────────────────────────────────────────────────────────────────
+	statements.push('-- ═══════════════════════════════════════════════════════════════');
+	statements.push('-- PAPERS (Vorhandenheit - present-at-hand analysis)');
+	statements.push('-- ═══════════════════════════════════════════════════════════════');
+	statements.push('');
+
+	for (const paper of PAPER_REFERENCES) {
+		statements.push(`-- ${paper.title} (${paper.domain}/papers/${paper.slug})`);
+
+		for (const principleId of paper.principleMatches) {
+			const description = PRINCIPLE_DESCRIPTIONS[principleId] || principleId;
+			const id = generateId();
+
+			statements.push(`INSERT INTO canon_references (id, principle_id, reference_type, reference_slug, reference_domain, description) VALUES (
+  '${id}',
+  '${principleId}',
+  'paper',
+  '${paper.slug}',
+  '${paper.domain}',
+  'Validates: ${description}'
+);`);
+		}
+		statements.push('');
+	}
+
+	const totalExperimentRefs = EXPERIMENT_REFERENCES.reduce((sum, exp) => sum + exp.principleMatches.length, 0);
+	const totalPaperRefs = PAPER_REFERENCES.reduce((sum, paper) => sum + paper.principleMatches.length, 0);
+
 	statements.push('-- Summary:');
-	statements.push(`-- Total references created: ${EXPERIMENT_REFERENCES.reduce((sum, exp) => sum + exp.principleMatches.length, 0)}`);
+	statements.push(`-- Total experiment references: ${totalExperimentRefs}`);
+	statements.push(`-- Total paper references: ${totalPaperRefs}`);
+	statements.push(`-- Total references created: ${totalExperimentRefs + totalPaperRefs}`);
 	statements.push(`-- Experiments linked: ${EXPERIMENT_REFERENCES.length}`);
+	statements.push(`-- Papers linked: ${PAPER_REFERENCES.length}`);
 	statements.push('');
 
 	return statements.join('\n');
@@ -230,7 +299,9 @@ console.log(generateSQL());
 // Also output a summary to stderr
 console.error('\n=== Canon References Seed ===');
 console.error(`Experiments: ${EXPERIMENT_REFERENCES.length}`);
-console.error(`References: ${EXPERIMENT_REFERENCES.reduce((sum, exp) => sum + exp.principleMatches.length, 0)}`);
+console.error(`Papers: ${PAPER_REFERENCES.length}`);
+console.error(`Experiment References: ${EXPERIMENT_REFERENCES.reduce((sum, exp) => sum + exp.principleMatches.length, 0)}`);
+console.error(`Paper References: ${PAPER_REFERENCES.reduce((sum, paper) => sum + paper.principleMatches.length, 0)}`);
 console.error('\nTo apply:');
 console.error('  1. Save output to seed.sql: pnpm --filter @create-something/ltd exec tsx scripts/seed-canon-references.ts > seed.sql');
 console.error('  2. Execute via wrangler: wrangler d1 execute create-something-db --remote --file=seed.sql');
