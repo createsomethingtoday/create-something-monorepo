@@ -151,6 +151,92 @@
 	</div>
 </section>
 
+<!-- CSS Architecture Standard -->
+<section class="py-16 px-6 border-t border-white/10">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">CSS Architecture</h2>
+
+		<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<p>
+				<strong>Tailwind for structure, Canon for aesthetics.</strong> This separation resolves the hermeneutic tension between utility frameworks and design tokens.
+			</p>
+
+			<p>
+				The canon defines design tokens as CSS custom properties in <code class="text-sm bg-white/10 px-2 py-1">app.css</code>. These are the ontological ground—what things <em>are</em> in this system. Tailwind introduces a parallel ontology that competes with the canon.
+			</p>
+		</div>
+
+		<div class="mt-8 border border-white/10">
+			<table class="w-full text-left">
+				<thead class="border-b border-white/10">
+					<tr>
+						<th class="px-6 py-4 text-sm font-semibold opacity-60">Category</th>
+						<th class="px-6 py-4 text-sm font-semibold opacity-60">Tailwind</th>
+						<th class="px-6 py-4 text-sm font-semibold opacity-60">Canon</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-white/10">
+					<tr>
+						<td class="px-6 py-4 font-medium">Layout</td>
+						<td class="px-6 py-4 opacity-70 text-green-400">✓ Use</td>
+						<td class="px-6 py-4 opacity-50">Not defined</td>
+					</tr>
+					<tr>
+						<td class="px-6 py-4 font-medium">Border Radius</td>
+						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70 text-green-400">var(--radius-*)</td>
+					</tr>
+					<tr>
+						<td class="px-6 py-4 font-medium">Colors</td>
+						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70 text-green-400">var(--color-*)</td>
+					</tr>
+					<tr>
+						<td class="px-6 py-4 font-medium">Spacing</td>
+						<td class="px-6 py-4 opacity-70 text-yellow-400">~ Acceptable</td>
+						<td class="px-6 py-4 opacity-70 text-green-400">var(--space-*)</td>
+					</tr>
+					<tr>
+						<td class="px-6 py-4 font-medium">Typography</td>
+						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70 text-green-400">var(--text-*)</td>
+					</tr>
+					<tr>
+						<td class="px-6 py-4 font-medium">Shadows</td>
+						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70 text-green-400">var(--shadow-*)</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="mt-8 space-y-6">
+			<div class="border-l-2 border-white/20 pl-6">
+				<h3 class="text-xl font-semibold mb-3">Layout Utilities (Keep)</h3>
+				<p class="opacity-70 leading-relaxed mb-3">
+					Tailwind's layout utilities don't conflict with the canon because CSS Flexbox and Grid are universal primitives, not design decisions.
+				</p>
+				<code class="text-sm opacity-60 font-mono">flex, grid, items-center, justify-between, relative, absolute, w-full, gap-*</code>
+			</div>
+
+			<div class="border-l-2 border-white/20 pl-6">
+				<h3 class="text-xl font-semibold mb-3">Design Utilities (Migrate)</h3>
+				<p class="opacity-70 leading-relaxed mb-3">
+					Design utilities compete with canonical tokens. Use CSS custom properties instead to maintain hermeneutic coherence.
+				</p>
+				<code class="text-sm opacity-60 font-mono">rounded-*, bg-*, text-*, border-*, shadow-* → var(--*)</code>
+			</div>
+		</div>
+
+		<div class="mt-8 p-6 border border-white/10 bg-white/5">
+			<p class="text-sm font-mono opacity-60 mb-4">The Principle:</p>
+			<p class="text-lg italic opacity-80">
+				"Tailwind provides syntax for structure. The canon provides semantics for aesthetics. When they compete, the canon wins."
+			</p>
+		</div>
+	</div>
+</section>
+
 <!-- Evaluation Checklist -->
 <section class="py-16 px-6 border-t border-white/10">
 	<div class="max-w-3xl mx-auto">
@@ -179,6 +265,10 @@
 				<label class="flex items-start gap-3 cursor-pointer">
 					<input type="checkbox" class="mt-1" disabled />
 					<span>Does it align with at least one principle from the canon?</span>
+				</label>
+				<label class="flex items-start gap-3 cursor-pointer">
+					<input type="checkbox" class="mt-1" disabled />
+					<span>Do design values use canonical tokens, not Tailwind utilities?</span>
 				</label>
 			</div>
 
