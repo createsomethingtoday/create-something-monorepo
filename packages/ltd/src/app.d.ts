@@ -6,6 +6,7 @@ interface Env {
 	DB: D1Database;
 	SESSIONS: KVNamespace;
 	CACHE: KVNamespace;
+	CIRCLE_DATA: KVNamespace;
 	STORAGE: R2Bucket;
 	RESEND_API_KEY: string;
 	ENVIRONMENT: string;

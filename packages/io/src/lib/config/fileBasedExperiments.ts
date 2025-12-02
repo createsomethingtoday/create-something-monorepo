@@ -27,6 +27,11 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		reading_time_minutes: 12,
 		difficulty: 'intermediate',
 		is_file_based: true,
+		tests_principles: [
+			'subtractive-triad', // Meta: tests the triad itself
+			'rams-principle-10', // As little as possible - 92% script reduction
+			'heidegger-hermeneutic-circle' // Understanding through practice
+		],
 		ascii_art: `
     ╔═══════════════════════════════════════════════════════╗
     ║   SUBTRACTIVE TRIAD AUDIT                             ║
@@ -60,6 +65,11 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		reading_time_minutes: 15,
 		difficulty: 'advanced',
 		is_file_based: true,
+		tests_principles: [
+			'rams-principle-10', // As little as possible - minimal documentation
+			'rams-principle-4', // Understandable - human-readable format
+			'heidegger-hermeneutic-circle' // Understanding through interpretation
+		],
 		ascii_art: `
     ╔═══════════════════════════════════════════════════════╗
     ║   UNDERSTANDING GRAPHS                                ║
@@ -92,6 +102,12 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		reading_time_minutes: 15,
 		difficulty: 'advanced',
 		is_file_based: true,
+		tests_principles: [
+			'tufte-data-ink-ratio', // Maximize data-ink ratio
+			'tufte-small-multiples', // Reveal patterns through repetition
+			'rams-principle-2', // Useful - components serve data revelation
+			'rams-principle-5' // Unobtrusive - visualization recedes, data emerges
+		],
 		ascii_art: `
     ╔═══════════════════════════════════════════╗
     ║   AGENTIC VISUALIZATION                   ║
@@ -123,6 +139,11 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		reading_time_minutes: 5,
 		difficulty: 'beginner',
 		is_file_based: true,
+		tests_principles: [
+			'tufte-data-ink-ratio', // Maximize signal, minimize noise
+			'rams-principle-3', // Aesthetic - form follows data
+			'heidegger-aletheia' // Truth as unconcealment - patterns emerge
+		],
 		ascii_art: `
     ╔═══════════════════════════════════════════╗
     ║   DATA PATTERNS                           ║

@@ -14,48 +14,11 @@
 
 	let { data } = $props();
 
-	// Principle descriptions for display (all 10 Rams principles)
-	const principleDescriptions: Record<string, { title: string; description: string }> = {
-		'rams-principle-1': {
-			title: 'Innovative',
-			description: 'Good design is innovative'
-		},
-		'rams-principle-2': {
-			title: 'Useful',
-			description: 'Good design makes a product useful'
-		},
-		'rams-principle-3': {
-			title: 'Aesthetic',
-			description: 'Good design is aesthetic'
-		},
-		'rams-principle-4': {
-			title: 'Understandable',
-			description: 'Good design makes a product understandable'
-		},
-		'rams-principle-5': {
-			title: 'Unobtrusive',
-			description: 'Good design is unobtrusive'
-		},
-		'rams-principle-6': {
-			title: 'Honest',
-			description: 'Good design is honest'
-		},
-		'rams-principle-7': {
-			title: 'Long-lasting',
-			description: 'Good design is long-lasting'
-		},
-		'rams-principle-8': {
-			title: 'Thorough',
-			description: 'Good design is thorough down to the last detail'
-		},
-		'rams-principle-9': {
-			title: 'Environmentally Friendly',
-			description: 'Good design is environmentally friendly'
-		},
-		'rams-principle-10': {
-			title: 'As Little Design As Possible',
-			description: 'Less, but better'
-		}
+	// Domain URLs for experiment links
+	const domainUrls: Record<string, string> = {
+		space: 'https://createsomething.space',
+		io: 'https://createsomething.io',
+		agency: 'https://createsomething.agency'
 	};
 
 	function getStatusColor(status: string): string {
@@ -69,9 +32,6 @@
 		}
 	}
 
-	function formatPercentage(value: number): string {
-		return `${Math.round(value * 100)}%`;
-	}
 </script>
 
 <svelte:head>
@@ -190,24 +150,16 @@
 			<div class="proof-content evidence-grid">
 				{#if data.evidence.length > 0}
 					{#each data.evidence as item}
-						{@const principle = principleDescriptions[item.principleId] || {
-							title: item.principleId,
-							description: ''
-						}}
 						<div class="evidence-card" style="--status-color: {getStatusColor(item.status)}">
 							<div class="evidence-header">
-								<span class="principle-id">{item.principleId}</span>
-								<span class="principle-title">{principle.title}</span>
+								<span class="master-name">{item.masterName}</span>
+								<span class="principle-title">{item.principleTitle}</span>
 							</div>
 
 							<div class="evidence-metrics">
 								<div class="metric">
-									<span class="metric-value">{item.totalExecutions}</span>
-									<span class="metric-label">executions</span>
-								</div>
-								<div class="metric">
-									<span class="metric-value">{formatPercentage(item.avgCompletionRate)}</span>
-									<span class="metric-label">completion</span>
+									<span class="metric-value">{item.evidenceCount}</span>
+									<span class="metric-label">experiment{item.evidenceCount !== 1 ? 's' : ''}</span>
 								</div>
 							</div>
 
@@ -217,13 +169,15 @@
 								<span class="status-label">{item.status}</span>
 							</div>
 
-							<div class="evidence-experiments">
-								{#each item.experiments as exp}
-									<a href="https://createsomething.space/experiments/{exp.slug}" class="exp-link">
-										{exp.title} →
-									</a>
-								{/each}
-							</div>
+							{#if item.experiments.length > 0}
+								<div class="evidence-experiments">
+									{#each item.experiments as exp}
+										<a href="{domainUrls[exp.domain]}/experiments/{exp.slug}" class="exp-link">
+											{exp.title} →
+										</a>
+									{/each}
+								</div>
+							{/if}
 						</div>
 					{/each}
 				{:else}
@@ -434,9 +388,10 @@
 		margin-bottom: 0.75rem;
 	}
 
-	.principle-id {
-		font-family: 'IBM Plex Mono', monospace;
-		font-size: 0.75rem;
+	.master-name {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 		color: rgba(255, 255, 255, 0.4);
 	}
 

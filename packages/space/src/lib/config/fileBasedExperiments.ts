@@ -31,6 +31,11 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 		difficulty: 'intermediate',
 		is_file_based: true,
 		is_executable: 1,
+		tests_principles: [
+			'rams-principle-5', // Unobtrusive - tool recedes from user's attention
+			'rams-principle-10', // As little as possible - stripped to essence
+			'heidegger-zuhandenheit' // Ready-to-hand - the tool becomes invisible in use
+		],
 		// Hermeneutic Circle: Evidence is QUALITATIVE, not quantitative
 		// The artifact's existence proves canon propagation - no execution metrics needed
 		// "The tool already embodies the principles. Measuring clicks adds noise."
@@ -112,20 +117,81 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     +-------------------------------------------------+
     |   WORKWAY SDK CANON AUDIT                       |
     |                                                 |
-    |   Pre-understanding    Emergent understanding   |
-    |   (README)             (Implementation)         |
+    |   Pre-understanding ────────► Emergent          |
+    |   (README)                    (Implementation)  |
     |                                                 |
-    |        |                      |                 |
-    |        v                      v                 |
-    |   ActionResult  ──────►  DX Helpers             |
-    |   IntegrationError ───►  Error Taxonomy         |
-    |   Timeout ────────────►  AbortController        |
-    |   Retry ──────────────►  Exponential Backoff    |
+    |   The circle closes:                            |
+    |   Practice reveals what theory cannot.          |
+    +-------------------------------------------------+
+`
+	},
+	{
+		id: 'file-threshold-dwelling',
+		slug: 'threshold-dwelling',
+		title: 'Threshold Dwelling: Miesian Floor Plan Visualization',
+		description:
+			"Architectural visualization using Heidegger's threshold zone theory. Five zones reveal how we dwell: OUTER → SERVICE → PUBLIC → PRIVATE → OPEN.",
+		excerpt_short: 'Floor plans through phenomenological zones',
+		excerpt_long:
+			"Threshold Dwelling applies Heidegger's concept of dwelling to architectural visualization. Rather than labeling rooms by function, the plan reveals five threshold zones—OUTER, SERVICE, PUBLIC, PRIVATE, OPEN—through barely perceptible value shifts. Tufte's data-ink ratio, Mies's 'less is more,' and Rams's unobtrusiveness converge in a single SVG.",
+		category: 'practice',
+		tags: ['Heidegger', 'Architecture', 'Tufte', 'Mies', 'Rams', 'SVG', 'Visualization'],
+		created_at: '2025-11-30T00:00:00Z',
+		updated_at: '2025-11-30T00:00:00Z',
+		reading_time_minutes: 5,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 0,
+		tests_principles: [
+			'rams-principle-5', // Unobtrusive
+			'rams-principle-10' // As little as possible
+		],
+		ascii_art: `
+    +-------------------------------------------------+
+    |   THRESHOLD DWELLING                            |
     |                                                 |
-    |   Score: 41/50 ──────────────────► 48/50        |
+    |   OUTER ──► SERVICE ──► PUBLIC                  |
+    |                           │                     |
+    |                           ▼                     |
+    |              OPEN ◄──── PRIVATE                 |
     |                                                 |
-    |   "The circle closes: implementation            |
-    |    reveals what documentation cannot."          |
+    |   Philosophy implicit in structure.             |
+    +-------------------------------------------------+
+`
+	},
+	{
+		id: 'file-integration-praxis',
+		slug: 'praxis',
+		title: 'Integration Praxis: Learning Through Practice',
+		description:
+			'Interactive exercises teaching WORKWAY SDK patterns through the hermeneutic circle. Code, reflect, understand.',
+		excerpt_short: 'Learn SDK patterns through guided practice',
+		excerpt_long:
+			'Integration Praxis embodies the hermeneutic circle: understanding emerges through practice, not documentation. Five exercises teach error handling, timeouts, retries, webhook security, and integration building. The Subtractive Triad audits each solution, revealing over-engineering and disconnection.',
+		category: 'practice',
+		tags: ['Hermeneutic Circle', 'SDK', 'Practice', 'Subtractive Triad', 'Interactive'],
+		created_at: '2025-11-30T00:00:00Z',
+		updated_at: '2025-11-30T00:00:00Z',
+		reading_time_minutes: 30,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 1,
+		tests_principles: [
+			'rams-principle-2', // Useful
+			'rams-principle-4', // Understandable
+			'rams-principle-10' // As little as possible
+		],
+		route: '/praxis', // Override: lives at /praxis, not /experiments/praxis
+		ascii_art: `
+    +-------------------------------------------------+
+    |   INTEGRATION PRAXIS                            |
+    |                                                 |
+    |   [Code] ──► [Run] ──► [Reflect] ──► [Reveal]   |
+    |                                                 |
+    |   DRY         Rams        Heidegger             |
+    |   Unify       Remove      Reconnect             |
+    |                                                 |
+    |   Understanding through practice.               |
     +-------------------------------------------------+
 `
 	}
