@@ -265,8 +265,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(0, 0, 0, 0.5);
-		color: rgba(255, 255, 255, 0.6);
+		background: color-mix(in srgb, var(--color-bg-pure) 50%, transparent);
+		color: var(--color-fg-tertiary);
 		font-size: 0.75rem;
 		z-index: 10;
 	}
@@ -283,13 +283,13 @@
 		stroke: currentColor;
 		stroke-width: 1.5;
 		opacity: calc(0.3 + var(--strength, 0) * 0.07);
-		transition: opacity 0.3s ease;
+		transition: opacity var(--duration-standard) var(--ease-standard);
 	}
 
 	.edge.missing {
 		stroke-dasharray: 4 4;
 		opacity: 0.2;
-		stroke: rgba(239, 68, 68, 0.5);
+		stroke: color-mix(in srgb, var(--color-error) 50%, transparent);
 	}
 
 	.edge.hidden {
@@ -308,7 +308,7 @@
 	/* Nodes */
 	.node {
 		cursor: default;
-		transition: transform 0.2s ease;
+		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
 	.node.interactive {
@@ -324,52 +324,52 @@
 	}
 
 	.node.interactive:focus .node-circle {
-		stroke: rgba(255, 255, 255, 0.8);
+		stroke: var(--color-fg-secondary);
 		stroke-width: 2;
 	}
 
 	.node-circle {
-		fill: rgba(10, 10, 10, 0.9);
-		stroke: rgba(255, 255, 255, 0.2);
+		fill: var(--color-bg-elevated);
+		stroke: var(--color-border-default);
 		stroke-width: 1;
 		transition:
-			fill 0.2s ease,
-			stroke 0.2s ease;
+			fill var(--duration-micro) var(--ease-standard),
+			stroke var(--duration-micro) var(--ease-standard);
 	}
 
 	.node.active .node-circle {
-		fill: rgba(30, 30, 30, 0.95);
-		stroke: rgba(255, 255, 255, 0.4);
+		fill: var(--color-bg-surface);
+		stroke: var(--color-border-strong);
 	}
 
 	.node.selected .node-circle {
-		stroke: rgba(255, 255, 255, 0.8);
+		stroke: var(--color-fg-secondary);
 		stroke-width: 2;
 	}
 
 	.node-count {
-		font-family: 'IBM Plex Mono', monospace;
+		font-family: var(--font-mono);
 		font-size: 10px;
 		font-weight: 600;
-		fill: rgba(255, 255, 255, 0.9);
+		fill: var(--color-fg-primary);
 	}
 
 	.node-label {
-		font-family: 'IBM Plex Mono', monospace;
+		font-family: var(--font-mono);
 		font-size: 8px;
 		font-weight: 600;
-		fill: rgba(255, 255, 255, 0.8);
+		fill: var(--color-fg-secondary);
 	}
 
 	.node-sublabel {
 		font-size: 6px;
-		fill: rgba(255, 255, 255, 0.4);
+		fill: var(--color-fg-muted);
 	}
 
 	/* Center text */
 	.center-text {
 		font-size: 8px;
-		fill: rgba(255, 255, 255, 0.3);
+		fill: var(--color-fg-subtle);
 	}
 
 	.center-empty {
@@ -380,8 +380,8 @@
 	.legend {
 		margin-top: 1rem;
 		padding: 0.5rem;
-		background: rgba(255, 255, 255, 0.03);
-		border-radius: 4px;
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-sm);
 		font-size: 0.7rem;
 		display: flex;
 		flex-wrap: wrap;
@@ -390,25 +390,25 @@
 	}
 
 	.legend-title {
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 	}
 
 	.gap-indicator {
-		color: rgba(239, 68, 68, 0.7);
+		color: var(--color-error);
 		padding: 0.125rem 0.375rem;
-		background: rgba(239, 68, 68, 0.1);
-		border-radius: 3px;
-		font-family: 'IBM Plex Mono', monospace;
+		background: color-mix(in srgb, var(--color-error) 10%, transparent);
+		border-radius: var(--radius-sm);
+		font-family: var(--font-mono);
 	}
 
 	.legend.complete {
 		justify-content: center;
-		background: rgba(34, 197, 94, 0.05);
-		border: 1px solid rgba(34, 197, 94, 0.2);
+		background: color-mix(in srgb, var(--color-success) 5%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
 	}
 
 	.legend-complete {
-		color: rgba(34, 197, 94, 0.8);
+		color: var(--color-success);
 		font-style: italic;
 	}
 </style>

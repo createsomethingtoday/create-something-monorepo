@@ -226,10 +226,10 @@
 
 <style>
 	.triad-health {
-		font-family: 'IBM Plex Mono', 'Fira Code', monospace;
-		background: rgba(10, 10, 10, 0.8);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 8px;
+		font-family: var(--font-mono);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 		padding: 1.5rem;
 	}
 
@@ -248,7 +248,7 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 2rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 	}
 
 	.loading-text {
@@ -284,24 +284,24 @@
 	.score-row.overall {
 		margin-top: 0.5rem;
 		padding-top: 0.75rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.score-label {
 		font-weight: 600;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--color-fg-primary);
 		font-size: 0.875rem;
 	}
 
 	.score-sublabel {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--color-fg-muted);
 	}
 
 	.score-bar {
 		font-size: 0.75rem;
 		letter-spacing: -0.05em;
-		color: var(--status-color, rgba(255, 255, 255, 0.5));
+		color: var(--status-color, var(--color-fg-muted));
 	}
 
 	.score-value {
@@ -315,13 +315,13 @@
 		font-weight: bold;
 		text-align: center;
 		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 	}
 
 	.violations-summary {
 		margin-top: 1rem;
 		padding-top: 1rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		border-top: 1px solid var(--color-border-default);
 		display: flex;
 		gap: 0.75rem;
 		flex-wrap: wrap;
@@ -329,67 +329,67 @@
 	}
 
 	.violations-label {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 	}
 
 	.no-violations {
-		color: var(--color-success, #22c55e);
+		color: var(--color-success);
 	}
 
 	.violation {
 		padding: 0.125rem 0.5rem;
-		border-radius: 4px;
+		border-radius: var(--radius-sm);
 		font-size: 0.75rem;
 	}
 
 	.violation.critical {
-		background: rgba(239, 68, 68, 0.2);
-		color: #ef4444;
+		background: color-mix(in srgb, var(--color-error) 20%, transparent);
+		color: var(--color-error);
 	}
 
 	.violation.high {
-		background: rgba(249, 115, 22, 0.2);
-		color: #f97316;
+		background: color-mix(in srgb, var(--color-warning) 20%, transparent);
+		color: var(--color-warning);
 	}
 
 	.violation.medium {
-		background: rgba(234, 179, 8, 0.2);
-		color: #eab308;
+		background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+		color: var(--color-warning);
 	}
 
 	.violation.low {
-		background: rgba(34, 197, 94, 0.2);
-		color: #22c55e;
+		background: color-mix(in srgb, var(--color-success) 20%, transparent);
+		color: var(--color-success);
 	}
 
 	.self-audit {
 		margin-top: 1rem;
 		padding: 0.75rem;
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		font-size: 0.8rem;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px dashed rgba(255, 255, 255, 0.1);
+		background: var(--color-bg-surface);
+		border: 1px dashed var(--color-border-default);
 	}
 
 	.self-audit.valid {
-		border-color: rgba(34, 197, 94, 0.3);
+		border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
 	}
 
 	.self-audit-label {
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 		margin-right: 0.5rem;
 	}
 
 	.self-audit-status.valid {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 
 	.self-audit-status.acceptable {
-		color: #eab308;
+		color: var(--color-warning);
 	}
 
 	.self-audit-status.warning {
-		color: #f97316;
+		color: var(--color-warning);
 	}
 
 	.metadata {
@@ -397,11 +397,11 @@
 		display: flex;
 		gap: 1rem;
 		font-size: 0.7rem;
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--color-fg-subtle);
 	}
 
 	.commit {
-		font-family: 'IBM Plex Mono', monospace;
+		font-family: var(--font-mono);
 	}
 
 	@keyframes pulse {

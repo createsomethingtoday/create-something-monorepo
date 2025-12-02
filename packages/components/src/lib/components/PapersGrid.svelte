@@ -15,15 +15,15 @@
 	const rotations = [-1, 1, -0.5, 0.5, -1.5, 1.5, -1, 1];
 </script>
 
-<section class="py-16 px-6 bg-black">
+<section class="papers-section py-16 px-6">
 	<div class="max-w-7xl mx-auto">
 		<!-- Section Header -->
 		<div class="mb-12">
-			<h2 class="text-3xl md:text-4xl font-bold text-white mb-2">
+			<h2 class="section-title text-3xl md:text-4xl font-bold mb-2">
 				{title}
 			</h2>
 			{#if subtitle}
-				<p class="text-white/60 text-lg">{subtitle}</p>
+				<p class="section-subtitle text-lg">{subtitle}</p>
 			{/if}
 		</div>
 
@@ -42,11 +42,33 @@
 		{#if papers.length === 0}
 			<div class="text-center py-24" transition:fade>
 				<div class="text-6xl mb-6">📄</div>
-				<h3 class="text-2xl font-semibold mb-3 text-white">No papers yet</h3>
-				<p class="text-white/60">
+				<h3 class="empty-title text-2xl font-semibold mb-3">No papers yet</h3>
+				<p class="empty-text">
 					Check back soon for technical content and case studies.
 				</p>
 			</div>
 		{/if}
 	</div>
 </section>
+
+<style>
+	.papers-section {
+		background: var(--color-bg-pure);
+	}
+
+	.section-title {
+		color: var(--color-fg-primary);
+	}
+
+	.section-subtitle {
+		color: var(--color-fg-tertiary);
+	}
+
+	.empty-title {
+		color: var(--color-fg-primary);
+	}
+
+	.empty-text {
+		color: var(--color-fg-tertiary);
+	}
+</style>
