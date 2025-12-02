@@ -120,18 +120,18 @@
 					class="block p-12 bg-white/[0.07] border border-white/10 rounded-xl hover:border-white transition-colors group"
 				>
 					<div class="mb-6">
-						<span class="text-xs font-mono text-white/40">CLIENT: VIRALYTICS</span>
+						<span class="text-xs font-mono text-white/40">CLIENT: HALF DOZEN</span>
 					</div>
 					<h2 class="text-3xl font-semibold text-white mb-4 group-hover:opacity-70 transition-opacity">
 						Viralytics
 					</h2>
 					<p class="text-lg text-white/60 mb-8 leading-relaxed">
-						Social media analytics platform with viral content tracking and engagement optimization
+						AI-powered A&R discovery agent identifying independent artists with viral momentum across Spotify charts
 					</p>
 					<div class="space-y-3 text-sm text-white/50">
-						<p>→ Real-time analytics dashboard</p>
-						<p>→ Content performance scoring</p>
-						<p>→ Trend prediction algorithms</p>
+						<p>→ Cloudflare Workers + Puppeteer</p>
+						<p>→ 20 discovery queries daily</p>
+						<p>→ Notion integration for A&R review</p>
 					</div>
 					<div class="mt-8 pt-6 border-t border-white/10">
 						<p class="text-xs text-white/40 uppercase tracking-wider mb-2">Pattern Applied</p>
