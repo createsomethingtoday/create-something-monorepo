@@ -98,6 +98,62 @@ wrangler pages deployment tail --project-name=createsomething-space
 - Utilities: `src/lib/utils/`
 - Types: `src/lib/types/`
 
+## CSS Architecture
+
+**Tailwind for structure, Canon for aesthetics.** This is a canonical standard documented at [createsomething.ltd/standards](https://createsomething.ltd/standards).
+
+### Keep (Layout Utilities)
+```
+flex, grid, items-*, justify-*, relative, absolute, w-*, h-*, gap-*, p-*, m-*
+```
+
+### Avoid (Design Utilities) → Use Canon Instead
+| Tailwind | Canon |
+|----------|-------|
+| `rounded-*` | `var(--radius-sm/md/lg/xl)` |
+| `bg-*`, `text-*` | `var(--color-*)` |
+| `shadow-*` | `var(--shadow-*)` |
+| `text-sm/lg` | `var(--text-*)` |
+
+### Example
+```svelte
+<!-- ✗ Tailwind design utilities -->
+<div class="flex items-center rounded-lg bg-white/10 text-white/60">
+
+<!-- ✓ Tailwind for layout, Canon for design -->
+<div class="flex items-center card">
+
+<style>
+  .card {
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-surface);
+    color: var(--color-fg-tertiary);
+  }
+</style>
+```
+
+### Canonical Tokens (defined in `app.css`)
+```css
+/* Border Radius */
+--radius-sm: 6px;
+--radius-md: 8px;
+--radius-lg: 12px;
+--radius-xl: 16px;
+--radius-full: 9999px;
+
+/* Spacing (Golden Ratio) */
+--space-xs: 0.5rem;
+--space-sm: 1rem;
+--space-md: 1.618rem;
+--space-lg: 2.618rem;
+--space-xl: 4.236rem;
+```
+
+### Migration Strategy
+**New code**: Follow the canonical pattern (Tailwind for structure, Canon for aesthetics).
+**Existing code**: Migrate incrementally when touching a file for other changes.
+**Priority**: Components in `packages/components/` should be migrated first—they propagate across all properties.
+
 ## Database
 
 D1 databases per package. Query with:
