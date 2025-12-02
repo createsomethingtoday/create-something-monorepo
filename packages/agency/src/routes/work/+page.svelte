@@ -39,6 +39,31 @@
 	<section class="py-24 px-6">
 		<div class="max-w-7xl mx-auto">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+				<!-- Kickstand -->
+				<a
+					href="/work/kickstand"
+					class="block p-12 bg-white/[0.07] border border-white/10 rounded-xl hover:border-white transition-colors group"
+				>
+					<div class="mb-6">
+						<span class="text-xs font-mono text-white/40">CLIENT: HALF DOZEN</span>
+					</div>
+					<h2 class="text-3xl font-semibold text-white mb-4 group-hover:opacity-70 transition-opacity">
+						Kickstand
+					</h2>
+					<p class="text-lg text-white/60 mb-8 leading-relaxed">
+						Venue intelligence system with health monitoring, automated cleanup scripts, and real-time status dashboards
+					</p>
+					<div class="space-y-3 text-sm text-white/50">
+						<p>→ Cloudflare Workers + D1</p>
+						<p>→ 92% script reduction via Subtractive Triad</p>
+						<p>→ Health score: 6.2 → 9.2</p>
+					</div>
+					<div class="mt-8 pt-6 border-t border-white/10">
+						<p class="text-xs text-white/40 uppercase tracking-wider mb-2">Pattern Applied</p>
+						<p class="text-sm text-white/60">Subtractive Triad: DRY → Rams → Heidegger</p>
+					</div>
+				</a>
+
 				<!-- Arc for Gmail -->
 				<a
 					href="/work/arc-for-gmail"
@@ -86,6 +111,31 @@
 					<div class="mt-8 pt-6 border-t border-white/10">
 						<p class="text-xs text-white/40 uppercase tracking-wider mb-2">Pattern Applied</p>
 						<p class="text-sm text-white/60">Weniger, aber besser: Less, but better</p>
+					</div>
+				</a>
+
+				<!-- Viralytics -->
+				<a
+					href="/work/viralytics"
+					class="block p-12 bg-white/[0.07] border border-white/10 rounded-xl hover:border-white transition-colors group"
+				>
+					<div class="mb-6">
+						<span class="text-xs font-mono text-white/40">CLIENT: VIRALYTICS</span>
+					</div>
+					<h2 class="text-3xl font-semibold text-white mb-4 group-hover:opacity-70 transition-opacity">
+						Viralytics
+					</h2>
+					<p class="text-lg text-white/60 mb-8 leading-relaxed">
+						Social media analytics platform with viral content tracking and engagement optimization
+					</p>
+					<div class="space-y-3 text-sm text-white/50">
+						<p>→ Real-time analytics dashboard</p>
+						<p>→ Content performance scoring</p>
+						<p>→ Trend prediction algorithms</p>
+					</div>
+					<div class="mt-8 pt-6 border-t border-white/10">
+						<p class="text-xs text-white/40 uppercase tracking-wider mb-2">Pattern Applied</p>
+						<p class="text-sm text-white/60">Data-ink ratio: Maximize signal, minimize noise</p>
 					</div>
 				</a>
 			</div>
