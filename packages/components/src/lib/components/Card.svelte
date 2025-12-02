@@ -3,13 +3,8 @@
 	 * Card Component
 	 *
 	 * Standardized card with variants following CREATE SOMETHING standards.
-	 * Uses golden ratio spacing and defined border radius scale.
-	 *
-	 * @see /STANDARDS.md - Section 1.3 Spacing System, 1.4 Border Radius
+	 * Uses canonical CSS custom properties for all design tokens.
 	 */
-
-	import { getRadius } from '../tokens/radius.js';
-	import { getSpacing } from '../tokens/spacing.js';
 
 	type CardVariant = 'standard' | 'elevated' | 'outlined';
 	type CardRadius = 'sm' | 'md' | 'lg' | 'xl';
@@ -37,47 +32,32 @@
 		onclick
 	}: Props = $props();
 
-	// Variant styles
-	const variantClasses = {
-		standard: 'bg-[#0a0a0a] border border-white/10',
-		elevated: 'bg-[#0a0a0a] border border-white/10 shadow-xl',
-		outlined: 'bg-transparent border-2 border-white/20'
-	};
-
-	// Padding map using golden ratio spacing
+	// Padding map using layout utilities (acceptable per CSS Architecture standard)
 	const paddingMap = {
 		none: '',
-		sm: 'p-4', // 1rem
-		md: 'p-6', // 1.5rem
-		lg: 'p-8', // 2rem (approximately space-lg)
-		xl: 'p-12' // 3rem
+		sm: 'p-4',
+		md: 'p-6',
+		lg: 'p-8',
+		xl: 'p-12'
 	};
 
-	// Hover effect
-	const hoverClass = hover
-		? 'transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-2xl cursor-pointer'
-		: '';
-
-	// Border radius
-	const radiusClass = `rounded-[${getRadius(radius)}]`;
-
-	const allClasses = `${variantClasses[variant]} ${paddingMap[padding]} ${radiusClass} ${hoverClass} ${className}`;
+	const baseClasses = `card card-${variant} card-radius-${radius} ${hover ? 'card-hover' : ''} ${paddingMap[padding]} ${className}`;
 </script>
 
 {#if href}
-	<a {href} class={allClasses} {onclick}>
+	<a {href} class={baseClasses} {onclick}>
 		{#if children}
 			{@render children()}
 		{/if}
 	</a>
 {:else if onclick}
-	<button type="button" class={allClasses} {onclick}>
+	<button type="button" class={baseClasses} {onclick}>
 		{#if children}
 			{@render children()}
 		{/if}
 	</button>
 {:else}
-	<div class={allClasses}>
+	<div class={baseClasses}>
 		{#if children}
 			{@render children()}
 		{/if}
@@ -85,20 +65,61 @@
 {/if}
 
 <style>
+	/* Base Card */
+	.card {
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	/* Variants */
+	.card-standard {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.card-elevated {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		box-shadow: var(--shadow-xl);
+	}
+
+	.card-outlined {
+		background: transparent;
+		border: 2px solid var(--color-border-emphasis);
+	}
+
+	/* Radius variants */
+	.card-radius-sm {
+		border-radius: var(--radius-sm);
+	}
+
+	.card-radius-md {
+		border-radius: var(--radius-md);
+	}
+
+	.card-radius-lg {
+		border-radius: var(--radius-lg);
+	}
+
+	.card-radius-xl {
+		border-radius: var(--radius-xl);
+	}
+
+	/* Hover effect */
+	.card-hover {
+		cursor: pointer;
+	}
+
+	.card-hover:hover {
+		transform: translateY(-8px);
+		box-shadow: var(--shadow-2xl);
+	}
+
 	/* Focus states for accessibility */
 	a:focus-visible,
 	button:focus-visible,
 	div:focus-visible {
-		outline: 2px solid rgba(255, 255, 255, 0.8);
+		outline: 2px solid var(--color-fg-muted);
 		outline-offset: 2px;
-	}
-
-	/* Smooth transitions */
-	a,
-	button,
-	div {
-		transition-property: transform, box-shadow;
-		transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
 	/* Reset button styles when used as card */
