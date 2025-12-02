@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { getTransition } from '../tokens/animation.js';
-
 	interface Props {
 		variant?: 'primary' | 'secondary' | 'ghost';
 		size?: 'sm' | 'md' | 'lg';
@@ -23,35 +21,24 @@
 		onclick
 	}: Props = $props();
 
-	// Size classes - ALL guarantee 44px minimum touch target
+	// Size classes - ALL guarantee 44px minimum touch target (layout utilities OK)
 	const sizeClasses = {
-		sm: 'px-4 py-2.5 text-sm min-h-[44px]', // 44px minimum
-		md: 'px-6 py-3 text-base min-h-[44px]', // 48px typical
-		lg: 'px-8 py-4 text-lg min-h-[44px]' // 56px typical
+		sm: 'px-4 py-2.5 text-sm min-h-[44px]',
+		md: 'px-6 py-3 text-base min-h-[44px]',
+		lg: 'px-8 py-4 text-lg min-h-[44px]'
 	};
 
-	// Variant classes
-	const variantClasses = {
-		primary: 'bg-white text-black hover:bg-white/90',
-		secondary: 'bg-transparent text-white border-2 border-white hover:bg-white/10',
-		ghost: 'bg-transparent text-white hover:bg-white/5'
-	};
-
-	const baseClasses = 'font-semibold rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2';
-
-	const widthClass = fullWidth ? 'w-full' : '';
-
-	const allClasses = `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${widthClass}`;
+	const baseClasses = `btn btn-${variant} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} font-semibold flex items-center justify-center gap-2`;
 </script>
 
 {#if href && !disabled}
-	<a {href} class={allClasses} role="button" {onclick}>
+	<a {href} class={baseClasses} role="button" {onclick}>
 		{#if children}
 			{@render children()}
 		{/if}
 	</a>
 {:else}
-	<button {type} {disabled} class={allClasses} {onclick}>
+	<button {type} {disabled} class={baseClasses} {onclick}>
 		{#if children}
 			{@render children()}
 		{/if}
@@ -59,16 +46,53 @@
 {/if}
 
 <style>
-	/* Ensure focus states are visible */
-	a:focus-visible,
-	button:focus-visible {
-		outline: 2px solid rgba(255, 255, 255, 0.8);
-		outline-offset: 2px;
+	/* Base Button */
+	.btn {
+		border-radius: var(--radius-full);
+		transition: all var(--duration-micro) var(--ease-standard);
+		-webkit-tap-highlight-color: transparent;
 	}
 
-	/* Guarantee touch target minimum */
-	a,
-	button {
-		-webkit-tap-highlight-color: transparent;
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	/* Primary Variant */
+	.btn-primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+
+	/* Secondary Variant */
+	.btn-secondary {
+		background: transparent;
+		color: var(--color-fg-primary);
+		border: 2px solid var(--color-fg-primary);
+	}
+
+	.btn-secondary:hover:not(:disabled) {
+		background: var(--color-active);
+	}
+
+	/* Ghost Variant */
+	.btn-ghost {
+		background: transparent;
+		color: var(--color-fg-primary);
+	}
+
+	.btn-ghost:hover:not(:disabled) {
+		background: var(--color-hover);
+	}
+
+	/* Focus states for accessibility */
+	a:focus-visible,
+	button:focus-visible {
+		outline: 2px solid var(--color-fg-muted);
+		outline-offset: 2px;
 	}
 </style>
