@@ -12,3 +12,9 @@ export * from './types/index.js';
 
 // Tokens (design system foundation)
 export * from './tokens/index.js';
+
+// ASCII Art (visual identity)
+export * from './ascii/index.js';
+
+// Visual Canon (isometric primitives and animations)
+export * from './visual/index.js';

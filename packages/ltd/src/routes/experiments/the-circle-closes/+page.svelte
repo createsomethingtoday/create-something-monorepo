@@ -10,7 +10,7 @@
 	 * "The tool reveals its own concealment."
 	 */
 
-	import { TriadHealth, HermeneuticCircle } from '@create-something/components';
+	import { TriadHealth, HermeneuticCircle, IsometricAssembly } from '@create-something/components';
 
 	let { data } = $props();
 
@@ -57,8 +57,19 @@
 			{/each}
 		</div>
 
-		<!-- ASCII Art -->
-		<pre class="ascii-art">{`
+		<!-- Visual Canon: Isometric Assembly -->
+		<div class="visual-canon">
+			<IsometricAssembly
+				title="Parts become whole"
+				animate={true}
+				size={320}
+			/>
+		</div>
+
+		<!-- ASCII Art (fallback/alternative) -->
+		<details class="ascii-details">
+			<summary class="ascii-toggle">View ASCII diagram</summary>
+			<pre class="ascii-art">{`
        ┌─────────────────────────────────────────────────────┐
        │                                                     │
        │            .ltd ◄──────────────────┐                │
@@ -81,6 +92,7 @@
        │                                                     │
        └─────────────────────────────────────────────────────┘
 `}</pre>
+		</details>
 	</header>
 
 	<div class="three-proofs">
@@ -240,8 +252,33 @@
 		text-align: center;
 	}
 
-	.ascii-art {
+	/* Visual Canon */
+	.visual-canon {
 		margin: 2rem auto;
+		display: flex;
+		justify-content: center;
+	}
+
+	.ascii-details {
+		margin: 1rem auto;
+		max-width: fit-content;
+	}
+
+	.ascii-toggle {
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.4);
+		cursor: pointer;
+		text-align: center;
+		padding: 0.5rem 1rem;
+		transition: color 0.2s;
+	}
+
+	.ascii-toggle:hover {
+		color: rgba(255, 255, 255, 0.6);
+	}
+
+	.ascii-art {
+		margin: 1rem auto 0;
 		padding: 1rem;
 		background: rgba(0, 0, 0, 0.3);
 		border: 1px solid rgba(255, 255, 255, 0.1);
