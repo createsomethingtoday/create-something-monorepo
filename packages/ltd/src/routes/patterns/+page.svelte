@@ -24,7 +24,7 @@
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 			<!-- Pattern: Constraint as Liberation -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/constraint-as-liberation" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Constraint as Liberation</h3>
 				<p class="text-sm opacity-60 mb-4">
 					Limitation breeds creativity. Rams' 10 principles. Mies' steel and glass. The Eameses' plywood.
@@ -34,10 +34,10 @@
 					<p class="mb-1">✓ Restricted component library</p>
 					<p>✓ Fixed grid system</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Functional Transparency -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/functional-transparency" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Functional Transparency</h3>
 				<p class="text-sm opacity-60 mb-4">
 					How something works should be evident. No mystery. No magic. Honest materials, honest code.
@@ -47,10 +47,10 @@
 					<p class="mb-1">✓ Self-documenting APIs</p>
 					<p>✓ Clear dependency graphs</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Iterative Reduction -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/iterative-reduction" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Iterative Reduction</h3>
 				<p class="text-sm opacity-60 mb-4">
 					Start complex, remove relentlessly. Rams revised his designs dozens of times. So should you.
@@ -60,10 +60,10 @@
 					<p class="mb-1">✓ Kill features based on usage</p>
 					<p>✓ Refactor toward clarity</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Universal Utility -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/universal-utility" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Universal Utility</h3>
 				<p class="text-sm opacity-60 mb-4">
 					The Eameses' "the best for the most for the least." Tools should serve everyone without compromise.
@@ -73,10 +73,10 @@
 					<p class="mb-1">✓ Progressive enhancement</p>
 					<p>✓ Zero-config options</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Timeless Materials -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/timeless-materials" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Timeless Materials</h3>
 				<p class="text-sm opacity-60 mb-4">
 					Choose what ages well. Avoid trends. Mies used steel because it endures. What's the steel of software?
@@ -86,10 +86,10 @@
 					<p class="mb-1">✓ SQL over NoSQL (for most cases)</p>
 					<p>✓ HTTP over proprietary protocols</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Negative Space -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/negative-space" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Negative Space</h3>
 				<p class="text-sm opacity-60 mb-4">
 					What you don't build matters as much as what you do. Whitespace in design. Silence in music. Restraint in code.
@@ -99,10 +99,10 @@
 					<p class="mb-1">✓ Sparse UI with clear hierarchy</p>
 					<p>✓ Functions that do one thing</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Tool Complementarity -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/tool-complementarity" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Tool Complementarity</h3>
 				<p class="text-sm opacity-60 mb-4">
 					Tools should not compete for the same ontological space. Each has a domain. Heidegger's Zuhandenheit—ready-to-hand tools recede from consciousness.
@@ -112,10 +112,10 @@
 					<p class="mb-1">✓ Handoff protocols, not redundancy</p>
 					<p>✓ Creation vs. operation domains</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Dwelling in Tools -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/dwelling-in-tools" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Dwelling in Tools</h3>
 				<p class="text-sm opacity-60 mb-4">
 					Build habits that make tools transparent. A carpenter forgets the hammer exists. Infrastructure should be invisible.
@@ -125,10 +125,10 @@
 					<p class="mb-1">✓ Configuration once, use forever</p>
 					<p>✓ Minimize conspicuousness, obtrusiveness, obstinacy</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Principled Defaults -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/principled-defaults" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Principled Defaults</h3>
 				<p class="text-sm opacity-60 mb-4">
 					Every configuration value traces to a principle. Arbitrary numbers are decoration in disguise. 20px padding? Why 20?
@@ -138,10 +138,10 @@
 					<p class="mb-1">✓ Colors from functional meaning, not trends</p>
 					<p>✓ Typography from readability research</p>
 				</div>
-			</div>
+			</a>
 
 			<!-- Pattern: Subtractive Triad Audit -->
-			<div class="border border-white/10 p-6">
+			<a href="/patterns/subtractive-triad-audit" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
 				<h3 class="text-lg font-semibold mb-3">Subtractive Triad Audit</h3>
 				<p class="text-sm opacity-60 mb-4">
 					Three questions at three levels. DRY for implementation, Rams for artifacts, Heidegger for systems. Apply in order.
@@ -151,7 +151,33 @@
 					<p class="mb-1">✓ "Does this earn its existence?" → Remove</p>
 					<p>✓ "Does this serve the whole?" → Reconnect</p>
 				</div>
-			</div>
+			</a>
+
+			<!-- Pattern: Hermeneutic Spiral -->
+			<a href="/patterns/hermeneutic-spiral" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
+				<h3 class="text-lg font-semibold mb-3">Hermeneutic Spiral</h3>
+				<p class="text-sm opacity-60 mb-4">
+					Understanding accumulates—it doesn't reset. Each interaction deepens context. Parts inform the whole; the whole informs the parts.
+				</p>
+				<div class="text-xs opacity-40 font-mono">
+					<p class="mb-1">✓ Remember what you learn, ask only what's new</p>
+					<p class="mb-1">✓ Delta intake over stateless repetition</p>
+					<p>✓ Returning users encounter evolved context</p>
+				</div>
+			</a>
+
+			<!-- Pattern: Code Mode -->
+			<a href="/patterns/code-mode" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
+				<h3 class="text-lg font-semibold mb-3">Code Mode</h3>
+				<p class="text-sm opacity-60 mb-4">
+					Tools recede when expressed as code. Heidegger's Zuhandenheit—ready-to-hand tools disappear into familiar patterns. The hammer vanishes when hammering.
+				</p>
+				<div class="text-xs opacity-40 font-mono">
+					<p class="mb-1">✓ Write code that uses tools as libraries</p>
+					<p class="mb-1">✓ Familiar grammar enables tool-transparency</p>
+					<p>✓ Compose operations, don't invoke schemas</p>
+				</div>
+			</a>
 		</div>
 	</div>
 </section>
@@ -400,6 +426,14 @@
 
 			<p>
 				When you stop asking "which tool should I use?" because each has a clear domain, that's <strong>Tool Complementarity</strong>.
+			</p>
+
+			<p>
+				When a returning user doesn't have to repeat themselves because the system remembers, that's the <strong>Hermeneutic Spiral</strong>.
+			</p>
+
+			<p>
+				When you write code that uses tools as libraries and forget you're invoking an API, that's <strong>Code Mode</strong>.
 			</p>
 
 			<div class="mt-12 p-6 border border-white/10">
