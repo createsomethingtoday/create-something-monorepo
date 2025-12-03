@@ -158,10 +158,10 @@
 				<!-- Visual Canon: Isometric Spiral -->
 				<div class="my-6">
 					<IsometricSpiral
+						animateOnScroll={true}
 						iterations={4}
 						labels={['Basic grasp', 'Refined understanding', 'Nuanced comprehension', 'Deep familiarity']}
 						title="Understanding deepens with each iteration"
-						animate={true}
 						size={350}
 					/>
 				</div>
@@ -295,10 +295,10 @@
 				<!-- Visual Canon: Isometric Architecture -->
 				<div class="my-6">
 					<IsometricArchitecture
+						animateOnScroll={true}
 						nodes={archNodes}
 						connections={archConnections}
 						title="Abundance Network Architecture"
-						animate={true}
 						size={400}
 					/>
 				</div>

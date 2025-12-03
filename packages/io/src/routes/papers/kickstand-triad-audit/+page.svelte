@@ -130,7 +130,7 @@
 
 				<!-- Visual Canon: Subtractive Triad -->
 				<div class="my-8">
-					<SubtractiveTriad animate={true} showLabels={true} showQuestions={true} size={420} />
+					<SubtractiveTriad animateOnScroll={true} showLabels={true} showQuestions={true} size={420} />
 				</div>
 
 				<p>
@@ -154,10 +154,10 @@
 				<!-- Visual Canon: System Hierarchy -->
 				<div class="my-6">
 					<IsometricArchitecture
+						animateOnScroll={true}
 						nodes={systemNodes}
 						connections={systemConnections}
 						title="System Hierarchy"
-						animate={true}
 						size={380}
 					/>
 				</div>

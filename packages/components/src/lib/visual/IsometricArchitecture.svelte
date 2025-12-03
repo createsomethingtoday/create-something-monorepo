@@ -12,6 +12,7 @@
 	 */
 
 	import { toIsometric } from './isometric.js';
+	import { inview } from './inview.js';
 
 	type ArchNode = {
 		id: string;
@@ -32,6 +33,7 @@
 		connections?: ArchConnection[];
 		title?: string;
 		animate?: boolean;
+		animateOnScroll?: boolean;
 		size?: number;
 		class?: string;
 	}
@@ -41,9 +43,14 @@
 		connections = [],
 		title,
 		animate = true,
+		animateOnScroll = false,
 		size = 400,
 		class: className = ''
 	}: Props = $props();
+
+	// Scroll-triggered animation state
+	let isInView = $state(!animateOnScroll);
+	const shouldAnimate = $derived(animate && isInView);
 
 	const defaultSize = { w: 60, h: 30, d: 40 };
 
@@ -98,7 +105,11 @@
 	const viewBox = $derived(`-${size / 2} -${size / 2} ${size} ${size}`);
 </script>
 
-<div class="isometric-architecture {className}">
+<div
+	class="isometric-architecture {className}"
+	use:inview={{ threshold: 0.3 }}
+	oninview={() => (isInView = true)}
+>
 	<svg viewBox={viewBox} class="arch-svg">
 		<defs>
 			<!-- Arrow marker -->
@@ -122,7 +133,7 @@
 				{@const delay = 200 + index * 100}
 				{#if path}
 					<path d={path} class="connection" marker-end="url(#arch-arrow)">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="stroke-dashoffset"
 								from="100"
@@ -143,7 +154,7 @@
 								class="connection-label"
 								text-anchor="middle"
 							>
-								{#if animate}
+								{#if shouldAnimate}
 									<animate
 										attributeName="opacity"
 										from="0"
@@ -170,7 +181,7 @@
 				<g class="node" data-id={node.id}>
 					<!-- Box faces -->
 					<path d={paths.top} class="face face-top">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -182,7 +193,7 @@
 						{/if}
 					</path>
 					<path d={paths.left} class="face face-left">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -194,7 +205,7 @@
 						{/if}
 					</path>
 					<path d={paths.right} class="face face-right">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -213,7 +224,7 @@
 						class="node-label"
 						text-anchor="middle"
 					>
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -233,7 +244,7 @@
 							class="node-sublabel"
 							text-anchor="middle"
 						>
-							{#if animate}
+							{#if shouldAnimate}
 								<animate
 									attributeName="opacity"
 									from="0"
@@ -253,7 +264,7 @@
 		<!-- Title -->
 		{#if title}
 			<text x="0" y={size / 2 - 20} class="arch-title" text-anchor="middle">
-				{#if animate}
+				{#if shouldAnimate}
 					<animate
 						attributeName="opacity"
 						from="0"

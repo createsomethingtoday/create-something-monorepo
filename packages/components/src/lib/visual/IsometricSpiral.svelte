@@ -11,12 +11,14 @@
 	 */
 
 	import { toIsometric } from './isometric.js';
+	import { inview } from './inview.js';
 
 	interface Props {
 		iterations?: number;
 		labels?: string[];
 		title?: string;
 		animate?: boolean;
+		animateOnScroll?: boolean;
 		size?: number;
 		class?: string;
 	}
@@ -26,9 +28,14 @@
 		labels = ['Basic grasp', 'Refined understanding', 'Nuanced comprehension', 'Deep familiarity'],
 		title = 'Understanding accumulates',
 		animate = true,
+		animateOnScroll = false,
 		size = 350,
 		class: className = ''
 	}: Props = $props();
+
+	// Scroll-triggered animation state
+	let isInView = $state(!animateOnScroll);
+	const shouldAnimate = $derived(animate && isInView);
 
 	// Generate spiral path points
 	function generateSpiralPoints(numPoints: number): { x: number; y: number }[] {
@@ -91,7 +98,11 @@
 	const viewBox = $derived(`-${size / 2} -${size / 1.5} ${size} ${size}`);
 </script>
 
-<div class="isometric-spiral {className}">
+<div
+	class="isometric-spiral {className}"
+	use:inview={{ threshold: 0.3 }}
+	oninview={() => (isInView = true)}
+>
 	<svg viewBox={viewBox} class="spiral-svg">
 		<defs>
 			<!-- Gradient for spiral -->
@@ -106,7 +117,7 @@
 			{#each Array(iterations) as _, level}
 				{@const delay = level * 300}
 				<path d={levelPlatform(level)} class="platform">
-					{#if animate}
+					{#if shouldAnimate}
 						<animate
 							attributeName="opacity"
 							from="0"
@@ -122,7 +133,7 @@
 
 		<!-- Spiral path -->
 		<path d={spiralPath} class="spiral-line">
-			{#if animate}
+			{#if shouldAnimate}
 				<animate
 					attributeName="stroke-dashoffset"
 					from="1000"
@@ -144,7 +155,7 @@
 
 				<!-- Marker dot -->
 				<circle cx={center.x} cy={center.y} r="4" class="marker">
-					{#if animate}
+					{#if shouldAnimate}
 						<animate
 							attributeName="opacity"
 							from="0"
@@ -159,7 +170,7 @@
 				<!-- Level label -->
 				{#if labels[level]}
 					<text x={center.x + 50} y={center.y} class="level-label" dominant-baseline="middle">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -175,7 +186,7 @@
 
 				<!-- Iteration number -->
 				<text x={center.x - 45} y={center.y} class="iteration-num" dominant-baseline="middle" text-anchor="end">
-					{#if animate}
+					{#if shouldAnimate}
 						<animate
 							attributeName="opacity"
 							from="0"
@@ -193,7 +204,7 @@
 		<!-- Title -->
 		{#if title}
 			<text x="0" y={size / 3} class="spiral-title" text-anchor="middle">
-				{#if animate}
+				{#if shouldAnimate}
 					<animate
 						attributeName="opacity"
 						from="0"
