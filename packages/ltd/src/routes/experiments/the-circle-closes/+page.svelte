@@ -60,8 +60,8 @@
 		<!-- Visual Canon: Isometric Assembly -->
 		<div class="visual-canon">
 			<IsometricAssembly
+				animateOnScroll={true}
 				title="Parts become whole"
-				animate={true}
 				size={320}
 			/>
 		</div>

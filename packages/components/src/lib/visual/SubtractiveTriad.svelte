@@ -12,9 +12,11 @@
 	 */
 
 	import { toIsometric } from './isometric.js';
+	import { inview } from './inview.js';
 
 	interface Props {
 		animate?: boolean;
+		animateOnScroll?: boolean;
 		showLabels?: boolean;
 		showQuestions?: boolean;
 		size?: number;
@@ -23,11 +25,16 @@
 
 	let {
 		animate = true,
+		animateOnScroll = false,
 		showLabels = true,
 		showQuestions = true,
 		size = 400,
 		class: className = ''
 	}: Props = $props();
+
+	// Scroll-triggered animation state
+	let isInView = $state(!animateOnScroll);
+	const shouldAnimate = $derived(animate && isInView);
 
 	// Three pillars of the triad
 	const pillars = [
@@ -94,7 +101,11 @@
 	const viewBox = $derived(`-${size / 2} -${size / 2.5} ${size} ${size * 0.8}`);
 </script>
 
-<div class="subtractive-triad {className}">
+<div
+	class="subtractive-triad {className}"
+	use:inview={{ threshold: 0.3 }}
+	oninview={() => (isInView = true)}
+>
 	<svg viewBox={viewBox} class="triad-svg">
 		<defs>
 			<!-- Gradient for pillars -->
@@ -115,7 +126,7 @@
 					class="noise-particle"
 					style:--delay="{particle.delay}ms"
 				>
-					{#if animate}
+					{#if shouldAnimate}
 						<animate
 							attributeName="opacity"
 							from="0.4"
@@ -138,7 +149,7 @@
 				<g class="pillar" data-id={pillar.id}>
 					<!-- Pillar faces -->
 					<path d={paths.top} class="face face-top">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -150,7 +161,7 @@
 						{/if}
 					</path>
 					<path d={paths.left} class="face face-left">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -162,7 +173,7 @@
 						{/if}
 					</path>
 					<path d={paths.right} class="face face-right">
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -179,7 +190,7 @@
 						{@const labelY = -60}
 						<g class="labels" transform="translate({pillar.x + 25}, {labelY})">
 							<text class="pillar-label" text-anchor="middle" y="0">
-								{#if animate}
+								{#if shouldAnimate}
 									<animate
 										attributeName="opacity"
 										from="0"
@@ -192,7 +203,7 @@
 								{pillar.label}
 							</text>
 							<text class="pillar-sublabel" text-anchor="middle" y="12">
-								{#if animate}
+								{#if shouldAnimate}
 									<animate
 										attributeName="opacity"
 										from="0"
@@ -205,7 +216,7 @@
 								{pillar.sublabel}
 							</text>
 							<text class="pillar-action" text-anchor="middle" y="26">
-								{#if animate}
+								{#if shouldAnimate}
 									<animate
 										attributeName="opacity"
 										from="0"
@@ -234,7 +245,7 @@
 						class="question"
 						text-anchor="middle"
 					>
-						{#if animate}
+						{#if shouldAnimate}
 							<animate
 								attributeName="opacity"
 								from="0"
@@ -252,7 +263,7 @@
 
 		<!-- Meta-principle (appears last) -->
 		<text x="0" y={size * 0.35} class="meta-principle" text-anchor="middle">
-			{#if animate}
+			{#if shouldAnimate}
 				<animate
 					attributeName="opacity"
 					from="0"

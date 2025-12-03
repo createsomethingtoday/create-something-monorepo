@@ -15,6 +15,7 @@
 	 */
 
 	import { toIsometric } from './isometric.js';
+	import { inview } from './inview.js';
 
 	type AssemblyPart = {
 		id: string;
@@ -29,6 +30,7 @@
 		title?: string;
 		showLabels?: boolean;
 		animate?: boolean;
+		animateOnScroll?: boolean;
 		size?: number;
 		class?: string;
 	}
@@ -70,9 +72,14 @@
 		title = 'The Hermeneutic Circle',
 		showLabels = true,
 		animate = true,
+		animateOnScroll = false,
 		size = 300,
 		class: className = ''
 	}: Props = $props();
+
+	// Scroll-triggered animation state
+	let isInView = $state(!animateOnScroll);
+	const shouldAnimate = $derived(animate && isInView);
 
 	// Convert 3D positions to 2D isometric
 	function getPartPosition(part: AssemblyPart): { x: number; y: number } {
@@ -117,7 +124,11 @@
 	const viewBox = $derived(`-${size / 2} -${size / 2} ${size} ${size}`);
 </script>
 
-<div class="isometric-assembly {className}">
+<div
+	class="isometric-assembly {className}"
+	use:inview={{ threshold: 0.3 }}
+	oninview={() => (isInView = true)}
+>
 	<svg {viewBox} class="assembly-svg">
 		<defs>
 			<!-- Stripe pattern for texture -->
@@ -147,7 +158,7 @@
 					<g class="box-faces">
 						<!-- Top face (lightest) -->
 						<path d={paths.top} class="face face-top">
-							{#if animate}
+							{#if shouldAnimate}
 								<animateTransform
 									attributeName="transform"
 									type="translate"
@@ -172,7 +183,7 @@
 
 						<!-- Left face -->
 						<path d={paths.left} class="face face-left">
-							{#if animate}
+							{#if shouldAnimate}
 								<animateTransform
 									attributeName="transform"
 									type="translate"
@@ -197,7 +208,7 @@
 
 						<!-- Right face (darkest) -->
 						<path d={paths.right} class="face face-right">
-							{#if animate}
+							{#if shouldAnimate}
 								<animateTransform
 									attributeName="transform"
 									type="translate"
@@ -229,7 +240,7 @@
 							class="part-label"
 							dominant-baseline="middle"
 						>
-							{#if animate}
+							{#if shouldAnimate}
 								<animate
 									attributeName="opacity"
 									from="0"
@@ -249,7 +260,7 @@
 		<!-- Title - appears last -->
 		{#if title}
 			<text x="0" y={size / 2 - 20} class="assembly-title" text-anchor="middle">
-				{#if animate}
+				{#if shouldAnimate}
 					<animate
 						attributeName="opacity"
 						from="0"
