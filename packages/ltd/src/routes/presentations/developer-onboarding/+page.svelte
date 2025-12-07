@@ -2,7 +2,7 @@
 	/**
 	 * Developer Onboarding Presentation
 	 *
-	 * A walkthrough for joining WORKWAY as a System Architect.
+	 * A walkthrough for joining WORKWAY as a Developer.
 	 * Designed to pair with a terminal split-screen demo.
 	 *
 	 * Structure:
@@ -33,7 +33,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="Developer Onboarding" subtitle="Become a System Architect">
+<Presentation title="Developer Onboarding" subtitle="Build & Earn on WORKWAY">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: What You're Joining
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -41,19 +41,15 @@
 	<!-- Slide 1: Title -->
 	<Slide type="title">
 		<span class="number">01</span>
-		<h1>System Architect</h1>
+		<h1>Developer</h1>
 		<p class="subtitle">The onboarding process.</p>
 		<p class="subtitle">5 minutes. 3 commands.</p>
 	</Slide>
 
-	<!-- Slide 2: What is a System Architect -->
+	<!-- Slide 2: What You Build -->
 	<Slide type="content">
 		<span class="number">02</span>
-		<h2>System Architect</h2>
-		<p>
-			Not "developer." Not "integrator."
-			<span class="muted">System Architect.</span>
-		</p>
+		<h2>Compound Workflows</h2>
 		<p>
 			You build <span class="em">compound workflows</span> — systems where multiple services
 			coordinate to produce outcomes users couldn't achieve alone.
@@ -63,6 +59,9 @@
 			<li>Payment received → CRM + Notion + Slack</li>
 			<li>Form submitted → AI synthesis + distribution</li>
 		</ul>
+		<p class="muted">
+			Not point-to-point integrations. Orchestrated outcomes.
+		</p>
 	</Slide>
 
 	<!-- Slide 3: The Opportunity -->
