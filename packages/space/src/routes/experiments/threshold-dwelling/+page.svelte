@@ -41,6 +41,7 @@
 	// Fullscreen state - Heidegger: tool appears only when summoned
 	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | null;
 	let expandedView: ExpandedView = $state(null);
+	let showBudget = $state(false);
 
 	function toggleExpand(view: ExpandedView) {
 		expandedView = expandedView === view ? null : view;
@@ -51,6 +52,30 @@
 			expandedView = null;
 		}
 	}
+
+	// Format currency - Tufte: numbers should be readable
+	function formatCurrency(amount: number): string {
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'USD',
+			minimumFractionDigits: 0,
+			maximumFractionDigits: 0
+		}).format(amount);
+	}
+
+	// Group line items by category - DRY
+	const groupedCosts = pavilion.materials?.lineItems.reduce(
+		(acc, item) => {
+			if (!acc[item.category]) acc[item.category] = [];
+			acc[item.category].push(item);
+			return acc;
+		},
+		{} as Record<string, typeof pavilion.materials.lineItems>
+	);
+
+	const totalBudget = pavilion.materials
+		? pavilion.materials.totalSF * pavilion.materials.costPerSF
+		: 0;
 
 	// ============================================================================
 	// FLOOR PLAN DATA
@@ -681,11 +706,49 @@
 			<span class="metric-value">{pavilion.bedrooms} / {pavilion.bathrooms}</span>
 			<span class="metric-label">Bed / Bath</span>
 		</div>
-		<div class="metric">
-			<span class="metric-value">${pavilion.materials?.costPerSF}</span>
-			<span class="metric-label">Per SF</span>
+		<div class="metric clickable" role="button" tabindex="0" onclick={() => showBudget = !showBudget} onkeydown={(e) => e.key === 'Enter' && (showBudget = !showBudget)}>
+			<span class="metric-value">{formatCurrency(totalBudget)}</span>
+			<span class="metric-label">Budget {showBudget ? '−' : '+'}</span>
 		</div>
 	</footer>
+
+	<!-- Budget Details: Collapsible price sheet (Rams: information on demand) -->
+	{#if showBudget && pavilion.materials && !expandedView}
+		<section class="budget-details">
+			<header class="budget-header">
+				<h2 class="budget-title">Construction Budget</h2>
+				<span class="budget-meta">{formatCurrency(pavilion.materials.costPerSF)}/SF · {pavilion.materials.lastUpdated}</span>
+			</header>
+
+			<div class="budget-categories">
+				{#each Object.entries(groupedCosts || {}) as [category, items]}
+					<div class="budget-category">
+						<h3 class="category-name">{category}</h3>
+						{#each items as item}
+							<div class="budget-item">
+								<span class="item-desc">{item.description}</span>
+								<span class="item-amount">{formatCurrency(item.estimate)}</span>
+							</div>
+							{#if item.notes}
+								<p class="item-notes">{item.notes}</p>
+							{/if}
+						{/each}
+					</div>
+				{/each}
+			</div>
+
+			{#if pavilion.materials.assumptions?.length}
+				<div class="budget-assumptions">
+					<h3>Assumptions</h3>
+					<ul>
+						{#each pavilion.materials.assumptions as assumption}
+							<li>{assumption}</li>
+						{/each}
+					</ul>
+				</div>
+			{/if}
+		</section>
+	{/if}
 
 	<!-- Escape hint (only when expanded) -->
 	{#if expandedView}
@@ -810,6 +873,113 @@
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
+	}
+
+	.metric.clickable {
+		cursor: pointer;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.metric.clickable:hover {
+		opacity: 0.8;
+	}
+
+	/* Budget Details - Collapsible price sheet */
+	.budget-details {
+		border-top: 1px solid var(--color-border-default);
+		padding: var(--space-lg) 0;
+		font-family: var(--font-sans, system-ui, sans-serif);
+	}
+
+	.budget-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: var(--space-md);
+	}
+
+	.budget-title {
+		font-size: var(--text-h3);
+		font-weight: 300;
+		color: var(--color-fg-secondary);
+		margin: 0;
+	}
+
+	.budget-meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.budget-categories {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: var(--space-lg);
+	}
+
+	.budget-category {
+		padding: var(--space-sm) 0;
+	}
+
+	.category-name {
+		font-size: var(--text-caption);
+		font-weight: 500;
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin: 0 0 var(--space-sm) 0;
+		padding-bottom: var(--space-xs);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.budget-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		padding: 0.25rem 0;
+	}
+
+	.item-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	.item-amount {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.item-notes {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		margin: 0.125rem 0 0.5rem 0;
+		font-style: italic;
+	}
+
+	.budget-assumptions {
+		margin-top: var(--space-lg);
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.budget-assumptions h3 {
+		font-size: var(--text-caption);
+		font-weight: 500;
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin: 0 0 var(--space-sm) 0;
+	}
+
+	.budget-assumptions ul {
+		margin: 0;
+		padding: 0 0 0 var(--space-sm);
+	}
+
+	.budget-assumptions li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin: 0.25rem 0;
 	}
 
 	/* Expand trigger - invisible button wrapper (Heidegger: tool recedes) */
