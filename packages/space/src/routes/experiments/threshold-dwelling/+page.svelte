@@ -38,6 +38,20 @@
 		roofDrain
 	} from '$lib/types/architecture';
 
+	// Fullscreen state - Heidegger: tool appears only when summoned
+	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | null;
+	let expandedView: ExpandedView = $state(null);
+
+	function toggleExpand(view: ExpandedView) {
+		expandedView = expandedView === view ? null : view;
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && expandedView) {
+			expandedView = null;
+		}
+	}
+
 	// ============================================================================
 	// FLOOR PLAN DATA
 	// ============================================================================
@@ -581,7 +595,8 @@
 	Canon: Golden ratio proportions (φ = 1.618)
 -->
 
-<div class="dwelling">
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div class="dwelling" class:has-expanded={expandedView !== null} onkeydown={handleKeydown} role="application">
 	<!-- Header: Minimal, informational -->
 	<header class="dwelling-header">
 		<h1 class="dwelling-title">{pavilion.name}</h1>
@@ -589,35 +604,71 @@
 	</header>
 
 	<!-- Primary: Floor Plan (φ proportion of vertical space) -->
-	<section class="primary-view">
-		<FloorPlan plan={pavilion} showCaption={false} />
+	<section
+		class="view-panel primary-view"
+		class:expanded={expandedView === 'plan'}
+		class:hidden={expandedView !== null && expandedView !== 'plan'}
+	>
+		<button class="expand-trigger" onclick={() => toggleExpand('plan')} aria-label="Toggle fullscreen floor plan">
+			<FloorPlan plan={pavilion} showCaption={false} />
+		</button>
 	</section>
 
 	<!-- Secondary: Section + Elevation (1:φ ratio between them) -->
-	<section class="secondary-views">
-		<div class="secondary-left">
-			<Section section={sectionAA} />
+	<section class="secondary-views" class:hidden={expandedView !== null && expandedView !== 'section' && expandedView !== 'elevation'}>
+		<div
+			class="view-panel secondary-left"
+			class:expanded={expandedView === 'section'}
+			class:hidden={expandedView !== null && expandedView !== 'section'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('section')} aria-label="Toggle fullscreen section">
+				<Section section={sectionAA} />
+			</button>
 		</div>
-		<div class="secondary-right">
-			<Elevation elevation={southElevation} />
+		<div
+			class="view-panel secondary-right"
+			class:expanded={expandedView === 'elevation'}
+			class:hidden={expandedView !== null && expandedView !== 'elevation'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('elevation')} aria-label="Toggle fullscreen elevation">
+				<Elevation elevation={southElevation} />
+			</button>
 		</div>
 	</section>
 
 	<!-- Tertiary: Site + Roof + Systems (equal thirds) -->
-	<section class="tertiary-views">
-		<div class="tertiary-item">
-			<SitePlan site={sitePlan} />
+	<section class="tertiary-views" class:hidden={expandedView !== null && !['site', 'roof', 'systems'].includes(expandedView)}>
+		<div
+			class="view-panel tertiary-item"
+			class:expanded={expandedView === 'site'}
+			class:hidden={expandedView !== null && expandedView !== 'site'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('site')} aria-label="Toggle fullscreen site plan">
+				<SitePlan site={sitePlan} />
+			</button>
 		</div>
-		<div class="tertiary-item">
-			<RoofPlan roof={roofPlan} />
+		<div
+			class="view-panel tertiary-item"
+			class:expanded={expandedView === 'roof'}
+			class:hidden={expandedView !== null && expandedView !== 'roof'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('roof')} aria-label="Toggle fullscreen roof plan">
+				<RoofPlan roof={roofPlan} />
+			</button>
 		</div>
-		<div class="tertiary-item">
-			<Systems systems={systemsData} />
+		<div
+			class="view-panel tertiary-item"
+			class:expanded={expandedView === 'systems'}
+			class:hidden={expandedView !== null && expandedView !== 'systems'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('systems')} aria-label="Toggle fullscreen systems">
+				<Systems systems={systemsData} />
+			</button>
 		</div>
 	</section>
 
 	<!-- Footer: Integrated data summary (Tufte: data, not chrome) -->
-	<footer class="dwelling-footer">
+	<footer class="dwelling-footer" class:hidden={expandedView !== null}>
 		<div class="metric">
 			<span class="metric-value">{pavilion.width}′ × {pavilion.depth}′</span>
 			<span class="metric-label">Footprint</span>
@@ -635,6 +686,11 @@
 			<span class="metric-label">Per SF</span>
 		</div>
 	</footer>
+
+	<!-- Escape hint (only when expanded) -->
+	{#if expandedView}
+		<div class="escape-hint">Press Esc or click to exit</div>
+	{/if}
 </div>
 
 <style>
@@ -754,6 +810,75 @@
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
+	}
+
+	/* Expand trigger - invisible button wrapper (Heidegger: tool recedes) */
+	.expand-trigger {
+		display: block;
+		width: 100%;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: zoom-in;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.expand-trigger:hover {
+		opacity: 0.9;
+	}
+
+	.expand-trigger:focus-visible {
+		outline: 1px solid var(--color-border-emphasis);
+		outline-offset: var(--space-xs);
+	}
+
+	/* View panel states */
+	.view-panel {
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.view-panel.hidden {
+		display: none;
+	}
+
+	.view-panel.expanded {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		background: var(--color-bg-pure);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-lg);
+	}
+
+	.view-panel.expanded .expand-trigger {
+		cursor: zoom-out;
+		max-width: 100%;
+		max-height: 100%;
+	}
+
+	/* Hide sections when something is expanded */
+	.has-expanded .secondary-views.hidden,
+	.has-expanded .tertiary-views.hidden {
+		display: none;
+	}
+
+	/* Escape hint - minimal, recedes */
+	.escape-hint {
+		position: fixed;
+		bottom: var(--space-md);
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 101;
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		background: var(--color-bg-elevated);
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-sm);
+		opacity: 0.7;
+		pointer-events: none;
 	}
 
 	/* Responsive: Stack on mobile */
