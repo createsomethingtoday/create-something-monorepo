@@ -1,0 +1,226 @@
+<script lang="ts">
+	/**
+	 * Elevation Component
+	 *
+	 * CREATE SOMETHING architectural elevation visualization.
+	 * Shows facade from cardinal direction.
+	 *
+	 * Tufte: High data-ink ratio.
+	 * Mies: Facade as honest expression.
+	 * Rams: Unobtrusive detail.
+	 */
+
+	import type { ElevationData } from '$lib/types/architecture';
+
+	export let elevation: ElevationData;
+	export let showCaption: boolean = true;
+
+	const scale = 12;
+	const margin = 40;
+
+	$: svgWidth = elevation.width * scale + margin * 2;
+	$: svgHeight = elevation.height * scale + margin * 2;
+
+	function tx(x: number): number {
+		return margin + x * scale;
+	}
+
+	function ty(y: number): number {
+		return svgHeight - margin - y * scale;
+	}
+
+	const elementStyles: Record<string, { stroke: string; width: number; dash?: string }> = {
+		wall: { stroke: 'var(--arch-wall-exterior)', width: 1.5 },
+		roof: { stroke: 'var(--arch-wall-exterior)', width: 1.5 },
+		window: { stroke: 'var(--arch-window)', width: 0.5 },
+		door: { stroke: 'var(--color-fg-secondary)', width: 1 },
+		column: { stroke: 'var(--arch-column)', width: 2 },
+		grade: { stroke: 'var(--color-fg-muted)', width: 0.5, dash: '2 2' }
+	};
+
+	const directionLabels: Record<string, string> = {
+		north: 'North Elevation',
+		south: 'South Elevation',
+		east: 'East Elevation',
+		west: 'West Elevation'
+	};
+</script>
+
+<div class="elevation-container">
+	<svg viewBox="0 0 {svgWidth} {svgHeight}" class="elevation" role="img" aria-label={elevation.name}>
+		<!-- Ground fill -->
+		<rect
+			x={0}
+			y={ty(elevation.groundLevel)}
+			width={svgWidth}
+			height={svgHeight - ty(elevation.groundLevel)}
+			class="ground-fill"
+		/>
+
+		<!-- Elements -->
+		{#each elevation.elements as el}
+			{@const style = elementStyles[el.type] || elementStyles.wall}
+			<line
+				x1={tx(el.x1)}
+				y1={ty(el.y1)}
+				x2={tx(el.x2)}
+				y2={ty(el.y2)}
+				stroke={style.stroke}
+				stroke-width={el.filled ? style.width * 2 : style.width}
+				stroke-linecap="square"
+				stroke-dasharray={style.dash || 'none'}
+				class="element element-{el.type}"
+			/>
+		{/each}
+
+		<!-- Windows -->
+		{#each elevation.windows || [] as win}
+			<rect
+				x={tx(win.x)}
+				y={ty(win.y + win.height)}
+				width={win.width * scale}
+				height={win.height * scale}
+				class="window-rect"
+			/>
+			<!-- Window mullion -->
+			<line
+				x1={tx(win.x + win.width / 2)}
+				y1={ty(win.y)}
+				x2={tx(win.x + win.width / 2)}
+				y2={ty(win.y + win.height)}
+				class="window-mullion"
+			/>
+		{/each}
+
+		<!-- Dimensions -->
+		{#each elevation.dimensions || [] as dim}
+			<g class="dimension">
+				<line
+					x1={tx(dim.x)}
+					y1={ty(dim.y1)}
+					x2={tx(dim.x)}
+					y2={ty(dim.y2)}
+					stroke="rgba(255,255,255,0.2)"
+					stroke-width="0.5"
+				/>
+				<line
+					x1={tx(dim.x) - 4}
+					y1={ty(dim.y2)}
+					x2={tx(dim.x) + 4}
+					y2={ty(dim.y2)}
+					stroke="rgba(255,255,255,0.2)"
+					stroke-width="0.5"
+				/>
+				<line
+					x1={tx(dim.x) - 4}
+					y1={ty(dim.y1)}
+					x2={tx(dim.x) + 4}
+					y2={ty(dim.y1)}
+					stroke="rgba(255,255,255,0.2)"
+					stroke-width="0.5"
+				/>
+				<text x={tx(dim.x) + 8} y={ty((dim.y1 + dim.y2) / 2)} class="dimension-label">
+					{dim.label}
+				</text>
+			</g>
+		{/each}
+
+		<!-- Labels -->
+		{#each elevation.labels || [] as label}
+			<text x={tx(label.x)} y={ty(label.y)} class="elevation-label" class:small={label.small}>
+				{label.text}
+			</text>
+		{/each}
+	</svg>
+
+	{#if showCaption}
+		<footer class="caption-bar">
+			<span class="caption">{elevation.name}</span>
+			<span class="direction-hint">{directionLabels[elevation.direction]}</span>
+		</footer>
+	{/if}
+</div>
+
+<style>
+	.elevation-container {
+		width: 100%;
+	}
+
+	.elevation {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+
+	.ground-fill {
+		fill: var(--color-bg-pure);
+		opacity: 0.5;
+	}
+
+	.window-rect {
+		fill: var(--color-hover);
+		stroke: var(--color-fg-muted);
+		stroke-width: 0.5;
+	}
+
+	.window-mullion {
+		stroke: var(--color-fg-subtle);
+		stroke-width: 0.5;
+	}
+
+	/* Dimension lines */
+	.dimension line {
+		stroke: var(--color-fg-subtle);
+		stroke-width: 0.5;
+	}
+
+	.elevation-label {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 7px;
+		fill: var(--arch-label-primary);
+		text-anchor: middle;
+		dominant-baseline: middle;
+	}
+
+	.elevation-label.small {
+		font-size: 5px;
+		fill: var(--arch-label-secondary);
+	}
+
+	.dimension-label {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 6px;
+		fill: var(--arch-label-subtle);
+		dominant-baseline: middle;
+	}
+
+	.caption-bar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: var(--space-md, 1.5rem);
+		padding-top: var(--space-sm, 1rem);
+		border-top: 1px solid var(--color-hover);
+		font-family: var(--font-sans, system-ui, sans-serif);
+	}
+
+	.caption {
+		font-size: var(--text-body-sm, 11px);
+		color: var(--color-fg-muted);
+	}
+
+	.direction-hint {
+		font-size: var(--text-caption, 10px);
+		color: var(--color-fg-subtle);
+		text-transform: uppercase;
+		letter-spacing: var(--tracking-widest, 0.1em);
+	}
+
+	@media (max-width: 768px) {
+		.caption-bar {
+			flex-direction: column;
+			gap: 0.5rem;
+			text-align: center;
+		}
+	}
+</style>
