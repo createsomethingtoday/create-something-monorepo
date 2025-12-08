@@ -38,19 +38,6 @@
 		roofDrain
 	} from '$lib/types/architecture';
 
-	// View toggle
-	type ViewType = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems';
-	let currentView: ViewType = $state('plan');
-
-	const views: { id: ViewType; label: string }[] = [
-		{ id: 'plan', label: 'Plan' },
-		{ id: 'section', label: 'Section' },
-		{ id: 'elevation', label: 'Elevation' },
-		{ id: 'site', label: 'Site' },
-		{ id: 'roof', label: 'Roof' },
-		{ id: 'systems', label: 'Systems' }
-	];
-
 	// ============================================================================
 	// FLOOR PLAN DATA
 	// ============================================================================
@@ -580,96 +567,215 @@
 	<title>Threshold Dwelling · CREATE SOMETHING</title>
 	<meta
 		name="description"
-		content="Architectural visualization using Heidegger threshold zones. Five views, one pattern."
+		content="Architectural visualization using Heidegger threshold zones. Tufte small multiples, Miesian clarity."
 	/>
 </svelte:head>
 
-<div class="experiment">
-	<div class="view-controls">
-		{#each views as view}
-			<button
-				class="view-btn"
-				class:active={currentView === view.id}
-				onclick={() => (currentView = view.id)}
-			>
-				{view.label}
-			</button>
-		{/each}
-	</div>
+<!--
+	Unified Small-Multiples Layout
 
-	<div class="visualization">
-		{#if currentView === 'plan'}
-			<FloorPlan plan={pavilion} />
-		{:else if currentView === 'section'}
+	Tufte: Show everything simultaneously for comparison
+	Mies: Less is more—no mode switching
+	Heidegger: Tool recedes; dwelling emerges
+	Rams: Weniger, aber besser
+	Canon: Golden ratio proportions (φ = 1.618)
+-->
+
+<div class="dwelling">
+	<!-- Header: Minimal, informational -->
+	<header class="dwelling-header">
+		<h1 class="dwelling-title">{pavilion.name}</h1>
+		<p class="dwelling-meta">{pavilion.location}</p>
+	</header>
+
+	<!-- Primary: Floor Plan (φ proportion of vertical space) -->
+	<section class="primary-view">
+		<FloorPlan plan={pavilion} showCaption={false} />
+	</section>
+
+	<!-- Secondary: Section + Elevation (1:φ ratio between them) -->
+	<section class="secondary-views">
+		<div class="secondary-left">
 			<Section section={sectionAA} />
-		{:else if currentView === 'elevation'}
+		</div>
+		<div class="secondary-right">
 			<Elevation elevation={southElevation} />
-		{:else if currentView === 'site'}
+		</div>
+	</section>
+
+	<!-- Tertiary: Site + Roof + Systems (equal thirds) -->
+	<section class="tertiary-views">
+		<div class="tertiary-item">
 			<SitePlan site={sitePlan} />
-		{:else if currentView === 'roof'}
+		</div>
+		<div class="tertiary-item">
 			<RoofPlan roof={roofPlan} />
-		{:else if currentView === 'systems'}
+		</div>
+		<div class="tertiary-item">
 			<Systems systems={systemsData} />
-		{/if}
-	</div>
+		</div>
+	</section>
+
+	<!-- Footer: Integrated data summary (Tufte: data, not chrome) -->
+	<footer class="dwelling-footer">
+		<div class="metric">
+			<span class="metric-value">{pavilion.width}′ × {pavilion.depth}′</span>
+			<span class="metric-label">Footprint</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">{(pavilion.width * pavilion.depth).toLocaleString()}</span>
+			<span class="metric-label">Square Feet</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">{pavilion.bedrooms} / {pavilion.bathrooms}</span>
+			<span class="metric-label">Bed / Bath</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">${pavilion.materials?.costPerSF}</span>
+			<span class="metric-label">Per SF</span>
+		</div>
+	</footer>
 </div>
 
 <style>
-	.experiment {
+	/*
+	 * Threshold Dwelling: Unified Layout
+	 *
+	 * Golden Ratio Grid:
+	 * - Primary view: 61.8% of vertical space (φ / (1 + φ))
+	 * - Secondary views: 23.6% (1 / (1 + φ)²)
+	 * - Tertiary views: 14.6% (remaining)
+	 *
+	 * Tufte: Maximum data density, minimum chrome
+	 * Mies: Structural clarity through proportion
+	 * Heidegger: Interface recedes, dwelling appears
+	 */
+
+	.dwelling {
 		min-height: 100vh;
 		background: var(--color-bg-pure);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-xl);
-		gap: var(--space-lg);
+		display: grid;
+		grid-template-rows: auto 1fr auto auto auto;
+		gap: var(--space-md);
+		padding: var(--space-lg);
+		max-width: 1400px;
+		margin: 0 auto;
 	}
 
-	.view-controls {
-		display: flex;
-		gap: 1px;
-		background: var(--color-border-default);
-		border-radius: var(--radius-sm);
-		overflow: hidden;
+	/* Header: Minimal identification */
+	.dwelling-header {
+		text-align: center;
+		padding: var(--space-sm) 0;
 	}
 
-	.view-btn {
+	.dwelling-title {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: var(--text-h3);
+		font-weight: 300;
+		color: var(--color-fg-secondary);
+		margin: 0;
+		letter-spacing: 0.02em;
+	}
+
+	.dwelling-meta {
 		font-family: var(--font-sans, system-ui, sans-serif);
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		background: var(--color-bg-pure);
-		border: none;
-		padding: var(--space-xs) var(--space-sm);
-		cursor: pointer;
-		letter-spacing: 0.1em;
+		margin: var(--space-xs) 0 0 0;
+		letter-spacing: 0.05em;
 		text-transform: uppercase;
-		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.view-btn:hover {
-		color: var(--color-fg-tertiary);
-		background: var(--color-hover);
+	/* Primary view: Floor Plan (dominant) */
+	.primary-view {
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 
-	.view-btn.active {
-		color: var(--color-fg-primary);
-		background: var(--color-active);
+	/* Secondary views: Section + Elevation (φ ratio) */
+	.secondary-views {
+		display: grid;
+		grid-template-columns: 1fr 1.618fr;
+		gap: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-md);
 	}
 
-	.visualization {
-		max-width: 1000px;
-		width: 100%;
+	.secondary-left,
+	.secondary-right {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	/* Tertiary views: Site + Roof + Systems (equal) */
+	.tertiary-views {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-md);
+	}
+
+	.tertiary-item {
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+	}
+
+	/* Footer: Data summary (Tufte sparkline style) */
+	.dwelling-footer {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-xl);
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-md);
+	}
+
+	.metric {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.metric-value {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: var(--text-body-lg);
+		font-weight: 300;
+		color: var(--color-fg-secondary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.metric-label {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+	}
+
+	/* Responsive: Stack on mobile */
+	@media (max-width: 1024px) {
+		.secondary-views {
+			grid-template-columns: 1fr;
+		}
+
+		.tertiary-views {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	@media (max-width: 768px) {
-		.experiment {
+		.dwelling {
 			padding: var(--space-md);
+			gap: var(--space-sm);
 		}
 
-		.view-controls {
+		.dwelling-footer {
 			flex-wrap: wrap;
-			justify-content: center;
+			gap: var(--space-md);
 		}
 	}
 </style>
