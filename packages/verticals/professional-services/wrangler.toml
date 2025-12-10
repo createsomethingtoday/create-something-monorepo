@@ -15,6 +15,7 @@
 
 name = "professional-services-template"
 compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
 
 # Pages deployment output
 pages_build_output_dir = ".svelte-kit/cloudflare"
@@ -26,15 +27,14 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [[d1_databases]]
 binding = "DB"
 database_name = "templates-platform-db"
-database_id = "YOUR_DATABASE_ID"
+database_id = "a06516a5-6c4b-472f-8826-d730e3a74926"
 
 # =============================================================================
 # KV Namespace - Session cache, rate limiting
-# Create with: wrangler kv:namespace create "CACHE"
 # =============================================================================
 [[kv_namespaces]]
 binding = "KV"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "bcb39a6258fe49b79da9dc9b09440934"
 
 # =============================================================================
 # R2 Bucket - Client documents, forms, uploads
