@@ -1,0 +1,11 @@
+# Professional Services Template
+# https://example.com
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://example.com/sitemap.xml
+
+# Crawl-delay for polite bots
+Crawl-delay: 1
