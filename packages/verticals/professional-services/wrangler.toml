@@ -1,0 +1,55 @@
+# Professional Services Vertical Template
+# Powered by CREATE SOMETHING Canon + WORKWAY
+#
+# SETUP INSTRUCTIONS:
+# 1. Use the shared templates-platform-db (contains tenant configs)
+# 2. Create KV namespace: wrangler kv:namespace create "CACHE"
+# 3. Create R2 bucket: wrangler r2 bucket create professional-services-documents
+# 4. Replace YOUR_* placeholders with actual IDs from step outputs
+# 5. Deploy: wrangler pages deploy .svelte-kit/cloudflare
+#
+# ARCHITECTURE:
+# - Templates-platform manages tenant configs (dashboard edits → D1)
+# - This template reads tenant configs from the same D1 database
+# - Tenant resolution: subdomain → D1 lookup → merged config
+
+name = "professional-services-template"
+compatibility_date = "2024-12-01"
+
+# Pages deployment output
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# =============================================================================
+# D1 Database - Shared with templates-platform for tenant configs
+# Uses the same database as templates-platform for tenant lookups
+# =============================================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "templates-platform-db"
+database_id = "YOUR_DATABASE_ID"
+
+# =============================================================================
+# KV Namespace - Session cache, rate limiting
+# Create with: wrangler kv:namespace create "CACHE"
+# =============================================================================
+[[kv_namespaces]]
+binding = "KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+# =============================================================================
+# R2 Bucket - Client documents, forms, uploads
+# Create with: wrangler r2 bucket create professional-services-documents
+# =============================================================================
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "professional-services-documents"
+
+# =============================================================================
+# Environment Variables (set via dashboard or wrangler secret)
+# =============================================================================
+[vars]
+ENVIRONMENT = "production"
+
+# For secrets (API keys, etc.), use:
+# wrangler secret put SENDGRID_API_KEY
+# wrangler secret put CALENDLY_WEBHOOK_SECRET
