@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/templates-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CREATE SOMETHING Templates Platform - Deploy beautiful sites in seconds",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "prepare": "svelte-kit sync || echo ''",
+    "db:migrate": "wrangler d1 migrations apply templates-platform-db --local",
+    "db:migrate:prod": "wrangler d1 migrations apply templates-platform-db"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "@sveltejs/adapter-cloudflare": "^6.0.0",
+    "@sveltejs/kit": "^2.21.0",
+    "@sveltejs/vite-plugin-svelte": "^5.1.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "svelte": "^5.33.0",
+    "svelte-check": "^4.2.1",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0",
+    "wrangler": "^4.14.0"
+  }
+}
