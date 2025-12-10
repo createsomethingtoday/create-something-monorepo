@@ -1,0 +1,350 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CANON DESIGN TOKENS - Templates Platform
+   Theme: Dark (aligned with .space)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Colors - Dark Theme */
+  --color-bg-pure: #000000;
+  --color-bg-elevated: #0a0a0a;
+  --color-bg-surface: #111111;
+  --color-bg-subtle: #1a1a1a;
+
+  --color-fg-primary: #ffffff;
+  --color-fg-secondary: rgba(255, 255, 255, 0.8);
+  --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+  --color-fg-muted: rgba(255, 255, 255, 0.4);
+  --color-fg-subtle: rgba(255, 255, 255, 0.2);
+
+  --color-border-default: rgba(255, 255, 255, 0.1);
+  --color-border-emphasis: rgba(255, 255, 255, 0.2);
+  --color-border-strong: rgba(255, 255, 255, 0.3);
+
+  --color-hover: rgba(255, 255, 255, 0.05);
+  --color-active: rgba(255, 255, 255, 0.1);
+
+  /* Accent - Platform blue */
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Spacing - Golden Ratio */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.618rem;
+  --space-lg: 2.618rem;
+  --space-xl: 4.236rem;
+  --space-2xl: 6.854rem;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-display: clamp(2.5rem, 4vw + 1.5rem, 4rem);
+  --text-h1: clamp(2rem, 3vw + 1rem, 3rem);
+  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2rem);
+  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.5rem);
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+
+  /* Line height */
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* Borders */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+
+  /* Animation */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --duration-micro: 150ms;
+  --duration-standard: 250ms;
+  --duration-complex: 400ms;
+
+  /* Layout */
+  --content-width: 1200px;
+  --content-narrow: 680px;
+  --gutter: clamp(1rem, 5vw, 2rem);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html {
+  font-family: var(--font-sans);
+  background: var(--color-bg-pure);
+  color: var(--color-fg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  line-height: var(--leading-normal);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--duration-micro) var(--ease-standard);
+}
+
+a:hover {
+  color: var(--color-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-micro) var(--ease-standard);
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--color-bg-surface);
+  color: var(--color-fg-primary);
+  border: 1px solid var(--color-border-default);
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border-emphasis);
+}
+
+.btn-lg {
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--text-body);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORMS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.input {
+  width: 100%;
+  padding: var(--space-sm);
+  font-size: var(--text-body);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-fg-primary);
+  transition: all var(--duration-micro) var(--ease-standard);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.input::placeholder {
+  color: var(--color-fg-muted);
+}
+
+.label {
+  display: block;
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  color: var(--color-fg-secondary);
+  margin-bottom: var(--space-xs);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--duration-standard) var(--ease-standard);
+}
+
+.card:hover {
+  border-color: var(--color-border-emphasis);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMPLATE CARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--duration-standard) var(--ease-standard);
+}
+
+.template-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.template-thumbnail {
+  aspect-ratio: 16/10;
+  overflow: hidden;
+  background: var(--color-bg-subtle);
+}
+
+.template-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--duration-complex) var(--ease-standard);
+}
+
+.template-card:hover .template-thumbnail img {
+  transform: scale(1.05);
+}
+
+.template-info {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.template-name {
+  font-size: var(--text-h3);
+  font-weight: 600;
+}
+
+.template-description {
+  font-size: var(--text-body-sm);
+  color: var(--color-fg-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.template-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.template-price {
+  font-size: var(--text-body-sm);
+  color: var(--color-fg-muted);
+}
+
+.template-price .free {
+  color: var(--color-success);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WIZARD STEPS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.wizard-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-fg-muted);
+}
+
+.wizard-step.active {
+  color: var(--color-fg-primary);
+}
+
+.wizard-step.completed {
+  color: var(--color-success);
+}
+
+.wizard-step-number {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-subtle);
+}
+
+.wizard-step.active .wizard-step-number {
+  background: var(--color-accent);
+  color: white;
+}
+
+.wizard-step.completed .wizard-step-number {
+  background: var(--color-success);
+  color: white;
+}
+
+.wizard-step-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border-default);
+}
+
+.wizard-step-connector.completed {
+  background: var(--color-success);
+}
