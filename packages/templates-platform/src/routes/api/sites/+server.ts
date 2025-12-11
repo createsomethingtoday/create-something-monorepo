@@ -74,6 +74,19 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		// Use authenticated user ID
 		const userId = locals.user.id;
 
+		// Ensure user exists in local database (sync from Identity Worker)
+		let user = await db.getUserById(platform.env.DB, userId);
+		if (!user) {
+			// Create user with defaults - they authenticated via Identity Worker
+			user = await db.createUser(platform.env.DB, {
+				id: userId,
+				email: locals.user.email,
+				plan: 'free',
+				siteLimit: 3
+			});
+			console.log('[api/sites] Created new user:', user.id);
+		}
+
 		// Create tenant
 		const tenant = await db.createTenant(platform.env.DB, {
 			userId,
