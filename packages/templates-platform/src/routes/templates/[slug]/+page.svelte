@@ -51,6 +51,27 @@
 		}
 	});
 
+	// Restore pending deploy after login redirect
+	$effect(() => {
+		if (typeof window !== 'undefined' && template) {
+			const pending = sessionStorage.getItem('pending_deploy');
+			if (pending) {
+				try {
+					const data = JSON.parse(pending);
+					// Only restore if it's for this template
+					if (data.slug === template.slug) {
+						config = data.config || {};
+						subdomain = data.subdomain || '';
+						currentStep = 3; // Go directly to deploy step
+						sessionStorage.removeItem('pending_deploy');
+					}
+				} catch {
+					sessionStorage.removeItem('pending_deploy');
+				}
+			}
+		}
+	});
+
 	// Check if required fields are filled
 	let requiredFieldsFilled = $derived(() => {
 		if (!template) return false;
@@ -80,6 +101,20 @@
 					config
 				})
 			});
+
+			// Handle authentication required
+			if (response.status === 401) {
+				// Save config to sessionStorage for after login
+				sessionStorage.setItem('pending_deploy', JSON.stringify({
+					templateId: template.id,
+					slug: template.slug,
+					subdomain,
+					config
+				}));
+				// Redirect to login with return URL
+				window.location.href = `/login?redirect=${encodeURIComponent(`/templates/${template.slug}`)}`;
+				return;
+			}
 
 			const result = await response.json();
 
