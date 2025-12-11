@@ -1,0 +1,30 @@
+# Identity Worker
+# Unified authentication for CREATE SOMETHING services
+#
+# Canon: One identity, many manifestations.
+# The authentication infrastructure disappears; only the unified self remains.
+
+name = "identity-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Custom domain: id.createsomething.space
+routes = [{ pattern = "id.createsomething.space", custom_domain = true }]
+
+[vars]
+ENVIRONMENT = "production"
+# Allowed origins for CORS
+ALLOWED_ORIGINS = "https://templates.createsomething.space,https://fn.workway.co,https://www.workway.co,https://workway.co,https://createsomething.space,https://createsomething.io"
+
+# D1 Database - Unified identity store
+[[d1_databases]]
+binding = "DB"
+database_name = "identity-db"
+database_id = "f3c1ec56-0ca1-4f8c-89ef-881682ef391a"
+
+# Rate limiting via Durable Objects (future)
+# [[durable_objects.bindings]]
+# name = "RATE_LIMITER"
+# class_name = "RateLimiter"
