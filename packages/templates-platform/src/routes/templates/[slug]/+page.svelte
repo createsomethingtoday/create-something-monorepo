@@ -73,7 +73,7 @@
 	});
 
 	// Check if required fields are filled
-	let requiredFieldsFilled = $derived(() => {
+	let requiredFieldsFilled = $derived.by(() => {
 		if (!template) return false;
 		return template.configSchema.required.every((field) => {
 			const value = config[field.key];
