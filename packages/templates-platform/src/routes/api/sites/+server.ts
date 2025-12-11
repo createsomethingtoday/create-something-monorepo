@@ -7,21 +7,40 @@ import { trackEvent } from '$lib/services/analytics';
 /**
  * POST /api/sites
  *
- * Create a new site from a template
+ * Create a new site from a template.
+ * Requires authentication.
  */
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ request, platform, locals }) => {
+	// Require authentication
+	if (!locals.user) {
+		throw error(401, 'Authentication required');
+	}
+
 	if (!platform?.env.DB) {
 		throw error(500, 'Database not configured');
 	}
 
 	try {
-		const body = await request.json();
+		const body = await request.json() as {
+			templateId?: string;
+			subdomain?: string;
+			config?: Record<string, unknown>;
+		};
 		const { templateId, subdomain, config } = body;
+
+		console.log('[api/sites] Creating site:', { templateId, subdomain, hasConfig: !!config, userId: locals.user.id });
+
+		// Validate required fields
+		if (!templateId || !subdomain) {
+			console.log('[api/sites] Missing fields:', { templateId, subdomain });
+			return json({ success: false, error: 'templateId and subdomain are required' }, { status: 400 });
+		}
 
 		// Validate template exists
 		const template = getTemplateById(templateId);
 		if (!template) {
-			return json({ success: false, error: 'Template not found' }, { status: 400 });
+			console.log('[api/sites] Template not found:', templateId);
+			return json({ success: false, error: `Template not found: ${templateId}` }, { status: 400 });
 		}
 
 		// Validate subdomain format
@@ -43,17 +62,17 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		// Validate config against schema
-		const validation = validateConfig(templateId, config);
+		const validation = validateConfig(templateId, config ?? {});
 		if (!validation.valid) {
+			console.log('[api/sites] Config validation failed:', validation.errors);
 			return json(
-				{ success: false, error: validation.errors.join(', ') },
+				{ success: false, error: `Configuration invalid: ${validation.errors.join(', ')}` },
 				{ status: 400 }
 			);
 		}
 
-		// For MVP: Create a temporary user if not logged in
-		// TODO: Implement proper auth
-		let userId = 'anonymous-' + crypto.randomUUID();
+		// Use authenticated user ID
+		const userId = locals.user.id;
 
 		// Create tenant
 		const tenant = await db.createTenant(platform.env.DB, {
@@ -61,7 +80,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			templateId,
 			subdomain,
 			status: 'queued',
-			config,
+			config: config ?? {},
 			tier: 'free'
 		});
 
@@ -97,9 +116,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		});
 
 	} catch (err) {
-		console.error('Site creation error:', err);
+		const errorMessage = err instanceof Error ? err.message : String(err);
+		console.error('[api/sites] Site creation error:', errorMessage, err);
 		return json(
-			{ success: false, error: 'Failed to create site. Please try again.' },
+			{ success: false, error: `Failed to create site: ${errorMessage}` },
 			{ status: 500 }
 		);
 	}
@@ -108,20 +128,20 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 /**
  * GET /api/sites
  *
- * List user's sites
+ * List user's sites.
+ * Requires authentication.
  */
-export const GET: RequestHandler = async ({ platform, url }) => {
+export const GET: RequestHandler = async ({ platform, locals }) => {
+	// Require authentication
+	if (!locals.user) {
+		throw error(401, 'Authentication required');
+	}
+
 	if (!platform?.env.DB) {
 		throw error(500, 'Database not configured');
 	}
 
-	// TODO: Get userId from session
-	const userId = url.searchParams.get('userId');
-	if (!userId) {
-		return json({ sites: [] });
-	}
-
-	const sites = await db.getTenantsByUserId(platform.env.DB, userId);
+	const sites = await db.getTenantsByUserId(platform.env.DB, locals.user.id);
 
 	return json({
 		sites: sites.map((site) => ({
