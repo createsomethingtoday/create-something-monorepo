@@ -50,17 +50,17 @@ Claude Code excels at:
 
 ## Complementarity Principle
 
-This workspace uses Claude Code for creation and WezTerm for execution:
+Claude Code handles the full creation-to-deployment cycle. Tools recede into transparent use—the hammer disappears when hammering.
 
 | Claude Code (You) | WezTerm (User) |
 |-------------------|----------------|
-| Write code | Deploy code |
-| Refactor | Run migrations |
-| Understand | Monitor logs |
-| Test | Execute sequences |
-| Plan | Verify production |
+| Write code | Monitor logs |
+| Deploy code | Verify production |
+| Run migrations | Debug edge cases |
+| Test | Interactive sessions |
+| Plan & Execute | Observe |
 
-**Handoff Protocol**: When deployment, database migrations, log tailing, or multi-step CLI operations are needed, provide the commands for the user to execute in WezTerm.
+**Canon**: The infrastructure disappears; only the work remains. Deploy directly via Bash or MCP tools. Reserve WezTerm handoff for truly interactive operations (debugging sessions, real-time log monitoring, production verification).
 
 ## Development Commands
 
@@ -75,101 +75,92 @@ pnpm --filter=space exec tsc --noEmit
 pnpm --filter=space exec wrangler types
 ```
 
-## Deployment Commands (WezTerm)
+## Deployment Commands
 
-These commands are for the user to execute in WezTerm:
+Execute directly via Bash. The tool recedes; deployment happens.
+
 ```bash
 # Deploy to Cloudflare Pages
-wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-space
+pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=createsomething-space
+
+# Deploy Workers
+pnpm --filter=identity-worker deploy
 
 # Database migrations
 wrangler d1 migrations apply DB_NAME
 
-# Tail production logs
+# Tail production logs (WezTerm - interactive)
 wrangler pages deployment tail --project-name=createsomething-space
 ```
 
 ## File Conventions
 
+Key paths (see `.claude/rules/sveltekit-conventions.md` for full patterns):
 - Routes: `src/routes/[path]/+page.svelte`
-- Server data: `+page.server.ts` for load functions
-- API routes: `src/routes/api/[endpoint]/+server.ts`
+- API: `src/routes/api/[endpoint]/+server.ts`
 - Components: `src/lib/components/`
-- Utilities: `src/lib/utils/`
-- Types: `src/lib/types/`
 
 ## CSS Architecture
 
-**Tailwind for structure, Canon for aesthetics.** This is a canonical standard documented at [createsomething.ltd/standards](https://createsomething.ltd/standards).
+**Tailwind for structure, Canon for aesthetics.** See `.claude/rules/css-canon.md` for tokens.
 
-### Keep (Layout Utilities)
-```
-flex, grid, items-*, justify-*, relative, absolute, w-*, h-*, gap-*, p-*, m-*
-```
+**Migration Strategy**: New code follows Canon. Existing code migrates incrementally when touched. Priority: `packages/components/` first.
 
-### Avoid (Design Utilities) → Use Canon Instead
-| Tailwind | Canon |
-|----------|-------|
-| `rounded-*` | `var(--radius-sm/md/lg/xl)` |
-| `bg-*`, `text-*` | `var(--color-*)` |
-| `shadow-*` | `var(--shadow-*)` |
-| `text-sm/lg` | `var(--text-*)` |
+## Cloudflare Resources
 
-### Example
-```svelte
-<!-- ✗ Tailwind design utilities -->
-<div class="flex items-center rounded-lg bg-white/10 text-white/60">
-
-<!-- ✓ Tailwind for layout, Canon for design -->
-<div class="flex items-center card">
-
-<style>
-  .card {
-    border-radius: var(--radius-lg);
-    background: var(--color-bg-surface);
-    color: var(--color-fg-tertiary);
-  }
-</style>
-```
-
-### Canonical Tokens (defined in `app.css`)
-```css
-/* Border Radius */
---radius-sm: 6px;
---radius-md: 8px;
---radius-lg: 12px;
---radius-xl: 16px;
---radius-full: 9999px;
-
-/* Spacing (Golden Ratio) */
---space-xs: 0.5rem;
---space-sm: 1rem;
---space-md: 1.618rem;
---space-lg: 2.618rem;
---space-xl: 4.236rem;
-```
-
-### Migration Strategy
-**New code**: Follow the canonical pattern (Tailwind for structure, Canon for aesthetics).
-**Existing code**: Migrate incrementally when touching a file for other changes.
-**Priority**: Components in `packages/components/` should be migrated first—they propagate across all properties.
-
-## Database
-
-D1 databases per package. Query with:
-```typescript
-const db = platform.env.DB;
-const result = await db.prepare('SELECT * FROM table').all();
-```
-
-## Workers
-
-Standalone Workers live in `packages/[pkg]/workers/[name]/`. Example: `packages/space/workers/motion-extractor/` for Puppeteer-based animation extraction.
+D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patterns.md` for queries and SDK usage.
 
 ## Skills Available
 
 - `motion-analysis`: Analyze CSS animations from URLs
-- `cloudflare-integration`: Infrastructure management reference
+- `canon-maintenance`: Enforce CREATE SOMETHING design standards
+
+## Code Mode: Tools Should Recede
+
+**Principle**: Prefer code-based operations over direct tool calls when composing multiple operations.
+
+This follows Heidegger's distinction between Zuhandenheit (ready-to-hand) and Vorhandenheit (present-at-hand). Tools should recede into transparent use—the hammer disappears when hammering.
+
+### When to Use Code Mode (via Bash)
+
+Use code-based operations when:
+- **Composing multiple operations**: Reading, transforming, and writing data
+- **Filtering or processing results**: Data transforms happen in code, not model context
+- **Familiar patterns exist**: `fs.readFile()` is more natural than `<invoke name="Read">`
+
+```typescript
+// Zuhandenheit: Tool recedes into use
+const content = await fs.readFile('src/config.ts', 'utf-8');
+const exports = content.match(/export \w+/g);
+console.log(`Found ${exports?.length ?? 0} exports`);
+```
+
+### When to Use Direct Tools
+
+Use direct tool calls (Read, Write, Edit, Grep, Glob) when:
+- **Single operations**: One read, one write
+- **Claude Code's specialized tools are better**: Edit tool's surgical replacement
+- **Visibility is needed**: User sees tool invocations in the UI
+
+### Cloudflare SDK
+
+For composed Cloudflare operations, use `@create-something/cloudflare-sdk`:
+
+```typescript
+import { cf } from '@create-something/cloudflare-sdk';
+
+// KV operations
+const namespaces = await cf.kv.listNamespaces();
+const value = await cf.kv.get('namespace-id', 'key');
+
+// D1 queries
+const users = await cf.d1.query('my-db', 'SELECT * FROM users');
+
+// Pages deployment
+const url = await cf.pages.deploy('project', './dist');
+```
+
+**Reference**: [Code Mode Hermeneutic Analysis](https://createsomething.io/papers/code-mode-hermeneutic-analysis)
 
 ## The Hermeneutic Circle
 

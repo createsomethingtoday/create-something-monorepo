@@ -1,0 +1,408 @@
+/**
+ * Identity Worker
+ *
+ * Unified authentication for CREATE SOMETHING services.
+ * Zero dependencies. The infrastructure disappears.
+ *
+ * Canon: One identity, many manifestations.
+ */
+
+import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload } from './types';
+import { hashPassword, verifyPassword, generateUUID, hashToken } from './services/crypto';
+import { generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
+import {
+	findUserByEmail,
+	findUserById,
+	createUser,
+	updateUser,
+	revokeAllUserTokens,
+	checkRateLimit,
+	incrementRateLimit,
+	findRefreshTokenByHash,
+	findApiKeyByHash,
+} from './db/queries';
+
+export default {
+	async fetch(request: Request, env: Env): Promise<Response> {
+		const url = new URL(request.url);
+		const method = request.method;
+		const path = url.pathname;
+
+		// CORS preflight
+		if (method === 'OPTIONS') {
+			return cors(new Response(null, { status: 204 }), request, env);
+		}
+
+		try {
+			const response = await route(request, env, method, path);
+			return cors(response, request, env);
+		} catch (err) {
+			console.error('Identity Worker Error:', err);
+			return cors(
+				json({ error: 'internal_error', message: 'An unexpected error occurred', status: 500 }, 500),
+				request,
+				env
+			);
+		}
+	},
+};
+
+// Router
+async function route(request: Request, env: Env, method: string, path: string): Promise<Response> {
+	// Health check
+	if (path === '/' && method === 'GET') {
+		return json({ service: 'identity-worker', version: '0.1.0', status: 'healthy' });
+	}
+
+	// JWKS (public)
+	if (path === '/.well-known/jwks.json' && method === 'GET') {
+		const jwks = await getJWKS(env.DB);
+		return json(jwks, 200, { 'Cache-Control': 'public, max-age=3600' });
+	}
+
+	// Auth endpoints
+	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
+	if (path === '/v1/auth/login' && method === 'POST') return handleLogin(request, env);
+	if (path === '/v1/auth/refresh' && method === 'POST') return handleRefresh(request, env);
+	if (path === '/v1/auth/logout' && method === 'POST') return handleLogout(request, env);
+
+	// User endpoints (protected)
+	if (path === '/v1/users/me' && method === 'GET') return handleGetMe(request, env);
+	if (path === '/v1/users/me' && method === 'PATCH') return handleUpdateMe(request, env);
+
+	// Service-to-service (API key protected)
+	if (path === '/v1/validate' && method === 'POST') return handleValidate(request, env);
+	if (path.startsWith('/v1/users/') && path.endsWith('/tier') && method === 'PATCH') {
+		const userId = path.replace('/v1/users/', '').replace('/tier', '');
+		return handleUpdateTier(request, env, userId);
+	}
+
+	return json({ error: 'not_found', message: 'Endpoint not found', status: 404 }, 404);
+}
+
+// Auth Handlers
+
+async function handleSignup(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Rate limit
+	const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+	const { allowed } = await checkRateLimit(db, `signup:${ip}`, 3, 300);
+	if (!allowed) {
+		return json({ error: 'rate_limited', message: 'Too many signup attempts', status: 429 }, 429);
+	}
+
+	const body = await parseJSON<{ email?: string; password?: string; name?: string; source?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+
+	const { email, password, name, source = 'templates' } = body;
+
+	if (!email || !password) {
+		return json({ error: 'invalid_request', message: 'Email and password required', status: 400 }, 400);
+	}
+
+	if (!isValidEmail(email)) {
+		return json({ error: 'invalid_email', message: 'Invalid email format', status: 400 }, 400);
+	}
+
+	if (password.length < 8) {
+		return json({ error: 'weak_password', message: 'Password must be at least 8 characters', status: 400 }, 400);
+	}
+
+	const existing = await findUserByEmail(db, email);
+	if (existing) {
+		return json({ error: 'email_exists', message: 'Email already registered', status: 409 }, 409);
+	}
+
+	await incrementRateLimit(db, `signup:${ip}`);
+
+	const passwordHash = await hashPassword(password);
+	const user = await createUser(db, {
+		id: generateUUID(),
+		email,
+		password_hash: passwordHash,
+		name,
+		source: source as 'workway' | 'templates' | 'io' | 'space',
+	});
+
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+
+	return json({
+		access_token: accessToken,
+		refresh_token: refreshToken,
+		token_type: 'Bearer',
+		expires_in: expiresIn,
+		user: {
+			id: user.id,
+			email: user.email,
+		},
+	});
+}
+
+async function handleLogin(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	const body = await parseJSON<{ email?: string; password?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+
+	const { email, password } = body;
+	if (!email || !password) {
+		return json({ error: 'invalid_request', message: 'Email and password required', status: 400 }, 400);
+	}
+
+	// Rate limit
+	const rateKey = `login:${email.toLowerCase()}`;
+	const { allowed } = await checkRateLimit(db, rateKey, 5, 60);
+	if (!allowed) {
+		return json({ error: 'rate_limited', message: 'Too many login attempts', status: 429 }, 429);
+	}
+
+	const user = await findUserByEmail(db, email);
+	if (!user) {
+		await incrementRateLimit(db, rateKey);
+		return json({ error: 'invalid_credentials', message: 'Invalid email or password', status: 401 }, 401);
+	}
+
+	const valid = await verifyPassword(password, user.password_hash);
+	if (!valid) {
+		await incrementRateLimit(db, rateKey);
+		return json({ error: 'invalid_credentials', message: 'Invalid email or password', status: 401 }, 401);
+	}
+
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+
+	return json({
+		access_token: accessToken,
+		refresh_token: refreshToken,
+		token_type: 'Bearer',
+		expires_in: expiresIn,
+		user: {
+			id: user.id,
+			email: user.email,
+		},
+	});
+}
+
+async function handleRefresh(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	const body = await parseJSON<{ refresh_token?: string }>(request);
+	if (!body?.refresh_token) {
+		return json({ error: 'invalid_request', message: 'Refresh token required', status: 400 }, 400);
+	}
+
+	const tokenHash = await hashToken(body.refresh_token);
+	const storedToken = await findRefreshTokenByHash(db, tokenHash);
+	if (!storedToken) {
+		return json({ error: 'invalid_token', message: 'Invalid refresh token', status: 401 }, 401);
+	}
+
+	const user = await findUserById(db, storedToken.user_id);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 401 }, 401);
+	}
+
+	const tokens = await refreshTokens(db, body.refresh_token, user);
+	if (!tokens) {
+		return json({ error: 'invalid_token', message: 'Token expired or revoked', status: 401 }, 401);
+	}
+
+	return json<TokenResponse>({
+		access_token: tokens.accessToken,
+		refresh_token: tokens.refreshToken,
+		token_type: 'Bearer',
+		expires_in: tokens.expiresIn,
+	});
+}
+
+async function handleLogout(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	const body = await parseJSON<{ refresh_token?: string }>(request);
+	if (body?.refresh_token) {
+		const tokenHash = await hashToken(body.refresh_token);
+		const storedToken = await findRefreshTokenByHash(db, tokenHash);
+		if (storedToken) {
+			await revokeAllUserTokens(db, storedToken.user_id);
+		}
+	}
+
+	return json({ success: true });
+}
+
+// User Handlers
+
+async function handleGetMe(request: Request, env: Env): Promise<Response> {
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	const user = await findUserById(env.DB, payload.sub);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	return json<UserResponse>({
+		id: user.id,
+		email: user.email,
+		email_verified: Boolean(user.email_verified),
+		name: user.name,
+		avatar_url: user.avatar_url,
+		tier: user.tier,
+		created_at: user.created_at,
+	});
+}
+
+async function handleUpdateMe(request: Request, env: Env): Promise<Response> {
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	const body = await parseJSON<{ name?: string; avatar_url?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+
+	const user = await updateUser(env.DB, payload.sub, {
+		...(body.name !== undefined && { name: body.name }),
+		...(body.avatar_url !== undefined && { avatar_url: body.avatar_url }),
+	});
+
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	return json<UserResponse>({
+		id: user.id,
+		email: user.email,
+		email_verified: Boolean(user.email_verified),
+		name: user.name,
+		avatar_url: user.avatar_url,
+		tier: user.tier,
+		created_at: user.created_at,
+	});
+}
+
+// Service-to-Service Handlers
+
+async function handleValidate(request: Request, env: Env): Promise<Response> {
+	const apiKey = request.headers.get('X-API-Key');
+	if (!apiKey) {
+		return json({ error: 'unauthorized', message: 'API key required', status: 401 }, 401);
+	}
+
+	const keyHash = await hashToken(apiKey);
+	const storedKey = await findApiKeyByHash(env.DB, keyHash);
+	if (!storedKey) {
+		return json({ error: 'unauthorized', message: 'Invalid API key', status: 401 }, 401);
+	}
+
+	const body = await parseJSON<{ access_token?: string }>(request);
+	if (!body?.access_token) {
+		return json({ error: 'invalid_request', message: 'Access token required', status: 400 }, 400);
+	}
+
+	const jwks = await getJWKS(env.DB);
+	let payload: JWTPayload | null = null;
+
+	for (const jwk of jwks.keys) {
+		const publicKey = await importPublicKey(jwk);
+		payload = await validateJWT(body.access_token, publicKey);
+		if (payload) break;
+	}
+
+	if (!payload) {
+		return json({ error: 'invalid_token', message: 'Invalid or expired token', status: 401 }, 401);
+	}
+
+	return json({
+		valid: true,
+		user: { id: payload.sub, email: payload.email, tier: payload.tier, source: payload.source },
+		exp: payload.exp,
+	});
+}
+
+async function handleUpdateTier(request: Request, env: Env, userId: string): Promise<Response> {
+	const apiKey = request.headers.get('X-API-Key');
+	if (!apiKey) {
+		return json({ error: 'unauthorized', message: 'API key required', status: 401 }, 401);
+	}
+
+	const keyHash = await hashToken(apiKey);
+	const storedKey = await findApiKeyByHash(env.DB, keyHash);
+	if (!storedKey) {
+		return json({ error: 'unauthorized', message: 'Invalid API key', status: 401 }, 401);
+	}
+
+	const permissions: string[] = JSON.parse(storedKey.permissions);
+	if (!permissions.includes('update_tier')) {
+		return json({ error: 'forbidden', message: 'Insufficient permissions', status: 403 }, 403);
+	}
+
+	const body = await parseJSON<{ tier?: string }>(request);
+	if (!body?.tier || !['free', 'pro', 'agency'].includes(body.tier)) {
+		return json({ error: 'invalid_request', message: 'Valid tier required', status: 400 }, 400);
+	}
+
+	const user = await updateUser(env.DB, userId, { tier: body.tier as 'free' | 'pro' | 'agency' });
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	return json({ success: true, user: { id: user.id, email: user.email, tier: user.tier } });
+}
+
+// Utilities
+
+async function authenticate(request: Request, env: Env): Promise<JWTPayload | null> {
+	const auth = request.headers.get('Authorization');
+	if (!auth?.startsWith('Bearer ')) return null;
+
+	const token = auth.slice(7);
+	const jwks = await getJWKS(env.DB);
+
+	for (const jwk of jwks.keys) {
+		const publicKey = await importPublicKey(jwk);
+		const payload = await validateJWT(token, publicKey);
+		if (payload) return payload;
+	}
+
+	return null;
+}
+
+function cors(response: Response, request: Request, env: Env): Response {
+	const origin = request.headers.get('Origin');
+	const allowed = (env.ALLOWED_ORIGINS?.split(',') || []).concat(
+		env.ENVIRONMENT !== 'production' ? ['http://localhost:5173', 'http://localhost:3000'] : []
+	);
+
+	const headers = new Headers(response.headers);
+	if (origin && allowed.includes(origin)) {
+		headers.set('Access-Control-Allow-Origin', origin);
+		headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+		headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
+		headers.set('Access-Control-Allow-Credentials', 'true');
+		headers.set('Access-Control-Max-Age', '86400');
+	}
+
+	return new Response(response.body, { status: response.status, headers });
+}
+
+function json<T>(data: T, status = 200, extraHeaders?: Record<string, string>): Response {
+	return new Response(JSON.stringify(data), {
+		status,
+		headers: { 'Content-Type': 'application/json', ...extraHeaders },
+	});
+}
+
+async function parseJSON<T>(request: Request): Promise<T | null> {
+	try {
+		return await request.json() as T;
+	} catch {
+		return null;
+	}
+}
+
+function isValidEmail(email: string): boolean {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
