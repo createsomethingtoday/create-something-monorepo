@@ -239,7 +239,7 @@
 	select:focus,
 	textarea:focus {
 		outline: none;
-		border-color: var(--color-accent);
+		border-color: var(--color-fg-primary);
 	}
 
 	textarea {
@@ -255,10 +255,10 @@
 
 	.submit-btn {
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-accent);
+		background: var(--color-fg-primary);
 		border: none;
 		border-radius: var(--radius-sm);
-		color: white;
+		color: var(--color-bg-pure);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
 		cursor: pointer;
@@ -266,7 +266,7 @@
 	}
 
 	.submit-btn:hover:not(:disabled) {
-		background: var(--color-accent-hover, #5a8fd8);
+		background: var(--color-fg-secondary);
 	}
 
 	.submit-btn:disabled {
