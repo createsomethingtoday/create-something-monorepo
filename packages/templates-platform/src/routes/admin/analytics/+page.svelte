@@ -251,13 +251,13 @@
 	}
 
 	.funnel-stage.highlight {
-		background: var(--color-accent);
+		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 	}
 
 	.funnel-stage.agency {
-		background: linear-gradient(135deg, #4477aa, #22c55e);
-		color: white;
+		background: linear-gradient(135deg, var(--color-info), var(--color-data-2));
+		color: var(--color-fg-primary);
 	}
 
 	.funnel-value {
@@ -328,14 +328,14 @@
 
 	.chart-bar {
 		width: 100%;
-		background: var(--color-accent);
+		background: var(--color-fg-primary);
 		border-radius: 2px 2px 0 0;
 		min-height: 4px;
 		transition: background var(--duration-micro) var(--ease-standard);
 	}
 
 	.chart-bar-wrapper:hover .chart-bar {
-		background: var(--color-accent-hover, #5a8fd8);
+		background: var(--color-fg-secondary);
 	}
 
 	.chart-labels {
@@ -420,12 +420,12 @@
 
 	.event-type[data-type='deploy'] {
 		background: var(--color-success);
-		color: white;
+		color: var(--color-fg-primary);
 	}
 
 	.event-type[data-type='agency_contact'] {
-		background: #22c55e;
-		color: white;
+		background: var(--color-data-2);
+		color: var(--color-fg-primary);
 	}
 
 	.event-meta {
@@ -474,13 +474,13 @@
 	}
 
 	.feedback-type[data-type='feature_request'] {
-		background: #60a5fa;
-		color: white;
+		background: var(--color-data-1);
+		color: var(--color-fg-primary);
 	}
 
 	.feedback-type[data-type='sdk_feedback'] {
-		background: #c084fc;
-		color: white;
+		background: var(--color-data-3);
+		color: var(--color-fg-primary);
 	}
 
 	.feedback-status {
@@ -493,7 +493,7 @@
 
 	.feedback-status[data-status='new'] {
 		background: var(--color-warning);
-		color: white;
+		color: var(--color-fg-primary);
 	}
 
 	.feedback-card h4 {

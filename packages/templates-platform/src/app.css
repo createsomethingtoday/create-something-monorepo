@@ -1,84 +1,133 @@
+/*
+  CREATE SOMETHING Design System
+  Property: Templates Platform (Dashboard)
+
+  Font Stack: System UI (primary) + JetBrains Mono (code)
+  Philosophy: "Weniger, aber besser" - Dieter Rams
+  Principle: The dashboard should disappear into use (Zuhandenheit)
+*/
+
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   CANON DESIGN TOKENS - Templates Platform
-   Theme: Dark (aligned with .space)
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ==========================================================================
+   CREATE SOMETHING Design Tokens (Canon)
+   "Weniger, aber besser" - Dieter Rams
+   ========================================================================== */
 
 :root {
-  /* Colors - Dark Theme */
+  /* Colors - Functional Minimalism */
   --color-bg-pure: #000000;
   --color-bg-elevated: #0a0a0a;
   --color-bg-surface: #111111;
   --color-bg-subtle: #1a1a1a;
-
   --color-fg-primary: #ffffff;
   --color-fg-secondary: rgba(255, 255, 255, 0.8);
   --color-fg-tertiary: rgba(255, 255, 255, 0.6);
   --color-fg-muted: rgba(255, 255, 255, 0.4);
   --color-fg-subtle: rgba(255, 255, 255, 0.2);
-
   --color-border-default: rgba(255, 255, 255, 0.1);
   --color-border-emphasis: rgba(255, 255, 255, 0.2);
   --color-border-strong: rgba(255, 255, 255, 0.3);
-
   --color-hover: rgba(255, 255, 255, 0.05);
   --color-active: rgba(255, 255, 255, 0.1);
+  --color-focus: rgba(255, 255, 255, 0.2);
 
-  /* Accent - Platform blue */
-  --color-accent: #3b82f6;
-  --color-accent-hover: #60a5fa;
+  /* Semantic Colors */
+  --color-success: #44aa44;
+  --color-success-muted: rgba(68, 170, 68, 0.2);
+  --color-error: #cc4444;
+  --color-error-muted: rgba(204, 68, 68, 0.2);
+  --color-warning: #aa8844;
+  --color-warning-muted: rgba(170, 136, 68, 0.2);
+  --color-info: #4477aa;
+  --color-info-muted: rgba(68, 119, 170, 0.2);
 
-  /* Semantic */
-  --color-success: #22c55e;
-  --color-error: #ef4444;
-  --color-warning: #f59e0b;
+  /* Data Visualization Palette */
+  --color-data-1: #60a5fa;
+  --color-data-2: #22c55e;
+  --color-data-3: #c084fc;
+  --color-data-4: #fbbf24;
+  --color-data-5: #f472b6;
+  --color-data-6: #facc15;
 
-  /* Spacing - Golden Ratio */
+  /* Typography - System Font Stack */
+  --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+  --font-serif: Georgia, "Times New Roman", serif;
+
+  /* Font Weights */
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 1.75;
+
+  /* Letter Spacing */
+  --tracking-tighter: -0.025em;
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+
+  /* Typography Scale - Fluid */
+  --text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem);
+  --text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);
+  --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);
+  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);
+  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);
+  --text-h4: clamp(1.125rem, 1vw + 0.5rem, 1.5rem);
+  --text-h5: clamp(1rem, 0.5vw + 0.75rem, 1.25rem);
+  --text-h6: clamp(0.875rem, 0.25vw + 0.75rem, 1rem);
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+  --text-overline: 0.6875rem;
+
+  /* Spacing - Golden Ratio (φ = 1.618) */
   --space-xs: 0.5rem;
   --space-sm: 1rem;
   --space-md: 1.618rem;
   --space-lg: 2.618rem;
   --space-xl: 4.236rem;
   --space-2xl: 6.854rem;
+  --space-3xl: 11.089rem;
 
-  /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --text-display: clamp(2.5rem, 4vw + 1.5rem, 4rem);
-  --text-h1: clamp(2rem, 3vw + 1rem, 3rem);
-  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2rem);
-  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.5rem);
-  --text-body-lg: 1.125rem;
-  --text-body: 1rem;
-  --text-body-sm: 0.875rem;
-  --text-caption: 0.75rem;
-
-  /* Line height */
-  --leading-tight: 1.2;
-  --leading-snug: 1.35;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.7;
-
-  /* Borders */
+  /* Border Radius */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+  /* Shadows & Elevation */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+  --shadow-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
+  --shadow-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
+  --shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
 
-  /* Animation */
+  /* Animation & Motion */
   --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --duration-micro: 150ms;
-  --duration-standard: 250ms;
-  --duration-complex: 400ms;
+  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+  --duration-micro: 200ms;
+  --duration-standard: 300ms;
+  --duration-complex: 500ms;
 
   /* Layout */
   --content-width: 1200px;
@@ -86,9 +135,9 @@
   --gutter: clamp(1rem, 5vw, 2rem);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ==========================================================================
    BASE STYLES
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ========================================================================== */
 
 html {
   font-family: var(--font-sans);
@@ -103,14 +152,31 @@ body {
   line-height: var(--leading-normal);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ==========================================================================
    TYPOGRAPHY
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ========================================================================== */
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-weight: var(--font-semibold);
   line-height: var(--leading-tight);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
+}
+
+h1 { font-size: var(--text-h1); }
+h2 { font-size: var(--text-h2); }
+h3 { font-size: var(--text-h3); }
+h4 { font-size: var(--text-h4); }
+h5 { font-size: var(--text-h5); }
+h6 { font-size: var(--text-h6); }
+
+p {
+  font-family: var(--font-sans);
+  line-height: var(--leading-relaxed);
+}
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
 }
 
 a {
@@ -120,12 +186,18 @@ a {
 }
 
 a:hover {
-  color: var(--color-accent);
+  color: var(--color-fg-secondary);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   BUTTONS
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Selection */
+::selection {
+  background: var(--color-focus);
+  color: var(--color-fg-primary);
+}
+
+/* ==========================================================================
+   BUTTONS - Canon Aesthetic
+   ========================================================================== */
 
 .btn {
   display: inline-flex;
@@ -133,8 +205,9 @@ a:hover {
   justify-content: center;
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-sans);
   font-size: var(--text-body-sm);
-  font-weight: 500;
+  font-weight: var(--font-medium);
   border-radius: var(--radius-md);
   transition: all var(--duration-micro) var(--ease-standard);
   cursor: pointer;
@@ -142,13 +215,13 @@ a:hover {
 }
 
 .btn-primary {
-  background: var(--color-accent);
-  color: white;
+  background: var(--color-fg-primary);
+  color: var(--color-bg-pure);
 }
 
 .btn-primary:hover {
-  background: var(--color-accent-hover);
-  color: white;
+  background: var(--color-fg-secondary);
+  color: var(--color-bg-pure);
 }
 
 .btn-secondary {
@@ -162,18 +235,34 @@ a:hover {
   border-color: var(--color-border-emphasis);
 }
 
+.btn-ghost {
+  background: transparent;
+  color: var(--color-fg-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--color-hover);
+  color: var(--color-fg-primary);
+}
+
 .btn-lg {
   padding: var(--space-md) var(--space-lg);
   font-size: var(--text-body);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   FORMS
-   ═══════════════════════════════════════════════════════════════════════════ */
+.btn-sm {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-caption);
+}
+
+/* ==========================================================================
+   FORMS - Canon Aesthetic
+   ========================================================================== */
 
 .input {
   width: 100%;
   padding: var(--space-sm);
+  font-family: var(--font-sans);
   font-size: var(--text-body);
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
@@ -184,8 +273,8 @@ a:hover {
 
 .input:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  border-color: var(--color-border-emphasis);
+  box-shadow: 0 0 0 3px var(--color-hover);
 }
 
 .input::placeholder {
@@ -194,15 +283,37 @@ a:hover {
 
 .label {
   display: block;
+  font-family: var(--font-sans);
   font-size: var(--text-body-sm);
-  font-weight: 500;
+  font-weight: var(--font-medium);
   color: var(--color-fg-secondary);
   margin-bottom: var(--space-xs);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   CARDS
-   ═══════════════════════════════════════════════════════════════════════════ */
+textarea.input {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Global form field focus glow */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(.btn),
+textarea,
+select {
+  transition: border-color var(--duration-micro) var(--ease-standard),
+              box-shadow var(--duration-micro) var(--ease-standard);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(.btn):focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-border-emphasis);
+  box-shadow: 0 0 0 3px var(--color-hover);
+}
+
+/* ==========================================================================
+   CARDS - Canon Aesthetic
+   ========================================================================== */
 
 .card {
   background: var(--color-bg-surface);
@@ -217,9 +328,9 @@ a:hover {
   box-shadow: var(--shadow-lg);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   TEMPLATE CARD
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ==========================================================================
+   TEMPLATE CARDS
+   ========================================================================== */
 
 .template-card {
   display: flex;
@@ -232,9 +343,25 @@ a:hover {
 }
 
 .template-card:hover {
-  border-color: var(--color-accent);
+  border-color: var(--color-border-emphasis);
   transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.template-card:active {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-card {
+    transition: border-color var(--duration-standard) var(--ease-standard),
+                box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .template-card:hover,
+  .template-card:active {
+    transform: none;
+  }
 }
 
 .template-thumbnail {
@@ -262,11 +389,14 @@ a:hover {
 }
 
 .template-name {
+  font-family: var(--font-sans);
   font-size: var(--text-h3);
-  font-weight: 600;
+  font-weight: var(--font-semibold);
+  color: var(--color-fg-primary);
 }
 
 .template-description {
+  font-family: var(--font-sans);
   font-size: var(--text-body-sm);
   color: var(--color-fg-secondary);
   line-height: var(--leading-relaxed);
@@ -282,18 +412,19 @@ a:hover {
 }
 
 .template-price {
+  font-family: var(--font-sans);
   font-size: var(--text-body-sm);
   color: var(--color-fg-muted);
 }
 
 .template-price .free {
   color: var(--color-success);
-  font-weight: 500;
+  font-weight: var(--font-medium);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ==========================================================================
    WIZARD STEPS
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ========================================================================== */
 
 .wizard-steps {
   display: flex;
@@ -307,6 +438,7 @@ a:hover {
   align-items: center;
   gap: var(--space-xs);
   color: var(--color-fg-muted);
+  font-family: var(--font-sans);
 }
 
 .wizard-step.active {
@@ -323,15 +455,16 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-mono);
   font-size: var(--text-body-sm);
-  font-weight: 600;
+  font-weight: var(--font-semibold);
   border-radius: var(--radius-full);
   background: var(--color-bg-subtle);
 }
 
 .wizard-step.active .wizard-step-number {
-  background: var(--color-accent);
-  color: white;
+  background: var(--color-fg-primary);
+  color: var(--color-bg-pure);
 }
 
 .wizard-step.completed .wizard-step-number {
@@ -347,4 +480,163 @@ a:hover {
 
 .wizard-step-connector.completed {
   background: var(--color-success);
+}
+
+/* ==========================================================================
+   STATUS INDICATORS
+   ========================================================================== */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.status-badge--active {
+  background: var(--color-success-muted);
+  color: var(--color-success);
+}
+
+.status-badge--pending {
+  background: var(--color-warning-muted);
+  color: var(--color-warning);
+}
+
+.status-badge--error {
+  background: var(--color-error-muted);
+  color: var(--color-error);
+}
+
+/* ==========================================================================
+   NAVIGATION
+   ========================================================================== */
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--gutter);
+  background: var(--color-bg-elevated);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.nav-brand {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.nav-link {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-sm);
+  color: var(--color-fg-secondary);
+  transition: color var(--duration-micro) var(--ease-standard);
+}
+
+.nav-link:hover {
+  color: var(--color-fg-primary);
+}
+
+.nav-link.active {
+  color: var(--color-fg-primary);
+}
+
+/* ==========================================================================
+   EDITOR COMPONENTS
+   ========================================================================== */
+
+.editor-section {
+  padding: var(--space-lg);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+.editor-section.primary {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-border-emphasis);
+}
+
+.section-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-h3);
+  font-weight: var(--font-semibold);
+  margin: 0 0 var(--space-xs);
+}
+
+.section-description {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-sm);
+  color: var(--color-fg-muted);
+  margin: 0 0 var(--space-md);
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+.text-muted {
+  color: var(--color-fg-muted);
+}
+
+.text-secondary {
+  color: var(--color-fg-secondary);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+/* ==========================================================================
+   SCROLLBAR - Subtle, Canon-aligned
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-emphasis);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) transparent;
 }

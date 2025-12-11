@@ -4,15 +4,18 @@
   Drag-drop image upload to R2.
   Shows preview, allows URL input, handles upload state.
   Heideggerian: Direct manipulation of images, not file management.
+
+  Images are stored per-tenant: user-uploads/{siteId}/{timestamp}-{random}.{ext}
 -->
 <script lang="ts">
   interface Props {
     value: string;
     onchange: (url: string) => void;
     accept?: string;
+    siteId?: string;
   }
 
-  let { value, onchange, accept = 'image/*' }: Props = $props();
+  let { value, onchange, accept = 'image/*', siteId }: Props = $props();
 
   let isDragging = $state(false);
   let isUploading = $state(false);
@@ -65,6 +68,9 @@
       // Create form data
       const formData = new FormData();
       formData.append('file', file);
+      if (siteId) {
+        formData.append('siteId', siteId);
+      }
 
       // Upload to R2 via API
       const response = await fetch('/api/upload', {
@@ -225,17 +231,17 @@
     align-items: center;
     gap: var(--space-xs);
     padding: var(--space-xs) var(--space-sm);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--color-active);
+    border: 1px solid var(--color-border-emphasis);
     border-radius: var(--radius-md);
-    color: white;
+    color: var(--color-fg-primary);
     cursor: pointer;
     font-size: var(--text-body-sm);
     transition: all var(--duration-micro) var(--ease-standard);
   }
 
   .overlay-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-border-emphasis);
   }
 
   .upload-tabs {
@@ -306,7 +312,7 @@
     width: 24px;
     height: 24px;
     border: 2px solid var(--color-border-emphasis);
-    border-top-color: var(--color-accent);
+    border-top-color: var(--color-fg-primary);
     border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
   }

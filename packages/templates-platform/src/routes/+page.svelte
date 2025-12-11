@@ -38,8 +38,16 @@
 		{#each templates as template}
 			<a href="/templates/{template.slug}" class="template-card">
 				<div class="template-thumbnail">
-					<div class="template-placeholder">
-						<span class="template-placeholder-icon">{template.name.charAt(0)}</span>
+					<!-- Live site embed: the preview IS the site -->
+					<div class="template-embed-wrapper">
+						<iframe
+							src={template.previewUrl}
+							title="{template.name} preview"
+							class="template-embed"
+							loading="lazy"
+							sandbox="allow-scripts allow-same-origin"
+						></iframe>
+						<div class="template-embed-overlay"></div>
 					</div>
 				</div>
 				<div class="template-info">
@@ -52,7 +60,7 @@
 								<span class="pro">· Pro ${template.pricing.proPrice}</span>
 							{/if}
 						</span>
-						<span class="template-cta">Preview</span>
+						<span class="template-cta">Preview →</span>
 					</div>
 				</div>
 			</a>
@@ -230,7 +238,7 @@
 	}
 
 	.hero-accent {
-		color: var(--color-accent);
+		color: var(--color-fg-primary);
 	}
 
 	.hero-description {
@@ -274,30 +282,121 @@
 		gap: var(--space-lg);
 	}
 
-	/* Template Card overrides */
-	.template-placeholder {
+	.template-card {
+		display: flex;
+		flex-direction: column;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+		text-decoration: none;
+		color: inherit;
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.template-card:hover {
+		border-color: var(--color-border-emphasis);
+		transform: translateY(-4px);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.template-card:active {
+		transform: translateY(-2px);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.template-card {
+			transition: border-color var(--duration-standard) var(--ease-standard),
+			            box-shadow var(--duration-standard) var(--ease-standard);
+		}
+
+		.template-card:hover,
+		.template-card:active {
+			transform: none;
+		}
+	}
+
+	/* Template Embed - Live Site Preview */
+	.template-embed-wrapper {
+		position: relative;
 		width: 100%;
 		height: 100%;
+		overflow: hidden;
+		background: var(--color-bg-subtle);
+	}
+
+	.template-embed {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 1440px;
+		height: 900px;
+		border: none;
+		transform: scale(0.25);
+		transform-origin: top left;
+		pointer-events: none;
+	}
+
+	/* Overlay to capture clicks and prevent iframe interaction */
+	.template-embed-overlay {
+		position: absolute;
+		inset: 0;
+		background: transparent;
+		cursor: pointer;
+	}
+
+	/* Adjust container to match scaled iframe dimensions */
+	.template-thumbnail {
+		aspect-ratio: 16/10;
+		overflow: hidden;
+		background: var(--color-bg-subtle);
+		position: relative;
+	}
+
+	.template-info {
+		padding: var(--space-md);
+		flex: 1;
+	}
+
+	.template-name {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		margin: 0 0 var(--space-xs);
+	}
+
+	.template-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.template-meta {
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		background: linear-gradient(135deg, var(--color-bg-subtle), var(--color-bg-surface));
-	}
-
-	.template-placeholder-icon {
-		font-size: 3rem;
-		font-weight: 700;
-		color: var(--color-fg-subtle);
-	}
-
-	.template-cta {
+		justify-content: space-between;
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
 		font-size: var(--text-body-sm);
-		color: var(--color-accent);
+	}
+
+	.template-price {
+		display: flex;
+		gap: var(--space-xs);
+	}
+
+	.template-price .free {
+		color: var(--color-success);
 		font-weight: 500;
 	}
 
 	.template-price .pro {
 		color: var(--color-fg-muted);
+	}
+
+	.template-cta {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		font-weight: 500;
 	}
 
 	/* Features Section */
@@ -327,7 +426,7 @@
 		margin: 0 auto var(--space-md);
 		font-size: var(--text-h3);
 		font-weight: 700;
-		color: var(--color-accent);
+		color: var(--color-fg-primary);
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-full);
 	}
@@ -430,7 +529,7 @@
 		align-items: center;
 		gap: var(--space-xs);
 		background: #24292e;
-		color: white;
+		color: var(--color-fg-primary);
 		border: none;
 	}
 
@@ -445,7 +544,7 @@
 	}
 
 	.deploy-hint a {
-		color: var(--color-accent);
+		color: var(--color-fg-primary);
 	}
 
 	/* Agency Section */
@@ -467,8 +566,8 @@
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: var(--color-accent);
-		background: rgba(255, 255, 255, 0.05);
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-full);
 		margin-bottom: var(--space-md);
@@ -496,8 +595,8 @@
 
 	.agency-service {
 		display: flex;
-		gap: var(--space-sm);
-		padding: var(--space-md);
+		gap: var(--space-md);
+		padding: var(--space-lg);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
@@ -505,7 +604,7 @@
 
 	.agency-service svg {
 		flex-shrink: 0;
-		color: var(--color-accent);
+		color: var(--color-fg-primary);
 	}
 
 	.agency-service h4 {
@@ -521,13 +620,13 @@
 	}
 
 	.btn-accent {
-		background: var(--color-accent);
+		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 		border: none;
 	}
 
 	.btn-accent:hover {
-		background: var(--color-accent-hover, #5a8fd8);
+		background: var(--color-fg-secondary);
 	}
 
 	@media (max-width: 768px) {

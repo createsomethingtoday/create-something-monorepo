@@ -232,7 +232,7 @@
     justify-content: space-between;
     gap: var(--space-lg);
     background: var(--color-bg-elevated);
-    border-color: var(--color-accent);
+    border-color: var(--color-fg-primary);
   }
 
   .publish-info {
@@ -266,8 +266,8 @@
   .spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
+    border: 2px solid var(--color-border-emphasis);
+    border-top-color: var(--color-fg-primary);
     border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
   }
