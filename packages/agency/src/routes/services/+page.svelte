@@ -210,41 +210,57 @@
 
 	// Track which service is highlighted (from hash or assessment)
 	let highlightedService = $state<string | null>(null);
+	let focusedServiceId = $state<string | null>(null);
 
-	// Scroll to service on mount (from URL hash or assessment recommendation)
+	// Reorder services to put focused one first
+	let displayServices = $derived.by(() => {
+		const targetId = focusedServiceId || recommendedService;
+		if (!targetId) return services;
+
+		const targetIndex = services.findIndex(s => s.id === targetId);
+		if (targetIndex === -1) return services;
+
+		// Move target to front
+		const reordered = [...services];
+		const [target] = reordered.splice(targetIndex, 1);
+		return [target, ...reordered];
+	});
+
+	// Handle URL hash on mount - reorder services and scroll to section
 	onMount(() => {
-		// Check URL hash first, then fall back to assessment recommendation
-		const hash = window.location.hash.slice(1); // Remove the '#'
+		const hash = window.location.hash.slice(1);
 		const targetService = hash || recommendedService;
 
-		if (targetService) {
-			// Small delay to ensure DOM is ready
-			setTimeout(() => {
-				const element = document.getElementById(targetService);
-				if (element) {
-					element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-					highlightedService = targetService;
+		if (targetService && services.some(s => s.id === targetService)) {
+			focusedServiceId = targetService;
+			highlightedService = targetService;
 
-					// Clear highlight after animation completes
-					setTimeout(() => {
-						highlightedService = null;
-					}, 2000);
+			// Scroll to services section (not the card itself)
+			setTimeout(() => {
+				const section = document.querySelector('.services-section');
+				if (section) {
+					section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 				}
+				// Clear highlight after animation
+				setTimeout(() => {
+					highlightedService = null;
+				}, 2000);
 			}, 100);
 		}
 
-		// Listen for hash changes (e.g., user clicks another anchor link)
+		// Listen for hash changes
 		function handleHashChange() {
 			const newHash = window.location.hash.slice(1);
-			if (newHash) {
-				const element = document.getElementById(newHash);
-				if (element) {
-					element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-					highlightedService = newHash;
-					setTimeout(() => {
-						highlightedService = null;
-					}, 2000);
+			if (newHash && services.some(s => s.id === newHash)) {
+				focusedServiceId = newHash;
+				highlightedService = newHash;
+				const section = document.querySelector('.services-section');
+				if (section) {
+					section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 				}
+				setTimeout(() => {
+					highlightedService = null;
+				}, 2000);
 			}
 		}
 
@@ -297,7 +313,7 @@
 <section class="services-section">
 	<div class="max-w-5xl mx-auto px-6">
 		<div class="services-grid">
-			{#each services as service, index}
+			{#each displayServices as service, index}
 				{@const isRecommended = recommendedService === service.id}
 				{@const isHighlighted = highlightedService === service.id}
 				<div
