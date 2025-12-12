@@ -1,12 +1,38 @@
 <script lang="ts">
-	import { Footer } from '@create-something/components';
 	import SEO from '$lib/components/SEO.svelte';
+	import TextRevelation from '$lib/components/TextRevelation.svelte';
 
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Services', href: '/services' },
-		{ label: 'Work', href: '/work' },
-		{ label: 'About', href: '/about' }
+	const services = [
+		{
+			title: 'Agentic Systems',
+			description: 'AI that runs autonomously. Not chatbots—agents that process 500+ decisions while you sleep.',
+			href: '/services#agentic-systems'
+		},
+		{
+			title: 'Web Platforms',
+			description: 'Sub-100ms response times. Cloudflare edge. No frameworks, no bloat.',
+			href: '/services#web-development'
+		},
+		{
+			title: 'Workflow Automation',
+			description: 'Manual processes become autonomous. 60-70% time savings, measured.',
+			href: '/services#automation'
+		}
+	];
+
+	const principles = [
+		{
+			question: 'Have I built this before?',
+			answer: 'Unify'
+		},
+		{
+			question: 'Does this earn its existence?',
+			answer: 'Remove'
+		},
+		{
+			question: 'Does this serve the whole?',
+			answer: 'Reconnect'
+		}
 	];
 </script>
 
@@ -18,182 +44,226 @@
 	propertyName="agency"
 />
 
-<!-- Hero Section -->
-	<section class="relative pt-32 pb-24 px-6 overflow-hidden">
-		<div class="max-w-7xl mx-auto">
-			<div class="text-center max-w-4xl mx-auto">
-				<h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-					AI systems that run<br />your business autonomously
-				</h1>
-				<p class="text-xl md:text-2xl text-white/70 mb-8 max-w-3xl mx-auto">
-					Start with web development. Scale to automation workflows. Evolve into intelligent agents.
-					<br />Research from
-					<a href="https://createsomething.io" class="text-white hover:text-white/80 underline"
-						>createsomething.io</a
-					>, applied to your operations.
-				</p>
-				<div class="flex flex-col sm:flex-row gap-4 justify-center">
-					<a
-						href="/work"
-						class="group px-8 py-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-white/90 transition-all inline-flex items-center justify-center gap-2"
-					>
-						View Our Work
-						<svg
-							class="w-5 h-5 transition-transform group-hover:translate-x-1"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-						</svg>
-					</a>
-					<a
-						href="/contact"
-						class="px-8 py-4 bg-white/5 border border-white/20 text-white text-lg font-semibold rounded-full hover:bg-white/10 transition-all"
-					>
-						Start a Conversation
-					</a>
+<!-- Act 1: The Revelation -->
+<TextRevelation />
+
+<!-- Act 2: What We Do -->
+<section class="services-section">
+	<div class="services-grid">
+		{#each services as service}
+			<a href={service.href} class="service-card">
+				<h3 class="service-title">{service.title}</h3>
+				<p class="service-description">{service.description}</p>
+				<span class="service-arrow">→</span>
+			</a>
+		{/each}
+	</div>
+</section>
+
+<!-- Act 3: How We Think -->
+<section class="principles-section">
+	<h2 class="principles-heading">The Subtractive Triad</h2>
+	<p class="principles-subtext">Three questions. One discipline.</p>
+
+	<div class="principles-list">
+		{#each principles as principle, i}
+			<div class="principle">
+				<span class="principle-number">{i + 1}</span>
+				<div class="principle-content">
+					<p class="principle-question">{principle.question}</p>
+					<p class="principle-answer">{principle.answer}</p>
 				</div>
 			</div>
-		</div>
-	</section>
+		{/each}
+	</div>
+</section>
 
-	<!-- Value Props -->
-	<section class="py-24 px-6 border-t border-white/10">
-		<div class="max-w-7xl mx-auto">
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-				<div class="p-8 bg-white/[0.07] border border-white/10 rounded-lg">
-					<div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-6">
-						<svg
-							class="w-6 h-6 text-white"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M13 10V3L4 14h7v7l9-11h-7z"
-							/>
-						</svg>
-					</div>
-					<h3 class="text-2xl font-semibold text-white mb-4">Research-Backed</h3>
-					<p class="text-white/60 leading-relaxed">
-						Every methodology we apply is validated through tracked experiments. No guesswork—just
-						proven approaches with real metrics.
-					</p>
-				</div>
+<!-- Act 4: The Invitation -->
+<section class="cta-section">
+	<p class="cta-text">Ready to subtract?</p>
+	<a href="/contact" class="cta-button">
+		Start a conversation
+		<span class="cta-arrow">→</span>
+	</a>
+</section>
 
-				<div class="p-8 bg-white/[0.07] border border-white/10 rounded-lg">
-					<div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-6">
-						<svg
-							class="w-6 h-6 text-white"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<circle cx="12" cy="12" r="10" />
-							<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
-						</svg>
-					</div>
-					<h3 class="text-2xl font-semibold text-white mb-4">Results-Oriented</h3>
-					<p class="text-white/60 leading-relaxed">
-						We track time, costs, and errors on every project. Transparent metrics mean you know
-						exactly what you're getting.
-					</p>
-				</div>
+<style>
+	/* Services Section */
+	.services-section {
+		padding: var(--space-2xl) var(--space-xl);
+		border-top: 1px solid var(--color-border-default);
+	}
 
-				<div class="p-8 bg-white/[0.07] border border-white/10 rounded-lg">
-					<div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-6">
-						<svg
-							class="w-6 h-6 text-white"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-					</div>
-					<h3 class="text-2xl font-semibold text-white mb-4">Production-Ready</h3>
-					<p class="text-white/60 leading-relaxed">
-						Built on Cloudflare's edge infrastructure with Claude Code. Modern stack, proven
-						reliability, scalable from day one.
-					</p>
-				</div>
-			</div>
-		</div>
-	</section>
+	.services-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-lg);
+		max-width: 1200px;
+		margin: 0 auto;
+	}
 
-	<!-- Services Overview -->
-	<section class="py-24 px-6 border-t border-white/10">
-		<div class="max-w-7xl mx-auto">
-			<div class="text-center mb-16">
-				<h2 class="text-4xl md:text-5xl font-bold text-white mb-6">How We Work</h2>
-				<p class="text-xl text-white/60 max-w-3xl mx-auto">
-					Three ways to bring AI-native development to your organization
-				</p>
-			</div>
+	.service-card {
+		display: flex;
+		flex-direction: column;
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		transition: border-color var(--duration-standard) var(--ease-standard),
+					background var(--duration-standard) var(--ease-standard);
+	}
 
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-				{#each [ { title: 'Consulting', description: 'Strategic guidance for teams exploring AI-native development', features: ['Assessment & roadmap', 'Methodology training', 'Architecture review', 'Team enablement'], cta: 'Learn More', href: '/services#consulting' }, { title: 'Implementation', description: 'Full-stack development of AI-native systems', features: ['Production-ready builds', 'Claude Code + Cloudflare', 'Complete documentation', '30-day support'], cta: 'Learn More', href: '/services#implementation' }, { title: 'Training', description: 'Hands-on workshops for adopting AI-native workflows', features: ['Claude Code fundamentals', 'Tracked experiments', 'Best practices', 'Certification program'], cta: 'Learn More', href: '/services#training' } ] as service}
-					<div
-						class="p-8 bg-white/[0.07] border border-white/10 rounded-lg hover:border-white/30 transition-all"
-					>
-						<h3 class="text-2xl font-semibold text-white mb-3">{service.title}</h3>
-						<p class="text-white/60 mb-6">{service.description}</p>
-						<ul class="space-y-3 mb-8">
-							{#each service.features as feature}
-								<li class="flex items-start gap-3">
-									<svg
-										class="w-5 h-5 text-white/60 mt-0.5 flex-shrink-0"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-										stroke-width="2"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-										/>
-									</svg>
-									<span class="text-white/70">{feature}</span>
-								</li>
-							{/each}
-						</ul>
-						<a
-							href={service.href}
-							class="text-white hover:text-white/80 font-medium inline-flex items-center gap-2 group"
-						>
-							{service.cta}
-							<svg
-								class="w-4 h-4 transition-transform group-hover:translate-x-1"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-								stroke-width="2"
-							>
-								<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-							</svg>
-						</a>
-					</div>
-				{/each}
-			</div>
-		</div>
-	</section>
+	.service-card:hover {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-elevated);
+	}
 
-<Footer
-	mode="agency"
-	showNewsletter={false}
-	aboutText="Professional AI-native development services backed by research from createsomething.io"
-	quickLinks={quickLinks}
-	showSocial={true}
-/>
+	.service-title {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.service-description {
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
+		line-height: var(--leading-relaxed);
+		flex-grow: 1;
+	}
+
+	.service-arrow {
+		font-size: var(--text-h3);
+		color: var(--color-fg-muted);
+		margin-top: var(--space-md);
+		transition: transform var(--duration-micro) var(--ease-standard),
+					color var(--duration-micro) var(--ease-standard);
+	}
+
+	.service-card:hover .service-arrow {
+		transform: translateX(4px);
+		color: var(--color-fg-primary);
+	}
+
+	/* Principles Section */
+	.principles-section {
+		padding: var(--space-2xl) var(--space-xl);
+		text-align: center;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.principles-heading {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.principles-subtext {
+		font-size: var(--text-body);
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-xl);
+	}
+
+	.principles-list {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-2xl);
+		max-width: 900px;
+		margin: 0 auto;
+	}
+
+	.principle {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-md);
+		text-align: left;
+	}
+
+	.principle-number {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-muted);
+		line-height: 1;
+	}
+
+	.principle-content {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.principle-question {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		font-style: italic;
+	}
+
+	.principle-answer {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	/* CTA Section */
+	.cta-section {
+		padding: var(--space-2xl) var(--space-xl);
+		text-align: center;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.cta-text {
+		font-size: var(--text-h2);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-lg);
+	}
+
+	.cta-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5em;
+		padding: var(--space-sm) var(--space-lg);
+		font-size: var(--text-body);
+		font-weight: var(--font-medium);
+		color: var(--color-bg-pure);
+		background: var(--color-fg-primary);
+		border-radius: var(--radius-full);
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.cta-button:hover {
+		opacity: 0.9;
+	}
+
+	.cta-arrow {
+		transition: transform var(--duration-micro) var(--ease-standard);
+	}
+
+	.cta-button:hover .cta-arrow {
+		transform: translateX(4px);
+	}
+
+	/* Responsive */
+	@media (max-width: 768px) {
+		.services-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.principles-list {
+			flex-direction: column;
+			align-items: center;
+			gap: var(--space-lg);
+		}
+
+		.principle {
+			max-width: 280px;
+		}
+
+		.services-section,
+		.principles-section,
+		.cta-section {
+			padding: var(--space-xl) var(--space-lg);
+		}
+	}
+</style>
