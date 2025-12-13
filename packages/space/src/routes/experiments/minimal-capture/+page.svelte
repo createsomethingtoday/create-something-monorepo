@@ -20,12 +20,35 @@
 	/>
 </svelte:head>
 
+<!-- ASCII Art Hero -->
+<section class="relative pt-24 pb-8 px-6">
+	<div class="max-w-4xl mx-auto">
+		<div class="ascii-container overflow-hidden">
+			<div class="aspect-[21/9] flex items-center justify-center p-8">
+				<pre class="ascii-art leading-[1.3] font-mono select-none">{`
+    +-------------------------------------------------+
+    |   MINIMAL CAPTURE                               |
+    |                                                 |
+    |   [QR] ──► [Form] ──► [D1] ──► [Admin]          |
+    |                                                 |
+    |   Built for another,                            |
+    |   absorbed the canon.                           |
+    |                                                 |
+    |   The ethos propagates                          |
+    |   beyond the boundary.                          |
+    +-------------------------------------------------+
+`}</pre>
+			</div>
+		</div>
+	</div>
+</section>
+
 <!-- Hero -->
-<section class="relative pt-32 pb-12 px-6">
+<section class="relative pb-12 px-6">
 	<div class="max-w-4xl mx-auto text-center space-y-4">
-		<h1 class="text-4xl md:text-5xl font-bold text-white">Minimal Capture</h1>
-		<p class="text-lg text-white/60 italic">The Canon's Reach</p>
-		<p class="text-white/40 max-w-2xl mx-auto">
+		<h1 class="hero-title">Minimal Capture</h1>
+		<p class="hero-subtitle italic">The Canon's Reach</p>
+		<p class="hero-description max-w-2xl mx-auto">
 			An experiment in propagation: what happens when tools built for others—outside the
 			practice—unconsciously absorb the design canon?
 		</p>
@@ -36,33 +59,33 @@
 <section class="px-6 pb-12">
 	<div class="max-w-4xl mx-auto space-y-12">
 		<!-- Hypothesis -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+		<div class="content-card p-6 space-y-4">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">The Hypothesis</h2>
-				<span class="text-sm text-white/40">HERMENEUTICS</span>
+				<h2 class="section-title">The Hypothesis</h2>
+				<span class="label-text">HERMENEUTICS</span>
 			</div>
-			<p class="text-white/70 leading-relaxed">
+			<p class="body-text leading-relaxed">
 				If "weniger, aber besser" is truly internalized—not as aesthetic preference but as
 				<em>way of seeing</em>—then it will propagate even to projects outside the creative practice.
 				Tools built as gifts for others will still embody the canon.
 			</p>
-			<p class="text-white/50 text-sm">
+			<p class="caption-text">
 				This tests whether the hermeneutic circle is self-sustaining: does understanding the whole
 				(CREATE SOMETHING ethos) change how we approach every part (any project)?
 			</p>
 		</div>
 
 		<!-- The Artifact -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+		<div class="content-card p-6 space-y-6">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">The Artifact</h2>
-				<span class="text-sm text-white/40">ZUHANDENHEIT</span>
+				<h2 class="section-title">The Artifact</h2>
+				<span class="label-text">ZUHANDENHEIT</span>
 			</div>
 
 			<div class="grid md:grid-cols-2 gap-6">
 				<div class="space-y-3">
-					<h3 class="text-white/70 font-medium">What Was Built</h3>
-					<p class="text-white/50 text-sm">
+					<h3 class="body-text font-medium">What Was Built</h3>
+					<p class="caption-text">
 						A QR-based contact capture system. Scan → Fill → Store → Retrieve. Built for someone
 						outside the practice who needed to collect contact information at events.
 					</p>
@@ -71,7 +94,7 @@
 							href={liveUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							class="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-white/90 transition-colors"
+							class="cta-button inline-flex items-center gap-2 px-4 py-2"
 						>
 							View Live Form
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,67 +110,67 @@
 				</div>
 
 				<div class="space-y-3">
-					<h3 class="text-white/70 font-medium">The Flow</h3>
-					<div class="font-mono text-sm text-white/60 space-y-1">
-						<p class="text-green-400">1. QR Code → Public Form</p>
-						<p class="text-white/40 pl-4">Light theme, minimal fields</p>
-						<p class="text-green-400">2. Form → D1 Database</p>
-						<p class="text-white/40 pl-4">Name, email, phone (optional)</p>
-						<p class="text-green-400">3. Admin → Dark Dashboard</p>
-						<p class="text-white/40 pl-4">Search, copy, call, email, delete</p>
+					<h3 class="body-text font-medium">The Flow</h3>
+					<div class="code-text space-y-1">
+						<p class="code-line-label">1. QR Code → Public Form</p>
+						<p class="code-line-comment pl-4">Light theme, minimal fields</p>
+						<p class="code-line-label">2. Form → D1 Database</p>
+						<p class="code-line-comment pl-4">Name, email, phone (optional)</p>
+						<p class="code-line-label">3. Admin → Dark Dashboard</p>
+						<p class="code-line-comment pl-4">Search, copy, call, email, delete</p>
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Evidence of Propagation -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+		<div class="content-card p-6 space-y-6">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">Evidence of Propagation</h2>
-				<span class="text-sm text-white/40">ALETHEIA</span>
+				<h2 class="section-title">Evidence of Propagation</h2>
+				<span class="label-text">ALETHEIA</span>
 			</div>
 
-			<p class="text-white/50 text-sm">
+			<p class="caption-text">
 				Without being asked, the project absorbed these CREATE SOMETHING principles:
 			</p>
 
 			<div class="grid md:grid-cols-2 gap-4">
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">Typography</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title">Typography</h3>
+					<p class="caption-text">
 						Stack Sans Notch + JetBrains Mono. The same fonts from .ltd and .space appeared without
 						explicit request.
 					</p>
 				</div>
 
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">Color System</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title">Color System</h3>
+					<p class="caption-text">
 						Achromatic palette. Dark admin, light public. No decorative color—only functional
 						states (success green, error red).
 					</p>
 				</div>
 
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">Spacing</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title">Spacing</h3>
+					<p class="caption-text">
 						Golden ratio tokens (1.618rem, 2.618rem). The same mathematical foundation as the canon.
 					</p>
 				</div>
 
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">Interaction</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title">Interaction</h3>
+					<p class="caption-text">
 						Tap to action (mailto:, tel:). No intermediate confirmation. Trust the user's intent.
 					</p>
 				</div>
 			</div>
 
-			<div class="p-4 border border-white/20 rounded-lg">
-				<p class="text-white/70 text-sm italic">
+			<div class="border-card p-4">
+				<p class="quote-text">
 					"The tool recedes. The task emerges."
 				</p>
-				<p class="text-white/40 text-xs mt-2">
+				<p class="note-text mt-2">
 					This is Zuhandenheit—ready-to-hand. The interface disappears into use. The same principle
 					we apply to .io tools appeared here unbidden.
 				</p>
@@ -155,25 +178,25 @@
 		</div>
 
 		<!-- Hermeneutic Analysis -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+		<div class="content-card p-6 space-y-6">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">Hermeneutic Analysis</h2>
-				<span class="text-sm text-white/40">INTERPRETATION</span>
+				<h2 class="section-title">Hermeneutic Analysis</h2>
+				<span class="label-text">INTERPRETATION</span>
 			</div>
 
 			<div class="space-y-4 text-white/70 text-sm leading-relaxed">
 				<p>
-					<strong class="text-white">Vorhabe (fore-having):</strong> We approached this as external—"my
+					<strong class="emphasis-text">Vorhabe (fore-having):</strong> We approached this as external—"my
 					brother's need"—and placed it outside the monorepo. It was Vorhandenheit: present-at-hand,
 					a tool for someone else.
 				</p>
 				<p>
-					<strong class="text-white">Vorsicht (fore-sight):</strong> But the project absorbed the
+					<strong class="emphasis-text">Vorsicht (fore-sight):</strong> But the project absorbed the
 					canon without being asked. The fonts appeared. The spacing appeared. The achromatic palette
 					appeared. The interaction patterns appeared.
 				</p>
 				<p>
-					<strong class="text-white">Vorgriff (fore-conception):</strong> The meaning shifted. This
+					<strong class="emphasis-text">Vorgriff (fore-conception):</strong> The meaning shifted. This
 					isn't "a contact form"—it's proof that the ethos propagates. The hermeneutic circle is
 					self-sustaining.
 				</p>
@@ -190,24 +213,24 @@
 		</div>
 
 		<!-- Technical Stack -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+		<div class="content-card p-6 space-y-4">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">Technical Stack</h2>
-				<span class="text-sm text-white/40">SEIN</span>
+				<h2 class="section-title">Technical Stack</h2>
+				<span class="label-text">SEIN</span>
 			</div>
 
 			<div class="grid md:grid-cols-3 gap-4 text-sm">
-				<div class="p-3 bg-black/30 rounded-lg">
-					<div class="text-white/50">Framework</div>
-					<div class="text-white font-medium">SvelteKit + Svelte 5</div>
+				<div class="metric-card p-3">
+					<div class="label-text">Framework</div>
+					<div class="insight-title">SvelteKit + Svelte 5</div>
 				</div>
-				<div class="p-3 bg-black/30 rounded-lg">
-					<div class="text-white/50">Deployment</div>
-					<div class="text-white font-medium">Cloudflare Pages</div>
+				<div class="metric-card p-3">
+					<div class="label-text">Deployment</div>
+					<div class="insight-title">Cloudflare Pages</div>
 				</div>
-				<div class="p-3 bg-black/30 rounded-lg">
-					<div class="text-white/50">Database</div>
-					<div class="text-white font-medium">Cloudflare D1</div>
+				<div class="metric-card p-3">
+					<div class="label-text">Database</div>
+					<div class="insight-title">Cloudflare D1</div>
 				</div>
 			</div>
 
@@ -217,14 +240,14 @@
 		</div>
 
 		<!-- Conclusion -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
-			<h2 class="text-xl font-bold text-white">Conclusion</h2>
-			<p class="text-white/70 leading-relaxed">
+		<div class="content-card p-6 space-y-4">
+			<h2 class="section-title">Conclusion</h2>
+			<p class="body-text leading-relaxed">
 				The hypothesis is confirmed. "Weniger, aber besser" is not a style to be applied—it's a lens
 				through which all projects are seen. The canon propagates because it has become the default
 				mode of creation.
 			</p>
-			<p class="text-white/50 text-sm">
+			<p class="caption-text">
 				This experiment suggests that the hermeneutic circle of CREATE SOMETHING extends beyond its
 				formal boundaries. Every tool built with care carries the ethos forward.
 			</p>
@@ -236,16 +259,147 @@
 				href={liveUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors"
+				class="cta-button px-6 py-3"
 			>
 				Try the Form
 			</a>
 			<a
 				href="/experiments"
-				class="px-6 py-3 border border-white/20 text-white font-medium rounded-lg hover:bg-white/10 transition-colors"
+				class="secondary-button px-6 py-3"
 			>
 				All Experiments
 			</a>
 		</div>
 	</div>
 </section>
+
+<style>
+  .ascii-container {
+    background: var(--color-bg-pure);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .ascii-art {
+    color: var(--color-fg-secondary);
+    font-size: clamp(0.7rem, 2vw, 1rem);
+  }
+
+  .hero-title {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+  }
+
+  .hero-description {
+    color: var(--color-fg-muted);
+  }
+
+  .content-card {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+  }
+
+  .section-title {
+    font-size: var(--text-h3);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .label-text {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .body-text {
+    color: var(--color-fg-tertiary);
+  }
+
+  .caption-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .emphasis-text {
+    color: var(--color-fg-primary);
+  }
+
+  .insight-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+  }
+
+  .insight-title {
+    color: var(--color-fg-primary);
+    font-weight: 500;
+  }
+
+  .insight-description {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .cta-button {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: opacity var(--duration-micro) var(--ease-standard);
+  }
+
+  .cta-button:hover {
+    opacity: 0.9;
+  }
+
+  .secondary-button {
+    border: 1px solid var(--color-border-emphasis);
+    color: var(--color-fg-primary);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: background var(--duration-micro) var(--ease-standard);
+  }
+
+  .secondary-button:hover {
+    background: var(--color-active);
+  }
+
+  .metric-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+  }
+
+  .code-text {
+    font-family: monospace;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .code-line-label {
+    color: rgb(34, 197, 94);
+  }
+
+  .code-line-comment {
+    color: var(--color-fg-muted);
+  }
+
+  .border-card {
+    border: 1px solid var(--color-border-emphasis);
+    border-radius: var(--radius-md);
+  }
+
+  .quote-text {
+    color: var(--color-fg-tertiary);
+    font-style: italic;
+  }
+
+  .note-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+  }
+</style>

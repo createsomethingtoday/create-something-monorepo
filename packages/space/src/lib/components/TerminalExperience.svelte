@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import { fade, fly, scale } from 'svelte/transition';
-	import gsap from 'gsap';
 	import Terminal3DBackground from './Terminal3DBackground.svelte';
 
 	interface TerminalLine {
@@ -79,40 +77,18 @@
 	let terminalRef: HTMLDivElement;
 	let headerRef: HTMLDivElement;
 
-	// Custom cursor tracking
+	// Custom cursor tracking - CSS transition handles smoothing
 	onMount(() => {
 		const handleMouse = (e: MouseEvent) => {
 			cursorX = e.clientX - 16;
 			cursorY = e.clientY - 16;
+			// Direct assignment - CSS transition handles smoothing
+			smoothCursorX = cursorX;
+			smoothCursorY = cursorY;
 		};
 
 		window.addEventListener('mousemove', handleMouse);
-
-		// Animate cursor smoothly using GSAP
-		gsap.to({ x: cursorX, y: cursorY }, {
-			duration: 0.3,
-			ease: 'power2.out',
-			onUpdate: function () {
-				smoothCursorX = this.targets()[0].x;
-				smoothCursorY = this.targets()[0].y;
-			}
-		});
-
 		return () => window.removeEventListener('mousemove', handleMouse);
-	});
-
-	// Cursor smooth animation
-	$effect(() => {
-		gsap.to({ x: smoothCursorX, y: smoothCursorY }, {
-			x: cursorX,
-			y: cursorY,
-			duration: 0.3,
-			ease: 'power2.out',
-			onUpdate: function () {
-				smoothCursorX = this.targets()[0].x;
-				smoothCursorY = this.targets()[0].y;
-			}
-		});
 	});
 
 	// Loading spinner animation
@@ -123,17 +99,7 @@
 		return () => clearInterval(interval);
 	});
 
-	// GSAP header animation
-	onMount(() => {
-		if (headerRef) {
-			gsap.to(headerRef, {
-				backgroundPosition: '200% center',
-				duration: 20,
-				ease: 'none',
-				repeat: -1
-			});
-		}
-	});
+	// Header animation handled by CSS keyframes
 
 	// Welcome sequence
 	onMount(() => {
@@ -176,14 +142,13 @@
 		}
 	});
 
-	// Auto-scroll to bottom with smooth animation
+	// Auto-scroll to bottom with smooth native scrolling
 	$effect(() => {
 		if (terminalRef && lines.length > 0) {
 			tick().then(() => {
-				gsap.to(terminalRef, {
-					scrollTop: terminalRef.scrollHeight,
-					duration: 0.5,
-					ease: 'power2.out'
+				terminalRef.scrollTo({
+					top: terminalRef.scrollHeight,
+					behavior: 'smooth'
 				});
 			});
 		}
@@ -306,14 +271,11 @@
 				return;
 
 			case 'matrix':
-				document.body.classList.add('matrix-mode');
-				addOutput('🎬 Matrix mode activated', 'success');
-				triggerMatrixRain();
+				addOutput('Matrix mode removed — decorative effects don\'t earn their existence.', 'info');
 				return;
 
 			case 'glitch':
-				triggerGlitchEffect();
-				addOutput('⚡ Glitch sequence initiated', 'system');
+				addOutput('Glitch effect removed — decorative effects don\'t earn their existence.', 'info');
 				return;
 
 			case '3d':
@@ -485,23 +447,7 @@
 		lines = [...lines, ...newLines];
 	}
 
-	function triggerMatrixRain() {
-		gsap.to('.matrix-rain', {
-			opacity: 1,
-			duration: 2,
-			ease: 'power2.inOut'
-		});
-	}
-
-	function triggerGlitchEffect() {
-		const timeline = gsap.timeline();
-		timeline
-			.to('body', { filter: 'hue-rotate(90deg)', duration: 0.1 })
-			.to('body', { filter: 'hue-rotate(-90deg)', duration: 0.1 })
-			.to('body', { filter: 'hue-rotate(0deg)', duration: 0.1 })
-			.to('.terminal-content', { x: () => Math.random() * 10 - 5, duration: 0.1 })
-			.to('.terminal-content', { x: 0, duration: 0.1 });
-	}
+	// Matrix and glitch effects removed - decorative, not functional
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
@@ -611,12 +557,12 @@
 
 <!-- Custom Cursor -->
 <div
-	class="fixed pointer-events-none z-[9999] mix-blend-difference"
+	class="custom-cursor fixed pointer-events-none z-[9999] mix-blend-difference transition-transform duration-100 ease-out"
 	style="transform: translate({smoothCursorX}px, {smoothCursorY}px);"
 >
 	<div class="relative">
-		<div class="w-8 h-8 bg-white rounded-full opacity-50"></div>
-		<div class="absolute inset-2 bg-white rounded-full animate-pulse"></div>
+		<div class="cursor-outer w-8 h-8"></div>
+		<div class="cursor-inner absolute inset-2 animate-pulse"></div>
 	</div>
 </div>
 
@@ -630,25 +576,24 @@
 
 <Terminal3DBackground />
 
-<div class="min-h-screen flex flex-col relative z-10" in:scale={{ duration: 500, start: 0.95 }}>
+<div class="min-h-screen flex flex-col relative z-10 animate-scale-in">
 	<!-- Animated Header -->
 	<div
 		bind:this={headerRef}
-		class="bg-gradient-to-r from-black/80 via-purple-900/20 to-black/80 border-b border-white/20 backdrop-blur-xl"
-		in:fly={{ y: -100, duration: 500 }}
+		class="terminal-header-gradient backdrop-blur-xl animate-slide-down-header"
 	>
 		<div class="flex items-center justify-between px-6 py-4">
 			<div class="flex items-center space-x-3">
-				<div class="w-2 h-2 bg-white/20 rounded-full"></div>
-				<div class="w-2 h-2 bg-white/20 rounded-full"></div>
-				<div class="w-2 h-2 bg-white/20 rounded-full"></div>
+				<div class="header-dot w-2 h-2"></div>
+				<div class="header-dot w-2 h-2"></div>
+				<div class="header-dot w-2 h-2"></div>
 			</div>
 
-			<div class="text-white font-mono text-sm tracking-wider">
+			<div class="header-title font-mono tracking-wider">
 				CREATE SOMETHING TERMINAL — {currentPath}
 			</div>
 
-			<div class="text-white/50 font-mono text-xs opacity-50">
+			<div class="header-stats font-mono opacity-50">
 				EDGE: {Math.floor(Math.random() * 300) + 1} | {Math.floor(Math.random() * 30) + 10}ms
 			</div>
 		</div>
@@ -657,33 +602,33 @@
 	<!-- Terminal Content -->
 	<div
 		bind:this={terminalRef}
-		class="terminal-content flex-1 overflow-y-auto p-6 font-mono text-sm lg:text-base"
+		class="terminal-content flex-1 overflow-y-auto p-6 font-mono"
 		onclick={() => inputRef?.focus()}
 	>
 		<div class="max-w-6xl mx-auto space-y-1">
 			{#each lines as line, index (line.id)}
 				<div
-					class="font-mono whitespace-pre-wrap hover:bg-white/5 px-2 py-0.5 rounded transition-all {line.type === 'input'
-						? 'text-white'
+					class="terminal-line font-mono whitespace-pre-wrap px-2 py-0.5 transition-all animate-slide-in-line {line.type === 'input'
+						? 'line-input'
 						: line.type === 'output'
-							? 'text-white'
+							? 'line-output'
 							: line.type === 'error'
-								? 'text-red-500'
+								? 'line-error'
 								: line.type === 'info'
-									? 'text-white'
+									? 'line-info'
 									: line.type === 'system'
-										? 'text-white/80'
+										? 'line-system'
 										: line.type === 'success'
-											? 'text-white/90'
+											? 'line-success'
 											: line.type === 'ascii'
-												? 'text-white text-xs'
-												: 'text-white'}"
-					in:fly={{ x: -50, duration: 500, delay: index * 20 }}
+												? 'line-ascii'
+												: 'line-default'}"
+					style="--line-index: {index}"
 				>
 					{#if line.content === 'LOADING_SPINNER'}
-						<div class="text-white font-mono flex items-center gap-2" in:fade>
-							<span class="text-2xl animate-spin">{SPINNER_FRAMES[spinnerFrame]}</span>
-							<span class="text-white">Generating ASCII art for papers...</span>
+						<div class="spinner-container font-mono flex items-center gap-2 animate-fade-in">
+							<span class="spinner-icon animate-spin">{SPINNER_FRAMES[spinnerFrame]}</span>
+							<span class="spinner-text">Generating ASCII art for papers...</span>
 						</div>
 					{:else if line.type === 'ascii'}
 						<pre class="leading-tight">{line.content}</pre>
@@ -713,23 +658,18 @@
 
 						<div
 							data-card-id={paper.id}
-							class="font-mono text-xs cursor-pointer my-4 select-none transition-all"
+							class="paper-card font-mono cursor-pointer my-4 select-none transition-all animate-card-in"
 							style="color: {isSelected || isHovered
 								? categoryColor.color
 								: '#FFFFFF'}; text-shadow: {isSelected || isHovered
 								? `0 0 10px ${categoryColor.glow}`
-								: '0 0 5px rgba(255, 255, 255, 0.3)'};"
+								: '0 0 5px rgba(255, 255, 255, 0.3)'}; --card-index: {index}; --card-direction: {index % 2 === 0 ? -1 : 1}"
 							onmouseenter={() => (hoveredCardId = paper.id)}
 							onmouseleave={() => (hoveredCardId = null)}
 							onclick={() => {
 								processCommand(`read ${paper.id}`);
 								isCardNavigationMode = false;
 								papers = [];
-							}}
-							in:fly={{
-								y: index % 2 === 0 ? -30 : 30,
-								duration: 600,
-								delay: index * 100
 							}}
 						>
 							<pre class="leading-tight">{borderChars.tl}{borderChars.h.repeat(
@@ -744,8 +684,7 @@
 {borderChars.bl}{borderChars.h.repeat(width)}{borderChars.br}</pre>
 							{#if isSelected}
 								<div
-									class="text-white text-center mt-1 animate-pulse"
-									in:fade
+									class="card-selected-indicator text-center mt-1 animate-pulse animate-fade-in"
 								>
 									▲ SELECTED ▲
 								</div>
@@ -757,9 +696,9 @@
 
 			<!-- Demo Mode Indicator -->
 			{#if demoMode}
-				<div class="text-center py-4 animate-pulse" in:fade>
-					<div class="text-white text-lg font-mono">⚡ DEMO MODE ACTIVE ⚡</div>
-					<div class="text-white text-sm mt-2">
+				<div class="demo-indicator text-center py-4 animate-pulse animate-fade-in">
+					<div class="demo-title font-mono">⚡ DEMO MODE ACTIVE ⚡</div>
+					<div class="demo-subtitle mt-2">
 						Auto-cycling every 3 seconds • Press ESC to exit
 					</div>
 				</div>
@@ -768,17 +707,16 @@
 			<!-- Input Line -->
 			<form
 				onsubmit={handleSubmit}
-				class="flex items-center mt-4"
-				in:fade={{ delay: 500 }}
+				class="flex items-center mt-4 animate-fade-in-delayed"
 			>
-				<span class="text-white mr-2"> user@createsomething:{currentPath}$ </span>
+				<span class="terminal-prompt mr-2"> user@createsomething:{currentPath}$ </span>
 				<input
 					bind:this={inputRef}
 					type="text"
 					bind:value={currentInput}
 					onkeydown={handleKeyDown}
 					disabled={isProcessing || isCardNavigationMode}
-					class="flex-1 bg-transparent outline-none text-white placeholder-white/30"
+					class="terminal-input flex-1 outline-none"
 					placeholder={isProcessing
 						? 'Processing...'
 						: isCardNavigationMode
@@ -789,7 +727,7 @@
 					autocapitalize="off"
 					spellcheck={false}
 				/>
-				<span class="text-white {isProcessing ? 'opacity-50' : ''} animate-pulse">
+				<span class="terminal-cursor {isProcessing ? 'opacity-50' : ''} animate-pulse">
 					{isProcessing ? '◊' : '█'}
 				</span>
 			</form>
@@ -798,16 +736,251 @@
 
 	<!-- Animated Footer -->
 	<div
-		class="bg-black/80 border-t border-white/20 backdrop-blur-xl"
-		in:fly={{ y: 100, duration: 500 }}
+		class="terminal-footer backdrop-blur-xl animate-slide-up-footer"
 	>
-		<div class="px-6 py-3 flex items-center justify-between text-xs font-mono">
-			<div class="text-white/50">
+		<div class="px-6 py-3 flex items-center justify-between font-mono">
+			<div class="footer-status">
 				READY • {commandHistory.length} commands • Session Active
 			</div>
-			<div class="text-white/50">
+			<div class="footer-credits">
 				Powered by SvelteKit • Cloudflare Workers • Three.js
 			</div>
 		</div>
 	</div>
 </div>
+
+<style>
+	.custom-cursor .cursor-outer {
+		background: var(--color-fg-primary);
+		border-radius: var(--radius-full);
+		opacity: 0.5;
+	}
+
+	.custom-cursor .cursor-inner {
+		background: var(--color-fg-primary);
+		border-radius: var(--radius-full);
+	}
+
+	.terminal-header-gradient {
+		background: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(88, 28, 135, 0.2), rgba(0, 0, 0, 0.8));
+		background-size: 200% 100%;
+		border-bottom: 1px solid var(--color-border-emphasis);
+		animation: header-gradient 20s linear infinite;
+	}
+
+	@keyframes header-gradient {
+		from { background-position: 0% center; }
+		to { background-position: 200% center; }
+	}
+
+	.header-dot {
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-full);
+	}
+
+	.header-title {
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+	}
+
+	.header-stats {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+	}
+
+	.terminal-content {
+		font-size: var(--text-body-sm);
+	}
+
+	@media (min-width: 1024px) {
+		.terminal-content {
+			font-size: var(--text-body);
+		}
+	}
+
+	.terminal-line {
+		border-radius: var(--radius-sm);
+	}
+
+	.terminal-line:hover {
+		background: var(--color-hover);
+	}
+
+	.line-input,
+	.line-output,
+	.line-info,
+	.line-default {
+		color: var(--color-fg-primary);
+	}
+
+	.line-error {
+		color: #ef4444; /* red-500 equivalent for errors */
+	}
+
+	.line-system {
+		color: var(--color-fg-secondary);
+	}
+
+	.line-success {
+		color: var(--color-fg-primary);
+		opacity: 0.9;
+	}
+
+	.line-ascii {
+		color: var(--color-fg-primary);
+		font-size: var(--text-caption);
+	}
+
+	.spinner-container .spinner-icon {
+		color: var(--color-fg-primary);
+		font-size: 1.5rem;
+	}
+
+	.spinner-container .spinner-text {
+		color: var(--color-fg-primary);
+	}
+
+	.paper-card {
+		font-size: var(--text-caption);
+	}
+
+	.card-selected-indicator {
+		color: var(--color-fg-primary);
+	}
+
+	.demo-indicator .demo-title {
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-lg);
+	}
+
+	.demo-indicator .demo-subtitle {
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+	}
+
+	.terminal-prompt {
+		color: var(--color-fg-primary);
+	}
+
+	.terminal-input {
+		background: transparent;
+		color: var(--color-fg-primary);
+	}
+
+	.terminal-input::placeholder {
+		color: var(--color-fg-subtle);
+	}
+
+	.terminal-cursor {
+		color: var(--color-fg-primary);
+	}
+
+	.terminal-footer {
+		background: rgba(0, 0, 0, 0.8);
+		border-top: 1px solid var(--color-border-emphasis);
+	}
+
+	.footer-status,
+	.footer-credits {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+	}
+
+	/* Animation classes */
+	.animate-scale-in {
+		opacity: 0;
+		transform: scale(0.95);
+		animation: scale-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	.animate-slide-down-header {
+		opacity: 0;
+		transform: translateY(-100px);
+		animation: slide-down-header 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	.animate-slide-up-footer {
+		opacity: 0;
+		transform: translateY(100px);
+		animation: slide-up-footer 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	.animate-slide-in-line {
+		opacity: 0;
+		transform: translateX(-50px);
+		animation: slide-in-line 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--line-index, 0) * 20ms);
+	}
+
+	.animate-fade-in {
+		opacity: 0;
+		animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	.animate-fade-in-delayed {
+		opacity: 0;
+		animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+	}
+
+	.animate-card-in {
+		opacity: 0;
+		transform: translateY(calc(var(--card-direction, 1) * 30px));
+		animation: card-in 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--card-index, 0) * 100ms);
+	}
+
+	@keyframes scale-in {
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes slide-down-header {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes slide-up-footer {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes slide-in-line {
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@keyframes fade-in {
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes card-in {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-scale-in,
+		.animate-slide-down-header,
+		.animate-slide-up-footer,
+		.animate-slide-in-line,
+		.animate-fade-in,
+		.animate-fade-in-delayed,
+		.animate-card-in {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

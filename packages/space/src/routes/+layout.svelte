@@ -1,15 +1,29 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Footer, Analytics } from '@create-something/components';
+	import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, onNavigate } from '$app/navigation';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	// View Transitions API - Hermeneutic Navigation
+	// .space: Experimental (300ms)
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 
 	const navLinks = [
-		{ label: 'Home', href: '/' },
 		{ label: 'Experiments', href: '/experiments' },
+		{ label: 'Praxis', href: '/praxis' },
 		{ label: 'Methodology', href: '/methodology' },
 		{ label: 'About', href: '/about' }
 	];
@@ -24,8 +38,18 @@
 		}
 	}
 
-	// Scroll to hash on mount (for direct links)
+	// Scroll to hash on mount (for direct links) + cross-property entry
 	onMount(() => {
+		// Cross-property entry animation
+		const transitionFrom = sessionStorage.getItem('cs-transition-from');
+		if (transitionFrom) {
+			sessionStorage.removeItem('cs-transition-from');
+			sessionStorage.removeItem('cs-transition-to');
+			sessionStorage.removeItem('cs-transition-time');
+			document.body.classList.add('transitioning-in');
+			setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+		}
+
 		if (window.location.hash) {
 			setTimeout(() => scrollToHash(window.location.hash), 100);
 		}
@@ -141,7 +165,7 @@
 
 <Analytics property="space" />
 
-<div class="min-h-screen bg-black">
+<div class="layout">
 	<Navigation
 		logo="CREATE SOMETHING"
 		logoSuffix=".space"
@@ -152,13 +176,14 @@
 		ctaHref="/contact"
 	/>
 
-	<div class="pt-[72px]">
+	<div class="content">
 		{@render children()}
 	</div>
 
 	<Footer
 		mode="space"
 		showNewsletter={true}
+		turnstileSiteKey={data.turnstileSiteKey}
 		newsletterTitle="Join the experimental layer"
 		newsletterDescription="Get notified when new experiments are added. Fork, break, learn in public."
 		aboutText="Community playground for AI-native development experiments. Every experiment feeds back into the research at createsomething.io."
@@ -170,4 +195,17 @@
 		]}
 		showSocial={true}
 	/>
+
+	<ModeIndicator current="space" />
 </div>
+
+<style>
+	.layout {
+		min-height: 100vh;
+		background: var(--color-bg-pure);
+	}
+
+	.content {
+		padding-top: 72px;
+	}
+</style>

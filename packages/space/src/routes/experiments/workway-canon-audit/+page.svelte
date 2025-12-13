@@ -22,9 +22,9 @@
 <!-- ASCII Art Hero -->
 <section class="relative pt-24 pb-8 px-6">
 	<div class="max-w-4xl mx-auto">
-		<div class="bg-black border border-white/10 rounded-lg overflow-hidden">
+		<div class="ascii-container overflow-hidden">
 			<div class="aspect-[21/9] flex items-center justify-center p-8">
-				<pre class="text-white/80 text-[0.6rem] sm:text-[0.75rem] md:text-sm leading-[1.3] font-mono select-none">{`
+				<pre class="ascii-art leading-[1.3] font-mono select-none">{`
     +-------------------------------------------------+
     |   WORKWAY SDK CANON AUDIT                       |
     |                                                 |
@@ -52,9 +52,9 @@
 <!-- Hero -->
 <section class="relative pb-12 px-6">
 	<div class="max-w-4xl mx-auto text-center space-y-4">
-		<h1 class="text-4xl md:text-5xl font-bold text-white">WORKWAY SDK</h1>
-		<p class="text-lg text-white/60 italic">The Hermeneutic Circle in Practice</p>
-		<p class="text-white/40 max-w-2xl mx-auto">
+		<h1 class="hero-title">WORKWAY SDK</h1>
+		<p class="hero-subtitle italic">The Hermeneutic Circle in Practice</p>
+		<p class="hero-description max-w-2xl mx-auto">
 			Applying Dieter Rams' 10 Principles to integration SDK development. The canon doesn't exist
 			in isolation—it's validated through practice.
 		</p>
@@ -64,19 +64,19 @@
 <!-- Score Summary -->
 <section class="px-6 pb-12">
 	<div class="max-w-4xl mx-auto">
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6">
+		<div class="metric-card p-6">
 			<div class="grid md:grid-cols-3 gap-6 text-center">
 				<div>
-					<div class="text-3xl font-bold text-white/40">41/50</div>
-					<div class="text-sm text-white/50">Initial Score</div>
+					<div class="metric-value-old">41/50</div>
+					<div class="metric-label">Initial Score</div>
 				</div>
 				<div>
-					<div class="text-3xl font-bold text-green-400">48/50</div>
-					<div class="text-sm text-white/50">Final Score</div>
+					<div class="metric-value-success">48/50</div>
+					<div class="metric-label">Final Score</div>
 				</div>
 				<div>
-					<div class="text-3xl font-bold text-white">+7</div>
-					<div class="text-sm text-white/50">Improvement</div>
+					<div class="metric-value">+7</div>
+					<div class="metric-label">Improvement</div>
 				</div>
 			</div>
 		</div>
@@ -87,17 +87,17 @@
 <section class="px-6 pb-12">
 	<div class="max-w-4xl mx-auto space-y-12">
 		<!-- The Hermeneutic Insight -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+		<div class="content-card p-6 space-y-4">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">The Hermeneutic Insight</h2>
-				<span class="text-sm text-white/40">ALETHEIA</span>
+				<h2 class="section-title">The Hermeneutic Insight</h2>
+				<span class="label-text">ALETHEIA</span>
 			</div>
-			<p class="text-white/70 leading-relaxed">
-				The README represented <strong class="text-white">pre-understanding</strong>—how we thought
+			<p class="body-text leading-relaxed">
+				The README represented <strong class="emphasis-text">pre-understanding</strong>—how we thought
 				the SDK worked. But through building concrete integrations (Gmail, Slack, Stripe, Notion,
 				GoogleSheets), a different understanding emerged.
 			</p>
-			<p class="text-white/50 text-sm">
+			<p class="caption-text">
 				This is the hermeneutic circle: the whole (SDK architecture) is understood through the
 				parts (individual integrations), and the parts are understood through the whole. Each
 				iteration deepens understanding.
@@ -105,41 +105,41 @@
 		</div>
 
 		<!-- What Emerged -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+		<div class="content-card p-6 space-y-6">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">What Emerged Through Praxis</h2>
-				<span class="text-sm text-white/40">EMERGENT UNDERSTANDING</span>
+				<h2 class="section-title">What Emerged Through Praxis</h2>
+				<span class="label-text">EMERGENT UNDERSTANDING</span>
 			</div>
 
 			<div class="space-y-4">
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">ActionResult.error Structure</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title font-medium">ActionResult.error Structure</h3>
+					<p class="caption-text">
 						The README didn't capture that <code class="text-white/70">result.error</code> is an
 						object <code class="text-white/70">{`{ message, code }`}</code>, not a string. Tests
 						revealed this gotcha. DX helpers were added.
 					</p>
 				</div>
 
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">Timeout Patterns</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title font-medium">Timeout Patterns</h3>
+					<p class="caption-text">
 						No timeout handling existed. Through implementation, the AbortController pattern emerged
 						as the canonical solution.
 					</p>
 				</div>
 
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">Retry Logic</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title font-medium">Retry Logic</h3>
+					<p class="caption-text">
 						Critical for production use. Exponential backoff with jitter, rate limit awareness—none
 						of this was documented because it only emerged through building real integrations.
 					</p>
 				</div>
 
-				<div class="p-4 bg-black/30 rounded-lg space-y-2">
-					<h3 class="text-white font-medium">Capabilities Honesty</h3>
-					<p class="text-white/50 text-sm">
+				<div class="insight-card p-4 space-y-2">
+					<h3 class="insight-title font-medium">Capabilities Honesty</h3>
+					<p class="caption-text">
 						Gmail claimed <code class="text-white/70">canHandleAttachments: true</code> but didn't
 						implement it. The Canon (Principle 6: Honest) required correction.
 					</p>
@@ -148,10 +148,10 @@
 		</div>
 
 		<!-- Principle Scores -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+		<div class="content-card p-6 space-y-6">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">Rams' Principles Applied</h2>
-				<span class="text-sm text-white/40">CANON</span>
+				<h2 class="section-title">Rams' Principles Applied</h2>
+				<span class="label-text">CANON</span>
 			</div>
 
 			<div class="space-y-3">
@@ -167,11 +167,11 @@
 					{ n: 9, name: 'Env. Friendly', prev: 5, curr: 5, note: 'Edge-native' },
 					{ n: 10, name: 'As Little As Possible', prev: 4, curr: 4, note: 'Could simplify further' }
 				] as principle}
-					<div class="flex items-center gap-4 p-3 bg-black/30 rounded-lg">
-						<div class="w-8 text-white/40 text-sm">{principle.n}.</div>
-						<div class="flex-1 text-white text-sm">{principle.name}</div>
-						<div class="text-white/40 text-sm">{principle.prev}/5</div>
-						<div class="text-white/20">→</div>
+					<div class="principle-row flex items-center gap-4 p-3">
+						<div class="principle-number w-8">{principle.n}.</div>
+						<div class="principle-name flex-1">{principle.name}</div>
+						<div class="principle-score-old">{principle.prev}/5</div>
+						<div class="principle-arrow">→</div>
 						<div
 							class="text-sm font-medium {principle.curr > principle.prev
 								? 'text-green-400'
@@ -179,17 +179,17 @@
 						>
 							{principle.curr}/5
 						</div>
-						<div class="hidden md:block text-white/40 text-xs max-w-48 truncate">{principle.note}</div>
+						<div class="principle-note hidden md:block max-w-48 truncate">{principle.note}</div>
 					</div>
 				{/each}
 			</div>
 		</div>
 
 		<!-- Critical Fixes -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+		<div class="content-card p-6 space-y-6">
 			<div class="flex items-center justify-between">
-				<h2 class="text-xl font-bold text-white">Critical Violations Addressed</h2>
-				<span class="text-sm text-white/40">REMEDIATION</span>
+				<h2 class="section-title">Critical Violations Addressed</h2>
+				<span class="label-text">REMEDIATION</span>
 			</div>
 
 			<div class="overflow-x-auto">
@@ -227,14 +227,14 @@
 		</div>
 
 		<!-- The Circle Closes -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
-			<h2 class="text-xl font-bold text-white">The Circle Closes</h2>
-			<p class="text-white/70 leading-relaxed">
+		<div class="content-card p-6 space-y-4">
+			<h2 class="section-title">The Circle Closes</h2>
+			<p class="body-text leading-relaxed">
 				Pre-understanding (README) described <em>what</em> the SDK does. Emergent understanding
 				(DEVELOPERS.md) describes <em>how to build with it</em>—the practical knowledge that only
 				emerges through praxis.
 			</p>
-			<p class="text-white/50 text-sm">
+			<p class="caption-text">
 				This is the hermeneutic circle applied to software: implementation reveals what
 				documentation cannot. The canon is not static dogma but living philosophy, validated and
 				refined through practice.
@@ -247,16 +247,175 @@
 				href={workwayRepo}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors"
+				class="cta-button px-6 py-3 font-medium transition-colors"
 			>
 				View Repository
 			</a>
 			<a
 				href="/experiments"
-				class="px-6 py-3 border border-white/20 text-white font-medium rounded-lg hover:bg-white/10 transition-colors"
+				class="secondary-button px-6 py-3 font-medium transition-colors"
 			>
 				All Experiments
 			</a>
 		</div>
 	</div>
 </section>
+
+<style>
+  .ascii-container {
+    background: var(--color-bg-pure);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .ascii-art {
+    color: var(--color-fg-secondary);
+    font-size: clamp(0.6rem, 1.5vw, 0.875rem);
+  }
+
+  .hero-title {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+  }
+
+  .hero-description {
+    color: var(--color-fg-muted);
+  }
+
+  .metric-card {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+  }
+
+  .metric-value-old {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-muted);
+  }
+
+  .metric-value-success {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: rgb(34, 197, 94);
+  }
+
+  .metric-value {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .metric-label {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .content-card {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+  }
+
+  .section-title {
+    font-size: var(--text-h3);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .label-text {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .body-text {
+    color: var(--color-fg-tertiary);
+  }
+
+  .caption-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .emphasis-text {
+    color: var(--color-fg-primary);
+  }
+
+  .insight-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+  }
+
+  .insight-title {
+    color: var(--color-fg-primary);
+  }
+
+  .insight-description {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .cta-button {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    border-radius: var(--radius-md);
+  }
+
+  .cta-button:hover {
+    opacity: 0.9;
+  }
+
+  .secondary-button {
+    border: 1px solid var(--color-border-emphasis);
+    color: var(--color-fg-primary);
+    border-radius: var(--radius-md);
+  }
+
+  .secondary-button:hover {
+    background: var(--color-active);
+  }
+
+  .principle-row {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+  }
+
+  .principle-number {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .principle-name {
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+  }
+
+  .principle-score-old {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .principle-arrow {
+    color: var(--color-fg-subtle);
+  }
+
+  .principle-score {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-primary);
+  }
+
+  .principle-score.improved {
+    color: rgb(34, 197, 94);
+  }
+
+  .principle-note {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+  }
+</style>

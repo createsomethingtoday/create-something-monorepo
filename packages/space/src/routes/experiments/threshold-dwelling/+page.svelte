@@ -12,13 +12,19 @@
 	import SitePlan from '$lib/components/SitePlan.svelte';
 	import RoofPlan from '$lib/components/RoofPlan.svelte';
 	import Systems from '$lib/components/Systems.svelte';
+	import LightStudy from '$lib/components/LightStudy.svelte';
+	import Circulation from '$lib/components/Circulation.svelte';
+	import MaterialPalette, { type Material } from '$lib/components/MaterialPalette.svelte';
+	import DailyRhythm, { type Activity, type DailyRhythmData } from '$lib/components/DailyRhythm.svelte';
 	import type {
 		FloorPlanData,
 		SectionData,
 		ElevationData,
 		SitePlanData,
 		RoofPlanData,
-		SystemsData
+		SystemsData,
+		LightStudyData,
+		CirculationData
 	} from '$lib/types/architecture';
 	import {
 		zone,
@@ -35,13 +41,20 @@
 		siteFeature,
 		setbackLine,
 		roofSlope,
-		roofDrain
+		roofDrain,
+		sunPosition,
+		seasonalPath,
+		lightZone,
+		thresholdMoment,
+		circulationPath,
+		zoneTransition
 	} from '$lib/types/architecture';
 
 	// Fullscreen state - Heidegger: tool appears only when summoned
-	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | null;
+	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | 'light' | 'circulation' | 'materials' | 'rhythm' | null;
 	let expandedView: ExpandedView = $state(null);
 	let showBudget = $state(false);
+	let showMaterials = $state(false);
 
 	function toggleExpand(view: ExpandedView) {
 		expandedView = expandedView === view ? null : view;
@@ -62,20 +75,6 @@
 			maximumFractionDigits: 0
 		}).format(amount);
 	}
-
-	// Group line items by category - DRY
-	const groupedCosts = pavilion.materials?.lineItems.reduce(
-		(acc, item) => {
-			if (!acc[item.category]) acc[item.category] = [];
-			acc[item.category].push(item);
-			return acc;
-		},
-		{} as Record<string, typeof pavilion.materials.lineItems>
-	);
-
-	const totalBudget = pavilion.materials
-		? pavilion.materials.totalSF * pavilion.materials.costPerSF
-		: 0;
 
 	// ============================================================================
 	// FLOOR PLAN DATA
@@ -205,7 +204,23 @@
 		],
 
 		windows: [
-			floorPlanWindow(0, 16.5, 4, 'vertical') // West hallway window
+			// West wall - hallway light
+			floorPlanWindow(0, 16.5, 4, 'vertical'),
+
+			// South wall - private zone threshold to earth/sky
+			// (offset from doors at x=5, x=22, x=47)
+			floorPlanWindow(12, 20, 6, 'horizontal'),  // Daughter's suite (clear of door at x=5)
+			floorPlanWindow(28, 20, 8, 'horizontal'),  // Primary bedroom (clear of door at x=22)
+			floorPlanWindow(38, 20, 5, 'horizontal'),  // Primary bath
+			floorPlanWindow(54, 20, 6, 'horizontal'),  // In-law suite (clear of door at x=47)
+
+			// North wall - service/public threshold
+			floorPlanWindow(20, 42, 8, 'horizontal'),  // Kitchen
+			floorPlanWindow(35, 42, 10, 'horizontal'), // Living/dining
+			floorPlanWindow(50, 42, 5, 'horizontal'),  // Open zone corner
+
+			// East wall - entry sequence light
+			floorPlanWindow(65, 30, 6, 'vertical')     // Living room east
 		],
 
 		columns: [
@@ -227,7 +242,7 @@
 
 		materials: {
 			totalSF: 2730,
-			costPerSF: 225,
+			costPerSF: 298,
 			lineItems: [
 				{
 					category: 'Site',
@@ -249,12 +264,12 @@
 					notes: 'Miesian exposed structure'
 				},
 				{ category: 'Structure', description: 'Roof structure', estimate: 35000 },
-				{ category: 'Structure', description: 'Exterior walls', estimate: 42000 },
+				{ category: 'Structure', description: 'Exterior walls', estimate: 48000, notes: 'Cedar board & batten' },
 				{
 					category: 'Envelope',
 					description: 'Windows & glazing',
-					estimate: 65000,
-					notes: 'Floor-to-ceiling east wall'
+					estimate: 95000,
+					notes: '10 windows: 4 south (private), 3 north (public), 1 east, 1 west'
 				},
 				{
 					category: 'Envelope',
@@ -270,7 +285,8 @@
 					estimate: 38000,
 					notes: 'Polished concrete throughout'
 				},
-				{ category: 'Interior', description: 'Cabinetry & millwork', estimate: 55000 },
+				{ category: 'Interior', description: 'Cedar millwork & cabinets', estimate: 62000, notes: 'Native Ashe Juniper throughout' },
+				{ category: 'Interior', description: 'Cedar ceilings', estimate: 28000, notes: 'T&G planks, living & bedrooms' },
 				{ category: 'Interior', description: 'Paint & finishes', estimate: 22000 },
 				{
 					category: 'Systems',
@@ -290,6 +306,8 @@
 				{ category: 'Fixtures', description: 'Bathroom fixtures', estimate: 24000 },
 				{ category: 'Fixtures', description: 'Lighting', estimate: 15000 },
 				{ category: 'Exterior', description: 'Carport structure', estimate: 18000 },
+				{ category: 'Exterior', description: 'Cedar soffits', estimate: 12000, notes: 'T&G under all overhangs' },
+				{ category: 'Exterior', description: 'Cedar decking', estimate: 18000, notes: 'Covered entry & patios' },
 				{
 					category: 'Exterior',
 					description: 'Dog kennel',
@@ -305,7 +323,7 @@
 				'Does not include land acquisition',
 				'10% contingency recommended'
 			],
-			lastUpdated: 'November 2025'
+			lastUpdated: 'December 2025'
 		}
 	};
 
@@ -600,6 +618,269 @@
 			sectionLabel(32.5, 21, 'Main Corridor')
 		]
 	};
+
+	// ============================================================================
+	// LIGHT STUDY DATA (Sun Path / Shadow Analysis)
+	// ============================================================================
+
+	const lightStudyData: LightStudyData = {
+		name: 'Johnson Residence',
+		latitude: 32.7, // Grandview, Texas
+		orientation: 0, // North-facing (long axis E-W)
+		width: 65,
+		depth: 42,
+
+		// Building outline
+		buildingOutline: [
+			wall(0, 0, 65, 0),
+			wall(65, 0, 65, 42),
+			wall(65, 42, 0, 42),
+			wall(0, 42, 0, 0)
+		],
+
+		overhangs: [
+			overhang(65, 0, 10, 6, 'Kennel'),
+			overhang(65, 6, 10, 7, 'Carport'),
+			overhang(65, 13, 8, 14, 'Entry')
+		],
+
+		// Sun paths for Texas latitude (~32.7°N)
+		sunPaths: [
+			// Summer Solstice (June 21) - sun is high and north
+			seasonalPath('summer', [
+				sunPosition('morning', 65, 25),   // 8am: ENE, low
+				sunPosition('noon', 170, 82),      // 12pm: Nearly overhead, slightly south
+				sunPosition('afternoon', 255, 45), // 4pm: WSW, medium
+				sunPosition('evening', 285, 15)    // 6pm: WNW, low
+			], 0.5),
+
+			// Equinox (March/September) - balanced
+			seasonalPath('equinox', [
+				sunPosition('morning', 85, 20),    // 8am: E, low
+				sunPosition('noon', 180, 57),       // 12pm: S, medium-high
+				sunPosition('afternoon', 255, 35), // 4pm: WSW, medium
+				sunPosition('evening', 270, 10)    // 6pm: W, very low
+			], 1.0),
+
+			// Winter Solstice (December 21) - sun is low and south
+			seasonalPath('winter', [
+				sunPosition('morning', 115, 10),   // 8am: ESE, very low
+				sunPosition('noon', 180, 34),       // 12pm: S, low
+				sunPosition('afternoon', 225, 20), // 4pm: SW, very low
+				sunPosition('evening', 245, 5)     // 6pm: WSW, horizon
+			], 2.0)
+		],
+
+		// Light zones - where sun penetrates at different times
+		lightZones: [
+			// South bedrooms get morning/afternoon light
+			lightZone(0, 20, 18, 22, 'direct', '7am-11am'),
+			lightZone(18, 20, 21, 22, 'direct', '10am-2pm'),
+			lightZone(39, 20, 26, 22, 'direct', '2pm-6pm'),
+			// Open living gets diffuse north light + south clerestory
+			lightZone(12, 0, 43, 13, 'diffuse', 'all day'),
+			// Service zones are shaded
+			lightZone(0, 0, 12, 13, 'shade', 'minimal'),
+			lightZone(55, 0, 10, 13, 'shade', 'minimal')
+		],
+
+		// Glazing locations - thresholds between interior dwelling and world
+		glazingLocations: [
+			// South wall - private zone (morning sun, winter warmth)
+			{ x: 12, y: 20, width: 6, orientation: 's' },  // Daughter's
+			{ x: 28, y: 20, width: 8, orientation: 's' },  // Primary bedroom
+			{ x: 38, y: 20, width: 5, orientation: 's' },  // Primary bath
+			{ x: 54, y: 20, width: 6, orientation: 's' },  // In-law suite
+
+			// North wall - public zone (diffuse light, summer shade)
+			{ x: 20, y: 42, width: 8, orientation: 'n' },  // Kitchen
+			{ x: 35, y: 42, width: 10, orientation: 'n' }, // Living/dining
+			{ x: 50, y: 42, width: 5, orientation: 'n' },  // Open zone
+
+			// East wall - morning threshold
+			{ x: 65, y: 30, width: 6, orientation: 'e' },  // Living room
+
+			// West wall - evening light
+			{ x: 0, y: 16.5, width: 4, orientation: 'w' }  // Hallway
+		],
+
+		labels: [
+			sectionLabel(9, 31, "Daughter's\n(AM light)", true),
+			sectionLabel(28, 31, 'Primary\n(Midday)', true),
+			sectionLabel(52, 31, 'In-Law\n(PM light)', true),
+			sectionLabel(32, 6, 'Living\n(Diffuse)', true)
+		]
+	};
+
+	// ============================================================================
+	// CIRCULATION DATA (Threshold Moments)
+	// ============================================================================
+
+	const circulationData: CirculationData = {
+		name: 'Threshold Moments',
+		width: 75, // Include overhangs
+		depth: 42,
+
+		// Zones for context
+		zones: pavilion.zones,
+
+		// Key threshold moments - Heidegger's zones of becoming
+		thresholds: [
+			// Entry sequence
+			thresholdMoment(73, 16, 'entry', 'Arrival',
+				'The threshold where outside meets inside. A moment of transition from the world to dwelling.'),
+			thresholdMoment(65, 16, 'transition', 'Vestibule',
+				'Covered entry—neither fully outside nor inside. The pause before entering.'),
+			thresholdMoment(55, 10, 'passage', 'Hall',
+				'The corridor that distributes: public left, private right, service beyond.'),
+
+			// Zone transitions
+			thresholdMoment(32, 13, 'transition', 'Open/Private',
+				'Where the open living zone meets the private corridor. Light gives way to intimacy.'),
+			thresholdMoment(5, 20, 'passage', "Daughter's",
+				'Threshold to the daughter\'s realm. Privacy within dwelling.'),
+			thresholdMoment(22, 20, 'passage', 'Primary',
+				'Entry to the primary suite. The deepest level of dwelling.'),
+			thresholdMoment(47, 20, 'passage', 'In-Law',
+				'The in-law suite threshold. Autonomy within togetherness.'),
+
+			// Destinations
+			thresholdMoment(32, 6, 'arrival', 'Living',
+				'The heart of dwelling. Where the family gathers, where light fills the space.'),
+			thresholdMoment(6, 8, 'arrival', 'Pantry',
+				'The service threshold. Sustenance and preparation.')
+		],
+
+		// Circulation paths
+		paths: [
+			// Primary path: Entry → Living
+			circulationPath([
+				{ x: 73, y: 16 },
+				{ x: 65, y: 16 },
+				{ x: 55, y: 13 },
+				{ x: 32, y: 13 },
+				{ x: 32, y: 6 }
+			], 'primary', 'Entry to Living'),
+
+			// Secondary: Hall to private zones
+			circulationPath([
+				{ x: 32, y: 16 },
+				{ x: 9, y: 16 },
+				{ x: 5, y: 20 }
+			], 'secondary', 'To Daughter'),
+			circulationPath([
+				{ x: 32, y: 16 },
+				{ x: 22, y: 16 },
+				{ x: 22, y: 20 }
+			], 'secondary', 'To Primary'),
+			circulationPath([
+				{ x: 32, y: 16 },
+				{ x: 47, y: 16 },
+				{ x: 47, y: 20 }
+			], 'secondary', 'To In-Law'),
+
+			// Service path
+			circulationPath([
+				{ x: 6, y: 13 },
+				{ x: 6, y: 8 }
+			], 'service', 'Service')
+		],
+
+		// Zone transitions
+		transitions: [
+			zoneTransition('public', 'private', 0, 20, 65, 'horizontal'),
+			zoneTransition('service', 'public', 12, 0, 13, 'vertical'),
+			zoneTransition('open', 'public', 12, 13, 43, 'horizontal')
+		]
+	};
+
+	// ============================================================================
+	// MATERIAL PALETTE - Heidegger: how earth appears in dwelling
+	// ============================================================================
+
+	const materialPalette: Material[] = [
+		// Structure - Miesian honesty
+		{ name: 'Exposed Steel', category: 'structure', color: '#2a2a2a', location: 'Columns & beams', notes: 'Hot-rolled, clear-coated' },
+		{ name: 'Concrete', category: 'structure', color: '#8a8a8a', location: 'Foundation slab', notes: 'Polished, sealed' },
+
+		// Envelope - threshold between inside/outside
+		{ name: 'Standing Seam', category: 'envelope', color: '#3d3d3d', location: 'Roof', notes: 'Galvalume, 24ga' },
+		{ name: 'Clear Glass', category: 'envelope', color: '#a8d4e6', location: 'Windows', notes: 'Low-E, insulated' },
+		{ name: 'Cedar Siding', category: 'envelope', color: '#8b6914', location: 'Exterior walls', notes: 'Board & batten, natural weather' },
+		{ name: 'Cedar Soffit', category: 'envelope', color: '#a67c52', location: 'Overhangs', notes: 'T&G, connects inside/out' },
+
+		// Interior - dwelling surfaces (cedar as unifying thread)
+		{ name: 'Polished Concrete', category: 'interior', color: '#9a9590', location: 'All floors', notes: 'Radiant heat ready' },
+		{ name: 'Cedar Millwork', category: 'interior', color: '#a67c52', location: 'Cabinets & built-ins', notes: 'Native Ashe Juniper' },
+		{ name: 'Cedar Ceiling', category: 'interior', color: '#b8956c', location: 'Living & bedrooms', notes: 'T&G planks, aromatic' },
+		{ name: 'Gypsum Board', category: 'interior', color: '#f5f5f5', location: 'Walls', notes: 'Level 5 finish, white' },
+
+		// Exterior - earth connection
+		{ name: 'Native Stone', category: 'exterior', color: '#b8a88a', location: 'Entry threshold', notes: 'Texas limestone' },
+		{ name: 'Cedar Deck', category: 'exterior', color: '#9a7b4f', location: 'Covered patios', notes: 'Extends interior floor plane' },
+		{ name: 'Gravel', category: 'exterior', color: '#c9c0b0', location: 'Driveway & paths', notes: 'Decomposed granite' }
+	];
+
+	// ============================================================================
+	// DAILY RHYTHM DATA - Temporal dwelling
+	// ============================================================================
+
+	const dailyRhythmData: DailyRhythmData = {
+		name: 'Typical Weekday',
+		spaces: [
+			'Kitchen',
+			'Dining',
+			'Living',
+			'Primary Suite',
+			"Daughter's Room",
+			'In-Law Suite',
+			'Pantry/Sit-in',
+			'Covered Entry'
+		],
+		activities: [
+			// Morning rhythm (6-9am)
+			{ name: 'Wake', space: 'Primary Suite', startHour: 6, endHour: 7, person: 'Parents', intensity: 'low' },
+			{ name: 'Wake', space: "Daughter's Room", startHour: 6.5, endHour: 7.5, person: 'Daughter', intensity: 'low' },
+			{ name: 'Wake', space: 'In-Law Suite', startHour: 7, endHour: 8, person: 'In-Law', intensity: 'low' },
+			{ name: 'Breakfast prep', space: 'Kitchen', startHour: 6.5, endHour: 8, person: 'Parents', intensity: 'high' },
+			{ name: 'Family breakfast', space: 'Dining', startHour: 7.5, endHour: 8.5, person: 'Family', intensity: 'high' },
+
+			// Daytime (9am-5pm) - parents at work, in-law at home
+			{ name: 'Reading', space: 'Living', startHour: 9, endHour: 11, person: 'In-Law', intensity: 'medium' },
+			{ name: 'Quiet time', space: 'Pantry/Sit-in', startHour: 11, endHour: 12, person: 'In-Law', intensity: 'low' },
+			{ name: 'Lunch', space: 'Kitchen', startHour: 12, endHour: 13, person: 'In-Law', intensity: 'medium' },
+			{ name: 'Rest', space: 'In-Law Suite', startHour: 13, endHour: 15, person: 'In-Law', intensity: 'low' },
+			{ name: 'Garden', space: 'Covered Entry', startHour: 15, endHour: 17, person: 'In-Law', intensity: 'medium' },
+
+			// After school (3-6pm)
+			{ name: 'Homework', space: "Daughter's Room", startHour: 15.5, endHour: 17.5, person: 'Daughter', intensity: 'medium' },
+
+			// Evening rhythm (5-10pm)
+			{ name: 'Cooking', space: 'Kitchen', startHour: 17, endHour: 19, person: 'Parents', intensity: 'high' },
+			{ name: 'Family dinner', space: 'Dining', startHour: 19, endHour: 20, person: 'Family', intensity: 'high' },
+			{ name: 'Evening together', space: 'Living', startHour: 20, endHour: 22, person: 'Family', intensity: 'medium' },
+			{ name: 'TV/Quiet', space: 'In-Law Suite', startHour: 20.5, endHour: 22, person: 'In-Law', intensity: 'low' },
+			{ name: 'Wind down', space: "Daughter's Room", startHour: 21, endHour: 22, person: 'Daughter', intensity: 'low' },
+			{ name: 'Evening', space: 'Primary Suite', startHour: 22, endHour: 23, person: 'Parents', intensity: 'low' },
+
+			// Weekend guest rhythm (occasional)
+			{ name: 'Guests arrive', space: 'Covered Entry', startHour: 18, endHour: 18.5, person: 'Guests', intensity: 'medium' }
+		]
+	};
+
+	// Group line items by category - DRY
+	const groupedCosts = pavilion.materials?.lineItems.reduce(
+		(acc, item) => {
+			if (!acc[item.category]) acc[item.category] = [];
+			acc[item.category].push(item);
+			return acc;
+		},
+		{} as Record<string, typeof pavilion.materials.lineItems>
+	);
+
+	const totalBudget = pavilion.materials
+		? pavilion.materials.totalSF * pavilion.materials.costPerSF
+		: 0;
 </script>
 
 <svelte:head>
@@ -661,8 +942,8 @@
 		</div>
 	</section>
 
-	<!-- Tertiary: Site + Roof + Systems (equal thirds) -->
-	<section class="tertiary-views" class:hidden={expandedView !== null && !['site', 'roof', 'systems'].includes(expandedView)}>
+	<!-- Tertiary: Site + Roof + Systems + Light + Circulation + Rhythm (3×2 grid) -->
+	<section class="tertiary-views" class:hidden={expandedView !== null && !['site', 'roof', 'systems', 'light', 'circulation', 'rhythm'].includes(expandedView)}>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'site'}
@@ -690,6 +971,33 @@
 				<Systems systems={systemsData} />
 			</button>
 		</div>
+		<div
+			class="view-panel tertiary-item"
+			class:expanded={expandedView === 'light'}
+			class:hidden={expandedView !== null && expandedView !== 'light'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('light')} aria-label="Toggle fullscreen light study">
+				<LightStudy study={lightStudyData} showCaption={false} />
+			</button>
+		</div>
+		<div
+			class="view-panel tertiary-item"
+			class:expanded={expandedView === 'circulation'}
+			class:hidden={expandedView !== null && expandedView !== 'circulation'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('circulation')} aria-label="Toggle fullscreen circulation">
+				<Circulation circulation={circulationData} showCaption={false} />
+			</button>
+		</div>
+		<div
+			class="view-panel tertiary-item"
+			class:expanded={expandedView === 'rhythm'}
+			class:hidden={expandedView !== null && expandedView !== 'rhythm'}
+		>
+			<button class="expand-trigger" onclick={() => toggleExpand('rhythm')} aria-label="Toggle fullscreen daily rhythm">
+				<DailyRhythm rhythm={dailyRhythmData} showCaption={false} />
+			</button>
+		</div>
 	</section>
 
 	<!-- Footer: Integrated data summary (Tufte: data, not chrome) -->
@@ -709,6 +1017,10 @@
 		<div class="metric clickable" role="button" tabindex="0" onclick={() => showBudget = !showBudget} onkeydown={(e) => e.key === 'Enter' && (showBudget = !showBudget)}>
 			<span class="metric-value">{formatCurrency(totalBudget)}</span>
 			<span class="metric-label">Budget {showBudget ? '−' : '+'}</span>
+		</div>
+		<div class="metric clickable" role="button" tabindex="0" onclick={() => showMaterials = !showMaterials} onkeydown={(e) => e.key === 'Enter' && (showMaterials = !showMaterials)}>
+			<span class="metric-value">{materialPalette.length}</span>
+			<span class="metric-label">Materials {showMaterials ? '−' : '+'}</span>
 		</div>
 	</footer>
 
@@ -747,6 +1059,13 @@
 					</ul>
 				</div>
 			{/if}
+		</section>
+	{/if}
+
+	<!-- Material Palette: Collapsible (Rams: information on demand) -->
+	{#if showMaterials && !expandedView}
+		<section class="materials-details">
+			<MaterialPalette materials={materialPalette} projectName={pavilion.name} showCaption={false} />
 		</section>
 	{/if}
 
@@ -828,7 +1147,7 @@
 		align-items: center;
 	}
 
-	/* Tertiary views: Site + Roof + Systems (equal) */
+	/* Tertiary views: Site + Roof + Systems + Light + Circulation + Rhythm (3×2 grid) */
 	.tertiary-views {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
@@ -885,10 +1204,16 @@
 	}
 
 	/* Budget Details - Collapsible price sheet */
-	.budget-details {
+	.budget-details,
+	.materials-details {
 		border-top: 1px solid var(--color-border-default);
 		padding: var(--space-lg) 0;
 		font-family: var(--font-sans, system-ui, sans-serif);
+	}
+
+	.materials-details {
+		display: flex;
+		justify-content: center;
 	}
 
 	.budget-header {
@@ -1028,6 +1353,14 @@
 		max-height: 100%;
 	}
 
+	/* Override component max-widths when expanded */
+	.view-panel.expanded :global(.light-study),
+	.view-panel.expanded :global(.circulation),
+	.view-panel.expanded :global(.daily-rhythm) {
+		max-width: 90vw;
+		max-height: 80vh;
+	}
+
 	/* Hide sections when something is expanded */
 	.has-expanded .secondary-views.hidden,
 	.has-expanded .tertiary-views.hidden {
@@ -1051,13 +1384,15 @@
 		pointer-events: none;
 	}
 
-	/* Responsive: Stack on mobile */
+	/* Responsive: Adjust grid on smaller screens */
+	@media (max-width: 1200px) {
+		.tertiary-views {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
 	@media (max-width: 1024px) {
 		.secondary-views {
-			grid-template-columns: 1fr;
-		}
-
-		.tertiary-views {
 			grid-template-columns: 1fr;
 		}
 	}
@@ -1066,6 +1401,10 @@
 		.dwelling {
 			padding: var(--space-md);
 			gap: var(--space-sm);
+		}
+
+		.tertiary-views {
+			grid-template-columns: 1fr;
 		}
 
 		.dwelling-footer {

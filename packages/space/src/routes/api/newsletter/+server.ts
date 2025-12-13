@@ -4,6 +4,12 @@ import type { RequestHandler } from './$types';
 interface NewsletterRequest {
 	email: string;
 	website?: string; // Honeypot field - should be empty
+	turnstileToken?: string;
+}
+
+interface TurnstileResponse {
+	success: boolean;
+	'error-codes'?: string[];
 }
 
 const RATE_LIMIT_WINDOW = 60 * 60; // 1 hour in seconds
@@ -12,7 +18,7 @@ const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
 export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	try {
 		const body = (await request.json()) as NewsletterRequest;
-		const { email, website } = body;
+		const { email, website, turnstileToken } = body;
 
 		// Honeypot check - if filled, silently reject (bots fill hidden fields)
 		if (website) {
@@ -51,6 +57,45 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		}
 
 		const env = platform.env;
+
+		// Verify Turnstile token if secret key is configured
+		if (env.TURNSTILE_SECRET_KEY) {
+			if (!turnstileToken) {
+				return json(
+					{
+						success: false,
+						message: 'Please complete the verification'
+					},
+					{ status: 400 }
+				);
+			}
+
+			const turnstileResponse = await fetch(
+				'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: new URLSearchParams({
+						secret: env.TURNSTILE_SECRET_KEY,
+						response: turnstileToken,
+						remoteip: getClientAddress()
+					})
+				}
+			);
+
+			const turnstileResult = (await turnstileResponse.json()) as TurnstileResponse;
+
+			if (!turnstileResult.success) {
+				console.warn('Turnstile verification failed:', turnstileResult['error-codes']);
+				return json(
+					{
+						success: false,
+						message: 'Verification failed. Please try again.'
+					},
+					{ status: 400 }
+				);
+			}
+		}
 
 		// Rate limiting via KV
 		const clientIP = getClientAddress();

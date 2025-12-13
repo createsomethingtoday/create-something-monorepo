@@ -101,13 +101,15 @@
 
 <div
   bind:this={editorContainer}
-  class="code-editor border border-white/10 rounded-lg overflow-hidden"
+  class="code-editor overflow-hidden"
   style="height: {height};"
 ></div>
 
 <style>
   .code-editor {
     position: relative;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
   }
 
   /* Ensure CodeMirror fills container */

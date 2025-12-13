@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
 	import PaperCard from './PaperCard.svelte';
 	import type { Paper } from '$lib/types/paper';
 
@@ -10,31 +9,31 @@
 	let { featuredPapers }: Props = $props();
 </script>
 
-<section class="relative pt-32 pb-24 px-6 overflow-hidden">
+<section class="hero relative pt-32 pb-24 px-6 overflow-hidden">
 	<div class="max-w-7xl mx-auto">
 		<!-- Hero Text - Now First -->
 		<div class="text-center space-y-6 mb-16">
-			<div class="text-base md:text-lg font-medium text-white/90" in:fly={{ y: 20, duration: 600 }}>
+			<div class="eyebrow animate-reveal" style="--delay: 0">
 				CREATE SOMETHING SPACE
 			</div>
 
-			<h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight" in:fly={{ y: 20, duration: 600, delay: 200 }}>
+			<h1 class="headline animate-reveal" style="--delay: 1">
 				Interactive Tutorials for AI-Native Development
 			</h1>
 
-			<p class="text-lg md:text-xl text-white/60 max-w-3xl mx-auto" in:fly={{ y: 20, duration: 600, delay: 400 }}>
-				Learn by doing with runnable code examples and hands-on experiments. Fork, modify, and run these tutorials directly in your browser. Research methodology and full papers available on <a href="https://createsomething.io" class="text-white/80 hover:text-white underline">createsomething.io</a>
+			<p class="description max-w-3xl mx-auto animate-reveal" style="--delay: 2">
+				Learn by doing with runnable code examples and hands-on experiments. Fork, modify, and run these tutorials directly in your browser. Research methodology and full papers available on <a href="https://createsomething.io" class="link">createsomething.io</a>
 			</p>
 
 			<!-- CTA to Research -->
-			<div class="mt-8" in:fly={{ y: 20, duration: 600, delay: 600 }}>
+			<div class="mt-8 animate-reveal" style="--delay: 3">
 				<a
 					href="https://createsomething.io"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors group"
+					class="cta-link inline-flex items-center gap-2 group"
 				>
-					<span class="text-sm md:text-base">See the research methodology</span>
+					<span class="cta-text">See the research methodology</span>
 					<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
 					</svg>
@@ -44,15 +43,15 @@
 
 		<!-- Featured Tutorials Section -->
 		{#if featuredPapers.length > 0}
-			<div class="text-center mb-8" in:fly={{ y: 20, duration: 600, delay: 800 }}>
-				<h2 class="text-2xl md:text-3xl font-bold text-white">Featured Tutorials</h2>
-				<p class="text-white/60 mt-2">Start with these hands-on experiments</p>
+			<div class="text-center mb-8 animate-reveal" style="--delay: 4">
+				<h2 class="section-title">Featured Tutorials</h2>
+				<p class="section-description mt-2">Start with these hands-on experiments</p>
 			</div>
 
 			<!-- Desktop Layout - Horizontal -->
 			<div class="hidden md:flex justify-center items-center gap-6 max-w-6xl mx-auto">
 				{#each featuredPapers.slice(0, 3) as paper, index (paper.id)}
-					<div class="flex-1 max-w-xs" in:fly={{ y: 20, duration: 600, delay: 1000 + index * 100 }}>
+					<div class="flex-1 max-w-xs animate-reveal" style="--delay: {5 + index}">
 						<PaperCard {paper} rotation={0} {index} />
 					</div>
 				{/each}
@@ -61,7 +60,7 @@
 			<!-- Mobile Layout - Simple Stack -->
 			<div class="grid grid-cols-1 gap-6 md:hidden">
 				{#each featuredPapers.slice(0, 2) as paper, index (paper.id)}
-					<div in:fly={{ y: 20, duration: 600, delay: 1000 + index * 100 }}>
+					<div class="animate-reveal" style="--delay: {5 + index}">
 						<PaperCard {paper} rotation={0} {index} />
 					</div>
 				{/each}
@@ -70,5 +69,108 @@
 	</div>
 
 	<!-- Background Gradient -->
-	<div class="absolute inset-0 -z-10 bg-gradient-to-b from-black via-black to-[#0a0a0a]"></div>
+	<div class="hero-background absolute inset-0 -z-10"></div>
 </section>
+
+<style>
+	.hero {
+		/* Layout only - keep Tailwind classes */
+	}
+
+	.eyebrow {
+		font-size: var(--text-body);
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+	}
+
+	@media (min-width: 768px) {
+		.eyebrow {
+			font-size: var(--text-body-lg);
+		}
+	}
+
+	.headline {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		line-height: 1.2;
+	}
+
+	.description {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-tertiary);
+	}
+
+	@media (min-width: 768px) {
+		.description {
+			font-size: 1.25rem;
+		}
+	}
+
+	.link {
+		color: var(--color-fg-secondary);
+		text-decoration: underline;
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.cta-link {
+		color: var(--color-fg-tertiary);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.cta-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.cta-text {
+		font-size: var(--text-body-sm);
+	}
+
+	@media (min-width: 768px) {
+		.cta-text {
+			font-size: var(--text-body);
+		}
+	}
+
+	.section-title {
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.section-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	.hero-background {
+		background: linear-gradient(to bottom, var(--color-bg-pure), var(--color-bg-pure), var(--color-bg-elevated));
+	}
+
+	/* Staggered reveal animation - CSS only, no JS */
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(16px);
+		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* Respect reduced motion preference */
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

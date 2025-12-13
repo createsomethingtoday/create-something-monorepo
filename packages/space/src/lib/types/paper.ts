@@ -15,6 +15,9 @@ export interface Paper extends BasePaper {
   code_lessons?: string // JSON stringified array of CodeLesson[]
   starter_code?: string // Initial code template
   solution_code?: string // Reference solution
+
+  // Route override for file-based experiments
+  route?: string
 }
 
 // ============================================================================

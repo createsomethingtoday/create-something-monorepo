@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { fade } from "svelte/transition";
 	import { marked } from "marked";
 	import hljs from "highlight.js";
 	import type { Paper } from "$lib/types/paper";
@@ -46,10 +45,7 @@
 	});
 </script>
 
-<article
-	class="w-full max-w-4xl mx-auto px-6 py-12"
-	transition:fade={{ duration: 600, delay: 200 }}
->
+<article class="article-content w-full max-w-4xl mx-auto px-6 py-12 animate-reveal">
 	<!-- Interactive Experiment CTA - Show if SPACE URL exists -->
 	{#if paper.interactive_demo_url}
 		<InteractiveExperimentCTA
@@ -60,30 +56,187 @@
 		/>
 	{/if}
 
-	<div
-		class="prose prose-invert prose-lg max-w-none
-			[&_h1]:text-4xl [&_h1]:font-bold [&_h1]:text-white [&_h1]:mb-6 [&_h1]:mt-12
-			[&_h2]:text-3xl [&_h2]:font-bold [&_h2]:text-white [&_h2]:mb-5 [&_h2]:mt-10
-			[&_h3]:text-2xl [&_h3]:font-semibold [&_h3]:text-white [&_h3]:mb-4 [&_h3]:mt-8
-			[&_h4]:text-xl [&_h4]:font-semibold [&_h4]:text-white [&_h4]:mb-3 [&_h4]:mt-6
-			[&_p]:text-white/80 [&_p]:leading-relaxed [&_p]:mb-6
-			[&_a]:text-white/90 [&_a]:hover:text-white [&_a]:underline [&_a]:underline-offset-4 [&_a]:transition-colors
-			[&_ul]:list-disc [&_ul]:list-inside [&_ul]:text-white/80 [&_ul]:mb-6 [&_ul]:space-y-2 [&_ul]:ml-4
-			[&_ol]:list-decimal [&_ol]:list-inside [&_ol]:text-white/80 [&_ol]:mb-6 [&_ol]:space-y-2 [&_ol]:ml-4
-			[&_li]:leading-relaxed
-			[&_pre]:bg-[#1a1a1a] [&_pre]:border [&_pre]:border-white/10 [&_pre]:rounded-lg [&_pre]:p-6 [&_pre]:mb-6 [&_pre]:overflow-x-auto
-			[&_code]:font-mono [&_code]:text-sm
-			[&_:not(pre)>code]:bg-white/10 [&_:not(pre)>code]:px-2 [&_:not(pre)>code]:py-1 [&_:not(pre)>code]:rounded [&_:not(pre)>code]:text-white/90
-			[&_blockquote]:border-l-4 [&_blockquote]:border-white/20 [&_blockquote]:pl-6 [&_blockquote]:py-2 [&_blockquote]:my-6 [&_blockquote]:italic [&_blockquote]:text-white/70 [&_blockquote]:bg-white/5 [&_blockquote]:rounded-r
-			[&_img]:rounded-lg [&_img]:w-full [&_img]:my-8 [&_img]:border [&_img]:border-white/10
-			[&_table]:min-w-full [&_table]:border [&_table]:border-white/10 [&_table]:rounded-lg [&_table]:my-6
-			[&_thead]:bg-white/5
-			[&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-white [&_th]:font-semibold [&_th]:border-b [&_th]:border-white/10
-			[&_td]:px-4 [&_td]:py-3 [&_td]:text-white/80 [&_td]:border-b [&_td]:border-white/5
-			[&_hr]:border-white/10 [&_hr]:my-8
-			[&_strong]:font-bold [&_strong]:text-white
-			[&_em]:italic [&_em]:text-white/90"
-	>
+	<div class="prose prose-invert prose-lg max-w-none">
 		{@html renderedContent}
 	</div>
 </article>
+
+<style>
+	/* Prose styles use Canon tokens for design */
+	.article-content :global(h1) {
+		font-size: 2.25rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin-bottom: 1.5rem;
+		margin-top: 3rem;
+	}
+
+	.article-content :global(h2) {
+		font-size: 1.875rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin-bottom: 1.25rem;
+		margin-top: 2.5rem;
+	}
+
+	.article-content :global(h3) {
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-bottom: 1rem;
+		margin-top: 2rem;
+	}
+
+	.article-content :global(h4) {
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-bottom: 0.75rem;
+		margin-top: 1.5rem;
+	}
+
+	.article-content :global(p) {
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		margin-bottom: 1.5rem;
+	}
+
+	.article-content :global(a) {
+		color: var(--color-fg-secondary);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.article-content :global(a:hover) {
+		color: var(--color-fg-primary);
+	}
+
+	.article-content :global(ul),
+	.article-content :global(ol) {
+		list-style-position: inside;
+		color: var(--color-fg-secondary);
+		margin-bottom: 1.5rem;
+		margin-left: 1rem;
+	}
+
+	.article-content :global(ul) {
+		list-style-type: disc;
+	}
+
+	.article-content :global(ol) {
+		list-style-type: decimal;
+	}
+
+	.article-content :global(ul),
+	.article-content :global(ol) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.article-content :global(li) {
+		line-height: 1.6;
+	}
+
+	.article-content :global(pre) {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		padding: 1.5rem;
+		margin-bottom: 1.5rem;
+		overflow-x: auto;
+	}
+
+	.article-content :global(code) {
+		font-family: monospace;
+		font-size: var(--text-body-sm);
+	}
+
+	.article-content :global(:not(pre) > code) {
+		background: rgba(255, 255, 255, 0.1);
+		padding: 0.125rem 0.5rem;
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.article-content :global(blockquote) {
+		border-left: 4px solid var(--color-border-emphasis);
+		padding-left: 1.5rem;
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+		margin: 1.5rem 0;
+		font-style: italic;
+		color: var(--color-fg-tertiary);
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+	}
+
+	.article-content :global(img) {
+		border-radius: var(--radius-lg);
+		width: 100%;
+		margin: 2rem 0;
+		border: 1px solid var(--color-border-default);
+	}
+
+	.article-content :global(table) {
+		min-width: 100%;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		margin: 1.5rem 0;
+	}
+
+	.article-content :global(thead) {
+		background: rgba(255, 255, 255, 0.05);
+	}
+
+	.article-content :global(th) {
+		padding: 0.75rem 1rem;
+		text-align: left;
+		color: var(--color-fg-primary);
+		font-weight: 600;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.article-content :global(td) {
+		padding: 0.75rem 1rem;
+		color: var(--color-fg-secondary);
+		border-bottom: 1px solid var(--color-border-subtle);
+	}
+
+	.article-content :global(hr) {
+		border-color: var(--color-border-default);
+		margin: 2rem 0;
+	}
+
+	.article-content :global(strong) {
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.article-content :global(em) {
+		font-style: italic;
+		color: var(--color-fg-secondary);
+	}
+
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(12px);
+		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

@@ -104,8 +104,8 @@
 <section class="relative pt-32 pb-12 px-6">
 	<div class="max-w-7xl mx-auto">
 		<div class="text-center space-y-4">
-			<h1 class="text-4xl md:text-6xl font-bold text-white">All Experiments</h1>
-			<p class="text-lg text-white/60">
+			<h1 class="hero-title">All Experiments</h1>
+			<p class="hero-subtitle">
 				{#if isFiltered}
 					{resultCount} of {papers.length} experiments
 				{:else}
@@ -123,12 +123,10 @@
 						type="text"
 						bind:value={searchQuery}
 						placeholder="Search experiments..."
-						class="w-full px-4 py-3 pl-10 bg-white/5 border border-white/10 rounded-lg
-							   text-white placeholder-white/40 focus:outline-none focus:border-white/30
-							   transition-colors"
+						class="search-input"
 					/>
 					<svg
-						class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
+						class="search-icon"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -143,7 +141,7 @@
 					{#if searchQuery}
 						<button
 							onclick={() => searchQuery = ''}
-							class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+							class="search-clear"
 						>
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -158,41 +156,31 @@
 				<div class="flex flex-wrap justify-center gap-2">
 					<button
 						onclick={() => masterFilter = 'all'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'all'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'all' ? 'filter-chip-active' : ''}"
 					>
 						All
 					</button>
 					<button
 						onclick={() => masterFilter = 'rams'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'rams'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'rams' ? 'filter-chip-active' : ''}"
 					>
 						Rams
 					</button>
 					<button
 						onclick={() => masterFilter = 'heidegger'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'heidegger'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'heidegger' ? 'filter-chip-active' : ''}"
 					>
 						Heidegger
 					</button>
 					<button
 						onclick={() => masterFilter = 'tufte'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'tufte'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'tufte' ? 'filter-chip-active' : ''}"
 					>
 						Tufte
 					</button>
 					<button
 						onclick={() => masterFilter = 'canon'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'canon'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'canon' ? 'filter-chip-active' : ''}"
 					>
 						Canon
 					</button>
@@ -201,28 +189,22 @@
 
 			<!-- Sort Control -->
 			<div class="flex justify-center">
-				<div class="inline-flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg">
+				<div class="sort-control">
 					<button
 						onclick={() => sortBy = 'newest'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'newest'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="sort-button {sortBy === 'newest' ? 'sort-button-active' : ''}"
 					>
 						Newest
 					</button>
 					<button
 						onclick={() => sortBy = 'oldest'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'oldest'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="sort-button {sortBy === 'oldest' ? 'sort-button-active' : ''}"
 					>
 						Oldest
 					</button>
 					<button
 						onclick={() => sortBy = 'featured'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'featured'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="sort-button {sortBy === 'featured' ? 'sort-button-active' : ''}"
 					>
 						Featured
 					</button>
@@ -237,13 +219,140 @@
 	<PapersGrid papers={filteredAndSortedPapers} title="" subtitle="" />
 {:else}
 	<div class="text-center py-16 px-6">
-		<p class="text-white/60 text-lg">No experiments match your search.</p>
+		<p class="empty-message">No experiments match your search.</p>
 		<button
 			onclick={() => { searchQuery = ''; masterFilter = 'all'; }}
-			class="mt-4 px-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-lg hover:bg-white/5 transition-all"
+			class="clear-button"
 		>
 			Clear filters
 		</button>
 	</div>
 {/if}
+
+<style>
+	.hero-title {
+		font-size: clamp(2.5rem, 5vw, 3.5rem);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.hero-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-muted);
+	}
+
+	.search-input {
+		width: 100%;
+		padding: 0.75rem 1rem 0.75rem 2.5rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.search-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.search-input:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.search-icon {
+		position: absolute;
+		left: 0.75rem;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 1rem;
+		height: 1rem;
+		color: var(--color-fg-muted);
+	}
+
+	.search-clear {
+		position: absolute;
+		right: 0.75rem;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-fg-muted);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.search-clear:hover {
+		color: var(--color-fg-tertiary);
+	}
+
+	.filter-chip {
+		padding: 0.375rem 0.75rem;
+		font-size: var(--text-body-sm);
+		border-radius: var(--radius-full);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-muted);
+		border: 1px solid var(--color-border-default);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.filter-chip:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.filter-chip-active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-color: var(--color-fg-primary);
+	}
+
+	.sort-control {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.25rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.sort-button {
+		padding: 0.5rem 1rem;
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		border-radius: var(--radius-md);
+		color: var(--color-fg-tertiary);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.sort-button:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.sort-button-active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	.empty-message {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-muted);
+	}
+
+	.clear-button {
+		margin-top: var(--space-sm);
+		padding: 0.5rem 1rem;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-lg);
+		background: transparent;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.clear-button:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-bg-surface);
+	}
+</style>
 

@@ -3,13 +3,18 @@
 	 * Integration Praxis
 	 *
 	 * A tool for understanding WORKWAY through practice.
-	 * Not a game—a compressed hermeneutic circle.
+	 * Now with graded validation via the Subtractive Triad.
 	 *
 	 * "Weniger, aber besser"
 	 */
 
-	import { exercises, type Exercise } from '$lib/praxis/exercises';
+	import { exercises, type ValidationGrade } from '$lib/praxis/exercises';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
+
+	interface TriadFeedback {
+		level: 'dry' | 'rams' | 'heidegger';
+		feedback: string;
+	}
 
 	let currentExerciseIndex = $state(0);
 	let code = $state(exercises[0].starterCode);
@@ -17,6 +22,8 @@
 	let isRunning = $state(false);
 	let isValid = $state(false);
 	let hasReflected = $state(false);
+	let grade = $state<ValidationGrade>('bug');
+	let triadFeedback = $state<TriadFeedback | undefined>(undefined);
 
 	let exercise = $derived(exercises[currentExerciseIndex]);
 	let showPattern = $derived(isValid && hasReflected);
@@ -24,6 +31,9 @@
 	let canNext = $derived(currentExerciseIndex < exercises.length - 1);
 	let canPrev = $derived(currentExerciseIndex > 0);
 	let isLastExercise = $derived(currentExerciseIndex === exercises.length - 1);
+
+	// Graded UI states
+	let isCanonical = $derived(grade === 'canonical');
 
 	let editor: CodeEditor;
 
@@ -45,9 +55,13 @@
 			const result = await response.json();
 			output = result.success ? result.output : [`Error: ${result.error}`];
 			isValid = result.valid === true;
+			grade = result.grade || 'bug';
+			triadFeedback = result.triadFeedback;
 		} catch (err) {
 			output = [`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`];
 			isValid = false;
+			grade = 'bug';
+			triadFeedback = undefined;
 		} finally {
 			isRunning = false;
 		}
@@ -62,6 +76,8 @@
 		output = [];
 		isValid = false;
 		hasReflected = false;
+		grade = 'bug';
+		triadFeedback = undefined;
 	}
 
 	function reset() {
@@ -70,6 +86,8 @@
 		output = [];
 		isValid = false;
 		hasReflected = false;
+		grade = 'bug';
+		triadFeedback = undefined;
 	}
 
 	function confirmReflection() {
@@ -80,6 +98,17 @@
 		if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
 			e.preventDefault();
 			runCode();
+		}
+	}
+
+	function getTriadLabel(level: 'dry' | 'rams' | 'heidegger'): string {
+		switch (level) {
+			case 'dry':
+				return 'DRY (Unify)';
+			case 'rams':
+				return 'Rams (Remove)';
+			case 'heidegger':
+				return 'Heidegger (Reconnect)';
 		}
 	}
 </script>
@@ -152,16 +181,30 @@
 			{#if isValid && !hasReflected}
 				<div class="section reflection">
 					<div class="section-header">
-						<span class="label">Apply the Subtractive Triad</span>
+						<span class="label">{isCanonical ? 'Canonical Pattern' : 'Subtractive Triad Audit'}</span>
+						{#if grade !== 'bug'}
+							<span class="grade grade-{grade}">{grade.replace('_', ' ')}</span>
+						{/if}
 					</div>
 					<div class="section-content">
-						<p class="triad-intro">Before the pattern reveals, consider your solution:</p>
-						<div class="triad-questions">
-							<p><strong>DRY:</strong> Is there duplication to unify?</p>
-							<p><strong>Rams:</strong> Is there anything to remove?</p>
-							<p><strong>Heidegger:</strong> Does this serve the whole?</p>
-						</div>
-						<p class="triad-note">If you used AI, apply these questions to its output.</p>
+						{#if isCanonical}
+							<p class="triad-success">You used the canonical pattern.</p>
+							<p class="triad-note">The Subtractive Triad found nothing to subtract.</p>
+						{:else if triadFeedback}
+							<div class="triad-audit">
+								<p class="audit-label">{getTriadLabel(triadFeedback.level)}</p>
+								<p class="audit-feedback">{triadFeedback.feedback}</p>
+							</div>
+							<p class="triad-note">Consider refactoring, or continue to see the canonical pattern.</p>
+						{:else}
+							<p class="triad-intro">Before the pattern reveals, consider your solution:</p>
+							<div class="triad-questions">
+								<p><strong>DRY:</strong> Is there duplication to unify?</p>
+								<p><strong>Rams:</strong> Is there anything to remove?</p>
+								<p><strong>Heidegger:</strong> Does this serve the whole?</p>
+							</div>
+							<p class="triad-note">If you used AI, apply these questions to its output.</p>
+						{/if}
 						<button class="btn-continue" onclick={confirmReflection}>
 							Continue to Pattern
 						</button>
@@ -281,6 +324,29 @@
 		color: var(--color-fg-tertiary);
 	}
 
+	.grade {
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		padding: 2px 8px;
+		border-radius: var(--radius-sm);
+		text-transform: capitalize;
+	}
+
+	.grade-canonical {
+		background: var(--color-success-subtle, #d4edda);
+		color: var(--color-success, #155724);
+	}
+
+	.grade-valid {
+		background: var(--color-warning-subtle, #fff3cd);
+		color: var(--color-warning, #856404);
+	}
+
+	.grade-over_engineered {
+		background: var(--color-info-subtle, #cce5ff);
+		color: var(--color-info, #004085);
+	}
+
 	.editor {
 		flex: 1;
 		min-height: 400px;
@@ -302,8 +368,7 @@
 
 	.btn-primary,
 	.btn-secondary,
-	.btn-nav,
-	.btn-reveal {
+	.btn-nav {
 		padding: var(--space-xs) var(--space-sm);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
@@ -394,6 +459,29 @@
 	.triad-intro {
 		color: var(--color-fg-secondary) !important;
 		margin-bottom: var(--space-sm) !important;
+	}
+
+	.triad-success {
+		font-weight: var(--font-medium);
+		color: var(--color-success, #155724) !important;
+	}
+
+	.triad-audit {
+		padding: var(--space-sm);
+		background: var(--color-bg-pure);
+		border-radius: var(--radius-sm);
+		margin-bottom: var(--space-sm);
+		border-left: 3px solid var(--color-warning, #ffc107);
+	}
+
+	.audit-label {
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary) !important;
+		margin-bottom: var(--space-xs) !important;
+	}
+
+	.audit-feedback {
+		color: var(--color-fg-secondary) !important;
 	}
 
 	.triad-questions {

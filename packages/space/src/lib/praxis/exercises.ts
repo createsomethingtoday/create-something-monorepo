@@ -8,6 +8,46 @@
  * "Weniger, aber besser" — Less, but better.
  */
 
+/**
+ * Subtractive Triad Audit
+ *
+ * Graded validation applies the three levels of subtraction:
+ * - DRY (Implementation): Detect duplication that should be unified
+ * - Rams (Artifact): Detect over-engineering that should be removed
+ * - Heidegger (System): Detect disconnection from canonical patterns
+ */
+export interface SubtractiveTriadAudit {
+	// DRY: Duplication to unify
+	duplication?: {
+		patterns: string[];
+		feedback: string;
+	};
+	// Rams: Over-engineering to remove
+	overEngineering?: {
+		patterns: string[];
+		feedback: string;
+	};
+	// Heidegger: Disconnection to reconnect (when valid but not canonical)
+	disconnection?: {
+		// Present when these patterns used instead of canonical
+		patterns: string[];
+		canonical: string;
+		feedback: string;
+	};
+}
+
+export type ValidationGrade = 'bug' | 'valid' | 'canonical' | 'over_engineered';
+
+export interface GradedValidation {
+	// Core validation (unchanged)
+	mustContain: string[];
+	mustContainAny?: string[];
+	mustNotContain?: string[];
+	// Graded validation (new)
+	canonical?: string; // The preferred pattern
+	triad?: SubtractiveTriadAudit;
+}
+
 export interface Exercise {
 	id: string;
 	number: number;
@@ -21,10 +61,7 @@ export interface Exercise {
 	};
 	starterCode: string;
 	solution: string;
-	validation: {
-		mustContain: string[];
-		mustNotContain?: string[];
-	};
+	validation: GradedValidation;
 	patternReveal: {
 		discovery: string;
 		canonicalSolution: string;
@@ -84,8 +121,23 @@ async function sendEmail(to: string, subject: string, body: string) {
 const response = await sendEmail('invalid', 'Test', 'Hello');
 console.log('Response:', response);`,
 		validation: {
-			mustContain: ['getErrorMessage', 'result.error.message'],
-			mustNotContain: ['return { error: result.error }']
+			mustContain: [],
+			mustContainAny: ['getErrorMessage', 'result.error.message'],
+			mustNotContain: ['return { error: result.error }'],
+			canonical: 'getErrorMessage',
+			triad: {
+				// Rams: Over-engineering to remove
+				overEngineering: {
+					patterns: ['result.error.code', 'error.code'],
+					feedback: 'Rams asks: does .code earn its existence in user-facing output?'
+				},
+				// Heidegger: Disconnection from SDK pattern
+				disconnection: {
+					patterns: ['result.error.message'],
+					canonical: 'getErrorMessage',
+					feedback: 'Valid, but getErrorMessage() unifies error extraction across all integrations.'
+				}
+			}
 		},
 		patternReveal: {
 			discovery: 'result.error is { message: string, code: string }, not a string.',
@@ -165,8 +217,23 @@ console.log('Sending message...');
 const result = await postMessage('#general', 'Hello');
 console.log('Result:', result);`,
 		validation: {
-			mustContain: ['AbortController', 'setTimeout', 'signal', 'clearTimeout'],
-			mustNotContain: []
+			mustContain: ['AbortController', 'setTimeout', 'signal'],
+			mustContainAny: ['clearTimeout', 'finally'],
+			mustNotContain: [],
+			canonical: 'clearTimeout',
+			triad: {
+				// Rams: Over-engineering
+				overEngineering: {
+					patterns: ['Promise.race', 'Promise.allSettled'],
+					feedback: 'Rams asks: AbortController is sufficient. Does Promise.race add clarity or complexity?'
+				},
+				// Heidegger: Disconnection (missing cleanup)
+				disconnection: {
+					patterns: ['controller.abort'],
+					canonical: 'clearTimeout',
+					feedback: 'Valid timeout, but clearTimeout in finally prevents memory leaks.'
+				}
+			}
 		},
 		patternReveal: {
 			discovery: 'fetch() has no built-in timeout. AbortController is required.',
@@ -272,8 +339,28 @@ async function createCustomer(email: string) {
 const result = await createCustomer('test@example.com');
 console.log('Result:', result);`,
 		validation: {
-			mustContain: ['Math.pow(2', 'jitter', 'setTimeout', '429'],
-			mustNotContain: []
+			mustContain: ['Math.pow(2', 'setTimeout', '429'],
+			mustContainAny: ['jitter', 'Math.random'],
+			mustNotContain: [],
+			canonical: 'jitter',
+			triad: {
+				// DRY: Duplication in retry logic
+				duplication: {
+					patterns: ['Math.pow(2, attempt)', 'Math.pow(2,attempt)'],
+					feedback: 'DRY: If you calculate delay in multiple places, extract to a function.'
+				},
+				// Rams: Over-engineering with retry libraries
+				overEngineering: {
+					patterns: ['retry-axios', 'p-retry', 'exponential-backoff'],
+					feedback: 'Rams asks: a library for 3 lines of math?'
+				},
+				// Heidegger: Missing jitter (causes thundering herd)
+				disconnection: {
+					patterns: ['Math.pow(2'],
+					canonical: 'jitter',
+					feedback: 'Backoff works, but jitter prevents synchronized client retries (thundering herd).'
+				}
+			}
 		},
 		patternReveal: {
 			discovery:
@@ -379,8 +466,23 @@ const forgedRequest = new Request('https://example.com/webhook', {
 
 await handleWebhook(forgedRequest, 'whsec_test');`,
 		validation: {
-			mustContain: ['parseWebhookEvent', 'Stripe-Signature', 'webhookSecret'],
-			mustNotContain: []
+			mustContain: ['Stripe-Signature'],
+			mustContainAny: ['parseWebhookEvent', 'constructEvent', 'verifySignature'],
+			mustNotContain: [],
+			canonical: 'parseWebhookEvent',
+			triad: {
+				// Rams: Over-engineering with manual crypto
+				overEngineering: {
+					patterns: ['crypto.createHmac', 'timingSafeEqual'],
+					feedback: 'Rams asks: manual HMAC when parseWebhookEvent exists? More code, more risk.'
+				},
+				// Heidegger: Using raw Stripe SDK instead of WORKWAY wrapper
+				disconnection: {
+					patterns: ['constructEvent'],
+					canonical: 'parseWebhookEvent',
+					feedback: 'Valid, but parseWebhookEvent returns ActionResult for consistent error handling.'
+				}
+			}
 		},
 		patternReveal: {
 			discovery:
@@ -569,10 +671,29 @@ console.log('Result:', result);`,
 			mustContain: [
 				'AbortController',
 				'Math.pow(2',
-				'createActionResult',
 				'canHandleAttachments: false'
 			],
-			mustNotContain: ['canHandleAttachments: true', 'throw new Error']
+			mustContainAny: ['createActionResult', 'ActionResult.error'],
+			mustNotContain: ['canHandleAttachments: true', 'throw new Error'],
+			canonical: 'createActionResult',
+			triad: {
+				// DRY: Repeated error handling
+				duplication: {
+					patterns: ['ActionResult.error', 'ActionResult.error', 'ActionResult.error'],
+					feedback: 'DRY: Multiple ActionResult.error calls with similar metadata. Consider a helper.'
+				},
+				// Rams: Over-engineering with unnecessary features
+				overEngineering: {
+					patterns: ['cache', 'metrics', 'telemetry', 'logging.debug'],
+					feedback: 'Rams asks: the exercise asked for timeout/retry/capabilities. Does caching earn its existence here?'
+				},
+				// Heidegger: Honest capabilities is the integration point
+				disconnection: {
+					patterns: ['canHandleText: true'],
+					canonical: 'canHandleAttachments: false',
+					feedback: 'Capabilities must be honest. Only claim what you implement.'
+				}
+			}
 		},
 		patternReveal: {
 			discovery: 'Production integrations combine all patterns: structured errors, timeout, retry, honest capabilities.',

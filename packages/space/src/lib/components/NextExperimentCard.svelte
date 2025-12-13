@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { Paper } from "$lib/types/paper";
-    import { fly } from "svelte/transition";
 
     interface Props {
         nextPaper: Paper;
@@ -9,35 +8,32 @@
     let { nextPaper }: Props = $props();
 </script>
 
-<div
-    class="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl p-8 mt-16 text-center relative overflow-hidden group"
-    in:fly={{ y: 20, duration: 500, delay: 200 }}
->
+<div class="next-card group relative overflow-hidden p-8 mt-16 text-center animate-reveal">
     <!-- Background Glow -->
     <div
-        class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-purple-500/10 blur-3xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        class="glow-effect absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
     ></div>
 
     <div class="relative z-10">
         <div
-            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-medium text-white/80 mb-4"
+            class="badge inline-flex items-center gap-2 px-3 py-1 mb-4"
         >
             <span>Horizon of Possibility</span>
         </div>
 
-        <h3 class="text-2xl font-bold text-white mb-2">
+        <h3 class="card-title mb-2">
             Ready for the next step?
         </h3>
 
-        <p class="text-white/60 mb-8 max-w-md mx-auto">
+        <p class="card-subtitle mb-8 max-w-md mx-auto">
             You've mastered the current concept. Continue your journey with <span
-                class="text-white font-medium">{nextPaper.title}</span
+                class="highlight">{nextPaper.title}</span
             >.
         </p>
 
         <a
             href="/experiments/{nextPaper.slug}"
-            class="inline-flex items-center gap-2 px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-white/90 transition-all transform hover:scale-105 shadow-lg hover:shadow-white/20"
+            class="cta-btn inline-flex items-center gap-2 px-8 py-3"
         >
             <span>Start Next Experiment</span>
             <svg
@@ -56,3 +52,75 @@
         </a>
     </div>
 </div>
+
+<style>
+	.next-card {
+		background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xl);
+	}
+
+	.glow-effect {
+		background: rgba(168, 85, 247, 0.1);
+		filter: blur(3rem);
+	}
+
+	.badge {
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-full);
+		font-size: var(--text-caption);
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+	}
+
+	.card-title {
+		font-size: var(--text-h3);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.card-subtitle {
+		color: var(--color-fg-tertiary);
+	}
+
+	.highlight {
+		color: var(--color-fg-primary);
+		font-weight: 500;
+	}
+
+	.cta-btn {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-weight: bold;
+		border-radius: var(--radius-full);
+		box-shadow: var(--shadow-lg);
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.cta-btn:hover {
+		background: var(--color-fg-secondary);
+		transform: scale(1.05);
+		box-shadow: var(--shadow-xl);
+	}
+
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(12px);
+		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

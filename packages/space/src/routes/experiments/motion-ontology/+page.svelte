@@ -159,17 +159,43 @@
 	/>
 </svelte:head>
 
+<!-- ASCII Art Hero -->
+<section class="relative pt-24 pb-8 px-6">
+	<div class="max-w-4xl mx-auto">
+		<div class="ascii-container overflow-hidden">
+			<div class="aspect-[21/9] flex items-center justify-center p-8">
+				<pre class="ascii-art leading-[1.3] font-mono select-none">{`
+    +-------------------------------------------------+
+    |   MOTION ONTOLOGY                               |
+    |                                                 |
+    |   Zuhandenheit        Vorhandenheit             |
+    |   (ready-to-hand)     (present-at-hand)         |
+    |                                                 |
+    |      [hover]              [inspect]             |
+    |        |                      |                 |
+    |        v                      v                 |
+    |   Transparent           Analyzed                |
+    |   engagement            breakdown               |
+    |                                                 |
+    |   The being of animation revealed               |
+    +-------------------------------------------------+
+`}</pre>
+			</div>
+		</div>
+	</div>
+</section>
+
 <!-- Hero -->
-<section class="relative pt-32 pb-12 px-6">
+<section class="relative pb-12 px-6">
 	<div class="max-w-4xl mx-auto text-center space-y-4">
-		<h1 class="text-4xl md:text-5xl font-bold text-white">Motion Ontology</h1>
-		<p class="text-lg text-white/60 italic">
+		<h1 class="hero-title">Motion Ontology</h1>
+		<p class="hero-subtitle italic">
 			Die Frage nach dem Sein der Animation
 		</p>
-		<p class="text-white/40 max-w-2xl mx-auto">
+		<p class="hero-description max-w-2xl mx-auto">
 			Analyze UI motion through Heidegger's phenomenological framework. Does the animation serve
-			<span class="text-white/60">disclosure</span> (revealing meaning) or mere
-			<span class="text-white/60">decoration</span> (visual noise)?
+			<span class="highlight-text">disclosure</span> (revealing meaning) or mere
+			<span class="highlight-text">decoration</span> (visual noise)?
 		</p>
 	</div>
 </section>
@@ -178,21 +204,21 @@
 <section class="px-6 pb-16">
 	<div class="max-w-4xl mx-auto">
 		<!-- Input Form -->
-		<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+		<div class="form-card p-6 space-y-4">
 			<div class="space-y-2">
-				<label for="url" class="block text-sm font-medium text-white/70">URL to Analyze</label>
+				<label for="url" class="form-label block">URL to Analyze</label>
 				<input
 					id="url"
 					type="url"
 					bind:value={url}
 					placeholder="https://example.com"
-					class="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+					class="form-input w-full px-4 py-3"
 				/>
 			</div>
 
 			<div class="grid md:grid-cols-2 gap-4">
 				<div class="space-y-2">
-					<label for="trigger" class="block text-sm font-medium text-white/70">Trigger Event</label>
+					<label for="trigger" class="form-label block">Trigger Event</label>
 					<select
 						id="trigger"
 						bind:value={triggerType}
@@ -206,7 +232,7 @@
 
 				{#if needsSelector}
 					<div class="space-y-2">
-						<label for="selector" class="block text-sm font-medium text-white/70"
+						<label for="selector" class="form-label block"
 							>CSS Selector</label
 						>
 						<input
@@ -214,20 +240,20 @@
 							type="text"
 							bind:value={triggerSelector}
 							placeholder="button, .btn, #submit"
-							class="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+							class="form-input w-full px-4 py-3"
 						/>
 					</div>
 				{/if}
 			</div>
 
 			{#if error}
-				<p class="text-red-400 text-sm">{error}</p>
+				<p class="error-text">{error}</p>
 			{/if}
 
 			<button
 				onclick={analyzeMotion}
 				disabled={isAnalyzing}
-				class="w-full px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+				class="submit-button w-full px-6 py-3 font-medium"
 			>
 				{isAnalyzing ? 'Analyzing...' : 'Analyze Motion'}
 			</button>
@@ -237,10 +263,10 @@
 		{#if result}
 			<div class="mt-8 space-y-6">
 				<!-- Phenomenological Analysis -->
-				<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+				<div class="result-card p-6 space-y-6">
 					<div class="flex items-center justify-between">
-						<h2 class="text-xl font-bold text-white">Phenomenological Analysis</h2>
-						<span class="text-sm text-white/40">ALETHEIA</span>
+						<h2 class="card-title">Phenomenological Analysis</h2>
+						<span class="label-text">ALETHEIA</span>
 					</div>
 
 					<!-- Judgment Badge -->
@@ -259,33 +285,33 @@
 
 					<!-- Disclosure -->
 					<div class="space-y-2">
-						<h3 class="text-sm font-medium text-white/50 uppercase tracking-wide">Disclosure</h3>
-						<p class="text-white">
-							<span class="text-white/60">{result.phenomenological.disclosure}:</span>
+						<h3 class="section-label">Disclosure</h3>
+						<p class="emphasis-text">
+							<span class="highlight-text">{result.phenomenological.disclosure}:</span>
 							{result.phenomenological.disclosureDescription}
 						</p>
 					</div>
 
 					<!-- Mode Rationale -->
 					<div class="space-y-2">
-						<h3 class="text-sm font-medium text-white/50 uppercase tracking-wide">
+						<h3 class="section-label">
 							Ontological Mode
 						</h3>
-						<p class="text-white/80">{result.phenomenological.modeRationale}</p>
+						<p class="body-text-light">{result.phenomenological.modeRationale}</p>
 					</div>
 
 					<!-- Justification -->
 					<div class="space-y-2">
-						<h3 class="text-sm font-medium text-white/50 uppercase tracking-wide">Justification</h3>
-						<p class="text-white/80">{result.phenomenological.justification}</p>
+						<h3 class="section-label">Justification</h3>
+						<p class="body-text-light">{result.phenomenological.justification}</p>
 					</div>
 
 					<!-- Recommendation -->
 					<div class="p-4 bg-black/30 rounded-lg space-y-2">
-						<h3 class="text-sm font-medium text-white/50 uppercase tracking-wide">
+						<h3 class="section-label">
 							Recommendation
 						</h3>
-						<p class="text-white">
+						<p class="emphasis-text">
 							<span
 								class="font-medium {result.phenomenological.recommendation.action === 'keep'
 									? 'text-green-400'
@@ -318,14 +344,14 @@
 				</div>
 
 				<!-- Technical Analysis -->
-				<div class="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+				<div class="form-card p-6 space-y-4">
 					<div class="flex items-center justify-between">
-						<h2 class="text-xl font-bold text-white">Technical Analysis</h2>
+						<h2 class="card-title">Technical Analysis</h2>
 						<div class="flex items-center gap-2">
 							{#if result.technical.debug?.puppeteerUsed}
-								<span class="text-xs px-2 py-1 bg-green-400/20 text-green-400 rounded">Puppeteer</span>
+								<span class="puppeteer-badge">Puppeteer</span>
 							{/if}
-							<span class="text-sm text-white/40">SEIN</span>
+							<span class="label-text">SEIN</span>
 						</div>
 					</div>
 
@@ -334,26 +360,26 @@
 						<div class="p-3 bg-black/30 rounded-lg text-sm space-y-2">
 							<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
 								<div>
-									<div class="text-white/50 text-xs">Element Found</div>
+									<div class="metric-label">Element Found</div>
 									<div class="text-lg font-medium {result.technical.debug.elementFound ? 'text-green-400' : 'text-red-400'}">
 										{result.technical.debug.elementFound ? 'Yes' : 'No'}
 									</div>
 								</div>
 								<div>
-									<div class="text-white/50 text-xs">Hover Triggered</div>
+									<div class="metric-label">Hover Triggered</div>
 									<div class="text-lg font-medium {result.technical.debug.realHoverTriggered ? 'text-green-400' : 'text-amber-400'}">
 										{result.technical.debug.realHoverTriggered ? 'Yes' : 'No'}
 									</div>
 								</div>
 								<div>
-									<div class="text-white/50 text-xs">Animations Before</div>
-									<div class="text-lg font-medium text-white">
+									<div class="metric-label">Animations Before</div>
+									<div class="metric-value-lg">
 										{result.technical.debug.animationsBeforeHover ?? 0}
 									</div>
 								</div>
 								<div>
-									<div class="text-white/50 text-xs">Animations After</div>
-									<div class="text-lg font-medium text-white">
+									<div class="metric-label">Animations After</div>
+									<div class="metric-value-lg">
 										{result.technical.debug.animationsAfterHover ?? 0}
 									</div>
 								</div>
@@ -366,20 +392,20 @@
 
 					<div class="grid md:grid-cols-3 gap-4 text-sm">
 						<div class="p-3 bg-black/30 rounded-lg">
-							<div class="text-white/50">Running Animations</div>
-							<div class="text-2xl font-bold text-white">
+							<div class="code-secondary">Running Animations</div>
+							<div class="metric-value-xl">
 								{result.technical.animations.length}
 							</div>
 						</div>
 						<div class="p-3 bg-black/30 rounded-lg">
-							<div class="text-white/50">CSS Transitions</div>
-							<div class="text-2xl font-bold text-white">
+							<div class="code-secondary">CSS Transitions</div>
+							<div class="metric-value-xl">
 								{result.technical.transitions.length}
 							</div>
 						</div>
 						<div class="p-3 bg-black/30 rounded-lg">
-							<div class="text-white/50">Total Duration</div>
-							<div class="text-2xl font-bold text-white">
+							<div class="code-secondary">Total Duration</div>
+							<div class="metric-value-xl">
 								{result.technical.timing.totalDuration}ms
 							</div>
 						</div>
@@ -391,16 +417,16 @@
 							<h3 class="text-sm font-medium text-white/50">CSS Transitions</h3>
 							<div class="grid md:grid-cols-2 gap-2">
 								{#each result.technical.transitions.slice(0, 10) as trans}
-									<div class="p-3 bg-black/30 rounded-lg text-sm font-mono">
-										<div class="text-white">{trans.property}</div>
-										<div class="text-white/50">
+									<div class="code-block p-3 font-mono">
+										<div class="emphasis-text">{trans.property}</div>
+										<div class="code-secondary">
 											{trans.duration}ms • {trans.easing}
 										</div>
 									</div>
 								{/each}
 							</div>
 							{#if result.technical.transitions.length > 10}
-								<div class="text-white/40 text-sm">+ {result.technical.transitions.length - 10} more transitions</div>
+								<div class="caption-text">+ {result.technical.transitions.length - 10} more transitions</div>
 							{/if}
 						</div>
 					{/if}
@@ -411,9 +437,9 @@
 							<h3 class="text-sm font-medium text-white/50">Running Animations</h3>
 							<div class="space-y-2">
 								{#each result.technical.animations as anim}
-									<div class="p-3 bg-black/30 rounded-lg text-sm font-mono">
-										<div class="text-white">{anim.name || 'unnamed'}</div>
-										<div class="text-white/50">
+									<div class="code-block p-3 font-mono">
+										<div class="emphasis-text">{anim.name || 'unnamed'}</div>
+										<div class="code-secondary">
 											{anim.duration}ms • {anim.easing} • {anim.iterations === Infinity
 												? 'infinite'
 												: anim.iterations}
@@ -431,24 +457,24 @@
 							<h3 class="text-sm font-medium text-white/50">CSS Animation/Transition Definitions</h3>
 							<div class="space-y-2 max-h-64 overflow-y-auto">
 								{#each result.technical.cssDefinitions.slice(0, 20) as def}
-									<div class="p-3 bg-black/30 rounded-lg text-sm font-mono">
+									<div class="code-block p-3 font-mono">
 										{#if def.type === 'keyframes'}
-											<div class="text-purple-400">@keyframes {def.name}</div>
-											<div class="text-white/50">{def.keyframes?.length || 0} keyframes</div>
+											<div class="code-keyword">@keyframes {def.name}</div>
+											<div class="code-secondary">{def.keyframes?.length || 0} keyframes</div>
 										{:else}
-											<div class="text-cyan-400 truncate">{def.selector}</div>
+											<div class="code-selector truncate">{def.selector}</div>
 											{#if def.transition}
-												<div class="text-white/50">transition: {def.transition}</div>
+												<div class="code-secondary">transition: {def.transition}</div>
 											{/if}
 											{#if def.animation}
-												<div class="text-white/50">animation: {def.animation}</div>
+												<div class="code-secondary">animation: {def.animation}</div>
 											{/if}
 										{/if}
 									</div>
 								{/each}
 							</div>
 							{#if result.technical.cssDefinitions.length > 20}
-								<div class="text-white/40 text-sm">+ {result.technical.cssDefinitions.length - 20} more definitions</div>
+								<div class="caption-text">+ {result.technical.cssDefinitions.length - 20} more definitions</div>
 							{/if}
 						</div>
 					{/if}
@@ -477,32 +503,238 @@
 
 		<!-- Framework Reference -->
 		<div class="mt-12 p-6 bg-white/5 border border-white/10 rounded-xl">
-			<h2 class="text-lg font-bold text-white mb-4">Heideggerian Framework</h2>
+			<h2 class="card-title mb-4">Heideggerian Framework</h2>
 			<div class="grid md:grid-cols-2 gap-6 text-sm">
 				<div class="space-y-3">
-					<h3 class="text-white/70 font-medium">Ontological Modes</h3>
+					<h3 class="subsection-title">Ontological Modes</h3>
 					<div class="space-y-2 text-white/50">
 						<p>
-							<span class="text-green-400 font-medium">Zuhandenheit</span> — Ready-to-hand. Motion
+							<span class="term-zuhandenheit font-medium">Zuhandenheit</span> — Ready-to-hand. Motion
 							recedes into the background, supporting intention without demanding attention.
 						</p>
 						<p>
-							<span class="text-amber-400 font-medium">Vorhandenheit</span> — Present-at-hand.
+							<span class="term-vorhandenheit font-medium">Vorhandenheit</span> — Present-at-hand.
 							Motion obstructs, forcing awareness of the interface itself.
 						</p>
 					</div>
 				</div>
 				<div class="space-y-3">
-					<h3 class="text-white/70 font-medium">Disclosure Types</h3>
+					<h3 class="subsection-title">Disclosure Types</h3>
 					<ul class="text-white/50 space-y-1">
-						<li><span class="text-white/70">state_transition</span> — Loading, expanding, toggling</li>
-						<li><span class="text-white/70">spatial_relationship</span> — Belonging, source/target</li>
-						<li><span class="text-white/70">user_confirmation</span> — Input acknowledged</li>
-						<li><span class="text-white/70">hierarchy_reveal</span> — Primary, secondary, tertiary</li>
-						<li><span class="text-white/70">temporal_sequence</span> — Order of operations</li>
+						<li><span class="term-label">state_transition</span> — Loading, expanding, toggling</li>
+						<li><span class="term-label">spatial_relationship</span> — Belonging, source/target</li>
+						<li><span class="term-label">user_confirmation</span> — Input acknowledged</li>
+						<li><span class="term-label">hierarchy_reveal</span> — Primary, secondary, tertiary</li>
+						<li><span class="term-label">temporal_sequence</span> — Order of operations</li>
 					</ul>
 				</div>
 			</div>
 		</div>
 	</div>
 </section>
+
+<style>
+  .ascii-container {
+    background: var(--color-bg-pure);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .ascii-art {
+    color: var(--color-fg-secondary);
+    font-size: clamp(0.6rem, 1.5vw, 0.9rem);
+  }
+
+  .hero-title {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+  }
+
+  .hero-description {
+    color: var(--color-fg-muted);
+  }
+
+  .highlight-text {
+    color: var(--color-fg-secondary);
+  }
+
+  .form-card {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+  }
+
+  .form-label {
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-fg-tertiary);
+  }
+
+  .form-input {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-primary);
+  }
+
+  .form-input::placeholder {
+    color: var(--color-fg-subtle);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-border-emphasis);
+  }
+
+  .error-text {
+    color: rgb(248, 113, 113);
+    font-size: var(--text-body-sm);
+  }
+
+  .submit-button {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: opacity var(--duration-micro) var(--ease-standard);
+  }
+
+  .submit-button:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .submit-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .result-card {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+  }
+
+  .card-title {
+    font-size: var(--text-h3);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .label-text {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .section-label {
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .emphasis-text {
+    color: var(--color-fg-primary);
+  }
+
+  .body-text {
+    color: var(--color-fg-secondary);
+  }
+
+  .body-text-light {
+    color: var(--color-fg-secondary);
+  }
+
+  .judgment-badge {
+    border-radius: var(--radius-md);
+    border: 1px solid;
+    font-size: var(--text-body-sm);
+    letter-spacing: 0.05em;
+  }
+
+  .puppeteer-badge {
+    font-size: var(--text-caption);
+    padding: 0.25rem 0.5rem;
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+    border-radius: var(--radius-sm);
+  }
+
+  .metric-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body-sm);
+  }
+
+  .metric-label {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+  }
+
+  .metric-value-lg {
+    font-size: var(--text-body-lg);
+    font-weight: 500;
+    color: var(--color-fg-primary);
+  }
+
+  .metric-value-xl {
+    font-size: var(--text-h2);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .code-block {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body-sm);
+  }
+
+  .code-primary {
+    color: var(--color-fg-primary);
+  }
+
+  .code-secondary {
+    color: var(--color-fg-muted);
+  }
+
+  .code-keyword {
+    color: rgb(192, 132, 252);
+  }
+
+  .code-selector {
+    color: rgb(103, 232, 249);
+  }
+
+  .caption-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .subsection-title {
+    color: var(--color-fg-tertiary);
+    font-weight: 500;
+  }
+
+  .reference-text {
+    color: var(--color-fg-muted);
+  }
+
+  .term-zuhandenheit {
+    color: rgb(34, 197, 94);
+  }
+
+  .term-vorhandenheit {
+    color: rgb(251, 191, 36);
+  }
+
+  .term-label {
+    color: var(--color-fg-tertiary);
+  }
+</style>

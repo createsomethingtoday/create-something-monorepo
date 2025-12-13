@@ -480,3 +480,164 @@ export function roofSlope(
 export function roofDrain(x: number, y: number): RoofDrain {
 	return { x, y };
 }
+
+// ============================================================================
+// LIGHT STUDY TYPES (Sun Path / Shadow Analysis)
+// ============================================================================
+
+export type Season = 'summer' | 'equinox' | 'winter';
+export type TimeOfDay = 'morning' | 'noon' | 'afternoon' | 'evening';
+
+export interface SunPosition {
+	time: TimeOfDay;
+	azimuth: number; // Degrees from north (0-360)
+	altitude: number; // Degrees above horizon (0-90)
+}
+
+export interface SeasonalSunPath {
+	season: Season;
+	positions: SunPosition[];
+	shadowLength: number; // Multiplier for shadow projection
+}
+
+export interface LightZone {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	quality: 'direct' | 'diffuse' | 'shade';
+	timeRange: string; // e.g., "6am-10am"
+}
+
+export interface LightStudyData {
+	name: string;
+	latitude: number; // Site latitude for accurate sun angles
+	orientation: number; // Building orientation (degrees from north)
+	width: number;
+	depth: number;
+
+	// Building outline for shadow casting
+	buildingOutline: Wall[];
+	overhangs?: Overhang[];
+
+	// Sun paths for different seasons
+	sunPaths: SeasonalSunPath[];
+
+	// Zones that receive different light qualities
+	lightZones?: LightZone[];
+
+	// Windows that admit light
+	glazingLocations?: { x: number; y: number; width: number; orientation: 'n' | 's' | 'e' | 'w' }[];
+
+	labels?: SectionLabel[];
+}
+
+// ============================================================================
+// LIGHT STUDY HELPERS
+// ============================================================================
+
+export function sunPosition(time: TimeOfDay, azimuth: number, altitude: number): SunPosition {
+	return { time, azimuth, altitude };
+}
+
+export function seasonalPath(
+	season: Season,
+	positions: SunPosition[],
+	shadowLength: number = 1
+): SeasonalSunPath {
+	return { season, positions, shadowLength };
+}
+
+export function lightZone(
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	quality: LightZone['quality'],
+	timeRange: string
+): LightZone {
+	return { x, y, width, height, quality, timeRange };
+}
+
+// ============================================================================
+// CIRCULATION / THRESHOLD TYPES
+// ============================================================================
+
+export type ThresholdType = 'entry' | 'transition' | 'passage' | 'arrival';
+export type CirculationMode = 'primary' | 'secondary' | 'service';
+
+export interface ThresholdMoment {
+	x: number;
+	y: number;
+	type: ThresholdType;
+	label: string;
+	description?: string; // Phenomenological description
+}
+
+export interface CirculationPath {
+	points: { x: number; y: number }[];
+	mode: CirculationMode;
+	label?: string;
+}
+
+export interface ZoneTransition {
+	from: ThresholdZone;
+	to: ThresholdZone;
+	x: number;
+	y: number;
+	width: number;
+	orientation: 'horizontal' | 'vertical';
+}
+
+export interface CirculationData {
+	name: string;
+	width: number;
+	depth: number;
+
+	// Building zones for context
+	zones: Zone[];
+
+	// Key threshold moments
+	thresholds: ThresholdMoment[];
+
+	// Circulation paths
+	paths: CirculationPath[];
+
+	// Zone transitions (where one zone meets another)
+	transitions?: ZoneTransition[];
+
+	labels?: SectionLabel[];
+}
+
+// ============================================================================
+// CIRCULATION HELPERS
+// ============================================================================
+
+export function thresholdMoment(
+	x: number,
+	y: number,
+	type: ThresholdType,
+	label: string,
+	description?: string
+): ThresholdMoment {
+	return { x, y, type, label, description };
+}
+
+export function circulationPath(
+	points: { x: number; y: number }[],
+	mode: CirculationMode,
+	label?: string
+): CirculationPath {
+	return { points, mode, label };
+}
+
+export function zoneTransition(
+	from: ThresholdZone,
+	to: ThresholdZone,
+	x: number,
+	y: number,
+	width: number,
+	orientation: 'horizontal' | 'vertical'
+): ZoneTransition {
+	return { from, to, x, y, width, orientation };
+}

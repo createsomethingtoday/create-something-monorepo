@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition';
   import { Footer } from '@create-something/components';
 
   const quickLinks = [
@@ -29,16 +28,16 @@
 <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-4xl mx-auto">
-      <div in:fly={{ y: 20, duration: 600 }} class="space-y-8">
-        <h1 class="text-4xl md:text-6xl font-bold text-white mb-8">
+      <div class="space-y-8 animate-reveal">
+        <h1 class="hero-title mb-8">
           Research Methodology
         </h1>
 
-        <p class="text-xl text-white/90 leading-relaxed">
+        <p class="intro-text">
           What makes CREATE SOMETHING different from AI blogs: we don't just document results—we document the <strong>process</strong> of building with AI agents.
         </p>
 
-        <p class="text-lg text-white/70 leading-relaxed">
+        <p class="body-text">
           Every experiment is tracked with automated logging, real costs from APIs, precise time measurements, and intervention documentation. This transforms anecdotes into reproducible experiments.
         </p>
       </div>
@@ -49,7 +48,7 @@
   <section class="py-16 px-6 border-t border-white/10">
     <div class="max-w-6xl mx-auto">
       <div>
-        <h2 class="text-3xl font-bold text-white mb-12 text-center">
+        <h2 class="section-title mb-12 text-center">
           How We Work
         </h2>
 
@@ -82,25 +81,25 @@
             }
           ] as item, index}
             <div
-              in:fly={{ y: 20, duration: 500, delay: index * 100 }}
-              class="relative p-6 bg-white/[0.07] border border-white/10 rounded-lg"
+              class="card relative p-6 animate-reveal"
+              style="--delay: {index + 1}"
             >
-              <div class="mb-4 text-white/70">
+              <div class="icon mb-4">
                 <svg class="w-10 h-10" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d={item.icon} stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </div>
-              <div class="text-sm text-white/40 mb-2">{item.step}</div>
-              <h3 class="text-xl font-semibold text-white mb-2">
+              <div class="metric-label mb-2">{item.step}</div>
+              <h3 class="subsection-title mb-2">
                 {item.title}
               </h3>
-              <p class="text-white/60 text-sm">
+              <p class="list-item">
                 {item.description}
               </p>
 
               <!-- Arrow -->
               {#if index < 3}
-                <div class="hidden md:block absolute -right-3 top-1/2 transform -translate-y-1/2 text-white/20">
+                <div class="arrow-icon hidden md:block absolute -right-3 top-1/2 transform -translate-y-1/2">
                   <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
@@ -111,7 +110,7 @@
         </div>
 
         <div class="text-center">
-          <p class="text-xl text-white/80 font-medium">
+          <p class="intro-text font-medium">
             This is research, not blogging.
           </p>
         </div>
@@ -123,7 +122,7 @@
   <section class="py-16 px-6 border-t border-white/10">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="text-3xl font-bold text-white mb-8">
+        <h2 class="section-title mb-8">
           Every Experiment Tracked With
         </h2>
 
@@ -161,16 +160,16 @@
             }
           ] as item, index}
             <div
-              in:fly={{ y: 20, duration: 500, delay: index * 50 }}
-              class="p-6 bg-white/[0.07] border border-white/10 rounded-lg"
+              class="card p-6 animate-reveal"
+              style="--delay: {index}"
             >
-              <h3 class="text-xl font-semibold text-white mb-2">
+              <h3 class="subsection-title mb-2">
                 {item.metric}
               </h3>
-              <p class="text-white/60 text-sm mb-3">
+              <p class="list-item mb-3">
                 {item.description}
               </p>
-              <code class="text-xs text-white/40 bg-white/5 px-2 py-1 rounded">
+              <code class="code-sample px-2 py-1">
                 {item.example}
               </code>
             </div>
@@ -184,7 +183,7 @@
   <section class="py-16 px-6 border-t border-white/10">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="text-3xl font-bold text-white mb-8">
+        <h2 class="section-title mb-8">
           Three Tracking Modes
         </h2>
 
@@ -213,14 +212,14 @@
             }
           ] as item, index}
             <div
-              in:fly={{ y: 20, duration: 500, delay: index * 100 }}
-              class="p-6 bg-white/[0.07] border border-white/10 rounded-lg"
+              class="card p-6 animate-reveal"
+              style="--delay: {index + 1}"
             >
               <div class="flex items-start justify-between mb-3">
                 <h3 class="text-xl font-semibold text-white">
                   {item.mode}
                 </h3>
-                <span class="text-xs px-2 py-1 bg-white/10 text-white/60 rounded">
+                <span class="tag px-2 py-1">
                   {item.tag}
                 </span>
               </div>
@@ -229,12 +228,12 @@
               </p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span class="text-white/40">Data Quality:</span>
-                  <p class="text-white/60">{item.dataQuality}</p>
+                  <span class="metric-label">Data Quality:</span>
+                  <p class="list-item">{item.dataQuality}</p>
                 </div>
                 <div>
-                  <span class="text-white/40">Use Case:</span>
-                  <p class="text-white/60">{item.useCase}</p>
+                  <span class="metric-label">Use Case:</span>
+                  <p class="list-item">{item.useCase}</p>
                 </div>
               </div>
             </div>
@@ -248,7 +247,7 @@
   <section class="py-16 px-6 border-t border-white/10">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="text-3xl font-bold text-white mb-8">
+        <h2 class="section-title mb-8">
           Why This Matters
         </h2>
 
@@ -265,7 +264,7 @@
                 'Just another AI blog'
               ] as item}
                 <li class="flex items-start gap-3">
-                  <svg class="w-5 h-5 text-white/40 flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <svg class="check-icon w-5 h-5 flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                   <span>{item}</span>
@@ -286,7 +285,7 @@
                 'Scientific research platform'
               ] as item}
                 <li class="flex items-start gap-3">
-                  <svg class="w-5 h-5 text-white/40 flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <svg class="check-icon w-5 h-5 flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                   <span>{item}</span>
@@ -296,8 +295,8 @@
           </div>
         </div>
 
-        <div class="p-6 bg-white/5 border border-white/10 rounded-lg mt-8">
-          <p class="text-lg text-white/80 leading-relaxed">
+        <div class="highlight-box p-6 mt-8">
+          <p class="intro-text leading-relaxed">
             The tracking methodology transforms "prompting and hoping" into <strong>systematic evaluation with reproducible results</strong>. This is what separates research from blogging.
           </p>
         </div>
@@ -309,7 +308,7 @@
   <section class="py-16 px-6 border-t border-white/10">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="text-3xl font-bold text-white mb-8">
+        <h2 class="section-title mb-8">
           For Researchers: Use This Methodology
         </h2>
 
@@ -336,14 +335,14 @@
             }
           ] as item, index}
             <div
-              in:fly={{ y: 20, duration: 500, delay: index * 100 }}
-              class="p-6 bg-white/[0.07] border border-white/10 rounded-lg text-center"
+              class="researcher-card p-6 text-center animate-reveal"
+              style="--delay: {index + 1}"
             >
               <div class="text-3xl font-bold text-white/20 mb-3">{item.step}</div>
               <h3 class="text-lg font-semibold text-white mb-2">
                 {item.title}
               </h3>
-              <p class="text-white/60 text-sm">
+              <p class="list-item">
                 {item.description}
               </p>
             </div>
@@ -355,7 +354,7 @@
             href="https://github.com/createsomethingtoday/create-something-experiments"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-all"
+            class="cta-button inline-flex items-center justify-center gap-2 px-6 py-3"
           >
             <span>View on GitHub</span>
             <svg class="w-4 h-4" stroke-width="2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -365,7 +364,7 @@
 
           <a
             href="/experiments/zoom-transcript-automation-experiment"
-            class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 text-white border border-white/20 font-semibold rounded-full hover:bg-white/20 hover:border-white/30 transition-all"
+            class="secondary-button inline-flex items-center justify-center gap-2 px-6 py-3"
           >
             <span>See Example Experiment</span>
           </a>
@@ -378,44 +377,44 @@
   <section class="py-16 px-6 border-t border-white/10">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="text-3xl font-bold text-white mb-8">
+        <h2 class="section-title mb-8">
           Methodology in Action
         </h2>
 
         <p class="text-lg text-white/70 leading-relaxed">
-          Example from <a href="/experiments/zoom-transcript-automation-experiment" class="text-white hover:underline">Experiment #1: Zoom Transcript Automation</a>
+          Example from <a href="/experiments/zoom-transcript-automation-experiment" class="link-text hover:underline">Experiment #1: Zoom Transcript Automation</a>
         </p>
 
-        <div class="p-6 bg-white/[0.07] border border-white/10 rounded-lg">
+        <div class="card p-6">
           <div class="space-y-4">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div class="p-4 bg-white/5 rounded">
-                <div class="text-2xl font-bold text-white">26</div>
-                <div class="text-xs text-white/40">Hours</div>
+              <div class="metric-card p-4">
+                <div class="metric-value">26</div>
+                <div class="metric-caption">Hours</div>
               </div>
-              <div class="p-4 bg-white/5 rounded">
-                <div class="text-2xl font-bold text-white">47</div>
-                <div class="text-xs text-white/40">Errors</div>
+              <div class="metric-card p-4">
+                <div class="metric-value">47</div>
+                <div class="metric-caption">Errors</div>
               </div>
-              <div class="p-4 bg-white/5 rounded">
-                <div class="text-2xl font-bold text-white">12</div>
-                <div class="text-xs text-white/40">Interventions</div>
+              <div class="metric-card p-4">
+                <div class="metric-value">12</div>
+                <div class="metric-caption">Interventions</div>
               </div>
-              <div class="p-4 bg-white/5 rounded">
-                <div class="text-2xl font-bold text-white">78%</div>
-                <div class="text-xs text-white/40">Time Savings</div>
+              <div class="metric-card p-4">
+                <div class="metric-value">78%</div>
+                <div class="metric-caption">Time Savings</div>
               </div>
             </div>
 
             <div class="pt-4 border-t border-white/10">
-              <p class="text-sm text-white/60">
-                <strong class="text-white">Data sources:</strong> Real-time prompt logging via hooks, Claude Code Analytics API, Cloudflare billing API, git commit history
+              <p class="list-item">
+                <strong class="link-text">Data sources:</strong> Real-time prompt logging via hooks, Claude Code Analytics API, Cloudflare billing API, git commit history
               </p>
             </div>
 
             <div class="pt-2">
-              <p class="text-sm text-white/60">
-                <strong class="text-white">Reproducibility:</strong> Starting prompt, tracking logs, and architecture decisions documented
+              <p class="list-item">
+                <strong class="link-text">Reproducibility:</strong> Starting prompt, tracking logs, and architecture decisions documented
               </p>
             </div>
           </div>
@@ -443,3 +442,167 @@
     quickLinks={quickLinks}
     showSocial={true}
   />
+
+<style>
+  .hero-title {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .intro-text {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+    line-height: 1.6;
+  }
+
+  .body-text {
+    font-size: var(--text-body);
+    color: var(--color-fg-tertiary);
+    line-height: 1.6;
+  }
+
+  .section-title {
+    font-size: var(--text-h2);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .subsection-title {
+    font-size: var(--text-h3);
+    font-weight: 600;
+    color: var(--color-fg-primary);
+  }
+
+  .card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .card:hover {
+    border-color: var(--color-border-emphasis);
+  }
+
+  .metric-card {
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-md);
+  }
+
+  .tag {
+    font-size: var(--text-caption);
+    background: var(--color-active);
+    color: var(--color-fg-secondary);
+    border-radius: var(--radius-sm);
+  }
+
+  .icon {
+    color: var(--color-fg-tertiary);
+  }
+
+  .arrow-icon {
+    color: var(--color-fg-subtle);
+  }
+
+  .code-sample {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    background: var(--color-hover);
+    border-radius: var(--radius-sm);
+  }
+
+  .metric-label {
+    color: var(--color-fg-muted);
+  }
+
+  .metric-value {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .metric-caption {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  .cta-button {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    transition: background var(--duration-micro) var(--ease-standard);
+  }
+
+  .cta-button:hover {
+    opacity: 0.9;
+  }
+
+  .secondary-button {
+    background: var(--color-active);
+    color: var(--color-fg-primary);
+    border: 1px solid var(--color-border-emphasis);
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .secondary-button:hover {
+    background: var(--color-hover);
+    border-color: var(--color-border-emphasis);
+  }
+
+  .highlight-box {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .list-item {
+    color: var(--color-fg-secondary);
+  }
+
+  .check-icon {
+    color: var(--color-fg-muted);
+  }
+
+  .x-icon {
+    color: var(--color-fg-muted);
+  }
+
+  .link-text {
+    color: var(--color-fg-primary);
+  }
+
+  .link-text:hover {
+    text-decoration: underline;
+  }
+
+  .researcher-card {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .animate-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: calc(var(--delay, 0) * 100ms);
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-reveal {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
