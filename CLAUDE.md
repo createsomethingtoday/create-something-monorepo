@@ -103,8 +103,8 @@ pnpm --filter=space exec wrangler types
 Execute directly via Bash. The tool recedes; deployment happens.
 
 ```bash
-# Deploy to Cloudflare Pages
-pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=createsomething-space
+# Deploy to Cloudflare Pages (use exact project names - see .claude/rules/cloudflare-patterns.md)
+pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=create-something-space
 
 # Deploy Workers
 pnpm --filter=identity-worker deploy
@@ -113,7 +113,7 @@ pnpm --filter=identity-worker deploy
 wrangler d1 migrations apply DB_NAME
 
 # Tail production logs (WezTerm - interactive)
-wrangler pages deployment tail --project-name=createsomething-space
+wrangler pages deployment tail --project-name=create-something-space
 ```
 
 ## File Conventions
@@ -131,7 +131,7 @@ Key paths (see `.claude/rules/sveltekit-conventions.md` for full patterns):
 
 ## Cloudflare Resources
 
-D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patterns.md` for queries and SDK usage.
+D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patterns.md` for queries, SDK usage, and **exact project names** for deployment.
 
 ## Skills Available
 

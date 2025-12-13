@@ -1,9 +1,60 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { ChevronLeft, ChevronRight } from 'lucide-svelte';
+  import { ChevronLeft, ChevronRight, CheckCircle } from 'lucide-svelte';
+  import { progress, getLessonProgress } from '$lib/stores/progress';
+  import { onMount } from 'svelte';
 
   let { data }: { data: PageData } = $props();
   const { path, lesson, lessonNumber, totalLessons, previousLesson, nextLesson } = data;
+
+  // Track time spent on this lesson
+  let startTime = 0;
+  let isCompleting = false;
+
+  // Get progress for this lesson
+  const lessonProgress = getLessonProgress(path.id, lesson.id);
+
+  onMount(() => {
+    startTime = Date.now();
+
+    // Mark lesson as started
+    progress.startLesson(path.id, lesson.id).catch((err) => {
+      console.error('Failed to track lesson start:', err);
+    });
+
+    // Fetch full progress on mount
+    progress.fetch();
+
+    return () => {
+      // Cleanup
+    };
+  });
+
+  async function handleCompleteLesson() {
+    if (isCompleting) return;
+
+    isCompleting = true;
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+    try {
+      const result = await progress.completeLesson(path.id, lesson.id, timeSpent);
+
+      if (result.pathCompleted) {
+        // Show celebration or path completion modal
+        console.log('Path completed!');
+      }
+
+      // Navigate to next lesson or back to path
+      if (nextLesson) {
+        window.location.href = `/paths/${path.id}/${nextLesson.id}`;
+      } else {
+        window.location.href = `/paths/${path.id}`;
+      }
+    } catch (err) {
+      console.error('Failed to complete lesson:', err);
+      isCompleting = false;
+    }
+  }
 </script>
 
 <svelte:head>
@@ -100,13 +151,27 @@
 
   <!-- Completion Action -->
   <div class="completion-section">
-    {#if nextLesson}
-      <a href="/paths/{path.id}/{nextLesson.id}" class="btn-primary">
-        Continue to Next Lesson
-      </a>
+    {#if $lessonProgress?.status === 'completed'}
+      <div class="completed-indicator">
+        <CheckCircle size={20} />
+        <span>Lesson Completed</span>
+      </div>
+      {#if nextLesson}
+        <a href="/paths/{path.id}/{nextLesson.id}" class="btn-primary">
+          Continue to Next Lesson
+        </a>
+      {:else}
+        <a href="/paths/{path.id}" class="btn-secondary">
+          View Path Overview
+        </a>
+      {/if}
     {:else}
-      <button class="btn-primary">
-        Mark Path Complete
+      <button
+        class="btn-primary"
+        onclick={handleCompleteLesson}
+        disabled={isCompleting}
+      >
+        {isCompleting ? 'Completing...' : nextLesson ? 'Complete & Continue' : 'Complete Lesson'}
       </button>
     {/if}
   </div>
@@ -285,8 +350,38 @@
     transition: opacity var(--duration-micro) var(--ease-standard);
   }
 
-  .btn-primary:hover {
+  .btn-primary:hover:not(:disabled) {
     opacity: 0.9;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    color: var(--color-fg-primary);
+    font-size: var(--text-body);
+    font-weight: 500;
+    transition: border-color var(--duration-micro) var(--ease-standard);
+    margin-left: var(--space-md);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-border-emphasis);
+  }
+
+  .completed-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-success);
+    font-size: var(--text-body);
+    margin-bottom: var(--space-md);
   }
 
   .text-right {

@@ -1,0 +1,36 @@
+{
+	"name": "@create-something/vertical-medical-practice",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"description": "Medical practice vertical template powered by WORKWAY",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"deploy": "npm run build && wrangler pages deploy",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20251128.0",
+		"@sveltejs/adapter-cloudflare": "^7.2.4",
+		"@sveltejs/adapter-static": "^3.0.10",
+		"@sveltejs/kit": "^2.47.1",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/node": "^24.10.1",
+		"autoprefixer": "^10.4.22",
+		"postcss": "^8.5.6",
+		"svelte": "^5.41.0",
+		"svelte-check": "^4.3.3",
+		"tailwindcss": "^3.4.18",
+		"typescript": "^5.9.3",
+		"vite": "^7.1.10",
+		"wrangler": "^4.51.0"
+	},
+	"dependencies": {
+		"@create-something/components": "workspace:*"
+	}
+}

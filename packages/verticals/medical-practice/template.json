@@ -1,0 +1,122 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Medical Practice",
+  "slug": "medical-practice",
+  "version": "1.0.0",
+  "description": "Production-ready template for medical practices, clinics, and healthcare providers",
+  "category": "healthcare",
+  "subcategories": ["medical-practice", "clinic", "dental", "healthcare"],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency",
+    "support": "https://createsomething.agency/contact"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-medical-practice",
+  "demo": "https://medical-practice.createsomething.space",
+  "thumbnail": "/og-image.jpg",
+  "screenshots": [
+    "/screenshots/home.png",
+    "/screenshots/services.png",
+    "/screenshots/team.png"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "5 core pages",
+        "Canon design system",
+        "SEO/Schema.org",
+        "Mobile responsive",
+        "Contact form",
+        "HIPAA-ready architecture"
+      ]
+    },
+    "pro": {
+      "price": 129,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "3 active WORKWAY workflows",
+        "Appointment booking integration",
+        "Patient reminder system",
+        "Insurance verification",
+        "EHR integration ready",
+        "Custom domain setup",
+        "Email support"
+      ]
+    },
+    "enterprise": {
+      "price": null,
+      "contact": true,
+      "features": [
+        "Everything in Pro",
+        "Unlimited WORKWAY workflows",
+        "Full EHR integration",
+        "Telemedicine platform",
+        "Multi-location support",
+        "Priority support",
+        "Direct .agency consultation"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages",
+    "database": "cloudflare-d1",
+    "storage": "cloudflare-r2",
+    "cache": "cloudflare-kv"
+  },
+  "workflows": {
+    "included": [
+      {
+        "name": "appointment-booking",
+        "description": "Calendar + patient records + notifications",
+        "tier": "pro"
+      },
+      {
+        "name": "appointment-reminder",
+        "description": "24hr/72hr reminders via SMS/email",
+        "tier": "pro"
+      },
+      {
+        "name": "new-patient-intake",
+        "description": "Digital forms + insurance verification",
+        "tier": "pro"
+      }
+    ]
+  },
+  "requirements": {
+    "cloudflare": {
+      "account": true,
+      "d1": true,
+      "kv": true,
+      "r2": "optional"
+    },
+    "optional": {
+      "sendgrid": "Email notifications",
+      "twilio": "SMS reminders",
+      "calendly": "Appointment booking",
+      "athenahealth": "EHR integration"
+    }
+  },
+  "seo": {
+    "schemaTypes": ["MedicalBusiness", "MedicalClinic", "LocalBusiness"],
+    "sitemap": true,
+    "robots": true,
+    "ogImage": true
+  },
+  "keywords": [
+    "medical practice website",
+    "healthcare website template",
+    "clinic website",
+    "doctor website template",
+    "patient portal",
+    "medical website",
+    "cloudflare pages",
+    "sveltekit template"
+  ],
+  "created": "2024-12-13",
+  "updated": "2024-12-13"
+}

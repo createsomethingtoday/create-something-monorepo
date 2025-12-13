@@ -9,6 +9,8 @@ declare global {
 				SITE_BUCKET: R2Bucket;
 				BUILD_QUEUE: Queue;
 				ADMIN_TOKEN?: string;
+				STRIPE_SECRET_KEY: string;
+				STRIPE_WEBHOOK_SECRET: string;
 			};
 		}
 

@@ -34,7 +34,8 @@ Generate deployment commands following the Complementarity Principle.
 cd /Users/micahjohnson/Documents/Github/Create\ Something/create-something-monorepo
 pnpm --filter=[property] build
 cd packages/[property]
-wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-[property]
+# Use exact project name from mapping table below
+wrangler pages deploy .svelte-kit/cloudflare --project-name=[exact-project-name]
 ```
 
 ### Verify
@@ -46,25 +47,31 @@ curl -I https://createsomething.[property]
 ### Monitor (separate terminal)
 
 ```bash
-wrangler pages deployment tail --project-name=createsomething-[property]
+# Use exact project name from mapping table
+wrangler pages deployment tail --project-name=[exact-project-name]
 ```
 
 ### Rollback (If Needed)
 
 ```bash
-wrangler pages deployment list --project-name=createsomething-[property]
-wrangler pages deployment rollback [DEPLOYMENT_ID] --project-name=createsomething-[property]
+# Use exact project name from mapping table
+wrangler pages deployment list --project-name=[exact-project-name]
+wrangler pages deployment rollback [DEPLOYMENT_ID] --project-name=[exact-project-name]
 ```
 ```
 
 ## Project Name Mapping
 
-| Package | Pages Project |
-|---------|---------------|
-| space | createsomething-space |
-| io | createsomething-io |
-| agency | createsomething-agency |
-| ltd | createsomething-ltd |
+**Critical**: Use exact project names. Naming is inconsistent due to historical reasons.
+
+| Package | Cloudflare Pages Project | Domain |
+|---------|--------------------------|--------|
+| space | `create-something-space` | createsomething.space |
+| io | `create-something-io` | createsomething.io |
+| agency | `create-something-agency` | createsomething.agency |
+| ltd | `createsomething-ltd` | createsomething.ltd |
+| lms | `createsomething-lms` | learn.createsomething.space |
+| templates-platform | `templates-platform` | templates.createsomething.space |
 
 ## Complementarity Principle
 

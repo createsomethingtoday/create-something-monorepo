@@ -111,6 +111,7 @@ export interface User {
   avatarUrl?: string;
   plan: 'free' | 'pro' | 'agency';
   siteLimit: number;
+  stripeCustomerId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -119,6 +120,36 @@ export interface Session {
   id: string;
   userId: string;
   expiresAt: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUBSCRIPTION TYPES
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  stripeSubscriptionId: string;
+  stripeCustomerId: string;
+  plan: 'free' | 'pro' | 'agency';
+  status: 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid';
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  canceledAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentHistory {
+  id: string;
+  userId: string;
+  stripePaymentIntentId: string;
+  amount: number; // cents
+  currency: string;
+  status: 'succeeded' | 'pending' | 'failed' | 'canceled';
+  description?: string;
+  createdAt: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -327,6 +327,38 @@ export const PATHS: Path[] = [
       },
     ],
   },
+  {
+    id: 'advanced',
+    title: 'Advanced',
+    subtitle: 'MCP + Hooks + Orchestration',
+    description: 'Deep-dive into custom MCP servers, hook automation, and multi-agent patterns. Tools that recede into transparent use.',
+    principle: 'The tool disappears; only the work remains.',
+    color: 'path-advanced',
+    prerequisites: ['partnership', 'agents'],
+    lessons: [
+      {
+        id: 'mcp-server-development',
+        title: 'MCP Server Development',
+        description: 'Creating custom MCP servers for composed operations.',
+        duration: '45 min',
+        praxis: 'build-mcp-server',
+      },
+      {
+        id: 'custom-hooks',
+        title: 'Custom Hooks',
+        description: 'Implementing Claude Code hooks for automation as dwelling.',
+        duration: '40 min',
+        praxis: 'hook-suite',
+      },
+      {
+        id: 'agent-orchestration',
+        title: 'Agent Orchestration',
+        description: 'Multi-agent patterns and coordination mechanisms.',
+        duration: '50 min',
+        praxis: 'multi-agent-system',
+      },
+    ],
+  },
 ];
 
 /**

@@ -101,10 +101,10 @@ macOS, Linux, Windows—identical behavior. Your muscle memory transfers.
 1. **Claude Code deploys** → WezTerm monitors logs
    ```bash
    # Claude Code executes
-   wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=createsomething-space
+   wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=create-something-space
 
    # User monitors in WezTerm
-   wrangler pages deployment tail --project-name=createsomething-space
+   wrangler pages deployment tail --project-name=create-something-space
    ```
 
 2. **Claude Code writes tests** → WezTerm runs them interactively
@@ -438,13 +438,13 @@ pnpm --filter=space build
 **Tab 2: Deployment** (Claude Code's domain)
 ```bash
 # Claude Code deploys
-wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=createsomething-space
+wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=create-something-space
 ```
 
 **Tab 3: Monitoring** (User's domain)
 ```bash
 # User monitors logs in real-time
-wrangler pages deployment tail --project-name=createsomething-space
+wrangler pages deployment tail --project-name=create-something-space
 
 # User sees actual requests, errors, performance
 [2025-12-13 10:30:45] GET / → 200 (125ms)

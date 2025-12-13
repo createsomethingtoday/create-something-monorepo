@@ -104,7 +104,7 @@ wrangler d1 execute create-something-db --remote --file=packages/agency/migratio
 cd packages/agency && pnpm build
 
 # 3. Deploy to Cloudflare Pages
-wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-agency
+wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-agency
 
 # 4. Set WhatsApp secrets in Cloudflare dashboard (Settings > Variables)
 #    - WHATSAPP_VERIFY_TOKEN (any string you choose)

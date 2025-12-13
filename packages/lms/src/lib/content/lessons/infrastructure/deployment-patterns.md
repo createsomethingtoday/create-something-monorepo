@@ -60,8 +60,9 @@ In Cloudflare dashboard or `wrangler.toml`:
 
 ```toml
 # wrangler.toml for Pages
-name = "createsomething-space"
+name = "create-something-space"
 pages_build_output_dir = ".svelte-kit/cloudflare"
+# Note: Actual project names vary - see .claude/rules/cloudflare-patterns.md
 
 [build]
 command = "pnpm build"

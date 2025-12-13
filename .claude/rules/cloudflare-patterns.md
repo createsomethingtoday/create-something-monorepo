@@ -73,14 +73,14 @@ interface Env {
 
 **Handoff to WezTerm** (not Claude Code's domain):
 ```bash
-# Deploy Pages
-wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-space
+# Deploy Pages (use exact project name from table above)
+wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-space
 
 # Apply migrations
 wrangler d1 migrations apply DB_NAME
 
 # Tail logs
-wrangler pages deployment tail --project-name=createsomething-space
+wrangler pages deployment tail --project-name=create-something-space
 ```
 
 ## Workers
@@ -112,9 +112,20 @@ const users = await cf.d1.query('my-db', 'SELECT * FROM users');
 
 ## Project Names
 
-| Package | Pages Project |
-|---------|---------------|
-| space | createsomething-space |
-| io | createsomething-io |
-| agency | createsomething-agency |
-| ltd | createsomething-ltd |
+**Important**: Cloudflare Pages project names are inconsistent due to historical naming. Always use the exact names below.
+
+| Package | Cloudflare Pages Project | Domain | Naming Pattern |
+|---------|--------------------------|--------|----------------|
+| space | `create-something-space` | createsomething.space | `create-something-*` |
+| io | `create-something-io` | createsomething.io | `create-something-*` |
+| agency | `create-something-agency` | createsomething.agency | `create-something-*` |
+| ltd | `createsomething-ltd` | createsomething.ltd | `createsomething-*` |
+| lms | `createsomething-lms` | learn.createsomething.space | `createsomething-*` |
+| templates-platform | `templates-platform` | templates.createsomething.space | standalone |
+
+**Pattern Notes**:
+- `space`, `io`, `agency` use `create-something-*` (with hyphen between words)
+- `ltd`, `lms` use `createsomething*` (no hyphen between words)
+- `templates-platform` is standalone (no prefix)
+
+**DO NOT** rename these projects in Cloudflare as it would break production deployments.

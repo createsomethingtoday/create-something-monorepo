@@ -134,10 +134,10 @@ Don't repeat yourself—capture patterns:
 
 ```bash
 # Before: typing every time
-pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=createsomething-space
+pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=create-something-space
 
 # After: an alias
-alias deploy-space="pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=createsomething-space"
+alias deploy-space="pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=create-something-space"
 
 # Usage
 deploy-space
