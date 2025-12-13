@@ -4,21 +4,41 @@
 	let { principle, showMaster = false }: { principle: Principle; showMaster?: boolean } = $props();
 </script>
 
-<div class="border border-white/10 p-8">
+<div class="card p-8">
 	<div class="mb-4">
 		{#if principle.order_index}
-			<span class="text-xs font-mono opacity-40">#{principle.order_index}</span>
+			<span class="order-index font-mono">#{principle.order_index}</span>
 		{/if}
 		{#if principle.category}
-			<span class="text-xs uppercase tracking-widest opacity-40 ml-2">{principle.category}</span>
+			<span class="category uppercase tracking-widest ml-2">{principle.category}</span>
 		{/if}
 	</div>
 
-	<h4 class="text-xl font-semibold mb-4">{principle.title}</h4>
+	<h4 class="title font-semibold mb-4">{principle.title}</h4>
 
 	{#if principle.description}
-		<div class="prose prose-sm max-w-none opacity-70">
+		<div class="description prose prose-sm max-w-none">
 			{@html principle.description}
 		</div>
 	{/if}
 </div>
+
+<style>
+	.card {
+		border: 1px solid var(--color-border-default);
+	}
+
+	.order-index,
+	.category {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.title {
+		font-size: var(--text-body-lg);
+	}
+
+	.description {
+		color: var(--color-fg-tertiary);
+	}
+</style>

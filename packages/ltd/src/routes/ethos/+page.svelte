@@ -11,22 +11,24 @@
 </svelte:head>
 
 <!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-white/10">
+<section class="header-section px-6">
 	<div class="max-w-4xl mx-auto text-center">
-		<p class="text-sm tracking-widest uppercase opacity-60 mb-4">Our Philosophy</p>
+		<p class="eyebrow mb-4">Our Philosophy</p>
 		<h1 class="mb-6">Ethos</h1>
-		<p class="text-xl opacity-70 leading-relaxed">
+		<p class="intro-text leading-relaxed">
 			How we apply the canon of "less, but better" across the Create Something ecosystem.
 		</p>
 	</div>
 </section>
+
+
 
 <!-- Core Philosophy -->
 <section class="py-16 px-6">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Less, But Better</h2>
 
-		<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
 			<p>
 				<strong>This isn't minimalism for aesthetics.</strong> It's discipline for clarity. It's constraint
 				for excellence.
@@ -51,51 +53,51 @@
 </section>
 
 <!-- The Subtractive Triad -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">The Subtractive Triad</h2>
 
-		<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
 			<p>
 				<strong>Creation is the discipline of removing what obscures.</strong> This meta-principle
 				manifests at three levels, each with its own question:
 			</p>
 		</div>
 
-		<div class="mt-8 border border-white/10">
+		<div class="mt-8 border border-canon">
 			<table class="w-full text-left">
-				<thead class="border-b border-white/10">
+				<thead class="border-b border-canon">
 					<tr>
-						<th class="px-6 py-4 text-sm font-semibold opacity-60">Level</th>
-						<th class="px-6 py-4 text-sm font-semibold opacity-60">Discipline</th>
-						<th class="px-6 py-4 text-sm font-semibold opacity-60">Question</th>
-						<th class="px-6 py-4 text-sm font-semibold opacity-60">Action</th>
+						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Level</th>
+						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Discipline</th>
+						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Question</th>
+						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Action</th>
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-white/10">
+				<tbody class="divide-y divide-canon">
 					<tr>
 						<td class="px-6 py-4 font-medium">Implementation</td>
-						<td class="px-6 py-4 opacity-70">DRY</td>
-						<td class="px-6 py-4 opacity-70">"Have I built this before?"</td>
-						<td class="px-6 py-4 opacity-70">Unify</td>
+						<td class="px-6 py-4 opacity-70-canon">DRY</td>
+						<td class="px-6 py-4 opacity-70-canon">"Have I built this before?"</td>
+						<td class="px-6 py-4 opacity-70-canon">Unify</td>
 					</tr>
 					<tr>
 						<td class="px-6 py-4 font-medium">Artifact</td>
-						<td class="px-6 py-4 opacity-70">Rams</td>
-						<td class="px-6 py-4 opacity-70">"Does this earn its existence?"</td>
-						<td class="px-6 py-4 opacity-70">Remove</td>
+						<td class="px-6 py-4 opacity-70-canon">Rams</td>
+						<td class="px-6 py-4 opacity-70-canon">"Does this earn its existence?"</td>
+						<td class="px-6 py-4 opacity-70-canon">Remove</td>
 					</tr>
 					<tr>
 						<td class="px-6 py-4 font-medium">System</td>
-						<td class="px-6 py-4 opacity-70">Heidegger</td>
-						<td class="px-6 py-4 opacity-70">"Does this serve the whole?"</td>
-						<td class="px-6 py-4 opacity-70">Reconnect</td>
+						<td class="px-6 py-4 opacity-70-canon">Heidegger</td>
+						<td class="px-6 py-4 opacity-70-canon">"Does this serve the whole?"</td>
+						<td class="px-6 py-4 opacity-70-canon">Reconnect</td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
 
-		<div class="mt-8 space-y-6 text-lg opacity-80 leading-relaxed">
+		<div class="mt-8 space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
 			<p>
 				The triad is coherent because it's <strong>one principle</strong>—subtractive
 				revelation—applied at <strong>three scales</strong>. Truth emerges through disciplined
@@ -110,9 +112,9 @@
 
 		<!-- Visual Demonstration -->
 		<div class="mt-12">
-			<p class="text-sm uppercase tracking-widest opacity-40 mb-4">Visual Demonstration</p>
+			<p class="text-sm-canon uppercase tracking-widest opacity-40-canon mb-4">Visual Demonstration</p>
 			<SubtractiveTriadAnimation />
-			<p class="mt-4 text-sm opacity-50 italic">
+			<p class="mt-4 text-sm-canon opacity-50-canon italic">
 				Inspired by Gabriel Santos (Stone Story RPG): "I start with the full pyramid and I erase it
 				layer by layer."
 			</p>
@@ -121,40 +123,40 @@
 </section>
 
 <!-- Standards for Each Domain -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-5xl mx-auto">
 		<h2 class="mb-12 text-center">Standards Across the Ecosystem</h2>
 
 		<div class="space-y-12">
 			<!-- .io Standards -->
-			<div class="border border-white/10 p-8">
+			<div class="border border-canon p-8">
 				<div class="mb-6">
-					<span class="text-xs font-mono opacity-40">.io</span>
-					<h3 class="text-2xl font-semibold mt-2">Research Standards</h3>
+					<span class="text-xs-canon font-mono opacity-40-canon">.io</span>
+					<h3 class="text-2xl-canon font-semibold mt-2">Research Standards</h3>
 				</div>
 
-				<ul class="space-y-4 text-base opacity-70">
+				<ul class="space-y-4 text-base-canon opacity-70-canon">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Every paper must answer: <strong>Is this useful?</strong> Not interesting, not novel—useful.</span
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Findings must be <strong>reproducible</strong>. Methodology transparent. Metrics honest.</span
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Writing serves the reader. <strong>Clarity over cleverness.</strong> Simple language over
 							jargon.</span
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>If a principle from .ltd applies, cite it. <strong
 								>Connect theory to the lineage.</strong
@@ -165,34 +167,34 @@
 			</div>
 
 			<!-- .space Standards -->
-			<div class="border border-white/10 p-8">
+			<div class="border border-canon p-8">
 				<div class="mb-6">
-					<span class="text-xs font-mono opacity-40">.space</span>
-					<h3 class="text-2xl font-semibold mt-2">Practice Standards</h3>
+					<span class="text-xs-canon font-mono opacity-40-canon">.space</span>
+					<h3 class="text-2xl-canon font-semibold mt-2">Practice Standards</h3>
 				</div>
 
-				<ul class="space-y-4 text-base opacity-70">
+				<ul class="space-y-4 text-base-canon opacity-70-canon">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Every experiment must <strong>teach a principle</strong>, not just a technique.</span
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Interfaces are minimal. <strong>Zero decoration.</strong> Only essential feedback.</span
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Success is completion, not clicks. <strong>Measure learning, not engagement.</strong
 							></span
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Link to .io for depth, to .ltd for philosophy. <strong
 								>Practice without context is shallow.</strong
@@ -203,15 +205,15 @@
 			</div>
 
 			<!-- .agency Standards -->
-			<div class="border border-white/10 p-8">
+			<div class="border border-canon p-8">
 				<div class="mb-6">
-					<span class="text-xs font-mono opacity-40">.agency</span>
-					<h3 class="text-2xl font-semibold mt-2">Service Standards</h3>
+					<span class="text-xs-canon font-mono opacity-40-canon">.agency</span>
+					<h3 class="text-2xl-canon font-semibold mt-2">Service Standards</h3>
 				</div>
 
-				<ul class="space-y-4 text-base opacity-70">
+				<ul class="space-y-4 text-base-canon opacity-70-canon">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Delivered work must meet canonical standards. <strong
 								>No shortcuts, no compromises.</strong
@@ -219,13 +221,13 @@
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Solutions solve problems. <strong>Not features for features' sake.</strong></span
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Documentation is complete. Code is readable. <strong
 								>Future maintainers are users too.</strong
@@ -233,7 +235,7 @@
 						>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span
 							>Case studies cite which .ltd principles were applied. <strong
 								>Proof, not just claims.</strong
@@ -247,11 +249,11 @@
 </section>
 
 <!-- The Hermeneutic Circle -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">The Hermeneutic Circle</h2>
 
-		<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
 			<p>
 				.ltd provides the <strong>horizon of understanding</strong> for everything else. You can't
 				evaluate research (.io) without standards. You can't design practice (.space) without
@@ -264,8 +266,8 @@
 				validation.
 			</p>
 
-			<div class="mt-12 p-8 border border-white/10">
-				<pre class="text-sm opacity-60 font-mono leading-relaxed overflow-x-auto">
+			<div class="mt-12 p-8 border border-canon">
+				<pre class="text-sm-canon opacity-60-canon font-mono leading-relaxed overflow-x-auto">
 .ltd (STANDARDS)
     ↓ provides criteria
 .io (RESEARCH)
@@ -281,3 +283,90 @@
 	</div>
 </section>
 
+<style>
+	.header-section {
+		padding-top: var(--space-2xl);
+		padding-bottom: var(--space-xl);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.eyebrow {
+		font-size: var(--text-body-sm);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--color-fg-tertiary);
+	}
+
+	.intro-text {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.text-sm-canon {
+		font-size: var(--text-body-sm);
+	}
+
+	.text-lg-canon {
+		font-size: var(--text-body-lg);
+	}
+
+	.text-xl-canon {
+		font-size: var(--text-h3);
+	}
+
+	.text-xs-canon {
+		font-size: var(--text-caption);
+	}
+
+	.text-base-canon {
+		font-size: var(--text-body);
+	}
+
+	.text-2xl-canon {
+		font-size: var(--text-h2);
+	}
+
+	.opacity-40-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-50-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-60-canon {
+		color: var(--color-fg-tertiary);
+	}
+
+	.opacity-70-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	.opacity-80-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	.border-canon {
+		border-color: var(--color-border-default);
+	}
+
+	.border-emphasis {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.divide-canon > * + * {
+		border-color: var(--color-border-default);
+	}
+
+	section {
+		border-color: var(--color-border-default);
+	}
+
+	table {
+		border-color: var(--color-border-default);
+	}
+
+	thead {
+		border-color: var(--color-border-default);
+	}
+</style>

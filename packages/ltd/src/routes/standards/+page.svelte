@@ -7,11 +7,11 @@
 </svelte:head>
 
 <!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-white/10">
+<section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-4xl mx-auto text-center">
-		<p class="text-sm tracking-widest uppercase opacity-60 mb-4">The Canon</p>
+		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
 		<h1 class="mb-6">Standards</h1>
-		<p class="text-xl opacity-70 leading-relaxed">
+		<p class="text-xl-canon opacity-70-canon leading-relaxed">
 			Codified criteria for evaluating work. Every project, experiment, and deliverable must meet these standards.
 		</p>
 	</div>
@@ -23,37 +23,37 @@
 		<h2 class="mb-8">Universal Standards</h2>
 
 		<div class="space-y-8">
-			<div class="border-l-2 border-white/20 pl-6">
-				<h3 class="text-xl font-semibold mb-3">1. Justification</h3>
-				<p class="opacity-70 leading-relaxed">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">1. Justification</h3>
+				<p class="opacity-70-canon leading-relaxed">
 					Every element must justify its existence. If it cannot, it must be removed. Decoration is dishonest. Complexity is lazy.
 				</p>
 			</div>
 
-			<div class="border-l-2 border-white/20 pl-6">
-				<h3 class="text-xl font-semibold mb-3">2. Clarity</h3>
-				<p class="opacity-70 leading-relaxed">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">2. Clarity</h3>
+				<p class="opacity-70-canon leading-relaxed">
 					Purpose must be immediately clear. Users should understand without explanation. Code should read like prose.
 				</p>
 			</div>
 
-			<div class="border-l-2 border-white/20 pl-6">
-				<h3 class="text-xl font-semibold mb-3">3. Honesty</h3>
-				<p class="opacity-70 leading-relaxed">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">3. Honesty</h3>
+				<p class="opacity-70-canon leading-relaxed">
 					Metrics must be accurate. Claims must be verifiable. Failures must be documented alongside successes.
 				</p>
 			</div>
 
-			<div class="border-l-2 border-white/20 pl-6">
-				<h3 class="text-xl font-semibold mb-3">4. Longevity</h3>
-				<p class="opacity-70 leading-relaxed">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">4. Longevity</h3>
+				<p class="opacity-70-canon leading-relaxed">
 					Build for years, not quarters. Solutions should age well. Avoid trends. Embrace timeless principles.
 				</p>
 			</div>
 
-			<div class="border-l-2 border-white/20 pl-6">
-				<h3 class="text-xl font-semibold mb-3">5. Unobtrusiveness</h3>
-				<p class="opacity-70 leading-relaxed">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">5. Unobtrusiveness</h3>
+				<p class="opacity-70-canon leading-relaxed">
 					Tools serve users, not egos. The best interface is invisible. The best code requires no comments.
 				</p>
 			</div>
@@ -62,87 +62,87 @@
 </section>
 
 <!-- Domain-Specific Standards -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-5xl mx-auto">
 		<h2 class="mb-12 text-center">Standards Across the Ecosystem</h2>
 
 		<div class="space-y-12">
 			<!-- .io Standards -->
-			<div class="border border-white/10 p-8">
+			<div class="border border-canon p-8">
 				<div class="mb-6">
-					<span class="text-xs font-mono opacity-40">.io</span>
-					<h3 class="text-2xl font-semibold mt-2">Research Standards</h3>
+					<span class="text-xs-canon font-mono opacity-40-canon">.io</span>
+					<h3 class="text-2xl-canon font-semibold mt-2">Research Standards</h3>
 				</div>
 
-				<ul class="space-y-4 text-base opacity-70">
+				<ul class="space-y-4 text-base-canon opacity-70-canon">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Every paper must answer: <strong>Is this useful?</strong> Not interesting, not novel—useful.</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Findings must be <strong>reproducible</strong>. Methodology transparent. Metrics honest.</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Writing serves the reader. <strong>Clarity over cleverness.</strong> Simple language over jargon.</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>If a principle from .ltd applies, cite it. <strong>Connect theory to the lineage.</strong></span>
 					</li>
 				</ul>
 			</div>
 
 			<!-- .space Standards -->
-			<div class="border border-white/10 p-8">
+			<div class="border border-canon p-8">
 				<div class="mb-6">
-					<span class="text-xs font-mono opacity-40">.space</span>
-					<h3 class="text-2xl font-semibold mt-2">Practice Standards</h3>
+					<span class="text-xs-canon font-mono opacity-40-canon">.space</span>
+					<h3 class="text-2xl-canon font-semibold mt-2">Practice Standards</h3>
 				</div>
 
-				<ul class="space-y-4 text-base opacity-70">
+				<ul class="space-y-4 text-base-canon opacity-70-canon">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Every experiment must <strong>teach a principle</strong>, not just a technique.</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Interfaces are minimal. <strong>Zero decoration.</strong> Only essential feedback.</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Success is completion, not clicks. <strong>Measure learning, not engagement.</strong></span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Link to .io for depth, to .ltd for philosophy. <strong>Practice without context is shallow.</strong></span>
 					</li>
 				</ul>
 			</div>
 
 			<!-- .agency Standards -->
-			<div class="border border-white/10 p-8">
+			<div class="border border-canon p-8">
 				<div class="mb-6">
-					<span class="text-xs font-mono opacity-40">.agency</span>
-					<h3 class="text-2xl font-semibold mt-2">Service Standards</h3>
+					<span class="text-xs-canon font-mono opacity-40-canon">.agency</span>
+					<h3 class="text-2xl-canon font-semibold mt-2">Service Standards</h3>
 				</div>
 
-				<ul class="space-y-4 text-base opacity-70">
+				<ul class="space-y-4 text-base-canon opacity-70-canon">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Delivered work must meet canonical standards. <strong>No shortcuts, no compromises.</strong></span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Solutions solve problems. <strong>Not features for features' sake.</strong></span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Documentation is complete. Code is readable. <strong>Future maintainers are users too.</strong></span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="opacity-40-canon mt-1">—</span>
 						<span>Case studies cite which .ltd principles were applied. <strong>Proof, not just claims.</strong></span>
 					</li>
 				</ul>
@@ -152,85 +152,85 @@
 </section>
 
 <!-- CSS Architecture Standard -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">CSS Architecture</h2>
 
-		<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
 			<p>
 				<strong>Tailwind for structure, Canon for aesthetics.</strong> This separation resolves the hermeneutic tension between utility frameworks and design tokens.
 			</p>
 
 			<p>
-				The canon defines design tokens as CSS custom properties in <code class="text-sm bg-white/10 px-2 py-1">app.css</code>. These are the ontological ground—what things <em>are</em> in this system. Tailwind introduces a parallel ontology that competes with the canon.
+				The canon defines design tokens as CSS custom properties in <code class="text-sm-canon bg-surface px-2 py-1">app.css</code>. These are the ontological ground—what things <em>are</em> in this system. Tailwind introduces a parallel ontology that competes with the canon.
 			</p>
 		</div>
 
-		<div class="mt-8 border border-white/10">
+		<div class="mt-8 border border-canon">
 			<table class="w-full text-left">
-				<thead class="border-b border-white/10">
+				<thead class="border-b border-canon">
 					<tr>
-						<th class="px-6 py-4 text-sm font-semibold opacity-60">Category</th>
-						<th class="px-6 py-4 text-sm font-semibold opacity-60">Tailwind</th>
-						<th class="px-6 py-4 text-sm font-semibold opacity-60">Canon</th>
+						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Category</th>
+						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Tailwind</th>
+						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Canon</th>
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-white/10">
+				<tbody class="divide-y divide-canon">
 					<tr>
 						<td class="px-6 py-4 font-medium">Layout</td>
-						<td class="px-6 py-4 opacity-70 text-green-400">✓ Use</td>
-						<td class="px-6 py-4 opacity-50">Not defined</td>
+						<td class="px-6 py-4 opacity-70-canon text-success">✓ Use</td>
+						<td class="px-6 py-4 opacity-50-canon">Not defined</td>
 					</tr>
 					<tr>
 						<td class="px-6 py-4 font-medium">Border Radius</td>
-						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70 text-green-400">var(--radius-*)</td>
+						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70-canon text-success">var(--radius-*)</td>
 					</tr>
 					<tr>
 						<td class="px-6 py-4 font-medium">Colors</td>
-						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70 text-green-400">var(--color-*)</td>
+						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70-canon text-success">var(--color-*)</td>
 					</tr>
 					<tr>
 						<td class="px-6 py-4 font-medium">Spacing</td>
-						<td class="px-6 py-4 opacity-70 text-yellow-400">~ Acceptable</td>
-						<td class="px-6 py-4 opacity-70 text-green-400">var(--space-*)</td>
+						<td class="px-6 py-4 opacity-70-canon text-warning">~ Acceptable</td>
+						<td class="px-6 py-4 opacity-70-canon text-success">var(--space-*)</td>
 					</tr>
 					<tr>
 						<td class="px-6 py-4 font-medium">Typography</td>
-						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70 text-green-400">var(--text-*)</td>
+						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70-canon text-success">var(--text-*)</td>
 					</tr>
 					<tr>
 						<td class="px-6 py-4 font-medium">Shadows</td>
-						<td class="px-6 py-4 opacity-70 text-red-400">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70 text-green-400">var(--shadow-*)</td>
+						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
+						<td class="px-6 py-4 opacity-70-canon text-success">var(--shadow-*)</td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
 
 		<div class="mt-8 space-y-6">
-			<div class="border-l-2 border-white/20 pl-6">
-				<h3 class="text-xl font-semibold mb-3">Layout Utilities (Keep)</h3>
-				<p class="opacity-70 leading-relaxed mb-3">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">Layout Utilities (Keep)</h3>
+				<p class="opacity-70-canon leading-relaxed mb-3">
 					Tailwind's layout utilities don't conflict with the canon because CSS Flexbox and Grid are universal primitives, not design decisions.
 				</p>
-				<code class="text-sm opacity-60 font-mono">flex, grid, items-center, justify-between, relative, absolute, w-full, gap-*</code>
+				<code class="text-sm-canon opacity-60-canon font-mono">flex, grid, items-center, justify-between, relative, absolute, w-full, gap-*</code>
 			</div>
 
-			<div class="border-l-2 border-white/20 pl-6">
-				<h3 class="text-xl font-semibold mb-3">Design Utilities (Migrate)</h3>
-				<p class="opacity-70 leading-relaxed mb-3">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">Design Utilities (Migrate)</h3>
+				<p class="opacity-70-canon leading-relaxed mb-3">
 					Design utilities compete with canonical tokens. Use CSS custom properties instead to maintain hermeneutic coherence.
 				</p>
-				<code class="text-sm opacity-60 font-mono">rounded-*, bg-*, text-*, border-*, shadow-* → var(--*)</code>
+				<code class="text-sm-canon opacity-60-canon font-mono">rounded-*, bg-*, text-*, border-*, shadow-* → var(--*)</code>
 			</div>
 		</div>
 
-		<div class="mt-8 p-6 border border-white/10 bg-white/5">
-			<p class="text-sm font-mono opacity-60 mb-4">The Principle:</p>
-			<p class="text-lg italic opacity-80">
+		<div class="mt-8 p-6 border border-canon bg-surface-subtle">
+			<p class="text-sm-canon font-mono opacity-60-canon mb-4">The Principle:</p>
+			<p class="text-lg-canon italic opacity-80-canon">
 				"Tailwind provides syntax for structure. The canon provides semantics for aesthetics. When they compete, the canon wins."
 			</p>
 		</div>
@@ -238,14 +238,14 @@
 </section>
 
 <!-- Evaluation Checklist -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Evaluation Checklist</h2>
 
-		<div class="space-y-6 text-base opacity-70">
+		<div class="space-y-6 text-base-canon opacity-70-canon">
 			<p>Before shipping any work, ask:</p>
 
-			<div class="border border-white/10 p-6 space-y-3">
+			<div class="border border-canon p-6 space-y-3">
 				<label class="flex items-start gap-3 cursor-pointer">
 					<input type="checkbox" class="mt-1" disabled />
 					<span>Can I remove anything without losing function?</span>
@@ -272,9 +272,149 @@
 				</label>
 			</div>
 
-			<p class="text-sm opacity-60 italic pt-4">
+			<p class="text-sm-canon opacity-60-canon italic pt-4">
 				If any answer is "no," the work is not ready.
 			</p>
 		</div>
 	</div>
 </section>
+
+<style>
+	/* Typography */
+	.text-xs-canon {
+		font-size: var(--text-caption);
+	}
+
+	.text-sm-canon {
+		font-size: var(--text-body-sm);
+	}
+
+	.text-base-canon {
+		font-size: var(--text-body);
+	}
+
+	.text-lg-canon {
+		font-size: var(--text-body-lg);
+	}
+
+	.text-xl-canon {
+		font-size: var(--text-h3);
+	}
+
+	.text-2xl-canon {
+		font-size: var(--text-h2);
+	}
+
+	.text-3xl-canon {
+		font-size: var(--text-h1);
+	}
+
+	/* Opacity as color tokens */
+	.opacity-40-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-50-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-60-canon {
+		color: var(--color-fg-tertiary);
+	}
+
+	.opacity-70-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	.opacity-80-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Borders */
+	.border-canon {
+		border-color: var(--color-border-default);
+	}
+
+	.border-emphasis {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.border-hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.divide-canon > * + * {
+		border-color: var(--color-border-default);
+	}
+
+	/* Backgrounds */
+	.bg-surface-subtle {
+		background: var(--color-bg-subtle);
+	}
+
+	.bg-surface {
+		background: var(--color-bg-surface);
+	}
+
+	/* Semantic colors */
+	.text-success {
+		color: #4ade80;
+	}
+
+	.text-error {
+		color: #f87171;
+	}
+
+	.text-warning {
+		color: #fbbf24;
+	}
+
+	.bg-success-subtle {
+		background: rgba(74, 222, 128, 0.05);
+	}
+
+	.bg-success-muted {
+		background: rgba(74, 222, 128, 0.1);
+	}
+
+	.bg-error-subtle {
+		background: rgba(248, 113, 113, 0.05);
+	}
+
+	.bg-error-muted {
+		background: rgba(248, 113, 113, 0.1);
+	}
+
+	.bg-warning-subtle {
+		background: rgba(251, 191, 36, 0.05);
+	}
+
+	.bg-warning-muted {
+		background: rgba(251, 191, 36, 0.1);
+	}
+
+	.border-success {
+		border-color: rgba(74, 222, 128, 0.2);
+	}
+
+	.border-error {
+		border-color: rgba(248, 113, 113, 0.2);
+	}
+
+	.border-warning {
+		border-color: rgba(251, 191, 36, 0.2);
+	}
+
+	/* Universal element styles */
+	section {
+		border-color: var(--color-border-default);
+	}
+
+	table {
+		border-color: var(--color-border-default);
+	}
+
+	thead {
+		border-color: var(--color-border-default);
+	}
+</style>
