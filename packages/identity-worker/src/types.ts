@@ -9,6 +9,7 @@ export interface Env {
 	DB: D1Database;
 	ENVIRONMENT: string;
 	ALLOWED_ORIGINS: string;
+	RESEND_API_KEY?: string;
 }
 
 // Database models
