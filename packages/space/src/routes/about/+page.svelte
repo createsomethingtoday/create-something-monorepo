@@ -1,11 +1,5 @@
 <script lang="ts">
-	import { Footer } from '@create-something/components';
-
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Experiments', href: '/experiments' },
-		{ label: 'Methodology', href: '/methodology' }
-	];
+	// Footer is provided by +layout.svelte
 </script>
 
 <svelte:head>
@@ -126,14 +120,6 @@
 			</div>
 		</div>
 	</section>
-
-	<Footer
-		mode="space"
-		showNewsletter={false}
-		aboutText="Community playground for AI-native development experiments. Fork experiments, break things, learn in public."
-		quickLinks={quickLinks}
-		showSocial={true}
-	/>
 
 <style>
 	.hero-title {
