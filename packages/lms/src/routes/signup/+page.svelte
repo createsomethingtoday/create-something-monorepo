@@ -2,11 +2,12 @@
 	/**
 	 * Signup Page
 	 *
+	 * Registers via Identity Worker for unified CREATE SOMETHING identity.
+	 *
 	 * Canon: Creation begins with a single step.
 	 */
 
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 
 	let name = $state('');
 	let email = $state('');
@@ -28,21 +29,25 @@
 		loading = true;
 
 		try {
-			const response = await fetch('/api/auth/signup', {
+			const response = await fetch('https://id.createsomething.space/v1/auth/register', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name, email, password }),
+				body: JSON.stringify({ name, email, password, source: 'lms' }),
 			});
 
-			const data = (await response.json()) as { message?: string };
+			const data = await response.json();
 
 			if (!response.ok) {
 				error = data.message || 'Signup failed';
 				return;
 			}
 
+			// Set cookies with cross-subdomain scope for unified identity
+			document.cookie = `cs_access_token=${data.access_token}; path=/; domain=.createsomething.space; max-age=${data.expires_in}; secure; samesite=lax`;
+			document.cookie = `cs_refresh_token=${data.refresh_token}; path=/; domain=.createsomething.space; max-age=604800; secure; samesite=lax`;
+
 			// Redirect on success
-			goto(redirectTo);
+			window.location.href = redirectTo;
 		} catch {
 			error = 'An error occurred. Please try again.';
 		} finally {

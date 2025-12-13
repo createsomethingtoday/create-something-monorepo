@@ -89,11 +89,22 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	// Protected routes - require authentication
-	const protectedPaths = ['/dashboard'];
+	const protectedPaths = ['/dashboard', '/admin'];
 	const isProtected = protectedPaths.some((path) => event.url.pathname.startsWith(path));
 
 	if (isProtected && !event.locals.user) {
 		throw redirect(302, `/login?redirect=${encodeURIComponent(event.url.pathname)}`);
+	}
+
+	// Admin routes - require additional authorization
+	// TODO: Add role/tier check once admin roles are defined in Identity Worker
+	const adminPaths = ['/admin'];
+	const isAdminRoute = adminPaths.some((path) => event.url.pathname.startsWith(path));
+
+	if (isAdminRoute && event.locals.user) {
+		// For now, admin access is allowed for any authenticated user
+		// This should be restricted to specific users/roles in production
+		// Example: if (!event.locals.user.isAdmin) throw redirect(302, '/dashboard');
 	}
 
 	return resolve(event);
