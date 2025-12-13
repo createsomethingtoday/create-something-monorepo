@@ -13,6 +13,7 @@ declare global {
 			user?: {
 				id: string;
 				email: string;
+				name?: string;
 				tier: 'free' | 'pro' | 'agency';
 				source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
 			};
