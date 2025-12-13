@@ -1,0 +1,129 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Personal Injury Boutique",
+  "slug": "personal-injury",
+  "version": "1.0.0",
+  "description": "High-converting template for personal injury law firms with case screening, 24/7 availability, and contingency fee messaging",
+  "category": "legal",
+  "subcategories": ["personal-injury", "law-firm", "boutique"],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency",
+    "support": "https://createsomething.agency/contact"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-personal-injury",
+  "demo": "https://personal-injury.createsomething.space",
+  "thumbnail": "/og-image.jpg",
+  "screenshots": [
+    "/screenshots/home.png",
+    "/screenshots/accident-types.png",
+    "/screenshots/results.png",
+    "/screenshots/intake-form.png"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "6 core pages",
+        "Canon design system",
+        "24/7 availability banner",
+        "Contingency fee explainer",
+        "Accident type categories",
+        "Recovery results showcase",
+        "SEO/Schema.org",
+        "Mobile responsive",
+        "Basic intake form"
+      ]
+    },
+    "pro": {
+      "price": 149,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "Case screening automation",
+        "Hot lead detection",
+        "Slack urgent case alerts",
+        "Clio CRM integration via WORKWAY",
+        "Calendly calendar integration",
+        "Statute of limitations tracking",
+        "Guided custom domain setup",
+        "Email support"
+      ]
+    },
+    "enterprise": {
+      "price": null,
+      "contact": true,
+      "features": [
+        "Everything in Pro",
+        "Unlimited WORKWAY workflows",
+        "Multi-attorney routing",
+        "Medical records request automation",
+        "Settlement pipeline dashboard",
+        "Done-for-you domain setup",
+        "Priority support",
+        "Direct .agency consultation"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages",
+    "database": "cloudflare-d1",
+    "storage": "cloudflare-r2",
+    "cache": "cloudflare-kv"
+  },
+  "workflows": {
+    "included": [
+      {
+        "name": "pi-intake-to-clio",
+        "description": "Accident intake → Clio contact + PI matter with screening",
+        "tier": "pro"
+      },
+      {
+        "name": "case-screening",
+        "description": "Auto-qualify leads based on severity, fault, and statute",
+        "tier": "pro"
+      },
+      {
+        "name": "urgent-case-alert",
+        "description": "Slack notification for hot leads (severe/catastrophic)",
+        "tier": "pro"
+      }
+    ]
+  },
+  "requirements": {
+    "cloudflare": {
+      "account": true,
+      "d1": true,
+      "kv": true,
+      "r2": "optional"
+    },
+    "optional": {
+      "slack": "Urgent case alerts",
+      "sendgrid": "Email notifications",
+      "calendly": "Free case review booking",
+      "clio": "Legal practice management"
+    }
+  },
+  "seo": {
+    "schemaTypes": ["LegalService", "Attorney", "LocalBusiness"],
+    "sitemap": true,
+    "robots": true,
+    "ogImage": true
+  },
+  "keywords": [
+    "personal injury website",
+    "PI attorney template",
+    "accident lawyer website",
+    "injury law firm",
+    "contingency fee",
+    "case screening",
+    "legal lead generation",
+    "cloudflare pages",
+    "sveltekit template"
+  ],
+  "created": "2024-12-11",
+  "updated": "2024-12-11"
+}

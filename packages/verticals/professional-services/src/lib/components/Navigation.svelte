@@ -12,11 +12,8 @@
 	 */
 
 	import { page } from '$app/stores';
-	import { slide, fade } from 'svelte/transition';
-	import { getSiteConfigFromContext } from '$lib/config/context';
+	import { siteConfig } from '$lib/config/context';
 	import { onMount } from 'svelte';
-
-	const siteConfig = getSiteConfigFromContext();
 
 	let mobileMenuOpen = $state(false);
 	let scrolled = $state(false);
@@ -45,7 +42,7 @@
 <nav class="nav" class:nav--scrolled={scrolled}>
 	<div class="nav-container">
 		<a href="/" class="logo">
-			<span class="logo-text">{siteConfig.name}</span>
+			<span class="logo-text">{$siteConfig.name}</span>
 		</a>
 
 		<!-- Desktop Navigation -->
@@ -75,14 +72,13 @@
 
 	<!-- Mobile Menu -->
 	{#if mobileMenuOpen}
-		<div class="mobile-menu" transition:slide={{ duration: 200 }}>
+		<div class="mobile-menu animate-slide-down">
 			{#each navLinks as link, index}
 				<a
 					href={link.href}
-					class="mobile-nav-link"
+					class="mobile-nav-link animate-fade-in"
 					onclick={() => (mobileMenuOpen = false)}
-					style="--index: {index}"
-					transition:fade={{ delay: index * 50, duration: 150 }}
+					style="--delay: {index}"
 				>
 					{link.label}
 				</a>
@@ -255,6 +251,34 @@
 		opacity: 0.7;
 	}
 
+	/* Animations */
+	.animate-slide-down {
+		animation: slideDown 0.2s ease-out forwards;
+	}
+
+	.animate-fade-in {
+		opacity: 0;
+		animation: fadeIn 0.15s ease-out forwards;
+		animation-delay: calc(var(--delay, 0) * 50ms);
+	}
+
+	@keyframes slideDown {
+		from {
+			opacity: 0;
+			transform: translateY(-8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes fadeIn {
+		to {
+			opacity: 1;
+		}
+	}
+
 	/* Reduced motion */
 	@media (prefers-reduced-motion: reduce) {
 		.nav,
@@ -262,8 +286,13 @@
 		.nav-link,
 		.hamburger,
 		.hamburger::before,
-		.hamburger::after {
+		.hamburger::after,
+		.animate-slide-down,
+		.animate-fade-in {
 			transition: none;
+			animation: none;
+			opacity: 1;
+			transform: none;
 		}
 	}
 </style>

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Professional Services",
+  "slug": "professional-services",
+  "version": "1.0.0",
+  "description": "Production-ready template for law firms, accounting practices, and consulting businesses",
+  "category": "professional-services",
+  "subcategories": ["law-firm", "accounting", "consulting", "financial-services"],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency",
+    "support": "https://createsomething.agency/contact"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-professional-services",
+  "demo": "https://professional-services.createsomething.space",
+  "thumbnail": "/og-image.jpg",
+  "screenshots": [
+    "/screenshots/home.png",
+    "/screenshots/services.png",
+    "/screenshots/contact.png"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "5 core pages",
+        "Canon design system",
+        "SEO/Schema.org",
+        "Mobile responsive",
+        "Consultation form",
+        "Workflow stubs"
+      ]
+    },
+    "pro": {
+      "price": 99,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "3 active WORKWAY workflows",
+        "Automated appointment reminders",
+        "Post-meeting follow-up automation",
+        "HubSpot CRM integration",
+        "Calendly calendar integration",
+        "Guided custom domain setup",
+        "Email support"
+      ]
+    },
+    "enterprise": {
+      "price": null,
+      "contact": true,
+      "features": [
+        "Everything in Pro",
+        "Unlimited WORKWAY workflows",
+        "Any CRM integration",
+        "Any calendar integration",
+        "Done-for-you domain setup",
+        "Priority support",
+        "Direct .agency consultation"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages",
+    "database": "cloudflare-d1",
+    "storage": "cloudflare-r2",
+    "cache": "cloudflare-kv"
+  },
+  "workflows": {
+    "included": [
+      {
+        "name": "consultation-booking",
+        "description": "Calendar + CRM + email notifications",
+        "tier": "pro"
+      },
+      {
+        "name": "appointment-reminder",
+        "description": "24hr SMS/email reminders",
+        "tier": "pro"
+      },
+      {
+        "name": "post-meeting-followup",
+        "description": "Thank you + proposal + review request",
+        "tier": "pro"
+      }
+    ]
+  },
+  "requirements": {
+    "cloudflare": {
+      "account": true,
+      "d1": true,
+      "kv": true,
+      "r2": "optional"
+    },
+    "optional": {
+      "sendgrid": "Email notifications",
+      "twilio": "SMS notifications",
+      "calendly": "Calendar booking",
+      "hubspot": "CRM integration"
+    }
+  },
+  "seo": {
+    "schemaTypes": ["ProfessionalService", "LocalBusiness", "Organization"],
+    "sitemap": true,
+    "robots": true,
+    "ogImage": true
+  },
+  "keywords": [
+    "law firm website",
+    "attorney website template",
+    "accounting firm website",
+    "CPA website template",
+    "consulting website",
+    "professional services",
+    "cloudflare pages",
+    "sveltekit template"
+  ],
+  "created": "2024-12-10",
+  "updated": "2024-12-10"
+}

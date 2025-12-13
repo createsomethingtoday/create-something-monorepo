@@ -14,7 +14,10 @@ export { runAudit } from './audit.js';
 export {
 	collectDRYMetrics,
 	collectRamsMetrics,
-	collectHeideggerMetrics
+	collectHeideggerMetrics,
+	// Architecture domain
+	collectArchitectureHeideggerMetrics,
+	generateFlowASCII
 } from './collectors/index.js';
 
 export {
@@ -48,8 +51,29 @@ export type {
 	UnusedDependency,
 	PackageCompleteness,
 	OrphanedFile,
-	CircularDependency
+	CircularDependency,
+	// Architecture domain types
+	FloorPlan,
+	Room,
+	Door,
+	Wall,
+	Point,
+	ThresholdZone,
+	AccessViolation,
+	ZoneCoherenceResult,
+	FlowAnalysis,
+	ArchitectureHeideggerMetrics,
+	ArchitectureAuditResult
 } from './types/index.js';
+
+// Architecture domain helpers
+export {
+	createRoom,
+	createDoor,
+	createWall,
+	ZONE_HIERARCHY,
+	ZONE_ADJACENCY
+} from './types/architecture.js';
 
 export type { AuditHistory, ScoreDelta } from './config.js';
 

@@ -121,17 +121,17 @@
 	$: indicators = {
 		up: {
 			icon: '↑',
-			color: finalInverse ? 'text-red-400' : 'text-green-400',
+			className: finalInverse ? 'negative' : 'positive',
 			label: 'increase'
 		},
 		down: {
 			icon: '↓',
-			color: finalInverse ? 'text-green-400' : 'text-red-400',
+			className: finalInverse ? 'positive' : 'negative',
 			label: 'decrease'
 		},
 		flat: {
 			icon: '→',
-			color: 'text-white/40',
+			className: 'neutral',
 			label: 'no change'
 		}
 	};
@@ -146,15 +146,41 @@
 	3. Integrate text and data (direction + magnitude together)
 -->
 <div
-	class="inline-flex items-center gap-1 text-sm font-medium"
+	class="trend-indicator inline-flex items-center gap-1"
 	title="{indicator.label}: {displayValue} from {formatNumber(previous)} to {formatNumber(current)}"
 >
 	{#if showDirection}
-		<span class="{indicator.color} text-base" aria-label={indicator.label}>
+		<span class="icon {indicator.className}" aria-label={indicator.label}>
 			{indicator.icon}
 		</span>
 	{/if}
-	<span class={indicator.color}>
+	<span class="value {indicator.className}">
 		{displayValue}
 	</span>
 </div>
+
+<style>
+	.trend-indicator {
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+	}
+
+	.icon {
+		font-size: var(--text-body-lg);
+	}
+
+	.value.positive,
+	.icon.positive {
+		color: var(--color-success);
+	}
+
+	.value.negative,
+	.icon.negative {
+		color: var(--color-error);
+	}
+
+	.value.neutral,
+	.icon.neutral {
+		color: var(--color-fg-muted);
+	}
+</style>

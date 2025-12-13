@@ -1,0 +1,329 @@
+/**
+ * Architecture Studio - Canon Design System
+ *
+ * Design Philosophy: Images command, text supports, space breathes.
+ * This template emphasizes full-bleed imagery and generous whitespace.
+ */
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+	/* ==========================================================================
+	   Colors - Monochrome with warmth
+	   ========================================================================== */
+	--color-bg-pure: #ffffff;
+	--color-bg-elevated: #fafafa;
+	--color-bg-surface: #f5f5f5;
+	--color-bg-subtle: #ebebeb;
+
+	--color-fg-primary: #1a1a1a;
+	--color-fg-secondary: rgba(26, 26, 26, 0.75);
+	--color-fg-tertiary: rgba(26, 26, 26, 0.6);
+	--color-fg-muted: rgba(26, 26, 26, 0.4);
+	--color-fg-subtle: rgba(26, 26, 26, 0.2);
+
+	--color-border-default: rgba(26, 26, 26, 0.1);
+	--color-border-emphasis: rgba(26, 26, 26, 0.2);
+	--color-border-strong: rgba(26, 26, 26, 0.3);
+
+	--color-hover: rgba(26, 26, 26, 0.03);
+	--color-active: rgba(26, 26, 26, 0.06);
+
+	/* Accent - Cedar warmth */
+	--color-accent: #8b6914;
+	--color-accent-subtle: rgba(139, 105, 20, 0.1);
+
+	/* Semantic Colors */
+	--color-success: #44aa44;
+	--color-error: #cc4444;
+	--color-warning: #aa8844;
+	--color-info: #4477aa;
+
+	/* Inverse (for text over dark overlays) */
+	--color-fg-inverse: #ffffff;
+
+	/* ==========================================================================
+	   Spacing - Golden Ratio (φ = 1.618)
+	   ========================================================================== */
+	--space-xs: 0.5rem;
+	--space-sm: 1rem;
+	--space-md: 1.618rem;
+	--space-lg: 2.618rem;
+	--space-xl: 4.236rem;
+	--space-2xl: 6.854rem;
+	--space-3xl: 11.089rem;
+
+	/* ==========================================================================
+	   Typography - Editorial, restrained
+	   ========================================================================== */
+	--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+	--font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+	--text-display-xl: clamp(3.5rem, 6vw + 1.5rem, 8rem);
+	--text-display: clamp(2.5rem, 4vw + 1rem, 5rem);
+	--text-h1: clamp(2rem, 3vw + 0.75rem, 3.5rem);
+	--text-h2: clamp(1.5rem, 2vw + 0.5rem, 2.25rem);
+	--text-h3: clamp(1.25rem, 1.5vw + 0.4rem, 1.75rem);
+	--text-body-lg: 1.125rem;
+	--text-body: 1rem;
+	--text-body-sm: 0.875rem;
+	--text-caption: 0.75rem;
+
+	--leading-tight: 1.1;
+	--leading-snug: 1.25;
+	--leading-normal: 1.5;
+	--leading-relaxed: 1.75;
+
+	--tracking-tight: -0.02em;
+	--tracking-normal: 0;
+	--tracking-wide: 0.05em;
+
+	/* ==========================================================================
+	   Borders & Shadows - Minimal
+	   ========================================================================== */
+	--radius-sm: 2px;
+	--radius-md: 4px;
+	--radius-lg: 6px;
+	--radius-xl: 8px;
+	--radius-full: 9999px;
+
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+	--shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+	--shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+	/* ==========================================================================
+	   Animation - Subtle, refined
+	   ========================================================================== */
+	--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+	--ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+	--duration-instant: 100ms;
+	--duration-micro: 200ms;
+	--duration-standard: 300ms;
+	--duration-complex: 500ms;
+	--duration-slow: 800ms;
+
+	/* ==========================================================================
+	   Layout - Architecture-specific
+	   ========================================================================== */
+	--content-width: 1400px;
+	--content-narrow: 720px;
+	--gutter: clamp(1.5rem, 4vw, 4rem);
+	--section-spacing: clamp(4rem, 10vw, 10rem);
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	font-family: var(--font-sans);
+	font-size: 16px;
+	line-height: var(--leading-normal);
+	color: var(--color-fg-primary);
+	background: var(--color-bg-pure);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-weight: 300;
+	letter-spacing: var(--tracking-tight);
+	line-height: var(--leading-tight);
+	margin: 0;
+}
+
+h1 {
+	font-size: var(--text-h1);
+}
+h2 {
+	font-size: var(--text-h2);
+}
+h3 {
+	font-size: var(--text-h3);
+}
+
+p {
+	margin: 0;
+	line-height: var(--leading-relaxed);
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* ==========================================================================
+   Architecture-Specific Components
+   ========================================================================== */
+
+/* Full-bleed hero images */
+.hero-image {
+	width: 100vw;
+	height: 100vh;
+	object-fit: cover;
+	margin-left: calc(-50vw + 50%);
+}
+
+.hero-image-contained {
+	width: 100%;
+	height: 80vh;
+	object-fit: cover;
+}
+
+/* Project grid - Asymmetric for visual interest */
+.project-grid {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: var(--space-sm);
+}
+
+.project-grid-item {
+	overflow: hidden;
+}
+
+.project-grid-item.large {
+	grid-column: span 8;
+}
+
+.project-grid-item.small {
+	grid-column: span 4;
+}
+
+/* Image treatment */
+.image-fade {
+	transition: opacity var(--duration-standard) var(--ease-standard);
+}
+
+.image-fade:hover {
+	opacity: 0.92;
+}
+
+/* Text over images */
+.image-overlay {
+	position: relative;
+}
+
+.image-overlay::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 40%);
+	pointer-events: none;
+}
+
+.image-overlay-text {
+	position: absolute;
+	bottom: var(--space-lg);
+	left: var(--space-lg);
+	color: var(--color-fg-inverse);
+	z-index: 1;
+}
+
+/* Section spacing */
+.section {
+	padding: var(--section-spacing) var(--gutter);
+}
+
+.section-narrow {
+	max-width: var(--content-narrow);
+	margin: 0 auto;
+}
+
+/* Project detail specs */
+.specs-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: var(--space-md);
+	border-top: 1px solid var(--color-border-default);
+	padding-top: var(--space-md);
+}
+
+.spec-item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xs);
+}
+
+.spec-label {
+	font-size: var(--text-caption);
+	color: var(--color-fg-muted);
+	text-transform: uppercase;
+	letter-spacing: var(--tracking-wide);
+}
+
+.spec-value {
+	font-size: var(--text-body);
+	color: var(--color-fg-primary);
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+.text-display-xl {
+	font-size: var(--text-display-xl);
+}
+.text-display {
+	font-size: var(--text-display);
+}
+.text-muted {
+	color: var(--color-fg-muted);
+}
+.text-secondary {
+	color: var(--color-fg-secondary);
+}
+
+.font-light {
+	font-weight: 300;
+}
+.font-normal {
+	font-weight: 400;
+}
+
+.tracking-tight {
+	letter-spacing: var(--tracking-tight);
+}
+.tracking-wide {
+	letter-spacing: var(--tracking-wide);
+}
+
+.leading-tight {
+	line-height: var(--leading-tight);
+}
+.leading-relaxed {
+	line-height: var(--leading-relaxed);
+}
+
+/* Focus states */
+:focus-visible {
+	outline: 2px solid var(--color-fg-primary);
+	outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+	background: var(--color-fg-primary);
+	color: var(--color-bg-pure);
+}

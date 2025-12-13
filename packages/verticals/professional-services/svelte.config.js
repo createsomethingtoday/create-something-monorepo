@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-cloudflare';
+import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -7,11 +7,16 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			routes: {
-				include: ['/*'],
-				exclude: ['<all>']
-			}
-		})
+			pages: 'build',
+			assets: 'build',
+			fallback: '200.html',
+			precompress: false,
+			strict: false
+		}),
+		prerender: {
+			// Prerender all pages
+			entries: ['*']
+		}
 	}
 };
 

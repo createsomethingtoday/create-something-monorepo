@@ -1,0 +1,87 @@
+<script lang="ts">
+	import '../app.css';
+	import Navigation from '$lib/components/Navigation.svelte';
+	import Footer from '$lib/components/Footer.svelte';
+	import StickyCTA from '$lib/components/StickyCTA.svelte';
+	import { onNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
+	import { setSiteConfigContext } from '$lib/config/context';
+	import type { PersonalInjuryConfig } from '$lib/config/site';
+
+	interface Props {
+		children: import('svelte').Snippet;
+		data: {
+			siteConfig: PersonalInjuryConfig;
+			tenant: { id: string; subdomain: string; status: string } | null;
+			configSource: 'tenant' | 'preview' | 'static';
+		};
+	}
+
+	let { children, data }: Props = $props();
+
+	// Set site config in context for all child components
+	setSiteConfigContext(data.siteConfig);
+
+	// Don't show sticky CTA on contact/intake pages
+	let showStickyCTA = $derived(
+		$page.url.pathname !== '/contact' &&
+		$page.url.pathname !== '/free-case-review'
+	);
+
+	// View Transitions API - Canon Motion Philosophy
+	// Motion serves "disclosure" (reveal state/relationships), not decoration
+	// Zuhandenheit: The transition recedes into transparent use
+	onNavigate((navigation) => {
+		// Check for browser support
+		if (!document.startViewTransition) return;
+
+		// Respect reduced motion preference
+		if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
+
+	// Page entrance animation
+	onMount(() => {
+		// Add staggered reveal to main content sections
+		const sections = document.querySelectorAll('main > section, main > div > section');
+		sections.forEach((section, index) => {
+			section.classList.add('page-enter');
+			(section as HTMLElement).style.animationDelay = `${index * 100}ms`;
+		});
+	});
+</script>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div class="layout min-h-screen flex flex-col">
+	<Navigation />
+	<main id="main-content" class="flex-1" tabindex="-1">
+		{@render children()}
+	</main>
+	<Footer />
+
+	{#if showStickyCTA}
+		<StickyCTA />
+	{/if}
+</div>
+
+<style>
+	.layout {
+		--nav-height: 56px;
+		background: var(--color-bg-pure);
+		padding-top: var(--nav-height);
+	}
+
+	@media (max-width: 640px) {
+		.layout {
+			--nav-height: 60px;
+		}
+	}
+</style>

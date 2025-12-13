@@ -1,0 +1,94 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Creative Agency",
+  "slug": "creative-agency",
+  "version": "1.0.0",
+  "description": "Dark theme agency template with case studies, metrics, and results-driven design",
+  "category": "creative",
+  "subcategories": ["branding-agency", "design-studio", "digital-agency", "marketing-agency"],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency",
+    "support": "https://createsomething.agency/contact"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-creative-agency",
+  "demo": "https://creative-agency.createsomething.space",
+  "thumbnail": "/og-image.jpg",
+  "screenshots": [
+    "/screenshots/home.png",
+    "/screenshots/case-study.png",
+    "/screenshots/contact.png"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "Dark theme design",
+        "Case study pages with metrics",
+        "Services overview",
+        "Contact form with budget selector",
+        "Client logo grid",
+        "SEO optimized",
+        "Mobile responsive"
+      ]
+    },
+    "pro": {
+      "price": 199,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "Lead scoring workflow",
+        "Project intake automation",
+        "CRM integration (HubSpot/Pipedrive)",
+        "Calendar booking for discovery calls",
+        "Proposal generator",
+        "Email support"
+      ]
+    },
+    "enterprise": {
+      "price": null,
+      "contact": true,
+      "features": [
+        "Everything in Pro",
+        "Custom integrations",
+        "White-label option",
+        "Multi-team support",
+        "Advanced analytics",
+        "Done-for-you setup",
+        ".agency consultation"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages",
+    "database": "cloudflare-d1",
+    "cache": "cloudflare-kv"
+  },
+  "designPhilosophy": {
+    "principle": "Confident, direct, results-focused",
+    "colorScheme": "dark",
+    "typography": "Inter (bold weights)",
+    "aesthetic": "High contrast, metrics-driven"
+  },
+  "seo": {
+    "schemaTypes": ["ProfessionalService", "Organization"],
+    "sitemap": true,
+    "robots": true,
+    "ogImage": true
+  },
+  "keywords": [
+    "agency website template",
+    "creative agency",
+    "design agency template",
+    "branding agency",
+    "digital agency",
+    "dark theme",
+    "case studies",
+    "cloudflare pages"
+  ],
+  "created": "2024-12-10",
+  "updated": "2024-12-10"
+}

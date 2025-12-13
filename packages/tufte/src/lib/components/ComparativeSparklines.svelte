@@ -61,14 +61,14 @@
 		return `M ${points.join(' L ')}`;
 	}
 
-	// Default colors - brighter/more saturated for better visibility
+	// Canon data visualization palette
 	const defaultColors = [
-		'rgb(96, 165, 250)', // bright blue
-		'rgb(34, 197, 94)', // bright green
-		'rgb(192, 132, 252)', // bright purple
-		'rgb(251, 191, 36)', // bright yellow/orange
-		'rgb(244, 114, 182)', // bright pink
-		'rgb(250, 204, 21)' // bright yellow
+		'var(--color-data-1)', // Blue
+		'var(--color-data-2)', // Green
+		'var(--color-data-3)', // Purple
+		'var(--color-data-4)', // Amber
+		'var(--color-data-5)', // Pink
+		'var(--color-data-6)' // Yellow
 	];
 </script>
 
@@ -79,19 +79,19 @@
 	3. Integrate text and data (inline legend)
 	4. Small multiples concept (multiple series, same scale)
 -->
-<div class="space-y-4">
+<div class="comparative-sparklines space-y-4">
 	{#if showLegend}
 		<!-- Legend (Tufte: integrate with visualization) -->
-		<div class="flex flex-wrap gap-4 text-sm">
+		<div class="legend flex flex-wrap gap-4">
 			{#each paths as series, i}
-				<div class="flex items-center gap-2">
+				<div class="legend-item flex items-center gap-2">
 					<div
-						class="w-4 h-1 rounded"
+						class="legend-indicator w-4 h-1"
 						style="background-color: {series.color === 'white'
 							? defaultColors[i % defaultColors.length]
 							: series.color};"
 					/>
-					<span class="text-white/80 font-medium">{series.label}</span>
+					<span class="legend-label">{series.label}</span>
 				</div>
 			{/each}
 		</div>
@@ -100,7 +100,7 @@
 	<!-- Comparative visualization -->
 	<svg
 		viewBox="0 0 {width} {height}"
-		class="w-full h-32"
+		class="chart w-full h-32"
 		preserveAspectRatio="none"
 		aria-label="Comparative trend visualization with {series.length} data series"
 	>
@@ -130,3 +130,18 @@
 		{/each}
 	</svg>
 </div>
+
+<style>
+	.legend {
+		font-size: var(--text-body-sm);
+	}
+
+	.legend-indicator {
+		border-radius: var(--radius-sm);
+	}
+
+	.legend-label {
+		color: var(--color-fg-secondary);
+		font-weight: 500;
+	}
+</style>

@@ -1,6 +1,16 @@
 # @createsomething/triad-audit
 
-> "Creation is the discipline of removing what obscures."
+```
+╔═══════════════════════════════════════════════════════╗
+║   SUBTRACTIVE TRIAD AUDIT                             ║
+║                                                       ║
+║   DRY        Rams       Heidegger                     ║
+║   ─────      ─────      ─────────                     ║
+║   Unify      Remove     Reconnect                     ║
+║                                                       ║
+║   "Creation is removing what obscures"                ║
+╚═══════════════════════════════════════════════════════╝
+```
 
 A code analysis tool based on Dieter Rams' principle: **Weniger, aber besser** (Less, but better).
 
@@ -121,11 +131,79 @@ Create `.triad-audit.json` in your project root:
 }
 ```
 
+## MCP Server (Claude Code Integration)
+
+Run as an MCP server for Claude Code or any MCP-compatible client:
+
+```bash
+# Start the MCP server
+triad-audit-mcp
+```
+
+Add to your Claude Code settings (`~/.config/claude-code/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "triad-audit": {
+      "command": "npx",
+      "args": ["@createsomething/triad-audit", "mcp"]
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `audit` | Full Subtractive Triad audit |
+| `audit_dry` | DRY (Implementation) analysis only |
+| `audit_rams` | Rams (Artifact) analysis only |
+| `audit_heidegger` | Heidegger (System) analysis only |
+
+Example in Claude Code:
+```
+> Run a triad audit on this codebase
+Claude: [Uses audit tool] The codebase scores 7.2/10 overall...
+```
+
 ## CI/CD Integration
 
-### GitHub Actions
+### GitHub Action (Recommended)
 
-Copy `templates/github-workflow.yml` to `.github/workflows/triad-audit.yml`:
+Use the official GitHub Action:
+
+```yaml
+name: Subtractive Triad Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: create-something/triad-audit@v1
+        with:
+          threshold: 6.0
+          comment-on-pr: true
+```
+
+The action will:
+- Run the full Subtractive Triad audit
+- Post results as a PR comment
+- Fail if score drops below threshold
+- Track score history for regression detection
+
+### Manual Workflow
+
+Alternatively, copy `templates/github-workflow.yml` to `.github/workflows/triad-audit.yml`:
 
 ```yaml
 name: Subtractive Triad Audit
