@@ -122,7 +122,7 @@ async function handleSignup(request: Request, env: Env): Promise<Response> {
 		email,
 		password_hash: passwordHash,
 		name,
-		source: source as 'workway' | 'templates' | 'io' | 'space',
+		source: source as 'workway' | 'templates' | 'io' | 'space' | 'lms',
 	});
 
 	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);

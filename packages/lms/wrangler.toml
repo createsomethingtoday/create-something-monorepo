@@ -1,12 +1,25 @@
+# CREATE SOMETHING LMS
+# Teaching the ethos: Subtractive Triad, Canon, Zuhandenheit
+#
+# Canon: The infrastructure disappears; only the learning remains.
+
 name = "createsomething-lms"
-compatibility_date = "2024-11-01"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# Note: account_id set via CLOUDFLARE_ACCOUNT_ID env var for Pages compatibility
+# account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[vars]
+ENVIRONMENT = "production"
+IDENTITY_WORKER_URL = "https://id.createsomething.space"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "lms-db"
-database_id = "" # To be filled after creation
+database_id = "2ec4ea2e-c25f-4832-b78f-a608ff9f8ad7"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "" # To be filled after creation
+id = "3a6a52fbddaf44f0b769f42cbbd91ca2"
