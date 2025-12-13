@@ -59,27 +59,27 @@ const homeContent = {
 			id: 'petrox',
 			name: 'PetroX',
 			tagline: 'Oilfield Chemistry',
-			description: 'Advanced chemical solutions for enhanced oil recovery and production optimization.',
+			description: 'Advanced chemical solutions for production, EOR, midstream, and refining operations',
 			href: '/oil-gas',
-			videoSrc: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/127063803-crude-oil-close-up.mp4',
+			videoSrc: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/082466515-oil-rig-pumpjack-working-natur.mp4',
 			accentColor: 'petrox'
 		},
 		{
 			id: 'lithx',
 			name: 'LithX',
 			tagline: 'Mining Chemistry',
-			description: 'Next-generation metal recovery chemistry for critical minerals extraction.',
+			description: 'Next-generation lixiviation chemistry for superior metal extraction',
 			href: '/mining',
 			videoSrc: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/168384056-deep-open-pit-mine-copper-ore-.mp4',
 			accentColor: 'lithx'
 		},
 		{
-			id: 'dme',
-			name: 'DME',
+			id: 'hydrox',
+			name: 'HydroX',
 			tagline: 'Water Chemistry',
-			description: 'Sustainable wastewater valorization with metal recovery capabilities.',
+			description: 'Chemically-enabled technology to clean wastewater while recovering valuable byproducts',
 			href: '/water-treatment',
-			videoSrc: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/104893836-water-being-released-from-dam-.mp4',
+			videoSrc: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/124452682-engineers-assessing-waste-wate.mp4',
 			accentColor: 'dme'
 		}
 	]
