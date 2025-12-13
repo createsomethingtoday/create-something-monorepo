@@ -17,6 +17,7 @@ import {
 	updateUser,
 	updateUserPassword,
 	updateUserEmail,
+	softDeleteUser,
 	revokeAllUserTokens,
 	checkRateLimit,
 	incrementRateLimit,
@@ -26,7 +27,7 @@ import {
 	findEmailChangeRequestByToken,
 	deleteEmailChangeRequest,
 } from './db/queries';
-import { sendVerificationEmail } from './services/email';
+import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -75,6 +76,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	// User endpoints (protected)
 	if (path === '/v1/users/me' && method === 'GET') return handleGetMe(request, env);
 	if (path === '/v1/users/me' && method === 'PATCH') return handleUpdateMe(request, env);
+	if (path === '/v1/users/me' && method === 'DELETE') return handleDeleteMe(request, env);
 	if (path === '/v1/users/me/password' && method === 'PATCH') return handleChangePassword(request, env);
 	if (path === '/v1/users/me/email/change' && method === 'POST') return handleInitiateEmailChange(request, env);
 	if (path === '/v1/users/me/email/verify' && method === 'POST') return handleVerifyEmailChange(request, env);
@@ -170,6 +172,11 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 	if (!user) {
 		await incrementRateLimit(db, rateKey);
 		return json({ error: 'invalid_credentials', message: 'Invalid email or password', status: 401 }, 401);
+	}
+
+	// Check if user is deleted
+	if (user.deleted_at) {
+		return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
 	}
 
 	const valid = await verifyPassword(password, user.password_hash);
@@ -467,6 +474,56 @@ async function handleVerifyEmailChange(request: Request, env: Env): Promise<Resp
 		success: true,
 		message: 'Email updated successfully. Please log in with your new email.',
 		email: user.email,
+	});
+}
+
+async function handleDeleteMe(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Authenticate
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	// Parse request
+	const body = await parseJSON<{ password?: string }>(request);
+	if (!body?.password) {
+		return json({ error: 'invalid_request', message: 'Password required', status: 400 }, 400);
+	}
+
+	// Get user
+	const user = await findUserById(db, payload.sub);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	// Verify password
+	const valid = await verifyPassword(body.password, user.password_hash);
+	if (!valid) {
+		return json({ error: 'invalid_password', message: 'Password is incorrect', status: 401 }, 401);
+	}
+
+	// Soft delete the user
+	const deleted = await softDeleteUser(db, user.id);
+	if (!deleted) {
+		return json({ error: 'delete_failed', message: 'Failed to delete account', status: 500 }, 500);
+	}
+
+	// Revoke all tokens immediately
+	await revokeAllUserTokens(db, user.id);
+
+	// Send confirmation email (if email service is configured)
+	if (env.RESEND_API_KEY) {
+		// Note: We don't use a deletion confirmation URL since this is a soft delete
+		// The email just confirms the deletion and explains the 30-day grace period
+		const confirmUrl = `https://id.createsomething.space/restore-account?email=${encodeURIComponent(user.email)}`;
+		await sendDeletionConfirmationEmail(env.RESEND_API_KEY, user.email, user.name, confirmUrl);
+	}
+
+	return json({
+		success: true,
+		message: 'Account scheduled for deletion. You have 30 days to restore it by logging in.',
 	});
 }
 

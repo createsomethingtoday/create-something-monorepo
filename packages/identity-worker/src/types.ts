@@ -24,6 +24,7 @@ export interface User {
 	source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
 	workway_id: string | null;
 	templates_id: string | null;
+	deleted_at: string | null;
 	created_at: string;
 	updated_at: string;
 }
