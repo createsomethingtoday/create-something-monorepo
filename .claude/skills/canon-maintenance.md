@@ -101,6 +101,8 @@ Before any artifact ships, it must answer:
 - **Metric Vanity** — Optimizing engagement over utility
 - **Dishonest Documentation** — Hiding limitations
 - **Tool Redundancy** — Multiple tools for same task
+- **Enframing (Gestell)** — Treating everything as standing-reserve to be optimized
+- **Das Man Conformity** — "Best practices" borrowed wholesale without questioning
 
 ## Audit Workflow
 
@@ -150,7 +152,7 @@ When justifying decisions, trace to canonical sources:
 | **Mies van der Rohe** | "Less is more", "God is in the details" | Architecture |
 | **Charles & Ray Eames** | "The best for the most for the least" | Furniture/Film |
 | **Edward Tufte** | "Above all else show the data" | Information Design |
-| **Heidegger** | Zuhandenheit, Hermeneutic Circle | Philosophy |
+| **Heidegger** | Zuhandenheit, Hermeneutic Circle, Gestell, Gelassenheit, Das Man | Philosophy |
 
 ## Evaluation Checklist
 
