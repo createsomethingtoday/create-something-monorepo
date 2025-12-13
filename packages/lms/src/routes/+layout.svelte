@@ -3,12 +3,15 @@
   import { page } from '$app/stores';
   import { onNavigate } from '$app/navigation';
   import { Navigation, Footer, ModeIndicator } from '@create-something/components';
+  import type { LayoutData } from './$types';
 
   interface Props {
     children: import('svelte').Snippet;
+    data: LayoutData;
   }
 
-  let { children }: Props = $props();
+  let { children, data }: Props = $props();
+  const { user } = data;
 
   // View Transitions API - Hermeneutic Navigation
   // .learn: Educational (300ms)
@@ -149,8 +152,8 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel="Login"
-    ctaHref="/login"
+    ctaLabel={user ? 'Account' : 'Login'}
+    ctaHref={user ? '/account' : '/login'}
   />
 
   <div class="content">
