@@ -7,6 +7,7 @@
 // Environment bindings
 export interface Env {
 	DB: D1Database;
+	AVATARS: R2Bucket;
 	ENVIRONMENT: string;
 	ALLOWED_ORIGINS: string;
 	RESEND_API_KEY?: string;
