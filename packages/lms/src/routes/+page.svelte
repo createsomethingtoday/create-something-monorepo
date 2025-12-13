@@ -1,5 +1,6 @@
 <script lang="ts">
   import { PATHS } from '$content/paths';
+  import { BookOpen, Hammer, MessageCircle, ArrowRight, RotateCcw } from 'lucide-svelte';
 </script>
 
 <svelte:head>
@@ -55,20 +56,20 @@
 
     <div class="spiral-steps">
       <div class="spiral-step">
-        <div class="spiral-icon">📖</div>
+        <div class="spiral-icon"><BookOpen size={32} strokeWidth={1.5} /></div>
         <div class="spiral-label">Read</div>
       </div>
-      <div class="spiral-arrow">→</div>
+      <div class="spiral-arrow"><ArrowRight size={24} /></div>
       <div class="spiral-step">
-        <div class="spiral-icon">🔨</div>
+        <div class="spiral-icon"><Hammer size={32} strokeWidth={1.5} /></div>
         <div class="spiral-label">Practice</div>
       </div>
-      <div class="spiral-arrow">→</div>
+      <div class="spiral-arrow"><ArrowRight size={24} /></div>
       <div class="spiral-step">
-        <div class="spiral-icon">💭</div>
+        <div class="spiral-icon"><MessageCircle size={32} strokeWidth={1.5} /></div>
         <div class="spiral-label">Reflect</div>
       </div>
-      <div class="spiral-arrow">↺</div>
+      <div class="spiral-arrow"><RotateCcw size={24} /></div>
     </div>
   </section>
 </div>
@@ -189,8 +190,11 @@
   }
 
   .spiral-icon {
-    font-size: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 0.5rem;
+    color: var(--color-fg-secondary);
   }
 
   .spiral-label {

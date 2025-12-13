@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { ChevronRight } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
   const { path } = data;
@@ -70,7 +71,7 @@
           </div>
 
           <!-- Arrow -->
-          <div class="lesson-arrow">→</div>
+          <div class="lesson-arrow"><ChevronRight size={24} /></div>
         </a>
       {/each}
     </div>
@@ -233,7 +234,8 @@
   }
 
   .lesson-arrow {
-    font-size: var(--text-h3);
+    display: flex;
+    align-items: center;
     color: var(--color-fg-muted);
     transition: transform var(--duration-micro) var(--ease-standard);
   }
