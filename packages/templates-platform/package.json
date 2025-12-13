@@ -4,6 +4,9 @@
   "private": true,
   "description": "CREATE SOMETHING Templates Platform - Deploy beautiful sites in seconds",
   "type": "module",
+  "dependencies": {
+    "@create-something/components": "workspace:*"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",

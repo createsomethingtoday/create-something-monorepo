@@ -2,6 +2,7 @@
  * Site Settings - Server Load
  *
  * Loads site data for settings page.
+ * Protected route: requires authentication and ownership.
  */
 
 import type { PageServerLoad } from './$types';
@@ -9,7 +10,12 @@ import { error } from '@sveltejs/kit';
 import { getTenantById } from '$lib/db';
 import { getTemplateById } from '$lib/services/template-registry';
 
-export const load: PageServerLoad = async ({ params, platform }) => {
+export const load: PageServerLoad = async ({ params, platform, locals }) => {
+  // User is guaranteed by hooks.server.ts
+  if (!locals.user) {
+    throw error(401, 'Authentication required');
+  }
+
   const db = platform?.env?.DB;
 
   if (!db) {
@@ -38,6 +44,11 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 
   if (!site) {
     throw error(404, 'Site not found');
+  }
+
+  // Verify ownership
+  if (site.userId !== locals.user.id) {
+    throw error(403, 'Access denied');
   }
 
   const template = getTemplateById(site.templateId);

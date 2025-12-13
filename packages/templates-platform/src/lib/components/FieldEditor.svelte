@@ -171,6 +171,6 @@
 
   .color-text {
     flex: 1;
-    font-family: monospace;
+    font-family: var(--font-mono);
   }
 </style>

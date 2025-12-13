@@ -88,7 +88,7 @@ export async function processBuildJob(
     }
 
     // Deploy to Workers for Platforms
-    await deployToEdge(env, tenantId, buildResult.assets);
+    await deployToEdge(env, tenantId, buildResult.assets ?? new Map());
 
     // Update status to active
     await db.markTenantDeployed(env.DB, tenantId);

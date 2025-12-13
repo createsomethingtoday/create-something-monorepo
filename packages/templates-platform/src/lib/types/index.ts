@@ -35,7 +35,8 @@ export type TemplateCategory =
   | 'creative-agency'
   | 'portfolio'
   | 'ecommerce'
-  | 'saas';
+  | 'saas'
+  | 'legal';
 
 export interface TemplatePricing {
   free: boolean;

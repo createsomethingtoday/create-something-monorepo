@@ -3,13 +3,19 @@
  *
  * Loads analytics data for the site.
  * Only available for Pro tier and above.
+ * Protected route: requires authentication and ownership.
  */
 
 import type { PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { getTenantById } from '$lib/db';
 
-export const load: PageServerLoad = async ({ params, platform }) => {
+export const load: PageServerLoad = async ({ params, platform, locals }) => {
+  // User is guaranteed by hooks.server.ts
+  if (!locals.user) {
+    throw error(401, 'Authentication required');
+  }
+
   const db = platform?.env?.DB;
 
   if (!db) {
@@ -29,6 +35,11 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 
   if (!site) {
     throw error(404, 'Site not found');
+  }
+
+  // Verify ownership
+  if (site.userId !== locals.user.id) {
+    throw error(403, 'Access denied');
   }
 
   // Check tier - analytics is Pro feature

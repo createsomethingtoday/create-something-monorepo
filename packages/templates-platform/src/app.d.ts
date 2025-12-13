@@ -8,6 +8,7 @@ declare global {
 				KV: KVNamespace;
 				SITE_BUCKET: R2Bucket;
 				BUILD_QUEUE: Queue;
+				ADMIN_TOKEN?: string;
 			};
 		}
 

@@ -38,8 +38,8 @@ export const templates: Template[] = [
     category: 'architecture',
     subcategories: ['architect', 'interior-design', 'landscape'],
     thumbnail: '/templates/architecture-studio/thumbnail.jpg',
-    previewUrl: 'https://architecture-studio.createsomething.space',
-    pricing: { free: true, proPrice: 149, currency: 'USD' },
+    previewUrl: 'https://architecture-studio-template.pages.dev',
+    pricing: { free: true, proPrice: 99, currency: 'USD' },
     features: [
       'Full-bleed project galleries',
       'Project specs grid',
@@ -89,8 +89,8 @@ export const templates: Template[] = [
     category: 'creative-agency',
     subcategories: ['branding', 'digital', 'marketing'],
     thumbnail: '/templates/creative-agency/thumbnail.jpg',
-    previewUrl: 'https://creative-agency.createsomething.space',
-    pricing: { free: true, proPrice: 199, currency: 'USD' },
+    previewUrl: 'https://creative-agency-template.pages.dev',
+    pricing: { free: true, proPrice: 99, currency: 'USD' },
     features: [
       'Case studies with metrics',
       'Results showcase',
@@ -157,8 +157,8 @@ export const templates: Template[] = [
     category: 'portfolio',
     subcategories: ['photographer', 'designer', 'artist', 'illustrator'],
     thumbnail: '/templates/creative-portfolio/thumbnail.jpg',
-    previewUrl: 'https://creative-portfolio.createsomething.space',
-    pricing: { free: true, proPrice: 79, currency: 'USD' },
+    previewUrl: 'https://creative-portfolio-template.pages.dev',
+    pricing: { free: true, proPrice: 99, currency: 'USD' },
     features: [
       'Grid portfolio layout',
       'Full-bleed galleries',
@@ -202,11 +202,11 @@ export const templates: Template[] = [
     id: 'tpl_professional_services',
     slug: 'professional-services',
     name: 'Professional Services',
-    description: 'Sophisticated template for law firms, consultancies, and professional practices.',
+    description: 'Sophisticated template for consultancies and professional practices.',
     category: 'professional-services',
-    subcategories: ['law-firm', 'consulting', 'accounting'],
+    subcategories: ['consulting', 'accounting', 'advisory'],
     thumbnail: '/templates/professional-services/thumbnail.jpg',
-    previewUrl: 'https://professional-services.createsomething.space',
+    previewUrl: 'https://professional-services-template.pages.dev',
     pricing: { free: true, proPrice: 99, currency: 'USD' },
     features: [
       'Practice areas showcase',
@@ -254,6 +254,195 @@ export const templates: Template[] = [
     },
     createdAt: '2024-12-10',
     updatedAt: '2024-12-10'
+  },
+
+  {
+    id: 'tpl_law_firm',
+    slug: 'law-firm',
+    name: 'Law Firm',
+    description: 'Purpose-built template for law firms with Clio integration via WORKWAY. Ethics-compliant, trust-building design.',
+    category: 'legal',
+    subcategories: ['law-firm', 'attorney', 'legal-services'],
+    thumbnail: '/templates/law-firm/thumbnail.jpg',
+    previewUrl: 'https://law-firm-template.pages.dev',
+    pricing: { free: true, proPrice: 149, currency: 'USD' },
+    features: [
+      'Practice areas with Lucide icons',
+      'Attorney profiles with credentials',
+      'Anonymized case results',
+      'Client intake form → Clio',
+      'Calendly consultation booking',
+      'Ethics disclaimer throughout',
+      'Bar association badges',
+      'WORKWAY workflow integration'
+    ],
+    designPhilosophy: {
+      principle: 'Competence over cleverness',
+      colorScheme: 'dark',
+      aesthetic: 'Authoritative, trust-building'
+    },
+    configSchema: {
+      required: [
+        { key: 'name', label: 'Firm Name', type: 'text', placeholder: 'Morrison & Associates' },
+        { key: 'tagline', label: 'Tagline', type: 'text', placeholder: 'Experienced Legal Counsel' },
+        { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Brief description of your practice...' },
+        { key: 'disclaimer', label: 'Legal Disclaimer', type: 'textarea', placeholder: 'The information on this website is for general informational purposes only...' }
+      ],
+      optional: [
+        ...baseContactFields,
+        { key: 'social.linkedin', label: 'LinkedIn', type: 'url', placeholder: 'https://linkedin.com/company/...' },
+        { key: 'social.twitter', label: 'Twitter/X', type: 'url', placeholder: 'https://twitter.com/...' },
+        {
+          key: 'barAssociations',
+          label: 'Bar Associations',
+          type: 'array',
+          description: 'Professional memberships',
+          schema: [
+            { key: 'name', label: 'Association Name', type: 'text', placeholder: 'California State Bar' }
+          ]
+        },
+        {
+          key: 'practiceAreas',
+          label: 'Practice Areas',
+          type: 'array',
+          description: 'Areas of legal expertise',
+          schema: [
+            { key: 'name', label: 'Practice Area', type: 'text', placeholder: 'Family Law' },
+            { key: 'slug', label: 'URL Slug', type: 'text', placeholder: 'family-law' },
+            { key: 'description', label: 'Description', type: 'textarea' },
+            { key: 'icon', label: 'Icon (Lucide)', type: 'text', placeholder: 'users, shield, briefcase, scale' }
+          ]
+        },
+        {
+          key: 'attorneys',
+          label: 'Attorneys',
+          type: 'array',
+          description: 'Attorney profiles with credentials',
+          schema: [
+            { key: 'name', label: 'Name', type: 'text' },
+            { key: 'slug', label: 'URL Slug', type: 'text' },
+            { key: 'title', label: 'Title', type: 'text', placeholder: 'Partner' },
+            { key: 'barNumber', label: 'Bar Number', type: 'text', placeholder: 'CA Bar #123456' },
+            { key: 'bio', label: 'Bio', type: 'textarea' },
+            { key: 'image', label: 'Headshot', type: 'image' }
+          ]
+        },
+        {
+          key: 'results',
+          label: 'Case Results',
+          type: 'array',
+          description: 'Anonymized case outcomes (no client names)',
+          schema: [
+            { key: 'title', label: 'Case Title', type: 'text', placeholder: 'Complex Custody Resolution' },
+            { key: 'practiceArea', label: 'Practice Area Slug', type: 'text' },
+            { key: 'outcome', label: 'Outcome', type: 'text', placeholder: 'Full custody awarded to client' },
+            { key: 'year', label: 'Year', type: 'text' },
+            { key: 'description', label: 'Description', type: 'textarea' }
+          ]
+        },
+        {
+          key: 'workflows',
+          label: 'WORKWAY Integration',
+          type: 'object',
+          description: 'Connect to Clio via WORKWAY',
+          schema: [
+            { key: 'clioIntakeWebhook', label: 'Clio Intake Webhook URL', type: 'url', placeholder: 'https://hooks.workway.co/...' },
+            { key: 'calendlyUrl', label: 'Calendly Scheduling URL', type: 'url', placeholder: 'https://calendly.com/your-firm/consultation' }
+          ]
+        }
+      ]
+    },
+    createdAt: '2024-12-11',
+    updatedAt: '2024-12-11'
+  },
+
+  {
+    id: 'tpl_personal_injury',
+    slug: 'personal-injury',
+    name: 'Personal Injury',
+    description: 'Conversion-focused template for personal injury law firms. Trust-building design with case results, attorney profiles, and intake forms.',
+    category: 'legal',
+    subcategories: ['personal-injury', 'injury-attorney', 'trial-lawyer'],
+    thumbnail: '/templates/personal-injury/thumbnail.jpg',
+    previewUrl: 'https://createsomething-pi-template.pages.dev',
+    pricing: { free: true, proPrice: 149, currency: 'USD' },
+    features: [
+      'Case type pages with settlement ranges',
+      'Recovery results showcase',
+      'Attorney profiles with credentials',
+      'Multi-step intake form',
+      'Calendly consultation booking',
+      'Ethics disclaimer throughout',
+      'No-fee guarantee messaging',
+      'Mobile-first responsive design'
+    ],
+    designPhilosophy: {
+      principle: 'Trust through results',
+      colorScheme: 'dark',
+      aesthetic: 'Authoritative, conversion-focused'
+    },
+    configSchema: {
+      required: [
+        { key: 'name', label: 'Firm Name', type: 'text', placeholder: 'Martinez & Rivera' },
+        { key: 'tagline', label: 'Tagline', type: 'text', placeholder: 'Fighting for the Injured' },
+        { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Brief description of your practice...' },
+        { key: 'disclaimer', label: 'Legal Disclaimer', type: 'textarea', placeholder: 'Past results do not guarantee future outcomes...' }
+      ],
+      optional: [
+        ...baseContactFields,
+        { key: 'social.linkedin', label: 'LinkedIn', type: 'url', placeholder: 'https://linkedin.com/company/...' },
+        { key: 'social.twitter', label: 'Twitter/X', type: 'url', placeholder: 'https://twitter.com/...' },
+        {
+          key: 'accidentTypes',
+          label: 'Case Types',
+          type: 'array',
+          description: 'Types of cases you handle',
+          schema: [
+            { key: 'name', label: 'Case Type', type: 'text', placeholder: 'Car Accidents' },
+            { key: 'slug', label: 'URL Slug', type: 'text', placeholder: 'auto-accident' },
+            { key: 'description', label: 'Description', type: 'textarea' },
+            { key: 'averageSettlement', label: 'Typical Recovery Range', type: 'text', placeholder: '$50,000 - $500,000' }
+          ]
+        },
+        {
+          key: 'attorneys',
+          label: 'Attorneys',
+          type: 'array',
+          description: 'Attorney profiles',
+          schema: [
+            { key: 'name', label: 'Name', type: 'text' },
+            { key: 'slug', label: 'URL Slug', type: 'text' },
+            { key: 'title', label: 'Title', type: 'text', placeholder: 'Founding Partner' },
+            { key: 'barNumber', label: 'Bar Number', type: 'text', placeholder: 'CA Bar #123456' },
+            { key: 'bio', label: 'Bio', type: 'textarea' },
+            { key: 'image', label: 'Headshot', type: 'image' }
+          ]
+        },
+        {
+          key: 'recoveries',
+          label: 'Case Results',
+          type: 'array',
+          description: 'Recovery amounts (anonymized)',
+          schema: [
+            { key: 'title', label: 'Case Title', type: 'text', placeholder: 'Commercial Truck Collision' },
+            { key: 'accidentType', label: 'Case Type Slug', type: 'text' },
+            { key: 'amount', label: 'Recovery Amount', type: 'text', placeholder: '4200000' },
+            { key: 'recoveryDisplay', label: 'Display Amount', type: 'text', placeholder: '$4.2 Million Settlement' },
+            { key: 'resolution', label: 'Resolution Type', type: 'text', placeholder: 'settlement or verdict' },
+            { key: 'year', label: 'Year', type: 'text' },
+            { key: 'description', label: 'Description', type: 'textarea' }
+          ]
+        },
+        {
+          key: 'calendlyUrl',
+          label: 'Calendly URL',
+          type: 'url',
+          placeholder: 'https://calendly.com/your-firm/consultation'
+        }
+      ]
+    },
+    createdAt: '2024-12-11',
+    updatedAt: '2024-12-11'
   }
 ];
 
