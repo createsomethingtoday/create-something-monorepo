@@ -24,6 +24,11 @@ binding = "DB"
 database_name = "identity-db"
 database_id = "f3c1ec56-0ca1-4f8c-89ef-881682ef391a"
 
+# R2 Bucket - User avatars
+[[r2_buckets]]
+binding = "AVATARS"
+bucket_name = "identity-avatars"
+
 # Rate limiting via Durable Objects (future)
 # [[durable_objects.bindings]]
 # name = "RATE_LIMITER"

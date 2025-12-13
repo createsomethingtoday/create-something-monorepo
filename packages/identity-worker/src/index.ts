@@ -80,6 +80,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/v1/users/me/password' && method === 'PATCH') return handleChangePassword(request, env);
 	if (path === '/v1/users/me/email/change' && method === 'POST') return handleInitiateEmailChange(request, env);
 	if (path === '/v1/users/me/email/verify' && method === 'POST') return handleVerifyEmailChange(request, env);
+	if (path === '/v1/users/me/avatar' && method === 'POST') return handleAvatarUpload(request, env);
+	if (path === '/v1/users/me/avatar' && method === 'DELETE') return handleAvatarDelete(request, env);
 
 	// Service-to-service (API key protected)
 	if (path === '/v1/validate' && method === 'POST') return handleValidate(request, env);
@@ -525,6 +527,126 @@ async function handleDeleteMe(request: Request, env: Env): Promise<Response> {
 		success: true,
 		message: 'Account scheduled for deletion. You have 30 days to restore it by logging in.',
 	});
+}
+
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+	'image/png': 'png',
+	'image/jpeg': 'jpg',
+	'image/webp': 'webp',
+	'image/gif': 'gif',
+};
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+
+async function handleAvatarUpload(request: Request, env: Env): Promise<Response> {
+	// Authenticate
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	// Check content type
+	const contentType = request.headers.get('Content-Type') || '';
+
+	let imageData: ArrayBuffer;
+	let mimeType: string;
+
+	if (contentType.startsWith('multipart/form-data')) {
+		// Handle multipart form upload
+		const formData = await request.formData();
+		const file = formData.get('avatar');
+
+		if (!file || typeof file === 'string') {
+			return json({ error: 'invalid_request', message: 'Avatar file required', status: 400 }, 400);
+		}
+
+		// file is now File type
+		const imageFile = file as File;
+		mimeType = imageFile.type;
+		imageData = await imageFile.arrayBuffer();
+	} else if (contentType in ALLOWED_IMAGE_TYPES) {
+		// Handle raw image upload
+		mimeType = contentType;
+		imageData = await request.arrayBuffer();
+	} else {
+		return json({ error: 'invalid_content_type', message: 'Unsupported content type', status: 400 }, 400);
+	}
+
+	// Validate image type
+	const extension = ALLOWED_IMAGE_TYPES[mimeType];
+	if (!extension) {
+		return json({ error: 'invalid_image_type', message: 'Supported types: PNG, JPEG, WebP, GIF', status: 400 }, 400);
+	}
+
+	// Validate size
+	if (imageData.byteLength > MAX_AVATAR_SIZE) {
+		return json({ error: 'file_too_large', message: 'Avatar must be under 5MB', status: 400 }, 400);
+	}
+
+	// Generate unique filename
+	const filename = `${payload.sub}/${generateUUID()}.${extension}`;
+
+	// Upload to R2
+	await env.AVATARS.put(filename, imageData, {
+		httpMetadata: {
+			contentType: mimeType,
+			cacheControl: 'public, max-age=31536000', // 1 year
+		},
+	});
+
+	// Generate public URL
+	const avatarUrl = `https://avatars.createsomething.space/${filename}`;
+
+	// Delete old avatar if exists
+	const user = await findUserById(env.DB, payload.sub);
+	if (user?.avatar_url?.startsWith('https://avatars.createsomething.space/')) {
+		const oldPath = user.avatar_url.replace('https://avatars.createsomething.space/', '');
+		try {
+			await env.AVATARS.delete(oldPath);
+		} catch {
+			// Ignore deletion errors for old avatars
+		}
+	}
+
+	// Update user avatar_url
+	const updatedUser = await updateUser(env.DB, payload.sub, { avatar_url: avatarUrl });
+	if (!updatedUser) {
+		return json({ error: 'update_failed', message: 'Failed to update avatar', status: 500 }, 500);
+	}
+
+	return json({
+		success: true,
+		avatar_url: avatarUrl,
+	});
+}
+
+async function handleAvatarDelete(request: Request, env: Env): Promise<Response> {
+	// Authenticate
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	// Get user
+	const user = await findUserById(env.DB, payload.sub);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	// Delete from R2 if it's our avatar
+	if (user.avatar_url?.startsWith('https://avatars.createsomething.space/')) {
+		const path = user.avatar_url.replace('https://avatars.createsomething.space/', '');
+		try {
+			await env.AVATARS.delete(path);
+		} catch {
+			// Ignore deletion errors
+		}
+	}
+
+	// Clear avatar_url
+	await updateUser(env.DB, payload.sub, { avatar_url: null });
+
+	return json({ success: true, message: 'Avatar deleted' });
 }
 
 // Service-to-Service Handlers
