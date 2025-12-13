@@ -79,6 +79,12 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="canonical" href="https://learn.createsomething.space" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
   <link rel="manifest" href="/manifest.json" />
 
   <!-- Structured Data (JSON-LD) for AEO -->
