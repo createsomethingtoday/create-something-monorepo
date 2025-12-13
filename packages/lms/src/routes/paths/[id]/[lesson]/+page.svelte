@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
   const { path, lesson, lessonNumber, totalLessons, previousLesson, nextLesson } = data;
@@ -68,7 +69,7 @@
     <!-- Previous Lesson -->
     {#if previousLesson}
       <a href="/paths/{path.id}/{previousLesson.id}" class="nav-button prev">
-        <div class="nav-arrow">←</div>
+        <div class="nav-arrow"><ChevronLeft size={24} /></div>
         <div class="flex-1">
           <div class="nav-label">Previous</div>
           <div class="nav-title">{previousLesson.title}</div>
@@ -90,7 +91,7 @@
           <div class="nav-label">Next</div>
           <div class="nav-title">{nextLesson.title}</div>
         </div>
-        <div class="nav-arrow">→</div>
+        <div class="nav-arrow"><ChevronRight size={24} /></div>
       </a>
     {:else}
       <div class="nav-spacer"></div>
@@ -250,7 +251,8 @@
   }
 
   .nav-arrow {
-    font-size: var(--text-h3);
+    display: flex;
+    align-items: center;
     color: var(--color-fg-muted);
   }
 

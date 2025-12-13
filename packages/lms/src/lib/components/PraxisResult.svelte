@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Check, X, Info } from 'lucide-svelte';
+
 	type ResultState = 'success' | 'error' | 'info';
 
 	interface Props {
@@ -10,12 +12,6 @@
 
 	let { state, feedback, score, maxScore }: Props = $props();
 
-	const icons = {
-		success: '✓',
-		error: '✗',
-		info: 'ℹ'
-	};
-
 	const stateLabels = {
 		success: 'Success',
 		error: 'Try Again',
@@ -25,7 +21,15 @@
 
 <div class="result {state}">
 	<div class="result-header">
-		<span class="result-icon">{icons[state]}</span>
+		<span class="result-icon">
+			{#if state === 'success'}
+				<Check size={18} strokeWidth={2.5} />
+			{:else if state === 'error'}
+				<X size={18} strokeWidth={2.5} />
+			{:else}
+				<Info size={18} strokeWidth={2} />
+			{/if}
+		</span>
 		<span class="result-label">{stateLabels[state]}</span>
 		{#if score !== undefined && maxScore !== undefined}
 			<span class="result-score">{score}/{maxScore}</span>
@@ -67,8 +71,8 @@
 	}
 
 	.result-icon {
-		font-size: var(--text-body-lg);
-		font-weight: bold;
+		display: flex;
+		align-items: center;
 	}
 
 	.result-label {

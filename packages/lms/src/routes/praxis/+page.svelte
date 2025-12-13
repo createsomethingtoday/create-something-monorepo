@@ -3,6 +3,7 @@
 	import PraxisContainer from '$lib/components/PraxisContainer.svelte';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
 	import PraxisResult from '$lib/components/PraxisResult.svelte';
+	import { ArrowLeft, ChevronRight } from 'lucide-svelte';
 
 	// Example exercises data
 	const exercises = [
@@ -98,7 +99,7 @@ function CancelButton({ onClick }) {
 					<p class="exercise-description">{exercise.description}</p>
 					<div class="exercise-footer">
 						<span class="exercise-type">{exercise.type}</span>
-						<span class="exercise-arrow">→</span>
+						<span class="exercise-arrow"><ChevronRight size={18} /></span>
 					</div>
 				</button>
 			{/each}
@@ -106,7 +107,10 @@ function CancelButton({ onClick }) {
 	{:else if selectedExercise === 'triad-intro'}
 		<!-- Example Triad Audit exercise -->
 		<div class="exercise-view">
-			<button class="back-button" onclick={() => (selectedExercise = null)}>← Back to Exercises</button>
+			<button class="back-button" onclick={() => (selectedExercise = null)}>
+				<ArrowLeft size={16} />
+				<span>Back to Exercises</span>
+			</button>
 
 			<TriadAudit
 				scenario="Review the code below and identify opportunities for improvement at each level of the Subtractive Triad. Look for duplication (DRY), excess complexity (Rams), and disconnection from the larger system (Heidegger)."
@@ -117,7 +121,10 @@ function CancelButton({ onClick }) {
 	{:else}
 		<!-- Placeholder for other exercise types -->
 		<div class="exercise-view">
-			<button class="back-button" onclick={() => (selectedExercise = null)}>← Back to Exercises</button>
+			<button class="back-button" onclick={() => (selectedExercise = null)}>
+				<ArrowLeft size={16} />
+				<span>Back to Exercises</span>
+			</button>
 
 			<PraxisContainer
 				title={exercises.find((e) => e.id === selectedExercise)?.title ?? ''}
@@ -237,6 +244,8 @@ function CancelButton({ onClick }) {
 	}
 
 	.exercise-arrow {
+		display: flex;
+		align-items: center;
 		color: var(--color-fg-muted);
 		transition: transform var(--duration-micro) var(--ease-standard);
 	}
@@ -252,6 +261,9 @@ function CancelButton({ onClick }) {
 	}
 
 	.back-button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
 		padding: var(--space-sm) var(--space-md);
 		margin-bottom: var(--space-lg);
 		background: transparent;
