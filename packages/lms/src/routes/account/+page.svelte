@@ -7,7 +7,7 @@
 	 */
 
 	import type { PageData } from './$types';
-	import { User, Mail, Shield, Calendar, Check, Loader2, LogOut, Key, Eye, EyeOff } from 'lucide-svelte';
+	import { User, Mail, Shield, Calendar, Check, Loader2, LogOut, Key, Eye, EyeOff, Upload, Trash2, AlertTriangle } from 'lucide-svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
@@ -24,6 +24,26 @@
 	let showNewPassword = $state(false);
 	let changingPassword = $state(false);
 	let passwordMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+
+	// Email change state
+	let newEmail = $state('');
+	let emailPassword = $state('');
+	let changingEmail = $state(false);
+	let emailMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+
+	// Avatar state
+	let avatarFile = $state<File | null>(null);
+	let avatarPreview = $state<string | null>(null);
+	let uploadingAvatar = $state(false);
+	let avatarMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+	let fileInput: HTMLInputElement;
+
+	// Delete account state
+	let showDeleteConfirm = $state(false);
+	let deletePassword = $state('');
+	let deleteConfirmText = $state('');
+	let deletingAccount = $state(false);
+	let deleteMessage = $state<{ type: 'error'; text: string } | null>(null);
 
 	// Format date
 	function formatDate(dateStr: string): string {
@@ -54,7 +74,7 @@
 			});
 
 			if (!response.ok) {
-				const err = await response.json();
+				const err = (await response.json()) as { message?: string };
 				throw new Error(err.message || 'Failed to save');
 			}
 
@@ -106,7 +126,7 @@
 			});
 
 			if (!response.ok) {
-				const err = await response.json();
+				const err = (await response.json()) as { message?: string };
 				throw new Error(err.message || 'Failed to change password');
 			}
 
@@ -116,6 +136,181 @@
 			passwordMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to change password' };
 		} finally {
 			changingPassword = false;
+		}
+	}
+
+	// Change email
+	async function changeEmail() {
+		emailMessage = null;
+
+		if (!newEmail || !emailPassword) {
+			emailMessage = { type: 'error', text: 'New email and password required' };
+			return;
+		}
+
+		// Basic email validation
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+			emailMessage = { type: 'error', text: 'Please enter a valid email address' };
+			return;
+		}
+
+		changingEmail = true;
+
+		try {
+			const response = await fetch('/api/account/email', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					new_email: newEmail,
+					password: emailPassword,
+				}),
+			});
+
+			if (!response.ok) {
+				const err = (await response.json()) as { message?: string };
+				throw new Error(err.message || 'Failed to initiate email change');
+			}
+
+			emailMessage = { type: 'success', text: 'Verification email sent. Check your new inbox.' };
+			newEmail = '';
+			emailPassword = '';
+		} catch (err) {
+			emailMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to change email' };
+		} finally {
+			changingEmail = false;
+		}
+	}
+
+	// Avatar file selection
+	function handleAvatarSelect(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+
+		if (!file) return;
+
+		// Validate type
+		const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+		if (!allowedTypes.includes(file.type)) {
+			avatarMessage = { type: 'error', text: 'Please select a PNG, JPEG, WebP, or GIF image' };
+			return;
+		}
+
+		// Validate size (5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			avatarMessage = { type: 'error', text: 'Image must be under 5MB' };
+			return;
+		}
+
+		avatarFile = file;
+		avatarPreview = URL.createObjectURL(file);
+		avatarMessage = null;
+	}
+
+	// Upload avatar
+	async function uploadAvatar() {
+		if (!avatarFile) return;
+
+		uploadingAvatar = true;
+		avatarMessage = null;
+
+		try {
+			const formData = new FormData();
+			formData.append('avatar', avatarFile);
+
+			const response = await fetch('/api/account/avatar', {
+				method: 'POST',
+				body: formData,
+			});
+
+			if (!response.ok) {
+				const err = (await response.json()) as { message?: string };
+				throw new Error(err.message || 'Failed to upload avatar');
+			}
+
+			avatarMessage = { type: 'success', text: 'Avatar updated' };
+			avatarFile = null;
+			if (avatarPreview) {
+				URL.revokeObjectURL(avatarPreview);
+				avatarPreview = null;
+			}
+			await invalidateAll();
+		} catch (err) {
+			avatarMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to upload avatar' };
+		} finally {
+			uploadingAvatar = false;
+		}
+	}
+
+	// Cancel avatar selection
+	function cancelAvatarSelection() {
+		avatarFile = null;
+		if (avatarPreview) {
+			URL.revokeObjectURL(avatarPreview);
+			avatarPreview = null;
+		}
+		if (fileInput) {
+			fileInput.value = '';
+		}
+	}
+
+	// Delete avatar
+	async function deleteAvatar() {
+		uploadingAvatar = true;
+		avatarMessage = null;
+
+		try {
+			const response = await fetch('/api/account/avatar', {
+				method: 'DELETE',
+			});
+
+			if (!response.ok) {
+				const err = (await response.json()) as { message?: string };
+				throw new Error(err.message || 'Failed to delete avatar');
+			}
+
+			avatarMessage = { type: 'success', text: 'Avatar removed' };
+			await invalidateAll();
+		} catch (err) {
+			avatarMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to delete avatar' };
+		} finally {
+			uploadingAvatar = false;
+		}
+	}
+
+	// Delete account
+	async function deleteAccount() {
+		deleteMessage = null;
+
+		if (!deletePassword) {
+			deleteMessage = { type: 'error', text: 'Password required' };
+			return;
+		}
+
+		if (deleteConfirmText !== 'DELETE') {
+			deleteMessage = { type: 'error', text: 'Please type DELETE to confirm' };
+			return;
+		}
+
+		deletingAccount = true;
+
+		try {
+			const response = await fetch('/api/account/delete', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password: deletePassword }),
+			});
+
+			if (!response.ok) {
+				const err = (await response.json()) as { message?: string };
+				throw new Error(err.message || 'Failed to delete account');
+			}
+
+			// Account deleted - redirect to home
+			goto('/?message=account_deleted');
+		} catch (err) {
+			deleteMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to delete account' };
+		} finally {
+			deletingAccount = false;
 		}
 	}
 </script>
@@ -146,18 +341,58 @@
 			</div>
 
 			<form onsubmit={(e) => { e.preventDefault(); saveProfile(); }} class="profile-form">
-				<!-- Avatar placeholder -->
+				<!-- Avatar section with upload -->
 				<div class="avatar-container">
 					<div class="avatar">
-						{#if data.profile.avatar_url}
+						{#if avatarPreview}
+							<img src={avatarPreview} alt="New avatar preview" />
+						{:else if data.profile.avatar_url}
 							<img src={data.profile.avatar_url} alt="Avatar" />
 						{:else}
 							<User size={32} strokeWidth={1.5} />
 						{/if}
 					</div>
-					<div class="avatar-info">
-						<span class="avatar-name">{data.profile.name || 'Learner'}</span>
-						<span class="avatar-tier">{tierLabel(data.profile.tier)} tier</span>
+					<div class="avatar-controls">
+						<div class="avatar-info">
+							<span class="avatar-name">{data.profile.name || 'Learner'}</span>
+							<span class="avatar-tier">{tierLabel(data.profile.tier)} tier</span>
+						</div>
+						<div class="avatar-actions">
+							<input
+								type="file"
+								accept="image/png,image/jpeg,image/webp,image/gif"
+								onchange={handleAvatarSelect}
+								bind:this={fileInput}
+								class="hidden-input"
+								id="avatar-input"
+							/>
+							{#if avatarFile}
+								<button type="button" class="avatar-btn upload" onclick={uploadAvatar} disabled={uploadingAvatar}>
+									{#if uploadingAvatar}
+										<Loader2 size={14} class="animate-spin" />
+									{:else}
+										<Upload size={14} />
+									{/if}
+									<span>Upload</span>
+								</button>
+								<button type="button" class="avatar-btn cancel" onclick={cancelAvatarSelection}>
+									<span>Cancel</span>
+								</button>
+							{:else}
+								<label for="avatar-input" class="avatar-btn">
+									<Upload size={14} />
+									<span>Change</span>
+								</label>
+								{#if data.profile.avatar_url}
+									<button type="button" class="avatar-btn delete" onclick={deleteAvatar} disabled={uploadingAvatar}>
+										<Trash2 size={14} />
+									</button>
+								{/if}
+							{/if}
+						</div>
+						{#if avatarMessage}
+							<span class="avatar-message {avatarMessage.type}">{avatarMessage.text}</span>
+						{/if}
 					</div>
 				</div>
 
@@ -330,6 +565,63 @@
 			</form>
 		</section>
 
+		<!-- Email Change Section -->
+		<section class="email-section">
+			<div class="section-header">
+				<h2 class="section-title">Email Address</h2>
+				<p class="section-subtitle">Change the email address associated with your account.</p>
+			</div>
+
+			<form onsubmit={(e) => { e.preventDefault(); changeEmail(); }} class="email-form">
+				<!-- New Email -->
+				<div class="field">
+					<label for="new-email" class="field-label">
+						<Mail size={16} strokeWidth={1.5} />
+						<span>New Email Address</span>
+					</label>
+					<input
+						id="new-email"
+						type="email"
+						bind:value={newEmail}
+						placeholder="Enter new email"
+						class="field-input"
+						autocomplete="email"
+					/>
+				</div>
+
+				<!-- Password for verification -->
+				<div class="field">
+					<label for="email-password" class="field-label">
+						<Key size={16} strokeWidth={1.5} />
+						<span>Confirm Password</span>
+					</label>
+					<input
+						id="email-password"
+						type="password"
+						bind:value={emailPassword}
+						placeholder="Enter your password"
+						class="field-input"
+						autocomplete="current-password"
+					/>
+					<p class="field-hint">Required to verify your identity.</p>
+				</div>
+
+				<div class="form-actions">
+					{#if emailMessage}
+						<span class="save-message {emailMessage.type}">{emailMessage.text}</span>
+					{/if}
+					<button type="submit" class="change-email-btn" disabled={changingEmail}>
+						{#if changingEmail}
+							<Loader2 size={16} class="animate-spin" />
+							<span>Sending...</span>
+						{:else}
+							<span>Send Verification</span>
+						{/if}
+					</button>
+				</div>
+			</form>
+		</section>
+
 		<!-- Actions Section -->
 		<section class="actions-section">
 			<div class="section-header">
@@ -340,6 +632,83 @@
 				<LogOut size={18} strokeWidth={1.5} />
 				<span>Sign Out</span>
 			</button>
+		</section>
+
+		<!-- Danger Zone -->
+		<section class="danger-section">
+			<div class="section-header">
+				<h2 class="section-title danger">Danger Zone</h2>
+			</div>
+
+			{#if !showDeleteConfirm}
+				<div class="danger-info">
+					<p>Once you delete your account, there is no going back. Your account will be scheduled for deletion, and you will have 30 days to recover it by logging in.</p>
+					<button type="button" class="delete-account-btn" onclick={() => (showDeleteConfirm = true)}>
+						<Trash2 size={16} />
+						<span>Delete Account</span>
+					</button>
+				</div>
+			{:else}
+				<div class="delete-confirm-card">
+					<div class="delete-warning">
+						<AlertTriangle size={24} />
+						<div>
+							<strong>Are you sure?</strong>
+							<p>This action cannot be undone. Type <strong>DELETE</strong> to confirm.</p>
+						</div>
+					</div>
+
+					<form onsubmit={(e) => { e.preventDefault(); deleteAccount(); }} class="delete-form">
+						<div class="field">
+							<label for="delete-confirm" class="field-label">
+								<span>Type DELETE to confirm</span>
+							</label>
+							<input
+								id="delete-confirm"
+								type="text"
+								bind:value={deleteConfirmText}
+								placeholder="DELETE"
+								class="field-input"
+								autocomplete="off"
+							/>
+						</div>
+
+						<div class="field">
+							<label for="delete-password" class="field-label">
+								<Key size={16} strokeWidth={1.5} />
+								<span>Your Password</span>
+							</label>
+							<input
+								id="delete-password"
+								type="password"
+								bind:value={deletePassword}
+								placeholder="Enter your password"
+								class="field-input"
+								autocomplete="current-password"
+							/>
+						</div>
+
+						{#if deleteMessage}
+							<span class="delete-message error">{deleteMessage.text}</span>
+						{/if}
+
+						<div class="delete-actions">
+							<button type="button" class="cancel-delete-btn" onclick={() => { showDeleteConfirm = false; deleteConfirmText = ''; deletePassword = ''; }}>
+								Cancel
+							</button>
+							<button type="submit" class="confirm-delete-btn" disabled={deletingAccount}>
+								{#if deletingAccount}
+									<Loader2 size={16} class="animate-spin" />
+									<span>Deleting...</span>
+								{:else}
+									<Trash2 size={16} />
+									<span>Delete My Account</span>
+								{/if}
+							</button>
+						</div>
+					</form>
+				</div>
+			{/if}
 		</section>
 	{/if}
 </div>
@@ -655,6 +1024,256 @@
 	}
 
 	.change-password-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	/* Avatar Controls */
+	.avatar-controls {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.avatar-actions {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+	}
+
+	.hidden-input {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+		overflow: hidden;
+	}
+
+	.avatar-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.375rem 0.75rem;
+		background: transparent;
+		color: var(--color-fg-tertiary);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		font-family: inherit;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.avatar-btn:hover:not(:disabled) {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-secondary);
+	}
+
+	.avatar-btn.upload {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-color: var(--color-fg-primary);
+	}
+
+	.avatar-btn.upload:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+
+	.avatar-btn.delete {
+		color: var(--color-error);
+		border-color: transparent;
+	}
+
+	.avatar-btn.delete:hover:not(:disabled) {
+		border-color: var(--color-error);
+	}
+
+	.avatar-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.avatar-message {
+		font-size: var(--text-caption);
+	}
+
+	.avatar-message.success {
+		color: var(--color-success);
+	}
+
+	.avatar-message.error {
+		color: var(--color-error);
+	}
+
+	/* Email Section */
+	.email-section {
+		margin-bottom: var(--space-xl);
+	}
+
+	.section-subtitle {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+		margin-top: var(--space-xs);
+	}
+
+	.email-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.change-email-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		background: transparent;
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		font-family: inherit;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.change-email-btn:hover:not(:disabled) {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+	}
+
+	.change-email-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	/* Danger Zone */
+	.danger-section {
+		margin-top: var(--space-xl);
+		padding-top: var(--space-lg);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.section-title.danger {
+		color: var(--color-error);
+	}
+
+	.danger-info {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.danger-info p {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		line-height: 1.6;
+	}
+
+	.delete-account-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		background: transparent;
+		color: var(--color-error);
+		border: 1px solid var(--color-error);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		font-family: inherit;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+		align-self: flex-start;
+	}
+
+	.delete-account-btn:hover {
+		background: rgba(204, 68, 68, 0.1);
+	}
+
+	.delete-confirm-card {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-error);
+		border-radius: var(--radius-lg);
+	}
+
+	.delete-warning {
+		display: flex;
+		gap: var(--space-md);
+		margin-bottom: var(--space-md);
+		color: var(--color-error);
+	}
+
+	.delete-warning strong {
+		display: block;
+		margin-bottom: 0.25rem;
+	}
+
+	.delete-warning p {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.delete-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.delete-message {
+		font-size: var(--text-body-sm);
+	}
+
+	.delete-message.error {
+		color: var(--color-error);
+	}
+
+	.delete-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--space-sm);
+		margin-top: var(--space-sm);
+	}
+
+	.cancel-delete-btn {
+		padding: var(--space-sm) var(--space-md);
+		background: transparent;
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-family: inherit;
+		cursor: pointer;
+	}
+
+	.cancel-delete-btn:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.confirm-delete-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-error);
+		color: white;
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		font-family: inherit;
+		cursor: pointer;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.confirm-delete-btn:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+
+	.confirm-delete-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
