@@ -3,7 +3,7 @@
 
 	interface Props {
 		type?: 'organization' | 'project';
-		page?: 'home' | 'projects' | 'studio' | 'contact';
+		page?: 'home' | 'projects' | 'services' | 'studio' | 'contact';
 	}
 
 	let { type = 'organization', page = 'home' }: Props = $props();
@@ -84,6 +84,24 @@
 					position: 2,
 					name: 'Projects',
 					item: `${siteConfig.url}/projects`
+				}
+			]
+		},
+		services: {
+			'@context': 'https://schema.org',
+			'@type': 'BreadcrumbList',
+			itemListElement: [
+				{
+					'@type': 'ListItem',
+					position: 1,
+					name: 'Home',
+					item: siteConfig.url
+				},
+				{
+					'@type': 'ListItem',
+					position: 2,
+					name: 'Services',
+					item: `${siteConfig.url}/services`
 				}
 			]
 		},

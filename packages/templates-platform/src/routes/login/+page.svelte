@@ -28,9 +28,9 @@
         return;
       }
 
-      // Store tokens
-      document.cookie = `cs_access_token=${data.access_token}; path=/; max-age=900; secure; samesite=lax`;
-      document.cookie = `cs_refresh_token=${data.refresh_token}; path=/; max-age=604800; secure; samesite=lax`;
+      // Store tokens with cross-subdomain scope for unified identity
+      document.cookie = `cs_access_token=${data.access_token}; path=/; domain=.createsomething.space; max-age=900; secure; samesite=lax`;
+      document.cookie = `cs_refresh_token=${data.refresh_token}; path=/; domain=.createsomething.space; max-age=604800; secure; samesite=lax`;
 
       // Redirect to original destination or dashboard
       window.location.href = redirectUrl;

@@ -40,9 +40,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			return json(data, { status: response.status });
 		}
 
-		// Set cookies for the tokens
+		// Set cookies for the tokens (cross-subdomain for unified identity)
 		cookies.set('cs_access_token', data.access_token, {
 			path: '/',
+			domain: '.createsomething.space',
 			httpOnly: true,
 			secure: true,
 			sameSite: 'lax',
@@ -51,6 +52,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
 		cookies.set('cs_refresh_token', data.refresh_token, {
 			path: '/',
+			domain: '.createsomething.space',
 			httpOnly: true,
 			secure: true,
 			sameSite: 'lax',
