@@ -313,3 +313,33 @@ export async function updateUserEmail(db: D1Database, id: string, email: string)
 export async function cleanExpiredEmailChangeRequests(db: D1Database): Promise<void> {
 	await db.prepare("DELETE FROM email_change_requests WHERE expires_at < datetime('now')").run();
 }
+
+// Soft delete queries
+export async function softDeleteUser(db: D1Database, id: string): Promise<boolean> {
+	const result = await db
+		.prepare("UPDATE users SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL")
+		.bind(id)
+		.run();
+	return result.meta.changes > 0;
+}
+
+export async function restoreUser(db: D1Database, id: string): Promise<User | null> {
+	await db
+		.prepare("UPDATE users SET deleted_at = NULL, updated_at = datetime('now') WHERE id = ?")
+		.bind(id)
+		.run();
+	return findUserById(db, id);
+}
+
+export async function hardDeleteUser(db: D1Database, id: string): Promise<boolean> {
+	const result = await db.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
+	return result.meta.changes > 0;
+}
+
+export async function findDeletedUsersForCleanup(db: D1Database): Promise<User[]> {
+	// Find users deleted more than 30 days ago
+	const result = await db
+		.prepare("SELECT * FROM users WHERE deleted_at < datetime('now', '-30 days')")
+		.all<User>();
+	return result.results ?? [];
+}
