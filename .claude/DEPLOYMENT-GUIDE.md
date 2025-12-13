@@ -84,6 +84,7 @@ Deploy the updated .ltd property with the new evidence API.
 cd packages/ltd
 pnpm build
 wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd
+# Note: This is correct - ltd uses 'createsomething-ltd' (without hyphen in 'createsomething')
 ```
 
 ### Verify

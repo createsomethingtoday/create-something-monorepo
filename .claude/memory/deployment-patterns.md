@@ -19,25 +19,29 @@ Deployment and migration workflows for Cloudflare Pages.
 # 1. Build
 pnpm --filter=[property] build
 
-# 2. Deploy
+# 2. Deploy (use exact project name from mapping table below)
 cd packages/[property]
-wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-[property]
+wrangler pages deploy .svelte-kit/cloudflare --project-name=[exact-project-name]
 
 # 3. Verify
 curl -I https://createsomething.[property]
 
 # 4. Monitor
-wrangler pages deployment tail --project-name=createsomething-[property]
+wrangler pages deployment tail --project-name=[exact-project-name]
 ```
 
 ## Project Name Mapping
 
-| Package | Pages Project |
-|---------|---------------|
-| space | createsomething-space |
-| io | createsomething-io |
-| agency | createsomething-agency |
-| ltd | createsomething-ltd |
+**Critical**: Use exact project names. Naming is inconsistent due to historical reasons.
+
+| Package | Cloudflare Pages Project | Domain |
+|---------|--------------------------|--------|
+| space | `create-something-space` | createsomething.space |
+| io | `create-something-io` | createsomething.io |
+| agency | `create-something-agency` | createsomething.agency |
+| ltd | `createsomething-ltd` | createsomething.ltd |
+| lms | `createsomething-lms` | learn.createsomething.space |
+| templates-platform | `templates-platform` | templates.createsomething.space |
 
 ## Database Migrations
 
@@ -66,11 +70,11 @@ wrangler d1 migrations apply DB_NAME
 ## Rollback
 
 ```bash
-# List deployments
-wrangler pages deployment list --project-name=createsomething-[property]
+# List deployments (use exact project name from mapping table)
+wrangler pages deployment list --project-name=[exact-project-name]
 
 # Rollback
-wrangler pages deployment rollback [DEPLOYMENT_ID] --project-name=createsomething-[property]
+wrangler pages deployment rollback [DEPLOYMENT_ID] --project-name=[exact-project-name]
 ```
 
 ## Pre-Deployment Checklist

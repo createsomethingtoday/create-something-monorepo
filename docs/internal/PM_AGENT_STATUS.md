@@ -118,6 +118,7 @@ Received protocol 'cloudflare:'
    # Try deploying just the agent routes
    cd packages/io
    npx wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-io
+   # Note: This is correct - io uses 'create-something-io' (with hyphen in 'create-something')
    ```
 
 4. **Once deployed, test agent**

@@ -58,6 +58,7 @@
   --color-path-method: #ec4899;
   --color-path-systems: #6366f1;
   --color-path-partnership: #a855f7;
+  --color-path-advanced: #ef4444;
 
   /* Typography - Fluid & Canonical */
   --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -387,6 +388,7 @@ a:hover {
 .path-method { --path-color: var(--color-path-method); }
 .path-systems { --path-color: var(--color-path-systems); }
 .path-partnership { --path-color: var(--color-path-partnership); }
+.path-advanced { --path-color: var(--color-path-advanced); }
 
 /* ==========================================================================
    Praxis Exercise Styles

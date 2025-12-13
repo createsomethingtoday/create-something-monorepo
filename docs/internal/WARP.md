@@ -46,7 +46,8 @@ This workspace uses both Warp Agent Mode and Claude Code. Each has a domain:
 ```bash
 cd packages/space
 pnpm run build
-wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-space
+wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-space
+# Note: Use exact project name - see .claude/rules/cloudflare-patterns.md for full mapping
 ```
 
 ### Deploy a Worker
@@ -79,7 +80,8 @@ wrangler d1 migrations apply create-something-db
 
 ### Tail Pages Logs
 ```bash
-wrangler pages deployment tail --project-name=createsomething-space
+wrangler pages deployment tail --project-name=create-something-space
+# Note: Use exact project name - see .claude/rules/cloudflare-patterns.md for full mapping
 ```
 
 ### Tail Worker Logs

@@ -8,10 +8,17 @@
 
   import type { PageData } from './$types';
   import { PATHS } from '$content/paths';
-  import { CheckCircle, Circle, Clock, BookOpen, ArrowRight } from 'lucide-svelte';
+  import { CheckCircle, Circle, Clock, BookOpen, ArrowRight, RefreshCw } from 'lucide-svelte';
+  import { progress, overallProgress } from '$lib/stores/progress';
+  import { onMount } from 'svelte';
 
   let { data }: { data: PageData } = $props();
-  const { user, pathProgress, stats } = data;
+  const { user } = data;
+
+  // Use store for reactive progress data
+  onMount(() => {
+    progress.fetch();
+  });
 
   // Helper to get path info
   function getPath(pathId: string) {
@@ -27,12 +34,10 @@
     return `${hours}h ${mins}m`;
   }
 
-  // Calculate overall progress percentage
-  const overallProgress = $derived(
-    stats.totalLessons > 0
-      ? Math.round((stats.lessonsCompleted / stats.totalLessons) * 100)
-      : 0
-  );
+  // Refresh progress
+  async function refreshProgress() {
+    await progress.fetch();
+  }
 </script>
 
 <svelte:head>
@@ -42,7 +47,17 @@
 <div class="max-w-5xl mx-auto px-6 py-16">
   <!-- Header -->
   <header class="mb-12">
-    <h1 class="page-title">Your Progress</h1>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="page-title">Your Progress</h1>
+      <button
+        class="refresh-button"
+        onclick={refreshProgress}
+        disabled={$progress.loading}
+        title="Refresh progress"
+      >
+        <RefreshCw size={20} class:spinning={$progress.loading} />
+      </button>
+    </div>
     <p class="page-subtitle">
       Welcome back{user?.name ? `, ${user.name}` : ''}. Continue your journey.
     </p>
@@ -51,19 +66,19 @@
   <!-- Stats Overview -->
   <section class="stats-grid">
     <div class="stat-card">
-      <div class="stat-value">{stats.pathsCompleted}/{stats.totalPaths}</div>
+      <div class="stat-value">{$progress.stats.pathsCompleted}/{$progress.stats.totalPaths}</div>
       <div class="stat-label">Paths Completed</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value">{stats.lessonsCompleted}/{stats.totalLessons}</div>
+      <div class="stat-value">{$progress.stats.lessonsCompleted}/{$progress.stats.totalLessons}</div>
       <div class="stat-label">Lessons Completed</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value">{overallProgress}%</div>
+      <div class="stat-value">{$overallProgress}%</div>
       <div class="stat-label">Overall Progress</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value">{formatTime(stats.totalTimeSpent)}</div>
+      <div class="stat-value">{formatTime($progress.stats.totalTimeSpent)}</div>
       <div class="stat-label">Time Learning</div>
     </div>
   </section>
@@ -71,7 +86,7 @@
   <!-- Overall Progress Bar -->
   <div class="overall-progress">
     <div class="progress-bar-container">
-      <div class="progress-bar" style="width: {overallProgress}%"></div>
+      <div class="progress-bar" style="width: {$overallProgress}%"></div>
     </div>
   </div>
 
@@ -80,20 +95,20 @@
     <h2 class="section-title">Learning Paths</h2>
 
     <div class="paths-list">
-      {#each pathProgress as progress}
-        {@const path = getPath(progress.pathId)}
+      {#each $progress.pathProgress as pathProg}
+        {@const path = getPath(pathProg.pathId)}
         {#if path}
           <a
             href="/paths/{path.id}"
             class="path-progress-card {path.color}"
-            class:completed={progress.status === 'completed'}
-            class:in-progress={progress.status === 'in_progress'}
+            class:completed={pathProg.status === 'completed'}
+            class:in-progress={pathProg.status === 'in_progress'}
           >
             <div class="path-header">
               <div class="path-indicator">
-                {#if progress.status === 'completed'}
+                {#if pathProg.status === 'completed'}
                   <CheckCircle size={20} strokeWidth={1.5} />
-                {:else if progress.status === 'in_progress'}
+                {:else if pathProg.status === 'in_progress'}
                   <Clock size={20} strokeWidth={1.5} />
                 {:else}
                   <Circle size={20} strokeWidth={1.5} />
@@ -105,7 +120,7 @@
               </div>
               <div class="path-stats">
                 <span class="lesson-count">
-                  {progress.lessonsCompleted}/{progress.totalLessons}
+                  {pathProg.lessonsCompleted}/{pathProg.totalLessons}
                 </span>
               </div>
             </div>
@@ -114,24 +129,24 @@
             <div class="lesson-progress-bar">
               <div
                 class="lesson-progress-fill"
-                style="width: {progress.totalLessons > 0
-                  ? (progress.lessonsCompleted / progress.totalLessons) * 100
+                style="width: {pathProg.totalLessons > 0
+                  ? (pathProg.lessonsCompleted / pathProg.totalLessons) * 100
                   : 0}%"
               ></div>
             </div>
 
             <!-- Continue CTA for in-progress paths -->
-            {#if progress.status === 'in_progress' && progress.currentLesson}
+            {#if pathProg.status === 'in_progress' && pathProg.currentLesson}
               <div class="continue-cta">
-                <span>Continue: {progress.currentLesson}</span>
+                <span>Continue: {pathProg.currentLesson}</span>
                 <ArrowRight size={16} />
               </div>
-            {:else if progress.status === 'not_started'}
+            {:else if pathProg.status === 'not_started'}
               <div class="start-cta">
                 <span>Start Path</span>
                 <ArrowRight size={16} />
               </div>
-            {:else if progress.status === 'completed'}
+            {:else if pathProg.status === 'completed'}
               <div class="completed-label">
                 <span>Completed</span>
                 <CheckCircle size={16} />
@@ -144,7 +159,7 @@
   </section>
 
   <!-- Empty State -->
-  {#if stats.lessonsCompleted === 0}
+  {#if $progress.stats.lessonsCompleted === 0}
     <section class="empty-state">
       <div class="empty-icon"><BookOpen size={48} strokeWidth={1} /></div>
       <h3>Begin Your Journey</h3>
@@ -374,5 +389,42 @@
   .empty-state a {
     color: var(--color-fg-primary);
     text-decoration: underline;
+  }
+
+  /* Refresh Button */
+  .refresh-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    color: var(--color-fg-secondary);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .refresh-button:hover:not(:disabled) {
+    border-color: var(--color-border-emphasis);
+    color: var(--color-fg-primary);
+  }
+
+  .refresh-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .refresh-button :global(.spinning) {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

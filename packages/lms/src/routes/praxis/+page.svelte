@@ -214,6 +214,10 @@ function CancelButton({ onClick }) {
 		color: var(--color-path-partnership);
 	}
 
+	.exercise-path.path-advanced {
+		color: var(--color-path-advanced);
+	}
+
 	.exercise-difficulty {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
