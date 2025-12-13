@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
+	import RelatedResearch from '$lib/components/RelatedResearch.svelte';
 	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
@@ -25,3 +26,5 @@
 <!-- Hero Section with All Tutorials -->
 <HeroSection featuredPapers={sortedPapers} />
 
+<!-- Cross-property links to .io Research -->
+<RelatedResearch />

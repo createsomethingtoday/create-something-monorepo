@@ -3,6 +3,7 @@
 	import ArticleHeader from '$lib/components/ArticleHeader.svelte';
 	import ExperimentRuntime from '$lib/components/ExperimentRuntime.svelte';
 	import ExperimentCodeEditor from '$lib/components/ExperimentCodeEditor.svelte';
+	import RelatedPapersCard from '$lib/components/RelatedPapersCard.svelte';
 	import { RelatedArticles } from '@create-something/components';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
@@ -96,7 +97,7 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black">
+<div class="experiment-page min-h-screen">
 	<!-- Article Header -->
 	<ArticleHeader {paper} />
 
@@ -141,6 +142,11 @@
 		</div>
 	{/if}
 
+	<!-- Related .io Research Papers -->
+	<div class="w-full max-w-5xl mx-auto px-6">
+		<RelatedPapersCard experimentSlug={paper.slug} />
+	</div>
+
 	<!-- Related Articles -->
 	<RelatedArticles papers={relatedPapers} currentPaperId={paper.id} />
 
@@ -166,6 +172,10 @@
 </div>
 
 <style>
+  .experiment-page {
+    background: var(--color-bg-pure);
+  }
+
   .paper-link {
     background: var(--color-hover);
     border: 1px solid var(--color-border-default);
