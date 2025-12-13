@@ -12,6 +12,12 @@ export const siteConfig = {
 	description:
 		'Contemporary American dining featuring seasonal ingredients and artisanal techniques. Serving Seattle since 2018.',
 
+	// Hero
+	hero: {
+		image: '/hero/restaurant-dining.jpg',
+		alt: 'Elegant restaurant dining room with ambient lighting'
+	},
+
 	// Contact
 	email: 'reservations@restaurantname.com',
 	phone: '+1 (555) 123-4567',
@@ -144,6 +150,199 @@ export const siteConfig = {
 			image: '/menu/tasting.jpg',
 			dietary: ['vegetarian-option', 'vegan-option'],
 			featured: true
+		}
+	],
+
+	// Full Menu Items
+	menuItems: [
+		// Appetizers
+		{
+			name: 'Oysters on the Half Shell',
+			description: 'Daily selection, mignonette, cocktail sauce, lemon',
+			category: 'appetizers',
+			price: 18,
+			dietary: ['gluten-free']
+		},
+		{
+			name: 'Charcuterie Board',
+			description: 'House-cured meats, artisan cheese, pickled vegetables, grilled bread',
+			category: 'appetizers',
+			price: 22,
+			dietary: []
+		},
+		{
+			name: 'Crispy Brussels Sprouts',
+			description: 'Caramelized onions, hazelnuts, pomegranate, balsamic reduction',
+			category: 'appetizers',
+			price: 14,
+			dietary: ['vegetarian', 'vegan', 'gluten-free']
+		},
+		{
+			name: 'Tuna Tartare',
+			description: 'Sushi-grade ahi, avocado, cucumber, sesame, wonton crisps',
+			category: 'appetizers',
+			price: 19,
+			dietary: ['dairy-free']
+		},
+		// Salads & Soups
+		{
+			name: 'Caesar Salad',
+			description: 'Romaine hearts, house-made dressing, parmesan, sourdough croutons',
+			category: 'salads',
+			price: 12,
+			dietary: []
+		},
+		{
+			name: 'Seasonal Greens',
+			description: "Chef's selection of local greens, seasonal vegetables, citrus vinaigrette",
+			category: 'salads',
+			price: 14,
+			dietary: ['vegetarian', 'vegan', 'gluten-free']
+		},
+		{
+			name: 'French Onion Soup',
+			description: 'Slow-cooked onions, beef stock, gruyere, toasted baguette',
+			category: 'salads',
+			price: 11,
+			dietary: []
+		},
+		{
+			name: 'Roasted Beet Salad',
+			description: 'Golden and red beets, goat cheese, candied walnuts, arugula',
+			category: 'salads',
+			price: 15,
+			dietary: ['vegetarian', 'gluten-free']
+		},
+		// Entrees
+		{
+			name: 'Pan-Roasted Halibut',
+			description:
+				'Wild-caught Pacific halibut, heirloom tomato confit, summer squash, basil oil',
+			category: 'entrees',
+			price: 38,
+			dietary: ['gluten-free']
+		},
+		{
+			name: 'Wood-Fired Ribeye',
+			description: '14oz dry-aged beef, roasted bone marrow, fingerling potatoes, red wine jus',
+			category: 'entrees',
+			price: 52,
+			dietary: ['gluten-free']
+		},
+		{
+			name: 'Duck Confit',
+			description: 'Crispy duck leg, white bean cassoulet, cherry gastrique, frisée',
+			category: 'entrees',
+			price: 34,
+			dietary: ['dairy-free', 'gluten-free']
+		},
+		{
+			name: 'Wild Mushroom Risotto',
+			description: 'Arborio rice, seasonal mushrooms, parmesan, truffle oil, pea shoots',
+			category: 'entrees',
+			price: 28,
+			dietary: ['vegetarian', 'gluten-free']
+		},
+		{
+			name: 'Lamb Loin',
+			description: 'Herb-crusted lamb, eggplant caponata, mint yogurt, crispy chickpeas',
+			category: 'entrees',
+			price: 42,
+			dietary: ['gluten-free']
+		},
+		{
+			name: 'Pan-Seared Scallops',
+			description: 'Diver scallops, sweet corn puree, pancetta, microgreens',
+			category: 'entrees',
+			price: 36,
+			dietary: ['gluten-free']
+		},
+		// Sides
+		{
+			name: 'Roasted Seasonal Vegetables',
+			description: "Chef's selection of market vegetables",
+			category: 'sides',
+			price: 10,
+			dietary: ['vegetarian', 'vegan', 'gluten-free']
+		},
+		{
+			name: 'Truffle Fries',
+			description: 'Hand-cut fries, truffle oil, parmesan, herbs',
+			category: 'sides',
+			price: 12,
+			dietary: ['vegetarian']
+		},
+		{
+			name: 'Creamed Spinach',
+			description: 'Sautéed spinach, garlic cream, nutmeg',
+			category: 'sides',
+			price: 9,
+			dietary: ['vegetarian', 'gluten-free']
+		},
+		{
+			name: 'Mac and Cheese',
+			description: 'Three-cheese blend, panko crust',
+			category: 'sides',
+			price: 11,
+			dietary: ['vegetarian']
+		},
+		// Desserts
+		{
+			name: 'Chocolate Torte',
+			description: 'Flourless dark chocolate, raspberry coulis, whipped cream',
+			category: 'desserts',
+			price: 12,
+			dietary: ['gluten-free']
+		},
+		{
+			name: 'Seasonal Fruit Tart',
+			description: 'Vanilla pastry cream, fresh seasonal fruit, almond crust',
+			category: 'desserts',
+			price: 11,
+			dietary: ['vegetarian']
+		},
+		{
+			name: 'Crème Brûlée',
+			description: 'Classic vanilla custard, caramelized sugar, fresh berries',
+			category: 'desserts',
+			price: 10,
+			dietary: ['vegetarian', 'gluten-free']
+		},
+		{
+			name: 'Affogato',
+			description: 'Vanilla gelato, espresso, amaretti cookie',
+			category: 'desserts',
+			price: 9,
+			dietary: ['vegetarian']
+		},
+		// Drinks
+		{
+			name: 'House Cocktail',
+			description: 'Seasonal rotating selection - ask your server',
+			category: 'drinks',
+			price: 14,
+			dietary: []
+		},
+		{
+			name: 'Wine by the Glass',
+			description: 'Curated selection of red, white, and sparkling wines',
+			category: 'drinks',
+			price: 12,
+			dietary: []
+		},
+		{
+			name: 'Craft Beer',
+			description: 'Local and regional selections on tap',
+			category: 'drinks',
+			price: 8,
+			dietary: []
+		},
+		{
+			name: 'Non-Alcoholic Spritz',
+			description: 'House-made botanical soda, fresh herbs, citrus',
+			category: 'drinks',
+			price: 6,
+			dietary: ['vegan']
 		}
 	],
 
