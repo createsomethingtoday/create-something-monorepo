@@ -1,0 +1,96 @@
+# CREATE SOMETHING Neomutt Configuration
+# Philosophy: The tool recedes into communication
+#
+# Structure:
+#   neomuttrc           - Main entry point (this file)
+#   accounts/           - Account-specific configs
+#   colors/canon.muttrc - Canon-compliant color scheme
+#   bindings/           - Keybinding modules
+#   hooks/              - Folder, signature, and save hooks
+#   signatures/         - Per-account signatures
+#   mailcap             - MIME handlers
+
+# ─────────────────────────────────────────────────────────────
+# Performance: Header Caching (critical for large mailboxes)
+# ─────────────────────────────────────────────────────────────
+# Without caching, neomutt downloads all headers on every startup.
+# With caching, only new messages are fetched.
+
+set header_cache = "~/.cache/neomutt/headers"
+set message_cachedir = "~/.cache/neomutt/bodies"
+set header_cache_backend = lmdb
+
+# IMAP optimizations
+set imap_check_subscribed = no
+set imap_list_subscribed = no
+set imap_fetch_chunk_size = 100
+set imap_qresync = yes
+
+# ─────────────────────────────────────────────────────────────
+# Core Settings
+# ─────────────────────────────────────────────────────────────
+
+set mail_check = 120
+set timeout = 15
+set sort = threads
+set sort_aux = reverse-last-date-received
+set strict_threads = yes
+
+# Threading display
+set collapse_all = yes
+set uncollapse_new = yes
+
+# Index format: minimal, semantic
+# %Z = status flags, %D = date, %n = author, %s = subject
+set index_format = "%Z %D %-20.20n %s"
+set date_format = "%m/%d"
+
+# Pager: content over chrome
+set pager_index_lines = 8
+set pager_context = 3
+set pager_stop = yes
+set tilde = yes
+set markers = no
+
+# Compose: friction → zero
+set fast_reply = yes
+set include = yes
+set forward_quote = yes
+set edit_headers = yes
+set editor = "nvim"
+
+# Sidebar: only if you act on it
+set sidebar_visible = yes
+set sidebar_width = 24
+set sidebar_format = "%B%?F? [%F]?%* %?N?%N?"
+set sidebar_short_path = yes
+set sidebar_folder_indent = yes
+
+# MIME handling
+set mailcap_path = "~/.config/neomutt/mailcap"
+auto_view text/html
+alternative_order text/plain text/enriched text/html
+
+# ─────────────────────────────────────────────────────────────
+# Modules
+# ─────────────────────────────────────────────────────────────
+
+source ~/.config/neomutt/colors/canon.muttrc
+source ~/.config/neomutt/bindings/core.muttrc
+source ~/.config/neomutt/bindings/sidebar.muttrc
+source ~/.config/neomutt/bindings/compose.muttrc
+
+# ─────────────────────────────────────────────────────────────
+# Hooks
+# ─────────────────────────────────────────────────────────────
+
+source ~/.config/neomutt/hooks/folder.muttrc
+source ~/.config/neomutt/hooks/accounts.muttrc
+source ~/.config/neomutt/hooks/signatures.muttrc
+source ~/.config/neomutt/hooks/save.muttrc
+
+# ─────────────────────────────────────────────────────────────
+# Default Account (load on startup)
+# ─────────────────────────────────────────────────────────────
+
+source ~/.config/neomutt/accounts/createsomething.muttrc

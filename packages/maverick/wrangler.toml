@@ -1,0 +1,30 @@
+# Maverick X - SvelteKit on Cloudflare Pages
+name = "maverick-x"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# D1 Database - Content, users, domains
+[[d1_databases]]
+binding = "DB"
+database_name = "maverick-x-db"
+database_id = "2554c248-8ceb-4ee2-8a4d-965b39eb5f53"
+
+# KV Namespace - Session storage
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "07177a78d36b406191b9655492a40cef"
+
+# KV Namespace - Page content (JSON per page)
+[[kv_namespaces]]
+binding = "CONTENT"
+id = "3842228f5d15483eb0fb2465afef24f5"
+
+# R2 Bucket - Media uploads
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "maverick-x-assets"
+
+# Environment variables
+[vars]
+SITE_NAME = "Maverick X"

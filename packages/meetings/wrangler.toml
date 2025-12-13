@@ -1,0 +1,29 @@
+# Meeting Transcription Worker
+# "Tools recede, understanding remains"
+
+name = "create-something-meetings"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# D1 Database - stores transcripts, summaries, metadata
+[[d1_databases]]
+binding = "DB"
+database_name = "meetings"
+database_id = "8b88dd4c-8454-478a-b86b-42f31e12e076"
+
+# R2 Storage - raw audio files
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "meetings-audio"
+
+# Workers AI - Whisper transcription
+[ai]
+binding = "AI"
+
+# Environment variables (set via wrangler secret)
+# ANTHROPIC_API_KEY - for Claude summarization
+
+[vars]
+ENVIRONMENT = "development"

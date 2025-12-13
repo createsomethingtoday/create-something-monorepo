@@ -1,0 +1,19 @@
+{
+  "name": "Maverick X Components",
+  "components": "./src/**/*.webflow.@(js|jsx|mjs|ts|tsx)",
+  "telemetry": {
+    "global": {
+      "allowTelemetry": true,
+      "lastPrompted": 1765306041441,
+      "version": "1.8.51"
+    }
+  },
+  "library": {
+    "components": [
+      "**/*.webflow.@(js|jsx|mjs|ts|tsx)"
+    ],
+    "name": "Maverick X Components",
+    "description": "Maverick X design system components - heroes, cards, forms, stats displays, and layout elements with LithX/PetroX/DME brand variants.",
+    "id": "maverick-x-components"
+  }
+}

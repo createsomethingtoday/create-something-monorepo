@@ -1,0 +1,27 @@
+# Maverick X Admin App
+# Cloudflare Pages configuration
+
+name = "maverick-admin"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "maverick-db"
+database_id = ""  # Will be populated after creation
+
+# R2 Bucket for media
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "maverick-media"
+
+# KV for sessions
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = ""  # Will be populated after creation
+
+# Environment variables (set via dashboard)
+# AUTH_SECRET - Session signing key
+# ADMIN_EMAIL - Admin login email
+# ADMIN_PASSWORD_HASH - Bcrypt hash of admin password

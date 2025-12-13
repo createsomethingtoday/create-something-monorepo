@@ -1,0 +1,307 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================================
+   MAVERICK X DESIGN SYSTEM
+   "Chemistry That Outperforms" - Industrial precision meets minimal design
+   ============================================================================= */
+
+:root {
+  /* Backgrounds - Dark Canon palette */
+  --color-bg-pure: #000000;
+  --color-bg-elevated: #0a0a0a;
+  --color-bg-surface: #111111;
+  --color-bg-subtle: #1a1a1a;
+
+  /* Foregrounds - Semantic opacity levels */
+  --color-fg-primary: #ffffff;
+  --color-fg-secondary: rgba(255, 255, 255, 0.8);
+  --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+  --color-fg-muted: rgba(255, 255, 255, 0.4);
+  --color-fg-subtle: rgba(255, 255, 255, 0.2);
+
+  /* Borders - Subtle hierarchy */
+  --color-border-default: rgba(255, 255, 255, 0.1);
+  --color-border-emphasis: rgba(255, 255, 255, 0.2);
+  --color-border-strong: rgba(255, 255, 255, 0.3);
+
+  /* Interactive states */
+  --color-hover: rgba(255, 255, 255, 0.05);
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-focus: rgba(255, 255, 255, 0.2);
+
+  /* Semantic colors */
+  --color-success: #44aa44;
+  --color-success-muted: rgba(68, 170, 68, 0.2);
+  --color-error: #cc4444;
+  --color-error-muted: rgba(204, 68, 68, 0.2);
+  --color-warning: #aa8844;
+  --color-warning-muted: rgba(170, 136, 68, 0.2);
+  --color-info: #4477aa;
+  --color-info-muted: rgba(68, 119, 170, 0.2);
+
+  /* Brand accent - Monochromatic Canon */
+  --color-accent: rgba(255, 255, 255, 0.8);
+  --color-accent-hover: rgba(255, 255, 255, 1);
+  --color-accent-muted: rgba(255, 255, 255, 0.1);
+
+  /* Data visualization palette */
+  --color-data-1: #60a5fa;
+  --color-data-2: #22c55e;
+  --color-data-3: #c084fc;
+  --color-data-4: #fbbf24;
+  --color-data-5: #f472b6;
+  --color-data-6: #facc15;
+
+  /* Spacing - Golden Ratio (φ = 1.618) */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.618rem;
+  --space-lg: 2.618rem;
+  --space-xl: 4.236rem;
+
+  /* Typography scale */
+  --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);
+  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);
+  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);
+  --text-h4: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows - Depth through darkness */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+
+  /* Animation */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --duration-micro: 200ms;
+  --duration-standard: 300ms;
+  --duration-complex: 500ms;
+}
+
+/* =============================================================================
+   BASE STYLES
+   ============================================================================= */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* =============================================================================
+   ADMIN COMPONENT CLASSES
+   ============================================================================= */
+
+@layer components {
+  /* Admin Card */
+  .admin-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+  .admin-card:hover {
+    border-color: var(--color-border-emphasis);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Admin Input */
+  .admin-input {
+    width: 100%;
+    padding: var(--space-sm);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+  .admin-input:focus {
+    outline: none;
+    border-color: var(--color-border-emphasis);
+    box-shadow: 0 0 0 3px var(--color-hover);
+  }
+  .admin-input::placeholder {
+    color: var(--color-fg-muted);
+  }
+
+  /* Admin Button */
+  .admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: var(--text-body-sm);
+    border-radius: var(--radius-full);
+    transition: all var(--duration-micro) var(--ease-standard);
+    cursor: pointer;
+  }
+  .admin-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .admin-btn-primary {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+  }
+  .admin-btn-primary:hover:not(:disabled) {
+    background: var(--color-fg-secondary);
+  }
+  .admin-btn-secondary {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    color: var(--color-fg-primary);
+  }
+  .admin-btn-secondary:hover:not(:disabled) {
+    background: var(--color-hover);
+    border-color: var(--color-border-emphasis);
+  }
+  .admin-btn-ghost {
+    background: transparent;
+    color: var(--color-fg-secondary);
+  }
+  .admin-btn-ghost:hover:not(:disabled) {
+    background: var(--color-hover);
+    color: var(--color-fg-primary);
+  }
+  .admin-btn-danger {
+    background: var(--color-hover);
+    color: var(--color-fg-secondary);
+  }
+  .admin-btn-danger:hover:not(:disabled) {
+    background: var(--color-active);
+    color: var(--color-fg-primary);
+  }
+
+  /* Admin Badge */
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    font-size: var(--text-caption);
+    font-weight: 500;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .admin-badge-success {
+    background: var(--color-success-muted);
+    color: var(--color-success);
+  }
+  .admin-badge-error {
+    background: var(--color-error-muted);
+    color: var(--color-error);
+  }
+  .admin-badge-warning {
+    background: var(--color-warning-muted);
+    color: var(--color-warning);
+  }
+  .admin-badge-info {
+    background: var(--color-info-muted);
+    color: var(--color-info);
+  }
+  .admin-badge-neutral {
+    background: var(--color-hover);
+    color: var(--color-fg-muted);
+  }
+
+  /* Admin Table */
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .admin-table th {
+    padding: var(--space-sm);
+    text-align: left;
+    font-size: var(--text-body-sm);
+    font-weight: 600;
+    color: var(--color-fg-secondary);
+    background: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border-emphasis);
+  }
+  .admin-table td {
+    padding: var(--space-sm);
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-primary);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+  .admin-table tr:hover td {
+    background: var(--color-hover);
+  }
+
+  /* Admin Nav Link */
+  .admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-tertiary);
+    border-radius: var(--radius-md);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+  .admin-nav-link:hover {
+    background: var(--color-hover);
+    color: var(--color-fg-primary);
+  }
+  .admin-nav-link.active {
+    background: var(--color-active);
+    color: var(--color-fg-primary);
+  }
+}
+
+/* =============================================================================
+   SCROLL REVEAL ANIMATION UTILITIES
+   ============================================================================= */
+
+@layer utilities {
+  /* Scroll reveal states */
+  .scroll-reveal {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .scroll-reveal-hidden {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+
+  /* Stagger delays */
+  .stagger-1 { transition-delay: 0.15s; }
+  .stagger-2 { transition-delay: 0.30s; }
+  .stagger-3 { transition-delay: 0.45s; }
+  .stagger-4 { transition-delay: 0.60s; }
+}

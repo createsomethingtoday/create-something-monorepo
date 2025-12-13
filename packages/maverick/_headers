@@ -1,0 +1,7 @@
+# Maverick X - Cloudflare Pages Headers
+# Allow iframe embedding for Webflow CMS admin
+# Note: X-Frame-Options is intentionally omitted to allow iframe embedding
+# Content-Security-Policy frame-ancestors is the modern replacement
+
+/*
+  Content-Security-Policy: frame-ancestors 'self' https://maverick-x-cms.webflow.io https://*.webflow.io https://webflow.com https://*.webflow.com

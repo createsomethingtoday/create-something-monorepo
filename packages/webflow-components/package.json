@@ -1,0 +1,28 @@
+{
+  "name": "@create-something/webflow-components",
+  "version": "0.1.0",
+  "description": "Webflow code components library adapted from Maverick X",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "share": "npx webflow library share",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@webflow/react": "^1.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@webflow/webflow-cli": "^1.0.0",
+    "@webflow/data-types": "^1.0.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subtractive Triad Reviewer</title>
+  <style>
+    :root {
+      --color-bg-pure: #000000;
+      --color-bg-elevated: #0a0a0a;
+      --color-bg-surface: #111111;
+      --color-bg-subtle: #1a1a1a;
+      --color-fg-primary: #ffffff;
+      --color-fg-secondary: rgba(255, 255, 255, 0.8);
+      --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+      --color-fg-muted: rgba(255, 255, 255, 0.4);
+      --color-border-default: rgba(255, 255, 255, 0.1);
+      --color-border-emphasis: rgba(255, 255, 255, 0.2);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --space-sm: 1rem;
+      --space-md: 1.618rem;
+      --space-lg: 2.618rem;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--color-bg-pure);
+      color: var(--color-fg-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-md);
+    }
+
+    header {
+      text-align: center;
+      padding: var(--space-lg) 0;
+      border-bottom: 1px solid var(--color-border-default);
+      margin-bottom: var(--space-lg);
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: var(--space-sm);
+    }
+
+    .subtitle {
+      color: var(--color-fg-tertiary);
+      font-size: 1rem;
+    }
+
+    .philosophy-table {
+      width: 100%;
+      max-width: 600px;
+      margin: var(--space-md) auto;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .philosophy-table th,
+    .philosophy-table td {
+      padding: 0.5rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+
+    .philosophy-table th {
+      color: var(--color-fg-muted);
+      font-weight: 500;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-lg);
+    }
+
+    @media (max-width: 800px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+    }
+
+    .panel h2 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--color-fg-secondary);
+      margin-bottom: var(--space-sm);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 400px;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      color: var(--color-fg-primary);
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.875rem;
+      padding: var(--space-sm);
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--color-border-emphasis);
+    }
+
+    button {
+      width: 100%;
+      padding: var(--space-sm);
+      background: var(--color-fg-primary);
+      color: var(--color-bg-pure);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: var(--space-sm);
+      transition: opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .overall-score {
+      text-align: center;
+      padding: var(--space-md);
+      background: var(--color-bg-elevated);
+      border-radius: var(--radius-md);
+    }
+
+    .overall-score .score {
+      font-size: 3rem;
+      font-weight: 700;
+    }
+
+    .overall-score .summary {
+      color: var(--color-fg-tertiary);
+      margin-top: 0.5rem;
+    }
+
+    .level-section {
+      background: var(--color-bg-elevated);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .level-header {
+      padding: var(--space-sm);
+      background: var(--color-bg-subtle);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .level-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .level-title {
+      font-weight: 500;
+    }
+
+    .level-question {
+      color: var(--color-fg-muted);
+      font-size: 0.75rem;
+      font-style: italic;
+    }
+
+    .level-score {
+      font-weight: 600;
+    }
+
+    .level-content {
+      padding: var(--space-sm);
+      display: none;
+    }
+
+    .level-content.open {
+      display: block;
+    }
+
+    .commendation {
+      color: rgba(100, 200, 100, 0.9);
+      padding: 0.5rem 0;
+      font-size: 0.875rem;
+    }
+
+    .violation {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+
+    .violation:last-child {
+      border-bottom: none;
+    }
+
+    .violation-severity {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      margin-right: 0.5rem;
+    }
+
+    .severity-critical { background: rgba(220, 50, 50, 0.3); color: #ff6b6b; }
+    .severity-high { background: rgba(220, 100, 50, 0.3); color: #ffa06b; }
+    .severity-medium { background: rgba(220, 180, 50, 0.3); color: #ffd06b; }
+    .severity-low { background: rgba(100, 150, 220, 0.3); color: #6bb3ff; }
+
+    .violation-message {
+      font-size: 0.875rem;
+    }
+
+    .violation-suggestion {
+      color: var(--color-fg-muted);
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      font-style: italic;
+    }
+
+    .violation-location {
+      color: var(--color-fg-muted);
+      font-size: 0.75rem;
+    }
+
+    .claude-assessment {
+      background: var(--color-bg-elevated);
+      border: 1px solid rgba(100, 150, 220, 0.3);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm);
+      margin-top: var(--space-sm);
+    }
+
+    .claude-assessment h3 {
+      font-size: 0.875rem;
+      color: #6bb3ff;
+      margin-bottom: 0.5rem;
+    }
+
+    .claude-assessment p {
+      color: var(--color-fg-secondary);
+      font-size: 0.875rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: var(--space-lg);
+      color: var(--color-fg-muted);
+    }
+
+    .loading::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    footer {
+      text-align: center;
+      padding: var(--space-lg);
+      color: var(--color-fg-muted);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--color-border-default);
+      margin-top: var(--space-lg);
+    }
+
+    footer a {
+      color: var(--color-fg-tertiary);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--color-fg-primary);
+    }
+
+    .placeholder {
+      color: var(--color-fg-muted);
+      text-align: center;
+      padding: var(--space-lg);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Subtractive Triad Reviewer</h1>
+      <p class="subtitle">Truth emerges through disciplined removal at every level of abstraction.</p>
+      <table class="philosophy-table">
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Question</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>DRY</strong></td>
+            <td>Have I built this before?</td>
+            <td>Unify</td>
+          </tr>
+          <tr>
+            <td><strong>Rams</strong></td>
+            <td>Does this earn its existence?</td>
+            <td>Remove</td>
+          </tr>
+          <tr>
+            <td><strong>Heidegger</strong></td>
+            <td>Does this serve the whole?</td>
+            <td>Reconnect</td>
+          </tr>
+        </tbody>
+      </table>
+    </header>
+
+    <div class="main-content">
+      <div class="panel">
+        <h2>Your Code</h2>
+        <textarea id="code-input" placeholder="Paste your TypeScript or JavaScript code here..."></textarea>
+        <button id="analyze-btn" onclick="analyzeCode()">Analyze</button>
+      </div>
+
+      <div class="panel">
+        <h2>Analysis</h2>
+        <div id="results" class="results">
+          <div class="placeholder">
+            Paste code and click Analyze to see results
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Built by <a href="https://createsomething.ltd" target="_blank">CREATE SOMETHING</a></p>
+      <p>
+        <a href="https://createsomething.space" target="_blank">.space</a> |
+        <a href="https://createsomething.io" target="_blank">.io</a> |
+        <a href="https://createsomething.agency" target="_blank">.agency</a> |
+        <a href="https://createsomething.ltd" target="_blank">.ltd</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const exampleCode = `/**
+ * User management module
+ */
+
+import { db } from './database';
+import { logger } from './utils';
+import { validateEmail } from './validation';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const API_URL = "https://api.example.com";
+const BASE_URL = "https://api.example.com"; // Duplicate!
+
+export async function getUser(userId: number): Promise<User | null> {
+  const response = await fetch(\`\${API_URL}/users/\${userId}\`);
+  if (response.ok) {
+    return response.json();
+  }
+  return null;
+}
+
+export async function fetchUser(uid: number): Promise<User | null> {
+  // Almost identical to getUser!
+  const response = await fetch(\`\${API_URL}/users/\${uid}\`);
+  if (response.ok) {
+    return response.json();
+  }
+  return null;
+}
+
+export function GetAllUsers(): void {
+  // Empty function - wrong naming convention
+}
+
+function unusedHelper(): void {
+  // Never called
+}
+`;
+
+    // Load example code
+    document.getElementById('code-input').value = exampleCode;
+
+    async function analyzeCode() {
+      const code = document.getElementById('code-input').value;
+      const resultsDiv = document.getElementById('results');
+      const btn = document.getElementById('analyze-btn');
+
+      if (!code.trim()) {
+        alert('Please enter some code to analyze');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      resultsDiv.innerHTML = '<div class="loading">Analyzing code</div>';
+
+      try {
+        const response = await fetch('/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, filename: 'code.ts', language: 'typescript' }),
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Analysis failed');
+        }
+
+        renderResults(data.result, data.claudeAssessment);
+      } catch (error) {
+        resultsDiv.innerHTML = `<div class="placeholder" style="color: #ff6b6b;">Error: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analyze';
+      }
+    }
+
+    function renderResults(result, claudeAssessment) {
+      const resultsDiv = document.getElementById('results');
+
+      let html = `
+        <div class="overall-score">
+          <div class="score">${result.overall}/10</div>
+          <div class="summary">${result.summary}</div>
+        </div>
+      `;
+
+      // Render each level
+      const levels = [
+        { key: 'dry', name: 'DRY', question: 'Have I built this before?' },
+        { key: 'rams', name: 'Rams', question: 'Does this earn its existence?' },
+        { key: 'heidegger', name: 'Heidegger', question: 'Does this serve the whole?' },
+      ];
+
+      for (const level of levels) {
+        const data = result[level.key];
+        html += `
+          <div class="level-section">
+            <div class="level-header" onclick="toggleLevel('${level.key}')">
+              <div>
+                <div class="level-title">${level.name}</div>
+                <div class="level-question">${level.question}</div>
+              </div>
+              <div class="level-score">${data.score}/10</div>
+            </div>
+            <div id="level-${level.key}" class="level-content">
+              ${data.commendations.map(c => `<div class="commendation">+ ${c}</div>`).join('')}
+              ${data.violations.map(v => `
+                <div class="violation">
+                  <span class="violation-severity severity-${v.severity}">${v.severity}</span>
+                  <span class="violation-message">${v.message}</span>
+                  ${v.location ? `<div class="violation-location">${v.location}</div>` : ''}
+                  ${v.suggestion ? `<div class="violation-suggestion">${v.suggestion}</div>` : ''}
+                </div>
+              `).join('')}
+              ${data.violations.length === 0 && data.commendations.length === 0 ? '<div class="placeholder">No issues found</div>' : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Claude assessment
+      if (claudeAssessment) {
+        html += `
+          <div class="claude-assessment">
+            <h3>Claude's Philosophical Assessment</h3>
+            <p>${claudeAssessment}</p>
+          </div>
+        `;
+      }
+
+      resultsDiv.innerHTML = html;
+
+      // Open all levels by default
+      document.querySelectorAll('.level-content').forEach(el => el.classList.add('open'));
+    }
+
+    function toggleLevel(key) {
+      const content = document.getElementById(`level-${key}`);
+      content.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>

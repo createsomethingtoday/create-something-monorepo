@@ -1,0 +1,24 @@
+# Compose Keybindings
+# Minimal: the compose screen should get out of the way
+
+bind compose j next-entry
+bind compose k previous-entry
+
+# Edit fields
+bind compose e edit-message
+bind compose E edit-headers
+
+# Attachments
+bind compose a attach-file
+bind compose A attach-message
+bind compose D detach-file
+
+# Send
+bind compose y send-message
+bind compose Y send-message
+
+# Postpone (save draft)
+bind compose p postpone-message
+
+# Abort (quit without sending)
+bind compose q exit
