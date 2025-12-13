@@ -283,6 +283,6 @@
 
   .add-btn:hover {
     background: var(--color-hover);
-    color: var(--color-accent);
+    color: var(--color-fg-primary);
   }
 </style>

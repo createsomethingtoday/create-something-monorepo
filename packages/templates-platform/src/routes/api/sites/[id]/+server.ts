@@ -4,6 +4,8 @@
  * GET:   Get site with full config
  * PATCH: Update config (partial merge)
  * DELETE: Remove site
+ *
+ * All operations require authentication and ownership verification.
  */
 
 import type { RequestHandler } from './$types';
@@ -15,8 +17,14 @@ import { getTemplateById } from '$lib/services/template-registry';
  * GET /api/sites/[id]
  *
  * Returns full site data including config and template schema.
+ * Requires authentication and ownership.
  */
-export const GET: RequestHandler = async ({ params, platform }) => {
+export const GET: RequestHandler = async ({ params, platform, locals }) => {
+  // Require authentication
+  if (!locals.user) {
+    throw error(401, 'Authentication required');
+  }
+
   const db = platform?.env?.DB;
 
   if (!db) {
@@ -46,6 +54,11 @@ export const GET: RequestHandler = async ({ params, platform }) => {
     throw error(404, 'Site not found');
   }
 
+  // Verify ownership
+  if (site.userId !== locals.user.id) {
+    throw error(403, 'Access denied');
+  }
+
   const template = getTemplateById(site.templateId);
 
   return json({ site, template });
@@ -56,11 +69,17 @@ export const GET: RequestHandler = async ({ params, platform }) => {
  *
  * Updates site config (partial merge).
  * Auto-save sends updates here.
+ * Requires authentication and ownership.
  */
-export const PATCH: RequestHandler = async ({ params, request, platform }) => {
+export const PATCH: RequestHandler = async ({ params, request, platform, locals }) => {
+  // Require authentication
+  if (!locals.user) {
+    throw error(401, 'Authentication required');
+  }
+
   const db = platform?.env?.DB;
 
-  const body = await request.json();
+  const body = await request.json() as { config?: Record<string, unknown> };
   const { config } = body;
 
   if (!config || typeof config !== 'object') {
@@ -83,6 +102,11 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
     throw error(404, 'Site not found');
   }
 
+  // Verify ownership
+  if (site.userId !== locals.user.id) {
+    throw error(403, 'Access denied');
+  }
+
   // Merge new config with existing
   const mergedConfig = {
     ...site.config,
@@ -91,6 +115,17 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 
   // Update in database
   await updateTenantConfig(db, params.id, mergedConfig);
+
+  // Clear KV cache so router sees new config immediately
+  // Without this, changes are delayed up to 5 minutes (cache TTL)
+  const cacheKey = `tenant:subdomain:${site.subdomain}`;
+  await platform?.env?.KV?.delete(cacheKey);
+
+  // Also clear custom domain cache if configured
+  if (site.customDomain) {
+    const domainCacheKey = `tenant:domain:${site.customDomain}`;
+    await platform?.env?.KV?.delete(domainCacheKey);
+  }
 
   return json({
     success: true,
@@ -103,8 +138,14 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
  * DELETE /api/sites/[id]
  *
  * Soft-delete by marking as suspended.
+ * Requires authentication and ownership.
  */
-export const DELETE: RequestHandler = async ({ params, platform }) => {
+export const DELETE: RequestHandler = async ({ params, platform, locals }) => {
+  // Require authentication
+  if (!locals.user) {
+    throw error(401, 'Authentication required');
+  }
+
   const db = platform?.env?.DB;
 
   if (!db) {
@@ -115,6 +156,11 @@ export const DELETE: RequestHandler = async ({ params, platform }) => {
 
   if (!site) {
     throw error(404, 'Site not found');
+  }
+
+  // Verify ownership
+  if (site.userId !== locals.user.id) {
+    throw error(403, 'Access denied');
   }
 
   // Soft delete by setting status to suspended

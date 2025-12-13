@@ -1,0 +1,39 @@
+# Router Worker
+# Routes *.createsomething.space to tenant sites
+#
+# Canon: The infrastructure disappears into use.
+
+name = "templates-router"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Route all *.createsomething.space traffic (/* matches all paths)
+routes = [
+  { pattern = "*.createsomething.space/*", zone_name = "createsomething.space" }
+]
+
+# D1 Database - tenant configs and metadata
+[[d1_databases]]
+binding = "DB"
+database_name = "templates-platform-db"
+database_id = "a06516a5-6c4b-472f-8826-d730e3a74926"
+
+# KV - config cache for fast lookups
+[[kv_namespaces]]
+binding = "CONFIG_CACHE"
+id = "bcb39a6258fe49b79da9dc9b09440934"
+
+# R2 - template assets storage
+[[r2_buckets]]
+binding = "SITE_BUCKET"
+bucket_name = "templates-site-assets"
+
+# Workers for Platforms - dispatch namespace for tenant isolation
+# Uncomment when ready to use per-tenant Workers
+# [[dispatch_namespaces]]
+# binding = "DISPATCH_NAMESPACE"
+# namespace = "templates-dispatch"
+
+[vars]
+ENVIRONMENT = "production"

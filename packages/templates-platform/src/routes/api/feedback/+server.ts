@@ -19,7 +19,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const body = await request.json();
+		const body = await request.json() as {
+			type?: string;
+			title?: string;
+			description?: string;
+			source?: string;
+			tenantId?: string;
+			metadata?: Record<string, unknown>;
+		};
 		const { type, title, description, source, tenantId, metadata } = body;
 
 		if (!type || !description) {
@@ -30,7 +37,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const validTypes: FeedbackType[] = ['feature_request', 'bug_report', 'sdk_feedback', 'general'];
-		if (!validTypes.includes(type)) {
+		if (!validTypes.includes(type as FeedbackType)) {
 			return json(
 				{ success: false, error: `type must be one of: ${validTypes.join(', ')}` },
 				{ status: 400 }
@@ -38,7 +45,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const feedbackId = await submitFeedback(platform.env.DB, {
-			type,
+			type: type as FeedbackType,
 			title,
 			description,
 			source,

@@ -389,7 +389,7 @@
   }
 
   .dns-type {
-    color: var(--color-accent);
+    color: var(--color-fg-primary);
     font-weight: 600;
     min-width: 60px;
   }

@@ -190,7 +190,7 @@
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: var(--color-accent);
+		color: var(--color-fg-primary);
 		background: rgba(96, 165, 250, 0.1);
 		border-radius: var(--radius-full);
 		width: fit-content;
@@ -247,7 +247,7 @@
 	.testimonial {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border-left: 3px solid var(--color-accent);
+		border-left: 3px solid var(--color-fg-muted);
 		border-radius: 0 var(--radius-md) var(--radius-md) 0;
 		margin: 0;
 	}
@@ -368,7 +368,7 @@
 
 	.case-link {
 		font-size: var(--text-body-sm);
-		color: var(--color-accent);
+		color: var(--color-fg-primary);
 		font-weight: 500;
 	}
 

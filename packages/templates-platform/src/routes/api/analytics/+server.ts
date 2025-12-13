@@ -5,7 +5,7 @@
  */
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { trackEvent, type AnalyticsEvent } from '$lib/services/analytics';
+import { trackEvent, type AnalyticsEvent, type EventType } from '$lib/services/analytics';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	if (!platform?.env.DB) {
@@ -13,7 +13,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const body = await request.json();
+		const body = await request.json() as {
+			eventType?: string;
+			templateId?: string;
+			tenantId?: string;
+			source?: string;
+			metadata?: Record<string, unknown>;
+		};
 		const { eventType, templateId, tenantId, source, metadata } = body;
 
 		if (!eventType) {
@@ -21,7 +27,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const event: AnalyticsEvent = {
-			eventType,
+			eventType: eventType as EventType,
 			templateId,
 			tenantId,
 			source,

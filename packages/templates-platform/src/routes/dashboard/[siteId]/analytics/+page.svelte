@@ -249,14 +249,14 @@
 
   .chart-bar {
     width: 100%;
-    background: var(--color-accent);
+    background: var(--color-fg-primary);
     border-radius: 2px 2px 0 0;
     min-height: 4px;
     transition: background var(--duration-micro) var(--ease-standard);
   }
 
   .chart-bar-wrapper:hover .chart-bar {
-    background: var(--color-accent-hover);
+    background: var(--color-fg-secondary);
   }
 
   .chart-labels {

@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { getTemplate } from '$lib/services/template-registry';
 	import type { Template, ConfigField } from '$lib/types';
-	import { crossfade, scale } from 'svelte/transition';
-	import { cubicOut } from 'svelte/easing';
 
 	interface Props {
 		data: {
@@ -13,12 +11,6 @@
 	let { data }: Props = $props();
 
 	const template = getTemplate(data.slug);
-
-	// Crossfade transitions for step changes
-	const [send, receive] = crossfade({
-		duration: 300,
-		easing: cubicOut
-	});
 
 	// UI state
 	let showPanel = $state(true);
@@ -249,9 +241,7 @@
 
 				<!-- Step 1: Info -->
 				{#if currentStep === 1}
-					<div class="step-content"
-						in:receive|global={{ key: 1 }}
-						out:send|global={{ key: 1 }}>
+					<div class="step-content animate-fade-in">
 					<div class="panel-section">
 						<h1 class="template-name">{template.name}</h1>
 						<p class="template-desc">{template.description}</p>
@@ -287,9 +277,7 @@
 
 				<!-- Step 2: Configure -->
 				{#if currentStep === 2}
-					<div class="step-content"
-						in:receive|global={{ key: 2 }}
-						out:send|global={{ key: 2 }}>
+					<div class="step-content animate-fade-in">
 					<div class="panel-section">
 						<h2 class="step-title">Configure</h2>
 						<p class="step-desc">Add your details</p>
@@ -357,9 +345,7 @@
 
 				<!-- Step 3: Deploy -->
 				{#if currentStep === 3}
-					<div class="step-content"
-						in:receive|global={{ key: 3 }}
-						out:send|global={{ key: 3 }}>
+					<div class="step-content animate-fade-in">
 					<div class="panel-section">
 						<h2 class="step-title">Launch</h2>
 						<p class="step-desc">Choose your URL</p>
@@ -421,7 +407,7 @@
 
 	<!-- Deploy Success Celebration -->
 	{#if deploySuccess}
-		<div class="success-overlay" transition:scale={{ duration: 500, easing: cubicOut }}>
+		<div class="success-overlay animate-scale-in">
 			<div class="success-content">
 				<!-- Checkmark icon with animation -->
 				<div class="success-icon">
@@ -1023,6 +1009,35 @@
 		padding: var(--space-2xl) var(--gutter);
 	}
 
+	/* Step animations */
+	.animate-fade-in {
+		animation: fadeIn 0.3s ease-out forwards;
+	}
+
+	.animate-scale-in {
+		animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes scaleIn {
+		from {
+			opacity: 0;
+			transform: scale(0.9);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
 	/* Reduced motion support */
 	@media (prefers-reduced-motion: reduce) {
 		.progress-dot,
@@ -1044,8 +1059,12 @@
 			opacity: 0.7;
 		}
 
-		.success-icon {
+		.success-icon,
+		.animate-fade-in,
+		.animate-scale-in {
 			animation: none;
+			opacity: 1;
+			transform: none;
 		}
 	}
 
