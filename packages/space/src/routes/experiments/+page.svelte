@@ -234,11 +234,13 @@
 		font-size: clamp(2.5rem, 5vw, 3.5rem);
 		font-weight: 700;
 		color: var(--color-fg-primary);
+		text-align: center;
 	}
 
 	.hero-subtitle {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-muted);
+		text-align: center;
 	}
 
 	.search-input {
