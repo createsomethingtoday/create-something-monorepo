@@ -1,73 +1,78 @@
 <script lang="ts">
 	/**
-	 * Related Research Section
+	 * Learning Paths Section
 	 *
-	 * Cross-property links from .space (Practice) to .io (Research).
-	 * Closes the Hermeneutic Circle: experiments demonstrate what papers describe.
+	 * Cross-property links from .space (Practice) to .lms (Learning).
+	 * Closes the Hermeneutic Circle: practice leads to structured learning.
 	 *
 	 * Canon: "Parts → Whole → Parts"
 	 */
 
-	interface ResearchPaper {
-		slug: string;
+	interface LearningPath {
+		id: string;
 		title: string;
-		excerpt: string;
-		readingTime: number;
+		subtitle: string;
+		description: string;
+		lessonCount: number;
 		category: string;
 	}
 
-	// Curated selection of papers most relevant to .space experiments
-	const featuredPapers: ResearchPaper[] = [
+	// Curated selection of paths most relevant to .space practitioners
+	const featuredPaths: LearningPath[] = [
 		{
-			slug: 'code-mode-hermeneutic-analysis',
-			title: 'Code-Mediated Tool Use',
-			excerpt:
-				'Why Code Mode achieves Zuhandenheit where traditional tool calling forces Vorhandenheit.',
-			readingTime: 45,
-			category: 'research'
+			id: 'partnership',
+			title: 'Claude Code Partnership',
+			subtitle: 'Terminal + Claude Code',
+			description:
+				'Human-agent complementarity—what each does best. The craftsman uses the hammer; the hammer does not use him.',
+			lessonCount: 5,
+			category: 'partnership'
 		},
 		{
-			slug: 'subtractive-form-design',
-			title: 'Subtractive Form Design',
-			excerpt:
-				'When a field doesn\'t apply, hiding it is clearer than instructing users to leave it blank. Absence is clearer than instruction.',
-			readingTime: 8,
-			category: 'case study'
+			id: 'agents',
+			title: 'Tool Configuration',
+			subtitle: 'Coordination + Claude Code',
+			description:
+				'Multi-agent systems that reason together. MCP servers, skills, hooks, and slash commands.',
+			lessonCount: 5,
+			category: 'agents'
 		},
 		{
-			slug: 'hermeneutic-debugging',
-			title: 'Hermeneutic Debugging',
-			excerpt:
-				'Applying the hermeneutic circle to software debugging—each failed fix reveals hidden assumptions.',
-			readingTime: 12,
-			category: 'methodology'
+			id: 'foundations',
+			title: 'System Philosophy',
+			subtitle: 'The Subtractive Triad',
+			description:
+				'The philosophical core of CREATE SOMETHING. Learn the three-level discipline of subtractive revelation.',
+			lessonCount: 5,
+			category: 'foundations'
 		}
 	];
 </script>
 
-<section class="research-section relative py-24 px-6">
+<section class="learning-section relative py-24 px-6">
 	<div class="max-w-7xl mx-auto">
 		<div class="text-center mb-12">
-			<div class="eyebrow">FROM CREATESOMETHING.IO</div>
-			<h2 class="section-title mt-4">Research Papers</h2>
+			<div class="eyebrow">FROM CREATESOMETHING.LMS</div>
+			<h2 class="section-title mt-4">Learning Paths</h2>
 			<p class="section-description mt-2">
-				The theoretical grounding behind these experiments
+				Structured learning for AI-native development
 			</p>
 		</div>
 
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-			{#each featuredPapers as paper}
+			{#each featuredPaths as path}
 				<a
-					href="https://createsomething.io/papers/{paper.slug}"
+					href="https://learn.createsomething.space/paths/{path.id}"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="paper-card group"
+					class="path-card group"
 				>
-					<div class="category">{paper.category}</div>
-					<h3 class="paper-title">{paper.title}</h3>
-					<p class="paper-excerpt">{paper.excerpt}</p>
-					<div class="paper-meta">
-						<span>{paper.readingTime} min read</span>
+					<div class="category">{path.category}</div>
+					<h3 class="path-title">{path.title}</h3>
+					<p class="path-subtitle">{path.subtitle}</p>
+					<p class="path-description">{path.description}</p>
+					<div class="path-meta">
+						<span>{path.lessonCount} lessons</span>
 						<span class="arrow">→</span>
 					</div>
 				</a>
@@ -76,12 +81,12 @@
 
 		<div class="text-center mt-12">
 			<a
-				href="https://createsomething.io/papers"
+				href="https://learn.createsomething.space/paths"
 				target="_blank"
 				rel="noopener noreferrer"
 				class="view-all-link"
 			>
-				View all research papers
+				View all learning paths
 				<svg
 					class="inline-block w-4 h-4 ml-1 transition-transform group-hover:translate-x-1"
 					fill="none"
@@ -97,8 +102,8 @@
 </section>
 
 <style>
-	.research-section {
-		background: var(--color-bg-elevated);
+	.learning-section {
+		background: var(--color-bg-pure);
 	}
 
 	.eyebrow {
@@ -119,7 +124,7 @@
 		color: var(--color-fg-tertiary);
 	}
 
-	.paper-card {
+	.path-card {
 		display: flex;
 		flex-direction: column;
 		padding: var(--space-lg);
@@ -132,7 +137,7 @@
 			transform var(--duration-standard) var(--ease-standard);
 	}
 
-	.paper-card:hover {
+	.path-card:hover {
 		border-color: var(--color-border-emphasis);
 		transform: translateY(-2px);
 	}
@@ -146,22 +151,28 @@
 		margin-bottom: var(--space-sm);
 	}
 
-	.paper-title {
+	.path-title {
 		font-size: var(--text-h3);
 		font-weight: 600;
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-xs);
 		line-height: 1.3;
 	}
 
-	.paper-excerpt {
+	.path-subtitle {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-sm);
+	}
+
+	.path-description {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		line-height: 1.6;
 		flex-grow: 1;
 	}
 
-	.paper-meta {
+	.path-meta {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -176,7 +187,7 @@
 		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
-	.paper-card:hover .arrow {
+	.path-card:hover .arrow {
 		transform: translateX(4px);
 	}
 

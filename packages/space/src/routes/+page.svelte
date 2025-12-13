@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import RelatedResearch from '$lib/components/RelatedResearch.svelte';
+	import LearningPathsSection from '$lib/components/LearningPathsSection.svelte';
 	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
@@ -28,3 +29,6 @@
 
 <!-- Cross-property links to .io Research -->
 <RelatedResearch />
+
+<!-- Cross-property links to .lms Learning -->
+<LearningPathsSection />

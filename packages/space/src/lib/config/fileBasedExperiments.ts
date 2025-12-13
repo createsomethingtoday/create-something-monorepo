@@ -194,6 +194,115 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     |   Understanding through practice.               |
     +-------------------------------------------------+
 `
+	},
+	{
+		id: 'file-code-mode',
+		slug: 'code-mode',
+		title: 'Code Mode: The Zuhandenheit Experiment',
+		description:
+			"Experience Heidegger's tool-transparency distinction firsthand. Complete tasks using tool calling vs Code Mode and notice where your attention goes.",
+		excerpt_short: 'Experience tool transparency vs tool obstruction',
+		excerpt_long:
+			"An interactive experiment applying Heidegger's Zuhandenheit (ready-to-hand) vs Vorhandenheit (present-at-hand) distinction to LLM agent architecture. Complete the same task twice—once with direct tool calling, once with Code Mode—and discover which mode lets tools recede into transparent use.",
+		category: 'research',
+		tags: ['Heidegger', 'Code Mode', 'Tool Calling', 'Phenomenology', 'Zuhandenheit', 'Interactive'],
+		created_at: '2025-12-13T00:00:00Z',
+		updated_at: '2025-12-13T00:00:00Z',
+		reading_time_minutes: 10,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 1,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Tools recede into use
+			'rams-principle-5' // Unobtrusive - tool transparency
+		],
+		ascii_art: `
+    +-------------------------------------------------+
+    |   CODE MODE: THE ZUHANDENHEIT EXPERIMENT        |
+    |                                                 |
+    |   Tool Calling          Code Mode               |
+    |   (Vorhandenheit)       (Zuhandenheit)          |
+    |                                                 |
+    |   <invoke...>           const x = await ...     |
+    |     Attention           Attention               |
+    |     ↓                   ↓                       |
+    |   [THE TOOL]            [THE TASK]              |
+    |                                                 |
+    |   Where does your attention go?                 |
+    +-------------------------------------------------+
+`
+	},
+	{
+		id: 'file-subtractive-form',
+		slug: 'subtractive-form',
+		title: 'Subtractive Form Design: When Absence Is Clearer Than Instruction',
+		description:
+			'Interactive experiment demonstrating how hiding inapplicable form fields eliminates user errors more effectively than instructions.',
+		excerpt_short: 'Experience the hermeneutic question applied to form design',
+		excerpt_long:
+			'This experiment lets you experience Heidegger\'s system-level question—"Does this serve the whole?"—applied to form field design. Toggle between instructional and subtractive approaches, watch error rates shift from 68% to 0%, and understand why a visible field implies it should be filled—documentation cannot overcome this affordance.',
+		category: 'practice',
+		tags: ['Heidegger', 'Hermeneutic Circle', 'Form Design', 'UX', 'Subtractive Triad'],
+		created_at: '2025-12-13T00:00:00Z',
+		updated_at: '2025-12-13T00:00:00Z',
+		reading_time_minutes: 5,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 1,
+		tests_principles: [
+			'rams-principle-5', // Unobtrusive - hidden fields don't demand attention
+			'rams-principle-10', // As little as possible - remove what doesn't apply
+			'heidegger-system' // Does this serve the whole?
+		],
+		ascii_art: `
+    +-------------------------------------------------+
+    |   SUBTRACTIVE FORM DESIGN                       |
+    |                                                 |
+    |   Before                  After                 |
+    |                                                 |
+    |   [Field] ───────►       (Hidden)               |
+    |   "leave blank"           Nothing               |
+    |                                                 |
+    |   68% error rate          0% error rate         |
+    |                                                 |
+    |   Absence is clearer than instruction           |
+    +-------------------------------------------------+
+`
+	},
+	{
+		id: 'file-hermeneutic-debugging',
+		slug: 'hermeneutic-debugging',
+		title: 'Hermeneutic Debugging: The Circle of Understanding',
+		description:
+			'Experience the hermeneutic circle in debugging. Walk through 8 iterations of a React bug, predicting outcomes and discovering hidden assumptions.',
+		excerpt_short: 'Understanding emerges through iteration',
+		excerpt_long:
+			'Walk through a real debugging session where a simple logo animation required 8 iterations to solve. At each step, predict what will happen, run a simulation, and discover the hidden assumption that was exposed. Experience firsthand how debugging is interpretation—closing the gap between what we think the code does and what it actually does.',
+		category: 'methodology',
+		tags: ['Debugging', 'Hermeneutic Circle', 'Heidegger', 'React', 'Interactive'],
+		created_at: '2025-12-13T00:00:00Z',
+		updated_at: '2025-12-13T00:00:00Z',
+		reading_time_minutes: 15,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 1,
+		tests_principles: [
+			'rams-principle-4', // Understandable
+			'heidegger-hermeneutic-circle' // Understanding through iterative interpretation
+		],
+		ascii_art: `
+    +-------------------------------------------------+
+    |   HERMENEUTIC DEBUGGING                         |
+    |                                                 |
+    |   Attempt ──► Fail ──► Observe ──► Revise       |
+    |      │                               │          |
+    |      └───────────────────────────────┘          |
+    |                                                 |
+    |   Each failure reveals a hidden assumption.     |
+    |                                                 |
+    |   Understanding emerges through iteration.      |
+    +-------------------------------------------------+
+`
 	}
 ];
 
