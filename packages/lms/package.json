@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/lms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CREATE SOMETHING Learning Management System. Teaching the ethos through practice.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@create-something/components": "workspace:*",
+    "@sveltejs/adapter-cloudflare": "^4.7.4",
+    "@sveltejs/kit": "^2.9.0",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "marked": "^15.0.4",
+    "svelte": "^5.14.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "svelte-check": "^4.1.1",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  }
+}
