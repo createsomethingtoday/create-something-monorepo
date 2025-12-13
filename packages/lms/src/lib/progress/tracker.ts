@@ -1,3 +1,5 @@
+/// <reference types="@cloudflare/workers-types" />
+
 /**
  * Progress Tracker
  *
@@ -220,7 +222,7 @@ export class ProgressTracker {
       .bind(learnerId)
       .all<{ path_id: string }>();
 
-    return results.map((r) => r.path_id);
+    return results.map((r: { path_id: string }) => r.path_id);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -275,7 +277,7 @@ export class ProgressTracker {
       .bind(learnerId, praxisId)
       .all<Record<string, unknown>>();
 
-    return results.map((row) => ({
+    return results.map((row: Record<string, unknown>) => ({
       id: row.id as number,
       learnerId: row.learner_id as string,
       praxisId: row.praxis_id as string,
@@ -342,7 +344,7 @@ export class ProgressTracker {
       .bind(learnerId, pathId)
       .all<Record<string, unknown>>();
 
-    return results.map((row) => ({
+    return results.map((row: Record<string, unknown>) => ({
       level: row.understanding_level as number,
       assessedAt: row.assessed_at as number,
       type: row.assessment_type as string,

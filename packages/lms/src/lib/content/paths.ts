@@ -284,6 +284,49 @@ export const PATHS: Path[] = [
       },
     ],
   },
+  {
+    id: 'partnership',
+    title: 'Partnership',
+    subtitle: 'Terminal + Claude Code',
+    description: 'Learning to work alongside AI agents. The craftsman uses the hammer; the hammer does not use him.',
+    principle: 'Gelassenheit—full engagement without capture.',
+    color: 'path-partnership',
+    prerequisites: ['foundations', 'agents'],
+    lessons: [
+      {
+        id: 'terminal-philosophy',
+        title: 'Terminal Philosophy',
+        description: 'The command line as dwelling place for creation.',
+        duration: '20 min',
+      },
+      {
+        id: 'claude-code-partnership',
+        title: 'Claude Code Partnership',
+        description: 'Human-agent complementarity—what each does best.',
+        duration: '30 min',
+        praxis: 'partnership-audit',
+      },
+      {
+        id: 'tool-configuration',
+        title: 'Tool Configuration',
+        description: 'MCP servers, skills, hooks, and slash commands.',
+        duration: '35 min',
+        praxis: 'mcp-setup',
+      },
+      {
+        id: 'wezterm-workflow',
+        title: 'WezTerm Workflow',
+        description: 'Terminal as creative environment.',
+        duration: '25 min',
+      },
+      {
+        id: 'system-philosophy',
+        title: 'System Philosophy',
+        description: 'Gelassenheit and the craft of human-agent partnership.',
+        duration: '30 min',
+      },
+    ],
+  },
 ];
 
 /**
