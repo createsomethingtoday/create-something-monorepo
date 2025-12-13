@@ -1,13 +1,5 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition';
-  import { Footer } from '@create-something/components';
-
-  const quickLinks = [
-    { label: 'Home', href: '/' },
-    { label: 'Services', href: '/services' },
-    { label: 'Work', href: '/work' },
-    { label: 'About', href: '/about' }
-  ];
+  // Footer is provided by layout
 </script>
 
 <svelte:head>
@@ -20,12 +12,12 @@
 <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-4xl mx-auto">
-      <div in:fly={{ y: 20, duration: 600 }} class="space-y-6">
-        <h1 class="text-4xl md:text-6xl font-bold text-white">
+      <div class="space-y-6 animate-reveal">
+        <h1 class="hero-title font-bold">
           Privacy Policy
         </h1>
 
-        <p class="text-lg text-white/60">
+        <p class="body-lg body-tertiary">
           Last updated: November 14, 2024
         </p>
       </div>
@@ -35,12 +27,12 @@
   <!-- Content -->
   <section class="pb-20 px-6">
     <div class="max-w-4xl mx-auto">
-      <div class="space-y-12 text-white/70 leading-relaxed">
+      <div class="space-y-12 body-secondary leading-relaxed">
         <!-- Introduction -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">1. Introduction</h2>
+          <h2 class="heading-2 font-bold">1. Introduction</h2>
           <p>
-            CREATE SOMETHING ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website <a href="https://createsomething.io" class="text-white hover:underline">createsomething.io</a> and use our services.
+            CREATE SOMETHING ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website <a href="https://createsomething.io" class="hover:underline">createsomething.io</a> and use our services.
           </p>
           <p>
             Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
@@ -49,9 +41,9 @@
 
         <!-- Information We Collect -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">2. Information We Collect</h2>
+          <h2 class="heading-2 font-bold">2. Information We Collect</h2>
 
-          <h3 class="text-xl font-semibold text-white">2.1 Personal Information</h3>
+          <h3 class="heading-3 font-semibold">2.1 Personal Information</h3>
           <p>
             We may collect personal information that you voluntarily provide to us when you:
           </p>
@@ -70,7 +62,7 @@
             <li>Any other information you choose to provide</li>
           </ul>
 
-          <h3 class="text-xl font-semibold text-white mt-6">2.2 Automatically Collected Information</h3>
+          <h3 class="heading-3 font-semibold mt-6">2.2 Automatically Collected Information</h3>
           <p>
             When you visit our website, we may automatically collect certain information about your device, including:
           </p>
@@ -83,7 +75,7 @@
             <li>Device identifiers and other diagnostic data</li>
           </ul>
 
-          <h3 class="text-xl font-semibold text-white mt-6">2.3 Cookies and Tracking Technologies</h3>
+          <h3 class="heading-3 font-semibold mt-6">2.3 Cookies and Tracking Technologies</h3>
           <p>
             We use cookies and similar tracking technologies to track activity on our website and store certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions of our site.
           </p>
@@ -91,7 +83,7 @@
 
         <!-- How We Use Your Information -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">3. How We Use Your Information</h2>
+          <h2 class="heading-2 font-bold">3. How We Use Your Information</h2>
           <p>
             We use the information we collect for the following purposes:
           </p>
@@ -108,12 +100,12 @@
 
         <!-- Sharing Your Information -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">4. Sharing Your Information</h2>
+          <h2 class="heading-2 font-bold">4. Sharing Your Information</h2>
           <p>
             We do not sell, trade, or rent your personal information to third parties. We may share your information in the following circumstances:
           </p>
 
-          <h3 class="text-xl font-semibold text-white">4.1 Service Providers</h3>
+          <h3 class="heading-3 font-semibold">4.1 Service Providers</h3>
           <p>
             We may employ third-party companies and individuals to facilitate our service ("Service Providers"), provide the service on our behalf, perform service-related services, or assist us in analyzing how our service is used. These third parties have access to your personal information only to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
           </p>
@@ -127,12 +119,12 @@
             <li>Content delivery networks</li>
           </ul>
 
-          <h3 class="text-xl font-semibold text-white mt-6">4.2 Legal Requirements</h3>
+          <h3 class="heading-3 font-semibold mt-6">4.2 Legal Requirements</h3>
           <p>
             We may disclose your information if required to do so by law or in response to valid requests by public authorities (e.g., a court or government agency).
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">4.3 Business Transfers</h3>
+          <h3 class="heading-3 font-semibold mt-6">4.3 Business Transfers</h3>
           <p>
             If we are involved in a merger, acquisition, or asset sale, your personal information may be transferred. We will provide notice before your personal information is transferred and becomes subject to a different Privacy Policy.
           </p>
@@ -140,7 +132,7 @@
 
         <!-- Data Security -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">5. Data Security</h2>
+          <h2 class="heading-2 font-bold">5. Data Security</h2>
           <p>
             We implement appropriate technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. These measures include:
           </p>
@@ -158,7 +150,7 @@
 
         <!-- Data Retention -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">6. Data Retention</h2>
+          <h2 class="heading-2 font-bold">6. Data Retention</h2>
           <p>
             We retain your personal information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law. When we no longer need your information, we will securely delete or anonymize it.
           </p>
@@ -166,39 +158,39 @@
 
         <!-- Your Privacy Rights -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">7. Your Privacy Rights</h2>
+          <h2 class="heading-2 font-bold">7. Your Privacy Rights</h2>
           <p>
             Depending on your location, you may have certain rights regarding your personal information:
           </p>
 
-          <h3 class="text-xl font-semibold text-white">7.1 Access and Portability</h3>
+          <h3 class="heading-3 font-semibold">7.1 Access and Portability</h3>
           <p>
             You have the right to request access to the personal information we hold about you and to receive a copy of it in a structured, commonly used, and machine-readable format.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.2 Correction</h3>
+          <h3 class="heading-3 font-semibold mt-6">7.2 Correction</h3>
           <p>
             You have the right to request that we correct any inaccurate personal information about you.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.3 Deletion</h3>
+          <h3 class="heading-3 font-semibold mt-6">7.3 Deletion</h3>
           <p>
             You have the right to request that we delete your personal information, subject to certain exceptions prescribed by law.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.4 Opt-Out of Marketing</h3>
+          <h3 class="heading-3 font-semibold mt-6">7.4 Opt-Out of Marketing</h3>
           <p>
             You can opt out of receiving marketing emails from us at any time by clicking the "unsubscribe" link in any marketing email or by contacting us directly.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.5 Do Not Track</h3>
+          <h3 class="heading-3 font-semibold mt-6">7.5 Do Not Track</h3>
           <p>
             We currently do not respond to "Do Not Track" signals, as there is no industry standard for compliance.
           </p>
 
           <p class="mt-6">
             To exercise any of these rights, please contact us at{' '}
-            <a href="mailto:micah@createsomething.io" class="text-white hover:underline">
+            <a href="mailto:micah@createsomething.io" class="hover:underline">
               micah@createsomething.io
             </a>.
           </p>
@@ -206,7 +198,7 @@
 
         <!-- Third-Party Links -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">8. Third-Party Links</h2>
+          <h2 class="heading-2 font-bold">8. Third-Party Links</h2>
           <p>
             Our website may contain links to third-party websites, services, or resources that are not owned or controlled by us. We are not responsible for the privacy practices or content of these third-party sites. We encourage you to review the privacy policies of any third-party sites you visit.
           </p>
@@ -214,7 +206,7 @@
 
         <!-- Children's Privacy -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">9. Children's Privacy</h2>
+          <h2 class="heading-2 font-bold">9. Children's Privacy</h2>
           <p>
             Our services are not directed to individuals under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe that your child has provided us with personal information, please contact us, and we will take steps to delete such information.
           </p>
@@ -222,7 +214,7 @@
 
         <!-- International Data Transfers -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">10. International Data Transfers</h2>
+          <h2 class="heading-2 font-bold">10. International Data Transfers</h2>
           <p>
             Your information may be transferred to and maintained on servers located outside of your state, province, country, or other governmental jurisdiction where data protection laws may differ. If you are located outside the United States and choose to provide information to us, please note that we transfer the data to the United States and process it there.
           </p>
@@ -233,7 +225,7 @@
 
         <!-- GDPR Compliance -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">11. GDPR Compliance (European Users)</h2>
+          <h2 class="heading-2 font-bold">11. GDPR Compliance (European Users)</h2>
           <p>
             If you are located in the European Economic Area (EEA), you have certain data protection rights under the General Data Protection Regulation (GDPR). We aim to take reasonable steps to allow you to correct, amend, delete, or limit the use of your personal information.
           </p>
@@ -249,7 +241,7 @@
 
         <!-- CCPA Compliance -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">12. CCPA Compliance (California Residents)</h2>
+          <h2 class="heading-2 font-bold">12. CCPA Compliance (California Residents)</h2>
           <p>
             If you are a California resident, the California Consumer Privacy Act (CCPA) provides you with specific rights regarding your personal information:
           </p>
@@ -261,7 +253,7 @@
           </ul>
           <p>
             To exercise these rights, contact us at{' '}
-            <a href="mailto:micah@createsomething.io" class="text-white hover:underline">
+            <a href="mailto:micah@createsomething.io" class="hover:underline">
               micah@createsomething.io
             </a>.
           </p>
@@ -269,7 +261,7 @@
 
         <!-- Changes to This Policy -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">13. Changes to This Privacy Policy</h2>
+          <h2 class="heading-2 font-bold">13. Changes to This Privacy Policy</h2>
           <p>
             We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date at the top.
           </p>
@@ -280,20 +272,20 @@
 
         <!-- Contact Us -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">14. Contact Us</h2>
+          <h2 class="heading-2 font-bold">14. Contact Us</h2>
           <p>
             If you have any questions about this Privacy Policy, please contact us:
           </p>
           <ul class="space-y-2">
             <li>
-              <strong class="text-white">Email:</strong>{' '}
-              <a href="mailto:micah@createsomething.io" class="text-white hover:underline">
+              <strong class="contact-label">Email:</strong>{' '}
+              <a href="mailto:micah@createsomething.io" class="hover:underline">
                 micah@createsomething.io
               </a>
             </li>
             <li>
-              <strong class="text-white">Website:</strong>{' '}
-              <a href="https://createsomething.io/contact" class="text-white hover:underline">
+              <strong class="contact-label">Website:</strong>{' '}
+              <a href="https://createsomething.io/contact" class="hover:underline">
                 createsomething.io/contact
               </a>
             </li>
@@ -301,19 +293,143 @@
         </div>
 
         <!-- Acknowledgment -->
-        <div class="space-y-4 pt-8 border-t border-white/10">
-          <p class="text-sm text-white/50">
+        <div class="space-y-4 pt-8 section-border">
+          <p class="body-sm body-muted">
             By using our website and services, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.
           </p>
         </div>
       </div>
-    </div>
-  </section>
+    
 
-<Footer
-  mode="agency"
-  showNewsletter={false}
-  aboutText="Professional AI-native development services backed by research from createsomething.io"
-  quickLinks={quickLinks}
-  showSocial={true}
-/>
+<style>
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-2 {
+		font-size: var(--text-h2);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-3 {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.body-xl {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-lg {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-sm {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-xs {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.body-secondary {
+		color: var(--color-fg-secondary);
+	}
+
+	.body-tertiary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.body-muted {
+		color: var(--color-fg-muted);
+	}
+
+	.link {
+		color: var(--color-fg-primary);
+	}
+
+	.link:hover {
+		text-decoration: underline;
+	}
+
+	.card-surface {
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-elevated {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.section-border {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.btn-primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+	}
+
+	.btn-primary:hover {
+		opacity: 0.9;
+	}
+
+	.input {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+	}
+
+	.input:focus {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.contact-label {
+		color: var(--color-fg-primary);
+	}
+
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(20px);
+		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>
+
+</div>
+  </section>

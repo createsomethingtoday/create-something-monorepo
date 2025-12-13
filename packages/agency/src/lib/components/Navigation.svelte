@@ -1,60 +1,43 @@
 <script lang="ts">
-	import { slide } from 'svelte/transition';
-
 	let isMenuOpen = $state(false);
 </script>
 
-<nav class="fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/10">
+<nav class="nav fixed top-0 left-0 right-0 z-50">
 	<div class="max-w-7xl mx-auto px-6">
 		<div class="flex items-center justify-between py-4">
 			<!-- Logo -->
 			<a href="/" class="flex items-center">
-				<div class="text-2xl font-bold text-white hover:text-white/80 transition-colors">
+				<div class="logo">
 					CREATE SOMETHING AGENCY
 				</div>
 			</a>
 
 			<!-- Desktop Navigation -->
 			<div class="hidden md:flex items-center gap-8">
-				<a
-					href="/"
-					class="text-white/80 hover:text-white transition-colors text-sm font-medium"
-				>
+				<a href="/" class="nav-link">
 					Home
 				</a>
-				<a
-					href="/services"
-					class="text-white/80 hover:text-white transition-colors text-sm font-medium"
-				>
+				<a href="/services" class="nav-link">
 					Services
 				</a>
-				<a
-					href="/work"
-					class="text-white/80 hover:text-white transition-colors text-sm font-medium"
-				>
+				<a href="/work" class="nav-link">
 					Our Work
 				</a>
-				<a
-					href="/about"
-					class="text-white/80 hover:text-white transition-colors text-sm font-medium"
-				>
+				<a href="/about" class="nav-link">
 					About
 				</a>
 
 				<!-- Contact Button -->
-				<a
-					href="/contact"
-					class="group relative px-6 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-all overflow-hidden"
-				>
+				<a href="/contact" class="contact-btn group relative px-6 py-2 overflow-hidden">
 					<span class="relative z-10">Contact</span>
-					<div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
+					<div class="contact-btn-overlay absolute inset-0 translate-y-full group-hover:translate-y-0"></div>
 				</a>
 			</div>
 
 			<!-- Mobile Menu Button -->
 			<button
 				onclick={() => isMenuOpen = !isMenuOpen}
-				class="md:hidden w-11 h-11 flex items-center justify-center text-white hover:text-white/80 transition-colors duration-150"
+				class="menu-btn md:hidden w-11 h-11 flex items-center justify-center"
 				aria-label={isMenuOpen ? "Close menu" : "Open menu"}
 			>
 				{#if isMenuOpen}
@@ -71,41 +54,21 @@
 
 		<!-- Mobile Menu -->
 		{#if isMenuOpen}
-			<div transition:slide={{ duration: 200 }} class="md:hidden py-4 border-t border-white/10">
+			<div class="mobile-menu animate-slide-down md:hidden py-4">
 				<div class="flex flex-col gap-4">
-					<a
-						href="/"
-						class="text-white/80 hover:text-white transition-colors text-sm font-medium py-2"
-						onclick={() => isMenuOpen = false}
-					>
+					<a href="/" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
 						Home
 					</a>
-					<a
-						href="/services"
-						class="text-white/80 hover:text-white transition-colors text-sm font-medium py-2"
-						onclick={() => isMenuOpen = false}
-					>
+					<a href="/services" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
 						Services
 					</a>
-					<a
-						href="/work"
-						class="text-white/80 hover:text-white transition-colors text-sm font-medium py-2"
-						onclick={() => isMenuOpen = false}
-					>
+					<a href="/work" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
 						Our Work
 					</a>
-					<a
-						href="/about"
-						class="text-white/80 hover:text-white transition-colors text-sm font-medium py-2"
-						onclick={() => isMenuOpen = false}
-					>
+					<a href="/about" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
 						About
 					</a>
-					<a
-						href="/contact"
-						class="px-6 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors text-center"
-						onclick={() => isMenuOpen = false}
-					>
+					<a href="/contact" class="mobile-contact-btn px-6 py-2 text-center" onclick={() => isMenuOpen = false}>
 						Contact
 					</a>
 				</div>
@@ -113,3 +76,109 @@
 		{/if}
 	</div>
 </nav>
+
+<style>
+	.nav {
+		background: var(--color-bg-pure);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.logo {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.logo:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	.nav-link {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.nav-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.contact-btn {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+		transition: background var(--duration-standard) var(--ease-standard);
+	}
+
+	.contact-btn:hover {
+		background: rgba(255, 255, 255, 0.9);
+	}
+
+	.contact-btn-overlay {
+		background: rgba(255, 255, 255, 0.2);
+		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	.menu-btn {
+		color: var(--color-fg-primary);
+		transition: color 150ms var(--ease-standard);
+	}
+
+	.menu-btn:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	.mobile-menu {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.mobile-link {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.mobile-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.mobile-contact-btn {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.mobile-contact-btn:hover {
+		background: rgba(255, 255, 255, 0.9);
+	}
+
+	/* Slide down animation for mobile menu */
+	.animate-slide-down {
+		animation: slide-down 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	@keyframes slide-down {
+		from {
+			opacity: 0;
+			transform: translateY(-8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-slide-down {
+			animation: none;
+		}
+	}
+</style>

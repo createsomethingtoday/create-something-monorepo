@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
 	import type { Paper } from '$lib/types/paper';
 
 	interface Props {
@@ -31,30 +30,29 @@
 
 <a href={`/experiments/${paper.slug}`} class="block h-full">
 	<article
-		class="group h-full"
-		style="transform: rotate({rotation}deg);"
-		in:fly={{ y: 20, duration: 500, delay: index * 100 }}
+		class="card animate-reveal group h-full"
+		style="transform: rotate({rotation}deg); --delay: {index};"
 	>
-		<div class="relative h-full bg-white/[0.07] border border-white/10 rounded-none overflow-hidden transition-all duration-300 hover:border-white/30 hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-2">
+		<div class="card-inner relative h-full overflow-hidden">
 			<!-- Image or ASCII Art -->
-			<div class="aspect-[4/3] bg-black border-b border-white/10 flex items-center justify-center p-4 relative overflow-hidden">
+			<div class="card-image aspect-[4/3] flex items-center justify-center p-4 relative overflow-hidden">
 				{#if paper.ascii_art}
-					<pre class="text-white text-[0.45rem] leading-[1.1] font-mono select-none opacity-90 group-hover:opacity-100 transition-opacity">{paper.ascii_art}</pre>
+					<pre class="ascii-art">{paper.ascii_art}</pre>
 				{:else}
-					<div class="text-white/20 text-6xl">
+					<div class="placeholder">
 						📄
 					</div>
 				{/if}
 
 				<!-- Hover Arrow Button -->
-				<div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-					<div class="w-10 h-10 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center">
+				<div class="arrow-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+					<div class="arrow-btn-inner">
 						<svg
 							width="16"
 							height="16"
 							viewBox="0 0 16 16"
 							fill="none"
-							class="text-white"
+							class="arrow-icon"
 						>
 							<path
 								d="M10.6696 6.276L4.93156 12.014L3.98889 11.0713L9.72622 5.33333H4.66956V4H12.0029V11.3333H10.6696V6.276Z"
@@ -68,26 +66,26 @@
 			<!-- Card Content -->
 			<div class="p-2 pb-4 space-y-3">
 				<!-- Metadata -->
-				<div class="flex items-center gap-2 text-xs font-medium text-white/60">
+				<div class="metadata flex items-center gap-2">
 					{#if formattedDate}
 						<span>{formattedDate}</span>
-						<span class="w-1 h-1 rounded-full bg-white/40"></span>
+						<span class="dot"></span>
 					{/if}
 					<span>{paper.reading_time} min read</span>
 				</div>
 
 				<!-- Title -->
-				<h3 class="text-lg font-medium text-white group-hover:text-white/90 transition-colors line-clamp-2 leading-tight">
+				<h3 class="card-title line-clamp-2 leading-tight">
 					{paper.title}
 				</h3>
 
 				<!-- Category Badge with Sliding Animation -->
 				<div class="inline-block">
-					<div class="relative overflow-hidden">
-						<div class="px-3 py-1 bg-white/5 border border-white/10 rounded text-xs font-medium text-white/90 group-hover:translate-y-[-100%] transition-transform duration-300">
+					<div class="category-badge-wrapper relative overflow-hidden">
+						<div class="category-badge group-hover:translate-y-[-100%] transition-transform duration-300">
 							{categoryDisplayName}
 						</div>
-						<div class="absolute inset-0 px-3 py-1 bg-white/5 border border-white/10 rounded text-xs font-medium text-white/90 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300">
+						<div class="category-badge absolute inset-0 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300">
 							{categoryDisplayName}
 						</div>
 					</div>
@@ -95,7 +93,128 @@
 			</div>
 
 			<!-- Hover Overlay Effect -->
-			<div class="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+			<div class="hover-overlay absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 		</div>
 	</article>
 </a>
+
+<style>
+	.card {
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.card-inner {
+		background: rgba(255, 255, 255, 0.07);
+		border: 1px solid var(--color-border-default);
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.card:hover .card-inner {
+		border-color: var(--color-border-emphasis);
+		box-shadow: 0 25px 50px -12px rgba(255, 255, 255, 0.1);
+		transform: translateY(-0.5rem);
+	}
+
+	.card-image {
+		background: var(--color-bg-pure);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.ascii-art {
+		color: var(--color-fg-primary);
+		font-size: 0.45rem;
+		line-height: 1.1;
+		font-family: monospace;
+		user-select: none;
+		opacity: 0.9;
+		transition: opacity var(--duration-standard) var(--ease-standard);
+	}
+
+	.card:hover .ascii-art {
+		opacity: 1;
+	}
+
+	.placeholder {
+		color: var(--color-fg-subtle);
+		font-size: 3.75rem;
+	}
+
+	.arrow-btn-inner {
+		width: 2.5rem;
+		height: 2.5rem;
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(8px);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-full);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.arrow-icon {
+		color: var(--color-fg-primary);
+	}
+
+	.metadata {
+		font-size: var(--text-caption);
+		font-weight: 500;
+		color: var(--color-fg-tertiary);
+	}
+
+	.dot {
+		width: 0.25rem;
+		height: 0.25rem;
+		border-radius: var(--radius-full);
+		background: var(--color-fg-muted);
+	}
+
+	.card-title {
+		font-size: var(--text-body-lg);
+		font-weight: 500;
+		color: var(--color-fg-primary);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.card:hover .card-title {
+		color: var(--color-fg-secondary);
+	}
+
+	.category-badge {
+		padding: 0.25rem 0.75rem;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+	}
+
+	.hover-overlay {
+		background: linear-gradient(to top, rgba(255, 255, 255, 0.05), transparent);
+	}
+
+	/* Staggered reveal animation - CSS only */
+	.animate-reveal {
+		opacity: 0;
+		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		from {
+			opacity: 0;
+			transform: translateY(20px) rotate(var(--rotation, 0deg));
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) rotate(var(--rotation, 0deg));
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+		}
+	}
+</style>

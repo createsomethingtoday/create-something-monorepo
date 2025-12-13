@@ -14,9 +14,15 @@ declare global {
 				CACHE: KVNamespace;
 				STORAGE: R2Bucket;
 				RESEND_API_KEY: string;
+				TURNSTILE_SECRET_KEY?: string;
+				TURNSTILE_SITE_KEY?: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;
+				// Abundance Network
+				WHATSAPP_VERIFY_TOKEN?: string;
+				WHATSAPP_ACCESS_TOKEN?: string;
+				WHATSAPP_PHONE_NUMBER_ID?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

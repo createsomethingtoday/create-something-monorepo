@@ -7,12 +7,13 @@ interface ContactRequest {
 	message: string;
 	service?: string;
 	company?: string;
+	assessment_id?: string;
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		const body = (await request.json()) as ContactRequest;
-		const { name, email, message, service, company } = body;
+		const { name, email, message, service, company, assessment_id } = body;
 
 		// Validate inputs
 		if (!name || !name.trim()) {
@@ -67,12 +68,21 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		try {
 			await env.DB.prepare(
 				`
-        INSERT INTO contact_submissions (name, email, message, service, company, submitted_at)
-        VALUES (?, ?, ?, ?, ?, datetime('now'))
+        INSERT INTO contact_submissions (name, email, message, service, company, assessment_id, submitted_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
       `
 			)
-				.bind(name, email, message, service || null, company || null)
+				.bind(name, email, message, service || null, company || null, assessment_id || null)
 				.run();
+
+			// Mark assessment as converted if present
+			if (assessment_id) {
+				await env.DB.prepare(
+					`UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?`
+				)
+					.bind(assessment_id)
+					.run();
+			}
 		} catch (dbError) {
 			console.warn('Contact submissions table not found - skipping DB insert');
 		}
@@ -127,7 +137,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			},
 			body: JSON.stringify({
 				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
-				to: 'micah@createsomething.agency',
+				to: 'micah@createsomething.io',
 				replyTo: email,
 				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
 				html: `<!DOCTYPE html>

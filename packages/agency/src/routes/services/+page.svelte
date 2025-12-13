@@ -1,271 +1,28 @@
 <script lang="ts">
 	import SEO from '$lib/components/SEO.svelte';
-	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
-	// Footer is provided by layout
+	import { services, getServiceSchemaData } from '$lib/data/services';
 
 	let { data }: { data: PageData } = $props();
 
-	// Context from assessment
+	// Context from assessment (if user came from assessment flow)
 	const hasAssessmentContext = $derived(!!data.recommendedService || !!data.assessmentId);
 	const recommendedService = $derived(data.recommendedService);
 
-	const services = [
-		{
-			id: 'web-development',
-			title: 'Web Development',
-			triadQuestion: '"Have I built this before?"',
-			triadAction: 'Unify',
-			triadLevel: 'implementation',
-
-			whatThisRemoves: [
-				'Scattered website code across multiple platforms',
-				'Manual deployment overhead and version conflicts',
-				'Reinventing patterns that already exist'
-			],
-
-			howItWorks: [
-				'CREATE SOMETHING component library (battle-tested)',
-				'Type-safe TypeScript throughout',
-				'Cloudflare Pages deployment (global edge)',
-				'Automation opportunity assessment included'
-			],
-
-			proof: {
-				caseStudy: '/work/arc-for-gmail',
-				name: 'Arc for Gmail',
-				headline: 'Concept to production in 4 days',
-				stats: ['Multi-user OAuth', '100% automated', '5-min sync cycle']
-			},
-
-			pricing: '$5,000+',
-			timeline: '2-4 weeks',
-			icon: 'globe'
-		},
-		{
-			id: 'automation',
-			title: 'AI Automation Systems',
-			triadQuestion: '"Does this earn its existence?"',
-			triadAction: 'Remove',
-			triadLevel: 'artifact',
-
-			whatThisRemoves: [
-				'Manual tasks consuming creative bandwidth',
-				'Human bottlenecks in data transfer between systems',
-				'Decision fatigue from context-switching between tools'
-			],
-
-			howItWorks: [
-				'Claude Code for intelligent automation design',
-				'Cloudflare Workers for serverless execution',
-				'OAuth integrations for multi-user access',
-				'Tracked metrics (time saved, cost, errors)'
-			],
-
-			proof: {
-				caseStudy: '/work/viralytics',
-				name: 'Viralytics',
-				headline: '120 hours/week of research → automated daily',
-				stats: ['4+ chart sources', 'Daily automation', '20 signal queries']
-			},
-
-			pricing: '$15,000+',
-			timeline: '4-8 weeks',
-			icon: 'automation'
-		},
-		{
-			id: 'agentic-systems',
-			title: 'Agentic Systems Engineering',
-			triadQuestion: '"Does this serve the whole?"',
-			triadAction: 'Reconnect',
-			triadLevel: 'system',
-
-			whatThisRemoves: [
-				'Disconnected systems that don\'t talk to each other',
-				'Decision paralysis from incomplete information',
-				'Human coordination overhead across workflows'
-			],
-
-			howItWorks: [
-				'Long-running workflows (hours to days)',
-				'Cloudflare Workflows for durable execution',
-				'Claude Code for intelligent decision-making',
-				'Production monitoring and cost control'
-			],
-
-			proof: {
-				caseStudy: '/work/kickstand',
-				name: 'Kickstand',
-				headline: '155 scripts → 13 (92% reduction)',
-				stats: ['Health 6.2 → 9.2', '0 TypeScript errors', '92% cost reduction']
-			},
-
-			pricing: '$35,000+',
-			timeline: '8-16 weeks',
-			icon: 'robot'
-		},
-		{
-			id: 'partnership',
-			title: 'Ongoing Systems Partnership',
-			triadQuestion: '"Does this serve the whole?"',
-			triadAction: 'Reconnect',
-			triadLevel: 'system',
-
-			whatThisRemoves: [
-				'Accumulating technical debt in production systems',
-				'Reactive firefighting instead of proactive optimization',
-				'Missed opportunities for automation in daily operations'
-			],
-
-			howItWorks: [
-				'System maintenance and monitoring',
-				'Performance optimization (speed + cost)',
-				'New automation development (2-4 features/month)',
-				'Research collaboration (your systems → .io papers)'
-			],
-
-			proof: {
-				caseStudy: '/work/kickstand',
-				name: 'Kickstand',
-				headline: 'Bugs become sustainability experiments',
-				stats: ['Monthly reports', 'Quarterly experiments', '4-hour response']
-			},
-
-			pricing: '$5,000/month',
-			timeline: 'Ongoing',
-			icon: 'partnership'
-		},
-		{
-			id: 'transformation',
-			title: 'AI-Native Transformation',
-			triadQuestion: '"Does this serve the whole?"',
-			triadAction: 'Reconnect',
-			triadLevel: 'system',
-
-			whatThisRemoves: [
-				'Organizational resistance to AI adoption',
-				'Knowledge silos between teams',
-				'Dependency on external vendors for AI capability'
-			],
-
-			howItWorks: [
-				'Current state assessment and workflow audit',
-				'Hands-on Claude Code training for your team',
-				'Guided first automation project',
-				'Internal playbook development'
-			],
-
-			proof: {
-				caseStudy: '/work/kickstand',
-				name: 'Kickstand',
-				headline: 'Team capability → internal AI infrastructure',
-				stats: ['90-day roadmap', 'Certified team', 'Internal playbook']
-			},
-
-			pricing: '$50,000+',
-			timeline: '12-16 weeks',
-			icon: 'academy'
-		},
-		{
-			id: 'advisory',
-			title: 'Strategic Advisory',
-			triadQuestion: '"Does this serve the whole?"',
-			triadAction: 'Reconnect',
-			triadLevel: 'system',
-
-			whatThisRemoves: [
-				'Uncertainty about AI infrastructure direction',
-				'Misaligned investments in disconnected tools',
-				'Strategic blind spots in AI maturity'
-			],
-
-			howItWorks: [
-				'Quarterly strategic planning sessions',
-				'Architecture review of your systems',
-				'Performance optimization guidance',
-				'Pre-publication access to .io research'
-			],
-
-			proof: {
-				caseStudy: '/work/kickstand',
-				name: 'Kickstand',
-				headline: 'Philosophy eliminates decision paralysis',
-				stats: ['Quarterly reports', 'Monthly office hours', 'Priority support']
-			},
-
-			pricing: '$10,000/month',
-			timeline: '6-month minimum',
-			icon: 'advisor'
-		}
-	];
-
 	// Service schema data for SEO
-	const serviceSchemaData = services.map((service) => ({
-		name: service.title,
-		description: service.whatThisRemoves.join('. '),
-		type: 'ProfessionalService',
-		price: service.pricing.replace(/[\$,+\/mo]/g, ''),
-		priceDescription: service.pricing
-	}));
+	const serviceSchemaData = getServiceSchemaData();
 
-	// Track which service is highlighted (from hash or assessment)
-	let highlightedService = $state<string | null>(null);
-	let focusedServiceId = $state<string | null>(null);
-
-	// Reorder services to put focused one first
+	// Display services with recommended first if applicable
 	let displayServices = $derived.by(() => {
-		const targetId = focusedServiceId || recommendedService;
-		if (!targetId) return services;
+		if (!recommendedService) return services;
 
-		const targetIndex = services.findIndex(s => s.id === targetId);
+		const targetIndex = services.findIndex((s) => s.id === recommendedService);
 		if (targetIndex === -1) return services;
 
-		// Move target to front
+		// Move recommended to front
 		const reordered = [...services];
 		const [target] = reordered.splice(targetIndex, 1);
 		return [target, ...reordered];
-	});
-
-	// Handle URL hash on mount - reorder services and scroll to section
-	onMount(() => {
-		const hash = window.location.hash.slice(1);
-		const targetService = hash || recommendedService;
-
-		if (targetService && services.some(s => s.id === targetService)) {
-			focusedServiceId = targetService;
-			highlightedService = targetService;
-
-			// Scroll to services section (not the card itself)
-			setTimeout(() => {
-				const section = document.querySelector('.services-section');
-				if (section) {
-					section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				}
-				// Clear highlight after animation
-				setTimeout(() => {
-					highlightedService = null;
-				}, 2000);
-			}, 100);
-		}
-
-		// Listen for hash changes
-		function handleHashChange() {
-			const newHash = window.location.hash.slice(1);
-			if (newHash && services.some(s => s.id === newHash)) {
-				focusedServiceId = newHash;
-				highlightedService = newHash;
-				const section = document.querySelector('.services-section');
-				if (section) {
-					section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				}
-				setTimeout(() => {
-					highlightedService = null;
-				}, 2000);
-			}
-		}
-
-		window.addEventListener('hashchange', handleHashChange);
-		return () => window.removeEventListener('hashchange', handleHashChange);
 	});
 
 	// Triad level display names
@@ -296,7 +53,8 @@
 				{#if data.triadLevel}
 					You identified accumulation at the {triadLevelNames[data.triadLevel] || data.triadLevel}.
 				{/if}
-				We recommend <strong>{recommended?.title || 'exploring your options'}</strong> as your entry point.
+				We recommend <strong>{recommended?.title || 'exploring your options'}</strong> as your entry
+				point.
 			</p>
 		{:else}
 			<p class="eyebrow">Weniger, aber besser</p>
@@ -315,12 +73,10 @@
 		<div class="services-grid">
 			{#each displayServices as service, index}
 				{@const isRecommended = recommendedService === service.id}
-				{@const isHighlighted = highlightedService === service.id}
-				<div
-					id={service.id}
+				<a
+					href="/services/{service.id}"
 					class="service-card animate-reveal"
 					class:recommended={isRecommended}
-					class:highlighted={isHighlighted}
 					style="--delay: {index}"
 				>
 					{#if isRecommended}
@@ -332,27 +88,51 @@
 						<div class="service-icon">
 							{#if service.icon === 'globe'}
 								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+									/>
 								</svg>
 							{:else if service.icon === 'automation'}
 								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M13 10V3L4 14h7v7l9-11h-7z"
+									/>
 								</svg>
 							{:else if service.icon === 'robot'}
 								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+									/>
 								</svg>
 							{:else if service.icon === 'partnership'}
 								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+									/>
 								</svg>
 							{:else if service.icon === 'academy'}
 								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+									/>
 								</svg>
 							{:else if service.icon === 'advisor'}
 								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+									/>
 								</svg>
 							{/if}
 						</div>
@@ -375,45 +155,20 @@
 						</ul>
 					</div>
 
-					<!-- How It Works -->
-					<div class="service-section">
-						<h3 class="section-label">How it works</h3>
-						<ul class="feature-list">
-							{#each service.howItWorks as item}
-								<li>{item}</li>
-							{/each}
-						</ul>
-					</div>
-
-					<!-- Proof Block -->
-					<a href={service.proof.caseStudy} class="proof-block">
-						<div class="proof-header">
-							<span class="proof-label">Proof</span>
-							<span class="proof-name">{service.proof.name}</span>
-						</div>
-						<p class="proof-headline">{service.proof.headline}</p>
-						<div class="proof-stats">
-							{#each service.proof.stats as stat}
-								<span class="proof-stat">{stat}</span>
-							{/each}
-						</div>
-						<span class="proof-link">See proof →</span>
-					</a>
-
-					<!-- Pricing + CTA -->
+					<!-- Footer Preview -->
 					<div class="service-footer">
 						<div class="pricing-row">
 							<span class="pricing">{service.pricing}</span>
 							<span class="timeline">{service.timeline}</span>
 						</div>
-						<a href="/contact?service={service.id}" class="service-cta">
-							Start a conversation
+						<span class="view-details">
+							View details
 							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
 							</svg>
-						</a>
+						</span>
 					</div>
-				</div>
+				</a>
 			{/each}
 		</div>
 	</div>
@@ -425,8 +180,8 @@
 		<div class="pricing-qualifier">
 			<h3 class="qualifier-title">On pricing</h3>
 			<p class="qualifier-text">
-				Engagements typically range from $5,000 to $50,000+ depending on scope and complexity.
-				We'd rather understand your situation before discussing numbers.
+				Engagements typically range from $5,000 to $50,000+ depending on scope and complexity. We'd
+				rather understand your situation before discussing numbers.
 			</p>
 			<p class="qualifier-note">
 				The first conversation is always free. We'll tell you honestly if we're the right fit.
@@ -486,56 +241,29 @@
 		gap: var(--space-lg);
 	}
 
-	/* Service Card */
+	/* Service Card - now a link */
 	.service-card {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
 		position: relative;
-		transition: border-color var(--duration-standard) var(--ease-standard);
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			background var(--duration-standard) var(--ease-standard);
 	}
 
 	.service-card:hover {
 		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-elevated);
 	}
 
 	.service-card.recommended {
 		border-color: var(--color-border-strong);
 		background: var(--color-bg-elevated);
-		animation: pulse-highlight 600ms var(--ease-standard);
-	}
-
-	.service-card.highlighted {
-		border-color: var(--color-border-strong);
-		background: var(--color-bg-elevated);
-		animation: target-highlight 2s var(--ease-standard);
-	}
-
-	@keyframes pulse-highlight {
-		0%, 100% { box-shadow: 0 0 0 0 var(--color-border-emphasis); }
-		50% { box-shadow: 0 0 0 4px var(--color-border-emphasis); }
-	}
-
-	@keyframes target-highlight {
-		0% {
-			box-shadow: 0 0 0 0 var(--color-border-emphasis);
-			border-color: var(--color-border-default);
-		}
-		15% {
-			box-shadow: 0 0 0 6px var(--color-border-emphasis);
-			border-color: var(--color-border-strong);
-		}
-		30% {
-			box-shadow: 0 0 0 3px var(--color-border-emphasis);
-		}
-		100% {
-			box-shadow: 0 0 0 0 transparent;
-			border-color: var(--color-border-default);
-		}
 	}
 
 	.recommended-badge {
@@ -621,8 +349,7 @@
 		margin-bottom: var(--space-xs);
 	}
 
-	.removal-list,
-	.feature-list {
+	.removal-list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
@@ -643,85 +370,6 @@
 		position: absolute;
 		left: 0;
 		color: var(--color-fg-muted);
-	}
-
-	.feature-list li {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		padding-left: 1rem;
-		position: relative;
-	}
-
-	.feature-list li::before {
-		content: '•';
-		position: absolute;
-		left: 0;
-		color: var(--color-fg-muted);
-	}
-
-	/* Proof Block - reduced visual weight */
-	.proof-block {
-		display: block;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
-		padding: var(--space-sm) var(--space-md);
-		transition: background var(--duration-micro) var(--ease-standard);
-	}
-
-	.proof-block:hover {
-		background: var(--color-hover);
-	}
-
-	.proof-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 0.25rem;
-	}
-
-	.proof-label {
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-fg-muted);
-	}
-
-	.proof-name {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
-	}
-
-	.proof-headline {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
-		margin-bottom: 0.25rem;
-	}
-
-	.proof-stats {
-		display: flex;
-		gap: var(--space-sm);
-		flex-wrap: wrap;
-		margin-bottom: var(--space-xs);
-	}
-
-	.proof-stat {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
-		padding: 0.125rem 0.5rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-	}
-
-	.proof-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.proof-block:hover .proof-link {
-		color: var(--color-fg-primary);
 	}
 
 	/* Service Footer */
@@ -749,35 +397,34 @@
 		color: var(--color-fg-muted);
 	}
 
-	.service-cta {
+	.view-details {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-xs);
 		width: 100%;
 		padding: var(--space-sm) var(--space-md);
-		background: transparent;
-		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
-		border: 1px solid var(--color-border-emphasis);
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.service-cta:hover {
-		background: var(--color-hover);
-		border-color: var(--color-fg-tertiary);
+	.service-card:hover .view-details {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
 	}
 
-	.service-cta svg {
+	.view-details svg {
 		width: 1rem;
 		height: 1rem;
 		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
-	.service-cta:hover svg {
-		transform: translateX(2px);
+	.service-card:hover .view-details svg {
+		transform: translateX(4px);
 	}
 
 	/* Pricing Section */
@@ -842,17 +489,10 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal,
-		.service-card.highlighted,
-		.service-card.recommended {
+		.animate-reveal {
 			animation: none;
 			opacity: 1;
 			transform: none;
-		}
-
-		.service-card.highlighted {
-			border-color: var(--color-border-strong);
-			background: var(--color-bg-elevated);
 		}
 	}
 </style>

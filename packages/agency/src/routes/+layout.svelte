@@ -1,16 +1,30 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Analytics } from '@create-something/components';
+	import { Navigation, Analytics, ModeIndicator, Footer } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, onNavigate } from '$app/navigation';
 
 	let { children } = $props();
 
+	// View Transitions API - Hermeneutic Navigation
+	// .agency: Efficient (200ms)
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
+
 	const navLinks = [
-		{ label: 'Home', href: '/' },
 		{ label: 'Services', href: '/services' },
 		{ label: 'Work', href: '/work' },
+		{ label: 'Methodology', href: '/methodology' },
 		{ label: 'About', href: '/about' }
 	];
 
@@ -24,8 +38,18 @@
 		}
 	}
 
-	// Scroll to hash on mount (for direct links)
+	// Scroll to hash on mount (for direct links) + cross-property entry
 	onMount(() => {
+		// Cross-property entry animation
+		const transitionFrom = sessionStorage.getItem('cs-transition-from');
+		if (transitionFrom) {
+			sessionStorage.removeItem('cs-transition-from');
+			sessionStorage.removeItem('cs-transition-to');
+			sessionStorage.removeItem('cs-transition-time');
+			document.body.classList.add('transitioning-in');
+			setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+		}
+
 		if (window.location.hash) {
 			setTimeout(() => scrollToHash(window.location.hash), 100);
 		}
@@ -70,7 +94,7 @@
 
 <Analytics property="agency" />
 
-<div class="min-h-screen bg-black">
+<div class="layout-root min-h-screen">
 	<Navigation
 		logo="CREATE SOMETHING"
 		logoSuffix=".agency"
@@ -84,4 +108,26 @@
 	<div class="pt-[72px]">
 		{@render children()}
 	</div>
+
+	<Footer
+		mode="agency"
+		showNewsletter={false}
+		aboutText="Professional AI-native development services. Research-backed consulting, implementation, and training."
+		quickLinks={[
+			{ label: 'Services', href: '/services' },
+			{ label: 'Work', href: '/work' },
+			{ label: 'Methodology', href: '/methodology' },
+			{ label: 'About', href: '/about' },
+			{ label: 'Contact', href: '/contact' }
+		]}
+		showSocial={true}
+	/>
+
+	<ModeIndicator current="agency" />
 </div>
+
+<style>
+	.layout-root {
+		background: var(--color-bg-pure);
+	}
+</style>

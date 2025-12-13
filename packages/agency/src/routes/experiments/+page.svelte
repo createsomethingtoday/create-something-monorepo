@@ -46,42 +46,42 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black">
+<div class="min-h-screen page-wrapper">
 	<!-- Navigation -->
-	<nav class="fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/10">
+	<nav class="fixed top-0 left-0 right-0 z-50 nav-bar">
 		<div class="max-w-7xl mx-auto px-6">
 			<div class="flex items-center justify-between py-4">
 				<a href="/" class="flex items-center">
-					<div class="text-2xl font-bold text-white hover:text-white/80 transition-colors">
+					<div class="heading-2 font-bold hover:body-secondary transition-colors">
 						CREATE SOMETHING AGENCY
 					</div>
 				</a>
 
 				<div class="hidden md:flex items-center gap-8">
-					<a href="/" class="text-white/80 hover:text-white transition-colors text-sm font-medium">
+					<a href="/" class="body-secondary hover:transition-colors body-sm font-medium">
 						Home
 					</a>
 					<a
 						href="/experiments"
-						class="text-white/80 hover:text-white transition-colors text-sm font-medium"
+						class="body-secondary hover:transition-colors body-sm font-medium"
 					>
 						Experiments
 					</a>
 					<a
 						href="/methodology"
-						class="text-white/80 hover:text-white transition-colors text-sm font-medium"
+						class="body-secondary hover:transition-colors body-sm font-medium"
 					>
 						Methodology
 					</a>
 					<a
 						href="/about"
-						class="text-white/80 hover:text-white transition-colors text-sm font-medium"
+						class="body-secondary hover:transition-colors body-sm font-medium"
 					>
 						About
 					</a>
 					<a
 						href="/contact"
-						class="group relative px-6 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-all"
+						class="group relative px-6 py-2 transition-all nav-cta-button"
 					>
 						<span class="relative z-10">Contact</span>
 					</a>
@@ -94,36 +94,30 @@
 	<section class="relative pt-32 pb-12 px-6">
 		<div class="max-w-7xl mx-auto">
 			<div class="text-center space-y-4">
-				<h1 class="text-4xl md:text-6xl font-bold text-white">All Experiments</h1>
-				<p class="text-lg text-white/60">
+				<h1 class="hero-title font-bold">All Experiments</h1>
+				<p class="body-lg body-tertiary">
 					{papers.length} agency experiments — real projects, real results
 				</p>
 			</div>
 
 			<!-- Sort Control -->
 			<div class="flex justify-center mt-8">
-				<div class="inline-flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg">
+				<div class="inline-flex items-center gap-1 p-1 sort-control">
 					<button
 						onclick={() => sortBy = 'newest'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'newest'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="px-4 py-2 font-medium transition-all sort-button {sortBy === 'newest' ? 'sort-button-active' : ''}"
 					>
 						Newest
 					</button>
 					<button
 						onclick={() => sortBy = 'oldest'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'oldest'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="px-4 py-2 font-medium transition-all sort-button {sortBy === 'oldest' ? 'sort-button-active' : ''}"
 					>
 						Oldest
 					</button>
 					<button
 						onclick={() => sortBy = 'featured'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'featured'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="px-4 py-2 font-medium transition-all sort-button {sortBy === 'featured' ? 'sort-button-active' : ''}"
 					>
 						Featured
 					</button>
@@ -136,16 +130,16 @@
 	<PapersGrid papers={sortedPapers} title="" subtitle="" />
 
 	<!-- Footer -->
-	<footer class="bg-black border-t border-white/10 py-6 px-6">
+	<footer class="py-6 px-6 page-footer">
 		<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-			<p class="text-white/40 text-sm">
+			<p class="body-muted body-sm">
 				© {new Date().getFullYear()} Micah Johnson. All rights reserved.
 			</p>
 			<div class="flex items-center gap-6">
-				<a href="/privacy" class="text-white/40 hover:text-white/60 text-sm transition-colors">
+				<a href="/privacy" class="body-muted hover:body-tertiary body-sm transition-colors">
 					Privacy Policy
 				</a>
-				<a href="/terms" class="text-white/40 hover:text-white/60 text-sm transition-colors">
+				<a href="/terms" class="body-muted hover:body-tertiary body-sm transition-colors">
 					Terms of Service
 				</a>
 			</div>
@@ -156,5 +150,62 @@
 <style>
 	:global(.text-terminal-green) {
 		color: #00ff00;
+	}
+
+	/* Page wrapper */
+	.page-wrapper {
+		background: var(--color-bg-pure);
+	}
+
+	/* Navigation bar */
+	.nav-bar {
+		background: var(--color-bg-pure);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	/* Nav CTA button */
+	.nav-cta-button {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+	}
+
+	.nav-cta-button:hover {
+		opacity: 0.9;
+	}
+
+	/* Sort control container */
+	.sort-control {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	/* Sort buttons */
+	.sort-button {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		border-radius: var(--radius-md);
+	}
+
+	.sort-button:hover {
+		background: var(--color-bg-subtle);
+	}
+
+	.sort-button-active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	.sort-button-active:hover {
+		background: var(--color-fg-primary);
+	}
+
+	/* Page footer */
+	.page-footer {
+		background: var(--color-bg-pure);
+		border-top: 1px solid var(--color-border-default);
 	}
 </style>

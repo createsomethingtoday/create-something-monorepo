@@ -13,7 +13,7 @@ This is where philosophy meets the market. Patterns validated in `.space` and do
 | Dependency | Why It Matters |
 |------------|----------------|
 | `@create-something/components` | Shared UI for professional presentation |
-| `gsap` | Smooth animations for client-facing polish |
+| View Transitions API | Platform-native animations (GSAP removed) |
 | `marked` + `highlight.js` | Case study content rendering |
 | Cloudflare Pages | Edge deployment for global client access |
 | Validated patterns | Only deploy what's proven in .io/.space |
