@@ -47,7 +47,16 @@
   --color-data-5: #f472b6; /* Pink */
   --color-data-6: #facc15; /* Yellow */
 
-  /* Typography - Fluid & Canonical */
+  /* Typography - Golden Ratio Scale (φ = 1.618)
+     Base: 1rem (16px)
+     Scale: Each step multiplied/divided by φ
+     1rem × φ⁴ = 6.854rem (display-xl)
+     1rem × φ³ = 4.236rem (display)
+     1rem × φ² = 2.618rem (h1)
+     1rem × φ  = 1.618rem (h2)
+     1rem      = 1rem     (body)
+     1rem ÷ φ  = 0.618rem (small)
+  */
   --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
   --font-serif: Georgia, "Times New Roman", serif;
@@ -58,7 +67,7 @@
   --leading-tight: 1.25;
   --leading-snug: 1.375;
   --leading-normal: 1.5;
-  --leading-relaxed: 1.625;
+  --leading-relaxed: 1.618; /* Golden ratio */
   --leading-loose: 1.75;
   --tracking-tighter: -0.025em;
   --tracking-tight: -0.015em;
@@ -66,19 +75,20 @@
   --tracking-wide: 0.025em;
   --tracking-wider: 0.05em;
   --tracking-widest: 0.1em;
-  --text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem);
-  --text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);
-  --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);
-  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);
-  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);
-  --text-h4: clamp(1.125rem, 1vw + 0.5rem, 1.5rem);
-  --text-h5: clamp(1rem, 0.5vw + 0.75rem, 1.25rem);
-  --text-h6: clamp(0.875rem, 0.25vw + 0.75rem, 1rem);
+  /* Golden Ratio Typography Scale */
+  --text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);  /* φ³ to φ⁴ */
+  --text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);   /* φ² to φ³ */
+  --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);          /* φ to φ² */
+  --text-h2: clamp(1.25rem, 2vw + 0.5rem, 1.618rem);         /* ~φ */
+  --text-h3: clamp(1.125rem, 1vw + 0.5rem, 1.25rem);
+  --text-h4: clamp(1rem, 0.5vw + 0.5rem, 1.125rem);
+  --text-h5: 1rem;
+  --text-h6: 0.875rem;
   --text-body-lg: 1.125rem;
   --text-body: 1rem;
   --text-body-sm: 0.875rem;
   --text-caption: 0.75rem;
-  --text-overline: 0.6875rem;
+  --text-overline: 0.618rem;  /* 1/φ */
 
   /* Spacing - Golden Ratio (φ = 1.618) */
   --space-xs: 0.5rem;
@@ -147,81 +157,83 @@
 }
 
 /* ==========================================================================
-   Base Styles
+   Base Styles - Wrapped in @layer base for Tailwind compatibility
+   These styles apply AFTER Tailwind's preflight reset
    ========================================================================== */
 
-html {
-  scroll-behavior: smooth;
-}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  font-family: var(--font-sans);
-  font-optical-sizing: auto;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-  background: var(--color-bg-pure);
-  color: var(--color-fg-primary);
-  min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
-  letter-spacing: var(--tracking-tight);
-}
+  body {
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    background: var(--color-bg-pure);
+    color: var(--color-fg-primary);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    letter-spacing: var(--tracking-tight);
+  }
 
-/* Typography - Canonical Implementation */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans);
-  font-optical-sizing: auto;
-}
+  /* Typography - Golden Ratio Implementation */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+  }
 
-h1 {
-  font-size: var(--text-display-xl);
-  font-weight: var(--font-semibold);
-  line-height: 1.05;
-  letter-spacing: var(--tracking-tighter);
-  max-width: 20ch;
-}
+  h1 {
+    font-size: var(--text-display-xl);
+    font-weight: var(--font-semibold);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-tighter);
+  }
 
-h2 {
-  font-size: var(--text-h1);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tighter);
-}
+  h2 {
+    font-size: var(--text-h1);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tighter);
+  }
 
-h3 {
-  font-size: var(--text-h2);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-snug);
-  letter-spacing: var(--tracking-tight);
-}
+  h3 {
+    font-size: var(--text-h2);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-tight);
+  }
 
-h4 {
-  font-size: var(--text-h3);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-snug);
-}
+  h4 {
+    font-size: var(--text-h3);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+  }
 
-h5 {
-  font-size: var(--text-h4);
-  font-weight: var(--font-semibold);
-}
+  h5 {
+    font-size: var(--text-h4);
+    font-weight: var(--font-semibold);
+  }
 
-h6 {
-  font-size: var(--text-h5);
-  font-weight: var(--font-semibold);
-}
+  h6 {
+    font-size: var(--text-h5);
+    font-weight: var(--font-semibold);
+  }
 
-p {
-  font-size: var(--text-body);
-  line-height: var(--leading-relaxed);
-  letter-spacing: var(--tracking-tight);
-}
+  p {
+    font-size: var(--text-body);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-tight);
+  }
 
-/* Code and monospace elements */
-code, pre, .font-mono {
-  font-family: var(--font-mono);
+  /* Code and monospace elements */
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
 }
 
 /* ==========================================================================
