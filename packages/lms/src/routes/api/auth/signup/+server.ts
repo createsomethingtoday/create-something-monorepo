@@ -11,9 +11,28 @@ import { json } from '@sveltejs/kit';
 
 const IDENTITY_WORKER = 'https://id.createsomething.space';
 
+interface SignupRequest {
+	email: string;
+	password: string;
+	name?: string;
+}
+
+interface AuthResponse {
+	access_token: string;
+	refresh_token: string;
+	expires_in: number;
+	user: {
+		id: string;
+		email: string;
+		name?: string;
+	};
+	error?: string;
+	message?: string;
+}
+
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	try {
-		const body = await request.json();
+		const body = (await request.json()) as SignupRequest;
 
 		const response = await fetch(`${IDENTITY_WORKER}/v1/auth/signup`, {
 			method: 'POST',
@@ -24,7 +43,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			}),
 		});
 
-		const data = await response.json();
+		const data = (await response.json()) as AuthResponse;
 
 		if (!response.ok) {
 			return json(data, { status: response.status });

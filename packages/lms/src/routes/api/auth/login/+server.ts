@@ -11,6 +11,19 @@ import { json } from '@sveltejs/kit';
 
 const IDENTITY_WORKER = 'https://id.createsomething.space';
 
+interface AuthResponse {
+	access_token: string;
+	refresh_token: string;
+	expires_in: number;
+	user: {
+		id: string;
+		email: string;
+		name?: string;
+	};
+	error?: string;
+	message?: string;
+}
+
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	try {
 		const body = await request.json();
@@ -21,7 +34,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			body: JSON.stringify(body),
 		});
 
-		const data = await response.json();
+		const data = (await response.json()) as AuthResponse;
 
 		if (!response.ok) {
 			return json(data, { status: response.status });

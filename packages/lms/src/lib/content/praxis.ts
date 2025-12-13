@@ -246,6 +246,40 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Propose structural improvements',
       'Validate against Subtractive Triad'
     ]
+  },
+
+  // ============ PARTNERSHIP ============
+  {
+    id: 'partnership-audit',
+    lessonId: 'claude-code-partnership',
+    pathId: 'partnership',
+    title: 'Partnership Audit',
+    description: 'Evaluate how well human and agent collaborate on a task.',
+    type: 'analysis',
+    difficulty: 'intermediate',
+    duration: '30 min',
+    objectives: [
+      'Identify delegation vs. collaboration moments',
+      'Assess trust calibration accuracy',
+      'Map complementary contributions',
+      'Propose workflow improvements'
+    ]
+  },
+  {
+    id: 'mcp-setup',
+    lessonId: 'tool-configuration',
+    pathId: 'partnership',
+    title: 'MCP Setup',
+    description: 'Configure MCP servers, skills, and hooks for a project.',
+    type: 'code',
+    difficulty: 'intermediate',
+    duration: '40 min',
+    objectives: [
+      'Create an MCP server configuration',
+      'Define a custom skill',
+      'Set up a useful hook',
+      'Validate tool integration'
+    ]
   }
 ];
 
