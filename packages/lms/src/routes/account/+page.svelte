@@ -7,7 +7,7 @@
 	 */
 
 	import type { PageData } from './$types';
-	import { User, Mail, Shield, Calendar, Check, Loader2, LogOut } from 'lucide-svelte';
+	import { User, Mail, Shield, Calendar, Check, Loader2, LogOut, Key, Eye, EyeOff } from 'lucide-svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
@@ -15,6 +15,15 @@
 	let name = $state(data.profile?.name || '');
 	let saving = $state(false);
 	let saveMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+
+	// Password change state
+	let currentPassword = $state('');
+	let newPassword = $state('');
+	let confirmPassword = $state('');
+	let showCurrentPassword = $state(false);
+	let showNewPassword = $state(false);
+	let changingPassword = $state(false);
+	let passwordMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
 	// Format date
 	function formatDate(dateStr: string): string {
@@ -62,6 +71,52 @@
 	async function logout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
 		goto('/');
+	}
+
+	// Change password
+	async function changePassword() {
+		passwordMessage = null;
+
+		// Validation
+		if (!currentPassword || !newPassword || !confirmPassword) {
+			passwordMessage = { type: 'error', text: 'All password fields are required' };
+			return;
+		}
+
+		if (newPassword.length < 8) {
+			passwordMessage = { type: 'error', text: 'New password must be at least 8 characters' };
+			return;
+		}
+
+		if (newPassword !== confirmPassword) {
+			passwordMessage = { type: 'error', text: 'New passwords do not match' };
+			return;
+		}
+
+		changingPassword = true;
+
+		try {
+			const response = await fetch('/api/account/password', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					current_password: currentPassword,
+					new_password: newPassword,
+				}),
+			});
+
+			if (!response.ok) {
+				const err = await response.json();
+				throw new Error(err.message || 'Failed to change password');
+			}
+
+			// Password changed successfully - redirect to login
+			goto('/login?message=password_changed');
+		} catch (err) {
+			passwordMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to change password' };
+		} finally {
+			changingPassword = false;
+		}
 	}
 </script>
 
@@ -176,6 +231,105 @@
 			</form>
 		</section>
 
+		<!-- Security Section -->
+		<section class="security-section">
+			<div class="section-header">
+				<h2 class="section-title">Security</h2>
+			</div>
+
+			<form onsubmit={(e) => { e.preventDefault(); changePassword(); }} class="password-form">
+				<!-- Current Password -->
+				<div class="field">
+					<label for="current-password" class="field-label">
+						<Key size={16} strokeWidth={1.5} />
+						<span>Current Password</span>
+					</label>
+					<div class="password-input-container">
+						<input
+							id="current-password"
+							type={showCurrentPassword ? 'text' : 'password'}
+							bind:value={currentPassword}
+							placeholder="Enter current password"
+							class="field-input password-input"
+							autocomplete="current-password"
+						/>
+						<button
+							type="button"
+							class="password-toggle"
+							onclick={() => (showCurrentPassword = !showCurrentPassword)}
+						>
+							{#if showCurrentPassword}
+								<EyeOff size={16} />
+							{:else}
+								<Eye size={16} />
+							{/if}
+						</button>
+					</div>
+				</div>
+
+				<!-- New Password -->
+				<div class="field">
+					<label for="new-password" class="field-label">
+						<Key size={16} strokeWidth={1.5} />
+						<span>New Password</span>
+					</label>
+					<div class="password-input-container">
+						<input
+							id="new-password"
+							type={showNewPassword ? 'text' : 'password'}
+							bind:value={newPassword}
+							placeholder="Enter new password"
+							class="field-input password-input"
+							autocomplete="new-password"
+						/>
+						<button
+							type="button"
+							class="password-toggle"
+							onclick={() => (showNewPassword = !showNewPassword)}
+						>
+							{#if showNewPassword}
+								<EyeOff size={16} />
+							{:else}
+								<Eye size={16} />
+							{/if}
+						</button>
+					</div>
+					<p class="field-hint">Minimum 8 characters.</p>
+				</div>
+
+				<!-- Confirm Password -->
+				<div class="field">
+					<label for="confirm-password" class="field-label">
+						<Key size={16} strokeWidth={1.5} />
+						<span>Confirm New Password</span>
+					</label>
+					<input
+						id="confirm-password"
+						type="password"
+						bind:value={confirmPassword}
+						placeholder="Confirm new password"
+						class="field-input"
+						autocomplete="new-password"
+					/>
+				</div>
+
+				<!-- Change Password button -->
+				<div class="form-actions">
+					{#if passwordMessage}
+						<span class="save-message {passwordMessage.type}">{passwordMessage.text}</span>
+					{/if}
+					<button type="submit" class="change-password-btn" disabled={changingPassword}>
+						{#if changingPassword}
+							<Loader2 size={16} class="animate-spin" />
+							<span>Changing...</span>
+						{:else}
+							<span>Change Password</span>
+						{/if}
+					</button>
+				</div>
+			</form>
+		</section>
+
 		<!-- Actions Section -->
 		<section class="actions-section">
 			<div class="section-header">
@@ -228,6 +382,7 @@
 
 	/* Sections */
 	.profile-section,
+	.security-section,
 	.actions-section {
 		margin-bottom: var(--space-xl);
 	}
@@ -441,6 +596,67 @@
 	.logout-btn:hover {
 		border-color: var(--color-error);
 		color: var(--color-error);
+	}
+
+	/* Password Form */
+	.password-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.password-input-container {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	.password-input {
+		padding-right: 2.5rem;
+	}
+
+	.password-toggle {
+		position: absolute;
+		right: var(--space-sm);
+		padding: var(--space-xs);
+		background: transparent;
+		border: none;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.password-toggle:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	.change-password-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		background: transparent;
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		font-family: inherit;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.change-password-btn:hover:not(:disabled) {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+	}
+
+	.change-password-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	/* Animation */
