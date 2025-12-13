@@ -1,0 +1,42 @@
+{
+  "name": "@create-something/agent-coordination",
+  "version": "0.1.0",
+  "description": "Multi-agent coordination layer for Cloudflare Workers. Graph-based task tracking with claims, dependencies, and health monitoring.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "agents": "^0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "agents",
+    "coordination",
+    "multi-agent",
+    "d1"
+  ],
+  "license": "MIT"
+}
