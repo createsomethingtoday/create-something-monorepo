@@ -27,7 +27,7 @@
 				body: JSON.stringify({ email, password }),
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as { message?: string };
 
 			if (!response.ok) {
 				error = data.message || 'Login failed';
