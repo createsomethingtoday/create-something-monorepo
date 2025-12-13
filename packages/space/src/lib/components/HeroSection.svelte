@@ -81,6 +81,7 @@
 		font-size: var(--text-body);
 		font-weight: 500;
 		color: var(--color-fg-secondary);
+		text-align: center;
 	}
 
 	@media (min-width: 768px) {
@@ -94,11 +95,13 @@
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		line-height: 1.2;
+		text-align: center;
 	}
 
 	.description {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-tertiary);
+		text-align: center;
 	}
 
 	@media (min-width: 768px) {
@@ -140,10 +143,12 @@
 		font-size: var(--text-h2);
 		font-weight: 700;
 		color: var(--color-fg-primary);
+		text-align: center;
 	}
 
 	.section-description {
 		color: var(--color-fg-tertiary);
+		text-align: center;
 	}
 
 	.hero-background {
