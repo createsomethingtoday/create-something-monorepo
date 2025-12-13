@@ -1,6 +1,4 @@
 <script lang="ts">
-  
-  import { fly } from 'svelte/transition';
 </script>
 
 <svelte:head>
@@ -14,7 +12,7 @@
   <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-4xl mx-auto">
-      <div in:fly={{ y: 20, duration: 600 }} class="space-y-6">
+      <div class="space-y-6 animate-reveal">
         <h1 class="text-4xl md:text-6xl font-bold text-white">
           Terms of Service
         </h1>
@@ -25,6 +23,29 @@
       </div>
     </div>
   </section>
+
+<style>
+  .animate-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-reveal {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
 
   <!-- Content -->
   <section class="pb-20 px-6">

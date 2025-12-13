@@ -20,28 +20,26 @@
 	}
 </script>
 
-<div class="min-h-screen bg-black text-white">
+<div class="admin-layout">
 	<!-- Admin Navigation -->
-	<nav class="border-b border-white/10 bg-white/5">
+	<nav class="admin-nav">
 		<div class="max-w-7xl mx-auto px-6">
 			<div class="flex items-center justify-between">
 				<div class="flex gap-6">
 					{#each navItems as item}
 						<a
 							href={item.href}
-							class="py-4 border-b-2 transition-colors {$page.url.pathname === item.href
-								? 'border-white text-white'
-								: 'border-transparent text-white/60 hover:text-white'}"
+							class="nav-link {$page.url.pathname === item.href ? 'active' : ''}"
 						>
 							{item.label}
 						</a>
 					{/each}
 				</div>
 				<div class="flex items-center gap-4">
-					<a href="/" class="text-white/60 hover:text-white text-sm">← Back to Site</a>
+					<a href="/" class="utility-link">← Back to Site</a>
 					<button
 						onclick={logout}
-						class="text-white/60 hover:text-white text-sm transition-colors"
+						class="utility-link"
 					>
 						Logout
 					</button>
@@ -51,13 +49,59 @@
 	</nav>
 
 	<!-- Admin Content -->
-	<main class="max-w-7xl mx-auto px-6 py-8">
+	<main class="admin-content">
 		<slot />
 	</main>
 </div>
 
 <style>
 	:global(body) {
-		background: #000;
+		background: var(--color-bg-pure);
+	}
+
+	.admin-layout {
+		min-height: 100vh;
+		background: var(--color-bg-pure);
+		color: var(--color-fg-primary);
+	}
+
+	.admin-nav {
+		border-bottom: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+	}
+
+	.nav-link {
+		padding: var(--space-sm) 0;
+		border-bottom: 2px solid transparent;
+		transition: all var(--duration-standard) var(--ease-standard);
+		color: var(--color-fg-tertiary);
+	}
+
+	.nav-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.nav-link.active {
+		border-bottom-color: var(--color-fg-primary);
+		color: var(--color-fg-primary);
+	}
+
+	.utility-link {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		transition: color var(--duration-standard) var(--ease-standard);
+		background: transparent;
+		border: none;
+		cursor: pointer;
+	}
+
+	.utility-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.admin-content {
+		max-width: 80rem;
+		margin: 0 auto;
+		padding: var(--space-lg) var(--space-md);
 	}
 </style>

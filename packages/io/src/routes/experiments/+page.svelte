@@ -101,11 +101,11 @@
 </svelte:head>
 
 <!-- Hero Section -->
-<section class="relative pt-16 pb-12 px-6">
+<section class="hero-section">
 	<div class="max-w-7xl mx-auto">
 		<div class="text-center space-y-4">
-			<h1 class="text-4xl md:text-6xl font-bold text-white">All Experiments</h1>
-			<p class="text-lg text-white/60">
+			<h1 class="hero-title">All Experiments</h1>
+			<p class="hero-subtitle">
 				{#if isFiltered}
 					{resultCount} of {papers.length} experiments
 				{:else}
@@ -115,7 +115,7 @@
 		</div>
 
 		<!-- Search & Filter Controls -->
-		<div class="mt-8 space-y-4">
+		<div class="controls-container">
 			<!-- Search Input -->
 			<div class="flex justify-center">
 				<div class="relative w-full max-w-md">
@@ -123,12 +123,10 @@
 						type="text"
 						bind:value={searchQuery}
 						placeholder="Search experiments..."
-						class="w-full px-4 py-3 pl-10 bg-white/5 border border-white/10 rounded-lg
-							   text-white placeholder-white/40 focus:outline-none focus:border-white/30
-							   transition-colors"
+						class="search-input"
 					/>
 					<svg
-						class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
+						class="search-icon"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -143,7 +141,7 @@
 					{#if searchQuery}
 						<button
 							onclick={() => searchQuery = ''}
-							class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+							class="search-clear"
 						>
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -158,41 +156,31 @@
 				<div class="flex flex-wrap justify-center gap-2">
 					<button
 						onclick={() => masterFilter = 'all'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'all'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'all' ? 'active' : ''}"
 					>
 						All
 					</button>
 					<button
 						onclick={() => masterFilter = 'rams'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'rams'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'rams' ? 'active' : ''}"
 					>
 						Rams
 					</button>
 					<button
 						onclick={() => masterFilter = 'heidegger'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'heidegger'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'heidegger' ? 'active' : ''}"
 					>
 						Heidegger
 					</button>
 					<button
 						onclick={() => masterFilter = 'tufte'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'tufte'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'tufte' ? 'active' : ''}"
 					>
 						Tufte
 					</button>
 					<button
 						onclick={() => masterFilter = 'canon'}
-						class="px-3 py-1.5 text-sm rounded-full transition-all {masterFilter === 'canon'
-							? 'bg-white text-black'
-							: 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}"
+						class="filter-chip {masterFilter === 'canon' ? 'active' : ''}"
 					>
 						Canon
 					</button>
@@ -201,28 +189,22 @@
 
 			<!-- Sort Control -->
 			<div class="flex justify-center">
-				<div class="inline-flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg">
+				<div class="sort-control">
 					<button
 						onclick={() => sortBy = 'newest'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'newest'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="sort-button {sortBy === 'newest' ? 'active' : ''}"
 					>
 						Newest
 					</button>
 					<button
 						onclick={() => sortBy = 'oldest'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'oldest'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="sort-button {sortBy === 'oldest' ? 'active' : ''}"
 					>
 						Oldest
 					</button>
 					<button
 						onclick={() => sortBy = 'featured'}
-						class="px-4 py-2 text-sm font-medium rounded-md transition-all {sortBy === 'featured'
-							? 'bg-white text-black'
-							: 'text-white/70 hover:text-white hover:bg-white/10'}"
+						class="sort-button {sortBy === 'featured' ? 'active' : ''}"
 					>
 						Featured
 					</button>
@@ -236,15 +218,164 @@
 {#if resultCount > 0}
 	<PapersGrid papers={filteredAndSortedPapers} title="" subtitle="" />
 {:else}
-	<div class="text-center py-16 px-6">
-		<p class="text-white/60 text-lg">No experiments match your search.</p>
+	<div class="empty-state">
+		<p class="empty-message">No experiments match your search.</p>
 		<button
 			onclick={() => { searchQuery = ''; masterFilter = 'all'; }}
-			class="mt-4 px-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-lg hover:bg-white/5 transition-all"
+			class="clear-button"
 		>
 			Clear filters
 		</button>
 	</div>
 {/if}
+
+<style>
+	/* Hero Section */
+	.hero-section {
+		position: relative;
+		padding: var(--space-xl) var(--space-md) var(--space-lg);
+	}
+
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.hero-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Controls */
+	.controls-container {
+		margin-top: var(--space-lg);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.search-input {
+		width: 100%;
+		padding: var(--space-sm) var(--space-sm) var(--space-sm) 2.5rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-standard) var(--ease-standard);
+	}
+
+	.search-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.search-input:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.search-icon {
+		position: absolute;
+		left: var(--space-sm);
+		top: 50%;
+		transform: translateY(-50%);
+		width: 1rem;
+		height: 1rem;
+		color: var(--color-fg-muted);
+	}
+
+	.search-clear {
+		position: absolute;
+		right: var(--space-sm);
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-fg-muted);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.search-clear:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Filter Chips */
+	.filter-chip {
+		padding: 0.375rem var(--space-sm);
+		font-size: var(--text-body-sm);
+		border-radius: var(--radius-full);
+		transition: all var(--duration-standard) var(--ease-standard);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-tertiary);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.filter-chip:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.filter-chip.active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-color: var(--color-fg-primary);
+	}
+
+	/* Sort Control */
+	.sort-control {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.25rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.sort-button {
+		padding: var(--space-xs) var(--space-sm);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		border-radius: var(--radius-sm);
+		transition: all var(--duration-standard) var(--ease-standard);
+		color: var(--color-fg-secondary);
+	}
+
+	.sort-button:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.sort-button.active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	/* Empty State */
+	.empty-state {
+		text-align: center;
+		padding: var(--space-2xl) var(--space-md);
+	}
+
+	.empty-message {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-lg);
+		margin-bottom: var(--space-md);
+	}
+
+	.clear-button {
+		margin-top: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-md);
+		background: transparent;
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.clear-button:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-bg-surface);
+	}
+</style>
 
 <!-- Footer -->

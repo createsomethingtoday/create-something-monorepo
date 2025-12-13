@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition';
-  
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -24,7 +22,7 @@
   <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-7xl mx-auto">
-      <div in:fly={{ y: 20, duration: 600 }} class="text-center space-y-4">
+      <div class="text-center space-y-4 animate-reveal">
         <h1 class="text-4xl md:text-6xl font-bold text-white">
           Browse by Category
         </h1>
@@ -40,7 +38,7 @@
     <div class="max-w-5xl mx-auto">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {#each categories as category, index}
-          <div in:fly={{ y: 20, duration: 500, delay: index * 100 }}>
+          <div class="animate-reveal" style="--delay: {index + 1}">
             <a
               href="/category/{category.slug}"
               class="group block relative p-8 bg-[#111111] border border-white/10 rounded-lg hover:border-white/30 transition-all overflow-hidden min-h-[160px]"
@@ -84,4 +82,26 @@
     </div>
   </section>
 
-  
+<style>
+  .animate-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: calc(var(--delay, 0) * 100ms);
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-reveal {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

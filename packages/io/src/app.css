@@ -42,6 +42,14 @@
   --color-active: rgba(255, 255, 255, 0.1);
   --color-focus: rgba(255, 255, 255, 0.2);
 
+  /* Data Visualization Palette - For charts, graphs, multi-series data */
+  --color-data-1: #60a5fa; /* Blue */
+  --color-data-2: #22c55e; /* Green */
+  --color-data-3: #c084fc; /* Purple */
+  --color-data-4: #fbbf24; /* Amber */
+  --color-data-5: #f472b6; /* Pink */
+  --color-data-6: #facc15; /* Yellow */
+
   /* Legacy aliases for backward compatibility */
   --bg-primary: var(--color-bg-pure);
   --bg-secondary: var(--color-bg-elevated);
@@ -466,4 +474,87 @@ pre code.hljs {
   border-radius: var(--radius-md);
   font-size: var(--text-body-sm);
   line-height: var(--leading-relaxed);
+}
+
+/* ==========================================================================
+   View Transitions API - Hermeneutic Navigation
+   "Navigation should feel like dwelling, not jumping"
+   ========================================================================== */
+
+/* Dynamic duration set by JavaScript based on Mode of Being */
+:root {
+  --view-transition-duration: var(--duration-standard);
+}
+
+/* Base view transition animations */
+::view-transition-old(root) {
+  animation: view-transition-fade-out var(--view-transition-duration) var(--ease-standard);
+}
+
+::view-transition-new(root) {
+  animation: view-transition-fade-in var(--view-transition-duration) var(--ease-standard);
+}
+
+@keyframes view-transition-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes view-transition-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Cross-property exit animation */
+body.transitioning-out {
+  animation: cross-property-exit var(--duration-standard) var(--ease-standard) forwards;
+}
+
+@keyframes cross-property-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+/* Cross-property entry animation */
+body.transitioning-in {
+  animation: cross-property-entry var(--duration-complex) var(--ease-standard);
+}
+
+@keyframes cross-property-entry {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  body.transitioning-out,
+  body.transitioning-in {
+    animation: none !important;
+  }
 }

@@ -1,15 +1,55 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
-	import { afterNavigate } from '$app/navigation';
-	import { Navigation, Footer, Analytics } from '@create-something/components';
+	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/components';
 	import { page } from '$app/stores';
 
-	let { children } = $props();
+	// View Transitions API - Hermeneutic Navigation
+	// "Navigation should feel like dwelling, not jumping"
+	onNavigate((navigation) => {
+		// Progressive enhancement: skip if API not available
+		if (!document.startViewTransition) return;
+
+		// Respect reduced motion preference
+		if (typeof window !== 'undefined') {
+			const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (prefersReducedMotion) return;
+		}
+
+		// Set mode-specific duration (300ms for .io - analytical)
+		document.documentElement.style.setProperty('--view-transition-duration', '300ms');
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
+
+	// Handle cross-property entry animations
+	onMount(() => {
+		// Check if arriving from another CREATE Something property
+		const transitionFrom = sessionStorage.getItem('cs-transition-from');
+		if (transitionFrom) {
+			sessionStorage.removeItem('cs-transition-from');
+			sessionStorage.removeItem('cs-transition-to');
+			sessionStorage.removeItem('cs-transition-time');
+
+			// Play entry animation
+			document.body.classList.add('transitioning-in');
+			setTimeout(() => {
+				document.body.classList.remove('transitioning-in');
+			}, 500);
+		}
+	});
+
+	let { children, data } = $props();
 
 	const navLinks = [
-		{ label: 'Home', href: '/' },
 		{ label: 'Experiments', href: '/experiments' },
+		{ label: 'Papers', href: '/papers' },
 		{ label: 'Methodology', href: '/methodology' },
 		{ label: 'About', href: '/about' }
 	];
@@ -151,7 +191,7 @@
 
 <Analytics property="io" />
 
-<div class="min-h-screen bg-black">
+<div class="layout-root">
 	<Navigation
 		logo="CREATE SOMETHING"
 		links={navLinks}
@@ -162,13 +202,14 @@
 	/>
 
 	<!-- Add top padding to account for fixed navigation -->
-	<div class="pt-[72px]">
+	<div class="main-content">
 		{@render children()}
 	</div>
 
 	<Footer
 		mode="io"
 		showNewsletter={true}
+		turnstileSiteKey={data.turnstileSiteKey}
 		newsletterTitle="Stay updated with new experiments"
 		newsletterDescription="Get notified when new research is published. Real metrics, tracked experiments, honest learnings."
 		aboutText="Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare."
@@ -181,4 +222,18 @@
 		]}
 		showSocial={true}
 	/>
+
+	<!-- Mode of Being Indicator - Hermeneutic Circle Position -->
+	<ModeIndicator current="io" />
 </div>
+
+<style>
+	.layout-root {
+		min-height: 100vh;
+		background: var(--color-bg-pure);
+	}
+
+	.main-content {
+		padding-top: 72px;
+	}
+</style>

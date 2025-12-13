@@ -40,11 +40,11 @@
 <div class="min-h-screen flex items-start justify-center px-6 pt-24">
 	<div class="w-full max-w-md">
 		<div class="text-center mb-8">
-			<h1 class="text-3xl font-bold mb-2">CREATE SOMETHING</h1>
-			<p class="text-white/60">Admin Access</p>
+			<h1 class="login-title mb-2">CREATE SOMETHING</h1>
+			<p class="login-subtitle">Admin Access</p>
 		</div>
 
-		<div class="bg-white/5 border border-white/10 rounded-lg p-8">
+		<div class="login-card p-8">
 			<form
 				onsubmit={(e) => {
 					e.preventDefault();
@@ -53,13 +53,13 @@
 			>
 				<div class="space-y-6">
 					{#if error}
-						<div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+						<div class="error-alert p-4">
 							{error}
 						</div>
 					{/if}
 
 					<div>
-						<label for="email" class="block text-sm font-medium mb-2">Email</label>
+						<label for="email" class="field-label block mb-2">Email</label>
 						<input
 							id="email"
 							type="email"
@@ -67,12 +67,12 @@
 							disabled={loading}
 							autocomplete="email"
 							placeholder="your@email.com"
-							class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 disabled:opacity-50"
+							class="input-field w-full px-4 py-3"
 						/>
 					</div>
 
 					<div>
-						<label for="password" class="block text-sm font-medium mb-2">Password</label>
+						<label for="password" class="field-label block mb-2">Password</label>
 						<input
 							id="password"
 							type="password"
@@ -80,14 +80,14 @@
 							disabled={loading}
 							autocomplete="current-password"
 							placeholder="••••••••"
-							class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 disabled:opacity-50"
+							class="input-field w-full px-4 py-3"
 						/>
 					</div>
 
 					<button
 						type="submit"
 						disabled={loading}
-						class="w-full px-4 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+						class="btn-primary w-full px-4 py-3"
 					>
 						{loading ? 'Signing in...' : 'Sign In'}
 					</button>
@@ -96,9 +96,87 @@
 		</div>
 
 		<div class="mt-6 text-center">
-			<a href="/" class="text-white/60 hover:text-white text-sm transition-colors">
+			<a href="/" class="back-link">
 				← Back to Site
 			</a>
 		</div>
 	</div>
 </div>
+
+<style>
+	.login-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.login-subtitle {
+		color: var(--color-fg-tertiary);
+	}
+
+	.login-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.error-alert {
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.3);
+		border-radius: var(--radius-lg);
+		color: #fca5a5;
+		font-size: var(--text-body-sm);
+	}
+
+	.field-label {
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+	}
+
+	.input-field {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.input-field::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.input-field:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.input-field:disabled {
+		opacity: 0.5;
+	}
+
+	.btn-primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-radius: var(--radius-lg);
+		font-weight: 600;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+
+	.btn-primary:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.back-link {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.back-link:hover {
+		color: var(--color-fg-primary);
+	}
+</style>

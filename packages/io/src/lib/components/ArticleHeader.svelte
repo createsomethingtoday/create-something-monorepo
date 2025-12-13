@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly } from "svelte/transition";
 	import TrackedExperimentBadge from "./TrackedExperimentBadge.svelte";
 	import type { Paper } from "$lib/types/paper";
 
@@ -38,21 +37,14 @@
 	};
 </script>
 
-<header
-	class="w-full max-w-5xl mx-auto px-6 py-12"
-	in:fly={{ y: 20, duration: 600 }}
->
+<header class="w-full max-w-5xl mx-auto px-6 py-12 animate-reveal">
 	<!-- ASCII Art Hero -->
-	<div
-		class="mb-8 bg-black border border-white/10 rounded-lg overflow-hidden"
-	>
+	<div class="ascii-hero mb-8 overflow-hidden">
 		<div class="aspect-[21/9] flex items-center justify-center p-8">
 			{#if paper.ascii_art}
-				<pre
-					class="text-white/80 text-[0.7rem] sm:text-[0.9rem] leading-[1.2] font-mono select-none opacity-90">{paper.ascii_art}</pre>
+				<pre class="ascii-art ascii-art-real">{paper.ascii_art}</pre>
 			{:else}
-				<pre
-					class="text-white/70 text-[0.8rem] leading-tight font-mono select-none">{`
+				<pre class="ascii-art ascii-art-placeholder">{`
   ╔═══════════════════════════════════════════════════════════╗
   ║                                                           ║
   ║                     [ASCII ART HERO]                      ║
@@ -65,37 +57,26 @@
 	</div>
 
 	<!-- Category Tag -->
-	<div class="mb-6" in:fly={{ x: -20, duration: 500, delay: 200 }}>
-		<span
-			class="inline-block px-4 py-2 bg-white/5 border border-white/10 rounded text-sm font-medium text-white/80 uppercase tracking-wider"
-		>
+	<div class="mb-6 animate-slide-in" style="--delay: 2">
+		<span class="category-tag">
 			{categoryDisplayName}
 		</span>
 	</div>
 
 	<!-- Title -->
-	<h1
-		class="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight"
-		in:fly={{ y: 20, duration: 500, delay: 300 }}
-	>
+	<h1 class="article-title mb-6 animate-reveal" style="--delay: 3">
 		{paper.title}
 	</h1>
 
 	<!-- Excerpt -->
 	{#if paper.excerpt_long}
-		<p
-			class="text-lg sm:text-xl text-white/70 mb-8 leading-relaxed max-w-3xl"
-			in:fly={{ y: 20, duration: 500, delay: 400 }}
-		>
+		<p class="article-excerpt mb-8 max-w-3xl animate-reveal" style="--delay: 4">
 			{paper.excerpt_long}
 		</p>
 	{/if}
 
 	<!-- Metadata Row -->
-	<div
-		class="flex flex-wrap items-center gap-6 text-sm text-white/60 border-t border-white/10 pt-6"
-		in:fly={{ y: 20, duration: 500, delay: 500 }}
-	>
+	<div class="metadata-row flex flex-wrap items-center gap-6 pt-6 animate-reveal" style="--delay: 5">
 		<!-- Published Date -->
 		{#if paper.published_at || paper.date}
 			<div class="flex items-center gap-2">
@@ -137,10 +118,8 @@
 		<!-- Difficulty -->
 		{#if paper.difficulty_level}
 			<div class="flex items-center gap-2">
-				<div
-					class={`w-2 h-2 rounded-full ${difficultyColor.split(" ")[1]}`}
-				></div>
-				<span class={difficultyColor.split(" ")[0]}>
+				<div class="difficulty-indicator {difficultyColor.split(' ')[1]}"></div>
+				<span class="difficulty-text {difficultyColor.split(' ')[0]}">
 					{paper.difficulty_level}
 				</span>
 			</div>
@@ -149,12 +128,10 @@
 		<!-- Technical Focus Tags -->
 		{#if paper.technical_focus}
 			<div class="flex items-center gap-2">
-				<span class="text-white/40">Tags:</span>
+				<span class="tag-label">Tags:</span>
 				<div class="flex gap-2">
 					{#each paper.technical_focus.split(",").slice(0, 3) as tech}
-						<span
-							class="px-2 py-1 text-xs bg-white/5 border border-white/10 rounded text-white/60"
-						>
+						<span class="tech-tag">
 							{tech.trim()}
 						</span>
 					{/each}
@@ -164,7 +141,125 @@
 	</div>
 
 	<!-- Tracked Experiment Badge -->
-	<div class="mt-8" in:fly={{ y: 20, duration: 500, delay: 600 }}>
+	<div class="mt-8 animate-reveal" style="--delay: 6">
 		<TrackedExperimentBadge {paper} showFullStats={true} />
 	</div>
 </header>
+
+<style>
+	.ascii-hero {
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.ascii-art {
+		font-family: monospace;
+		user-select: none;
+	}
+
+	.ascii-art-real {
+		color: var(--color-fg-secondary);
+		font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+		line-height: 1.2;
+		opacity: 0.9;
+	}
+
+	.ascii-art-placeholder {
+		color: var(--color-fg-muted);
+		font-size: 0.8rem;
+		line-height: 1.4;
+	}
+
+	.category-tag {
+		display: inline-block;
+		padding: 0.5rem 1rem;
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.article-title {
+		font-size: clamp(2rem, 5vw, 3.75rem);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+		line-height: 1.2;
+	}
+
+	.article-excerpt {
+		font-size: clamp(1.125rem, 2vw, 1.25rem);
+		color: var(--color-fg-muted);
+		line-height: 1.6;
+	}
+
+	.metadata-row {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.difficulty-indicator {
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: var(--radius-full);
+	}
+
+	.difficulty-text {
+		/* Color classes applied inline */
+	}
+
+	.tag-label {
+		color: var(--color-fg-muted);
+	}
+
+	.tech-tag {
+		padding: 0.25rem 0.5rem;
+		font-size: var(--text-caption);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(12px);
+		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	.animate-slide-in {
+		opacity: 0;
+		transform: translateX(-12px);
+		animation: slide-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes slide-in {
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal,
+		.animate-slide-in {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

@@ -103,20 +103,20 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h2 class="text-3xl font-bold mb-2">Experiments</h2>
-			<p class="text-white/60">Manage CREATE SOMETHING experiments</p>
+			<h2 class="page-title">Experiments</h2>
+			<p class="page-subtitle">Manage CREATE SOMETHING experiments</p>
 		</div>
 		<div class="flex gap-3">
 			<button
 				onclick={bulkApplyTags}
 				disabled={bulkTagging}
-				class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
+				class="btn btn--secondary"
 			>
 				{bulkTagging ? 'Tagging...' : 'Auto-Tag All'}
 			</button>
 			<a
 				href="/admin/experiments/new"
-				class="px-4 py-2 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-semibold"
+				class="btn btn--primary"
 			>
 				+ New Experiment
 			</a>
@@ -129,12 +129,12 @@
 			type="text"
 			bind:value={searchQuery}
 			placeholder="Search experiments..."
-			class="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30"
+			class="search-input"
 		/>
 
 		<select
 			bind:value={filterCategory}
-			class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30"
+			class="category-select"
 		>
 			{#each categories as category}
 				<option value={category}>{category.charAt(0).toUpperCase() + category.slice(1)}</option>
@@ -146,14 +146,14 @@
 	{#if loading}
 		<div class="space-y-4">
 			{#each [1, 2, 3] as _}
-				<div class="p-6 bg-white/5 border border-white/10 rounded-lg animate-pulse">
-					<div class="h-6 bg-white/10 rounded w-1/3 mb-2"></div>
-					<div class="h-4 bg-white/10 rounded w-2/3"></div>
+				<div class="skeleton-card">
+					<div class="skeleton-title"></div>
+					<div class="skeleton-text"></div>
 				</div>
 			{/each}
 		</div>
 	{:else if filteredExperiments.length === 0}
-		<div class="text-center py-12 text-white/60">
+		<div class="empty-state">
 			{#if searchQuery || filterCategory !== 'all'}
 				No experiments match your filters.
 			{:else}
@@ -163,58 +163,56 @@
 	{:else}
 		<div class="space-y-4">
 			{#each filteredExperiments as experiment}
-				<div class="p-6 bg-white/5 border border-white/10 rounded-lg hover:border-white/20 transition-colors">
+				<div class="experiment-card">
 					<div class="flex items-start justify-between mb-3">
 						<div class="flex-1">
-							<h3 class="text-xl font-semibold mb-2">{experiment.title || 'Untitled Experiment'}</h3>
+							<h3 class="experiment-title">{experiment.title || 'Untitled Experiment'}</h3>
 							<div class="flex items-center gap-2 mb-2">
 								{#if experiment.featured}
-									<span class="px-2 py-1 bg-white/10 text-white/90 text-xs rounded">Featured</span>
+									<span class="badge badge--featured">Featured</span>
 								{/if}
 								{#if experiment.category}
-									<span class="px-2 py-1 bg-white/5 text-white/60 text-xs rounded"
-										>{experiment.category}</span
-									>
+									<span class="badge badge--category">{experiment.category}</span>
 								{/if}
 							</div>
 							{#if experiment.description}
-								<p class="text-white/60 text-sm">{experiment.description}</p>
+								<p class="experiment-description">{experiment.description}</p>
 							{/if}
 						</div>
 
 						<div class="flex gap-2">
 							<button
 								onclick={() => toggleFeature(experiment.id, experiment.featured)}
-								class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-sm transition-colors"
+								class="action-btn"
 							>
 								{experiment.featured ? 'Unfeature' : 'Feature'}
 							</button>
 							<a
 								href="/admin/experiments/{experiment.id}/edit"
-								class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-sm transition-colors"
+								class="action-btn"
 							>
 								Edit
 							</a>
 							<button
 								onclick={() => deleteExperiment(experiment.id)}
-								class="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-sm transition-colors"
+								class="action-btn action-btn--danger"
 							>
 								Delete
 							</button>
 						</div>
 					</div>
 
-					<div class="flex items-center gap-4 text-sm text-white/40">
+					<div class="flex items-center gap-4">
 						{#if experiment.url}
-							<a href={experiment.url} target="_blank" class="hover:text-white/60">
+							<a href={experiment.url} target="_blank" class="experiment-link">
 								View Live →
 							</a>
 						{/if}
 						{#if experiment.created_at}
-							<span>Created {new Date(experiment.created_at).toLocaleDateString()}</span>
+							<span class="experiment-meta">Created {new Date(experiment.created_at).toLocaleDateString()}</span>
 						{/if}
 						{#if experiment.execution_count}
-							<span>{experiment.execution_count} executions</span>
+							<span class="experiment-meta">{experiment.execution_count} executions</span>
 						{/if}
 					</div>
 				</div>
@@ -223,24 +221,253 @@
 	{/if}
 
 	<!-- Stats Summary -->
-	<div class="border-t border-white/10 pt-6">
-		<div class="grid grid-cols-3 gap-4 text-center">
-			<div>
-				<div class="text-2xl font-bold">{experiments.length}</div>
-				<div class="text-sm text-white/60">Total Experiments</div>
+	<div class="stats-section">
+		<div class="grid grid-cols-3 gap-4">
+			<div class="stat-item">
+				<div class="stat-value">{experiments.length}</div>
+				<div class="stat-label">Total Experiments</div>
 			</div>
-			<div>
-				<div class="text-2xl font-bold">
+			<div class="stat-item">
+				<div class="stat-value">
 					{experiments.filter((e) => e.featured).length}
 				</div>
-				<div class="text-sm text-white/60">Featured</div>
+				<div class="stat-label">Featured</div>
 			</div>
-			<div>
-				<div class="text-2xl font-bold">
+			<div class="stat-item">
+				<div class="stat-value">
 					{experiments.reduce((sum, e) => sum + (e.execution_count || 0), 0)}
 				</div>
-				<div class="text-sm text-white/60">Total Executions</div>
+				<div class="stat-label">Total Executions</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+<style>
+	/* Typography */
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		margin-bottom: var(--space-sm);
+		color: var(--color-fg-primary);
+	}
+
+	.page-subtitle {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body);
+	}
+
+	/* Buttons */
+	.btn {
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-lg);
+		font-weight: 600;
+		transition: all var(--duration-standard) var(--ease-standard);
+		border: none;
+		cursor: pointer;
+		text-decoration: none;
+		display: inline-block;
+	}
+
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn--primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	.btn--primary:hover:not(:disabled) {
+		background: var(--color-fg-secondary);
+	}
+
+	.btn--secondary {
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
+	}
+
+	.btn--secondary:hover:not(:disabled) {
+		background: var(--color-hover);
+	}
+
+	/* Form Inputs */
+	.search-input {
+		flex: 1;
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+	}
+
+	.search-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.search-input:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.category-select {
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+		cursor: pointer;
+	}
+
+	.category-select:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	/* Skeleton Loading */
+	.skeleton-card {
+		padding: var(--space-lg);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+	}
+
+	.skeleton-title {
+		height: 1.5rem;
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-sm);
+		width: 33.333333%;
+		margin-bottom: var(--space-sm);
+	}
+
+	.skeleton-text {
+		height: 1rem;
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-sm);
+		width: 66.666667%;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.5; }
+	}
+
+	/* Empty State */
+	.empty-state {
+		text-align: center;
+		padding: var(--space-2xl);
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Experiment Cards */
+	.experiment-card {
+		padding: var(--space-lg);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		transition: border-color var(--duration-standard) var(--ease-standard);
+	}
+
+	.experiment-card:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.experiment-title {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		margin-bottom: var(--space-sm);
+		color: var(--color-fg-primary);
+	}
+
+	.experiment-description {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	/* Badges */
+	.badge {
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+	}
+
+	.badge--featured {
+		background: var(--color-bg-surface);
+		color: var(--color-fg-secondary);
+	}
+
+	.badge--category {
+		background: var(--color-bg-elevated);
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Action Buttons */
+	.action-btn {
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-surface);
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		transition: all var(--duration-standard) var(--ease-standard);
+		cursor: pointer;
+		text-decoration: none;
+		display: inline-block;
+	}
+
+	.action-btn:hover {
+		background: var(--color-hover);
+	}
+
+	.action-btn--danger {
+		background: rgba(239, 68, 68, 0.2);
+		color: #f87171;
+	}
+
+	.action-btn--danger:hover {
+		background: rgba(239, 68, 68, 0.3);
+	}
+
+	/* Experiment Metadata */
+	.experiment-link {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		text-decoration: none;
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.experiment-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.experiment-meta {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	/* Stats Section */
+	.stats-section {
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-lg);
+	}
+
+	.stat-item {
+		text-align: center;
+	}
+
+	.stat-value {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.stat-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-xs);
+	}
+</style>

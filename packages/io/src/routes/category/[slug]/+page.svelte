@@ -1,6 +1,4 @@
 <script lang="ts">
-  
-  import { fly } from 'svelte/transition';
   import { PaperCard } from '@create-something/components';
   import type { PageData } from './$types';
 
@@ -59,7 +57,7 @@
   <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-7xl mx-auto">
-      <div in:fly={{ y: 20, duration: 600 }} class="text-center space-y-4">
+      <div class="text-center space-y-4 animate-reveal">
         <h1 class="text-4xl md:text-6xl font-bold text-white">
           {category.name}
         </h1>
@@ -76,7 +74,7 @@
       {#if papers.length > 0}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {#each papers as paper, index}
-            <div in:fly={{ y: 20, duration: 600, delay: 0.1 * index }}>
+            <div class="animate-reveal" style="--delay: {index + 1}">
               <PaperCard {paper} rotation={0} {index} />
             </div>
           {/each}
@@ -89,4 +87,26 @@
     </div>
   </section>
 
-  
+<style>
+  .animate-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: calc(var(--delay, 0) * 100ms);
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-reveal {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

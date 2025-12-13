@@ -1,10 +1,22 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/components/types';
 import { isFileBasedExperiment } from '$lib/config/fileBasedExperiments';
 
+// Cross-property experiments: experiments that live on other properties
+// Redirect to the canonical location
+const CROSS_PROPERTY_REDIRECTS: Record<string, string> = {
+	'minimal-capture': 'https://createsomething.space/experiments/minimal-capture',
+	'motion-ontology': 'https://createsomething.space/experiments/motion-ontology'
+};
+
 export const load: PageServerLoad = async ({ params, platform }) => {
 	const { slug } = params;
+
+	// Redirect cross-property experiments to their canonical location
+	if (CROSS_PROPERTY_REDIRECTS[slug]) {
+		throw redirect(301, CROSS_PROPERTY_REDIRECTS[slug]);
+	}
 
 	// Skip this route for file-based experiments - they have their own routes
 	if (isFileBasedExperiment(slug)) {

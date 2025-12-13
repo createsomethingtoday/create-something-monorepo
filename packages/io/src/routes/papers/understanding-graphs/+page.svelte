@@ -1,8 +1,8 @@
 <script lang="ts">
 	/**
-	 * Understanding Graphs Experiment
+	 * Understanding Graphs Paper
 	 *
-	 * Research experiment demonstrating "Less, but better" codebase navigation
+	 * Research paper demonstrating "Less, but better" codebase navigation
 	 * through minimal, human-readable dependency documentation that captures
 	 * only understanding-critical relationships.
 	 *
@@ -12,14 +12,14 @@
 
 <svelte:head>
 	<title>Understanding Graphs: Less, But Better Codebase Navigation | CREATE SOMETHING.io</title>
-	<meta name="description" content="Research experiment applying Heidegger's hermeneutic circle to develop minimal dependency documentation that captures only understanding-critical relationships." />
+	<meta name="description" content="Research paper applying Heidegger's hermeneutic circle to develop minimal dependency documentation that captures only understanding-critical relationships." />
 </svelte:head>
 
 <div class="min-h-screen bg-black text-white p-6">
 	<div class="max-w-4xl mx-auto space-y-12">
 		<!-- Header -->
 		<div class="border-b border-white/10 pb-8">
-			<div class="font-mono text-white/40 text-sm mb-4">EXPERIMENT-2024-003</div>
+			<div class="font-mono text-white/40 text-sm mb-4">PAPER-2024-003</div>
 			<h1 class="text-4xl font-bold mb-3">Understanding Graphs: "Less, But Better" Codebase Navigation</h1>
 			<p class="text-white/70 text-lg max-w-3xl">
 				Applying Heidegger's hermeneutic circle to develop minimal dependency documentation
@@ -483,7 +483,7 @@
 		<!-- Footer -->
 		<div class="border-t border-white/10 pt-6">
 			<p class="text-sm text-white/40">
-				This experiment is part of the CREATE SOMETHING research program exploring AI-native
+				This paper is part of the CREATE SOMETHING research program exploring AI-native
 				development patterns. View the
 				<a href="https://github.com/createsomethingtoday/create-something-monorepo" class="underline hover:text-white/60">
 					source repository

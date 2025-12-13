@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
-	
-
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
 		{ label: 'All Experiments', href: '/experiments' },
@@ -25,44 +22,44 @@
 </svelte:head>
 
 <!-- Hero Section -->
-	<section class="relative pt-32 pb-16 px-6">
+	<section class="hero-section">
 		<div class="max-w-4xl mx-auto">
-			<div class="space-y-8" in:fly={{ y: 20, duration: 600 }}>
-				<h1 class="text-4xl md:text-6xl font-bold text-white mb-8">
+			<div class="space-y-8 animate-reveal">
+				<h1 class="hero-title">
 					Hi, I'm Micah Johnson
 				</h1>
 
 				<div class="space-y-8">
 					<!-- Core Identity -->
-					<div class="space-y-6 text-lg text-white/70 leading-relaxed">
-						<p class="text-xl text-white/90 font-medium">
+					<div class="space-y-6 leading-relaxed intro-text">
+						<p class="intro-highlight">
 							I'm a System Architect, automation builder, and proponent of "less, but better" — focused on how systems work, evolve, and scale.
 						</p>
 
 						<p>
-							By day, I architect systems on the <a href="https://webflow.com" class="text-white hover:underline">Webflow</a> Marketplace team, building developer experiences that serve thousands of creators. By night, I'm building the future of workflow automation with <a href="https://workway.co" class="text-white hover:underline" target="_blank" rel="noopener noreferrer">WORKWAY</a> — the first open-source marketplace for TypeScript workflows, running entirely on Cloudflare's edge infrastructure.
+							By day, I architect systems on the <a href="https://webflow.com" class="text-link">Webflow</a> Marketplace team, building developer experiences that serve thousands of creators. By night, I'm building the future of workflow automation with <a href="https://workway.co" class="text-link" target="_blank" rel="noopener noreferrer">WORKWAY</a> — the first open-source marketplace for TypeScript workflows, running entirely on Cloudflare's edge infrastructure.
 						</p>
 
 						<p>
-							I'm also co-founder of <a href="https://halfdozen.co" class="text-white hover:underline" target="_blank" rel="noopener noreferrer">Half Dozen</a>, where we build business operating systems for the live events industry — helping venues, promoters, and agencies orchestrate complex operations through clean system design.
+							I'm also co-founder of <a href="https://halfdozen.co" class="text-link" target="_blank" rel="noopener noreferrer">Half Dozen</a>, where we build business operating systems for the live events industry — helping venues, promoters, and agencies orchestrate complex operations through clean system design.
 						</p>
 					</div>
 
 					<!-- Philosophy -->
-					<div class="p-6 bg-white/5 border border-white/10 rounded-lg space-y-4">
-						<h3 class="text-xl font-semibold text-white">The experiment</h3>
-						<p class="text-white/70 leading-relaxed">
+					<div class="philosophy-card">
+						<h3 class="card-title">The experiment</h3>
+						<p class="card-text">
 							I'm building production systems agentically — working with LLMs as actual development partners, not just code generators. CREATE SOMETHING documents what I'm learning through rigorous testing: running experiments, writing papers to prove or disprove approaches, and sharing honest results. Not blog posts about AI, but real data from building real systems with AI agents. What works, what doesn't, and why.
 						</p>
 					</div>
 
 					<!-- Background -->
-					<div class="space-y-4 text-white/60 text-base">
+					<div class="space-y-4 background-text">
 						<p>
 							I studied at Texas A&M and earned a UI/UX Design Certification from Boulder Digital Arts. My career has taken me through Webflow development, API integrations, marketplace architecture, and now full-time system design at Webflow — always with a focus on automation and developer experience.
 						</p>
 						<p>
-							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-white hover:underline" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration and conversation about systems.
+							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration and conversation about systems.
 						</p>
 					</div>
 				</div>
@@ -71,14 +68,14 @@
 	</section>
 
 	<!-- Mission Section -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="section-border">
 		<div class="max-w-4xl mx-auto">
-			<div class="space-y-6" in:fly={{ y: 20, duration: 600, delay: 200 }}>
-				<h2 class="text-2xl md:text-3xl font-bold text-white">
+			<div class="space-y-6 animate-reveal" style="--delay: 2">
+				<h2 class="section-title">
 					What You'll Find Here
 				</h2>
 
-				<p class="text-lg text-white/70 leading-relaxed">
+				<p class="section-text">
 					Systems thinking applied to real-world challenges — exploring architecture patterns, automation design, mental models for complexity, and the principles that make systems resilient. Each piece examines how systems work through the lens of production implementations, drawing insights that transcend specific technologies.
 				</p>
 			</div>
@@ -86,10 +83,10 @@
 	</section>
 
 	<!-- Topics Section -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="section-border">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8">
-				<h2 class="text-2xl md:text-3xl font-bold text-white">
+				<h2 class="section-title">
 					Systems Thinking Themes
 				</h2>
 
@@ -113,13 +110,13 @@
 						}
 					] as topic, index}
 						<div
-							class="p-6 bg-[#111111] border border-white/10 rounded-lg"
-							in:fly={{ y: 20, duration: 500, delay: index * 100 }}
+							class="topic-card animate-reveal"
+							style="--delay: {index + 3}"
 						>
-							<h3 class="text-xl font-semibold text-white mb-2">
+							<h3 class="topic-title">
 								{topic.title}
 							</h3>
-							<p class="text-white/60">
+							<p class="topic-description">
 								{topic.description}
 							</p>
 						</div>
@@ -128,5 +125,122 @@
 			</div>
 		</div>
 	</section>
+
+<style>
+	.hero-section {
+		position: relative;
+		padding: var(--space-2xl) var(--space-md) var(--space-xl);
+	}
+
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-lg);
+	}
+
+	.intro-text {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.intro-highlight {
+		font-size: var(--text-h3);
+		color: var(--color-fg-primary);
+		font-weight: var(--font-medium);
+	}
+
+	.text-link {
+		color: var(--color-fg-primary);
+		transition: opacity var(--duration-standard) var(--ease-standard);
+	}
+
+	.text-link:hover {
+		text-decoration: underline;
+	}
+
+	.philosophy-card {
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.card-title {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	.card-text {
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.background-text {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body);
+	}
+
+	.section-border {
+		padding: var(--space-xl) var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.section-title {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.section-text {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.topic-card {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.topic-title {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.topic-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(20px);
+		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>
 
 <!-- Footer -->

@@ -14,15 +14,29 @@
 	 * theoretical analysis that DESCRIBES the hermeneutic circle.
 	 */
 
-	import { marked } from 'marked';
+	import { marked, Renderer } from 'marked';
 
 	let { data } = $props();
+
+	// Custom renderer that adds IDs to headers for anchor links
+	const renderer = new Renderer();
+	renderer.heading = ({ text, depth }) => {
+		// Generate slug from text (same logic as server)
+		const id = text
+			.toLowerCase()
+			.replace(/\*\*/g, '')
+			.replace(/<[^>]*>/g, '') // Strip HTML tags
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-|-$/g, '');
+		return `<h${depth} id="${id}">${text}</h${depth}>`;
+	};
 
 	// Configure marked for academic rendering
 	marked.setOptions({
 		gfm: true,
 		breaks: false
 	});
+	marked.use({ renderer });
 
 	// Render markdown content
 	const htmlContent = data.paper.content ? marked.parse(data.paper.content) : '';

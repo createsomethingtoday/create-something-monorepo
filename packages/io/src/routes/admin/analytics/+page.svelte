@@ -63,13 +63,13 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h2 class="text-3xl font-bold mb-2">Analytics</h2>
-			<p class="text-white/60">Privacy-first analytics across CREATE SOMETHING properties</p>
+			<h2 class="page-title mb-2">Analytics</h2>
+			<p class="page-description">Privacy-first analytics across CREATE SOMETHING properties</p>
 		</div>
 
 		<select
 			bind:value={days}
-			class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30"
+			class="select-field px-4 py-2"
 		>
 			<option value={7}>Last 7 days</option>
 			<option value={30}>Last 30 days</option>
@@ -78,7 +78,7 @@
 	</div>
 
 	{#if loading}
-		<div class="text-center py-12 text-white/60">Loading analytics...</div>
+		<div class="text-center py-12 loading-text">Loading analytics...</div>
 	{:else}
 		<!-- Overview Stats - Using Agentic MetricCard Components -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -102,8 +102,8 @@
 		<!-- High Density Tables - Using Agentic HighDensityTable Component -->
 		<div class="grid grid-cols-2 gap-4">
 			<!-- Top Pages -->
-			<div class="bg-white/5 border border-white/10 rounded-lg p-4">
-				<h3 class="text-sm font-semibold mb-3 text-white/60 uppercase tracking-wide">Top Pages</h3>
+			<div class="table-card p-4">
+				<h3 class="table-title mb-3">Top Pages</h3>
 				<HighDensityTable
 					items={analytics.top_pages}
 					limit={10}
@@ -116,8 +116,8 @@
 			</div>
 
 			<!-- Top Experiments -->
-			<div class="bg-white/5 border border-white/10 rounded-lg p-4">
-				<h3 class="text-sm font-semibold mb-3 text-white/60 uppercase tracking-wide">Top Experiments</h3>
+			<div class="table-card p-4">
+				<h3 class="table-title mb-3">Top Experiments</h3>
 				<HighDensityTable
 					items={analytics.top_experiments.map((exp: any) => ({
 						label: exp.title || exp.experiment_id,
@@ -130,8 +130,8 @@
 			</div>
 
 			<!-- Top Countries -->
-			<div class="bg-white/5 border border-white/10 rounded-lg p-4">
-				<h3 class="text-sm font-semibold mb-3 text-white/60 uppercase tracking-wide">Top Countries</h3>
+			<div class="table-card p-4">
+				<h3 class="table-title mb-3">Top Countries</h3>
 				<HighDensityTable
 					items={analytics.top_countries.map((c: any) => ({
 						label: c.country,
@@ -144,8 +144,8 @@
 			</div>
 
 			<!-- Top Referrers -->
-			<div class="bg-white/5 border border-white/10 rounded-lg p-4">
-				<h3 class="text-sm font-semibold mb-3 text-white/60 uppercase tracking-wide">Top Referrers</h3>
+			<div class="table-card p-4">
+				<h3 class="table-title mb-3">Top Referrers</h3>
 				<HighDensityTable
 					items={analytics.top_referrers.map((ref: any) => ({
 						label: ref.referrer,
@@ -159,11 +159,11 @@
 		</div>
 
 		<!-- Daily Trend - Using Agentic Sparkline and DailyGrid Components -->
-		<div class="bg-white/5 border border-white/10 rounded-lg p-6">
+		<div class="chart-card p-6">
 			<div class="flex items-end justify-between mb-6">
 				<div>
-					<h3 class="text-xl font-semibold">Daily Page Views</h3>
-					<p class="text-xs text-white/40 mt-1 font-mono">
+					<h3 class="chart-title">Daily Page Views</h3>
+					<p class="chart-subtitle mt-1 font-mono">
 						{analytics.daily_views.length > 0 ?
 							`${analytics.daily_views[0]?.date} to ${analytics.daily_views[analytics.daily_views.length - 1]?.date}`
 							: 'No data'}
@@ -171,16 +171,16 @@
 				</div>
 				{#if analytics.daily_views.length > 0}
 					<div class="text-right">
-						<div class="text-2xl font-bold">
+						<div class="chart-value">
 							{new Intl.NumberFormat().format(analytics.daily_views[analytics.daily_views.length - 1]?.count || 0)}
 						</div>
-						<div class="text-xs text-white/40">today</div>
+						<div class="chart-label">today</div>
 					</div>
 				{/if}
 			</div>
 
 			{#if analytics.daily_views.length === 0}
-				<p class="text-white/40 text-sm">No daily data yet</p>
+				<p class="empty-state">No daily data yet</p>
 			{:else}
 				<!-- Agentic Sparkline Component (replaces manual SVG generation) -->
 				<div class="w-full h-24">
@@ -201,15 +201,112 @@
 		</div>
 
 		<!-- Info Footer -->
-		<div class="border-t border-white/10 pt-6">
-			<p class="text-sm text-white/40">
+		<div class="info-footer pt-6">
+			<p class="footer-text">
 				Privacy-first analytics powered by D1. No cookies, no tracking scripts, no personal data
 				collected. All data stored in your own database.
 			</p>
-			<p class="text-xs text-white/30 mt-2">
-				Visualizations powered by <a href="https://createsomething.ltd/masters/edward-tufte" class="underline hover:text-white/50">@create-something/tufte</a>
+			<p class="footer-note mt-2">
+				Visualizations powered by <a href="https://createsomething.ltd/masters/edward-tufte" class="footer-link">@create-something/tufte</a>
 				— agentic components embodying Tufte's principles
 			</p>
 		</div>
 	{/if}
 </div>
+
+<style>
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.page-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	.select-field {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.select-field:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.loading-text {
+		color: var(--color-fg-tertiary);
+	}
+
+	.table-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.table-title {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.chart-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.chart-title {
+		font-size: var(--text-h3);
+		font-weight: 600;
+	}
+
+	.chart-subtitle {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.chart-value {
+		font-size: var(--text-h2);
+		font-weight: 700;
+	}
+
+	.chart-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.empty-state {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+	}
+
+	.info-footer {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.footer-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.footer-note {
+		font-size: var(--text-caption);
+		color: var(--color-fg-subtle);
+	}
+
+	.footer-link {
+		text-decoration: underline;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.footer-link:hover {
+		color: var(--color-fg-secondary);
+	}
+</style>

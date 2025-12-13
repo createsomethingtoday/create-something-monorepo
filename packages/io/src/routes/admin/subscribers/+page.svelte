@@ -106,12 +106,12 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h2 class="text-3xl font-bold mb-2">Newsletter Subscribers</h2>
-			<p class="text-white/60">Manage your email list</p>
+			<h2 class="page-title mb-2">Newsletter Subscribers</h2>
+			<p class="page-description">Manage your email list</p>
 		</div>
 		<button
 			onclick={exportSubscribers}
-			class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+			class="btn-secondary px-4 py-2"
 		>
 			Export CSV
 		</button>
@@ -123,12 +123,12 @@
 			type="email"
 			bind:value={searchQuery}
 			placeholder="Search by email..."
-			class="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30"
+			class="input-field flex-1 px-4 py-2"
 		/>
 
 		<select
 			bind:value={filterStatus}
-			class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30"
+			class="select-field px-4 py-2"
 		>
 			<option value="all">All Status</option>
 			<option value="active">Active</option>
@@ -137,7 +137,7 @@
 
 		<select
 			bind:value={sortBy}
-			class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30"
+			class="select-field px-4 py-2"
 		>
 			<option value="newest">Newest First</option>
 			<option value="oldest">Oldest First</option>
@@ -149,13 +149,13 @@
 	{#if loading}
 		<div class="space-y-3">
 			{#each [1, 2, 3, 4, 5] as _}
-				<div class="p-4 bg-white/5 border border-white/10 rounded-lg animate-pulse">
-					<div class="h-5 bg-white/10 rounded w-1/3"></div>
+				<div class="skeleton-card p-4">
+					<div class="skeleton-line"></div>
 				</div>
 			{/each}
 		</div>
 	{:else if filteredSubscribers.length === 0}
-		<div class="text-center py-12 text-white/60">
+		<div class="empty-state-container">
 			{#if searchQuery || filterStatus !== 'all'}
 				No subscribers match your filters.
 			{:else}
@@ -163,62 +163,62 @@
 			{/if}
 		</div>
 	{:else}
-		<div class="border border-white/10 rounded-lg overflow-hidden">
+		<div class="table-container">
 			<table class="w-full">
-				<thead class="bg-white/5 border-b border-white/10">
+				<thead class="table-header">
 					<tr>
-						<th class="px-6 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wider">
+						<th class="table-header-cell px-6 py-3">
 							Email
 						</th>
-						<th class="px-6 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wider">
+						<th class="table-header-cell px-6 py-3">
 							Status
 						</th>
-						<th class="px-6 py-3 text-left text-xs font-semibold text-white/60 uppercase tracking-wider">
+						<th class="table-header-cell px-6 py-3">
 							Subscribed
 						</th>
-						<th class="px-6 py-3 text-right text-xs font-semibold text-white/60 uppercase tracking-wider">
+						<th class="table-header-cell-right px-6 py-3">
 							Actions
 						</th>
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-white/10">
+				<tbody class="table-body">
 					{#each filteredSubscribers as subscriber}
-						<tr class="hover:bg-white/5 transition-colors">
-							<td class="px-6 py-4 text-white">
+						<tr class="table-row">
+							<td class="table-cell px-6 py-4">
 								{subscriber.email}
 							</td>
 							<td class="px-6 py-4">
 								<span
-									class="px-2 py-1 rounded text-xs {subscriber.status === 'unsubscribed'
-										? 'bg-red-500/20 text-red-400'
-										: 'bg-green-500/20 text-green-400'}"
+									class="status-badge {subscriber.status === 'unsubscribed'
+										? 'status-unsubscribed'
+										: 'status-active'}"
 								>
 									{subscriber.status || 'active'}
 								</span>
 							</td>
-							<td class="px-6 py-4 text-white/60 text-sm">
+							<td class="table-cell-secondary px-6 py-4">
 								{new Date(subscriber.created_at).toLocaleDateString()}
 							</td>
-							<td class="px-6 py-4 text-right">
+							<td class="px-6 py-4">
 								<div class="flex justify-end gap-2">
 									{#if subscriber.status === 'unsubscribed'}
 										<button
 											onclick={() => updateSubscriberStatus(subscriber.id, 'active')}
-											class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs transition-colors"
+											class="btn-small"
 										>
 											Reactivate
 										</button>
 									{:else}
 										<button
 											onclick={() => updateSubscriberStatus(subscriber.id, 'unsubscribed')}
-											class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs transition-colors"
+											class="btn-small"
 										>
 											Unsubscribe
 										</button>
 									{/if}
 									<button
 										onclick={() => deleteSubscriber(subscriber.id)}
-										class="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-xs transition-colors"
+										class="btn-danger"
 									>
 										Delete
 									</button>
@@ -231,28 +231,228 @@
 		</div>
 
 		<!-- Pagination Info -->
-		<div class="text-sm text-white/60 text-center">
+		<div class="pagination-info">
 			Showing {filteredSubscribers.length} of {subscribers.length} subscribers
 		</div>
 	{/if}
 
 	<!-- Stats -->
-	<div class="border-t border-white/10 pt-6">
-		<div class="grid grid-cols-3 gap-4 text-center">
-			<div>
-				<div class="text-2xl font-bold">{subscribers.length}</div>
-				<div class="text-sm text-white/60">Total Subscribers</div>
+	<div class="stats-section pt-6">
+		<div class="grid grid-cols-3 gap-4">
+			<div class="stat-item">
+				<div class="stat-value">{subscribers.length}</div>
+				<div class="stat-label">Total Subscribers</div>
 			</div>
-			<div>
-				<div class="text-2xl font-bold">{activeCount}</div>
-				<div class="text-sm text-white/60">Active</div>
+			<div class="stat-item">
+				<div class="stat-value">{activeCount}</div>
+				<div class="stat-label">Active</div>
 			</div>
-			<div>
-				<div class="text-2xl font-bold">
+			<div class="stat-item">
+				<div class="stat-value">
 					{subscribers.filter((s) => s.status === 'unsubscribed').length}
 				</div>
-				<div class="text-sm text-white/60">Unsubscribed</div>
+				<div class="stat-label">Unsubscribed</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+<style>
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.page-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	.btn-secondary {
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-lg);
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-secondary:hover {
+		background: var(--color-hover);
+	}
+
+	.input-field {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.input-field::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.input-field:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.select-field {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.select-field:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.skeleton-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+	}
+
+	.skeleton-line {
+		height: 1.25rem;
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-sm);
+		width: 33%;
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
+
+	.empty-state-container {
+		text-align: center;
+		padding: 3rem 0;
+		color: var(--color-fg-tertiary);
+	}
+
+	.table-container {
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+	}
+
+	.table-header {
+		background: var(--color-bg-surface);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.table-header-cell {
+		text-align: left;
+		font-size: var(--text-caption);
+		font-weight: 600;
+		color: var(--color-fg-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.table-header-cell-right {
+		text-align: right;
+		font-size: var(--text-caption);
+		font-weight: 600;
+		color: var(--color-fg-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.table-body {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.table-body > * + * {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.table-row {
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.table-row:hover {
+		background: var(--color-hover);
+	}
+
+	.table-cell {
+		color: var(--color-fg-primary);
+	}
+
+	.table-cell-secondary {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.status-badge {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+	}
+
+	.status-unsubscribed {
+		background: rgba(239, 68, 68, 0.2);
+		color: #fca5a5;
+	}
+
+	.status-active {
+		background: rgba(74, 222, 128, 0.2);
+		color: #86efac;
+	}
+
+	.btn-small {
+		padding: 0.25rem 0.75rem;
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-small:hover {
+		background: var(--color-hover);
+	}
+
+	.btn-danger {
+		padding: 0.25rem 0.75rem;
+		background: rgba(239, 68, 68, 0.2);
+		color: #fca5a5;
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-danger:hover {
+		background: rgba(239, 68, 68, 0.3);
+	}
+
+	.pagination-info {
+		text-align: center;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	.stats-section {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.stat-item {
+		text-align: center;
+	}
+
+	.stat-value {
+		font-size: var(--text-h2);
+		font-weight: 700;
+	}
+
+	.stat-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+</style>

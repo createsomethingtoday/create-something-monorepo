@@ -210,39 +210,36 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 	{
 		id: 'file-dwelling-conversion',
 		slug: 'dwelling-conversion',
-		title: 'Dwelling as Conversion: The Subtractive Triad Assessment',
-		description: 'Transforming the agency homepage from static sales copy to an interactive assessment that continues the dwelling experience—applying Heidegger\'s Zuhandenheit to conversion optimization.',
-		excerpt_short: 'Converting users by continuing their dwelling rather than interrupting it',
-		excerpt_long: 'Analytics revealed a rupture: users dwell in experiments on .space and .io (50%+ of traffic) but bounce from .agency\'s static sales page. The solution wasn\'t better copy—it was continuing the experiment. This paper documents building an interactive Subtractive Triad Assessment that transforms selling into dwelling.',
+		title: 'Dwelling as Conversion: From Assessment to Progressive Erasure',
+		description: 'Documenting the evolution from interactive assessment to scroll-driven TextRevelation—two modes of dwelling that transform conversion into experience.',
+		excerpt_short: 'Two approaches to conversion as dwelling: asking vs showing',
+		excerpt_long: 'This experiment documents two approaches to the same insight: conversion is dwelling continued. Phase 1 used interactive assessment questions. Phase 2 uses TextRevelation—a scroll-driven animation where words erase to reveal "We remove what obscures." Both achieve Zuhandenheit through different modes of engagement.',
 		category: 'research',
-		tags: ['Heidegger', 'Conversion', 'Assessment', 'Hermeneutic Circle', 'Dwelling', 'Agency', 'Analytics'],
+		tags: ['Heidegger', 'Conversion', 'TextRevelation', 'Scroll Animation', 'Progressive Erasure', 'Dwelling', 'Agency', 'Evolution'],
 		created_at: '2025-12-11T00:00:00Z',
-		updated_at: '2025-12-11T00:00:00Z',
-		reading_time_minutes: 10,
+		updated_at: '2025-12-13T00:00:00Z',
+		reading_time_minutes: 12,
 		difficulty: 'intermediate',
 		is_file_based: true,
 		tests_principles: [
-			'heidegger-zuhandenheit', // Tool recedes—assessment feels like exploration, not interrogation
-			'hermeneutic-spiral', // User's answers deepen mutual understanding
-			'rams-principle-2', // Useful—surfaces relevant service, not just collects leads
-			'subtractive-triad' // Applied at meta-level: assessment IS the triad
+			'heidegger-zuhandenheit', // Tool recedes—both modes achieve transparent use
+			'heidegger-aletheia', // Truth as unconcealment—essence emerges through removal
+			'rams-principle-10', // As little design as possible—text IS the animation
+			'subtractive-triad' // Applied at meta-level: evolution embodies subtraction
 		],
 		ascii_art: `
-    ╔═══════════════════════════════════════════╗
-    ║   DWELLING AS CONVERSION                  ║
-    ║                                           ║
-    ║   Before:        After:                   ║
-    ║   ┌─────────┐    ┌─────────────────────┐  ║
-    ║   │  SELL   │    │   Q1: Accumulating? │  ║
-    ║   │ "Start  │    │   Q2: Remove what?  │  ║
-    ║   │  conv." │    │   Q3: Stopping you? │  ║
-    ║   └────┬────┘    └──────────┬──────────┘  ║
-    ║        │                    │             ║
-    ║     5.6%               dwelling           ║
-    ║   contact              continues          ║
-    ║                                           ║
-    ║   "The tool recedes; insight emerges."    ║
-    ╚═══════════════════════════════════════════╝
+    ╔═══════════════════════════════════════════════════════════════════╗
+    ║   DWELLING AS CONVERSION: EVOLUTION                               ║
+    ║                                                                   ║
+    ║   Phase 1: Active              Phase 2: Contemplative             ║
+    ║   ┌────────────────────┐       ┌────────────────────────────────┐ ║
+    ║   │ Q1: Accumulating?  │       │ "We help businesses..."        │ ║
+    ║   │ Q2: Would remove?  │  ──►  │         ↓ scroll               │ ║
+    ║   │ Q3: Stopping you?  │       │ "We remove what obscures"      │ ║
+    ║   └────────────────────┘       └────────────────────────────────┘ ║
+    ║                                                                   ║
+    ║   Both achieve Zuhandenheit: the tool recedes                     ║
+    ╚═══════════════════════════════════════════════════════════════════╝
 `
 	},
 	{
@@ -282,6 +279,50 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ║                                           ║
     ║   "Artifacts enable re-entry into the     ║
     ║    hermeneutic circle" — Heidegger        ║
+    ╚═══════════════════════════════════════════╝
+`
+	},
+	{
+		id: 'file-validation-zuhandenheit',
+		slug: 'validation-zuhandenheit',
+		title: 'Validation as Zuhandenheit: Preventing Tool Breakdown Through Proximity',
+		description: 'When validation occurs at the point of input, tools remain ready-to-hand. When errors surface downstream, tools break down into present-at-hand obstruction.',
+		excerpt_short: 'Client-side validation keeps tools transparent; server errors cause breakdown',
+		excerpt_long: 'A case study in form validation through a Heideggerian lens. When users upload files with 100+ character names, the downstream Admin system fails with a cryptic "failed to upload image" error. By moving validation to the input boundary, we prevent Vorhandenheit—the moment when tools stop serving and start obstructing.',
+		category: 'research',
+		tags: ['Heidegger', 'Validation', 'Zuhandenheit', 'Vorhandenheit', 'Forms', 'Case Study'],
+		created_at: '2025-12-12T00:00:00Z',
+		updated_at: '2025-12-12T00:00:00Z',
+		reading_time_minutes: 6,
+		difficulty: 'beginner',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Validation recedes into transparent use
+			'heidegger-vorhandenheit', // Server errors force tool breakdown
+			'rams-principle-4', // Understandable—errors appear where they're made
+			'rams-principle-5' // Unobtrusive—validation disappears when input is valid
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════╗
+    ║   VALIDATION AS ZUHANDENHEIT              ║
+    ║                                           ║
+    ║   Before (Vorhandenheit):                 ║
+    ║   ┌────────┐     ┌────────┐     ┌──────┐  ║
+    ║   │ Input  │ ──▶ │ Server │ ──▶ │ ???  │  ║
+    ║   │ (ok)   │     │  (ok)  │     │ FAIL │  ║
+    ║   └────────┘     └────────┘     └──────┘  ║
+    ║                                 ↑         ║
+    ║                          "failed to       ║
+    ║                           upload image"   ║
+    ║                                           ║
+    ║   After (Zuhandenheit):                   ║
+    ║   ┌────────┐                              ║
+    ║   │ Input  │ ──▶ ✓ proceeds               ║
+    ║   │ ⚠ 142  │     or                       ║
+    ║   │ chars  │ ──▶ ✗ "rename file"          ║
+    ║   └────────┘                              ║
+    ║                                           ║
+    ║   The tool recedes; the work continues.   ║
     ╚═══════════════════════════════════════════╝
 `
 	}
