@@ -1,14 +1,6 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
-	import { Footer } from '@create-something/components';
 	import SEO from '$lib/components/SEO.svelte';
-
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Services', href: '/services' },
-		{ label: 'Work', href: '/work' },
-		{ label: 'About', href: '/about' }
-	];
+	// Footer is provided by layout
 </script>
 
 <SEO
@@ -22,20 +14,20 @@
 <!-- Hero Section -->
 	<section class="relative pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
-			<div class="space-y-8" in:fly={{ y: 20, duration: 600 }}>
-				<h1 class="text-4xl md:text-6xl font-bold text-white mb-8">
+			<div class="space-y-8 animate-reveal">
+				<h1 class="hero-title mb-8">
 					Agentic Systems Engineering
 				</h1>
 
 				<div class="space-y-8">
 					<!-- Core Identity -->
-					<div class="space-y-6 text-lg text-white/70 leading-relaxed">
-						<p class="text-xl text-white/90 font-medium">
+					<div class="space-y-6 leading-relaxed body-lg">
+						<p class="body-xl font-medium">
 							We build AI systems that run businesses autonomously — from background automation workflows to long-running intelligent agents.
 						</p>
 
 						<p>
-							This isn't generic "AI consulting." We're systems engineers who build production infrastructure. Every project is backed by research from <a href="https://createsomething.io" class="text-white hover:underline">createsomething.io</a>, tracked with real metrics (time, cost, errors), and published as case studies.
+							This isn't generic "AI consulting." We're systems engineers who build production infrastructure. Every project is backed by research from <a href="https://createsomething.io" class="link">createsomething.io</a>, tracked with real metrics (time, cost, errors), and published as case studies.
 						</p>
 
 						<p>
@@ -44,20 +36,20 @@
 					</div>
 
 					<!-- Philosophy -->
-					<div class="p-6 bg-white/5 border border-white/10 rounded-lg space-y-4">
-						<h3 class="text-xl font-semibold text-white">Our Approach</h3>
-						<p class="text-white/70 leading-relaxed">
+					<div class="card-surface space-y-4">
+						<h3 class="heading-3">Our Approach</h3>
+						<p class="body-secondary leading-relaxed">
 							Every system we build becomes a research experiment. We track precise metrics. We document what works and what doesn't. We publish honest results. Your production systems contribute to the collective knowledge of AI-native engineering — and you benefit from insights across our entire client base.
 						</p>
 					</div>
 
 					<!-- Background -->
-					<div class="space-y-4 text-white/60 text-base">
+					<div class="space-y-4 body">
 						<p>
 							Led by Micah Johnson — Texas A&M graduate, UI/UX Design certified (Boulder Digital Arts), systems architect at Webflow. Career spanning Webflow development, API integrations, marketplace architecture, and now full-time agentic systems engineering.
 						</p>
 						<p>
-							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-white hover:underline" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration on complex automation challenges.
+							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration on complex automation challenges.
 						</p>
 					</div>
 				</div>
@@ -66,14 +58,14 @@
 	</section>
 
 	<!-- Mission Section -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-4xl mx-auto">
-			<div class="space-y-6" in:fly={{ y: 20, duration: 600, delay: 200 }}>
-				<h2 class="text-2xl md:text-3xl font-bold text-white">
+			<div class="space-y-6 animate-reveal" style="--delay: 2">
+				<h2 class="heading-2">
 					What We Build
 				</h2>
 
-				<p class="text-lg text-white/70 leading-relaxed">
+				<p class="body-lg leading-relaxed">
 					Production-grade automation systems and autonomous AI agents. Multi-user OAuth integrations. Background processing pipelines. Long-running workflows with durable execution. These aren't experiments — they're business-critical infrastructure running on Cloudflare's global edge network.
 				</p>
 			</div>
@@ -81,10 +73,10 @@
 	</section>
 
 	<!-- Topics Section -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8">
-				<h2 class="text-2xl md:text-3xl font-bold text-white">
+				<h2 class="heading-2">
 					Service Categories
 				</h2>
 
@@ -108,13 +100,13 @@
 						}
 					] as topic, index}
 						<div
-							class="p-6 bg-white/[0.07] border border-white/10 rounded-lg"
-							in:fly={{ y: 20, duration: 500, delay: index * 100 }}
+							class="card-elevated animate-reveal"
+							style="--delay: {index + 3}"
 						>
-							<h3 class="text-xl font-semibold text-white mb-2">
+							<h3 class="heading-3 mb-2">
 								{topic.title}
 							</h3>
-							<p class="text-white/60">
+							<p class="body-tertiary">
 								{topic.description}
 							</p>
 						</div>
@@ -124,10 +116,93 @@
 		</div>
 	</section>
 
-<Footer
-	mode="agency"
-	showNewsletter={false}
-	aboutText="Professional AI-native development services backed by research from createsomething.io"
-	quickLinks={quickLinks}
-	showSocial={true}
-/>
+<style>
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-2 {
+		font-size: var(--text-h2);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-3 {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.body-xl {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-lg {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body {
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
+	}
+
+	.body-secondary {
+		color: var(--color-fg-secondary);
+	}
+
+	.body-tertiary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.link {
+		color: var(--color-fg-primary);
+	}
+
+	.link:hover {
+		text-decoration: underline;
+	}
+
+	.card-surface {
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-elevated {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.section-border {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(20px);
+		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

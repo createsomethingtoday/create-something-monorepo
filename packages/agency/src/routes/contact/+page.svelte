@@ -1,18 +1,27 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
-	import { Footer } from '@create-something/components';
 	import SEO from '$lib/components/SEO.svelte';
+	import { page } from '$app/stores';
+	// Footer is provided by layout
 
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Services', href: '/services' },
-		{ label: 'Work', href: '/work' },
-		{ label: 'About', href: '/about' }
-	];
+	// Service mapping for display names
+	const serviceNames: Record<string, string> = {
+		'web-development': 'Web Development',
+		automation: 'AI Automation Systems',
+		'agentic-systems': 'Agentic Systems Engineering',
+		partnership: 'Ongoing Systems Partnership',
+		transformation: 'AI-Native Transformation',
+		advisory: 'Strategic Advisory'
+	};
 
-	let submitting = false;
-	let submitMessage = '';
-	let submitSuccess = false;
+	// Get service and assessment from URL query params
+	let serviceParam = $derived($page.url.searchParams.get('service'));
+	let assessmentId = $derived($page.url.searchParams.get('assessment'));
+	let serviceName = $derived(serviceParam ? serviceNames[serviceParam] || serviceParam : null);
+	let hasAssessment = $derived(!!assessmentId);
+
+	let submitting = $state(false);
+	let submitMessage = $state('');
+	let submitSuccess = $state(false);
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -31,9 +40,9 @@
 				body: JSON.stringify({
 					name: formData.get('name'),
 					email: formData.get('email'),
-					company: formData.get('company'),
-					service: formData.get('service'),
-					message: formData.get('message')
+					message: formData.get('message'),
+					service: serviceParam || undefined,
+					assessment_id: assessmentId || undefined
 				})
 			});
 
@@ -41,15 +50,15 @@
 
 			if (response.ok && result.success) {
 				submitSuccess = true;
-				submitMessage = result.message || 'Message sent successfully!';
+				submitMessage = 'Sent. We\'ll be in touch.';
 				form.reset();
 			} else {
 				submitSuccess = false;
-				submitMessage = result.message || 'Failed to send message. Please try again.';
+				submitMessage = result.message || 'Something went wrong. Try again.';
 			}
 		} catch (error) {
 			submitSuccess = false;
-			submitMessage = 'An error occurred. Please try again.';
+			submitMessage = 'Something went wrong. Try again.';
 		} finally {
 			submitting = false;
 		}
@@ -58,242 +67,261 @@
 
 <SEO
 	title="Contact"
-	description="Get in touch about agentic systems engineering, AI automation, or autonomous systems development. Inquire about our services or discuss your project needs."
-	keywords="contact, agentic systems, AI automation, autonomous systems, consulting inquiry, web development, automation workflows"
+	description="Start a conversation about your project. We build AI systems that work while you sleep."
+	keywords="contact, agentic systems, AI automation, autonomous systems"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
 
-<!-- Hero Section -->
-	<section class="relative pt-32 pb-16 px-6">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-6" in:fly={{ y: 20, duration: 600 }}>
-				<h1 class="text-4xl md:text-6xl font-bold text-white">
-					Let's Build Something
-				</h1>
-
-				<p class="text-lg text-white/70 leading-relaxed">
-					Ready to bring AI automation to your business? Whether you're starting with web development or looking to build autonomous systems, let's discuss your project.
-				</p>
+<section class="contact-section">
+	<div class="max-w-2xl mx-auto px-6">
+		{#if hasAssessment && serviceName}
+			<div class="assessment-context">
+				<span class="context-label">Based on your assessment</span>
+				<span class="context-value">We recommend {serviceName}</span>
 			</div>
-		</div>
-	</section>
+		{:else if serviceName}
+			<div class="service-context">
+				<span class="service-label">Interested in</span>
+				<span class="service-name">{serviceName}</span>
+			</div>
+		{/if}
 
-	<!-- Service Inquiry Section -->
-	<section class="py-16 px-6">
-		<div class="max-w-4xl mx-auto">
-			<!-- Inquiry Form -->
-			<div
-				class="p-8 bg-white/[0.07] border border-white/10 rounded-lg mb-8"
-				in:fly={{ y: 20, duration: 500 }}
+		<h1 class="contact-headline">
+			{hasAssessment
+				? 'Tell us more about your situation.'
+				: serviceName
+					? 'Tell us about your situation.'
+					: "Tell us what you're building."}
+		</h1>
+
+		<form class="contact-form" onsubmit={handleSubmit}>
+			<div class="form-field">
+				<label for="name" class="form-label">Name</label>
+				<input
+					type="text"
+					id="name"
+					name="name"
+					required
+					class="form-input"
+					autocomplete="name"
+				/>
+			</div>
+
+			<div class="form-field">
+				<label for="email" class="form-label">Email</label>
+				<input
+					type="email"
+					id="email"
+					name="email"
+					required
+					class="form-input"
+					autocomplete="email"
+				/>
+			</div>
+
+			<div class="form-field">
+				<label for="message" class="form-label">What are you working on?</label>
+				<textarea
+					id="message"
+					name="message"
+					required
+					rows="5"
+					class="form-input form-textarea"
+				></textarea>
+			</div>
+
+			<button
+				type="submit"
+				disabled={submitting}
+				class="form-submit"
 			>
-				<h2 class="text-2xl font-semibold text-white mb-6">Service Inquiry</h2>
-				<p class="text-white/60 mb-8">
-					Fill out the form below and we'll get back to you within 24 hours to discuss your project.
+				{submitting ? 'Sending...' : 'Send'}
+			</button>
+
+			{#if submitMessage}
+				<p class="form-message" class:success={submitSuccess} class:error={!submitSuccess}>
+					{submitMessage}
 				</p>
+			{/if}
+		</form>
 
-				<form class="space-y-6" on:submit={handleSubmit}>
-					<!-- Service Selection -->
-					<div>
-						<label for="service" class="block text-sm font-medium text-white mb-2">
-							Which service are you interested in?
-						</label>
-						<select
-							id="service"
-							name="service"
-							required
-							class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:border-white/40 transition-colors"
-						>
-							<option value="" disabled selected>Select a service</option>
-							<option value="web-development">Web Development ($5,000+)</option>
-							<option value="automation">AI Automation Systems ($15,000+)</option>
-							<option value="agentic-systems">Agentic Systems Engineering ($35,000+)</option>
-							<option value="partnership">Ongoing Systems Partnership ($5,000/mo+)</option>
-							<option value="transformation">AI-Native Transformation ($50,000+)</option>
-							<option value="advisory">Strategic Advisory ($10,000/mo+)</option>
-							<option value="not-sure">Not sure yet - let's discuss</option>
-						</select>
-					</div>
+		<p class="contact-alt">
+			Or email directly: <a href="mailto:micah@createsomething.io" class="contact-link">micah@createsomething.io</a>
+		</p>
+	</div>
+</section>
 
-					<!-- Name -->
-					<div>
-						<label for="name" class="block text-sm font-medium text-white mb-2">
-							Your name
-						</label>
-						<input
-							type="text"
-							id="name"
-							name="name"
-							required
-							class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
-							placeholder="John Doe"
-						/>
-					</div>
+<style>
+	.contact-section {
+		min-height: 80vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-2xl) 0;
+	}
 
-					<!-- Email -->
-					<div>
-						<label for="email" class="block text-sm font-medium text-white mb-2">
-							Email address
-						</label>
-						<input
-							type="email"
-							id="email"
-							name="email"
-							required
-							class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
-							placeholder="john@company.com"
-						/>
-					</div>
+	.contact-headline {
+		font-size: var(--text-display);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-tight);
+		margin-bottom: var(--space-xl);
+	}
 
-					<!-- Company -->
-					<div>
-						<label for="company" class="block text-sm font-medium text-white mb-2">
-							Company (optional)
-						</label>
-						<input
-							type="text"
-							id="company"
-							name="company"
-							class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
-							placeholder="Your Company"
-						/>
-					</div>
+	.contact-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
 
-					<!-- Project Details -->
-					<div>
-						<label for="message" class="block text-sm font-medium text-white mb-2">
-							Tell us about your project
-						</label>
-						<textarea
-							id="message"
-							name="message"
-							required
-							rows="6"
-							class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors resize-none"
-							placeholder="What are you looking to build? What problems are you trying to solve? Any timeline or budget constraints?"
-						></textarea>
-					</div>
+	.form-field {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
 
-					<!-- Submit Button -->
-					<button
-						type="submit"
-						disabled={submitting}
-						class="w-full px-8 py-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{submitting ? 'Sending...' : 'Submit Inquiry'}
-					</button>
+	.form-label {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: var(--tracking-wider);
+	}
 
-					<!-- Submit Message -->
-					{#if submitMessage}
-						<div
-							class="p-4 rounded-lg {submitSuccess
-								? 'bg-green-500/10 border border-green-500/20 text-green-400'
-								: 'bg-red-500/10 border border-red-500/20 text-red-400'}"
-						>
-							{submitMessage}
-						</div>
-					{/if}
-				</form>
-			</div>
+	.form-input {
+		padding: 1rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
 
-			<!-- Direct Contact -->
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-				<!-- Email -->
-				<div
-					class="p-8 bg-white/[0.07] border border-white/10 rounded-lg hover:border-white/30 transition-all"
-					in:fly={{ y: 20, duration: 500, delay: 100 }}
-				>
-					<div class="mb-4">
-						<svg
-							class="w-8 h-8 text-white/80"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-							/>
-						</svg>
-					</div>
-					<h3 class="text-xl font-semibold text-white mb-2">Prefer Email?</h3>
-					<p class="text-white/60 mb-4">
-						Reach out directly for quick questions or general inquiries.
-					</p>
-					<a
-						href="mailto:micah@createsomething.agency"
-						class="text-white/80 hover:text-white transition-colors inline-flex items-center gap-2"
-					>
-						micah@createsomething.agency
-						<svg
-							class="w-4 h-4"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M14 5l7 7m0 0l-7 7m7-7H3"
-							/>
-						</svg>
-					</a>
-				</div>
+	.form-input::placeholder {
+		color: var(--color-fg-muted);
+	}
 
-				<!-- Social -->
-				<div
-					class="p-8 bg-white/[0.07] border border-white/10 rounded-lg hover:border-white/30 transition-all"
-					in:fly={{ y: 20, duration: 500, delay: 200 }}
-				>
-					<div class="mb-4">
-						<svg
-							class="w-8 h-8 text-white/80"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-							/>
-						</svg>
-					</div>
-					<h3 class="text-xl font-semibold text-white mb-2">Connect</h3>
-					<p class="text-white/60 mb-4">
-						Follow our work and see case studies on LinkedIn.
-					</p>
-					<div class="flex gap-4">
-						<a
-							href="https://www.linkedin.com/in/micahryanjohnson/"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-white/80 hover:text-white transition-colors"
-						>
-							LinkedIn
-						</a>
-						<a
-							href="https://github.com/createsomethingtoday"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-white/80 hover:text-white transition-colors"
-						>
-							GitHub
-						</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
+	.form-input:focus {
+		outline: none;
+		border-color: var(--color-fg-primary);
+	}
 
-<Footer
-	mode="agency"
-	showNewsletter={false}
-	aboutText="Professional AI-native development services backed by research from createsomething.io"
-	quickLinks={quickLinks}
-	showSocial={true}
-/>
+	.form-textarea {
+		resize: none;
+		min-height: 140px;
+	}
+
+	.form-submit {
+		margin-top: var(--space-sm);
+		padding: 1rem 2rem;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		border-radius: var(--radius-full);
+		border: none;
+		cursor: pointer;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.form-submit:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+
+	.form-submit:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.form-message {
+		padding: 1rem;
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		text-align: center;
+	}
+
+	.form-message.success {
+		background: var(--color-success-muted);
+		color: var(--color-success);
+		border: 1px solid var(--color-success);
+	}
+
+	.form-message.error {
+		background: var(--color-error-muted);
+		color: var(--color-error);
+		border: 1px solid var(--color-error);
+	}
+
+	.contact-alt {
+		margin-top: var(--space-xl);
+		padding-top: var(--space-lg);
+		border-top: 1px solid var(--color-border-default);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		text-align: center;
+	}
+
+	.contact-link {
+		color: var(--color-fg-primary);
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.contact-link:hover {
+		opacity: 0.8;
+	}
+
+	/* Service context */
+	.service-context {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.25rem;
+		margin-bottom: var(--space-lg);
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.service-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+	}
+
+	.service-name {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	/* Assessment context - emphasized version */
+	.assessment-context {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.25rem;
+		margin-bottom: var(--space-lg);
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-lg);
+	}
+
+	.context-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-tertiary);
+	}
+
+	.context-value {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+</style>

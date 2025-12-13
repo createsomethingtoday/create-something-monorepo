@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
-
 	let email = $state('');
 
 	function handleSubmit(e: Event) {
@@ -10,15 +8,15 @@
 	}
 </script>
 
-<footer class="bg-black border-t border-white/10">
+<footer class="footer">
 	<!-- Newsletter Section -->
 	<section id="newsletter" class="py-20 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="text-center">
-				<h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+				<h2 class="newsletter-title">
 					Stay updated with new experiments
 				</h2>
-				<p class="text-white/60 mb-8 max-w-2xl mx-auto">
+				<p class="newsletter-description mb-8 max-w-2xl mx-auto">
 					Get notified when new research is published. Real metrics, tracked experiments, honest learnings from building with AI.
 				</p>
 
@@ -29,13 +27,10 @@
 							type="email"
 							bind:value={email}
 							placeholder="Enter your email address"
-							class="flex-1 px-6 py-4 bg-white/[0.07] border border-white/10 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors"
+							class="newsletter-input flex-1 px-6 py-4"
 							required
 						/>
-						<button
-							type="submit"
-							class="group px-8 py-4 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-all flex items-center justify-center gap-2"
-						>
+						<button type="submit" class="newsletter-btn group px-8 py-4 flex items-center justify-center gap-2">
 							<span>Subscribe</span>
 							<svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -48,15 +43,15 @@
 	</section>
 
 	<!-- Footer Links -->
-	<div class="border-t border-white/10 py-12 px-6">
+	<div class="footer-links py-12 px-6">
 		<div class="max-w-7xl mx-auto">
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-12">
 				<!-- Brand Column -->
 				<div class="md:col-span-2">
-					<div class="text-2xl font-bold text-white mb-4">
+					<div class="brand-title mb-4">
 						THE EXPERIMENTAL LAYER
 					</div>
-					<p class="text-white/60 text-sm max-w-md mb-6">
+					<p class="brand-description mb-6 max-w-md">
 						Community playground for AI-native development experiments. Share real metrics, tracked experiments, and honest learnings from building with AI.
 					</p>
 					<!-- Social Links -->
@@ -65,7 +60,7 @@
 							href="https://github.com/createsomethingtoday"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all"
+							class="social-link"
 							aria-label="GitHub"
 						>
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -76,7 +71,7 @@
 							href="https://www.linkedin.com/in/micahryanjohnson/"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all"
+							class="social-link"
 							aria-label="LinkedIn"
 						>
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -88,30 +83,30 @@
 
 				<!-- Quick Links -->
 				<div>
-					<h3 class="text-white font-semibold mb-4">Quick Links</h3>
+					<h3 class="section-heading mb-4">Quick Links</h3>
 					<ul class="space-y-3">
 						<li>
-							<a href="/" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/" class="footer-link">
 								Home
 							</a>
 						</li>
 						<li>
-							<a href="/experiments" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/experiments" class="footer-link">
 								All Experiments
 							</a>
 						</li>
 						<li>
-							<a href="/methodology" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/methodology" class="footer-link">
 								Methodology
 							</a>
 						</li>
 						<li>
-							<a href="/categories" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/categories" class="footer-link">
 								Categories
 							</a>
 						</li>
 						<li>
-							<a href="/about" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/about" class="footer-link">
 								About
 							</a>
 						</li>
@@ -120,30 +115,30 @@
 
 				<!-- Modes of Being -->
 				<div>
-					<h3 class="text-white font-semibold mb-4">Modes of Being</h3>
+					<h3 class="section-heading mb-4">Modes of Being</h3>
 					<ul class="space-y-3">
 						<li>
-							<a href="https://createsomething.space" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.space" class="footer-link">
 								.space — Explore
 							</a>
 						</li>
 						<li>
-							<a href="https://createsomething.io" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.io" class="footer-link">
 								.io — Learn
 							</a>
 						</li>
 						<li>
-							<a href="https://createsomething.agency" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.agency" class="footer-link">
 								.agency — Build
 							</a>
 						</li>
 						<li>
-							<a href="https://createsomething.ltd" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.ltd" class="footer-link">
 								.ltd — Canon
 							</a>
 						</li>
 						<li>
-							<a href="https://github.com/createsomethingtoday" target="_blank" rel="noopener noreferrer" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://github.com/createsomethingtoday" target="_blank" rel="noopener noreferrer" class="footer-link">
 								GitHub — Source
 							</a>
 						</li>
@@ -154,19 +149,133 @@
 	</div>
 
 	<!-- Copyright -->
-	<div class="border-t border-white/10 py-6 px-6">
+	<div class="copyright py-6 px-6">
 		<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-			<p class="text-white/40 text-sm text-center md:text-left">
+			<p class="copyright-text text-center md:text-left">
 				© {new Date().getFullYear()} Micah Johnson. All rights reserved.
 			</p>
 			<div class="flex items-center gap-6">
-				<a href="/privacy" class="text-white/40 hover:text-white/60 text-sm transition-colors">
+				<a href="/privacy" class="legal-link">
 					Privacy Policy
 				</a>
-				<a href="/terms" class="text-white/40 hover:text-white/60 text-sm transition-colors">
+				<a href="/terms" class="legal-link">
 					Terms of Service
 				</a>
 			</div>
 		</div>
 	</div>
 </footer>
+
+<style>
+	.footer {
+		background: var(--color-bg-pure);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.newsletter-title {
+		font-size: clamp(1.875rem, 4vw, 2.25rem);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin-bottom: 1rem;
+	}
+
+	.newsletter-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	.newsletter-input {
+		background: rgba(255, 255, 255, 0.07);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		color: var(--color-fg-primary);
+		outline: none;
+		transition: border-color var(--duration-standard) var(--ease-standard);
+	}
+
+	.newsletter-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.newsletter-input:focus {
+		border-color: rgba(255, 255, 255, 0.3);
+	}
+
+	.newsletter-btn {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+		transition: background var(--duration-standard) var(--ease-standard);
+	}
+
+	.newsletter-btn:hover {
+		background: rgba(255, 255, 255, 0.9);
+	}
+
+	.footer-links {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.brand-title {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.brand-description {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.social-link {
+		width: 2.5rem;
+		height: 2.5rem;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-fg-tertiary);
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.social-link:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: var(--color-fg-primary);
+	}
+
+	.section-heading {
+		color: var(--color-fg-primary);
+		font-weight: 600;
+	}
+
+	.footer-link {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.footer-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.copyright {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.copyright-text {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+	}
+
+	.legal-link {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.legal-link:hover {
+		color: var(--color-fg-tertiary);
+	}
+</style>

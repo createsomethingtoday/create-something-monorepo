@@ -1,12 +1,5 @@
 <script lang="ts">
-	import { Footer } from '@create-something/components';
-
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Services', href: '/services' },
-		{ label: 'Work', href: '/work' },
-		{ label: 'About', href: '/about' }
-	];
+	// Footer is provided by layout
 </script>
 
 <svelte:head>
@@ -17,20 +10,20 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black text-white">
+<div class="min-h-screen bg-black">
 	<!-- Hero -->
 	<section class="pt-32 pb-16 px-6 border-b border-white/10">
 		<div class="max-w-4xl mx-auto">
 			<div class="mb-6">
-				<a href="/work" class="text-sm opacity-60 hover:opacity-100">← Back to Work</a>
+				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="text-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
 			<h1 class="mb-6">Arc for Gmail</h1>
-			<p class="text-2xl opacity-70 leading-relaxed mb-8">
+			<p class="heading-2 opacity-70 leading-relaxed mb-8">
 				Multi-user OAuth-based Gmail→Notion sync with AI-powered summaries and automatic contact
 				management
 			</p>
-			<div class="flex gap-4 text-sm opacity-50">
+			<div class="flex gap-4 body-sm opacity-50">
 				<span>• Cloudflare Workers</span>
 				<span>• Workers AI</span>
 				<span>• Notion API 2025-09-03</span>
@@ -44,7 +37,7 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">The Challenge</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
 					Half Dozen needed a way to capture important email interactions in their Notion workspace
 					without manual copying. The system had to support multiple team members, preserve email
@@ -53,7 +46,7 @@
 
 				<p><strong>Technical constraints:</strong></p>
 
-				<ul class="space-y-3 text-base opacity-70 pl-6">
+				<ul class="space-y-3 body opacity-70 pl-6">
 					<li class="flex items-start gap-3">
 						<span class="opacity-40 mt-1">—</span>
 						<span>Multi-user OAuth (multiple Gmail accounts)</span>
@@ -80,21 +73,18 @@
 	</section>
 
 	<!-- The Arc Pattern -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Applying the Arc Pattern</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
-					This project validated the <a
-						href="https://createsomething.ltd/patterns/arc"
-						class="underline hover:opacity-70">Arc pattern</a
-					>: efficient connection between points. Gmail → Notion as a one-way sync with minimal transformation.
+					This project validated the <strong>Arc pattern</strong>: efficient connection between points. Gmail → Notion as a one-way sync with minimal transformation.
 				</p>
 
-				<div class="my-8 p-8 border border-white/10 rounded-xl bg-white/5">
-					<p class="text-sm font-mono opacity-60 mb-4">The Arc Implementation:</p>
-					<pre class="text-sm opacity-70 font-mono leading-loose overflow-x-auto">
+				<div class="my-8 p-8 card-border rounded-lg bg-surface">
+					<p class="body-sm font-mono opacity-60 mb-4">The Arc Implementation:</p>
+					<pre class="body-sm opacity-70 font-mono leading-loose overflow-x-auto">
 Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 
 1. User labels email "Log to Notion"
@@ -107,7 +97,7 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 
 				<p><strong>Arc principles applied:</strong></p>
 
-				<ul class="space-y-3 text-base opacity-70 pl-6">
+				<ul class="space-y-3 body opacity-70 pl-6">
 					<li class="flex items-start gap-3">
 						<span class="opacity-40 mt-1">✓</span>
 						<span><strong>Single direction:</strong> Gmail→Notion only, no bidirectional complexity</span>
@@ -137,15 +127,15 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 	</section>
 
 	<!-- Technical Implementation -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-5xl mx-auto">
 			<h2 class="mb-12">Technical Implementation</h2>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 				<!-- Infrastructure -->
-				<div class="border border-white/10 rounded-xl p-8">
-					<h3 class="text-xl font-semibold mb-4">Infrastructure</h3>
-					<ul class="space-y-3 text-sm opacity-70">
+				<div class="card-border rounded-lg p-8">
+					<h3 class="heading-3 font-semibold mb-4">Infrastructure</h3>
+					<ul class="space-y-3 body-sm opacity-70">
 						<li>• Cloudflare Workers (serverless)</li>
 						<li>• KV Storage (thread tracking, OAuth tokens)</li>
 						<li>• Cron Triggers (5-minute sync cycle)</li>
@@ -154,9 +144,9 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 				</div>
 
 				<!-- APIs -->
-				<div class="border border-white/10 rounded-xl p-8">
-					<h3 class="text-xl font-semibold mb-4">API Integration</h3>
-					<ul class="space-y-3 text-sm opacity-70">
+				<div class="card-border rounded-lg p-8">
+					<h3 class="heading-3 font-semibold mb-4">API Integration</h3>
+					<ul class="space-y-3 body-sm opacity-70">
 						<li>• Gmail API (OAuth 2.0, thread fetching)</li>
 						<li>• Notion API 2025-09-03 (data_source_id)</li>
 						<li>• Workers AI (@cf/meta/llama-3.1-8b-instruct)</li>
@@ -166,10 +156,10 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 			</div>
 
 			<!-- Key Challenges -->
-			<div class="mt-12 p-8 border border-white/10 rounded-xl bg-white/5">
-				<h3 class="text-xl font-semibold mb-6">Key Technical Challenges Solved</h3>
+			<div class="mt-12 p-8 card-border rounded-lg bg-surface">
+				<h3 class="heading-3 font-semibold mb-6">Key Technical Challenges Solved</h3>
 
-				<div class="space-y-6 text-sm opacity-70">
+				<div class="space-y-6 body-sm opacity-70">
 					<div>
 						<p class="font-semibold opacity-100 mb-2">1. Character Encoding (Mojibake)</p>
 						<p class="leading-relaxed">
@@ -207,34 +197,34 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 	</section>
 
 	<!-- Results -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Results</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
 					<strong>Deployed to production</strong> at Half Dozen with bespoke configuration for their
 					team.
 				</p>
 
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-					<div class="text-center p-6 border border-white/10 rounded-xl">
-						<p class="text-3xl font-bold mb-2">5 min</p>
-						<p class="text-sm opacity-60">Sync cycle</p>
+					<div class="text-center p-6 card-border rounded-lg">
+						<p class="heading-2 font-bold mb-2">5 min</p>
+						<p class="body-sm opacity-60">Sync cycle</p>
 					</div>
-					<div class="text-center p-6 border border-white/10 rounded-xl">
-						<p class="text-3xl font-bold mb-2">Multi-user</p>
-						<p class="text-sm opacity-60">OAuth support</p>
+					<div class="text-center p-6 card-border rounded-lg">
+						<p class="heading-2 font-bold mb-2">Multi-user</p>
+						<p class="body-sm opacity-60">OAuth support</p>
 					</div>
-					<div class="text-center p-6 border border-white/10 rounded-xl">
-						<p class="text-3xl font-bold mb-2">100%</p>
-						<p class="text-sm opacity-60">Automated</p>
+					<div class="text-center p-6 card-border rounded-lg">
+						<p class="heading-2 font-bold mb-2">100%</p>
+						<p class="body-sm opacity-60">Automated</p>
 					</div>
 				</div>
 
 				<p><strong>Validated outcomes:</strong></p>
 
-				<ul class="space-y-3 text-base opacity-70 pl-6">
+				<ul class="space-y-3 body opacity-70 pl-6">
 					<li class="flex items-start gap-3">
 						<span class="opacity-40 mt-1">✓</span>
 						<span>Email formatting preserved (links, bold, italic, structure)</span>
@@ -261,11 +251,11 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 	</section>
 
 	<!-- Development Approach -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Development Approach</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
 					Built using <strong>Claude Code</strong> (AI-native development) with comprehensive documentation
 					and test scripts for debugging.
@@ -275,7 +265,7 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 				<p><strong>Cost:</strong> ~$6.30 in AI costs (vs. $3,750 manual development)</p>
 				<p><strong>ROI:</strong> 99.8% cost savings, 55-65% time savings</p>
 
-				<p class="pt-6 text-base opacity-60 italic">
+				<p class="pt-6 body opacity-60 italic">
 					Full experiment documentation and research paper available at <a
 						href="https://createsomething.io"
 						class="underline hover:opacity-100">createsomething.io</a
@@ -286,11 +276,11 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 	</section>
 
 	<!-- Pattern Validation -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Why This Validates Arc</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
 					Arc for Gmail was the first implementation of the Arc pattern. Its success in production
 					validates that "efficient connection between points" is a canonical approach worth
@@ -301,39 +291,130 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 					The pattern proved <strong>reusable</strong>: Arc for Fireflies (transcripts → Notion) is
 					next, following the exact same principles with different endpoints.
 				</p>
-
-				<p class="pt-6 text-base opacity-60 italic">
-					Read the full Arc pattern documentation at <a
-						href="https://createsomething.ltd/patterns/arc"
-						class="underline hover:opacity-100">createsomething.ltd/patterns/arc</a
-					>.
-				</p>
 			</div>
 		</div>
 	</section>
 
 	<!-- CTA -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto text-center">
 			<h2 class="mb-6">Need a Custom Sync Integration?</h2>
-			<p class="text-lg opacity-70 mb-8 leading-relaxed">
+			<p class="body-lg opacity-70 mb-8 leading-relaxed">
 				The Arc pattern can connect any systems: Slack→Notion, Fireflies→Notion, Discord→Notion,
 				and beyond.
 			</p>
 			<a
 				href="/contact"
-				class="inline-block px-8 py-4 bg-white text-black font-medium hover:opacity-90 transition-opacity"
+				class="inline-block px-8 py-4 btn-primary"
 			>
 				Start a Conversation
 			</a>
 		</div>
 	</section>
 
-<Footer
-	mode="agency"
-	showNewsletter={false}
-	aboutText="Professional AI-native development services backed by research from createsomething.io"
-	quickLinks={quickLinks}
-	showSocial={true}
-/>
+<style>
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-2 {
+		font-size: var(--text-h2);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-3 {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.body-xl {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-lg {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-sm {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-xs {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.body-secondary {
+		color: var(--color-fg-secondary);
+	}
+
+	.body-tertiary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.body-muted {
+		color: var(--color-fg-muted);
+	}
+
+	.link {
+		color: var(--color-fg-primary);
+	}
+
+	.link:hover {
+		text-decoration: underline;
+	}
+
+	.card-surface {
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-elevated {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.section-border {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.btn-primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+	}
+
+	.btn-primary:hover {
+		opacity: 0.9;
+	}
+
+	.input {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+	}
+
+	.input:focus {
+		border-color: var(--color-border-emphasis);
+	}
+</style>
+
 </div>

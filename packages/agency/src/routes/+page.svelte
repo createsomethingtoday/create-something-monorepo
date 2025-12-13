@@ -6,17 +6,17 @@
 		{
 			title: 'Agentic Systems',
 			description: 'AI that runs autonomously. Not chatbots—agents that process 500+ decisions while you sleep.',
-			href: '/services#agentic-systems'
+			href: '/services/agentic-systems'
 		},
 		{
 			title: 'Web Platforms',
 			description: 'Sub-100ms response times. Cloudflare edge. No frameworks, no bloat.',
-			href: '/services#web-development'
+			href: '/services/web-development'
 		},
 		{
 			title: 'Workflow Automation',
 			description: 'Manual processes become autonomous. 60-70% time savings, measured.',
-			href: '/services#automation'
+			href: '/services/automation'
 		}
 	];
 

@@ -3,12 +3,18 @@ import type { RequestHandler } from './$types';
 
 interface NewsletterRequest {
 	email: string;
+	turnstileToken?: string;
 }
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+interface TurnstileResponse {
+	success: boolean;
+	'error-codes'?: string[];
+}
+
+export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	try {
 		const body = (await request.json()) as NewsletterRequest;
-		const { email } = body;
+		const { email, turnstileToken } = body;
 
 		// Validate email
 		if (!email || !email.trim()) {
@@ -38,6 +44,45 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const env = platform.env;
+
+		// Verify Turnstile token if secret key is configured
+		if (env.TURNSTILE_SECRET_KEY) {
+			if (!turnstileToken) {
+				return json(
+					{
+						success: false,
+						message: 'Please complete the verification'
+					},
+					{ status: 400 }
+				);
+			}
+
+			const turnstileResponse = await fetch(
+				'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: new URLSearchParams({
+						secret: env.TURNSTILE_SECRET_KEY,
+						response: turnstileToken,
+						remoteip: getClientAddress()
+					})
+				}
+			);
+
+			const turnstileResult = (await turnstileResponse.json()) as TurnstileResponse;
+
+			if (!turnstileResult.success) {
+				console.warn('Turnstile verification failed:', turnstileResult['error-codes']);
+				return json(
+					{
+						success: false,
+						message: 'Verification failed. Please try again.'
+					},
+					{ status: 400 }
+				);
+			}
+		}
 
 		// Generate unsubscribe token
 		const unsubscribeToken = btoa(`${email}:${Date.now()}`);

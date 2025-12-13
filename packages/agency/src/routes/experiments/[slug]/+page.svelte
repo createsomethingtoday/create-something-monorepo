@@ -77,7 +77,7 @@
 	<div class="w-full max-w-5xl mx-auto px-6 py-12">
 		<a
 			href="/experiments"
-			class="inline-flex items-center gap-2 text-terminal-green hover:text-white transition-colors"
+			class="inline-flex items-center gap-2 text-terminal-green hover:transition-colors"
 		>
 			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />

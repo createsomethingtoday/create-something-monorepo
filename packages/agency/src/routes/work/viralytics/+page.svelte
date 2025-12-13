@@ -1,12 +1,5 @@
 <script lang="ts">
-	import { Footer } from '@create-something/components';
-
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Services', href: '/services' },
-		{ label: 'Work', href: '/work' },
-		{ label: 'About', href: '/about' }
-	];
+	// Footer is provided by layout
 </script>
 
 <svelte:head>
@@ -17,19 +10,19 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black text-white">
+<div class="min-h-screen bg-black">
 	<!-- Hero -->
 	<section class="pt-32 pb-16 px-6 border-b border-white/10">
 		<div class="max-w-4xl mx-auto">
 			<div class="mb-6">
-				<a href="/work" class="text-sm opacity-60 hover:opacity-100">← Back to Work</a>
+				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="text-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
 			<h1 class="mb-6">Viralytics</h1>
-			<p class="text-2xl opacity-70 leading-relaxed mb-8">
+			<p class="heading-2 opacity-70 leading-relaxed mb-8">
 				AI-powered A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists
 			</p>
-			<div class="flex flex-wrap gap-4 text-sm opacity-50">
+			<div class="flex flex-wrap gap-4 body-sm opacity-50">
 				<span>• Cloudflare Workers</span>
 				<span>• Puppeteer Scraping</span>
 				<span>• AI Analysis</span>
@@ -43,7 +36,7 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">The Challenge</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
 					Half Dozen's A&R team needed a way to discover independent artists before they blow up.
 					Manual tracking across multiple chart sources was time-consuming and inconsistent.
@@ -52,7 +45,7 @@
 
 				<p><strong>Technical requirements:</strong></p>
 
-				<ul class="space-y-3 text-base opacity-70 pl-6">
+				<ul class="space-y-3 body opacity-70 pl-6">
 					<li class="flex items-start gap-3">
 						<span class="opacity-40 mt-1">—</span>
 						<span>Scrape Spotify charts (Global Daily, City Pulse playlists)</span>
@@ -79,14 +72,14 @@
 	</section>
 
 	<!-- Architecture -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">System Architecture</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
-				<div class="my-8 p-8 border border-white/10 rounded-xl bg-white/5">
-					<p class="text-sm font-mono opacity-60 mb-4">Data Flow:</p>
-					<pre class="text-sm opacity-70 font-mono leading-loose overflow-x-auto">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+				<div class="my-8 p-8 card-border rounded-lg bg-surface">
+					<p class="body-sm font-mono opacity-60 mb-4">Data Flow:</p>
+					<pre class="body-sm opacity-70 font-mono leading-loose overflow-x-auto">
 Chart Sources (Spotify, City Pulse)
     ↓
 chart-scraper Worker (Puppeteer)
@@ -105,7 +98,7 @@ Notion (A&R Review Queue)
 
 				<p><strong>Key components:</strong></p>
 
-				<ul class="space-y-3 text-base opacity-70 pl-6">
+				<ul class="space-y-3 body opacity-70 pl-6">
 					<li class="flex items-start gap-3">
 						<span class="opacity-40 mt-1">✓</span>
 						<span><strong>chart-scraper:</strong> Browser Rendering API with Puppeteer for scraping protected charts</span>
@@ -124,31 +117,31 @@ Notion (A&R Review Queue)
 	</section>
 
 	<!-- Discovery Queries -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">AI-Powered Discovery</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
 					The viralytics workflow runs 20 SQL queries daily to identify artists with viral potential:
 				</p>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-8">
-					<div class="p-4 border border-white/10 rounded-lg">
-						<p class="text-sm font-semibold mb-2">Trending New Entries</p>
-						<p class="text-xs opacity-60">New in top 50, last 14 days</p>
+					<div class="p-4 card-border rounded">
+						<p class="body-sm font-semibold mb-2">Trending New Entries</p>
+						<p class="body-xs opacity-60">New in top 50, last 14 days</p>
 					</div>
-					<div class="p-4 border border-white/10 rounded-lg">
-						<p class="text-sm font-semibold mb-2">Rapid Climbers</p>
-						<p class="text-xs opacity-60">8+ position jump in 7 days</p>
+					<div class="p-4 card-border rounded">
+						<p class="body-sm font-semibold mb-2">Rapid Climbers</p>
+						<p class="body-xs opacity-60">8+ position jump in 7 days</p>
 					</div>
-					<div class="p-4 border border-white/10 rounded-lg">
-						<p class="text-sm font-semibold mb-2">Cross-Market Momentum</p>
-						<p class="text-xs opacity-60">Charting in 2+ markets</p>
+					<div class="p-4 card-border rounded">
+						<p class="body-sm font-semibold mb-2">Cross-Market Momentum</p>
+						<p class="body-xs opacity-60">Charting in 2+ markets</p>
 					</div>
-					<div class="p-4 border border-white/10 rounded-lg">
-						<p class="text-sm font-semibold mb-2">Independent Rising</p>
-						<p class="text-xs opacity-60">Non-major label, top 30</p>
+					<div class="p-4 card-border rounded">
+						<p class="body-sm font-semibold mb-2">Independent Rising</p>
+						<p class="body-xs opacity-60">Non-major label, top 30</p>
 					</div>
 				</div>
 
@@ -161,32 +154,32 @@ Notion (A&R Review Queue)
 	</section>
 
 	<!-- Results -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Results</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-					<div class="text-center p-6 border border-white/10 rounded-xl">
-						<p class="text-3xl font-bold mb-2">4+</p>
-						<p class="text-sm opacity-60">Chart sources</p>
-						<p class="text-xs opacity-40 mt-1">Global, Denver, NYC, Austin</p>
+					<div class="text-center p-6 card-border rounded-lg">
+						<p class="heading-2 font-bold mb-2">4+</p>
+						<p class="body-sm opacity-60">Chart sources</p>
+						<p class="body-xs opacity-40 mt-1">Global, Denver, NYC, Austin</p>
 					</div>
-					<div class="text-center p-6 border border-white/10 rounded-xl">
-						<p class="text-3xl font-bold mb-2">Daily</p>
-						<p class="text-sm opacity-60">Automated discovery</p>
-						<p class="text-xs opacity-40 mt-1">7 AM UTC workflow</p>
+					<div class="text-center p-6 card-border rounded-lg">
+						<p class="heading-2 font-bold mb-2">Daily</p>
+						<p class="body-sm opacity-60">Automated discovery</p>
+						<p class="body-xs opacity-40 mt-1">7 AM UTC workflow</p>
 					</div>
-					<div class="text-center p-6 border border-white/10 rounded-xl">
-						<p class="text-3xl font-bold mb-2">20</p>
-						<p class="text-sm opacity-60">Discovery queries</p>
-						<p class="text-xs opacity-40 mt-1">Multi-signal analysis</p>
+					<div class="text-center p-6 card-border rounded-lg">
+						<p class="heading-2 font-bold mb-2">20</p>
+						<p class="body-sm opacity-60">Discovery queries</p>
+						<p class="body-xs opacity-40 mt-1">Multi-signal analysis</p>
 					</div>
 				</div>
 
 				<p><strong>Production status:</strong></p>
 
-				<ul class="space-y-3 text-base opacity-70 pl-6">
+				<ul class="space-y-3 body opacity-70 pl-6">
 					<li class="flex items-start gap-3">
 						<span class="opacity-40 mt-1">✓</span>
 						<span>Chart scraping operational (4 sources)</span>
@@ -209,11 +202,11 @@ Notion (A&R Review Queue)
 	</section>
 
 	<!-- Pattern Validation -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Applying the Canon</h2>
 
-			<div class="space-y-6 text-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<p>
 					Viralytics applies <strong>Tufte's data-ink ratio</strong> principle: the system maximizes
 					signal (actionable artist discoveries) and minimizes noise (irrelevant chart data).
@@ -228,26 +221,124 @@ Notion (A&R Review Queue)
 	</section>
 
 	<!-- CTA -->
-	<section class="py-16 px-6 border-t border-white/10">
+	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto text-center">
 			<h2 class="mb-6">Need AI-Powered Discovery?</h2>
-			<p class="text-lg opacity-70 mb-8 leading-relaxed">
+			<p class="body-lg opacity-70 mb-8 leading-relaxed">
 				We build autonomous agents that surface actionable intelligence from complex data landscapes.
 			</p>
 			<a
 				href="/contact"
-				class="inline-block px-8 py-4 bg-white text-black font-medium hover:opacity-90 transition-opacity"
+				class="inline-block px-8 py-4 btn-primary"
 			>
 				Start a Conversation
 			</a>
 		</div>
 	</section>
 
-<Footer
-	mode="agency"
-	showNewsletter={false}
-	aboutText="Professional AI-native development services backed by research from createsomething.io"
-	quickLinks={quickLinks}
-	showSocial={true}
-/>
+<style>
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-2 {
+		font-size: var(--text-h2);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.heading-3 {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.body-xl {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-lg {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.body {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-sm {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.body-xs {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.body-secondary {
+		color: var(--color-fg-secondary);
+	}
+
+	.body-tertiary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.body-muted {
+		color: var(--color-fg-muted);
+	}
+
+	.link {
+		color: var(--color-fg-primary);
+	}
+
+	.link:hover {
+		text-decoration: underline;
+	}
+
+	.card-surface {
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-elevated {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.section-border {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.btn-primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+	}
+
+	.btn-primary:hover {
+		opacity: 0.9;
+	}
+
+	.input {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+	}
+
+	.input:focus {
+		border-color: var(--color-border-emphasis);
+	}
+</style>
+
 </div>

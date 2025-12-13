@@ -208,18 +208,18 @@ Contact Create Something:
 	}
 </script>
 
-<div class="h-screen bg-gray-900 font-mono flex flex-col">
+<div class="terminal h-screen flex flex-col">
 	<!-- Terminal Header -->
-	<div class="bg-gray-800 border-b border-gray-700 p-3 flex items-center justify-between">
+	<div class="terminal-header p-3 flex items-center justify-between">
 		<div class="flex items-center space-x-2">
-			<div class="w-3 h-3 bg-red-500 rounded-full"></div>
-			<div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-			<div class="w-3 h-3 bg-green-500 rounded-full"></div>
+			<div class="traffic-light traffic-light-red"></div>
+			<div class="traffic-light traffic-light-yellow"></div>
+			<div class="traffic-light traffic-light-green"></div>
 		</div>
-		<div class="text-gray-400 text-sm">
+		<div class="terminal-title">
 			Create Something Terminal — {currentPath}
 		</div>
-		<div class="text-gray-500 text-xs">
+		<div class="terminal-subtitle">
 			SvelteKit + Cloudflare
 		</div>
 	</div>
@@ -227,20 +227,20 @@ Contact Create Something:
 	<!-- Terminal Content -->
 	<div
 		bind:this={terminalRef}
-		class="flex-1 overflow-y-auto p-4 text-green-400"
+		class="terminal-content flex-1 overflow-y-auto p-4"
 		onclick={() => inputRef?.focus()}
 		role="button"
 		tabindex="-1"
 	>
 		{#each history as line, i (i)}
-			<div class="whitespace-pre-wrap">
+			<div class="terminal-line whitespace-pre-wrap">
 				{line}
 			</div>
 		{/each}
 
 		<!-- Input Line -->
 		<form onsubmit={handleSubmit} class="flex items-center">
-			<span class="text-cyan-400 mr-2">
+			<span class="terminal-prompt mr-2">
 				user@createsomething:{currentPath}$
 			</span>
 			<input
@@ -248,18 +248,18 @@ Contact Create Something:
 				bind:value={currentInput}
 				onkeydown={handleKeyDown}
 				type="text"
-				class="flex-1 bg-transparent outline-none text-green-400"
+				class="terminal-input flex-1 bg-transparent outline-none"
 				autocomplete="off"
 				autocorrect="off"
 				autocapitalize="off"
 				spellcheck={false}
 			/>
-			<span class="animate-pulse">_</span>
+			<span class="terminal-cursor animate-pulse">_</span>
 		</form>
 	</div>
 
 	<!-- Terminal Footer -->
-	<div class="bg-gray-800 border-t border-gray-700 p-2 text-xs text-gray-500 flex justify-between">
+	<div class="terminal-footer p-2 flex justify-between">
 		<div>
 			Ready • {commandHistory.length} commands
 		</div>
@@ -268,3 +268,70 @@ Contact Create Something:
 		</div>
 	</div>
 </div>
+
+<style>
+	.terminal {
+		background: #1a1a1a;
+		font-family: monospace;
+	}
+
+	.terminal-header {
+		background: #2a2a2a;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.traffic-light {
+		width: 0.75rem;
+		height: 0.75rem;
+		border-radius: var(--radius-full);
+	}
+
+	.traffic-light-red {
+		background: #ef4444;
+	}
+
+	.traffic-light-yellow {
+		background: #eab308;
+	}
+
+	.traffic-light-green {
+		background: #22c55e;
+	}
+
+	.terminal-title {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+	}
+
+	.terminal-subtitle {
+		color: var(--color-fg-subtle);
+		font-size: var(--text-caption);
+	}
+
+	.terminal-content {
+		color: #22c55e;
+	}
+
+	.terminal-line {
+		color: #22c55e;
+	}
+
+	.terminal-prompt {
+		color: #06b6d4;
+	}
+
+	.terminal-input {
+		color: #22c55e;
+	}
+
+	.terminal-cursor {
+		color: #22c55e;
+	}
+
+	.terminal-footer {
+		background: #2a2a2a;
+		border-top: 1px solid var(--color-border-default);
+		font-size: var(--text-caption);
+		color: var(--color-fg-subtle);
+	}
+</style>
