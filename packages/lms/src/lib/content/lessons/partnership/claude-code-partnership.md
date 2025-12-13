@@ -696,3 +696,192 @@ Agent:
 8. *Commits with message: "feat: add newsletter subscription form with email validation and database persistence"*
 9. "Newsletter form is complete. The migration needs to be run on staging before deployment.
     Want me to walk through the changes?"
+Human: *Tests form on staging, verifies email delivery, checks validation edge cases*
+Human: "Perfect! This matches the design perfectly. Merging now."
+
+**Outcome**: Task complete in one cycle. Human verified final result.
+
+---
+
+### Example 2: Complex Debugging (Collaboration Mode)
+
+```
+Human: "The search results are sometimes stale—users report seeing old data after updates"
+Agent: "Let me trace the search flow..."
+       *Analyzes search component, API endpoint, database queries*
+Agent: "I see the issue. The search results are cached in KV with a 1-hour TTL,
+       but cache invalidation only happens on new posts, not edits"
+Human: "Ah yes! Can we invalidate on edits too?"
+Agent: "Yes. I can add cache invalidation to the edit endpoint. Should I also
+       reduce the TTL to 15 minutes for a safer default?"
+Human: "Good idea. And add a manual cache clear button in the admin panel"
+Agent: *Implements cache invalidation on edit, reduces TTL, adds admin button*
+Human: *Tests in staging, edits a post, sees fresh results*
+Human: "Much better. The manual clear button is a great addition—future-proofs us"
+```
+
+**Outcome**: Collaboration led to better solution than either would propose alone.
+
+---
+
+### Example 3: High-Risk Migration (Supervision Mode)
+
+```
+Human: "We need to migrate user sessions from localStorage to the database.
+        This is production with 10k active users, so we need to be careful."
+Agent: "Understood. High-risk migration. Should I start by reading the current session code?"
+Human: "Yes, and propose a migration strategy before we change anything"
+Agent: *Reads current implementation*
+Agent: "Current approach:
+       - Sessions stored in localStorage as JWT
+       - No server-side state
+       - 7-day expiry
+
+       Proposed migration:
+       1. Add sessions table to database
+       2. Create session management API
+       3. Dual-write period: write to both localStorage and database
+       4. Switch reads to database
+       5. Remove localStorage writes
+
+       This gives us a rollback path at each step. Sound good?"
+Human: "Perfect. Start with step 1—create the migration for the sessions table"
+Agent: *Creates migration with schema*
+Human: *Reviews schema*
+Human: "Add an index on user_id and created_at for cleanup queries"
+Agent: *Adds indexes*
+Human: "Good. Run this on staging"
+Agent: *Applies migration to staging database*
+Human: *Verifies in staging database*
+Human: "Clean. Now implement the session API"
+Agent: *Creates session CRUD endpoints*
+Human: *Reviews code, tests endpoints*
+Human: "Add rate limiting to the create endpoint—we don't want session spam"
+Agent: *Adds rate limiting*
+...
+```
+
+**Outcome**: Multi-step supervised migration completed safely. Human verified each step.
+
+---
+
+### Example 4: Pattern Teaching (Observation Mode)
+
+```
+Human: *Debugging a subtle state synchronization issue in a Svelte store*
+Human: "Watch how I debug this. It's a pattern you'll see again."
+Human: *Opens browser DevTools, adds console.logs in the store's subscribe function*
+Human: "See? The subscription fires 3 times on mount. That's the bug."
+Human: "Now I trace backward: what's causing 3 subscriptions?"
+Human: *Checks component mounting, finds component mounted 3 times due to route guard*
+Human: "The route guard re-renders the component. We need to move the guard higher in the tree."
+Human: *Moves guard to layout*
+Human: *Tests—subscription now fires once*
+Human: "This pattern—trace from symptom to cause—works for most state bugs.
+        Next time you see unexpected reactivity, try:
+        1. Log in the store's subscribe
+        2. Count how many times it fires
+        3. Trace backward to find what's triggering it
+        4. Fix the architecture, not the symptom"
+Agent: *Observes pattern and stores for future debugging tasks*
+```
+
+**Outcome**: Agent learns domain-specific debugging technique through observation.
+
+---
+
+## Reflection Questions
+
+### Understanding Complementarity
+
+1. **What tasks are you currently doing that Claude Code could own?**
+   - Writing boilerplate?
+   - Refactoring repetitive patterns?
+   - Following established conventions?
+
+2. **What decisions are you currently delegating that need your judgment?**
+   - UX tradeoffs?
+   - Performance vs. simplicity?
+   - What features to build?
+
+3. **How do you know when to trust vs. verify?**
+   - Do you verify based on task type or agent history?
+   - Are you over-verifying (micro-managing) or under-verifying (ignoring output)?
+
+### Improving Communication
+
+4. **Review your last 5 requests to Claude Code. Were they:**
+   - Clear about the objective?
+   - Rich in context?
+   - Specific about constraints?
+   - Reference examples when available?
+
+5. **Do you close feedback loops?**
+   - When Claude Code completes a task, do you verify and report back?
+   - Do you explain why you're not using output?
+   - Do you share what worked well for future tasks?
+
+6. **Are you confirming approach before large implementations?**
+   - Or discovering misalignment after the work is done?
+
+### Calibrating Trust
+
+7. **Map your recent tasks by trust level:**
+   - High trust: What made you confident delegating?
+   - Low trust: What made you supervise closely?
+   - Did your trust level match the task risk?
+
+8. **How has your trust in Claude Code evolved?**
+   - Are there tasks you now delegate that you initially supervised?
+   - Are there patterns the agent has mastered?
+   - Are there areas where trust hasn't grown—why?
+
+### Partnership Quality
+
+9. **Which mode do you use most: Delegation, Collaboration, Supervision, Observation?**
+   - Is this the right distribution for your current work?
+   - Are you stuck in one mode when another would be better?
+
+10. **Review your CLAUDE.md file:**
+    - Does it reflect your current architecture?
+    - Are conventions documented?
+    - Do domain boundaries match reality?
+    - When did you last update it?
+
+### Anti-Pattern Check
+
+11. **Which anti-patterns do you recognize in your partnership?**
+    - Over-delegation: Asking for too much without guidance
+    - Micro-management: Directing every keystroke
+    - Ignoring output: Not verifying or providing feedback
+    - Context hoarding: Not sharing relevant information
+    - Search engine mode: Just asking questions, not building together
+    - Zero verification: Shipping without testing
+
+12. **What would make your partnership 10x more effective?**
+    - Better context in CLAUDE.md?
+    - Clearer communication patterns?
+    - More structured verification?
+    - Different task breakdown?
+
+---
+
+## Summary: The Partnership Principle
+
+**Human-agent partnership works when:**
+
+1. **Clear division of labor**: Each does what they do best
+2. **Rich context sharing**: Agent has information to make good local decisions
+3. **Calibrated trust**: Verification depth matches task risk
+4. **Closed feedback loops**: Verification and learning happen consistently
+5. **Documented patterns**: CLAUDE.md captures evolving conventions
+
+**The goal is not automation—it is complementarity.**
+
+The human provides judgment, taste, context, and verification. The agent provides execution, consistency, thoroughness, and tirelessness. Together, they form a system where creation happens faster and better than either could achieve alone.
+
+**Tools should recede.** The partnership works best when both human and agent focus on the work, not the partnership itself. The infrastructure disappears; only creation remains.
+
+This is Heidegger's third level applied to collaboration: *Does this partnership serve the whole?*
+
+When yes, the work speaks for itself.

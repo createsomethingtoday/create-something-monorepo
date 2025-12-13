@@ -40,3 +40,6 @@ coverage
 
 # Client apps (in development)
 apps/
+
+# MCP configuration (contains API keys)
+.mcp.json
