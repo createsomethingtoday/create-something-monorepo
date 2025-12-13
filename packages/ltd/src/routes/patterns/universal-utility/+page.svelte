@@ -16,14 +16,14 @@
 </svelte:head>
 
 <!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-white/10">
+<section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-3xl mx-auto">
-		<a href="/patterns" class="text-sm opacity-40 hover:opacity-70 transition-opacity mb-8 inline-block">
+		<a href="/patterns" class="text-sm-canon opacity-40-canon hover:opacity-70-canon transition-opacity mb-8 inline-block">
 			← All Patterns
 		</a>
-		<p class="text-sm tracking-widest uppercase opacity-60 mb-4">Pattern</p>
+		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">Pattern</p>
 		<h1 class="mb-6">Universal Utility</h1>
-		<p class="text-xl opacity-70 leading-relaxed">
+		<p class="text-xl-canon opacity-70-canon leading-relaxed">
 			"The best for the most for the least." Charles and Ray Eames' democratic
 			design philosophy. Tools that serve everyone without compromise.
 		</p>
@@ -33,12 +33,12 @@
 <!-- Quote -->
 <section class="py-12 px-6">
 	<div class="max-w-3xl mx-auto">
-		<div class="p-6 border border-white/10">
-			<p class="text-lg opacity-70 italic">
+		<div class="p-6 border border-canon">
+			<p class="text-lg-canon opacity-70-canon italic">
 				"The role of the designer is that of a very good, thoughtful host
 				anticipating the needs of his guests."
 			</p>
-			<p class="text-sm opacity-40 mt-2">— Charles Eames</p>
+			<p class="text-sm-canon opacity-40-canon mt-2">— Charles Eames</p>
 		</div>
 	</div>
 </section>
@@ -48,7 +48,7 @@
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Definition</h2>
 
-		<div class="space-y-6 text-base opacity-70 leading-relaxed">
+		<div class="space-y-6 text-base-canon opacity-70-canon leading-relaxed">
 			<p>
 				<strong>Universal Utility</strong> is the Eames commitment to democratic design:
 				create the best possible solution, make it available to the most people, at the
@@ -67,8 +67,8 @@
 				so beginners aren't excluded. The best experience for the broadest audience.
 			</p>
 
-			<div class="p-6 border border-white/10 my-8">
-				<p class="text-sm opacity-60 italic">
+			<div class="p-6 border border-canon my-8">
+				<p class="text-sm-canon opacity-60-canon italic">
 					"Universal doesn't mean average. It means excellent for everyone."
 				</p>
 			</div>
@@ -77,57 +77,57 @@
 </section>
 
 <!-- Principles -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Principles</h2>
 
 		<div class="space-y-8">
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">Accessibility by Default</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">Accessibility by Default</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					Accessibility isn't a feature—it's a baseline. Screen readers, keyboard
 					navigation, color contrast: these aren't enhancements, they're requirements.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Semantic HTML before ARIA</p>
 					<p class="mb-1">✓ WCAG AA minimum, AAA preferred</p>
 					<p>✓ Test with actual assistive technologies</p>
 				</div>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">Progressive Enhancement</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">Progressive Enhancement</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					Start with core functionality that works everywhere. Layer enhancements
 					for capable environments. Never require the latest technology.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Works without JavaScript where possible</p>
 					<p class="mb-1">✓ Graceful degradation for older browsers</p>
 					<p>✓ Core paths work on slow connections</p>
 				</div>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">Zero-Config Options</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">Zero-Config Options</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					Beginners shouldn't need to configure. The default experience should be
 					excellent. Power users can customize, but the out-of-box experience works.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Sensible defaults for all options</p>
 					<p class="mb-1">✓ Configuration optional, not required</p>
 					<p>✓ Progressive disclosure of advanced features</p>
 				</div>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">No Exclusive Pricing</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">No Exclusive Pricing</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					The best features shouldn't be paywalled. Core functionality should be
 					affordable or free. Premium tiers add convenience, not capability.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Free tier that actually works</p>
 					<p class="mb-1">✓ Open source when possible</p>
 					<p>✓ Premium = more, not premium = usable</p>
@@ -138,14 +138,14 @@
 </section>
 
 <!-- When to Use -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">When to Apply</h2>
 
 		<div class="grid md:grid-cols-2 gap-8">
-			<div class="p-6 bg-green-500/5 border border-green-500/20">
-				<h3 class="text-lg font-semibold text-green-300 mb-4">Apply When</h3>
-				<ul class="space-y-2 text-sm opacity-70">
+			<div class="p-6 bg-success-subtle border border-success">
+				<h3 class="text-lg-canon font-semibold text-success mb-4">Apply When</h3>
+				<ul class="space-y-2 text-sm-canon opacity-70-canon">
 					<li>• Building public-facing tools</li>
 					<li>• Audience includes diverse abilities</li>
 					<li>• Global reach is a goal</li>
@@ -154,9 +154,9 @@
 				</ul>
 			</div>
 
-			<div class="p-6 bg-yellow-500/5 border border-yellow-500/20">
-				<h3 class="text-lg font-semibold text-yellow-300 mb-4">Balance With</h3>
-				<ul class="space-y-2 text-sm opacity-70">
+			<div class="p-6 bg-warning-subtle border border-warning">
+				<h3 class="text-lg-canon font-semibold text-warning mb-4">Balance With</h3>
+				<ul class="space-y-2 text-sm-canon opacity-70-canon">
 					<li>• Expert-focused tools (universal ≠ dumbed down)</li>
 					<li>• Sustainable business models</li>
 					<li>• Performance for power users</li>
@@ -168,29 +168,29 @@
 </section>
 
 <!-- Eames Example -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">The Eames Example</h2>
 
-		<div class="border border-white/10 p-8">
-			<h3 class="text-xl font-semibold mb-4">The Molded Plywood Chair (1946)</h3>
+		<div class="border border-canon p-8">
+			<h3 class="text-xl-canon font-semibold mb-4">The Molded Plywood Chair (1946)</h3>
 
 			<div class="grid md:grid-cols-3 gap-6 mb-6">
-				<div class="text-center p-4 bg-white/5">
-					<div class="text-2xl font-bold mb-1">Best</div>
-					<div class="text-xs opacity-50">Museum-quality design</div>
+				<div class="text-center p-4 bg-surface-subtle">
+					<div class="text-2xl-canon font-bold mb-1">Best</div>
+					<div class="text-xs-canon opacity-50-canon">Museum-quality design</div>
 				</div>
-				<div class="text-center p-4 bg-white/5">
-					<div class="text-2xl font-bold mb-1">Most</div>
-					<div class="text-xs opacity-50">Mass production enabled</div>
+				<div class="text-center p-4 bg-surface-subtle">
+					<div class="text-2xl-canon font-bold mb-1">Most</div>
+					<div class="text-xs-canon opacity-50-canon">Mass production enabled</div>
 				</div>
-				<div class="text-center p-4 bg-white/5">
-					<div class="text-2xl font-bold mb-1">Least</div>
-					<div class="text-xs opacity-50">Affordable price point</div>
+				<div class="text-center p-4 bg-surface-subtle">
+					<div class="text-2xl-canon font-bold mb-1">Least</div>
+					<div class="text-xs-canon opacity-50-canon">Affordable price point</div>
 				</div>
 			</div>
 
-			<p class="text-sm opacity-60">
+			<p class="text-sm-canon opacity-60-canon">
 				The chair is in MoMA's permanent collection—yet it was designed for
 				Herman Miller's mass production. The Eameses refused to compromise on
 				quality to achieve accessibility. They innovated in manufacturing instead.
@@ -200,21 +200,21 @@
 </section>
 
 <!-- Related Patterns -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Related Patterns</h2>
 
 		<div class="grid md:grid-cols-2 gap-6">
-			<a href="/patterns/constraint-as-liberation" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
-				<h3 class="text-lg font-semibold mb-2">Constraint as Liberation</h3>
-				<p class="text-sm opacity-60">
+			<a href="/patterns/constraint-as-liberation" class="block border border-canon p-6 hover:border-hover transition-colors">
+				<h3 class="text-lg-canon font-semibold mb-2">Constraint as Liberation</h3>
+				<p class="text-sm-canon opacity-60-canon">
 					Manufacturing constraints drove Eames innovation. Limitation enabled universality.
 				</p>
 			</a>
 
-			<a href="/patterns/timeless-materials" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
-				<h3 class="text-lg font-semibold mb-2">Timeless Materials</h3>
-				<p class="text-sm opacity-60">
+			<a href="/patterns/timeless-materials" class="block border border-canon p-6 hover:border-hover transition-colors">
+				<h3 class="text-lg-canon font-semibold mb-2">Timeless Materials</h3>
+				<p class="text-sm-canon opacity-60-canon">
 					Universal tools age well. Build on standards that everyone can access.
 				</p>
 			</a>
@@ -223,10 +223,150 @@
 </section>
 
 <!-- Footer -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto text-center">
-		<p class="text-sm opacity-40">
-			Part of the <a href="/patterns" class="underline hover:opacity-70">CREATE SOMETHING Pattern Library</a>
+		<p class="text-sm-canon opacity-40-canon">
+			Part of the <a href="/patterns" class="underline hover:opacity-70-canon">CREATE SOMETHING Pattern Library</a>
 		</p>
 	</div>
 </section>
+
+<style>
+	/* Typography */
+	.text-xs-canon {
+		font-size: var(--text-caption);
+	}
+
+	.text-sm-canon {
+		font-size: var(--text-body-sm);
+	}
+
+	.text-base-canon {
+		font-size: var(--text-body);
+	}
+
+	.text-lg-canon {
+		font-size: var(--text-body-lg);
+	}
+
+	.text-xl-canon {
+		font-size: var(--text-h3);
+	}
+
+	.text-2xl-canon {
+		font-size: var(--text-h2);
+	}
+
+	.text-3xl-canon {
+		font-size: var(--text-h1);
+	}
+
+	/* Opacity as color tokens */
+	.opacity-40-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-50-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-60-canon {
+		color: var(--color-fg-tertiary);
+	}
+
+	.opacity-70-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	.opacity-80-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Borders */
+	.border-canon {
+		border-color: var(--color-border-default);
+	}
+
+	.border-emphasis {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.border-hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.divide-canon > * + * {
+		border-color: var(--color-border-default);
+	}
+
+	/* Backgrounds */
+	.bg-surface-subtle {
+		background: var(--color-bg-subtle);
+	}
+
+	.bg-surface {
+		background: var(--color-bg-surface);
+	}
+
+	/* Semantic colors */
+	.text-success {
+		color: #4ade80;
+	}
+
+	.text-error {
+		color: #f87171;
+	}
+
+	.text-warning {
+		color: #fbbf24;
+	}
+
+	.bg-success-subtle {
+		background: rgba(74, 222, 128, 0.05);
+	}
+
+	.bg-success-muted {
+		background: rgba(74, 222, 128, 0.1);
+	}
+
+	.bg-error-subtle {
+		background: rgba(248, 113, 113, 0.05);
+	}
+
+	.bg-error-muted {
+		background: rgba(248, 113, 113, 0.1);
+	}
+
+	.bg-warning-subtle {
+		background: rgba(251, 191, 36, 0.05);
+	}
+
+	.bg-warning-muted {
+		background: rgba(251, 191, 36, 0.1);
+	}
+
+	.border-success {
+		border-color: rgba(74, 222, 128, 0.2);
+	}
+
+	.border-error {
+		border-color: rgba(248, 113, 113, 0.2);
+	}
+
+	.border-warning {
+		border-color: rgba(251, 191, 36, 0.2);
+	}
+
+	/* Universal element styles */
+	section {
+		border-color: var(--color-border-default);
+	}
+
+	table {
+		border-color: var(--color-border-default);
+	}
+
+	thead {
+		border-color: var(--color-border-default);
+	}
+</style>

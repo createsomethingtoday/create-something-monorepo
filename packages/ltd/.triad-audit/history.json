@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2025-12-02T16:22:21.461Z",
+    "scores": {
+      "dry": 2.2,
+      "rams": 7.8,
+      "heidegger": 9.6,
+      "overall": 6.8
+    },
+    "violations": {
+      "total": 7,
+      "critical": 0,
+      "high": 1,
+      "medium": 3,
+      "low": 3
+    }
+  }
+]

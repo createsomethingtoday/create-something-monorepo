@@ -15,14 +15,14 @@
 </svelte:head>
 
 <!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-white/10">
+<section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-3xl mx-auto">
-		<a href="/patterns" class="text-sm opacity-40 hover:opacity-70 transition-opacity mb-8 inline-block">
+		<a href="/patterns" class="text-sm-canon opacity-40-canon hover:opacity-70-canon transition-opacity mb-8 inline-block">
 			← All Patterns
 		</a>
-		<p class="text-sm tracking-widest uppercase opacity-60 mb-4">Pattern</p>
+		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">Pattern</p>
 		<h1 class="mb-6">Constraint as Liberation</h1>
-		<p class="text-xl opacity-70 leading-relaxed">
+		<p class="text-xl-canon opacity-70-canon leading-relaxed">
 			Limitation breeds creativity. The fewer options, the clearer the path.
 			Rams' 10 principles. Mies' steel and glass. The Eameses' plywood.
 		</p>
@@ -32,11 +32,11 @@
 <!-- Quote -->
 <section class="py-12 px-6">
 	<div class="max-w-3xl mx-auto">
-		<div class="p-6 border border-white/10">
-			<p class="text-lg opacity-70 italic">
+		<div class="p-6 border border-canon">
+			<p class="text-lg-canon opacity-70-canon italic">
 				"The enemy of art is the absence of limitations."
 			</p>
-			<p class="text-sm opacity-40 mt-2">— Orson Welles</p>
+			<p class="text-sm-canon opacity-40-canon mt-2">— Orson Welles</p>
 		</div>
 	</div>
 </section>
@@ -46,7 +46,7 @@
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Definition</h2>
 
-		<div class="space-y-6 text-base opacity-70 leading-relaxed">
+		<div class="space-y-6 text-base-canon opacity-70-canon leading-relaxed">
 			<p>
 				<strong>Constraint as Liberation</strong> recognizes that freedom comes not from
 				unlimited choice but from deliberate limitation. When everything is possible,
@@ -66,8 +66,8 @@
 				system enables layout decisions without endless negotiation.
 			</p>
 
-			<div class="p-6 border border-white/10 my-8">
-				<p class="text-sm opacity-60 italic">
+			<div class="p-6 border border-canon my-8">
+				<p class="text-sm-canon opacity-60-canon italic">
 					"The constraint is not the obstacle—it is the path."
 				</p>
 			</div>
@@ -76,57 +76,57 @@
 </section>
 
 <!-- Principles -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Principles</h2>
 
 		<div class="space-y-8">
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">Choose Your Constraints Deliberately</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">Choose Your Constraints Deliberately</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					Don't accept accidental limitations. Select constraints that serve your goals.
 					Rams chose "less, but better" because it aligned with his vision of honest design.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Black and white palette (forces focus on typography)</p>
 					<p class="mb-1">✓ Single typeface (forces hierarchy through weight/size)</p>
 					<p>✓ 5-component limit (forces composition creativity)</p>
 				</div>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">Master the Constraint Before Expanding</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">Master the Constraint Before Expanding</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					The Eameses spent years with plywood before touching fiberglass. Depth comes
 					from constraint mastery, not from breadth of options.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Build 10 projects with the same stack</p>
 					<p class="mb-1">✓ Use one framework until you hit its limits</p>
 					<p>✓ Exhaust simple solutions before adding complexity</p>
 				</div>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">Constraints Should Be Visible</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">Constraints Should Be Visible</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					Document your constraints. Make them explicit. When the team knows the
 					boundaries, decisions become faster and more consistent.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Design system with explicit rules</p>
 					<p class="mb-1">✓ Architecture decision records</p>
 					<p>✓ Style guides that say "no" more than "yes"</p>
 				</div>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-3">Constraints Enable Speed</h3>
-				<p class="text-sm opacity-60 mb-4">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-3">Constraints Enable Speed</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
 					Decision fatigue kills velocity. When constraints eliminate options,
 					execution accelerates. Less time debating, more time building.
 				</p>
-				<div class="text-xs opacity-40 font-mono">
+				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Pre-selected technology stack</p>
 					<p class="mb-1">✓ Established naming conventions</p>
 					<p>✓ Template-based starting points</p>
@@ -137,14 +137,14 @@
 </section>
 
 <!-- When to Use -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">When to Apply</h2>
 
 		<div class="grid md:grid-cols-2 gap-8">
-			<div class="p-6 bg-green-500/5 border border-green-500/20">
-				<h3 class="text-lg font-semibold text-green-300 mb-4">Apply When</h3>
-				<ul class="space-y-2 text-sm opacity-70">
+			<div class="p-6 bg-success-subtle border border-success">
+				<h3 class="text-lg-canon font-semibold text-success mb-4">Apply When</h3>
+				<ul class="space-y-2 text-sm-canon opacity-70-canon">
 					<li>• Starting a new design system</li>
 					<li>• Team lacks decision-making velocity</li>
 					<li>• Output feels scattered or inconsistent</li>
@@ -153,9 +153,9 @@
 				</ul>
 			</div>
 
-			<div class="p-6 bg-yellow-500/5 border border-yellow-500/20">
-				<h3 class="text-lg font-semibold text-yellow-300 mb-4">Reconsider When</h3>
-				<ul class="space-y-2 text-sm opacity-70">
+			<div class="p-6 bg-warning-subtle border border-warning">
+				<h3 class="text-lg-canon font-semibold text-warning mb-4">Reconsider When</h3>
+				<ul class="space-y-2 text-sm-canon opacity-70-canon">
 					<li>• Constraints are accidental, not chosen</li>
 					<li>• Limitations serve ego, not users</li>
 					<li>• You're avoiding necessary complexity</li>
@@ -168,30 +168,30 @@
 </section>
 
 <!-- Examples -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Examples from the Masters</h2>
 
 		<div class="space-y-6">
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-2">Dieter Rams — 10 Principles</h3>
-				<p class="text-sm opacity-60">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-2">Dieter Rams — 10 Principles</h3>
+				<p class="text-sm-canon opacity-60-canon">
 					Not 7, not 15. Exactly 10 principles that governed decades of work at Braun.
 					The constraint of 10 forced each principle to earn its place.
 				</p>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-2">Mies van der Rohe — Steel, Glass, Stone</h3>
-				<p class="text-sm opacity-60">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-2">Mies van der Rohe — Steel, Glass, Stone</h3>
+				<p class="text-sm-canon opacity-60-canon">
 					A palette of three materials. Barcelona Pavilion, Farnsworth House, Seagram
 					Building—all from the same constraint, each utterly distinct.
 				</p>
 			</div>
 
-			<div class="border border-white/10 p-6">
-				<h3 class="text-lg font-semibold mb-2">Charles & Ray Eames — Plywood Years</h3>
-				<p class="text-sm opacity-60">
+			<div class="border border-canon p-6">
+				<h3 class="text-lg-canon font-semibold mb-2">Charles & Ray Eames — Plywood Years</h3>
+				<p class="text-sm-canon opacity-60-canon">
 					1941-1956: fifteen years of plywood exploration before the famous fiberglass
 					chairs. The constraint became the foundation of their entire practice.
 				</p>
@@ -201,21 +201,21 @@
 </section>
 
 <!-- Related Patterns -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Related Patterns</h2>
 
 		<div class="grid md:grid-cols-2 gap-6">
-			<a href="/patterns/iterative-reduction" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
-				<h3 class="text-lg font-semibold mb-2">Iterative Reduction</h3>
-				<p class="text-sm opacity-60">
+			<a href="/patterns/iterative-reduction" class="block border border-canon p-6 hover:border-hover transition-colors">
+				<h3 class="text-lg-canon font-semibold mb-2">Iterative Reduction</h3>
+				<p class="text-sm-canon opacity-60-canon">
 					Constraints emerge through reduction. Start broad, remove until only essential remains.
 				</p>
 			</a>
 
-			<a href="/patterns/principled-defaults" class="block border border-white/10 p-6 hover:border-white/30 transition-colors">
-				<h3 class="text-lg font-semibold mb-2">Principled Defaults</h3>
-				<p class="text-sm opacity-60">
+			<a href="/patterns/principled-defaults" class="block border border-canon p-6 hover:border-hover transition-colors">
+				<h3 class="text-lg-canon font-semibold mb-2">Principled Defaults</h3>
+				<p class="text-sm-canon opacity-60-canon">
 					Constraints become defaults. Every limitation traces to a principle.
 				</p>
 			</a>
@@ -224,10 +224,150 @@
 </section>
 
 <!-- Footer -->
-<section class="py-16 px-6 border-t border-white/10">
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto text-center">
-		<p class="text-sm opacity-40">
-			Part of the <a href="/patterns" class="underline hover:opacity-70">CREATE SOMETHING Pattern Library</a>
+		<p class="text-sm-canon opacity-40-canon">
+			Part of the <a href="/patterns" class="underline hover:opacity-70-canon">CREATE SOMETHING Pattern Library</a>
 		</p>
 	</div>
 </section>
+
+<style>
+	/* Typography */
+	.text-xs-canon {
+		font-size: var(--text-caption);
+	}
+
+	.text-sm-canon {
+		font-size: var(--text-body-sm);
+	}
+
+	.text-base-canon {
+		font-size: var(--text-body);
+	}
+
+	.text-lg-canon {
+		font-size: var(--text-body-lg);
+	}
+
+	.text-xl-canon {
+		font-size: var(--text-h3);
+	}
+
+	.text-2xl-canon {
+		font-size: var(--text-h2);
+	}
+
+	.text-3xl-canon {
+		font-size: var(--text-h1);
+	}
+
+	/* Opacity as color tokens */
+	.opacity-40-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-50-canon {
+		color: var(--color-fg-muted);
+	}
+
+	.opacity-60-canon {
+		color: var(--color-fg-tertiary);
+	}
+
+	.opacity-70-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	.opacity-80-canon {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Borders */
+	.border-canon {
+		border-color: var(--color-border-default);
+	}
+
+	.border-emphasis {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.border-hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.divide-canon > * + * {
+		border-color: var(--color-border-default);
+	}
+
+	/* Backgrounds */
+	.bg-surface-subtle {
+		background: var(--color-bg-subtle);
+	}
+
+	.bg-surface {
+		background: var(--color-bg-surface);
+	}
+
+	/* Semantic colors */
+	.text-success {
+		color: #4ade80;
+	}
+
+	.text-error {
+		color: #f87171;
+	}
+
+	.text-warning {
+		color: #fbbf24;
+	}
+
+	.bg-success-subtle {
+		background: rgba(74, 222, 128, 0.05);
+	}
+
+	.bg-success-muted {
+		background: rgba(74, 222, 128, 0.1);
+	}
+
+	.bg-error-subtle {
+		background: rgba(248, 113, 113, 0.05);
+	}
+
+	.bg-error-muted {
+		background: rgba(248, 113, 113, 0.1);
+	}
+
+	.bg-warning-subtle {
+		background: rgba(251, 191, 36, 0.05);
+	}
+
+	.bg-warning-muted {
+		background: rgba(251, 191, 36, 0.1);
+	}
+
+	.border-success {
+		border-color: rgba(74, 222, 128, 0.2);
+	}
+
+	.border-error {
+		border-color: rgba(248, 113, 113, 0.2);
+	}
+
+	.border-warning {
+		border-color: rgba(251, 191, 36, 0.2);
+	}
+
+	/* Universal element styles */
+	section {
+		border-color: var(--color-border-default);
+	}
+
+	table {
+		border-color: var(--color-border-default);
+	}
+
+	thead {
+		border-color: var(--color-border-default);
+	}
+</style>

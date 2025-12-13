@@ -1,8 +1,36 @@
 <script lang="ts">
-	import { Navigation, Footer, Analytics } from '@create-something/components';
+	import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/components';
+	import { onNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import '../app.css';
 
 	let { children, data } = $props();
+
+	// View Transitions API - Hermeneutic Navigation
+	// .ltd: Contemplative (500ms)
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
+
+	// Handle cross-property entry animations
+	onMount(() => {
+		const transitionFrom = sessionStorage.getItem('cs-transition-from');
+		if (transitionFrom) {
+			sessionStorage.removeItem('cs-transition-from');
+			sessionStorage.removeItem('cs-transition-to');
+			sessionStorage.removeItem('cs-transition-time');
+			document.body.classList.add('transitioning-in');
+			setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+		}
+	});
 
 	const navLinks = [
 		{ label: 'Masters', href: '/masters' },
@@ -68,4 +96,6 @@
 		quickLinks={quickLinks}
 		showSocial={true}
 	/>
+
+	<ModeIndicator current="ltd" />
 </div>

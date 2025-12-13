@@ -218,4 +218,7 @@ INSERT OR REPLACE INTO principles (id, master_id, title, description, order_inde
 -- Masters:    6 (Rams, Mies, Tufte, Eames, Heidegger, Canon)
 -- Principles: 27 (10 Rams + 5 Tufte + 5 Heidegger + 4 Mies + 4 Eames + 3 Canon)
 -- Quotes:     25 (5 per master)
+--
+-- Note: Heidegger expanded from 5 → 10 principles in migration 0003.
+-- Total principles after 0003: 32 (10 Rams + 5 Tufte + 10 Heidegger + 4 Mies + 4 Eames + 3 Canon)
 -- ═══════════════════════════════════════════════════════════════════════════
