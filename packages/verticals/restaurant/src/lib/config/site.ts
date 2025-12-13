@@ -12,10 +12,10 @@ export const siteConfig = {
 	description:
 		'Contemporary American dining featuring seasonal ingredients and artisanal techniques. Serving Seattle since 2018.',
 
-	// Hero
+	// Hero (using menu image as placeholder)
 	hero: {
-		image: '/hero/restaurant-dining.jpg',
-		alt: 'Elegant restaurant dining room with ambient lighting'
+		image: '/menu/halibut.jpg',
+		alt: 'Pacific Northwest Halibut - Our signature dish'
 	},
 
 	// Contact
@@ -137,7 +137,7 @@ export const siteConfig = {
 			description: '14oz dry-aged beef, roasted bone marrow, fingerling potatoes, red wine jus',
 			category: 'entrees',
 			price: 52,
-			image: '/menu/ribeye.jpg',
+			image: '/menu/halibut.jpg',
 			dietary: ['gluten-free'],
 			featured: true
 		},
@@ -147,7 +147,7 @@ export const siteConfig = {
 				"Chef's selection of five courses showcasing the season's finest ingredients",
 			category: 'tasting',
 			price: 85,
-			image: '/menu/tasting.jpg',
+			image: '/menu/halibut.jpg',
 			dietary: ['vegetarian-option', 'vegan-option'],
 			featured: true
 		}

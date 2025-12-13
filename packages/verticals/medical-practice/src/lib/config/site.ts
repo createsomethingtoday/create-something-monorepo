@@ -92,13 +92,13 @@ export const siteConfig = {
 		}
 	],
 
-	// Medical Team
+	// Medical Team (images to be added via tenant config)
 	providers: [
 		{
 			name: 'Dr. Sarah Chen',
 			role: 'Family Medicine Physician',
 			credentials: 'MD, FAAFP',
-			image: '/team/dr-chen.jpg',
+			image: '',
 			bio: 'Board certified in Family Medicine. University of Washington School of Medicine 2012. Residency at Swedish Medical Center.',
 			specialties: ['Primary Care', 'Preventive Medicine', 'Chronic Disease Management'],
 			languages: ['English', 'Mandarin']
@@ -107,7 +107,7 @@ export const siteConfig = {
 			name: 'Dr. Michael Rodriguez',
 			role: 'Internal Medicine Physician',
 			credentials: 'MD, FACP',
-			image: '/team/dr-rodriguez.jpg',
+			image: '',
 			bio: 'Board certified in Internal Medicine. UCSF School of Medicine 2010. Fellowship in Hospital Medicine.',
 			specialties: ['Internal Medicine', 'Hospital Medicine', 'Geriatrics'],
 			languages: ['English', 'Spanish']
@@ -116,7 +116,7 @@ export const siteConfig = {
 			name: 'Jessica Thompson',
 			role: 'Nurse Practitioner',
 			credentials: 'ARNP, FNP-C',
-			image: '/team/np-thompson.jpg',
+			image: '',
 			bio: 'Family Nurse Practitioner. Seattle University 2015. Focus on pediatric and adolescent care.',
 			specialties: ['Pediatrics', 'Adolescent Health', 'Immunizations'],
 			languages: ['English']
@@ -165,11 +165,7 @@ export const siteConfig = {
 	newPatients: {
 		accepting: true,
 		note: 'We are currently accepting new patients with most insurance plans.',
-		forms: [
-			{ name: 'New Patient Registration', url: '/forms/registration.pdf' },
-			{ name: 'Medical History', url: '/forms/history.pdf' },
-			{ name: 'Insurance Information', url: '/forms/insurance.pdf' }
-		]
+		forms: []
 	}
 } as const;
 
