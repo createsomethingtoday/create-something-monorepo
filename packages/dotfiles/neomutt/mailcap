@@ -1,0 +1,74 @@
+# Mailcap - MIME type handlers for Neomutt
+# macOS-optimized with Canon principle: minimal, functional handlers
+
+# ─────────────────────────────────────────────────────────────
+# HTML
+# ─────────────────────────────────────────────────────────────
+
+# View HTML in terminal via lynx (text-mode, no noise)
+text/html; lynx -dump -assume_charset=utf-8 -display_charset=utf-8 %s; copiousoutput; nametemplate=%s.html
+
+# Alternative: w3m if lynx not available
+# text/html; w3m -dump -T text/html %s; copiousoutput; nametemplate=%s.html
+
+# Open HTML in browser (for complex emails)
+text/html; open %s; nametemplate=%s.html
+
+# ─────────────────────────────────────────────────────────────
+# Images
+# ─────────────────────────────────────────────────────────────
+
+# Open in Preview (macOS default)
+image/*; open %s
+
+# ─────────────────────────────────────────────────────────────
+# PDF
+# ─────────────────────────────────────────────────────────────
+
+# Open in Preview (macOS default)
+application/pdf; open %s
+
+# ─────────────────────────────────────────────────────────────
+# Office Documents
+# ─────────────────────────────────────────────────────────────
+
+# Microsoft Office
+application/msword; open %s
+application/vnd.openxmlformats-officedocument.wordprocessingml.document; open %s
+application/vnd.ms-excel; open %s
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; open %s
+application/vnd.ms-powerpoint; open %s
+application/vnd.openxmlformats-officedocument.presentationml.presentation; open %s
+
+# Google Docs exported formats
+application/rtf; open %s
+
+# ─────────────────────────────────────────────────────────────
+# Archives
+# ─────────────────────────────────────────────────────────────
+
+application/zip; open %s
+application/x-gzip; open %s
+application/x-tar; open %s
+
+# ─────────────────────────────────────────────────────────────
+# Calendar
+# ─────────────────────────────────────────────────────────────
+
+# Calendar invites - open in Calendar.app
+text/calendar; open %s
+application/ics; open %s
+
+# ─────────────────────────────────────────────────────────────
+# Plain Text
+# ─────────────────────────────────────────────────────────────
+
+# Text files - display inline
+text/plain; cat %s; copiousoutput
+
+# ─────────────────────────────────────────────────────────────
+# Fallback
+# ─────────────────────────────────────────────────────────────
+
+# Unknown types - let macOS handle it
+*/*; open %s

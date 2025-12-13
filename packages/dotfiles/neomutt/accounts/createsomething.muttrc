@@ -1,0 +1,52 @@
+# CREATE SOMETHING Account
+# micah@createsomething.io (Google Workspace)
+
+# ─────────────────────────────────────────────────────────────
+# Identity
+# ─────────────────────────────────────────────────────────────
+
+set realname = "Micah Johnson"
+set from = "micah@createsomething.io"
+
+# ─────────────────────────────────────────────────────────────
+# IMAP (Google Workspace)
+# ─────────────────────────────────────────────────────────────
+
+set imap_user = "micah@createsomething.io"
+set imap_pass = "`cat ~/.config/neomutt/credentials/createsomething.pass`"
+
+set folder = "imaps://imap.gmail.com:993"
+set spoolfile = "+INBOX"
+set postponed = "+[Gmail]/Drafts"
+set record = "+[Gmail]/Sent Mail"
+set trash = "+[Gmail]/Trash"
+
+# ─────────────────────────────────────────────────────────────
+# SMTP (Google Workspace)
+# ─────────────────────────────────────────────────────────────
+
+set smtp_url = "smtps://micah@createsomething.io@smtp.gmail.com:465"
+set smtp_pass = "`cat ~/.config/neomutt/credentials/createsomething.pass`"
+
+# ─────────────────────────────────────────────────────────────
+# Sidebar Mailboxes
+# ─────────────────────────────────────────────────────────────
+
+mailboxes =INBOX "=[Gmail]/Sent Mail" "=[Gmail]/Drafts" "=[Gmail]/All Mail" "=[Gmail]/Trash"
+
+# ─────────────────────────────────────────────────────────────
+# Signature
+# ─────────────────────────────────────────────────────────────
+
+set signature = "~/.config/neomutt/signatures/createsomething.txt"
+
+# ─────────────────────────────────────────────────────────────
+# Account-specific settings
+# ─────────────────────────────────────────────────────────────
+
+# Named mailboxes for account switching
+named-mailboxes "CS: Inbox" =INBOX
+named-mailboxes "CS: Sent" "=[Gmail]/Sent Mail"
+named-mailboxes "CS: Drafts" "=[Gmail]/Drafts"
+named-mailboxes "CS: Archive" "=[Gmail]/All Mail"
+named-mailboxes "CS: Trash" "=[Gmail]/Trash"

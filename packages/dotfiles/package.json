@@ -1,0 +1,18 @@
+{
+  "name": "@create-something/dotfiles",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Canon-compliant terminal tooling configuration",
+  "scripts": {
+    "install-dotfiles": "./scripts/install.sh",
+    "check": "echo 'Checking dotfiles...' && ls -la ~/.config/neomutt && ls -la ~/.taskrc"
+  },
+  "keywords": [
+    "dotfiles",
+    "neomutt",
+    "taskwarrior",
+    "canon"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "MIT"
+}

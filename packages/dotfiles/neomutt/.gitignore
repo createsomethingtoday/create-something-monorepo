@@ -1,0 +1,14 @@
+# Credentials (app passwords - never commit)
+credentials/
+
+# Cache directories
+cache/
+header_cache/
+message_cache/
+
+# Temporary files
+*.tmp
+*~
+
+# macOS
+.DS_Store

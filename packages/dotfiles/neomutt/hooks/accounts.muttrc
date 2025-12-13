@@ -1,0 +1,26 @@
+# Account Hooks
+# Switch identity based on folder context
+#
+# Pattern: folder-hook <pattern> <command>
+
+# ─────────────────────────────────────────────────────────────
+# Account Switching (folder-based)
+# ─────────────────────────────────────────────────────────────
+
+# CREATE SOMETHING (default)
+folder-hook imaps://micah@createsomething.io@imap.gmail.com/* 'source ~/.config/neomutt/accounts/createsomething.muttrc'
+
+# HALF DOZEN
+folder-hook imaps://mj@halfdozen.co@imap.gmail.com/* 'source ~/.config/neomutt/accounts/halfdozen.muttrc'
+
+# WEBFLOW
+folder-hook imaps://micah@webflow.com@imap.gmail.com/* 'source ~/.config/neomutt/accounts/webflow.muttrc'
+
+# ─────────────────────────────────────────────────────────────
+# Account Switching Macros
+# ─────────────────────────────────────────────────────────────
+
+# Quick account switching: g1, g2, g3
+macro index,pager g1 '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/createsomething.muttrc<enter><change-folder>=INBOX<enter>' "Switch to CREATE SOMETHING"
+macro index,pager g2 '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/halfdozen.muttrc<enter><change-folder>=INBOX<enter>' "Switch to HALF DOZEN"
+macro index,pager g3 '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/webflow.muttrc<enter><change-folder>=INBOX<enter>' "Switch to WEBFLOW"

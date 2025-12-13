@@ -1,0 +1,20 @@
+# Save Hooks
+# Default save locations for messages
+#
+# Pattern: save-hook <address-pattern> <folder>
+
+# ─────────────────────────────────────────────────────────────
+# Default: Archive (Gmail All Mail)
+# ─────────────────────────────────────────────────────────────
+
+# All messages default to archive
+save-hook . "=[Gmail]/All Mail"
+
+# ─────────────────────────────────────────────────────────────
+# Domain-specific Archives (optional)
+# ─────────────────────────────────────────────────────────────
+
+# Uncomment to organize by domain
+# save-hook '~f @webflow\.com' "+Archive/Webflow"
+# save-hook '~f @github\.com' "+Archive/GitHub"
+# save-hook '~f @stripe\.com' "+Archive/Stripe"
