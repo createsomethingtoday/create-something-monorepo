@@ -42,6 +42,14 @@
   --color-active: rgba(255, 255, 255, 0.1);
   --color-focus: rgba(255, 255, 255, 0.2);
 
+  /* Data Visualization Palette - For charts, graphs, multi-series data */
+  --color-data-1: #60a5fa; /* Blue */
+  --color-data-2: #22c55e; /* Green */
+  --color-data-3: #c084fc; /* Purple */
+  --color-data-4: #fbbf24; /* Amber */
+  --color-data-5: #f472b6; /* Pink */
+  --color-data-6: #facc15; /* Yellow */
+
   /* Typography - Fluid & Canonical */
   --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
@@ -109,6 +117,87 @@
   --duration-micro: 200ms;
   --duration-standard: 300ms;
   --duration-complex: 500ms;
+
+  /* ==========================================================================
+     Architectural Visualization Tokens
+     Threshold Zones based on Heidegger's phenomenology
+     Derived from Canon design system
+     ========================================================================== */
+
+  /* Threshold Zone Colors - derived from background scale, barely perceptible */
+  --arch-zone-outer: var(--color-bg-pure);
+  --arch-zone-service: rgba(255, 255, 255, 0.02);
+  --arch-zone-public: rgba(255, 255, 255, 0.03);
+  --arch-zone-private: rgba(255, 255, 255, 0.05);
+  --arch-zone-open: rgba(255, 255, 255, 0.04);
+
+  /* Structural Elements - derived from foreground scale */
+  --arch-wall-exterior: var(--color-fg-primary);
+  --arch-wall-interior: var(--color-fg-secondary);
+  --arch-wall-weight-exterior: 1.5;
+  --arch-wall-weight-interior: 0.5;
+
+  /* Labels & Annotations - derived from foreground scale */
+  --arch-label-primary: var(--color-fg-tertiary);
+  --arch-label-secondary: var(--color-fg-muted);
+  --arch-label-subtle: var(--color-fg-subtle);
+
+  /* Interactive Elements - derived from foreground scale */
+  --arch-door-tick: var(--color-fg-muted);
+  --arch-window: var(--color-fg-tertiary);
+  --arch-column: var(--color-fg-secondary);
+  --arch-overhang: var(--color-fg-subtle);
+  --arch-entry-arrow: var(--color-fg-muted);
+
+  /* MEP Systems - derived from Canon data visualization palette */
+  /* HVAC: Blue (data-1) */
+  --arch-hvac-supply: color-mix(in srgb, var(--color-data-1) 50%, transparent);
+  --arch-hvac-return: color-mix(in srgb, var(--color-data-1) 30%, transparent);
+  --arch-hvac-equipment: color-mix(in srgb, var(--color-data-1) 60%, transparent);
+  --arch-hvac-zone: transparent;
+  --arch-hvac-label: color-mix(in srgb, var(--color-data-1) 40%, transparent);
+
+  /* Plumbing: Purple (data-3) */
+  --arch-plumbing-supply: color-mix(in srgb, var(--color-data-3) 50%, transparent);
+  --arch-plumbing-drain: color-mix(in srgb, var(--color-data-3) 40%, transparent);
+  --arch-plumbing-vent: color-mix(in srgb, var(--color-data-3) 30%, transparent);
+  --arch-plumbing-fixture: color-mix(in srgb, var(--color-data-3) 60%, transparent);
+  --arch-plumbing-label: color-mix(in srgb, var(--color-data-3) 40%, transparent);
+
+  /* Electrical: Amber (data-4) */
+  --arch-electrical-circuit: transparent;
+  --arch-electrical-equipment: color-mix(in srgb, var(--color-data-4) 60%, transparent);
+  --arch-electrical-wire: color-mix(in srgb, var(--color-data-4) 35%, transparent);
+  --arch-electrical-label: color-mix(in srgb, var(--color-data-4) 40%, transparent);
+
+  /* Site Plan - derived from Canon background/foreground */
+  --arch-site-building: var(--color-bg-surface);
+  --arch-site-driveway: var(--color-bg-elevated);
+  --arch-site-landscape: color-mix(in srgb, var(--color-data-2) 15%, transparent);
+  --arch-site-water: color-mix(in srgb, var(--color-data-1) 20%, transparent);
+  --arch-site-setback: var(--color-fg-subtle);
+
+  /* Circulation/Threshold - derived from Canon data palette */
+  --arch-threshold-entry: var(--color-data-2);      /* Green - arrival */
+  --arch-threshold-transition: var(--color-data-1); /* Blue - zone change */
+  --arch-threshold-passage: var(--color-data-4);    /* Amber - movement */
+  --arch-threshold-arrival: var(--color-data-3);    /* Purple - destination */
+
+  /* Light Study - derived from Canon data palette */
+  --arch-sun-summer: var(--color-data-4);   /* Amber */
+  --arch-sun-equinox: var(--color-data-1);  /* Blue */
+  --arch-sun-winter: var(--color-data-3);   /* Purple */
+  --arch-light-direct: var(--color-data-4);
+  --arch-light-diffuse: var(--color-data-1);
+  --arch-light-shade: var(--color-bg-subtle);
+
+  /* Daily Rhythm - derived from Canon data palette */
+  --arch-rhythm-family: var(--color-data-1);   /* Blue */
+  --arch-rhythm-parents: var(--color-data-3);  /* Purple */
+  --arch-rhythm-daughter: var(--color-data-5); /* Pink */
+  --arch-rhythm-inlaw: var(--color-data-4);    /* Amber */
+  --arch-rhythm-guests: var(--color-data-2);   /* Green */
+  --arch-rhythm-service: var(--color-fg-muted);
 
   /* Z-Index Layers */
   --z-base: 0;
@@ -448,4 +537,59 @@ pre code.hljs {
   border-radius: var(--radius-md);
   font-size: var(--text-body-sm);
   line-height: var(--leading-relaxed);
+}
+
+/* ==========================================================================
+   View Transitions API - Hermeneutic Navigation
+   "Navigation should feel like dwelling, not jumping"
+   ========================================================================== */
+
+:root {
+  --view-transition-duration: 300ms; /* .space: Experimental, playful */
+}
+
+::view-transition-old(root) {
+  animation: view-transition-fade-out var(--view-transition-duration) var(--ease-standard);
+}
+
+::view-transition-new(root) {
+  animation: view-transition-fade-in var(--view-transition-duration) var(--ease-standard);
+}
+
+@keyframes view-transition-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes view-transition-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+body.transitioning-out {
+  animation: cross-property-exit var(--duration-standard) var(--ease-standard) forwards;
+}
+
+@keyframes cross-property-exit {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+
+body.transitioning-in {
+  animation: cross-property-entry var(--duration-complex) var(--ease-standard);
+}
+
+@keyframes cross-property-entry {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  body.transitioning-out,
+  body.transitioning-in {
+    animation: none !important;
+  }
 }

@@ -16,6 +16,8 @@ declare global {
 				AI: Ai; // Cloudflare Workers AI binding
 				SANDBOX: unknown; // Cloudflare Sandbox binding
 				RESEND_API_KEY: string;
+				TURNSTILE_SECRET_KEY?: string;
+				TURNSTILE_SITE_KEY?: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;

@@ -108,7 +108,7 @@
 				href={isCompleted ? returnUrl : ioUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="inline-flex items-center gap-2 px-4 py-2 {isCompleted ? 'bg-green-500/10 border-green-500/30' : 'bg-white/5 border-white/10'} border rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-sm"
+				class="paper-link inline-flex items-center gap-2 px-4 py-2 {isCompleted ? 'completed' : ''} transition-colors"
 			>
 				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 					<path stroke-linecap="round" stroke-linejoin="round" d={isCompleted ? "M5 13l4 4L19 7" : "M10 19l-7-7m0 0l7-7m-7 7h18"} />
@@ -155,7 +155,7 @@
 	<div class="w-full max-w-5xl mx-auto px-6 py-12">
 		<a
 			href="/experiments"
-			class="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+			class="back-link inline-flex items-center gap-2"
 		>
 			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -164,3 +164,32 @@
 		</a>
 	</div>
 </div>
+
+<style>
+  .paper-link {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+  }
+
+  .paper-link:hover {
+    color: var(--color-fg-primary);
+    background: var(--color-active);
+  }
+
+  .paper-link.completed {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+
+  .back-link {
+    color: var(--color-fg-secondary);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .back-link:hover {
+    color: var(--color-fg-primary);
+  }
+</style>

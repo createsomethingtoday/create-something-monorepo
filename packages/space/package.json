@@ -23,7 +23,6 @@
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@types/node": "^24.10.1",
 		"autoprefixer": "^10.4.22",
-		"gsap": "^3.13.0",
 		"highlight.js": "^11.11.1",
 		"marked": "^17.0.0",
 		"postcss": "^8.5.6",

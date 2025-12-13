@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade } from 'svelte/transition';
   import type { Paper, CodeLesson } from '$lib/types/paper';
 
   interface Props {
@@ -180,7 +179,7 @@
     <div class="output-panel">
       <!-- Hint (Progressive Disclosure) -->
       {#if showHint && lesson.hints}
-        <div class="hint-box" transition:fade>
+        <div class="hint-box animate-fade-in">
           <h4>Hints:</h4>
           <ul>
             {#each lesson.hints as hint}
@@ -204,7 +203,7 @@
           {/if}
         </div>
         {#if output.length > 0}
-          <pre class="output" transition:fade>{output.join('\n')}</pre>
+          <pre class="output animate-fade-in">{output.join('\n')}</pre>
         {:else}
           <div class="output-placeholder">Code executed successfully</div>
         {/if}
@@ -214,7 +213,7 @@
       <div class="kv-section">
         <h4>KV Storage:</h4>
         {#if kvState.length > 0}
-          <div class="kv-items" transition:fade>
+          <div class="kv-items animate-fade-in">
             {#each kvState as item}
               <div class="kv-item">
                 <span class="kv-key">{item.key}</span>
@@ -506,6 +505,27 @@
 
   .kv-value {
     color: white;
+  }
+
+  /* Animation */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in {
+      animation: none;
+      opacity: 1;
+    }
   }
 
   /* Responsive */

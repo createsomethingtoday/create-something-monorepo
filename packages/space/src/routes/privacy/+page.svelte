@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition';
   import { Footer } from '@create-something/components';
 
   const quickLinks = [
@@ -19,12 +18,12 @@
 <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-4xl mx-auto">
-      <div in:fly={{ y: 20, duration: 600 }} class="space-y-6">
-        <h1 class="text-4xl md:text-6xl font-bold text-white">
+      <div class="space-y-6 animate-reveal">
+        <h1 class="hero-title">
           Privacy Policy
         </h1>
 
-        <p class="text-lg text-white/60">
+        <p class="date-text">
           Last updated: November 14, 2024
         </p>
       </div>
@@ -37,9 +36,9 @@
       <div class="space-y-12 text-white/70 leading-relaxed">
         <!-- Introduction -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">1. Introduction</h2>
+          <h2 class="section-title">1. Introduction</h2>
           <p>
-            CREATE SOMETHING ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website <a href="https://createsomething.io" class="text-white hover:underline">createsomething.io</a> and use our services.
+            CREATE SOMETHING ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website <a href="https://createsomething.io" class="link hover:underline">createsomething.io</a> and use our services.
           </p>
           <p>
             Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
@@ -48,9 +47,9 @@
 
         <!-- Information We Collect -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">2. Information We Collect</h2>
+          <h2 class="section-title">2. Information We Collect</h2>
 
-          <h3 class="text-xl font-semibold text-white">2.1 Personal Information</h3>
+          <h3 class="subsection-title">2.1 Personal Information</h3>
           <p>
             We may collect personal information that you voluntarily provide to us when you:
           </p>
@@ -90,7 +89,7 @@
 
         <!-- How We Use Your Information -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">3. How We Use Your Information</h2>
+          <h2 class="section-title">3. How We Use Your Information</h2>
           <p>
             We use the information we collect for the following purposes:
           </p>
@@ -107,12 +106,12 @@
 
         <!-- Sharing Your Information -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">4. Sharing Your Information</h2>
+          <h2 class="section-title">4. Sharing Your Information</h2>
           <p>
             We do not sell, trade, or rent your personal information to third parties. We may share your information in the following circumstances:
           </p>
 
-          <h3 class="text-xl font-semibold text-white">4.1 Service Providers</h3>
+          <h3 class="subsection-title">4.1 Service Providers</h3>
           <p>
             We may employ third-party companies and individuals to facilitate our service ("Service Providers"), provide the service on our behalf, perform service-related services, or assist us in analyzing how our service is used. These third parties have access to your personal information only to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
           </p>
@@ -139,7 +138,7 @@
 
         <!-- Data Security -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">5. Data Security</h2>
+          <h2 class="section-title">5. Data Security</h2>
           <p>
             We implement appropriate technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. These measures include:
           </p>
@@ -157,7 +156,7 @@
 
         <!-- Data Retention -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">6. Data Retention</h2>
+          <h2 class="section-title">6. Data Retention</h2>
           <p>
             We retain your personal information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law. When we no longer need your information, we will securely delete or anonymize it.
           </p>
@@ -165,12 +164,12 @@
 
         <!-- Your Privacy Rights -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">7. Your Privacy Rights</h2>
+          <h2 class="section-title">7. Your Privacy Rights</h2>
           <p>
             Depending on your location, you may have certain rights regarding your personal information:
           </p>
 
-          <h3 class="text-xl font-semibold text-white">7.1 Access and Portability</h3>
+          <h3 class="subsection-title">7.1 Access and Portability</h3>
           <p>
             You have the right to request access to the personal information we hold about you and to receive a copy of it in a structured, commonly used, and machine-readable format.
           </p>
@@ -197,7 +196,7 @@
 
           <p class="mt-6">
             To exercise any of these rights, please contact us at{' '}
-            <a href="mailto:micah@createsomething.io" class="text-white hover:underline">
+            <a href="mailto:micah@createsomething.io" class="link hover:underline">
               micah@createsomething.io
             </a>.
           </p>
@@ -205,7 +204,7 @@
 
         <!-- Third-Party Links -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">8. Third-Party Links</h2>
+          <h2 class="section-title">8. Third-Party Links</h2>
           <p>
             Our website may contain links to third-party websites, services, or resources that are not owned or controlled by us. We are not responsible for the privacy practices or content of these third-party sites. We encourage you to review the privacy policies of any third-party sites you visit.
           </p>
@@ -213,7 +212,7 @@
 
         <!-- Children's Privacy -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">9. Children's Privacy</h2>
+          <h2 class="section-title">9. Children's Privacy</h2>
           <p>
             Our services are not directed to individuals under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe that your child has provided us with personal information, please contact us, and we will take steps to delete such information.
           </p>
@@ -221,7 +220,7 @@
 
         <!-- International Data Transfers -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">10. International Data Transfers</h2>
+          <h2 class="section-title">10. International Data Transfers</h2>
           <p>
             Your information may be transferred to and maintained on servers located outside of your state, province, country, or other governmental jurisdiction where data protection laws may differ. If you are located outside the United States and choose to provide information to us, please note that we transfer the data to the United States and process it there.
           </p>
@@ -232,7 +231,7 @@
 
         <!-- GDPR Compliance -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">11. GDPR Compliance (European Users)</h2>
+          <h2 class="section-title">11. GDPR Compliance (European Users)</h2>
           <p>
             If you are located in the European Economic Area (EEA), you have certain data protection rights under the General Data Protection Regulation (GDPR). We aim to take reasonable steps to allow you to correct, amend, delete, or limit the use of your personal information.
           </p>
@@ -248,7 +247,7 @@
 
         <!-- CCPA Compliance -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">12. CCPA Compliance (California Residents)</h2>
+          <h2 class="section-title">12. CCPA Compliance (California Residents)</h2>
           <p>
             If you are a California resident, the California Consumer Privacy Act (CCPA) provides you with specific rights regarding your personal information:
           </p>
@@ -260,7 +259,7 @@
           </ul>
           <p>
             To exercise these rights, contact us at{' '}
-            <a href="mailto:micah@createsomething.io" class="text-white hover:underline">
+            <a href="mailto:micah@createsomething.io" class="link hover:underline">
               micah@createsomething.io
             </a>.
           </p>
@@ -268,7 +267,7 @@
 
         <!-- Changes to This Policy -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">13. Changes to This Privacy Policy</h2>
+          <h2 class="section-title">13. Changes to This Privacy Policy</h2>
           <p>
             We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date at the top.
           </p>
@@ -279,20 +278,20 @@
 
         <!-- Contact Us -->
         <div class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">14. Contact Us</h2>
+          <h2 class="section-title">14. Contact Us</h2>
           <p>
             If you have any questions about this Privacy Policy, please contact us:
           </p>
           <ul class="space-y-2">
             <li>
               <strong class="text-white">Email:</strong>{' '}
-              <a href="mailto:micah@createsomething.io" class="text-white hover:underline">
+              <a href="mailto:micah@createsomething.io" class="link hover:underline">
                 micah@createsomething.io
               </a>
             </li>
             <li>
               <strong class="text-white">Website:</strong>{' '}
-              <a href="https://createsomething.io/contact" class="text-white hover:underline">
+              <a href="https://createsomething.io/contact" class="link hover:underline">
                 createsomething.io/contact
               </a>
             </li>
@@ -301,7 +300,7 @@
 
         <!-- Acknowledgment -->
         <div class="space-y-4 pt-8 border-t border-white/10">
-          <p class="text-sm text-white/50">
+          <p class="caption-text">
             By using our website and services, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.
           </p>
         </div>
@@ -316,3 +315,61 @@
     quickLinks={quickLinks}
     showSocial={true}
   />
+<style>
+  .hero-title {
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .date-text {
+    font-size: var(--text-body);
+    color: var(--color-fg-secondary);
+  }
+
+  .body-text {
+    color: var(--color-fg-tertiary);
+  }
+
+  .section-title {
+    font-size: var(--text-h2);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .subsection-title {
+    font-size: var(--text-h3);
+    font-weight: 600;
+    color: var(--color-fg-primary);
+  }
+
+  .caption-text {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .link {
+    color: var(--color-fg-primary);
+  }
+
+  .animate-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-reveal {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
