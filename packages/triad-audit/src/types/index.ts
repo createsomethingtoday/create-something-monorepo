@@ -157,3 +157,9 @@ export const DEFAULT_CONFIG: AuditConfig = {
 	},
 	output: 'both'
 };
+
+// =============================================================================
+// ARCHITECTURE DOMAIN
+// =============================================================================
+
+export * from './architecture.js';

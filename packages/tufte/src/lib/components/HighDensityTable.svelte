@@ -39,37 +39,35 @@
 	3. Tabular numbers (monospace font, right-aligned)
 	4. Clear visual hierarchy (opacity variations)
 -->
-<div class="space-y-1">
+<div class="table space-y-1">
 	{#if displayItems.length === 0}
-		<p class="text-white/40 text-xs py-2">{emptyMessage}</p>
+		<p class="empty-message py-2">{emptyMessage}</p>
 	{:else}
 		{#each displayItems as item, i}
-			<div
-				class="flex items-center gap-2 text-xs font-mono py-1.5 border-b border-white/5 last:border-0"
-			>
+			<div class="row flex items-center gap-2 py-1.5">
 				<!-- Rank number (Tufte: muted, right-aligned) -->
 				{#if showRank}
-					<span class="text-white/30 w-4 text-right">{i + 1}</span>
+					<span class="rank w-4 text-right">{i + 1}</span>
 				{/if}
 
 				<!-- Optional badge (e.g., property tag) -->
 				{#if badgeKey && item[badgeKey]}
-					<span class="text-white/40 px-1.5 py-0.5 bg-white/5 rounded text-[10px]">
+					<span class="badge px-1.5 py-0.5">
 						{item[badgeKey]}
 					</span>
 				{/if}
 
 				<!-- Label (Tufte: main data, truncate if needed) -->
-				<span class="flex-1 truncate text-white/80">{item[labelKey]}</span>
+				<span class="label flex-1 truncate">{item[labelKey]}</span>
 
 				<!-- Count (Tufte: tabular numbers, right-aligned) -->
-				<span class="text-white/60 tabular-nums w-12 text-right">
+				<span class="count tabular-nums w-12 text-right">
 					{formatNumber(item[countKey] as number)}
 				</span>
 
 				<!-- Percentage of total (Tufte: subtle context) -->
 				{#if showPercentage}
-					<span class="text-white/30 w-10 text-right">
+					<span class="percentage w-10 text-right">
 						{getPercentage(item[countKey] as number, total)}%
 					</span>
 				{/if}
@@ -77,3 +75,46 @@
 		{/each}
 	{/if}
 </div>
+
+<style>
+	.table {
+		font-size: var(--text-caption);
+		font-family: ui-monospace, monospace;
+	}
+
+	.empty-message {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+	}
+
+	.row {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.row:last-child {
+		border-bottom: none;
+	}
+
+	.rank {
+		color: var(--color-fg-subtle);
+	}
+
+	.badge {
+		color: var(--color-fg-muted);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-sm);
+		font-size: 10px;
+	}
+
+	.label {
+		color: var(--color-fg-secondary);
+	}
+
+	.count {
+		color: var(--color-fg-tertiary);
+	}
+
+	.percentage {
+		color: var(--color-fg-subtle);
+	}
+</style>

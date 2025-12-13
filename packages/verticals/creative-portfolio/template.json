@@ -1,0 +1,62 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Creative Portfolio",
+  "slug": "creative-portfolio",
+  "version": "1.0.0",
+  "description": "Minimal portfolio for photographers, designers, and artists. Maximum work, minimum chrome.",
+  "category": "creative",
+  "subcategories": ["photographer", "designer", "artist", "illustrator"],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-creative-portfolio",
+  "demo": "https://creative-portfolio.createsomething.space",
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "Grid portfolio layout",
+        "Full-bleed project galleries",
+        "Info overlay with bio",
+        "Social links",
+        "SEO optimized",
+        "Mobile responsive"
+      ]
+    },
+    "pro": {
+      "price": 79,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "Password-protected projects",
+        "Client gallery links",
+        "Download management",
+        "Contact form",
+        "Analytics integration"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages"
+  },
+  "designPhilosophy": {
+    "principle": "Maximum work, minimum chrome",
+    "colorScheme": "light-neutral",
+    "typography": "Inter (minimal weights)",
+    "aesthetic": "Gallery-first, UI-recedes"
+  },
+  "keywords": [
+    "photographer portfolio",
+    "designer portfolio",
+    "artist website",
+    "minimal portfolio",
+    "photography website",
+    "gallery template"
+  ],
+  "created": "2024-12-10",
+  "updated": "2024-12-10"
+}

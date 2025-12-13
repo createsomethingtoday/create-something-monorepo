@@ -9,34 +9,44 @@
 	 * not an afterthought."
 	 */
 
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 
 	const currentYear = new Date().getFullYear();
 </script>
 
 <footer class="footer">
 	<div class="footer-container">
-		<!-- Main content: two columns -->
+		<!-- Main content: three columns -->
 		<div class="footer-main">
 			<!-- Left: Studio info -->
 			<div class="footer-studio">
-				<span class="footer-name">{siteConfig.name}</span>
+				<span class="footer-name">{$siteConfig.name}</span>
 				<address class="footer-address">
-					<span>{siteConfig.address.street}</span>
-					<span>{siteConfig.address.city}, {siteConfig.address.state} {siteConfig.address.zip}</span>
+					<span>{$siteConfig.address.street}</span>
+					<span>{$siteConfig.address.city}, {$siteConfig.address.state} {$siteConfig.address.zip}</span>
 				</address>
+			</div>
+
+			<!-- Middle: Site navigation -->
+			<div class="footer-nav">
+				<nav class="footer-links" aria-label="Footer navigation">
+					<a href="/projects" class="footer-link">Projects</a>
+					<a href="/services" class="footer-link">Services</a>
+					<a href="/team" class="footer-link">Team</a>
+					<a href="/studio" class="footer-link">Studio</a>
+					<a href="/about" class="footer-link">About</a>
+					<a href="/contact" class="footer-link">Contact</a>
+				</nav>
 			</div>
 
 			<!-- Right: Contact & Social -->
 			<div class="footer-contact">
-				<a href="mailto:{siteConfig.email}" class="footer-email">{siteConfig.email}</a>
-				<a href="tel:{siteConfig.phone}" class="footer-phone">{siteConfig.phone}</a>
+				<a href="mailto:{$siteConfig.email}" class="footer-email">{$siteConfig.email}</a>
+				<a href="tel:{$siteConfig.phone}" class="footer-phone">{$siteConfig.phone}</a>
 				<div class="footer-social">
-					{#if siteConfig.social.instagram}
+					{#if $siteConfig.social.instagram}
 						<a
-							href={siteConfig.social.instagram}
+							href={$siteConfig.social.instagram}
 							class="social-link"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -45,9 +55,9 @@
 							Instagram
 						</a>
 					{/if}
-					{#if siteConfig.social.pinterest}
+					{#if $siteConfig.social.pinterest}
 						<a
-							href={siteConfig.social.pinterest}
+							href={$siteConfig.social.pinterest}
 							class="social-link"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -62,7 +72,7 @@
 
 		<!-- Bottom: copyright & legal -->
 		<div class="footer-bottom">
-			<span class="footer-copyright">&copy; {currentYear} {siteConfig.name}</span>
+			<span class="footer-copyright">&copy; {currentYear} {$siteConfig.name}</span>
 			<div class="footer-legal">
 				<a href="/privacy" class="legal-link">Privacy</a>
 				<a href="/terms" class="legal-link">Terms</a>
@@ -93,8 +103,39 @@
 
 	@media (min-width: 768px) {
 		.footer-main {
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: 1fr 1fr 1fr;
 		}
+	}
+
+	/* Footer navigation */
+	.footer-nav {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.footer-links {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	@media (min-width: 768px) {
+		.footer-links {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-xs) var(--space-md);
+		}
+	}
+
+	.footer-link {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		text-decoration: none;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.footer-link:hover {
+		color: var(--color-fg-primary);
 	}
 
 	/* Studio info */

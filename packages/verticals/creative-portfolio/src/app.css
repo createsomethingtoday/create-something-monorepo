@@ -1,0 +1,176 @@
+/**
+ * Creative Portfolio - Canon Design System
+ *
+ * Design Philosophy: Maximum work, minimum chrome.
+ * Images fill the space. Navigation disappears.
+ */
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+	/* Colors - Neutral, lets images pop */
+	--color-bg-pure: #fafafa;
+	--color-bg-elevated: #ffffff;
+	--color-bg-surface: #f0f0f0;
+
+	--color-fg-primary: #1a1a1a;
+	--color-fg-secondary: #666666;
+	--color-fg-muted: #999999;
+	--color-fg-subtle: #cccccc;
+
+	--color-border-default: #e5e5e5;
+	--color-border-emphasis: #d0d0d0;
+
+	--color-hover: rgba(0, 0, 0, 0.03);
+
+	/* Spacing - Generous */
+	--space-xs: 0.5rem;
+	--space-sm: 1rem;
+	--space-md: 1.618rem;
+	--space-lg: 2.618rem;
+	--space-xl: 4.236rem;
+	--space-2xl: 6.854rem;
+
+	/* Typography - Restrained */
+	--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+	--font-mono: 'JetBrains Mono', monospace;
+
+	--text-display: clamp(1.5rem, 2vw + 0.5rem, 2rem);
+	--text-h1: clamp(1.25rem, 1.5vw + 0.5rem, 1.5rem);
+	--text-body: 1rem;
+	--text-body-sm: 0.875rem;
+	--text-caption: 0.75rem;
+
+	--leading-tight: 1.2;
+	--leading-normal: 1.5;
+	--leading-relaxed: 1.75;
+
+	/* Effects */
+	--duration-micro: 150ms;
+	--duration-standard: 300ms;
+	--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+	/* Layout */
+	--content-width: 1600px;
+	--gutter: clamp(1rem, 3vw, 3rem);
+}
+
+/* Base */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	font-family: var(--font-sans);
+	font-size: 16px;
+	line-height: var(--leading-normal);
+	color: var(--color-fg-primary);
+	background: var(--color-bg-pure);
+	-webkit-font-smoothing: antialiased;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+}
+
+/* Typography */
+h1, h2, h3 {
+	font-weight: 400;
+	margin: 0;
+}
+
+p { margin: 0; }
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* Portfolio Grid - Masonry-like */
+.work-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+	gap: var(--space-sm);
+}
+
+.work-item {
+	aspect-ratio: 4/3;
+	overflow: hidden;
+	position: relative;
+}
+
+.work-item img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform var(--duration-standard) var(--ease-standard);
+}
+
+.work-item:hover img {
+	transform: scale(1.02);
+}
+
+/* Full-bleed gallery */
+.gallery {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-sm);
+}
+
+.gallery-image {
+	width: 100%;
+}
+
+.gallery-image img {
+	width: 100%;
+	height: auto;
+	display: block;
+}
+
+/* Minimal navigation */
+.nav-minimal {
+	position: fixed;
+	bottom: var(--space-md);
+	left: var(--space-md);
+	z-index: 100;
+	font-size: var(--text-caption);
+	color: var(--color-fg-muted);
+}
+
+.nav-minimal a {
+	transition: color var(--duration-micro) var(--ease-standard);
+}
+
+.nav-minimal a:hover {
+	color: var(--color-fg-primary);
+}
+
+/* Info overlay for project pages */
+.info-toggle {
+	position: fixed;
+	bottom: var(--space-md);
+	right: var(--space-md);
+	z-index: 100;
+	font-size: var(--text-caption);
+	color: var(--color-fg-muted);
+	cursor: pointer;
+	background: none;
+	border: none;
+	font-family: inherit;
+}
+
+/* Focus */
+:focus-visible {
+	outline: 1px solid var(--color-fg-primary);
+	outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+	.work-grid {
+		grid-template-columns: 1fr;
+	}
+}

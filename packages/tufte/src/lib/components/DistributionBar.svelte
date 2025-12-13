@@ -35,12 +35,12 @@
 		width: total > 0 ? (s.count / total) * 100 : 0
 	}));
 
-	// Default colors - brighter/more saturated for better visibility
+	// Canon data visualization palette
 	const defaultColors = [
-		'rgb(96, 165, 250)', // bright blue
-		'rgb(34, 197, 94)', // bright green
-		'rgb(192, 132, 252)', // bright purple
-		'rgb(251, 191, 36)' // bright yellow/orange
+		'var(--color-data-1)', // Blue
+		'var(--color-data-2)', // Green
+		'var(--color-data-3)', // Purple
+		'var(--color-data-4)' // Amber
 	];
 </script>
 
@@ -50,20 +50,20 @@
 	2. Maximize data-ink ratio (minimal decoration)
 	3. Integrate text and data (labels within segments when possible)
 -->
-<div class="space-y-2">
+<div class="distribution-bar space-y-2">
 	<!-- Distribution bar -->
-	<div class="flex {height} rounded overflow-hidden bg-white/5">
+	<div class="bar flex {height} overflow-hidden">
 		{#each segmentsWithPercentages as segment, i}
 			{#if segment.width > 0}
 				<div
-					class="flex items-center justify-center text-xs font-medium transition-all hover:opacity-80"
+					class="segment flex items-center justify-center"
 					style="width: {segment.width}%; background-color: {segment.color ||
 						defaultColors[i % defaultColors.length]};"
 					title="{segment.label}: {formatNumber(segment.count)} ({segment.percentage}%)"
 				>
 					<!-- Only show label if segment is wide enough (Tufte: clarity over completeness) -->
 					{#if segment.width >= minLabelWidth}
-						<span class="text-white px-2 truncate">
+						<span class="segment-label px-2 truncate">
 							{segment.percentage}%
 						</span>
 					{/if}
@@ -74,19 +74,19 @@
 
 	<!-- Legend below (Tufte: integrate supporting information) -->
 	{#if showLabels}
-		<div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+		<div class="legend flex flex-wrap gap-x-6 gap-y-2">
 			{#each segmentsWithPercentages as segment, i}
-				<div class="flex items-center gap-2">
+				<div class="legend-item flex items-center gap-2">
 					<div
-						class="w-4 h-4 rounded"
+						class="legend-indicator w-4 h-4"
 						style="background-color: {segment.color ||
 							defaultColors[i % defaultColors.length]};"
 					/>
-					<span class="text-white/90 font-medium">{segment.label}</span>
-					<span class="text-white/60 font-mono">
+					<span class="legend-label">{segment.label}</span>
+					<span class="legend-value">
 						{formatNumber(segment.count)}
 						{#if showPercentages}
-							<span class="text-white/50">({segment.percentage}%)</span>
+							<span class="legend-percentage">({segment.percentage}%)</span>
 						{/if}
 					</span>
 				</div>
@@ -94,3 +94,46 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.bar {
+		border-radius: var(--radius-md);
+		background: var(--color-bg-surface);
+	}
+
+	.segment {
+		font-size: var(--text-caption);
+		font-weight: 500;
+		transition: opacity var(--duration-standard) var(--ease-standard);
+	}
+
+	.segment:hover {
+		opacity: 0.8;
+	}
+
+	.segment-label {
+		color: var(--color-fg-primary);
+	}
+
+	.legend {
+		font-size: var(--text-body-sm);
+	}
+
+	.legend-indicator {
+		border-radius: var(--radius-sm);
+	}
+
+	.legend-label {
+		color: var(--color-fg-primary);
+		font-weight: 500;
+	}
+
+	.legend-value {
+		color: var(--color-fg-tertiary);
+		font-family: ui-monospace, monospace;
+	}
+
+	.legend-percentage {
+		color: var(--color-fg-muted);
+	}
+</style>

@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/vertical-shared",
+  "version": "1.0.0",
+  "description": "Shared infrastructure for CREATE SOMETHING template verticals",
+  "type": "module",
+  "exports": {
+    "./components": "./src/components/index.ts",
+    "./layouts": "./src/layouts/index.ts",
+    "./workflows": "./src/workflows/index.ts",
+    "./types": "./src/types/index.ts",
+    "./canon": "./src/canon/tokens.css"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

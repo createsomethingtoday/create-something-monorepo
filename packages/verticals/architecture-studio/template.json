@@ -1,0 +1,92 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Architecture Studio",
+  "slug": "architecture-studio",
+  "version": "1.0.0",
+  "description": "Image-led portfolio template for architecture studios and design firms",
+  "category": "creative",
+  "subcategories": ["architecture", "interior-design", "landscape-architecture"],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency",
+    "support": "https://createsomething.agency/contact"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-architecture-studio",
+  "demo": "https://architecture-studio.createsomething.space",
+  "thumbnail": "/og-image.jpg",
+  "screenshots": [
+    "/screenshots/home.png",
+    "/screenshots/projects.png",
+    "/screenshots/project-detail.png"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "Full-bleed hero imagery",
+        "Project portfolio with detail pages",
+        "Studio/About page",
+        "Contact form",
+        "Canon design system (light theme)",
+        "SEO/Schema.org structured data",
+        "Mobile responsive"
+      ]
+    },
+    "pro": {
+      "price": 149,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "Project inquiry workflow",
+        "Client meeting scheduler",
+        "Press kit generator",
+        "Multiple team members",
+        "Custom domain setup guide",
+        "Email support"
+      ]
+    },
+    "enterprise": {
+      "price": null,
+      "contact": true,
+      "features": [
+        "Everything in Pro",
+        "Custom integrations",
+        "Multi-language support",
+        "Client portal",
+        "Done-for-you setup",
+        ".agency design consultation"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages",
+    "database": "cloudflare-d1",
+    "cache": "cloudflare-kv"
+  },
+  "designPhilosophy": {
+    "principle": "Images command, text supports, space breathes",
+    "colorScheme": "light",
+    "typography": "Inter + Newsreader",
+    "aesthetic": "Scandinavian minimalism"
+  },
+  "seo": {
+    "schemaTypes": ["ArchitectureBusiness", "LocalBusiness", "Organization"],
+    "sitemap": true,
+    "robots": true,
+    "ogImage": true
+  },
+  "keywords": [
+    "architecture portfolio",
+    "architect website",
+    "design studio template",
+    "interior design website",
+    "minimalist portfolio",
+    "cloudflare pages",
+    "sveltekit template"
+  ],
+  "created": "2024-12-10",
+  "updated": "2024-12-10"
+}

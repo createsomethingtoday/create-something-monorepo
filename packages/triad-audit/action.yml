@@ -1,0 +1,122 @@
+# GitHub Action for Subtractive Triad Audit
+# Usage:
+#   - uses: create-something/triad-audit@v1
+#     with:
+#       threshold: 6.0
+
+name: 'Subtractive Triad Audit'
+description: 'Audit your codebase using the Subtractive Triad: DRY, Rams, Heidegger'
+author: 'CREATE SOMETHING'
+
+branding:
+  icon: 'minus-circle'
+  color: 'gray-dark'
+
+inputs:
+  path:
+    description: 'Path to audit (defaults to repository root)'
+    required: false
+    default: '.'
+  threshold:
+    description: 'Minimum overall score (0-10) to pass'
+    required: false
+    default: '5.0'
+  fail-on-regression:
+    description: 'Fail if score decreases from baseline'
+    required: false
+    default: 'true'
+  comment-on-pr:
+    description: 'Post audit results as PR comment'
+    required: false
+    default: 'true'
+
+outputs:
+  score:
+    description: 'Overall audit score (0-10)'
+  dry-score:
+    description: 'DRY level score (0-10)'
+  rams-score:
+    description: 'Rams level score (0-10)'
+  heidegger-score:
+    description: 'Heidegger level score (0-10)'
+  violations:
+    description: 'Total violation count'
+  report:
+    description: 'Full audit report in markdown'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run Subtractive Triad Audit
+      id: audit
+      shell: bash
+      run: |
+        # Run the audit
+        npx @createsomething/triad-audit ${{ inputs.path }} --format json --output audit-result.json
+
+        # Extract scores
+        OVERALL=$(jq -r '.scores.overall' audit-result.json)
+        DRY=$(jq -r '.scores.dry' audit-result.json)
+        RAMS=$(jq -r '.scores.rams' audit-result.json)
+        HEIDEGGER=$(jq -r '.scores.heidegger' audit-result.json)
+        VIOLATIONS=$(jq -r '.summary.totalViolations' audit-result.json)
+
+        # Set outputs
+        echo "score=$OVERALL" >> $GITHUB_OUTPUT
+        echo "dry-score=$DRY" >> $GITHUB_OUTPUT
+        echo "rams-score=$RAMS" >> $GITHUB_OUTPUT
+        echo "heidegger-score=$HEIDEGGER" >> $GITHUB_OUTPUT
+        echo "violations=$VIOLATIONS" >> $GITHUB_OUTPUT
+
+        # Generate markdown report
+        npx @createsomething/triad-audit ${{ inputs.path }} --format markdown --output audit-report.md
+
+        # Check threshold
+        THRESHOLD=${{ inputs.threshold }}
+        if (( $(echo "$OVERALL < $THRESHOLD" | bc -l) )); then
+          echo "::error::Score $OVERALL is below threshold $THRESHOLD"
+          exit 1
+        fi
+
+    - name: Comment on PR
+      if: ${{ github.event_name == 'pull_request' && inputs.comment-on-pr == 'true' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('audit-report.md', 'utf8');
+
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const botComment = comments.find(c =>
+            c.user.type === 'Bot' &&
+            c.body.includes('SUBTRACTIVE TRIAD AUDIT')
+          );
+
+          const body = `## 🔍 Subtractive Triad Audit\n\n${report}`;
+
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+          }

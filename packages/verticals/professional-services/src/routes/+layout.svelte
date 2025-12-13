@@ -6,7 +6,8 @@
 	import { onNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { setSiteConfigContext } from '$lib/config/context';
+	import { initSiteConfig } from '$lib/config/context';
+	import { browser } from '$app/environment';
 	import type { SiteConfig } from '$lib/config/site';
 
 	interface Props {
@@ -20,8 +21,9 @@
 
 	let { children, data }: Props = $props();
 
-	// Set site config in context for all child components
-	setSiteConfigContext(data.siteConfig);
+	// Initialize site config from window.__SITE_CONFIG__ if available
+	// This makes the config reactive via the store
+	initSiteConfig();
 
 	// Don't show sticky CTA on contact page (already there)
 	let showStickyCTA = $derived($page.url.pathname !== '/contact');

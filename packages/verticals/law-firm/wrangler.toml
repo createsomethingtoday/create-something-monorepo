@@ -1,0 +1,58 @@
+# Law Firm Vertical Template
+# Powered by CREATE SOMETHING Canon + WORKWAY Clio Integration
+#
+# SETUP INSTRUCTIONS:
+# 1. Create D1 database: wrangler d1 create law-firm-db
+# 2. Create KV namespace: wrangler kv:namespace create "CACHE"
+# 3. Create R2 bucket: wrangler r2 bucket create law-firm-documents
+# 4. Replace YOUR_* placeholders with actual IDs from step outputs
+# 5. Run migrations: wrangler d1 migrations apply law-firm-db
+# 6. Deploy: wrangler pages deploy .svelte-kit/cloudflare
+#
+# WORKWAY INTEGRATION:
+# - Client Intake → Clio: Configure workflows.clioIntakeWebhook in site.ts
+# - Consultation Booking → Clio: Configure workflows.calendlyUrl in site.ts
+
+name = "law-firm-template"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages deployment output
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# =============================================================================
+# D1 Database - Shared with templates-platform for vertical templates
+# Using templates-platform-db for all vertical template data
+# =============================================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "templates-platform-db"
+database_id = "a06516a5-6c4b-472f-8826-d730e3a74926"
+
+# =============================================================================
+# KV Namespace - Session cache, rate limiting
+# =============================================================================
+[[kv_namespaces]]
+binding = "KV"
+id = "04038e941c0541ebbb794a8c83669a6c"
+
+# =============================================================================
+# R2 Bucket - Client documents, form attachments
+# Create with: wrangler r2 bucket create law-firm-documents
+# =============================================================================
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "law-firm-documents"
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+[vars]
+ENVIRONMENT = "production"
+
+# =============================================================================
+# Secrets (set via wrangler secret put)
+# =============================================================================
+# wrangler secret put WORKWAY_WEBHOOK_SECRET   # For validating WORKWAY callbacks
+# wrangler secret put CALENDLY_WEBHOOK_SECRET  # For validating Calendly webhooks
+# wrangler secret put SENDGRID_API_KEY         # For email notifications

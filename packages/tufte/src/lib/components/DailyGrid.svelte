@@ -30,18 +30,40 @@
 	2. High data density (7 days in compact grid)
 	3. Minimal decoration (subtle backgrounds only)
 -->
-<div class="grid gap-1 text-xs font-mono" style="grid-template-columns: repeat({days}, 1fr);">
+<div class="daily-grid grid gap-1" style="grid-template-columns: repeat({days}, 1fr);">
 	{#each displayData as day}
-		<div class="text-center p-2 bg-white/5 rounded">
+		<div class="day-cell text-center p-2">
 			<!-- Day label (Tufte: minimal text) -->
-			<div class="text-white/40 text-[10px] mb-1">
+			<div class="day-label mb-1">
 				{formatDate(day.date, 'weekday')}
 			</div>
 
 			<!-- Count (Tufte: tabular numbers for alignment) -->
-			<div class="text-white/80 font-semibold tabular-nums">
+			<div class="day-count tabular-nums">
 				{formatNumber(day.count)}
 			</div>
 		</div>
 	{/each}
 </div>
+
+<style>
+	.daily-grid {
+		font-size: var(--text-caption);
+		font-family: ui-monospace, monospace;
+	}
+
+	.day-cell {
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-md);
+	}
+
+	.day-label {
+		color: var(--color-fg-muted);
+		font-size: 10px;
+	}
+
+	.day-count {
+		color: var(--color-fg-secondary);
+		font-weight: 600;
+	}
+</style>

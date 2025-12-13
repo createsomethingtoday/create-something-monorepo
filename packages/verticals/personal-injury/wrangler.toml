@@ -1,0 +1,61 @@
+# Personal Injury Law Firm Vertical Template
+# Powered by CREATE SOMETHING Canon + WORKWAY Clio Integration
+#
+# SETUP INSTRUCTIONS:
+# 1. Create D1 database: wrangler d1 create personal-injury-db
+# 2. Create KV namespace: wrangler kv:namespace create "CACHE"
+# 3. Create R2 bucket: wrangler r2 bucket create personal-injury-documents
+# 4. Replace YOUR_* placeholders with actual IDs from step outputs
+# 5. Run migrations: wrangler d1 migrations apply personal-injury-db
+# 6. Deploy: wrangler pages deploy .svelte-kit/cloudflare
+#
+# WORKWAY INTEGRATION:
+# - PI Intake → Clio: Configure workflows.clioIntakeWebhook in site.ts
+# - Case Screening: Automatic lead qualification based on severity
+# - Hot Lead Alerts: Slack notifications for urgent cases
+
+name = "personal-injury-template"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages deployment output
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# =============================================================================
+# D1 Database - Shared with templates-platform for vertical templates
+# Using templates-platform-db for all vertical template data
+# =============================================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "templates-platform-db"
+database_id = "a06516a5-6c4b-472f-8826-d730e3a74926"
+
+# =============================================================================
+# KV Namespace - Session cache, rate limiting
+# =============================================================================
+[[kv_namespaces]]
+binding = "KV"
+id = "04038e941c0541ebbb794a8c83669a6c"
+
+# =============================================================================
+# R2 Bucket - Accident photos, medical records, case documents
+# Create with: wrangler r2 bucket create personal-injury-documents
+# Uncomment when R2 bucket is created
+# =============================================================================
+# [[r2_buckets]]
+# binding = "R2"
+# bucket_name = "personal-injury-documents"
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+[vars]
+ENVIRONMENT = "production"
+
+# =============================================================================
+# Secrets (set via wrangler secret put)
+# =============================================================================
+# wrangler secret put WORKWAY_WEBHOOK_SECRET   # For validating WORKWAY callbacks
+# wrangler secret put SLACK_WEBHOOK_URL        # For urgent case alerts
+# wrangler secret put CALENDLY_WEBHOOK_SECRET  # For validating Calendly webhooks
+# wrangler secret put SENDGRID_API_KEY         # For email notifications
