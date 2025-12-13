@@ -238,5 +238,53 @@
       "medium": 30,
       "low": 5
     }
+  },
+  {
+    "timestamp": "2025-11-30T06:16:27.909Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6,
+      "heidegger": 9.4,
+      "overall": 8.6
+    },
+    "violations": {
+      "total": 37,
+      "critical": 0,
+      "high": 0,
+      "medium": 32,
+      "low": 5
+    }
+  },
+  {
+    "timestamp": "2025-11-30T06:16:58.878Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6,
+      "heidegger": 9.4,
+      "overall": 8.6
+    },
+    "violations": {
+      "total": 37,
+      "critical": 0,
+      "high": 0,
+      "medium": 32,
+      "low": 5
+    }
+  },
+  {
+    "timestamp": "2025-11-30T06:17:32.808Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6,
+      "heidegger": 9.4,
+      "overall": 8.6
+    },
+    "violations": {
+      "total": 37,
+      "critical": 0,
+      "high": 0,
+      "medium": 32,
+      "low": 5
+    }
   }
 ]
