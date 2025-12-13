@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
 	import type { Paper } from '@create-something/components/types';
 
 	interface Props {
@@ -31,9 +30,8 @@
 
 <a href={`/experiments/${paper.slug}`} class="block h-full">
 	<article
-		class="group h-full"
-		style="transform: rotate({rotation}deg);"
-		in:fly={{ y: 20, duration: 500, delay: index * 100 }}
+		class="group animate-reveal h-full"
+		style="transform: rotate({rotation}deg); --delay: {index};"
 	>
 		<div class="paper-card relative h-full overflow-hidden">
 			<!-- Image or ASCII Art -->
@@ -68,7 +66,7 @@
 			<!-- Card Content -->
 			<div class="p-2 pb-4 space-y-3">
 				<!-- Metadata -->
-				<div class="paper-meta flex items-center gap-2 text-xs font-medium">
+				<div class="paper-meta flex items-center gap-2 font-medium">
 					{#if formattedDate}
 						<span>{formattedDate}</span>
 						<span class="meta-dot w-1 h-1"></span>
@@ -77,17 +75,17 @@
 				</div>
 
 				<!-- Title -->
-				<h3 class="paper-title text-lg font-medium line-clamp-2 leading-tight">
+				<h3 class="paper-title font-medium line-clamp-2 leading-tight">
 					{paper.title}
 				</h3>
 
 				<!-- Category Badge with Sliding Animation -->
 				<div class="inline-block">
 					<div class="relative overflow-hidden">
-						<div class="category-badge px-3 py-1 text-xs font-medium group-hover:translate-y-[-100%] transition-transform duration-300">
+						<div class="category-badge px-3 py-1 font-medium group-hover:translate-y-[-100%] transition-transform duration-300">
 							{categoryDisplayName}
 						</div>
-						<div class="category-badge absolute inset-0 px-3 py-1 text-xs font-medium translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300">
+						<div class="category-badge absolute inset-0 px-3 py-1 font-medium translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300">
 							{categoryDisplayName}
 						</div>
 					</div>
@@ -151,6 +149,7 @@
 
 	/* Metadata */
 	.paper-meta {
+		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
 	}
 
@@ -161,6 +160,7 @@
 
 	/* Title */
 	.paper-title {
+		font-size: var(--text-body-lg);
 		color: var(--color-fg-primary);
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
@@ -171,6 +171,7 @@
 
 	/* Category Badge */
 	.category-badge {
+		font-size: var(--text-caption);
 		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
@@ -180,5 +181,30 @@
 	/* Hover Overlay */
 	.hover-overlay {
 		background: linear-gradient(to top, var(--color-hover), transparent);
+	}
+
+	/* Staggered reveal animation - CSS only */
+	.animate-reveal {
+		opacity: 0;
+		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+		}
 	}
 </style>

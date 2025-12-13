@@ -14,3 +14,5 @@ export { default as Analytics } from './Analytics.svelte';
 export { default as RelatedArticles } from './RelatedArticles.svelte';
 export { default as TriadHealth } from './TriadHealth.svelte';
 export { default as HermeneuticCircle } from './HermeneuticCircle.svelte';
+export { default as ModeIndicator } from './ModeIndicator.svelte';
+export { default as CrossPropertyLink } from './CrossPropertyLink.svelte';

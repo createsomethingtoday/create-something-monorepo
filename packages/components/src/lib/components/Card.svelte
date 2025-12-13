@@ -115,9 +115,9 @@
 	}
 
 	/* Focus states for accessibility */
-	a:focus-visible,
-	button:focus-visible,
-	div:focus-visible {
+	a.card:focus-visible,
+	button.card:focus-visible,
+	div.card:focus-visible {
 		outline: 2px solid var(--color-fg-muted);
 		outline-offset: 2px;
 	}

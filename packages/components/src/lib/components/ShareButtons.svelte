@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly } from "svelte/transition";
 
 	interface Props {
 		title: string;
@@ -30,11 +29,8 @@
 	};
 </script>
 
-<div
-	class="sticky top-24 space-y-4"
-	transition:fly={{ x: -20, duration: 500, delay: 300 }}
->
-	<h3 class="share-title text-lg font-semibold mb-4">Share:</h3>
+<div class="sticky top-24 space-y-4 animate-slide-in">
+	<h3 class="share-title font-semibold mb-4">Share:</h3>
 
 	<div class="flex flex-col gap-3">
 		<!-- X (formerly Twitter) -->
@@ -139,6 +135,7 @@
 <style>
 	/* Title */
 	.share-title {
+		font-size: var(--text-body-lg);
 		color: var(--color-fg-primary);
 	}
 
@@ -163,5 +160,27 @@
 
 	.group:hover .share-icon {
 		color: var(--color-fg-primary);
+	}
+
+	/* Slide in animation - CSS only */
+	.animate-slide-in {
+		opacity: 0;
+		transform: translateX(-20px);
+		animation: slide-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+	}
+
+	@keyframes slide-in {
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-slide-in {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
 	}
 </style>
