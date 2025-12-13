@@ -15,6 +15,7 @@ import {
 	findUserById,
 	createUser,
 	updateUser,
+	updateUserPassword,
 	revokeAllUserTokens,
 	checkRateLimit,
 	incrementRateLimit,
@@ -69,6 +70,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	// User endpoints (protected)
 	if (path === '/v1/users/me' && method === 'GET') return handleGetMe(request, env);
 	if (path === '/v1/users/me' && method === 'PATCH') return handleUpdateMe(request, env);
+	if (path === '/v1/users/me/password' && method === 'PATCH') return handleChangePassword(request, env);
 
 	// Service-to-service (API key protected)
 	if (path === '/v1/validate' && method === 'POST') return handleValidate(request, env);
@@ -281,6 +283,62 @@ async function handleUpdateMe(request: Request, env: Env): Promise<Response> {
 		tier: user.tier,
 		created_at: user.created_at,
 	});
+}
+
+async function handleChangePassword(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Authenticate
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	// Rate limit by user ID to prevent brute force
+	const rateKey = `password:${payload.sub}`;
+	const { allowed } = await checkRateLimit(db, rateKey, 5, 300); // 5 attempts per 5 minutes
+	if (!allowed) {
+		return json({ error: 'rate_limited', message: 'Too many password change attempts', status: 429 }, 429);
+	}
+
+	// Parse request body
+	const body = await parseJSON<{ current_password?: string; new_password?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+
+	const { current_password, new_password } = body;
+	if (!current_password || !new_password) {
+		return json({ error: 'invalid_request', message: 'Current password and new password required', status: 400 }, 400);
+	}
+
+	// Validate new password
+	if (new_password.length < 8) {
+		return json({ error: 'weak_password', message: 'New password must be at least 8 characters', status: 400 }, 400);
+	}
+
+	// Get user
+	const user = await findUserById(db, payload.sub);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	// Verify current password
+	const valid = await verifyPassword(current_password, user.password_hash);
+	if (!valid) {
+		await incrementRateLimit(db, rateKey);
+		return json({ error: 'invalid_password', message: 'Current password is incorrect', status: 401 }, 401);
+	}
+
+	// Hash and update new password
+	const newPasswordHash = await hashPassword(new_password);
+	const updated = await updateUserPassword(db, payload.sub, newPasswordHash);
+	if (!updated) {
+		return json({ error: 'update_failed', message: 'Failed to update password', status: 500 }, 500);
+	}
+
+	// Revoke all tokens to force re-login (security best practice)
+	await revokeAllUserTokens(db, payload.sub);
+
+	return json({ success: true, message: 'Password updated. Please log in again.' });
 }
 
 // Service-to-Service Handlers
