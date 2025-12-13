@@ -1,6 +1,4 @@
 <script lang="ts">
-  
-	import { fly } from 'svelte/transition';
 </script>
 
 <svelte:head>
@@ -19,14 +17,14 @@
 
 
 	<!-- Hero Section -->
-	<section class="relative pt-32 pb-16 px-6">
+	<section class="hero-section">
 		<div class="max-w-4xl mx-auto">
-			<div class="space-y-6" in:fly={{ y: 20, duration: 600 }}>
-				<h1 class="text-4xl md:text-6xl font-bold text-white">
+			<div class="space-y-6 animate-reveal">
+				<h1 class="hero-title">
 					Get in Touch
 				</h1>
 
-				<p class="text-lg text-white/70 leading-relaxed">
+				<p class="hero-subtitle">
 					Questions about our tracked experiments, methodology, or interested in collaborating on AI-native development research? Let's connect.
 				</p>
 			</div>
@@ -34,17 +32,17 @@
 	</section>
 
 	<!-- Contact Options -->
-	<section class="py-16 px-6">
+	<section class="contact-section">
 		<div class="max-w-4xl mx-auto">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 				<!-- Email -->
 				<div
-					class="p-8 bg-[#111111] border border-white/10 rounded-lg hover:border-white/30 transition-all"
-					in:fly={{ y: 20, duration: 500 }}
+					class="contact-card animate-reveal"
+					style="--delay: 1"
 				>
-					<div class="mb-4">
+					<div class="icon-container">
 						<svg
-							class="w-8 h-8 text-white/80"
+							class="icon"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
@@ -57,13 +55,13 @@
 							/>
 						</svg>
 					</div>
-					<h3 class="text-xl font-semibold text-white mb-2">Email</h3>
-					<p class="text-white/60 mb-4">
+					<h3 class="card-title">Email</h3>
+					<p class="card-description">
 						Questions about experiment methodology, development metrics, or research collaboration? Get in touch.
 					</p>
 					<a
 						href="mailto:micah@createsomething.io"
-						class="text-white/80 hover:text-white transition-colors inline-flex items-center gap-2"
+						class="contact-link"
 					>
 						micah@createsomething.io
 						<svg
@@ -84,12 +82,12 @@
 
 				<!-- Social -->
 				<div
-					class="p-8 bg-[#111111] border border-white/10 rounded-lg hover:border-white/30 transition-all"
-					in:fly={{ y: 20, duration: 500, delay: 100 }}
+					class="contact-card animate-reveal"
+					style="--delay: 2"
 				>
-					<div class="mb-4">
+					<div class="icon-container">
 						<svg
-							class="w-8 h-8 text-white/80"
+							class="icon"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
@@ -102,8 +100,8 @@
 							/>
 						</svg>
 					</div>
-					<h3 class="text-xl font-semibold text-white mb-2">Follow Updates</h3>
-					<p class="text-white/60 mb-4">
+					<h3 class="card-title">Follow Updates</h3>
+					<p class="card-description">
 						Stay updated with new tracked experiments and AI-native development research.
 					</p>
 					<div class="flex gap-4">
@@ -111,7 +109,7 @@
 							href="https://www.linkedin.com/in/micahryanjohnson/"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="text-white/80 hover:text-white transition-colors"
+							class="social-link"
 						>
 							LinkedIn
 						</a>
@@ -119,7 +117,7 @@
 							href="https://github.com/createsomethingtoday"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="text-white/80 hover:text-white transition-colors"
+							class="social-link"
 						>
 							GitHub
 						</a>
@@ -129,4 +127,104 @@
 		</div>
 	</section>
 
-	
+<style>
+	.hero-section {
+		position: relative;
+		padding: var(--space-2xl) var(--space-md) var(--space-xl);
+	}
+
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.hero-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.contact-section {
+		padding: var(--space-xl) var(--space-md);
+	}
+
+	.contact-card {
+		padding: var(--space-lg);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		transition: border-color var(--duration-standard) var(--ease-standard);
+	}
+
+	.contact-card:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.icon-container {
+		margin-bottom: var(--space-sm);
+	}
+
+	.icon {
+		width: 2rem;
+		height: 2rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.card-title {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.card-description {
+		color: var(--color-fg-tertiary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.contact-link {
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-standard) var(--ease-standard);
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+	}
+
+	.contact-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.social-link {
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.social-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(20px);
+		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>
+
+

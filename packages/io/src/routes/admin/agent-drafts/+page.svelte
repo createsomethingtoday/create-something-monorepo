@@ -171,26 +171,26 @@
 
 <div class="container mx-auto px-4 py-8 max-w-6xl">
 	<header class="mb-8">
-		<h1 class="text-3xl font-bold mb-2">PM Agent Draft Review</h1>
-		<p class="text-gray-600">Experiment #3: AI PM Agent</p>
+		<h1 class="page-title">PM Agent Draft Review</h1>
+		<p class="page-subtitle">Experiment #3: AI PM Agent</p>
 	</header>
 
 	<!-- Metrics -->
 	<div class="grid grid-cols-3 gap-4 mb-8">
-		<div class="bg-white p-6 rounded-lg shadow">
-			<div class="text-2xl font-bold text-blue-600">{metrics.approval_rate.toFixed(1)}%</div>
-			<div class="text-sm text-gray-600">Approval Rate</div>
-			<div class="text-xs text-gray-400 mt-1">{metrics.total_decisions} total decisions</div>
+		<div class="metric-card">
+			<div class="metric-value metric-value--approval">{metrics.approval_rate.toFixed(1)}%</div>
+			<div class="metric-label">Approval Rate</div>
+			<div class="metric-subtext">{metrics.total_decisions} total decisions</div>
 		</div>
 
-		<div class="bg-white p-6 rounded-lg shadow">
-			<div class="text-2xl font-bold text-orange-600">{metrics.escalation_rate.toFixed(1)}%</div>
-			<div class="text-sm text-gray-600">Escalation Rate</div>
+		<div class="metric-card">
+			<div class="metric-value metric-value--escalation">{metrics.escalation_rate.toFixed(1)}%</div>
+			<div class="metric-label">Escalation Rate</div>
 		</div>
 
-		<div class="bg-white p-6 rounded-lg shadow">
-			<div class="text-2xl font-bold text-green-600">{contacts.length}</div>
-			<div class="text-sm text-gray-600">Pending Reviews</div>
+		<div class="metric-card">
+			<div class="metric-value metric-value--pending">{contacts.length}</div>
+			<div class="metric-label">Pending Reviews</div>
 		</div>
 	</div>
 
@@ -199,7 +199,7 @@
 		<button
 			on:click={triggerTriage}
 			disabled={loading}
-			class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+			class="btn btn--primary"
 		>
 			{loading ? 'Processing...' : 'Trigger Triage (Process New Submissions)'}
 		</button>
@@ -207,47 +207,45 @@
 		<button
 			on:click={loadPendingReviews}
 			disabled={loading}
-			class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 disabled:bg-gray-400"
+			class="btn btn--secondary"
 		>
 			Refresh
 		</button>
 	</div>
 
 	{#if error}
-		<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+		<div class="alert alert--error mb-6">
 			{error}
 		</div>
 	{/if}
 
 	<!-- Pending Reviews -->
 	{#if loading}
-		<div class="text-center py-12 text-gray-500">Loading reviews...</div>
+		<div class="empty-state">Loading reviews...</div>
 	{:else if contacts.length === 0}
-		<div class="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
-			<p class="text-lg mb-2">No pending reviews</p>
-			<p class="text-sm">Trigger triage to process new contact submissions</p>
+		<div class="empty-state empty-state--bordered">
+			<p class="empty-state__title">No pending reviews</p>
+			<p class="empty-state__subtitle">Trigger triage to process new contact submissions</p>
 		</div>
 	{:else}
 		<div class="space-y-6">
 			{#each contacts as { contact, draft, escalation }}
-				<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+				<div class="review-card">
 					<!-- Contact Info Header -->
-					<div class="bg-gray-50 px-6 py-4 border-b">
+					<div class="review-card__header">
 						<div class="flex justify-between items-start">
 							<div>
-								<h3 class="text-lg font-bold">{contact.name}</h3>
-								<p class="text-sm text-gray-600">{contact.email}</p>
-								<p class="text-xs text-gray-500">
+								<h3 class="review-card__title">{contact.name}</h3>
+								<p class="review-card__email">{contact.email}</p>
+								<p class="review-card__meta">
 									Submitted: {formatDate(contact.submitted_at)}
 								</p>
 							</div>
 							<div class="text-right">
 								<span
-									class="inline-block px-3 py-1 rounded-full text-sm font-medium"
-									class:bg-yellow-100={contact.status === 'in_progress'}
-									class:text-yellow-800={contact.status === 'in_progress'}
-									class:bg-red-100={contact.status === 'escalated'}
-									class:text-red-800={contact.status === 'escalated'}
+									class="status-badge"
+									class:status-badge--in-progress={contact.status === 'in_progress'}
+									class:status-badge--escalated={contact.status === 'escalated'}
 								>
 									{contact.status}
 								</span>
@@ -256,39 +254,39 @@
 					</div>
 
 					<!-- Original Message -->
-					<div class="px-6 py-4 bg-gray-50 border-b">
-						<h4 class="text-sm font-semibold text-gray-700 mb-2">Original Inquiry:</h4>
-						<p class="text-gray-800 whitespace-pre-wrap">{contact.message}</p>
+					<div class="review-card__section">
+						<h4 class="section-label">Original Inquiry:</h4>
+						<p class="message-text">{contact.message}</p>
 					</div>
 
 					{#if draft}
 						<!-- Agent Draft -->
-						<div class="px-6 py-4">
-							<h4 class="text-sm font-semibold text-gray-700 mb-2">Agent's Draft Response:</h4>
+						<div class="review-card__body">
+							<h4 class="section-label">Agent's Draft Response:</h4>
 
-							<div class="mb-4 p-4 bg-blue-50 rounded">
-								<p class="text-xs text-gray-600 mb-1"><strong>To:</strong> {draft.to_email}</p>
-								<p class="text-xs text-gray-600 mb-2"><strong>Subject:</strong> {draft.subject}</p>
-								<div class="prose prose-sm max-w-none">
-									<pre class="whitespace-pre-wrap text-sm">{draft.body}</pre>
+							<div class="draft-preview">
+								<p class="draft-meta"><strong>To:</strong> {draft.to_email}</p>
+								<p class="draft-meta"><strong>Subject:</strong> {draft.subject}</p>
+								<div class="prose">
+									<pre class="draft-body">{draft.body}</pre>
 								</div>
 							</div>
 
-							<div class="mb-4 p-4 bg-yellow-50 rounded">
-								<h5 class="text-xs font-semibold text-gray-700 mb-1">Agent's Reasoning:</h5>
-								<p class="text-sm text-gray-700">{draft.reasoning}</p>
+							<div class="reasoning-box">
+								<h5 class="reasoning-label">Agent's Reasoning:</h5>
+								<p class="reasoning-text">{draft.reasoning}</p>
 							</div>
 
 							<div class="flex gap-3">
 								<button
 									on:click={() => approveDraft(contact.id)}
-									class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+									class="btn btn--approve"
 								>
 									✓ Approve & Send
 								</button>
 								<button
 									on:click={() => rejectDraft(contact.id)}
-									class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+									class="btn btn--reject"
 								>
 									✗ Reject (Handle Manually)
 								</button>
@@ -296,32 +294,32 @@
 						</div>
 					{:else if escalation}
 						<!-- Escalation -->
-						<div class="px-6 py-4">
-							<h4 class="text-sm font-semibold text-red-700 mb-2">Escalated to Human:</h4>
+						<div class="review-card__body">
+							<h4 class="section-label section-label--error">Escalated to Human:</h4>
 
-							<div class="p-4 bg-red-50 rounded">
-								<p class="text-sm mb-2">
+							<div class="escalation-box">
+								<p class="escalation-text">
 									<strong>Reason:</strong>
 									{escalation.reason}
 								</p>
-								<p class="text-sm mb-2">
+								<p class="escalation-text">
 									<strong>Context:</strong>
 									{escalation.context}
 								</p>
-								<p class="text-xs text-gray-600">
+								<p class="escalation-meta">
 									<strong>Urgency:</strong>
 									<span
-										class="inline-block px-2 py-1 rounded text-xs"
-										class:bg-yellow-200={escalation.urgency === 'medium'}
-										class:bg-red-200={escalation.urgency === 'high'}
-										class:bg-gray-200={escalation.urgency === 'low'}
+										class="urgency-badge"
+										class:urgency-badge--medium={escalation.urgency === 'medium'}
+										class:urgency-badge--high={escalation.urgency === 'high'}
+										class:urgency-badge--low={escalation.urgency === 'low'}
 									>
 										{escalation.urgency}
 									</span>
 								</p>
 							</div>
 
-							<p class="text-sm text-gray-600 mt-4">
+							<p class="escalation-notice">
 								This inquiry requires human attention. Handle manually.
 							</p>
 						</div>
@@ -333,6 +331,308 @@
 </div>
 
 <style>
+	/* Typography */
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.page-subtitle {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body);
+	}
+
+	/* Metric Cards */
+	.metric-card {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-md);
+	}
+
+	.metric-value {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.metric-value--approval {
+		color: #3b82f6;
+	}
+
+	.metric-value--escalation {
+		color: #f97316;
+	}
+
+	.metric-value--pending {
+		color: #10b981;
+	}
+
+	.metric-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-xs);
+	}
+
+	.metric-subtext {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		margin-top: var(--space-xs);
+	}
+
+	/* Buttons */
+	.btn {
+		padding: var(--space-sm) var(--space-lg);
+		border-radius: var(--radius-md);
+		font-weight: 600;
+		transition: all var(--duration-standard) var(--ease-standard);
+		border: none;
+		cursor: pointer;
+	}
+
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn--primary {
+		background: #3b82f6;
+		color: var(--color-fg-primary);
+	}
+
+	.btn--primary:hover:not(:disabled) {
+		background: #2563eb;
+	}
+
+	.btn--secondary {
+		background: var(--color-bg-subtle);
+		color: var(--color-fg-primary);
+	}
+
+	.btn--secondary:hover:not(:disabled) {
+		background: var(--color-hover);
+	}
+
+	.btn--approve {
+		background: #10b981;
+		color: var(--color-fg-primary);
+	}
+
+	.btn--approve:hover {
+		background: #059669;
+	}
+
+	.btn--reject {
+		background: #ef4444;
+		color: var(--color-fg-primary);
+	}
+
+	.btn--reject:hover {
+		background: #dc2626;
+	}
+
+	/* Alerts */
+	.alert {
+		padding: var(--space-md) var(--space-lg);
+		border-radius: var(--radius-md);
+	}
+
+	.alert--error {
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.3);
+		color: #f87171;
+	}
+
+	/* Empty States */
+	.empty-state {
+		text-align: center;
+		padding: var(--space-2xl);
+		color: var(--color-fg-muted);
+	}
+
+	.empty-state--bordered {
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+	}
+
+	.empty-state__title {
+		font-size: var(--text-body-lg);
+		margin-bottom: var(--space-sm);
+	}
+
+	.empty-state__subtitle {
+		font-size: var(--text-body-sm);
+	}
+
+	/* Review Cards */
+	.review-card {
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-lg);
+		overflow: hidden;
+	}
+
+	.review-card__header {
+		background: var(--color-bg-elevated);
+		padding: var(--space-lg);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.review-card__title {
+		font-size: var(--text-body-lg);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.review-card__email {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-xs);
+	}
+
+	.review-card__meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		margin-top: var(--space-xs);
+	}
+
+	.review-card__section {
+		padding: var(--space-lg);
+		background: var(--color-bg-elevated);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.review-card__body {
+		padding: var(--space-lg);
+	}
+
+	/* Status Badges */
+	.status-badge {
+		display: inline-block;
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-full);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+	}
+
+	.status-badge--in-progress {
+		background: rgba(234, 179, 8, 0.1);
+		color: #facc15;
+	}
+
+	.status-badge--escalated {
+		background: rgba(239, 68, 68, 0.1);
+		color: #f87171;
+	}
+
+	/* Section Labels */
+	.section-label {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.section-label--error {
+		color: #ef4444;
+	}
+
+	.message-text {
+		color: var(--color-fg-primary);
+		white-space: pre-wrap;
+	}
+
+	/* Draft Preview */
+	.draft-preview {
+		margin-bottom: var(--space-md);
+		padding: var(--space-md);
+		background: rgba(59, 130, 246, 0.05);
+		border-radius: var(--radius-md);
+	}
+
+	.draft-meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.draft-body {
+		white-space: pre-wrap;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		background: transparent;
+		padding: 0;
+		margin: 0;
+		border: none;
+	}
+
+	/* Reasoning Box */
+	.reasoning-box {
+		margin-bottom: var(--space-md);
+		padding: var(--space-md);
+		background: rgba(234, 179, 8, 0.05);
+		border-radius: var(--radius-md);
+	}
+
+	.reasoning-label {
+		font-size: var(--text-caption);
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.reasoning-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	/* Escalation Box */
+	.escalation-box {
+		padding: var(--space-md);
+		background: rgba(239, 68, 68, 0.05);
+		border-radius: var(--radius-md);
+		margin-bottom: var(--space-md);
+	}
+
+	.escalation-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.escalation-meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+	}
+
+	.escalation-notice {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Urgency Badges */
+	.urgency-badge {
+		display: inline-block;
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+	}
+
+	.urgency-badge--low {
+		background: var(--color-bg-subtle);
+		color: var(--color-fg-secondary);
+	}
+
+	.urgency-badge--medium {
+		background: rgba(234, 179, 8, 0.2);
+		color: #facc15;
+	}
+
+	.urgency-badge--high {
+		background: rgba(239, 68, 68, 0.2);
+		color: #f87171;
+	}
+
 	.prose pre {
 		background: transparent;
 		padding: 0;

@@ -75,7 +75,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			)
 			.all();
 
-		// Daily page views (last 30 days)
+		// Daily page views (last 30 days) - ASC order so last element is "today"
 		const dailyViewsResult = await db
 			.prepare(
 				`SELECT DATE(created_at) as date, COUNT(*) as count
@@ -83,7 +83,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 				WHERE event_type = 'page_view'
 				AND created_at >= datetime('now', '-30 days')
 				GROUP BY DATE(created_at)
-				ORDER BY date DESC`
+				ORDER BY date ASC`
 			)
 			.all();
 

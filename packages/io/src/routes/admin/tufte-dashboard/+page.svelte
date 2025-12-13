@@ -58,8 +58,8 @@
 	<!-- Header -->
 	<div class="flex items-start justify-between">
 		<div>
-			<h1 class="text-3xl font-bold mb-2">Tufte Dashboard</h1>
-			<p class="text-white/60 text-sm max-w-xl">
+			<h1 class="page-title mb-2">Tufte Dashboard</h1>
+			<p class="page-description max-w-xl">
 				AI-powered analytics visualized through Edward Tufte's principles.
 				Each component autonomously maximizes data-ink ratio and reveals patterns
 				that conventional charts obscure.
@@ -70,7 +70,7 @@
 			<!-- Period Selector -->
 			<select
 				bind:value={days}
-				class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/30"
+				class="select-field px-4 py-2"
 			>
 				<option value={7}>Last 7 days</option>
 				<option value={14}>Last 14 days</option>
@@ -82,7 +82,7 @@
 			<button
 				on:click={loadDashboard}
 				disabled={loading}
-				class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
+				class="btn-secondary px-4 py-2"
 			>
 				{loading ? 'Loading...' : 'Refresh'}
 			</button>
@@ -90,12 +90,12 @@
 	</div>
 
 	<!-- Hermeneutic Context -->
-	<div class="bg-white/5 border border-white/10 rounded-lg p-4">
-		<h2 class="text-white/40 text-xs uppercase tracking-wider mb-2">The Hermeneutic Loop</h2>
-		<p class="text-white/60 text-xs font-mono">
+	<div class="context-card p-4">
+		<h2 class="context-title mb-2">The Hermeneutic Loop</h2>
+		<p class="context-flow font-mono">
 			Raw Data (D1) → AI Analysis (Workers AI) → Tufte Visualization → Human Insight → Action
 		</p>
-		<p class="text-white/40 text-xs mt-2">
+		<p class="context-description mt-2">
 			The AI understands metric semantics (e.g., "response_time" = lower is better) and the
 			Tufte components autonomously enforce visualization best practices.
 		</p>
@@ -105,11 +105,92 @@
 	<TufteDashboard {data} {loading} {error} />
 
 	<!-- Footer -->
-	<div class="border-t border-white/10 pt-6 text-center">
-		<p class="text-white/30 text-xs">
-			Powered by <span class="text-white/50">@create-something/tufte</span> •
-			Data from <span class="text-white/50">Cloudflare D1</span> •
-			AI by <span class="text-white/50">Workers AI</span>
+	<div class="footer-section pt-6">
+		<p class="footer-text">
+			Powered by <span class="footer-highlight">@create-something/tufte</span> •
+			Data from <span class="footer-highlight">Cloudflare D1</span> •
+			AI by <span class="footer-highlight">Workers AI</span>
 		</p>
 	</div>
 </div>
+
+<style>
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.page-description {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.select-field {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.select-field:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.btn-secondary {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-secondary:hover:not(:disabled) {
+		background: var(--color-bg-elevated);
+		color: var(--color-fg-primary);
+	}
+
+	.btn-secondary:disabled {
+		opacity: 0.5;
+	}
+
+	.context-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.context-title {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.context-flow {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-caption);
+	}
+
+	.context-description {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+	}
+
+	.footer-section {
+		border-top: 1px solid var(--color-border-default);
+		text-align: center;
+	}
+
+	.footer-text {
+		color: var(--color-fg-subtle);
+		font-size: var(--text-caption);
+	}
+
+	.footer-highlight {
+		color: var(--color-fg-secondary);
+	}
+</style>

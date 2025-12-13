@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
-
 	let email = $state('');
 	let website = $state(''); // Honeypot - hidden from users, filled by bots
 	let isSubmitting = $state(false);
@@ -42,15 +40,15 @@
 	}
 </script>
 
-<footer class="bg-black border-t border-white/10">
+<footer class="footer">
 	<!-- Newsletter Section -->
 	<section id="newsletter" class="py-20 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="text-center">
-				<h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+				<h2 class="newsletter-heading">
 					Stay updated with new experiments
 				</h2>
-				<p class="text-white/60 mb-8 max-w-2xl mx-auto">
+				<p class="newsletter-description mb-8 max-w-2xl mx-auto">
 					Get notified when new research is published. Real metrics, tracked experiments, honest learnings from building with AI.
 				</p>
 
@@ -71,14 +69,14 @@
 							type="email"
 							bind:value={email}
 							placeholder="Enter your email address"
-							class="flex-1 px-6 py-4 bg-[#111111] border border-white/10 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							class="email-input flex-1 px-6 py-4"
 							required
 							disabled={isSubmitting}
 						/>
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							class="group px-8 py-4 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+							class="submit-button group px-8 py-4 flex items-center justify-center gap-2"
 						>
 							<span>{isSubmitting ? 'Subscribing...' : 'Subscribe'}</span>
 							{#if !isSubmitting}
@@ -91,12 +89,7 @@
 
 					<!-- Message Display -->
 					{#if message}
-						<div
-							class="mt-4 p-4 rounded-lg text-sm {message.type === 'success'
-								? 'bg-green-500/10 text-green-400 border border-green-500/20'
-								: 'bg-red-500/10 text-red-400 border border-red-500/20'}"
-							transition:fade
-						>
+						<div class="message-display animate-fade-in mt-4 p-4 {message.type === 'success' ? 'success' : 'error'}">
 							{message.text}
 						</div>
 					{/if}
@@ -106,15 +99,15 @@
 	</section>
 
 	<!-- Footer Links -->
-	<div class="border-t border-white/10 py-12 px-6">
+	<div class="footer-links py-12 px-6">
 		<div class="max-w-7xl mx-auto">
 			<div class="grid grid-cols-1 md:grid-cols-4 gap-12">
 				<!-- Brand Column -->
 				<div class="md:col-span-2">
-					<div class="text-2xl font-bold text-white mb-4">
+					<div class="brand-name mb-4">
 						CREATE SOMETHING
 					</div>
-					<p class="text-white/60 text-sm max-w-md mb-6">
+					<p class="brand-description mb-6 max-w-md">
 						AI-native development research with tracked experiments. Every paper includes real metrics: time, costs, errors, and learnings.
 					</p>
 					<!-- Social Links -->
@@ -123,7 +116,7 @@
 							href="https://github.com/createsomethingtoday"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all"
+							class="social-link w-10 h-10 flex items-center justify-center"
 							aria-label="GitHub"
 						>
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -134,7 +127,7 @@
 							href="https://www.linkedin.com/in/micahryanjohnson/"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-all"
+							class="social-link w-10 h-10 flex items-center justify-center"
 							aria-label="LinkedIn"
 						>
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -146,30 +139,30 @@
 
 				<!-- Quick Links -->
 				<div>
-					<h3 class="text-white font-semibold mb-4">Quick Links</h3>
+					<h3 class="footer-section-title mb-4">Quick Links</h3>
 					<ul class="space-y-3">
 						<li>
-							<a href="/" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/" class="footer-nav-link">
 								Home
 							</a>
 						</li>
 						<li>
-							<a href="/experiments" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/experiments" class="footer-nav-link">
 								All Experiments
 							</a>
 						</li>
 						<li>
-							<a href="/methodology" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/methodology" class="footer-nav-link">
 								Methodology
 							</a>
 						</li>
 						<li>
-							<a href="/categories" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/categories" class="footer-nav-link">
 								Categories
 							</a>
 						</li>
 						<li>
-							<a href="/about" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="/about" class="footer-nav-link">
 								About
 							</a>
 						</li>
@@ -178,30 +171,30 @@
 
 				<!-- Modes of Being -->
 				<div>
-					<h3 class="text-white font-semibold mb-4">Modes of Being</h3>
+					<h3 class="footer-section-title mb-4">Modes of Being</h3>
 					<ul class="space-y-3">
 						<li>
-							<a href="https://createsomething.space" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.space" class="footer-nav-link">
 								.space — Explore
 							</a>
 						</li>
 						<li>
-							<a href="https://createsomething.io" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.io" class="footer-nav-link">
 								.io — Learn
 							</a>
 						</li>
 						<li>
-							<a href="https://createsomething.agency" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.agency" class="footer-nav-link">
 								.agency — Build
 							</a>
 						</li>
 						<li>
-							<a href="https://createsomething.ltd" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://createsomething.ltd" class="footer-nav-link">
 								.ltd — Canon
 							</a>
 						</li>
 						<li>
-							<a href="https://github.com/createsomethingtoday" target="_blank" rel="noopener noreferrer" class="text-white/60 hover:text-white text-sm transition-colors">
+							<a href="https://github.com/createsomethingtoday" target="_blank" rel="noopener noreferrer" class="footer-nav-link">
 								GitHub — Source
 							</a>
 						</li>
@@ -212,19 +205,173 @@
 	</div>
 
 	<!-- Copyright -->
-	<div class="border-t border-white/10 py-6 px-6">
+	<div class="copyright py-6 px-6">
 		<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-			<p class="text-white/40 text-sm text-center md:text-left">
+			<p class="copyright-text text-center md:text-left">
 				© {new Date().getFullYear()} Micah Johnson. All rights reserved.
 			</p>
 			<div class="flex items-center gap-6">
-				<a href="/privacy" class="text-white/40 hover:text-white/60 text-sm transition-colors">
+				<a href="/privacy" class="legal-link">
 					Privacy Policy
 				</a>
-				<a href="/terms" class="text-white/40 hover:text-white/60 text-sm transition-colors">
+				<a href="/terms" class="legal-link">
 					Terms of Service
 				</a>
 			</div>
 		</div>
 	</div>
 </footer>
+
+<style>
+	.footer {
+		background: var(--color-bg-pure);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.newsletter-heading {
+		font-size: clamp(1.875rem, 4vw, 2.25rem);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+		margin-bottom: 1rem;
+	}
+
+	.newsletter-description {
+		color: var(--color-fg-tertiary);
+	}
+
+	.email-input {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-standard);
+	}
+
+	.email-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.email-input:focus {
+		outline: none;
+		border-color: rgba(255, 255, 255, 0.3);
+	}
+
+	.email-input:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.submit-button {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+		transition: all var(--duration-standard);
+	}
+
+	.submit-button:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.9);
+	}
+
+	.submit-button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.message-display {
+		border-radius: var(--radius-lg);
+		font-size: var(--text-body-sm);
+	}
+
+	.message-display.success {
+		background: rgba(34, 197, 94, 0.1);
+		color: rgb(74, 222, 128);
+		border: 1px solid rgba(34, 197, 94, 0.2);
+	}
+
+	.message-display.error {
+		background: rgba(239, 68, 68, 0.1);
+		color: rgb(248, 113, 113);
+		border: 1px solid rgba(239, 68, 68, 0.2);
+	}
+
+	.footer-links {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.brand-name {
+		font-size: clamp(1.25rem, 2vw, 1.5rem);
+		font-weight: bold;
+		color: var(--color-fg-primary);
+	}
+
+	.brand-description {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.social-link {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		color: var(--color-fg-tertiary);
+		transition: all var(--duration-standard);
+	}
+
+	.social-link:hover {
+		background: var(--color-hover);
+		color: var(--color-fg-primary);
+	}
+
+	.footer-section-title {
+		color: var(--color-fg-primary);
+		font-weight: 600;
+	}
+
+	.footer-nav-link {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		transition: color var(--duration-standard);
+	}
+
+	.footer-nav-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.copyright {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.copyright-text {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+	}
+
+	.legal-link {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+		transition: color var(--duration-standard);
+	}
+
+	.legal-link:hover {
+		color: var(--color-fg-tertiary);
+	}
+
+	.animate-fade-in {
+		opacity: 0;
+		animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	@keyframes fade-in {
+		to {
+			opacity: 1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-fade-in {
+			animation: none;
+			opacity: 1;
+		}
+	}
+</style>

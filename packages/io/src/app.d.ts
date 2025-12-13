@@ -22,6 +22,8 @@ declare global {
 				STORAGE: R2Bucket;
 				AI: Ai;
 				RESEND_API_KEY: string;
+				TURNSTILE_SECRET_KEY?: string;
+				TURNSTILE_SITE_KEY?: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;

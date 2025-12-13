@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly } from "svelte/transition";
 	import { onMount } from "svelte";
 
 	interface Props {
@@ -30,13 +29,12 @@
 
 {#if isVisible}
 	<div
-		class="fixed bottom-6 right-6 z-50 flex items-center gap-2"
-		transition:fly={{ y: 20, duration: 300 }}
+		class="fixed bottom-6 right-6 z-50 flex items-center gap-2 animate-slide-up"
 	>
 		{#if isCompleted && onReset}
 			<button
 				onclick={onReset}
-				class="p-3 bg-white/10 text-white/60 hover:text-white hover:bg-white/20 rounded-full transition-colors backdrop-blur-md"
+				class="sticky-reset p-3"
 				aria-label="Reset progress"
 				title="Reset progress"
 			>
@@ -60,9 +58,7 @@
 			href={spaceUrl}
 			target="_blank"
 			rel="noopener noreferrer"
-			class="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full transition-colors shadow-lg {isCompleted
-				? 'bg-green-500 text-black hover:bg-green-400'
-				: 'bg-white text-black hover:bg-white/90'}"
+			class="sticky-launch {isCompleted ? 'completed' : 'default'} flex items-center gap-2 px-6 py-3"
 		>
 			{#if isCompleted}
 				<span>Verification Complete</span>
@@ -98,3 +94,65 @@
 		</a>
 	</div>
 {/if}
+
+<style>
+	.sticky-reset {
+		background: var(--color-hover);
+		color: var(--color-fg-tertiary);
+		border-radius: var(--radius-full);
+		backdrop-filter: blur(12px);
+		transition: all var(--duration-standard);
+	}
+
+	.sticky-reset:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-active);
+	}
+
+	.sticky-launch {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		border-radius: var(--radius-full);
+		box-shadow: var(--shadow-lg);
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.sticky-launch.default {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	.sticky-launch.default:hover {
+		background: var(--color-fg-secondary);
+	}
+
+	.sticky-launch.completed {
+		background: rgb(34, 197, 94);
+		color: var(--color-bg-pure);
+	}
+
+	.sticky-launch.completed:hover {
+		background: rgb(74, 222, 128);
+	}
+
+	.animate-slide-up {
+		opacity: 0;
+		transform: translateY(20px);
+		animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	@keyframes slide-up {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-slide-up {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+</style>

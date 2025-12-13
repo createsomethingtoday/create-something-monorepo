@@ -13,6 +13,78 @@
 	 */
 
 	let { data } = $props();
+	const papers = data.papers;
+
+	// Search state
+	let searchQuery = $state('');
+
+	// Sort state
+	type SortOption = 'newest' | 'oldest' | 'reading-time';
+	let sortBy: SortOption = $state('newest');
+
+	// Category filter
+	type CategoryFilter = 'all' | 'research' | 'case-study' | 'methodology';
+	let categoryFilter: CategoryFilter = $state('all');
+
+	// Check if a paper matches the search query
+	function matchesSearch(paper: typeof papers[0]): boolean {
+		if (!searchQuery.trim()) return true;
+
+		const query = searchQuery.toLowerCase();
+		const title = (paper.title || '').toLowerCase();
+		const excerpt = (paper.excerpt_long || '').toLowerCase();
+		const subtitle = (paper.subtitle || '').toLowerCase();
+		const tags = Array.isArray(paper.tags)
+			? paper.tags.map((t: string | { name: string }) =>
+				typeof t === 'string' ? t.toLowerCase() : t.name.toLowerCase()
+			).join(' ')
+			: '';
+
+		return title.includes(query) ||
+			   excerpt.includes(query) ||
+			   subtitle.includes(query) ||
+			   tags.includes(query);
+	}
+
+	// Check if a paper matches the category filter
+	function matchesCategory(paper: typeof papers[0]): boolean {
+		if (categoryFilter === 'all') return true;
+		return paper.category === categoryFilter;
+	}
+
+	// Combined filter, search, and sort
+	const filteredAndSortedPapers = $derived.by(() => {
+		// First filter
+		const filtered = papers.filter(p => matchesSearch(p) && matchesCategory(p));
+
+		// Then sort
+		switch (sortBy) {
+			case 'newest':
+				return filtered.sort((a, b) => {
+					const aDate = new Date(a.published_at || a.created_at || 0).getTime();
+					const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+					return bDate - aDate;
+				});
+			case 'oldest':
+				return filtered.sort((a, b) => {
+					const aDate = new Date(a.published_at || a.created_at || 0).getTime();
+					const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+					return aDate - bDate;
+				});
+			case 'reading-time':
+				return filtered.sort((a, b) => {
+					const aTime = a.reading_time || 0;
+					const bTime = b.reading_time || 0;
+					return aTime - bTime;
+				});
+			default:
+				return filtered;
+		}
+	});
+
+	// Result count for display
+	const resultCount = $derived(filteredAndSortedPapers.length);
+	const isFiltered = $derived(searchQuery.trim() !== '' || categoryFilter !== 'all');
 </script>
 
 <svelte:head>
@@ -20,213 +92,393 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<main class="papers-page">
-	<header class="page-header">
-		<pre class="ascii-header">{`
-╔═══════════════════════════════════════════════════════════════╗
-║   RESEARCH PAPERS                                             ║
-║                                                               ║
-║   Theoretical Grounding for AI-Native Development             ║
-║                                                               ║
-║   "We understand parts through the whole,                     ║
-║    and the whole through its parts."                          ║
-║                              — Gadamer                        ║
-╚═══════════════════════════════════════════════════════════════╝
-`}</pre>
-
-		<p class="page-description">
-			Formal research applying phenomenology, hermeneutics, and design philosophy to understand how
-			AI systems should be built. These papers DESCRIBE the hermeneutic circle; our
-			<a href="/experiments">experiments</a> DEMONSTRATE it.
-		</p>
-	</header>
-
-	<section class="papers-grid">
-		{#each data.papers as paper}
-			<article class="paper-card">
-				{#if paper.ascii_art}
-					<pre class="paper-ascii">{paper.ascii_art}</pre>
+<!-- Hero Section -->
+<section class="hero-section">
+	<div class="max-w-7xl mx-auto">
+		<div class="text-center space-y-4">
+			<h1 class="hero-title">Research Papers</h1>
+			<p class="hero-subtitle">
+				{#if isFiltered}
+					{resultCount} of {papers.length} papers
+				{:else}
+					{papers.length} papers — theoretical grounding for AI-native development
 				{/if}
+			</p>
+		</div>
 
-				<div class="paper-content">
-					<div class="paper-meta">
-						<span class="paper-category">{paper.category}</span>
-						<span class="paper-reading-time">{paper.reading_time} min read</span>
-						<span class="paper-difficulty">{paper.difficulty_level}</span>
-					</div>
-
-					<h2 class="paper-title">
-						<a href="/papers/{paper.slug}">{paper.title}</a>
-					</h2>
-
-					{#if paper.subtitle}
-						<p class="paper-subtitle">{paper.subtitle}</p>
+		<!-- Search & Filter Controls -->
+		<div class="controls-container">
+			<!-- Search Input -->
+			<div class="flex justify-center">
+				<div class="relative w-full max-w-md">
+					<input
+						type="text"
+						bind:value={searchQuery}
+						placeholder="Search papers..."
+						class="search-input"
+					/>
+					<svg
+						class="search-icon"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+						/>
+					</svg>
+					{#if searchQuery}
+						<button
+							onclick={() => searchQuery = ''}
+							class="search-clear"
+							aria-label="Clear search"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
 					{/if}
-
-					<p class="paper-excerpt">{paper.excerpt_long}</p>
-
-					<div class="paper-keywords">
-						{#each paper.tags || [] as tag}
-							<span class="keyword">{tag.name}</span>
-						{/each}
-					</div>
-
-					<footer class="paper-footer">
-						<a href="/papers/{paper.slug}" class="read-link">Read Paper →</a>
-					</footer>
 				</div>
-			</article>
-		{/each}
-	</section>
+			</div>
 
-	{#if data.papers.length === 0}
-		<p class="no-papers">Research papers coming soon. Check our <a href="/experiments">experiments</a> for practical demonstrations.</p>
+			<!-- Category Filter Chips -->
+			<div class="flex justify-center">
+				<div class="flex flex-wrap justify-center gap-2">
+					<button
+						onclick={() => categoryFilter = 'all'}
+						class="filter-chip {categoryFilter === 'all' ? 'active' : ''}"
+					>
+						All
+					</button>
+					<button
+						onclick={() => categoryFilter = 'research'}
+						class="filter-chip {categoryFilter === 'research' ? 'active' : ''}"
+					>
+						Research
+					</button>
+					<button
+						onclick={() => categoryFilter = 'case-study'}
+						class="filter-chip {categoryFilter === 'case-study' ? 'active' : ''}"
+					>
+						Case Study
+					</button>
+					<button
+						onclick={() => categoryFilter = 'methodology'}
+						class="filter-chip {categoryFilter === 'methodology' ? 'active' : ''}"
+					>
+						Methodology
+					</button>
+				</div>
+			</div>
+
+			<!-- Sort Control -->
+			<div class="flex justify-center">
+				<div class="sort-control">
+					<button
+						onclick={() => sortBy = 'newest'}
+						class="sort-button {sortBy === 'newest' ? 'active' : ''}"
+					>
+						Newest
+					</button>
+					<button
+						onclick={() => sortBy = 'oldest'}
+						class="sort-button {sortBy === 'oldest' ? 'active' : ''}"
+					>
+						Oldest
+					</button>
+					<button
+						onclick={() => sortBy = 'reading-time'}
+						class="sort-button {sortBy === 'reading-time' ? 'active' : ''}"
+					>
+						Quick Reads
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<main class="papers-page">
+
+	{#if resultCount > 0}
+		<section class="papers-grid">
+			{#each filteredAndSortedPapers as paper}
+				<a href="/papers/{paper.slug}" class="paper-card">
+					<div class="paper-content">
+						<div class="paper-meta flex">
+							<span class="paper-category">{paper.category}</span>
+							<span class="paper-reading-time">{paper.reading_time} min read</span>
+							<span class="paper-difficulty">{paper.difficulty_level}</span>
+						</div>
+
+						<h2 class="paper-title">{paper.title}</h2>
+
+						{#if paper.subtitle}
+							<p class="paper-subtitle">{paper.subtitle}</p>
+						{/if}
+
+						<p class="paper-excerpt">{paper.excerpt_long}</p>
+
+						<div class="paper-keywords flex flex-wrap">
+							{#each paper.tags || [] as tag}
+								<span class="keyword">{typeof tag === 'string' ? tag : tag.name}</span>
+							{/each}
+						</div>
+					</div>
+				</a>
+			{/each}
+		</section>
+	{:else}
+		<div class="empty-state">
+			<p class="empty-message">No papers match your search.</p>
+			<button
+				onclick={() => { searchQuery = ''; categoryFilter = 'all'; }}
+				class="clear-button"
+			>
+				Clear filters
+			</button>
+		</div>
 	{/if}
 </main>
 
 <style>
-	.papers-page {
-		max-width: 900px;
-		margin: 0 auto;
-		padding: 2rem;
+	/* Hero Section */
+	.hero-section {
+		position: relative;
+		padding: var(--space-xl) var(--space-md) var(--space-lg);
 	}
 
-	.page-header {
-		margin-bottom: 3rem;
+	.hero-title {
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.hero-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Controls */
+	.controls-container {
+		margin-top: var(--space-lg);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.search-input {
+		width: 100%;
+		padding: var(--space-sm) var(--space-sm) var(--space-sm) 2.5rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-standard) var(--ease-standard);
+	}
+
+	.search-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.search-input:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.search-icon {
+		position: absolute;
+		left: var(--space-sm);
+		top: 50%;
+		transform: translateY(-50%);
+		width: 1rem;
+		height: 1rem;
+		color: var(--color-fg-muted);
+	}
+
+	.search-clear {
+		position: absolute;
+		right: var(--space-sm);
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-fg-muted);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.search-clear:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Filter Chips */
+	.filter-chip {
+		padding: 0.375rem var(--space-sm);
+		font-size: var(--text-body-sm);
+		border-radius: var(--radius-full);
+		transition: all var(--duration-standard) var(--ease-standard);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-tertiary);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.filter-chip:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.filter-chip.active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-color: var(--color-fg-primary);
+	}
+
+	/* Sort Control */
+	.sort-control {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.25rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.sort-button {
+		padding: var(--space-xs) var(--space-sm);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		border-radius: var(--radius-sm);
+		transition: all var(--duration-standard) var(--ease-standard);
+		color: var(--color-fg-secondary);
+	}
+
+	.sort-button:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.sort-button.active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	/* Empty State */
+	.empty-state {
 		text-align: center;
+		padding: var(--space-2xl) var(--space-md);
 	}
 
-	.ascii-header {
-		font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-		font-size: 0.7rem;
-		line-height: 1.2;
-		color: rgba(255, 255, 255, 0.7);
-		margin: 0 auto 1.5rem;
-		text-align: left;
-		display: inline-block;
+	.empty-message {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-lg);
+		margin-bottom: var(--space-md);
 	}
 
-	.page-description {
-		max-width: 600px;
+	.clear-button {
+		margin-top: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-md);
+		background: transparent;
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.clear-button:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-bg-surface);
+	}
+
+	/* Existing paper card styles remain unchanged as they already use Canon */
+	/* ==========================================================================
+	   Papers Page - Card Styles (Canonical CSS)
+	   Hero section uses Tailwind for consistency with /experiments
+	   ========================================================================== */
+
+	.papers-page {
+		max-width: 800px;
 		margin: 0 auto;
-		color: rgba(255, 255, 255, 0.6);
-		line-height: 1.6;
+		padding: 0 var(--space-md) var(--space-lg);
 	}
 
-	.page-description a {
-		color: rgba(255, 255, 255, 0.8);
-		text-decoration: underline;
-	}
-
+	/* Papers Grid */
 	.papers-grid {
 		display: flex;
 		flex-direction: column;
-		gap: 2rem;
+		gap: var(--space-md);
 	}
 
 	.paper-card {
-		background: rgba(10, 10, 10, 0.6);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 8px;
+		display: block;
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 		overflow: hidden;
+		text-decoration: none;
+		color: inherit;
+		transition: border-color var(--duration-standard) var(--ease-out),
+		            background var(--duration-standard) var(--ease-out),
+		            transform var(--duration-standard) var(--ease-out);
 	}
 
-	.paper-ascii {
-		font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
-		font-size: 0.55rem;
-		line-height: 1.15;
-		color: rgba(255, 255, 255, 0.5);
-		padding: 1rem;
-		background: rgba(0, 0, 0, 0.3);
-		margin: 0;
-		overflow-x: auto;
+	.paper-card:hover {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-hover);
+		transform: translateY(-2px);
 	}
 
 	.paper-content {
-		padding: 1.5rem;
+		padding: var(--space-md);
 	}
 
 	.paper-meta {
-		display: flex;
-		gap: 1rem;
-		margin-bottom: 0.75rem;
-		font-size: 0.75rem;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-xs);
+		font-size: var(--text-caption);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: rgba(255, 255, 255, 0.4);
+		letter-spacing: var(--tracking-wider);
+		color: var(--color-fg-muted);
 	}
 
 	.paper-category {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 	}
 
 	.paper-title {
-		font-size: 1.5rem;
-		font-weight: 600;
-		margin: 0 0 0.5rem 0;
-		line-height: 1.3;
-	}
-
-	.paper-title a {
-		color: inherit;
-		text-decoration: none;
-	}
-
-	.paper-title a:hover {
-		color: rgba(255, 255, 255, 0.8);
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		margin: 0 0 var(--space-xs) 0;
+		line-height: var(--leading-snug);
+		color: var(--color-fg-primary);
 	}
 
 	.paper-subtitle {
-		font-size: 1rem;
-		color: rgba(255, 255, 255, 0.6);
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
 		font-style: italic;
-		margin: 0 0 1rem 0;
+		margin: 0 0 var(--space-sm) 0;
 	}
 
 	.paper-excerpt {
-		color: rgba(255, 255, 255, 0.7);
-		line-height: 1.6;
-		margin: 0 0 1rem 0;
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin: 0 0 var(--space-sm) 0;
 	}
 
 	.paper-keywords {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
+		gap: var(--space-xs);
+		margin-bottom: var(--space-sm);
 	}
 
 	.keyword {
-		padding: 0.25rem 0.5rem;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 4px;
-		font-size: 0.7rem;
-		color: rgba(255, 255, 255, 0.5);
-	}
-
-	.paper-footer {
-		padding-top: 1rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
-	}
-
-	.read-link {
-		color: rgba(255, 255, 255, 0.7);
-		text-decoration: none;
-		font-size: 0.875rem;
-	}
-
-	.read-link:hover {
-		color: rgba(255, 255, 255, 1);
-	}
-
-	.no-papers {
-		text-align: center;
-		color: rgba(255, 255, 255, 0.5);
-		padding: 3rem;
-	}
-
-	.no-papers a {
-		color: rgba(255, 255, 255, 0.7);
+		padding: 0.25rem var(--space-xs);
+		background: var(--color-hover);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-overline);
+		color: var(--color-fg-muted);
 	}
 </style>

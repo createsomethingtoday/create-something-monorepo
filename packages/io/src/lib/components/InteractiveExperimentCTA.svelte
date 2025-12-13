@@ -15,14 +15,14 @@
 </script>
 
 <!-- Simple, clean CTA matching site aesthetic -->
-<div class="bg-black border border-white/10 rounded-lg p-6 mb-8">
+<div class="interactive-cta p-6 mb-8">
 	<div class="flex items-center justify-between gap-6 flex-wrap">
 		<!-- Left: Simple text -->
 		<div class="flex-1 min-w-0">
-			<div class="text-white/80 text-sm mb-1">
+			<div class="cta-title mb-1">
 				Interactive Version Available
 			</div>
-			<div class="text-white/60 text-xs">
+			<div class="cta-subtitle">
 				Run this experiment hands-on in your browser
 			</div>
 		</div>
@@ -32,7 +32,7 @@
 			{#if isCompleted && onReset}
 				<button
 					onclick={onReset}
-					class="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded transition-colors"
+					class="reset-button p-2"
 					aria-label="Reset progress"
 					title="Reset progress"
 				>
@@ -56,9 +56,7 @@
 				href={spaceUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded transition-colors {isCompleted
-					? 'bg-green-500 text-black hover:bg-green-400'
-					: 'bg-white text-black hover:bg-white/90'}"
+				class="launch-button {isCompleted ? 'completed' : 'default'} flex items-center gap-2 px-4 py-2"
 			>
 				{#if isCompleted}
 					<span>Verification Complete</span>
@@ -95,3 +93,57 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.interactive-cta {
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.cta-title {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+	}
+
+	.cta-subtitle {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-caption);
+	}
+
+	.reset-button {
+		color: var(--color-fg-tertiary);
+		border-radius: var(--radius-sm);
+		transition: all var(--duration-standard);
+	}
+
+	.reset-button:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.launch-button {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		border-radius: var(--radius-sm);
+		transition: all var(--duration-standard);
+	}
+
+	.launch-button.default {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	.launch-button.default:hover {
+		background: rgba(255, 255, 255, 0.9);
+	}
+
+	.launch-button.completed {
+		background: rgb(34, 197, 94);
+		color: var(--color-bg-pure);
+	}
+
+	.launch-button.completed:hover {
+		background: rgb(74, 222, 128);
+	}
+</style>

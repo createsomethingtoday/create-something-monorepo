@@ -89,12 +89,12 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h2 class="text-3xl font-bold mb-2">New Experiment</h2>
-			<p class="text-white/60">Create a new CREATE SOMETHING experiment</p>
+			<h2 class="page-title">New Experiment</h2>
+			<p class="page-subtitle">Create a new CREATE SOMETHING experiment</p>
 		</div>
 		<a
 			href="/admin/experiments"
-			class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+			class="back-link"
 		>
 			← Back to Experiments
 		</a>
@@ -108,41 +108,39 @@
 		class="space-y-6"
 	>
 		{#if error}
-			<div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
+			<div class="error-alert">
 				{error}
 			</div>
 		{/if}
 
 		<!-- Title -->
 		<div>
-			<label for="title" class="block text-sm font-medium mb-2">Title *</label>
+			<label for="title" class="form-label">Title *</label>
 			<input
 				id="title"
 				type="text"
 				bind:value={title}
 				required
 				placeholder="Multi-User Gmail→Notion Sync"
-				class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30"
+				class="form-input"
 			/>
 		</div>
 
 		<!-- Description -->
 		<div>
-			<label for="description" class="block text-sm font-medium mb-2">Description</label>
+			<label for="description" class="form-label">Description</label>
 			<textarea
 				id="description"
 				bind:value={description}
 				rows="3"
 				placeholder="Brief description of the experiment..."
-				class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30"
+				class="form-textarea"
 			></textarea>
 		</div>
 
 		<!-- Content -->
 		<div>
-			<label for="content" class="block text-sm font-medium mb-2"
-				>Content (Markdown supported)</label
-			>
+			<label for="content" class="form-label">Content (Markdown supported)</label>
 			<textarea
 				id="content"
 				bind:value={content}
@@ -157,71 +155,69 @@ Technical details...
 
 ## Results
 Outcomes and learnings..."
-				class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 font-mono text-sm"
+				class="form-textarea form-textarea--mono"
 			></textarea>
 		</div>
 
 		<!-- Category -->
 		<div>
-			<label for="category" class="block text-sm font-medium mb-2">Category</label>
+			<label for="category" class="form-label">Category</label>
 			<select
 				id="category"
 				bind:value={category}
-				class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30"
+				class="form-select"
 			>
 				<option value="">Select a category</option>
 				{#each allTags as tag}
 					<option value={tag.slug}>{tag.name}</option>
 				{/each}
 			</select>
-			<p class="mt-1 text-xs text-white/40">
+			<p class="form-help">
 				Category determines the experiment's primary classification
 			</p>
 		</div>
 
 		<!-- Tags -->
 		<div>
-			<label class="block text-sm font-medium mb-2">Tags (Multi-select)</label>
+			<label class="form-label">Tags (Multi-select)</label>
 			<div class="flex flex-wrap gap-2">
 				{#each allTags as tag}
 					<button
 						type="button"
 						onclick={() => toggleTag(tag.id)}
-						class="px-3 py-1.5 rounded-lg text-sm transition-colors {selectedTagIds.includes(tag.id)
-							? 'bg-white text-black'
-							: 'bg-white/10 text-white hover:bg-white/20'}"
+						class="tag-btn {selectedTagIds.includes(tag.id) ? 'tag-btn--active' : ''}"
 					>
 						{tag.name}
 					</button>
 				{/each}
 			</div>
-			<p class="mt-1 text-xs text-white/40">
+			<p class="form-help">
 				Tags help categorize and filter experiments across the system
 			</p>
 		</div>
 
 		<!-- URL -->
 		<div>
-			<label for="url" class="block text-sm font-medium mb-2">URL (optional)</label>
+			<label for="url" class="form-label">URL (optional)</label>
 			<input
 				id="url"
 				type="url"
 				bind:value={url}
 				placeholder="https://example.com/experiment"
-				class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/30"
+				class="form-input"
 			/>
 		</div>
 
 		<!-- Options -->
 		<div class="flex gap-6">
-			<label class="flex items-center gap-2 cursor-pointer">
-				<input type="checkbox" bind:checked={featured} class="w-4 h-4" />
-				<span class="text-sm">Featured</span>
+			<label class="checkbox-label">
+				<input type="checkbox" bind:checked={featured} class="checkbox-input" />
+				<span>Featured</span>
 			</label>
 
-			<label class="flex items-center gap-2 cursor-pointer">
-				<input type="checkbox" bind:checked={published} class="w-4 h-4" />
-				<span class="text-sm">Published</span>
+			<label class="checkbox-label">
+				<input type="checkbox" bind:checked={published} class="checkbox-input" />
+				<span>Published</span>
 			</label>
 		</div>
 
@@ -230,17 +226,172 @@ Outcomes and learnings..."
 			<button
 				type="submit"
 				disabled={loading}
-				class="px-6 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+				class="btn btn--primary"
 			>
 				{loading ? 'Creating...' : 'Create Experiment'}
 			</button>
 
 			<a
 				href="/admin/experiments"
-				class="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors font-semibold"
+				class="btn btn--secondary"
 			>
 				Cancel
 			</a>
 		</div>
 	</form>
 </div>
+
+<style>
+	/* Typography */
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		margin-bottom: var(--space-sm);
+		color: var(--color-fg-primary);
+	}
+
+	.page-subtitle {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body);
+	}
+
+	/* Links */
+	.back-link {
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		text-decoration: none;
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.back-link:hover {
+		background: var(--color-hover);
+	}
+
+	/* Buttons */
+	.btn {
+		padding: var(--space-sm) var(--space-lg);
+		border-radius: var(--radius-lg);
+		font-weight: 600;
+		transition: all var(--duration-standard) var(--ease-standard);
+		border: none;
+		cursor: pointer;
+		text-decoration: none;
+		display: inline-block;
+		text-align: center;
+	}
+
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn--primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	.btn--primary:hover:not(:disabled) {
+		background: var(--color-fg-secondary);
+	}
+
+	.btn--secondary {
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
+	}
+
+	.btn--secondary:hover:not(:disabled) {
+		background: var(--color-hover);
+	}
+
+	/* Error Alert */
+	.error-alert {
+		padding: var(--space-md);
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.3);
+		border-radius: var(--radius-lg);
+		color: #f87171;
+	}
+
+	/* Form Elements */
+	.form-label {
+		display: block;
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		margin-bottom: var(--space-sm);
+		color: var(--color-fg-primary);
+	}
+
+	.form-input,
+	.form-textarea,
+	.form-select {
+		width: 100%;
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+	}
+
+	.form-input::placeholder,
+	.form-textarea::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.form-input:focus,
+	.form-textarea:focus,
+	.form-select:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.form-textarea--mono {
+		font-family: ui-monospace, monospace;
+		font-size: var(--text-body-sm);
+	}
+
+	.form-help {
+		margin-top: var(--space-xs);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	/* Tag Buttons */
+	.tag-btn {
+		padding: 0.375rem var(--space-sm);
+		border-radius: var(--radius-lg);
+		font-size: var(--text-body-sm);
+		transition: all var(--duration-standard) var(--ease-standard);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
+		border: none;
+		cursor: pointer;
+	}
+
+	.tag-btn:hover {
+		background: var(--color-hover);
+	}
+
+	.tag-btn--active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+	}
+
+	/* Checkbox */
+	.checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		cursor: pointer;
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+	}
+
+	.checkbox-input {
+		width: 1rem;
+		height: 1rem;
+		cursor: pointer;
+	}
+</style>

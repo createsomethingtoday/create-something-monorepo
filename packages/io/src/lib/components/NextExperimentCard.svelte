@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { Paper } from "$lib/types/paper";
-    import { fly } from "svelte/transition";
 
     interface Props {
         nextPaper: Paper;
@@ -9,36 +8,24 @@
     let { nextPaper }: Props = $props();
 </script>
 
-<div
-    class="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl p-8 mt-16 text-center relative overflow-hidden group"
-    in:fly={{ y: 20, duration: 500, delay: 200 }}
->
+<div class="next-card group p-8 mt-16 text-center relative overflow-hidden animate-reveal">
     <!-- Background Glow -->
-    <div
-        class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-purple-500/10 blur-3xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-    ></div>
+    <div class="bg-glow absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10"></div>
 
     <div class="relative z-10">
-        <div
-            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-medium text-white/80 mb-4"
-        >
+        <div class="horizon-badge inline-flex items-center gap-2 px-3 py-1 mb-4">
             <span>Horizon of Possibility</span>
         </div>
 
-        <h3 class="text-2xl font-bold text-white mb-2">
+        <h3 class="next-heading mb-2">
             Ready for the next step?
         </h3>
 
-        <p class="text-white/60 mb-8 max-w-md mx-auto">
-            You've mastered the current concept. Continue your journey with <span
-                class="text-white font-medium">{nextPaper.title}</span
-            >.
+        <p class="next-description mb-8 max-w-md mx-auto">
+            You've mastered the current concept. Continue your journey with <span class="next-title-highlight">{nextPaper.title}</span>.
         </p>
 
-        <a
-            href="/experiments/{nextPaper.slug}"
-            class="inline-flex items-center gap-2 px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-white/90 transition-all transform hover:scale-105 shadow-lg hover:shadow-white/20"
-        >
+        <a href="/experiments/{nextPaper.slug}" class="next-button inline-flex items-center gap-2 px-8 py-3 transform">
             <span>Start Next Experiment</span>
             <svg
                 class="w-4 h-4"
@@ -56,3 +43,81 @@
         </a>
     </div>
 </div>
+
+<style>
+    .next-card {
+        background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--radius-xl);
+    }
+
+    .bg-glow {
+        background: rgba(168, 85, 247, 0.1);
+        filter: blur(48px);
+        opacity: 0;
+        transition: opacity 500ms;
+    }
+
+    .group:hover .bg-glow {
+        opacity: 1;
+    }
+
+    .horizon-badge {
+        border-radius: var(--radius-full);
+        background: var(--color-hover);
+        font-size: var(--text-caption);
+        font-weight: 500;
+        color: var(--color-fg-secondary);
+    }
+
+    .next-heading {
+        font-size: clamp(1.25rem, 3vw, 1.5rem);
+        font-weight: bold;
+        color: var(--color-fg-primary);
+    }
+
+    .next-description {
+        color: var(--color-fg-tertiary);
+    }
+
+    .next-title-highlight {
+        color: var(--color-fg-primary);
+        font-weight: 500;
+    }
+
+    .next-button {
+        background: var(--color-fg-primary);
+        color: var(--color-bg-pure);
+        font-weight: bold;
+        border-radius: var(--radius-full);
+        transition: all var(--duration-standard);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .next-button:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: scale(1.05);
+        box-shadow: 0 20px 25px -5px rgba(255, 255, 255, 0.2), 0 10px 10px -5px rgba(255, 255, 255, 0.1);
+    }
+
+    .animate-reveal {
+        opacity: 0;
+        transform: translateY(12px);
+        animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+    }
+
+    @keyframes reveal {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .animate-reveal {
+            animation: none;
+            opacity: 1;
+            transform: none;
+        }
+    }
+</style>
