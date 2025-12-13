@@ -81,6 +81,19 @@
   --space-lg: 2.618rem;
   --space-xl: 4.236rem;
   --space-2xl: 6.854rem;
+  --space-3xl: 11.09rem;
+
+  /* Width constraints */
+  --width-prose: 65ch;
+  --width-content: 800px;
+  --width-wide: 1200px;
+
+  /* Z-index layers */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-modal: 30;
+  --z-toast: 40;
 
   /* Radius */
   --radius-sm: 6px;
@@ -187,5 +200,58 @@
   /* View transitions */
   @view-transition {
     navigation: auto;
+  }
+}
+
+/* ==========================================================================
+   Component Patterns
+   ========================================================================== */
+
+@layer components {
+  /* Container */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-md);
+  }
+
+  /* Section spacing */
+  .section {
+    padding: var(--space-2xl) 0;
+  }
+
+  /* CTA Buttons */
+  .cta-primary,
+  .cta-secondary {
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body);
+    font-weight: var(--font-medium);
+    transition: all var(--duration-micro) var(--ease-standard);
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+  }
+
+  .cta-primary {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    border: 1px solid var(--color-fg-primary);
+  }
+
+  .cta-primary:hover {
+    background: var(--color-fg-secondary);
+    border-color: var(--color-fg-secondary);
+  }
+
+  .cta-secondary {
+    background: transparent;
+    color: var(--color-fg-primary);
+    border: 1px solid var(--color-border-emphasis);
+  }
+
+  .cta-secondary:hover {
+    background: var(--color-hover);
+    border-color: var(--color-border-strong);
   }
 }
