@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#000000"/>
+
+  <!-- Grid pattern (subtle) -->
+  <defs>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Open book icon (centered, large) -->
+  <g transform="translate(500, 150)">
+    <path d="M20 30h60a40 40 0 0 1 40 40v140a30 30 0 0 0-30-30H20z"
+          fill="none"
+          stroke="#FFFFFF"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <path d="M220 30h-60a40 40 0 0 0-40 40v140a30 30 0 0 1 30-30h70z"
+          fill="none"
+          stroke="#FFFFFF"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- Brand text -->
+  <text x="600" y="450"
+        text-anchor="middle"
+        font-family="system-ui, -apple-system, sans-serif"
+        font-size="48"
+        font-weight="600"
+        fill="#FFFFFF">
+    CREATE SOMETHING
+  </text>
+
+  <text x="600" y="510"
+        text-anchor="middle"
+        font-family="system-ui, -apple-system, sans-serif"
+        font-size="32"
+        font-weight="400"
+        fill="rgba(255,255,255,0.6)">
+    Learn the Ethos
+  </text>
+
+  <!-- .learn badge -->
+  <text x="600" y="570"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="24"
+        fill="rgba(255,255,255,0.4)">
+    .learn
+  </text>
+</svg>
