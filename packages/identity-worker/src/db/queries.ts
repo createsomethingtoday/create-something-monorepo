@@ -255,3 +255,61 @@ export async function incrementRateLimit(db: D1Database, key: string): Promise<v
 		.bind(key, now, now)
 		.run();
 }
+
+// Email change request queries
+export interface EmailChangeRequest {
+	id: string;
+	user_id: string;
+	new_email: string;
+	token_hash: string;
+	expires_at: string;
+	created_at: string;
+}
+
+export async function createEmailChangeRequest(
+	db: D1Database,
+	request: {
+		id: string;
+		user_id: string;
+		new_email: string;
+		token_hash: string;
+		expires_at: string;
+	}
+): Promise<void> {
+	// Delete any existing requests for this user first
+	await db.prepare('DELETE FROM email_change_requests WHERE user_id = ?').bind(request.user_id).run();
+
+	await db
+		.prepare(
+			`INSERT INTO email_change_requests (id, user_id, new_email, token_hash, expires_at)
+       VALUES (?, ?, ?, ?, ?)`
+		)
+		.bind(request.id, request.user_id, request.new_email, request.token_hash, request.expires_at)
+		.run();
+}
+
+export async function findEmailChangeRequestByToken(
+	db: D1Database,
+	tokenHash: string
+): Promise<EmailChangeRequest | null> {
+	return db
+		.prepare('SELECT * FROM email_change_requests WHERE token_hash = ? AND expires_at > datetime("now")')
+		.bind(tokenHash)
+		.first<EmailChangeRequest>();
+}
+
+export async function deleteEmailChangeRequest(db: D1Database, id: string): Promise<void> {
+	await db.prepare('DELETE FROM email_change_requests WHERE id = ?').bind(id).run();
+}
+
+export async function updateUserEmail(db: D1Database, id: string, email: string): Promise<User | null> {
+	await db
+		.prepare("UPDATE users SET email = ?, email_verified = 1, updated_at = datetime('now') WHERE id = ?")
+		.bind(email.toLowerCase(), id)
+		.run();
+	return findUserById(db, id);
+}
+
+export async function cleanExpiredEmailChangeRequests(db: D1Database): Promise<void> {
+	await db.prepare("DELETE FROM email_change_requests WHERE expires_at < datetime('now')").run();
+}

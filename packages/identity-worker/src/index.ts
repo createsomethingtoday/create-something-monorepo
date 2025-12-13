@@ -16,12 +16,17 @@ import {
 	createUser,
 	updateUser,
 	updateUserPassword,
+	updateUserEmail,
 	revokeAllUserTokens,
 	checkRateLimit,
 	incrementRateLimit,
 	findRefreshTokenByHash,
 	findApiKeyByHash,
+	createEmailChangeRequest,
+	findEmailChangeRequestByToken,
+	deleteEmailChangeRequest,
 } from './db/queries';
+import { sendVerificationEmail } from './services/email';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -71,6 +76,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/v1/users/me' && method === 'GET') return handleGetMe(request, env);
 	if (path === '/v1/users/me' && method === 'PATCH') return handleUpdateMe(request, env);
 	if (path === '/v1/users/me/password' && method === 'PATCH') return handleChangePassword(request, env);
+	if (path === '/v1/users/me/email/change' && method === 'POST') return handleInitiateEmailChange(request, env);
+	if (path === '/v1/users/me/email/verify' && method === 'POST') return handleVerifyEmailChange(request, env);
 
 	// Service-to-service (API key protected)
 	if (path === '/v1/validate' && method === 'POST') return handleValidate(request, env);
@@ -339,6 +346,128 @@ async function handleChangePassword(request: Request, env: Env): Promise<Respons
 	await revokeAllUserTokens(db, payload.sub);
 
 	return json({ success: true, message: 'Password updated. Please log in again.' });
+}
+
+async function handleInitiateEmailChange(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Authenticate
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	// Check for Resend API key
+	if (!env.RESEND_API_KEY) {
+		return json({ error: 'service_unavailable', message: 'Email service not configured', status: 503 }, 503);
+	}
+
+	// Rate limit
+	const rateKey = `email_change:${payload.sub}`;
+	const { allowed } = await checkRateLimit(db, rateKey, 3, 3600); // 3 attempts per hour
+	if (!allowed) {
+		return json({ error: 'rate_limited', message: 'Too many email change attempts', status: 429 }, 429);
+	}
+
+	// Parse request
+	const body = await parseJSON<{ new_email?: string; password?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+
+	const { new_email, password } = body;
+	if (!new_email || !password) {
+		return json({ error: 'invalid_request', message: 'New email and password required', status: 400 }, 400);
+	}
+
+	if (!isValidEmail(new_email)) {
+		return json({ error: 'invalid_email', message: 'Invalid email format', status: 400 }, 400);
+	}
+
+	// Get user and verify password
+	const user = await findUserById(db, payload.sub);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	const valid = await verifyPassword(password, user.password_hash);
+	if (!valid) {
+		await incrementRateLimit(db, rateKey);
+		return json({ error: 'invalid_password', message: 'Password is incorrect', status: 401 }, 401);
+	}
+
+	// Check if new email already exists
+	const existing = await findUserByEmail(db, new_email);
+	if (existing) {
+		return json({ error: 'email_exists', message: 'Email already in use', status: 409 }, 409);
+	}
+
+	// Generate verification token
+	const token = generateUUID();
+	const tokenHash = await hashToken(token);
+	const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+
+	// Create email change request
+	await createEmailChangeRequest(db, {
+		id: generateUUID(),
+		user_id: user.id,
+		new_email: new_email.toLowerCase(),
+		token_hash: tokenHash,
+		expires_at: expiresAt,
+	});
+
+	// Send verification email to new address
+	const verificationUrl = `https://id.createsomething.space/verify-email?token=${token}`;
+	const result = await sendVerificationEmail(env.RESEND_API_KEY, new_email, user.name, verificationUrl);
+
+	if (!result.success) {
+		return json({ error: 'email_failed', message: 'Failed to send verification email', status: 500 }, 500);
+	}
+
+	return json({
+		success: true,
+		message: 'Verification email sent to your new address. Please check your inbox.',
+	});
+}
+
+async function handleVerifyEmailChange(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Parse request
+	const body = await parseJSON<{ token?: string }>(request);
+	if (!body?.token) {
+		return json({ error: 'invalid_request', message: 'Token required', status: 400 }, 400);
+	}
+
+	// Find the request by token
+	const tokenHash = await hashToken(body.token);
+	const changeRequest = await findEmailChangeRequestByToken(db, tokenHash);
+	if (!changeRequest) {
+		return json({ error: 'invalid_token', message: 'Invalid or expired token', status: 400 }, 400);
+	}
+
+	// Check if new email still available
+	const existing = await findUserByEmail(db, changeRequest.new_email);
+	if (existing) {
+		await deleteEmailChangeRequest(db, changeRequest.id);
+		return json({ error: 'email_exists', message: 'Email already in use', status: 409 }, 409);
+	}
+
+	// Update user's email
+	const user = await updateUserEmail(db, changeRequest.user_id, changeRequest.new_email);
+	if (!user) {
+		return json({ error: 'update_failed', message: 'Failed to update email', status: 500 }, 500);
+	}
+
+	// Delete the change request
+	await deleteEmailChangeRequest(db, changeRequest.id);
+
+	// Revoke all tokens (security - force re-login with new email)
+	await revokeAllUserTokens(db, changeRequest.user_id);
+
+	return json({
+		success: true,
+		message: 'Email updated successfully. Please log in with your new email.',
+		email: user.email,
+	});
 }
 
 // Service-to-Service Handlers
