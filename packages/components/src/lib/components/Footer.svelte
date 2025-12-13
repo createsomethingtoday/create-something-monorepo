@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
 	interface QuickLink {
 		label: string;
 		href: string;
 	}
 
 	interface Props {
-		mode?: 'ltd' | 'io' | 'space' | 'agency';
+		mode?: 'ltd' | 'io' | 'space' | 'agency' | 'learn';
 		aboutText?: string;
 		showNewsletter?: boolean;
 		newsletterTitle?: string;
@@ -14,6 +16,7 @@
 		showRamsQuote?: boolean;
 		copyrightText?: string;
 		showSocial?: boolean;
+		turnstileSiteKey?: string;
 	}
 
 	let {
@@ -25,17 +28,85 @@
 		quickLinks = [],
 		showRamsQuote = false,
 		copyrightText,
-		showSocial = false
+		showSocial = false,
+		turnstileSiteKey = ''
 	}: Props = $props();
 
 	let email = $state('');
+	let honeypot = $state(''); // Hidden field - bots fill this
 	let isSubmitting = $state(false);
 	let message = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+	let turnstileToken = $state('');
+	let turnstileWidgetId: string | null = null;
+	let turnstileContainer: HTMLDivElement;
+
+	// Load Turnstile script and render widget
+	onMount(() => {
+		if (!showNewsletter || !turnstileSiteKey) return;
+
+		// Check if script already loaded
+		if (window.turnstile) {
+			renderTurnstile();
+			return;
+		}
+
+		// Load Turnstile script
+		const script = document.createElement('script');
+		script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
+		script.async = true;
+		script.defer = true;
+
+		// Set up callback
+		(window as any).onTurnstileLoad = () => {
+			renderTurnstile();
+		};
+
+		document.head.appendChild(script);
+
+		return () => {
+			// Cleanup
+			if (turnstileWidgetId && window.turnstile) {
+				window.turnstile.remove(turnstileWidgetId);
+			}
+		};
+	});
+
+	function renderTurnstile() {
+		if (!turnstileContainer || !window.turnstile || !turnstileSiteKey) return;
+
+		turnstileWidgetId = window.turnstile.render(turnstileContainer, {
+			sitekey: turnstileSiteKey,
+			callback: (token: string) => {
+				turnstileToken = token;
+			},
+			'expired-callback': () => {
+				turnstileToken = '';
+			},
+			'error-callback': () => {
+				turnstileToken = '';
+			},
+			theme: 'dark',
+			size: 'flexible'
+		});
+	}
 
 	async function handleNewsletterSubmit(e: Event) {
 		e.preventDefault();
 
 		if (isSubmitting) return;
+
+		// Honeypot check - if filled, silently "succeed" but don't submit
+		if (honeypot) {
+			message = { type: 'success', text: 'Thanks for subscribing!' };
+			email = '';
+			return;
+		}
+
+		// Turnstile check
+		if (turnstileSiteKey && !turnstileToken) {
+			message = { type: 'error', text: 'Please complete the verification.' };
+			return;
+		}
 
 		isSubmitting = true;
 		message = null;
@@ -46,7 +117,10 @@
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ email })
+				body: JSON.stringify({
+					email,
+					turnstileToken: turnstileToken || undefined
+				})
 			});
 
 			const data = await response.json();
@@ -54,6 +128,11 @@
 			if (data.success) {
 				message = { type: 'success', text: data.message };
 				email = '';
+				// Reset Turnstile for next submission
+				if (window.turnstile && turnstileWidgetId) {
+					window.turnstile.reset(turnstileWidgetId);
+					turnstileToken = '';
+				}
 			} else {
 				message = { type: 'error', text: data.message };
 			}
@@ -69,6 +148,41 @@
 
 	const currentYear = new Date().getFullYear();
 	const defaultCopyright = `© ${currentYear} Create Something. The canon for "less, but better."`;
+
+	// Cross-property transition handler
+	function handleCrossPropertyClick(e: MouseEvent, targetMode: 'ltd' | 'io' | 'space' | 'agency' | 'learn') {
+		// Don't animate if staying on same property
+		if (targetMode === mode) return;
+
+		e.preventDefault();
+		const href = (e.currentTarget as HTMLAnchorElement).href;
+
+		// Store transition data for entry animation on target page
+		if (typeof sessionStorage !== 'undefined') {
+			sessionStorage.setItem('cs-transition-from', mode);
+			sessionStorage.setItem('cs-transition-to', targetMode);
+			sessionStorage.setItem('cs-transition-time', Date.now().toString());
+		}
+
+		// Trigger exit animation
+		document.body.classList.add('transitioning-out');
+
+		// Navigate after animation completes
+		setTimeout(() => {
+			window.location.href = href;
+		}, 300);
+	}
+
+	// TypeScript declarations for Turnstile
+	declare global {
+		interface Window {
+			turnstile?: {
+				render: (container: HTMLElement, options: any) => string;
+				reset: (widgetId: string) => void;
+				remove: (widgetId: string) => void;
+			};
+		}
+	}
 </script>
 
 <footer class="footer">
@@ -85,6 +199,16 @@
 					</p>
 
 					<form onsubmit={handleNewsletterSubmit} class="max-w-lg mx-auto">
+						<!-- Honeypot field - hidden from users, bots fill it -->
+						<input
+							type="text"
+							bind:value={honeypot}
+							name="website"
+							autocomplete="off"
+							tabindex="-1"
+							class="honeypot"
+						/>
+
 						<div class="flex flex-col sm:flex-row gap-3">
 							<input
 								type="email"
@@ -118,8 +242,13 @@
 							</button>
 						</div>
 
+						<!-- Turnstile widget container -->
+						{#if turnstileSiteKey}
+							<div bind:this={turnstileContainer} class="turnstile-container mt-4"></div>
+						{/if}
+
 						{#if message}
-							<div class="mt-4 p-4 text-sm message-{message.type}">
+							<div class="mt-4 p-4 message-{message.type}">
 								{message.text}
 							</div>
 						{/if}
@@ -137,12 +266,12 @@
 				<div>
 					{#if aboutText}
 						<div class="brand-title mb-4">CREATE SOMETHING</div>
-						<p class="brand-description text-sm max-w-md mb-6">
+						<p class="brand-description max-w-md mb-6">
 							{aboutText}
 						</p>
 					{:else}
-						<h4 class="section-title text-sm mb-4">About</h4>
-						<p class="section-description text-sm leading-relaxed">
+						<h4 class="section-title mb-4">About</h4>
+						<p class="section-description leading-relaxed">
 							The philosophical foundation for the Create Something ecosystem. Curated wisdom from
 							masters who embody "less, but better."
 						</p>
@@ -184,11 +313,11 @@
 				<!-- Quick Links (Optional) -->
 				{#if quickLinks.length > 0}
 					<div>
-						<h3 class="section-title text-sm mb-4">Quick Links</h3>
+						<h3 class="section-title mb-4">Quick Links</h3>
 						<ul class="space-y-3">
 							{#each quickLinks as link}
 								<li>
-									<a href={link.href} class="footer-link text-sm">
+									<a href={link.href} class="footer-link">
 										{link.label}
 									</a>
 								</li>
@@ -197,33 +326,46 @@
 					</div>
 				{/if}
 
-				<!-- Modes of Being (REQUIRED) -->
+				<!-- Modes of Being (REQUIRED) - With Hermeneutic Transitions -->
 				<div>
-					<h3 class="section-title text-sm mb-4">Modes of Being</h3>
+					<h3 class="section-title mb-4">Modes of Being</h3>
 					<ul class="space-y-3">
 						<li>
 							<a
 								href="https://createsomething.space"
-								class="footer-link block text-sm"
+								class="footer-link block"
 								class:active={mode === 'space'}
+								onclick={(e) => handleCrossPropertyClick(e, 'space')}
 							>
 								.space <span class="link-label">— Explore</span>
 							</a>
 						</li>
 						<li>
 							<a
-								href="https://createsomething.io"
-								class="footer-link block text-sm"
-								class:active={mode === 'io'}
+								href="https://learn.createsomething.space"
+								class="footer-link block"
+								class:active={mode === 'learn'}
+								onclick={(e) => handleCrossPropertyClick(e, 'learn')}
 							>
-								.io <span class="link-label">— Learn</span>
+								.learn <span class="link-label">— Study</span>
+							</a>
+						</li>
+						<li>
+							<a
+								href="https://createsomething.io"
+								class="footer-link block"
+								class:active={mode === 'io'}
+								onclick={(e) => handleCrossPropertyClick(e, 'io')}
+							>
+								.io <span class="link-label">— Research</span>
 							</a>
 						</li>
 						<li>
 							<a
 								href="https://createsomething.agency"
-								class="footer-link block text-sm"
+								class="footer-link block"
 								class:active={mode === 'agency'}
+								onclick={(e) => handleCrossPropertyClick(e, 'agency')}
 							>
 								.agency <span class="link-label">— Build</span>
 							</a>
@@ -231,8 +373,9 @@
 						<li>
 							<a
 								href="https://createsomething.ltd"
-								class="footer-link block text-sm"
+								class="footer-link block"
 								class:active={mode === 'ltd'}
+								onclick={(e) => handleCrossPropertyClick(e, 'ltd')}
 							>
 								.ltd <span class="link-label">— Canon</span>
 							</a>
@@ -242,7 +385,7 @@
 								href="https://github.com/createsomethingtoday"
 								target="_blank"
 								rel="noopener"
-								class="footer-link block text-sm"
+								class="footer-link block"
 							>
 								GitHub <span class="link-label">— Source</span>
 							</a>
@@ -256,7 +399,7 @@
 	<!-- Copyright -->
 	<div class="footer-copyright py-6 px-6">
 		<div class="max-w-7xl mx-auto">
-			<p class="copyright-text text-xs text-center">
+			<p class="copyright-text text-center">
 				{copyrightText || defaultCopyright}
 			</p>
 		</div>
@@ -266,7 +409,7 @@
 	{#if showRamsQuote}
 		<div class="footer-quote py-8 px-6">
 			<div class="max-w-7xl mx-auto text-center">
-				<p class="quote-text text-xs leading-relaxed">
+				<p class="quote-text leading-relaxed">
 					Less, but better. · Weniger, aber besser. · — Dieter Rams
 				</p>
 			</div>
@@ -333,6 +476,7 @@
 
 	/* Message States */
 	.message-success {
+		font-size: var(--text-body-sm);
 		background: var(--color-success-muted);
 		color: var(--color-success);
 		border: 1px solid var(--color-success);
@@ -340,6 +484,7 @@
 	}
 
 	.message-error {
+		font-size: var(--text-body-sm);
 		background: var(--color-error-muted);
 		color: var(--color-error);
 		border: 1px solid var(--color-error);
@@ -359,16 +504,19 @@
 	}
 
 	.brand-description {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 	}
 
 	/* Section Titles */
 	.section-title {
+		font-size: var(--text-body-sm);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 	}
 
 	.section-description {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 	}
 
@@ -388,6 +536,7 @@
 
 	/* Footer Links */
 	.footer-link {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
@@ -407,6 +556,7 @@
 	}
 
 	.copyright-text {
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 	}
 
@@ -416,6 +566,23 @@
 	}
 
 	.quote-text {
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	/* Honeypot - hidden from users */
+	.honeypot {
+		position: absolute;
+		left: -9999px;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	/* Turnstile container */
+	.turnstile-container {
+		display: flex;
+		justify-content: center;
 	}
 </style>
