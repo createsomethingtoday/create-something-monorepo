@@ -1,0 +1,125 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Restaurant",
+  "slug": "restaurant",
+  "version": "1.0.0",
+  "description": "Production-ready template for restaurants, cafes, bars, and food establishments",
+  "category": "hospitality",
+  "subcategories": ["restaurant", "cafe", "bar", "bistro"],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency",
+    "support": "https://createsomething.agency/contact"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-restaurant",
+  "demo": "https://restaurant.createsomething.space",
+  "thumbnail": "/og-image.jpg",
+  "screenshots": [
+    "/screenshots/home.png",
+    "/screenshots/menu.png",
+    "/screenshots/reservations.png"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "5 core pages",
+        "Menu display",
+        "Canon design system",
+        "SEO/Schema.org",
+        "Mobile responsive",
+        "Contact form"
+      ]
+    },
+    "pro": {
+      "price": 79,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "3 active WORKWAY workflows",
+        "Online ordering integration",
+        "Reservation system",
+        "Waitlist management",
+        "Email notifications",
+        "Custom domain setup",
+        "Email support"
+      ]
+    },
+    "enterprise": {
+      "price": null,
+      "contact": true,
+      "features": [
+        "Everything in Pro",
+        "Unlimited WORKWAY workflows",
+        "Multi-location support",
+        "POS integration",
+        "Custom integrations",
+        "Priority support",
+        "Direct .agency consultation"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages",
+    "database": "cloudflare-d1",
+    "storage": "cloudflare-r2",
+    "cache": "cloudflare-kv"
+  },
+  "workflows": {
+    "included": [
+      {
+        "name": "online-ordering",
+        "description": "Menu display + cart + checkout + order notifications",
+        "tier": "pro"
+      },
+      {
+        "name": "reservation-booking",
+        "description": "Table availability + booking calendar + confirmation",
+        "tier": "pro"
+      },
+      {
+        "name": "waitlist-management",
+        "description": "Real-time waitlist + SMS notifications + queue updates",
+        "tier": "pro"
+      }
+    ]
+  },
+  "requirements": {
+    "cloudflare": {
+      "account": true,
+      "d1": true,
+      "kv": true,
+      "r2": "optional"
+    },
+    "optional": {
+      "sendgrid": "Email notifications",
+      "twilio": "SMS notifications",
+      "opentable": "Reservation booking",
+      "doordash": "Online ordering",
+      "square": "POS integration"
+    }
+  },
+  "seo": {
+    "schemaTypes": ["Restaurant", "FoodEstablishment", "LocalBusiness"],
+    "sitemap": true,
+    "robots": true,
+    "ogImage": true
+  },
+  "keywords": [
+    "restaurant website",
+    "cafe website template",
+    "bar website",
+    "food establishment website",
+    "online ordering",
+    "restaurant reservation system",
+    "menu website",
+    "hospitality template",
+    "cloudflare pages",
+    "sveltekit template"
+  ],
+  "created": "2025-12-13",
+  "updated": "2025-12-13"
+}
