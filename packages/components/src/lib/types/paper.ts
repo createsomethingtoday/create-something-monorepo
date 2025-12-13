@@ -48,6 +48,11 @@ export interface Paper {
   meta_title?: string | null
   meta_description?: string | null
   focus_keywords?: string | null
+  // ASCII Art: Two-tier system
+  // - ascii_art: Full hero display (ArticleHeader, ~51-59 chars wide)
+  // - ascii_thumbnail: Compact card display (RelatedArticles, optional)
+  // RelatedArticles prefers ascii_thumbnail, falls back to ascii_art
+  // File-based experiments typically only need ascii_art (already compact)
   ascii_art?: string | null
   ascii_thumbnail?: string | null
   created_at: string

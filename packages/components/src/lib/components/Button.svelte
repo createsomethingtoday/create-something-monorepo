@@ -23,12 +23,12 @@
 
 	// Size classes - ALL guarantee 44px minimum touch target (layout utilities OK)
 	const sizeClasses = {
-		sm: 'px-4 py-2.5 text-sm min-h-[44px]',
-		md: 'px-6 py-3 text-base min-h-[44px]',
-		lg: 'px-8 py-4 text-lg min-h-[44px]'
+		sm: 'btn-sm px-4 py-2.5 min-h-[44px]',
+		md: 'btn-md px-6 py-3 min-h-[44px]',
+		lg: 'btn-lg px-8 py-4 min-h-[44px]'
 	};
 
-	const baseClasses = `btn btn-${variant} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} font-semibold flex items-center justify-center gap-2`;
+	const baseClasses = `btn btn-${variant} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} flex items-center justify-center gap-2`;
 </script>
 
 {#if href && !disabled}
@@ -49,6 +49,7 @@
 	/* Base Button */
 	.btn {
 		border-radius: var(--radius-full);
+		font-weight: var(--font-semibold);
 		transition: all var(--duration-micro) var(--ease-standard);
 		-webkit-tap-highlight-color: transparent;
 	}
@@ -56,6 +57,19 @@
 	.btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	/* Size Variants */
+	.btn-sm {
+		font-size: var(--text-body-sm);
+	}
+
+	.btn-md {
+		font-size: var(--text-body);
+	}
+
+	.btn-lg {
+		font-size: var(--text-body-lg);
 	}
 
 	/* Primary Variant */

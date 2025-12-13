@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
 	import type { Paper } from '@create-something/components/types';
 
 	interface Props {
@@ -46,77 +45,79 @@
 
 {#if relatedPapers.length > 0}
 	<section class="related-section w-full max-w-5xl mx-auto px-6 py-16">
-		<div in:fly={{ y: 20, duration: 600 }}>
+		<div class="animate-reveal" style="--delay: 0">
 			<h2 class="section-title mb-8">Related Articles</h2>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				{#each relatedPapers as paper, index (paper.id)}
-					<div in:fly={{ y: 20, duration: 500, delay: index * 100 }}>
-						<a href={`/experiments/${paper.slug}`} class="group block h-full">
-							<article class="related-card h-full overflow-hidden">
-								<!-- ASCII Art Thumbnail -->
-								<div class="thumbnail-container aspect-[16/9] flex items-center justify-center p-4">
-									{#if paper.ascii_thumbnail || paper.ascii_art}
-										<pre class="ascii-art text-[0.35rem] sm:text-[0.4rem] leading-[1.1] font-mono select-none">{paper.ascii_thumbnail || paper.ascii_art}</pre>
-									{:else}
-										<pre class="ascii-placeholder text-[0.4rem] leading-tight font-mono select-none">
+					<a
+						href={`/experiments/${paper.slug}`}
+						class="group block h-full animate-reveal"
+						style="--delay: {index + 1}"
+					>
+						<article class="related-card h-full overflow-hidden">
+							<!-- ASCII Art Thumbnail -->
+							<div class="thumbnail-container aspect-[16/9] flex items-center justify-center p-4">
+								{#if paper.ascii_thumbnail || paper.ascii_art}
+									<pre class="ascii-art leading-[1.1] font-mono select-none">{paper.ascii_thumbnail || paper.ascii_art}</pre>
+								{:else}
+									<pre class="ascii-placeholder leading-tight font-mono select-none">
   ╔═════════════╗
   ║   ASCII     ║
   ║ THUMBNAIL   ║
   ╚═════════════╝
 </pre>
-									{/if}
-								</div>
+								{/if}
+							</div>
 
-								<!-- Content -->
-								<div class="p-5 space-y-3">
-									<!-- Metadata -->
-									<div class="meta-row flex items-center gap-2 text-xs">
-										<span class="capitalize">{getCategoryDisplayName(paper.category)}</span>
-										{#if paper.published_at || paper.date}
-											<span class="meta-separator">•</span>
-											<span>{formatDate(paper.published_at || paper.date)}</span>
-										{/if}
+							<!-- Content -->
+							<div class="p-5 space-y-3">
+								<!-- Metadata -->
+								<div class="meta-row flex items-center gap-2">
+									<span class="capitalize">{getCategoryDisplayName(paper.category)}</span>
+									{#if paper.published_at || paper.date}
 										<span class="meta-separator">•</span>
-										<span>{paper.reading_time} min</span>
-									</div>
-
-									<!-- Title -->
-									<h3 class="related-title text-lg font-semibold line-clamp-2 leading-snug">
-										{paper.title}
-									</h3>
-
-									<!-- Excerpt -->
-									{#if paper.excerpt_short}
-										<p class="related-excerpt text-sm line-clamp-2 leading-relaxed">
-											{paper.excerpt_short}
-										</p>
+										<span>{formatDate(paper.published_at || paper.date)}</span>
 									{/if}
-
-									<!-- Read More Arrow -->
-									<div class="read-more flex items-center gap-2 text-sm group-hover:gap-3 transition-all">
-										<span>Read more</span>
-										<svg
-											class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M9 5l7 7-7 7"
-											/>
-										</svg>
-									</div>
+									<span class="meta-separator">•</span>
+									<span>{paper.reading_time} min</span>
 								</div>
 
-								<!-- Hover Overlay -->
-								<div class="hover-overlay absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-							</article>
-						</a>
-					</div>
+								<!-- Title -->
+								<h3 class="related-title font-semibold line-clamp-2 leading-snug">
+									{paper.title}
+								</h3>
+
+								<!-- Excerpt -->
+								{#if paper.excerpt_short}
+									<p class="related-excerpt line-clamp-2 leading-relaxed">
+										{paper.excerpt_short}
+									</p>
+								{/if}
+
+								<!-- Read More Arrow -->
+								<div class="read-more flex items-center gap-2 group-hover:gap-3 transition-all">
+									<span>Read more</span>
+									<svg
+										class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 5l7 7-7 7"
+										/>
+									</svg>
+								</div>
+							</div>
+
+							<!-- Hover Overlay -->
+							<div class="hover-overlay absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+						</article>
+					</a>
 				{/each}
 			</div>
 		</div>
@@ -155,9 +156,16 @@
 	}
 
 	.ascii-art {
+		font-size: 0.35rem;
 		color: var(--color-fg-primary);
 		opacity: 0.8;
 		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	@media (min-width: 640px) {
+		.ascii-art {
+			font-size: 0.4rem;
+		}
 	}
 
 	.group:hover .ascii-art {
@@ -165,11 +173,13 @@
 	}
 
 	.ascii-placeholder {
+		font-size: 0.4rem;
 		color: var(--color-fg-muted);
 	}
 
 	/* Metadata */
 	.meta-row {
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 	}
 
@@ -179,6 +189,7 @@
 
 	/* Title */
 	.related-title {
+		font-size: var(--text-body-lg);
 		color: var(--color-fg-primary);
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
@@ -189,16 +200,41 @@
 
 	/* Excerpt */
 	.related-excerpt {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 	}
 
 	/* Read More */
 	.read-more {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 	}
 
 	/* Hover Overlay */
 	.hover-overlay {
 		background: linear-gradient(to top, var(--color-hover), transparent);
+	}
+
+	/* Staggered reveal animation - CSS only */
+	.animate-reveal {
+		opacity: 0;
+		transform: translateY(20px);
+		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation-delay: calc(var(--delay, 0) * 100ms);
+	}
+
+	@keyframes reveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-reveal {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
 	}
 </style>

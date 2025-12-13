@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
 	import PaperCard from './PaperCard.svelte';
 	import type { Paper } from '@create-something/components/types';
 
@@ -19,11 +18,11 @@
 	<div class="max-w-7xl mx-auto">
 		<!-- Section Header -->
 		<div class="mb-12">
-			<h2 class="section-title text-3xl md:text-4xl font-bold mb-2">
+			<h2 class="section-title font-bold mb-2">
 				{title}
 			</h2>
 			{#if subtitle}
-				<p class="section-subtitle text-lg">{subtitle}</p>
+				<p class="section-subtitle">{subtitle}</p>
 			{/if}
 		</div>
 
@@ -40,9 +39,9 @@
 
 		<!-- Empty State -->
 		{#if papers.length === 0}
-			<div class="text-center py-24" transition:fade>
-				<div class="text-6xl mb-6">📄</div>
-				<h3 class="empty-title text-2xl font-semibold mb-3">No papers yet</h3>
+			<div class="text-center py-24 animate-fade-in">
+				<div class="empty-icon mb-6">📄</div>
+				<h3 class="empty-title font-semibold mb-3">No papers yet</h3>
 				<p class="empty-text">
 					Check back soon for technical content and case studies.
 				</p>
@@ -57,18 +56,44 @@
 	}
 
 	.section-title {
+		font-size: var(--text-h2);
 		color: var(--color-fg-primary);
 	}
 
 	.section-subtitle {
+		font-size: var(--text-body-lg);
 		color: var(--color-fg-tertiary);
 	}
 
+	.empty-icon {
+		font-size: 3.75rem;
+	}
+
 	.empty-title {
+		font-size: var(--text-h2);
 		color: var(--color-fg-primary);
 	}
 
 	.empty-text {
 		color: var(--color-fg-tertiary);
+	}
+
+	/* Fade in animation - CSS only */
+	.animate-fade-in {
+		opacity: 0;
+		animation: fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	@keyframes fade-in {
+		to {
+			opacity: 1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-fade-in {
+			animation: none;
+			opacity: 1;
+		}
 	}
 </style>
