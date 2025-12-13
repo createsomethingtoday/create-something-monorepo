@@ -20,7 +20,7 @@ export interface User {
 	name: string | null;
 	avatar_url: string | null;
 	tier: 'free' | 'pro' | 'agency';
-	source: 'workway' | 'templates' | 'io' | 'space';
+	source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
 	workway_id: string | null;
 	templates_id: string | null;
 	created_at: string;
