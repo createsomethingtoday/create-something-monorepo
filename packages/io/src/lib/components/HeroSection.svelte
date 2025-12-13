@@ -123,6 +123,7 @@
 		color: var(--color-fg-primary);
 		line-height: var(--leading-tight);
 		margin: 0 0 var(--space-sm) 0;
+		text-align: center;
 	}
 
 	/* Subheadline */
