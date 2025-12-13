@@ -1,143 +1,65 @@
-# Subtractive Triad Audit
-# "The tool that reveals its own concealment"
-#
-# Runs the triad-audit on every push to main and on PRs.
-# Stores results to Cloudflare KV for dashboard display.
-
 name: Subtractive Triad Audit
 
 on:
-  schedule:
-    - cron: '0 6 * * *'  # Daily at 6am UTC
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
-  workflow_dispatch:
+    types: [opened, synchronize, reopened]
 
-env:
-  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  audit:
-    name: Run Triad Audit
+  triad-audit:
+    name: Philosophical Code Review
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
         with:
-          version: 9
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
 
-      - name: Build triad-audit
-        run: pnpm --filter=@createsomething/triad-audit build
+      - name: Get PR diff
+        id: diff
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} > pr_diff.txt
+          echo "diff_size=$(wc -l < pr_diff.txt | tr -d ' ')" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Monorepo Audit
+      - name: Run Subtractive Triad Audit
         id: audit
         run: |
-          # Run audit and capture output
-          node packages/triad-audit/dist/cli.js . --format json -o audit-result.json
+          RESULT=$(cat pr_diff.txt | claude -p "Review this PR through the Subtractive Triad. Provide scores for DRY, Rams, Heidegger (0-10 each), list violations, and recommend APPROVE, REQUEST_CHANGES, or COMMENT." --output-format json --allowedTools "Read,Grep" 2>/dev/null || echo '{"error": "failed"}')
+          ANALYSIS=$(echo "$RESULT" | jq -r '.result // "Audit could not complete"')
+          COST=$(echo "$RESULT" | jq -r '.total_cost_usd // "unknown"')
+          echo "$ANALYSIS" > audit_result.txt
+          echo "cost=$COST" >> $GITHUB_OUTPUT
+          if echo "$ANALYSIS" | grep -qi "REQUEST_CHANGES"; then
+            echo "recommendation=request_changes" >> $GITHUB_OUTPUT
+          elif echo "$ANALYSIS" | grep -qi "APPROVE"; then
+            echo "recommendation=approve" >> $GITHUB_OUTPUT
+          else
+            echo "recommendation=comment" >> $GITHUB_OUTPUT
+          fi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-          # Extract scores for summary
-          echo "dry_score=$(jq '.scores.dry' audit-result.json)" >> $GITHUB_OUTPUT
-          echo "rams_score=$(jq '.scores.rams' audit-result.json)" >> $GITHUB_OUTPUT
-          echo "heidegger_score=$(jq '.scores.heidegger' audit-result.json)" >> $GITHUB_OUTPUT
-          echo "overall_score=$(jq '.scores.overall' audit-result.json)" >> $GITHUB_OUTPUT
-          echo "critical_count=$(jq '.summary.criticalCount' audit-result.json)" >> $GITHUB_OUTPUT
-          echo "high_count=$(jq '.summary.highCount' audit-result.json)" >> $GITHUB_OUTPUT
-        continue-on-error: true
-
-      - name: Upload audit artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: triad-audit-result
-          path: audit-result.json
-          retention-days: 30
-
-      - name: Store results to KV (main branch only)
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: |
-          # Prepare the audit result with metadata
-          TIMESTAMP=$(date +%s)
-          COMMIT_SHA="${{ github.sha }}"
-
-          # Create the KV value with metadata
-          jq --arg ts "$TIMESTAMP" --arg sha "$COMMIT_SHA" \
-            '. + {storedAt: ($ts | tonumber), commitHash: $sha}' \
-            audit-result.json > kv-value.json
-
-          # Store to KV using Cloudflare API
-          # Key: audit:latest
-          curl -X PUT \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/${{ secrets.CIRCLE_DATA_KV_ID }}/values/audit:latest" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            --data-binary @kv-value.json
-
-          # Also store with timestamp key for history
-          curl -X PUT \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/${{ secrets.CIRCLE_DATA_KV_ID }}/values/audit:$TIMESTAMP" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            --data-binary @kv-value.json
-
-      - name: Create PR Comment
-        if: github.event_name == 'pull_request'
+      - name: Post audit comment
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-
-            let result;
-            try {
-              result = JSON.parse(fs.readFileSync('audit-result.json', 'utf8'));
-            } catch (e) {
-              console.log('Could not read audit result');
-              return;
-            }
-
-            const scoreBar = (score) => {
-              const filled = Math.round(score);
-              const empty = 10 - filled;
-              return '█'.repeat(filled) + '░'.repeat(empty);
-            };
-
-            const status = (score) => score >= 7 ? '✅' : score >= 5 ? '⚠️' : '❌';
-
-            const body = `## Subtractive Triad Audit
-
-            | Level | Score | |
-            |-------|-------|---|
-            | DRY (Implementation) | ${result.scores.dry.toFixed(1)}/10 | ${scoreBar(result.scores.dry)} ${status(result.scores.dry)} |
-            | Rams (Artifact) | ${result.scores.rams.toFixed(1)}/10 | ${scoreBar(result.scores.rams)} ${status(result.scores.rams)} |
-            | Heidegger (System) | ${result.scores.heidegger.toFixed(1)}/10 | ${scoreBar(result.scores.heidegger)} ${status(result.scores.heidegger)} |
-            | **Overall** | **${result.scores.overall.toFixed(1)}/10** | ${scoreBar(result.scores.overall)} ${status(result.scores.overall)} |
-
-            ### Violations
-            - Critical: ${result.summary.criticalCount}
-            - High: ${result.summary.highCount}
-            - Medium: ${result.summary.mediumCount}
-            - Low: ${result.summary.lowCount}
-
-            ${result.commendations.length > 0 ? `### Commendations\n${result.commendations.map(c => `- **${c.component}**: ${c.reason}`).join('\n')}` : ''}
-
-            ---
-            *"The tool reveals its own concealment."* — [createsomething.ltd/ethos](https://createsomething.ltd/ethos)
-            `;
-
+            const audit = fs.readFileSync('audit_result.txt', 'utf8');
+            const body = `## Subtractive Triad Audit\n\n${audit}\n\n---\n<sub>[CREATE SOMETHING](https://createsomething.ltd)</sub>`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -145,83 +67,6 @@ jobs:
               body: body
             });
 
-      - name: Check thresholds
-        run: |
-          CRITICAL=${{ steps.audit.outputs.critical_count }}
-          HIGH=${{ steps.audit.outputs.high_count }}
-
-          if [ "$CRITICAL" -gt "0" ]; then
-            echo "::error::Critical violations found: $CRITICAL"
-            exit 2
-          fi
-
-          if [ "$HIGH" -gt "0" ]; then
-            echo "::warning::High severity violations found: $HIGH"
-            # Don't fail on high for now, just warn
-          fi
-
-  self-audit:
-    name: Self-Audit (Recursive Validation)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build triad-audit
-        run: pnpm --filter=@createsomething/triad-audit build
-
-      - name: Self-Audit (triad-audit audits itself)
-        id: self-audit
-        continue-on-error: true
-        run: |
-          # The most Heideggerian check: the tool audits itself
-          node packages/triad-audit/dist/cli.js packages/triad-audit --format json -o self-audit.json
-
-          # Extract self-score
-          SELF_SCORE=$(jq '.scores.overall' self-audit.json)
-          echo "self_score=$SELF_SCORE" >> $GITHUB_OUTPUT
-
-          # The tool must pass its own test
-          if (( $(echo "$SELF_SCORE < 6" | bc -l) )); then
-            echo "::warning::triad-audit self-score below 6. Results should be interpreted with caution."
-          fi
-
-      - name: Store self-audit to KV (main branch only)
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: |
-          TIMESTAMP=$(date +%s)
-
-          jq --arg ts "$TIMESTAMP" \
-            '. + {storedAt: ($ts | tonumber), isSelfAudit: true}' \
-            self-audit.json > self-kv-value.json
-
-          curl -X PUT \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/${{ secrets.CIRCLE_DATA_KV_ID }}/values/audit:self:latest" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            --data-binary @self-kv-value.json
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Upload self-audit artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: triad-audit-self-result
-          path: self-audit.json
-          retention-days: 30
+      - name: Fail on violations
+        if: steps.audit.outputs.recommendation == 'request_changes'
+        run: exit 1

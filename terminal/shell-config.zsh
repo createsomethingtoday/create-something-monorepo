@@ -80,6 +80,9 @@ alias cs='cd "$HOME/Documents/Github/Create Something/create-something-monorepo"
 # WORKWAY
 alias ww='cd "$HOME/Documents/Github/WORKWAY/Cloudflare"'
 
+# To Do (Taskwarrior threshold)
+alias td='cd "$HOME/Desktop/To Do"'
+
 # ─────────────────────────────────────────────────────────────
 # Claude Code
 # ─────────────────────────────────────────────────────────────

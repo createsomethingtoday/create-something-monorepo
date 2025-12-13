@@ -62,6 +62,29 @@ Claude Code handles the full creation-to-deployment cycle. Tools recede into tra
 
 **Canon**: The infrastructure disappears; only the work remains. Deploy directly via Bash or MCP tools. Reserve WezTerm handoff for truly interactive operations (debugging sessions, real-time log monitoring, production verification).
 
+## Task Management: Beads
+
+Agent-native issue tracking that persists across sessions. The tool recedes; the work remains.
+
+```bash
+# Session Start: Surface highest-impact work
+bv --robot-priority
+
+# During Work
+bd create "Task"              # Capture discovered work
+bd dep add X blocks Y         # Record dependencies
+bd update X --status in-progress
+
+# Session End
+bd close X                    # Mark completed
+```
+
+**Labels**: `agency`, `io`, `space`, `ltd` (scope) + `feature`, `bug`, `research`, `refactor` (type)
+
+**Why Beads**: Designed for AI agents. Taskwarrior was human-first; Beads speaks machine to machine via `--robot-priority`.
+
+See `.claude/rules/beads-patterns.md` for full reference.
+
 ## Development Commands
 
 ```bash
@@ -120,6 +143,10 @@ D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patter
 **Principle**: Prefer code-based operations over direct tool calls when composing multiple operations.
 
 This follows Heidegger's distinction between Zuhandenheit (ready-to-hand) and Vorhandenheit (present-at-hand). Tools should recede into transparent use—the hammer disappears when hammering.
+
+**Gestell Warning**: Automation that fills every gap is not efficiency but invasion. The question is not whether to use technology but whether our systems enable dwelling or merely accelerate consumption.
+
+**Gelassenheit**: Neither rejection nor submission—full engagement without capture. The craftsman uses the hammer; the hammer does not use him.
 
 ### When to Use Code Mode (via Bash)
 
