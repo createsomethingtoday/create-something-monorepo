@@ -78,6 +78,18 @@ export async function updateUser(
 	return findUserById(db, id);
 }
 
+export async function updateUserPassword(
+	db: D1Database,
+	id: string,
+	passwordHash: string
+): Promise<boolean> {
+	const result = await db
+		.prepare("UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?")
+		.bind(passwordHash, id)
+		.run();
+	return result.meta.changes > 0;
+}
+
 // Refresh token queries
 export async function createRefreshToken(
 	db: D1Database,
