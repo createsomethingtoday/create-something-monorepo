@@ -21,7 +21,7 @@ const seedData = {
 				date: 'July 29, 2025',
 				title: 'Maverick Metals launches Direct Metal Extraction Technology',
 				excerpt: 'Revolutionary DME platform enables recovery of critical metals from industrial wastewater streams, transforming waste into valuable resources for the energy transition.',
-				image: '/images/news-pic-2.png',
+				image: '/images/news-pic-2.jpg',
 				slug: 'maverick-metals-launches-dme-technology',
 				featured: true,
 				category: 'Product Launch'
