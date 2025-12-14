@@ -86,13 +86,105 @@ overflow-*, z-*, order-*, col-*, row-*
 --text-caption: 0.75rem
 ```
 
-### Animation
+### Animation & Motion
+
+**Philosophy**: Motion should be purposeful, not decorative. Animation reveals state changes and guides attention. When in doubt, don't animate.
+
+#### Timing Tokens
 ```css
---ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1)
---duration-micro: 200ms
---duration-standard: 300ms
---duration-complex: 500ms
+--duration-micro: 200ms    /* Hover states, toggles, micro-interactions */
+--duration-standard: 300ms /* Page transitions, modal open/close */
+--duration-complex: 500ms  /* Multi-step animations, orchestrated sequences */
 ```
+
+#### Easing
+```css
+--ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1)  /* Material Design standard */
+```
+Use `--ease-standard` for all animations. Consistent easing creates coherent motion language.
+
+#### When to Use Each Duration
+
+| Duration | Use Case | Examples |
+|----------|----------|----------|
+| `--duration-micro` | Immediate feedback | Button hover, link underline, icon color |
+| `--duration-standard` | State changes | Modal open, drawer slide, tab switch |
+| `--duration-complex` | Orchestrated motion | Page enter, multi-element sequences |
+
+#### Standard Patterns
+
+**Hover States** (micro):
+```css
+.element {
+  transition: all var(--duration-micro) var(--ease-standard);
+}
+.element:hover {
+  border-color: var(--color-border-emphasis);
+}
+```
+
+**Fade In** (entrance):
+```css
+.fade-in {
+  animation: fadeIn var(--duration-complex) var(--ease-standard);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+```
+
+**Card Lift** (hover emphasis):
+```css
+.card-lift {
+  transition: all var(--duration-standard) var(--ease-standard);
+}
+.card-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-2xl);
+}
+```
+
+#### View Transitions
+
+Per-property transition speeds reflect their character:
+
+| Property | Duration | Character |
+|----------|----------|-----------|
+| `.space` | 200ms | Experimental, responsive |
+| `.io` | 250ms | Research, measured |
+| `.agency` | 250ms | Professional, efficient |
+| `.ltd` | 500ms | Contemplative, deliberate |
+| `.learn` | 300ms | Educational, patient |
+
+```css
+/* Property-specific override in app.css */
+:root {
+  --view-transition-duration: 300ms;
+}
+```
+
+#### Reduced Motion
+
+Always respect user preferences:
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+#### Anti-Patterns
+
+Avoid:
+- Animation for decoration (bouncing icons, pulsing elements)
+- Duration > 500ms (feels sluggish)
+- Custom easing curves (breaks motion coherence)
+- Animating layout properties (`width`, `height`) — use `transform` instead
+- Auto-playing animations without user trigger
 
 ## Pattern
 
