@@ -40,7 +40,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Primary Meta Tags -->
-  <meta name="description" content="Learn the CREATE SOMETHING ethos through practice. Six learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns." />
+  <meta name="description" content="Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns." />
   <meta name="keywords" content="AI development education, Claude Code learning, Subtractive Triad, Canon design system, AI-native patterns, development philosophy, learn by doing, hermeneutic learning" />
   <meta name="author" content="Micah Johnson" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -50,7 +50,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://learn.createsomething.space" />
   <meta property="og:title" content="CREATE SOMETHING LMS | Learn the Ethos" />
-  <meta property="og:description" content="Learn the CREATE SOMETHING ethos through practice. Six learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns." />
+  <meta property="og:description" content="Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns." />
   <meta property="og:image" content="https://learn.createsomething.space/og-image.svg" />
   <meta property="og:image:type" content="image/svg+xml" />
   <meta property="og:image:width" content="1200" />
@@ -62,7 +62,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://learn.createsomething.space" />
   <meta name="twitter:title" content="CREATE SOMETHING LMS | Learn the Ethos" />
-  <meta name="twitter:description" content="Learn the CREATE SOMETHING ethos through practice. Six paths, one philosophy." />
+  <meta name="twitter:description" content="Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy." />
   <meta name="twitter:image" content="https://learn.createsomething.space/og-image.svg" />
   <meta name="twitter:creator" content="@micahryanjohnson" />
 
@@ -97,7 +97,7 @@
       "@type": "EducationalOrganization",
       "name": "CREATE SOMETHING LMS",
       "alternateName": "Learn the Ethos",
-      "description": "Learn the CREATE SOMETHING ethos through practice. Six learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns.",
+      "description": "Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns.",
       "url": "https://learn.createsomething.space",
       "inLanguage": "en-US",
       "author": {
@@ -163,7 +163,7 @@
   <Footer
     mode="learn"
     showNewsletter={false}
-    aboutText="Learn the CREATE SOMETHING ethos through practice. Six paths, one philosophy. Understanding through disciplined removal."
+    aboutText="Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy. Understanding through disciplined removal."
     quickLinks={[
       { label: 'Paths', href: '/paths' },
       { label: 'Praxis', href: '/praxis' },
