@@ -366,5 +366,21 @@
       "medium": 36,
       "low": 5
     }
+  },
+  {
+    "timestamp": "2025-12-14T02:35:51.639Z",
+    "scores": {
+      "dry": 10,
+      "rams": 6,
+      "heidegger": 6.2,
+      "overall": 7.3
+    },
+    "violations": {
+      "total": 53,
+      "critical": 0,
+      "high": 12,
+      "medium": 36,
+      "low": 5
+    }
   }
 ]
