@@ -319,7 +319,9 @@
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="contact-modal-title"
+				tabindex="-1"
 				onclick={(e) => e.stopPropagation()}
+				onkeydown={(e) => e.stopPropagation()}
 			>
 				<!-- Close Button -->
 				<button
