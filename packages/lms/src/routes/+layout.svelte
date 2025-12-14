@@ -32,6 +32,14 @@
     { label: 'Praxis', href: '/praxis' },
     { label: 'Progress', href: '/progress' }
   ];
+
+  // DRY: Centralized copy for meta tags and components
+  const SITE_COPY = {
+    tagline: 'Learn the Ethos',
+    descriptionFull: 'Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns.',
+    descriptionShort: 'Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy.',
+    descriptionFooter: 'Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy. Understanding through disciplined removal.'
+  } as const;
 </script>
 
 <svelte:head>
@@ -40,7 +48,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Primary Meta Tags -->
-  <meta name="description" content="Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns." />
+  <meta name="description" content={SITE_COPY.descriptionFull} />
   <meta name="keywords" content="AI development education, Claude Code learning, Subtractive Triad, Canon design system, AI-native patterns, development philosophy, learn by doing, hermeneutic learning" />
   <meta name="author" content="Micah Johnson" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -50,7 +58,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://learn.createsomething.space" />
   <meta property="og:title" content="CREATE SOMETHING LMS | Learn the Ethos" />
-  <meta property="og:description" content="Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns." />
+  <meta property="og:description" content={SITE_COPY.descriptionFull} />
   <meta property="og:image" content="https://learn.createsomething.space/og-image.svg" />
   <meta property="og:image:type" content="image/svg+xml" />
   <meta property="og:image:width" content="1200" />
@@ -62,7 +70,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://learn.createsomething.space" />
   <meta name="twitter:title" content="CREATE SOMETHING LMS | Learn the Ethos" />
-  <meta name="twitter:description" content="Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy." />
+  <meta name="twitter:description" content={SITE_COPY.descriptionShort} />
   <meta name="twitter:image" content="https://learn.createsomething.space/og-image.svg" />
   <meta name="twitter:creator" content="@micahryanjohnson" />
 
@@ -97,7 +105,7 @@
       "@type": "EducationalOrganization",
       "name": "CREATE SOMETHING LMS",
       "alternateName": "Learn the Ethos",
-      "description": "Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns.",
+      "description": "${SITE_COPY.descriptionFull}",
       "url": "https://learn.createsomething.space",
       "inLanguage": "en-US",
       "author": {
@@ -163,7 +171,7 @@
   <Footer
     mode="learn"
     showNewsletter={false}
-    aboutText="Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy. Understanding through disciplined removal."
+    aboutText={SITE_COPY.descriptionFooter}
     quickLinks={[
       { label: 'Paths', href: '/paths' },
       { label: 'Praxis', href: '/praxis' },
