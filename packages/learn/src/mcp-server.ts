@@ -1,0 +1,129 @@
+#!/usr/bin/env node
+/**
+ * CREATE SOMETHING Learn MCP Server
+ *
+ * Exposes learning tools to Claude Code for methodology education.
+ * Canon: The tool recedes; learning emerges through use.
+ *
+ * @example
+ * # In Claude Code settings, add:
+ * {
+ *   "mcpServers": {
+ *     "learn": {
+ *       "command": "npx",
+ *       "args": ["@create-something/learn"]
+ *     }
+ *   }
+ * }
+ */
+
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+	CallToolRequestSchema,
+	ListToolsRequestSchema
+} from '@modelcontextprotocol/sdk/types.js';
+
+import {
+	authenticateTool,
+	handleAuthenticate,
+	statusTool,
+	handleStatus,
+	lessonTool,
+	handleLesson,
+	completeTool,
+	handleComplete,
+	praxisTool,
+	handlePraxis
+} from './tools/index.js';
+
+const SERVER_NAME = 'create-something-learn';
+const SERVER_VERSION = '0.1.0';
+
+/**
+ * Main MCP server for CREATE SOMETHING learning.
+ *
+ * Tools:
+ * - learn_authenticate: Magic link authentication
+ * - learn_status: Progress overview
+ * - learn_lesson: Fetch lesson content
+ * - learn_complete: Mark lesson complete with reflection
+ * - learn_praxis: Execute praxis exercises
+ */
+async function main() {
+	const server = new Server(
+		{
+			name: SERVER_NAME,
+			version: SERVER_VERSION
+		},
+		{
+			capabilities: {
+				tools: {}
+			}
+		}
+	);
+
+	// Register tool listing
+	server.setRequestHandler(ListToolsRequestSchema, async () => {
+		return {
+			tools: [authenticateTool, statusTool, lessonTool, completeTool, praxisTool]
+		};
+	});
+
+	// Register tool execution
+	server.setRequestHandler(CallToolRequestSchema, async (request) => {
+		const { name, arguments: args } = request.params;
+
+		try {
+			switch (name) {
+				case 'learn_authenticate':
+					return { content: await handleAuthenticate(args) };
+
+				case 'learn_status':
+					return { content: await handleStatus() };
+
+				case 'learn_lesson':
+					return { content: await handleLesson(args) };
+
+				case 'learn_complete':
+					return { content: await handleComplete(args) };
+
+				case 'learn_praxis':
+					return { content: await handlePraxis(args) };
+
+				default:
+					return {
+						content: [
+							{
+								type: 'text' as const,
+								text: `Unknown tool: ${name}`
+							}
+						],
+						isError: true
+					};
+			}
+		} catch (error) {
+			return {
+				content: [
+					{
+						type: 'text' as const,
+						text: `Error executing ${name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+					}
+				],
+				isError: true
+			};
+		}
+	});
+
+	// Connect via stdio
+	const transport = new StdioServerTransport();
+	await server.connect(transport);
+
+	// Log startup to stderr (stdout is reserved for MCP protocol)
+	console.error(`${SERVER_NAME} v${SERVER_VERSION} started`);
+}
+
+main().catch((error) => {
+	console.error('Fatal error:', error);
+	process.exit(1);
+});
