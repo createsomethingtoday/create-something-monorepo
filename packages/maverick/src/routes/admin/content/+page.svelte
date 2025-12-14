@@ -16,7 +16,6 @@
 		{ id: 'lithx', label: 'Mining' },
 		{ id: 'dme', label: 'Water Treatment' },
 		{ id: 'news', label: 'News' },
-		{ id: 'about', label: 'About' },
 		{ id: 'global', label: 'Global (Footer/Contact)' }
 	];
 

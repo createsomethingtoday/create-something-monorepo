@@ -11,7 +11,8 @@ const ADMIN_PASSWORD = '***REMOVED***';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	try {
-		const { email, password } = await request.json();
+		const body = await request.json() as { email?: string; password?: string };
+		const { email, password } = body;
 
 		if (!email || !password) {
 			throw error(400, 'Email and password required');
