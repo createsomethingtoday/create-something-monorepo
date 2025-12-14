@@ -1,0 +1,50 @@
+{
+  "name": "@create-something/learn",
+  "version": "0.1.0",
+  "description": "CREATE SOMETHING Learning MCP Server - Learn the Subtractive Triad through Claude Code",
+  "type": "module",
+  "bin": {
+    "learn": "./dist/cli.js",
+    "learn-mcp": "./dist/mcp-server.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "create-something",
+    "mcp",
+    "claude-code",
+    "learning",
+    "subtractive-triad"
+  ],
+  "author": "Micah Johnson <micah@createsomething.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/learn"
+  }
+}
