@@ -359,3 +359,13 @@ Before moving on:
 3. When was the last time work taught you something about your values?
 
 **Work without purpose is motion without progress.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Hierarchical telos reflects the [Hermeneutic Spiral](https://createsomething.ltd/patterns/hermeneutic-spiral)—work that connects to larger purpose through iterative understanding.
+>
+> **Canon Reference**: The telos hierarchy embodies "Does this serve the whole?" (Heidegger level of the [Subtractive Triad](https://createsomething.ltd/ethos)).
+>
+> **Research Depth**: The concept of purpose-driven work connects to [Hermeneutic Spiral in UX](https://createsomething.io/papers/hermeneutic-spiral-ux).

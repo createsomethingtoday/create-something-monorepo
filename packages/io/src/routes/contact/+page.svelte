@@ -20,7 +20,7 @@
 	<section class="hero-section">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-6 animate-reveal">
-				<h1 class="hero-title">
+				<h1>
 					Get in Touch
 				</h1>
 
@@ -131,12 +131,6 @@
 	.hero-section {
 		position: relative;
 		padding: var(--space-2xl) var(--space-md) var(--space-xl);
-	}
-
-	.hero-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
 	}
 
 	.hero-subtitle {

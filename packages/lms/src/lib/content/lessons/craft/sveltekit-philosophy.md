@@ -291,3 +291,13 @@ Before moving on:
 3. Where does your framework become visible to users?
 
 **The best framework is the one you forget you're using.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools) for the Heideggerian concept of Zuhandenheit—tools that recede into transparent use.
+>
+> **Canon Reference**: SvelteKit's compiler-first approach embodies [Functional Transparency](https://createsomething.ltd/patterns/functional-transparency)—the mechanism disappears, only the function remains.
+>
+> **Research Depth**: Read [Code Mode Hermeneutic Analysis](https://createsomething.io/papers/code-mode-hermeneutic-analysis) for how framework choice enables or inhibits understanding.

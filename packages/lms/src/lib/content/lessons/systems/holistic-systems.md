@@ -428,3 +428,13 @@ Before completing this path:
 3. How would you know if your system is coherent or fragmented?
 
 **A system is more than its parts. It's the relationships between them.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: The hermeneutic circle of properties embodies the [Ethos](https://createsomething.ltd/ethos)—the complete philosophical foundation of CREATE SOMETHING.
+>
+> **Canon Reference**: System integrity reflects [Subtractive Triad Audit](https://createsomething.ltd/patterns/subtractive-triad-audit)—applying DRY → Rams → Heidegger to every change.
+>
+> **Research Depth**: Study the [CREATE SOMETHING architecture](packages/UNDERSTANDING.md) for how the monorepo properties relate to each other.

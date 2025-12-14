@@ -285,6 +285,16 @@ That's where Rams comes in: **Does this earn its existence?**
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [The Subtractive Triad](https://createsomething.ltd/ethos) for how DRY fits into the three-level discipline.
+>
+> **Research Depth**: Read [Iterative Reduction Pattern](https://createsomething.ltd/patterns/iterative-reduction) for the philosophical foundation of unification.
+>
+> **Practice**: The [Triad Audit experiment](https://createsomething.space/experiments/workway-canon-audit) includes DRY analysis as its first step.
+
+---
+
 ## Reflection
 
 Before the praxis exercise:

@@ -394,3 +394,13 @@ Before the praxis:
 3. What resources should be shared vs. isolated?
 
 **Praxis**: Design a Worker composition for a real feature, identifying boundaries and bindings.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Worker composition embodies [Tool Complementarity](https://createsomething.ltd/patterns/tool-complementarity)—services that complement rather than compete.
+>
+> **Canon Reference**: The "start combined, split when needed" approach follows [Iterative Reduction](https://createsomething.ltd/patterns/iterative-reduction)—simplicity first, complexity only when earned.
+>
+> **Practice**: Study the templates-platform Workers (`packages/templates-platform/workers/`) for real composition patterns.

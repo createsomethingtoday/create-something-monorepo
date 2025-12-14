@@ -25,7 +25,7 @@
 	<section class="hero-section">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8 animate-reveal">
-				<h1 class="hero-title">
+				<h1>
 					Hi, I'm Micah Johnson
 				</h1>
 
@@ -71,7 +71,7 @@
 	<section class="section-border">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-6 animate-reveal" style="--delay: 2">
-				<h2 class="section-title">
+				<h2>
 					What You'll Find Here
 				</h2>
 
@@ -86,7 +86,7 @@
 	<section class="section-border">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8">
-				<h2 class="section-title">
+				<h2>
 					Systems Thinking Themes
 				</h2>
 
@@ -130,13 +130,6 @@
 	.hero-section {
 		position: relative;
 		padding: var(--space-2xl) var(--space-md) var(--space-xl);
-	}
-
-	.hero-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-lg);
 	}
 
 	.intro-text {
@@ -190,11 +183,6 @@
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.section-title {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-	}
 
 	.section-text {
 		font-size: var(--text-body-lg);

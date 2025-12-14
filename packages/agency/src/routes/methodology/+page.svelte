@@ -481,13 +481,13 @@
 	.cta-button-primary {
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		border-radius: var(--radius-full);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	.cta-button-primary:hover {
-		opacity: 0.9;
+		background: var(--color-fg-secondary);
 	}
 
 	/* Secondary CTA button */
@@ -495,7 +495,7 @@
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-emphasis);
 		color: var(--color-fg-primary);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		border-radius: var(--radius-full);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
@@ -524,7 +524,7 @@
 
 	.heading-3 {
 		font-size: var(--text-h3);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 	}
 
@@ -594,12 +594,12 @@
 	.btn-primary {
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		border-radius: var(--radius-full);
 	}
 
 	.btn-primary:hover {
-		opacity: 0.9;
+		background: var(--color-fg-secondary);
 	}
 
 	.input {

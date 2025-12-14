@@ -1,29 +1,53 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getPath, getLesson } from '$lib/content/paths';
+import { marked } from 'marked';
+
+// Configure marked for clean output
+marked.setOptions({
+  gfm: true,
+  breaks: false
+});
+
+// Import all lesson markdown files at build time using Vite's glob import
+const lessonFiles = import.meta.glob('/src/lib/content/lessons/**/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true
+}) as Record<string, string>;
 
 export const load: PageServerLoad = async ({ params }) => {
-  const path = getPath(params.id);
+  const pathData = getPath(params.id);
   const lesson = getLesson(params.id, params.lesson);
 
-  if (!path || !lesson) {
+  if (!pathData || !lesson) {
     throw error(404, 'Lesson not found');
   }
 
   // Find current lesson index
-  const currentIndex = path.lessons.findIndex((l) => l.id === params.lesson);
+  const currentIndex = pathData.lessons.findIndex((l) => l.id === params.lesson);
 
   // Get previous and next lessons
-  const previousLesson = currentIndex > 0 ? path.lessons[currentIndex - 1] : null;
+  const previousLesson = currentIndex > 0 ? pathData.lessons[currentIndex - 1] : null;
   const nextLesson =
-    currentIndex < path.lessons.length - 1 ? path.lessons[currentIndex + 1] : null;
+    currentIndex < pathData.lessons.length - 1 ? pathData.lessons[currentIndex + 1] : null;
+
+  // Load markdown content from pre-imported files
+  let content = '';
+  const contentKey = `/src/lib/content/lessons/${params.id}/${params.lesson}.md`;
+  const markdown = lessonFiles[contentKey];
+
+  if (markdown) {
+    content = await marked.parse(markdown);
+  }
 
   return {
-    path,
+    path: pathData,
     lesson,
     lessonNumber: currentIndex + 1,
-    totalLessons: path.lessons.length,
+    totalLessons: pathData.lessons.length,
     previousLesson,
-    nextLesson
+    nextLesson,
+    content
   };
 };

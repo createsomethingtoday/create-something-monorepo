@@ -309,6 +309,16 @@ The division works because:
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [The CSS Canon Standards](https://createsomething.ltd/standards) for the complete token reference and design rationale.
+>
+> **Research Depth**: Read [Subtractive Form Design](https://createsomething.io/papers/subtractive-form-design) for the theory behind semantic tokens.
+>
+> **Practice**: The [Praxis exercises on .space](https://createsomething.space/praxis) use Canon tokens throughout—study the implementations.
+
+---
+
 ## Reflection
 
 Before the praxis:

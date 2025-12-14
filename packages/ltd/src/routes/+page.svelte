@@ -146,18 +146,18 @@
 		padding: 1rem 2rem;
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
-		font-weight: 500;
-		transition: opacity 300ms var(--ease-standard);
+		font-weight: var(--font-medium);
+		transition: background var(--duration-standard) var(--ease-standard);
 	}
 
 	.btn-primary:hover {
-		opacity: 0.9;
+		background: var(--color-fg-secondary);
 	}
 
 	.btn-secondary {
 		padding: 1rem 2rem;
 		border: 1px solid var(--color-border-default);
-		transition: border-color 300ms var(--ease-standard);
+		transition: border-color var(--duration-standard) var(--ease-standard);
 	}
 
 	.btn-secondary:hover {
@@ -181,7 +181,7 @@
 
 	.master-card {
 		border: 1px solid var(--color-border-default);
-		transition: border-color 300ms var(--ease-standard);
+		transition: border-color var(--duration-standard) var(--ease-standard);
 	}
 
 	.master-card:hover {
@@ -202,9 +202,9 @@
 
 	.view-all {
 		font-size: var(--text-body-sm);
-		font-weight: 500;
+		font-weight: var(--font-medium);
 		color: var(--color-fg-tertiary);
-		transition: color 300ms var(--ease-standard);
+		transition: color var(--duration-standard) var(--ease-standard);
 	}
 
 	.view-all:hover {
@@ -223,7 +223,7 @@
 
 	.property-title {
 		font-size: var(--text-body-lg);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 	}
 
 	.property-description {

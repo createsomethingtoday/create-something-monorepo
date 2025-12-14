@@ -55,7 +55,9 @@
         disabled={$progress.loading}
         title="Refresh progress"
       >
-        <RefreshCw size={20} class:spinning={$progress.loading} />
+        <span class:spinning={$progress.loading}>
+          <RefreshCw size={20} />
+        </span>
       </button>
     </div>
     <p class="page-subtitle">
@@ -174,7 +176,7 @@
 <style>
   .page-title {
     font-size: var(--text-display);
-    font-weight: 300;
+    font-weight: var(--font-light);
     margin-bottom: var(--space-xs);
   }
 
@@ -207,7 +209,7 @@
 
   .stat-value {
     font-size: var(--text-h2);
-    font-weight: 300;
+    font-weight: var(--font-light);
     margin-bottom: var(--space-xs);
   }
 
@@ -302,7 +304,7 @@
 
   .path-name {
     font-size: var(--text-body-lg);
-    font-weight: 500;
+    font-weight: var(--font-medium);
     margin-bottom: 0.125rem;
   }
 
@@ -411,12 +413,13 @@
   }
 
   .refresh-button:disabled {
-    opacity: 0.5;
+    color: var(--color-fg-muted);
     cursor: not-allowed;
   }
 
-  .refresh-button :global(.spinning) {
+  .refresh-button .spinning {
     animation: spin 1s linear infinite;
+    display: flex;
   }
 
   @keyframes spin {

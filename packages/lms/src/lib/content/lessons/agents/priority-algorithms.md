@@ -353,3 +353,13 @@ Before moving on:
 3. Are there hidden critical paths in your projects?
 
 **The best priority system is one you trust enough to follow.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Priority algorithms embody [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—computed priorities that guide toward correct outcomes.
+>
+> **Canon Reference**: Trusting the system to prioritize reflects [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools)—tools that recede into transparent use.
+>
+> **Practice**: The Beads coordination system uses these algorithms to surface the right work at the right time.

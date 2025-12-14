@@ -131,7 +131,7 @@
 
 	.heading-3 {
 		font-size: var(--text-h3);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 	}
 

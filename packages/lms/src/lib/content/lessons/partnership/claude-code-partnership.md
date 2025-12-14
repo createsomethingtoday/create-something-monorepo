@@ -866,6 +866,16 @@ Agent: *Observes pattern and stores for future debugging tasks*
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [Tool Complementarity](https://createsomething.ltd/patterns/tool-complementarity) for the philosophical foundation of human-agent partnership.
+>
+> **Canon Reference**: See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools) for Heidegger's Zuhandenheit applied to development tools.
+>
+> **Research Depth**: Read [Code Mode Hermeneutic Analysis](https://createsomething.io/papers/code-mode-hermeneutic-analysis) for research on when to use tool calls vs. code.
+
+---
+
 ## Summary: The Partnership Principle
 
 **Human-agent partnership works when:**

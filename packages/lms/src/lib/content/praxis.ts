@@ -280,6 +280,56 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Set up a useful hook',
       'Validate tool integration'
     ]
+  },
+
+  // ============ ADVANCED ============
+  {
+    id: 'build-mcp-server',
+    lessonId: 'mcp-server-development',
+    pathId: 'advanced',
+    title: 'Build MCP Server',
+    description: 'Create a custom MCP server that composes multiple operations into a single tool.',
+    type: 'code',
+    difficulty: 'advanced',
+    duration: '45 min',
+    objectives: [
+      'Design an MCP server for composed operations',
+      'Implement tool definitions with proper schemas',
+      'Handle JSON-RPC communication',
+      'Test server with Claude Code integration'
+    ]
+  },
+  {
+    id: 'hook-suite',
+    lessonId: 'custom-hooks',
+    pathId: 'advanced',
+    title: 'Hook Suite',
+    description: 'Build a comprehensive hook suite that enforces your project standards.',
+    type: 'code',
+    difficulty: 'advanced',
+    duration: '40 min',
+    objectives: [
+      'Implement validation hooks for code standards',
+      'Create session lifecycle hooks',
+      'Handle exit codes appropriately (0, 1, 2)',
+      'Test hook behavior with simulated inputs'
+    ]
+  },
+  {
+    id: 'multi-agent-system',
+    lessonId: 'agent-orchestration',
+    pathId: 'advanced',
+    title: 'Multi-Agent System',
+    description: 'Design and implement a multi-agent system for a complex task.',
+    type: 'design',
+    difficulty: 'advanced',
+    duration: '50 min',
+    objectives: [
+      'Choose appropriate orchestration pattern',
+      'Define agent specializations',
+      'Design communication mechanism',
+      'Handle coordination and error recovery'
+    ]
   }
 ];
 

@@ -245,6 +245,16 @@ When compute is close to users:
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [Functional Transparency Pattern](https://createsomething.ltd/patterns/functional-transparency) for how infrastructure should recede into use.
+>
+> **Research Depth**: Read [Hermeneutic Debugging](https://createsomething.io/papers/hermeneutic-debugging) for how understanding emerges through system interaction.
+>
+> **Practice**: The [CREATE SOMETHING properties](https://createsomething.space) all run on Cloudflare's edge infrastructure—study the implementations in the monorepo.
+
+---
+
 ## Reflection
 
 Before moving on:

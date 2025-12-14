@@ -2,32 +2,38 @@
   import type { PageData } from './$types';
   import { ChevronLeft, ChevronRight, CheckCircle } from 'lucide-svelte';
   import { progress, getLessonProgress } from '$lib/stores/progress';
-  import { onMount } from 'svelte';
 
   let { data }: { data: PageData } = $props();
-  const { path, lesson, lessonNumber, totalLessons, previousLesson, nextLesson } = data;
+
+  // Derived values for reactivity when navigating between lessons
+  let path = $derived(data.path);
+  let lesson = $derived(data.lesson);
+  let lessonNumber = $derived(data.lessonNumber);
+  let totalLessons = $derived(data.totalLessons);
+  let previousLesson = $derived(data.previousLesson);
+  let nextLesson = $derived(data.nextLesson);
+  let content = $derived(data.content);
 
   // Track time spent on this lesson
-  let startTime = 0;
-  let isCompleting = false;
+  let startTime = $state(0);
+  let isCompleting = $state(false);
 
-  // Get progress for this lesson
-  const lessonProgress = getLessonProgress(path.id, lesson.id);
+  // Get progress for this lesson - needs to be derived to react to lesson changes
+  let lessonProgress = $derived(getLessonProgress(path.id, lesson.id));
 
-  onMount(() => {
+  // Track lesson start when lesson changes
+  $effect(() => {
+    // Reset state for new lesson
     startTime = Date.now();
+    isCompleting = false;
 
     // Mark lesson as started
     progress.startLesson(path.id, lesson.id).catch((err) => {
       console.error('Failed to track lesson start:', err);
     });
 
-    // Fetch full progress on mount
+    // Fetch full progress
     progress.fetch();
-
-    return () => {
-      // Cleanup
-    };
   });
 
   async function handleCompleteLesson() {
@@ -94,25 +100,38 @@
 
   <!-- Lesson Content -->
   <article class="lesson-content">
-    <!-- TODO: This will be replaced with actual markdown content -->
-    <div class="placeholder-content">
-      <h2>Coming Soon</h2>
-      <p>
-        This lesson's content is being developed. For now, you can navigate through the lesson structure
-        to understand the path architecture.
-      </p>
-
-      <h3>What you'll learn:</h3>
-      <p>{lesson.description}</p>
+    {#if content}
+      <div class="prose">
+        {@html content}
+      </div>
 
       {#if lesson.praxis}
         <div class="praxis-callout">
           <h3>Praxis Exercise</h3>
           <p>This lesson includes a hands-on exercise: <strong>{lesson.praxis}</strong></p>
-          <p>Complete the exercise to deepen your understanding through practice.</p>
+          <a href="/praxis/{lesson.praxis}" class="praxis-link">Start Exercise →</a>
         </div>
       {/if}
-    </div>
+    {:else}
+      <div class="placeholder-content">
+        <h2>Coming Soon</h2>
+        <p>
+          This lesson's content is being developed. For now, you can navigate through the lesson structure
+          to understand the path architecture.
+        </p>
+
+        <h3>What you'll learn:</h3>
+        <p>{lesson.description}</p>
+
+        {#if lesson.praxis}
+          <div class="praxis-callout">
+            <h3>Praxis Exercise</h3>
+            <p>This lesson includes a hands-on exercise: <strong>{lesson.praxis}</strong></p>
+            <p>Complete the exercise to deepen your understanding through practice.</p>
+          </div>
+        {/if}
+      </div>
+    {/if}
   </article>
 
   <!-- Navigation Footer -->
@@ -231,14 +250,14 @@
 
   .lesson-title {
     font-size: var(--text-display);
-    font-weight: 300;
+    font-weight: var(--font-light);
     margin-bottom: var(--space-sm);
   }
 
   .lesson-description {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
-    line-height: 1.6;
+    line-height: var(--leading-relaxed);
   }
 
   .lesson-content {
@@ -266,8 +285,128 @@
   .placeholder-content p {
     font-size: var(--text-body);
     color: var(--color-fg-secondary);
-    line-height: 1.6;
+    line-height: var(--leading-relaxed);
     margin-bottom: var(--space-md);
+  }
+
+  /* Prose styles for rendered markdown */
+  .prose {
+    font-size: var(--text-body);
+    line-height: var(--leading-relaxed);
+    color: var(--color-fg-secondary);
+  }
+
+  .prose :global(h1) {
+    font-size: var(--text-h1);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin: var(--space-xl) 0 var(--space-md);
+  }
+
+  .prose :global(h2) {
+    font-size: var(--text-h2);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin: var(--space-lg) 0 var(--space-sm);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  .prose :global(h2:first-child) {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+
+  .prose :global(h3) {
+    font-size: var(--text-h3);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin: var(--space-md) 0 var(--space-sm);
+  }
+
+  .prose :global(p) {
+    margin-bottom: var(--space-md);
+  }
+
+  .prose :global(strong) {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: var(--space-md) 0;
+    padding-left: var(--space-lg);
+  }
+
+  .prose :global(li) {
+    margin-bottom: var(--space-xs);
+  }
+
+  .prose :global(blockquote) {
+    margin: var(--space-md) 0;
+    padding: var(--space-md);
+    border-left: 3px solid var(--color-border-emphasis);
+    background: var(--color-bg-elevated);
+    font-style: italic;
+    color: var(--color-fg-tertiary);
+  }
+
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    padding: 0.2em 0.4em;
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-sm);
+  }
+
+  .prose :global(pre) {
+    margin: var(--space-md) 0;
+    padding: var(--space-md);
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+  }
+
+  .prose :global(pre code) {
+    padding: 0;
+    background: none;
+  }
+
+  .prose :global(table) {
+    width: 100%;
+    margin: var(--space-md) 0;
+    border-collapse: collapse;
+  }
+
+  .prose :global(th),
+  .prose :global(td) {
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border-default);
+    text-align: left;
+  }
+
+  .prose :global(th) {
+    background: var(--color-bg-elevated);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+  }
+
+  .prose :global(hr) {
+    margin: var(--space-lg) 0;
+    border: none;
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  .prose :global(a) {
+    color: var(--color-data-1);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .prose :global(a:hover) {
+    color: var(--color-fg-primary);
   }
 
   .praxis-callout {
@@ -281,6 +420,20 @@
   .praxis-callout h3 {
     color: var(--color-data-1);
     margin-top: 0;
+    font-size: var(--text-h3);
+    margin-bottom: var(--space-sm);
+  }
+
+  .praxis-link {
+    display: inline-block;
+    margin-top: var(--space-sm);
+    color: var(--color-data-1);
+    font-weight: var(--font-medium);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .praxis-link:hover {
+    color: var(--color-fg-primary);
   }
 
   .lesson-nav {
@@ -346,12 +499,12 @@
     background: var(--color-fg-primary);
     color: var(--color-bg-pure);
     font-size: var(--text-body);
-    font-weight: 500;
-    transition: opacity var(--duration-micro) var(--ease-standard);
+    font-weight: var(--font-medium);
+    transition: background var(--duration-micro) var(--ease-standard);
   }
 
   .btn-primary:hover:not(:disabled) {
-    opacity: 0.9;
+    background: var(--color-fg-secondary);
   }
 
   .btn-primary:disabled {
@@ -366,7 +519,7 @@
     border: 1px solid var(--color-border-default);
     color: var(--color-fg-primary);
     font-size: var(--text-body);
-    font-weight: 500;
+    font-weight: var(--font-medium);
     transition: border-color var(--duration-micro) var(--ease-standard);
     margin-left: var(--space-md);
   }

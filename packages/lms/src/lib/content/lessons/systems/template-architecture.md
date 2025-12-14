@@ -397,3 +397,13 @@ Before moving on:
 3. How would a template update flow to deployed instances?
 
 **Architecture is the art of making the right things easy and the wrong things hard.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: This architecture philosophy is [Constraint as Liberation](https://createsomething.ltd/patterns/constraint-as-liberation)—boundaries that guide toward correct outcomes.
+>
+> **Canon Reference**: Template extension points embody [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—structure that enables without dictating.
+>
+> **Practice**: Study the professional-services vertical (`packages/verticals/professional-services/`) for real template architecture patterns.

@@ -347,3 +347,13 @@ Before moving on:
 3. Are there pages that break out of layouts? Should they be restructured instead?
 
 **Good layout architecture makes the right thing automatic.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults) for how architecture can embed correct behavior by default.
+>
+> **Canon Reference**: Layout architecture embodies [Constraint as Liberation](https://createsomething.ltd/patterns/constraint-as-liberation)—structure that frees rather than limits.
+>
+> **Practice**: Study the route structure in any CREATE SOMETHING property (e.g., `packages/space/src/routes/`) to see these patterns in practice.

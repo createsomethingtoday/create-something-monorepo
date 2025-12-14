@@ -297,3 +297,13 @@ Before moving on:
 3. How do you handle scope change requests today?
 
 **Great projects are defined as much by what they exclude as what they include.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Iterative Reduction](https://createsomething.ltd/patterns/iterative-reduction) for the philosophical basis of subtractive scoping.
+>
+> **Canon Reference**: The [Subtractive Triad Audit](https://createsomething.ltd/patterns/subtractive-triad-audit) pattern applies DRY → Rams → Heidegger to scope decisions.
+>
+> **Research Depth**: Read [Subtractive Form Design](https://createsomething.io/papers/subtractive-form-design) for how removal creates clarity in all design domains.

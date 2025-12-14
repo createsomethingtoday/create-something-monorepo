@@ -647,3 +647,13 @@ Before the praxis exercise:
 **The goal isn't automation—it's transparent composition.**
 
 When the tool recedes, the work reveals itself.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools) for the Heideggerian foundation of Zuhandenheit applied to tooling.
+>
+> **Canon Reference**: See [Tool Complementarity](https://createsomething.ltd/patterns/tool-complementarity) for patterns of human-agent collaboration that MCP servers enable.
+>
+> **Practice**: Study the [Cloudflare MCP Server](https://github.com/cloudflare/mcp-server-cloudflare) as a real-world example of composed operations.

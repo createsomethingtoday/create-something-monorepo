@@ -418,3 +418,13 @@ Before the praxis:
 3. How many of your component props have defaults?
 
 **Praxis**: You'll build a component following these patterns and test it for "receding into use."
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools) for the philosophical basis of "components that recede into use."
+>
+> **Canon Reference**: The prop design principles here mirror [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—sensible defaults that guide toward the right outcome.
+>
+> **Practice**: Study the shared components package (`@create-something/components`) for real implementations of these patterns.

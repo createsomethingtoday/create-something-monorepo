@@ -404,3 +404,13 @@ Before the praxis:
 3. Which queries are hot paths that should be cached?
 
 **Praxis**: Create a D1 migration for a real feature in your project.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: D1's SQLite simplicity embodies [Timeless Materials](https://createsomething.ltd/patterns/timeless-materials)—proven technology over trendy alternatives.
+>
+> **Canon Reference**: Edge database distribution aligns with [Functional Transparency](https://createsomething.ltd/patterns/functional-transparency)—the distributed nature is invisible to the application.
+>
+> **Practice**: Study the migrations in any CREATE SOMETHING package (e.g., `packages/ltd/migrations/`) for real D1 patterns.

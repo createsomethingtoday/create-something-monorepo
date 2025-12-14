@@ -3,44 +3,21 @@
 	import PraxisContainer from '$lib/components/PraxisContainer.svelte';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
 	import PraxisResult from '$lib/components/PraxisResult.svelte';
-	import { ArrowLeft, ChevronRight } from 'lucide-svelte';
+	import { ArrowLeft, ChevronRight, Clock, BookOpen } from 'lucide-svelte';
+	import { PRAXIS_EXERCISES, type PraxisExercise } from '$lib/content/praxis';
+	import { PATHS } from '$lib/content/paths';
 
-	// Example exercises data
-	const exercises = [
-		{
-			id: 'triad-intro',
-			title: 'Introduction to the Subtractive Triad',
-			description: 'Practice identifying opportunities at each level of the Subtractive Triad.',
-			type: 'triad-audit',
-			difficulty: 'Beginner',
-			path: 'Foundations'
-		},
-		{
-			id: 'component-refactor',
-			title: 'Component Refactoring',
-			description: 'Apply DRY principles to reduce duplication in component code.',
-			type: 'code',
-			difficulty: 'Intermediate',
-			path: 'Craft'
-		},
-		{
-			id: 'design-tokens',
-			title: 'Design Tokens Migration',
-			description: 'Convert Tailwind utilities to Canon CSS variables.',
-			type: 'code',
-			difficulty: 'Intermediate',
-			path: 'Craft'
-		},
-		{
-			id: 'system-coherence',
-			title: 'System Coherence Analysis',
-			description: 'Evaluate how components serve the whole system.',
-			type: 'triad-audit',
-			difficulty: 'Advanced',
-			path: 'Systems'
-		}
-	];
+	// Get path title from ID
+	function getPathTitle(pathId: string): string {
+		return PATHS.find((p) => p.id === pathId)?.title ?? pathId;
+	}
 
+	// Get path color class
+	function getPathClass(pathId: string): string {
+		return `path-${pathId}`;
+	}
+
+	// Example code for triad audit exercises
 	const exampleCode = `function Button({ text, onClick, disabled, loading }) {
   if (loading) {
     return <button disabled>Loading...</button>;
@@ -84,7 +61,7 @@ function CancelButton({ onClick }) {
 	{#if !selectedExercise}
 		<!-- Exercise listing -->
 		<div class="exercises-grid">
-			{#each exercises as exercise}
+			{#each PRAXIS_EXERCISES as exercise}
 				<button
 					class="exercise-card"
 					onclick={() => {
@@ -92,19 +69,29 @@ function CancelButton({ onClick }) {
 					}}
 				>
 					<div class="exercise-meta">
-						<span class="exercise-path path-{exercise.path.toLowerCase()}">{exercise.path}</span>
+						<span class="exercise-path {getPathClass(exercise.pathId)}">{getPathTitle(exercise.pathId)}</span>
 						<span class="exercise-difficulty">{exercise.difficulty}</span>
 					</div>
 					<h3 class="exercise-title">{exercise.title}</h3>
 					<p class="exercise-description">{exercise.description}</p>
 					<div class="exercise-footer">
-						<span class="exercise-type">{exercise.type}</span>
-						<span class="exercise-arrow"><ChevronRight size={18} /></span>
+						<div class="exercise-info">
+							<span class="exercise-type">{exercise.type}</span>
+							<span class="exercise-duration"><Clock size={12} /> {exercise.duration}</span>
+						</div>
+						<a
+							href="/paths/{exercise.pathId}/{exercise.lessonId}"
+							class="exercise-lesson-link"
+							onclick={(e) => e.stopPropagation()}
+						>
+							<BookOpen size={14} />
+							<span>Lesson</span>
+						</a>
 					</div>
 				</button>
 			{/each}
 		</div>
-	{:else if selectedExercise === 'triad-intro'}
+	{:else if PRAXIS_EXERCISES.find((e) => e.id === selectedExercise)?.type === 'triad-audit'}
 		<!-- Example Triad Audit exercise -->
 		<div class="exercise-view">
 			<button class="back-button" onclick={() => (selectedExercise = null)}>
@@ -119,22 +106,74 @@ function CancelButton({ onClick }) {
 			/>
 		</div>
 	{:else}
-		<!-- Placeholder for other exercise types -->
+		{@const currentExercise = PRAXIS_EXERCISES.find((e) => e.id === selectedExercise)}
+		<!-- Exercise view for code, analysis, design types -->
 		<div class="exercise-view">
 			<button class="back-button" onclick={() => (selectedExercise = null)}>
 				<ArrowLeft size={16} />
 				<span>Back to Exercises</span>
 			</button>
 
-			<PraxisContainer
-				title={exercises.find((e) => e.id === selectedExercise)?.title ?? ''}
-				instructions="This exercise is under construction. Check back soon!"
-				showSubmit={false}
-			>
-				{#snippet children()}
-					<CodeEditor bind:value={userCode} placeholder="// Your code here..." rows={15} />
-				{/snippet}
-			</PraxisContainer>
+			{#if currentExercise}
+				<div class="exercise-header">
+					<div class="exercise-meta-header">
+						<span class="exercise-path {getPathClass(currentExercise.pathId)}">{getPathTitle(currentExercise.pathId)}</span>
+						<span class="exercise-difficulty-badge">{currentExercise.difficulty}</span>
+						<span class="exercise-duration-badge"><Clock size={12} /> {currentExercise.duration}</span>
+					</div>
+					<h1 class="exercise-title-large">{currentExercise.title}</h1>
+					<p class="exercise-description-large">{currentExercise.description}</p>
+				</div>
+
+				<div class="objectives-section">
+					<h3 class="objectives-title">Objectives</h3>
+					<ul class="objectives-list">
+						{#each currentExercise.objectives as objective}
+							<li>{objective}</li>
+						{/each}
+					</ul>
+				</div>
+
+				{#if currentExercise.type === 'code'}
+					<PraxisContainer
+						title="Your Solution"
+						instructions="Write code that addresses the objectives above. Apply the principles from the {getPathTitle(currentExercise.pathId)} path."
+						showSubmit={true}
+					>
+						{#snippet children()}
+							<CodeEditor bind:value={userCode} placeholder="// Your code here..." rows={15} />
+						{/snippet}
+					</PraxisContainer>
+				{:else if currentExercise.type === 'analysis'}
+					<PraxisContainer
+						title="Your Analysis"
+						instructions="Document your analysis below. Address each objective systematically."
+						showSubmit={true}
+					>
+						{#snippet children()}
+							<CodeEditor bind:value={userCode} placeholder="## Analysis&#10;&#10;### Objective 1: ..." rows={15} />
+						{/snippet}
+					</PraxisContainer>
+				{:else if currentExercise.type === 'design'}
+					<PraxisContainer
+						title="Your Design"
+						instructions="Document your design decisions and artifacts below."
+						showSubmit={true}
+					>
+						{#snippet children()}
+							<CodeEditor bind:value={userCode} placeholder="## Design Document&#10;&#10;### Architecture&#10;..." rows={15} />
+						{/snippet}
+					</PraxisContainer>
+				{/if}
+
+				<div class="lesson-link-section">
+					<a href="/paths/{currentExercise.pathId}/{currentExercise.lessonId}" class="lesson-link-large">
+						<BookOpen size={16} />
+						<span>Review the lesson</span>
+						<ChevronRight size={16} />
+					</a>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </div>
@@ -288,5 +327,146 @@ function CancelButton({ onClick }) {
 		background: var(--color-hover);
 		border-color: var(--color-border-emphasis);
 		color: var(--color-fg-primary);
+	}
+
+	/* Exercise info row */
+	.exercise-info {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.exercise-duration {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.exercise-lesson-link {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		text-decoration: none;
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-sm);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.exercise-lesson-link:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	/* Exercise detail view header */
+	.exercise-header {
+		margin-bottom: var(--space-lg);
+	}
+
+	.exercise-meta-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-sm);
+	}
+
+	.exercise-difficulty-badge {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		text-transform: capitalize;
+	}
+
+	.exercise-duration-badge {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.exercise-title-large {
+		font-size: var(--text-h1);
+		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-sm) 0;
+	}
+
+	.exercise-description-large {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		margin: 0;
+	}
+
+	/* Objectives section */
+	.objectives-section {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
+		margin-bottom: var(--space-lg);
+	}
+
+	.objectives-title {
+		font-size: var(--text-h3);
+		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-sm) 0;
+	}
+
+	.objectives-list {
+		margin: 0;
+		padding-left: var(--space-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.objectives-list li {
+		margin-bottom: var(--space-xs);
+		line-height: 1.6;
+	}
+
+	.objectives-list li:last-child {
+		margin-bottom: 0;
+	}
+
+	/* Lesson link section */
+	.lesson-link-section {
+		margin-top: var(--space-lg);
+		padding-top: var(--space-lg);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.lesson-link-large {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		text-decoration: none;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.lesson-link-large:hover {
+		background: var(--color-hover);
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+	}
+
+	/* Path color classes for additional paths */
+	.exercise-path.path-infrastructure {
+		color: var(--color-path-infrastructure, var(--color-data-1));
+	}
+
+	.exercise-path.path-agents {
+		color: var(--color-path-agents, var(--color-data-3));
+	}
+
+	.exercise-path.path-method {
+		color: var(--color-path-method, var(--color-data-4));
 	}
 </style>

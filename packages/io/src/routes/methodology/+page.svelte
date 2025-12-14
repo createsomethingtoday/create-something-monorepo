@@ -26,36 +26,31 @@
 </script>
 
 <style>
-  .hero-title {
-    font-size: var(--text-h1);
-    font-weight: 700;
-    color: var(--color-fg-primary);
-  }
+  /* ==========================================================================
+     Methodology Page - Canon Design Tokens
+     All styles derive from shared Canon tokens
+     ========================================================================== */
 
+  /* Hero Section */
   .hero-lead {
     font-size: var(--text-body-lg);
-    color: var(--color-fg-primary);
-    opacity: 0.9;
-    line-height: 1.6;
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
   }
 
   .hero-subtext {
     font-size: var(--text-body);
-    color: var(--color-fg-secondary);
-    line-height: 1.6;
+    color: var(--color-fg-tertiary);
+    line-height: var(--leading-relaxed);
   }
 
-  .section-title {
-    font-size: var(--text-h2);
-    font-weight: 700;
-    color: var(--color-fg-primary);
-  }
-
+  /* Section Headers - h2 uses base styles from Canon */
   .section-subtitle {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
   }
 
+  /* Cards */
   .card {
     background: var(--color-bg-surface);
     border: 1px solid var(--color-border-default);
@@ -69,7 +64,7 @@
 
   .card-title {
     font-size: var(--text-body-lg);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -78,6 +73,7 @@
     color: var(--color-fg-tertiary);
   }
 
+  /* Icons */
   .icon {
     color: var(--color-fg-secondary);
   }
@@ -86,15 +82,16 @@
     color: var(--color-fg-subtle);
   }
 
+  /* Typography Variants */
   .emphasis-text {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
-    font-weight: 500;
+    font-weight: var(--font-medium);
   }
 
   .metric-label {
     font-size: var(--text-body-lg);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -111,10 +108,12 @@
     border-radius: var(--radius-sm);
   }
 
+  /* Backgrounds */
   .section-bg-elevated {
     background: var(--color-bg-elevated);
   }
 
+  /* Quote Box */
   .quote-box {
     background: var(--color-hover);
     border: 1px solid var(--color-border-emphasis);
@@ -131,9 +130,10 @@
     font-size: var(--text-body-sm);
   }
 
+  /* Principles */
   .principle-title {
     font-size: var(--text-body);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -151,6 +151,7 @@
     color: var(--color-fg-tertiary);
   }
 
+  /* Borders */
   .divider-top {
     border-top: 1px solid var(--color-border-default);
   }
@@ -159,6 +160,7 @@
     border-top: 1px solid var(--color-border-default);
   }
 
+  /* Lists */
   .checklist-icon {
     color: var(--color-fg-muted);
   }
@@ -167,20 +169,34 @@
     color: var(--color-fg-tertiary);
   }
 
+  /* Buttons */
   .cta-button {
     background: var(--color-hover);
     color: var(--color-fg-primary);
     border: 1px solid var(--color-border-emphasis);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     border-radius: var(--radius-full);
     transition: all var(--duration-standard) var(--ease-standard);
   }
 
   .cta-button:hover {
     background: var(--color-active);
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-border-strong);
   }
 
+  .cta-button-primary {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    font-weight: var(--font-semibold);
+    border-radius: var(--radius-full);
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .cta-button-primary:hover {
+    background: var(--color-fg-secondary);
+  }
+
+  /* Links */
   .link-text {
     color: var(--color-fg-primary);
   }
@@ -189,6 +205,7 @@
     text-decoration: underline;
   }
 
+  /* Tags & Badges */
   .tag {
     font-size: var(--text-caption);
     background: var(--color-hover);
@@ -196,9 +213,17 @@
     border-radius: var(--radius-sm);
   }
 
+  .badge {
+    font-size: var(--text-caption);
+    background: var(--color-hover);
+    color: var(--color-fg-tertiary);
+    border-radius: var(--radius-full);
+  }
+
+  /* Mode Cards */
   .mode-title {
     font-size: var(--text-body-lg);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -214,9 +239,10 @@
     color: var(--color-fg-tertiary);
   }
 
+  /* Stats */
   .stat-value {
     font-size: var(--text-h2);
-    font-weight: 700;
+    font-weight: var(--font-bold);
     color: var(--color-fg-primary);
   }
 
@@ -230,6 +256,7 @@
     border-radius: var(--radius-sm);
   }
 
+  /* Info */
   .info-label {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
@@ -239,14 +266,15 @@
     color: var(--color-fg-primary);
   }
 
+  /* Steps */
   .step-number {
-    font-weight: 700;
+    font-weight: var(--font-bold);
     color: var(--color-fg-subtle);
   }
 
   .step-title {
     font-size: var(--text-body);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -255,9 +283,10 @@
     color: var(--color-fg-tertiary);
   }
 
+  /* Authors */
   .author-name {
     font-size: var(--text-body-lg);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -266,13 +295,7 @@
     color: var(--color-fg-muted);
   }
 
-  .badge {
-    font-size: var(--text-caption);
-    background: var(--color-hover);
-    color: var(--color-fg-tertiary);
-    border-radius: var(--radius-full);
-  }
-
+  /* Work Titles */
   .work-title {
     color: var(--color-fg-primary);
   }
@@ -286,6 +309,7 @@
     color: var(--color-fg-tertiary);
   }
 
+  /* Footer Links */
   .footer-link {
     color: var(--color-fg-secondary);
     transition: color var(--duration-standard) var(--ease-standard);
@@ -300,6 +324,11 @@
     color: var(--color-fg-tertiary);
   }
 
+  .footer-links {
+    font-size: var(--text-body-sm);
+  }
+
+  /* Canon Intro */
   .canon-intro {
     font-size: var(--text-body);
     color: var(--color-fg-secondary);
@@ -310,25 +339,11 @@
     color: var(--color-fg-secondary);
   }
 
-  .cta-button-primary {
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    font-weight: 600;
-    border-radius: var(--radius-full);
-    transition: all var(--duration-standard) var(--ease-standard);
-  }
-
-  .cta-button-primary:hover {
-    opacity: 0.9;
-  }
-  .footer-links {
-    font-size: var(--text-body-sm);
-  }
-
+  /* Animations - Canon duration */
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
     animation-delay: calc(var(--delay, 0) * 100ms);
   }
 
@@ -366,7 +381,7 @@
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8 animate-reveal">
-        <h1 class="hero-title mb-8">
+        <h1 class="mb-8">
           Research Methodology
         </h1>
 
@@ -385,7 +400,7 @@
   <section class="py-16 px-6 section-border">
     <div class="max-w-6xl mx-auto">
       <div>
-        <h2 class="section-title mb-12 text-center">
+        <h2 class="mb-12 text-center">
           How We Work
         </h2>
 
@@ -459,7 +474,7 @@
   <section class="py-16 px-6 section-border">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="section-title mb-8">
+        <h2 class="mb-8">
           Every Experiment Tracked With
         </h2>
 
@@ -520,7 +535,7 @@
   <section class="py-16 px-6 section-border section-bg-elevated">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="section-title mb-8">
+        <h2 class="mb-8">
           Displaying Evidence
         </h2>
 
@@ -632,7 +647,7 @@
   <section class="py-16 px-6 section-border">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="section-title mb-8">
+        <h2 class="mb-8">
           Three Tracking Modes
         </h2>
 
@@ -696,7 +711,7 @@
   <section class="py-16 px-6 section-border">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="section-title mb-8">
+        <h2 class="mb-8">
           Why This Matters
         </h2>
 
@@ -757,7 +772,7 @@
   <section class="py-16 px-6 section-border">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="section-title mb-8">
+        <h2 class="mb-8">
           For Researchers: Use This Methodology
         </h2>
 
@@ -826,7 +841,7 @@
   <section class="py-16 px-6 section-border">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="section-title mb-8">
+        <h2 class="mb-8">
           Methodology in Action
         </h2>
 
@@ -888,7 +903,7 @@
   <section class="py-16 px-6 section-border">
     <div class="max-w-4xl mx-auto">
       <div class="space-y-8">
-        <h2 class="section-title mb-8">
+        <h2 class="mb-8">
           Canon & Influences
         </h2>
 
@@ -898,7 +913,7 @@
 
         <!-- Masters -->
         <div class="mt-8">
-          <h3 class="section-title mb-6">Masters</h3>
+          <h3 class="mb-6">Masters</h3>
 
           <!-- Edward Tufte -->
           <div class="p-6 card">

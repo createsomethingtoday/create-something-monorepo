@@ -621,3 +621,13 @@ Before the praxis exercise:
 **The goal isn't automation—it's dwelling.**
 
 When the tool recedes, the craft reveals itself.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools) for the Heideggerian foundation of tools that recede into use.
+>
+> **Research Depth**: Read [Code Mode Hermeneutic Analysis](https://createsomething.io/papers/code-mode-hermeneutic-analysis) for research on when automation enables vs. invades.
+>
+> **Practice**: See the CREATE SOMETHING [hooks directory](https://github.com/create-something/create-something-monorepo/tree/main/.claude/hooks) for real examples of Canon enforcement hooks.

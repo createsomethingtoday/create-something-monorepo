@@ -20,7 +20,7 @@
 	<section class="relative pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8 animate-reveal">
-				<h1 class="hero-title mb-8">
+				<h1 class="mb-8">
 					The Experimental Layer
 				</h1>
 
@@ -66,7 +66,7 @@
 	<section class="mission-section">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-6 animate-reveal" style="--delay: 2">
-				<h2 class="section-title">
+				<h2>
 					What You'll Find Here
 				</h2>
 
@@ -81,7 +81,7 @@
 	<section class="topics-section">
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8">
-				<h2 class="section-title">
+				<h2>
 					Experiment Categories
 				</h2>
 
@@ -122,25 +122,19 @@
 	</section>
 
 <style>
-	.hero-title {
-		font-size: clamp(2.5rem, 5vw, 3.5rem);
-		font-weight: 700;
-		color: var(--color-fg-primary);
-	}
-
 	.core-identity {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-md);
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-tertiary);
-		line-height: 1.7;
+		line-height: var(--leading-relaxed);
 	}
 
 	.lead-text {
-		font-size: clamp(1.125rem, 2vw, 1.25rem);
+		font-size: var(--text-h3);
 		color: var(--color-fg-secondary);
-		font-weight: 500;
+		font-weight: var(--font-medium);
 	}
 
 	.link {
@@ -163,13 +157,13 @@
 
 	.card-title {
 		font-size: var(--text-h3);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 	}
 
 	.card-text {
 		color: var(--color-fg-tertiary);
-		line-height: 1.7;
+		line-height: var(--leading-relaxed);
 	}
 
 	.background-section {
@@ -186,16 +180,10 @@
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.section-title {
-		font-size: clamp(1.5rem, 3vw, 1.875rem);
-		font-weight: 700;
-		color: var(--color-fg-primary);
-	}
-
 	.section-text {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-tertiary);
-		line-height: 1.7;
+		line-height: var(--leading-relaxed);
 	}
 
 	.topic-card {
@@ -207,7 +195,7 @@
 
 	.topic-title {
 		font-size: var(--text-h3);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-xs);
 	}

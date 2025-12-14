@@ -543,6 +543,47 @@ pre code.hljs {
    ========================================================================== */
 
 @layer utilities {
+  /* ==========================================================================
+     Hero Pattern - Unified across all properties
+     Pattern: eyebrow (context) → hero-title (assertion) → hero-subtitle/description (evidence)
+     ========================================================================== */
+
+  /* Eyebrow - Context label above headings */
+  .eyebrow {
+    font-size: var(--text-body-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-widest);
+    color: var(--color-fg-tertiary);
+    margin-bottom: var(--space-md);
+  }
+
+  /* Hero Title - Primary assertion, largest display text */
+  .hero-title {
+    font-size: var(--text-display-xl);
+    font-weight: var(--font-light);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-tighter);
+    margin-bottom: var(--space-md);
+  }
+
+  /* Hero Subtitle - Supporting statement */
+  .hero-subtitle {
+    font-size: var(--text-h3);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 42rem;
+    margin: 0 auto var(--space-sm);
+  }
+
+  /* Hero Description - Additional context */
+  .hero-description {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-tertiary);
+    line-height: var(--leading-relaxed);
+    max-width: 36rem;
+    margin: 0 auto;
+  }
+
   .text-shadow-soft {
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }

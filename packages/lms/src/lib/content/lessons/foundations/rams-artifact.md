@@ -302,6 +302,16 @@ That's where Heidegger comes in: **Does this serve the whole?**
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [The Masters — Dieter Rams](https://createsomething.ltd/masters/dieter-rams) for his complete design principles and influence on CREATE SOMETHING.
+>
+> **Canon Reference**: Read [Negative Space Pattern](https://createsomething.ltd/patterns/negative-space) for how absence creates presence in design.
+>
+> **Research Depth**: Read [Subtractive Form Design](https://createsomething.io/papers/subtractive-form-design) for research on reduction in interface design.
+
+---
+
 ## Reflection
 
 Before the praxis exercise:

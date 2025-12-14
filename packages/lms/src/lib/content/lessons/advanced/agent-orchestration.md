@@ -857,3 +857,13 @@ Before the praxis exercise:
 **The goal isn't parallelism—it's specialized transparency.**
 
 When the swarm recedes, the creation reveals itself.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Tool Complementarity](https://createsomething.ltd/patterns/tool-complementarity) for how agents should complement rather than replace human judgment.
+>
+> **Research Depth**: Read the [Hierarchical Telos paper](https://createsomething.io/papers/hierarchical-telos) for the theoretical foundation of multi-level agent coordination.
+>
+> **Practice**: The CREATE SOMETHING deployment system uses multi-agent patterns—study the [deployment workflow](https://github.com/create-something/create-something-monorepo/tree/main/.github/workflows) to see these patterns in practice.
