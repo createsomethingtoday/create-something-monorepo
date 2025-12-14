@@ -2,6 +2,8 @@
 	/**
 	 * PetroX - Oil & Gas Solutions
 	 * Maverick X
+	 *
+	 * Content fetched from CMS at request time (not build time)
 	 */
 
 	import KineticHero from '$lib/components/KineticHero.svelte';
@@ -15,22 +17,34 @@
 		petroxOperationsHeader,
 		petroxOperationsImages
 	} from '$lib/data/petrox';
+	import type { PageData } from './$types';
 
-	// Hero content from React mocks
-	const heroContent = {
-		title: 'Targeted Non-Hazmat Chemistry',
-		subtitle: 'Boost production and slash costs with PetroX—advanced chelation chemistry for enhanced oil recovery, sludge remediation, and water treatment',
-		video: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/082466515-oil-rig-pumpjack-working-natur.mp4',
-		cta: 'Learn More'
-	};
+	interface Props {
+		data: PageData;
+	}
 
-	// Why PetroX features
-	const whyFeatures = [
+	let { data }: Props = $props();
+	const content = data.content;
+
+	// Hero content with CMS overrides
+	const heroTitle = content?.hero?.title ?? 'Targeted Non-Hazmat Chemistry';
+	const heroSubtitle = content?.hero?.subtitle ?? 'Boost production and slash costs with PetroX—advanced chelation chemistry for enhanced oil recovery, sludge remediation, and water treatment';
+	const heroVideo = content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/082466515-oil-rig-pumpjack-working-natur.mp4';
+	const heroCta = content?.hero?.cta ?? 'Learn More';
+
+	// Why PetroX section with CMS overrides
+	const whyTitle = content?.why?.title ?? 'Why PetroX?';
+	const whySubtitle = content?.why?.subtitle ?? 'Industry-leading oilfield chemistry that delivers results without the downsides of traditional treatments.';
+	const whyFeatures = content?.whyFeatures ?? [
 		{ icon: 'thermometer', title: 'Room Temperature Operation' },
 		{ icon: 'shield-check', title: 'Non-Hazardous' },
 		{ icon: 'wrench', title: 'Infrastructure-Safe' },
 		{ icon: 'clock', title: 'Non-Disruptive' }
 	];
+
+	// Section headers with CMS overrides
+	const solutionsHeadline = content?.solutionsHeader?.headline ?? petroxSolutionsHeader.headline;
+	const operationsHeadline = content?.operationsHeader?.headline ?? petroxOperationsHeader.headline;
 
 	// Transform petrox solutions to TabbedSolutions format
 	const tabbedSolutions = petroxSolutions.map(solution => ({
@@ -54,15 +68,15 @@
 
 <!-- Hero Section (Main) -->
 <KineticHero
-	videoSrc={heroContent.video}
-	title={heroContent.title}
-	subtitle={heroContent.subtitle}
-	ctaText={heroContent.cta}
+	videoSrc={heroVideo}
+	title={heroTitle}
+	subtitle={heroSubtitle}
+	ctaText={heroCta}
 />
 
 <!-- Tabbed Solutions Section -->
 <TabbedSolutions
-	headline={petroxSolutionsHeader.headline}
+	headline={solutionsHeadline}
 	solutions={tabbedSolutions}
 	productPrefix="PetroX"
 	accentColor="petrox"
@@ -91,8 +105,8 @@
 			class="why-header scroll-reveal"
 			class:scroll-reveal-hidden={!whyVisible}
 		>
-			<h2 class="why-title">Why PetroX?</h2>
-			<p class="why-subtitle">Industry-leading oilfield chemistry that delivers results without the downsides of traditional treatments.</p>
+			<h2 class="why-title">{whyTitle}</h2>
+			<p class="why-subtitle">{whySubtitle}</p>
 		</div>
 		<div class="why-grid">
 			{#each whyFeatures as feature, index}
@@ -136,7 +150,7 @@
 
 <!-- Operations Hotspot Section -->
 <OperationsHotspot
-	headline={petroxOperationsHeader.headline}
+	headline={operationsHeadline}
 	hotspots={petroxOperations}
 	imageUrl={petroxOperationsImages.desktop}
 	mobileImageUrl={petroxOperationsImages.mobile}

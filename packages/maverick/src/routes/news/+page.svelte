@@ -4,17 +4,26 @@
 	 * Maverick X
 	 *
 	 * Structure: Main (heading) → FeaturedArticle → NewsGrid
+	 * Content fetched from KV at request time (not build time)
 	 */
 
+	import type { PageData } from './$types';
 	import { inview } from '$lib/actions/inview';
 	import Button from '$lib/components/Button.svelte';
+
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+	const content = data.content;
 
 	let mainVisible = $state(false);
 	let featuredVisible = $state(false);
 	let gridVisible = $state(false);
 
-	// News articles data - matches React mocks/news.tsx
-	const newsArticles = [
+	// Default news articles - fallback when CMS content not available
+	const defaultArticles = [
 		{
 			id: '1',
 			date: 'July 29, 2025',
@@ -77,6 +86,9 @@
 		}
 	];
 
+	// Use CMS content or fallback to defaults
+	const pageTitle = content?.title ?? 'Maverick In the News';
+	const newsArticles = content?.articles ?? defaultArticles;
 	const featuredArticle = newsArticles.find(article => article.featured) || newsArticles[0];
 	const regularArticles = newsArticles.filter(article => !article.featured);
 </script>
@@ -97,7 +109,7 @@
 			class="main-title scroll-reveal"
 			class:scroll-reveal-hidden={!mainVisible}
 		>
-			Maverick In the News
+			{pageTitle}
 		</h1>
 	</div>
 </section>

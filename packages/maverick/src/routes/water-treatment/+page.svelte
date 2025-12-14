@@ -2,25 +2,35 @@
 	/**
 	 * HydroX - Water Treatment Solutions
 	 * Maverick X
+	 *
+	 * Content fetched from CMS at request time (not build time)
 	 */
 
 	import KineticHero from '$lib/components/KineticHero.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import { inview } from '$lib/actions/inview';
+	import type { PageData } from './$types';
 
-	// Hero content - matches React dmeHero
-	const heroContent = {
-		title: 'Introducing HydroX',
-		subtitle: 'Unlocking new domestic sources of critical minerals and industrial water',
-		video: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/124452682-engineers-assessing-waste-wate.mp4',
-		cta: 'Learn More'
-	};
+	interface Props {
+		data: PageData;
+	}
 
-	// Statistics section - matches React dmeStatisticsContent
-	const statisticsContent = {
-		headline: 'HydroX is a process that cleans wastewater for industrial use while recovering and processing valuable byproducts',
-		cta: 'Learn More'
-	};
+	let { data }: Props = $props();
+	const content = data.content;
+
+	// Hero content with CMS overrides
+	const heroTitle = content?.hero?.title ?? 'Introducing HydroX';
+	const heroSubtitle = content?.hero?.subtitle ?? 'Unlocking new domestic sources of critical minerals and industrial water';
+	const heroVideo = content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/124452682-engineers-assessing-waste-wate.mp4';
+	const heroCta = content?.hero?.cta ?? 'Learn More';
+
+	// Statistics section with CMS overrides
+	const statisticsHeadline = content?.statistics?.headline ?? 'HydroX is a process that cleans wastewater for industrial use while recovering and processing valuable byproducts';
+	const statisticsCta = content?.statistics?.cta ?? 'Learn More';
+
+	// Section headlines with CMS overrides
+	const metalsHeadline = content?.metalsHeadline ?? 'Metals of interest';
+	const wasteHeadline = content?.wasteHeadline ?? 'Recover From';
 
 	// Metals of interest - matches React dmeMetalImages
 	const metals = [
@@ -98,10 +108,10 @@
 
 <!-- Hero Section (Main) -->
 <KineticHero
-	videoSrc={heroContent.video}
-	title={heroContent.title}
-	subtitle={heroContent.subtitle}
-	ctaText={heroContent.cta}
+	videoSrc={heroVideo}
+	title={heroTitle}
+	subtitle={heroSubtitle}
+	ctaText={heroCta}
 />
 
 <!-- Statistics Section - matches React (headline + CTA only, no stat cards) -->
@@ -116,14 +126,14 @@
 				class="statistics-headline scroll-reveal"
 				class:scroll-reveal-hidden={!statisticsVisible}
 			>
-				{statisticsContent.headline}
+				{statisticsHeadline}
 			</h2>
 			<div
 				class="statistics-cta scroll-reveal stagger-1"
 				class:scroll-reveal-hidden={!statisticsVisible}
 			>
 				<Button
-					title={statisticsContent.cta}
+					title={statisticsCta}
 					arrow
 					onclick={openContactModal}
 				/>
@@ -143,7 +153,7 @@
 			class="metals-headline scroll-reveal"
 			class:scroll-reveal-hidden={!metalsVisible}
 		>
-			Metals of interest
+			{metalsHeadline}
 		</h2>
 		<div class="metals-grid">
 			{#each metals as metal, index}
@@ -204,7 +214,7 @@
 
 		<!-- Static Title - Top Left -->
 		<div class="waste-header">
-			<h2 class="waste-title">Recover From</h2>
+			<h2 class="waste-title">{wasteHeadline}</h2>
 		</div>
 
 		<!-- Content Overlay -->

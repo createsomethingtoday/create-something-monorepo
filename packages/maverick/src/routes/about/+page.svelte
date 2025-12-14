@@ -2,12 +2,50 @@
 	/**
 	 * About Page
 	 * Maverick X
+	 *
+	 * Content fetched from KV at request time (not build time)
 	 */
 
+	import type { PageData } from './$types';
 	import { inview } from '$lib/actions/inview';
 	import Button from '$lib/components/Button.svelte';
 
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+	const content = data.content;
+
 	let visible = $state(false);
+
+	// Hero defaults
+	const heroBadge = content?.hero?.badge ?? 'Y Combinator Backed';
+	const heroHeadline = content?.hero?.headline ?? 'Chemistry That Outperforms';
+	const heroDescription = content?.hero?.description ?? 'Maverick X develops next-generation chemical solutions that transform how industries extract, process, and recover valuable resources. Our proprietary formulations deliver breakthrough performance where it matters most.';
+
+	// Mission/Approach defaults
+	const missionHeading = content?.mission?.heading ?? 'Our Mission';
+	const missionBody = content?.mission?.body ?? 'We believe the world\'s most critical challenges—energy security, critical mineral supply, and water sustainability—can be solved through better chemistry. Our mission is to develop targeted chemical solutions that enable more efficient, sustainable industrial operations.';
+	const approachHeading = content?.approach?.heading ?? 'Our Approach';
+	const approachBody = content?.approach?.body ?? 'We combine deep domain expertise with cutting-edge research to create formulations that outperform conventional alternatives. Every product we develop is purpose-built for real-world conditions, tested rigorously, and optimized for both performance and sustainability.';
+
+	// Products defaults
+	const productsHeading = content?.products?.heading ?? 'Our Products';
+	const petroxName = content?.products?.petrox?.name ?? 'PetroX';
+	const petroxTagline = content?.products?.petrox?.tagline ?? 'Targeted Oilfield Chemistry';
+	const petroxDescription = content?.products?.petrox?.description ?? 'Advanced solutions for enhanced oil recovery and production optimization.';
+	const lithxName = content?.products?.lithx?.name ?? 'LithX';
+	const lithxTagline = content?.products?.lithx?.tagline ?? 'Next-Gen Metal Recovery';
+	const lithxDescription = content?.products?.lithx?.description ?? 'Revolutionary extraction chemistry for critical minerals.';
+	const hydroxName = content?.products?.hydrox?.name ?? 'HydroX';
+	const hydroxTagline = content?.products?.hydrox?.tagline ?? 'Wastewater Valorization';
+	const hydroxDescription = content?.products?.hydrox?.description ?? 'Innovative treatment that recovers value from industrial wastewater.';
+
+	// CTA defaults
+	const ctaHeading = content?.cta?.heading ?? 'Ready to learn more?';
+	const ctaDescription = content?.cta?.description ?? 'Contact our team to discuss how Maverick X can help your operations.';
+	const ctaButtonLabel = content?.cta?.buttonLabel ?? 'Get in Touch';
 
 	function openContactModal() {
 		window.dispatchEvent(new CustomEvent('openContactModal', { detail: { categoryId: 'general' } }));
@@ -32,7 +70,7 @@
 					class:scroll-reveal-hidden={!visible}
 				>
 					<span class="company-badge">
-						Y Combinator Backed
+						{heroBadge}
 					</span>
 				</div>
 
@@ -40,7 +78,7 @@
 					class="text-h1 mb-6 scroll-reveal stagger-1"
 					class:scroll-reveal-hidden={!visible}
 				>
-					Chemistry That Outperforms
+					{heroHeadline}
 				</h1>
 
 				<p
@@ -48,7 +86,7 @@
 					class:scroll-reveal-hidden={!visible}
 					style="color: var(--color-fg-secondary)"
 				>
-					Maverick X develops next-generation chemical solutions that transform how industries extract, process, and recover valuable resources. Our proprietary formulations deliver breakthrough performance where it matters most.
+					{heroDescription}
 				</p>
 			</div>
 		</div>
@@ -63,14 +101,14 @@
 						class="text-h2 mb-6 scroll-reveal"
 						class:scroll-reveal-hidden={!visible}
 					>
-						Our Mission
+						{missionHeading}
 					</h2>
 					<p
 						class="text-paragraph scroll-reveal stagger-1"
 						class:scroll-reveal-hidden={!visible}
 						style="color: var(--color-fg-secondary)"
 					>
-						We believe the world's most critical challenges—energy security, critical mineral supply, and water sustainability—can be solved through better chemistry. Our mission is to develop targeted chemical solutions that enable more efficient, sustainable industrial operations.
+						{missionBody}
 					</p>
 				</div>
 				<div>
@@ -78,14 +116,14 @@
 						class="text-h2 mb-6 scroll-reveal"
 						class:scroll-reveal-hidden={!visible}
 					>
-						Our Approach
+						{approachHeading}
 					</h2>
 					<p
 						class="text-paragraph scroll-reveal stagger-1"
 						class:scroll-reveal-hidden={!visible}
 						style="color: var(--color-fg-secondary)"
 					>
-						We combine deep domain expertise with cutting-edge research to create formulations that outperform conventional alternatives. Every product we develop is purpose-built for real-world conditions, tested rigorously, and optimized for both performance and sustainability.
+						{approachBody}
 					</p>
 				</div>
 			</div>
@@ -99,7 +137,7 @@
 				class="text-h2 mb-12 scroll-reveal"
 				class:scroll-reveal-hidden={!visible}
 			>
-				Our Products
+				{productsHeading}
 			</h2>
 
 			<div class="grid-responsive-3">
@@ -115,9 +153,9 @@
 							<path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-5h-6v5H6v-9.5l6-4.5 6 4.5V19z"/>
 						</svg>
 					</div>
-					<h3 class="product-name">PetroX</h3>
-					<p class="product-tagline">Targeted Oilfield Chemistry</p>
-					<p class="product-description">Advanced solutions for enhanced oil recovery and production optimization.</p>
+					<h3 class="product-name">{petroxName}</h3>
+					<p class="product-tagline">{petroxTagline}</p>
+					<p class="product-description">{petroxDescription}</p>
 				</a>
 
 				<!-- LithX -->
@@ -132,9 +170,9 @@
 							<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm0-14a6 6 0 1 0 6 6 6 6 0 0 0-6-6zm0 10a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
 						</svg>
 					</div>
-					<h3 class="product-name">LithX</h3>
-					<p class="product-tagline">Next-Gen Metal Recovery</p>
-					<p class="product-description">Revolutionary extraction chemistry for critical minerals.</p>
+					<h3 class="product-name">{lithxName}</h3>
+					<p class="product-tagline">{lithxTagline}</p>
+					<p class="product-description">{lithxDescription}</p>
 				</a>
 
 				<!-- HydroX -->
@@ -149,9 +187,9 @@
 							<path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z"/>
 						</svg>
 					</div>
-					<h3 class="product-name">HydroX</h3>
-					<p class="product-tagline">Wastewater Valorization</p>
-					<p class="product-description">Innovative treatment that recovers value from industrial wastewater.</p>
+					<h3 class="product-name">{hydroxName}</h3>
+					<p class="product-tagline">{hydroxTagline}</p>
+					<p class="product-description">{hydroxDescription}</p>
 				</a>
 			</div>
 		</div>
@@ -165,13 +203,13 @@
 				class:scroll-reveal-hidden={!visible}
 			>
 				<div class="cta-content">
-					<h2 class="text-h3 mb-2">Ready to learn more?</h2>
+					<h2 class="text-h3 mb-2">{ctaHeading}</h2>
 					<p style="color: var(--color-fg-secondary)">
-						Contact our team to discuss how Maverick X can help your operations.
+						{ctaDescription}
 					</p>
 				</div>
 				<Button
-					title="Get in Touch"
+					title={ctaButtonLabel}
 					arrow
 					onclick={openContactModal}
 				/>

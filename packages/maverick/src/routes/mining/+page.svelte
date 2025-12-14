@@ -2,6 +2,8 @@
 	/**
 	 * LithX - Mining & Metals Solutions
 	 * Maverick X
+	 *
+	 * Content fetched from CMS at request time (not build time)
 	 */
 
 	import KineticHero from '$lib/components/KineticHero.svelte';
@@ -14,22 +16,34 @@
 		lithxMethods,
 		lithxMethodsHeader
 	} from '$lib/data/lithx';
+	import type { PageData } from './$types';
 
-	// Hero content from React mocks
-	const heroContent = {
-		title: 'Next Generation Recovery',
-		subtitle: 'Valorize low-grade ores with LithX—advanced chelation technology for critical metals recovery from heaps, tailings, and complex mineralogy',
-		video: 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/168384056-deep-open-pit-mine-copper-ore-.mp4',
-		cta: 'Learn More'
-	};
+	interface Props {
+		data: PageData;
+	}
 
-	// Why LithX features (matching React)
-	const whyFeatures = [
+	let { data }: Props = $props();
+	const content = data.content;
+
+	// Hero content with CMS overrides
+	const heroTitle = content?.hero?.title ?? 'Next Generation Recovery';
+	const heroSubtitle = content?.hero?.subtitle ?? 'Valorize low-grade ores with LithX—advanced chelation technology for critical metals recovery from heaps, tailings, and complex mineralogy';
+	const heroVideo = content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/168384056-deep-open-pit-mine-copper-ore-.mp4';
+	const heroCta = content?.hero?.cta ?? 'Learn More';
+
+	// Why section with CMS overrides
+	const whyTitle = content?.why?.title ?? 'Advanced Chelation Technology';
+	const whySubtitle = content?.why?.subtitle ?? 'Our proprietary chemistry platform enables efficient metal extraction with reduced environmental impact and operational complexity.';
+	const whyFeatures = content?.whyFeatures ?? [
 		{ icon: 'beaker', title: 'Ultra-Strong Chelators' },
 		{ icon: 'thermometer', title: 'Ambient Temperature' },
 		{ icon: 'leaf', title: 'Environmentally Friendly' },
 		{ icon: 'plug', title: 'Drop-In Solution' }
 	];
+
+	// Section headers with CMS overrides
+	const solutionsHeadline = content?.solutionsHeader?.headline ?? lithxSolutionsHeader.headline;
+	const methodsHeadline = content?.methodsHeader?.headline ?? lithxMethodsHeader.headline;
 
 	// Transform lithx solutions to TabbedSolutions format
 	const tabbedSolutions = lithxSolutions.map(solution => ({
@@ -62,15 +76,15 @@
 
 <!-- Hero Section (Main) -->
 <KineticHero
-	videoSrc={heroContent.video}
-	title={heroContent.title}
-	subtitle={heroContent.subtitle}
-	ctaText={heroContent.cta}
+	videoSrc={heroVideo}
+	title={heroTitle}
+	subtitle={heroSubtitle}
+	ctaText={heroCta}
 />
 
 <!-- Tabbed Solutions Section -->
 <TabbedSolutions
-	headline={lithxSolutionsHeader.headline}
+	headline={solutionsHeadline}
 	solutions={tabbedSolutions}
 	productPrefix="LithX"
 	accentColor="lithx"
@@ -99,8 +113,8 @@
 			class="why-header scroll-reveal"
 			class:scroll-reveal-hidden={!whyVisible}
 		>
-			<h2 class="why-title">Advanced Chelation Technology</h2>
-			<p class="why-subtitle">Our proprietary chemistry platform enables efficient metal extraction with reduced environmental impact and operational complexity.</p>
+			<h2 class="why-title">{whyTitle}</h2>
+			<p class="why-subtitle">{whySubtitle}</p>
 		</div>
 		<div class="why-grid">
 			{#each whyFeatures as feature, index}
@@ -146,7 +160,7 @@
 
 <!-- Methods/Process Section -->
 <ProcessSection
-	headline={lithxMethodsHeader.headline}
+	headline={methodsHeadline}
 	steps={processSteps}
 	numbered={false}
 	accentColor="lithx"
