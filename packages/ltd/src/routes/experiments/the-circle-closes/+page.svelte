@@ -24,11 +24,11 @@
 	function getStatusColor(status: string): string {
 		switch (status) {
 			case 'corroborating':
-				return '#22c55e';
+				return 'var(--color-success)';
 			case 'refuting':
-				return '#ef4444';
+				return 'var(--color-error)';
 			default:
-				return '#6b7280';
+				return 'var(--color-fg-muted)';
 		}
 	}
 
@@ -234,59 +234,60 @@
 </article>
 
 <style>
+	/* ==========================================================================
+	   The Circle Closes - Canon Design Tokens
+	   All styles derive from shared Canon tokens
+	   ========================================================================== */
+
 	.experiment {
 		max-width: 720px;
 		margin: 0 auto;
-		padding: 2rem;
-		font-family:
-			'Inter',
-			-apple-system,
-			BlinkMacSystemFont,
-			sans-serif;
-		color: rgba(255, 255, 255, 0.9);
+		padding: var(--space-lg);
+		font-family: var(--font-sans);
+		color: var(--color-fg-secondary);
 	}
 
 	/* Header */
 	.header {
-		margin-bottom: 4rem;
+		margin-bottom: var(--space-xl);
 		text-align: center;
 	}
 
 	/* Visual Canon */
 	.visual-canon {
-		margin: 2rem auto;
+		margin: var(--space-lg) auto;
 		display: flex;
 		justify-content: center;
 	}
 
 	.ascii-details {
-		margin: 1rem auto;
+		margin: var(--space-sm) auto;
 		max-width: fit-content;
 	}
 
 	.ascii-toggle {
-		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.4);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 		cursor: pointer;
 		text-align: center;
-		padding: 0.5rem 1rem;
-		transition: color 0.2s;
+		padding: var(--space-xs) var(--space-sm);
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.ascii-toggle:hover {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 	}
 
 	.ascii-art {
-		margin: 1rem auto 0;
-		padding: 1rem;
-		background: rgba(0, 0, 0, 0.3);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 8px;
-		font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+		margin: var(--space-sm) auto 0;
+		padding: var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		font-family: var(--font-mono);
 		font-size: 0.65rem;
 		line-height: 1.3;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 		overflow-x: auto;
 		white-space: pre;
 		text-align: left;
@@ -294,72 +295,72 @@
 
 	.meta {
 		display: flex;
-		gap: 1rem;
+		gap: var(--space-sm);
 		justify-content: center;
-		margin-bottom: 1rem;
-		font-size: 0.75rem;
+		margin-bottom: var(--space-sm);
+		font-size: var(--text-caption);
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: rgba(255, 255, 255, 0.5);
+		letter-spacing: var(--tracking-widest);
+		color: var(--color-fg-muted);
 	}
 
 	.title {
-		font-size: 2.5rem;
-		font-weight: 700;
-		margin: 0 auto 0.5rem auto;
-		letter-spacing: -0.02em;
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
+		margin: 0 auto var(--space-xs) auto;
+		letter-spacing: var(--tracking-tight);
 	}
 
 	.subtitle {
-		font-size: 1.25rem;
-		color: rgba(255, 255, 255, 0.6);
-		margin: 0 0 1.5rem 0;
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-tertiary);
+		margin: 0 0 var(--space-md) 0;
 		font-style: italic;
 	}
 
 	.description {
 		max-width: 600px;
-		margin: 0 auto 1.5rem;
-		line-height: 1.6;
-		color: rgba(255, 255, 255, 0.7);
+		margin: 0 auto var(--space-md);
+		line-height: var(--leading-relaxed);
+		color: var(--color-fg-secondary);
 	}
 
 	.tags {
 		display: flex;
-		gap: 0.5rem;
+		gap: var(--space-xs);
 		justify-content: center;
 		flex-wrap: wrap;
 	}
 
 	.tag {
 		padding: 0.25rem 0.75rem;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 100px;
-		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.6);
+		background: var(--color-hover);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
 	}
 
 	/* Three Proofs - Stacked Layout */
 	.three-proofs {
 		display: flex;
 		flex-direction: column;
-		gap: 3rem;
-		margin-bottom: 4rem;
+		gap: var(--space-lg);
+		margin-bottom: var(--space-xl);
 	}
 
 	/* Proof Sections */
 	.proof-section {
-		background: rgba(10, 10, 10, 0.6);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 12px;
-		padding: 2rem;
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
 	}
 
 	.section-title {
-		font-size: 1.25rem;
-		font-weight: 600;
-		margin: 0 0 0.5rem 0;
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		margin: 0 0 var(--space-xs) 0;
 		display: flex;
 		align-items: baseline;
 		justify-content: center;
@@ -367,21 +368,21 @@
 	}
 
 	.section-number {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.3);
-		font-family: 'IBM Plex Mono', monospace;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-subtle);
+		font-family: var(--font-mono);
 	}
 
 	.section-description {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.5);
-		margin: 0 0 1.5rem 0;
-		line-height: 1.5;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		margin: 0 0 var(--space-md) 0;
+		line-height: var(--leading-normal);
 		text-align: center;
 	}
 
 	.proof-content {
-		margin-bottom: 1rem;
+		margin-bottom: var(--space-sm);
 	}
 
 	.circle-container {
@@ -390,37 +391,37 @@
 	}
 
 	.proof-verdict {
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		font-style: italic;
-		margin: 1rem 0 0 0;
+		margin: var(--space-sm) 0 0 0;
 		text-align: center;
 	}
 
 	.proof-verdict.valid {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 
 	.proof-verdict.pending {
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--color-fg-muted);
 	}
 
 	/* Evidence Grid */
 	.evidence-grid {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: var(--space-sm);
 	}
 
 	.evidence-card {
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.08);
-		border-radius: 8px;
-		padding: 1rem;
+		background: var(--color-hover);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-sm);
 	}
 
 	.evidence-header {
 		display: flex;
-		gap: 0.5rem;
+		gap: var(--space-xs);
 		align-items: baseline;
 		margin-bottom: 0.75rem;
 	}
@@ -428,18 +429,18 @@
 	.master-name {
 		font-size: 0.7rem;
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: rgba(255, 255, 255, 0.4);
+		letter-spacing: var(--tracking-wider);
+		color: var(--color-fg-muted);
 	}
 
 	.principle-title {
-		font-weight: 600;
-		font-size: 0.875rem;
+		font-weight: var(--font-semibold);
+		font-size: var(--text-body-sm);
 	}
 
 	.evidence-metrics {
 		display: flex;
-		gap: 1.5rem;
+		gap: var(--space-md);
 		margin-bottom: 0.75rem;
 	}
 
@@ -449,35 +450,35 @@
 	}
 
 	.metric-value {
-		font-family: 'IBM Plex Mono', monospace;
-		font-size: 1.25rem;
-		font-weight: 600;
+		font-family: var(--font-mono);
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
 	}
 
 	.metric-label {
 		font-size: 0.7rem;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--color-fg-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: var(--tracking-wider);
 	}
 
 	.evidence-status {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: var(--space-xs);
 		margin-bottom: 0.75rem;
 	}
 
 	.status-indicator {
 		width: 8px;
 		height: 8px;
-		border-radius: 50%;
+		border-radius: var(--radius-full);
 	}
 
 	.status-label {
-		font-size: 0.75rem;
+		font-size: var(--text-caption);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: var(--tracking-wider);
 		color: var(--status-color);
 	}
 
@@ -488,76 +489,76 @@
 	}
 
 	.exp-link {
-		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.5);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		text-decoration: none;
-		transition: color 0.2s;
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.exp-link:hover {
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--color-fg-primary);
 	}
 
 	.no-evidence {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.4);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		font-style: italic;
 		text-align: center;
-		padding: 2rem;
+		padding: var(--space-lg);
 	}
 
 	/* Synthesis */
 	.synthesis {
 		max-width: 600px;
-		margin: 0 auto 3rem;
+		margin: 0 auto var(--space-lg);
 		text-align: center;
 	}
 
 	.synthesis-title {
-		font-size: 1.5rem;
-		font-weight: 600;
-		margin: 0 0 1.5rem 0;
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		margin: 0 0 var(--space-md) 0;
 	}
 
 	.synthesis-quote {
 		font-style: italic;
-		color: rgba(255, 255, 255, 0.7);
-		margin: 0 0 1.5rem 0;
-		padding: 1rem 1.5rem;
-		border-left: 2px solid rgba(255, 255, 255, 0.2);
+		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-md) 0;
+		padding: var(--space-sm) var(--space-md);
+		border-left: 2px solid var(--color-border-emphasis);
 		text-align: left;
 	}
 
 	.synthesis-quote cite {
 		display: block;
 		margin-top: 0.75rem;
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.4);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	.synthesis-text {
-		line-height: 1.7;
-		color: rgba(255, 255, 255, 0.6);
+		line-height: var(--leading-loose);
+		color: var(--color-fg-tertiary);
 	}
 
 	/* Footer */
 	.experiment-footer {
 		text-align: center;
-		padding-top: 2rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		padding-top: var(--space-lg);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.footer-text {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.4);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	.footer-text a {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 		text-decoration: underline;
 	}
 
 	.footer-text a:hover {
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--color-fg-primary);
 	}
 </style>
