@@ -25,6 +25,7 @@ declare global {
 				KV: KVNamespace;
 				ENVIRONMENT: string;
 				IDENTITY_WORKER_URL: string;
+				RESEND_API_KEY: string;
 			};
 			context: ExecutionContext;
 			caches: CacheStorage;
