@@ -7,7 +7,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-const VALID_PAGES = ['home', 'petrox', 'lithx', 'dme', 'news'];
+const VALID_PAGES = ['home', 'petrox', 'lithx', 'dme', 'news', 'about', 'global'];
 
 export const GET: RequestHandler = async ({ params, platform }) => {
 	const { page } = params;

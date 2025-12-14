@@ -9,9 +9,20 @@
 	 * - Grid checkbox cards (rounded-xl)
 	 * - Quick contact info section
 	 * - Default category/product selection from product pages
+	 *
+	 * Content fetched from CMS at request time (not build time)
 	 */
 
 	import Icon from './Icon.svelte';
+
+	interface ContactContent {
+		title?: string;
+		description?: string;
+		emails?: {
+			label: string;
+			address: string;
+		}[];
+	}
 
 	interface Props {
 		isOpen: boolean;
@@ -19,9 +30,19 @@
 		defaultCategoryId?: string;
 		defaultProductId?: string;
 		defaultApplicationId?: string;
+		content?: ContactContent | null;
 	}
 
-	let { isOpen, onClose, defaultCategoryId, defaultProductId, defaultApplicationId }: Props = $props();
+	let { isOpen, onClose, defaultCategoryId, defaultProductId, defaultApplicationId, content }: Props = $props();
+
+	// Defaults with CMS overrides
+	const modalTitle = content?.title ?? 'Get in Touch';
+	const modalDescription = content?.description ?? 'Ready to transform your industrial chemistry operations? Our technical team is here to help you optimize performance and drive results.';
+	const contactEmails = content?.emails ?? [
+		{ label: 'General Inquiries', address: 'info@maverickx.com' },
+		{ label: 'Technical Support', address: 'support@maverickx.com' },
+		{ label: 'Sales & Partnerships', address: 'sales@maverickx.com' }
+	];
 
 	// Form state
 	let name = $state('');
@@ -316,34 +337,22 @@
 				<div class="modal-inner">
 					<!-- Header -->
 					<div class="modal-header">
-						<h2 id="contact-modal-title" class="modal-title">Get in Touch</h2>
+						<h2 id="contact-modal-title" class="modal-title">{modalTitle}</h2>
 						<p class="modal-description">
-							Ready to transform your industrial chemistry operations?
-							Our technical team is here to help you optimize performance
-							and drive results.
+							{modalDescription}
 						</p>
 					</div>
 
 					<!-- Quick Contact Info -->
 					<div class="contact-info-grid">
-						<div>
-							<div class="contact-label">General Inquiries</div>
-							<a href="mailto:info@maverickx.com" class="contact-link">
-								info@maverickx.com
-							</a>
-						</div>
-						<div>
-							<div class="contact-label">Technical Support</div>
-							<a href="mailto:support@maverickx.com" class="contact-link">
-								support@maverickx.com
-							</a>
-						</div>
-						<div>
-							<div class="contact-label">Sales & Partnerships</div>
-							<a href="mailto:sales@maverickx.com" class="contact-link">
-								sales@maverickx.com
-							</a>
-						</div>
+						{#each contactEmails as emailEntry}
+							<div>
+								<div class="contact-label">{emailEntry.label}</div>
+								<a href="mailto:{emailEntry.address}" class="contact-link">
+									{emailEntry.address}
+								</a>
+							</div>
+						{/each}
 					</div>
 
 					<!-- Contact Form -->

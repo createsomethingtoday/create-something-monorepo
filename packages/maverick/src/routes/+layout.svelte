@@ -11,9 +11,11 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ContactModal from '$lib/components/ContactModal.svelte';
+	import type { LayoutData } from './$types';
 
 	interface Props {
 		children: import('svelte').Snippet;
+		data: LayoutData;
 	}
 
 	interface ContactModalContext {
@@ -22,7 +24,8 @@
 		applicationId?: string;
 	}
 
-	let { children }: Props = $props();
+	let { children, data }: Props = $props();
+	const globalContent = data.globalContent;
 
 	// Check if we're on an admin route - admin has its own layout
 	const isAdmin = $derived($page.url.pathname.startsWith('/admin'));
@@ -71,7 +74,7 @@
 </main>
 
 {#if !isAdmin}
-	<Footer onContactClick={openContactModal} />
+	<Footer onContactClick={openContactModal} content={globalContent?.footer} />
 
 	<!-- Contact Modal -->
 	<ContactModal
@@ -80,6 +83,7 @@
 		defaultCategoryId={modalContext.categoryId}
 		defaultProductId={modalContext.productId}
 		defaultApplicationId={modalContext.applicationId}
+		content={globalContent?.contact}
 	/>
 {/if}
 

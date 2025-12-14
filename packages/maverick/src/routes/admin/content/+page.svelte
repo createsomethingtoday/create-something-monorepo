@@ -15,7 +15,9 @@
 		{ id: 'petrox', label: 'Oil & Gas' },
 		{ id: 'lithx', label: 'Mining' },
 		{ id: 'dme', label: 'Water Treatment' },
-		{ id: 'news', label: 'News' }
+		{ id: 'news', label: 'News' },
+		{ id: 'about', label: 'About' },
+		{ id: 'global', label: 'Global (Footer/Contact)' }
 	];
 
 	// Fields that should not be editable
@@ -321,7 +323,32 @@
 														oninput={(e) => updateValue([section, k], typeof v === 'number' ? Number((e.target as HTMLInputElement).value) : (e.target as HTMLInputElement).value)}
 														class="admin-input flex-1"
 													/>
-												{:else if typeof v === 'object' && v !== null && !Array.isArray(v)}
+												{:else if Array.isArray(v)}
+													<!-- Nested array (e.g., contact.emails) -->
+													<div class="nested-array">
+														{#each v as item, i}
+															<div class="array-item nested">
+																<div class="item-label">Item {i + 1}</div>
+																{#if typeof item === 'object' && item !== null}
+																	{#each Object.entries(item as Record<string, JsonValue>) as [nk, nv]}
+																		{#if !HIDDEN_FIELDS.includes(nk) && (typeof nv === 'string' || typeof nv === 'number')}
+																			{@const nestedMatch = isExactMatch([section, k, String(i), nk])}
+																			<div class="field-row" class:is-match={nestedMatch}>
+																				<label class="field-label" class:is-match={nestedMatch}>{formatLabel(nk)}</label>
+																				<input
+																					type={typeof nv === 'number' ? 'number' : 'text'}
+																					value={nv}
+																					oninput={(e) => updateValue([section, k, String(i), nk], typeof nv === 'number' ? Number((e.target as HTMLInputElement).value) : (e.target as HTMLInputElement).value)}
+																					class="admin-input flex-1"
+																				/>
+																			</div>
+																		{/if}
+																	{/each}
+																{/if}
+															</div>
+														{/each}
+													</div>
+												{:else if typeof v === 'object' && v !== null}
 													<!-- Nested object -->
 													<div class="nested-object">
 														{#each Object.entries(v as Record<string, JsonValue>) as [nk, nv]}
@@ -584,6 +611,19 @@
 		padding-left: 1rem;
 		margin-top: 0.5rem;
 		border-left: 2px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	/* Nested Array */
+	.nested-array {
+		width: 100%;
+		margin-top: 0.5rem;
+	}
+
+	.array-item.nested {
+		padding-left: 1rem;
+		padding-top: 0.5rem;
+		margin-bottom: 0.5rem;
+		border-left: 2px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
 	/* Textarea-specific adjustment (inherits .admin-input from app.css) */

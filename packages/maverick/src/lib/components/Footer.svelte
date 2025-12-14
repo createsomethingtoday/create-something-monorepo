@@ -2,13 +2,31 @@
 	/**
 	 * Footer Component - 3-column layout with Y Combinator logo
 	 * Maverick X Design System
+	 *
+	 * Content fetched from CMS at request time (not build time)
 	 */
+
+	interface FooterContent {
+		tagline?: string;
+		address?: {
+			line1?: string;
+			line2?: string;
+			line3?: string;
+		};
+	}
 
 	interface Props {
 		onContactClick?: () => void;
+		content?: FooterContent | null;
 	}
 
-	let { onContactClick }: Props = $props();
+	let { onContactClick, content }: Props = $props();
+
+	// Defaults with CMS overrides
+	const tagline = content?.tagline ?? 'Engineering the future of chemistry for safer, more profitable natural resource production.';
+	const addressLine1 = content?.address?.line1 ?? '444 E. St. Elmo Rd.';
+	const addressLine2 = content?.address?.line2 ?? 'Bldg. B';
+	const addressLine3 = content?.address?.line3 ?? 'Austin, TX 78745';
 
 	const companyLinks = [
 		{ href: '/oil-gas', label: 'OIL & GAS' },
@@ -35,7 +53,7 @@
 
 				<!-- Tagline -->
 				<p class="brand-tagline">
-					Engineering the future of chemistry for safer, more profitable natural resource production.
+					{tagline}
 				</p>
 
 				<!-- Y Combinator -->
@@ -76,9 +94,9 @@
 			<div class="footer-column">
 				<h3 class="footer-heading">Get In Touch</h3>
 				<address class="footer-address">
-					444 E. St. Elmo Rd.<br />
-					Bldg. B<br />
-					Austin, TX 78745
+					{addressLine1}<br />
+					{addressLine2}<br />
+					{addressLine3}
 				</address>
 				<button
 					type="button"
