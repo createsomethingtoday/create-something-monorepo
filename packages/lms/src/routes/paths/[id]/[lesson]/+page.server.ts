@@ -16,6 +16,15 @@ const lessonFiles = import.meta.glob('/src/lib/content/lessons/**/*.md', {
   eager: true
 }) as Record<string, string>;
 
+/**
+ * Strip YAML frontmatter from markdown content.
+ * Frontmatter is delimited by --- at the start of the file.
+ */
+function stripFrontmatter(markdown: string): string {
+  const frontmatterRegex = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
+  return markdown.replace(frontmatterRegex, '');
+}
+
 export const load: PageServerLoad = async ({ params }) => {
   const pathData = getPath(params.id);
   const lesson = getLesson(params.id, params.lesson);
@@ -38,7 +47,9 @@ export const load: PageServerLoad = async ({ params }) => {
   const markdown = lessonFiles[contentKey];
 
   if (markdown) {
-    content = await marked.parse(markdown);
+    // Strip YAML frontmatter before parsing
+    const markdownContent = stripFrontmatter(markdown);
+    content = await marked.parse(markdownContent);
   }
 
   return {

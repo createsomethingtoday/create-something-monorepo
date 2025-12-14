@@ -12,7 +12,7 @@
  * @see Heidegger's "Building Dwelling Thinking" (1951)
  */
 
-import type { Severity, Violation } from './index.js';
+import type { Severity, Violation } from './base.js';
 
 // =============================================================================
 // SPATIAL PRIMITIVES

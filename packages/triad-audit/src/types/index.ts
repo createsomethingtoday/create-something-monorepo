@@ -7,23 +7,9 @@
  * - Heidegger (System): "Does this serve the whole?" → Reconnect
  */
 
-export type Severity = 'critical' | 'high' | 'medium' | 'low';
-
-export interface Violation {
-	type: string;
-	severity: Severity;
-	message: string;
-	file?: string;
-	files?: string[];
-	lines?: number;
-	suggestion: string;
-}
-
-export interface Commendation {
-	level: 'dry' | 'rams' | 'heidegger';
-	component: string;
-	reason: string;
-}
+// Import and re-export base types (shared primitives)
+import type { Severity, Violation, Commendation } from './base.js';
+export type { Severity, Violation, Commendation } from './base.js';
 
 // DRY Level: "Have I built this before?"
 export interface DuplicateBlock {
