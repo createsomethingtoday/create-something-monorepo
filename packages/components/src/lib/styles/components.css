@@ -1,0 +1,252 @@
+/*
+  CREATE SOMETHING Shared Component Styles
+  Property-agnostic UI patterns built on Canon tokens
+
+  Import after canon.css:
+    @import '@create-something/components/styles/canon.css';
+    @import '@create-something/components/styles/components.css';
+
+  Philosophy: "Weniger, aber besser" - Dieter Rams
+  DRY: Unified patterns used across properties
+*/
+
+/* ==========================================================================
+   Component Layer - Shared UI Patterns
+   ========================================================================== */
+
+@layer components {
+  /* ==========================================================================
+     Page Header Pattern
+     Usage: <h1 class="page-title">, <p class="page-subtitle">
+     ========================================================================== */
+  .page-title {
+    font-size: var(--text-display);
+    font-weight: var(--font-light);
+    margin: 0 0 var(--space-sm) 0;
+    color: var(--color-fg-primary);
+  }
+
+  .page-subtitle {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+    max-width: 48rem;
+    margin: 0;
+    line-height: var(--leading-relaxed);
+  }
+
+  .page-description {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-tertiary);
+    line-height: var(--leading-relaxed);
+    margin: 0;
+  }
+
+  /* ==========================================================================
+     Section Title
+     ========================================================================== */
+  .section-title {
+    font-size: var(--text-h2);
+    margin-bottom: var(--space-lg);
+  }
+
+  .section-title.center {
+    text-align: center;
+    margin-bottom: var(--space-md);
+  }
+
+  /* ==========================================================================
+     Card Patterns
+     Base card with elevated background, hover state
+     ========================================================================== */
+  .card {
+    display: block;
+    padding: var(--space-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .card:hover {
+    border-color: var(--color-border-emphasis);
+  }
+
+  .card-xl {
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+  }
+
+  /* ==========================================================================
+     Button Patterns
+     ========================================================================== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body);
+    cursor: pointer;
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .btn-primary {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    border: none;
+    font-weight: var(--font-medium);
+  }
+
+  .btn-primary:hover {
+    background: var(--color-fg-secondary);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-fg-secondary);
+    border: 1px solid var(--color-border-emphasis);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-fg-primary);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-fg-secondary);
+    border: 1px solid var(--color-border-default);
+  }
+
+  .btn-ghost:hover {
+    background: var(--color-hover);
+    border-color: var(--color-border-emphasis);
+    color: var(--color-fg-primary);
+  }
+
+  /* ==========================================================================
+     Eyebrow / Label Pattern
+     Small caps, muted, used for categories/metadata
+     Note: .eyebrow also exists in canon.css @layer utilities
+     This variant adds accent styling
+     ========================================================================== */
+  .eyebrow-accent {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  /* ==========================================================================
+     Badge Pattern
+     Small inline label
+     ========================================================================== */
+  .badge {
+    font-size: var(--text-caption);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .badge-info {
+    color: var(--color-data-1);
+    background: rgba(96, 165, 250, 0.1);
+  }
+
+  .badge-success {
+    color: var(--color-success);
+    background: var(--color-success-muted);
+  }
+
+  .badge-warning {
+    color: var(--color-warning);
+    background: var(--color-warning-muted);
+  }
+
+  .badge-error {
+    color: var(--color-error);
+    background: var(--color-error-muted);
+  }
+
+  /* ==========================================================================
+     List Patterns
+     ========================================================================== */
+  .list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .list-vertical-sm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  /* ==========================================================================
+     Progress Bar
+     ========================================================================== */
+  .progress-track {
+    height: 4px;
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .progress-track-sm {
+    height: 2px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--color-fg-primary);
+    border-radius: var(--radius-full);
+    transition: width var(--duration-complex) var(--ease-standard);
+  }
+
+  /* ==========================================================================
+     Number Circle
+     Used for lesson/step numbering
+     ========================================================================== */
+  .number-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    font-weight: var(--font-medium);
+  }
+
+  /* ==========================================================================
+     Container Pattern
+     Centered container with padding
+     ========================================================================== */
+  .container {
+    width: 100%;
+    max-width: var(--container-xl);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  .container-sm {
+    max-width: var(--container-sm);
+  }
+
+  .container-md {
+    max-width: var(--container-md);
+  }
+
+  .container-lg {
+    max-width: var(--container-lg);
+  }
+
+  .container-prose {
+    max-width: var(--container-prose);
+  }
+}
