@@ -273,6 +273,18 @@ Every command is a small creation. Every session is a dialogue with the machine.
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools) for Heidegger's concept of dwelling applied to terminal environments.
+>
+> **Canon Reference**: The [dotfiles package](https://github.com/create-something/create-something-monorepo/tree/main/packages/dotfiles) shows how CREATE SOMETHING applies these principles to shell and neomutt configuration.
+>
+> **Practice**: [Beads](https://github.com/steveyegge/beads) provides distributed task management designed for AI agents—a memory upgrade that enables long-horizon planning across sessions.
+>
+> **Practice**: The entire CREATE SOMETHING workflow operates from WezTerm + Claude Code—experience it by cloning the monorepo.
+
+---
+
 ## Reflection
 
 Before moving on:

@@ -392,3 +392,13 @@ Before moving on:
 3. What's the acceptable staleness for different types of data?
 
 **The best cache is the one you don't notice.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: KV caching embodies [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools)—infrastructure that recedes into transparent use.
+>
+> **Canon Reference**: Cache key design reflects [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—hierarchical keys guide correct usage patterns.
+>
+> **Practice**: Study the KV patterns in the templates-platform router worker for real caching implementations.

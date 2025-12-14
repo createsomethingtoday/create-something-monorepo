@@ -401,3 +401,13 @@ Before the praxis:
 3. Test your site with `prefers-reduced-motion: reduce`. Does it still work?
 
 **Praxis**: You'll audit a page for animation restraint and refactor any violations.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Motion restraint is a direct application of [Iterative Reduction](https://createsomething.ltd/patterns/iterative-reduction)—removing animation until only functional motion remains.
+>
+> **Practice**: Use the [Motion Analysis skill](/.claude/skills/motion-analysis.md) to extract and audit animations from any URL.
+>
+> **Research Depth**: Study the [Motion Ontology experiment](https://createsomething.space/experiments/motion-ontology) for a phenomenological analysis of animation types.

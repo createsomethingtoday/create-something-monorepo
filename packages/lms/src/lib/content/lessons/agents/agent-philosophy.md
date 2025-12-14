@@ -254,6 +254,16 @@ If you're thinking about:
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools) for the philosophical foundation of Zuhandenheit applied to AI.
+>
+> **Canon Reference**: Read [Tool Complementarity](https://createsomething.ltd/patterns/tool-complementarity) for human-agent partnership principles.
+>
+> **Research Depth**: Read [Code Mode Hermeneutic Analysis](https://createsomething.io/papers/code-mode-hermeneutic-analysis) for research on when tools recede vs. become visible.
+
+---
+
 ## Reflection
 
 Before moving on:

@@ -629,3 +629,13 @@ grep -rn "rounded-\|bg-white" packages/*/src --include="*.svelte"
 **The Canon question**: Does this tool earn its existence?
 
 If the infrastructure is visible, it's not yet infrastructure—it's still a tool. The goal is transparent use: the hammer disappears when hammering.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: The Canon question "Does this earn its existence?" applies to every tool—see [Rams: Artifact Level](https://createsomething.ltd/ethos) in the Subtractive Triad.
+>
+> **Canon Reference**: Transparent use is the definition of [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools)—Zuhandenheit applied to AI partnership.
+>
+> **Practice**: Study the `.claude/` directory structure for real implementations of MCP servers, skills, hooks, and slash commands.

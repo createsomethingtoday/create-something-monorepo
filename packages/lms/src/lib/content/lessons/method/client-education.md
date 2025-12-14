@@ -382,3 +382,13 @@ Before moving on:
 3. What would it mean for clients to truly not need you?
 
 **The goal is capability, not dependency.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Universal Utility](https://createsomething.ltd/patterns/universal-utility) for how education enables universal access—not just to features, but to understanding.
+>
+> **Canon Reference**: Client education embodies [Tool Complementarity](https://createsomething.ltd/patterns/tool-complementarity)—building human capability alongside systems.
+>
+> **Practice**: The LMS itself (.learn) demonstrates these principles—teaching through progressive understanding, not just feature documentation.

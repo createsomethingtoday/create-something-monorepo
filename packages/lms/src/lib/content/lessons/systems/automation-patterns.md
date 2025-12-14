@@ -422,3 +422,13 @@ Before moving on:
 3. What would graceful degradation look like for your systems?
 
 **Automate for reliability, not just convenience.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Graceful degradation embodies [Functional Transparency](https://createsomething.ltd/patterns/functional-transparency)—automation that fails gracefully maintains transparent use.
+>
+> **Canon Reference**: The Gestell warning applies—automation that fills every gap is invasion, not efficiency. See [The Ethos](https://createsomething.ltd/ethos).
+>
+> **Practice**: Study the Claude Code hooks (`.claude/hooks/`) for real automation that degrades gracefully.

@@ -204,7 +204,7 @@
 	}
 
 	.submit-btn:hover:not(:disabled) {
-		opacity: 0.9;
+		background: var(--color-fg-secondary);
 	}
 
 	.submit-btn:disabled {

@@ -321,6 +321,16 @@ In the final lesson, you'll learn to apply all three together.
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [The Hermeneutic Spiral Pattern](https://createsomething.ltd/patterns/hermeneutic-spiral) for the canonical description of part-whole understanding.
+>
+> **Research Depth**: Read [Hermeneutic Spiral in UX](https://createsomething.io/papers/hermeneutic-spiral-ux) for how the circle applies to user experience design.
+>
+> **Practice**: Try [Threshold Dwelling](https://createsomething.space/experiments/threshold-dwelling) to experience the hermeneutic circle in action.
+
+---
+
 ## Reflection
 
 Before the praxis exercise:

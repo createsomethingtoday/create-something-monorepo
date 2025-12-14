@@ -95,7 +95,7 @@
 
   .path-title {
     font-size: var(--text-display);
-    font-weight: 300;
+    font-weight: var(--font-light);
     margin-bottom: var(--space-sm);
   }
 
@@ -108,7 +108,7 @@
   .path-description {
     font-size: var(--text-body-lg);
     color: var(--color-fg-tertiary);
-    line-height: 1.6;
+    line-height: var(--leading-relaxed);
   }
 
   .principle-box {
@@ -152,12 +152,12 @@
     background: var(--color-fg-primary);
     color: var(--color-bg-pure);
     font-size: var(--text-body);
-    font-weight: 500;
-    transition: opacity var(--duration-micro) var(--ease-standard);
+    font-weight: var(--font-medium);
+    transition: background var(--duration-micro) var(--ease-standard);
   }
 
   .btn-primary:hover {
-    opacity: 0.9;
+    background: var(--color-fg-secondary);
   }
 
   .btn-secondary {
@@ -207,7 +207,7 @@
     justify-content: center;
     font-size: var(--text-body-sm);
     color: var(--color-fg-muted);
-    font-weight: 500;
+    font-weight: var(--font-medium);
   }
 
   .lesson-title {

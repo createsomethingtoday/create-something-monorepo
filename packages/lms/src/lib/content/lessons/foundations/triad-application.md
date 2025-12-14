@@ -441,3 +441,13 @@ This is the foundation. Everything you build on CREATE SOMETHING—craft, infras
 **Weniger, aber besser.** Less, but better.
 
 **Welcome to the practice.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See the [Ethos page](https://createsomething.ltd/ethos) for the complete philosophical foundation of the Subtractive Triad.
+>
+> **Canon Reference**: The [Subtractive Triad Audit](https://createsomething.ltd/patterns/subtractive-triad-audit) pattern provides a practical framework for applying these questions.
+>
+> **Practice**: Try the [Workway Canon Audit](https://createsomething.space/experiments/workway-canon-audit) experiment to see the Triad applied to real code.

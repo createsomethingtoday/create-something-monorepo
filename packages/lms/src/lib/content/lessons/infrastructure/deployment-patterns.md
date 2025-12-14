@@ -411,3 +411,13 @@ Before moving on:
 3. When was the last time deployment itself caused an incident?
 
 **Good deployment is deployment you forget about.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Invisible deployment embodies [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools)—infrastructure that recedes into transparent use.
+>
+> **Canon Reference**: The deployment checklist applies [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—automation that guides toward correct outcomes.
+>
+> **Practice**: Study `.github/workflows/` in any CREATE SOMETHING property for real deployment patterns.

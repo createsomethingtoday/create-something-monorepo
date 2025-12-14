@@ -317,3 +317,13 @@ Before moving on:
 3. How would you encode your wisdom into a template?
 
 **Templates are not shortcuts—they're crystallized expertise.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Templates as "compressed understanding" aligns with [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—embedding wisdom into structure.
+>
+> **Canon Reference**: The constraint philosophy embodies [Constraint as Liberation](https://createsomething.ltd/patterns/constraint-as-liberation)—boundaries that free rather than limit.
+>
+> **Practice**: Study the templates-platform (`packages/templates-platform/`) and verticals (`packages/verticals/`) for real template implementations.

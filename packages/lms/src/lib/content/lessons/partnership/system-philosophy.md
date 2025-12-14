@@ -239,3 +239,13 @@ Then, when you *do* partner with AI, the engagement is free—not compelled by n
 **The Partnership Paradox**: The better the partnership, the less you notice it. When human and AI truly collaborate, the distinction dissolves—there is only the work.
 
 **The Partnership Canon**: Neither the human nor the AI should become present-at-hand. Both recede. Only creation remains.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: The Partnership Paradox is the ultimate expression of [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools)—when the tool disappears, only the work remains.
+>
+> **Canon Reference**: Gelassenheit (letting-be) is the philosophical foundation—see [The Ethos](https://createsomething.ltd/ethos) for how this applies to all CREATE SOMETHING work.
+>
+> **Research Depth**: Study [Code Mode Hermeneutic Analysis](https://createsomething.io/papers/code-mode-hermeneutic-analysis) for the theoretical grounding of human-AI partnership.

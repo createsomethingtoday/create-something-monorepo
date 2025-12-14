@@ -216,8 +216,8 @@ Tab 2: Monitoring
 Tab 3: Email (Neomutt)
   └─ Pane 1: Full-screen mail client
 
-Tab 4: Tasks (Taskwarrior)
-  └─ Pane 1: Task list and capture
+Tab 4: Tasks (Beads)
+  └─ Pane 1: bd list, bd ready, bd show
 ```
 
 **Principle**: Each tab is a **context**, not a command. You switch between modes of work, not between commands.
@@ -490,4 +490,14 @@ wrangler pages deployment tail --project-name=create-something-space
 ---
 
 **Duration**: 25 minutes
-**Next Lesson**: [Terminal Tools: Neomutt & Taskwarrior](./terminal-tools)
+**Next Lesson**: [Terminal Tools: Neomutt & Beads](./terminal-tools)
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: The terminal as dwelling place connects to [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools)—the environment should recede, leaving only the work.
+>
+> **Canon Reference**: "Remove what doesn't earn its existence" is the Rams level of the [Subtractive Triad](https://createsomething.ltd/ethos).
+>
+> **Practice**: Study the dotfiles package (`packages/dotfiles/`) for real WezTerm configurations that embody these principles.

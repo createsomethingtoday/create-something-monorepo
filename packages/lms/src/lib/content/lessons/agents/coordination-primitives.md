@@ -363,3 +363,13 @@ Before the praxis:
 3. How often does duplicate work happen due to poor coordination?
 
 **Praxis**: Set up a coordination system for a real project.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: Coordination primitives enable [Tool Complementarity](https://createsomething.ltd/patterns/tool-complementarity)—agents that work together rather than in isolation.
+>
+> **Research Depth**: Study [Understanding Graphs](https://createsomething.io/papers/understanding-graphs) for how dependency relationships encode project understanding.
+>
+> **Practice**: The Beads coordination system (`bd` CLI) demonstrates these primitives in action.

@@ -115,6 +115,16 @@ By the end, you won't just know the Subtractive Triad—you'll see through it. T
 
 ---
 
+## Cross-Property References
+
+> **Canon Reference**: See [The Subtractive Triad](https://createsomething.ltd/ethos) for the canonical statement of these principles.
+>
+> **Research Depth**: Read [Hermeneutic Spiral in UX](https://createsomething.io/papers/hermeneutic-spiral-ux) for how subtractive thinking applies to user experience design.
+>
+> **Practice**: Try the [Triad Audit](https://createsomething.space/experiments/workway-canon-audit) experiment to apply DRY → Rams → Heidegger to real code.
+
+---
+
 ## Reflection
 
 Before moving on, consider:

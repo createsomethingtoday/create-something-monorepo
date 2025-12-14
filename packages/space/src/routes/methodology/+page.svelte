@@ -23,7 +23,7 @@
 <section class="relative pt-32 pb-16 px-6">
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8 animate-reveal">
-      <h1 class="hero-title mb-8">
+      <h1 class="mb-8">
         Research Methodology
       </h1>
 
@@ -42,7 +42,7 @@
 <section class="section-border py-16 px-6">
   <div class="max-w-6xl mx-auto">
     <div>
-      <h2 class="section-title mb-12 centered">
+      <h2 class="mb-12 centered">
         How We Work
       </h2>
 
@@ -116,7 +116,7 @@
 <section class="section-border py-16 px-6">
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
-      <h2 class="section-title mb-8">
+      <h2 class="mb-8">
         Every Experiment Tracked With
       </h2>
 
@@ -177,7 +177,7 @@
 <section class="section-border py-16 px-6">
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
-      <h2 class="section-title mb-8">
+      <h2 class="mb-8">
         Three Tracking Modes
       </h2>
 
@@ -241,7 +241,7 @@
 <section class="section-border py-16 px-6">
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
-      <h2 class="section-title mb-8">
+      <h2 class="mb-8">
         Why This Matters
       </h2>
 
@@ -302,11 +302,11 @@
 <section class="section-border py-16 px-6">
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
-      <h2 class="section-title mb-8">
+      <h2 class="mb-8">
         For Researchers: Use This Methodology
       </h2>
 
-      <p class="body-text-lg">
+      <p class="body-large">
         Want to adopt this approach for your own AI-native development research? The experiment tracking system is available as a Claude Code Skill.
       </p>
 
@@ -371,11 +371,11 @@
 <section class="section-border py-16 px-6">
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
-      <h2 class="section-title mb-8">
+      <h2 class="mb-8">
         Methodology in Action
       </h2>
 
-      <p class="body-text-lg">
+      <p class="body-large">
         Example from <a href="/experiments/zoom-transcript-automation-experiment" class="link-text">Experiment #1: Zoom Transcript Automation</a>
       </p>
 
@@ -430,39 +430,27 @@
 </section>
 
 <style>
-  .hero-title {
-    font-size: var(--text-h1);
-    font-weight: 700;
-    color: var(--color-fg-primary);
-  }
-
   .intro-text {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
-    line-height: 1.6;
+    line-height: var(--leading-relaxed);
   }
 
   .body-text {
     font-size: var(--text-body);
     color: var(--color-fg-tertiary);
-    line-height: 1.6;
+    line-height: var(--leading-relaxed);
   }
 
-  .body-text-lg {
+  .body-large {
     font-size: var(--text-body-lg);
     color: var(--color-fg-tertiary);
-    line-height: 1.6;
-  }
-
-  .section-title {
-    font-size: var(--text-h2);
-    font-weight: 700;
-    color: var(--color-fg-primary);
+    line-height: var(--leading-relaxed);
   }
 
   .subsection-title {
     font-size: var(--text-h3);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -490,7 +478,7 @@
 
   .card-heading {
     font-size: var(--text-h3);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
@@ -535,7 +523,7 @@
 
   .metric-value {
     font-size: var(--text-h1);
-    font-weight: 700;
+    font-weight: var(--font-bold);
     color: var(--color-fg-primary);
   }
 
@@ -547,20 +535,20 @@
   .cta-button {
     background: var(--color-fg-primary);
     color: var(--color-bg-pure);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     border-radius: var(--radius-full);
     transition: background var(--duration-micro) var(--ease-standard);
   }
 
   .cta-button:hover {
-    opacity: 0.9;
+    background: var(--color-fg-secondary);
   }
 
   .secondary-button {
     background: var(--color-active);
     color: var(--color-fg-primary);
     border: 1px solid var(--color-border-emphasis);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     border-radius: var(--radius-full);
     transition: all var(--duration-micro) var(--ease-standard);
   }
@@ -615,13 +603,13 @@
 
   .step-number {
     font-size: var(--text-h1);
-    font-weight: 700;
+    font-weight: var(--font-bold);
     color: var(--color-fg-subtle);
   }
 
   .researcher-title {
     font-size: var(--text-body-lg);
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 

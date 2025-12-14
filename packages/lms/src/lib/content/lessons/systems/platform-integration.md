@@ -417,3 +417,13 @@ Before moving on:
 3. How would you handle a 24-hour outage of your most critical integration?
 
 **The best integration is often no integration at all.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: "The best integration is often no integration" applies the Rams principle—does this integration earn its existence?
+>
+> **Canon Reference**: Resilient integration reflects [Iterative Reduction](https://createsomething.ltd/patterns/iterative-reduction)—remove dependencies until only essential connections remain.
+>
+> **Practice**: Study how CREATE SOMETHING properties integrate (shared components, D1 databases, KV namespaces) for examples of minimal integration.

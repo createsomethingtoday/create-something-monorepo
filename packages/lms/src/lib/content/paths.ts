@@ -1,7 +1,7 @@
 /**
  * Learning Paths Configuration
  *
- * Six interconnected paths teaching the CREATE SOMETHING ethos.
+ * Eight interconnected paths teaching the CREATE SOMETHING ethos.
  * Each path follows the hermeneutic spiral: Read → Practice → Reflect → Repeat
  */
 
@@ -206,7 +206,7 @@ export const PATHS: Path[] = [
     description: 'Delivering value through the CREATE SOMETHING methodology. Being-as-Service.',
     principle: 'Value emerges through disciplined practice.',
     color: 'path-method',
-    prerequisites: ['foundations'],
+    prerequisites: ['foundations', 'craft'],
     lessons: [
       {
         id: 'workway-philosophy',

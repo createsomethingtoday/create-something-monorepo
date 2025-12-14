@@ -350,3 +350,13 @@ Before the praxis:
 3. How would you measure organizational health?
 
 **Praxis**: Configure an ethos layer for your project.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: The ethos layer operationalizes [The Ethos](https://createsomething.ltd/ethos)—embedding organizational values into agent behavior.
+>
+> **Canon Reference**: Health constraints reflect [Constraint as Liberation](https://createsomething.ltd/patterns/constraint-as-liberation)—boundaries that protect rather than restrict.
+>
+> **Practice**: Study the Canon Maintenance skill (`.claude/skills/canon-maintenance.md`) for how values manifest in agent guidance.

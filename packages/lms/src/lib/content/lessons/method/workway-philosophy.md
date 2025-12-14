@@ -241,3 +241,13 @@ Before moving on:
 3. How could you leave your next client more capable than you found them?
 
 **The best service is service that makes itself unnecessary.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Universal Utility](https://createsomething.ltd/patterns/universal-utility) for how subtractive design principles translate to universal accessibility and service.
+>
+> **Canon Reference**: See [Being-as-Service](.agency's role) in the hermeneutic circle—how service work tests and evolves the philosophy.
+>
+> **Practice**: The [Service Delivery Patterns skill](/.claude/skills/service-delivery-patterns.md) applies these principles in actual client engagements.

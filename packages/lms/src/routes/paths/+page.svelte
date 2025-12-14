@@ -80,7 +80,7 @@
 
   .path-number {
     font-size: var(--text-h1);
-    font-weight: 300;
+    font-weight: var(--font-light);
     color: var(--color-fg-muted);
     width: 3rem;
   }

@@ -344,3 +344,13 @@ Before the praxis:
 3. What questions do you avoid asking that you should?
 
 **Praxis**: Conduct a discovery session using the hermeneutic framework.
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Hermeneutic Spiral](https://createsomething.ltd/patterns/hermeneutic-spiral) for the philosophical foundation of iterative understanding.
+>
+> **Research Depth**: Read [Hermeneutic Spiral in UX](https://createsomething.io/papers/hermeneutic-spiral-ux) for how this pattern applies to user experience research.
+>
+> **Practice**: The Service Delivery Patterns skill applies these discovery principles in actual client engagements.

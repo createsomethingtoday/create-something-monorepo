@@ -312,3 +312,13 @@ Before moving on:
 3. How might weekly value delivery change client relationships?
 
 **Sustainable rhythm beats heroic effort.**
+
+---
+
+## Cross-Property References
+
+> **Canon Reference**: See [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults) for how embedded principles create consistent outcomes—the same philosophy applied to delivery rhythm.
+>
+> **Practice**: The [Service Delivery Patterns skill](/.claude/skills/service-delivery-patterns.md) provides specific templates for weekly updates and client communication.
+>
+> **Canon Reference**: The concept of sustainable pace aligns with Gelassenheit—full engagement without capture. See [Dwelling in Tools](https://createsomething.ltd/patterns/dwelling-in-tools).
