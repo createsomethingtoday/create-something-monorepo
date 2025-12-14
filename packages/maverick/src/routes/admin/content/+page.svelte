@@ -165,6 +165,52 @@
 			.replace(/^./, (s) => s.toUpperCase())
 			.replace(/_/g, ' ');
 	}
+
+	// Array mutation helpers
+	function generateId(): string {
+		return String(Date.now());
+	}
+
+	function generateSlug(title: string): string {
+		return title
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-|-$/g, '');
+	}
+
+	function addArrayItem(section: string) {
+		if (!content) return;
+		const updated = JSON.parse(JSON.stringify(content));
+		const arr = updated[section];
+		if (!Array.isArray(arr)) return;
+
+		// Template for news articles
+		if (section === 'articles') {
+			arr.push({
+				id: generateId(),
+				date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+				title: 'New Article',
+				excerpt: 'Article excerpt...',
+				image: '/images/news-pic-1.png',
+				slug: 'new-article-' + generateId(),
+				featured: false,
+				category: 'Company News'
+			});
+		} else {
+			// Generic object for other arrays
+			arr.push({});
+		}
+		content = updated;
+	}
+
+	function removeArrayItem(section: string, index: number) {
+		if (!content) return;
+		const updated = JSON.parse(JSON.stringify(content));
+		const arr = updated[section];
+		if (!Array.isArray(arr)) return;
+		arr.splice(index, 1);
+		content = updated;
+	}
 </script>
 
 <div class="content-editor">
@@ -275,7 +321,18 @@
 								{#if Array.isArray(value)}
 									{#each value as item, i}
 										<div class="array-item">
-											<div class="item-label">Item {i + 1}</div>
+											<div class="item-header">
+												<span class="item-label">Item {i + 1}</span>
+												<button
+													onclick={() => removeArrayItem(section, i)}
+													class="remove-btn"
+													title="Remove item"
+												>
+													<svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+													</svg>
+												</button>
+											</div>
 											{#if typeof item === 'object' && item !== null}
 												{#each Object.entries(item as Record<string, JsonValue>) as [k, v]}
 													{#if !HIDDEN_FIELDS.includes(k) && pathMatches([section, String(i), k])}
@@ -303,6 +360,16 @@
 											{/if}
 										</div>
 									{/each}
+									<!-- Add item button -->
+									<button
+										onclick={() => addArrayItem(section)}
+										class="add-btn"
+									>
+										<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+										</svg>
+										Add {section === 'articles' ? 'Article' : 'Item'}
+									</button>
 								{:else if typeof value === 'object' && value !== null}
 									{#each Object.entries(value as Record<string, JsonValue>) as [k, v]}
 										{#if !HIDDEN_FIELDS.includes(k) && pathMatches([section, k])}
@@ -598,11 +665,58 @@
 		border-left: 2px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
+	.item-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.5rem;
+	}
+
 	.item-label {
 		font-size: var(--text-caption, 0.75rem);
 		font-weight: 500;
-		margin-bottom: 0.5rem;
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+	}
+
+	.remove-btn {
+		padding: 0.25rem;
+		color: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		border-radius: var(--radius-sm, 6px);
+		opacity: 0;
+		transition: all 0.2s ease;
+	}
+
+	.array-item:hover .remove-btn {
+		opacity: 1;
+	}
+
+	.remove-btn:hover {
+		color: var(--color-error, #cc4444);
+		background: rgba(204, 68, 68, 0.1);
+	}
+
+	.add-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 1rem;
+		padding: 0.5rem 1rem;
+		font-size: var(--text-body-sm, 0.875rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		border: 1px dashed var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-sm, 6px);
+		transition: all 0.2s ease;
+	}
+
+	.add-btn:hover {
+		color: var(--color-fg-primary, #fff);
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		background: var(--color-hover, rgba(255, 255, 255, 0.05));
+	}
+
+	.icon-xs {
+		width: 0.875rem;
+		height: 0.875rem;
 	}
 
 	/* Nested Object */
