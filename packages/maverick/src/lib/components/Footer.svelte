@@ -112,9 +112,9 @@
 
 <style>
 	.footer {
-		background: #000000;
+		background: var(--color-bg-pure);
 		padding: 5rem 0;
-		color: #ffffff;
+		color: var(--color-fg-primary);
 	}
 
 	@media (max-width: 1023px) {
@@ -160,7 +160,7 @@
 	.brand-tagline {
 		font-size: 1rem;
 		line-height: 1.6;
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--color-fg-secondary);
 		margin-bottom: 3rem;
 	}
 
@@ -173,7 +173,7 @@
 
 	.yc-label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
@@ -191,7 +191,7 @@
 		font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;
 		font-size: 1.125rem;
 		font-weight: 600;
-		color: #ffffff;
+		color: var(--color-fg-primary);
 		margin-bottom: 1.5rem;
 	}
 
@@ -203,21 +203,21 @@
 
 	.footer-link {
 		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--color-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		transition: color 0.3s ease;
+		transition: color var(--duration-standard) var(--ease-standard);
 	}
 
 	.footer-link:hover {
-		color: #ffffff;
+		color: var(--color-fg-primary);
 	}
 
 	.footer-address {
 		font-style: normal;
 		font-size: 1rem;
 		line-height: 1.6;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--color-fg-secondary);
 		margin-bottom: 1.5rem;
 	}
 
@@ -226,17 +226,17 @@
 		padding: 0.625rem 1.5rem;
 		font-size: 0.875rem;
 		font-weight: 500;
-		color: #ffffff;
+		color: var(--color-fg-primary);
 		background: transparent;
-		border: 1px solid rgba(255, 255, 255, 0.3);
+		border: 1px solid var(--color-border-strong);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		cursor: pointer;
-		transition: all 0.3s ease;
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	.contact-button:hover {
-		background: #ffffff;
-		color: #000000;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
 	}
 </style>
