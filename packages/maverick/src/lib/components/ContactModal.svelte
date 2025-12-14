@@ -684,6 +684,33 @@
 {/if}
 
 <style>
+	/**
+	 * ContactModal: Intentional Light Theme
+	 *
+	 * CANON EXCEPTION: This component deliberately uses a light theme with
+	 * custom gray palette, NOT Canon dark tokens. This is an intentional
+	 * design decision for readability when overlaid on Maverick's dark UI.
+	 *
+	 * Gray Scale (Maverick Design System):
+	 * ----------------------------------
+	 * g-500: #212121  (text primary)
+	 * g-300: #363636  (text secondary)
+	 * g-200: #585858  (borders focused, icons)
+	 * g-100: #8a8a8a  (text muted, links)
+	 * g-75:  #adadad  (borders default, placeholders)
+	 * g-50:  #e0e0e0  (backgrounds hover)
+	 *
+	 * Background: #ffffff (pure white)
+	 * Backdrop: rgba(0,0,0,0.95) (near-black overlay)
+	 *
+	 * This scoped light theme enables:
+	 * 1. High contrast form inputs (WCAG AA compliance)
+	 * 2. Clear visual separation from dark site background
+	 * 3. Familiar light-mode form UX for conversions
+	 *
+	 * DO NOT migrate to Canon dark tokens without design review.
+	 */
+
 	/* Modal Overlay */
 	.modal-overlay {
 		position: fixed;
