@@ -281,6 +281,23 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Validate tool integration'
     ]
   },
+  {
+    id: 'learn-mcp-setup',
+    lessonId: 'using-learn-mcp',
+    pathId: 'partnership',
+    title: 'Learn MCP Setup',
+    description: 'Install, configure, and authenticate with Learn MCP—using the tool to learn the tool.',
+    type: 'code',
+    difficulty: 'beginner',
+    duration: '20 min',
+    objectives: [
+      'Add Learn MCP to Claude Code configuration',
+      'Complete magic link authentication',
+      'Use learn_status to view progress',
+      'Fetch and complete a lesson through the tool',
+      'Reflect on the recursive experience'
+    ]
+  },
 
   // ============ ADVANCED ============
   {
