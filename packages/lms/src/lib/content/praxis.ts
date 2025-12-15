@@ -3,9 +3,22 @@
  *
  * Hands-on exercises that accompany lessons.
  * Each exercise has a type that determines the UI component used.
+ *
+ * Meta-Learning Principle: Every praxis exercise includes Beads tasks.
+ * You learn Beads by using Beads to track your learning—dwelling through doing.
  */
 
 export type ExerciseType = 'triad-audit' | 'code' | 'analysis' | 'design';
+
+/**
+ * A Beads task template for tracking exercise progress.
+ * Users create these tasks before starting the exercise.
+ */
+export interface BeadsTask {
+  title: string;
+  type: 'task' | 'feature' | 'research';
+  labels?: string[];
+}
 
 export interface PraxisExercise {
   id: string;
@@ -17,6 +30,11 @@ export interface PraxisExercise {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   duration: string;
   objectives: string[];
+  /**
+   * Beads tasks to create before starting the exercise.
+   * Meta-learning: you learn Beads by using Beads.
+   */
+  beadsTasks?: BeadsTask[];
 }
 
 export const PRAXIS_EXERCISES: PraxisExercise[] = [
@@ -34,6 +52,11 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Recognize structural duplication in component code',
       'Distinguish essential similarity from coincidental',
       'Propose a unified abstraction'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Identify duplication in [target]', type: 'task', labels: ['learn', 'foundations'] },
+      { title: 'Document 3+ duplication patterns found', type: 'task', labels: ['learn'] },
+      { title: 'Propose unified abstraction', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -49,6 +72,11 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Apply "Does this earn its existence?" to each element',
       'Identify decorative vs. functional elements',
       'Propose removals with justification'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Audit [component] with Rams principles', type: 'task', labels: ['learn', 'foundations'] },
+      { title: 'List elements that fail "earns existence" test', type: 'task', labels: ['learn'] },
+      { title: 'Propose removal strategy with rationale', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -64,6 +92,12 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Identify dependencies and dependents',
       'Trace data flow through the system',
       'Evaluate system-level coherence'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Trace connections for [module]', type: 'research', labels: ['learn', 'foundations'] },
+      { title: 'Map upstream dependencies', type: 'task', labels: ['learn'] },
+      { title: 'Map downstream dependents', type: 'task', labels: ['learn'] },
+      { title: 'Evaluate system coherence—does it serve the whole?', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -80,6 +114,13 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Apply Rams analysis to question existence',
       'Apply Heidegger analysis to verify system coherence',
       'Synthesize findings into actionable recommendations'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Complete Triad Audit of [target]', type: 'feature', labels: ['learn', 'foundations'] },
+      { title: 'Level 1: DRY analysis—identify duplication', type: 'task', labels: ['learn'] },
+      { title: 'Level 2: Rams analysis—question existence', type: 'task', labels: ['learn'] },
+      { title: 'Level 3: Heidegger analysis—verify coherence', type: 'task', labels: ['learn'] },
+      { title: 'Synthesize findings into recommendations', type: 'task', labels: ['learn'] }
     ]
   },
 
@@ -97,6 +138,12 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Identify Tailwind design utilities (colors, shadows, radii)',
       'Find corresponding Canon tokens',
       'Migrate while preserving layout utilities'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Migrate [file] from Tailwind to Canon', type: 'task', labels: ['learn', 'craft'] },
+      { title: 'Audit file for design utilities (colors, shadows, radii)', type: 'task', labels: ['learn'] },
+      { title: 'Create mapping: Tailwind → Canon tokens', type: 'task', labels: ['learn'] },
+      { title: 'Apply migration, preserve layout utilities', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -113,6 +160,13 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Use Svelte 5 runes correctly',
       'Apply Canon CSS tokens for aesthetics',
       'Ensure the component "recedes into use"'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Build [component] with Canon principles', type: 'feature', labels: ['learn', 'craft'] },
+      { title: 'Design minimal prop interface', type: 'task', labels: ['learn'] },
+      { title: 'Implement with Svelte 5 runes', type: 'task', labels: ['learn'] },
+      { title: 'Apply Canon CSS tokens (no Tailwind design utilities)', type: 'task', labels: ['learn'] },
+      { title: 'Verify component recedes into use—test with real usage', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -128,6 +182,13 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Categorize animations as functional or decorative',
       'Identify animations that violate reduced-motion',
       'Propose restraint-based alternatives'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Motion audit of [URL/page]', type: 'research', labels: ['learn', 'craft'] },
+      { title: 'Catalog all animations on page', type: 'task', labels: ['learn'] },
+      { title: 'Categorize each as functional or decorative', type: 'task', labels: ['learn'] },
+      { title: 'Test with prefers-reduced-motion', type: 'task', labels: ['learn'] },
+      { title: 'Propose restraint-based alternatives for decorative animations', type: 'task', labels: ['learn'] }
     ]
   },
 
@@ -145,6 +206,13 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Design a minimal schema',
       'Write reversible migrations',
       'Apply proper indexing strategy'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: D1 migration for [feature]', type: 'task', labels: ['learn', 'infrastructure'] },
+      { title: 'Design minimal schema (question every column)', type: 'task', labels: ['learn'] },
+      { title: 'Write up migration', type: 'task', labels: ['learn'] },
+      { title: 'Write down migration (reversible)', type: 'task', labels: ['learn'] },
+      { title: 'Add indexes with justification', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -161,6 +229,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Implement proper error handling',
       'Use service bindings for composition',
       'Follow gateway pattern principles'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Build [service] Worker', type: 'feature', labels: ['learn', 'infrastructure'] },
+      { title: 'Design service interface (inputs, outputs, errors)', type: 'task', labels: ['learn'] },
+      { title: 'Implement core handler logic', type: 'task', labels: ['learn'] },
+      { title: 'Add error handling with proper HTTP semantics', type: 'task', labels: ['learn'] },
+      { title: 'Configure service bindings for composition', type: 'task', labels: ['learn'] },
+      { title: 'Test end-to-end with wrangler dev', type: 'task', labels: ['learn'] }
     ]
   },
 
@@ -178,6 +254,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Create issues with proper metadata',
       'Establish dependency relationships',
       'Set up claim patterns for work distribution'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Set up Beads coordination for [project]', type: 'feature', labels: ['learn', 'agents'] },
+      { title: 'Initialize .beads/ directory with bd init', type: 'task', labels: ['learn'] },
+      { title: 'Create 3+ issues with proper labels and priority', type: 'task', labels: ['learn'] },
+      { title: 'Establish dependency graph with bd dep add', type: 'task', labels: ['learn'] },
+      { title: 'Test bd ready to verify unblocked work surfaces', type: 'task', labels: ['learn'] },
+      { title: 'Document claim pattern for your workflow', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -194,6 +278,15 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Establish constraints with enforcement',
       'Create health check criteria',
       'Set up norm-based behaviors'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Configure ethos for [project/domain]', type: 'feature', labels: ['learn', 'agents'] },
+      { title: 'Define 1+ DRY-level principle with learn_ethos', type: 'task', labels: ['learn'] },
+      { title: 'Define 1+ Rams-level principle with learn_ethos', type: 'task', labels: ['learn'] },
+      { title: 'Define 1+ Heidegger-level principle with learn_ethos', type: 'task', labels: ['learn'] },
+      { title: 'Add constraint to enforce a principle', type: 'task', labels: ['learn'] },
+      { title: 'Add health check with measurable threshold', type: 'task', labels: ['learn'] },
+      { title: 'Export ethos and commit to repository', type: 'task', labels: ['learn'] }
     ]
   },
 
@@ -211,6 +304,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Apply the hermeneutic approach to questioning',
       'Distinguish stated needs from real needs',
       'Create discovery artifacts (problem statement, stakeholder map)'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Discovery session for [client/project]', type: 'research', labels: ['learn', 'method'] },
+      { title: 'Prepare hermeneutic questions (what, why, for whom)', type: 'task', labels: ['learn'] },
+      { title: 'Conduct session—document stated needs', type: 'task', labels: ['learn'] },
+      { title: 'Analyze gap between stated and real needs', type: 'task', labels: ['learn'] },
+      { title: 'Create problem statement artifact', type: 'task', labels: ['learn'] },
+      { title: 'Create stakeholder map artifact', type: 'task', labels: ['learn'] }
     ]
   },
 
@@ -229,6 +330,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Create a configuration schema',
       'Identify extension points',
       'Document constraints with rationale'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Design template for [vertical]', type: 'feature', labels: ['learn', 'systems'] },
+      { title: 'Research vertical—identify common patterns', type: 'research', labels: ['learn'] },
+      { title: 'Define structure (what cannot change)', type: 'task', labels: ['learn'] },
+      { title: 'Define configuration schema (what can change)', type: 'task', labels: ['learn'] },
+      { title: 'Identify extension points with constraints', type: 'task', labels: ['learn'] },
+      { title: 'Document rationale for each constraint', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -245,6 +354,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Identify gaps in the hermeneutic circle',
       'Propose structural improvements',
       'Validate against Subtractive Triad'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: System audit of [system/organization]', type: 'research', labels: ['learn', 'systems'] },
+      { title: 'Map all properties and their relationships', type: 'task', labels: ['learn'] },
+      { title: 'Trace hermeneutic circle—does each serve the whole?', type: 'task', labels: ['learn'] },
+      { title: 'Identify gaps where circle breaks', type: 'task', labels: ['learn'] },
+      { title: 'Apply Subtractive Triad to each property', type: 'task', labels: ['learn'] },
+      { title: 'Propose structural improvements with rationale', type: 'task', labels: ['learn'] }
     ]
   },
 
@@ -263,6 +380,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Assess trust calibration accuracy',
       'Map complementary contributions',
       'Propose workflow improvements'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Partnership audit of [recent session]', type: 'research', labels: ['learn', 'partnership'] },
+      { title: 'Review session transcript for delegation moments', type: 'task', labels: ['learn'] },
+      { title: 'Identify collaboration vs. handoff patterns', type: 'task', labels: ['learn'] },
+      { title: 'Assess trust calibration—over/under-trusted?', type: 'task', labels: ['learn'] },
+      { title: 'Map complementary contributions (human vs. agent)', type: 'task', labels: ['learn'] },
+      { title: 'Propose workflow improvements', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -279,6 +404,13 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Define a custom skill',
       'Set up a useful hook',
       'Validate tool integration'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Configure MCP for [project]', type: 'feature', labels: ['learn', 'partnership'] },
+      { title: 'Create .mcp.json configuration', type: 'task', labels: ['learn'] },
+      { title: 'Define a domain-specific skill', type: 'task', labels: ['learn'] },
+      { title: 'Set up pre-commit or validation hook', type: 'task', labels: ['learn'] },
+      { title: 'Test tool integration end-to-end', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -296,6 +428,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Use learn_status to view progress',
       'Fetch and complete a lesson through the tool',
       'Reflect on the recursive experience'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Set up Learn MCP in Claude Code', type: 'task', labels: ['learn', 'partnership'] },
+      { title: 'Add MCP server to settings.json', type: 'task', labels: ['learn'] },
+      { title: 'Complete magic link authentication', type: 'task', labels: ['learn'] },
+      { title: 'Test learn_status and learn_lesson', type: 'task', labels: ['learn'] },
+      { title: 'Define first ethos principle using learn_ethos', type: 'task', labels: ['learn'] },
+      { title: 'Reflect: How does the recursive structure feel?', type: 'task', labels: ['learn'] }
     ]
   },
 
@@ -314,6 +454,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Implement tool definitions with proper schemas',
       'Handle JSON-RPC communication',
       'Test server with Claude Code integration'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Build MCP server for [domain]', type: 'feature', labels: ['learn', 'advanced'] },
+      { title: 'Design tool composition—what operations merge?', type: 'task', labels: ['learn'] },
+      { title: 'Define JSON schema for tool inputs', type: 'task', labels: ['learn'] },
+      { title: 'Implement stdio transport handler', type: 'task', labels: ['learn'] },
+      { title: 'Implement tool execution logic', type: 'task', labels: ['learn'] },
+      { title: 'Test with Claude Code integration', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -330,6 +478,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Create session lifecycle hooks',
       'Handle exit codes appropriately (0, 1, 2)',
       'Test hook behavior with simulated inputs'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Build hook suite for [project]', type: 'feature', labels: ['learn', 'advanced'] },
+      { title: 'Design hook architecture (which events, what actions)', type: 'task', labels: ['learn'] },
+      { title: 'Implement validation hook (exit code 0/1/2)', type: 'task', labels: ['learn'] },
+      { title: 'Implement session lifecycle hook', type: 'task', labels: ['learn'] },
+      { title: 'Test hooks with simulated inputs', type: 'task', labels: ['learn'] },
+      { title: 'Document hook behavior for team', type: 'task', labels: ['learn'] }
     ]
   },
   {
@@ -346,6 +502,14 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       'Define agent specializations',
       'Design communication mechanism',
       'Handle coordination and error recovery'
+    ],
+    beadsTasks: [
+      { title: 'Praxis: Design multi-agent system for [task]', type: 'feature', labels: ['learn', 'advanced'] },
+      { title: 'Choose orchestration pattern (parallel, sequential, swarm)', type: 'task', labels: ['learn'] },
+      { title: 'Define agent specializations and boundaries', type: 'task', labels: ['learn'] },
+      { title: 'Design communication mechanism', type: 'task', labels: ['learn'] },
+      { title: 'Implement coordination logic', type: 'task', labels: ['learn'] },
+      { title: 'Handle error recovery and graceful degradation', type: 'task', labels: ['learn'] }
     ]
   }
 ];
