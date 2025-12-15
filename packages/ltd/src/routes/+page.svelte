@@ -73,7 +73,7 @@
 			{#each [ { name: 'Dieter Rams', discipline: 'Industrial Design', tagline: '10 Principles of Good Design', slug: 'dieter-rams' }, { name: 'Ludwig Mies van der Rohe', discipline: 'Architecture', tagline: 'Less is more', slug: 'mies-van-der-rohe' } ] as master}
 				<a href="/masters/{master.slug}" class="master-card block p-8 group">
 					<p class="discipline mb-4">{master.discipline}</p>
-					<h4 class="mb-2 group-hover:opacity-70 transition-opacity">{master.name}</h4>
+					<h4 class="master-name mb-2">{master.name}</h4>
 					<p class="tagline">{master.tagline}</p>
 				</a>
 			{/each}
@@ -186,6 +186,15 @@
 
 	.master-card:hover {
 		border-color: var(--color-fg-primary);
+	}
+
+	.master-name {
+		color: var(--color-fg-primary);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.master-card:hover .master-name {
+		color: var(--color-fg-secondary);
 	}
 
 	.discipline {
