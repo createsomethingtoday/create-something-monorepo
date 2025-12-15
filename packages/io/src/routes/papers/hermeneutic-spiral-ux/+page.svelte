@@ -287,7 +287,7 @@
 					<li><strong>Channel:</strong> WhatsApp (phone number as identity)</li>
 					<li><strong>Interaction:</strong> Conversational (not form-based)</li>
 					<li><strong>Memory:</strong> Cloudflare KV for context persistence</li>
-					<li><strong>Matching:</strong> AI-powered creative recommendation</li>
+					<li><strong>Matching:</strong> LLM-driven creative recommendation</li>
 				</ul>
 
 				<h3 class="text-xl font-semibold text-white/90 mt-6">Architecture</h3>
