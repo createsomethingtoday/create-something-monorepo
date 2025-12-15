@@ -11,7 +11,7 @@
  *   "mcpServers": {
  *     "learn": {
  *       "command": "npx",
- *       "args": ["@create-something/learn"]
+ *       "args": ["@createsomething/learn"]
  *     }
  *   }
  * }

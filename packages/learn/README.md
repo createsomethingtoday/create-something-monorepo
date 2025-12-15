@@ -1,4 +1,4 @@
-# @create-something/learn
+# @createsomething/learn
 
 MCP server for learning the CREATE SOMETHING methodology through Claude Code.
 
@@ -15,7 +15,7 @@ Every creation exists simultaneously at three levels:
 ## Installation
 
 ```bash
-npx @create-something/learn init
+npx @createsomething/learn init
 ```
 
 Or add to your Claude Code settings manually:
@@ -25,7 +25,7 @@ Or add to your Claude Code settings manually:
   "mcpServers": {
     "learn": {
       "command": "npx",
-      "args": ["@create-something/learn"]
+      "args": ["@createsomething/learn"]
     }
   }
 }
@@ -75,9 +75,9 @@ Lessons are cached locally for 24 hours. Learn on the train, reflect anywhere.
 ## CLI Commands
 
 ```bash
-npx @create-something/learn init     # Setup instructions
-npx @create-something/learn status   # Auth & cache status
-npx @create-something/learn clear    # Clear credentials
+npx @createsomething/learn init     # Setup instructions
+npx @createsomething/learn status   # Auth & cache status
+npx @createsomething/learn clear    # Clear credentials
 ```
 
 ## Philosophy
