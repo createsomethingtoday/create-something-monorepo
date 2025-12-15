@@ -1,5 +1,5 @@
 /**
- * @create-something/learn
+ * @createsomething/learn
  *
  * MCP server for CREATE SOMETHING methodology learning.
  * Integrates with Claude Code for distributed education.
@@ -10,7 +10,7 @@
  *   "mcpServers": {
  *     "learn": {
  *       "command": "npx",
- *       "args": ["@create-something/learn"]
+ *       "args": ["@createsomething/learn"]
  *     }
  *   }
  * }

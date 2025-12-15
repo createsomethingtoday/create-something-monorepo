@@ -5,9 +5,9 @@
  * Setup and configuration for Claude Code learning integration.
  *
  * @example
- * npx @create-something/learn init
- * npx @create-something/learn status
- * npx @create-something/learn clear
+ * npx @createsomething/learn init
+ * npx @createsomething/learn status
+ * npx @createsomething/learn clear
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
@@ -26,7 +26,7 @@ function printHelp() {
 	console.log(`
 CREATE SOMETHING Learn CLI
 
-Usage: npx @create-something/learn <command>
+Usage: npx @createsomething/learn <command>
 
 Commands:
 ${Object.entries(COMMANDS)
@@ -41,7 +41,7 @@ MCP Server:
     "mcpServers": {
       "learn": {
         "command": "npx",
-        "args": ["@create-something/learn"]
+        "args": ["@createsomething/learn"]
       }
     }
   }
@@ -119,7 +119,7 @@ function initSetup() {
     "mcpServers": {
       "learn": {
         "command": "npx",
-        "args": ["@create-something/learn"]
+        "args": ["@createsomething/learn"]
       }
     }
   }`);
@@ -127,7 +127,7 @@ function initSetup() {
 
 		// Offer to auto-configure
 		if (configExists) {
-			console.log('  Or run: npx @create-something/learn init --auto\n');
+			console.log('  Or run: npx @createsomething/learn init --auto\n');
 		}
 	}
 
@@ -172,7 +172,7 @@ function initAuto() {
 	const mcpServers = (config.mcpServers as Record<string, unknown>) || {};
 	mcpServers.learn = {
 		command: 'npx',
-		args: ['@create-something/learn']
+		args: ['@createsomething/learn']
 	};
 	config.mcpServers = mcpServers;
 

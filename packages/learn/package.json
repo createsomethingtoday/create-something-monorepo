@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/learn",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CREATE SOMETHING Learning MCP Server - Learn the Subtractive Triad through Claude Code",
   "type": "module",
   "bin": {
