@@ -27,7 +27,7 @@ Add to your Claude Code settings (`~/.config/claude-code/settings.json` or proje
   "mcpServers": {
     "learn": {
       "command": "npx",
-      "args": ["-y", "@create-something/learn"]
+      "args": ["-y", "@createsomething/learn"]
     }
   }
 }
@@ -36,7 +36,7 @@ Add to your Claude Code settings (`~/.config/claude-code/settings.json` or proje
 Or install globally for faster startup:
 
 ```bash
-npm install -g @create-something/learn
+npm install -g @createsomething/learn
 ```
 
 Then configure:
@@ -142,7 +142,7 @@ Tokens are stored at `~/.create-something/auth.json` with secure permissions (06
 To log out:
 
 ```bash
-npx @create-something/learn clear
+npx @createsomething/learn clear
 ```
 
 ---
