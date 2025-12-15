@@ -314,6 +314,13 @@ export const PATHS: Path[] = [
         praxis: 'mcp-setup',
       },
       {
+        id: 'using-learn-mcp',
+        title: 'Using Learn MCP',
+        description: 'The recursive tool that teaches itself—usage directions and expected results.',
+        duration: '25 min',
+        praxis: 'learn-mcp-setup',
+      },
+      {
         id: 'wezterm-workflow',
         title: 'WezTerm Workflow',
         description: 'Terminal as creative environment.',
