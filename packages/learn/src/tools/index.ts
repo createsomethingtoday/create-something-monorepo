@@ -9,6 +9,7 @@ export { statusTool, handleStatus } from './status.js';
 export { lessonTool, handleLesson } from './lesson.js';
 export { completeTool, handleComplete } from './complete.js';
 export { praxisTool, handlePraxis } from './praxis.js';
+export { ethosTool, handleEthos } from './ethos.js';
 
 // Tool registry for MCP server
 export const tools = {
@@ -16,5 +17,6 @@ export const tools = {
 	learn_status: { tool: 'statusTool', handler: 'handleStatus' },
 	learn_lesson: { tool: 'lessonTool', handler: 'handleLesson' },
 	learn_complete: { tool: 'completeTool', handler: 'handleComplete' },
-	learn_praxis: { tool: 'praxisTool', handler: 'handlePraxis' }
+	learn_praxis: { tool: 'praxisTool', handler: 'handlePraxis' },
+	learn_ethos: { tool: 'ethosTool', handler: 'handleEthos' }
 } as const;

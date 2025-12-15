@@ -156,3 +156,77 @@ export interface CacheManifest {
 	lessons: Record<string, { fetchedAt: number; etag?: string }>;
 	progress?: { fetchedAt: number };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ethos Layer
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A principle in the user's personal ethos.
+ * Principles are high-level guidelines derived from the Subtractive Triad.
+ */
+export interface EthosPrinciple {
+	id: string;
+	text: string;
+	level: 'dry' | 'rams' | 'heidegger'; // Which triad level it derives from
+	domain?: string; // Optional domain (e.g., "components", "api", "tests")
+	createdAt: number;
+	updatedAt: number;
+}
+
+/**
+ * A constraint that enforces a principle.
+ * Constraints are concrete rules Claude Code can check.
+ */
+export interface EthosConstraint {
+	id: string;
+	principleId: string; // Links to the principle it enforces
+	pattern: string; // Glob pattern for files (e.g., "*.test.ts", "src/api/*")
+	rule: string; // The constraint rule
+	severity: 'error' | 'warning' | 'info';
+	createdAt: number;
+}
+
+/**
+ * A health check for the codebase.
+ * Health checks are quantitative metrics.
+ */
+export interface EthosHealthCheck {
+	id: string;
+	name: string;
+	description: string;
+	metric: string; // What to measure (e.g., "bundle_size", "dependency_count")
+	threshold: string; // The threshold (e.g., "< 200KB", "> 80%")
+	command?: string; // Optional command to run
+	createdAt: number;
+}
+
+/**
+ * The user's complete ethos configuration.
+ * This is what gets persisted and referenced by Claude Code.
+ */
+export interface UserEthos {
+	version: 1;
+	name: string; // Name for this ethos (e.g., "My React Principles")
+	description?: string;
+	principles: EthosPrinciple[];
+	constraints: EthosConstraint[];
+	healthChecks: EthosHealthCheck[];
+	createdAt: number;
+	updatedAt: number;
+}
+
+/**
+ * Actions that can be performed on the ethos.
+ */
+export type EthosAction =
+	| { type: 'view' }
+	| { type: 'add_principle'; text: string; level: EthosPrinciple['level']; domain?: string }
+	| { type: 'add_constraint'; principleId: string; pattern: string; rule: string; severity?: EthosConstraint['severity'] }
+	| { type: 'add_health_check'; name: string; description: string; metric: string; threshold: string; command?: string }
+	| { type: 'remove_principle'; id: string }
+	| { type: 'remove_constraint'; id: string }
+	| { type: 'remove_health_check'; id: string }
+	| { type: 'clear' }
+	| { type: 'export' }
+	| { type: 'import'; ethos: UserEthos };
