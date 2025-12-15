@@ -626,7 +626,7 @@ Ethos Construction (Personalization)
 				<li>Heidegger, M. (1951). <em>Building Dwelling Thinking</em>. In Poetry, Language, Thought.</li>
 				<li>Dreyfus, H. (1991). <em>Being-in-the-World: A Commentary on Heidegger's Being and Time, Division I</em>.</li>
 				<li>Rams, D. (1976). "Ten Principles for Good Design."</li>
-				<li>CREATE SOMETHING. (2025). "The Subtractive Triad." <a href="https://createsomething.ltd/canon" class="text-link">createsomething.ltd/canon</a></li>
+				<li>CREATE SOMETHING. (2025). "The Subtractive Triad." <a href="https://createsomething.ltd/principles" class="text-link">createsomething.ltd/principles</a></li>
 				<li>Anthropic. (2025). "Model Context Protocol Specification."</li>
 			</ol>
 		</section>
