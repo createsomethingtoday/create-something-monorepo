@@ -10,9 +10,9 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black">
+<div class="page-container min-h-screen">
 	<!-- Hero -->
-	<section class="pt-32 pb-16 px-6 border-b border-white/10">
+	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
@@ -78,7 +78,7 @@
 					>: as little design as possible. Industrial chemistry is complex—the website's job is to clarify, not complicate.
 				</p>
 
-				<div class="my-8 p-8 card-border rounded-lg bg-surface">
+				<div class="my-8 p-8 card-surface">
 					<p class="body-sm font-mono opacity-60 mb-4">Design Decisions:</p>
 					<ul class="space-y-2 body-sm opacity-70 font-mono">
 						<li>→ Three products, three colors, three sections</li>
@@ -115,7 +115,7 @@
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 				<!-- Stack -->
-				<div class="card-border rounded-lg p-8">
+				<div class="card-surface p-8">
 					<h3 class="heading-3 font-semibold mb-4">Technology Stack</h3>
 					<ul class="space-y-3 body-sm opacity-70">
 						<li>• Next.js 14 (App Router)</li>
@@ -126,7 +126,7 @@
 				</div>
 
 				<!-- Deployment -->
-				<div class="card-border rounded-lg p-8">
+				<div class="card-surface p-8">
 					<h3 class="heading-3 font-semibold mb-4">Deployment</h3>
 					<ul class="space-y-3 body-sm opacity-70">
 						<li>• Vercel (automatic deploys)</li>
@@ -150,17 +150,18 @@
 				</p>
 
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">3</p>
-						<p class="body-sm opacity-60">Product lines</p>
+						<p class="body-sm metric-label">Product lines</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">3</p>
-						<p class="body-sm opacity-60">Sector pages</p>
+						<p class="body-sm metric-label">Sector pages</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
-						<p class="heading-2 font-bold mb-2">Fast</p>
-						<p class="body-sm opacity-60">Load times</p>
+					<div class="text-center p-6 metric-card">
+						<p class="heading-2 font-bold mb-2">&lt;1s</p>
+						<p class="body-sm metric-label">Load times</p>
+						<p class="body-xs metric-sublabel mt-1">Sub-second TTFB</p>
 					</div>
 				</div>
 
@@ -190,10 +191,31 @@
 	</section>
 
 <style>
+	.page-container {
+		background: var(--color-bg-pure);
+	}
+
+	.hero-section {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
 	.hero-title {
 		font-size: var(--text-h1);
 		font-weight: bold;
 		color: var(--color-fg-primary);
+	}
+
+	.metric-card {
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.metric-label {
+		color: var(--color-fg-muted);
+	}
+
+	.metric-sublabel {
+		color: var(--color-fg-subtle);
 	}
 
 	.heading-2 {

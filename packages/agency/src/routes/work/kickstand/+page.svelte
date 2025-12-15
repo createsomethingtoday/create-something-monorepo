@@ -10,9 +10,9 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black">
+<div class="page-container min-h-screen">
 	<!-- Hero -->
-	<section class="pt-32 pb-16 px-6 border-b border-white/10">
+	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
@@ -80,7 +80,7 @@
 					> framework: DRY → Rams → Heidegger.
 				</p>
 
-				<div class="my-8 p-8 card-border rounded-lg bg-surface">
+				<div class="my-8 p-8 card-surface">
 					<p class="body-sm font-mono opacity-60 mb-4">The Three Levels:</p>
 					<pre class="body-sm opacity-70 font-mono leading-loose overflow-x-auto">
 Level 1: DRY (Implementation)
@@ -116,20 +116,20 @@ Level 3: Heidegger (System)
 
 			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">92%</p>
-						<p class="body-sm opacity-60">Script reduction</p>
-						<p class="body-xs opacity-40 mt-1">155 → 13</p>
+						<p class="body-sm metric-label">Script reduction</p>
+						<p class="body-xs metric-sublabel mt-1">155 → 13</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">100%</p>
-						<p class="body-sm opacity-60">Type errors fixed</p>
-						<p class="body-xs opacity-40 mt-1">30 → 0</p>
+						<p class="body-sm metric-label">Type errors fixed</p>
+						<p class="body-xs metric-sublabel mt-1">30 → 0</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">9.2</p>
-						<p class="body-sm opacity-60">Health score</p>
-						<p class="body-xs opacity-40 mt-1">Up from 6.2</p>
+						<p class="body-sm metric-label">Health score</p>
+						<p class="body-xs metric-sublabel mt-1">Up from 6.2</p>
 					</div>
 				</div>
 
@@ -204,10 +204,31 @@ Level 3: Heidegger (System)
 	</section>
 
 <style>
+	.page-container {
+		background: var(--color-bg-pure);
+	}
+
+	.hero-section {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
 	.hero-title {
 		font-size: var(--text-h1);
 		font-weight: bold;
 		color: var(--color-fg-primary);
+	}
+
+	.metric-card {
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.metric-label {
+		color: var(--color-fg-muted);
+	}
+
+	.metric-sublabel {
+		color: var(--color-fg-subtle);
 	}
 
 	.heading-2 {
