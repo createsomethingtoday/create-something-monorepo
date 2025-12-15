@@ -430,6 +430,73 @@ export const fileBasedPapers: FileBasedPaper[] = [
     ║                              — Heidegger, Being and Time      ║
     ╚═══════════════════════════════════════════════════════════════╝
 `
+	},
+	{
+		id: 'paper-ethos-transfer-agentic-engineering',
+		slug: 'ethos-transfer-agentic-engineering',
+		title: 'From Learning About to Dwelling Within',
+		subtitle: 'Agentic Engineering as Methodology Transfer in the Terminal',
+		authors: ['CREATE SOMETHING Research'],
+		abstract: `This paper examines how Claude Code can serve as a methodology transfer vehicle, helping users adopt the CREATE SOMETHING ethos through agentic engineering in the terminal. We argue that the terminal is the site of dwelling—where developers already work—and that Claude Code achieves Zuhandenheit (tools recede into transparent use) rather than Vorhandenheit (tools demand attention). The current Learn MCP infrastructure supports passive learning but lacks the feedback loops needed for active methodology adoption. We propose four evolution stages: Learning, Guided Application, Ethos Construction, and Methodology Embodiment.`,
+		keywords: [
+			'Ethos',
+			'Methodology Transfer',
+			'Claude Code',
+			'MCP',
+			'Dwelling',
+			'Heidegger',
+			'Terminal',
+			'Agentic Engineering',
+			'Learn MCP',
+			'Subtractive Triad'
+		],
+		description:
+			'Examining how Claude Code can transfer CREATE SOMETHING methodology through agentic engineering, transforming passive learning into active ethos adoption.',
+		excerpt_short: 'The terminal as site of dwelling for methodology transfer',
+		excerpt_long:
+			'This paper examines how the Learn MCP infrastructure could guide users in building their own CREATE SOMETHING ethos through agentic engineering. The terminal is where developers already dwell—Claude Code meets them there, enabling methodology transfer through use rather than instruction.',
+		category: 'research',
+		created_at: '2025-12-14T00:00:00Z',
+		updated_at: '2025-12-14T00:00:00Z',
+		reading_time_minutes: 20,
+		difficulty: 'advanced',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Terminal as dwelling
+			'heidegger-hermeneutic-circle', // Learning through practice
+			'rams-principle-5' // Tools recede
+		],
+		related_experiments: [
+			'minimal-capture' // Demonstrates zuhandenheit in practice
+		],
+		source_path: 'papers/ethos-transfer-agentic-engineering',
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║   METHODOLOGY TRANSFER                                        ║
+    ║                                                               ║
+    ║   Traditional:              Agentic:                          ║
+    ║   ────────────              ────────                          ║
+    ║   Course → Quiz → Cert      Practice → Reflect → Embody       ║
+    ║                                                               ║
+    ║   Learning About            Dwelling Within                   ║
+    ║   (Vorhandenheit)           (Zuhandenheit)                    ║
+    ║                                                               ║
+    ║   ┌────────────────────────────────────────────┐              ║
+    ║   │    .ltd (Canon)                            │              ║
+    ║   │         ↓                                  │              ║
+    ║   │    Learn MCP (Education)                   │              ║
+    ║   │         ↓                                  │              ║
+    ║   │    User Practice (Application)             │              ║
+    ║   │         ↓                                  │              ║
+    ║   │    Ethos Construction (Personalization)    │              ║
+    ║   │         ↓                                  │              ║
+    ║   │    Canon Evolution (Contribution)          │              ║
+    ║   └────────────────────────────────────────────┘              ║
+    ║                                                               ║
+    ║   "To dwell means to remain in a place"                       ║
+    ║                              — Heidegger                      ║
+    ╚═══════════════════════════════════════════════════════════════╝
+`
 	}
 ];
 
