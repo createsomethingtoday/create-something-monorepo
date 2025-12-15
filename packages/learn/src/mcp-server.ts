@@ -34,11 +34,13 @@ import {
 	completeTool,
 	handleComplete,
 	praxisTool,
-	handlePraxis
+	handlePraxis,
+	ethosTool,
+	handleEthos
 } from './tools/index.js';
 
 const SERVER_NAME = 'create-something-learn';
-const SERVER_VERSION = '0.1.0';
+const SERVER_VERSION = '0.2.0';
 
 /**
  * Main MCP server for CREATE SOMETHING learning.
@@ -49,6 +51,7 @@ const SERVER_VERSION = '0.1.0';
  * - learn_lesson: Fetch lesson content
  * - learn_complete: Mark lesson complete with reflection
  * - learn_praxis: Execute praxis exercises
+ * - learn_ethos: Manage personal principles derived from the Subtractive Triad
  */
 async function main() {
 	const server = new Server(
@@ -66,7 +69,7 @@ async function main() {
 	// Register tool listing
 	server.setRequestHandler(ListToolsRequestSchema, async () => {
 		return {
-			tools: [authenticateTool, statusTool, lessonTool, completeTool, praxisTool]
+			tools: [authenticateTool, statusTool, lessonTool, completeTool, praxisTool, ethosTool]
 		};
 	});
 
@@ -90,6 +93,9 @@ async function main() {
 
 				case 'learn_praxis':
 					return { content: await handlePraxis(args) };
+
+				case 'learn_ethos':
+					return { content: await handleEthos(args as Record<string, unknown>) };
 
 				default:
 					return {

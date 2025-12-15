@@ -354,9 +354,79 @@ or more precisely:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### learn_praxis (Coming Soon): Ethos Construction
+### learn_ethos: Define Your Principles
 
-Future enhancement: `learn_ethos` will allow you to define your own principles derived from the canon. Your ethos becomes a living document that Claude Code references during your work.
+**Purpose**: Manage your personal ethos—principles derived from the Subtractive Triad.
+
+**When to use**: When you've absorbed the methodology and want to define YOUR principles for YOUR domain.
+
+**Actions**:
+- `view` - See your current ethos
+- `add_principle` - Add a new principle (requires text and level)
+- `add_constraint` - Add a constraint to enforce a principle
+- `add_health_check` - Add a codebase health metric
+- `export` / `import` - Share or backup your ethos
+- `clear` - Start fresh
+
+**Invocation**:
+
+> "Show me my ethos"
+
+or:
+
+> "Add a principle: 'Every component must justify its props' at the Rams level for the components domain"
+
+**Expected Result**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ MY ETHOS                                                        │
+│                                                                 │
+│ Your personal principles derived from the Subtractive Triad.   │
+│                                                                 │
+│ File: ~/.create-something/ethos.json                           │
+│                                                                 │
+│ ─────────────────────────────────────────────────────────────── │
+│                                                                 │
+│ PRINCIPLES (3)                                                  │
+│                                                                 │
+│ DRY Level — Implementation                                      │
+│ "Have I built this before?"                                     │
+│                                                                 │
+│   🔧 abc123: Extract shared logic into hooks                    │
+│      └─ src/hooks/*: Every hook must have 3+ consumers          │
+│                                                                 │
+│ Rams Level — Artifact                                           │
+│ "Does this earn its existence?"                                 │
+│                                                                 │
+│   ✂️ def456: Every component must justify its props [components]│
+│      └─ src/components/*: No prop without usage in 2+ places    │
+│                                                                 │
+│ Heidegger Level — System                                        │
+│ "Does this serve the whole?"                                    │
+│                                                                 │
+│   🔗 ghi789: Every module must declare its dependencies         │
+│                                                                 │
+│ ─────────────────────────────────────────────────────────────── │
+│                                                                 │
+│ HEALTH CHECKS (2)                                               │
+│                                                                 │
+│   📊 Bundle Size: bundle_size < 200KB                           │
+│   📊 Circular Deps: circular_deps = 0                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**The Three Levels**:
+
+| Level | Icon | Question | Your Principles |
+|-------|------|----------|-----------------|
+| DRY | 🔧 | "Have I built this before?" | Unification patterns |
+| Rams | ✂️ | "Does this earn its existence?" | Existence criteria |
+| Heidegger | 🔗 | "Does this serve the whole?" | System coherence |
+
+**Why This Matters**:
+
+Learning the Subtractive Triad is education. Defining YOUR ethos is dwelling. Your principles become a living document that Claude Code references during your work—your methodology made explicit.
 
 ---
 
@@ -388,11 +458,16 @@ The tools work together in a cycle:
        │
        ▼
 ┌──────────────┐
+│ learn_ethos  │ ← "This is MY principle"
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
 │ learn_status │ ← "What's next?"
 └──────────────┘
 ```
 
-This is the hermeneutic spiral: each pass through the cycle deepens understanding. Returning to a lesson you've completed isn't repetition—it's the circle turning again.
+This is the hermeneutic spiral: each pass through the cycle deepens understanding. Returning to a lesson you've completed isn't repetition—it's the circle turning again. And when you add to your ethos, you're not just learning—you're dwelling.
 
 ---
 
@@ -468,22 +543,25 @@ This enables learning on planes, trains, and disconnected environments—dwellin
 
 6. **Zuhandenheit**: Describe a moment when you stopped noticing the tool. What were you focused on instead?
 
+7. **Ethos**: What's the difference between learning someone else's principles and defining your own? Why does the ethos tool complete the hermeneutic circle?
+
 ---
 
 ## Summary
 
-**Learn MCP is the tool that teaches itself.**
+**Learn MCP is the tool that teaches itself—and helps you define yourself.**
 
-Five tools, one flow:
+Six tools, one flow:
 - `learn_authenticate` → Enter
 - `learn_status` → Orient
 - `learn_lesson` → Engage
 - `learn_complete` → Reflect
 - `learn_praxis` → Apply
+- `learn_ethos` → Dwell
 
 Expected results are predictable because the tool earns its existence through clarity. When you know what will happen, attention shifts from mechanism to meaning.
 
-The goal is not to master the tool but to have it recede into transparent use. The hammer disappears when hammering; Learn MCP disappears when learning.
+The goal is not to master the tool but to have it recede into transparent use. The hammer disappears when hammering; Learn MCP disappears when learning. And when you define your ethos, you're no longer just learning CREATE SOMETHING—you're creating YOUR SOMETHING.
 
 ---
 

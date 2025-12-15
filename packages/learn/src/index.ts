@@ -29,7 +29,13 @@ export type {
 	ProgressOverview,
 	PraxisAttempt,
 	OfflineQueue,
-	CacheManifest
+	CacheManifest,
+	// Ethos types
+	UserEthos,
+	EthosPrinciple,
+	EthosConstraint,
+	EthosHealthCheck,
+	EthosAction
 } from './types.js';
 
 // Auth
@@ -48,6 +54,24 @@ export {
 	getLessonWithCache
 } from './cache/lessons.js';
 
+// Ethos
+export {
+	loadEthos,
+	saveEthos,
+	getOrCreateEthos,
+	hasEthos,
+	clearEthos,
+	addPrinciple,
+	addConstraint,
+	addHealthCheck,
+	removePrinciple,
+	removeConstraint,
+	removeHealthCheck,
+	exportEthos,
+	importEthos,
+	getEthosPath
+} from './ethos/storage.js';
+
 // Tools (for programmatic use)
 export {
 	authenticateTool,
@@ -59,5 +83,7 @@ export {
 	completeTool,
 	handleComplete,
 	praxisTool,
-	handlePraxis
+	handlePraxis,
+	ethosTool,
+	handleEthos
 } from './tools/index.js';
