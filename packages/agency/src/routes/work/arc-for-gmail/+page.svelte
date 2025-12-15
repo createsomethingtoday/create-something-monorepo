@@ -10,9 +10,9 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black">
+<div class="page-container min-h-screen">
 	<!-- Hero -->
-	<section class="pt-32 pb-16 px-6 border-b border-white/10">
+	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
@@ -20,7 +20,7 @@
 			<p class="body-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
 			<h1 class="mb-6">Arc for Gmail</h1>
 			<p class="heading-2 opacity-70 leading-relaxed mb-8">
-				Multi-user OAuth-based Gmail→Notion sync with AI-powered summaries and automatic contact
+				Multi-user OAuth-based Gmail→Notion sync with Workers AI summaries and automatic contact
 				management
 			</p>
 			<div class="flex gap-4 body-sm opacity-50">
@@ -82,7 +82,7 @@
 					This project validated the <strong>Arc pattern</strong>: efficient connection between points. Gmail → Notion as a one-way sync with minimal transformation.
 				</p>
 
-				<div class="my-8 p-8 card-border rounded-lg bg-surface">
+				<div class="my-8 p-8 card-surface">
 					<p class="body-sm font-mono opacity-60 mb-4">The Arc Implementation:</p>
 					<pre class="body-sm opacity-70 font-mono leading-loose overflow-x-auto">
 Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
@@ -133,7 +133,7 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 				<!-- Infrastructure -->
-				<div class="card-border rounded-lg p-8">
+				<div class="card-surface p-8">
 					<h3 class="heading-3 font-semibold mb-4">Infrastructure</h3>
 					<ul class="space-y-3 body-sm opacity-70">
 						<li>• Cloudflare Workers (serverless)</li>
@@ -144,7 +144,7 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 				</div>
 
 				<!-- APIs -->
-				<div class="card-border rounded-lg p-8">
+				<div class="card-surface p-8">
 					<h3 class="heading-3 font-semibold mb-4">API Integration</h3>
 					<ul class="space-y-3 body-sm opacity-70">
 						<li>• Gmail API (OAuth 2.0, thread fetching)</li>
@@ -156,7 +156,7 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 			</div>
 
 			<!-- Key Challenges -->
-			<div class="mt-12 p-8 card-border rounded-lg bg-surface">
+			<div class="mt-12 p-8 card-surface">
 				<h3 class="heading-3 font-semibold mb-6">Key Technical Challenges Solved</h3>
 
 				<div class="space-y-6 body-sm opacity-70">
@@ -208,17 +208,17 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 				</p>
 
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">5 min</p>
-						<p class="body-sm opacity-60">Sync cycle</p>
+						<p class="body-sm metric-label">Sync cycle</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">Multi-user</p>
-						<p class="body-sm opacity-60">OAuth support</p>
+						<p class="body-sm metric-label">OAuth support</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">100%</p>
-						<p class="body-sm opacity-60">Automated</p>
+						<p class="body-sm metric-label">Automated</p>
 					</div>
 				</div>
 
@@ -313,10 +313,27 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 	</section>
 
 <style>
+	.page-container {
+		background: var(--color-bg-pure);
+	}
+
+	.hero-section {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
 	.hero-title {
 		font-size: var(--text-h1);
 		font-weight: bold;
 		color: var(--color-fg-primary);
+	}
+
+	.metric-card {
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.metric-label {
+		color: var(--color-fg-muted);
 	}
 
 	.heading-2 {

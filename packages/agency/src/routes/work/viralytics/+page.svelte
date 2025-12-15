@@ -6,13 +6,13 @@
 	<title>Viralytics — Case Study | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="AI-powered A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists."
+		content="Autonomous A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists."
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black">
+<div class="page-container min-h-screen">
 	<!-- Hero -->
-	<section class="pt-32 pb-16 px-6 border-b border-white/10">
+	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
@@ -20,7 +20,7 @@
 			<p class="body-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
 			<h1 class="mb-6">Viralytics</h1>
 			<p class="heading-2 opacity-70 leading-relaxed mb-8">
-				AI-powered A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists
+				Autonomous A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists
 			</p>
 			<div class="flex flex-wrap gap-4 body-sm opacity-50">
 				<span>• Cloudflare Workers</span>
@@ -77,7 +77,7 @@
 			<h2 class="mb-8">System Architecture</h2>
 
 			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
-				<div class="my-8 p-8 card-border rounded-lg bg-surface">
+				<div class="my-8 p-8 card-surface">
 					<p class="body-sm font-mono opacity-60 mb-4">Data Flow:</p>
 					<pre class="body-sm opacity-70 font-mono leading-loose overflow-x-auto">
 Chart Sources (Spotify, City Pulse)
@@ -127,21 +127,21 @@ Notion (A&R Review Queue)
 				</p>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-8">
-					<div class="p-4 card-border rounded">
+					<div class="p-4 query-card">
 						<p class="body-sm font-semibold mb-2">Trending New Entries</p>
-						<p class="body-xs opacity-60">New in top 50, last 14 days</p>
+						<p class="body-xs query-desc">New in top 50, last 14 days</p>
 					</div>
-					<div class="p-4 card-border rounded">
+					<div class="p-4 query-card">
 						<p class="body-sm font-semibold mb-2">Rapid Climbers</p>
-						<p class="body-xs opacity-60">8+ position jump in 7 days</p>
+						<p class="body-xs query-desc">8+ position jump in 7 days</p>
 					</div>
-					<div class="p-4 card-border rounded">
+					<div class="p-4 query-card">
 						<p class="body-sm font-semibold mb-2">Cross-Market Momentum</p>
-						<p class="body-xs opacity-60">Charting in 2+ markets</p>
+						<p class="body-xs query-desc">Charting in 2+ markets</p>
 					</div>
-					<div class="p-4 card-border rounded">
+					<div class="p-4 query-card">
 						<p class="body-sm font-semibold mb-2">Independent Rising</p>
-						<p class="body-xs opacity-60">Non-major label, top 30</p>
+						<p class="body-xs query-desc">Non-major label, top 30</p>
 					</div>
 				</div>
 
@@ -160,20 +160,20 @@ Notion (A&R Review Queue)
 
 			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">4+</p>
-						<p class="body-sm opacity-60">Chart sources</p>
-						<p class="body-xs opacity-40 mt-1">Global, Denver, NYC, Austin</p>
+						<p class="body-sm metric-label">Chart sources</p>
+						<p class="body-xs metric-sublabel mt-1">Global, Denver, NYC, Austin</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">Daily</p>
-						<p class="body-sm opacity-60">Automated discovery</p>
-						<p class="body-xs opacity-40 mt-1">7 AM UTC workflow</p>
+						<p class="body-sm metric-label">Automated discovery</p>
+						<p class="body-xs metric-sublabel mt-1">7 AM UTC workflow</p>
 					</div>
-					<div class="text-center p-6 card-border rounded-lg">
+					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">20</p>
-						<p class="body-sm opacity-60">Discovery queries</p>
-						<p class="body-xs opacity-40 mt-1">Multi-signal analysis</p>
+						<p class="body-sm metric-label">Discovery queries</p>
+						<p class="body-xs metric-sublabel mt-1">Multi-signal analysis</p>
 					</div>
 				</div>
 
@@ -237,10 +237,40 @@ Notion (A&R Review Queue)
 	</section>
 
 <style>
+	.page-container {
+		background: var(--color-bg-pure);
+	}
+
+	.hero-section {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
 	.hero-title {
 		font-size: var(--text-h1);
 		font-weight: bold;
 		color: var(--color-fg-primary);
+	}
+
+	.metric-card {
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.metric-label {
+		color: var(--color-fg-muted);
+	}
+
+	.metric-sublabel {
+		color: var(--color-fg-subtle);
+	}
+
+	.query-card {
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.query-desc {
+		color: var(--color-fg-muted);
 	}
 
 	.heading-2 {

@@ -364,6 +364,118 @@
 	</div>
 </section>
 
+<!-- When Specificity Is Constrained -->
+<section class="section-divider py-16 px-6">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">When Specificity Is Constrained</h2>
+
+		<div class="space-y-6 constrained-description leading-relaxed">
+			<p>
+				Client confidentiality does not excuse vagueness—it <strong>redirects</strong> it.
+			</p>
+
+			<p>
+				When outcomes are under NDA, specify what you <em>can</em> share. Acknowledge what you cannot.
+			</p>
+
+			<div class="my-8 p-6 terminology-box">
+				<p class="box-title mb-4">Instead of vague claims:</p>
+				<div class="space-y-3">
+					<div class="flex items-start gap-4">
+						<span class="line-through opacity-50">"Significant improvement"</span>
+						<span class="opacity-60">→</span>
+						<span>"Improvement measured but under NDA"</span>
+					</div>
+					<div class="flex items-start gap-4">
+						<span class="line-through opacity-50">"Fast load times"</span>
+						<span class="opacity-60">→</span>
+						<span>"Sub-second TTFB" or actual metric</span>
+					</div>
+					<div class="flex items-start gap-4">
+						<span class="line-through opacity-50">"Many users"</span>
+						<span class="opacity-60">→</span>
+						<span>"Multi-user OAuth system (user count confidential)"</span>
+					</div>
+				</div>
+			</div>
+
+			<p><strong>Required:</strong> Always include at least one measurable metric.</p>
+
+			<p>If outcomes are confidential, measure inputs:</p>
+
+			<ul class="space-y-2 pl-6 input-metrics">
+				<li>• Development hours</li>
+				<li>• Lines of code changed</li>
+				<li>• API integrations count</li>
+				<li>• Deployment infrastructure details</li>
+			</ul>
+
+			<p class="pt-4 warning-text">
+				<strong>Never acceptable:</strong> Vague claims without ANY specificity.
+			</p>
+		</div>
+	</div>
+</section>
+
+<!-- Educational Voice -->
+<section class="section-divider py-16 px-6">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">Educational Voice</h2>
+
+		<div class="space-y-6 educational-description leading-relaxed">
+			<p>
+				Teaching follows the same five principles with additional patterns for progressive disclosure.
+			</p>
+
+			<div>
+				<h3 class="mb-4">Progressive Disclosure</h3>
+				<p class="mb-4">
+					Reveal complexity in layers. Each layer must earn its existence.
+				</p>
+
+				<div class="my-6 p-6 terminology-box">
+					<div class="space-y-4">
+						<div>
+							<p class="pattern-name mb-1">Situation → Task → Notice</p>
+							<p class="pattern-example">"You're building X. Your task is Y. Notice Z."</p>
+						</div>
+						<div>
+							<p class="pattern-name mb-1">Discovery → Why It Matters</p>
+							<p class="pattern-example">"result.error is an object. Structured errors enable..."</p>
+						</div>
+						<div>
+							<p class="pattern-name mb-1">Pattern → Canon Connection</p>
+							<p class="pattern-example">"AbortController with cleanup. Principle 7: long-lasting."</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div>
+				<h3 class="mb-4">Scaffolding Markers</h3>
+				<p class="mb-4">Use explicit markers for meta-learning:</p>
+
+				<ul class="space-y-3 pl-6 scaffolding-list">
+					<li><strong>Notice:</strong> Direct attention to a specific observation</li>
+					<li><strong>Discovery:</strong> Reveal what was learned</li>
+					<li><strong>Why it matters:</strong> Connect to broader principle</li>
+					<li><strong>Reference:</strong> Cite canonical source</li>
+				</ul>
+			</div>
+
+			<div class="pt-6">
+				<h3 class="mb-4">What We Avoid in Teaching</h3>
+				<div class="space-y-2 avoid-list">
+					<p><span class="line-through opacity-50">"Simply do X"</span> — Nothing is simple to the learner</p>
+					<p><span class="line-through opacity-50">"Obviously"</span> — If obvious, why say it?</p>
+					<p><span class="line-through opacity-50">"Clearly"</span> — Clarity is earned, not declared</p>
+					<p><span class="line-through opacity-50">Step-by-step without context</span> — Recipes without understanding</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
 <!-- The Hermeneutic Test -->
 <section class="section-divider py-16 px-6">
 	<div class="max-w-3xl mx-auto">
@@ -632,6 +744,58 @@
 	}
 
 	.note-description {
+		color: var(--color-fg-secondary);
+	}
+
+	/* When Specificity Is Constrained */
+	.constrained-description {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
+	.terminology-box {
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+	}
+
+	.box-title {
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+	}
+
+	.input-metrics {
+		color: var(--color-fg-tertiary);
+	}
+
+	.warning-text {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Educational Voice */
+	.educational-description {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
+	.pattern-name {
+		font-weight: 600;
+		font-family: monospace;
+		color: var(--color-fg-primary);
+	}
+
+	.pattern-example {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		font-style: italic;
+	}
+
+	.scaffolding-list {
+		color: var(--color-fg-secondary);
+	}
+
+	.avoid-list {
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 	}
 </style>
