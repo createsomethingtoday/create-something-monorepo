@@ -80,9 +80,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 			// Create user with defaults - they authenticated via Identity Worker
 			user = await db.createUser(platform.env.DB, {
 				id: userId,
-				email: locals.user.email,
-				plan: 'free',
-				siteLimit: 3
+				email: locals.user.email
 			});
 			console.log('[api/sites] Created new user:', user.id);
 		}
@@ -93,8 +91,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 			templateId,
 			subdomain,
 			status: 'queued',
-			config: config ?? {},
-			tier: 'free'
+			config: config ?? {}
 		});
 
 		// Queue deployment

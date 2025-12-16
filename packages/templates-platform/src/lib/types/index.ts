@@ -39,10 +39,7 @@ export type TemplateCategory =
   | 'legal';
 
 export interface TemplatePricing {
-  free: boolean;
-  proPrice?: number;
-  enterprisePrice?: number;
-  currency: string;
+  free: true; // All templates are free
 }
 
 export interface TemplateConfigSchema {
@@ -75,7 +72,6 @@ export interface Tenant {
   customDomain?: string;
   status: TenantStatus;
   config: Record<string, unknown>;
-  tier: 'free' | 'pro' | 'enterprise';
   createdAt: string;
   updatedAt: string;
   deployedAt?: string;
@@ -109,9 +105,6 @@ export interface User {
   email: string;
   name?: string;
   avatarUrl?: string;
-  plan: 'free' | 'pro' | 'agency';
-  siteLimit: number;
-  stripeCustomerId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,36 +113,6 @@ export interface Session {
   id: string;
   userId: string;
   expiresAt: string;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SUBSCRIPTION TYPES
-// ═══════════════════════════════════════════════════════════════════════════
-
-export interface Subscription {
-  id: string;
-  userId: string;
-  stripeSubscriptionId: string;
-  stripeCustomerId: string;
-  plan: 'free' | 'pro' | 'agency';
-  status: 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid';
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
-  canceledAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PaymentHistory {
-  id: string;
-  userId: string;
-  stripePaymentIntentId: string;
-  amount: number; // cents
-  currency: string;
-  status: 'succeeded' | 'pending' | 'failed' | 'canceled';
-  description?: string;
-  createdAt: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -189,16 +152,10 @@ export interface PlatformConfig {
   accountId: string;
   /** Workers for Platforms namespace */
   dispatchNamespace: string;
-  /** Max free sites per user */
-  freeSiteLimit: number;
-  /** Max pro sites per user */
-  proSiteLimit: number;
 }
 
 export const defaultPlatformConfig: PlatformConfig = {
   baseDomain: 'createsomething.space',
   accountId: '',
-  dispatchNamespace: 'templates',
-  freeSiteLimit: 1,
-  proSiteLimit: 10
+  dispatchNamespace: 'templates'
 };

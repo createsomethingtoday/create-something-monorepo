@@ -39,7 +39,7 @@ export const templates: Template[] = [
     subcategories: ['architect', 'interior-design', 'landscape'],
     thumbnail: '/templates/architecture-studio/thumbnail.jpg',
     previewUrl: 'https://architecture-studio-template.pages.dev',
-    pricing: { free: true, proPrice: 99, currency: 'USD' },
+    pricing: { free: true },
     features: [
       'Full-bleed project galleries',
       'Project specs grid',
@@ -90,7 +90,7 @@ export const templates: Template[] = [
     subcategories: ['branding', 'digital', 'marketing'],
     thumbnail: '/templates/creative-agency/thumbnail.jpg',
     previewUrl: 'https://creative-agency-template.pages.dev',
-    pricing: { free: true, proPrice: 99, currency: 'USD' },
+    pricing: { free: true },
     features: [
       'Case studies with metrics',
       'Results showcase',
@@ -158,7 +158,7 @@ export const templates: Template[] = [
     subcategories: ['photographer', 'designer', 'artist', 'illustrator'],
     thumbnail: '/templates/creative-portfolio/thumbnail.jpg',
     previewUrl: 'https://creative-portfolio-template.pages.dev',
-    pricing: { free: true, proPrice: 99, currency: 'USD' },
+    pricing: { free: true },
     features: [
       'Grid portfolio layout',
       'Full-bleed galleries',
@@ -207,7 +207,7 @@ export const templates: Template[] = [
     subcategories: ['consulting', 'accounting', 'advisory'],
     thumbnail: '/templates/professional-services/thumbnail.jpg',
     previewUrl: 'https://professional-services-template.pages.dev',
-    pricing: { free: true, proPrice: 99, currency: 'USD' },
+    pricing: { free: true },
     features: [
       'Practice areas showcase',
       'Team/partner profiles',
@@ -265,7 +265,7 @@ export const templates: Template[] = [
     subcategories: ['law-firm', 'attorney', 'legal-services'],
     thumbnail: '/templates/law-firm/thumbnail.jpg',
     previewUrl: 'https://law-firm-template.pages.dev',
-    pricing: { free: true, proPrice: 149, currency: 'USD' },
+    pricing: { free: true },
     features: [
       'Practice areas with Lucide icons',
       'Attorney profiles with credentials',
@@ -365,7 +365,7 @@ export const templates: Template[] = [
     subcategories: ['personal-injury', 'injury-attorney', 'trial-lawyer'],
     thumbnail: '/templates/personal-injury/thumbnail.jpg',
     previewUrl: 'https://createsomething-pi-template.pages.dev',
-    pricing: { free: true, proPrice: 149, currency: 'USD' },
+    pricing: { free: true },
     features: [
       'Case type pages with settlement ranges',
       'Recovery results showcase',

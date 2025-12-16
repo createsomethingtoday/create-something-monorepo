@@ -2,12 +2,12 @@
  * Site Analytics - Server Load
  *
  * Loads analytics data for the site.
- * Only available for Pro tier and above.
+ * Available for all users (all templates are free).
  * Protected route: requires authentication and ownership.
  */
 
 import type { PageServerLoad } from './$types';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { getTenantById } from '$lib/db';
 
 export const load: PageServerLoad = async ({ params, platform, locals }) => {
@@ -24,7 +24,6 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
       site: {
         id: params.siteId,
         subdomain: 'demo-site',
-        tier: 'pro',
         config: { name: 'Demo Site' }
       },
       analytics: generateMockAnalytics()
@@ -40,11 +39,6 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
   // Verify ownership
   if (site.userId !== locals.user.id) {
     throw error(403, 'Access denied');
-  }
-
-  // Check tier - analytics is Pro feature
-  if (site.tier === 'free') {
-    throw redirect(302, `/dashboard/${params.siteId}?upgrade=analytics`);
   }
 
   // In production, this would query analytics data from D1 or Analytics Engine
