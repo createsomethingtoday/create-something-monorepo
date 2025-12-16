@@ -2,11 +2,25 @@
 	import TriadAudit from '$lib/components/TriadAudit.svelte';
 	import PraxisContainer from '$lib/components/PraxisContainer.svelte';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
-	import { ArrowLeft, ChevronRight, Clock, BookOpen, CheckCircle2 } from 'lucide-svelte';
+	import { ArrowLeft, ChevronRight, Clock, BookOpen, CheckCircle2, Terminal, Copy, Check } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let userCode = $state('');
+	let copied = $state(false);
+
+	async function copyPromptToClipboard() {
+		if (!data.exercise.claudeCodePrompt) return;
+		try {
+			await navigator.clipboard.writeText(data.exercise.claudeCodePrompt);
+			copied = true;
+			setTimeout(() => {
+				copied = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy:', err);
+		}
+	}
 
 	// Example code for triad audit exercises
 	const exampleCode = `function Button({ text, onClick, disabled, loading }) {
@@ -81,6 +95,30 @@ function CancelButton({ onClick }) {
 						<code class="beads-command">bd create "{task.title}" --type={task.type}{#if task.labels} --labels={task.labels.join(',')}{/if}</code>
 					</div>
 				{/each}
+			</div>
+		</div>
+	{/if}
+
+	{#if data.exercise.claudeCodePrompt}
+		<div class="claude-prompt-section">
+			<h3 class="claude-prompt-title">
+				<Terminal size={18} />
+				<span>Claude Code Prompt</span>
+			</h3>
+			<p class="claude-prompt-description">
+				Copy this prompt into Claude Code to build YOUR own version:
+			</p>
+			<div class="claude-prompt-block">
+				<pre class="claude-prompt-text">{data.exercise.claudeCodePrompt}</pre>
+				<button class="copy-button" onclick={copyPromptToClipboard}>
+					{#if copied}
+						<Check size={14} />
+						<span>Copied!</span>
+					{:else}
+						<Copy size={14} />
+						<span>Copy to Clipboard</span>
+					{/if}
+				</button>
 			</div>
 		</div>
 	{/if}
@@ -304,6 +342,76 @@ function CancelButton({ onClick }) {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		word-break: break-all;
+	}
+
+	/* Claude Code prompt section */
+	.claude-prompt-section {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-data-3);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
+		margin-bottom: var(--space-lg);
+	}
+
+	.claude-prompt-title {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		font-size: var(--text-h3);
+		color: var(--color-data-3);
+		margin: 0 0 var(--space-xs) 0;
+	}
+
+	.claude-prompt-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin: 0 0 var(--space-md) 0;
+		font-style: italic;
+	}
+
+	.claude-prompt-block {
+		position: relative;
+	}
+
+	.claude-prompt-text {
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-md);
+		font-family: var(--font-mono);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		white-space: pre-wrap;
+		word-break: break-word;
+		overflow-x: auto;
+		max-height: 400px;
+		overflow-y: auto;
+		margin: 0 0 var(--space-sm) 0;
+		line-height: 1.6;
+	}
+
+	.copy-button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-data-3);
+		border: none;
+		border-radius: var(--radius-md);
+		color: var(--color-bg-pure);
+		font-size: var(--text-body-sm);
+		font-family: var(--font-mono);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.copy-button:hover {
+		opacity: 0.9;
+		transform: translateY(-1px);
+	}
+
+	.copy-button:active {
+		transform: translateY(0);
 	}
 
 	/* Lesson link section */

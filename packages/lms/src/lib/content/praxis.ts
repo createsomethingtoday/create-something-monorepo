@@ -35,6 +35,11 @@ export interface PraxisExercise {
    * Meta-learning: you learn Beads by using Beads.
    */
   beadsTasks?: BeadsTask[];
+  /**
+   * Claude Code prompt to guide building YOUR OWN version.
+   * Copy-paste into Claude Code to start the exercise.
+   */
+  claudeCodePrompt?: string;
 }
 
 export const PRAXIS_EXERCISES: PraxisExercise[] = [
@@ -57,7 +62,23 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Praxis: Identify duplication in [target]', type: 'task', labels: ['learn', 'foundations'] },
       { title: 'Document 3+ duplication patterns found', type: 'task', labels: ['learn'] },
       { title: 'Propose unified abstraction', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me identify duplication patterns in my codebase and create MY unification strategy.
+
+I'm building my own DRY discipline. Analyze [FILE_OR_DIRECTORY] for:
+
+1. **Structural duplication**: Similar component patterns, repeated prop interfaces
+2. **Logic duplication**: Copy-pasted conditionals, repeated data transforms
+3. **Essential vs. coincidental**: Which similarities are fundamental vs. accidental?
+
+For each pattern found:
+- Show me the duplicated code
+- Explain why it's duplication (or why it's not)
+- Propose a unified abstraction
+
+End with MY DRY principle: a one-sentence rule I can apply to future code.
+
+The target I want to analyze: [YOUR_FILE_OR_DIRECTORY]`
   },
   {
     id: 'audit-artifact',
@@ -77,7 +98,24 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Praxis: Audit [component] with Rams principles', type: 'task', labels: ['learn', 'foundations'] },
       { title: 'List elements that fail "earns existence" test', type: 'task', labels: ['learn'] },
       { title: 'Propose removal strategy with rationale', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me audit [COMPONENT_OR_PAGE] using Rams' "Weniger, aber besser" principle.
+
+I'm defining MY standard for what "earns its existence." For each element, ask:
+
+1. **Does this element serve a function?** (If not, it's decorative)
+2. **Is the function essential?** (Could the user accomplish their goal without it?)
+3. **Is this the simplest way to serve that function?**
+
+Analyze [COMPONENT_OR_PAGE] and create a table:
+| Element | Function | Essential? | Simplest? | Verdict |
+|---------|----------|------------|-----------|---------|
+
+For elements that fail: propose removal or simplification.
+
+End with MY Rams principle: a one-sentence test I'll apply to every element I create.
+
+The artifact I want to audit: [YOUR_COMPONENT_OR_PAGE]`
   },
   {
     id: 'trace-connections',
@@ -98,7 +136,28 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Map upstream dependencies', type: 'task', labels: ['learn'] },
       { title: 'Map downstream dependents', type: 'task', labels: ['learn'] },
       { title: 'Evaluate system coherence—does it serve the whole?', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me trace connections for [MODULE] and evaluate its role in MY system.
+
+I'm learning to think at the Heidegger level: "Does this serve the whole?"
+
+Map [MODULE]'s connections:
+
+1. **Upstream dependencies**: What does this module import/depend on?
+2. **Downstream dependents**: What imports/uses this module?
+3. **Data flow**: How does data enter and leave this module?
+4. **System role**: What would break if this module didn't exist?
+
+Create a dependency diagram (ASCII or mermaid).
+
+Then evaluate:
+- Does this module have a clear, singular purpose?
+- Are its boundaries well-defined?
+- Does it serve the larger system, or does it create coupling?
+
+End with MY Heidegger principle: a one-sentence rule about system coherence.
+
+The module I want to trace: [YOUR_MODULE_PATH]`
   },
   {
     id: 'triad-audit',
@@ -121,7 +180,37 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Level 2: Rams analysis—question existence', type: 'task', labels: ['learn'] },
       { title: 'Level 3: Heidegger analysis—verify coherence', type: 'task', labels: ['learn'] },
       { title: 'Synthesize findings into recommendations', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me apply the complete Subtractive Triad to [TARGET] and create MY audit framework.
+
+Walk me through all three levels:
+
+## Level 1: DRY (Implementation)
+- "Have I built this before?"
+- Find duplicated patterns, propose unification
+
+## Level 2: Rams (Artifact)
+- "Does this earn its existence?"
+- Question every element, propose removals
+
+## Level 3: Heidegger (System)
+- "Does this serve the whole?"
+- Trace connections, evaluate coherence
+
+For [TARGET], create:
+
+1. **DRY findings**: List of duplication with severity
+2. **Rams findings**: Elements that fail the existence test
+3. **Heidegger findings**: System-level issues
+
+4. **Synthesis**: Prioritized recommendations
+   - What to unify (DRY)
+   - What to remove (Rams)
+   - What to reconnect (Heidegger)
+
+End by helping me write MY Subtractive Triad principles document.
+
+The target for my audit: [YOUR_FILE_COMPONENT_OR_SYSTEM]`
   },
 
   // ============ CRAFT ============
@@ -144,7 +233,36 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Audit file for design utilities (colors, shadows, radii)', type: 'task', labels: ['learn'] },
       { title: 'Create mapping: Tailwind → Canon tokens', type: 'task', labels: ['learn'] },
       { title: 'Apply migration, preserve layout utilities', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me create MY design token system (my own "Canon CSS").
+
+I'm building a semantic design token system for my project. Guide me through:
+
+1. **Audit [FILE]** for Tailwind design utilities:
+   - Colors (bg-*, text-*, border-*)
+   - Shadows (shadow-*)
+   - Border radii (rounded-*)
+   - Typography (text-sm, text-lg, font-*)
+
+2. **Define MY tokens**:
+   - Background colors: --color-bg-*
+   - Foreground colors: --color-fg-*
+   - Border colors: --color-border-*
+   - Shadows: --shadow-*
+   - Radii: --radius-*
+   - Typography: --text-*
+
+3. **Create the migration**:
+   - Map each Tailwind utility to my semantic token
+   - Preserve Tailwind layout utilities (flex, grid, p-*, m-*, etc.)
+   - Apply the changes
+
+4. **Document MY Canon**:
+   - Create a CSS file with my token definitions
+   - Include comments explaining each token's purpose
+
+The file to migrate: [YOUR_FILE_PATH]
+My brand colors/preferences: [YOUR_BRAND_INFO]`
   },
   {
     id: 'build-component',
@@ -167,7 +285,34 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Implement with Svelte 5 runes', type: 'task', labels: ['learn'] },
       { title: 'Apply Canon CSS tokens (no Tailwind design utilities)', type: 'task', labels: ['learn'] },
       { title: 'Verify component recedes into use—test with real usage', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me build [COMPONENT_NAME] following MY Canon design principles.
+
+I want a component that "recedes into use"—invisible when working, noticed only when broken.
+
+1. **Design the prop interface**:
+   - What's the minimum API needed?
+   - What can be inferred vs. explicitly passed?
+   - Are there sensible defaults?
+
+2. **Implement with Svelte 5 runes**:
+   - Use $props() for inputs
+   - Use $state() only when needed
+   - Keep reactivity minimal and obvious
+
+3. **Apply MY design tokens**:
+   - Use semantic tokens (--color-bg-*, --radius-*, etc.)
+   - No raw Tailwind design utilities
+   - Keep layout utilities (flex, grid, etc.)
+
+4. **Verify it "recedes"**:
+   - Is the API obvious without documentation?
+   - Does it compose well with other components?
+   - Would a new developer understand it immediately?
+
+Component to build: [YOUR_COMPONENT_NAME]
+Purpose: [WHAT_IT_DOES]
+My design tokens file: [PATH_TO_YOUR_TOKENS]`
   },
   {
     id: 'motion-audit',
@@ -189,7 +334,37 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Categorize each as functional or decorative', type: 'task', labels: ['learn'] },
       { title: 'Test with prefers-reduced-motion', type: 'task', labels: ['learn'] },
       { title: 'Propose restraint-based alternatives for decorative animations', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me audit animations on [URL_OR_PAGE] and define MY motion philosophy.
+
+I'm building MY animation guidelines. For each animation found:
+
+1. **Catalog all motion**:
+   - CSS transitions
+   - CSS animations
+   - JavaScript animations
+   - Scroll-triggered effects
+
+2. **Classify each**:
+   | Animation | Type | Functional or Decorative? | Duration | Easing |
+   |-----------|------|---------------------------|----------|--------|
+
+   Functional = reveals state, guides attention, provides feedback
+   Decorative = exists for visual interest only
+
+3. **Test accessibility**:
+   - Does it respect prefers-reduced-motion?
+   - Is timing appropriate (< 500ms for micro, < 1s for transitions)?
+   - Does motion cause vestibular issues?
+
+4. **Define MY motion tokens**:
+   - --duration-micro: [for hovers, toggles]
+   - --duration-standard: [for state changes]
+   - --ease-standard: [consistent easing]
+
+5. **Write MY motion philosophy**: When do I animate? When don't I?
+
+Target to audit: [YOUR_URL_OR_PAGE_PATH]`
   },
 
   // ============ INFRASTRUCTURE ============
@@ -213,7 +388,38 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Write up migration', type: 'task', labels: ['learn'] },
       { title: 'Write down migration (reversible)', type: 'task', labels: ['learn'] },
       { title: 'Add indexes with justification', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me design a D1 database schema for [FEATURE] following MY minimal data philosophy.
+
+I'm building MY approach to database design. For [FEATURE]:
+
+1. **Question every column**:
+   - What data is truly required?
+   - What can be derived instead of stored?
+   - What's the minimal viable schema?
+
+2. **Design the schema**:
+   - Create table definitions
+   - Apply proper types (TEXT, INTEGER, REAL, BLOB)
+   - Add NOT NULL only where essential
+   - Use sensible defaults
+
+3. **Write migrations**:
+   - UP migration (creates the schema)
+   - DOWN migration (reverts cleanly)
+
+4. **Index strategy**:
+   - Which queries will be common?
+   - Create indexes with clear justification
+   - Avoid over-indexing
+
+5. **Document MY data principles**:
+   - When do I store vs. derive?
+   - What's my naming convention?
+   - How do I handle relationships?
+
+Feature to model: [YOUR_FEATURE]
+Expected queries: [YOUR_COMMON_QUERIES]`
   },
   {
     id: 'worker-service',
@@ -237,7 +443,41 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Add error handling with proper HTTP semantics', type: 'task', labels: ['learn'] },
       { title: 'Configure service bindings for composition', type: 'task', labels: ['learn'] },
       { title: 'Test end-to-end with wrangler dev', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me build a Cloudflare Worker for [SERVICE_NAME] following MY service composition patterns.
+
+I'm defining MY approach to edge services. For [SERVICE_NAME]:
+
+1. **Design the service interface**:
+   - What are the inputs (request shape, query params, headers)?
+   - What are the outputs (response shape, status codes)?
+   - What errors can occur and how are they represented?
+   - Create a TypeScript interface for Request/Response
+
+2. **Implement the handler**:
+   - Parse and validate inputs
+   - Execute core logic
+   - Return structured responses
+   - Use proper HTTP semantics (GET for reads, POST for mutations)
+
+3. **Error handling strategy**:
+   - Map internal errors to HTTP status codes
+   - Return consistent error response shape
+   - Log appropriately for observability
+
+4. **Composition with bindings**:
+   - What other services does this need? (D1, KV, R2, other Workers)
+   - Configure wrangler.toml bindings
+   - Use service bindings for Worker-to-Worker calls
+
+5. **Document MY service patterns**:
+   - Naming conventions for Workers
+   - Standard response envelope shape
+   - Error handling philosophy
+
+Service to build: [YOUR_SERVICE_NAME]
+Purpose: [WHAT_IT_DOES]
+Bindings needed: [D1/KV/R2/OTHER_WORKERS]`
   },
 
   // ============ AGENTS ============
@@ -262,7 +502,41 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Establish dependency graph with bd dep add', type: 'task', labels: ['learn'] },
       { title: 'Test bd ready to verify unblocked work surfaces', type: 'task', labels: ['learn'] },
       { title: 'Document claim pattern for your workflow', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me set up MY work coordination system using Beads for [PROJECT_NAME].
+
+I'm building MY approach to agent-native task management. Guide me through:
+
+1. **Initialize Beads**:
+   - Run \`bd init\` to create .beads/ directory
+   - Configure labels for MY domains and types
+   - Set up priority model (P0-P4 or custom)
+
+2. **Create initial issues**:
+   Create 3-5 issues that represent real work in [PROJECT_NAME]:
+   \`\`\`bash
+   bd create "[task title]" --type=task|feature|bug --priority=P2 --labels=[domain]
+   \`\`\`
+
+3. **Establish dependencies**:
+   - Which issues block others?
+   - Create the dependency graph:
+   \`\`\`bash
+   bd dep add [blocker-id] blocks [blocked-id]
+   \`\`\`
+
+4. **Test the workflow**:
+   - Run \`bd ready\` to see unblocked work
+   - Run \`bd blocked\` to verify dependencies work
+   - Claim an issue: \`bd update [id] --status=in_progress\`
+
+5. **Document MY coordination patterns**:
+   - What labels do I use and why?
+   - When do I create dependencies vs. leave issues independent?
+   - What's my claim-and-complete workflow?
+
+Project: [YOUR_PROJECT_NAME]
+Domains/labels I use: [YOUR_LABELS]`
   },
   {
     id: 'ethos-config',
@@ -287,7 +561,42 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Add constraint to enforce a principle', type: 'task', labels: ['learn'] },
       { title: 'Add health check with measurable threshold', type: 'task', labels: ['learn'] },
       { title: 'Export ethos and commit to repository', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me create MY ethos—a living document of principles that guide my work.
+
+I'm building my own version of CREATE SOMETHING's ethos layer. Guide me through:
+
+1. **Define 3 principles** (one at each Triad level):
+
+   **DRY level** (Implementation):
+   - What implementation pattern do I always follow?
+   - Example: "Single source of truth for configuration"
+
+   **Rams level** (Artifact):
+   - What standard determines if something "earns its existence"?
+   - Example: "Every UI element must serve a user task"
+
+   **Heidegger level** (System):
+   - How do I ensure things serve the larger system?
+   - Example: "Components must be usable in isolation"
+
+2. **Add constraints** that enforce my principles:
+   - File patterns they apply to (e.g., "src/components/**/*.svelte")
+   - Rules to check (e.g., "no inline styles")
+   - Severity (error/warning/info)
+
+3. **Add health checks** with measurable thresholds:
+   - Metrics I care about (bundle size, test coverage, complexity)
+   - Acceptable thresholds
+   - Commands to measure them
+
+4. **Export and persist**:
+   - Create .ethos/ directory in my project
+   - Save principles.json, constraints.json, health.json
+
+Use learn_ethos to save each principle. Show me what I'm creating as we go.
+
+My domain is: [YOUR_DOMAIN - e.g., "React component library", "API services", "content site"]`
   },
 
   // ============ METHOD ============
@@ -312,7 +621,45 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Analyze gap between stated and real needs', type: 'task', labels: ['learn'] },
       { title: 'Create problem statement artifact', type: 'task', labels: ['learn'] },
       { title: 'Create stakeholder map artifact', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me practice hermeneutic discovery for [PROJECT_OR_CLIENT].
+
+I'm developing MY discovery methodology. Simulate a discovery session where you play the client and I ask questions.
+
+1. **Prepare hermeneutic questions**:
+   Help me draft questions that reveal, not assume:
+   - "What problem are you trying to solve?" (not "What features do you want?")
+   - "Who experiences this problem most acutely?"
+   - "What happens if this problem isn't solved?"
+   - "What have you tried before?"
+
+2. **Conduct the session**:
+   You play the client for [PROJECT_OR_CLIENT]. Give realistic responses that:
+   - Start with surface-level stated needs
+   - Reveal deeper needs when questioned well
+   - Include contradictions I should notice
+
+3. **Analyze the gap**:
+   After the session, help me identify:
+   - Stated needs (what they said they want)
+   - Real needs (what would actually solve their problem)
+   - The gap between them
+
+4. **Create discovery artifacts**:
+
+   **Problem Statement**:
+   "[WHO] needs [WHAT] because [WHY], but currently [OBSTACLE]."
+
+   **Stakeholder Map**:
+   | Stakeholder | Relationship to Problem | Influence | Interest |
+   |-------------|------------------------|-----------|----------|
+
+5. **Reflect on MY discovery approach**:
+   - What questions worked best?
+   - What patterns do I see in stated vs. real needs?
+   - How will I structure future discovery sessions?
+
+Client/Project context: [DESCRIBE_THE_SCENARIO]`
   },
 
   // ============ SYSTEMS ============
@@ -338,7 +685,51 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Define configuration schema (what can change)', type: 'task', labels: ['learn'] },
       { title: 'Identify extension points with constraints', type: 'task', labels: ['learn'] },
       { title: 'Document rationale for each constraint', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me design MY template architecture for [VERTICAL].
+
+I'm building a template system for [VERTICAL] (e.g., law firms, architecture studios, restaurants). Guide me through:
+
+1. **Research the vertical**:
+   - What pages does every [VERTICAL] website need?
+   - What content types are universal vs. optional?
+   - What industry conventions exist (terminology, navigation patterns)?
+
+2. **Define structure** (what CANNOT change):
+   These are the bones—the parts every instance shares:
+   - Required pages (Home, About, Contact, ...)
+   - Navigation patterns
+   - SEO requirements
+   - Accessibility standards
+
+3. **Define configuration schema** (what CAN change):
+   Create a JSON schema for customization:
+   \`\`\`typescript
+   interface SiteConfig {
+     name: string;
+     tagline?: string;
+     // What else?
+   }
+   \`\`\`
+
+4. **Identify extension points**:
+   Where can users add custom content without breaking the system?
+   - Custom pages?
+   - Custom sections on standard pages?
+   - Theme overrides?
+   - List constraints for each extension point.
+
+5. **Document constraints with rationale**:
+   For each constraint, explain WHY:
+   | Constraint | Rationale |
+   |------------|-----------|
+   | Max 6 nav items | Cognitive load research |
+
+6. **Write MY template philosophy**:
+   - What is structure vs. configuration in my system?
+   - How do I balance flexibility with coherence?
+
+Vertical: [YOUR_VERTICAL - e.g., "law firms", "restaurants", "portfolios"]`
   },
   {
     id: 'system-audit',
@@ -362,7 +753,52 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Identify gaps where circle breaks', type: 'task', labels: ['learn'] },
       { title: 'Apply Subtractive Triad to each property', type: 'task', labels: ['learn'] },
       { title: 'Propose structural improvements with rationale', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me evaluate MY system as a coherent whole.
+
+I'm auditing [SYSTEM_OR_ORGANIZATION] to see if it forms a true hermeneutic circle. Guide me through:
+
+1. **Map all properties/components**:
+   List every part of my system:
+   | Property | Purpose | Inputs | Outputs |
+   |----------|---------|--------|---------|
+
+2. **Draw the relationships**:
+   Create a diagram showing how parts relate:
+   - What does each part depend on?
+   - What depends on each part?
+   - Where does value flow?
+
+3. **Trace the hermeneutic circle**:
+   Does the system form a complete circle?
+   - Philosophy → defines criteria for →
+   - Research → validates →
+   - Practice → applies to →
+   - Services → tests and evolves →
+   - Philosophy (back to start)
+
+   Where does MY circle break?
+
+4. **Apply Subtractive Triad to each property**:
+   For each component:
+   - **DRY**: Is this duplicated elsewhere in the system?
+   - **Rams**: Does this earn its existence?
+   - **Heidegger**: Does this serve the whole?
+
+5. **Identify gaps and redundancies**:
+   - What's missing from the circle?
+   - What exists but doesn't serve the whole?
+   - What could be merged or removed?
+
+6. **Propose improvements**:
+   | Issue | Type | Proposed Fix | Rationale |
+   |-------|------|--------------|-----------|
+
+7. **Write MY system philosophy**:
+   - How do parts relate to whole in my system?
+   - What makes my system coherent (or not)?
+
+System to audit: [YOUR_SYSTEM - packages, services, products, teams, etc.]`
   },
 
   // ============ PARTNERSHIP ============
@@ -388,7 +824,55 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Assess trust calibration—over/under-trusted?', type: 'task', labels: ['learn'] },
       { title: 'Map complementary contributions (human vs. agent)', type: 'task', labels: ['learn'] },
       { title: 'Propose workflow improvements', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me audit MY human-agent partnership to improve how we work together.
+
+I want to analyze a recent Claude Code session and develop MY partnership patterns. Guide me through:
+
+1. **Review session patterns**:
+   Think about your recent work with Claude Code. Identify:
+   - When did you delegate (hand off completely)?
+   - When did you collaborate (work together)?
+   - When did you take over (do it yourself)?
+
+2. **Assess trust calibration**:
+   | Task Type | Your Trust Level | Actual Outcome | Calibration |
+   |-----------|------------------|----------------|-------------|
+   | Code generation | High/Med/Low | Success/Failure | Over/Under/Correct |
+
+   Where did you over-trust? Under-trust?
+
+3. **Map complementary contributions**:
+   What did each partner contribute best?
+
+   **Human strengths** (your contributions):
+   - Context about the project
+   - Judgment calls
+   - Creative direction
+   - Domain expertise
+
+   **Agent strengths** (Claude's contributions):
+   - Code generation
+   - Pattern recognition
+   - Consistency
+   - Speed
+
+4. **Identify friction points**:
+   - Where did miscommunication happen?
+   - Where did you wait when you could have worked in parallel?
+   - Where did you interrupt when you should have let Claude finish?
+
+5. **Define MY partnership principles**:
+   Write 3-5 rules for how you'll work with Claude Code:
+   - "I delegate [X] completely"
+   - "I collaborate on [Y]"
+   - "I always handle [Z] myself"
+
+6. **Create workflow improvements**:
+   | Current Pattern | Problem | New Pattern |
+   |-----------------|---------|-------------|
+
+Recent session context: [DESCRIBE_WHAT_YOU_WORKED_ON]`
   },
   {
     id: 'mcp-setup',
@@ -411,7 +895,70 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Define a domain-specific skill', type: 'task', labels: ['learn'] },
       { title: 'Set up pre-commit or validation hook', type: 'task', labels: ['learn'] },
       { title: 'Test tool integration end-to-end', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me configure MCP for MY project to extend Claude Code's capabilities.
+
+I'm setting up MY tool ecosystem. Guide me through:
+
+1. **Identify needed capabilities**:
+   What operations do I frequently perform that could be automated?
+   - Database queries?
+   - API calls?
+   - File transformations?
+   - External service integrations?
+
+2. **Configure MCP servers**:
+   Edit my Claude Code settings to add MCP servers:
+   \`\`\`json
+   {
+     "mcpServers": {
+       "[my-server]": {
+         "command": "npx",
+         "args": ["-y", "@my-org/my-mcp-server"]
+       }
+     }
+   }
+   \`\`\`
+
+   What servers would help MY workflow?
+
+3. **Create a custom skill**:
+   Write a skill file for a domain-specific operation:
+   \`\`\`markdown
+   # .claude/skills/[my-skill].md
+
+   Use this skill when [TRIGGER_CONDITION].
+
+   ## Steps
+   1. [First step]
+   2. [Second step]
+   \`\`\`
+
+4. **Set up hooks**:
+   Create hooks that enforce MY standards:
+   \`\`\`json
+   {
+     "hooks": {
+       "pre-commit": [
+         { "command": "npm run lint" },
+         { "command": "npm run typecheck" }
+       ]
+     }
+   }
+   \`\`\`
+
+5. **Test the integration**:
+   - Verify MCP servers connect
+   - Test skill invocation
+   - Validate hooks run correctly
+
+6. **Document MY tool configuration**:
+   - What tools did I add and why?
+   - What skills are available?
+   - What hooks enforce my standards?
+
+Project: [YOUR_PROJECT]
+Repetitive operations I want to automate: [YOUR_OPERATIONS]`
   },
   {
     id: 'learn-mcp-setup',
@@ -436,7 +983,48 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Test learn_status and learn_lesson', type: 'task', labels: ['learn'] },
       { title: 'Define first ethos principle using learn_ethos', type: 'task', labels: ['learn'] },
       { title: 'Reflect: How does the recursive structure feel?', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me set up Learn MCP so I can learn the Subtractive Triad through Claude Code.
+
+This is recursive: I'm using Claude Code to learn how to use Claude Code better. Guide me through:
+
+1. **Install Learn MCP**:
+   Add to my Claude Code settings (VS Code: settings.json, CLI: ~/.claude.json):
+   \`\`\`json
+   {
+     "mcpServers": {
+       "learn": {
+         "command": "npx",
+         "args": ["-y", "@createsomething/learn"]
+       }
+     }
+   }
+   \`\`\`
+
+2. **Authenticate**:
+   - Use learn_auth to get a magic link
+   - Click the link to authenticate
+   - Verify with learn_status
+
+3. **Explore the curriculum**:
+   - Use learn_status to see available paths
+   - Use learn_lesson to fetch a lesson
+   - Browse the learning paths
+
+4. **Define MY first ethos principle**:
+   Use learn_ethos to save a principle:
+   \`\`\`
+   learn_ethos action="add_principle" level="dry" content="[MY_PRINCIPLE]"
+   \`\`\`
+
+   What implementation pattern do I always follow?
+
+5. **Reflect on the recursion**:
+   - I'm learning about Claude Code partnership... through Claude Code
+   - I'm defining my ethos... using a tool that teaches ethos
+   - How does this recursive structure feel?
+
+This is meta-learning: understanding by doing, not just reading.`
   },
 
   // ============ ADVANCED ============
@@ -462,7 +1050,66 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Implement stdio transport handler', type: 'task', labels: ['learn'] },
       { title: 'Implement tool execution logic', type: 'task', labels: ['learn'] },
       { title: 'Test with Claude Code integration', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me build MY own MCP server for [DOMAIN].
+
+I'm creating a custom MCP server that extends Claude Code for my specific use case. Guide me through:
+
+1. **Identify composed operations**:
+   What operations do I frequently chain together?
+   - Read config → validate → apply?
+   - Query database → transform → cache?
+   - Fetch API → parse → update local state?
+
+   List 2-3 operations that should become single tools.
+
+2. **Design tool schemas**:
+   For each tool, define:
+   \`\`\`typescript
+   {
+     name: "my_tool",
+     description: "What this tool does",
+     inputSchema: {
+       type: "object",
+       properties: {
+         // Define inputs
+       },
+       required: ["..."]
+     }
+   }
+   \`\`\`
+
+3. **Set up the project**:
+   \`\`\`bash
+   mkdir my-mcp-server && cd my-mcp-server
+   npm init -y
+   npm install @modelcontextprotocol/sdk
+   \`\`\`
+
+4. **Implement the server**:
+   Create src/index.ts with:
+   - Server initialization
+   - Tool registration
+   - stdio transport handler
+   - Tool execution logic
+
+5. **Handle the protocol**:
+   - Parse JSON-RPC requests
+   - Return properly formatted responses
+   - Handle errors gracefully
+
+6. **Test locally**:
+   - Add to Claude Code settings
+   - Invoke tools and verify output
+   - Debug any issues
+
+7. **Document MY MCP server**:
+   - What problem does it solve?
+   - How do I use each tool?
+   - What are the gotchas?
+
+Domain: [YOUR_DOMAIN - e.g., "project management", "data pipeline", "content publishing"]
+Operations to compose: [YOUR_OPERATIONS]`
   },
   {
     id: 'hook-suite',
@@ -486,7 +1133,66 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Implement session lifecycle hook', type: 'task', labels: ['learn'] },
       { title: 'Test hooks with simulated inputs', type: 'task', labels: ['learn'] },
       { title: 'Document hook behavior for team', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me build MY hook suite that enforces my project standards automatically.
+
+I'm creating hooks that make Claude Code enforce MY rules. Guide me through:
+
+1. **Identify standards to enforce**:
+   What rules do I want automatically checked?
+   - Code formatting?
+   - Type safety?
+   - Test coverage?
+   - Commit message format?
+   - File naming conventions?
+
+2. **Design hook architecture**:
+   | Event | Hook Purpose | Exit Behavior |
+   |-------|--------------|---------------|
+   | pre-commit | Lint & format | Block if fails |
+   | post-edit | Type check | Warn only |
+   | session-start | Load context | Always continue |
+
+3. **Implement validation hooks**:
+   Create scripts that use exit codes correctly:
+   - **Exit 0**: Success, continue
+   - **Exit 1**: Failure, block and show message
+   - **Exit 2**: Failure, block and stop
+
+   Example pre-commit hook:
+   \`\`\`bash
+   #!/bin/bash
+   npm run lint || exit 1
+   npm run typecheck || exit 1
+   exit 0
+   \`\`\`
+
+4. **Implement lifecycle hooks**:
+   - Session start: Load project context, run bd prime
+   - Session end: Sync work, remind about uncommitted changes
+
+5. **Configure in Claude Code**:
+   \`\`\`json
+   {
+     "hooks": {
+       "PreToolUse": [{ "matcher": "Edit|Write", "hooks": ["./hooks/pre-edit.sh"] }],
+       "PostToolUse": [{ "matcher": "Edit|Write", "hooks": ["./hooks/post-edit.sh"] }]
+     }
+   }
+   \`\`\`
+
+6. **Test thoroughly**:
+   - Simulate passing conditions
+   - Simulate failing conditions
+   - Verify exit codes work correctly
+
+7. **Document MY hook suite**:
+   - What does each hook do?
+   - When do they run?
+   - How do I bypass them if needed?
+
+Project: [YOUR_PROJECT]
+Standards to enforce: [YOUR_STANDARDS]`
   },
   {
     id: 'multi-agent-system',
@@ -510,7 +1216,69 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Design communication mechanism', type: 'task', labels: ['learn'] },
       { title: 'Implement coordination logic', type: 'task', labels: ['learn'] },
       { title: 'Handle error recovery and graceful degradation', type: 'task', labels: ['learn'] }
-    ]
+    ],
+    claudeCodePrompt: `Help me design MY multi-agent system for [COMPLEX_TASK].
+
+I'm building a system where multiple agents work together. Guide me through:
+
+1. **Analyze the task**:
+   What is [COMPLEX_TASK]?
+   - What sub-tasks can be parallelized?
+   - What must happen sequentially?
+   - What requires coordination between agents?
+
+2. **Choose orchestration pattern**:
+
+   **Parallel** (independent work):
+   - Tasks don't depend on each other
+   - Speed is the priority
+   - Example: Reviewing multiple files simultaneously
+
+   **Sequential** (pipeline):
+   - Each stage feeds the next
+   - Order matters
+   - Example: Parse → Transform → Validate → Deploy
+
+   **Swarm** (collaborative):
+   - Agents share context
+   - Dynamic task assignment
+   - Example: Exploring a codebase together
+
+   Which pattern fits MY task?
+
+3. **Define agent specializations**:
+   | Agent | Specialization | Tools | Boundaries |
+   |-------|----------------|-------|------------|
+   | Research | Information gathering | Web, Read | No writes |
+   | Implement | Code changes | Edit, Write | No deploys |
+   | Review | Quality assurance | Read, Grep | No edits |
+
+4. **Design communication**:
+   How do agents share information?
+   - Shared file system?
+   - Message passing?
+   - Shared database (D1)?
+
+5. **Implement coordination**:
+   Using Claude Code's Task tool:
+   \`\`\`
+   Task: "Research the authentication patterns in this codebase"
+   subagent_type: "Explore"
+   run_in_background: true
+   \`\`\`
+
+6. **Handle errors**:
+   - What if an agent fails?
+   - How do we retry vs. skip?
+   - What's the graceful degradation path?
+
+7. **Document MY multi-agent patterns**:
+   - When do I use multi-agent vs. single agent?
+   - What specializations are reusable?
+   - What coordination patterns work for my domain?
+
+Complex task: [YOUR_COMPLEX_TASK]
+Sub-tasks: [LIST_THE_PARTS]`
   }
 ];
 
