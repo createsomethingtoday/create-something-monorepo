@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { space as spaceTracking } from '@create-something/components/utils';
 
 const STORAGE_KEY_PREFIX = 'experiment_completed_';
 
@@ -6,10 +7,13 @@ const STORAGE_KEY_PREFIX = 'experiment_completed_';
  * Marks an experiment as completed in local storage.
  * @param slug The slug of the experiment
  */
-export function markExperimentCompleted(slug: string): void {
+export function markExperimentCompleted(slug: string, timeSpent?: number): void {
     if (!browser) return;
     try {
         localStorage.setItem(`${STORAGE_KEY_PREFIX}${slug}`, 'true');
+
+        // Track completion event
+        spaceTracking.experimentCompleted(slug, timeSpent);
     } catch (e) {
         console.warn('Failed to save completion state:', e);
     }
@@ -52,4 +56,20 @@ export function clearExperimentCompletion(slug: string): void {
  */
 export function validateCompletionToken(url: URL): boolean {
     return url.searchParams.get('completed') === 'true';
+}
+
+/**
+ * Tracks when an experiment is started (first viewed).
+ * @param slug The slug of the experiment
+ */
+export function trackExperimentStart(slug: string): void {
+    if (!browser) return;
+
+    const startKey = `${STORAGE_KEY_PREFIX}${slug}_started`;
+    const hasTrackedStart = localStorage.getItem(startKey);
+
+    if (!hasTrackedStart) {
+        spaceTracking.experimentStarted(slug);
+        localStorage.setItem(startKey, 'true');
+    }
 }

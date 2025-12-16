@@ -36,7 +36,15 @@ import {
 	praxisTool,
 	handlePraxis,
 	ethosTool,
-	handleEthos
+	handleEthos,
+	analyzeTool,
+	handleAnalyze,
+	recommendTool,
+	handleRecommend,
+	coachTool,
+	handleCoach,
+	digestTool,
+	handleDigest
 } from './tools/index.js';
 
 const SERVER_NAME = 'create-something-learn';
@@ -52,6 +60,10 @@ const SERVER_VERSION = '0.2.0';
  * - learn_complete: Mark lesson complete with reflection
  * - learn_praxis: Execute praxis exercises
  * - learn_ethos: Manage personal principles derived from the Subtractive Triad
+ * - learn_analyze_reflection: Analyze reflection text for depth and Triad alignment
+ * - learn_recommend: Recommend lessons based on Triad audit scores
+ * - learn_coach: Provide real-time Triad-aligned coaching
+ * - learn_digest: Generate weekly audit summary with trends
  */
 async function main() {
 	const server = new Server(
@@ -69,7 +81,18 @@ async function main() {
 	// Register tool listing
 	server.setRequestHandler(ListToolsRequestSchema, async () => {
 		return {
-			tools: [authenticateTool, statusTool, lessonTool, completeTool, praxisTool, ethosTool]
+			tools: [
+				authenticateTool,
+				statusTool,
+				lessonTool,
+				completeTool,
+				praxisTool,
+				ethosTool,
+				analyzeTool,
+				recommendTool,
+				coachTool,
+				digestTool
+			]
 		};
 	});
 
@@ -96,6 +119,18 @@ async function main() {
 
 				case 'learn_ethos':
 					return { content: await handleEthos(args as Record<string, unknown>) };
+
+				case 'learn_analyze_reflection':
+					return { content: await handleAnalyze(args as Record<string, unknown>) };
+
+				case 'learn_recommend':
+					return { content: await handleRecommend(args as Record<string, unknown>) };
+
+				case 'learn_coach':
+					return { content: await handleCoach(args as Record<string, unknown>) };
+
+				case 'learn_digest':
+					return { content: await handleDigest(args as Record<string, unknown>) };
 
 				default:
 					return {

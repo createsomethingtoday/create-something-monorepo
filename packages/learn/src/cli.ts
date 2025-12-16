@@ -6,14 +6,20 @@
  *
  * @example
  * npx @createsomething/learn init
+ * npx @createsomething/learn init --full
  * npx @createsomething/learn status
  * npx @createsomething/learn clear
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, cpSync } from 'fs';
+import { join, dirname } from 'path';
 import { homedir } from 'os';
+import { fileURLToPath } from 'url';
 import { isAuthenticated, clearAuth, getCurrentUser } from './auth/storage.js';
+import { loadEthos } from './ethos/storage.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const COMMANDS = {
 	init: 'Set up CREATE SOMETHING learning in Claude Code',
@@ -185,6 +191,127 @@ function initAuto() {
 	console.log('  "Help me learn the CREATE SOMETHING methodology"');
 }
 
+function initFull() {
+	console.log('\nCREATE SOMETHING Learn — Full Setup\n');
+
+	const cwd = process.cwd();
+
+	// Get project name from package.json or directory name
+	let projectName = 'My Project';
+	const packageJsonPath = join(cwd, 'package.json');
+	if (existsSync(packageJsonPath)) {
+		try {
+			const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+			projectName = pkg.name || projectName;
+		} catch {
+			// Use directory name instead
+			projectName = cwd.split('/').pop() || projectName;
+		}
+	} else {
+		projectName = cwd.split('/').pop() || projectName;
+	}
+
+	console.log(`Project: ${projectName}\n`);
+
+	// 1. Create .claude directory structure
+	const claudeDir = join(cwd, '.claude');
+	const rulesDir = join(claudeDir, 'rules');
+	const skillsDir = join(claudeDir, 'skills');
+
+	if (!existsSync(claudeDir)) {
+		mkdirSync(claudeDir, { recursive: true });
+		console.log('✓ Created .claude/ directory');
+	}
+
+	if (!existsSync(rulesDir)) {
+		mkdirSync(rulesDir, { recursive: true });
+		console.log('✓ Created .claude/rules/ directory');
+	}
+
+	if (!existsSync(skillsDir)) {
+		mkdirSync(skillsDir, { recursive: true });
+		console.log('✓ Created .claude/skills/ directory');
+	}
+
+	// 2. Copy templates
+	const templatesDir = join(__dirname, '..', 'templates');
+
+	// Copy CLAUDE.md
+	const claudeMdTemplate = join(templatesDir, 'CLAUDE.md.template');
+	const claudeMdTarget = join(cwd, 'CLAUDE.md');
+
+	if (existsSync(claudeMdTemplate)) {
+		let content = readFileSync(claudeMdTemplate, 'utf-8');
+
+		// Interpolate project name
+		content = content.replace(/\{\{PROJECT_NAME\}\}/g, projectName);
+
+		// Interpolate ethos section
+		const ethos = loadEthos();
+		let ethosSection = '';
+
+		if (ethos && ethos.principles.length > 0) {
+			ethosSection = `Your personal principles from CREATE SOMETHING Learn:\n\n`;
+			ethos.principles.forEach((p) => {
+				ethosSection += `- **${p.level.toUpperCase()}**: ${p.text}${p.domain ? ` [${p.domain}]` : ''}\n`;
+			});
+			ethosSection += `\nManage your ethos: \`learn_ethos action="view"\``;
+		} else {
+			ethosSection = `Define your personal principles using:\n\`\`\`\nlearn_ethos action="add_principle" text="Your principle" level="dry|rams|heidegger"\n\`\`\``;
+		}
+
+		content = content.replace(/\{\{ETHOS_SECTION\}\}/g, ethosSection);
+
+		if (!existsSync(claudeMdTarget)) {
+			writeFileSync(claudeMdTarget, content);
+			console.log('✓ Created CLAUDE.md');
+		} else {
+			console.log('○ CLAUDE.md already exists (skipped)');
+		}
+	}
+
+	// Copy subtractive-triad.md rule
+	const triadRuleTemplate = join(templatesDir, 'rules', 'subtractive-triad.md');
+	const triadRuleTarget = join(rulesDir, 'subtractive-triad.md');
+
+	if (existsSync(triadRuleTemplate)) {
+		if (!existsSync(triadRuleTarget)) {
+			cpSync(triadRuleTemplate, triadRuleTarget);
+			console.log('✓ Created .claude/rules/subtractive-triad.md');
+		} else {
+			console.log('○ subtractive-triad.md rule already exists (skipped)');
+		}
+	}
+
+	// Copy methodology skill
+	const methodologySkillTemplate = join(templatesDir, 'skill', 'methodology.md');
+	const methodologySkillTarget = join(skillsDir, 'subtractive-triad.md');
+
+	if (existsSync(methodologySkillTemplate)) {
+		if (!existsSync(methodologySkillTarget)) {
+			cpSync(methodologySkillTemplate, methodologySkillTarget);
+			console.log('✓ Created .claude/skills/subtractive-triad.md');
+		} else {
+			console.log('○ subtractive-triad skill already exists (skipped)');
+		}
+	}
+
+	// 3. Show next steps
+	console.log('\n--- Setup Complete ---\n');
+	console.log('Files created:');
+	console.log('  CLAUDE.md                              (Project instructions)');
+	console.log('  .claude/rules/subtractive-triad.md     (Methodology rules)');
+	console.log('  .claude/skills/subtractive-triad.md    (Methodology skill)');
+
+	console.log('\n--- Next Steps ---\n');
+	console.log('1. Review and customize CLAUDE.md for your project');
+	console.log('2. Run: npx @createsomething/learn init --auto');
+	console.log('3. Restart Claude Code');
+	console.log('4. Start coding with the Subtractive Triad');
+
+	console.log('\n*The tool recedes; the methodology remains.*\n');
+}
+
 // Main CLI handler
 function main() {
 	const args = process.argv.slice(2);
@@ -192,7 +319,9 @@ function main() {
 
 	switch (command) {
 		case 'init':
-			if (args.includes('--auto')) {
+			if (args.includes('--full')) {
+				initFull();
+			} else if (args.includes('--auto')) {
 				initAuto();
 			} else {
 				initSetup();

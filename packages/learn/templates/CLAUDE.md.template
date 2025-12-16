@@ -1,0 +1,45 @@
+# {{PROJECT_NAME}}
+
+## Philosophy: The Subtractive Triad
+
+**Meta-principle**: Creation is the discipline of removing what obscures.
+
+### The Three Levels
+
+Every creation exists simultaneously at three levels, each with its corresponding discipline:
+
+| Level | Discipline | Question | Action |
+|-------|------------|----------|--------|
+| **Implementation** | DRY | "Have I built this before?" | Unify |
+| **Artifact** | Rams | "Does this earn its existence?" | Remove |
+| **System** | Heidegger | "Does this serve the whole?" | Reconnect |
+
+### Application
+
+For any decision, ask the three questions in order:
+
+1. **DRY** (Implementation) → Eliminate duplication
+2. **Weniger, aber besser** (Artifact) → Eliminate excess
+3. **Hermeneutic circle** (System) → Eliminate disconnection
+
+### Why This Works
+
+The triad is coherent because it's one principle—**subtractive revelation**—applied at three scales. Truth emerges through disciplined removal at every level of abstraction.
+
+## Your Domain: {{PROJECT_NAME}}
+
+Claude Code excels at:
+- Writing new features and components
+- Refactoring existing code
+- Understanding unfamiliar code paths
+- Creating and debugging tests
+- Architecture planning and documentation
+- Code review and optimization
+
+## Your Personal Ethos
+
+{{ETHOS_SECTION}}
+
+---
+
+*This file was generated with CREATE SOMETHING Learn. Edit to match your practice.*
