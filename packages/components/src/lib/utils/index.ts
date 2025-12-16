@@ -23,3 +23,17 @@ export {
 
 // Design tokens
 export * from '../tokens/index.js';
+
+// Learning event tracking
+export {
+    trackLearningEvent,
+    trackLearningEvents,
+    io,
+    space,
+    ltd,
+    agency,
+    type PropertyId,
+    type LearningEvent,
+    type LearningEventMetadata,
+    type LearningEventResponse
+} from './learning.js';
