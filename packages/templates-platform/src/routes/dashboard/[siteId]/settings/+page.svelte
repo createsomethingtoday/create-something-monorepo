@@ -137,21 +137,15 @@
       </div>
     </section>
 
-    <!-- Plan Section -->
+    <!-- Template Section -->
     <section class="settings-section">
-      <h2>Plan</h2>
+      <h2>Template</h2>
 
       <div class="plan-card">
         <div class="plan-info">
-          <span class="plan-name">{data.site.tier}</span>
-          <span class="plan-template">Using: {data.template?.name || 'Unknown template'}</span>
+          <span class="plan-name">{data.template?.name || 'Unknown template'}</span>
+          <span class="plan-template">All templates are free</span>
         </div>
-
-        {#if data.site.tier === 'free'}
-          <a href="/pricing" class="btn btn-primary">
-            Upgrade to Pro
-          </a>
-        {/if}
       </div>
 
       <div class="plan-features">
@@ -159,13 +153,13 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
-          {data.site.tier === 'free' ? '1 site' : data.site.tier === 'pro' ? '10 sites' : 'Unlimited sites'}
+          Unlimited sites
         </p>
         <p class="plan-feature">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
-          {data.site.tier === 'free' ? 'Subdomain only' : 'Custom domain'}
+          Custom domains supported
         </p>
       </div>
     </section>

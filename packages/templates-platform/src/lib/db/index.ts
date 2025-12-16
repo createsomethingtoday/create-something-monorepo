@@ -42,10 +42,10 @@ export async function createUser(
   const id = user.id || crypto.randomUUID();
   await db
     .prepare(
-      `INSERT INTO users (id, email, name, avatar_url, plan, site_limit)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO users (id, email, name, avatar_url)
+       VALUES (?, ?, ?, ?)`
     )
-    .bind(id, user.email, user.name || null, user.avatarUrl || null, user.plan, user.siteLimit)
+    .bind(id, user.email, user.name || null, user.avatarUrl || null)
     .run();
 
   return (await getUserById(db, id))!;
@@ -143,8 +143,8 @@ export async function createTenant(
   const id = crypto.randomUUID();
   await db
     .prepare(
-      `INSERT INTO tenants (id, user_id, template_id, subdomain, custom_domain, status, config, tier)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO tenants (id, user_id, template_id, subdomain, custom_domain, status, config)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       id,
@@ -153,8 +153,7 @@ export async function createTenant(
       tenant.subdomain,
       tenant.customDomain || null,
       tenant.status,
-      JSON.stringify(tenant.config),
-      tenant.tier
+      JSON.stringify(tenant.config)
     )
     .run();
 
@@ -267,8 +266,6 @@ function mapUser(row: Record<string, unknown>): User {
     email: row.email as string,
     name: row.name as string | undefined,
     avatarUrl: row.avatar_url as string | undefined,
-    plan: row.plan as 'free' | 'pro' | 'agency',
-    siteLimit: row.site_limit as number,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string
   };
@@ -302,7 +299,6 @@ function mapTenant(row: Record<string, unknown>): Tenant {
     customDomain: row.custom_domain as string | undefined,
     status: row.status as TenantStatus,
     config: JSON.parse((row.config as string) || '{}'),
-    tier: row.tier as 'free' | 'pro' | 'enterprise',
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     deployedAt: row.deployed_at as string | undefined
