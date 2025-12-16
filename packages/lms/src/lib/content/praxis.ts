@@ -43,6 +43,203 @@ export interface PraxisExercise {
 }
 
 export const PRAXIS_EXERCISES: PraxisExercise[] = [
+  // ============ GETTING STARTED ============
+  {
+    id: 'claude-code-first-session',
+    lessonId: 'install-claude-code',
+    pathId: 'getting-started',
+    title: 'First Claude Code Session',
+    description: 'Install the CLI and run your first agentic session.',
+    type: 'code',
+    difficulty: 'beginner',
+    duration: '15 min',
+    objectives: [
+      'Install Claude Code CLI',
+      'Authenticate with Anthropic',
+      'Run first prompt in a codebase',
+      'Understand the partnership model'
+    ],
+    beadsTasks: [
+      { title: 'Install Claude Code CLI', type: 'task', labels: ['learn', 'getting-started'] },
+      { title: 'Authenticate with Anthropic API', type: 'task', labels: ['learn'] },
+      { title: 'Run first prompt in a project', type: 'task', labels: ['learn'] },
+      { title: 'Explore slash commands (/help, /status)', type: 'task', labels: ['learn'] }
+    ],
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Install Claude Code CLI" --type=task --labels=learn,getting-started
+bd create "Authenticate with Anthropic API" --type=task --labels=learn
+bd create "Run first prompt in a project" --type=task --labels=learn
+bd create "Explore slash commands" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me set up Claude Code CLI on my system.
+
+Walk me through:
+1. Installing the claude CLI (npm or direct download)
+2. Authenticating with my Anthropic API key
+3. Running my first prompt in an existing project
+4. Understanding key slash commands (/help, /status, /clear)
+
+After setup, explain the partnership model:
+- What Claude Code handles well (code generation, exploration, multi-file changes)
+- What I should handle (judgment calls, creative direction, domain expertise)
+- How to calibrate trust over time
+
+My operating system: [macOS/Linux/Windows]`
+  },
+  {
+    id: 'wezterm-setup',
+    lessonId: 'configure-wezterm',
+    pathId: 'getting-started',
+    title: 'Configure WezTerm',
+    description: 'Use Claude Code to apply Canon colors and vim-native keybindings.',
+    type: 'code',
+    difficulty: 'beginner',
+    duration: '20 min',
+    objectives: [
+      'Apply Canon color palette',
+      'Configure vim-native keybindings',
+      'Set up splits and tabs',
+      'Verify terminal recedes into use'
+    ],
+    beadsTasks: [
+      { title: 'Clone/symlink dotfiles config', type: 'task', labels: ['learn', 'getting-started'] },
+      { title: 'Verify Canon colors applied', type: 'task', labels: ['learn'] },
+      { title: 'Test keybindings (splits, tabs, navigation)', type: 'task', labels: ['learn'] },
+      { title: 'Restart WezTerm and verify', type: 'task', labels: ['learn'] }
+    ],
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Clone/symlink dotfiles config" --type=task --labels=learn,getting-started
+bd create "Verify Canon colors applied" --type=task --labels=learn
+bd create "Test keybindings (splits, tabs, navigation)" --type=task --labels=learn
+bd create "Restart WezTerm and verify" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me configure WezTerm with the CREATE SOMETHING Canon theme.
+
+WezTerm is already installed. Now I need:
+1. Canon color palette (pure black background, white/opacity foreground hierarchy)
+2. Vim-native keybindings matching my other tools
+3. Fast startup, minimal UI chrome
+
+Walk me through:
+- Creating or symlinking the WezTerm config file
+- Canon color tokens to apply
+- Key keybindings I should learn (Ctrl-based for splits/tabs)
+- How to verify it's working (the terminal should "disappear" into use)
+
+My operating system: [macOS/Linux/Windows]
+Config location: ~/.wezterm.lua or ~/.config/wezterm/wezterm.lua`
+  },
+  {
+    id: 'beads-setup',
+    lessonId: 'install-beads',
+    pathId: 'getting-started',
+    title: 'Set Up Beads',
+    description: 'Use Claude Code to install Beads and create your first task.',
+    type: 'code',
+    difficulty: 'beginner',
+    duration: '15 min',
+    objectives: [
+      'Install Beads CLI',
+      'Initialize .beads/ in a project',
+      'Create and complete a task',
+      'Learn the workflow: create → work → close → sync'
+    ],
+    beadsTasks: [
+      { title: 'Install Beads CLI', type: 'task', labels: ['learn', 'getting-started'] },
+      { title: 'Run bd init in a project', type: 'task', labels: ['learn'] },
+      { title: 'Create first task with bd create', type: 'task', labels: ['learn'] },
+      { title: 'Complete task with bd close', type: 'task', labels: ['learn'] }
+    ],
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Install Beads CLI" --type=task --labels=learn,getting-started
+bd create "Run bd init in a project" --type=task --labels=learn
+bd create "Create first task with bd create" --type=task --labels=learn
+bd create "Complete task with bd close" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me install Beads and set up agent-native task tracking.
+
+I want to:
+1. Install the Beads CLI (bd command)
+2. Initialize Beads in my current project
+3. Create a few test tasks
+4. Learn the core workflow: create → work → close → sync
+
+Walk me through each step. After installation, help me understand:
+- How bd ready surfaces unblocked work
+- How bd dep add creates dependencies
+- How bd sync integrates with git
+
+My operating system: [macOS/Linux]
+My project directory: [YOUR_PROJECT_PATH]`
+  },
+  {
+    id: 'neomutt-setup',
+    lessonId: 'configure-neomutt',
+    pathId: 'getting-started',
+    title: 'Configure Neomutt',
+    description: 'Set up terminal email with Canon colors and vim keybindings.',
+    type: 'code',
+    difficulty: 'intermediate',
+    duration: '25 min',
+    objectives: [
+      'Install Neomutt',
+      'Configure first email account (Gmail/Google Workspace)',
+      'Apply Canon color scheme',
+      'Learn core navigation and actions'
+    ],
+    beadsTasks: [
+      { title: 'Install Neomutt', type: 'task', labels: ['learn', 'getting-started'] },
+      { title: 'Create Google App Password', type: 'task', labels: ['learn'] },
+      { title: 'Configure first account', type: 'task', labels: ['learn'] },
+      { title: 'Apply dotfiles config (colors, bindings)', type: 'task', labels: ['learn'] },
+      { title: 'Send test email', type: 'task', labels: ['learn'] }
+    ],
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Install Neomutt" --type=task --labels=learn,getting-started
+bd create "Create Google App Password" --type=task --labels=learn
+bd create "Configure first account" --type=task --labels=learn
+bd create "Apply dotfiles config" --type=task --labels=learn
+bd create "Send test email" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me set up Neomutt for terminal-based email.
+
+I want:
+1. Neomutt installed
+2. My Gmail/Google Workspace account configured
+3. Canon color scheme applied
+4. Vim-native keybindings
+
+Walk me through:
+- Installation for my OS
+- Creating a Google App Password (for IMAP/SMTP auth)
+- Setting up my first account config
+- Symlinking the dotfiles config for colors and keybindings
+- Core keybindings: navigation (j/k), actions (r/f/d), go-to (gi/gs/gd)
+
+My email: [YOUR_EMAIL]
+My operating system: [macOS/Linux]`
+  },
+
   // ============ FOUNDATIONS ============
   {
     id: 'identify-duplication',
