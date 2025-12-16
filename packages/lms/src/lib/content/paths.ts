@@ -1,8 +1,10 @@
 /**
  * Learning Paths Configuration
  *
- * Eight interconnected paths teaching the CREATE SOMETHING ethos.
+ * Nine interconnected paths teaching the CREATE SOMETHING ethos.
  * Each path follows the hermeneutic spiral: Read → Practice → Reflect → Repeat
+ *
+ * Start with "Getting Started" to install your environment, then progress through Foundations.
  */
 
 export interface Lesson {
@@ -25,6 +27,50 @@ export interface Path {
 }
 
 export const PATHS: Path[] = [
+  {
+    id: 'getting-started',
+    title: 'Getting Started',
+    subtitle: 'Environment Setup',
+    description: 'Install WezTerm, then Claude Code, then configure everything else using Claude Code. The bootstrap sequence that enables everything.',
+    principle: 'The hammer disappears when hammering.',
+    color: 'path-getting-started',
+    lessons: [
+      {
+        id: 'install-wezterm',
+        title: 'Install WezTerm',
+        description: 'Your terminal foundation—install it first.',
+        duration: '10 min',
+      },
+      {
+        id: 'install-claude-code',
+        title: 'Install Claude Code CLI',
+        description: 'Your AI development partner, installed in WezTerm.',
+        duration: '15 min',
+        praxis: 'claude-code-first-session',
+      },
+      {
+        id: 'configure-wezterm',
+        title: 'Configure WezTerm',
+        description: 'Use Claude Code to apply Canon config.',
+        duration: '20 min',
+        praxis: 'wezterm-setup',
+      },
+      {
+        id: 'install-beads',
+        title: 'Install Beads',
+        description: 'Agent-native task tracking via Claude Code.',
+        duration: '15 min',
+        praxis: 'beads-setup',
+      },
+      {
+        id: 'configure-neomutt',
+        title: 'Configure Neomutt',
+        description: 'Terminal email via Claude Code.',
+        duration: '25 min',
+        praxis: 'neomutt-setup',
+      },
+    ],
+  },
   {
     id: 'foundations',
     title: 'Foundations',

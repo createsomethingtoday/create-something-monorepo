@@ -68,6 +68,34 @@ if ! command -v bd &> /dev/null; then
 fi
 
 # ─────────────────────────────────────────────────────────────
+# WezTerm
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "Installing WezTerm configuration..."
+
+# Backup existing wezterm config
+if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then
+    echo "  Backing up existing wezterm config to ~/.config/wezterm.backup"
+    mv ~/.config/wezterm ~/.config/wezterm.backup
+elif [ -L ~/.config/wezterm ]; then
+    rm ~/.config/wezterm
+fi
+
+# Symlink wezterm config
+ln -sf "$DOTFILES_DIR/wezterm" ~/.config/wezterm
+echo "  Symlinked wezterm → ~/.config/wezterm"
+
+# Check if wezterm is installed
+if ! command -v wezterm &> /dev/null; then
+    echo ""
+    echo "  WezTerm not found. Install with:"
+    echo "    macOS: brew install --cask wezterm"
+    echo "    Linux: https://wezfurlong.org/wezterm/install/linux.html"
+    echo ""
+fi
+
+# ─────────────────────────────────────────────────────────────
 # Neovim
 # ─────────────────────────────────────────────────────────────
 
