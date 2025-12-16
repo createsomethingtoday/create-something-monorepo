@@ -129,10 +129,10 @@
 
 		<!-- Section 2: Theoretical Framework -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">II. Theoretical Framework: Heidegger's Hermeneutic Circle</h2>
+			<h2 class="section-heading">II. Theoretical Framework: Heidegger's Hermeneutic Circle</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<h3 class="text-xl font-semibold text-white/90">The Circle of Understanding</h3>
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">The Circle of Understanding</h3>
 
 				<p>
 					In <em>Being and Time</em>, Heidegger describes understanding as fundamentally circular:
@@ -148,7 +148,7 @@
 					through the whole, and the whole through its parts. Each cycle deepens our grasp.
 				</p>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">The Spiral, Not the Circle</h3>
+				<h3 class="mt-6 subsection-heading">The Spiral, Not the Circle</h3>
 
 				<p>
 					While Heidegger uses "circle," the motion is better described as a <strong>spiral</strong>.
@@ -170,7 +170,7 @@
 					The key insight: <strong>understanding accumulates</strong>. It doesn't reset.
 				</p>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Application to User Experience</h3>
+				<h3 class="mt-6 subsection-heading">Application to User Experience</h3>
 
 				<p>Traditional systems break this spiral:</p>
 
@@ -200,10 +200,10 @@
 
 		<!-- Section 3: The Pattern -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">III. The Hermeneutic Spiral Pattern</h2>
+			<h2 class="section-heading">III. The Hermeneutic Spiral Pattern</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<h3 class="text-xl font-semibold text-white/90">Core Principles</h3>
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Core Principles</h3>
 
 				<p>The Hermeneutic Spiral pattern follows three principles:</p>
 
@@ -232,7 +232,7 @@
 					</table>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Conversational Flow</h3>
+				<h3 class="mt-6 subsection-heading">Conversational Flow</h3>
 
 				<p><strong>First Visit:</strong></p>
 
@@ -272,10 +272,10 @@
 
 		<!-- Section 4: Case Study -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">IV. Case Study: Abundance Network</h2>
+			<h2 class="section-heading">IV. Case Study: Abundance Network</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<h3 class="text-xl font-semibold text-white/90">System Overview</h3>
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">System Overview</h3>
 
 				<p>
 					The Abundance Network is a WhatsApp-based creative professional matching platform built
@@ -290,7 +290,7 @@
 					<li><strong>Matching:</strong> LLM-driven creative recommendation</li>
 				</ul>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Architecture</h3>
+				<h3 class="mt-6 subsection-heading">Architecture</h3>
 
 				<!-- Visual Canon: Isometric Architecture -->
 				<div class="my-6">
@@ -376,9 +376,9 @@
 
 		<!-- Section 5: Results -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">V. Results</h2>
+			<h2 class="section-heading">V. Results</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>Comparing stateless vs. hermeneutic intake:</p>
 
 				<div class="overflow-x-auto">
@@ -429,9 +429,9 @@
 
 		<!-- Section 6: Design Principles -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">VI. Design Principles</h2>
+			<h2 class="section-heading">VI. Design Principles</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<div class="p-4 callout-info">
 					<h3 class="mb-2 callout-heading">Zuhandenheit: The System Recedes</h3>
 					<p class="body-text">
@@ -501,9 +501,9 @@ if (daysSince(context.last_seen) > 90) {
 
 		<!-- Section 7: Implications -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">VII. Implications</h2>
+			<h2 class="section-heading">VII. Implications</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<h3 class="subsection-heading">For UX Design</h3>
 				<p>
 					The Hermeneutic Spiral suggests that good UX isn't just about reducing friction in a
@@ -541,9 +541,9 @@ Use this context to personalize recommendations.`}</pre>
 
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">VIII. Conclusion</h2>
+			<h2 class="section-heading">VIII. Conclusion</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					The Hermeneutic Spiral transforms user intake from repetitive interrogation into evolving
 					conversation. By applying Heidegger's insight that understanding accumulates through

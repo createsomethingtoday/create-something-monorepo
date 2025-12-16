@@ -27,17 +27,17 @@
 	<meta name="description" content="Applied the Subtractive Triad framework to audit Kickstand, achieving 48% health score improvement through systematic code unification, artifact removal, and documentation reconnection." />
 </svelte:head>
 
-<div class="min-h-screen bg-black text-white p-6">
+<div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">
 		<!-- Header -->
-		<div class="border-b border-white/10 pb-8">
-			<div class="font-mono text-white/40 text-sm mb-4">PAPER-2025-001</div>
-			<h1 class="text-4xl font-bold mb-3">Subtractive Triad Audit: Kickstand</h1>
-			<p class="text-white/70 text-lg max-w-3xl">
+		<div class="pb-8 paper-header">
+			<div class="font-mono mb-4 paper-id">PAPER-2025-001</div>
+			<h1 class="mb-3 paper-title">Subtractive Triad Audit: Kickstand</h1>
+			<p class="max-w-3xl paper-subtitle">
 				Applying the Subtractive Triad framework (DRY → Rams → Heidegger) to audit a production
 				venue intelligence system—demonstrating that creation is the discipline of removing what obscures.
 			</p>
-			<div class="flex gap-4 mt-4 text-sm text-white/50">
+			<div class="flex gap-4 mt-4 paper-meta">
 				<span>Case Study</span>
 				<span>•</span>
 				<span>12 min read</span>
@@ -47,9 +47,9 @@
 		</div>
 
 		<!-- Abstract -->
-		<section class="border-l-4 border-white/20 pl-6 space-y-4">
-			<h2 class="text-2xl font-bold">Abstract</h2>
-			<p class="text-white/70 leading-relaxed">
+		<section class="pl-6 space-y-4 abstract-section">
+			<h2 class="section-heading">Abstract</h2>
+			<p class="leading-relaxed body-text">
 				This paper documents the application of the <em>Subtractive Triad</em> framework to Kickstand,
 				a venue intelligence automation system serving Half Dozen (a CREATE SOMETHING client). The system
 				had evolved through multiple architectural phases (Node.js → Railway → Cloudflare Workers),
@@ -63,31 +63,31 @@
 
 		<!-- Metrics -->
 		<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold text-green-400">9.2</div>
-				<div class="text-sm text-white/60">Final Health Score</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value metric-success">9.2</div>
+				<div class="metric-label">Final Health Score</div>
 			</div>
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold">-92%</div>
-				<div class="text-sm text-white/60">Active Scripts</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">-92%</div>
+				<div class="metric-label">Active Scripts</div>
 			</div>
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold text-green-400">0</div>
-				<div class="text-sm text-white/60">TypeScript Errors</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value metric-success">0</div>
+				<div class="metric-label">TypeScript Errors</div>
 			</div>
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold">153</div>
-				<div class="text-sm text-white/60">Scripts Archived</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">153</div>
+				<div class="metric-label">Scripts Archived</div>
 			</div>
 		</section>
 
 		<!-- The Framework -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">1. The Subtractive Triad Framework</h2>
+			<h2 class="section-heading">1. The Subtractive Triad Framework</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>
-					<strong class="text-white/90">Meta-principle:</strong> Creation is the discipline of removing what obscures.
+					<strong class="text-emphasis">Meta-principle:</strong> Creation is the discipline of removing what obscures.
 				</p>
 
 				<p>
@@ -96,33 +96,33 @@
 				</p>
 
 				<div class="overflow-x-auto">
-					<table class="w-full text-sm">
+					<table class="w-full data-table">
 						<thead>
-							<tr class="border-b border-white/20">
-								<th class="text-left py-2 text-white/80">Level</th>
-								<th class="text-left py-2 text-white/80">Discipline</th>
-								<th class="text-left py-2 text-white/80">Question</th>
-								<th class="text-left py-2 text-white/80">Action</th>
+							<tr class="table-header-row">
+								<th class="text-left py-2 table-header">Level</th>
+								<th class="text-left py-2 table-header">Discipline</th>
+								<th class="text-left py-2 table-header">Question</th>
+								<th class="text-left py-2 table-header">Action</th>
 							</tr>
 						</thead>
-						<tbody class="text-white/60">
-							<tr class="border-b border-white/10">
+						<tbody class="table-body">
+							<tr class="table-row">
 								<td class="py-2">Implementation</td>
-								<td class="py-2 font-semibold text-white/80">DRY</td>
+								<td class="py-2 font-semibold table-cell-emphasis">DRY</td>
 								<td class="py-2">"Have I built this before?"</td>
-								<td class="py-2 text-blue-400">Unify</td>
+								<td class="py-2 action-blue">Unify</td>
 							</tr>
-							<tr class="border-b border-white/10">
+							<tr class="table-row">
 								<td class="py-2">Artifact</td>
-								<td class="py-2 font-semibold text-white/80">Rams</td>
+								<td class="py-2 font-semibold table-cell-emphasis">Rams</td>
 								<td class="py-2">"Does this earn its existence?"</td>
-								<td class="py-2 text-yellow-400">Remove</td>
+								<td class="py-2 action-yellow">Remove</td>
 							</tr>
 							<tr>
 								<td class="py-2">System</td>
-								<td class="py-2 font-semibold text-white/80">Heidegger</td>
+								<td class="py-2 font-semibold table-cell-emphasis">Heidegger</td>
 								<td class="py-2">"Does this serve the whole?"</td>
-								<td class="py-2 text-green-400">Reconnect</td>
+								<td class="py-2 action-green">Reconnect</td>
 							</tr>
 						</tbody>
 					</table>
@@ -142,9 +142,9 @@
 
 		<!-- System Context -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">2. System Context: Kickstand</h2>
+			<h2 class="section-heading">2. System Context: Kickstand</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					Kickstand is a <strong>venue intelligence automation system</strong> that monitors music venues'
 					social media and websites to extract artist performance data. It serves Half Dozen, which
@@ -181,63 +181,63 @@
 
 		<!-- Level 1: DRY -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">3. Level 1: DRY (Implementation) — Unify</h2>
+			<h2 class="section-heading">3. Level 1: DRY (Implementation) — Unify</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-					<p class="text-blue-300"><strong>Question:</strong> "Have I built this before?"</p>
-					<p class="text-blue-300/70 text-sm mt-1">Score: 5/10 — Critical duplication found</p>
+			<div class="space-y-4 leading-relaxed body-text">
+				<div class="p-4 callout-blue">
+					<p class="callout-text-blue"><strong>Question:</strong> "Have I built this before?"</p>
+					<p class="callout-meta-blue">Score: 5/10 — Critical duplication found</p>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Finding: Parallel Runtime Implementations</h3>
+				<h3 class="mt-6 subsection-heading">Finding: Parallel Runtime Implementations</h3>
 				<p>
 					The codebase maintained <strong>two complete implementations</strong> of core services—one
 					in Node.js and one in Cloudflare Workers TypeScript:
 				</p>
 
 				<div class="overflow-x-auto">
-					<table class="w-full text-sm">
+					<table class="w-full data-table">
 						<thead>
-							<tr class="border-b border-white/20">
-								<th class="text-left py-2 text-white/80">Component</th>
-								<th class="text-left py-2 text-white/80">Node.js</th>
-								<th class="text-left py-2 text-white/80">Workers</th>
-								<th class="text-left py-2 text-white/80">Duplicated</th>
+							<tr class="table-header-row">
+								<th class="text-left py-2 table-header">Component</th>
+								<th class="text-left py-2 table-header">Node.js</th>
+								<th class="text-left py-2 table-header">Workers</th>
+								<th class="text-left py-2 table-header">Duplicated</th>
 							</tr>
 						</thead>
-						<tbody class="text-white/60">
-							<tr class="border-b border-white/10">
+						<tbody class="table-body">
+							<tr class="table-row">
 								<td class="py-2">Artist Extractor</td>
 								<td class="py-2">1,594 lines</td>
 								<td class="py-2">644 lines</td>
 								<td class="py-2">~500 lines</td>
 							</tr>
-							<tr class="border-b border-white/10">
+							<tr class="table-row">
 								<td class="py-2">Website Monitor</td>
 								<td class="py-2">~800 lines</td>
 								<td class="py-2">~600 lines</td>
 								<td class="py-2">~400 lines</td>
 							</tr>
-							<tr class="border-b border-white/10">
+							<tr class="table-row">
 								<td class="py-2">Instagram Monitor</td>
 								<td class="py-2">~900 lines</td>
 								<td class="py-2">~700 lines</td>
 								<td class="py-2">~600 lines</td>
 							</tr>
 							<tr>
-								<td class="py-2 font-semibold text-white/80">Total</td>
+								<td class="py-2 font-semibold table-cell-emphasis">Total</td>
 								<td class="py-2" colspan="2"></td>
-								<td class="py-2 font-semibold text-white/80">~3,200 lines</td>
+								<td class="py-2 font-semibold table-cell-emphasis">~3,200 lines</td>
 							</tr>
 						</tbody>
 					</table>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Action: Unified to Workers</h3>
+				<h3 class="mt-6 subsection-heading">Action: Unified to Workers</h3>
 				<ul class="list-disc list-inside space-y-2 pl-4">
-					<li>Marked Node.js services with <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">@deprecated</code> notices</li>
+					<li>Marked Node.js services with <code class="code-inline">@deprecated</code> notices</li>
 					<li>Fixed 30 TypeScript errors in Workers implementation</li>
-					<li>Updated Cloudflare Workflow API usage (<code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">event.payload</code> not <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">event.params</code>)</li>
+					<li>Updated Cloudflare Workflow API usage (<code class="code-inline">event.payload</code> not <code class="code-inline">event.params</code>)</li>
 					<li>Added proper type annotations throughout</li>
 				</ul>
 			</div>
@@ -245,23 +245,23 @@
 
 		<!-- Level 2: Rams -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">4. Level 2: Rams (Artifact) — Remove</h2>
+			<h2 class="section-heading">4. Level 2: Rams (Artifact) — Remove</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-					<p class="text-yellow-300"><strong>Question:</strong> "Does this earn its existence?"</p>
-					<p class="text-yellow-300/70 text-sm mt-1">Score: 6/10 — Significant excess found</p>
+			<div class="space-y-4 leading-relaxed body-text">
+				<div class="p-4 callout-yellow">
+					<p class="callout-text-yellow"><strong>Question:</strong> "Does this earn its existence?"</p>
+					<p class="callout-meta-yellow">Score: 6/10 — Significant excess found</p>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Finding: Script Proliferation</h3>
+				<h3 class="mt-6 subsection-heading">Finding: Script Proliferation</h3>
 				<p>
 					<strong>155 JavaScript files</strong> in the scripts directory, with only ~20 actively needed:
 				</p>
 
 				<div class="grid md:grid-cols-2 gap-4">
-					<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-						<h4 class="text-lg font-semibold mb-3 text-white/80">Before</h4>
-						<ul class="space-y-2 text-sm text-white/60">
+					<div class="p-4 info-card">
+						<h4 class="mb-3 card-heading">Before</h4>
+						<ul class="space-y-2 card-list">
 							<li>• 155 scripts total</li>
 							<li>• 35 explicitly archived</li>
 							<li>• ~70 likely obsolete</li>
@@ -270,9 +270,9 @@
 						</ul>
 					</div>
 
-					<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-						<h4 class="text-lg font-semibold mb-3 text-white/80">After</h4>
-						<ul class="space-y-2 text-sm text-white/60">
+					<div class="p-4 info-card">
+						<h4 class="mb-3 card-heading">After</h4>
+						<ul class="space-y-2 card-list">
 							<li>• 13 scripts active</li>
 							<li>• 153 scripts archived</li>
 							<li>• Organized into categories:</li>
@@ -283,11 +283,11 @@
 					</div>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Action: Archived Obsolete Artifacts</h3>
+				<h3 class="mt-6 subsection-heading">Action: Archived Obsolete Artifacts</h3>
 				<ul class="list-disc list-inside space-y-2 pl-4">
 					<li>Moved 153 scripts to organized archive directories</li>
-					<li>Archived Railway configuration to <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">config/archive/</code></li>
-					<li>Moved Railway docs to <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">docs/archive/railway/</code></li>
+					<li>Archived Railway configuration to <code class="code-inline">config/archive/</code></li>
+					<li>Moved Railway docs to <code class="code-inline">docs/archive/railway/</code></li>
 					<li>Created archive README documenting restoration process</li>
 				</ul>
 			</div>
@@ -295,24 +295,24 @@
 
 		<!-- Level 3: Heidegger -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">5. Level 3: Heidegger (System) — Reconnect</h2>
+			<h2 class="section-heading">5. Level 3: Heidegger (System) — Reconnect</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<div class="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-					<p class="text-green-300"><strong>Question:</strong> "Does this serve the whole?"</p>
-					<p class="text-green-300/70 text-sm mt-1">Score: 7/10 — Minor disconnection found</p>
+			<div class="space-y-4 leading-relaxed body-text">
+				<div class="p-4 callout-green">
+					<p class="callout-text-green"><strong>Question:</strong> "Does this serve the whole?"</p>
+					<p class="callout-meta-green">Score: 7/10 — Minor disconnection found</p>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Finding: Architectural Confusion</h3>
+				<h3 class="mt-6 subsection-heading">Finding: Architectural Confusion</h3>
 				<p>
 					The README described three different deployment targets, creating systemic incoherence:
 				</p>
 
-				<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm">
-					<p class="text-white/40">// README claimed:</p>
-					<p class="text-white/90">1. Node.js + Railway (documented as primary)</p>
-					<p class="text-white/90">2. n8n (mentioned as future target)</p>
-					<p class="text-white/90">3. Cloudflare Workers (actual production)</p>
+				<div class="p-4 font-mono code-block">
+					<p class="code-comment">// README claimed:</p>
+					<p class="code-primary">1. Node.js + Railway (documented as primary)</p>
+					<p class="code-primary">2. n8n (mentioned as future target)</p>
+					<p class="code-primary">3. Cloudflare Workers (actual production)</p>
 				</div>
 
 				<p class="mt-4">
@@ -320,12 +320,12 @@
 					undocumented within the system itself.
 				</p>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">Action: Unified Documentation</h3>
+				<h3 class="mt-6 subsection-heading">Action: Unified Documentation</h3>
 				<ul class="list-disc list-inside space-y-2 pl-4">
-					<li>Rewrote <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">README.md</code> for Cloudflare Workers architecture</li>
-					<li>Created <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">docs/ARCHITECTURE.md</code> documenting system context</li>
-					<li>Added <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">services/LEGACY.md</code> deprecation guide</li>
-					<li>Added <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">monitoring/LEGACY.md</code> deprecation guide</li>
+					<li>Rewrote <code class="code-inline">README.md</code> for Cloudflare Workers architecture</li>
+					<li>Created <code class="code-inline">docs/ARCHITECTURE.md</code> documenting system context</li>
+					<li>Added <code class="code-inline">services/LEGACY.md</code> deprecation guide</li>
+					<li>Added <code class="code-inline">monitoring/LEGACY.md</code> deprecation guide</li>
 					<li>Documented the hermeneutic circle: how Kickstand fits into the larger system</li>
 				</ul>
 			</div>
@@ -333,79 +333,79 @@
 
 		<!-- Results -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">6. Results</h2>
+			<h2 class="section-heading">6. Results</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<div class="overflow-x-auto">
-					<table class="w-full text-sm">
+					<table class="w-full data-table">
 						<thead>
-							<tr class="border-b border-white/20">
-								<th class="text-left py-2 text-white/80">Metric</th>
-								<th class="text-left py-2 text-white/80">Before</th>
-								<th class="text-left py-2 text-white/80">After</th>
-								<th class="text-left py-2 text-white/80">Change</th>
+							<tr class="table-header-row">
+								<th class="text-left py-2 table-header">Metric</th>
+								<th class="text-left py-2 table-header">Before</th>
+								<th class="text-left py-2 table-header">After</th>
+								<th class="text-left py-2 table-header">Change</th>
 							</tr>
 						</thead>
-						<tbody class="text-white/60">
-							<tr class="border-b border-white/10">
+						<tbody class="table-body">
+							<tr class="table-row">
 								<td class="py-2">Health Score</td>
 								<td class="py-2">6.2/10</td>
-								<td class="py-2 text-green-400">9.2/10</td>
-								<td class="py-2 text-green-400">+48%</td>
+								<td class="py-2 table-success">9.2/10</td>
+								<td class="py-2 table-success">+48%</td>
 							</tr>
-							<tr class="border-b border-white/10">
+							<tr class="table-row">
 								<td class="py-2">Active Scripts</td>
 								<td class="py-2">155</td>
 								<td class="py-2">13</td>
-								<td class="py-2 text-green-400">-92%</td>
+								<td class="py-2 table-success">-92%</td>
 							</tr>
-							<tr class="border-b border-white/10">
+							<tr class="table-row">
 								<td class="py-2">Archived Scripts</td>
 								<td class="py-2">35</td>
 								<td class="py-2">153</td>
 								<td class="py-2">+337%</td>
 							</tr>
-							<tr class="border-b border-white/10">
+							<tr class="table-row">
 								<td class="py-2">TypeScript Errors</td>
 								<td class="py-2">~30</td>
-								<td class="py-2 text-green-400">0</td>
-								<td class="py-2 text-green-400">-100%</td>
+								<td class="py-2 table-success">0</td>
+								<td class="py-2 table-success">-100%</td>
 							</tr>
-							<tr class="border-b border-white/10">
+							<tr class="table-row">
 								<td class="py-2">Build Status</td>
-								<td class="py-2 text-red-400">Failing</td>
-								<td class="py-2 text-green-400">Passing</td>
-								<td class="py-2 text-green-400">Fixed</td>
+								<td class="py-2 table-error">Failing</td>
+								<td class="py-2 table-success">Passing</td>
+								<td class="py-2 table-success">Fixed</td>
 							</tr>
 							<tr>
 								<td class="py-2">Documentation</td>
 								<td class="py-2">Outdated</td>
-								<td class="py-2 text-green-400">Current</td>
-								<td class="py-2 text-green-400">Unified</td>
+								<td class="py-2 table-success">Current</td>
+								<td class="py-2 table-success">Unified</td>
 							</tr>
 						</tbody>
 					</table>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">TypeScript Fixes Applied</h3>
+				<h3 class="mt-6 subsection-heading">TypeScript Fixes Applied</h3>
 				<p>Key fixes to achieve zero build errors:</p>
 
 				<ul class="list-disc list-inside space-y-2 pl-4">
-					<li>Added <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">warn()</code> method to Logger class</li>
-					<li>Fixed Cloudflare Workflow API (<code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">event.payload</code> not <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">event.params</code>)</li>
-					<li>Fixed <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">Logger.error()</code> call signatures throughout</li>
+					<li>Added <code class="code-inline">warn()</code> method to Logger class</li>
+					<li>Fixed Cloudflare Workflow API (<code class="code-inline">event.payload</code> not <code class="code-inline">event.params</code>)</li>
+					<li>Fixed <code class="code-inline">Logger.error()</code> call signatures throughout</li>
 					<li>Added type assertions for API responses</li>
-					<li>Updated <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">MonitorResult</code> interface</li>
-					<li>Removed <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">@types/node</code> from tsconfig to resolve conflicts</li>
+					<li>Updated <code class="code-inline">MonitorResult</code> interface</li>
+					<li>Removed <code class="code-inline">@types/node</code> from tsconfig to resolve conflicts</li>
 				</ul>
 			</div>
 		</section>
 
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">7. Conclusion</h2>
+			<h2 class="section-heading">7. Conclusion</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					This case study validates the Subtractive Triad as an effective framework for production
 					system audits. The three levels complement each other:
@@ -423,43 +423,283 @@
 					now reflects this clarity.
 				</p>
 
-				<div class="p-6 bg-white/5 border border-white/10 rounded-lg mt-6">
-					<p class="text-white/80 text-center text-lg">
+				<div class="p-6 mt-6 quote-box">
+					<p class="text-center card-heading">
 						<strong>The Subtractive Path Forward</strong>
 					</p>
 					<div class="grid md:grid-cols-3 gap-4 mt-4 text-center">
 						<div>
-							<div class="text-blue-400 font-semibold">Unify</div>
-							<div class="text-white/60 text-sm">the implementation</div>
+							<div class="font-semibold action-blue">Unify</div>
+							<div class="card-list">the implementation</div>
 						</div>
 						<div>
-							<div class="text-yellow-400 font-semibold">Remove</div>
-							<div class="text-white/60 text-sm">the obsolete artifacts</div>
+							<div class="font-semibold action-yellow">Remove</div>
+							<div class="card-list">the obsolete artifacts</div>
 						</div>
 						<div>
-							<div class="text-green-400 font-semibold">Reconnect</div>
-							<div class="text-white/60 text-sm">the documentation</div>
+							<div class="font-semibold action-green">Reconnect</div>
+							<div class="card-list">the documentation</div>
 						</div>
 					</div>
 				</div>
 
-				<p class="text-white/80 text-lg mt-6 text-center italic">
+				<p class="mt-6 text-center italic quote-text">
 					"Creation is the discipline of removing what obscures."
 				</p>
 			</div>
 		</section>
 
 		<!-- Footer -->
-		<div class="border-t border-white/10 pt-6">
-			<p class="text-sm text-white/40">
+		<div class="pt-6 paper-footer">
+			<p class="footer-text">
 				This case study is part of the CREATE SOMETHING research program exploring AI-native
 				development patterns. View the
-				<a href="https://github.com/Half-Dozen/kickstand-monitoring" class="underline hover:text-white/60">
+				<a href="https://github.com/Half-Dozen/kickstand-monitoring" class="footer-link">
 					Kickstand repository
 				</a>
 				or read more about our
-				<a href="/methodology" class="underline hover:text-white/60">methodology</a>.
+				<a href="/methodology" class="footer-link">methodology</a>.
 			</p>
 		</div>
 	</div>
 </div>
+
+<style>
+	/* Structure: Tailwind | Design: Canon */
+	.paper-container {
+		background: var(--color-bg-pure);
+		color: var(--color-fg-primary);
+	}
+
+	.paper-header {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.paper-id {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+	}
+
+	.paper-title {
+		font-size: var(--text-h1);
+	}
+
+	.paper-subtitle {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-lg);
+	}
+
+	.paper-meta {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	.abstract-section {
+		border-left: 4px solid var(--color-border-emphasis);
+	}
+
+	.section-heading {
+		font-size: var(--text-h2);
+	}
+
+	.subsection-heading {
+		font-size: var(--text-h3);
+		color: var(--color-fg-primary);
+	}
+
+	.body-text {
+		color: var(--color-fg-secondary);
+	}
+
+	.text-emphasis {
+		color: var(--color-fg-primary);
+	}
+
+	/* Metric Cards */
+	.metric-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.metric-value {
+		font-size: var(--text-h2);
+		color: var(--color-fg-primary);
+	}
+
+	.metric-success {
+		color: var(--color-success);
+	}
+
+	.metric-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Data Tables */
+	.data-table {
+		font-size: var(--text-body-sm);
+	}
+
+	.table-header-row {
+		border-bottom: 1px solid var(--color-border-emphasis);
+	}
+
+	.table-header {
+		color: var(--color-fg-secondary);
+	}
+
+	.table-body {
+		color: var(--color-fg-tertiary);
+	}
+
+	.table-row {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.table-cell-emphasis {
+		color: var(--color-fg-secondary);
+	}
+
+	.table-success {
+		color: var(--color-success);
+	}
+
+	.table-error {
+		color: var(--color-error);
+	}
+
+	/* Action Colors */
+	.action-blue {
+		color: var(--color-data-1);
+	}
+
+	.action-yellow {
+		color: var(--color-data-4);
+	}
+
+	.action-green {
+		color: var(--color-data-2);
+	}
+
+	/* Callouts */
+	.callout-blue {
+		background: rgba(96, 165, 250, 0.1);
+		border: 1px solid rgba(96, 165, 250, 0.3);
+		border-radius: var(--radius-lg);
+	}
+
+	.callout-text-blue {
+		color: #93c5fd;
+	}
+
+	.callout-meta-blue {
+		color: rgba(147, 197, 253, 0.7);
+		font-size: var(--text-body-sm);
+		margin-top: 0.25rem;
+	}
+
+	.callout-yellow {
+		background: rgba(251, 191, 36, 0.1);
+		border: 1px solid rgba(251, 191, 36, 0.3);
+		border-radius: var(--radius-lg);
+	}
+
+	.callout-text-yellow {
+		color: #fcd34d;
+	}
+
+	.callout-meta-yellow {
+		color: rgba(252, 211, 77, 0.7);
+		font-size: var(--text-body-sm);
+		margin-top: 0.25rem;
+	}
+
+	.callout-green {
+		background: rgba(34, 197, 94, 0.1);
+		border: 1px solid rgba(34, 197, 94, 0.3);
+		border-radius: var(--radius-lg);
+	}
+
+	.callout-text-green {
+		color: #86efac;
+	}
+
+	.callout-meta-green {
+		color: rgba(134, 239, 172, 0.7);
+		font-size: var(--text-body-sm);
+		margin-top: 0.25rem;
+	}
+
+	/* Info Cards */
+	.info-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-heading {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.card-list {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Code */
+	.code-block {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		font-size: var(--text-body-sm);
+	}
+
+	.code-primary {
+		color: var(--color-fg-primary);
+	}
+
+	.code-comment {
+		color: var(--color-fg-muted);
+	}
+
+	.code-inline {
+		color: var(--color-fg-primary);
+		background: var(--color-bg-surface);
+		padding: 0.125rem 0.5rem;
+		border-radius: var(--radius-sm);
+	}
+
+	/* Quote Box */
+	.quote-box {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.quote-text {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-lg);
+	}
+
+	/* Footer */
+	.paper-footer {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.footer-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.footer-link {
+		text-decoration: underline;
+		color: var(--color-fg-tertiary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.footer-link:hover {
+		color: var(--color-fg-secondary);
+	}
+</style>
