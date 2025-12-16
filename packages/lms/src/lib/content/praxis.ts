@@ -79,8 +79,10 @@ bd create "Explore slash commands" --type=task --labels=learn
 Help me set up Claude Code CLI on my system.
 
 Walk me through:
-1. Installing the claude CLI (npm or direct download)
-2. Authenticating with my Anthropic API key
+1. Installing the claude CLI (npm install -g @anthropic-ai/claude-code)
+2. Authenticating—I'll use [Claude Max plan / API key]
+   - Max plan: authenticate via claude.ai account (recommended)
+   - API key: get from console.anthropic.com
 3. Running my first prompt in an existing project
 4. Understanding key slash commands (/help, /status, /clear)
 
@@ -89,7 +91,8 @@ After setup, explain the partnership model:
 - What I should handle (judgment calls, creative direction, domain expertise)
 - How to calibrate trust over time
 
-My operating system: [macOS/Linux/Windows]`
+My operating system: [macOS/Linux/Windows]
+My auth method: [Claude Max / API key]`
   },
   {
     id: 'wezterm-setup',

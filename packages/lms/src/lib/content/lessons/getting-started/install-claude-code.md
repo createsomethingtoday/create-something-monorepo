@@ -44,15 +44,30 @@ npx @anthropic-ai/claude-code
 
 ## Authentication
 
-Claude Code needs an Anthropic API key. Get one at [console.anthropic.com](https://console.anthropic.com/).
+You have two options for authenticating Claude Code:
 
-Then authenticate:
+### Option 1: Claude Max Plan (Recommended)
 
-```bash
-claude auth
-```
+The [Claude Max plan](https://claude.ai/pricing) includes Claude Code usage in your subscription—no API key needed, no usage tracking.
 
-Follow the prompts to enter your API key. It will be stored securely in your system keychain.
+1. Subscribe to Claude Max at [claude.ai/pricing](https://claude.ai/pricing)
+2. Run `claude` in your terminal
+3. Select "Claude.ai account" when prompted
+4. Authenticate through your browser
+
+This is the simplest path. Your subscription covers unlimited Claude Code usage.
+
+For details: [Using Claude Code with your Pro or Max plan](https://support.claude.com/en/articles/11145838-using-claude-code-with-your-pro-or-max-plan)
+
+### Option 2: API Key
+
+If you prefer pay-as-you-go or need API access for other tools:
+
+1. Get an API key at [console.anthropic.com](https://console.anthropic.com/)
+2. Run `claude auth`
+3. Enter your API key when prompted
+
+The key is stored securely in your system keychain.
 
 ## First Session
 
