@@ -63,7 +63,17 @@ export const PRAXIS_EXERCISES: PraxisExercise[] = [
       { title: 'Document 3+ duplication patterns found', type: 'task', labels: ['learn'] },
       { title: 'Propose unified abstraction', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me identify duplication patterns in my codebase and create MY unification strategy.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Identify duplication in [target]" --type=task --labels=learn,foundations
+bd create "Document 3+ duplication patterns found" --type=task --labels=learn
+bd create "Propose unified abstraction" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me identify duplication patterns in my codebase and create MY unification strategy.
 
 I'm building my own DRY discipline. Analyze [FILE_OR_DIRECTORY] for:
 
@@ -99,7 +109,17 @@ The target I want to analyze: [YOUR_FILE_OR_DIRECTORY]`
       { title: 'List elements that fail "earns existence" test', type: 'task', labels: ['learn'] },
       { title: 'Propose removal strategy with rationale', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me audit [COMPONENT_OR_PAGE] using Rams' "Weniger, aber besser" principle.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Audit [component] with Rams principles" --type=task --labels=learn,foundations
+bd create "List elements that fail 'earns existence' test" --type=task --labels=learn
+bd create "Propose removal strategy with rationale" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me audit [COMPONENT_OR_PAGE] using Rams' "Weniger, aber besser" principle.
 
 I'm defining MY standard for what "earns its existence." For each element, ask:
 
@@ -137,7 +157,18 @@ The artifact I want to audit: [YOUR_COMPONENT_OR_PAGE]`
       { title: 'Map downstream dependents', type: 'task', labels: ['learn'] },
       { title: 'Evaluate system coherence—does it serve the whole?', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me trace connections for [MODULE] and evaluate its role in MY system.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Trace connections for [module]" --type=research --labels=learn,foundations
+bd create "Map upstream dependencies" --type=task --labels=learn
+bd create "Map downstream dependents" --type=task --labels=learn
+bd create "Evaluate system coherence—does it serve the whole?" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me trace connections for [MODULE] and evaluate its role in MY system.
 
 I'm learning to think at the Heidegger level: "Does this serve the whole?"
 
@@ -181,7 +212,19 @@ The module I want to trace: [YOUR_MODULE_PATH]`
       { title: 'Level 3: Heidegger analysis—verify coherence', type: 'task', labels: ['learn'] },
       { title: 'Synthesize findings into recommendations', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me apply the complete Subtractive Triad to [TARGET] and create MY audit framework.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Complete Triad Audit of [target]" --type=feature --labels=learn,foundations
+bd create "Level 1: DRY analysis—identify duplication" --type=task --labels=learn
+bd create "Level 2: Rams analysis—question existence" --type=task --labels=learn
+bd create "Level 3: Heidegger analysis—verify coherence" --type=task --labels=learn
+bd create "Synthesize findings into recommendations" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me apply the complete Subtractive Triad to [TARGET] and create MY audit framework.
 
 Walk me through all three levels:
 
@@ -234,7 +277,18 @@ The target for my audit: [YOUR_FILE_COMPONENT_OR_SYSTEM]`
       { title: 'Create mapping: Tailwind → Canon tokens', type: 'task', labels: ['learn'] },
       { title: 'Apply migration, preserve layout utilities', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me create MY design token system (my own "Canon CSS").
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Migrate [file] from Tailwind to Canon" --type=task --labels=learn,craft
+bd create "Audit file for design utilities (colors, shadows, radii)" --type=task --labels=learn
+bd create "Create mapping: Tailwind → Canon tokens" --type=task --labels=learn
+bd create "Apply migration, preserve layout utilities" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me create MY design token system (my own "Canon CSS").
 
 I'm building a semantic design token system for my project. Guide me through:
 
@@ -286,7 +340,19 @@ My brand colors/preferences: [YOUR_BRAND_INFO]`
       { title: 'Apply Canon CSS tokens (no Tailwind design utilities)', type: 'task', labels: ['learn'] },
       { title: 'Verify component recedes into use—test with real usage', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me build [COMPONENT_NAME] following MY Canon design principles.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Build [component] with Canon principles" --type=feature --labels=learn,craft
+bd create "Design minimal prop interface" --type=task --labels=learn
+bd create "Implement with Svelte 5 runes" --type=task --labels=learn
+bd create "Apply Canon CSS tokens (no Tailwind design utilities)" --type=task --labels=learn
+bd create "Verify component recedes into use—test with real usage" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me build [COMPONENT_NAME] following MY Canon design principles.
 
 I want a component that "recedes into use"—invisible when working, noticed only when broken.
 
@@ -335,7 +401,19 @@ My design tokens file: [PATH_TO_YOUR_TOKENS]`
       { title: 'Test with prefers-reduced-motion', type: 'task', labels: ['learn'] },
       { title: 'Propose restraint-based alternatives for decorative animations', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me audit animations on [URL_OR_PAGE] and define MY motion philosophy.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Motion audit of [URL/page]" --type=research --labels=learn,craft
+bd create "Catalog all animations on page" --type=task --labels=learn
+bd create "Categorize each as functional or decorative" --type=task --labels=learn
+bd create "Test with prefers-reduced-motion" --type=task --labels=learn
+bd create "Propose restraint-based alternatives for decorative animations" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me audit animations on [URL_OR_PAGE] and define MY motion philosophy.
 
 I'm building MY animation guidelines. For each animation found:
 
@@ -389,7 +467,19 @@ Target to audit: [YOUR_URL_OR_PAGE_PATH]`
       { title: 'Write down migration (reversible)', type: 'task', labels: ['learn'] },
       { title: 'Add indexes with justification', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me design a D1 database schema for [FEATURE] following MY minimal data philosophy.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: D1 migration for [feature]" --type=task --labels=learn,infrastructure
+bd create "Design minimal schema (question every column)" --type=task --labels=learn
+bd create "Write up migration" --type=task --labels=learn
+bd create "Write down migration (reversible)" --type=task --labels=learn
+bd create "Add indexes with justification" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me design a D1 database schema for [FEATURE] following MY minimal data philosophy.
 
 I'm building MY approach to database design. For [FEATURE]:
 
@@ -444,7 +534,20 @@ Expected queries: [YOUR_COMMON_QUERIES]`
       { title: 'Configure service bindings for composition', type: 'task', labels: ['learn'] },
       { title: 'Test end-to-end with wrangler dev', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me build a Cloudflare Worker for [SERVICE_NAME] following MY service composition patterns.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Build [service] Worker" --type=feature --labels=learn,infrastructure
+bd create "Design service interface (inputs, outputs, errors)" --type=task --labels=learn
+bd create "Implement core handler logic" --type=task --labels=learn
+bd create "Add error handling with proper HTTP semantics" --type=task --labels=learn
+bd create "Configure service bindings for composition" --type=task --labels=learn
+bd create "Test end-to-end with wrangler dev" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me build a Cloudflare Worker for [SERVICE_NAME] following MY service composition patterns.
 
 I'm defining MY approach to edge services. For [SERVICE_NAME]:
 
@@ -503,7 +606,20 @@ Bindings needed: [D1/KV/R2/OTHER_WORKERS]`
       { title: 'Test bd ready to verify unblocked work surfaces', type: 'task', labels: ['learn'] },
       { title: 'Document claim pattern for your workflow', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me set up MY work coordination system using Beads for [PROJECT_NAME].
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Set up Beads coordination for [project]" --type=feature --labels=learn,agents
+bd create "Initialize .beads/ directory with bd init" --type=task --labels=learn
+bd create "Create 3+ issues with proper labels and priority" --type=task --labels=learn
+bd create "Establish dependency graph with bd dep add" --type=task --labels=learn
+bd create "Test bd ready to verify unblocked work surfaces" --type=task --labels=learn
+bd create "Document claim pattern for your workflow" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me set up MY work coordination system using Beads for [PROJECT_NAME].
 
 I'm building MY approach to agent-native task management. Guide me through:
 
@@ -562,7 +678,21 @@ Domains/labels I use: [YOUR_LABELS]`
       { title: 'Add health check with measurable threshold', type: 'task', labels: ['learn'] },
       { title: 'Export ethos and commit to repository', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me create MY ethos—a living document of principles that guide my work.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Configure ethos for [project/domain]" --type=feature --labels=learn,agents
+bd create "Define 1+ DRY-level principle with learn_ethos" --type=task --labels=learn
+bd create "Define 1+ Rams-level principle with learn_ethos" --type=task --labels=learn
+bd create "Define 1+ Heidegger-level principle with learn_ethos" --type=task --labels=learn
+bd create "Add constraint to enforce a principle" --type=task --labels=learn
+bd create "Add health check with measurable threshold" --type=task --labels=learn
+bd create "Export ethos and commit to repository" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me create MY ethos—a living document of principles that guide my work.
 
 I'm building my own version of CREATE SOMETHING's ethos layer. Guide me through:
 
@@ -622,7 +752,20 @@ My domain is: [YOUR_DOMAIN - e.g., "React component library", "API services", "c
       { title: 'Create problem statement artifact', type: 'task', labels: ['learn'] },
       { title: 'Create stakeholder map artifact', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me practice hermeneutic discovery for [PROJECT_OR_CLIENT].
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Discovery session for [client/project]" --type=research --labels=learn,method
+bd create "Prepare hermeneutic questions (what, why, for whom)" --type=task --labels=learn
+bd create "Conduct session—document stated needs" --type=task --labels=learn
+bd create "Analyze gap between stated and real needs" --type=task --labels=learn
+bd create "Create problem statement artifact" --type=task --labels=learn
+bd create "Create stakeholder map artifact" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me practice hermeneutic discovery for [PROJECT_OR_CLIENT].
 
 I'm developing MY discovery methodology. Simulate a discovery session where you play the client and I ask questions.
 
@@ -686,7 +829,20 @@ Client/Project context: [DESCRIBE_THE_SCENARIO]`
       { title: 'Identify extension points with constraints', type: 'task', labels: ['learn'] },
       { title: 'Document rationale for each constraint', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me design MY template architecture for [VERTICAL].
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Design template for [vertical]" --type=feature --labels=learn,systems
+bd create "Research vertical—identify common patterns" --type=research --labels=learn
+bd create "Define structure (what cannot change)" --type=task --labels=learn
+bd create "Define configuration schema (what can change)" --type=task --labels=learn
+bd create "Identify extension points with constraints" --type=task --labels=learn
+bd create "Document rationale for each constraint" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me design MY template architecture for [VERTICAL].
 
 I'm building a template system for [VERTICAL] (e.g., law firms, architecture studios, restaurants). Guide me through:
 
@@ -754,7 +910,20 @@ Vertical: [YOUR_VERTICAL - e.g., "law firms", "restaurants", "portfolios"]`
       { title: 'Apply Subtractive Triad to each property', type: 'task', labels: ['learn'] },
       { title: 'Propose structural improvements with rationale', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me evaluate MY system as a coherent whole.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: System audit of [system/organization]" --type=research --labels=learn,systems
+bd create "Map all properties and their relationships" --type=task --labels=learn
+bd create "Trace hermeneutic circle—does each serve the whole?" --type=task --labels=learn
+bd create "Identify gaps where circle breaks" --type=task --labels=learn
+bd create "Apply Subtractive Triad to each property" --type=task --labels=learn
+bd create "Propose structural improvements with rationale" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me evaluate MY system as a coherent whole.
 
 I'm auditing [SYSTEM_OR_ORGANIZATION] to see if it forms a true hermeneutic circle. Guide me through:
 
@@ -825,7 +994,20 @@ System to audit: [YOUR_SYSTEM - packages, services, products, teams, etc.]`
       { title: 'Map complementary contributions (human vs. agent)', type: 'task', labels: ['learn'] },
       { title: 'Propose workflow improvements', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me audit MY human-agent partnership to improve how we work together.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Partnership audit of [recent session]" --type=research --labels=learn,partnership
+bd create "Review session transcript for delegation moments" --type=task --labels=learn
+bd create "Identify collaboration vs. handoff patterns" --type=task --labels=learn
+bd create "Assess trust calibration—over/under-trusted?" --type=task --labels=learn
+bd create "Map complementary contributions (human vs. agent)" --type=task --labels=learn
+bd create "Propose workflow improvements" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me audit MY human-agent partnership to improve how we work together.
 
 I want to analyze a recent Claude Code session and develop MY partnership patterns. Guide me through:
 
@@ -896,7 +1078,19 @@ Recent session context: [DESCRIBE_WHAT_YOU_WORKED_ON]`
       { title: 'Set up pre-commit or validation hook', type: 'task', labels: ['learn'] },
       { title: 'Test tool integration end-to-end', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me configure MCP for MY project to extend Claude Code's capabilities.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Configure MCP for [project]" --type=feature --labels=learn,partnership
+bd create "Create .mcp.json configuration" --type=task --labels=learn
+bd create "Define a domain-specific skill" --type=task --labels=learn
+bd create "Set up pre-commit or validation hook" --type=task --labels=learn
+bd create "Test tool integration end-to-end" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me configure MCP for MY project to extend Claude Code's capabilities.
 
 I'm setting up MY tool ecosystem. Guide me through:
 
@@ -984,7 +1178,20 @@ Repetitive operations I want to automate: [YOUR_OPERATIONS]`
       { title: 'Define first ethos principle using learn_ethos', type: 'task', labels: ['learn'] },
       { title: 'Reflect: How does the recursive structure feel?', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me set up Learn MCP so I can learn the Subtractive Triad through Claude Code.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Set up Learn MCP in Claude Code" --type=task --labels=learn,partnership
+bd create "Add MCP server to settings.json" --type=task --labels=learn
+bd create "Complete magic link authentication" --type=task --labels=learn
+bd create "Test learn_status and learn_lesson" --type=task --labels=learn
+bd create "Define first ethos principle using learn_ethos" --type=task --labels=learn
+bd create "Reflect: How does the recursive structure feel?" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me set up Learn MCP so I can learn the Subtractive Triad through Claude Code.
 
 This is recursive: I'm using Claude Code to learn how to use Claude Code better. Guide me through:
 
@@ -1051,7 +1258,20 @@ This is meta-learning: understanding by doing, not just reading.`
       { title: 'Implement tool execution logic', type: 'task', labels: ['learn'] },
       { title: 'Test with Claude Code integration', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me build MY own MCP server for [DOMAIN].
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Build MCP server for [domain]" --type=feature --labels=learn,advanced
+bd create "Design tool composition—what operations merge?" --type=task --labels=learn
+bd create "Define JSON schema for tool inputs" --type=task --labels=learn
+bd create "Implement stdio transport handler" --type=task --labels=learn
+bd create "Implement tool execution logic" --type=task --labels=learn
+bd create "Test with Claude Code integration" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me build MY own MCP server for [DOMAIN].
 
 I'm creating a custom MCP server that extends Claude Code for my specific use case. Guide me through:
 
@@ -1134,7 +1354,20 @@ Operations to compose: [YOUR_OPERATIONS]`
       { title: 'Test hooks with simulated inputs', type: 'task', labels: ['learn'] },
       { title: 'Document hook behavior for team', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me build MY hook suite that enforces my project standards automatically.
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Build hook suite for [project]" --type=feature --labels=learn,advanced
+bd create "Design hook architecture (which events, what actions)" --type=task --labels=learn
+bd create "Implement validation hook (exit code 0/1/2)" --type=task --labels=learn
+bd create "Implement session lifecycle hook" --type=task --labels=learn
+bd create "Test hooks with simulated inputs" --type=task --labels=learn
+bd create "Document hook behavior for team" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me build MY hook suite that enforces my project standards automatically.
 
 I'm creating hooks that make Claude Code enforce MY rules. Guide me through:
 
@@ -1217,7 +1450,20 @@ Standards to enforce: [YOUR_STANDARDS]`
       { title: 'Implement coordination logic', type: 'task', labels: ['learn'] },
       { title: 'Handle error recovery and graceful degradation', type: 'task', labels: ['learn'] }
     ],
-    claudeCodePrompt: `Help me design MY multi-agent system for [COMPLEX_TASK].
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Praxis: Design multi-agent system for [task]" --type=feature --labels=learn,advanced
+bd create "Choose orchestration pattern (parallel, sequential, swarm)" --type=task --labels=learn
+bd create "Define agent specializations and boundaries" --type=task --labels=learn
+bd create "Design communication mechanism" --type=task --labels=learn
+bd create "Implement coordination logic" --type=task --labels=learn
+bd create "Handle error recovery and graceful degradation" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me design MY multi-agent system for [COMPLEX_TASK].
 
 I'm building a system where multiple agents work together. Guide me through:
 
