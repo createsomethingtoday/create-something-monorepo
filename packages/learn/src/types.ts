@@ -114,6 +114,31 @@ export interface ProgressOverview {
 // Praxis Exercises
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface BeadsTask {
+	title: string;
+	type: 'task' | 'feature' | 'research';
+	labels?: string[];
+}
+
+export interface PraxisExercise {
+	id: string;
+	lessonId: string;
+	pathId: string;
+	title: string;
+	description: string;
+	type: 'triad-audit' | 'code' | 'analysis' | 'design';
+	difficulty: 'beginner' | 'intermediate' | 'advanced';
+	duration: string;
+	objectives: string[];
+	beadsTasks: BeadsTask[];
+	claudeCodePrompt: string | null;
+}
+
+export interface PraxisExerciseResponse {
+	exercise: PraxisExercise;
+	pathTitle: string;
+}
+
 export interface PraxisAttempt {
 	id: number;
 	praxisId: string;

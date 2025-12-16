@@ -10,7 +10,8 @@ import type {
 	LessonContent,
 	MagicLinkPollResponse,
 	ProgressOverview,
-	PraxisAttempt
+	PraxisAttempt,
+	PraxisExerciseResponse
 } from '../types.js';
 
 const LMS_BASE_URL = 'https://learn.createsomething.space';
@@ -98,6 +99,20 @@ export class LMSClient {
 		}
 
 		return response.text();
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Praxis Exercises
+	// ─────────────────────────────────────────────────────────────────────────
+
+	async getPraxisExercise(praxisId: string): Promise<PraxisExerciseResponse> {
+		const response = await fetch(`${LMS_BASE_URL}/api/praxis/${praxisId}`);
+
+		if (!response.ok) {
+			throw new Error(`Praxis exercise not found: ${praxisId}`);
+		}
+
+		return response.json() as Promise<PraxisExerciseResponse>;
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
