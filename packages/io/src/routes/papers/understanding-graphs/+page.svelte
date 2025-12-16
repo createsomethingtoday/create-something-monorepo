@@ -15,13 +15,13 @@
 	<meta name="description" content="Research paper applying Heidegger's hermeneutic circle to develop minimal dependency documentation that captures only understanding-critical relationships." />
 </svelte:head>
 
-<div class="min-h-screen bg-black text-white p-6">
+<div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">
 		<!-- Header -->
-		<div class="border-b border-white/10 pb-8">
-			<div class="font-mono text-white/40 text-sm mb-4">PAPER-2024-003</div>
-			<h1 class="text-4xl font-bold mb-3">Understanding Graphs: "Less, But Better" Codebase Navigation</h1>
-			<p class="text-white/70 text-lg max-w-3xl">
+		<div class="pb-8 paper-header">
+			<div class="font-mono mb-4 paper-id">PAPER-2024-003</div>
+			<h1 class="mb-3 paper-title">Understanding Graphs: "Less, But Better" Codebase Navigation</h1>
+			<p class="max-w-3xl paper-subtitle">
 				Applying Heidegger's hermeneutic circle to develop minimal dependency documentation
 				that captures only understanding-critical relationships—replacing exhaustive tooling
 				with human-readable insight.
@@ -55,29 +55,29 @@
 
 		<!-- Metrics -->
 		<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold">6</div>
-				<div class="text-sm text-white/60">Packages documented</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">6</div>
+				<div class="metric-label">Packages documented</div>
 			</div>
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold">1</div>
-				<div class="text-sm text-white/60">New Skill created</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">1</div>
+				<div class="metric-label">New Skill created</div>
 			</div>
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold">0</div>
-				<div class="text-sm text-white/60">External tools required</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">0</div>
+				<div class="metric-label">External tools required</div>
 			</div>
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-				<div class="text-2xl font-bold">~2hr</div>
-				<div class="text-sm text-white/60">Development time</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">~2hr</div>
+				<div class="metric-label">Development time</div>
 			</div>
 		</section>
 
 		<!-- Introduction -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">1. Introduction</h2>
+			<h2 class="section-heading">1. Introduction</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					The question arose during a discussion of agent reasoning in large codebases: would
 					Markov Chains improve context management? This led to a deeper inquiry: what do agents
@@ -108,7 +108,7 @@
 					<li>Require no tooling (no LSP, no graph database, no build step)</li>
 				</ul>
 
-				<p class="text-white/80">
+				<p class="emphasis-text">
 					<strong>Contributions:</strong> (1) A hermeneutic methodology for "sufficient" documentation,
 					(2) The UNDERSTANDING.md canonical format, (3) Implementation across CREATE SOMETHING monorepo,
 					(4) A Claude Code Skill for maintaining understanding graphs.
@@ -118,25 +118,25 @@
 
 		<!-- Methodology -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">2. Methodology: Hermeneutic Analysis</h2>
+			<h2 class="section-heading">2. Methodology: Hermeneutic Analysis</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					We applied Heidegger's <em>hermeneutic circle</em>—the interpretive method where
 					understanding emerges through movement between whole and parts. The "whole" was the
 					CREATE SOMETHING methodology; the "part" was dependency documentation.
 				</p>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">2.1 First Movement: Whole → Part</h3>
+				<h3 class="mt-6 subsection-heading">2.1 First Movement: Whole → Part</h3>
 				<p>
 					We began by examining what traditional dependency graphs provide:
 				</p>
 
-				<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm">
-					<p class="text-white/40">// Traditional approach: exhaustive</p>
-					<p class="text-white/90">FileA.ts imports → types.ts, utils.ts, config.ts, ...</p>
-					<p class="text-white/90">FileA.ts calls → functionX(), functionY(), functionZ(), ...</p>
-					<p class="text-white/90">FileA.ts references → TypeA, TypeB, InterfaceC, ...</p>
+				<div class="p-4 font-mono code-block">
+					<p class="code-comment">// Traditional approach: exhaustive</p>
+					<p class="code-primary">FileA.ts imports → types.ts, utils.ts, config.ts, ...</p>
+					<p class="code-primary">FileA.ts calls → functionX(), functionY(), functionZ(), ...</p>
+					<p class="code-primary">FileA.ts references → TypeA, TypeB, InterfaceC, ...</p>
 				</div>
 
 				<p class="mt-4">
@@ -144,7 +144,7 @@
 					<em>unobtrusive</em> (requires tooling), and certainly not "as little as possible."
 				</p>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">2.2 Second Movement: Part → Whole</h3>
+				<h3 class="mt-6 subsection-heading">2.2 Second Movement: Part → Whole</h3>
 				<p>
 					We then asked: what would <em>sufficient</em> documentation look like? The hermeneutic
 					insight emerged: understanding is not about knowing all connections but about knowing
@@ -163,7 +163,7 @@
 					<li><strong>Relationships</strong>: What does this depend on? What depends on this?</li>
 				</ul>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">2.3 The Hermeneutic Insight</h3>
+				<h3 class="mt-6 subsection-heading">2.3 The Hermeneutic Insight</h3>
 				<p>
 					The critical realization: dependency graphs are <em>unidirectional</em> (A depends on B),
 					but understanding flows <em>bidirectionally</em>. Understanding A helps me understand B,
@@ -171,8 +171,8 @@
 					the hermeneutic circle describes.
 				</p>
 
-				<div class="p-4 bg-white/5 border border-white/10 rounded-lg mt-4">
-					<p class="text-white/80 text-center">
+				<div class="p-4 mt-4 callout-box">
+					<p class="text-center callout-text">
 						<strong>Key Insight</strong>: We don't need dependency graphs.<br/>
 						We need <em>understanding</em> graphs.
 					</p>
@@ -182,16 +182,16 @@
 
 		<!-- Implementation -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">3. Implementation</h2>
+			<h2 class="section-heading">3. Implementation</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<h3 class="text-xl font-semibold text-white/90">3.1 The UNDERSTANDING.md Format</h3>
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">3.1 The UNDERSTANDING.md Format</h3>
 				<p>
 					We developed a canonical format that balances human readability with machine parseability:
 				</p>
 
-				<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm overflow-x-auto">
-					<pre class="text-white/90">{`# Understanding: [Package Name]
+				<div class="p-4 font-mono overflow-x-auto code-block">
+					<pre class="code-primary">{`# Understanding: [Package Name]
 
 > **[One-sentence purpose]**
 
@@ -219,12 +219,12 @@
 | [Term]  | [Brief]    | [File]|`}</pre>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">3.2 What Makes It "Less, But Better"</h3>
+				<h3 class="mt-6 subsection-heading">3.2 What Makes It "Less, But Better"</h3>
 
 				<div class="grid md:grid-cols-2 gap-6">
-					<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-						<h4 class="text-lg font-semibold mb-3 text-white/80">Less</h4>
-						<ul class="space-y-2 text-sm text-white/60">
+					<div class="p-6 info-card">
+						<h4 class="mb-3 card-heading">Less</h4>
+						<ul class="space-y-2 card-list">
 							<li>• No external tooling</li>
 							<li>• No graph databases</li>
 							<li>• No visualization requirements</li>
@@ -234,9 +234,9 @@
 						</ul>
 					</div>
 
-					<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-						<h4 class="text-lg font-semibold mb-3 text-white/80">Better</h4>
-						<ul class="space-y-2 text-sm text-white/60">
+					<div class="p-6 info-card">
+						<h4 class="mb-3 card-heading">Better</h4>
+						<ul class="space-y-2 card-list">
 							<li>• Human-readable (developers can read it)</li>
 							<li>• Machine-parseable (Claude can use it)</li>
 							<li>• Captures semantic relationships</li>
@@ -247,13 +247,13 @@
 					</div>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">3.3 Monorepo Implementation</h3>
+				<h3 class="mt-6 subsection-heading">3.3 Monorepo Implementation</h3>
 				<p>
 					We created UNDERSTANDING.md files for all six packages in the CREATE SOMETHING monorepo:
 				</p>
 
-				<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm">
-					<pre class="text-white/90">{`packages/
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`packages/
 ├── components/UNDERSTANDING.md  → Foundation (Vorverständnis)
 ├── tufte/UNDERSTANDING.md       → Visualization foundation
 ├── ltd/UNDERSTANDING.md         → Being-as-Canon
@@ -267,9 +267,9 @@
 					that package in the context of the hermeneutic workflow.
 				</p>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">3.4 Claude Code Skill</h3>
+				<h3 class="mt-6 subsection-heading">3.4 Claude Code Skill</h3>
 				<p>
-					To maintain understanding graphs over time, we created the <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">understanding-graphs</code> Skill.
+					To maintain understanding graphs over time, we created the <code class="inline-code">understanding-graphs</code> Skill.
 					This Skill provides:
 				</p>
 

@@ -8,7 +8,7 @@
  */
 
 import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload } from './types';
-import { hashPassword, verifyPassword, generateUUID, hashToken } from './services/crypto';
+import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
 import { generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
 	findUserByEmail,
@@ -70,6 +70,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	// Auth endpoints
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
 	if (path === '/v1/auth/login' && method === 'POST') return handleLogin(request, env);
+	if (path === '/v1/auth/magic-login' && method === 'POST') return handleMagicLogin(request, env);
+	if (path === '/v1/auth/magic-signup' && method === 'POST') return handleMagicSignup(request, env);
 	if (path === '/v1/auth/refresh' && method === 'POST') return handleRefresh(request, env);
 	if (path === '/v1/auth/logout' && method === 'POST') return handleLogout(request, env);
 
@@ -246,6 +248,88 @@ async function handleLogout(request: Request, env: Env): Promise<Response> {
 	}
 
 	return json({ success: true });
+}
+
+async function handleMagicLogin(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	const body = await parseJSON<{ email?: string; source?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+
+	const { email, source = 'lms' } = body;
+	if (!email) {
+		return json({ error: 'invalid_request', message: 'Email required', status: 400 }, 400);
+	}
+
+	const user = await findUserByEmail(db, email);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	// Check if user is deleted
+	if (user.deleted_at) {
+		return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
+	}
+
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+
+	return json({
+		access_token: accessToken,
+		refresh_token: refreshToken,
+		token_type: 'Bearer',
+		expires_in: expiresIn,
+		user: {
+			id: user.id,
+			email: user.email,
+		},
+	});
+}
+
+async function handleMagicSignup(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	const body = await parseJSON<{ email?: string; source?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+
+	const { email, source = 'lms' } = body;
+
+	if (!email) {
+		return json({ error: 'invalid_request', message: 'Email required', status: 400 }, 400);
+	}
+
+	if (!isValidEmail(email)) {
+		return json({ error: 'invalid_email', message: 'Invalid email format', status: 400 }, 400);
+	}
+
+	const existing = await findUserByEmail(db, email);
+	if (existing) {
+		return json({ error: 'email_exists', message: 'Email already registered', status: 409 }, 409);
+	}
+
+	// Generate a random unguessable password hash
+	// Users can't log in with password - only via magic link or reset flow
+	const randomPassword = generateSecureToken(32);
+	const passwordHash = await hashPassword(randomPassword);
+
+	const user = await createUser(db, {
+		id: generateUUID(),
+		email,
+		password_hash: passwordHash,
+		source: source as 'workway' | 'templates' | 'io' | 'space' | 'lms',
+	});
+
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+
+	return json({
+		access_token: accessToken,
+		refresh_token: refreshToken,
+		token_type: 'Bearer',
+		expires_in: expiresIn,
+		user: {
+			id: user.id,
+			email: user.email,
+		},
+	});
 }
 
 // User Handlers

@@ -13,7 +13,8 @@
 	import {
 		markExperimentCompleted,
 		isExperimentCompleted,
-		validateCompletionToken
+		validateCompletionToken,
+		trackExperimentStart
 	} from '$lib/utils/completion';
 
 	let { data }: { data: PageData } = $props();
@@ -46,6 +47,9 @@
 	$effect(() => {
 		// Track paper.slug to re-run when navigating between articles
 		const currentSlug = paper.slug;
+
+		// Track experiment start
+		trackExperimentStart(currentSlug);
 
 		// Check if we just returned from .io with a completion token
 		if (validateCompletionToken($page.url)) {
