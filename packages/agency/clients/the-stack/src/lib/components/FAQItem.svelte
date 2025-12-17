@@ -47,10 +47,9 @@
 
 <style>
 	.faqs_item {
-		cursor: pointer;
-		border-bottom: 1px solid rgba(206, 255, 101, 0.2);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 		padding-bottom: 0.75rem;
-		transition: color 0.45s var(--ease-stack);
+		transition: color var(--duration-bg) var(--ease-stack);
 	}
 
 	.faqs_item:hover {
@@ -73,6 +72,7 @@
 	}
 
 	.faq-arrow {
+		flex-shrink: 0;
 		transition: transform 0.3s var(--ease-stack);
 	}
 
@@ -86,13 +86,6 @@
 
 	.text-rich-text {
 		font-size: 1.125rem;
-	}
-
-	.text-weight-medium {
-		font-weight: 500;
-	}
-
-	.margin-top-8 {
-		margin-top: 0.5rem;
+		line-height: 1.6;
 	}
 </style>

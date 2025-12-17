@@ -2,10 +2,10 @@
 	/**
 	 * Navigation Component
 	 *
-	 * Animated navbar with:
-	 * - Slide-in animation on load
-	 * - Hamburger menu on tablet/mobile
-	 * - Link underline animations
+	 * Centered logo layout using exact Webflow pattern:
+	 * - CSS Grid with 15rem gap creates space for logo
+	 * - Logo absolutely positioned in center
+	 * - Two columns: left links | right links
 	 */
 
 	import { onMount } from 'svelte';
@@ -14,15 +14,17 @@
 	let isMenuOpen = $state(false);
 	let isVisible = $state(false);
 
-	const navLinks = [
+	const leftLinks = [
 		{ href: '/locations', label: 'book a court' },
-		{ href: '/team', label: 'meet our team' },
+		{ href: '/team', label: 'meet our team' }
+	];
+
+	const rightLinks = [
 		{ href: '/about', label: 'become a member' },
 		{ href: '/contact', label: 'Contact' }
 	];
 
 	onMount(() => {
-		// Trigger slide-in animation after mount
 		setTimeout(() => {
 			isVisible = true;
 		}, 100);
@@ -35,33 +37,38 @@
 
 {#if isVisible}
 	<div class="nav_wrapper" transition:fly={{ y: -100, duration: 600 }}>
-		<nav class="navbar" role="navigation">
+		<nav class="navbar">
 			<div class="nav_wrap">
-				<!-- Logo -->
+				<!-- Center Logo (absolute positioned) -->
 				<a href="/" class="nav_brand">
-					<img src="/images/logo.png" alt="The Stack" class="nav_logo" loading="lazy" />
-					<div class="link_line"></div>
+					<img
+						src="/images/logo.png"
+						loading="lazy"
+						alt="The Stack Indoor Pickleball"
+						class="nav_logo"
+					/>
 				</a>
 
-				<!-- Desktop Navigation -->
-				<div class="nav_menu-items" class:is-open={isMenuOpen}>
-					<div class="nav_menu-items-inner">
-						<div class="nav_menu-link-wrap is-left">
-							{#each navLinks.slice(0, 2) as link}
-								<a href={link.href} class="nav_link">
-									<span class="z-index-2">{link.label}</span>
-									<div class="link_line"></div>
-								</a>
-							{/each}
-						</div>
-						<div class="nav_menu-link-wrap">
-							{#each navLinks.slice(2) as link}
-								<a href={link.href} class="nav_link">
-									<span class="z-index-2">{link.label}</span>
-									<div class="link_line"></div>
-								</a>
-							{/each}
-						</div>
+				<!-- Grid container for links -->
+				<div class="nav_menu-items-inner">
+					<!-- Left Links -->
+					<div class="nav_menu-link-wrap is-left">
+						{#each leftLinks as link}
+							<a href={link.href} class="nav_link">
+								<span class="z-index-2">{link.label}</span>
+								<div class="link_line"></div>
+							</a>
+						{/each}
+					</div>
+
+					<!-- Right Links -->
+					<div class="nav_menu-link-wrap is-right">
+						{#each rightLinks as link}
+							<a href={link.href} class="nav_link">
+								<span class="z-index-2">{link.label}</span>
+								<div class="link_line"></div>
+							</a>
+						{/each}
 					</div>
 				</div>
 
@@ -80,6 +87,15 @@
 					</div>
 				</button>
 			</div>
+
+			<!-- Mobile Menu -->
+			<div class="nav_menu-mobile" class:is-open={isMenuOpen}>
+				{#each [...leftLinks, ...rightLinks] as link}
+					<a href={link.href} class="nav_link-mobile">
+						{link.label}
+					</a>
+				{/each}
+			</div>
 		</nav>
 	</div>
 {/if}
@@ -92,57 +108,97 @@
 		right: 0;
 		z-index: 100;
 		background-color: var(--white);
+		border-bottom: 1px solid var(--light-grey);
 	}
 
 	.navbar {
 		width: 100%;
+		height: 6rem; /* Exact Webflow height */
 	}
 
+	/* Webflow .nav_wrap pattern */
 	.nav_wrap {
-		display: flex;
-		justify-content: space-between;
+		justify-content: center;
 		align-items: center;
-		width: 90%;
-		max-width: var(--container-max);
+		width: 100%;
+		max-width: 72.875rem; /* 1166px exact */
+		height: 100%;
+		display: flex;
+		position: relative;
 		margin: 0 auto;
-		height: var(--nav-height);
+		padding: 0 2rem;
 	}
 
+	/* Logo absolutely positioned in center */
 	.nav_brand {
-		position: relative;
-		text-decoration: none;
+		z-index: 100;
+		width: 10.5625rem; /* Exact Webflow width */
+		position: absolute;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 
 	.nav_logo {
-		height: 2.5rem;
-		width: auto;
+		width: 100%;
+		height: auto;
 	}
 
-	.nav_menu-items {
-		display: flex;
-		align-items: center;
-	}
-
+	/* Grid container for left/right links - exact Webflow pattern */
 	.nav_menu-items-inner {
-		display: flex;
-		align-items: center;
-		gap: 3rem;
+		grid-column-gap: 15rem; /* KEY: Creates space for logo */
+		grid-template-columns: 1fr 1fr;
+		justify-content: space-between;
+		width: 100%;
+		display: grid;
 	}
 
+	/* Link wrapper - exact Webflow pattern */
 	.nav_menu-link-wrap {
+		gap: 3rem;
+		width: 20rem;
 		display: flex;
-		gap: 2rem;
 	}
 
+	.nav_menu-link-wrap.is-left {
+		justify-content: flex-start;
+	}
+
+	.nav_menu-link-wrap.is-right {
+		justify-content: flex-end;
+	}
+
+	/* Nav links - exact Webflow pattern */
 	.nav_link {
 		position: relative;
 		text-decoration: none;
 		text-transform: uppercase;
-		font-size: 0.875rem;
-		letter-spacing: 0.02em;
+		font-family: var(--font-coolvetica);
+		font-size: 1.125rem; /* Exact Webflow size */
+		letter-spacing: 0.04em;
+		color: var(--black);
 		padding: 0.5rem 0;
+		white-space: nowrap;
 	}
 
+	.link_line {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: 1px;
+		background-color: var(--black);
+		transform: scaleX(0);
+		transform-origin: right;
+		transition: transform 0.3s var(--ease-stack);
+	}
+
+	.nav_link:hover .link_line {
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+
+	/* Hamburger Button */
 	.nav_button {
 		display: none;
 		flex-direction: column;
@@ -154,6 +210,8 @@
 		border: none;
 		cursor: pointer;
 		padding: 0;
+		position: absolute;
+		right: 1rem;
 	}
 
 	.nav_button-inner {
@@ -184,46 +242,53 @@
 		transform: translateY(-8px) rotate(-45deg);
 	}
 
+	/* Mobile Menu */
+	.nav_menu-mobile {
+		display: none;
+		flex-direction: column;
+		background-color: var(--white);
+		padding: 1rem 2rem 2rem;
+		border-top: 1px solid var(--light-grey);
+	}
+
+	.nav_menu-mobile.is-open {
+		display: flex;
+	}
+
+	.nav_link-mobile {
+		text-decoration: none;
+		text-transform: uppercase;
+		font-family: var(--font-coolvetica);
+		font-size: 1.25rem;
+		letter-spacing: 0.04em;
+		color: var(--black);
+		padding: 1rem 0;
+		border-bottom: 1px solid var(--light-grey);
+	}
+
 	/* Tablet Breakpoint */
 	@media (max-width: 991px) {
+		.navbar {
+			height: 4.5rem;
+		}
+
+		.nav_wrap {
+			justify-content: center;
+			padding: 0.75rem 1rem;
+			position: relative;
+		}
+
+		.nav_menu-items-inner {
+			display: none;
+		}
+
 		.nav_button {
 			display: flex;
 		}
 
-		.nav_menu-items {
-			position: fixed;
-			top: var(--nav-height);
-			left: 0;
-			right: 0;
-			bottom: 0;
-			background-color: var(--white);
-			flex-direction: column;
-			justify-content: flex-start;
-			padding: 2rem;
-			transform: translateX(100%);
-			transition: transform 0.4s var(--ease-stack);
-		}
-
-		.nav_menu-items.is-open {
-			transform: translateX(0);
-		}
-
-		.nav_menu-items-inner {
-			flex-direction: column;
-			gap: 1rem;
-			width: 100%;
-		}
-
-		.nav_menu-link-wrap {
-			flex-direction: column;
-			width: 100%;
-			gap: 0;
-		}
-
-		.nav_link {
-			font-size: 1.5rem;
-			padding: 1rem 0;
-			border-bottom: 1px solid var(--light-grey);
+		.nav_brand {
+			position: relative;
+			margin: 0 auto;
 		}
 	}
 </style>
