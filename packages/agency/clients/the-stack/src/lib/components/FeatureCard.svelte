@@ -2,12 +2,12 @@
 	/**
 	 * FeatureCard Component
 	 *
-	 * Card with:
-	 * - Square image (1:1 aspect ratio)
+	 * Card matching Webflow player_item structure:
+	 * - Square image with hover scale animation
 	 * - Eyebrow text
-	 * - Title
+	 * - Title (h2)
 	 * - Description
-	 * - CTA button
+	 * - Secondary CTA button
 	 */
 
 	interface Props {
@@ -29,12 +29,12 @@
 		</div>
 	</div>
 	<div class="max-width-440">
-		<div class="player_content">
+		<div class="w-layout-vflex">
 			<div class="margin-bottom-16">
 				<p class="text-size-eyebrow">{eyebrow}</p>
 			</div>
 			<div class="margin-bottom-24">
-				<p class="heading-style-h2">{title}</p>
+				<h3 class="heading-style-h2">{title}</h3>
 			</div>
 			<div class="margin-bottom-24">
 				<p class="text-size-medium">{description}</p>
@@ -57,11 +57,36 @@
 		width: 100%;
 		position: relative;
 		overflow: hidden;
+		will-change: transform;
+		transform: scale(1);
+		transition: transform 0.6s var(--ease-stack);
 	}
 
-	.player_content {
+	.player_item:hover .player_visual {
+		transform: scale(1.03);
+	}
+
+	.w-layout-vflex {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+	}
+
+	/* Font family overrides for this component */
+	.text-size-eyebrow {
+		font-family: var(--font-satoshi);
+	}
+
+	.heading-style-h2 {
+		font-family: var(--font-coolvetica);
+	}
+
+	.text-size-medium {
+		font-family: var(--font-satoshi);
+	}
+
+	.button p {
+		font-family: var(--font-satoshi);
+		margin: 0;
 	}
 </style>

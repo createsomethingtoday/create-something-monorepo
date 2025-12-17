@@ -97,6 +97,9 @@
 		position: relative;
 		text-decoration: none;
 		text-transform: lowercase;
+		font-family: var(--font-coolvetica);
+		font-size: 1.125rem;
+		letter-spacing: 0.04em;
 	}
 
 	.footer_copyright {
@@ -112,10 +115,6 @@
 		display: flex;
 		align-items: center;
 		gap: 2rem;
-	}
-
-	.text-size-regular {
-		font-size: 1rem;
 	}
 
 	@media (max-width: 991px) {

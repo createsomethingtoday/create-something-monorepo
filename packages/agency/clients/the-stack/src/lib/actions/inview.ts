@@ -2,6 +2,7 @@
  * InView Action - Scroll-triggered visibility detection
  *
  * Adds 'is-visible' class when element enters viewport.
+ * Dispatches 'inview' custom event for programmatic handling.
  * Used for reveal animations.
  */
 
@@ -19,11 +20,13 @@ export function inview(node: HTMLElement, options: InViewOptions = {}) {
 			entries.forEach((entry) => {
 				if (entry.isIntersecting) {
 					node.classList.add('is-visible');
+					node.dispatchEvent(new CustomEvent('inview', { detail: { inView: true } }));
 					if (once) {
 						observer.unobserve(node);
 					}
 				} else if (!once) {
 					node.classList.remove('is-visible');
+					node.dispatchEvent(new CustomEvent('inview', { detail: { inView: false } }));
 				}
 			});
 		},
@@ -44,11 +47,13 @@ export function inview(node: HTMLElement, options: InViewOptions = {}) {
 					entries.forEach((entry) => {
 						if (entry.isIntersecting) {
 							node.classList.add('is-visible');
+							node.dispatchEvent(new CustomEvent('inview', { detail: { inView: true } }));
 							if (newOptions.once !== false) {
 								newObserver.unobserve(node);
 							}
 						} else if (newOptions.once === false) {
 							node.classList.remove('is-visible');
+							node.dispatchEvent(new CustomEvent('inview', { detail: { inView: false } }));
 						}
 					});
 				},
