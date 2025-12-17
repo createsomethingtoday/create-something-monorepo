@@ -8,6 +8,7 @@ export interface Env {
   STORAGE: R2Bucket;
   AI: Ai;
   ANTHROPIC_API_KEY: string;
+  ASSEMBLYAI_API_KEY: string;
   ENVIRONMENT: string;
 }
 

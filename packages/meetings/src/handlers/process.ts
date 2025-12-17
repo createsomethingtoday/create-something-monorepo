@@ -7,10 +7,12 @@
 import type { Env, TranscriptionResult, SummaryResult } from '../types';
 
 const WHISPER_MODEL = '@cf/openai/whisper-large-v3-turbo';
+const WHISPER_LIMIT = 25 * 1024 * 1024; // 25MB Whisper API limit - larger files use AssemblyAI
 
 /**
  * Process audio: transcribe with Whisper, summarize with Claude
  * Called via waitUntil for background processing
+ * Supports chunked transcription for large files
  */
 export async function processAudio(
   meetingId: string,
@@ -19,8 +21,8 @@ export async function processAudio(
   env: Env
 ): Promise<void> {
   try {
-    // Transcribe with Whisper
-    const transcription = await transcribeAudio(audioBuffer, env);
+    // Transcribe with Whisper (chunked if necessary)
+    const transcription = await transcribeAudioChunked(audioBuffer, env);
 
     // Generate summary with Claude
     const summary = await generateSummary(transcription.text, env);
@@ -75,35 +77,149 @@ export async function processAudio(
   }
 }
 
-async function transcribeAudio(
+/**
+ * Transcribe audio - uses Whisper for small files, AssemblyAI for large files
+ */
+async function transcribeAudioChunked(
   audioBuffer: ArrayBuffer,
   env: Env
 ): Promise<TranscriptionResult> {
-  console.log(`Transcribing audio: ${audioBuffer.byteLength} bytes`);
+  const totalSize = audioBuffer.byteLength;
+  console.log(`Transcribing audio: ${totalSize} bytes (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
 
-  // Whisper has a ~25MB limit, check file size
-  const maxSize = 25 * 1024 * 1024; // 25MB
-  if (audioBuffer.byteLength > maxSize) {
-    throw new Error(`Audio file too large: ${audioBuffer.byteLength} bytes (max: ${maxSize})`);
+  // If file is small enough, use Cloudflare Workers AI (Whisper)
+  if (totalSize <= WHISPER_LIMIT) {
+    console.log('Using Cloudflare Workers AI (Whisper)');
+    return transcribeWithWhisper(audioBuffer, env);
   }
 
-  // whisper-large-v3-turbo requires Base64-encoded audio
-  // https://developers.cloudflare.com/workers-ai/guides/tutorials/build-a-workers-ai-whisper-with-chunking/
-  const base64Audio = bufferToBase64(audioBuffer);
+  // Large file: use AssemblyAI
+  if (!env.ASSEMBLYAI_API_KEY) {
+    throw new Error(`Audio file too large (${(totalSize / 1024 / 1024).toFixed(2)} MB) and no ASSEMBLYAI_API_KEY configured`);
+  }
 
-  console.log(`Sending base64 audio (${base64Audio.length} chars) to Whisper`);
+  console.log('File exceeds Whisper limit, using AssemblyAI');
+  return transcribeWithAssemblyAI(audioBuffer, env);
+}
+
+/**
+ * Transcribe using Cloudflare Workers AI (Whisper)
+ */
+async function transcribeWithWhisper(
+  audioBuffer: ArrayBuffer,
+  env: Env
+): Promise<TranscriptionResult> {
+  const base64Audio = bufferToBase64(audioBuffer);
 
   const response = await env.AI.run(WHISPER_MODEL, {
     audio: base64Audio,
   });
-
-  console.log(`Whisper response received: ${response.text?.length || 0} chars`);
 
   return {
     text: response.text || '',
     vtt: response.vtt,
     word_count: response.word_count,
   };
+}
+
+/**
+ * Transcribe using AssemblyAI (supports large files)
+ */
+async function transcribeWithAssemblyAI(
+  audioBuffer: ArrayBuffer,
+  env: Env
+): Promise<TranscriptionResult> {
+  const apiKey = env.ASSEMBLYAI_API_KEY;
+
+  // Step 1: Upload audio to AssemblyAI
+  console.log('Uploading audio to AssemblyAI...');
+  const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': apiKey,
+      'Content-Type': 'application/octet-stream',
+    },
+    body: audioBuffer,
+  });
+
+  if (!uploadResponse.ok) {
+    const error = await uploadResponse.text();
+    throw new Error(`AssemblyAI upload failed: ${error}`);
+  }
+
+  const uploadResult = await uploadResponse.json() as { upload_url: string };
+  console.log('Audio uploaded, starting transcription...');
+
+  // Step 2: Start transcription
+  const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+    method: 'POST',
+    headers: {
+      'Authorization': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      audio_url: uploadResult.upload_url,
+      language_detection: true,
+    }),
+  });
+
+  if (!transcriptResponse.ok) {
+    const error = await transcriptResponse.text();
+    throw new Error(`AssemblyAI transcription start failed: ${error}`);
+  }
+
+  const transcriptResult = await transcriptResponse.json() as { id: string; status: string };
+  const transcriptId = transcriptResult.id;
+  console.log(`Transcription started: ${transcriptId}`);
+
+  // Step 3: Poll for completion (max 10 minutes)
+  const maxWaitTime = 10 * 60 * 1000; // 10 minutes
+  const pollInterval = 5000; // 5 seconds
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitTime) {
+    await sleep(pollInterval);
+
+    const statusResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
+      headers: {
+        'Authorization': apiKey,
+      },
+    });
+
+    if (!statusResponse.ok) {
+      const error = await statusResponse.text();
+      throw new Error(`AssemblyAI status check failed: ${error}`);
+    }
+
+    const status = await statusResponse.json() as {
+      status: string;
+      text: string | null;
+      words: Array<{ text: string }> | null;
+      error: string | null;
+    };
+
+    console.log(`Transcription status: ${status.status}`);
+
+    if (status.status === 'completed') {
+      const wordCount = status.words?.length || status.text?.split(/\s+/).length || 0;
+      console.log(`AssemblyAI transcription complete: ${status.text?.length || 0} chars, ${wordCount} words`);
+
+      return {
+        text: status.text || '',
+        word_count: wordCount,
+      };
+    }
+
+    if (status.status === 'error') {
+      throw new Error(`AssemblyAI transcription failed: ${status.error}`);
+    }
+  }
+
+  throw new Error('AssemblyAI transcription timed out after 10 minutes');
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function bufferToBase64(buffer: ArrayBuffer): string {
