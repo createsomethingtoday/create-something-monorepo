@@ -399,3 +399,128 @@ export async function checkForPauseRequest(
 
   return { paused: false, reason: null };
 }
+
+/**
+ * Get harness issue by ID or find the most recent running harness.
+ */
+export async function getHarnessIssue(
+  harnessId?: string,
+  repoRoot?: string
+): Promise<BeadsIssue | null> {
+  const issues = await readAllIssues(repoRoot);
+
+  if (harnessId) {
+    return issues.find((issue) => issue.id === harnessId) || null;
+  }
+
+  // Find the most recent harness issue that's not closed
+  const harnessIssues = issues
+    .filter(
+      (issue) =>
+        issue.labels?.includes('harness') &&
+        issue.issue_type === 'epic' &&
+        issue.status !== 'closed'
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+  return harnessIssues[0] || null;
+}
+
+/**
+ * Get checkpoint issues for a harness, sorted by session number (descending).
+ */
+export async function getHarnessCheckpoints(
+  harnessId: string,
+  repoRoot?: string
+): Promise<BeadsIssue[]> {
+  const issues = await readAllIssues(repoRoot);
+
+  return issues
+    .filter(
+      (issue) =>
+        issue.labels?.includes('checkpoint') &&
+        issue.labels?.includes(`harness:${harnessId}`)
+    )
+    .sort((a, b) => {
+      // Extract session number from title "Checkpoint #N: ..."
+      const aMatch = a.title.match(/Checkpoint #(\d+)/);
+      const bMatch = b.title.match(/Checkpoint #(\d+)/);
+      const aNum = aMatch ? parseInt(aMatch[1], 10) : 0;
+      const bNum = bMatch ? parseInt(bMatch[1], 10) : 0;
+      return bNum - aNum; // Descending
+    });
+}
+
+/**
+ * Get completed feature issues for a harness.
+ */
+export async function getCompletedFeatures(
+  harnessId: string,
+  repoRoot?: string
+): Promise<BeadsIssue[]> {
+  const issues = await readAllIssues(repoRoot);
+
+  return issues.filter(
+    (issue) =>
+      issue.labels?.includes(`harness:${harnessId}`) &&
+      !issue.labels?.includes('checkpoint') &&
+      issue.issue_type !== 'epic' &&
+      issue.status === 'closed'
+  );
+}
+
+/**
+ * Get in-progress and open feature issues for a harness.
+ */
+export async function getPendingFeatures(
+  harnessId: string,
+  repoRoot?: string
+): Promise<BeadsIssue[]> {
+  const issues = await readAllIssues(repoRoot);
+
+  return issues.filter(
+    (issue) =>
+      issue.labels?.includes(`harness:${harnessId}`) &&
+      !issue.labels?.includes('checkpoint') &&
+      issue.issue_type !== 'epic' &&
+      issue.status !== 'closed'
+  );
+}
+
+/**
+ * Parse harness state from a harness issue's description.
+ * Extracts metadata like spec file, feature counts, etc.
+ */
+export function parseHarnessDescription(description: string): {
+  specFile: string | null;
+  featuresTotal: number;
+  startedAt: string | null;
+} {
+  const specMatch = description.match(/Harness run for:\s*(.+)/);
+  const featuresMatch = description.match(/Features:\s*(\d+)/);
+  const startedMatch = description.match(/Started:\s*(.+)/);
+
+  return {
+    specFile: specMatch ? specMatch[1].trim() : null,
+    featuresTotal: featuresMatch ? parseInt(featuresMatch[1], 10) : 0,
+    startedAt: startedMatch ? startedMatch[1].trim() : null,
+  };
+}
+
+/**
+ * Update harness issue status.
+ */
+export async function updateHarnessStatus(
+  harnessId: string,
+  status: 'running' | 'paused' | 'completed',
+  cwd?: string
+): Promise<void> {
+  if (status === 'completed') {
+    await bd(`close ${harnessId}`, cwd);
+  } else {
+    await bd(`update ${harnessId} --status=${status === 'running' ? 'in_progress' : 'open'}`, cwd);
+  }
+}

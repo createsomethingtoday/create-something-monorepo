@@ -7,12 +7,13 @@
 import { readFile } from 'node:fs/promises';
 import type {
   HarnessState,
+  HarnessStatus,
   StartOptions,
   Checkpoint,
   CheckpointPolicy,
   PrimingContext,
-  DEFAULT_CHECKPOINT_POLICY,
 } from './types.js';
+import { DEFAULT_CHECKPOINT_POLICY } from './types.js';
 import { parseSpec, formatSpecSummary } from './spec-parser.js';
 import {
   createIssuesFromFeatures,
@@ -20,6 +21,12 @@ import {
   getReadyIssues,
   updateIssueStatus,
   getIssue,
+  getHarnessIssue,
+  getHarnessCheckpoints,
+  getCompletedFeatures,
+  getPendingFeatures,
+  parseHarnessDescription,
+  updateHarnessStatus,
 } from './beads.js';
 import {
   runSession,
@@ -310,13 +317,119 @@ export async function runHarness(
  * Resume a paused harness.
  */
 export async function resumeHarness(
-  harnessId: string,
-  cwd: string
+  harnessId: string | undefined,
+  cwd: string,
+  options?: { dryRun?: boolean }
 ): Promise<void> {
-  // TODO: Load harness state from Beads issue
-  // For now, just log
-  console.log(`Resuming harness: ${harnessId}`);
-  console.log('Resume functionality not yet implemented.');
+  console.log(`\n🔄 Resuming harness${harnessId ? `: ${harnessId}` : ''}...\n`);
+
+  // 1. Find the harness issue
+  const harnessIssue = await getHarnessIssue(harnessId, cwd);
+  if (!harnessIssue) {
+    if (harnessId) {
+      console.log(`❌ Harness not found: ${harnessId}`);
+    } else {
+      console.log('❌ No active harness found to resume.');
+    }
+    return;
+  }
+
+  console.log(`Found harness: ${harnessIssue.id} - ${harnessIssue.title}`);
+
+  // 2. Parse harness description for metadata
+  const metadata = parseHarnessDescription(harnessIssue.description || '');
+  if (!metadata.specFile) {
+    console.log('❌ Could not determine spec file from harness issue.');
+    return;
+  }
+
+  console.log(`Spec file: ${metadata.specFile}`);
+  console.log(`Total features: ${metadata.featuresTotal}`);
+
+  // 3. Get completed and pending features
+  const completedFeatures = await getCompletedFeatures(harnessIssue.id, cwd);
+  const pendingFeatures = await getPendingFeatures(harnessIssue.id, cwd);
+
+  console.log(`Completed: ${completedFeatures.length}`);
+  console.log(`Pending: ${pendingFeatures.length}`);
+
+  // 4. Get the most recent checkpoint for context
+  const checkpoints = await getHarnessCheckpoints(harnessIssue.id, cwd);
+  let lastSessionNumber = 0;
+  let lastCheckpointId: string | null = null;
+
+  if (checkpoints.length > 0) {
+    const latestCheckpoint = checkpoints[0];
+    lastCheckpointId = latestCheckpoint.id;
+    const match = latestCheckpoint.title.match(/Checkpoint #(\d+)/);
+    if (match) {
+      lastSessionNumber = parseInt(match[1], 10);
+    }
+    console.log(`Last checkpoint: ${latestCheckpoint.title}`);
+  }
+
+  // 5. Determine git branch
+  // Try to find the harness branch or use current branch
+  let gitBranch = '';
+  try {
+    const { exec } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const execAsync = promisify(exec);
+    const { stdout } = await execAsync('git branch --show-current', { cwd });
+    gitBranch = stdout.trim();
+
+    // Check if we need to switch to the harness branch
+    if (!gitBranch.startsWith('harness/')) {
+      // Look for a harness branch matching this harness
+      const { stdout: branches } = await execAsync('git branch --list "harness/*"', { cwd });
+      const harnessBranches = branches.trim().split('\n').map((b) => b.trim().replace('* ', ''));
+
+      // Find branch that might match this harness (by partial ID or date)
+      const matchingBranch = harnessBranches.find((b) =>
+        b.includes(harnessIssue.id.slice(-4)) || b.includes(metadata.startedAt?.slice(0, 10)?.replace(/-/g, '') || '')
+      );
+
+      if (matchingBranch) {
+        console.log(`Switching to harness branch: ${matchingBranch}`);
+        await execAsync(`git checkout ${matchingBranch}`, { cwd });
+        gitBranch = matchingBranch;
+      } else {
+        console.log(`⚠ No harness branch found, continuing on current branch: ${gitBranch}`);
+      }
+    }
+  } catch {
+    gitBranch = 'main';
+  }
+
+  // 6. Reconstruct harness state
+  const harnessState: HarnessState = {
+    id: harnessIssue.id,
+    status: 'running',
+    specFile: metadata.specFile,
+    gitBranch,
+    startedAt: metadata.startedAt || harnessIssue.created_at,
+    currentSession: lastSessionNumber,
+    sessionsCompleted: lastSessionNumber,
+    featuresTotal: metadata.featuresTotal,
+    featuresCompleted: completedFeatures.length,
+    featuresFailed: 0, // We don't track failed count in Beads yet
+    lastCheckpoint: lastCheckpointId,
+    checkpointPolicy: DEFAULT_CHECKPOINT_POLICY,
+    pauseReason: null,
+  };
+
+  // 7. Update harness status to running
+  await updateHarnessStatus(harnessIssue.id, 'running', cwd);
+
+  console.log(`\n═══════════════════════════════════════════════════════════════`);
+  console.log(`  HARNESS RESUMING: ${harnessState.id}`);
+  console.log(`  Branch: ${harnessState.gitBranch}`);
+  console.log(`  Progress: ${harnessState.featuresCompleted}/${harnessState.featuresTotal} features`);
+  console.log(`  Last session: #${harnessState.currentSession}`);
+  console.log(`═══════════════════════════════════════════════════════════════\n`);
+
+  // 8. Run the harness loop
+  await runHarness(harnessState, { cwd, dryRun: options?.dryRun });
 }
 
 /**
@@ -341,8 +454,67 @@ export async function getHarnessStatus(
   harnessId: string | undefined,
   cwd: string
 ): Promise<void> {
-  // TODO: Read from Beads
-  console.log('Status checking not yet implemented.');
+  // Find the harness issue
+  const harnessIssue = await getHarnessIssue(harnessId, cwd);
+  if (!harnessIssue) {
+    if (harnessId) {
+      console.log(`❌ Harness not found: ${harnessId}`);
+    } else {
+      console.log('No active harness found.');
+    }
+    return;
+  }
+
+  // Parse metadata
+  const metadata = parseHarnessDescription(harnessIssue.description || '');
+
+  // Get feature counts
+  const completedFeatures = await getCompletedFeatures(harnessIssue.id, cwd);
+  const pendingFeatures = await getPendingFeatures(harnessIssue.id, cwd);
+
+  // Get checkpoints
+  const checkpoints = await getHarnessCheckpoints(harnessIssue.id, cwd);
+
+  // Determine status label
+  let statusLabel = harnessIssue.status === 'closed' ? 'COMPLETED' :
+                    harnessIssue.status === 'open' ? 'PAUSED' : 'RUNNING';
+
+  console.log(`\n═══════════════════════════════════════════════════════════════`);
+  console.log(`  HARNESS STATUS: ${statusLabel}`);
+  console.log(`═══════════════════════════════════════════════════════════════`);
+  console.log(`  ID: ${harnessIssue.id}`);
+  console.log(`  Title: ${harnessIssue.title}`);
+  console.log(`  Spec: ${metadata.specFile || 'unknown'}`);
+  console.log(`  Started: ${metadata.startedAt || harnessIssue.created_at}`);
+  console.log(`───────────────────────────────────────────────────────────────`);
+  console.log(`  Features:`);
+  console.log(`    Total: ${metadata.featuresTotal}`);
+  console.log(`    Completed: ${completedFeatures.length}`);
+  console.log(`    Pending: ${pendingFeatures.length}`);
+  console.log(`    Progress: ${Math.round((completedFeatures.length / metadata.featuresTotal) * 100)}%`);
+  console.log(`───────────────────────────────────────────────────────────────`);
+  console.log(`  Checkpoints: ${checkpoints.length}`);
+  if (checkpoints.length > 0) {
+    console.log(`  Latest: ${checkpoints[0].title}`);
+  }
+  console.log(`═══════════════════════════════════════════════════════════════\n`);
+
+  // List pending features
+  if (pendingFeatures.length > 0 && pendingFeatures.length <= 10) {
+    console.log('Pending features:');
+    for (const feature of pendingFeatures) {
+      const statusIcon = feature.status === 'in_progress' ? '◐' : '○';
+      console.log(`  ${statusIcon} ${feature.id}: ${feature.title}`);
+    }
+    console.log('');
+  } else if (pendingFeatures.length > 10) {
+    console.log(`${pendingFeatures.length} features pending (showing first 10):`);
+    for (const feature of pendingFeatures.slice(0, 10)) {
+      const statusIcon = feature.status === 'in_progress' ? '◐' : '○';
+      console.log(`  ${statusIcon} ${feature.id}: ${feature.title}`);
+    }
+    console.log('');
+  }
 }
 
 /**
