@@ -66,7 +66,7 @@
 		<p class="subtitle">Begin your journey into creation</p>
 
 		{#if error}
-			<div class="error-message">{error}</div>
+			<div id="signup-error" class="error-message" role="alert" aria-live="polite">{error}</div>
 		{/if}
 
 		<form onsubmit={handleSubmit}>
@@ -81,27 +81,33 @@
 			</div>
 
 			<div class="field">
-				<label for="email">Email</label>
+				<label for="email">Email <span class="required-indicator" aria-hidden="true">*</span></label>
 				<input
 					type="email"
 					id="email"
 					bind:value={email}
 					required
+					aria-required="true"
+					aria-invalid={!!error}
+					aria-describedby={error ? 'signup-error' : undefined}
 					autocomplete="email"
 				/>
 			</div>
 
 			<div class="field">
-				<label for="password">Password</label>
+				<label for="password">Password <span class="required-indicator" aria-hidden="true">*</span></label>
 				<input
 					type="password"
 					id="password"
 					bind:value={password}
 					required
+					aria-required="true"
+					aria-invalid={!!error}
+					aria-describedby="password-hint"
 					autocomplete="new-password"
 					minlength="8"
 				/>
-				<span class="hint">At least 8 characters</span>
+				<span id="password-hint" class="hint">At least 8 characters</span>
 			</div>
 
 			<button type="submit" class="submit-btn" disabled={loading}>
@@ -190,6 +196,11 @@
 	.hint {
 		color: var(--color-fg-muted);
 		font-size: var(--text-caption);
+	}
+
+	.required-indicator {
+		color: var(--color-error);
+		margin-left: 0.25em;
 	}
 
 	.submit-btn {

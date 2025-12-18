@@ -133,6 +133,9 @@ export interface PrimingContext {
   lastCheckpoint: Checkpoint | null;
   redirectNotes: string[];
   sessionGoal: string;
+  // DRY Context Discovery
+  existingPatterns?: string[];
+  relevantFiles?: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

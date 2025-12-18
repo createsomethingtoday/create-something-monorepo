@@ -174,10 +174,10 @@ Consolidate repeated a11y patterns into shared utilities. Subtractive Triad: DRY
   - ~~Configurable target (default: #main-content)~~ → Simple anchor links in layouts
   - ~~Use across all property layouts~~ → Added to io, ltd, space, agency
 
-- P2: Create accessible toggle button pattern
-  - Document aria-pressed usage
-  - Create example in components package
-  - Refactor LightStudy control buttons to use pattern
+- ~~P2: Create accessible toggle button pattern~~ ✓ DONE
+  - ~~Document aria-pressed usage~~ → `keyboardToggle` action in packages/components/src/lib/actions/a11y.ts
+  - ~~Create example in components package~~ → JSDoc example in keyboardToggle action
+  - ~~Refactor LightStudy control buttons to use pattern~~ → Already uses native buttons with aria-pressed
 
 ---
 
@@ -235,7 +235,7 @@ Final verification:
 - [ ] Shared keyboardClick action in packages/components
 - [ ] Shared focus styles in canon.css (no per-component duplication)
 - [x] Skip-to-content utility class used across all properties
-- [ ] Toggle button pattern documented and applied consistently
+- [x] Toggle button pattern documented and applied consistently
 
 ## Canon Alignment
 
