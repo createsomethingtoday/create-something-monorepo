@@ -152,12 +152,16 @@ async function executeClaudeCode(
   promptFile: string,
   options: { cwd: string; timeout: number }
 ): Promise<ClaudeCodeResult> {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
+    // Read prompt content
+    const { readFile } = await import('node:fs/promises');
+    const promptContent = await readFile(promptFile, 'utf-8');
+
+    // Use -p with the prompt text directly (not --print separately)
     const args = [
+      '-p', promptContent,
       '--dangerously-skip-permissions', // Required for autonomous operation
-      '--print', // Non-interactive mode
       '--output-format', 'json',
-      '-p', `$(cat ${promptFile})`, // Pass prompt via file
     ];
 
     let output = '';
@@ -165,7 +169,7 @@ async function executeClaudeCode(
 
     const proc = spawn('claude', args, {
       cwd: options.cwd,
-      shell: true,
+      shell: false, // Don't use shell - pass args directly
       env: { ...process.env },
     });
 
