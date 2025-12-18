@@ -69,11 +69,11 @@
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
 		padding: var(--space-sm, 1rem) var(--space-md, 1.5rem);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		transition: border-color 0.2s ease;
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		transition: border-color var(--duration-micro, 0.2s) var(--ease-standard, ease);
 	}
 
 	.error-link:hover {
-		border-color: rgba(255, 255, 255, 0.3);
+		border-color: var(--color-border-strong, rgba(255, 255, 255, 0.3));
 	}
 </style>

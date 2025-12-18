@@ -774,15 +774,15 @@ const content = await filesystem
 	}
 
 	.code-success {
-		color: #86efac;
+		color: var(--color-success);
 	}
 
 	.code-success-heading {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.code-warning-heading {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.inline-code {
@@ -793,20 +793,20 @@ const content = await filesystem
 
 	/* Comparison Cards */
 	.comparison-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.comparison-warning {
-		background: rgba(251, 191, 36, 0.1);
-		border: 1px solid rgba(251, 191, 36, 0.3);
+		background: var(--color-warning-muted);
+		border: 1px solid var(--color-warning-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.comparison-error {
-		background: rgba(248, 113, 113, 0.1);
-		border: 1px solid rgba(248, 113, 113, 0.3);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-lg);
 	}
 
@@ -815,15 +815,15 @@ const content = await filesystem
 	}
 
 	.comparison-success-heading {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.comparison-warning-heading {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.comparison-error-heading {
-		color: #f87171;
+		color: var(--color-error);
 	}
 
 	.comparison-list {
@@ -860,14 +860,14 @@ const content = await filesystem
 
 	/* Callout */
 	.callout-info {
-		background: rgba(59, 130, 246, 0.1);
-		border: 1px solid rgba(59, 130, 246, 0.3);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.callout-heading {
 		font-size: var(--text-h3);
-		color: #93c5fd;
+		color: var(--color-info);
 	}
 
 	/* References */

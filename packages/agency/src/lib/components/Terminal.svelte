@@ -274,12 +274,12 @@ Contact Create Something:
 
 <style>
 	.terminal {
-		background: #1a1a1a;
+		background: var(--color-bg-subtle);
 		font-family: monospace;
 	}
 
 	.terminal-header {
-		background: #2a2a2a;
+		background: var(--color-bg-surface);
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
@@ -290,15 +290,15 @@ Contact Create Something:
 	}
 
 	.traffic-light-red {
-		background: #ef4444;
+		background: var(--color-error);
 	}
 
 	.traffic-light-yellow {
-		background: #eab308;
+		background: var(--color-warning);
 	}
 
 	.traffic-light-green {
-		background: #22c55e;
+		background: var(--color-success);
 	}
 
 	.terminal-title {
@@ -312,27 +312,27 @@ Contact Create Something:
 	}
 
 	.terminal-content {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 
 	.terminal-line {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 
 	.terminal-prompt {
-		color: #06b6d4;
+		color: var(--color-info);
 	}
 
 	.terminal-input {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 
 	.terminal-cursor {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 
 	.terminal-footer {
-		background: #2a2a2a;
+		background: var(--color-bg-surface);
 		border-top: 1px solid var(--color-border-default);
 		font-size: var(--text-caption);
 		color: var(--color-fg-subtle);

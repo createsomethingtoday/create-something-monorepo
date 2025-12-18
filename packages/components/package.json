@@ -61,6 +61,7 @@
 			"types": "./dist/actions/index.d.ts",
 			"default": "./dist/actions/index.js"
 		},
+		"./styles/tokens.css": "./dist/styles/tokens.css",
 		"./styles/canon.css": "./dist/styles/canon.css",
 		"./styles/components.css": "./dist/styles/components.css",
 		"./transitions": {

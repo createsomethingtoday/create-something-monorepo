@@ -1,0 +1,290 @@
+/**
+ * Canon Design Tokens - Single Source of Truth
+ *
+ * "Weniger, aber besser" - Dieter Rams
+ *
+ * This file contains ONLY CSS custom property definitions.
+ * No base styles, no utilities, no components—just tokens.
+ *
+ * Import this file when you need:
+ * - Token definitions without base styles (vertical templates)
+ * - To extend/override tokens in a custom theme
+ *
+ * For the complete Canon system with base styles, import canon.css instead.
+ *
+ * @usage
+ *   @import '@create-something/components/styles/tokens.css';
+ *
+ * @see .claude/rules/css-canon.md for token reference
+ */
+
+:root {
+  /* ==========================================================================
+     Colors - Functional Minimalism
+     ========================================================================== */
+
+  /* Backgrounds - Pure to near-black
+   * These form the dark canvas on which content appears.
+   * Use elevation to create hierarchy, not color.
+   */
+  --color-bg-pure: #000000;
+  --color-bg-elevated: #0a0a0a;
+  --color-bg-surface: #111111;
+  --color-bg-subtle: #1a1a1a;
+
+  /* Foreground - White with semantic opacity
+   * Opacity creates hierarchy. Primary for headlines,
+   * muted for captions, subtle for disabled.
+   */
+  --color-fg-primary: #ffffff;
+  --color-fg-secondary: rgba(255, 255, 255, 0.8);
+  --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+  --color-fg-muted: rgba(255, 255, 255, 0.46); /* WCAG AA compliant: 4.56:1 on pure black */
+  --color-fg-subtle: rgba(255, 255, 255, 0.2);
+
+  /* Borders - Subtle separation */
+  --color-border-default: rgba(255, 255, 255, 0.1);
+  --color-border-emphasis: rgba(255, 255, 255, 0.2);
+  --color-border-strong: rgba(255, 255, 255, 0.3);
+
+  /* Semantic colors - Functional, not decorative
+   * All colors are WCAG AA compliant (4.5:1+ on pure black).
+   */
+  --color-success: #44aa44;               /* 7.08:1 */
+  --color-success-muted: rgba(68, 170, 68, 0.2);
+  --color-success-border: rgba(68, 170, 68, 0.3);
+  --color-error: #d44d4d;                 /* 4.97:1 */
+  --color-error-muted: rgba(212, 77, 77, 0.2);
+  --color-error-border: rgba(212, 77, 77, 0.3);
+  --color-warning: #aa8844;               /* 6.31:1 */
+  --color-warning-muted: rgba(170, 136, 68, 0.2);
+  --color-warning-border: rgba(170, 136, 68, 0.3);
+  --color-info: #5082b9;                  /* 5.23:1 */
+  --color-info-muted: rgba(80, 130, 185, 0.2);
+  --color-info-border: rgba(80, 130, 185, 0.3);
+
+  /* Interactive states */
+  --color-hover: rgba(255, 255, 255, 0.05);
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-focus: rgba(255, 255, 255, 0.5); /* WCAG AA compliant: 5.28:1 for focus indicators */
+
+  /* Data Visualization Palette */
+  --color-data-1: #60a5fa; /* Blue */
+  --color-data-2: #22c55e; /* Green */
+  --color-data-3: #c084fc; /* Purple */
+  --color-data-4: #fbbf24; /* Amber */
+  --color-data-5: #f472b6; /* Pink */
+  --color-data-6: #facc15; /* Yellow */
+
+  /* ==========================================================================
+     Typography - Golden Ratio Scale (φ = 1.618)
+     ========================================================================== */
+
+  /* Font families */
+  --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+  --font-serif: Georgia, "Times New Roman", serif;
+
+  /* Font weights */
+  --font-light: 300;
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.618; /* Golden ratio */
+  --leading-loose: 1.75;
+
+  /* Letter spacing */
+  --tracking-tighter: -0.025em;
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+
+  /* Type scale - Golden Ratio derived
+   * Base: 1rem (16px)
+   * 1rem × φ⁴ = 6.854rem (display-xl)
+   * 1rem × φ³ = 4.236rem (display)
+   * 1rem × φ² = 2.618rem (h1)
+   * 1rem × φ  = 1.618rem (h2)
+   */
+  --text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);
+  --text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);
+  --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);
+  --text-h2: clamp(1.25rem, 2vw + 0.5rem, 1.618rem);
+  --text-h3: clamp(1.125rem, 1vw + 0.5rem, 1.25rem);
+  --text-h4: clamp(1rem, 0.5vw + 0.5rem, 1.125rem);
+  --text-h5: 1rem;
+  --text-h6: 0.875rem;
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+  --text-overline: 0.618rem; /* 1/φ */
+
+  /* ==========================================================================
+     Spacing - Golden Ratio (φ = 1.618)
+     ========================================================================== */
+
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.618rem;
+  --space-lg: 2.618rem;
+  --space-xl: 4.236rem;
+  --space-2xl: 6.854rem;
+  --space-3xl: 11.089rem;
+
+  /* ==========================================================================
+     Border Radius
+     ========================================================================== */
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ==========================================================================
+     Shadows & Elevation
+     ========================================================================== */
+
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+  --shadow-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
+  --shadow-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
+  --shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
+  --shadow-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+
+  /* ==========================================================================
+     Animation & Motion
+     ========================================================================== */
+
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+
+  --duration-instant: 100ms;
+  --duration-micro: 200ms;
+  --duration-standard: 300ms;
+  --duration-complex: 500ms;
+  --duration-slow: 700ms;
+
+  /* Opacity states */
+  --opacity-muted: 0.6;
+  --opacity-hover: 0.8;
+  --opacity-full: 1;
+
+  /* ==========================================================================
+     Z-Index Layers
+     ========================================================================== */
+
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 50;
+  --z-modal: 100;
+  --z-popover: 200;
+  --z-tooltip: 300;
+
+  /* ==========================================================================
+     Breakpoints & Containers
+     ========================================================================== */
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1400px;
+  --container-prose: 65ch;
+
+  /* Content widths - Golden ratio derived */
+  --width-prose: 42rem;      /* 672px - optimal reading width */
+  --width-content: 52.36rem; /* 838px - content sections */
+  --width-wide: 68rem;       /* 1088px - wide content */
+  --width-narrow: 32.36rem;  /* 518px - narrow content */
+
+  /* ==========================================================================
+     View Transitions
+     ========================================================================== */
+
+  --view-transition-duration: var(--duration-standard);
+}
+
+/* ==========================================================================
+   Light Theme Tokens
+   Apply via: <html data-theme="light"> or .theme-light
+   ========================================================================== */
+
+[data-theme="light"],
+.theme-light {
+  --color-bg-pure: #ffffff;
+  --color-bg-elevated: #fafafa;
+  --color-bg-surface: #f5f5f5;
+  --color-bg-subtle: #eeeeee;
+
+  --color-fg-primary: #1a1a1a;
+  --color-fg-secondary: rgba(0, 0, 0, 0.8);
+  --color-fg-tertiary: rgba(0, 0, 0, 0.6);
+  --color-fg-muted: rgba(0, 0, 0, 0.46);
+  --color-fg-subtle: rgba(0, 0, 0, 0.2);
+
+  --color-border-default: rgba(0, 0, 0, 0.1);
+  --color-border-emphasis: rgba(0, 0, 0, 0.15);
+  --color-border-strong: rgba(0, 0, 0, 0.25);
+
+  --color-hover: rgba(0, 0, 0, 0.03);
+  --color-active: rgba(0, 0, 0, 0.06);
+  --color-focus: rgba(0, 0, 0, 0.2);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   High Contrast Mode
+   ========================================================================== */
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-bg-elevated: #050505;
+    --color-bg-surface: #0a0a0a;
+    --color-bg-subtle: #121212;
+
+    --color-fg-secondary: rgba(255, 255, 255, 0.95);
+    --color-fg-tertiary: rgba(255, 255, 255, 0.85);
+    --color-fg-muted: rgba(255, 255, 255, 0.75);
+    --color-fg-subtle: rgba(255, 255, 255, 0.5);
+
+    --color-border-default: rgba(255, 255, 255, 0.3);
+    --color-border-emphasis: rgba(255, 255, 255, 0.5);
+    --color-border-strong: rgba(255, 255, 255, 0.7);
+
+    --color-hover: rgba(255, 255, 255, 0.15);
+    --color-active: rgba(255, 255, 255, 0.25);
+    --color-focus: rgba(255, 255, 255, 0.9);
+
+    /* Semantic colors - brighter for high contrast */
+    --color-success: #5ddb5d;
+    --color-error: #ff6b6b;
+    --color-warning: #ffc857;
+    --color-info: #7eb8ff;
+  }
+}

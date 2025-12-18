@@ -188,13 +188,13 @@
 
 	.success-message {
 		padding: var(--space-sm);
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-md);
 	}
 
 	.success-text {
-		color: rgb(74, 222, 128);
+		color: var(--color-success);
 		font-weight: var(--font-medium);
 	}
 
@@ -218,7 +218,7 @@
 	}
 
 	.error-text {
-		color: rgb(248, 113, 113);
+		color: var(--color-error);
 		font-size: var(--text-body-sm);
 		margin-top: var(--space-sm);
 	}

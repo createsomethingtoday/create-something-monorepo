@@ -149,8 +149,8 @@
   }
 
   .badge-info {
-    color: var(--color-data-1);
-    background: rgba(96, 165, 250, 0.1);
+    color: var(--color-info);
+    background: var(--color-info-muted);
   }
 
   .badge-success {

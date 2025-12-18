@@ -19,9 +19,11 @@
 	let { children }: Props = $props();
 </script>
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <div class="page-wrapper">
 	<Navigation />
-	<main class="main-wrapper">
+	<main id="main-content" class="main-wrapper" tabindex="-1">
 		{@render children()}
 	</main>
 	<Footer />

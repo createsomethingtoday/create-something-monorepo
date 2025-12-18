@@ -65,11 +65,13 @@
 	<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </svelte:head>
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 {#if !isAdmin}
 	<Header onContactClick={openContactModal} />
 {/if}
 
-<main>
+<main id="main-content" tabindex="-1">
 	{@render children()}
 </main>
 
