@@ -689,10 +689,23 @@ A functional contact form with validation and proper accessibility.
 
           <!-- Submit Error -->
           {#if errors.submit}
-            <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p class="text-sm text-red-400">{errors.submit}</p>
+            <div class="error-banner p-4">
+              <p class="error-text">{errors.submit}</p>
             </div>
           {/if}
+
+          <!--
+            Canon-compliant error styling (in <style> block):
+            .error-banner {
+              background: var(--color-error-muted);
+              border: 1px solid var(--color-error-border);
+              border-radius: var(--radius-lg);
+            }
+            .error-text {
+              color: var(--color-error);
+              font-size: var(--text-body-sm);
+            }
+          -->
 
           <!-- Submit Button -->
           <Button

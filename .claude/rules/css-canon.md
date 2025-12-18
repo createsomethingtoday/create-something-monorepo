@@ -63,9 +63,17 @@ For hover/active states, use transparent overlays:
 
 /* Semantic Colors */
 --color-success: #44aa44
+--color-success-muted: rgba(68, 170, 68, 0.2)
+--color-success-border: rgba(68, 170, 68, 0.3)
 --color-error: #cc4444
+--color-error-muted: rgba(204, 68, 68, 0.2)
+--color-error-border: rgba(204, 68, 68, 0.3)
 --color-warning: #aa8844
+--color-warning-muted: rgba(170, 136, 68, 0.2)
+--color-warning-border: rgba(170, 136, 68, 0.3)
 --color-info: #4477aa
+--color-info-muted: rgba(68, 119, 170, 0.2)
+--color-info-border: rgba(68, 119, 170, 0.3)
 
 /* Data Visualization Palette */
 --color-data-1: #60a5fa  /* Blue */

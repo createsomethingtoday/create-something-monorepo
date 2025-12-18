@@ -814,7 +814,7 @@
 	}
 
 	.line-error {
-		color: #ef4444; /* red-500 equivalent for errors */
+		color: var(--color-error);
 	}
 
 	.line-system {

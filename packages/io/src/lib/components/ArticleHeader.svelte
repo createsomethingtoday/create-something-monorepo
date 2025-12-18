@@ -17,14 +17,14 @@
 	const categoryDisplayName =
 		categoryDisplayNames[paper.category] || paper.category;
 
-	const difficultyColors: Record<string, string> = {
-		Beginner: "text-green-400 bg-green-400",
-		Intermediate: "text-yellow-400 bg-yellow-400",
-		Advanced: "text-red-400 bg-red-400",
+	const difficultyLevels: Record<string, string> = {
+		Beginner: "difficulty-beginner",
+		Intermediate: "difficulty-intermediate",
+		Advanced: "difficulty-advanced",
 	};
 
-	const difficultyColor =
-		difficultyColors[paper.difficulty_level || ""] || "text-white bg-white";
+	const difficultyClass =
+		difficultyLevels[paper.difficulty_level || ""] || "difficulty-default";
 
 	const formatDate = (dateString?: string) => {
 		if (!dateString) return "";
@@ -117,9 +117,9 @@
 
 		<!-- Difficulty -->
 		{#if paper.difficulty_level}
-			<div class="flex items-center gap-2">
-				<div class="difficulty-indicator {difficultyColor.split(' ')[1]}"></div>
-				<span class="difficulty-text {difficultyColor.split(' ')[0]}">
+			<div class="flex items-center gap-2 {difficultyClass}">
+				<div class="difficulty-indicator"></div>
+				<span class="difficulty-text">
 					{paper.difficulty_level}
 				</span>
 			</div>
@@ -209,8 +209,37 @@
 		border-radius: var(--radius-full);
 	}
 
-	.difficulty-text {
-		/* Color classes applied inline */
+	/* Difficulty level colors - using Canon semantic tokens */
+	.difficulty-beginner .difficulty-indicator {
+		background-color: var(--color-success);
+	}
+
+	.difficulty-beginner .difficulty-text {
+		color: var(--color-success);
+	}
+
+	.difficulty-intermediate .difficulty-indicator {
+		background-color: var(--color-warning);
+	}
+
+	.difficulty-intermediate .difficulty-text {
+		color: var(--color-warning);
+	}
+
+	.difficulty-advanced .difficulty-indicator {
+		background-color: var(--color-error);
+	}
+
+	.difficulty-advanced .difficulty-text {
+		color: var(--color-error);
+	}
+
+	.difficulty-default .difficulty-indicator {
+		background-color: var(--color-fg-primary);
+	}
+
+	.difficulty-default .difficulty-text {
+		color: var(--color-fg-primary);
 	}
 
 	.tag-label {
