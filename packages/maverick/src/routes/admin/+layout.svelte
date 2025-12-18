@@ -39,10 +39,12 @@
 	}
 </script>
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 {#if isEmbedded}
 	<!-- Embedded mode - No sidebar, just content -->
 	<div class="admin-embed">
-		<main class="admin-embed-main-full">
+		<main id="main-content" class="admin-embed-main-full" tabindex="-1">
 			{@render children()}
 		</main>
 	</div>
@@ -149,7 +151,7 @@
 			</header>
 
 			<!-- Page content -->
-			<main class="admin-content">
+			<main id="main-content" class="admin-content" tabindex="-1">
 				{@render children()}
 			</main>
 		</div>

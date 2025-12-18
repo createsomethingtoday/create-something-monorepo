@@ -20,6 +20,8 @@
 	}
 </script>
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <div class="admin-layout">
 	<!-- Admin Navigation -->
 	<nav class="admin-nav">
@@ -49,7 +51,7 @@
 	</nav>
 
 	<!-- Admin Content -->
-	<main class="admin-content">
+	<main id="main-content" class="admin-content" tabindex="-1">
 		<slot />
 	</main>
 </div>
