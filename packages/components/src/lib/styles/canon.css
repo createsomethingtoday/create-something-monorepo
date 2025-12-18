@@ -29,12 +29,16 @@
   --color-border-strong: rgba(255, 255, 255, 0.3);
   --color-success: #44aa44;
   --color-success-muted: rgba(68, 170, 68, 0.2);
+  --color-success-border: rgba(68, 170, 68, 0.3);
   --color-error: #cc4444;
   --color-error-muted: rgba(204, 68, 68, 0.2);
+  --color-error-border: rgba(204, 68, 68, 0.3);
   --color-warning: #aa8844;
   --color-warning-muted: rgba(170, 136, 68, 0.2);
+  --color-warning-border: rgba(170, 136, 68, 0.3);
   --color-info: #4477aa;
   --color-info-muted: rgba(68, 119, 170, 0.2);
+  --color-info-border: rgba(68, 119, 170, 0.3);
   --color-hover: rgba(255, 255, 255, 0.05);
   --color-active: rgba(255, 255, 255, 0.1);
   --color-focus: rgba(255, 255, 255, 0.2);
@@ -612,6 +616,11 @@ pre code.hljs {
   .bg-error { background-color: var(--color-error-muted); }
   .bg-warning { background-color: var(--color-warning-muted); }
   .bg-info { background-color: var(--color-info-muted); }
+
+  .border-success { border-color: var(--color-success-border); }
+  .border-error { border-color: var(--color-error-border); }
+  .border-warning { border-color: var(--color-warning-border); }
+  .border-info { border-color: var(--color-info-border); }
 
   /* ==========================================================================
      Hero Pattern - Unified across all properties

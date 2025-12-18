@@ -63,8 +63,8 @@
 	);
 
 	// Mode styling
-	function getModeColor(mode: OntologicalMode): string {
-		return mode === 'zuhandenheit' ? 'text-green-400' : 'text-amber-400';
+	function getModeClass(mode: OntologicalMode): string {
+		return mode === 'zuhandenheit' ? 'mode-zuhandenheit' : 'mode-vorhandenheit';
 	}
 
 	function getModeLabel(mode: OntologicalMode): string {
@@ -72,14 +72,14 @@
 	}
 
 	// Judgment styling
-	function getJudgmentColor(judgment: MotionJudgment): string {
+	function getJudgmentClass(judgment: MotionJudgment): string {
 		switch (judgment) {
 			case 'functional':
-				return 'text-green-400 bg-green-400/10 border-green-400/30';
+				return 'judgment-functional';
 			case 'decorative':
-				return 'text-red-400 bg-red-400/10 border-red-400/30';
+				return 'judgment-decorative';
 			case 'ambiguous':
-				return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30';
+				return 'judgment-ambiguous';
 		}
 	}
 
@@ -271,14 +271,10 @@
 
 					<!-- Judgment Badge -->
 					<div class="flex items-center gap-4">
-						<span
-							class="px-4 py-2 rounded-lg border text-sm font-medium uppercase tracking-wide {getJudgmentColor(
-								result.phenomenological.judgment
-							)}"
-						>
+						<span class="judgment-badge {getJudgmentClass(result.phenomenological.judgment)}">
 							{result.phenomenological.judgment}
 						</span>
-						<span class="text-sm {getModeColor(result.phenomenological.mode)}">
+						<span class="mode-label {getModeClass(result.phenomenological.mode)}">
 							{getModeLabel(result.phenomenological.mode)}
 						</span>
 					</div>
@@ -653,17 +649,50 @@
   }
 
   .judgment-badge {
+    padding: 0.5rem 1rem;
     border-radius: var(--radius-md);
     border: 1px solid;
     font-size: var(--text-body-sm);
+    font-weight: 500;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .judgment-functional {
+    color: var(--color-success);
+    background: var(--color-success-muted);
+    border-color: var(--color-success-border);
+  }
+
+  .judgment-decorative {
+    color: var(--color-error);
+    background: var(--color-error-muted);
+    border-color: var(--color-error-border);
+  }
+
+  .judgment-ambiguous {
+    color: var(--color-warning);
+    background: var(--color-warning-muted);
+    border-color: var(--color-warning-border);
+  }
+
+  .mode-label {
+    font-size: var(--text-body-sm);
+  }
+
+  .mode-zuhandenheit {
+    color: var(--color-success);
+  }
+
+  .mode-vorhandenheit {
+    color: var(--color-warning);
   }
 
   .puppeteer-badge {
     font-size: var(--text-caption);
     padding: 0.25rem 0.5rem;
-    background: rgba(34, 197, 94, 0.2);
-    color: rgb(34, 197, 94);
+    background: var(--color-success-muted);
+    color: var(--color-success);
     border-radius: var(--radius-sm);
   }
 
@@ -727,11 +756,11 @@
   }
 
   .term-zuhandenheit {
-    color: rgb(34, 197, 94);
+    color: var(--color-success);
   }
 
   .term-vorhandenheit {
-    color: rgb(251, 191, 36);
+    color: var(--color-warning);
   }
 
   .term-label {

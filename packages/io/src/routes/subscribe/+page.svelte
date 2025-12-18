@@ -339,9 +339,9 @@
 			</p>
 
 			{#if submitted}
-				<div class="p-6 bg-green-500/10 border border-green-500/30 rounded-lg">
-					<div class="text-green-400 text-lg font-medium mb-2">You're on the list!</div>
-					<p class="text-white/70 text-sm">
+				<div class="success-banner p-6">
+					<div class="success-title mb-2">You're on the list!</div>
+					<p class="success-description">
 						We'll email you when subscriptions open in January.
 					</p>
 				</div>
@@ -353,12 +353,12 @@
 							bind:value={email}
 							placeholder="your@email.com"
 							required
-							class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-white/40"
+							class="email-input w-full px-4 py-3"
 						/>
 					</div>
 
 					{#if error}
-						<div class="p-3 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-sm">
+						<div class="error-banner p-3">
 							{error}
 						</div>
 					{/if}
@@ -387,3 +387,46 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.success-banner {
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+		border-radius: var(--radius-lg);
+	}
+
+	.success-title {
+		color: var(--color-success);
+		font-size: var(--text-body-lg);
+		font-weight: 500;
+	}
+
+	.success-description {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.error-banner {
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		border-radius: var(--radius-sm);
+		color: var(--color-error);
+		font-size: var(--text-body-sm);
+	}
+
+	.email-input {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-lg);
+		color: var(--color-fg-primary);
+	}
+
+	.email-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.email-input:focus {
+		outline: none;
+		border-color: var(--color-border-strong);
+	}
+</style>
