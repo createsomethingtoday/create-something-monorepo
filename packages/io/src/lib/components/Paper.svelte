@@ -198,7 +198,7 @@
 	}
 
 	:global(.paper-container .metric-positive) {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	:global(.paper-container .metric-label) {
@@ -215,8 +215,8 @@
 	}
 
 	:global(.paper-container .code-block-success) {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -234,7 +234,7 @@
 	}
 
 	:global(.paper-container .code-success) {
-		color: #86efac;
+		color: var(--color-success);
 	}
 
 	/* Quotes */
@@ -256,14 +256,14 @@
 
 	/* Comparison Boxes */
 	:global(.paper-container .comparison-broken) {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.3);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-lg);
 	}
 
 	:global(.paper-container .comparison-success) {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 	}
 
@@ -273,11 +273,11 @@
 	}
 
 	:global(.paper-container .comparison-broken .comparison-heading) {
-		color: #fca5a5;
+		color: var(--color-error);
 	}
 
 	:global(.paper-container .comparison-success .comparison-heading) {
-		color: #86efac;
+		color: var(--color-success);
 	}
 
 	:global(.paper-container .comparison-text) {
@@ -316,19 +316,19 @@
 	}
 
 	:global(.paper-container .table-success) {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	/* Callouts */
 	:global(.paper-container .callout-info) {
-		background: rgba(59, 130, 246, 0.1);
-		border: 1px solid rgba(59, 130, 246, 0.3);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-lg);
 	}
 
 	:global(.paper-container .callout-heading) {
 		font-size: var(--text-h3);
-		color: #93c5fd;
+		color: var(--color-info);
 	}
 
 	/* Info Cards */

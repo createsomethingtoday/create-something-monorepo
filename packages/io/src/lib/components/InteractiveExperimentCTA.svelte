@@ -135,15 +135,15 @@
 	}
 
 	.launch-button.default:hover {
-		background: rgba(255, 255, 255, 0.9);
+		background: var(--color-fg-secondary);
 	}
 
 	.launch-button.completed {
-		background: rgb(34, 197, 94);
+		background: var(--color-success);
 		color: var(--color-bg-pure);
 	}
 
 	.launch-button.completed:hover {
-		background: rgb(74, 222, 128);
+		filter: brightness(1.15);
 	}
 </style>

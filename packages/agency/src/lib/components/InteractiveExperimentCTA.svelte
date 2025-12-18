@@ -119,7 +119,7 @@
 
 	.reset-btn:hover {
 		color: var(--color-fg-primary);
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 	}
 
 	.launch-btn {
@@ -135,15 +135,15 @@
 	}
 
 	.launch-btn.default:hover {
-		background: rgba(255, 255, 255, 0.9);
+		background: var(--color-fg-secondary);
 	}
 
 	.launch-btn.completed {
-		background: #22c55e;
-		color: #000;
+		background: var(--color-success);
+		color: var(--color-bg-pure);
 	}
 
 	.launch-btn.completed:hover {
-		background: #4ade80;
+		filter: brightness(1.15);
 	}
 </style>

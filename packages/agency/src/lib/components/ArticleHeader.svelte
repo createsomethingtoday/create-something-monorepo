@@ -137,7 +137,7 @@
 	}
 
 	.ascii-art {
-		color: #00ff00;
+		color: var(--color-success);
 		font-size: clamp(0.7rem, 1.5vw, 0.9rem);
 		line-height: 1.2;
 		font-family: monospace;
@@ -154,7 +154,7 @@
 	}
 
 	.category-tag {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
@@ -187,27 +187,27 @@
 	}
 
 	.difficulty-beginner-bg {
-		background: #4ade80;
+		background: var(--color-success);
 	}
 
 	.difficulty-beginner-text {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.difficulty-intermediate-bg {
-		background: #facc15;
+		background: var(--color-warning);
 	}
 
 	.difficulty-intermediate-text {
-		color: #facc15;
+		color: var(--color-warning);
 	}
 
 	.difficulty-advanced-bg {
-		background: #f87171;
+		background: var(--color-error);
 	}
 
 	.difficulty-advanced-text {
-		color: #f87171;
+		color: var(--color-error);
 	}
 
 	.difficulty-default-bg {
@@ -224,7 +224,7 @@
 
 	.tech-tag {
 		font-size: var(--text-caption);
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-tertiary);

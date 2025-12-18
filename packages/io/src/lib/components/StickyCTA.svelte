@@ -127,12 +127,12 @@
 	}
 
 	.sticky-launch.completed {
-		background: rgb(34, 197, 94);
+		background: var(--color-success);
 		color: var(--color-bg-pure);
 	}
 
 	.sticky-launch.completed:hover {
-		background: rgb(74, 222, 128);
+		filter: brightness(1.15);
 	}
 
 	.animate-slide-up {
