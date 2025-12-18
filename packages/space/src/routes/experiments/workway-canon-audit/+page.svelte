@@ -115,8 +115,8 @@
 				<div class="insight-card p-4 space-y-2">
 					<h3 class="insight-title font-medium">ActionResult.error Structure</h3>
 					<p class="caption-text">
-						The README didn't capture that <code class="text-white/70">result.error</code> is an
-						object <code class="text-white/70">{`{ message, code }`}</code>, not a string. Tests
+						The README didn't capture that <code class="code-text">result.error</code> is an
+						object <code class="code-text">{`{ message, code }`}</code>, not a string. Tests
 						revealed this gotcha. DX helpers were added.
 					</p>
 				</div>
@@ -140,7 +140,7 @@
 				<div class="insight-card p-4 space-y-2">
 					<h3 class="insight-title font-medium">Capabilities Honesty</h3>
 					<p class="caption-text">
-						Gmail claimed <code class="text-white/70">canHandleAttachments: true</code> but didn't
+						Gmail claimed <code class="code-text">canHandleAttachments: true</code> but didn't
 						implement it. The Canon (Principle 6: Honest) required correction.
 					</p>
 				</div>
@@ -173,9 +173,8 @@
 						<div class="principle-score-old">{principle.prev}/5</div>
 						<div class="principle-arrow">→</div>
 						<div
-							class="text-sm font-medium {principle.curr > principle.prev
-								? 'text-green-400'
-								: 'text-white'}"
+							class="principle-score-current"
+							class:improved={principle.curr > principle.prev}
 						>
 							{principle.curr}/5
 						</div>
@@ -193,31 +192,31 @@
 			</div>
 
 			<div class="overflow-x-auto">
-				<table class="w-full text-sm">
+				<table class="data-table w-full">
 					<thead>
-						<tr class="text-left text-white/50 border-b border-white/10">
+						<tr class="table-header">
 							<th class="pb-2">Violation</th>
 							<th class="pb-2">Fix</th>
 						</tr>
 					</thead>
-					<tbody class="text-white/70">
-						<tr class="border-b border-white/5">
+					<tbody class="table-body">
+						<tr class="table-row">
 							<td class="py-2">No retry logic</td>
-							<td class="py-2"><code class="text-white/50">retry.ts</code> with exponential backoff</td>
+							<td class="py-2"><code class="code-text-muted">retry.ts</code> with exponential backoff</td>
 						</tr>
-						<tr class="border-b border-white/5">
+						<tr class="table-row">
 							<td class="py-2">Capabilities overstatement</td>
 							<td class="py-2">Honest declarations in Gmail, Stripe</td>
 						</tr>
-						<tr class="border-b border-white/5">
+						<tr class="table-row">
 							<td class="py-2">No request timeout</td>
 							<td class="py-2">AbortController in all 5 integrations</td>
 						</tr>
-						<tr class="border-b border-white/5">
+						<tr class="table-row">
 							<td class="py-2">No webhook tests</td>
 							<td class="py-2">42 tests (Stripe + template)</td>
 						</tr>
-						<tr>
+						<tr class="table-row-last">
 							<td class="py-2">Type conflicts</td>
 							<td class="py-2">Removed duplicate definitions</td>
 						</tr>
@@ -303,7 +302,7 @@
   .metric-value-success {
     font-size: var(--text-h1);
     font-weight: 700;
-    color: rgb(34, 197, 94);
+    color: var(--color-success);
   }
 
   .metric-value {
@@ -347,8 +346,16 @@
     color: var(--color-fg-primary);
   }
 
+  .code-text {
+    color: var(--color-fg-tertiary);
+  }
+
+  .code-text-muted {
+    color: var(--color-fg-muted);
+  }
+
   .insight-card {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-bg-pure);
     border-radius: var(--radius-md);
   }
 
@@ -382,7 +389,7 @@
   }
 
   .principle-row {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-bg-pure);
     border-radius: var(--radius-md);
   }
 
@@ -405,17 +412,40 @@
     color: var(--color-fg-subtle);
   }
 
-  .principle-score {
+  .principle-score-current {
     font-size: var(--text-body-sm);
+    font-weight: 500;
     color: var(--color-fg-primary);
   }
 
-  .principle-score.improved {
-    color: rgb(34, 197, 94);
+  .principle-score-current.improved {
+    color: var(--color-success);
   }
 
   .principle-note {
     color: var(--color-fg-muted);
     font-size: var(--text-caption);
+  }
+
+  .data-table {
+    font-size: var(--text-body-sm);
+  }
+
+  .table-header {
+    text-align: left;
+    color: var(--color-fg-muted);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .table-body {
+    color: var(--color-fg-tertiary);
+  }
+
+  .table-row {
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .table-row-last {
+    /* No border on last row */
   }
 </style>
