@@ -312,7 +312,7 @@
 
 				<!-- Quick Links (Optional) -->
 				{#if quickLinks.length > 0}
-					<div>
+					<nav aria-label="Quick links">
 						<h3 class="section-title mb-4">Quick Links</h3>
 						<ul class="space-y-3">
 							{#each quickLinks as link}
@@ -323,11 +323,11 @@
 								</li>
 							{/each}
 						</ul>
-					</div>
+					</nav>
 				{/if}
 
 				<!-- Modes of Being (REQUIRED) - With Hermeneutic Transitions -->
-				<div>
+				<nav aria-label="CREATE SOMETHING properties">
 					<h3 class="section-title mb-4">Modes of Being</h3>
 					<ul class="space-y-3">
 						<li>
@@ -391,7 +391,7 @@
 							</a>
 						</li>
 					</ul>
-				</div>
+				</nav>
 			</div>
 		</div>
 	</div>
