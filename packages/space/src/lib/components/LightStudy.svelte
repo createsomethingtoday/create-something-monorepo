@@ -274,16 +274,16 @@
 	</svg>
 
 	<!-- Season/Time controls (Rams: information on demand) -->
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="controls" onclick={(e) => e.stopPropagation()}>
+	<div class="controls" role="group" aria-label="Light study controls">
 		<div class="control-group">
 			<span class="control-label">Season</span>
-			<div class="control-buttons">
+			<div class="control-buttons" role="group" aria-label="Season selection">
 				{#each ['summer', 'equinox', 'winter'] as season}
 					<button
 						class="control-btn"
 						class:active={activeSeason === season}
-						onclick={(e) => { e.stopPropagation(); activeSeason = season as Season; }}
+						onclick={() => { activeSeason = season as Season; }}
+						aria-pressed={activeSeason === season}
 						style="--accent: {seasonColors[season as Season]}"
 					>
 						{season === 'summer' ? 'Jun' : season === 'equinox' ? 'Mar/Sep' : 'Dec'}
@@ -293,11 +293,12 @@
 		</div>
 		<div class="control-group">
 			<span class="control-label">Time</span>
-			<div class="control-buttons">
+			<div class="control-buttons" role="group" aria-label="Time of day selection">
 				<button
 					class="control-btn"
 					class:active={activeTime === 'all'}
-					onclick={(e) => { e.stopPropagation(); activeTime = 'all'; }}
+					onclick={() => { activeTime = 'all'; }}
+					aria-pressed={activeTime === 'all'}
 				>
 					All
 				</button>
@@ -305,7 +306,8 @@
 					<button
 						class="control-btn"
 						class:active={activeTime === time}
-						onclick={(e) => { e.stopPropagation(); activeTime = time as TimeOfDay; }}
+						onclick={() => { activeTime = time as TimeOfDay; }}
+						aria-pressed={activeTime === time}
 					>
 						{timeLabels[time as TimeOfDay]}
 					</button>
@@ -498,6 +500,11 @@
 
 	.control-btn:hover {
 		background: var(--color-hover);
+	}
+
+	.control-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 1px;
 	}
 
 	.control-btn.active {
