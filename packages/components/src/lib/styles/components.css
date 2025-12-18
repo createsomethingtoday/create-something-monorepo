@@ -249,4 +249,226 @@
   .container-prose {
     max-width: var(--container-prose);
   }
+
+  /* ==========================================================================
+     Hover State Patterns
+     Standardized interactive feedback following Canon tokens
+     Usage: Add to any interactive element for consistent behavior
+     ========================================================================== */
+
+  /* Base hover transition - apply to any interactive element */
+  .hover-transition {
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  /* Border emphasis on hover - subtle but noticeable */
+  .hover-border {
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-border:hover {
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Strong border on hover - more prominent feedback */
+  .hover-border-strong {
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-border-strong:hover {
+    border-color: var(--color-border-strong);
+  }
+
+  /* Background overlay on hover - for cards and panels */
+  .hover-bg {
+    transition: background-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-bg:hover {
+    background-color: var(--color-hover);
+  }
+
+  /* Active state background - for pressed/active states */
+  .hover-bg-active:active {
+    background-color: var(--color-active);
+  }
+
+  /* Text opacity hover - muted to full */
+  .hover-text {
+    color: var(--color-fg-muted);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-text:hover {
+    color: var(--color-fg-primary);
+  }
+
+  /* Secondary text hover - secondary to primary */
+  .hover-text-secondary {
+    color: var(--color-fg-secondary);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-text-secondary:hover {
+    color: var(--color-fg-primary);
+  }
+
+  /* Combined hover pattern - border + background */
+  .hover-interactive {
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-interactive:hover {
+    border-color: var(--color-border-emphasis);
+    background-color: var(--color-hover);
+  }
+
+  /* ==========================================================================
+     Elevation Transition Utilities
+     Smooth shadow and transform transitions for depth changes
+     ========================================================================== */
+
+  /* Base elevation transition */
+  .elevation-transition {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  /* Subtle lift - minimal movement, ideal for cards */
+  .elevation-lift-sm {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-lift-sm:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Standard lift - noticeable movement, ideal for feature cards */
+  .elevation-lift {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Large lift - dramatic movement, ideal for hero cards */
+  .elevation-lift-lg {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-lift-lg:hover {
+    transform: translateY(-12px);
+    box-shadow: var(--shadow-2xl);
+  }
+
+  /* Glow elevation - adds soft glow instead of shadow */
+  .elevation-glow {
+    transition: box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-glow:hover {
+    box-shadow: var(--shadow-glow-md);
+  }
+
+  /* Strong glow - more prominent glow effect */
+  .elevation-glow-lg {
+    transition: box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-glow-lg:hover {
+    box-shadow: var(--shadow-glow-lg);
+  }
+
+  /* Shadow only - no transform, just shadow change */
+  .elevation-shadow {
+    transition: box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-shadow:hover {
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Combined: lift + border + background */
+  .elevation-card {
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Horizontal slide - subtle rightward movement */
+  .elevation-slide {
+    transition: transform var(--duration-micro) var(--ease-standard),
+                border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .elevation-slide:hover {
+    transform: translateX(4px);
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Scale up - subtle grow effect */
+  .elevation-scale {
+    transition: transform var(--duration-standard) var(--ease-standard),
+                box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-scale:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* ==========================================================================
+     Combined Interactive Patterns
+     Pre-composed patterns for common use cases
+     ========================================================================== */
+
+  /* Interactive card - combines elevation + border + background */
+  .interactive-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .interactive-card:hover {
+    border-color: var(--color-border-emphasis);
+    background: var(--color-bg-surface);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Interactive list item - horizontal slide with border */
+  .interactive-list-item {
+    border: 1px solid var(--color-border-default);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .interactive-list-item:hover {
+    border-color: var(--color-border-emphasis);
+    transform: translateX(4px);
+    background: var(--color-hover);
+  }
+
+  /* Interactive link block - background highlight */
+  .interactive-link {
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .interactive-link:hover {
+    background: var(--color-hover);
+  }
+
+  .interactive-link:active {
+    background: var(--color-active);
+  }
 }
