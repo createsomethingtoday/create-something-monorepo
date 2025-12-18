@@ -76,12 +76,12 @@
 		{ label: '5xx Server', count: 30 }
 	];
 
-	// Comparative trends
+	// Comparative trends - using Canon data visualization colors
 	const performanceTrends = [
-		{ label: 'Auth', data: apiMetrics.auth.dailyAverages, color: 'rgb(34, 197, 94)', opacity: 0.9 },
-		{ label: 'Database', data: apiMetrics.database.dailyAverages, color: 'rgb(239, 68, 68)', opacity: 0.9 },
-		{ label: 'Cache', data: apiMetrics.cache.dailyAverages, color: 'rgb(96, 165, 250)', opacity: 0.9 },
-		{ label: 'Storage', data: apiMetrics.storage.dailyAverages, color: 'rgb(251, 191, 36)', opacity: 0.9 }
+		{ label: 'Auth', data: apiMetrics.auth.dailyAverages, color: 'var(--color-data-2)', opacity: 0.9 },
+		{ label: 'Database', data: apiMetrics.database.dailyAverages, color: 'var(--color-error)', opacity: 0.9 },
+		{ label: 'Cache', data: apiMetrics.cache.dailyAverages, color: 'var(--color-data-1)', opacity: 0.9 },
+		{ label: 'Storage', data: apiMetrics.storage.dailyAverages, color: 'var(--color-data-4)', opacity: 0.9 }
 	];
 </script>
 
@@ -89,12 +89,12 @@
 	<title>Data Patterns | CREATE SOMETHING.io</title>
 </svelte:head>
 
-<div class="min-h-screen bg-black text-white p-6">
+<div class="page-container min-h-screen p-6">
 	<div class="max-w-5xl mx-auto space-y-12">
 		<!-- Header -->
-		<div class="border-b border-white/10 pb-8">
-			<h1 class="text-4xl font-bold mb-3">Revealing Data Patterns</h1>
-			<p class="text-white/70 text-lg max-w-3xl">
+		<div class="header-section pb-8">
+			<h1 class="page-title mb-3">Revealing Data Patterns</h1>
+			<p class="text-secondary max-w-3xl">
 				A demonstration of how agentic visualization components automatically reveal patterns,
 				trends, and anomalies without manual analysis. The components make the insights obvious.
 			</p>
@@ -103,22 +103,22 @@
 		<!-- Pattern 1: Performance Degradation -->
 		<section class="space-y-6">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">Pattern Revealed: Performance Degradation</h2>
-				<p class="text-white/70">
+				<h2 class="section-title mb-2">Pattern Revealed: Performance Degradation</h2>
+				<p class="text-tertiary">
 					ComparativeSparklines component reveals which services are improving vs. degrading
 				</p>
 			</div>
 
-			<div class="p-8 bg-white/5 border border-white/10 rounded-lg space-y-6">
+			<div class="card p-8 space-y-6">
 				<ComparativeSparklines series={performanceTrends} width={100} height={30} />
 
-				<div class="text-sm text-white/60 space-y-2">
-					<p><strong class="text-white/80">What it reveals:</strong></p>
+				<div class="text-body-sm text-tertiary space-y-2">
+					<p><strong class="text-secondary">What it reveals:</strong></p>
 					<ul class="list-disc list-inside space-y-1 ml-4">
-						<li><span class="text-green-400">Auth</span> is improving (trending down = faster)</li>
-						<li><span class="text-red-400">Database</span> is degrading (trending up = slower)</li>
-						<li><span class="text-blue-400">Cache</span> is stable and optimal</li>
-						<li><span class="text-yellow-400">Storage</span> is flat (no change)</li>
+						<li><span class="data-success">Auth</span> is improving (trending down = faster)</li>
+						<li><span class="data-error">Database</span> is degrading (trending up = slower)</li>
+						<li><span class="data-info">Cache</span> is stable and optimal</li>
+						<li><span class="data-warning">Storage</span> is flat (no change)</li>
 					</ul>
 				</div>
 			</div>
@@ -127,8 +127,8 @@
 		<!-- Pattern 2: AI-Powered Service Health -->
 		<section class="space-y-6">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">Pattern Revealed: AI-Powered Service Health</h2>
-				<p class="text-white/70">
+				<h2 class="section-title mb-2">Pattern Revealed: AI-Powered Service Health</h2>
+				<p class="text-tertiary">
 					MetricCard + TrendIndicator with automatic semantic understanding via Cloudflare Workers AI
 				</p>
 			</div>
@@ -142,8 +142,8 @@
 							trend={metrics.dailyAverages}
 							context="ms avg"
 						/>
-						<div class="px-6 py-2 bg-white/5 border border-white/10 rounded-lg">
-							<div class="text-xs text-white/40 mb-1">vs. last week</div>
+						<div class="card-subtle px-6 py-2">
+							<div class="text-caption text-muted mb-1">vs. last week</div>
 							<TrendIndicator
 								current={metrics.avgResponseTime}
 								previous={metrics.previousAvg}
@@ -158,17 +158,17 @@
 				{/each}
 			</div>
 
-			<div class="p-6 bg-white/5 border border-white/10 rounded-lg space-y-3 text-white/70 text-sm">
-				<p>
-					<strong class="text-white/90">What it reveals:</strong> Database response time increased
+			<div class="card p-6 space-y-3">
+				<p class="text-tertiary text-body-sm">
+					<strong class="text-secondary">What it reveals:</strong> Database response time increased
 					+26%, indicating a problem. Auth improved -13%, cache improved -20%, storage flat.
 				</p>
-				<p>
-					<strong class="text-white/90">AI Enhancement:</strong> The component uses Cloudflare Workers AI
+				<p class="text-tertiary text-body-sm">
+					<strong class="text-secondary">AI Enhancement:</strong> The component uses Cloudflare Workers AI
 					to understand that "response_time" semantically means "lower is better"—automatically inverting
 					colors without manual configuration.
 				</p>
-				<p class="text-white/50">
+				<p class="text-muted text-body-sm">
 					First load calls AI API. Subsequent loads use cached results. Falls back to heuristics if AI unavailable.
 				</p>
 			</div>
@@ -177,17 +177,17 @@
 		<!-- Pattern 3: Error Distribution -->
 		<section class="space-y-6">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">Pattern Revealed: Error Distribution Health</h2>
-				<p class="text-white/70">
+				<h2 class="section-title mb-2">Pattern Revealed: Error Distribution Health</h2>
+				<p class="text-tertiary">
 					DistributionBar shows proportional breakdown of HTTP responses
 				</p>
 			</div>
 
-			<div class="p-8 bg-white/5 border border-white/10 rounded-lg">
+			<div class="card p-8">
 				<DistributionBar segments={errorDistribution} height="h-12" />
 
-				<p class="text-sm text-white/60 mt-6">
-					<strong class="text-white/80">What it reveals:</strong> System is healthy - 98.5%
+				<p class="text-body-sm text-tertiary mt-6">
+					<strong class="text-secondary">What it reveals:</strong> System is healthy - 98.5%
 					success rate, 1.2% client errors (expected), only 0.3% server errors (excellent).
 					The visual makes this distribution immediately obvious.
 				</p>
@@ -195,46 +195,130 @@
 		</section>
 
 		<!-- Key Insight -->
-		<section class="border-t border-white/10 pt-8">
-			<h2 class="text-2xl font-bold mb-4">The Pattern Recognition Insight</h2>
+		<section class="section-divider pt-8">
+			<h2 class="section-title mb-4">The Pattern Recognition Insight</h2>
 
-			<div class="p-6 bg-white/5 border border-white/10 rounded-lg space-y-4 text-white/70">
-				<p>
-					<strong class="text-white/90">Without visualization:</strong> You would need to manually:
+			<div class="card p-6 space-y-4">
+				<p class="text-tertiary">
+					<strong class="text-secondary">Without visualization:</strong> You would need to manually:
 				</p>
-				<ul class="list-disc list-inside space-y-2 ml-4">
+				<ul class="list-disc list-inside space-y-2 ml-4 text-tertiary">
 					<li>Calculate percentage changes for each service</li>
 					<li>Compare trends across time periods</li>
 					<li>Compute proportions for error distribution</li>
 					<li>Identify which metrics are improving vs. degrading</li>
 				</ul>
 
-				<p>
-					<strong class="text-white/90">With agentic components:</strong> Patterns are
+				<p class="text-tertiary">
+					<strong class="text-secondary">With agentic components:</strong> Patterns are
 					<em>immediately visible</em>. The database degradation, auth improvement, and healthy
 					error distribution are obvious at a glance. The components do the analytical work.
 				</p>
 
-				<p class="text-sm text-white/50 italic">
+				<p class="text-body-sm text-muted italic">
 					This is the power of encoding expert knowledge into autonomous software.
 				</p>
 			</div>
 		</section>
 
 		<!-- Footer -->
-		<div class="border-t border-white/10 pt-6">
-			<p class="text-sm text-white/40">
+		<div class="section-divider pt-6">
+			<p class="text-body-sm text-muted">
 				All visualizations powered by
 				<a
 					href="https://createsomething.ltd/masters/edward-tufte"
-					class="underline hover:text-white/60">@create-something/tufte</a
+					class="link">@create-something/tufte</a
 				>. View
-				<a href="/experiments/agentic-visualization" class="underline hover:text-white/60"
+				<a href="/experiments/agentic-visualization" class="link"
 					>full research paper</a
 				>
 				or
-				<a href="/experiments" class="underline hover:text-white/60">all experiments</a>.
+				<a href="/experiments" class="link">all experiments</a>.
 			</p>
 		</div>
 	</div>
 </div>
+
+<style>
+	.page-container {
+		background: var(--color-bg-pure);
+		color: var(--color-fg-primary);
+	}
+
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.section-title {
+		font-size: var(--text-h2);
+		font-weight: 700;
+	}
+
+	.header-section {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.section-divider {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.text-secondary {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-lg);
+	}
+
+	.text-tertiary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.text-muted {
+		color: var(--color-fg-muted);
+	}
+
+	.text-body-sm {
+		font-size: var(--text-body-sm);
+	}
+
+	.text-caption {
+		font-size: var(--text-caption);
+	}
+
+	.card {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-subtle {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.link {
+		text-decoration: underline;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.link:hover {
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Data visualization semantic colors */
+	.data-success {
+		color: var(--color-data-2);
+	}
+
+	.data-error {
+		color: var(--color-error);
+	}
+
+	.data-info {
+		color: var(--color-data-1);
+	}
+
+	.data-warning {
+		color: var(--color-data-4);
+	}
+</style>

@@ -23,10 +23,10 @@
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-7xl mx-auto">
       <div class="text-center space-y-4 animate-reveal">
-        <h1 class="text-4xl md:text-6xl font-bold text-white">
+        <h1 class="page-title">
           Browse by Category
         </h1>
-        <p class="text-lg text-white/60">
+        <p class="text-tertiary text-body-lg">
           Explore our technical papers organized by topic
         </p>
       </div>
@@ -41,15 +41,15 @@
           <div class="animate-reveal" style="--delay: {index + 1}">
             <a
               href="/category/{category.slug}"
-              class="group block relative p-8 bg-[#111111] border border-white/10 rounded-lg hover:border-white/30 transition-all overflow-hidden min-h-[160px]"
+              class="category-card group block relative p-8 min-h-[160px] overflow-hidden"
             >
               <div class="relative z-10 space-y-4">
-                <h3 class="text-2xl font-semibold text-white group-hover:text-white/90 transition-colors">
+                <h3 class="category-title">
                   {category.name}
                 </h3>
 
                 <div class="flex items-center justify-between">
-                  <div class="text-base font-medium text-white/60 group-hover:text-white/80 transition-colors">
+                  <div class="category-count">
                     {category.count} {category.count === 1 ? 'article' : 'articles'}
                   </div>
 
@@ -58,7 +58,7 @@
                     height="20"
                     viewBox="0 0 16 16"
                     fill="none"
-                    class="text-white/60 group-hover:text-white/90 transition-all group-hover:translate-x-1"
+                    class="category-arrow"
                   >
                     <path
                       d="M10.6696 6.276L4.93156 12.014L3.98889 11.0713L9.72622 5.33333H4.66956V4H12.0029V11.3333H10.6696V6.276Z"
@@ -68,7 +68,7 @@
                 </div>
               </div>
 
-              <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div class="category-overlay"></div>
             </a>
           </div>
         {/each}
@@ -76,17 +76,86 @@
 
       {#if categories.length === 0}
         <div class="text-center py-16">
-          <p class="text-white/60 text-lg">No categories available yet.</p>
+          <p class="text-tertiary text-body-lg">No categories available yet.</p>
         </div>
       {/if}
     </div>
   </section>
 
 <style>
+  .page-title {
+    font-size: var(--text-display);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .text-tertiary {
+    color: var(--color-fg-tertiary);
+  }
+
+  .text-body-lg {
+    font-size: var(--text-body-lg);
+  }
+
+  .category-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .category-card:hover {
+    border-color: var(--color-border-strong);
+  }
+
+  .category-title {
+    font-size: var(--text-h2);
+    font-weight: 600;
+    color: var(--color-fg-primary);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .group:hover .category-title {
+    color: var(--color-fg-secondary);
+  }
+
+  .category-count {
+    font-size: var(--text-body);
+    font-weight: 500;
+    color: var(--color-fg-tertiary);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .group:hover .category-count {
+    color: var(--color-fg-secondary);
+  }
+
+  .category-arrow {
+    color: var(--color-fg-tertiary);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .group:hover .category-arrow {
+    color: var(--color-fg-secondary);
+    transform: translateX(4px);
+  }
+
+  .category-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom right, var(--color-hover), transparent);
+    opacity: 0;
+    transition: opacity var(--duration-micro) var(--ease-standard);
+  }
+
+  .group:hover .category-overlay {
+    opacity: 1;
+  }
+
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
     animation-delay: calc(var(--delay, 0) * 100ms);
   }
 
