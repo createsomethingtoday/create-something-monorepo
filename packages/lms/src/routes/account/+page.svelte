@@ -384,7 +384,7 @@
 									<span>Change</span>
 								</label>
 								{#if data.profile.avatar_url}
-									<button type="button" class="avatar-btn delete" onclick={deleteAvatar} disabled={uploadingAvatar}>
+									<button type="button" class="avatar-btn delete" onclick={deleteAvatar} disabled={uploadingAvatar} aria-label="Delete avatar">
 										<Trash2 size={14} />
 									</button>
 								{/if}
