@@ -44,9 +44,9 @@
               class="category-card group block relative p-8 min-h-[160px] overflow-hidden"
             >
               <div class="relative z-10 space-y-4">
-                <h3 class="category-title">
+                <h2 class="category-title">
                   {category.name}
-                </h3>
+                </h2>
 
                 <div class="flex items-center justify-between">
                   <div class="category-count">

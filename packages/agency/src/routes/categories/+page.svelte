@@ -37,9 +37,9 @@
             class="group block relative p-8 overflow-hidden category-card"
           >
             <div class="relative z-10 space-y-4">
-              <h3 class="heading-2 font-semibold group-hover:body-xl transition-colors">
+              <h2 class="heading-2 font-semibold group-hover:body-xl transition-colors">
                 {category.name}
-              </h3>
+              </h2>
 
               <div class="flex items-center justify-between">
                 <div class="body font-medium body-tertiary group-hover:body-secondary transition-colors">
