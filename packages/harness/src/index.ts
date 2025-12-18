@@ -27,6 +27,8 @@ export type {
   PauseOptions,
   ParallelExecutionConfig,
   ParallelSessionResult,
+  BatchStats,
+  AggregatedResults,
 } from './types.js';
 
 export { DEFAULT_CHECKPOINT_POLICY, DEFAULT_PARALLEL_CONFIG } from './types.js';
@@ -112,3 +114,20 @@ export type {
   DependencyGraph,
   IndependenceAnalysis,
 } from './independence.js';
+
+// Aggregation
+export {
+  calculateBatchStats,
+  createResultAggregator,
+  addBatchResult,
+  addSequentialResult,
+  computeAggregatedResults,
+  formatBatchStats,
+  formatAggregatedResults,
+  formatAggregatedSummary,
+  generateAggregatedCheckpointSummary,
+} from './aggregation.js';
+
+export type {
+  ResultAggregator,
+} from './aggregation.js';

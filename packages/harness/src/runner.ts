@@ -61,6 +61,14 @@ import {
   areDependenciesComplete,
   buildDependencyGraph,
 } from './independence.js';
+import {
+  createResultAggregator,
+  addBatchResult,
+  addSequentialResult,
+  computeAggregatedResults,
+  formatAggregatedResults,
+  generateAggregatedCheckpointSummary,
+} from './aggregation.js';
 
 /**
  * Initialize a new harness run.
@@ -140,6 +148,7 @@ export async function runHarness(
   options: { cwd: string; dryRun?: boolean; parallelConfig?: ParallelExecutionConfig }
 ): Promise<void> {
   const checkpointTracker = createCheckpointTracker();
+  const resultAggregator = createResultAggregator();
   let beadsSnapshot = await takeSnapshot(options.cwd);
   let lastCheckpoint: Checkpoint | null = null;
   let redirectNotes: string[] = [];
@@ -258,6 +267,9 @@ export async function runHarness(
         dryRun: options.dryRun,
       });
 
+      // Add batch result to aggregator for cross-batch statistics
+      addBatchResult(resultAggregator, parallelResult);
+
       // Handle parallel results
       for (const result of parallelResult.results) {
         recordSession(checkpointTracker, result);
@@ -316,6 +328,7 @@ export async function runHarness(
 
       // Handle session result
       recordSession(checkpointTracker, sessionResult);
+      addSequentialResult(resultAggregator, sessionResult);
 
       if (sessionResult.outcome === 'success') {
         await updateIssueStatus(nextIssue.id, 'closed', options.cwd);
@@ -391,6 +404,9 @@ export async function runHarness(
     }
   }
 
+  // Compute aggregated results
+  const aggregatedResults = computeAggregatedResults(resultAggregator);
+
   // Final summary
   console.log(`\n═══════════════════════════════════════════════════════════════`);
   console.log(`  HARNESS ${harnessState.status.toUpperCase()}`);
@@ -401,6 +417,11 @@ export async function runHarness(
     console.log(`  Pause Reason: ${harnessState.pauseReason}`);
   }
   console.log(`═══════════════════════════════════════════════════════════════\n`);
+
+  // Show aggregated results if there were multiple batches or parallel execution
+  if (aggregatedResults.batches.length > 1 || isParallel) {
+    console.log(formatAggregatedResults(aggregatedResults));
+  }
 }
 
 /**

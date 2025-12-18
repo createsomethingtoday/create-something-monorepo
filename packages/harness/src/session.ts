@@ -18,6 +18,7 @@ import type {
   ParallelExecutionConfig,
 } from './types.js';
 import { DEFAULT_PARALLEL_CONFIG } from './types.js';
+import { calculateBatchStats } from './aggregation.js';
 
 const execAsync = promisify(exec);
 
@@ -517,20 +518,25 @@ export async function runParallelSessions(
       console.log(`    - ${issue.id}: ${issue.title}`);
     }
 
+    const dryRunResults = issues.slice(0, maxAgents).map((issue) => ({
+      issueId: issue.id,
+      outcome: 'success' as SessionOutcome,
+      summary: '[Dry run] Session would have executed',
+      gitCommit: null,
+      contextUsed: 0,
+      durationMs: 0,
+      error: null,
+    }));
+
+    const dryRunDuration = Date.now() - startTime;
+
     return {
-      results: issues.slice(0, maxAgents).map((issue) => ({
-        issueId: issue.id,
-        outcome: 'success' as SessionOutcome,
-        summary: '[Dry run] Session would have executed',
-        gitCommit: null,
-        contextUsed: 0,
-        durationMs: 0,
-        error: null,
-      })),
+      results: dryRunResults,
       completed: issues.slice(0, maxAgents).map((i) => i.id),
       failed: [],
-      totalDurationMs: Date.now() - startTime,
+      totalDurationMs: dryRunDuration,
       allSucceeded: true,
+      stats: calculateBatchStats(dryRunResults, dryRunDuration, maxAgents),
     };
   }
 
@@ -575,11 +581,16 @@ export async function runParallelSessions(
 
   const totalDurationMs = Date.now() - startTime;
 
+  // Calculate batch statistics
+  const stats = calculateBatchStats(results, totalDurationMs, maxAgents);
+
   console.log(`\n  ⏱ Parallel batch completed in ${(totalDurationMs / 1000).toFixed(1)}s`);
   console.log(`    ✅ Completed: ${completed.length}`);
   if (failed.length > 0) {
     console.log(`    ❌ Failed: ${failed.length}`);
   }
+  console.log(`    📊 Efficiency: ${(stats.efficiency * 100).toFixed(0)}%`);
+  console.log(`    📈 Throughput: ${stats.throughput.toFixed(1)} sessions/min`);
 
   return {
     results,
@@ -587,6 +598,7 @@ export async function runParallelSessions(
     failed,
     totalDurationMs,
     allSucceeded: failed.length === 0,
+    stats,
   };
 }
 

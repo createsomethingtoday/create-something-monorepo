@@ -162,6 +162,60 @@ export interface ParallelSessionResult {
   totalDurationMs: number;
   /** Whether all sessions succeeded */
   allSucceeded: boolean;
+  /** Batch-level statistics */
+  stats: BatchStats;
+}
+
+/**
+ * Statistics for a single parallel batch.
+ */
+export interface BatchStats {
+  /** Number of agents spawned */
+  agentCount: number;
+  /** Success rate (0-1) */
+  successRate: number;
+  /** Average duration per session */
+  avgDurationMs: number;
+  /** Maximum duration (slowest session) */
+  maxDurationMs: number;
+  /** Minimum duration (fastest session) */
+  minDurationMs: number;
+  /** Throughput: sessions per minute */
+  throughput: number;
+  /** Parallel efficiency: (sum of durations) / (totalDuration * agentCount) */
+  efficiency: number;
+}
+
+/**
+ * Aggregated results across multiple parallel batches.
+ */
+export interface AggregatedResults {
+  /** All individual session results */
+  allResults: SessionResult[];
+  /** All batch results */
+  batches: ParallelSessionResult[];
+  /** Total sessions run */
+  totalSessions: number;
+  /** Total successful sessions */
+  successfulSessions: number;
+  /** Total failed sessions */
+  failedSessions: number;
+  /** Total partial sessions */
+  partialSessions: number;
+  /** Total wall clock time */
+  totalWallTimeMs: number;
+  /** Cumulative session time (would be sequential time) */
+  cumulativeSessionTimeMs: number;
+  /** Time saved via parallelism */
+  timeSavedMs: number;
+  /** Overall success rate */
+  overallSuccessRate: number;
+  /** Overall throughput (sessions per minute) */
+  overallThroughput: number;
+  /** Average batch efficiency */
+  avgBatchEfficiency: number;
+  /** Git commits produced */
+  gitCommits: string[];
 }
 
 export const DEFAULT_PARALLEL_CONFIG: ParallelExecutionConfig = {
