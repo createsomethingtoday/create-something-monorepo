@@ -280,7 +280,7 @@
 			<div class="control-buttons" role="group" aria-label="Season selection">
 				{#each ['summer', 'equinox', 'winter'] as season}
 					<button
-						class="control-btn"
+						class="control-btn a11y-focus-tight"
 						class:active={activeSeason === season}
 						onclick={() => { activeSeason = season as Season; }}
 						aria-pressed={activeSeason === season}
@@ -295,7 +295,7 @@
 			<span class="control-label">Time</span>
 			<div class="control-buttons" role="group" aria-label="Time of day selection">
 				<button
-					class="control-btn"
+					class="control-btn a11y-focus-tight"
 					class:active={activeTime === 'all'}
 					onclick={() => { activeTime = 'all'; }}
 					aria-pressed={activeTime === 'all'}
@@ -304,7 +304,7 @@
 				</button>
 				{#each ['morning', 'noon', 'afternoon', 'evening'] as time}
 					<button
-						class="control-btn"
+						class="control-btn a11y-focus-tight"
 						class:active={activeTime === time}
 						onclick={() => { activeTime = time as TimeOfDay; }}
 						aria-pressed={activeTime === time}
@@ -502,10 +502,7 @@
 		background: var(--color-hover);
 	}
 
-	.control-btn:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 1px;
-	}
+	/* Focus styles handled by .a11y-focus-tight utility class */
 
 	.control-btn.active {
 		background: var(--accent, var(--color-fg-subtle));

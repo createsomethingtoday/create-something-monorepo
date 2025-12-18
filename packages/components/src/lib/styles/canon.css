@@ -700,4 +700,42 @@ pre code.hljs {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* ==========================================================================
+     Accessibility Focus Utilities
+     ==========================================================================
+
+     Shared focus styles for accessible interactive elements.
+     Use these classes instead of duplicating focus styles in components.
+
+     Usage:
+       .a11y-focus       - Apply to focusable elements (buttons, links, interactive)
+       .a11y-focus-within - Apply to containers whose children receive focus
+
+     These use var(--color-focus) for consistent focus indication.
+     ========================================================================== */
+
+  /* Standard focus ring for interactive elements */
+  .a11y-focus:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Focus state for containers (shows when any descendant is focused) */
+  .a11y-focus-within:focus-within {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Variant with no outline offset (for tight layouts) */
+  .a11y-focus-tight:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 0;
+  }
+
+  /* Variant with inward offset (for nested elements) */
+  .a11y-focus-inset:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
 }

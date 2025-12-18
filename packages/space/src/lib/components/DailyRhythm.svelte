@@ -289,7 +289,7 @@
 	.activity:focus-visible .activity-bar {
 		stroke: var(--color-fg-primary);
 		stroke-width: 2;
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.2));
+		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
 	}
 
