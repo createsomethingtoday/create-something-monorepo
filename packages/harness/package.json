@@ -21,7 +21,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "harness": "node dist/cli.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
