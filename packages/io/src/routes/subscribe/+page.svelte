@@ -567,7 +567,8 @@
 	}
 
 	.email-input:focus {
-		outline: none;
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 		border-color: var(--color-border-strong);
 	}
 
@@ -580,6 +581,11 @@
 
 	.submit-button:hover {
 		opacity: 0.9;
+	}
+
+	.submit-button:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	/* Footer */

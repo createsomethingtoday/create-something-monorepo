@@ -448,7 +448,8 @@
 	}
 
 	.newsletter-input:focus {
-		outline: none;
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 		border-color: var(--color-border-strong);
 	}
 
@@ -472,6 +473,11 @@
 	.newsletter-button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.newsletter-button:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	/* Message States */

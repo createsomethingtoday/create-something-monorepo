@@ -251,8 +251,9 @@
 	}
 
 	.newsletter-input:focus {
-		outline: none;
-		border-color: rgba(255, 255, 255, 0.3);
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+		border-color: var(--color-border-strong);
 	}
 
 	.newsletter-btn {
@@ -265,6 +266,11 @@
 
 	.newsletter-btn:hover {
 		background: var(--color-fg-secondary);
+	}
+
+	.newsletter-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.footer-links-section {

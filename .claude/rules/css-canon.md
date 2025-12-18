@@ -40,7 +40,7 @@ For hover/active states, use transparent overlays:
 |-------|-------------|-------|
 | hover | `var(--color-hover)` | rgba(255,255,255,0.05) |
 | active | `var(--color-active)` | rgba(255,255,255,0.1) |
-| focus | `var(--color-focus)` | rgba(255,255,255,0.2) |
+| focus | `var(--color-focus)` | rgba(255,255,255,0.5) - WCAG AA compliant 5.28:1 |
 
 ## Token Reference
 

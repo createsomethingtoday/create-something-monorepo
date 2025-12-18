@@ -161,7 +161,8 @@
   }
 
   input:focus {
-    outline: none;
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
     border-color: var(--color-border-emphasis);
   }
 
@@ -189,6 +190,11 @@
   .submit:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .submit:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
   }
 
   .switch {
