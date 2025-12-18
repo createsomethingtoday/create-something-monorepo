@@ -12,8 +12,9 @@ import type {
   Checkpoint,
   CheckpointPolicy,
   PrimingContext,
+  FailureHandlingConfig,
 } from './types.js';
-import { DEFAULT_CHECKPOINT_POLICY } from './types.js';
+import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG } from './types.js';
 import { parseSpec, formatSpecSummary } from './spec-parser.js';
 import {
   createIssuesFromFeatures,
@@ -27,6 +28,9 @@ import {
   getPendingFeatures,
   parseHarnessDescription,
   updateHarnessStatus,
+  annotateIssueFailure,
+  markIssueSkipped,
+  resetIssueForRetry,
 } from './beads.js';
 import {
   runSession,
@@ -52,6 +56,15 @@ import {
   requiresImmediateAction,
   logRedirect,
 } from './redirect.js';
+import {
+  createFailureTracker,
+  makeFailureDecision,
+  recordSuccessfulRetry,
+  getAttemptCount,
+  formatFailureAnnotation,
+  formatFailureStats,
+  getFailureStats,
+} from './failure-handler.js';
 
 /**
  * Initialize a new harness run.
@@ -128,9 +141,15 @@ export async function initializeHarness(
  */
 export async function runHarness(
   harnessState: HarnessState,
-  options: { cwd: string; dryRun?: boolean }
+  options: {
+    cwd: string;
+    dryRun?: boolean;
+    failureConfig?: FailureHandlingConfig;
+  }
 ): Promise<void> {
   const checkpointTracker = createCheckpointTracker();
+  const failureTracker = createFailureTracker();
+  const failureConfig = options.failureConfig ?? DEFAULT_FAILURE_HANDLING_CONFIG;
   let beadsSnapshot = await takeSnapshot(options.cwd);
   let lastCheckpoint: Checkpoint | null = null;
   let redirectNotes: string[] = [];
@@ -139,6 +158,7 @@ export async function runHarness(
   console.log(`  HARNESS RUNNING: ${harnessState.id}`);
   console.log(`  Branch: ${harnessState.gitBranch}`);
   console.log(`  Features: ${harnessState.featuresTotal}`);
+  console.log(`  Failure Handling: retry=${failureConfig.maxRetries}, continue=${failureConfig.continueOnFailure}`);
   console.log(`═══════════════════════════════════════════════════════════════\n`);
 
   while (harnessState.status === 'running') {
@@ -229,28 +249,97 @@ export async function runHarness(
       dryRun: options.dryRun,
     });
 
-    // 5. Handle session result
+    // 5. Handle session result with graceful failure handling
     recordSession(checkpointTracker, sessionResult);
 
     if (sessionResult.outcome === 'success') {
+      // Check if this was a successful retry
+      const attemptCount = getAttemptCount(failureTracker, nextIssue.id);
+      if (attemptCount > 0) {
+        recordSuccessfulRetry(failureTracker, nextIssue.id);
+        console.log(`✅ Task completed on retry (attempt ${attemptCount + 1}): ${nextIssue.id}`);
+      } else {
+        console.log(`✅ Task completed: ${nextIssue.id}`);
+      }
+
       await updateIssueStatus(nextIssue.id, 'closed', options.cwd);
       harnessState.featuresCompleted++;
       harnessState.sessionsCompleted++;
-      console.log(`✅ Task completed: ${nextIssue.id}`);
-    } else if (sessionResult.outcome === 'failure') {
-      // Keep as in_progress for retry, but track failure
-      harnessState.featuresFailed++;
+    } else {
+      // Non-success outcome - use failure handler
       harnessState.sessionsCompleted++;
-      console.log(`❌ Task failed: ${nextIssue.id}`);
+
+      const decision = makeFailureDecision(sessionResult, failureTracker, failureConfig);
+      console.log(`${getOutcomeIcon(sessionResult.outcome)} ${nextIssue.id}: ${sessionResult.outcome}`);
       if (sessionResult.error) {
-        console.log(`   Error: ${sessionResult.error}`);
+        console.log(`   Error: ${sessionResult.error.slice(0, 100)}`);
       }
-    } else if (sessionResult.outcome === 'partial') {
-      harnessState.sessionsCompleted++;
-      console.log(`◐ Task partially completed: ${nextIssue.id}`);
-    } else if (sessionResult.outcome === 'context_overflow') {
-      harnessState.sessionsCompleted++;
-      console.log(`⚠ Context overflow: ${nextIssue.id}`);
+      console.log(`   Decision: ${decision.action} - ${decision.reason}`);
+
+      // Handle the decision
+      switch (decision.action) {
+        case 'retry':
+          // Schedule retry - the issue stays in_progress and will be picked up next iteration
+          console.log(`   Waiting ${failureConfig.retryDelayMs}ms before retry...`);
+          if (!options.dryRun) {
+            await sleep(decision.retryAfterMs ?? failureConfig.retryDelayMs);
+          }
+          // Reset issue state for retry
+          await resetIssueForRetry(nextIssue.id, options.cwd);
+          break;
+
+        case 'skip':
+          // Mark as skipped and move on
+          harnessState.featuresFailed++;
+          await markIssueSkipped(nextIssue.id, decision.reason, options.cwd);
+          // Annotate the failure if configured
+          if (failureConfig.annotateFailures) {
+            const record = failureTracker.records.get(nextIssue.id);
+            if (record) {
+              await annotateIssueFailure(
+                nextIssue.id,
+                formatFailureAnnotation(record),
+                options.cwd
+              );
+            }
+          }
+          break;
+
+        case 'pause':
+          // Pause the harness for human review
+          harnessState.status = 'paused';
+          harnessState.pauseReason = decision.reason;
+          harnessState.featuresFailed++;
+          console.log(`\n⏸ Harness paused: ${decision.reason}`);
+          break;
+
+        case 'escalate':
+          // Escalate - pause with escalation flag
+          harnessState.status = 'paused';
+          harnessState.pauseReason = `[ESCALATED] ${decision.reason}`;
+          harnessState.featuresFailed++;
+          console.log(`\n🚨 Harness escalated: ${decision.reason}`);
+          break;
+      }
+
+      // Create checkpoint if decision requires it
+      if (decision.shouldCreateCheckpoint && checkpointTracker.sessionsResults.length > 0) {
+        console.log(`\n📊 Creating checkpoint: ${decision.reason}`);
+        lastCheckpoint = await generateCheckpoint(
+          checkpointTracker,
+          harnessState,
+          `Failure handling: ${decision.action}`,
+          options.cwd
+        );
+        console.log('\n' + formatCheckpointDisplay(lastCheckpoint));
+        resetTracker(checkpointTracker);
+        harnessState.lastCheckpoint = lastCheckpoint.id;
+      }
+
+      // Exit loop if decision says not to continue
+      if (!decision.shouldContinue) {
+        break;
+      }
     }
 
     // 6. Check checkpoint policy
@@ -303,16 +392,36 @@ export async function runHarness(
     }
   }
 
-  // Final summary
+  // Final summary with failure statistics
+  const failureStats = getFailureStats(failureTracker);
   console.log(`\n═══════════════════════════════════════════════════════════════`);
   console.log(`  HARNESS ${harnessState.status.toUpperCase()}`);
   console.log(`  Sessions: ${harnessState.sessionsCompleted}`);
   console.log(`  Features: ${harnessState.featuresCompleted}/${harnessState.featuresTotal} completed`);
   console.log(`  Failed: ${harnessState.featuresFailed}`);
+  if (failureStats.totalRetries > 0) {
+    console.log(`  Retries: ${failureStats.totalRetries} (${failureStats.successfulRetries} successful)`);
+  }
+  if (failureStats.skippedIssues > 0) {
+    console.log(`  Skipped: ${failureStats.skippedIssues}`);
+  }
   if (harnessState.pauseReason) {
     console.log(`  Pause Reason: ${harnessState.pauseReason}`);
   }
   console.log(`═══════════════════════════════════════════════════════════════\n`);
+}
+
+/**
+ * Get icon for session outcome.
+ */
+function getOutcomeIcon(outcome: string): string {
+  switch (outcome) {
+    case 'success': return '✅';
+    case 'failure': return '❌';
+    case 'partial': return '◐';
+    case 'context_overflow': return '⚠';
+    default: return '?';
+  }
 }
 
 /**

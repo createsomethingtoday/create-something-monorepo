@@ -82,6 +82,63 @@ bd close <id>                     # Stop work on issue
 | On error | true | Checkpoint on task failure |
 | Low confidence | 0.7 | Pause if confidence < 70% |
 
+## Failure Handling
+
+The harness handles partial failures gracefully with configurable strategies.
+
+### Failure Actions
+
+| Action | Description |
+|--------|-------------|
+| `retry` | Retry the task (up to maxRetries) |
+| `skip` | Skip the task and continue |
+| `pause` | Pause harness for human review |
+| `escalate` | Pause with escalation flag |
+
+### Default Strategies by Failure Type
+
+| Failure Type | Default Action | Rationale |
+|--------------|---------------|-----------|
+| `context_overflow` | skip | Task may be too large, retrying won't help |
+| `timeout` | retry | May be transient |
+| `partial` | skip | Some work done, move on |
+| `failure` | retry | Worth another attempt |
+
+### Configuration
+
+```typescript
+const failureConfig: FailureHandlingConfig = {
+  maxRetries: 2,           // Retry up to 2 times
+  retryDelayMs: 5000,      // Wait 5s between retries
+  continueOnFailure: true, // Keep running on individual failures
+  maxConsecutiveFailures: 3, // Pause after 3 consecutive failures
+  annotateFailures: true,  // Record failure reasons in Beads
+  strategies: {
+    contextOverflow: 'skip',
+    timeout: 'retry',
+    partial: 'skip',
+    failure: 'retry',
+  },
+};
+```
+
+### Failure Tracking
+
+The harness tracks:
+- **Per-issue history**: Attempt count, errors, durations
+- **Consecutive failures**: Resets on success
+- **Retry success rate**: How often retries help
+- **Skipped issues**: Tasks that couldn't complete
+
+### Recovery from Failures
+
+When the harness pauses due to failures:
+1. Review the checkpoint summary
+2. Check failed issue annotations in Beads
+3. Address root causes (task too large? dependencies missing?)
+4. Adjust failure config if needed
+5. Resume with `harness resume`
+
 ## Architecture
 
 ```
@@ -200,6 +257,7 @@ packages/harness/
 │   ├── session.ts        # Claude Code spawning
 │   ├── checkpoint.ts     # Progress reports
 │   ├── redirect.ts       # Change detection
+│   ├── failure-handler.ts # Graceful failure handling
 │   ├── runner.ts         # Main loop
 │   ├── cli.ts            # CLI entry point
 │   └── index.ts          # Exports

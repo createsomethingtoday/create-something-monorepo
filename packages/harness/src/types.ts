@@ -168,3 +168,92 @@ export const DEFAULT_CHECKPOINT_POLICY: CheckpointPolicy = {
   onConfidenceBelow: 0.7,
   onRedirect: true,
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Partial Failure Handling
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Configuration for handling partial failures gracefully.
+ * Philosophy: Failures are information, not disasters. The harness learns
+ * from failures and adjusts strategy accordingly.
+ */
+export interface FailureHandlingConfig {
+  /** Maximum retry attempts per task (default: 2) */
+  maxRetries: number;
+  /** Delay between retries in ms (default: 5000) */
+  retryDelayMs: number;
+  /** Continue harness execution on individual failure (default: true) */
+  continueOnFailure: boolean;
+  /** Maximum consecutive failures before pausing (default: 3) */
+  maxConsecutiveFailures: number;
+  /** Record failure reason in Beads issue (default: true) */
+  annotateFailures: boolean;
+  /** Strategies for different failure types */
+  strategies: FailureStrategies;
+}
+
+/**
+ * Strategies for handling different types of failures.
+ */
+export interface FailureStrategies {
+  /** What to do on context overflow */
+  contextOverflow: FailureAction;
+  /** What to do on timeout */
+  timeout: FailureAction;
+  /** What to do on partial completion */
+  partial: FailureAction;
+  /** What to do on general failure */
+  failure: FailureAction;
+}
+
+/**
+ * Actions to take on failure.
+ */
+export type FailureAction = 'retry' | 'skip' | 'pause' | 'escalate';
+
+/**
+ * Tracks failure history for an issue across retry attempts.
+ */
+export interface FailureRecord {
+  issueId: string;
+  attempts: FailureAttempt[];
+  lastOutcome: SessionOutcome;
+  finalAction: FailureAction;
+}
+
+/**
+ * A single failure attempt with context.
+ */
+export interface FailureAttempt {
+  attemptNumber: number;
+  timestamp: string;
+  outcome: SessionOutcome;
+  error: string | null;
+  durationMs: number;
+}
+
+/**
+ * Result of a failure handling decision.
+ */
+export interface FailureDecision {
+  action: FailureAction;
+  reason: string;
+  shouldContinue: boolean;
+  shouldCreateCheckpoint: boolean;
+  retryAfterMs?: number;
+}
+
+export const DEFAULT_FAILURE_HANDLING_CONFIG: FailureHandlingConfig = {
+  maxRetries: 2,
+  retryDelayMs: 5000,
+  continueOnFailure: true,
+  maxConsecutiveFailures: 3,
+  annotateFailures: true,
+  strategies: {
+    contextOverflow: 'skip', // Context overflow rarely helps with retry
+    timeout: 'retry', // Timeouts may be transient
+    partial: 'skip', // Partial work done, move on
+    failure: 'retry', // General failures worth retrying
+  },
+};
