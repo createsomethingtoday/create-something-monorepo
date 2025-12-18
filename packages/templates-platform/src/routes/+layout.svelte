@@ -24,6 +24,8 @@
 </svelte:head>
 
 <div class="app">
+	<a href="#main-content" class="skip-to-content">Skip to main content</a>
+
 	<!-- Canon Navigation -->
 	<nav class="nav-container">
 		<div class="nav-content">
@@ -66,7 +68,7 @@
 	</nav>
 
 	<!-- Main Content -->
-	<main class="main">
+	<main id="main-content" class="main">
 		{@render children()}
 	</main>
 
