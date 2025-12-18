@@ -98,7 +98,9 @@
 			<form class="progressive-form" onsubmit={handleSubmit}>
 				<!-- Stage 1: Email (always visible) -->
 				<div class="form-field">
+					<label for="progressive-email" class="form-label">Email</label>
 					<input
+						id="progressive-email"
 						type="email"
 						placeholder="your@email.com"
 						bind:value={email}
@@ -114,7 +116,9 @@
 				<!-- Stage 2: Name (reveals after valid email) -->
 				{#if stage >= 2}
 					<div class="form-field animate-slide-down">
+						<label for="progressive-name" class="form-label">Name</label>
 						<input
+							id="progressive-name"
 							type="text"
 							placeholder="Your name"
 							bind:value={name}
@@ -127,7 +131,9 @@
 				<!-- Stage 3: Message (reveals after name) -->
 				{#if stage >= 3}
 					<div class="form-field animate-slide-down">
+						<label for="progressive-message" class="form-label">Message</label>
 						<textarea
+							id="progressive-message"
 							placeholder="What would you like to discuss?"
 							bind:value={message}
 							class="form-input form-textarea"
@@ -200,6 +206,13 @@
 
 	.form-field {
 		width: 100%;
+	}
+
+	.form-label {
+		display: block;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-xs);
 	}
 
 	.form-input {

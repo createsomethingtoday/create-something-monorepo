@@ -352,7 +352,9 @@
 					</div>
 
 					<div class="subdomain-picker">
+						<label for="subdomain-input" class="sr-only">Subdomain</label>
 						<input
+							id="subdomain-input"
 							type="text"
 							placeholder="yoursite"
 							bind:value={subdomain}
@@ -1097,5 +1099,18 @@
 			width: 60px;
 			height: 60px;
 		}
+	}
+
+	/* Screen reader only - visually hidden but accessible */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 </style>
