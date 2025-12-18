@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { afterNavigate, onNavigate } from '$app/navigation';
-	import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/components';
+	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent } from '@create-something/components';
 	import { page } from '$app/stores';
 
 	// View Transitions API - Hermeneutic Navigation
@@ -191,7 +191,7 @@
 
 <Analytics property="io" />
 
-<a href="#main-content" class="skip-to-content">Skip to main content</a>
+<SkipToContent />
 
 <div class="layout-root">
 	<Navigation

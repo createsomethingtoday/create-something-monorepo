@@ -281,7 +281,7 @@
 	}
 
 	.submit-button:hover:not(:disabled) {
-		background: rgba(255, 255, 255, 0.9);
+		background: var(--color-fg-secondary);
 	}
 
 	.submit-button:disabled {
@@ -300,15 +300,15 @@
 	}
 
 	.message-display.success {
-		background: rgba(34, 197, 94, 0.1);
-		color: rgb(74, 222, 128);
-		border: 1px solid rgba(34, 197, 94, 0.2);
+		background: var(--color-success-muted);
+		color: var(--color-success);
+		border: 1px solid var(--color-success-border);
 	}
 
 	.message-display.error {
-		background: rgba(239, 68, 68, 0.1);
-		color: rgb(248, 113, 113);
-		border: 1px solid rgba(239, 68, 68, 0.2);
+		background: var(--color-error-muted);
+		color: var(--color-error);
+		border: 1px solid var(--color-error-border);
 	}
 
 	.footer-links {

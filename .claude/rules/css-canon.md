@@ -2,6 +2,36 @@
 
 **Principle**: Tailwind for structure, Canon for aesthetics.
 
+## Token Architecture
+
+**Single Source of Truth**: `packages/components/src/lib/styles/tokens.css`
+
+| File | Purpose | Import Path |
+|------|---------|-------------|
+| `tokens.css` | Pure token definitions only | `@create-something/components/styles/tokens.css` |
+| `canon.css` | Tokens + base styles + utilities | `@create-something/components/styles/canon.css` |
+
+### Import Patterns
+
+**Main properties** (.io, .space, .agency, .ltd):
+```css
+@import '@create-something/components/styles/canon.css';
+```
+
+**Vertical templates** (with Tailwind):
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import '@create-something/components/styles/tokens.css';
+/* Then add template-specific styles */
+```
+
+**Tokens only** (for custom theming):
+```css
+@import '@create-something/components/styles/tokens.css';
+```
+
 ## Layout Utilities (Keep)
 ```
 flex, grid, items-*, justify-*, relative, absolute, fixed, sticky

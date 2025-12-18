@@ -744,11 +744,11 @@ Ethos Construction (Personalization)
 	}
 
 	.code-success {
-		color: #86efac;
+		color: var(--color-success);
 	}
 
 	.code-success-heading {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.code-small {
@@ -763,14 +763,14 @@ Ethos Construction (Personalization)
 
 	/* Comparison Cards */
 	.comparison-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.comparison-warning {
-		background: rgba(251, 191, 36, 0.1);
-		border: 1px solid rgba(251, 191, 36, 0.3);
+		background: var(--color-warning-muted);
+		border: 1px solid var(--color-warning-border);
 		border-radius: var(--radius-lg);
 	}
 
@@ -779,11 +779,11 @@ Ethos Construction (Personalization)
 	}
 
 	.comparison-success-heading {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.comparison-warning-heading {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.comparison-list {
@@ -830,11 +830,11 @@ Ethos Construction (Personalization)
 	}
 
 	.table-row-highlight {
-		background: rgba(34, 197, 94, 0.1);
+		background: var(--color-success-muted);
 	}
 
 	.table-cell-highlight {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	/* Checkmarks */

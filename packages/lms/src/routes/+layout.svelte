@@ -2,7 +2,7 @@
   import '../app.css';
   import { page } from '$app/stores';
   import { onNavigate } from '$app/navigation';
-  import { Navigation, Footer, ModeIndicator } from '@create-something/components';
+  import { Navigation, Footer, ModeIndicator, SkipToContent } from '@create-something/components';
   import type { LayoutData } from './$types';
 
   interface Props {
@@ -153,7 +153,7 @@
   </script>`}
 </svelte:head>
 
-<a href="#main-content" class="skip-to-content">Skip to main content</a>
+<SkipToContent />
 
 <div class="layout">
   <Navigation

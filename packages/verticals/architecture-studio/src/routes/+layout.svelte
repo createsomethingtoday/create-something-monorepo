@@ -10,9 +10,11 @@
 	let { children }: Props = $props();
 </script>
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <Navigation />
 
-<main>
+<main id="main-content" tabindex="-1">
 	{@render children()}
 </main>
 

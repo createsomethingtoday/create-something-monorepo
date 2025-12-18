@@ -518,7 +518,7 @@ useEffect(() => {
 	}
 
 	.metric-positive {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.metric-neutral {
@@ -556,14 +556,14 @@ useEffect(() => {
 	}
 
 	.callout-info {
-		background: rgba(59, 130, 246, 0.1);
-		border: 1px solid rgba(59, 130, 246, 0.3);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.callout-heading {
 		font-size: var(--text-h3);
-		color: #93c5fd;
+		color: var(--color-info);
 	}
 
 	.data-table {
