@@ -27,15 +27,17 @@
 		</div>
 
 		<!-- Responsive Grid - Matches Webflow inspiration -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+		<ul class="papers-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="list">
 			{#each papers as paper, index (paper.id)}
-				<PaperCard
-					{paper}
-					rotation={rotations[index % rotations.length]}
-					{index}
-				/>
+				<li>
+					<PaperCard
+						{paper}
+						rotation={rotations[index % rotations.length]}
+						{index}
+					/>
+				</li>
 			{/each}
-		</div>
+		</ul>
 
 		<!-- Empty State -->
 		{#if papers.length === 0}
@@ -53,6 +55,12 @@
 <style>
 	.papers-grid {
 		background: var(--color-bg-pure);
+	}
+
+	.papers-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
 	}
 
 	.grid-title {

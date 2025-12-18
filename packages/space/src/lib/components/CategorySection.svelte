@@ -22,13 +22,14 @@
 		</div>
 
 		<!-- Category Cards Grid -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+		<ul class="category-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" role="list">
 			{#each categories as category, index (category.slug)}
-				<a
-					href={`/category/${category.slug}`}
-					class="category-card animate-reveal group block relative p-8 overflow-hidden"
-					style="--delay: {index}"
-				>
+				<li>
+					<a
+						href={`/category/${category.slug}`}
+						class="category-card animate-reveal group block relative p-8 overflow-hidden"
+						style="--delay: {index}"
+					>
 					<!-- Category Name -->
 					<div class="relative z-10 mb-4">
 						<h3 class="category-name">
@@ -72,11 +73,12 @@
 						</div>
 					</div>
 
-					<!-- Hover Background Effect -->
-					<div class="hover-bg absolute inset-0"></div>
-				</a>
+						<!-- Hover Background Effect -->
+						<div class="hover-bg absolute inset-0"></div>
+					</a>
+				</li>
 			{/each}
-		</div>
+		</ul>
 
 		<!-- Empty State -->
 		{#if categories.length === 0}
@@ -90,6 +92,12 @@
 <style>
 	.category-section {
 		background: var(--color-bg-pure);
+	}
+
+	.category-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
 	}
 
 	.section-header {
