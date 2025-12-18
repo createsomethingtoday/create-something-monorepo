@@ -143,8 +143,20 @@
 			<g
 				class="threshold-moment"
 				class:active={activeThreshold === i}
+				role="button"
+				tabindex="0"
+				aria-label="{threshold.type} threshold: {threshold.label}{threshold.description ? `. ${threshold.description}` : ''}"
+				aria-pressed={activeThreshold === i}
 				onmouseenter={() => activeThreshold = i}
 				onmouseleave={() => activeThreshold = null}
+				onfocus={() => activeThreshold = i}
+				onblur={() => activeThreshold = null}
+				onkeydown={(e: KeyboardEvent) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						activeThreshold = activeThreshold === i ? null : i;
+					}
+				}}
 			>
 				<!-- Outer ring -->
 				<circle
@@ -269,6 +281,16 @@
 	.threshold-moment {
 		cursor: pointer;
 		transition: transform var(--duration-micro) var(--ease-standard);
+		outline: none;
+	}
+
+	.threshold-moment:focus-visible {
+		filter: url(#threshold-glow);
+	}
+
+	.threshold-moment:focus-visible .threshold-ring {
+		stroke-width: 3;
+		opacity: 1;
 	}
 
 	.threshold-moment.active {
