@@ -25,9 +25,11 @@ export type {
   StartOptions,
   ResumeOptions,
   PauseOptions,
+  ParallelExecutionConfig,
+  ParallelSessionResult,
 } from './types.js';
 
-export { DEFAULT_CHECKPOINT_POLICY } from './types.js';
+export { DEFAULT_CHECKPOINT_POLICY, DEFAULT_PARALLEL_CONFIG } from './types.js';
 
 // Spec Parser
 export { parseSpec, formatSpecSummary } from './spec-parser.js';
@@ -53,8 +55,10 @@ export {
 export {
   generatePrimingPrompt,
   runSession,
+  runParallelSessions,
   getRecentCommits,
   createHarnessBranch,
+  determineAgentCount,
 } from './session.js';
 
 // Checkpoints

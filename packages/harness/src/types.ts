@@ -139,6 +139,38 @@ export interface PrimingContext {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Parallel Execution
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ParallelExecutionConfig {
+  /** Maximum number of agents to spawn in parallel (default: 1) */
+  maxAgents: number;
+  /** Whether to use independence analysis to determine parallelism (default: true) */
+  useIndependenceAnalysis: boolean;
+  /** Minimum batch size to trigger parallel execution (default: 2) */
+  minBatchSize: number;
+}
+
+export interface ParallelSessionResult {
+  /** Results from all sessions in the batch */
+  results: SessionResult[];
+  /** IDs of successfully completed issues */
+  completed: string[];
+  /** IDs of failed issues */
+  failed: string[];
+  /** Total duration for the batch */
+  totalDurationMs: number;
+  /** Whether all sessions succeeded */
+  allSucceeded: boolean;
+}
+
+export const DEFAULT_PARALLEL_CONFIG: ParallelExecutionConfig = {
+  maxAgents: 1,
+  useIndependenceAnalysis: true,
+  minBatchSize: 2,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CLI Options
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -147,6 +179,8 @@ export interface StartOptions {
   checkpointEvery?: number;
   maxHours?: number;
   dryRun?: boolean;
+  /** Number of parallel agents (default: 1 for sequential) */
+  parallel?: number;
 }
 
 export interface ResumeOptions {

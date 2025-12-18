@@ -12,8 +12,10 @@ import type {
   Checkpoint,
   CheckpointPolicy,
   PrimingContext,
+  ParallelExecutionConfig,
+  BeadsIssue,
 } from './types.js';
-import { DEFAULT_CHECKPOINT_POLICY } from './types.js';
+import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_PARALLEL_CONFIG } from './types.js';
 import { parseSpec, formatSpecSummary } from './spec-parser.js';
 import {
   createIssuesFromFeatures,
@@ -30,10 +32,12 @@ import {
 } from './beads.js';
 import {
   runSession,
+  runParallelSessions,
   getRecentCommits,
   createHarnessBranch,
   generatePrimingPrompt,
   discoverDryContext,
+  determineAgentCount,
 } from './session.js';
 import {
   createCheckpointTracker,
@@ -52,6 +56,11 @@ import {
   requiresImmediateAction,
   logRedirect,
 } from './redirect.js';
+import {
+  analyzeIndependence,
+  areDependenciesComplete,
+  buildDependencyGraph,
+} from './independence.js';
 
 /**
  * Initialize a new harness run.
@@ -128,17 +137,24 @@ export async function initializeHarness(
  */
 export async function runHarness(
   harnessState: HarnessState,
-  options: { cwd: string; dryRun?: boolean }
+  options: { cwd: string; dryRun?: boolean; parallelConfig?: ParallelExecutionConfig }
 ): Promise<void> {
   const checkpointTracker = createCheckpointTracker();
   let beadsSnapshot = await takeSnapshot(options.cwd);
   let lastCheckpoint: Checkpoint | null = null;
   let redirectNotes: string[] = [];
+  const parallelConfig = options.parallelConfig || DEFAULT_PARALLEL_CONFIG;
+  const isParallel = parallelConfig.maxAgents > 1;
 
   console.log(`\n═══════════════════════════════════════════════════════════════`);
   console.log(`  HARNESS RUNNING: ${harnessState.id}`);
   console.log(`  Branch: ${harnessState.gitBranch}`);
   console.log(`  Features: ${harnessState.featuresTotal}`);
+  if (isParallel) {
+    console.log(`  Mode: PARALLEL (up to ${parallelConfig.maxAgents} agents)`);
+  } else {
+    console.log(`  Mode: Sequential`);
+  }
   console.log(`═══════════════════════════════════════════════════════════════\n`);
 
   while (harnessState.status === 'running') {
@@ -198,66 +214,138 @@ export async function runHarness(
       break;
     }
 
-    const nextIssue = harnessIssues[0];
-    console.log(`\n📋 Next task: ${nextIssue.id} - ${nextIssue.title}`);
-
-    // Mark as in progress
-    await updateIssueStatus(nextIssue.id, 'in_progress', options.cwd);
-
-    // 3. Build priming context with DRY discovery
+    // 3. Determine if we can run in parallel
+    const agentCount = determineAgentCount(harnessIssues.length, parallelConfig);
     const recentCommits = await getRecentCommits(options.cwd, 10);
-    const dryContext = await discoverDryContext(nextIssue.title, options.cwd);
-    const primingContext: PrimingContext = {
-      currentIssue: nextIssue,
-      recentCommits,
-      lastCheckpoint,
-      redirectNotes,
-      sessionGoal: `Complete: ${nextIssue.title}\n\n${nextIssue.description || ''}`,
-      existingPatterns: dryContext.existingPatterns,
-      relevantFiles: dryContext.relevantFiles,
-    };
 
-    // Clear redirect notes for next iteration
-    redirectNotes = [];
-
-    // 4. Run session
-    harnessState.currentSession++;
-    console.log(`\n🤖 Starting session #${harnessState.currentSession}...`);
-
-    const sessionResult = await runSession(nextIssue, primingContext, {
-      cwd: options.cwd,
-      dryRun: options.dryRun,
-    });
-
-    // 5. Handle session result
-    recordSession(checkpointTracker, sessionResult);
-
-    if (sessionResult.outcome === 'success') {
-      await updateIssueStatus(nextIssue.id, 'closed', options.cwd);
-      harnessState.featuresCompleted++;
-      harnessState.sessionsCompleted++;
-      console.log(`✅ Task completed: ${nextIssue.id}`);
-    } else if (sessionResult.outcome === 'failure') {
-      // Keep as in_progress for retry, but track failure
-      harnessState.featuresFailed++;
-      harnessState.sessionsCompleted++;
-      console.log(`❌ Task failed: ${nextIssue.id}`);
-      if (sessionResult.error) {
-        console.log(`   Error: ${sessionResult.error}`);
+    if (agentCount > 1 && harnessIssues.length >= parallelConfig.minBatchSize) {
+      // === PARALLEL EXECUTION ===
+      const batch = harnessIssues.slice(0, agentCount);
+      console.log(`\n📋 Parallel batch: ${batch.length} independent tasks`);
+      for (const issue of batch) {
+        console.log(`    - ${issue.id}: ${issue.title}`);
       }
-    } else if (sessionResult.outcome === 'partial') {
-      harnessState.sessionsCompleted++;
-      console.log(`◐ Task partially completed: ${nextIssue.id}`);
-    } else if (sessionResult.outcome === 'context_overflow') {
-      harnessState.sessionsCompleted++;
-      console.log(`⚠ Context overflow: ${nextIssue.id}`);
+
+      // Mark all as in progress
+      await Promise.all(
+        batch.map((issue) => updateIssueStatus(issue.id, 'in_progress', options.cwd))
+      );
+
+      // Build context builder function
+      const buildContext = async (issue: BeadsIssue): Promise<PrimingContext> => {
+        const dryContext = await discoverDryContext(issue.title, options.cwd);
+        return {
+          currentIssue: issue,
+          recentCommits,
+          lastCheckpoint,
+          redirectNotes,
+          sessionGoal: `Complete: ${issue.title}\n\n${issue.description || ''}`,
+          existingPatterns: dryContext.existingPatterns,
+          relevantFiles: dryContext.relevantFiles,
+        };
+      };
+
+      // Clear redirect notes for next iteration
+      redirectNotes = [];
+
+      // Run parallel sessions
+      harnessState.currentSession += batch.length;
+      console.log(`\n🤖 Starting parallel sessions #${harnessState.currentSession - batch.length + 1}-${harnessState.currentSession}...`);
+
+      const parallelResult = await runParallelSessions(batch, buildContext, {
+        cwd: options.cwd,
+        maxAgents: agentCount,
+        dryRun: options.dryRun,
+      });
+
+      // Handle parallel results
+      for (const result of parallelResult.results) {
+        recordSession(checkpointTracker, result);
+
+        if (result.outcome === 'success') {
+          await updateIssueStatus(result.issueId, 'closed', options.cwd);
+          harnessState.featuresCompleted++;
+          harnessState.sessionsCompleted++;
+          console.log(`✅ Task completed: ${result.issueId}`);
+        } else if (result.outcome === 'failure') {
+          harnessState.featuresFailed++;
+          harnessState.sessionsCompleted++;
+          console.log(`❌ Task failed: ${result.issueId}`);
+          if (result.error) {
+            console.log(`   Error: ${result.error}`);
+          }
+        } else if (result.outcome === 'partial') {
+          harnessState.sessionsCompleted++;
+          console.log(`◐ Task partially completed: ${result.issueId}`);
+        } else if (result.outcome === 'context_overflow') {
+          harnessState.sessionsCompleted++;
+          console.log(`⚠ Context overflow: ${result.issueId}`);
+        }
+      }
+    } else {
+      // === SEQUENTIAL EXECUTION ===
+      const nextIssue = harnessIssues[0];
+      console.log(`\n📋 Next task: ${nextIssue.id} - ${nextIssue.title}`);
+
+      // Mark as in progress
+      await updateIssueStatus(nextIssue.id, 'in_progress', options.cwd);
+
+      // Build priming context with DRY discovery
+      const dryContext = await discoverDryContext(nextIssue.title, options.cwd);
+      const primingContext: PrimingContext = {
+        currentIssue: nextIssue,
+        recentCommits,
+        lastCheckpoint,
+        redirectNotes,
+        sessionGoal: `Complete: ${nextIssue.title}\n\n${nextIssue.description || ''}`,
+        existingPatterns: dryContext.existingPatterns,
+        relevantFiles: dryContext.relevantFiles,
+      };
+
+      // Clear redirect notes for next iteration
+      redirectNotes = [];
+
+      // Run session
+      harnessState.currentSession++;
+      console.log(`\n🤖 Starting session #${harnessState.currentSession}...`);
+
+      const sessionResult = await runSession(nextIssue, primingContext, {
+        cwd: options.cwd,
+        dryRun: options.dryRun,
+      });
+
+      // Handle session result
+      recordSession(checkpointTracker, sessionResult);
+
+      if (sessionResult.outcome === 'success') {
+        await updateIssueStatus(nextIssue.id, 'closed', options.cwd);
+        harnessState.featuresCompleted++;
+        harnessState.sessionsCompleted++;
+        console.log(`✅ Task completed: ${nextIssue.id}`);
+      } else if (sessionResult.outcome === 'failure') {
+        // Keep as in_progress for retry, but track failure
+        harnessState.featuresFailed++;
+        harnessState.sessionsCompleted++;
+        console.log(`❌ Task failed: ${nextIssue.id}`);
+        if (sessionResult.error) {
+          console.log(`   Error: ${sessionResult.error}`);
+        }
+      } else if (sessionResult.outcome === 'partial') {
+        harnessState.sessionsCompleted++;
+        console.log(`◐ Task partially completed: ${nextIssue.id}`);
+      } else if (sessionResult.outcome === 'context_overflow') {
+        harnessState.sessionsCompleted++;
+        console.log(`⚠ Context overflow: ${nextIssue.id}`);
+      }
     }
 
     // 6. Check checkpoint policy
+    // Use the last recorded session for checkpoint check (works for both parallel and sequential)
+    const lastSessionResult = checkpointTracker.sessionsResults[checkpointTracker.sessionsResults.length - 1];
     const checkpointCheck = shouldCreateCheckpoint(
       checkpointTracker,
       harnessState.checkpointPolicy,
-      sessionResult,
+      lastSessionResult,
       redirectCheck.redirects.length > 0
     );
 

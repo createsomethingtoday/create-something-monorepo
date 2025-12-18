@@ -9,7 +9,15 @@ import { promisify } from 'node:util';
 import { writeFile, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import type { BeadsIssue, PrimingContext, SessionResult, SessionOutcome } from './types.js';
+import type {
+  BeadsIssue,
+  PrimingContext,
+  SessionResult,
+  SessionOutcome,
+  ParallelSessionResult,
+  ParallelExecutionConfig,
+} from './types.js';
+import { DEFAULT_PARALLEL_CONFIG } from './types.js';
 
 const execAsync = promisify(exec);
 
@@ -475,4 +483,122 @@ export async function createHarnessBranch(
 
     proc.on('error', reject);
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parallel Session Execution
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run multiple sessions in parallel.
+ * Spawns N agents concurrently for independent tasks.
+ *
+ * Philosophy: When tasks are independent, sequential execution wastes time.
+ * Parallel agents reveal the true shape of work—the critical path becomes visible.
+ */
+export async function runParallelSessions(
+  issues: BeadsIssue[],
+  contextBuilder: (issue: BeadsIssue) => Promise<PrimingContext>,
+  options: {
+    cwd: string;
+    maxAgents?: number;
+    timeout?: number;
+    dryRun?: boolean;
+  }
+): Promise<ParallelSessionResult> {
+  const startTime = Date.now();
+  const maxAgents = Math.min(options.maxAgents || DEFAULT_PARALLEL_CONFIG.maxAgents, issues.length);
+
+  console.log(`\n  🔀 Spawning ${maxAgents} parallel agents for ${issues.length} independent tasks...`);
+
+  if (options.dryRun) {
+    console.log('\n  [DRY RUN] Would spawn agents for:');
+    for (const issue of issues.slice(0, maxAgents)) {
+      console.log(`    - ${issue.id}: ${issue.title}`);
+    }
+
+    return {
+      results: issues.slice(0, maxAgents).map((issue) => ({
+        issueId: issue.id,
+        outcome: 'success' as SessionOutcome,
+        summary: '[Dry run] Session would have executed',
+        gitCommit: null,
+        contextUsed: 0,
+        durationMs: 0,
+        error: null,
+      })),
+      completed: issues.slice(0, maxAgents).map((i) => i.id),
+      failed: [],
+      totalDurationMs: Date.now() - startTime,
+      allSucceeded: true,
+    };
+  }
+
+  // Limit to maxAgents
+  const batch = issues.slice(0, maxAgents);
+
+  // Build contexts in parallel (these are independent operations)
+  console.log(`  📋 Building priming contexts...`);
+  const contexts = await Promise.all(batch.map(contextBuilder));
+
+  // Run sessions in parallel
+  console.log(`  🚀 Starting ${batch.length} sessions in parallel...`);
+  const sessionPromises = batch.map((issue, index) =>
+    runSession(issue, contexts[index], {
+      cwd: options.cwd,
+      timeout: options.timeout,
+      dryRun: options.dryRun,
+    }).catch((error): SessionResult => ({
+      issueId: issue.id,
+      outcome: 'failure',
+      summary: `Session failed: ${error.message}`,
+      gitCommit: null,
+      contextUsed: 0,
+      durationMs: 0,
+      error: error.message,
+    }))
+  );
+
+  const results = await Promise.all(sessionPromises);
+
+  // Categorize results
+  const completed: string[] = [];
+  const failed: string[] = [];
+
+  for (const result of results) {
+    if (result.outcome === 'success') {
+      completed.push(result.issueId);
+    } else {
+      failed.push(result.issueId);
+    }
+  }
+
+  const totalDurationMs = Date.now() - startTime;
+
+  console.log(`\n  ⏱ Parallel batch completed in ${(totalDurationMs / 1000).toFixed(1)}s`);
+  console.log(`    ✅ Completed: ${completed.length}`);
+  if (failed.length > 0) {
+    console.log(`    ❌ Failed: ${failed.length}`);
+  }
+
+  return {
+    results,
+    completed,
+    failed,
+    totalDurationMs,
+    allSucceeded: failed.length === 0,
+  };
+}
+
+/**
+ * Determine optimal agent count based on batch size and config.
+ */
+export function determineAgentCount(
+  batchSize: number,
+  config: ParallelExecutionConfig
+): number {
+  if (batchSize < config.minBatchSize) {
+    return 1; // Sequential for small batches
+  }
+  return Math.min(batchSize, config.maxAgents);
 }

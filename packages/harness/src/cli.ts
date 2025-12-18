@@ -16,7 +16,8 @@ import { readFile } from 'node:fs/promises';
 import { initializeHarness, runHarness, resumeHarness, pauseHarness, getHarnessStatus } from './runner.js';
 import { parseSpec, formatSpecSummary } from './spec-parser.js';
 import { analyzeIndependence, formatIndependenceAnalysis } from './independence.js';
-import type { StartOptions, PauseOptions, ResumeOptions } from './types.js';
+import type { StartOptions, PauseOptions, ResumeOptions, ParallelExecutionConfig } from './types.js';
+import { DEFAULT_PARALLEL_CONFIG } from './types.js';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -77,6 +78,7 @@ COMMANDS:
 OPTIONS:
   --checkpoint-every N   Create checkpoint every N sessions (default: 3)
   --max-hours M          Create checkpoint every M hours (default: 4)
+  --parallel N           Run up to N agents in parallel for independent tasks (default: 1)
   --dry-run              Print what would happen without executing
   --reason "..."         Reason for pausing (with pause command)
   --harness-id <id>      Specify harness ID (for resume/status)
@@ -84,6 +86,7 @@ OPTIONS:
 EXAMPLES:
   harness start specs/my-project.md
   harness start specs/api.md --checkpoint-every 5 --dry-run
+  harness start specs/large-project.md --parallel 3
   harness analyze specs/my-project.md
   harness pause --reason "Need to review auth approach"
   harness resume
@@ -111,11 +114,20 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
     process.exit(1);
   }
 
+  const parallelAgents = parseIntArg(args, '--parallel', 1);
+
   const options: StartOptions = {
     specFile,
     checkpointEvery: parseIntArg(args, '--checkpoint-every', 3),
     maxHours: parseIntArg(args, '--max-hours', 4),
     dryRun: args.includes('--dry-run'),
+    parallel: parallelAgents,
+  };
+
+  // Build parallel config
+  const parallelConfig: ParallelExecutionConfig = {
+    ...DEFAULT_PARALLEL_CONFIG,
+    maxAgents: parallelAgents,
   };
 
   console.log(`
@@ -126,6 +138,11 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
 ║   Review progress. Redirect when needed."                     ║
 ╚═══════════════════════════════════════════════════════════════╝
 `);
+
+  if (parallelAgents > 1) {
+    console.log(`  🔀 Parallel mode: up to ${parallelAgents} agents`);
+    console.log('');
+  }
 
   const { harnessState, featureMap } = await initializeHarness(options, cwd);
 
@@ -138,7 +155,7 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
     return;
   }
 
-  await runHarness(harnessState, { cwd, dryRun: options.dryRun });
+  await runHarness(harnessState, { cwd, dryRun: options.dryRun, parallelConfig });
 }
 
 async function handlePause(args: string[], cwd: string): Promise<void> {

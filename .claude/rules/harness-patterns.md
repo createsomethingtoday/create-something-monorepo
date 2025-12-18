@@ -19,6 +19,9 @@ vim specs/my-project.md
 # 2. Start the harness
 harness start specs/my-project.md
 
+# 2b. Or start with parallel agents for independent tasks
+harness start specs/my-project.md --parallel 3
+
 # 3. Walk away—check progress when ready
 bd progress
 
@@ -57,8 +60,10 @@ Description of what we're building...
 ### Harness Control
 
 ```bash
-harness start <spec>              # Start from spec
+harness start <spec>              # Start from spec (sequential)
+harness start <spec> --parallel N # Start with N parallel agents
 harness start <spec> --dry-run    # Preview without executing
+harness analyze <spec>            # Analyze spec for parallelism
 harness pause                     # Stop after current session
 harness resume                    # Continue from checkpoint
 harness status                    # Show current state
@@ -79,11 +84,41 @@ bd close <id>                     # Stop work on issue
 |---------|---------|-------------|
 | `--checkpoint-every` | 3 | Checkpoint every N sessions |
 | `--max-hours` | 4 | Checkpoint every M hours |
+| `--parallel` | 1 | Max parallel agents for independent tasks |
 | On error | true | Checkpoint on task failure |
 | Low confidence | 0.7 | Pause if confidence < 70% |
 
+## Parallel Execution
+
+When tasks are independent (no dependencies), the harness can spawn N agents in parallel:
+
+```bash
+# Analyze spec for parallelism potential
+harness analyze specs/my-project.md
+
+# Output:
+#   Max Parallelism: 4
+#   Critical Path Length: 6
+#   Potential speedup: 2.3x
+
+# Start with parallel agents
+harness start specs/my-project.md --parallel 3
+```
+
+**How it works:**
+- The harness analyzes task dependencies from the spec
+- Independent tasks (no blockers) run in parallel batches
+- Each batch completes before the next starts
+- Dependencies are respected—blocked tasks wait
+
+**When to use:**
+- Large specs with many independent tasks
+- Tasks that don't modify the same files
+- Isolated features (auth, logging, UI components)
+
 ## Architecture
 
+### Sequential Mode (default)
 ```
 ┌─────────────────────────────────────────────────────┐
 │                 HARNESS RUNNER                       │
@@ -101,6 +136,29 @@ bd close <id>                     # Stop work on issue
 │  `bd progress` - Review checkpoints                 │
 │  `bd update`   - Redirect priorities                │
 │  `bd create`   - Inject work                        │
+└─────────────────────────────────────────────────────┘
+```
+
+### Parallel Mode (--parallel N)
+```
+┌─────────────────────────────────────────────────────┐
+│                 HARNESS RUNNER                       │
+│                                                     │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐               │
+│  │Agent 1  │ │Agent 2  │ │Agent 3  │  Batch 1      │
+│  │Task A   │ │Task B   │ │Task C   │  (parallel)   │
+│  └────┬────┘ └────┬────┘ └────┬────┘               │
+│       └──────────┼──────────┘                      │
+│                  ▼                                  │
+│             Checkpoint                              │
+│                  │                                  │
+│  ┌─────────┐ ┌─────────┐                           │
+│  │Agent 1  │ │Agent 2  │         Batch 2           │
+│  │Task D   │ │Task E   │         (parallel)        │
+│  └────┬────┘ └────┬────┘                           │
+│       └─────┬─────┘                                │
+│             ▼                                      │
+│         Checkpoint                                  │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -197,10 +255,11 @@ packages/harness/
 │   ├── types.ts          # Type definitions
 │   ├── spec-parser.ts    # Markdown PRD parsing
 │   ├── beads.ts          # Beads integration
-│   ├── session.ts        # Claude Code spawning
+│   ├── session.ts        # Claude Code spawning (sequential + parallel)
+│   ├── independence.ts   # Task independence detection for parallelism
 │   ├── checkpoint.ts     # Progress reports
 │   ├── redirect.ts       # Change detection
-│   ├── runner.ts         # Main loop
+│   ├── runner.ts         # Main loop (handles parallel batches)
 │   ├── cli.ts            # CLI entry point
 │   └── index.ts          # Exports
 ├── package.json
