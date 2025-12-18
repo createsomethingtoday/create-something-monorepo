@@ -2,8 +2,8 @@
   CREATE SOMETHING Design System
   Property: .io (Research)
 
-  Imports shared Canon tokens from @create-something/components
-  Legacy aliases preserved for backward compatibility.
+  Uses shared Canon tokens from @create-something/components.
+  See .claude/rules/css-canon.md for token reference.
 */
 
 /* Import shared Canon Design System (must precede @tailwind) */
@@ -13,28 +13,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ==========================================================================
-   .io Property Customizations
-   View Transitions: Standard (300ms) - Research-focused
-   ========================================================================== */
-
-:root {
-  /* Legacy aliases for backward compatibility */
-  --bg-primary: var(--color-bg-pure);
-  --bg-secondary: var(--color-bg-elevated);
-  --bg-tertiary: var(--color-bg-surface);
-  --bg-elevated: var(--color-bg-subtle);
-  --text-primary: var(--color-fg-primary);
-  --text-secondary: var(--color-fg-secondary);
-  --text-tertiary: var(--color-fg-tertiary);
-  --text-muted: var(--color-fg-muted);
-  --border-primary: var(--color-border-default);
-  --border-secondary: var(--color-border-default);
-  --border-hover: var(--color-border-strong);
-
-  /* Legacy spacing aliases */
-  --spacing-section: var(--space-2xl);
-  --spacing-headline: var(--space-lg);
-  --spacing-card: var(--space-sm);
-}
