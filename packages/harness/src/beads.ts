@@ -114,8 +114,8 @@ export async function createIssue(
 
   const output = await bd(args.join(' '), cwd);
 
-  // Parse the issue ID from output (e.g., "Created cs-abc123")
-  const match = output.match(/Created\s+(\S+)/i) || output.match(/(cs-[a-z0-9]+)/i);
+  // Parse the issue ID from output (e.g., "Created issue: create-something-monorepo-abc")
+  const match = output.match(/Created issue:\s+(\S+)/i) || output.match(/([a-z0-9]+-[a-z0-9]+)/i);
   if (!match) {
     throw new Error(`Could not parse issue ID from bd output: ${output}`);
   }
