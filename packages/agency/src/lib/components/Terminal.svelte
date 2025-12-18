@@ -229,8 +229,15 @@ Contact Create Something:
 		bind:this={terminalRef}
 		class="terminal-content flex-1 overflow-y-auto p-4"
 		onclick={() => inputRef?.focus()}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				inputRef?.focus();
+			}
+		}}
 		role="button"
-		tabindex="-1"
+		tabindex="0"
+		aria-label="Terminal output area. Click or press Enter to focus the command input."
 	>
 		{#each history as line, i (i)}
 			<div class="terminal-line whitespace-pre-wrap">
