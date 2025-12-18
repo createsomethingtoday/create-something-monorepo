@@ -32,9 +32,18 @@ export type {
   FailureRecord,
   FailureAttempt,
   FailureDecision,
+  // Swarm types
+  SwarmConfig,
+  SwarmAgentStatus,
+  SwarmProgress,
+  SwarmCheckpoint,
 } from './types.js';
 
-export { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG } from './types.js';
+export {
+  DEFAULT_CHECKPOINT_POLICY,
+  DEFAULT_FAILURE_HANDLING_CONFIG,
+  DEFAULT_SWARM_CONFIG,
+} from './types.js';
 
 // Spec Parser
 export { parseSpec, formatSpecSummary } from './spec-parser.js';
@@ -74,6 +83,15 @@ export {
   generateCheckpoint,
   resetTracker,
   formatCheckpointDisplay,
+  // Swarm batch tracking
+  startSwarmBatch,
+  registerSwarmAgent,
+  updateSwarmAgentStatus,
+  completeSwarmBatch,
+  getCurrentSwarmProgress,
+  hasActiveSwarmBatch,
+  generateSwarmCheckpoint,
+  formatSwarmProgressDisplay,
 } from './checkpoint.js';
 
 // Redirect Detection
