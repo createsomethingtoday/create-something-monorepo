@@ -239,6 +239,76 @@ Tailwind design utilities to flag:
 - `opacity-*` (use rgba in Canon tokens instead)
 - `border-gray-*`, `border-white`, `border-black`
 
+## Experimental Routes Policy
+
+**Principle**: Experiments explore; production delivers.
+
+### Development Phase
+
+During active development, experiments **may drift** from Canon:
+
+| Allowed During Development | Reason |
+|---------------------------|--------|
+| Hardcoded colors | Rapid visual iteration |
+| Non-standard spacing | Testing proportions |
+| Custom animations | Motion exploration |
+| Direct Tailwind design utilities | Speed over consistency |
+
+The purpose of experiments is discovery. Premature standardization constrains exploration.
+
+### Pre-Merge Requirements
+
+Before an experiment merges to production, it **must align**:
+
+| Requirement | Validation |
+|-------------|------------|
+| Colors use Canon tokens | No hardcoded hex/rgb values |
+| Typography uses Canon scale | No arbitrary `text-*` sizes |
+| Spacing uses Canon tokens | Golden ratio (`--space-*`) |
+| Borders use semantic tokens | `--color-border-*` |
+| Motion uses Canon timing | `--duration-*`, `--ease-standard` |
+
+### Migration Checklist
+
+Before promoting an experiment:
+
+```bash
+# Run Canon audit on the experiment
+/audit-canon packages/io/src/routes/experiments/[name]
+```
+
+Or manually check:
+- [ ] No `bg-white`, `bg-black`, `bg-gray-*` → use `--color-bg-*`
+- [ ] No `text-white`, `text-gray-*` → use `--color-fg-*`
+- [ ] No `border-white`, `border-gray-*` → use `--color-border-*`
+- [ ] No hardcoded `#hex` or `rgb()` values
+- [ ] No `rounded-*` → use `--radius-*`
+- [ ] No `shadow-*` → use `--shadow-*`
+- [ ] Motion uses `--duration-*` and `--ease-standard`
+
+### Route Classification
+
+| Route Type | Canon Requirement | Example |
+|------------|-------------------|---------|
+| `/experiments/*` | Relaxed during dev, strict before merge | `/experiments/text-revelation` |
+| `/papers/*` | Strict (public-facing) | `/papers/subtractive-form-design` |
+| `/admin/*` | Moderate (internal tools) | `/admin/tufte-dashboard` |
+| All other routes | Strict | `/`, `/about`, `/contact` |
+
+### Rationale
+
+This policy balances two needs:
+
+1. **Creative Freedom**: Experiments need room to explore visual ideas without the friction of token lookup
+2. **System Coherence**: Production code must maintain the unified Canon aesthetic
+
+The hermeneutic circle applies: experiments inform the Canon (discovering what works), while the Canon constrains production (enforcing what's proven).
+
+**Subtractive Triad Application**:
+- **DRY**: Don't duplicate design decisions—eventually canonize them
+- **Rams**: Only experiments that earn production status get promoted
+- **Heidegger**: Each experiment must eventually serve the whole system or be archived
+
 ## Tailwind Version & Security Status
 
 **Current**: Tailwind CSS 3.4.18 (pinned)
