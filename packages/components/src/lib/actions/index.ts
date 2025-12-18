@@ -6,5 +6,5 @@
  */
 
 // Accessibility actions
-export { keyboardClick, keyboardToggle } from './a11y.js';
-export type { KeyboardClickOptions, KeyboardToggleOptions } from './a11y.js';
+export { keyboardClick, keyboardToggle, focusTrap } from './a11y.js';
+export type { KeyboardClickOptions, KeyboardToggleOptions, FocusTrapOptions } from './a11y.js';

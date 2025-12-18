@@ -357,6 +357,10 @@ importers:
         version: 4.51.0(@cloudflare/workers-types@4.20251128.0)
 
   packages/maverick:
+    dependencies:
+      '@create-something/components':
+        specifier: workspace:*
+        version: link:../components
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20251128.0

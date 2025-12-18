@@ -5,6 +5,17 @@
  * Following WAI-ARIA best practices for interactive elements.
  */
 
+// Focusable element selectors for focus trapping
+const FOCUSABLE_SELECTORS = [
+	'a[href]',
+	'button:not([disabled])',
+	'input:not([disabled])',
+	'select:not([disabled])',
+	'textarea:not([disabled])',
+	'[tabindex]:not([tabindex="-1"])',
+	'[contenteditable="true"]'
+].join(', ');
+
 /**
  * Options for the keyboardClick action
  */
@@ -109,7 +120,7 @@ export function keyboardClick(
 		}
 	}
 
-	node.addEventListener('keydown', handleKeydown);
+	node.addEventListener('keydown', handleKeydown as EventListener);
 
 	return {
 		update(newOptions: KeyboardClickOptions) {
@@ -120,7 +131,7 @@ export function keyboardClick(
 			};
 		},
 		destroy() {
-			node.removeEventListener('keydown', handleKeydown);
+			node.removeEventListener('keydown', handleKeydown as EventListener);
 		}
 	};
 }
@@ -188,14 +199,202 @@ export function keyboardToggle(
 		}
 	}
 
-	node.addEventListener('keydown', handleKeydown);
+	node.addEventListener('keydown', handleKeydown as EventListener);
 
 	return {
 		update(newOptions: KeyboardToggleOptions) {
 			currentOptions = newOptions;
 		},
 		destroy() {
-			node.removeEventListener('keydown', handleKeydown);
+			node.removeEventListener('keydown', handleKeydown as EventListener);
+		}
+	};
+}
+
+/**
+ * Options for the focusTrap action
+ */
+export interface FocusTrapOptions {
+	/**
+	 * Whether the focus trap is currently active
+	 * @default true
+	 */
+	active?: boolean;
+
+	/**
+	 * Element to receive initial focus when trap activates
+	 * If not provided, focuses the first focusable element
+	 */
+	initialFocus?: HTMLElement | null;
+
+	/**
+	 * Element to return focus to when trap deactivates
+	 * If not provided, returns focus to document.activeElement at mount time
+	 */
+	returnFocusTo?: HTMLElement | null;
+
+	/**
+	 * Callback fired when Escape is pressed
+	 */
+	onEscape?: () => void;
+}
+
+/**
+ * Svelte action for modal focus trapping.
+ *
+ * Traps keyboard focus within a container, cycling through focusable elements.
+ * Essential for modal dialogs to meet WCAG 2.4.3 (Focus Order).
+ *
+ * Features:
+ * - Traps Tab and Shift+Tab within container
+ * - Auto-focuses first focusable element (or specified initialFocus)
+ * - Returns focus to trigger element on deactivation
+ * - Handles Escape key for dismissal
+ *
+ * Usage:
+ * ```svelte
+ * <div
+ *   use:focusTrap={{ active: isOpen, onEscape: closeModal }}
+ *   role="dialog"
+ *   aria-modal="true"
+ * >
+ *   <button>First focusable</button>
+ *   <input type="text" />
+ *   <button>Last focusable</button>
+ * </div>
+ * ```
+ *
+ * With explicit return focus element:
+ * ```svelte
+ * <button bind:this={triggerEl} onclick={openModal}>Open</button>
+ * <div use:focusTrap={{ active: isOpen, returnFocusTo: triggerEl }}>
+ *   ...
+ * </div>
+ * ```
+ */
+export function focusTrap(
+	node: HTMLElement,
+	options: FocusTrapOptions = {}
+): { update: (options: FocusTrapOptions) => void; destroy: () => void } {
+	let currentOptions: FocusTrapOptions = {
+		active: true,
+		...options
+	};
+
+	// Store the element that had focus before trap activated
+	let previouslyFocusedElement: HTMLElement | null =
+		currentOptions.returnFocusTo ?? (document.activeElement as HTMLElement);
+
+	function getFocusableElements(): HTMLElement[] {
+		const elements = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS));
+		// Filter out elements that are not visible
+		return elements.filter((el) => {
+			return el.offsetParent !== null && !el.hasAttribute('inert');
+		});
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (!currentOptions.active) return;
+
+		// Handle Escape
+		if (event.key === 'Escape' && currentOptions.onEscape) {
+			event.preventDefault();
+			currentOptions.onEscape();
+			return;
+		}
+
+		// Handle Tab key for focus trapping
+		if (event.key === 'Tab') {
+			const focusableElements = getFocusableElements();
+			if (focusableElements.length === 0) return;
+
+			const firstElement = focusableElements[0];
+			const lastElement = focusableElements[focusableElements.length - 1];
+
+			// Shift+Tab on first element -> go to last
+			if (event.shiftKey && document.activeElement === firstElement) {
+				event.preventDefault();
+				lastElement.focus();
+				return;
+			}
+
+			// Tab on last element -> go to first
+			if (!event.shiftKey && document.activeElement === lastElement) {
+				event.preventDefault();
+				firstElement.focus();
+				return;
+			}
+
+			// If focus is outside the trap (shouldn't happen, but safety), refocus
+			if (!focusableElements.includes(document.activeElement as HTMLElement)) {
+				event.preventDefault();
+				firstElement.focus();
+			}
+		}
+	}
+
+	function activate() {
+		if (!currentOptions.active) return;
+
+		// Store current focus for later restoration
+		previouslyFocusedElement =
+			currentOptions.returnFocusTo ?? (document.activeElement as HTMLElement);
+
+		// Focus initial element or first focusable
+		requestAnimationFrame(() => {
+			if (currentOptions.initialFocus) {
+				currentOptions.initialFocus.focus();
+			} else {
+				const focusableElements = getFocusableElements();
+				if (focusableElements.length > 0) {
+					focusableElements[0].focus();
+				} else {
+					// If no focusable elements, focus the container itself
+					node.setAttribute('tabindex', '-1');
+					node.focus();
+				}
+			}
+		});
+	}
+
+	function deactivate() {
+		// Return focus to the element that had focus before
+		if (previouslyFocusedElement && typeof previouslyFocusedElement.focus === 'function') {
+			previouslyFocusedElement.focus();
+		}
+	}
+
+	// Initialize
+	node.addEventListener('keydown', handleKeydown as EventListener);
+	if (currentOptions.active) {
+		activate();
+	}
+
+	return {
+		update(newOptions: FocusTrapOptions) {
+			const wasActive = currentOptions.active;
+			currentOptions = {
+				active: true,
+				...newOptions
+			};
+
+			// Handle activation/deactivation transitions
+			if (!wasActive && currentOptions.active) {
+				activate();
+			} else if (wasActive && !currentOptions.active) {
+				deactivate();
+			}
+
+			// Update return focus target if provided
+			if (newOptions.returnFocusTo) {
+				previouslyFocusedElement = newOptions.returnFocusTo;
+			}
+		},
+		destroy() {
+			node.removeEventListener('keydown', handleKeydown as EventListener);
+			if (currentOptions.active) {
+				deactivate();
+			}
 		}
 	};
 }
