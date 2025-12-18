@@ -147,12 +147,9 @@ async function handlePause(args: string[], cwd: string): Promise<void> {
 
 async function handleResume(args: string[], cwd: string): Promise<void> {
   const harnessId = parseStringArg(args, '--harness-id');
+  const dryRun = args.includes('--dry-run');
 
-  if (!harnessId) {
-    console.log('Finding paused harness...');
-  }
-
-  await resumeHarness(harnessId || 'paused', cwd);
+  await resumeHarness(harnessId, cwd, { dryRun });
 }
 
 async function handleStatus(args: string[], cwd: string): Promise<void> {
