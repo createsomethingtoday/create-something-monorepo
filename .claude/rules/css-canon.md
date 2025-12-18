@@ -228,6 +228,173 @@ Avoid:
 </style>
 ```
 
+## Utility Class vs Inline Style Decision
+
+**Principle**: Utility classes for composition, inline styles for truly dynamic values.
+
+### When to Use Utility Classes (Tailwind)
+
+| Scenario | Example | Why |
+|----------|---------|-----|
+| Layout composition | `flex items-center gap-4` | Reusable, predictable |
+| Responsive variants | `md:grid-cols-2 lg:grid-cols-3` | Tailwind handles breakpoints |
+| State variants | `hover:opacity-80 focus:ring-2` | Pseudo-class handling |
+| Spacing | `p-4 m-2 gap-6` | Consistent rhythm |
+
+### When to Use Inline Styles
+
+| Scenario | Example | Why |
+|----------|---------|-----|
+| Truly dynamic values | `style="--progress: {percent}%"` | Runtime calculation |
+| User-controlled data | `style="background-image: url({userAvatar})"` | Can't predefine |
+| Animation keyframe values | `style="transform: translateX({offset}px)"` | JS-driven animation |
+| CSS custom property injection | `style="--delay: {index * 100}ms"` | Per-instance variation |
+
+### When to Use Component Styles (Canon)
+
+| Scenario | Example | Why |
+|----------|---------|-----|
+| Design tokens | `color: var(--color-fg-primary)` | Semantic meaning |
+| Border radius | `border-radius: var(--radius-lg)` | Visual consistency |
+| Typography | `font-size: var(--text-body-sm)` | Scale adherence |
+| Colors | `background: var(--color-bg-surface)` | Theme coherence |
+
+### Common Violations & Fixes
+
+#### Violation 1: Hardcoded colors in utility classes
+```svelte
+<!-- ❌ Violation -->
+<div class="bg-white/10 text-white/60 border-white/20">
+
+<!-- ✅ Fixed -->
+<div class="card">
+<style>
+  .card {
+    background: var(--color-bg-surface);
+    color: var(--color-fg-tertiary);
+    border: 1px solid var(--color-border-emphasis);
+  }
+</style>
+```
+
+#### Violation 2: Inline styles for static values
+```svelte
+<!-- ❌ Violation -->
+<div style="border-radius: 12px; background: #1a1a1a;">
+
+<!-- ✅ Fixed -->
+<div class="panel">
+<style>
+  .panel {
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-subtle);
+  }
+</style>
+```
+
+#### Violation 3: Utility classes for typography scale
+```svelte
+<!-- ❌ Violation -->
+<h1 class="text-4xl font-bold">
+<p class="text-sm text-gray-400">
+
+<!-- ✅ Fixed -->
+<h1 class="heading">
+<p class="caption">
+<style>
+  .heading {
+    font-size: var(--text-h1);
+    font-weight: 700;
+  }
+  .caption {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+</style>
+```
+
+#### Violation 4: Missing semantic class names
+```svelte
+<!-- ❌ Violation: All styling via utilities -->
+<button class="px-4 py-2 bg-white/10 rounded-lg border border-white/20 hover:bg-white/20">
+
+<!-- ✅ Fixed: Semantic class with Canon tokens -->
+<button class="px-4 py-2 btn-secondary">
+<style>
+  .btn-secondary {
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-default);
+    transition: background var(--duration-micro) var(--ease-standard);
+  }
+  .btn-secondary:hover {
+    background: var(--color-hover);
+  }
+</style>
+```
+
+#### Violation 5: Inline styles for animation
+```svelte
+<!-- ❌ Violation -->
+<div style="transition: all 0.2s ease-in-out;">
+
+<!-- ✅ Fixed -->
+<div class="animated">
+<style>
+  .animated {
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+</style>
+```
+
+### Decision Flowchart
+
+```
+Is the value dynamic/computed at runtime?
+├── Yes → Use inline style with CSS custom property
+│         style="--value: {computed}"
+└── No → Is it a layout/structure concern?
+         ├── Yes → Use Tailwind utility
+         │         class="flex items-center gap-4"
+         └── No → Is it a design/aesthetic concern?
+                  ├── Yes → Use Canon token in <style>
+                  │         color: var(--color-fg-primary)
+                  └── No → Reconsider if needed at all
+```
+
+### The Hybrid Pattern
+
+Most components combine all three approaches:
+
+```svelte
+<!-- Structure: Tailwind | Design: Canon | Dynamic: Inline -->
+<article
+  class="flex flex-col gap-4 p-6 card"
+  style="--delay: {index * 100}ms"
+>
+  <h2 class="title">{heading}</h2>
+  <p class="body">{content}</p>
+</article>
+
+<style>
+  .card {
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-default);
+    animation: fadeIn var(--duration-standard) var(--ease-standard);
+    animation-delay: var(--delay);
+  }
+  .title {
+    font-size: var(--text-h3);
+    color: var(--color-fg-primary);
+  }
+  .body {
+    font-size: var(--text-body);
+    color: var(--color-fg-secondary);
+  }
+</style>
+```
+
 ## Detection Patterns
 
 Tailwind design utilities to flag:
