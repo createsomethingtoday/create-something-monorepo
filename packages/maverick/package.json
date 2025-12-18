@@ -13,6 +13,9 @@
 		"deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name=maverick-x",
 		"cf-typegen": "wrangler types"
 	},
+	"dependencies": {
+		"@create-something/components": "workspace:*"
+	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20251128.0",
 		"@sveltejs/adapter-cloudflare": "^7.2.4",

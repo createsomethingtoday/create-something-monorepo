@@ -11,8 +11,14 @@
 	 * - Default category/product selection from product pages
 	 *
 	 * Content fetched from CMS at request time (not build time)
+	 *
+	 * Accessibility:
+	 * - Focus trapped within modal when open (WCAG 2.4.3)
+	 * - Focus returns to trigger element on close
+	 * - ESC key dismisses modal
 	 */
 
+	import { focusTrap } from '@create-something/components/actions';
 	import Icon from './Icon.svelte';
 
 	interface ContactContent {
@@ -278,12 +284,6 @@
 		}
 	});
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape' && isOpen) {
-			onClose();
-		}
-	}
-
 	function selectCategory(cat: { id: string; title: string }) {
 		category = cat;
 		categoryDropdownOpen = false;
@@ -292,8 +292,6 @@
 		selectedApplications = [];
 	}
 </script>
-
-<svelte:window onkeydown={handleKeydown} />
 
 {#if isOpen || isAnimating}
 	<!-- Overlay -->
@@ -319,7 +317,7 @@
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="contact-modal-title"
-				tabindex="-1"
+				use:focusTrap={{ active: isOpen, onEscape: onClose }}
 				onclick={(e) => e.stopPropagation()}
 				onkeydown={(e) => e.stopPropagation()}
 			>
