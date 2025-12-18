@@ -620,6 +620,30 @@ select:focus {
 }
 
 /* ==========================================================================
+   ACCESSIBILITY - Skip to Content
+   ========================================================================== */
+
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: var(--space-sm);
+  z-index: 9999;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-fg-primary);
+  color: var(--color-bg-pure);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: top var(--duration-micro) var(--ease-standard);
+}
+
+.skip-to-content:focus {
+  top: var(--space-sm);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
    SCROLLBAR - Subtle, Canon-aligned
    ========================================================================== */
 
