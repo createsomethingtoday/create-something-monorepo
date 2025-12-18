@@ -7,14 +7,6 @@
 
   TYPOGRAPHY: System fonts by default.
   Templates are neutral vessels—your brand should emerge, not ours.
-
-  To customize fonts:
-  1. Add your font imports (Google Fonts, Adobe Fonts, local files)
-  2. Update --font-sans and/or --font-mono below
-
-  Example with Inter:
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    :root { --font-sans: 'Inter', system-ui, sans-serif; }
 */
 
 @tailwind base;
@@ -22,186 +14,37 @@
 @tailwind utilities;
 
 /* ==========================================================================
-   Canon Design Tokens
+   Canon Design Tokens - Single Source of Truth
+   Import from @create-something/components
+   ========================================================================== */
+
+@import '@create-something/components/styles/tokens.css';
+
+/* ==========================================================================
+   Template-Specific Token Overrides
+   Professional Services: System fonts for template neutrality
    ========================================================================== */
 
 :root {
-  /* Colors - Functional Minimalism */
-  --color-bg-pure: #000000;
-  --color-bg-elevated: #0a0a0a;
-  --color-bg-surface: #111111;
-  --color-bg-subtle: #1a1a1a;
-  --color-fg-primary: #ffffff;
-  --color-fg-secondary: rgba(255, 255, 255, 0.8);
-  --color-fg-tertiary: rgba(255, 255, 255, 0.6);
-  --color-fg-muted: rgba(255, 255, 255, 0.4);
-  --color-fg-subtle: rgba(255, 255, 255, 0.2);
-  --color-border-default: rgba(255, 255, 255, 0.1);
-  --color-border-emphasis: rgba(255, 255, 255, 0.2);
-  --color-border-strong: rgba(255, 255, 255, 0.3);
-  --color-success: #44aa44;
-  --color-success-muted: rgba(68, 170, 68, 0.2);
-  --color-error: #cc4444;
-  --color-error-muted: rgba(204, 68, 68, 0.2);
-  --color-warning: #aa8844;
-  --color-warning-muted: rgba(170, 136, 68, 0.2);
-  --color-info: #4477aa;
-  --color-info-muted: rgba(68, 119, 170, 0.2);
-  --color-hover: rgba(255, 255, 255, 0.05);
-  --color-active: rgba(255, 255, 255, 0.1);
-  --color-focus: rgba(255, 255, 255, 0.2);
-
-  /* Data Visualization Palette */
-  --color-data-1: #60a5fa; /* Blue */
-  --color-data-2: #22c55e; /* Green */
-  --color-data-3: #c084fc; /* Purple */
-  --color-data-4: #fbbf24; /* Amber */
-  --color-data-5: #f472b6; /* Pink */
-  --color-data-6: #facc15; /* Yellow */
-
-  /* Typography - Fluid & Canonical
-   * System fonts by default for template neutrality.
-   * See header comments for customization instructions.
-   */
+  /* Override fonts - use system fonts for template neutrality */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-regular: 400;
-  --font-medium: 500;
-  --font-semibold: 600;
-  --font-bold: 700;
-  --leading-tight: 1.25;
-  --leading-snug: 1.375;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.625;
-  --leading-loose: 1.75;
-  --tracking-tighter: -0.025em;
-  --tracking-tight: -0.015em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.025em;
-  --tracking-wider: 0.05em;
-  --tracking-widest: 0.1em;
-  /* Typography Scale - Golden Ratio (φ = 1.618)
-   * Base: 1rem (16px) - refined, not loud
-   * Headlines bold, body restrained
-   *
-   * "Quiet confidence" - Authority through clarity, not volume
-   */
-  --text-display-xl: clamp(3.5rem, 6vw + 2rem, 6rem);
-  --text-display: clamp(2.75rem, 5vw + 1.5rem, 4.5rem);
-  --text-h1: clamp(2rem, 4vw + 1rem, 3.5rem);
-  --text-h2: clamp(1.5rem, 2.5vw + 0.75rem, 2.25rem);
-  --text-h3: clamp(1.25rem, 2vw + 0.5rem, 1.75rem);
-  --text-h4: clamp(1.125rem, 1.5vw + 0.5rem, 1.5rem);
-  --text-h5: clamp(1rem, 1vw + 0.5rem, 1.25rem);
-  --text-h6: clamp(0.875rem, 0.5vw + 0.5rem, 1rem);
-  --text-body-lg: 1.125rem;
-  --text-body: 1rem;
-  --text-body-sm: 0.875rem;
-  --text-caption: 0.75rem;
-  --text-overline: 0.6875rem;
 
-  /* Spacing - Golden Ratio (phi = 1.618)
-   * Enhanced for generous negative space.
-   * "Confidence through restraint" - Canon principle
-   *
-   * Scale: Each step = previous × 1.618
-   * 0.5 → 0.809 → 1.309 → 2.118 → 3.427 → 5.545 → 8.972 → 14.52
-   * Rounded for practical use: 0.5, 1, 1.618, 2.618, 4.236, 6.854, 11.089, 17.942
-   */
-  --space-xs: 0.5rem;      /* 8px */
-  --space-sm: 1rem;        /* 16px */
-  --space-md: 1.618rem;    /* 25.9px ≈ 26px */
-  --space-lg: 2.618rem;    /* 41.9px ≈ 42px */
-  --space-xl: 4.236rem;    /* 67.8px ≈ 68px */
-  --space-2xl: 6.854rem;   /* 109.7px ≈ 110px */
-  --space-3xl: 11.089rem;  /* 177.4px ≈ 177px */
-  --space-4xl: 17.942rem;  /* 287px */
-
-  /* Section spacing - generous breathing room */
+  /* Extended spacing for professional services */
+  --space-4xl: 17.942rem;
   --section-padding: var(--space-3xl);
   --section-padding-sm: var(--space-2xl);
 
-  /* Golden Ratio Widths (for max-width, content widths)
-   * Base: 1280px (container-xl) / phi^n
-   * These ensure content areas relate harmonically.
-   */
-  --width-prose: 42rem;        /* 672px - optimal reading width (~65ch) */
-  --width-content: 52.36rem;   /* 838px - content sections (1280 / φ^0.5) */
-  --width-wide: 68rem;         /* 1088px - wide content */
-  --width-narrow: 32.36rem;    /* 518px - narrow content, sidebars */
-  --width-avatar: 6.18rem;     /* 99px ≈ 100px - avatar size (φ × 61.8) */
-  --width-avatar-sm: 3.82rem;  /* 61px - small avatar */
-  --width-icon: 1.5rem;        /* 24px - standard icon */
-  --width-icon-lg: 2.427rem;   /* 38.8px - large icon (24 × φ) */
-  --width-icon-xl: 3.927rem;   /* 62.8px - extra large icon */
+  /* Extended width tokens */
+  --width-avatar: 6.18rem;
+  --width-avatar-sm: 3.82rem;
+  --width-icon: 1.5rem;
+  --width-icon-lg: 2.427rem;
+  --width-icon-xl: 3.927rem;
 
-  /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  /* Shadows & Elevation */
-  --shadow-none: none;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
-  --shadow-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
-  --shadow-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
-  --shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
-  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
-  --shadow-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
-
-  /* Animation & Motion - Canon Philosophy
-   * Zuhandenheit (Ready-to-hand): Motion recedes into transparent use
-   * Vorhandenheit (Present-at-hand): Motion obstructs, calling attention to itself
-   *
-   * Canon motion serves disclosure, not decoration.
-   * Every animation must reveal state, relationship, or causation.
-   */
-
-  /* Duration Tokens - Threshold of Awareness */
-  --duration-instant: 100ms;   /* Perceived as instant, maximum zuhandenheit */
-  --duration-micro: 150ms;     /* Quick feedback, still recedes */
-  --duration-fast: 200ms;      /* Fast response, borderline awareness */
-  --duration-standard: 300ms;  /* Default transitions, balanced */
-  --duration-complex: 500ms;   /* Noticeable, for significant state changes */
-  --duration-slow: 700ms;      /* Theatrical, requires justification */
-
-  /* Easing Functions - Natural Movement */
-  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);   /* Natural deceleration (default) */
-  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1); /* Begins instantly, ends gentle */
-  --ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);   /* Builds speed, for exits */
-  --ease-sharp: cubic-bezier(0.4, 0.0, 0.6, 1);      /* Punchy, mechanical feel */
-
-  /* View Transition Duration (agency mode: efficient) */
+  /* View Transition Duration */
   --view-transition-duration: 200ms;
-
-  /* Z-Index Layers */
-  --z-base: 0;
-  --z-dropdown: 10;
-  --z-sticky: 20;
-  --z-fixed: 50;
-  --z-modal: 100;
-  --z-popover: 200;
-  --z-tooltip: 300;
-
-  /* Breakpoints & Containers */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1400px;
-  --container-prose: 65ch;
 }
 
 /* ==========================================================================
