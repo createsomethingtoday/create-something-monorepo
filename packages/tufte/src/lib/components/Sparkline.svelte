@@ -27,21 +27,22 @@
 	$: linePath = generateSparklinePath(data, width, height);
 	$: fillPath = showFill ? generateFillPath(linePath, width, height) : '';
 
-	// Design tokens (CREATE SOMETHING way - enforced by component)
+	// Design tokens (CREATE SOMETHING Canon palette)
+	// Using --color-data-1 (blue) as the default data visualization color
 	const stroke = {
-		color: 'white',
-		opacity: 0.6,
+		color: 'var(--color-data-1)',
+		opacity: 0.8,
 		width: 1.5
 	};
 
 	const fill = {
-		color: 'white',
-		opacity: 0.1
+		color: 'var(--color-data-1)',
+		opacity: 0.15
 	};
 
 	const referenceLine = {
-		color: 'white',
-		opacity: 0.05,
+		color: 'var(--color-fg-subtle)',
+		opacity: 1,
 		width: 0.5
 	};
 </script>
