@@ -184,7 +184,7 @@
 				<span class="label-text">INTERPRETATION</span>
 			</div>
 
-			<div class="space-y-4 text-white/70 text-sm leading-relaxed">
+			<div class="analysis-text space-y-4">
 				<p>
 					<strong class="emphasis-text">Vorhabe (fore-having):</strong> We approached this as external—"my
 					brother's need"—and placed it outside the monorepo. It was Vorhandenheit: present-at-hand,
@@ -202,9 +202,9 @@
 				</p>
 			</div>
 
-			<div class="p-4 bg-black/30 rounded-lg">
-				<p class="text-white font-medium mb-2">The Insight</p>
-				<p class="text-white/60 text-sm">
+			<div class="insight-box p-4">
+				<p class="insight-box-title mb-2">The Insight</p>
+				<p class="insight-box-text">
 					The project's origin as <em>gift</em> (Heidegger's Gabe) is itself significant. We build tools
 					through care for others (Sorge), and those tools return to inform our understanding. The canon
 					doesn't stay within boundaries—it flows outward through every act of creation.
@@ -219,7 +219,7 @@
 				<span class="label-text">SEIN</span>
 			</div>
 
-			<div class="grid md:grid-cols-3 gap-4 text-sm">
+			<div class="grid md:grid-cols-3 gap-4 stack-grid">
 				<div class="metric-card p-3">
 					<div class="label-text">Framework</div>
 					<div class="insight-title">SvelteKit + Svelte 5</div>
@@ -234,8 +234,8 @@
 				</div>
 			</div>
 
-			<div class="text-white/40 text-xs">
-				Source: <code class="text-white/60">FREELANCE/contact-capture</code> (outside monorepo, by design)
+			<div class="source-text">
+				Source: <code class="source-code">FREELANCE/contact-capture</code> (outside monorepo, by design)
 			</div>
 		</div>
 
@@ -331,7 +331,7 @@
   }
 
   .insight-card {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-bg-subtle);
     border-radius: var(--radius-md);
   }
 
@@ -370,7 +370,7 @@
   }
 
   .metric-card {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-bg-subtle);
     border-radius: var(--radius-md);
   }
 
@@ -381,7 +381,7 @@
   }
 
   .code-line-label {
-    color: rgb(34, 197, 94);
+    color: var(--color-success);
   }
 
   .code-line-comment {
@@ -401,5 +401,39 @@
   .note-text {
     color: var(--color-fg-muted);
     font-size: var(--text-caption);
+  }
+
+  .analysis-text {
+    color: var(--color-fg-tertiary);
+    font-size: var(--text-body-sm);
+    line-height: 1.6;
+  }
+
+  .insight-box {
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-lg);
+  }
+
+  .insight-box-title {
+    color: var(--color-fg-primary);
+    font-weight: 500;
+  }
+
+  .insight-box-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .stack-grid {
+    font-size: var(--text-body-sm);
+  }
+
+  .source-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+  }
+
+  .source-code {
+    color: var(--color-fg-tertiary);
   }
 </style>
