@@ -11,6 +11,8 @@
 	 * the phenomenological rhythm of family dwelling.
 	 */
 
+	import { keyboardToggle } from '@create-something/components';
+
 	export interface Activity {
 		name: string;
 		space: string;
@@ -84,16 +86,6 @@
 	// Active activity for tooltip
 	let activeActivity: Activity | null = $state(null);
 
-	// Keyboard handler for activity elements
-	function handleActivityKeydown(event: KeyboardEvent, activity: Activity) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			activeActivity = activeActivity === activity ? null : activity;
-		} else if (event.key === 'Escape') {
-			activeActivity = null;
-		}
-	}
-
 	// Hour markers for context
 	const hourMarkers = [6, 9, 12, 15, 18, 21];
 
@@ -162,7 +154,11 @@
 				onmouseleave={() => activeActivity = null}
 				onfocus={() => activeActivity = activity}
 				onblur={() => activeActivity = null}
-				onkeydown={(e) => handleActivityKeydown(e, activity)}
+				use:keyboardToggle={{
+					pressed: activeActivity === activity,
+					onToggle: (pressed) => activeActivity = pressed ? activity : null,
+					onEscape: () => activeActivity = null
+				}}
 			>
 				<!-- Activity bar -->
 				<rect

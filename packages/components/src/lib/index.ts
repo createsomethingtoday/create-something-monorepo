@@ -18,3 +18,6 @@ export * from './ascii/index.js';
 
 // Visual Canon (isometric primitives and animations)
 export * from './visual/index.js';
+
+// Actions (Svelte use: directives)
+export * from './actions/index.js';
