@@ -81,12 +81,12 @@
 		{ label: '.ltd', count: propertyData.ltd.views }
 	];
 
-	// Comparative sparklines data - Using brighter, more saturated colors for better visibility
+	// Comparative sparklines data - Using Canon data visualization colors
 	const comparativeData = [
-		{ label: '.agency', data: propertyData.agency.dailyViews, color: 'rgb(96, 165, 250)', opacity: 0.9 },
-		{ label: '.io', data: propertyData.io.dailyViews, color: 'rgb(34, 197, 94)', opacity: 0.9 },
-		{ label: '.space', data: propertyData.space.dailyViews, color: 'rgb(192, 132, 252)', opacity: 0.9 },
-		{ label: '.ltd', data: propertyData.ltd.dailyViews, color: 'rgb(251, 191, 36)', opacity: 0.9 }
+		{ label: '.agency', data: propertyData.agency.dailyViews, color: 'var(--color-data-1)', opacity: 0.9 },
+		{ label: '.io', data: propertyData.io.dailyViews, color: 'var(--color-data-2)', opacity: 0.9 },
+		{ label: '.space', data: propertyData.space.dailyViews, color: 'var(--color-data-3)', opacity: 0.9 },
+		{ label: '.ltd', data: propertyData.ltd.dailyViews, color: 'var(--color-data-4)', opacity: 0.9 }
 	];
 </script>
 
@@ -94,12 +94,12 @@
 	<title>Agentic Visualizations | CREATE SOMETHING.io</title>
 </svelte:head>
 
-<div class="min-h-screen bg-black text-white p-6">
+<div class="page-container min-h-screen p-6">
 	<div class="max-w-7xl mx-auto space-y-12">
 	<!-- Header -->
-	<div class="border-b border-white/10 pb-8">
-		<h1 class="text-4xl font-bold mb-3">Agentic Visualization Experiment</h1>
-		<p class="text-white/70 text-lg max-w-3xl">
+	<div class="header-section pb-8">
+		<h1 class="page-title mb-3">Agentic Visualization Experiment</h1>
+		<p class="text-secondary max-w-3xl">
 			Research experiment demonstrating autonomous UI components that embody Edward Tufte's principles
 			for displaying quantitative information. Components make intelligent decisions about data presentation,
 			transforming visualization from manual craft into intelligent revelation.
@@ -107,9 +107,9 @@
 	</div>
 
 	<!-- Abstract -->
-	<section class="border-l-4 border-white/20 pl-6 space-y-4">
-		<h2 class="text-2xl font-bold">Abstract</h2>
-		<p class="text-white/70 leading-relaxed">
+	<section class="abstract-section pl-6 space-y-4">
+		<h2 class="section-title">Abstract</h2>
+		<p class="text-tertiary leading-relaxed">
 			This paper presents <em>agentic visualization</em>: autonomous UI components that embody
 			expert knowledge and make intelligent decisions about data presentation. We demonstrate
 			how Edward Tufte's principles for displaying quantitative information can be encoded into
@@ -125,9 +125,9 @@
 
 	<!-- Introduction -->
 	<section class="space-y-6">
-		<h2 class="text-2xl font-bold">1. Introduction</h2>
+		<h2 class="section-title">1. Introduction</h2>
 
-		<div class="space-y-4 text-white/70 leading-relaxed">
+		<div class="space-y-4 text-tertiary leading-relaxed">
 			<p>
 				Data visualization occupies a curious position in software engineering: universally acknowledged
 				as critical, yet implemented through libraries that demand extensive configuration and offer
@@ -137,7 +137,7 @@
 			</p>
 
 			<p>
-				This research asks: <strong>What if components could embody expertise?</strong>
+				This research asks: <strong class="text-secondary">What if components could embody expertise?</strong>
 			</p>
 
 			<p>
@@ -160,7 +160,7 @@
 				that understand both data and design principles.
 			</p>
 
-			<p class="text-white/80">
+			<p class="text-secondary">
 				<strong>Contributions:</strong> (1) A theoretical framework for agentic visualization
 				components, (2) Eight implemented components embodying Tufte's principles,
 				(3) Demonstration of data source flexibility through sample/live toggle,
@@ -171,16 +171,16 @@
 
 	<!-- Methodology -->
 	<section class="space-y-6">
-		<h2 class="text-2xl font-bold">2. Methodology: Hermeneutic Component Design</h2>
+		<h2 class="section-title">2. Methodology: Hermeneutic Component Design</h2>
 
-		<div class="space-y-4 text-white/70 leading-relaxed">
+		<div class="space-y-4 text-tertiary leading-relaxed">
 			<p>
 				Traditional software development follows specification → implementation → testing.
 				This research instead employed Heidegger's <em>hermeneutic circle</em>—an interpretive
 				method where understanding emerges through iterative engagement with the whole and its parts.
 			</p>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">2.1 Hermeneutic Process</h3>
+			<h3 class="subsection-title mt-6">2.1 Hermeneutic Process</h3>
 			<p>
 				Beginning with four base components (Sparkline, MetricCard, HighDensityTable, DailyGrid),
 				we asked: "What visualizations can we now create?" This question revealed missing compositional
@@ -188,10 +188,10 @@
 			</p>
 
 			<ul class="list-disc list-inside space-y-2 pl-4">
-				<li><strong>ComparativeSparklines</strong>: Multiple series needed shared scaling for valid comparison</li>
-				<li><strong>DistributionBar</strong>: Proportional relationships were invisible in tables</li>
-				<li><strong>TrendIndicator</strong>: Direction and magnitude of change required semantic encoding</li>
-				<li><strong>HourlyHeatmap</strong>: Temporal patterns demanded small multiples grid</li>
+				<li><strong class="text-secondary">ComparativeSparklines</strong>: Multiple series needed shared scaling for valid comparison</li>
+				<li><strong class="text-secondary">DistributionBar</strong>: Proportional relationships were invisible in tables</li>
+				<li><strong class="text-secondary">TrendIndicator</strong>: Direction and magnitude of change required semantic encoding</li>
+				<li><strong class="text-secondary">HourlyHeatmap</strong>: Temporal patterns demanded small multiples grid</li>
 			</ul>
 
 			<p>
@@ -200,7 +200,7 @@
 				predefined chart types.
 			</p>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">2.2 Encoding Tufte's Principles</h3>
+			<h3 class="subsection-title mt-6">2.2 Encoding Tufte's Principles</h3>
 			<p>
 				Edward Tufte's "The Visual Display of Quantitative Information" (1983) establishes six principles:
 			</p>
@@ -220,14 +220,14 @@
 				Tufte's "valid comparison" principle is structurally impossible.
 			</p>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">2.3 Agentic Decision-Making</h3>
+			<h3 class="subsection-title mt-6">2.3 Agentic Decision-Making</h3>
 			<p>
 				Components make autonomous decisions through reactive calculations:
 			</p>
 
 			<ul class="list-disc list-inside space-y-2 pl-4">
-				<li>Automatic scaling: <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">$: range = max - min || 1</code></li>
-				<li>Proportion calculation: <code class="text-white/90 bg-white/10 px-2 py-0.5 rounded">$: percentage = (count / total) * 100</code></li>
+				<li>Automatic scaling: <code class="code-inline">$: range = max - min || 1</code></li>
+				<li>Proportion calculation: <code class="code-inline">$: percentage = (count / total) * 100</code></li>
 				<li>Contextual formatting: Labels only appear when segment width >= 8%</li>
 				<li>Semantic colors: Green/red/gray based on direction, not manual assignment</li>
 			</ul>
@@ -241,43 +241,43 @@
 
 	<!-- Implementation -->
 	<section class="space-y-6">
-		<h2 class="text-2xl font-bold">3. Implementation</h2>
+		<h2 class="section-title">3. Implementation</h2>
 
-		<div class="space-y-4 text-white/70 leading-relaxed">
-			<h3 class="text-xl font-semibold text-white/90">3.1 Technical Architecture</h3>
+		<div class="space-y-4 text-tertiary leading-relaxed">
+			<h3 class="subsection-title">3.1 Technical Architecture</h3>
 			<p>
 				The @create-something/tufte package is implemented in SvelteKit 5 with TypeScript,
 				distributed as an npm package. Components use:
 			</p>
 
 			<ul class="list-disc list-inside space-y-2 pl-4">
-				<li><strong>Svelte reactive statements</strong> ($:) for autonomous calculations</li>
-				<li><strong>SVG path generation</strong> for resolution-independent graphics</li>
-				<li><strong>Tailwind CSS</strong> with CREATE SOMETHING design tokens</li>
-				<li><strong>TypeScript interfaces</strong> for type-safe data contracts</li>
+				<li><strong class="text-secondary">Svelte reactive statements</strong> ($:) for autonomous calculations</li>
+				<li><strong class="text-secondary">SVG path generation</strong> for resolution-independent graphics</li>
+				<li><strong class="text-secondary">Tailwind CSS</strong> with CREATE SOMETHING design tokens</li>
+				<li><strong class="text-secondary">TypeScript interfaces</strong> for type-safe data contracts</li>
 			</ul>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">3.2 Component Examples</h3>
+			<h3 class="subsection-title mt-6">3.2 Component Examples</h3>
 
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm space-y-2">
-				<p class="text-white/40">// ComparativeSparklines: Shared scaling example</p>
-				<p class="text-white/90">$: allValues = series.flatMap(s => s.data.map(d => d.count));</p>
-				<p class="text-white/90">$: max = Math.max(...allValues, 1);</p>
-				<p class="text-white/90">$: min = Math.min(...allValues, 0);</p>
-				<p class="text-white/90">$: range = max - min || 1;</p>
+			<div class="code-block p-4 space-y-2">
+				<p class="text-muted">// ComparativeSparklines: Shared scaling example</p>
+				<p class="text-secondary">$: allValues = series.flatMap(s => s.data.map(d => d.count));</p>
+				<p class="text-secondary">$: max = Math.max(...allValues, 1);</p>
+				<p class="text-secondary">$: min = Math.min(...allValues, 0);</p>
+				<p class="text-secondary">$: range = max - min || 1;</p>
 			</div>
 
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm space-y-2 mt-4">
-				<p class="text-white/40">// DistributionBar: Automatic proportions</p>
-				<p class="text-white/90">$: total = segments.reduce((sum, s) =&gt; sum + s.count, 0);</p>
-				<p class="text-white/90">$: segmentsWithPercentages = segments.map(s =&gt; (&lbrace;</p>
-				<p class="text-white/90 pl-4">...s,</p>
-				<p class="text-white/90 pl-4">percentage: (s.count / total) * 100,</p>
-				<p class="text-white/90 pl-4">width: (s.count / total) * 100</p>
-			<p class="text-white/90">&rbrace;));</p>
+			<div class="code-block p-4 space-y-2 mt-4">
+				<p class="text-muted">// DistributionBar: Automatic proportions</p>
+				<p class="text-secondary">$: total = segments.reduce((sum, s) =&gt; sum + s.count, 0);</p>
+				<p class="text-secondary">$: segmentsWithPercentages = segments.map(s =&gt; (&lbrace;</p>
+				<p class="text-secondary pl-4">...s,</p>
+				<p class="text-secondary pl-4">percentage: (s.count / total) * 100,</p>
+				<p class="text-secondary pl-4">width: (s.count / total) * 100</p>
+			<p class="text-secondary">&rbrace;));</p>
 			</div>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">3.3 Data Source Flexibility</h3>
+			<h3 class="subsection-title mt-6">3.3 Data Source Flexibility</h3>
 			<p>
 				To demonstrate component flexibility, this page implements a Sample/Live toggle.
 				Components receive data through props—they don't know or care whether it's controlled
@@ -285,19 +285,19 @@
 				autonomous: they work with <em>any</em> data source that matches the interface.
 			</p>
 
-			<div class="p-4 bg-white/5 border border-white/10 rounded-lg font-mono text-sm space-y-2 mt-4">
-				<p class="text-white/40">// Reactive data switching</p>
-				<p class="text-white/90">$: propertyData = dataSource === 'live' && liveAnalytics</p>
-				<p class="text-white/90 pl-4">? getLivePropertyData()</p>
-				<p class="text-white/90 pl-4">: propertyData;</p>
+			<div class="code-block p-4 space-y-2 mt-4">
+				<p class="text-muted">// Reactive data switching</p>
+				<p class="text-secondary">$: propertyData = dataSource === 'live' && liveAnalytics</p>
+				<p class="text-secondary pl-4">? getLivePropertyData()</p>
+				<p class="text-secondary pl-4">: propertyData;</p>
 			</div>
 		</div>
 	</section>
 
 	<!-- Results Section Header -->
-	<section class="border-t border-white/10 pt-8">
-		<h2 class="text-3xl font-bold mb-4">4. Results: Component Demonstrations</h2>
-		<p class="text-white/70 leading-relaxed mb-8">
+	<section class="section-divider pt-8">
+		<h2 class="results-title mb-4">4. Results: Component Demonstrations</h2>
+		<p class="text-tertiary leading-relaxed mb-8">
 			The following sections demonstrate each component with controlled sample data representing
 			CREATE SOMETHING property analytics. Each component automatically handles scaling, formatting,
 			and visual encoding without manual configuration.
@@ -307,15 +307,15 @@
 		<!-- 1. Comparative Sparklines -->
 		<section class="space-y-4">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">4.1 Comparative Trends</h2>
-				<p class="text-white/70 text-base">
+				<h2 class="section-title mb-2">4.1 Comparative Trends</h2>
+				<p class="text-tertiary">
 					ComparativeSparklines component - Multiple data series overlaid for direct comparison
 				</p>
 			</div>
-			<div class="p-8 bg-white/5 border border-white/10 rounded-lg space-y-6">
+			<div class="card p-8 space-y-6">
 				<ComparativeSparklines series={comparativeData} width={100} height={30} />
-				<p class="text-sm text-white/60">
-					<strong class="text-white/80">Reveals:</strong> .io and .agency are growing, .space is declining, .ltd is
+				<p class="text-body-sm text-tertiary">
+					<strong class="text-secondary">Reveals:</strong> .io and .agency are growing, .space is declining, .ltd is
 					emerging. Relative performance visible at a glance.
 				</p>
 			</div>
@@ -324,15 +324,15 @@
 		<!-- 2. Distribution Bar -->
 		<section class="space-y-4">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">4.2 Proportional Distribution</h2>
-				<p class="text-white/70 text-base">
+				<h2 class="section-title mb-2">4.2 Proportional Distribution</h2>
+				<p class="text-tertiary">
 					DistributionBar component - Visual representation of how total is divided
 				</p>
 			</div>
-			<div class="p-8 bg-white/5 border border-white/10 rounded-lg">
+			<div class="card p-8">
 				<DistributionBar segments={distribution} height="h-12" />
-				<p class="text-sm text-white/60 mt-6">
-					<strong class="text-white/80">Reveals:</strong> .io dominates (47%), followed by .agency (24%), .space (17%),
+				<p class="text-body-sm text-tertiary mt-6">
+					<strong class="text-secondary">Reveals:</strong> .io dominates (47%), followed by .agency (24%), .space (17%),
 					and .ltd (11%). Distribution imbalance immediately obvious.
 				</p>
 			</div>
@@ -341,33 +341,33 @@
 		<!-- 3. Trend Indicators -->
 		<section class="space-y-4">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">4.3 Change Direction &amp; Magnitude</h2>
-				<p class="text-white/70 text-base">
+				<h2 class="section-title mb-2">4.3 Change Direction &amp; Magnitude</h2>
+				<p class="text-tertiary">
 					TrendIndicator component - Shows whether metrics are up, down, or flat
 				</p>
 			</div>
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 				{#if propertyData}
 			{#each Object.entries(propertyData) as [property, data]}
-					<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-						<div class="text-sm text-white/60 mb-2">.{property}</div>
-						<div class="text-3xl font-bold tabular-nums mb-2">{data.views.toLocaleString()}</div>
+					<div class="card p-6">
+						<div class="text-body-sm text-tertiary mb-2">.{property}</div>
+						<div class="metric-value tabular-nums mb-2">{data.views.toLocaleString()}</div>
 						<TrendIndicator current={data.views} previous={data.previousViews} />
 					</div>
 				{/each}
 		{/if}
 			</div>
-			<p class="text-xs text-white/40">
-				<strong>Reveals:</strong> Directional changes at a glance - growing (green ↑), declining
-				(red ↓), or stable (gray →)
+			<p class="text-caption text-muted">
+				<strong>Reveals:</strong> Directional changes at a glance - growing (green), declining
+				(red), or stable (gray)
 			</p>
 		</section>
 
 		<!-- 4. Integrated Comparison Dashboard -->
 		<section class="space-y-4">
 			<div>
-				<h2 class="text-2xl font-bold mb-2">4.4 Integrated Comparison Dashboard</h2>
-				<p class="text-white/60 text-sm">
+				<h2 class="section-title mb-2">4.4 Integrated Comparison Dashboard</h2>
+				<p class="text-tertiary text-body-sm">
 					Composition - MetricCard + TrendIndicator + comparative context
 				</p>
 			</div>
@@ -381,31 +381,31 @@
 							trend={data.dailyViews}
 							context="last 7 days"
 						/>
-						<div class="px-6 py-2 bg-white/5 border border-white/10 rounded-lg">
-							<div class="text-xs text-white/40 mb-1">vs. previous period</div>
+						<div class="card-subtle px-6 py-2">
+							<div class="text-caption text-muted mb-1">vs. previous period</div>
 							<TrendIndicator current={data.views} previous={data.previousViews} />
 						</div>
 					</div>
 				{/each}
 		{/if}
 			</div>
-			<p class="text-xs text-white/40">
+			<p class="text-caption text-muted">
 				<strong>Reveals:</strong> Complete picture - absolute values, trends, and directional
 				changes in unified view
 			</p>
 		</section>
 
 	<!-- 5. Discussion -->
-	<section class="border-t border-white/10 pt-8 space-y-6">
-		<h2 class="text-3xl font-bold mb-4">5. Discussion</h2>
+	<section class="section-divider pt-8 space-y-6">
+		<h2 class="results-title mb-4">5. Discussion</h2>
 
-		<div class="space-y-4 text-white/70 leading-relaxed">
-			<h3 class="text-xl font-semibold text-white/90">5.1 What the Hermeneutic Circle Revealed</h3>
+		<div class="space-y-4 text-tertiary leading-relaxed">
+			<h3 class="subsection-title">5.1 What the Hermeneutic Circle Revealed</h3>
 
 			<div class="grid md:grid-cols-2 gap-6">
-				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<h4 class="text-lg font-semibold mb-3 text-white/80">Compositional Power</h4>
-					<ul class="space-y-2 text-sm text-white/60">
+				<div class="card p-6">
+					<h4 class="card-title mb-3">Compositional Power</h4>
+					<ul class="space-y-2 text-body-sm text-tertiary">
 						<li>• Components combine to reveal multi-dimensional insights</li>
 						<li>• Same data, different lenses: trends, proportions, changes</li>
 						<li>• Patterns invisible in tables become obvious visually</li>
@@ -413,9 +413,9 @@
 					</ul>
 				</div>
 
-				<div class="p-6 bg-white/5 border border-white/10 rounded-lg">
-					<h4 class="text-lg font-semibold mb-3 text-white/80">Agentic Behavior</h4>
-					<ul class="space-y-2 text-sm text-white/60">
+				<div class="card p-6">
+					<h4 class="card-title mb-3">Agentic Behavior</h4>
+					<ul class="space-y-2 text-body-sm text-tertiary">
 						<li>• Automatic scaling (ComparativeSparklines uses shared range)</li>
 						<li>• Intelligent formatting (percentages, colors, labels)</li>
 						<li>• Contextual decisions (show labels only when space permits)</li>
@@ -424,7 +424,7 @@
 				</div>
 			</div>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">5.2 Implications for Software Design</h3>
+			<h3 class="subsection-title mt-6">5.2 Implications for Software Design</h3>
 			<p>
 				This research demonstrates that design expertise—previously considered the domain of human
 				judgment—can be encoded into autonomous software components. The implications extend beyond
@@ -432,10 +432,10 @@
 			</p>
 
 			<ul class="list-disc list-inside space-y-2 pl-4">
-				<li><strong>UI Components</strong>: Form validation, accessibility, responsive layouts could make expert decisions</li>
-				<li><strong>API Design</strong>: Clients that automatically handle retries, caching, rate limiting</li>
-				<li><strong>Database Queries</strong>: ORMs that understand indexing strategies and query optimization</li>
-				<li><strong>Testing Frameworks</strong>: Tests that know which assertions matter for given code patterns</li>
+				<li><strong class="text-secondary">UI Components</strong>: Form validation, accessibility, responsive layouts could make expert decisions</li>
+				<li><strong class="text-secondary">API Design</strong>: Clients that automatically handle retries, caching, rate limiting</li>
+				<li><strong class="text-secondary">Database Queries</strong>: ORMs that understand indexing strategies and query optimization</li>
+				<li><strong class="text-secondary">Testing Frameworks</strong>: Tests that know which assertions matter for given code patterns</li>
 			</ul>
 
 			<p>
@@ -443,7 +443,7 @@
 				eliminate manual configuration.
 			</p>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">5.3 Visualization as Unconcealment</h3>
+			<h3 class="subsection-title mt-6">5.3 Visualization as Unconcealment</h3>
 			<p>
 				Heidegger's concept of <em>aletheia</em> (unconcealment) describes truth not as correctness
 				but as <em>revealing what was hidden</em>. Traditional charts require humans to manually
@@ -456,7 +456,7 @@
 				decides how to reveal; the developer provides what to reveal.
 			</p>
 
-			<h3 class="text-xl font-semibold text-white/90 mt-6">5.4 Limitations and Future Work</h3>
+			<h3 class="subsection-title mt-6">5.4 Limitations and Future Work</h3>
 			<p>
 				Current components handle quantitative time-series data. Future work could extend to:
 			</p>
@@ -477,10 +477,10 @@
 	</section>
 
 	<!-- 6. References -->
-	<section class="border-t border-white/10 pt-8 space-y-4">
-		<h2 class="text-3xl font-bold mb-4">6. References</h2>
+	<section class="section-divider pt-8 space-y-4">
+		<h2 class="results-title mb-4">6. References</h2>
 
-		<div class="space-y-3 text-white/70 text-sm">
+		<div class="space-y-3 text-tertiary text-body-sm">
 			<div class="pl-6 -indent-6">
 				[1] Tufte, Edward R. (1983). <em>The Visual Display of Quantitative Information</em>.
 				Graphics Press. Cheshire, Connecticut.
@@ -513,14 +513,14 @@
 
 			<div class="pl-6 -indent-6">
 				[7] @create-something/tufte package documentation.
-				<a href="https://createsomething.ltd/masters/edward-tufte" class="text-white/90 underline hover:text-white">
+				<a href="https://createsomething.ltd/masters/edward-tufte" class="link">
 					https://createsomething.ltd/masters/edward-tufte
 				</a>
 			</div>
 
 			<div class="pl-6 -indent-6">
 				[8] CREATE SOMETHING methodology.
-				<a href="https://createsomething.io/methodology" class="text-white/90 underline hover:text-white">
+				<a href="https://createsomething.io/methodology" class="link">
 					https://createsomething.io/methodology
 				</a>
 			</div>
@@ -528,18 +528,127 @@
 	</section>
 
 		<!-- Footer -->
-		<div class="border-t border-white/10 pt-6">
-			<p class="text-sm text-white/40">
+		<div class="section-divider pt-6">
+			<p class="text-body-sm text-muted">
 				All visualizations powered by
 				<a
 					href="https://createsomething.ltd/masters/edward-tufte"
-					class="underline hover:text-white/60">@create-something/tufte</a
+					class="link">@create-something/tufte</a
 				>
 				— agentic components embodying Tufte's principles. View
-				<a href="/methodology" class="underline hover:text-white/60">methodology</a>
+				<a href="/methodology" class="link">methodology</a>
 				or
-				<a href="/admin/analytics" class="underline hover:text-white/60">analytics dashboard</a>.
+				<a href="/admin/analytics" class="link">analytics dashboard</a>.
 			</p>
 		</div>
 	</div>
 </div>
+
+<style>
+	.page-container {
+		background: var(--color-bg-pure);
+		color: var(--color-fg-primary);
+	}
+
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.section-title {
+		font-size: var(--text-h2);
+		font-weight: 700;
+	}
+
+	.subsection-title {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+	}
+
+	.results-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.header-section {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.abstract-section {
+		border-left: 4px solid var(--color-border-emphasis);
+	}
+
+	.section-divider {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.text-secondary {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-lg);
+	}
+
+	.text-tertiary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.text-muted {
+		color: var(--color-fg-muted);
+	}
+
+	.text-body-sm {
+		font-size: var(--text-body-sm);
+	}
+
+	.text-caption {
+		font-size: var(--text-caption);
+	}
+
+	.card {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-subtle {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-title {
+		font-size: var(--text-body-lg);
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+	}
+
+	.code-block {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		font-family: monospace;
+		font-size: var(--text-body-sm);
+	}
+
+	.code-inline {
+		color: var(--color-fg-secondary);
+		background: var(--color-bg-subtle);
+		padding: 0.125rem 0.5rem;
+		border-radius: var(--radius-sm);
+	}
+
+	.metric-value {
+		font-size: var(--text-h1);
+		font-weight: 700;
+	}
+
+	.link {
+		color: var(--color-fg-secondary);
+		text-decoration: underline;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.link:hover {
+		color: var(--color-fg-primary);
+	}
+</style>
