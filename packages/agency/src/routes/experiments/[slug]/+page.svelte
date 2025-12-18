@@ -51,7 +51,7 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-black">
+<div class="min-h-screen page-wrapper">
 	<!-- Article Header -->
 	<ArticleHeader {paper} />
 
@@ -77,7 +77,7 @@
 	<div class="w-full max-w-5xl mx-auto px-6 py-12">
 		<a
 			href="/experiments"
-			class="inline-flex items-center gap-2 text-terminal-green hover:transition-colors"
+			class="inline-flex items-center gap-2 back-link"
 		>
 			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -88,7 +88,16 @@
 </div>
 
 <style>
-	:global(.text-terminal-green) {
-		color: #00ff00;
+	.page-wrapper {
+		background: var(--color-bg-pure);
+	}
+
+	.back-link {
+		color: var(--color-success);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.back-link:hover {
+		color: var(--color-fg-primary);
 	}
 </style>

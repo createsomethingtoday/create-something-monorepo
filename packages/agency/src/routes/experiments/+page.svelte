@@ -148,10 +148,6 @@
 </div>
 
 <style>
-	:global(.text-terminal-green) {
-		color: #00ff00;
-	}
-
 	/* Page wrapper */
 	.page-wrapper {
 		background: var(--color-bg-pure);
