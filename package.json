@@ -22,7 +22,11 @@
     "check": "pnpm --recursive run check",
     "lint": "pnpm --recursive run lint",
     "format": "prettier --write \"packages/**/*.{js,ts,svelte,json,css,md}\"",
-    "test": "pnpm --recursive run test"
+    "test": "pnpm --recursive run test",
+    "harness": "pnpm --filter @create-something/harness harness",
+    "harness:start": "pnpm --filter @create-something/harness harness start",
+    "harness:status": "pnpm --filter @create-something/harness harness status",
+    "harness:resume": "pnpm --filter @create-something/harness harness resume"
   },
   "devDependencies": {
     "prettier": "^3.4.2",
