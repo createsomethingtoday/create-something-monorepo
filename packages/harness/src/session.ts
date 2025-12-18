@@ -170,11 +170,24 @@ async function executeClaudeCode(
     const proc = spawn('claude', args, {
       cwd: options.cwd,
       env: { ...process.env },
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
 
-    // Write prompt to stdin
-    proc.stdin?.write(promptContent);
-    proc.stdin?.end();
+    // Write prompt to stdin and close it
+    if (proc.stdin) {
+      proc.stdin.write(promptContent);
+      proc.stdin.end();
+    } else {
+      resolve({
+        exitCode: -1,
+        output: '',
+        error: 'Failed to open stdin pipe',
+      });
+      return;
+    }
+
+    // Log that we've started (visible in harness output)
+    console.log(`  [Session] Prompt sent (${promptContent.length} chars), waiting for response...`);
 
     const timeoutId = setTimeout(() => {
       proc.kill('SIGTERM');
