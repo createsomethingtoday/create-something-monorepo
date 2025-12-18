@@ -13,26 +13,35 @@
 			</a>
 
 			<!-- Desktop Navigation -->
-			<div class="hidden md:flex items-center gap-8">
-				<a href="/" class="nav-link">
-					Home
-				</a>
-				<a href="/services" class="nav-link">
-					Services
-				</a>
-				<a href="/work" class="nav-link">
-					Our Work
-				</a>
-				<a href="/about" class="nav-link">
-					About
-				</a>
-
-				<!-- Contact Button -->
-				<a href="/contact" class="contact-btn group relative px-6 py-2 overflow-hidden">
-					<span class="relative z-10">Contact</span>
-					<div class="contact-btn-overlay absolute inset-0 translate-y-full group-hover:translate-y-0"></div>
-				</a>
-			</div>
+			<ul class="nav-list hidden md:flex items-center gap-8">
+				<li>
+					<a href="/" class="nav-link">
+						Home
+					</a>
+				</li>
+				<li>
+					<a href="/services" class="nav-link">
+						Services
+					</a>
+				</li>
+				<li>
+					<a href="/work" class="nav-link">
+						Our Work
+					</a>
+				</li>
+				<li>
+					<a href="/about" class="nav-link">
+						About
+					</a>
+				</li>
+				<li>
+					<!-- Contact Button -->
+					<a href="/contact" class="contact-btn group relative px-6 py-2 overflow-hidden">
+						<span class="relative z-10">Contact</span>
+						<div class="contact-btn-overlay absolute inset-0 translate-y-full group-hover:translate-y-0"></div>
+					</a>
+				</li>
+			</ul>
 
 			<!-- Mobile Menu Button -->
 			<button
@@ -55,23 +64,33 @@
 		<!-- Mobile Menu -->
 		{#if isMenuOpen}
 			<div class="mobile-menu animate-slide-down md:hidden py-4">
-				<div class="flex flex-col gap-4">
-					<a href="/" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
-						Home
-					</a>
-					<a href="/services" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
-						Services
-					</a>
-					<a href="/work" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
-						Our Work
-					</a>
-					<a href="/about" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
-						About
-					</a>
-					<a href="/contact" class="mobile-contact-btn px-6 py-2 text-center" onclick={() => isMenuOpen = false}>
-						Contact
-					</a>
-				</div>
+				<ul class="mobile-nav-list flex flex-col gap-4">
+					<li>
+						<a href="/" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
+							Home
+						</a>
+					</li>
+					<li>
+						<a href="/services" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
+							Services
+						</a>
+					</li>
+					<li>
+						<a href="/work" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
+							Our Work
+						</a>
+					</li>
+					<li>
+						<a href="/about" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
+							About
+						</a>
+					</li>
+					<li>
+						<a href="/contact" class="mobile-contact-btn px-6 py-2 text-center" onclick={() => isMenuOpen = false}>
+							Contact
+						</a>
+					</li>
+				</ul>
 			</div>
 		{/if}
 	</div>
@@ -81,6 +100,13 @@
 	.nav {
 		background: var(--color-bg-pure);
 		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.nav-list,
+	.mobile-nav-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
 	}
 
 	.logo {
