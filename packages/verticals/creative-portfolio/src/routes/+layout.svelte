@@ -13,13 +13,15 @@
 	const showNav = $derived($page.url.pathname !== '/');
 </script>
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 {#if showNav}
 	<nav class="nav-minimal">
 		<a href="/">{$config.name}</a>
 	</nav>
 {/if}
 
-<main>
+<main id="main-content" tabindex="-1">
 	{@render children()}
 </main>
 
