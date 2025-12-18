@@ -6,8 +6,8 @@
 # "Weniger, aber besser." — Dieter Rams
 
 # Issue prefix for this repository
-# Creates issues like "cs-a1b2", "cs-f14c"
-issue-prefix: "cs"
+# Creates issues like "create-something-monorepo-a1b2"
+issue-prefix: "create-something-monorepo"
 
 # Git branch for beads sync
 # All clones use the same sync branch for team collaboration
