@@ -30,6 +30,7 @@
 
 	--color-hover: rgba(255, 255, 255, 0.05);
 	--color-active: rgba(255, 255, 255, 0.1);
+	--color-focus: rgba(255, 255, 255, 0.2);
 
 	/* Accent - Electric */
 	--color-accent: #5b7fff;
@@ -265,7 +266,7 @@ a {
 
 /* Focus states */
 :focus-visible {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-focus);
 	outline-offset: 2px;
 }
 

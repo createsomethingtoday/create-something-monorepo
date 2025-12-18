@@ -30,6 +30,7 @@
 
 	--color-hover: rgba(26, 26, 26, 0.03);
 	--color-active: rgba(26, 26, 26, 0.06);
+	--color-focus: rgba(26, 26, 26, 0.2);
 
 	/* Accent - Cedar warmth */
 	--color-accent: #8b6914;
@@ -318,7 +319,7 @@ a {
 
 /* Focus states */
 :focus-visible {
-	outline: 2px solid var(--color-fg-primary);
+	outline: 2px solid var(--color-focus);
 	outline-offset: 2px;
 }
 

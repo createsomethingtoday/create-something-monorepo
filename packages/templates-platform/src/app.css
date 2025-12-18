@@ -195,6 +195,12 @@ a:hover {
   color: var(--color-fg-primary);
 }
 
+/* Global focus indicator using Canon token */
+*:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 /* ==========================================================================
    BUTTONS - Canon Aesthetic
    ========================================================================== */

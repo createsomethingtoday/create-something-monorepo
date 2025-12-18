@@ -101,6 +101,12 @@
     scroll-padding-top: 5rem;
   }
 
+  /* Global focus indicator using Canon token */
+  *:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;

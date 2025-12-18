@@ -17,8 +17,7 @@
 
 	let { title, href, onclick, arrow = false, light = false, class: className = '' }: Props = $props();
 
-	const baseClasses =
-		'btn group relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 transition-all';
+	const baseClasses = 'btn group relative overflow-hidden transition-all';
 
 	const lightClasses =
 		'border-w-50 bg-w-50 text-g-500 hover:bg-g-500 hover:text-white hover:shadow-lg hover:shadow-black/20';

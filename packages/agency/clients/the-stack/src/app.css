@@ -53,6 +53,7 @@
   --green: #966e44;
   --dark-grey: darkgrey;
   --light-grey: #d8d8d8;
+  --color-focus: rgba(8, 8, 8, 0.2);
 
   /* Border Radius */
   --hero-video-radius: 3.125rem;
@@ -117,6 +118,12 @@
 * {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Global focus indicator */
+*:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 body {
