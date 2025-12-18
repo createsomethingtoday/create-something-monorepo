@@ -35,11 +35,11 @@
 	$: range = max - min || 1;
 
 	// Agentic: generate paths for all series with shared scale
-	$: paths = series.map((s) => ({
+	$: paths = series.map((s, i) => ({
 		...s,
 		path: generateSparklinePathWithScale(s.data, width, height, min, range),
-		color: s.color || 'white',
-		opacity: s.opacity || 0.6
+		color: s.color || defaultColors[i % defaultColors.length],
+		opacity: s.opacity || 0.9
 	}));
 
 	function generateSparklinePathWithScale(
@@ -87,9 +87,7 @@
 				<div class="legend-item flex items-center gap-2">
 					<div
 						class="legend-indicator w-4 h-1"
-						style="background-color: {series.color === 'white'
-							? defaultColors[i % defaultColors.length]
-							: series.color};"
+						style="background-color: {series.color};"
 					/>
 					<span class="legend-label">{series.label}</span>
 				</div>
@@ -110,8 +108,8 @@
 			y1={height / 2}
 			x2={width}
 			y2={height / 2}
-			stroke="white"
-			stroke-opacity="0.05"
+			stroke="var(--color-fg-subtle)"
+			stroke-opacity="1"
 			stroke-width="0.5"
 		/>
 
@@ -121,8 +119,8 @@
 				<path
 					d={s.path}
 					fill="none"
-					stroke={s.color === 'white' ? defaultColors[i % defaultColors.length] : s.color}
-					stroke-opacity={s.opacity || 0.9}
+					stroke={s.color}
+					stroke-opacity={s.opacity}
 					stroke-width="2.5"
 					vector-effect="non-scaling-stroke"
 				/>
