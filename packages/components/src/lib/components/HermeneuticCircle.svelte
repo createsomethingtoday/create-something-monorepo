@@ -136,7 +136,18 @@
 		</div>
 	{/if}
 
-	<svg viewBox="0 0 200 200" class="circle-svg">
+	<svg
+		viewBox="0 0 200 200"
+		class="circle-svg"
+		role="img"
+		aria-labelledby="hermeneutic-circle-title hermeneutic-circle-desc"
+	>
+		<title id="hermeneutic-circle-title">Hermeneutic Circle</title>
+		<desc id="hermeneutic-circle-desc"
+			>Visualization of CREATE SOMETHING domains: .ltd (Philosophy), .io (Research), .space
+			(Practice), .agency (Services) - showing how each domain connects to form a complete
+			circle.</desc
+		>
 		<defs>
 			<!-- Arrow marker for edges -->
 			<marker
@@ -184,36 +195,63 @@
 			{@const node = getNode(domain as Domain)}
 			{@const pos = positions[domain as Domain]}
 			{@const isSelected = selectedNode === domain}
-			<g
-				class="node"
-				class:active={node.active}
-				class:selected={isSelected}
-				class:interactive
-				transform="translate({pos.x}, {pos.y})"
-				role={interactive ? 'button' : 'img'}
-				tabindex={interactive ? 0 : -1}
-				aria-label="{node.label} - {node.sublabel}: {node.count} items"
-				onclick={() => handleNodeClick(domain as Domain)}
-				onkeydown={(e) => handleKeyDown(e, domain as Domain)}
-			>
-				<!-- Node circle -->
-				<circle r="18" class="node-circle" />
+			{#if interactive}
+				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+				<g
+					class="node interactive"
+					class:active={node.active}
+					class:selected={isSelected}
+					transform="translate({pos.x}, {pos.y})"
+					role="button"
+					tabindex="0"
+					aria-label="{node.label} - {node.sublabel}: {node.count} items"
+					onclick={() => handleNodeClick(domain as Domain)}
+					onkeydown={(e) => handleKeyDown(e, domain as Domain)}
+				>
+					<!-- Node circle -->
+					<circle r="18" class="node-circle" />
 
-				<!-- Count badge -->
-				<text class="node-count" y="1" text-anchor="middle" dominant-baseline="middle">
-					{node.count}
-				</text>
+					<!-- Count badge -->
+					<text class="node-count" y="1" text-anchor="middle" dominant-baseline="middle">
+						{node.count}
+					</text>
 
-				<!-- Label -->
-				<text class="node-label" y="28" text-anchor="middle">
-					{node.label}
-				</text>
+					<!-- Label -->
+					<text class="node-label" y="28" text-anchor="middle">
+						{node.label}
+					</text>
 
-				<!-- Sublabel -->
-				<text class="node-sublabel" y="38" text-anchor="middle">
-					{node.sublabel}
-				</text>
-			</g>
+					<!-- Sublabel -->
+					<text class="node-sublabel" y="38" text-anchor="middle">
+						{node.sublabel}
+					</text>
+				</g>
+			{:else}
+				<g
+					class="node"
+					class:active={node.active}
+					class:selected={isSelected}
+					transform="translate({pos.x}, {pos.y})"
+				>
+					<!-- Node circle -->
+					<circle r="18" class="node-circle" />
+
+					<!-- Count badge -->
+					<text class="node-count" y="1" text-anchor="middle" dominant-baseline="middle">
+						{node.count}
+					</text>
+
+					<!-- Label -->
+					<text class="node-label" y="28" text-anchor="middle">
+						{node.label}
+					</text>
+
+					<!-- Sublabel -->
+					<text class="node-sublabel" y="38" text-anchor="middle">
+						{node.sublabel}
+					</text>
+				</g>
+			{/if}
 		{/each}
 
 		<!-- Center text -->
