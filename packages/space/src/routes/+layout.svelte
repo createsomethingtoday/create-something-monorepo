@@ -165,6 +165,8 @@
 
 <Analytics property="space" />
 
+<a href="#main-content" class="skip-to-content">Skip to main content</a>
+
 <div class="layout">
 	<Navigation
 		logo="CREATE SOMETHING"
@@ -176,9 +178,9 @@
 		ctaHref="/contact"
 	/>
 
-	<div class="content">
+	<main id="main-content" class="content">
 		{@render children()}
-	</div>
+	</main>
 
 	<Footer
 		mode="space"
