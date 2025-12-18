@@ -183,10 +183,12 @@ export async function runHarness(
       }
     }
 
-    // 2. Get next work item
+    // 2. Get next work item (exclude checkpoints and the harness epic itself)
     const readyIssues = await getReadyIssues(options.cwd);
     const harnessIssues = readyIssues.filter((issue) =>
-      issue.labels?.includes(`harness:${harnessState.id}`)
+      issue.labels?.includes(`harness:${harnessState.id}`) &&
+      !issue.labels?.includes('checkpoint') &&
+      issue.issue_type !== 'epic'
     );
 
     if (harnessIssues.length === 0) {

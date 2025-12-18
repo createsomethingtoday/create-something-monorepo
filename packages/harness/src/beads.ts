@@ -39,13 +39,25 @@ async function bd(args: string, cwd?: string): Promise<string> {
 }
 
 /**
- * Read all issues from the Beads JSONL file.
+ * Read all issues from Beads.
+ * Uses `bd list --json` for reliability (reads from SQLite database).
  */
 export async function readAllIssues(repoRoot?: string): Promise<BeadsIssue[]> {
-  const filePath = join(repoRoot || process.cwd(), ISSUES_FILE);
-  const content = await readFile(filePath, 'utf-8');
-  const lines = content.trim().split('\n').filter(Boolean);
-  return lines.map((line) => JSON.parse(line) as BeadsIssue);
+  try {
+    // Try using bd CLI first (more reliable)
+    const output = await bd('list --json --all', repoRoot);
+    return JSON.parse(output) as BeadsIssue[];
+  } catch {
+    // Fallback to JSONL file
+    try {
+      const filePath = join(repoRoot || process.cwd(), ISSUES_FILE);
+      const content = await readFile(filePath, 'utf-8');
+      const lines = content.trim().split('\n').filter(Boolean);
+      return lines.map((line) => JSON.parse(line) as BeadsIssue);
+    } catch {
+      return [];
+    }
+  }
 }
 
 /**
