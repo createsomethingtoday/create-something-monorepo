@@ -16,3 +16,4 @@ export { default as TriadHealth } from './TriadHealth.svelte';
 export { default as HermeneuticCircle } from './HermeneuticCircle.svelte';
 export { default as ModeIndicator } from './ModeIndicator.svelte';
 export { default as CrossPropertyLink } from './CrossPropertyLink.svelte';
+export { default as SkipToContent } from './SkipToContent.svelte';
