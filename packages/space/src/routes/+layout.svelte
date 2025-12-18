@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/components';
+	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate, onNavigate } from '$app/navigation';
@@ -165,7 +165,7 @@
 
 <Analytics property="space" />
 
-<a href="#main-content" class="skip-to-content">Skip to main content</a>
+<SkipToContent />
 
 <div class="layout">
 	<Navigation

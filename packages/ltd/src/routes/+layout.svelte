@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/components';
+	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent } from '@create-something/components';
 	import { onNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import '../app.css';
@@ -77,7 +77,7 @@
 
 <Analytics property="ltd" />
 
-<a href="#main-content" class="skip-to-content">Skip to main content</a>
+<SkipToContent />
 
 <div class="min-h-screen flex flex-col">
 	<Navigation
