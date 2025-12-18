@@ -157,19 +157,24 @@ async function executeClaudeCode(
     const { readFile } = await import('node:fs/promises');
     const promptContent = await readFile(promptFile, 'utf-8');
 
-    // Pipe prompt via stdin to avoid command-line length limits
-    // Using shell with heredoc for reliable multi-line input
-    const shellCommand = `claude -p --dangerously-skip-permissions --output-format json <<'HARNESS_PROMPT_EOF'
-${promptContent}
-HARNESS_PROMPT_EOF`;
+    // Pipe prompt via stdin: echo "prompt" | claude -p
+    const args = [
+      '-p',
+      '--dangerously-skip-permissions',
+      '--output-format', 'json',
+    ];
 
     let output = '';
     let errorOutput = '';
 
-    const proc = spawn('bash', ['-c', shellCommand], {
+    const proc = spawn('claude', args, {
       cwd: options.cwd,
       env: { ...process.env },
     });
+
+    // Write prompt to stdin
+    proc.stdin?.write(promptContent);
+    proc.stdin?.end();
 
     const timeoutId = setTimeout(() => {
       proc.kill('SIGTERM');
