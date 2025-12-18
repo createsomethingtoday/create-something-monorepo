@@ -33,10 +33,10 @@
 
 		<div class="areas-grid stagger-children">
 			{#each areas as area}
-				<a href={area.href} class="area-card service-card card-interactive stagger-item">
+				<a href={area.href} class="area-card service-card card-interactive stagger-item" aria-label="Learn more about {area.title}">
 					<h3 class="area-title">{area.title}</h3>
 					<p class="area-description">{area.description}</p>
-					<span class="area-link">Learn more &rarr;</span>
+					<span class="area-link" aria-hidden="true">Learn more &rarr;</span>
 				</a>
 			{/each}
 		</div>

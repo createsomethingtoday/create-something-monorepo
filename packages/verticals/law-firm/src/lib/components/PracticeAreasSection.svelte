@@ -35,7 +35,7 @@
 
 		<div class="areas-grid">
 			{#each practiceAreas as area}
-				<a href="/practice-areas/{area.slug}" class="area-card">
+				<a href="/practice-areas/{area.slug}" class="area-card" aria-label="Learn more about {area.name}">
 					<div class="area-icon">
 						{#if area.icon && iconComponents[area.icon]}
 							<svelte:component this={iconComponents[area.icon]} size={32} strokeWidth={1.5} />
@@ -45,7 +45,7 @@
 					</div>
 					<h3 class="area-name">{area.name}</h3>
 					<p class="area-description">{area.description}</p>
-					<span class="area-link">Learn more →</span>
+					<span class="area-link" aria-hidden="true">Learn more →</span>
 				</a>
 			{/each}
 		</div>

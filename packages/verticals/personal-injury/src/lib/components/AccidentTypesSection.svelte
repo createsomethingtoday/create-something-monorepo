@@ -56,6 +56,7 @@
 				class="type-card"
 				class:featured={index === 0}
 				class:wide={index === accidentTypes.length - 1 && accidentTypes.length === 6}
+				aria-label="Learn more about {type.name} cases"
 			>
 				<div class="card-icon">
 					<Icon size={index === 0 ? 32 : 24} />
@@ -71,7 +72,7 @@
 						</div>
 					{/if}
 
-					<span class="card-link">
+					<span class="card-link" aria-hidden="true">
 						<span>Learn More</span>
 						<ArrowRight size={14} />
 					</span>

@@ -54,6 +54,7 @@
 						href={`/experiments/${paper.slug}`}
 						class="group block h-full animate-reveal"
 						style="--delay: {index + 1}"
+						aria-label="Read article: {paper.title}"
 					>
 						<article class="related-card h-full overflow-hidden">
 							<!-- ASCII Art Thumbnail -->
