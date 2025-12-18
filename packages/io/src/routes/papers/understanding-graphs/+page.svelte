@@ -26,7 +26,7 @@
 				that captures only understanding-critical relationships—replacing exhaustive tooling
 				with human-readable insight.
 			</p>
-			<div class="flex gap-4 mt-4 text-sm text-white/50">
+			<div class="flex gap-4 mt-4 paper-meta">
 				<span>Research</span>
 				<span>•</span>
 				<span>15 min read</span>
@@ -36,9 +36,9 @@
 		</div>
 
 		<!-- Abstract -->
-		<section class="border-l-4 border-white/20 pl-6 space-y-4">
-			<h2 class="text-2xl font-bold">Abstract</h2>
-			<p class="text-white/70 leading-relaxed">
+		<section class="abstract-section space-y-4">
+			<h2 class="section-heading">Abstract</h2>
+			<p class="body-text leading-relaxed">
 				This paper presents <em>Understanding Graphs</em>: a minimal, human-readable approach to
 				documenting codebase relationships that embodies Dieter Rams' principle "Weniger, aber besser"
 				(less, but better). Through hermeneutic analysis, we identified that traditional dependency
@@ -284,71 +284,71 @@
 
 		<!-- Results -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">4. Results</h2>
+			<h2 class="section-heading">4. Results</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<h3 class="text-xl font-semibold text-white/90">4.1 Comparison: Traditional vs. Understanding Graphs</h3>
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">4.1 Comparison: Traditional vs. Understanding Graphs</h3>
 
 				<div class="overflow-x-auto">
-					<table class="w-full text-sm">
+					<table class="w-full comparison-table">
 						<thead>
-							<tr class="border-b border-white/20">
-								<th class="text-left py-2 text-white/80">Aspect</th>
-								<th class="text-left py-2 text-white/80">Traditional</th>
-								<th class="text-left py-2 text-white/80">Understanding Graphs</th>
+							<tr>
+								<th>Aspect</th>
+								<th>Traditional</th>
+								<th>Understanding Graphs</th>
 							</tr>
 						</thead>
-						<tbody class="text-white/60">
-							<tr class="border-b border-white/10">
-								<td class="py-2">Relationships captured</td>
-								<td class="py-2">All imports, calls, types</td>
-								<td class="py-2">Only understanding-critical</td>
-							</tr>
-							<tr class="border-b border-white/10">
-								<td class="py-2">Tooling required</td>
-								<td class="py-2">LSP, visualizers, graph DB</td>
-								<td class="py-2">None (plain markdown)</td>
-							</tr>
-							<tr class="border-b border-white/10">
-								<td class="py-2">Direction</td>
-								<td class="py-2">Unidirectional (A → B)</td>
-								<td class="py-2">Bidirectional (A ↔ B)</td>
-							</tr>
-							<tr class="border-b border-white/10">
-								<td class="py-2">Content</td>
-								<td class="py-2">What (structural)</td>
-								<td class="py-2">Why (semantic)</td>
-							</tr>
-							<tr class="border-b border-white/10">
-								<td class="py-2">Human-readable</td>
-								<td class="py-2">Requires visualization</td>
-								<td class="py-2">Native markdown</td>
-							</tr>
-							<tr class="border-b border-white/10">
-								<td class="py-2">Machine-parseable</td>
-								<td class="py-2">Yes (but complex)</td>
-								<td class="py-2">Yes (simple text)</td>
+						<tbody>
+							<tr>
+								<td>Relationships captured</td>
+								<td>All imports, calls, types</td>
+								<td>Only understanding-critical</td>
 							</tr>
 							<tr>
-								<td class="py-2">Maintenance</td>
-								<td class="py-2">Automatic but noisy</td>
-								<td class="py-2">Manual but minimal</td>
+								<td>Tooling required</td>
+								<td>LSP, visualizers, graph DB</td>
+								<td>None (plain markdown)</td>
+							</tr>
+							<tr>
+								<td>Direction</td>
+								<td>Unidirectional (A → B)</td>
+								<td>Bidirectional (A ↔ B)</td>
+							</tr>
+							<tr>
+								<td>Content</td>
+								<td>What (structural)</td>
+								<td>Why (semantic)</td>
+							</tr>
+							<tr>
+								<td>Human-readable</td>
+								<td>Requires visualization</td>
+								<td>Native markdown</td>
+							</tr>
+							<tr>
+								<td>Machine-parseable</td>
+								<td>Yes (but complex)</td>
+								<td>Yes (simple text)</td>
+							</tr>
+							<tr>
+								<td>Maintenance</td>
+								<td>Automatic but noisy</td>
+								<td>Manual but minimal</td>
 							</tr>
 						</tbody>
 					</table>
 				</div>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">4.2 Hermeneutic Circle Validation</h3>
+				<h3 class="mt-6 subsection-heading">4.2 Hermeneutic Circle Validation</h3>
 				<p>
 					The implementation completed the hermeneutic circle:
 				</p>
 
-				<div class="p-4 bg-white/5 border border-white/10 rounded-lg">
-					<div class="space-y-2 text-sm">
-						<p><strong class="text-white/80">.ltd (Canon)</strong>: Does it embody Rams' principles? ✅ Minimal, honest, unobtrusive</p>
-						<p><strong class="text-white/80">.io (Research)</strong>: Is there theoretical grounding? ✅ Hermeneutic methodology documented</p>
-						<p><strong class="text-white/80">.space (Practice)</strong>: Does it work hands-on? ✅ 6 packages successfully documented</p>
-						<p><strong class="text-white/80">.agency (Service)</strong>: Commercial validation? 🔄 Pending client application</p>
+				<div class="p-4 validation-box">
+					<div class="space-y-2 validation-list">
+						<p><strong class="validation-label">.ltd (Canon)</strong>: Does it embody Rams' principles? ✅ Minimal, honest, unobtrusive</p>
+						<p><strong class="validation-label">.io (Research)</strong>: Is there theoretical grounding? ✅ Hermeneutic methodology documented</p>
+						<p><strong class="validation-label">.space (Practice)</strong>: Does it work hands-on? ✅ 6 packages successfully documented</p>
+						<p><strong class="validation-label">.agency (Service)</strong>: Commercial validation? 🔄 Pending client application</p>
 					</div>
 				</div>
 			</div>
@@ -356,10 +356,10 @@
 
 		<!-- Discussion -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">5. Discussion</h2>
+			<h2 class="section-heading">5. Discussion</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
-				<h3 class="text-xl font-semibold text-white/90">5.1 Why Markov Chains Were the Wrong Question</h3>
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">5.1 Why Markov Chains Were the Wrong Question</h3>
 				<p>
 					The original question—whether Markov Chains could improve agent reasoning—assumed the
 					problem was <em>state compression</em>. But the hermeneutic analysis revealed the actual
@@ -374,7 +374,7 @@
 					read these documents to build context without loading entire codebases.
 				</p>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">5.2 Implications for AI-Native Development</h3>
+				<h3 class="mt-6 subsection-heading">5.2 Implications for AI-Native Development</h3>
 				<p>
 					This research suggests a pattern for AI-human collaboration in codebase navigation:
 				</p>
@@ -386,7 +386,7 @@
 					<li><strong>Bidirectional benefit</strong>: Both humans and AI navigate the same documentation</li>
 				</ul>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">5.3 Limitations</h3>
+				<h3 class="mt-6 subsection-heading">5.3 Limitations</h3>
 				<p>
 					Understanding Graphs require human judgment to identify "understanding-critical" relationships.
 					This is both a strength (captures semantic meaning machines miss) and limitation (requires
@@ -399,7 +399,7 @@
 					<li>Update criteria (only on structural changes, not bug fixes)</li>
 				</ul>
 
-				<h3 class="text-xl font-semibold text-white/90 mt-6">5.4 Future Work</h3>
+				<h3 class="mt-6 subsection-heading">5.4 Future Work</h3>
 				<p>
 					Potential extensions include:
 				</p>
@@ -415,9 +415,9 @@
 
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="text-2xl font-bold">6. Conclusion</h2>
+			<h2 class="section-heading">6. Conclusion</h2>
 
-			<div class="space-y-4 text-white/70 leading-relaxed">
+			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					This research demonstrates that dependency documentation can embody "Less, but better."
 					Traditional dependency graphs violate Rams' principles—they're exhaustive when sufficiency
@@ -437,7 +437,7 @@
 					and embody the minimalist philosophy that guides the entire methodology.
 				</p>
 
-				<p class="text-white/80 text-lg mt-6">
+				<p class="mt-6 conclusion-insight">
 					<strong>The hermeneutic insight</strong>: To understand a codebase, you don't need all
 					relationships—just the right ones.
 				</p>
@@ -445,10 +445,10 @@
 		</section>
 
 		<!-- References -->
-		<section class="border-t border-white/10 pt-8 space-y-4">
-			<h2 class="text-2xl font-bold">References</h2>
+		<section class="references-section space-y-4">
+			<h2 class="section-heading">References</h2>
 
-			<div class="space-y-3 text-white/70 text-sm">
+			<div class="space-y-3 references-list">
 				<div class="pl-6 -indent-6">
 					[1] Heidegger, Martin (1962). <em>Being and Time</em> (J. Macquarrie & E. Robinson, Trans.).
 					Harper & Row. (Original work published 1927)
@@ -466,14 +466,14 @@
 
 				<div class="pl-6 -indent-6">
 					[4] CREATE SOMETHING methodology.
-					<a href="https://createsomething.io/methodology" class="text-white/90 underline hover:text-white">
+					<a href="https://createsomething.io/methodology" class="reference-link">
 						https://createsomething.io/methodology
 					</a>
 				</div>
 
 				<div class="pl-6 -indent-6">
 					[5] CREATE SOMETHING Skills documentation.
-					<a href="https://github.com/createsomethingtoday/create-something-monorepo/blob/main/SKILLS.md" class="text-white/90 underline hover:text-white">
+					<a href="https://github.com/createsomethingtoday/create-something-monorepo/blob/main/SKILLS.md" class="reference-link">
 						SKILLS.md
 					</a>
 				</div>
@@ -481,16 +481,231 @@
 		</section>
 
 		<!-- Footer -->
-		<div class="border-t border-white/10 pt-6">
-			<p class="text-sm text-white/40">
+		<div class="paper-footer">
+			<p class="footer-text">
 				This paper is part of the CREATE SOMETHING research program exploring AI-native
 				development patterns. View the
-				<a href="https://github.com/createsomethingtoday/create-something-monorepo" class="underline hover:text-white/60">
+				<a href="https://github.com/createsomethingtoday/create-something-monorepo" class="footer-link">
 					source repository
 				</a>
 				or read more about our
-				<a href="/methodology" class="underline hover:text-white/60">methodology</a>.
+				<a href="/methodology" class="footer-link">methodology</a>.
 			</p>
 		</div>
 	</div>
 </div>
+
+<style>
+	/* Paper Container */
+	.paper-container {
+		background-color: var(--color-bg-pure);
+	}
+
+	/* Header Styles */
+	.paper-header {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.paper-id {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+	}
+
+	.paper-title {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.paper-subtitle {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-lg);
+	}
+
+	.paper-meta {
+		color: var(--color-fg-subtle);
+		font-size: var(--text-body-sm);
+	}
+
+	/* Section Styles */
+	.section-heading {
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.subsection-heading {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+	}
+
+	.body-text {
+		color: var(--color-fg-tertiary);
+	}
+
+	.emphasis-text {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Abstract Section */
+	.abstract-section {
+		border-left: 4px solid var(--color-border-emphasis);
+		padding-left: var(--space-md);
+	}
+
+	/* Metric Cards */
+	.metric-card {
+		background-color: var(--color-bg-subtle);
+		border-radius: var(--radius-lg);
+	}
+
+	.metric-value {
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.metric-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	/* Code Blocks */
+	.code-block {
+		background-color: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		overflow-x: auto;
+	}
+
+	.code-comment {
+		color: var(--color-fg-muted);
+	}
+
+	.code-primary {
+		color: var(--color-fg-secondary);
+	}
+
+	.inline-code {
+		background-color: var(--color-bg-subtle);
+		padding: 0.125rem 0.375rem;
+		border-radius: var(--radius-sm);
+		font-family: var(--font-mono, ui-monospace, monospace);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	/* Info Cards */
+	.info-card {
+		background-color: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.card-heading {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.card-list {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	/* Callout Box */
+	.callout-box {
+		background-color: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.callout-text {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Table Styles */
+	.comparison-table {
+		font-size: var(--text-body-sm);
+	}
+
+	.comparison-table th {
+		color: var(--color-fg-secondary);
+		border-bottom: 1px solid var(--color-border-emphasis);
+		padding: 0.5rem 0;
+		text-align: left;
+	}
+
+	.comparison-table tbody tr {
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.comparison-table td {
+		color: var(--color-fg-tertiary);
+		padding: 0.5rem 0;
+	}
+
+	/* Validation Box */
+	.validation-box {
+		background-color: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.validation-list {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	.validation-label {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Conclusion */
+	.conclusion-insight {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-lg);
+	}
+
+	/* References */
+	.references-section {
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-lg);
+	}
+
+	.references-list {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.reference-link {
+		color: var(--color-fg-secondary);
+		text-decoration: underline;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.reference-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	/* Footer */
+	.paper-footer {
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-md);
+	}
+
+	.footer-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.footer-link {
+		text-decoration: underline;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.footer-link:hover {
+		color: var(--color-fg-tertiary);
+	}
+</style>

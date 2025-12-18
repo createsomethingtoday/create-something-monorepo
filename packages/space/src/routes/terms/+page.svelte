@@ -33,7 +33,7 @@
   <!-- Content -->
   <section class="pb-20 px-6">
     <div class="max-w-4xl mx-auto">
-      <div class="space-y-12 text-white/70 leading-relaxed">
+      <div class="space-y-12 body-text leading-relaxed">
         <!-- Introduction -->
         <div class="space-y-4">
           <h2 class="section-title">1. Agreement to Terms</h2>
@@ -54,12 +54,12 @@
             You must be at least 13 years old to use our Site. By using our Site, you represent and warrant that you meet this age requirement.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">2.2 License to Use</h3>
+          <h3 class="subsection-title mt-6">2.2 License to Use</h3>
           <p>
             We grant you a limited, non-exclusive, non-transferable, and revocable license to access and use our Site for personal, non-commercial purposes, subject to these Terms.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">2.3 Prohibited Uses</h3>
+          <h3 class="subsection-title mt-6">2.3 Prohibited Uses</h3>
           <p>
             You may not use our Site:
           </p>
@@ -83,7 +83,7 @@
             The Site and its entire contents, features, and functionality (including but not limited to all information, software, text, displays, images, video, and audio, and the design, selection, and arrangement thereof) are owned by CREATE SOMETHING, its licensors, or other providers of such material and are protected by United States and international copyright, trademark, patent, trade secret, and other intellectual property or proprietary rights laws.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">3.2 Limited Use of Content</h3>
+          <h3 class="subsection-title mt-6">3.2 Limited Use of Content</h3>
           <p>
             You may view, download for caching purposes only, and print pages from the Site for your own personal, non-commercial use, subject to the restrictions set out in these Terms.
           </p>
@@ -97,12 +97,12 @@
             <li>Republish, redistribute, or make commercial use of any content without explicit permission</li>
           </ul>
 
-          <h3 class="text-xl font-semibold text-white mt-6">3.3 Code Examples and Tutorials</h3>
+          <h3 class="subsection-title mt-6">3.3 Code Examples and Tutorials</h3>
           <p>
             Code examples and technical implementations described in our articles are provided for educational purposes. While you may use these examples in your own projects, we retain copyright on the original content and presentation. Attribution is appreciated but not required for code snippets.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">3.4 Trademarks</h3>
+          <h3 class="subsection-title mt-6">3.4 Trademarks</h3>
           <p>
             "CREATE SOMETHING" and any associated logos are trademarks of CREATE SOMETHING. You may not use these trademarks without our prior written permission.
           </p>
@@ -117,7 +117,7 @@
             If you submit comments, suggestions, feedback, or other materials ("User Contributions"), you grant us a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, reproduce, modify, adapt, publish, translate, create derivative works from, distribute, and display such User Contributions in any media.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">4.2 Representations</h3>
+          <h3 class="subsection-title mt-6">4.2 Representations</h3>
           <p>
             You represent and warrant that:
           </p>
@@ -224,12 +224,12 @@
             to seek informal resolution.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">12.2 Binding Arbitration</h3>
+          <h3 class="subsection-title mt-6">12.2 Binding Arbitration</h3>
           <p>
             If we cannot resolve a dispute informally, any remaining dispute shall be resolved by binding arbitration in accordance with the rules of the American Arbitration Association. The arbitration shall take place in the United States.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">12.3 Class Action Waiver</h3>
+          <h3 class="subsection-title mt-6">12.3 Class Action Waiver</h3>
           <p>
             You and CREATE SOMETHING agree that each may bring claims against the other only in your or its individual capacity and not as a plaintiff or class member in any purported class or representative proceeding.
           </p>
@@ -263,7 +263,7 @@
             If any provision of these Terms is held to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">15.2 Waiver</h3>
+          <h3 class="subsection-title mt-6">15.2 Waiver</h3>
           <p>
             No waiver by CREATE SOMETHING of any term or condition set out in these Terms shall be deemed a further or continuing waiver of such term or condition or a waiver of any other term or condition.
           </p>
@@ -277,13 +277,13 @@
           </p>
           <ul class="space-y-2">
             <li>
-              <strong class="text-white">Email:</strong>{' '}
+              <strong class="strong-text">Email:</strong>{' '}
               <a href="mailto:micah@createsomething.io" class="link hover:underline">
                 micah@createsomething.io
               </a>
             </li>
             <li>
-              <strong class="text-white">Website:</strong>{' '}
+              <strong class="strong-text">Website:</strong>{' '}
               <a href="https://createsomething.io/contact" class="link hover:underline">
                 createsomething.io/contact
               </a>
@@ -292,7 +292,7 @@
         </div>
 
         <!-- Acknowledgment -->
-        <div class="space-y-4 pt-8 border-t border-white/10">
+        <div class="space-y-4 pt-8 acknowledgment-section">
           <p class="caption-text">
             By using our Site, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
           </p>
@@ -345,10 +345,18 @@
     color: var(--color-fg-primary);
   }
 
+  .strong-text {
+    color: var(--color-fg-primary);
+  }
+
+  .acknowledgment-section {
+    border-top: 1px solid var(--color-border-default);
+  }
+
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
   }
 
   @keyframes reveal {
