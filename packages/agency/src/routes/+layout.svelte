@@ -94,6 +94,8 @@
 
 <Analytics property="agency" />
 
+<a href="#main-content" class="skip-to-content">Skip to main content</a>
+
 <div class="layout-root min-h-screen">
 	<Navigation
 		logo="CREATE SOMETHING"
@@ -105,9 +107,9 @@
 		ctaHref="/contact"
 	/>
 
-	<div class="pt-[72px]">
+	<main id="main-content" class="pt-[72px]">
 		{@render children()}
-	</div>
+	</main>
 
 	<Footer
 		mode="agency"

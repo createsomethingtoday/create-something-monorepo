@@ -77,6 +77,8 @@
 
 <Analytics property="ltd" />
 
+<a href="#main-content" class="skip-to-content">Skip to main content</a>
+
 <div class="min-h-screen flex flex-col">
 	<Navigation
 		logo="CREATE SOMETHING"
@@ -85,7 +87,7 @@
 		currentPath={data?.pathname || '/'}
 	/>
 
-	<main class="flex-1">
+	<main id="main-content" class="flex-1">
 		{@render children()}
 	</main>
 

@@ -32,7 +32,7 @@ All four CREATE SOMETHING properties should meet WCAG 2.1 Level AA.
 
 ---
 
-## Features (22 total)
+## Features (26 total)
 
 ### keyboard-navigation (6)
 
@@ -92,10 +92,10 @@ Focus should be visible and logical.
   - Ensure all focusable elements have visible focus rings
   - Use Canon focus token: var(--color-focus)
 
-- P2: Add skip-to-content links
-  - Add to all property layouts
-  - Visually hidden until focused
-  - Link to main content area
+- ~~P2: Add skip-to-content links~~ ✓ DONE
+  - ~~Add to all property layouts~~ → Added to io, ltd, space, agency
+  - ~~Visually hidden until focused~~ → CSS class in canon.css
+  - ~~Link to main content area~~ → Links to #main-content
 
 - P2: Verify focus trap in modals/dialogs
   - If any modals exist, ensure focus is trapped
@@ -151,6 +151,34 @@ Forms must be usable by everyone.
   - Use aria-required
   - Visual indicator should not be color-only
 
+### dry-consolidation (4)
+
+Consolidate repeated a11y patterns into shared utilities. Subtractive Triad: DRY level.
+
+- P1: Create keyboardClick Svelte action
+  - Location: packages/components/src/lib/actions/a11y.ts
+  - Handle Enter/Space key events for click-equivalent
+  - Handle Escape for dismissal
+  - Export as `use:keyboardClick`
+  - Refactor Terminal, DailyRhythm, Circulation to use it
+
+- P1: Create shared focus styles in canon.css
+  - Add `.a11y-focus` utility class
+  - Add `.a11y-focus-within` for container focus
+  - Use var(--color-focus) token consistently
+  - Remove duplicated focus styles from individual components
+
+- ~~P2: Create SkipLink component~~ ✓ DONE (as CSS utility instead)
+  - ~~Location: packages/components/src/lib/components/SkipLink.svelte~~ → CSS class in canon.css
+  - ~~Visually hidden until focused~~ → .skip-to-content class
+  - ~~Configurable target (default: #main-content)~~ → Simple anchor links in layouts
+  - ~~Use across all property layouts~~ → Added to io, ltd, space, agency
+
+- P2: Create accessible toggle button pattern
+  - Document aria-pressed usage
+  - Create example in components package
+  - Refactor LightStudy control buttons to use pattern
+
 ---
 
 ## Dependencies
@@ -173,6 +201,10 @@ semantic-html
 
 forms-and-errors
   └── aria-labels (form labels are a subset)
+
+dry-consolidation
+  └── keyboard-navigation (patterns to consolidate must exist first)
+  └── focus-management (focus styles to unify)
 ```
 
 ## Verification
@@ -197,14 +229,31 @@ Final verification:
 - [ ] All interactive elements keyboard accessible
 - [ ] All interactive elements have accessible names
 - [ ] Visible focus indicators throughout
-- [ ] Skip-to-content links on all properties
+- [x] Skip-to-content links on all properties
 - [ ] WCAG 2.1 AA color contrast compliance
 - [ ] Proper heading hierarchy on all routes
+- [ ] Shared keyboardClick action in packages/components
+- [ ] Shared focus styles in canon.css (no per-component duplication)
+- [x] Skip-to-content utility class used across all properties
+- [ ] Toggle button pattern documented and applied consistently
 
 ## Canon Alignment
 
 This spec follows the Subtractive Triad:
 
-1. **DRY**: Shared a11y utilities in packages/components (focus styles, skip links)
+1. **DRY**: Shared a11y utilities in packages/components (keyboardClick action, focus styles, SkipLink component, toggle pattern)
 2. **Rams**: Only fixes that earn their existence—no over-engineering
 3. **Heidegger**: Accessibility enables tool transparency for all users
+
+## DRY Principle
+
+A11y patterns must be centralized, not scattered:
+
+| Pattern | Location | Used By |
+|---------|----------|---------|
+| `use:keyboardClick` | packages/components/src/lib/actions/a11y.ts | Terminal, DailyRhythm, Circulation, etc. |
+| `.a11y-focus` | packages/components/styles/canon.css | All focusable elements |
+| `.skip-to-content` | packages/components/styles/canon.css | All property layouts |
+| Toggle button | Documented pattern | LightStudy, any toggle UI |
+
+When adding a11y to a new component, import from shared utilities—don't duplicate.

@@ -191,6 +191,8 @@
 
 <Analytics property="io" />
 
+<a href="#main-content" class="skip-to-content">Skip to main content</a>
+
 <div class="layout-root">
 	<Navigation
 		logo="CREATE SOMETHING"
@@ -202,9 +204,9 @@
 	/>
 
 	<!-- Add top padding to account for fixed navigation -->
-	<div class="main-content">
+	<main id="main-content" class="main-content">
 		{@render children()}
-	</div>
+	</main>
 
 	<Footer
 		mode="io"

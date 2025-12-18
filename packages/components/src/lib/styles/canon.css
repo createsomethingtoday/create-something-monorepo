@@ -738,4 +738,43 @@ pre code.hljs {
     outline: 2px solid var(--color-focus);
     outline-offset: -2px;
   }
+
+  /* ==========================================================================
+     Skip to Content Link
+     ==========================================================================
+
+     Accessible skip link that allows keyboard users to bypass navigation
+     and jump directly to main content. Visually hidden until focused.
+
+     Usage:
+       <a href="#main-content" class="skip-to-content">Skip to main content</a>
+       ...
+       <main id="main-content">...</main>
+
+     WCAG 2.4.1: Bypass Blocks - Provides mechanism to skip repeated content.
+     ========================================================================== */
+
+  .skip-to-content {
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-tooltip);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-surface);
+    color: var(--color-fg-primary);
+    border: 1px solid var(--color-border-emphasis);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: top var(--duration-micro) var(--ease-standard);
+  }
+
+  .skip-to-content:focus {
+    top: var(--space-sm);
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
 }
