@@ -544,6 +544,76 @@ pre code.hljs {
 
 @layer utilities {
   /* ==========================================================================
+     Canon-Compliant Wrapper Styles
+     ==========================================================================
+
+     These utility classes provide Canon-compliant alternatives to Tailwind
+     opacity variants. Use these instead of Tailwind's arbitrary opacity values.
+
+     Philosophy: "Tailwind for structure, Canon for aesthetics"
+
+     Design Decision: Tailwind opacity utilities (e.g., bg-white/5) create
+     transparent overlays. Canon uses solid semantic colors for consistency
+     across all backgrounds. On --color-bg-pure (#000), the visual effect
+     is identical while providing better predictability.
+
+     Migration guide (Tailwind → Canon class → CSS token):
+       bg-white/5    → .bg-subtle     → var(--color-bg-subtle)     // #1a1a1a - card/section backgrounds
+       bg-white/10   → .bg-surface    → var(--color-bg-surface)    // #111111 - elevated surfaces
+       bg-white/5    → .bg-hover      → var(--color-hover)         // rgba(255,255,255,0.05) - interactive hover only
+       bg-white/10   → .bg-active     → var(--color-active)        // rgba(255,255,255,0.1) - active/pressed states
+       text-white/40 → .text-muted    → var(--color-fg-muted)      // rgba(255,255,255,0.4)
+       text-white/60 → .text-tertiary → var(--color-fg-tertiary)   // rgba(255,255,255,0.6)
+       text-white/80 → .text-secondary → var(--color-fg-secondary) // rgba(255,255,255,0.8)
+       border-white/10 → .border-default → var(--color-border-default)   // rgba(255,255,255,0.1)
+       border-white/20 → .border-emphasis → var(--color-border-emphasis) // rgba(255,255,255,0.2)
+       border-white/30 → .border-strong → var(--color-border-strong)     // rgba(255,255,255,0.3)
+
+     Context guidance:
+       - For static backgrounds (cards, panels): use .bg-subtle or .bg-surface
+       - For interactive states (hover, focus): use .bg-hover or .bg-active
+       - Both achieve the same visual result on pure black backgrounds
+
+     ========================================================================== */
+
+  /* Background Opacity Wrappers
+   * Maps Tailwind bg-white/XX to Canon background tokens
+   */
+  .bg-pure { background-color: var(--color-bg-pure); }
+  .bg-elevated { background-color: var(--color-bg-elevated); }
+  .bg-surface { background-color: var(--color-bg-surface); }
+  .bg-subtle { background-color: var(--color-bg-subtle); }
+  .bg-hover { background-color: var(--color-hover); }
+  .bg-active { background-color: var(--color-active); }
+
+  /* Text Opacity Wrappers
+   * Maps Tailwind text-white/XX to Canon foreground tokens
+   */
+  .text-primary { color: var(--color-fg-primary); }
+  .text-secondary { color: var(--color-fg-secondary); }
+  .text-tertiary { color: var(--color-fg-tertiary); }
+  .text-muted { color: var(--color-fg-muted); }
+  .text-subtle { color: var(--color-fg-subtle); }
+
+  /* Border Opacity Wrappers
+   * Maps Tailwind border-white/XX to Canon border tokens
+   */
+  .border-default { border-color: var(--color-border-default); }
+  .border-emphasis { border-color: var(--color-border-emphasis); }
+  .border-strong { border-color: var(--color-border-strong); }
+
+  /* Semantic State Colors */
+  .text-success { color: var(--color-success); }
+  .text-error { color: var(--color-error); }
+  .text-warning { color: var(--color-warning); }
+  .text-info { color: var(--color-info); }
+
+  .bg-success { background-color: var(--color-success-muted); }
+  .bg-error { background-color: var(--color-error-muted); }
+  .bg-warning { background-color: var(--color-warning-muted); }
+  .bg-info { background-color: var(--color-info-muted); }
+
+  /* ==========================================================================
      Hero Pattern - Unified across all properties
      Pattern: eyebrow (context) → hero-title (assertion) → hero-subtitle/description (evidence)
      ========================================================================== */

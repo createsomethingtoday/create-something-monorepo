@@ -10,24 +10,37 @@ overflow-*, z-*, order-*, col-*, row-*
 ```
 
 ## Design Utilities (Avoid) → Use Canon
-| Tailwind | Canon Token |
-|----------|-------------|
-| `rounded-sm` | `var(--radius-sm)` (6px) |
-| `rounded-md` | `var(--radius-md)` (8px) |
-| `rounded-lg` | `var(--radius-lg)` (12px) |
-| `rounded-xl` | `var(--radius-xl)` (16px) |
-| `rounded-full` | `var(--radius-full)` |
-| `bg-white/10` | `var(--color-bg-surface)` |
-| `bg-black` | `var(--color-bg-pure)` |
-| `text-white` | `var(--color-fg-primary)` |
-| `text-white/80` | `var(--color-fg-secondary)` |
-| `text-white/60` | `var(--color-fg-tertiary)` |
-| `text-white/40` | `var(--color-fg-muted)` |
-| `shadow-sm` | `var(--shadow-sm)` |
-| `shadow-md` | `var(--shadow-md)` |
-| `shadow-lg` | `var(--shadow-lg)` |
-| `text-sm` | `var(--text-body-sm)` |
-| `text-lg` | `var(--text-body-lg)` |
+| Tailwind | Canon Token | Notes |
+|----------|-------------|-------|
+| `rounded-sm` | `var(--radius-sm)` | 6px |
+| `rounded-md` | `var(--radius-md)` | 8px |
+| `rounded-lg` | `var(--radius-lg)` | 12px |
+| `rounded-xl` | `var(--radius-xl)` | 16px |
+| `rounded-full` | `var(--radius-full)` | |
+| `bg-white/5` | `var(--color-bg-subtle)` | #1a1a1a - card backgrounds |
+| `bg-white/10` | `var(--color-bg-surface)` | #111111 - elevated surfaces |
+| `bg-black` | `var(--color-bg-pure)` | #000000 |
+| `text-white` | `var(--color-fg-primary)` | #ffffff |
+| `text-white/80` | `var(--color-fg-secondary)` | rgba(255,255,255,0.8) |
+| `text-white/60` | `var(--color-fg-tertiary)` | rgba(255,255,255,0.6) |
+| `text-white/40` | `var(--color-fg-muted)` | rgba(255,255,255,0.4) |
+| `text-white/20` | `var(--color-fg-subtle)` | rgba(255,255,255,0.2) |
+| `border-white/10` | `var(--color-border-default)` | rgba(255,255,255,0.1) |
+| `border-white/20` | `var(--color-border-emphasis)` | rgba(255,255,255,0.2) |
+| `border-white/30` | `var(--color-border-strong)` | rgba(255,255,255,0.3) |
+| `shadow-sm` | `var(--shadow-sm)` | |
+| `shadow-md` | `var(--shadow-md)` | |
+| `shadow-lg` | `var(--shadow-lg)` | |
+| `text-sm` | `var(--text-body-sm)` | 0.875rem |
+| `text-lg` | `var(--text-body-lg)` | 1.125rem |
+
+### Interactive State Tokens
+For hover/active states, use transparent overlays:
+| State | Canon Token | Value |
+|-------|-------------|-------|
+| hover | `var(--color-hover)` | rgba(255,255,255,0.05) |
+| active | `var(--color-active)` | rgba(255,255,255,0.1) |
+| focus | `var(--color-focus)` | rgba(255,255,255,0.2) |
 
 ## Token Reference
 
