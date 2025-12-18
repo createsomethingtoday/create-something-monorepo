@@ -1,0 +1,38 @@
+{
+  "name": "@create-something/harness",
+  "version": "0.1.0",
+  "description": "Autonomous agent harness with Beads-based human oversight. Runs Claude Code sessions in a loop with progress reports and reactive redirection.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "harness": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "keywords": [
+    "claude-code",
+    "harness",
+    "agents",
+    "beads",
+    "automation"
+  ],
+  "license": "MIT"
+}
