@@ -60,7 +60,7 @@
 		expandedView = expandedView === view ? null : view;
 	}
 
-	function handleKeydown(event: KeyboardEvent) {
+	function handleGlobalKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape' && expandedView) {
 			expandedView = null;
 		}
@@ -891,6 +891,8 @@
 	/>
 </svelte:head>
 
+<svelte:window onkeydown={handleGlobalKeydown} />
+
 <!--
 	Unified Small-Multiples Layout
 
@@ -901,8 +903,7 @@
 	Canon: Golden ratio proportions (φ = 1.618)
 -->
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div class="dwelling" class:has-expanded={expandedView !== null} onkeydown={handleKeydown} role="application">
+<div class="dwelling" class:has-expanded={expandedView !== null}>
 	<!-- Header: Minimal, informational -->
 	<header class="dwelling-header">
 		<h1 class="dwelling-title">{pavilion.name}</h1>
