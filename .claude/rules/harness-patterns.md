@@ -221,6 +221,40 @@ Git Commit: abc123def
 ═══════════════════════════════════════════════════════════════
 ```
 
+### Swarm Checkpoints
+
+When running in parallel (swarm) mode, checkpoints include additional metrics:
+
+```
+═══════════════════════════════════════════════════════════════
+  SWARM CHECKPOINT #5
+  2025-12-18T14:00:00Z
+═══════════════════════════════════════════════════════════════
+
+Parallel Execution: 5 agents
+
+Completed 4 of 5 tasks in this checkpoint period.
+1 task(s) failed and may need attention.
+
+Overall progress: 20/42 features.
+
+✓ Completed: cs-a1b2, cs-c3d4, cs-e5f6, cs-g7h8
+✗ Failed: cs-k1l2
+
+Confidence: 80%
+Parallelism Efficiency: 80%
+Git Commit: abc123def
+
+── Agent Failures ──
+  agent-001 → cs-k1l2: Context overflow after 50k tokens
+═══════════════════════════════════════════════════════════════
+```
+
+**Swarm-specific metrics**:
+- **Parallel Execution**: Number of agents in the batch
+- **Parallelism Efficiency**: Ratio of successful to total parallel tasks
+- **Agent Failures**: Per-agent error breakdown for debugging
+
 ## When to Pause
 
 The harness auto-pauses when:

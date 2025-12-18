@@ -257,3 +257,76 @@ export const DEFAULT_FAILURE_HANDLING_CONFIG: FailureHandlingConfig = {
     failure: 'retry', // General failures worth retrying
   },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Swarm Orchestration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Configuration for parallel swarm execution.
+ * Philosophy: Independent tasks can run in parallel, speeding up harness runs.
+ */
+export interface SwarmConfig {
+  /** Maximum number of parallel agents (default: 5) */
+  maxParallelAgents: number;
+  /** Whether to enable swarm mode (default: false for backward compatibility) */
+  enabled: boolean;
+  /** Minimum tasks required to trigger swarm mode (default: 3) */
+  minTasksForSwarm: number;
+  /** Aggregate interval in ms - how often to collect swarm results (default: 10000) */
+  aggregateIntervalMs: number;
+}
+
+export const DEFAULT_SWARM_CONFIG: SwarmConfig = {
+  maxParallelAgents: 5,
+  enabled: false,
+  minTasksForSwarm: 3,
+  aggregateIntervalMs: 10000,
+};
+
+/**
+ * Tracks a single agent's progress within a swarm.
+ */
+export interface SwarmAgentStatus {
+  agentId: string;
+  issueId: string;
+  status: 'running' | 'completed' | 'failed' | 'cancelled';
+  startedAt: string;
+  completedAt: string | null;
+  outcome: SessionOutcome | null;
+  error: string | null;
+}
+
+/**
+ * Aggregated swarm progress for checkpoint reporting.
+ */
+export interface SwarmProgress {
+  /** Unique ID for this swarm batch */
+  batchId: string;
+  /** When this batch started */
+  startedAt: string;
+  /** Number of agents currently running */
+  activeAgents: number;
+  /** Total agents spawned in this batch */
+  totalAgents: number;
+  /** Per-agent status */
+  agentStatuses: SwarmAgentStatus[];
+  /** Issues completed in this batch */
+  issuesCompleted: string[];
+  /** Issues failed in this batch */
+  issuesFailed: string[];
+  /** Issues still in progress */
+  issuesInProgress: string[];
+}
+
+/**
+ * Extended checkpoint with swarm support.
+ */
+export interface SwarmCheckpoint extends Checkpoint {
+  /** Whether this checkpoint includes swarm data */
+  isSwarmCheckpoint: boolean;
+  /** Swarm-specific progress data */
+  swarmProgress: SwarmProgress | null;
+  /** Parallelism efficiency (completed / (completed + failed) for parallel tasks) */
+  parallelismEfficiency: number | null;
+}
