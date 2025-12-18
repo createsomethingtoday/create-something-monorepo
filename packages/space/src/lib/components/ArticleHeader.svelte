@@ -16,8 +16,6 @@
 
 	const categoryDisplayName = categoryDisplayNames[paper.category] || paper.category;
 
-	// Simple, consistent styling for all difficulty levels
-	const difficultyColor = 'text-white/80 bg-white/80';
 
 	const formatDate = (dateString?: string) => {
 		if (!dateString) return '';

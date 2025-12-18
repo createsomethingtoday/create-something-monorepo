@@ -176,18 +176,18 @@
 			<div class="border border-error p-4">
 				<div class="text-xs-canon opacity-40-canon mb-2">Without negative space:</div>
 				<div class="bg-surface p-2 text-xs-canon space-y-1">
-					<div class="bg-white/20 p-1">Element</div>
-					<div class="bg-white/20 p-1">Element</div>
-					<div class="bg-white/20 p-1">Element</div>
-					<div class="bg-white/20 p-1">Element</div>
+					<div class="demo-element p-1">Element</div>
+					<div class="demo-element p-1">Element</div>
+					<div class="demo-element p-1">Element</div>
+					<div class="demo-element p-1">Element</div>
 				</div>
 			</div>
 
 			<div class="border border-success p-4">
 				<div class="text-xs-canon opacity-40-canon mb-2">With negative space:</div>
 				<div class="p-4 text-xs-canon space-y-4">
-					<div class="bg-white/20 p-2">Element</div>
-					<div class="bg-white/20 p-2">Element</div>
+					<div class="demo-element p-2">Element</div>
+					<div class="demo-element p-2">Element</div>
 				</div>
 			</div>
 		</div>
@@ -305,6 +305,11 @@
 
 	.bg-surface {
 		background: var(--color-bg-surface);
+	}
+
+	/* Demo elements */
+	.demo-element {
+		background: var(--color-border-emphasis);
 	}
 
 	/* Semantic colors */
