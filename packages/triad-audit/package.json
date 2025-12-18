@@ -5,7 +5,8 @@
   "type": "module",
   "bin": {
     "triad-audit": "./dist/cli.js",
-    "triad-audit-mcp": "./dist/mcp-server.js"
+    "triad-audit-mcp": "./dist/mcp-server.js",
+    "triad-feedback": "./dist/feedback-cli.js"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -17,8 +18,8 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/cli.ts src/mcp-server.ts --format esm --dts --clean",
-    "dev": "tsup src/index.ts src/cli.ts src/mcp-server.ts --format esm --dts --watch",
+    "build": "tsup src/index.ts src/cli.ts src/mcp-server.ts src/feedback-cli.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts src/cli.ts src/mcp-server.ts src/feedback-cli.ts --format esm --dts --watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "pnpm build"
   },

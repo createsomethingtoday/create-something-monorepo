@@ -17,7 +17,11 @@ export {
 	collectHeideggerMetrics,
 	// Architecture domain
 	collectArchitectureHeideggerMetrics,
-	generateFlowASCII
+	generateFlowASCII,
+	// PR Feedback patterns
+	FeedbackCollector,
+	DEFAULT_FEEDBACK_THRESHOLDS,
+	KNOWN_FEEDBACK_PATTERNS
 } from './collectors/index.js';
 
 export {
@@ -63,7 +67,15 @@ export type {
 	ZoneCoherenceResult,
 	FlowAnalysis,
 	ArchitectureHeideggerMetrics,
-	ArchitectureAuditResult
+	ArchitectureAuditResult,
+	// PR Feedback pattern types
+	FeedbackEntry,
+	FeedbackPattern,
+	FeedbackCategory,
+	FeedbackThresholds,
+	FeedbackTrackerState,
+	PatternAnalysisResult,
+	AutomationSuggestion
 } from './types/index.js';
 
 // Architecture domain helpers

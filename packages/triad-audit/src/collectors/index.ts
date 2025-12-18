@@ -8,3 +8,10 @@ export {
 	collectArchitectureHeideggerMetrics,
 	generateFlowASCII
 } from './architecture-collector.js';
+
+// PR Feedback pattern collector
+export {
+	FeedbackCollector,
+	DEFAULT_FEEDBACK_THRESHOLDS,
+	KNOWN_FEEDBACK_PATTERNS
+} from './feedback-collector.js';
