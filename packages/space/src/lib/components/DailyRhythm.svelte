@@ -84,6 +84,16 @@
 	// Active activity for tooltip
 	let activeActivity: Activity | null = $state(null);
 
+	// Keyboard handler for activity elements
+	function handleActivityKeydown(event: KeyboardEvent, activity: Activity) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			activeActivity = activeActivity === activity ? null : activity;
+		} else if (event.key === 'Escape') {
+			activeActivity = null;
+		}
+	}
+
 	// Hour markers for context
 	const hourMarkers = [6, 9, 12, 15, 18, 21];
 
@@ -144,8 +154,15 @@
 			<g
 				class="activity"
 				class:active={activeActivity === activity}
+				role="button"
+				tabindex="0"
+				aria-label="{activity.name} in {activity.space}, {formatHour(activity.startHour)} to {formatHour(activity.endHour)}{activity.person ? `, ${activity.person}` : ''}"
+				aria-pressed={activeActivity === activity}
 				onmouseenter={() => activeActivity = activity}
 				onmouseleave={() => activeActivity = null}
+				onfocus={() => activeActivity = activity}
+				onblur={() => activeActivity = null}
+				onkeydown={(e) => handleActivityKeydown(e, activity)}
 			>
 				<!-- Activity bar -->
 				<rect
@@ -262,6 +279,22 @@
 	.activity.active .activity-bar {
 		stroke: var(--color-fg-secondary);
 		stroke-width: 1;
+	}
+
+	.activity:focus {
+		outline: none;
+	}
+
+	.activity:focus .activity-bar {
+		stroke: var(--color-fg-primary);
+		stroke-width: 2;
+	}
+
+	.activity:focus-visible .activity-bar {
+		stroke: var(--color-fg-primary);
+		stroke-width: 2;
+		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.2));
+		outline-offset: 2px;
 	}
 
 	.activity-label {
