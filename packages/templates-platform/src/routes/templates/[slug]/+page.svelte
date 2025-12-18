@@ -248,7 +248,7 @@
 					</div>
 
 					<div class="panel-section features">
-						<h3 class="section-label">Includes</h3>
+						<h2 class="section-label">Includes</h2>
 						<ul class="features-list">
 							{#each template.features as feature}
 								<li>{feature}</li>
@@ -438,7 +438,7 @@
 	{/if}
 {:else}
 	<div class="not-found">
-		<h1>Template Not Found</h1>
+		<h2>Template Not Found</h2>
 		<p>The template you're looking for doesn't exist.</p>
 		<a href="/#templates" class="btn btn-primary">Browse Templates</a>
 	</div>
