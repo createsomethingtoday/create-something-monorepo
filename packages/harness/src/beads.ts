@@ -92,14 +92,24 @@ export async function createIssue(
 ): Promise<string> {
   const args: string[] = ['create', `"${title.replace(/"/g, '\\"')}"`];
 
-  if (options?.type) {
-    args.push(`--type=${options.type}`);
-  }
+  // Use valid Beads types: bug|feature|task|epic|chore
+  const validTypes = ['bug', 'feature', 'task', 'epic', 'chore'];
+  const issueType = options?.type && validTypes.includes(options.type) ? options.type : 'task';
+  args.push(`--type=${issueType}`);
+
   if (options?.priority !== undefined) {
     args.push(`--priority=P${options.priority}`);
   }
   if (options?.labels?.length) {
     args.push(`--labels=${options.labels.join(',')}`);
+  }
+  if (options?.description) {
+    // Escape description for shell and truncate if needed
+    const desc = options.description.slice(0, 500).replace(/"/g, '\\"').replace(/\n/g, ' ');
+    args.push(`-d "${desc}"`);
+  } else {
+    // Add default description to avoid Beads warning
+    args.push(`-d "Created by harness"`);
   }
 
   const output = await bd(args.join(' '), cwd);
@@ -141,14 +151,15 @@ export async function updateIssuePriority(
 
 /**
  * Add a dependency between issues.
+ * Usage: bd dep add [issue-id] [depends-on-id] --type=blocks
  */
 export async function addDependency(
-  fromId: string,
-  toId: string,
-  type: 'blocks' | 'parent' | 'related' = 'blocks',
+  issueId: string,
+  dependsOnId: string,
+  type: 'blocks' | 'parent-child' | 'related' | 'discovered-from' = 'blocks',
   cwd?: string
 ): Promise<void> {
-  await bd(`dep add ${fromId} ${type} ${toId}`, cwd);
+  await bd(`dep add ${issueId} ${dependsOnId} --type=${type}`, cwd);
 }
 
 /**
@@ -192,12 +203,15 @@ export async function createHarnessIssue(
     pause_reason: null,
   };
 
+  const description = `Harness run for: ${specFile}\nFeatures: ${featuresTotal}\nStarted: ${new Date().toISOString()}`;
+
   const issueId = await createIssue(
     `Harness: ${title}`,
     {
-      type: 'harness',
+      type: 'epic', // Use epic for harness parent issues
       priority: 0, // Harness issues are high priority
       labels: ['harness'],
+      description,
     },
     cwd
   );
@@ -220,7 +234,7 @@ export async function createCheckpointIssue(
   const issueId = await createIssue(
     `Checkpoint #${checkpoint.sessionNumber}: ${checkpoint.summary.slice(0, 50)}`,
     {
-      type: 'checkpoint',
+      type: 'task', // Use task for checkpoint issues
       priority: 2,
       labels: ['checkpoint', `harness:${checkpoint.harnessId}`],
       description,
