@@ -33,7 +33,7 @@
   <!-- Content -->
   <section class="pb-20 px-6">
     <div class="max-w-4xl mx-auto">
-      <div class="space-y-12 text-white/70 leading-relaxed">
+      <div class="space-y-12 body-text leading-relaxed">
         <!-- Introduction -->
         <div class="space-y-4">
           <h2 class="section-title">1. Introduction</h2>
@@ -68,7 +68,7 @@
             <li>Any other information you choose to provide</li>
           </ul>
 
-          <h3 class="text-xl font-semibold text-white mt-6">2.2 Automatically Collected Information</h3>
+          <h3 class="subsection-title mt-6">2.2 Automatically Collected Information</h3>
           <p>
             When you visit our website, we may automatically collect certain information about your device, including:
           </p>
@@ -81,7 +81,7 @@
             <li>Device identifiers and other diagnostic data</li>
           </ul>
 
-          <h3 class="text-xl font-semibold text-white mt-6">2.3 Cookies and Tracking Technologies</h3>
+          <h3 class="subsection-title mt-6">2.3 Cookies and Tracking Technologies</h3>
           <p>
             We use cookies and similar tracking technologies to track activity on our website and store certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions of our site.
           </p>
@@ -125,12 +125,12 @@
             <li>Content delivery networks</li>
           </ul>
 
-          <h3 class="text-xl font-semibold text-white mt-6">4.2 Legal Requirements</h3>
+          <h3 class="subsection-title mt-6">4.2 Legal Requirements</h3>
           <p>
             We may disclose your information if required to do so by law or in response to valid requests by public authorities (e.g., a court or government agency).
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">4.3 Business Transfers</h3>
+          <h3 class="subsection-title mt-6">4.3 Business Transfers</h3>
           <p>
             If we are involved in a merger, acquisition, or asset sale, your personal information may be transferred. We will provide notice before your personal information is transferred and becomes subject to a different Privacy Policy.
           </p>
@@ -174,22 +174,22 @@
             You have the right to request access to the personal information we hold about you and to receive a copy of it in a structured, commonly used, and machine-readable format.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.2 Correction</h3>
+          <h3 class="subsection-title mt-6">7.2 Correction</h3>
           <p>
             You have the right to request that we correct any inaccurate personal information about you.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.3 Deletion</h3>
+          <h3 class="subsection-title mt-6">7.3 Deletion</h3>
           <p>
             You have the right to request that we delete your personal information, subject to certain exceptions prescribed by law.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.4 Opt-Out of Marketing</h3>
+          <h3 class="subsection-title mt-6">7.4 Opt-Out of Marketing</h3>
           <p>
             You can opt out of receiving marketing emails from us at any time by clicking the "unsubscribe" link in any marketing email or by contacting us directly.
           </p>
 
-          <h3 class="text-xl font-semibold text-white mt-6">7.5 Do Not Track</h3>
+          <h3 class="subsection-title mt-6">7.5 Do Not Track</h3>
           <p>
             We currently do not respond to "Do Not Track" signals, as there is no industry standard for compliance.
           </p>
@@ -284,13 +284,13 @@
           </p>
           <ul class="space-y-2">
             <li>
-              <strong class="text-white">Email:</strong>{' '}
+              <strong class="strong-text">Email:</strong>{' '}
               <a href="mailto:micah@createsomething.io" class="link hover:underline">
                 micah@createsomething.io
               </a>
             </li>
             <li>
-              <strong class="text-white">Website:</strong>{' '}
+              <strong class="strong-text">Website:</strong>{' '}
               <a href="https://createsomething.io/contact" class="link hover:underline">
                 createsomething.io/contact
               </a>
@@ -299,7 +299,7 @@
         </div>
 
         <!-- Acknowledgment -->
-        <div class="space-y-4 pt-8 border-t border-white/10">
+        <div class="space-y-4 pt-8 acknowledgment-section">
           <p class="caption-text">
             By using our website and services, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.
           </p>
@@ -352,10 +352,18 @@
     color: var(--color-fg-primary);
   }
 
+  .strong-text {
+    color: var(--color-fg-primary);
+  }
+
+  .acknowledgment-section {
+    border-top: 1px solid var(--color-border-default);
+  }
+
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
   }
 
   @keyframes reveal {

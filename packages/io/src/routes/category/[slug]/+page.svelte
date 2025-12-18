@@ -58,10 +58,10 @@
   <section class="relative pt-32 pb-16 px-6">
     <div class="max-w-7xl mx-auto">
       <div class="text-center space-y-4 animate-reveal">
-        <h1 class="text-4xl md:text-6xl font-bold text-white">
+        <h1 class="hero-title">
           {category.name}
         </h1>
-        <p class="text-lg text-white/60">
+        <p class="hero-subtitle">
           {papers.length} {papers.length === 1 ? 'article' : 'articles'}
         </p>
       </div>
@@ -81,17 +81,36 @@
         </div>
       {:else}
         <div class="text-center py-16">
-          <p class="text-white/60 text-lg">No articles found in this category yet.</p>
+          <p class="empty-message">No articles found in this category yet.</p>
         </div>
       {/if}
     </div>
   </section>
 
 <style>
+  /* Hero Section */
+  .hero-title {
+    font-size: var(--text-display);
+    font-weight: 700;
+    color: var(--color-fg-primary);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-tertiary);
+  }
+
+  /* Empty State */
+  .empty-message {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-tertiary);
+  }
+
+  /* Animation */
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
     animation-delay: calc(var(--delay, 0) * 100ms);
   }
 

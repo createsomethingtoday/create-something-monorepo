@@ -93,7 +93,7 @@
 	]}
 />
 
-<div class="min-h-screen bg-black">
+<div class="min-h-screen page-container">
 	<!-- Article Header -->
 	<ArticleHeader {paper} />
 
@@ -119,7 +119,7 @@
 	<div class="w-full max-w-5xl mx-auto px-6 py-12">
 		<a
 			href="/experiments"
-			class="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+			class="inline-flex items-center gap-2 back-link"
 		>
 			<svg
 				class="w-5 h-5"
@@ -157,3 +157,18 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.page-container {
+		background-color: var(--color-bg-pure);
+	}
+
+	.back-link {
+		color: var(--color-fg-tertiary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.back-link:hover {
+		color: var(--color-fg-primary);
+	}
+</style>

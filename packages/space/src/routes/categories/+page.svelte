@@ -43,12 +43,12 @@
               class="category-card group block relative p-8 transition-all overflow-hidden min-h-[160px]"
             >
               <div class="relative z-10 space-y-4">
-                <h3 class="category-title group-hover:text-white/90 transition-colors">
+                <h3 class="category-title">
                   {category.name}
                 </h3>
 
                 <div class="flex items-center justify-between">
-                  <div class="category-count font-medium group-hover:text-white/80 transition-colors">
+                  <div class="category-count font-medium">
                     {category.count} {category.count === 1 ? 'experiment' : 'experiments'}
                   </div>
 
@@ -57,7 +57,7 @@
                     height="20"
                     viewBox="0 0 16 16"
                     fill="none"
-                    class="category-arrow group-hover:text-white/90 transition-all group-hover:translate-x-1"
+                    class="category-arrow"
                   >
                     <path
                       d="M10.6696 6.276L4.93156 12.014L3.98889 11.0713L9.72622 5.33333H4.66956V4H12.0029V11.3333H10.6696V6.276Z"
@@ -67,7 +67,7 @@
                 </div>
               </div>
 
-              <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div class="absolute inset-0 opacity-0 group-hover:opacity-100 category-hover-gradient" />
             </a>
           </div>
         {/each}
@@ -125,6 +125,11 @@
     color: var(--color-fg-secondary);
   }
 
+  .category-hover-gradient {
+    background: linear-gradient(to bottom right, var(--color-hover), transparent);
+    transition: opacity var(--duration-micro) var(--ease-standard);
+  }
+
   .empty-text {
     font-size: var(--text-body);
     color: var(--color-fg-secondary);
@@ -133,7 +138,7 @@
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
     animation-delay: calc(var(--delay, 0) * 100ms);
   }
 
