@@ -331,8 +331,9 @@ export async function createIssuesFromFeatures(
     for (const depFeatureId of feature.dependsOn) {
       const depIssueId = featureToIssue.get(depFeatureId);
       if (depIssueId) {
-        // depIssueId blocks issueId
-        await addDependency(depIssueId, issueId, 'blocks', cwd);
+        // issueId depends on depIssueId (depIssueId blocks issueId)
+        // bd dep add syntax: bd dep add [issue] [depends-on] --type=blocks
+        await addDependency(issueId, depIssueId, 'blocks', cwd);
       }
     }
   }
