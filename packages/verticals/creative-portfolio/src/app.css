@@ -9,8 +9,20 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* ==========================================================================
+   Canon Design Tokens - Single Source of Truth
+   Import from @create-something/components
+   ========================================================================== */
+
+@import '@create-something/components/styles/tokens.css';
+
+/* ==========================================================================
+   Template-Specific Token Overrides
+   Creative Portfolio: Light theme, neutral, lets images pop
+   ========================================================================== */
+
 :root {
-	/* Colors - Neutral, lets images pop */
+	/* Light theme colors (override dark defaults) */
 	--color-bg-pure: #fafafa;
 	--color-bg-elevated: #ffffff;
 	--color-bg-surface: #f0f0f0;
@@ -26,34 +38,21 @@
 	--color-hover: rgba(0, 0, 0, 0.03);
 	--color-focus: rgba(0, 0, 0, 0.2);
 
-	/* Spacing - Generous */
-	--space-xs: 0.5rem;
-	--space-sm: 1rem;
-	--space-md: 1.618rem;
-	--space-lg: 2.618rem;
-	--space-xl: 4.236rem;
-	--space-2xl: 6.854rem;
-
-	/* Typography - Restrained */
+	/* Typography - Restrained to let work shine */
 	--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 	--font-mono: 'JetBrains Mono', monospace;
 
+	/* Smaller typography scale for minimal chrome */
 	--text-display: clamp(1.5rem, 2vw + 0.5rem, 2rem);
 	--text-h1: clamp(1.25rem, 1.5vw + 0.5rem, 1.5rem);
-	--text-body: 1rem;
-	--text-body-sm: 0.875rem;
-	--text-caption: 0.75rem;
 
+	/* Tighter leading for minimal feel */
 	--leading-tight: 1.2;
-	--leading-normal: 1.5;
-	--leading-relaxed: 1.75;
 
-	/* Effects */
+	/* Faster micro interactions */
 	--duration-micro: 150ms;
-	--duration-standard: 300ms;
-	--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
-	/* Layout */
+	/* Layout - Wide for full-bleed imagery */
 	--content-width: 1600px;
 	--gutter: clamp(1rem, 3vw, 3rem);
 }
