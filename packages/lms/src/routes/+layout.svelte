@@ -153,6 +153,8 @@
   </script>`}
 </svelte:head>
 
+<a href="#main-content" class="skip-to-content">Skip to main content</a>
+
 <div class="layout">
   <Navigation
     logo="CREATE SOMETHING"
@@ -164,9 +166,9 @@
     ctaHref={user ? '/account' : '/login'}
   />
 
-  <div class="content">
+  <main id="main-content" class="content">
     {@render children()}
-  </div>
+  </main>
 
   <Footer
     mode="learn"

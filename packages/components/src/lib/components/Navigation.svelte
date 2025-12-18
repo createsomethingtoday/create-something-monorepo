@@ -44,7 +44,7 @@
 	}
 </script>
 
-<nav class="nav-container" class:nav-fixed={fixed}>
+<nav class="nav-container" class:nav-fixed={fixed} aria-label="Primary">
 	<div class="max-w-7xl mx-auto px-6 py-4">
 		<div class="flex items-center justify-between">
 			<!-- Logo / Home -->
