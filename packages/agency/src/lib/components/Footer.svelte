@@ -188,7 +188,6 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		color: var(--color-fg-primary);
-		outline: none;
 		transition: border-color var(--duration-standard) var(--ease-standard);
 	}
 
@@ -197,7 +196,9 @@
 	}
 
 	.newsletter-input:focus {
-		border-color: rgba(255, 255, 255, 0.3);
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+		border-color: var(--color-border-strong);
 	}
 
 	.newsletter-btn {
@@ -210,6 +211,11 @@
 
 	.newsletter-btn:hover {
 		background: rgba(255, 255, 255, 0.9);
+	}
+
+	.newsletter-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.footer-links {

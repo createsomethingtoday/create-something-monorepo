@@ -252,8 +252,9 @@
 	}
 
 	.email-input:focus {
-		outline: none;
-		border-color: rgba(255, 255, 255, 0.3);
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+		border-color: var(--color-border-strong);
 	}
 
 	.email-input:disabled {
@@ -276,6 +277,11 @@
 	.submit-button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.submit-button:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.message-display {

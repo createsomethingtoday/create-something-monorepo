@@ -205,7 +205,8 @@
 	}
 
 	.form-input:focus {
-		outline: none;
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 		border-color: var(--color-fg-primary);
 	}
 
@@ -234,6 +235,11 @@
 	.form-submit:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.form-submit:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.form-message {

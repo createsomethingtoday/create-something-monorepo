@@ -41,7 +41,7 @@
   --color-info-border: rgba(80, 130, 185, 0.3);
   --color-hover: rgba(255, 255, 255, 0.05);
   --color-active: rgba(255, 255, 255, 0.1);
-  --color-focus: rgba(255, 255, 255, 0.2);
+  --color-focus: rgba(255, 255, 255, 0.5); /* WCAG AA compliant: 5.28:1 on pure black for focus indicators */
 
   /* Data Visualization Palette */
   --color-data-1: #60a5fa; /* Blue */
