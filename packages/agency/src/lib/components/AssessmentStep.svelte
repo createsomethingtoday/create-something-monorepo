@@ -117,21 +117,13 @@
 		}
 	}
 
-	function handleContainerClick(event: MouseEvent) {
-		// Click on container (not options) cancels auto-advance
-		const target = event.target as HTMLElement;
-		if (target.classList.contains('step-container') || target.classList.contains('step-input')) {
-			cancelAutoAdvance();
-		}
-	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div class="step-container" onclick={handleContainerClick}>
+<div class="step-container" role="group" aria-labelledby="step-question">
 	<div class="step-header">
-		<h2 class="step-question">{question}</h2>
+		<h2 id="step-question" class="step-question">{question}</h2>
 		<p class="step-subtext">{subtext}</p>
 	</div>
 
