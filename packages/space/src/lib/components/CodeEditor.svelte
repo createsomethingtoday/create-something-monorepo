@@ -43,28 +43,35 @@
           '&': {
             height: height,
             fontSize: '14px',
-            backgroundColor: '#000000',
+            // Uses Canon token: --color-bg-pure (#000000)
+            backgroundColor: 'var(--color-bg-pure, #000000)',
           },
           '.cm-content': {
             fontFamily: '"Fira Code", "JetBrains Mono", monospace',
             padding: '16px 0',
           },
           '.cm-gutters': {
-            backgroundColor: '#000000',
-            color: 'rgba(255, 255, 255, 0.3)',
+            // Uses Canon token: --color-bg-pure (#000000)
+            backgroundColor: 'var(--color-bg-pure, #000000)',
+            // Uses Canon token: --color-fg-subtle (rgba 0.2) - slightly brighter for line numbers
+            color: 'var(--color-fg-subtle, rgba(255, 255, 255, 0.2))',
             border: 'none',
           },
           '.cm-activeLineGutter': {
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            // Uses Canon token: --color-hover (rgba 0.05)
+            backgroundColor: 'var(--color-hover, rgba(255, 255, 255, 0.05))',
           },
           '.cm-activeLine': {
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            // Uses Canon token: --color-hover (rgba 0.05)
+            backgroundColor: 'var(--color-hover, rgba(255, 255, 255, 0.05))',
           },
           '.cm-selectionBackground': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1) !important',
+            // Uses Canon token: --color-active (rgba 0.1)
+            backgroundColor: 'var(--color-active, rgba(255, 255, 255, 0.1)) !important',
           },
           '.cm-cursor': {
-            borderLeftColor: '#ffffff',
+            // Uses Canon token: --color-fg-primary (#ffffff)
+            borderLeftColor: 'var(--color-fg-primary, #ffffff)',
           },
         }),
       ],
