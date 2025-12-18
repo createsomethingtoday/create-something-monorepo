@@ -143,13 +143,13 @@ Forms must be usable by everyone.
   - All inputs must have associated labels
   - Labels must be visible (not placeholder-only)
 
-- P2: Audit error state announcements
-  - Errors should be announced to screen readers
-  - Use aria-live or aria-describedby
+- ~~P2: Audit error state announcements~~ ✓ DONE
+  - ~~Errors should be announced to screen readers~~ → role="alert" aria-live="polite" added
+  - ~~Use aria-live or aria-describedby~~ → aria-describedby links inputs to error messages
 
-- P3: Audit required field indicators
-  - Use aria-required
-  - Visual indicator should not be color-only
+- ~~P3: Audit required field indicators~~ ✓ DONE
+  - ~~Use aria-required~~ → aria-required="true" added to required inputs
+  - ~~Visual indicator should not be color-only~~ → Asterisk (*) with aria-hidden for visual cue
 
 ### dry-consolidation (4)
 

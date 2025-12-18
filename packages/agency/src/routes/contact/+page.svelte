@@ -97,35 +97,43 @@
 
 		<form class="contact-form" onsubmit={handleSubmit}>
 			<div class="form-field">
-				<label for="name" class="form-label">Name</label>
+				<label for="name" class="form-label">Name <span class="required-indicator" aria-hidden="true">*</span></label>
 				<input
 					type="text"
 					id="name"
 					name="name"
 					required
+					aria-required="true"
+					aria-invalid={!submitSuccess && !!submitMessage}
+					aria-describedby={submitMessage && !submitSuccess ? 'contact-message' : undefined}
 					class="form-input"
 					autocomplete="name"
 				/>
 			</div>
 
 			<div class="form-field">
-				<label for="email" class="form-label">Email</label>
+				<label for="email" class="form-label">Email <span class="required-indicator" aria-hidden="true">*</span></label>
 				<input
 					type="email"
 					id="email"
 					name="email"
 					required
+					aria-required="true"
+					aria-invalid={!submitSuccess && !!submitMessage}
+					aria-describedby={submitMessage && !submitSuccess ? 'contact-message' : undefined}
 					class="form-input"
 					autocomplete="email"
 				/>
 			</div>
 
 			<div class="form-field">
-				<label for="message" class="form-label">What are you working on?</label>
+				<label for="message" class="form-label">What are you working on? <span class="required-indicator" aria-hidden="true">*</span></label>
 				<textarea
 					id="message"
 					name="message"
 					required
+					aria-required="true"
+					aria-invalid={!submitSuccess && !!submitMessage}
 					rows="5"
 					class="form-input form-textarea"
 				></textarea>
@@ -140,7 +148,14 @@
 			</button>
 
 			{#if submitMessage}
-				<p class="form-message" class:success={submitSuccess} class:error={!submitSuccess}>
+				<p
+					id="contact-message"
+					class="form-message"
+					class:success={submitSuccess}
+					class:error={!submitSuccess}
+					role="alert"
+					aria-live="polite"
+				>
 					{submitMessage}
 				</p>
 			{/if}
@@ -259,6 +274,11 @@
 		background: var(--color-error-muted);
 		color: var(--color-error);
 		border: 1px solid var(--color-error);
+	}
+
+	.required-indicator {
+		color: var(--color-error);
+		margin-left: 0.25em;
 	}
 
 	.contact-alt {
