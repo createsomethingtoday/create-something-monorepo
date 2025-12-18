@@ -198,6 +198,47 @@ Always respect user preferences:
 }
 ```
 
+#### High Contrast Mode
+
+Respect users who need increased contrast via `prefers-contrast: more`:
+
+```css
+@media (prefers-contrast: more) {
+  :root {
+    /* Foreground colors - brighter (WCAG AAA 7:1+) */
+    --color-fg-secondary: rgba(255, 255, 255, 0.95);
+    --color-fg-tertiary: rgba(255, 255, 255, 0.85);
+    --color-fg-muted: rgba(255, 255, 255, 0.75);
+    --color-fg-subtle: rgba(255, 255, 255, 0.5);
+
+    /* Border colors - more visible */
+    --color-border-default: rgba(255, 255, 255, 0.3);
+    --color-border-emphasis: rgba(255, 255, 255, 0.5);
+    --color-border-strong: rgba(255, 255, 255, 0.7);
+
+    /* Interactive states - more prominent */
+    --color-hover: rgba(255, 255, 255, 0.15);
+    --color-active: rgba(255, 255, 255, 0.25);
+    --color-focus: rgba(255, 255, 255, 0.9);
+
+    /* Enhanced focus ring */
+    *:focus-visible {
+      outline: 3px solid var(--color-focus);
+      outline-offset: 3px;
+    }
+  }
+}
+```
+
+| Token | Standard | High Contrast | Ratio Change |
+|-------|----------|---------------|--------------|
+| `--color-fg-muted` | 0.46 | 0.75 | +63% |
+| `--color-fg-subtle` | 0.2 | 0.5 | +150% |
+| `--color-border-default` | 0.1 | 0.3 | +200% |
+| `--color-focus` | 0.5 | 0.9 | +80% |
+
+**Philosophy**: Same design language, increased visibility. Structure unchanged, only contrast enhanced.
+
 #### Anti-Patterns
 
 Avoid:
