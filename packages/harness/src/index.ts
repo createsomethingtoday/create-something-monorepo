@@ -25,9 +25,16 @@ export type {
   StartOptions,
   ResumeOptions,
   PauseOptions,
+  // Failure handling types
+  FailureHandlingConfig,
+  FailureStrategies,
+  FailureAction,
+  FailureRecord,
+  FailureAttempt,
+  FailureDecision,
 } from './types.js';
 
-export { DEFAULT_CHECKPOINT_POLICY } from './types.js';
+export { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG } from './types.js';
 
 // Spec Parser
 export { parseSpec, formatSpecSummary } from './spec-parser.js';
@@ -88,3 +95,15 @@ export {
   pauseHarness,
   getHarnessStatus,
 } from './runner.js';
+
+// Failure Handling
+export {
+  createFailureTracker,
+  makeFailureDecision,
+  recordSuccessfulRetry,
+  shouldRetry,
+  getAttemptCount,
+  formatFailureAnnotation,
+  getFailureStats,
+  formatFailureStats,
+} from './failure-handler.js';

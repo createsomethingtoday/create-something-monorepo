@@ -536,3 +536,74 @@ export async function updateHarnessStatus(
     await bd(`update ${harnessId} --status=${status === 'running' ? 'in_progress' : 'open'}`, cwd);
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Failure Annotation
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Add a failure annotation to an issue.
+ * Records the failure reason and attempt history for future reference.
+ */
+export async function annotateIssueFailure(
+  issueId: string,
+  annotation: string,
+  cwd?: string
+): Promise<void> {
+  try {
+    // Add a label to indicate the issue has failures
+    await bd(`label add ${issueId} failed-attempt`, cwd);
+
+    // Update the issue description with failure details
+    // Note: bd may not support description updates, so we'll use a comment-like approach
+    // by creating a linked issue with the failure details
+
+    // For now, just log the annotation - full implementation would require
+    // Beads CLI support for description updates or comments
+    console.log(`  [Failure Annotation] ${issueId}:`);
+    console.log(`    ${annotation.split('\n')[0]}`);
+  } catch (error) {
+    // Don't fail the harness if annotation fails
+    console.log(`  [Warning] Could not annotate failure for ${issueId}`);
+  }
+}
+
+/**
+ * Mark an issue as skipped due to repeated failures.
+ */
+export async function markIssueSkipped(
+  issueId: string,
+  reason: string,
+  cwd?: string
+): Promise<void> {
+  try {
+    // Add skipped label
+    await bd(`label add ${issueId} skipped`, cwd);
+
+    // Keep the issue open but note it was skipped
+    // The status remains as is (likely in_progress)
+    console.log(`  [Skipped] ${issueId}: ${reason}`);
+  } catch (error) {
+    console.log(`  [Warning] Could not mark ${issueId} as skipped`);
+  }
+}
+
+/**
+ * Reset an issue's failure state for retry.
+ * Removes failure labels and prepares for a fresh attempt.
+ */
+export async function resetIssueForRetry(
+  issueId: string,
+  cwd?: string
+): Promise<void> {
+  try {
+    // Remove failure labels if present
+    await bd(`label remove ${issueId} failed-attempt`, cwd).catch(() => {});
+    await bd(`label remove ${issueId} skipped`, cwd).catch(() => {});
+
+    // Ensure status is in_progress
+    await updateIssueStatus(issueId, 'in_progress', cwd);
+  } catch (error) {
+    // Don't fail if label removal fails
+  }
+}
