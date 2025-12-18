@@ -368,3 +368,67 @@ A11y patterns must be centralized, not scattered:
 | Toggle button | Documented pattern | LightStudy, any toggle UI |
 
 When adding a11y to a new component, import from shared utilities—don't duplicate.
+
+---
+
+## Personal Injury Vertical Audit (2025-12-18)
+
+### Summary
+
+The `packages/verticals/personal-injury` vertical demonstrates strong accessibility patterns with minor improvements possible.
+
+### ✓ Compliant Patterns
+
+| Component | Pattern | Status |
+|-----------|---------|--------|
+| `+layout.svelte` | Skip link (`#main-content`) | ✓ Present |
+| `+layout.svelte` | Main landmark with `tabindex="-1"` | ✓ Keyboard navigation ready |
+| `Navigation.svelte` | `aria-label`, `aria-expanded` on mobile menu | ✓ Screen reader friendly |
+| `FAQSection.svelte` | `aria-expanded`, `aria-controls`, `role="region"` | ✓ WCAG compliant accordion |
+| `TestimonialsSection.svelte` | `role="tablist"`, `aria-selected`, `aria-label` on dots | ✓ Carousel accessible |
+| `HeroSection.svelte` | Decorative elements hidden with `aria-hidden="true"` | ✓ Correct |
+| `ProcessSection.svelte` | Decorative connectors hidden with `aria-hidden="true"` | ✓ Correct |
+| `PIIntakeForm.svelte` | Form labels associated with inputs via `id`/`for` | ✓ Screen reader friendly |
+| `ProgressiveForm.svelte` | Progress indicator hidden with `aria-hidden="true"` | ✓ Correct |
+| `app.css` | `.sr-only` utility, `.skip-link`, focus states | ✓ A11y utilities present |
+
+### ⚠️ Minor Improvements (P3)
+
+1. **Form Error Announcements**: `PIIntakeForm.svelte` error message lacks `role="alert"` or `aria-live`
+   - Current: `<div class="error-message">{error}</div>`
+   - Recommended: `<div class="error-message" role="alert">{error}</div>`
+
+2. **ProgressiveForm.svelte**: Missing `aria-required="true"` on required email field
+   - Current: `required` HTML attribute only
+   - Recommended: Add `aria-required="true"` for screen reader clarity
+
+3. **StickyCTA.svelte**: Lacks `role="complementary"` or similar landmark
+   - Minor issue—fixed CTAs may benefit from landmark identification
+
+4. **TestimonialsSection.svelte**: Auto-playing carousel without pause button
+   - Current: Pauses on hover (mouse only)
+   - Recommended: Add visible pause/play control for keyboard users (WCAG 2.2.2)
+
+### Accessibility Features Present
+
+| Feature | Implementation |
+|---------|----------------|
+| Skip-to-content link | `.skip-link` in `app.css` + `<a href="#main-content">` in layout |
+| Reduced motion support | `@media (prefers-reduced-motion: reduce)` in all components |
+| Focus states | `:focus-visible` with `var(--color-focus)` ring |
+| Touch targets | `min-height: 44px; min-width: 44px;` on buttons/links |
+| Screen reader utilities | `.sr-only` class available |
+| Heading hierarchy | Single `h1` per page, proper nesting observed |
+| Form accessibility | Labels associated via `id`/`for`, required fields marked |
+
+### Canon Alignment
+
+The vertical follows Canon accessibility philosophy:
+- **Zuhandenheit**: Accessibility features recede into transparent use
+- **Reduced motion**: Respects user preferences absolutely
+- **Focus management**: Clear focus indicators without decorative excess
+- **Semantic HTML**: Proper landmarks, headings, and ARIA where needed
+
+### Recommended Actions
+
+No critical fixes required. Minor improvements listed above are P3 priority (nice-to-have).
