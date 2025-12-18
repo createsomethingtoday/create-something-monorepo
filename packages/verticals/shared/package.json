@@ -8,13 +8,18 @@
     "./layouts": "./src/layouts/index.ts",
     "./workflows": "./src/workflows/index.ts",
     "./types": "./src/types/index.ts",
-    "./canon": "./src/canon/tokens.css"
+    "./canon": "./src/canon/tokens.css",
+    "./canon.css": "./canon.css"
   },
   "files": [
-    "src"
+    "src",
+    "canon.css"
   ],
   "scripts": {
     "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/components": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.3.0"

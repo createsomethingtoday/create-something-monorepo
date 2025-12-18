@@ -5,160 +5,20 @@
   Philosophy: "Weniger, aber besser" - Dieter Rams
   Font Stack: Stack Sans Notch (variable weight 200-700) + JetBrains Mono (code)
 
-  This is the single source of truth for Canon tokens.
+  This file combines Canon tokens with base styles, utilities, and components.
   Property-specific customizations live in each app.css.
+
+  Architecture:
+  - tokens.css: Pure token definitions (import this for tokens only)
+  - canon.css: Complete system with base styles (import this for full Canon)
 */
 
 /* ==========================================================================
    Canon Design Tokens
+   Imported from the single source of truth
    ========================================================================== */
 
-:root {
-  /* Colors - Functional Minimalism */
-  --color-bg-pure: #000000;
-  --color-bg-elevated: #0a0a0a;
-  --color-bg-surface: #111111;
-  --color-bg-subtle: #1a1a1a;
-  --color-fg-primary: #ffffff;
-  --color-fg-secondary: rgba(255, 255, 255, 0.8);
-  --color-fg-tertiary: rgba(255, 255, 255, 0.6);
-  --color-fg-muted: rgba(255, 255, 255, 0.46); /* WCAG AA compliant: 4.56:1 on pure black */
-  --color-fg-subtle: rgba(255, 255, 255, 0.2);
-  --color-border-default: rgba(255, 255, 255, 0.1);
-  --color-border-emphasis: rgba(255, 255, 255, 0.2);
-  --color-border-strong: rgba(255, 255, 255, 0.3);
-  --color-success: #44aa44;
-  --color-success-muted: rgba(68, 170, 68, 0.2);
-  --color-success-border: rgba(68, 170, 68, 0.3);
-  --color-error: #d44d4d; /* WCAG AA compliant: 4.97:1 on pure black */
-  --color-error-muted: rgba(212, 77, 77, 0.2);
-  --color-error-border: rgba(212, 77, 77, 0.3);
-  --color-warning: #aa8844;
-  --color-warning-muted: rgba(170, 136, 68, 0.2);
-  --color-warning-border: rgba(170, 136, 68, 0.3);
-  --color-info: #5082b9; /* WCAG AA compliant: 5.23:1 on pure black */
-  --color-info-muted: rgba(80, 130, 185, 0.2);
-  --color-info-border: rgba(80, 130, 185, 0.3);
-  --color-hover: rgba(255, 255, 255, 0.05);
-  --color-active: rgba(255, 255, 255, 0.1);
-  --color-focus: rgba(255, 255, 255, 0.5); /* WCAG AA compliant: 5.28:1 on pure black for focus indicators */
-
-  /* Data Visualization Palette */
-  --color-data-1: #60a5fa; /* Blue */
-  --color-data-2: #22c55e; /* Green */
-  --color-data-3: #c084fc; /* Purple */
-  --color-data-4: #fbbf24; /* Amber */
-  --color-data-5: #f472b6; /* Pink */
-  --color-data-6: #facc15; /* Yellow */
-
-  /* Typography - Golden Ratio Scale (φ = 1.618)
-     Base: 1rem (16px)
-     Scale: Each step multiplied/divided by φ
-     1rem × φ⁴ = 6.854rem (display-xl)
-     1rem × φ³ = 4.236rem (display)
-     1rem × φ² = 2.618rem (h1)
-     1rem × φ  = 1.618rem (h2)
-     1rem      = 1rem     (body)
-     1rem ÷ φ  = 0.618rem (small)
-  */
-  --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
-  --font-serif: Georgia, "Times New Roman", serif;
-  --font-regular: 400;
-  --font-medium: 500;
-  --font-semibold: 600;
-  --font-bold: 700;
-  --leading-tight: 1.25;
-  --leading-snug: 1.375;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.618; /* Golden ratio */
-  --leading-loose: 1.75;
-  --tracking-tighter: -0.025em;
-  --tracking-tight: -0.015em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.025em;
-  --tracking-wider: 0.05em;
-  --tracking-widest: 0.1em;
-  /* Golden Ratio Typography Scale */
-  --text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);  /* φ³ to φ⁴ */
-  --text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);   /* φ² to φ³ */
-  --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);          /* φ to φ² */
-  --text-h2: clamp(1.25rem, 2vw + 0.5rem, 1.618rem);         /* ~φ */
-  --text-h3: clamp(1.125rem, 1vw + 0.5rem, 1.25rem);
-  --text-h4: clamp(1rem, 0.5vw + 0.5rem, 1.125rem);
-  --text-h5: 1rem;
-  --text-h6: 0.875rem;
-  --text-body-lg: 1.125rem;
-  --text-body: 1rem;
-  --text-body-sm: 0.875rem;
-  --text-caption: 0.75rem;
-  --text-overline: 0.618rem;  /* 1/φ */
-
-  /* Spacing - Golden Ratio (φ = 1.618) */
-  --space-xs: 0.5rem;
-  --space-sm: 1rem;
-  --space-md: 1.618rem;
-  --space-lg: 2.618rem;
-  --space-xl: 4.236rem;
-  --space-2xl: 6.854rem;
-  --space-3xl: 11.089rem;
-
-  /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  /* Shadows & Elevation */
-  --shadow-none: none;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
-  --shadow-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
-  --shadow-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
-  --shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
-  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
-  --shadow-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
-
-  /* Animation & Motion */
-  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --duration-micro: 200ms;
-  --duration-standard: 300ms;
-  --duration-complex: 500ms;
-
-  /* Opacity - Canon tokens for visibility states */
-  --opacity-muted: 0.6;
-  --opacity-hover: 0.8;
-  --opacity-full: 1;
-
-  /* Z-Index Layers */
-  --z-base: 0;
-  --z-dropdown: 10;
-  --z-sticky: 20;
-  --z-fixed: 50;
-  --z-modal: 100;
-  --z-popover: 200;
-  --z-tooltip: 300;
-
-  /* Breakpoints & Containers */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1400px;
-  --container-prose: 65ch;
-
-  /* View Transition - Default (properties override) */
-  --view-transition-duration: var(--duration-standard);
-}
+@import './tokens.css';
 
 /* ==========================================================================
    Base Styles - Wrapped in @layer base for Tailwind compatibility
