@@ -23,7 +23,7 @@ overflow-*, z-*, order-*, col-*, row-*
 | `text-white` | `var(--color-fg-primary)` | #ffffff |
 | `text-white/80` | `var(--color-fg-secondary)` | rgba(255,255,255,0.8) |
 | `text-white/60` | `var(--color-fg-tertiary)` | rgba(255,255,255,0.6) |
-| `text-white/40` | `var(--color-fg-muted)` | rgba(255,255,255,0.4) |
+| `text-white/46` | `var(--color-fg-muted)` | rgba(255,255,255,0.46) - WCAG AA compliant |
 | `text-white/20` | `var(--color-fg-subtle)` | rgba(255,255,255,0.2) |
 | `border-white/10` | `var(--color-border-default)` | rgba(255,255,255,0.1) |
 | `border-white/20` | `var(--color-border-emphasis)` | rgba(255,255,255,0.2) |
@@ -53,7 +53,7 @@ For hover/active states, use transparent overlays:
 --color-fg-primary: #ffffff
 --color-fg-secondary: rgba(255, 255, 255, 0.8)
 --color-fg-tertiary: rgba(255, 255, 255, 0.6)
---color-fg-muted: rgba(255, 255, 255, 0.4)
+--color-fg-muted: rgba(255, 255, 255, 0.46)  /* WCAG AA: 4.56:1 */
 --color-fg-subtle: rgba(255, 255, 255, 0.2)
 --color-border-default: rgba(255, 255, 255, 0.1)
 --color-border-emphasis: rgba(255, 255, 255, 0.2)
@@ -61,19 +61,19 @@ For hover/active states, use transparent overlays:
 --color-hover: rgba(255, 255, 255, 0.05)
 --color-active: rgba(255, 255, 255, 0.1)
 
-/* Semantic Colors */
---color-success: #44aa44
+/* Semantic Colors - All WCAG AA compliant (4.5:1+ on pure black) */
+--color-success: #44aa44              /* 7.08:1 */
 --color-success-muted: rgba(68, 170, 68, 0.2)
 --color-success-border: rgba(68, 170, 68, 0.3)
---color-error: #cc4444
---color-error-muted: rgba(204, 68, 68, 0.2)
---color-error-border: rgba(204, 68, 68, 0.3)
---color-warning: #aa8844
+--color-error: #d44d4d                /* 4.97:1 */
+--color-error-muted: rgba(212, 77, 77, 0.2)
+--color-error-border: rgba(212, 77, 77, 0.3)
+--color-warning: #aa8844              /* 6.31:1 */
 --color-warning-muted: rgba(170, 136, 68, 0.2)
 --color-warning-border: rgba(170, 136, 68, 0.3)
---color-info: #4477aa
---color-info-muted: rgba(68, 119, 170, 0.2)
---color-info-border: rgba(68, 119, 170, 0.3)
+--color-info: #5082b9                 /* 5.23:1 */
+--color-info-muted: rgba(80, 130, 185, 0.2)
+--color-info-border: rgba(80, 130, 185, 0.3)
 
 /* Data Visualization Palette */
 --color-data-1: #60a5fa  /* Blue */
