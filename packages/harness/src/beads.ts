@@ -180,7 +180,7 @@ export async function addDependency(
  */
 export async function getReadyIssues(cwd?: string): Promise<BeadsIssue[]> {
   try {
-    const output = await bd('ready --json', cwd);
+    const output = await bd('ready --json --limit 100', cwd);
     return JSON.parse(output) as BeadsIssue[];
   } catch {
     // Fallback: manual filtering

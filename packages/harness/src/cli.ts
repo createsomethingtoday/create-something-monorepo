@@ -12,7 +12,10 @@
  *   harness stop
  */
 
+import { readFile } from 'node:fs/promises';
 import { initializeHarness, runHarness, resumeHarness, pauseHarness, getHarnessStatus } from './runner.js';
+import { parseSpec, formatSpecSummary } from './spec-parser.js';
+import { analyzeIndependence, formatIndependenceAnalysis } from './independence.js';
 import type { StartOptions, PauseOptions, ResumeOptions } from './types.js';
 
 async function main(): Promise<void> {
@@ -42,6 +45,9 @@ async function main(): Promise<void> {
       case 'stop':
         await handleStop(args.slice(1), cwd);
         break;
+      case 'analyze':
+        await handleAnalyze(args.slice(1), cwd);
+        break;
       default:
         console.error(`Unknown command: ${command}`);
         printHelp();
@@ -62,6 +68,7 @@ USAGE:
 
 COMMANDS:
   start <spec-file>   Start a new harness run from a markdown PRD spec
+  analyze <spec-file> Analyze spec for task independence and parallel execution
   pause               Pause the running harness after current session
   resume              Resume a paused harness
   status              Show harness status
@@ -77,6 +84,7 @@ OPTIONS:
 EXAMPLES:
   harness start specs/my-project.md
   harness start specs/api.md --checkpoint-every 5 --dry-run
+  harness analyze specs/my-project.md
   harness pause --reason "Need to review auth approach"
   harness resume
   harness status
@@ -160,6 +168,59 @@ async function handleStatus(args: string[], cwd: string): Promise<void> {
 async function handleStop(args: string[], cwd: string): Promise<void> {
   console.log('Stop command not yet implemented.');
   console.log('Use Ctrl+C to stop the harness, or create a pause issue.');
+}
+
+async function handleAnalyze(args: string[], cwd: string): Promise<void> {
+  const specFile = args.find((arg) => !arg.startsWith('--'));
+  if (!specFile) {
+    console.error('Error: spec file required');
+    console.error('Usage: harness analyze <spec-file>');
+    process.exit(1);
+  }
+
+  console.log(`\n📊 Analyzing spec: ${specFile}\n`);
+
+  // Read and parse spec
+  const specContent = await readFile(specFile, 'utf-8');
+  const spec = parseSpec(specContent);
+
+  // Show parsed spec summary
+  console.log(formatSpecSummary(spec));
+  console.log('');
+
+  // Analyze independence
+  const analysis = analyzeIndependence(spec);
+
+  // Show independence analysis
+  console.log(formatIndependenceAnalysis(analysis, spec.features));
+
+  // Show summary recommendations
+  console.log('');
+  console.log('RECOMMENDATIONS:');
+  console.log('─────────────────────────────────────────────────────────────────');
+
+  if (analysis.maxParallelism > 1) {
+    console.log(`  ✓ This spec supports parallel execution (up to ${analysis.maxParallelism} agents)`);
+    console.log(`    Critical path: ${analysis.criticalPathLength} sequential steps`);
+    console.log(`    Potential speedup: ${(spec.features.length / analysis.criticalPathLength).toFixed(1)}x`);
+  } else {
+    console.log('  ⚠ All tasks are sequential - no parallel execution possible');
+    console.log('    Consider breaking dependencies to enable parallelism');
+  }
+
+  if (analysis.implicitDependencies.length > 0) {
+    console.log('');
+    console.log(`  ⚠ ${analysis.implicitDependencies.length} potential implicit dependencies detected`);
+    console.log('    Review suggested dependencies above and add to spec if appropriate');
+  }
+
+  if (analysis.isolated.length > 0) {
+    console.log('');
+    console.log(`  ℹ ${analysis.isolated.length} isolated features (no dependencies)`);
+    console.log('    These can run anytime, consider if they need dependencies');
+  }
+
+  console.log('');
 }
 
 function parseIntArg(args: string[], flag: string, defaultValue: number): number {

@@ -187,26 +187,218 @@ function inferPriority(title: string, index: number): number {
 
 /**
  * Infer dependencies between features.
- * Simple heuristic: features in the same category depend on earlier ones.
+ * Multi-level heuristic:
+ * 1. Category-based: features in the same category may depend on earlier ones
+ * 2. Content-based: analyze text for dependency keywords
+ * 3. Sequential-based: numbered phases/steps imply order
  */
 function inferDependencies(features: Feature[]): void {
+  // Build title lookup for reference matching
+  const titleToId = new Map<string, string>();
+  for (const feature of features) {
+    // Index by full title (normalized)
+    titleToId.set(normalizeTitle(feature.title), feature.id);
+    // Index by significant words
+    for (const word of extractSignificantWords(feature.title)) {
+      titleToId.set(word, feature.id);
+    }
+  }
+
+  // Track first feature in each category
   const categoryFirstFeature: Record<string, string> = {};
 
   for (const feature of features) {
+    // 1. Category-based dependencies
     const category = feature.labels[0];
-    if (!category) continue;
-
-    if (categoryFirstFeature[category]) {
-      // Later features in a category depend on the first one
-      // (Only add if not already the first)
-      if (feature.id !== categoryFirstFeature[category]) {
-        feature.dependsOn.push(categoryFirstFeature[category]);
+    if (category) {
+      if (categoryFirstFeature[category]) {
+        if (feature.id !== categoryFirstFeature[category]) {
+          addUniqueDependency(feature, categoryFirstFeature[category]);
+        }
+      } else {
+        categoryFirstFeature[category] = feature.id;
       }
-    } else {
-      // This is the first feature in the category
-      categoryFirstFeature[category] = feature.id;
+    }
+
+    // 2. Content-based dependency detection
+    const contentDeps = extractContentDependencies(feature, titleToId);
+    for (const depId of contentDeps) {
+      if (depId !== feature.id) {
+        addUniqueDependency(feature, depId);
+      }
+    }
+
+    // 3. Sequential naming detection (Phase 1, Step 2, etc.)
+    const sequentialDeps = extractSequentialDependencies(feature, features);
+    for (const depId of sequentialDeps) {
+      if (depId !== feature.id) {
+        addUniqueDependency(feature, depId);
+      }
     }
   }
+}
+
+/**
+ * Normalize a title for matching.
+ */
+function normalizeTitle(title: string): string {
+  return title.toLowerCase().trim();
+}
+
+/**
+ * Extract significant words from a title (3+ chars, not common words).
+ */
+function extractSignificantWords(title: string): string[] {
+  const commonWords = new Set([
+    'the', 'and', 'for', 'with', 'from', 'into', 'that', 'this', 'will', 'can',
+    'add', 'new', 'use', 'get', 'set', 'all', 'any'
+  ]);
+
+  return title
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(word => word.length > 3 && !commonWords.has(word));
+}
+
+/**
+ * Add a dependency if not already present.
+ */
+function addUniqueDependency(feature: Feature, depId: string): void {
+  if (!feature.dependsOn.includes(depId)) {
+    feature.dependsOn.push(depId);
+  }
+}
+
+/**
+ * Dependency keywords and their patterns.
+ */
+const DEPENDENCY_KEYWORDS = [
+  { pattern: /requires?\s+["']?([^"'\n,]+)["']?/gi, type: 'requires' },
+  { pattern: /depends?\s+on\s+["']?([^"'\n,]+)["']?/gi, type: 'depends' },
+  { pattern: /after\s+["']?([^"'\n,]+)["']?/gi, type: 'after' },
+  { pattern: /following\s+["']?([^"'\n,]+)["']?/gi, type: 'following' },
+  { pattern: /once\s+["']?([^"'\n,]+)["']?\s+is\s+(complete|done|ready)/gi, type: 'once' },
+];
+
+/**
+ * Extract dependencies from feature content based on keywords.
+ */
+function extractContentDependencies(
+  feature: Feature,
+  titleToId: Map<string, string>
+): string[] {
+  const text = `${feature.title} ${feature.description}`.toLowerCase();
+  const dependencies: string[] = [];
+
+  for (const { pattern } of DEPENDENCY_KEYWORDS) {
+    let match;
+    // Reset regex state
+    pattern.lastIndex = 0;
+    while ((match = pattern.exec(text)) !== null) {
+      const reference = match[1].trim().toLowerCase();
+
+      // Try to match against known titles/words
+      const matchedId = titleToId.get(reference);
+      if (matchedId && !dependencies.includes(matchedId)) {
+        dependencies.push(matchedId);
+        continue;
+      }
+
+      // Try fuzzy matching against title parts
+      for (const [key, id] of titleToId) {
+        if (reference.includes(key) || key.includes(reference)) {
+          if (!dependencies.includes(id)) {
+            dependencies.push(id);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return dependencies;
+}
+
+/**
+ * Sequential naming patterns.
+ */
+const SEQUENTIAL_PATTERNS = [
+  /^(part|phase|step|stage)\s*(\d+)/i,
+  /^(\d+)\.\s/,
+  /\b(first|second|third|fourth|fifth)\b/i,
+];
+
+const ORDINAL_MAP: Record<string, number> = {
+  'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5
+};
+
+/**
+ * Extract dependencies based on sequential naming.
+ */
+function extractSequentialDependencies(
+  feature: Feature,
+  allFeatures: Feature[]
+): string[] {
+  const dependencies: string[] = [];
+  const titleLower = feature.title.toLowerCase();
+
+  for (const pattern of SEQUENTIAL_PATTERNS) {
+    const match = titleLower.match(pattern);
+    if (!match) continue;
+
+    let prefix: string;
+    let currentNum: number;
+
+    if (match[1] && ORDINAL_MAP[match[1]]) {
+      // Ordinal match (first, second, etc.)
+      prefix = '';
+      currentNum = ORDINAL_MAP[match[1]];
+    } else if (match[2]) {
+      // Numbered match (Part 1, Phase 2, etc.)
+      prefix = match[1]?.toLowerCase() || '';
+      currentNum = parseInt(match[2], 10);
+    } else if (match[1] && !isNaN(parseInt(match[1], 10))) {
+      // Pure number prefix (1. Task, 2. Task)
+      prefix = '';
+      currentNum = parseInt(match[1], 10);
+    } else {
+      continue;
+    }
+
+    // Look for previous numbered feature
+    for (const prevFeature of allFeatures) {
+      if (prevFeature.id === feature.id) continue;
+
+      const prevTitleLower = prevFeature.title.toLowerCase();
+      let prevNum: number | null = null;
+
+      for (const prevPattern of SEQUENTIAL_PATTERNS) {
+        const prevMatch = prevTitleLower.match(prevPattern);
+        if (!prevMatch) continue;
+
+        if (prevMatch[1] && ORDINAL_MAP[prevMatch[1]]) {
+          prevNum = ORDINAL_MAP[prevMatch[1]];
+        } else if (prevMatch[2]) {
+          const prevPrefix = prevMatch[1]?.toLowerCase() || '';
+          if (prefix === prevPrefix) {
+            prevNum = parseInt(prevMatch[2], 10);
+          }
+        } else if (prevMatch[1] && !isNaN(parseInt(prevMatch[1], 10))) {
+          prevNum = parseInt(prevMatch[1], 10);
+        }
+
+        if (prevNum !== null) break;
+      }
+
+      if (prevNum !== null && prevNum === currentNum - 1) {
+        if (!dependencies.includes(prevFeature.id)) {
+          dependencies.push(prevFeature.id);
+        }
+      }
+    }
+  }
+
+  return dependencies;
 }
 
 /**

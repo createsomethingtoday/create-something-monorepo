@@ -88,3 +88,23 @@ export {
   pauseHarness,
   getHarnessStatus,
 } from './runner.js';
+
+// Independence Detection
+export {
+  buildDependencyGraph,
+  detectImplicitDependencies,
+  computeParallelBatches,
+  findIsolatedFeatures,
+  calculateCriticalPath,
+  analyzeIndependence,
+  enhanceDependencies,
+  extractDependencyHints,
+  formatIndependenceAnalysis,
+  getNextParallelBatch,
+  areDependenciesComplete,
+} from './independence.js';
+
+export type {
+  DependencyGraph,
+  IndependenceAnalysis,
+} from './independence.js';
