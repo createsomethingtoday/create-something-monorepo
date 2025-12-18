@@ -8,6 +8,7 @@
 	 */
 
 	import type { CirculationData, ThresholdType, CirculationMode } from '$lib/types/architecture';
+	import { keyboardToggle } from '@create-something/components';
 
 	interface Props {
 		circulation: CirculationData;
@@ -151,11 +152,9 @@
 				onmouseleave={() => activeThreshold = null}
 				onfocus={() => activeThreshold = i}
 				onblur={() => activeThreshold = null}
-				onkeydown={(e: KeyboardEvent) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						activeThreshold = activeThreshold === i ? null : i;
-					}
+				use:keyboardToggle={{
+					pressed: activeThreshold === i,
+					onToggle: (pressed) => activeThreshold = pressed ? i : null
 				}}
 			>
 				<!-- Outer ring -->
