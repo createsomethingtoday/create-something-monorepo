@@ -24,6 +24,7 @@
 	--color-border-emphasis: #d0d0d0;
 
 	--color-hover: rgba(0, 0, 0, 0.03);
+	--color-focus: rgba(0, 0, 0, 0.2);
 
 	/* Spacing - Generous */
 	--space-xs: 0.5rem;
@@ -165,7 +166,7 @@ a {
 
 /* Focus */
 :focus-visible {
-	outline: 1px solid var(--color-fg-primary);
+	outline: 2px solid var(--color-focus);
 	outline-offset: 2px;
 }
 
