@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { SkipToContent } from '@create-something/components';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -24,7 +25,7 @@
 </svelte:head>
 
 <div class="app">
-	<a href="#main-content" class="skip-to-content">Skip to main content</a>
+	<SkipToContent />
 
 	<!-- Canon Navigation -->
 	<nav class="nav-container">
