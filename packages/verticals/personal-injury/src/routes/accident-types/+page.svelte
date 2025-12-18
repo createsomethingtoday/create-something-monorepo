@@ -48,7 +48,7 @@
 			<div class="types-grid">
 				{#each accidentTypes as type}
 					{@const Icon = getIcon(type.slug)}
-					<a href="/accident-types/{type.slug}" class="type-card">
+					<a href="/accident-types/{type.slug}" class="type-card" aria-label="Learn more about {type.name} cases">
 						<div class="card-icon">
 							<Icon size={28} />
 						</div>
@@ -70,7 +70,7 @@
 								</div>
 							{/if}
 
-							<span class="card-link">
+							<span class="card-link" aria-hidden="true">
 								<span>Learn More</span>
 								<ArrowRight size={14} />
 							</span>

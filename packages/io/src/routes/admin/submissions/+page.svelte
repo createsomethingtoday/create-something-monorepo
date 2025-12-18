@@ -160,8 +160,9 @@
 						<button
 							onclick={() => (selectedSubmission = null)}
 							class="close-btn"
+							aria-label="Close detail view"
 						>
-							✕
+							<span aria-hidden="true">✕</span>
 						</button>
 					</div>
 

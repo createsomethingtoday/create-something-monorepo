@@ -126,7 +126,7 @@
 								</div>
 							{/each}
 						</div>
-						<a href="/case-studies/{study.id}" class="case-link">Read more →</a>
+						<a href="/case-studies/{study.id}" class="case-link" aria-label="Read more about {study.title}">Read more <span aria-hidden="true">→</span></a>
 					</div>
 				</article>
 			{/each}

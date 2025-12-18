@@ -104,9 +104,10 @@
                 onclick={() => moveItem(index, index - 1)}
                 disabled={index === 0}
                 title="Move up"
+                aria-label="Move item up"
                 type="button"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <polyline points="18 15 12 9 6 15"/>
                 </svg>
               </button>
@@ -115,9 +116,10 @@
                 onclick={() => moveItem(index, index + 1)}
                 disabled={index === items.length - 1}
                 title="Move down"
+                aria-label="Move item down"
                 type="button"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -125,9 +127,10 @@
                 class="action-btn danger"
                 onclick={() => removeItem(index)}
                 title="Remove"
+                aria-label="Remove item"
                 type="button"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
                 </svg>
