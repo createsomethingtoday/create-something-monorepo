@@ -111,7 +111,9 @@
 			<!-- Search Input -->
 			<div class="flex justify-center">
 				<div class="relative w-full max-w-md">
+					<label for="papers-search" class="sr-only">Search papers</label>
 					<input
+						id="papers-search"
 						type="text"
 						bind:value={searchQuery}
 						placeholder="Search papers..."
@@ -480,5 +482,18 @@
 		border-radius: var(--radius-sm);
 		font-size: var(--text-overline);
 		color: var(--color-fg-muted);
+	}
+
+	/* Screen reader only - visually hidden but accessible */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 </style>

@@ -252,10 +252,12 @@
 
 		<!-- Search -->
 		<div class="search-container">
-			<svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<label for="content-search" class="sr-only">Search content</label>
+			<svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 			</svg>
 			<input
+				id="content-search"
 				type="text"
 				placeholder="Search content..."
 				bind:value={searchQuery}
@@ -778,5 +780,18 @@
 	/* No Content */
 	.no-content {
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+	}
+
+	/* Screen reader only - visually hidden but accessible */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 </style>
