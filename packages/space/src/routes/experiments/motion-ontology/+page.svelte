@@ -222,7 +222,7 @@
 					<select
 						id="trigger"
 						bind:value={triggerType}
-						class="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30"
+						class="form-select w-full px-4 py-3"
 					>
 						{#each triggerOptions as option}
 							<option value={option.value}>{option.label}</option>
@@ -303,35 +303,35 @@
 					</div>
 
 					<!-- Recommendation -->
-					<div class="p-4 bg-black/30 rounded-lg space-y-2">
+					<div class="recommendation-box p-4 space-y-2">
 						<h3 class="section-label">
 							Recommendation
 						</h3>
 						<p class="emphasis-text">
 							<span
 								class="font-medium {result.phenomenological.recommendation.action === 'keep'
-									? 'text-green-400'
+									? 'action-keep'
 									: result.phenomenological.recommendation.action === 'remove'
-										? 'text-red-400'
-										: 'text-yellow-400'}"
+										? 'action-remove'
+										: 'action-modify'}"
 							>
 								{result.phenomenological.recommendation.action.toUpperCase()}
 							</span>
 							— {result.phenomenological.recommendation.reasoning}
 						</p>
 						{#if result.phenomenological.recommendation.modification}
-							<p class="text-white/60 text-sm">
+							<p class="modification-text">
 								Modification: {result.phenomenological.recommendation.modification}
 							</p>
 						{/if}
 					</div>
 
 					<!-- Confidence -->
-					<div class="flex items-center gap-2 text-sm text-white/40">
+					<div class="confidence-row flex items-center gap-2">
 						<span>Confidence:</span>
-						<div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+						<div class="confidence-track flex-1 h-2 overflow-hidden">
 							<div
-								class="h-full bg-white/50 rounded-full"
+								class="confidence-fill h-full"
 								style="width: {result.phenomenological.confidence * 100}%"
 							></div>
 						</div>
@@ -353,17 +353,17 @@
 
 					<!-- Puppeteer Debug Info -->
 					{#if result.technical.debug?.puppeteerUsed}
-						<div class="p-3 bg-black/30 rounded-lg text-sm space-y-2">
+						<div class="debug-box p-3 space-y-2">
 							<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
 								<div>
 									<div class="metric-label">Element Found</div>
-									<div class="text-lg font-medium {result.technical.debug.elementFound ? 'text-green-400' : 'text-red-400'}">
+									<div class="metric-value-lg {result.technical.debug.elementFound ? 'status-success' : 'status-error'}">
 										{result.technical.debug.elementFound ? 'Yes' : 'No'}
 									</div>
 								</div>
 								<div>
 									<div class="metric-label">Hover Triggered</div>
-									<div class="text-lg font-medium {result.technical.debug.realHoverTriggered ? 'text-green-400' : 'text-amber-400'}">
+									<div class="metric-value-lg {result.technical.debug.realHoverTriggered ? 'status-success' : 'status-warning'}">
 										{result.technical.debug.realHoverTriggered ? 'Yes' : 'No'}
 									</div>
 								</div>
@@ -381,25 +381,25 @@
 								</div>
 							</div>
 							{#if result.technical.debug.captureTime}
-								<div class="text-white/40 text-xs">Captured in {result.technical.debug.captureTime}ms</div>
+								<div class="capture-time">Captured in {result.technical.debug.captureTime}ms</div>
 							{/if}
 						</div>
 					{/if}
 
-					<div class="grid md:grid-cols-3 gap-4 text-sm">
-						<div class="p-3 bg-black/30 rounded-lg">
+					<div class="grid md:grid-cols-3 gap-4">
+						<div class="metric-box p-3">
 							<div class="code-secondary">Running Animations</div>
 							<div class="metric-value-xl">
 								{result.technical.animations.length}
 							</div>
 						</div>
-						<div class="p-3 bg-black/30 rounded-lg">
+						<div class="metric-box p-3">
 							<div class="code-secondary">CSS Transitions</div>
 							<div class="metric-value-xl">
 								{result.technical.transitions.length}
 							</div>
 						</div>
-						<div class="p-3 bg-black/30 rounded-lg">
+						<div class="metric-box p-3">
 							<div class="code-secondary">Total Duration</div>
 							<div class="metric-value-xl">
 								{result.technical.timing.totalDuration}ms
@@ -410,7 +410,7 @@
 					<!-- Transitions List -->
 					{#if result.technical.transitions.length > 0}
 						<div class="space-y-2">
-							<h3 class="text-sm font-medium text-white/50">CSS Transitions</h3>
+							<h3 class="list-heading">CSS Transitions</h3>
 							<div class="grid md:grid-cols-2 gap-2">
 								{#each result.technical.transitions.slice(0, 10) as trans}
 									<div class="code-block p-3 font-mono">
@@ -430,7 +430,7 @@
 					<!-- Running Animations List -->
 					{#if result.technical.animations.length > 0}
 						<div class="space-y-2">
-							<h3 class="text-sm font-medium text-white/50">Running Animations</h3>
+							<h3 class="list-heading">Running Animations</h3>
 							<div class="space-y-2">
 								{#each result.technical.animations as anim}
 									<div class="code-block p-3 font-mono">
@@ -450,7 +450,7 @@
 					<!-- CSS Definitions -->
 					{#if result.technical.cssDefinitions && result.technical.cssDefinitions.length > 0}
 						<div class="space-y-2">
-							<h3 class="text-sm font-medium text-white/50">CSS Animation/Transition Definitions</h3>
+							<h3 class="list-heading">CSS Animation/Transition Definitions</h3>
 							<div class="space-y-2 max-h-64 overflow-y-auto">
 								{#each result.technical.cssDefinitions.slice(0, 20) as def}
 									<div class="code-block p-3 font-mono">
@@ -478,10 +478,10 @@
 					<!-- Properties -->
 					{#if result.technical.propertiesAnimated.length > 0}
 						<div class="space-y-2">
-							<h3 class="text-sm font-medium text-white/50">Properties Animated</h3>
+							<h3 class="list-heading">Properties Animated</h3>
 							<div class="flex flex-wrap gap-2">
 								{#each result.technical.propertiesAnimated as prop}
-									<span class="px-2 py-1 bg-black/30 rounded text-xs text-white/70 font-mono">
+									<span class="property-tag px-2 py-1 font-mono">
 										{prop}
 									</span>
 								{/each}
@@ -491,19 +491,19 @@
 				</div>
 
 				<!-- Metadata -->
-				<div class="text-center text-sm text-white/30">
+				<div class="metadata-text text-center">
 					Analyzed {result.metadata.url} in {result.metadata.duration}ms
 				</div>
 			</div>
 		{/if}
 
 		<!-- Framework Reference -->
-		<div class="mt-12 p-6 bg-white/5 border border-white/10 rounded-xl">
+		<div class="framework-card mt-12 p-6">
 			<h2 class="card-title mb-4">Heideggerian Framework</h2>
-			<div class="grid md:grid-cols-2 gap-6 text-sm">
+			<div class="grid md:grid-cols-2 gap-6">
 				<div class="space-y-3">
 					<h3 class="subsection-title">Ontological Modes</h3>
-					<div class="space-y-2 text-white/50">
+					<div class="framework-text space-y-2">
 						<p>
 							<span class="term-zuhandenheit font-medium">Zuhandenheit</span> — Ready-to-hand. Motion
 							recedes into the background, supporting intention without demanding attention.
@@ -516,7 +516,7 @@
 				</div>
 				<div class="space-y-3">
 					<h3 class="subsection-title">Disclosure Types</h3>
-					<ul class="text-white/50 space-y-1">
+					<ul class="framework-text space-y-1">
 						<li><span class="term-label">state_transition</span> — Loading, expanding, toggling</li>
 						<li><span class="term-label">spatial_relationship</span> — Belonging, source/target</li>
 						<li><span class="term-label">user_confirmation</span> — Input acknowledged</li>
