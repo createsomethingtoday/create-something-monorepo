@@ -218,6 +218,9 @@
 								placeholder="Enter your email address"
 								class="newsletter-input flex-1 px-6 py-4"
 								required
+								aria-required="true"
+								aria-invalid={message?.type === 'error'}
+								aria-describedby={message ? 'newsletter-message' : undefined}
 								disabled={isSubmitting}
 							/>
 							<button
@@ -250,7 +253,12 @@
 						{/if}
 
 						{#if message}
-							<div class="mt-4 p-4 message-{message.type}">
+							<div
+								id="newsletter-message"
+								class="mt-4 p-4 message-{message.type}"
+								role="alert"
+								aria-live="polite"
+							>
 								{message.text}
 							</div>
 						{/if}

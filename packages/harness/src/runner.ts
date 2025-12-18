@@ -26,6 +26,7 @@ import {
   getRecentCommits,
   createHarnessBranch,
   generatePrimingPrompt,
+  discoverDryContext,
 } from './session.js';
 import {
   createCheckpointTracker,
@@ -194,14 +195,17 @@ export async function runHarness(
     // Mark as in progress
     await updateIssueStatus(nextIssue.id, 'in_progress', options.cwd);
 
-    // 3. Build priming context
+    // 3. Build priming context with DRY discovery
     const recentCommits = await getRecentCommits(options.cwd, 10);
+    const dryContext = await discoverDryContext(nextIssue.title, options.cwd);
     const primingContext: PrimingContext = {
       currentIssue: nextIssue,
       recentCommits,
       lastCheckpoint,
       redirectNotes,
       sessionGoal: `Complete: ${nextIssue.title}\n\n${nextIssue.description || ''}`,
+      existingPatterns: dryContext.existingPatterns,
+      relevantFiles: dryContext.relevantFiles,
     };
 
     // Clear redirect notes for next iteration

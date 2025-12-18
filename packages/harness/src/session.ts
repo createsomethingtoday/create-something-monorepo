@@ -4,11 +4,113 @@
  * Session Spawner: Runs Claude Code sessions with priming context.
  */
 
-import { spawn } from 'node:child_process';
+import { spawn, exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import { writeFile, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { BeadsIssue, PrimingContext, SessionResult, SessionOutcome } from './types.js';
+
+const execAsync = promisify(exec);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRY Context Discovery
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Extract meaningful keywords from an issue title.
+ */
+function extractKeywords(title: string): string[] {
+  const stopWords = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'be', 'been',
+    'add', 'update', 'create', 'implement', 'fix', 'use', 'make', 'get',
+    'all', 'across', 'properties', 'audit', 'verify', 'check',
+  ]);
+
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !stopWords.has(word))
+    .slice(0, 5);
+}
+
+/**
+ * Discover existing patterns and files relevant to an issue.
+ * Helps agents avoid duplicating existing work (DRY enforcement).
+ */
+export async function discoverDryContext(
+  issueTitle: string,
+  cwd: string
+): Promise<{ existingPatterns: string[]; relevantFiles: string[] }> {
+  const existingPatterns: string[] = [];
+  const relevantFiles: string[] = [];
+
+  const keywords = extractKeywords(issueTitle);
+
+  // Always include CLAUDE.md if it exists
+  try {
+    await execAsync('test -f CLAUDE.md', { cwd });
+    relevantFiles.push('CLAUDE.md');
+  } catch {
+    // CLAUDE.md doesn't exist
+  }
+
+  // Include .claude/rules (max 3)
+  try {
+    const { stdout } = await execAsync('ls .claude/rules/*.md 2>/dev/null || true', { cwd });
+    const rules = stdout.trim().split('\n').filter(Boolean);
+    if (rules.length > 0) {
+      relevantFiles.push(...rules.slice(0, 3));
+      existingPatterns.push('Project rules exist in .claude/rules/ - read before implementing');
+    }
+  } catch {
+    // No rules
+  }
+
+  // Search for files by keyword (max 10 files, 3 keywords)
+  for (const keyword of keywords.slice(0, 3)) {
+    try {
+      const { stdout } = await execAsync(
+        `find . -type f \\( -name "*.ts" -o -name "*.svelte" -o -name "*.css" \\) -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" 2>/dev/null | xargs grep -l -i "${keyword}" 2>/dev/null | head -5`,
+        { cwd }
+      );
+      for (const file of stdout.trim().split('\n').filter(Boolean)) {
+        if (!relevantFiles.includes(file) && relevantFiles.length < 10) {
+          relevantFiles.push(file);
+        }
+      }
+    } catch {
+      // No matches
+    }
+  }
+
+  // Pattern hints based on issue content
+  const lowerTitle = issueTitle.toLowerCase();
+
+  if (lowerTitle.includes('component') || lowerTitle.includes('ui')) {
+    existingPatterns.push('Check existing components in packages/components/src/lib/');
+  }
+  if (lowerTitle.includes('style') || lowerTitle.includes('css')) {
+    existingPatterns.push('Use Canon tokens from packages/components/src/lib/styles/canon.css');
+  }
+  if (lowerTitle.includes('a11y') || lowerTitle.includes('accessibility') || lowerTitle.includes('keyboard')) {
+    existingPatterns.push('Use shared a11y actions from packages/components/src/lib/actions/a11y.ts');
+  }
+  if (lowerTitle.includes('api') || lowerTitle.includes('endpoint')) {
+    existingPatterns.push('Follow +server.ts patterns in existing routes');
+  }
+  if (lowerTitle.includes('focus') || lowerTitle.includes('skip')) {
+    existingPatterns.push('Use .skip-to-content and .a11y-focus classes from canon.css');
+  }
+
+  return { existingPatterns, relevantFiles };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Priming Prompt Generation
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Generate priming context for a session.
@@ -30,6 +132,34 @@ export function generatePrimingPrompt(context: PrimingContext): string {
   if (context.currentIssue.description) {
     lines.push('**Description**:');
     lines.push(context.currentIssue.description);
+    lines.push('');
+  }
+
+  // DRY Principles (static)
+  lines.push('## DRY Principles');
+  lines.push('');
+  lines.push('Before writing code:');
+  lines.push('1. **Read first** - ALWAYS read existing files before modifying or creating');
+  lines.push('2. **Search for patterns** - Use Grep/Glob to find existing implementations');
+  lines.push("3. **Reuse, don't recreate** - If a pattern exists, USE it");
+  lines.push('4. **Edit over create** - Prefer editing existing files over new ones');
+  lines.push('');
+
+  // Existing patterns (dynamic)
+  if (context.existingPatterns && context.existingPatterns.length > 0) {
+    lines.push('## Existing Patterns to Reuse');
+    for (const pattern of context.existingPatterns) {
+      lines.push(`- ${pattern}`);
+    }
+    lines.push('');
+  }
+
+  // Relevant files (dynamic)
+  if (context.relevantFiles && context.relevantFiles.length > 0) {
+    lines.push('## Relevant Files to Reference');
+    for (const file of context.relevantFiles) {
+      lines.push(`- \`${file}\``);
+    }
     lines.push('');
   }
 

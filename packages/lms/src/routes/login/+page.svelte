@@ -59,7 +59,7 @@
 		<p class="subtitle">Continue your learning journey</p>
 
 		{#if error}
-			<div class="error-message">{error}</div>
+			<div id="login-error" class="error-message" role="alert" aria-live="polite">{error}</div>
 		{/if}
 
 		<form onsubmit={handleSubmit}>
@@ -70,6 +70,9 @@
 					id="email"
 					bind:value={email}
 					required
+					aria-required="true"
+					aria-invalid={!!error}
+					aria-describedby={error ? 'login-error' : undefined}
 					autocomplete="email"
 				/>
 			</div>
@@ -81,6 +84,8 @@
 					id="password"
 					bind:value={password}
 					required
+					aria-required="true"
+					aria-invalid={!!error}
 					autocomplete="current-password"
 				/>
 			</div>
