@@ -15,6 +15,8 @@ export interface Feature {
   description: string;
   priority: number; // 0-4 (P0=highest)
   dependsOn: string[]; // Feature IDs this depends on
+  blockedBy: string[]; // Feature IDs that block this one (reverse of dependsOn)
+  isIndependent: boolean; // True if no dependencies - can run in parallel
   acceptanceCriteria: string[];
   labels: string[];
 }
@@ -23,6 +25,27 @@ export interface ParsedSpec {
   title: string;
   overview: string;
   features: Feature[];
+  /** Features with no dependencies that can be executed in parallel */
+  independentFeatures: Feature[];
+  /** Dependency graph metadata for swarm orchestration */
+  dependencyGraph: DependencyGraph;
+}
+
+/**
+ * Dependency graph metadata for analyzing task independence.
+ * Used by the swarm orchestrator to determine parallel execution batches.
+ */
+export interface DependencyGraph {
+  /** Map of feature ID to features that depend on it */
+  blocksMap: Map<string, string[]>;
+  /** Map of feature ID to features it depends on */
+  dependsOnMap: Map<string, string[]>;
+  /** Features with no dependencies (can start immediately) */
+  roots: string[];
+  /** Features with no dependents (end points) */
+  leaves: string[];
+  /** Maximum depth of the dependency chain */
+  maxDepth: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,6 +133,8 @@ export interface SessionResult {
   contextUsed: number;
   durationMs: number;
   error: string | null;
+  /** Detected model information */
+  model: DetectedModel | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -330,3 +355,65 @@ export interface SwarmCheckpoint extends Checkpoint {
   /** Parallelism efficiency (completed / (completed + failed) for parallel tasks) */
   parallelismEfficiency: number | null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Model Detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Known Claude model families and their capabilities.
+ * Philosophy: Different models have different strengths—the harness adapts.
+ */
+export type ClaudeModelFamily = 'opus' | 'sonnet' | 'haiku' | 'unknown';
+
+/**
+ * Detected model information from a Claude Code session.
+ */
+export interface DetectedModel {
+  /** Full model identifier (e.g., "claude-opus-4-5-20251101") */
+  modelId: string;
+  /** Model family (opus, sonnet, haiku) */
+  family: ClaudeModelFamily;
+  /** Model version date if parseable (e.g., "20251101") */
+  versionDate: string | null;
+  /** Whether this is the latest version of the family */
+  isLatest: boolean;
+  /** Raw model string as returned by CLI */
+  raw: string;
+}
+
+/**
+ * Model-specific configuration for harness behavior.
+ * Different models may require different thresholds and strategies.
+ */
+export interface ModelSpecificConfig {
+  /** Confidence thresholds by model family */
+  confidenceThresholds: Record<ClaudeModelFamily, number>;
+  /** Context window sizes by model family (for overflow prediction) */
+  contextWindows: Record<ClaudeModelFamily, number>;
+  /** Retry strategies by model family */
+  retryStrategies: Record<ClaudeModelFamily, Partial<FailureStrategies>>;
+}
+
+export const DEFAULT_MODEL_SPECIFIC_CONFIG: ModelSpecificConfig = {
+  confidenceThresholds: {
+    opus: 0.6, // Opus is more capable, can tolerate lower confidence
+    sonnet: 0.7, // Default threshold
+    haiku: 0.8, // Haiku may need higher confidence to trust results
+    unknown: 0.7,
+  },
+  contextWindows: {
+    opus: 200000, // 200k tokens
+    sonnet: 200000, // 200k tokens
+    haiku: 200000, // 200k tokens
+    unknown: 100000,
+  },
+  retryStrategies: {
+    opus: {}, // Use defaults
+    sonnet: {}, // Use defaults
+    haiku: {
+      contextOverflow: 'skip', // Haiku more likely to overflow
+    },
+    unknown: {},
+  },
+};

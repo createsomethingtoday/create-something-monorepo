@@ -9,7 +9,8 @@
     "./workflows": "./src/workflows/index.ts",
     "./types": "./src/types/index.ts",
     "./canon": "./src/canon/tokens.css",
-    "./canon.css": "./canon.css"
+    "./canon.css": "./canon.css",
+    "./styles/vertical-base.css": "./src/styles/vertical-base.css"
   },
   "files": [
     "src",

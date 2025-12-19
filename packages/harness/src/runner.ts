@@ -13,8 +13,11 @@ import type {
   CheckpointPolicy,
   PrimingContext,
   FailureHandlingConfig,
+  SwarmConfig,
+  BeadsIssue,
+  SessionResult,
 } from './types.js';
-import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG } from './types.js';
+import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG, DEFAULT_SWARM_CONFIG } from './types.js';
 import { parseSpec, formatSpecSummary } from './spec-parser.js';
 import {
   createIssuesFromFeatures,
@@ -48,6 +51,13 @@ import {
   resetTracker,
   formatCheckpointDisplay,
   calculateConfidence,
+  // Swarm tracking
+  startSwarmBatch,
+  registerSwarmAgent,
+  updateSwarmAgentStatus,
+  completeSwarmBatch,
+  generateSwarmCheckpoint,
+  formatSwarmProgressDisplay,
 } from './checkpoint.js';
 import {
   takeSnapshot,
@@ -626,6 +636,107 @@ export async function getHarnessStatus(
     }
     console.log('');
   }
+}
+
+/**
+ * Run multiple sessions in parallel for independent tasks.
+ * Uses Promise.all to execute up to maxParallel sessions concurrently.
+ */
+export async function runParallelSessions(
+  issues: BeadsIssue[],
+  harnessState: HarnessState,
+  checkpointTracker: ReturnType<typeof createCheckpointTracker>,
+  options: {
+    cwd: string;
+    dryRun?: boolean;
+    maxParallel?: number;
+  }
+): Promise<SessionResult[]> {
+  const maxParallel = options.maxParallel ?? DEFAULT_SWARM_CONFIG.maxParallelAgents;
+  const batchSize = Math.min(issues.length, maxParallel);
+
+  console.log(`\n🐝 Starting swarm: ${batchSize} parallel agents`);
+
+  // Start swarm batch tracking
+  const batchId = startSwarmBatch(checkpointTracker);
+
+  // Prepare session promises
+  const sessionPromises = issues.slice(0, batchSize).map(async (issue, index) => {
+    const agentId = `agent-${index.toString().padStart(3, '0')}`;
+
+    // Register agent
+    registerSwarmAgent(checkpointTracker, agentId, issue.id);
+
+    // Mark issue as in progress
+    await updateIssueStatus(issue.id, 'in_progress', options.cwd);
+
+    // Build priming context
+    const recentCommits = await getRecentCommits(options.cwd, 5);
+    const dryContext = await discoverDryContext(issue.title, options.cwd);
+    const primingContext: PrimingContext = {
+      currentIssue: issue,
+      recentCommits,
+      lastCheckpoint: null,
+      redirectNotes: [],
+      sessionGoal: `Complete: ${issue.title}\n\n${issue.description || ''}`,
+      existingPatterns: dryContext.existingPatterns,
+      relevantFiles: dryContext.relevantFiles,
+    };
+
+    console.log(`  [${agentId}] Starting: ${issue.id} - ${issue.title.slice(0, 40)}...`);
+
+    try {
+      // Run session
+      const result = await runSession(issue, primingContext, {
+        cwd: options.cwd,
+        dryRun: options.dryRun,
+      });
+
+      // Update agent status
+      updateSwarmAgentStatus(checkpointTracker, agentId, result);
+
+      // Handle result
+      if (result.outcome === 'success') {
+        await updateIssueStatus(issue.id, 'closed', options.cwd);
+        console.log(`  [${agentId}] ✅ Completed: ${issue.id}`);
+      } else {
+        console.log(`  [${agentId}] ${getOutcomeIcon(result.outcome)} Failed: ${issue.id} - ${result.outcome}`);
+      }
+
+      return result;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorResult: SessionResult = {
+        issueId: issue.id,
+        outcome: 'failure',
+        summary: 'Session crashed',
+        gitCommit: null,
+        contextUsed: 0,
+        durationMs: 0,
+        error: errorMsg,
+        model: null,
+      };
+      updateSwarmAgentStatus(checkpointTracker, agentId, errorResult);
+      console.log(`  [${agentId}] ❌ Error: ${issue.id} - ${errorMsg.slice(0, 50)}`);
+      return errorResult;
+    }
+  });
+
+  // Wait for all sessions to complete
+  const results = await Promise.all(sessionPromises);
+
+  // Complete swarm batch
+  const swarmProgress = completeSwarmBatch(checkpointTracker);
+  if (swarmProgress) {
+    console.log('\n' + formatSwarmProgressDisplay(swarmProgress));
+  }
+
+  // Record results
+  for (const result of results) {
+    recordSession(checkpointTracker, result);
+  }
+
+  return results;
 }
 
 /**
