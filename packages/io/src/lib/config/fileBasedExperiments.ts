@@ -325,6 +325,55 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ║   The tool recedes; the work continues.   ║
     ╚═══════════════════════════════════════════╝
 `
+	},
+	{
+		id: 'file-heideggerian-form',
+		slug: 'heideggerian-form-experience',
+		title: 'Heideggerian Form Experience: When Forms Serve Rather Than Extract',
+		description: 'An interactive experiment demonstrating Heideggerian philosophy through service configuration. Form behavior embodies Zuhandenheit (transparent use), Vorhandenheit (validation breakdown), Gestell (extraction patterns), and Gelassenheit (service-oriented design).',
+		excerpt_short: 'Forms that demonstrate philosophy through interaction',
+		excerpt_long: 'This experiment presents a live service configuration form alongside a real-time database view. As users configure services, the form demonstrates Heideggerian concepts: Zuhandenheit when flowing smoothly, Vorhandenheit when validation breaks, Gestell through meta-commentary on extraction, and Gelassenheit through forms that serve user intent.',
+		category: 'research',
+		tags: ['Heidegger', 'Forms', 'UX', 'Interactive', 'Philosophy', 'D1', 'Subtractive Triad'],
+		created_at: '2025-12-19T00:00:00Z',
+		updated_at: '2025-12-19T00:00:00Z',
+		reading_time_minutes: 8,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Form recedes into transparent use
+			'heidegger-vorhandenheit', // Validation makes form visible
+			'heidegger-gestell', // Meta-commentary on extraction
+			'heidegger-gelassenheit', // Neither submission nor rejection
+			'rams-principle-4', // Understandable - form teaches through use
+			'rams-principle-5' // Unobtrusive - no unnecessary friction
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════╗
+    ║   HEIDEGGERIAN FORM EXPERIENCE                                        ║
+    ║                                                                       ║
+    ║   ┌─────────────────────────────┬────────────────────────────────┐    ║
+    ║   │                             │                                │    ║
+    ║   │    SERVICE CONFIGURATION    │     LIVE DATABASE              │    ║
+    ║   │                             │                                │    ║
+    ║   │    ┌─ Service Type ────┐    │     ┌────────────────────────┐ │    ║
+    ║   │    │ [Automation    ▼] │    │     │ automation / workflow  │ │    ║
+    ║   │    └───────────────────┘    │     │ 2 features · growth    │ │    ║
+    ║   │                             │     ├────────────────────────┤ │    ║
+    ║   │    ┌─ Scope ───────────┐    │     │ transformation / proc  │ │    ║
+    ║   │    │ [Workflow      ▼] │    │     │ 4 features · enterprise│ │    ║
+    ║   │    └───────────────────┘    │     └────────────────────────┘ │    ║
+    ║   │                             │                                │    ║
+    ║   │    ┌─ Features ────────┐    │     "The form recedes;         │    ║
+    ║   │    │ ☑ Routing         │    │      the service emerges."     │    ║
+    ║   │    │ ☐ Triggers        │    │                                │    ║
+    ║   │    └───────────────────┘    │                                │    ║
+    ║   │                             │                                │    ║
+    ║   └─────────────────────────────┴────────────────────────────────┘    ║
+    ║                                                                       ║
+    ║   Zuhandenheit → Vorhandenheit → Gestell → Gelassenheit              ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+`
 	}
 ];
 
