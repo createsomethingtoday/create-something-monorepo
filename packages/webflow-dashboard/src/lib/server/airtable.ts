@@ -1,5 +1,5 @@
 import Airtable from 'airtable';
-import type { Asset, Creator, ApiKey } from '$lib/types';
+import type { Asset, Creator, ApiKey, RelatedAsset } from '$lib/types';
 
 // Airtable table IDs
 const TABLES = {
@@ -114,11 +114,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 */
 		async setVerificationToken(userId: string, token: string, expirationTime: Date): Promise<void> {
 			// Step 1: Clear old token
+			// Note: null is required to clear fields and trigger Airtable automation
 			await base(TABLES.USERS).update([{
 				id: userId,
 				fields: {
-					[FIELDS.VERIFICATION_TOKEN]: null,
-					[FIELDS.TOKEN_EXPIRATION]: null
+					[FIELDS.VERIFICATION_TOKEN]: null as unknown as string,
+					[FIELDS.TOKEN_EXPIRATION]: null as unknown as string
 				}
 			}]);
 
@@ -166,8 +167,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			await base(TABLES.USERS).update([{
 				id: userId,
 				fields: {
-					[FIELDS.TOKEN_EXPIRATION]: null,
-					[FIELDS.VERIFICATION_TOKEN]: null
+					[FIELDS.TOKEN_EXPIRATION]: null as unknown as string,
+					[FIELDS.VERIFICATION_TOKEN]: null as unknown as string
 				}
 			}]);
 		},
@@ -210,29 +211,76 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
-		 * Get single asset by ID
+		 * Get single asset by ID with all fields
 		 */
 		async getAsset(id: string): Promise<Asset | null> {
 			try {
 				const record = await base(TABLES.ASSETS).find(id);
 
+				// Extract carousel images
+				const carouselImages = (record.fields['🖼️Carousel Images'] as unknown as { url: string }[] | undefined)?.map(img => img.url) || [];
+
+				// Clean status string (remove emojis)
+				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
+				const cleanedStatus = rawStatus.replace(/[^\w\s]/g, '').trim() as Asset['status'];
+
 				return {
 					id: record.id,
-					name: record.fields['🆎Name'] as string || '',
+					name: record.fields['Name'] as string || '',
 					description: record.fields['📝Description'] as string || '',
+					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
+					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
-					status: record.fields['🚀Marketplace Status'] as Asset['status'] || 'Draft',
+					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as unknown as { url: string }[] | undefined)?.[0]?.url,
+					secondaryThumbnailUrl: (record.fields['fldzKxNCXcgCnEwxu'] as unknown as { url: string }[] | undefined)?.[0]?.url,
+					carouselImages,
 					websiteUrl: record.fields['🔗Website URL'] as string,
+					previewUrl: record.fields['🔗Preview Site URL'] as string || record.fields['fldROrXCnuZyKNCxW'] as string,
 					marketplaceUrl: record.fields['🔗Marketplace URL'] as string,
 					submittedDate: record.fields['📅Submitted Date'] as string,
 					publishedDate: record.fields['📅Published Date'] as string,
+					decisionDate: record.fields['🚀📅Decision Date'] as string,
 					uniqueViewers: record.fields['📋 Unique Viewers'] as number,
 					cumulativePurchases: record.fields['📋 Cumulative Purchases'] as number,
-					cumulativeRevenue: record.fields['📋 Cumulative Revenue'] as number
+					cumulativeRevenue: record.fields['📋 Cumulative Revenue'] as number,
+					// Review fields
+					latestReviewStatus: record.fields['📝Latest Review Status'] as string,
+					latestReviewDate: record.fields['📝Latest Review Date'] as string,
+					latestReviewFeedback: (record.fields['🖌️📝Latest Review Feedback'] as string[] | undefined)?.[0],
+					rejectionFeedback: record.fields['🚩Rejection Feedback'] as string || record.fields['🖌Rejection Feedback'] as string,
+					rejectionFeedbackHtml: record.fields['🚩Rejection Feedback.html'] as string || record.fields['🖌Rejection Feedback.html'] as string,
+					qualityScore: record.fields['🖌️Initial Quality Score'] as number,
+					priceString: record.fields['🥞💲Template Price String (🏗️ only)'] as string
 				};
 			} catch {
 				return null;
+			}
+		},
+
+		/**
+		 * Get related assets (other published templates, excluding current)
+		 */
+		async getRelatedAssets(assetId: string, limit: number = 6): Promise<RelatedAsset[]> {
+			try {
+				const escapedAssetId = escapeAirtableString(assetId);
+				const records = await base(TABLES.ASSETS)
+					.select({
+						filterByFormula: `AND(RECORD_ID() != '${escapedAssetId}', {🚀Marketplace Status} = 'Published')`,
+						maxRecords: limit,
+						fields: ['Name', '🆎Type', '🖼️Thumbnail Image']
+					})
+					.firstPage();
+
+				return records.map(record => ({
+					id: record.id,
+					name: record.fields['Name'] as string || 'Untitled',
+					type: record.fields['🆎Type'] as string || 'Template',
+					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as unknown as { url: string }[] | undefined)?.[0]?.url
+				}));
+			} catch (err) {
+				console.error('Error fetching related assets:', err);
+				return [];
 			}
 		},
 

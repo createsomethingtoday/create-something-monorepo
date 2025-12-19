@@ -1,5 +1,4 @@
 import type { PageServerLoad } from './$types';
-import type { Asset } from '$lib/types';
 import { getAirtableClient } from '$lib/server/airtable';
 import { error } from '@sveltejs/kit';
 
@@ -14,18 +13,21 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 
 	try {
 		const airtable = getAirtableClient(platform.env);
-		const asset = await airtable.getAsset(params.id);
+
+		// Fetch asset and related assets in parallel
+		const [asset, relatedAssets] = await Promise.all([
+			airtable.getAsset(params.id),
+			airtable.getRelatedAssets(params.id, 6)
+		]);
 
 		if (!asset) {
 			throw error(404, 'Asset not found');
 		}
 
-		// Verify ownership by checking if user has access to this asset
-		// (In a real app, you'd verify the asset belongs to the user)
-
 		return {
 			user: locals.user,
-			asset
+			asset,
+			relatedAssets
 		};
 	} catch (err) {
 		if (err && typeof err === 'object' && 'status' in err) {
