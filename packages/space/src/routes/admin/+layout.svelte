@@ -9,8 +9,6 @@
 	];
 </script>
 
-<a href="#main-content" class="skip-link">Skip to main content</a>
-
 <div class="admin-layout">
 	<nav class="admin-nav">
 		<div class="nav-container">
@@ -40,20 +38,6 @@
 <style>
 	:global(body) {
 		background: var(--color-bg-pure);
-	}
-
-	.skip-link {
-		position: absolute;
-		top: -40px;
-		left: 0;
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
-		padding: var(--space-xs) var(--space-sm);
-		z-index: 100;
-	}
-
-	.skip-link:focus {
-		top: 0;
 	}
 
 	.admin-layout {
