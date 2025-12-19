@@ -137,20 +137,25 @@
 </div>
 
 <style>
+	/* ==========================================================================
+	   StatusSection - Collapsible asset group with Canon spacing
+	   ========================================================================== */
+
 	.status-section {
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
-		background: var(--color-bg-surface);
+		background: var(--color-bg-pure);
 		overflow: hidden;
 	}
 
+	/* Header - Clickable toggle with status indicator */
 	.header {
 		width: 100%;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: var(--space-md) var(--space-lg);
-		background: none;
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-surface);
 		border: none;
 		cursor: pointer;
 		transition: background var(--duration-micro) var(--ease-standard);
@@ -167,7 +172,7 @@
 	.header-left {
 		display: flex;
 		align-items: center;
-		gap: var(--space-md);
+		gap: var(--space-sm);
 	}
 
 	.header-right {
@@ -175,9 +180,10 @@
 		align-items: center;
 	}
 
+	/* Status icon badge - colored circle with icon */
 	.icon-badge {
-		width: 32px;
-		height: 32px;
+		width: 28px;
+		height: 28px;
 		border-radius: var(--radius-full);
 		display: flex;
 		align-items: center;
@@ -187,11 +193,12 @@
 
 	.status-title {
 		font-size: var(--text-body);
-		font-weight: 600;
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
+	/* Chevron - rotates when expanded */
 	.chevron {
 		color: var(--color-fg-tertiary);
 		transition: transform var(--duration-standard) var(--ease-standard);
@@ -201,12 +208,14 @@
 		transform: rotate(180deg);
 	}
 
+	/* Content area - contains the table */
 	.content {
 		border-top: 1px solid var(--color-border-default);
 	}
 
+	/* Empty state when no assets in this status */
 	.empty-state {
-		padding: var(--space-xl);
+		padding: var(--space-lg) var(--space-md);
 		text-align: center;
 	}
 
@@ -216,15 +225,16 @@
 		margin: 0;
 	}
 
+	/* Show more button - reveals additional assets */
 	.show-more {
 		width: 100%;
-		padding: var(--space-md);
+		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-subtle);
 		border: none;
 		border-top: 1px solid var(--color-border-default);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
-		font-weight: 600;
+		font-weight: var(--font-medium);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}

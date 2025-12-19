@@ -18,13 +18,11 @@
 <style>
 	.table-container {
 		overflow-x: auto;
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		background: var(--color-bg-surface);
 	}
 
 	.data-table {
 		width: 100%;
 		border-collapse: collapse;
+		background: var(--color-bg-surface);
 	}
 </style>

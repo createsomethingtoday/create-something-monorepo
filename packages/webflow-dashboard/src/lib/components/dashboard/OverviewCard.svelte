@@ -51,23 +51,30 @@
 </Card>
 
 <style>
+	/* ==========================================================================
+	   OverviewCard - Status summary with golden ratio proportions
+	   φ-based spacing: header → body → footer
+	   ========================================================================== */
+
 	:global(.overview-card) {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
-		padding: var(--space-lg);
-		width: 280px;
+		gap: var(--space-sm);
+		padding: var(--space-md);
+		width: 240px;
+		min-height: 180px;
 		flex-shrink: 0;
 		cursor: pointer;
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	:global(.overview-card:hover) {
-		transform: translateY(-8px);
-		box-shadow: var(--shadow-xl);
+		transform: translateY(-4px);
+		box-shadow: var(--shadow-lg);
 		border-color: var(--color-border-emphasis);
 	}
 
+	/* Header - Icon + Status badge */
 	.card-header {
 		display: flex;
 		align-items: center;
@@ -79,37 +86,39 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
+		width: 40px;
+		height: 40px;
+		border-radius: var(--radius-full);
 		flex-shrink: 0;
 	}
 
+	/* Body - Large count + label */
 	.card-body {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: calc(var(--space-xs) / 1.618);
+		flex: 1;
 	}
 
 	.count {
-		font-size: var(--text-display);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		line-height: 1;
 	}
 
 	.label {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
 	}
 
+	/* Footer - Link to view all */
 	.card-footer {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
-		margin-top: auto;
+		gap: calc(var(--space-xs) / 2);
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
 		padding-top: var(--space-sm);
 		border-top: 1px solid var(--color-border-default);
 		transition: color var(--duration-micro) var(--ease-standard);
