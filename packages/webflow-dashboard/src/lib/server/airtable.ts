@@ -460,7 +460,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * - >3 days → "overdue" (over SLA)
 		 */
 		async getSlaAssets(): Promise<{ warning: number; overdue: number }> {
-			const DAYS_FIELD = '⏱Days in Current Review Status';
+			const DAYS_FIELD = '⏱️Days in Current Review Stage';
 
 			const records = await base(TABLES.ASSETS)
 				.select({

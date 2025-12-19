@@ -1,0 +1,16 @@
+# SLA Notifications Worker
+# Queries Airtable for assets over SLA and notifies via Zapier
+#
+# Canon: The tool recedes; only the alert remains.
+
+name = "webflow-sla-notifications"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 9 * * *"]  # Daily at 9:00 AM UTC
+
+[vars]
+ENVIRONMENT = "production"
