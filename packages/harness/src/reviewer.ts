@@ -146,7 +146,8 @@ async function executeReviewerSession(
   return new Promise(async (resolve) => {
     const promptContent = await readFile(promptFile, 'utf-8');
 
-    const args = ['-p', '--dangerously-skip-permissions', '--output-format', 'json'];
+    // Don't use --output-format json - we want the raw model output for parsing
+    const args = ['-p', '--dangerously-skip-permissions'];
 
     let output = '';
     let errorOutput = '';
@@ -213,31 +214,57 @@ async function executeReviewerSession(
 
 /**
  * Parse the raw output into a structured ReviewResult.
+ * The model should output JSON directly based on the prompt instructions.
  */
 function parseReviewResult(
   config: ReviewerConfig,
   result: ReviewerSessionResult,
   durationMs: number
 ): ReviewResult {
+  // Check for session-level errors first
+  if (result.error || result.exitCode !== 0) {
+    const errorMsg = result.error || `Exit code ${result.exitCode}`;
+    // If there's output despite error, try to parse it
+    if (!result.output.trim()) {
+      return {
+        reviewerId: config.id,
+        reviewerType: config.type,
+        outcome: 'error',
+        findings: [],
+        summary: `Reviewer session failed: ${errorMsg}`,
+        confidence: 0,
+        durationMs,
+        error: errorMsg,
+      };
+    }
+  }
+
+  // Check for empty output
+  if (!result.output.trim()) {
+    return {
+      reviewerId: config.id,
+      reviewerType: config.type,
+      outcome: 'error',
+      findings: [],
+      summary: 'Reviewer produced no output',
+      confidence: 0,
+      durationMs,
+      error: 'Empty output',
+    };
+  }
+
   try {
     // Try to extract JSON from the output
-    // Look for JSON object with "outcome" field
-    const jsonMatch = result.output.match(/\{[\s\S]*?"outcome"[\s\S]*?\}/);
-    if (!jsonMatch) {
-      // Try to find any JSON-like structure
-      const anyJsonMatch = result.output.match(/\{[\s\S]*\}/);
-      if (!anyJsonMatch) {
-        throw new Error('No JSON found in reviewer output');
-      }
-      // Try parsing it anyway
-      const parsed = JSON.parse(anyJsonMatch[0]);
-      return buildReviewResult(config, parsed, durationMs);
+    const jsonContent = extractJsonFromOutput(result.output);
+    if (!jsonContent) {
+      throw new Error('No valid JSON found in reviewer output');
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(jsonContent);
     return buildReviewResult(config, parsed, durationMs);
   } catch (error) {
-    // If parsing fails, try to extract meaning from text
+    // If parsing fails, return error result with output snippet for debugging
+    const outputPreview = result.output.slice(0, 200).replace(/\n/g, ' ');
     return {
       reviewerId: config.id,
       reviewerType: config.type,
@@ -246,8 +273,94 @@ function parseReviewResult(
       summary: `Failed to parse reviewer output: ${(error as Error).message}`,
       confidence: 0,
       durationMs,
-      error: (error as Error).message,
+      error: `${(error as Error).message} - Output preview: ${outputPreview}`,
     };
+  }
+}
+
+/**
+ * Extract JSON object from Claude output.
+ * Handles code blocks, raw JSON, and mixed content.
+ */
+function extractJsonFromOutput(output: string): string | null {
+  // Strategy 1: Try to find JSON in a code block (```json ... ```)
+  const codeBlockMatch = output.match(/```json?\s*([\s\S]*?)\s*```/);
+  if (codeBlockMatch) {
+    const content = codeBlockMatch[1].trim();
+    if (isValidJson(content)) {
+      return content;
+    }
+  }
+
+  // Strategy 2: Find JSON object with balanced braces
+  const jsonContent = extractBalancedJson(output);
+  if (jsonContent && isValidJson(jsonContent)) {
+    return jsonContent;
+  }
+
+  // Strategy 3: Try the entire output if it looks like JSON
+  const trimmed = output.trim();
+  if (trimmed.startsWith('{') && trimmed.endsWith('}') && isValidJson(trimmed)) {
+    return trimmed;
+  }
+
+  return null;
+}
+
+/**
+ * Extract a balanced JSON object from text.
+ * Finds the first { and matches until balanced }.
+ */
+function extractBalancedJson(text: string): string | null {
+  const startIdx = text.indexOf('{');
+  if (startIdx === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = startIdx; i < text.length; i++) {
+    const char = text[i];
+
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+
+    if (char === '\\' && inString) {
+      escapeNext = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (!inString) {
+      if (char === '{') {
+        depth++;
+      } else if (char === '}') {
+        depth--;
+        if (depth === 0) {
+          return text.slice(startIdx, i + 1);
+        }
+      }
+    }
+  }
+
+  return null; // Unbalanced braces
+}
+
+/**
+ * Quick JSON validation check.
+ */
+function isValidJson(text: string): boolean {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -259,8 +372,31 @@ function buildReviewResult(
   parsed: Record<string, unknown>,
   durationMs: number
 ): ReviewResult {
+  // Validate that we have minimum required fields
+  if (!parsed || typeof parsed !== 'object') {
+    return {
+      reviewerId: config.id,
+      reviewerType: config.type,
+      outcome: 'error',
+      findings: [],
+      summary: 'Invalid JSON structure: not an object',
+      confidence: 0,
+      durationMs,
+      error: 'Invalid JSON structure',
+    };
+  }
+
   const outcome = validateOutcome(parsed.outcome as string);
-  const findings = parseFndings(config.id, parsed.findings as unknown[]);
+  const findings = parseFindings(config.id, parsed.findings as unknown[]);
+
+  // Validate and normalize confidence (should be 0-1)
+  let confidence: number;
+  if (typeof parsed.confidence === 'number') {
+    confidence = Math.max(0, Math.min(1, parsed.confidence));
+  } else {
+    // If no confidence provided, derive from outcome
+    confidence = outcome === 'pass' ? 0.9 : outcome === 'pass_with_findings' ? 0.7 : outcome === 'fail' ? 0.6 : 0;
+  }
 
   return {
     reviewerId: config.id,
@@ -268,7 +404,7 @@ function buildReviewResult(
     outcome,
     findings,
     summary: (parsed.summary as string) || 'No summary provided',
-    confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.5,
+    confidence,
     durationMs,
   };
 }
@@ -287,7 +423,7 @@ function validateOutcome(outcome: string | undefined): ReviewOutcome {
 /**
  * Parse findings array from JSON.
  */
-function parseFndings(reviewerId: string, findings: unknown[]): ReviewFinding[] {
+function parseFindings(reviewerId: string, findings: unknown[]): ReviewFinding[] {
   if (!Array.isArray(findings)) return [];
 
   const results: ReviewFinding[] = [];
