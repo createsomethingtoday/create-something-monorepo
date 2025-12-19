@@ -18,5 +18,8 @@ export { default as ApiKeysManager } from './ApiKeysManager.svelte';
 // Tracking components
 export { default as SubmissionTracker } from './SubmissionTracker.svelte';
 
+// Upload components
+export { default as ImageUploader } from './ImageUploader.svelte';
+
 // Re-export UI components
 export * from './ui';
