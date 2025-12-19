@@ -1,5 +1,6 @@
 import Airtable from 'airtable';
 import type { Asset, Creator, ApiKey, RelatedAsset } from '$lib/types';
+import { randomBytes, createHash } from 'node:crypto';
 
 // Airtable table IDs
 const TABLES = {
@@ -15,7 +16,8 @@ const TABLES = {
 // Airtable view IDs
 const VIEWS = {
 	CATEGORY_PERFORMANCE: 'viw5EUGpK0xDMcBga',
-	LEADERBOARD: 'viwEaYTAux1ADl5C5'
+	LEADERBOARD: 'viwEaYTAux1ADl5C5',
+	SLA_OVER: 'viwPPsq6O9tKDg9oZ'
 } as const;
 
 // Airtable field IDs
@@ -447,6 +449,46 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}));
 		},
 
+		// ==================== SLA ====================
+
+		/**
+		 * Get assets over SLA from the "All Assets SLA Over" view
+		 * Used by SLA notifications worker and manual triggers
+		 *
+		 * SLA Logic:
+		 * - 3 days exactly → "warning" (approaching SLA)
+		 * - >3 days → "overdue" (over SLA)
+		 */
+		async getSlaAssets(): Promise<{ warning: number; overdue: number }> {
+			const DAYS_FIELD = '⏱Days in Current Review Status';
+
+			const records = await base(TABLES.ASSETS)
+				.select({
+					view: VIEWS.SLA_OVER,
+					fields: ['Name', DAYS_FIELD]
+				})
+				.all();
+
+			let warning = 0;
+			let overdue = 0;
+
+			for (const record of records) {
+				const days = record.fields[DAYS_FIELD] as number | undefined;
+
+				if (days === undefined || days === null) {
+					continue;
+				}
+
+				if (days === 3) {
+					warning++;
+				} else if (days > 3) {
+					overdue++;
+				}
+			}
+
+			return { warning, overdue };
+		},
+
 		// ==================== ANALYTICS ====================
 
 		/**
@@ -515,6 +557,154 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				ranking: index + 1,
 				thumbnailUrl: (r.fields['Thumbnail'] as unknown as { url: string }[] | undefined)?.[0]?.url
 			}));
+		},
+
+		// ==================== API KEYS ====================
+
+		/**
+		 * Generate a new API key for a creator
+		 */
+		async generateApiKey(creatorEmail: string, name: string, scopes: string[]): Promise<{ key: string; apiKey: ApiKey }> {
+			// Generate a secure random key
+			const rawKey = randomBytes(32).toString('hex');
+			const keyPrefix = 'wfd_'; // webflow dashboard prefix
+			const fullKey = `${keyPrefix}${rawKey}`;
+
+			// Hash the key for storage (never store raw keys)
+			const keyHash = createHash('sha256').update(fullKey).digest('hex');
+
+			const now = new Date();
+			const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
+
+			const records = await base(TABLES.API_KEYS).create([{
+				fields: {
+					'Name': name,
+					'Key Hash': keyHash,
+					'Key Prefix': fullKey.substring(0, 12), // Store prefix for identification
+					'Creator Email': creatorEmail,
+					'Scopes': scopes.join(','),
+					'Status': 'Active',
+					'Created At': now.toISOString(),
+					'Expires At': expiresAt.toISOString()
+				}
+			}]);
+
+			const record = records[0];
+			return {
+				key: fullKey, // Only returned once at creation
+				apiKey: {
+					id: record.id,
+					name: record.fields['Name'] as string,
+					createdAt: record.fields['Created At'] as string,
+					expiresAt: record.fields['Expires At'] as string,
+					scopes: scopes,
+					status: 'Active'
+				}
+			};
+		},
+
+		/**
+		 * List API keys for a creator (without the actual key values)
+		 */
+		async listApiKeys(creatorEmail: string): Promise<ApiKey[]> {
+			const escapedEmail = escapeAirtableString(creatorEmail);
+			const records = await base(TABLES.API_KEYS)
+				.select({
+					filterByFormula: `{Creator Email} = '${escapedEmail}'`,
+					sort: [{ field: 'Created At', direction: 'desc' }]
+				})
+				.all();
+
+			return records.map(r => {
+				const expiresAt = r.fields['Expires At'] as string | undefined;
+				const status = r.fields['Status'] as string || 'Active';
+
+				// Check if expired
+				let finalStatus: ApiKey['status'] = status as ApiKey['status'];
+				if (status === 'Active' && expiresAt && new Date(expiresAt) < new Date()) {
+					finalStatus = 'Expired';
+				}
+
+				return {
+					id: r.id,
+					name: r.fields['Name'] as string || 'Unnamed Key',
+					createdAt: r.fields['Created At'] as string,
+					expiresAt: expiresAt,
+					lastUsedAt: r.fields['Last Used At'] as string | undefined,
+					scopes: (r.fields['Scopes'] as string || '').split(',').filter(Boolean),
+					status: finalStatus
+				};
+			});
+		},
+
+		/**
+		 * Revoke an API key
+		 */
+		async revokeApiKey(keyId: string, creatorEmail: string): Promise<boolean> {
+			// First verify ownership
+			try {
+				const record = await base(TABLES.API_KEYS).find(keyId);
+				const recordEmail = record.fields['Creator Email'] as string;
+
+				if (recordEmail.toLowerCase() !== creatorEmail.toLowerCase()) {
+					return false; // Not owner
+				}
+
+				await base(TABLES.API_KEYS).update([{
+					id: keyId,
+					fields: {
+						'Status': 'Revoked',
+						'Revoked At': new Date().toISOString()
+					}
+				}]);
+
+				return true;
+			} catch {
+				return false;
+			}
+		},
+
+		/**
+		 * Validate an API key and return the associated creator email
+		 */
+		async validateApiKey(key: string): Promise<{ valid: boolean; email?: string; scopes?: string[] }> {
+			if (!key.startsWith('wfd_')) {
+				return { valid: false };
+			}
+
+			const keyHash = createHash('sha256').update(key).digest('hex');
+			const escapedHash = escapeAirtableString(keyHash);
+
+			const records = await base(TABLES.API_KEYS)
+				.select({
+					filterByFormula: `AND({Key Hash} = '${escapedHash}', {Status} = 'Active')`,
+					maxRecords: 1
+				})
+				.firstPage();
+
+			if (records.length === 0) {
+				return { valid: false };
+			}
+
+			const record = records[0];
+			const expiresAt = record.fields['Expires At'] as string | undefined;
+
+			// Check expiration
+			if (expiresAt && new Date(expiresAt) < new Date()) {
+				return { valid: false };
+			}
+
+			// Update last used timestamp (fire and forget)
+			base(TABLES.API_KEYS).update([{
+				id: record.id,
+				fields: { 'Last Used At': new Date().toISOString() }
+			}]).catch(() => { /* ignore errors */ });
+
+			return {
+				valid: true,
+				email: record.fields['Creator Email'] as string,
+				scopes: (record.fields['Scopes'] as string || '').split(',').filter(Boolean)
+			};
 		}
 	};
 }
