@@ -15,5 +15,8 @@ export { default as OverviewStats } from './OverviewStats.svelte';
 export { default as EditProfileModal } from './EditProfileModal.svelte';
 export { default as ApiKeysManager } from './ApiKeysManager.svelte';
 
+// Tracking components
+export { default as SubmissionTracker } from './SubmissionTracker.svelte';
+
 // Re-export UI components
 export * from './ui';

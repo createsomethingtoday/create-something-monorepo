@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto, invalidate } from '$app/navigation';
-	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats, EditProfileModal } from '$lib/components';
+	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats, EditProfileModal, SubmissionTracker } from '$lib/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -106,15 +106,7 @@
 							</CardContent>
 						</Card>
 
-						<Card>
-							<CardHeader>
-								<CardTitle>This Month</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div class="stat-value">--/6</div>
-								<p class="stat-label">Submissions used</p>
-							</CardContent>
-						</Card>
+						<SubmissionTracker assets={data.assets || []} />
 					</div>
 
 					<!-- Detailed Stats -->
