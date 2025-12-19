@@ -2,7 +2,8 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	type Variant = 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'outline';
+	type Variant = 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'outline';
+	export type { Variant };
 
 	interface Props extends HTMLAttributes<HTMLSpanElement> {
 		variant?: Variant;
@@ -63,6 +64,12 @@
 		background: var(--color-error-muted);
 		color: var(--color-error);
 		border-color: var(--color-error-border);
+	}
+
+	.badge-info {
+		background: var(--color-info-muted);
+		color: var(--color-info);
+		border-color: var(--color-info-border);
 	}
 
 	.badge-outline {
