@@ -111,17 +111,17 @@
 	}
 
 	.heading {
-		font-family: var(--webflow-font-medium);
-		font-size: 2rem;
-		font-weight: 600;
+		font-family: var(--font-sans);
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
 		line-height: 1.2;
-		color: var(--webflow-fg-primary);
+		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
 	.subtitle {
-		font-size: 1rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
 		margin: 0.5rem 0 0;
 	}
 
@@ -142,7 +142,7 @@
 		left: 0.75rem;
 		top: 50%;
 		transform: translateY(-50%);
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 		pointer-events: none;
 	}
 
@@ -158,17 +158,17 @@
 
 	.status-filter {
 		padding: 0.375rem 0.75rem;
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 		background: transparent;
-		border: 1px solid var(--webflow-border);
-		border-radius: 9999px;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
 		cursor: pointer;
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.status-filter:hover {
-		border-color: var(--webflow-border-emphasis);
+		border-color: var(--color-border-emphasis);
 	}
 
 	.status-filter.active {

@@ -99,9 +99,9 @@
 	}
 
 	.asset-card-wrapper:focus-visible {
-		outline: 2px solid var(--webflow-blue);
+		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
-		border-radius: var(--webflow-radius-xl);
+		border-radius: var(--radius-xl);
 	}
 
 	.card-inner {
@@ -113,7 +113,7 @@
 		width: 100%;
 		aspect-ratio: 16 / 9;
 		overflow: hidden;
-		border-radius: var(--webflow-radius-xl) var(--webflow-radius-xl) 0 0;
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 	}
 
 	.thumbnail img {
@@ -126,12 +126,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--webflow-bg-hover);
+		background: var(--color-hover);
 	}
 
 	.placeholder-text {
-		color: var(--webflow-fg-muted);
-		font-size: 0.875rem;
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -145,17 +145,17 @@
 	}
 
 	.title {
-		font-family: var(--webflow-font-medium);
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--webflow-fg-primary);
+		font-family: var(--font-sans);
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		margin: 0;
 		line-height: 1.4;
 	}
 
 	.description {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 		margin: 0 0 0.75rem;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -174,10 +174,10 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		font-size: 0.75rem;
+		font-size: var(--text-caption);
 		color: var(--webflow-blue);
 		text-decoration: none;
-		transition: opacity var(--webflow-duration) var(--webflow-ease);
+		transition: opacity var(--duration-micro) var(--ease-standard);
 	}
 
 	.marketplace-link:hover {
@@ -189,18 +189,18 @@
 		gap: 1rem;
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
-		border-top: 1px solid var(--webflow-border);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.metric {
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
-		font-size: 0.75rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-caption);
+		color: var(--color-fg-secondary);
 	}
 
 	.metric :global(svg) {
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 	}
 </style>

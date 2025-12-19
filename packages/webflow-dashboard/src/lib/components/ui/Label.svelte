@@ -25,15 +25,15 @@
 <style>
 	.label {
 		display: block;
-		font-family: var(--webflow-font-medium);
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--webflow-fg-primary);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
 		margin-bottom: 0.375rem;
 	}
 
 	.required {
-		color: var(--webflow-error);
+		color: var(--color-error);
 		margin-left: 0.125rem;
 	}
 </style>

@@ -234,15 +234,16 @@
 	}
 
 	.page-title {
-		font-size: 1.75rem;
-		font-weight: 600;
-		color: var(--webflow-text-primary);
+		font-family: var(--font-sans);
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		margin: 0 0 0.5rem;
 	}
 
 	.page-subtitle {
-		font-size: 0.9375rem;
-		color: var(--webflow-text-muted);
+		font-size: var(--text-body);
+		color: var(--color-fg-muted);
 		margin: 0;
 	}
 
@@ -278,8 +279,8 @@
 		justify-content: center;
 		width: 48px;
 		height: 48px;
-		background: var(--webflow-bg-hover);
-		border-radius: var(--webflow-radius-lg);
+		background: var(--color-hover);
+		border-radius: var(--radius-lg);
 		color: var(--webflow-blue);
 	}
 
@@ -293,18 +294,18 @@
 	}
 
 	.metric-value {
-		font-size: 1.25rem;
-		font-weight: 600;
-		color: var(--webflow-text-primary);
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 	}
 
 	.metric-value.top-category {
-		font-size: 1rem;
+		font-size: var(--text-body);
 	}
 
 	.metric-label {
-		font-size: 0.8125rem;
-		color: var(--webflow-text-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	/* Insights Layout */
@@ -333,18 +334,18 @@
 		align-items: center;
 		gap: 0.5rem;
 		margin-bottom: 0.25rem;
-		color: var(--webflow-text-primary);
+		color: var(--color-fg-primary);
 	}
 
 	.section-title {
-		font-size: 1.125rem;
-		font-weight: 600;
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
 		margin: 0;
 	}
 
 	.section-subtitle {
-		font-size: 0.8125rem;
-		color: var(--webflow-text-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		margin: 0;
 	}
 
@@ -356,26 +357,26 @@
 	.data-table {
 		width: 100%;
 		border-collapse: collapse;
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 	}
 
 	.data-table th,
 	.data-table td {
 		padding: 0.75rem 0.5rem;
 		text-align: left;
-		border-bottom: 1px solid var(--webflow-border);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.data-table th {
-		font-weight: 500;
-		color: var(--webflow-text-muted);
-		font-size: 0.75rem;
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.data-table td {
-		color: var(--webflow-text-primary);
+		color: var(--color-fg-primary);
 	}
 
 	.rank-col {
@@ -389,12 +390,12 @@
 	}
 
 	.category-name {
-		font-weight: 500;
+		font-weight: var(--font-medium);
 	}
 
 	.revenue {
-		color: var(--webflow-success);
-		font-weight: 500;
+		color: var(--color-success);
+		font-weight: var(--font-medium);
 	}
 
 	/* Ranking Badge */
@@ -404,11 +405,11 @@
 		justify-content: center;
 		width: 24px;
 		height: 24px;
-		font-size: 0.75rem;
-		font-weight: 600;
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
 		border-radius: 50%;
-		background: var(--webflow-bg-hover);
-		color: var(--webflow-text-muted);
+		background: var(--color-hover);
+		color: var(--color-fg-muted);
 	}
 
 	.ranking-badge.gold {
@@ -438,16 +439,16 @@
 		align-items: center;
 		gap: 0.75rem;
 		padding: 0.75rem;
-		background: var(--webflow-bg-primary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-md);
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 		text-decoration: none;
-		transition: all 0.15s ease;
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.leaderboard-item:hover {
 		border-color: var(--webflow-blue);
-		background: var(--webflow-bg-hover);
+		background: var(--color-hover);
 	}
 
 	.leaderboard-rank {
@@ -458,9 +459,9 @@
 		flex-shrink: 0;
 		width: 48px;
 		height: 36px;
-		border-radius: var(--webflow-radius-sm);
+		border-radius: var(--radius-sm);
 		overflow: hidden;
-		background: var(--webflow-bg-hover);
+		background: var(--color-hover);
 	}
 
 	.leaderboard-thumbnail img {
@@ -475,7 +476,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--webflow-text-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.leaderboard-info {
@@ -486,17 +487,17 @@
 	}
 
 	.template-name {
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--webflow-text-primary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
 	.template-category {
-		font-size: 0.75rem;
-		color: var(--webflow-text-muted);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	.leaderboard-stats {
@@ -508,27 +509,27 @@
 	}
 
 	.stat {
-		font-size: 0.8125rem;
+		font-size: var(--text-body-sm);
 		white-space: nowrap;
 	}
 
 	.stat.revenue {
-		font-weight: 600;
-		color: var(--webflow-success);
+		font-weight: var(--font-semibold);
+		color: var(--color-success);
 	}
 
 	.stat.purchases {
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
-		color: var(--webflow-text-muted);
-		font-size: 0.75rem;
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
 	}
 
 	/* Empty State */
 	.empty-state {
 		text-align: center;
 		padding: 2rem;
-		color: var(--webflow-text-muted);
+		color: var(--color-fg-muted);
 	}
 </style>

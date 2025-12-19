@@ -49,10 +49,10 @@
 		justify-content: center;
 		gap: 0.5rem;
 		white-space: nowrap;
-		font-family: var(--webflow-font-medium);
-		font-weight: 500;
-		border-radius: var(--webflow-radius-lg);
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		font-family: var(--font-sans);
+		font-weight: var(--font-medium);
+		border-radius: var(--radius-lg);
+		transition: all var(--duration-micro) var(--ease-standard);
 		cursor: pointer;
 		border: none;
 	}
@@ -64,20 +64,20 @@
 	}
 
 	.btn:focus-visible {
-		outline: 2px solid var(--webflow-blue);
+		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
 	}
 
 	/* Variants */
 	.btn-default {
-		background: var(--webflow-bg-surface);
-		color: var(--webflow-fg-primary);
-		border: 1px solid var(--webflow-border);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
+		border: 1px solid var(--color-border-default);
 	}
 
 	.btn-default:hover:not(:disabled) {
-		background: var(--webflow-bg-hover);
-		border-color: var(--webflow-border-emphasis);
+		background: var(--color-hover);
+		border-color: var(--color-border-emphasis);
 	}
 
 	.btn-webflow {
@@ -86,7 +86,7 @@
 	}
 
 	.btn-webflow:hover:not(:disabled) {
-		background: var(--webflow-blue-600);
+		background: var(--webflow-blue-dark);
 	}
 
 	.btn-outline {
@@ -101,20 +101,20 @@
 
 	.btn-ghost {
 		background: transparent;
-		color: var(--webflow-fg-primary);
+		color: var(--color-fg-primary);
 	}
 
 	.btn-ghost:hover:not(:disabled) {
-		background: var(--webflow-bg-hover);
+		background: var(--color-hover);
 	}
 
 	.btn-destructive {
-		background: var(--webflow-error);
+		background: var(--color-error);
 		color: #ffffff;
 	}
 
 	.btn-destructive:hover:not(:disabled) {
-		background: color-mix(in srgb, var(--webflow-error) 80%, black);
+		background: color-mix(in srgb, var(--color-error) 80%, black);
 	}
 
 	/* Loading Spinner */

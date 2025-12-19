@@ -48,25 +48,25 @@
 		align-items: center;
 		gap: 0.75rem;
 		padding: 0.875rem 1rem;
-		font-family: var(--webflow-font-regular);
-		font-size: 0.875rem;
-		color: var(--webflow-fg-primary);
-		background: var(--webflow-bg-surface);
-		border-radius: var(--webflow-radius-lg);
-		border: 1px solid var(--webflow-border);
-		box-shadow: var(--webflow-shadow-lg);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-border-default);
+		box-shadow: var(--shadow-lg);
 	}
 
 	.toast-success {
-		border-left: 3px solid var(--webflow-success);
+		border-left: 3px solid var(--color-success);
 	}
 
 	.toast-error {
-		border-left: 3px solid var(--webflow-error);
+		border-left: 3px solid var(--color-error);
 	}
 
 	.toast-warning {
-		border-left: 3px solid var(--webflow-warning);
+		border-left: 3px solid var(--color-warning);
 	}
 
 	.toast-info {
@@ -74,15 +74,15 @@
 	}
 
 	.toast-success :global(svg:first-child) {
-		color: var(--webflow-success);
+		color: var(--color-success);
 	}
 
 	.toast-error :global(svg:first-child) {
-		color: var(--webflow-error);
+		color: var(--color-error);
 	}
 
 	.toast-warning :global(svg:first-child) {
-		color: var(--webflow-warning);
+		color: var(--color-warning);
 	}
 
 	.toast-info :global(svg:first-child) {
@@ -98,16 +98,16 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.25rem;
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 		background: none;
 		border: none;
-		border-radius: var(--webflow-radius-sm);
+		border-radius: var(--radius-sm);
 		cursor: pointer;
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.close:hover {
-		color: var(--webflow-fg-primary);
-		background: var(--webflow-bg-hover);
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
 	}
 </style>

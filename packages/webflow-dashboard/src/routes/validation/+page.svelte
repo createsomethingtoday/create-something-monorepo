@@ -269,15 +269,16 @@
 	}
 
 	.page-title {
-		font-size: 1.75rem;
-		font-weight: 600;
-		color: var(--webflow-text-primary);
+		font-family: var(--font-sans);
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		margin: 0 0 0.5rem;
 	}
 
 	.page-subtitle {
-		font-size: 0.9375rem;
-		color: var(--webflow-text-muted);
+		font-size: var(--text-body);
+		color: var(--color-fg-muted);
 		margin: 0;
 	}
 
@@ -309,18 +310,18 @@
 		left: 1rem;
 		top: 50%;
 		transform: translateY(-50%);
-		color: var(--webflow-text-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.url-input {
 		width: 100%;
 		padding: 0.75rem 1rem 0.75rem 3rem;
-		font-size: 1rem;
-		background: var(--webflow-bg-primary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-md);
-		color: var(--webflow-text-primary);
-		transition: border-color 0.15s ease;
+		font-size: var(--text-body);
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.url-input:focus {
@@ -333,7 +334,7 @@
 	}
 
 	.url-input::placeholder {
-		color: var(--webflow-text-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.validate-btn {
@@ -342,14 +343,14 @@
 		justify-content: center;
 		gap: 0.5rem;
 		padding: 0.75rem 1.5rem;
-		font-size: 1rem;
-		font-weight: 500;
+		font-size: var(--text-body);
+		font-weight: var(--font-medium);
 		color: #ffffff;
 		background: var(--webflow-blue);
 		border: none;
-		border-radius: var(--webflow-radius-md);
+		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: background 0.15s ease;
+		transition: background var(--duration-micro) var(--ease-standard);
 		white-space: nowrap;
 	}
 
@@ -380,11 +381,11 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.75rem 1rem;
-		font-size: 0.875rem;
-		color: var(--webflow-error);
-		background: rgba(255, 82, 82, 0.1);
-		border: 1px solid rgba(255, 82, 82, 0.2);
-		border-radius: var(--webflow-radius-md);
+		font-size: var(--text-body-sm);
+		color: var(--color-error);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		border-radius: var(--radius-md);
 	}
 
 	/* Results */
@@ -406,23 +407,23 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		font-size: 1.25rem;
-		font-weight: 600;
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
 	}
 
 	.result-status.valid {
-		color: var(--webflow-success);
+		color: var(--color-success);
 	}
 
 	.result-status.invalid {
-		color: var(--webflow-error);
+		color: var(--color-error);
 	}
 
 	.url-link {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.375rem;
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		color: var(--webflow-blue);
 		text-decoration: none;
 		word-break: break-all;
@@ -449,43 +450,43 @@
 		flex-direction: column;
 		align-items: center;
 		padding: 1rem;
-		background: var(--webflow-bg-hover);
-		border-radius: var(--webflow-radius-md);
+		background: var(--color-hover);
+		border-radius: var(--radius-md);
 	}
 
 	.stat.has-issues {
-		background: rgba(255, 82, 82, 0.1);
+		background: var(--color-error-muted);
 	}
 
 	.stat.has-issues .stat-value {
-		color: var(--webflow-error);
+		color: var(--color-error);
 	}
 
 	.stat.has-warnings {
-		background: rgba(255, 193, 7, 0.1);
+		background: var(--color-warning-muted);
 	}
 
 	.stat.has-warnings .stat-value {
-		color: #ffc107;
+		color: var(--color-warning);
 	}
 
 	.stat.detected {
-		background: rgba(255, 82, 82, 0.1);
+		background: var(--color-error-muted);
 	}
 
 	.stat.detected .stat-value {
-		color: var(--webflow-error);
+		color: var(--color-error);
 	}
 
 	.stat-value {
 		font-size: 1.5rem;
-		font-weight: 600;
-		color: var(--webflow-text-primary);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 	}
 
 	.stat-label {
-		font-size: 0.75rem;
-		color: var(--webflow-text-muted);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -494,17 +495,17 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		font-size: 1rem;
-		font-weight: 600;
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
 		margin: 0 0 1rem;
 	}
 
 	.error-title {
-		color: var(--webflow-error);
+		color: var(--color-error);
 	}
 
 	.warning-title {
-		color: #ffc107;
+		color: var(--color-warning);
 	}
 
 	.issues-list {
@@ -517,21 +518,21 @@
 		display: flex;
 		gap: 0.75rem;
 		padding: 1rem;
-		border-radius: var(--webflow-radius-md);
+		border-radius: var(--radius-md);
 	}
 
 	.issue-item.severity-error {
-		background: rgba(255, 82, 82, 0.1);
-		color: var(--webflow-error);
+		background: var(--color-error-muted);
+		color: var(--color-error);
 	}
 
 	.issue-item.severity-warning {
-		background: rgba(255, 193, 7, 0.1);
-		color: #ffc107;
+		background: var(--color-warning-muted);
+		color: var(--color-warning);
 	}
 
 	.issue-item.severity-info {
-		background: var(--webflow-bg-hover);
+		background: var(--color-hover);
 		color: var(--webflow-blue);
 	}
 
@@ -541,8 +542,8 @@
 
 	.issue-type {
 		display: block;
-		font-size: 0.75rem;
-		font-weight: 600;
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin-bottom: 0.25rem;
@@ -550,8 +551,8 @@
 
 	.issue-message {
 		margin: 0;
-		font-size: 0.875rem;
-		color: var(--webflow-text-primary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
 	}
 
 	.all-clear {
@@ -560,18 +561,18 @@
 		align-items: center;
 		text-align: center;
 		padding: 2rem;
-		color: var(--webflow-success);
+		color: var(--color-success);
 	}
 
 	.all-clear h3 {
-		font-size: 1.25rem;
-		font-weight: 600;
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
 		margin: 1rem 0 0.5rem;
 	}
 
 	.all-clear p {
 		margin: 0;
-		font-size: 0.9375rem;
-		color: var(--webflow-text-muted);
+		font-size: var(--text-body);
+		color: var(--color-fg-muted);
 	}
 </style>

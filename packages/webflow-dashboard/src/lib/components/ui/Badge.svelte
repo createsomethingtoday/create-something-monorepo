@@ -25,38 +25,38 @@
 	.badge {
 		display: inline-flex;
 		align-items: center;
-		font-family: var(--webflow-font-medium);
-		font-size: 0.75rem;
-		font-weight: 500;
+		font-family: var(--font-sans);
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
 		line-height: 1;
 		padding: 0.25rem 0.625rem;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		white-space: nowrap;
 	}
 
 	.badge-default {
-		background: var(--webflow-bg-hover);
-		color: var(--webflow-fg-secondary);
+		background: var(--color-hover);
+		color: var(--color-fg-secondary);
 	}
 
 	.badge-success {
-		background: color-mix(in srgb, var(--webflow-success) 15%, transparent);
-		color: var(--webflow-success);
+		background: var(--color-success-muted);
+		color: var(--color-success);
 	}
 
 	.badge-warning {
-		background: color-mix(in srgb, var(--webflow-warning) 15%, transparent);
-		color: var(--webflow-warning);
+		background: var(--color-warning-muted);
+		color: var(--color-warning);
 	}
 
 	.badge-error {
-		background: color-mix(in srgb, var(--webflow-error) 15%, transparent);
-		color: var(--webflow-error);
+		background: var(--color-error-muted);
+		color: var(--color-error);
 	}
 
 	.badge-info {
-		background: color-mix(in srgb, var(--webflow-blue) 15%, transparent);
-		color: var(--webflow-blue);
+		background: var(--color-info-muted);
+		color: var(--color-info);
 	}
 
 	.badge-webflow {

@@ -23,18 +23,19 @@
 		display: flex;
 		height: 2.5rem;
 		width: 100%;
-		font-family: var(--webflow-font-regular);
-		font-size: 0.875rem;
-		color: var(--webflow-fg-primary);
-		background: var(--webflow-bg-elevated);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-lg);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-regular);
+		color: var(--color-fg-primary);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
 		padding: 0.5rem 0.75rem;
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.input::placeholder {
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.input:focus {
@@ -49,10 +50,10 @@
 	}
 
 	.input.error {
-		border-color: var(--webflow-error);
+		border-color: var(--color-error);
 	}
 
 	.input.error:focus {
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--webflow-error) 20%, transparent);
+		box-shadow: 0 0 0 3px var(--color-error-muted);
 	}
 </style>

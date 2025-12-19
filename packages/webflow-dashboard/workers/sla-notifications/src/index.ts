@@ -71,6 +71,12 @@ async function getSlaStats(env: Env): Promise<{ warning: number; overdue: number
 	}
 
 	for (const record of records) {
+		// Skip "Base." template items - these are internal templates, not real assets
+		const name = record.fields['Name'] as string | undefined;
+		if (name?.startsWith('Base.')) {
+			continue;
+		}
+
 		// Use the specific field, fallback to dynamic search
 		const days = (record.fields[DAYS_FIELD] as number | undefined) ?? findDaysField(record.fields as Record<string, unknown>);
 

@@ -24,7 +24,7 @@
 <style>
 	.separator {
 		flex-shrink: 0;
-		background: var(--webflow-border);
+		background: var(--color-border-default);
 	}
 
 	.separator-horizontal {
