@@ -9,7 +9,8 @@ import { promisify } from 'node:util';
 import { writeFile, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import type { BeadsIssue, PrimingContext, SessionResult, SessionOutcome } from './types.js';
+import type { BeadsIssue, PrimingContext, SessionResult, SessionOutcome, DetectedModel } from './types.js';
+import { parseModelFromOutput } from './model-detector.js';
 
 const execAsync = promisify(exec);
 
@@ -236,6 +237,7 @@ export async function runSession(
       contextUsed: 0,
       durationMs: Date.now() - startTime,
       error: null,
+      model: null,
     };
   }
 
@@ -257,6 +259,7 @@ export async function runSession(
       contextUsed: result.tokensUsed || 0,
       durationMs: Date.now() - startTime,
       error: result.error || null,
+      model: result.model,
     };
   } finally {
     // Clean up temp file
@@ -273,6 +276,7 @@ interface ClaudeCodeResult {
   output: string;
   error: string | null;
   tokensUsed?: number;
+  model: DetectedModel | null;
 }
 
 /**
@@ -312,6 +316,7 @@ async function executeClaudeCode(
         exitCode: -1,
         output: '',
         error: 'Failed to open stdin pipe',
+        model: null,
       });
       return;
     }
@@ -325,6 +330,7 @@ async function executeClaudeCode(
         exitCode: -1,
         output,
         error: 'Session timed out',
+        model: parseModelFromOutput(output), // Try to parse model even from timeout
       });
     }, options.timeout);
 
@@ -338,10 +344,13 @@ async function executeClaudeCode(
 
     proc.on('close', (code) => {
       clearTimeout(timeoutId);
+      // Parse model from output
+      const model = parseModelFromOutput(output);
       resolve({
         exitCode: code || 0,
         output,
         error: code !== 0 ? errorOutput || `Exit code ${code}` : null,
+        model,
       });
     });
 
@@ -351,6 +360,7 @@ async function executeClaudeCode(
         exitCode: -1,
         output,
         error: err.message,
+        model: null,
       });
     });
   });

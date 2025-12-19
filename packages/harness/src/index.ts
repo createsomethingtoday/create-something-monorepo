@@ -13,6 +13,7 @@
 export type {
   Feature,
   ParsedSpec,
+  DependencyGraph,
   BeadsIssue,
   HarnessStatus,
   CheckpointPolicy,
@@ -37,16 +38,27 @@ export type {
   SwarmAgentStatus,
   SwarmProgress,
   SwarmCheckpoint,
+  // Model detection types
+  ClaudeModelFamily,
+  DetectedModel,
+  ModelSpecificConfig,
 } from './types.js';
 
 export {
   DEFAULT_CHECKPOINT_POLICY,
   DEFAULT_FAILURE_HANDLING_CONFIG,
   DEFAULT_SWARM_CONFIG,
+  DEFAULT_MODEL_SPECIFIC_CONFIG,
 } from './types.js';
 
 // Spec Parser
-export { parseSpec, formatSpecSummary } from './spec-parser.js';
+export {
+  parseSpec,
+  formatSpecSummary,
+  getStartableFeatures,
+  getNextBatch,
+  analyzeDependencyGraph,
+} from './spec-parser.js';
 
 // Beads Integration
 export {
@@ -112,6 +124,7 @@ export {
   resumeHarness,
   pauseHarness,
   getHarnessStatus,
+  runParallelSessions,
 } from './runner.js';
 
 // Failure Handling
@@ -125,3 +138,12 @@ export {
   getFailureStats,
   formatFailureStats,
 } from './failure-handler.js';
+
+// Model Detection
+export {
+  parseModelFromOutput,
+  parseModelId,
+  formatModelInfo,
+  getModelConfidenceThreshold,
+  isModelContextSensitive,
+} from './model-detector.js';
