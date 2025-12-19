@@ -1,11 +1,25 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { Header, Card, CardHeader, CardTitle, CardContent } from '$lib/components';
 
 	let { data }: { data: PageData } = $props();
+
+	let searchTerm = $state('');
+	let isProfileOpen = $state(false);
 
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
 		window.location.href = '/login';
+	}
+
+	function handleSearch(term: string) {
+		searchTerm = term;
+		// Will be used in Phase 5 for asset filtering
+	}
+
+	function handleProfileClick() {
+		isProfileOpen = true;
+		// Profile modal will be implemented in Phase 9
 	}
 </script>
 
@@ -13,155 +27,180 @@
 	<title>Dashboard | Webflow Asset Dashboard</title>
 </svelte:head>
 
-<main class="container">
-	<header class="header">
-		<div class="header-content">
-			<div class="logo">
-				<svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<rect width="40" height="40" rx="8" fill="var(--webflow-blue)" />
-					<path d="M28 14L20 26L12 14H28Z" fill="white" />
-				</svg>
-				<span class="logo-text">Asset Dashboard</span>
-			</div>
-			<div class="header-actions">
-				<span class="user-email">{data.user?.email}</span>
-				<button class="logout-btn" onclick={handleLogout}>Logout</button>
-			</div>
-		</div>
-	</header>
+<div class="dashboard">
+	<Header
+		userEmail={data.user?.email}
+		onLogout={handleLogout}
+		onProfileClick={handleProfileClick}
+		onSearch={handleSearch}
+	/>
 
-	<div class="content">
-		<h1>Welcome to your Dashboard</h1>
-		<p class="subtitle">Your Webflow templates and assets will appear here.</p>
+	<main class="main-content">
+		<div class="content-wrapper">
+			<!-- Overview Section -->
+			<section class="overview-section">
+				<h1 class="page-title">Welcome back</h1>
+				<p class="page-subtitle">Here's an overview of your Webflow templates and assets.</p>
 
-		<div class="placeholder-grid">
-			<div class="placeholder-card">
-				<div class="placeholder-icon">📊</div>
-				<h3>Assets</h3>
-				<p>View and manage your templates</p>
-			</div>
-			<div class="placeholder-card">
-				<div class="placeholder-icon">📈</div>
-				<h3>Analytics</h3>
-				<p>Track performance metrics</p>
-			</div>
-			<div class="placeholder-card">
-				<div class="placeholder-icon">⚙️</div>
-				<h3>Settings</h3>
-				<p>Manage your profile</p>
-			</div>
+				<div class="stats-grid">
+					<Card>
+						<CardHeader>
+							<CardTitle>Total Templates</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div class="stat-value">--</div>
+							<p class="stat-label">Published templates</p>
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>Pending Review</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div class="stat-value">--</div>
+							<p class="stat-label">Awaiting approval</p>
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>This Month</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div class="stat-value">--/6</div>
+							<p class="stat-label">Submissions used</p>
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>Total Revenue</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div class="stat-value">$--</div>
+							<p class="stat-label">All time earnings</p>
+						</CardContent>
+					</Card>
+				</div>
+			</section>
+
+			<!-- Assets Section Placeholder -->
+			<section class="assets-section">
+				<div class="section-header">
+					<h2 class="section-title">Your Assets</h2>
+				</div>
+
+				<Card>
+					<CardContent>
+						<div class="empty-state">
+							<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+								<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+							</svg>
+							<h3>Assets will appear here</h3>
+							<p>Your published and pending templates will be displayed in this section.</p>
+						</div>
+					</CardContent>
+				</Card>
+			</section>
 		</div>
-	</div>
-</main>
+	</main>
+</div>
 
 <style>
-	.container {
+	.dashboard {
 		min-height: 100vh;
 		background: var(--color-bg-pure);
 	}
 
-	.header {
-		border-bottom: 1px solid var(--color-border-default);
-		background: var(--color-bg-surface);
+	.main-content {
+		padding: var(--space-lg) var(--space-md);
 	}
 
-	.header-content {
-		max-width: 1200px;
+	.content-wrapper {
+		max-width: 80rem;
 		margin: 0 auto;
-		padding: var(--space-sm) var(--space-md);
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
 	}
 
-	.logo {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
+	.overview-section {
+		margin-bottom: var(--space-xl);
 	}
 
-	.logo-text {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-	}
-
-	.header-actions {
-		display: flex;
-		align-items: center;
-		gap: var(--space-md);
-	}
-
-	.user-email {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	.logout-btn {
-		padding: 0.5rem 1rem;
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
-		background: transparent;
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.logout-btn:hover {
-		color: var(--color-fg-primary);
-		border-color: var(--color-border-emphasis);
-	}
-
-	.content {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: var(--space-xl) var(--space-md);
-	}
-
-	h1 {
+	.page-title {
 		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-xs);
 	}
 
-	.subtitle {
+	.page-subtitle {
 		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-xl);
+		margin: 0 0 var(--space-lg);
 	}
 
-	.placeholder-grid {
+	.stats-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		gap: var(--space-md);
 	}
 
-	.placeholder-card {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+	.stat-value {
+		font-size: var(--text-display);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		line-height: 1;
+	}
+
+	.stat-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		margin: var(--space-xs) 0 0;
+	}
+
+	.assets-section {
+		margin-bottom: var(--space-xl);
+	}
+
+	.section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: var(--space-md);
+	}
+
+	.section-title {
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-2xl) var(--space-md);
 		text-align: center;
 	}
 
-	.placeholder-icon {
-		font-size: 2.5rem;
-		margin-bottom: var(--space-sm);
+	.empty-state svg {
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-md);
 	}
 
-	.placeholder-card h3 {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
+	.empty-state h3 {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-xs);
 	}
 
-	.placeholder-card p {
+	.empty-state p {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 		margin: 0;
+		max-width: 24rem;
 	}
 </style>
