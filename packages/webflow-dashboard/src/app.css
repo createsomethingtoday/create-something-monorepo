@@ -74,6 +74,33 @@
 	--color-info-border: rgba(80, 130, 185, 0.3);
 
 	/* -------------------------------------------------------------------------
+	   Status-Specific Colors (Webflow Asset States)
+	   ------------------------------------------------------------------------- */
+	--color-status-scheduled: #146ef5;
+	--color-status-scheduled-muted: rgba(20, 110, 245, 0.1);
+	--color-status-scheduled-border: rgba(20, 110, 245, 0.2);
+
+	--color-status-published: #10b981;
+	--color-status-published-muted: rgba(16, 185, 129, 0.1);
+	--color-status-published-border: rgba(16, 185, 129, 0.2);
+
+	--color-status-upcoming: #8b5cf6;
+	--color-status-upcoming-muted: rgba(139, 92, 246, 0.1);
+	--color-status-upcoming-border: rgba(139, 92, 246, 0.2);
+
+	--color-status-delisted: #f59e0b;
+	--color-status-delisted-muted: rgba(245, 158, 11, 0.1);
+	--color-status-delisted-border: rgba(245, 158, 11, 0.2);
+
+	--color-status-rejected: #ef4444;
+	--color-status-rejected-muted: rgba(239, 68, 68, 0.1);
+	--color-status-rejected-border: rgba(239, 68, 68, 0.2);
+
+	--color-status-draft: #6b7280;
+	--color-status-draft-muted: rgba(107, 114, 128, 0.1);
+	--color-status-draft-border: rgba(107, 114, 128, 0.2);
+
+	/* -------------------------------------------------------------------------
 	   Typography
 	   ------------------------------------------------------------------------- */
 	--font-sans: 'WF Visual Sans', system-ui, -apple-system, sans-serif;
@@ -224,6 +251,31 @@
 	--color-error-muted: rgba(212, 77, 77, 0.2);
 	--color-warning-muted: rgba(170, 136, 68, 0.2);
 	--color-info-muted: rgba(80, 130, 185, 0.2);
+
+	/* Status-Specific - brighter for dark theme visibility */
+	--color-status-scheduled: #3b82f6;
+	--color-status-scheduled-muted: rgba(59, 130, 246, 0.2);
+	--color-status-scheduled-border: rgba(59, 130, 246, 0.3);
+
+	--color-status-published: #22c55e;
+	--color-status-published-muted: rgba(34, 197, 94, 0.2);
+	--color-status-published-border: rgba(34, 197, 94, 0.3);
+
+	--color-status-upcoming: #a78bfa;
+	--color-status-upcoming-muted: rgba(167, 139, 250, 0.2);
+	--color-status-upcoming-border: rgba(167, 139, 250, 0.3);
+
+	--color-status-delisted: #fbbf24;
+	--color-status-delisted-muted: rgba(251, 191, 36, 0.2);
+	--color-status-delisted-border: rgba(251, 191, 36, 0.3);
+
+	--color-status-rejected: #f87171;
+	--color-status-rejected-muted: rgba(248, 113, 113, 0.2);
+	--color-status-rejected-border: rgba(248, 113, 113, 0.3);
+
+	--color-status-draft: #9ca3af;
+	--color-status-draft-muted: rgba(156, 163, 175, 0.2);
+	--color-status-draft-border: rgba(156, 163, 175, 0.3);
 
 	/* Shadows - deeper for dark theme */
 	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);

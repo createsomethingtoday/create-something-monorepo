@@ -102,3 +102,77 @@ export interface MarketplaceInsights {
 	categories: CategoryPerformance[];
 	lastUpdated: string;
 }
+
+// Asset status types
+export type AssetStatus = 'Draft' | 'Scheduled' | 'Upcoming' | 'Published' | 'Rejected' | 'Delisted';
+
+// Sort configuration
+export interface SortConfig {
+	key: string;
+	direction: 'ascending' | 'descending';
+}
+
+// Status display configuration
+export interface StatusConfig {
+	icon: string;
+	color: string;
+	darkColor: string;
+	bgClass: string;
+	textClass: string;
+	borderClass: string;
+}
+
+// Status ordering for consistent display
+export const STATUS_ORDER: AssetStatus[] = ['Published', 'Scheduled', 'Upcoming', 'Delisted', 'Rejected', 'Draft'];
+
+// Status configuration mapping
+export const STATUS_CONFIG: Record<AssetStatus, StatusConfig> = {
+	Published: {
+		icon: 'CheckCircle',
+		color: 'var(--color-status-published)',
+		darkColor: '#34D399',
+		bgClass: 'bg-status-published',
+		textClass: 'text-status-published',
+		borderClass: 'border-status-published'
+	},
+	Scheduled: {
+		icon: 'Calendar',
+		color: 'var(--color-status-scheduled)',
+		darkColor: '#3B82F6',
+		bgClass: 'bg-status-scheduled',
+		textClass: 'text-status-scheduled',
+		borderClass: 'border-status-scheduled'
+	},
+	Upcoming: {
+		icon: 'Clock',
+		color: 'var(--color-status-upcoming)',
+		darkColor: '#A78BFA',
+		bgClass: 'bg-status-upcoming',
+		textClass: 'text-status-upcoming',
+		borderClass: 'border-status-upcoming'
+	},
+	Delisted: {
+		icon: 'AlertCircle',
+		color: 'var(--color-status-delisted)',
+		darkColor: '#FBBF24',
+		bgClass: 'bg-status-delisted',
+		textClass: 'text-status-delisted',
+		borderClass: 'border-status-delisted'
+	},
+	Rejected: {
+		icon: 'XCircle',
+		color: 'var(--color-status-rejected)',
+		darkColor: '#F87171',
+		bgClass: 'bg-status-rejected',
+		textClass: 'text-status-rejected',
+		borderClass: 'border-status-rejected'
+	},
+	Draft: {
+		icon: 'FileText',
+		color: 'var(--color-status-draft)',
+		darkColor: '#9CA3AF',
+		bgClass: 'bg-status-draft',
+		textClass: 'text-status-draft',
+		borderClass: 'border-status-draft'
+	}
+};
