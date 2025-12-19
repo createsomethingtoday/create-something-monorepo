@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { goto, invalidate } from '$app/navigation';
 	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats, EditProfileModal, SubmissionTracker } from '$lib/components';
+	import { toast } from '$lib/stores/toast';
 
 	let { data }: { data: PageData } = $props();
 
@@ -35,13 +36,17 @@
 	}
 
 	async function handleArchiveAsset(id: string) {
-		const response = await fetch(`/api/assets/${id}/archive`, { method: 'POST' });
-		if (response.ok) {
-			// Refresh the page data
-			invalidate('app:assets');
-		} else {
-			const error = await response.json();
-			console.error('Archive failed:', error);
+		try {
+			const response = await fetch(`/api/assets/${id}/archive`, { method: 'POST' });
+			if (response.ok) {
+				toast.success('Asset archived successfully');
+				invalidate('app:assets');
+			} else {
+				const error = await response.json();
+				toast.error(error.message || 'Failed to archive asset');
+			}
+		} catch {
+			toast.error('Failed to archive asset');
 		}
 	}
 
