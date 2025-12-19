@@ -67,6 +67,10 @@
 		"./transitions": {
 			"types": "./dist/transitions/index.d.ts",
 			"default": "./dist/transitions/index.js"
+		},
+		"./analytics": {
+			"types": "./dist/analytics/index.d.ts",
+			"default": "./dist/analytics/index.js"
 		}
 	},
 	"peerDependencies": {
