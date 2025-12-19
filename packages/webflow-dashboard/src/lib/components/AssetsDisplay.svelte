@@ -1,0 +1,441 @@
+<script lang="ts">
+	import { Button, Card, CardContent, Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from './ui';
+	import AssetTableRow from './AssetTableRow.svelte';
+	import StatusBadge from './StatusBadge.svelte';
+	import type { Asset } from '$lib/server/airtable';
+
+	interface Props {
+		assets: Asset[];
+		searchTerm?: string;
+		onView?: (id: string) => void;
+		onEdit?: (id: string) => void;
+		onArchive?: (id: string) => Promise<void>;
+		onRefresh?: () => void;
+	}
+
+	let { assets, searchTerm = '', onView, onEdit, onArchive, onRefresh }: Props = $props();
+
+	let showPerformance = $state(false);
+	let expandedStatuses = $state<string[]>([]);
+	let sortConfig = $state<{ key: string; direction: 'asc' | 'desc' }>({
+		key: 'submittedDate',
+		direction: 'desc'
+	});
+
+	// Status order for display
+	const statusOrder = ['Scheduled', 'Published', 'Upcoming', 'Delisted', 'Rejected'];
+
+	// Status icons and colors
+	const statusConfig: Record<string, { icon: string; bgClass: string }> = {
+		Scheduled: { icon: '📋', bgClass: 'status-scheduled' },
+		Published: { icon: '✓', bgClass: 'status-published' },
+		Upcoming: { icon: '🚀', bgClass: 'status-upcoming' },
+		Delisted: { icon: '⚠', bgClass: 'status-delisted' },
+		Rejected: { icon: '✕', bgClass: 'status-rejected' }
+	};
+
+	// Filter assets by search term
+	const filteredAssets = $derived(() => {
+		if (!searchTerm.trim()) return assets;
+		const term = searchTerm.toLowerCase();
+		return assets.filter(
+			(asset) =>
+				asset.name.toLowerCase().includes(term) ||
+				asset.type.toLowerCase().includes(term) ||
+				asset.status.toLowerCase().includes(term)
+		);
+	});
+
+	// Group assets by status
+	const groupedAssets = $derived(() => {
+		const groups: Record<string, Asset[]> = {};
+
+		for (const asset of filteredAssets()) {
+			const status = asset.status;
+			if (!groups[status]) {
+				groups[status] = [];
+			}
+			groups[status].push(asset);
+		}
+
+		// Sort each group
+		for (const status of Object.keys(groups)) {
+			groups[status].sort((a, b) => {
+				const aVal = a[sortConfig.key as keyof Asset];
+				const bVal = b[sortConfig.key as keyof Asset];
+
+				if (sortConfig.key === 'submittedDate' || sortConfig.key === 'publishedDate') {
+					const dateA = aVal ? new Date(aVal as string).getTime() : 0;
+					const dateB = bVal ? new Date(bVal as string).getTime() : 0;
+					return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+				}
+
+				if (typeof aVal === 'number' && typeof bVal === 'number') {
+					return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+				}
+
+				const strA = String(aVal || '');
+				const strB = String(bVal || '');
+				return sortConfig.direction === 'asc'
+					? strA.localeCompare(strB)
+					: strB.localeCompare(strA);
+			});
+		}
+
+		return groups;
+	});
+
+	// Get sorted status keys
+	const sortedStatuses = $derived(() => {
+		return statusOrder.filter((status) => groupedAssets()[status]?.length > 0);
+	});
+
+	function toggleStatus(status: string) {
+		if (expandedStatuses.includes(status)) {
+			expandedStatuses = expandedStatuses.filter((s) => s !== status);
+		} else {
+			expandedStatuses = [...expandedStatuses, status];
+		}
+	}
+
+	function requestSort(key: string) {
+		if (sortConfig.key === key) {
+			sortConfig = { key, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' };
+		} else {
+			sortConfig = { key, direction: 'desc' };
+		}
+	}
+
+	function getSortIndicator(key: string): string {
+		if (sortConfig.key !== key) return '';
+		return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+	}
+
+	function getVisibleAssets(status: string): Asset[] {
+		const all = groupedAssets()[status] || [];
+		if (expandedStatuses.includes(status)) {
+			return all;
+		}
+		return all.slice(0, 10);
+	}
+
+	function calculateTotals(assets: Asset[]): { viewers: number; purchases: number; revenue: number } {
+		return assets.reduce(
+			(acc, asset) => ({
+				viewers: acc.viewers + (asset.uniqueViewers || 0),
+				purchases: acc.purchases + (asset.cumulativePurchases || 0),
+				revenue: acc.revenue + (asset.cumulativeRevenue || 0)
+			}),
+			{ viewers: 0, purchases: 0, revenue: 0 }
+		);
+	}
+</script>
+
+<div class="assets-display">
+	<div class="section-header">
+		<h2 class="section-title">Your Assets</h2>
+		<Button
+			variant={showPerformance ? 'default' : 'outline'}
+			size="sm"
+			onclick={() => (showPerformance = !showPerformance)}
+		>
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-9m12 3a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+			{showPerformance ? 'Hide' : 'Show'} Performance
+		</Button>
+	</div>
+
+	{#if sortedStatuses().length === 0}
+		<Card>
+			<CardContent>
+				<div class="empty-state">
+					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+					</svg>
+					<h3>No assets found</h3>
+					<p>
+						{#if searchTerm}
+							No assets match your search "{searchTerm}".
+						{:else}
+							Your published and pending templates will be displayed here.
+						{/if}
+					</p>
+				</div>
+			</CardContent>
+		</Card>
+	{:else}
+		{#each sortedStatuses() as status}
+			{@const statusAssets = groupedAssets()[status] || []}
+			{@const visibleAssets = getVisibleAssets(status)}
+			{@const config = statusConfig[status] || { icon: '•', bgClass: '' }}
+			{@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(status)}
+			{@const totals = showTotals ? calculateTotals(visibleAssets) : null}
+
+			<section class="status-section">
+				<div class="status-header">
+					<div class="status-info">
+						<div class="status-icon {config.bgClass}">
+							<span>{config.icon}</span>
+						</div>
+						<div class="status-meta">
+							<h3 class="status-title">{status}</h3>
+							<span class="status-count">
+								{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}
+							</span>
+						</div>
+					</div>
+					<StatusBadge {status} />
+				</div>
+
+				<Card>
+					<div class="table-container">
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead class="w-12"></TableHead>
+									<TableHead>
+										<button type="button" class="sort-btn" onclick={() => requestSort('name')}>
+											Name{getSortIndicator('name')}
+										</button>
+									</TableHead>
+									<TableHead>
+										<button type="button" class="sort-btn" onclick={() => requestSort('submittedDate')}>
+											Submitted{getSortIndicator('submittedDate')}
+										</button>
+									</TableHead>
+									<TableHead>Type</TableHead>
+									{#if showPerformance}
+										<TableHead class="text-center">
+											<button type="button" class="sort-btn" onclick={() => requestSort('uniqueViewers')}>
+												Viewers{getSortIndicator('uniqueViewers')}
+											</button>
+										</TableHead>
+										<TableHead class="text-center">
+											<button type="button" class="sort-btn" onclick={() => requestSort('cumulativePurchases')}>
+												Purchases{getSortIndicator('cumulativePurchases')}
+											</button>
+										</TableHead>
+										<TableHead class="text-center">
+											<button type="button" class="sort-btn" onclick={() => requestSort('cumulativeRevenue')}>
+												Revenue{getSortIndicator('cumulativeRevenue')}
+											</button>
+										</TableHead>
+									{/if}
+									<TableHead class="w-12"></TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{#each visibleAssets as asset (asset.id)}
+									<AssetTableRow
+										{asset}
+										{showPerformance}
+										{onView}
+										{onEdit}
+										{onArchive}
+									/>
+								{/each}
+								{#if totals}
+									<TableRow class="totals-row">
+										<TableCell>
+											<div class="totals-icon">
+												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+													<path d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-9" />
+												</svg>
+											</div>
+										</TableCell>
+										<TableCell><strong>Total</strong></TableCell>
+										<TableCell></TableCell>
+										<TableCell></TableCell>
+										<TableCell class="text-center"><strong>{totals.viewers.toLocaleString()}</strong></TableCell>
+										<TableCell class="text-center"><strong>{totals.purchases.toLocaleString()}</strong></TableCell>
+										<TableCell class="text-center"><strong>${totals.revenue.toLocaleString()}</strong></TableCell>
+										<TableCell></TableCell>
+									</TableRow>
+								{/if}
+							</TableBody>
+						</Table>
+					</div>
+
+					{#if statusAssets.length > 10}
+						<div class="show-more">
+							<Button variant="outline" onclick={() => toggleStatus(status)}>
+								{expandedStatuses.includes(status)
+									? 'Show Less'
+									: `Show ${statusAssets.length - 10} More`}
+							</Button>
+						</div>
+					{/if}
+				</Card>
+			</section>
+		{/each}
+	{/if}
+</div>
+
+<style>
+	.assets-display {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-lg);
+	}
+
+	.section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-md);
+	}
+
+	.section-title {
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.status-section {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.status-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.status-info {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.status-icon {
+		width: 2.25rem;
+		height: 2.25rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-md);
+		font-size: var(--text-body);
+	}
+
+	.status-icon.status-scheduled {
+		background: var(--color-info-muted);
+		color: var(--color-info);
+	}
+
+	.status-icon.status-published {
+		background: var(--color-success-muted);
+		color: var(--color-success);
+	}
+
+	.status-icon.status-upcoming {
+		background: rgba(192, 132, 252, 0.2);
+		color: rgb(192, 132, 252);
+	}
+
+	.status-icon.status-delisted {
+		background: var(--color-warning-muted);
+		color: var(--color-warning);
+	}
+
+	.status-icon.status-rejected {
+		background: var(--color-error-muted);
+		color: var(--color-error);
+	}
+
+	.status-meta {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.status-title {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.status-count {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.table-container {
+		overflow-x: auto;
+	}
+
+	.sort-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0;
+		background: none;
+		border: none;
+		color: inherit;
+		font: inherit;
+		cursor: pointer;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.sort-btn:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.show-more {
+		display: flex;
+		justify-content: center;
+		padding: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.totals-row {
+		border-top: 2px solid var(--color-border-emphasis);
+		background: var(--color-bg-subtle);
+	}
+
+	.totals-icon {
+		width: 35px;
+		height: 45px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-2xl) var(--space-md);
+		text-align: center;
+	}
+
+	.empty-state svg {
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-md);
+	}
+
+	.empty-state h3 {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-xs);
+	}
+
+	.empty-state p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		margin: 0;
+		max-width: 24rem;
+	}
+
+	:global(.text-center) {
+		text-align: center;
+	}
+</style>

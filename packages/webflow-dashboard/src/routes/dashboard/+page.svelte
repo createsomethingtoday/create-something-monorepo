@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { Header, Card, CardHeader, CardTitle, CardContent } from '$lib/components';
+	import { goto, invalidate } from '$app/navigation';
+	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay } from '$lib/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -14,13 +15,50 @@
 
 	function handleSearch(term: string) {
 		searchTerm = term;
-		// Will be used in Phase 5 for asset filtering
 	}
 
 	function handleProfileClick() {
 		isProfileOpen = true;
 		// Profile modal will be implemented in Phase 9
 	}
+
+	function handleViewAsset(id: string) {
+		goto(`/assets/${id}`);
+	}
+
+	function handleEditAsset(id: string) {
+		// Edit modal will be implemented in Phase 7
+		console.log('Edit asset:', id);
+	}
+
+	async function handleArchiveAsset(id: string) {
+		const response = await fetch(`/api/assets/${id}/archive`, { method: 'POST' });
+		if (response.ok) {
+			// Refresh the page data
+			invalidate('app:assets');
+		} else {
+			const error = await response.json();
+			console.error('Archive failed:', error);
+		}
+	}
+
+	async function handleRefreshAssets() {
+		invalidate('app:assets');
+	}
+
+	// Calculate stats from assets
+	const stats = $derived(() => {
+		const assets = data.assets || [];
+		const published = assets.filter((a) => a.status === 'Published').length;
+		const pending = assets.filter((a) => ['Upcoming', 'Scheduled'].includes(a.status)).length;
+		const totalRevenue = assets.reduce((sum, a) => sum + (a.cumulativeRevenue || 0), 0);
+
+		return {
+			totalTemplates: published,
+			pendingReview: pending,
+			totalRevenue
+		};
+	});
 </script>
 
 <svelte:head>
@@ -48,7 +86,7 @@
 							<CardTitle>Total Templates</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div class="stat-value">--</div>
+							<div class="stat-value">{stats().totalTemplates}</div>
 							<p class="stat-label">Published templates</p>
 						</CardContent>
 					</Card>
@@ -58,7 +96,7 @@
 							<CardTitle>Pending Review</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div class="stat-value">--</div>
+							<div class="stat-value">{stats().pendingReview}</div>
 							<p class="stat-label">Awaiting approval</p>
 						</CardContent>
 					</Card>
@@ -78,30 +116,23 @@
 							<CardTitle>Total Revenue</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div class="stat-value">$--</div>
+							<div class="stat-value">${stats().totalRevenue.toLocaleString()}</div>
 							<p class="stat-label">All time earnings</p>
 						</CardContent>
 					</Card>
 				</div>
 			</section>
 
-			<!-- Assets Section Placeholder -->
+			<!-- Assets Section -->
 			<section class="assets-section">
-				<div class="section-header">
-					<h2 class="section-title">Your Assets</h2>
-				</div>
-
-				<Card>
-					<CardContent>
-						<div class="empty-state">
-							<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-								<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-							</svg>
-							<h3>Assets will appear here</h3>
-							<p>Your published and pending templates will be displayed in this section.</p>
-						</div>
-					</CardContent>
-				</Card>
+				<AssetsDisplay
+					assets={data.assets || []}
+					{searchTerm}
+					onView={handleViewAsset}
+					onEdit={handleEditAsset}
+					onArchive={handleArchiveAsset}
+					onRefresh={handleRefreshAssets}
+				/>
 			</section>
 		</div>
 	</main>
@@ -160,47 +191,5 @@
 
 	.assets-section {
 		margin-bottom: var(--space-xl);
-	}
-
-	.section-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: var(--space-md);
-	}
-
-	.section-title {
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0;
-	}
-
-	.empty-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-2xl) var(--space-md);
-		text-align: center;
-	}
-
-	.empty-state svg {
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-md);
-	}
-
-	.empty-state h3 {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs);
-	}
-
-	.empty-state p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0;
-		max-width: 24rem;
 	}
 </style>
