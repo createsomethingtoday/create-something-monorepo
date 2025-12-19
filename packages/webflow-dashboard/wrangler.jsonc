@@ -1,0 +1,31 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "webflow-dashboard",
+	"compatibility_date": "2024-12-01",
+	"pages_build_output_dir": ".svelte-kit/cloudflare",
+
+	// KV Namespaces
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "TBD_SESSIONS_KV_ID"
+		}
+	],
+
+	// R2 Buckets
+	"r2_buckets": [
+		{
+			"binding": "UPLOADS",
+			"bucket_name": "webflow-dashboard-uploads"
+		}
+	],
+
+	// Environment variables (secrets set via wrangler secret put)
+	"vars": {
+		"ENVIRONMENT": "production"
+	}
+
+	// Secrets (set via: wrangler secret put AIRTABLE_API_KEY)
+	// - AIRTABLE_API_KEY
+	// - AIRTABLE_BASE_ID
+}
