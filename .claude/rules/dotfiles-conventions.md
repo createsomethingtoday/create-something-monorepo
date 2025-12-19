@@ -121,6 +121,51 @@ cd packages/dotfiles
 ./scripts/install.sh
 ```
 
+## Git Multi-Account SSH Configuration
+
+Multiple GitHub accounts are configured via SSH host aliases:
+
+| Host Alias | Account | SSH Key | Email |
+|------------|---------|---------|-------|
+| `github.com` | createsomethingtoday | `~/.ssh/id_ed25519_createsomething` | micah@createsomething.io |
+| `github-halfdozen` | halfdozenco | `~/.ssh/id_ed25519` | mj@halfdozen.co |
+
+### Switching Accounts
+
+**Preferred method**: Use SSH host aliases in remote URLs.
+
+```bash
+# For createsomethingtoday repos
+git remote set-url origin git@github.com:createsomethingtoday/repo-name.git
+
+# For halfdozen repos
+git remote set-url origin git@github-halfdozen:halfdozenco/repo-name.git
+```
+
+**Alternative**: Use `gh auth switch` for HTTPS remotes.
+
+```bash
+gh auth switch --user createsomethingtoday
+gh auth switch --user halfdozenco
+```
+
+### Loading SSH Keys
+
+If keys aren't loaded (after restart):
+
+```bash
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519_createsomething
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519
+```
+
+### Verifying Configuration
+
+```bash
+ssh-add -l                    # List loaded keys
+ssh -T git@github.com         # Test createsomethingtoday
+ssh -T git@github-halfdozen   # Test halfdozenco
+```
+
 ## Claude Code Integration
 
 When modifying dotfiles:
