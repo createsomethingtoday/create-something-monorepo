@@ -176,26 +176,25 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 		/**
 		 * Get all assets for a user by email
+		 * Uses same view and formula as original implementation
 		 */
 		async getAssetsByEmail(email: string, options?: { limit?: number }): Promise<Asset[]> {
 			const escapedEmail = escapeAirtableString(email);
-			// Assets are linked via Creator, which has multiple email fields
-			const formula = `OR(
-				FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)})),
-				{📧Emails (from 🎨Creator)} = '${escapedEmail}'
-			)`;
+
+			// Match original: FIND email in creator emails field, filter to Templates only
+			const formula = `AND(FIND('${escapedEmail}', {📧Emails (from 🎨Creator)}), {🆎Type} = 'Template🏗️')`;
 
 			const records = await base(TABLES.ASSETS)
 				.select({
+					view: 'viwETCKXDaVHbEnZQ', // Original view
 					filterByFormula: formula,
-					maxRecords: options?.limit || 100,
-					sort: [{ field: 'Created', direction: 'desc' }]
+					maxRecords: options?.limit || 100
 				})
 				.all();
 
 			return records.map(record => ({
 				id: record.id,
-				name: record.fields['🆎Name'] as string || '',
+				name: record.fields['Name'] as string || '',
 				description: record.fields['📝Description'] as string || '',
 				type: record.fields['🆎Type'] as Asset['type'] || 'Template',
 				status: record.fields['🚀Marketplace Status'] as Asset['status'] || 'Draft',
