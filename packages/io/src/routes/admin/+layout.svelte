@@ -20,8 +20,6 @@
 	}
 </script>
 
-<a href="#main-content" class="skip-link">Skip to main content</a>
-
 <div class="admin-layout">
 	<!-- Admin Navigation -->
 	<nav class="admin-nav">
