@@ -76,8 +76,13 @@
 		showPerformance = !showPerformance;
 	}
 
-	function handleSort(config: SortConfig) {
-		sortConfig = config;
+	function handleSort(key: string) {
+		// Toggle direction if same key, otherwise default to descending
+		const direction =
+			sortConfig.key === key && sortConfig.direction === 'descending'
+				? 'ascending'
+				: 'descending';
+		sortConfig = { key, direction };
 	}
 
 	function scrollToStatus(status: AssetStatus) {
@@ -207,20 +212,29 @@
 </main>
 
 <style>
+	/* ==========================================================================
+	   Canon Golden Ratio Layout
+	   φ (phi) = 1.618
+	   Spacing: xs(0.5) → sm(1) → md(1.618) → lg(2.618) → xl(4.236) → 2xl(6.854)
+	   ========================================================================== */
+
 	.main {
 		min-height: calc(100vh - 60px);
-		background: var(--color-bg-pure);
+		background: var(--color-bg-elevated);
 	}
 
 	.content {
 		max-width: 1400px;
 		margin: 0 auto;
-		padding: var(--space-lg) var(--space-md);
+		padding: var(--space-xl) var(--space-lg);
 	}
 
-	/* Overview Section */
+	/* ==========================================================================
+	   Overview Section - Visual hierarchy via golden ratio
+	   ========================================================================== */
+
 	.overview {
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 	}
 
 	.overview-header {
@@ -228,13 +242,13 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		margin-bottom: var(--space-lg);
-		gap: var(--space-md);
+		gap: var(--space-lg);
 	}
 
 	.overview-title-group {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: calc(var(--space-xs) / 1.618); /* φ-derived micro-gap */
 	}
 
 	.overview-title {
@@ -243,11 +257,12 @@
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin: 0;
+		line-height: 1.2;
 	}
 
 	.overview-subtitle {
 		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-tertiary);
 		margin: 0;
 	}
 
@@ -255,48 +270,56 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
+		flex-shrink: 0;
 	}
 
+	/* Horizontal scroll cards - φ gap between cards */
 	.overview-cards {
 		display: flex;
 		gap: var(--space-md);
 		overflow-x: auto;
-		padding-bottom: var(--space-sm);
-		/* Custom scrollbar */
+		padding: var(--space-xs) 0 var(--space-sm);
+		margin: 0 calc(-1 * var(--space-xs));
+		padding-left: var(--space-xs);
+		padding-right: var(--space-xs);
 		scrollbar-width: thin;
-		scrollbar-color: var(--color-border-emphasis) var(--color-bg-surface);
+		scrollbar-color: var(--color-border-emphasis) transparent;
 	}
 
 	.overview-cards::-webkit-scrollbar {
-		height: 8px;
+		height: 6px;
 	}
 
 	.overview-cards::-webkit-scrollbar-track {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: transparent;
 	}
 
 	.overview-cards::-webkit-scrollbar-thumb {
-		background: var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
+		background: var(--color-border-default);
+		border-radius: var(--radius-full);
 	}
 
 	.overview-cards::-webkit-scrollbar-thumb:hover {
-		background: var(--color-border-strong);
+		background: var(--color-border-emphasis);
 	}
 
-	/* Assets Section */
+	/* ==========================================================================
+	   Assets Section - Table-based layout with golden ratio gaps
+	   ========================================================================== */
+
 	.assets {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
+		gap: var(--space-md);
 	}
 
 	.assets-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: var(--space-md);
+		gap: var(--space-lg);
+		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.assets-title {
@@ -307,14 +330,17 @@
 		margin: 0;
 	}
 
-	/* Empty State */
+	/* ==========================================================================
+	   Empty State - Centered with generous padding
+	   ========================================================================== */
+
 	.empty-state {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-md);
-		padding: var(--space-2xl);
+		padding: var(--space-2xl) var(--space-xl);
 		text-align: center;
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
@@ -333,9 +359,19 @@
 		font-size: var(--text-body);
 		color: var(--color-fg-tertiary);
 		margin: 0;
+		max-width: 32ch;
 	}
 
-	/* Responsive */
+	/* ==========================================================================
+	   Responsive - Maintain proportions at smaller viewports
+	   ========================================================================== */
+
+	@media (max-width: 1024px) {
+		.content {
+			padding: var(--space-lg) var(--space-md);
+		}
+	}
+
 	@media (max-width: 768px) {
 		.content {
 			padding: var(--space-md) var(--space-sm);
@@ -343,17 +379,18 @@
 
 		.overview-header {
 			flex-direction: column;
-			align-items: flex-start;
+			align-items: stretch;
+			gap: var(--space-md);
 		}
 
 		.overview-actions {
-			width: 100%;
-			flex-direction: column;
+			justify-content: flex-start;
 		}
 
 		.assets-header {
 			flex-direction: column;
-			align-items: flex-start;
+			align-items: stretch;
+			gap: var(--space-sm);
 		}
 	}
 </style>
