@@ -1,22 +1,25 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import type { Asset } from '$lib/types';
 	import { TableRow, TableCell } from '../ui';
 	import { Badge } from '../ui';
-	import { Eye, Pencil, Archive } from 'lucide-svelte';
+	import { Eye, Pencil, Archive, Loader2 } from 'lucide-svelte';
 
 	interface Props {
 		asset: Asset;
 		showPerformance?: boolean;
 		onEdit?: (asset: Asset) => void;
 		onSelect?: (asset: Asset) => void;
+		onArchive?: (asset: Asset) => Promise<void>;
 	}
 
-	let { asset, showPerformance = false, onEdit, onSelect }: Props = $props();
+	let { asset, showPerformance = false, onEdit, onSelect, onArchive }: Props = $props();
 
 	// Dropdown state
 	let showDropdown = $state(false);
 	let dropdownRef: HTMLDivElement | null = $state(null);
+	let isArchiving = $state(false);
 
 	// Toggle dropdown
 	function toggleDropdown(e: MouseEvent) {
@@ -36,11 +39,45 @@
 		}
 	}
 
-	// Handle archive action (placeholder)
-	function handleArchive() {
-		// TODO: Implement archive functionality
-		console.log('Archive asset:', asset.id);
+	// Handle view details - navigate to detail page
+	function handleViewDetails() {
 		closeDropdown();
+		goto(`/assets/${asset.id}`);
+	}
+
+	// Handle edit - navigate to detail page for now
+	function handleEdit() {
+		closeDropdown();
+		if (onEdit) {
+			onEdit(asset);
+		} else {
+			// Default: navigate to detail page
+			goto(`/assets/${asset.id}`);
+		}
+	}
+
+	// Handle archive action
+	async function handleArchive() {
+		if (isArchiving) return;
+
+		const confirmed = confirm(`Are you sure you want to archive "${asset.name}"? This will change its status to Delisted.`);
+		if (!confirmed) {
+			closeDropdown();
+			return;
+		}
+
+		isArchiving = true;
+		try {
+			if (onArchive) {
+				await onArchive(asset);
+			}
+			closeDropdown();
+		} catch (err) {
+			console.error('Failed to archive:', err);
+			alert('Failed to archive asset. Please try again.');
+		} finally {
+			isArchiving = false;
+		}
 	}
 
 	onMount(() => {
@@ -133,22 +170,31 @@
 
 			{#if showDropdown}
 				<div class="dropdown-menu">
-					<button class="dropdown-item" onclick={() => { onSelect?.(asset); closeDropdown(); }}>
+					<button class="dropdown-item" onclick={handleViewDetails}>
 						<Eye size={16} />
 						View Details
 					</button>
 
 					{#if asset.status === 'Published' || asset.status === 'Upcoming' || asset.status === 'Scheduled'}
-						<button class="dropdown-item" onclick={() => { onEdit?.(asset); closeDropdown(); }}>
+						<button class="dropdown-item" onclick={handleEdit}>
 							<Pencil size={16} />
 							Edit
 						</button>
 					{/if}
 
 					{#if asset.status !== 'Delisted'}
-						<button class="dropdown-item dropdown-item-danger" onclick={handleArchive}>
-							<Archive size={16} />
-							Archive
+						<button
+							class="dropdown-item dropdown-item-danger"
+							onclick={handleArchive}
+							disabled={isArchiving}
+						>
+							{#if isArchiving}
+								<Loader2 size={16} class="spin" />
+								Archiving...
+							{:else}
+								<Archive size={16} />
+								Archive
+							{/if}
 						</button>
 					{/if}
 				</div>
@@ -262,5 +308,27 @@
 	.dropdown-item-danger:hover {
 		background: var(--color-error-muted);
 		color: var(--color-error);
+	}
+
+	.dropdown-item:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.dropdown-item:disabled:hover {
+		background: none;
+	}
+
+	:global(.spin) {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>
