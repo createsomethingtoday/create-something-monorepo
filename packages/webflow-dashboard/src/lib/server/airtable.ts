@@ -108,10 +108,21 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 		/**
 		 * Set verification token for user
+		 * Uses two-step process to trigger Airtable automation:
+		 * 1. Clear old token (set to null)
+		 * 2. Set new token (transition from null → value triggers automation)
 		 */
 		async setVerificationToken(userId: string, token: string, expirationTime: Date): Promise<void> {
-			// First clear old token, then set new token
-			// Note: Airtable doesn't accept null, so we set empty string first then overwrite
+			// Step 1: Clear old token
+			await base(TABLES.USERS).update([{
+				id: userId,
+				fields: {
+					[FIELDS.VERIFICATION_TOKEN]: null,
+					[FIELDS.TOKEN_EXPIRATION]: null
+				}
+			}]);
+
+			// Step 2: Set new token (this transition triggers the Airtable automation to send email)
 			await base(TABLES.USERS).update([{
 				id: userId,
 				fields: {
