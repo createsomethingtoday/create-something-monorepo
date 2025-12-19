@@ -24,6 +24,13 @@ export {
 	KNOWN_FEEDBACK_PATTERNS
 } from './collectors/index.js';
 
+// Rule generators
+export {
+	generateRule,
+	generateRulesFromPatterns,
+	generateEslintConfig,
+} from './generators/index.js';
+
 export {
 	formatAsJson,
 	writeJsonReport,
@@ -77,6 +84,12 @@ export type {
 	PatternAnalysisResult,
 	AutomationSuggestion
 } from './types/index.js';
+
+// Rule generator types
+export type {
+	GeneratedRule,
+	RuleGenerationResult,
+} from './generators/index.js';
 
 // Architecture domain helpers
 export {
