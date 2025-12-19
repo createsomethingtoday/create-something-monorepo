@@ -12,14 +12,7 @@
 	 * Both achieve Zuhandenheit—the tool recedes. The evolution represents
 	 * a shift from *asking* to *showing*.
 	 */
-	import { Footer, QuoteBlock } from '@create-something/components';
-
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'Experiments', href: '/experiments' },
-		{ label: 'Papers', href: '/papers' },
-		{ label: 'About', href: '/about' }
-	];
+	import { QuoteBlock } from '@create-something/components';
 </script>
 
 <svelte:head>
@@ -524,14 +517,6 @@ let phase = $derived(
 		</section>
 	</div>
 </div>
-
-<Footer
-	mode="io"
-	showNewsletter={true}
-	aboutText="Research and tools for AI-native development. Every experiment becomes methodology."
-	{quickLinks}
-	showSocial={true}
-/>
 
 <style>
 	.page {
