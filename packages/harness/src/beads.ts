@@ -486,6 +486,7 @@ export async function getCompletedFeatures(
 
 /**
  * Get in-progress and open feature issues for a harness.
+ * Excludes checkpoint and review issues which are created by the harness itself.
  */
 export async function getPendingFeatures(
   harnessId: string,
@@ -497,6 +498,7 @@ export async function getPendingFeatures(
     (issue) =>
       issue.labels?.includes(`harness:${harnessId}`) &&
       !issue.labels?.includes('checkpoint') &&
+      !issue.labels?.includes('review') &&
       issue.issue_type !== 'epic' &&
       issue.status !== 'closed'
   );
