@@ -14,6 +14,7 @@
 		TabsContent
 	} from './ui';
 	import ApiKeysManager from './ApiKeysManager.svelte';
+	import ImageUploader from './ImageUploader.svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -29,7 +30,8 @@
 	let formData = $state({
 		name: '',
 		legalName: '',
-		biography: ''
+		biography: '',
+		profileImage: null as string | null
 	});
 
 	let modalRef: HTMLDivElement | undefined = $state();
@@ -43,6 +45,7 @@
 		name?: string;
 		legalName?: string;
 		biography?: string;
+		profileImage?: string | null;
 	}
 
 	async function loadProfile() {
@@ -53,7 +56,8 @@
 			formData = {
 				name: profile.name || '',
 				legalName: profile.legalName || '',
-				biography: profile.biography || ''
+				biography: profile.biography || '',
+				profileImage: profile.profileImage || null
 			};
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load profile';
@@ -145,6 +149,16 @@
 								{#if error}
 									<div class="error-message">{error}</div>
 								{/if}
+
+								<div class="form-field">
+									<ImageUploader
+										value={formData.profileImage}
+										onchange={(url) => (formData.profileImage = url)}
+										label="Profile Image"
+										description="WebP images only, square format recommended"
+										disabled={isSaving}
+									/>
+								</div>
 
 								<div class="form-field">
 									<Label for="name">Name</Label>
