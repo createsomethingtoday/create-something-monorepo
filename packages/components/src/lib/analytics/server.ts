@@ -107,6 +107,13 @@ export async function processEventBatch(
 		// Non-critical, don't fail the request
 	}
 
+	// Update session summaries asynchronously
+	try {
+		await updateSessionSummaries(db, events, context);
+	} catch {
+		// Non-critical, don't fail the request
+	}
+
 	return {
 		success: errors.length === 0,
 		received: statements.length,
@@ -209,6 +216,106 @@ async function updateDailyAggregates(db: D1Database, events: AnalyticsEvent[]): 
 // =============================================================================
 // SESSION MANAGEMENT
 // =============================================================================
+
+/**
+ * Update session summaries for a batch of events
+ * Groups events by session and creates/updates sessions efficiently
+ */
+async function updateSessionSummaries(
+	db: D1Database,
+	events: AnalyticsEvent[],
+	context: { userAgent?: string; ipCountry?: string }
+): Promise<void> {
+	// Group events by session
+	const sessionEvents = new Map<string, AnalyticsEvent[]>();
+	for (const event of events) {
+		const existing = sessionEvents.get(event.sessionId) || [];
+		existing.push(event);
+		sessionEvents.set(event.sessionId, existing);
+	}
+
+	// Process each session
+	for (const [sessionId, sessionEvts] of sessionEvents) {
+		// Sort events by timestamp
+		sessionEvts.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+		const firstEvent = sessionEvts[0];
+		const lastEvent = sessionEvts[sessionEvts.length - 1];
+
+		// Count event types
+		const pageViews = sessionEvts.filter(e => e.category === 'navigation' && e.action === 'page_view').length;
+		const interactions = sessionEvts.filter(e => e.category === 'interaction').length;
+		const conversions = sessionEvts.filter(e => e.category === 'conversion').length;
+		const errors = sessionEvts.filter(e => e.category === 'error').length;
+		const maxScrollDepth = Math.max(0, ...sessionEvts.filter(e => e.action === 'scroll_depth' && e.value).map(e => e.value || 0));
+
+		// Check if session exists
+		const existing = await db
+			.prepare('SELECT * FROM unified_sessions WHERE id = ?')
+			.bind(sessionId)
+			.run();
+
+		if (existing.results && existing.results.length > 0) {
+			// Update existing session
+			await db
+				.prepare(
+					`UPDATE unified_sessions SET
+					 ended_at = ?,
+					 page_views = page_views + ?,
+					 interactions = interactions + ?,
+					 conversions = conversions + ?,
+					 errors = errors + ?,
+					 max_scroll_depth = MAX(max_scroll_depth, ?),
+					 exit_url = ?,
+					 updated_at = datetime('now')
+					 WHERE id = ?`
+				)
+				.bind(
+					lastEvent.timestamp,
+					pageViews,
+					interactions,
+					conversions,
+					errors,
+					maxScrollDepth,
+					lastEvent.url,
+					sessionId
+				)
+				.run();
+		} else {
+			// Calculate duration in seconds
+			const startTime = new Date(firstEvent.timestamp).getTime();
+			const endTime = new Date(lastEvent.timestamp).getTime();
+			const durationSeconds = Math.round((endTime - startTime) / 1000);
+
+			// Create new session
+			await db
+				.prepare(
+					`INSERT INTO unified_sessions
+					 (id, property, user_id, started_at, ended_at, duration_seconds, page_views, interactions, conversions, errors, max_scroll_depth, entry_url, exit_url, referrer, user_agent, ip_country)
+					 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+				)
+				.bind(
+					sessionId,
+					firstEvent.property,
+					firstEvent.userId || null,
+					firstEvent.timestamp,
+					lastEvent.timestamp,
+					durationSeconds,
+					pageViews,
+					interactions,
+					conversions,
+					errors,
+					maxScrollDepth,
+					firstEvent.url,
+					lastEvent.url,
+					firstEvent.referrer || null,
+					context.userAgent || null,
+					context.ipCountry || null
+				)
+				.run();
+		}
+	}
+}
 
 /**
  * Update or create session summary
