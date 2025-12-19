@@ -287,28 +287,55 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Update an asset
 		 */
-		async updateAsset(id: string, data: Partial<Asset>): Promise<Asset | null> {
+		async updateAsset(id: string, data: Partial<Pick<Asset, 'name' | 'description' | 'descriptionShort' | 'websiteUrl' | 'previewUrl'>>): Promise<Asset | null> {
 			const fields: Record<string, string> = {};
 
-			if (data.name !== undefined) fields['🆎Name'] = data.name;
+			if (data.name !== undefined) fields['Name'] = data.name;
 			if (data.description !== undefined) fields['📝Description'] = data.description;
+			if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
 			if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
+			if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
+
+			if (Object.keys(fields).length === 0) {
+				return null;
+			}
 
 			try {
 				const records = await base(TABLES.ASSETS).update([{ id, fields }]);
 				const record = records[0];
+
+				// Clean status string (remove emojis)
+				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
+				const cleanedStatus = rawStatus.replace(/[^\w\s]/g, '').trim() as Asset['status'];
+
 				return {
 					id: record.id,
-					name: record.fields['🆎Name'] as string || '',
+					name: record.fields['Name'] as string || '',
 					description: record.fields['📝Description'] as string || '',
+					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
-					status: record.fields['🚀Marketplace Status'] as Asset['status'] || 'Draft',
+					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as unknown as { url: string }[] | undefined)?.[0]?.url,
 					websiteUrl: record.fields['🔗Website URL'] as string,
+					previewUrl: record.fields['🔗Preview Site URL'] as string,
 					marketplaceUrl: record.fields['🔗Marketplace URL'] as string
 				};
 			} catch {
 				return null;
+			}
+		},
+
+		/**
+		 * Check if user owns an asset (by email match)
+		 */
+		async verifyAssetOwnership(assetId: string, email: string): Promise<boolean> {
+			try {
+				const record = await base(TABLES.ASSETS).find(assetId);
+				const creatorEmails = record.fields['📧Emails (from 🎨Creator)'] as string | undefined;
+				if (!creatorEmails) return false;
+				return creatorEmails.toLowerCase().includes(email.toLowerCase());
+			} catch {
+				return false;
 			}
 		},
 
@@ -340,6 +367,64 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				biography: record.fields['📝Biography'] as string,
 				legalName: record.fields['📜Legal Name'] as string
 			};
+		},
+
+		/**
+		 * Update creator profile
+		 */
+		async updateCreator(id: string, data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName'>>): Promise<Creator | null> {
+			const fields: Record<string, string> = {};
+
+			if (data.name !== undefined) fields['🎨Name'] = data.name;
+			if (data.biography !== undefined) fields['📝Biography'] = data.biography;
+			if (data.legalName !== undefined) fields['📜Legal Name'] = data.legalName;
+
+			if (Object.keys(fields).length === 0) {
+				return null;
+			}
+
+			try {
+				const records = await base(TABLES.CREATORS).update([{ id, fields }]);
+				const record = records[0];
+				return {
+					id: record.id,
+					name: record.fields['🎨Name'] as string || '',
+					email: (record.fields['📧Emails'] as string)?.split(',')[0]?.trim() || '',
+					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
+					avatarUrl: (record.fields['🖼️Avatar'] as unknown as { url: string }[] | undefined)?.[0]?.url,
+					biography: record.fields['📝Biography'] as string,
+					legalName: record.fields['📜Legal Name'] as string
+				};
+			} catch {
+				return null;
+			}
+		},
+
+		/**
+		 * Check if an asset name is unique (excluding a specific asset ID)
+		 */
+		async checkAssetNameUniqueness(name: string, excludeId?: string): Promise<{ unique: boolean; existingId?: string }> {
+			const escapedName = escapeAirtableString(name.trim());
+
+			let formula = `LOWER({Name}) = LOWER('${escapedName}')`;
+			if (excludeId) {
+				const escapedId = escapeAirtableString(excludeId);
+				formula = `AND(${formula}, RECORD_ID() != '${escapedId}')`;
+			}
+
+			const records = await base(TABLES.ASSETS)
+				.select({
+					filterByFormula: formula,
+					maxRecords: 1,
+					fields: ['Name']
+				})
+				.firstPage();
+
+			if (records.length === 0) {
+				return { unique: true };
+			}
+
+			return { unique: false, existingId: records[0].id };
 		},
 
 		// ==================== TAGS ====================
