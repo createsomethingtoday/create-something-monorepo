@@ -16,6 +16,9 @@ declare global {
 				AIRTABLE_API_KEY: string;
 				AIRTABLE_BASE_ID: string;
 				ENVIRONMENT: string;
+				// SLA notifications (optional - used by manual trigger)
+				ZAPIER_SLA_WEBHOOK_URL?: string;
+				SLA_TRIGGER_SECRET?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;
