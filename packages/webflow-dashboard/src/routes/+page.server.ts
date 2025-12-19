@@ -2,35 +2,29 @@ import type { PageServerLoad } from './$types';
 import type { Asset } from '$lib/types';
 import { getAirtableClient } from '$lib/server/airtable';
 
-interface DashboardStats {
-	totalAssets: number;
-	publishedAssets: number;
-	inReviewAssets: number;
-	totalRevenue: number;
-}
-
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	let stats: DashboardStats = {
-		totalAssets: 0,
-		publishedAssets: 0,
-		inReviewAssets: 0,
-		totalRevenue: 0
-	};
-
 	let assets: Asset[] = [];
+	let submissionsThisMonth = 0;
 
 	if (locals.user?.email && platform?.env) {
 		try {
 			const airtable = getAirtableClient(platform.env);
-			assets = await airtable.getAssetsByEmail(locals.user.email, { limit: 6 });
+			// Get all assets (no limit)
+			assets = await airtable.getAssetsByEmail(locals.user.email);
 
-			// Calculate stats from assets
-			stats = {
-				totalAssets: assets.length,
-				publishedAssets: assets.filter(a => a.status === 'Published').length,
-				inReviewAssets: assets.filter(a => a.status === 'Scheduled' || a.status === 'Upcoming').length,
-				totalRevenue: assets.reduce((sum, a) => sum + (a.cumulativeRevenue ?? 0), 0)
-			};
+			// Calculate submissions this month
+			const now = new Date();
+			const currentYear = now.getFullYear();
+			const currentMonth = now.getMonth();
+
+			submissionsThisMonth = assets.filter(asset => {
+				if (!asset.submittedDate) return false;
+				const submittedDate = new Date(asset.submittedDate);
+				return (
+					submittedDate.getFullYear() === currentYear &&
+					submittedDate.getMonth() === currentMonth
+				);
+			}).length;
 		} catch (error) {
 			console.error('Failed to load dashboard data:', error);
 		}
@@ -38,7 +32,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 
 	return {
 		user: locals.user,
-		stats,
-		assets
+		assets,
+		submissionsThisMonth
 	};
 };
