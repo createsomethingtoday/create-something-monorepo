@@ -1,13 +1,15 @@
 <script lang="ts">
 	import type { HTMLTextareaAttributes } from 'svelte/elements';
 
-	interface Props extends HTMLTextareaAttributes {
+	interface Props extends Omit<HTMLTextareaAttributes, 'value'> {
 		error?: boolean;
+		value?: string;
 	}
 
 	let {
 		error = false,
 		class: className = '',
+		value = $bindable(''),
 		...restProps
 	}: Props = $props();
 </script>
@@ -15,6 +17,7 @@
 <textarea
 	class="textarea {className}"
 	class:textarea-error={error}
+	bind:value
 	{...restProps}
 ></textarea>
 

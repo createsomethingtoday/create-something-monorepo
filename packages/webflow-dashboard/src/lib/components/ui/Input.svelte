@@ -1,13 +1,15 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from 'svelte/elements';
 
-	interface Props extends HTMLInputAttributes {
+	interface Props extends Omit<HTMLInputAttributes, 'value'> {
 		error?: boolean;
+		value?: string;
 	}
 
 	let {
 		error = false,
 		class: className = '',
+		value = $bindable(''),
 		...restProps
 	}: Props = $props();
 </script>
@@ -15,6 +17,7 @@
 <input
 	class="input {className}"
 	class:input-error={error}
+	bind:value
 	{...restProps}
 />
 
