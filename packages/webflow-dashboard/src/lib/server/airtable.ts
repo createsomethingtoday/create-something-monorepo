@@ -163,12 +163,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Clear verification token after successful login
 		 */
 		async clearVerificationToken(userId: string): Promise<void> {
-			// Use empty string to clear since Airtable doesn't accept null
 			await base(TABLES.USERS).update([{
 				id: userId,
 				fields: {
-					[FIELDS.TOKEN_EXPIRATION]: '',
-					[FIELDS.VERIFICATION_TOKEN]: ''
+					[FIELDS.TOKEN_EXPIRATION]: null,
+					[FIELDS.VERIFICATION_TOKEN]: null
 				}
 			}]);
 		},
