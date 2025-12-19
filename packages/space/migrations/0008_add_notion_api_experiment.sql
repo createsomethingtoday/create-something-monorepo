@@ -5,7 +5,7 @@
 -- Created: 2025-11-18
 -- Purpose: Deploy interactive code experiment teaching Notion API migration
 
-INSERT INTO papers (
+INSERT OR IGNORE INTO papers (
   id,
   title,
   slug,
