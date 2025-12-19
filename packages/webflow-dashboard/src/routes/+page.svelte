@@ -6,6 +6,7 @@
 	import { BetaBanner, OverviewCard } from '$lib/components/dashboard';
 	import { StatusSection } from '$lib/components/assets';
 	import { Button } from '$lib/components/ui';
+	import { invalidateAll } from '$app/navigation';
 	import {
 		CheckCircle,
 		Calendar,
@@ -106,6 +107,20 @@
 		console.log('Select asset:', assetId);
 	}
 
+	async function handleArchive(asset: Asset): Promise<void> {
+		const response = await fetch(`/api/assets/${asset.id}/archive`, {
+			method: 'POST'
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.message || 'Failed to archive asset');
+		}
+
+		// Refresh the page data to reflect the change
+		await invalidateAll();
+	}
+
 	// Icon mapping
 	const statusIcons = {
 		Published: CheckCircle,
@@ -191,6 +206,7 @@
 							onSort={handleSort}
 							onEdit={handleEdit}
 							onSelect={handleSelect}
+							onArchive={handleArchive}
 						/>
 					</div>
 				{/if}

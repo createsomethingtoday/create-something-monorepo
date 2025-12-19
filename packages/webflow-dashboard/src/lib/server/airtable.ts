@@ -433,6 +433,36 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
+		 * Archive an asset (change status to Delisted)
+		 * Follows original implementation: appends unique code to name, updates status
+		 */
+		async archiveAsset(id: string): Promise<{ success: boolean; error?: string }> {
+			try {
+				// First get the current asset
+				const record = await base(TABLES.ASSETS).find(id);
+				const currentName = record.fields['Name'] as string || '';
+
+				// Generate unique 8-character code
+				const uniqueCode = randomBytes(4).toString('hex').toUpperCase();
+
+				// Update the asset
+				await base(TABLES.ASSETS).update([{
+					id,
+					fields: {
+						'Name': `${currentName} Archived ${uniqueCode}`,
+						'🚀Marketplace Status': '4️⃣Delisted☠️',
+						'🥞CMS Status': 'Archived'
+					}
+				}]);
+
+				return { success: true };
+			} catch (err) {
+				console.error('Error archiving asset:', err);
+				return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+			}
+		},
+
+		/**
 		 * Check if an asset name is unique (excluding a specific asset ID)
 		 */
 		async checkAssetNameUniqueness(name: string, excludeId?: string): Promise<{ unique: boolean; existingId?: string }> {

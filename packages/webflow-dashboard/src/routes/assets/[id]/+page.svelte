@@ -1,551 +1,237 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-	import type { StatusTimelineItem, Asset } from '$lib/types';
-	import { Header } from '$lib/components/layout';
-	import { Card, CardContent, Button, Badge, Separator } from '$lib/components/ui';
-	import { StatusBadge } from '$lib/components/assets';
-	import { EditAssetModal } from '$lib/components/assets';
-	import {
-		ArrowLeft,
-		ExternalLink,
-		Edit,
-		Eye,
-		ShoppingCart,
-		DollarSign,
-		Calendar,
-		MessageCircle,
-		ClipboardCheck,
-		CheckCircle,
-		XCircle,
-		Clock,
-		FileText
-	} from 'lucide-svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { Badge } from '$lib/components/ui';
+	import { ArrowLeft, ExternalLink, Eye, DollarSign, ShoppingCart, Calendar, Clock } from 'lucide-svelte';
 
-	let { data }: { data: PageData } = $props();
+	let { data } = $props();
 
-	const asset = $derived(data.asset);
-	const relatedAssets = $derived(data.relatedAssets ?? []);
-
-	let activeTab = $state<'overview' | 'details' | 'related'>('overview');
-	let showPerformanceMetrics = $state(false);
-	let showEditModal = $state(false);
-
-	function handleEditSave(updatedAsset: Asset) {
-		showEditModal = false;
-		// Refresh the page data to get the updated asset
-		invalidateAll();
+	function formatDate(dateString?: string): string {
+		if (!dateString) return '-';
+		const date = new Date(dateString);
+		return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 	}
 
-	function formatCurrency(value: number | undefined): string {
-		if (!value) return '$0';
-		return new Intl.NumberFormat('en-US', {
-			style: 'currency',
-			currency: 'USD',
-			minimumFractionDigits: 0,
-			maximumFractionDigits: 0
-		}).format(value);
+	function formatNumber(num?: number): string {
+		if (num === undefined || num === null) return '0';
+		return num.toLocaleString('en-US');
 	}
 
-	function formatNumber(value: number | undefined): string {
-		if (!value) return '0';
-		return new Intl.NumberFormat('en-US').format(value);
+	function formatCurrency(num?: number): string {
+		if (num === undefined || num === null) return '$0';
+		return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
 	}
 
-	function formatDate(dateStr: string | undefined): string {
-		if (!dateStr) return 'N/A';
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric'
-		});
-	}
-
-	// Build status timeline
-	const statusTimeline = $derived.by(() => {
-		if (!asset) return [];
-
-		const timeline: StatusTimelineItem[] = [];
-
-		// Add submitted status
-		if (asset.submittedDate) {
-			timeline.push({
-				date: formatDate(asset.submittedDate),
-				status: 'Submitted'
-			});
+	function getStatusColor(status: string): string {
+		switch (status) {
+			case 'Published': return 'var(--color-status-published)';
+			case 'Scheduled': return 'var(--color-status-scheduled)';
+			case 'Upcoming': return 'var(--color-status-upcoming)';
+			case 'Delisted': return 'var(--color-status-delisted)';
+			case 'Rejected': return 'var(--color-status-rejected)';
+			default: return 'var(--color-fg-muted)';
 		}
-
-		// Add review status if available
-		if (asset.latestReviewStatus) {
-			timeline.push({
-				date: formatDate(asset.latestReviewDate),
-				status: asset.latestReviewStatus,
-				comment: asset.latestReviewFeedback
-			});
-		}
-
-		// Add decision date if available (only if status exists)
-		if (asset.decisionDate && asset.status) {
-			timeline.push({
-				date: formatDate(asset.decisionDate),
-				status: asset.status
-			});
-		}
-
-		return timeline;
-	});
-
-	// Status color config
-	function getStatusColor(status: string | undefined | null) {
-		if (!status) return { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' };
-		const statusLower = status.toLowerCase();
-		if (statusLower.includes('published') || statusLower.includes('approved')) {
-			return { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' };
-		}
-		if (statusLower.includes('rejected')) {
-			return { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' };
-		}
-		if (statusLower.includes('review') || statusLower.includes('changes')) {
-			return { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200' };
-		}
-		if (statusLower.includes('scheduled') || statusLower.includes('upcoming')) {
-			return { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' };
-		}
-		if (statusLower.includes('delisted')) {
-			return { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' };
-		}
-		return { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' };
 	}
 </script>
 
 <svelte:head>
-	<title>{asset?.name ?? 'Asset'} | Webflow Asset Dashboard</title>
+	<title>{data.asset.name} | Asset Dashboard</title>
 </svelte:head>
 
-<Header userEmail={data.user?.email} />
+<div class="asset-detail-page">
+	<header class="page-header">
+		<a href="/" class="back-link">
+			<ArrowLeft size={20} />
+			Back to Dashboard
+		</a>
+	</header>
 
-<main class="main">
 	<div class="content">
-		<nav class="breadcrumb">
-			<a href="/assets" class="back-link">
-				<ArrowLeft size={16} />
-				Back to Assets
-			</a>
-		</nav>
-
-		{#if asset}
-			<!-- Sticky Header -->
-			<div class="sticky-header">
-				<div class="header-content">
-					<div class="header-left">
-						<h1 class="asset-name">{asset.name}</h1>
-						<StatusBadge status={asset.status} />
+		<div class="main-content">
+			<!-- Hero Section -->
+			<section class="hero-section">
+				<div class="hero-image">
+					{#if data.asset.thumbnailUrl}
+						<img src={data.asset.thumbnailUrl} alt={data.asset.name} />
+					{:else}
+						<div class="placeholder">No Image</div>
+					{/if}
+				</div>
+				<div class="hero-info">
+					<div class="status-row">
+						<Badge variant="default" style="--badge-color: {getStatusColor(data.asset.status)}">{data.asset.status}</Badge>
+						<span class="asset-type">{data.asset.type}</span>
 					</div>
-					<div class="header-actions">
-						<button type="button" class="action-btn edit-btn" onclick={() => (showEditModal = true)}>
-							<Edit size={16} />
-							Edit
-						</button>
-						{#if asset.previewUrl}
-							<a href={asset.previewUrl} target="_blank" rel="noopener noreferrer" class="action-btn">
+					<h1 class="asset-name">{data.asset.name}</h1>
+					{#if data.asset.priceString}
+						<p class="price">{data.asset.priceString}</p>
+					{/if}
+					<div class="action-buttons">
+						{#if data.asset.previewUrl}
+							<a href={data.asset.previewUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary">
 								<Eye size={16} />
 								Preview
 							</a>
 						{/if}
-						{#if asset.websiteUrl}
-							<a href={asset.websiteUrl} target="_blank" rel="noopener noreferrer" class="action-btn">
+						{#if data.asset.marketplaceUrl}
+							<a href={data.asset.marketplaceUrl} target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
 								<ExternalLink size={16} />
-								View Live
+								View on Marketplace
 							</a>
 						{/if}
 					</div>
 				</div>
-			</div>
+			</section>
 
-			<!-- Tabs Navigation -->
-			<div class="tabs-nav">
-				<button
-					type="button"
-					class="tab-btn"
-					class:active={activeTab === 'overview'}
-					onclick={() => (activeTab = 'overview')}
-				>
-					Overview
-				</button>
-				<button
-					type="button"
-					class="tab-btn"
-					class:active={activeTab === 'details'}
-					onclick={() => (activeTab = 'details')}
-				>
-					Additional Details
-				</button>
-				<button
-					type="button"
-					class="tab-btn"
-					class:active={activeTab === 'related'}
-					onclick={() => (activeTab = 'related')}
-				>
-					Related Assets
-				</button>
-			</div>
-
-			<!-- Tab Content -->
-			{#if activeTab === 'overview'}
-				<div class="overview-layout">
-					<!-- Left Column -->
-					<div class="main-column">
-						<Card>
-							<CardContent>
-								<div class="card-header-row">
-									<h2 class="section-label">Template Details</h2>
-									<button
-										type="button"
-										class="performance-toggle"
-										class:active={showPerformanceMetrics}
-										onclick={() => (showPerformanceMetrics = !showPerformanceMetrics)}
-									>
-										{showPerformanceMetrics ? 'Hide' : 'Show'} Performance
-									</button>
-								</div>
-
-								<div class="details-grid">
-									<div class="detail-item">
-										<span class="detail-label">Template Name</span>
-										<span class="detail-value">{asset.name}</span>
-									</div>
-									<div class="detail-item">
-										<span class="detail-label">Type</span>
-										<span class="detail-value">{asset.type}</span>
-									</div>
-									<div class="detail-item">
-										<span class="detail-label">Submitted Date</span>
-										<span class="detail-value">{formatDate(asset.submittedDate)}</span>
-									</div>
-									<div class="detail-item">
-										<span class="detail-label">Current Status</span>
-										<StatusBadge status={asset.status} />
-									</div>
-									{#if asset.qualityScore}
-										<div class="detail-item">
-											<span class="detail-label">Quality Score</span>
-											<span class="detail-value">{asset.qualityScore}</span>
-										</div>
-									{/if}
-									{#if asset.latestReviewStatus}
-										<div class="detail-item">
-											<span class="detail-label">Latest Review Status</span>
-											<span class="detail-value">{asset.latestReviewStatus}</span>
-										</div>
-									{/if}
-
-									{#if showPerformanceMetrics && asset.status !== 'Upcoming'}
-										<div class="detail-item">
-											<span class="detail-label">Unique Viewers</span>
-											<span class="detail-value">{formatNumber(asset.uniqueViewers)}</span>
-										</div>
-										<div class="detail-item">
-											<span class="detail-label">Cumulative Purchases</span>
-											<span class="detail-value">{formatNumber(asset.cumulativePurchases)}</span>
-										</div>
-										<div class="detail-item">
-											<span class="detail-label">Cumulative Revenue</span>
-											<span class="detail-value">{formatCurrency(asset.cumulativeRevenue)}</span>
-										</div>
-									{/if}
-								</div>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardContent>
-								<h2 class="section-label">Description</h2>
-								{#if asset.descriptionShort}
-									<p class="description-short">{asset.descriptionShort}</p>
-									<Separator />
-								{/if}
-								{#if asset.descriptionLongHtml}
-									<div class="description-long">
-										{@html asset.descriptionLongHtml}
-									</div>
-								{:else if asset.description}
-									<p class="description">{asset.description}</p>
-								{/if}
-							</CardContent>
-						</Card>
-
-						<!-- Rejection Feedback -->
-						{#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml)}
-							<Card class="rejection-card">
-								<CardContent>
-									<div class="rejection-header">
-										<MessageCircle size={20} class="rejection-icon" />
-										<h2 class="rejection-title">Rejection Feedback</h2>
-									</div>
-									{#if asset.rejectionFeedbackHtml}
-										<div class="rejection-content">
-											{@html asset.rejectionFeedbackHtml}
-										</div>
-									{:else if asset.rejectionFeedback}
-										<ul class="rejection-list">
-											{#each asset.rejectionFeedback.split('-').filter((item) => item.trim()) as item}
-												<li>{item.trim()}</li>
-											{/each}
-										</ul>
-									{/if}
-								</CardContent>
-							</Card>
-						{/if}
+			<!-- Metrics Section -->
+			<section class="metrics-section">
+				<h2 class="section-title">Performance</h2>
+				<div class="metrics-grid">
+					<div class="metric-card">
+						<div class="metric-icon">
+							<Eye size={24} />
+						</div>
+						<div class="metric-content">
+							<span class="metric-value">{formatNumber(data.asset.uniqueViewers)}</span>
+							<span class="metric-label">Unique Viewers</span>
+						</div>
 					</div>
-
-					<!-- Right Column -->
-					<aside class="sidebar-column">
-						<Card>
-							<CardContent>
-								<h2 class="section-label">Preview</h2>
-								<p class="preview-subtitle">Template's promotional images</p>
-								{#if asset.thumbnailUrl}
-									<div class="thumbnail-section">
-										<span class="thumbnail-label">Primary Thumbnail</span>
-										<img src={asset.thumbnailUrl} alt={asset.name} class="thumbnail-img" />
-									</div>
-								{/if}
-								{#if asset.secondaryThumbnailUrl}
-									<div class="thumbnail-section">
-										<span class="thumbnail-label">Secondary Thumbnail</span>
-										<img
-											src={asset.secondaryThumbnailUrl}
-											alt="{asset.name} secondary"
-											class="thumbnail-img secondary"
-										/>
-									</div>
-								{/if}
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardContent>
-								<h2 class="section-label">Performance</h2>
-								<div class="metrics">
-									<div class="metric">
-										<Eye size={18} class="metric-icon" />
-										<div class="metric-content">
-											<span class="metric-value">{formatNumber(asset.uniqueViewers)}</span>
-											<span class="metric-label">Unique Viewers</span>
-										</div>
-									</div>
-									<div class="metric">
-										<ShoppingCart size={18} class="metric-icon" />
-										<div class="metric-content">
-											<span class="metric-value">{formatNumber(asset.cumulativePurchases)}</span>
-											<span class="metric-label">Purchases</span>
-										</div>
-									</div>
-									<div class="metric">
-										<DollarSign size={18} class="metric-icon" />
-										<div class="metric-content">
-											<span class="metric-value">{formatCurrency(asset.cumulativeRevenue)}</span>
-											<span class="metric-label">Revenue</span>
-										</div>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-
-						<Button variant="outline" class="edit-button">
-							<Edit size={16} />
-							Edit Asset
-						</Button>
-					</aside>
+					<div class="metric-card">
+						<div class="metric-icon">
+							<ShoppingCart size={24} />
+						</div>
+						<div class="metric-content">
+							<span class="metric-value">{formatNumber(data.asset.cumulativePurchases)}</span>
+							<span class="metric-label">Purchases</span>
+						</div>
+					</div>
+					<div class="metric-card">
+						<div class="metric-icon">
+							<DollarSign size={24} />
+						</div>
+						<div class="metric-content">
+							<span class="metric-value">{formatCurrency(data.asset.cumulativeRevenue)}</span>
+							<span class="metric-label">Revenue</span>
+						</div>
+					</div>
 				</div>
+			</section>
+
+			<!-- Details Section -->
+			<section class="details-section">
+				<h2 class="section-title">Details</h2>
+				<div class="details-grid">
+					<div class="detail-row">
+						<span class="detail-label">
+							<Calendar size={16} />
+							Submitted
+						</span>
+						<span class="detail-value">{formatDate(data.asset.submittedDate)}</span>
+					</div>
+					{#if data.asset.publishedDate}
+						<div class="detail-row">
+							<span class="detail-label">
+								<Clock size={16} />
+								Published
+							</span>
+							<span class="detail-value">{formatDate(data.asset.publishedDate)}</span>
+						</div>
+					{/if}
+					{#if data.asset.decisionDate}
+						<div class="detail-row">
+							<span class="detail-label">
+								<Clock size={16} />
+								Decision Date
+							</span>
+							<span class="detail-value">{formatDate(data.asset.decisionDate)}</span>
+						</div>
+					{/if}
+				</div>
+			</section>
+
+			<!-- Description Section -->
+			{#if data.asset.description || data.asset.descriptionShort}
+				<section class="description-section">
+					<h2 class="section-title">Description</h2>
+					<p class="description">
+						{data.asset.descriptionShort || data.asset.description}
+					</p>
+				</section>
 			{/if}
 
-			{#if activeTab === 'details'}
-				<div class="details-layout">
-					<div class="main-column">
-						<!-- Status Timeline -->
-						<Card>
-							<CardContent>
-								<h2 class="section-label">Status History</h2>
-								<p class="timeline-subtitle">Timeline of status changes for this template</p>
-								<Separator />
-
-								<div class="timeline-container">
-									<div class="timeline-track"></div>
-									<div class="timeline-items">
-										{#each statusTimeline as item, index}
-											{@const colors = getStatusColor(item.status)}
-											{@const isLatest = index === statusTimeline.length - 1}
-											<div class="timeline-item" class:latest={isLatest}>
-												<div class="timeline-date">{item.date}</div>
-												<div class="timeline-node {colors.bg} {colors.border}">
-													{#if item.status?.toLowerCase().includes('submitted')}
-														<Calendar size={isLatest ? 20 : 16} class={colors.text} />
-													{:else if item.status?.toLowerCase().includes('review') || item.status?.toLowerCase().includes('changes')}
-														<ClipboardCheck size={isLatest ? 20 : 16} class={colors.text} />
-													{:else if item.status?.toLowerCase().includes('approved') || item.status?.toLowerCase().includes('published')}
-														<CheckCircle size={isLatest ? 20 : 16} class={colors.text} />
-													{:else if item.status?.toLowerCase().includes('rejected')}
-														<XCircle size={isLatest ? 20 : 16} class={colors.text} />
-													{:else}
-														<FileText size={isLatest ? 20 : 16} class={colors.text} />
-													{/if}
-												</div>
-												<div class="timeline-status {colors.bg} {colors.text} {colors.border}">
-													{item.status}
-												</div>
-												{#if item.comment}
-													<button type="button" class="timeline-feedback-btn {colors.border} {colors.text}">
-														<MessageCircle size={14} />
-														View Feedback
-													</button>
-												{/if}
-											</div>
-										{/each}
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-
-						<!-- Template Details Table -->
-						<Card>
-							<CardContent>
-								<h2 class="section-label">Template Details</h2>
-								<table class="details-table">
-									<thead>
-										<tr>
-											<th>Property</th>
-											<th>Value</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td>Name</td>
-											<td>{asset.name || 'N/A'}</td>
-										</tr>
-										<tr>
-											<td>Website URL</td>
-											<td>
-												{#if asset.websiteUrl}
-													<a href={asset.websiteUrl} target="_blank" rel="noopener noreferrer">
-														{asset.websiteUrl}
-													</a>
-												{:else}
-													N/A
-												{/if}
-											</td>
-										</tr>
-										<tr>
-											<td>Price</td>
-											<td>{asset.priceString || '$0'}</td>
-										</tr>
-										<tr>
-											<td>Description (Short)</td>
-											<td>{asset.descriptionShort || 'N/A'}</td>
-										</tr>
-										<tr>
-											<td>Submitted Date</td>
-											<td>{formatDate(asset.submittedDate)}</td>
-										</tr>
-									</tbody>
-								</table>
-							</CardContent>
-						</Card>
-					</div>
-
-					<aside class="sidebar-column">
-						<Card>
-							<CardContent>
-								<h2 class="section-label">Carousel Images</h2>
-								{#if asset.carouselImages && asset.carouselImages.length > 0}
-									<div class="carousel-images">
-										{#each asset.carouselImages as img, i}
-											<img src={img} alt="Carousel item {i + 1}" class="carousel-img" />
-										{/each}
-									</div>
-								{:else}
-									<p class="no-images">No carousel images available</p>
-								{/if}
-							</CardContent>
-						</Card>
-					</aside>
-				</div>
-			{/if}
-
-			{#if activeTab === 'related'}
-				<Card>
-					<CardContent>
-						<h2 class="section-label">Related Assets</h2>
-						<p class="related-subtitle">Assets that are similar to this template</p>
-
-						{#if relatedAssets.length === 0}
-							<div class="empty-state">
-								<div class="empty-icon">
-									<FileText size={48} />
-								</div>
-								<h3>No related assets found</h3>
-								<p>There are currently no assets similar to this template.</p>
-							</div>
+			<!-- Rejection Feedback -->
+			{#if data.asset.status === 'Rejected' && (data.asset.rejectionFeedback || data.asset.rejectionFeedbackHtml)}
+				<section class="feedback-section">
+					<h2 class="section-title feedback-title">Rejection Feedback</h2>
+					<div class="feedback-content">
+						{#if data.asset.rejectionFeedbackHtml}
+							{@html data.asset.rejectionFeedbackHtml}
 						{:else}
-							<div class="related-grid">
-								{#each relatedAssets as related}
-									<a href="/assets/{related.id}" class="related-card">
-										<div class="related-thumbnail">
-											{#if related.thumbnailUrl}
-												<img src={related.thumbnailUrl} alt={related.name} />
-											{/if}
-										</div>
-										<h4 class="related-name">{related.name}</h4>
-										<p class="related-type">{related.type}</p>
-										<span class="related-link">View details</span>
-									</a>
-								{/each}
-							</div>
+							<p>{data.asset.rejectionFeedback}</p>
 						{/if}
-					</CardContent>
-				</Card>
+					</div>
+				</section>
 			{/if}
-		{:else}
-			<Card>
-				<CardContent>
-					<p class="not-found">Asset not found.</p>
-				</CardContent>
-			</Card>
-		{/if}
-	</div>
-</main>
 
-{#if asset}
-	<EditAssetModal
-		{asset}
-		open={showEditModal}
-		onclose={() => (showEditModal = false)}
-		onsave={handleEditSave}
-	/>
-{/if}
+			<!-- Carousel Images -->
+			{#if data.asset.carouselImages && data.asset.carouselImages.length > 0}
+				<section class="carousel-section">
+					<h2 class="section-title">Gallery</h2>
+					<div class="carousel-grid">
+						{#each data.asset.carouselImages as image}
+							<div class="carousel-image">
+								<img src={image} alt="Gallery image" />
+							</div>
+						{/each}
+					</div>
+				</section>
+			{/if}
+		</div>
+
+		<!-- Sidebar -->
+		<aside class="sidebar">
+			{#if data.relatedAssets.length > 0}
+				<section class="related-section">
+					<h3 class="sidebar-title">Related Templates</h3>
+					<div class="related-list">
+						{#each data.relatedAssets as related}
+							<a href="/assets/{related.id}" class="related-item">
+								<div class="related-thumbnail">
+									{#if related.thumbnailUrl}
+										<img src={related.thumbnailUrl} alt={related.name} />
+									{:else}
+										<div class="placeholder-sm">?</div>
+									{/if}
+								</div>
+								<div class="related-info">
+									<span class="related-name">{related.name}</span>
+									<span class="related-type">{related.type}</span>
+								</div>
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/if}
+		</aside>
+	</div>
+</div>
 
 <style>
-	.main {
-		min-height: calc(100vh - 60px);
-	}
-
-	.content {
+	.asset-detail-page {
 		max-width: 1200px;
 		margin: 0 auto;
-		padding: 2rem 1.5rem;
+		padding: var(--space-lg);
 	}
 
-	.breadcrumb {
-		margin-bottom: 1.5rem;
+	.page-header {
+		margin-bottom: var(--space-lg);
 	}
 
 	.back-link {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
-		font-size: var(--text-body-sm);
+		gap: var(--space-sm);
 		color: var(--color-fg-secondary);
 		text-decoration: none;
+		font-size: var(--text-body-sm);
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
@@ -553,298 +239,164 @@
 		color: var(--color-fg-primary);
 	}
 
-	/* Sticky Header */
-	.sticky-header {
-		position: sticky;
-		top: 0;
-		z-index: 10;
-		background: var(--color-bg-elevated);
-		border-bottom: 1px solid var(--color-border-default);
-		padding: 0.75rem 0;
-		margin-bottom: 1.5rem;
-	}
-
-	.header-content {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.header-left {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	.asset-name {
-		font-family: var(--font-sans);
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0;
-	}
-
-	.header-actions {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.action-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		padding: 0.375rem 0.75rem;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.action-btn:hover {
-		color: var(--color-fg-primary);
-		border-color: var(--color-border-emphasis);
-	}
-
-	/* Tabs Navigation */
-	.tabs-nav {
-		display: flex;
-		border-bottom: 1px solid var(--color-border-default);
-		margin-bottom: 1.5rem;
-	}
-
-	.tab-btn {
-		padding: 0.75rem 1rem;
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-muted);
-		background: none;
-		border: none;
-		border-bottom: 2px solid transparent;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.tab-btn:hover {
-		color: var(--color-fg-secondary);
-	}
-
-	.tab-btn.active {
-		color: var(--webflow-blue);
-		border-bottom-color: var(--webflow-blue);
-	}
-
-	/* Layout */
-	.overview-layout,
-	.details-layout {
+	.content {
 		display: grid;
-		gap: 1.5rem;
+		grid-template-columns: 1fr 300px;
+		gap: var(--space-xl);
 	}
 
-	@media (min-width: 768px) {
-		.overview-layout,
-		.details-layout {
-			grid-template-columns: 1fr 300px;
+	@media (max-width: 900px) {
+		.content {
+			grid-template-columns: 1fr;
 		}
 	}
 
-	.main-column {
+	.main-content {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: var(--space-xl);
 	}
 
-	.sidebar-column {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
-	/* Section Labels */
-	.section-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-fg-muted);
-		margin: 0 0 0.75rem;
-	}
-
-	/* Card Header Row */
-	.card-header-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 1rem;
-	}
-
-	.performance-toggle {
-		padding: 0.375rem 0.75rem;
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-subtle);
+	/* Hero Section */
+	.hero-section {
+		display: grid;
+		grid-template-columns: 200px 1fr;
+		gap: var(--space-lg);
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	@media (max-width: 600px) {
+		.hero-section {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.hero-image img {
+		width: 100%;
+		aspect-ratio: 7/9;
+		object-fit: cover;
 		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.hero-image .placeholder {
+		width: 100%;
+		aspect-ratio: 7/9;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-muted);
+	}
+
+	.hero-info {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.status-row {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.asset-type {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+	}
+
+	.asset-name {
+		font-size: var(--text-h2);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.price {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		margin: 0;
+	}
+
+	.action-buttons {
+		display: flex;
+		gap: var(--space-sm);
+		margin-top: var(--space-md);
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		text-decoration: none;
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.performance-toggle.active {
-		background: var(--webflow-blue);
+	.btn-primary {
+		background: var(--color-info);
 		color: white;
-		border-color: var(--webflow-blue);
+		border: none;
 	}
 
-	/* Details Grid */
-	.details-grid {
+	.btn-primary:hover {
+		opacity: 0.9;
+	}
+
+	.btn-secondary {
+		background: transparent;
+		color: var(--color-fg-primary);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.btn-secondary:hover {
+		background: var(--color-hover);
+	}
+
+	/* Section Styles */
+	.section-title {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-md) 0;
+	}
+
+	/* Metrics Section */
+	.metrics-section {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.metrics-grid {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 1rem;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-md);
 	}
 
-	.detail-item {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
+	@media (max-width: 600px) {
+		.metrics-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 
-	.detail-label {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-muted);
-	}
-
-	.detail-value {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
-	}
-
-	/* Description */
-	.description-short {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		line-height: 1.6;
-		margin: 0 0 1rem;
-	}
-
-	.description-long {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		line-height: 1.6;
-	}
-
-	.description-long :global(h1),
-	.description-long :global(h2),
-	.description-long :global(h3) {
-		color: var(--color-fg-primary);
-		margin: 1rem 0 0.5rem;
-	}
-
-	.description-long :global(a) {
-		color: var(--webflow-blue);
-	}
-
-	/* Rejection Card */
-	.rejection-card {
-		border-color: var(--color-error-border);
-	}
-
-	.rejection-header {
+	.metric-card {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
-	}
-
-	.rejection-icon {
-		color: var(--color-error);
-	}
-
-	.rejection-title {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		color: var(--color-error);
-		margin: 0;
-	}
-
-	.rejection-content {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-	}
-
-	.rejection-content :global(a) {
-		color: var(--webflow-blue);
-	}
-
-	.rejection-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.rejection-list li {
-		display: flex;
-		align-items: flex-start;
-		gap: 0.5rem;
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin-bottom: 0.5rem;
-	}
-
-	.rejection-list li::before {
-		content: '';
-		width: 6px;
-		height: 6px;
-		background: var(--color-error-border);
-		border-radius: 50%;
-		margin-top: 0.5rem;
-		flex-shrink: 0;
-	}
-
-	/* Thumbnails */
-	.preview-subtitle {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0 0 1rem;
-	}
-
-	.thumbnail-section {
-		margin-bottom: 1rem;
-	}
-
-	.thumbnail-label {
-		display: block;
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-muted);
-		margin-bottom: 0.5rem;
-	}
-
-	.thumbnail-img {
-		width: 100%;
-		aspect-ratio: 7 / 9;
-		object-fit: cover;
+		gap: var(--space-md);
+		padding: var(--space-md);
+		background: var(--color-bg-subtle);
 		border-radius: var(--radius-md);
-	}
-
-	.thumbnail-img.secondary {
-		aspect-ratio: 16 / 10;
-	}
-
-	/* Metrics */
-	.metrics {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.metric {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
 	}
 
 	.metric-icon {
@@ -857,9 +409,8 @@
 	}
 
 	.metric-value {
-		font-family: var(--font-sans);
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-h3);
+		font-weight: 600;
 		color: var(--color-fg-primary);
 	}
 
@@ -868,231 +419,176 @@
 		color: var(--color-fg-muted);
 	}
 
-	/* Edit Button */
-	.edit-button {
-		width: 100%;
+	/* Details Section */
+	.details-section {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
 	}
 
-	/* Timeline */
-	.timeline-subtitle {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0 0 1rem;
-	}
-
-	.timeline-container {
-		position: relative;
-		padding: 1rem 0;
-		overflow-x: auto;
-	}
-
-	.timeline-track {
-		position: absolute;
-		top: 50%;
-		left: 0;
-		right: 0;
-		height: 2px;
-		background: var(--color-border-default);
-		transform: translateY(-50%);
-	}
-
-	.timeline-items {
-		display: flex;
-		justify-content: center;
-		gap: 4rem;
-		position: relative;
-	}
-
-	.timeline-item {
+	.details-grid {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 0.5rem;
-		min-width: 100px;
+		gap: var(--space-sm);
 	}
 
-	.timeline-date {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	.timeline-node {
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
+	.detail-row {
 		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: 2px solid;
-		background: var(--color-bg-elevated);
-		z-index: 1;
-	}
-
-	.timeline-item.latest .timeline-node {
-		width: 56px;
-		height: 56px;
-		box-shadow: 0 0 0 4px var(--color-bg-elevated);
-	}
-
-	.timeline-status {
-		padding: 0.25rem 0.75rem;
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		border-radius: var(--radius-md);
-		border: 1px solid;
-	}
-
-	.timeline-feedback-btn {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		padding: 0.25rem 0.5rem;
-		font-size: var(--text-caption);
-		background: var(--color-bg-elevated);
-		border: 1px solid;
-		border-radius: var(--radius-sm);
-		cursor: pointer;
-	}
-
-	/* Details Table */
-	.details-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.details-table th,
-	.details-table td {
-		padding: 0.75rem;
-		text-align: left;
+		justify-content: space-between;
+		padding: var(--space-sm) 0;
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
-	.details-table th {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-muted);
+	.detail-row:last-child {
+		border-bottom: none;
 	}
 
-	.details-table td {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	.details-table td a {
-		color: var(--webflow-blue);
-		text-decoration: none;
-	}
-
-	.details-table td a:hover {
-		text-decoration: underline;
-	}
-
-	/* Carousel Images */
-	.carousel-images {
+	.detail-label {
 		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.carousel-img {
-		width: 100%;
-		aspect-ratio: 16 / 10;
-		object-fit: cover;
-		border-radius: var(--radius-md);
-	}
-
-	.no-images {
-		font-size: var(--text-body-sm);
+		align-items: center;
+		gap: var(--space-xs);
 		color: var(--color-fg-muted);
-		text-align: center;
-		padding: 2rem 0;
-	}
-
-	/* Related Assets */
-	.related-subtitle {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0 0 1.5rem;
 	}
 
-	.related-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: 1rem;
+	.detail-value {
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
 	}
 
-	.related-card {
-		display: block;
-		padding: 1rem;
+	/* Description Section */
+	.description-section {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
-		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.related-card:hover {
-		border-color: var(--color-border-emphasis);
-		box-shadow: var(--shadow-md);
+	.description {
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		margin: 0;
+	}
+
+	/* Feedback Section */
+	.feedback-section {
+		padding: var(--space-lg);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		border-radius: var(--radius-lg);
+	}
+
+	.feedback-title {
+		color: var(--color-error);
+	}
+
+	.feedback-content {
+		color: var(--color-fg-primary);
+		line-height: 1.6;
+	}
+
+	/* Carousel Section */
+	.carousel-section {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.carousel-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: var(--space-md);
+	}
+
+	.carousel-image img {
+		width: 100%;
+		aspect-ratio: 16/9;
+		object-fit: cover;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border-default);
+	}
+
+	/* Sidebar */
+	.sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-lg);
+	}
+
+	.related-section {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.sidebar-title {
+		font-size: var(--text-body-lg);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-md) 0;
+	}
+
+	.related-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.related-item {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: var(--space-sm);
+		text-decoration: none;
+		border-radius: var(--radius-md);
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.related-item:hover {
+		background: var(--color-hover);
 	}
 
 	.related-thumbnail {
-		aspect-ratio: 16 / 9;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
-		overflow: hidden;
-		margin-bottom: 0.75rem;
+		width: 50px;
+		height: 65px;
+		flex-shrink: 0;
 	}
 
 	.related-thumbnail img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		border-radius: var(--radius-sm);
+	}
+
+	.placeholder-sm {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+	}
+
+	.related-info {
+		display: flex;
+		flex-direction: column;
 	}
 
 	.related-name {
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
-		margin: 0 0 0.25rem;
+		font-size: var(--text-body-sm);
+		font-weight: 500;
 	}
 
 	.related-type {
-		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
-		margin: 0 0 0.75rem;
-	}
-
-	.related-link {
-		font-size: var(--text-body-sm);
-		color: var(--webflow-blue);
-	}
-
-	/* Empty State */
-	.empty-state {
-		text-align: center;
-		padding: 3rem 1rem;
-	}
-
-	.empty-icon {
-		color: var(--color-fg-muted);
-		margin-bottom: 1rem;
-	}
-
-	.empty-state h3 {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0 0 0.5rem;
-	}
-
-	.empty-state p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0;
-	}
-
-	.not-found {
-		text-align: center;
-		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
 	}
 </style>

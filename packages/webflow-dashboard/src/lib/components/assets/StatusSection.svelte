@@ -15,6 +15,7 @@
 		onSort?: (key: string) => void;
 		onEdit?: (asset: Asset) => void;
 		onSelect?: (asset: Asset) => void;
+		onArchive?: (asset: Asset) => Promise<void>;
 	}
 
 	let {
@@ -26,7 +27,8 @@
 		onToggleExpand,
 		onSort,
 		onEdit,
-		onSelect
+		onSelect,
+		onArchive
 	}: Props = $props();
 
 	const statusConfig = STATUS_CONFIG[status];
@@ -124,6 +126,7 @@
 					{onSort}
 					{onEdit}
 					{onSelect}
+					{onArchive}
 				/>
 
 				{#if !showAll && remainingCount > 0}

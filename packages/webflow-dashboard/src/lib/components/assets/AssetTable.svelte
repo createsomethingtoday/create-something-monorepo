@@ -10,6 +10,7 @@
 		onSort?: (key: string) => void;
 		onEdit?: (asset: Asset) => void;
 		onSelect?: (asset: Asset) => void;
+		onArchive?: (asset: Asset) => Promise<void>;
 	}
 
 	let {
@@ -18,7 +19,8 @@
 		showPerformance = false,
 		onSort,
 		onEdit,
-		onSelect
+		onSelect,
+		onArchive
 	}: Props = $props();
 
 	function handleSort(key: string) {
@@ -76,7 +78,7 @@
 
 	<TableBody>
 		{#each assets as asset (asset.id)}
-			<AssetTableRow {asset} {showPerformance} {onEdit} {onSelect} />
+			<AssetTableRow {asset} {showPerformance} {onEdit} {onSelect} {onArchive} />
 		{/each}
 
 		{#if showPerformance && assets.length > 0}
