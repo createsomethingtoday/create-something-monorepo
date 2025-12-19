@@ -8,7 +8,14 @@ const TABLES = {
 	ASSETS: 'tblRwzpWoLgE9MrUm',
 	API_KEYS: 'tblU5rI3WiQerozvX',
 	TAGS: '🏷️Tags (Free Form)',
-	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9'
+	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
+	LEADERBOARD: 'tblcXLVLYobhNmrg6'
+} as const;
+
+// Airtable view IDs
+const VIEWS = {
+	CATEGORY_PERFORMANCE: 'viw5EUGpK0xDMcBga',
+	LEADERBOARD: 'viwEaYTAux1ADl5C5'
 } as const;
 
 // Airtable field IDs
@@ -445,12 +452,68 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Get category performance data
 		 */
-		async getCategoryPerformance(): Promise<{ category: string; revenue: number; count: number }[]> {
-			const records = await base(TABLES.CATEGORY_PERFORMANCE).select().all();
-			return records.map(r => ({
+		async getCategoryPerformance(): Promise<{
+			category: string;
+			revenue: number;
+			count: number;
+			avgRevenue: number;
+			ranking: number;
+		}[]> {
+			const records = await base(TABLES.CATEGORY_PERFORMANCE)
+				.select({
+					view: VIEWS.CATEGORY_PERFORMANCE
+				})
+				.all();
+
+			const data = records.map(r => ({
 				category: r.fields['Category'] as string || '',
 				revenue: r.fields['Revenue'] as number || 0,
-				count: r.fields['Template Count'] as number || 0
+				count: r.fields['Template Count'] as number || 0,
+				avgRevenue: 0,
+				ranking: 0
+			}));
+
+			// Calculate average revenue and assign rankings
+			data.forEach(item => {
+				item.avgRevenue = item.count > 0 ? Math.round(item.revenue / item.count) : 0;
+			});
+
+			// Sort by revenue descending and assign rankings
+			data.sort((a, b) => b.revenue - a.revenue);
+			data.forEach((item, index) => {
+				item.ranking = index + 1;
+			});
+
+			return data;
+		},
+
+		/**
+		 * Get top templates leaderboard
+		 */
+		async getLeaderboard(limit: number = 20): Promise<{
+			id: string;
+			name: string;
+			category: string;
+			revenue: number;
+			purchases: number;
+			ranking: number;
+			thumbnailUrl?: string;
+		}[]> {
+			const records = await base(TABLES.LEADERBOARD)
+				.select({
+					view: VIEWS.LEADERBOARD,
+					maxRecords: limit
+				})
+				.all();
+
+			return records.map((r, index) => ({
+				id: r.id,
+				name: r.fields['Name'] as string || '',
+				category: r.fields['Category'] as string || '',
+				revenue: r.fields['Revenue'] as number || 0,
+				purchases: r.fields['Purchases'] as number || 0,
+				ranking: index + 1,
+				thumbnailUrl: (r.fields['Thumbnail'] as unknown as { url: string }[] | undefined)?.[0]?.url
 			}));
 		}
 	};
