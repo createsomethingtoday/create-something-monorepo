@@ -264,22 +264,23 @@ export async function runHarness(
       }
     }
 
-    // 2. Get next work item (exclude checkpoints and the harness epic itself)
-    const readyIssues = await getReadyIssues(options.cwd);
-    const harnessIssues = readyIssues.filter((issue) =>
-      issue.labels?.includes(`harness:${harnessState.id}`) &&
-      !issue.labels?.includes('checkpoint') &&
-      issue.issue_type !== 'epic'
-    );
+    // 2. Get next work item from pending features for this harness
+    // Note: We use getPendingFeatures() instead of getReadyIssues() because
+    // bd ready --json doesn't include harness-created feature issues
+    const pendingFeatures = await getPendingFeatures(harnessState.id, options.cwd);
 
-    if (harnessIssues.length === 0) {
+    if (pendingFeatures.length === 0) {
       // No more work
       harnessState.status = 'completed';
       console.log('\n✅ All tasks completed!');
       break;
     }
 
-    const nextIssue = harnessIssues[0];
+    // Sort by priority and pick the first open one (prefer non-in_progress to avoid re-processing)
+    const openFeatures = pendingFeatures.filter((issue) => issue.status === 'open');
+    const nextIssue = openFeatures.length > 0
+      ? openFeatures.sort((a, b) => (a.priority || 2) - (b.priority || 2))[0]
+      : pendingFeatures.sort((a, b) => (a.priority || 2) - (b.priority || 2))[0];
     console.log(`\n📋 Next task: ${nextIssue.id} - ${nextIssue.title}`);
 
     // Mark as in progress
