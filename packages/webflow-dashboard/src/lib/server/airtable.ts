@@ -1,6 +1,7 @@
 import Airtable from 'airtable';
 import type { Asset, Creator, ApiKey, RelatedAsset } from '$lib/types';
 import { randomBytes, createHash } from 'node:crypto';
+import { sanitizeHtml } from './sanitize';
 
 // Airtable table IDs
 const TABLES = {
@@ -261,7 +262,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					name: record.fields['Name'] as string || '',
 					description: record.fields['📝Description'] as string || '',
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
-					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
+					// Sanitize HTML fields to prevent XSS attacks
+					descriptionLongHtml: sanitizeHtml(record.fields['ℹ️Description (Long).html'] as string) || '',
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
 					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as unknown as { url: string }[] | undefined)?.[0]?.url,
@@ -281,7 +283,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					latestReviewDate: record.fields['📝Latest Review Date'] as string,
 					latestReviewFeedback: (record.fields['🖌️📝Latest Review Feedback'] as string[] | undefined)?.[0],
 					rejectionFeedback: record.fields['🚩Rejection Feedback'] as string || record.fields['🖌Rejection Feedback'] as string,
-					rejectionFeedbackHtml: record.fields['🚩Rejection Feedback.html'] as string || record.fields['🖌Rejection Feedback.html'] as string,
+					// Sanitize HTML to prevent XSS attacks from Airtable content
+					rejectionFeedbackHtml: sanitizeHtml(record.fields['🚩Rejection Feedback.html'] as string || record.fields['🖌Rejection Feedback.html'] as string),
 					qualityScore: record.fields['🖌️Initial Quality Score'] as number,
 					priceString: record.fields['🥞💲Template Price String (🏗️ only)'] as string
 				};
