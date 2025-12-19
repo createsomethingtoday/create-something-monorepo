@@ -67,13 +67,13 @@
 	}
 
 	.title {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 	}
 
 	.icon {
 		display: flex;
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.icon :global(svg) {
@@ -82,10 +82,10 @@
 	}
 
 	.value {
-		font-family: var(--webflow-font-medium);
+		font-family: var(--font-sans);
 		font-size: 2rem;
-		font-weight: 600;
-		color: var(--webflow-fg-primary);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		line-height: 1.2;
 	}
 
@@ -100,24 +100,24 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		font-size: 0.75rem;
-		font-weight: 500;
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
 	}
 
 	.trend-up {
-		color: var(--webflow-success);
+		color: var(--color-success);
 	}
 
 	.trend-down {
-		color: var(--webflow-error);
+		color: var(--color-error);
 	}
 
 	.trend-neutral {
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.subtitle {
-		font-size: 0.75rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 </style>

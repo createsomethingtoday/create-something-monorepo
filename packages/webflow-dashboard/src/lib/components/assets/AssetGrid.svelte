@@ -39,7 +39,7 @@
 		align-items: center;
 		justify-content: center;
 		min-height: 200px;
-		color: var(--webflow-fg-muted);
-		font-size: 0.875rem;
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
 	}
 </style>

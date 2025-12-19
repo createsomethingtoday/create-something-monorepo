@@ -64,8 +64,8 @@
 		position: sticky;
 		top: 0;
 		z-index: 100;
-		background: var(--webflow-bg-primary);
-		border-bottom: 1px solid var(--webflow-border);
+		background: var(--color-bg-pure);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header-inner {
@@ -86,7 +86,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: var(--webflow-fg-primary);
+		color: var(--color-fg-primary);
 		text-decoration: none;
 	}
 
@@ -97,9 +97,9 @@
 	}
 
 	.logo-text {
-		font-family: var(--webflow-font-medium);
-		font-weight: 600;
-		font-size: 1.125rem;
+		font-family: var(--font-sans);
+		font-weight: var(--font-semibold);
+		font-size: var(--text-body-lg);
 	}
 
 	.nav {
@@ -110,16 +110,16 @@
 
 	.nav-link {
 		padding: 0.5rem 0.75rem;
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 		text-decoration: none;
-		border-radius: var(--webflow-radius-lg);
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		border-radius: var(--radius-lg);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.nav-link:hover {
-		color: var(--webflow-fg-primary);
-		background: var(--webflow-bg-hover);
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
 	}
 
 	.user-section {
@@ -132,8 +132,8 @@
 		display: flex;
 		align-items: center;
 		gap: 0.375rem;
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 	}
 
 	@media (max-width: 768px) {

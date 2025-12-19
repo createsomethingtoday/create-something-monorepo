@@ -248,9 +248,9 @@
 	}
 
 	.modal-content {
-		background: var(--webflow-bg-secondary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-xl);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xl);
 		width: 100%;
 		max-width: 560px;
 		max-height: 90vh;
@@ -262,12 +262,12 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 1.25rem 1.5rem;
-		border-bottom: 1px solid var(--webflow-border);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.modal-title {
-		font-size: var(--webflow-text-h4);
-		font-weight: 600;
+		font-size: var(--text-h4);
+		font-weight: var(--font-semibold);
 		margin: 0;
 	}
 
@@ -279,15 +279,15 @@
 		height: 32px;
 		background: none;
 		border: none;
-		color: var(--webflow-text-muted);
+		color: var(--color-fg-muted);
 		cursor: pointer;
-		border-radius: var(--webflow-radius-md);
-		transition: all 0.15s ease;
+		border-radius: var(--radius-md);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.close-button:hover {
-		background: var(--webflow-bg-hover);
-		color: var(--webflow-text-primary);
+		background: var(--color-hover);
+		color: var(--color-fg-primary);
 	}
 
 	.form-body {
@@ -304,21 +304,21 @@
 	}
 
 	.form-label {
-		font-size: var(--webflow-text-small);
-		font-weight: 500;
-		color: var(--webflow-text-secondary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-secondary);
 	}
 
 	.form-input,
 	.form-textarea {
 		width: 100%;
 		padding: 0.625rem 0.875rem;
-		font-size: var(--webflow-text-body);
-		background: var(--webflow-bg-primary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-md);
-		color: var(--webflow-text-primary);
-		transition: border-color 0.15s ease;
+		font-size: var(--text-body);
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.form-input:focus,
@@ -334,12 +334,12 @@
 	}
 
 	.form-input.has-error {
-		border-color: var(--webflow-error);
+		border-color: var(--color-error);
 	}
 
 	.form-input::placeholder,
 	.form-textarea::placeholder {
-		color: var(--webflow-text-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.form-textarea {
@@ -348,22 +348,22 @@
 	}
 
 	.field-error {
-		font-size: var(--webflow-text-small);
-		color: var(--webflow-error);
+		font-size: var(--text-body-sm);
+		color: var(--color-error);
 	}
 
 	.field-hint {
-		font-size: var(--webflow-text-small);
-		color: var(--webflow-text-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	.error-message {
 		padding: 0.75rem 1rem;
-		font-size: var(--webflow-text-small);
-		color: var(--webflow-error);
-		background: rgba(255, 82, 82, 0.1);
-		border: 1px solid rgba(255, 82, 82, 0.2);
-		border-radius: var(--webflow-radius-md);
+		font-size: var(--text-body-sm);
+		color: var(--color-error);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		border-radius: var(--radius-md);
 	}
 
 	.modal-footer {
@@ -371,17 +371,17 @@
 		justify-content: flex-end;
 		gap: 0.75rem;
 		padding: 1rem 1.5rem;
-		border-top: 1px solid var(--webflow-border);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.btn {
 		padding: 0.625rem 1rem;
-		font-size: var(--webflow-text-body);
-		font-weight: 500;
+		font-size: var(--text-body);
+		font-weight: var(--font-medium);
 		border: none;
-		border-radius: var(--webflow-radius-md);
+		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: all 0.15s ease;
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.btn:disabled {
@@ -390,12 +390,12 @@
 	}
 
 	.btn-secondary {
-		background: var(--webflow-bg-hover);
-		color: var(--webflow-text-primary);
+		background: var(--color-hover);
+		color: var(--color-fg-primary);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		background: var(--webflow-border);
+		background: var(--color-active);
 	}
 
 	.btn-primary {

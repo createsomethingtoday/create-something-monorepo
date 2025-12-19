@@ -107,17 +107,17 @@
 	}
 
 	.heading {
-		font-family: var(--webflow-font-medium);
-		font-size: 2rem;
-		font-weight: 600;
+		font-family: var(--font-sans);
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
 		line-height: 1.2;
-		color: var(--webflow-fg-primary);
+		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
 	.subtitle {
-		font-size: 1rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
 		margin: 0.5rem 0 0;
 	}
 
@@ -140,18 +140,18 @@
 	}
 
 	.section-title {
-		font-family: var(--webflow-font-medium);
-		font-size: 1.25rem;
-		font-weight: 600;
-		color: var(--webflow-fg-primary);
+		font-family: var(--font-sans);
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
 	.view-all {
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		color: var(--webflow-blue);
 		text-decoration: none;
-		transition: opacity var(--webflow-duration) var(--webflow-ease);
+		transition: opacity var(--duration-micro) var(--ease-standard);
 	}
 
 	.view-all:hover {

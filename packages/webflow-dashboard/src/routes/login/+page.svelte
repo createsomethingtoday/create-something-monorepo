@@ -92,9 +92,9 @@
 		width: 100%;
 		max-width: 400px;
 		padding: 2rem;
-		background: var(--webflow-bg-secondary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-xl);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xl);
 	}
 
 	.login-header {
@@ -103,14 +103,16 @@
 	}
 
 	.login-title {
-		font-size: var(--webflow-text-h3);
-		font-weight: 600;
+		font-family: var(--font-sans);
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		margin-bottom: 0.5rem;
 	}
 
 	.login-subtitle {
-		font-size: var(--webflow-text-small);
-		color: var(--webflow-text-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	.form-group {
@@ -119,20 +121,21 @@
 
 	.form-label {
 		display: block;
-		font-size: var(--webflow-text-small);
-		font-weight: 500;
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-secondary);
 		margin-bottom: 0.5rem;
 	}
 
 	.form-input {
 		width: 100%;
 		padding: 0.75rem 1rem;
-		font-size: 1rem;
-		background: var(--webflow-bg-primary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-md);
-		color: var(--webflow-text-primary);
-		transition: border-color 0.2s ease;
+		font-size: var(--text-body);
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-primary);
+		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.form-input:focus {
@@ -146,20 +149,20 @@
 	}
 
 	.form-input::placeholder {
-		color: var(--webflow-text-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.submit-button {
 		width: 100%;
 		padding: 0.75rem 1rem;
-		font-size: 1rem;
-		font-weight: 500;
+		font-size: var(--text-body);
+		font-weight: var(--font-medium);
 		color: #ffffff;
 		background: var(--webflow-blue);
 		border: none;
-		border-radius: var(--webflow-radius-md);
+		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: background-color 0.2s ease;
+		transition: background-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.submit-button:hover:not(:disabled) {
@@ -174,10 +177,10 @@
 	.error-message {
 		padding: 0.75rem 1rem;
 		margin-bottom: 1rem;
-		font-size: var(--webflow-text-small);
-		color: var(--webflow-error);
-		background: rgba(255, 82, 82, 0.1);
-		border: 1px solid rgba(255, 82, 82, 0.2);
-		border-radius: var(--webflow-radius-md);
+		font-size: var(--text-body-sm);
+		color: var(--color-error);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		border-radius: var(--radius-md);
 	}
 </style>

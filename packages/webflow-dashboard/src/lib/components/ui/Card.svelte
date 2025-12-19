@@ -23,36 +23,36 @@
 
 <style>
 	.card {
-		border-radius: var(--webflow-radius-xl);
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		border-radius: var(--radius-xl);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.card-default {
-		background: var(--webflow-bg-surface);
-		border: 1px solid var(--webflow-border);
-		box-shadow: var(--webflow-shadow-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.card-glass {
-		background: color-mix(in srgb, var(--webflow-bg-surface) 80%, transparent);
-		border: 1px solid var(--webflow-border);
+		background: color-mix(in srgb, var(--color-bg-surface) 80%, transparent);
+		border: 1px solid var(--color-border-default);
 		backdrop-filter: blur(16px) saturate(1.5);
-		box-shadow: var(--webflow-shadow-lg);
+		box-shadow: var(--shadow-lg);
 	}
 
 	.card-glass:hover {
-		background: color-mix(in srgb, var(--webflow-bg-surface) 90%, transparent);
-		box-shadow: var(--webflow-shadow-xl);
+		background: color-mix(in srgb, var(--color-bg-surface) 90%, transparent);
+		box-shadow: var(--shadow-xl);
 	}
 
 	.card-elevated {
-		background: var(--webflow-bg-surface);
-		border: 1px solid var(--webflow-border);
-		box-shadow: var(--webflow-shadow-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		box-shadow: var(--shadow-md);
 	}
 
 	.card-elevated:hover {
 		transform: translateY(-4px);
-		box-shadow: var(--webflow-shadow-xl);
+		box-shadow: var(--shadow-xl);
 	}
 </style>

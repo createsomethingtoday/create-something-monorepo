@@ -542,14 +542,14 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 		text-decoration: none;
-		transition: color var(--webflow-duration) var(--webflow-ease);
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.back-link:hover {
-		color: var(--webflow-fg-primary);
+		color: var(--color-fg-primary);
 	}
 
 	/* Sticky Header */
@@ -557,8 +557,8 @@
 		position: sticky;
 		top: 0;
 		z-index: 10;
-		background: var(--webflow-bg-secondary);
-		border-bottom: 1px solid var(--webflow-border);
+		background: var(--color-bg-elevated);
+		border-bottom: 1px solid var(--color-border-default);
 		padding: 0.75rem 0;
 		margin-bottom: 1.5rem;
 	}
@@ -577,10 +577,10 @@
 	}
 
 	.asset-name {
-		font-family: var(--webflow-font-medium);
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: var(--webflow-fg-primary);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
@@ -594,41 +594,41 @@
 		align-items: center;
 		gap: 0.25rem;
 		padding: 0.375rem 0.75rem;
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
-		background: var(--webflow-bg-tertiary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-md);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 		text-decoration: none;
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.action-btn:hover {
-		color: var(--webflow-fg-primary);
-		border-color: var(--webflow-border-emphasis);
+		color: var(--color-fg-primary);
+		border-color: var(--color-border-emphasis);
 	}
 
 	/* Tabs Navigation */
 	.tabs-nav {
 		display: flex;
-		border-bottom: 1px solid var(--webflow-border);
+		border-bottom: 1px solid var(--color-border-default);
 		margin-bottom: 1.5rem;
 	}
 
 	.tab-btn {
 		padding: 0.75rem 1rem;
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
 		background: none;
 		border: none;
 		border-bottom: 2px solid transparent;
 		cursor: pointer;
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.tab-btn:hover {
-		color: var(--webflow-fg-secondary);
+		color: var(--color-fg-secondary);
 	}
 
 	.tab-btn.active {
@@ -664,10 +664,10 @@
 
 	/* Section Labels */
 	.section-label {
-		font-size: 0.75rem;
+		font-size: var(--text-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 		margin: 0 0 0.75rem;
 	}
 
@@ -681,14 +681,14 @@
 
 	.performance-toggle {
 		padding: 0.375rem 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--webflow-fg-secondary);
-		background: var(--webflow-bg-tertiary);
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-md);
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-secondary);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.performance-toggle.active {
@@ -711,34 +711,34 @@
 	}
 
 	.detail-label {
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
 	}
 
 	.detail-value {
-		font-size: 0.9375rem;
-		color: var(--webflow-fg-primary);
+		font-size: var(--text-body);
+		color: var(--color-fg-primary);
 	}
 
 	/* Description */
 	.description-short {
-		font-size: 0.9375rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
 		line-height: 1.6;
 		margin: 0 0 1rem;
 	}
 
 	.description-long {
-		font-size: 0.9375rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
 		line-height: 1.6;
 	}
 
 	.description-long :global(h1),
 	.description-long :global(h2),
 	.description-long :global(h3) {
-		color: var(--webflow-fg-primary);
+		color: var(--color-fg-primary);
 		margin: 1rem 0 0.5rem;
 	}
 
@@ -748,7 +748,7 @@
 
 	/* Rejection Card */
 	.rejection-card {
-		border-color: rgba(239, 68, 68, 0.3);
+		border-color: var(--color-error-border);
 	}
 
 	.rejection-header {
@@ -759,19 +759,19 @@
 	}
 
 	.rejection-icon {
-		color: #ef4444;
+		color: var(--color-error);
 	}
 
 	.rejection-title {
-		font-size: 1rem;
-		font-weight: 600;
-		color: #ef4444;
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		color: var(--color-error);
 		margin: 0;
 	}
 
 	.rejection-content {
-		font-size: 0.9375rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
 	}
 
 	.rejection-content :global(a) {
@@ -788,8 +788,8 @@
 		display: flex;
 		align-items: flex-start;
 		gap: 0.5rem;
-		font-size: 0.9375rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
 		margin-bottom: 0.5rem;
 	}
 
@@ -797,7 +797,7 @@
 		content: '';
 		width: 6px;
 		height: 6px;
-		background: rgba(239, 68, 68, 0.3);
+		background: var(--color-error-border);
 		border-radius: 50%;
 		margin-top: 0.5rem;
 		flex-shrink: 0;
@@ -805,8 +805,8 @@
 
 	/* Thumbnails */
 	.preview-subtitle {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		margin: 0 0 1rem;
 	}
 
@@ -816,9 +816,9 @@
 
 	.thumbnail-label {
 		display: block;
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
 		margin-bottom: 0.5rem;
 	}
 
@@ -826,7 +826,7 @@
 		width: 100%;
 		aspect-ratio: 7 / 9;
 		object-fit: cover;
-		border-radius: var(--webflow-radius-md);
+		border-radius: var(--radius-md);
 	}
 
 	.thumbnail-img.secondary {
@@ -847,7 +847,7 @@
 	}
 
 	.metric-icon {
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 	}
 
 	.metric-content {
@@ -856,15 +856,15 @@
 	}
 
 	.metric-value {
-		font-family: var(--webflow-font-medium);
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: var(--webflow-fg-primary);
+		font-family: var(--font-sans);
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 	}
 
 	.metric-label {
-		font-size: 0.75rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	/* Edit Button */
@@ -874,8 +874,8 @@
 
 	/* Timeline */
 	.timeline-subtitle {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		margin: 0 0 1rem;
 	}
 
@@ -891,7 +891,7 @@
 		left: 0;
 		right: 0;
 		height: 2px;
-		background: var(--webflow-border);
+		background: var(--color-border-default);
 		transform: translateY(-50%);
 	}
 
@@ -911,8 +911,8 @@
 	}
 
 	.timeline-date {
-		font-size: 0.75rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	.timeline-node {
@@ -923,21 +923,21 @@
 		align-items: center;
 		justify-content: center;
 		border: 2px solid;
-		background: var(--webflow-bg-secondary);
+		background: var(--color-bg-elevated);
 		z-index: 1;
 	}
 
 	.timeline-item.latest .timeline-node {
 		width: 56px;
 		height: 56px;
-		box-shadow: 0 0 0 4px var(--webflow-bg-secondary);
+		box-shadow: 0 0 0 4px var(--color-bg-elevated);
 	}
 
 	.timeline-status {
 		padding: 0.25rem 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 500;
-		border-radius: var(--webflow-radius-md);
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		border-radius: var(--radius-md);
 		border: 1px solid;
 	}
 
@@ -946,10 +946,10 @@
 		align-items: center;
 		gap: 0.25rem;
 		padding: 0.25rem 0.5rem;
-		font-size: 0.75rem;
-		background: var(--webflow-bg-secondary);
+		font-size: var(--text-caption);
+		background: var(--color-bg-elevated);
 		border: 1px solid;
-		border-radius: var(--webflow-radius-sm);
+		border-radius: var(--radius-sm);
 		cursor: pointer;
 	}
 
@@ -963,18 +963,18 @@
 	.details-table td {
 		padding: 0.75rem;
 		text-align: left;
-		border-bottom: 1px solid var(--webflow-border);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.details-table th {
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
 	}
 
 	.details-table td {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-secondary);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 	}
 
 	.details-table td a {
@@ -997,20 +997,20 @@
 		width: 100%;
 		aspect-ratio: 16 / 10;
 		object-fit: cover;
-		border-radius: var(--webflow-radius-md);
+		border-radius: var(--radius-md);
 	}
 
 	.no-images {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		text-align: center;
 		padding: 2rem 0;
 	}
 
 	/* Related Assets */
 	.related-subtitle {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		margin: 0 0 1.5rem;
 	}
 
@@ -1023,21 +1023,21 @@
 	.related-card {
 		display: block;
 		padding: 1rem;
-		border: 1px solid var(--webflow-border);
-		border-radius: var(--webflow-radius-lg);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
 		text-decoration: none;
-		transition: all var(--webflow-duration) var(--webflow-ease);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.related-card:hover {
-		border-color: var(--webflow-border-emphasis);
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--shadow-md);
 	}
 
 	.related-thumbnail {
 		aspect-ratio: 16 / 9;
-		background: var(--webflow-bg-tertiary);
-		border-radius: var(--webflow-radius-md);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
 		overflow: hidden;
 		margin-bottom: 0.75rem;
 	}
@@ -1049,20 +1049,20 @@
 	}
 
 	.related-name {
-		font-size: 0.9375rem;
-		font-weight: 500;
-		color: var(--webflow-fg-primary);
+		font-size: var(--text-body);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
 		margin: 0 0 0.25rem;
 	}
 
 	.related-type {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		margin: 0 0 0.75rem;
 	}
 
 	.related-link {
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		color: var(--webflow-blue);
 	}
 
@@ -1073,25 +1073,25 @@
 	}
 
 	.empty-icon {
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 		margin-bottom: 1rem;
 	}
 
 	.empty-state h3 {
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--webflow-fg-primary);
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
 		margin: 0 0 0.5rem;
 	}
 
 	.empty-state p {
-		font-size: 0.875rem;
-		color: var(--webflow-fg-muted);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 		margin: 0;
 	}
 
 	.not-found {
 		text-align: center;
-		color: var(--webflow-fg-muted);
+		color: var(--color-fg-muted);
 	}
 </style>

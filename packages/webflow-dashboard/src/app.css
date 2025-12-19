@@ -1,8 +1,8 @@
 /*
   Webflow Asset Dashboard
-  SvelteKit + Tailwind CSS
+  Canon-aligned design tokens with dual theme support
 
-  Webflow brand colors as CSS custom properties
+  Principle: Canon tokens as foundation, --webflow-* as backward-compatible aliases
 */
 
 /* Tailwind CSS directives */
@@ -10,106 +10,339 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Webflow brand colors */
+/* ==========================================================================
+   Canon Token System - Light Theme Default
+   ========================================================================== */
+
 :root {
-	/* Primary brand */
+	/* -------------------------------------------------------------------------
+	   Brand Accent (Webflow Blue) - Preserved
+	   ------------------------------------------------------------------------- */
 	--webflow-blue: #4353ff;
-	--webflow-blue-dark: #3340cc;
 	--webflow-blue-light: #6673ff;
+	--webflow-blue-dark: #3340cc;
+	--webflow-blue-600: #3340cc;
 
-	/* Light theme (default) */
-	--webflow-bg-primary: #ffffff;
-	--webflow-bg-secondary: #f5f5f5;
-	--webflow-bg-tertiary: #eeeeee;
-	--webflow-text-primary: #1a1a1a;
-	--webflow-text-secondary: rgba(0, 0, 0, 0.8);
-	--webflow-text-muted: rgba(0, 0, 0, 0.6);
-	--webflow-border: rgba(0, 0, 0, 0.1);
-	--webflow-border-emphasis: rgba(0, 0, 0, 0.2);
+	/* -------------------------------------------------------------------------
+	   Background Colors - Light Theme
+	   ------------------------------------------------------------------------- */
+	--color-bg-pure: #ffffff;
+	--color-bg-elevated: #fafafa;
+	--color-bg-surface: #f5f5f5;
+	--color-bg-subtle: #eeeeee;
 
-	/* Status colors */
-	--webflow-success: #00c853;
-	--webflow-warning: #ffab00;
-	--webflow-error: #ff5252;
+	/* -------------------------------------------------------------------------
+	   Foreground Colors - Light Theme
+	   ------------------------------------------------------------------------- */
+	--color-fg-primary: #1a1a1a;
+	--color-fg-secondary: rgba(0, 0, 0, 0.8);
+	--color-fg-tertiary: rgba(0, 0, 0, 0.6);
+	--color-fg-muted: rgba(0, 0, 0, 0.46);
+	--color-fg-subtle: rgba(0, 0, 0, 0.2);
 
-	/* Interactive states */
-	--webflow-hover: rgba(0, 0, 0, 0.05);
-	--webflow-active: rgba(0, 0, 0, 0.1);
+	/* -------------------------------------------------------------------------
+	   Border Colors - Light Theme
+	   ------------------------------------------------------------------------- */
+	--color-border-default: rgba(0, 0, 0, 0.1);
+	--color-border-emphasis: rgba(0, 0, 0, 0.2);
+	--color-border-strong: rgba(0, 0, 0, 0.3);
 
-	/* Border radius */
-	--webflow-radius-sm: 6px;
-	--webflow-radius-md: 8px;
-	--webflow-radius-lg: 12px;
-	--webflow-radius-xl: 16px;
-	--webflow-radius-full: 9999px;
+	/* -------------------------------------------------------------------------
+	   Interactive States - Light Theme
+	   ------------------------------------------------------------------------- */
+	--color-hover: rgba(0, 0, 0, 0.05);
+	--color-active: rgba(0, 0, 0, 0.1);
+	--color-focus: rgba(67, 83, 255, 0.5);
 
-	/* Typography scale */
-	--webflow-text-h1: 2.5rem;
-	--webflow-text-h2: 2rem;
-	--webflow-text-h3: 1.5rem;
-	--webflow-text-h4: 1.25rem;
-	--webflow-text-paragraph: 1rem;
-	--webflow-text-small: 0.875rem;
-	--webflow-text-eyebrow: 0.75rem;
+	/* -------------------------------------------------------------------------
+	   Semantic Colors - WCAG AA Compliant
+	   ------------------------------------------------------------------------- */
+	--color-success: #44aa44;
+	--color-success-muted: rgba(68, 170, 68, 0.15);
+	--color-success-border: rgba(68, 170, 68, 0.3);
+
+	--color-error: #d44d4d;
+	--color-error-muted: rgba(212, 77, 77, 0.15);
+	--color-error-border: rgba(212, 77, 77, 0.3);
+
+	--color-warning: #aa8844;
+	--color-warning-muted: rgba(170, 136, 68, 0.15);
+	--color-warning-border: rgba(170, 136, 68, 0.3);
+
+	--color-info: #5082b9;
+	--color-info-muted: rgba(80, 130, 185, 0.15);
+	--color-info-border: rgba(80, 130, 185, 0.3);
+
+	/* -------------------------------------------------------------------------
+	   Typography
+	   ------------------------------------------------------------------------- */
+	--font-sans: 'WF Visual Sans', system-ui, -apple-system, sans-serif;
+	--font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+	--font-regular: 400;
+	--font-medium: 500;
+	--font-semibold: 600;
+	--font-bold: 700;
+
+	/* Type Scale - Canon clamp-based responsive */
+	--text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);
+	--text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);
+	--text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);
+	--text-h4: 1.25rem;
+	--text-body-lg: 1.125rem;
+	--text-body: 1rem;
+	--text-body-sm: 0.875rem;
+	--text-caption: 0.75rem;
+
+	/* -------------------------------------------------------------------------
+	   Spacing - Golden Ratio (phi = 1.618)
+	   ------------------------------------------------------------------------- */
+	--space-xs: 0.5rem;
+	--space-sm: 1rem;
+	--space-md: 1.618rem;
+	--space-lg: 2.618rem;
+	--space-xl: 4.236rem;
+
+	/* -------------------------------------------------------------------------
+	   Border Radius
+	   ------------------------------------------------------------------------- */
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 12px;
+	--radius-xl: 16px;
+	--radius-full: 9999px;
+
+	/* -------------------------------------------------------------------------
+	   Shadows - Light Theme
+	   ------------------------------------------------------------------------- */
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+	--shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+	--shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+	--shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.12);
+
+	/* -------------------------------------------------------------------------
+	   Motion - Canon values
+	   ------------------------------------------------------------------------- */
+	--duration-micro: 200ms;
+	--duration-standard: 300ms;
+	--duration-complex: 500ms;
+	--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+	/* -------------------------------------------------------------------------
+	   Backward Compatibility Aliases (--webflow-*)
+	   ------------------------------------------------------------------------- */
+
+	/* Backgrounds */
+	--webflow-bg-primary: var(--color-bg-pure);
+	--webflow-bg-secondary: var(--color-bg-elevated);
+	--webflow-bg-tertiary: var(--color-bg-subtle);
+	--webflow-bg-surface: var(--color-bg-surface);
+	--webflow-bg-elevated: var(--color-bg-elevated);
+	--webflow-bg-hover: var(--color-hover);
+
+	/* Foreground */
+	--webflow-fg-primary: var(--color-fg-primary);
+	--webflow-fg-secondary: var(--color-fg-secondary);
+	--webflow-fg-muted: var(--color-fg-muted);
+	--webflow-text-primary: var(--color-fg-primary);
+	--webflow-text-secondary: var(--color-fg-secondary);
+	--webflow-text-muted: var(--color-fg-muted);
+
+	/* Borders */
+	--webflow-border: var(--color-border-default);
+	--webflow-border-emphasis: var(--color-border-emphasis);
+
+	/* Semantic */
+	--webflow-success: var(--color-success);
+	--webflow-error: var(--color-error);
+	--webflow-warning: var(--color-warning);
+
+	/* Interactive */
+	--webflow-hover: var(--color-hover);
+	--webflow-active: var(--color-active);
+
+	/* Radius */
+	--webflow-radius-sm: var(--radius-sm);
+	--webflow-radius-md: var(--radius-md);
+	--webflow-radius-lg: var(--radius-lg);
+	--webflow-radius-xl: var(--radius-xl);
+	--webflow-radius-full: var(--radius-full);
 
 	/* Shadows */
-	--webflow-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-	--webflow-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-	--webflow-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+	--webflow-shadow-sm: var(--shadow-sm);
+	--webflow-shadow-md: var(--shadow-md);
+	--webflow-shadow-lg: var(--shadow-lg);
+	--webflow-shadow-xl: var(--shadow-xl);
+
+	/* Motion */
+	--webflow-duration: var(--duration-micro);
+	--webflow-ease: var(--ease-standard);
+
+	/* Typography */
+	--webflow-font-regular: var(--font-regular);
+	--webflow-font-medium: var(--font-medium);
+	--webflow-font-mono: var(--font-mono);
+	--webflow-text-h1: var(--text-h1);
+	--webflow-text-h2: var(--text-h2);
+	--webflow-text-h3: var(--text-h3);
+	--webflow-text-h4: var(--text-h4);
+	--webflow-text-paragraph: var(--text-body);
+	--webflow-text-small: var(--text-body-sm);
+	--webflow-text-eyebrow: var(--text-caption);
 }
 
-/* Dark theme */
-.dark, [data-theme="dark"] {
-	--webflow-bg-primary: #1a1a1a;
-	--webflow-bg-secondary: #252525;
-	--webflow-bg-tertiary: #303030;
-	--webflow-text-primary: #ffffff;
-	--webflow-text-secondary: rgba(255, 255, 255, 0.8);
-	--webflow-text-muted: rgba(255, 255, 255, 0.6);
-	--webflow-border: rgba(255, 255, 255, 0.1);
-	--webflow-border-emphasis: rgba(255, 255, 255, 0.2);
-	--webflow-hover: rgba(255, 255, 255, 0.05);
-	--webflow-active: rgba(255, 255, 255, 0.1);
+/* ==========================================================================
+   Dark Theme Override
+   ========================================================================== */
+
+.dark,
+[data-theme='dark'] {
+	/* Backgrounds */
+	--color-bg-pure: #000000;
+	--color-bg-elevated: #0a0a0a;
+	--color-bg-surface: #111111;
+	--color-bg-subtle: #1a1a1a;
+
+	/* Foreground */
+	--color-fg-primary: #ffffff;
+	--color-fg-secondary: rgba(255, 255, 255, 0.8);
+	--color-fg-tertiary: rgba(255, 255, 255, 0.6);
+	--color-fg-muted: rgba(255, 255, 255, 0.46);
+	--color-fg-subtle: rgba(255, 255, 255, 0.2);
+
+	/* Borders */
+	--color-border-default: rgba(255, 255, 255, 0.1);
+	--color-border-emphasis: rgba(255, 255, 255, 0.2);
+	--color-border-strong: rgba(255, 255, 255, 0.3);
+
+	/* Interactive */
+	--color-hover: rgba(255, 255, 255, 0.05);
+	--color-active: rgba(255, 255, 255, 0.1);
+	--color-focus: rgba(255, 255, 255, 0.5);
+
+	/* Semantic - muted backgrounds inverted for dark */
+	--color-success-muted: rgba(68, 170, 68, 0.2);
+	--color-error-muted: rgba(212, 77, 77, 0.2);
+	--color-warning-muted: rgba(170, 136, 68, 0.2);
+	--color-info-muted: rgba(80, 130, 185, 0.2);
+
+	/* Shadows - deeper for dark theme */
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+	--shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+	--shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+	--shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
 }
 
-/* Base styles */
+/* ==========================================================================
+   Accessibility - Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* ==========================================================================
+   Accessibility - High Contrast Mode
+   ========================================================================== */
+
+@media (prefers-contrast: more) {
+	:root {
+		/* Foreground - brighter for contrast */
+		--color-fg-secondary: rgba(0, 0, 0, 0.95);
+		--color-fg-tertiary: rgba(0, 0, 0, 0.85);
+		--color-fg-muted: rgba(0, 0, 0, 0.75);
+		--color-fg-subtle: rgba(0, 0, 0, 0.5);
+
+		/* Borders - more visible */
+		--color-border-default: rgba(0, 0, 0, 0.3);
+		--color-border-emphasis: rgba(0, 0, 0, 0.5);
+		--color-border-strong: rgba(0, 0, 0, 0.7);
+
+		/* Interactive - more prominent */
+		--color-hover: rgba(0, 0, 0, 0.15);
+		--color-active: rgba(0, 0, 0, 0.25);
+		--color-focus: rgba(67, 83, 255, 0.9);
+	}
+
+	.dark,
+	[data-theme='dark'] {
+		--color-fg-secondary: rgba(255, 255, 255, 0.95);
+		--color-fg-tertiary: rgba(255, 255, 255, 0.85);
+		--color-fg-muted: rgba(255, 255, 255, 0.75);
+		--color-fg-subtle: rgba(255, 255, 255, 0.5);
+
+		--color-border-default: rgba(255, 255, 255, 0.3);
+		--color-border-emphasis: rgba(255, 255, 255, 0.5);
+		--color-border-strong: rgba(255, 255, 255, 0.7);
+
+		--color-hover: rgba(255, 255, 255, 0.15);
+		--color-active: rgba(255, 255, 255, 0.25);
+		--color-focus: rgba(255, 255, 255, 0.9);
+	}
+
+	/* Enhanced focus ring for high contrast */
+	*:focus-visible {
+		outline-width: 3px;
+		outline-offset: 3px;
+	}
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
 html {
-	background-color: var(--webflow-bg-primary);
-	color: var(--webflow-text-primary);
+	background-color: var(--color-bg-pure);
+	color: var(--color-fg-primary);
 }
 
 body {
-	font-family: 'WF Visual Sans', system-ui, -apple-system, sans-serif;
+	font-family: var(--font-sans);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
 
-/* Focus ring */
+/* Focus ring - uses Canon focus color */
 *:focus-visible {
-	outline: 2px solid var(--webflow-blue);
+	outline: 2px solid var(--color-focus);
 	outline-offset: 2px;
 }
 
-/* Scrollbar styling (dark theme) */
-.dark ::-webkit-scrollbar {
+/* ==========================================================================
+   Scrollbar Styling
+   ========================================================================== */
+
+::-webkit-scrollbar {
 	width: 8px;
 	height: 8px;
 }
 
-.dark ::-webkit-scrollbar-track {
-	background: var(--webflow-bg-secondary);
+::-webkit-scrollbar-track {
+	background: var(--color-bg-elevated);
 }
 
-.dark ::-webkit-scrollbar-thumb {
-	background: var(--webflow-border-emphasis);
+::-webkit-scrollbar-thumb {
+	background: var(--color-border-emphasis);
 	border-radius: 4px;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-	background: rgba(255, 255, 255, 0.3);
+::-webkit-scrollbar-thumb:hover {
+	background: var(--color-border-strong);
 }
 
-/* Dark mode transition */
+/* ==========================================================================
+   Theme Transition (Optional)
+   ========================================================================== */
+
 .theme-transition * {
-	transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+	transition:
+		background-color var(--duration-standard) var(--ease-standard),
+		color var(--duration-standard) var(--ease-standard),
+		border-color var(--duration-standard) var(--ease-standard);
 }
