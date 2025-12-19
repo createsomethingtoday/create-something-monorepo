@@ -630,6 +630,69 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				email: record.fields['Creator Email'] as string,
 				scopes: (record.fields['Scopes'] as string || '').split(',').filter(Boolean)
 			};
+		},
+
+		// ==================== ANALYTICS ====================
+
+		/**
+		 * Get leaderboard data (top 50 templates by sales).
+		 */
+		async getLeaderboard(): Promise<Array<{
+			templateName: string;
+			category: string;
+			creatorEmail: string;
+			totalSales30d: number;
+			totalRevenue30d: number;
+			avgRevenuePerSale: number;
+			salesRank: number;
+			revenueRank: number;
+		}>> {
+			const records = await base(TABLES.LEADERBOARD)
+				.select({
+					view: VIEWS.LEADERBOARD,
+					maxRecords: 50,
+					sort: [{ field: 'SALES_RANK', direction: 'asc' }]
+				})
+				.all();
+
+			return records.map(record => ({
+				templateName: record.fields['TEMPLATE_NAME'] as string || '',
+				category: record.fields['CATEGORY'] as string || '',
+				creatorEmail: record.fields['CREATOR_EMAIL'] as string || '',
+				totalSales30d: Number(record.fields['TOTAL_SALES_30D']) || 0,
+				totalRevenue30d: Number(record.fields['TOTAL_REVENUE_30D']) || 0,
+				avgRevenuePerSale: Number(record.fields['AVG_REVENUE_PER_SALE']) || 0,
+				salesRank: Number(record.fields['SALES_RANK']) || 0,
+				revenueRank: Number(record.fields['REVENUE_RANK']) || 0
+			}));
+		},
+
+		/**
+		 * Get category performance data.
+		 */
+		async getCategoryPerformance(): Promise<Array<{
+			category: string;
+			subcategory: string;
+			templatesInSubcategory: number;
+			totalSales30d: number;
+			avgRevenuePerTemplate: number;
+			revenueRank: number;
+		}>> {
+			const records = await base(TABLES.CATEGORY_PERFORMANCE)
+				.select({
+					view: VIEWS.CATEGORY_PERFORMANCE,
+					sort: [{ field: 'REVENUE_RANK', direction: 'asc' }]
+				})
+				.all();
+
+			return records.map(record => ({
+				category: record.fields['CATEGORY'] as string || '',
+				subcategory: record.fields['SUBCATEGORY'] as string || '',
+				templatesInSubcategory: Number(record.fields['TEMPLATES_IN_SUBCATEGORY']) || 0,
+				totalSales30d: Number(record.fields['TOTAL_SALES_30D']) || 0,
+				avgRevenuePerTemplate: Number(record.fields['AVG_REVENUE_PER_TEMPLATE']) || 0,
+				revenueRank: Number(record.fields['REVENUE_RANK']) || 0
+			}));
 		}
 	};
 }
