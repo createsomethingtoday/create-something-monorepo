@@ -71,7 +71,7 @@ async function getSlaStats(env: Env): Promise<{ warning: number; overdue: number
 	}
 
 	for (const record of records) {
-		// Skip "Base." template items - these are internal templates, not real assets
+		// Skip "Base." items - filtered in Airtable view, but kept here as safety net
 		const name = record.fields['Name'] as string | undefined;
 		if (name?.startsWith('Base.')) {
 			continue;
