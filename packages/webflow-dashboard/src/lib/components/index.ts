@@ -21,5 +21,8 @@ export { default as SubmissionTracker } from './SubmissionTracker.svelte';
 // Upload components
 export { default as ImageUploader } from './ImageUploader.svelte';
 
+// Analytics components
+export { default as MarketplaceInsights } from './MarketplaceInsights.svelte';
+
 // Re-export UI components
 export * from './ui';
