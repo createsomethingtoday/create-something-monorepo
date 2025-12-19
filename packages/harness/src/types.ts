@@ -417,3 +417,146 @@ export const DEFAULT_MODEL_SPECIFIC_CONFIG: ModelSpecificConfig = {
     unknown: {},
   },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Peer Review System
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Reviewer specialization types.
+ * Philosophy: Different reviewers focus on different concerns.
+ */
+export type ReviewerType = 'security' | 'architecture' | 'quality' | 'custom';
+
+/**
+ * Finding severity levels.
+ */
+export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+/**
+ * Review outcome.
+ */
+export type ReviewOutcome = 'pass' | 'pass_with_findings' | 'fail' | 'error';
+
+/**
+ * A single finding from a reviewer.
+ */
+export interface ReviewFinding {
+  id: string;
+  severity: FindingSeverity;
+  category: string;
+  title: string;
+  description: string;
+  file?: string;
+  line?: number;
+  suggestion?: string;
+  issueId?: string; // Related Beads issue if applicable
+}
+
+/**
+ * Result from a single reviewer.
+ */
+export interface ReviewResult {
+  reviewerId: string;
+  reviewerType: ReviewerType;
+  outcome: ReviewOutcome;
+  findings: ReviewFinding[];
+  summary: string;
+  confidence: number; // 0-1
+  durationMs: number;
+  error?: string;
+}
+
+/**
+ * Configuration for a specific reviewer.
+ */
+export interface ReviewerConfig {
+  id: string;
+  type: ReviewerType;
+  enabled: boolean;
+  /** Whether this reviewer can block advancement */
+  canBlock?: boolean;
+  /** Custom prompt for this reviewer (overrides default) */
+  customPrompt?: string;
+  /** Minimum severity to report (default: 'low') */
+  minSeverity?: FindingSeverity;
+  /** Files/patterns to focus on */
+  includePatterns?: string[];
+  /** Files/patterns to exclude */
+  excludePatterns?: string[];
+}
+
+/**
+ * Configuration for the review pipeline.
+ * Philosophy: Peer reviewers provide first-pass analysis, humans review summaries.
+ */
+export interface ReviewPipelineConfig {
+  /** Whether peer review is enabled */
+  enabled: boolean;
+  /** Minimum confidence to auto-advance (default: 0.8) */
+  minConfidenceToAdvance: number;
+  /** Whether critical findings block advancement (default: true) */
+  blockOnCritical: boolean;
+  /** Whether high findings block advancement (default: false) */
+  blockOnHigh: boolean;
+  /** Maximum parallel reviewers (default: 3) */
+  maxParallelReviewers: number;
+  /** Timeout per reviewer in ms (default: 5 minutes) */
+  reviewerTimeoutMs: number;
+  /** Reviewers to run */
+  reviewers: ReviewerConfig[];
+}
+
+export const DEFAULT_REVIEW_PIPELINE_CONFIG: ReviewPipelineConfig = {
+  enabled: true,
+  minConfidenceToAdvance: 0.8,
+  blockOnCritical: true,
+  blockOnHigh: false,
+  maxParallelReviewers: 3,
+  reviewerTimeoutMs: 5 * 60 * 1000, // 5 minutes
+  reviewers: [
+    { id: 'security', type: 'security', enabled: true, canBlock: true },
+    { id: 'architecture', type: 'architecture', enabled: true, canBlock: true },
+    { id: 'quality', type: 'quality', enabled: true, canBlock: false },
+  ],
+};
+
+/**
+ * Aggregated review results for a checkpoint.
+ */
+export interface ReviewAggregation {
+  checkpointId: string;
+  reviewers: ReviewResult[];
+  overallOutcome: ReviewOutcome;
+  overallConfidence: number;
+  totalFindings: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  infoCount: number;
+  shouldAdvance: boolean;
+  blockingReasons: string[];
+  timestamp: string;
+}
+
+/**
+ * Context provided to reviewers.
+ */
+export interface ReviewContext {
+  checkpointId: string;
+  harnessId: string;
+  gitDiff: string;
+  completedIssues: BeadsIssue[];
+  filesChanged: string[];
+  recentCommits: string[];
+  checkpointSummary: string;
+}
+
+/**
+ * Extended checkpoint with review data.
+ */
+export interface ReviewedCheckpoint extends Checkpoint {
+  hasReview: boolean;
+  reviewAggregation: ReviewAggregation | null;
+}

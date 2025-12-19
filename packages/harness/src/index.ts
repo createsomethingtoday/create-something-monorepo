@@ -42,6 +42,17 @@ export type {
   ClaudeModelFamily,
   DetectedModel,
   ModelSpecificConfig,
+  // Peer review types
+  ReviewerType,
+  FindingSeverity,
+  ReviewOutcome,
+  ReviewFinding,
+  ReviewResult,
+  ReviewerConfig,
+  ReviewPipelineConfig,
+  ReviewAggregation,
+  ReviewContext,
+  ReviewedCheckpoint,
 } from './types.js';
 
 export {
@@ -49,6 +60,7 @@ export {
   DEFAULT_FAILURE_HANDLING_CONFIG,
   DEFAULT_SWARM_CONFIG,
   DEFAULT_MODEL_SPECIFIC_CONFIG,
+  DEFAULT_REVIEW_PIPELINE_CONFIG,
 } from './types.js';
 
 // Spec Parser
@@ -93,6 +105,7 @@ export {
   calculateConfidence,
   shouldPauseForConfidence,
   generateCheckpoint,
+  generateReviewedCheckpoint,
   resetTracker,
   formatCheckpointDisplay,
   // Swarm batch tracking
@@ -147,3 +160,35 @@ export {
   getModelConfidenceThreshold,
   isModelContextSensitive,
 } from './model-detector.js';
+
+// Peer Review - Prompts
+export {
+  getPromptForReviewer,
+  SECURITY_REVIEWER_PROMPT,
+  ARCHITECTURE_REVIEWER_PROMPT,
+  QUALITY_REVIEWER_PROMPT,
+} from './reviewer-prompts.js';
+
+// Peer Review - Reviewer Execution
+export {
+  generateReviewPrompt,
+  runReviewer,
+  filterFindingsBySeverity,
+  getOutcomeIcon,
+} from './reviewer.js';
+
+// Peer Review - Pipeline
+export {
+  buildReviewContext,
+  runReviewPipeline,
+  aggregateReviewResults,
+  formatReviewDisplay,
+  formatFindingsReport,
+} from './review-pipeline.js';
+
+// Peer Review - Beads Integration
+export {
+  createReviewIssue,
+  createFindingIssues,
+  getReviewSummaryLine,
+} from './review-beads.js';

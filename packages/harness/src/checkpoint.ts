@@ -13,8 +13,14 @@ import type {
   SwarmProgress,
   SwarmCheckpoint,
   SwarmAgentStatus,
+  ReviewPipelineConfig,
+  ReviewedCheckpoint,
+  ReviewAggregation,
 } from './types.js';
-import { createCheckpointIssue, getOpenIssues } from './beads.js';
+import { DEFAULT_REVIEW_PIPELINE_CONFIG } from './types.js';
+import { createCheckpointIssue, getOpenIssues, getIssue } from './beads.js';
+import { runReviewPipeline, formatReviewDisplay } from './review-pipeline.js';
+import { createReviewIssue, createFindingIssues } from './review-beads.js';
 
 /**
  * Checkpoint tracking state.
@@ -636,3 +642,95 @@ export function formatSwarmProgressDisplay(progress: SwarmProgress): string {
 
   return lines.join('\n');
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Peer Review Integration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run peer review on a checkpoint and return a reviewed checkpoint.
+ * Philosophy: Peer reviewers analyze code at checkpoint boundaries,
+ * providing first-pass review before human engagement.
+ */
+export async function runCheckpointReview(
+  checkpoint: Checkpoint,
+  tracker: CheckpointTracker,
+  reviewConfig: ReviewPipelineConfig,
+  cwd: string
+): Promise<ReviewedCheckpoint> {
+  if (!reviewConfig.enabled) {
+    return {
+      ...checkpoint,
+      hasReview: false,
+      reviewAggregation: null,
+    };
+  }
+
+  // Get the completed issues for context
+  const completedIssueIds = checkpoint.issuesCompleted;
+  const completedIssues: BeadsIssue[] = [];
+
+  for (const issueId of completedIssueIds) {
+    const issue = await getIssue(issueId, cwd);
+    if (issue) {
+      completedIssues.push(issue);
+    }
+  }
+
+  // Run the review pipeline
+  const reviewAggregation = await runReviewPipeline(
+    checkpoint,
+    completedIssues,
+    reviewConfig,
+    cwd
+  );
+
+  // Display review results
+  console.log('\n' + formatReviewDisplay(reviewAggregation));
+
+  // Create review issue in Beads
+  const harnessId = checkpoint.harnessId;
+  await createReviewIssue(reviewAggregation, harnessId, cwd);
+
+  // Create individual issues for critical/high findings
+  if (reviewAggregation.criticalCount > 0 || reviewAggregation.highCount > 0) {
+    await createFindingIssues(reviewAggregation, harnessId, cwd);
+  }
+
+  return {
+    ...checkpoint,
+    hasReview: true,
+    reviewAggregation,
+  };
+}
+
+/**
+ * Generate a checkpoint with optional peer review.
+ * This is the main entry point for reviewed checkpoints.
+ */
+export async function generateReviewedCheckpoint(
+  tracker: CheckpointTracker,
+  harnessState: HarnessState,
+  redirectNotes: string | null,
+  reviewConfig: ReviewPipelineConfig | null,
+  cwd?: string
+): Promise<ReviewedCheckpoint> {
+  // Generate the base checkpoint
+  const checkpoint = await generateCheckpoint(tracker, harnessState, redirectNotes, cwd);
+
+  // Run review if configured
+  if (reviewConfig?.enabled) {
+    return runCheckpointReview(checkpoint, tracker, reviewConfig, cwd || process.cwd());
+  }
+
+  return {
+    ...checkpoint,
+    hasReview: false,
+    reviewAggregation: null,
+  };
+}
+
+/**
+ * Re-export formatReviewDisplay for use in runner.
+ */
+export { formatReviewDisplay };

@@ -13,7 +13,8 @@
  */
 
 import { initializeHarness, runHarness, resumeHarness, pauseHarness, getHarnessStatus } from './runner.js';
-import type { StartOptions, PauseOptions, ResumeOptions } from './types.js';
+import type { StartOptions, PauseOptions, ResumeOptions, ReviewPipelineConfig, ReviewerType } from './types.js';
+import { DEFAULT_REVIEW_PIPELINE_CONFIG } from './types.js';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -74,6 +75,11 @@ OPTIONS:
   --reason "..."         Reason for pausing (with pause command)
   --harness-id <id>      Specify harness ID (for resume/status)
 
+PEER REVIEW OPTIONS:
+  --reviewers <list>     Comma-separated reviewers (default: security,architecture,quality)
+  --no-review            Disable peer review at checkpoints
+  --review-block-high    Block on high findings (default: block on critical only)
+
 EXAMPLES:
   harness start specs/my-project.md
   harness start specs/api.md --checkpoint-every 5 --dry-run
@@ -110,6 +116,10 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
     dryRun: args.includes('--dry-run'),
   };
 
+  // Parse review configuration
+  const noReview = args.includes('--no-review');
+  const reviewConfig = noReview ? null : buildReviewConfig(args);
+
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                   CREATE SOMETHING HARNESS                     ║
@@ -127,10 +137,18 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
     for (const [featureId, issueId] of featureMap) {
       console.log(`  ${featureId} → ${issueId}`);
     }
+    if (reviewConfig) {
+      const enabledReviewers = reviewConfig.reviewers.filter(r => r.enabled).map(r => r.id);
+      console.log(`\nPeer review: ${enabledReviewers.join(', ')}`);
+      console.log(`Block on critical: ${reviewConfig.blockOnCritical}`);
+      console.log(`Block on high: ${reviewConfig.blockOnHigh}`);
+    } else {
+      console.log('\nPeer review: disabled');
+    }
     return;
   }
 
-  await runHarness(harnessState, { cwd, dryRun: options.dryRun });
+  await runHarness(harnessState, { cwd, dryRun: options.dryRun, reviewConfig: reviewConfig ?? undefined });
 }
 
 async function handlePause(args: string[], cwd: string): Promise<void> {
@@ -177,6 +195,45 @@ function parseStringArg(args: string[], flag: string): string | undefined {
     return undefined;
   }
   return args[index + 1];
+}
+
+/**
+ * Build review pipeline configuration from CLI args.
+ */
+function buildReviewConfig(args: string[]): ReviewPipelineConfig {
+  // Start with default config
+  const config: ReviewPipelineConfig = { ...DEFAULT_REVIEW_PIPELINE_CONFIG };
+
+  // Parse --reviewers flag
+  const reviewersArg = parseStringArg(args, '--reviewers');
+  if (reviewersArg) {
+    const requestedTypes = reviewersArg.split(',').map(s => s.trim().toLowerCase()) as ReviewerType[];
+    const validTypes: ReviewerType[] = ['security', 'architecture', 'quality', 'custom'];
+
+    // Disable all reviewers first
+    for (const reviewer of config.reviewers) {
+      reviewer.enabled = false;
+    }
+
+    // Enable only requested reviewers
+    for (const type of requestedTypes) {
+      if (!validTypes.includes(type)) {
+        console.warn(`Warning: Unknown reviewer type '${type}', skipping.`);
+        continue;
+      }
+      const reviewer = config.reviewers.find(r => r.type === type);
+      if (reviewer) {
+        reviewer.enabled = true;
+      }
+    }
+  }
+
+  // Parse --review-block-high flag
+  if (args.includes('--review-block-high')) {
+    config.blockOnHigh = true;
+  }
+
+  return config;
 }
 
 main().catch((error) => {
