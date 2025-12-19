@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { Button } from './ui';
 	import Search from './Search.svelte';
 	import DarkModeToggle from './DarkModeToggle.svelte';
@@ -18,6 +19,12 @@
 		onSearch,
 		showSearch = true
 	}: Props = $props();
+
+	const navItems = [
+		{ href: '/dashboard', label: 'Dashboard' },
+		{ href: '/marketplace', label: 'Marketplace' },
+		{ href: '/validation', label: 'Validation' }
+	];
 </script>
 
 <header class="header">
@@ -30,6 +37,19 @@
 				</svg>
 				<span class="logo-text">Asset Dashboard</span>
 			</a>
+
+			<nav class="nav-links">
+				{#each navItems as item}
+					<a
+						href={item.href}
+						class="nav-link"
+						class:active={$page.url.pathname === item.href || $page.url.pathname.startsWith(item.href + '/')}
+					>
+						{item.label}
+					</a>
+				{/each}
+			</nav>
+
 			{#if showSearch}
 				<div class="search-desktop">
 					<Search {onSearch} />
@@ -96,6 +116,37 @@
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+	}
+
+	.nav-links {
+		display: none;
+		align-items: center;
+		gap: var(--space-xs);
+	}
+
+	@media (min-width: 768px) {
+		.nav-links {
+			display: flex;
+		}
+	}
+
+	.nav-link {
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		text-decoration: none;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.nav-link:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.nav-link.active {
+		color: var(--webflow-blue);
+		background: color-mix(in srgb, var(--webflow-blue) 10%, transparent);
 	}
 
 	.search-desktop {

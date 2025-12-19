@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import type { Snippet } from 'svelte';
+	import { Toast } from '$lib/components';
 
 	let { children }: { children: Snippet } = $props();
 </script>
@@ -11,3 +12,4 @@
 </svelte:head>
 
 {@render children()}
+<Toast />
