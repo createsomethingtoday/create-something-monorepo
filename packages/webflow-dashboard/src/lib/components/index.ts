@@ -11,5 +11,9 @@ export { default as StatusBadge } from './StatusBadge.svelte';
 export { default as EditAssetModal } from './EditAssetModal.svelte';
 export { default as OverviewStats } from './OverviewStats.svelte';
 
+// Profile components
+export { default as EditProfileModal } from './EditProfileModal.svelte';
+export { default as ApiKeysManager } from './ApiKeysManager.svelte';
+
 // Re-export UI components
 export * from './ui';

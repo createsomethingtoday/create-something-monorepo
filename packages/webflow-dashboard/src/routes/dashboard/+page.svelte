@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto, invalidate } from '$app/navigation';
-	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats } from '$lib/components';
+	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats, EditProfileModal } from '$lib/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -19,7 +19,10 @@
 
 	function handleProfileClick() {
 		isProfileOpen = true;
-		// Profile modal will be implemented in Phase 9
+	}
+
+	function handleProfileClose() {
+		isProfileOpen = false;
 	}
 
 	function handleViewAsset(id: string) {
@@ -134,6 +137,10 @@
 			</section>
 		</div>
 	</main>
+
+	{#if isProfileOpen}
+		<EditProfileModal onClose={handleProfileClose} />
+	{/if}
 </div>
 
 <style>
