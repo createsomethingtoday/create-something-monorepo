@@ -21,7 +21,13 @@
 		top_experiments: [],
 		top_countries: [],
 		daily_views: [],
-		top_referrers: []
+		top_referrers: [],
+		unified: {
+			categoryBreakdown: [],
+			topActions: [],
+			sessionStats: { total: 0, avgPageViews: 0, avgDuration: 0 },
+			dailyAggregates: [],
+		},
 	};
 
 	async function loadAnalytics() {
@@ -158,8 +164,64 @@
 			</div>
 		</div>
 
+		<!-- Unified Behavioral Analytics -->
+		{#if analytics.unified}
+			<div class="section-header mt-8 mb-4">
+				<h3 class="section-title">Behavioral Analytics</h3>
+				<p class="section-subtitle">Session-based tracking from unified events</p>
+			</div>
+
+			<!-- Session Stats -->
+			<div class="grid grid-cols-3 gap-4 mb-4">
+				<MetricCard
+					label="Sessions"
+					value={analytics.unified.sessionStats.total}
+					context="{days} days"
+				/>
+				<MetricCard
+					label="Avg Page Views"
+					value={analytics.unified.sessionStats.avgPageViews?.toFixed(1) || '0'}
+					context="per session"
+				/>
+				<MetricCard
+					label="Avg Duration"
+					value={`${Math.round((analytics.unified.sessionStats.avgDuration || 0) / 60)}m`}
+					context="per session"
+				/>
+			</div>
+
+			<!-- Category & Actions -->
+			<div class="grid grid-cols-2 gap-4">
+				<div class="table-card p-4">
+					<h3 class="table-title mb-3">By Category</h3>
+					<HighDensityTable
+						items={analytics.unified.categoryBreakdown.map((c: any) => ({
+							label: c.category.charAt(0).toUpperCase() + c.category.slice(1),
+							count: c.count
+						}))}
+						limit={10}
+						showPercentage={false}
+						emptyMessage="No category data yet"
+					/>
+				</div>
+
+				<div class="table-card p-4">
+					<h3 class="table-title mb-3">Top Actions</h3>
+					<HighDensityTable
+						items={analytics.unified.topActions.map((a: any) => ({
+							label: a.action,
+							count: a.count
+						}))}
+						limit={10}
+						showPercentage={false}
+						emptyMessage="No action data yet"
+					/>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Daily Trend - Using Agentic Sparkline and DailyGrid Components -->
-		<div class="chart-card p-6">
+		<div class="chart-card p-6 mt-4">
 			<div class="flex items-end justify-between mb-6">
 				<div>
 					<h3 class="chart-title">Daily Page Views</h3>
@@ -222,6 +284,22 @@
 
 	.page-description {
 		color: var(--color-fg-tertiary);
+	}
+
+	.section-header {
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-md);
+	}
+
+	.section-title {
+		font-size: var(--text-h3);
+		font-weight: 600;
+	}
+
+	.section-subtitle {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-xs);
 	}
 
 	.select-field {
