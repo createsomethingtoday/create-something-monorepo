@@ -10,7 +10,7 @@ compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
 [triggers]
-crons = ["0 14 * * *"]  # Daily at 8:00 AM CT (14:00 UTC)
+crons = ["0 14 * * 1-5"]  # Weekdays at 8:00 AM CT (14:00 UTC)
 
 [vars]
 ENVIRONMENT = "production"
