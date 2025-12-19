@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { StatusTimelineItem } from '$lib/types';
+	import type { StatusTimelineItem, Asset } from '$lib/types';
 	import { Header } from '$lib/components/layout';
 	import { Card, CardContent, Button, Badge, Separator } from '$lib/components/ui';
 	import { StatusBadge } from '$lib/components/assets';
+	import { EditAssetModal } from '$lib/components/assets';
 	import {
 		ArrowLeft,
 		ExternalLink,
@@ -19,6 +20,7 @@
 		Clock,
 		FileText
 	} from 'lucide-svelte';
+	import { invalidateAll } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 
@@ -27,6 +29,13 @@
 
 	let activeTab = $state<'overview' | 'details' | 'related'>('overview');
 	let showPerformanceMetrics = $state(false);
+	let showEditModal = $state(false);
+
+	function handleEditSave(updatedAsset: Asset) {
+		showEditModal = false;
+		// Refresh the page data to get the updated asset
+		invalidateAll();
+	}
 
 	function formatCurrency(value: number | undefined): string {
 		if (!value) return '$0';
@@ -132,6 +141,10 @@
 						<StatusBadge status={asset.status} />
 					</div>
 					<div class="header-actions">
+						<button type="button" class="action-btn edit-btn" onclick={() => (showEditModal = true)}>
+							<Edit size={16} />
+							Edit
+						</button>
 						{#if asset.previewUrl}
 							<a href={asset.previewUrl} target="_blank" rel="noopener noreferrer" class="action-btn">
 								<Eye size={16} />
@@ -500,6 +513,15 @@
 		{/if}
 	</div>
 </main>
+
+{#if asset}
+	<EditAssetModal
+		{asset}
+		open={showEditModal}
+		onclose={() => (showEditModal = false)}
+		onsave={handleEditSave}
+	/>
+{/if}
 
 <style>
 	.main {
