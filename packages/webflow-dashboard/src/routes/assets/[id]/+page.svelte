@@ -84,8 +84,8 @@
 			});
 		}
 
-		// Add decision date if available
-		if (asset.decisionDate) {
+		// Add decision date if available (only if status exists)
+		if (asset.decisionDate && asset.status) {
 			timeline.push({
 				date: formatDate(asset.decisionDate),
 				status: asset.status
@@ -96,7 +96,8 @@
 	});
 
 	// Status color config
-	function getStatusColor(status: string) {
+	function getStatusColor(status: string | undefined | null) {
+		if (!status) return { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' };
 		const statusLower = status.toLowerCase();
 		if (statusLower.includes('published') || statusLower.includes('approved')) {
 			return { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' };
@@ -378,13 +379,13 @@
 											<div class="timeline-item" class:latest={isLatest}>
 												<div class="timeline-date">{item.date}</div>
 												<div class="timeline-node {colors.bg} {colors.border}">
-													{#if item.status.toLowerCase().includes('submitted')}
+													{#if item.status?.toLowerCase().includes('submitted')}
 														<Calendar size={isLatest ? 20 : 16} class={colors.text} />
-													{:else if item.status.toLowerCase().includes('review') || item.status.toLowerCase().includes('changes')}
+													{:else if item.status?.toLowerCase().includes('review') || item.status?.toLowerCase().includes('changes')}
 														<ClipboardCheck size={isLatest ? 20 : 16} class={colors.text} />
-													{:else if item.status.toLowerCase().includes('approved') || item.status.toLowerCase().includes('published')}
+													{:else if item.status?.toLowerCase().includes('approved') || item.status?.toLowerCase().includes('published')}
 														<CheckCircle size={isLatest ? 20 : 16} class={colors.text} />
-													{:else if item.status.toLowerCase().includes('rejected')}
+													{:else if item.status?.toLowerCase().includes('rejected')}
 														<XCircle size={isLatest ? 20 : 16} class={colors.text} />
 													{:else}
 														<FileText size={isLatest ? 20 : 16} class={colors.text} />
