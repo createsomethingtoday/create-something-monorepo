@@ -102,7 +102,6 @@ export async function initializeHarness(
   console.log(formatSpecSummary(spec));
   console.log(`\nParsed ${spec.features.length} features from spec.\n`);
 
-  // Create harness issue
   const checkpointPolicy: CheckpointPolicy = {
     afterSessions: options.checkpointEvery || 3,
     afterHours: options.maxHours || 4,
@@ -111,6 +110,33 @@ export async function initializeHarness(
     onRedirect: true,
   };
 
+  // Dry run: skip creating real artifacts
+  if (options.dryRun) {
+    const featureMap = new Map<string, string>();
+    for (const feature of spec.features) {
+      featureMap.set(feature.id, `(dry-run-${feature.id})`);
+    }
+
+    const harnessState: HarnessState = {
+      id: '(dry-run)',
+      status: 'running',
+      specFile: options.specFile,
+      gitBranch: '(dry-run)',
+      startedAt: new Date().toISOString(),
+      currentSession: 0,
+      sessionsCompleted: 0,
+      featuresTotal: spec.features.length,
+      featuresCompleted: 0,
+      featuresFailed: 0,
+      lastCheckpoint: null,
+      checkpointPolicy,
+      pauseReason: null,
+    };
+
+    return { harnessState, featureMap };
+  }
+
+  // Create harness issue
   const harnessId = await createHarnessIssue(
     spec.title,
     options.specFile,

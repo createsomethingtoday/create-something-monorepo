@@ -12,17 +12,24 @@
  *
  * ## Features
  *
- * ### Feature Category
- * - Feature 1 description
- * - Feature 2 description
- *   - Acceptance criteria item
+ * ### Feature Name
+ * Description of the feature...
+ * - Acceptance criteria 1
+ * - Acceptance criteria 2
+ *
+ * ### Another Feature
+ * - Task 1
+ * - Task 2
  * ```
+ *
+ * Each H3 (###) becomes ONE feature. Bullets are acceptance criteria, not separate features.
  */
 
 import type { Feature, ParsedSpec, DependencyGraph } from './types.js';
 
 /**
  * Parse a markdown PRD spec into structured features.
+ * Each H3 (###) becomes ONE feature. Bullets are acceptance criteria.
  */
 export function parseSpec(markdown: string): ParsedSpec {
   const lines = markdown.split('\n');
@@ -32,7 +39,6 @@ export function parseSpec(markdown: string): ParsedSpec {
   const features: Feature[] = [];
 
   let currentSection: 'title' | 'overview' | 'features' | 'other' = 'title';
-  let currentCategory = '';
   let currentFeature: Partial<Feature> | null = null;
   let overviewLines: string[] = [];
   let featureId = 0;
@@ -68,15 +74,22 @@ export function parseSpec(markdown: string): ParsedSpec {
       continue;
     }
 
-    // H3: Feature categories (within Features section)
+    // H3: Feature titles (within Features section) - each H3 is ONE feature
     if (trimmed.startsWith('### ') && currentSection === 'features') {
       // Save any pending feature
       if (currentFeature && currentFeature.title) {
         features.push(finalizeFeature(currentFeature, featureId++));
-        currentFeature = null;
       }
 
-      currentCategory = trimmed.slice(4).trim();
+      // Create new feature from H3 title
+      const featureTitle = trimmed.slice(4).trim();
+      currentFeature = {
+        title: featureTitle,
+        description: '',
+        labels: [slugify(featureTitle)],
+        acceptanceCriteria: [],
+        dependsOn: [],
+      };
       continue;
     }
 
@@ -86,36 +99,17 @@ export function parseSpec(markdown: string): ParsedSpec {
       continue;
     }
 
-    // Parse feature items (bullet points in Features section)
-    if (currentSection === 'features' && trimmed.startsWith('- ')) {
-      const isSubItem = line.startsWith('  ') || line.startsWith('\t');
-
-      if (isSubItem && currentFeature) {
-        // Sub-item: Add as acceptance criteria
-        const criterion = trimmed.slice(2).trim();
-        if (criterion) {
-          currentFeature.acceptanceCriteria = currentFeature.acceptanceCriteria || [];
-          currentFeature.acceptanceCriteria.push(criterion);
-        }
-      } else {
-        // Top-level item: New feature
-        if (currentFeature && currentFeature.title) {
-          features.push(finalizeFeature(currentFeature, featureId++));
-        }
-
-        const featureTitle = trimmed.slice(2).trim();
-        currentFeature = {
-          title: featureTitle,
-          description: '',
-          labels: currentCategory ? [slugify(currentCategory)] : [],
-          acceptanceCriteria: [],
-          dependsOn: [],
-        };
+    // Bullets in Features section become acceptance criteria for current feature
+    if (currentSection === 'features' && trimmed.startsWith('- ') && currentFeature) {
+      const criterion = trimmed.slice(2).trim();
+      if (criterion) {
+        currentFeature.acceptanceCriteria = currentFeature.acceptanceCriteria || [];
+        currentFeature.acceptanceCriteria.push(criterion);
       }
       continue;
     }
 
-    // Plain text after a feature title becomes its description
+    // Plain text after H3 becomes description
     if (currentSection === 'features' && currentFeature && trimmed && !trimmed.startsWith('-')) {
       if (!currentFeature.description) {
         currentFeature.description = trimmed;
@@ -136,10 +130,7 @@ export function parseSpec(markdown: string): ParsedSpec {
     .trim()
     .replace(/\n{3,}/g, '\n\n');
 
-  // Infer dependencies from feature order and categories
-  inferDependencies(features);
-
-  // Build dependency graph and detect independence
+  // Build dependency graph and detect independence (no auto-inferred deps)
   const dependencyGraph = buildDependencyGraph(features);
   detectIndependence(features, dependencyGraph);
 
