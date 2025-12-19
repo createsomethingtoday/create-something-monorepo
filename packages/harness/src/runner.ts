@@ -16,8 +16,10 @@ import type {
   SwarmConfig,
   BeadsIssue,
   SessionResult,
+  ReviewPipelineConfig,
+  ReviewedCheckpoint,
 } from './types.js';
-import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG, DEFAULT_SWARM_CONFIG } from './types.js';
+import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG, DEFAULT_SWARM_CONFIG, DEFAULT_REVIEW_PIPELINE_CONFIG } from './types.js';
 import { parseSpec, formatSpecSummary } from './spec-parser.js';
 import {
   createIssuesFromFeatures,
@@ -48,6 +50,7 @@ import {
   shouldCreateCheckpoint,
   shouldPauseForConfidence,
   generateCheckpoint,
+  generateReviewedCheckpoint,
   resetTracker,
   formatCheckpointDisplay,
   calculateConfidence,
@@ -75,6 +78,13 @@ import {
   formatFailureStats,
   getFailureStats,
 } from './failure-handler.js';
+
+/**
+ * Type guard to check if a checkpoint has review data.
+ */
+function isReviewedCheckpoint(checkpoint: Checkpoint | ReviewedCheckpoint): checkpoint is ReviewedCheckpoint {
+  return 'hasReview' in checkpoint && checkpoint.hasReview === true;
+}
 
 /**
  * Initialize a new harness run.
@@ -155,13 +165,15 @@ export async function runHarness(
     cwd: string;
     dryRun?: boolean;
     failureConfig?: FailureHandlingConfig;
+    reviewConfig?: ReviewPipelineConfig;
   }
 ): Promise<void> {
   const checkpointTracker = createCheckpointTracker();
   const failureTracker = createFailureTracker();
   const failureConfig = options.failureConfig ?? DEFAULT_FAILURE_HANDLING_CONFIG;
+  const reviewConfig = options.reviewConfig ?? null; // null = no review
   let beadsSnapshot = await takeSnapshot(options.cwd);
-  let lastCheckpoint: Checkpoint | null = null;
+  let lastCheckpoint: Checkpoint | ReviewedCheckpoint | null = null;
   let redirectNotes: string[] = [];
 
   console.log(`\n═══════════════════════════════════════════════════════════════`);
@@ -169,6 +181,10 @@ export async function runHarness(
   console.log(`  Branch: ${harnessState.gitBranch}`);
   console.log(`  Features: ${harnessState.featuresTotal}`);
   console.log(`  Failure Handling: retry=${failureConfig.maxRetries}, continue=${failureConfig.continueOnFailure}`);
+  if (reviewConfig?.enabled) {
+    const reviewerIds = reviewConfig.reviewers.filter(r => r.enabled).map(r => r.id);
+    console.log(`  Peer Review: ${reviewerIds.join(', ')}`);
+  }
   console.log(`═══════════════════════════════════════════════════════════════\n`);
 
   while (harnessState.status === 'running') {
@@ -201,15 +217,24 @@ export async function runHarness(
     if (requiresImmediateAction(redirectCheck.redirects)) {
       // Create checkpoint before handling redirect
       if (checkpointTracker.sessionsResults.length > 0) {
-        lastCheckpoint = await generateCheckpoint(
+        lastCheckpoint = await generateReviewedCheckpoint(
           checkpointTracker,
           harnessState,
           formatRedirectNotes(redirectCheck.redirects),
+          reviewConfig,
           options.cwd
         );
         console.log('\n' + formatCheckpointDisplay(lastCheckpoint));
         resetTracker(checkpointTracker);
         harnessState.lastCheckpoint = lastCheckpoint.id;
+
+        // Handle review decision
+        if (isReviewedCheckpoint(lastCheckpoint) && lastCheckpoint.reviewAggregation && !lastCheckpoint.reviewAggregation.shouldAdvance) {
+          harnessState.status = 'paused';
+          harnessState.pauseReason = `Review blocked: ${lastCheckpoint.reviewAggregation.blockingReasons.join(', ')}`;
+          console.log(`\n⏸ Harness paused for review: ${harnessState.pauseReason}`);
+          break;
+        }
       }
     }
 
@@ -335,15 +360,25 @@ export async function runHarness(
       // Create checkpoint if decision requires it
       if (decision.shouldCreateCheckpoint && checkpointTracker.sessionsResults.length > 0) {
         console.log(`\n📊 Creating checkpoint: ${decision.reason}`);
-        lastCheckpoint = await generateCheckpoint(
+        lastCheckpoint = await generateReviewedCheckpoint(
           checkpointTracker,
           harnessState,
           `Failure handling: ${decision.action}`,
+          reviewConfig,
           options.cwd
         );
         console.log('\n' + formatCheckpointDisplay(lastCheckpoint));
         resetTracker(checkpointTracker);
         harnessState.lastCheckpoint = lastCheckpoint.id;
+
+        // Handle review decision (additional pause if review blocked)
+        if (isReviewedCheckpoint(lastCheckpoint) && lastCheckpoint.reviewAggregation && !lastCheckpoint.reviewAggregation.shouldAdvance) {
+          if (harnessState.status === 'running') {
+            harnessState.status = 'paused';
+            harnessState.pauseReason = `Review blocked: ${lastCheckpoint.reviewAggregation.blockingReasons.join(', ')}`;
+            console.log(`\n⏸ Harness paused for review: ${harnessState.pauseReason}`);
+          }
+        }
       }
 
       // Exit loop if decision says not to continue
@@ -362,15 +397,24 @@ export async function runHarness(
 
     if (checkpointCheck.create) {
       console.log(`\n📊 Creating checkpoint: ${checkpointCheck.reason}`);
-      lastCheckpoint = await generateCheckpoint(
+      lastCheckpoint = await generateReviewedCheckpoint(
         checkpointTracker,
         harnessState,
         formatRedirectNotes(redirectCheck.redirects),
+        reviewConfig,
         options.cwd
       );
       console.log('\n' + formatCheckpointDisplay(lastCheckpoint));
       resetTracker(checkpointTracker);
       harnessState.lastCheckpoint = lastCheckpoint.id;
+
+      // Handle review decision
+      if (isReviewedCheckpoint(lastCheckpoint) && lastCheckpoint.reviewAggregation && !lastCheckpoint.reviewAggregation.shouldAdvance) {
+        harnessState.status = 'paused';
+        harnessState.pauseReason = `Review blocked: ${lastCheckpoint.reviewAggregation.blockingReasons.join(', ')}`;
+        console.log(`\n⏸ Harness paused for review: ${harnessState.pauseReason}`);
+        break;
+      }
     }
 
     // 7. Check confidence threshold
@@ -385,10 +429,11 @@ export async function runHarness(
 
       // Create final checkpoint before pausing
       if (checkpointTracker.sessionsResults.length > 0) {
-        lastCheckpoint = await generateCheckpoint(
+        lastCheckpoint = await generateReviewedCheckpoint(
           checkpointTracker,
           harnessState,
           `Low confidence pause`,
+          reviewConfig,
           options.cwd
         );
         console.log('\n' + formatCheckpointDisplay(lastCheckpoint));
