@@ -24,5 +24,8 @@ export { default as ImageUploader } from './ImageUploader.svelte';
 // Analytics components
 export { default as MarketplaceInsights } from './MarketplaceInsights.svelte';
 
+// Validation components
+export { default as GsapValidationModal } from './GsapValidationModal.svelte';
+
 // Re-export UI components
 export * from './ui';
