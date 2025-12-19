@@ -1,0 +1,22 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "webflow-dashboard",
+	"compatibility_date": "2025-11-15",
+	"compatibility_flags": ["nodejs_compat"],
+	"pages_build_output_dir": ".svelte-kit/cloudflare",
+
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "552d6f66fdf84e8aad55306e6971068e"
+		},
+		{
+			"binding": "CACHE",
+			"id": "28f5c600295a4c0b87f81d53e6d45c46"
+		}
+	],
+
+	"vars": {
+		"ENVIRONMENT": "production"
+	}
+}

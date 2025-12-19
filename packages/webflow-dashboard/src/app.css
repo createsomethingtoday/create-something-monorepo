@@ -1,0 +1,115 @@
+/*
+  Webflow Asset Dashboard
+  SvelteKit + Tailwind CSS
+
+  Webflow brand colors as CSS custom properties
+*/
+
+/* Tailwind CSS directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Webflow brand colors */
+:root {
+	/* Primary brand */
+	--webflow-blue: #4353ff;
+	--webflow-blue-dark: #3340cc;
+	--webflow-blue-light: #6673ff;
+
+	/* Light theme (default) */
+	--webflow-bg-primary: #ffffff;
+	--webflow-bg-secondary: #f5f5f5;
+	--webflow-bg-tertiary: #eeeeee;
+	--webflow-text-primary: #1a1a1a;
+	--webflow-text-secondary: rgba(0, 0, 0, 0.8);
+	--webflow-text-muted: rgba(0, 0, 0, 0.6);
+	--webflow-border: rgba(0, 0, 0, 0.1);
+	--webflow-border-emphasis: rgba(0, 0, 0, 0.2);
+
+	/* Status colors */
+	--webflow-success: #00c853;
+	--webflow-warning: #ffab00;
+	--webflow-error: #ff5252;
+
+	/* Interactive states */
+	--webflow-hover: rgba(0, 0, 0, 0.05);
+	--webflow-active: rgba(0, 0, 0, 0.1);
+
+	/* Border radius */
+	--webflow-radius-sm: 6px;
+	--webflow-radius-md: 8px;
+	--webflow-radius-lg: 12px;
+	--webflow-radius-xl: 16px;
+	--webflow-radius-full: 9999px;
+
+	/* Typography scale */
+	--webflow-text-h1: 2.5rem;
+	--webflow-text-h2: 2rem;
+	--webflow-text-h3: 1.5rem;
+	--webflow-text-h4: 1.25rem;
+	--webflow-text-paragraph: 1rem;
+	--webflow-text-small: 0.875rem;
+	--webflow-text-eyebrow: 0.75rem;
+
+	/* Shadows */
+	--webflow-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+	--webflow-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+	--webflow-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme */
+.dark, [data-theme="dark"] {
+	--webflow-bg-primary: #1a1a1a;
+	--webflow-bg-secondary: #252525;
+	--webflow-bg-tertiary: #303030;
+	--webflow-text-primary: #ffffff;
+	--webflow-text-secondary: rgba(255, 255, 255, 0.8);
+	--webflow-text-muted: rgba(255, 255, 255, 0.6);
+	--webflow-border: rgba(255, 255, 255, 0.1);
+	--webflow-border-emphasis: rgba(255, 255, 255, 0.2);
+	--webflow-hover: rgba(255, 255, 255, 0.05);
+	--webflow-active: rgba(255, 255, 255, 0.1);
+}
+
+/* Base styles */
+html {
+	background-color: var(--webflow-bg-primary);
+	color: var(--webflow-text-primary);
+}
+
+body {
+	font-family: 'WF Visual Sans', system-ui, -apple-system, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring */
+*:focus-visible {
+	outline: 2px solid var(--webflow-blue);
+	outline-offset: 2px;
+}
+
+/* Scrollbar styling (dark theme) */
+.dark ::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+	background: var(--webflow-bg-secondary);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+	background: var(--webflow-border-emphasis);
+	border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.3);
+}
+
+/* Dark mode transition */
+.theme-transition * {
+	transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
