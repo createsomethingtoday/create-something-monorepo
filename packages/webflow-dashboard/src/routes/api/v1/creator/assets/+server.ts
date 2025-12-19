@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ request, url, platform }) => {
 		throw error(500, 'Server configuration error');
 	}
 
-	// Parse optional limit
+	// Parse optional limit for response filtering
 	const limitParam = url.searchParams.get('limit');
 	let limit = 50;
 	if (limitParam) {
@@ -23,7 +23,9 @@ export const GET: RequestHandler = async ({ request, url, platform }) => {
 
 	try {
 		const airtable = getAirtableClient(platform.env);
-		const assets = await airtable.getAssetsByEmail(auth.email, { limit });
+		// getAssetsByEmail returns all assets for the email, we limit in response
+		const allAssets = await airtable.getAssetsByEmail(auth.email);
+		const assets = allAssets.slice(0, limit);
 
 		// Return public-safe asset data
 		return json({
