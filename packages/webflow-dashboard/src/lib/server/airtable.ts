@@ -188,35 +188,58 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Get all assets for a user by email
 		 * Uses same view and formula as original implementation
 		 */
-		async getAssetsByEmail(email: string, options?: { limit?: number }): Promise<Asset[]> {
-			const escapedEmail = escapeAirtableString(email);
+		async getAssetsByEmail(email: string): Promise<Asset[]> {
+			const escapedEmail = escapeAirtableString(email.toLowerCase());
 
-			// Match original: FIND email in creator emails field, filter to Templates only
-			const formula = `AND(FIND('${escapedEmail}', {📧Emails (from 🎨Creator)}), {🆎Type} = 'Template🏗️')`;
+			// Case-insensitive search: FIND on lowercased email in lowercased creator emails field
+			// Filter to Templates only (🆎Type = 'Template🏗️')
+			const formula = `AND(FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)})), {🆎Type} = 'Template🏗️')`;
+
+			console.log('[Airtable] getAssetsByEmail:', {
+				email,
+				escapedEmail,
+				formula,
+				table: TABLES.ASSETS,
+				view: 'viwETCKXDaVHbEnZQ'
+			});
 
 			const records = await base(TABLES.ASSETS)
 				.select({
 					view: 'viwETCKXDaVHbEnZQ', // Original view
-					filterByFormula: formula,
-					maxRecords: options?.limit || 100
+					filterByFormula: formula
 				})
 				.all();
 
-			return records.map(record => ({
-				id: record.id,
-				name: record.fields['Name'] as string || '',
-				description: record.fields['📝Description'] as string || '',
-				type: record.fields['🆎Type'] as Asset['type'] || 'Template',
-				status: record.fields['🚀Marketplace Status'] as Asset['status'] || 'Draft',
-				thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as unknown as { url: string }[] | undefined)?.[0]?.url,
-				websiteUrl: record.fields['🔗Website URL'] as string,
-				marketplaceUrl: record.fields['🔗Marketplace URL'] as string,
-				submittedDate: record.fields['📅Submitted Date'] as string,
-				publishedDate: record.fields['📅Published Date'] as string,
-				uniqueViewers: record.fields['📋 Unique Viewers'] as number,
-				cumulativePurchases: record.fields['📋 Cumulative Purchases'] as number,
-				cumulativeRevenue: record.fields['📋 Cumulative Revenue'] as number
-			}));
+			console.log('[Airtable] Query returned', records.length, 'records');
+
+			return records.map(record => {
+				// Clean status string (remove emoji prefixes like "2️⃣Published" → "Published")
+				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
+				const cleanedStatus = rawStatus
+					.replace(/^\d*️⃣/u, '')
+					.replace(/🆕/u, '')
+					.replace(/📅/u, '')
+					.replace(/🚀/u, '')
+					.replace(/☠️/u, '')
+					.replace(/❌/u, '')
+					.trim() as Asset['status'];
+
+				return {
+					id: record.id,
+					name: record.fields['Name'] as string || '',
+					description: record.fields['📝Description'] as string || '',
+					type: 'Template' as Asset['type'], // Already filtered to templates
+					status: cleanedStatus || 'Draft',
+					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as unknown as { url: string }[] | undefined)?.[0]?.url,
+					websiteUrl: record.fields['🔗Website URL'] as string,
+					marketplaceUrl: record.fields['🔗Marketplace URL'] as string,
+					submittedDate: record.fields['📅Submitted Date'] as string,
+					publishedDate: record.fields['📅Published Date'] as string,
+					uniqueViewers: record.fields['📋 Unique Viewers'] as number,
+					cumulativePurchases: record.fields['📋 Cumulative Purchases'] as number,
+					cumulativeRevenue: record.fields['📋 Cumulative Revenue'] as number
+				};
+			});
 		},
 
 		/**
