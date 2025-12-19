@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto, invalidate } from '$app/navigation';
-	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay } from '$lib/components';
+	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats } from '$lib/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -80,46 +80,44 @@
 				<h1 class="page-title">Welcome back</h1>
 				<p class="page-subtitle">Here's an overview of your Webflow templates and assets.</p>
 
-				<div class="stats-grid">
-					<Card>
-						<CardHeader>
-							<CardTitle>Total Templates</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div class="stat-value">{stats().totalTemplates}</div>
-							<p class="stat-label">Published templates</p>
-						</CardContent>
-					</Card>
+				<div class="dashboard-grid">
+					<!-- Quick Stats -->
+					<div class="quick-stats">
+						<Card>
+							<CardHeader>
+								<CardTitle>Total Templates</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<div class="stat-value">{stats().totalTemplates}</div>
+								<p class="stat-label">Published templates</p>
+							</CardContent>
+						</Card>
 
-					<Card>
-						<CardHeader>
-							<CardTitle>Pending Review</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div class="stat-value">{stats().pendingReview}</div>
-							<p class="stat-label">Awaiting approval</p>
-						</CardContent>
-					</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>Pending Review</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<div class="stat-value">{stats().pendingReview}</div>
+								<p class="stat-label">Awaiting approval</p>
+							</CardContent>
+						</Card>
 
-					<Card>
-						<CardHeader>
-							<CardTitle>This Month</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div class="stat-value">--/6</div>
-							<p class="stat-label">Submissions used</p>
-						</CardContent>
-					</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>This Month</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<div class="stat-value">--/6</div>
+								<p class="stat-label">Submissions used</p>
+							</CardContent>
+						</Card>
+					</div>
 
-					<Card>
-						<CardHeader>
-							<CardTitle>Total Revenue</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div class="stat-value">${stats().totalRevenue.toLocaleString()}</div>
-							<p class="stat-label">All time earnings</p>
-						</CardContent>
-					</Card>
+					<!-- Detailed Stats -->
+					<div class="detailed-stats">
+						<OverviewStats assets={data.assets || []} />
+					</div>
 				</div>
 			</section>
 
@@ -170,10 +168,27 @@
 		margin: 0 0 var(--space-lg);
 	}
 
-	.stats-grid {
+	.dashboard-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-lg);
+	}
+
+	.quick-stats {
+		display: flex;
+		flex-direction: column;
 		gap: var(--space-md);
+	}
+
+	.detailed-stats {
+		display: flex;
+		flex-direction: column;
+	}
+
+	@media (max-width: 1024px) {
+		.dashboard-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	.stat-value {

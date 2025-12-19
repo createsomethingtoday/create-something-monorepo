@@ -9,6 +9,7 @@ export { default as AssetTableRow } from './AssetTableRow.svelte';
 export { default as ActionsDropdown } from './ActionsDropdown.svelte';
 export { default as StatusBadge } from './StatusBadge.svelte';
 export { default as EditAssetModal } from './EditAssetModal.svelte';
+export { default as OverviewStats } from './OverviewStats.svelte';
 
 // Re-export UI components
 export * from './ui';
