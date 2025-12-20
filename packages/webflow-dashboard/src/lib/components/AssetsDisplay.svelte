@@ -332,8 +332,8 @@
 	}
 
 	.status-icon.status-upcoming {
-		background: rgba(192, 132, 252, 0.2);
-		color: rgb(192, 132, 252);
+		background: color-mix(in srgb, var(--color-data-3) 20%, transparent);
+		color: var(--color-data-3);
 	}
 
 	.status-icon.status-delisted {
