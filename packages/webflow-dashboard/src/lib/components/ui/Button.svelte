@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 
-	type Variant = 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' | 'webflow';
+	type Variant = 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link';
 	type Size = 'default' | 'sm' | 'lg' | 'icon';
 
 	interface Props extends HTMLButtonAttributes {
@@ -106,22 +106,13 @@
 
 	.btn-link {
 		background: transparent;
-		color: var(--webflow-blue);
+		color: var(--color-info);
 		text-decoration: underline;
 		text-underline-offset: 4px;
 	}
 
 	.btn-link:hover:not(:disabled) {
 		opacity: 0.8;
-	}
-
-	.btn-webflow {
-		background: var(--webflow-blue);
-		color: white;
-	}
-
-	.btn-webflow:hover:not(:disabled) {
-		background: var(--webflow-blue-hover);
 	}
 
 	/* Sizes */

@@ -108,7 +108,7 @@
 						</Button>
 					{/if}
 					{#if asset.marketplaceUrl}
-						<Button variant="webflow" size="sm" onclick={() => window.open(asset.marketplaceUrl, '_blank')}>
+						<Button variant="default" size="sm" onclick={() => window.open(asset.marketplaceUrl, '_blank')}>
 							View on Marketplace
 						</Button>
 					{/if}

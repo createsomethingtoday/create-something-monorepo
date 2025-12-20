@@ -143,7 +143,7 @@
 			</div>
 			<p class="header-description">Manage your API keys to access your templates programmatically</p>
 		</div>
-		<Button variant="webflow" onclick={() => (showGenerateForm = !showGenerateForm)}>
+		<Button variant="default" onclick={() => (showGenerateForm = !showGenerateForm)}>
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<path d="M12 5v14m-7-7h14" />
 			</svg>
@@ -241,7 +241,7 @@
 					</div>
 
 					<div class="form-actions">
-						<Button variant="webflow" onclick={handleGenerate} disabled={isGenerating}>
+						<Button variant="default" onclick={handleGenerate} disabled={isGenerating}>
 							{isGenerating ? 'Generating...' : 'Generate Key'}
 						</Button>
 						<Button
