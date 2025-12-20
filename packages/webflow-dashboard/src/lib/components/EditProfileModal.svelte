@@ -252,7 +252,7 @@
 		width: 2rem;
 		height: 2rem;
 		border: 3px solid var(--color-border-default);
-		border-top-color: var(--webflow-blue);
+		border-top-color: var(--color-info);
 		border-radius: 50%;
 		animation: spin 1s linear infinite;
 	}
