@@ -15,8 +15,8 @@
 	<div class="login-card">
 		<div class="logo">
 			<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<rect width="40" height="40" rx="8" fill="var(--webflow-blue)" />
-				<path d="M28 14L20 26L12 14H28Z" fill="white" />
+				<rect width="40" height="40" rx="8" fill="var(--color-fg-primary)" />
+				<path d="M28 14L20 26L12 14H28Z" fill="var(--color-bg-pure)" />
 			</svg>
 		</div>
 
@@ -152,7 +152,7 @@
 	}
 
 	input:focus {
-		border-color: var(--webflow-blue);
+		border-color: var(--color-border-emphasis);
 	}
 
 	input:disabled {
@@ -209,16 +209,16 @@
 		padding: 0.75rem 1rem;
 		font-size: var(--text-body);
 		font-weight: var(--font-medium);
-		color: white;
-		background: var(--webflow-blue);
+		color: var(--color-bg-pure);
+		background: var(--color-fg-primary);
 		border: none;
 		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-micro) var(--ease-standard);
 	}
 
 	.submit-button:hover:not(:disabled) {
-		background: var(--webflow-blue-hover);
+		opacity: 0.9;
 	}
 
 	.submit-button:disabled {
@@ -229,8 +229,8 @@
 	.spinner {
 		width: 16px;
 		height: 16px;
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-top-color: white;
+		border: 2px solid var(--color-border-strong);
+		border-top-color: var(--color-bg-pure);
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 	}
