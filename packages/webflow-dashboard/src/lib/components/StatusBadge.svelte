@@ -28,9 +28,9 @@
 			border: 'var(--color-success-border)'
 		},
 		Upcoming: {
-			bg: 'rgba(192, 132, 252, 0.2)',
-			text: 'rgb(192, 132, 252)',
-			border: 'rgba(192, 132, 252, 0.3)'
+			bg: 'var(--color-data-3-muted)',
+			text: 'var(--color-data-3)',
+			border: 'var(--color-data-3-border)'
 		},
 		Delisted: {
 			bg: 'var(--color-warning-muted)',

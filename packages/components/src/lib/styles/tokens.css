@@ -72,6 +72,8 @@
   --color-data-1: #60a5fa; /* Blue */
   --color-data-2: #22c55e; /* Green */
   --color-data-3: #c084fc; /* Purple */
+  --color-data-3-muted: rgba(192, 132, 252, 0.2);
+  --color-data-3-border: rgba(192, 132, 252, 0.3);
   --color-data-4: #fbbf24; /* Amber */
   --color-data-5: #f472b6; /* Pink */
   --color-data-6: #facc15; /* Yellow */
