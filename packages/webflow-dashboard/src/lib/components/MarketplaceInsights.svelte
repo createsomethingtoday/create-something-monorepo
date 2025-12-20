@@ -388,7 +388,7 @@
 	}
 
 	.section-title svg {
-		color: var(--webflow-blue);
+		color: var(--color-info);
 	}
 
 	/* Insights */
@@ -472,8 +472,8 @@
 	}
 
 	.leaderboard-card.user-template {
-		background: rgba(68, 111, 230, 0.1);
-		border-color: var(--webflow-blue);
+		background: var(--color-info-muted);
+		border-color: var(--color-info-border);
 	}
 
 	.leaderboard-header {
@@ -570,8 +570,8 @@
 	}
 
 	.toggle-btn.active {
-		background: var(--webflow-blue);
-		color: white;
+		background: var(--color-info);
+		color: var(--color-fg-primary);
 	}
 
 	.table-container {
@@ -621,7 +621,7 @@
 	}
 
 	.data-table tr.user-row {
-		background: rgba(68, 111, 230, 0.05);
+		background: var(--color-info-muted);
 	}
 
 	.data-table .center {
@@ -639,7 +639,7 @@
 	.user-indicator {
 		display: block;
 		font-size: var(--text-caption);
-		color: var(--webflow-blue);
+		color: var(--color-info);
 		margin-top: 2px;
 	}
 
@@ -716,8 +716,8 @@
 	}
 
 	.category-card.user-category {
-		background: rgba(68, 111, 230, 0.1);
-		border-color: var(--webflow-blue);
+		background: var(--color-info-muted);
+		border-color: var(--color-info-border);
 	}
 
 	.category-card-header {
