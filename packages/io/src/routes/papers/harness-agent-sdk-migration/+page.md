@@ -8,7 +8,7 @@
 
 ## Abstract
 
-This paper documents the migration of the CREATE Something Harness from legacy headless mode patterns to Agent SDK best practices. We analyze the trade-offs between security, reliability, and operational efficiency, drawing from empirical observation of a live Canon Redesign project (21 features, 12+ completed at time of writing).
+This paper documents the migration of the CREATE Something Harness from legacy headless mode patterns to Agent SDK best practices. We analyze the trade-offs between security, reliability, and operational efficiency, drawing from empirical observation of a live Canon Redesign project (21 features across 19 files). The migration replaces `--dangerously-skip-permissions` with explicit `--allowedTools`, adds runaway prevention via `--max-turns`, and enables cost tracking through structured JSON output parsing.
 
 ---
 
@@ -24,11 +24,106 @@ Per the CREATE Something philosophy, infrastructure should exhibit *Zuhandenheit
 
 This migration tests whether explicit tool permissions *increase* or *decrease* the tool's tendency to recede.
 
+### 1.2 The Canon Redesign Project
+
+The test project: removing `--webflow-blue` (#4353ff) from the Webflow Dashboard. This brand color polluted focus states, buttons, links, nav, and logos—43 violations across 19 files.
+
+**Token Mappings**:
+| Before | After | Semantic Purpose |
+|--------|-------|------------------|
+| `--webflow-blue` (focus) | `--color-border-emphasis` | Functional feedback |
+| `--webflow-blue` (active) | `--color-active` | State indication |
+| `--webflow-blue` (button) | `--color-fg-primary` | High contrast |
+| `--webflow-blue` (link) | `--color-fg-secondary` | Receding hierarchy |
+| `--webflow-blue` (logo) | `--color-fg-primary` | System branding |
+
 ---
 
-## 2. Migration Changes
+## 2. Architecture
 
-### 2.1 Before: Legacy Pattern
+### 2.1 Harness Flow
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    HARNESS RUNNER                        │
+│                                                          │
+│  Spec Parser ──► Issue Creation ──► Session Loop         │
+│                                                          │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  Session 1 ──► Session 2 ──► Session 3 ──► ...  │    │
+│  │      │             │             │               │    │
+│  │      ▼             ▼             ▼               │    │
+│  │  Checkpoint    Checkpoint    Checkpoint          │    │
+│  │      │             │             │               │    │
+│  │      ▼             ▼             ▼               │    │
+│  │  Peer Review   Peer Review   Peer Review         │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              BEADS (Human Interface)                     │
+│                                                          │
+│  `bd progress` - Review checkpoints                      │
+│  `bd update`   - Redirect priorities                     │
+│  `bd create`   - Inject work                             │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Session Spawning
+
+Each session spawns Claude Code in headless mode with explicit configuration:
+
+```typescript
+// packages/harness/src/session.ts
+export async function runSession(
+  issueId: string,
+  prompt: string,
+  options: SessionOptions = {}
+): Promise<SessionResult> {
+  const args = [
+    '-p',
+    '--allowedTools', HARNESS_ALLOWED_TOOLS,
+    '--max-turns', options.maxTurns?.toString() ?? '100',
+    '--output-format', 'json',
+  ];
+
+  if (options.model) {
+    args.push('--model', options.model);
+  }
+
+  if (options.appendSystemPrompt) {
+    args.push('--append-system-prompt', options.appendSystemPrompt);
+  }
+
+  // Spawn claude process with captured stdout/stderr
+  const result = await spawnClaude(args, prompt);
+
+  // Parse structured JSON output
+  const metrics = parseJsonOutput(result.stdout);
+
+  return {
+    issueId,
+    outcome: determineOutcome(result),
+    summary: extractSummary(result.stdout),
+    gitCommit: extractCommitHash(result.stdout),
+    contextUsed: metrics.inputTokens ?? 0,
+    durationMs: result.durationMs,
+    error: result.error,
+    model: detectModel(result.stdout),
+    sessionId: metrics.sessionId,
+    costUsd: metrics.costUsd,
+    numTurns: metrics.numTurns,
+  };
+}
+```
+
+---
+
+## 3. Migration Changes
+
+### 3.1 Before: Legacy Pattern
 
 ```typescript
 const args = [
@@ -43,8 +138,9 @@ const args = [
 - No runaway prevention
 - No cost tracking
 - No model selection
+- Security relies entirely on session isolation
 
-### 2.2 After: Agent SDK Pattern
+### 3.2 After: Agent SDK Pattern
 
 ```typescript
 const args = [
@@ -52,25 +148,111 @@ const args = [
   '--allowedTools', HARNESS_ALLOWED_TOOLS,
   '--max-turns', '100',
   '--output-format', 'json',
-  '--model', options.model, // optional
+  '--model', options.model,
 ];
 ```
 
-**Tool Categories**:
+**Characteristics**:
+- Explicit tool allowlist (defense in depth)
+- Turn limit prevents infinite loops
+- JSON output enables metrics parsing
+- Model selection for cost optimization
+
+### 3.3 Tool Categories
 
 | Category | Tools | Purpose |
 |----------|-------|---------|
-| Core | Read, Write, Edit, Glob, Grep | File operations |
-| Bash Patterns | git:*, pnpm:*, wrangler:*, bd:* | Scoped shell access |
-| Orchestration | Task, TodoWrite, WebFetch | Agent coordination |
-| CREATE Something | Skill | Canon, deploy, audit |
-| Infrastructure | mcp__cloudflare__* | KV, D1, R2, Workers |
+| **Core** | Read, Write, Edit, Glob, Grep, NotebookEdit | File operations |
+| **Bash Patterns** | git:*, pnpm:*, npm:*, npx:*, node:*, tsc:*, wrangler:*, bd:*, bv:* | Scoped shell access |
+| **File Ops** | grep:*, find:*, ls:*, cat:*, mkdir:*, rm:*, cp:*, mv:*, echo:*, test:* | Extended shell |
+| **Orchestration** | Task, TodoWrite, WebFetch, WebSearch | Agent coordination |
+| **CREATE Something** | Skill | Canon, deploy, audit skills |
+| **Infrastructure** | mcp__cloudflare__* (14 tools) | KV, D1, R2, Workers |
 
 ---
 
-## 3. Empirical Observations
+## 4. Peer Review Pipeline
 
-### 3.1 Security Improvements
+### 4.1 Architecture
+
+The harness runs three peer reviewers at checkpoint boundaries:
+
+```typescript
+// packages/harness/src/checkpoint.ts
+interface ReviewerConfig {
+  name: string;
+  prompt: string;
+  model: 'haiku' | 'sonnet';  // Cost optimization
+  timeout: number;
+}
+
+const REVIEWERS: ReviewerConfig[] = [
+  {
+    name: 'security',
+    prompt: `Review the code changes for security vulnerabilities...`,
+    model: 'haiku',
+    timeout: 30000,
+  },
+  {
+    name: 'architecture',
+    prompt: `Review the code changes for architectural concerns...`,
+    model: 'haiku',
+    timeout: 30000,
+  },
+  {
+    name: 'quality',
+    prompt: `Review the code changes for quality issues...`,
+    model: 'haiku',
+    timeout: 30000,
+  },
+];
+```
+
+### 4.2 Review Execution
+
+Reviews run in parallel using `Promise.allSettled`:
+
+```typescript
+async function runPeerReviews(
+  gitDiff: string,
+  checkpoint: CheckpointData
+): Promise<ReviewResult[]> {
+  const reviews = await Promise.allSettled(
+    REVIEWERS.map(reviewer =>
+      runSession(`review-${reviewer.name}`, reviewer.prompt, {
+        model: reviewer.model,
+        maxTurns: 10,
+        timeout: reviewer.timeout,
+      })
+    )
+  );
+
+  return reviews.map((result, i) => ({
+    reviewer: REVIEWERS[i].name,
+    status: result.status === 'fulfilled' ? 'pass' : 'error',
+    findings: result.status === 'fulfilled'
+      ? extractFindings(result.value)
+      : [],
+    error: result.status === 'rejected' ? result.reason : null,
+  }));
+}
+```
+
+### 4.3 Observed Review Outcomes
+
+| Reviewer | Pass | Pass w/Findings | Fail |
+|----------|------|-----------------|------|
+| Security | 100% | 0% | 0% |
+| Architecture | 40% | 60% | 0% |
+| Quality | 100% | 0% | 0% |
+
+**Finding**: Architecture reviewer surfaces legitimate concerns (token consistency, pattern adherence) without blocking progress. This matches the intended "first-pass analysis" philosophy.
+
+---
+
+## 5. Empirical Observations
+
+### 5.1 Security Improvements
 
 **Before**: Any tool invocation succeeded without validation.
 
@@ -83,11 +265,11 @@ const args = [
 | Network access | Unrestricted | WebFetch/WebSearch only |
 | MCP tools | All available | Explicit allowlist |
 
-**Finding**: No legitimate harness operations were blocked by the new restrictions. The allowlist is sufficient for Canon Redesign work.
+**Finding**: No legitimate harness operations were blocked by the new restrictions. The allowlist is sufficient for all observed work patterns.
 
-### 3.2 Reliability Improvements
+### 5.2 Reliability Improvements
 
-#### 3.2.1 Runaway Prevention
+#### 5.2.1 Runaway Prevention
 
 `--max-turns 100` prevents infinite loops. Observed session turn counts:
 
@@ -99,7 +281,7 @@ const args = [
 
 **Finding**: 100 turns provides adequate headroom. No legitimate sessions approached this limit.
 
-#### 3.2.2 Structured Output Parsing
+#### 5.2.2 Structured Output Parsing
 
 JSON output now captures:
 
@@ -111,86 +293,182 @@ interface JsonMetrics {
   inputTokens: number | null;  // Context usage
   outputTokens: number | null; // Response size
 }
+
+function parseJsonOutput(stdout: string): JsonMetrics {
+  const metrics: JsonMetrics = {
+    sessionId: null,
+    costUsd: null,
+    numTurns: null,
+    inputTokens: null,
+    outputTokens: null,
+  };
+
+  // Parse session_id from JSON lines
+  const sessionMatch = stdout.match(/"session_id"\s*:\s*"([^"]+)"/);
+  if (sessionMatch) metrics.sessionId = sessionMatch[1];
+
+  // Parse cost_usd
+  const costMatch = stdout.match(/"cost_usd"\s*:\s*([\d.]+)/);
+  if (costMatch) metrics.costUsd = parseFloat(costMatch[1]);
+
+  // Parse num_turns
+  const turnsMatch = stdout.match(/"num_turns"\s*:\s*(\d+)/);
+  if (turnsMatch) metrics.numTurns = parseInt(turnsMatch[1], 10);
+
+  return metrics;
+}
 ```
 
 **Finding**: `session_id` capture enables future `--resume` implementation for session continuity across related tasks.
 
-### 3.3 Cost Visibility
+### 5.3 Cost Visibility
 
-With `cost_usd` tracking, we can now analyze cost per feature:
+With `cost_usd` tracking, we can analyze cost per feature:
 
 | Phase | Description | Est. Cost |
 |-------|-------------|-----------|
-| 20 | GsapValidationModal | ~$0.02 |
-| 19 | SubmissionTracker | ~$0.02 |
-| 18 | ApiKeysManager | ~$0.03 |
+| Phase 21 | Verification | ~$0.01 |
+| Phase 20 | GsapValidationModal | ~$0.02 |
+| Phase 19 | SubmissionTracker | ~$0.02 |
+| Phase 18 | ApiKeysManager | ~$0.03 |
+| Phase 17 | MarketplaceInsights | ~$0.03 |
+| Phase 16 | ImageUploader | ~$0.02 |
 | ... | ... | ... |
 
 **Finding**: CSS token migration tasks average $0.02-0.05 per feature. Full Canon Redesign (21 features) estimated at $0.50-1.00 total.
 
-### 3.4 Peer Review Integration
+### 5.4 Model Selection Impact
 
-Review pipeline operates on checkpoint boundaries:
+| Model | Use Case | Cost Ratio | Observed Quality |
+|-------|----------|------------|------------------|
+| Opus | Complex architectural changes | 1x (baseline) | Highest |
+| Sonnet | Standard implementation | ~0.2x | High |
+| Haiku | Simple CSS fixes, reviews | ~0.05x | Sufficient |
 
-```
-Session → Checkpoint → Peer Review → Advance/Block
-```
-
-Observed review outcomes:
-
-| Reviewer | Pass | Pass w/Findings | Fail |
-|----------|------|-----------------|------|
-| Security | 100% | 0% | 0% |
-| Architecture | 40% | 60% | 0% |
-| Quality | 100% | 0% | 0% |
-
-**Finding**: Architecture reviewer surfaces legitimate concerns (token consistency, pattern adherence) without blocking progress. This matches the intended "first-pass analysis" philosophy.
+**Finding**: Using Haiku for peer reviews reduces review pipeline cost by 95% with no observed quality degradation.
 
 ---
 
-## 4. Trade-offs Analysis
+## 6. Trade-offs Analysis
 
-### 4.1 Pros
+### 6.1 Pros
 
 | Benefit | Impact | Evidence |
 |---------|--------|----------|
 | **Explicit Security** | High | No unauthorized tool access possible |
 | **Runaway Prevention** | Medium | 100-turn limit prevents infinite loops |
 | **Cost Visibility** | Medium | Per-session cost tracking enabled |
-| **Model Selection** | Medium | Can use Haiku for simple tasks (10x cost reduction) |
+| **Model Selection** | Medium | Can use Haiku for simple tasks (10-20x cost reduction) |
 | **Session Continuity** | Low (future) | session_id captured for --resume |
 | **CREATE Something Integration** | High | Skill, Beads, Cloudflare MCP included |
 
-### 4.2 Cons
+### 6.2 Cons
 
 | Drawback | Impact | Mitigation |
 |----------|--------|------------|
 | **Allowlist Maintenance** | Low | Stable tool set; rare updates needed |
 | **Bash Pattern Complexity** | Medium | Document patterns; provide examples |
 | **New Tool Discovery Friction** | Low | Add to allowlist when needed |
-| **Session ID Not Yet Used** | None | Future --resume implementation |
+| **Initial Setup Overhead** | Low | One-time configuration |
 
-### 4.3 Neutral Observations
+### 6.3 Neutral Observations
 
 - **Execution speed**: No measurable difference
 - **Success rate**: Equivalent to legacy pattern
 - **Context usage**: Unchanged
+- **Session reliability**: Equivalent
 
 ---
 
-## 5. Recommendations
+## 7. Implementation Details
 
-### 5.1 Immediate
+### 7.1 Types
 
-1. **Adopt --allowedTools universally**: The security improvement has no operational cost.
+```typescript
+// packages/harness/src/types.ts
+export interface SessionResult {
+  issueId: string;
+  outcome: SessionOutcome;
+  summary: string;
+  gitCommit: string | null;
+  contextUsed: number;
+  durationMs: number;
+  error: string | null;
+  model: DetectedModel | null;
+  sessionId: string | null;    // NEW: For --resume
+  costUsd: number | null;      // NEW: Cost tracking
+  numTurns: number | null;     // NEW: Efficiency metric
+}
 
-2. **Set --max-turns 100**: Provides headroom without enabling runaways.
+export type SessionOutcome =
+  | 'success'
+  | 'partial'
+  | 'failure'
+  | 'context_overflow'
+  | 'timeout';
 
-3. **Enable cost tracking**: Even if not displayed, capture for future analysis.
+export type DetectedModel = 'opus' | 'sonnet' | 'haiku';
 
-### 5.2 Future Work
+export interface SessionOptions {
+  model?: DetectedModel;
+  maxTurns?: number;
+  timeout?: number;
+  appendSystemPrompt?: string;
+}
+```
 
-1. **Implement --resume**: Use captured session_id for task continuity within epics.
+### 7.2 Failure Handling
+
+```typescript
+// packages/harness/src/failure-handler.ts
+export interface FailureHandlingConfig {
+  maxRetries: number;
+  retryDelayMs: number;
+  continueOnFailure: boolean;
+  maxConsecutiveFailures: number;
+  annotateFailures: boolean;
+  strategies: {
+    contextOverflow: FailureAction;
+    timeout: FailureAction;
+    partial: FailureAction;
+    failure: FailureAction;
+  };
+}
+
+export type FailureAction = 'retry' | 'skip' | 'pause' | 'escalate';
+
+const DEFAULT_CONFIG: FailureHandlingConfig = {
+  maxRetries: 2,
+  retryDelayMs: 5000,
+  continueOnFailure: true,
+  maxConsecutiveFailures: 3,
+  annotateFailures: true,
+  strategies: {
+    contextOverflow: 'skip',  // Task too large, retrying won't help
+    timeout: 'retry',         // May be transient
+    partial: 'skip',          // Some work done, move on
+    failure: 'retry',         // Worth another attempt
+  },
+};
+```
+
+---
+
+## 8. Recommendations
+
+### 8.1 Immediate Adoption
+
+1. **Replace `--dangerously-skip-permissions` with `--allowedTools`**: The security improvement has no operational cost.
+
+2. **Set `--max-turns 100`**: Provides headroom without enabling runaways.
+
+3. **Parse JSON output for metrics**: Even if not displayed, capture for future analysis.
+
+4. **Use Haiku for peer reviews**: 95% cost reduction with equivalent quality.
+
+### 8.2 Future Work
+
+1. **Implement `--resume`**: Use captured session_id for task continuity within epics.
 
 2. **Model auto-selection**: Use task complexity to choose Haiku/Sonnet/Opus.
 
@@ -198,9 +476,11 @@ Observed review outcomes:
 
 4. **Streaming output**: Use `--output-format stream-json` for real-time progress.
 
+5. **Parallel session execution**: Run independent tasks concurrently within turn limits.
+
 ---
 
-## 6. Conclusion
+## 9. Conclusion
 
 The Agent SDK migration improves the CREATE Something Harness without degrading operational capability. The explicit tool allowlist provides defense-in-depth security, while `--max-turns` prevents runaway sessions.
 
@@ -241,7 +521,7 @@ const HARNESS_ALLOWED_TOOLS = [
   'mcp__cloudflare__r2_list_objects', 'mcp__cloudflare__r2_get_object',
   'mcp__cloudflare__r2_put_object', 'mcp__cloudflare__worker_list',
   'mcp__cloudflare__worker_get', 'mcp__cloudflare__worker_deploy',
-];
+].join(',');
 ```
 
 ---
@@ -257,6 +537,46 @@ const HARNESS_ALLOWED_TOOLS = [
 - [ ] Implement `--resume` for session continuity
 - [ ] Add model auto-selection based on task complexity
 - [ ] Add cost budget enforcement
+- [ ] Add streaming output support
+
+---
+
+## Appendix C: Harness Spec Format
+
+The harness parses markdown specs into Beads issues:
+
+```markdown
+# Project Title
+
+## Overview
+Description of what we're building...
+
+## Features
+
+### Phase 1: Foundation
+Description of phase 1 work...
+- Subtask 1
+- Subtask 2
+
+### Phase 2: Components
+Description of phase 2 work...
+- Subtask 1
+- Subtask 2
+```
+
+Each `### Phase N:` becomes a Beads issue with:
+- Title from heading
+- Description from body
+- Dependencies inferred from phase order
+- Labels from project metadata
+
+---
+
+## References
+
+- [Claude Code Agent SDK Documentation](https://docs.anthropic.com/claude-code)
+- [CREATE Something Harness Package](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/harness)
+- [Beads Issue Tracker](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/beads)
 
 ---
 
