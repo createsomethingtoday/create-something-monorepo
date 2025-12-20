@@ -85,7 +85,7 @@
 	}
 
 	.search-input:focus {
-		border-color: var(--webflow-blue);
+		border-color: var(--color-border-emphasis);
 	}
 
 	.clear-btn {
