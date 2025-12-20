@@ -221,8 +221,8 @@ View with `bd progress` or `bd show <checkpoint-id>`.
 ## References
 
 - [Paper: Harness Agent SDK Migration](https://createsomething.io/papers/harness-agent-sdk-migration)
-- [Harness Patterns](.claude/rules/harness-patterns.md)
-- [Beads Issue Tracker](../beads/)
+- [Harness Patterns](../../.claude/rules/harness-patterns.md)
+- [Beads Patterns](../../.claude/rules/beads-patterns.md)
 
 ## License
 
