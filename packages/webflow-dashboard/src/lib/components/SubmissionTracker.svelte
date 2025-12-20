@@ -353,7 +353,7 @@
 	.submission-dot {
 		width: 0.375rem;
 		height: 0.375rem;
-		background: var(--webflow-blue);
+		background: var(--color-data-1);
 		border-radius: 50%;
 		flex-shrink: 0;
 	}
