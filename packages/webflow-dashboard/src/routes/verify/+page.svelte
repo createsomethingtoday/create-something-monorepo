@@ -50,8 +50,8 @@
 	<div class="verify-card">
 		<div class="logo">
 			<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<rect width="40" height="40" rx="8" fill="var(--webflow-blue)" />
-				<path d="M28 14L20 26L12 14H28Z" fill="white" />
+				<rect width="40" height="40" rx="8" fill="var(--color-fg-primary)" />
+				<path d="M28 14L20 26L12 14H28Z" fill="black" />
 			</svg>
 		</div>
 
@@ -146,7 +146,7 @@
 		width: 48px;
 		height: 48px;
 		border: 3px solid var(--color-border-default);
-		border-top-color: var(--webflow-blue);
+		border-top-color: var(--color-info);
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 		margin-bottom: var(--space-sm);
@@ -160,7 +160,7 @@
 
 	.retry-link {
 		margin-top: var(--space-md);
-		color: var(--webflow-blue);
+		color: var(--color-info);
 		text-decoration: none;
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
