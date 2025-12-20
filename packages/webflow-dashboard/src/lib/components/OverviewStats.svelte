@@ -63,7 +63,7 @@
 	const statusColors: Record<string, string> = {
 		Published: 'var(--color-success)',
 		Scheduled: 'var(--color-info)',
-		Upcoming: 'rgb(192, 132, 252)',
+		Upcoming: 'var(--color-data-3)',
 		Delisted: 'var(--color-warning)',
 		Rejected: 'var(--color-error)'
 	};
@@ -199,8 +199,8 @@
 	}
 
 	.performance-icon.revenue {
-		background: rgba(192, 132, 252, 0.2);
-		color: rgb(192, 132, 252);
+		background: var(--color-data-3-muted, rgba(192, 132, 252, 0.2));
+		color: var(--color-data-3);
 	}
 
 	.performance-content {
