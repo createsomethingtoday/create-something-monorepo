@@ -645,7 +645,7 @@ export async function runSession(
 			<ul class="list-disc list-inside space-y-2 body-text">
 				<li><a href="https://docs.anthropic.com/claude-code" class="text-link">Claude Code Agent SDK Documentation</a></li>
 				<li><a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/harness" class="text-link">CREATE Something Harness Package</a></li>
-				<li><a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/beads" class="text-link">Beads Issue Tracker</a></li>
+				<li><a href="https://github.com/createsomethingtoday/create-something-monorepo/blob/main/.claude/rules/beads-patterns.md" class="text-link">Beads Patterns Documentation</a></li>
 			</ul>
 		</section>
 
