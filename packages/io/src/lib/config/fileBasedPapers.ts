@@ -497,6 +497,65 @@ export const fileBasedPapers: FileBasedPaper[] = [
     ║                              — Heidegger                      ║
     ╚═══════════════════════════════════════════════════════════════╝
 `
+	},
+	{
+		id: 'paper-harness-agent-sdk-migration',
+		slug: 'harness-agent-sdk-migration',
+		title: 'Harness Agent SDK Migration: Empirical Analysis',
+		subtitle: 'Security, Reliability, and Cost Improvements Through Explicit Tool Permissions',
+		authors: ['CREATE SOMETHING Research'],
+		abstract: `This paper documents the migration of the CREATE Something Harness from legacy headless mode patterns to Agent SDK best practices. We analyze the trade-offs between security, reliability, and operational efficiency, drawing from empirical observation of a live Canon Redesign project (21 features). The migration replaces --dangerously-skip-permissions with explicit --allowedTools, adds runaway prevention via --max-turns, and enables cost tracking through structured JSON output parsing.`,
+		keywords: [
+			'Agent SDK',
+			'Claude Code',
+			'Harness',
+			'Autonomous Orchestration',
+			'Tool Permissions',
+			'Security',
+			'Cost Optimization',
+			'Peer Review',
+			'Zuhandenheit'
+		],
+		description:
+			'Empirical analysis of migrating from --dangerously-skip-permissions to --allowedTools in autonomous Claude Code orchestration.',
+		excerpt_short: 'Agent SDK migration: explicit permissions, better security',
+		excerpt_long:
+			'This paper documents the migration of the CREATE Something Harness to Agent SDK best practices, replacing blanket permission skip with explicit tool allowlists. Empirical observation from a 21-feature Canon Redesign shows improved security with no operational cost.',
+		category: 'case-study',
+		created_at: '2025-12-19T00:00:00Z',
+		updated_at: '2025-12-19T00:00:00Z',
+		reading_time_minutes: 12,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Infrastructure recedes into transparent use
+			'rams-principle-10', // As little as possible - minimal tool surface
+			'subtractive-triad' // DRY allowlist, Rams minimal tools, Heidegger serves the whole
+		],
+		source_path: 'papers/harness-agent-sdk-migration',
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║   AGENT SDK MIGRATION                                         ║
+    ║                                                               ║
+    ║   Before:                     After:                          ║
+    ║   ────────                    ──────                          ║
+    ║   --dangerously-skip          --allowedTools [explicit]       ║
+    ║   --permissions               --max-turns 100                 ║
+    ║                               --model [opus|sonnet|haiku]     ║
+    ║                                                               ║
+    ║   All tools     →            Whitelisted tools                ║
+    ║   No limits     →            Turn limits                      ║
+    ║   No tracking   →            Cost + metrics                   ║
+    ║                                                               ║
+    ║   ┌────────────────────────────────────────────┐              ║
+    ║   │  Security: Explicit > Implicit             │              ║
+    ║   │  Reliability: Bounded > Unbounded          │              ║
+    ║   │  Visibility: Tracked > Opaque              │              ║
+    ║   └────────────────────────────────────────────┘              ║
+    ║                                                               ║
+    ║   "The harness recedes; the work remains"                     ║
+    ╚═══════════════════════════════════════════════════════════════╝
+`
 	}
 ];
 
