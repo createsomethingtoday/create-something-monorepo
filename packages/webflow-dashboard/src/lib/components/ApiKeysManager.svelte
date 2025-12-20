@@ -523,7 +523,7 @@
 	.scope-item input {
 		width: 1rem;
 		height: 1rem;
-		accent-color: var(--webflow-blue);
+		accent-color: var(--color-info);
 	}
 
 	.form-actions {
@@ -554,7 +554,7 @@
 		width: 2rem;
 		height: 2rem;
 		border: 3px solid var(--color-border-default);
-		border-top-color: var(--webflow-blue);
+		border-top-color: var(--color-info);
 		border-radius: 50%;
 		animation: spin 1s linear infinite;
 	}
@@ -679,7 +679,7 @@
 	}
 
 	.docs-card {
-		background: linear-gradient(135deg, var(--color-info-muted), rgba(192, 132, 252, 0.1));
+		background: var(--color-info-muted);
 		border-color: var(--color-info-border);
 	}
 
