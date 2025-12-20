@@ -246,8 +246,8 @@
 	}
 
 	.dropzone.drag-over {
-		border-color: var(--webflow-blue);
-		background: rgba(68, 111, 230, 0.1);
+		border-color: var(--color-border-strong);
+		background: var(--color-active);
 	}
 
 	.dropzone.disabled {
