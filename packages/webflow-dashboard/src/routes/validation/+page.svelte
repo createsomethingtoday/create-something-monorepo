@@ -177,7 +177,12 @@
 		align-items: center;
 		gap: var(--space-xs);
 		margin-bottom: var(--space-md);
-		color: var(--webflow-blue);
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	:global(.back-link:hover) {
+		color: var(--color-fg-primary);
 	}
 
 	.page-header {
