@@ -1,12 +1,6 @@
 /* Canon Design Tokens */
 @import '@create-something/components/styles/tokens.css';
 
-/* Webflow brand color */
-:root {
-	--webflow-blue: #4353ff;
-	--webflow-blue-hover: #3040e0;
-}
-
 /* Base styles */
 *,
 *::before,
