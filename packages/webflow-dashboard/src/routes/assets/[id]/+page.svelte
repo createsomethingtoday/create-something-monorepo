@@ -537,8 +537,8 @@
 	}
 
 	.tab-trigger.active {
-		color: var(--webflow-blue);
-		border-bottom-color: var(--webflow-blue);
+		color: var(--color-fg-primary);
+		border-bottom-color: var(--color-fg-primary);
 	}
 
 	.tab-content {
@@ -614,7 +614,7 @@
 	}
 
 	.description-long :global(a) {
-		color: var(--webflow-blue);
+		color: var(--color-info);
 	}
 
 	.rejection-card {
@@ -706,7 +706,7 @@
 	}
 
 	.link {
-		color: var(--webflow-blue);
+		color: var(--color-info);
 		text-decoration: none;
 	}
 
