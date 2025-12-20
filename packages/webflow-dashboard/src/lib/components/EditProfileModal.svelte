@@ -193,7 +193,7 @@
 								<div class="form-actions">
 									<Button variant="secondary" onclick={onClose}>Cancel</Button>
 									<Button
-										variant="webflow"
+										variant="default"
 										onclick={handleSave}
 										disabled={isSaving}
 									>

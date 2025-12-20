@@ -170,7 +170,7 @@
 						Cancel
 					</Button>
 					<Button
-						variant="webflow"
+						variant="default"
 						onclick={handleSubmit}
 						disabled={isLoading}
 					>
