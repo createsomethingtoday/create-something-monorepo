@@ -208,17 +208,34 @@ export function generatePrimingPrompt(context: PrimingContext): string {
 }
 
 /**
+ * Session options with Agent SDK optimizations.
+ */
+export interface SessionOptions {
+  cwd: string;
+  maxTokens?: number;
+  timeout?: number; // ms
+  dryRun?: boolean;
+  /** Maximum turns before session terminates (default: 100) */
+  maxTurns?: number;
+  /** Model to use: 'opus', 'sonnet', 'haiku' (default: auto) */
+  model?: 'opus' | 'sonnet' | 'haiku';
+  /** Session ID to resume (for continuation) */
+  resumeSessionId?: string;
+}
+
+/**
  * Run a Claude Code session.
+ *
+ * Agent SDK optimizations:
+ * - Uses --allowedTools for explicit security
+ * - Uses --max-turns to prevent runaway sessions
+ * - Supports --model for cost optimization
+ * - Captures session_id for future --resume support
  */
 export async function runSession(
   issue: BeadsIssue,
   context: PrimingContext,
-  options: {
-    cwd: string;
-    maxTokens?: number;
-    timeout?: number; // ms
-    dryRun?: boolean;
-  }
+  options: SessionOptions
 ): Promise<SessionResult> {
   const startTime = Date.now();
 
@@ -238,6 +255,9 @@ export async function runSession(
       durationMs: Date.now() - startTime,
       error: null,
       model: null,
+      sessionId: null,
+      costUsd: null,
+      numTurns: null,
     };
   }
 
@@ -249,17 +269,25 @@ export async function runSession(
     const result = await executeClaudeCode(promptFile, {
       cwd: options.cwd,
       timeout: options.timeout || 30 * 60 * 1000, // 30 min default
+      maxTurns: options.maxTurns || 100,
+      model: options.model,
     });
+
+    // Parse structured metrics from JSON output
+    const metrics = parseJsonMetrics(result.output);
 
     return {
       issueId: issue.id,
       outcome: determineOutcome(result),
       summary: extractSummary(result.output),
       gitCommit: extractGitCommit(result.output),
-      contextUsed: result.tokensUsed || 0,
+      contextUsed: metrics.inputTokens || result.tokensUsed || 0,
       durationMs: Date.now() - startTime,
       error: result.error || null,
       model: result.model,
+      sessionId: metrics.sessionId,
+      costUsd: metrics.costUsd,
+      numTurns: metrics.numTurns,
     };
   } finally {
     // Clean up temp file
@@ -268,6 +296,48 @@ export async function runSession(
     } catch {
       // Ignore cleanup errors
     }
+  }
+}
+
+/**
+ * Parsed metrics from JSON output.
+ */
+interface JsonMetrics {
+  sessionId: string | null;
+  costUsd: number | null;
+  numTurns: number | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+}
+
+/**
+ * Parse structured metrics from Claude Code JSON output.
+ */
+function parseJsonMetrics(output: string): JsonMetrics {
+  const defaults: JsonMetrics = {
+    sessionId: null,
+    costUsd: null,
+    numTurns: null,
+    inputTokens: null,
+    outputTokens: null,
+  };
+
+  try {
+    // Find JSON object in output (may have other text around it)
+    const jsonMatch = output.match(/\{[\s\S]*"session_id"[\s\S]*\}/);
+    if (!jsonMatch) return defaults;
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    return {
+      sessionId: parsed.session_id || null,
+      costUsd: parsed.cost_usd || null,
+      numTurns: parsed.num_turns || null,
+      inputTokens: parsed.input_tokens || null,
+      outputTokens: parsed.output_tokens || null,
+    };
+  } catch {
+    return defaults;
   }
 }
 
@@ -280,23 +350,98 @@ interface ClaudeCodeResult {
 }
 
 /**
+ * Allowed tools for harness sessions.
+ * Explicit allowlist is safer than --dangerously-skip-permissions.
+ *
+ * Tool categories:
+ * - Core: Read, Write, Edit, Glob, Grep
+ * - Bash patterns: git, pnpm, npm, node, tsc, wrangler, bd (beads)
+ * - Orchestration: Task, TodoWrite
+ * - CREATE Something: Skill (for canon-maintenance, deploy, audit-canon)
+ * - MCP: Cloudflare tools for infrastructure
+ */
+const HARNESS_ALLOWED_TOOLS = [
+  // Core file operations
+  'Read',
+  'Write',
+  'Edit',
+  'Glob',
+  'Grep',
+  'NotebookEdit',
+
+  // Bash with granular patterns
+  'Bash(git:*)',
+  'Bash(pnpm:*)',
+  'Bash(npm:*)',
+  'Bash(npx:*)',
+  'Bash(node:*)',
+  'Bash(tsc:*)',
+  'Bash(wrangler:*)',  // Cloudflare deployments
+  'Bash(bd:*)',        // Beads CLI
+  'Bash(bv:*)',        // Beads viewer
+  'Bash(grep:*)',
+  'Bash(find:*)',
+  'Bash(ls:*)',
+  'Bash(cat:*)',
+  'Bash(mkdir:*)',
+  'Bash(rm:*)',
+  'Bash(cp:*)',
+  'Bash(mv:*)',
+  'Bash(echo:*)',
+  'Bash(test:*)',
+
+  // Orchestration
+  'Task',
+  'TodoWrite',
+  'WebFetch',
+  'WebSearch',
+
+  // CREATE Something skills
+  'Skill',             // Invokes canon-maintenance, deploy, audit-canon, etc.
+
+  // MCP Cloudflare tools (infrastructure)
+  'mcp__cloudflare__kv_get',
+  'mcp__cloudflare__kv_put',
+  'mcp__cloudflare__kv_list',
+  'mcp__cloudflare__d1_query',
+  'mcp__cloudflare__d1_list_databases',
+  'mcp__cloudflare__r2_list_objects',
+  'mcp__cloudflare__r2_get_object',
+  'mcp__cloudflare__r2_put_object',
+  'mcp__cloudflare__worker_list',
+  'mcp__cloudflare__worker_get',
+  'mcp__cloudflare__worker_deploy',
+].join(',');
+
+/**
  * Execute Claude Code CLI with the given prompt.
+ *
+ * Optimizations applied:
+ * 1. --allowedTools instead of --dangerously-skip-permissions (safer)
+ * 2. --max-turns 100 to prevent runaway sessions
+ * 3. JSON output for structured result parsing
  */
 async function executeClaudeCode(
   promptFile: string,
-  options: { cwd: string; timeout: number }
+  options: { cwd: string; timeout: number; maxTurns?: number; model?: string }
 ): Promise<ClaudeCodeResult> {
   return new Promise(async (resolve) => {
     // Read prompt content
     const { readFile } = await import('node:fs/promises');
     const promptContent = await readFile(promptFile, 'utf-8');
 
-    // Pipe prompt via stdin: echo "prompt" | claude -p
+    // Build args with optimized flags
     const args = [
       '-p',
-      '--dangerously-skip-permissions',
+      '--allowedTools', HARNESS_ALLOWED_TOOLS,
+      '--max-turns', String(options.maxTurns || 100),
       '--output-format', 'json',
     ];
+
+    // Add model selection if specified (cost optimization)
+    if (options.model) {
+      args.push('--model', options.model);
+    }
 
     let output = '';
     let errorOutput = '';

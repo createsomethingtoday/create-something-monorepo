@@ -135,6 +135,12 @@ export interface SessionResult {
   error: string | null;
   /** Detected model information */
   model: DetectedModel | null;
+  /** Session ID for --resume support */
+  sessionId: string | null;
+  /** Cost in USD for this session */
+  costUsd: number | null;
+  /** Number of turns in this session */
+  numTurns: number | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

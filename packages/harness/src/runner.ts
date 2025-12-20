@@ -787,6 +787,9 @@ export async function runParallelSessions(
         durationMs: 0,
         error: errorMsg,
         model: null,
+        sessionId: null,
+        costUsd: null,
+        numTurns: null,
       };
       updateSwarmAgentStatus(checkpointTracker, agentId, errorResult);
       console.log(`  [${agentId}] ❌ Error: ${issue.id} - ${errorMsg.slice(0, 50)}`);
