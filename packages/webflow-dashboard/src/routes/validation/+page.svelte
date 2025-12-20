@@ -64,34 +64,39 @@
 							<h3 class="tool-title">GSAP Validator</h3>
 						</div>
 						<p class="tool-description">
-							Test your templates for GSAP compliance before submission. Ensures all GSAP usage follows marketplace guidelines.
+							Test your templates for GSAP compliance before submission. Crawls up to 50 pages and checks for custom code patterns.
 						</p>
 						<ul class="tool-features">
 							<li>
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M5 13l4 4L19 7" />
 								</svg>
-								Scans all pages automatically
+								Crawls up to 50 pages automatically
 							</li>
 							<li>
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M5 13l4 4L19 7" />
 								</svg>
-								Identifies flagged code patterns
+								Detects flagged code and security risks
 							</li>
 							<li>
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M5 13l4 4L19 7" />
 								</svg>
-								Provides detailed recommendations
+								Provides smart recommendations
 							</li>
 						</ul>
-						<Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-							</svg>
-							Run Validator
-						</Button>
+						<div class="tool-actions">
+							<Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+								</svg>
+								Quick Validate
+							</Button>
+							<a href="/validation/playground" class="playground-link">
+								Open Full Playground →
+							</a>
+						</div>
 					</Card>
 
 					<!-- Coming Soon Card -->
@@ -283,10 +288,30 @@
 		flex-shrink: 0;
 	}
 
-	:global(.tool-button) {
+	.tool-actions {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
 		margin-top: auto;
+	}
+
+	:global(.tool-button) {
 		justify-content: center;
 		gap: var(--space-xs);
+	}
+
+	.playground-link {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		text-decoration: none;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.playground-link:hover {
+		color: var(--color-fg-primary);
 	}
 
 	.coming-soon-badge {

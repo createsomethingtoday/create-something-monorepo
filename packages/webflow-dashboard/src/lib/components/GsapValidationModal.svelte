@@ -1,29 +1,11 @@
 <script lang="ts">
 	import { Button, Dialog, Input, Label } from './ui';
+	import type { ValidationResult } from '$lib/types/validation';
 
 	interface Props {
 		isOpen: boolean;
 		onClose: () => void;
 		userEmail?: string;
-	}
-
-	interface ValidationResult {
-		url: string;
-		status: 'pass' | 'warning' | 'fail';
-		summary: {
-			totalPages: number;
-			pagesWithGsap: number;
-			hasGsapClub: boolean;
-			hasCustomCode: boolean;
-		};
-		findings: Array<{
-			type: 'gsap' | 'custom_code' | 'warning';
-			severity: 'info' | 'warning' | 'error';
-			message: string;
-			page?: string;
-			details?: string;
-		}>;
-		recommendations: string[];
 	}
 
 	let { isOpen, onClose, userEmail }: Props = $props();
@@ -71,26 +53,9 @@
 		onClose();
 	}
 
-	function getStatusColor(status: 'pass' | 'warning' | 'fail'): string {
-		switch (status) {
-			case 'pass':
-				return 'var(--color-success)';
-			case 'warning':
-				return 'var(--color-warning)';
-			case 'fail':
-				return 'var(--color-error)';
-		}
-	}
-
-	function getSeverityClass(severity: 'info' | 'warning' | 'error'): string {
-		switch (severity) {
-			case 'info':
-				return 'finding-info';
-			case 'warning':
-				return 'finding-warning';
-			case 'error':
-				return 'finding-error';
-		}
+	function handleViewDetails() {
+		// Navigate to playground with results
+		window.location.href = '/validation/playground';
 	}
 </script>
 
@@ -172,56 +137,67 @@
 		{#if validationResults}
 			<div class="results">
 				<!-- Overall Status Header -->
-				<div class="results-header">
+				<div class="results-header" class:passed={validationResults.passed} class:failed={!validationResults.passed}>
 					<div class="results-title">
-						<h3>Validation Results</h3>
+						<h3>Validation {validationResults.passed ? 'Passed' : 'Failed'}</h3>
 						<p class="results-url">{validationResults.url}</p>
 					</div>
-					<div
-						class="status-badge"
-						style="--status-color: {getStatusColor(validationResults.status)}"
-					>
-						{validationResults.status.toUpperCase()}
+					<div class="status-badge" class:passed={validationResults.passed}>
+						{validationResults.passed ? 'PASSED' : 'FAILED'}
 					</div>
 				</div>
 
 				<!-- Stats Grid -->
 				<div class="stats-grid">
 					<div class="stat">
+						<div class="stat-value">{validationResults.summary.passRate}%</div>
+						<div class="stat-label">Pass Rate</div>
+					</div>
+					<div class="stat">
 						<div class="stat-value">{validationResults.summary.totalPages}</div>
-						<div class="stat-label">Pages Scanned</div>
+						<div class="stat-label">Pages</div>
 					</div>
-					<div class="stat">
-						<div class="stat-value">{validationResults.summary.pagesWithGsap}</div>
-						<div class="stat-label">Pages with GSAP</div>
+					<div class="stat passed">
+						<div class="stat-value">{validationResults.summary.passedPages}</div>
+						<div class="stat-label">Passed</div>
 					</div>
-					<div class="stat">
-						<div class="stat-value">{validationResults.summary.hasGsapClub ? 'Yes' : 'No'}</div>
-						<div class="stat-label">GSAP Club</div>
-					</div>
-					<div class="stat">
-						<div class="stat-value">{validationResults.summary.hasCustomCode ? 'Yes' : 'No'}</div>
-						<div class="stat-label">Custom Code</div>
+					<div class="stat failed">
+						<div class="stat-value">{validationResults.summary.failedPages}</div>
+						<div class="stat-label">Failed</div>
 					</div>
 				</div>
 
-				<!-- Findings -->
-				{#if validationResults.findings.length > 0}
-					<div class="findings-section">
-						<h4>Findings</h4>
-						<div class="findings-list">
-							{#each validationResults.findings as finding}
-								<div class="finding {getSeverityClass(finding.severity)}">
-									<div class="finding-header">
-										<span class="finding-type">{finding.type.replace('_', ' ')}</span>
-										<span class="finding-severity">{finding.severity}</span>
-									</div>
-									<p class="finding-message">{finding.message}</p>
-									{#if finding.details}
-										<p class="finding-details">{finding.details}</p>
-									{/if}
-									{#if finding.page}
-										<p class="finding-page">Page: {finding.page}</p>
+				<!-- Issue Summary -->
+				{#if validationResults.issues.totalFlaggedCode > 0 || validationResults.issues.totalSecurityRisks > 0}
+					<div class="issues-summary">
+						<h4>Issues Found</h4>
+						<div class="issues-grid">
+							<div class="issue-stat">
+								<span class="issue-value">{validationResults.issues.totalFlaggedCode}</span>
+								<span class="issue-label">Flagged Code</span>
+							</div>
+							<div class="issue-stat">
+								<span class="issue-value">{validationResults.issues.totalSecurityRisks}</span>
+								<span class="issue-label">Security Risks</span>
+							</div>
+							<div class="issue-stat success">
+								<span class="issue-value">{validationResults.issues.totalValidGsap}</span>
+								<span class="issue-label">Valid GSAP</span>
+							</div>
+						</div>
+					</div>
+				{/if}
+
+				<!-- Top Recommendations -->
+				{#if validationResults.recommendations.length > 0}
+					<div class="recommendations-section">
+						<h4>Top Recommendations</h4>
+						<div class="recommendations-list">
+							{#each validationResults.recommendations.slice(0, 3) as rec}
+								<div class="recommendation {rec.type}">
+									<span class="rec-title">{rec.title}</span>
+									{#if rec.required}
+										<span class="required-badge">Required</span>
 									{/if}
 								</div>
 							{/each}
@@ -229,17 +205,15 @@
 					</div>
 				{/if}
 
-				<!-- Recommendations -->
-				{#if validationResults.recommendations.length > 0}
-					<div class="recommendations-section">
-						<h4>Recommendations</h4>
-						<ul class="recommendations-list">
-							{#each validationResults.recommendations as recommendation}
-								<li>{recommendation}</li>
-							{/each}
-						</ul>
-					</div>
-				{/if}
+				<!-- View Details Link -->
+				<div class="results-footer">
+					<Button variant="secondary" size="sm" onclick={handleViewDetails}>
+						View Full Details
+					</Button>
+					<a href="/validation/playground" class="playground-link">
+						Open in Playground →
+					</a>
+				</div>
 			</div>
 		{/if}
 	</div>
@@ -343,9 +317,18 @@
 		justify-content: space-between;
 		align-items: flex-start;
 		padding: var(--space-md);
-		background: var(--color-bg-subtle);
 		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid;
+	}
+
+	.results-header.passed {
+		background: var(--color-success-muted);
+		border-color: var(--color-success-border);
+	}
+
+	.results-header.failed {
+		background: var(--color-error-muted);
+		border-color: var(--color-error-border);
 	}
 
 	.results-title h3 {
@@ -367,9 +350,12 @@
 		border-radius: var(--radius-md);
 		font-size: var(--text-caption);
 		font-weight: var(--font-semibold);
-		background: color-mix(in srgb, var(--status-color) 20%, transparent);
-		color: var(--status-color);
-		border: 1px solid color-mix(in srgb, var(--status-color) 40%, transparent);
+		background: var(--color-error);
+		color: var(--color-bg-pure);
+	}
+
+	.status-badge.passed {
+		background: var(--color-success);
 	}
 
 	.stats-grid {
@@ -386,6 +372,22 @@
 		border: 1px solid var(--color-border-default);
 	}
 
+	.stat.passed {
+		border-color: var(--color-success-border);
+	}
+
+	.stat.passed .stat-value {
+		color: var(--color-success);
+	}
+
+	.stat.failed {
+		border-color: var(--color-error-border);
+	}
+
+	.stat.failed .stat-value {
+		color: var(--color-error);
+	}
+
 	.stat-value {
 		font-size: var(--text-h3);
 		font-weight: var(--font-semibold);
@@ -397,7 +399,7 @@
 		color: var(--color-fg-muted);
 	}
 
-	.findings-section,
+	.issues-summary,
 	.recommendations-section {
 		padding: var(--space-md);
 		background: var(--color-bg-subtle);
@@ -405,7 +407,7 @@
 		border: 1px solid var(--color-border-default);
 	}
 
-	.findings-section h4,
+	.issues-summary h4,
 	.recommendations-section h4 {
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
@@ -413,83 +415,93 @@
 		margin: 0 0 var(--space-sm) 0;
 	}
 
-	.findings-list {
+	.issues-grid {
 		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-md);
 	}
 
-	.finding {
-		padding: var(--space-sm);
-		border-radius: var(--radius-md);
+	.issue-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.issue-value {
+		font-size: var(--text-h3);
+		font-weight: var(--font-bold);
+		color: var(--color-error);
+	}
+
+	.issue-stat.success .issue-value {
+		color: var(--color-success);
+	}
+
+	.issue-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.recommendations-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.recommendation {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-sm);
 		border-left: 3px solid;
 	}
 
-	.finding-info {
-		background: var(--color-info-muted);
-		border-color: var(--color-info);
-	}
-
-	.finding-warning {
-		background: var(--color-warning-muted);
-		border-color: var(--color-warning);
-	}
-
-	.finding-error {
+	.recommendation.critical {
 		background: var(--color-error-muted);
 		border-color: var(--color-error);
 	}
 
-	.finding-header {
-		display: flex;
-		justify-content: space-between;
-		margin-bottom: var(--space-xs);
+	.recommendation.warning {
+		background: var(--color-warning-muted);
+		border-color: var(--color-warning);
 	}
 
-	.finding-type {
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
-		text-transform: capitalize;
+	.recommendation.success {
+		background: var(--color-success-muted);
+		border-color: var(--color-success);
 	}
 
-	.finding-severity {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		text-transform: uppercase;
-	}
-
-	.finding-message {
+	.rec-title {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);
-		margin: 0;
 	}
 
-	.finding-details {
+	.required-badge {
+		padding: 0.125rem 0.375rem;
+		background: var(--color-error);
+		color: var(--color-bg-pure);
+		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+	}
+
+	.results-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.playground-link {
 		color: var(--color-fg-secondary);
-		margin: var(--space-xs) 0 0 0;
-	}
-
-	.finding-page {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin: var(--space-xs) 0 0 0;
-	}
-
-	.recommendations-list {
-		margin: 0;
-		padding-left: var(--space-md);
-	}
-
-	.recommendations-list li {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xs);
+		text-decoration: none;
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
-	.recommendations-list li:last-child {
-		margin-bottom: 0;
+	.playground-link:hover {
+		color: var(--color-fg-primary);
 	}
 
 	@media (max-width: 640px) {
