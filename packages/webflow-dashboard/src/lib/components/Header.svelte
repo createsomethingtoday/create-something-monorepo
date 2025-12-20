@@ -32,8 +32,8 @@
 		<div class="header-left">
 			<a href="/dashboard" class="logo">
 				<svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<rect width="40" height="40" rx="8" fill="var(--webflow-blue)" />
-					<path d="M28 14L20 26L12 14H28Z" fill="white" />
+					<rect width="40" height="40" rx="8" fill="var(--color-fg-primary)" />
+					<path d="M28 14L20 26L12 14H28Z" fill="var(--color-bg-pure)" />
 				</svg>
 				<span class="logo-text">Asset Dashboard</span>
 			</a>
@@ -70,7 +70,7 @@
 				</Button>
 			{/if}
 			{#if onLogout}
-				<Button variant="webflow" onclick={onLogout}>Logout</Button>
+				<Button variant="secondary" onclick={onLogout}>Logout</Button>
 			{/if}
 		</div>
 	</div>
@@ -145,8 +145,8 @@
 	}
 
 	.nav-link.active {
-		color: var(--webflow-blue);
-		background: color-mix(in srgb, var(--webflow-blue) 10%, transparent);
+		color: var(--color-fg-primary);
+		background: var(--color-active);
 	}
 
 	.search-desktop {
