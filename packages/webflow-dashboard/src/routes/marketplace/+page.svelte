@@ -151,7 +151,7 @@
 		align-items: center;
 		gap: var(--space-xs);
 		margin-bottom: var(--space-md);
-		color: var(--webflow-blue);
+		color: var(--color-info);
 	}
 
 	.page-header {
@@ -200,7 +200,7 @@
 	.dot {
 		width: 8px;
 		height: 8px;
-		background: var(--webflow-blue);
+		background: var(--color-info);
 		border-radius: 50%;
 		animation: pulse 1.5s ease-in-out infinite;
 	}
