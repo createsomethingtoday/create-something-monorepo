@@ -35,7 +35,9 @@
 		border-radius: var(--radius-md);
 		outline: none;
 		resize: vertical;
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		transition:
+			border-color var(--duration-micro) var(--ease-standard),
+			box-shadow var(--duration-micro) var(--ease-standard);
 	}
 
 	.textarea::placeholder {
@@ -43,7 +45,8 @@
 	}
 
 	.textarea:focus {
-		border-color: var(--webflow-blue);
+		border-color: var(--color-border-emphasis);
+		box-shadow: 0 0 0 1px var(--color-focus);
 	}
 
 	.textarea:disabled {
@@ -58,5 +61,6 @@
 
 	.textarea-error:focus {
 		border-color: var(--color-error);
+		box-shadow: 0 0 0 1px var(--color-error);
 	}
 </style>
