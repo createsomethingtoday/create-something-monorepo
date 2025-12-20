@@ -2,13 +2,14 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "webflow-dashboard",
 	"compatibility_date": "2024-12-01",
+	"compatibility_flags": ["nodejs_compat"],
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
 
 	// KV Namespaces
 	"kv_namespaces": [
 		{
 			"binding": "SESSIONS",
-			"id": "TBD_SESSIONS_KV_ID"
+			"id": "552d6f66fdf84e8aad55306e6971068e"
 		}
 	],
 
