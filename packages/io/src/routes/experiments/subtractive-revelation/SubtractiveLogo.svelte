@@ -8,6 +8,7 @@
 	 * User interaction removes the noise, revealing truth.
 	 */
 
+	import { untrack } from 'svelte';
 	import { isometricBoxPath } from '@create-something/components/visual';
 	import NoiseLayer from './NoiseLayer.svelte';
 	import type { InteractionMode, Particle } from './types';
@@ -65,7 +66,8 @@
 	// Notify parent of progress changes
 	$effect(() => {
 		const currentProgress = 100 - obscurationPercent;
-		if (currentProgress !== previousProgress) {
+		const prev = untrack(() => previousProgress);
+		if (currentProgress !== prev) {
 			previousProgress = currentProgress;
 			onProgressChange?.(currentProgress);
 		}
