@@ -54,14 +54,21 @@
 	let stillnessTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 
 	// Calculate obscuration percentage
-	const obscurationPercent = $derived(() => {
+	const obscurationPercent = $derived.by(() => {
 		const hidden = particles.filter((p) => !p.revealed).length;
 		return Math.round((hidden / particles.length) * 100);
 	});
 
+	// Track previous value to avoid unnecessary callbacks
+	let previousProgress = $state(-1);
+
 	// Notify parent of progress changes
 	$effect(() => {
-		onProgressChange?.(100 - obscurationPercent());
+		const currentProgress = 100 - obscurationPercent;
+		if (currentProgress !== previousProgress) {
+			previousProgress = currentProgress;
+			onProgressChange?.(currentProgress);
+		}
 	});
 
 	// Cube paths (always present beneath noise)
@@ -272,7 +279,7 @@
 	</svg>
 
 	<div class="progress-indicator">
-		<span class="progress-value">{100 - obscurationPercent()}%</span>
+		<span class="progress-value">{100 - obscurationPercent}%</span>
 		<span class="progress-label">revealed</span>
 	</div>
 </div>
