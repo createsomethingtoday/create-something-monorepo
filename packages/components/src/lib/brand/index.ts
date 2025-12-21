@@ -31,6 +31,5 @@ export * from './states/index.js';
 // - marks/CubeMark.svelte
 // - marks/Wordmark.svelte
 // - marks/PropertyMark.svelte
-// - states/CubeLoader.svelte
 // - utils/cube-geometry.ts
 // - utils/cube-animations.ts
