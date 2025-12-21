@@ -19,10 +19,11 @@
 // TYPES
 // =============================================================================
 
-/**
- * A CREATE SOMETHING property
- */
-export type Property = 'space' | 'io' | 'agency' | 'ltd' | 'lms';
+// Import Property from components (single source of truth)
+import type { Property } from '@create-something/components/analytics';
+
+// Re-export for consumers of this module
+export type { Property };
 
 /**
  * Category of user behavior signal

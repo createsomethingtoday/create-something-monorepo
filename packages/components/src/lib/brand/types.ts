@@ -1,10 +1,11 @@
 // Brand module types
 // Shared interfaces for CREATE SOMETHING brand components
 
-/**
- * CREATE SOMETHING property identifiers
- */
-export type Property = 'io' | 'ltd' | 'space' | 'agency';
+// Import Property from analytics (single source of truth)
+import type { Property } from '../analytics/types.js';
+
+// Re-export for consumers of this module
+export type { Property };
 
 /**
  * Standard size scale for brand components
