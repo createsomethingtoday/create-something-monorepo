@@ -52,6 +52,7 @@ export {
 
 // Engagement tracking
 export {
+	createSessionTracker,
 	createScrollTracker,
 	createTimeTracker,
 	createCopyTracker,

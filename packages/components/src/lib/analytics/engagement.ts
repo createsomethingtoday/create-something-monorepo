@@ -1,13 +1,122 @@
 /**
  * Content Engagement Tracking
  *
- * Tracks how users engage with content: scroll depth, time on page, copy events.
+ * Tracks how users engage with content: scroll depth, time on page, copy events, session lifecycle.
  * Philosophy: Understand what content resonates without being invasive.
  *
  * @packageDocumentation
  */
 
 import type { AnalyticsClient } from './client.js';
+
+// =============================================================================
+// SESSION LIFECYCLE TRACKING
+// =============================================================================
+
+interface SessionTrackerOptions {
+	/** Emit session_start event on initialization (default: true) */
+	emitSessionStart?: boolean;
+}
+
+interface SessionState {
+	/** Time when the session/visibility segment started */
+	segmentStartTime: number;
+	/** Cumulative active time in milliseconds */
+	totalActiveTime: number;
+	/** Whether the tab is currently visible/active */
+	isActive: boolean;
+	/** Session start timestamp for the session_start event */
+	sessionStartedAt: string;
+}
+
+/**
+ * Creates a session lifecycle tracker with accurate active time measurement.
+ *
+ * Tracks cumulative active time by pausing when the tab is hidden and resuming
+ * when visible. Reports session_end with activeTimeSeconds on page unload.
+ *
+ * Philosophy: Wall clock time doesn't reflect engagement. Active time does.
+ */
+export function createSessionTracker(
+	client: AnalyticsClient,
+	options: SessionTrackerOptions = {}
+): () => void {
+	if (typeof window === 'undefined') {
+		return () => {};
+	}
+
+	const emitSessionStart = options.emitSessionStart ?? true;
+	const sessionStartedAt = new Date().toISOString();
+
+	const state: SessionState = {
+		segmentStartTime: Date.now(),
+		totalActiveTime: 0,
+		isActive: document.visibilityState === 'visible',
+		sessionStartedAt,
+	};
+
+	// Emit session_start if enabled
+	if (emitSessionStart) {
+		client.track('navigation', 'session_start', {
+			metadata: { startedAt: sessionStartedAt },
+		});
+	}
+
+	/**
+	 * Get current active time in seconds
+	 */
+	function getActiveTimeSeconds(): number {
+		const currentSegmentTime = state.isActive ? Date.now() - state.segmentStartTime : 0;
+		return Math.floor((state.totalActiveTime + currentSegmentTime) / 1000);
+	}
+
+	/**
+	 * Handle visibility changes - pause/resume time tracking
+	 */
+	function onVisibilityChange(): void {
+		if (document.visibilityState === 'hidden') {
+			// Tab is now hidden - accumulate time and pause
+			if (state.isActive) {
+				state.totalActiveTime += Date.now() - state.segmentStartTime;
+				state.isActive = false;
+			}
+		} else {
+			// Tab is now visible - resume tracking
+			state.segmentStartTime = Date.now();
+			state.isActive = true;
+		}
+	}
+
+	/**
+	 * Handle page unload - emit session_end with active time
+	 */
+	function onUnload(): void {
+		const activeTimeSeconds = getActiveTimeSeconds();
+
+		// Only report if there was meaningful activity (at least 1 second)
+		if (activeTimeSeconds >= 1) {
+			client.track('navigation', 'session_end', {
+				value: activeTimeSeconds,
+				metadata: {
+					startedAt: state.sessionStartedAt,
+					activeTimeSeconds,
+				},
+			});
+		}
+	}
+
+	// Listen for visibility changes
+	document.addEventListener('visibilitychange', onVisibilityChange);
+
+	// Report session_end on page unload
+	window.addEventListener('pagehide', onUnload);
+
+	// Cleanup function
+	return () => {
+		document.removeEventListener('visibilitychange', onVisibilityChange);
+		window.removeEventListener('pagehide', onUnload);
+	};
+}
 
 // =============================================================================
 // SCROLL DEPTH TRACKING
