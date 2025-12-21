@@ -389,11 +389,14 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		line-height: 1.2;
 		color: var(--color-fg-muted);
 		overflow-x: auto;
-		margin: var(--space-xl) 0;
+		margin: var(--space-xl) auto;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
+		display: block;
+		width: fit-content;
+		max-width: 100%;
 	}
 
 	/* Demos Section */
