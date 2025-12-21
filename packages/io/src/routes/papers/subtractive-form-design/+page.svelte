@@ -125,7 +125,7 @@
 					<strong>Answer: No.</strong> The Install URL field for Designer Extensions created disconnection at every level:
 				</p>
 
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr>
@@ -288,7 +288,7 @@
 			<h2 class="section-heading">VI. Results</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr>

@@ -247,7 +247,7 @@
 					No new file formats, no separate databases. The tool recedes:
 				</p>
 
-				<div class="overflow-x-auto mt-4">
+				<div class="responsive-table-scroll mt-4">
 					<table class="w-full table-auto">
 						<thead>
 							<tr class="table-header">
@@ -359,7 +359,7 @@ Complete the dashboard layout. Commit if tests pass.`}</pre>
 
 				<h3 class="subsection-heading">Checkpoint Policy</h3>
 
-				<div class="overflow-x-auto mt-4">
+				<div class="responsive-table-scroll mt-4">
 					<table class="w-full table-auto">
 						<thead>
 							<tr class="table-header">
@@ -432,7 +432,7 @@ Git Commit: abc123def
 					or create urgent issues, the harness detects and responds:
 				</p>
 
-				<div class="overflow-x-auto mt-4">
+				<div class="responsive-table-scroll mt-4">
 					<table class="w-full table-auto">
 						<thead>
 							<tr class="table-header">
@@ -653,7 +653,7 @@ cs-003: Session management
 					project to ensure CSS design consistency across all CREATE SOMETHING properties.
 				</p>
 
-				<div class="overflow-x-auto mt-4">
+				<div class="responsive-table-scroll mt-4">
 					<table class="w-full table-auto">
 						<thead>
 							<tr class="table-header">

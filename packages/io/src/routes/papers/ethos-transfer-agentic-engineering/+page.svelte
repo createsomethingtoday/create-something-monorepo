@@ -237,7 +237,7 @@ learn_praxis        → Execute praxis exercises`}</pre>
 					The gap between learning about and dwelling within manifests in four dimensions:
 				</p>
 
-				<div class="overflow-x-auto mt-4">
+				<div class="responsive-table-scroll mt-4">
 					<table class="w-full table-auto">
 						<thead>
 							<tr class="table-header">
@@ -294,7 +294,7 @@ learn_praxis        → Execute praxis exercises`}</pre>
 					The terminal is where developers already dwell—where work happens. Not slides, not videos, not LMS dashboards.
 				</p>
 
-				<div class="overflow-x-auto mt-4">
+				<div class="responsive-table-scroll mt-4">
 					<table class="w-full table-auto">
 						<thead>
 							<tr class="table-header">

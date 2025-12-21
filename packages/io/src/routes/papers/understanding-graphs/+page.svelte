@@ -289,7 +289,7 @@
 			<div class="space-y-4 leading-relaxed body-text">
 				<h3 class="subsection-heading">4.1 Comparison: Traditional vs. Understanding Graphs</h3>
 
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full comparison-table">
 						<thead>
 							<tr>
