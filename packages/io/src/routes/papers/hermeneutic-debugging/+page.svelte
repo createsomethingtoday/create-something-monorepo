@@ -299,7 +299,7 @@ useEffect(() => {
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>From this case study, we extract a general pattern:</p>
 
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr class="table-header-row">

@@ -95,7 +95,7 @@
 					at a different level of abstraction:
 				</p>
 
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr class="table-header-row">
@@ -195,7 +195,7 @@
 					in Node.js and one in Cloudflare Workers TypeScript:
 				</p>
 
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr class="table-header-row">
@@ -336,7 +336,7 @@
 			<h2 class="section-heading">6. Results</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr class="table-header-row">

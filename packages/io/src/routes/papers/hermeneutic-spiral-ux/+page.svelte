@@ -207,7 +207,7 @@
 
 				<p>The Hermeneutic Spiral pattern follows three principles:</p>
 
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr class="table-header-row">
@@ -381,7 +381,7 @@
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>Comparing stateless vs. hermeneutic intake:</p>
 
-				<div class="overflow-x-auto">
+				<div class="responsive-table-scroll">
 					<table class="w-full data-table">
 						<thead>
 							<tr class="table-header-row">

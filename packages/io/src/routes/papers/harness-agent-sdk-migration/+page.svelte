@@ -94,7 +94,7 @@
 				This brand color polluted focus states, buttons, links, nav, and logos—43 violations across 19 files.
 			</p>
 
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -244,7 +244,7 @@ export async function runSession(
 			</div>
 
 			<h3 class="subsection-heading">3.3 Tool Categories</h3>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -314,7 +314,7 @@ export async function runSession(
 ];`}</code></pre>
 
 			<h3 class="subsection-heading">4.1 Observed Review Outcomes</h3>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -358,7 +358,7 @@ export async function runSession(
 			<h2 class="section-heading">5. Empirical Observations</h2>
 
 			<h3 class="subsection-heading">5.1 Security Improvements</h3>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -401,7 +401,7 @@ export async function runSession(
 			<p class="leading-relaxed body-text">
 				<code>--max-turns 100</code> prevents infinite loops. Observed session turn counts:
 			</p>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -431,7 +431,7 @@ export async function runSession(
 			</div>
 
 			<h3 class="subsection-heading">5.3 Cost Visibility</h3>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -451,7 +451,7 @@ export async function runSession(
 			</div>
 
 			<h3 class="subsection-heading">5.4 Model Selection Impact</h3>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -490,7 +490,7 @@ export async function runSession(
 			<h2 class="section-heading">6. Trade-offs Analysis</h2>
 
 			<h3 class="subsection-heading">6.1 Pros</h3>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
@@ -530,7 +530,7 @@ export async function runSession(
 			</div>
 
 			<h3 class="subsection-heading">6.2 Cons</h3>
-			<div class="overflow-x-auto">
+			<div class="responsive-table-scroll">
 				<table class="w-full data-table">
 					<thead>
 						<tr>
