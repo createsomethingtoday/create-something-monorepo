@@ -115,26 +115,54 @@
 				{#if data.templates.length === 0}
 					<p class="empty-state">No template data yet</p>
 				{:else}
-					<table class="data-table">
-						<thead>
-							<tr>
-								<th>Template</th>
-								<th>Deploys</th>
-								<th>Workflows</th>
-								<th>.agency</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each data.templates as template}
+					<!-- Mobile Card Layout -->
+					<div class="template-cards">
+						{#each data.templates as template}
+							<div class="template-card">
+								<div class="template-card-header">
+									<span class="template-name">{template.templateId}</span>
+								</div>
+								<div class="template-card-metrics">
+									<div class="metric">
+										<span class="metric-value">{template.deploys}</span>
+										<span class="metric-label">Deploys</span>
+									</div>
+									<div class="metric">
+										<span class="metric-value">{template.activeWorkflows}</span>
+										<span class="metric-label">Workflows</span>
+									</div>
+									<div class="metric">
+										<span class="metric-value">{template.agencyLeads}</span>
+										<span class="metric-label">.agency</span>
+									</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+
+					<!-- Desktop Table Layout -->
+					<div class="data-table-wrapper">
+						<table class="data-table">
+							<thead>
 								<tr>
-									<td>{template.templateId}</td>
-									<td>{template.deploys}</td>
-									<td>{template.activeWorkflows}</td>
-									<td>{template.agencyLeads}</td>
+									<th>Template</th>
+									<th>Deploys</th>
+									<th>Workflows</th>
+									<th>.agency</th>
 								</tr>
-							{/each}
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								{#each data.templates as template}
+									<tr>
+										<td>{template.templateId}</td>
+										<td>{template.deploys}</td>
+										<td>{template.activeWorkflows}</td>
+										<td>{template.agencyLeads}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				{/if}
 			</section>
 
@@ -367,6 +395,68 @@
 		padding: var(--space-lg);
 	}
 
+	/* Template Cards (Mobile) */
+	.template-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.data-table-wrapper {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.template-cards {
+			display: none;
+		}
+
+		.data-table-wrapper {
+			display: block;
+		}
+	}
+
+	.template-card {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.template-card-header {
+		margin-bottom: var(--space-sm);
+	}
+
+	.template-name {
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+	}
+
+	.template-card-metrics {
+		display: flex;
+		gap: var(--space-md);
+	}
+
+	.metric {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+	}
+
+	.metric-value {
+		font-size: var(--text-h3);
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-fg-primary);
+	}
+
+	.metric-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
 	.data-table {
 		width: 100%;
 		border-collapse: collapse;
@@ -529,6 +619,28 @@
 
 		.funnel-stage {
 			width: 100%;
+		}
+
+		/* Event list mobile improvements */
+		.event-item {
+			flex-wrap: wrap;
+		}
+
+		.event-meta {
+			order: 3;
+			width: 100%;
+			margin-top: var(--space-xs);
+		}
+
+		.event-time {
+			order: 2;
+			margin-left: auto;
+		}
+
+		/* Conversion rates stack on mobile */
+		.conversion-rates {
+			flex-direction: column;
+			gap: var(--space-md);
 		}
 	}
 </style>
