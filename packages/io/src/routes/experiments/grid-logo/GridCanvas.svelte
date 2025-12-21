@@ -305,6 +305,9 @@
 				<path
 					d={path}
 					class="logo-path"
+					class:face-top={logoType === 'cube' && i === 0}
+					class:face-left={logoType === 'cube' && i === 1}
+					class:face-right={logoType === 'cube' && i === 2}
 					class:stroke-only={logoType === 'cs-lettermark'}
 					style="--path-delay: {i * 100}ms"
 				/>
@@ -377,16 +380,30 @@
 	}
 
 	.logo-path {
-		fill: var(--color-fg-primary);
-		stroke: none;
+		stroke: var(--color-fg-muted);
+		stroke-width: 1;
 		animation: fadeIn var(--duration-complex) var(--ease-standard) backwards;
 		animation-delay: var(--path-delay, 0ms);
 	}
 
+	/* Cube face fills - matching IsometricBox from Canon */
+	.logo-path.face-top {
+		fill: var(--color-fg-subtle);
+	}
+
+	.logo-path.face-left {
+		fill: var(--color-bg-subtle);
+	}
+
+	.logo-path.face-right {
+		fill: var(--color-bg-elevated);
+	}
+
+	/* CS Lettermark - stroke only */
 	.logo-path.stroke-only {
 		fill: none;
 		stroke: var(--color-fg-primary);
-		stroke-width: 8;
+		stroke-width: 3;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}

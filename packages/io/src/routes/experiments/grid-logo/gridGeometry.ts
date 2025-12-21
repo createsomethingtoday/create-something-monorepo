@@ -2,21 +2,17 @@
  * Grid Geometry Utilities
  *
  * Mathematical foundations for the grid logo experiment.
- * Uses 30° isometric angles consistent with the CREATE SOMETHING visual canon.
+ * Uses the canonical isometric system from @create-something/components.
  */
 
 import type { GridLine, Point, LogoPaths } from './types';
+import { isometricBoxPath } from '@create-something/components/visual';
 
 /** Grid dimensions */
 export const GRID_SIZE = 12;
 export const CELL_SIZE = 30;
 export const CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
 export const CANVAS_PADDING = 20;
-
-/** Isometric angle constants (30°) */
-export const ISO_ANGLE = 30;
-export const ISO_COS = Math.cos((ISO_ANGLE * Math.PI) / 180);
-export const ISO_SIN = Math.sin((ISO_ANGLE * Math.PI) / 180);
 
 /**
  * Convert grid coordinates to isometric screen position
@@ -114,7 +110,7 @@ export function generateGridLines(): GridLine[] {
 
 /**
  * Get cells that form the isometric cube logo
- * Matches the CREATE SOMETHING favicon - proper isometric projection
+ * Uses the canonical isometricBoxPath from @create-something/components
  */
 export function getCubeLogoCells(): LogoPaths {
 	const cellKeys: string[] = [];
@@ -143,29 +139,16 @@ export function getCubeLogoCells(): LogoPaths {
 
 	const uniqueCells = [...new Set(cellKeys)];
 
-	// Generate proper isometric cube SVG paths
-	// Based on 30° isometric projection
+	// Use canonical isometricBoxPath from components
+	// Center the cube in the grid
 	const centerX = CANVAS_PADDING + cx * CELL_SIZE + CELL_SIZE / 2;
-	const s = CELL_SIZE * 3.5; // cube size
+	const centerY = CANVAS_PADDING + cy * CELL_SIZE;
+	const cubeSize = CELL_SIZE * 3.5;
 
-	// Isometric cube vertices
-	const top = { x: centerX, y: CANVAS_PADDING + 2.5 * CELL_SIZE };
-	const left = { x: centerX - s * ISO_COS, y: top.y + s * ISO_SIN };
-	const right = { x: centerX + s * ISO_COS, y: top.y + s * ISO_SIN };
-	const center = { x: centerX, y: top.y + s * ISO_SIN * 2 };
-	const bottomLeft = { x: left.x, y: left.y + s };
-	const bottomRight = { x: right.x, y: right.y + s };
-	const bottom = { x: centerX, y: center.y + s };
+	const facePaths = isometricBoxPath(centerX, centerY, cubeSize, cubeSize, cubeSize);
 
-	const paths = [
-		// Cube outline (single path for clean stroke)
-		`M ${top.x} ${top.y} L ${right.x} ${right.y} L ${right.x} ${bottomRight.y} L ${bottom.x} ${bottom.y} L ${bottomLeft.x} ${bottomLeft.y} L ${left.x} ${left.y} Z`,
-		// Internal lines - center vertical
-		`M ${top.x} ${top.y} L ${center.x} ${center.y} L ${bottom.x} ${bottom.y}`,
-		// Internal lines - to left and right
-		`M ${center.x} ${center.y} L ${left.x} ${left.y}`,
-		`M ${center.x} ${center.y} L ${right.x} ${right.y}`
-	];
+	// Return three face paths as the logo
+	const paths = [facePaths.top, facePaths.left, facePaths.right];
 
 	return { paths, cells: uniqueCells };
 }
