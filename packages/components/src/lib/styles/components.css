@@ -415,29 +415,10 @@
      <div class="responsive-table-wrapper">
        <table class="responsive-table">...</table>
      </div>
+
+     Note: Display rules are OUTSIDE the layer (below) to ensure proper
+     specificity over Tailwind and other unlayered styles.
      ========================================================================== */
-
-  /* Card container - visible on mobile, hidden on desktop */
-  .responsive-table-cards {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  /* Table wrapper - hidden on mobile, visible on desktop */
-  .responsive-table-wrapper {
-    display: none;
-  }
-
-  @media (min-width: 768px) {
-    .responsive-table-cards {
-      display: none;
-    }
-
-    .responsive-table-wrapper {
-      display: block;
-    }
-  }
 
   /* Individual card styling */
   .responsive-table-card {
@@ -591,5 +572,32 @@
 
   .interactive-link:active {
     background: var(--color-active);
+  }
+}
+
+/* ==========================================================================
+   Responsive Table Display Rules (OUTSIDE @layer for specificity)
+   These MUST be outside the layer to override Tailwind/unlayered styles
+   ========================================================================== */
+
+/* Card container - visible on mobile, hidden on desktop */
+.responsive-table-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Table wrapper - hidden on mobile, visible on desktop */
+.responsive-table-wrapper {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .responsive-table-cards {
+    display: none;
+  }
+
+  .responsive-table-wrapper {
+    display: block;
   }
 }
