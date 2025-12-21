@@ -55,6 +55,31 @@ export interface PropertyMarkProps extends BrandMarkProps {
 }
 
 /**
+ * Extended size scale for wordmark (includes display sizes)
+ */
+export type WordmarkSize = BrandSize | 'display' | 'display-xl';
+
+/**
+ * Props for wordmark component
+ */
+export interface WordmarkProps {
+	/** Size of the wordmark - maps to Canon typography scale */
+	size?: WordmarkSize;
+	/** Optional tagline displayed below the wordmark */
+	tagline?: string;
+	/** Layout variant */
+	layout?: 'inline' | 'stacked' | 'split';
+	/** Whether to animate on mount */
+	animate?: boolean;
+	/** Animation type */
+	animationType?: AnimationType;
+	/** Custom stagger delay per word (ms) */
+	staggerDelay?: number;
+	/** Additional CSS classes */
+	class?: string;
+}
+
+/**
  * Props for loading states
  */
 export interface LoaderProps {
