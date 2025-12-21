@@ -60,8 +60,31 @@
 				<h2 class="section-title">Recent Contacts</h2>
 				<a href="/dashboard/contacts" class="view-all-link">View all</a>
 			</div>
-			<div class="card">
-				<table>
+
+			<!-- Mobile Card Layout -->
+			<div class="contacts-cards">
+				{#each data.recentContacts as contact}
+					<a href="/dashboard/contacts/{contact.id}" class="contact-card card">
+						<div class="contact-card-header">
+							<span class="contact-name">{contact.name}</span>
+							<span class="badge badge-{contact.status === 'new' ? 'warning' : 'success'}">{contact.status}</span>
+						</div>
+						<div class="contact-card-details">
+							{#if contact.company}
+								<span class="contact-company">{contact.company}</span>
+							{/if}
+							<span class="badge badge-{contact.category || 'primary'}">{contact.category || 'general'}</span>
+						</div>
+						<div class="contact-card-footer">
+							<span class="contact-date">{new Date(contact.created_at).toLocaleDateString()}</span>
+						</div>
+					</a>
+				{/each}
+			</div>
+
+			<!-- Desktop Table Layout -->
+			<div class="card contacts-table-wrapper">
+				<table class="contacts-table">
 					<thead>
 						<tr>
 							<th>Name</th>
@@ -187,6 +210,73 @@
 	}
 
 	.cell-muted {
+		color: var(--color-fg-muted);
+	}
+
+	/* Mobile Card Layout for Contacts */
+	.contacts-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.contacts-table-wrapper {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.contacts-cards {
+			display: none;
+		}
+
+		.contacts-table-wrapper {
+			display: block;
+		}
+	}
+
+	.contact-card {
+		display: block;
+		text-decoration: none;
+		color: inherit;
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.contact-card:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.contact-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--space-xs);
+	}
+
+	.contact-name {
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.contact-card-details {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-xs);
+		margin-bottom: var(--space-xs);
+	}
+
+	.contact-company {
+		font-size: var(--text-body-sm, 0.875rem);
+		color: var(--color-fg-secondary);
+	}
+
+	.contact-card-footer {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.contact-date {
+		font-size: var(--text-body-sm, 0.875rem);
 		color: var(--color-fg-muted);
 	}
 </style>

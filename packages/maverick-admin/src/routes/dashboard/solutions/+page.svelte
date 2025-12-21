@@ -35,10 +35,44 @@
 		<a href="/dashboard/solutions?brand=dme" class="filter-tab" class:active={data.brand === 'dme'}>DME</a>
 	</div>
 
-	<!-- Solutions table -->
-	<div class="card">
+	<!-- Mobile Card Layout -->
+	<div class="solutions-cards">
 		{#if data.solutions && data.solutions.length > 0}
-			<table>
+			{#each data.solutions as solution}
+				<div class="solution-card card">
+					<div class="solution-card-header">
+						<a href="/dashboard/solutions/{solution.id}" class="solution-name-link">
+							{solution.name}
+							{#if solution.symbol}
+								<span class="solution-symbol">({solution.symbol})</span>
+							{/if}
+						</a>
+						<span class="badge badge-{solution.is_active ? 'success' : 'warning'}">
+							{solution.is_active ? 'Active' : 'Inactive'}
+						</span>
+					</div>
+					<div class="solution-card-brand">
+						<span class="badge badge-{solution.brand}">{brandLabels[solution.brand] || solution.brand}</span>
+					</div>
+					<p class="solution-card-headline">{solution.headline}</p>
+					<div class="solution-card-actions">
+						<a href="/dashboard/solutions/{solution.id}" class="btn btn-secondary solution-action-btn">View</a>
+						<a href="/dashboard/solutions/{solution.id}/edit" class="btn btn-secondary solution-action-btn">Edit</a>
+					</div>
+				</div>
+			{/each}
+		{:else}
+			<div class="card empty-state">
+				<p class="empty-text">No solutions found</p>
+				<a href="/dashboard/solutions/new" class="btn btn-primary">Add your first solution</a>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Desktop Table Layout -->
+	<div class="card solutions-table-wrapper">
+		{#if data.solutions && data.solutions.length > 0}
+			<table class="solutions-table">
 				<thead>
 					<tr>
 						<th>Name</th>
@@ -172,5 +206,75 @@
 	.empty-text {
 		color: var(--color-fg-muted);
 		margin-bottom: var(--space-md);
+	}
+
+	/* Mobile Card Layout for Solutions */
+	.solutions-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.solutions-table-wrapper {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.solutions-cards {
+			display: none;
+		}
+
+		.solutions-table-wrapper {
+			display: block;
+		}
+	}
+
+	.solution-card {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.solution-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: var(--space-xs);
+	}
+
+	.solution-name-link {
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		text-decoration: none;
+	}
+
+	.solution-name-link:hover {
+		text-decoration: underline;
+	}
+
+	.solution-card-brand {
+		display: flex;
+		gap: var(--space-xs);
+	}
+
+	.solution-card-headline {
+		font-size: var(--text-body-sm, 0.875rem);
+		color: var(--color-fg-secondary);
+		line-height: 1.5;
+		margin: 0;
+	}
+
+	.solution-card-actions {
+		display: flex;
+		gap: var(--space-xs);
+		margin-top: var(--space-xs);
+		padding-top: var(--space-xs);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.solution-action-btn {
+		flex: 1;
+		text-align: center;
+		min-height: 44px;
 	}
 </style>
