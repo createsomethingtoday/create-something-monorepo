@@ -1,22 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- CREATE SOMETHING Isometric Cube Mark -->
+  <!-- Canon face opacity: top=1.0, left=0.6, right=0.3 -->
   <rect width="32" height="32" fill="#000000"/>
-  <g transform="translate(6, 6)">
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-          fill="none"
-          stroke="#FFFFFF"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
-    <polyline points="3.29 7 12 12 20.71 7"
-              fill="none"
-              stroke="#FFFFFF"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"/>
-    <line x1="12" y1="22" x2="12" y2="12"
-          stroke="#FFFFFF"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
-  </g>
+  <!-- Top face (brightest) -->
+  <path d="M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z" fill="#FFFFFF" fill-opacity="1"/>
+  <!-- Left face (medium) -->
+  <path d="M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z" fill="#FFFFFF" fill-opacity="0.6"/>
+  <!-- Right face (darkest) -->
+  <path d="M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z" fill="#FFFFFF" fill-opacity="0.3"/>
 </svg>
