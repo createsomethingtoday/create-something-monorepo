@@ -167,139 +167,139 @@
 		</div>
 
 		<!-- Mobile Card Layout -->
-		<div class="css-arch-cards mt-8">
-			<div class="css-arch-card">
-				<div class="css-arch-card-header">
-					<span class="css-arch-category">Layout</span>
+		<div class="responsive-table-cards mt-8">
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Layout</span>
 				</div>
-				<div class="css-arch-card-body">
-					<div class="css-arch-row">
-						<span class="css-arch-label">Tailwind</span>
-						<span class="css-arch-value text-success">✓ Use</span>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Tailwind</span>
+						<span class="responsive-table-card-value text-success">✓ Use</span>
 					</div>
-					<div class="css-arch-row">
-						<span class="css-arch-label">Canon</span>
-						<span class="css-arch-value opacity-50-canon">Not defined</span>
-					</div>
-				</div>
-			</div>
-			<div class="css-arch-card">
-				<div class="css-arch-card-header">
-					<span class="css-arch-category">Border Radius</span>
-				</div>
-				<div class="css-arch-card-body">
-					<div class="css-arch-row">
-						<span class="css-arch-label">Tailwind</span>
-						<span class="css-arch-value text-error">✗ Avoid</span>
-					</div>
-					<div class="css-arch-row">
-						<span class="css-arch-label">Canon</span>
-						<span class="css-arch-value text-success">var(--radius-*)</span>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Canon</span>
+						<span class="responsive-table-card-value opacity-50-canon">Not defined</span>
 					</div>
 				</div>
 			</div>
-			<div class="css-arch-card">
-				<div class="css-arch-card-header">
-					<span class="css-arch-category">Colors</span>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Border Radius</span>
 				</div>
-				<div class="css-arch-card-body">
-					<div class="css-arch-row">
-						<span class="css-arch-label">Tailwind</span>
-						<span class="css-arch-value text-error">✗ Avoid</span>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Tailwind</span>
+						<span class="responsive-table-card-value text-error">✗ Avoid</span>
 					</div>
-					<div class="css-arch-row">
-						<span class="css-arch-label">Canon</span>
-						<span class="css-arch-value text-success">var(--color-*)</span>
-					</div>
-				</div>
-			</div>
-			<div class="css-arch-card">
-				<div class="css-arch-card-header">
-					<span class="css-arch-category">Spacing</span>
-				</div>
-				<div class="css-arch-card-body">
-					<div class="css-arch-row">
-						<span class="css-arch-label">Tailwind</span>
-						<span class="css-arch-value text-warning">~ Acceptable</span>
-					</div>
-					<div class="css-arch-row">
-						<span class="css-arch-label">Canon</span>
-						<span class="css-arch-value text-success">var(--space-*)</span>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Canon</span>
+						<span class="responsive-table-card-value text-success">var(--radius-*)</span>
 					</div>
 				</div>
 			</div>
-			<div class="css-arch-card">
-				<div class="css-arch-card-header">
-					<span class="css-arch-category">Typography</span>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Colors</span>
 				</div>
-				<div class="css-arch-card-body">
-					<div class="css-arch-row">
-						<span class="css-arch-label">Tailwind</span>
-						<span class="css-arch-value text-error">✗ Avoid</span>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Tailwind</span>
+						<span class="responsive-table-card-value text-error">✗ Avoid</span>
 					</div>
-					<div class="css-arch-row">
-						<span class="css-arch-label">Canon</span>
-						<span class="css-arch-value text-success">var(--text-*)</span>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Canon</span>
+						<span class="responsive-table-card-value text-success">var(--color-*)</span>
 					</div>
 				</div>
 			</div>
-			<div class="css-arch-card">
-				<div class="css-arch-card-header">
-					<span class="css-arch-category">Shadows</span>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Spacing</span>
 				</div>
-				<div class="css-arch-card-body">
-					<div class="css-arch-row">
-						<span class="css-arch-label">Tailwind</span>
-						<span class="css-arch-value text-error">✗ Avoid</span>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Tailwind</span>
+						<span class="responsive-table-card-value text-warning">~ Acceptable</span>
 					</div>
-					<div class="css-arch-row">
-						<span class="css-arch-label">Canon</span>
-						<span class="css-arch-value text-success">var(--shadow-*)</span>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Canon</span>
+						<span class="responsive-table-card-value text-success">var(--space-*)</span>
+					</div>
+				</div>
+			</div>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Typography</span>
+				</div>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Tailwind</span>
+						<span class="responsive-table-card-value text-error">✗ Avoid</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Canon</span>
+						<span class="responsive-table-card-value text-success">var(--text-*)</span>
+					</div>
+				</div>
+			</div>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Shadows</span>
+				</div>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Tailwind</span>
+						<span class="responsive-table-card-value text-error">✗ Avoid</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Canon</span>
+						<span class="responsive-table-card-value text-success">var(--shadow-*)</span>
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Desktop Table Layout -->
-		<div class="css-arch-table-wrapper mt-8 border border-canon">
-			<table class="css-arch-table w-full">
+		<div class="responsive-table-wrapper mt-8 border border-canon">
+			<table class="responsive-table">
 				<thead class="border-b border-canon">
 					<tr>
-						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Category</th>
-						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Tailwind</th>
-						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Canon</th>
+						<th>Category</th>
+						<th>Tailwind</th>
+						<th>Canon</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-canon">
 					<tr>
-						<td class="px-6 py-4 font-medium">Layout</td>
-						<td class="px-6 py-4 opacity-70-canon text-success">✓ Use</td>
-						<td class="px-6 py-4 opacity-50-canon">Not defined</td>
+						<td class="font-medium">Layout</td>
+						<td class="text-success">✓ Use</td>
+						<td class="opacity-50-canon">Not defined</td>
 					</tr>
 					<tr>
-						<td class="px-6 py-4 font-medium">Border Radius</td>
-						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70-canon text-success">var(--radius-*)</td>
+						<td class="font-medium">Border Radius</td>
+						<td class="text-error">✗ Avoid</td>
+						<td class="text-success">var(--radius-*)</td>
 					</tr>
 					<tr>
-						<td class="px-6 py-4 font-medium">Colors</td>
-						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70-canon text-success">var(--color-*)</td>
+						<td class="font-medium">Colors</td>
+						<td class="text-error">✗ Avoid</td>
+						<td class="text-success">var(--color-*)</td>
 					</tr>
 					<tr>
-						<td class="px-6 py-4 font-medium">Spacing</td>
-						<td class="px-6 py-4 opacity-70-canon text-warning">~ Acceptable</td>
-						<td class="px-6 py-4 opacity-70-canon text-success">var(--space-*)</td>
+						<td class="font-medium">Spacing</td>
+						<td class="text-warning">~ Acceptable</td>
+						<td class="text-success">var(--space-*)</td>
 					</tr>
 					<tr>
-						<td class="px-6 py-4 font-medium">Typography</td>
-						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70-canon text-success">var(--text-*)</td>
+						<td class="font-medium">Typography</td>
+						<td class="text-error">✗ Avoid</td>
+						<td class="text-success">var(--text-*)</td>
 					</tr>
 					<tr>
-						<td class="px-6 py-4 font-medium">Shadows</td>
-						<td class="px-6 py-4 opacity-70-canon text-error">✗ Avoid</td>
-						<td class="px-6 py-4 opacity-70-canon text-success">var(--shadow-*)</td>
+						<td class="font-medium">Shadows</td>
+						<td class="text-error">✗ Avoid</td>
+						<td class="text-success">var(--shadow-*)</td>
 					</tr>
 				</tbody>
 			</table>
@@ -511,71 +511,5 @@
 
 	thead {
 		border-color: var(--color-border-default);
-	}
-	/* Mobile Card Layout for CSS Architecture Table */
-	.css-arch-cards {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.css-arch-table-wrapper {
-		display: none;
-	}
-
-	@media (min-width: 768px) {
-		.css-arch-cards {
-			display: none;
-		}
-
-		.css-arch-table-wrapper {
-			display: block;
-		}
-	}
-
-	.css-arch-card {
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-	}
-
-	.css-arch-card-header {
-		margin-bottom: var(--space-sm);
-		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.css-arch-category {
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
-	}
-
-	.css-arch-card-body {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
-
-	.css-arch-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.css-arch-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-	}
-
-	.css-arch-value {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		font-family: ui-monospace, monospace;
-	}
-
-	.css-arch-table {
-		text-align: left;
 	}
 </style>

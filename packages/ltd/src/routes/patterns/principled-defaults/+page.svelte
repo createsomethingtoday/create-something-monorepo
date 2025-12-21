@@ -176,79 +176,89 @@
 			<h3 class="text-xl-canon font-semibold mb-6">Spacing Scale Derivation</h3>
 
 			<!-- Mobile Card Layout -->
-			<div class="spacing-cards">
-				<div class="spacing-card">
-					<div class="spacing-card-header">
-						<span class="spacing-token">--space-xs</span>
-						<span class="spacing-value">10px</span>
+			<div class="responsive-table-cards">
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title spacing-token">--space-xs</span>
+						<span class="responsive-table-card-badge">10px</span>
 					</div>
-					<div class="spacing-derivation">16 × 0.618 ≈ 10</div>
+					<div class="responsive-table-card-body">
+						<span class="spacing-derivation">16 × 0.618 ≈ 10</span>
+					</div>
 				</div>
-				<div class="spacing-card">
-					<div class="spacing-card-header">
-						<span class="spacing-token">--space-sm</span>
-						<span class="spacing-value">16px</span>
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title spacing-token">--space-sm</span>
+						<span class="responsive-table-card-badge">16px</span>
 					</div>
-					<div class="spacing-derivation">Base unit (1rem)</div>
+					<div class="responsive-table-card-body">
+						<span class="spacing-derivation">Base unit (1rem)</span>
+					</div>
 				</div>
-				<div class="spacing-card">
-					<div class="spacing-card-header">
-						<span class="spacing-token">--space-md</span>
-						<span class="spacing-value">26px</span>
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title spacing-token">--space-md</span>
+						<span class="responsive-table-card-badge">26px</span>
 					</div>
-					<div class="spacing-derivation">16 × 1.618 ≈ 26</div>
+					<div class="responsive-table-card-body">
+						<span class="spacing-derivation">16 × 1.618 ≈ 26</span>
+					</div>
 				</div>
-				<div class="spacing-card">
-					<div class="spacing-card-header">
-						<span class="spacing-token">--space-lg</span>
-						<span class="spacing-value">42px</span>
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title spacing-token">--space-lg</span>
+						<span class="responsive-table-card-badge">42px</span>
 					</div>
-					<div class="spacing-derivation">16 × 2.618 ≈ 42</div>
+					<div class="responsive-table-card-body">
+						<span class="spacing-derivation">16 × 2.618 ≈ 42</span>
+					</div>
 				</div>
-				<div class="spacing-card">
-					<div class="spacing-card-header">
-						<span class="spacing-token">--space-xl</span>
-						<span class="spacing-value">68px</span>
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title spacing-token">--space-xl</span>
+						<span class="responsive-table-card-badge">68px</span>
 					</div>
-					<div class="spacing-derivation">16 × 4.236 ≈ 68</div>
+					<div class="responsive-table-card-body">
+						<span class="spacing-derivation">16 × 4.236 ≈ 68</span>
+					</div>
 				</div>
 			</div>
 
 			<!-- Desktop Table Layout -->
-			<div class="spacing-table-wrapper overflow-x-auto">
-				<table class="w-full text-sm-canon">
+			<div class="responsive-table-wrapper overflow-x-auto">
+				<table class="responsive-table spacing-table">
 					<thead>
 						<tr class="border-b border-canon">
-							<th class="text-left py-2 pr-4 font-semibold">Token</th>
-							<th class="text-left py-2 pr-4 font-semibold">Value</th>
-							<th class="text-left py-2 font-semibold">Derivation</th>
+							<th>Token</th>
+							<th>Value</th>
+							<th>Derivation</th>
 						</tr>
 					</thead>
-					<tbody class="opacity-70-canon font-mono text-xs-canon">
+					<tbody class="font-mono">
 						<tr class="border-b border-canon">
-							<td class="py-2 pr-4">--space-xs</td>
-							<td class="py-2 pr-4">10px</td>
-							<td class="py-2">16 × 0.618 ≈ 10</td>
+							<td>--space-xs</td>
+							<td>10px</td>
+							<td>16 × 0.618 ≈ 10</td>
 						</tr>
 						<tr class="border-b border-canon">
-							<td class="py-2 pr-4">--space-sm</td>
-							<td class="py-2 pr-4">16px</td>
-							<td class="py-2">Base unit (1rem)</td>
+							<td>--space-sm</td>
+							<td>16px</td>
+							<td>Base unit (1rem)</td>
 						</tr>
 						<tr class="border-b border-canon">
-							<td class="py-2 pr-4">--space-md</td>
-							<td class="py-2 pr-4">26px</td>
-							<td class="py-2">16 × 1.618 ≈ 26</td>
+							<td>--space-md</td>
+							<td>26px</td>
+							<td>16 × 1.618 ≈ 26</td>
 						</tr>
 						<tr class="border-b border-canon">
-							<td class="py-2 pr-4">--space-lg</td>
-							<td class="py-2 pr-4">42px</td>
-							<td class="py-2">16 × 2.618 ≈ 42</td>
+							<td>--space-lg</td>
+							<td>42px</td>
+							<td>16 × 2.618 ≈ 42</td>
 						</tr>
 						<tr>
-							<td class="py-2 pr-4">--space-xl</td>
-							<td class="py-2 pr-4">68px</td>
-							<td class="py-2">16 × 4.236 ≈ 68</td>
+							<td>--space-xl</td>
+							<td>68px</td>
+							<td>16 × 4.236 ≈ 68</td>
 						</tr>
 					</tbody>
 				</table>
@@ -433,60 +443,18 @@
 		border-color: var(--color-border-default);
 	}
 
-	/* Mobile Card Layout for Spacing Scale */
-	.spacing-cards {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.spacing-table-wrapper {
-		display: none;
-	}
-
-	@media (min-width: 768px) {
-		.spacing-cards {
-			display: none;
-		}
-
-		.spacing-table-wrapper {
-			display: block;
-		}
-	}
-
-	.spacing-card {
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-	}
-
-	.spacing-card-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: var(--space-xs);
-	}
-
+	/* Custom spacing table styles */
 	.spacing-token {
 		font-family: monospace;
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
-	}
-
-	.spacing-value {
-		font-family: monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		padding: 2px 8px;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
 	}
 
 	.spacing-derivation {
 		font-family: monospace;
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	.spacing-table {
+		font-size: var(--text-caption);
 	}
 </style>

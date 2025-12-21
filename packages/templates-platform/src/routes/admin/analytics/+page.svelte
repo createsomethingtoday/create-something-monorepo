@@ -116,11 +116,11 @@
 					<p class="empty-state">No template data yet</p>
 				{:else}
 					<!-- Mobile Card Layout -->
-					<div class="template-cards">
+					<div class="responsive-table-cards">
 						{#each data.templates as template}
-							<div class="template-card">
-								<div class="template-card-header">
-									<span class="template-name">{template.templateId}</span>
+							<div class="responsive-table-card">
+								<div class="responsive-table-card-header">
+									<span class="responsive-table-card-title">{template.templateId}</span>
 								</div>
 								<div class="template-card-metrics">
 									<div class="metric">
@@ -141,8 +141,8 @@
 					</div>
 
 					<!-- Desktop Table Layout -->
-					<div class="data-table-wrapper">
-						<table class="data-table">
+					<div class="responsive-table-wrapper">
+						<table class="responsive-table">
 							<thead>
 								<tr>
 									<th>Template</th>
@@ -395,44 +395,7 @@
 		padding: var(--space-lg);
 	}
 
-	/* Template Cards (Mobile) */
-	.template-cards {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.data-table-wrapper {
-		display: none;
-	}
-
-	@media (min-width: 768px) {
-		.template-cards {
-			display: none;
-		}
-
-		.data-table-wrapper {
-			display: block;
-		}
-	}
-
-	.template-card {
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-	}
-
-	.template-card-header {
-		margin-bottom: var(--space-sm);
-	}
-
-	.template-name {
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
-	}
-
+	/* Template Card Metrics (custom layout for analytics) */
 	.template-card-metrics {
 		display: flex;
 		gap: var(--space-md);
@@ -455,29 +418,6 @@
 	.metric-label {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-	}
-
-	.data-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.data-table th,
-	.data-table td {
-		padding: var(--space-sm);
-		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.data-table th {
-		font-size: var(--text-body-sm);
-		font-weight: 600;
-		color: var(--color-fg-secondary);
-	}
-
-	.data-table td {
-		font-size: var(--text-body-sm);
-		font-variant-numeric: tabular-nums;
 	}
 
 	/* Event List */

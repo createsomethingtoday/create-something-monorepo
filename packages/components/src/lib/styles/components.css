@@ -405,6 +405,127 @@
     border-color: var(--color-border-emphasis);
   }
 
+  /* ==========================================================================
+     Responsive Table Pattern
+     Mobile: Card layout for touch-friendly data display
+     Desktop: Traditional table layout for data density
+
+     Usage:
+     <div class="responsive-table-cards">...cards...</div>
+     <div class="responsive-table-wrapper">
+       <table class="responsive-table">...</table>
+     </div>
+     ========================================================================== */
+
+  /* Card container - visible on mobile, hidden on desktop */
+  .responsive-table-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  /* Table wrapper - hidden on mobile, visible on desktop */
+  .responsive-table-wrapper {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .responsive-table-cards {
+      display: none;
+    }
+
+    .responsive-table-wrapper {
+      display: block;
+    }
+  }
+
+  /* Individual card styling */
+  .responsive-table-card {
+    padding: var(--space-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .responsive-table-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .responsive-table-card-title {
+    font-weight: 600;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body);
+  }
+
+  .responsive-table-card-badge {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    padding: 2px 8px;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .responsive-table-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .responsive-table-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .responsive-table-card-label {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .responsive-table-card-value {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  /* Table styling */
+  .responsive-table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+  }
+
+  .responsive-table th,
+  .responsive-table td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .responsive-table th {
+    font-size: var(--text-body-sm);
+    font-weight: 600;
+    color: var(--color-fg-tertiary);
+  }
+
+  .responsive-table td {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .responsive-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Horizontal scroll variant for tables that must remain as tables */
+  .responsive-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Horizontal slide - subtle rightward movement */
   .elevation-slide {
     transition: transform var(--duration-micro) var(--ease-standard),

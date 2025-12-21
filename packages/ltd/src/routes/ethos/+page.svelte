@@ -65,68 +65,86 @@
 		</div>
 
 		<!-- Mobile Card Layout -->
-		<div class="triad-cards mt-8">
-			<div class="triad-card">
-				<div class="triad-card-header">
-					<span class="triad-level">Implementation</span>
-					<span class="triad-action">Unify</span>
+		<div class="responsive-table-cards mt-8">
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Implementation</span>
+					<span class="responsive-table-card-badge">Unify</span>
 				</div>
-				<div class="triad-card-body">
-					<div class="triad-discipline">DRY</div>
-					<div class="triad-question">"Have I built this before?"</div>
-				</div>
-			</div>
-			<div class="triad-card">
-				<div class="triad-card-header">
-					<span class="triad-level">Artifact</span>
-					<span class="triad-action">Remove</span>
-				</div>
-				<div class="triad-card-body">
-					<div class="triad-discipline">Rams</div>
-					<div class="triad-question">"Does this earn its existence?"</div>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Discipline</span>
+						<span class="responsive-table-card-value">DRY</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Question</span>
+						<span class="responsive-table-card-value triad-question">"Have I built this before?"</span>
+					</div>
 				</div>
 			</div>
-			<div class="triad-card">
-				<div class="triad-card-header">
-					<span class="triad-level">System</span>
-					<span class="triad-action">Reconnect</span>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Artifact</span>
+					<span class="responsive-table-card-badge">Remove</span>
 				</div>
-				<div class="triad-card-body">
-					<div class="triad-discipline">Heidegger</div>
-					<div class="triad-question">"Does this serve the whole?"</div>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Discipline</span>
+						<span class="responsive-table-card-value">Rams</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Question</span>
+						<span class="responsive-table-card-value triad-question">"Does this earn its existence?"</span>
+					</div>
+				</div>
+			</div>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">System</span>
+					<span class="responsive-table-card-badge">Reconnect</span>
+				</div>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Discipline</span>
+						<span class="responsive-table-card-value">Heidegger</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="responsive-table-card-label">Question</span>
+						<span class="responsive-table-card-value triad-question">"Does this serve the whole?"</span>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Desktop Table Layout -->
-		<div class="triad-table-wrapper mt-8 border border-canon">
-			<table class="triad-table w-full">
+		<div class="responsive-table-wrapper mt-8 border border-canon">
+			<table class="responsive-table">
 				<thead class="border-b border-canon">
 					<tr>
-						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Level</th>
-						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Discipline</th>
-						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Question</th>
-						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Action</th>
+						<th>Level</th>
+						<th>Discipline</th>
+						<th>Question</th>
+						<th>Action</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-canon">
 					<tr>
-						<td class="px-6 py-4 font-medium">Implementation</td>
-						<td class="px-6 py-4 opacity-70-canon">DRY</td>
-						<td class="px-6 py-4 opacity-70-canon">"Have I built this before?"</td>
-						<td class="px-6 py-4 opacity-70-canon">Unify</td>
+						<td class="font-medium">Implementation</td>
+						<td>DRY</td>
+						<td>"Have I built this before?"</td>
+						<td>Unify</td>
 					</tr>
 					<tr>
-						<td class="px-6 py-4 font-medium">Artifact</td>
-						<td class="px-6 py-4 opacity-70-canon">Rams</td>
-						<td class="px-6 py-4 opacity-70-canon">"Does this earn its existence?"</td>
-						<td class="px-6 py-4 opacity-70-canon">Remove</td>
+						<td class="font-medium">Artifact</td>
+						<td>Rams</td>
+						<td>"Does this earn its existence?"</td>
+						<td>Remove</td>
 					</tr>
 					<tr>
-						<td class="px-6 py-4 font-medium">System</td>
-						<td class="px-6 py-4 opacity-70-canon">Heidegger</td>
-						<td class="px-6 py-4 opacity-70-canon">"Does this serve the whole?"</td>
-						<td class="px-6 py-4 opacity-70-canon">Reconnect</td>
+						<td class="font-medium">System</td>
+						<td>Heidegger</td>
+						<td>"Does this serve the whole?"</td>
+						<td>Reconnect</td>
 					</tr>
 				</tbody>
 			</table>
@@ -405,78 +423,13 @@
 		border-color: var(--color-border-default);
 	}
 
-	/* Mobile Card Layout for Subtractive Triad */
-	.triad-cards {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.triad-table-wrapper {
-		display: none;
-	}
-
-	@media (min-width: 768px) {
-		.triad-cards {
-			display: none;
-		}
-
-		.triad-table-wrapper {
-			display: block;
-		}
-	}
-
-	.triad-card {
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-	}
-
-	.triad-card-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: var(--space-sm);
-	}
-
-	.triad-level {
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
-	}
-
-	.triad-action {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		padding: 2px 8px;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-	}
-
-	.triad-card-body {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
-
-	.triad-discipline {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		font-weight: 500;
-	}
-
+	/* Custom styling for triad question (italic) */
 	.triad-question {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
 		font-style: italic;
 	}
+
 	.triad-intro {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-	}
-
-	.triad-table {
-		text-align: left;
 	}
 </style>

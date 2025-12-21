@@ -172,99 +172,119 @@
 		<h2 class="mb-8">Timeless vs. Trendy</h2>
 
 		<!-- Mobile Card Layout -->
-		<div class="comparison-cards">
-			<div class="comparison-card">
-				<div class="comparison-domain">Database</div>
-				<div class="comparison-row">
-					<span class="comparison-label timeless">Timeless</span>
-					<span class="comparison-value">PostgreSQL, SQLite</span>
+		<div class="responsive-table-cards">
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Database</span>
 				</div>
-				<div class="comparison-row">
-					<span class="comparison-label trendy">Trendy</span>
-					<span class="comparison-value">This year's distributed DB</span>
-				</div>
-			</div>
-			<div class="comparison-card">
-				<div class="comparison-domain">API</div>
-				<div class="comparison-row">
-					<span class="comparison-label timeless">Timeless</span>
-					<span class="comparison-value">REST/HTTP</span>
-				</div>
-				<div class="comparison-row">
-					<span class="comparison-label trendy">Trendy</span>
-					<span class="comparison-value">GraphQL, gRPC (unless needed)</span>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="comparison-label timeless">Timeless</span>
+						<span class="responsive-table-card-value">PostgreSQL, SQLite</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="comparison-label trendy">Trendy</span>
+						<span class="responsive-table-card-value">This year's distributed DB</span>
+					</div>
 				</div>
 			</div>
-			<div class="comparison-card">
-				<div class="comparison-domain">Styling</div>
-				<div class="comparison-row">
-					<span class="comparison-label timeless">Timeless</span>
-					<span class="comparison-value">CSS, CSS Variables</span>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">API</span>
 				</div>
-				<div class="comparison-row">
-					<span class="comparison-label trendy">Trendy</span>
-					<span class="comparison-value">CSS-in-JS framework du jour</span>
-				</div>
-			</div>
-			<div class="comparison-card">
-				<div class="comparison-domain">State</div>
-				<div class="comparison-row">
-					<span class="comparison-label timeless">Timeless</span>
-					<span class="comparison-value">URL, forms, localStorage</span>
-				</div>
-				<div class="comparison-row">
-					<span class="comparison-label trendy">Trendy</span>
-					<span class="comparison-value">State management library #47</span>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="comparison-label timeless">Timeless</span>
+						<span class="responsive-table-card-value">REST/HTTP</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="comparison-label trendy">Trendy</span>
+						<span class="responsive-table-card-value">GraphQL, gRPC (unless needed)</span>
+					</div>
 				</div>
 			</div>
-			<div class="comparison-card">
-				<div class="comparison-domain">Hosting</div>
-				<div class="comparison-row">
-					<span class="comparison-label timeless">Timeless</span>
-					<span class="comparison-value">VPS, static files</span>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Styling</span>
 				</div>
-				<div class="comparison-row">
-					<span class="comparison-label trendy">Trendy</span>
-					<span class="comparison-value">Serverless everything</span>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="comparison-label timeless">Timeless</span>
+						<span class="responsive-table-card-value">CSS, CSS Variables</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="comparison-label trendy">Trendy</span>
+						<span class="responsive-table-card-value">CSS-in-JS framework du jour</span>
+					</div>
+				</div>
+			</div>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">State</span>
+				</div>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="comparison-label timeless">Timeless</span>
+						<span class="responsive-table-card-value">URL, forms, localStorage</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="comparison-label trendy">Trendy</span>
+						<span class="responsive-table-card-value">State management library #47</span>
+					</div>
+				</div>
+			</div>
+			<div class="responsive-table-card">
+				<div class="responsive-table-card-header">
+					<span class="responsive-table-card-title">Hosting</span>
+				</div>
+				<div class="responsive-table-card-body">
+					<div class="responsive-table-card-row">
+						<span class="comparison-label timeless">Timeless</span>
+						<span class="responsive-table-card-value">VPS, static files</span>
+					</div>
+					<div class="responsive-table-card-row">
+						<span class="comparison-label trendy">Trendy</span>
+						<span class="responsive-table-card-value">Serverless everything</span>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Desktop Table Layout -->
-		<div class="comparison-table-wrapper border border-canon overflow-hidden">
-			<table class="w-full text-sm-canon">
+		<div class="responsive-table-wrapper border border-canon overflow-hidden">
+			<table class="responsive-table">
 				<thead>
 					<tr class="border-b border-canon bg-surface-subtle">
-						<th class="table-th">Domain</th>
-						<th class="table-th text-success">Timeless</th>
-						<th class="table-th text-warning">Trendy</th>
+						<th>Domain</th>
+						<th class="text-success">Timeless</th>
+						<th class="text-warning">Trendy</th>
 					</tr>
 				</thead>
-				<tbody class="opacity-70-canon">
+				<tbody>
 					<tr class="border-b border-canon">
-						<td class="py-3 px-4">Database</td>
-						<td class="py-3 px-4">PostgreSQL, SQLite</td>
-						<td class="py-3 px-4">This year's distributed DB</td>
+						<td>Database</td>
+						<td>PostgreSQL, SQLite</td>
+						<td>This year's distributed DB</td>
 					</tr>
 					<tr class="border-b border-canon">
-						<td class="py-3 px-4">API</td>
-						<td class="py-3 px-4">REST/HTTP</td>
-						<td class="py-3 px-4">GraphQL, gRPC (unless needed)</td>
+						<td>API</td>
+						<td>REST/HTTP</td>
+						<td>GraphQL, gRPC (unless needed)</td>
 					</tr>
 					<tr class="border-b border-canon">
-						<td class="py-3 px-4">Styling</td>
-						<td class="py-3 px-4">CSS, CSS Variables</td>
-						<td class="py-3 px-4">CSS-in-JS framework du jour</td>
+						<td>Styling</td>
+						<td>CSS, CSS Variables</td>
+						<td>CSS-in-JS framework du jour</td>
 					</tr>
 					<tr class="border-b border-canon">
-						<td class="py-3 px-4">State</td>
-						<td class="py-3 px-4">URL, forms, localStorage</td>
-						<td class="py-3 px-4">State management library #47</td>
+						<td>State</td>
+						<td>URL, forms, localStorage</td>
+						<td>State management library #47</td>
 					</tr>
 					<tr>
-						<td class="py-3 px-4">Hosting</td>
-						<td class="py-3 px-4">VPS, static files</td>
-						<td class="py-3 px-4">Serverless everything</td>
+						<td>Hosting</td>
+						<td>VPS, static files</td>
+						<td>Serverless everything</td>
 					</tr>
 				</tbody>
 			</table>
@@ -443,54 +463,7 @@
 		border-color: var(--color-border-default);
 	}
 
-	/* Mobile Card Layout for Comparison Table */
-	.comparison-cards {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.comparison-table-wrapper {
-		display: none;
-	}
-
-	@media (min-width: 768px) {
-		.comparison-cards {
-			display: none;
-		}
-
-		.comparison-table-wrapper {
-			display: block;
-		}
-	}
-
-	.comparison-card {
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-	}
-
-	.comparison-domain {
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
-		margin-bottom: var(--space-sm);
-		padding-bottom: var(--space-xs);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.comparison-row {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		margin-bottom: var(--space-xs);
-	}
-
-	.comparison-row:last-child {
-		margin-bottom: 0;
-	}
-
+	/* Custom comparison label colors */
 	.comparison-label {
 		font-size: var(--text-caption);
 		font-weight: 500;
@@ -499,21 +472,10 @@
 	}
 
 	.comparison-label.timeless {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.comparison-label.trendy {
-		color: #fbbf24;
-	}
-
-	.comparison-value {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	.table-th {
-		text-align: left;
-		padding: 0.75rem 1rem;
-		font-weight: 600;
+		color: var(--color-warning);
 	}
 </style>
