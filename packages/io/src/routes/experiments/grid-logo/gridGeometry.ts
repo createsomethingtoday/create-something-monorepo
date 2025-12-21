@@ -114,56 +114,57 @@ export function generateGridLines(): GridLine[] {
 
 /**
  * Get cells that form the isometric cube logo
- * The cube sits in the center of the grid (roughly 4x4 area)
+ * Matches the CREATE SOMETHING favicon - proper isometric projection
  */
 export function getCubeLogoCells(): LogoPaths {
-	// Cube vertices in grid space (center of 12x12 grid)
-	const cx = 6;
-	const cy = 6;
-	const size = 3;
-
-	// Define cells that form the cube outline and internal structure
 	const cellKeys: string[] = [];
 
-	// Top face cells (diamond shape)
-	for (let i = -size; i <= size; i++) {
-		cellKeys.push(getCellKey(cy - size, cx + i)); // top row
-		cellKeys.push(getCellKey(cy + size, cx + i)); // bottom row
-	}
-	for (let i = -size + 1; i < size; i++) {
-		cellKeys.push(getCellKey(cy + i, cx - size)); // left column
-		cellKeys.push(getCellKey(cy + i, cx + size)); // right column
-	}
+	// Cube occupies center region - cells that form the isometric shape
+	// The cube is centered at (6,6) with ~4 cell radius
+	const cx = 6;
+	const cy = 6;
 
-	// Center cells
-	cellKeys.push(getCellKey(cy, cx));
-	cellKeys.push(getCellKey(cy - 1, cx));
-	cellKeys.push(getCellKey(cy + 1, cx));
-	cellKeys.push(getCellKey(cy, cx - 1));
-	cellKeys.push(getCellKey(cy, cx + 1));
+	// Top diamond shape (rows 2-5, forming diamond)
+	cellKeys.push(getCellKey(2, 6)); // apex
+	cellKeys.push(getCellKey(3, 5), getCellKey(3, 6), getCellKey(3, 7));
+	cellKeys.push(getCellKey(4, 4), getCellKey(4, 5), getCellKey(4, 6), getCellKey(4, 7), getCellKey(4, 8));
+	cellKeys.push(getCellKey(5, 3), getCellKey(5, 4), getCellKey(5, 5), getCellKey(5, 6), getCellKey(5, 7), getCellKey(5, 8), getCellKey(5, 9));
 
-	// Remove duplicates
+	// Middle row (widest point)
+	cellKeys.push(getCellKey(6, 3), getCellKey(6, 4), getCellKey(6, 5), getCellKey(6, 6), getCellKey(6, 7), getCellKey(6, 8), getCellKey(6, 9));
+
+	// Bottom half - left and right faces
+	cellKeys.push(getCellKey(7, 3), getCellKey(7, 4), getCellKey(7, 5), getCellKey(7, 6), getCellKey(7, 7), getCellKey(7, 8), getCellKey(7, 9));
+	cellKeys.push(getCellKey(8, 3), getCellKey(8, 4), getCellKey(8, 5), getCellKey(8, 6), getCellKey(8, 7), getCellKey(8, 8), getCellKey(8, 9));
+	cellKeys.push(getCellKey(9, 4), getCellKey(9, 5), getCellKey(9, 6), getCellKey(9, 7), getCellKey(9, 8));
+
+	// Bottom point
+	cellKeys.push(getCellKey(10, 6));
+
 	const uniqueCells = [...new Set(cellKeys)];
 
-	// Generate SVG paths for the cube (simplified isometric box)
-	const centerX = CANVAS_PADDING + cx * CELL_SIZE;
-	const centerY = CANVAS_PADDING + cy * CELL_SIZE;
-	const s = size * CELL_SIZE;
+	// Generate proper isometric cube SVG paths
+	// Based on 30° isometric projection
+	const centerX = CANVAS_PADDING + cx * CELL_SIZE + CELL_SIZE / 2;
+	const s = CELL_SIZE * 3.5; // cube size
 
-	// Isometric cube paths
-	const topY = centerY - s * 0.6;
-	const midY = centerY;
-	const botY = centerY + s * 0.6;
-	const leftX = centerX - s * 0.9;
-	const rightX = centerX + s * 0.9;
+	// Isometric cube vertices
+	const top = { x: centerX, y: CANVAS_PADDING + 2.5 * CELL_SIZE };
+	const left = { x: centerX - s * ISO_COS, y: top.y + s * ISO_SIN };
+	const right = { x: centerX + s * ISO_COS, y: top.y + s * ISO_SIN };
+	const center = { x: centerX, y: top.y + s * ISO_SIN * 2 };
+	const bottomLeft = { x: left.x, y: left.y + s };
+	const bottomRight = { x: right.x, y: right.y + s };
+	const bottom = { x: centerX, y: center.y + s };
 
 	const paths = [
-		// Top face (rhombus)
-		`M ${centerX} ${topY - s * 0.3} L ${rightX} ${topY + s * 0.15} L ${centerX} ${midY - s * 0.15} L ${leftX} ${topY + s * 0.15} Z`,
-		// Left face
-		`M ${leftX} ${topY + s * 0.15} L ${centerX} ${midY - s * 0.15} L ${centerX} ${botY + s * 0.15} L ${leftX} ${midY + s * 0.3} Z`,
-		// Right face
-		`M ${rightX} ${topY + s * 0.15} L ${centerX} ${midY - s * 0.15} L ${centerX} ${botY + s * 0.15} L ${rightX} ${midY + s * 0.3} Z`
+		// Cube outline (single path for clean stroke)
+		`M ${top.x} ${top.y} L ${right.x} ${right.y} L ${right.x} ${bottomRight.y} L ${bottom.x} ${bottom.y} L ${bottomLeft.x} ${bottomLeft.y} L ${left.x} ${left.y} Z`,
+		// Internal lines - center vertical
+		`M ${top.x} ${top.y} L ${center.x} ${center.y} L ${bottom.x} ${bottom.y}`,
+		// Internal lines - to left and right
+		`M ${center.x} ${center.y} L ${left.x} ${left.y}`,
+		`M ${center.x} ${center.y} L ${right.x} ${right.y}`
 	];
 
 	return { paths, cells: uniqueCells };
@@ -171,68 +172,78 @@ export function getCubeLogoCells(): LogoPaths {
 
 /**
  * Get cells that form the CS lettermark
- * Morphic-inspired geometric construction
+ * Morphic-inspired geometric construction with bold strokes
  */
 export function getCSLettermarkCells(): LogoPaths {
 	const cellKeys: string[] = [];
 
-	// "C" letter - left side of grid (cols 2-5, rows 3-9)
-	// Vertical stroke
-	for (let row = 3; row <= 9; row++) {
+	// "C" letter - left side (cols 1-4, rows 2-10)
+	// Two-cell wide vertical stroke for boldness
+	for (let row = 2; row <= 10; row++) {
+		cellKeys.push(getCellKey(row, 1));
 		cellKeys.push(getCellKey(row, 2));
 	}
-	// Top horizontal
-	for (let col = 2; col <= 4; col++) {
+	// Top horizontal arm (2 cells tall)
+	for (let col = 1; col <= 4; col++) {
+		cellKeys.push(getCellKey(2, col));
 		cellKeys.push(getCellKey(3, col));
 	}
-	// Bottom horizontal
-	for (let col = 2; col <= 4; col++) {
+	// Bottom horizontal arm (2 cells tall)
+	for (let col = 1; col <= 4; col++) {
 		cellKeys.push(getCellKey(9, col));
+		cellKeys.push(getCellKey(10, col));
 	}
 
-	// "S" letter - right side of grid (cols 7-10, rows 3-9)
-	// Top horizontal
-	for (let col = 7; col <= 10; col++) {
+	// "S" letter - right side (cols 7-11, rows 2-10)
+	// Top horizontal (2 cells tall)
+	for (let col = 7; col <= 11; col++) {
+		cellKeys.push(getCellKey(2, col));
 		cellKeys.push(getCellKey(3, col));
 	}
-	// Top-left vertical
-	cellKeys.push(getCellKey(4, 7));
-	cellKeys.push(getCellKey(5, 7));
-	// Middle horizontal
-	for (let col = 7; col <= 10; col++) {
+	// Top-left vertical (2 cells wide)
+	for (let row = 2; row <= 5; row++) {
+		cellKeys.push(getCellKey(row, 7));
+		cellKeys.push(getCellKey(row, 8));
+	}
+	// Middle horizontal (2 cells tall)
+	for (let col = 7; col <= 11; col++) {
+		cellKeys.push(getCellKey(5, col));
 		cellKeys.push(getCellKey(6, col));
 	}
-	// Bottom-right vertical
-	cellKeys.push(getCellKey(7, 10));
-	cellKeys.push(getCellKey(8, 10));
-	// Bottom horizontal
-	for (let col = 7; col <= 10; col++) {
+	// Bottom-right vertical (2 cells wide)
+	for (let row = 6; row <= 10; row++) {
+		cellKeys.push(getCellKey(row, 10));
+		cellKeys.push(getCellKey(row, 11));
+	}
+	// Bottom horizontal (2 cells tall)
+	for (let col = 7; col <= 11; col++) {
 		cellKeys.push(getCellKey(9, col));
+		cellKeys.push(getCellKey(10, col));
 	}
 
 	const uniqueCells = [...new Set(cellKeys)];
 
-	// Generate SVG paths for CS lettermark
-	const strokeWidth = CELL_SIZE * 0.8;
-
-	// C path
-	const cLeft = CANVAS_PADDING + 2 * CELL_SIZE + CELL_SIZE / 2;
+	// Generate bold SVG paths for CS lettermark
+	// Coordinates align with grid cells
+	const cLeft = CANVAS_PADDING + 1 * CELL_SIZE;
 	const cRight = CANVAS_PADDING + 4.5 * CELL_SIZE;
-	const cTop = CANVAS_PADDING + 3 * CELL_SIZE + CELL_SIZE / 2;
-	const cBottom = CANVAS_PADDING + 9 * CELL_SIZE + CELL_SIZE / 2;
+	const cTop = CANVAS_PADDING + 2 * CELL_SIZE;
+	const cMidTop = CANVAS_PADDING + 4 * CELL_SIZE;
+	const cMidBot = CANVAS_PADDING + 8 * CELL_SIZE;
+	const cBottom = CANVAS_PADDING + 10 * CELL_SIZE + CELL_SIZE;
 
-	// S path
-	const sLeft = CANVAS_PADDING + 7 * CELL_SIZE + CELL_SIZE / 2;
-	const sRight = CANVAS_PADDING + 10 * CELL_SIZE + CELL_SIZE / 2;
-	const sTop = CANVAS_PADDING + 3 * CELL_SIZE + CELL_SIZE / 2;
-	const sMid = CANVAS_PADDING + 6 * CELL_SIZE + CELL_SIZE / 2;
-	const sBottom = CANVAS_PADDING + 9 * CELL_SIZE + CELL_SIZE / 2;
+	const sLeft = CANVAS_PADDING + 7 * CELL_SIZE;
+	const sRight = CANVAS_PADDING + 11 * CELL_SIZE + CELL_SIZE;
+	const sTop = CANVAS_PADDING + 2 * CELL_SIZE;
+	const sMidTop = CANVAS_PADDING + 5 * CELL_SIZE;
+	const sMidBot = CANVAS_PADDING + 6 * CELL_SIZE + CELL_SIZE;
+	const sBottom = CANVAS_PADDING + 10 * CELL_SIZE + CELL_SIZE;
 
 	const paths = [
-		// C - open rectangle (stroke-based)
+		// C - bold open bracket shape
 		`M ${cRight} ${cTop} L ${cLeft} ${cTop} L ${cLeft} ${cBottom} L ${cRight} ${cBottom}`,
-		// S - serpentine (stroke-based)
-		`M ${sRight} ${sTop} L ${sLeft} ${sTop} L ${sLeft} ${sMid} L ${sRight} ${sMid} L ${sRight} ${sBottom} L ${sLeft} ${sBottom}`
+		// S - bold serpentine
+		`M ${sRight} ${sTop} L ${sLeft} ${sTop} L ${sLeft} ${sMidTop} L ${sRight} ${sMidTop} L ${sRight} ${sBottom} L ${sLeft} ${sBottom}`
 	];
 
 	return { paths, cells: uniqueCells };
