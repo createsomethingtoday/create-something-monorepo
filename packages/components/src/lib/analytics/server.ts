@@ -257,11 +257,15 @@ async function updateSessionSummaries(
 
 		if (existing.results && existing.results.length > 0) {
 			// Update existing session
+			// Use MAX(..., 1) to ensure minimum 1 second duration when page_views > 0
 			await db
 				.prepare(
 					`UPDATE unified_sessions SET
 					 ended_at = ?,
-					 duration_seconds = CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER),
+					 duration_seconds = CASE
+					   WHEN page_views + ? > 0 THEN MAX(CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER), 1)
+					   ELSE CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER)
+					 END,
 					 page_views = page_views + ?,
 					 interactions = interactions + ?,
 					 conversions = conversions + ?,
@@ -272,6 +276,8 @@ async function updateSessionSummaries(
 					 WHERE id = ?`
 				)
 				.bind(
+					lastEvent.timestamp,
+					pageViews,
 					lastEvent.timestamp,
 					lastEvent.timestamp,
 					pageViews,
@@ -287,7 +293,13 @@ async function updateSessionSummaries(
 			// Calculate duration in seconds
 			const startTime = new Date(firstEvent.timestamp).getTime();
 			const endTime = new Date(lastEvent.timestamp).getTime();
-			const durationSeconds = Math.round((endTime - startTime) / 1000);
+			let durationSeconds = Math.round((endTime - startTime) / 1000);
+
+			// Minimum duration fallback: if session has page_view but duration is 0,
+			// use 1 second minimum (evidence of user presence)
+			if (durationSeconds === 0 && pageViews > 0) {
+				durationSeconds = 1;
+			}
 
 			// Create new session
 			await db
