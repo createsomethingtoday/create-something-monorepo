@@ -104,7 +104,7 @@
 </script>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
+	<div class="page-header">
 		<div>
 			<h2 class="page-title mb-2">Newsletter Subscribers</h2>
 			<p class="page-description">Manage your email list</p>
@@ -118,7 +118,7 @@
 	</div>
 
 	<!-- Filters & Search -->
-	<div class="flex gap-4 items-center">
+	<div class="filters-container">
 		<input
 			type="email"
 			bind:value={searchQuery}
@@ -163,71 +163,123 @@
 			{/if}
 		</div>
 	{:else}
-		<div class="table-container">
-			<table class="w-full">
-				<thead class="table-header">
-					<tr>
-						<th class="table-header-cell px-6 py-3">
-							Email
-						</th>
-						<th class="table-header-cell px-6 py-3">
-							Status
-						</th>
-						<th class="table-header-cell px-6 py-3">
-							Subscribed
-						</th>
-						<th class="table-header-cell-right px-6 py-3">
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody class="table-body">
-					{#each filteredSubscribers as subscriber}
-						<tr class="table-row">
-							<td class="table-cell px-6 py-4">
-								{subscriber.email}
-							</td>
-							<td class="px-6 py-4">
-								<span
-									class="status-badge {subscriber.status === 'unsubscribed'
-										? 'status-unsubscribed'
-										: 'status-active'}"
-								>
-									{subscriber.status || 'active'}
-								</span>
-							</td>
-							<td class="table-cell-secondary px-6 py-4">
-								{new Date(subscriber.created_at).toLocaleDateString()}
-							</td>
-							<td class="px-6 py-4">
-								<div class="flex justify-end gap-2">
-									{#if subscriber.status === 'unsubscribed'}
-										<button
-											onclick={() => updateSubscriberStatus(subscriber.id, 'active')}
-											class="btn-small"
-										>
-											Reactivate
-										</button>
-									{:else}
-										<button
-											onclick={() => updateSubscriberStatus(subscriber.id, 'unsubscribed')}
-											class="btn-small"
-										>
-											Unsubscribe
-										</button>
-									{/if}
-									<button
-										onclick={() => deleteSubscriber(subscriber.id)}
-										class="btn-danger"
-									>
-										Delete
-									</button>
-								</div>
-							</td>
+		<!-- Mobile: Card layout -->
+		<div class="responsive-table-cards">
+			{#each filteredSubscribers as subscriber}
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<div class="card-header-content">
+							<span class="responsive-table-card-title">{subscriber.email}</span>
+							<span
+								class="status-badge {subscriber.status === 'unsubscribed'
+									? 'status-unsubscribed'
+									: 'status-active'}"
+							>
+								{subscriber.status || 'active'}
+							</span>
+						</div>
+					</div>
+					<div class="responsive-table-card-body">
+						<div class="responsive-table-card-row">
+							<span class="responsive-table-card-label">Subscribed</span>
+							<span class="responsive-table-card-value">{new Date(subscriber.created_at).toLocaleDateString()}</span>
+						</div>
+					</div>
+					<div class="card-actions-mobile">
+						{#if subscriber.status === 'unsubscribed'}
+							<button
+								onclick={() => updateSubscriberStatus(subscriber.id, 'active')}
+								class="btn-small-mobile"
+							>
+								Reactivate
+							</button>
+						{:else}
+							<button
+								onclick={() => updateSubscriberStatus(subscriber.id, 'unsubscribed')}
+								class="btn-small-mobile"
+							>
+								Unsubscribe
+							</button>
+						{/if}
+						<button
+							onclick={() => deleteSubscriber(subscriber.id)}
+							class="btn-danger-mobile"
+						>
+							Delete
+						</button>
+					</div>
+				</div>
+			{/each}
+		</div>
+
+		<!-- Desktop: Table layout -->
+		<div class="responsive-table-wrapper">
+			<div class="table-container">
+				<table class="responsive-table">
+					<thead class="table-header">
+						<tr>
+							<th class="table-header-cell px-6 py-3">
+								Email
+							</th>
+							<th class="table-header-cell px-6 py-3">
+								Status
+							</th>
+							<th class="table-header-cell px-6 py-3">
+								Subscribed
+							</th>
+							<th class="table-header-cell-right px-6 py-3">
+								Actions
+							</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody class="table-body">
+						{#each filteredSubscribers as subscriber}
+							<tr class="table-row">
+								<td class="table-cell px-6 py-4">
+									{subscriber.email}
+								</td>
+								<td class="px-6 py-4">
+									<span
+										class="status-badge {subscriber.status === 'unsubscribed'
+											? 'status-unsubscribed'
+											: 'status-active'}"
+									>
+										{subscriber.status || 'active'}
+									</span>
+								</td>
+								<td class="table-cell-secondary px-6 py-4">
+									{new Date(subscriber.created_at).toLocaleDateString()}
+								</td>
+								<td class="px-6 py-4">
+									<div class="flex justify-end gap-2">
+										{#if subscriber.status === 'unsubscribed'}
+											<button
+												onclick={() => updateSubscriberStatus(subscriber.id, 'active')}
+												class="btn-small"
+											>
+												Reactivate
+											</button>
+										{:else}
+											<button
+												onclick={() => updateSubscriberStatus(subscriber.id, 'unsubscribed')}
+												class="btn-small"
+											>
+												Unsubscribe
+											</button>
+										{/if}
+										<button
+											onclick={() => deleteSubscriber(subscriber.id)}
+											class="btn-danger"
+										>
+											Delete
+										</button>
+									</div>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		</div>
 
 		<!-- Pagination Info -->
@@ -238,7 +290,7 @@
 
 	<!-- Stats -->
 	<div class="stats-section pt-6">
-		<div class="grid grid-cols-3 gap-4">
+		<div class="stats-grid">
 			<div class="stat-item">
 				<div class="stat-value">{subscribers.length}</div>
 				<div class="stat-label">Total Subscribers</div>
@@ -258,6 +310,21 @@
 </div>
 
 <style>
+	/* Page Header - Responsive */
+	.page-header {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	@media (min-width: 768px) {
+		.page-header {
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+		}
+	}
+
 	.page-title {
 		font-size: var(--text-h1);
 		font-weight: 700;
@@ -271,10 +338,32 @@
 		background: var(--color-bg-elevated);
 		border-radius: var(--radius-lg);
 		transition: background var(--duration-micro) var(--ease-standard);
+		width: 100%;
+	}
+
+	@media (min-width: 768px) {
+		.btn-secondary {
+			width: auto;
+		}
 	}
 
 	.btn-secondary:hover {
 		background: var(--color-hover);
+	}
+
+	/* Filters - Responsive */
+	.filters-container {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	@media (min-width: 768px) {
+		.filters-container {
+			flex-direction: row;
+			gap: var(--space-md);
+			align-items: center;
+		}
 	}
 
 	.input-field {
@@ -283,6 +372,7 @@
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-micro) var(--ease-standard);
+		width: 100%;
 	}
 
 	.input-field::placeholder {
@@ -300,6 +390,13 @@
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-micro) var(--ease-standard);
+		width: 100%;
+	}
+
+	@media (min-width: 768px) {
+		.select-field {
+			width: auto;
+		}
 	}
 
 	.select-field:focus {
@@ -336,6 +433,51 @@
 		color: var(--color-fg-tertiary);
 	}
 
+	/* Mobile Card Layout Overrides */
+	.card-header-content {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.card-actions-mobile {
+		display: flex;
+		gap: var(--space-sm);
+		margin-top: var(--space-md);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.btn-small-mobile {
+		flex: 1;
+		padding: var(--space-sm);
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		text-align: center;
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-small-mobile:hover {
+		background: var(--color-hover);
+	}
+
+	.btn-danger-mobile {
+		flex: 1;
+		padding: var(--space-sm);
+		background: var(--color-error-muted);
+		color: var(--color-error);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		text-align: center;
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-danger-mobile:hover {
+		background: rgba(212, 77, 77, 0.3);
+	}
+
+	/* Desktop Table */
 	.table-container {
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
@@ -398,13 +540,13 @@
 	}
 
 	.status-unsubscribed {
-		background: rgba(239, 68, 68, 0.2);
-		color: #fca5a5;
+		background: var(--color-error-muted);
+		color: var(--color-error);
 	}
 
 	.status-active {
-		background: rgba(74, 222, 128, 0.2);
-		color: #86efac;
+		background: var(--color-success-muted);
+		color: var(--color-success);
 	}
 
 	.btn-small {
@@ -421,15 +563,15 @@
 
 	.btn-danger {
 		padding: 0.25rem 0.75rem;
-		background: rgba(239, 68, 68, 0.2);
-		color: #fca5a5;
+		background: var(--color-error-muted);
+		color: var(--color-error);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
 		transition: background var(--duration-micro) var(--ease-standard);
 	}
 
 	.btn-danger:hover {
-		background: rgba(239, 68, 68, 0.3);
+		background: rgba(212, 77, 77, 0.3);
 	}
 
 	.pagination-info {
@@ -438,12 +580,35 @@
 		color: var(--color-fg-tertiary);
 	}
 
+	/* Stats Grid - Responsive */
 	.stats-section {
 		border-top: 1px solid var(--color-border-default);
 	}
 
+	.stats-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--space-md);
+	}
+
+	@media (min-width: 768px) {
+		.stats-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
 	.stat-item {
 		text-align: center;
+		padding: var(--space-sm);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-md);
+	}
+
+	@media (min-width: 768px) {
+		.stat-item {
+			background: transparent;
+			padding: 0;
+		}
 	}
 
 	.stat-value {
