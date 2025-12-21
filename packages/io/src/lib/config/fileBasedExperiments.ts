@@ -374,6 +374,48 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ║   Zuhandenheit → Vorhandenheit → Gestell → Gelassenheit              ║
     ╚═══════════════════════════════════════════════════════════════════════╝
 `
+	},
+	{
+		id: 'file-grid-logo',
+		slug: 'grid-logo',
+		title: 'Grid as Revelation: When Structure Becomes Logo',
+		description: 'Interactive exploration of logo construction from geometric first principles. The grid is not scaffolding to remove—it is the foundation that makes form meaningful.',
+		excerpt_short: 'Logos emerge from grids; the construction is the meaning',
+		excerpt_long: 'This experiment explores two logo concepts through their underlying grid geometry: the existing isometric cube and a new "CS" lettermark. Users interact with the grid to reveal the construction lines, embodying Aletheia (unconcealment). The logo is not added to the grid—it emerges from it.',
+		category: 'research',
+		tags: ['Logo Design', 'Isometric', 'Grid Systems', 'Aletheia', 'Interactive', 'SVG'],
+		created_at: '2025-12-21T00:00:00Z',
+		updated_at: '2025-12-21T00:00:00Z',
+		reading_time_minutes: 10,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-aletheia', // Truth as unconcealment
+			'heidegger-zuhandenheit', // Tool recedes into use
+			'rams-principle-10', // As little design as possible
+			'subtractive-triad' // Grid is DRY, logo is Rams, system is Heidegger
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════╗
+    ║   GRID AS REVELATION                                                  ║
+    ║                                                                       ║
+    ║   ┌─────────────────────────────┬────────────────────────────────┐    ║
+    ║   │  ╔═══╦═══╦═══╦═══╗         │   ╔═══╦═══╦═══╦═══╦═══╦═══╗    │    ║
+    ║   │  ║   ║   ║   ║   ║         │   ║ C ║   ║   ║ S ║   ║   ║    │    ║
+    ║   │  ╠═══╬═══╬═══╬═══╣         │   ║   ║   ║   ╠═══╬═══╬═══╣    │    ║
+    ║   │  ║   ║ ◇ ║   ║   ║  cube   │   ║   ║   ║   ║   ║   ║ S ║    │    ║
+    ║   │  ╠═══╬═══╬═══╬═══╣         │   ╠═══╬═══╬═══╬═══╬═══╬═══╣    │    ║
+    ║   │  ║   ║   ║   ║   ║         │   ║ C ║   ║   ║ S ║   ║   ║    │    ║
+    ║   │  ╚═══╩═══╩═══╩═══╝         │   ╚═══╩═══╩═══╩═══╩═══╩═══╝    │    ║
+    ║   │     isometric cube         │       CS lettermark            │    ║
+    ║   └─────────────────────────────┴────────────────────────────────┘    ║
+    ║                                                                       ║
+    ║   Click • Drag • Timeline → Reveal the structure beneath              ║
+    ║                                                                       ║
+    ║   "The grid was always there. The logo emerges through                ║
+    ║    the removal of hiddenness." — Aletheia                             ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+`
 	}
 ];
 
