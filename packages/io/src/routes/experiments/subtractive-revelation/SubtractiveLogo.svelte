@@ -6,12 +6,12 @@
 	 *
 	 * The cube is always there. Noise conceals it.
 	 * User interaction removes the noise, revealing truth.
+	 *
+	 * Uses SVG <animate> elements following SubtractiveTriad.svelte pattern.
 	 */
 
-	import { untrack } from 'svelte';
 	import { isometricBoxPath } from '@create-something/components/visual';
-	import NoiseLayer from './NoiseLayer.svelte';
-	import type { InteractionMode, Particle } from './types';
+	import type { InteractionMode } from './types';
 
 	interface Props {
 		mode: InteractionMode;
@@ -20,9 +20,20 @@
 		onProgressChange?: (percent: number) => void;
 	}
 
-	let { mode, size = 400, noiseCount = 300, onProgressChange }: Props = $props();
+	let { mode, size = 400, noiseCount = 200, onProgressChange }: Props = $props();
 
-	// Generate noise particles
+	// Particle state - only track revealed status, not animation
+	interface Particle {
+		id: string;
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+		opacity: number;
+		revealed: boolean;
+	}
+
+	// Generate noise particles concentrated around cube
 	function generateParticles(count: number): Particle[] {
 		const particles: Particle[] = [];
 		const cubeRadius = size * 0.35;
@@ -30,11 +41,10 @@
 		const centerY = size / 2;
 
 		for (let i = 0; i < count; i++) {
-			// Concentrate particles around the cube area
 			const angle = Math.random() * Math.PI * 2;
 			const distance = Math.random() * cubeRadius * 1.2;
 			const x = centerX + Math.cos(angle) * distance;
-			const y = centerY + Math.sin(angle) * distance * 0.8; // Slightly flattened for isometric
+			const y = centerY + Math.sin(angle) * distance * 0.8;
 
 			particles.push({
 				id: `p-${i}`,
@@ -42,9 +52,8 @@
 				y: y - 2,
 				width: 2 + Math.random() * 4,
 				height: 2 + Math.random() * 4,
-				opacity: 0.2 + Math.random() * 0.4,
-				revealed: false,
-				revealDelay: 0
+				opacity: 0.3 + Math.random() * 0.4,
+				revealed: false
 			});
 		}
 		return particles;
@@ -52,34 +61,31 @@
 
 	let particles = $state<Particle[]>(generateParticles(noiseCount));
 	let isDragging = $state(false);
-	let stillnessTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 
-	// Calculate obscuration percentage
-	const obscurationPercent = $derived.by(() => {
-		const hidden = particles.filter((p) => !p.revealed).length;
-		return Math.round((hidden / particles.length) * 100);
-	});
+	// Non-reactive timer - doesn't need to trigger updates
+	let stillnessTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// Track previous value to avoid unnecessary callbacks
-	let previousProgress = $state(-1);
+	// Progress calculation
+	const revealedCount = $derived(particles.filter((p) => p.revealed).length);
+	const progress = $derived(Math.round((revealedCount / particles.length) * 100));
 
-	// Notify parent of progress changes
+	// Track last reported progress to avoid spam
+	let lastReportedProgress = -1;
+
+	// Report progress changes (throttled)
 	$effect(() => {
-		const currentProgress = 100 - obscurationPercent;
-		const prev = untrack(() => previousProgress);
-		if (currentProgress !== prev) {
-			previousProgress = currentProgress;
-			onProgressChange?.(currentProgress);
+		if (progress !== lastReportedProgress) {
+			lastReportedProgress = progress;
+			onProgressChange?.(progress);
 		}
 	});
 
-	// Cube paths (always present beneath noise)
+	// Cube paths
 	const cubeSize = size * 0.35;
 	const cubePaths = $derived(isometricBoxPath(size / 2, size / 2, cubeSize, cubeSize, cubeSize));
 
 	// Reveal particles within radius
 	function revealInRadius(x: number, y: number, radius: number) {
-		let staggerIndex = 0;
 		particles = particles.map((p) => {
 			if (p.revealed) return p;
 
@@ -88,28 +94,24 @@
 			const dist = Math.sqrt(dx * dx + dy * dy);
 
 			if (dist < radius) {
-				staggerIndex++;
-				return {
-					...p,
-					revealed: true,
-					revealDelay: mode === 'dissolve' ? staggerIndex * 15 : 0
-				};
+				return { ...p, revealed: true };
 			}
 			return p;
 		});
 	}
 
-	// Handle stillness mode
-	function resetStillnessTimer() {
+	// Stillness mode - auto-reveal when user is still
+	function startStillnessTimer() {
+		clearStillnessTimer();
+		if (mode === 'stillness') {
+			stillnessTimer = setTimeout(autoReveal, 2000);
+		}
+	}
+
+	function clearStillnessTimer() {
 		if (stillnessTimer) {
 			clearTimeout(stillnessTimer);
-		}
-
-		if (mode === 'stillness') {
-			stillnessTimer = setTimeout(() => {
-				// Auto-reveal particles gradually
-				autoReveal();
-			}, 2000);
+			stillnessTimer = null;
 		}
 	}
 
@@ -119,40 +121,37 @@
 		const unrevealed = particles.filter((p) => !p.revealed);
 		if (unrevealed.length === 0) return;
 
-		// Reveal 5% at a time
+		// Reveal ~5% of remaining particles
 		const toReveal = Math.max(1, Math.floor(unrevealed.length * 0.05));
 		let revealed = 0;
 
 		particles = particles.map((p) => {
 			if (p.revealed || revealed >= toReveal) return p;
 			revealed++;
-			return { ...p, revealed: true, revealDelay: revealed * 30 };
+			return { ...p, revealed: true };
 		});
 
-		// Continue auto-revealing
-		stillnessTimer = setTimeout(autoReveal, 500);
+		// Continue revealing
+		stillnessTimer = setTimeout(autoReveal, 400);
 	}
 
 	// Event handlers
 	function handleMouseDown(event: MouseEvent) {
 		if (mode === 'stillness') {
-			resetStillnessTimer();
+			startStillnessTimer();
 			return;
 		}
-
 		if (mode === 'wipe') {
 			isDragging = true;
 		}
-
 		handleInteraction(event);
 	}
 
 	function handleMouseMove(event: MouseEvent) {
 		if (mode === 'stillness') {
-			resetStillnessTimer();
+			startStillnessTimer();
 			return;
 		}
-
 		if (mode === 'wipe' && isDragging) {
 			handleInteraction(event);
 		}
@@ -173,7 +172,6 @@
 		const rect = svg.getBoundingClientRect();
 		const x = ((event.clientX - rect.left) / rect.width) * size;
 		const y = ((event.clientY - rect.top) / rect.height) * size;
-
 		const radius = mode === 'wipe' ? 40 : 60;
 		revealInRadius(x, y, radius);
 	}
@@ -181,10 +179,9 @@
 	// Touch handlers
 	function handleTouchStart(event: TouchEvent) {
 		if (mode === 'stillness') {
-			resetStillnessTimer();
+			startStillnessTimer();
 			return;
 		}
-
 		event.preventDefault();
 		if (mode === 'wipe') {
 			isDragging = true;
@@ -194,10 +191,9 @@
 
 	function handleTouchMove(event: TouchEvent) {
 		if (mode === 'stillness') {
-			resetStillnessTimer();
+			startStillnessTimer();
 			return;
 		}
-
 		event.preventDefault();
 		if (mode === 'wipe' && isDragging) {
 			handleTouchInteraction(event);
@@ -218,30 +214,33 @@
 		const rect = svg.getBoundingClientRect();
 		const x = ((touch.clientX - rect.left) / rect.width) * size;
 		const y = ((touch.clientY - rect.top) / rect.height) * size;
-
 		const radius = mode === 'wipe' ? 40 : 60;
 		revealInRadius(x, y, radius);
 	}
 
-	// Initialize stillness mode
+	// Initialize/cleanup stillness mode on mode change
 	$effect(() => {
 		if (mode === 'stillness') {
-			resetStillnessTimer();
+			startStillnessTimer();
+		} else {
+			clearStillnessTimer();
 		}
-		return () => {
-			if (stillnessTimer) clearTimeout(stillnessTimer);
-		};
+		return clearStillnessTimer;
 	});
 
 	export function reset() {
+		clearStillnessTimer();
 		particles = generateParticles(noiseCount);
-		if (stillnessTimer) clearTimeout(stillnessTimer);
-		if (mode === 'stillness') resetStillnessTimer();
+		lastReportedProgress = -1;
+		if (mode === 'stillness') {
+			startStillnessTimer();
+		}
 	}
 </script>
 
 <div class="subtractive-logo-wrapper">
 	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<svg
 		viewBox="0 0 {size} {size}"
 		class="subtractive-logo"
@@ -249,7 +248,7 @@
 		class:mode-dissolve={mode === 'dissolve'}
 		class:mode-stillness={mode === 'stillness'}
 		role="application"
-		aria-label="Interactive logo revelation - {mode} mode. {mode === 'wipe' ? 'Drag to reveal.' : mode === 'dissolve' ? 'Click to reveal.' : 'Be still to reveal.'}"
+		aria-label="Interactive logo revelation - {mode} mode"
 		tabindex="0"
 		onmousedown={handleMouseDown}
 		onmousemove={handleMouseMove}
@@ -261,7 +260,6 @@
 		ontouchend={handleTouchEnd}
 		onkeydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') {
-				// Reveal center area on keyboard interaction
 				revealInRadius(size / 2, size / 2, 60);
 			}
 		}}
@@ -277,11 +275,23 @@
 		</g>
 
 		<!-- Noise layer (obscures the truth) -->
-		<NoiseLayer {particles} />
+		<g class="noise-layer">
+			{#each particles as particle (particle.id)}
+				<rect
+					x={particle.x}
+					y={particle.y}
+					width={particle.width}
+					height={particle.height}
+					class="noise-particle"
+					class:revealed={particle.revealed}
+					style:--particle-opacity={particle.opacity}
+				/>
+			{/each}
+		</g>
 	</svg>
 
 	<div class="progress-indicator">
-		<span class="progress-value">{100 - obscurationPercent}%</span>
+		<span class="progress-value">{progress}%</span>
 		<span class="progress-label">revealed</span>
 	</div>
 </div>
@@ -316,7 +326,7 @@
 		fill: var(--color-bg-pure, #000000);
 	}
 
-	/* Cube faces - always present beneath noise */
+	/* Cube faces */
 	.face {
 		stroke: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
 		stroke-width: 1;
@@ -333,6 +343,17 @@
 
 	.face-right {
 		fill: rgba(255, 255, 255, 0.05);
+	}
+
+	/* Noise particles - simple CSS transition */
+	.noise-particle {
+		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		opacity: var(--particle-opacity, 0.4);
+		transition: opacity 200ms ease-out;
+	}
+
+	.noise-particle.revealed {
+		opacity: 0;
 	}
 
 	/* Progress indicator */
