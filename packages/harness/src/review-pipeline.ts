@@ -27,6 +27,7 @@ const execAsync = promisify(exec);
 
 /**
  * Build review context from checkpoint data.
+ * Enhanced: Now includes full harness diff for DRY violation detection.
  */
 export async function buildReviewContext(
   checkpoint: Checkpoint,
@@ -36,18 +37,41 @@ export async function buildReviewContext(
   let gitDiff = '';
   let filesChanged: string[] = [];
   let recentCommits: string[] = [];
+  let fullHarnessDiff = '';
 
   // Get git diff since start of checkpoint period
   // We estimate this by looking at commits proportional to completed issues
   const commitCount = Math.max(checkpoint.issuesCompleted.length, 5);
 
   try {
-    // Get diff of recent changes
+    // Get diff of recent changes (checkpoint period)
     const { stdout: diff } = await execAsync(`git diff HEAD~${commitCount}..HEAD 2>/dev/null || git diff HEAD~1..HEAD 2>/dev/null || echo ""`, {
       cwd,
       maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large diffs
     });
     gitDiff = diff;
+
+    // NEW: Get full harness diff for DRY detection
+    // Try to diff against main/master to see all harness changes
+    try {
+      const { stdout: harnessDiff } = await execAsync(
+        `git diff main...HEAD 2>/dev/null || git diff master...HEAD 2>/dev/null || echo ""`,
+        { cwd, maxBuffer: 10 * 1024 * 1024 }
+      );
+      fullHarnessDiff = harnessDiff;
+    } catch {
+      // Fall back to more commits if main/master not available
+      try {
+        const { stdout: harnessDiff } = await execAsync(`git diff HEAD~20..HEAD 2>/dev/null || echo ""`, {
+          cwd,
+          maxBuffer: 10 * 1024 * 1024,
+        });
+        fullHarnessDiff = harnessDiff;
+      } catch {
+        // Use checkpoint diff as fallback
+        fullHarnessDiff = gitDiff;
+      }
+    }
 
     const { stdout: files } = await execAsync(
       `git diff --name-only HEAD~${commitCount}..HEAD 2>/dev/null || git diff --name-only HEAD~1..HEAD 2>/dev/null || echo ""`,
@@ -82,6 +106,7 @@ export async function buildReviewContext(
     checkpointId: checkpoint.id,
     harnessId: checkpoint.harnessId,
     gitDiff,
+    fullHarnessDiff,
     completedIssues,
     filesChanged,
     recentCommits,

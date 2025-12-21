@@ -46,16 +46,31 @@ export function generateReviewPrompt(
   }
   contextLines.push('');
 
-  contextLines.push('## Git Diff');
+  contextLines.push('## Git Diff (This Checkpoint)');
   contextLines.push('```diff');
-  // Truncate diff to avoid context overflow (50k chars max)
-  const truncatedDiff = context.gitDiff.slice(0, 50000);
+  // Truncate diff to avoid context overflow (30k chars for checkpoint)
+  const truncatedDiff = context.gitDiff.slice(0, 30000);
   contextLines.push(truncatedDiff);
-  if (context.gitDiff.length > 50000) {
+  if (context.gitDiff.length > 30000) {
     contextLines.push('... (diff truncated)');
   }
   contextLines.push('```');
   contextLines.push('');
+
+  // For architecture reviewer, include full harness diff for DRY detection
+  if (config.type === 'architecture' && context.fullHarnessDiff) {
+    contextLines.push('## Full Harness Diff (All Changes Since Branch Start)');
+    contextLines.push('**IMPORTANT: Check this for DRY violations across all files modified in this harness run.**');
+    contextLines.push('```diff');
+    // Allocate 20k chars for full harness diff
+    const truncatedFullDiff = context.fullHarnessDiff.slice(0, 20000);
+    contextLines.push(truncatedFullDiff);
+    if (context.fullHarnessDiff.length > 20000) {
+      contextLines.push('... (full harness diff truncated)');
+    }
+    contextLines.push('```');
+    contextLines.push('');
+  }
 
   contextLines.push('## Completed Issues');
   if (context.completedIssues.length > 0) {
