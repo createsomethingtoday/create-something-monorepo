@@ -238,7 +238,7 @@
 	.fluid-assembly {
 		display: inline-block;
 		font-family: var(--font-sans);
-		font-size: var(--text-h1);
+		font-size: var(--text-display);
 		font-weight: var(--font-regular);
 		line-height: var(--leading-tight);
 		letter-spacing: var(--tracking-tight);
