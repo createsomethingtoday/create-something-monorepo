@@ -22,6 +22,12 @@
 	export let totalForPercentage: number | undefined = undefined;
 	export let emptyMessage: string = 'No data yet';
 
+	// Mobile responsiveness props
+	/** Hide rank column on mobile (<480px) to save space */
+	export let hideRankOnMobile: boolean = false;
+	/** Hide percentage column on mobile (<480px) to save space */
+	export let hidePercentageOnMobile: boolean = false;
+
 	// Column configuration (agentic: sensible defaults)
 	export let labelKey: keyof T = 'label' as keyof T;
 	export let countKey: keyof T = 'count' as keyof T;
@@ -47,7 +53,7 @@
 			<div class="row flex items-center gap-2 py-1.5">
 				<!-- Rank number (Tufte: muted, right-aligned) -->
 				{#if showRank}
-					<span class="rank w-4 text-right">{i + 1}</span>
+					<span class="rank w-4 text-right" class:hide-on-mobile={hideRankOnMobile}>{i + 1}</span>
 				{/if}
 
 				<!-- Optional badge (e.g., property tag) -->
@@ -67,7 +73,7 @@
 
 				<!-- Percentage of total (Tufte: subtle context) -->
 				{#if showPercentage}
-					<span class="percentage w-10 text-right">
+					<span class="percentage w-10 text-right" class:hide-on-mobile={hidePercentageOnMobile}>
 						{getPercentage(item[countKey] as number, total)}%
 					</span>
 				{/if}
@@ -80,6 +86,9 @@
 	.table {
 		font-size: var(--text-caption);
 		font-family: ui-monospace, monospace;
+		/* Prevent horizontal overflow */
+		overflow-x: auto;
+		min-width: 0;
 	}
 
 	.empty-message {
@@ -97,6 +106,7 @@
 
 	.rank {
 		color: var(--color-fg-subtle);
+		flex-shrink: 0;
 	}
 
 	.badge {
@@ -104,17 +114,42 @@
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-sm);
 		font-size: 10px;
+		flex-shrink: 0;
 	}
 
 	.label {
 		color: var(--color-fg-secondary);
+		min-width: 0; /* Allow text truncation to work properly */
 	}
 
 	.count {
 		color: var(--color-fg-tertiary);
+		flex-shrink: 0;
 	}
 
 	.percentage {
 		color: var(--color-fg-subtle);
+		flex-shrink: 0;
+	}
+
+	/* Mobile responsiveness: reduce gap and padding on small screens */
+	@media (max-width: 480px) {
+		.row {
+			gap: 0.25rem; /* Tighter gap on mobile (was gap-2 = 0.5rem) */
+			padding-top: 0.375rem;
+			padding-bottom: 0.375rem;
+		}
+
+		.count {
+			width: 2.5rem; /* Smaller count column on mobile */
+		}
+
+		.percentage {
+			width: 2rem; /* Smaller percentage column on mobile */
+		}
+
+		.hide-on-mobile {
+			display: none;
+		}
 	}
 </style>
