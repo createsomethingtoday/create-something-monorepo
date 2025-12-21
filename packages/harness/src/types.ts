@@ -553,6 +553,8 @@ export interface ReviewContext {
   checkpointId: string;
   harnessId: string;
   gitDiff: string;
+  /** Full diff since harness branch started - for detecting cross-checkpoint DRY violations */
+  fullHarnessDiff: string;
   completedIssues: BeadsIssue[];
   filesChanged: string[];
   recentCommits: string[];
