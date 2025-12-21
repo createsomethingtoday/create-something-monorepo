@@ -495,8 +495,8 @@
 	}
 
 	.rank-badge.rank-1 {
-		background: rgba(250, 204, 21, 0.2);
-		color: #ca8a04;
+		background: var(--color-rank-gold-muted);
+		color: var(--color-rank-gold);
 	}
 
 	.rank-badge.rank-2 {
@@ -505,8 +505,8 @@
 	}
 
 	.rank-badge.rank-3 {
-		background: rgba(234, 88, 12, 0.2);
-		color: #c2410c;
+		background: var(--color-rank-bronze-muted);
+		color: var(--color-rank-bronze);
 	}
 
 	.rank-badge.rank-4,
