@@ -4,6 +4,13 @@
 // Types
 export * from './types.js';
 
+// Styles
+// CSS-based icons: import '@create-something/components/brand/icons.css'
+// - .icon-cube: Isometric cube mark with Canon face opacities
+// - .icon-cube-mono: Single-color cube variant
+// - Size classes: .icon-xs (16px), .icon-sm (24px), .icon-md (32px), .icon-lg (48px), .icon-xl (64px)
+// - Animation classes: .icon-pulse, .icon-spin
+
 // Placeholder exports for future components
 // These will be populated as components are implemented:
 // - marks/CubeMark.svelte
