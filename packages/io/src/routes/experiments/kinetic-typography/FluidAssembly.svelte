@@ -126,6 +126,30 @@
 		return baseWeight + (emphasisWeight - baseWeight) * easedProgress;
 	}
 
+	// Calculate word opacity based on emphasis
+	// Non-emphasized words dim slightly, emphasized words stay bright
+	function getWordOpacity(wordIndex: number): number {
+		const baseOpacity = 0.6;     // Dimmed for non-emphasis
+		const emphasisOpacity = 1.0; // Full brightness
+
+		if (!hasAnimated || reducedMotion) {
+			return emphasis.includes(wordIndex) ? emphasisOpacity : baseOpacity;
+		}
+
+		if (progress < PHASES.emphasize.start) return 1; // All bright until emphasis phase
+
+		const emphasisProgress = (progress - PHASES.emphasize.start) /
+			(PHASES.emphasize.end - PHASES.emphasize.start);
+		const easedProgress = easeOutCubic(emphasisProgress);
+
+		if (emphasis.includes(wordIndex)) {
+			return emphasisOpacity; // Emphasized words stay at full opacity
+		} else {
+			// Non-emphasized words dim
+			return 1 - (1 - baseOpacity) * easedProgress;
+		}
+	}
+
 	// Easing function
 	function easeOutCubic(t: number): number {
 		return 1 - Math.pow(1 - t, 3);
@@ -189,7 +213,7 @@
 		<span
 			class="word"
 			class:emphasis={emphasis.includes(wordIndex)}
-			style="font-weight: {getWordWeight(wordIndex)};"
+			style="font-weight: {getWordWeight(wordIndex)}; opacity: {getWordOpacity(wordIndex)};"
 		>
 			{#each word.split('') as char, charIndex}
 				{@const globalCharIndex = words.slice(0, wordIndex).join('').length + charIndex}
@@ -223,7 +247,9 @@
 
 	.word {
 		display: inline-block;
-		transition: font-weight var(--duration-standard) var(--ease-standard);
+		transition:
+			font-weight var(--duration-standard) var(--ease-standard),
+			opacity var(--duration-standard) var(--ease-standard);
 	}
 
 	.word.emphasis {
