@@ -261,6 +261,7 @@ async function updateSessionSummaries(
 				.prepare(
 					`UPDATE unified_sessions SET
 					 ended_at = ?,
+					 duration_seconds = CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER),
 					 page_views = page_views + ?,
 					 interactions = interactions + ?,
 					 conversions = conversions + ?,
@@ -271,6 +272,7 @@ async function updateSessionSummaries(
 					 WHERE id = ?`
 				)
 				.bind(
+					lastEvent.timestamp,
 					lastEvent.timestamp,
 					pageViews,
 					interactions,

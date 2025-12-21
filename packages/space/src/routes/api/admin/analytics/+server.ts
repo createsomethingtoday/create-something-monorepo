@@ -75,13 +75,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 						`SELECT
 						   COUNT(DISTINCT id) as total,
 						   AVG(page_views) as avgPageViews,
-						   AVG(
-						     CASE
-						       WHEN ended_at IS NOT NULL AND started_at IS NOT NULL
-						       THEN (julianday(ended_at) - julianday(started_at)) * 86400
-						       ELSE 0
-						     END
-						   ) as avgDuration
+						   AVG(COALESCE(duration_seconds, 0)) as avgDuration
 						 FROM unified_sessions
 						 WHERE started_at >= datetime('now', ? || ' days')`
 					)
