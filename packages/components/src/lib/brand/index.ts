@@ -4,6 +4,15 @@
 // Types
 export * from './types.js';
 
+// OG Image Generation
+export {
+	generateOGSVG,
+	generateMinimalOGSVG,
+	generateOGDataURI,
+	OG_WIDTH,
+	OG_HEIGHT
+} from './og-template.js';
+
 // Styles
 // CSS-based icons: import '@create-something/components/brand/icons.css'
 // - .icon-cube: Isometric cube mark with Canon face opacities
@@ -19,6 +28,5 @@ export * from './types.js';
 // - states/CubeLoader.svelte
 // - states/CubeSkeleton.svelte
 // - social/OGImage.svelte
-// - social/og-template.ts
 // - utils/cube-geometry.ts
 // - utils/cube-animations.ts
