@@ -375,45 +375,6 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ╚═══════════════════════════════════════════════════════════════════════╝
 `
 	},
-	{
-		id: 'file-subtractive-revelation',
-		slug: 'subtractive-revelation',
-		title: 'Subtractive Revelation: Logo as Aletheia',
-		description: 'An interactive experiment where the CREATE SOMETHING cube emerges through noise removal. The cube was always there—we merely reveal it through disciplined subtraction.',
-		excerpt_short: 'The cube was always there. You merely removed what concealed it.',
-		excerpt_long: 'This experiment embodies Heidegger\'s Aletheia—truth as unconcealment. Rather than building up a logo through additive means (grids, construction), we start with noise that conceals the isometric cube. User interaction subtracts the noise, revealing what was always present beneath.',
-		category: 'research',
-		tags: ['Heidegger', 'Aletheia', 'Logo', 'Interactive', 'Subtraction', 'Philosophy', 'Animation'],
-		created_at: '2025-12-21T00:00:00Z',
-		updated_at: '2025-12-21T00:00:00Z',
-		reading_time_minutes: 5,
-		difficulty: 'beginner',
-		is_file_based: true,
-		tests_principles: [
-			'heidegger-aletheia', // Truth as unconcealment—the cube was always there
-			'subtractive-triad', // Creation is removal of what obscures
-			'rams-principle-10', // As little design as possible—noise is the only addition
-			'heidegger-zuhandenheit', // Wipe mode: tool recedes into use
-			'heidegger-gelassenheit' // Dissolve/stillness modes: letting-be
-		],
-		ascii_art: `
-    ╔═══════════════════════════════════════════════════════════════════════╗
-    ║   SUBTRACTIVE REVELATION                                              ║
-    ║                                                                       ║
-    ║   Before:                        After:                               ║
-    ║   ┌────────────────────┐         ┌────────────────────┐               ║
-    ║   │ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │         │                    │               ║
-    ║   │ ▒▒▒░▒▒▒▒▒▒▒▒▒░▒▒▒▒ │         │       ╱╲           │               ║
-    ║   │ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │   ──►   │      ╱  ╲          │               ║
-    ║   │ ▒▒░▒▒▒▒▒░▒▒▒▒▒▒░▒▒ │         │     ╱╲  ╱╲         │               ║
-    ║   │ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │         │    ╱  ╲╱  ╲        │               ║
-    ║   │ ▒▒▒▒░▒▒▒▒▒▒▒░▒▒▒▒▒ │         │                    │               ║
-    ║   └────────────────────┘         └────────────────────┘               ║
-    ║                                                                       ║
-    ║   "The cube was always there. You merely removed what concealed it."  ║
-    ╚═══════════════════════════════════════════════════════════════════════╝
-`
-	},
 ];
 
 /**
