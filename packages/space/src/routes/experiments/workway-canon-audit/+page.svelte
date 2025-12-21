@@ -191,34 +191,71 @@
 				<span class="label-text">REMEDIATION</span>
 			</div>
 
-			<div class="overflow-x-auto">
+			<!-- Mobile Card Layout -->
+			<div class="responsive-table-cards">
+				{#each [
+					{ violation: 'No retry logic', fix: 'retry.ts with exponential backoff', code: true },
+					{ violation: 'Capabilities overstatement', fix: 'Honest declarations in Gmail, Stripe', code: false },
+					{ violation: 'No request timeout', fix: 'AbortController in all 5 integrations', code: false },
+					{ violation: 'No webhook tests', fix: '42 tests (Stripe + template)', code: false },
+					{ violation: 'Type conflicts', fix: 'Removed duplicate definitions', code: false }
+				] as item}
+					<div class="violation-card">
+						<div class="violation-card-header">
+							<span class="violation-status">✗</span>
+							<span class="violation-title">{item.violation}</span>
+						</div>
+						<div class="violation-fix">
+							<span class="violation-fix-label">Fix:</span>
+							{#if item.code}
+								<code class="code-text-muted">{item.fix}</code>
+							{:else}
+								<span>{item.fix}</span>
+							{/if}
+						</div>
+						<div class="violation-resolved">
+							<span class="violation-resolved-status">✓</span>
+							<span>Resolved</span>
+						</div>
+					</div>
+				{/each}
+			</div>
+
+			<!-- Desktop Table Layout -->
+			<div class="responsive-table-wrapper">
 				<table class="data-table w-full">
 					<thead>
 						<tr class="table-header">
 							<th class="pb-2">Violation</th>
 							<th class="pb-2">Fix</th>
+							<th class="pb-2">Status</th>
 						</tr>
 					</thead>
 					<tbody class="table-body">
 						<tr class="table-row">
 							<td class="py-2">No retry logic</td>
 							<td class="py-2"><code class="code-text-muted">retry.ts</code> with exponential backoff</td>
+							<td class="py-2"><span class="status-resolved">✓ Resolved</span></td>
 						</tr>
 						<tr class="table-row">
 							<td class="py-2">Capabilities overstatement</td>
 							<td class="py-2">Honest declarations in Gmail, Stripe</td>
+							<td class="py-2"><span class="status-resolved">✓ Resolved</span></td>
 						</tr>
 						<tr class="table-row">
 							<td class="py-2">No request timeout</td>
 							<td class="py-2">AbortController in all 5 integrations</td>
+							<td class="py-2"><span class="status-resolved">✓ Resolved</span></td>
 						</tr>
 						<tr class="table-row">
 							<td class="py-2">No webhook tests</td>
 							<td class="py-2">42 tests (Stripe + template)</td>
+							<td class="py-2"><span class="status-resolved">✓ Resolved</span></td>
 						</tr>
 						<tr class="table-row-last">
 							<td class="py-2">Type conflicts</td>
 							<td class="py-2">Removed duplicate definitions</td>
+							<td class="py-2"><span class="status-resolved">✓ Resolved</span></td>
 						</tr>
 					</tbody>
 				</table>
@@ -447,5 +484,89 @@
 
   .table-row-last {
     /* No border on last row */
+  }
+
+  /* Status indicator */
+  .status-resolved {
+    color: var(--color-success);
+    font-size: var(--text-body-sm);
+  }
+
+  /* Responsive table pattern */
+  .responsive-table-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .responsive-table-wrapper {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .responsive-table-cards {
+      display: none;
+    }
+
+    .responsive-table-wrapper {
+      display: block;
+    }
+  }
+
+  /* Violation card styles */
+  .violation-card {
+    padding: var(--space-md);
+    background: var(--color-bg-pure);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .violation-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .violation-status {
+    color: var(--color-error);
+    font-weight: 600;
+    font-size: var(--text-body-lg);
+  }
+
+  .violation-title {
+    font-weight: 600;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body);
+  }
+
+  .violation-fix {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-tertiary);
+  }
+
+  .violation-fix-label {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+  }
+
+  .violation-resolved {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--color-border-default);
+    font-size: var(--text-body-sm);
+    color: var(--color-success);
+  }
+
+  .violation-resolved-status {
+    font-weight: 600;
   }
 </style>
