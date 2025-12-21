@@ -171,13 +171,73 @@
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">Timeless vs. Trendy</h2>
 
-		<div class="border border-canon overflow-hidden">
+		<!-- Mobile Card Layout -->
+		<div class="comparison-cards">
+			<div class="comparison-card">
+				<div class="comparison-domain">Database</div>
+				<div class="comparison-row">
+					<span class="comparison-label timeless">Timeless</span>
+					<span class="comparison-value">PostgreSQL, SQLite</span>
+				</div>
+				<div class="comparison-row">
+					<span class="comparison-label trendy">Trendy</span>
+					<span class="comparison-value">This year's distributed DB</span>
+				</div>
+			</div>
+			<div class="comparison-card">
+				<div class="comparison-domain">API</div>
+				<div class="comparison-row">
+					<span class="comparison-label timeless">Timeless</span>
+					<span class="comparison-value">REST/HTTP</span>
+				</div>
+				<div class="comparison-row">
+					<span class="comparison-label trendy">Trendy</span>
+					<span class="comparison-value">GraphQL, gRPC (unless needed)</span>
+				</div>
+			</div>
+			<div class="comparison-card">
+				<div class="comparison-domain">Styling</div>
+				<div class="comparison-row">
+					<span class="comparison-label timeless">Timeless</span>
+					<span class="comparison-value">CSS, CSS Variables</span>
+				</div>
+				<div class="comparison-row">
+					<span class="comparison-label trendy">Trendy</span>
+					<span class="comparison-value">CSS-in-JS framework du jour</span>
+				</div>
+			</div>
+			<div class="comparison-card">
+				<div class="comparison-domain">State</div>
+				<div class="comparison-row">
+					<span class="comparison-label timeless">Timeless</span>
+					<span class="comparison-value">URL, forms, localStorage</span>
+				</div>
+				<div class="comparison-row">
+					<span class="comparison-label trendy">Trendy</span>
+					<span class="comparison-value">State management library #47</span>
+				</div>
+			</div>
+			<div class="comparison-card">
+				<div class="comparison-domain">Hosting</div>
+				<div class="comparison-row">
+					<span class="comparison-label timeless">Timeless</span>
+					<span class="comparison-value">VPS, static files</span>
+				</div>
+				<div class="comparison-row">
+					<span class="comparison-label trendy">Trendy</span>
+					<span class="comparison-value">Serverless everything</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Desktop Table Layout -->
+		<div class="comparison-table-wrapper border border-canon overflow-hidden">
 			<table class="w-full text-sm-canon">
 				<thead>
 					<tr class="border-b border-canon bg-surface-subtle">
-						<th class="text-left py-3 px-4 font-semibold">Domain</th>
-						<th class="text-left py-3 px-4 font-semibold text-success">Timeless</th>
-						<th class="text-left py-3 px-4 font-semibold text-warning">Trendy</th>
+						<th class="table-th">Domain</th>
+						<th class="table-th text-success">Timeless</th>
+						<th class="table-th text-warning">Trendy</th>
 					</tr>
 				</thead>
 				<tbody class="opacity-70-canon">
@@ -381,5 +441,79 @@
 
 	thead {
 		border-color: var(--color-border-default);
+	}
+
+	/* Mobile Card Layout for Comparison Table */
+	.comparison-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.comparison-table-wrapper {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.comparison-cards {
+			display: none;
+		}
+
+		.comparison-table-wrapper {
+			display: block;
+		}
+	}
+
+	.comparison-card {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.comparison-domain {
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+		margin-bottom: var(--space-sm);
+		padding-bottom: var(--space-xs);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.comparison-row {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-bottom: var(--space-xs);
+	}
+
+	.comparison-row:last-child {
+		margin-bottom: 0;
+	}
+
+	.comparison-label {
+		font-size: var(--text-caption);
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.comparison-label.timeless {
+		color: #4ade80;
+	}
+
+	.comparison-label.trendy {
+		color: #fbbf24;
+	}
+
+	.comparison-value {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.table-th {
+		text-align: left;
+		padding: 0.75rem 1rem;
+		font-weight: 600;
 	}
 </style>
