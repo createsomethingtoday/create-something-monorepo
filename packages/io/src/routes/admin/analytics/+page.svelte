@@ -189,8 +189,8 @@
 				/>
 				<MetricCard
 					label="Avg Duration"
-					value={`${Math.round((analytics.unified.sessionStats.avgDuration ?? 0) / 60) || 0}m`}
-					context="per session"
+					value={Math.round((analytics.unified.sessionStats.avgDuration ?? 0) / 60) || 0}
+					context="minutes per session"
 				/>
 			</div>
 
