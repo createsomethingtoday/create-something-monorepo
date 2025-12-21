@@ -338,9 +338,9 @@
 	}
 
 	.grid-line {
-		stroke: var(--color-border-default);
-		stroke-width: 0.5;
-		opacity: 0.3;
+		stroke: var(--color-border-emphasis);
+		stroke-width: 1;
+		opacity: 0.5;
 	}
 
 	.cell {
