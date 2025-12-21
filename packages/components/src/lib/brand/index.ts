@@ -19,6 +19,9 @@ export * from './social/index.js';
 // State Components (loading, skeleton, transitions)
 export * from './states/index.js';
 
+// Mark Components (property marks, wordmarks, cube marks)
+export * from './marks/index.js';
+
 // Styles
 // CSS-based icons: import '@create-something/components/brand/icons.css'
 // - .icon-cube: Isometric cube mark with Canon face opacities
@@ -30,6 +33,5 @@ export * from './states/index.js';
 // These will be populated as components are implemented:
 // - marks/CubeMark.svelte
 // - marks/Wordmark.svelte
-// - marks/PropertyMark.svelte
 // - utils/cube-geometry.ts
 // - utils/cube-animations.ts
