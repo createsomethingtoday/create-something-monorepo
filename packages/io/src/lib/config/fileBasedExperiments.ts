@@ -375,6 +375,46 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ╚═══════════════════════════════════════════════════════════════════════╝
 `
 	},
+	{
+		id: 'file-kinetic-typography',
+		slug: 'kinetic-typography',
+		title: 'Kinetic Typography: Data-Ink Ratio for Motion',
+		description: 'Text animation as information revelation. Combining fluid morphing with assembly to show semantic weight—where Tufte meets Heidegger.',
+		excerpt_short: 'Animation that reveals information hierarchy, not decoration',
+		excerpt_long: 'Tufte\'s principle "Above all else, show the data" applied to kinetic typography. Characters scatter then converge, while emphasized words gain weight. The weight transition IS the data layer—revealing which words carry semantic importance. Animation as aletheia: truth unconcealed through motion.',
+		category: 'research',
+		tags: ['Typography', 'Animation', 'Tufte', 'Kinetic', 'Data Visualization', 'Canon', 'CSS'],
+		created_at: '2025-12-21T00:00:00Z',
+		updated_at: '2025-12-21T00:00:00Z',
+		reading_time_minutes: 6,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'tufte-data-ink-ratio', // Animation adds information, not decoration
+			'heidegger-aletheia', // Truth as unconcealment—emphasis emerges through motion
+			'rams-principle-10', // As little design as possible—weight IS the data
+			'rams-principle-4' // Understandable—hierarchy revealed through animation
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════╗
+    ║   KINETIC TYPOGRAPHY: DATA-INK RATIO FOR MOTION                       ║
+    ║                                                                       ║
+    ║   Phase 1: Scatter          Phase 2: Converge        Phase 3: Weight  ║
+    ║   ┌───────────────────┐     ┌───────────────────┐    ┌──────────────┐ ║
+    ║   │  L     s          │     │                   │    │              │ ║
+    ║   │    e       ,      │     │  Less, but        │    │  Less, but   │ ║
+    ║   │       b  t        │ ──▶ │       better      │ ──▶│      BETTER  │ ║
+    ║   │  u           r    │     │                   │    │              │ ║
+    ║   │         e         │     │                   │    │              │ ║
+    ║   └───────────────────┘     └───────────────────┘    └──────────────┘ ║
+    ║                                                                       ║
+    ║   0%─────────20%────────60%─────────80%────────100%                   ║
+    ║   opacity    position      lock        weight gain                    ║
+    ║                                                                       ║
+    ║   "Above all else, show the data." — Edward Tufte                     ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+`
+	},
 ];
 
 /**
