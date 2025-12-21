@@ -2,11 +2,15 @@
 	/**
 	 * Unified Analytics Dashboard
 	 *
-	 * Visualizes data from the unified_events, unified_events_daily,
-	 * and unified_sessions tables.
+	 * Now powered by @create-something/tufte - agentic visualization components
+	 * that embody Edward Tufte's principles automatically.
+	 *
+	 * Before: 641 lines with manual chart generation, custom card styling
+	 * After: Uses shared tufte components for consistency with io dashboard
 	 */
 
 	import { onMount } from 'svelte';
+	import { MetricCard, HighDensityTable, Sparkline, DailyGrid } from '@create-something/tufte';
 
 	let loading = $state(true);
 	let days = $state(7);
@@ -105,25 +109,15 @@
 			.map(([date, count]) => ({ date, count }))
 			.sort((a, b) => a.date.localeCompare(b.date));
 	}
-
-	// Calculate max for bar scaling
-	function getMaxCount(items: Array<{ count: number }>) {
-		return Math.max(...items.map((i) => i.count), 1);
-	}
-
-	// Format category name
-	function formatCategory(cat: string) {
-		return cat.charAt(0).toUpperCase() + cat.slice(1);
-	}
 </script>
 
-<div class="analytics">
-	<div class="header">
+<div class="space-y-6">
+	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="page-title">Analytics</h1>
 			<p class="page-description">Unified event tracking for createsomething.space</p>
 		</div>
-		<select bind:value={days} class="select-field">
+		<select bind:value={days} class="select-field px-4 py-2">
 			<option value={7}>Last 7 days</option>
 			<option value={14}>Last 14 days</option>
 			<option value={30}>Last 30 days</option>
@@ -131,98 +125,107 @@
 	</div>
 
 	{#if loading}
-		<p class="loading">Loading analytics...</p>
+		<div class="text-center py-12 loading-text">Loading analytics...</div>
 	{:else}
-		<!-- Session Stats -->
-		<div class="stats-row">
-			<div class="stat-card">
-				<div class="stat-value">{data.sessionStats.total.toLocaleString()}</div>
-				<div class="stat-label">Sessions</div>
-			</div>
-			<div class="stat-card">
-				<div class="stat-value">{data.sessionStats.avgPageViews.toFixed(1)}</div>
-				<div class="stat-label">Avg Page Views</div>
-			</div>
-			<div class="stat-card">
-				<div class="stat-value">{Math.round((data.sessionStats.avgDuration ?? 0) / 60)}m</div>
-				<div class="stat-label">Avg Duration</div>
-			</div>
+		<!-- Session Stats - Using Agentic MetricCard Components -->
+		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+			<MetricCard
+				label="Sessions"
+				value={data.sessionStats.total}
+				context="{days} days"
+			/>
+			<MetricCard
+				label="Avg Page Views"
+				value={Number(data.sessionStats.avgPageViews?.toFixed(1)) || 0}
+				context="per session"
+			/>
+			<MetricCard
+				label="Avg Duration"
+				value={Math.round((data.sessionStats.avgDuration ?? 0) / 60)}
+				context="minutes per session"
+			/>
 		</div>
 
-		<!-- Daily Trend -->
-		<div class="card">
-			<h2 class="card-title">Daily Events</h2>
-			{#if getDailyTotals().length === 0}
-				<p class="empty">No events recorded yet</p>
-			{:else}
-				<div class="daily-chart">
-					{#each getDailyTotals() as day}
-						{@const max = getMaxCount(getDailyTotals())}
-						<div class="chart-bar-container">
-							<div
-								class="chart-bar"
-								style="height: {(day.count / max) * 100}%"
-								title="{day.date}: {day.count} events"
-							></div>
-							<span class="chart-label">{day.date.slice(5)}</span>
+		<!-- Daily Trend - Using Agentic Sparkline and DailyGrid Components -->
+		<div class="chart-card p-6">
+			<div class="flex items-end justify-between mb-6">
+				<div>
+					<h3 class="chart-title">Daily Events</h3>
+					<p class="chart-subtitle mt-1 font-mono">
+						{#if getDailyTotals().length > 0}
+							{getDailyTotals()[0]?.date} to {getDailyTotals()[getDailyTotals().length - 1]?.date}
+						{:else}
+							No data
+						{/if}
+					</p>
+				</div>
+				{#if getDailyTotals().length > 0}
+					<div class="text-right">
+						<div class="chart-value">
+							{new Intl.NumberFormat().format(getDailyTotals()[getDailyTotals().length - 1]?.count || 0)}
 						</div>
-					{/each}
+						<div class="chart-label">today</div>
+					</div>
+				{/if}
+			</div>
+
+			{#if getDailyTotals().length === 0}
+				<p class="empty-state">No events recorded yet</p>
+			{:else}
+				<!-- Agentic Sparkline Component -->
+				<div class="w-full h-24">
+					<Sparkline
+						data={getDailyTotals()}
+						width={100}
+						height={30}
+						showFill={true}
+						showReferenceLine={true}
+					/>
+				</div>
+
+				<!-- Agentic DailyGrid Component -->
+				<div class="mt-4">
+					<DailyGrid data={getDailyTotals()} days={7} />
 				</div>
 			{/if}
 		</div>
 
-		<!-- Category & Actions Grid -->
-		<div class="two-col">
-			<!-- Category Breakdown -->
-			<div class="card">
-				<h2 class="card-title">By Category</h2>
-				{#if data.categoryBreakdown.length === 0}
-					<p class="empty">No category data</p>
-				{:else}
-					<div class="breakdown-list">
-						{#each data.categoryBreakdown as cat}
-							{@const max = getMaxCount(data.categoryBreakdown)}
-							<div class="breakdown-item">
-								<div class="breakdown-header">
-									<span class="breakdown-label">{formatCategory(cat.category)}</span>
-									<span class="breakdown-count">{cat.count.toLocaleString()}</span>
-								</div>
-								<div class="breakdown-bar-bg">
-									<div
-										class="breakdown-bar"
-										style="width: {(cat.count / max) * 100}%"
-									></div>
-								</div>
-							</div>
-						{/each}
-					</div>
-				{/if}
+		<!-- Category & Actions - Using Agentic HighDensityTable Component -->
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<div class="table-card p-4">
+				<h3 class="table-title mb-3">By Category</h3>
+				<HighDensityTable
+					items={data.categoryBreakdown.map((c) => ({
+						label: c.category.charAt(0).toUpperCase() + c.category.slice(1),
+						count: c.count
+					}))}
+					limit={10}
+					showPercentage={false}
+					hideRankOnMobile={true}
+					emptyMessage="No category data yet"
+				/>
 			</div>
 
-			<!-- Top Actions -->
-			<div class="card">
-				<h2 class="card-title">Top Actions</h2>
-				{#if data.topActions.length === 0}
-					<p class="empty">No actions recorded</p>
-				{:else}
-					<div class="action-list">
-						{#each data.topActions.slice(0, 10) as action, i}
-							<div class="action-item">
-								<span class="action-rank">{i + 1}</span>
-								<span class="action-name">{action.action}</span>
-								<span class="action-count">{action.count.toLocaleString()}</span>
-							</div>
-						{/each}
-					</div>
-				{/if}
+			<div class="table-card p-4">
+				<h3 class="table-title mb-3">Top Actions</h3>
+				<HighDensityTable
+					items={data.topActions.map((a) => ({
+						label: a.action,
+						count: a.count
+					}))}
+					limit={10}
+					showPercentage={false}
+					hideRankOnMobile={true}
+					emptyMessage="No action data yet"
+				/>
 			</div>
 		</div>
 
-		<!-- Recent Events -->
-		<div class="card">
-			<h2 class="card-title">Recent Events</h2>
+		<!-- Recent Events - Space-specific feature -->
+		<div class="table-card p-4">
+			<h3 class="table-title mb-3">Recent Events</h3>
 			{#if data.recentEvents.length === 0}
-				<p class="empty">No recent events</p>
+				<p class="empty-state">No recent events</p>
 			{:else}
 				<!-- Mobile Card Layout -->
 				<div class="responsive-table-cards">
@@ -282,203 +285,119 @@
 				</div>
 			{/if}
 		</div>
+
+		<!-- Info Footer -->
+		<div class="info-footer pt-6">
+			<p class="footer-text">
+				Privacy-first analytics powered by D1. No cookies, no tracking scripts, no personal data
+				collected. All data stored in your own database.
+			</p>
+			<p class="footer-note mt-2">
+				Visualizations powered by <a href="https://createsomething.ltd/masters/edward-tufte" class="footer-link">@create-something/tufte</a>
+				— agentic components embodying Tufte's principles
+			</p>
+		</div>
 	{/if}
 </div>
 
 <style>
-	.analytics {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-lg);
-	}
-
-	.header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-	}
-
 	.page-title {
 		font-size: var(--text-h1);
 		font-weight: 700;
-		margin: 0;
 	}
 
 	.page-description {
 		color: var(--color-fg-tertiary);
-		margin: var(--space-xs) 0 0 0;
+		margin-top: var(--space-xs);
 	}
 
 	.select-field {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
-		padding: var(--space-xs) var(--space-sm);
 		font-size: var(--text-body-sm);
+		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
-	.loading {
+	.select-field:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis);
+	}
+
+	.loading-text {
 		color: var(--color-fg-tertiary);
 	}
 
-	.stats-row {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-md);
-	}
-
-	.stat-card {
+	.table-card {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
-		padding: var(--space-md);
-		text-align: center;
 	}
 
-	.stat-value {
-		font-size: var(--text-h2);
-		font-weight: 700;
-	}
-
-	.stat-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-xs);
-	}
-
-	.card {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
-	}
-
-	.card-title {
+	.table-title {
 		font-size: var(--text-body-sm);
 		font-weight: 600;
 		color: var(--color-fg-tertiary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		margin: 0 0 var(--space-sm) 0;
 	}
 
-	.empty {
+	.chart-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.chart-title {
+		font-size: var(--text-h3);
+		font-weight: 600;
+	}
+
+	.chart-subtitle {
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
 	}
 
-	.daily-chart {
-		display: flex;
-		align-items: flex-end;
-		gap: 4px;
-		height: 120px;
-	}
-
-	.chart-bar-container {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		height: 100%;
-	}
-
-	.chart-bar {
-		width: 100%;
-		background: var(--color-data-1);
-		border-radius: 2px 2px 0 0;
-		min-height: 2px;
-		transition: height var(--duration-standard) var(--ease-standard);
+	.chart-value {
+		font-size: var(--text-h2);
+		font-weight: 700;
 	}
 
 	.chart-label {
-		font-size: 10px;
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		margin-top: var(--space-xs);
 	}
 
-	.two-col {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-md);
-	}
-
-	.breakdown-list {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.breakdown-item {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.breakdown-header {
-		display: flex;
-		justify-content: space-between;
+	.empty-state {
+		color: var(--color-fg-muted);
 		font-size: var(--text-body-sm);
 	}
 
-	.breakdown-label {
-		color: var(--color-fg-secondary);
+	.info-footer {
+		border-top: 1px solid var(--color-border-default);
 	}
 
-	.breakdown-count {
-		color: var(--color-fg-tertiary);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.breakdown-bar-bg {
-		height: 4px;
-		background: var(--color-bg-subtle);
-		border-radius: 2px;
-		overflow: hidden;
-	}
-
-	.breakdown-bar {
-		height: 100%;
-		background: var(--color-data-2);
-		border-radius: 2px;
-		transition: width var(--duration-standard) var(--ease-standard);
-	}
-
-	.action-list {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.action-item {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-xs) 0;
-		border-bottom: 1px solid var(--color-border-default);
+	.footer-text {
 		font-size: var(--text-body-sm);
-	}
-
-	.action-item:last-child {
-		border-bottom: none;
-	}
-
-	.action-rank {
-		width: 20px;
 		color: var(--color-fg-muted);
-		font-variant-numeric: tabular-nums;
 	}
 
-	.action-name {
-		flex: 1;
+	.footer-note {
+		font-size: var(--text-caption);
+		color: var(--color-fg-subtle);
+	}
+
+	.footer-link {
+		text-decoration: underline;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.footer-link:hover {
 		color: var(--color-fg-secondary);
-		font-family: var(--font-mono);
 	}
 
-	.action-count {
-		color: var(--color-fg-tertiary);
-		font-variant-numeric: tabular-nums;
-	}
-
+	/* Recent Events - Space-specific styles */
 	.events-table {
 		display: flex;
 		flex-direction: column;
@@ -627,15 +546,5 @@
 		white-space: normal;
 		word-break: break-all;
 		max-width: 100%;
-	}
-
-	@media (max-width: 768px) {
-		.two-col {
-			grid-template-columns: 1fr;
-		}
-
-		.stats-row {
-			grid-template-columns: 1fr;
-		}
 	}
 </style>
