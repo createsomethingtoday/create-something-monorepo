@@ -19,6 +19,7 @@
    ========================================================================== */
 
 @import './tokens.css';
+@import './components.css';
 
 /* ==========================================================================
    Base Styles - Wrapped in @layer base for Tailwind compatibility
