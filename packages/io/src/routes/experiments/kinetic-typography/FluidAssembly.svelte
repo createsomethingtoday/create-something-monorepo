@@ -109,9 +109,10 @@
 	}
 
 	// Calculate word weight based on emphasis and phase
+	// Using dramatic range (300 → 700) for visible hierarchy
 	function getWordWeight(wordIndex: number): number {
-		const baseWeight = 400;
-		const emphasisWeight = 600;
+		const baseWeight = 300;      // Light
+		const emphasisWeight = 700;  // Bold - maximum contrast
 
 		if (!emphasis.includes(wordIndex)) return baseWeight;
 		if (!hasAnimated || reducedMotion) return emphasisWeight;
@@ -254,7 +255,7 @@
 	}
 
 	.fluid-assembly.reduced-motion .word.emphasis {
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-bold);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
