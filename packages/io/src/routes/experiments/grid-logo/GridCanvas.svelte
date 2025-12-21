@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { CellState, InteractionMode, LogoType } from './types';
 	import {
 		GRID_SIZE,
@@ -24,8 +25,19 @@
 
 	let { logoType, interactionMode, timelineProgress = 0, onProgressChange }: Props = $props();
 
+	// Initialize cell states map
+	function createInitialCellStates(): Map<string, CellState> {
+		const states = new Map<string, CellState>();
+		for (let row = 0; row < GRID_SIZE; row++) {
+			for (let col = 0; col < GRID_SIZE; col++) {
+				states.set(getCellKey(row, col), 'hidden');
+			}
+		}
+		return states;
+	}
+
 	// Grid state
-	let cellStates = $state<Map<string, CellState>>(new Map());
+	let cellStates = $state<Map<string, CellState>>(createInitialCellStates());
 	let isDragging = $state(false);
 	let revealProgress = $state(0);
 	let logoVisible = $state(false);
@@ -35,24 +47,27 @@
 	const logoCellSet = $derived(new Set(logoData.cells));
 	const gridLines = generateGridLines();
 
-	// Initialize cell states
+	// Track previous logoType to detect changes
+	let previousLogoType = $state(logoType);
+
+	// Reset when logoType changes
 	$effect(() => {
-		const newStates = new Map<string, CellState>();
-		for (let row = 0; row < GRID_SIZE; row++) {
-			for (let col = 0; col < GRID_SIZE; col++) {
-				const key = getCellKey(row, col);
-				newStates.set(key, 'hidden');
-			}
+		if (logoType !== previousLogoType) {
+			untrack(() => {
+				cellStates = createInitialCellStates();
+				revealProgress = 0;
+				logoVisible = false;
+				previousLogoType = logoType;
+			});
 		}
-		cellStates = newStates;
-		revealProgress = 0;
-		logoVisible = false;
 	});
 
 	// Handle timeline mode
 	$effect(() => {
-		if (interactionMode === 'timeline') {
-			revealCellsByProgress(timelineProgress);
+		const mode = interactionMode;
+		const progress = timelineProgress;
+		if (mode === 'timeline') {
+			untrack(() => revealCellsByProgress(progress));
 		}
 	});
 
