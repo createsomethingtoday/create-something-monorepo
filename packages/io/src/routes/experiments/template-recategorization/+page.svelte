@@ -280,47 +280,144 @@
 					context and verify results.
 				</p>
 
-				<table class="metrics-table">
-					<thead>
-						<tr>
-							<th>Task</th>
-							<th>Claude Code</th>
-							<th>Human</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>Identify problem</td>
-							<td class="status-partial">—</td>
-							<td class="status-pass">✓ (Slack thread)</td>
-						</tr>
-						<tr>
-							<td>Query database</td>
-							<td class="status-pass">✓ (MCP tools)</td>
-							<td class="status-partial">—</td>
-						</tr>
-						<tr>
-							<td>Interpret results</td>
-							<td class="status-pass">✓ (Template content)</td>
-							<td class="status-pass">✓ (Category intent)</td>
-						</tr>
-						<tr>
-							<td>Decide new category</td>
-							<td class="status-pass">✓ (Suggestion)</td>
-							<td class="status-pass">✓ (Approval)</td>
-						</tr>
-						<tr>
-							<td>Execute update</td>
-							<td class="status-pass">✓ (MCP update)</td>
-							<td class="status-partial">—</td>
-						</tr>
-						<tr>
-							<td>Verify in production</td>
-							<td class="status-partial">—</td>
-							<td class="status-pass">✓ (Webflow check)</td>
-						</tr>
-					</tbody>
-				</table>
+				<!-- Mobile: Card layout -->
+				<div class="responsive-table-cards">
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Identify problem</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Claude Code</span>
+								<span class="responsive-table-card-value status-partial">—</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Human</span>
+								<span class="responsive-table-card-value status-pass">✓ (Slack thread)</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Query database</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Claude Code</span>
+								<span class="responsive-table-card-value status-pass">✓ (MCP tools)</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Human</span>
+								<span class="responsive-table-card-value status-partial">—</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Interpret results</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Claude Code</span>
+								<span class="responsive-table-card-value status-pass">✓ (Template content)</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Human</span>
+								<span class="responsive-table-card-value status-pass">✓ (Category intent)</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Decide new category</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Claude Code</span>
+								<span class="responsive-table-card-value status-pass">✓ (Suggestion)</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Human</span>
+								<span class="responsive-table-card-value status-pass">✓ (Approval)</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Execute update</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Claude Code</span>
+								<span class="responsive-table-card-value status-pass">✓ (MCP update)</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Human</span>
+								<span class="responsive-table-card-value status-partial">—</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Verify in production</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Claude Code</span>
+								<span class="responsive-table-card-value status-partial">—</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Human</span>
+								<span class="responsive-table-card-value status-pass">✓ (Webflow check)</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Desktop: Table layout -->
+				<div class="responsive-table-wrapper">
+					<table class="responsive-table">
+						<thead>
+							<tr>
+								<th>Task</th>
+								<th>Claude Code</th>
+								<th>Human</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Identify problem</td>
+								<td class="status-partial">—</td>
+								<td class="status-pass">✓ (Slack thread)</td>
+							</tr>
+							<tr>
+								<td>Query database</td>
+								<td class="status-pass">✓ (MCP tools)</td>
+								<td class="status-partial">—</td>
+							</tr>
+							<tr>
+								<td>Interpret results</td>
+								<td class="status-pass">✓ (Template content)</td>
+								<td class="status-pass">✓ (Category intent)</td>
+							</tr>
+							<tr>
+								<td>Decide new category</td>
+								<td class="status-pass">✓ (Suggestion)</td>
+								<td class="status-pass">✓ (Approval)</td>
+							</tr>
+							<tr>
+								<td>Execute update</td>
+								<td class="status-pass">✓ (MCP update)</td>
+								<td class="status-partial">—</td>
+							</tr>
+							<tr>
+								<td>Verify in production</td>
+								<td class="status-partial">—</td>
+								<td class="status-pass">✓ (Webflow check)</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</section>
 
@@ -389,57 +486,184 @@
 					reflect its content and intended audience.
 				</p>
 
-				<table class="metrics-table">
-					<thead>
-						<tr>
-							<th>Template</th>
-							<th>Previous Categories</th>
-							<th>Updated Categories</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>Zerixs</td>
-							<td>Public services, Design & Creative</td>
-							<td class="status-pass">Design & Creative</td>
-						</tr>
-						<tr>
-							<td>Crownline</td>
-							<td>Public services, Transportation, Services</td>
-							<td class="status-pass">Transportation, Services</td>
-						</tr>
-						<tr>
-							<td>Jones Smith</td>
-							<td>Public services, Law Firm & Attorney</td>
-							<td class="status-pass">Law Firm & Attorney</td>
-						</tr>
-						<tr>
-							<td>Nomadlife</td>
-							<td>Public services, Travel & Tours</td>
-							<td class="status-pass">Travel & Tours</td>
-						</tr>
-						<tr>
-							<td>Dactor</td>
-							<td>Public services, Doctor, Volunteer & Community</td>
-							<td class="status-pass">Doctor, Volunteer & Community</td>
-						</tr>
-						<tr>
-							<td>Avocats X</td>
-							<td>Public services, Law Firm & Attorney, Finance</td>
-							<td class="status-pass">Law Firm & Attorney, Finance & Accounting</td>
-						</tr>
-						<tr>
-							<td>Rover</td>
-							<td>Public services, Advocacy & Campaigns, Charity</td>
-							<td class="status-pass">Advocacy & Campaigns, Charity & Fundraising</td>
-						</tr>
-						<tr>
-							<td>DentiCare</td>
-							<td>Public services, Dentist, Volunteer & Community</td>
-							<td class="status-pass">Dentist, Volunteer & Community</td>
-						</tr>
-					</tbody>
-				</table>
+				<!-- Mobile: Card layout -->
+				<div class="responsive-table-cards">
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Zerixs</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Design & Creative</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Design & Creative</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Crownline</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Transportation, Services</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Transportation, Services</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Jones Smith</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Law Firm & Attorney</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Law Firm & Attorney</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Nomadlife</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Travel & Tours</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Travel & Tours</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Dactor</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Doctor, Volunteer & Community</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Doctor, Volunteer & Community</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Avocats X</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Law Firm & Attorney, Finance</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Law Firm & Attorney, Finance & Accounting</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">Rover</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Advocacy & Campaigns, Charity</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Advocacy & Campaigns, Charity & Fundraising</span>
+							</div>
+						</div>
+					</div>
+					<div class="responsive-table-card">
+						<div class="responsive-table-card-header">
+							<span class="responsive-table-card-title">DentiCare</span>
+						</div>
+						<div class="responsive-table-card-body">
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Previous</span>
+								<span class="responsive-table-card-value">Public services, Dentist, Volunteer & Community</span>
+							</div>
+							<div class="responsive-table-card-row">
+								<span class="responsive-table-card-label">Updated</span>
+								<span class="responsive-table-card-value status-pass">Dentist, Volunteer & Community</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Desktop: Table layout -->
+				<div class="responsive-table-wrapper">
+					<table class="responsive-table">
+						<thead>
+							<tr>
+								<th>Template</th>
+								<th>Previous Categories</th>
+								<th>Updated Categories</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Zerixs</td>
+								<td>Public services, Design & Creative</td>
+								<td class="status-pass">Design & Creative</td>
+							</tr>
+							<tr>
+								<td>Crownline</td>
+								<td>Public services, Transportation, Services</td>
+								<td class="status-pass">Transportation, Services</td>
+							</tr>
+							<tr>
+								<td>Jones Smith</td>
+								<td>Public services, Law Firm & Attorney</td>
+								<td class="status-pass">Law Firm & Attorney</td>
+							</tr>
+							<tr>
+								<td>Nomadlife</td>
+								<td>Public services, Travel & Tours</td>
+								<td class="status-pass">Travel & Tours</td>
+							</tr>
+							<tr>
+								<td>Dactor</td>
+								<td>Public services, Doctor, Volunteer & Community</td>
+								<td class="status-pass">Doctor, Volunteer & Community</td>
+							</tr>
+							<tr>
+								<td>Avocats X</td>
+								<td>Public services, Law Firm & Attorney, Finance</td>
+								<td class="status-pass">Law Firm & Attorney, Finance & Accounting</td>
+							</tr>
+							<tr>
+								<td>Rover</td>
+								<td>Public services, Advocacy & Campaigns, Charity</td>
+								<td class="status-pass">Advocacy & Campaigns, Charity & Fundraising</td>
+							</tr>
+							<tr>
+								<td>DentiCare</td>
+								<td>Public services, Dentist, Volunteer & Community</td>
+								<td class="status-pass">Dentist, Volunteer & Community</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 
 				<div class="decision">
 					<h4 class="decision-title">Key Insight: Category Field Structure</h4>
@@ -749,32 +973,7 @@
 		margin: 0;
 	}
 
-	/* Metrics Table */
-	.metrics-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--text-body-sm);
-	}
-
-	.metrics-table th,
-	.metrics-table td {
-		padding: var(--space-sm);
-		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.metrics-table th {
-		color: var(--color-fg-muted);
-		font-weight: 500;
-		text-transform: uppercase;
-		font-size: var(--text-caption);
-		letter-spacing: 0.05em;
-	}
-
-	.metrics-table td {
-		color: var(--color-fg-secondary);
-	}
-
+	/* Status indicators for table cells */
 	.status-pass { color: #22c55e; font-weight: 600; }
 	.status-partial { color: var(--color-fg-muted); }
 

@@ -156,32 +156,84 @@ echo "Ready"</pre>
 		<!-- Failure Modes -->
 		<section class="section">
 			<h2 class="section-title">Failure Modes & Solutions</h2>
-			<table class="failure-table">
-				<thead>
-					<tr>
-						<th>Problem</th>
-						<th>Solution</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Premature completion claims</td>
-						<td>Comprehensive feature list with explicit pass/fail</td>
-					</tr>
-					<tr>
-						<td>Lost setup knowledge</td>
-						<td>Executable init.sh</td>
-					</tr>
-					<tr>
-						<td>Undocumented bugs</td>
-						<td>Git commits + progress notes</td>
-					</tr>
-					<tr>
-						<td>Doing too much at once</td>
-						<td>One feature per session constraint</td>
-					</tr>
-				</tbody>
-			</table>
+
+			<!-- Mobile: Card layout -->
+			<div class="responsive-table-cards">
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title">Premature completion claims</span>
+					</div>
+					<div class="responsive-table-card-body">
+						<div class="responsive-table-card-row">
+							<span class="responsive-table-card-label">Solution</span>
+							<span class="responsive-table-card-value">Comprehensive feature list with explicit pass/fail</span>
+						</div>
+					</div>
+				</div>
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title">Lost setup knowledge</span>
+					</div>
+					<div class="responsive-table-card-body">
+						<div class="responsive-table-card-row">
+							<span class="responsive-table-card-label">Solution</span>
+							<span class="responsive-table-card-value">Executable init.sh</span>
+						</div>
+					</div>
+				</div>
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title">Undocumented bugs</span>
+					</div>
+					<div class="responsive-table-card-body">
+						<div class="responsive-table-card-row">
+							<span class="responsive-table-card-label">Solution</span>
+							<span class="responsive-table-card-value">Git commits + progress notes</span>
+						</div>
+					</div>
+				</div>
+				<div class="responsive-table-card">
+					<div class="responsive-table-card-header">
+						<span class="responsive-table-card-title">Doing too much at once</span>
+					</div>
+					<div class="responsive-table-card-body">
+						<div class="responsive-table-card-row">
+							<span class="responsive-table-card-label">Solution</span>
+							<span class="responsive-table-card-value">One feature per session constraint</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Desktop: Table layout -->
+			<div class="responsive-table-wrapper">
+				<table class="responsive-table">
+					<thead>
+						<tr>
+							<th>Problem</th>
+							<th>Solution</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Premature completion claims</td>
+							<td>Comprehensive feature list with explicit pass/fail</td>
+						</tr>
+						<tr>
+							<td>Lost setup knowledge</td>
+							<td>Executable init.sh</td>
+						</tr>
+						<tr>
+							<td>Undocumented bugs</td>
+							<td>Git commits + progress notes</td>
+						</tr>
+						<tr>
+							<td>Doing too much at once</td>
+							<td>One feature per session constraint</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</section>
 
 		<!-- Hermeneutic Frame -->
@@ -521,37 +573,6 @@ echo "Ready"</pre>
 		padding-left: var(--space-sm);
 		border-left: 2px solid var(--color-border-default);
 		margin-left: var(--space-xs);
-	}
-
-	/* Failure Table */
-	.failure-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--text-body-sm);
-	}
-
-	.failure-table th,
-	.failure-table td {
-		padding: var(--space-sm);
-		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.failure-table th {
-		color: var(--color-fg-muted);
-		font-weight: 500;
-		text-transform: uppercase;
-		font-size: var(--text-caption);
-		letter-spacing: 0.05em;
-	}
-
-	.failure-table td {
-		color: var(--color-fg-secondary);
-	}
-
-	.failure-table td:first-child {
-		color: var(--color-fg-primary);
-		font-weight: 500;
 	}
 
 	/* Cards */
