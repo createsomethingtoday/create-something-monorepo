@@ -230,7 +230,45 @@
 		</div>
 
 		{#if viewMode === 'table'}
-			<div class="table-container">
+			<!-- Mobile Card Layout for Table View -->
+			<div class="table-mobile-cards">
+				{#each sortedCategories() as category}
+					{@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+					{@const hasUserTemplate = userCategories().has(category.category)}
+					<div class="table-mobile-card" class:user-category={hasUserTemplate}>
+						<div class="mobile-card-header">
+							<div class="mobile-card-title">
+								<span class="category-parent">{category.category}</span>
+								<span class="category-name">{category.subcategory}</span>
+								{#if hasUserTemplate}
+									<span class="user-indicator">Your portfolio</span>
+								{/if}
+							</div>
+							<span class="rank-pill">#{category.revenueRank}</span>
+						</div>
+						<div class="mobile-card-metric">
+							<span class="metric-value">${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span>
+							<span class="metric-label">avg revenue</span>
+						</div>
+						<div class="mobile-card-stats">
+							<div class="mobile-stat">
+								<span class="stat-label">Sales (30d)</span>
+								<span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
+							</div>
+							<div class="mobile-stat">
+								<span class="stat-label">Templates</span>
+								<span class="stat-value">{category.templatesInSubcategory}</span>
+							</div>
+						</div>
+						<Badge variant={competition.color === 'success' ? 'success' : competition.color === 'warning' ? 'warning' : competition.color === 'error' ? 'error' : 'info'}>
+							{competition.level} Competition
+						</Badge>
+					</div>
+				{/each}
+			</div>
+
+			<!-- Desktop Table Layout -->
+			<div class="table-container table-desktop">
 				<table class="data-table">
 					<thead>
 						<tr>
@@ -782,5 +820,103 @@
 
 	:global(.competition-badge) {
 		text-align: center;
+	}
+
+	/* Mobile Card Layout for Table View */
+	.table-mobile-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.table-desktop {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.table-mobile-cards {
+			display: none;
+		}
+
+		.table-desktop {
+			display: block;
+		}
+	}
+
+	.table-mobile-card {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.table-mobile-card.user-category {
+		background: var(--color-info-muted);
+		border-color: var(--color-info-border);
+	}
+
+	.mobile-card-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-sm);
+	}
+
+	.mobile-card-title {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.mobile-card-title .category-parent {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.mobile-card-title .category-name {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+	}
+
+	.mobile-card-metric {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.mobile-card-metric .metric-value {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.mobile-card-metric .metric-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.mobile-card-stats {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-sm);
+	}
+
+	.mobile-stat {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.mobile-stat .stat-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.mobile-stat .stat-value {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
 	}
 </style>

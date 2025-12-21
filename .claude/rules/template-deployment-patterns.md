@@ -4,6 +4,8 @@
 
 When infrastructure fails, it becomes *present-at-hand* (Vorhandenheit)—we notice the hammer instead of the nail. These patterns ensure the deployment process remains *ready-to-hand* (Zuhandenheit)—transparent, receding use.
 
+Stahl distinguishes between *fixing* (mechanical correction) and *repairing* (restructuring understanding). Each pattern below represents repair: we don't just fix the deployment—we document the failure so it can't recur. See [Breakdown and Repair](https://createsomething.ltd/patterns/breakdown-and-repair) for the full pattern.
+
 **Canon Principle**: The infrastructure disappears; only the work remains.
 
 ---
