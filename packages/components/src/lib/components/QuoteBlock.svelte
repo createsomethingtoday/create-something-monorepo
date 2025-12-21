@@ -2,21 +2,38 @@
 	import type { Quote } from '../types/common.js';
 
 	interface Props {
-		quote: Quote;
+		/** Quote object (legacy) or quote text string */
+		quote: Quote | string;
+		/** Attribution (when quote is a string) */
+		attribution?: string;
+		/** Author name (alternative to attribution) */
+		author?: string;
+		/** Source reference */
+		source?: string;
 	}
 
-	let { quote }: Props = $props();
+	let { quote, attribution, author, source }: Props = $props();
+
+	// Normalize: support both Quote object and string props
+	const quoteText = $derived(typeof quote === 'string' ? quote : quote?.quote_text ?? '');
+	const context = $derived(
+		typeof quote === 'string'
+			? [author, attribution, source].filter(Boolean).join(' — ')
+			: quote?.context ?? ''
+	);
 </script>
 
-<blockquote class="quote-block py-2">
-	<p class="quote-text italic leading-relaxed mb-4">"{quote.quote_text}"</p>
+{#if quoteText}
+	<blockquote class="quote-block py-2">
+		<p class="quote-text italic leading-relaxed mb-4">"{quoteText}"</p>
 
-	{#if quote.context}
-		<footer class="quote-context">
-			{quote.context}
-		</footer>
-	{/if}
-</blockquote>
+		{#if context}
+			<footer class="quote-context">
+				{context}
+			</footer>
+		{/if}
+	</blockquote>
+{/if}
 
 <style>
 	.quote-block {
