@@ -64,6 +64,7 @@
 		"./styles/tokens.css": "./dist/styles/tokens.css",
 		"./styles/canon.css": "./dist/styles/canon.css",
 		"./styles/components.css": "./dist/styles/components.css",
+		"./brand/icons.css": "./dist/brand/icons.css",
 		"./transitions": {
 			"types": "./dist/transitions/index.d.ts",
 			"default": "./dist/transitions/index.js"
