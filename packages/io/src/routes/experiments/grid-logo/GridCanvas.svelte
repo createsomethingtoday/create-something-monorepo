@@ -386,17 +386,17 @@
 		animation-delay: var(--path-delay, 0ms);
 	}
 
-	/* Cube face fills - matching IsometricBox from Canon */
+	/* Cube face fills - varying opacity for 3D depth */
 	.logo-path.face-top {
-		fill: var(--color-fg-subtle);
+		fill: rgba(255, 255, 255, 0.25);
 	}
 
 	.logo-path.face-left {
-		fill: var(--color-bg-subtle);
+		fill: rgba(255, 255, 255, 0.12);
 	}
 
 	.logo-path.face-right {
-		fill: var(--color-bg-elevated);
+		fill: rgba(255, 255, 255, 0.05);
 	}
 
 	/* CS Lettermark - stroke only */
