@@ -72,6 +72,22 @@ For hover/active states, use transparent overlays:
 | active | `var(--color-active)` | rgba(255,255,255,0.1) |
 | focus | `var(--color-focus)` | rgba(255,255,255,0.5) - WCAG AA compliant 5.28:1 |
 
+### Overlay Tokens
+For modals, dialogs, and backdrops:
+| Use Case | Canon Token | Value |
+|----------|-------------|-------|
+| modal overlay | `var(--color-overlay)` | rgba(0,0,0,0.5) |
+| heavy backdrop | `var(--color-overlay-heavy)` | rgba(0,0,0,0.7) |
+
+### Rank/Leaderboard Tokens
+For medals, badges, and leaderboard displays:
+| Rank | Canon Token | Value |
+|------|-------------|-------|
+| gold (1st) | `var(--color-rank-gold)` | #ca8a04 |
+| gold muted | `var(--color-rank-gold-muted)` | rgba(202,138,4,0.2) |
+| bronze (3rd) | `var(--color-rank-bronze)` | #c2410c |
+| bronze muted | `var(--color-rank-bronze-muted)` | rgba(194,65,12,0.2) |
+
 ## Token Reference
 
 ### Colors
@@ -90,6 +106,8 @@ For hover/active states, use transparent overlays:
 --color-border-strong: rgba(255, 255, 255, 0.3)
 --color-hover: rgba(255, 255, 255, 0.05)
 --color-active: rgba(255, 255, 255, 0.1)
+--color-overlay: rgba(0, 0, 0, 0.5)
+--color-overlay-heavy: rgba(0, 0, 0, 0.7)
 
 /* Semantic Colors - All WCAG AA compliant (4.5:1+ on pure black) */
 --color-success: #44aa44              /* 7.08:1 */
@@ -107,11 +125,23 @@ For hover/active states, use transparent overlays:
 
 /* Data Visualization Palette */
 --color-data-1: #60a5fa  /* Blue */
+--color-data-1-muted: rgba(96, 165, 250, 0.2)
 --color-data-2: #22c55e  /* Green */
+--color-data-2-muted: rgba(34, 197, 94, 0.2)
 --color-data-3: #c084fc  /* Purple */
+--color-data-3-muted: rgba(192, 132, 252, 0.2)
 --color-data-4: #fbbf24  /* Amber */
+--color-data-4-muted: rgba(251, 191, 36, 0.2)
 --color-data-5: #f472b6  /* Pink */
+--color-data-5-muted: rgba(244, 114, 182, 0.2)
 --color-data-6: #facc15  /* Yellow */
+--color-data-6-muted: rgba(250, 204, 21, 0.2)
+
+/* Rank Colors */
+--color-rank-gold: #ca8a04
+--color-rank-gold-muted: rgba(202, 138, 4, 0.2)
+--color-rank-bronze: #c2410c
+--color-rank-bronze-muted: rgba(194, 65, 12, 0.2)
 ```
 
 ### Spacing (Golden Ratio φ = 1.618)

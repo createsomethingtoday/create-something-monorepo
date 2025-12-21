@@ -199,7 +199,7 @@
 	}
 
 	.performance-icon.revenue {
-		background: var(--color-data-3-muted, rgba(192, 132, 252, 0.2));
+		background: var(--color-data-3-muted);
 		color: var(--color-data-3);
 	}
 
