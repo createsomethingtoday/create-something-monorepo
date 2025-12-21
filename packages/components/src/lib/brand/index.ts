@@ -16,6 +16,9 @@ export {
 // Social Components (Svelte components for client-side rendering)
 export * from './social/index.js';
 
+// State Components (loading, skeleton, transitions)
+export * from './states/index.js';
+
 // Styles
 // CSS-based icons: import '@create-something/components/brand/icons.css'
 // - .icon-cube: Isometric cube mark with Canon face opacities
@@ -29,6 +32,5 @@ export * from './social/index.js';
 // - marks/Wordmark.svelte
 // - marks/PropertyMark.svelte
 // - states/CubeLoader.svelte
-// - states/CubeSkeleton.svelte
 // - utils/cube-geometry.ts
 // - utils/cube-animations.ts
