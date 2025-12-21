@@ -300,103 +300,13 @@
 	{/if}
 </div>
 
+<!--
+  Shared dashboard styles come from @create-something/components/styles/components.css
+  Classes used: page-title, page-description, select-field, loading-text, table-card,
+                table-title, chart-card, chart-title, chart-subtitle, chart-value,
+                chart-label, empty-state, info-footer, footer-text, footer-note, footer-link
+-->
 <style>
-	.page-title {
-		font-size: var(--text-h1);
-		font-weight: 700;
-	}
-
-	.page-description {
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-xs);
-	}
-
-	.select-field {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
-		transition: border-color var(--duration-micro) var(--ease-standard);
-	}
-
-	.select-field:focus {
-		outline: none;
-		border-color: var(--color-border-emphasis);
-	}
-
-	.loading-text {
-		color: var(--color-fg-tertiary);
-	}
-
-	.table-card {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.table-title {
-		font-size: var(--text-body-sm);
-		font-weight: 600;
-		color: var(--color-fg-tertiary);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.chart-card {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.chart-title {
-		font-size: var(--text-h3);
-		font-weight: 600;
-	}
-
-	.chart-subtitle {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	.chart-value {
-		font-size: var(--text-h2);
-		font-weight: 700;
-	}
-
-	.chart-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	.empty-state {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
-	}
-
-	.info-footer {
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.footer-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-	}
-
-	.footer-note {
-		font-size: var(--text-caption);
-		color: var(--color-fg-subtle);
-	}
-
-	.footer-link {
-		text-decoration: underline;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.footer-link:hover {
-		color: var(--color-fg-secondary);
-	}
-
 	/* Recent Events - Space-specific styles */
 	.events-table {
 		display: flex;
