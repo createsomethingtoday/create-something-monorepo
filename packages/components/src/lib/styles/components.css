@@ -573,6 +573,116 @@
   .interactive-link:active {
     background: var(--color-active);
   }
+
+  /* ==========================================================================
+     Analytics Dashboard Patterns
+     Shared styles for admin analytics dashboards across properties
+     Used by: io/admin/analytics, space/admin/analytics
+     ========================================================================== */
+
+  /* Form Elements */
+  .select-field {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .select-field:focus {
+    outline: none;
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Loading State */
+  .loading-text {
+    color: var(--color-fg-tertiary);
+  }
+
+  /* Table Card - container for HighDensityTable */
+  .table-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .table-title {
+    font-size: var(--text-body-sm);
+    font-weight: 600;
+    color: var(--color-fg-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Chart Card - container for Sparkline/DailyGrid */
+  .chart-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .chart-title {
+    font-size: var(--text-h3);
+    font-weight: 600;
+  }
+
+  .chart-subtitle {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  .chart-value {
+    font-size: var(--text-h2);
+    font-weight: 700;
+  }
+
+  .chart-label {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  /* Empty State */
+  .empty-state {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  /* Section Header (with border) */
+  .section-header {
+    border-top: 1px solid var(--color-border-default);
+    padding-top: var(--space-md);
+  }
+
+  .section-subtitle {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-tertiary);
+    margin-top: var(--space-xs);
+  }
+
+  /* Info Footer */
+  .info-footer {
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  .footer-text {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .footer-note {
+    font-size: var(--text-caption);
+    color: var(--color-fg-subtle);
+  }
+
+  .footer-link {
+    text-decoration: underline;
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .footer-link:hover {
+    color: var(--color-fg-secondary);
+  }
 }
 
 /* ==========================================================================
