@@ -106,7 +106,7 @@
 		</div>
 
 		<!-- High Density Tables - Using Agentic HighDensityTable Component -->
-		<div class="grid grid-cols-2 gap-4">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 			<!-- Top Pages -->
 			<div class="table-card p-4">
 				<h3 class="table-title mb-3">Top Pages</h3>
@@ -117,6 +117,7 @@
 					countKey="count"
 					badgeKey="property"
 					totalForPercentage={analytics.total_views}
+					hideRankOnMobile={true}
 					emptyMessage="No data yet"
 				/>
 			</div>
@@ -131,6 +132,7 @@
 					}))}
 					limit={10}
 					showPercentage={false}
+					hideRankOnMobile={true}
 					emptyMessage="No experiment views yet"
 				/>
 			</div>
@@ -145,6 +147,7 @@
 					}))}
 					limit={10}
 					totalForPercentage={analytics.total_views}
+					hideRankOnMobile={true}
 					emptyMessage="No country data yet"
 				/>
 			</div>
@@ -159,6 +162,7 @@
 					}))}
 					limit={10}
 					totalForPercentage={analytics.total_views}
+					hideRankOnMobile={true}
 					emptyMessage="No referrer data yet"
 				/>
 			</div>
@@ -172,7 +176,7 @@
 			</div>
 
 			<!-- Session Stats -->
-			<div class="grid grid-cols-3 gap-4 mb-4">
+			<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
 				<MetricCard
 					label="Sessions"
 					value={analytics.unified.sessionStats.total}
@@ -191,7 +195,7 @@
 			</div>
 
 			<!-- Category & Actions -->
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div class="table-card p-4">
 					<h3 class="table-title mb-3">By Category</h3>
 					<HighDensityTable
@@ -201,6 +205,7 @@
 						}))}
 						limit={10}
 						showPercentage={false}
+						hideRankOnMobile={true}
 						emptyMessage="No category data yet"
 					/>
 				</div>
@@ -214,6 +219,7 @@
 						}))}
 						limit={10}
 						showPercentage={false}
+						hideRankOnMobile={true}
 						emptyMessage="No action data yet"
 					/>
 				</div>
