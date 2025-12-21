@@ -21,3 +21,6 @@ export * from './visual/index.js';
 
 // Actions (Svelte use: directives)
 export * from './actions/index.js';
+
+// Brand (marks, loaders, social assets)
+export * from './brand/index.js';
