@@ -78,6 +78,26 @@ function getSessionId(): string {
 	}
 }
 
+/**
+ * Get session start time from storage or return current time as fallback
+ */
+function getSessionStartedAt(): number {
+	if (typeof window === 'undefined') {
+		return Date.now();
+	}
+
+	try {
+		const stored = sessionStorage.getItem(SESSION_KEY);
+		if (stored) {
+			const session: SessionData = JSON.parse(stored);
+			return session.startedAt;
+		}
+	} catch {
+		// sessionStorage not available
+	}
+	return Date.now();
+}
+
 // =============================================================================
 // PRIVACY
 // =============================================================================
@@ -103,6 +123,8 @@ export class AnalyticsClient {
 	private queue: AnalyticsEvent[] = [];
 	private flushTimer: ReturnType<typeof setTimeout> | null = null;
 	private sessionId: string;
+	private sessionStartedAt: number;
+	private sessionEndSent: boolean = false;
 
 	constructor(config: AnalyticsConfig) {
 		this.config = {
@@ -114,6 +136,7 @@ export class AnalyticsClient {
 			debug: config.debug ?? false,
 		};
 		this.sessionId = getSessionId();
+		this.sessionStartedAt = getSessionStartedAt();
 
 		// Flush on page unload
 		if (typeof window !== 'undefined') {
@@ -314,6 +337,17 @@ export class AnalyticsClient {
 	 * Flush queued events immediately
 	 */
 	async flush(): Promise<void> {
+		// Send session_end event on page unload (only once per session)
+		if (
+			typeof document !== 'undefined' &&
+			document.visibilityState === 'hidden' &&
+			!this.sessionEndSent
+		) {
+			this.sessionEndSent = true;
+			const elapsedSeconds = Math.floor((Date.now() - this.sessionStartedAt) / 1000);
+			this.track('navigation', 'session_end', { value: elapsedSeconds });
+		}
+
 		if (this.queue.length === 0) return;
 
 		const events = [...this.queue];
