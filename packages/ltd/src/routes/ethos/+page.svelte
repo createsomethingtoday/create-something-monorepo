@@ -57,15 +57,50 @@
 	<div class="max-w-3xl mx-auto">
 		<h2 class="mb-8">The Subtractive Triad</h2>
 
-		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
+		<div class="triad-intro space-y-6 leading-relaxed">
 			<p>
 				<strong>Creation is the discipline of removing what obscures.</strong> This meta-principle
 				manifests at three levels, each with its own question:
 			</p>
 		</div>
 
-		<div class="mt-8 border border-canon">
-			<table class="w-full text-left">
+		<!-- Mobile Card Layout -->
+		<div class="triad-cards mt-8">
+			<div class="triad-card">
+				<div class="triad-card-header">
+					<span class="triad-level">Implementation</span>
+					<span class="triad-action">Unify</span>
+				</div>
+				<div class="triad-card-body">
+					<div class="triad-discipline">DRY</div>
+					<div class="triad-question">"Have I built this before?"</div>
+				</div>
+			</div>
+			<div class="triad-card">
+				<div class="triad-card-header">
+					<span class="triad-level">Artifact</span>
+					<span class="triad-action">Remove</span>
+				</div>
+				<div class="triad-card-body">
+					<div class="triad-discipline">Rams</div>
+					<div class="triad-question">"Does this earn its existence?"</div>
+				</div>
+			</div>
+			<div class="triad-card">
+				<div class="triad-card-header">
+					<span class="triad-level">System</span>
+					<span class="triad-action">Reconnect</span>
+				</div>
+				<div class="triad-card-body">
+					<div class="triad-discipline">Heidegger</div>
+					<div class="triad-question">"Does this serve the whole?"</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Desktop Table Layout -->
+		<div class="triad-table-wrapper mt-8 border border-canon">
+			<table class="triad-table w-full">
 				<thead class="border-b border-canon">
 					<tr>
 						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Level</th>
@@ -368,5 +403,80 @@
 
 	thead {
 		border-color: var(--color-border-default);
+	}
+
+	/* Mobile Card Layout for Subtractive Triad */
+	.triad-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.triad-table-wrapper {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.triad-cards {
+			display: none;
+		}
+
+		.triad-table-wrapper {
+			display: block;
+		}
+	}
+
+	.triad-card {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.triad-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--space-sm);
+	}
+
+	.triad-level {
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+	}
+
+	.triad-action {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		padding: 2px 8px;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-sm);
+	}
+
+	.triad-card-body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.triad-discipline {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		font-weight: 500;
+	}
+
+	.triad-question {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		font-style: italic;
+	}
+	.triad-intro {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+	}
+
+	.triad-table {
+		text-align: left;
 	}
 </style>

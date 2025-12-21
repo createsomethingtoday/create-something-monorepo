@@ -166,8 +166,103 @@
 			</p>
 		</div>
 
-		<div class="mt-8 border border-canon">
-			<table class="w-full text-left">
+		<!-- Mobile Card Layout -->
+		<div class="css-arch-cards mt-8">
+			<div class="css-arch-card">
+				<div class="css-arch-card-header">
+					<span class="css-arch-category">Layout</span>
+				</div>
+				<div class="css-arch-card-body">
+					<div class="css-arch-row">
+						<span class="css-arch-label">Tailwind</span>
+						<span class="css-arch-value text-success">✓ Use</span>
+					</div>
+					<div class="css-arch-row">
+						<span class="css-arch-label">Canon</span>
+						<span class="css-arch-value opacity-50-canon">Not defined</span>
+					</div>
+				</div>
+			</div>
+			<div class="css-arch-card">
+				<div class="css-arch-card-header">
+					<span class="css-arch-category">Border Radius</span>
+				</div>
+				<div class="css-arch-card-body">
+					<div class="css-arch-row">
+						<span class="css-arch-label">Tailwind</span>
+						<span class="css-arch-value text-error">✗ Avoid</span>
+					</div>
+					<div class="css-arch-row">
+						<span class="css-arch-label">Canon</span>
+						<span class="css-arch-value text-success">var(--radius-*)</span>
+					</div>
+				</div>
+			</div>
+			<div class="css-arch-card">
+				<div class="css-arch-card-header">
+					<span class="css-arch-category">Colors</span>
+				</div>
+				<div class="css-arch-card-body">
+					<div class="css-arch-row">
+						<span class="css-arch-label">Tailwind</span>
+						<span class="css-arch-value text-error">✗ Avoid</span>
+					</div>
+					<div class="css-arch-row">
+						<span class="css-arch-label">Canon</span>
+						<span class="css-arch-value text-success">var(--color-*)</span>
+					</div>
+				</div>
+			</div>
+			<div class="css-arch-card">
+				<div class="css-arch-card-header">
+					<span class="css-arch-category">Spacing</span>
+				</div>
+				<div class="css-arch-card-body">
+					<div class="css-arch-row">
+						<span class="css-arch-label">Tailwind</span>
+						<span class="css-arch-value text-warning">~ Acceptable</span>
+					</div>
+					<div class="css-arch-row">
+						<span class="css-arch-label">Canon</span>
+						<span class="css-arch-value text-success">var(--space-*)</span>
+					</div>
+				</div>
+			</div>
+			<div class="css-arch-card">
+				<div class="css-arch-card-header">
+					<span class="css-arch-category">Typography</span>
+				</div>
+				<div class="css-arch-card-body">
+					<div class="css-arch-row">
+						<span class="css-arch-label">Tailwind</span>
+						<span class="css-arch-value text-error">✗ Avoid</span>
+					</div>
+					<div class="css-arch-row">
+						<span class="css-arch-label">Canon</span>
+						<span class="css-arch-value text-success">var(--text-*)</span>
+					</div>
+				</div>
+			</div>
+			<div class="css-arch-card">
+				<div class="css-arch-card-header">
+					<span class="css-arch-category">Shadows</span>
+				</div>
+				<div class="css-arch-card-body">
+					<div class="css-arch-row">
+						<span class="css-arch-label">Tailwind</span>
+						<span class="css-arch-value text-error">✗ Avoid</span>
+					</div>
+					<div class="css-arch-row">
+						<span class="css-arch-label">Canon</span>
+						<span class="css-arch-value text-success">var(--shadow-*)</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Desktop Table Layout -->
+		<div class="css-arch-table-wrapper mt-8 border border-canon">
+			<table class="css-arch-table w-full">
 				<thead class="border-b border-canon">
 					<tr>
 						<th class="px-6 py-4 text-sm-canon font-semibold opacity-60-canon">Category</th>
@@ -416,5 +511,71 @@
 
 	thead {
 		border-color: var(--color-border-default);
+	}
+	/* Mobile Card Layout for CSS Architecture Table */
+	.css-arch-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.css-arch-table-wrapper {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.css-arch-cards {
+			display: none;
+		}
+
+		.css-arch-table-wrapper {
+			display: block;
+		}
+	}
+
+	.css-arch-card {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.css-arch-card-header {
+		margin-bottom: var(--space-sm);
+		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.css-arch-category {
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+	}
+
+	.css-arch-card-body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.css-arch-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.css-arch-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.css-arch-value {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		font-family: ui-monospace, monospace;
+	}
+
+	.css-arch-table {
+		text-align: left;
 	}
 </style>
