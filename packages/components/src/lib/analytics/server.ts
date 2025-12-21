@@ -249,6 +249,10 @@ async function updateSessionSummaries(
 		const errors = sessionEvts.filter(e => e.category === 'error').length;
 		const maxScrollDepth = Math.max(0, ...sessionEvts.filter(e => e.action === 'scroll_depth' && e.value).map(e => e.value || 0));
 
+		// Look for session_end event with client-reported duration
+		const sessionEndEvent = sessionEvts.find(e => e.action === 'session_end');
+		const clientReportedDuration = sessionEndEvent?.value;
+
 		// Check if session exists
 		const existing = await db
 			.prepare('SELECT * FROM unified_sessions WHERE id = ?')
@@ -257,48 +261,88 @@ async function updateSessionSummaries(
 
 		if (existing.results && existing.results.length > 0) {
 			// Update existing session
-			// Use MAX(..., 1) to ensure minimum 1 second duration when page_views > 0
-			await db
-				.prepare(
-					`UPDATE unified_sessions SET
-					 ended_at = ?,
-					 duration_seconds = CASE
-					   WHEN page_views + ? > 0 THEN MAX(CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER), 1)
-					   ELSE CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER)
-					 END,
-					 page_views = page_views + ?,
-					 interactions = interactions + ?,
-					 conversions = conversions + ?,
-					 errors = errors + ?,
-					 max_scroll_depth = MAX(max_scroll_depth, ?),
-					 exit_url = ?,
-					 updated_at = datetime('now')
-					 WHERE id = ?`
-				)
-				.bind(
-					lastEvent.timestamp,
-					pageViews,
-					lastEvent.timestamp,
-					lastEvent.timestamp,
-					pageViews,
-					interactions,
-					conversions,
-					errors,
-					maxScrollDepth,
-					lastEvent.url,
-					sessionId
-				)
-				.run();
+			// Prefer client-reported duration from session_end event if available
+			if (clientReportedDuration !== undefined && clientReportedDuration > 0) {
+				// Use client-reported active time (more accurate)
+				await db
+					.prepare(
+						`UPDATE unified_sessions SET
+						 ended_at = ?,
+						 duration_seconds = ?,
+						 page_views = page_views + ?,
+						 interactions = interactions + ?,
+						 conversions = conversions + ?,
+						 errors = errors + ?,
+						 max_scroll_depth = MAX(max_scroll_depth, ?),
+						 exit_url = ?,
+						 updated_at = datetime('now')
+						 WHERE id = ?`
+					)
+					.bind(
+						lastEvent.timestamp,
+						Math.round(clientReportedDuration),
+						pageViews,
+						interactions,
+						conversions,
+						errors,
+						maxScrollDepth,
+						lastEvent.url,
+						sessionId
+					)
+					.run();
+			} else {
+				// Fall back to timestamp calculation
+				// Use MAX(..., 1) to ensure minimum 1 second duration when page_views > 0
+				await db
+					.prepare(
+						`UPDATE unified_sessions SET
+						 ended_at = ?,
+						 duration_seconds = CASE
+						   WHEN page_views + ? > 0 THEN MAX(CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER), 1)
+						   ELSE CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER)
+						 END,
+						 page_views = page_views + ?,
+						 interactions = interactions + ?,
+						 conversions = conversions + ?,
+						 errors = errors + ?,
+						 max_scroll_depth = MAX(max_scroll_depth, ?),
+						 exit_url = ?,
+						 updated_at = datetime('now')
+						 WHERE id = ?`
+					)
+					.bind(
+						lastEvent.timestamp,
+						pageViews,
+						lastEvent.timestamp,
+						lastEvent.timestamp,
+						pageViews,
+						interactions,
+						conversions,
+						errors,
+						maxScrollDepth,
+						lastEvent.url,
+						sessionId
+					)
+					.run();
+			}
 		} else {
 			// Calculate duration in seconds
-			const startTime = new Date(firstEvent.timestamp).getTime();
-			const endTime = new Date(lastEvent.timestamp).getTime();
-			let durationSeconds = Math.round((endTime - startTime) / 1000);
+			let durationSeconds: number;
 
-			// Minimum duration fallback: if session has page_view but duration is 0,
-			// use 1 second minimum (evidence of user presence)
-			if (durationSeconds === 0 && pageViews > 0) {
-				durationSeconds = 1;
+			if (clientReportedDuration !== undefined && clientReportedDuration > 0) {
+				// Prefer client-reported active time (more accurate, excludes hidden tab time)
+				durationSeconds = Math.round(clientReportedDuration);
+			} else {
+				// Fall back to timestamp calculation
+				const startTime = new Date(firstEvent.timestamp).getTime();
+				const endTime = new Date(lastEvent.timestamp).getTime();
+				durationSeconds = Math.round((endTime - startTime) / 1000);
+
+				// Minimum duration fallback: if session has page_view but duration is 0,
+				// use 1 second minimum (evidence of user presence)
+				if (durationSeconds === 0 && pageViews > 0) {
+					durationSeconds = 1;
+				}
 			}
 
 			// Create new session
