@@ -31,6 +31,5 @@ export * from './marks/index.js';
 
 // Placeholder exports for future components
 // These will be populated as components are implemented:
-// - marks/CubeMark.svelte
 // - utils/cube-geometry.ts
 // - utils/cube-animations.ts
