@@ -4,7 +4,7 @@
 // Types
 export * from './types.js';
 
-// OG Image Generation
+// OG Image Generation (server-side SVG generation)
 export {
 	generateOGSVG,
 	generateMinimalOGSVG,
@@ -12,6 +12,9 @@ export {
 	OG_WIDTH,
 	OG_HEIGHT
 } from './og-template.js';
+
+// Social Components (Svelte components for client-side rendering)
+export * from './social/index.js';
 
 // Styles
 // CSS-based icons: import '@create-something/components/brand/icons.css'
@@ -27,6 +30,5 @@ export {
 // - marks/PropertyMark.svelte
 // - states/CubeLoader.svelte
 // - states/CubeSkeleton.svelte
-// - social/OGImage.svelte
 // - utils/cube-geometry.ts
 // - utils/cube-animations.ts
