@@ -10,6 +10,39 @@
 
 	let loading = $state(true);
 	let days = $state(7);
+	let expandedUrls = $state<Set<string>>(new Set());
+
+	/**
+	 * Format timestamp as relative time (e.g., "2m ago", "1h ago")
+	 */
+	function formatRelativeTime(dateStr: string): string {
+		const date = new Date(dateStr);
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffMins = Math.floor(diffMs / 60000);
+		const diffHours = Math.floor(diffMins / 60);
+		const diffDays = Math.floor(diffHours / 24);
+
+		if (diffMins < 1) return 'just now';
+		if (diffMins < 60) return `${diffMins}m ago`;
+		if (diffHours < 24) return `${diffHours}h ago`;
+		if (diffDays < 7) return `${diffDays}d ago`;
+		return date.toLocaleDateString();
+	}
+
+	/**
+	 * Toggle URL expansion for a specific event
+	 */
+	function toggleUrl(eventId: string): void {
+		const newSet = new Set(expandedUrls);
+		if (newSet.has(eventId)) {
+			newSet.delete(eventId);
+		} else {
+			newSet.add(eventId);
+		}
+		expandedUrls = newSet;
+	}
+
 	let data = $state<{
 		dailyAggregates: Array<{
 			date: string;
@@ -191,23 +224,61 @@
 			{#if data.recentEvents.length === 0}
 				<p class="empty">No recent events</p>
 			{:else}
-				<div class="events-table">
-					<div class="table-header">
-						<span>Category</span>
-						<span>Action</span>
-						<span>Target</span>
-						<span>URL</span>
-						<span>Time</span>
-					</div>
+				<!-- Mobile Card Layout -->
+				<div class="responsive-table-cards">
 					{#each data.recentEvents.slice(0, 20) as event}
-						<div class="table-row">
-							<span class="category-badge">{event.category}</span>
-							<span class="action-text">{event.action}</span>
-							<span class="target-text">{event.target || '—'}</span>
-							<span class="url-text" title={event.url}>{event.url?.slice(0, 30) || '—'}</span>
-							<span class="time-text">{new Date(event.created_at).toLocaleTimeString()}</span>
+						<div class="event-card">
+							<div class="event-card-header">
+								<span class="category-badge">{event.category}</span>
+								<span class="event-time">{formatRelativeTime(event.created_at)}</span>
+							</div>
+							<div class="event-card-body">
+								<div class="event-card-row">
+									<span class="event-card-label">Action</span>
+									<span class="event-card-action">{event.action}</span>
+								</div>
+								{#if event.target}
+									<div class="event-card-row">
+										<span class="event-card-label">Target</span>
+										<span class="event-card-value">{event.target}</span>
+									</div>
+								{/if}
+								{#if event.url}
+									<button
+										class="event-url-button"
+										onclick={() => toggleUrl(event.id)}
+									>
+										<span class="event-card-label">URL</span>
+										<span class="event-url-value" class:expanded={expandedUrls.has(event.id)}>
+											{event.url}
+										</span>
+									</button>
+								{/if}
+							</div>
 						</div>
 					{/each}
+				</div>
+
+				<!-- Desktop Table Layout -->
+				<div class="responsive-table-wrapper">
+					<div class="events-table">
+						<div class="table-header">
+							<span>Category</span>
+							<span>Action</span>
+							<span>Target</span>
+							<span>URL</span>
+							<span>Time</span>
+						</div>
+						{#each data.recentEvents.slice(0, 20) as event}
+							<div class="table-row">
+								<span class="category-badge">{event.category}</span>
+								<span class="action-text">{event.action}</span>
+								<span class="target-text">{event.target || '—'}</span>
+								<span class="url-text" title={event.url}>{event.url?.slice(0, 30) || '—'}</span>
+								<span class="time-text">{new Date(event.created_at).toLocaleTimeString()}</span>
+							</div>
+						{/each}
+					</div>
 				</div>
 			{/if}
 		</div>
@@ -458,6 +529,106 @@
 		font-variant-numeric: tabular-nums;
 	}
 
+	/* Responsive table pattern */
+	.responsive-table-cards {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.responsive-table-wrapper {
+		display: none;
+	}
+
+	@media (min-width: 768px) {
+		.responsive-table-cards {
+			display: none;
+		}
+
+		.responsive-table-wrapper {
+			display: block;
+		}
+	}
+
+	/* Event card styles (mobile) */
+	.event-card {
+		padding: var(--space-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.event-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--space-sm);
+		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.event-time {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.event-card-body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.event-card-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.event-card-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.event-card-action {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		font-family: var(--font-mono);
+	}
+
+	.event-card-value {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	/* URL button for tap to expand */
+	.event-url-button {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		width: 100%;
+		padding: var(--space-xs) 0;
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+	}
+
+	.event-url-value {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		max-width: 60%;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.event-url-value.expanded {
+		white-space: normal;
+		word-break: break-all;
+		max-width: 100%;
+	}
+
 	@media (max-width: 768px) {
 		.two-col {
 			grid-template-columns: 1fr;
@@ -465,18 +636,6 @@
 
 		.stats-row {
 			grid-template-columns: 1fr;
-		}
-
-		.table-header,
-		.table-row {
-			grid-template-columns: 80px 1fr 60px;
-		}
-
-		.table-header span:nth-child(3),
-		.table-header span:nth-child(4),
-		.table-row span:nth-child(3),
-		.table-row span:nth-child(4) {
-			display: none;
 		}
 	}
 </style>
