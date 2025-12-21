@@ -85,6 +85,13 @@ export interface BackNavigationEvent extends AnalyticsEvent {
 	action: 'back_navigation';
 }
 
+export interface SessionEndEvent extends AnalyticsEvent {
+	category: 'navigation';
+	action: 'session_end';
+	/** Session duration in seconds */
+	value: number;
+}
+
 export interface ExternalLinkEvent extends AnalyticsEvent {
 	category: 'navigation';
 	action: 'external_link';
