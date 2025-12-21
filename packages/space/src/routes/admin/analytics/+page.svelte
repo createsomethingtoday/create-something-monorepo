@@ -144,7 +144,7 @@
 				<div class="stat-label">Avg Page Views</div>
 			</div>
 			<div class="stat-card">
-				<div class="stat-value">{Math.round(data.sessionStats.avgDuration / 60)}m</div>
+				<div class="stat-value">{Math.round((data.sessionStats.avgDuration ?? 0) / 60)}m</div>
 				<div class="stat-label">Avg Duration</div>
 			</div>
 		</div>
