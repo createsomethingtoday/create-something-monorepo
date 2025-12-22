@@ -177,7 +177,7 @@
 		max-width: 14ch;
 		opacity: 0;
 		transform: translateY(20px);
-		transition: opacity 600ms var(--ease-standard), transform 600ms var(--ease-standard);
+		transition: opacity var(--duration-complex) var(--ease-standard), transform var(--duration-complex) var(--ease-standard);
 	}
 
 	.act-text.visible {
@@ -186,7 +186,7 @@
 	}
 
 	.act-text.delayed {
-		transition-delay: 200ms;
+		transition-delay: var(--duration-micro);
 	}
 
 	.act-subtext {
@@ -197,8 +197,8 @@
 		max-width: 24ch;
 		opacity: 0;
 		transform: translateY(20px);
-		transition: opacity 600ms var(--ease-standard), transform 600ms var(--ease-standard);
-		transition-delay: 200ms;
+		transition: opacity var(--duration-complex) var(--ease-standard), transform var(--duration-complex) var(--ease-standard);
+		transition-delay: var(--duration-micro);
 	}
 
 	.act-subtext.visible {
@@ -221,10 +221,10 @@
 		border-radius: var(--radius-full);
 		opacity: 0;
 		transform: translateY(20px);
-		transition: opacity 600ms var(--ease-standard),
-					transform 600ms var(--ease-standard),
-					border-color 200ms var(--ease-standard),
-					background 200ms var(--ease-standard);
+		transition: opacity var(--duration-complex) var(--ease-standard),
+					transform var(--duration-complex) var(--ease-standard),
+					border-color var(--duration-micro) var(--ease-standard),
+					background var(--duration-micro) var(--ease-standard);
 	}
 
 	.act-cta.visible {
@@ -238,7 +238,7 @@
 	}
 
 	.act-cta .arrow {
-		transition: transform 200ms var(--ease-standard);
+		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
 	.act-cta:hover .arrow {

@@ -151,7 +151,7 @@
 
 	.menu-btn {
 		color: var(--color-fg-primary);
-		transition: color 150ms var(--ease-standard);
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.menu-btn:hover {
