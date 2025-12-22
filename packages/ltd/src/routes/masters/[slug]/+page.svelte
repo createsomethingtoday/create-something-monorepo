@@ -90,7 +90,7 @@
 					{data.examples.length} curated examples from Are.na
 				</p>
 
-				<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each data.examples as example}
 						<div class="example-card group relative aspect-square overflow-hidden border border-canon">
 							{#if example.image_url}
