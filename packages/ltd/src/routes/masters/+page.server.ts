@@ -9,10 +9,12 @@ export const load: PageServerLoad = async ({ platform }) => {
 	}
 
 	try {
+		// Exclude arena-taste (curated references live at /taste, not /masters)
 		const result = await db
 			.prepare(
 				`
 			SELECT * FROM masters
+			WHERE id != 'arena-taste'
 			ORDER BY created_at ASC
 		`
 			)
