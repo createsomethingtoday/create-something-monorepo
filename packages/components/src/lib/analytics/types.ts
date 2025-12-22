@@ -17,6 +17,18 @@
 export type Property = 'space' | 'io' | 'agency' | 'ltd' | 'lms';
 
 /**
+ * Domain to property mapping for cross-property detection
+ * Single source of truth for property identification
+ */
+export const PROPERTY_DOMAINS: Record<string, Property> = {
+	'createsomething.space': 'space',
+	'createsomething.io': 'io',
+	'createsomething.agency': 'agency',
+	'createsomething.ltd': 'ltd',
+	'learn.createsomething.space': 'lms',
+};
+
+/**
  * Event categories aligned with user intent discovery
  */
 export type EventCategory =
