@@ -17,12 +17,12 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase opacity-60 mb-4">Client: Maverick X</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Maverick X</p>
 			<h1 class="mb-6">Maverick X</h1>
-			<p class="heading-2 opacity-70 leading-relaxed mb-8">
+			<p class="heading-2 body-tertiary leading-relaxed mb-8">
 				Corporate website for industrial chemistry company with breakthrough solutions across oil & gas, mining, and water treatment
 			</p>
-			<div class="flex gap-4 body-sm opacity-50">
+			<div class="flex gap-4 body-sm body-muted">
 				<span>• Next.js 14</span>
 				<span>• Tailwind CSS</span>
 				<span>• Framer Motion</span>
@@ -36,28 +36,28 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">The Challenge</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					Maverick X needed a corporate website to communicate their breakthrough industrial chemistry solutions across three distinct sectors: oil & gas recovery, mining & metals extraction, and water treatment.
 				</p>
 
 				<p><strong>Requirements:</strong></p>
 
-				<ul class="space-y-3 body opacity-70 pl-6">
+				<ul class="space-y-3 body body-tertiary pl-6">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Clear product differentiation (PetroX, LithX, DME)</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Sector-specific landing pages with technical depth</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Professional aesthetic for B2B industrial audience</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Performance-optimized for fast load times</span>
 					</li>
 				</ul>
@@ -70,17 +70,17 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Applying "Less, But Better"</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					This project applied <a
 						href="https://createsomething.ltd/principles"
-						class="underline hover:opacity-70">Dieter Rams' tenth principle</a
+						class="underline link-hover">Dieter Rams' tenth principle</a
 					>: as little design as possible. Industrial chemistry is complex—the website's job is to clarify, not complicate.
 				</p>
 
 				<div class="my-8 p-8 card-surface">
-					<p class="body-sm font-mono opacity-60 mb-4">Design Decisions:</p>
-					<ul class="space-y-2 body-sm opacity-70 font-mono">
+					<p class="body-sm font-mono body-tertiary mb-4">Design Decisions:</p>
+					<ul class="space-y-2 body-sm body-tertiary font-mono">
 						<li>→ Three products, three colors, three sections</li>
 						<li>→ No unnecessary animations or decorations</li>
 						<li>→ Technical content presented clearly</li>
@@ -90,17 +90,17 @@
 
 				<p><strong>Principles applied:</strong></p>
 
-				<ul class="space-y-3 body opacity-70 pl-6">
+				<ul class="space-y-3 body body-tertiary pl-6">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span><strong>Understandable:</strong> Complex chemistry made accessible</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span><strong>As little as possible:</strong> Remove until it breaks</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span><strong>Honest:</strong> No inflated claims, real technical specs</span>
 					</li>
 				</ul>
@@ -117,7 +117,7 @@
 				<!-- Stack -->
 				<div class="card-surface p-8">
 					<h3 class="heading-3 font-semibold mb-4">Technology Stack</h3>
-					<ul class="space-y-3 body-sm opacity-70">
+					<ul class="space-y-3 body-sm body-tertiary">
 						<li>• Next.js 14 (App Router)</li>
 						<li>• Tailwind CSS</li>
 						<li>• TypeScript</li>
@@ -128,7 +128,7 @@
 				<!-- Deployment -->
 				<div class="card-surface p-8">
 					<h3 class="heading-3 font-semibold mb-4">Deployment</h3>
-					<ul class="space-y-3 body-sm opacity-70">
+					<ul class="space-y-3 body-sm body-tertiary">
 						<li>• Vercel (automatic deploys)</li>
 						<li>• Edge network distribution</li>
 						<li>• Image optimization</li>
@@ -144,7 +144,7 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Results</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					<strong>Deployed to production</strong> with three sector-specific landing pages and clear product positioning.
 				</p>
@@ -166,7 +166,7 @@
 				</div>
 
 				<p>
-					<a href="https://maverickx.createsomething.io" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-70">
+					<a href="https://maverickx.createsomething.io" target="_blank" rel="noopener noreferrer" class="underline link-hover">
 						View live site →
 					</a>
 				</p>
@@ -178,7 +178,7 @@
 	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto text-center">
 			<h2 class="mb-6">Need a Corporate Website?</h2>
-			<p class="body-lg opacity-70 mb-8 leading-relaxed">
+			<p class="body-lg body-tertiary mb-8 leading-relaxed">
 				We build focused, fast websites that communicate complex products clearly.
 			</p>
 			<a
@@ -265,6 +265,18 @@
 
 	.body-muted {
 		color: var(--color-fg-muted);
+	}
+
+	.body-subtle {
+		color: var(--color-fg-subtle);
+	}
+
+	.link-hover {
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.link-hover:hover {
+		color: var(--color-fg-tertiary);
 	}
 
 	.link {

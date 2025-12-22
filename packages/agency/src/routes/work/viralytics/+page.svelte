@@ -17,12 +17,12 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Half Dozen</p>
 			<h1 class="mb-6">Viralytics</h1>
-			<p class="heading-2 opacity-70 leading-relaxed mb-8">
+			<p class="heading-2 body-tertiary leading-relaxed mb-8">
 				Autonomous A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists
 			</p>
-			<div class="flex flex-wrap gap-4 body-sm opacity-50">
+			<div class="flex flex-wrap gap-4 body-sm body-muted">
 				<span>• Cloudflare Workers</span>
 				<span>• Puppeteer Scraping</span>
 				<span>• AI Analysis</span>
@@ -36,7 +36,7 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">The Challenge</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					Half Dozen's A&R team needed a way to discover independent artists before they blow up.
 					Manual tracking across multiple chart sources was time-consuming and inconsistent.
@@ -45,25 +45,25 @@
 
 				<p><strong>Technical requirements:</strong></p>
 
-				<ul class="space-y-3 body opacity-70 pl-6">
+				<ul class="space-y-3 body body-tertiary pl-6">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Scrape Spotify charts (Global Daily, City Pulse playlists)</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Track chart positions, rank changes, days on chart</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Filter for independent artists (non-major label)</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Calculate "Viralytics Score" for discovery prioritization</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Automatically add qualified artists to Notion for review</span>
 					</li>
 				</ul>
@@ -76,10 +76,10 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">System Architecture</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<div class="my-8 p-8 card-surface">
-					<p class="body-sm font-mono opacity-60 mb-4">Data Flow:</p>
-					<pre class="body-sm opacity-70 font-mono leading-loose overflow-x-auto">
+					<p class="body-sm font-mono body-tertiary mb-4">Data Flow:</p>
+					<pre class="body-sm body-tertiary font-mono leading-loose overflow-x-auto">
 Chart Sources (Spotify, City Pulse)
     ↓
 chart-scraper Worker (Puppeteer)
@@ -98,17 +98,17 @@ Notion (A&R Review Queue)
 
 				<p><strong>Key components:</strong></p>
 
-				<ul class="space-y-3 body opacity-70 pl-6">
+				<ul class="space-y-3 body body-tertiary pl-6">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span><strong>chart-scraper:</strong> Browser Rendering API with Puppeteer for scraping protected charts</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span><strong>chart-service:</strong> API orchestrator that fetches, caches, and stores chart data</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span><strong>viralytics-workflow:</strong> Daily AI agent that discovers and qualifies artists</span>
 					</li>
 				</ul>
@@ -121,7 +121,7 @@ Notion (A&R Review Queue)
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">AI-Powered Discovery</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					The viralytics workflow runs 20 SQL queries daily to identify artists with viral potential:
 				</p>
@@ -158,7 +158,7 @@ Notion (A&R Review Queue)
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Results</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
 					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">4+</p>
@@ -179,21 +179,21 @@ Notion (A&R Review Queue)
 
 				<p><strong>Production status:</strong></p>
 
-				<ul class="space-y-3 body opacity-70 pl-6">
+				<ul class="space-y-3 body body-tertiary pl-6">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span>Chart scraping operational (4 sources)</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span>Daily workflow triggering at 7 AM UTC</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span>Notion integration for A&R review queue</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">⏳</span>
+						<span class="body-subtle mt-1">⏳</span>
 						<span>Cloudflare D1 migration in progress (from Neon PostgreSQL)</span>
 					</li>
 				</ul>
@@ -206,7 +206,7 @@ Notion (A&R Review Queue)
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Applying the Canon</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					Viralytics applies <strong>Tufte's data-ink ratio</strong> principle: the system maximizes
 					signal (actionable artist discoveries) and minimizes noise (irrelevant chart data).
@@ -224,7 +224,7 @@ Notion (A&R Review Queue)
 	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto text-center">
 			<h2 class="mb-6">Need AI-Powered Discovery?</h2>
-			<p class="body-lg opacity-70 mb-8 leading-relaxed">
+			<p class="body-lg body-tertiary mb-8 leading-relaxed">
 				We build autonomous agents that surface actionable intelligence from complex data landscapes.
 			</p>
 			<a

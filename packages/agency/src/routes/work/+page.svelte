@@ -40,7 +40,7 @@
 					<div class="mb-6">
 						<span class="body-xs font-mono body-muted">CLIENT: HALF DOZEN</span>
 					</div>
-					<h2 class="heading-2 font-semibold mb-4 group-hover:opacity-70 transition-opacity">
+					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Kickstand
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
@@ -65,7 +65,7 @@
 					<div class="mb-6">
 						<span class="body-xs font-mono body-muted">CLIENT: HALF DOZEN</span>
 					</div>
-					<h2 class="heading-2 font-semibold mb-4 group-hover:opacity-70 transition-opacity">
+					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Arc for Gmail
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
@@ -90,7 +90,7 @@
 					<div class="mb-6">
 						<span class="body-xs font-mono body-muted">CLIENT: MAVERICK X</span>
 					</div>
-					<h2 class="heading-2 font-semibold mb-4 group-hover:opacity-70 transition-opacity">
+					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Maverick X
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
@@ -115,7 +115,7 @@
 					<div class="mb-6">
 						<span class="body-xs font-mono body-muted">CLIENT: HALF DOZEN</span>
 					</div>
-					<h2 class="heading-2 font-semibold mb-4 group-hover:opacity-70 transition-opacity">
+					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Viralytics
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
@@ -217,6 +217,14 @@
 		font-size: var(--text-h2);
 		font-weight: bold;
 		color: var(--color-fg-primary);
+	}
+
+	.heading-hover {
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.group:hover .heading-hover {
+		color: var(--color-fg-tertiary);
 	}
 
 	.heading-3 {

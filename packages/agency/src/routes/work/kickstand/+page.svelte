@@ -17,12 +17,12 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase opacity-60 mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Half Dozen</p>
 			<h1 class="mb-6">Kickstand</h1>
-			<p class="heading-2 opacity-70 leading-relaxed mb-8">
+			<p class="heading-2 body-tertiary leading-relaxed mb-8">
 				Venue intelligence system with health monitoring, automated cleanup scripts, and real-time status dashboards
 			</p>
-			<div class="flex flex-wrap gap-4 body-sm opacity-50">
+			<div class="flex flex-wrap gap-4 body-sm body-muted">
 				<span>• Cloudflare Workers</span>
 				<span>• D1 Database</span>
 				<span>• TypeScript</span>
@@ -36,7 +36,7 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">The Challenge</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					Kickstand had grown organically over time, accumulating technical debt: 155 active scripts,
 					30 TypeScript errors, and documentation scattered across multiple formats. The system
@@ -45,21 +45,21 @@
 
 				<p><strong>Initial assessment:</strong></p>
 
-				<ul class="space-y-3 body opacity-70 pl-6">
+				<ul class="space-y-3 body body-tertiary pl-6">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>155 active scripts (many redundant or orphaned)</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>30 TypeScript errors blocking type safety</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Documentation inconsistency across README, CLAUDE.md, ARCHITECTURE.md</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">—</span>
+						<span class="body-subtle mt-1">—</span>
 						<span>Health score: 6.2/10</span>
 					</li>
 				</ul>
@@ -72,17 +72,17 @@
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Applying the Subtractive Triad</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					This project was the first formal application of the <a
 						href="https://createsomething.ltd/ethos"
-						class="underline hover:opacity-70">Subtractive Triad</a
+						class="underline link-hover">Subtractive Triad</a
 					> framework: DRY → Rams → Heidegger.
 				</p>
 
 				<div class="my-8 p-8 card-surface">
-					<p class="body-sm font-mono opacity-60 mb-4">The Three Levels:</p>
-					<pre class="body-sm opacity-70 font-mono leading-loose overflow-x-auto">
+					<p class="body-sm font-mono body-tertiary mb-4">The Three Levels:</p>
+					<pre class="body-sm body-tertiary font-mono leading-loose overflow-x-auto">
 Level 1: DRY (Implementation)
   → "Have I built this before?"
   → Action: Unify
@@ -101,7 +101,7 @@ Level 3: Heidegger (System)
 				</div>
 
 				<p><strong>Key insight:</strong></p>
-				<p class="italic opacity-70">
+				<p class="italic body-tertiary">
 					"Creation is the discipline of removing what obscures. Each level of the triad
 					subtracts differently—duplication, excess, disconnection—but all reveal the same truth."
 				</p>
@@ -114,7 +114,7 @@ Level 3: Heidegger (System)
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Results</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
 					<div class="text-center p-6 metric-card">
 						<p class="heading-2 font-bold mb-2">92%</p>
@@ -135,21 +135,21 @@ Level 3: Heidegger (System)
 
 				<p><strong>Validated outcomes:</strong></p>
 
-				<ul class="space-y-3 body opacity-70 pl-6">
+				<ul class="space-y-3 body body-tertiary pl-6">
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span>Removed 142 orphaned/redundant scripts</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span>TypeScript strict mode enabled with zero errors</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span>Documentation unified into canonical UNDERSTANDING.md format</span>
 					</li>
 					<li class="flex items-start gap-3">
-						<span class="opacity-40 mt-1">✓</span>
+						<span class="body-subtle mt-1">✓</span>
 						<span>48% health score improvement (6.2 → 9.2)</span>
 					</li>
 				</ul>
@@ -162,7 +162,7 @@ Level 3: Heidegger (System)
 		<div class="max-w-3xl mx-auto">
 			<h2 class="mb-8">Why This Validates the Triad</h2>
 
-			<div class="space-y-6 body-lg opacity-80 leading-relaxed">
+			<div class="space-y-6 body-lg leading-relaxed">
 				<p>
 					Kickstand was the first production application of the Subtractive Triad. The framework
 					proved that systematic subtraction at three levels—implementation, artifact, system—yields
@@ -172,14 +172,14 @@ Level 3: Heidegger (System)
 				<p>
 					The triad has since been formalized into the <a
 						href="https://createsomething.io/experiments/kickstand-triad-audit"
-						class="underline hover:opacity-70">Kickstand Triad Audit experiment</a
+						class="underline link-hover">Kickstand Triad Audit experiment</a
 					> and documented in the CREATE SOMETHING canon.
 				</p>
 
-				<p class="pt-6 body opacity-60 italic">
+				<p class="pt-6 body body-tertiary italic">
 					Full experiment documentation available at <a
 						href="https://createsomething.io/experiments/kickstand-triad-audit"
-						class="underline hover:opacity-100">createsomething.io</a
+						class="underline link-hover-strong">createsomething.io</a
 					>.
 				</p>
 			</div>
@@ -190,7 +190,7 @@ Level 3: Heidegger (System)
 	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto text-center">
 			<h2 class="mb-6">Need a Codebase Audit?</h2>
-			<p class="body-lg opacity-70 mb-8 leading-relaxed">
+			<p class="body-lg body-tertiary mb-8 leading-relaxed">
 				The Subtractive Triad can be applied to any system: legacy codebases, overgrown projects,
 				or architectural reviews.
 			</p>
@@ -278,6 +278,22 @@ Level 3: Heidegger (System)
 
 	.body-muted {
 		color: var(--color-fg-muted);
+	}
+
+	.body-subtle {
+		color: var(--color-fg-subtle);
+	}
+
+	.link-hover {
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.link-hover:hover {
+		color: var(--color-fg-tertiary);
+	}
+
+	.link-hover-strong:hover {
+		color: var(--color-fg-primary);
 	}
 
 	.link {
