@@ -58,8 +58,8 @@ if grep -qE 'class="[^"]*shadow-(sm|md|lg|xl|2xl)[^"]*"' "$FILE_PATH" 2>/dev/nul
   VIOLATIONS="$VIOLATIONS\n• shadow-* detected: Use var(--shadow-*) instead"
 fi
 
-# Typography size violations
-if grep -qE 'class="[^"]*text-(xs|sm|base|lg|xl|2xl|3xl|4xl)[^"]*"' "$FILE_PATH" 2>/dev/null; then
+# Typography size violations (exclude -canon suffixed classes which ARE Canon)
+if grep -E 'class="[^"]*text-(xs|sm|base|lg|xl|2xl|3xl|4xl)[^"]*"' "$FILE_PATH" 2>/dev/null | grep -vq '\-canon'; then
   VIOLATIONS="$VIOLATIONS\n• text-[size] detected: Use var(--text-*) instead"
 fi
 

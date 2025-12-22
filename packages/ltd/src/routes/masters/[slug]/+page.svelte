@@ -81,6 +81,43 @@
 		</section>
 	{/if}
 
+	<!-- Visual Examples -->
+	{#if data.examples && data.examples.length > 0}
+		<section class="py-16 px-6 border-t border-canon">
+			<div class="max-w-6xl mx-auto">
+				<h2 class="section-heading">Visual References</h2>
+				<p class="section-subheading">
+					{data.examples.length} curated examples from Are.na
+				</p>
+
+				<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+					{#each data.examples as example}
+						<div class="example-card group relative aspect-square overflow-hidden border border-canon">
+							{#if example.image_url}
+								<img
+									src={example.image_url}
+									alt={example.title || 'Visual reference'}
+									class="example-img w-full h-full object-cover"
+									loading="lazy"
+								/>
+							{/if}
+							<div class="example-overlay absolute inset-0">
+								<div class="absolute bottom-0 left-0 right-0 p-4">
+									{#if example.title}
+										<p class="example-title">{example.title}</p>
+									{/if}
+									{#if example.year}
+										<p class="example-year">{example.year}</p>
+									{/if}
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			</div>
+		</section>
+	{/if}
+
 	<!-- Legacy -->
 	{#if data.master.legacy}
 		<section class="py-16 px-6 border-t border-canon">
@@ -266,6 +303,58 @@
 
 	.border-warning {
 		border-color: var(--color-warning-border);
+	}
+
+	/* Section headings for examples */
+	.section-heading {
+		font-size: var(--text-h1);
+		font-weight: 700;
+		margin-bottom: 2rem;
+	}
+
+	.section-subheading {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-bottom: 3rem;
+	}
+
+	/* Example gallery */
+	.example-card {
+		background: var(--color-bg-surface);
+	}
+
+	.example-img {
+		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	.example-card:hover .example-img {
+		transform: scale(1.05);
+	}
+
+	.example-overlay {
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent, transparent);
+		opacity: 0;
+		transition: opacity var(--duration-standard) var(--ease-standard);
+	}
+
+	.example-card:hover .example-overlay {
+		opacity: 1;
+	}
+
+	.example-title {
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		color: var(--color-fg-primary);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.example-year {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		margin-top: 0.25rem;
 	}
 
 	/* Universal element styles */
