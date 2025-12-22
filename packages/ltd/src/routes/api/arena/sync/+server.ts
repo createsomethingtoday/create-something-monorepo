@@ -18,8 +18,14 @@ import {
 } from '$lib/integrations/arena';
 import type { Example, Resource } from '$lib/types';
 
-// Default channels to sync (external high-quality sources)
-const DEFAULT_CHANNELS = [
+// CREATE SOMETHING curated channels (primary sources)
+const CS_CHANNELS = [
+	'canon-minimalism',
+	'motion-language'
+];
+
+// External high-quality channels (secondary sources)
+const EXTERNAL_CHANNELS = [
 	'people-dieter-rams',
 	'examples-swiss-design',
 	'motion-minimal-simple',
@@ -27,6 +33,9 @@ const DEFAULT_CHANNELS = [
 	'interfaces-motion',
 	'minimal-modern-web'
 ];
+
+// Default: sync our channels first, then external
+const DEFAULT_CHANNELS = [...CS_CHANNELS, ...EXTERNAL_CHANNELS];
 
 // Default master ID for synced examples (create a "Canon" master if needed)
 const DEFAULT_MASTER_ID = 'arena-taste';
