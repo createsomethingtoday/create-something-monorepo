@@ -39,6 +39,23 @@ async function bd(args: string, cwd?: string): Promise<string> {
 }
 
 /**
+ * Execute a bv command and return the result.
+ * bv is the Beads TUI viewer with robot mode for AI agents.
+ */
+async function bv(args: string, cwd?: string): Promise<string> {
+  try {
+    const { stdout } = await execAsync(`bv ${args}`, {
+      cwd: cwd || process.cwd(),
+      env: { ...process.env },
+    });
+    return stdout.trim();
+  } catch (error) {
+    const err = error as { stderr?: string; message: string };
+    throw new Error(`bv command failed: ${err.stderr || err.message}`);
+  }
+}
+
+/**
  * Read all issues from Beads.
  * Uses `bd list --json` for reliability (reads from SQLite database).
  */
@@ -175,19 +192,73 @@ export async function addDependency(
 }
 
 /**
+ * Robot-priority recommendation from bv.
+ */
+interface RobotPriorityRecommendation {
+  issue_id: string;
+  title: string;
+  current_priority: number;
+  suggested_priority: number;
+  impact_score: number;
+  confidence: number;
+  reasoning: string[];
+  direction: 'increase' | 'decrease' | 'maintain';
+}
+
+interface RobotPriorityOutput {
+  generated_at: string;
+  recommendations: RobotPriorityRecommendation[];
+}
+
+/**
  * Get priority-sorted issues ready for work.
- * Uses bv --robot-priority for optimized output.
+ * Uses bv -robot-priority for PageRank + Critical Path ranking.
+ * Falls back to bd ready --json if bv unavailable.
  */
 export async function getReadyIssues(cwd?: string): Promise<BeadsIssue[]> {
+  // First get the list of ready issues
+  let readyIssues: BeadsIssue[];
   try {
     const output = await bd('ready --json', cwd);
-    return JSON.parse(output) as BeadsIssue[];
+    readyIssues = JSON.parse(output) as BeadsIssue[];
   } catch {
     // Fallback: manual filtering
     const issues = await readAllIssues(cwd);
-    return issues
+    readyIssues = issues
       .filter((issue) => issue.status === 'open')
       .sort((a, b) => (a.priority || 2) - (b.priority || 2));
+    return readyIssues;
+  }
+
+  // Try to enhance with robot-priority impact scores
+  try {
+    const priorityOutput = await bv('-robot-priority', cwd);
+    const robotData = JSON.parse(priorityOutput) as RobotPriorityOutput;
+
+    // Create a map of issue_id -> impact_score
+    const impactScores = new Map<string, number>();
+    for (const rec of robotData.recommendations) {
+      impactScores.set(rec.issue_id, rec.impact_score);
+    }
+
+    // Sort ready issues by: impact_score (desc), then priority (asc)
+    readyIssues.sort((a, b) => {
+      const aImpact = impactScores.get(a.id) ?? 0;
+      const bImpact = impactScores.get(b.id) ?? 0;
+
+      // Higher impact first
+      if (bImpact !== aImpact) {
+        return bImpact - aImpact;
+      }
+
+      // Then by priority (lower = more urgent)
+      return (a.priority || 2) - (b.priority || 2);
+    });
+
+    return readyIssues;
+  } catch {
+    // bv not available or failed - return issues sorted by priority only
+    return readyIssues;
   }
 }
 
