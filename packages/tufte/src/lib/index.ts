@@ -9,6 +9,7 @@ export { default as ComparativeSparklines } from './components/ComparativeSparkl
 export { default as DistributionBar } from './components/DistributionBar.svelte';
 export { default as TrendIndicator } from './components/TrendIndicator.svelte';
 export { default as HourlyHeatmap } from './components/HourlyHeatmap.svelte';
+export { default as FlowGrid } from './components/FlowGrid.svelte';
 
 // Utilities
 export { generateSparklinePath, generateFillPath, formatNumber, getPercentage, formatCompact, formatDate } from './utils/index.js';
