@@ -185,13 +185,13 @@ git status                       # Uncommitted changes?
 ┌─────────────────────────────────────────────────────┐
 │                 HARNESS RUNNER                       │
 │                                                     │
-│  Session 1 ──► Session 2 ──► Session 3 ──► ...     │
-│      │             │             │                  │
-│      ▼             ▼             ▼                  │
-│  Checkpoint    Checkpoint    Checkpoint             │
-└──────┬─────────────┬─────────────┬──────────────────┘
-       │             │             │
-       ▼             ▼             ▼
+│  Init ──► Session 1 ──► Session 2 ──► Session 3    │
+│   │           │             │             │         │
+│   ▼           ▼             ▼             ▼         │
+│ Setup    Checkpoint    Checkpoint    Checkpoint     │
+└───┬───────────┬─────────────┬─────────────┬────────┘
+    │           │             │             │
+    ▼           ▼             ▼             ▼
 ┌─────────────────────────────────────────────────────┐
 │              BEADS (Human Interface)                │
 │                                                     │
@@ -199,6 +199,196 @@ git status                       # Uncommitted changes?
 │  `bd update`   - Redirect priorities                │
 │  `bd create`   - Inject work                        │
 └─────────────────────────────────────────────────────┘
+```
+
+## Session Types
+
+The harness distinguishes between **initializer** and **coding** sessions. Same tools, different responsibilities.
+
+### Initializer Session (First Run)
+
+The first session after `harness start` has setup responsibilities:
+
+```bash
+# Harness creates a setup issue that blocks all feature work
+bd create "Setup: Initialize harness environment" \
+  --type task \
+  --priority P0 \
+  --label harness:setup
+
+# All feature issues get dependency on setup
+bd dep add <feature-id> <setup-id>  # Feature blocked by setup
+```
+
+**Initializer Responsibilities**:
+
+| Task | Beads Tracking |
+|------|----------------|
+| Parse spec → create issues | Issues created with `harness:<run-id>` label |
+| Create `init.sh` script | Noted in setup issue description |
+| Establish dependency graph | `bd dep add` for all blockers |
+| First commit (baseline) | Close setup issue with commit ref |
+| Verify environment runs | Test `./init.sh` before closing |
+
+**Initializer Priming** (different from coding sessions):
+
+```markdown
+# Harness Initializer Session
+
+## Mode: INITIALIZER (first session)
+
+## Spec Location
+/specs/my-project.md
+
+## Responsibilities
+1. Parse spec and create Beads issues for each feature
+2. Create init.sh for environment setup
+3. Establish dependency graph between features
+4. Make initial commit with baseline
+5. Close setup issue when environment verified
+
+## Constraints
+- Do NOT implement features—only setup
+- Every feature issue MUST have clear acceptance criteria
+- init.sh MUST be tested before closing setup issue
+```
+
+### Coding Sessions (Subsequent)
+
+All sessions after initializer follow the standard Session Startup Protocol.
+
+**Detection**: If `bd list --label harness:setup --status=open` returns results, this is still initializer phase.
+
+```bash
+# Check if still in setup phase
+SETUP_OPEN=$(bd list --label harness:setup --status=open -q)
+if [ -n "$SETUP_OPEN" ]; then
+  echo "Initializer session: complete setup first"
+else
+  echo "Coding session: proceed with features"
+fi
+```
+
+## Environment Initialization
+
+The `init.sh` pattern ensures consistent environment setup across sessions.
+
+### init.sh Template
+
+Created by the initializer session, tracked in the setup issue:
+
+```bash
+#!/bin/bash
+# init.sh - Harness environment initialization
+# Created by: harness init session
+# Tracked in: Beads setup issue
+
+set -e  # Exit on error
+
+# Configuration
+PACKAGE="${1:-space}"           # Default package
+PORT="${2:-5173}"               # Default port
+TIMEOUT="${3:-30}"              # Startup timeout
+
+echo "→ Initializing harness environment..."
+
+# 1. Check dependencies
+if ! command -v pnpm &> /dev/null; then
+  echo "✗ pnpm not found"
+  exit 1
+fi
+
+# 2. Install if needed
+if [ ! -d "node_modules" ]; then
+  echo "→ Installing dependencies..."
+  pnpm install
+fi
+
+# 3. Generate types (if applicable)
+if [ -f "packages/$PACKAGE/wrangler.jsonc" ]; then
+  echo "→ Generating Cloudflare types..."
+  pnpm --filter="$PACKAGE" exec wrangler types 2>/dev/null || true
+fi
+
+# 4. Start dev server in background
+echo "→ Starting dev server for $PACKAGE..."
+pnpm dev --filter="$PACKAGE" &
+DEV_PID=$!
+
+# 5. Wait for server
+echo "→ Waiting for server (max ${TIMEOUT}s)..."
+for i in $(seq 1 $TIMEOUT); do
+  if curl -s "http://localhost:$PORT" > /dev/null 2>&1; then
+    echo "✓ Server ready on port $PORT (PID: $DEV_PID)"
+    echo "$DEV_PID" > .harness-dev-pid
+    exit 0
+  fi
+  sleep 1
+done
+
+echo "✗ Server failed to start within ${TIMEOUT}s"
+kill $DEV_PID 2>/dev/null || true
+exit 1
+```
+
+### init.sh in Beads Workflow
+
+```bash
+# Initializer session creates init.sh and tracks it
+bd update <setup-id> --description "$(cat <<EOF
+Setup issue for harness run.
+
+## Environment Script
+Created: init.sh
+- Installs dependencies
+- Generates types
+- Starts dev server
+- Verifies startup
+
+## Verification
+Run \`./init.sh\` and confirm server starts.
+EOF
+)"
+
+# Close setup when verified
+./init.sh && bd close <setup-id> --reason "Environment verified, init.sh working"
+```
+
+### Cleanup Script
+
+Companion to init.sh:
+
+```bash
+#!/bin/bash
+# cleanup.sh - Stop harness environment
+
+if [ -f ".harness-dev-pid" ]; then
+  PID=$(cat .harness-dev-pid)
+  if kill -0 "$PID" 2>/dev/null; then
+    echo "→ Stopping dev server (PID: $PID)..."
+    kill "$PID"
+    rm .harness-dev-pid
+    echo "✓ Server stopped"
+  else
+    echo "→ Server already stopped"
+    rm .harness-dev-pid
+  fi
+else
+  echo "→ No active harness server"
+fi
+```
+
+### Session Startup with init.sh
+
+The Session Startup Protocol uses init.sh when available:
+
+```bash
+# 4. Verify environment runs (updated)
+if [ -f "init.sh" ]; then
+  ./init.sh                      # Use harness init script
+else
+  pnpm dev --filter=<package> &  # Fallback
+fi
 ```
 
 ## Session Startup Protocol
@@ -402,9 +592,15 @@ packages/harness/
 ## Why This Works
 
 ### Subtractive Triad
-- **DRY**: One system (Beads) for all tracking
-- **Rams**: Only essential components
-- **Heidegger**: Serves the work, not itself
+- **DRY**: One system (Beads) for all tracking—no separate progress files
+- **Rams**: Only essential components—init.sh replaces ad-hoc setup
+- **Heidegger**: Serves the work, not itself—infrastructure recedes
+
+### Session Architecture
+- **Initializer/Coding split**: Setup happens once, properly
+- **One feature per session**: Prevents scope creep
+- **Prescriptive startup**: Reduces context waste
+- **Explicit verification**: Prevents premature completion
 
 ### Human Agency Preserved
 You can always:
@@ -414,3 +610,15 @@ You can always:
 - Resume when ready (`harness resume`)
 
 The harness runs autonomously, but you remain in control.
+
+### Anthropic Patterns Integrated
+Based on [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents):
+
+| Anthropic Pattern | Our Implementation |
+|-------------------|-------------------|
+| `claude-progress.txt` | Beads closed issues + `bd list --since` |
+| `feature_list.json` | Beads issues with status tracking |
+| Initializer agent | Initializer session with setup issue |
+| `init.sh` script | Created by initializer, tracked in Beads |
+| One-feature-per-session | Enforced in Session Priming constraints |
+| Failure mode docs | Failure Mode Reference table |
