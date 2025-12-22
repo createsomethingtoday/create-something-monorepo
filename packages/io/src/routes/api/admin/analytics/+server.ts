@@ -26,6 +26,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			unifiedTopActions,
 			unifiedSessionStats,
 			unifiedDailyAggregates,
+			// Cross-property flow data
+			propertyTransitions,
 		] = await Promise.all([
 			// Total page views (legacy)
 			db
@@ -166,6 +168,22 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 					ORDER BY date ASC, count DESC`
 				)
 				.all(),
+
+			// Cross-property transitions (Anti-Concierge wayfinding)
+			db
+				.prepare(
+					`SELECT
+						json_extract(metadata, '$.sourceProperty') as source,
+						json_extract(metadata, '$.targetProperty') as target,
+						COUNT(*) as count
+					FROM unified_events
+					WHERE action = 'property_transition'
+					AND created_at >= datetime('now', '-${days} days')
+					GROUP BY source, target
+					ORDER BY count DESC
+					LIMIT 20`
+				)
+				.all(),
 		]);
 
 		return json({
@@ -187,6 +205,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 					avgDuration: (unifiedSessionStats as { avgDuration: number } | null)?.avgDuration || 0,
 				},
 				dailyAggregates: unifiedDailyAggregates.results || [],
+				propertyTransitions: propertyTransitions.results || [],
 			},
 		});
 	} catch (error) {

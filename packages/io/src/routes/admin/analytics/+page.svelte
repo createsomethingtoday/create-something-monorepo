@@ -27,6 +27,7 @@
 			topActions: [],
 			sessionStats: { total: 0, avgPageViews: 0, avgDuration: 0 },
 			dailyAggregates: [],
+			propertyTransitions: [],
 		},
 	};
 
@@ -226,6 +227,27 @@
 			</div>
 		{/if}
 
+		<!-- Cross-Property Flow (Anti-Concierge Wayfinding) -->
+		{#if analytics.unified?.propertyTransitions?.length > 0}
+			<div class="section-header mt-8 mb-4">
+				<h3 class="section-title">Cross-Property Flow</h3>
+				<p class="section-subtitle">User journeys between CREATE SOMETHING properties</p>
+			</div>
+
+			<div class="table-card p-4">
+				<div class="flow-grid">
+					{#each analytics.unified.propertyTransitions as flow}
+						<div class="flow-item">
+							<span class="flow-source">.{flow.source}</span>
+							<span class="flow-arrow">→</span>
+							<span class="flow-target">.{flow.target}</span>
+							<span class="flow-count">{flow.count}</span>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
 		<!-- Daily Trend - Using Agentic Sparkline and DailyGrid Components -->
 		<div class="chart-card p-6 mt-4">
 			<div class="flex items-end justify-between mb-6">
@@ -281,6 +303,49 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* Cross-Property Flow Visualization */
+	.flow-grid {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.flow-item {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+	}
+
+	.flow-source {
+		font-family: var(--font-mono);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		min-width: 4rem;
+	}
+
+	.flow-arrow {
+		color: var(--color-fg-muted);
+	}
+
+	.flow-target {
+		font-family: var(--font-mono);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		min-width: 4rem;
+	}
+
+	.flow-count {
+		margin-left: auto;
+		font-family: var(--font-mono);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+</style>
 
 <!--
   Styles for this dashboard are now shared via @create-something/components/styles/components.css
