@@ -16,7 +16,6 @@ import type {
 	Property,
 	EventCategory,
 	EventBatch,
-	DEFAULT_CONFIG,
 } from './types.js';
 
 // =============================================================================
@@ -30,6 +29,65 @@ interface SessionData {
 	id: string;
 	startedAt: number;
 	lastActivityAt: number;
+	sourceProperty?: Property;
+}
+
+// =============================================================================
+// CROSS-PROPERTY DETECTION
+// =============================================================================
+
+const PROPERTY_DOMAINS: Record<string, Property> = {
+	'createsomething.space': 'space',
+	'createsomething.io': 'io',
+	'createsomething.agency': 'agency',
+	'createsomething.ltd': 'ltd',
+	'learn.createsomething.space': 'lms',
+};
+
+/**
+ * Detect which CREATE SOMETHING property a URL belongs to
+ */
+function detectPropertyFromUrl(url: string): Property | null {
+	try {
+		const parsed = new URL(url);
+		const hostname = parsed.hostname;
+
+		// Check for exact domain matches
+		for (const [domain, property] of Object.entries(PROPERTY_DOMAINS)) {
+			if (hostname === domain || hostname.endsWith('.' + domain)) {
+				return property;
+			}
+		}
+
+		// Check for localhost/dev patterns
+		if (hostname === 'localhost' || hostname === '127.0.0.1') {
+			// Can't determine property from localhost
+			return null;
+		}
+
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Get source property from referrer if it's a different CREATE SOMETHING property
+ */
+function getSourcePropertyFromReferrer(currentProperty: Property): Property | null {
+	if (typeof document === 'undefined') return null;
+
+	const referrer = document.referrer;
+	if (!referrer) return null;
+
+	const sourceProperty = detectPropertyFromUrl(referrer);
+
+	// Only return if it's a different property (actual cross-property navigation)
+	if (sourceProperty && sourceProperty !== currentProperty) {
+		return sourceProperty;
+	}
+
+	return null;
 }
 
 /**
@@ -125,6 +183,7 @@ export class AnalyticsClient {
 	private sessionId: string;
 	private sessionStartedAt: number;
 	private sessionEndSent: boolean = false;
+	private sourceProperty: Property | null = null;
 
 	constructor(config: AnalyticsConfig) {
 		this.config = {
@@ -137,6 +196,20 @@ export class AnalyticsClient {
 		};
 		this.sessionId = getSessionId();
 		this.sessionStartedAt = getSessionStartedAt();
+
+		// Detect cross-property navigation
+		this.sourceProperty = getSourcePropertyFromReferrer(config.property);
+		if (this.sourceProperty) {
+			// Store source property in session for persistence
+			this.updateSessionSourceProperty(this.sourceProperty);
+
+			// Fire property_transition event
+			this.propertyTransition(this.sourceProperty, config.property);
+
+			if (this.config.debug) {
+				console.log('[Analytics] Cross-property navigation detected:', this.sourceProperty, '→', config.property);
+			}
+		}
 
 		// Flush on page unload
 		if (typeof window !== 'undefined') {
@@ -176,6 +249,7 @@ export class AnalyticsClient {
 			eventId: this.generateEventId(),
 			sessionId: this.sessionId,
 			property: this.config.property,
+			sourceProperty: this.sourceProperty ?? undefined,
 			timestamp: new Date().toISOString(),
 			url: typeof window !== 'undefined' ? window.location.href : '',
 			referrer: typeof document !== 'undefined' ? document.referrer : undefined,
@@ -187,6 +261,43 @@ export class AnalyticsClient {
 		};
 
 		this.enqueue(event);
+	}
+
+	/**
+	 * Track a property transition (cross-property navigation)
+	 */
+	propertyTransition(fromProperty: Property, toProperty: Property): void {
+		this.track('navigation', 'property_transition', {
+			metadata: {
+				sourceProperty: fromProperty,
+				targetProperty: toProperty,
+			},
+		});
+	}
+
+	/**
+	 * Update session storage with source property
+	 */
+	private updateSessionSourceProperty(sourceProperty: Property): void {
+		if (typeof window === 'undefined') return;
+
+		try {
+			const stored = sessionStorage.getItem(SESSION_KEY);
+			if (stored) {
+				const session: SessionData = JSON.parse(stored);
+				session.sourceProperty = sourceProperty;
+				sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+			}
+		} catch {
+			// sessionStorage not available
+		}
+	}
+
+	/**
+	 * Get source property for this session
+	 */
+	getSourceProperty(): Property | null {
+		return this.sourceProperty;
 	}
 
 	/**

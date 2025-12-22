@@ -40,6 +40,8 @@ export interface AnalyticsEvent {
 	userId?: string;
 	/** Which property this event occurred on */
 	property: Property;
+	/** Property user came from (for cross-property tracking) */
+	sourceProperty?: Property;
 	/** ISO 8601 timestamp */
 	timestamp: string;
 	/** Current page URL */
@@ -90,6 +92,15 @@ export interface SessionEndEvent extends AnalyticsEvent {
 	action: 'session_end';
 	/** Session duration in seconds */
 	value: number;
+}
+
+export interface PropertyTransitionEvent extends AnalyticsEvent {
+	category: 'navigation';
+	action: 'property_transition';
+	metadata: {
+		sourceProperty: Property;
+		targetProperty: Property;
+	};
 }
 
 export interface ExternalLinkEvent extends AnalyticsEvent {
