@@ -10,6 +10,15 @@ The harness runs autonomously. Humans engage through **progress reports**—reac
 
 **Canon alignment**: As little infrastructure as possible. Checkpoints ARE Beads issues. No new systems.
 
+### Core Constraints
+
+| Constraint | Rationale |
+|------------|-----------|
+| **One feature per session** | Prevents scope creep; enables clean commits |
+| **Beads is the only progress system** | DRY—no separate progress files |
+| **Commit before close** | Work without commits is lost work |
+| **Verify before declaring complete** | Prevents premature victory |
+
 ## Quick Start
 
 ```bash
@@ -139,6 +148,37 @@ When the harness pauses due to failures:
 4. Adjust failure config if needed
 5. Resume with `harness resume`
 
+### Failure Mode Reference
+
+Explicit mapping of failure patterns to solutions (learned from production use):
+
+| Failure Mode | Symptom | Root Cause | Solution |
+|--------------|---------|------------|----------|
+| **Premature completion** | Agent says "done" but feature broken | No verification step | Require E2E test pass before `bd close` |
+| **Context sprawl** | Multiple features touched, none complete | Scope creep | Enforce ONE issue per session in priming |
+| **Environment discovery** | Wasted tokens on setup commands | No init script | Add `init.sh` or document startup in issue |
+| **Lost progress** | Agent re-implements completed work | Context not recovered | Use Session Startup Protocol strictly |
+| **Shallow testing** | Only unit tests, integration broken | E2E not mandated | Add Puppeteer/browser verification step |
+| **Dependency cascade** | Blocked issues pile up | Poor dependency graph | Run `bd blocked` before session, resolve blockers first |
+| **Victory declaration** | "Project complete" with open issues | No source of truth check | Always verify against `bd list --status=open` |
+| **Commit amnesia** | Work done but not committed | No commit discipline | Commit after each logical unit, include issue ID |
+
+### Prevention Patterns
+
+```bash
+# Before marking ANY issue complete:
+1. Run tests:        pnpm test --filter=<package>
+2. Verify E2E:       pnpm test:e2e (if applicable)
+3. Check issue:      bd show <id>  # Confirm this is the right issue
+4. Commit:           git commit -m "feat(<scope>): <desc> [<issue-id>]"
+5. Close with ref:   bd close <id> --reason "Commit: $(git rev-parse --short HEAD)"
+
+# Before declaring session/project complete:
+bd list --status=open            # Any remaining work?
+bd blocked                       # Any blocked issues?
+git status                       # Uncommitted changes?
+```
+
 ## Architecture
 
 ```
@@ -161,29 +201,89 @@ When the harness pauses due to failures:
 └─────────────────────────────────────────────────────┘
 ```
 
-## Session Priming
+## Session Startup Protocol
 
-Each session receives context:
+Each session follows a **prescriptive startup sequence** to minimize context waste on environment discovery. All progress tracking uses Beads—no separate progress files.
+
+### Startup Sequence
+
+```bash
+# 1. Verify environment
+pwd                              # Confirm working directory
+git status --short               # Check for uncommitted changes
+
+# 2. Recover context from Beads (single source of truth)
+bd show $(bd list --status=in_progress --limit=1 -q)  # Current work
+bd list --status=closed --limit=5                      # Recent completions
+git log --oneline -10                                  # Recent commits
+
+# 3. Select work for this session
+bd ready | head -5               # Available unblocked work
+# Select ONE issue for this session
+
+# 4. Verify environment runs
+pnpm dev --filter=<package> &    # Or: ./init.sh if exists
+```
+
+### Session Priming Template
+
+The harness generates this context from Beads:
 
 ```markdown
 # Harness Session Context
 
-## Current Task
+## Current Task (from `bd ready`)
 **Issue**: cs-xyz - Implement user dashboard
 **Priority**: P1
+**Blocked by**: None
+**Description**: [Full issue description from Beads]
 
-## Recent Git Commits
-- abc123: Add login endpoint
-- def456: Add session management
+## Session Log (from closed issues, last 5)
+- cs-abc: Add login endpoint (closed 2h ago, commit abc123)
+- cs-def: Add session management (closed 4h ago, commit def456)
+- cs-ghi: Create user model (closed 6h ago, commit ghi789)
 
-## Last Checkpoint Summary
-Completed auth flow. 8/42 features done.
+## Recent Git Commits (last 10)
+- abc123: feat: add login endpoint
+- def456: feat: add session management
 
-## Redirect Notes
-Human updated cs-ghi from P2 → P0.
+## Redirect Notes (priority changes since last session)
+- cs-xyz: P2 → P0 (human escalated)
 
 ## Session Goal
-Complete the dashboard layout. Commit if tests pass.
+Complete ONE feature: cs-xyz (user dashboard).
+Commit when tests pass. Update issue status in Beads.
+
+## Constraints
+- Do NOT start other features
+- Do NOT mark complete without verification
+- Commit after each logical unit of work
+```
+
+### Progress Tracking via Beads
+
+**DRY Principle**: Beads IS the progress log. No separate files.
+
+| Progress Event | Beads Action |
+|----------------|--------------|
+| Start work | `bd update <id> --status in_progress` |
+| Partial progress | Add comment: `bd comment <id> "Completed X, starting Y"` |
+| Blocker found | `bd create "Blocker: X" && bd dep add <new> blocks <current>` |
+| Work complete | `bd close <id> --reason "Commit: abc123"` |
+| Session end | Checkpoint issue created automatically |
+
+### Session Log Query
+
+To view session history (replaces separate progress file):
+
+```bash
+# Recent session activity
+bd list --status=closed --since=24h --format=log
+
+# Output:
+# 2025-12-22T14:00 cs-xyz closed "feat: dashboard layout" (abc123)
+# 2025-12-22T13:00 cs-abc closed "feat: login endpoint" (def456)
+# 2025-12-22T12:00 cs-def closed "feat: session mgmt" (ghi789)
 ```
 
 ## Redirecting
