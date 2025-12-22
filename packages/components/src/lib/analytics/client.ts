@@ -10,12 +10,13 @@
  * @packageDocumentation
  */
 
-import type {
-	AnalyticsEvent,
-	AnalyticsConfig,
-	Property,
-	EventCategory,
-	EventBatch,
+import {
+	PROPERTY_DOMAINS,
+	type AnalyticsEvent,
+	type AnalyticsConfig,
+	type Property,
+	type EventCategory,
+	type EventBatch,
 } from './types.js';
 
 // =============================================================================
@@ -35,14 +36,6 @@ interface SessionData {
 // =============================================================================
 // CROSS-PROPERTY DETECTION
 // =============================================================================
-
-const PROPERTY_DOMAINS: Record<string, Property> = {
-	'createsomething.space': 'space',
-	'createsomething.io': 'io',
-	'createsomething.agency': 'agency',
-	'createsomething.ltd': 'ltd',
-	'learn.createsomething.space': 'lms',
-};
 
 /**
  * Detect which CREATE SOMETHING property a URL belongs to
