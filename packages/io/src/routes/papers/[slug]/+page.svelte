@@ -166,7 +166,7 @@
 			-apple-system,
 			BlinkMacSystemFont,
 			sans-serif;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--color-fg-primary);
 	}
 
 	/* Header */
@@ -174,14 +174,14 @@
 		text-align: center;
 		margin-bottom: 3rem;
 		padding-bottom: 2rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.ascii-header {
 		font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
 		font-size: 0.55rem;
 		line-height: 1.15;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 		margin: 0 auto 2rem;
 		text-align: left;
 		display: inline-block;
@@ -198,7 +198,7 @@
 		font-size: 0.75rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--color-fg-muted);
 	}
 
 	.paper-title {
@@ -211,25 +211,25 @@
 
 	.paper-subtitle {
 		font-size: 1.125rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 		font-style: italic;
 		margin: 0 0 1.5rem 0;
 	}
 
 	.paper-authors {
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--color-fg-secondary);
 		margin-bottom: 0.5rem;
 	}
 
 	.paper-date {
 		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--color-fg-muted);
 	}
 
 	/* Abstract */
 	.abstract {
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
 		border-radius: 8px;
 		padding: 1.5rem;
 		margin-bottom: 2rem;
@@ -239,7 +239,7 @@
 		font-size: 1rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 		margin: 0 0 1rem 0;
 	}
 
@@ -250,7 +250,7 @@
 
 	.keywords {
 		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 	}
 
 	.keyword {
@@ -269,7 +269,7 @@
 		font-size: 1rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 		margin: 0 0 1rem 0;
 	}
 
@@ -288,12 +288,12 @@
 	}
 
 	.toc-item a {
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--color-fg-secondary);
 		text-decoration: none;
 	}
 
 	.toc-item a:hover {
-		color: rgba(255, 255, 255, 1);
+		color: var(--color-fg-primary);
 	}
 
 	/* Content */
@@ -312,7 +312,7 @@
 	.paper-content :global(h2) {
 		font-size: 1.5rem;
 		padding-top: 1rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.paper-content :global(h3) {
@@ -324,11 +324,11 @@
 	}
 
 	.paper-content :global(blockquote) {
-		border-left: 3px solid rgba(255, 255, 255, 0.3);
+		border-left: 3px solid var(--color-border-strong);
 		margin: 1.5rem 0;
 		padding: 0.5rem 1.5rem;
 		font-style: italic;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--color-fg-secondary);
 	}
 
 	.paper-content :global(pre) {
@@ -343,7 +343,7 @@
 	.paper-content :global(code) {
 		font-family: 'JetBrains Mono', monospace;
 		font-size: 0.9em;
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-border-default);
 		padding: 0.15rem 0.3rem;
 		border-radius: 3px;
 	}
@@ -354,13 +354,13 @@
 	}
 
 	.paper-content :global(a) {
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--color-fg-secondary);
 		text-decoration: underline;
 	}
 
 	.paper-content :global(hr) {
 		border: none;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		border-top: 1px solid var(--color-border-default);
 		margin: 2rem 0;
 	}
 
@@ -368,7 +368,7 @@
 	.paper-placeholder {
 		text-align: center;
 		padding: 3rem;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--color-bg-subtle);
 		border-radius: 8px;
 	}
 
@@ -376,13 +376,13 @@
 		display: block;
 		margin: 1rem 0;
 		font-family: 'JetBrains Mono', monospace;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 	}
 
 	.paper-placeholder .excerpt {
 		max-width: 600px;
 		margin: 1rem auto 0;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 		line-height: 1.6;
 	}
 
@@ -390,7 +390,7 @@
 	.paper-footer {
 		margin-top: 3rem;
 		padding-top: 2rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.principles-validated,
@@ -402,14 +402,14 @@
 		font-size: 1rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-fg-muted);
 		margin: 0 0 0.5rem 0;
 	}
 
 	.principles-intro,
 	.experiments-intro {
 		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 		margin: 0 0 0.75rem 0;
 	}
 
@@ -422,11 +422,11 @@
 	.principles-list li,
 	.experiments-list li {
 		margin: 0.25rem 0;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--color-fg-secondary);
 	}
 
 	.experiments-list a {
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--color-fg-secondary);
 	}
 
 	.paper-nav {
@@ -437,13 +437,13 @@
 
 	.back-link,
 	.experiments-link {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-fg-tertiary);
 		text-decoration: none;
 		font-size: 0.875rem;
 	}
 
 	.back-link:hover,
 	.experiments-link:hover {
-		color: rgba(255, 255, 255, 1);
+		color: var(--color-fg-primary);
 	}
 </style>

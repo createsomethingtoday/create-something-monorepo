@@ -90,7 +90,7 @@
 
 <style>
 	.badge-compact {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-full);
 		font-size: var(--text-caption);
@@ -114,7 +114,7 @@
 	}
 
 	.badge-full {
-		background: rgba(255, 255, 255, 0.07);
+		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
@@ -135,7 +135,7 @@
 	}
 
 	.metric-card {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border-radius: var(--radius-sm);
 	}
 

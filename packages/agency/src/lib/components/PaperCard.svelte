@@ -104,14 +104,14 @@
 	}
 
 	.card-inner {
-		background: rgba(255, 255, 255, 0.07);
+		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	.card:hover .card-inner {
 		border-color: var(--color-border-emphasis);
-		box-shadow: 0 25px 50px -12px rgba(255, 255, 255, 0.1);
+		box-shadow: 0 25px 50px -12px var(--color-active);
 		transform: translateY(-0.5rem);
 	}
 
@@ -142,7 +142,7 @@
 	.arrow-btn-inner {
 		width: 2.5rem;
 		height: 2.5rem;
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 		backdrop-filter: blur(8px);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-full);
@@ -181,7 +181,7 @@
 
 	.category-badge {
 		padding: 0.25rem 0.75rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
@@ -190,7 +190,7 @@
 	}
 
 	.hover-overlay {
-		background: linear-gradient(to top, rgba(255, 255, 255, 0.05), transparent);
+		background: linear-gradient(to top, var(--color-hover), transparent);
 	}
 
 	/* Staggered reveal animation - CSS only */

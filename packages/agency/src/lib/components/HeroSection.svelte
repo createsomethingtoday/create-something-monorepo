@@ -80,7 +80,7 @@
 	}
 
 	.newsletter-cta {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-full);
 		color: var(--color-fg-secondary);
@@ -89,8 +89,8 @@
 	}
 
 	.newsletter-cta:hover {
-		background: rgba(255, 255, 255, 0.2);
-		border-color: rgba(255, 255, 255, 0.3);
+		background: var(--color-border-emphasis);
+		border-color: var(--color-border-strong);
 	}
 
 	.hero-label {

@@ -30,7 +30,7 @@
 
 .button-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-glow-lg);
 }
 
 .button-secondary {

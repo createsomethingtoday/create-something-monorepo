@@ -474,7 +474,7 @@
 	}
 
 	.btn-danger-mobile:hover {
-		background: rgba(212, 77, 77, 0.3);
+		background: var(--color-error-border);
 	}
 
 	/* Desktop Table */
@@ -571,7 +571,7 @@
 	}
 
 	.btn-danger:hover {
-		background: rgba(212, 77, 77, 0.3);
+		background: var(--color-error-border);
 	}
 
 	.pagination-info {

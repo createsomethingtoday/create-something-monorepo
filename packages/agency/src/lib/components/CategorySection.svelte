@@ -99,7 +99,7 @@
 	}
 
 	.category-card {
-		background: rgba(255, 255, 255, 0.07);
+		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: all var(--duration-standard) var(--ease-standard);
@@ -137,7 +137,7 @@
 	}
 
 	.hover-bg {
-		background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.05), transparent);
+		background: linear-gradient(to bottom right, var(--color-hover), transparent);
 	}
 
 	.empty-state {

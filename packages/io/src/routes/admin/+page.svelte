@@ -220,6 +220,6 @@
 	}
 
 	.system-value-success {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 </style>

@@ -424,12 +424,12 @@
 	}
 
 	.action-btn--danger {
-		background: rgba(239, 68, 68, 0.2);
-		color: #f87171;
+		background: var(--color-error-muted);
+		color: var(--color-error);
 	}
 
 	.action-btn--danger:hover {
-		background: rgba(239, 68, 68, 0.3);
+		background: var(--color-error-border);
 	}
 
 	/* Experiment Metadata */

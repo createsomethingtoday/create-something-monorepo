@@ -301,18 +301,18 @@
 
 	/* Semantic state styles */
 	:global(.content .success-card) {
-		background: rgba(74, 222, 128, 0.05);
-		border-color: rgba(74, 222, 128, 0.2);
+		background: var(--color-success-muted);
+		border-color: var(--color-success-border);
 	}
 
 	:global(.content .error-card) {
-		background: rgba(248, 113, 113, 0.05);
-		border-color: rgba(248, 113, 113, 0.2);
+		background: var(--color-error-muted);
+		border-color: var(--color-error-border);
 	}
 
 	:global(.content .warning-card) {
-		background: rgba(251, 191, 36, 0.05);
-		border-color: rgba(251, 191, 36, 0.2);
+		background: var(--color-warning-muted);
+		border-color: var(--color-warning-border);
 	}
 
 	:global(.content .success-title) {

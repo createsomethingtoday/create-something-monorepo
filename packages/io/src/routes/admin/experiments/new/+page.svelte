@@ -308,10 +308,10 @@ Outcomes and learnings..."
 	/* Error Alert */
 	.error-alert {
 		padding: var(--space-md);
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.3);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-lg);
-		color: #f87171;
+		color: var(--color-error);
 	}
 
 	/* Form Elements */

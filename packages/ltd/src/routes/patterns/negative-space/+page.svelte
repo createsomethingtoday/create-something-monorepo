@@ -326,39 +326,39 @@
 	}
 
 	.bg-success-subtle {
-		background: rgba(74, 222, 128, 0.05);
+		background: var(--color-success-muted);
 	}
 
 	.bg-success-muted {
-		background: rgba(74, 222, 128, 0.1);
+		background: var(--color-success-muted);
 	}
 
 	.bg-error-subtle {
-		background: rgba(248, 113, 113, 0.05);
+		background: var(--color-error-muted);
 	}
 
 	.bg-error-muted {
-		background: rgba(248, 113, 113, 0.1);
+		background: var(--color-error-muted);
 	}
 
 	.bg-warning-subtle {
-		background: rgba(251, 191, 36, 0.05);
+		background: var(--color-warning-muted);
 	}
 
 	.bg-warning-muted {
-		background: rgba(251, 191, 36, 0.1);
+		background: var(--color-warning-muted);
 	}
 
 	.border-success {
-		border-color: rgba(74, 222, 128, 0.2);
+		border-color: var(--color-success-border);
 	}
 
 	.border-error {
-		border-color: rgba(248, 113, 113, 0.2);
+		border-color: var(--color-error-border);
 	}
 
 	.border-warning {
-		border-color: rgba(251, 191, 36, 0.2);
+		border-color: var(--color-warning-border);
 	}
 
 	/* Universal element styles */
