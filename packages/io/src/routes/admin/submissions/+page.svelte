@@ -391,7 +391,7 @@
 	.unread-dot {
 		width: 0.5rem;
 		height: 0.5rem;
-		background: #60a5fa;
+		background: var(--color-info);
 		border-radius: var(--radius-full);
 		display: inline-block;
 	}
@@ -519,12 +519,12 @@
 	}
 
 	.action-btn--danger {
-		background: rgba(239, 68, 68, 0.2);
-		color: #f87171;
+		background: var(--color-error-muted);
+		color: var(--color-error);
 	}
 
 	.action-btn--danger:hover {
-		background: rgba(239, 68, 68, 0.3);
+		background: var(--color-error-border);
 	}
 
 	/* Empty Detail */

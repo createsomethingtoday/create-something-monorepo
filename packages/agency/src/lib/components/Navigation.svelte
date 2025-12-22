@@ -141,11 +141,11 @@
 	}
 
 	.contact-btn:hover {
-		background: rgba(255, 255, 255, 0.9);
+		background: var(--color-fg-primary);
 	}
 
 	.contact-btn-overlay {
-		background: rgba(255, 255, 255, 0.2);
+		background: var(--color-border-emphasis);
 		transition: transform var(--duration-standard) var(--ease-standard);
 	}
 
@@ -183,7 +183,7 @@
 	}
 
 	.mobile-contact-btn:hover {
-		background: rgba(255, 255, 255, 0.9);
+		background: var(--color-fg-primary);
 	}
 
 	/* Slide down animation for mobile menu */

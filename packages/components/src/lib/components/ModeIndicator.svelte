@@ -12,9 +12,12 @@
 		current: 'ltd' | 'io' | 'space' | 'agency' | 'learn';
 		showLabels?: boolean;
 		size?: 'sm' | 'md';
+		showYouAreHere?: boolean;
 	}
 
-	let { current, showLabels = false, size = 'sm' }: Props = $props();
+	let { current, showLabels = false, size = 'sm', showYouAreHere = false }: Props = $props();
+
+	let hoveredMode = $state<string | null>(null);
 
 	const modes = [
 		{ id: 'space', label: 'Explore', url: 'https://createsomething.space' },
@@ -50,10 +53,15 @@
 			class:active={mode.id === current}
 			onclick={(e) => handleModeClick(e, mode)}
 			title={mode.label}
+			onmouseenter={() => (hoveredMode = mode.id)}
+			onmouseleave={() => (hoveredMode = null)}
 		>
 			<span class="mode-dot"></span>
 			{#if showLabels}
 				<span class="mode-label">.{mode.id}</span>
+			{/if}
+			{#if showYouAreHere && mode.id === current && hoveredMode === current}
+				<span class="you-are-here-tooltip">You are here</span>
 			{/if}
 		</a>
 	{/each}
@@ -113,6 +121,17 @@
 	.mode-item.active .mode-dot {
 		background: var(--color-fg-primary);
 		box-shadow: 0 0 8px var(--color-fg-primary);
+		animation: pulse 2s infinite;
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			box-shadow: 0 0 8px var(--color-fg-primary);
+		}
+		50% {
+			box-shadow: 0 0 16px var(--color-fg-primary);
+		}
 	}
 
 	.mode-label {
@@ -128,6 +147,37 @@
 
 	.mode-item.active .mode-label {
 		color: var(--color-fg-primary);
+	}
+
+	.you-are-here-tooltip {
+		position: absolute;
+		bottom: calc(100% + var(--space-xs));
+		left: 50%;
+		transform: translateX(-50%);
+		padding: 0.25rem 0.5rem;
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		color: var(--color-fg-secondary);
+		white-space: nowrap;
+		pointer-events: none;
+		animation: fadeIn var(--duration-micro) var(--ease-standard);
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateX(-50%) translateY(4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+	}
+
+	.mode-item {
+		position: relative;
 	}
 
 	/* Size variants */

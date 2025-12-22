@@ -357,15 +357,15 @@
 	}
 
 	.metric-value--approval {
-		color: #3b82f6;
+		color: var(--color-info);
 	}
 
 	.metric-value--escalation {
-		color: #f97316;
+		color: var(--color-warning);
 	}
 
 	.metric-value--pending {
-		color: #10b981;
+		color: var(--color-success);
 	}
 
 	.metric-label {
@@ -396,12 +396,13 @@
 	}
 
 	.btn--primary {
-		background: #3b82f6;
+		background: var(--color-info);
 		color: var(--color-fg-primary);
 	}
 
 	.btn--primary:hover:not(:disabled) {
-		background: #2563eb;
+		background: var(--color-info);
+		opacity: 0.8;
 	}
 
 	.btn--secondary {
@@ -414,21 +415,23 @@
 	}
 
 	.btn--approve {
-		background: #10b981;
+		background: var(--color-success);
 		color: var(--color-fg-primary);
 	}
 
 	.btn--approve:hover {
-		background: #059669;
+		background: var(--color-success);
+		opacity: 0.8;
 	}
 
 	.btn--reject {
-		background: #ef4444;
+		background: var(--color-error);
 		color: var(--color-fg-primary);
 	}
 
 	.btn--reject:hover {
-		background: #dc2626;
+		background: var(--color-error);
+		opacity: 0.8;
 	}
 
 	/* Alerts */
@@ -438,9 +441,9 @@
 	}
 
 	.alert--error {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.3);
-		color: #f87171;
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		color: var(--color-error);
 	}
 
 	/* Empty States */
@@ -516,13 +519,13 @@
 	}
 
 	.status-badge--in-progress {
-		background: rgba(234, 179, 8, 0.1);
-		color: #facc15;
+		background: var(--color-warning-muted);
+		color: var(--color-warning);
 	}
 
 	.status-badge--escalated {
-		background: rgba(239, 68, 68, 0.1);
-		color: #f87171;
+		background: var(--color-error-muted);
+		color: var(--color-error);
 	}
 
 	/* Section Labels */
@@ -534,7 +537,7 @@
 	}
 
 	.section-label--error {
-		color: #ef4444;
+		color: var(--color-error);
 	}
 
 	.message-text {
@@ -546,7 +549,7 @@
 	.draft-preview {
 		margin-bottom: var(--space-md);
 		padding: var(--space-md);
-		background: rgba(59, 130, 246, 0.05);
+		background: var(--color-info-muted);
 		border-radius: var(--radius-md);
 	}
 
@@ -570,7 +573,7 @@
 	.reasoning-box {
 		margin-bottom: var(--space-md);
 		padding: var(--space-md);
-		background: rgba(234, 179, 8, 0.05);
+		background: var(--color-warning-muted);
 		border-radius: var(--radius-md);
 	}
 
@@ -589,7 +592,7 @@
 	/* Escalation Box */
 	.escalation-box {
 		padding: var(--space-md);
-		background: rgba(239, 68, 68, 0.05);
+		background: var(--color-error-muted);
 		border-radius: var(--radius-md);
 		margin-bottom: var(--space-md);
 	}
@@ -624,13 +627,13 @@
 	}
 
 	.urgency-badge--medium {
-		background: rgba(234, 179, 8, 0.2);
-		color: #facc15;
+		background: var(--color-warning-muted);
+		color: var(--color-warning);
 	}
 
 	.urgency-badge--high {
-		background: rgba(239, 68, 68, 0.2);
-		color: #f87171;
+		background: var(--color-error-muted);
+		color: var(--color-error);
 	}
 
 	.prose pre {

@@ -351,7 +351,8 @@
 								class:active={mode === 'space'}
 								onclick={(e) => handleCrossPropertyClick(e, 'space')}
 							>
-								.space <span class="link-label">— Explore</span>
+								<div>.space <span class="link-label">— Explore</span></div>
+								<div class="link-description">Experiments, practice, learning by doing</div>
 							</a>
 						</li>
 						<li>
@@ -361,7 +362,8 @@
 								class:active={mode === 'learn'}
 								onclick={(e) => handleCrossPropertyClick(e, 'learn')}
 							>
-								.learn <span class="link-label">— Study</span>
+								<div>.learn <span class="link-label">— Study</span></div>
+								<div class="link-description">Structured courses and educational content</div>
 							</a>
 						</li>
 						<li>
@@ -371,7 +373,8 @@
 								class:active={mode === 'io'}
 								onclick={(e) => handleCrossPropertyClick(e, 'io')}
 							>
-								.io <span class="link-label">— Research</span>
+								<div>.io <span class="link-label">— Research</span></div>
+								<div class="link-description">Papers, tools, documented discoveries</div>
 							</a>
 						</li>
 						<li>
@@ -381,7 +384,8 @@
 								class:active={mode === 'agency'}
 								onclick={(e) => handleCrossPropertyClick(e, 'agency')}
 							>
-								.agency <span class="link-label">— Build</span>
+								<div>.agency <span class="link-label">— Build</span></div>
+								<div class="link-description">Client services, commercial work</div>
 							</a>
 						</li>
 						<li>
@@ -391,7 +395,8 @@
 								class:active={mode === 'ltd'}
 								onclick={(e) => handleCrossPropertyClick(e, 'ltd')}
 							>
-								.ltd <span class="link-label">— Canon</span>
+								<div>.ltd <span class="link-label">— Canon</span></div>
+								<div class="link-description">Philosophy, patterns, the source of truth</div>
 							</a>
 						</li>
 						<li>
@@ -401,7 +406,8 @@
 								rel="noopener"
 								class="footer-link block"
 							>
-								GitHub <span class="link-label">— Source</span>
+								<div>GitHub <span class="link-label">— Source</span></div>
+								<div class="link-description">Open development, version control</div>
 							</a>
 						</li>
 					</ul>
@@ -574,6 +580,12 @@
 
 	.link-label {
 		color: var(--color-fg-muted);
+	}
+
+	.link-description {
+		font-size: var(--text-caption);
+		color: var(--color-fg-subtle);
+		margin-top: 0.25rem;
 	}
 
 	/* Copyright */

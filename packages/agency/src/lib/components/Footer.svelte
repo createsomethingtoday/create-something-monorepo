@@ -194,7 +194,7 @@
 	}
 
 	.newsletter-input {
-		background: rgba(255, 255, 255, 0.07);
+		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		color: var(--color-fg-primary);
@@ -220,7 +220,7 @@
 	}
 
 	.newsletter-btn:hover {
-		background: rgba(255, 255, 255, 0.9);
+		background: var(--color-fg-primary);
 	}
 
 	.newsletter-btn:focus-visible {
@@ -253,7 +253,7 @@
 	.social-link {
 		width: 2.5rem;
 		height: 2.5rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		display: flex;
@@ -264,7 +264,7 @@
 	}
 
 	.social-link:hover {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 		color: var(--color-fg-primary);
 	}
 

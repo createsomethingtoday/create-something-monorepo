@@ -34,9 +34,9 @@
 <!-- Header -->
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-7xl mx-auto">
-		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
+		<p class="type-sm tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
 		<h1 class="mb-6">Principles</h1>
-		<p class="text-xl-canon opacity-70-canon max-w-3xl leading-relaxed">
+		<p class="type-xl opacity-70-canon max-w-3xl leading-relaxed">
 			Aggregated wisdom from the masters. These principles guide everything we build at Create
 			Something.
 		</p>
@@ -54,8 +54,8 @@
 							href="/masters/{master.slug}"
 							class="inline-block group hover:opacity-70-canon transition-opacity"
 						>
-							<h2 class="text-3xl-canon font-bold mb-2">{master.name}</h2>
-							<p class="text-sm-canon opacity-60-canon">
+							<h2 class="type-3xl font-bold mb-2">{master.name}</h2>
+							<p class="type-sm opacity-60-canon">
 								{master.principles.length}
 								{master.principles.length === 1 ? 'Principle' : 'Principles'} →
 							</p>
@@ -71,8 +71,8 @@
 			{/each}
 		{:else}
 			<div class="text-center py-24">
-				<p class="text-lg-canon opacity-60-canon">Principles coming soon...</p>
-				<p class="text-sm-canon opacity-40-canon mt-2">Database seeding in progress.</p>
+				<p class="type-lg opacity-60-canon">Principles coming soon...</p>
+				<p class="type-sm opacity-40-canon mt-2">Database seeding in progress.</p>
 			</div>
 		{/if}
 	</div>
@@ -80,31 +80,31 @@
 
 <style>
 	/* Typography */
-	.text-xs-canon {
+	.type-caption {
 		font-size: var(--text-caption);
 	}
 
-	.text-sm-canon {
+	.type-sm {
 		font-size: var(--text-body-sm);
 	}
 
-	.text-base-canon {
+	.type-base {
 		font-size: var(--text-body);
 	}
 
-	.text-lg-canon {
+	.type-lg {
 		font-size: var(--text-body-lg);
 	}
 
-	.text-xl-canon {
+	.type-xl {
 		font-size: var(--text-h3);
 	}
 
-	.text-2xl-canon {
+	.type-2xl {
 		font-size: var(--text-h2);
 	}
 
-	.text-3xl-canon {
+	.type-3xl {
 		font-size: var(--text-h1);
 	}
 
@@ -157,51 +157,51 @@
 
 	/* Semantic colors */
 	.text-success {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.text-error {
-		color: #f87171;
+		color: var(--color-error);
 	}
 
 	.text-warning {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.bg-success-subtle {
-		background: rgba(74, 222, 128, 0.05);
+		background: var(--color-success-muted);
 	}
 
 	.bg-success-muted {
-		background: rgba(74, 222, 128, 0.1);
+		background: var(--color-success-muted);
 	}
 
 	.bg-error-subtle {
-		background: rgba(248, 113, 113, 0.05);
+		background: var(--color-error-muted);
 	}
 
 	.bg-error-muted {
-		background: rgba(248, 113, 113, 0.1);
+		background: var(--color-error-muted);
 	}
 
 	.bg-warning-subtle {
-		background: rgba(251, 191, 36, 0.05);
+		background: var(--color-warning-muted);
 	}
 
 	.bg-warning-muted {
-		background: rgba(251, 191, 36, 0.1);
+		background: var(--color-warning-muted);
 	}
 
 	.border-success {
-		border-color: rgba(74, 222, 128, 0.2);
+		border-color: var(--color-success-border);
 	}
 
 	.border-error {
-		border-color: rgba(248, 113, 113, 0.2);
+		border-color: var(--color-error-border);
 	}
 
 	.border-warning {
-		border-color: rgba(251, 191, 36, 0.2);
+		border-color: var(--color-warning-border);
 	}
 
 	/* Universal element styles */
