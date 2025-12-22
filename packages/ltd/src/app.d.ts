@@ -9,6 +9,7 @@ interface Env {
 	CIRCLE_DATA: KVNamespace;
 	STORAGE: R2Bucket;
 	RESEND_API_KEY: string;
+	ARENA_API_TOKEN?: string;
 	ENVIRONMENT: string;
 }
 
