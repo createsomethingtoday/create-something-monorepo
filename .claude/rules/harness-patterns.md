@@ -186,13 +186,13 @@ git status                       # Uncommitted changes?
 ┌─────────────────────────────────────────────────────┐
 │                 HARNESS RUNNER                       │
 │                                                     │
-│  Init ──► Session 1 ──► Session 2 ──► Session 3    │
-│   │           │             │             │         │
-│   ▼           ▼             ▼             ▼         │
-│ Setup    Checkpoint    Checkpoint    Checkpoint     │
-└───┬───────────┬─────────────┬─────────────┬────────┘
-    │           │             │             │
-    ▼           ▼             ▼             ▼
+│  Daemon Stop ──► Init ──► Sessions ──► Daemon Start │
+│       │           │           │              │      │
+│       ▼           ▼           ▼              ▼      │
+│   Safety     Setup      Checkpoints     Restore     │
+└───────┬───────────┬───────────┬──────────────┬─────┘
+        │           │           │              │
+        ▼           ▼           ▼              ▼
 ┌─────────────────────────────────────────────────────┐
 │              BEADS (Human Interface)                │
 │                                                     │
@@ -200,6 +200,439 @@ git status                       # Uncommitted changes?
 │  `bd update`   - Redirect priorities                │
 │  `bd create`   - Inject work                        │
 └─────────────────────────────────────────────────────┘
+```
+
+## Daemon Coordination
+
+**Critical**: The Beads daemon's git sync can overwrite SQLite data, causing harness-created issues to vanish. The harness MUST coordinate with the daemon.
+
+### Why This Matters
+
+The bd daemon runs `bd sync` periodically, which:
+1. Reads `issues.jsonl` from disk
+2. Overwrites SQLite cache
+3. Can destroy issues created since last sync
+
+During harness operation, issues are created in SQLite. If the daemon syncs before harness commits, those issues vanish.
+
+### Daemon Lifecycle
+
+```
+┌─────────────────────────────────────────────────────┐
+│              HARNESS START                          │
+├─────────────────────────────────────────────────────┤
+│  1. Stop bd daemon (bd daemon --stop)               │
+│  2. Kill orphan processes (pgrep -f "bd daemon")    │
+│  3. Verify daemon stopped                           │
+│  4. Begin harness sessions                          │
+└─────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│              HARNESS RUNNING                        │
+├─────────────────────────────────────────────────────┤
+│  • Daemon is OFF                                    │
+│  • bd commands work (direct SQLite + jsonl)         │
+│  • Harness creates/updates issues safely            │
+│  • No background sync interference                  │
+└─────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│              HARNESS END                            │
+├─────────────────────────────────────────────────────┤
+│  1. Run bd sync (commit all changes)                │
+│  2. Restart bd daemon (bd daemon --start)           │
+│  3. Verify daemon running                           │
+└─────────────────────────────────────────────────────┘
+```
+
+### Implementation
+
+```typescript
+// daemon.ts - Daemon coordination
+
+import { execSync, exec } from 'child_process';
+
+/**
+ * Stop the bd daemon before harness operations
+ * CRITICAL: Must be called before any harness session starts
+ */
+export async function stopBdDaemon(): Promise<void> {
+  console.log('→ Stopping bd daemon...');
+
+  try {
+    // Try graceful stop first
+    execSync('bd daemon --stop', { stdio: 'pipe' });
+  } catch {
+    // Daemon might not be running, that's OK
+  }
+
+  // Kill any orphan daemon processes
+  try {
+    const { stdout } = await execAsync('pgrep -f "bd daemon"');
+    const pids = stdout.trim().split('\n').filter(Boolean);
+    for (const pid of pids) {
+      try {
+        execSync(`kill ${pid}`, { stdio: 'pipe' });
+        console.log(`  Killed orphan daemon process: ${pid}`);
+      } catch {
+        // Process might have already exited
+      }
+    }
+  } catch {
+    // No daemon processes found, good
+  }
+
+  // Verify daemon is stopped
+  await sleep(500);
+  const stillRunning = await isDaemonRunning();
+  if (stillRunning) {
+    throw new Error('Failed to stop bd daemon - harness cannot proceed safely');
+  }
+
+  console.log('✓ Daemon stopped');
+}
+
+/**
+ * Restart the bd daemon after harness completes
+ * Should be called in finally block or crash handler
+ */
+export async function startBdDaemon(): Promise<void> {
+  console.log('→ Restarting bd daemon...');
+
+  // Sync first to commit all harness changes
+  try {
+    execSync('bd sync', { stdio: 'pipe' });
+    console.log('  Synced harness changes');
+  } catch (err) {
+    console.error('  Warning: bd sync failed:', err);
+  }
+
+  // Start daemon
+  exec('bd daemon --start', (err) => {
+    if (err) {
+      console.error('  Warning: Failed to restart daemon:', err);
+    }
+  });
+
+  // Verify daemon started
+  await sleep(1000);
+  const running = await isDaemonRunning();
+  if (running) {
+    console.log('✓ Daemon restarted');
+  } else {
+    console.error('⚠ Daemon may not have started - run "bd daemon --start" manually');
+  }
+}
+
+async function isDaemonRunning(): Promise<boolean> {
+  try {
+    await execAsync('pgrep -f "bd daemon"');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function execAsync(cmd: string): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) reject(err);
+      else resolve({ stdout, stderr });
+    });
+  });
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+```
+
+### Shell Script Version
+
+For use in init.sh:
+
+```bash
+#!/bin/bash
+# daemon-control.sh - Daemon coordination utilities
+
+stop_daemon() {
+  echo "→ Stopping bd daemon..."
+
+  # Graceful stop
+  bd daemon --stop 2>/dev/null || true
+
+  # Kill orphans
+  for pid in $(pgrep -f "bd daemon" 2>/dev/null); do
+    kill "$pid" 2>/dev/null && echo "  Killed orphan: $pid"
+  done
+
+  # Verify
+  sleep 0.5
+  if pgrep -f "bd daemon" > /dev/null 2>&1; then
+    echo "✗ Failed to stop daemon"
+    exit 1
+  fi
+
+  echo "✓ Daemon stopped"
+}
+
+start_daemon() {
+  echo "→ Restarting bd daemon..."
+
+  # Sync first
+  bd sync 2>/dev/null && echo "  Synced changes"
+
+  # Start
+  bd daemon --start &
+
+  # Verify
+  sleep 1
+  if pgrep -f "bd daemon" > /dev/null 2>&1; then
+    echo "✓ Daemon restarted"
+  else
+    echo "⚠ Daemon may not have started"
+  fi
+}
+```
+
+### Harness Runner Integration
+
+```typescript
+// runner.ts - Main harness loop with daemon coordination
+
+import { stopBdDaemon, startBdDaemon } from './daemon';
+
+export async function runHarness(spec: string): Promise<void> {
+  // CRITICAL: Stop daemon before any operations
+  await stopBdDaemon();
+
+  try {
+    // ... harness sessions ...
+    await runSessions(spec);
+  } finally {
+    // ALWAYS restart daemon, even on crash
+    await startBdDaemon();
+  }
+}
+```
+
+### Crash Recovery
+
+If harness crashes without restarting daemon:
+
+```bash
+# Manual recovery
+bd daemon --start
+
+# Or use recovery script
+./scripts/harness-recover.sh
+```
+
+Recovery script:
+
+```bash
+#!/bin/bash
+# harness-recover.sh - Recover from harness crash
+
+echo "→ Harness crash recovery..."
+
+# 1. Sync any uncommitted changes
+bd sync 2>/dev/null && echo "✓ Synced uncommitted changes"
+
+# 2. Restart daemon
+bd daemon --start &
+sleep 1
+
+# 3. Verify
+if pgrep -f "bd daemon" > /dev/null 2>&1; then
+  echo "✓ Daemon restored"
+else
+  echo "✗ Failed to restore daemon - check bd installation"
+  exit 1
+fi
+
+# 4. Show status
+echo ""
+echo "Current state:"
+bd list --status=in_progress
+```
+
+## Property Modes
+
+Each CREATE SOMETHING property has distinct character. The harness adapts priming and constraints to match.
+
+### Mode Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PROPERTY MODES                                │
+├──────────┬──────────┬──────────┬──────────┬─────────────────────┤
+│  .space  │   .io    │ .agency  │   .ltd   │       .lms          │
+│ Practice │ Research │ Services │Philosophy│      Learning       │
+├──────────┼──────────┼──────────┼──────────┼─────────────────────┤
+│ Explore  │ Document │ Deliver  │  Canon   │      Educate        │
+│ Iterate  │ Validate │ Serve    │  Guide   │      Scaffold       │
+└──────────┴──────────┴──────────┴──────────┴─────────────────────┘
+```
+
+### Mode Definitions
+
+| Property | Mode | Character | Session Constraints |
+|----------|------|-----------|---------------------|
+| `.space` | `practice` | Experimental, iterative | Allow exploration, looser scope |
+| `.io` | `research` | Documented, validated | Require citations, test coverage |
+| `.agency` | `services` | Client-focused, deliverable | Strict scope, client approval gates |
+| `.ltd` | `philosophy` | Canonical, deliberate | Canon compliance required, slow is correct |
+| `.lms` | `education` | Scaffolded, progressive | Learning path coherence, accessibility |
+
+### Mode-Specific Priming
+
+Each mode receives tailored context in session priming:
+
+#### .space (Practice Mode)
+
+```markdown
+## Mode: PRACTICE (.space)
+
+### Character
+Experimental. This is where we explore ideas before they're proven.
+
+### Constraints Relaxed
+- Canon compliance encouraged but not enforced
+- Multiple experimental approaches per session allowed
+- Failure is learning—document what didn't work
+
+### Session Directive
+Explore the implementation. Try multiple approaches if needed.
+Document what works and what doesn't in issue comments.
+```
+
+#### .io (Research Mode)
+
+```markdown
+## Mode: RESEARCH (.io)
+
+### Character
+Rigorous documentation. Every claim must be validated.
+
+### Additional Constraints
+- All new features require test coverage
+- Public-facing content requires citations
+- Papers must include methodology section
+
+### Session Directive
+Validate before documenting. Test coverage is mandatory.
+Include references for technical claims.
+```
+
+#### .agency (Services Mode)
+
+```markdown
+## Mode: SERVICES (.agency)
+
+### Character
+Client deliverables. The work must serve external stakeholders.
+
+### Additional Constraints
+- Strict scope adherence—client approved this scope
+- All changes require deployment verification
+- Time-sensitive: check priority labels for deadlines
+
+### Session Directive
+Deliver what was scoped. No scope creep.
+Verify deployment works before marking complete.
+```
+
+#### .ltd (Philosophy Mode)
+
+```markdown
+## Mode: PHILOSOPHY (.ltd)
+
+### Character
+Canonical truth. This defines what CREATE SOMETHING believes.
+
+### Additional Constraints
+- Canon compliance REQUIRED (run audit-canon)
+- Changes must align with Subtractive Triad
+- Deliberate pace—correctness over speed
+
+### Session Directive
+Ensure philosophical coherence. Run canon audit before completion.
+Less is more. Remove what doesn't serve the whole.
+```
+
+#### .lms (Education Mode)
+
+```markdown
+## Mode: EDUCATION (.lms)
+
+### Character
+Scaffolded learning. Content must build understanding progressively.
+
+### Additional Constraints
+- Accessibility compliance (WCAG 2.1 AA)
+- Learning path coherence—check prerequisites
+- Progressive disclosure—simple before complex
+
+### Session Directive
+Build understanding progressively. Ensure accessibility.
+Link to prerequisites and follow-up content.
+```
+
+### Mode Detection
+
+The harness detects mode from the spec or issue labels:
+
+```typescript
+type PropertyMode = 'practice' | 'research' | 'services' | 'philosophy' | 'education';
+
+function detectMode(issue: BeadsIssue): PropertyMode {
+  const labels = issue.labels || [];
+
+  // Explicit mode label
+  if (labels.includes('mode:practice')) return 'practice';
+  if (labels.includes('mode:research')) return 'research';
+  if (labels.includes('mode:services')) return 'services';
+  if (labels.includes('mode:philosophy')) return 'philosophy';
+  if (labels.includes('mode:education')) return 'education';
+
+  // Infer from property label
+  if (labels.includes('space')) return 'practice';
+  if (labels.includes('io')) return 'research';
+  if (labels.includes('agency')) return 'services';
+  if (labels.includes('ltd')) return 'philosophy';
+  if (labels.includes('lms')) return 'education';
+
+  // Default to research (most constrained)
+  return 'research';
+}
+```
+
+### Mode Constraints Matrix
+
+| Constraint | practice | research | services | philosophy | education |
+|------------|----------|----------|----------|------------|-----------|
+| Canon audit | optional | required | required | **mandatory** | required |
+| Test coverage | optional | **mandatory** | required | required | required |
+| Scope guard | relaxed | standard | **strict** | standard | standard |
+| E2E verification | optional | required | **mandatory** | required | required |
+| Citations | optional | **mandatory** | optional | required | required |
+| Accessibility | optional | required | required | required | **mandatory** |
+
+### CLI Usage
+
+```bash
+# Explicit mode override
+harness start specs/feature.md --mode=services
+
+# Auto-detect from property label
+harness start specs/feature.md  # Reads labels from spec
+
+# Mode-specific commands
+harness audit --mode=philosophy  # Run canon audit
+harness verify --mode=services   # Run E2E verification
 ```
 
 ## Session Types
