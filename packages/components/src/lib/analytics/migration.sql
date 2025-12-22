@@ -59,6 +59,7 @@ CREATE INDEX IF NOT EXISTS idx_unified_daily_property ON unified_events_daily(pr
 CREATE TABLE IF NOT EXISTS unified_sessions (
   id TEXT PRIMARY KEY, -- session_id
   property TEXT NOT NULL,
+  source_property TEXT, -- Property user came from (for cross-property tracking)
   user_id TEXT,
   started_at TEXT NOT NULL,
   ended_at TEXT,
