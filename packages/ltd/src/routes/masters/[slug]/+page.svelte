@@ -90,9 +90,9 @@
 					{data.examples.length} curated examples from Are.na
 				</p>
 
-				<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+				<div class="masonry-grid">
 					{#each data.examples as example}
-						<div class="example-card group relative overflow-hidden border border-canon">
+						<div class="example-card group relative overflow-hidden border border-canon mb-4">
 							{#if example.image_url}
 								<img
 									src={example.image_url}
@@ -305,6 +305,24 @@
 		border-color: var(--color-warning-border);
 	}
 
+	/* Masonry grid using CSS columns */
+	.masonry-grid {
+		column-count: 2;
+		column-gap: 1rem;
+	}
+
+	@media (min-width: 768px) {
+		.masonry-grid {
+			column-count: 3;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.masonry-grid {
+			column-count: 4;
+		}
+	}
+
 	/* Section headings for examples */
 	.section-heading {
 		font-size: var(--text-h1);
@@ -321,6 +339,7 @@
 	/* Example gallery */
 	.example-card {
 		background: var(--color-bg-surface);
+		break-inside: avoid;
 	}
 
 	.example-img {
