@@ -90,14 +90,14 @@
 					{data.examples.length} curated examples from Are.na
 				</p>
 
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 					{#each data.examples as example}
-						<div class="example-card group relative aspect-square overflow-hidden border border-canon">
+						<div class="example-card group relative overflow-hidden border border-canon">
 							{#if example.image_url}
 								<img
 									src={example.image_url}
 									alt={example.title || 'Visual reference'}
-									class="example-img w-full h-full object-cover"
+									class="example-img w-full h-auto"
 									loading="lazy"
 								/>
 							{/if}
