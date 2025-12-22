@@ -12,12 +12,13 @@ The harness runs autonomously. Humans engage through **progress reports**—reac
 
 ### Core Constraints
 
-| Constraint | Rationale |
-|------------|-----------|
-| **One feature per session** | Prevents scope creep; enables clean commits |
-| **Beads is the only progress system** | DRY—no separate progress files |
-| **Commit before close** | Work without commits is lost work |
-| **Verify before declaring complete** | Prevents premature victory |
+| Constraint | Rationale | Enforcement |
+|------------|-----------|-------------|
+| **One feature per session** | Prevents scope creep; enables clean commits | `one-feature-guard.sh` |
+| **Beads is the only progress system** | DRY—no separate progress files | Architecture |
+| **Commit before close** | Work without commits is lost work | Close reason must include commit |
+| **Two-stage completion** | Prevents premature victory | `code-complete` → `verified` labels |
+| **E2E before verified** | Unit tests aren't enough | Puppeteer or manual check required |
 
 ## Quick Start
 
@@ -459,8 +460,164 @@ Commit when tests pass. Update issue status in Beads.
 | Start work | `bd update <id> --status in_progress` |
 | Partial progress | Add comment: `bd comment <id> "Completed X, starting Y"` |
 | Blocker found | `bd create "Blocker: X" && bd dep add <new> blocks <current>` |
-| Work complete | `bd close <id> --reason "Commit: abc123"` |
+| Code complete | `bd label add <id> code-complete` |
+| E2E verified | `bd label add <id> verified && bd close <id>` |
 | Session end | Checkpoint issue created automatically |
+
+### Verification Status
+
+**Problem**: Agents declare "done" when code compiles, but feature may be broken.
+
+**Solution**: Two-stage completion using Beads labels.
+
+```
+┌─────────────┐     ┌──────────────┐     ┌────────────┐
+│ in_progress │ ──► │ code-complete│ ──► │  verified  │
+│             │     │ (tests pass) │     │ (E2E pass) │
+└─────────────┘     └──────────────┘     └────────────┘
+                           │                    │
+                           │                    ▼
+                           │              ┌──────────┐
+                           └─────────────►│  closed  │
+                                          └──────────┘
+```
+
+**Labels**:
+
+| Label | Meaning | Gate |
+|-------|---------|------|
+| `code-complete` | Implementation done, unit tests pass | `pnpm test` passes |
+| `verified` | E2E tested, feature works in browser | Manual or Puppeteer verification |
+
+**Workflow**:
+
+```bash
+# After implementation + unit tests
+pnpm test --filter=<package>
+bd label add <id> code-complete
+git commit -m "feat: <desc> [<id>]"
+
+# After E2E verification
+# (manual check or Puppeteer test)
+bd label add <id> verified
+bd close <id> --reason "Verified: commit $(git rev-parse --short HEAD)"
+```
+
+**Harness Enforcement**:
+
+```bash
+# Harness only counts issues with BOTH labels as truly complete
+TRULY_DONE=$(bd list --status=closed --label verified --since=24h -q | wc -l)
+CODE_ONLY=$(bd list --label code-complete --status=open -q | wc -l)
+
+echo "Verified complete: $TRULY_DONE"
+echo "Awaiting verification: $CODE_ONLY"
+```
+
+**Checkpoint Reporting**:
+
+```
+Overall progress: 35/42 features.
+
+✓ Verified: cs-a1b2, cs-c3d4, cs-e5f6 (3)
+◑ Code-complete: cs-g7h8, cs-i9j0 (2) ← awaiting E2E
+◐ In Progress: cs-m3n4 (1)
+✗ Failed: cs-k1l2 (1)
+```
+
+### One-Feature Enforcement
+
+**Problem**: Agents touch multiple features, completing none properly.
+
+**Solution**: Explicit scope guard in session priming + detection.
+
+**Pre-Session Check**:
+
+```bash
+#!/bin/bash
+# one-feature-guard.sh - Enforce single-feature sessions
+
+# Check for multiple in-progress issues
+IN_PROGRESS=$(bd list --status=in_progress -q)
+COUNT=$(echo "$IN_PROGRESS" | grep -c . || echo 0)
+
+if [ "$COUNT" -gt 1 ]; then
+  echo "⚠ SCOPE VIOLATION: $COUNT issues in progress"
+  echo "Issues: $IN_PROGRESS"
+  echo ""
+  echo "Resolution options:"
+  echo "1. Close completed issues: bd close <id>"
+  echo "2. Pause others: bd update <id> --status open"
+  echo ""
+  echo "Session blocked until exactly 1 issue in_progress."
+  exit 1
+fi
+
+if [ "$COUNT" -eq 0 ]; then
+  echo "→ No issue in progress. Select from bd ready:"
+  bd ready | head -5
+  echo ""
+  echo "Start with: bd update <id> --status in_progress"
+  exit 0
+fi
+
+echo "✓ Single issue in progress: $IN_PROGRESS"
+bd show "$IN_PROGRESS"
+```
+
+**Session Priming Addition**:
+
+```markdown
+## Scope Guard
+**Active Issue**: cs-xyz (user dashboard)
+**Status**: ✓ Single issue in progress
+
+⚠ CONSTRAINT: Do NOT run `bd update --status in_progress` on any other issue.
+If you discover work, create it as a new issue but do NOT start it:
+  bd create "Discovered: <task>" --priority P2
+```
+
+**Mid-Session Detection**:
+
+```bash
+# Run periodically during long sessions
+check_scope() {
+  COUNT=$(bd list --status=in_progress -q | wc -l)
+  if [ "$COUNT" -gt 1 ]; then
+    echo "⚠ SCOPE CREEP DETECTED"
+    echo "Multiple issues now in_progress. Harness will pause."
+    return 1
+  fi
+  return 0
+}
+```
+
+**Violation Recovery**:
+
+```bash
+# If scope violation detected, agent must:
+# 1. Identify the original issue
+ORIGINAL=$(bd list --status=in_progress --label harness:active -q)
+
+# 2. Reset others to open
+bd list --status=in_progress -q | grep -v "$ORIGINAL" | \
+  xargs -I{} bd update {} --status open
+
+# 3. Continue with original
+echo "Scope restored. Continuing with: $ORIGINAL"
+```
+
+**Configuration**:
+
+```typescript
+const scopeConfig = {
+  maxConcurrentIssues: 1,          // Strict: exactly one
+  allowDiscovery: true,            // Can create new issues
+  discoveryStatus: 'open',         // New issues start as open, not in_progress
+  violationAction: 'pause',        // Pause harness on violation
+  graceTokens: 10000,              // Allow 10k tokens before checking
+};
+```
 
 ### Session Log Query
 
@@ -598,9 +755,10 @@ packages/harness/
 
 ### Session Architecture
 - **Initializer/Coding split**: Setup happens once, properly
-- **One feature per session**: Prevents scope creep
+- **One feature per session**: Enforced by scope guard script
 - **Prescriptive startup**: Reduces context waste
-- **Explicit verification**: Prevents premature completion
+- **Two-stage verification**: `code-complete` → `verified` labels
+- **Scope detection**: Mid-session checks prevent creep
 
 ### Human Agency Preserved
 You can always:
@@ -617,8 +775,9 @@ Based on [Effective Harnesses for Long-Running Agents](https://www.anthropic.com
 | Anthropic Pattern | Our Implementation |
 |-------------------|-------------------|
 | `claude-progress.txt` | Beads closed issues + `bd list --since` |
-| `feature_list.json` | Beads issues with status tracking |
+| `feature_list.json` with `passes: false` | Beads labels: `code-complete` → `verified` |
 | Initializer agent | Initializer session with setup issue |
 | `init.sh` script | Created by initializer, tracked in Beads |
-| One-feature-per-session | Enforced in Session Priming constraints |
+| One-feature-per-session | `one-feature-guard.sh` + scope detection |
+| E2E verification mandate | `verified` label requires Puppeteer/manual check |
 | Failure mode docs | Failure Mode Reference table |
