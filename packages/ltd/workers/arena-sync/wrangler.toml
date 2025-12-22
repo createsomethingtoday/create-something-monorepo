@@ -1,0 +1,13 @@
+# Arena Sync Scheduled Worker
+# Triggers daily sync by calling the createsomething.ltd API
+
+name = "arena-sync"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Scheduled trigger - daily at 6am UTC
+[triggers]
+crons = ["0 6 * * *"]
+
+# Optional: Add API key for authenticated sync
+# Set via: wrangler secret put SYNC_API_KEY
