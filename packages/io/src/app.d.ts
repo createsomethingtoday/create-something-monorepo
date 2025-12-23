@@ -10,6 +10,7 @@ declare global {
 				email: string;
 				username: string;
 				role: string;
+				tier?: 'free' | 'pro' | 'agency';
 			};
 		}
 		// interface PageData {}

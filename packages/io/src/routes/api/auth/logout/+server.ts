@@ -1,20 +1,24 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import {
+	clearSessionCookies,
+	getRefreshTokenFromRequest,
+	revokeSession
+} from '@create-something/components/auth';
 
-export const POST: RequestHandler = async ({ cookies, platform }) => {
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	try {
-		const sessionToken = cookies.get('session');
+		const isProduction = platform?.env?.ENVIRONMENT === 'production';
+		const domain = isProduction ? '.createsomething.io' : undefined;
 
-		if (sessionToken) {
-			const db = platform?.env?.DB;
-			if (db) {
-				// Delete session from database (using id as token)
-				await db.prepare('DELETE FROM sessions WHERE id = ?').bind(sessionToken).run();
-			}
+		// Get refresh token to revoke at Identity Worker
+		const refreshToken = getRefreshTokenFromRequest(request);
+		if (refreshToken) {
+			await revokeSession(refreshToken);
 		}
 
-		// Clear session cookie
-		cookies.delete('session', { path: '/' });
+		// Clear JWT cookies
+		clearSessionCookies(cookies, isProduction ?? true, domain);
 
 		return json({ success: true });
 	} catch (error) {
