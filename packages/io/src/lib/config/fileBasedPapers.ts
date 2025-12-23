@@ -556,6 +556,70 @@ export const fileBasedPapers: FileBasedPaper[] = [
     ║   "The harness recedes; the work remains"                     ║
     ╚═══════════════════════════════════════════════════════════════╝
 `
+	},
+	{
+		id: 'paper-hermeneutic-triad-review',
+		slug: 'hermeneutic-triad-review',
+		title: 'The Hermeneutic Triad',
+		subtitle: 'How Reviewers, Harness, and Agent Collaborate',
+		authors: ['CREATE SOMETHING Research'],
+		abstract: `This paper documents a live case study from December 2025 where the CREATE SOMETHING harness orchestrated parallel peer reviews that identified critical DRY violations in newsletter subscription code. Three specialized reviewers—architecture, security, and quality—each analyzed the same codebase simultaneously, producing complementary findings. The architecture reviewer detected 4 pairs of nearly-identical files across packages; the security reviewer identified IDOR vulnerabilities; the quality reviewer noted inconsistent error handling. This paper analyzes how this hermeneutic triad—the interplay between reviewers, harness, and agent—creates a self-correcting system that surfaces issues no single perspective would catch.`,
+		keywords: [
+			'Hermeneutic Circle',
+			'Peer Review',
+			'DRY',
+			'Harness',
+			'Autonomous Orchestration',
+			'Architecture Review',
+			'Security Review',
+			'Quality Review',
+			'Case Study'
+		],
+		description:
+			'Case study of parallel peer review identifying DRY violations through the hermeneutic triad of reviewers, harness, and agent.',
+		excerpt_short: 'Parallel peer review as self-correcting system',
+		excerpt_long:
+			'This paper documents how three specialized reviewers—architecture, security, and quality—analyzed the same codebase simultaneously to identify critical DRY violations. The hermeneutic triad creates a self-correcting system that surfaces issues no single perspective would catch.',
+		category: 'case-study',
+		created_at: '2025-12-22T00:00:00Z',
+		updated_at: '2025-12-22T00:00:00Z',
+		reading_time_minutes: 12,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-hermeneutic-circle', // Multiple perspectives reveal hidden truths
+			'subtractive-triad', // DRY violations detected and resolved
+			'rams-principle-10' // As little as possible - consolidate duplicates
+		],
+		source_path: 'papers/hermeneutic-triad-review',
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║   THE HERMENEUTIC TRIAD                                       ║
+    ║                                                               ║
+    ║   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        ║
+    ║   │ Architecture │  │   Security   │  │   Quality    │        ║
+    ║   │──────────────│  │──────────────│  │──────────────│        ║
+    ║   │ "Does this   │  │ "Can this be │  │ "Is this     │        ║
+    ║   │  serve the   │  │  exploited?" │  │  maintain-   │        ║
+    ║   │  whole?"     │  │              │  │  able?"      │        ║
+    ║   └──────┬───────┘  └──────┬───────┘  └──────┬───────┘        ║
+    ║          │                 │                 │                ║
+    ║          └─────────────────┼─────────────────┘                ║
+    ║                            ▼                                  ║
+    ║                   ┌─────────────────┐                         ║
+    ║                   │     HARNESS     │                         ║
+    ║                   │   Aggregates    │                         ║
+    ║                   │   & Prioritizes │                         ║
+    ║                   └────────┬────────┘                         ║
+    ║                            ▼                                  ║
+    ║                   ┌─────────────────┐                         ║
+    ║                   │      AGENT      │                         ║
+    ║                   │    Resolves     │                         ║
+    ║                   └─────────────────┘                         ║
+    ║                                                               ║
+    ║   "Multiple perspectives reveal hidden truths"                ║
+    ╚═══════════════════════════════════════════════════════════════╝
+`
 	}
 ];
 
