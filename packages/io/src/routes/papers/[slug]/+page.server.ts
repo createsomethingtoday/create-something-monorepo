@@ -1,64 +1,33 @@
 /**
- * Research Paper Detail - Server Load
+ * Research Paper Detail - Fallback Route
  *
- * Loads a specific research paper by slug, including its full
- * markdown content bundled at build time.
+ * This dynamic route serves as a fallback for papers without their own
+ * dedicated route folder. Since all current papers have their own
+ * /papers/[name]/+page.svelte, this primarily handles 404s.
+ *
+ * Papers are now self-contained in their route folders with meta.ts
+ * for listing metadata.
  */
 
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
-import { getFileBasedPaper, isFileBasedPaper } from '$lib/config/fileBasedPapers';
-import { getPaperContent } from '$lib/config/paperContent';
-import { transformResearchPaperToPaper } from '@create-something/components';
+import type { PaperMeta } from '../types';
+
+// Auto-discover all papers with meta.ts files
+const paperModules = import.meta.glob<{ meta: PaperMeta }>('../*/meta.ts', { eager: true });
+const validSlugs = new Set(Object.values(paperModules).map((mod) => mod.meta.slug));
 
 export const load: PageServerLoad = async ({ params }) => {
 	const { slug } = params;
 
-	// Check if this is a file-based paper
-	if (!isFileBasedPaper(slug)) {
+	// If this slug has a dedicated route folder, SvelteKit will use that instead.
+	// This route only triggers for slugs without their own folder.
+	// Since all papers have their own folders, this is effectively a 404 handler.
+	if (!validSlugs.has(slug)) {
 		throw error(404, 'Paper not found');
 	}
 
-	const paperMeta = getFileBasedPaper(slug);
-	if (!paperMeta) {
-		throw error(404, 'Paper not found');
-	}
-
-	// Transform to standard paper format
-	const paper = transformResearchPaperToPaper(paperMeta);
-
-	// Get bundled markdown content
-	const content = getPaperContent(slug) || '';
-	const sections: { id: string; title: string; level: number }[] = [];
-
-	// Extract section headers for table of contents
-	if (content) {
-		const headerRegex = /^(#{1,3})\s+(.+?)(?:\s*\{#([\w-]+)\})?$/gm;
-		let match;
-		while ((match = headerRegex.exec(content)) !== null) {
-			const level = match[1].length;
-			const title = match[2].replace(/\*\*/g, '').trim();
-			// Generate ID from title if not provided
-			const id =
-				match[3] ||
-				title
-					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-')
-					.replace(/^-|-$/g, '');
-			sections.push({ id, title, level });
-		}
-	}
-
-	return {
-		paper: {
-			...paper,
-			content,
-			sections,
-			authors: paperMeta.authors,
-			abstract: paperMeta.abstract,
-			keywords: paperMeta.keywords,
-			related_experiments: paperMeta.related_experiments || [],
-			tests_principles: paperMeta.tests_principles
-		}
-	};
+	// If we somehow get here for a valid slug without a route folder,
+	// redirect or show a minimal error
+	throw error(404, 'Paper route not found');
 };

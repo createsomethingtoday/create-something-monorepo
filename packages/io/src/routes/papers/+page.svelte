@@ -32,18 +32,14 @@
 
 		const query = searchQuery.toLowerCase();
 		const title = (paper.title || '').toLowerCase();
-		const excerpt = (paper.excerpt_long || '').toLowerCase();
+		const description = (paper.description || '').toLowerCase();
 		const subtitle = (paper.subtitle || '').toLowerCase();
-		const tags = Array.isArray(paper.tags)
-			? paper.tags.map((t: string | { name: string }) =>
-				typeof t === 'string' ? t.toLowerCase() : t.name.toLowerCase()
-			).join(' ')
-			: '';
+		const keywords = paper.keywords?.map((k) => k.toLowerCase()).join(' ') || '';
 
 		return title.includes(query) ||
-			   excerpt.includes(query) ||
+			   description.includes(query) ||
 			   subtitle.includes(query) ||
-			   tags.includes(query);
+			   keywords.includes(query);
 	}
 
 	// Check if a paper matches the category filter
@@ -61,20 +57,20 @@
 		switch (sortBy) {
 			case 'newest':
 				return filtered.sort((a, b) => {
-					const aDate = new Date(a.published_at || a.created_at || 0).getTime();
-					const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+					const aDate = new Date(a.date || 0).getTime();
+					const bDate = new Date(b.date || 0).getTime();
 					return bDate - aDate;
 				});
 			case 'oldest':
 				return filtered.sort((a, b) => {
-					const aDate = new Date(a.published_at || a.created_at || 0).getTime();
-					const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+					const aDate = new Date(a.date || 0).getTime();
+					const bDate = new Date(b.date || 0).getTime();
 					return aDate - bDate;
 				});
 			case 'reading-time':
 				return filtered.sort((a, b) => {
-					const aTime = a.reading_time || 0;
-					const bTime = b.reading_time || 0;
+					const aTime = a.readingTime || 0;
+					const bTime = b.readingTime || 0;
 					return aTime - bTime;
 				});
 			default:
@@ -212,8 +208,8 @@
 					<div class="paper-content">
 						<div class="paper-meta flex">
 							<span class="paper-category">{paper.category}</span>
-							<span class="paper-reading-time">{paper.reading_time} min read</span>
-							<span class="paper-difficulty">{paper.difficulty_level}</span>
+							<span class="paper-reading-time">{paper.readingTime} min read</span>
+							<span class="paper-difficulty">{paper.difficulty}</span>
 						</div>
 
 						<h2 class="paper-title">{paper.title}</h2>
@@ -222,11 +218,11 @@
 							<p class="paper-subtitle">{paper.subtitle}</p>
 						{/if}
 
-						<p class="paper-excerpt">{paper.excerpt_long}</p>
+						<p class="paper-excerpt">{paper.description}</p>
 
 						<div class="paper-keywords flex flex-wrap">
-							{#each paper.tags || [] as tag}
-								<span class="keyword">{typeof tag === 'string' ? tag : tag.name}</span>
+							{#each paper.keywords as keyword}
+								<span class="keyword">{keyword}</span>
 							{/each}
 						</div>
 					</div>
