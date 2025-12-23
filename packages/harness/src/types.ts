@@ -251,6 +251,12 @@ export interface FailureRecord {
   attempts: FailureAttempt[];
   lastOutcome: SessionOutcome;
   finalAction: FailureAction;
+  /** Original model selected by heuristics (before any escalation) */
+  originalModel?: 'opus' | 'sonnet' | 'haiku';
+  /** Whether this task required model escalation to succeed */
+  escalatedToOpus?: boolean;
+  /** Learning note: why escalation was needed (for pattern refinement) */
+  escalationReason?: string;
 }
 
 /**
@@ -262,6 +268,24 @@ export interface FailureAttempt {
   outcome: SessionOutcome;
   error: string | null;
   durationMs: number;
+  /** Model used for this attempt */
+  model?: 'opus' | 'sonnet' | 'haiku';
+}
+
+/**
+ * Model escalation learning record.
+ * Created when a task fails with cheaper model but succeeds with opus.
+ * Used to refine selectModelForTask patterns over time.
+ */
+export interface ModelEscalationLearning {
+  issueId: string;
+  issueTitle: string;
+  originalModel: 'sonnet' | 'haiku';
+  failedAttempts: number;
+  escalatedAt: string;
+  succeededWithOpus: boolean;
+  /** Keywords from the issue that should trigger opus in the future */
+  suggestedPatterns: string[];
 }
 
 /**
