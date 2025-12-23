@@ -11,6 +11,7 @@ import {
 	setSessionCookies,
 	getSessionCookies,
 	clearSessionCookies,
+	getRefreshTokenFromRequest,
 	type CookieOptions,
 } from './cookies.js';
 
@@ -529,4 +530,86 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 
 		return resolve(event);
 	};
+}
+
+// =============================================================================
+// LOGOUT HANDLER
+// =============================================================================
+
+/**
+ * Extract domain from URL hostname
+ * Handles both production (createsomething.{tld}) and localhost
+ *
+ * @internal
+ */
+function getDomainFromHostname(hostname: string, isProduction: boolean): string | undefined {
+	if (!isProduction) {
+		return undefined;
+	}
+
+	// Extract TLD from hostname (e.g., "createsomething.space" -> ".createsomething.space")
+	const match = hostname.match(/createsomething\.(space|io|agency|ltd|lms)$/);
+	if (match) {
+		return `.createsomething.${match[1]}`;
+	}
+
+	return undefined;
+}
+
+/**
+ * Handle logout request - revoke session and clear cookies
+ *
+ * Consolidates logout logic across all CREATE SOMETHING properties.
+ * Determines domain from request URL to set cross-subdomain cookies.
+ *
+ * @param request - The incoming request
+ * @param cookies - SvelteKit cookies API
+ * @param platform - Cloudflare platform object (for environment detection)
+ * @returns JSON response with success/error status
+ *
+ * @example
+ * ```typescript
+ * // In +server.ts
+ * import { handleLogout } from '@create-something/components/auth';
+ * import type { RequestHandler } from './$types';
+ *
+ * export const POST: RequestHandler = async ({ request, cookies, platform }) => {
+ *   return handleLogout(request, cookies, platform);
+ * };
+ * ```
+ */
+export async function handleLogout(
+	request: Request,
+	cookies: CookiesAPI,
+	platform?: { env?: { ENVIRONMENT?: string } }
+): Promise<Response> {
+	try {
+		const isProduction = platform?.env?.ENVIRONMENT === 'production';
+		const url = new URL(request.url);
+		const domain = getDomainFromHostname(url.hostname, isProduction);
+
+		// Get refresh token to revoke at Identity Worker
+		const refreshToken = getRefreshTokenFromRequest(request);
+		if (refreshToken) {
+			await revokeSession(refreshToken);
+		}
+
+		// Clear JWT cookies
+		clearSessionCookies(cookies, isProduction ?? true, domain);
+
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+	} catch (error) {
+		console.error('Logout error:', error);
+		return new Response(JSON.stringify({ error: 'Logout failed' }), {
+			status: 500,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+	}
 }
