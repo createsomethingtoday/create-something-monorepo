@@ -7,8 +7,7 @@
  * @packageDocumentation
  */
 
-import type { NewsletterRequest, NewsletterResult, TurnstileResponse } from './types.js';
-import type { PropertyDomain } from '../analytics/types.js';
+import type { NewsletterRequest, NewsletterResult, TurnstileResponse, PropertyDomain } from './types.js';
 
 /**
  * Environment bindings required for newsletter operations
