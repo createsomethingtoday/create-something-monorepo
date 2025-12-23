@@ -40,6 +40,8 @@
 			<span class="stat">{data.stats.resources} resources</span>
 			<span class="stat-divider">·</span>
 			<span class="stat">Synced {formatDate(data.stats.lastSync)}</span>
+			<span class="stat-divider">·</span>
+			<a href="/taste/insights" class="stat-link">Your Insights →</a>
 		</div>
 	</div>
 </section>
@@ -235,6 +237,18 @@
 
 	.stat-divider {
 		color: var(--color-fg-subtle);
+	}
+
+	.stat-link {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		text-decoration: none;
+		font-weight: 500;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.stat-link:hover {
+		opacity: 0.7;
 	}
 
 	/* Channels */
