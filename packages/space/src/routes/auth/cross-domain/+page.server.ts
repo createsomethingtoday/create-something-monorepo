@@ -74,7 +74,7 @@ export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 				refreshToken: result.refresh_token,
 				domain,
 			},
-			isProduction
+			isProduction ?? true
 		);
 
 		console.log('[Cross-Domain Exchange .space] Redirecting to:', redirectTo);
