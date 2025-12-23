@@ -26,10 +26,17 @@ interface D1Database {
 interface D1PreparedStatement {
 	bind(...args: unknown[]): D1PreparedStatement;
 	run(): Promise<D1Result>;
+	first<T = unknown>(): Promise<T | null>;
 }
 
 interface D1Result {
 	success: boolean;
+}
+
+interface ExistingSubscriber {
+	email: string;
+	confirmed_at: string | null;
+	unsubscribed_at: string | null;
 }
 
 interface KVNamespace {
@@ -39,6 +46,50 @@ interface KVNamespace {
 
 const RATE_LIMIT_WINDOW = 60 * 60; // 1 hour in seconds
 const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
+
+/**
+ * Generate the confirmation email HTML template (double opt-in)
+ */
+export function generateConfirmationEmailHtml(confirmUrl: string): string {
+	return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .header { margin-bottom: 40px; }
+    .logo { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.1em; text-transform: uppercase; }
+    .content { line-height: 1.8; }
+    .content p { color: rgba(255, 255, 255, 0.7); margin-bottom: 20px; }
+    .quote { font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0; }
+    .cta { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500; }
+    .footer { margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.3); font-size: 13px; }
+    .footer a { color: rgba(255, 255, 255, 0.4); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">CREATE SOMETHING</div>
+    </div>
+
+    <div class="content">
+      <p class="quote">"Weniger, aber besser."</p>
+      <p>Less, but better. This guides everything we build.</p>
+      <p>Please confirm your subscription to receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
+      <a href="${confirmUrl}" class="cta">Confirm Subscription</a>
+      <p style="margin-top: 30px; font-size: 14px; color: rgba(255, 255, 255, 0.5);">If you didn't request this subscription, you can safely ignore this email.</p>
+    </div>
+
+    <div class="footer">
+      <p>CREATE SOMETHING</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
 
 /**
  * Generate the welcome email HTML template
@@ -197,23 +248,66 @@ export async function processSubscription(
 		}
 	}
 
-	// Generate unsubscribe token
-	const unsubscribeToken = btoa(`${email}:${Date.now()}`);
+	// Generate tokens for unsubscribe and confirmation
+	const timestamp = Date.now();
+	const unsubscribeToken = btoa(`${email}:${timestamp}`);
+	const confirmationToken = btoa(`confirm:${email}:${timestamp}:${crypto.randomUUID()}`);
 
-	// Store subscriber in D1 database
+	// Check if subscriber already exists
+	let existingSubscriber: ExistingSubscriber | null = null;
 	try {
-		await env.DB.prepare(
-			`INSERT OR IGNORE INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token, source)
-        VALUES (?, datetime('now'), ?, ?)`
+		existingSubscriber = await env.DB.prepare(
+			`SELECT email, confirmed_at, unsubscribed_at FROM newsletter_subscribers WHERE email = ?`
 		)
-			.bind(email, unsubscribeToken, subscriberSource)
-			.run();
+			.bind(email)
+			.first<ExistingSubscriber>();
 	} catch (dbError) {
-		// Table might not exist - that's okay, we'll still send the welcome email
-		console.warn('Newsletter subscribers table not found - skipping DB insert');
+		console.warn('Could not check existing subscriber:', dbError);
 	}
 
-	// Send welcome email via Resend
+	// If already confirmed, no need to re-subscribe
+	if (existingSubscriber?.confirmed_at && !existingSubscriber?.unsubscribed_at) {
+		return {
+			result: { success: true, message: 'You are already subscribed!' },
+			status: 200,
+		};
+	}
+
+	// Store subscriber in D1 database with confirmed_at = NULL (requires confirmation)
+	try {
+		if (existingSubscriber) {
+			// Update existing subscriber (may have unsubscribed before)
+			await env.DB.prepare(
+				`UPDATE newsletter_subscribers
+				 SET confirmation_token = ?,
+				     unsubscribe_token = ?,
+				     unsubscribed_at = NULL,
+				     confirmed_at = NULL,
+				     subscribed_at = datetime('now'),
+				     source = ?
+				 WHERE email = ?`
+			)
+				.bind(confirmationToken, unsubscribeToken, subscriberSource, email)
+				.run();
+		} else {
+			// Insert new subscriber
+			await env.DB.prepare(
+				`INSERT INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token, confirmation_token, confirmed_at, source)
+				 VALUES (?, datetime('now'), ?, ?, NULL, ?)`
+			)
+				.bind(email, unsubscribeToken, confirmationToken, subscriberSource)
+				.run();
+		}
+	} catch (dbError) {
+		console.error('Newsletter subscribers database error:', dbError);
+		return {
+			result: { success: false, message: 'Failed to process subscription' },
+			status: 500,
+		};
+	}
+
+	// Send confirmation email via Resend (double opt-in)
+	const confirmUrl = `https://createsomething.io/confirm?token=${encodeURIComponent(confirmationToken)}`;
 	const resendResponse = await fetch('https://api.resend.com/emails', {
 		method: 'POST',
 		headers: {
@@ -223,8 +317,8 @@ export async function processSubscription(
 		body: JSON.stringify({
 			from: 'CREATE SOMETHING <hello@createsomething.io>',
 			to: email,
-			subject: 'Welcome to CREATE SOMETHING',
-			html: generateWelcomeEmailHtml(unsubscribeToken, property),
+			subject: 'Confirm your subscription to CREATE SOMETHING',
+			html: generateConfirmationEmailHtml(confirmUrl),
 		}),
 	});
 
@@ -233,7 +327,7 @@ export async function processSubscription(
 	if (!resendResponse.ok) {
 		console.error('Resend API error:', resendData);
 		return {
-			result: { success: false, message: 'Failed to send welcome email' },
+			result: { success: false, message: 'Failed to send confirmation email' },
 			status: 500,
 		};
 	}
@@ -241,7 +335,7 @@ export async function processSubscription(
 	return {
 		result: {
 			success: true,
-			message: 'Successfully subscribed! Check your email for a welcome message.',
+			message: 'Please check your email to confirm your subscription.',
 			emailId: resendData.id,
 		},
 		status: 200,
