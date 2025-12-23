@@ -27,27 +27,27 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		const target = url.searchParams.get('target');
 		const redirect = url.searchParams.get('redirect') || '/account';
 
-		console.log('[Cross-Domain Generate] Starting', { target, redirect });
+		console.log('[Cross-Domain Generate .agency] Starting', { target, redirect });
 
 		if (!target || !TARGET_DOMAINS[target]) {
-			console.log('[Cross-Domain Generate] Invalid target:', target);
+			console.log('[Cross-Domain Generate .agency] Invalid target:', target);
 			return json({ error: 'Invalid target property' }, { status: 400 });
 		}
 
 		// Check if user is logged in
 		const session = getSessionCookies(cookies);
-		console.log('[Cross-Domain Generate] Session check', {
+		console.log('[Cross-Domain Generate .agency] Session check', {
 			hasAccessToken: !!session.accessToken,
 			hasRefreshToken: !!session.refreshToken
 		});
 
 		if (!session.accessToken) {
-			console.log('[Cross-Domain Generate] No access token');
+			console.log('[Cross-Domain Generate .agency] No access token');
 			return json({ error: 'Not authenticated' }, { status: 401 });
 		}
 
 		// Call identity-worker to generate cross-domain token
-		console.log('[Cross-Domain Generate] Calling identity-worker...');
+		console.log('[Cross-Domain Generate .agency] Calling identity-worker...');
 		const response = await fetch(`${IDENTITY_API}/v1/auth/cross-domain/generate`, {
 			method: 'POST',
 			headers: {
@@ -57,23 +57,23 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			body: JSON.stringify({ target }),
 		});
 
-		console.log('[Cross-Domain Generate] Identity response status:', response.status);
+		console.log('[Cross-Domain Generate .agency] Identity response status:', response.status);
 
 		if (!response.ok) {
 			const errorResult = (await response.json()) as ErrorResponse;
-			console.log('[Cross-Domain Generate] Identity error:', errorResult);
+			console.log('[Cross-Domain Generate .agency] Identity error:', errorResult);
 			return json({ error: errorResult.error || 'Token generation failed' }, { status: response.status });
 		}
 
 		const result = (await response.json()) as GenerateResponse;
-		console.log('[Cross-Domain Generate] Token generated, expires_in:', result.expires_in);
+		console.log('[Cross-Domain Generate .agency] Token generated, expires_in:', result.expires_in);
 
 		// Build redirect URL with token and final destination
 		const targetUrl = new URL('/auth/cross-domain', TARGET_DOMAINS[target]);
 		targetUrl.searchParams.set('token', result.token);
 		targetUrl.searchParams.set('redirect', redirect);
 
-		console.log('[Cross-Domain Generate] Redirecting to:', targetUrl.toString());
+		console.log('[Cross-Domain Generate .agency] Redirecting to:', targetUrl.toString());
 
 		// Redirect to target property
 		return new Response(null, {
@@ -83,7 +83,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			},
 		});
 	} catch (err) {
-		console.error('[Cross-Domain Generate] Error:', err);
+		console.error('[Cross-Domain Generate .agency] Error:', err);
 		return json({ error: 'An unexpected error occurred' }, { status: 500 });
 	}
 };

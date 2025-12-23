@@ -168,6 +168,8 @@
 		e.preventDefault();
 		const originalHref = (e.currentTarget as HTMLAnchorElement).href;
 
+		console.log('[Footer Cross-Domain]', { isAuthenticated, targetMode, mode, originalHref });
+
 		// Store transition data for entry animation on target page
 		if (typeof sessionStorage !== 'undefined') {
 			sessionStorage.setItem('cs-transition-from', mode);

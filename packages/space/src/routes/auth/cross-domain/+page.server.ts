@@ -50,7 +50,8 @@ export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 		if (!response.ok) {
 			const errorResult = (await response.json()) as ErrorResponse;
 			console.log('[Cross-Domain Exchange .space] Identity error:', errorResult);
-			redirect(302, `/login?error=${encodeURIComponent(errorResult.error || 'exchange_failed')}`);
+			const errorMsg = encodeURIComponent(errorResult.error || 'exchange_failed');
+			redirect(302, `/login?error=${errorMsg}`);
 		}
 
 		const result = (await response.json()) as ExchangeResponse;

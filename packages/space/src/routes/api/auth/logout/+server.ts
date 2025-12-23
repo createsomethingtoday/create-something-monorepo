@@ -1,13 +1,28 @@
-import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { clearSessionCookies } from '@create-something/components/auth';
+import type { RequestHandler } from './$types';
+import {
+	clearSessionCookies,
+	getRefreshTokenFromRequest,
+	revokeSession
+} from '@create-something/components/auth';
 
-export const POST: RequestHandler = async ({ cookies, platform }) => {
-	const isProduction = platform?.env?.ENVIRONMENT === 'production';
-	const domain = isProduction ? '.createsomething.space' : undefined;
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
+	try {
+		const isProduction = platform?.env?.ENVIRONMENT === 'production';
+		const domain = isProduction ? '.createsomething.space' : undefined;
 
-	// Clear session cookies
-	clearSessionCookies(cookies, isProduction, domain);
+		// Get refresh token to revoke at Identity Worker
+		const refreshToken = getRefreshTokenFromRequest(request);
+		if (refreshToken) {
+			await revokeSession(refreshToken);
+		}
 
-	return json({ success: true });
+		// Clear JWT cookies
+		clearSessionCookies(cookies, isProduction ?? true, domain);
+
+		return json({ success: true });
+	} catch (error) {
+		console.error('Logout error:', error);
+		return json({ error: 'Logout failed' }, { status: 500 });
+	}
 };
