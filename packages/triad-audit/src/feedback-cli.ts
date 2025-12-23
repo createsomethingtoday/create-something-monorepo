@@ -21,6 +21,7 @@
  */
 
 import { FeedbackCollector } from './collectors/feedback-collector.js';
+import { generateRulesFromPatterns, generateEslintConfig } from './generators/index.js';
 import type { FeedbackCategory } from './types/feedback.js';
 import type { Severity } from './types/base.js';
 import * as fs from 'node:fs';
@@ -31,7 +32,7 @@ import * as path from 'node:path';
 // =============================================================================
 
 interface CliOptions {
-	command: 'add' | 'import' | 'analyze' | 'status' | 'mark' | 'export' | 'help';
+	command: 'add' | 'import' | 'analyze' | 'status' | 'mark' | 'export' | 'generate-rules' | 'help';
 	storagePath: string;
 	prId?: string;
 	file?: string;
@@ -46,6 +47,8 @@ interface CliOptions {
 	minOccurrences?: number;
 	inputFile?: string;
 	outputFile?: string;
+	rulesOutput?: string;
+	configOutput?: string;
 }
 
 // =============================================================================
@@ -64,7 +67,7 @@ function parseArgs(args: string[]): CliOptions {
 	// First arg is command
 	if (args.length > 0 && !args[0].startsWith('-')) {
 		const cmd = args[0];
-		if (['add', 'import', 'analyze', 'status', 'mark', 'export', 'help'].includes(cmd)) {
+		if (['add', 'import', 'analyze', 'status', 'mark', 'export', 'generate-rules', 'help'].includes(cmd)) {
 			options.command = cmd as CliOptions['command'];
 			i = 1;
 		}
@@ -126,6 +129,12 @@ function parseArgs(args: string[]): CliOptions {
 			case '-o':
 				options.outputFile = args[++i];
 				break;
+			case '--rules-output':
+				options.rulesOutput = args[++i];
+				break;
+			case '--config-output':
+				options.configOutput = args[++i];
+				break;
 			case '--help':
 			case '-h':
 				options.command = 'help';
@@ -152,13 +161,14 @@ USAGE:
   triad-feedback <command> [options]
 
 COMMANDS:
-  add         Add a single feedback entry
-  import      Import feedback from JSON file
-  analyze     Analyze patterns and show automation candidates
-  status      Show current feedback statistics
-  mark        Mark a pattern as automated
-  export      Export feedback data to JSON
-  help        Show this help
+  add              Add a single feedback entry
+  import           Import feedback from JSON file
+  analyze          Analyze patterns and show automation candidates
+  status           Show current feedback statistics
+  mark             Mark a pattern as automated
+  generate-rules   Generate ESLint rules from feedback patterns
+  export           Export feedback data to JSON
+  help             Show this help
 
 GLOBAL OPTIONS:
   --storage, -s <path>    Path to feedback storage (default: .triad-audit/feedback.json)
@@ -190,6 +200,11 @@ MARK OPTIONS:
 EXPORT OPTIONS:
   --output, -o <file>     Output file (default: stdout)
 
+GENERATE-RULES OPTIONS:
+  --rules-output <dir>    Directory to write generated rule files
+  --config-output <file>  File to write ESLint config snippet
+  --min <n>               Minimum occurrences to generate (default: 3)
+
 EXAMPLES:
   # Add feedback from a PR review
   triad-feedback add --pr 123 --comment "Use Canon tokens instead of hardcoded colors" \\
@@ -203,6 +218,9 @@ EXAMPLES:
 
   # Mark pattern as automated after creating lint rule
   triad-feedback mark --pattern missing-canon-tokens --automation-ref canon-audit
+
+  # Generate ESLint rules from patterns ready for automation
+  triad-feedback generate-rules --rules-output rules/ --config-output .eslintrc-generated.json
 
   # View current status
   triad-feedback status
@@ -446,6 +464,99 @@ function cmdExport(collector: FeedbackCollector, options: CliOptions): void {
 	}
 }
 
+function cmdGenerateRules(collector: FeedbackCollector, options: CliOptions): void {
+	// Get patterns ready for automation
+	const patternsReady = collector.getPatternsReadyForAutomation();
+
+	if (patternsReady.length === 0) {
+		console.log('ℹ No patterns ready for rule generation yet');
+		console.log(`  (threshold: ${options.minOccurrences || 3} occurrences)`);
+		return;
+	}
+
+	// Generate rules
+	const result = generateRulesFromPatterns(patternsReady);
+
+	// Output summary
+	if (options.format === 'json') {
+		console.log(JSON.stringify(result, null, 2));
+		return;
+	}
+
+	console.log('\n🔧 LINT RULE GENERATION');
+	console.log('━'.repeat(60));
+
+	// Stats
+	console.log(`\nGenerated: ${result.generated.length} rule(s)`);
+	console.log(`  - Custom rules: ${result.stats.custom}`);
+	console.log(`  - Svelte rules: ${result.stats.svelte}`);
+	console.log(`  - Existing rules to enable: ${result.stats.existing}`);
+	console.log(`  - Canon patterns: ${result.stats.canon}`);
+
+	if (result.skipped.length > 0) {
+		console.log(`\nSkipped: ${result.skipped.length}`);
+		for (const skip of result.skipped) {
+			console.log(`  - ${skip.patternId}: ${skip.reason}`);
+		}
+	}
+
+	// Output generated rules
+	if (options.rulesOutput) {
+		if (!fs.existsSync(options.rulesOutput)) {
+			fs.mkdirSync(options.rulesOutput, { recursive: true });
+		}
+
+		const customRules = result.generated.filter((r) => r.type === 'custom');
+		const svelteRules = result.generated.filter((r) => r.type === 'svelte');
+		const canonRules = result.generated.filter((r) => r.type === 'canon');
+
+		console.log(`\n📝 Writing rule files to ${options.rulesOutput}/`);
+
+		for (const rule of customRules) {
+			const filePath = path.join(options.rulesOutput, rule.fileName);
+			fs.writeFileSync(filePath, rule.content, 'utf-8');
+			console.log(`  ✓ ${rule.fileName} (custom)`);
+		}
+
+		for (const rule of svelteRules) {
+			const filePath = path.join(options.rulesOutput, rule.fileName);
+			fs.writeFileSync(filePath, rule.content, 'utf-8');
+			console.log(`  ✓ ${rule.fileName} (Svelte)`);
+		}
+
+		for (const rule of canonRules) {
+			const filePath = path.join(options.rulesOutput, rule.fileName);
+			fs.writeFileSync(filePath, rule.content, 'utf-8');
+			console.log(`  ✓ ${rule.fileName} (Canon pattern)`);
+		}
+	}
+
+	// Output ESLint config
+	if (options.configOutput) {
+		const customRules = result.generated.filter((r) => r.type !== 'canon');
+		const configContent = generateEslintConfig(customRules);
+		fs.writeFileSync(options.configOutput, configContent, 'utf-8');
+		console.log(`\n⚙️  ESLint config snippet written to ${options.configOutput}`);
+		console.log('   Add to your .eslintrc.js:');
+		const lines = configContent.split('\n').slice(2, 8);
+		for (const line of lines) {
+			console.log(`   ${line}`);
+		}
+	}
+
+	// Mark patterns as automated
+	if (options.rulesOutput || options.configOutput) {
+		console.log('\n✅ Marking patterns as automated...');
+		for (const generated of result.generated) {
+			const success = collector.markAutomated(generated.patternId, generated.ruleName);
+			if (success) {
+				console.log(`  ✓ ${generated.patternId}`);
+			}
+		}
+		collector.save();
+	}
+}
+
 // =============================================================================
 // MAIN
 // =============================================================================
@@ -488,6 +599,9 @@ async function main(): Promise<void> {
 			break;
 		case 'export':
 			cmdExport(collector, options);
+			break;
+		case 'generate-rules':
+			cmdGenerateRules(collector, options);
 			break;
 		default:
 			showHelp();

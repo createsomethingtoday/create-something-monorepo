@@ -11,3 +11,12 @@ export {
 	type GeneratedRule,
 	type RuleGenerationResult,
 } from './rule-generator.js';
+
+export {
+	suggestCanonEnhancements,
+	findCanonPatternMatch,
+	generateCanonAuditIntegration,
+	suggestIntegrationPoints,
+	feedbackToCanonRule,
+	CANON_PATTERN_SUGGESTIONS,
+} from './canon-integration.js';
