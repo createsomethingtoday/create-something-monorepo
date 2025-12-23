@@ -26,6 +26,7 @@ export interface User {
 	workway_id: string | null;
 	templates_id: string | null;
 	deleted_at: string | null;
+	analytics_opt_out: number;
 	created_at: string;
 	updated_at: string;
 }
@@ -88,6 +89,7 @@ export interface UserResponse {
 	name: string | null;
 	avatar_url: string | null;
 	tier: User['tier'];
+	analytics_opt_out: boolean;
 	created_at: string;
 }
 

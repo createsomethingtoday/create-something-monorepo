@@ -30,6 +30,8 @@
 		trackErrors?: boolean;
 		/** Enable debug logging */
 		debug?: boolean;
+		/** User has opted out of analytics tracking (from profile) */
+		userOptedOut?: boolean;
 	}
 
 	let {
@@ -42,6 +44,7 @@
 		trackForms = true,
 		trackErrors = true,
 		debug = false,
+		userOptedOut = false,
 	}: Props = $props();
 
 	let cleanupFns: Array<() => void> = [];
@@ -53,6 +56,7 @@
 			property,
 			endpoint,
 			debug,
+			userOptedOut,
 		};
 
 		const client = initAnalytics(config);
@@ -110,6 +114,14 @@
 				client.pageView({ title: document.title });
 			}
 			lastPath = currentPath;
+		}
+	});
+
+	// Update opt-out status when prop changes
+	$effect(() => {
+		const client = getAnalytics();
+		if (client) {
+			client.setUserOptOut(userOptedOut);
 		}
 	});
 
