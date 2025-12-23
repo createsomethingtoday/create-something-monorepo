@@ -45,8 +45,7 @@
 		{ label: 'Patterns', href: '/patterns' },
 		{ label: 'Standards', href: '/standards' },
 		{ label: 'Voice', href: '/voice' },
-		{ label: 'Ethos', href: '/ethos' },
-		{ label: 'The Circle', href: '/experiments/the-circle-closes' }
+		{ label: 'Ethos', href: '/ethos' }
 	];
 
 	const quickLinks = [
@@ -55,8 +54,7 @@
 		{ label: 'Patterns', href: '/patterns' },
 		{ label: 'Standards', href: '/standards' },
 		{ label: 'Voice', href: '/voice' },
-		{ label: 'Ethos', href: '/ethos' },
-		{ label: 'The Circle', href: '/experiments/the-circle-closes' }
+		{ label: 'Ethos', href: '/ethos' }
 	];
 </script>
 
