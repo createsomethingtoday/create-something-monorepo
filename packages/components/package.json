@@ -88,6 +88,10 @@
 		"./gdpr": {
 			"types": "./dist/gdpr/index.d.ts",
 			"default": "./dist/gdpr/index.js"
+		},
+		"./newsletter": {
+			"types": "./dist/newsletter/index.d.ts",
+			"default": "./dist/newsletter/index.js"
 		}
 	},
 	"peerDependencies": {
