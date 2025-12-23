@@ -13,8 +13,8 @@
  */
 
 import { initializeHarness, runHarness, resumeHarness, pauseHarness, getHarnessStatus } from './runner.js';
-import type { StartOptions, PauseOptions, ResumeOptions, ReviewPipelineConfig, ReviewerType } from './types.js';
-import { DEFAULT_REVIEW_PIPELINE_CONFIG } from './types.js';
+import type { StartOptions, PauseOptions, ResumeOptions, ReviewPipelineConfig, ReviewerType, SwarmConfig } from './types.js';
+import { DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_SWARM_CONFIG } from './types.js';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -80,6 +80,11 @@ PEER REVIEW OPTIONS:
   --no-review            Disable peer review at checkpoints
   --review-block-high    Block on high findings (default: block on critical only)
 
+SWARM OPTIONS:
+  --swarm                Enable parallel swarm mode (default: disabled)
+  --max-agents N         Max parallel agents in swarm (default: 5)
+  --min-tasks N          Min independent tasks to trigger swarm (default: 3)
+
 EXAMPLES:
   harness start specs/my-project.md
   harness start specs/api.md --checkpoint-every 5 --dry-run
@@ -120,6 +125,9 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
   const noReview = args.includes('--no-review');
   const reviewConfig = noReview ? null : buildReviewConfig(args);
 
+  // Parse swarm configuration
+  const swarmConfig = buildSwarmConfig(args);
+
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                   CREATE SOMETHING HARNESS                     ║
@@ -145,10 +153,22 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
     } else {
       console.log('\nPeer review: disabled');
     }
+    if (swarmConfig.enabled) {
+      console.log(`\nSwarm mode: ENABLED`);
+      console.log(`Max agents: ${swarmConfig.maxParallelAgents}`);
+      console.log(`Min tasks: ${swarmConfig.minTasksForSwarm}`);
+    } else {
+      console.log('\nSwarm mode: DISABLED');
+    }
     return;
   }
 
-  await runHarness(harnessState, { cwd, dryRun: options.dryRun, reviewConfig: reviewConfig ?? undefined });
+  await runHarness(harnessState, {
+    cwd,
+    dryRun: options.dryRun,
+    reviewConfig: reviewConfig ?? undefined,
+    swarmConfig,
+  });
 }
 
 async function handlePause(args: string[], cwd: string): Promise<void> {
@@ -232,6 +252,28 @@ function buildReviewConfig(args: string[]): ReviewPipelineConfig {
   if (args.includes('--review-block-high')) {
     config.blockOnHigh = true;
   }
+
+  return config;
+}
+
+/**
+ * Build swarm configuration from CLI args.
+ */
+function buildSwarmConfig(args: string[]): SwarmConfig {
+  const config: SwarmConfig = { ...DEFAULT_SWARM_CONFIG };
+
+  // Enable swarm if --swarm flag is present
+  if (args.includes('--swarm')) {
+    config.enabled = true;
+  }
+
+  // Parse --max-agents flag
+  const maxAgents = parseIntArg(args, '--max-agents', DEFAULT_SWARM_CONFIG.maxParallelAgents);
+  config.maxParallelAgents = maxAgents;
+
+  // Parse --min-tasks flag
+  const minTasks = parseIntArg(args, '--min-tasks', DEFAULT_SWARM_CONFIG.minTasksForSwarm);
+  config.minTasksForSwarm = minTasks;
 
   return config;
 }
