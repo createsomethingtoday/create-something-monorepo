@@ -21,6 +21,7 @@ export {
 } from './AuthStore.js';
 
 // Components
+export { default as AccountPage } from './AccountPage.svelte';
 export { default as LoginForm } from './LoginForm.svelte';
 export { default as SignupForm } from './SignupForm.svelte';
 export { default as MagicLinkForm } from './MagicLinkForm.svelte';
