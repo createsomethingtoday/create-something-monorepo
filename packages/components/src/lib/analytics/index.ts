@@ -86,3 +86,14 @@ export {
 
 // Components
 export { default as PopularContent } from './PopularContent.svelte';
+
+// Popular content analytics (shared logic for /api/analytics/popular)
+export {
+	fetchPopularAnalytics,
+	extractTitle,
+	type PopularContent as PopularContentData,
+	type UserReadingHistory,
+	type PopularResponse,
+	type ContentType,
+	type PopularQueryOptions,
+} from './popular.js';
