@@ -1,8 +1,6 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { setSessionCookies, type TokenResponse, type User } from '@create-something/components/auth';
-
-const IDENTITY_API = 'https://id.createsomething.space';
+import { IDENTITY_API, setSessionCookies, type TokenResponse, type User } from '@create-something/components/auth';
 
 interface LoginResponse extends TokenResponse {
 	user: User;

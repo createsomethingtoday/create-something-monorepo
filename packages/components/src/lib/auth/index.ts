@@ -9,6 +9,9 @@
  * @packageDocumentation
  */
 
+// Identity API endpoint (single source of truth)
+export const IDENTITY_API = 'https://id.createsomething.space';
+
 // Shared types (canonical source to avoid circular dependencies)
 export {
 	SESSION_CONFIG,

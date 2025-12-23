@@ -1,8 +1,6 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { getSessionCookies } from '@create-something/components/auth';
-
-const IDENTITY_API = 'https://id.createsomething.space';
+import { IDENTITY_API, getSessionCookies } from '@create-something/components/auth';
 
 const TARGET_DOMAINS: Record<string, string> = {
 	ltd: 'https://createsomething.ltd',

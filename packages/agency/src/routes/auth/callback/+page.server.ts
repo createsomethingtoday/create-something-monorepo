@@ -1,8 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { setSessionCookies, type TokenResponse } from '@create-something/components/auth';
-
-const IDENTITY_API = 'https://id.createsomething.space';
+import { IDENTITY_API, setSessionCookies, type TokenResponse } from '@create-something/components/auth';
 
 interface VerifyResponse extends TokenResponse {}
 
