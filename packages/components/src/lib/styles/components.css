@@ -605,7 +605,7 @@
     background: var(--color-bg-surface);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
-    overflow: hidden; /* Ensure truncation works within card */
+    overflow: auto; /* Allow horizontal scroll when content overflows */
     min-width: 0; /* Allow flex child to shrink */
   }
 
