@@ -85,3 +85,19 @@ export {
 	clearJWKSCache,
 	AuthenticationError,
 } from './server.js';
+
+// UI Components
+export {
+	createAuthStore,
+	getAuthStore,
+	LoginForm,
+	SignupForm,
+	MagicLinkForm,
+	UserMenu,
+	ProtectedRoute,
+	type AuthState,
+	type AuthStoreConfig,
+	type LoginCredentials,
+	type SignupCredentials,
+	type MagicLinkRequest,
+} from './components/index.js';
