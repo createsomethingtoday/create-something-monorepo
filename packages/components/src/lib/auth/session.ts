@@ -486,3 +486,246 @@ export async function requireAuth(
 	const session = createSessionManager(cookies, options);
 	return session.getUser();
 }
+
+// =============================================================================
+// JWT VALIDATION WITH JWKS
+// =============================================================================
+
+/** JWK (JSON Web Key) structure for ES256 public keys */
+export interface JWK {
+	kty: string;
+	crv: string;
+	x: string;
+	y: string;
+	kid: string;
+	alg: string;
+	use: string;
+}
+
+/** JWKS cache with TTL */
+interface JWKSCache {
+	keys: JWK[];
+	fetchedAt: number;
+}
+
+// Module-level cache for JWKS
+let jwksCache: JWKSCache | null = null;
+
+/**
+ * Fetch JWKS from Identity Worker (with caching)
+ */
+async function fetchJWKS(): Promise<JWK[]> {
+	const now = Date.now();
+
+	// Return cached keys if still valid
+	if (jwksCache && now - jwksCache.fetchedAt < SESSION_CONFIG.JWKS_CACHE_TTL * 1000) {
+		return jwksCache.keys;
+	}
+
+	try {
+		const response = await fetch(`${SESSION_CONFIG.IDENTITY_ENDPOINT}/.well-known/jwks.json`);
+		if (!response.ok) {
+			console.error('Failed to fetch JWKS:', response.status);
+			return jwksCache?.keys ?? [];
+		}
+
+		const data = (await response.json()) as { keys: JWK[] };
+		jwksCache = { keys: data.keys, fetchedAt: now };
+		return data.keys;
+	} catch (error) {
+		console.error('JWKS fetch error:', error);
+		return jwksCache?.keys ?? [];
+	}
+}
+
+/**
+ * Base64URL decode
+ */
+function base64UrlDecode(input: string): Uint8Array<ArrayBuffer> {
+	const padded = input + '='.repeat((4 - (input.length % 4)) % 4);
+	const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
+	const binary = atob(base64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	return bytes;
+}
+
+/**
+ * Validate a JWT with cryptographic signature verification via JWKS
+ *
+ * This is the secure server-side validation function that verifies the
+ * token signature against the Identity Worker's public keys.
+ *
+ * @example
+ * ```typescript
+ * // In +layout.server.ts
+ * import { validateToken, getSessionCookies } from '@create-something/components/auth';
+ *
+ * export const load: LayoutServerLoad = async ({ cookies }) => {
+ *   const session = getSessionCookies(cookies);
+ *   const user = session.accessToken
+ *     ? await validateToken(session.accessToken)
+ *     : null;
+ *   return { user };
+ * };
+ * ```
+ */
+export async function validateToken(token: string): Promise<User | null> {
+	try {
+		const [headerB64, payloadB64, signatureB64] = token.split('.');
+		if (!headerB64 || !payloadB64 || !signatureB64) return null;
+
+		// Parse header to get key ID
+		const header = JSON.parse(atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')));
+		const kid = header.kid;
+
+		// Get public key from JWKS
+		const keys = await fetchJWKS();
+		const jwk = keys.find((k) => k.kid === kid);
+		if (!jwk) return null;
+
+		// Import public key
+		const publicKey = await crypto.subtle.importKey(
+			'jwk',
+			{ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y },
+			{ name: 'ECDSA', namedCurve: 'P-256' },
+			true,
+			['verify']
+		);
+
+		// Verify signature
+		const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+		const signature = base64UrlDecode(signatureB64);
+
+		const valid = await crypto.subtle.verify(
+			{ name: 'ECDSA', hash: 'SHA-256' },
+			publicKey,
+			signature,
+			data
+		);
+
+		if (!valid) return null;
+
+		// Parse and validate payload
+		const payload = JSON.parse(
+			atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
+		) as JWTPayload;
+
+		// Check expiration
+		const now = Math.floor(Date.now() / 1000);
+		if (payload.exp < now) return null;
+
+		// Check issuer
+		if (payload.iss !== SESSION_CONFIG.IDENTITY_ENDPOINT) return null;
+
+		return {
+			id: payload.sub,
+			email: payload.email,
+			tier: payload.tier,
+			source: payload.source,
+		};
+	} catch {
+		return null;
+	}
+}
+
+// =============================================================================
+// SVELTEKIT AUTH HOOKS
+// =============================================================================
+
+/** Configuration for createAuthHooks */
+export interface AuthHooksConfig {
+	/** Routes that require authentication (default: []) */
+	protectedPaths?: string[];
+	/** Login redirect path (default: '/login') */
+	loginPath?: string;
+	/** Whether to include redirect parameter (default: true) */
+	includeRedirect?: boolean;
+	/** Whether running in production (default: true) */
+	isProduction?: boolean;
+	/** Domain for cross-subdomain cookies */
+	domain?: string;
+	/** Analytics event emitter */
+	onAnalyticsEvent?: (event: SessionAnalyticsEvent) => void;
+}
+
+/** SvelteKit Handle function type */
+type Handle = (input: {
+	event: {
+		cookies: CookiesAPI;
+		url: URL;
+		locals: { user?: User | null };
+	};
+	resolve: (event: unknown) => Promise<Response>;
+}) => Promise<Response>;
+
+/**
+ * Create SvelteKit auth hooks with auto-refresh and protected routes
+ *
+ * @example
+ * ```typescript
+ * // In hooks.server.ts
+ * import { createAuthHooks } from '@create-something/components/auth';
+ *
+ * export const handle = createAuthHooks({
+ *   protectedPaths: ['/dashboard', '/settings', '/account'],
+ *   loginPath: '/login',
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Custom composition with other hooks
+ * import { sequence } from '@sveltejs/kit/hooks';
+ * import { createAuthHooks } from '@create-something/components/auth';
+ *
+ * const authHooks = createAuthHooks({ protectedPaths: ['/app'] });
+ *
+ * export const handle = sequence(
+ *   authHooks,
+ *   customLoggingHook
+ * );
+ * ```
+ */
+export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
+	const {
+		protectedPaths = [],
+		loginPath = '/login',
+		includeRedirect = true,
+		isProduction = true,
+		domain,
+		onAnalyticsEvent,
+	} = config;
+
+	return async ({ event, resolve }) => {
+		const { cookies, url, locals } = event;
+
+		// Get session and attempt to get user (with auto-refresh)
+		const sessionManager = createSessionManager(cookies, {
+			isProduction,
+			domain,
+			onAnalyticsEvent,
+		});
+
+		const user = await sessionManager.getUser();
+		locals.user = user;
+
+		// Check if route is protected
+		const isProtected = protectedPaths.some((path) => url.pathname.startsWith(path));
+
+		if (isProtected && !user) {
+			// Redirect to login
+			const redirectParam = includeRedirect ? `?redirect=${encodeURIComponent(url.pathname)}` : '';
+			return new Response(null, {
+				status: 302,
+				headers: {
+					Location: `${loginPath}${redirectParam}`,
+				},
+			});
+		}
+
+		return resolve(event);
+	};
+}
