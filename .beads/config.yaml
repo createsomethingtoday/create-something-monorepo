@@ -20,6 +20,16 @@ auto-start-daemon: true
 # 5 seconds balances responsiveness with write efficiency
 flush-debounce: "5s"
 
+# Directory-aware label scoping (your contribution!)
+# When running bd ready/list from a matching directory,
+# issues with that label are automatically filtered.
+directory:
+  labels:
+    packages/io: io
+    packages/space: space
+    packages/agency: agency
+    packages/ltd: ltd
+
 # ─────────────────────────────────────────────────────────────────────
 # Label Conventions
 # ─────────────────────────────────────────────────────────────────────
