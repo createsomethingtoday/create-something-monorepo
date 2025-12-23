@@ -91,8 +91,7 @@
 					y1={ty(dim.y1)}
 					x2={tx(dim.x)}
 					y2={ty(dim.y2)}
-					stroke="rgba(255,255,255,0.2)"
-					stroke-width="0.5"
+					class="dimension-line"
 				/>
 				<!-- Top tick -->
 				<line
@@ -100,8 +99,7 @@
 					y1={ty(dim.y2)}
 					x2={tx(dim.x) + 4}
 					y2={ty(dim.y2)}
-					stroke="rgba(255,255,255,0.2)"
-					stroke-width="0.5"
+					class="dimension-line"
 				/>
 				<!-- Bottom tick -->
 				<line
@@ -109,8 +107,7 @@
 					y1={ty(dim.y1)}
 					x2={tx(dim.x) + 4}
 					y2={ty(dim.y1)}
-					stroke="rgba(255,255,255,0.2)"
-					stroke-width="0.5"
+					class="dimension-line"
 				/>
 				<!-- Label -->
 				<text
@@ -174,6 +171,11 @@
 	/* Dimension lines */
 	.dimension line {
 		stroke: var(--color-fg-subtle);
+		stroke-width: 0.5;
+	}
+
+	.dimension-line {
+		stroke: var(--color-border-emphasis);
 		stroke-width: 0.5;
 	}
 
