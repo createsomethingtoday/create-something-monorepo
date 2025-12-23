@@ -502,61 +502,22 @@ export interface JWK {
 	use: string;
 }
 
-/** JWKS cache with TTL */
-interface JWKSCache {
-	keys: JWK[];
-	fetchedAt: number;
-}
-
-// Module-level cache for JWKS
-let jwksCache: JWKSCache | null = null;
-
-/**
- * Fetch JWKS from Identity Worker (with caching)
- */
-async function fetchJWKS(): Promise<JWK[]> {
-	const now = Date.now();
-
-	// Return cached keys if still valid
-	if (jwksCache && now - jwksCache.fetchedAt < SESSION_CONFIG.JWKS_CACHE_TTL * 1000) {
-		return jwksCache.keys;
-	}
-
-	try {
-		const response = await fetch(`${SESSION_CONFIG.IDENTITY_ENDPOINT}/.well-known/jwks.json`);
-		if (!response.ok) {
-			console.error('Failed to fetch JWKS:', response.status);
-			return jwksCache?.keys ?? [];
-		}
-
-		const data = (await response.json()) as { keys: JWK[] };
-		jwksCache = { keys: data.keys, fetchedAt: now };
-		return data.keys;
-	} catch (error) {
-		console.error('JWKS fetch error:', error);
-		return jwksCache?.keys ?? [];
-	}
-}
-
-/**
- * Base64URL decode
- */
-function base64UrlDecode(input: string): Uint8Array<ArrayBuffer> {
-	const padded = input + '='.repeat((4 - (input.length % 4)) % 4);
-	const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
-	const binary = atob(base64);
-	const bytes = new Uint8Array(binary.length);
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i);
-	}
-	return bytes;
-}
+// Import the canonical implementation from server.ts
+// NOTE: This creates a dependency where server.ts imports types from session.ts
+// and session.ts imports the implementation from server.ts. This is intentional:
+// - Types flow: session.ts → server.ts (session.ts is the type source)
+// - Implementation: server.ts → session.ts (server.ts is the implementation source)
+import { validateToken as validateTokenImpl } from './server.js';
 
 /**
  * Validate a JWT with cryptographic signature verification via JWKS
  *
  * This is the secure server-side validation function that verifies the
  * token signature against the Identity Worker's public keys.
+ *
+ * NOTE: This is a convenience wrapper around the canonical implementation
+ * in server.ts. For advanced use cases (KV caching), import directly from
+ * '@create-something/components/auth/server'.
  *
  * @example
  * ```typescript
@@ -571,64 +532,18 @@ function base64UrlDecode(input: string): Uint8Array<ArrayBuffer> {
  *   return { user };
  * };
  * ```
+ *
+ * @example
+ * ```typescript
+ * // For KV-cached validation in Cloudflare Workers
+ * import { validateToken } from '@create-something/components/auth/server';
+ *
+ * const user = await validateToken(token, platform?.env);
+ * ```
  */
 export async function validateToken(token: string): Promise<User | null> {
-	try {
-		const [headerB64, payloadB64, signatureB64] = token.split('.');
-		if (!headerB64 || !payloadB64 || !signatureB64) return null;
-
-		// Parse header to get key ID
-		const header = JSON.parse(atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')));
-		const kid = header.kid;
-
-		// Get public key from JWKS
-		const keys = await fetchJWKS();
-		const jwk = keys.find((k) => k.kid === kid);
-		if (!jwk) return null;
-
-		// Import public key
-		const publicKey = await crypto.subtle.importKey(
-			'jwk',
-			{ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y },
-			{ name: 'ECDSA', namedCurve: 'P-256' },
-			true,
-			['verify']
-		);
-
-		// Verify signature
-		const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-		const signature = base64UrlDecode(signatureB64);
-
-		const valid = await crypto.subtle.verify(
-			{ name: 'ECDSA', hash: 'SHA-256' },
-			publicKey,
-			signature,
-			data
-		);
-
-		if (!valid) return null;
-
-		// Parse and validate payload
-		const payload = JSON.parse(
-			atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
-		) as JWTPayload;
-
-		// Check expiration
-		const now = Math.floor(Date.now() / 1000);
-		if (payload.exp < now) return null;
-
-		// Check issuer
-		if (payload.iss !== SESSION_CONFIG.IDENTITY_ENDPOINT) return null;
-
-		return {
-			id: payload.sub,
-			email: payload.email,
-			tier: payload.tier,
-			source: payload.source,
-		};
-	} catch {
-		return null;
-	}
+	// Delegate to canonical implementation (without KV caching)
+	return validateTokenImpl(token);
 }
 
 // =============================================================================
