@@ -11,9 +11,11 @@
 	 */
 
 	import type { SectionData } from '$lib/types/architecture';
+	import ArchitecturalPatterns from './ArchitecturalPatterns.svelte';
 
 	export let section: SectionData;
 	export let showCaption: boolean = true;
+	export let expanded: boolean = false;
 
 	// Scale and dimensions
 	const scale = 12;
@@ -42,6 +44,8 @@
 </script>
 
 <div class="section-container">
+	<ArchitecturalPatterns />
+
 	<svg viewBox="0 0 {svgWidth} {svgHeight}" class="section" role="img" aria-label={section.name}>
 		<!-- Ground fill -->
 		<rect
@@ -50,13 +54,25 @@
 			width={svgWidth}
 			height={svgHeight - ty(section.groundLevel)}
 			class="ground-fill"
+			fill={expanded ? 'url(#earth-hatch)' : 'var(--color-bg-pure)'}
 		/>
 
 		<!-- Section elements -->
 		{#each section.elements as el}
 			{@const style = elementStyles[el.type] || elementStyles.wall}
 			{#if el.filled}
-				<!-- Filled element (cut through solid) -->
+				<!-- Filled element (cut through solid) - show hatch when expanded -->
+				{#if expanded}
+					<!-- Create a filled rectangle with concrete hatch for cut elements -->
+					<rect
+						x={Math.min(tx(el.x1), tx(el.x2)) - style.width * 2}
+						y={Math.min(ty(el.y1), ty(el.y2)) - style.width * 2}
+						width={Math.abs(tx(el.x2) - tx(el.x1)) + style.width * 4}
+						height={Math.abs(ty(el.y2) - ty(el.y1)) + style.width * 4}
+						fill="url(#concrete-hatch)"
+						class="element-fill element-{el.type}"
+					/>
+				{/if}
 				<line
 					x1={tx(el.x1)}
 					y1={ty(el.y1)}
@@ -164,8 +180,13 @@
 	}
 
 	.ground-fill {
-		fill: var(--color-bg-pure);
+		/* Default fill: semi-transparent background */
 		opacity: 0.5;
+	}
+
+	/* When earth-hatch pattern is applied via expanded prop, use hatch opacity */
+	.section .ground-fill {
+		opacity: var(--arch-hatch-opacity);
 	}
 
 	/* Dimension lines */
@@ -175,7 +196,7 @@
 	}
 
 	.dimension-line {
-		stroke: var(--color-border-emphasis);
+		stroke: var(--arch-dimension-color);
 		stroke-width: 0.5;
 	}
 
