@@ -9,28 +9,19 @@
  * @packageDocumentation
  */
 
-import { SESSION_CONFIG, type JWTPayload, type User, type JWK } from './session.js';
+// Import from types module to avoid circular dependencies
+import {
+	SESSION_CONFIG,
+	type JWTPayload,
+	type User,
+	type JWK,
+	type KVLike,
+	type AuthEnv,
+} from './types.js';
 import { COOKIE_CONFIG, parseCookieHeader } from './cookies.js';
 
-// =============================================================================
-// TYPES
-// =============================================================================
-
-/**
- * Minimal KV interface for JWKS caching
- * Compatible with Cloudflare KVNamespace without requiring @cloudflare/workers-types
- */
-export interface KVLike {
-	get(key: string, type: 'json'): Promise<unknown>;
-	put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
-	delete(key: string): Promise<void>;
-}
-
-/** Environment with optional KV namespace for JWKS caching */
-export interface AuthEnv {
-	/** KV namespace for caching JWKS (optional - falls back to module cache) */
-	AUTH_CACHE?: KVLike;
-}
+// Re-export types for backwards compatibility
+export type { KVLike, AuthEnv };
 
 /** Cached JWKS structure for KV storage */
 interface CachedJWKS {

@@ -8,7 +8,7 @@
  */
 
 import type { AnalyticsEvent, ConversionEvent, Property } from '../analytics/types.js';
-import type { SessionAnalyticsEvent } from './session.js';
+import type { SessionAnalyticsEvent } from './types.js';
 
 // =============================================================================
 // TYPES
