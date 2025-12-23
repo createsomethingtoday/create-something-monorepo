@@ -86,8 +86,8 @@
 	.table {
 		font-size: var(--text-caption);
 		font-family: ui-monospace, monospace;
-		/* Prevent horizontal overflow */
-		overflow-x: auto;
+		/* Force truncation instead of horizontal scroll */
+		overflow: hidden;
 		min-width: 0;
 	}
 
@@ -98,6 +98,8 @@
 
 	.row {
 		border-bottom: 1px solid var(--color-border-default);
+		overflow: hidden;
+		min-width: 0;
 	}
 
 	.row:last-child {
