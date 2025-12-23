@@ -109,6 +109,7 @@
 		aboutText="The philosophical foundation for the Create Something ecosystem. Curated wisdom from masters who embody 'less, but better.'"
 		quickLinks={quickLinks}
 		showSocial={true}
+		isAuthenticated={!!data.user}
 	/>
 
 	<ModeIndicator current="ltd" />

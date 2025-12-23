@@ -17,6 +17,7 @@
 		copyrightText?: string;
 		showSocial?: boolean;
 		turnstileSiteKey?: string;
+		isAuthenticated?: boolean;
 	}
 
 	let {
@@ -29,8 +30,18 @@
 		showRamsQuote = false,
 		copyrightText,
 		showSocial = false,
-		turnstileSiteKey = ''
+		turnstileSiteKey = '',
+		isAuthenticated = false
 	}: Props = $props();
+
+	// Map mode to target for cross-domain SSO
+	const modeToTarget: Record<string, string> = {
+		ltd: 'ltd',
+		io: 'io',
+		space: 'space',
+		agency: 'agency',
+		learn: 'lms'
+	};
 
 	let email = $state('');
 	let honeypot = $state(''); // Hidden field - bots fill this
@@ -155,7 +166,7 @@
 		if (targetMode === mode) return;
 
 		e.preventDefault();
-		const href = (e.currentTarget as HTMLAnchorElement).href;
+		const originalHref = (e.currentTarget as HTMLAnchorElement).href;
 
 		// Store transition data for entry animation on target page
 		if (typeof sessionStorage !== 'undefined') {
@@ -166,6 +177,16 @@
 
 		// Trigger exit animation
 		document.body.classList.add('transitioning-out');
+
+		// Determine the navigation URL
+		let href = originalHref;
+		if (isAuthenticated) {
+			// Use cross-domain SSO flow when authenticated
+			const target = modeToTarget[targetMode];
+			if (target) {
+				href = `/api/auth/cross-domain?target=${target}&redirect=/`;
+			}
+		}
 
 		// Navigate after animation completes
 		setTimeout(() => {
