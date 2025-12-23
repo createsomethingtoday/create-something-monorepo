@@ -16,6 +16,8 @@ export const IDENTITY_API = 'https://id.createsomething.space';
 export {
 	SESSION_CONFIG,
 	type TokenResponse,
+	type ExchangeResponse,
+	type ErrorResponse,
 	type JWTPayload,
 	type User,
 	type SessionState,
@@ -64,6 +66,12 @@ export {
 	// Logout handler
 	handleLogout,
 } from './session.js';
+
+// Cross-domain authentication
+export {
+	exchangeCrossDomainToken,
+	type CrossDomainExchangeParams,
+} from './crossDomain.js';
 
 // Analytics integration
 export {
