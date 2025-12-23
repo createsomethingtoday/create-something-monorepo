@@ -24,3 +24,6 @@ export * from './actions/index.js';
 
 // Brand (marks, loaders, social assets)
 export * from './brand/index.js';
+
+// Newsletter (subscription and unsubscribe)
+export * from './newsletter/index.js';
