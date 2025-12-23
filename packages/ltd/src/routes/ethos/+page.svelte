@@ -363,10 +363,6 @@
 		font-size: var(--text-body-lg);
 	}
 
-	.text-xl-canon {
-		font-size: var(--text-h3);
-	}
-
 	.text-xs-canon {
 		font-size: var(--text-caption);
 	}
@@ -380,10 +376,6 @@
 	}
 
 	.opacity-40-canon {
-		color: var(--color-fg-muted);
-	}
-
-	.opacity-50-canon {
 		color: var(--color-fg-muted);
 	}
 
@@ -403,23 +395,7 @@
 		border-color: var(--color-border-default);
 	}
 
-	.border-emphasis {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.divide-canon > * + * {
-		border-color: var(--color-border-default);
-	}
-
 	section {
-		border-color: var(--color-border-default);
-	}
-
-	table {
-		border-color: var(--color-border-default);
-	}
-
-	thead {
 		border-color: var(--color-border-default);
 	}
 

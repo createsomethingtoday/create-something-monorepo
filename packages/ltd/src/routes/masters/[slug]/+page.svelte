@@ -189,10 +189,6 @@
 		font-size: var(--text-body-sm);
 	}
 
-	.text-base-canon {
-		font-size: var(--text-body);
-	}
-
 	.text-lg-canon {
 		font-size: var(--text-body-lg);
 	}
@@ -214,10 +210,6 @@
 		color: var(--color-fg-muted);
 	}
 
-	.opacity-50-canon {
-		color: var(--color-fg-muted);
-	}
-
 	.opacity-60-canon {
 		color: var(--color-fg-tertiary);
 	}
@@ -233,76 +225,6 @@
 	/* Borders */
 	.border-canon {
 		border-color: var(--color-border-default);
-	}
-
-	.border-emphasis {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.border-hover {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.divide-canon > * + * {
-		border-color: var(--color-border-default);
-	}
-
-	/* Backgrounds */
-	.bg-surface-subtle {
-		background: var(--color-bg-subtle);
-	}
-
-	.bg-surface {
-		background: var(--color-bg-surface);
-	}
-
-	/* Semantic colors */
-	.text-success {
-		color: #4ade80;
-	}
-
-	.text-error {
-		color: #f87171;
-	}
-
-	.text-warning {
-		color: #fbbf24;
-	}
-
-	.bg-success-subtle {
-		background: var(--color-success-muted);
-	}
-
-	.bg-success-muted {
-		background: var(--color-success-muted);
-	}
-
-	.bg-error-subtle {
-		background: var(--color-error-muted);
-	}
-
-	.bg-error-muted {
-		background: var(--color-error-muted);
-	}
-
-	.bg-warning-subtle {
-		background: var(--color-warning-muted);
-	}
-
-	.bg-warning-muted {
-		background: var(--color-warning-muted);
-	}
-
-	.border-success {
-		border-color: var(--color-success-border);
-	}
-
-	.border-error {
-		border-color: var(--color-error-border);
-	}
-
-	.border-warning {
-		border-color: var(--color-warning-border);
 	}
 
 	/* Masonry grid using CSS columns */
@@ -378,14 +300,6 @@
 
 	/* Universal element styles */
 	section {
-		border-color: var(--color-border-default);
-	}
-
-	table {
-		border-color: var(--color-border-default);
-	}
-
-	thead {
 		border-color: var(--color-border-default);
 	}
 </style>

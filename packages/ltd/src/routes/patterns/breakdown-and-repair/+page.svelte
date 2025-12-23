@@ -298,9 +298,6 @@
 	}
 
 	/* Foreground colors */
-	.fg-primary {
-		color: var(--color-fg-primary);
-	}
 
 	.fg-secondary {
 		color: var(--color-fg-secondary);
@@ -328,9 +325,6 @@
 		border-color: var(--color-border-default);
 	}
 
-	.border-hover {
-		border-color: var(--color-border-emphasis);
-	}
 
 	.border-success {
 		border-color: var(--color-success-border);
