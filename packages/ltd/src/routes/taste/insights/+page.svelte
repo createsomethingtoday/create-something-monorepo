@@ -1,16 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { formatTime } from '$lib/taste/insights';
 
 	let { data }: { data: PageData } = $props();
-
-	// Format time duration for display
-	function formatTime(seconds: number): string {
-		if (seconds < 60) return `${seconds}s`;
-		if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-		const hours = Math.floor(seconds / 3600);
-		const mins = Math.round((seconds % 3600) / 60);
-		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-	}
 
 	// Format date for display
 	function formatDate(dateStr: string): string {
