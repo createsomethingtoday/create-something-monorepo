@@ -400,10 +400,6 @@
 		font-size: var(--text-h2);
 	}
 
-	.text-3xl-canon {
-		font-size: var(--text-h1);
-	}
-
 	/* Opacity as color tokens */
 	.opacity-40-canon {
 		color: var(--color-fg-muted);
@@ -430,25 +426,9 @@
 		border-color: var(--color-border-default);
 	}
 
-	.border-emphasis {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.border-hover {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.divide-canon > * + * {
-		border-color: var(--color-border-default);
-	}
-
 	/* Backgrounds */
 	.bg-surface-subtle {
 		background: var(--color-bg-subtle);
-	}
-
-	.bg-surface {
-		background: var(--color-bg-surface);
 	}
 
 	/* Semantic colors - using Canon tokens */
@@ -464,52 +444,8 @@
 		color: var(--color-warning);
 	}
 
-	.bg-success-subtle {
-		background: var(--color-success-muted);
-	}
-
-	.bg-success-muted {
-		background: var(--color-success-muted);
-	}
-
-	.bg-error-subtle {
-		background: var(--color-error-muted);
-	}
-
-	.bg-error-muted {
-		background: var(--color-error-muted);
-	}
-
-	.bg-warning-subtle {
-		background: var(--color-warning-muted);
-	}
-
-	.bg-warning-muted {
-		background: var(--color-warning-muted);
-	}
-
-	.border-success {
-		border-color: var(--color-success-border);
-	}
-
-	.border-error {
-		border-color: var(--color-error-border);
-	}
-
-	.border-warning {
-		border-color: var(--color-warning-border);
-	}
-
 	/* Universal element styles */
 	section {
-		border-color: var(--color-border-default);
-	}
-
-	table {
-		border-color: var(--color-border-default);
-	}
-
-	thead {
 		border-color: var(--color-border-default);
 	}
 </style>

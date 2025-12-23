@@ -121,25 +121,68 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			console.warn('Rate limiting unavailable:', kvError);
 		}
 
-		// Generate unsubscribe token
-		const unsubscribeToken = btoa(`${email}:${Date.now()}`);
+		// Generate tokens for unsubscribe and confirmation
+		const timestamp = Date.now();
+		const unsubscribeToken = btoa(`${email}:${timestamp}`);
+		const confirmationToken = btoa(`confirm:${email}:${timestamp}:${crypto.randomUUID()}`);
 
-		// Store subscriber in D1 database (optional - create table if needed)
+		// Check if subscriber already exists
+		let existingSubscriber;
 		try {
-			await env.DB.prepare(
-				`
-        INSERT OR IGNORE INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token)
-        VALUES (?, datetime('now'), ?)
-      `
+			existingSubscriber = await env.DB.prepare(
+				`SELECT email, confirmed_at, unsubscribed_at FROM newsletter_subscribers WHERE email = ?`
 			)
-				.bind(email, unsubscribeToken)
-				.run();
+				.bind(email)
+				.first();
 		} catch (dbError) {
-			// Table might not exist - that's okay, we'll still send the welcome email
-			console.warn('Newsletter subscribers table not found - skipping DB insert');
+			console.warn('Could not check existing subscriber:', dbError);
 		}
 
-		// Send welcome email via Resend
+		// If already confirmed, no need to re-subscribe
+		if (existingSubscriber?.confirmed_at && !existingSubscriber?.unsubscribed_at) {
+			return json({
+				success: true,
+				message: 'You are already subscribed!'
+			});
+		}
+
+		// Store subscriber in D1 database with confirmed_at = NULL (requires confirmation)
+		try {
+			if (existingSubscriber) {
+				// Update existing subscriber (may have unsubscribed before)
+				await env.DB.prepare(
+					`UPDATE newsletter_subscribers
+					 SET confirmation_token = ?,
+					     unsubscribe_token = ?,
+					     unsubscribed_at = NULL,
+					     confirmed_at = NULL,
+					     subscribed_at = datetime('now')
+					 WHERE email = ?`
+				)
+					.bind(confirmationToken, unsubscribeToken, email)
+					.run();
+			} else {
+				// Insert new subscriber
+				await env.DB.prepare(
+					`INSERT INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token, confirmation_token, confirmed_at)
+					 VALUES (?, datetime('now'), ?, ?, NULL)`
+				)
+					.bind(email, unsubscribeToken, confirmationToken)
+					.run();
+			}
+		} catch (dbError) {
+			console.error('Newsletter subscribers database error:', dbError);
+			return json(
+				{
+					success: false,
+					message: 'Failed to process subscription'
+				},
+				{ status: 500 }
+			);
+		}
+
+		// Send confirmation email via Resend (double opt-in)
+		const confirmUrl = `https://createsomething.io/confirm?token=${encodeURIComponent(confirmationToken)}`;
 		const resendResponse = await fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
@@ -149,7 +192,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			body: JSON.stringify({
 				from: 'CREATE SOMETHING <hello@createsomething.io>',
 				to: email,
-				subject: 'Welcome to CREATE SOMETHING',
+				subject: 'Confirm your subscription to CREATE SOMETHING',
 				html: `<!DOCTYPE html>
 <html>
 <head>
@@ -177,13 +220,13 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
     <div class="content">
       <p class="quote">"Weniger, aber besser."</p>
       <p>Less, but better. This guides everything we build.</p>
-      <p>You'll receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
-      <a href="https://createsomething.ltd/ethos" class="cta">Read the Ethos</a>
+      <p>Please confirm your subscription to receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
+      <a href="${confirmUrl}" class="cta">Confirm Subscription</a>
+      <p style="margin-top: 30px; font-size: 14px; color: rgba(255, 255, 255, 0.5);">If you didn't request this subscription, you can safely ignore this email.</p>
     </div>
 
     <div class="footer">
       <p>CREATE SOMETHING</p>
-      <p><a href="https://createsomething.io/unsubscribe?token=${unsubscribeToken}">Unsubscribe</a></p>
     </div>
   </div>
 </body>
@@ -197,7 +240,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			return json(
 				{
 					success: false,
-					message: 'Failed to send welcome email'
+					message: 'Failed to send confirmation email'
 				},
 				{ status: 500 }
 			);
@@ -207,7 +250,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 
 		return json({
 			success: true,
-			message: 'Successfully subscribed! Check your email for a welcome message.',
+			message: 'Please check your email to confirm your subscription.',
 			emailId: resendData.id
 		});
 	} catch (err) {
