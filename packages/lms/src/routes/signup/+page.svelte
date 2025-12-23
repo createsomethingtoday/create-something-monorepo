@@ -8,6 +8,8 @@
 	 */
 
 	import { page } from '$app/stores';
+	import { CookieConsent } from '@create-something/components/components';
+	import { hasCookieConsent, acceptCookieConsent } from '@create-something/components/gdpr';
 
 	let name = $state('');
 	let email = $state('');
@@ -40,6 +42,12 @@
 			if (!response.ok) {
 				error = data.message || 'Signup failed';
 				return;
+			}
+
+			// Check cookie consent before setting session cookies
+			// If not already consented, accept implicitly on signup (user is actively creating an account)
+			if (!hasCookieConsent()) {
+				acceptCookieConsent();
 			}
 
 			// Set cookies with cross-subdomain scope for unified identity
@@ -120,6 +128,8 @@
 		</p>
 	</div>
 </main>
+
+<CookieConsent privacyPolicyUrl="/privacy" />
 
 <style>
 	.container {
