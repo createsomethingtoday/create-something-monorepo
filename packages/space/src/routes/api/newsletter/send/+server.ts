@@ -37,9 +37,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			);
 		}
 
-		// Fetch all active subscribers
+		// Fetch all confirmed and active subscribers (double opt-in)
 		const subscribers = await env.DB.prepare(
-			`SELECT email, unsubscribe_token FROM newsletter_subscribers WHERE unsubscribed_at IS NULL`
+			`SELECT email, unsubscribe_token FROM newsletter_subscribers
+			 WHERE unsubscribed_at IS NULL AND confirmed_at IS NOT NULL`
 		).all();
 
 		if (!subscribers.results || subscribers.results.length === 0) {
@@ -145,7 +146,8 @@ export const GET: RequestHandler = async ({ request, platform }) => {
 
 	try {
 		const count = await env.DB.prepare(
-			`SELECT COUNT(*) as count FROM newsletter_subscribers WHERE unsubscribed_at IS NULL`
+			`SELECT COUNT(*) as count FROM newsletter_subscribers
+			 WHERE unsubscribed_at IS NULL AND confirmed_at IS NOT NULL`
 		).first();
 
 		return json({
