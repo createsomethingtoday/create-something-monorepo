@@ -87,6 +87,65 @@ function isReviewedCheckpoint(checkpoint: Checkpoint | ReviewedCheckpoint): chec
 }
 
 /**
+ * Select the appropriate model for a task based on its characteristics.
+ *
+ * Cost optimization: Use cheaper models for simpler tasks.
+ * - Haiku (~5% of Opus cost): Simple mechanical tasks
+ * - Sonnet (~20% of Opus cost): Standard implementations
+ * - Opus (baseline): Complex reasoning, architecture, novel work
+ */
+function selectModelForTask(issue: BeadsIssue): 'opus' | 'sonnet' | 'haiku' {
+  const title = issue.title.toLowerCase();
+  const desc = (issue.description || '').toLowerCase();
+  const labels = issue.labels || [];
+
+  // Explicit label override (highest priority)
+  if (labels.includes('model:haiku')) return 'haiku';
+  if (labels.includes('model:sonnet')) return 'sonnet';
+  if (labels.includes('model:opus')) return 'opus';
+
+  // Haiku: simple mechanical tasks (pattern matching, no reasoning)
+  const haikuPatterns = [
+    'rename', 'typo', 'comment', 'import', 'export',
+    'lint', 'format', 'cleanup', 'remove unused',
+    'add test for', 'update test', 'fix test',
+    'bump version', 'update dependency',
+  ];
+  if (haikuPatterns.some(p => title.includes(p) || desc.includes(p))) {
+    return 'haiku';
+  }
+
+  // Sonnet: standard implementations (clear patterns exist)
+  const sonnetPatterns = [
+    'add', 'update', 'fix', 'implement',
+    'component', 'endpoint', 'route', 'page',
+    'style', 'css', 'layout',
+    'validation', 'error handling',
+  ];
+  if (sonnetPatterns.some(p => title.includes(p))) {
+    return 'sonnet';
+  }
+
+  // Opus: complex tasks requiring deep reasoning
+  // - Architectural decisions
+  // - Multi-file refactors
+  // - Novel implementations
+  // - Debugging complex issues
+  // - Anything with "design", "architect", "refactor", "migrate"
+  const opusPatterns = [
+    'architect', 'design', 'refactor', 'migrate',
+    'optimize', 'performance', 'security',
+    'integration', 'system',
+  ];
+  if (opusPatterns.some(p => title.includes(p) || desc.includes(p))) {
+    return 'opus';
+  }
+
+  // Default to sonnet for unmatched tasks (good balance of cost/capability)
+  return 'sonnet';
+}
+
+/**
  * Initialize a new harness run.
  */
 export async function initializeHarness(
@@ -302,13 +361,15 @@ export async function runHarness(
     // Clear redirect notes for next iteration
     redirectNotes = [];
 
-    // 4. Run session
+    // 4. Run session with cost-optimized model selection
     harnessState.currentSession++;
-    console.log(`\n🤖 Starting session #${harnessState.currentSession}...`);
+    const model = selectModelForTask(nextIssue);
+    console.log(`\n🤖 Starting session #${harnessState.currentSession} [${model}]...`);
 
     const sessionResult = await runSession(nextIssue, primingContext, {
       cwd: options.cwd,
       dryRun: options.dryRun,
+      model,
     });
 
     // 5. Handle session result with graceful failure handling
@@ -755,13 +816,16 @@ export async function runParallelSessions(
       relevantFiles: dryContext.relevantFiles,
     };
 
-    console.log(`  [${agentId}] Starting: ${issue.id} - ${issue.title.slice(0, 40)}...`);
+    // Select model for cost optimization
+    const model = selectModelForTask(issue);
+    console.log(`  [${agentId}] Starting [${model}]: ${issue.id} - ${issue.title.slice(0, 40)}...`);
 
     try {
-      // Run session
+      // Run session with selected model
       const result = await runSession(issue, primingContext, {
         cwd: options.cwd,
         dryRun: options.dryRun,
+        model,
       });
 
       // Update agent status
