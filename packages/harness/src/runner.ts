@@ -406,9 +406,10 @@ export async function runHarness(
     }
 
     // Fall back to sequential mode for single task or when swarm disabled
-    const nextIssue = openFeatures.length > 0
-      ? openFeatures.sort((a, b) => (a.priority || 2) - (b.priority || 2))[0]
-      : pendingFeatures.sort((a, b) => (a.priority || 2) - (b.priority || 2))[0];
+    // BUG FIX: Use independentTasks to respect dependency order, not openFeatures
+    const nextIssue = independentTasks.length > 0
+      ? independentTasks.sort((a, b) => (a.priority || 2) - (b.priority || 2))[0]
+      : pendingFeatures.filter(f => f.status !== 'closed').sort((a, b) => (a.priority || 2) - (b.priority || 2))[0];
     console.log(`\n📋 Next task: ${nextIssue.id} - ${nextIssue.title}`);
 
     // Mark as in progress
