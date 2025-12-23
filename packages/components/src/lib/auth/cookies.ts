@@ -25,7 +25,7 @@ export const COOKIE_CONFIG = {
 	/** Cookie path - available across the entire domain */
 	PATH: '/',
 	/** SameSite policy */
-	SAME_SITE: 'Lax' as const,
+	SAME_SITE: 'lax' as const,
 } as const;
 
 // =============================================================================
@@ -36,7 +36,7 @@ export interface CookieOptions {
 	maxAge: number;
 	httpOnly: boolean;
 	secure: boolean;
-	sameSite: 'Strict' | 'Lax' | 'None';
+	sameSite: 'strict' | 'lax' | 'none';
 	path: string;
 	domain?: string;
 }
@@ -124,7 +124,8 @@ export function getClearCookieOptions(isProduction: boolean, domain?: string): C
  */
 export function setSessionCookies(
 	cookies: {
-		set: (name: string, value: string, options: CookieOptions) => void;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		set: (name: string, value: string, options: any) => void;
 	},
 	params: SetCookieParams,
 	isProduction = true
@@ -191,8 +192,10 @@ export function getSessionCookies(cookies: { get: (name: string) => string | und
  */
 export function clearSessionCookies(
 	cookies: {
-		set: (name: string, value: string, options: CookieOptions) => void;
-		delete: (name: string, options?: { path?: string }) => void;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		set: (name: string, value: string, options: any) => void;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		delete: (name: string, options?: any) => void;
 	},
 	isProduction = true,
 	domain?: string

@@ -182,10 +182,15 @@ export async function revokeSession(refreshToken: string): Promise<boolean> {
 // SERVER-SIDE SESSION MANAGEMENT
 // =============================================================================
 
-type CookiesAPI = {
+/**
+ * Minimal cookies interface compatible with SvelteKit's Cookies
+ * Uses a permissive function signature to accept various cookie implementations
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CookiesAPI = {
 	get: (name: string) => string | undefined;
-	set: (name: string, value: string, options: CookieOptions) => void;
-	delete: (name: string, options?: { path?: string }) => void;
+	set: (name: string, value: string, options: any) => void;
+	delete: (name: string, options?: any) => void;
 };
 
 /**
