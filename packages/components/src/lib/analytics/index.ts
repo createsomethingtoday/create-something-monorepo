@@ -97,3 +97,14 @@ export {
 	type ContentType,
 	type PopularQueryOptions,
 } from './popular.js';
+
+// GDPR consent utilities (re-export for convenience)
+export {
+	type ConsentState,
+	getConsentState,
+	setConsentState,
+	updateAnalyticsConsent,
+	hasAnalyticsConsent,
+	initializeConsent,
+	shouldTrackAnalytics,
+} from '../gdpr/consent.js';

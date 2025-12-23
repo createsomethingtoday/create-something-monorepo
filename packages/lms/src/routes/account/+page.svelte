@@ -7,8 +7,10 @@
 	 */
 
 	import type { PageData } from './$types';
-	import { User, Mail, Shield, Calendar, Check, Loader2, LogOut, Key, Eye, EyeOff, Upload, Trash2, AlertTriangle } from 'lucide-svelte';
+	import { User, Mail, Shield, Calendar, Check, Loader2, LogOut, Key, Eye, EyeOff, Upload, Trash2, AlertTriangle, BarChart3 } from 'lucide-svelte';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { getConsentState, updateAnalyticsConsent, initializeConsent } from '@create-something/components/gdpr';
 
 	let { data }: { data: PageData } = $props();
 
@@ -44,6 +46,20 @@
 	let deleteConfirmText = $state('');
 	let deletingAccount = $state(false);
 	let deleteMessage = $state<{ type: 'error'; text: string } | null>(null);
+
+	// Privacy settings state
+	let analyticsEnabled = $state(data.profile?.analytics_opt_out === false);
+	let savingPrivacy = $state(false);
+	let privacyMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+
+	// Initialize consent state from server on mount
+	onMount(() => {
+		if (data.profile) {
+			// Sync local consent with server preference
+			initializeConsent(data.profile.analytics_opt_out);
+			analyticsEnabled = !data.profile.analytics_opt_out;
+		}
+	});
 
 	// Format date
 	function formatDate(dateStr: string): string {
@@ -274,6 +290,40 @@
 			avatarMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to delete avatar' };
 		} finally {
 			uploadingAvatar = false;
+		}
+	}
+
+	// Update privacy settings
+	async function updatePrivacySettings() {
+		savingPrivacy = true;
+		privacyMessage = null;
+
+		try {
+			// Update server
+			const response = await fetch('/api/account/privacy', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ analytics_opt_out: !analyticsEnabled }),
+			});
+
+			if (!response.ok) {
+				const err = (await response.json()) as { message?: string };
+				throw new Error(err.message || 'Failed to update privacy settings');
+			}
+
+			// Update local consent state
+			updateAnalyticsConsent(analyticsEnabled);
+
+			privacyMessage = {
+				type: 'success',
+				text: analyticsEnabled
+					? 'Analytics enabled. Thank you for helping us improve.'
+					: 'Analytics disabled. Your browsing data will no longer be collected.'
+			};
+		} catch (err) {
+			privacyMessage = { type: 'error', text: err instanceof Error ? err.message : 'Failed to update settings' };
+		} finally {
+			savingPrivacy = false;
 		}
 	}
 
@@ -622,6 +672,57 @@
 			</form>
 		</section>
 
+		<!-- Privacy Section -->
+		<section class="privacy-section">
+			<div class="section-header">
+				<h2 class="section-title">Privacy</h2>
+				<p class="section-subtitle">Control how your data is collected and used.</p>
+			</div>
+
+			<div class="privacy-form">
+				<!-- Analytics Toggle -->
+				<div class="toggle-field">
+					<div class="toggle-info">
+						<label for="analytics-toggle" class="toggle-label">
+							<BarChart3 size={16} strokeWidth={1.5} />
+							<span>Analytics Tracking</span>
+						</label>
+						<p class="toggle-description">
+							Help us improve by allowing anonymous usage analytics. We never share your data with third parties.
+						</p>
+					</div>
+					<div class="toggle-control">
+						<label class="toggle-switch">
+							<input
+								id="analytics-toggle"
+								type="checkbox"
+								bind:checked={analyticsEnabled}
+								onchange={updatePrivacySettings}
+								disabled={savingPrivacy}
+							/>
+							<span class="toggle-slider"></span>
+						</label>
+						{#if savingPrivacy}
+							<Loader2 size={14} class="animate-spin toggle-loading" />
+						{/if}
+					</div>
+				</div>
+
+				{#if privacyMessage}
+					<div class="privacy-message {privacyMessage.type}">
+						{privacyMessage.text}
+					</div>
+				{/if}
+
+				<div class="privacy-info">
+					<p>
+						We respect your privacy. Your browser's <a href="https://allaboutdnt.com/" target="_blank" rel="noopener noreferrer">Do Not Track</a> setting is always honored.
+						View our <a href="/privacy">Privacy Policy</a> for more details.
+					</p>
+				</div>
+			</div>
+		</section>
+
 		<!-- Actions Section -->
 		<section class="actions-section">
 			<div class="section-header">
@@ -752,6 +853,7 @@
 	/* Sections */
 	.profile-section,
 	.security-section,
+	.privacy-section,
 	.actions-section {
 		margin-bottom: var(--space-xl);
 	}
@@ -1276,6 +1378,146 @@
 	.confirm-delete-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	/* Privacy Section */
+	.privacy-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.toggle-field {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: var(--space-md);
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.toggle-info {
+		flex: 1;
+	}
+
+	.toggle-label {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body);
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.toggle-description {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+		margin-top: var(--space-xs);
+		line-height: 1.5;
+	}
+
+	.toggle-control {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.toggle-switch {
+		position: relative;
+		display: inline-block;
+		width: 44px;
+		height: 24px;
+		cursor: pointer;
+	}
+
+	.toggle-switch input {
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.toggle-slider {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.toggle-slider::before {
+		position: absolute;
+		content: "";
+		height: 18px;
+		width: 18px;
+		left: 2px;
+		bottom: 2px;
+		background-color: var(--color-fg-muted);
+		border-radius: var(--radius-full);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.toggle-switch input:checked + .toggle-slider {
+		background-color: var(--color-success-muted);
+		border-color: var(--color-success);
+	}
+
+	.toggle-switch input:checked + .toggle-slider::before {
+		transform: translateX(20px);
+		background-color: var(--color-success);
+	}
+
+	.toggle-switch input:disabled + .toggle-slider {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.toggle-loading {
+		color: var(--color-fg-muted);
+	}
+
+	.privacy-message {
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+	}
+
+	.privacy-message.success {
+		background: var(--color-success-muted);
+		color: var(--color-success);
+		border: 1px solid var(--color-success-border);
+	}
+
+	.privacy-message.error {
+		background: var(--color-error-muted);
+		color: var(--color-error);
+		border: 1px solid var(--color-error-border);
+	}
+
+	.privacy-info {
+		padding: var(--space-sm) 0;
+	}
+
+	.privacy-info p {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+		line-height: 1.6;
+	}
+
+	.privacy-info a {
+		color: var(--color-fg-secondary);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.privacy-info a:hover {
+		color: var(--color-fg-primary);
 	}
 
 	/* Animation */

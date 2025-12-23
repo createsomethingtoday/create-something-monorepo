@@ -18,6 +18,7 @@ import {
 	type EventCategory,
 	type EventBatch,
 } from './types.js';
+import { shouldTrackAnalytics, initializeConsent, getConsentState } from '../gdpr/consent.js';
 
 // =============================================================================
 // SESSION MANAGEMENT
@@ -179,6 +180,7 @@ export class AnalyticsClient {
 	private sessionEndSent: boolean = false;
 	private sourceProperty: Property | null = null;
 	private userOptedOut: boolean = false;
+	private isAuthenticated: boolean = false;
 
 	constructor(config: AnalyticsConfig) {
 		this.config = {
@@ -191,6 +193,7 @@ export class AnalyticsClient {
 			userOptedOut: config.userOptedOut ?? false,
 		};
 		this.userOptedOut = config.userOptedOut ?? false;
+		this.isAuthenticated = config.userOptedOut !== undefined; // If userOptedOut is provided, user is authenticated
 		this.sessionId = getSessionId();
 		this.sessionStartedAt = getSessionStartedAt();
 
@@ -223,14 +226,17 @@ export class AnalyticsClient {
 	}
 
 	/**
-	 * Check if tracking is disabled (DNT or user opt-out)
+	 * Check if tracking is disabled (DNT, user opt-out, or consent state)
 	 */
 	isTrackingDisabled(): boolean {
-		// DNT browser setting is ALWAYS respected, regardless of other settings
-		if (isDNTEnabled()) {
+		// Use unified consent check which handles:
+		// 1. DNT browser setting (always respected)
+		// 2. User consent state from localStorage
+		// 3. User opt-out from profile settings
+		if (!shouldTrackAnalytics(this.isAuthenticated)) {
 			return true;
 		}
-		// User opt-out from profile settings
+		// User opt-out from profile settings (fallback for server-side preference)
 		if (this.userOptedOut) {
 			return true;
 		}
@@ -239,12 +245,41 @@ export class AnalyticsClient {
 
 	/**
 	 * Update user opt-out preference (called when user changes setting)
+	 * Also updates the consent state in localStorage for persistence
 	 */
 	setUserOptOut(optedOut: boolean): void {
 		this.userOptedOut = optedOut;
 		this.config.userOptedOut = optedOut;
+
+		// Sync with consent state in localStorage
+		initializeConsent(optedOut);
+
 		if (this.config.debug) {
 			console.log('[Analytics] User opt-out updated:', optedOut);
+		}
+	}
+
+	/**
+	 * Set authenticated state (called when user logs in/out)
+	 */
+	setAuthenticated(isAuthenticated: boolean, analyticsOptOut?: boolean): void {
+		this.isAuthenticated = isAuthenticated;
+
+		if (isAuthenticated && analyticsOptOut !== undefined) {
+			// Initialize consent from server preference
+			initializeConsent(analyticsOptOut);
+			this.userOptedOut = analyticsOptOut;
+			this.config.userOptedOut = analyticsOptOut;
+		}
+
+		if (!isAuthenticated) {
+			// User logged out - keep local consent but clear server preference
+			this.userOptedOut = false;
+			this.config.userOptedOut = false;
+		}
+
+		if (this.config.debug) {
+			console.log('[Analytics] Authentication state updated:', { isAuthenticated, analyticsOptOut });
 		}
 	}
 
@@ -260,18 +295,10 @@ export class AnalyticsClient {
 			metadata?: Record<string, unknown>;
 		}
 	): void {
-		// DNT is ALWAYS respected, regardless of config.respectDNT setting
-		if (isDNTEnabled()) {
+		// Use unified tracking check (DNT + consent + user opt-out)
+		if (this.isTrackingDisabled()) {
 			if (this.config.debug) {
-				console.log('[Analytics] DNT enabled, event skipped:', action);
-			}
-			return;
-		}
-
-		// Check user opt-out preference
-		if (this.userOptedOut) {
-			if (this.config.debug) {
-				console.log('[Analytics] User opted out, event skipped:', action);
+				console.log('[Analytics] Tracking disabled, event skipped:', action);
 			}
 			return;
 		}

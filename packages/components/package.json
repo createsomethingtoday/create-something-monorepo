@@ -84,6 +84,10 @@
 		"./auth/server": {
 			"types": "./dist/auth/server.d.ts",
 			"default": "./dist/auth/server.js"
+		},
+		"./gdpr": {
+			"types": "./dist/gdpr/index.d.ts",
+			"default": "./dist/gdpr/index.js"
 		}
 	},
 	"peerDependencies": {
