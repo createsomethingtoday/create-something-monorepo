@@ -3,6 +3,7 @@
  *
  * Fetches user's reading insights for display.
  * Philosophy: Taste is cultivated through reflection.
+ * Canon: Privacy is not a feature—it's respect for the user's autonomy.
  */
 
 import type { PageServerLoad } from './$types';
@@ -11,12 +12,10 @@ import {
 	EMPTY_INSIGHTS,
 	type InsightsData,
 } from '$lib/taste/insights';
+import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/components/auth/server';
 
-export const load: PageServerLoad = async ({ platform, cookies }) => {
+export const load: PageServerLoad = async ({ request, platform }) => {
 	const db = platform?.env?.DB;
-
-	// Get user ID from session cookie (placeholder - integrate with identity system)
-	const userId = cookies.get('userId');
 
 	if (!db) {
 		return {
@@ -25,12 +24,24 @@ export const load: PageServerLoad = async ({ platform, cookies }) => {
 		} satisfies InsightsData;
 	}
 
-	if (!userId) {
+	// Authenticate user from session token
+	const token = getTokenFromRequest(request);
+	if (!token) {
 		return {
 			...EMPTY_INSIGHTS,
 			error: 'Sign in to view your reading insights',
 		} satisfies InsightsData;
 	}
+
+	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	if (!user) {
+		return {
+			...EMPTY_INSIGHTS,
+			error: 'Sign in to view your reading insights',
+		} satisfies InsightsData;
+	}
+
+	const userId = user.id;
 
 	try {
 		const insights = await fetchTasteInsights(db, {

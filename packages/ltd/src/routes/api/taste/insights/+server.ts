@@ -5,25 +5,34 @@
  * GET: Fetch user's taste profile and reading stats
  *
  * Philosophy: Taste is cultivated, not consumed.
+ * Canon: Privacy is not a feature—it's respect for the user's autonomy.
  */
 
-import { json } from '@sveltejs/kit';
+import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { fetchTasteInsights } from '$lib/taste/insights';
+import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/components/auth/server';
 
-export const GET: RequestHandler = async ({ platform, url }) => {
+export const GET: RequestHandler = async ({ request, platform, url }) => {
 	const db = platform?.env?.DB;
 
 	if (!db) {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
-	// Get user ID from query param (in real implementation, from auth)
-	const userId = url.searchParams.get('userId');
-
-	if (!userId) {
-		return json({ error: 'userId required' }, { status: 400 });
+	// Authenticate user - taste insights are private data
+	const token = getTokenFromRequest(request);
+	if (!token) {
+		throw error(401, 'Authentication required');
 	}
+
+	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	if (!user) {
+		throw error(401, 'Invalid or expired token');
+	}
+
+	// Use authenticated user's ID - no IDOR via query params
+	const userId = user.id;
 
 	// Time range for daily activity (default: last 30 days)
 	const days = parseInt(url.searchParams.get('days') ?? '30', 10);
