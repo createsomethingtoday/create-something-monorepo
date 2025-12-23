@@ -255,12 +255,14 @@ export async function runHarness(
     dryRun?: boolean;
     failureConfig?: FailureHandlingConfig;
     reviewConfig?: ReviewPipelineConfig;
+    swarmConfig?: SwarmConfig;
   }
 ): Promise<void> {
   const checkpointTracker = createCheckpointTracker();
   const failureTracker = createFailureTracker();
   const failureConfig = options.failureConfig ?? DEFAULT_FAILURE_HANDLING_CONFIG;
   const reviewConfig = options.reviewConfig ?? null; // null = no review
+  const swarmConfig = options.swarmConfig ?? DEFAULT_SWARM_CONFIG;
   let beadsSnapshot = await takeSnapshot(options.cwd);
   let lastCheckpoint: Checkpoint | ReviewedCheckpoint | null = null;
   let redirectNotes: string[] = [];
@@ -273,6 +275,11 @@ export async function runHarness(
   if (reviewConfig?.enabled) {
     const reviewerIds = reviewConfig.reviewers.filter(r => r.enabled).map(r => r.id);
     console.log(`  Peer Review: ${reviewerIds.join(', ')}`);
+  }
+  if (swarmConfig.enabled) {
+    console.log(`  Swarm Mode: ENABLED (max ${swarmConfig.maxParallelAgents} agents, min ${swarmConfig.minTasksForSwarm} tasks)`);
+  } else {
+    console.log(`  Swarm Mode: DISABLED`);
   }
   console.log(`═══════════════════════════════════════════════════════════════\n`);
 
@@ -339,8 +346,66 @@ export async function runHarness(
       break;
     }
 
-    // Sort by priority and pick the first open one (prefer non-in_progress to avoid re-processing)
+    // 3. Detect independent tasks and decide on swarm mode
     const openFeatures = pendingFeatures.filter((issue) => issue.status === 'open');
+    const independentTasks = detectIndependentTasks(openFeatures);
+
+    // Check if swarm mode should be used
+    const shouldUseSwarm = swarmConfig.enabled &&
+      independentTasks.length >= swarmConfig.minTasksForSwarm;
+
+    if (shouldUseSwarm) {
+      // Run parallel swarm session
+      console.log(`\n🐝 Swarm mode: detected ${independentTasks.length} independent tasks`);
+      const swarmResults = await runParallelSessions(
+        independentTasks,
+        harnessState,
+        checkpointTracker,
+        {
+          cwd: options.cwd,
+          dryRun: options.dryRun,
+          maxParallel: swarmConfig.maxParallelAgents,
+        }
+      );
+
+      // Handle swarm results with failure handling
+      for (const result of swarmResults) {
+        if (result.outcome === 'success') {
+          harnessState.featuresCompleted++;
+        } else {
+          const decision = makeFailureDecision(result, failureTracker, failureConfig);
+          console.log(`${getOutcomeIcon(result.outcome)} ${result.issueId}: ${result.outcome}`);
+          console.log(`   Decision: ${decision.action} - ${decision.reason}`);
+
+          if (decision.action === 'skip' || decision.action === 'pause' || decision.action === 'escalate') {
+            harnessState.featuresFailed++;
+          }
+        }
+        harnessState.sessionsCompleted++;
+      }
+
+      // Create swarm checkpoint
+      const swarmCheckpoint = await generateSwarmCheckpoint(
+        checkpointTracker,
+        harnessState,
+        redirectNotes.length > 0 ? redirectNotes.join('\n') : null,
+        options.cwd
+      );
+      console.log('\n' + formatCheckpointDisplay(swarmCheckpoint));
+      resetTracker(checkpointTracker);
+      harnessState.lastCheckpoint = swarmCheckpoint.id;
+
+      // Clear redirect notes
+      redirectNotes = [];
+
+      // Continue to next iteration
+      if (!options.dryRun) {
+        await sleep(2000);
+      }
+      continue;
+    }
+
+    // Fall back to sequential mode for single task or when swarm disabled
     const nextIssue = openFeatures.length > 0
       ? openFeatures.sort((a, b) => (a.priority || 2) - (b.priority || 2))[0]
       : pendingFeatures.sort((a, b) => (a.priority || 2) - (b.priority || 2))[0];
@@ -349,7 +414,7 @@ export async function runHarness(
     // Mark as in progress
     await updateIssueStatus(nextIssue.id, 'in_progress', options.cwd);
 
-    // 3. Build priming context with DRY discovery
+    // 4. Build priming context with DRY discovery
     const recentCommits = await getRecentCommits(options.cwd, 10);
     const dryContext = await discoverDryContext(nextIssue.title, options.cwd);
     const primingContext: PrimingContext = {
@@ -365,7 +430,7 @@ export async function runHarness(
     // Clear redirect notes for next iteration
     redirectNotes = [];
 
-    // 4. Run session with cost-optimized model selection + escalation
+    // 5. Run session with cost-optimized model selection + escalation
     harnessState.currentSession++;
     const heuristicModel = selectModelForTask(nextIssue);
     const { model, escalated, reason: modelReason } = getEffectiveModel(
@@ -385,7 +450,7 @@ export async function runHarness(
       model,
     });
 
-    // 5. Handle session result with graceful failure handling
+    // 6. Handle session result with graceful failure handling
     recordSession(checkpointTracker, sessionResult);
 
     if (sessionResult.outcome === 'success') {
@@ -508,12 +573,12 @@ export async function runHarness(
       }
     }
 
-    // 6. Check checkpoint policy
+    // 7. Check checkpoint policy
     const checkpointCheck = shouldCreateCheckpoint(
       checkpointTracker,
       harnessState.checkpointPolicy,
       sessionResult,
-      redirectCheck.redirects.length > 0
+      redirectNotes.length > 0
     );
 
     if (checkpointCheck.create) {
@@ -521,7 +586,7 @@ export async function runHarness(
       lastCheckpoint = await generateReviewedCheckpoint(
         checkpointTracker,
         harnessState,
-        formatRedirectNotes(redirectCheck.redirects),
+        redirectNotes.length > 0 ? redirectNotes.join('\n') : null,
         reviewConfig,
         options.cwd
       );
@@ -538,7 +603,7 @@ export async function runHarness(
       }
     }
 
-    // 7. Check confidence threshold
+    // 8. Check confidence threshold
     if (shouldPauseForConfidence(
       checkpointTracker.sessionsResults,
       harnessState.checkpointPolicy.onConfidenceBelow
@@ -585,6 +650,33 @@ export async function runHarness(
     console.log(`  Pause Reason: ${harnessState.pauseReason}`);
   }
   console.log(`═══════════════════════════════════════════════════════════════\n`);
+}
+
+/**
+ * Detect independent tasks that can run in parallel.
+ * A task is independent if it has no dependencies on other pending tasks.
+ */
+function detectIndependentTasks(issues: BeadsIssue[]): BeadsIssue[] {
+  if (issues.length === 0) return [];
+
+  // Create a map of issue IDs for quick lookup
+  const issueIds = new Set(issues.map(i => i.id));
+
+  // Filter for issues with no dependencies on other pending issues
+  return issues.filter(issue => {
+    const deps = issue.dependencies || [];
+
+    // Check if this issue has any dependencies on other pending issues
+    const hasBlockingDeps = deps.some(dep => {
+      // Only consider "blocks" dependencies
+      if (dep.type !== 'blocks') return false;
+
+      // Check if the dependency is in the pending set
+      return issueIds.has(dep.depends_on_id);
+    });
+
+    return !hasBlockingDeps;
+  });
 }
 
 /**
