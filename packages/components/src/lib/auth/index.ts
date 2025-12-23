@@ -61,6 +61,8 @@ export {
 	requireAuth,
 	// SvelteKit hooks
 	createAuthHooks,
+	// Logout handler
+	handleLogout,
 } from './session.js';
 
 // Analytics integration
