@@ -11,9 +11,11 @@
 	 */
 
 	import type { ElevationData } from '$lib/types/architecture';
+	import ArchitecturalPatterns from './ArchitecturalPatterns.svelte';
 
 	export let elevation: ElevationData;
 	export let showCaption: boolean = true;
+	export let expanded: boolean = false;
 
 	const scale = 12;
 	const margin = 40;
@@ -29,13 +31,19 @@
 		return svgHeight - margin - y * scale;
 	}
 
+	// Line weight tokens correspond to CSS custom properties in app.css
+	// --arch-stroke-cut: 2.0 (section cuts)
+	// --arch-stroke-object: 1.0 (walls, major elements)
+	// --arch-stroke-medium: 0.5 (secondary elements)
+	// --arch-stroke-fine: 0.25 (dimensions, annotations)
+	// --arch-stroke-hairline: 0.15 (hidden lines, hatching)
 	const elementStyles: Record<string, { stroke: string; width: number; dash?: string }> = {
-		wall: { stroke: 'var(--arch-wall-exterior)', width: 1.5 },
-		roof: { stroke: 'var(--arch-wall-exterior)', width: 1.5 },
-		window: { stroke: 'var(--arch-window)', width: 0.5 },
-		door: { stroke: 'var(--color-fg-secondary)', width: 1 },
-		column: { stroke: 'var(--arch-column)', width: 2 },
-		grade: { stroke: 'var(--color-fg-muted)', width: 0.5, dash: '2 2' }
+		wall: { stroke: 'var(--arch-wall-exterior)', width: 1.0 },
+		roof: { stroke: 'var(--arch-wall-exterior)', width: 1.0 },
+		window: { stroke: 'var(--arch-window)', width: 0.25 },
+		door: { stroke: 'var(--color-fg-secondary)', width: 0.5 },
+		column: { stroke: 'var(--arch-column)', width: 2.0 },
+		grade: { stroke: 'var(--arch-dimension-color)', width: 0.25, dash: '2 2' }
 	};
 
 	const directionLabels: Record<string, string> = {
@@ -47,6 +55,8 @@
 </script>
 
 <div class="elevation-container">
+	<ArchitecturalPatterns />
+
 	<svg viewBox="0 0 {svgWidth} {svgHeight}" class="elevation" role="img" aria-label={elevation.name}>
 		<!-- Ground fill -->
 		<rect
@@ -55,6 +65,7 @@
 			width={svgWidth}
 			height={svgHeight - ty(elevation.groundLevel)}
 			class="ground-fill"
+			fill={expanded ? 'url(#earth-hatch)' : 'var(--color-bg-pure)'}
 		/>
 
 		<!-- Elements -->
@@ -150,8 +161,13 @@
 	}
 
 	.ground-fill {
-		fill: var(--color-bg-pure);
+		/* Default fill: semi-transparent background */
 		opacity: 0.5;
+	}
+
+	/* When earth-hatch pattern is applied via expanded prop, use hatch opacity */
+	.elevation .ground-fill {
+		opacity: var(--arch-hatch-opacity);
 	}
 
 	.window-rect {
@@ -167,12 +183,12 @@
 
 	/* Dimension lines */
 	.dimension line {
-		stroke: var(--color-fg-subtle);
+		stroke: var(--arch-dimension-color);
 		stroke-width: 0.5;
 	}
 
 	.dimension-line {
-		stroke: var(--color-border-emphasis);
+		stroke: var(--arch-dimension-color);
 		stroke-width: 0.5;
 	}
 
