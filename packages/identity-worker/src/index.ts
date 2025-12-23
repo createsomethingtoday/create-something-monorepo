@@ -84,6 +84,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/v1/users/me/email/verify' && method === 'POST') return handleVerifyEmailChange(request, env);
 	if (path === '/v1/users/me/avatar' && method === 'POST') return handleAvatarUpload(request, env);
 	if (path === '/v1/users/me/avatar' && method === 'DELETE') return handleAvatarDelete(request, env);
+	if (path === '/v1/users/me/analytics' && method === 'PATCH') return handleUpdateAnalytics(request, env);
 
 	// Service-to-service (API key protected)
 	if (path === '/v1/validate' && method === 'POST') return handleValidate(request, env);
@@ -352,6 +353,7 @@ async function handleGetMe(request: Request, env: Env): Promise<Response> {
 		name: user.name,
 		avatar_url: user.avatar_url,
 		tier: user.tier,
+		analytics_opt_out: Boolean(user.analytics_opt_out),
 		created_at: user.created_at,
 	});
 }
@@ -362,12 +364,13 @@ async function handleUpdateMe(request: Request, env: Env): Promise<Response> {
 		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
 	}
 
-	const body = await parseJSON<{ name?: string; avatar_url?: string }>(request);
+	const body = await parseJSON<{ name?: string; avatar_url?: string; analytics_opt_out?: boolean }>(request);
 	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
 
 	const user = await updateUser(env.DB, payload.sub, {
 		...(body.name !== undefined && { name: body.name }),
 		...(body.avatar_url !== undefined && { avatar_url: body.avatar_url }),
+		...(body.analytics_opt_out !== undefined && { analytics_opt_out: body.analytics_opt_out ? 1 : 0 }),
 	});
 
 	if (!user) {
@@ -381,6 +384,7 @@ async function handleUpdateMe(request: Request, env: Env): Promise<Response> {
 		name: user.name,
 		avatar_url: user.avatar_url,
 		tier: user.tier,
+		analytics_opt_out: Boolean(user.analytics_opt_out),
 		created_at: user.created_at,
 	});
 }
@@ -731,6 +735,37 @@ async function handleAvatarDelete(request: Request, env: Env): Promise<Response>
 	await updateUser(env.DB, payload.sub, { avatar_url: null });
 
 	return json({ success: true, message: 'Avatar deleted' });
+}
+
+async function handleUpdateAnalytics(request: Request, env: Env): Promise<Response> {
+	// Authenticate
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	// Parse request
+	const body = await parseJSON<{ analytics_opt_out?: boolean }>(request);
+	if (!body || typeof body.analytics_opt_out !== 'boolean') {
+		return json({ error: 'invalid_request', message: 'analytics_opt_out boolean required', status: 400 }, 400);
+	}
+
+	// Update user preference
+	const user = await updateUser(env.DB, payload.sub, {
+		analytics_opt_out: body.analytics_opt_out ? 1 : 0,
+	});
+
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	return json({
+		success: true,
+		analytics_opt_out: Boolean(user.analytics_opt_out),
+		message: body.analytics_opt_out
+			? 'Analytics tracking disabled. Your browsing data will no longer be collected.'
+			: 'Analytics tracking enabled.',
+	});
 }
 
 // Service-to-Service Handlers

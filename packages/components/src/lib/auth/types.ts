@@ -48,6 +48,7 @@ export interface User {
 	email: string;
 	tier: 'free' | 'pro' | 'agency';
 	source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
+	analytics_opt_out?: boolean;
 }
 
 export interface SessionState {

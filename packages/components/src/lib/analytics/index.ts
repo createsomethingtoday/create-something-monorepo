@@ -51,6 +51,7 @@ export {
 	initAnalytics,
 	getAnalytics,
 	track,
+	isDNTEnabled,
 } from './client.js';
 
 // Engagement tracking

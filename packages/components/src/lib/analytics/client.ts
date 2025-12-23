@@ -154,9 +154,10 @@ function getSessionStartedAt(): number {
 // =============================================================================
 
 /**
- * Check if Do Not Track is enabled
+ * Check if Do Not Track is enabled in the browser
+ * This is always respected regardless of other settings
  */
-function isDNTEnabled(): boolean {
+export function isDNTEnabled(): boolean {
 	if (typeof window === 'undefined') return false;
 
 	return (
@@ -177,6 +178,7 @@ export class AnalyticsClient {
 	private sessionStartedAt: number;
 	private sessionEndSent: boolean = false;
 	private sourceProperty: Property | null = null;
+	private userOptedOut: boolean = false;
 
 	constructor(config: AnalyticsConfig) {
 		this.config = {
@@ -186,7 +188,9 @@ export class AnalyticsClient {
 			batchTimeout: config.batchTimeout ?? 5000,
 			respectDNT: config.respectDNT ?? true,
 			debug: config.debug ?? false,
+			userOptedOut: config.userOptedOut ?? false,
 		};
+		this.userOptedOut = config.userOptedOut ?? false;
 		this.sessionId = getSessionId();
 		this.sessionStartedAt = getSessionStartedAt();
 
@@ -219,6 +223,32 @@ export class AnalyticsClient {
 	}
 
 	/**
+	 * Check if tracking is disabled (DNT or user opt-out)
+	 */
+	isTrackingDisabled(): boolean {
+		// DNT browser setting is ALWAYS respected, regardless of other settings
+		if (isDNTEnabled()) {
+			return true;
+		}
+		// User opt-out from profile settings
+		if (this.userOptedOut) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Update user opt-out preference (called when user changes setting)
+	 */
+	setUserOptOut(optedOut: boolean): void {
+		this.userOptedOut = optedOut;
+		this.config.userOptedOut = optedOut;
+		if (this.config.debug) {
+			console.log('[Analytics] User opt-out updated:', optedOut);
+		}
+	}
+
+	/**
 	 * Track an event
 	 */
 	track(
@@ -230,10 +260,18 @@ export class AnalyticsClient {
 			metadata?: Record<string, unknown>;
 		}
 	): void {
-		// Respect DNT
-		if (this.config.respectDNT && isDNTEnabled()) {
+		// DNT is ALWAYS respected, regardless of config.respectDNT setting
+		if (isDNTEnabled()) {
 			if (this.config.debug) {
 				console.log('[Analytics] DNT enabled, event skipped:', action);
+			}
+			return;
+		}
+
+		// Check user opt-out preference
+		if (this.userOptedOut) {
+			if (this.config.debug) {
+				console.log('[Analytics] User opted out, event skipped:', action);
 			}
 			return;
 		}

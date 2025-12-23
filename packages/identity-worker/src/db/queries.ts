@@ -46,7 +46,7 @@ export async function createUser(
 export async function updateUser(
 	db: D1Database,
 	id: string,
-	updates: Partial<Pick<User, 'name' | 'avatar_url' | 'email_verified' | 'tier'>>
+	updates: Partial<Pick<User, 'name' | 'avatar_url' | 'email_verified' | 'tier' | 'analytics_opt_out'>>
 ): Promise<User | null> {
 	const sets: string[] = [];
 	const values: unknown[] = [];
@@ -66,6 +66,10 @@ export async function updateUser(
 	if (updates.tier !== undefined) {
 		sets.push('tier = ?');
 		values.push(updates.tier);
+	}
+	if (updates.analytics_opt_out !== undefined) {
+		sets.push('analytics_opt_out = ?');
+		values.push(updates.analytics_opt_out);
 	}
 
 	if (sets.length === 0) return findUserById(db, id);

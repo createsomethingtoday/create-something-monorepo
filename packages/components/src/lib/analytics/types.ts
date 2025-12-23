@@ -311,6 +311,8 @@ export interface AnalyticsConfig {
 	respectDNT?: boolean;
 	/** Enable debug logging (default: false) */
 	debug?: boolean;
+	/** User has opted out of analytics (from profile setting) */
+	userOptedOut?: boolean;
 }
 
 export const DEFAULT_CONFIG: Partial<AnalyticsConfig> = {
