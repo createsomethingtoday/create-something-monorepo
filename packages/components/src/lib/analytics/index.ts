@@ -7,6 +7,9 @@
  * @packageDocumentation
  */
 
+// Constants
+export { PROPERTY_DOMAINS } from './types.js';
+
 // Types
 export type {
 	Property,
@@ -79,3 +82,6 @@ export {
 	getDailyAggregates,
 	type AnalyticsQueryOptions,
 } from './server.js';
+
+// Components
+export { default as PopularContent } from './PopularContent.svelte';

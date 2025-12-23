@@ -119,7 +119,13 @@ export async function createIssue(
   },
   cwd?: string
 ): Promise<string> {
-  const args: string[] = ['create', `"${title.replace(/"/g, '\\"')}"`];
+  // Escape shell special characters: double quotes, backticks, dollar signs
+  const escapedTitle = title
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$');
+  const args: string[] = ['create', `"${escapedTitle}"`];
 
   // Use valid Beads types: bug|feature|task|epic|chore
   const validTypes = ['bug', 'feature', 'task', 'epic', 'chore'];
@@ -133,8 +139,14 @@ export async function createIssue(
     args.push(`--labels=${options.labels.join(',')}`);
   }
   if (options?.description) {
-    // Escape description for shell and truncate if needed
-    const desc = options.description.slice(0, 500).replace(/"/g, '\\"').replace(/\n/g, ' ');
+    // Escape description for shell: quotes, backticks, dollar signs, newlines
+    const desc = options.description
+      .slice(0, 500)
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/`/g, '\\`')
+      .replace(/\$/g, '\\$')
+      .replace(/\n/g, ' ');
     args.push(`-d "${desc}"`);
   } else {
     // Add default description to avoid Beads warning
