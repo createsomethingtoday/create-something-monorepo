@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
-	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
 	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent } from '@create-something/components';
 	import { page } from '$app/stores';
 
@@ -46,6 +46,13 @@
 	});
 
 	let { children, data } = $props();
+
+	// Handle logout
+	async function handleLogout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		await invalidateAll();
+		goto('/');
+	}
 
 	const navLinks = [
 		{ label: 'Experiments', href: '/experiments' },
@@ -201,6 +208,11 @@
 		fixed={true}
 		ctaLabel="Contact"
 		ctaHref="/contact"
+		user={data.user}
+		onLogout={handleLogout}
+		showLogin={true}
+		loginHref="/login"
+		accountHref="/account"
 	/>
 
 	<!-- Add top padding to account for fixed navigation -->
