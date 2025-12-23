@@ -9,6 +9,22 @@
  * @packageDocumentation
  */
 
+// Shared types (canonical source to avoid circular dependencies)
+export {
+	SESSION_CONFIG,
+	type TokenResponse,
+	type JWTPayload,
+	type User,
+	type SessionState,
+	type RefreshResult,
+	type SessionAnalyticsEvent,
+	type SessionManagerOptions,
+	type AuthHooksConfig,
+	type JWK,
+	type KVLike,
+	type AuthEnv,
+} from './types.js';
+
 // Cookie utilities
 export {
 	COOKIE_CONFIG,
@@ -28,9 +44,8 @@ export {
 	type SetCookieParams,
 } from './cookies.js';
 
-// Session management
+// Session management (client-side utilities, no cryptographic validation)
 export {
-	SESSION_CONFIG,
 	decodeJWT,
 	isTokenExpired,
 	needsRefresh,
@@ -41,19 +56,8 @@ export {
 	createSessionManager,
 	autoRefreshMiddleware,
 	requireAuth,
-	// JWT validation with JWKS
-	validateToken,
 	// SvelteKit hooks
 	createAuthHooks,
-	type TokenResponse,
-	type JWTPayload,
-	type User,
-	type SessionState,
-	type RefreshResult,
-	type SessionAnalyticsEvent,
-	type SessionManagerOptions,
-	type JWK,
-	type AuthHooksConfig,
 } from './session.js';
 
 // Analytics integration
@@ -71,13 +75,13 @@ export {
 } from './analytics.js';
 
 // Server-side validation (KV-cached JWKS)
+// validateToken is the canonical cryptographic validation function
 export {
+	validateToken,
 	validateToken as validateTokenWithKV,
 	requireAuth as requireAuthFromRequest,
 	getTokenFromRequest,
 	getOptionalUser,
 	clearJWKSCache,
 	AuthenticationError,
-	type AuthEnv,
-	type KVLike,
 } from './server.js';
