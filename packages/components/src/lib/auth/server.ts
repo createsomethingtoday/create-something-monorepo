@@ -10,7 +10,7 @@
  */
 
 import { SESSION_CONFIG, type JWTPayload, type User, type JWK } from './session.js';
-import { COOKIE_CONFIG } from './cookies.js';
+import { COOKIE_CONFIG, parseCookieHeader } from './cookies.js';
 
 // =============================================================================
 // TYPES
@@ -154,22 +154,6 @@ export function getTokenFromRequest(request: Request): string | null {
 	}
 
 	return null;
-}
-
-/**
- * Parse a Cookie header into key-value pairs
- */
-function parseCookieHeader(header: string): Record<string, string> {
-	const cookies: Record<string, string> = {};
-
-	header.split(';').forEach((pair) => {
-		const [name, ...valueParts] = pair.trim().split('=');
-		if (name) {
-			cookies[name] = valueParts.join('=');
-		}
-	});
-
-	return cookies;
 }
 
 // =============================================================================
