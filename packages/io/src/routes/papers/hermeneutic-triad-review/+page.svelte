@@ -5,6 +5,7 @@
 	 * A case study of the DRY violation detection and resolution workflow,
 	 * demonstrating how parallel peer review creates a self-correcting system.
 	 */
+	import { Building2, Shield, Sparkles } from 'lucide-svelte';
 </script>
 
 <svelte:head>
@@ -115,7 +116,7 @@
 
 				<div class="grid md:grid-cols-3 gap-4 mt-4">
 					<div class="p-4 info-card">
-						<h4 class="mb-2 card-heading">🏛️ Architecture</h4>
+						<h4 class="flex items-center gap-2 mb-2 card-heading"><Building2 size={18} /> Architecture</h4>
 						<p class="mb-2 card-text">
 							Asks: "Does the structure serve the whole?"
 						</p>
@@ -126,7 +127,7 @@
 					</div>
 
 					<div class="p-4 info-card">
-						<h4 class="mb-2 card-heading">🔒 Security</h4>
+						<h4 class="flex items-center gap-2 mb-2 card-heading"><Shield size={18} /> Security</h4>
 						<p class="mb-2 card-text">
 							Asks: "Can this be exploited?"
 						</p>
@@ -137,7 +138,7 @@
 					</div>
 
 					<div class="p-4 info-card">
-						<h4 class="mb-2 card-heading">✨ Quality</h4>
+						<h4 class="flex items-center gap-2 mb-2 card-heading"><Sparkles size={18} /> Quality</h4>
 						<p class="mb-2 card-text">
 							Asks: "Is this maintainable?"
 						</p>
