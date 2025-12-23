@@ -29,6 +29,12 @@ export {
 	generateRule,
 	generateRulesFromPatterns,
 	generateEslintConfig,
+	suggestCanonEnhancements,
+	findCanonPatternMatch,
+	generateCanonAuditIntegration,
+	suggestIntegrationPoints,
+	feedbackToCanonRule,
+	CANON_PATTERN_SUGGESTIONS,
 } from './generators/index.js';
 
 export {
