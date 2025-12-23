@@ -86,8 +86,8 @@
 	.table {
 		font-size: var(--text-caption);
 		font-family: ui-monospace, monospace;
-		/* Force truncation instead of horizontal scroll */
-		overflow: hidden;
+		/* Allow horizontal scroll when content overflows */
+		overflow: auto;
 		min-width: 0;
 	}
 
