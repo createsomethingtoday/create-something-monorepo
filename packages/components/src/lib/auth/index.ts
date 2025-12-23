@@ -69,3 +69,15 @@ export {
 	type AuthAnalyticsEvent,
 	type AuthAnalyticsOptions,
 } from './analytics.js';
+
+// Server-side validation (KV-cached JWKS)
+export {
+	validateToken as validateTokenWithKV,
+	requireAuth as requireAuthFromRequest,
+	getTokenFromRequest,
+	getOptionalUser,
+	clearJWKSCache,
+	AuthenticationError,
+	type AuthEnv,
+	type KVLike,
+} from './server.js';
