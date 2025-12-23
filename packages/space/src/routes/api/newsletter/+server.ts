@@ -5,6 +5,7 @@ interface NewsletterRequest {
 	email: string;
 	website?: string; // Honeypot field - should be empty
 	turnstileToken?: string;
+	source?: string; // Optional source override, defaults to property
 }
 
 interface TurnstileResponse {
@@ -18,7 +19,9 @@ const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
 export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	try {
 		const body = (await request.json()) as NewsletterRequest;
-		const { email, website, turnstileToken } = body;
+		const { email, website, turnstileToken, source } = body;
+		// Default source to 'space' for this property, allow override
+		const subscriberSource = source || 'space';
 
 		// Honeypot check - if filled, silently reject (bots fill hidden fields)
 		if (website) {
@@ -131,11 +134,11 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		try {
 			await env.DB.prepare(
 				`
-        INSERT OR IGNORE INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token)
-        VALUES (?, datetime('now'), ?)
+        INSERT OR IGNORE INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token, source)
+        VALUES (?, datetime('now'), ?, ?)
       `
 			)
-				.bind(email, unsubscribeToken)
+				.bind(email, unsubscribeToken, subscriberSource)
 				.run();
 		} catch (dbError) {
 			// Table might not exist - that's okay, we'll still send the welcome email

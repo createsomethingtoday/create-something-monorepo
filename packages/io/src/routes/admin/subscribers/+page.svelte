@@ -5,6 +5,7 @@
 	let loading = true;
 	let searchQuery = '';
 	let filterStatus = 'all';
+	let filterSource = 'all';
 	let sortBy = 'newest';
 
 	onMount(async () => {
@@ -64,11 +65,12 @@
 
 	async function exportSubscribers() {
 		const csv = [
-			['Email', 'Status', 'Subscribed At'].join(','),
+			['Email', 'Status', 'Source', 'Subscribed At'].join(','),
 			...filteredSubscribers.map((sub) =>
 				[
 					sub.email,
 					sub.status || 'active',
+					sub.source || 'unknown',
 					new Date(sub.created_at).toISOString()
 				].join(',')
 			)
@@ -88,7 +90,8 @@
 			const matchesSearch =
 				searchQuery === '' || sub.email?.toLowerCase().includes(searchQuery.toLowerCase());
 			const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
-			return matchesSearch && matchesStatus;
+			const matchesSource = filterSource === 'all' || sub.source === filterSource;
+			return matchesSearch && matchesStatus && matchesSource;
 		})
 		.sort((a, b) => {
 			if (sortBy === 'newest') {
@@ -133,6 +136,17 @@
 			<option value="all">All Status</option>
 			<option value="active">Active</option>
 			<option value="unsubscribed">Unsubscribed</option>
+		</select>
+
+		<select
+			bind:value={filterSource}
+			class="select-field px-4 py-2"
+		>
+			<option value="all">All Sources</option>
+			<option value="io">.io</option>
+			<option value="space">.space</option>
+			<option value="agency">.agency</option>
+			<option value="ltd">.ltd</option>
 		</select>
 
 		<select
@@ -181,6 +195,10 @@
 					</div>
 					<div class="responsive-table-card-body">
 						<div class="responsive-table-card-row">
+							<span class="responsive-table-card-label">Source</span>
+							<span class="responsive-table-card-value source-badge">.{subscriber.source || 'unknown'}</span>
+						</div>
+						<div class="responsive-table-card-row">
 							<span class="responsive-table-card-label">Subscribed</span>
 							<span class="responsive-table-card-value">{new Date(subscriber.created_at).toLocaleDateString()}</span>
 						</div>
@@ -225,6 +243,9 @@
 								Status
 							</th>
 							<th class="table-header-cell px-6 py-3">
+								Source
+							</th>
+							<th class="table-header-cell px-6 py-3">
 								Subscribed
 							</th>
 							<th class="table-header-cell-right px-6 py-3">
@@ -246,6 +267,9 @@
 									>
 										{subscriber.status || 'active'}
 									</span>
+								</td>
+								<td class="table-cell-secondary px-6 py-4">
+									<span class="source-badge">.{subscriber.source || 'unknown'}</span>
 								</td>
 								<td class="table-cell-secondary px-6 py-4">
 									{new Date(subscriber.created_at).toLocaleDateString()}
@@ -547,6 +571,16 @@
 	.status-active {
 		background: var(--color-success-muted);
 		color: var(--color-success);
+	}
+
+	.source-badge {
+		display: inline-block;
+		padding: 0.125rem 0.5rem;
+		background: var(--color-info-muted);
+		color: var(--color-info);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		font-family: monospace;
 	}
 
 	.btn-small {
