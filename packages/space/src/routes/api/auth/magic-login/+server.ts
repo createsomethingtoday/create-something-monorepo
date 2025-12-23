@@ -1,7 +1,6 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-
-const IDENTITY_API = 'https://id.createsomething.space';
+import { IDENTITY_API } from '@create-something/components/auth';
 
 interface ErrorResponse {
 	error: string;

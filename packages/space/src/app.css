@@ -103,4 +103,34 @@
   --arch-rhythm-inlaw: var(--color-data-4);    /* Amber */
   --arch-rhythm-guests: var(--color-data-2);   /* Green */
   --arch-rhythm-service: var(--color-fg-muted);
+
+  /* ==========================================================================
+     Construction Document Tokens
+     Line weights, dimensions, and hatching for CD-quality drawings
+     ========================================================================== */
+
+  /* Line Weight Hierarchy (AIA/CSI standard adapted for screen) */
+  --arch-stroke-cut: 2.0;        /* Section cuts - heaviest */
+  --arch-stroke-object: 1.0;     /* Walls, major elements */
+  --arch-stroke-medium: 0.5;     /* Secondary elements, furniture */
+  --arch-stroke-fine: 0.25;      /* Dimensions, annotations */
+  --arch-stroke-hairline: 0.15;  /* Hidden lines, hatching patterns */
+
+  /* Dimension System */
+  --arch-dimension-color: var(--color-fg-subtle);
+  --arch-dimension-text: var(--color-fg-muted);
+  --arch-dimension-tick: 4;      /* Tick mark length in px */
+
+  /* Scale Bar */
+  --arch-scale-color: var(--color-fg-muted);
+  --arch-scale-text: var(--color-fg-subtle);
+
+  /* Hatching Patterns (for expanded/fullscreen view) */
+  --arch-hatch-color: var(--color-fg-subtle);
+  --arch-hatch-opacity: 0.3;
+  --arch-hatch-spacing: 3;       /* px between hatch lines */
+
+  /* Title Block */
+  --arch-title-primary: var(--color-fg-secondary);
+  --arch-title-secondary: var(--color-fg-muted);
 }
