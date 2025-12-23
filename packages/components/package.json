@@ -85,6 +85,10 @@
 			"types": "./dist/auth/server.d.ts",
 			"default": "./dist/auth/server.js"
 		},
+		"./auth/components": {
+			"types": "./dist/auth/components/index.d.ts",
+			"svelte": "./dist/auth/components/index.js"
+		},
 		"./gdpr": {
 			"types": "./dist/gdpr/index.d.ts",
 			"default": "./dist/gdpr/index.js"

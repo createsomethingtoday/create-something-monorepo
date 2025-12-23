@@ -16,11 +16,14 @@ import type {
   ReviewPipelineConfig,
   ReviewedCheckpoint,
   ReviewAggregation,
+  DetectedModel,
+  ClaudeModelFamily,
 } from './types.js';
-import { DEFAULT_REVIEW_PIPELINE_CONFIG } from './types.js';
+import { DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_MODEL_SPECIFIC_CONFIG } from './types.js';
 import { createCheckpointIssue, getOpenIssues, getIssue } from './beads.js';
 import { runReviewPipeline, formatReviewDisplay } from './review-pipeline.js';
 import { createReviewIssue, createFindingIssues } from './review-beads.js';
+import { getModelConfidenceThreshold } from './model-detector.js';
 
 /**
  * Checkpoint tracking state.
@@ -271,14 +274,46 @@ export function calculateConfidence(results: SessionResult[]): number {
 }
 
 /**
+ * Get the most recent detected model from session results.
+ * Used to determine which confidence threshold to apply.
+ */
+function getMostRecentModel(results: SessionResult[]): DetectedModel | null {
+  // Look backwards through results to find the most recent model
+  for (let i = results.length - 1; i >= 0; i--) {
+    if (results[i].model) {
+      return results[i].model;
+    }
+  }
+  return null;
+}
+
+/**
  * Check if the harness should pause due to low confidence.
+ * Uses dynamic thresholds based on detected model capabilities.
+ *
+ * Philosophy: Different models have different capabilities.
+ * Opus can be trusted at lower confidence levels than Haiku.
  */
 export function shouldPauseForConfidence(
   results: SessionResult[],
-  threshold: number
+  fallbackThreshold: number
 ): boolean {
   const confidence = calculateConfidence(results);
-  return confidence < threshold;
+
+  // Detect the model being used
+  const detectedModel = getMostRecentModel(results);
+
+  // Get the appropriate threshold for this model
+  // Falls back to provided threshold if model is unknown
+  const threshold = getModelConfidenceThreshold(
+    detectedModel,
+    DEFAULT_MODEL_SPECIFIC_CONFIG.confidenceThresholds
+  );
+
+  // Use the dynamic threshold if we have a detected model, otherwise use fallback
+  const effectiveThreshold = detectedModel ? threshold : fallbackThreshold;
+
+  return confidence < effectiveThreshold;
 }
 
 /**
@@ -359,6 +394,18 @@ function generateSummary(
 
   if (failureCount > 0) {
     lines.push(`${failureCount} task(s) failed and may need attention.`);
+  }
+
+  // Include model detection info
+  const detectedModel = getMostRecentModel(results);
+  if (detectedModel) {
+    const threshold = getModelConfidenceThreshold(
+      detectedModel,
+      DEFAULT_MODEL_SPECIFIC_CONFIG.confidenceThresholds
+    );
+    lines.push(
+      `Model: ${detectedModel.family} (confidence threshold: ${(threshold * 100).toFixed(0)}%)`
+    );
   }
 
   if (partialCount > 0) {

@@ -218,6 +218,23 @@ Progress reports are Beads issues with:
 
 View with `bd progress` or `bd show <checkpoint-id>`.
 
+## Dynamic Confidence Thresholds
+
+The harness adjusts pause thresholds based on detected model capabilities:
+
+| Model | Threshold | Rationale |
+|-------|-----------|-----------|
+| Opus | 60% | More capable, can be trusted at lower confidence |
+| Sonnet | 70% | Standard threshold (default) |
+| Haiku | 80% | Less capable, requires higher confidence |
+| Unknown | 70% | Conservative fallback |
+
+**Philosophy**: Different models have different capabilities. Opus can be trusted to recover from failures more effectively than Haiku. The harness automatically detects which model is running and adjusts accordingly.
+
+**Implementation**: Model detection happens via Claude Code JSON output. Each session's `model` field is parsed (e.g., `"claude-sonnet-4-5-20250929"`) and mapped to a family (`opus`, `sonnet`, `haiku`). The checkpoint system then uses family-specific thresholds when deciding whether to pause for low confidence.
+
+**Verification**: Run `pnpm exec tsx verify-dynamic-thresholds.ts` to test threshold logic.
+
 ## References
 
 - [Paper: Harness Agent SDK Migration](https://createsomething.io/papers/harness-agent-sdk-migration)
