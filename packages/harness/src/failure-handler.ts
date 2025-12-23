@@ -17,6 +17,8 @@ import type {
   FailureAttempt,
   FailureDecision,
   FailureAction,
+  ModelEscalationLearning,
+  BeadsIssue,
 } from './types.js';
 import { DEFAULT_FAILURE_HANDLING_CONFIG } from './types.js';
 
@@ -342,4 +344,196 @@ export function formatFailureStats(tracker: FailureTracker): string {
   lines.push(`  Skipped Issues: ${stats.skippedIssues}`);
 
   return lines.join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Model Escalation (Self-Healing)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Determine if a task should escalate to a more capable model.
+ *
+ * Philosophy: When cheaper models fail, escalate to opus rather than giving up.
+ * This implements self-healing: the system repairs itself by using more capable
+ * tools when simpler ones fail.
+ *
+ * Heideggerian framing: The tool (cheaper model) has broken down, becoming
+ * present-at-hand. Escalation returns the system to ready-to-hand operation.
+ */
+export function shouldEscalateModel(
+  tracker: FailureTracker,
+  issueId: string,
+  currentModel: 'opus' | 'sonnet' | 'haiku'
+): { escalate: boolean; toModel: 'opus' | 'sonnet' | 'haiku'; reason: string } {
+  // Already using opus—no escalation possible
+  if (currentModel === 'opus') {
+    return { escalate: false, toModel: 'opus', reason: 'Already using opus' };
+  }
+
+  const record = tracker.records.get(issueId);
+  if (!record) {
+    return { escalate: false, toModel: currentModel, reason: 'No failure history' };
+  }
+
+  // Count failures with current model
+  const currentModelFailures = record.attempts.filter(
+    a => a.model === currentModel && a.outcome !== 'success'
+  ).length;
+
+  // Escalation thresholds
+  // Haiku → Sonnet after 1 failure
+  // Sonnet → Opus after 2 failures
+  // Haiku → Opus after 2 failures (if already tried sonnet)
+  if (currentModel === 'haiku' && currentModelFailures >= 1) {
+    // Check if we already tried sonnet
+    const sonnetAttempts = record.attempts.filter(a => a.model === 'sonnet');
+    if (sonnetAttempts.length > 0) {
+      return {
+        escalate: true,
+        toModel: 'opus',
+        reason: `Failed with haiku (${currentModelFailures}x) and sonnet—escalating to opus`,
+      };
+    }
+    return {
+      escalate: true,
+      toModel: 'sonnet',
+      reason: `Failed with haiku (${currentModelFailures}x)—escalating to sonnet`,
+    };
+  }
+
+  if (currentModel === 'sonnet' && currentModelFailures >= 2) {
+    return {
+      escalate: true,
+      toModel: 'opus',
+      reason: `Failed with sonnet (${currentModelFailures}x)—escalating to opus`,
+    };
+  }
+
+  return { escalate: false, toModel: currentModel, reason: 'Not enough failures to escalate' };
+}
+
+/**
+ * Record that a task was escalated and succeeded.
+ * This creates a learning record for future pattern refinement.
+ */
+export function recordEscalationSuccess(
+  tracker: FailureTracker,
+  issue: BeadsIssue,
+  originalModel: 'sonnet' | 'haiku',
+  succeededWithOpus: boolean
+): ModelEscalationLearning {
+  const record = tracker.records.get(issue.id);
+
+  // Mark escalation in the record
+  if (record) {
+    record.originalModel = originalModel;
+    record.escalatedToOpus = succeededWithOpus;
+    record.escalationReason = `Task "${issue.title}" required opus after failing with ${originalModel}`;
+  }
+
+  // Extract potential patterns from the issue
+  const suggestedPatterns = extractPatternsForLearning(issue);
+
+  const learning: ModelEscalationLearning = {
+    issueId: issue.id,
+    issueTitle: issue.title,
+    originalModel,
+    failedAttempts: record?.attempts.length ?? 0,
+    escalatedAt: new Date().toISOString(),
+    succeededWithOpus,
+    suggestedPatterns,
+  };
+
+  return learning;
+}
+
+/**
+ * Extract keywords from an issue that might indicate it needs opus.
+ * Used for learning and pattern refinement.
+ */
+function extractPatternsForLearning(issue: BeadsIssue): string[] {
+  const patterns: string[] = [];
+  const title = issue.title.toLowerCase();
+  const desc = (issue.description || '').toLowerCase();
+  const combined = `${title} ${desc}`;
+
+  // Common words that might indicate complexity
+  const complexityIndicators = [
+    'multiple', 'across', 'all', 'entire', 'whole',
+    'complex', 'advanced', 'sophisticated',
+    'debug', 'investigate', 'diagnose',
+    'integrate', 'coordinate', 'orchestrate',
+    'optimize', 'performance', 'memory',
+    'architecture', 'design', 'refactor',
+    'migration', 'upgrade', 'convert',
+    'security', 'authentication', 'authorization',
+  ];
+
+  for (const indicator of complexityIndicators) {
+    if (combined.includes(indicator)) {
+      patterns.push(indicator);
+    }
+  }
+
+  // Extract the main action verb + noun if possible
+  const actionMatch = title.match(/^(add|implement|create|fix|update|refactor|migrate)\s+(.+)/i);
+  if (actionMatch) {
+    const verb = actionMatch[1].toLowerCase();
+    const noun = actionMatch[2].split(/\s+/).slice(0, 2).join(' ').toLowerCase();
+    patterns.push(`${verb} ${noun}`);
+  }
+
+  return [...new Set(patterns)].slice(0, 5); // Dedupe and limit
+}
+
+/**
+ * Format an escalation learning record for annotation in Beads.
+ */
+export function formatEscalationLearning(learning: ModelEscalationLearning): string {
+  const lines: string[] = [];
+
+  lines.push('## Model Escalation Learning');
+  lines.push('');
+  lines.push(`**Original Model**: ${learning.originalModel}`);
+  lines.push(`**Failed Attempts**: ${learning.failedAttempts}`);
+  lines.push(`**Escalated At**: ${learning.escalatedAt}`);
+  lines.push(`**Succeeded with Opus**: ${learning.succeededWithOpus ? 'Yes' : 'No'}`);
+  lines.push('');
+  lines.push('### Suggested Patterns for Opus Selection');
+  lines.push('');
+  lines.push('Consider adding these patterns to `opusPatterns` in `selectModelForTask`:');
+  lines.push('');
+  for (const pattern of learning.suggestedPatterns) {
+    lines.push(`- \`${pattern}\``);
+  }
+  lines.push('');
+  lines.push('*This annotation was auto-generated by the harness self-healing system.*');
+
+  return lines.join('\n');
+}
+
+/**
+ * Get the effective model for a task, considering escalation history.
+ * Call this instead of selectModelForTask when you have failure history.
+ */
+export function getEffectiveModel(
+  tracker: FailureTracker,
+  issueId: string,
+  heuristicModel: 'opus' | 'sonnet' | 'haiku'
+): { model: 'opus' | 'sonnet' | 'haiku'; escalated: boolean; reason: string } {
+  const escalation = shouldEscalateModel(tracker, issueId, heuristicModel);
+
+  if (escalation.escalate) {
+    return {
+      model: escalation.toModel,
+      escalated: true,
+      reason: escalation.reason,
+    };
+  }
+
+  return {
+    model: heuristicModel,
+    escalated: false,
+    reason: 'Using heuristic selection',
+  };
 }

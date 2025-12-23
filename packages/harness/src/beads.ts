@@ -654,6 +654,32 @@ export async function annotateIssueFailure(
 }
 
 /**
+ * Add an escalation learning annotation to an issue.
+ * Records when a task required model escalation for future pattern refinement.
+ *
+ * Philosophy: Self-healing creates learning. When cheaper models fail and
+ * opus succeeds, we record the patterns so selectModelForTask can improve.
+ */
+export async function annotateIssueEscalation(
+  issueId: string,
+  annotation: string,
+  cwd?: string
+): Promise<void> {
+  try {
+    // Add a label to indicate model escalation occurred
+    await bd(`label add ${issueId} model-escalated`, cwd);
+
+    // Log the learning annotation
+    console.log(`  [Escalation Learning] ${issueId}:`);
+    const firstLine = annotation.split('\n').find(l => l.trim()) || '';
+    console.log(`    ${firstLine}`);
+  } catch (error) {
+    // Don't fail the harness if annotation fails
+    console.log(`  [Warning] Could not annotate escalation for ${issueId}`);
+  }
+}
+
+/**
  * Mark an issue as skipped due to repeated failures.
  */
 export async function markIssueSkipped(

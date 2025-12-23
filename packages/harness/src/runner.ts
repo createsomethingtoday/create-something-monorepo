@@ -77,7 +77,11 @@ import {
   formatFailureAnnotation,
   formatFailureStats,
   getFailureStats,
+  getEffectiveModel,
+  recordEscalationSuccess,
+  formatEscalationLearning,
 } from './failure-handler.js';
+import { annotateIssueEscalation } from './beads.js';
 
 /**
  * Type guard to check if a checkpoint has review data.
@@ -361,9 +365,18 @@ export async function runHarness(
     // Clear redirect notes for next iteration
     redirectNotes = [];
 
-    // 4. Run session with cost-optimized model selection
+    // 4. Run session with cost-optimized model selection + escalation
     harnessState.currentSession++;
-    const model = selectModelForTask(nextIssue);
+    const heuristicModel = selectModelForTask(nextIssue);
+    const { model, escalated, reason: modelReason } = getEffectiveModel(
+      failureTracker,
+      nextIssue.id,
+      heuristicModel
+    );
+    if (escalated) {
+      console.log(`\n🔄 Model escalated: ${heuristicModel} → ${model}`);
+      console.log(`   Reason: ${modelReason}`);
+    }
     console.log(`\n🤖 Starting session #${harnessState.currentSession} [${model}]...`);
 
     const sessionResult = await runSession(nextIssue, primingContext, {
@@ -383,6 +396,26 @@ export async function runHarness(
         console.log(`✅ Task completed on retry (attempt ${attemptCount + 1}): ${nextIssue.id}`);
       } else {
         console.log(`✅ Task completed: ${nextIssue.id}`);
+      }
+
+      // Record escalation learning if model was escalated
+      if (escalated && heuristicModel !== 'opus') {
+        const learning = recordEscalationSuccess(
+          failureTracker,
+          nextIssue,
+          heuristicModel as 'sonnet' | 'haiku',
+          model === 'opus'
+        );
+        console.log(`📚 Learning recorded: ${heuristicModel} → ${model} for "${nextIssue.title.slice(0, 40)}..."`);
+
+        // Annotate the issue with learning for future pattern refinement
+        if (!options.dryRun) {
+          await annotateIssueEscalation(
+            nextIssue.id,
+            formatEscalationLearning(learning),
+            options.cwd
+          );
+        }
       }
 
       await updateIssueStatus(nextIssue.id, 'closed', options.cwd);
