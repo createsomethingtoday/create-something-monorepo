@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { LoginForm, SignupForm, MagicLinkForm } from '@create-something/components/auth';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 
 	interface AuthResponse {
 		success?: boolean;
@@ -32,7 +32,8 @@
 				return false;
 			}
 
-			// Redirect to intended destination or home
+			// Invalidate all load functions to refresh user state
+			await invalidateAll();
 			const redirectTo = data.redirectTo || '/';
 			goto(redirectTo);
 			return true;
@@ -62,7 +63,8 @@
 				return false;
 			}
 
-			// Redirect to intended destination or home
+			// Invalidate all load functions to refresh user state
+			await invalidateAll();
 			const redirectTo = data.redirectTo || '/';
 			goto(redirectTo);
 			return true;

@@ -4,7 +4,7 @@
  * Canon: The database disappears into the query.
  */
 
-import type { User, RefreshToken, SigningKey, ApiKey } from '../types';
+import type { User, RefreshToken, SigningKey, ApiKey, CrossDomainToken } from '../types';
 
 // User queries
 export async function findUserByEmail(db: D1Database, email: string): Promise<User | null> {
@@ -346,4 +346,65 @@ export async function findDeletedUsersForCleanup(db: D1Database): Promise<User[]
 		.prepare("SELECT * FROM users WHERE deleted_at < datetime('now', '-30 days')")
 		.all<User>();
 	return result.results ?? [];
+}
+
+// Cross-domain token queries
+export async function createCrossDomainToken(
+	db: D1Database,
+	token: {
+		id: string;
+		user_id: string;
+		token_hash: string;
+		target: CrossDomainToken['target'];
+		expires_at: string;
+	}
+): Promise<void> {
+	await db
+		.prepare(
+			`INSERT INTO cross_domain_tokens (id, user_id, token_hash, target, expires_at)
+       VALUES (?, ?, ?, ?, ?)`
+		)
+		.bind(token.id, token.user_id, token.token_hash, token.target, token.expires_at)
+		.run();
+}
+
+export async function findCrossDomainTokenByHash(
+	db: D1Database,
+	tokenHash: string
+): Promise<CrossDomainToken | null> {
+	return db
+		.prepare(
+			`SELECT * FROM cross_domain_tokens
+       WHERE token_hash = ?
+       AND expires_at > datetime('now')
+       AND used_at IS NULL`
+		)
+		.bind(tokenHash)
+		.first<CrossDomainToken>();
+}
+
+export async function markCrossDomainTokenUsed(db: D1Database, id: string): Promise<void> {
+	await db
+		.prepare("UPDATE cross_domain_tokens SET used_at = datetime('now') WHERE id = ?")
+		.bind(id)
+		.run();
+}
+
+export async function countRecentCrossDomainTokens(
+	db: D1Database,
+	userId: string,
+	windowSeconds: number
+): Promise<number> {
+	const result = await db
+		.prepare(
+			`SELECT COUNT(*) as count FROM cross_domain_tokens
+       WHERE user_id = ? AND created_at > datetime('now', '-' || ? || ' seconds')`
+		)
+		.bind(userId, windowSeconds)
+		.first<{ count: number }>();
+	return result?.count ?? 0;
+}
+
+export async function cleanExpiredCrossDomainTokens(db: D1Database): Promise<void> {
+	await db.prepare("DELETE FROM cross_domain_tokens WHERE expires_at < datetime('now')").run();
 }
