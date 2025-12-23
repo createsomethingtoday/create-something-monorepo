@@ -87,6 +87,11 @@
 	]
 		.filter(Boolean)
 		.join('  ·  ');
+
+	// Scale bar configuration
+	const scaleBarIntervals = [0, 5, 10, 15, 20]; // feet
+	const scaleBarY = svgHeight - 10; // Position near bottom
+	const scaleBarStartX = margin;
 </script>
 
 <div class="floor-plan-container" class:interactive>
@@ -250,6 +255,46 @@
 				class="north-line"
 			/>
 			<text x={tx(plan.width + 5)} y={ty(plan.depth) - 3} class="north-label">N</text>
+		</g>
+
+		<!-- Scale bar - graphic representation -->
+		<g class="scale-bar">
+			<!-- Main horizontal line -->
+			<line
+				x1={scaleBarStartX}
+				y1={scaleBarY}
+				x2={scaleBarStartX + (20 * scale)}
+				y2={scaleBarY}
+				class="scale-bar-line"
+			/>
+
+			<!-- Interval marks and labels -->
+			{#each scaleBarIntervals as interval}
+				<line
+					x1={scaleBarStartX + (interval * scale)}
+					y1={scaleBarY - 3}
+					x2={scaleBarStartX + (interval * scale)}
+					y2={scaleBarY + 3}
+					class="scale-bar-tick"
+				/>
+				<text
+					x={scaleBarStartX + (interval * scale)}
+					y={scaleBarY + 10}
+					class="scale-bar-label"
+				>
+					{interval}′
+				</text>
+			{/each}
+		</g>
+
+		<!-- Title block - minimal, bottom left -->
+		<g class="title-block">
+			<text x={margin} y={margin - 5} class="title-block-name">
+				{plan.name}
+			</text>
+			<text x={margin} y={margin - 15} class="title-block-scale">
+				SCALE: 1/4″ = 1′-0″
+			</text>
 		</g>
 	</svg>
 
@@ -580,6 +625,45 @@
 		color: var(--color-fg-subtle);
 		margin: var(--space-md, 1.5rem) 0 0 0;
 		text-align: right;
+	}
+
+	/* Scale bar - architectural graphic scale */
+	.scale-bar-line {
+		stroke: var(--arch-scale-color);
+		stroke-width: 0.75;
+		stroke-linecap: square;
+	}
+
+	.scale-bar-tick {
+		stroke: var(--arch-scale-color);
+		stroke-width: 0.5;
+	}
+
+	.scale-bar-label {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 6px;
+		fill: var(--arch-scale-text);
+		text-anchor: middle;
+		letter-spacing: var(--tracking-normal, 0.02em);
+	}
+
+	/* Title block - minimal project info */
+	.title-block-name {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 8px;
+		fill: var(--arch-title-primary);
+		font-weight: 500;
+		letter-spacing: var(--tracking-wide, 0.04em);
+		text-anchor: start;
+	}
+
+	.title-block-scale {
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 6px;
+		fill: var(--arch-title-secondary);
+		letter-spacing: var(--tracking-wider, 0.05em);
+		text-anchor: start;
+		text-transform: uppercase;
 	}
 
 	@media (max-width: 768px) {
