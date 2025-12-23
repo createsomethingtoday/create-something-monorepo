@@ -29,17 +29,16 @@
 		</pattern>
 
 		<!-- Concrete Hatching Pattern -->
-		<!-- Denser diagonal lines for concrete/masonry -->
+		<!-- Stipple dots for section cuts through concrete -->
 		<pattern
 			id="concrete-hatch"
 			x="0"
 			y="0"
-			width="{3}"
-			height="{3}"
+			width="{4}"
+			height="{4}"
 			patternUnits="userSpaceOnUse"
-			patternTransform="rotate(-45)"
 		>
-			<line x1="0" y1="0" x2="0" y2="3" stroke="var(--arch-hatch-color)" stroke-width="0.25" />
+			<circle cx="2" cy="2" r="1" fill="var(--arch-hatch-color)" opacity="0.6" />
 		</pattern>
 
 		<!-- Metal/Steel Hatching Pattern -->
@@ -64,17 +63,22 @@
 		</pattern>
 
 		<!-- Insulation Hatching Pattern -->
-		<!-- Crossed diagonal lines for insulation/void spaces -->
+		<!-- Wavy lines for wall cavity insulation -->
 		<pattern
 			id="insulation-hatch"
 			x="0"
 			y="0"
-			width="{5}"
-			height="{5}"
+			width="{8}"
+			height="{8}"
 			patternUnits="userSpaceOnUse"
 		>
-			<line x1="0" y1="0" x2="5" y2="5" stroke="var(--arch-hatch-color)" stroke-width="0.25" />
-			<line x1="5" y1="0" x2="0" y2="5" stroke="var(--arch-hatch-color)" stroke-width="0.25" />
+			<path
+				d="M 0 4 Q 2 2 4 4 T 8 4"
+				stroke="var(--arch-hatch-color)"
+				stroke-width="0.4"
+				fill="none"
+				stroke-linecap="round"
+			/>
 		</pattern>
 	</defs>
 </svg>
