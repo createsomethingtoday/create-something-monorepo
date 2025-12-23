@@ -8,79 +8,39 @@
  */
 
 import {
-	COOKIE_CONFIG,
 	setSessionCookies,
 	getSessionCookies,
 	clearSessionCookies,
-	getAccessTokenFromRequest,
-	getRefreshTokenFromRequest,
 	type CookieOptions,
 } from './cookies.js';
 
-// =============================================================================
-// CONFIGURATION
-// =============================================================================
+// Import types from shared types module to avoid circular dependencies
+import {
+	SESSION_CONFIG,
+	type TokenResponse,
+	type JWTPayload,
+	type User,
+	type SessionState,
+	type RefreshResult,
+	type SessionAnalyticsEvent,
+	type SessionManagerOptions,
+	type AuthHooksConfig,
+	type JWK,
+} from './types.js';
 
-/** Session configuration */
-export const SESSION_CONFIG = {
-	/** Refresh access token when it has less than 2 minutes remaining */
-	REFRESH_THRESHOLD_SECONDS: 2 * 60,
-	/** Identity worker endpoint */
-	IDENTITY_ENDPOINT: 'https://id.createsomething.space',
-	/** JWKS cache TTL in seconds */
-	JWKS_CACHE_TTL: 3600,
-} as const;
-
-// =============================================================================
-// TYPES
-// =============================================================================
-
-export interface TokenResponse {
-	access_token: string;
-	refresh_token: string;
-	token_type: 'Bearer';
-	expires_in: number;
-}
-
-export interface JWTPayload {
-	sub: string;
-	email: string;
-	tier: 'free' | 'pro' | 'agency';
-	source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
-	iss: string;
-	aud: string[];
-	iat: number;
-	exp: number;
-}
-
-export interface User {
-	id: string;
-	email: string;
-	tier: 'free' | 'pro' | 'agency';
-	source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
-}
-
-export interface SessionState {
-	user: User | null;
-	expiresAt: number | null;
-	isAuthenticated: boolean;
-}
-
-export interface RefreshResult {
-	success: boolean;
-	tokens?: TokenResponse;
-	error?: string;
-}
-
-export interface SessionAnalyticsEvent {
-	action:
-		| 'auth_login_complete'
-		| 'auth_logout'
-		| 'auth_token_refresh'
-		| 'auth_session_expired'
-		| 'auth_session_restored';
-	metadata?: Record<string, unknown>;
-}
+// Re-export for backwards compatibility
+export { SESSION_CONFIG };
+export type {
+	TokenResponse,
+	JWTPayload,
+	User,
+	SessionState,
+	RefreshResult,
+	SessionAnalyticsEvent,
+	SessionManagerOptions,
+	AuthHooksConfig,
+	JWK,
+};
 
 // =============================================================================
 // JWT UTILITIES
@@ -227,15 +187,6 @@ type CookiesAPI = {
 	set: (name: string, value: string, options: CookieOptions) => void;
 	delete: (name: string, options?: { path?: string }) => void;
 };
-
-export interface SessionManagerOptions {
-	/** Whether running in production (affects Secure flag) */
-	isProduction?: boolean;
-	/** Domain for cross-subdomain cookies */
-	domain?: string;
-	/** Analytics event emitter */
-	onAnalyticsEvent?: (event: SessionAnalyticsEvent) => void;
-}
 
 /**
  * Create a session manager for server-side use
@@ -488,83 +439,13 @@ export async function requireAuth(
 }
 
 // =============================================================================
-// JWT VALIDATION WITH JWKS
-// =============================================================================
-
-/** JWK (JSON Web Key) structure for ES256 public keys */
-export interface JWK {
-	kty: string;
-	crv: string;
-	x: string;
-	y: string;
-	kid: string;
-	alg: string;
-	use: string;
-}
-
-// Import the canonical implementation from server.ts
-// NOTE: This creates a dependency where server.ts imports types from session.ts
-// and session.ts imports the implementation from server.ts. This is intentional:
-// - Types flow: session.ts → server.ts (session.ts is the type source)
-// - Implementation: server.ts → session.ts (server.ts is the implementation source)
-import { validateToken as validateTokenImpl } from './server.js';
-
-/**
- * Validate a JWT with cryptographic signature verification via JWKS
- *
- * This is the secure server-side validation function that verifies the
- * token signature against the Identity Worker's public keys.
- *
- * NOTE: This is a convenience wrapper around the canonical implementation
- * in server.ts. For advanced use cases (KV caching), import directly from
- * '@create-something/components/auth/server'.
- *
- * @example
- * ```typescript
- * // In +layout.server.ts
- * import { validateToken, getSessionCookies } from '@create-something/components/auth';
- *
- * export const load: LayoutServerLoad = async ({ cookies }) => {
- *   const session = getSessionCookies(cookies);
- *   const user = session.accessToken
- *     ? await validateToken(session.accessToken)
- *     : null;
- *   return { user };
- * };
- * ```
- *
- * @example
- * ```typescript
- * // For KV-cached validation in Cloudflare Workers
- * import { validateToken } from '@create-something/components/auth/server';
- *
- * const user = await validateToken(token, platform?.env);
- * ```
- */
-export async function validateToken(token: string): Promise<User | null> {
-	// Delegate to canonical implementation (without KV caching)
-	return validateTokenImpl(token);
-}
-
-// =============================================================================
 // SVELTEKIT AUTH HOOKS
 // =============================================================================
 
-/** Configuration for createAuthHooks */
-export interface AuthHooksConfig {
-	/** Routes that require authentication (default: []) */
-	protectedPaths?: string[];
-	/** Login redirect path (default: '/login') */
-	loginPath?: string;
-	/** Whether to include redirect parameter (default: true) */
-	includeRedirect?: boolean;
-	/** Whether running in production (default: true) */
-	isProduction?: boolean;
-	/** Domain for cross-subdomain cookies */
-	domain?: string;
-	/** Analytics event emitter */
-	onAnalyticsEvent?: (event: SessionAnalyticsEvent) => void;
-}
+// Note: validateToken is now only exported from server.ts to avoid circular dependencies.
+// For cryptographic JWT validation, import from '@create-something/components/auth/server':
+//   import { validateToken } from '@create-something/components/auth/server';
+// The main index.ts re-exports it as validateTokenWithKV for clarity.
 
 /** SvelteKit Handle function type */
 type Handle = (input: {
