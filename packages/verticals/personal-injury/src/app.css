@@ -14,6 +14,12 @@
 @tailwind utilities;
 
 /* ==========================================================================
+   Vertical Template Base - Shared across all verticals
+   Import AFTER Tailwind to apply Canon base styles
+   ========================================================================== */
+ '-something/components/styles/vertical-base.css';
+
+/* ==========================================================================
    Canon Design Tokens - Single Source of Truth
    Import from @create-something/components
    ========================================================================== */

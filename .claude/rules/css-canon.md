@@ -10,6 +10,7 @@
 |------|---------|-------------|
 | `tokens.css` | Pure token definitions only | `@create-something/components/styles/tokens.css` |
 | `canon.css` | Tokens + base styles + utilities | `@create-something/components/styles/canon.css` |
+| `vertical-base.css` | Shared vertical template base (DRY) | `@create-something/components/styles/vertical-base.css` |
 
 ### Import Patterns
 
@@ -20,11 +21,12 @@
 
 **Vertical templates** (with Tailwind):
 ```css
+@import '@create-something/components/styles/tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import '@create-something/components/styles/tokens.css';
-/* Then add template-specific styles */
+@import '@create-something/components/styles/vertical-base.css';
+/* Then add template-specific overrides */
 ```
 
 **Tokens only** (for custom theming):

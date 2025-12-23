@@ -5,16 +5,21 @@
  * Bold typography, high contrast, metrics that matter.
  */
 
+/* ==========================================================================
+   Canon Design Tokens - Single Source of Truth
+   Import from @create-something/components (MUST come before @tailwind)
+   ========================================================================== */
+@import '@create-something/components/styles/tokens.css';
+
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
 /* ==========================================================================
-   Canon Design Tokens - Single Source of Truth
-   Import from @create-something/components
+   Vertical Template Base - Shared across all verticals
+   Import AFTER Tailwind to apply Canon base styles
    ========================================================================== */
-
-@import '@create-something/components/styles/tokens.css';
+@import '@create-something/components/styles/vertical-base.css';
 
 /* ==========================================================================
    Template-Specific Token Overrides
