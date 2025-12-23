@@ -3,9 +3,16 @@
 	import { Navigation, Analytics, ModeIndicator, Footer, SkipToContent } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	// Handle logout
+	async function handleLogout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		await invalidateAll();
+		goto('/');
+	}
 
 	// View Transitions API - Hermeneutic Navigation
 	// .agency: Efficient (200ms)
@@ -105,6 +112,11 @@
 		fixed={true}
 		ctaLabel="Get Started"
 		ctaHref="/contact"
+		user={data.user}
+		onLogout={handleLogout}
+		showLogin={true}
+		loginHref="/login"
+		accountHref="/account"
 	/>
 
 	<main id="main-content" class="pt-[72px]">
