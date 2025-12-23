@@ -47,7 +47,7 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 		const insights = await fetchTasteInsights(db, {
 			userId,
 			days: 30,
-			includeItemCounts: false, // Page uses simplified collection counts
+			includeItemCounts: true, // Include item counts for collection growth
 		});
 
 		return insights satisfies InsightsData;

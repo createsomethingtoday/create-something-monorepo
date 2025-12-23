@@ -1,8 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { formatTime } from '$lib/taste/insights';
+	import { Sparkline } from '@create-something/tufte';
+	import type { DataPoint } from '@create-something/tufte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Share state
+	let shareState = $state<'idle' | 'copying' | 'copied'>('idle');
 
 	// Format date for display
 	function formatDate(dateStr: string): string {
@@ -30,6 +35,72 @@
 	const maxChannelTime = $derived(
 		Math.max(...data.channelBreakdown.map(c => c.timeSeconds), 1)
 	);
+
+	// Transform collection growth to sparkline data
+	const collectionSparklineData = $derived<DataPoint[]>(
+		data.collectionGrowth.map(point => ({ count: point.collectionCount }))
+	);
+
+	// Calculate total items across all collections
+	const totalCollectionItems = $derived(
+		data.collectionGrowth.length > 0
+			? data.collectionGrowth[data.collectionGrowth.length - 1].itemCount || 0
+			: 0
+	);
+
+	// Current collection count
+	const currentCollectionCount = $derived(
+		data.collectionGrowth.length > 0
+			? data.collectionGrowth[data.collectionGrowth.length - 1].collectionCount
+			: 0
+	);
+
+	// Generate shareable profile text
+	function generateShareText(): string {
+		const lines: string[] = [];
+		lines.push('🎨 My Taste Profile');
+		lines.push('');
+		lines.push(`Exploration Score: ${data.profile.explorationScore}/100`);
+		lines.push(`${data.profile.summary}`);
+		lines.push('');
+		lines.push(`📊 Stats:`);
+		lines.push(`• ${data.stats.channelsExplored}/${data.stats.totalChannels} channels explored`);
+		lines.push(`• ${formatTime(data.stats.totalTimeSeconds)} invested`);
+		lines.push(`• ${data.stats.totalStudied} references deeply studied`);
+		if (data.profile.focusAreas.length > 0) {
+			lines.push('');
+			lines.push(`Focus: ${data.profile.focusAreas.join(', ')}`);
+		}
+		lines.push('');
+		lines.push('Cultivate your taste at createsomething.ltd/taste');
+		return lines.join('\n');
+	}
+
+	// Copy profile to clipboard
+	async function shareProfile() {
+		if (shareState !== 'idle') return;
+
+		shareState = 'copying';
+		try {
+			const text = generateShareText();
+
+			// Try Web Share API first (mobile/native share sheet)
+			if (navigator.share) {
+				await navigator.share({
+					title: 'My Taste Profile',
+					text: text
+				});
+			} else {
+				// Fall back to clipboard
+				await navigator.clipboard.writeText(text);
+			}
+			shareState = 'copied';
+			setTimeout(() => { shareState = 'idle'; }, 2000);
+		} catch (err) {
+			// User cancelled share or error
+			shareState = 'idle';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -229,21 +300,49 @@
 	{/if}
 
 	<!-- Collection Growth -->
-	{#if data.collectionGrowth.length > 0}
-		<section class="growth-section">
-			<div class="max-w-4xl mx-auto px-6">
-				<h2 class="section-title">Collection Growth</h2>
-				<div class="growth-chart">
-					{#each data.collectionGrowth as point, i}
-						<div class="growth-point">
-							<span class="growth-date">{formatDate(point.date)}</span>
-							<span class="growth-count">{point.collectionCount} collections</span>
+	<section class="growth-section">
+		<div class="max-w-4xl mx-auto px-6">
+			<h2 class="section-title">Collection Growth</h2>
+			{#if data.collectionGrowth.length > 1}
+				<div class="growth-card">
+					<div class="growth-stats">
+						<div class="growth-stat">
+							<span class="growth-value">{currentCollectionCount}</span>
+							<span class="growth-label">Collections</span>
 						</div>
-					{/each}
+						{#if totalCollectionItems > 0}
+							<div class="growth-stat">
+								<span class="growth-value">{totalCollectionItems}</span>
+								<span class="growth-label">Total Items</span>
+							</div>
+						{/if}
+					</div>
+					<div class="growth-sparkline">
+						<Sparkline
+							data={collectionSparklineData}
+							width={200}
+							height={40}
+							showFill={true}
+							showReferenceLine={false}
+						/>
+					</div>
+					<div class="growth-range">
+						<span>{formatDate(data.collectionGrowth[0].date)}</span>
+						<span>{formatDate(data.collectionGrowth[data.collectionGrowth.length - 1].date)}</span>
+					</div>
 				</div>
-			</div>
-		</section>
-	{/if}
+			{:else if data.collectionGrowth.length === 1}
+				<div class="growth-empty">
+					<p class="growth-single">{currentCollectionCount} collection created on {formatDate(data.collectionGrowth[0].date)}</p>
+				</div>
+			{:else}
+				<div class="growth-empty">
+					<p>No collections yet. Start curating your taste.</p>
+					<a href="/taste" class="growth-cta">Explore Channels</a>
+				</div>
+			{/if}
+		</div>
+	</section>
 
 	<!-- Share Profile -->
 	<section class="share-section">
@@ -251,8 +350,20 @@
 			<p class="share-text">
 				Taste is cultivated, not consumed. Share your exploration journey.
 			</p>
-			<button class="share-button" disabled>
-				Share Profile (Coming Soon)
+			<button
+				class="share-button"
+				class:copying={shareState === 'copying'}
+				class:copied={shareState === 'copied'}
+				onclick={shareProfile}
+				disabled={shareState === 'copying'}
+			>
+				{#if shareState === 'copied'}
+					Copied to Clipboard
+				{:else if shareState === 'copying'}
+					Sharing...
+				{:else}
+					Share Profile
+				{/if}
 			</button>
 		</div>
 	</section>
@@ -657,28 +768,72 @@
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
-	.growth-chart {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-sm);
-	}
-
-	.growth-point {
-		padding: var(--space-xs) var(--space-sm);
+	.growth-card {
+		padding: var(--space-md);
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 	}
 
-	.growth-date {
-		display: block;
+	.growth-stats {
+		display: flex;
+		gap: var(--space-lg);
+		margin-bottom: var(--space-sm);
+	}
+
+	.growth-stat {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.growth-value {
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.growth-label {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 	}
 
-	.growth-count {
-		display: block;
+	.growth-sparkline {
+		height: 40px;
+		margin-bottom: var(--space-xs);
+	}
+
+	.growth-range {
+		display: flex;
+		justify-content: space-between;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.growth-empty {
+		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+		text-align: center;
+		color: var(--color-fg-tertiary);
+	}
+
+	.growth-single {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
+	.growth-cta {
+		display: inline-block;
+		margin-top: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);
+		text-decoration: none;
+		border: 1px solid var(--color-border-emphasis);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.growth-cta:hover {
+		border-color: var(--color-fg-primary);
 	}
 
 	/* Share Section */
@@ -699,8 +854,22 @@
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		color: var(--color-fg-primary);
-		cursor: not-allowed;
-		opacity: 0.5;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.share-button:hover:not(:disabled) {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-hover);
+	}
+
+	.share-button:disabled {
+		cursor: wait;
+	}
+
+	.share-button.copied {
+		border-color: var(--color-success);
+		color: var(--color-success);
 	}
 
 	@media (max-width: 640px) {

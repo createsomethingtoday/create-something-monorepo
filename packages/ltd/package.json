@@ -14,7 +14,8 @@
 		"cf-typegen": "wrangler types"
 	},
 	"dependencies": {
-		"@create-something/components": "workspace:*"
+		"@create-something/components": "workspace:*",
+		"@create-something/tufte": "workspace:*"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20251128.0",
