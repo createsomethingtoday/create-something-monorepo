@@ -83,16 +83,29 @@ export function extractTitle(path: string): string {
 }
 
 /**
- * Build SQL path filter based on content type
+ * Path patterns for content types (used with LIKE operator)
+ * These are static constants, never user-provided values.
  */
-function buildPathFilter(type: ContentType): string {
+const PATH_PATTERNS = {
+	papers: '%/papers/%',
+	experiments: '%/experiments/%',
+} as const;
+
+/**
+ * Get path filter configuration for parameterized queries
+ *
+ * Returns an object with patterns array for use with bound parameters.
+ * This eliminates SQL injection risk by ensuring all values go through
+ * the database's parameter binding mechanism.
+ */
+function getPathFilterConfig(type: ContentType): { patterns: string[] } {
 	switch (type) {
 		case 'papers':
-			return "AND url LIKE '%/papers/%'";
+			return { patterns: [PATH_PATTERNS.papers] };
 		case 'experiments':
-			return "AND url LIKE '%/experiments/%'";
+			return { patterns: [PATH_PATTERNS.experiments] };
 		default:
-			return "AND (url LIKE '%/papers/%' OR url LIKE '%/experiments/%')";
+			return { patterns: [PATH_PATTERNS.papers, PATH_PATTERNS.experiments] };
 	}
 }
 
@@ -147,13 +160,19 @@ interface UserHistoryRow {
 
 /**
  * Fetch popular content from D1
+ *
+ * Uses parameterized queries for path filtering to prevent SQL injection.
  */
 async function fetchPopular(
 	db: D1Database,
 	startDate: string,
-	pathFilter: string,
+	pathPatterns: string[],
 	limit: number
 ): Promise<PopularContent[]> {
+	// Build parameterized path filter with placeholders
+	const pathPlaceholders = pathPatterns.map(() => 'url LIKE ?').join(' OR ');
+	const pathFilter = pathPatterns.length > 0 ? `AND (${pathPlaceholders})` : '';
+
 	const query = `
 		SELECT
 			url as path,
@@ -171,7 +190,11 @@ async function fetchPopular(
 		LIMIT ?
 	`;
 
-	const results = await db.prepare(query).bind(startDate, limit).all<PopularRow>();
+	// Bind parameters in order: startDate, ...pathPatterns, limit
+	const results = await db
+		.prepare(query)
+		.bind(startDate, ...pathPatterns, limit)
+		.all<PopularRow>();
 
 	return (results.results || []).map((row) => ({
 		path: row.path,
@@ -186,12 +209,19 @@ async function fetchPopular(
 
 /**
  * Fetch trending content (week-over-week growth)
+ *
+ * Uses parameterized queries for path filtering to prevent SQL injection.
  */
 async function fetchTrending(
 	db: D1Database,
-	pathFilter: string,
+	pathPatterns: string[],
 	limit: number
 ): Promise<PopularContent[]> {
+	// Build parameterized path filter with placeholders
+	const pathPlaceholders = pathPatterns.map(() => 'url LIKE ?').join(' OR ');
+	const pathFilter = pathPatterns.length > 0 ? `AND (${pathPlaceholders})` : '';
+
+	// Note: path patterns are needed twice in this query (once for recent, once for previous)
 	const query = `
 		WITH recent AS (
 			SELECT url, COUNT(*) as views
@@ -224,7 +254,11 @@ async function fetchTrending(
 		LIMIT ?
 	`;
 
-	const results = await db.prepare(query).bind(limit).all<TrendingRow>();
+	// Bind parameters: ...pathPatterns (for recent CTE), ...pathPatterns (for previous CTE), limit
+	const results = await db
+		.prepare(query)
+		.bind(...pathPatterns, ...pathPatterns, limit)
+		.all<TrendingRow>();
 
 	return (results.results || []).map((row) => ({
 		path: row.path,
@@ -239,12 +273,18 @@ async function fetchTrending(
 
 /**
  * Fetch user's reading history
+ *
+ * Uses parameterized queries for path filtering to prevent SQL injection.
  */
 async function fetchUserHistory(
 	db: D1Database,
 	userId: string,
-	pathFilter: string
+	pathPatterns: string[]
 ): Promise<UserReadingHistory[]> {
+	// Build parameterized path filter with placeholders
+	const pathPlaceholders = pathPatterns.map(() => 'url LIKE ?').join(' OR ');
+	const pathFilter = pathPatterns.length > 0 ? `AND (${pathPlaceholders})` : '';
+
 	const query = `
 		SELECT
 			url as path,
@@ -261,7 +301,8 @@ async function fetchUserHistory(
 		LIMIT 20
 	`;
 
-	const results = await db.prepare(query).bind(userId).all<UserHistoryRow>();
+	// Bind parameters: userId, ...pathPatterns
+	const results = await db.prepare(query).bind(userId, ...pathPatterns).all<UserHistoryRow>();
 
 	return (results.results || []).map((row) => ({
 		path: row.path,
@@ -305,12 +346,12 @@ export async function fetchPopularAnalytics(
 	const { type = 'all', period = '30d', limit = 10, userId = null } = options;
 
 	const safeLimit = Math.min(limit, 50);
-	const pathFilter = buildPathFilter(type);
+	const { patterns: pathPatterns } = getPathFilterConfig(type);
 	const startDate = getStartDate(period);
 
 	const [popular, trending] = await Promise.all([
-		fetchPopular(db, startDate, pathFilter, safeLimit),
-		fetchTrending(db, pathFilter, safeLimit),
+		fetchPopular(db, startDate, pathPatterns, safeLimit),
+		fetchTrending(db, pathPatterns, safeLimit),
 	]);
 
 	const response: PopularResponse = {
@@ -321,7 +362,7 @@ export async function fetchPopularAnalytics(
 	};
 
 	if (userId) {
-		response.userHistory = await fetchUserHistory(db, userId, pathFilter);
+		response.userHistory = await fetchUserHistory(db, userId, pathPatterns);
 	}
 
 	return response;
