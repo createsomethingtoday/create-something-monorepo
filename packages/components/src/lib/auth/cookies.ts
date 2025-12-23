@@ -234,7 +234,7 @@ export function getRefreshTokenFromRequest(request: Request): string | null {
 /**
  * Parse a Cookie header into key-value pairs
  */
-function parseCookieHeader(header: string): Record<string, string> {
+export function parseCookieHeader(header: string): Record<string, string> {
 	const cookies: Record<string, string> = {};
 
 	header.split(';').forEach((pair) => {
