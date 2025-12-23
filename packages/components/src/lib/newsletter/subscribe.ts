@@ -37,6 +37,7 @@ interface ExistingSubscriber {
 	email: string;
 	confirmed_at: string | null;
 	unsubscribed_at: string | null;
+	status: string | null;
 }
 
 interface KVNamespace {
@@ -257,12 +258,20 @@ export async function processSubscription(
 	let existingSubscriber: ExistingSubscriber | null = null;
 	try {
 		existingSubscriber = await env.DB.prepare(
-			`SELECT email, confirmed_at, unsubscribed_at FROM newsletter_subscribers WHERE email = ?`
+			`SELECT email, confirmed_at, unsubscribed_at, status FROM newsletter_subscribers WHERE email = ?`
 		)
 			.bind(email)
 			.first<ExistingSubscriber>();
 	} catch (dbError) {
 		console.warn('Could not check existing subscriber:', dbError);
+	}
+
+	// If email was previously bounced or complained, reject re-subscription
+	if (existingSubscriber?.status === 'bounced' || existingSubscriber?.status === 'complained') {
+		return {
+			result: { success: false, message: 'This email address cannot receive our newsletters.' },
+			status: 400,
+		};
 	}
 
 	// If already confirmed, no need to re-subscribe
