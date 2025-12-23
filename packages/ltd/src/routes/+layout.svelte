@@ -1,10 +1,17 @@
 <script lang="ts">
 	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent } from '@create-something/components';
-	import { onNavigate } from '$app/navigation';
+	import { onNavigate, goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import '../app.css';
 
 	let { children, data } = $props();
+
+	// Handle logout
+	async function handleLogout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		await invalidateAll();
+		goto('/');
+	}
 
 	// View Transitions API - Hermeneutic Navigation
 	// .ltd: Contemplative (500ms)
@@ -85,6 +92,11 @@
 		logoSuffix=".ltd"
 		links={navLinks}
 		currentPath={data?.pathname || '/'}
+		user={data.user}
+		onLogout={handleLogout}
+		showLogin={true}
+		loginHref="/login"
+		accountHref="/account"
 	/>
 
 	<main id="main-content" class="flex-1">
