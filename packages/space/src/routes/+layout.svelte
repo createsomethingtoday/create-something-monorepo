@@ -211,6 +211,7 @@
 			{ label: 'Contact', href: '/contact' }
 		]}
 		showSocial={true}
+		isAuthenticated={!!data.user}
 	/>
 
 	<ModeIndicator current="space" />

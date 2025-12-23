@@ -235,6 +235,7 @@
 			{ label: 'Contact', href: '/contact' }
 		]}
 		showSocial={true}
+		isAuthenticated={!!data.user}
 	/>
 
 	<!-- Mode of Being Indicator - Hermeneutic Circle Position -->
