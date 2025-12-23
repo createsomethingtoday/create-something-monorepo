@@ -32,6 +32,23 @@ export interface TokenResponse {
 	expires_in: number;
 }
 
+export interface ExchangeResponse extends TokenResponse {
+	user: {
+		id: string;
+		email: string;
+		email_verified: boolean;
+		name: string | null;
+		avatar_url: string | null;
+		tier: 'free' | 'pro' | 'agency';
+		analytics_opt_out: boolean;
+		created_at: string;
+	};
+}
+
+export interface ErrorResponse {
+	error: string;
+}
+
 export interface JWTPayload {
 	sub: string;
 	email: string;
