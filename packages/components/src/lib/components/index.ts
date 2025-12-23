@@ -18,3 +18,4 @@ export { default as ModeIndicator } from './ModeIndicator.svelte';
 export { default as CrossPropertyLink } from './CrossPropertyLink.svelte';
 export { default as SkipToContent } from './SkipToContent.svelte';
 export { default as PrivacyPolicyContent } from './PrivacyPolicyContent.svelte';
+export { default as CookieConsent } from './CookieConsent.svelte';

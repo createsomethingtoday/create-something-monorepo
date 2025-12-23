@@ -37,11 +37,27 @@ export interface ConsentSyncResult {
 /** localStorage key for consent state */
 export const CONSENT_STORAGE_KEY = 'cs_consent';
 
+/** localStorage key for cookie consent state */
+export const COOKIE_CONSENT_STORAGE_KEY = 'cs_cookie_consent';
+
 /** Default consent state (opted in by default, as per common practice) */
 const DEFAULT_CONSENT: ConsentState = {
 	analytics: true,
 	timestamp: new Date().toISOString(),
 };
+
+// =============================================================================
+// COOKIE CONSENT TYPES
+// =============================================================================
+
+export type CookieConsentStatus = 'pending' | 'accepted';
+
+export interface CookieConsentState {
+	/** Status of cookie consent */
+	status: CookieConsentStatus;
+	/** ISO timestamp of when consent was given */
+	timestamp: string;
+}
 
 // =============================================================================
 // LOCAL STORAGE OPERATIONS
@@ -292,4 +308,107 @@ export function shouldTrackAnalytics(isAuthenticated: boolean): boolean {
 
 	// Check consent for authenticated users
 	return hasAnalyticsConsent(isAuthenticated);
+}
+
+// =============================================================================
+// COOKIE CONSENT OPERATIONS
+// =============================================================================
+
+/**
+ * Get current cookie consent state from localStorage
+ *
+ * @returns CookieConsentState or null if not set
+ */
+export function getCookieConsentState(): CookieConsentState | null {
+	if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+		return null;
+	}
+
+	try {
+		const stored = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+		if (!stored) return null;
+
+		const parsed = JSON.parse(stored) as CookieConsentState;
+
+		// Validate structure
+		if (
+			(parsed.status !== 'pending' && parsed.status !== 'accepted') ||
+			typeof parsed.timestamp !== 'string'
+		) {
+			console.warn('[CookieConsent] Invalid consent state in localStorage, clearing');
+			localStorage.removeItem(COOKIE_CONSENT_STORAGE_KEY);
+			return null;
+		}
+
+		return parsed;
+	} catch (error) {
+		console.warn('[CookieConsent] Failed to parse consent state:', error);
+		return null;
+	}
+}
+
+/**
+ * Set cookie consent state in localStorage
+ *
+ * @param state - The cookie consent state to save
+ */
+export function setCookieConsentState(state: CookieConsentState): void {
+	if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+		return;
+	}
+
+	try {
+		localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, JSON.stringify(state));
+	} catch (error) {
+		console.error('[CookieConsent] Failed to save consent state:', error);
+	}
+}
+
+/**
+ * Accept cookie consent for authentication cookies
+ *
+ * @returns The new consent state
+ */
+export function acceptCookieConsent(): CookieConsentState {
+	const state: CookieConsentState = {
+		status: 'accepted',
+		timestamp: new Date().toISOString(),
+	};
+	setCookieConsentState(state);
+	return state;
+}
+
+/**
+ * Check if user has accepted cookie consent
+ *
+ * @returns true if cookies can be set
+ */
+export function hasCookieConsent(): boolean {
+	const state = getCookieConsentState();
+	return state?.status === 'accepted';
+}
+
+/**
+ * Check if cookie consent is pending (user hasn't interacted with banner)
+ *
+ * @returns true if consent is pending or not set
+ */
+export function isCookieConsentPending(): boolean {
+	const state = getCookieConsentState();
+	return state === null || state.status === 'pending';
+}
+
+/**
+ * Clear cookie consent state from localStorage
+ */
+export function clearCookieConsentState(): void {
+	if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+		return;
+	}
+
+	try {
+		localStorage.removeItem(COOKIE_CONSENT_STORAGE_KEY);
+	} catch (error) {
+		console.error('[CookieConsent] Failed to clear consent state:', error);
+	}
 }

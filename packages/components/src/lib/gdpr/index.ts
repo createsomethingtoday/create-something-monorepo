@@ -10,8 +10,11 @@ export {
 	// Types
 	type ConsentState,
 	type ConsentSyncResult,
+	type CookieConsentStatus,
+	type CookieConsentState,
 	// Constants
 	CONSENT_STORAGE_KEY,
+	COOKIE_CONSENT_STORAGE_KEY,
 	// Local storage operations
 	getConsentState,
 	setConsentState,
@@ -26,4 +29,11 @@ export {
 	// Browser detection
 	isDNTEnabled,
 	shouldTrackAnalytics,
+	// Cookie consent operations
+	getCookieConsentState,
+	setCookieConsentState,
+	acceptCookieConsent,
+	hasCookieConsent,
+	isCookieConsentPending,
+	clearCookieConsentState,
 } from './consent.js';
