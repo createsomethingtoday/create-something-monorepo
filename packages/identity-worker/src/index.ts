@@ -18,6 +18,8 @@ import {
 	updateUserPassword,
 	updateUserEmail,
 	softDeleteUser,
+	hardDeleteUser,
+	findDeletedUsersForCleanup,
 	revokeAllUserTokens,
 	checkRateLimit,
 	incrementRateLimit,
@@ -91,6 +93,13 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path.startsWith('/v1/users/') && path.endsWith('/tier') && method === 'PATCH') {
 		const userId = path.replace('/v1/users/', '').replace('/tier', '');
 		return handleUpdateTier(request, env, userId);
+	}
+	if (path.startsWith('/v1/users/') && path.endsWith('/hard-delete') && method === 'DELETE') {
+		const userId = path.replace('/v1/users/', '').replace('/hard-delete', '');
+		return handleHardDelete(request, env, userId);
+	}
+	if (path === '/v1/users/cleanup' && method === 'POST') {
+		return handleCleanupDeletedUsers(request, env);
 	}
 
 	return json({ error: 'not_found', message: 'Endpoint not found', status: 404 }, 404);
@@ -835,6 +844,112 @@ async function handleUpdateTier(request: Request, env: Env, userId: string): Pro
 	}
 
 	return json({ success: true, user: { id: user.id, email: user.email, tier: user.tier } });
+}
+
+async function handleHardDelete(request: Request, env: Env, userId: string): Promise<Response> {
+	const db = env.DB;
+
+	// Require API key with delete permission
+	const apiKey = request.headers.get('X-API-Key');
+	if (!apiKey) {
+		return json({ error: 'unauthorized', message: 'API key required', status: 401 }, 401);
+	}
+
+	const keyHash = await hashToken(apiKey);
+	const storedKey = await findApiKeyByHash(db, keyHash);
+	if (!storedKey) {
+		return json({ error: 'unauthorized', message: 'Invalid API key', status: 401 }, 401);
+	}
+
+	const permissions: string[] = JSON.parse(storedKey.permissions);
+	if (!permissions.includes('delete_user')) {
+		return json({ error: 'forbidden', message: 'Insufficient permissions', status: 403 }, 403);
+	}
+
+	// Check user exists and was soft-deleted
+	const user = await findUserById(db, userId);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	if (!user.deleted_at) {
+		return json({ error: 'not_deleted', message: 'User must be soft-deleted first', status: 400 }, 400);
+	}
+
+	// Check grace period (30 days) unless force flag is set
+	const body = await parseJSON<{ force?: boolean }>(request);
+	if (!body?.force) {
+		const deletedAt = new Date(user.deleted_at);
+		const gracePeriodEnd = new Date(deletedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+		const now = new Date();
+
+		if (now < gracePeriodEnd) {
+			const daysRemaining = Math.ceil((gracePeriodEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+			return json({
+				error: 'grace_period',
+				message: `Grace period has not expired. ${daysRemaining} days remaining.`,
+				status: 400,
+			}, 400);
+		}
+	}
+
+	// Revoke all tokens first (in case any are still valid)
+	await revokeAllUserTokens(db, userId);
+
+	// Hard delete the user
+	const deleted = await hardDeleteUser(db, userId);
+	if (!deleted) {
+		return json({ error: 'delete_failed', message: 'Failed to delete user', status: 500 }, 500);
+	}
+
+	return json({
+		success: true,
+		message: 'User permanently deleted',
+		user_id: userId,
+		deleted_at: new Date().toISOString(),
+	});
+}
+
+async function handleCleanupDeletedUsers(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Require API key with cleanup permission
+	const apiKey = request.headers.get('X-API-Key');
+	if (!apiKey) {
+		return json({ error: 'unauthorized', message: 'API key required', status: 401 }, 401);
+	}
+
+	const keyHash = await hashToken(apiKey);
+	const storedKey = await findApiKeyByHash(db, keyHash);
+	if (!storedKey) {
+		return json({ error: 'unauthorized', message: 'Invalid API key', status: 401 }, 401);
+	}
+
+	const permissions: string[] = JSON.parse(storedKey.permissions);
+	if (!permissions.includes('cleanup_users') && !permissions.includes('delete_user')) {
+		return json({ error: 'forbidden', message: 'Insufficient permissions', status: 403 }, 403);
+	}
+
+	// Find all users deleted more than 30 days ago
+	const usersToDelete = await findDeletedUsersForCleanup(db);
+
+	const results: { user_id: string; email: string; deleted: boolean }[] = [];
+
+	for (const user of usersToDelete) {
+		// Revoke any remaining tokens
+		await revokeAllUserTokens(db, user.id);
+
+		// Hard delete
+		const deleted = await hardDeleteUser(db, user.id);
+		results.push({ user_id: user.id, email: user.email, deleted });
+	}
+
+	return json({
+		success: true,
+		message: `Processed ${results.length} users for cleanup`,
+		deleted_count: results.filter((r) => r.deleted).length,
+		users: results,
+	});
 }
 
 // Utilities
