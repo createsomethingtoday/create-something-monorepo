@@ -1135,6 +1135,33 @@ Git Commit: abc123def
 - **Parallelism Efficiency**: Ratio of successful to total parallel tasks
 - **Agent Failures**: Per-agent error breakdown for debugging
 
+### Enabling Swarm Mode
+
+Swarm mode is disabled by default for backward compatibility. Enable it with CLI flags:
+
+```bash
+# Enable swarm with default settings (max 5 agents, min 3 tasks)
+harness start specs/project.md --swarm
+
+# Customize swarm configuration
+harness start specs/project.md --swarm --max-agents 10 --min-tasks 5
+```
+
+**Configuration**:
+- `--swarm`: Enable parallel swarm orchestration
+- `--max-agents N`: Maximum number of parallel agents (default: 5)
+- `--min-tasks N`: Minimum independent tasks to trigger swarm (default: 3)
+
+**How it works**:
+1. At each iteration, the harness detects independent tasks (no blocking dependencies)
+2. If count ≥ `minTasksForSwarm` and swarm is enabled, spawn parallel agents
+3. Each agent runs a full Claude Code session for its assigned task
+4. Results are aggregated and failures are handled per the failure config
+5. A swarm checkpoint is created showing parallel execution metrics
+
+**Independence Detection**:
+Tasks are considered independent if they have no `blocks` dependencies on other pending tasks. The harness automatically analyzes the dependency graph from Beads to identify parallel-safe work.
+
 ## When to Pause
 
 The harness auto-pauses when:
