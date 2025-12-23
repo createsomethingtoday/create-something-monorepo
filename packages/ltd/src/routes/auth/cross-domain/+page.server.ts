@@ -46,7 +46,7 @@ export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 
 		// Set session cookies
 		const isProduction = platform?.env?.ENVIRONMENT === 'production';
-		const domain = isProduction ? '.createsomething.io' : undefined;
+		const domain = isProduction ? '.createsomething.ltd' : undefined;
 
 		setSessionCookies(
 			cookies,
