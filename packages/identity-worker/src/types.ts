@@ -125,3 +125,31 @@ export interface JWK {
 export interface JWKS {
 	keys: JWK[];
 }
+
+// Cross-domain SSO
+export interface CrossDomainToken {
+	id: string;
+	user_id: string;
+	token_hash: string;
+	target: 'ltd' | 'io' | 'space' | 'agency';
+	created_at: string;
+	expires_at: string;
+	used_at: string | null;
+}
+
+export interface CrossDomainGenerateRequest {
+	target: CrossDomainToken['target'];
+}
+
+export interface CrossDomainGenerateResponse {
+	token: string;
+	expires_in: number;
+}
+
+export interface CrossDomainExchangeRequest {
+	token: string;
+}
+
+export interface CrossDomainExchangeResponse extends TokenResponse {
+	user: UserResponse;
+}

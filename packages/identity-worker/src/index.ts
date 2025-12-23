@@ -7,7 +7,7 @@
  * Canon: One identity, many manifestations.
  */
 
-import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload } from './types';
+import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken } from './types';
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
 import { generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
@@ -28,6 +28,10 @@ import {
 	createEmailChangeRequest,
 	findEmailChangeRequestByToken,
 	deleteEmailChangeRequest,
+	createCrossDomainToken,
+	findCrossDomainTokenByHash,
+	markCrossDomainTokenUsed,
+	countRecentCrossDomainTokens,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 
@@ -76,6 +80,10 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/v1/auth/magic-signup' && method === 'POST') return handleMagicSignup(request, env);
 	if (path === '/v1/auth/refresh' && method === 'POST') return handleRefresh(request, env);
 	if (path === '/v1/auth/logout' && method === 'POST') return handleLogout(request, env);
+
+	// Cross-domain SSO endpoints
+	if (path === '/v1/auth/cross-domain/generate' && method === 'POST') return handleCrossDomainGenerate(request, env);
+	if (path === '/v1/auth/cross-domain/exchange' && method === 'POST') return handleCrossDomainExchange(request, env);
 
 	// User endpoints (protected)
 	if (path === '/v1/users/me' && method === 'GET') return handleGetMe(request, env);
@@ -258,6 +266,104 @@ async function handleLogout(request: Request, env: Env): Promise<Response> {
 	}
 
 	return json({ success: true });
+}
+
+// Cross-Domain SSO Handlers
+
+const VALID_TARGETS: CrossDomainToken['target'][] = ['ltd', 'io', 'space', 'agency'];
+
+async function handleCrossDomainGenerate(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Authenticate - requires valid access token
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	// Parse request
+	const body = await parseJSON<{ target?: string }>(request);
+	if (!body?.target || !VALID_TARGETS.includes(body.target as CrossDomainToken['target'])) {
+		return json({ error: 'invalid_request', message: 'Valid target required (ltd, io, space, agency)', status: 400 }, 400);
+	}
+
+	const target = body.target as CrossDomainToken['target'];
+
+	// Rate limit: max 10 cross-domain tokens per minute
+	const recentCount = await countRecentCrossDomainTokens(db, payload.sub, 60);
+	if (recentCount >= 10) {
+		return json({ error: 'rate_limited', message: 'Too many cross-domain token requests', status: 429 }, 429);
+	}
+
+	// Generate token
+	const token = generateSecureToken(32);
+	const tokenHash = await hashToken(token);
+	const expiresAt = new Date(Date.now() + 60 * 1000).toISOString(); // 60 seconds
+
+	await createCrossDomainToken(db, {
+		id: generateUUID(),
+		user_id: payload.sub,
+		token_hash: tokenHash,
+		target,
+		expires_at: expiresAt,
+	});
+
+	return json({
+		token,
+		expires_in: 60,
+	});
+}
+
+async function handleCrossDomainExchange(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+
+	// Parse request
+	const body = await parseJSON<{ token?: string }>(request);
+	if (!body?.token) {
+		return json({ error: 'invalid_request', message: 'Token required', status: 400 }, 400);
+	}
+
+	// Find token
+	const tokenHash = await hashToken(body.token);
+	const storedToken = await findCrossDomainTokenByHash(db, tokenHash);
+
+	if (!storedToken) {
+		return json({ error: 'invalid_token', message: 'Invalid or expired token', status: 401 }, 401);
+	}
+
+	// Mark as used immediately (single-use)
+	await markCrossDomainTokenUsed(db, storedToken.id);
+
+	// Get user
+	const user = await findUserById(db, storedToken.user_id);
+	if (!user) {
+		return json({ error: 'user_not_found', message: 'User not found', status: 404 }, 404);
+	}
+
+	// Check if user is deleted
+	if (user.deleted_at) {
+		return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
+	}
+
+	// Generate new tokens for this domain
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+
+	return json({
+		access_token: accessToken,
+		refresh_token: refreshToken,
+		token_type: 'Bearer',
+		expires_in: expiresIn,
+		user: {
+			id: user.id,
+			email: user.email,
+			email_verified: Boolean(user.email_verified),
+			name: user.name,
+			avatar_url: user.avatar_url,
+			tier: user.tier,
+			analytics_opt_out: Boolean(user.analytics_opt_out),
+			created_at: user.created_at,
+		},
+	});
 }
 
 async function handleMagicLogin(request: Request, env: Env): Promise<Response> {
