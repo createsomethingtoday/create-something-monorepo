@@ -41,6 +41,10 @@ export {
 	createSessionManager,
 	autoRefreshMiddleware,
 	requireAuth,
+	// JWT validation with JWKS
+	validateToken,
+	// SvelteKit hooks
+	createAuthHooks,
 	type TokenResponse,
 	type JWTPayload,
 	type User,
@@ -48,6 +52,8 @@ export {
 	type RefreshResult,
 	type SessionAnalyticsEvent,
 	type SessionManagerOptions,
+	type JWK,
+	type AuthHooksConfig,
 } from './session.js';
 
 // Analytics integration
