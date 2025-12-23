@@ -168,13 +168,6 @@
 		e.preventDefault();
 		const originalHref = (e.currentTarget as HTMLAnchorElement).href;
 
-		console.log('[Footer Cross-Domain]', { isAuthenticated, targetMode, mode, originalHref });
-
-		// TEMP DEBUG: Show alert to verify SSO flow
-		if (typeof window !== 'undefined') {
-			console.log('[Footer SSO Debug] isAuthenticated:', isAuthenticated, 'Using SSO:', isAuthenticated && !!modeToTarget[targetMode]);
-		}
-
 		// Store transition data for entry animation on target page
 		if (typeof sessionStorage !== 'undefined') {
 			sessionStorage.setItem('cs-transition-from', mode);
