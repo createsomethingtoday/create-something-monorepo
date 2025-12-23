@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { UserMenu } from '../auth/components/index.js';
+	import type { User } from '../auth/types.js';
+
 	interface NavLink {
 		label: string;
 		href: string;
@@ -13,6 +16,16 @@
 		fixed?: boolean;
 		ctaLabel?: string;
 		ctaHref?: string;
+		/** Current authenticated user (shows UserMenu when present) */
+		user?: User | null;
+		/** Called when user clicks logout in UserMenu */
+		onLogout?: () => void;
+		/** Login page URL (shown when no user) */
+		loginHref?: string;
+		/** Show login link when not authenticated */
+		showLogin?: boolean;
+		/** Account settings URL for UserMenu */
+		accountHref?: string;
 	}
 
 	let {
@@ -23,7 +36,12 @@
 		currentPath = $bindable('/'),
 		fixed = false,
 		ctaLabel,
-		ctaHref
+		ctaHref,
+		user = null,
+		onLogout,
+		loginHref = '/login',
+		showLogin = false,
+		accountHref = '/account'
 	}: Props = $props();
 
 	let mobileMenuOpen = $state(false);
@@ -65,6 +83,13 @@
 				{#if ctaLabel && ctaHref}
 					<a href={ctaHref} class="nav-cta">
 						{ctaLabel}
+					</a>
+				{/if}
+				{#if user}
+					<UserMenu {user} onLogout={onLogout ?? (() => {})} settingsHref={accountHref} />
+				{:else if showLogin}
+					<a href={loginHref} class="nav-link">
+						Sign in
 					</a>
 				{/if}
 			</div>
@@ -111,6 +136,21 @@
 				{#if ctaLabel && ctaHref}
 					<a href={ctaHref} onclick={closeMobileMenu} class="nav-cta text-center">
 						{ctaLabel}
+					</a>
+				{/if}
+				{#if user}
+					<div class="nav-mobile-user">
+						<span class="nav-mobile-user-email">{user.email}</span>
+						<a href={accountHref} onclick={closeMobileMenu} class="nav-link py-2">
+							Account
+						</a>
+						<button type="button" class="nav-mobile-logout" onclick={() => { closeMobileMenu(); onLogout?.(); }}>
+							Sign out
+						</button>
+					</div>
+				{:else if showLogin}
+					<a href={loginHref} onclick={closeMobileMenu} class="nav-link py-2">
+						Sign in
 					</a>
 				{/if}
 			</div>
@@ -211,5 +251,37 @@
 		.animate-slide-down {
 			animation: none;
 		}
+	}
+
+	/* Mobile User Section */
+	.nav-mobile-user {
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-md);
+		margin-top: var(--space-sm);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.nav-mobile-user-email {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		padding: var(--space-xs) 0;
+	}
+
+	.nav-mobile-logout {
+		background: none;
+		border: none;
+		color: var(--color-error);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		padding: var(--space-sm) 0;
+		text-align: left;
+		cursor: pointer;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.nav-mobile-logout:hover {
+		opacity: 0.8;
 	}
 </style>

@@ -3,9 +3,19 @@
 	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent } from '@create-something/components';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
+	import { revokeSession } from '@create-something/components/auth';
 
 	let { children, data } = $props();
+
+	// Handle logout
+	async function handleLogout() {
+		// Clear session on server
+		await fetch('/api/auth/logout', { method: 'POST' });
+		// Refresh to clear user state
+		await invalidateAll();
+		goto('/');
+	}
 
 	// View Transitions API - Hermeneutic Navigation
 	// .space: Experimental (300ms)
@@ -176,6 +186,11 @@
 		fixed={true}
 		ctaLabel="Contact"
 		ctaHref="/contact"
+		user={data.user}
+		onLogout={handleLogout}
+		showLogin={true}
+		loginHref="/login"
+		accountHref="/account"
 	/>
 
 	<main id="main-content" class="content">
