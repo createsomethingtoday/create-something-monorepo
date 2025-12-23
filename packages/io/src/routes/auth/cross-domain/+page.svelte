@@ -3,9 +3,43 @@
 	// The +page.server.ts handles the token exchange and redirects
 </script>
 
-<div class="flex min-h-screen items-center justify-center">
-	<div class="text-center">
-		<div class="mb-4 text-lg">Completing sign-in...</div>
-		<div class="h-8 w-8 animate-spin rounded-full border-4 border-white/20 border-t-white mx-auto"></div>
+<div class="loading-container">
+	<div class="loading-content">
+		<div class="loading-text">Completing sign-in...</div>
+		<div class="spinner"></div>
 	</div>
 </div>
+
+<style>
+	.loading-container {
+		display: flex;
+		min-height: 100vh;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.loading-content {
+		text-align: center;
+	}
+
+	.loading-text {
+		margin-bottom: var(--space-md);
+		font-size: var(--text-body-lg);
+	}
+
+	.spinner {
+		width: 2rem;
+		height: 2rem;
+		margin: 0 auto;
+		border: 4px solid var(--color-border-default);
+		border-top-color: var(--color-fg-primary);
+		border-radius: var(--radius-full);
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+</style>
