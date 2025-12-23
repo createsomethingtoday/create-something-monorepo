@@ -197,9 +197,11 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			})
 		});
 
+		// Parse response body once (stream can only be consumed once)
+		const resendData = (await resendResponse.json()) as { id?: string; message?: string };
+
 		if (!resendResponse.ok) {
-			const errorData = await resendResponse.json();
-			console.error('Resend API error:', errorData);
+			console.error('Resend API error:', resendData);
 			return json(
 				{
 					success: false,
@@ -208,8 +210,6 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 				{ status: 500 }
 			);
 		}
-
-		const resendData = (await resendResponse.json()) as { id: string };
 
 		return json({
 			success: true,
