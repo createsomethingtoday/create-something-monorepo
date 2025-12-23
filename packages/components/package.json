@@ -80,6 +80,10 @@
 		"./auth": {
 			"types": "./dist/auth/index.d.ts",
 			"default": "./dist/auth/index.js"
+		},
+		"./auth/server": {
+			"types": "./dist/auth/server.d.ts",
+			"default": "./dist/auth/server.js"
 		}
 	},
 	"peerDependencies": {
