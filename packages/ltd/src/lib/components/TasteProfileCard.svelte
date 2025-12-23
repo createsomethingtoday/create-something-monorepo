@@ -8,37 +8,20 @@
 	 * Philosophy: Taste is cultivated, not consumed.
 	 */
 
-	interface TasteProfile {
-		summary: string;
-		topChannels: string[];
-		focusAreas: string[];
-		explorationScore: number;
-	}
-
-	interface TasteStats {
-		totalViewed: number;
-		totalStudied: number;
-		totalTimeSeconds: number;
-		channelsExplored: number;
-		totalChannels: number;
-	}
+	import {
+		formatTime,
+		type TasteProfile,
+		type TasteReadingStats,
+	} from '$lib/taste/insights';
 
 	interface Props {
 		profile: TasteProfile;
-		stats: TasteStats;
+		stats: TasteReadingStats;
 		userName?: string;
 		variant?: 'default' | 'compact' | 'share';
 	}
 
 	let { profile, stats, userName, variant = 'default' }: Props = $props();
-
-	function formatTime(seconds: number): string {
-		if (seconds < 60) return `${seconds}s`;
-		if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-		const hours = Math.floor(seconds / 3600);
-		const mins = Math.round((seconds % 3600) / 60);
-		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-	}
 
 	const isCompact = $derived(variant === 'compact');
 	const isShare = $derived(variant === 'share');
