@@ -136,7 +136,7 @@
 <style>
 	.auth-form {
 		width: 100%;
-		max-width: 400px;
+		max-width: 440px;
 	}
 
 	.success-state {
