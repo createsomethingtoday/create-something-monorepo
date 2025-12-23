@@ -18,6 +18,7 @@ interface UserProfile {
 	name?: string;
 	avatar_url?: string;
 	tier: 'free' | 'pro' | 'agency';
+	analytics_opt_out: boolean;
 	created_at: string;
 }
 
