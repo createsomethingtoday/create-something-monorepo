@@ -190,14 +190,9 @@
 	}
 
 	/* Dimension lines */
-	.dimension line {
-		stroke: var(--color-fg-subtle);
-		stroke-width: 0.5;
-	}
-
 	.dimension-line {
 		stroke: var(--arch-dimension-color);
-		stroke-width: 0.5;
+		stroke-width: var(--arch-stroke-fine);
 	}
 
 	/* Labels */
