@@ -5,10 +5,11 @@ Human-curated visual references from Are.na that inform Canon design decisions.
 ## Source Channels
 
 ### CREATE SOMETHING (Primary)
-| Channel | Purpose | Sync |
-|---------|---------|------|
-| `canon-minimalism` | Core visual vocabulary | Primary |
-| `motion-language` | Animation/transition examples | Primary |
+| Channel | Slug | Purpose | Sync |
+|---------|------|---------|------|
+| CANON MINIMALISM | `canon-minimalism` | Rams' visual vocabulary | Primary |
+| MOTION LANGUAGE | `motion-language-4hbfmugttwe` | Animation/transition examples | Primary |
+| CLAUDE CODE | `claude-code-puz_2pgfxky` | Human-AI partnership patterns | Primary |
 
 ### External (Secondary)
 | Channel | Curator | Content |
@@ -18,6 +19,51 @@ Human-curated visual references from Are.na that inform Canon design decisions.
 | `motion-minimal-simple` | Meg W | Subtle motion |
 | `brutalist-x-web-design` | — | Brutalist web |
 | `interfaces-motion` | — | UI animation patterns |
+
+## Per-Channel Curation Criteria
+
+### CANON MINIMALISM (`canon-minimalism`)
+Visual vocabulary for Dieter Rams' principles. Maps to css-canon.md tokens.
+
+| Accept | Reject |
+|--------|--------|
+| Pure black/white compositions | Grey backgrounds, muted palettes |
+| Golden ratio spacing (φ = 1.618) | Mechanical even spacing |
+| Typography as structure | Decorative ornament |
+| Functional minimal design | Trendy "minimalism" aesthetic |
+| Dieter Rams products, Braun | Apple products (too commercial) |
+| Swiss/International style | Brutalism for its own sake |
+| Negative space that breathes | Cluttered layouts |
+
+**Curation question**: "Does this demonstrate *weniger, aber besser*?"
+
+### MOTION LANGUAGE (`motion-language-4hbfmugttwe`)
+Animation/transition examples. Maps to css-canon.md motion tokens.
+
+| Accept | Reject |
+|--------|--------|
+| Purposeful state transitions | Decorative animation |
+| `--duration-micro` (200ms) examples | Slow, sluggish motion (>500ms) |
+| Single easing curve consistency | Mixed easing chaos |
+| Motion that guides attention | Motion that demands attention |
+| Loading states with meaning | Spinners without context |
+| Reduced motion alternatives | Inaccessible animation |
+
+**Curation question**: "Does this animation communicate state or seek attention?"
+
+### CLAUDE CODE (`claude-code-puz_2pgfxky`)
+Human-AI partnership patterns. Maps to Heideggerian tool philosophy.
+
+| Accept | Reject |
+|--------|--------|
+| Tools that recede into use (Zuhandenheit) | AI as autonomous replacement |
+| Human-AI collaboration patterns | AI doing everything alone |
+| Breakdown→understanding moments | "Magic" black box AI |
+| Craft computing | Consumption computing |
+| Poetic dwelling with technology | Pure automation without craft |
+| Partnership, not delegation | Human as passive observer |
+
+**Curation question**: "Does this show the tool receding, or the tool demanding attention?"
 
 ## Visual Principles (Derived from References)
 
@@ -82,15 +128,29 @@ curl -X POST https://createsomething.ltd/api/arena/blocks \
 curl -X POST https://createsomething.ltd/api/arena/blocks \
   -H "Content-Type: application/json" \
   -d '{
-    "channel": "motion-language",
+    "channel": "motion-language-4hbfmugttwe",
     "content": "Your markdown content here",
     "title": "Optional Title"
   }'
 ```
 
-**UI**: Authenticated users can contribute via the "+ Contribute Reference" button on `/taste`
+### Curate (Connect existing Are.na blocks)
 
-**Channels**: Only `canon-minimalism` and `motion-language` accept contributions
+```bash
+# Connect an existing Are.na block to a channel
+curl -X POST https://createsomething.ltd/api/arena/connect \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "canon-minimalism",
+    "blockId": 722667
+  }'
+```
+
+This enables the hermeneutic flow: **discover** (browsing Are.na) → **curate** (selecting blocks) → **connect** (adding to channel) → **sync** (pulling to /taste).
+
+**UI**: Contributors can use the "+ Contribute Reference" button on `/taste`
+
+**Channels**: `canon-minimalism`, `motion-language-4hbfmugttwe`, and `claude-code-puz_2pgfxky` accept contributions
 
 ## Hermeneutic Flow
 
