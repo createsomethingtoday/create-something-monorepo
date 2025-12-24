@@ -1,11 +1,4 @@
-export interface Plugin {
-	slug: string;
-	name: string;
-	description: string;
-	category: string;
-	tags: string[];
-	features: string[];
-}
+import type { Plugin } from '$lib/types/plugins';
 
 export const PLUGINS: Plugin[] = [
 	{
