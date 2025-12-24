@@ -107,8 +107,9 @@ type ChannelSlug = keyof typeof CURATION_CONFIG;
  */
 async function searchArena(query: string): Promise<ArenaBlock[]> {
 	const encoded = encodeURIComponent(query);
+	// Limit to 10 results per query for efficiency (5 queries × 10 = 50 max per channel)
 	const response = await fetch(
-		`https://api.are.na/v2/search/blocks?q=${encoded}&per=20`,
+		`https://api.are.na/v2/search/blocks?q=${encoded}&per=10`,
 		{
 			headers: { 'User-Agent': 'arena-curator/1.0' }
 		}
