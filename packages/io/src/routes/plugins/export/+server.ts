@@ -20,23 +20,31 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			.bind(user.id)
 			.all();
 
-		const enabledPlugins = (result?.results || []).map((row: any) => row.plugin_slug);
+		const enabledPluginSlugs = (result?.results || []).map((row: any) => row.plugin_slug);
 
 		// Build settings.json format for Claude Code
-		// Match Claude Code settings structure with skills/plugins
-		const settings = {
-			skills: {} as Record<string, unknown>
+		// Per docs: extraKnownMarketplaces defines marketplace, enabledPlugins uses "plugin@marketplace": true
+		const settings: {
+			extraKnownMarketplaces: Record<string, { source: { source: string; repo: string } }>;
+			enabledPlugins: Record<string, boolean>;
+		} = {
+			extraKnownMarketplaces: {
+				'create-something': {
+					source: {
+						source: 'github',
+						repo: 'createsomethingtoday/claude-plugins'
+					}
+				}
+			},
+			enabledPlugins: {}
 		};
 
-		// Add enabled plugins to settings
-		enabledPlugins.forEach((slug: string) => {
-			const plugin = PLUGINS.find(p => p.slug === slug);
+		// Add enabled plugins with correct format: "plugin-name@marketplace-name": true
+		// Slugs match marketplace.json in createsomethingtoday/claude-plugins
+		enabledPluginSlugs.forEach((slug: string) => {
+			const plugin = PLUGINS.find((p) => p.slug === slug);
 			if (plugin) {
-				settings.skills[slug] = {
-					enabled: true,
-					name: plugin.name,
-					description: plugin.description
-				};
+				settings.enabledPlugins[`${slug}@create-something`] = true;
 			}
 		});
 

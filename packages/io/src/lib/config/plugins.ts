@@ -1,9 +1,10 @@
 import type { Plugin } from '$lib/types/plugins';
 
+// Slugs must match marketplace.json in createsomethingtoday/claude-plugins
 export const PLUGINS: Plugin[] = [
 	{
-		slug: 'canon-maintenance',
-		name: 'Canon Maintenance',
+		slug: 'canon',
+		name: 'Canon',
 		description:
 			'Design system enforcement based on the Subtractive Triad. Operationalizes Dieter Rams\' "Weniger, aber besser" across all CREATE SOMETHING properties.',
 		category: 'Design',
@@ -16,8 +17,8 @@ export const PLUGINS: Plugin[] = [
 		]
 	},
 	{
-		slug: 'hermeneutic-reviewer',
-		name: 'Hermeneutic Reviewer',
+		slug: 'hermeneutic-review',
+		name: 'Hermeneutic Review',
 		description:
 			'Code review through the Subtractive Triad lens. Three-pass methodology: Unify (DRY), Remove (Rams), Reconnect (Heidegger).',
 		category: 'Code Review',
