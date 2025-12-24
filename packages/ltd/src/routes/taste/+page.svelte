@@ -126,11 +126,9 @@
 		</div>
 
 		<!-- Contribution -->
-		{#if data.user}
-			<div class="contribute-row">
-				<ContributeBlock />
-			</div>
-		{/if}
+		<div class="contribute-row">
+			<ContributeBlock />
+		</div>
 	</div>
 </section>
 

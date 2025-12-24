@@ -200,6 +200,50 @@ export class ArenaClient {
 	}
 
 	/**
+	 * Update channel settings (title, status, description)
+	 * Requires authentication
+	 * Status: 'public' (open for collaboration), 'closed', 'private'
+	 */
+	async updateChannel(
+		slug: string,
+		updates: {
+			title?: string;
+			status?: 'public' | 'closed' | 'private';
+			description?: string;
+		}
+	): Promise<ArenaChannel> {
+		if (!this.accessToken) {
+			throw new Error('Authentication required: accessToken must be set to update channels');
+		}
+
+		const updatedChannel = await this.fetch<ArenaChannel>(`/channels/${slug}`, {
+			method: 'PUT',
+			body: JSON.stringify(updates)
+		});
+
+		await this.invalidateChannel(slug);
+		return updatedChannel;
+	}
+
+	/**
+	 * Connect an existing block to a channel
+	 * Requires authentication
+	 */
+	async connectBlock(channelSlug: string, blockId: number): Promise<ArenaBlock> {
+		if (!this.accessToken) {
+			throw new Error('Authentication required: accessToken must be set to connect blocks');
+		}
+
+		const connected = await this.fetch<ArenaBlock>(`/channels/${channelSlug}/blocks`, {
+			method: 'PUT',
+			body: JSON.stringify({ id: blockId })
+		});
+
+		await this.invalidateChannel(channelSlug);
+		return connected;
+	}
+
+	/**
 	 * Invalidate cache for a specific channel
 	 */
 	async invalidateChannel(slug: string): Promise<void> {
@@ -225,5 +269,26 @@ export function createArenaClient(platform?: App.Platform): ArenaClient {
 	return new ArenaClient({
 		cache: platform?.env?.CACHE,
 		accessToken: platform?.env?.ARENA_API_TOKEN
+	});
+}
+
+/**
+ * Create a client with token from KV (for OAuth flow)
+ * Falls back to env var if KV token not found
+ */
+export async function createArenaClientWithKVToken(platform?: App.Platform): Promise<ArenaClient> {
+	let accessToken = platform?.env?.ARENA_API_TOKEN;
+
+	// Check KV for OAuth-obtained token if env var not set
+	if (!accessToken && platform?.env?.CACHE) {
+		const kvToken = await platform.env.CACHE.get('arena:access_token');
+		if (kvToken) {
+			accessToken = kvToken;
+		}
+	}
+
+	return new ArenaClient({
+		cache: platform?.env?.CACHE,
+		accessToken
 	});
 }

@@ -21,7 +21,8 @@ import type { Example, Resource } from '$lib/types';
 // CREATE SOMETHING curated channels (primary sources)
 const CS_CHANNELS = [
 	'canon-minimalism',
-	'motion-language'
+	'motion-language-4hbfmugttwe',
+	'claude-code-puz_2pgfxky'
 ];
 
 // External high-quality channels (secondary sources)

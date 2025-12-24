@@ -26,8 +26,9 @@
 	let description = $state('');
 
 	const channels = [
-		{ value: 'canon-minimalism', label: 'Canon Minimalism', desc: 'Core visual vocabulary' },
-		{ value: 'motion-language', label: 'Motion Language', desc: 'Animation/transition examples' }
+		{ value: 'canon-minimalism', label: 'Canon Minimalism', desc: 'Rams\' visual vocabulary' },
+		{ value: 'motion-language-4hbfmugttwe', label: 'Motion Language', desc: 'Animation/transition examples' },
+		{ value: 'claude-code-puz_2pgfxky', label: 'Claude Code', desc: 'Human-AI partnership patterns' }
 	];
 
 	function openModal() {

@@ -5,7 +5,12 @@
  * The tool recedes; the taste remains.
  */
 
-export { ArenaClient, createArenaClient, type ArenaClientOptions } from './client';
+export {
+	ArenaClient,
+	createArenaClient,
+	createArenaClientWithKVToken,
+	type ArenaClientOptions
+} from './client';
 
 export {
 	classifyBlock,

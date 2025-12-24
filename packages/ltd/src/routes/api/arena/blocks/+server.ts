@@ -12,7 +12,11 @@ import type { RequestHandler } from './$types';
 import { ArenaClient } from '$lib/integrations/arena';
 
 // Allowed channels for contribution (CREATE SOMETHING curated)
-const ALLOWED_CHANNELS = ['canon-minimalism', 'motion-language'];
+const ALLOWED_CHANNELS = [
+	'canon-minimalism',
+	'motion-language-4hbfmugttwe',
+	'claude-code-puz_2pgfxky'
+];
 
 interface CreateBlockRequest {
 	channel: string;
