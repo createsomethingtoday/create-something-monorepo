@@ -28,6 +28,13 @@ export interface PluginExportResponse {
 	skills?: Record<string, unknown>;
 }
 
+export interface PluginProvides {
+	commands?: { name: string; description: string }[];
+	agents?: { name: string; description: string }[];
+	skills?: { name: string; description: string }[];
+	hooks?: { name: string; description: string }[];
+}
+
 export interface Plugin {
 	slug: string;
 	name: string;
@@ -35,4 +42,5 @@ export interface Plugin {
 	category: string;
 	tags: string[];
 	features: string[];
+	provides?: PluginProvides;
 }
