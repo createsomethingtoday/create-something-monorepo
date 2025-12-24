@@ -4,49 +4,57 @@ export const PLUGINS: Plugin[] = [
 	{
 		slug: 'canon-maintenance',
 		name: 'Canon Maintenance',
-		description: 'Maintain and enforce CREATE Something design canon based on Dieter Rams principles.',
+		description:
+			'Design system enforcement based on the Subtractive Triad. Operationalizes Dieter Rams\' "Weniger, aber besser" across all CREATE SOMETHING properties.',
 		category: 'Design',
-		tags: ['design', 'canon', 'standards'],
+		tags: ['design', 'canon', 'dieter-rams', 'subtractive-triad'],
 		features: [
-			'Enforce Tailwind structure + Canon aesthetics',
-			'Audit files for canonical compliance',
-			'Apply Subtractive Triad analysis'
+			'Apply DRY → Rams → Heidegger in order',
+			'Enforce 10 Rams principles for artifacts',
+			'Validate hermeneutic circle coherence',
+			'Property-specific standards (.ltd, .io, .space, .agency)'
 		]
 	},
 	{
 		slug: 'hermeneutic-reviewer',
 		name: 'Hermeneutic Reviewer',
-		description: 'Review code through the Subtractive Triad lens using DRY → Rams → Heidegger analysis.',
+		description:
+			'Code review through the Subtractive Triad lens. Three-pass methodology: Unify (DRY), Remove (Rams), Reconnect (Heidegger).',
 		category: 'Code Review',
-		tags: ['review', 'architecture', 'philosophy'],
+		tags: ['review', 'architecture', 'subtractive-triad', 'pr-review'],
 		features: [
-			'Apply DRY principle at implementation level',
-			'Enforce Rams aesthetic minimalism',
-			'Validate Heideggerian system coherence'
+			'Pass 1: DRY - detect duplication patterns',
+			'Pass 2: Rams - question every addition',
+			'Pass 3: Heidegger - verify system connection',
+			'Anti-pattern detection (over-engineering, premature abstraction)'
 		]
 	},
 	{
-		slug: 'voice-audit',
-		name: 'Voice Audit',
-		description: 'Run Voice compliance check on content files against Five Principles.',
+		slug: 'voice-validator',
+		name: 'Voice Validator',
+		description:
+			'Content validation against the Five Principles: Clarity over cleverness, Specificity over generality, Honesty over polish, Useful over interesting, Grounded over trendy.',
 		category: 'Content',
-		tags: ['voice', 'content', 'validation'],
+		tags: ['voice', 'content', 'writing', 'five-principles'],
 		features: [
-			'Check voice consistency',
-			'Validate tone across content',
-			'Ensure principle adherence'
+			'Forbidden pattern scan (marketing jargon)',
+			'Specificity audit (numbers, baselines, evidence)',
+			'Honesty check (failures, limitations documented)',
+			'Utility test (actionable, reproducible)'
 		]
 	},
 	{
 		slug: 'understanding-graphs',
 		name: 'Understanding Graphs',
-		description: 'Create and maintain UNDERSTANDING.md files showing minimal dependency graphs.',
+		description:
+			'Create UNDERSTANDING.md files—minimal dependency graphs for codebase comprehension. "Less, but better" applied to documentation.',
 		category: 'Documentation',
-		tags: ['documentation', 'dependencies', 'clarity'],
+		tags: ['documentation', 'dependencies', 'onboarding', 'navigation'],
 		features: [
-			'Generate dependency graphs',
-			'Create UNDERSTANDING.md files',
-			'Track codebase relationships'
+			'Document understanding-critical relationships only',
+			'Generate critical paths (User Action → Result)',
+			'Identify key files with purpose/deps/consumers',
+			'Capture common traps and solutions'
 		]
 	}
 ];
