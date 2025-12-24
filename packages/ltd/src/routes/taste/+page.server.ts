@@ -48,12 +48,6 @@ const CHANNELS: Channel[] = [
 		isPrimary: false
 	},
 	{
-		slug: 'brutalist-x-web-design',
-		name: 'Brutalist Web',
-		description: 'Raw, honest web design',
-		isPrimary: false
-	},
-	{
 		slug: 'interfaces-motion',
 		name: 'Interface Motion',
 		description: 'UI animation patterns',
