@@ -29,7 +29,6 @@ const EXTERNAL_CHANNELS = [
 	'people-dieter-rams',
 	'examples-swiss-design',
 	'motion-minimal-simple',
-	'brutalist-x-web-design',
 	'interfaces-motion',
 	'minimal-modern-web'
 ];
