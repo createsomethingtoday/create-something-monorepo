@@ -10,6 +10,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isAdminApiRoute = event.url.pathname.startsWith('/api/admin');
 	const isLoginPage = event.url.pathname === '/admin/login';
 	const isAuthApi = event.url.pathname.startsWith('/api/auth');
+	const isUserPluginsApiRoute = event.url.pathname.startsWith('/api/plugins/user');
 
 	if ((isAdminRoute && !isLoginPage && !isAuthApi) || isAdminApiRoute) {
 		// Create session manager for JWT validation
@@ -65,6 +66,34 @@ export const handle: Handle = async ({ event, resolve }) => {
 			email: user.email,
 			username: (adminUser.username as string) || user.email.split('@')[0],
 			role: 'admin',
+			tier: user.tier
+		};
+	}
+
+	// Protect user-specific plugin API routes
+	if (isUserPluginsApiRoute) {
+		// Create session manager for JWT validation
+		const sessionManager = createSessionManager(event.cookies, {
+			isProduction: isProduction ?? true,
+			domain
+		});
+
+		// Get user from JWT
+		const user = await sessionManager.getUser();
+
+		if (!user) {
+			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+				status: 401,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
+		// Add user to locals for use in routes
+		event.locals.user = {
+			id: user.id,
+			email: user.email,
+			username: user.email.split('@')[0],
+			role: 'user',
 			tier: user.tier
 		};
 	}
