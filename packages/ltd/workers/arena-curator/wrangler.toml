@@ -3,12 +3,13 @@
 # Runs weekly to discover and connect relevant Are.na content
 
 name = "arena-curator"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
 # Weekly curation - Sundays at 6am UTC
 [triggers]
-crons = ["0 6 * * 0"]
+crons = ["0 6 * * SUN"]
 
 [vars]
 # API endpoint for connecting blocks
