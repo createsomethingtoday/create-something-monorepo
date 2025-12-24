@@ -39,12 +39,93 @@
 </script>
 
 <svelte:head>
-	<title>Plugins | CREATE SOMETHING</title>
+	<title>Claude Code Plugins | CREATE SOMETHING</title>
 	<meta
 		name="description"
-		content="Claude Code plugins for subtractive design methodology: DRY → Rams → Heidegger"
+		content="Free Claude Code plugins for subtractive design methodology. Implement DRY, Dieter Rams, and Heideggerian principles in your AI-native development workflow."
 	/>
+	<meta name="keywords" content="Claude Code plugins, AI development tools, subtractive design, DRY principle, Dieter Rams, code quality, Claude AI" />
 	<link rel="canonical" href="https://createsomething.io/plugins" />
+
+	<!-- Open Graph -->
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://createsomething.io/plugins" />
+	<meta property="og:title" content="Claude Code Plugins | CREATE SOMETHING" />
+	<meta property="og:description" content="Free Claude Code plugins for subtractive design methodology. DRY → Rams → Heidegger." />
+	<meta property="og:image" content="https://createsomething.io/og-image.png" />
+	<meta property="og:site_name" content="CREATE SOMETHING" />
+
+	<!-- Twitter -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:url" content="https://createsomething.io/plugins" />
+	<meta name="twitter:title" content="Claude Code Plugins | CREATE SOMETHING" />
+	<meta name="twitter:description" content="Free Claude Code plugins for subtractive design methodology." />
+	<meta name="twitter:image" content="https://createsomething.io/og-image.png" />
+
+	<!-- JSON-LD: ItemList for AEO (helps AI assistants list plugins) -->
+	{@html `<script type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'ItemList',
+		name: 'Claude Code Plugins by CREATE SOMETHING',
+		description: 'Free plugins for Claude Code implementing subtractive design methodology',
+		url: 'https://createsomething.io/plugins',
+		numberOfItems: plugins.length,
+		itemListElement: plugins.map((p, i) => ({
+			'@type': 'ListItem',
+			position: i + 1,
+			item: {
+				'@type': 'SoftwareApplication',
+				name: p.name,
+				description: p.description,
+				applicationCategory: 'DeveloperApplication',
+				operatingSystem: 'Any',
+				url: 'https://createsomething.io/plugins/' + p.slug,
+				offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+			}
+		}))
+	})}<\/script>`}
+
+	<!-- JSON-LD: BreadcrumbList -->
+	{@html `<script type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://createsomething.io' },
+			{ '@type': 'ListItem', position: 2, name: 'Plugins', item: 'https://createsomething.io/plugins' }
+		]
+	})}<\/script>`}
+
+	<!-- JSON-LD: FAQPage for AEO -->
+	{@html `<script type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: [
+			{
+				'@type': 'Question',
+				name: 'How do I install Claude Code plugins from CREATE SOMETHING?',
+				acceptedAnswer: {
+					'@type': 'Answer',
+					text: 'First, add the marketplace with: /plugin marketplace add createsomethingtoday/claude-plugins. Then install any plugin with: /plugin install [plugin-name]@create-something'
+				}
+			},
+			{
+				'@type': 'Question',
+				name: 'What is the Subtractive Triad methodology?',
+				acceptedAnswer: {
+					'@type': 'Answer',
+					text: 'The Subtractive Triad is a design philosophy with three levels: DRY (eliminate duplication), Rams (eliminate excess following Dieter Rams\' principle of less but better), and Heidegger (eliminate disconnection through hermeneutic understanding).'
+				}
+			},
+			{
+				'@type': 'Question',
+				name: 'Are these Claude Code plugins free?',
+				acceptedAnswer: {
+					'@type': 'Answer',
+					text: 'Yes, all CREATE SOMETHING Claude Code plugins are free and open source.'
+				}
+			}
+		]
+	})}<\/script>`}
 </svelte:head>
 
 <!-- Hero Section -->
