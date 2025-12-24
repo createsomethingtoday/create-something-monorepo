@@ -383,23 +383,23 @@
 		opacity: 0.5;
 	}
 
-	/* Walls - using design tokens */
+	/* Walls - using design tokens and line weight hierarchy */
 	.wall {
 		stroke: var(--arch-wall-interior);
-		stroke-width: var(--arch-wall-weight-interior);
+		stroke-width: var(--arch-stroke-medium);
 		stroke-linecap: square;
 	}
 
 	.wall.exterior {
 		stroke: var(--arch-wall-exterior);
-		stroke-width: var(--arch-wall-weight-exterior);
+		stroke-width: var(--arch-stroke-object);
 	}
 
 	/* Overhangs - dashed outline */
 	.overhang {
 		fill: none;
 		stroke: var(--arch-overhang);
-		stroke-width: 0.5;
+		stroke-width: var(--arch-stroke-fine);
 		stroke-dasharray: 4 2;
 	}
 
@@ -411,19 +411,19 @@
 	/* Doors */
 	.door-tick {
 		stroke: var(--arch-door-tick);
-		stroke-width: 0.5;
+		stroke-width: var(--arch-stroke-fine);
 	}
 
 	/* Windows */
 	.window {
 		stroke: var(--arch-window);
-		stroke-width: 2;
+		stroke-width: var(--arch-stroke-medium);
 	}
 
 	/* Entry arrow */
 	.entry-line {
 		stroke: var(--arch-entry-arrow);
-		stroke-width: 1;
+		stroke-width: var(--arch-stroke-medium);
 	}
 
 	.entry-arrow {
@@ -433,7 +433,7 @@
 	/* North arrow */
 	.north-line {
 		stroke: var(--arch-label-subtle);
-		stroke-width: 0.75;
+		stroke-width: var(--arch-stroke-fine);
 	}
 
 	/* Room labels - Rams: unobtrusive */
@@ -630,13 +630,13 @@
 	/* Scale bar - architectural graphic scale */
 	.scale-bar-line {
 		stroke: var(--arch-scale-color);
-		stroke-width: 0.75;
+		stroke-width: var(--arch-stroke-fine);
 		stroke-linecap: square;
 	}
 
 	.scale-bar-tick {
 		stroke: var(--arch-scale-color);
-		stroke-width: 0.5;
+		stroke-width: var(--arch-stroke-hairline);
 	}
 
 	.scale-bar-label {
