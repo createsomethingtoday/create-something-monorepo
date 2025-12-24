@@ -1,8 +1,10 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { getRelatedPlugins } from '$lib/config/plugins';
 
 	let { data }: { data: PageData } = $props();
 	let { plugin } = $derived(data);
+	let relatedPlugins = $derived(getRelatedPlugins(plugin.slug));
 
 	const url = `https://createsomething.io/plugins/${plugin.slug}`;
 
@@ -12,6 +14,7 @@
 
 	let copiedMarketplace = $state(false);
 	let copiedInstall = $state(false);
+	let copiedExample = $state<number | null>(null);
 
 	async function copyMarketplace() {
 		try {
@@ -31,6 +34,24 @@
 		} catch (err) {
 			console.error('Failed to copy:', err);
 		}
+	}
+
+	async function copyExample(index: number, prompt: string) {
+		try {
+			await navigator.clipboard.writeText(prompt);
+			copiedExample = index;
+			setTimeout(() => (copiedExample = null), 2000);
+		} catch (err) {
+			console.error('Failed to copy:', err);
+		}
+	}
+
+	function formatDate(dateStr: string): string {
+		return new Date(dateStr).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
+		});
 	}
 </script>
 
@@ -88,7 +109,15 @@
 	<div class="max-w-4xl mx-auto">
 		<div class="space-y-6 animate-reveal">
 			<div>
-				<div class="category-badge">{plugin.category}</div>
+				<div class="hero-meta">
+					<div class="category-badge">{plugin.category}</div>
+					{#if plugin.version}
+						<span class="version-badge">v{plugin.version}</span>
+					{/if}
+					{#if plugin.lastUpdated}
+						<span class="last-updated">Updated {formatDate(plugin.lastUpdated)}</span>
+					{/if}
+				</div>
 				<h1 class="plugin-title">{plugin.name}</h1>
 				<p class="plugin-description">{plugin.description}</p>
 			</div>
@@ -263,6 +292,71 @@
 	</div>
 </section>
 
+<!-- Try It Section -->
+{#if plugin.examples?.length}
+	<section class="py-16 px-6">
+		<div class="max-w-4xl mx-auto">
+			<div class="section-card animate-reveal" style="--delay: 2.5">
+				<h2 class="section-title">Try It</h2>
+				<p class="section-subtitle">Copy these prompts to get started:</p>
+				<div class="examples-list">
+					{#each plugin.examples as example, i}
+						<div class="example-item">
+							<div class="example-content">
+								<code class="example-prompt">{example.prompt}</code>
+								<span class="example-desc">{example.description}</span>
+							</div>
+							<button
+								class="copy-button"
+								onclick={() => copyExample(i, example.prompt)}
+								aria-label="Copy prompt"
+							>
+								{#if copiedExample === i}
+									<span class="copy-success">✓</span>
+								{:else}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+									</svg>
+								{/if}
+							</button>
+						</div>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</section>
+{/if}
+
+<!-- Related Plugins Section -->
+{#if relatedPlugins.length}
+	<section class="py-16 px-6">
+		<div class="max-w-4xl mx-auto">
+			<div class="section-card animate-reveal" style="--delay: 3">
+				<h2 class="section-title">Related Plugins</h2>
+				<div class="related-grid">
+					{#each relatedPlugins as related}
+						<a href="/plugins/{related.slug}" class="related-card">
+							<div class="related-category">{related.category}</div>
+							<h3 class="related-name">{related.name}</h3>
+							<p class="related-desc">{related.description}</p>
+							<span class="related-arrow">→</span>
+						</a>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</section>
+{/if}
+
 <style>
 	/* Back Link */
 	.back-link {
@@ -280,6 +374,14 @@
 	}
 
 	/* Hero */
+	.hero-meta {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		flex-wrap: wrap;
+		margin-bottom: var(--space-sm);
+	}
+
 	.category-badge {
 		display: inline-block;
 		padding: var(--space-xs) var(--space-sm);
@@ -289,7 +391,22 @@
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
-		margin-bottom: var(--space-sm);
+	}
+
+	.version-badge {
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
+		border-radius: var(--radius-md);
+		color: var(--color-info);
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		font-family: 'Monaco', 'Menlo', monospace;
+	}
+
+	.last-updated {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
 	}
 
 	.plugin-title {
@@ -495,6 +612,113 @@
 	.copy-success {
 		color: var(--color-success);
 		font-weight: 600;
+	}
+
+	/* Section Subtitle */
+	.section-subtitle {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body);
+		margin-bottom: var(--space-md);
+	}
+
+	/* Examples */
+	.examples-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.example-item {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-md);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.example-content {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		flex: 1;
+	}
+
+	.example-prompt {
+		font-family: 'Monaco', 'Menlo', monospace;
+		font-size: var(--text-body);
+		color: var(--color-fg-primary);
+		font-weight: 500;
+	}
+
+	.example-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	/* Related Plugins */
+	.related-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: var(--space-md);
+	}
+
+	.related-card {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		padding: var(--space-md);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		text-decoration: none;
+		transition: all var(--duration-micro) var(--ease-standard);
+		position: relative;
+	}
+
+	.related-card:hover {
+		border-color: var(--color-border-emphasis);
+		transform: translateY(-2px);
+	}
+
+	.related-category {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.related-name {
+		font-size: var(--text-body-lg);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.related-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.5;
+		margin: 0;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.related-arrow {
+		position: absolute;
+		top: var(--space-md);
+		right: var(--space-md);
+		color: var(--color-fg-muted);
+		transition: transform var(--duration-micro) var(--ease-standard);
+	}
+
+	.related-card:hover .related-arrow {
+		transform: translateX(4px);
+		color: var(--color-fg-primary);
 	}
 
 	/* Animation */

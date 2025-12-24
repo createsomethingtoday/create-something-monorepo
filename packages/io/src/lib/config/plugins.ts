@@ -19,13 +19,22 @@ export const PLUGINS: Plugin[] = [
 			commands: [
 				{ name: '/audit-canon', description: 'Check CSS Canon compliance on current file or directory' }
 			],
-			agents: [
-				{ name: 'canon-auditor', description: 'Proactive compliance checks after code changes' }
-			],
-			hooks: [
-				{ name: 'PostToolUse', description: 'Automatic checking on Write/Edit operations' }
-			]
-		}
+			agents: [{ name: 'canon-auditor', description: 'Proactive compliance checks after code changes' }],
+			hooks: [{ name: 'PostToolUse', description: 'Automatic checking on Write/Edit operations' }]
+		},
+		version: '1.1.0',
+		lastUpdated: '2024-12-23',
+		examples: [
+			{
+				prompt: '/audit-canon src/components/Button.svelte',
+				description: 'Check a component for Canon token compliance'
+			},
+			{
+				prompt: 'Review this CSS for Canon violations',
+				description: 'Let the agent analyze your styles'
+			}
+		],
+		relatedPlugins: ['hermeneutic-review', 'voice-validator']
 	},
 	{
 		slug: 'hermeneutic-review',
@@ -41,13 +50,25 @@ export const PLUGINS: Plugin[] = [
 			'Anti-pattern detection (over-engineering, premature abstraction)'
 		],
 		provides: {
-			agents: [
-				{ name: 'hermeneutic-reviewer', description: 'Full three-pass triad analysis on code' }
+			commands: [
+				{ name: '/review-triad', description: 'Apply Subtractive Triad review to any code' }
 			],
-			skills: [
-				{ name: 'Subtractive Review', description: 'Apply the review methodology to any code' }
-			]
-		}
+			agents: [{ name: 'hermeneutic-reviewer', description: 'Full three-pass triad analysis on code' }],
+			skills: [{ name: 'Subtractive Review', description: 'Apply the review methodology to any code' }]
+		},
+		version: '1.1.0',
+		lastUpdated: '2024-12-23',
+		examples: [
+			{
+				prompt: '/review-triad src/lib/utils',
+				description: 'Review a directory through the Subtractive Triad'
+			},
+			{
+				prompt: 'Review this PR using the hermeneutic method',
+				description: 'Get a three-pass analysis of changes'
+			}
+		],
+		relatedPlugins: ['canon', 'understanding-graphs']
 	},
 	{
 		slug: 'voice-validator',
@@ -63,16 +84,26 @@ export const PLUGINS: Plugin[] = [
 			'Utility test (actionable, reproducible)'
 		],
 		provides: {
-			commands: [
-				{ name: '/audit-voice', description: 'Check content compliance against Five Principles' }
-			],
+			commands: [{ name: '/audit-voice', description: 'Check content compliance against Five Principles' }],
 			agents: [
 				{ name: 'voice-auditor', description: 'Proactive content auditing after writing docs or README' }
 			],
-			skills: [
-				{ name: 'Voice Validator', description: 'Full validation workflow for content files' }
-			]
-		}
+			skills: [{ name: 'Voice Validator', description: 'Full validation workflow for content files' }],
+			hooks: [{ name: 'PostToolUse', description: 'Auto-prompt for audit after writing docs/README' }]
+		},
+		version: '1.2.0',
+		lastUpdated: '2024-12-23',
+		examples: [
+			{
+				prompt: '/audit-voice README.md',
+				description: 'Check your README for Voice compliance'
+			},
+			{
+				prompt: 'Is this marketing copy following the Five Principles?',
+				description: 'Get feedback on content clarity and honesty'
+			}
+		],
+		relatedPlugins: ['hermeneutic-review', 'understanding-graphs']
 	},
 	{
 		slug: 'understanding-graphs',
@@ -91,17 +122,37 @@ export const PLUGINS: Plugin[] = [
 			agents: [
 				{ name: 'codebase-navigator', description: 'Navigate unfamiliar codebases using UNDERSTANDING.md' }
 			],
-			skills: [
-				{ name: 'Understanding Graphs', description: 'Generate UNDERSTANDING.md for any package' }
+			skills: [{ name: 'Understanding Graphs', description: 'Generate UNDERSTANDING.md for any package' }],
+			hooks: [
+				{ name: 'PostToolUse', description: 'Prompt to update UNDERSTANDING.md on key file changes' }
 			]
-		}
+		},
+		version: '1.2.0',
+		lastUpdated: '2024-12-23',
+		examples: [
+			{
+				prompt: 'Generate an UNDERSTANDING.md for this package',
+				description: 'Create a minimal dependency graph for the codebase'
+			},
+			{
+				prompt: "I'm new to this codebase, help me navigate it",
+				description: 'Use existing UNDERSTANDING.md to orient quickly'
+			}
+		],
+		relatedPlugins: ['hermeneutic-review', 'voice-validator']
 	}
 ];
 
 export function getPlugin(slug: string): Plugin | undefined {
-	return PLUGINS.find(p => p.slug === slug);
+	return PLUGINS.find((p) => p.slug === slug);
 }
 
 export function getPluginsByCategory(category: string): Plugin[] {
-	return PLUGINS.filter(p => p.category === category);
+	return PLUGINS.filter((p) => p.category === category);
+}
+
+export function getRelatedPlugins(slug: string): Plugin[] {
+	const plugin = getPlugin(slug);
+	if (!plugin?.relatedPlugins) return [];
+	return plugin.relatedPlugins.map((s) => getPlugin(s)).filter((p): p is Plugin => p !== undefined);
 }

@@ -6,7 +6,8 @@
 	let { plugins, categories } = $derived(data);
 
 	let selectedCategory = $state<string | null>(null);
-	let copied = $state(false);
+	let copiedMarketplace = $state(false);
+	let copiedInstallAll = $state(false);
 
 	const filteredPlugins = $derived.by(() => {
 		if (!selectedCategory) return plugins;
@@ -14,12 +15,23 @@
 	});
 
 	const marketplaceCommand = '/plugin marketplace add createsomethingtoday/claude-plugins';
+	const installAllCommand = plugins.map((p) => `/plugin install ${p.slug}@create-something`).join(' && ');
 
-	async function copyCommand() {
+	async function copyMarketplace() {
 		try {
 			await navigator.clipboard.writeText(marketplaceCommand);
-			copied = true;
-			setTimeout(() => (copied = false), 2000);
+			copiedMarketplace = true;
+			setTimeout(() => (copiedMarketplace = false), 2000);
+		} catch (err) {
+			console.error('Failed to copy:', err);
+		}
+	}
+
+	async function copyInstallAll() {
+		try {
+			await navigator.clipboard.writeText(installAllCommand);
+			copiedInstallAll = true;
+			setTimeout(() => (copiedInstallAll = false), 2000);
 		} catch (err) {
 			console.error('Failed to copy:', err);
 		}
@@ -49,27 +61,55 @@
 			<!-- Quick Start -->
 			<div class="quick-start">
 				<h2 class="quick-start-title">Quick Start</h2>
-				<p class="quick-start-desc">Add the marketplace to Claude Code:</p>
-				<div class="command-box">
-					<code class="command-text">{marketplaceCommand}</code>
-					<button class="copy-button" onclick={copyCommand} aria-label="Copy command">
-						{#if copied}
-							<span class="copy-success">✓</span>
-						{:else}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-							</svg>
-						{/if}
-					</button>
+				<div class="quick-start-steps">
+					<div class="quick-start-step">
+						<span class="step-label">1. Add marketplace</span>
+						<div class="command-box">
+							<code class="command-text">{marketplaceCommand}</code>
+							<button class="copy-button" onclick={copyMarketplace} aria-label="Copy command">
+								{#if copiedMarketplace}
+									<span class="copy-success">✓</span>
+								{:else}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+									</svg>
+								{/if}
+							</button>
+						</div>
+					</div>
+					<div class="quick-start-step">
+						<span class="step-label">2. Install all plugins</span>
+						<div class="command-box install-all">
+							<code class="command-text">{installAllCommand}</code>
+							<button class="copy-button" onclick={copyInstallAll} aria-label="Copy install all command">
+								{#if copiedInstallAll}
+									<span class="copy-success">✓</span>
+								{:else}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+									</svg>
+								{/if}
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -144,13 +184,30 @@
 		font-size: var(--text-body);
 		font-weight: 600;
 		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs) 0;
+		margin: 0 0 var(--space-sm) 0;
 	}
 
-	.quick-start-desc {
+	.quick-start-steps {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.quick-start-step {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.step-label {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-sm) 0;
+		font-weight: 500;
+	}
+
+	.install-all .command-text {
+		font-size: var(--text-caption);
+		word-break: break-all;
 	}
 
 	.command-box {
