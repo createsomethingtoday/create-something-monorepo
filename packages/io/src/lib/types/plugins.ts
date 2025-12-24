@@ -35,6 +35,11 @@ export interface PluginProvides {
 	hooks?: { name: string; description: string }[];
 }
 
+export interface PluginExample {
+	prompt: string;
+	description: string;
+}
+
 export interface Plugin {
 	slug: string;
 	name: string;
@@ -43,4 +48,8 @@ export interface Plugin {
 	tags: string[];
 	features: string[];
 	provides?: PluginProvides;
+	version?: string;
+	lastUpdated?: string;
+	examples?: PluginExample[];
+	relatedPlugins?: string[];
 }
