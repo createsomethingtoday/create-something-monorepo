@@ -50,7 +50,9 @@ Visual references inform these token decisions:
 | Braun product radii | `--radius-sm: 6px` through `--radius-lg: 12px` |
 | Functional transitions | `--duration-micro: 200ms` |
 
-## Sync Commands
+## API Commands
+
+### Sync (Read from Are.na)
 
 ```bash
 # Sync all channels
@@ -62,6 +64,33 @@ curl https://createsomething.ltd/api/arena/sync?channel=canon-minimalism
 # View synced references
 https://createsomething.ltd/taste
 ```
+
+### Contribute (Write to Are.na)
+
+```bash
+# Create image/link block
+curl -X POST https://createsomething.ltd/api/arena/blocks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "canon-minimalism",
+    "source": "https://example.com/image.jpg",
+    "title": "Example Title",
+    "description": "Optional description"
+  }'
+
+# Create text block
+curl -X POST https://createsomething.ltd/api/arena/blocks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "motion-language",
+    "content": "Your markdown content here",
+    "title": "Optional Title"
+  }'
+```
+
+**UI**: Authenticated users can contribute via the "+ Contribute Reference" button on `/taste`
+
+**Channels**: Only `canon-minimalism` and `motion-language` accept contributions
 
 ## Hermeneutic Flow
 

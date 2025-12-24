@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
+	import ContributeBlock from '$lib/components/taste/ContributeBlock.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -60,6 +61,13 @@
 			<span class="stat-divider">·</span>
 			<a href="/taste/insights" class="stat-link">Your Insights →</a>
 		</div>
+
+		<!-- Contribution -->
+		{#if data.user}
+			<div class="contribute-row">
+				<ContributeBlock />
+			</div>
+		{/if}
 	</div>
 </section>
 
@@ -281,6 +289,10 @@
 
 	.stat-link:hover {
 		opacity: 0.7;
+	}
+
+	.contribute-row {
+		margin-top: var(--space-md);
 	}
 
 	/* Channels */

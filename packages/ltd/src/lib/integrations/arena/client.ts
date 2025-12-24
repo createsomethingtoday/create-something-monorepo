@@ -158,6 +158,48 @@ export class ArenaClient {
 	}
 
 	/**
+	 * Create a new block and add it to a channel
+	 * Requires authentication (accessToken must be set)
+	 */
+	async createBlock(
+		channelSlug: string,
+		block: {
+			source?: string; // URL for image/link/embed blocks
+			content?: string; // Text content (markdown)
+			title?: string;
+			description?: string;
+		}
+	): Promise<ArenaBlock> {
+		if (!this.accessToken) {
+			throw new Error('Authentication required: accessToken must be set to create blocks');
+		}
+
+		if (!block.source && !block.content) {
+			throw new Error('Either source (URL) or content (text) is required');
+		}
+
+		if (block.source && block.content) {
+			throw new Error('Cannot specify both source and content - choose one');
+		}
+
+		const body: Record<string, string> = {};
+		if (block.source) body.source = block.source;
+		if (block.content) body.content = block.content;
+		if (block.title) body.title = block.title;
+		if (block.description) body.description = block.description;
+
+		const createdBlock = await this.fetch<ArenaBlock>(`/channels/${channelSlug}/blocks`, {
+			method: 'POST',
+			body: JSON.stringify(body)
+		});
+
+		// Invalidate channel cache since we added a block
+		await this.invalidateChannel(channelSlug);
+
+		return createdBlock;
+	}
+
+	/**
 	 * Invalidate cache for a specific channel
 	 */
 	async invalidateChannel(slug: string): Promise<void> {
