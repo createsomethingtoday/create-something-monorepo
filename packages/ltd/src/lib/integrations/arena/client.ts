@@ -234,9 +234,12 @@ export class ArenaClient {
 			throw new Error('Authentication required: accessToken must be set to connect blocks');
 		}
 
-		const connected = await this.fetch<ArenaBlock>(`/channels/${channelSlug}/blocks`, {
-			method: 'PUT',
-			body: JSON.stringify({ id: blockId })
+		const connected = await this.fetch<ArenaBlock>(`/channels/${channelSlug}/connections`, {
+			method: 'POST',
+			body: JSON.stringify({
+				connectable_id: blockId,
+				connectable_type: 'Block'
+			})
 		});
 
 		await this.invalidateChannel(channelSlug);
