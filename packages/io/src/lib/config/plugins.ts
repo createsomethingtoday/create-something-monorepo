@@ -14,7 +14,18 @@ export const PLUGINS: Plugin[] = [
 			'Enforce 10 Rams principles for artifacts',
 			'Validate hermeneutic circle coherence',
 			'Property-specific standards (.ltd, .io, .space, .agency)'
-		]
+		],
+		provides: {
+			commands: [
+				{ name: '/audit-canon', description: 'Check CSS Canon compliance on current file or directory' }
+			],
+			agents: [
+				{ name: 'canon-auditor', description: 'Proactive compliance checks after code changes' }
+			],
+			hooks: [
+				{ name: 'PostToolUse', description: 'Automatic checking on Write/Edit operations' }
+			]
+		}
 	},
 	{
 		slug: 'hermeneutic-review',
@@ -28,7 +39,15 @@ export const PLUGINS: Plugin[] = [
 			'Pass 2: Rams - question every addition',
 			'Pass 3: Heidegger - verify system connection',
 			'Anti-pattern detection (over-engineering, premature abstraction)'
-		]
+		],
+		provides: {
+			agents: [
+				{ name: 'hermeneutic-reviewer', description: 'Full three-pass triad analysis on code' }
+			],
+			skills: [
+				{ name: 'Subtractive Review', description: 'Apply the review methodology to any code' }
+			]
+		}
 	},
 	{
 		slug: 'voice-validator',
@@ -42,7 +61,15 @@ export const PLUGINS: Plugin[] = [
 			'Specificity audit (numbers, baselines, evidence)',
 			'Honesty check (failures, limitations documented)',
 			'Utility test (actionable, reproducible)'
-		]
+		],
+		provides: {
+			commands: [
+				{ name: '/audit-voice', description: 'Check content compliance against Five Principles' }
+			],
+			skills: [
+				{ name: 'Voice Validator', description: 'Full validation workflow for content files' }
+			]
+		}
 	},
 	{
 		slug: 'understanding-graphs',
@@ -56,7 +83,12 @@ export const PLUGINS: Plugin[] = [
 			'Generate critical paths (User Action → Result)',
 			'Identify key files with purpose/deps/consumers',
 			'Capture common traps and solutions'
-		]
+		],
+		provides: {
+			skills: [
+				{ name: 'Understanding Graphs', description: 'Generate UNDERSTANDING.md for any package' }
+			]
+		}
 	}
 ];
 

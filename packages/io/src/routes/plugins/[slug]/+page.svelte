@@ -117,6 +117,74 @@
 	</div>
 </section>
 
+<!-- What You Get Section -->
+{#if plugin.provides}
+	<section class="py-16 px-6">
+		<div class="max-w-4xl mx-auto">
+			<div class="section-card animate-reveal" style="--delay: 1.5">
+				<h2 class="section-title">What You Get</h2>
+				<div class="provides-grid">
+					{#if plugin.provides.commands?.length}
+						<div class="provides-category">
+							<h3 class="provides-label">Commands</h3>
+							<div class="provides-items">
+								{#each plugin.provides.commands as cmd}
+									<div class="provides-item">
+										<code class="provides-name">{cmd.name}</code>
+										<span class="provides-desc">{cmd.description}</span>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
+					{#if plugin.provides.agents?.length}
+						<div class="provides-category">
+							<h3 class="provides-label">Agents</h3>
+							<div class="provides-items">
+								{#each plugin.provides.agents as agent}
+									<div class="provides-item">
+										<code class="provides-name">{agent.name}</code>
+										<span class="provides-desc">{agent.description}</span>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
+					{#if plugin.provides.skills?.length}
+						<div class="provides-category">
+							<h3 class="provides-label">Skills</h3>
+							<div class="provides-items">
+								{#each plugin.provides.skills as skill}
+									<div class="provides-item">
+										<code class="provides-name">{skill.name}</code>
+										<span class="provides-desc">{skill.description}</span>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
+					{#if plugin.provides.hooks?.length}
+						<div class="provides-category">
+							<h3 class="provides-label">Hooks</h3>
+							<div class="provides-items">
+								{#each plugin.provides.hooks as hook}
+									<div class="provides-item">
+										<code class="provides-name">{hook.name}</code>
+										<span class="provides-desc">{hook.description}</span>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				</div>
+			</div>
+		</div>
+	</section>
+{/if}
+
 <!-- Installation Section -->
 <section class="py-16 px-6">
 	<div class="max-w-4xl mx-auto">
@@ -291,6 +359,56 @@
 		left: 0;
 		color: var(--color-success);
 		font-weight: 700;
+	}
+
+	/* Provides Grid */
+	.provides-grid {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-lg);
+	}
+
+	.provides-category {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.provides-label {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin: 0;
+	}
+
+	.provides-items {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.provides-item {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: var(--space-sm);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+	}
+
+	.provides-name {
+		font-family: 'Monaco', 'Menlo', monospace;
+		font-size: var(--text-body);
+		color: var(--color-fg-primary);
+		font-weight: 500;
+	}
+
+	.provides-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.5;
 	}
 
 	/* Installation Steps */
