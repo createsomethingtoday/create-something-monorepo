@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PluginCard from '$lib/components/plugins/PluginCard.svelte';
+	import PluginExportModal from '$lib/components/plugins/PluginExportModal.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -12,28 +13,6 @@
 		if (!selectedCategory) return plugins;
 		return plugins.filter(p => p.category === selectedCategory);
 	});
-
-	async function downloadSettings() {
-		try {
-			const response = await fetch('/api/plugins/export');
-			if (!response.ok) {
-				throw new Error('Failed to export settings');
-			}
-
-			const blob = await response.blob();
-			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = 'settings.json';
-			document.body.appendChild(a);
-			a.click();
-			window.URL.revokeObjectURL(url);
-			document.body.removeChild(a);
-			showExportModal = false;
-		} catch (err) {
-			console.error('Error downloading settings:', err);
-		}
-	}
 </script>
 
 <svelte:head>
@@ -118,24 +97,10 @@
 </section>
 
 <!-- Export Modal -->
-{#if showExportModal}
-	<div class="modal-overlay" onclick={() => (showExportModal = false)}>
-		<div class="modal-content" onclick={e => e.stopPropagation()}>
-			<h2 class="modal-title">Export Settings</h2>
-			<p class="modal-description">
-				Download your enabled plugins as a settings.json file. You can import this into Claude Code
-				to sync your plugin configuration.
-			</p>
-
-			<div class="modal-actions">
-				<button class="button-secondary" onclick={() => (showExportModal = false)}>
-					Cancel
-				</button>
-				<button class="button-primary" onclick={downloadSettings}>Download</button>
-			</div>
-		</div>
-	</div>
-{/if}
+<PluginExportModal
+	isOpen={showExportModal}
+	onClose={() => (showExportModal = false)}
+/>
 
 <style>
 	.page-title {
@@ -198,79 +163,6 @@
 
 	.text-body-lg {
 		font-size: var(--text-body-lg);
-	}
-
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: var(--color-overlay);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 50;
-		padding: var(--space-md);
-		animation: fadeIn var(--duration-standard) var(--ease-standard);
-	}
-
-	.modal-content {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
-		max-width: 500px;
-		animation: slideUp var(--duration-standard) var(--ease-standard);
-	}
-
-	.modal-title {
-		font-size: var(--text-h2);
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-	}
-
-	.modal-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-lg);
-		line-height: 1.6;
-	}
-
-	.modal-actions {
-		display: flex;
-		gap: var(--space-md);
-		justify-content: flex-end;
-	}
-
-	.button-secondary {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.button-secondary:hover {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
-	}
-
-	.button-primary {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-success);
-		border: 1px solid var(--color-success);
-		border-radius: var(--radius-lg);
-		color: var(--color-bg-pure);
-		font-size: var(--text-body);
-		font-weight: 500;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.button-primary:hover {
-		opacity: 0.9;
 	}
 
 	.animate-reveal {
