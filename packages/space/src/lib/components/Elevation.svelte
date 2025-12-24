@@ -37,13 +37,13 @@
 	// --arch-stroke-medium: 0.5 (secondary elements)
 	// --arch-stroke-fine: 0.25 (dimensions, annotations)
 	// --arch-stroke-hairline: 0.15 (hidden lines, hatching)
-	const elementStyles: Record<string, { stroke: string; width: number; dash?: string }> = {
-		wall: { stroke: 'var(--arch-wall-exterior)', width: 1.0 },
-		roof: { stroke: 'var(--arch-wall-exterior)', width: 1.0 },
-		window: { stroke: 'var(--arch-window)', width: 0.25 },
-		door: { stroke: 'var(--color-fg-secondary)', width: 0.5 },
-		column: { stroke: 'var(--arch-column)', width: 2.0 },
-		grade: { stroke: 'var(--arch-dimension-color)', width: 0.25, dash: '2 2' }
+	const elementStyles: Record<string, { stroke: string; width: string; dash?: string }> = {
+		wall: { stroke: 'var(--arch-wall-exterior)', width: 'var(--arch-stroke-object)' },
+		roof: { stroke: 'var(--arch-wall-exterior)', width: 'var(--arch-stroke-object)' },
+		window: { stroke: 'var(--arch-window)', width: 'var(--arch-stroke-fine)' },
+		door: { stroke: 'var(--arch-door-tick)', width: 'var(--arch-stroke-medium)' },
+		column: { stroke: 'var(--arch-column)', width: 'var(--arch-stroke-cut)' },
+		grade: { stroke: 'var(--arch-dimension-color)', width: 'var(--arch-stroke-fine)', dash: '2 2' }
 	};
 
 	const directionLabels: Record<string, string> = {
@@ -77,10 +77,11 @@
 				x2={tx(el.x2)}
 				y2={ty(el.y2)}
 				stroke={style.stroke}
-				stroke-width={el.filled ? style.width * 2 : style.width}
+				stroke-width={style.width}
 				stroke-linecap="square"
 				stroke-dasharray={style.dash || 'none'}
 				class="element element-{el.type}"
+				style={el.filled ? 'opacity: 0.8' : ''}
 			/>
 		{/each}
 
@@ -171,25 +172,26 @@
 	}
 
 	.window-rect {
-		fill: var(--color-hover);
-		stroke: var(--color-fg-muted);
-		stroke-width: 0.5;
+		fill: var(--arch-window);
+		opacity: 0.15;
+		stroke: var(--arch-window);
+		stroke-width: var(--arch-stroke-fine);
 	}
 
 	.window-mullion {
-		stroke: var(--color-fg-subtle);
-		stroke-width: 0.5;
+		stroke: var(--arch-window);
+		stroke-width: var(--arch-stroke-hairline);
 	}
 
 	/* Dimension lines */
 	.dimension line {
 		stroke: var(--arch-dimension-color);
-		stroke-width: 0.5;
+		stroke-width: var(--arch-stroke-fine);
 	}
 
 	.dimension-line {
 		stroke: var(--arch-dimension-color);
-		stroke-width: 0.5;
+		stroke-width: var(--arch-stroke-fine);
 	}
 
 	.elevation-label {
@@ -218,7 +220,7 @@
 		align-items: center;
 		margin-top: var(--space-md, 1.5rem);
 		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-hover);
+		border-top: 1px solid var(--color-border-default);
 		font-family: var(--font-sans, system-ui, sans-serif);
 	}
 
