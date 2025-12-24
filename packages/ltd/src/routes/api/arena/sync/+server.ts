@@ -28,9 +28,10 @@ const CS_CHANNELS = [
 const EXTERNAL_CHANNELS = [
 	'people-dieter-rams',
 	'examples-swiss-design',
-	'motion-minimal-simple',
 	'interfaces-motion',
-	'minimal-modern-web'
+	'minimal-modern-web',
+	'clean-mymjklzsah4',
+	'minimalism-cpx4fblmr3i'
 ];
 
 // Default: sync our channels first, then external

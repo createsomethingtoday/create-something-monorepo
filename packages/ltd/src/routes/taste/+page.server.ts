@@ -42,12 +42,6 @@ const CHANNELS: Channel[] = [
 		isPrimary: false
 	},
 	{
-		slug: 'motion-minimal-simple',
-		name: 'Minimal Motion',
-		description: 'Subtle animation examples',
-		isPrimary: false
-	},
-	{
 		slug: 'interfaces-motion',
 		name: 'Interface Motion',
 		description: 'UI animation patterns',
@@ -57,6 +51,18 @@ const CHANNELS: Channel[] = [
 		slug: 'minimal-modern-web',
 		name: 'Minimal Web',
 		description: 'Contemporary minimalist sites',
+		isPrimary: false
+	},
+	{
+		slug: 'clean-mymjklzsah4',
+		name: 'Clean',
+		description: 'Clean and clear minimalist design',
+		isPrimary: false
+	},
+	{
+		slug: 'minimalism-cpx4fblmr3i',
+		name: 'Minimalism',
+		description: 'Minimalist design references',
 		isPrimary: false
 	}
 ];
