@@ -929,7 +929,7 @@
 			class:hidden={expandedView !== null && expandedView !== 'section'}
 		>
 			<button class="expand-trigger" onclick={() => toggleExpand('section')} aria-label="Toggle fullscreen section">
-				<Section section={sectionAA} />
+				<Section section={sectionAA} expanded={expandedView === 'section'} />
 			</button>
 		</div>
 		<div
@@ -938,7 +938,7 @@
 			class:hidden={expandedView !== null && expandedView !== 'elevation'}
 		>
 			<button class="expand-trigger" onclick={() => toggleExpand('elevation')} aria-label="Toggle fullscreen elevation">
-				<Elevation elevation={southElevation} />
+				<Elevation elevation={southElevation} expanded={expandedView === 'elevation'} />
 			</button>
 		</div>
 	</section>
