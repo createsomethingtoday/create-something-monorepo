@@ -1,0 +1,15 @@
+# Arena Curator Scheduled Worker
+# Programmatic curation based on search queries and filter rules
+# Runs weekly to discover and connect relevant Are.na content
+
+name = "arena-curator"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Weekly curation - Sundays at 6am UTC
+[triggers]
+crons = ["0 6 * * 0"]
+
+[vars]
+# API endpoint for connecting blocks
+API_BASE = "https://createsomething.ltd"
