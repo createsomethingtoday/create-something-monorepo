@@ -1,7 +1,24 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Lightbox state
+	let selectedImageIndex = $state(-1);
+	let isLightboxOpen = $derived(selectedImageIndex >= 0);
+
+	function openLightbox(index: number) {
+		selectedImageIndex = index;
+	}
+
+	function closeLightbox() {
+		selectedImageIndex = -1;
+	}
+
+	function navigateLightbox(index: number) {
+		selectedImageIndex = index;
+	}
 
 	// Format date for display
 	function formatDate(dateStr: string | null): string {
@@ -95,8 +112,12 @@
 			<p class="section-subtitle">{data.examples.length} curated images from Are.na</p>
 
 			<div class="masonry-grid">
-				{#each data.examples as example}
-					<div class="example-card">
+				{#each data.examples as example, index}
+					<button
+						class="example-card"
+						onclick={() => openLightbox(index)}
+						aria-label={example.title ? `View ${example.title}` : 'View image'}
+					>
 						{#if example.image_url}
 							<img
 								src={example.image_url}
@@ -115,7 +136,7 @@
 								{/if}
 							</div>
 						</div>
-					</div>
+					</button>
 				{/each}
 			</div>
 		</div>
@@ -200,6 +221,17 @@
 		</a>
 	</div>
 </section>
+
+<!-- Image Lightbox -->
+{#if data.examples && data.examples.length > 0}
+	<ImageLightbox
+		images={data.examples}
+		currentIndex={selectedImageIndex}
+		isOpen={isLightboxOpen}
+		onClose={closeLightbox}
+		onNavigate={navigateLightbox}
+	/>
+{/if}
 
 <style>
 	/* Header */
@@ -356,6 +388,20 @@
 		background: var(--color-bg-surface);
 		margin-bottom: 1rem;
 		break-inside: avoid;
+		/* Reset button styles */
+		padding: 0;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		text-align: left;
+		width: 100%;
+		display: block;
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.example-card:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.example-img {
