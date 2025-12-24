@@ -18,7 +18,7 @@
 		settingsJson = null;
 
 		try {
-			const response = await fetch('/api/plugins/export');
+			const response = await fetch('/plugins/export');
 
 			if (!response.ok) {
 				throw new Error('Failed to load settings');
