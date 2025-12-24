@@ -69,7 +69,8 @@ const CHANNELS: Channel[] = [
 
 const MASTER_ID = 'arena-taste';
 
-export const load: PageServerLoad = async ({ platform }) => {
+export const load: PageServerLoad = async ({ platform, parent }) => {
+	const { user } = await parent();
 	const db = platform?.env?.DB;
 
 	if (!db) {
@@ -77,7 +78,8 @@ export const load: PageServerLoad = async ({ platform }) => {
 			examples: [],
 			resources: [],
 			channels: CHANNELS,
-			stats: { examples: 0, resources: 0, lastSync: null }
+			stats: { examples: 0, resources: 0, lastSync: null },
+			user
 		};
 	}
 
@@ -112,7 +114,8 @@ export const load: PageServerLoad = async ({ platform }) => {
 				examples: examples.length,
 				resources: resources.length,
 				lastSync: examples[0]?.created_at || resources[0]?.created_at || null
-			}
+			},
+			user
 		};
 	} catch (error) {
 		console.error('Error loading taste references:', error);
@@ -120,7 +123,8 @@ export const load: PageServerLoad = async ({ platform }) => {
 			examples: [],
 			resources: [],
 			channels: CHANNELS,
-			stats: { examples: 0, resources: 0, lastSync: null }
+			stats: { examples: 0, resources: 0, lastSync: null },
+			user
 		};
 	}
 };
