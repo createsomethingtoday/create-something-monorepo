@@ -1,25 +1,16 @@
 <script lang="ts">
-	import PluginToggle from './PluginToggle.svelte';
 	import type { Plugin } from '$lib/config/plugins';
 
 	interface Props {
 		plugin: Plugin;
-		isEnabled: boolean;
-		isAuthenticated: boolean;
 	}
 
-	let { plugin, isEnabled = $bindable(), isAuthenticated }: Props = $props();
+	let { plugin }: Props = $props();
 </script>
 
 <a href="/plugins/{plugin.slug}" class="plugin-card">
 	<div class="card-header">
 		<div class="category-badge">{plugin.category}</div>
-		<PluginToggle
-			slug={plugin.slug}
-			bind:enabled={isEnabled}
-			{isAuthenticated}
-			onclick={e => e.stopPropagation()}
-		/>
 	</div>
 
 	<div class="card-content">
