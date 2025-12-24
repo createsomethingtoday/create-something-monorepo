@@ -187,19 +187,60 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		// Update each recipient's status
 		const updatePromises = recipients.map(async (email) => {
 			try {
-				await db
-					.prepare(
-						`UPDATE newsletter_subscribers
-             SET status = ?,
-                 bounce_reason = ?,
-                 bounced_at = datetime('now')
-             WHERE email = ?`
-					)
-					.bind(status, bounceReason, email)
-					.run();
+				// Check if this is a hard bounce (Permanent) that should count toward auto-unsubscribe
+				const isHardBounce = event.data.bounce?.type === 'Permanent';
 
-				console.log(`Marked ${email} as ${status}: ${bounceReason}`);
-				return { email, success: true };
+				if (isHardBounce) {
+					// Get current bounce count
+					const subscriber = await db
+						.prepare('SELECT bounce_count FROM newsletter_subscribers WHERE email = ?')
+						.bind(email)
+						.first<{ bounce_count: number }>();
+
+					const currentBounceCount = subscriber?.bounce_count || 0;
+					const newBounceCount = currentBounceCount + 1;
+
+					// Auto-unsubscribe if this is the 3rd hard bounce
+					const newStatus = newBounceCount >= 3 ? 'unsubscribed' : status;
+					const autoUnsubscribeReason =
+						newBounceCount >= 3
+							? `Auto-unsubscribed after 3 hard bounces. ${bounceReason}`
+							: bounceReason;
+
+					await db
+						.prepare(
+							`UPDATE newsletter_subscribers
+               SET status = ?,
+                   bounce_reason = ?,
+                   bounce_count = ?,
+                   bounced_at = COALESCE(bounced_at, datetime('now')),
+                   last_bounce_at = datetime('now')
+               WHERE email = ?`
+						)
+						.bind(newStatus, autoUnsubscribeReason, newBounceCount, email)
+						.run();
+
+					console.log(
+						`Marked ${email} as ${newStatus} (bounce ${newBounceCount}/3): ${autoUnsubscribeReason}`
+					);
+					return { email, success: true, bounceCount: newBounceCount, autoUnsubscribed: newBounceCount >= 3 };
+				} else {
+					// Soft bounce or complaint - don't increment bounce count
+					await db
+						.prepare(
+							`UPDATE newsletter_subscribers
+               SET status = ?,
+                   bounce_reason = ?,
+                   bounced_at = COALESCE(bounced_at, datetime('now')),
+                   last_bounce_at = datetime('now')
+               WHERE email = ?`
+						)
+						.bind(status, bounceReason, email)
+						.run();
+
+					console.log(`Marked ${email} as ${status}: ${bounceReason}`);
+					return { email, success: true };
+				}
 			} catch (err) {
 				console.error(`Failed to update ${email}:`, err);
 				return { email, success: false, error: err };
