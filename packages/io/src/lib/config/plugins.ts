@@ -66,6 +66,9 @@ export const PLUGINS: Plugin[] = [
 			commands: [
 				{ name: '/audit-voice', description: 'Check content compliance against Five Principles' }
 			],
+			agents: [
+				{ name: 'voice-auditor', description: 'Proactive content auditing after writing docs or README' }
+			],
 			skills: [
 				{ name: 'Voice Validator', description: 'Full validation workflow for content files' }
 			]
@@ -85,6 +88,9 @@ export const PLUGINS: Plugin[] = [
 			'Capture common traps and solutions'
 		],
 		provides: {
+			agents: [
+				{ name: 'codebase-navigator', description: 'Navigate unfamiliar codebases using UNDERSTANDING.md' }
+			],
 			skills: [
 				{ name: 'Understanding Graphs', description: 'Generate UNDERSTANDING.md for any package' }
 			]
