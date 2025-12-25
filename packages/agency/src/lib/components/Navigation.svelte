@@ -35,10 +35,10 @@
 					</a>
 				</li>
 				<li>
-					<!-- Contact Button -->
-					<a href="/contact" class="contact-btn group relative px-6 py-2 overflow-hidden">
-						<span class="relative z-10">Contact</span>
-						<div class="contact-btn-overlay absolute inset-0 translate-y-full group-hover:translate-y-0"></div>
+					<!-- Discovery CTA -->
+					<a href="/discover" class="discover-btn group relative px-6 py-2 overflow-hidden">
+						<span class="relative z-10">Discover</span>
+						<div class="discover-btn-overlay absolute inset-0 translate-y-full group-hover:translate-y-0"></div>
 					</a>
 				</li>
 			</ul>
@@ -86,8 +86,8 @@
 						</a>
 					</li>
 					<li>
-						<a href="/contact" class="mobile-contact-btn px-6 py-2 text-center" onclick={() => isMenuOpen = false}>
-							Contact
+						<a href="/discover" class="mobile-discover-btn px-6 py-2 text-center" onclick={() => isMenuOpen = false}>
+							Discover
 						</a>
 					</li>
 				</ul>
@@ -131,7 +131,7 @@
 		color: var(--color-fg-primary);
 	}
 
-	.contact-btn {
+	.discover-btn {
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 		font-size: var(--text-body-sm);
@@ -140,11 +140,11 @@
 		transition: background var(--duration-standard) var(--ease-standard);
 	}
 
-	.contact-btn:hover {
+	.discover-btn:hover {
 		background: var(--color-fg-primary);
 	}
 
-	.contact-btn-overlay {
+	.discover-btn-overlay {
 		background: var(--color-border-emphasis);
 		transition: transform var(--duration-standard) var(--ease-standard);
 	}
@@ -173,7 +173,7 @@
 		color: var(--color-fg-primary);
 	}
 
-	.mobile-contact-btn {
+	.mobile-discover-btn {
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 		font-size: var(--text-body-sm);
@@ -182,7 +182,7 @@
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
-	.mobile-contact-btn:hover {
+	.mobile-discover-btn:hover {
 		background: var(--color-fg-primary);
 	}
 
