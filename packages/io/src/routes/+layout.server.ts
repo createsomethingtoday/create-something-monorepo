@@ -10,13 +10,6 @@ export const load: LayoutServerLoad = async ({ cookies, platform }) => {
 
 	const user = await session.getUser();
 
-	// Debug logging for SSO investigation
-	console.log('[IO Layout] User loaded:', {
-		hasUser: !!user,
-		userId: user?.id,
-		email: user?.email
-	});
-
 	// Fetch analytics_opt_out from local database if user is logged in
 	let analytics_opt_out = false;
 	if (user && platform?.env?.DB) {
