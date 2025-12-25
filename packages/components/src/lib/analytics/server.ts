@@ -261,12 +261,16 @@ async function updateSessionSummaries(
 
 		if (existing.results && existing.results.length > 0) {
 			// Update existing session
+			// Get user_id from first event with one (in case user logged in mid-session)
+			const eventUserId = sessionEvts.find(e => e.userId)?.userId || null;
+
 			// Prefer client-reported duration from session_end event if available
 			if (clientReportedDuration !== undefined && clientReportedDuration > 0) {
 				// Use client-reported active time (more accurate)
 				await db
 					.prepare(
 						`UPDATE unified_sessions SET
+						 user_id = COALESCE(user_id, ?),
 						 ended_at = ?,
 						 duration_seconds = ?,
 						 page_views = page_views + ?,
@@ -279,6 +283,7 @@ async function updateSessionSummaries(
 						 WHERE id = ?`
 					)
 					.bind(
+						eventUserId,
 						lastEvent.timestamp,
 						Math.round(clientReportedDuration),
 						pageViews,
@@ -296,6 +301,7 @@ async function updateSessionSummaries(
 				await db
 					.prepare(
 						`UPDATE unified_sessions SET
+						 user_id = COALESCE(user_id, ?),
 						 ended_at = ?,
 						 duration_seconds = CASE
 						   WHEN page_views + ? > 0 THEN MAX(CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER), 1)
@@ -311,6 +317,7 @@ async function updateSessionSummaries(
 						 WHERE id = ?`
 					)
 					.bind(
+						eventUserId,
 						lastEvent.timestamp,
 						pageViews,
 						lastEvent.timestamp,
