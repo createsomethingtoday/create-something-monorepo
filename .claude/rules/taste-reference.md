@@ -25,6 +25,7 @@ Human-curated visual references from Are.na that inform Canon design decisions.
 | `offlining` | H R T | Critique of technological enframing (Claude Code) |
 | `delightful-interactions...` | Nicky Knicky | Purposeful UI motion, 483 blocks (Motion Language) |
 | `10x10-material-cultures` | M V | Information design, Tufte, Isotype |
+| `systems-diagrams...` | Anne-Laure Lemaitre | Cybernetics, systematic visualization |
 
 ## Per-Channel Curation Criteria
 
