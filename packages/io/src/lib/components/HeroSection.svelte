@@ -182,7 +182,7 @@
 		border-color: var(--color-border-emphasis);
 		background: var(--color-hover);
 		transform: translateY(-4px); /* Prominent lift — participatory */
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+		box-shadow: var(--shadow-lg);
 	}
 
 	/* Papers: Vorhandenheit — Detached analysis, contemplative stillness */
