@@ -195,7 +195,7 @@
 	}
 
 	.btn-primary {
-		padding: 1rem 2rem;
+		padding: var(--space-sm) var(--space-md);
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 		font-weight: var(--font-medium);
@@ -207,7 +207,7 @@
 	}
 
 	.btn-secondary {
-		padding: 1rem 2rem;
+		padding: var(--space-sm) var(--space-md);
 		border: 1px solid var(--color-border-default);
 		transition: border-color var(--duration-standard) var(--ease-standard);
 	}
@@ -279,9 +279,7 @@
 	.master-card {
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
-		box-shadow:
-			inset 0 0 30px rgba(255, 255, 255, 0),
-			0 0 0 0 transparent;
+		box-shadow: none;
 		transition:
 			border-color var(--duration-standard) var(--ease-standard),
 			box-shadow var(--duration-standard) var(--ease-standard),
@@ -303,10 +301,8 @@
 	.master-card:hover {
 		border-color: var(--color-border-emphasis);
 		background: var(--color-bg-elevated);
-		/* Interior glow — light from within, suggesting depth */
-		box-shadow:
-			inset 0 0 40px rgba(255, 255, 255, 0.02),
-			0 0 0 1px var(--color-border-emphasis);
+		/* Subtle emphasis on hover — depth suggested through background shift */
+		box-shadow: 0 0 0 1px var(--color-border-emphasis);
 	}
 
 	.master-name {
