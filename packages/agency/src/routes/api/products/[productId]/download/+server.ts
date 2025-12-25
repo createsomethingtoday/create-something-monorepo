@@ -13,8 +13,8 @@ import { getOfferingBySlug } from '$lib/data/services';
 // Product file paths in R2 bucket
 const PRODUCT_FILES: Record<string, { path: string; filename: string; contentType: string }> = {
 	'automation-patterns': {
-		path: 'products/automation-patterns-pack-v1.zip',
-		filename: 'automation-patterns-pack-v1.zip',
+		path: 'products/automation-patterns-v1.0.0.zip',
+		filename: 'automation-patterns-pack-v1.0.0.zip',
 		contentType: 'application/zip'
 	}
 	// Add more products as needed
