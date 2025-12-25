@@ -11,6 +11,24 @@ Terminal tooling follows the Subtractive Triad:
 
 ## Contents
 
+### claude-code/
+
+Claude Code settings and templates:
+- `settings.json` - MCP servers, permissions, custom instructions
+- `mcp-templates/` - Pre-configured MCP server configs (Slack, Linear, Stripe, etc.)
+- `harness-templates/` - Multi-session work templates (feature, migration, refactor)
+
+### wezterm/
+
+Terminal emulator configuration:
+- Canon color scheme
+- Custom key bindings
+- Tab and pane management
+
+### beads/
+
+Agent-native task management configuration. Beads replaces Taskwarrior for AI-agent workflows.
+
 ### neomutt/
 
 Email client configuration with:
@@ -18,10 +36,6 @@ Email client configuration with:
 - Vim keybinding grammar
 - Multi-account support (Google Workspace)
 - Folder hooks and signatures
-
-### beads/
-
-Agent-native task management configuration. Beads replaces Taskwarrior for AI-agent workflows.
 
 ### nvim/
 

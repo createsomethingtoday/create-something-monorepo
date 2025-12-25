@@ -1,0 +1,35 @@
+{
+  "_template": "Supabase MCP Server",
+  "_description": "Database queries and auth operations via Supabase",
+  "_workway": "Postgres access without pgAdmin or Supabase Dashboard",
+  "_requires": ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+
+  "supabase": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-supabase"],
+    "env": {
+      "SUPABASE_URL": "${SUPABASE_URL}",
+      "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+    }
+  },
+
+  "_setup": [
+    "1. Get project URL and service role key from Supabase Dashboard",
+    "2. Settings > API > Service Role Key (keep secret!)",
+    "3. Set environment variables"
+  ],
+
+  "_usage": [
+    "Query data: 'How many users signed up this week?'",
+    "Check schema: 'What columns are in the users table?'",
+    "Run migration: 'Add an email_verified column to users'"
+  ],
+
+  "_d1_alternative": "For Cloudflare projects, prefer D1 over Supabase. Use Supabase MCP when working with existing Supabase projects.",
+
+  "_security": [
+    "Service role key bypasses RLS - use carefully",
+    "Never expose in client-side code",
+    "Consider using anon key for read-only operations"
+  ]
+}

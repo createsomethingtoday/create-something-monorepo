@@ -1,0 +1,28 @@
+{
+  "_template": "Slack MCP Server",
+  "_description": "Send messages and read channels via Slack API",
+  "_workway": "Enables communication without context-switching to browser",
+  "_requires": ["SLACK_BOT_TOKEN", "SLACK_TEAM_ID"],
+
+  "slack": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-slack"],
+    "env": {
+      "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+      "SLACK_TEAM_ID": "${SLACK_TEAM_ID}"
+    }
+  },
+
+  "_setup": [
+    "1. Create a Slack App at https://api.slack.com/apps",
+    "2. Add Bot Token Scopes: channels:read, chat:write, users:read",
+    "3. Install to workspace and copy Bot User OAuth Token",
+    "4. Set SLACK_BOT_TOKEN and SLACK_TEAM_ID in environment"
+  ],
+
+  "_usage": [
+    "Send message: 'Post to #general: Deploy complete'",
+    "Read channel: 'What are the recent messages in #engineering?'",
+    "Find user: 'Who is online in the team?'"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "_template": "Stripe MCP Server",
+  "_description": "Query and manage Stripe payments, customers, subscriptions",
+  "_workway": "Payment operations without dashboard context-switching",
+  "_requires": ["STRIPE_SECRET_KEY"],
+
+  "stripe": {
+    "command": "npx",
+    "args": ["-y", "@anthropic/mcp-server-stripe"],
+    "env": {
+      "STRIPE_SECRET_KEY": "${STRIPE_SECRET_KEY}"
+    }
+  },
+
+  "_setup": [
+    "1. Get API key from https://dashboard.stripe.com/apikeys",
+    "2. Use test key for development: sk_test_...",
+    "3. Set STRIPE_SECRET_KEY in environment"
+  ],
+
+  "_usage": [
+    "Check customer: 'Look up the Stripe customer for email@example.com'",
+    "List subscriptions: 'What active subscriptions do we have?'",
+    "Check payment: 'What's the status of invoice inv_xxx?'"
+  ],
+
+  "_security": [
+    "Never use production keys in development",
+    "Restrict API key permissions in Stripe Dashboard",
+    "Audit API key usage regularly"
+  ]
+}

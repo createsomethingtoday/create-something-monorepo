@@ -1,0 +1,33 @@
+{
+  "_template": "Notion MCP Server",
+  "_description": "Read and update Notion pages and databases",
+  "_workway": "Documentation and knowledge base access from terminal",
+  "_requires": ["NOTION_API_KEY"],
+
+  "notion": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-notion"],
+    "env": {
+      "NOTION_API_KEY": "${NOTION_API_KEY}"
+    }
+  },
+
+  "_setup": [
+    "1. Create integration at https://www.notion.so/my-integrations",
+    "2. Copy the Internal Integration Token",
+    "3. Share relevant pages/databases with your integration",
+    "4. Set NOTION_API_KEY in environment"
+  ],
+
+  "_usage": [
+    "Read docs: 'What's in our API documentation in Notion?'",
+    "Update page: 'Add a section about authentication to the docs'",
+    "Query database: 'List all open tasks in the project tracker'"
+  ],
+
+  "_patterns": [
+    "Keep technical specs in Notion, reference during development",
+    "Update project status pages automatically",
+    "Query meeting notes for context"
+  ]
+}
