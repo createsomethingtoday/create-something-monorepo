@@ -31,8 +31,8 @@
 	const navLinks = [
 		{ label: 'Services', href: '/services' },
 		{ label: 'Products', href: '/products' },
+		{ label: 'Discover', href: '/discover' },
 		{ label: 'Work', href: '/work' },
-		{ label: 'Methodology', href: '/methodology' },
 		{ label: 'About', href: '/about' }
 	];
 
@@ -131,8 +131,8 @@
 		quickLinks={[
 			{ label: 'Services', href: '/services' },
 			{ label: 'Products', href: '/products' },
+			{ label: 'Discover', href: '/discover' },
 			{ label: 'Work', href: '/work' },
-			{ label: 'Methodology', href: '/methodology' },
 			{ label: 'About', href: '/about' },
 			{ label: 'Contact', href: '/contact' }
 		]}
