@@ -359,7 +359,7 @@
 	}
 
 	.continue-button {
-		padding: 0.875rem 2rem;
+		padding: var(--space-sm) var(--space-lg);
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 		font-size: var(--text-body);
