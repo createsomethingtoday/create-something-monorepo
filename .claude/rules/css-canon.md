@@ -230,22 +230,39 @@ Use `--ease-standard` for all animations. Consistent easing creates coherent mot
 
 #### View Transitions
 
-Per-property transition speeds reflect their character:
+Per-property transition speeds reflect their ontological character:
 
-| Property | Duration | Character |
-|----------|----------|-----------|
-| `.space` | 200ms | Experimental, responsive |
-| `.io` | 250ms | Research, measured |
-| `.agency` | 250ms | Professional, efficient |
-| `.ltd` | 500ms | Contemplative, deliberate |
-| `.learn` | 300ms | Educational, patient |
+| Property | Duration | Character | Heideggerian Mode |
+|----------|----------|-----------|-------------------|
+| `.agency` | 200ms | Efficient, direct | Being-as-Service |
+| `.io` | 250ms | Measured, analytical | Being-as-Document |
+| `.space` | 300ms | Exploratory, playful | Being-as-Experience |
+| `.ltd` | 500ms | Contemplative, deliberate | Being-as-Canon |
+| `.learn` | 300ms | Educational, patient | Being-as-Learning |
+
+**Gradient principle**: Motion speed reflects epistemic stance. Commercial work (.agency) demands efficiency; philosophical foundation (.ltd) requires dwelling.
 
 ```css
 /* Property-specific override in app.css */
 :root {
-  --view-transition-duration: 300ms;
+  --view-transition-duration: 250ms; /* .io example: measured research pace */
 }
 ```
+
+#### Philosophical Motion Pattern: TextRevelation
+
+The `.agency` TextRevelation component exemplifies motion as meaning:
+
+| Phase | Action | Philosophy |
+|-------|--------|------------|
+| Reading | Words visible | Vorhandenheit — present-at-hand, theoretical |
+| Striking | Strikethrough reveals | Destruktion — deconstruction of facade |
+| Fading | Non-essential dissolves | Subtraction — removal of ornament |
+| Coalescing | Essence emerges | Zuhandenheit — ready-to-hand, truth revealed |
+
+This is the Subtractive Triad made visual: the strikethrough literally *removes* what obscures, revealing the essence beneath. "Ready to subtract?" invites the viewer into Heideggerian practice.
+
+**Implementation**: Scroll-driven CSS animation with `requestAnimationFrame`, no libraries. The tool recedes; the revelation remains.
 
 #### Reduced Motion
 

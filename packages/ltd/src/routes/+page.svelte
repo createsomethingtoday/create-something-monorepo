@@ -130,6 +130,15 @@
 </section>
 
 <style>
+	/* Typography: Commanding presence for the philosophical foundation */
+	h1 {
+		font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem);
+		font-weight: var(--font-bold);
+		letter-spacing: -0.02em;
+		line-height: 1.1;
+		color: var(--color-fg-primary);
+	}
+
 	.eyebrow {
 		font-size: var(--text-body-sm);
 		text-transform: uppercase;

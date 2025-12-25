@@ -14,3 +14,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ==========================================================================
+   .io Property Customizations
+   View Transitions: Measured (250ms) - Research pace, between efficiency and exploration
+   ========================================================================== */
+
+:root {
+  --view-transition-duration: 250ms;
+}
