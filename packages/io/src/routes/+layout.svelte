@@ -196,7 +196,7 @@
 	</script>`}
 </svelte:head>
 
-<Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
+<Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} debug={true} />
 
 <SkipToContent />
 

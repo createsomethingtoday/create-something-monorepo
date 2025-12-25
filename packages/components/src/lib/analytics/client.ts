@@ -232,17 +232,31 @@ export class AnalyticsClient {
 	 * Check if tracking is disabled (DNT, user opt-out, or consent state)
 	 */
 	isTrackingDisabled(): boolean {
-		// Use unified consent check which handles:
-		// 1. DNT browser setting (always respected)
-		// 2. User consent state from localStorage
-		// 3. User opt-out from profile settings
-		if (!shouldTrackAnalytics(this.isAuthenticated)) {
+		// Check DNT first (most common cause)
+		if (isDNTEnabled()) {
+			if (this.config.debug) {
+				console.log('[Analytics] Tracking disabled: Do Not Track (DNT) is enabled in browser');
+			}
 			return true;
 		}
+
+		// Check localStorage consent state
+		const consentState = getConsentState();
+		if (consentState && !consentState.analytics) {
+			if (this.config.debug) {
+				console.log('[Analytics] Tracking disabled: User consent analytics=false in localStorage');
+			}
+			return true;
+		}
+
 		// User opt-out from profile settings (fallback for server-side preference)
 		if (this.userOptedOut) {
+			if (this.config.debug) {
+				console.log('[Analytics] Tracking disabled: User opted out via profile settings');
+			}
 			return true;
 		}
+
 		return false;
 	}
 
