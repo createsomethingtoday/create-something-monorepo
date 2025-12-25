@@ -15,10 +15,8 @@
 <main class="discover-page">
 	<div class="discover-container">
 		<header class="discover-header">
-			<h1 class="discover-title">What's accumulating?</h1>
 			<p class="discover-subtitle">
-				Three questions. One recommendation. Whether you need a quick tool or deeper partnership,
-				we'll find the right entry point.
+				Three questions. One recommendation.
 			</p>
 		</header>
 
@@ -45,22 +43,14 @@
 
 	.discover-header {
 		text-align: center;
-		margin-bottom: var(--space-xl);
-	}
-
-	.discover-title {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		line-height: var(--leading-tight);
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-md);
 	}
 
 	.discover-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
-		max-width: 48ch;
-		margin: 0 auto;
+		font-size: var(--text-body);
+		color: var(--color-fg-muted);
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 
 	.assessment-wrapper {
@@ -70,10 +60,6 @@
 	@media (max-width: 768px) {
 		.discover-page {
 			padding: var(--space-lg);
-		}
-
-		.discover-title {
-			font-size: var(--text-h1);
 		}
 	}
 </style>
