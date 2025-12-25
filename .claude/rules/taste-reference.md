@@ -19,6 +19,13 @@ Human-curated visual references from Are.na that inform Canon design decisions.
 | `motion-minimal-simple` | Meg W | Subtle motion |
 | `brutalist-x-web-design` | — | Brutalist web |
 | `interfaces-motion` | — | UI animation patterns |
+| `less-but-better` | Alex Chantré | Rams-aligned minimalism |
+| `grids-organizational-systems` | Rachel Steele | Swiss grid systems, Müller-Brockmann |
+| `a-website-as-a-poem...` | Esther Bouquet | Poetic dwelling, craft computing (Claude Code) |
+| `offlining` | H R T | Critique of technological enframing (Claude Code) |
+| `delightful-interactions...` | Nicky Knicky | Purposeful UI motion, 483 blocks (Motion Language) |
+| `10x10-material-cultures` | M V | Information design, Tufte, Isotype |
+| `systems-diagrams...` | Anne-Laure Lemaitre | Cybernetics, systematic visualization |
 
 ## Per-Channel Curation Criteria
 

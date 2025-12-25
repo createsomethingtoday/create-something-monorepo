@@ -8,6 +8,60 @@
 
 	const presentations = [
 		{
+			slug: 'heidegger-canon',
+			title: 'HEIDEGGER: CANON',
+			subtitle: 'Philosophy as Foundation',
+			description: 'Install the CREATE SOMETHING methodology. Apply the Subtractive Triad. Build systems that disappear.',
+			slides: 18,
+			duration: '25 min',
+			tags: ['Philosophy', 'Methodology']
+		},
+		{
+			slug: 'claude-code-partner',
+			title: 'CLAUDE CODE: PARTNER',
+			subtitle: 'AI-Native Development',
+			description: 'Set up Claude Code as your development partner. Configure CLAUDE.md, rules, MCP servers, and hooks.',
+			slides: 16,
+			duration: '25 min',
+			tags: ['Claude Code', 'AI', 'Setup']
+		},
+		{
+			slug: 'beads-continuity',
+			title: 'BEADS: CONTINUITY',
+			subtitle: 'Cross-Session Memory',
+			description: 'Agent-native task tracking for cross-session memory. Dependencies, robot mode, and hermeneutic continuity.',
+			slides: 14,
+			duration: '20 min',
+			tags: ['Beads', 'Task Management']
+		},
+		{
+			slug: 'cloudflare-edge',
+			title: 'CLOUDFLARE: EDGE',
+			subtitle: 'Global Infrastructure',
+			description: 'Deploy to the edge with D1, KV, R2, and Workers. Infrastructure that disappears.',
+			slides: 18,
+			duration: '25 min',
+			tags: ['Cloudflare', 'Infrastructure']
+		},
+		{
+			slug: 'canon-design',
+			title: 'CANON: DESIGN',
+			subtitle: 'Design Tokens from Philosophy',
+			description: 'Tailwind for structure, Canon for aesthetics. Design tokens derived from first principles.',
+			slides: 15,
+			duration: '20 min',
+			tags: ['Design', 'CSS', 'Canon']
+		},
+		{
+			slug: 'deployment-dwelling',
+			title: 'DEPLOYMENT: DWELLING',
+			subtitle: 'Shipping to Production',
+			description: 'Deploy to production and dwell. The hermeneutic spiral of ongoing practice.',
+			slides: 14,
+			duration: '20 min',
+			tags: ['Deployment', 'Practice']
+		},
+		{
 			slug: 'workway',
 			title: 'WORKWAY',
 			subtitle: 'Workflow Automation for Developers',
