@@ -41,10 +41,11 @@ export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
 	},
 
 	// One-time payment products
-	'automation-recipes': {
-		priceId: process.env.STRIPE_PRICE_AUTOMATION_RECIPES || 'price_automation_recipes_placeholder',
+	'automation-patterns': {
+		priceId:
+			process.env.STRIPE_PRICE_AUTOMATION_PATTERNS || 'price_automation_patterns_placeholder',
 		mode: 'payment',
-		name: 'Automation Recipe Pack'
+		name: 'Automation Patterns Pack'
 	},
 
 	// Agent-in-a-Box has multiple tiers
