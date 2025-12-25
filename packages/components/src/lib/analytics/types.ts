@@ -337,3 +337,95 @@ export interface BatchResponse {
 	received: number;
 	errors?: string[];
 }
+
+// =============================================================================
+// USER ANALYTICS (for /account visualization)
+// =============================================================================
+
+/**
+ * Aggregated user analytics for Tufte-style visualization
+ * Philosophy: Show variation and patterns, not raw counts
+ */
+export interface UserAnalytics {
+	/** Total sessions across all properties */
+	totalSessions: number;
+	/** Total page views across all properties */
+	totalPageViews: number;
+	/** Total time spent in minutes */
+	totalTimeMinutes: number;
+	/** Daily activity for sparkline visualization */
+	dailyActivity: DailyActivityPoint[];
+	/** Breakdown by property for distribution bar */
+	propertyBreakdown: PropertyBreakdown[];
+	/** Top pages visited for high-density table */
+	topPages: TopPage[];
+	/** Category breakdown for distribution visualization */
+	categoryBreakdown: CategoryBreakdown[];
+}
+
+/**
+ * Single day's activity count
+ */
+export interface DailyActivityPoint {
+	/** ISO date string (YYYY-MM-DD) */
+	date: string;
+	/** Event count for this day */
+	count: number;
+}
+
+/**
+ * Analytics breakdown per property
+ */
+export interface PropertyBreakdown {
+	/** Property identifier */
+	property: Property;
+	/** Number of sessions on this property */
+	sessions: number;
+	/** Number of page views on this property */
+	pageViews: number;
+	/** Time spent on this property in minutes */
+	timeMinutes: number;
+}
+
+/**
+ * Top page entry for high-density table
+ */
+export interface TopPage {
+	/** Page URL path */
+	url: string;
+	/** Property this page belongs to */
+	property: Property;
+	/** Number of views */
+	views: number;
+}
+
+/**
+ * Category breakdown for visualization
+ */
+export interface CategoryBreakdown {
+	/** Event category */
+	category: EventCategory;
+	/** Count of events in this category */
+	count: number;
+}
+
+/**
+ * Per-property analytics response (internal)
+ * Returned by each property's /api/user/analytics endpoint
+ */
+export interface PropertyAnalytics {
+	/** Which property this data is from */
+	property: Property;
+	/** Sessions on this property */
+	sessions: {
+		total: number;
+		pageViews: number;
+		durationSeconds: number;
+	};
+	/** Daily event counts */
+	dailyActivity: DailyActivityPoint[];
+	/** Category breakdown */
+	categoryBreakdown: CategoryBreakdown[];
+	/** Top pages */
+	topPages: Array<{ url: string; views: number }>;
+}
