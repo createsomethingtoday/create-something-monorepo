@@ -441,8 +441,8 @@ export const products: Service[] = [
 		isProductized: true
 	},
 	{
-		id: 'automation-recipes',
-		title: 'Automation Recipe Pack',
+		id: 'automation-patterns',
+		title: 'Automation Patterns Pack',
 		description:
 			'10 production-tested automation patterns from real CREATE SOMETHING projects. Copy, adapt, deploy.',
 		triadQuestion: '"Does this earn its existence?"',
@@ -459,7 +459,7 @@ export const products: Service[] = [
 			'Time spent on patterns others have already solved'
 		],
 		howItWorks: [
-			'10 documented automation recipes',
+			'10 documented automation patterns',
 			'Real code from production projects',
 			'Complexity ratings (simple → advanced)',
 			'Integration patterns for common tools'
@@ -468,11 +468,11 @@ export const products: Service[] = [
 			caseStudy: '/work/viralytics',
 			name: 'Viralytics Patterns',
 			headline: 'The automation patterns behind 120 hours/week saved',
-			stats: ['10 recipes', 'Production-tested', 'Copy-paste ready']
+			stats: ['10 patterns', 'Production-tested', 'Copy-paste ready']
 		},
 		pricing: '$299',
 		timeline: 'Instant access',
-		icon: 'cookbook',
+		icon: 'book',
 		tier: 'accessible',
 		isProductized: true
 	},
