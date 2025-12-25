@@ -145,7 +145,9 @@ async function handleSubscriptionUpdate(
 				id: subscription.id,
 				status: subscription.status,
 				customerId: subscription.customer,
-				currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+				currentPeriodEnd: subscription.current_period_end
+					? new Date(subscription.current_period_end * 1000).toISOString()
+					: null,
 				cancelAtPeriodEnd: subscription.cancel_at_period_end
 			}),
 			{ expirationTtl: 60 * 60 * 24 * 30 } // 30 days
