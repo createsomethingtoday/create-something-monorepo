@@ -64,11 +64,11 @@
 		return activity.map((d) => ({ value: d.count }));
 	}
 
-	// Reactive computations
-	$: propertySegments = analytics ? getPropertySegments(analytics.propertyBreakdown) : [];
-	$: topPagesItems = analytics ? getTopPagesItems(analytics.topPages) : [];
-	$: sparklineData = analytics ? getSparklineData(analytics.dailyActivity) : [];
-	$: hasActivity = analytics && analytics.totalSessions > 0;
+	// Reactive computations (Svelte 5 runes)
+	let propertySegments = $derived(analytics ? getPropertySegments(analytics.propertyBreakdown) : []);
+	let topPagesItems = $derived(analytics ? getTopPagesItems(analytics.topPages) : []);
+	let sparklineData = $derived(analytics ? getSparklineData(analytics.dailyActivity) : []);
+	let hasActivity = $derived(analytics && analytics.totalSessions > 0);
 </script>
 
 {#if optedOut}
