@@ -1,24 +1,29 @@
 /**
  * Product Download API
  *
- * Verifies Stripe checkout session and serves product download.
+ * Verifies Stripe checkout session and serves product download directly from R2.
+ * More secure than public URLs - files are served through authenticated endpoint.
  */
 
 import type { RequestHandler } from './$types';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { createStripeClient } from '$lib/services/stripe';
 import { getOfferingBySlug } from '$lib/data/services';
 
-// Product download URLs - stored in R2 or external hosting
-const PRODUCT_DOWNLOADS: Record<string, string> = {
-	'automation-patterns':
-		'https://pub-createsomething.r2.dev/products/automation-patterns-pack-v1.zip'
+// Product file paths in R2 bucket
+const PRODUCT_FILES: Record<string, { path: string; filename: string; contentType: string }> = {
+	'automation-patterns': {
+		path: 'products/automation-patterns-pack-v1.zip',
+		filename: 'automation-patterns-pack-v1.zip',
+		contentType: 'application/zip'
+	}
 	// Add more products as needed
 };
 
 export const GET: RequestHandler = async ({ params, url, platform }) => {
 	const { productId } = params;
 	const sessionId = url.searchParams.get('session_id');
+	const token = url.searchParams.get('token');
 
 	// Validate product exists
 	const product = getOfferingBySlug(productId);
@@ -27,12 +32,12 @@ export const GET: RequestHandler = async ({ params, url, platform }) => {
 	}
 
 	// Check if product has a download
-	const downloadUrl = PRODUCT_DOWNLOADS[productId];
-	if (!downloadUrl) {
+	const fileInfo = PRODUCT_FILES[productId];
+	if (!fileInfo) {
 		throw error(404, 'No download available for this product');
 	}
 
-	// Verify Stripe session if provided
+	// Verify authorization via Stripe session
 	if (sessionId) {
 		const stripeSecretKey = platform?.env?.STRIPE_SECRET_KEY;
 		if (!stripeSecretKey) {
@@ -54,11 +59,11 @@ export const GET: RequestHandler = async ({ params, url, platform }) => {
 				throw error(403, 'Session does not match product');
 			}
 
-			// Session verified - redirect to download
-			throw redirect(302, downloadUrl);
+			// Session verified - serve the file
+			return await serveFile(platform, fileInfo);
 		} catch (err) {
-			// If it's already a redirect, rethrow
-			if (err && typeof err === 'object' && 'status' in err && err.status === 302) {
+			// Check if it's already an HTTP error
+			if (err && typeof err === 'object' && 'status' in err) {
 				throw err;
 			}
 			console.error('Session verification error:', err);
@@ -66,8 +71,7 @@ export const GET: RequestHandler = async ({ params, url, platform }) => {
 		}
 	}
 
-	// No session - check for download token in KV (for email links)
-	const token = url.searchParams.get('token');
+	// Check for download token in KV (for email links)
 	if (token) {
 		const cache = platform?.env?.CACHE;
 		if (cache) {
@@ -75,7 +79,7 @@ export const GET: RequestHandler = async ({ params, url, platform }) => {
 			if (tokenData) {
 				const data = JSON.parse(tokenData);
 				if (data.productId === productId && data.expiresAt > Date.now()) {
-					throw redirect(302, downloadUrl);
+					return await serveFile(platform, fileInfo);
 				}
 			}
 		}
@@ -84,3 +88,27 @@ export const GET: RequestHandler = async ({ params, url, platform }) => {
 
 	throw error(403, 'Valid session or download token required');
 };
+
+async function serveFile(
+	platform: App.Platform | undefined,
+	fileInfo: { path: string; filename: string; contentType: string }
+): Promise<Response> {
+	const bucket = platform?.env?.STORAGE;
+	if (!bucket) {
+		throw error(500, 'Storage unavailable');
+	}
+
+	const object = await bucket.get(fileInfo.path);
+	if (!object) {
+		throw error(404, 'File not found');
+	}
+
+	const headers = new Headers();
+	headers.set('Content-Type', fileInfo.contentType);
+	headers.set('Content-Disposition', `attachment; filename="${fileInfo.filename}"`);
+	headers.set('Content-Length', object.size.toString());
+	// Cache for 1 hour on client
+	headers.set('Cache-Control', 'private, max-age=3600');
+
+	return new Response(object.body, { headers });
+}
