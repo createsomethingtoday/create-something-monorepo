@@ -27,6 +27,10 @@ declare global {
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;
+				// Stripe
+				STRIPE_SECRET_KEY: string;
+				STRIPE_WEBHOOK_SECRET: string;
+				STRIPE_PUBLISHABLE_KEY?: string;
 				// Abundance Network
 				WHATSAPP_VERIFY_TOKEN?: string;
 				WHATSAPP_ACCESS_TOKEN?: string;
