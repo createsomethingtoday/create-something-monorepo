@@ -34,7 +34,7 @@
 	},
 	"dependencies": {
 		"@create-something/components": "workspace:*",
-		"@create-something/tufte": "workspace:^",
+		"@createsomething/tufte": "workspace:^",
 		"stripe": "^18.5.0"
 	}
 }

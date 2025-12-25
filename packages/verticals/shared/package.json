@@ -20,7 +20,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@create-something/components": "workspace:*"
+    "@createsomething/components": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.3.0"

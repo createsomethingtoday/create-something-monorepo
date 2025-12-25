@@ -144,8 +144,8 @@
 				<span class="cta-arrow">→</span>
 			</a>
 		{:else if service.id === 'canon-css-starter'}
-			<a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/components/src/lib/styles" class="cta-button" target="_blank" rel="noopener">
-				View on GitHub
+			<a href="https://www.npmjs.com/package/@createsomething/components" class="cta-button" target="_blank" rel="noopener">
+				Install from npm
 				<span class="cta-arrow">→</span>
 			</a>
 		{:else if service.id === 'vertical-templates'}
