@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import type { Snippet } from 'svelte';
 
 	interface Props {
 		user: {
@@ -10,9 +11,11 @@
 		pageTitle?: string;
 		currentProperty: 'space' | 'io' | 'agency' | 'ltd' | 'lms';
 		logoutEndpoint?: string;
+		/** Optional analytics slot for Tufte visualizations */
+		analytics?: Snippet;
 	}
 
-	let { user, pageTitle, currentProperty, logoutEndpoint = '/api/auth/logout' }: Props = $props();
+	let { user, pageTitle, currentProperty, logoutEndpoint = '/api/auth/logout', analytics }: Props = $props();
 	let isLoggingOut = $state(false);
 
 	const propertyLabels: Record<string, string> = {
@@ -97,6 +100,13 @@
 					{/each}
 				</div>
 			</section>
+
+			{#if analytics}
+				<section class="account-section">
+					<h2>Your Activity</h2>
+					{@render analytics()}
+				</section>
+			{/if}
 
 			<section class="account-section">
 				<h2>Session</h2>
