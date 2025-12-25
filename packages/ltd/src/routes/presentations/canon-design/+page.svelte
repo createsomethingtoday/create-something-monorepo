@@ -75,7 +75,7 @@
 			"Weniger, aber besser."
 		</blockquote>
 		<cite>— Dieter Rams</cite>
-		<p class="muted" style="margin-top: 2rem;">
+		<p class="muted spaced">
 			Fewer things, but better things.<br />
 			This is the essence of Canon design.
 		</p>
@@ -309,23 +309,11 @@ Is the value dynamic/computed at runtime?
 			<li>Ensures "Tailwind for structure, Canon for aesthetics" principle</li>
 			<li>Returns structured feedback on violations</li>
 		</ul>
-		<p class="muted" style="margin-top: 1.618rem;">
+		<p class="muted spaced">
 			Design tokens are philosophy made executable.<br />
 			The audit ensures philosophy persists through implementation.
 		</p>
 	</Slide>
 </Presentation>
 
-<style>
-	:global(body) {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
-	}
-
-	:global(.presentation) {
-		display: flex;
-		flex-direction: column;
-		height: 100vh;
-		overflow: hidden;
-	}
-</style>
+<!-- Styles consolidated in Presentation.svelte (DRY) -->

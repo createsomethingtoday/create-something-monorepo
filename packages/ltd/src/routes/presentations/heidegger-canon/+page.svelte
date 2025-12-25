@@ -193,7 +193,7 @@ const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;`}</code></pre>
 				<li>Quiet hours: [10 PM – 7 AM]</li>
 				<li>Theme: [Auto]</li>
 			</ul>
-			<p class="muted" style="margin-top: 2rem;">
+			<p class="muted spaced">
 				Smart defaults. Advanced → hidden.
 			</p>
 		</div>
@@ -409,34 +409,4 @@ interface CreateUserOptions {
 	</Slide>
 </Presentation>
 
-<style>
-	/* Link styling */
-	:global(.link) {
-		color: var(--color-fg-primary);
-		text-decoration: underline;
-		text-underline-offset: 4px;
-	}
-
-	:global(.link:hover) {
-		color: var(--color-fg-secondary);
-	}
-
-	/* Code in content */
-	:global(.slide-content code) {
-		font-family: var(--font-mono);
-		font-size: 0.9em;
-		background: var(--color-bg-elevated);
-		padding: 0.1em 0.3em;
-		border-radius: var(--radius-sm);
-	}
-
-	/* Split slide list styling */
-	:global(.slide-split ul) {
-		font-size: var(--text-body-sm);
-		line-height: 1.4;
-	}
-
-	:global(.slide-split li) {
-		margin-bottom: 0.25rem;
-	}
-</style>
+<!-- Styles consolidated in Presentation.svelte (DRY) -->

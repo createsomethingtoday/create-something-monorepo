@@ -306,6 +306,45 @@
 		font-family: var(--font-mono);
 	}
 
+	/* ═══════════════════════════════════════════════════════════════════
+	   Shared Content Styles (DRY - used by all presentations)
+	   ═══════════════════════════════════════════════════════════════════ */
+
+	/* Link styling */
+	:global(.link) {
+		color: var(--color-fg-primary);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+
+	:global(.link:hover) {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Code in slide content */
+	:global(.slide-content code) {
+		font-family: var(--font-mono);
+		font-size: 0.9em;
+		background: var(--color-bg-elevated);
+		padding: 0.1em 0.3em;
+		border-radius: var(--radius-sm);
+	}
+
+	/* Spaced elements - Canon compliant margin */
+	:global(.spaced) {
+		margin-top: var(--space-md);
+	}
+
+	/* Split slide list styling */
+	:global(.slide-split ul) {
+		font-size: var(--text-body-sm);
+		line-height: 1.4;
+	}
+
+	:global(.slide-split li) {
+		margin-bottom: var(--space-xs);
+	}
+
 	/* Responsive */
 	@media (max-width: 768px) {
 		.slide-container {
