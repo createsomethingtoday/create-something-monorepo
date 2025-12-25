@@ -99,7 +99,7 @@
 	<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 </svelte:head>
 
-<Analytics property="agency" />
+<Analytics property="agency" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <SkipToContent />
 

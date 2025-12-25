@@ -32,6 +32,8 @@
 		debug?: boolean;
 		/** User has opted out of analytics tracking (from profile) */
 		userOptedOut?: boolean;
+		/** Authenticated user ID for cross-property tracking */
+		userId?: string;
 	}
 
 	let {
@@ -45,6 +47,7 @@
 		trackErrors = true,
 		debug = false,
 		userOptedOut = false,
+		userId = undefined,
 	}: Props = $props();
 
 	let cleanupFns: Array<() => void> = [];
@@ -57,6 +60,7 @@
 			endpoint,
 			debug,
 			userOptedOut,
+			userId,
 		};
 
 		const client = initAnalytics(config);
@@ -122,6 +126,14 @@
 		const client = getAnalytics();
 		if (client) {
 			client.setUserOptOut(userOptedOut);
+		}
+	});
+
+	// Update user ID when prop changes (login/logout)
+	$effect(() => {
+		const client = getAnalytics();
+		if (client) {
+			client.setUserId(userId ?? null);
 		}
 	});
 

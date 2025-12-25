@@ -172,7 +172,7 @@ export function isDNTEnabled(): boolean {
 // =============================================================================
 
 export class AnalyticsClient {
-	private config: Required<AnalyticsConfig>;
+	private config: Required<AnalyticsConfig> & { userId?: string };
 	private queue: AnalyticsEvent[] = [];
 	private flushTimer: ReturnType<typeof setTimeout> | null = null;
 	private sessionId: string;
@@ -181,6 +181,7 @@ export class AnalyticsClient {
 	private sourceProperty: Property | null = null;
 	private userOptedOut: boolean = false;
 	private isAuthenticated: boolean = false;
+	private userId: string | null = null;
 
 	constructor(config: AnalyticsConfig) {
 		this.config = {
@@ -191,9 +192,11 @@ export class AnalyticsClient {
 			respectDNT: config.respectDNT ?? true,
 			debug: config.debug ?? false,
 			userOptedOut: config.userOptedOut ?? false,
+			userId: config.userId,
 		};
 		this.userOptedOut = config.userOptedOut ?? false;
-		this.isAuthenticated = config.userOptedOut !== undefined; // If userOptedOut is provided, user is authenticated
+		this.userId = config.userId ?? null;
+		this.isAuthenticated = config.userId !== undefined || config.userOptedOut !== undefined;
 		this.sessionId = getSessionId();
 		this.sessionStartedAt = getSessionStartedAt();
 
@@ -262,25 +265,54 @@ export class AnalyticsClient {
 	/**
 	 * Set authenticated state (called when user logs in/out)
 	 */
-	setAuthenticated(isAuthenticated: boolean, analyticsOptOut?: boolean): void {
+	setAuthenticated(isAuthenticated: boolean, analyticsOptOut?: boolean, userId?: string): void {
 		this.isAuthenticated = isAuthenticated;
 
-		if (isAuthenticated && analyticsOptOut !== undefined) {
-			// Initialize consent from server preference
-			initializeConsent(analyticsOptOut);
-			this.userOptedOut = analyticsOptOut;
-			this.config.userOptedOut = analyticsOptOut;
+		if (isAuthenticated) {
+			// Set user ID for cross-property tracking
+			if (userId) {
+				this.userId = userId;
+				this.config.userId = userId;
+			}
+
+			if (analyticsOptOut !== undefined) {
+				// Initialize consent from server preference
+				initializeConsent(analyticsOptOut);
+				this.userOptedOut = analyticsOptOut;
+				this.config.userOptedOut = analyticsOptOut;
+			}
 		}
 
 		if (!isAuthenticated) {
-			// User logged out - keep local consent but clear server preference
+			// User logged out - clear user ID and server preference
+			this.userId = null;
+			this.config.userId = undefined;
 			this.userOptedOut = false;
 			this.config.userOptedOut = false;
 		}
 
 		if (this.config.debug) {
-			console.log('[Analytics] Authentication state updated:', { isAuthenticated, analyticsOptOut });
+			console.log('[Analytics] Authentication state updated:', { isAuthenticated, analyticsOptOut, userId });
 		}
+	}
+
+	/**
+	 * Set user ID for cross-property analytics tracking
+	 */
+	setUserId(userId: string | null): void {
+		this.userId = userId;
+		this.config.userId = userId ?? undefined;
+
+		if (this.config.debug) {
+			console.log('[Analytics] User ID updated:', userId);
+		}
+	}
+
+	/**
+	 * Get current user ID
+	 */
+	getUserId(): string | null {
+		return this.userId;
 	}
 
 	/**
@@ -306,6 +338,7 @@ export class AnalyticsClient {
 		const event: AnalyticsEvent = {
 			eventId: this.generateEventId(),
 			sessionId: this.sessionId,
+			userId: this.userId ?? undefined,
 			property: this.config.property,
 			sourceProperty: this.sourceProperty ?? undefined,
 			timestamp: new Date().toISOString(),
