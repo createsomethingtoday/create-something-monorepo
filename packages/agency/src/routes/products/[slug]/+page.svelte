@@ -126,8 +126,16 @@
 				<span class="message-icon">✓</span>
 				<h2 class="message-title">Purchase Complete</h2>
 				<p class="message-text">
-					Thank you for your purchase! Check your email for access instructions.
+					Thank you for your purchase! Your download is ready below, and we've also sent access instructions to your email.
 				</p>
+				<div class="download-section">
+					<a href="/api/products/{product.id}/download?session={$page.url.searchParams.get('session_id') || ''}" class="download-button">
+						Download {product.title}
+					</a>
+					<p class="download-note">
+						This link is valid for 24 hours. Check your email for permanent access.
+					</p>
+				</div>
 			</div>
 		</section>
 	{/if}
@@ -404,6 +412,36 @@
 	.message-text {
 		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
+	}
+
+	.download-section {
+		margin-top: var(--space-md);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.download-button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-lg);
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		color: var(--color-bg-pure);
+		background: var(--color-success);
+		border-radius: var(--radius-full);
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.download-button:hover {
+		opacity: 0.9;
+	}
+
+	.download-note {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	/* CTA Section */
