@@ -71,7 +71,8 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 
 	// Build checkout session
 	const baseUrl = url.origin;
-	const defaultSuccessUrl = `${baseUrl}/products/${productId}?success=true${assessmentId ? `&assessment=${assessmentId}` : ''}`;
+	// Include {CHECKOUT_SESSION_ID} - Stripe replaces this with actual session ID
+	const defaultSuccessUrl = `${baseUrl}/products/${productId}?success=true&session_id={CHECKOUT_SESSION_ID}${assessmentId ? `&assessment=${assessmentId}` : ''}`;
 	const defaultCancelUrl = `${baseUrl}/products/${productId}?canceled=true`;
 
 	try {

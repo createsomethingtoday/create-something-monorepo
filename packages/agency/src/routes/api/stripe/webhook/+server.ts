@@ -87,20 +87,22 @@ async function handleCheckoutComplete(
 	const productId = session.metadata?.product_id;
 	const tier = session.metadata?.tier;
 	const assessmentId = session.metadata?.assessment_id;
+	const customerEmail = session.customer_email || session.customer_details?.email;
 
 	console.log('Checkout completed:', {
 		sessionId: session.id,
 		productId,
 		tier,
 		assessmentId,
-		customerEmail: session.customer_email,
+		customerEmail,
 		amountTotal: session.amount_total
 	});
 
-	// Store purchase record in KV for quick lookups
 	const cache = platform?.env?.CACHE;
-	if (cache && session.customer_email) {
-		const purchaseKey = `purchase:${session.customer_email}:${productId}`;
+
+	// Store purchase record in KV for quick lookups
+	if (cache && customerEmail && productId) {
+		const purchaseKey = `purchase:${customerEmail}:${productId}`;
 		await cache.put(
 			purchaseKey,
 			JSON.stringify({
@@ -113,12 +115,89 @@ async function handleCheckoutComplete(
 			}),
 			{ expirationTtl: 60 * 60 * 24 * 365 } // 1 year
 		);
-	}
 
-	// For one-time purchases, send fulfillment email
-	if (session.mode === 'payment') {
-		// TODO: Integrate with email service (Resend, etc.)
-		console.log(`One-time purchase fulfillment needed for ${productId}`);
+		// Create download token for email link (valid 7 days)
+		const downloadToken = crypto.randomUUID();
+		await cache.put(
+			`download:${downloadToken}`,
+			JSON.stringify({
+				productId,
+				email: customerEmail,
+				sessionId: session.id,
+				createdAt: Date.now(),
+				expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
+			}),
+			{ expirationTtl: 60 * 60 * 24 * 7 } // 7 days
+		);
+
+		// Send fulfillment email
+		if (session.mode === 'payment') {
+			await sendFulfillmentEmail(customerEmail, productId, downloadToken, platform);
+		}
+	}
+}
+
+/**
+ * Send fulfillment email with download link
+ */
+async function sendFulfillmentEmail(
+	email: string,
+	productId: string,
+	downloadToken: string,
+	platform: App.Platform | undefined
+) {
+	const downloadUrl = `https://createsomething.agency/api/products/${productId}/download?token=${downloadToken}`;
+
+	// Product names for email
+	const productNames: Record<string, string> = {
+		'automation-patterns': 'Automation Patterns Pack',
+		'vertical-templates': 'Vertical Templates',
+		'agent-in-a-box': 'Agent-in-a-Box Kit'
+	};
+
+	const productName = productNames[productId] || productId;
+
+	// Try to send via Resend if API key is configured
+	const resendApiKey = platform?.env?.RESEND_API_KEY;
+	if (resendApiKey) {
+		try {
+			const response = await fetch('https://api.resend.com/emails', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${resendApiKey}`
+				},
+				body: JSON.stringify({
+					from: 'CREATE SOMETHING <products@createsomething.agency>',
+					to: email,
+					subject: `Your ${productName} is ready`,
+					html: `
+						<h1>Thank you for your purchase!</h1>
+						<p>Your ${productName} is ready to download.</p>
+						<p><a href="${downloadUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Download Now</a></p>
+						<p style="color: #666; font-size: 14px;">This link is valid for 7 days. If you have any questions, reply to this email.</p>
+						<hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+						<p style="color: #999; font-size: 12px;">CREATE SOMETHING<br/>createsomething.agency</p>
+					`
+				})
+			});
+
+			if (response.ok) {
+				console.log(`Fulfillment email sent to ${email} for ${productId}`);
+			} else {
+				const error = await response.text();
+				console.error('Failed to send email via Resend:', error);
+			}
+		} catch (err) {
+			console.error('Error sending fulfillment email:', err);
+		}
+	} else {
+		// Log for manual fulfillment if no email service configured
+		console.log('FULFILLMENT EMAIL NEEDED:', {
+			to: email,
+			product: productName,
+			downloadUrl
+		});
 	}
 }
 
