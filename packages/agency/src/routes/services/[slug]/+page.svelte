@@ -132,10 +132,38 @@
 			<span class="pricing">{service.pricing}</span>
 			<span class="timeline">{service.timeline}</span>
 		</div>
-		<a href="/contact" class="cta-button">
-			Start a conversation
-			<span class="cta-arrow">→</span>
-		</a>
+		<!-- Product-specific CTAs: the tool recedes into use -->
+		{#if service.id === 'ai-readiness-assessment'}
+			<a href="/discover" class="cta-button">
+				Start assessment
+				<span class="cta-arrow">→</span>
+			</a>
+		{:else if service.id === 'triad-audit-template'}
+			<a href="https://createsomething.io/papers/kickstand-triad-audit" class="cta-button" target="_blank" rel="noopener">
+				View audit framework
+				<span class="cta-arrow">→</span>
+			</a>
+		{:else if service.id === 'canon-css-starter'}
+			<a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/components/src/lib/styles" class="cta-button" target="_blank" rel="noopener">
+				View on GitHub
+				<span class="cta-arrow">→</span>
+			</a>
+		{:else if service.id === 'vertical-templates'}
+			<a href="/contact?subject=vertical-templates" class="cta-button">
+				Request demo
+				<span class="cta-arrow">→</span>
+			</a>
+		{:else if service.id === 'automation-recipes'}
+			<a href="/contact?subject=automation-recipes" class="cta-button">
+				Get instant access
+				<span class="cta-arrow">→</span>
+			</a>
+		{:else}
+			<a href="/contact" class="cta-button">
+				Start a conversation
+				<span class="cta-arrow">→</span>
+			</a>
+		{/if}
 	</section>
 </main>
 

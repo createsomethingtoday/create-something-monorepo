@@ -356,8 +356,8 @@ export const products: Service[] = [
 			'Integration with Claude Code via skill file'
 		],
 		proof: {
-			caseStudy: '/papers/subtractive-triad-audit',
-			name: 'Subtractive Triad Audit',
+			caseStudy: 'https://createsomething.io/papers/kickstand-triad-audit',
+			name: 'Kickstand Triad Audit',
 			headline: 'The framework behind CREATE SOMETHING methodology',
 			stats: ['3-level audit', 'Production-tested', 'Open methodology']
 		},
