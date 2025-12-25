@@ -2,7 +2,7 @@
   import '../app.css';
   import { page } from '$app/stores';
   import { onNavigate } from '$app/navigation';
-  import { Navigation, Footer, ModeIndicator, SkipToContent } from '@create-something/components';
+  import { Navigation, Footer, ModeIndicator, SkipToContent, Analytics } from '@create-something/components';
   import type { LayoutData } from './$types';
 
   interface Props {
@@ -152,6 +152,8 @@
     }
   </script>`}
 </svelte:head>
+
+<Analytics property="lms" userId={user?.id} userOptedOut={user?.analytics_opt_out ?? false} />
 
 <SkipToContent />
 

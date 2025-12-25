@@ -173,7 +173,7 @@
 	</script>`}
 </svelte:head>
 
-<Analytics property="space" />
+<Analytics property="space" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <SkipToContent />
 

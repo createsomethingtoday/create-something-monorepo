@@ -313,6 +313,8 @@ export interface AnalyticsConfig {
 	debug?: boolean;
 	/** User has opted out of analytics (from profile setting) */
 	userOptedOut?: boolean;
+	/** Authenticated user ID for cross-property tracking */
+	userId?: string;
 }
 
 export const DEFAULT_CONFIG: Partial<AnalyticsConfig> = {

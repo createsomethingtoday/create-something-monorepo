@@ -80,7 +80,7 @@
 	/>
 </svelte:head>
 
-<Analytics property="ltd" />
+<Analytics property="ltd" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <SkipToContent />
 
