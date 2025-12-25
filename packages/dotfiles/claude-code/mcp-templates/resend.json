@@ -1,0 +1,32 @@
+{
+  "_template": "Resend MCP Server",
+  "_description": "Send transactional emails via Resend API",
+  "_workway": "Email communication integrated into development workflow",
+  "_requires": ["RESEND_API_KEY"],
+
+  "resend": {
+    "command": "npx",
+    "args": ["-y", "@anthropic/mcp-server-resend"],
+    "env": {
+      "RESEND_API_KEY": "${RESEND_API_KEY}"
+    }
+  },
+
+  "_setup": [
+    "1. Create account at https://resend.com",
+    "2. Generate API key in dashboard",
+    "3. Verify your sending domain",
+    "4. Set RESEND_API_KEY in environment"
+  ],
+
+  "_usage": [
+    "Send email: 'Send an email to client@example.com about the project status'",
+    "Template email: 'Send the weekly report email to the team'"
+  ],
+
+  "_patterns": [
+    "Use for deployment notifications",
+    "Use for error alerts",
+    "Use for client communication during development"
+  ]
+}

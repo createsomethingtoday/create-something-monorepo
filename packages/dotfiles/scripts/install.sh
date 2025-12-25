@@ -115,6 +115,47 @@ ln -sf "$DOTFILES_DIR/nvim" ~/.config/nvim
 echo "  Symlinked nvim → ~/.config/nvim"
 
 # ─────────────────────────────────────────────────────────────
+# Claude Code
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "Installing Claude Code configuration..."
+
+# Create claude directory
+mkdir -p ~/.claude
+mkdir -p ~/.claude/skills
+
+# Backup existing settings
+if [ -f ~/.claude/settings.json ] && [ ! -L ~/.claude/settings.json ]; then
+    echo "  Backing up existing settings to ~/.claude/settings.json.backup"
+    mv ~/.claude/settings.json ~/.claude/settings.json.backup
+elif [ -L ~/.claude/settings.json ]; then
+    rm ~/.claude/settings.json
+fi
+
+# Copy settings (not symlink - user will customize)
+cp "$DOTFILES_DIR/claude-code/settings.json" ~/.claude/settings.json
+echo "  Copied settings.json → ~/.claude/settings.json"
+
+# Copy MCP templates
+mkdir -p ~/.claude/mcp-templates
+cp -r "$DOTFILES_DIR/claude-code/mcp-templates/"* ~/.claude/mcp-templates/
+echo "  Copied MCP templates → ~/.claude/mcp-templates/"
+
+# Copy harness templates
+mkdir -p ~/.claude/harness-templates
+cp -r "$DOTFILES_DIR/claude-code/harness-templates/"* ~/.claude/harness-templates/
+echo "  Copied harness templates → ~/.claude/harness-templates/"
+
+# Check if claude is installed
+if ! command -v claude &> /dev/null; then
+    echo ""
+    echo "  Claude Code CLI not found. Install with:"
+    echo "    npm install -g @anthropic-ai/claude-code"
+    echo ""
+fi
+
+# ─────────────────────────────────────────────────────────────
 # Credentials Setup
 # ─────────────────────────────────────────────────────────────
 
@@ -164,6 +205,14 @@ echo "Signatures are version-controlled in the repo."
 echo "Edit them at: packages/dotfiles/neomutt/signatures/"
 echo ""
 echo "Next steps:"
-echo "  1. Configure credentials if skipped: ~/.config/neomutt/credentials/"
-echo "  2. Launch neomutt to verify configuration"
+echo "  1. Configure email credentials if skipped: ~/.config/neomutt/credentials/"
+echo "  2. Configure Claude Code MCP servers: ~/.claude/settings.json"
+echo "     - Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN for Cloudflare MCP"
+echo "     - See ~/.claude/mcp-templates/ for additional server configs"
+echo "  3. Launch tools to verify:"
+echo "     - neomutt (email)"
+echo "     - wezterm (terminal)"
+echo "     - claude (AI development)"
+echo ""
+echo "Harness templates available at: ~/.claude/harness-templates/"
 echo ""
