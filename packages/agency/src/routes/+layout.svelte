@@ -30,6 +30,7 @@
 
 	const navLinks = [
 		{ label: 'Services', href: '/services' },
+		{ label: 'Products', href: '/products' },
 		{ label: 'Work', href: '/work' },
 		{ label: 'Methodology', href: '/methodology' },
 		{ label: 'About', href: '/about' }
@@ -129,6 +130,7 @@
 		aboutText="Professional AI-native development services. Research-backed consulting, implementation, and training."
 		quickLinks={[
 			{ label: 'Services', href: '/services' },
+			{ label: 'Products', href: '/products' },
 			{ label: 'Work', href: '/work' },
 			{ label: 'Methodology', href: '/methodology' },
 			{ label: 'About', href: '/about' },
