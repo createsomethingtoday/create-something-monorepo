@@ -353,22 +353,4 @@ pnpm dev --filter=space
 	</Slide>
 </Presentation>
 
-<style>
-	:global(.link) {
-		color: var(--color-fg-primary);
-		text-decoration: underline;
-		text-underline-offset: 4px;
-	}
-
-	:global(.link:hover) {
-		color: var(--color-fg-secondary);
-	}
-
-	:global(.slide-content code) {
-		font-family: var(--font-mono);
-		font-size: 0.9em;
-		background: var(--color-bg-elevated);
-		padding: 0.1em 0.3em;
-		border-radius: var(--radius-sm);
-	}
-</style>
+<!-- Styles consolidated in Presentation.svelte (DRY) -->
