@@ -11,6 +11,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { getConsentState, updateAnalyticsConsent, initializeConsent } from '@create-something/components/gdpr';
+	import { UserInteractionsPanel } from '@create-something/components/analytics';
 
 	let { data }: { data: PageData } = $props();
 
@@ -723,6 +724,18 @@
 			</div>
 		</section>
 
+		<!-- Activity Section -->
+		<section class="activity-section">
+			<div class="section-header">
+				<h2 class="section-title">Your Activity</h2>
+			</div>
+
+			<UserInteractionsPanel
+				analytics={data.analytics}
+				optedOut={data.profile?.analytics_opt_out ?? false}
+			/>
+		</section>
+
 		<!-- Actions Section -->
 		<section class="actions-section">
 			<div class="section-header">
@@ -854,6 +867,7 @@
 	.profile-section,
 	.security-section,
 	.privacy-section,
+	.activity-section,
 	.actions-section {
 		margin-bottom: var(--space-xl);
 	}

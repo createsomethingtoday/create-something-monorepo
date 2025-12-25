@@ -41,6 +41,13 @@ export type {
 	NotFoundEvent,
 	WebVitalEvent,
 	ConversionEvent,
+	// User analytics types (for /account visualization)
+	UserAnalytics,
+	DailyActivityPoint,
+	PropertyBreakdown,
+	TopPage,
+	CategoryBreakdown,
+	PropertyAnalytics,
 } from './types.js';
 
 export { DEFAULT_CONFIG } from './types.js';
@@ -86,6 +93,7 @@ export {
 
 // Components
 export { default as PopularContent } from './PopularContent.svelte';
+export { default as UserInteractionsPanel } from './UserInteractionsPanel.svelte';
 
 // Popular content analytics (shared logic for /api/analytics/popular)
 export {
