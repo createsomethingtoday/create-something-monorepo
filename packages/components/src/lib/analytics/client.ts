@@ -232,10 +232,23 @@ export class AnalyticsClient {
 	 * Check if tracking is disabled (DNT, user opt-out, or consent state)
 	 */
 	isTrackingDisabled(): boolean {
+		if (this.config.debug) {
+			// Log all values being checked for debugging
+			const dntEnabled = isDNTEnabled();
+			const consentState = getConsentState();
+			const dntValue = typeof navigator !== 'undefined' ? navigator.doNotTrack : 'N/A';
+			console.log('[Analytics] Tracking check:', {
+				dntEnabled,
+				dntValue,
+				consentState,
+				userOptedOut: this.userOptedOut,
+			});
+		}
+
 		// Check DNT first (most common cause)
 		if (isDNTEnabled()) {
 			if (this.config.debug) {
-				console.log('[Analytics] Tracking disabled: Do Not Track (DNT) is enabled in browser');
+				console.log('[Analytics] BLOCKED: Do Not Track (DNT) is enabled in browser. Disable DNT in browser settings to enable analytics.');
 			}
 			return true;
 		}
@@ -244,7 +257,7 @@ export class AnalyticsClient {
 		const consentState = getConsentState();
 		if (consentState && !consentState.analytics) {
 			if (this.config.debug) {
-				console.log('[Analytics] Tracking disabled: User consent analytics=false in localStorage');
+				console.log('[Analytics] BLOCKED: User consent analytics=false in localStorage. Run: localStorage.setItem("cs_consent", JSON.stringify({analytics:true,timestamp:new Date().toISOString()}))');
 			}
 			return true;
 		}
@@ -252,7 +265,7 @@ export class AnalyticsClient {
 		// User opt-out from profile settings (fallback for server-side preference)
 		if (this.userOptedOut) {
 			if (this.config.debug) {
-				console.log('[Analytics] Tracking disabled: User opted out via profile settings');
+				console.log('[Analytics] BLOCKED: User opted out via profile settings');
 			}
 			return true;
 		}
@@ -553,6 +566,10 @@ export class AnalyticsClient {
 	 * Flush queued events immediately
 	 */
 	async flush(): Promise<void> {
+		if (this.config.debug) {
+			console.log('[Analytics] Flush called, queue length:', this.queue.length);
+		}
+
 		// Send session_end event on page unload (only once per session)
 		if (
 			typeof document !== 'undefined' &&
@@ -575,7 +592,13 @@ export class AnalyticsClient {
 		}
 
 		try {
+			if (this.config.debug) {
+				console.log('[Analytics] Sending', events.length, 'events to', this.config.endpoint);
+			}
 			await this.sendEvents(events);
+			if (this.config.debug) {
+				console.log('[Analytics] Events sent successfully');
+			}
 		} catch (error) {
 			if (this.config.debug) {
 				console.error('[Analytics] Failed to send events:', error);
@@ -605,17 +628,23 @@ export class AnalyticsClient {
 		this.queue.push(event);
 
 		if (this.config.debug) {
-			console.log('[Analytics] Event queued:', event.action, event);
+			console.log('[Analytics] Event queued:', event.action, `(queue: ${this.queue.length}/${this.config.batchSize})`, event);
 		}
 
 		// Flush if batch size reached
 		if (this.queue.length >= this.config.batchSize) {
+			if (this.config.debug) {
+				console.log('[Analytics] Batch size reached, triggering flush');
+			}
 			this.flush();
 			return;
 		}
 
 		// Set up flush timer if not already running
 		if (!this.flushTimer) {
+			if (this.config.debug) {
+				console.log('[Analytics] Setting flush timer for', this.config.batchTimeout, 'ms');
+			}
 			this.flushTimer = setTimeout(() => {
 				this.flush();
 			}, this.config.batchTimeout);
