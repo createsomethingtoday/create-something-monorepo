@@ -501,7 +501,7 @@
 
 	.cta-button {
 		display: inline-block;
-		padding: 0.875rem 2rem;
+		padding: var(--space-sm) var(--space-lg);
 		font-size: var(--text-body);
 		font-weight: var(--font-medium);
 		border-radius: var(--radius-full);
