@@ -24,7 +24,7 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "fast-glob": "^3.3.2",
     "jscpd": "^4.0.5",
     "madge": "^8.0.0"
