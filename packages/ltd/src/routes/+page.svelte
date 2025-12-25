@@ -10,21 +10,24 @@
 	propertyName="ltd"
 />
 
-<!-- Hero -->
-<section class="pt-24 pb-32 px-6">
+<!-- Hero: Gelassenheit Entrance
+     The viewer hasn't arrived yet. We don't demand immediate comprehension.
+     Each element fades in with micro-delays, settling into presence rather than arriving.
+     This embodies "releasement" — non-willful action that invites contemplation. -->
+<section class="hero pt-24 pb-32 px-6">
 	<div class="max-w-4xl mx-auto text-center">
-		<p class="eyebrow mb-6">Being-as-Standard</p>
+		<p class="eyebrow mb-6 hero-entrance" style="--delay: 0">Being-as-Standard</p>
 
-		<h1 class="mb-8">
+		<h1 class="mb-8 hero-entrance" style="--delay: 1">
 			The Canon for<br />"Less, But Better"
 		</h1>
 
-		<p class="hero-text mb-12 max-w-2xl mx-auto leading-relaxed">
+		<p class="hero-text mb-12 max-w-2xl mx-auto leading-relaxed hero-entrance" style="--delay: 2">
 			The philosophical foundation for the Create Something ecosystem. Curated wisdom from masters
 			who proved that simplicity is the ultimate sophistication.
 		</p>
 
-		<div class="flex flex-col sm:flex-row gap-4 justify-center">
+		<div class="flex flex-col sm:flex-row gap-4 justify-center hero-entrance" style="--delay: 3">
 			<a href="/masters" class="btn-primary">
 				Explore Masters
 			</a>
@@ -35,12 +38,14 @@
 	</div>
 </section>
 
-<!-- Manifesto -->
+<!-- Manifesto: Breathing Negative Space
+     Typography should demonstrate the principle it articulates.
+     Each paragraph breathes with increasing constraint — the "less" becomes more apparent. -->
 <section class="manifesto py-24 px-6">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8 text-center">Weniger, aber besser</h2>
+		<h2 class="mb-8 text-center manifesto-title">Weniger, aber besser</h2>
 
-		<div class="manifesto-body space-y-6 leading-relaxed">
+		<div class="manifesto-body">
 			<p>
 				<strong>Less, but better.</strong> This isn't minimalism for aesthetics. It's discipline for
 				clarity. It's constraint for excellence.
@@ -64,14 +69,17 @@
 	</div>
 </section>
 
-<!-- Featured Masters (Placeholder) -->
-<section class="py-24 px-6">
+<!-- Featured Masters: Contemplation Over Interaction
+     These cards invite dwelling, not clicking. The glow suggests interiority —
+     "There's a full philosophy here; you're only seeing the surface."
+     Staggered reveal honors the viewer's attention span. -->
+<section class="masters-section py-24 px-6">
 	<div class="max-w-7xl mx-auto">
-		<h3 class="mb-12 text-center">Featured Masters</h3>
+		<h3 class="mb-12 text-center section-heading">Featured Masters</h3>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-			{#each [ { name: 'Dieter Rams', discipline: 'Industrial Design', tagline: '10 Principles of Good Design', slug: 'dieter-rams' }, { name: 'Ludwig Mies van der Rohe', discipline: 'Architecture', tagline: 'Less is more', slug: 'mies-van-der-rohe' } ] as master}
-				<a href="/masters/{master.slug}" class="master-card block p-8 group">
+			{#each [ { name: 'Dieter Rams', discipline: 'Industrial Design', tagline: '10 Principles of Good Design', slug: 'dieter-rams' }, { name: 'Ludwig Mies van der Rohe', discipline: 'Architecture', tagline: 'Less is more', slug: 'mies-van-der-rohe' } ] as master, i}
+				<a href="/masters/{master.slug}" class="master-card block p-8" style="--card-delay: {i * 150}ms">
 					<p class="discipline mb-4">{master.discipline}</p>
 					<h4 class="master-name mb-2">{master.name}</h4>
 					<p class="tagline">{master.tagline}</p>
@@ -130,7 +138,42 @@
 </section>
 
 <style>
-	/* Typography: Commanding presence for the philosophical foundation */
+	/* ==========================================================================
+	   GELASSENHEIT ENTRANCE
+	   "Releasement" — non-willful action that invites contemplation.
+	   Elements settle into presence rather than arrive with urgency.
+	   Uses decelerate easing (0, 0, 0.2, 1) so motion settles, not snaps.
+	   ========================================================================== */
+
+	.hero-entrance {
+		animation: fadeInSettle var(--duration-complex) cubic-bezier(0, 0, 0.2, 1);
+		animation-delay: calc(var(--delay) * 100ms);
+		animation-fill-mode: both;
+	}
+
+	@keyframes fadeInSettle {
+		from {
+			opacity: 0;
+			transform: translateY(8px); /* Minimal, not dramatic */
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero-entrance {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	/* ==========================================================================
+	   TYPOGRAPHY: Commanding presence for the philosophical foundation
+	   ========================================================================== */
+
 	h1 {
 		font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem);
 		font-weight: var(--font-bold);
@@ -173,33 +216,103 @@
 		border-color: var(--color-fg-primary);
 	}
 
+	/* ==========================================================================
+	   MANIFESTO: Breathing Negative Space
+	   Typography demonstrates the principle — constraint increases with depth.
+	   Gap grows with viewport, allowing the text to breathe.
+	   ========================================================================== */
+
 	.manifesto {
 		border-top: 1px solid var(--color-border-default);
 	}
 
+	.manifesto-title {
+		font-size: var(--text-h2);
+		font-weight: var(--font-light);
+		letter-spacing: 0.05em;
+		color: var(--color-fg-primary);
+	}
+
 	.manifesto-body {
+		display: flex;
+		flex-direction: column;
+		gap: clamp(1.5rem, 5vh, 2.618rem); /* Grows with viewport — breathing */
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.manifesto-body p {
+		margin: 0;
+	}
+
+	.manifesto-body strong {
+		color: var(--color-fg-primary);
+		font-weight: var(--font-semibold);
 	}
 
 	.attribution {
 		font-size: var(--text-body);
 		color: var(--color-fg-tertiary);
 		font-style: italic;
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+		margin-top: var(--space-sm);
+	}
+
+	/* ==========================================================================
+	   MASTER CARDS: Contemplation Over Interaction
+	   Cards invite dwelling, not clicking. Interior glow suggests depth —
+	   "There's a full philosophy here; you're only seeing the surface."
+	   ========================================================================== */
+
+	.masters-section {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.section-heading {
+		font-size: var(--text-h3);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
 	}
 
 	.master-card {
 		border: 1px solid var(--color-border-default);
-		transition: border-color var(--duration-standard) var(--ease-standard);
+		background: var(--color-bg-pure);
+		box-shadow:
+			inset 0 0 30px rgba(255, 255, 255, 0),
+			0 0 0 0 transparent;
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			background var(--duration-standard) var(--ease-standard);
+		animation: cardReveal var(--duration-complex) cubic-bezier(0, 0, 0.2, 1);
+		animation-delay: calc(var(--card-delay) + 600ms); /* After hero settles */
+		animation-fill-mode: both;
+	}
+
+	@keyframes cardReveal {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	.master-card:hover {
-		border-color: var(--color-fg-primary);
+		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-elevated);
+		/* Interior glow — light from within, suggesting depth */
+		box-shadow:
+			inset 0 0 40px rgba(255, 255, 255, 0.02),
+			0 0 0 1px var(--color-border-emphasis);
 	}
 
 	.master-name {
+		font-size: var(--text-h3);
 		color: var(--color-fg-primary);
-		transition: color var(--duration-standard) var(--ease-standard);
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.master-card:hover .master-name {
@@ -215,7 +328,15 @@
 
 	.tagline {
 		font-size: var(--text-body-sm);
+		font-style: italic;
 		color: var(--color-fg-tertiary);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.master-card {
+			animation: none;
+			opacity: 1;
+		}
 	}
 
 	.view-all {
