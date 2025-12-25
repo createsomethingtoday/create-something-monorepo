@@ -8,8 +8,28 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Check if accessing admin routes (except login page)
 	const isAdminRoute = event.url.pathname.startsWith('/admin');
 	const isAdminApiRoute = event.url.pathname.startsWith('/api/admin');
+	const isUserApiRoute = event.url.pathname.startsWith('/api/user');
 	const isLoginPage = event.url.pathname === '/admin/login';
 	const isAuthApi = event.url.pathname.startsWith('/api/auth');
+
+	// Set locals.user for user API routes (analytics, preferences, etc.)
+	if (isUserApiRoute) {
+		const sessionManager = createSessionManager(event.cookies, {
+			isProduction: isProduction ?? true,
+			domain
+		});
+
+		const user = await sessionManager.getUser();
+		if (user) {
+			event.locals.user = {
+				id: user.id,
+				email: user.email,
+				username: user.email.split('@')[0],
+				role: 'user',
+				tier: user.tier
+			};
+		}
+	}
 
 	if ((isAdminRoute && !isLoginPage && !isAuthApi) || isAdminApiRoute) {
 		// Create session manager for JWT validation
