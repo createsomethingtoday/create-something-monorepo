@@ -20,10 +20,10 @@ importers:
 
   packages/agency:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../components
-      '@createsomething/tufte':
+      '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
       stripe:
@@ -140,7 +140,7 @@ importers:
         specifier: ^11.0.0
         version: 11.10.0
     devDependencies:
-      '@createsomething/tufte':
+      '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
       '@sveltejs/adapter-auto':
@@ -205,10 +205,10 @@ importers:
 
   packages/io:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../components
-      '@createsomething/tufte':
+      '@create-something/tufte':
         specifier: workspace:*
         version: link:../tufte
       '@types/canvas-confetti':
@@ -288,59 +288,59 @@ importers:
 
   packages/lms:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../components
-      '@createsomething/tufte':
+      '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
-      '@sveltejs/adapter-cloudflare':
-        specifier: ^4.7.4
-        version: 4.9.0(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(wrangler@4.51.0(@cloudflare/workers-types@4.20251213.0))
-      '@sveltejs/kit':
-        specifier: ^2.9.0
-        version: 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1))
-      '@sveltejs/vite-plugin-svelte':
-        specifier: ^4.0.0
-        version: 4.0.4(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1))
       lucide-svelte:
         specifier: ^0.554.0
         version: 0.554.0(svelte@5.43.12)
       marked:
         specifier: ^15.0.4
         version: 15.0.12
-      svelte:
-        specifier: ^5.14.1
-        version: 5.43.12
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^4.20251213.0
-        version: 4.20251213.0
+        specifier: ^4.20251128.0
+        version: 4.20251219.0
+      '@sveltejs/adapter-cloudflare':
+        specifier: ^7.2.4
+        version: 7.2.4(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(wrangler@4.51.0(@cloudflare/workers-types@4.20251219.0))
+      '@sveltejs/kit':
+        specifier: ^2.47.1
+        version: 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6))
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^6.2.1
+        version: 6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6))
       autoprefixer:
-        specifier: ^10.4.20
+        specifier: ^10.4.22
         version: 10.4.22(postcss@8.5.6)
       postcss:
-        specifier: ^8.4.49
+        specifier: ^8.5.6
         version: 8.5.6
+      svelte:
+        specifier: ^5.41.0
+        version: 5.43.12
       svelte-check:
-        specifier: ^4.1.1
+        specifier: ^4.3.3
         version: 4.3.4(picomatch@4.0.3)(svelte@5.43.12)(typescript@5.9.3)
       tailwindcss:
         specifier: ^3.4.18
         version: 3.4.18(tsx@4.20.6)
       typescript:
-        specifier: ^5.7.2
+        specifier: ^5.9.3
         version: 5.9.3
       vite:
-        specifier: ^5.4.11
-        version: 5.4.21(@types/node@24.10.1)(terser@5.44.1)
+        specifier: ^7.1.10
+        version: 7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)
 
   packages/ltd:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../components
-      '@createsomething/tufte':
+      '@create-something/tufte':
         specifier: workspace:*
         version: link:../tufte
     devDependencies:
@@ -392,7 +392,7 @@ importers:
 
   packages/maverick:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../components
     devDependencies:
@@ -517,10 +517,10 @@ importers:
       '@codemirror/view':
         specifier: ^6.38.7
         version: 6.38.8
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../components
-      '@createsomething/tufte':
+      '@create-something/tufte':
         specifier: workspace:*
         version: link:../tufte
       codemirror:
@@ -584,7 +584,7 @@ importers:
 
   packages/templates-platform:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../components
       stripe:
@@ -685,7 +685,7 @@ importers:
 
   packages/verticals/architecture-studio:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
     devDependencies:
@@ -731,7 +731,7 @@ importers:
 
   packages/verticals/creative-agency:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
     devDependencies:
@@ -777,7 +777,7 @@ importers:
 
   packages/verticals/creative-portfolio:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
     devDependencies:
@@ -823,7 +823,7 @@ importers:
 
   packages/verticals/law-firm:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
       lucide-svelte:
@@ -875,7 +875,7 @@ importers:
 
   packages/verticals/medical-practice:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
     devDependencies:
@@ -924,7 +924,7 @@ importers:
 
   packages/verticals/personal-injury:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
       lucide-svelte:
@@ -976,7 +976,7 @@ importers:
 
   packages/verticals/professional-services:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
     devDependencies:
@@ -1028,7 +1028,7 @@ importers:
 
   packages/verticals/restaurant:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
     devDependencies:
@@ -1077,7 +1077,7 @@ importers:
 
   packages/verticals/shared:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:*
         version: link:../../components
       svelte:
@@ -1118,7 +1118,7 @@ importers:
 
   packages/webflow-dashboard:
     dependencies:
-      '@createsomething/components':
+      '@create-something/components':
         specifier: workspace:^
         version: link:../components
       airtable:
@@ -9341,14 +9341,6 @@ snapshots:
     dependencies:
       '@sveltejs/kit': 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6))
 
-  '@sveltejs/adapter-cloudflare@4.9.0(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(wrangler@4.51.0(@cloudflare/workers-types@4.20251213.0))':
-    dependencies:
-      '@cloudflare/workers-types': 4.20251219.0
-      '@sveltejs/kit': 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1))
-      esbuild: 0.24.2
-      worktop: 0.8.0-next.18
-      wrangler: 4.51.0(@cloudflare/workers-types@4.20251213.0)
-
   '@sveltejs/adapter-cloudflare@4.9.0(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(svelte@5.43.12)(vite@5.4.21(@types/node@24.10.1)(terser@5.44.1)))(wrangler@4.51.0(@cloudflare/workers-types@4.20251219.0))':
     dependencies:
       '@cloudflare/workers-types': 4.20251219.0
@@ -9383,17 +9375,24 @@ snapshots:
 
   '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(wrangler@4.51.0(@cloudflare/workers-types@4.20251128.0))':
     dependencies:
-      '@cloudflare/workers-types': 4.20251213.0
+      '@cloudflare/workers-types': 4.20251219.0
       '@sveltejs/kit': 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6))
       worktop: 0.8.0-next.18
       wrangler: 4.51.0(@cloudflare/workers-types@4.20251128.0)
 
   '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(wrangler@4.51.0(@cloudflare/workers-types@4.20251213.0))':
     dependencies:
-      '@cloudflare/workers-types': 4.20251213.0
+      '@cloudflare/workers-types': 4.20251219.0
       '@sveltejs/kit': 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6))
       worktop: 0.8.0-next.18
       wrangler: 4.51.0(@cloudflare/workers-types@4.20251213.0)
+
+  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(wrangler@4.51.0(@cloudflare/workers-types@4.20251219.0))':
+    dependencies:
+      '@cloudflare/workers-types': 4.20251219.0
+      '@sveltejs/kit': 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6))
+      worktop: 0.8.0-next.18
+      wrangler: 4.51.0(@cloudflare/workers-types@4.20251219.0)
 
   '@sveltejs/adapter-static@3.0.10(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))(svelte@5.43.12)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.20.6)))':
     dependencies:
