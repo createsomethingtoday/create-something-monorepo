@@ -2,7 +2,7 @@
 
 ## Recording Notes
 
-**Duration**: ~25 minutes
+**Duration**: ~27 minutes
 **Pace**: Conversational but focused. Partnership means dialogue, not lecture.
 **Tone**: Collaborative. Show the relationship between human and AI.
 
@@ -344,7 +344,39 @@ You invoke the skill. The workflow executes. The complexity is hidden.
 
 ---
 
-## Slide 13: The Development Loop [18:00]
+## Slide 13: Plugins [18:00]
+
+{slide transition - ASCII table appears}
+
+[BREATHE]
+
+What if you could install these patterns into *any* Claude Code environment↗
+
+[PAUSE]
+
+That's what plugins do.
+
+[PAUSE]
+
+Canon. [PAUSE] Design system enforcement. The Subtractive Triad in every code review.
+
+Hermeneutic Review. [PAUSE] Three-pass code review methodology. DRY, then Rams, then Heidegger.
+
+Voice Validator. [PAUSE] Content checked against the Five Principles. Clarity, Specificity, Honesty, Useful, Grounded.
+
+Understanding Graphs. [PAUSE] Minimal dependency documentation. Navigate any codebase.
+
+[PAUSE 2s]
+
+Philosophy made executable. [PAUSE] Install in one command.
+
+[PAUSE]
+
+Visit createsomething.io/plugins. [PAUSE] The methodology becomes portable.
+
+---
+
+## Slide 14: The Development Loop [19:30]
 
 {slide transition - ASCII diagram appears}
 
@@ -376,7 +408,7 @@ The circle closes. Understanding deepens.
 
 ---
 
-## Slide 14: Zuhandenheit in Practice [20:00]
+## Slide 15: Zuhandenheit in Practice [21:00]
 
 {slide transition}
 
@@ -406,7 +438,7 @@ When you notice Claude, something has broken. When Claude is invisible, the part
 
 ---
 
-## Slide 15: Installation [22:00]
+## Slide 16: Installation [23:00]
 
 {slide transition - code appears}
 
@@ -444,7 +476,7 @@ Install once. Partner indefinitely.
 
 ---
 
-## Slide 16: Final [24:00]
+## Slide 17: Final [25:00]
 
 {slide transition}
 
@@ -523,5 +555,5 @@ After recording:
 
 - [ ] Review for clarity and pacing
 - [ ] Check for mouth sounds or clicks
-- [ ] Verify all 16 slides covered
+- [ ] Verify all 17 slides covered
 - [ ] Run /audit-voice on transcript

@@ -264,13 +264,43 @@ flex, grid, items-*, justify-*, p-*, m-*, gap-*
 		</p>
 	</Slide>
 
+	<!-- Slide 13: Plugins -->
+	<Slide type="ascii">
+		<span class="number">13</span>
+		<pre>{`
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│   PLUGINS                                                               │
+│   Install philosophy into your Claude Code                              │
+│                                                                         │
+│   ┌──────────────────┬──────────────────────────────────────────────┐   │
+│   │ Canon            │ Design system enforcement                    │   │
+│   │                  │ DRY → Rams → Heidegger in every review       │   │
+│   ├──────────────────┼──────────────────────────────────────────────┤   │
+│   │ Hermeneutic      │ Code review through Subtractive Triad        │   │
+│   │ Review           │ Three-pass methodology                       │   │
+│   ├──────────────────┼──────────────────────────────────────────────┤   │
+│   │ Voice Validator  │ Content against Five Principles              │   │
+│   │                  │ Clarity, Specificity, Honesty, Useful        │   │
+│   ├──────────────────┼──────────────────────────────────────────────┤   │
+│   │ Understanding    │ UNDERSTANDING.md files                       │   │
+│   │ Graphs           │ Minimal dependency graphs for navigation     │   │
+│   └──────────────────┴──────────────────────────────────────────────┘   │
+│                                                                         │
+│   → createsomething.io/plugins                                          │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+`}</pre>
+		<p class="caption">Philosophy made executable. Install in one command.</p>
+	</Slide>
+
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 3: The Circle Closes (How does it fit?)
 	     ═══════════════════════════════════════════════════════════════════ -->
 
-	<!-- Slide 13: The Development Loop -->
+	<!-- Slide 14: The Development Loop -->
 	<Slide type="ascii">
-		<span class="number">13</span>
+		<span class="number">14</span>
 		<pre>{`
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                         │
@@ -299,9 +329,9 @@ flex, grid, items-*, justify-*, p-*, m-*, gap-*
 		<p class="caption">Read → Plan → Execute → Verify → Repair</p>
 	</Slide>
 
-	<!-- Slide 14: Zuhandenheit in Practice -->
+	<!-- Slide 15: Zuhandenheit in Practice -->
 	<Slide type="content">
-		<span class="number">14</span>
+		<span class="number">15</span>
 		<h2>Zuhandenheit in Practice</h2>
 		<p>
 			When Claude Code works, it <span class="em">disappears</span>.
@@ -320,9 +350,9 @@ flex, grid, items-*, justify-*, p-*, m-*, gap-*
 	     PART 4: Dwelling (What do you do now?)
 	     ═══════════════════════════════════════════════════════════════════ -->
 
-	<!-- Slide 15: Installation Steps -->
+	<!-- Slide 16: Installation Steps -->
 	<Slide type="code">
-		<span class="number">15</span>
+		<span class="number">16</span>
 		<h2>Installation</h2>
 		<pre><code>{`# 1. Clone the monorepo
 git clone git@github.com:createsomethingtoday/create-something-monorepo.git
@@ -342,9 +372,9 @@ pnpm dev --filter=space
 		<p class="annotation">Install once. Partner indefinitely.</p>
 	</Slide>
 
-	<!-- Slide 16: Final -->
+	<!-- Slide 17: Final -->
 	<Slide type="title">
-		<span class="number">16</span>
+		<span class="number">17</span>
 		<h1>CLAUDE CODE: PARTNER</h1>
 		<p class="subtitle">The partner should disappear.</p>
 		<p class="tagline">
