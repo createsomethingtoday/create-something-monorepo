@@ -1,4 +1,17 @@
 // Service definitions shared across routes
+// Phase 2: Accessible/Commercial tier system
+
+/**
+ * Tier Types
+ *
+ * accessible: For individuals, nonprofits, and those learning ($0-$5,000)
+ * commercial: For SMB and enterprise partnerships ($5,000-$50,000+)
+ *
+ * Philosophy: Assessment fully routes to a single recommendation.
+ * User never sees "tier" - only the appropriate offering.
+ */
+export type ServiceTier = 'accessible' | 'commercial';
+
 export interface ServiceProof {
 	caseStudy: string;
 	name: string;
@@ -20,6 +33,9 @@ export interface Service {
 	pricing: string;
 	timeline: string;
 	icon: string;
+	// Phase 2 additions
+	tier: ServiceTier;
+	isProductized: boolean; // true = self-serve product, false = consulting
 }
 
 export const services: Service[] = [
@@ -60,7 +76,9 @@ export const services: Service[] = [
 
 		pricing: '$5,000+',
 		timeline: '2-4 weeks',
-		icon: 'globe'
+		icon: 'globe',
+		tier: 'commercial',
+		isProductized: false
 	},
 	{
 		id: 'automation',
@@ -99,7 +117,9 @@ export const services: Service[] = [
 
 		pricing: '$15,000+',
 		timeline: '4-8 weeks',
-		icon: 'automation'
+		icon: 'automation',
+		tier: 'commercial',
+		isProductized: false
 	},
 	{
 		id: 'agentic-systems',
@@ -138,7 +158,9 @@ export const services: Service[] = [
 
 		pricing: '$35,000+',
 		timeline: '8-16 weeks',
-		icon: 'robot'
+		icon: 'robot',
+		tier: 'commercial',
+		isProductized: false
 	},
 	{
 		id: 'partnership',
@@ -177,7 +199,9 @@ export const services: Service[] = [
 
 		pricing: '$5,000/month',
 		timeline: 'Ongoing',
-		icon: 'partnership'
+		icon: 'partnership',
+		tier: 'commercial',
+		isProductized: false
 	},
 	{
 		id: 'transformation',
@@ -216,7 +240,9 @@ export const services: Service[] = [
 
 		pricing: '$50,000+',
 		timeline: '12-16 weeks',
-		icon: 'academy'
+		icon: 'academy',
+		tier: 'commercial',
+		isProductized: false
 	},
 	{
 		id: 'advisory',
@@ -255,20 +281,276 @@ export const services: Service[] = [
 
 		pricing: '$10,000/month',
 		timeline: '6-month minimum',
-		icon: 'advisor'
+		icon: 'advisor',
+		tier: 'commercial',
+		isProductized: false
 	}
 ];
+
+// ============================================================================
+// Productized Offerings (Accessible Tier)
+// ============================================================================
+// Self-serve products that don't require consulting engagement.
+// Assessment routes users here based on complexity/budget fit.
+
+export const products: Service[] = [
+	// Free Products
+	{
+		id: 'ai-readiness-assessment',
+		title: 'AI Readiness Assessment',
+		description:
+			'Discover where AI can create the most impact in your workflow. Three questions that reveal your starting point on the Subtractive Triad.',
+		triadQuestion: '"Have I built this before?"',
+		triadAction: 'Unify',
+		triadLevel: 'implementation',
+		whenToUse: [
+			"You're curious about AI but unsure where to start",
+			'You want to understand your automation opportunities',
+			'You need a framework for evaluating AI investments'
+		],
+		whatThisRemoves: [
+			'Uncertainty about AI starting points',
+			'Analysis paralysis when considering AI tools',
+			'Wasted time exploring irrelevant AI solutions'
+		],
+		howItWorks: [
+			'3-minute interactive assessment',
+			'Maps your situation to the Subtractive Triad',
+			'Personalized recommendation based on responses',
+			'Optional consultation pathway if complexity warrants'
+		],
+		proof: {
+			caseStudy: '/discover',
+			name: 'Discovery Path',
+			headline: 'Find your starting point in 3 minutes',
+			stats: ['3 questions', 'Instant recommendation', 'No signup required']
+		},
+		pricing: 'Free',
+		timeline: '3 minutes',
+		icon: 'compass',
+		tier: 'accessible',
+		isProductized: true
+	},
+	{
+		id: 'triad-audit-template',
+		title: 'Triad Audit Template',
+		description:
+			'The same framework we use internally to evaluate automation opportunities. Apply DRY → Rams → Heidegger to your own systems.',
+		triadQuestion: '"Does this earn its existence?"',
+		triadAction: 'Remove',
+		triadLevel: 'artifact',
+		whenToUse: [
+			'You want to evaluate your own systems for automation potential',
+			'Your team needs a shared vocabulary for AI decisions',
+			'You prefer DIY with philosophical grounding'
+		],
+		whatThisRemoves: [
+			'Ad-hoc automation decisions without framework',
+			'Miscommunication about what to automate',
+			'Wasted effort on automations that complicate rather than simplify'
+		],
+		howItWorks: [
+			'Downloadable audit template (Markdown)',
+			'Step-by-step Subtractive Triad walkthrough',
+			'Example applications from real projects',
+			'Integration with Claude Code via skill file'
+		],
+		proof: {
+			caseStudy: '/papers/subtractive-triad-audit',
+			name: 'Subtractive Triad Audit',
+			headline: 'The framework behind CREATE SOMETHING methodology',
+			stats: ['3-level audit', 'Production-tested', 'Open methodology']
+		},
+		pricing: 'Free',
+		timeline: '1 hour',
+		icon: 'checklist',
+		tier: 'accessible',
+		isProductized: true
+	},
+	{
+		id: 'canon-css-starter',
+		title: 'Canon CSS Starter',
+		description:
+			"The design tokens powering all CREATE SOMETHING properties. Dieter Rams' principles encoded as CSS custom properties.",
+		triadQuestion: '"Have I built this before?"',
+		triadAction: 'Unify',
+		triadLevel: 'implementation',
+		whenToUse: [
+			'You want a minimal, principled CSS foundation',
+			"You appreciate Rams' \"less, but better\" philosophy",
+			'You need consistent tokens across projects'
+		],
+		whatThisRemoves: [
+			'Decision fatigue over color/spacing/typography',
+			'Inconsistent visual language across projects',
+			'Arbitrary design choices without philosophical grounding'
+		],
+		howItWorks: [
+			'npm install @create-something/components',
+			'Import tokens.css or canon.css',
+			'Golden ratio spacing, semantic colors, motion tokens',
+			'Works with Tailwind or pure CSS'
+		],
+		proof: {
+			caseStudy: 'https://github.com/createsomethingtoday/create-something-monorepo',
+			name: 'CREATE SOMETHING Monorepo',
+			headline: 'The same tokens powering .io, .space, .agency, .ltd',
+			stats: ['Open source', 'WCAG AA compliant', 'Golden ratio spacing']
+		},
+		pricing: 'Free',
+		timeline: '5 minutes',
+		icon: 'palette',
+		tier: 'accessible',
+		isProductized: true
+	},
+	// Paid Products
+	{
+		id: 'vertical-templates',
+		title: 'Vertical Templates',
+		description:
+			'Industry-specific website templates with built-in lead capture. Deploy to Cloudflare in minutes, customize with Canon design system.',
+		triadQuestion: '"Have I built this before?"',
+		triadAction: 'Unify',
+		triadLevel: 'implementation',
+		whenToUse: [
+			'You need a professional website quickly',
+			'Your industry has specific requirements (law, architecture, etc.)',
+			'You want automation-ready infrastructure from day one'
+		],
+		whatThisRemoves: [
+			'Months of custom development for standard needs',
+			'Generic templates that miss industry requirements',
+			'Manual lead capture and follow-up processes'
+		],
+		howItWorks: [
+			'Choose your vertical (Law Firm, Architecture, etc.)',
+			'Deploy to your subdomain instantly',
+			'Customize content via admin panel',
+			'Built-in analytics and lead tracking'
+		],
+		proof: {
+			caseStudy: '/work/templates',
+			name: 'Vertical Templates',
+			headline: 'Professional websites deployed in minutes',
+			stats: ['5+ verticals', 'Cloudflare edge', 'D1 database included']
+		},
+		pricing: '$99-199/mo',
+		timeline: 'Same day',
+		icon: 'template',
+		tier: 'accessible',
+		isProductized: true
+	},
+	{
+		id: 'automation-recipes',
+		title: 'Automation Recipe Pack',
+		description:
+			'10 production-tested automation patterns from real CREATE SOMETHING projects. Copy, adapt, deploy.',
+		triadQuestion: '"Does this earn its existence?"',
+		triadAction: 'Remove',
+		triadLevel: 'artifact',
+		whenToUse: [
+			'You have Claude Code and want automation inspiration',
+			"You're stuck on \"what should I automate?\"",
+			'You prefer learning from working examples'
+		],
+		whatThisRemoves: [
+			'Blank slate syndrome when starting automation',
+			'Trial-and-error discovering what works',
+			'Time spent on patterns others have already solved'
+		],
+		howItWorks: [
+			'10 documented automation recipes',
+			'Real code from production projects',
+			'Complexity ratings (simple → advanced)',
+			'Integration patterns for common tools'
+		],
+		proof: {
+			caseStudy: '/work/viralytics',
+			name: 'Viralytics Patterns',
+			headline: 'The automation patterns behind 120 hours/week saved',
+			stats: ['10 recipes', 'Production-tested', 'Copy-paste ready']
+		},
+		pricing: '$299',
+		timeline: 'Instant access',
+		icon: 'cookbook',
+		tier: 'accessible',
+		isProductized: true
+	},
+	{
+		id: 'agent-in-a-box',
+		title: 'Agent-in-a-Box Kit',
+		description:
+			'Complete AI development environment. WezTerm, Claude Code, Beads, MCP servers—all configured and ready. 90 days of onboarding support.',
+		triadQuestion: '"Does this serve the whole?"',
+		triadAction: 'Reconnect',
+		triadLevel: 'system',
+		whenToUse: [
+			'You want the full CREATE SOMETHING development setup',
+			'Your team needs a standardized AI development environment',
+			'You want onboarding support, not just documentation'
+		],
+		whatThisRemoves: [
+			'Hours of tool configuration and debugging',
+			'Inconsistent environments across team members',
+			'Learning curve for Claude Code best practices'
+		],
+		howItWorks: [
+			'Pre-configured dotfiles and tool setup',
+			'MCP server templates for common integrations',
+			'90-day weekly office hours for questions',
+			'LMS access for self-paced learning'
+		],
+		proof: {
+			caseStudy: '/work/kickstand',
+			name: 'Kickstand Development Environment',
+			headline: 'The exact setup used for 155 → 13 script consolidation',
+			stats: ['Full dotfiles', '90-day support', 'LMS access included']
+		},
+		pricing: '$2,500-10,000',
+		timeline: '1 week setup + 90 days',
+		icon: 'box',
+		tier: 'accessible',
+		isProductized: true
+	}
+];
+
+// ============================================================================
+// Combined Offerings & Lookup Functions
+// ============================================================================
+
+/** All offerings (consulting services + productized offerings) */
+export const allOfferings: Service[] = [...products, ...services];
+
+/** Get productized offerings only */
+export function getProducts(): Service[] {
+	return products;
+}
+
+/** Get consulting services only */
+export function getConsultingServices(): Service[] {
+	return services;
+}
+
+/** Get offerings by tier */
+export function getOfferingsByTier(tier: ServiceTier): Service[] {
+	return allOfferings.filter((s) => s.tier === tier);
+}
+
+/** Get offering by slug (searches both products and services) */
+export function getOfferingBySlug(slug: string): Service | undefined {
+	return allOfferings.find((s) => s.id === slug);
+}
 
 export function getServiceBySlug(slug: string): Service | undefined {
 	return services.find((s) => s.id === slug);
 }
 
 export function getServiceSchemaData() {
-	return services.map((service) => ({
+	return allOfferings.map((service) => ({
 		name: service.title,
 		description: service.whatThisRemoves.join('. '),
-		type: 'ProfessionalService',
-		price: service.pricing.replace(/[\$,+\/mo]/g, ''),
+		type: service.isProductized ? 'Product' : 'ProfessionalService',
+		price: service.pricing.replace(/[\$,+\/mo-]/g, ''),
 		priceDescription: service.pricing
 	}));
 }
