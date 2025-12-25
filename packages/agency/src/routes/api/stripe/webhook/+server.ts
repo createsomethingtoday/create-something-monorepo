@@ -139,14 +139,16 @@ async function handleSubscriptionUpdate(
 	const cache = platform?.env?.CACHE;
 	if (cache) {
 		const subKey = `subscription:${subscription.id}`;
+		// Get current period end from first subscription item
+		const currentPeriodEnd = subscription.items?.data?.[0]?.current_period_end;
 		await cache.put(
 			subKey,
 			JSON.stringify({
 				id: subscription.id,
 				status: subscription.status,
 				customerId: subscription.customer,
-				currentPeriodEnd: subscription.current_period_end
-					? new Date(subscription.current_period_end * 1000).toISOString()
+				currentPeriodEnd: currentPeriodEnd
+					? new Date(currentPeriodEnd * 1000).toISOString()
 					: null,
 				cancelAtPeriodEnd: subscription.cancel_at_period_end
 			}),
