@@ -10,6 +10,8 @@ interface Env {
 	STORAGE: R2Bucket;
 	RESEND_API_KEY: string;
 	ARENA_API_TOKEN?: string;
+	ARENA_CLIENT_ID?: string;
+	ARENA_CLIENT_SECRET?: string;
 	ENVIRONMENT: string;
 }
 
