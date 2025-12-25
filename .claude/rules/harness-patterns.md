@@ -4,64 +4,420 @@ Autonomous agent orchestration with Beads-based human oversight.
 
 ## Philosophy: Zuhandenheit
 
-**The harness must be invisible.** Users describe work; Claude handles scope detection, issue creation, execution, and checkpointing. The "harness" never surfaces as a concept users must understand.
+**The harness must be invisible.** The harness is not a tool you invoke—it's the way all work happens. When you switch between "direct work" and "use harness," the tool becomes visible. True Zuhandenheit means one workflow for everything.
+
+```
+User: "Fix the typo in README"
+         │
+         ▼
+    bd work cs-xyz
+         │
+         ▼
+    Harness detects: trivial
+         │
+         ▼
+    haiku model, 0 overhead
+         │
+         ▼
+    Metrics collected
+```
 
 ```
 User: "Update all components to Canon tokens"
-                    │
-                    ▼
-        Claude detects: Multi-session scope
-                    │
-                    ▼
-        Creates Beads issues automatically
-                    │
-                    ▼
-        Works through issues one at a time
-                    │
-                    ▼
-        Checkpoints when confidence drops
-                    │
-                    ▼
-        User returns to: bd progress
+         │
+         ▼
+    bd work (creates issues first)
+         │
+         ▼
+    Harness detects: complex
+         │
+         ▼
+    opus model, full orchestration
+         │
+         ▼
+    Checkpoints, reviews, metrics
 ```
 
-**The tool recedes. Only the work remains.**
+**Same entry point. Different overhead. The tool recedes. Only the work remains.**
 
 ### Core Constraints
 
 | Constraint | Rationale | Enforcement |
 |------------|-----------|-------------|
-| **One feature per session** | Prevents scope creep; enables clean commits | Skill pattern |
+| **All work through harness** | Consistent data, model selection | `bd work` is the only entry |
+| **One feature per session** | Prevents scope creep; enables clean commits | Scope guard |
 | **Beads is the only progress system** | DRY—no separate progress files | Architecture |
 | **Commit before close** | Work without commits is lost work | Close reason must include commit |
 | **Two-stage completion** | Prevents premature victory | `code-complete` → `verified` labels |
 | **E2E before verified** | Unit tests aren't enough | Puppeteer or manual check required |
+| **Metrics on everything** | Learning requires data | All sessions log metrics |
 
 ## Quick Start
 
-There is no "harness command" to invoke. Claude detects multi-session work automatically.
+**The unified entry point:**
 
-**User workflow:**
+```bash
+# Work on an existing issue
+bd work cs-xyz
+
+# Create and immediately work on a task
+bd work --create "Fix login button alignment"
+
+# Let harness break down large work
+bd work --spec specs/feature.md
 ```
-1. Describe large task to Claude
-2. Claude creates Beads issues automatically
-3. Claude works through issues, commits each
-4. Check progress anytime: bd progress
-5. Redirect if needed: bd update <id> --priority P0
+
+**What happens:**
+1. Harness detects complexity from issue description + file analysis
+2. Selects optimal model (haiku/sonnet/opus)
+3. Applies appropriate overhead (none/light/full)
+4. Executes work with structured close
+5. Collects metrics for learning
+
+**Claude's response:**
+> "Working on cs-xyz (trivial → haiku). ETA: ~2 min."
+
+or
+
+> "Breaking cs-xyz into 5 subtasks (complex → opus). Check progress with `bd progress`."
+
+## Universal Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      bd work <issue-id>                          │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │              COMPLEXITY DETECTION                            ││
+│  │                                                              ││
+│  │  Inputs:                                                     ││
+│  │  • Issue description (keywords, scope indicators)            ││
+│  │  • File analysis (touched files, LOC delta estimate)         ││
+│  │  • Dependency count (blocked/blocking issues)                ││
+│  │  • Historical data (similar issues, avg duration)            ││
+│  └──────────────────────┬──────────────────────────────────────┘│
+│                         │                                        │
+│         ┌───────────────┼───────────────┬───────────────┐       │
+│         ▼               ▼               ▼               ▼       │
+│    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    │
+│    │ TRIVIAL │    │ SIMPLE  │    │STANDARD │    │ COMPLEX │    │
+│    │  1 file │    │ 2-5 fls │    │ 5-15 fls│    │  15+ fls│    │
+│    │ ~100 LOC│    │ ~500 LOC│    │~2000 LOC│    │ ~5000+  │    │
+│    └────┬────┘    └────┬────┘    └────┬────┘    └────┬────┘    │
+│         │              │              │              │          │
+│         ▼              ▼              ▼              ▼          │
+│    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    │
+│    │  haiku  │    │  haiku  │    │ sonnet  │    │  opus   │    │
+│    │ 0 ovhd  │    │ micro   │    │  auto   │    │  full   │    │
+│    │ no ckpt │    │ review  │    │ review  │    │ harness │    │
+│    └─────────┘    └─────────┘    └─────────┘    └─────────┘    │
+│                                                                  │
+│  Always: structured start → structured close → metrics logged   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Claude's response to large tasks:**
-> "I'll break this into [N] tasks and work through them. Check progress with `bd progress`. I'll pause if I hit uncertainty."
+## Complexity Detection
 
-## Scope Detection
+The harness analyzes each issue to determine appropriate resources.
 
-Claude activates multi-session orchestration when:
-- Work affects >5 files
-- Complex dependency chains between tasks
-- User phrases like "update everything", "fix all", "migrate all"
-- Work clearly exceeds single-session context
+### Detection Heuristics
 
-**Single-session work**: Just do it directly, no orchestration needed.
+```typescript
+interface ComplexitySignals {
+  // From issue content
+  descriptionLength: number;      // Longer = more complex
+  scopeKeywords: string[];        // "all", "every", "migrate", "refactor"
+  acceptanceCriteria: number;     // More criteria = more complex
+
+  // From codebase analysis
+  estimatedFiles: number;         // Files likely to change
+  estimatedLOC: number;           // Lines of code delta
+  crossPackage: boolean;          // Touches multiple packages
+
+  // From dependency graph
+  blockedBy: number;              // Prerequisites
+  blocks: number;                 // Dependents waiting
+
+  // From history
+  similarIssueAvgDuration: number;
+  similarIssueAvgTokens: number;
+}
+
+function detectComplexity(signals: ComplexitySignals): ComplexityLevel {
+  // Scope keywords are strong signals
+  if (signals.scopeKeywords.length > 0) return 'complex';
+
+  // Cross-package work is at least standard
+  if (signals.crossPackage) return 'standard';
+
+  // File count thresholds
+  if (signals.estimatedFiles > 15) return 'complex';
+  if (signals.estimatedFiles > 5) return 'standard';
+  if (signals.estimatedFiles > 1) return 'simple';
+
+  return 'trivial';
+}
+```
+
+### Complexity Levels
+
+| Level | Files | LOC | Model | Overhead | Review | Checkpoint |
+|-------|-------|-----|-------|----------|--------|------------|
+| **trivial** | 1 | ~100 | haiku | 0 | none | no |
+| **simple** | 2-5 | ~500 | haiku | micro | self | no |
+| **standard** | 5-15 | ~2000 | sonnet | auto | automated | optional |
+| **complex** | 15+ | 5000+ | opus | full | human gate | yes |
+
+### Override Flags
+
+```bash
+# Force complexity level
+bd work cs-xyz --complexity=complex
+
+# Force model
+bd work cs-xyz --model=opus
+
+# Disable overhead for quick iteration
+bd work cs-xyz --minimal
+```
+
+## Model Routing
+
+The harness selects the optimal model based on complexity and cost.
+
+### Model Characteristics
+
+| Model | Input Cost | Output Cost | Context | Best For |
+|-------|------------|-------------|---------|----------|
+| **haiku** | $0.25/M | $1.25/M | 200k | Trivial, simple tasks |
+| **sonnet** | $3/M | $15/M | 200k | Standard tasks, balanced |
+| **opus** | $15/M | $75/M | 200k | Complex, multi-file, architectural |
+
+### Routing Rules
+
+```typescript
+function selectModel(complexity: ComplexityLevel, signals: ComplexitySignals): Model {
+  // Complex always gets opus
+  if (complexity === 'complex') return 'opus';
+
+  // Standard gets sonnet (good balance)
+  if (complexity === 'standard') return 'sonnet';
+
+  // Simple/trivial get haiku (cost efficient)
+  // Exception: if issue has many dependencies, upgrade
+  if (signals.blockedBy > 3 || signals.blocks > 3) {
+    return 'sonnet';
+  }
+
+  return 'haiku';
+}
+```
+
+### Cost Optimization
+
+Running all work through the harness with model selection **reduces cost**:
+
+| Before (all opus) | After (routed) | Savings |
+|-------------------|----------------|---------|
+| 100 tasks × opus | 60 haiku + 30 sonnet + 10 opus | ~70% |
+
+Most tasks are trivial or simple. Using haiku for these provides massive cost reduction while maintaining quality for complex work.
+
+## The `bd work` Command
+
+Unified entry point for all work.
+
+### Synopsis
+
+```bash
+bd work [issue-id] [options]
+
+Options:
+  --create <title>      Create issue and immediately work on it
+  --spec <path>         Parse spec file, create issues, work through them
+  --complexity <level>  Override complexity detection (trivial|simple|standard|complex)
+  --model <model>       Override model selection (haiku|sonnet|opus)
+  --minimal             Skip overhead (no checkpoints, no review)
+  --dry-run             Show what would happen without executing
+```
+
+### Examples
+
+```bash
+# Work on existing issue
+bd work cs-xyz
+
+# Quick fix (create + work)
+bd work --create "Fix typo in footer"
+
+# Large feature from spec
+bd work --spec specs/user-auth.md
+
+# Force complex handling for tricky bug
+bd work cs-abc --complexity=complex
+
+# Iterate quickly during development
+bd work cs-xyz --minimal
+```
+
+### Workflow
+
+```
+bd work cs-xyz
+     │
+     ├──► Complexity detection
+     │         │
+     │         ▼
+     ├──► Model selection
+     │         │
+     │         ▼
+     ├──► bd update cs-xyz --status in_progress
+     │         │
+     │         ▼
+     ├──► Execute work (with appropriate overhead)
+     │         │
+     │         ▼
+     ├──► Structured close (commit + close with reason)
+     │         │
+     │         ▼
+     └──► Log metrics
+```
+
+## Overhead Levels
+
+Each complexity level has appropriate overhead.
+
+### Zero Overhead (trivial)
+
+```
+Start → Work → Commit → Close → Metrics
+```
+
+No checkpoints, no review, no scope guards. Just structured start/close.
+
+### Micro Overhead (simple)
+
+```
+Start → Work → Self-Review → Commit → Close → Metrics
+```
+
+Quick self-review before commit:
+- Did I actually fix the issue?
+- Any obvious regressions?
+
+### Auto Overhead (standard)
+
+```
+Start → Work → Tests → Auto-Review → Commit → Close → Metrics
+```
+
+Automated review layer:
+- Run relevant tests
+- Check for common issues (type errors, lint)
+- Verify issue acceptance criteria
+
+### Full Overhead (complex)
+
+```
+Start → [Sessions with checkpoints] → Tests → E2E → Human Review → Commit → Close → Metrics
+```
+
+Full harness orchestration as documented in later sections.
+
+## Metrics Collection
+
+Every task generates metrics for learning.
+
+### Metrics Schema
+
+```typescript
+interface TaskMetrics {
+  // Identity
+  issueId: string;
+  timestamp: string;
+
+  // Classification
+  detectedComplexity: ComplexityLevel;
+  overrideComplexity?: ComplexityLevel;
+  model: Model;
+
+  // Execution
+  durationMs: number;
+  tokensInput: number;
+  tokensOutput: number;
+
+  // Outcome
+  success: boolean;
+  failureReason?: string;
+  commitHash?: string;
+
+  // Quality signals
+  testsRun: number;
+  testsPassed: number;
+  lintErrors: number;
+  typeErrors: number;
+
+  // Learning
+  actualFiles: number;          // Compare to estimate
+  actualLOC: number;            // Compare to estimate
+  complexityAccuracy: boolean;  // Was detection correct?
+}
+```
+
+### Storage
+
+Metrics are stored in Beads as issue metadata:
+
+```bash
+# View metrics for an issue
+bd show cs-xyz --metrics
+
+# Aggregate metrics
+bd metrics --since=7d
+```
+
+### Learning Loop
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LEARNING LOOP                             │
+│                                                              │
+│  Metrics ──► Analysis ──► Heuristic Updates ──► Better      │
+│     │                                           Detection    │
+│     │                                              │         │
+│     └──────────────────────────────────────────────┘         │
+│                                                              │
+│  Questions we can answer:                                    │
+│  • Which complexity signals are most predictive?             │
+│  • What's the optimal model for each complexity?             │
+│  • Where does detection fail? (over/under-estimate)          │
+│  • What patterns lead to failure?                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Backward Compatibility
+
+The old `harness start` command still works:
+
+```bash
+# Old way (still works)
+harness start specs/feature.md
+
+# New way (preferred)
+bd work --spec specs/feature.md
+```
+
+Direct work without harness is **deprecated**:
+
+```bash
+# Deprecated (no metrics, no model selection)
+bd update cs-xyz --status in_progress
+# ... manual work ...
+bd close cs-xyz
+
+# Preferred
+bd work cs-xyz
+```
 
 ## Progress & Redirection (via Beads)
 
@@ -1183,16 +1539,20 @@ Resume with `harness resume` after investigating.
 ```
 packages/harness/
 ├── src/
-│   ├── types.ts          # Type definitions
-│   ├── spec-parser.ts    # Markdown PRD parsing
-│   ├── beads.ts          # Beads integration
-│   ├── session.ts        # Claude Code spawning
-│   ├── checkpoint.ts     # Progress reports
-│   ├── redirect.ts       # Change detection
+│   ├── types.ts           # Type definitions (ComplexityLevel, TaskMetrics, etc.)
+│   ├── complexity.ts      # Complexity detection heuristics
+│   ├── model-router.ts    # Model selection (haiku/sonnet/opus)
+│   ├── overhead.ts        # Overhead level application
+│   ├── metrics.ts         # Metrics collection and storage
+│   ├── spec-parser.ts     # Markdown PRD parsing
+│   ├── beads.ts           # Beads integration
+│   ├── session.ts         # Claude Code spawning
+│   ├── checkpoint.ts      # Progress reports
+│   ├── redirect.ts        # Change detection
 │   ├── failure-handler.ts # Graceful failure handling
-│   ├── runner.ts         # Main loop
-│   ├── cli.ts            # CLI entry point
-│   └── index.ts          # Exports
+│   ├── runner.ts          # Main loop (universal entry point)
+│   ├── cli.ts             # CLI entry point (bd work integration)
+│   └── index.ts           # Exports
 ├── package.json
 └── tsconfig.json
 ```
@@ -1200,9 +1560,15 @@ packages/harness/
 ## Why This Works
 
 ### Subtractive Triad
-- **DRY**: One system (Beads) for all tracking—no separate progress files
-- **Rams**: Only essential components—init.sh replaces ad-hoc setup
-- **Heidegger**: Serves the work, not itself—infrastructure recedes
+- **DRY**: One workflow (`bd work`) for all tasks—no mode switching
+- **Rams**: Overhead scales with complexity—trivial tasks get trivial overhead
+- **Heidegger**: The harness recedes completely—you never think "should I use the harness?"
+
+### Universal Entry Point
+- **No bifurcation**: Same command for typo fixes and multi-week features
+- **Automatic optimization**: Model and overhead selected for you
+- **Data everywhere**: Every task contributes to learning
+- **Cost reduction**: Haiku for trivial work saves ~70% vs always-opus
 
 ### Session Architecture
 - **Initializer/Coding split**: Setup happens once, properly
@@ -1217,8 +1583,19 @@ You can always:
 - Redirect priorities (`bd update`)
 - Pause for review (`harness pause`)
 - Resume when ready (`harness resume`)
+- Override complexity (`bd work --complexity=complex`)
+- Override model (`bd work --model=opus`)
 
 The harness runs autonomously, but you remain in control.
+
+### Metrics-Driven Evolution
+Every task generates data:
+- Complexity detection accuracy
+- Model performance per task type
+- Token usage patterns
+- Failure modes and recovery
+
+This data feeds back into better heuristics. The system learns.
 
 ### Anthropic Patterns Integrated
 Based on [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents):
@@ -1232,3 +1609,4 @@ Based on [Effective Harnesses for Long-Running Agents](https://www.anthropic.com
 | One-feature-per-session | `one-feature-guard.sh` + scope detection |
 | E2E verification mandate | `verified` label requires Puppeteer/manual check |
 | Failure mode docs | Failure Mode Reference table |
+| Model selection | Complexity → haiku/sonnet/opus routing |
