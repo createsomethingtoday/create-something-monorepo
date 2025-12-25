@@ -140,11 +140,11 @@
 	}
 
 	.launch-btn.completed {
-		background: rgb(34, 197, 94);
+		background: var(--color-success);
 		color: var(--color-bg-pure);
 	}
 
 	.launch-btn.completed:hover {
-		background: rgb(74, 222, 128);
+		filter: brightness(1.2);
 	}
 </style>

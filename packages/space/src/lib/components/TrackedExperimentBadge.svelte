@@ -94,7 +94,7 @@
 <style>
 	.badge-compact {
 		padding: 0.5rem 1rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-full);
 		font-size: var(--text-caption);
@@ -142,7 +142,7 @@
 
 	.metric-card {
 		padding: 0.75rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border-radius: var(--radius-sm);
 	}
 

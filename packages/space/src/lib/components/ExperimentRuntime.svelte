@@ -452,7 +452,7 @@
   .overview-card {
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-overlay);
   }
 
   .overview-card:hover {
@@ -568,7 +568,7 @@
   }
 
   .metric-card {
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-overlay);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
   }

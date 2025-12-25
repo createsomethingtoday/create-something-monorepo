@@ -46,20 +46,20 @@
 	}
 
 	.result.success {
-		background: rgba(68, 170, 68, 0.1);
-		border-color: rgba(68, 170, 68, 0.3);
+		background: var(--color-success-muted);
+		border-color: var(--color-success-border);
 		color: var(--color-success);
 	}
 
 	.result.error {
-		background: rgba(204, 68, 68, 0.1);
-		border-color: rgba(204, 68, 68, 0.3);
+		background: var(--color-error-muted);
+		border-color: var(--color-error-border);
 		color: var(--color-error);
 	}
 
 	.result.info {
-		background: rgba(68, 119, 170, 0.1);
-		border-color: rgba(68, 119, 170, 0.3);
+		background: var(--color-info-muted);
+		border-color: var(--color-info-border);
 		color: var(--color-info);
 	}
 

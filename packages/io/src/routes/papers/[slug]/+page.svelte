@@ -185,7 +185,7 @@
 		margin: 0 auto 2rem;
 		text-align: left;
 		display: inline-block;
-		background: rgba(0, 0, 0, 0.3);
+		background: var(--color-overlay);
 		padding: 1rem;
 		border-radius: 8px;
 	}
@@ -259,7 +259,7 @@
 
 	/* Table of Contents */
 	.table-of-contents {
-		background: rgba(0, 0, 0, 0.2);
+		background: var(--color-overlay);
 		border-radius: 8px;
 		padding: 1.5rem;
 		margin-bottom: 2rem;
@@ -332,7 +332,7 @@
 	}
 
 	.paper-content :global(pre) {
-		background: rgba(0, 0, 0, 0.4);
+		background: var(--color-overlay);
 		padding: 1rem;
 		border-radius: 8px;
 		overflow-x: auto;

@@ -729,8 +729,8 @@ Ethos Construction (Personalization)
 	}
 
 	.code-block-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}

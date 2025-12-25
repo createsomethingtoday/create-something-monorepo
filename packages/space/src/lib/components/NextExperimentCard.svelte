@@ -55,13 +55,13 @@
 
 <style>
 	.next-card {
-		background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+		background: linear-gradient(to bottom right, var(--color-active), var(--color-hover));
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl);
 	}
 
 	.glow-effect {
-		background: rgba(168, 85, 247, 0.1);
+		background: var(--color-data-3-muted);
 		filter: blur(3rem);
 	}
 

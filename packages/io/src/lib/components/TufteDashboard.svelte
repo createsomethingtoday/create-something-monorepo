@@ -522,7 +522,7 @@
 
 	.error-banner {
 		background-color: var(--color-error-muted);
-		border: 1px solid rgba(204, 68, 68, 0.2);
+		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-lg);
 		padding: 1rem;
 	}
@@ -562,8 +562,8 @@
 
 	/* AI Insights Banner */
 	.ai-insights-banner {
-		background: linear-gradient(to right, var(--color-data-3-muted, rgba(192, 132, 252, 0.1)), var(--color-data-1-muted, rgba(96, 165, 250, 0.1)));
-		border: 1px solid rgba(192, 132, 252, 0.2);
+		background: linear-gradient(to right, var(--color-data-3-muted), var(--color-data-1-muted));
+		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-lg);
 		padding: 1rem;
 	}
@@ -607,19 +607,19 @@
 	/* Severity States */
 	.severity-critical {
 		background-color: var(--color-error-muted);
-		border-color: rgba(204, 68, 68, 0.3);
+		border-color: var(--color-error-border);
 		color: var(--color-error);
 	}
 
 	.severity-warning {
 		background-color: var(--color-warning-muted);
-		border-color: rgba(170, 136, 68, 0.3);
+		border-color: var(--color-warning-border);
 		color: var(--color-warning);
 	}
 
 	.severity-info {
 		background-color: var(--color-info-muted);
-		border-color: rgba(68, 119, 170, 0.3);
+		border-color: var(--color-info-border);
 		color: var(--color-info);
 	}
 

@@ -316,15 +316,15 @@
 	}
 
 	:global(.content .success-title) {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	:global(.content .error-title) {
-		color: #f87171;
+		color: var(--color-error);
 	}
 
 	:global(.content .warning-title) {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	:global(.content .stat-grid) {

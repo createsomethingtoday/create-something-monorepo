@@ -46,13 +46,13 @@
 
 <style>
     .next-card {
-        background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        background: linear-gradient(to bottom right, var(--color-border-default), var(--color-hover));
         border: 1px solid var(--color-border-default);
         border-radius: var(--radius-xl);
     }
 
     .bg-glow {
-        background: rgba(168, 85, 247, 0.1);
+        background: var(--color-data-3-muted);
         filter: blur(48px);
         opacity: 0;
         transition: opacity 500ms;
@@ -95,9 +95,9 @@
     }
 
     .next-button:hover {
-        background: rgba(255, 255, 255, 0.9);
+        background: var(--color-fg-secondary);
         transform: scale(1.05);
-        box-shadow: 0 20px 25px -5px rgba(255, 255, 255, 0.2), 0 10px 10px -5px rgba(255, 255, 255, 0.1);
+        box-shadow: var(--shadow-2xl);
     }
 
     .animate-reveal {

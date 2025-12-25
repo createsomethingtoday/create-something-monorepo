@@ -197,17 +197,17 @@
   }
 
   .difficulty-beginner {
-    background: rgba(68, 170, 68, 0.1);
+    background: var(--color-success-muted);
     color: var(--color-success);
   }
 
   .difficulty-intermediate {
-    background: rgba(80, 130, 185, 0.1);
+    background: var(--color-info-muted);
     color: var(--color-info);
   }
 
   .difficulty-advanced {
-    background: rgba(212, 77, 77, 0.1);
+    background: var(--color-error-muted);
     color: var(--color-error);
   }
 
@@ -395,7 +395,7 @@
   }
 
   .enable-button.enabled:hover {
-    background: rgba(68, 170, 68, 0.8);
+    filter: brightness(0.9);
   }
 
   /* Related Modules Section */

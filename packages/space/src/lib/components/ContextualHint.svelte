@@ -120,7 +120,7 @@
   .hint-card {
     border: 1px solid var(--color-border-emphasis);
     border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-hover);
     backdrop-filter: blur(4px);
   }
 
@@ -150,7 +150,7 @@
   }
 
   .alternative-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-hover);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-default);
   }
@@ -178,7 +178,7 @@
 
   .feedback-button {
     padding: 0.25rem 0.75rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-active);
     color: var(--color-fg-secondary);
     border-radius: var(--radius-sm);
     font-size: var(--text-caption);
@@ -186,7 +186,7 @@
   }
 
   .feedback-button:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-border-emphasis);
   }
 
   .thanks-message {

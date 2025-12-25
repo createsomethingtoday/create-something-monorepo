@@ -69,7 +69,7 @@
 
 <style>
 	.modal-overlay {
-		background: rgba(0, 0, 0, 0.8);
+		background: var(--color-overlay-heavy);
 		backdrop-filter: blur(4px);
 	}
 
@@ -132,7 +132,7 @@
 	}
 
 	.btn-secondary {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		color: var(--color-fg-secondary);
 		font-weight: 600;

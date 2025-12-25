@@ -12,6 +12,11 @@
 		const ctx = canvasRef.getContext('2d');
 		if (!ctx) return;
 
+		// Get Canon colors from CSS custom properties
+		const styles = getComputedStyle(document.documentElement);
+		const bgPure = styles.getPropertyValue('--color-bg-pure').trim() || '#000000';
+		const fgFocus = styles.getPropertyValue('--color-focus').trim() || 'rgba(255, 255, 255, 0.5)';
+
 		// Simple animated background
 		const particles: { x: number; y: number; vx: number; vy: number }[] = [];
 		const particleCount = 100;
@@ -28,10 +33,12 @@
 		function animate() {
 			if (!ctx || !canvasRef) return;
 
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+			// Use Canon bg-pure with low opacity for trail effect
+			ctx.fillStyle = bgPure.startsWith('#') ? `${bgPure}0d` : 'rgba(0, 0, 0, 0.05)';
 			ctx.fillRect(0, 0, canvasRef.width, canvasRef.height);
 
-			ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+			// Use Canon focus color for particles
+			ctx.fillStyle = fgFocus;
 			particles.forEach((p) => {
 				p.x += p.vx;
 				p.y += p.vy;
@@ -66,6 +73,11 @@
 
 <canvas
 	bind:this={canvasRef}
-	class="fixed inset-0 w-full h-full pointer-events-none opacity-20 z-0"
-	style="background: black;"
+	class="canvas-bg fixed inset-0 w-full h-full pointer-events-none opacity-20 z-0"
 />
+
+<style>
+	.canvas-bg {
+		background: var(--color-bg-pure);
+	}
+</style>

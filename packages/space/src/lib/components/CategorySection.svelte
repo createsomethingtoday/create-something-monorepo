@@ -120,7 +120,7 @@
 	}
 
 	.category-card:hover {
-		border-color: rgba(255, 255, 255, 0.3);
+		border-color: var(--color-border-strong);
 	}
 
 	.category-name {
@@ -168,7 +168,7 @@
 	}
 
 	.hover-bg {
-		background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent);
+		background: linear-gradient(135deg, var(--color-hover), transparent);
 		opacity: 0;
 		transition: opacity var(--duration-standard) var(--ease-standard);
 	}

@@ -417,7 +417,7 @@
 	.item-overlay {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent 50%);
+		background: linear-gradient(to top, var(--color-overlay-heavy), transparent 50%);
 		opacity: 0;
 		transition: opacity var(--duration-standard) var(--ease-standard);
 	}

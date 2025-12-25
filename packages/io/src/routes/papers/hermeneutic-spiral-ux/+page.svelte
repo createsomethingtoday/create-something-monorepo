@@ -650,7 +650,7 @@ Use this context to personalize recommendations.`}</pre>
 	}
 
 	.metric-positive {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.metric-label {
@@ -666,8 +666,8 @@ Use this context to personalize recommendations.`}</pre>
 	}
 
 	.code-block-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -685,7 +685,7 @@ Use this context to personalize recommendations.`}</pre>
 	}
 
 	.code-success {
-		color: #86efac;
+		color: var(--color-data-2);
 	}
 
 	.blockquote {
@@ -694,14 +694,14 @@ Use this context to personalize recommendations.`}</pre>
 	}
 
 	.comparison-broken {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.3);
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.comparison-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 	}
 
@@ -711,11 +711,11 @@ Use this context to personalize recommendations.`}</pre>
 	}
 
 	.comparison-broken .comparison-heading {
-		color: #fca5a5;
+		color: var(--color-error);
 	}
 
 	.comparison-success .comparison-heading {
-		color: #86efac;
+		color: var(--color-data-2);
 	}
 
 	.comparison-text {
@@ -753,18 +753,18 @@ Use this context to personalize recommendations.`}</pre>
 	}
 
 	.table-success {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.callout-info {
-		background: rgba(59, 130, 246, 0.1);
-		border: 1px solid rgba(59, 130, 246, 0.3);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.callout-heading {
 		font-size: var(--text-h3);
-		color: #93c5fd;
+		color: var(--color-data-1);
 	}
 
 	.info-card {
