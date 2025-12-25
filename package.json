@@ -29,8 +29,8 @@
     "harness:resume": "pnpm --filter @create-something/harness harness resume"
   },
   "devDependencies": {
-    "prettier": "^3.4.2",
-    "prettier-plugin-svelte": "^3.2.8",
+    "prettier": "^3.7.4",
+    "prettier-plugin-svelte": "^3.4.1",
     "typescript": "^5.7.2"
   },
   "engines": {
