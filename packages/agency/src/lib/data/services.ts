@@ -444,34 +444,34 @@ export const products: Service[] = [
 		id: 'automation-patterns',
 		title: 'Automation Patterns Pack',
 		description:
-			'10 production-tested automation patterns from real CREATE SOMETHING projects. Copy, adapt, deploy.',
+			'Skip 20 hours of pattern discovery. The same automation playbook I use with fractional CTO clients—now for solo builders.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
 		whenToUse: [
-			'You have Claude Code and want automation inspiration',
-			"You're stuck on \"what should I automate?\"",
-			'You prefer learning from working examples'
+			"You're a solo dev doing everything yourself",
+			'You want proven patterns, not trial-and-error',
+			'You bill by the hour and hate wasting time on setup'
 		],
 		whatThisRemoves: [
-			'Blank slate syndrome when starting automation',
-			'Trial-and-error discovering what works',
-			'Time spent on patterns others have already solved'
+			'Hours spent figuring out "how should I automate this?"',
+			'Context switching between coding and researching patterns',
+			'The guilt of "I should build this myself"'
 		],
 		howItWorks: [
-			'10 documented automation patterns',
-			'Real code from production projects',
-			'Complexity ratings (simple → advanced)',
-			'Integration patterns for common tools'
+			'10 copy-paste patterns with complexity ratings',
+			'3 Claude Code skills you drop into .claude/',
+			'Shell scripts that work immediately',
+			'No platform, no login—just markdown and code'
 		],
 		proof: {
 			caseStudy: '/work/viralytics',
-			name: 'Viralytics Patterns',
-			headline: 'The automation patterns behind 120 hours/week saved',
-			stats: ['10 patterns', 'Production-tested', 'Copy-paste ready']
+			name: 'Fractional CTO Playbook',
+			headline: 'The patterns I repeat across every client engagement',
+			stats: ['20 hours saved', 'Used across 10+ clients', 'Download and apply today']
 		},
-		pricing: '$299',
-		timeline: 'Instant access',
+		pricing: '$99',
+		timeline: 'Instant download',
 		icon: 'book',
 		tier: 'accessible',
 		isProductized: true
