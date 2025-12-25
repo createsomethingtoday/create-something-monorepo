@@ -1,13 +1,23 @@
 <script lang="ts">
 	import SEO from '$lib/components/SEO.svelte';
 	import type { PageData } from './$types';
-	import { services, getServiceSchemaData } from '$lib/data/services';
+	import {
+		services,
+		products,
+		allOfferings,
+		getServiceSchemaData
+	} from '$lib/data/services';
 
 	let { data }: { data: PageData } = $props();
 
 	// Context from assessment (if user came from assessment flow)
 	const hasAssessmentContext = $derived(!!data.recommendedService || !!data.assessmentId);
 	const recommendedService = $derived(data.recommendedService);
+
+	// Find recommended offering (could be product or service)
+	const recommendedOffering = $derived(
+		recommendedService ? allOfferings.find((o) => o.id === recommendedService) : null
+	);
 
 	// Service schema data for SEO
 	const serviceSchemaData = getServiceSchemaData();
@@ -25,11 +35,38 @@
 		return [target, ...reordered];
 	});
 
+	// Display products with recommended first if applicable
+	let displayProducts = $derived.by(() => {
+		if (!recommendedService) return products;
+
+		const targetIndex = products.findIndex((p) => p.id === recommendedService);
+		if (targetIndex === -1) return products;
+
+		// Move recommended to front
+		const reordered = [...products];
+		const [target] = reordered.splice(targetIndex, 1);
+		return [target, ...reordered];
+	});
+
 	// Triad level display names
 	const triadLevelNames: Record<string, string> = {
 		implementation: 'implementation level',
 		artifact: 'artifact level',
 		system: 'system level'
+	};
+
+	// Product icons
+	const productIcons: Record<string, string> = {
+		compass: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+		checklist:
+			'M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z',
+		palette:
+			'M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm5.5 11c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-3-4c-.83 0-1.5-.67-1.5-1.5S13.67 6 14.5 6s1.5.67 1.5 1.5S15.33 9 14.5 9zM5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S7.33 13 6.5 13 5 12.33 5 11.5zm6-4c0 .83-.67 1.5-1.5 1.5S8 8.33 8 7.5 8.67 6 9.5 6s1.5.67 1.5 1.5z',
+		template:
+			'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z',
+		cookbook:
+			'M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z',
+		box: 'M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z'
 	};
 </script>
 
@@ -45,31 +82,72 @@
 <!-- Hero Section -->
 <section class="hero-section">
 	<div class="max-w-4xl mx-auto px-6 text-center">
-		{#if hasAssessmentContext && recommendedService}
-			{@const recommended = services.find((s) => s.id === recommendedService)}
+		{#if hasAssessmentContext && recommendedOffering}
 			<p class="eyebrow">Based on your assessment</p>
 			<h1 class="hero-title">Here's where we'd start.</h1>
 			<p class="hero-subtitle">
 				{#if data.triadLevel}
 					You identified accumulation at the {triadLevelNames[data.triadLevel] || data.triadLevel}.
 				{/if}
-				We recommend <strong>{recommended?.title || 'exploring your options'}</strong> as your entry
-				point.
+				We recommend <strong>{recommendedOffering.title}</strong> as your entry point.
+				{#if recommendedOffering.isProductized}
+					<span class="recommended-tier">Self-serve product — start immediately.</span>
+				{/if}
 			</p>
 		{:else}
 			<p class="eyebrow">Weniger, aber besser</p>
 			<h1 class="hero-title">Ship faster. Eliminate manual work.</h1>
 			<p class="hero-subtitle">
-				Every service applies the same discipline: identify what's accumulating, question whether it
+				Every offering applies the same discipline: identify what's accumulating, question whether it
 				earns its existence, and remove what doesn't serve the whole.
 			</p>
 		{/if}
 	</div>
 </section>
 
-<!-- Services Section -->
+<!-- Products Section (Accessible Tier) -->
+<section class="products-section">
+	<div class="max-w-5xl mx-auto px-6">
+		<div class="section-header">
+			<h2 class="section-title">Products</h2>
+			<p class="section-subtitle">Self-serve tools and templates. Start immediately.</p>
+		</div>
+		<div class="products-grid">
+			{#each displayProducts as product, index}
+				{@const isRecommended = recommendedService === product.id}
+				<a
+					href="/services/{product.id}"
+					class="product-card animate-reveal"
+					class:recommended={isRecommended}
+					style="--delay: {index}"
+				>
+					{#if isRecommended}
+						<div class="recommended-badge">Recommended for you</div>
+					{/if}
+					<div class="product-icon">
+						<svg fill="currentColor" viewBox="0 0 24 24">
+							<path d={productIcons[product.icon] || productIcons.box} />
+						</svg>
+					</div>
+					<h3 class="product-title">{product.title}</h3>
+					<p class="product-description">{product.description}</p>
+					<div class="product-footer">
+						<span class="product-pricing">{product.pricing}</span>
+						<span class="product-timeline">{product.timeline}</span>
+					</div>
+				</a>
+			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- Services Section (Commercial Tier) -->
 <section class="services-section">
 	<div class="max-w-5xl mx-auto px-6">
+		<div class="section-header">
+			<h2 class="section-title">Consulting Services</h2>
+			<p class="section-subtitle">Custom engagements for complex challenges.</p>
+		</div>
 		<div class="services-grid">
 			{#each displayServices as service, index}
 				{@const isRecommended = recommendedService === service.id}
@@ -227,6 +305,115 @@
 
 	.hero-subtitle strong {
 		color: var(--color-fg-primary);
+	}
+
+	/* Recommended tier indicator */
+	.recommended-tier {
+		display: block;
+		margin-top: var(--space-xs);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	/* Section Headers */
+	.section-header {
+		margin-bottom: var(--space-lg);
+	}
+
+	.section-title {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.section-subtitle {
+		font-size: var(--text-body);
+		color: var(--color-fg-muted);
+	}
+
+	/* Products Section */
+	.products-section {
+		padding: var(--space-xl) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.products-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: var(--space-md);
+	}
+
+	.product-card {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		padding: var(--space-md);
+		position: relative;
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			background var(--duration-standard) var(--ease-standard);
+	}
+
+	.product-card:hover {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-elevated);
+	}
+
+	.product-card.recommended {
+		border-color: var(--color-border-strong);
+		background: var(--color-bg-elevated);
+	}
+
+	.product-icon {
+		width: 2.5rem;
+		height: 2.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+	}
+
+	.product-icon svg {
+		width: 1.25rem;
+		height: 1.25rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.product-title {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	.product-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		line-height: 1.5;
+		flex: 1;
+	}
+
+	.product-footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.product-pricing {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	.product-timeline {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	/* Services Section */

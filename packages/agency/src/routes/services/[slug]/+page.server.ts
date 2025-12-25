@@ -1,12 +1,13 @@
 import type { PageServerLoad } from './$types';
-import { getServiceBySlug } from '$lib/data/services';
+import { getOfferingBySlug } from '$lib/data/services';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const service = getServiceBySlug(params.slug);
+	// Search both products (accessible tier) and services (commercial tier)
+	const service = getOfferingBySlug(params.slug);
 
 	if (!service) {
-		throw error(404, 'Service not found');
+		throw error(404, 'Offering not found');
 	}
 
 	return { service };

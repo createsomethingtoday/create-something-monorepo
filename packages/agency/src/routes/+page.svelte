@@ -81,8 +81,8 @@
 <!-- Act 4: The Invitation -->
 <section class="cta-section">
 	<p class="cta-text">Ready to subtract?</p>
-	<a href="/contact" class="cta-button">
-		Start a conversation
+	<a href="/discover" class="cta-button">
+		Find your entry point
 		<span class="cta-arrow">→</span>
 	</a>
 </section>
