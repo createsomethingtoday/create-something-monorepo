@@ -23,7 +23,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="CLAUDE CODE: PARTNER" subtitle="AI-Native Development Environment">
+<Presentation title="CLAUDE CODE: PARTNER" subtitle="AI-Native Development Environment" scriptUrl="/presentations/claude-code-partner/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is this?)
 	     ═══════════════════════════════════════════════════════════════════ -->

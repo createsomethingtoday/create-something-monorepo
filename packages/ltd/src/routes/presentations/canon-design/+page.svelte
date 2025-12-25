@@ -21,7 +21,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="CANON: DESIGN" subtitle="Philosophy → Tokens → Coherence">
+<Presentation title="CANON: DESIGN" subtitle="Philosophy → Tokens → Coherence" scriptUrl="/presentations/canon-design/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: The Principle
 	     ═══════════════════════════════════════════════════════════════════ -->

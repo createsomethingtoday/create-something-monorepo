@@ -23,7 +23,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="BEADS: CONTINUITY" subtitle="Memory across context boundaries.">
+<Presentation title="BEADS: CONTINUITY" subtitle="Memory across context boundaries." scriptUrl="/presentations/beads-continuity/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (The Problem: Context Resets)
 	     ═══════════════════════════════════════════════════════════════════ -->

@@ -23,7 +23,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="HEIDEGGER: CANON" subtitle="Install the CREATE SOMETHING Methodology">
+<Presentation title="HEIDEGGER: CANON" subtitle="Install the CREATE SOMETHING Methodology" scriptUrl="/presentations/heidegger-canon/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is this?)
 	     ═══════════════════════════════════════════════════════════════════ -->
