@@ -2,19 +2,36 @@
 
 Autonomous agent orchestration with Beads-based human oversight.
 
-## Philosophy
+## Philosophy: Zuhandenheit
 
-The harness runs autonomously. Humans engage through **progress reports**—reactive steering rather than proactive management.
+**The harness must be invisible.** Users describe work; Claude handles scope detection, issue creation, execution, and checkpointing. The "harness" never surfaces as a concept users must understand.
 
-**Heideggerian alignment**: The harness recedes into transparent operation. When working, you don't think about the harness—you review progress and redirect when needed.
+```
+User: "Update all components to Canon tokens"
+                    │
+                    ▼
+        Claude detects: Multi-session scope
+                    │
+                    ▼
+        Creates Beads issues automatically
+                    │
+                    ▼
+        Works through issues one at a time
+                    │
+                    ▼
+        Checkpoints when confidence drops
+                    │
+                    ▼
+        User returns to: bd progress
+```
 
-**Canon alignment**: As little infrastructure as possible. Checkpoints ARE Beads issues. No new systems.
+**The tool recedes. Only the work remains.**
 
 ### Core Constraints
 
 | Constraint | Rationale | Enforcement |
 |------------|-----------|-------------|
-| **One feature per session** | Prevents scope creep; enables clean commits | `one-feature-guard.sh` |
+| **One feature per session** | Prevents scope creep; enables clean commits | Skill pattern |
 | **Beads is the only progress system** | DRY—no separate progress files | Architecture |
 | **Commit before close** | Work without commits is lost work | Close reason must include commit |
 | **Two-stage completion** | Prevents premature victory | `code-complete` → `verified` labels |
@@ -22,62 +39,36 @@ The harness runs autonomously. Humans engage through **progress reports**—reac
 
 ## Quick Start
 
-```bash
-# 1. Write a spec (markdown PRD)
-vim specs/my-project.md
+There is no "harness command" to invoke. Claude detects multi-session work automatically.
 
-# 2. Start the harness
-harness start specs/my-project.md
-
-# 3. Walk away—check progress when ready
-bd progress
-
-# 4. Redirect if needed
-bd update cs-xyz --priority P0
-
-# 5. Resume if paused
-harness resume
+**User workflow:**
+```
+1. Describe large task to Claude
+2. Claude creates Beads issues automatically
+3. Claude works through issues, commits each
+4. Check progress anytime: bd progress
+5. Redirect if needed: bd update <id> --priority P0
 ```
 
-## Spec Format
+**Claude's response to large tasks:**
+> "I'll break this into [N] tasks and work through them. Check progress with `bd progress`. I'll pause if I hit uncertainty."
 
-Free-form markdown. The harness parses it into Beads issues.
+## Scope Detection
 
-```markdown
-# Project Title
+Claude activates multi-session orchestration when:
+- Work affects >5 files
+- Complex dependency chains between tasks
+- User phrases like "update everything", "fix all", "migrate all"
+- Work clearly exceeds single-session context
 
-## Overview
-Description of what we're building...
+**Single-session work**: Just do it directly, no orchestration needed.
 
-## Features
-
-### Authentication
-- Login with email/password
-- Magic link option
-- Session management
-
-### Dashboard
-- Overview stats
-- Recent activity feed
-- Quick actions
-```
-
-## Commands
-
-### Harness Control
-
-```bash
-harness start <spec>              # Start from spec
-harness start <spec> --dry-run    # Preview without executing
-harness pause                     # Stop after current session
-harness resume                    # Continue from checkpoint
-harness status                    # Show current state
-```
-
-### Progress & Redirection (via Beads)
+## Progress & Redirection (via Beads)
 
 ```bash
 bd progress                       # View checkpoints
+bd list --status=open             # Remaining work
+bd blocked                        # What's stuck
 bd update <id> --priority P0      # Urgent redirect
 bd create "Fix X" --priority P0   # Inject urgent work
 bd close <id>                     # Stop work on issue
