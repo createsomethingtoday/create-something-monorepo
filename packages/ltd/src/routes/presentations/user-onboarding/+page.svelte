@@ -22,7 +22,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="User Onboarding" subtitle="Enable a Workflow">
+<Presentation title="User Onboarding" subtitle="Enable a Workflow" scriptUrl="/presentations/user-onboarding/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: The Reality
 	     ═══════════════════════════════════════════════════════════════════ -->

@@ -23,7 +23,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="CLOUDFLARE: EDGE" subtitle="Global infrastructure that disappears.">
+<Presentation title="CLOUDFLARE: EDGE" subtitle="Global infrastructure that disappears." scriptUrl="/presentations/cloudflare-edge/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (Why Edge Computing?)
 	     ═══════════════════════════════════════════════════════════════════ -->

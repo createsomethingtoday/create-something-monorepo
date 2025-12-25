@@ -23,7 +23,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="DEPLOYMENT: DWELLING" subtitle="Ship. Verify. Dwell.">
+<Presentation title="DEPLOYMENT: DWELLING" subtitle="Ship. Verify. Dwell." scriptUrl="/presentations/deployment-dwelling/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is dwelling?)
 	     ═══════════════════════════════════════════════════════════════════ -->

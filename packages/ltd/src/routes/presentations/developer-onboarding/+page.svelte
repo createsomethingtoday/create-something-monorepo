@@ -33,7 +33,7 @@
 	<meta name="description" content={data.meta.description} />
 </svelte:head>
 
-<Presentation title="Developer Onboarding" subtitle="Build & Earn on WORKWAY">
+<Presentation title="Developer Onboarding" subtitle="Build & Earn on WORKWAY" scriptUrl="/presentations/developer-onboarding/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: What You're Joining
 	     ═══════════════════════════════════════════════════════════════════ -->

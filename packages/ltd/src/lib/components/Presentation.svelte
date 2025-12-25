@@ -15,10 +15,11 @@
 	interface Props {
 		title: string;
 		subtitle?: string;
+		scriptUrl?: string;
 		children?: import('svelte').Snippet;
 	}
 
-	let { title, subtitle, children }: Props = $props();
+	let { title, subtitle, scriptUrl, children }: Props = $props();
 
 	let currentSlide = $state(0);
 	let totalSlides = $state(0);
@@ -179,6 +180,9 @@
 	<div class="hints">
 		<span>← → navigate</span>
 		<span>f fullscreen</span>
+		{#if scriptUrl}
+			<a href={scriptUrl} class="script-link">📝 script</a>
+		{/if}
 	</div>
 </div>
 
@@ -304,6 +308,17 @@
 
 	.hints span {
 		font-family: var(--font-mono);
+	}
+
+	.script-link {
+		font-family: var(--font-mono);
+		color: var(--color-fg-subtle);
+		text-decoration: none;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.script-link:hover {
+		color: var(--color-fg-primary);
 	}
 
 	/* ═══════════════════════════════════════════════════════════════════
