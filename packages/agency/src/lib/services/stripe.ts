@@ -42,7 +42,7 @@ export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
 
 	// One-time payment products
 	'automation-patterns': {
-		priceId: 'price_1SiJXKAzstI6Ecr52Vdu0PVA',
+		priceId: 'price_1SiJd9AzstI6Ecr5i1NAv5W5',
 		mode: 'payment',
 		name: 'Automation Patterns Pack'
 	},
