@@ -1,4 +1,16 @@
 <script lang="ts">
+	/**
+	 * Hero Section for createsomething.space
+	 *
+	 * Embodies Zuhandenheit (ready-to-hand) — tutorials are tools that recede into use.
+	 * When learning, you don't think about the interface; you engage with the material.
+	 *
+	 * HERMENEUTIC REVEAL SEQUENCE:
+	 * Identity (CREATE SOMETHING SPACE) → Offer (Interactive Tutorials) →
+	 * Explanation (Learn by doing) → Affordance (CTA) → Content (Featured cards)
+	 *
+	 * This sequence respects cognitive temporality per Gadamer's fusion of horizons.
+	 */
 	import PaperCard from './PaperCard.svelte';
 	import type { Paper } from '$lib/types/paper';
 
@@ -34,7 +46,7 @@
 					class="cta-link inline-flex items-center gap-2 group"
 				>
 					<span class="cta-text">See the research methodology</span>
-					<svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+					<svg class="cta-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
 					</svg>
 				</a>
@@ -139,6 +151,15 @@
 		}
 	}
 
+	/* CTA Arrow: Explicit Canon motion token (not Tailwind default) */
+	.cta-arrow {
+		transition: transform var(--duration-micro) var(--ease-standard);
+	}
+
+	.cta-link:hover .cta-arrow {
+		transform: translateX(4px);
+	}
+
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 700;
@@ -155,11 +176,16 @@
 		background: linear-gradient(to bottom, var(--color-bg-pure), var(--color-bg-pure), var(--color-bg-elevated));
 	}
 
-	/* Staggered reveal animation - CSS only, no JS */
+	/* ==========================================================================
+	   STAGGERED REVEAL: Hermeneutic Scaffolding
+	   Identity → Offer → Explanation → Affordance → Content
+	   Understanding unfolds temporally; this sequence respects cognitive load.
+	   ========================================================================== */
+
 	.animate-reveal {
 		opacity: 0;
 		transform: translateY(16px);
-		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation: reveal var(--duration-complex) var(--ease-standard) forwards;
 		animation-delay: calc(var(--delay, 0) * 100ms);
 	}
 

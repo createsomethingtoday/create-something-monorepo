@@ -7,6 +7,11 @@
 	 *   - Papers (Vorhandenheit) → Detached analysis, reader as observer
 	 *
 	 * Both paths lead to understanding; the difference is in HOW you engage.
+	 *
+	 * VISUAL DISTINCTION (Heideggerian Alignment):
+	 * The two cards should not just describe but EMBODY their ontological character:
+	 *   - Experiments: Prominent lift, warmer hover, participatory engagement
+	 *   - Papers: Subtle shift, cooler interaction, observational stance
 	 */
 </script>
 
@@ -151,7 +156,12 @@
 		}
 	}
 
-	/* Path Cards */
+	/* ==========================================================================
+	   PATH CARDS: Ontological Distinction Through Interaction
+	   Experiments (Zuhandenheit): Engaged, participatory, prominent lift
+	   Papers (Vorhandenheit): Observational, contemplative, subtle shift
+	   ========================================================================== */
+
 	.path-card {
 		display: flex;
 		flex-direction: column;
@@ -160,13 +170,31 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-decoration: none;
-		transition: all var(--duration-standard) var(--ease-out);
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
-	.path-card:hover {
-		border-color: var(--color-border-hover);
+	/* Experiments: Zuhandenheit — Engaged practice, participatory lift */
+	.path-card.experiments {
+		border-color: var(--color-border-default);
+	}
+
+	.path-card.experiments:hover {
+		border-color: var(--color-border-emphasis);
 		background: var(--color-hover);
-		transform: translateY(-2px);
+		transform: translateY(-4px); /* Prominent lift — participatory */
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+	}
+
+	/* Papers: Vorhandenheit — Detached analysis, contemplative stillness */
+	.path-card.papers {
+		border-color: var(--color-border-default);
+	}
+
+	.path-card.papers:hover {
+		border-color: var(--color-border-default); /* Minimal change */
+		background: var(--color-bg-surface);
+		transform: translateY(-1px); /* Subtle — observational */
+		box-shadow: none;
 	}
 
 	.path-icon {
@@ -222,11 +250,17 @@
 	.cta-arrow {
 		width: 16px;
 		height: 16px;
-		transition: transform var(--duration-micro) var(--ease-out);
+		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
-	.path-card:hover .cta-arrow {
-		transform: translateX(4px);
+	/* Experiments arrow: continuous motion suggestion */
+	.path-card.experiments:hover .cta-arrow {
+		transform: translateX(6px); /* More movement — engagement */
+	}
+
+	/* Papers arrow: measured, deliberate */
+	.path-card.papers:hover .cta-arrow {
+		transform: translateX(2px); /* Subtle — contemplation */
 	}
 
 	/* Divider */
@@ -273,11 +307,16 @@
 		letter-spacing: var(--tracking-wide);
 	}
 
-	/* Staggered reveal animation - CSS only */
+	/* ==========================================================================
+	   STAGGERED REVEAL: Hermeneutic Scaffolding
+	   Identity (who) → Offer (what) → Explanation (why) → Affordance (how)
+	   This sequence respects cognitive temporality — understanding is a process.
+	   ========================================================================== */
+
 	.animate-reveal {
 		opacity: 0;
 		transform: translateY(16px);
-		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation: reveal var(--duration-complex) var(--ease-standard) forwards;
 		animation-delay: calc(var(--delay, 0) * 150ms);
 	}
 
