@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Footer, QuoteBlock } from '@create-something/components';
+	import { QuoteBlock } from '@create-something/components';
 	import type { PageData } from './$types';
 	import FluidAssembly from './FluidAssembly.svelte';
 
@@ -336,8 +336,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		</p>
 	</footer>
 </article>
-
-<Footer />
 
 <style>
 	.experiment-page {
