@@ -133,14 +133,14 @@
 	.share-button {
 		width: 3rem;
 		height: 3rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.share-button:hover {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 		border-color: var(--color-border-emphasis);
 	}
 

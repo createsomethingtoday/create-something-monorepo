@@ -230,7 +230,7 @@
     color: var(--color-data-1);
     padding: 0.25rem 0.5rem;
     border-radius: var(--radius-sm);
-    background: rgba(96, 165, 250, 0.1);
+    background: var(--color-data-1-muted);
   }
 
   .lesson-arrow {

@@ -244,7 +244,7 @@
 
 	.error-message {
 		padding: var(--space-sm);
-		background: rgba(204, 68, 68, 0.1);
+		background: var(--color-error-muted);
 		border: 1px solid var(--color-error);
 		border-radius: var(--radius-sm);
 		color: var(--color-error);

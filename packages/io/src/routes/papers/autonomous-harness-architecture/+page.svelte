@@ -848,8 +848,8 @@ cs-003: Session management
 	}
 
 	.code-block-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -863,15 +863,15 @@ cs-003: Session management
 	}
 
 	.code-warning {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.code-success {
-		color: #86efac;
+		color: var(--color-data-2);
 	}
 
 	.code-success-heading {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.code-small {
@@ -887,14 +887,14 @@ cs-003: Session management
 
 	/* Comparison Cards */
 	.comparison-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.comparison-warning {
-		background: rgba(251, 191, 36, 0.1);
-		border: 1px solid rgba(251, 191, 36, 0.3);
+		background: var(--color-warning-muted);
+		border: 1px solid var(--color-warning-border);
 		border-radius: var(--radius-lg);
 	}
 
@@ -903,11 +903,11 @@ cs-003: Session management
 	}
 
 	.comparison-success-heading {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.comparison-warning-heading {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.comparison-list {

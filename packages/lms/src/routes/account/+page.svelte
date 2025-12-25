@@ -985,7 +985,7 @@
 		align-items: center;
 		gap: 0.25rem;
 		padding: 0.25rem 0.5rem;
-		background: rgba(68, 170, 68, 0.1);
+		background: var(--color-success-muted);
 		color: var(--color-success);
 		font-size: var(--text-caption);
 		border-radius: var(--radius-sm);
@@ -1006,12 +1006,12 @@
 	}
 
 	.tier-pro {
-		background: rgba(96, 165, 250, 0.1);
+		background: var(--color-data-1-muted);
 		color: var(--color-data-1);
 	}
 
 	.tier-agency {
-		background: rgba(192, 132, 252, 0.1);
+		background: var(--color-data-3-muted);
 		color: var(--color-data-3);
 	}
 
@@ -1306,7 +1306,7 @@
 	}
 
 	.delete-account-btn:hover {
-		background: rgba(204, 68, 68, 0.1);
+		background: var(--color-error-muted);
 	}
 
 	.delete-confirm-card {

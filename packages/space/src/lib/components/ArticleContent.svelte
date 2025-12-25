@@ -154,7 +154,7 @@
 	}
 
 	.article-content :global(:not(pre) > code) {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 		padding: 0.125rem 0.5rem;
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
@@ -168,7 +168,7 @@
 		margin: 1.5rem 0;
 		font-style: italic;
 		color: var(--color-fg-tertiary);
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 	}
 
@@ -187,7 +187,7 @@
 	}
 
 	.article-content :global(thead) {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 	}
 
 	.article-content :global(th) {

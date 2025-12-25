@@ -120,8 +120,8 @@
 	}
 
 	.paper-card:hover .card-wrapper {
-		border-color: rgba(255, 255, 255, 0.3);
-		box-shadow: 0 20px 50px rgba(255, 255, 255, 0.1);
+		border-color: var(--color-border-strong);
+		box-shadow: var(--shadow-2xl);
 		transform: translateY(-0.5rem);
 	}
 
@@ -145,7 +145,7 @@
 	}
 
 	.ascii-placeholder {
-		color: rgba(255, 255, 255, 0.2);
+		color: var(--color-fg-subtle);
 		font-size: 3.75rem;
 	}
 
@@ -161,7 +161,7 @@
 	.arrow-inner {
 		width: 2.5rem;
 		height: 2.5rem;
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 		backdrop-filter: blur(4px);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-full);
@@ -178,7 +178,7 @@
 		width: 0.25rem;
 		height: 0.25rem;
 		border-radius: var(--radius-full);
-		background: rgba(255, 255, 255, 0.4);
+		background: var(--color-fg-muted);
 	}
 
 	.card-title {
@@ -198,7 +198,7 @@
 
 	.badge {
 		padding: 0.25rem 0.75rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
@@ -221,7 +221,7 @@
 
 	.runnable-badge {
 		padding: 0.25rem 0.5rem;
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-active);
 		color: var(--color-fg-primary);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
@@ -230,7 +230,7 @@
 	}
 
 	.hover-overlay {
-		background: linear-gradient(to top, rgba(255, 255, 255, 0.05), transparent);
+		background: linear-gradient(to top, var(--color-hover), transparent);
 		opacity: 0;
 		transition: opacity var(--duration-standard) var(--ease-standard);
 	}

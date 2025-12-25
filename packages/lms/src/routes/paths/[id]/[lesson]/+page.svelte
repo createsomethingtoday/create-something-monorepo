@@ -413,8 +413,8 @@
     margin-top: var(--space-lg);
     padding: var(--space-md);
     border-radius: var(--radius-md);
-    background: rgba(96, 165, 250, 0.05);
-    border: 1px solid rgba(96, 165, 250, 0.2);
+    background: var(--color-info-muted);
+    border: 1px solid var(--color-info-border);
   }
 
   .praxis-callout h3 {

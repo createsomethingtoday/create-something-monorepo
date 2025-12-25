@@ -491,7 +491,7 @@
 	.example-overlay {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent, transparent);
+		background: linear-gradient(to top, var(--color-overlay-heavy), transparent, transparent);
 		opacity: 0;
 		transition: opacity var(--duration-standard) var(--ease-standard);
 	}

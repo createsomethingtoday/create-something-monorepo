@@ -284,11 +284,11 @@
 
 	/* Semantic colors */
 	.text-success {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.text-warning {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.bg-success-subtle {

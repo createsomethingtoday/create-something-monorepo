@@ -239,7 +239,7 @@
     align-items: flex-start;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--color-border-default);
   }
 
   .lesson-title h3 {
@@ -251,14 +251,14 @@
 
   .lesson-title p {
     margin: 0;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--color-fg-tertiary);
     line-height: 1.5;
     font-size: 0.875rem;
   }
 
   .lesson-count {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--color-fg-muted);
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     white-space: nowrap;
   }
@@ -275,9 +275,9 @@
   .editor-panel {
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border-default);
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-overlay);
     overflow: hidden;
   }
 
@@ -307,8 +307,8 @@
     display: flex;
     gap: 0.5rem;
     padding: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid var(--color-border-default);
+    background: var(--color-overlay);
     flex-wrap: wrap;
     align-items: center;
   }
@@ -326,7 +326,7 @@
   }
 
   .run-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-fg-secondary);
     transform: scale(1.02);
   }
 
@@ -338,9 +338,9 @@
   .hint-btn,
   .solution-btn {
     padding: 0.5rem 0.875rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-hover);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--color-border-emphasis);
     border-radius: 6px;
     font-size: 0.75rem;
     cursor: pointer;
@@ -349,8 +349,8 @@
 
   .hint-btn:hover,
   .solution-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--color-active);
+    border-color: var(--color-border-strong);
   }
 
   .nav-buttons {
@@ -361,9 +361,9 @@
 
   .nav-buttons button {
     padding: 0.5rem 0.875rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-hover);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--color-border-emphasis);
     border-radius: 6px;
     font-size: 0.75rem;
     cursor: pointer;
@@ -371,8 +371,8 @@
   }
 
   .nav-buttons button:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--color-active);
+    border-color: var(--color-border-strong);
   }
 
   .nav-buttons button:disabled {
@@ -389,8 +389,8 @@
 
   .hint-box {
     padding: 1rem;
-    background: rgba(251, 191, 36, 0.1);
-    border: 1px solid rgba(251, 191, 36, 0.3);
+    background: var(--color-warning-muted);
+    border: 1px solid var(--color-warning-border);
     border-radius: 6px;
   }
 
@@ -398,7 +398,7 @@
     margin: 0 0 0.5rem 0;
     font-size: 0.75rem;
     font-weight: 600;
-    color: rgb(251, 191, 36);
+    color: var(--color-warning);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -409,7 +409,7 @@
   }
 
   .hint-box li {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--color-fg-secondary);
     font-size: 0.875rem;
     line-height: 1.6;
   }
@@ -417,8 +417,8 @@
   .output-section,
   .kv-section {
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-overlay);
+    border: 1px solid var(--color-border-default);
     border-radius: 6px;
   }
 
@@ -436,7 +436,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--color-fg-muted);
   }
 
   .execution-info {
@@ -448,13 +448,13 @@
 
   .exec-time {
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--color-fg-tertiary);
     font-weight: 500;
   }
 
   .improvement {
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    color: rgb(34, 197, 94);
+    color: var(--color-success);
     font-weight: 600;
   }
 
@@ -465,8 +465,8 @@
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-overlay);
+    border: 1px solid var(--color-border-default);
     border-radius: 4px;
     overflow-x: auto;
     white-space: pre-wrap;
@@ -476,7 +476,7 @@
 
   .output-placeholder,
   .kv-placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--color-fg-muted);
     font-style: italic;
   }
 
@@ -491,8 +491,8 @@
     display: flex;
     gap: 0.75rem;
     padding: 0.75rem;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-overlay);
+    border: 1px solid var(--color-border-default);
     border-radius: 4px;
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     font-size: 0.875rem;
@@ -500,7 +500,7 @@
 
   .kv-key {
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--color-fg-tertiary);
   }
 
   .kv-value {

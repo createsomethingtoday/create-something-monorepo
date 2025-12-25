@@ -297,11 +297,11 @@
 
 	/* Semantic colors */
 	.text-error {
-		color: #f87171;
+		color: var(--color-error);
 	}
 
 	.text-success {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.bg-success-subtle {

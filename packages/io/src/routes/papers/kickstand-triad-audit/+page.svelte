@@ -584,49 +584,49 @@
 
 	/* Callouts */
 	.callout-blue {
-		background: rgba(96, 165, 250, 0.1);
-		border: 1px solid rgba(96, 165, 250, 0.3);
+		background: var(--color-data-1-muted);
+		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-lg);
 	}
 
 	.callout-text-blue {
-		color: #93c5fd;
+		color: var(--color-data-1);
 	}
 
 	.callout-meta-blue {
-		color: rgba(147, 197, 253, 0.7);
+		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 		margin-top: 0.25rem;
 	}
 
 	.callout-yellow {
-		background: rgba(251, 191, 36, 0.1);
-		border: 1px solid rgba(251, 191, 36, 0.3);
+		background: var(--color-warning-muted);
+		border: 1px solid var(--color-warning-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.callout-text-yellow {
-		color: #fcd34d;
+		color: var(--color-data-4);
 	}
 
 	.callout-meta-yellow {
-		color: rgba(252, 211, 77, 0.7);
+		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 		margin-top: 0.25rem;
 	}
 
 	.callout-green {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 	}
 
 	.callout-text-green {
-		color: #86efac;
+		color: var(--color-data-2);
 	}
 
 	.callout-meta-green {
-		color: rgba(134, 239, 172, 0.7);
+		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 		margin-top: 0.25rem;
 	}

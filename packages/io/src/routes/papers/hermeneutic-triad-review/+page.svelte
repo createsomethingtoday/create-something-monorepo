@@ -726,11 +726,11 @@ $ pnpm --filter=space exec tsc --noEmit  # ✓`}</pre>
 	}
 
 	.code-warning {
-		color: #fbbf24;
+		color: var(--color-warning);
 	}
 
 	.code-success {
-		color: #86efac;
+		color: var(--color-data-2);
 	}
 
 	.inline-code {
@@ -759,8 +759,8 @@ $ pnpm --filter=space exec tsc --noEmit  # ✓`}</pre>
 
 	/* Comparison Cards */
 	.comparison-success {
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 	}
 
@@ -769,7 +769,7 @@ $ pnpm --filter=space exec tsc --noEmit  # ✓`}</pre>
 	}
 
 	.comparison-success-heading {
-		color: #4ade80;
+		color: var(--color-success);
 	}
 
 	.comparison-list {
