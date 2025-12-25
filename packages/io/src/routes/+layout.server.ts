@@ -17,8 +17,22 @@ export const load: LayoutServerLoad = async ({ cookies, platform }) => {
 		email: user?.email
 	});
 
+	// Fetch analytics_opt_out from local database if user is logged in
+	let analytics_opt_out = false;
+	if (user && platform?.env?.DB) {
+		try {
+			const dbUser = await platform.env.DB
+				.prepare('SELECT analytics_opt_out FROM users WHERE id = ?')
+				.bind(user.id)
+				.first<{ analytics_opt_out: number }>();
+			analytics_opt_out = dbUser?.analytics_opt_out === 1;
+		} catch (err) {
+			console.warn('[IO Layout] Failed to fetch analytics_opt_out:', err);
+		}
+	}
+
 	return {
 		turnstileSiteKey: platform?.env?.TURNSTILE_SITE_KEY ?? '',
-		user
+		user: user ? { ...user, analytics_opt_out } : null
 	};
 };
