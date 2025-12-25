@@ -42,8 +42,7 @@ export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
 
 	// One-time payment products
 	'automation-patterns': {
-		priceId:
-			process.env.STRIPE_PRICE_AUTOMATION_PATTERNS || 'price_automation_patterns_placeholder',
+		priceId: 'price_1SiJXKAzstI6Ecr52Vdu0PVA',
 		mode: 'payment',
 		name: 'Automation Patterns Pack'
 	},
