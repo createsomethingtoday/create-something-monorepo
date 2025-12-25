@@ -261,7 +261,35 @@ function determineComplexity(answers: AssessmentAnswers): 'simple' | 'moderate' 
 }
 
 /**
- * Analyze assessment responses and generate recommendations
+ * Determine tier based on complexity.
+ * Simple/moderate → accessible (products)
+ * Complex → commercial (consulting)
+ */
+function determineTier(complexity: 'simple' | 'moderate' | 'complex'): ServiceTier {
+	return complexity === 'complex' ? 'commercial' : 'accessible';
+}
+
+/**
+ * Map triad level to appropriate product for accessible tier.
+ * Each triad level has a corresponding product that addresses it.
+ */
+function getProductForTriadLevel(triadLevel: TriadLevel): OfferingType {
+	const productMap: Record<TriadLevel, OfferingType> = {
+		implementation: 'triad-audit-template', // DRY level → audit methodology
+		artifact: 'automation-recipes', // Rams level → automation patterns
+		system: 'agent-in-a-box' // Heidegger level → full system approach
+	};
+	return productMap[triadLevel];
+}
+
+/**
+ * Analyze assessment responses and generate recommendations.
+ *
+ * Phase 2: Routes to single recommendation based on complexity.
+ * - Simple/moderate complexity → accessible tier (products)
+ * - Complex → commercial tier (consulting services)
+ *
+ * User never sees "tier" - only the appropriate offering.
  */
 export function analyzeResponses(answers: AssessmentAnswers): AssessmentResult {
 	// Count triad level mentions from Q1
@@ -282,21 +310,30 @@ export function analyzeResponses(answers: AssessmentAnswers): AssessmentResult {
 	const triadLevel = (Object.entries(triadCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ||
 		'implementation') as TriadLevel;
 
-	// Map blockers to services from Q3
-	const serviceVotes: Record<string, number> = {};
-	answers.blockers.forEach((id) => {
-		const option = blockerOptions.find((o) => o.id === id);
-		if (option) {
-			serviceVotes[option.service] = (serviceVotes[option.service] || 0) + 1;
-		}
-	});
-
-	// Determine recommended service (most voted)
-	const service = (Object.entries(serviceVotes).sort(([, a], [, b]) => b - a)[0]?.[0] ||
-		'automation') as ServiceType;
-
-	const meta = serviceMetadata[service];
+	// Determine complexity and tier
 	const complexity = determineComplexity(answers);
+	const tier = determineTier(complexity);
+
+	let offering: OfferingType;
+
+	if (tier === 'accessible') {
+		// Route to product based on triad level
+		offering = getProductForTriadLevel(triadLevel);
+	} else {
+		// Route to consulting service based on blockers
+		const serviceVotes: Record<string, number> = {};
+		answers.blockers.forEach((id) => {
+			const option = blockerOptions.find((o) => o.id === id);
+			if (option) {
+				serviceVotes[option.service] = (serviceVotes[option.service] || 0) + 1;
+			}
+		});
+
+		offering = (Object.entries(serviceVotes).sort(([, a], [, b]) => b - a)[0]?.[0] ||
+			'automation') as OfferingType;
+	}
+
+	const meta = offeringMetadata[offering];
 
 	return {
 		answers,
@@ -304,11 +341,11 @@ export function analyzeResponses(answers: AssessmentAnswers): AssessmentResult {
 			triadLevel,
 			primaryBlocker: answers.blockers[0] || 'where_to_start',
 			complexity,
-			tier: meta.tier
+			tier
 		},
 		recommendation: {
-			offering: service,
-			service, // Legacy alias
+			offering,
+			service: offering, // Legacy alias
 			offeringName: meta.name,
 			serviceName: meta.name, // Legacy alias
 			caseStudy: meta.caseStudy,
