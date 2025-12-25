@@ -172,7 +172,7 @@ export function isDNTEnabled(): boolean {
 // =============================================================================
 
 export class AnalyticsClient {
-	private config: Required<AnalyticsConfig> & { userId?: string };
+	private config: Omit<Required<AnalyticsConfig>, 'userId'> & { userId?: string };
 	private queue: AnalyticsEvent[] = [];
 	private flushTimer: ReturnType<typeof setTimeout> | null = null;
 	private sessionId: string;
