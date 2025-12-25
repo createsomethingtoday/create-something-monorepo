@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/components/types';
+import { getPlatform } from '@create-something/components/platform';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
 
 function sortByFeaturedThenDate<T extends { featured?: number; published_at?: string | null; created_at?: string }>(
@@ -18,12 +19,11 @@ function sortByFeaturedThenDate<T extends { featured?: number; published_at?: st
 export const load: PageServerLoad = async ({ platform }) => {
 	const fileBasedExperiments = getFileBasedExperiments();
 
-	if (!platform?.env?.DB) {
-		return { papers: sortByFeaturedThenDate(fileBasedExperiments) };
-	}
-
 	try {
-		const result = await platform.env.DB.prepare(
+		// getPlatform() abstracts D1/SQLite - same code works on Cloudflare or Mac Mini
+		const { DB } = await getPlatform(platform);
+
+		const result = await DB.prepare(
 			`
       SELECT
         id, title, category, content, html_content, reading_time,
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 		const merged = [...fileBasedExperiments, ...databaseExperiments];
 		return { papers: sortByFeaturedThenDate(merged) };
 	} catch (error) {
-		console.error('Error fetching experiments from D1:', error);
+		console.error('Error fetching experiments:', error);
 		return { papers: sortByFeaturedThenDate(fileBasedExperiments) };
 	}
 };

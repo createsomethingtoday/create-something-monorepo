@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/components/types';
+import { getPlatform } from '@create-something/components/platform';
 import { isFileBasedExperiment } from '$lib/config/fileBasedExperiments';
 
 // Cross-property experiments: experiments that live on other properties
@@ -23,12 +24,11 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 		throw error(404, 'Not found');
 	}
 
-	if (!platform?.env?.DB) {
-		throw error(503, 'Database unavailable');
-	}
-
 	try {
-		const paperResult = await platform.env.DB.prepare(
+		// getPlatform() abstracts D1/SQLite - same code works on Cloudflare or Mac Mini
+		const { DB } = await getPlatform(platform);
+
+		const paperResult = await DB.prepare(
 			`
         SELECT
           id, title, category, content, html_content, reading_time,
@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 			throw error(404, 'Experiment not found');
 		}
 
-		const relatedResult = await platform.env.DB.prepare(
+		const relatedResult = await DB.prepare(
 			`
         SELECT id, title, category, reading_time, excerpt_short,
           slug, ascii_art, ascii_thumbnail, published_at, date, difficulty_level
@@ -70,7 +70,7 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 		if (err && typeof err === 'object' && 'status' in err) {
 			throw err;
 		}
-		console.error('Error fetching experiment from D1:', err);
+		console.error('Error fetching experiment:', err);
 		throw error(500, 'Failed to load experiment');
 	}
 };
