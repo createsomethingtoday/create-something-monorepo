@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { AssessmentResult } from '$lib/services/assessment';
+	import { offeringMetadata } from '$lib/services/assessment';
 
 	interface Props {
 		result: AssessmentResult;
@@ -14,6 +15,10 @@
 		artifact: '[ ]',
 		system: '( )'
 	};
+
+	// Get the offering metadata for richer display
+	const offering = $derived(offeringMetadata[result.recommendation.offering]);
+	const isProduct = $derived(result.recommendation.isProductized);
 </script>
 
 <!-- Orchestrated reveal: arrival, not completion -->
@@ -33,23 +38,49 @@
 		{result.recommendation.insight}
 	</p>
 
-	<!-- 4. Case study link (natural flow, no label) -->
+	<!-- 4. Recommendation card - single offering -->
+	<div class="recommendation-card animate-reveal" style="--delay: 6">
+		<span class="recommendation-label">We recommend</span>
+		<h3 class="recommendation-title">{result.recommendation.offeringName}</h3>
+		<p class="recommendation-description">{offering.description}</p>
+	</div>
+
+	<!-- 5. Case study link (context) -->
 	<a
 		href={result.recommendation.caseStudy}
 		class="case-study-link animate-reveal"
-		style="--delay: 6"
-	>
-		{result.recommendation.caseStudyName} →
-	</a>
-
-	<!-- 5. Primary CTA last -->
-	<a
-		href="/contact?service={result.recommendation.service}&assessment={sessionId}"
-		class="primary-cta animate-reveal"
 		style="--delay: 8"
 	>
-		Let's discuss your situation
+		See how this works: {result.recommendation.caseStudyName} →
 	</a>
+
+	<!-- 6. Primary CTA - different based on tier -->
+	{#if isProduct}
+		<a
+			href="/products/{result.recommendation.offering}?assessment={sessionId}"
+			class="primary-cta animate-reveal"
+			style="--delay: 10"
+		>
+			Get started with {result.recommendation.offeringName}
+		</a>
+	{:else}
+		<a
+			href="/contact?service={result.recommendation.offering}&assessment={sessionId}"
+			class="primary-cta animate-reveal"
+			style="--delay: 10"
+		>
+			Let's discuss your situation
+		</a>
+	{/if}
+
+	<!-- 7. Alternative path -->
+	<p class="alternative-text animate-reveal" style="--delay: 12">
+		{#if isProduct}
+			Looking for deeper partnership? <a href="/services" class="alt-link">Explore consulting services</a>
+		{:else}
+			Want to start smaller? <a href="/products" class="alt-link">View products</a>
+		{/if}
+	</p>
 </div>
 
 <style>
@@ -86,8 +117,38 @@
 		max-width: 48ch;
 	}
 
-	.case-study-link {
+	.recommendation-card {
+		width: 100%;
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		text-align: center;
+	}
+
+	.recommendation-label {
+		display: block;
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-xs);
+	}
+
+	.recommendation-title {
+		font-size: var(--text-h3);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.recommendation-description {
 		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
+	.case-study-link {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		transition: color var(--duration-standard) var(--ease-standard);
 	}
@@ -111,6 +172,22 @@
 
 	.primary-cta:hover {
 		opacity: 0.9;
+	}
+
+	.alternative-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.alt-link {
+		color: var(--color-fg-tertiary);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.alt-link:hover {
+		color: var(--color-fg-primary);
 	}
 
 	/* Staggered reveal animation - CSS only */
