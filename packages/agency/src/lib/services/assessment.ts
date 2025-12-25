@@ -116,48 +116,120 @@ export interface AssessmentResult {
 	recommendation: AssessmentRecommendation;
 }
 
-// Service metadata for display
-export const serviceMetadata: Record<
-	ServiceType,
-	{ name: string; description: string; caseStudy: string; caseStudyName: string }
+// Offering metadata for display (products + consulting services)
+export const offeringMetadata: Record<
+	OfferingType,
+	{
+		name: string;
+		description: string;
+		caseStudy: string;
+		caseStudyName: string;
+		tier: ServiceTier;
+		isProductized: boolean;
+	}
 > = {
+	// Products (accessible tier)
+	'ai-readiness-assessment': {
+		name: 'AI Readiness Assessment',
+		description: 'Discover where AI can create the most impact',
+		caseStudy: '/discover',
+		caseStudyName: 'Discovery Path',
+		tier: 'accessible',
+		isProductized: true
+	},
+	'triad-audit-template': {
+		name: 'Triad Audit Template',
+		description: 'Apply DRY → Rams → Heidegger to your own systems',
+		caseStudy: '/papers/subtractive-triad-audit',
+		caseStudyName: 'Subtractive Triad Audit',
+		tier: 'accessible',
+		isProductized: true
+	},
+	'canon-css-starter': {
+		name: 'Canon CSS Starter',
+		description: "Dieter Rams' principles as CSS custom properties",
+		caseStudy: 'https://github.com/createsomethingtoday/create-something-monorepo',
+		caseStudyName: 'CREATE SOMETHING Monorepo',
+		tier: 'accessible',
+		isProductized: true
+	},
+	'vertical-templates': {
+		name: 'Vertical Templates',
+		description: 'Industry-specific websites deployed in minutes',
+		caseStudy: '/work/templates',
+		caseStudyName: 'Vertical Templates',
+		tier: 'accessible',
+		isProductized: true
+	},
+	'automation-recipes': {
+		name: 'Automation Recipe Pack',
+		description: '10 production-tested automation patterns',
+		caseStudy: '/work/viralytics',
+		caseStudyName: 'Viralytics Patterns',
+		tier: 'accessible',
+		isProductized: true
+	},
+	'agent-in-a-box': {
+		name: 'Agent-in-a-Box Kit',
+		description: 'Complete AI development environment with 90-day support',
+		caseStudy: '/work/kickstand',
+		caseStudyName: 'Kickstand Environment',
+		tier: 'accessible',
+		isProductized: true
+	},
+	// Consulting services (commercial tier)
 	'web-development': {
 		name: 'Web Development',
 		description: 'Fast, focused web presence built on solid foundations',
-		caseStudy: '/work/arc-for-gmail',
-		caseStudyName: 'Arc for Gmail'
+		caseStudy: '/work/maverick-x',
+		caseStudyName: 'Maverick X',
+		tier: 'commercial',
+		isProductized: false
 	},
 	automation: {
 		name: 'AI Automation Systems',
 		description: 'Remove manual work through intelligent automation',
 		caseStudy: '/work/viralytics',
-		caseStudyName: 'Viralytics'
+		caseStudyName: 'Viralytics',
+		tier: 'commercial',
+		isProductized: false
 	},
 	'agentic-systems': {
 		name: 'Agentic Systems Engineering',
 		description: 'Long-running AI agents that handle complexity autonomously',
 		caseStudy: '/work/kickstand',
-		caseStudyName: 'Kickstand'
+		caseStudyName: 'Kickstand',
+		tier: 'commercial',
+		isProductized: false
 	},
 	partnership: {
 		name: 'Ongoing Systems Partnership',
 		description: 'Continuous optimization without adding to your team',
 		caseStudy: '/work/kickstand',
-		caseStudyName: 'Kickstand'
+		caseStudyName: 'Kickstand',
+		tier: 'commercial',
+		isProductized: false
 	},
 	transformation: {
 		name: 'AI-Native Transformation',
 		description: 'Help your team embrace subtractive thinking',
 		caseStudy: '/work/kickstand',
-		caseStudyName: 'Kickstand'
+		caseStudyName: 'Kickstand',
+		tier: 'commercial',
+		isProductized: false
 	},
 	advisory: {
 		name: 'Strategic Advisory',
 		description: 'Clarity on what to remove and why',
 		caseStudy: '/work/kickstand',
-		caseStudyName: 'Kickstand'
+		caseStudyName: 'Kickstand',
+		tier: 'commercial',
+		isProductized: false
 	}
 };
+
+// Legacy alias for backward compatibility
+export const serviceMetadata = offeringMetadata;
 
 // Triad level headlines
 const triadHeadlines: Record<TriadLevel, string> = {
@@ -231,15 +303,20 @@ export function analyzeResponses(answers: AssessmentAnswers): AssessmentResult {
 		analysis: {
 			triadLevel,
 			primaryBlocker: answers.blockers[0] || 'where_to_start',
-			complexity
+			complexity,
+			tier: meta.tier
 		},
 		recommendation: {
-			service,
-			serviceName: meta.name,
+			offering: service,
+			service, // Legacy alias
+			offeringName: meta.name,
+			serviceName: meta.name, // Legacy alias
 			caseStudy: meta.caseStudy,
 			caseStudyName: meta.caseStudyName,
 			headline: triadHeadlines[triadLevel],
-			insight: generateInsight(triadLevel, answers.removalInsight)
+			insight: generateInsight(triadLevel, answers.removalInsight),
+			tier: meta.tier,
+			isProductized: meta.isProductized
 		}
 	};
 }
