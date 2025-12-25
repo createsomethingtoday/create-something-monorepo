@@ -1,9 +1,18 @@
 /**
  * Subtractive Triad Assessment
  *
- * Questions and recommendation engine for the agency homepage assessment.
- * Maps user responses to appropriate services and case studies.
+ * Questions and recommendation engine for the discovery path.
+ * Maps user responses to appropriate products or services.
+ *
+ * Phase 2: Assessment fully routes to a single recommendation.
+ * User never sees "tier" - only the appropriate offering.
+ *
+ * Discovery Path Flow:
+ * - Complexity = Low, Budget = Learning → Products (accessible tier)
+ * - Complexity = High, Budget = Implementation → Consulting (commercial tier)
  */
+
+import type { ServiceTier } from '../data/services';
 
 // Q1: What's accumulating in your business?
 // Maps to Triad levels: implementation (DRY), artifact (Rams), system (Heidegger)
@@ -54,13 +63,26 @@ export const blockerOptions = [
 ];
 
 export type TriadLevel = 'implementation' | 'artifact' | 'system';
-export type ServiceType =
+
+// All offering IDs (products + consulting services)
+export type OfferingType =
+	// Products (accessible tier)
+	| 'ai-readiness-assessment'
+	| 'triad-audit-template'
+	| 'canon-css-starter'
+	| 'vertical-templates'
+	| 'automation-recipes'
+	| 'agent-in-a-box'
+	// Consulting services (commercial tier)
 	| 'advisory'
 	| 'transformation'
 	| 'automation'
 	| 'partnership'
 	| 'agentic-systems'
 	| 'web-development';
+
+// Legacy alias for backward compatibility
+export type ServiceType = OfferingType;
 
 export interface AssessmentAnswers {
 	accumulating: string[];
@@ -72,15 +94,20 @@ export interface AssessmentAnalysis {
 	triadLevel: TriadLevel;
 	primaryBlocker: string;
 	complexity: 'simple' | 'moderate' | 'complex';
+	tier: ServiceTier; // Phase 2: Determined tier
 }
 
 export interface AssessmentRecommendation {
-	service: ServiceType;
-	serviceName: string;
+	offering: OfferingType; // Renamed from 'service' for clarity
+	service: OfferingType; // Legacy alias
+	offeringName: string;
+	serviceName: string; // Legacy alias
 	caseStudy: string;
 	caseStudyName: string;
 	headline: string;
 	insight: string;
+	tier: ServiceTier;
+	isProductized: boolean;
 }
 
 export interface AssessmentResult {
