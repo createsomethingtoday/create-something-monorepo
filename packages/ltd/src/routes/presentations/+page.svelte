@@ -8,6 +8,24 @@
 
 	const presentations = [
 		{
+			slug: 'heidegger-canon',
+			title: 'HEIDEGGER: CANON',
+			subtitle: 'Philosophy as Foundation',
+			description: 'Install the CREATE SOMETHING methodology. Apply the Subtractive Triad. Build systems that disappear.',
+			slides: 18,
+			duration: '25 min',
+			tags: ['Philosophy', 'Methodology']
+		},
+		{
+			slug: 'claude-code-partner',
+			title: 'CLAUDE CODE: PARTNER',
+			subtitle: 'AI-Native Development',
+			description: 'Set up Claude Code as your development partner. Configure CLAUDE.md, rules, MCP servers, and hooks.',
+			slides: 16,
+			duration: '25 min',
+			tags: ['Claude Code', 'AI', 'Setup']
+		},
+		{
 			slug: 'workway',
 			title: 'WORKWAY',
 			subtitle: 'Workflow Automation for Developers',
