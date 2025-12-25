@@ -31,7 +31,7 @@
 		"wrangler": "^4.51.0"
 	},
 	"dependencies": {
-		"@create-something/components": "workspace:*",
+		"@createsomething/components": "workspace:*",
 		"lucide-svelte": "^0.554.0"
 	}
 }

@@ -15,7 +15,7 @@
 	},
 	"dependencies": {
 		"@create-something/components": "workspace:*",
-		"@create-something/tufte": "workspace:*"
+		"@createsomething/tufte": "workspace:*"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20251128.0",

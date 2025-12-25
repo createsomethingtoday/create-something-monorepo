@@ -105,19 +105,19 @@
 	"peerDependencies": {
 		"@sveltejs/kit": "^2.0.0",
 		"svelte": "^5.0.0",
-		"@create-something/tufte": "workspace:^",
+		"@createsomething/tufte": "workspace:^",
 		"better-sqlite3": "^11.0.0"
 	},
 	"peerDependenciesMeta": {
 		"better-sqlite3": {
 			"optional": true
 		},
-		"@create-something/tufte": {
+		"@createsomething/tufte": {
 			"optional": true
 		}
 	},
 	"devDependencies": {
-		"@create-something/tufte": "workspace:^",
+		"@createsomething/tufte": "workspace:^",
 		"@types/better-sqlite3": "^7.6.12",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.47.1",
