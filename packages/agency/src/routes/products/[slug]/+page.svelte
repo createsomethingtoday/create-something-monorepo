@@ -1,11 +1,59 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import SEO from '$lib/components/SEO.svelte';
+	import { page } from '$app/stores';
 
 	let { data }: { data: PageData } = $props();
 	const { product } = data;
 
 	const isFree = product.pricing === 'Free';
+	const isPurchasable = !isFree && product.isProductized;
+	const hasAgentTiers = product.id === 'agent-in-a-box';
+
+	// Agent-in-a-Box tier options
+	const agentTiers = [
+		{ id: 'solo', name: 'Solo', price: '$2,500', seats: '1 seat' },
+		{ id: 'team', name: 'Team', price: '$5,000', seats: '3 seats' },
+		{ id: 'org', name: 'Organization', price: '$10,000', seats: '10 seats' }
+	];
+
+	let selectedTier = $state<'solo' | 'team' | 'org'>('solo');
+	let isCheckingOut = $state(false);
+	let checkoutError = $state<string | null>(null);
+
+	// Check for success/cancel params
+	const success = $page.url.searchParams.get('success') === 'true';
+	const canceled = $page.url.searchParams.get('canceled') === 'true';
+
+	async function handleCheckout() {
+		isCheckingOut = true;
+		checkoutError = null;
+
+		try {
+			const response = await fetch('/api/stripe/checkout', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					productId: product.id,
+					tier: hasAgentTiers ? selectedTier : undefined
+				})
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.message || 'Checkout failed');
+			}
+
+			// Redirect to Stripe Checkout
+			if (result.url) {
+				window.location.href = result.url;
+			}
+		} catch (err) {
+			checkoutError = err instanceof Error ? err.message : 'Something went wrong';
+			isCheckingOut = false;
+		}
+	}
 </script>
 
 <SEO
@@ -71,18 +119,77 @@
 		</section>
 	{/if}
 
+	<!-- Success/Cancel Messages -->
+	{#if success}
+		<section class="message-section success">
+			<div class="message-content">
+				<span class="message-icon">✓</span>
+				<h2 class="message-title">Purchase Complete</h2>
+				<p class="message-text">
+					Thank you for your purchase! Check your email for access instructions.
+				</p>
+			</div>
+		</section>
+	{/if}
+
+	{#if canceled}
+		<section class="message-section canceled">
+			<div class="message-content">
+				<p class="message-text">
+					Checkout was canceled. No charges were made.
+				</p>
+			</div>
+		</section>
+	{/if}
+
 	<!-- CTA Section -->
 	<section class="cta-section">
 		<div class="cta-content">
-			<div class="cta-info">
-				<span class="cta-price">{product.pricing}</span>
-				<span class="cta-timeline">{product.timeline}</span>
-			</div>
+			{#if hasAgentTiers}
+				<!-- Tier Selector for Agent-in-a-Box -->
+				<div class="tier-selector">
+					<h3 class="tier-label">Select Your Plan</h3>
+					<div class="tier-options">
+						{#each agentTiers as tier}
+							<button
+								class="tier-option"
+								class:selected={selectedTier === tier.id}
+								onclick={() => selectedTier = tier.id as 'solo' | 'team' | 'org'}
+							>
+								<span class="tier-name">{tier.name}</span>
+								<span class="tier-price">{tier.price}</span>
+								<span class="tier-seats">{tier.seats}</span>
+							</button>
+						{/each}
+					</div>
+				</div>
+			{:else}
+				<div class="cta-info">
+					<span class="cta-price">{product.pricing}</span>
+					<span class="cta-timeline">{product.timeline}</span>
+				</div>
+			{/if}
 
 			{#if isFree}
-				<a href={product.caseStudyLink || '/discover'} class="cta-button primary">
+				<a href={product.proof.caseStudy || '/discover'} class="cta-button primary">
 					Get started free
 				</a>
+			{:else if isPurchasable}
+				<button
+					class="cta-button primary"
+					onclick={handleCheckout}
+					disabled={isCheckingOut}
+				>
+					{#if isCheckingOut}
+						Processing...
+					{:else}
+						Purchase {hasAgentTiers ? agentTiers.find(t => t.id === selectedTier)?.name : product.title}
+					{/if}
+				</button>
+				{#if checkoutError}
+					<p class="checkout-error">{checkoutError}</p>
+				{/if}
+				<p class="checkout-note">Secure checkout powered by Stripe</p>
 			{:else}
 				<a href="/contact?product={product.id}" class="cta-button primary">
 					Get {product.title}
@@ -90,9 +197,9 @@
 			{/if}
 		</div>
 
-		{#if product.caseStudyLink}
-			<a href={product.caseStudyLink} class="case-study-link">
-				See it in action: {product.caseStudy} →
+		{#if product.proof.caseStudy}
+			<a href={product.proof.caseStudy} class="case-study-link">
+				See it in action: {product.proof.name} →
 			</a>
 		{/if}
 	</section>
@@ -258,6 +365,47 @@
 		color: var(--color-fg-muted);
 	}
 
+	/* Message Sections (success/cancel) */
+	.message-section {
+		padding: var(--space-lg);
+		border-radius: var(--radius-lg);
+		margin-bottom: var(--space-lg);
+		text-align: center;
+	}
+
+	.message-section.success {
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+	}
+
+	.message-section.canceled {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.message-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.message-icon {
+		font-size: var(--text-h2);
+		color: var(--color-success);
+	}
+
+	.message-title {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	.message-text {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+
 	/* CTA Section */
 	.cta-section {
 		padding: var(--space-xl) 0;
@@ -290,13 +438,81 @@
 		color: var(--color-fg-muted);
 	}
 
+	/* Tier Selector */
+	.tier-selector {
+		width: 100%;
+		max-width: 500px;
+		margin-bottom: var(--space-md);
+	}
+
+	.tier-label {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin-bottom: var(--space-sm);
+	}
+
+	.tier-options {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-sm);
+	}
+
+	.tier-option {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 2px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.tier-option:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.tier-option.selected {
+		border-color: var(--color-fg-primary);
+		background: var(--color-bg-elevated);
+	}
+
+	.tier-name {
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	.tier-price {
+		font-size: var(--text-h3);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+	}
+
+	.tier-seats {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
 	.cta-button {
 		display: inline-block;
 		padding: 0.875rem 2rem;
 		font-size: var(--text-body);
 		font-weight: var(--font-medium);
 		border-radius: var(--radius-full);
+		border: none;
+		cursor: pointer;
 		transition: opacity var(--duration-standard) var(--ease-standard);
+	}
+
+	.cta-button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	.cta-button.primary {
@@ -304,8 +520,20 @@
 		color: var(--color-bg-pure);
 	}
 
-	.cta-button.primary:hover {
+	.cta-button.primary:hover:not(:disabled) {
 		opacity: 0.9;
+	}
+
+	.checkout-error {
+		font-size: var(--text-body-sm);
+		color: var(--color-error);
+		margin-top: var(--space-sm);
+	}
+
+	.checkout-note {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		margin-top: var(--space-xs);
 	}
 
 	.case-study-link {
@@ -353,6 +581,15 @@
 
 		.triad-separator {
 			display: none;
+		}
+
+		.tier-options {
+			grid-template-columns: 1fr;
+		}
+
+		.tier-option {
+			flex-direction: row;
+			justify-content: space-between;
 		}
 	}
 </style>
