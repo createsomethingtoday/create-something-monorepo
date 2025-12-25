@@ -116,7 +116,7 @@
 			{#each displayProducts as product, index}
 				{@const isRecommended = recommendedService === product.id}
 				<a
-					href="/services/{product.id}"
+					href="/products/{product.id}"
 					class="product-card animate-reveal"
 					class:recommended={isRecommended}
 					style="--delay: {index}"
