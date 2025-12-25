@@ -2,6 +2,14 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getModule } from '$lib/config/modules';
 
+interface EnrollmentRow {
+  module_slug: string;
+  enabled: number;
+  enrolled_at: number;
+  progress_percentage: number;
+  last_accessed_at: number | null;
+}
+
 /**
  * GET /api/modules/[slug]
  * Get a specific module with user enrollment status
@@ -20,7 +28,7 @@ export const GET: RequestHandler = async ({ params, platform, locals }) => {
       'SELECT * FROM module_enrollment WHERE learner_id = ? AND module_slug = ?'
     )
       .bind(locals.user.id, params.slug)
-      .first();
+      .first<EnrollmentRow>();
 
     if (result) {
       enrollment = {
@@ -55,7 +63,7 @@ export const POST: RequestHandler = async ({ params, platform, locals, request }
     throw error(404, 'Module not found');
   }
 
-  const body = await request.json();
+  const body = (await request.json()) as { enabled?: boolean };
   const enabled = body.enabled === true;
 
   const db = platform?.env.DB;
@@ -89,7 +97,11 @@ export const POST: RequestHandler = async ({ params, platform, locals, request }
         'SELECT * FROM module_enrollment WHERE learner_id = ? AND module_slug = ?'
       )
       .bind(locals.user.id, params.slug)
-      .first();
+      .first<EnrollmentRow>();
+
+    if (!result) {
+      throw error(500, 'Failed to retrieve enrollment');
+    }
 
     return json({
       success: true,

@@ -1,5 +1,5 @@
 {
-	"name": "@createsomething/tufte",
+	"name": "@create-something/tufte",
 	"version": "1.0.0",
 	"description": "Agentic visualization components embodying Edward Tufte's principles for displaying quantitative information",
 	"type": "module",

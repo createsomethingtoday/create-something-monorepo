@@ -2,6 +2,14 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { MODULES } from '$lib/config/modules';
 
+interface EnrollmentRow {
+  module_slug: string;
+  enabled: number;
+  enrolled_at: number;
+  progress_percentage: number;
+  last_accessed_at: number | null;
+}
+
 /**
  * GET /api/modules
  * Get all modules with user enrollment status
@@ -16,7 +24,7 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
         'SELECT module_slug, enabled, enrolled_at, progress_percentage, last_accessed_at FROM module_enrollment WHERE learner_id = ?'
       )
         .bind(locals.user.id)
-        .all();
+        .all<EnrollmentRow>();
 
       if (result.success && result.results) {
         for (const row of result.results) {
