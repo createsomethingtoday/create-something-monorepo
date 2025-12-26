@@ -1,0 +1,43 @@
+{
+	"name": "@create-something/eslint-plugin-canon",
+	"version": "1.0.0",
+	"description": "ESLint plugin for enforcing CREATE SOMETHING Canon design tokens",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"check": "tsc --noEmit"
+	},
+	"keywords": [
+		"eslint",
+		"eslintplugin",
+		"canon",
+		"design-tokens",
+		"tailwind",
+		"svelte"
+	],
+	"peerDependencies": {
+		"eslint": "^8.0.0 || ^9.0.0"
+	},
+	"dependencies": {
+		"@typescript-eslint/utils": "^8.23.0",
+		"svelte-eslint-parser": "^0.43.0"
+	},
+	"devDependencies": {
+		"@types/eslint": "^9.6.1",
+		"@types/node": "^24.10.1",
+		"eslint": "^9.17.0",
+		"typescript": "^5.9.3"
+	}
+}
