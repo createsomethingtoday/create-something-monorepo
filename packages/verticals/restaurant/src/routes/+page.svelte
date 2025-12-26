@@ -127,36 +127,77 @@
 	<section class="section practical" class:revealed={sectionsRevealed}>
 		<div class="container">
 			<div class="practical-grid">
-				<!-- Hours -->
-				<div class="practical-block">
+				<!-- Hours - Full width on its own row -->
+				<div class="practical-block hours-block">
 					<h3 class="practical-title">Hours</h3>
-					<dl class="hours-list">
+					<div class="hours-grid">
 						{#each Object.entries($siteConfig.hours) as [day, hours]}
-							<div class="hours-row">
-								<dt class="day-label">{day}</dt>
-								<dd class="hours-value">{hours}</dd>
+							<div class="hours-item" class:closed={hours === 'Closed'}>
+								<span class="day-name">{day.charAt(0).toUpperCase() + day.slice(1)}</span>
+								{#if hours === 'Closed'}
+									<span class="hours-closed">Closed</span>
+								{:else}
+									<div class="hours-detail">
+										{#each hours.split(', ') as period}
+											<span class="hours-period">{period}</span>
+										{/each}
+									</div>
+								{/if}
 							</div>
 						{/each}
-					</dl>
+					</div>
 				</div>
 
-				<!-- Location -->
-				<div class="practical-block">
-					<h3 class="practical-title">Location</h3>
+				<!-- Location & Contact side by side -->
+				<div class="practical-block location-block">
+					<h3 class="practical-title">Find Us</h3>
 					<address class="location-address">
-						{$siteConfig.address.street}<br />
-						{$siteConfig.address.city}, {$siteConfig.address.state} {$siteConfig.address.zip}
+						<span class="address-line">{$siteConfig.address.street}</span>
+						<span class="address-line">{$siteConfig.address.city}, {$siteConfig.address.state} {$siteConfig.address.zip}</span>
 					</address>
 					<p class="location-neighborhood">{$siteConfig.location.neighborhood}</p>
+					{#if $siteConfig.location.parking}
+						<div class="parking-info">
+							<span class="parking-label">Parking</span>
+							<ul class="parking-list">
+								{#each $siteConfig.location.parking as option}
+									<li>{option}</li>
+								{/each}
+							</ul>
+						</div>
+					{/if}
 				</div>
 
-				<!-- Contact -->
-				<div class="practical-block">
+				<div class="practical-block contact-block">
 					<h3 class="practical-title">Contact</h3>
 					<div class="contact-links">
-						<a href="tel:{$siteConfig.phone}" class="contact-link">{$siteConfig.phone}</a>
-						<a href="mailto:{$siteConfig.email}" class="contact-link">{$siteConfig.email}</a>
+						<a href="tel:{$siteConfig.phone}" class="contact-link">
+							<svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+								<path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+							</svg>
+							<span>{$siteConfig.phone}</span>
+						</a>
+						<a href="mailto:{$siteConfig.email}" class="contact-link">
+							<svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+								<path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+							</svg>
+							<span>{$siteConfig.email}</span>
+						</a>
 					</div>
+					{#if $siteConfig.social}
+						<div class="social-links">
+							{#if $siteConfig.social.instagram}
+								<a href={$siteConfig.social.instagram} target="_blank" rel="noopener" class="social-link" aria-label="Instagram">
+									<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+								</a>
+							{/if}
+							{#if $siteConfig.social.facebook}
+								<a href={$siteConfig.social.facebook} target="_blank" rel="noopener" class="social-link" aria-label="Facebook">
+									<svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+								</a>
+							{/if}
+						</div>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -523,11 +564,12 @@
 	}
 
 	/* ==========================================================================
-	   Practical: Hours, Location, Contact
+	   Practical: Hours, Location, Contact - Redesigned
 	   ========================================================================== */
 
 	.practical {
 		border-top: 1px solid var(--color-border-default);
+		background: var(--color-bg-elevated);
 		opacity: 0;
 		transition: opacity 0.6s var(--ease-decelerate);
 	}
@@ -538,73 +580,229 @@
 
 	.practical-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-2xl);
+		grid-template-columns: 1fr;
+		gap: var(--space-xl);
 	}
 
 	.practical-block {
-		/* Minimal container */
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
 	}
 
 	.practical-title {
 		font-size: var(--text-caption);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
+		letter-spacing: 0.15em;
 		margin-bottom: var(--space-md);
+		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
-	.hours-list {
-		margin: 0;
-		padding: 0;
+	/* Hours Grid - 7 columns for days */
+	.hours-block {
+		grid-column: 1 / -1;
 	}
 
-	.hours-row {
-		display: flex;
-		justify-content: space-between;
-		padding: var(--space-xs) 0;
+	.hours-grid {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: var(--space-sm);
 	}
 
-	.day-label {
+	.hours-item {
+		text-align: center;
+		padding: var(--space-sm);
+		border-radius: var(--radius-md);
+		background: var(--color-bg-elevated);
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.hours-item:hover {
+		background: var(--color-hover);
+	}
+
+	.hours-item.closed {
+		opacity: 0.5;
+	}
+
+	.day-name {
+		display: block;
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		text-transform: capitalize;
+		font-weight: 500;
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
 	}
 
-	.hours-value {
-		font-size: var(--text-body-sm);
+	.hours-closed {
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	.hours-detail {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.hours-period {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		line-height: 1.4;
+	}
+
+	/* Location & Contact side by side */
+	@media (min-width: 768px) {
+		.practical-grid {
+			grid-template-columns: 1fr 1fr;
+		}
+
+		.hours-block {
+			grid-column: 1 / -1;
+		}
 	}
 
 	.location-address {
 		font-style: normal;
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
-		line-height: var(--leading-relaxed);
 		margin-bottom: var(--space-sm);
 	}
 
+	.address-line {
+		display: block;
+		font-size: var(--text-body);
+		color: var(--color-fg-primary);
+		line-height: var(--leading-relaxed);
+	}
+
 	.location-neighborhood {
-		font-size: var(--text-body-sm);
+		display: inline-block;
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+		background: var(--color-bg-elevated);
+		padding: 4px 10px;
+		border-radius: var(--radius-sm);
+		margin: 0 0 var(--space-md);
+	}
+
+	.parking-info {
+		margin-top: var(--space-md);
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.parking-label {
+		display: block;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin-bottom: var(--space-xs);
+	}
+
+	.parking-list {
+		list-style: none;
+		padding: 0;
 		margin: 0;
+	}
+
+	.parking-list li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		padding: 4px 0;
 	}
 
 	.contact-links {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-sm);
 	}
 
 	.contact-link {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
 		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		text-decoration: none;
+		padding: var(--space-sm);
+		margin: calc(-1 * var(--space-sm));
+		border-radius: var(--radius-md);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.contact-link:hover {
 		color: var(--color-fg-primary);
+		background: var(--color-hover);
+	}
+
+	.contact-icon {
+		width: 20px;
+		height: 20px;
+		flex-shrink: 0;
+		opacity: 0.6;
+	}
+
+	.social-links {
+		display: flex;
+		gap: var(--space-sm);
+		margin-top: var(--space-lg);
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.social-link {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: var(--radius-md);
+		background: var(--color-bg-elevated);
+		color: var(--color-fg-muted);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.social-link:hover {
+		background: var(--color-hover);
+		color: var(--color-fg-primary);
+	}
+
+	.social-link svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* Mobile: Stack hours vertically */
+	@media (max-width: 767px) {
+		.hours-grid {
+			grid-template-columns: 1fr;
+			gap: var(--space-xs);
+		}
+
+		.hours-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			text-align: left;
+			padding: var(--space-sm) var(--space-md);
+		}
+
+		.day-name {
+			margin-bottom: 0;
+		}
+
+		.hours-detail {
+			flex-direction: row;
+			gap: var(--space-sm);
+			text-align: right;
+		}
+
+		.hours-period {
+			white-space: nowrap;
+		}
 	}
 
 	/* ==========================================================================
