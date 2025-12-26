@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "name": "CREATE SOMETHING Canon",
+  "version": "1.0.0",
+  "description": "Machine-readable Canon design tokens. Weniger, aber besser.",
+  "source": "tokens.css",
+  "colors": {
+    "bg": {
+      "pure": { "value": "#000000", "description": "Pure black canvas" },
+      "elevated": { "value": "#0a0a0a", "description": "Slightly elevated surface" },
+      "surface": { "value": "#111111", "description": "Card and panel backgrounds" },
+      "subtle": { "value": "#1a1a1a", "description": "Subtle background distinction" }
+    },
+    "fg": {
+      "primary": { "value": "#ffffff", "description": "Headlines, primary text" },
+      "secondary": { "value": "rgba(255, 255, 255, 0.8)", "description": "Body text" },
+      "tertiary": { "value": "rgba(255, 255, 255, 0.6)", "description": "Secondary content" },
+      "muted": { "value": "rgba(255, 255, 255, 0.46)", "description": "Captions, WCAG AA 4.56:1" },
+      "subtle": { "value": "rgba(255, 255, 255, 0.2)", "description": "Disabled, decorative" }
+    },
+    "border": {
+      "default": { "value": "rgba(255, 255, 255, 0.1)", "description": "Subtle separation" },
+      "emphasis": { "value": "rgba(255, 255, 255, 0.2)", "description": "Moderate emphasis" },
+      "strong": { "value": "rgba(255, 255, 255, 0.3)", "description": "Strong separation" }
+    },
+    "semantic": {
+      "success": {
+        "value": "#44aa44",
+        "muted": "rgba(68, 170, 68, 0.2)",
+        "border": "rgba(68, 170, 68, 0.3)",
+        "contrast": "7.08:1"
+      },
+      "error": {
+        "value": "#d44d4d",
+        "muted": "rgba(212, 77, 77, 0.2)",
+        "border": "rgba(212, 77, 77, 0.3)",
+        "contrast": "4.97:1"
+      },
+      "warning": {
+        "value": "#aa8844",
+        "muted": "rgba(170, 136, 68, 0.2)",
+        "border": "rgba(170, 136, 68, 0.3)",
+        "contrast": "6.31:1"
+      },
+      "info": {
+        "value": "#5082b9",
+        "muted": "rgba(80, 130, 185, 0.2)",
+        "border": "rgba(80, 130, 185, 0.3)",
+        "contrast": "5.23:1"
+      }
+    },
+    "data": {
+      "1": { "value": "#60a5fa", "muted": "rgba(96, 165, 250, 0.2)", "name": "Blue" },
+      "2": { "value": "#22c55e", "muted": "rgba(34, 197, 94, 0.2)", "name": "Green" },
+      "3": { "value": "#c084fc", "muted": "rgba(192, 132, 252, 0.2)", "border": "rgba(192, 132, 252, 0.3)", "name": "Purple" },
+      "4": { "value": "#fbbf24", "muted": "rgba(251, 191, 36, 0.2)", "name": "Amber" },
+      "5": { "value": "#f472b6", "muted": "rgba(244, 114, 182, 0.2)", "name": "Pink" },
+      "6": { "value": "#facc15", "muted": "rgba(250, 204, 21, 0.2)", "name": "Yellow" }
+    },
+    "interactive": {
+      "hover": { "value": "rgba(255, 255, 255, 0.05)", "description": "Hover state overlay" },
+      "active": { "value": "rgba(255, 255, 255, 0.1)", "description": "Active/pressed state" },
+      "focus": { "value": "rgba(255, 255, 255, 0.5)", "description": "Focus ring, WCAG AA 5.28:1" }
+    },
+    "overlay": {
+      "default": { "value": "rgba(0, 0, 0, 0.5)", "description": "Modal backdrop" },
+      "heavy": { "value": "rgba(0, 0, 0, 0.7)", "description": "Heavy overlay" }
+    },
+    "rank": {
+      "gold": { "value": "#ca8a04", "muted": "rgba(202, 138, 4, 0.2)", "description": "1st place" },
+      "bronze": { "value": "#c2410c", "muted": "rgba(194, 65, 12, 0.2)", "description": "3rd place" }
+    }
+  },
+  "typography": {
+    "fonts": {
+      "sans": "'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "mono": "'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace",
+      "serif": "Georgia, 'Times New Roman', serif"
+    },
+    "weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.25,
+      "snug": 1.375,
+      "normal": 1.5,
+      "relaxed": 1.618,
+      "loose": 1.75
+    },
+    "letterSpacing": {
+      "tighter": "-0.025em",
+      "tight": "-0.015em",
+      "normal": "0",
+      "wide": "0.025em",
+      "wider": "0.05em",
+      "widest": "0.1em"
+    },
+    "scale": {
+      "principle": "Golden Ratio (phi = 1.618)",
+      "base": "1rem (16px)",
+      "display": {
+        "xl": { "value": "clamp(4.236rem, 6vw + 2rem, 6.854rem)", "description": "Hero headlines" },
+        "default": { "value": "clamp(2.618rem, 4vw + 1.5rem, 4.236rem)", "description": "Section headlines" }
+      },
+      "headings": {
+        "h1": { "value": "clamp(1.618rem, 3vw + 1rem, 2.618rem)", "ratio": "phi^2" },
+        "h2": { "value": "clamp(1.25rem, 2vw + 0.5rem, 1.618rem)", "ratio": "phi" },
+        "h3": { "value": "clamp(1.125rem, 1vw + 0.5rem, 1.25rem)" },
+        "h4": { "value": "clamp(1rem, 0.5vw + 0.5rem, 1.125rem)" },
+        "h5": { "value": "1rem" },
+        "h6": { "value": "0.875rem" }
+      },
+      "body": {
+        "lg": { "value": "1.125rem", "px": 18 },
+        "default": { "value": "1rem", "px": 16 },
+        "sm": { "value": "0.875rem", "px": 14 }
+      },
+      "utility": {
+        "caption": { "value": "0.75rem", "px": 12 },
+        "overline": { "value": "0.618rem", "px": 10, "description": "1/phi" }
+      }
+    }
+  },
+  "spacing": {
+    "scale": "golden",
+    "ratio": 1.618,
+    "base": "1rem",
+    "values": {
+      "xs": { "value": "0.5rem", "px": 8 },
+      "sm": { "value": "1rem", "px": 16 },
+      "md": { "value": "1.618rem", "px": 26, "description": "Base * phi" },
+      "lg": { "value": "2.618rem", "px": 42, "description": "Base * phi^2" },
+      "xl": { "value": "4.236rem", "px": 68, "description": "Base * phi^3" },
+      "2xl": { "value": "6.854rem", "px": 110, "description": "Base * phi^4" },
+      "3xl": { "value": "11.089rem", "px": 177, "description": "Base * phi^5" }
+    }
+  },
+  "radius": {
+    "sm": { "value": "6px" },
+    "md": { "value": "8px" },
+    "lg": { "value": "12px" },
+    "xl": { "value": "16px" },
+    "full": { "value": "9999px" }
+  },
+  "shadows": {
+    "elevation": {
+      "none": { "value": "none" },
+      "sm": { "value": "0 1px 2px 0 rgba(0, 0, 0, 0.5)" },
+      "md": { "value": "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5)" },
+      "lg": { "value": "0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5)" },
+      "xl": { "value": "0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)" },
+      "2xl": { "value": "0 25px 50px -12px rgba(0, 0, 0, 0.75)" }
+    },
+    "glow": {
+      "sm": { "value": "0 0 10px rgba(255, 255, 255, 0.05)" },
+      "md": { "value": "0 0 20px rgba(255, 255, 255, 0.1)" },
+      "lg": { "value": "0 0 40px rgba(255, 255, 255, 0.15)" }
+    },
+    "inner": {
+      "default": { "value": "inset 0 2px 4px 0 rgba(0, 0, 0, 0.5)" },
+      "lg": { "value": "inset 0 4px 8px 0 rgba(0, 0, 0, 0.5)" }
+    }
+  },
+  "motion": {
+    "philosophy": "Motion should be purposeful, not decorative. Animation reveals state changes and guides attention.",
+    "duration": {
+      "instant": { "value": "100ms", "use": "Immediate feedback" },
+      "micro": { "value": "200ms", "use": "Hover states, toggles, micro-interactions" },
+      "standard": { "value": "300ms", "use": "Page transitions, modal open/close" },
+      "complex": { "value": "500ms", "use": "Multi-step animations, orchestrated sequences" },
+      "slow": { "value": "700ms", "use": "Deliberate, contemplative transitions" }
+    },
+    "easing": {
+      "standard": { "value": "cubic-bezier(0.4, 0.0, 0.2, 1)", "description": "Material Design standard" },
+      "decelerate": { "value": "cubic-bezier(0.0, 0.0, 0.2, 1)", "description": "Enter/appear" },
+      "accelerate": { "value": "cubic-bezier(0.4, 0.0, 1, 1)", "description": "Exit/disappear" }
+    },
+    "opacity": {
+      "muted": 0.6,
+      "hover": 0.8,
+      "full": 1
+    }
+  },
+  "zIndex": {
+    "base": 0,
+    "dropdown": 10,
+    "sticky": 20,
+    "fixed": 50,
+    "modal": 100,
+    "popover": 200,
+    "tooltip": 300
+  },
+  "breakpoints": {
+    "sm": { "value": "640px" },
+    "md": { "value": "768px" },
+    "lg": { "value": "1024px" },
+    "xl": { "value": "1280px" },
+    "2xl": { "value": "1536px" }
+  },
+  "containers": {
+    "sm": { "value": "640px" },
+    "md": { "value": "768px" },
+    "lg": { "value": "1024px" },
+    "xl": { "value": "1280px" },
+    "2xl": { "value": "1400px" },
+    "prose": { "value": "65ch", "description": "Optimal reading width in characters" }
+  },
+  "widths": {
+    "prose": { "value": "42rem", "px": 672, "description": "Optimal reading width" },
+    "content": { "value": "52.36rem", "px": 838, "description": "Content sections" },
+    "wide": { "value": "68rem", "px": 1088, "description": "Wide content" },
+    "narrow": { "value": "32.36rem", "px": 518, "description": "Narrow content" }
+  },
+  "themes": {
+    "dark": {
+      "description": "Default theme, dark canvas with white text",
+      "selector": ":root"
+    },
+    "light": {
+      "description": "Light theme with inverted colors",
+      "selector": "[data-theme='light'], .theme-light",
+      "overrides": {
+        "bg": {
+          "pure": "#ffffff",
+          "elevated": "#fafafa",
+          "surface": "#f5f5f5",
+          "subtle": "#eeeeee"
+        },
+        "fg": {
+          "primary": "#1a1a1a",
+          "secondary": "rgba(0, 0, 0, 0.8)",
+          "tertiary": "rgba(0, 0, 0, 0.6)",
+          "muted": "rgba(0, 0, 0, 0.46)",
+          "subtle": "rgba(0, 0, 0, 0.2)"
+        }
+      }
+    },
+    "highContrast": {
+      "description": "Enhanced contrast for accessibility",
+      "selector": "@media (prefers-contrast: more)",
+      "wcag": "AAA"
+    }
+  },
+  "meta": {
+    "philosophy": "Weniger, aber besser - Less, but better",
+    "principles": [
+      "Functional, not decorative",
+      "Elevation creates hierarchy, not color",
+      "Opacity creates text hierarchy",
+      "Golden ratio (1.618) governs scale",
+      "WCAG AA compliance for all text colors"
+    ],
+    "cssVariable": {
+      "prefix": "",
+      "pattern": "--{category}-{name}",
+      "examples": [
+        "--color-bg-pure",
+        "--space-md",
+        "--text-h1",
+        "--duration-micro"
+      ]
+    }
+  }
+}
