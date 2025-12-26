@@ -3,6 +3,7 @@
  *
  * Voice: Professional, trustworthy, compassionate
  * Structure: Services first, team credibility, easy contact
+ * Images: Generated via Cloudflare Workers AI (Flux)
  */
 
 export const siteConfig = {
@@ -11,6 +12,12 @@ export const siteConfig = {
 	tagline: 'Compassionate Care, Advanced Medicine',
 	description:
 		'Family medicine and primary care serving the community since 2015. Accepting new patients.',
+
+	// Hero
+	hero: {
+		image: '/images/hero-clinic.jpg',
+		alt: 'Modern medical clinic waiting room'
+	},
 
 	// Contact
 	email: 'contact@practicename.com',
@@ -92,13 +99,13 @@ export const siteConfig = {
 		}
 	],
 
-	// Medical Team (images to be added via tenant config)
+	// Medical Team
 	providers: [
 		{
 			name: 'Dr. Sarah Chen',
 			role: 'Family Medicine Physician',
 			credentials: 'MD, FAAFP',
-			image: '',
+			image: '/images/provider-chen.jpg',
 			bio: 'Board certified in Family Medicine. University of Washington School of Medicine 2012. Residency at Swedish Medical Center.',
 			specialties: ['Primary Care', 'Preventive Medicine', 'Chronic Disease Management'],
 			languages: ['English', 'Mandarin']
@@ -107,7 +114,7 @@ export const siteConfig = {
 			name: 'Dr. Michael Rodriguez',
 			role: 'Internal Medicine Physician',
 			credentials: 'MD, FACP',
-			image: '',
+			image: '/images/provider-rodriguez.jpg',
 			bio: 'Board certified in Internal Medicine. UCSF School of Medicine 2010. Fellowship in Hospital Medicine.',
 			specialties: ['Internal Medicine', 'Hospital Medicine', 'Geriatrics'],
 			languages: ['English', 'Spanish']
@@ -116,7 +123,7 @@ export const siteConfig = {
 			name: 'Jessica Thompson',
 			role: 'Nurse Practitioner',
 			credentials: 'ARNP, FNP-C',
-			image: '',
+			image: '/images/provider-thompson.jpg',
 			bio: 'Family Nurse Practitioner. Seattle University 2015. Focus on pediatric and adolescent care.',
 			specialties: ['Pediatrics', 'Adolescent Health', 'Immunizations'],
 			languages: ['English']
