@@ -26,6 +26,7 @@ Human-curated visual references from Are.na that inform Canon design decisions.
 | `delightful-interactions...` | Nicky Knicky | Purposeful UI motion, 483 blocks (Motion Language) |
 | `10x10-material-cultures` | M V | Information design, Tufte, Isotype |
 | `systems-diagrams...` | Anne-Laure Lemaitre | Cybernetics, systematic visualization |
+| `user-interface-fuu0gctxwj8` | Stanislav Govorukhin | UI patterns: smart, elegant (filter for decorative "weird") |
 
 ## Per-Channel Curation Criteria
 
