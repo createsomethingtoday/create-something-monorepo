@@ -19,7 +19,7 @@
    Vertical Template Base - Shared across all verticals
    Import AFTER Tailwind to apply Canon base styles
    ========================================================================== */
-@import '@create-something/components/styles/vertical-base.css';
+@import '@create-something/vertical-shared/styles/vertical-base.css';
 
 /* ==========================================================================
    Template-Specific Token Overrides

@@ -28,6 +28,7 @@
 		"wrangler": "^4.51.0"
 	},
 	"dependencies": {
-		"@create-something/components": "workspace:*"
+		"@create-something/components": "workspace:*",
+		"@create-something/vertical-shared": "workspace:*"
 	}
 }
