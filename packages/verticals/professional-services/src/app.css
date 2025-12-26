@@ -22,6 +22,7 @@
 /* ==========================================================================
    Vertical Template Base - Shared across all verticals
    Import AFTER Tailwind to apply Canon base styles
+   (PostCSS warning expected but styles are still processed)
    ========================================================================== */
 @import '@create-something/components/styles/vertical-base.css';
 
@@ -56,3 +57,27 @@
    Template-Specific Styles
    Add any professional-services-specific overrides or extensions here.
    ========================================================================== */
+
+/* Skip link - ensure visibility only on focus (accessibility)
+   This overrides any potential cascade issues from import order */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-fg-primary);
+  color: var(--color-bg-pure);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-body-sm);
+  text-decoration: none;
+  z-index: 9999;
+  transition: top var(--duration-micro) var(--ease-standard);
+}
+
+.skip-link:focus {
+  top: var(--space-sm);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
