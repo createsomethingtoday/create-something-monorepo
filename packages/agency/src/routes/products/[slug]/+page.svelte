@@ -8,18 +8,21 @@
 
 	const isFree = product.pricing === 'Free';
 	const isPurchasable = !isFree && product.isProductized;
-	const hasAgentTiers = product.id === 'agent-in-a-box';
+	const hasTiers = product.pricingTiers && product.pricingTiers.length > 0;
 
-	// Agent-in-a-Box tier options
-	const agentTiers = [
-		{ id: 'solo', name: 'Solo', price: '$2,500', seats: '1 seat' },
-		{ id: 'team', name: 'Team', price: '$5,000', seats: '3 seats' },
-		{ id: 'org', name: 'Organization', price: '$10,000', seats: '10 seats' }
-	];
+	// Default to recommended tier or first tier
+	const defaultTier = hasTiers
+		? (product.pricingTiers?.find(t => t.recommended)?.id || product.pricingTiers?.[0]?.id || 'solo')
+		: 'solo';
 
-	let selectedTier = $state<'solo' | 'team' | 'org'>('solo');
+	let selectedTier = $state<string>(defaultTier);
 	let isCheckingOut = $state(false);
 	let checkoutError = $state<string | null>(null);
+
+	// Get selected tier details
+	const selectedTierDetails = $derived(
+		hasTiers ? product.pricingTiers?.find(t => t.id === selectedTier) : null
+	);
 
 	// Check for success/cancel params
 	const success = $page.url.searchParams.get('success') === 'true';
@@ -35,7 +38,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					productId: product.id,
-					tier: hasAgentTiers ? selectedTier : undefined
+					tier: hasTiers ? selectedTier : undefined
 				})
 			});
 
@@ -153,20 +156,28 @@
 	<!-- CTA Section -->
 	<section class="cta-section">
 		<div class="cta-content">
-			{#if hasAgentTiers}
-				<!-- Tier Selector for Agent-in-a-Box -->
+			{#if hasTiers && product.pricingTiers}
+				<!-- Tier Selector -->
 				<div class="tier-selector">
 					<h3 class="tier-label">Select Your Plan</h3>
-					<div class="tier-options">
-						{#each agentTiers as tier}
+					<div class="tier-options" class:two-tier={product.pricingTiers.length === 2}>
+						{#each product.pricingTiers as tier}
 							<button
 								class="tier-option"
 								class:selected={selectedTier === tier.id}
-								onclick={() => selectedTier = tier.id as 'solo' | 'team' | 'org'}
+								class:recommended={tier.recommended}
+								onclick={() => selectedTier = tier.id}
 							>
+								{#if tier.recommended}
+									<span class="tier-badge">Recommended</span>
+								{/if}
 								<span class="tier-name">{tier.name}</span>
-								<span class="tier-price">{tier.price}</span>
-								<span class="tier-seats">{tier.seats}</span>
+								<span class="tier-price">{tier.price}<span class="tier-period">{tier.period || ''}</span></span>
+								<ul class="tier-features">
+									{#each tier.features.slice(0, 3) as feature}
+										<li>{feature}</li>
+									{/each}
+								</ul>
 							</button>
 						{/each}
 					</div>
@@ -191,7 +202,7 @@
 					{#if isCheckingOut}
 						Processing...
 					{:else}
-						Purchase {hasAgentTiers ? agentTiers.find(t => t.id === selectedTier)?.name : product.title}
+						{hasTiers ? `Subscribe to ${selectedTierDetails?.name}` : `Purchase ${product.title}`}
 					{/if}
 				</button>
 				{#if checkoutError}
@@ -479,7 +490,7 @@
 	/* Tier Selector */
 	.tier-selector {
 		width: 100%;
-		max-width: 500px;
+		max-width: 600px;
 		margin-bottom: var(--space-md);
 	}
 
@@ -498,12 +509,17 @@
 		gap: var(--space-sm);
 	}
 
+	.tier-options.two-tier {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
 	.tier-option {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: var(--space-xs);
-		padding: var(--space-md);
+		padding: var(--space-lg) var(--space-md);
 		background: var(--color-bg-surface);
 		border: 2px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
@@ -520,6 +536,28 @@
 		background: var(--color-bg-elevated);
 	}
 
+	.tier-option.recommended {
+		border-color: var(--color-success);
+	}
+
+	.tier-option.recommended.selected {
+		border-color: var(--color-fg-primary);
+	}
+
+	.tier-badge {
+		position: absolute;
+		top: -10px;
+		left: 50%;
+		transform: translateX(-50%);
+		padding: 0.125rem 0.5rem;
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
+		color: var(--color-bg-pure);
+		background: var(--color-success);
+		border-radius: var(--radius-full);
+		white-space: nowrap;
+	}
+
 	.tier-name {
 		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
@@ -527,14 +565,33 @@
 	}
 
 	.tier-price {
-		font-size: var(--text-h3);
+		font-size: var(--text-h2);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 	}
 
-	.tier-seats {
-		font-size: var(--text-caption);
+	.tier-period {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-normal);
 		color: var(--color-fg-muted);
+	}
+
+	.tier-features {
+		list-style: none;
+		padding: 0;
+		margin: var(--space-sm) 0 0 0;
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		text-align: left;
+	}
+
+	.tier-features li {
+		padding: 0.125rem 0;
+	}
+
+	.tier-features li::before {
+		content: '✓ ';
+		color: var(--color-success);
 	}
 
 	.cta-button {
@@ -621,13 +678,25 @@
 			display: none;
 		}
 
-		.tier-options {
+		.tier-options,
+		.tier-options.two-tier {
 			grid-template-columns: 1fr;
 		}
 
 		.tier-option {
-			flex-direction: row;
-			justify-content: space-between;
+			flex-direction: column;
+			align-items: flex-start;
+			text-align: left;
+		}
+
+		.tier-badge {
+			position: static;
+			transform: none;
+			margin-bottom: var(--space-xs);
+		}
+
+		.tier-features {
+			width: 100%;
 		}
 	}
 </style>
