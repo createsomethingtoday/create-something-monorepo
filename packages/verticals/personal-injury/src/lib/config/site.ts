@@ -203,7 +203,7 @@ export interface PersonalInjuryConfig {
 /**
  * Demo Configuration: Martinez & Rivera Personal Injury Law
  * A fictional San Diego PI boutique firm
- * Images: Generated via Google Imagen 3
+ * Images: Generated via Cloudflare Workers AI (Flux)
  */
 export const siteConfig: PersonalInjuryConfig = {
 	// Identity
@@ -239,7 +239,7 @@ export const siteConfig: PersonalInjuryConfig = {
 
 	// Hero
 	hero: {
-		image: '/images/hero-justice.png',
+		image: '/images/hero-justice.jpg',
 		alt: 'San Diego skyline with scales of justice'
 	},
 
@@ -322,7 +322,7 @@ export const siteConfig: PersonalInjuryConfig = {
 				{ school: 'San Diego State University', degree: 'B.A. Criminal Justice', year: 2000 }
 			],
 			practiceAreas: ['commercial-truck', 'wrongful-death', 'auto-accident'],
-			image: '/images/attorney-martinez.png',
+			image: '/images/attorney-martinez.jpg',
 			bio: "Carlos has dedicated his career to fighting for injury victims. He has recovered over $250 million for his clients and is recognized as one of California's top trial lawyers. A former insurance defense attorney, Carlos knows how the other side thinks."
 		},
 		{
@@ -336,7 +336,7 @@ export const siteConfig: PersonalInjuryConfig = {
 				{ school: 'UC San Diego', degree: 'B.S. Biology', year: 2005 }
 			],
 			practiceAreas: ['medical-malpractice', 'auto-accident'],
-			image: '/images/attorney-rivera.png',
+			image: '/images/attorney-rivera.jpg',
 			bio: 'Elena brings a scientific background to medical malpractice cases. Her pre-law biology degree and attention to detail have resulted in numerous seven-figure settlements. She is passionate about holding healthcare providers accountable.'
 		},
 		{
@@ -350,7 +350,7 @@ export const siteConfig: PersonalInjuryConfig = {
 				{ school: 'Howard University', degree: 'B.A. Political Science', year: 2012 }
 			],
 			practiceAreas: ['motorcycle', 'premises-liability'],
-			image: '/images/attorney-johnson.png',
+			image: '/images/attorney-johnson.jpg',
 			bio: 'Marcus is an avid motorcycle rider who understands the unique challenges riders face. He has recovered millions for injured motorcyclists and is known for his aggressive litigation style.'
 		}
 	],
