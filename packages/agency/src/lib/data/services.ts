@@ -445,7 +445,7 @@ export const products: Service[] = [
 			headline: 'Professional websites deployed in minutes',
 			stats: ['5+ verticals', 'Cloudflare edge', 'D1 database included']
 		},
-		pricing: '$99-199/mo',
+		pricing: '$29-79/mo',
 		timeline: 'Same day',
 		icon: 'template',
 		tier: 'accessible',
@@ -454,7 +454,7 @@ export const products: Service[] = [
 			{
 				id: 'solo',
 				name: 'Solo',
-				price: '$99',
+				price: '$29',
 				period: '/mo',
 				features: [
 					'1 site with custom domain',
@@ -466,7 +466,7 @@ export const products: Service[] = [
 			{
 				id: 'team',
 				name: 'Team',
-				price: '$199',
+				price: '$79',
 				period: '/mo',
 				features: [
 					'5 sites with custom domains',

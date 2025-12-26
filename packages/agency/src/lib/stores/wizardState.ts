@@ -190,8 +190,8 @@ export const TEMPLATES = [
 	}
 ];
 
-// Pricing
+// Pricing (must match Stripe product catalog)
 export const PRICING = {
-	solo: { monthly: 99, label: 'Solo', description: 'For individuals and small teams' },
-	team: { monthly: 199, label: 'Team', description: 'For growing businesses' }
+	solo: { monthly: 29, label: 'Solo', description: 'For individuals and small teams' },
+	team: { monthly: 79, label: 'Team', description: 'For growing businesses' }
 } as const;

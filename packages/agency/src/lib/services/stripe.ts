@@ -33,14 +33,15 @@ export interface StripePriceConfig {
  * 4. Add to this configuration
  */
 export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
-	// Vertical Templates - Subscription tiers
+	// Vertical Templates - Subscription tiers ($29/mo Solo, $79/mo Team)
+	// Set STRIPE_PRICE_VERTICAL_SOLO and STRIPE_PRICE_VERTICAL_TEAM in Cloudflare secrets
 	'vertical-templates-solo': {
-		priceId: process.env.STRIPE_PRICE_VERTICAL_SOLO || 'price_vertical_solo_placeholder',
+		priceId: process.env.STRIPE_PRICE_VERTICAL_SOLO || 'price_1SiduGAzstI6Ecr5scme24uj',
 		mode: 'subscription',
 		name: 'Vertical Templates (Solo)'
 	},
 	'vertical-templates-team': {
-		priceId: process.env.STRIPE_PRICE_VERTICAL_TEAM || 'price_vertical_team_placeholder',
+		priceId: process.env.STRIPE_PRICE_VERTICAL_TEAM || 'price_1SidvJAzstI6Ecr5ZWWsHRD5',
 		mode: 'subscription',
 		name: 'Vertical Templates (Team)'
 	},
