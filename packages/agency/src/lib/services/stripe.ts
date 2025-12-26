@@ -33,11 +33,16 @@ export interface StripePriceConfig {
  * 4. Add to this configuration
  */
 export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
-	// Subscription product
-	'vertical-templates': {
-		priceId: process.env.STRIPE_PRICE_VERTICAL_TEMPLATES || 'price_vertical_templates_placeholder',
+	// Vertical Templates - Subscription tiers
+	'vertical-templates-solo': {
+		priceId: process.env.STRIPE_PRICE_VERTICAL_SOLO || 'price_vertical_solo_placeholder',
 		mode: 'subscription',
-		name: 'Vertical Templates'
+		name: 'Vertical Templates (Solo)'
+	},
+	'vertical-templates-team': {
+		priceId: process.env.STRIPE_PRICE_VERTICAL_TEAM || 'price_vertical_team_placeholder',
+		mode: 'subscription',
+		name: 'Vertical Templates (Team)'
 	},
 
 	// One-time payment products

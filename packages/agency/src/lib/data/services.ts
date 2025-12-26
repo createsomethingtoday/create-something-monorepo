@@ -19,6 +19,15 @@ export interface ServiceProof {
 	stats: string[];
 }
 
+export interface PricingTier {
+	id: string;
+	name: string;
+	price: string;
+	period?: string; // e.g., '/mo', '/year'
+	features: string[];
+	recommended?: boolean;
+}
+
 export interface Service {
 	id: string;
 	title: string;
@@ -36,6 +45,8 @@ export interface Service {
 	// Phase 2 additions
 	tier: ServiceTier;
 	isProductized: boolean; // true = self-serve product, false = consulting
+	// Optional pricing tiers for multi-tier products
+	pricingTiers?: PricingTier[];
 }
 
 export const services: Service[] = [
@@ -438,7 +449,35 @@ export const products: Service[] = [
 		timeline: 'Same day',
 		icon: 'template',
 		tier: 'accessible',
-		isProductized: true
+		isProductized: true,
+		pricingTiers: [
+			{
+				id: 'solo',
+				name: 'Solo',
+				price: '$99',
+				period: '/mo',
+				features: [
+					'1 site with custom domain',
+					'1,000 leads/month',
+					'Built-in analytics',
+					'Email support'
+				]
+			},
+			{
+				id: 'team',
+				name: 'Team',
+				price: '$199',
+				period: '/mo',
+				features: [
+					'5 sites with custom domains',
+					'Unlimited leads',
+					'White-label branding',
+					'API access',
+					'Priority support'
+				],
+				recommended: true
+			}
+		]
 	},
 	{
 		id: 'automation-patterns',
