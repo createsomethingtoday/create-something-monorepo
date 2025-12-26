@@ -98,7 +98,7 @@ function isReviewedCheckpoint(checkpoint: Checkpoint | ReviewedCheckpoint): chec
  * - Sonnet (~20% of Opus cost): Standard implementations
  * - Opus (baseline): Complex reasoning, architecture, novel work
  */
-function selectModelForTask(issue: BeadsIssue): 'opus' | 'sonnet' | 'haiku' {
+export function selectModelForTask(issue: BeadsIssue): 'opus' | 'sonnet' | 'haiku' {
   const title = issue.title.toLowerCase();
   const desc = (issue.description || '').toLowerCase();
   const labels = issue.labels || [];

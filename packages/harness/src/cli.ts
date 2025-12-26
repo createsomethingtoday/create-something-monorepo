@@ -12,8 +12,10 @@
  *   harness stop
  */
 
-import { initializeHarness, runHarness, resumeHarness, pauseHarness, getHarnessStatus } from './runner.js';
-import type { StartOptions, PauseOptions, ResumeOptions, ReviewPipelineConfig, ReviewerType, SwarmConfig } from './types.js';
+import { initializeHarness, runHarness, resumeHarness, pauseHarness, getHarnessStatus, selectModelForTask } from './runner.js';
+import { getIssue, createIssue, updateIssueStatus } from './beads.js';
+import { runSession } from './session.js';
+import type { StartOptions, PauseOptions, ResumeOptions, ReviewPipelineConfig, ReviewerType, SwarmConfig, BeadsIssue } from './types.js';
 import { DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_SWARM_CONFIG } from './types.js';
 
 async function main(): Promise<void> {
@@ -43,6 +45,9 @@ async function main(): Promise<void> {
       case 'stop':
         await handleStop(args.slice(1), cwd);
         break;
+      case 'work':
+        await handleWork(args.slice(1), cwd);
+        break;
       default:
         console.error(`Unknown command: ${command}`);
         printHelp();
@@ -62,11 +67,18 @@ USAGE:
   harness <command> [options]
 
 COMMANDS:
+  work <issue-id>     Work on a single issue (unified entry point)
+  work --create "T"   Create new issue and work on it
   start <spec-file>   Start a new harness run from a markdown PRD spec
   pause               Pause the running harness after current session
   resume              Resume a paused harness
   status              Show harness status
   stop                Stop the harness immediately
+
+WORK OPTIONS:
+  --create "title"    Create new issue with title and work on it
+  --model <m>         Override model selection (opus|sonnet|haiku)
+  --dry-run           Show what would happen without executing
 
 OPTIONS:
   --checkpoint-every N   Create checkpoint every N sessions (default: 3)
@@ -198,6 +210,123 @@ async function handleStatus(args: string[], cwd: string): Promise<void> {
 async function handleStop(args: string[], cwd: string): Promise<void> {
   console.log('Stop command not yet implemented.');
   console.log('Use Ctrl+C to stop the harness, or create a pause issue.');
+}
+
+/**
+ * Handle the 'work' command - unified entry point for working on issues.
+ *
+ * Usage:
+ *   harness work <issue-id>              Work on existing issue
+ *   harness work --create "Title"        Create and work on new issue
+ *   harness work --spec <file>           Parse spec and work through issues
+ */
+async function handleWork(args: string[], cwd: string): Promise<void> {
+  const createTitle = parseStringArg(args, '--create');
+  const specFile = parseStringArg(args, '--spec');
+  const modelOverride = parseStringArg(args, '--model') as 'opus' | 'sonnet' | 'haiku' | undefined;
+  const dryRun = args.includes('--dry-run');
+
+  let issue: BeadsIssue | null = null;
+
+  // Mode 1: Create new issue and work on it
+  if (createTitle) {
+    console.log(`\n🆕 Creating issue: "${createTitle}"\n`);
+    if (dryRun) {
+      console.log('[DRY RUN] Would create issue and work on it');
+      return;
+    }
+    const issueId = await createIssue(createTitle, {
+      description: 'Created via harness work --create',
+      priority: 2,
+      type: 'task',
+    }, cwd);
+    issue = await getIssue(issueId, cwd);
+  }
+  // Mode 2: Parse spec file and work through issues
+  else if (specFile) {
+    console.log(`\n📋 Spec mode not yet integrated with work command.`);
+    console.log(`   Use: harness start ${specFile}`);
+    return;
+  }
+  // Mode 3: Work on existing issue
+  else {
+    const issueId = args.find((arg) => !arg.startsWith('--'));
+    if (!issueId) {
+      console.error('Error: issue ID required');
+      console.error('Usage: harness work <issue-id> [--model opus|sonnet|haiku]');
+      console.error('       harness work --create "Task title"');
+      process.exit(1);
+    }
+    issue = await getIssue(issueId, cwd);
+    if (!issue) {
+      console.error(`Error: Issue not found: ${issueId}`);
+      process.exit(1);
+    }
+  }
+
+  if (!issue) {
+    console.error('Error: Could not resolve issue');
+    process.exit(1);
+  }
+
+  // Detect complexity and select model
+  const detectedModel = selectModelForTask(issue);
+  const model = modelOverride || detectedModel;
+
+  console.log(`
+╔═══════════════════════════════════════════════════════════════╗
+║                      HARNESS WORK                              ║
+╚═══════════════════════════════════════════════════════════════╝
+
+📋 Issue: ${issue.id}
+📝 Title: ${issue.title}
+🎯 Priority: P${issue.priority}
+🏷️  Labels: ${issue.labels?.join(', ') || 'none'}
+
+🔍 Complexity Detection:
+   Detected model: ${detectedModel}
+   ${modelOverride ? `Override: ${modelOverride}` : ''}
+   Using: ${model.toUpperCase()}
+`);
+
+  if (dryRun) {
+    console.log('[DRY RUN] Would mark in_progress and spawn Claude Code session');
+    return;
+  }
+
+  // Mark issue in progress
+  console.log(`→ Marking ${issue.id} as in_progress...`);
+  await updateIssueStatus(issue.id, 'in_progress', cwd);
+
+  // Spawn Claude Code session
+  console.log(`→ Spawning Claude Code session with ${model}...\n`);
+
+  const primingContext = {
+    currentIssue: issue,
+    recentCommits: [],
+    lastCheckpoint: null,
+    redirectNotes: [],
+    sessionGoal: `Complete issue ${issue.id}: ${issue.title}`,
+  };
+
+  const result = await runSession(issue, primingContext, {
+    cwd,
+    model,
+  });
+
+  // Handle result
+  if (result.outcome === 'success') {
+    console.log(`\n✅ Session completed successfully`);
+    if (result.gitCommit) {
+      console.log(`   Commit: ${result.gitCommit}`);
+    }
+    console.log(`   Duration: ${Math.round(result.durationMs / 1000)}s`);
+  } else {
+    console.log(`\n⚠️  Session ended with: ${result.outcome}`);
+    if (result.error) {
+      console.log(`   Error: ${result.error}`);
+    }
+  }
 }
 
 function parseIntArg(args: string[], flag: string, defaultValue: number): number {
