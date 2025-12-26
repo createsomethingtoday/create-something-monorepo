@@ -3,6 +3,7 @@
  *
  * Voice: Warm, inviting, sensory-rich
  * Structure: Menu first, ambiance, easy reservations
+ * Images: Generated via Cloudflare Workers AI (Flux)
  */
 
 export const siteConfig = {
@@ -12,10 +13,10 @@ export const siteConfig = {
 	description:
 		'Contemporary American dining featuring seasonal ingredients and artisanal techniques. Serving Seattle since 2018.',
 
-	// Hero (using menu image as placeholder)
+	// Hero
 	hero: {
-		image: '/menu/halibut.jpg',
-		alt: 'Pacific Northwest Halibut - Our signature dish'
+		image: '/hero-interior.jpg',
+		alt: 'Elegant restaurant interior with warm ambient lighting'
 	},
 
 	// Contact
@@ -137,7 +138,7 @@ export const siteConfig = {
 			description: '14oz dry-aged beef, roasted bone marrow, fingerling potatoes, red wine jus',
 			category: 'entrees',
 			price: 52,
-			image: '/menu/halibut.jpg',
+			image: '/menu/ribeye.jpg',
 			dietary: ['gluten-free'],
 			featured: true
 		},
@@ -147,7 +148,7 @@ export const siteConfig = {
 				"Chef's selection of five courses showcasing the season's finest ingredients",
 			category: 'tasting',
 			price: 85,
-			image: '/menu/halibut.jpg',
+			image: '/menu/tasting-menu.jpg',
 			dietary: ['vegetarian-option', 'vegan-option'],
 			featured: true
 		}
