@@ -1023,6 +1023,10 @@
 			<span class="metric-value">{materialPalette.length}</span>
 			<span class="metric-label">Materials {showMaterials ? '−' : '+'}</span>
 		</div>
+		<a href="/experiments/threshold-dwelling/png?width=2048" download="threshold-dwelling-floorplan.png" class="metric clickable download-link">
+			<span class="metric-value">PNG</span>
+			<span class="metric-label">Download</span>
+		</a>
 	</footer>
 
 	<!-- Budget Details: Collapsible price sheet (Rams: information on demand) -->
@@ -1202,6 +1206,10 @@
 
 	.metric.clickable:hover {
 		opacity: 0.8;
+	}
+
+	.download-link {
+		text-decoration: none;
 	}
 
 	/* Budget Details - Collapsible price sheet */

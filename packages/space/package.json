@@ -33,6 +33,8 @@
 		"tsx": "^4.20.6",
 		"typescript": "^5.9.3",
 		"vite": "^7.1.10",
+		"vite-plugin-top-level-await": "^1.6.0",
+		"vite-plugin-wasm": "^3.5.0",
 		"wrangler": "^4.51.0"
 	},
 	"dependencies": {
@@ -46,6 +48,7 @@
 		"@codemirror/view": "^6.38.7",
 		"@create-something/components": "workspace:*",
 		"@create-something/tufte": "workspace:*",
+		"@resvg/resvg-wasm": "^2.6.2",
 		"codemirror": "^6.0.2"
 	}
 }
