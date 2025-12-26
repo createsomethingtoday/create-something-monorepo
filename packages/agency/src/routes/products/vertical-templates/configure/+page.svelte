@@ -127,7 +127,7 @@
 		display: flex;
 		flex-direction: column;
 		padding: var(--space-xl) var(--space-lg);
-		max-width: var(--width-prose);
+		max-width: var(--width-wide);
 		margin: 0 auto;
 	}
 
