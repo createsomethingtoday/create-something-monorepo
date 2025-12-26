@@ -88,6 +88,8 @@ async function handleCheckoutComplete(
 	const tier = session.metadata?.tier;
 	const assessmentId = session.metadata?.assessment_id;
 	const customerEmail = session.customer_email || session.customer_details?.email;
+	const pendingId = session.metadata?.pending_id;
+	const subdomain = session.metadata?.subdomain;
 
 	console.log('Checkout completed:', {
 		sessionId: session.id,
@@ -95,8 +97,16 @@ async function handleCheckoutComplete(
 		tier,
 		assessmentId,
 		customerEmail,
+		pendingId,
+		subdomain,
 		amountTotal: session.amount_total
 	});
+
+	// Handle Vertical Templates provisioning
+	if (productId === 'vertical-templates' && pendingId) {
+		await provisionVerticalTemplate(session, platform);
+		return;
+	}
 
 	const cache = platform?.env?.CACHE;
 
@@ -134,6 +144,132 @@ async function handleCheckoutComplete(
 		if (session.mode === 'payment') {
 			await sendFulfillmentEmail(customerEmail, productId, downloadToken, platform);
 		}
+	}
+}
+
+/**
+ * Provision a Vertical Template site after successful payment
+ */
+async function provisionVerticalTemplate(
+	session: Stripe.Checkout.Session,
+	platform: App.Platform | undefined
+) {
+	const pendingId = session.metadata?.pending_id;
+	const subdomain = session.metadata?.subdomain;
+	const customerEmail = session.customer_email || session.customer_details?.email;
+
+	if (!pendingId) {
+		console.error('Vertical template provisioning failed: no pending_id in metadata');
+		return;
+	}
+
+	const templatesApiUrl =
+		platform?.env?.TEMPLATES_PLATFORM_API_URL || 'https://templates.createsomething.space';
+	const templatesApiSecret = platform?.env?.TEMPLATES_PLATFORM_API_SECRET;
+
+	if (!templatesApiSecret) {
+		console.error('Vertical template provisioning failed: TEMPLATES_PLATFORM_API_SECRET not configured');
+		return;
+	}
+
+	try {
+		// Call provision API
+		const response = await fetch(`${templatesApiUrl}/api/sites/provision`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'x-api-secret': templatesApiSecret
+			},
+			body: JSON.stringify({
+				pendingId,
+				stripeSubscriptionId: session.subscription as string,
+				stripeCustomerId: session.customer as string
+			})
+		});
+
+		const data = await response.json() as { success: boolean; tenant?: { id: string; subdomain: string; url: string } };
+
+		if (!response.ok || !data.success) {
+			console.error('Provision API failed:', data);
+			return;
+		}
+
+		console.log('Vertical template provisioned:', {
+			tenantId: data.tenant?.id,
+			subdomain: data.tenant?.subdomain,
+			url: data.tenant?.url
+		});
+
+		// Send welcome email with site URL
+		if (customerEmail && subdomain) {
+			await sendVerticalTemplateWelcomeEmail(
+				customerEmail,
+				subdomain,
+				`https://${subdomain}.createsomething.space`,
+				platform
+			);
+		}
+	} catch (err) {
+		console.error('Error provisioning vertical template:', err);
+	}
+}
+
+/**
+ * Send welcome email for Vertical Templates
+ */
+async function sendVerticalTemplateWelcomeEmail(
+	email: string,
+	subdomain: string,
+	siteUrl: string,
+	platform: App.Platform | undefined
+) {
+	const resendApiKey = platform?.env?.RESEND_API_KEY;
+
+	if (resendApiKey) {
+		try {
+			const response = await fetch('https://api.resend.com/emails', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${resendApiKey}`
+				},
+				body: JSON.stringify({
+					from: 'CREATE SOMETHING <sites@createsomething.agency>',
+					to: email,
+					subject: `Your site ${subdomain}.createsomething.space is live!`,
+					html: `
+						<h1>Your site is live!</h1>
+						<p>Great news—your site is now active and ready for the world.</p>
+						<p><strong>Your site URL:</strong></p>
+						<p><a href="${siteUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Visit ${subdomain}.createsomething.space</a></p>
+						<h2>What's next?</h2>
+						<ul>
+							<li>Share your new site with clients and colleagues</li>
+							<li>Content management dashboard coming soon</li>
+							<li>Custom domain support available on Team tier</li>
+						</ul>
+						<p style="color: #666; font-size: 14px;">Questions? Reply to this email and we'll help you out.</p>
+						<hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+						<p style="color: #999; font-size: 12px;">CREATE SOMETHING<br/>createsomething.agency</p>
+					`
+				})
+			});
+
+			if (response.ok) {
+				console.log(`Welcome email sent to ${email} for site ${subdomain}`);
+			} else {
+				const error = await response.text();
+				console.error('Failed to send welcome email via Resend:', error);
+			}
+		} catch (err) {
+			console.error('Error sending welcome email:', err);
+		}
+	} else {
+		console.log('WELCOME EMAIL NEEDED:', {
+			to: email,
+			subdomain,
+			siteUrl
+		});
 	}
 }
 
@@ -262,6 +398,45 @@ async function handleSubscriptionCanceled(
 			}),
 			{ expirationTtl: 60 * 60 * 24 * 30 } // Keep for 30 days for reference
 		);
+	}
+
+	// Suspend vertical template site if applicable
+	await suspendVerticalTemplateSite(subscription, platform);
+}
+
+/**
+ * Suspend a Vertical Template site when subscription is canceled
+ */
+async function suspendVerticalTemplateSite(
+	subscription: Stripe.Subscription,
+	platform: App.Platform | undefined
+) {
+	const templatesApiUrl =
+		platform?.env?.TEMPLATES_PLATFORM_API_URL || 'https://templates.createsomething.space';
+	const templatesApiSecret = platform?.env?.TEMPLATES_PLATFORM_API_SECRET;
+
+	if (!templatesApiSecret) {
+		return; // Not configured for vertical templates
+	}
+
+	try {
+		const response = await fetch(`${templatesApiUrl}/api/subscriptions/update`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'x-api-secret': templatesApiSecret
+			},
+			body: JSON.stringify({
+				stripeSubscriptionId: subscription.id,
+				status: 'canceled'
+			})
+		});
+
+		if (response.ok) {
+			console.log(`Vertical template site suspended for subscription ${subscription.id}`);
+		}
+	} catch (err) {
+		console.error('Error suspending vertical template site:', err);
 	}
 }
 

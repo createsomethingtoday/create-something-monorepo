@@ -297,7 +297,7 @@
 	.form-input:focus {
 		outline: none;
 		border-color: var(--color-border-strong);
-		box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+		box-shadow: 0 0 0 3px var(--color-hover);
 	}
 
 	.form-input:hover:not(:focus) {

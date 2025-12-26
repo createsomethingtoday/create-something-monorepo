@@ -12,11 +12,22 @@ import { getOfferingBySlug } from '$lib/data/services';
 
 interface CheckoutRequest {
 	productId: string;
-	tier?: 'solo' | 'team' | 'org'; // For agent-in-a-box tiers
+	tier?: 'solo' | 'team' | 'org'; // For agent-in-a-box and vertical-templates tiers
 	successUrl?: string;
 	cancelUrl?: string;
 	customerEmail?: string;
 	assessmentId?: string; // Link to assessment session if applicable
+	// Vertical Templates specific
+	subdomain?: string;
+	templateId?: string;
+	config?: Record<string, unknown>;
+}
+
+interface ReserveResponse {
+	success: boolean;
+	pendingId?: string;
+	expiresAt?: string;
+	error?: string;
 }
 
 export const POST: RequestHandler = async ({ request, platform, url }) => {
@@ -34,10 +45,55 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 		throw error(400, 'Invalid JSON body');
 	}
 
-	const { productId, tier, successUrl, cancelUrl, customerEmail, assessmentId } = body;
+	const { productId, tier, successUrl, cancelUrl, customerEmail, assessmentId, subdomain, templateId, config } = body;
 
 	// Validate product exists
 	const product = getOfferingBySlug(productId);
+
+	// For vertical-templates, reserve subdomain before checkout
+	let pendingId: string | undefined;
+	if (productId === 'vertical-templates') {
+		if (!subdomain || !templateId || !config || !customerEmail) {
+			throw error(400, 'Vertical templates require subdomain, templateId, config, and customerEmail');
+		}
+
+		// Call templates-platform reserve API
+		const templatesApiUrl = platform?.env?.TEMPLATES_PLATFORM_API_URL || 'https://templates.createsomething.space';
+		const templatesApiSecret = platform?.env?.TEMPLATES_PLATFORM_API_SECRET;
+
+		if (!templatesApiSecret) {
+			throw error(500, 'Templates platform not configured');
+		}
+
+		try {
+			const reserveResponse = await fetch(`${templatesApiUrl}/api/sites/reserve`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'x-api-secret': templatesApiSecret
+				},
+				body: JSON.stringify({
+					subdomain,
+					templateId,
+					tier: tier || 'solo',
+					config,
+					customerEmail
+				})
+			});
+
+			const reserveData: ReserveResponse = await reserveResponse.json();
+
+			if (!reserveData.success) {
+				throw error(409, reserveData.error || 'Failed to reserve subdomain');
+			}
+
+			pendingId = reserveData.pendingId;
+		} catch (err) {
+			if (err instanceof Error && 'status' in err) throw err;
+			console.error('Reserve API error:', err);
+			throw error(500, 'Failed to reserve site');
+		}
+	}
 	if (!product) {
 		throw error(404, 'Product not found');
 	}
@@ -90,7 +146,11 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 			metadata: {
 				product_id: productId,
 				tier: tier || 'default',
-				assessment_id: assessmentId || ''
+				assessment_id: assessmentId || '',
+				// Vertical Templates provisioning
+				pending_id: pendingId || '',
+				subdomain: subdomain || '',
+				template_id: templateId || ''
 			},
 			// For subscriptions, allow promotion codes
 			...(priceConfig.mode === 'subscription' && {

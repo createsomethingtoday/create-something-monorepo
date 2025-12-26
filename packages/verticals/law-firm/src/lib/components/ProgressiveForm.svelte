@@ -292,7 +292,7 @@
 
 	/* Animation */
 	.animate-slide-down {
-		animation: slideDown 0.2s ease-out forwards;
+		animation: slideDown var(--duration-micro) var(--ease-standard) forwards;
 	}
 
 	@keyframes slideDown {

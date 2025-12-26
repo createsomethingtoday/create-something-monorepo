@@ -29,6 +29,7 @@
     "harness:resume": "pnpm --filter @create-something/harness harness resume"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^8.50.1",
     "prettier": "^3.7.4",
     "prettier-plugin-svelte": "^3.4.1",
     "typescript": "^5.7.2"

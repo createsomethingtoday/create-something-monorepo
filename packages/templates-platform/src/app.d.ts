@@ -6,11 +6,13 @@ declare global {
 			env: {
 				DB: D1Database;
 				KV: KVNamespace;
+				TENANT_CACHE: KVNamespace;
 				SITE_BUCKET: R2Bucket;
 				BUILD_QUEUE: Queue;
 				ADMIN_TOKEN?: string;
 				STRIPE_SECRET_KEY: string;
 				STRIPE_WEBHOOK_SECRET: string;
+				INTERNAL_API_SECRET?: string;
 			};
 		}
 
