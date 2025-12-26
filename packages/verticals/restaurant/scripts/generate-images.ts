@@ -108,6 +108,16 @@ const IMAGES: ImageSpec[] = [
 		beautifully plated dishes, wine glasses, warm candlelight,
 		Pacific Northwest fine dining, intimate dinner atmosphere,
 		rich colors, inviting and appetizing scene`
+	},
+
+	// Team - Executive Chef
+	{
+		filename: 'team/chef-williams.jpg',
+		prompt: `Professional chef portrait, distinguished male executive chef in clean white chef's coat,
+		confident welcoming expression, professional kitchen environment blurred in background,
+		warm natural lighting, editorial portrait photography style, approachable and experienced,
+		Pacific Northwest culinary professional, mid-40s, subtle smile, clean composition,
+		restaurant kitchen setting, high-end culinary establishment, 8K quality`
 	}
 ];
 
