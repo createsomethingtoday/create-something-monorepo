@@ -140,7 +140,7 @@ export interface LawFirmConfig {
 /**
  * Demo Configuration: Morrison & Associates
  * A fictional mid-size California law firm
- * Images: Generated via Google Imagen 3
+ * Images: Generated via Cloudflare Workers AI (Flux)
  */
 export const siteConfig: LawFirmConfig = {
 	// Identity
@@ -172,7 +172,7 @@ export const siteConfig: LawFirmConfig = {
 
 	// Hero
 	hero: {
-		image: '/images/hero-office.png',
+		image: '/images/hero-office.jpg',
 		alt: 'Modern law office with San Francisco skyline view'
 	},
 
@@ -214,7 +214,7 @@ export const siteConfig: LawFirmConfig = {
 				{ school: 'UC Berkeley', degree: 'B.A. Political Science', year: 2002 }
 			],
 			practiceAreas: ['family-law', 'business-law'],
-			image: '/images/attorney-morrison.png',
+			image: '/images/attorney-morrison.jpg',
 			bio: 'Sarah founded Morrison & Associates in 2010 after five years at a leading Bay Area litigation firm. She has successfully handled over 500 family law cases and is a certified family law specialist by the California State Bar.'
 		},
 		{
@@ -228,7 +228,7 @@ export const siteConfig: LawFirmConfig = {
 				{ school: 'UCLA', degree: 'B.S. Economics', year: 2007 }
 			],
 			practiceAreas: ['personal-injury', 'business-law'],
-			image: '/images/attorney-chen.png',
+			image: '/images/attorney-chen.jpg',
 			bio: 'James joined the firm in 2015 and became partner in 2020. He has recovered over $25 million for personal injury clients and brings meticulous attention to every case.'
 		},
 		{
@@ -242,7 +242,7 @@ export const siteConfig: LawFirmConfig = {
 				{ school: 'San Jose State University', degree: 'B.A. Sociology', year: 2015 }
 			],
 			practiceAreas: ['family-law'],
-			image: '/images/attorney-gonzalez.png',
+			image: '/images/attorney-gonzalez.jpg',
 			bio: 'Maria focuses exclusively on family law, helping clients navigate custody disputes, divorce proceedings, and domestic violence restraining orders. Fluent in Spanish.'
 		}
 	],
