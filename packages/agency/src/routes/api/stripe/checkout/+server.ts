@@ -81,6 +81,14 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 				})
 			});
 
+			// Handle non-success HTTP responses
+			if (!reserveResponse.ok) {
+				const errorData = await reserveResponse.json().catch(() => ({})) as { message?: string; error?: string };
+				const errorMessage = errorData.message || errorData.error || `Reserve API returned ${reserveResponse.status}`;
+				console.error('Reserve API error response:', reserveResponse.status, errorMessage);
+				throw error(reserveResponse.status, errorMessage);
+			}
+
 			const reserveData: ReserveResponse = await reserveResponse.json();
 
 			if (!reserveData.success) {
@@ -89,7 +97,8 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 
 			pendingId = reserveData.pendingId;
 		} catch (err) {
-			if (err instanceof Error && 'status' in err) throw err;
+			// SvelteKit HttpError has status property but isn't an Error instance
+			if (err && typeof err === 'object' && 'status' in err) throw err;
 			console.error('Reserve API error:', err);
 			throw error(500, 'Failed to reserve site');
 		}
