@@ -21,10 +21,6 @@
 
 	let { children, data }: Props = $props();
 
-	// Initialize site config from window.__SITE_CONFIG__ if available
-	// This makes the config reactive via the store
-	initSiteConfig();
-
 	// Don't show sticky CTA on contact page (already there)
 	let showStickyCTA = $derived($page.url.pathname !== '/contact');
 
@@ -46,8 +42,12 @@
 		});
 	});
 
-	// Page entrance animation
+	// Page entrance animation and config initialization
 	onMount(() => {
+		// Initialize site config from window.__SITE_CONFIG__ after hydration
+		// Must be in onMount to ensure browser context is available
+		initSiteConfig();
+
 		// Add staggered reveal to main content sections
 		const sections = document.querySelectorAll('main > section, main > div > section');
 		sections.forEach((section, index) => {

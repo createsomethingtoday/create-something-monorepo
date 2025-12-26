@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 
 	interface PracticeArea {
 		title: string;
@@ -13,14 +11,17 @@
 		areas?: PracticeArea[];
 	}
 
-	// Generate practice areas from siteConfig services
-	const defaultAreas: PracticeArea[] = siteConfig.services.map((service) => ({
-		title: service.name,
-		description: service.description,
-		href: '/services'
-	}));
+	let { areas }: Props = $props();
 
-	let { areas = defaultAreas }: Props = $props();
+	// Reactive defaults from store - generate practice areas from siteConfig services
+	const effectiveAreas = $derived(
+		areas ??
+			$siteConfig.services.map((service) => ({
+				title: service.name,
+				description: service.description,
+				href: '/services'
+			}))
+	);
 </script>
 
 <section class="practice-areas">
@@ -32,7 +33,7 @@
 		</div>
 
 		<div class="areas-grid stagger-children">
-			{#each areas as area}
+			{#each effectiveAreas as area}
 				<a href={area.href} class="area-card service-card card-interactive stagger-item" aria-label="Learn more about {area.title}">
 					<h3 class="area-title">{area.title}</h3>
 					<p class="area-description">{area.description}</p>

@@ -11,9 +11,7 @@
 	 * "Architecture should recede into experience."
 	 */
 
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 
 	interface Props {
 		headline?: string;
@@ -21,25 +19,26 @@
 		approach?: readonly string[];
 	}
 
-	let {
-		headline = siteConfig.studio.headline,
-		philosophy = siteConfig.studio.philosophy,
-		approach = siteConfig.studio.approach
-	}: Props = $props();
+	let { headline, philosophy, approach }: Props = $props();
+
+	// Reactive defaults from store
+	const effectiveHeadline = $derived(headline ?? $siteConfig.studio.headline);
+	const effectivePhilosophy = $derived(philosophy ?? $siteConfig.studio.philosophy);
+	const effectiveApproach = $derived(approach ?? $siteConfig.studio.approach);
 </script>
 
 <section class="studio-section">
 	<div class="studio-container">
 		<!-- Philosophy: the core statement -->
 		<div class="studio-philosophy">
-			<h2 class="studio-headline">{headline}</h2>
-			<p class="studio-statement">{philosophy}</p>
+			<h2 class="studio-headline">{effectiveHeadline}</h2>
+			<p class="studio-statement">{effectivePhilosophy}</p>
 		</div>
 
 		<!-- Approach: principles, not features -->
 		<div class="studio-approach">
 			<ul class="approach-list">
-				{#each approach as principle, index}
+				{#each effectiveApproach as principle, index}
 					<li class="approach-item" style="--index: {index}">
 						{principle}
 					</li>

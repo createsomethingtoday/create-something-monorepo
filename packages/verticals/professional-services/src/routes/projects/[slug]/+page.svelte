@@ -11,6 +11,7 @@
 
 	import type { PageData } from './$types';
 	import SEOHead from '$lib/components/SEOHead.svelte';
+	import { siteConfig } from '$lib/config/context';
 
 	let { data }: { data: PageData } = $props();
 
@@ -18,7 +19,7 @@
 </script>
 
 <SEOHead
-	title="{project.title} | Studio Name"
+	title="{project.title} | {$siteConfig.name}"
 	description={project.description}
 	canonical="/projects/{project.slug}"
 />

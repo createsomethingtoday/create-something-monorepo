@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 
 	interface Testimonial {
 		quote: string;
@@ -13,7 +11,10 @@
 		testimonials?: Testimonial[];
 	}
 
-	let { testimonials = siteConfig.testimonials }: Props = $props();
+	let { testimonials }: Props = $props();
+
+	// Reactive defaults from store
+	const effectiveTestimonials = $derived(testimonials ?? $siteConfig.testimonials);
 </script>
 
 <section class="testimonials-section">
@@ -25,7 +26,7 @@
 		</div>
 
 		<div class="testimonials-grid stagger-children">
-			{#each testimonials as testimonial}
+			{#each effectiveTestimonials as testimonial}
 				<div class="testimonial-card card-interactive stagger-item">
 					<blockquote class="testimonial-quote">"{testimonial.quote}"</blockquote>
 					<div class="testimonial-author">

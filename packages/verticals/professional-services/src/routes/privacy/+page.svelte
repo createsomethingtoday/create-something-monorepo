@@ -1,8 +1,6 @@
 <script lang="ts">
 	import SEOHead from '$lib/components/SEOHead.svelte';
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 </script>
 
 <SEOHead
@@ -19,7 +17,7 @@
 		<section>
 			<h2>Introduction</h2>
 			<p>
-				{siteConfig.name} ("we," "our," or "us") respects your privacy and is committed to protecting
+				{$siteConfig.name} ("we," "our," or "us") respects your privacy and is committed to protecting
 				your personal information. This Privacy Policy explains how we collect, use, disclose, and
 				safeguard your information when you visit our website or use our services.
 			</p>
@@ -92,8 +90,8 @@
 				If you have questions about this Privacy Policy, please contact us at:
 			</p>
 			<p>
-				<a href="mailto:{siteConfig.email}">{siteConfig.email}</a><br />
-				{siteConfig.phone}
+				<a href="mailto:{$siteConfig.email}">{$siteConfig.email}</a><br />
+				{$siteConfig.phone}
 			</p>
 		</section>
 	</div>

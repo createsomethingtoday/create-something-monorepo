@@ -8,9 +8,7 @@
 	 * "Architecture should recede into experience."
 	 */
 
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 
 	interface Props {
 		image?: string;
@@ -18,11 +16,12 @@
 		caption?: string;
 	}
 
-	let {
-		image = siteConfig.hero.image,
-		alt = siteConfig.hero.alt,
-		caption = siteConfig.hero.caption
-	}: Props = $props();
+	let { image, alt, caption }: Props = $props();
+
+	// Reactive defaults from store
+	const effectiveImage = $derived(image ?? $siteConfig.hero.image);
+	const effectiveAlt = $derived(alt ?? $siteConfig.hero.alt);
+	const effectiveCaption = $derived(caption ?? $siteConfig.hero.caption);
 </script>
 
 <section class="hero">
@@ -31,8 +30,8 @@
 		<!-- Placeholder for when image loads -->
 		<div class="hero-image-placeholder"></div>
 		<img
-			src={image}
-			{alt}
+			src={effectiveImage}
+			alt={effectiveAlt}
 			class="hero-image"
 			loading="eager"
 		/>
@@ -42,7 +41,7 @@
 
 	<!-- Minimal caption - positioned with intention -->
 	<div class="hero-caption">
-		<span class="caption-text">{caption}</span>
+		<span class="caption-text">{effectiveCaption}</span>
 	</div>
 
 	<!-- Scroll indicator - invites exploration -->

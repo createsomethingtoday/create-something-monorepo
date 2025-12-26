@@ -9,14 +9,12 @@
 	 */
 
 	import SEOHead from '$lib/components/SEOHead.svelte';
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 </script>
 
 <SEOHead
-	title="Studio | {siteConfig.name}"
-	description={siteConfig.studio.philosophy}
+	title="Studio | {$siteConfig.name}"
+	description={$siteConfig.studio.philosophy}
 	canonical="/studio"
 />
 
@@ -29,7 +27,7 @@
 	<!-- Philosophy -->
 	<section class="studio-philosophy">
 		<p class="philosophy-text">
-			{siteConfig.studio.philosophy}
+			{$siteConfig.studio.philosophy}
 		</p>
 	</section>
 
@@ -37,7 +35,7 @@
 	<section class="studio-approach">
 		<h2 class="section-label">Approach</h2>
 		<ul class="approach-list">
-			{#each siteConfig.studio.approach as principle, index}
+			{#each $siteConfig.studio.approach as principle, index}
 				<li class="approach-item" style="--index: {index}">
 					<span class="approach-number">{String(index + 1).padStart(2, '0')}</span>
 					<span class="approach-text">{principle}</span>
@@ -50,18 +48,18 @@
 	<section class="studio-services">
 		<h2 class="section-label">Services</h2>
 		<ul class="services-list">
-			{#each siteConfig.services as service}
+			{#each $siteConfig.services as service}
 				<li class="service-item">{service}</li>
 			{/each}
 		</ul>
 	</section>
 
 	<!-- Recognition -->
-	{#if siteConfig.recognition.length > 0}
+	{#if $siteConfig.recognition.length > 0}
 		<section class="studio-recognition">
 			<h2 class="section-label">Recognition</h2>
 			<ul class="recognition-list">
-				{#each siteConfig.recognition as item}
+				{#each $siteConfig.recognition as item}
 					<li class="recognition-item">
 						<span class="recognition-publication">{item.publication}</span>
 						<span class="recognition-year">{item.year}</span>
@@ -72,11 +70,11 @@
 	{/if}
 
 	<!-- Team -->
-	{#if siteConfig.studio.founders.length > 0}
+	{#if $siteConfig.studio.founders.length > 0}
 		<section class="studio-team">
 			<h2 class="section-label">Leadership</h2>
 			<div class="team-grid">
-				{#each siteConfig.studio.founders as founder}
+				{#each $siteConfig.studio.founders as founder}
 					<article class="team-member">
 						<div class="member-image-container">
 							<img

@@ -10,13 +10,11 @@
 
 	import ProgressiveForm from '$lib/components/ProgressiveForm.svelte';
 	import SEOHead from '$lib/components/SEOHead.svelte';
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 </script>
 
 <SEOHead
-	title="Contact | {siteConfig.name}"
+	title="Contact | {$siteConfig.name}"
 	description="Start a conversation about your project. We'd love to hear from you."
 	canonical="/contact"
 />
@@ -45,23 +43,23 @@
 			<div class="info-group">
 				<h2 class="info-label">Studio</h2>
 				<address class="info-address">
-					{siteConfig.address.street}<br />
-					{siteConfig.address.city}, {siteConfig.address.state} {siteConfig.address.zip}
+					{$siteConfig.address.street}<br />
+					{$siteConfig.address.city}, {$siteConfig.address.state} {$siteConfig.address.zip}
 				</address>
 			</div>
 
 			<div class="info-group">
 				<h2 class="info-label">Direct</h2>
-				<a href="mailto:{siteConfig.email}" class="info-link">{siteConfig.email}</a>
-				<a href="tel:{siteConfig.phone}" class="info-link">{siteConfig.phone}</a>
+				<a href="mailto:{$siteConfig.email}" class="info-link">{$siteConfig.email}</a>
+				<a href="tel:{$siteConfig.phone}" class="info-link">{$siteConfig.phone}</a>
 			</div>
 
 			<div class="info-group">
 				<h2 class="info-label">Follow</h2>
 				<div class="social-links">
-					{#if siteConfig.social.instagram}
+					{#if $siteConfig.social.instagram}
 						<a
-							href={siteConfig.social.instagram}
+							href={$siteConfig.social.instagram}
 							class="info-link"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -69,9 +67,9 @@
 							Instagram
 						</a>
 					{/if}
-					{#if siteConfig.social.pinterest}
+					{#if $siteConfig.social.pinterest}
 						<a
-							href={siteConfig.social.pinterest}
+							href={$siteConfig.social.pinterest}
 							class="info-link"
 							target="_blank"
 							rel="noopener noreferrer"

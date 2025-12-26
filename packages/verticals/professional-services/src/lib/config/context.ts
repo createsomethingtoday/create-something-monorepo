@@ -31,10 +31,43 @@ declare global {
 }
 
 /**
+ * Unflatten dot-notation keys into nested objects
+ * e.g., { "address.city": "Seattle" } -> { address: { city: "Seattle" } }
+ */
+function unflattenConfig(flat: Record<string, unknown>): Record<string, unknown> {
+	const result: Record<string, unknown> = {};
+
+	for (const [key, value] of Object.entries(flat)) {
+		if (key.includes('.')) {
+			const parts = key.split('.');
+			let current = result;
+			for (let i = 0; i < parts.length - 1; i++) {
+				const part = parts[i];
+				if (!(part in current) || typeof current[part] !== 'object') {
+					current[part] = {};
+				}
+				current = current[part] as Record<string, unknown>;
+			}
+			current[parts[parts.length - 1]] = value;
+		} else {
+			// Don't overwrite nested objects with undefined
+			if (value !== undefined) {
+				result[key] = value;
+			}
+		}
+	}
+
+	return result;
+}
+
+/**
  * Merge injected config with defaults
  */
 export function mergeWithDefaults(injected: InjectedConfig): SiteConfig {
-	const { _tenant, ...config } = injected;
+	const { _tenant, ...flatConfig } = injected;
+
+	// Unflatten dot-notation keys (e.g., "address.city" -> address: { city: ... })
+	const config = unflattenConfig(flatConfig as Record<string, unknown>) as Partial<SiteConfig>;
 
 	return {
 		name: config.name ?? defaultConfig.name,
@@ -42,13 +75,13 @@ export function mergeWithDefaults(injected: InjectedConfig): SiteConfig {
 		description: config.description ?? defaultConfig.description,
 		email: config.email ?? defaultConfig.email,
 		phone: config.phone ?? defaultConfig.phone,
-		address: { ...defaultConfig.address, ...(config.address ?? {}) },
-		social: { ...defaultConfig.social, ...(config.social ?? {}) },
+		address: { ...defaultConfig.address, ...((config.address as object) ?? {}) },
+		social: { ...defaultConfig.social, ...((config.social as object) ?? {}) },
 		url: config.url ?? defaultConfig.url,
 		locale: config.locale ?? defaultConfig.locale,
-		hero: { ...defaultConfig.hero, ...(config.hero ?? {}) },
+		hero: { ...defaultConfig.hero, ...((config.hero as object) ?? {}) },
 		projects: config.projects ?? defaultConfig.projects,
-		studio: config.studio ? { ...defaultConfig.studio, ...config.studio } : defaultConfig.studio,
+		studio: config.studio ? { ...defaultConfig.studio, ...(config.studio as object) } : defaultConfig.studio,
 		services: config.services ?? defaultConfig.services,
 		recognition: config.recognition ?? defaultConfig.recognition
 	} as SiteConfig;
