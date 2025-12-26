@@ -19,6 +19,8 @@ export interface Feature {
   isIndependent: boolean; // True if no dependencies - can run in parallel
   acceptanceCriteria: string[];
   labels: string[];
+  /** Files expected to be modified (YAML spec only) */
+  files?: string[];
 }
 
 export interface ParsedSpec {
@@ -29,6 +31,14 @@ export interface ParsedSpec {
   independentFeatures: Feature[];
   /** Dependency graph metadata for swarm orchestration */
   dependencyGraph: DependencyGraph;
+  /** Target CREATE SOMETHING property (YAML spec only) */
+  property?: 'space' | 'io' | 'agency' | 'ltd';
+  /** Complexity override for model routing (YAML spec only) */
+  complexity?: 'trivial' | 'simple' | 'standard' | 'complex';
+  /** Technical requirements that apply to all features (YAML spec only) */
+  requirements?: string[];
+  /** Success criteria for the entire project (YAML spec only) */
+  successCriteria?: string[];
 }
 
 /**

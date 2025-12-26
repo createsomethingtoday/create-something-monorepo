@@ -65,11 +65,17 @@ export {
 
 // Spec Parser
 export {
+  parse,
   parseSpec,
   formatSpecSummary,
   getStartableFeatures,
   getNextBatch,
   analyzeDependencyGraph,
+  // YAML spec parser utilities
+  parseYamlSpec,
+  isYamlSpec,
+  SpecValidationError,
+  generateYamlFromMarkdown,
 } from './spec-parser.js';
 
 // Beads Integration

@@ -1,9 +1,11 @@
 /**
  * @create-something/harness
  *
- * Spec Parser: Converts markdown PRD documents into structured features.
+ * Spec Parser: Converts markdown or YAML PRD documents into structured features.
  *
- * Expected format:
+ * Supports two formats:
+ *
+ * 1. Markdown (legacy):
  * ```markdown
  * # Project Title
  *
@@ -16,16 +18,43 @@
  * Description of the feature...
  * - Acceptance criteria 1
  * - Acceptance criteria 2
- *
- * ### Another Feature
- * - Task 1
- * - Task 2
  * ```
  *
- * Each H3 (###) becomes ONE feature. Bullets are acceptance criteria, not separate features.
+ * 2. YAML (recommended):
+ * ```yaml
+ * title: Project Title
+ * property: agency
+ * complexity: standard
+ *
+ * features:
+ *   - title: Feature Name
+ *     priority: 1
+ *     acceptance:
+ *       - Acceptance criteria 1
+ *       - test: Acceptance criteria 2
+ *         verify: pnpm test
+ * ```
+ *
+ * YAML specs are validated against JSON Schema for unambiguous, machine-validatable specifications.
+ * Schema: https://createsomething.ltd/schemas/harness-spec.json
  */
 
 import type { Feature, ParsedSpec, DependencyGraph } from './types.js';
+import { parseYamlSpec, isYamlSpec, SpecValidationError, generateYamlFromMarkdown } from './yaml-spec-parser.js';
+
+// Re-export YAML parser utilities
+export { parseYamlSpec, isYamlSpec, SpecValidationError, generateYamlFromMarkdown };
+
+/**
+ * Parse a spec file (auto-detects Markdown vs YAML).
+ * This is the recommended entry point for parsing specs.
+ */
+export function parse(content: string): ParsedSpec {
+  if (isYamlSpec(content)) {
+    return parseYamlSpec(content);
+  }
+  return parseSpec(content);
+}
 
 /**
  * Parse a markdown PRD spec into structured features.
