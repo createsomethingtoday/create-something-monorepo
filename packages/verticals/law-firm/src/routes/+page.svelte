@@ -41,21 +41,16 @@
 
 	<StatisticsSection />
 
-	<ScrollReveal>
-		<PracticeAreasSection />
-	</ScrollReveal>
+	<!-- Self-animating sections (have their own IntersectionObserver) -->
+	<PracticeAreasSection />
 
 	<ScrollReveal delay={100}>
 		<ResultsSection />
 	</ScrollReveal>
 
-	<ScrollReveal delay={100}>
-		<TestimonialsSection />
-	</ScrollReveal>
+	<TestimonialsSection />
 
-	<ScrollReveal delay={100}>
-		<FirmSection />
-	</ScrollReveal>
+	<FirmSection />
 
 	<ScrollReveal delay={100}>
 		<AttorneysSection />

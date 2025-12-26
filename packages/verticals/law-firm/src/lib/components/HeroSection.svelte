@@ -77,26 +77,25 @@
 		background: var(--color-bg-elevated);
 	}
 
-	/* CREATE SOMETHING dark overlay treatment
-	 * Philosophy: Image recedes, content emerges
-	 * The overlay creates depth while maintaining the pure black brand identity
+	/* Zuhandenheit overlay treatment
+	 * Philosophy: The image emerges, the interface recedes
+	 * Lighter overlay lets atmosphere speak while maintaining legibility
 	 */
 	.hero-overlay {
 		position: absolute;
 		inset: 0;
 		background:
-			/* Primary dark wash - CREATE SOMETHING signature */
-			linear-gradient(
-				to bottom,
-				rgba(0, 0, 0, 0.8) 0%,
-				rgba(0, 0, 0, 0.65) 40%,
-				rgba(0, 0, 0, 0.75) 100%
-			),
-			/* Vignette for depth */
+			/* Subtle vignette - atmosphere, not suppression */
 			radial-gradient(
 				ellipse at center,
-				transparent 10%,
-				rgba(0, 0, 0, 0.5) 100%
+				transparent 30%,
+				var(--color-bg-pure) 100%
+			),
+			/* Bottom fade for content legibility */
+			linear-gradient(
+				to top,
+				var(--color-bg-pure) 0%,
+				transparent 50%
 			);
 		pointer-events: none;
 		z-index: 1;

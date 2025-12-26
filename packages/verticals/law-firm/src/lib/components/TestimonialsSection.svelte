@@ -1,349 +1,158 @@
 <script lang="ts">
 	/**
-	 * TestimonialsSection - Client Testimonials Carousel
+	 * TestimonialsSection - Single Powerful Quote
 	 *
-	 * Premium feature: Auto-rotating testimonials with manual navigation.
-	 * Philosophy: Social proof builds trust for legal services.
-	 * Canon: Let the voices speak. Minimal chrome.
+	 * Philosophy: One voice, fully present. Carousels fragment attention.
+	 * A single testimonial, given room to breathe, builds more trust
+	 * than a rotating parade of quotes you can't absorb.
+	 *
+	 * Zuhandenheit: The interface disappears; the voice remains.
 	 */
 
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import { onMount, onDestroy } from 'svelte';
-	import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-svelte';
+	import { onMount } from 'svelte';
 
 	const siteConfig = getSiteConfigFromContext();
-	const { testimonials } = siteConfig;
+	// Use the first testimonial as the featured quote
+	const testimonial = siteConfig.testimonials?.[0];
 
-	let currentIndex = $state(0);
-	let isAutoPlaying = $state(true);
-	let autoPlayInterval: ReturnType<typeof setInterval> | null = null;
-
-	function next() {
-		currentIndex = (currentIndex + 1) % testimonials.length;
-	}
-
-	function prev() {
-		currentIndex = (currentIndex - 1 + testimonials.length) % testimonials.length;
-	}
-
-	function goTo(index: number) {
-		currentIndex = index;
-	}
-
-	function pauseAutoPlay() {
-		isAutoPlaying = false;
-		if (autoPlayInterval) {
-			clearInterval(autoPlayInterval);
-			autoPlayInterval = null;
-		}
-	}
-
-	function resumeAutoPlay() {
-		isAutoPlaying = true;
-		startAutoPlay();
-	}
-
-	function startAutoPlay() {
-		if (autoPlayInterval) clearInterval(autoPlayInterval);
-		autoPlayInterval = setInterval(() => {
-			if (isAutoPlaying) {
-				next();
-			}
-		}, 6000); // Change every 6 seconds
-	}
+	let revealed = $state(false);
 
 	onMount(() => {
-		startAutoPlay();
-	});
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting) {
+					revealed = true;
+					observer.disconnect();
+				}
+			},
+			{ threshold: 0.3 }
+		);
 
-	onDestroy(() => {
-		if (autoPlayInterval) {
-			clearInterval(autoPlayInterval);
-		}
+		const section = document.getElementById('testimonial');
+		if (section) observer.observe(section);
+
+		return () => observer.disconnect();
 	});
 </script>
 
-<section class="testimonials-section">
-	<div class="testimonials-container">
-		<div class="section-header">
-			<h2 class="section-title">What Our Clients Say</h2>
-			<p class="section-subtitle">Real experiences from clients we have helped</p>
+{#if testimonial}
+	<section class="testimonial-section" id="testimonial" class:revealed>
+		<div class="testimonial-container">
+			<blockquote class="quote">
+				<span class="quote-mark" aria-hidden="true">"</span>
+				<p class="quote-text">{testimonial.quote}</p>
+			</blockquote>
+
+			<footer class="attribution">
+				<span class="author-name">{testimonial.author}</span>
+				{#if testimonial.title}
+					<span class="author-context">{testimonial.title}</span>
+				{/if}
+			</footer>
 		</div>
-
-		<div
-			class="testimonials-carousel"
-			onmouseenter={pauseAutoPlay}
-			onmouseleave={resumeAutoPlay}
-			role="region"
-			aria-label="Client testimonials"
-		>
-			<!-- Quote Icon -->
-			<div class="quote-icon" aria-hidden="true">
-				<Quote size={48} strokeWidth={1} />
-			</div>
-
-			<!-- Testimonials Container -->
-			<div class="testimonials-track">
-				{#each testimonials as testimonial, index}
-					<div
-						class="testimonial-slide"
-						class:active={index === currentIndex}
-						aria-hidden={index !== currentIndex}
-					>
-						<blockquote class="testimonial-quote">
-							"{testimonial.quote}"
-						</blockquote>
-
-						{#if testimonial.rating}
-							<div class="testimonial-rating" aria-label={`${testimonial.rating} out of 5 stars`}>
-								{#each Array(5) as _, i}
-									<Star
-										size={18}
-										fill={i < testimonial.rating ? 'currentColor' : 'none'}
-										strokeWidth={1.5}
-									/>
-								{/each}
-							</div>
-						{/if}
-
-						<div class="testimonial-author">
-							<span class="author-name">{testimonial.author}</span>
-							{#if testimonial.title}
-								<span class="author-title">{testimonial.title}</span>
-							{/if}
-						</div>
-					</div>
-				{/each}
-			</div>
-
-			<!-- Navigation Arrows -->
-			<button
-				class="nav-button nav-prev"
-				onclick={prev}
-				aria-label="Previous testimonial"
-			>
-				<ChevronLeft size={24} strokeWidth={1.5} />
-			</button>
-			<button
-				class="nav-button nav-next"
-				onclick={next}
-				aria-label="Next testimonial"
-			>
-				<ChevronRight size={24} strokeWidth={1.5} />
-			</button>
-
-			<!-- Dot Indicators -->
-			<div class="dot-indicators" role="tablist" aria-label="Testimonial navigation">
-				{#each testimonials as _, index}
-					<button
-						class="dot"
-						class:active={index === currentIndex}
-						onclick={() => goTo(index)}
-						role="tab"
-						aria-selected={index === currentIndex}
-						aria-label={`Go to testimonial ${index + 1}`}
-					></button>
-				{/each}
-			</div>
-		</div>
-	</div>
-</section>
+	</section>
+{/if}
 
 <style>
-	.testimonials-section {
-		padding: var(--space-3xl) var(--space-lg);
-		background: var(--color-bg-pure);
-		position: relative;
+	.testimonial-section {
+		padding: var(--space-2xl) var(--space-lg);
+		background: var(--color-bg-surface);
 	}
 
-	.testimonials-container {
+	.testimonial-container {
 		max-width: 900px;
 		margin: 0 auto;
-	}
-
-	.section-header {
 		text-align: center;
-		margin-bottom: var(--space-xl);
 	}
 
-	.section-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-sm);
-	}
-
-	.section-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+	.quote {
 		margin: 0;
+		padding: 0;
 	}
 
-	.testimonials-carousel {
-		position: relative;
-		padding: var(--space-xl) var(--space-2xl);
-	}
-
-	.quote-icon {
-		position: absolute;
-		top: 0;
-		left: 50%;
-		transform: translateX(-50%);
+	.quote-mark {
+		display: block;
+		font-size: clamp(4rem, 10vw, 8rem);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-subtle);
-		opacity: 0.5;
-	}
-
-	.testimonials-track {
-		position: relative;
-		min-height: 280px;
-	}
-
-	.testimonial-slide {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		opacity: 0;
-		transform: translateX(20px);
-		transition: opacity var(--duration-complex) var(--ease-standard),
-			transform var(--duration-complex) var(--ease-standard);
-		pointer-events: none;
-	}
-
-	.testimonial-slide.active {
-		opacity: 1;
-		transform: translateX(0);
-		pointer-events: auto;
-	}
-
-	.testimonial-quote {
-		font-size: var(--text-h3);
-		font-weight: var(--font-regular);
-		color: var(--color-fg-primary);
-		line-height: var(--leading-relaxed);
-		margin: 0 0 var(--space-lg);
-		font-style: italic;
-		max-width: 700px;
-	}
-
-	.testimonial-rating {
-		display: flex;
-		gap: 4px;
-		color: var(--color-data-4);
+		line-height: 0.5;
 		margin-bottom: var(--space-md);
+		opacity: 0;
+		transform: translateY(20px);
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
-	.testimonial-author {
+	.revealed .quote-mark {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.quote-text {
+		font-size: var(--text-h2);
+		font-weight: var(--font-regular);
+		font-style: italic;
+		color: var(--color-fg-primary);
+		line-height: 1.4;
+		margin: 0 0 var(--space-lg);
+		opacity: 0;
+		transform: translateY(20px);
+		transition: all var(--duration-standard) var(--ease-standard) 0.1s;
+	}
+
+	.revealed .quote-text {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.attribution {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
+		opacity: 0;
+		transform: translateY(10px);
+		transition: all var(--duration-standard) var(--ease-standard) 0.2s;
+	}
+
+	.revealed .attribution {
+		opacity: 1;
+		transform: translateY(0);
 	}
 
 	.author-name {
 		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		letter-spacing: 0.02em;
 	}
 
-	.author-title {
+	.author-context {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 	}
 
-	/* Navigation Buttons */
-	.nav-button {
-		position: absolute;
-		top: 50%;
-		transform: translateY(-50%);
-		width: 48px;
-		height: 48px;
-		border-radius: var(--radius-full);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		color: var(--color-fg-secondary);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.nav-button:hover {
-		background: var(--color-bg-subtle);
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
-	}
-
-	.nav-prev {
-		left: 0;
-	}
-
-	.nav-next {
-		right: 0;
-	}
-
-	/* Dot Indicators */
-	.dot-indicators {
-		display: flex;
-		justify-content: center;
-		gap: var(--space-xs);
-		margin-top: var(--space-lg);
-	}
-
-	.dot {
-		width: 10px;
-		height: 10px;
-		border-radius: var(--radius-full);
-		background: var(--color-fg-subtle);
-		border: none;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.dot.active {
-		background: var(--color-fg-primary);
-		transform: scale(1.2);
-	}
-
-	.dot:hover:not(.active) {
-		background: var(--color-fg-muted);
-	}
-
-	/* Responsive */
 	@media (max-width: 768px) {
-		.testimonials-section {
-			padding: var(--space-2xl) var(--space-md);
+		.testimonial-section {
+			padding: var(--space-xl) var(--space-md);
 		}
 
-		.testimonials-carousel {
-			padding: var(--space-lg) var(--space-md);
+		.quote-text {
+			font-size: var(--text-h3);
 		}
 
-		.testimonial-quote {
-			font-size: var(--text-body-lg);
-		}
-
-		.nav-button {
-			display: none; /* Use swipe on mobile instead */
-		}
-
-		.testimonials-track {
-			min-height: 320px;
+		.quote-mark {
+			font-size: 4rem;
 		}
 	}
 
 	/* Reduced motion */
 	@media (prefers-reduced-motion: reduce) {
-		.testimonial-slide {
-			transition: opacity var(--duration-micro) linear;
+		.quote-mark,
+		.quote-text,
+		.attribution {
+			opacity: 1;
 			transform: none;
-		}
-
-		.testimonial-slide.active {
-			transform: none;
+			transition: none;
 		}
 	}
 </style>
