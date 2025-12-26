@@ -1,220 +1,217 @@
 /**
- * Generate high-resolution architecture images using Gemini Imagen 3
+ * Generate images using Cloudflare Workers AI (Flux)
  *
  * Usage:
- *   GOOGLE_API_KEY=your-key npx tsx scripts/generate-images.ts
+ *   cd packages/verticals/architecture-studio
+ *   npx tsx scripts/generate-images.ts
  *
- * Generates cohesive, high-resolution images for the architecture-studio template.
+ * Authentication: Uses wrangler's stored OAuth token automatically.
+ * Model: @cf/black-forest-labs/flux-1-schnell (1024x1024, high quality)
+ *
+ * This is the canonical image generation pattern for all vertical templates.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
-const API_KEY = process.env.GOOGLE_API_KEY;
-if (!API_KEY) {
-	console.error('Error: GOOGLE_API_KEY environment variable required');
-	process.exit(1);
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+const ACCOUNT_ID = '9645bd52e640b8a4f40a3a55ff1dd75a';
+const MODEL = '@cf/black-forest-labs/flux-1-schnell';
 const OUTPUT_DIR = path.join(__dirname, '../static/projects');
 
-// Imagen 3 endpoint
-const IMAGEN_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${API_KEY}`;
+// Get API token from wrangler config or environment
+function getApiToken(): string {
+	if (process.env.CLOUDFLARE_API_TOKEN) {
+		return process.env.CLOUDFLARE_API_TOKEN;
+	}
 
-// Style prefix for consistency across all images
-const STYLE_PREFIX = `Professional architectural photography, minimalist modern architecture,
-natural materials (wood, glass, concrete), integration with natural landscape,
-warm interior lighting at golden hour, clean editorial style, high dynamic range,
-ultra sharp details, 8K quality, shot on Hasselblad medium format camera`;
+	// Try to get from wrangler config (macOS location)
+	const configPaths = [
+		path.join(process.env.HOME || '', 'Library/Preferences/.wrangler/config/default.toml'),
+		path.join(process.env.HOME || '', '.local/share/wrangler/config/default.toml'),
+		path.join(process.env.HOME || '', '.wrangler/config/default.toml')
+	];
+
+	for (const configPath of configPaths) {
+		if (fs.existsSync(configPath)) {
+			const config = fs.readFileSync(configPath, 'utf-8');
+			const match = config.match(/oauth_token\s*=\s*"([^"]+)"/);
+			if (match) return match[1];
+		}
+	}
+
+	throw new Error('No Cloudflare API token found. Set CLOUDFLARE_API_TOKEN env var.');
+}
+
+const STYLE = `Professional architectural photography, minimalist modern architecture,
+natural materials wood glass concrete, warm interior lighting at golden hour,
+clean editorial style, ultra sharp details, photorealistic, 8K,
+no vignette, no radial gradient, no white overlay, no fog effect, even lighting across frame,
+clear unobstructed view, magazine quality, Dwell magazine style`;
 
 interface ImageSpec {
 	filename: string;
 	prompt: string;
-	aspectRatio: '3:4' | '4:3' | '1:1' | '16:9';
 }
 
-// All images needed for the template
 const IMAGES: ImageSpec[] = [
-	// Forest Cabin Project
+	// Forest Cabin
 	{
 		filename: 'hero-forest-cabin.jpg',
-		prompt: `${STYLE_PREFIX}. Stunning glass pavilion house nestled among tall pine trees in a Scandinavian forest.
-		The structure features floor-to-ceiling windows, a black steel frame, and warm amber interior lighting glowing at dusk.
-		Pine trees frame the composition. Misty atmosphere, golden hour lighting.`,
-		aspectRatio: '16:9'
+		prompt: `${STYLE}. Stunning glass pavilion house nestled among tall pine trees in a Scandinavian forest,
+		floor-to-ceiling windows, black steel frame, warm amber interior lighting glowing at dusk,
+		pine trees frame composition, misty atmosphere, golden hour`
 	},
 	{
 		filename: 'forest-cabin-01.jpg',
-		prompt: `${STYLE_PREFIX}. Interior of a modern forest cabin, double-height living space with floor-to-ceiling windows
-		overlooking pine forest. Minimalist furniture, concrete floor, wood-clad ceiling, warm afternoon light streaming in.
-		A person reading on a low sofa.`,
-		aspectRatio: '3:4'
+		prompt: `${STYLE}. Interior of modern forest cabin, double-height living space with
+		floor-to-ceiling windows overlooking pine forest, minimalist furniture, concrete floor,
+		wood-clad ceiling, warm afternoon light streaming in`
 	},
 	{
 		filename: 'forest-cabin-02.jpg',
-		prompt: `${STYLE_PREFIX}. Modern kitchen in a forest cabin, open plan with island counter,
-		black cabinetry, concrete countertops, large window with forest view. Copper pendant lights,
-		morning light, minimalist design.`,
-		aspectRatio: '3:4'
+		prompt: `${STYLE}. Modern kitchen in forest cabin, open plan with island counter,
+		black cabinetry, concrete countertops, large window with forest view, copper pendant lights`
 	},
 	{
 		filename: 'forest-cabin-03.jpg',
-		prompt: `${STYLE_PREFIX}. Exterior detail of modern cabin, showing the junction of black steel frame
-		and floor-to-ceiling glass, with pine trees reflected. Clean geometric lines, high contrast.`,
-		aspectRatio: '3:4'
+		prompt: `${STYLE}. Exterior detail of modern cabin showing junction of black steel frame
+		and floor-to-ceiling glass with pine trees reflected, clean geometric lines`
 	},
 
-	// Hillside Residence Project
+	// Hillside Residence
 	{
 		filename: 'exterior-hillside.jpg',
-		prompt: `${STYLE_PREFIX}. Dramatic cantilevered modern house on a steep hillside,
-		concrete and glass construction, floating above the landscape. Sweeping valley views,
-		dramatic clouds, golden hour light hitting the structure.`,
-		aspectRatio: '4:3'
+		prompt: `${STYLE}. Dramatic cantilevered modern house on steep hillside,
+		concrete and glass construction floating above landscape, sweeping valley views,
+		dramatic clouds, golden hour light`
 	},
 	{
 		filename: 'hillside-01.jpg',
-		prompt: `${STYLE_PREFIX}. Open plan living space in a hillside home with panoramic floor-to-ceiling windows,
-		polished concrete floors, built-in walnut shelving, minimal furniture. Valley views beyond.`,
-		aspectRatio: '4:3'
+		prompt: `${STYLE}. Open plan living space in hillside home with panoramic floor-to-ceiling windows,
+		polished concrete floors, built-in walnut shelving, minimal furniture, valley views`
 	},
 	{
 		filename: 'hillside-02.jpg',
-		prompt: `${STYLE_PREFIX}. Master bedroom in hillside residence with glass wall overlooking mountains,
-		floating bed platform, oak floors, pure white linens, morning light.`,
-		aspectRatio: '16:9'
+		prompt: `${STYLE}. Master bedroom in hillside residence with glass wall overlooking mountains,
+		floating bed platform, oak floors, pure white linens, morning light`
 	},
 
-	// Coastal Retreat Project
+	// Coastal Retreat
 	{
 		filename: 'exterior-coastal.jpg',
-		prompt: `${STYLE_PREFIX}. Modernist beach house with horizontal lines, white concrete walls,
-		large overhanging roof, infinity pool merging with ocean horizon. Blue sky, coastal vegetation.`,
-		aspectRatio: '1:1'
+		prompt: `${STYLE}. Modernist beach house with horizontal lines, white concrete walls,
+		large overhanging roof, infinity pool merging with ocean horizon, blue sky, coastal vegetation`
 	},
 	{
 		filename: 'coastal-01.jpg',
-		prompt: `${STYLE_PREFIX}. Living room interior with ocean view, white walls, natural linen furniture,
-		woven textures, driftwood accents. Floor-to-ceiling sliding glass doors open to terrace. Afternoon light.`,
-		aspectRatio: '3:4'
+		prompt: `${STYLE}. Living room interior with ocean view, white walls, natural linen furniture,
+		floor-to-ceiling sliding glass doors open to terrace, afternoon light`
 	},
 	{
 		filename: 'coastal-02.jpg',
-		prompt: `${STYLE_PREFIX}. Outdoor deck of coastal home with built-in seating, fire pit,
-		ocean view at sunset. Warm amber lighting, wooden decking, minimalist design.`,
-		aspectRatio: '4:3'
+		prompt: `${STYLE}. Outdoor deck of coastal home with built-in seating, fire pit,
+		ocean view at sunset, wooden decking, minimalist design`
 	},
 
-	// Meadow Studio Project
+	// Meadow Studio
 	{
 		filename: 'exterior-meadow.jpg',
-		prompt: `${STYLE_PREFIX}. Low-slung modernist pavilion in a wildflower meadow,
-		black timber cladding, large glass walls, flat roof with deep overhang.
-		Golden grasses, soft evening light, mountains in distance.`,
-		aspectRatio: '4:3'
+		prompt: `${STYLE}. Low-slung modernist pavilion in wildflower meadow,
+		black timber cladding, large glass walls, flat roof with deep overhang,
+		golden grasses, mountains in distance`
 	},
 	{
 		filename: 'meadow-01.jpg',
-		prompt: `${STYLE_PREFIX}. Artist studio interior with north-facing skylights,
-		white walls, concrete floor, large canvas on easel, minimal furnishings.
-		Natural diffused light, creative workspace.`,
-		aspectRatio: '3:4'
+		prompt: `${STYLE}. Artist studio interior with north-facing skylights,
+		white walls, concrete floor, large canvas on easel, natural diffused light`
 	},
 	{
 		filename: 'meadow-02.jpg',
-		prompt: `${STYLE_PREFIX}. Entry sequence to meadow pavilion, covered walkway with timber slats
-		creating shadow patterns, meadow grasses visible through gaps. Zen-like approach.`,
-		aspectRatio: '3:4'
+		prompt: `${STYLE}. Entry sequence to meadow pavilion, covered walkway with timber slats
+		creating shadow patterns, meadow grasses visible through gaps`
 	},
 
-	// Woodland House Project
+	// Woodland House
 	{
 		filename: 'exterior-woodland.jpg',
-		prompt: `${STYLE_PREFIX}. Contemporary timber house among deciduous trees in autumn,
-		vertical cedar cladding weathered to silver-grey, large windows,
-		fallen leaves on ground, soft diffused light through canopy.`,
-		aspectRatio: '3:4'
+		prompt: `${STYLE}. Contemporary timber house among deciduous trees in autumn,
+		vertical cedar cladding weathered to silver-grey, large windows, fallen leaves`
 	},
 	{
 		filename: 'woodland-01.jpg',
-		prompt: `${STYLE_PREFIX}. Double-height living room with timber frame exposed,
-		wood-burning stove, floor-to-ceiling bookshelf, autumn forest visible through windows.
-		Warm interior, reading nook.`,
-		aspectRatio: '4:3'
+		prompt: `${STYLE}. Double-height living room with timber frame exposed,
+		wood-burning stove, floor-to-ceiling bookshelf, autumn forest through windows`
 	},
 	{
 		filename: 'woodland-02.jpg',
-		prompt: `${STYLE_PREFIX}. Home library in woodland house, built-in oak shelving,
-		leather reading chair by window, forest view, afternoon light streaming in,
-		books and objects carefully arranged.`,
-		aspectRatio: '4:3'
+		prompt: `${STYLE}. Home library in woodland house, built-in oak shelving,
+		leather reading chair by window, forest view, afternoon light`
 	},
 	{
 		filename: 'woodland-03.jpg',
-		prompt: `${STYLE_PREFIX}. Construction detail showing timber joinery of woodland house,
-		mortise and tenon joints, natural wood grain, craftsmanship detail shot.`,
-		aspectRatio: '1:1'
+		prompt: `${STYLE}. Construction detail showing timber joinery, mortise and tenon joints,
+		natural wood grain, craftsmanship detail`
 	},
 
-	// Team and OG Image
+	// Team and OG
 	{
 		filename: '../team/principal.jpg',
-		prompt: `Professional headshot portrait of a distinguished architect in their 50s,
-		salt and pepper hair, wearing black turtleneck, standing in a modern white studio space.
-		Soft natural lighting, shallow depth of field, warm and approachable expression.
-		High-end editorial portrait style.`,
-		aspectRatio: '1:1'
+		prompt: `Professional headshot portrait of distinguished architect in 50s,
+		salt and pepper hair, black turtleneck, modern white studio space,
+		soft natural lighting, warm approachable expression, editorial portrait`
 	},
 	{
 		filename: '../og-image.jpg',
-		prompt: `${STYLE_PREFIX}. Dramatic aerial view of a cluster of modern glass and concrete houses
-		nestled in a forested hillside, showing the harmony between architecture and nature.
-		Golden hour, long shadows, architectural masterplan visualization.`,
-		aspectRatio: '1:1'
+		prompt: `${STYLE}. Aerial view of cluster of modern glass and concrete houses
+		nestled in forested hillside, harmony between architecture and nature, golden hour, long shadows`
 	}
 ];
 
-async function generateImage(spec: ImageSpec): Promise<void> {
+async function generateImage(spec: ImageSpec, apiToken: string): Promise<void> {
 	console.log(`Generating: ${spec.filename}...`);
 
-	const response = await fetch(IMAGEN_URL, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			instances: [{ prompt: spec.prompt }],
-			parameters: {
-				sampleCount: 1,
-				aspectRatio: spec.aspectRatio,
-				safetyFilterLevel: 'block_few',
-				personGeneration: 'allow_adult'
-			}
-		})
-	});
+	const response = await fetch(
+		`https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/run/${MODEL}`,
+		{
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${apiToken}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ prompt: spec.prompt })
+		}
+	);
 
 	if (!response.ok) {
 		const error = await response.text();
-		throw new Error(`API error for ${spec.filename}: ${error}`);
+		throw new Error(`API error: ${response.status} - ${error}`);
 	}
 
-	const data = await response.json();
+	const data = await response.json() as { result?: { image?: string }; success: boolean };
 
-	if (!data.predictions?.[0]?.bytesBase64Encoded) {
-		throw new Error(`No image data returned for ${spec.filename}`);
+	if (!data.success || !data.result?.image) {
+		throw new Error(`No image returned: ${JSON.stringify(data)}`);
 	}
 
-	const imageBuffer = Buffer.from(data.predictions[0].bytesBase64Encoded, 'base64');
+	const imageBuffer = Buffer.from(data.result.image, 'base64');
 	const outputPath = path.join(OUTPUT_DIR, spec.filename);
 
-	// Ensure directory exists
 	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 	fs.writeFileSync(outputPath, imageBuffer);
 
-	console.log(`  ✓ Saved: ${outputPath} (${(imageBuffer.length / 1024).toFixed(0)}KB)`);
+	console.log(`  ✓ Saved: ${spec.filename} (${(imageBuffer.length / 1024).toFixed(0)}KB)`);
 }
 
 async function main() {
-	console.log('Architecture Studio Image Generator');
-	console.log('====================================\n');
+	console.log('Architecture Studio Image Generator (Cloudflare Flux)');
+	console.log('=====================================================\n');
+
+	const apiToken = getApiToken();
+	console.log(`Using API token: ${apiToken.substring(0, 10)}...\n`);
 	console.log(`Generating ${IMAGES.length} images...\n`);
 
 	let success = 0;
@@ -222,12 +219,12 @@ async function main() {
 
 	for (const spec of IMAGES) {
 		try {
-			await generateImage(spec);
+			await generateImage(spec, apiToken);
 			success++;
-			// Rate limiting - wait between requests
-			await new Promise(resolve => setTimeout(resolve, 2000));
+			// Rate limiting
+			await new Promise((r) => setTimeout(r, 3000));
 		} catch (error) {
-			console.error(`  ✗ Failed: ${spec.filename}`, error);
+			console.error(`  ✗ Failed: ${spec.filename}`, (error as Error).message);
 			failed++;
 		}
 	}

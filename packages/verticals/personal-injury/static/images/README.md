@@ -1,17 +1,18 @@
-# Law Firm Template Images
+# Personal Injury Template Images
 
 Images for the Morrison & Associates demo law firm template.
 
-## Required Images
+## Generation
 
-Generate these images using Google Imagen 3 Pro:
+Use Cloudflare Workers AI (Flux) for image generation. See `packages/verticals/architecture-studio/scripts/generate-images.ts` for the pattern.
 
-### Hero Image
+### Required Images
+
+#### Hero Image
 - **File**: `hero-office.jpg`
-- **Prompt**: "Professional law office interior with floor-to-ceiling windows overlooking San Francisco skyline, modern minimalist design, warm lighting, legal books on shelves, high-end corporate aesthetic, photorealistic"
-- **Size**: 1920x1080
+- **Prompt**: "Professional law office interior with floor-to-ceiling windows overlooking San Francisco skyline, modern minimalist design, warm lighting, legal books on shelves, high-end corporate aesthetic, photorealistic, 8K, no vignette, no radial gradient, clear unobstructed view"
 
-### Attorney Headshots
+#### Attorney Headshots
 - **File**: `attorney-morrison.jpg`
 - **Prompt**: "Professional headshot of a confident woman attorney in her mid-40s, dark professional attire, neutral studio background, warm lighting, photorealistic"
 
@@ -21,22 +22,12 @@ Generate these images using Google Imagen 3 Pro:
 - **File**: `attorney-gonzalez.jpg`
 - **Prompt**: "Professional headshot of a Latina woman attorney in her early 30s, professional attire, neutral studio background, warm lighting, photorealistic"
 
-## Generation Command
+## Cloudflare Workers AI
 
 ```bash
-# Authenticate first
-gcloud auth application-default login
-
-# Generate images via Vertex AI Imagen 3
-ACCESS_TOKEN=$(gcloud auth application-default print-access-token)
-PROJECT_ID="your-project-id"
-
-curl -X POST \
-  "https://us-central1-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-central1/publishers/google/models/imagen-3.0-generate-001:predict" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{"instances":[{"prompt":"YOUR_PROMPT"}],"parameters":{"sampleCount":1}}' \
-  | jq -r '.predictions[0].bytesBase64Encoded' | base64 -d > output.jpg
+# Generate via Cloudflare API (uses wrangler OAuth token)
+cd packages/verticals/architecture-studio
+npx tsx scripts/generate-images.ts
 ```
 
 ## Placeholder Alternative
