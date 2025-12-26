@@ -100,7 +100,7 @@
 	}
 
 	.nav--scrolled {
-		background: rgba(0, 0, 0, 0.9);
+		background: var(--color-overlay-heavy);
 		backdrop-filter: blur(10px);
 		-webkit-backdrop-filter: blur(10px);
 	}
@@ -227,7 +227,7 @@
 		display: flex;
 		flex-direction: column;
 		padding: var(--space-lg);
-		background: rgba(0, 0, 0, 0.95);
+		background: color-mix(in srgb, var(--color-bg-pure) 95%, transparent);
 		backdrop-filter: blur(20px);
 		-webkit-backdrop-filter: blur(20px);
 	}
@@ -254,12 +254,12 @@
 
 	/* Animations */
 	.animate-slide-down {
-		animation: slideDown 0.2s ease-out forwards;
+		animation: slideDown var(--duration-micro) var(--ease-standard) forwards;
 	}
 
 	.animate-fade-in {
 		opacity: 0;
-		animation: fadeIn 0.15s ease-out forwards;
+		animation: fadeIn var(--duration-micro) var(--ease-standard) forwards;
 		animation-delay: calc(var(--delay, 0) * 50ms);
 	}
 

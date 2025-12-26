@@ -266,7 +266,7 @@
 		padding: var(--space-sm);
 		font-size: var(--text-body-sm);
 		color: var(--color-error);
-		background: rgba(204, 68, 68, 0.1);
+		background: var(--color-error-muted);
 		border-radius: var(--radius-sm);
 		margin: 0;
 	}

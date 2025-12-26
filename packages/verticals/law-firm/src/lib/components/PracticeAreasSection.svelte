@@ -97,7 +97,7 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-decoration: none;
-		transition: all 0.3s ease;
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	.area-card:hover {
@@ -109,7 +109,7 @@
 	.area-icon {
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-sm);
-		transition: color 0.2s ease;
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.area-card:hover .area-icon {
@@ -135,7 +135,7 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		margin-top: var(--space-md);
-		transition: color 0.2s ease;
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.area-card:hover .area-link {

@@ -16,6 +16,11 @@ migrations_dir = "migrations"
 binding = "KV"
 id = "bcb39a6258fe49b79da9dc9b09440934"
 
+# KV for tenant routing cache
+[[kv_namespaces]]
+binding = "TENANT_CACHE"
+id = "bcb39a6258fe49b79da9dc9b09440934"
+
 # R2 for site assets
 [[r2_buckets]]
 binding = "SITE_BUCKET"
@@ -29,3 +34,6 @@ bucket_name = "templates-site-assets"
 [vars]
 ENVIRONMENT = "production"
 BASE_DOMAIN = "createsomething.space"
+
+# Secrets (configure in Cloudflare Dashboard or `wrangler secret put`):
+# - INTERNAL_API_SECRET: Shared secret for agency <-> templates-platform APIs

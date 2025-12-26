@@ -143,7 +143,7 @@
 
 	/* Animation */
 	.animate-slide-up {
-		animation: slideUp 0.2s ease-out forwards;
+		animation: slideUp var(--duration-micro) var(--ease-standard) forwards;
 	}
 
 	@keyframes slideUp {

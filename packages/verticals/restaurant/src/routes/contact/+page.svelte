@@ -457,7 +457,7 @@
 
 	.form-input:disabled,
 	.form-textarea:disabled {
-		opacity: 0.5;
+		color: var(--color-fg-muted);
 		cursor: not-allowed;
 	}
 
@@ -504,7 +504,8 @@
 	}
 
 	.form-submit:disabled {
-		opacity: 0.5;
+		background: var(--color-fg-muted);
+		border-color: var(--color-fg-muted);
 		cursor: not-allowed;
 	}
 
