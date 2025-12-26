@@ -2,10 +2,30 @@
 	/**
 	 * Template Selector - Step 1
 	 *
-	 * Display available templates with live previews.
+	 * Display available templates with Lucide icons.
+	 * Canon: Typography as structure, icons as subtle affordance.
 	 */
 
 	import { wizardState, selectedTemplate, TEMPLATES } from '$lib/stores/wizardState';
+	import {
+		Building2,
+		Palette,
+		Briefcase,
+		Scale,
+		Stethoscope,
+		UtensilsCrossed,
+		Check
+	} from 'lucide-svelte';
+
+	// Map icon names to components
+	const iconMap = {
+		Building2,
+		Palette,
+		Briefcase,
+		Scale,
+		Stethoscope,
+		UtensilsCrossed
+	} as const;
 </script>
 
 <div class="template-selector">
@@ -14,6 +34,7 @@
 
 	<div class="template-grid">
 		{#each TEMPLATES as template}
+			{@const IconComponent = iconMap[template.icon as keyof typeof iconMap]}
 			<button
 				class="template-card"
 				class:selected={$selectedTemplate === template.id}
@@ -21,7 +42,9 @@
 			>
 				<div class="template-preview">
 					<div class="preview-placeholder">
-						<span class="preview-icon">🎨</span>
+						{#if IconComponent}
+							<IconComponent size={32} strokeWidth={1.5} />
+						{/if}
 					</div>
 				</div>
 				<div class="template-info">
@@ -30,7 +53,9 @@
 					<span class="template-category">{template.category}</span>
 				</div>
 				{#if $selectedTemplate === template.id}
-					<div class="selected-badge">✓</div>
+					<div class="selected-badge">
+						<Check size={14} strokeWidth={2.5} />
+					</div>
 				{/if}
 			</button>
 		{/each}
@@ -56,11 +81,17 @@
 
 	.template-grid {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-md);
 	}
 
-	@media (max-width: 640px) {
+	@media (max-width: 900px) {
+		.template-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (max-width: 540px) {
 		.template-grid {
 			grid-template-columns: 1fr;
 		}
@@ -100,11 +131,12 @@
 		flex-direction: column;
 		align-items: center;
 		gap: var(--space-xs);
+		color: var(--color-fg-muted);
 	}
 
-	.preview-icon {
-		font-size: 2rem;
-		opacity: 0.5;
+	.template-card:hover .preview-placeholder,
+	.template-card.selected .preview-placeholder {
+		color: var(--color-fg-secondary);
 	}
 
 	.template-info {
@@ -143,6 +175,5 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: var(--text-caption);
 	}
 </style>

@@ -132,31 +132,52 @@ export const canProceed = derived(wizardState, ($state) => {
 	}
 });
 
-// Template definitions (matches templates-platform)
+// Template definitions (matches templates-platform database)
 export const TEMPLATES = [
+	{
+		id: 'tpl_architecture_studio',
+		slug: 'architecture-studio',
+		name: 'Architecture Studio',
+		description: 'Light, editorial template for architecture firms',
+		category: 'Professional',
+		icon: 'Building2',
+		preview: 'https://architecture-studio-template.pages.dev'
+	},
+	{
+		id: 'tpl_creative_portfolio',
+		slug: 'creative-portfolio',
+		name: 'Creative Portfolio',
+		description: 'Minimal portfolio for photographers and designers',
+		category: 'Creative',
+		icon: 'Palette',
+		preview: 'https://creative-portfolio-template.pages.dev'
+	},
 	{
 		id: 'tpl_professional_services',
 		slug: 'professional-services',
 		name: 'Professional Services',
-		description: 'For architects, consultants, and service firms',
+		description: 'Sophisticated template for consultancies',
 		category: 'Professional',
-		preview: 'https://demo-professional.createsomething.space'
+		icon: 'Briefcase',
+		preview: 'https://professional-services-template.pages.dev'
 	},
 	{
 		id: 'tpl_law_firm',
 		slug: 'law-firm',
 		name: 'Law Firm',
-		description: 'For attorneys and legal practices',
+		description: 'Purpose-built for attorneys and legal practices',
 		category: 'Professional',
-		preview: 'https://demo-law.createsomething.space'
+		icon: 'Scale',
+		preview: 'https://law-firm-template.pages.dev'
 	},
 	{
 		id: 'tpl_medical_practice',
 		slug: 'medical-practice',
 		name: 'Medical Practice',
-		description: 'For clinics, practices, and healthcare providers',
+		description: 'For clinics and healthcare providers',
 		category: 'Healthcare',
-		preview: 'https://demo-medical.createsomething.space'
+		icon: 'Stethoscope',
+		preview: 'https://medical-practice-template.pages.dev'
 	},
 	{
 		id: 'tpl_restaurant',
@@ -164,7 +185,8 @@ export const TEMPLATES = [
 		name: 'Restaurant',
 		description: 'For restaurants, cafes, and hospitality',
 		category: 'Hospitality',
-		preview: 'https://demo-restaurant.createsomething.space'
+		icon: 'UtensilsCrossed',
+		preview: 'https://restaurant-template.pages.dev'
 	}
 ];
 
