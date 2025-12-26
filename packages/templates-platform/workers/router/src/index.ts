@@ -229,28 +229,51 @@ async function serveFromR2(request: Request, env: Env, tenant: TenantRecord): Pr
 	const url = new URL(request.url);
 	let path = url.pathname;
 
-	// Normalize path
-	if (path === '/') path = '/index.html';
-	if (!path.includes('.') && !path.endsWith('/')) path = `${path}/index.html`;
-	if (path.endsWith('/')) path = `${path}index.html`;
-
 	// Resolve version - use tenant's pinned version or "latest"
 	const version = tenant.template_version || 'latest';
+	const basePath = `${tenant.template_id}/${version}`;
 
-	// Try to fetch from R2: {templateId}/{version}/{path}
-	const assetKey = `${tenant.template_id}/${version}${path}`;
-	let asset = await env.SITE_BUCKET.get(assetKey);
+	let asset: R2ObjectBody | null = null;
+	let resolvedPath = path;
 
-	// SPA fallback - try index.html for routes
+	// Handle root path
+	if (path === '/') {
+		resolvedPath = '/index.html';
+		asset = await env.SITE_BUCKET.get(`${basePath}/index.html`);
+	}
+	// Handle paths with extensions (static assets)
+	else if (path.includes('.')) {
+		resolvedPath = path;
+		asset = await env.SITE_BUCKET.get(`${basePath}${path}`);
+	}
+	// Handle clean URLs (no extension) - try .html first, then /index.html
+	else {
+		// First try {path}.html (SvelteKit adapter-static format)
+		resolvedPath = `${path}.html`;
+		asset = await env.SITE_BUCKET.get(`${basePath}${path}.html`);
+
+		// If not found, try {path}/index.html
+		if (!asset) {
+			resolvedPath = `${path}/index.html`;
+			asset = await env.SITE_BUCKET.get(`${basePath}${path}/index.html`);
+		}
+	}
+
+	// SPA fallback - try 200.html then index.html for routes
 	if (!asset && !path.match(/\.(js|css|png|jpg|jpeg|webp|svg|ico|woff2?|json|txt|xml)$/i)) {
-		asset = await env.SITE_BUCKET.get(`${tenant.template_id}/${version}/index.html`);
+		// Try 200.html first (SvelteKit SPA fallback)
+		asset = await env.SITE_BUCKET.get(`${basePath}/200.html`);
+		if (!asset) {
+			asset = await env.SITE_BUCKET.get(`${basePath}/index.html`);
+		}
+		resolvedPath = '/200.html';
 	}
 
 	if (!asset) {
 		return new Response('Not Found', { status: 404 });
 	}
 
-	const contentType = getContentType(path);
+	const contentType = getContentType(resolvedPath);
 
 	// For HTML files, inject tenant config
 	if (contentType === 'text/html') {
