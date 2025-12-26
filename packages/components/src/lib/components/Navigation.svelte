@@ -74,7 +74,7 @@
 			</a>
 
 			<!-- Desktop Navigation Links -->
-			<div class="hidden md:flex items-center gap-8 ml-8">
+			<div class="hidden lg:flex items-center gap-8 ml-8">
 				{#each links as link}
 					<a href={link.href} class="nav-link" class:active={isActive(link)}>
 						{link.label}
@@ -97,7 +97,7 @@
 			<!-- Mobile Menu Button (44px minimum touch target) -->
 			<button
 				onclick={toggleMobileMenu}
-				class="nav-menu-button md:hidden w-11 h-11 flex items-center justify-center"
+				class="nav-menu-button lg:hidden w-11 h-11 flex items-center justify-center"
 				aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
 				aria-expanded={mobileMenuOpen}
 			>
@@ -127,7 +127,7 @@
 
 		<!-- Mobile Menu -->
 		{#if mobileMenuOpen}
-			<div class="nav-mobile-menu animate-slide-down md:hidden pt-4 pb-2 flex flex-col gap-4 mt-4">
+			<div class="nav-mobile-menu animate-slide-down lg:hidden pt-4 pb-2 flex flex-col gap-4 mt-4">
 				{#each links as link}
 					<a href={link.href} onclick={closeMobileMenu} class="nav-link py-2" class:active={isActive(link)}>
 						{link.label}
