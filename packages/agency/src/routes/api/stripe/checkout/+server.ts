@@ -115,9 +115,11 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 	// Determine the Stripe price ID
 	let stripePriceKey = productId;
 
-	// Handle agent-in-a-box tiers
+	// Handle tiered products
 	if (productId === 'agent-in-a-box' && tier) {
 		stripePriceKey = `agent-in-a-box-${tier}`;
+	} else if (productId === 'vertical-templates' && tier) {
+		stripePriceKey = `vertical-templates-${tier}`;
 	}
 
 	// Get Stripe price configuration
