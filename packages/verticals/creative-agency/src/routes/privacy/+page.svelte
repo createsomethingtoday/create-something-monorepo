@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
@@ -13,7 +13,7 @@
 		<section>
 			<h2>Introduction</h2>
 			<p>
-				{siteConfig.name} ("we," "our," or "us") respects your privacy and is committed to protecting
+				{$config.name} ("we," "our," or "us") respects your privacy and is committed to protecting
 				your personal information. This Privacy Policy explains how we collect, use, disclose, and
 				safeguard your information when you visit our website or use our services.
 			</p>
@@ -86,8 +86,8 @@
 				If you have questions about this Privacy Policy, please contact us at:
 			</p>
 			<p class="contact-info">
-				<a href="mailto:{siteConfig.email}">{siteConfig.email}</a><br />
-				{siteConfig.phone}
+				<a href="mailto:{$config.email}">{$config.email}</a><br />
+				{$config.phone}
 			</p>
 		</section>
 	</div>

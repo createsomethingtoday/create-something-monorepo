@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
@@ -13,7 +13,7 @@
 		<section>
 			<h2>Agreement to Terms</h2>
 			<p>
-				By accessing or using the services of {siteConfig.name}, you agree to be bound by these Terms
+				By accessing or using the services of {$config.name}, you agree to be bound by these Terms
 				of Service and all applicable laws and regulations. If you do not agree with any of these
 				terms, you are prohibited from using or accessing our services.
 			</p>
@@ -103,7 +103,7 @@
 		<section>
 			<h2>Governing Law</h2>
 			<p>
-				These Terms shall be governed by and construed in accordance with the laws of {siteConfig.address.state},
+				These Terms shall be governed by and construed in accordance with the laws of {$config.address.state},
 				without regard to its conflict of law provisions.
 			</p>
 		</section>
@@ -114,8 +114,8 @@
 				If you have questions about these Terms, please contact us at:
 			</p>
 			<p class="contact-info">
-				<a href="mailto:{siteConfig.email}">{siteConfig.email}</a><br />
-				{siteConfig.phone}
+				<a href="mailto:{$config.email}">{$config.email}</a><br />
+				{$config.phone}
 			</p>
 		</section>
 	</div>

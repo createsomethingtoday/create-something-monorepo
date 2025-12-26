@@ -9,7 +9,7 @@
 	 * Zuhandenheit: The portfolio recedes; the impact remains.
 	 */
 
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 	import { onMount } from 'svelte';
 
@@ -57,10 +57,10 @@
 <!-- Hero -->
 <section class="hero" class:visible={heroVisible}>
 	<div class="hero-content">
-		<h1 class="hero-headline">{siteConfig.hero.headline}</h1>
-		<p class="hero-subheadline">{siteConfig.hero.subheadline}</p>
+		<h1 class="hero-headline">{$config.hero.headline}</h1>
+		<p class="hero-subheadline">{$config.hero.subheadline}</p>
 		<div class="hero-actions">
-			<a href="/contact" class="btn-primary">{siteConfig.hero.cta}</a>
+			<a href="/contact" class="btn-primary">{$config.hero.cta}</a>
 			<a href="/work" class="btn-secondary">View Work →</a>
 		</div>
 	</div>
@@ -69,7 +69,7 @@
 <!-- Stats -->
 <section class="stats section" id="stats" class:revealed={statsRevealed}>
 	<div class="stats-grid">
-		{#each siteConfig.stats as stat, i}
+		{#each $config.stats as stat, i}
 			<div class="metric" style="--delay: {i * 100}ms">
 				<span class="metric-number">{stat.number}</span>
 				<span class="metric-label">{stat.label}</span>
@@ -86,7 +86,7 @@
 	</div>
 
 	<div class="work-grid">
-		{#each siteConfig.work as project, i}
+		{#each $config.work as project, i}
 			<a href="/work/{project.slug}" class="case-card" style="--delay: {i * 80}ms">
 				<div class="case-image">
 					<img src={project.heroImage} alt={project.title} loading="lazy" />
@@ -115,7 +115,7 @@
 	</div>
 
 	<div class="services-grid">
-		{#each siteConfig.services as service, i}
+		{#each $config.services as service, i}
 			<div class="service-card" style="--delay: {i * 80}ms">
 				<span class="service-number">{String(i + 1).padStart(2, '0')}</span>
 				<h3 class="service-name">{service.name}</h3>
@@ -134,7 +134,7 @@
 <section class="clients section" id="clients" class:revealed={clientsRevealed}>
 	<p class="clients-label">Trusted by</p>
 	<div class="clients-grid">
-		{#each siteConfig.clients as client, i}
+		{#each $config.clients as client, i}
 			<span class="client-name" style="--delay: {i * 50}ms">{client}</span>
 		{/each}
 	</div>

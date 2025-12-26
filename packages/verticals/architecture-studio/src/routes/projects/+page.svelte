@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
@@ -14,7 +14,7 @@
 	</header>
 
 	<div class="projects-grid">
-		{#each siteConfig.projects as project, i}
+		{#each $config.projects as project, i}
 			<a
 				href="/projects/{project.slug}"
 				class="project-card"

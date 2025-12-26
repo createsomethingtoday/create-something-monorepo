@@ -4,15 +4,13 @@
 	 * Overview of architecture services offered
 	 */
 
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
-
-	const { services, name } = siteConfig;
 </script>
 
 <SEOHead
-	title="Services | {name}"
+	title="Services | {$config.name}"
 	canonical="/services"
 	description="Architecture, interiors, and custom furniture design. Full-service residential design from concept through construction."
 />
@@ -30,7 +28,7 @@
 
 	<section class="services-list">
 		<div class="container">
-			{#each services as service, i}
+			{#each $config.services as service, i}
 				<article class="service-card" style="--delay: {i * 100}ms">
 					<div class="service-number">
 						{String(i + 1).padStart(2, '0')}
@@ -48,8 +46,8 @@
 		<div class="container">
 			<h2 class="section-title">Approach</h2>
 			<div class="approach-grid">
-				{#each siteConfig.studio.approach as principle, i}
-					<div class="approach-item" style="--delay: {(services.length + i) * 100}ms">
+				{#each $config.studio.approach as principle, i}
+					<div class="approach-item" style="--delay: {($config.services.length + i) * 100}ms">
 						<p class="approach-text">{principle}</p>
 					</div>
 				{/each}

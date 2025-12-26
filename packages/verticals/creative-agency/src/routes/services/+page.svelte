@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
@@ -18,7 +18,7 @@
 <!-- Services Grid -->
 <section class="services section">
 	<div class="services-grid">
-		{#each siteConfig.services as service, i}
+		{#each $config.services as service, i}
 			<div class="service-card">
 				<span class="service-number">{String(i + 1).padStart(2, '0')}</span>
 				<h2 class="service-name">{service.name}</h2>

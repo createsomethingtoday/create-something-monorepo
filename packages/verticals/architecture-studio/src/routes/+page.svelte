@@ -9,7 +9,7 @@
 	 * Zuhandenheit: The interface recedes; the work remains.
 	 */
 
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 	import { onMount } from 'svelte';
@@ -63,11 +63,11 @@
 <!-- Hero - Full bleed image with minimal text -->
 <section class="hero" class:visible={heroVisible}>
 	<div class="hero-image-wrapper">
-		<img src={siteConfig.hero.image} alt={siteConfig.hero.alt} class="hero-img" />
+		<img src={$config.hero.image} alt={$config.hero.alt} class="hero-img" />
 		<div class="hero-vignette"></div>
 	</div>
 	<div class="hero-content">
-		<p class="hero-caption">{siteConfig.hero.caption}</p>
+		<p class="hero-caption">{$config.hero.caption}</p>
 	</div>
 	<div class="scroll-indicator" aria-hidden="true">
 		<span class="scroll-line"></span>
@@ -82,7 +82,7 @@
 	</div>
 
 	<div class="projects-grid">
-		{#each siteConfig.projects.slice(0, 3) as project, i}
+		{#each $config.projects.slice(0, 3) as project, i}
 			<a
 				href="/projects/{project.slug}"
 				class="project-card"
@@ -107,7 +107,7 @@
 <section class="philosophy section" id="philosophy" class:revealed={philosophyRevealed}>
 	<div class="philosophy-content">
 		<span class="philosophy-mark" aria-hidden="true">"</span>
-		<p class="philosophy-text">{siteConfig.studio.philosophy}</p>
+		<p class="philosophy-text">{$config.studio.philosophy}</p>
 	</div>
 </section>
 
@@ -115,7 +115,7 @@
 <section class="approach section" id="approach" class:revealed={approachRevealed}>
 	<h2 class="approach-title">Approach</h2>
 	<div class="approach-grid">
-		{#each siteConfig.studio.approach as principle, i}
+		{#each $config.studio.approach as principle, i}
 			<div class="approach-item" style="--delay: {i * 80}ms">
 				<span class="approach-number">{String(i + 1).padStart(2, '0')}</span>
 				<p class="approach-text">{principle}</p>
@@ -125,11 +125,11 @@
 </section>
 
 <!-- Recognition -->
-{#if siteConfig.recognition.length > 0}
+{#if $config.recognition.length > 0}
 	<section class="recognition section" id="recognition" class:revealed={recognitionRevealed}>
 		<span class="recognition-label">Recognition</span>
 		<div class="recognition-list">
-			{#each siteConfig.recognition as item, i}
+			{#each $config.recognition as item, i}
 				<span class="recognition-item" style="--delay: {i * 50}ms">
 					{item.publication}, {item.year}
 				</span>

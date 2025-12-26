@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 
 	let formState = $state<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -47,17 +47,17 @@
 			<div class="contact-details">
 				<div class="detail">
 					<span class="detail-label">Email</span>
-					<a href="mailto:{siteConfig.email}" class="detail-value">{siteConfig.email}</a>
+					<a href="mailto:{$config.email}" class="detail-value">{$config.email}</a>
 				</div>
 				<div class="detail">
 					<span class="detail-label">Phone</span>
-					<a href="tel:{siteConfig.phone}" class="detail-value">{siteConfig.phone}</a>
+					<a href="tel:{$config.phone}" class="detail-value">{$config.phone}</a>
 				</div>
 				<div class="detail">
 					<span class="detail-label">Office</span>
 					<address class="detail-address">
-						{siteConfig.address.street}<br />
-						{siteConfig.address.city}, {siteConfig.address.state}
+						{$config.address.street}<br />
+						{$config.address.city}, {$config.address.state}
 					</address>
 				</div>
 			</div>

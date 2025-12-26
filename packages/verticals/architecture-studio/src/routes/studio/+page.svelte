@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
@@ -7,7 +7,7 @@
 <SEOHead
 	title="Studio"
 	canonical="/studio"
-	description="About {siteConfig.name} - {siteConfig.studio.philosophy}"
+	description="About {$config.name} - {$config.studio.philosophy}"
 />
 <StructuredData page="studio" />
 
@@ -15,8 +15,8 @@
 	<!-- Philosophy -->
 	<section class="philosophy-section">
 		<div class="philosophy-content">
-			<h1 class="philosophy-headline">{siteConfig.studio.headline}</h1>
-			<p class="philosophy-text">{siteConfig.studio.philosophy}</p>
+			<h1 class="philosophy-headline">{$config.studio.headline}</h1>
+			<p class="philosophy-text">{$config.studio.philosophy}</p>
 		</div>
 	</section>
 
@@ -24,7 +24,7 @@
 	<section class="process-section section">
 		<h2 class="section-title">Process</h2>
 		<div class="process-grid">
-			{#each siteConfig.studio.process as step, i}
+			{#each $config.studio.process as step, i}
 				<div class="process-step">
 					<span class="step-number">{String(i + 1).padStart(2, '0')}</span>
 					<h3 class="step-phase">{step.phase}</h3>
@@ -38,7 +38,7 @@
 	<section class="team-section section">
 		<h2 class="section-title">Team</h2>
 		<div class="team-grid">
-			{#each siteConfig.studio.team as member}
+			{#each $config.studio.team as member}
 				<div class="team-member">
 					{#if member.image}
 						<div class="member-image-wrapper">
@@ -59,7 +59,7 @@
 	<section class="services-section section">
 		<h2 class="section-title">Services</h2>
 		<div class="services-grid">
-			{#each siteConfig.services as service}
+			{#each $config.services as service}
 				<div class="service-item">
 					<h3 class="service-name">{service.name}</h3>
 					<p class="service-description">{service.description}</p>
@@ -69,11 +69,11 @@
 	</section>
 
 	<!-- Recognition -->
-	{#if siteConfig.recognition.length > 0}
+	{#if $config.recognition.length > 0}
 		<section class="recognition-section section">
 			<h2 class="section-title">Recognition</h2>
 			<div class="recognition-grid">
-				{#each siteConfig.recognition as item}
+				{#each $config.recognition as item}
 					<div class="recognition-item">
 						<span class="recognition-publication">{item.publication}</span>
 						<span class="recognition-year">{item.year}</span>
