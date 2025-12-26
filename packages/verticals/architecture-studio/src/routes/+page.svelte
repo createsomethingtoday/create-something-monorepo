@@ -64,7 +64,6 @@
 <section class="hero" class:visible={heroVisible}>
 	<div class="hero-image-wrapper">
 		<img src={$config.hero.image} alt={$config.hero.alt} class="hero-img" />
-		<div class="hero-vignette"></div>
 	</div>
 	<div class="hero-content">
 		<p class="hero-caption">{$config.hero.caption}</p>
@@ -168,16 +167,6 @@
 	.hero.visible .hero-img {
 		opacity: 1;
 		transform: scale(1);
-	}
-
-	/* Subtle vignette - atmosphere, not suppression */
-	.hero-vignette {
-		position: absolute;
-		inset: 0;
-		background:
-			radial-gradient(ellipse at center, transparent 40%, var(--color-bg-pure) 100%),
-			linear-gradient(to top, var(--color-bg-pure) 0%, transparent 30%);
-		pointer-events: none;
 	}
 
 	.hero-content {

@@ -46,7 +46,9 @@ function getApiToken(): string {
 
 const STYLE = `Professional architectural photography, minimalist modern architecture,
 natural materials wood glass concrete, warm interior lighting at golden hour,
-clean editorial style, high dynamic range, ultra sharp details, photorealistic, 8K`;
+clean editorial style, ultra sharp details, photorealistic, 8K,
+no vignette, no radial gradient, no white overlay, no fog effect, even lighting across frame,
+clear unobstructed view, magazine quality, Dwell magazine style`;
 
 interface ImageSpec {
 	filename: string;
