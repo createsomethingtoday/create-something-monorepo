@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 
 	interface TeamMember {
 		name: string;
@@ -24,7 +22,10 @@
 			.slice(0, 2);
 	}
 
-	let { team = siteConfig.team }: Props = $props();
+	let { team }: Props = $props();
+
+	// Reactive defaults from store
+	const effectiveTeam = $derived(team ?? $siteConfig.team);
 </script>
 
 <section class="team-section">
@@ -36,7 +37,7 @@
 		</div>
 
 		<div class="team-grid stagger-children">
-			{#each team as member}
+			{#each effectiveTeam as member}
 				<div class="team-card card-interactive stagger-item">
 					<div class="team-avatar">
 						<span class="team-initials">{getInitials(member.name)}</span>

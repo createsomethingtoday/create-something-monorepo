@@ -1,8 +1,6 @@
 <script lang="ts">
 	import SEOHead from '$lib/components/SEOHead.svelte';
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 </script>
 
 <SEOHead
@@ -19,7 +17,7 @@
 		<section>
 			<h2>Agreement to Terms</h2>
 			<p>
-				By accessing or using the services provided by {siteConfig.name} ("we," "our," or "us"),
+				By accessing or using the services provided by {$siteConfig.name} ("we," "our," or "us"),
 				you agree to be bound by these Terms of Service. If you do not agree to these terms, please
 				do not use our services.
 			</p>
@@ -48,7 +46,7 @@
 			<h2>Intellectual Property</h2>
 			<p>
 				All content on this website, including text, graphics, logos, and software, is the property
-				of {siteConfig.name} or its content suppliers and is protected by intellectual property laws.
+				of {$siteConfig.name} or its content suppliers and is protected by intellectual property laws.
 				You may not reproduce, distribute, or create derivative works without our express written permission.
 			</p>
 		</section>
@@ -56,7 +54,7 @@
 		<section>
 			<h2>Limitation of Liability</h2>
 			<p>
-				To the fullest extent permitted by law, {siteConfig.name} shall not be liable for any
+				To the fullest extent permitted by law, {$siteConfig.name} shall not be liable for any
 				indirect, incidental, special, consequential, or punitive damages arising from your use of
 				our services or website.
 			</p>
@@ -74,7 +72,7 @@
 			<h2>Governing Law</h2>
 			<p>
 				These Terms of Service shall be governed by and construed in accordance with the laws of
-				the jurisdiction in which {siteConfig.name} is registered, without regard to conflict of law principles.
+				the jurisdiction in which {$siteConfig.name} is registered, without regard to conflict of law principles.
 			</p>
 		</section>
 
@@ -93,8 +91,8 @@
 				If you have questions about these Terms of Service, please contact us at:
 			</p>
 			<p>
-				<a href="mailto:{siteConfig.email}">{siteConfig.email}</a><br />
-				{siteConfig.phone}
+				<a href="mailto:{$siteConfig.email}">{$siteConfig.email}</a><br />
+				{$siteConfig.phone}
 			</p>
 		</section>
 	</div>

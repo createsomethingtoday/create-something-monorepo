@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 
 	interface Props {
 		type?: 'organization' | 'service' | 'localBusiness';
@@ -10,23 +8,23 @@
 
 	let { type = 'organization', page = 'home' }: Props = $props();
 
-	// Organization schema (base for all pages)
-	const organizationSchema = {
+	// All schemas are derived to react to config changes
+	const organizationSchema = $derived({
 		'@context': 'https://schema.org',
 		'@type': 'ProfessionalService',
-		'@id': `${siteConfig.url}/#organization`,
-		name: siteConfig.name,
-		description: siteConfig.description,
-		url: siteConfig.url,
-		telephone: siteConfig.phone,
-		email: siteConfig.email,
+		'@id': `${$siteConfig.url}/#organization`,
+		name: $siteConfig.name,
+		description: $siteConfig.description,
+		url: $siteConfig.url,
+		telephone: $siteConfig.phone,
+		email: $siteConfig.email,
 		address: {
 			'@type': 'PostalAddress',
-			streetAddress: siteConfig.address.street,
-			addressLocality: siteConfig.address.city,
-			addressRegion: siteConfig.address.state,
-			postalCode: siteConfig.address.zip,
-			addressCountry: siteConfig.address.country
+			streetAddress: $siteConfig.address.street,
+			addressLocality: $siteConfig.address.city,
+			addressRegion: $siteConfig.address.state,
+			postalCode: $siteConfig.address.zip,
+			addressCountry: $siteConfig.address.country
 		},
 		openingHoursSpecification: [
 			{
@@ -36,11 +34,11 @@
 				closes: '18:00'
 			}
 		],
-		sameAs: [siteConfig.social.instagram, siteConfig.social.pinterest].filter(Boolean),
+		sameAs: [$siteConfig.social.instagram, $siteConfig.social.pinterest].filter(Boolean),
 		hasOfferCatalog: {
 			'@type': 'OfferCatalog',
 			name: 'Services',
-			itemListElement: siteConfig.services.map((service, index) => ({
+			itemListElement: $siteConfig.services.map((service, index) => ({
 				'@type': 'Offer',
 				itemOffered: {
 					'@type': 'Service',
@@ -49,23 +47,23 @@
 				position: index + 1
 			}))
 		}
-	};
+	});
 
 	// WebSite schema for home page
-	const webSiteSchema = {
+	const webSiteSchema = $derived({
 		'@context': 'https://schema.org',
 		'@type': 'WebSite',
-		'@id': `${siteConfig.url}/#website`,
-		url: siteConfig.url,
-		name: siteConfig.name,
-		description: siteConfig.description,
+		'@id': `${$siteConfig.url}/#website`,
+		url: $siteConfig.url,
+		name: $siteConfig.name,
+		description: $siteConfig.description,
 		publisher: {
-			'@id': `${siteConfig.url}/#organization`
+			'@id': `${$siteConfig.url}/#organization`
 		}
-	};
+	});
 
 	// BreadcrumbList for navigation
-	const breadcrumbSchemas: Record<string, object> = {
+	const breadcrumbSchemas = $derived<Record<string, object>>({
 		home: {
 			'@context': 'https://schema.org',
 			'@type': 'BreadcrumbList',
@@ -74,7 +72,7 @@
 					'@type': 'ListItem',
 					position: 1,
 					name: 'Home',
-					item: siteConfig.url
+					item: $siteConfig.url
 				}
 			]
 		},
@@ -86,13 +84,13 @@
 					'@type': 'ListItem',
 					position: 1,
 					name: 'Home',
-					item: siteConfig.url
+					item: $siteConfig.url
 				},
 				{
 					'@type': 'ListItem',
 					position: 2,
 					name: 'Services',
-					item: `${siteConfig.url}/services`
+					item: `${$siteConfig.url}/services`
 				}
 			]
 		},
@@ -104,13 +102,13 @@
 					'@type': 'ListItem',
 					position: 1,
 					name: 'Home',
-					item: siteConfig.url
+					item: $siteConfig.url
 				},
 				{
 					'@type': 'ListItem',
 					position: 2,
 					name: 'About',
-					item: `${siteConfig.url}/about`
+					item: `${$siteConfig.url}/about`
 				}
 			]
 		},
@@ -122,13 +120,13 @@
 					'@type': 'ListItem',
 					position: 1,
 					name: 'Home',
-					item: siteConfig.url
+					item: $siteConfig.url
 				},
 				{
 					'@type': 'ListItem',
 					position: 2,
 					name: 'Team',
-					item: `${siteConfig.url}/team`
+					item: `${$siteConfig.url}/team`
 				}
 			]
 		},
@@ -140,17 +138,17 @@
 					'@type': 'ListItem',
 					position: 1,
 					name: 'Home',
-					item: siteConfig.url
+					item: $siteConfig.url
 				},
 				{
 					'@type': 'ListItem',
 					position: 2,
 					name: 'Contact',
-					item: `${siteConfig.url}/contact`
+					item: `${$siteConfig.url}/contact`
 				}
 			]
 		}
-	};
+	});
 
 	// Combine schemas based on page
 	const schemas = $derived(() => {

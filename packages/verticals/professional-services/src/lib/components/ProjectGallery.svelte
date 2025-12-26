@@ -11,18 +11,18 @@
 	 * "Space between elements is content."
 	 */
 
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig, type SiteConfig } from '$lib/config/context';
 
 	interface Props {
-		projects?: typeof siteConfig.projects;
+		projects?: SiteConfig['projects'];
 		limit?: number;
 	}
 
-	let { projects = siteConfig.projects, limit }: Props = $props();
+	let { projects, limit }: Props = $props();
 
-	const displayProjects = limit ? projects.slice(0, limit) : projects;
+	// Reactive defaults from store
+	const effectiveProjects = $derived(projects ?? $siteConfig.projects);
+	const displayProjects = $derived(limit ? effectiveProjects.slice(0, limit) : effectiveProjects);
 </script>
 
 <section class="project-gallery">

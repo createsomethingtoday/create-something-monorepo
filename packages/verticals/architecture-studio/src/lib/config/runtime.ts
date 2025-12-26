@@ -55,10 +55,42 @@ export function getTenantInfo(): InjectedConfig['_tenant'] | null {
 }
 
 /**
+ * Unflatten dot-notation keys into nested objects
+ * e.g., { "address.city": "Seattle" } -> { address: { city: "Seattle" } }
+ */
+function unflattenConfig(flat: Record<string, unknown>): Record<string, unknown> {
+	const result: Record<string, unknown> = {};
+
+	for (const [key, value] of Object.entries(flat)) {
+		if (key.includes('.')) {
+			const parts = key.split('.');
+			let current = result;
+			for (let i = 0; i < parts.length - 1; i++) {
+				const part = parts[i];
+				if (!(part in current) || typeof current[part] !== 'object') {
+					current[part] = {};
+				}
+				current = current[part] as Record<string, unknown>;
+			}
+			current[parts[parts.length - 1]] = value;
+		} else {
+			if (value !== undefined) {
+				result[key] = value;
+			}
+		}
+	}
+
+	return result;
+}
+
+/**
  * Merge runtime config with static defaults
  */
 function mergeConfigs(defaults: SiteConfig, runtime: InjectedConfig): SiteConfig {
-	const { _tenant, ...runtimeConfig } = runtime;
+	const { _tenant, ...flatConfig } = runtime;
+
+	// Unflatten dot-notation keys (e.g., "address.city" -> address: { city: ... })
+	const runtimeConfig = unflattenConfig(flatConfig as Record<string, unknown>) as Partial<SiteConfig>;
 
 	return {
 		// Identity
@@ -69,21 +101,21 @@ function mergeConfigs(defaults: SiteConfig, runtime: InjectedConfig): SiteConfig
 		// Contact
 		email: runtimeConfig.email ?? defaults.email,
 		phone: runtimeConfig.phone ?? defaults.phone,
-		address: { ...defaults.address, ...(runtimeConfig.address ?? {}) },
+		address: { ...defaults.address, ...((runtimeConfig.address as object) ?? {}) },
 
 		// Social
-		social: { ...defaults.social, ...(runtimeConfig.social ?? {}) },
+		social: { ...defaults.social, ...((runtimeConfig.social as object) ?? {}) },
 
 		// SEO
 		url: runtimeConfig.url ?? defaults.url,
 		locale: runtimeConfig.locale ?? defaults.locale,
 
 		// Hero
-		hero: { ...defaults.hero, ...(runtimeConfig.hero ?? {}) },
+		hero: { ...defaults.hero, ...((runtimeConfig.hero as object) ?? {}) },
 
 		// Content
 		projects: runtimeConfig.projects ?? defaults.projects,
-		studio: runtimeConfig.studio ? { ...defaults.studio, ...runtimeConfig.studio } : defaults.studio,
+		studio: runtimeConfig.studio ? { ...defaults.studio, ...(runtimeConfig.studio as object) } : defaults.studio,
 		services: runtimeConfig.services ?? defaults.services,
 		recognition: runtimeConfig.recognition ?? defaults.recognition,
 		inquiryTypes: runtimeConfig.inquiryTypes ?? defaults.inquiryTypes

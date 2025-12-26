@@ -10,13 +10,11 @@
 
 	import ProjectGallery from '$lib/components/ProjectGallery.svelte';
 	import SEOHead from '$lib/components/SEOHead.svelte';
-	import { getSiteConfigFromContext } from '$lib/config/context';
-
-	const siteConfig = getSiteConfigFromContext();
+	import { siteConfig } from '$lib/config/context';
 </script>
 
 <SEOHead
-	title="Projects | {siteConfig.name}"
+	title="Projects | {$siteConfig.name}"
 	description="Explore our portfolio of architecture and design projects."
 	canonical="/projects"
 />
@@ -25,7 +23,7 @@
 	<!-- Header -->
 	<header class="projects-header">
 		<h1 class="projects-label">Projects</h1>
-		<p class="projects-count">{siteConfig.projects.length} Works</p>
+		<p class="projects-count">{$siteConfig.projects.length} Works</p>
 	</header>
 
 	<!-- Gallery -->
