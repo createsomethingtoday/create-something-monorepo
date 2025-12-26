@@ -31,6 +31,9 @@ declare global {
 				STRIPE_SECRET_KEY: string;
 				STRIPE_WEBHOOK_SECRET: string;
 				STRIPE_PUBLISHABLE_KEY?: string;
+				// Templates Platform
+				TEMPLATES_PLATFORM_API_URL?: string;
+				TEMPLATES_PLATFORM_API_SECRET?: string;
 				// Abundance Network
 				WHATSAPP_VERIFY_TOKEN?: string;
 				WHATSAPP_ACCESS_TOKEN?: string;
