@@ -158,50 +158,18 @@
 <!-- .agency Upgrade Section -->
 <section class="agency-section">
 	<div class="agency-content">
-		<div class="agency-badge">CREATE SOMETHING .agency</div>
+		<span class="agency-badge">.agency</span>
 		<h2 class="agency-title">Need more than a template?</h2>
 		<p class="agency-description">
-			Custom workflows. Automated client follow-ups. CRM integrations.
-			Our agency builds on top of your template to create systems that work while you sleep.
+			We build systems that work while you sleep.
 		</p>
-		<div class="agency-services">
-			<div class="agency-service">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-				</svg>
-				<div>
-					<h4>Booking Automation</h4>
-					<p>Calendly → CRM → Follow-up sequences</p>
-				</div>
-			</div>
-			<div class="agency-service">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-				</svg>
-				<div>
-					<h4>Client Communication</h4>
-					<p>Automated reminders, updates, reviews</p>
-				</div>
-			</div>
-			<div class="agency-service">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-					<line x1="3" y1="9" x2="21" y2="9"/>
-					<line x1="9" y1="21" x2="9" y2="9"/>
-				</svg>
-				<div>
-					<h4>Custom Integrations</h4>
-					<p>Connect to your existing tools</p>
-				</div>
-			</div>
-		</div>
 		<a
 			href="https://createsomething.agency/contact"
 			target="_blank"
 			rel="noopener noreferrer"
 			class="btn btn-accent btn-lg"
 		>
-			Talk to .agency
+			Let's talk
 		</a>
 	</div>
 </section>
@@ -550,7 +518,8 @@
 	/* Agency Section */
 	.agency-section {
 		padding: var(--space-2xl) var(--gutter);
-		background: linear-gradient(135deg, var(--color-bg-elevated), var(--color-bg-pure));
+		background: var(--color-bg-elevated);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.agency-content {
@@ -561,62 +530,22 @@
 
 	.agency-badge {
 		display: inline-block;
-		padding: var(--space-xs) var(--space-sm);
-		font-size: var(--text-caption);
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-primary);
-		background: var(--color-hover);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-full);
-		margin-bottom: var(--space-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		font-family: var(--font-mono);
+		color: var(--color-fg-tertiary);
+		margin-bottom: var(--space-sm);
 	}
 
 	.agency-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-h2);
 		margin-bottom: var(--space-sm);
 	}
 
 	.agency-description {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xl);
-		line-height: var(--leading-relaxed);
-	}
-
-	.agency-services {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-lg);
-		margin-bottom: var(--space-xl);
-		text-align: left;
-	}
-
-	.agency-service {
-		display: flex;
-		gap: var(--space-md);
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.agency-service svg {
-		flex-shrink: 0;
-		color: var(--color-fg-primary);
-	}
-
-	.agency-service h4 {
-		font-size: var(--text-body);
-		font-weight: 600;
-		margin-bottom: 4px;
-	}
-
-	.agency-service p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0;
+		margin-bottom: var(--space-lg);
 	}
 
 	.btn-accent {
@@ -639,10 +568,6 @@
 		}
 
 		.deploy-content {
-			grid-template-columns: 1fr;
-		}
-
-		.agency-services {
 			grid-template-columns: 1fr;
 		}
 	}
