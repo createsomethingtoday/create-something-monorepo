@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { siteConfig, type Project } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
+	import type { Project } from '$lib/config/site';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 
 	interface Props {
@@ -12,9 +13,9 @@
 	const { project } = data;
 
 	// Navigation
-	const currentIndex = siteConfig.projects.findIndex((p) => p.slug === project.slug);
-	const prevProject = siteConfig.projects[currentIndex - 1];
-	const nextProject = siteConfig.projects[currentIndex + 1];
+	const currentIndex = $config.projects.findIndex((p) => p.slug === project.slug);
+	const prevProject = $config.projects[currentIndex - 1];
+	const nextProject = $config.projects[currentIndex + 1];
 </script>
 
 <SEOHead

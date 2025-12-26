@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
@@ -12,7 +12,7 @@
 	</header>
 
 	<div class="work-grid">
-		{#each siteConfig.work as project, i}
+		{#each $config.work as project, i}
 			<a href="/work/{project.slug}" class="case-card" class:featured={i === 0}>
 				<div class="case-image">
 					<img src={project.heroImage} alt={project.title} loading="lazy" />

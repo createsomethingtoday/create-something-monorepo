@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 
@@ -34,7 +34,7 @@
 	}
 </script>
 
-<SEOHead title="Contact" canonical="/contact" description="Get in touch with {siteConfig.name}" />
+<SEOHead title="Contact" canonical="/contact" description="Get in touch with {$config.name}" />
 <StructuredData page="contact" />
 
 <div class="contact-page">
@@ -49,20 +49,20 @@
 			<div class="info-sections">
 				<div class="info-section">
 					<h2 class="info-label">Email</h2>
-					<a href="mailto:{siteConfig.email}" class="info-value">{siteConfig.email}</a>
+					<a href="mailto:{$config.email}" class="info-value">{$config.email}</a>
 				</div>
 
 				<div class="info-section">
 					<h2 class="info-label">Phone</h2>
-					<a href="tel:{siteConfig.phone}" class="info-value">{siteConfig.phone}</a>
+					<a href="tel:{$config.phone}" class="info-value">{$config.phone}</a>
 				</div>
 
 				<div class="info-section">
 					<h2 class="info-label">Studio</h2>
 					<address class="info-address">
-						{siteConfig.address.street}<br />
-						{siteConfig.address.city}, {siteConfig.address.state}
-						{siteConfig.address.zip}
+						{$config.address.street}<br />
+						{$config.address.city}, {$config.address.state}
+						{$config.address.zip}
 					</address>
 				</div>
 			</div>
@@ -111,7 +111,7 @@
 							class="form-select"
 						>
 							<option value="">Select...</option>
-							{#each siteConfig.inquiryTypes as type}
+							{#each $config.inquiryTypes as type}
 								<option value={type}>{type}</option>
 							{/each}
 						</select>

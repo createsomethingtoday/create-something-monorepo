@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { siteConfig } from '$lib/config/site';
+	import { config } from '$lib/config/runtime';
 	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
-<SEOHead title="About" description="{siteConfig.description}" />
+<SEOHead title="About" description="{$config.description}" />
 
 <!-- Hero -->
 <section class="hero">
 	<div class="hero-content">
 		<h1 class="hero-title">About Us</h1>
 		<p class="hero-description">
-			{siteConfig.description}
+			{$config.description}
 		</p>
 	</div>
 </section>
@@ -18,7 +18,7 @@
 <!-- Stats -->
 <section class="stats section">
 	<div class="stats-grid">
-		{#each siteConfig.stats as stat}
+		{#each $config.stats as stat}
 			<div class="stat">
 				<span class="stat-number">{stat.number}</span>
 				<span class="stat-label">{stat.label}</span>
@@ -50,7 +50,7 @@
 	</div>
 
 	<div class="team-grid">
-		{#each siteConfig.team as member}
+		{#each $config.team as member}
 			<div class="team-member">
 				<div class="member-image">
 					<img src={member.image} alt={member.name} loading="lazy" />
@@ -69,7 +69,7 @@
 <section class="clients section">
 	<p class="clients-label">Clients we've worked with</p>
 	<div class="clients-grid">
-		{#each siteConfig.clients as client}
+		{#each $config.clients as client}
 			<span class="client-name">{client}</span>
 		{/each}
 	</div>
