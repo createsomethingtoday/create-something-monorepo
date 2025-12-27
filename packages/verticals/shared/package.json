@@ -10,11 +10,13 @@
     "./types": "./src/types/index.ts",
     "./canon": "./src/canon/tokens.css",
     "./canon.css": "./canon.css",
-    "./styles/vertical-base.css": "./src/styles/vertical-base.css"
+    "./styles/vertical-base.css": "./src/styles/vertical-base.css",
+    "./tailwind.config.base": "./tailwind.config.base.js"
   },
   "files": [
     "src",
-    "canon.css"
+    "canon.css",
+    "tailwind.config.base.js"
   ],
   "scripts": {
     "check": "tsc --noEmit"
