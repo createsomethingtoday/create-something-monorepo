@@ -375,3 +375,131 @@ With context preservation, sessions can resume mid-task, enabling:
 3. **Multi-session continuity** (complex work spans sessions)
 
 This is "nondeterministic idempotence"—the same outcome regardless of when/where the workflow was interrupted.
+
+## Self-Healing Baseline (Upstream from VC)
+
+**Principle**: Run quality gates before starting new work to prevent the "broken windows" problem.
+
+VC achieves 90.9% quality gate pass rate by checking baseline health at session start. If existing tests/lint/typecheck are broken, fix them before adding new code—otherwise failures accumulate and mask regressions.
+
+### Configuration
+
+```typescript
+import { runBaselineCheck, DEFAULT_BASELINE_CONFIG } from '@create-something/harness';
+
+// Run all gates
+const result = await runBaselineCheck(DEFAULT_BASELINE_CONFIG, cwd);
+
+// Custom configuration
+const result = await runBaselineCheck({
+  enabled: true,
+  gates: {
+    tests: true,      // Run test suite
+    typecheck: true,  // Run tsc --noEmit
+    lint: true,       // Run eslint
+    build: false,     // Skip build (expensive)
+  },
+  autoFix: true,        // Attempt eslint --fix
+  createBlockers: true, // Create issues for failures
+  maxAutoFixAttempts: 1,
+  gateTimeoutMs: 5 * 60 * 1000, // 5 minutes
+  packageFilter: 'harness', // Monorepo package filter
+}, cwd);
+```
+
+### Gate Types
+
+| Gate | Command | Auto-Fix | Notes |
+|------|---------|----------|-------|
+| `typecheck` | `tsc --noEmit` | No | Type errors require manual fix |
+| `lint` | `eslint .` | Yes | `eslint --fix` for auto-fix |
+| `tests` | `pnpm test` | No | Failing tests require investigation |
+| `build` | `pnpm build` | No | Expensive, off by default |
+
+### Auto-Fix Flow
+
+```
+Gate fails → Auto-fix enabled?
+              ├── No → Create blocker issue
+              └── Yes → Run fix command
+                         ├── Re-run gate
+                         │    ├── Pass → Continue (fixed)
+                         │    └── Fail → Create blocker issue
+```
+
+### Blocker Issue Creation
+
+When a gate fails and can't be auto-fixed, a self-heal blocker issue is created:
+
+```bash
+# Auto-created issue
+bd show csm-xyz
+
+csm-xyz: [Self-Heal] Fix failing typecheck baseline
+Priority: P1
+Labels: harness:self-heal
+
+Gate: typecheck
+Command: pnpm --filter=harness exec tsc --noEmit
+Exit Code: 1
+
+Output:
+src/lib/auth.ts:45:3 - error TS2322: Type 'string' is not assignable...
+```
+
+### Baseline Health Tracking
+
+Track pass rate over time to identify systemic issues:
+
+```typescript
+import {
+  createBaselineHealth,
+  updateBaselineHealth,
+  formatBaselineHealth,
+} from '@create-something/harness';
+
+const health = createBaselineHealth();
+
+// After each baseline check
+const updatedHealth = updateBaselineHealth(health, result);
+
+console.log(formatBaselineHealth(updatedHealth));
+// ┌────────────────────────────────────────────────────────────────┐
+// │  BASELINE HEALTH                                               │
+// ├────────────────────────────────────────────────────────────────┤
+// │  Total Checks:    15                                           │
+// │  Pass Rate:     90.0%                                          │
+// ├────────────────────────────────────────────────────────────────┤
+// │  Passed First:    12                                           │
+// │  After Fix:        2                                           │
+// │  Failed:           1                                           │
+// │  Common Failures:                                              │
+// │    lint           3 times                                      │
+// └────────────────────────────────────────────────────────────────┘
+```
+
+### Integration with Harness
+
+The harness can run baseline checks before claiming work:
+
+```typescript
+import { runBaselineCheck, canProceedWithWork, getBaselineBlockers } from '@create-something/harness';
+
+// Before starting new work
+const baseline = await runBaselineCheck(config, cwd);
+
+if (!canProceedWithWork(baseline, config)) {
+  console.log('Baseline failed - work on blockers first');
+  const blockers = getBaselineBlockers(baseline);
+  // Focus on blocker issues before new features
+}
+```
+
+### Why Self-Healing Matters
+
+1. **Prevents broken windows**: Small failures don't accumulate into chaos
+2. **Maintains signal**: Test failures indicate *new* regressions, not old ones
+3. **Enables confidence**: AI can trust that passing tests mean working code
+4. **Closes the loop**: Baseline issues become tracked work, not ignored debt
+
+**Philosophy**: The baseline is the foundation. Weak foundations collapse under pressure. Self-healing ensures the foundation stays solid.

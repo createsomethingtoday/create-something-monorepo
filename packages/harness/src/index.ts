@@ -62,6 +62,12 @@ export type {
   TaskProgress,
   TestState,
   Decision,
+  // Self-healing baseline types (upstream from VC)
+  QualityGateType,
+  BaselineConfig,
+  BaselineGate,
+  BaselineResult,
+  BaselineHealth,
 } from './types.js';
 
 export {
@@ -75,6 +81,8 @@ export {
   getDiscoveryLabel,
   // Agent context
   EMPTY_AGENT_CONTEXT,
+  // Self-healing baseline
+  DEFAULT_BASELINE_CONFIG,
 } from './types.js';
 
 // Spec Parser
@@ -233,3 +241,17 @@ export {
   createFindingIssues,
   getReviewSummaryLine,
 } from './review-beads.js';
+
+// Self-Healing Baseline (upstream from VC)
+export {
+  runQualityGate,
+  runBaselineCheck,
+  attemptAutoFix,
+  createBaselineBlocker,
+  formatBaselineDisplay,
+  createBaselineHealth,
+  updateBaselineHealth,
+  formatBaselineHealth,
+  canProceedWithWork,
+  getBaselineBlockers,
+} from './self-heal.js';
