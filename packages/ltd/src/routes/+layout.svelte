@@ -73,17 +73,19 @@
 <SkipToContent />
 
 <div class="min-h-screen flex flex-col">
-	<Navigation
-		logo="CREATE SOMETHING"
-		logoSuffix=".ltd"
-		links={navLinks}
-		currentPath={data?.pathname || '/'}
-		user={data.user}
-		onLogout={handleLogout}
-		showLogin={true}
-		loginHref="/login"
-		accountHref="/account"
-	/>
+	{#if !isCanonRoute}
+		<Navigation
+			logo="CREATE SOMETHING"
+			logoSuffix=".ltd"
+			links={navLinks}
+			currentPath={data?.pathname || '/'}
+			user={data.user}
+			onLogout={handleLogout}
+			showLogin={true}
+			loginHref="/login"
+			accountHref="/account"
+		/>
+	{/if}
 
 	<main id="main-content" class="flex-1">
 		{@render children()}
@@ -98,7 +100,7 @@
 			showSocial={true}
 			isAuthenticated={!!data.user}
 		/>
-	{/if}
 
-	<ModeIndicator current="ltd" />
+		<ModeIndicator current="ltd" />
+	{/if}
 </div>
