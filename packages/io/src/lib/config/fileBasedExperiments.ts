@@ -415,6 +415,52 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 `
 	},
 	{
+		id: 'file-render-studio',
+		slug: 'render-studio',
+		title: 'Render Studio: Explicit Control, Transparent Results',
+		description: 'Full architectural rendering workflow with Canon presets and pattern-based SVG operations. No natural language—explicit vocabulary, deterministic results.',
+		excerpt_short: 'Architectural rendering with explicit presets and transparent conditioning',
+		excerpt_long: 'Render Studio combines SVG editing with photorealistic rendering. Unlike black-box tools like Fenestra, presets are visible and named (threshold-dwelling, golden-hour), operations are pattern-based (no AI interpretation), and conditioning is transparent (see what the AI sees).',
+		category: 'research',
+		tags: ['Render Pipeline', 'ControlNet', 'SVG', 'Architecture', 'AI', 'Presets', 'Canon'],
+		created_at: '2025-12-27T00:00:00Z',
+		updated_at: '2025-12-27T00:00:00Z',
+		reading_time_minutes: 10,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Presets recede into transparent use
+			'rams-principle-4', // Understandable - named presets, visible conditioning
+			'heidegger-aletheia', // Truth revealed through explicit operations
+			'subtractive-triad' // Pattern-based ops remove ambiguity
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════════════════╗
+    ║   RENDER STUDIO: EXPLICIT CONTROL, TRANSPARENT RESULTS                            ║
+    ║                                                                                   ║
+    ║   ┌─────────────────────────────┬─────────────────────────────────────────────┐   ║
+    ║   │     FLOOR PLAN EDITOR       │        RENDER PREVIEW                       │   ║
+    ║   │                             │                                             │   ║
+    ║   │   ┌───┐ ┌───┐  [Upload]     │   ┌─────────────────────────────────────┐   │   ║
+    ║   │   │   │ │   │               │   │     ControlNet Conditioning         │   │   ║
+    ║   │   └───┘ └───┘               │   │     ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓           │   │   ║
+    ║   │   ┌─────────────┐           │   │     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓           │   │   ║
+    ║   │   │             │           │   │     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓           │   │   ║
+    ║   │   └─────────────┘           │   └─────────────────────────────────────┘   │   ║
+    ║   │                             │                                             │   ║
+    ║   │   ┌─ SVG Operations ──────┐ │   ┌─ Render Settings ───────────────────┐   │   ║
+    ║   │   │ [🛋️ Furniture] [👥 Ppl] │ │   │ Materials: [threshold-dwelling ▼]  │   │   ║
+    ║   │   │ [🏷️ Label] [🗑️ Remove] │ │   │ Lighting:  [golden-hour ▼]         │   │   ║
+    ║   │   └───────────────────────┘ │   │ Angle:     [wide ▼]                 │   │   ║
+    ║   │                             │   └─────────────────────────────────────┘   │   ║
+    ║   │   History: [Undo (3)] [Reset]│   [          Generate Render           ]   │   ║
+    ║   └─────────────────────────────┴─────────────────────────────────────────────┘   ║
+    ║                                                                                   ║
+    ║   "See what the AI sees. Control what the AI does." — Canon Differentiation       ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════╝
+`
+	},
+	{
 		id: 'file-kinetic-typography',
 		slug: 'kinetic-typography',
 		title: 'Kinetic Typography: Data-Ink Ratio for Motion',
