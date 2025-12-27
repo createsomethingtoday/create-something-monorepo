@@ -40,6 +40,7 @@
 	});
 
 	const navLinks = [
+		{ label: 'Canon', href: '/canon' },
 		{ label: 'Masters', href: '/masters' },
 		{ label: 'Principles', href: '/principles' },
 		{ label: 'Patterns', href: '/patterns' },
@@ -49,6 +50,7 @@
 	];
 
 	const quickLinks = [
+		{ label: 'Canon', href: '/canon' },
 		{ label: 'Masters', href: '/masters' },
 		{ label: 'Principles', href: '/principles' },
 		{ label: 'Patterns', href: '/patterns' },
