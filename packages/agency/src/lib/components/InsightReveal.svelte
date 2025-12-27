@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { AssessmentResult } from '$lib/services/assessment';
 	import { offeringMetadata } from '$lib/services/assessment';
+	import SavvyCalButton from './SavvyCalButton.svelte';
 
 	interface Props {
 		result: AssessmentResult;
@@ -55,23 +56,24 @@
 	</a>
 
 	<!-- 6. Primary CTA - different based on tier -->
-	{#if isProduct}
-		<a
-			href="/products/{result.recommendation.offering}?assessment={sessionId}"
-			class="primary-cta animate-reveal"
-			style="--delay: 10"
-		>
-			Get started with {result.recommendation.offeringName}
-		</a>
-	{:else}
-		<a
-			href="/contact?service={result.recommendation.offering}&assessment={sessionId}"
-			class="primary-cta animate-reveal"
-			style="--delay: 10"
-		>
-			Let's discuss your situation
-		</a>
-	{/if}
+	<div class="cta-group animate-reveal" style="--delay: 10">
+		{#if isProduct}
+			<a
+				href="/products/{result.recommendation.offering}?assessment={sessionId}"
+				class="primary-cta"
+			>
+				Get started with {result.recommendation.offeringName}
+			</a>
+		{:else}
+			<SavvyCalButton variant="primary" size="md" />
+			<a
+				href="/contact?service={result.recommendation.offering}&assessment={sessionId}"
+				class="secondary-cta"
+			>
+				or send a message instead
+			</a>
+		{/if}
+	</div>
 
 	<!-- 7. Alternative path -->
 	<p class="alternative-text animate-reveal" style="--delay: 12">
@@ -172,6 +174,24 @@
 
 	.primary-cta:hover {
 		opacity: 0.9;
+	}
+
+	.cta-group {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-sm);
+		width: 100%;
+	}
+
+	.secondary-cta {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.secondary-cta:hover {
+		color: var(--color-fg-primary);
 	}
 
 	.alternative-text {

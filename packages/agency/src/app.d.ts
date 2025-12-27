@@ -1,6 +1,12 @@
 /// <reference types="@cloudflare/workers-types" />
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+
+// SavvyCal embed API
+interface Window {
+	SavvyCal?: (action: string, options?: { link?: string }) => void;
+}
+
 declare global {
 	namespace App {
 		// interface Error {}

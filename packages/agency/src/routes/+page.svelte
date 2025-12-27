@@ -1,6 +1,9 @@
 <script lang="ts">
 	import SEO from '$lib/components/SEO.svelte';
 	import TextRevelation from '$lib/components/TextRevelation.svelte';
+	import SocialProofStrip from '$lib/components/SocialProofStrip.svelte';
+	import PartnershipSection from '$lib/components/PartnershipSection.svelte';
+	import SavvyCalButton from '$lib/components/SavvyCalButton.svelte';
 
 	const services = [
 		{
@@ -47,6 +50,9 @@
 <!-- Act 1: The Revelation -->
 <TextRevelation />
 
+<!-- Social Proof: Case study metrics -->
+<SocialProofStrip />
+
 <!-- Act 2: What We Do -->
 <section class="services-section">
 	<div class="services-grid">
@@ -78,13 +84,19 @@
 	</div>
 </section>
 
+<!-- Partnership: Half Dozen relationship -->
+<PartnershipSection />
+
 <!-- Act 4: The Invitation -->
 <section class="cta-section">
 	<p class="cta-text">Ready to subtract?</p>
-	<a href="/discover" class="cta-button">
-		Find your entry point
-		<span class="cta-arrow">→</span>
-	</a>
+	<div class="cta-buttons">
+		<SavvyCalButton variant="primary" size="lg" />
+		<a href="/discover" class="cta-secondary">
+			or take the assessment
+			<span class="cta-arrow">→</span>
+		</a>
+	</div>
 </section>
 
 <style>
@@ -219,28 +231,31 @@
 		margin-bottom: var(--space-lg);
 	}
 
-	.cta-button {
+	.cta-buttons {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-md);
+	}
+
+	.cta-secondary {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5em;
-		padding: var(--space-sm) var(--space-lg);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
-		color: var(--color-bg-pure);
-		background: var(--color-fg-primary);
-		border-radius: var(--radius-full);
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
-	.cta-button:hover {
-		opacity: 0.9;
+	.cta-secondary:hover {
+		color: var(--color-fg-primary);
 	}
 
 	.cta-arrow {
 		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
-	.cta-button:hover .cta-arrow {
+	.cta-secondary:hover .cta-arrow {
 		transform: translateX(4px);
 	}
 
