@@ -137,18 +137,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			throw error(response.status, `Failed to create booking: ${errorText}`);
 		}
 
-		const rawResponse = await response.json();
+		const rawResponse = (await response.json()) as Record<string, unknown>;
 		console.log('SavvyCal response:', JSON.stringify(rawResponse).slice(0, 500));
 
 		// Handle different response formats
-		const responseEvent = rawResponse.data || rawResponse.event || rawResponse;
+		const responseEvent = (rawResponse.data || rawResponse.event || rawResponse) as Record<string, unknown>;
 		const event: SavvyCalEvent = {
-			id: responseEvent.id || responseEvent.uuid || 'unknown',
-			start_at: responseEvent.start_at || start_at,
-			end_at: responseEvent.end_at || end_at,
-			display_name: responseEvent.display_name || responseEvent.name || name,
-			email: responseEvent.email || email,
-			time_zone: responseEvent.time_zone || responseEvent.timezone || timezone
+			id: String(responseEvent.id || responseEvent.uuid || 'unknown'),
+			start_at: String(responseEvent.start_at || start_at),
+			end_at: String(responseEvent.end_at || end_at),
+			display_name: String(responseEvent.display_name || responseEvent.name || name),
+			email: String(responseEvent.email || email),
+			time_zone: String(responseEvent.time_zone || responseEvent.timezone || timezone)
 		};
 
 		// Track booking completion
