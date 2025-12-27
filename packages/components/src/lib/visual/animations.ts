@@ -9,17 +9,55 @@
  * "Animation should reveal truth, not decorate surface."
  */
 
+import {
+	STANDARD,
+	DECELERATE,
+	ACCELERATE,
+	EMPHASIZED,
+	toCss,
+	toSpline,
+	type BezierControlPoints
+} from './easing.js';
+
+// Re-export easing utilities for convenience
+export {
+	STANDARD,
+	DECELERATE,
+	ACCELERATE,
+	EMPHASIZED,
+	toCss,
+	toSpline,
+	evaluateBezier,
+	getVelocity,
+	createEasingFunction,
+	debugCurve,
+	debugAllCurves,
+	type BezierControlPoints
+} from './easing.js';
+
 /**
- * Easing functions aligned with design tokens
+ * Easing functions - DERIVED from mathematical control points
+ *
+ * Each curve is defined by 4 control points (P0, P1, P2, P3) where:
+ * - P0 = (0, 0) and P3 = (1, 1) are fixed
+ * - P1 and P2 define the curve shape
+ *
+ * @see easing.ts for full mathematical derivation
  */
 export const easing = {
-	standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
-	emphasized: 'cubic-bezier(0.2, 0, 0, 1)',
-	decelerate: 'cubic-bezier(0, 0, 0.2, 1)',
-	accelerate: 'cubic-bezier(0.4, 0, 1, 1)',
-	// Spline for SVG animations (values string)
-	splineStandard: '0.4 0 0.2 1',
-	splineEmphasized: '0.2 0 0 1'
+	/** Standard: slow start, fast finish - general UI transitions */
+	standard: toCss(STANDARD),
+	/** Emphasized: fast start, very slow finish - dramatic/important */
+	emphasized: toCss(EMPHASIZED),
+	/** Decelerate: fast start, slow finish - elements entering */
+	decelerate: toCss(DECELERATE),
+	/** Accelerate: slow start, fast finish - elements exiting */
+	accelerate: toCss(ACCELERATE),
+	/** SVG spline format for SMIL animations */
+	splineStandard: toSpline(STANDARD),
+	splineEmphasized: toSpline(EMPHASIZED),
+	splineDecelerate: toSpline(DECELERATE),
+	splineAccelerate: toSpline(ACCELERATE)
 } as const;
 
 /**

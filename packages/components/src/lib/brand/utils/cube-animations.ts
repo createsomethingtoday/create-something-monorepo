@@ -20,6 +20,12 @@ import {
 	CUBE_FACE_NORMALS,
 	debugFaceOffsets
 } from '../../visual/isometric.js';
+import {
+	STANDARD,
+	EMPHASIZED,
+	toCss,
+	toSpline
+} from '../../visual/easing.js';
 
 // Re-export for convenience
 export { calculateFaceOffset, CUBE_FACE_NORMALS, debugFaceOffsets };
@@ -29,16 +35,18 @@ export { calculateFaceOffset, CUBE_FACE_NORMALS, debugFaceOffsets };
 // =============================================================================
 
 /**
- * Easing functions from Canon
+ * Easing functions - DERIVED from mathematical control points
+ *
+ * @see easing.ts for full cubic-bezier derivation
  */
 export const cubeEasing = {
-	/** Standard Material Design easing */
-	standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
-	/** Emphasized entry for dramatic effect */
-	emphasized: 'cubic-bezier(0.2, 0, 0, 1)',
+	/** Standard: slow start, fast finish - general transitions */
+	standard: toCss(STANDARD),
+	/** Emphasized: fast start, very slow finish - dramatic effect */
+	emphasized: toCss(EMPHASIZED),
 	/** SVG spline format for SMIL animations */
-	splineStandard: '0.4 0 0.2 1',
-	splineEmphasized: '0.2 0 0 1'
+	splineStandard: toSpline(STANDARD),
+	splineEmphasized: toSpline(EMPHASIZED)
 } as const;
 
 /**
