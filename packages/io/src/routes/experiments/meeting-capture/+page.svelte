@@ -413,150 +413,11 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 </div>
 
 <style>
-	.page {
-		min-height: 100vh;
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
-	}
+	@import '$lib/styles/experiment-page.css';
 
-	.container {
-		max-width: 64rem;
-		margin: 0 auto;
-		padding: var(--space-xl) var(--space-md);
-	}
+	/* Page-specific components and overrides */
 
-	/* Header */
-	.header {
-		padding-bottom: var(--space-lg);
-		margin-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.category-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-xs);
-	}
-
-	.title {
-		font-size: var(--text-display);
-		font-weight: 700;
-		margin: 0 0 var(--space-xs);
-	}
-
-	.subtitle {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		font-style: italic;
-		margin: 0 0 var(--space-sm);
-	}
-
-	.meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-	}
-
-	/* ASCII Art */
-	.ascii-art {
-		font-family: monospace;
-		font-size: 0.65rem;
-		line-height: 1.2;
-		color: var(--color-fg-tertiary);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		padding: var(--space-sm);
-		overflow-x: auto;
-	}
-
-	/* Sections */
-	.section {
-		margin: var(--space-2xl) 0;
-	}
-
-	.abstract {
-		margin: var(--space-xl) 0;
-		padding-left: var(--space-md);
-		border-left: 4px solid var(--color-border-emphasis);
-	}
-
-	.section-title {
-		font-size: var(--text-h2);
-		font-weight: 700;
-		margin: 0 0 var(--space-md);
-		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.subsection-title {
-		font-size: var(--text-h3);
-		font-weight: 600;
-		color: var(--color-fg-secondary);
-		margin: var(--space-lg) 0 var(--space-sm);
-	}
-
-	.content {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-	}
-
-	/* Typography */
-	.lead {
-		font-size: var(--text-body-lg);
-		line-height: 1.8;
-		color: var(--color-fg-secondary);
-	}
-
-	.body-text {
-		line-height: 1.7;
-		color: var(--color-fg-secondary);
-	}
-
-	em {
-		font-style: italic;
-		color: var(--color-fg-primary);
-	}
-
-	/* Success Criteria */
-	.criteria-grid {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.criterion {
-		display: flex;
-		gap: var(--space-sm);
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-	}
-
-	.criterion .check {
-		font-size: var(--text-body-lg);
-		width: 1.5rem;
-		flex-shrink: 0;
-	}
-
-	.criterion.validated .check { color: var(--color-success); }
-	.criterion.partial .check { color: var(--color-warning); }
-	.criterion.failed .check { color: var(--color-error); }
-
-	.criterion strong {
-		display: block;
-		color: var(--color-fg-primary);
-	}
-
-	.criterion p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0;
-	}
-
-	/* Metrics Table */
+	/* Metrics Table - page-specific component */
 	.metrics-table {
 		width: 100%;
 		border-collapse: collapse;
@@ -586,54 +447,7 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 	.status-partial { color: var(--color-warning); font-weight: 600; }
 	.status-fail { color: var(--color-error); font-weight: 600; }
 
-	/* Cards */
-	.card {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
-	}
-
-	.card-title {
-		font-size: var(--text-body-lg);
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.card-subtitle {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-sm);
-	}
-
-	.card-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	.card-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	.card-footer {
-		font-size: var(--text-body-sm);
-		margin-top: var(--space-md);
-		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.card-footer.positive { color: var(--color-success); }
-	.card-footer.negative { color: var(--color-error); }
-
-	/* Triad */
+	/* Triad - page-specific component */
 	.triad-stack {
 		display: flex;
 		flex-direction: column;
@@ -664,7 +478,7 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		margin-top: var(--space-xs);
 	}
 
-	/* Lists */
+	/* Lists - page-specific component */
 	.list {
 		list-style: none;
 		padding: 0;
@@ -690,7 +504,7 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		color: var(--color-fg-primary);
 	}
 
-	/* Decisions */
+	/* Decisions - page-specific component */
 	.decision {
 		background: var(--color-bg-elevated);
 		padding: var(--space-md);
@@ -710,7 +524,7 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		color: var(--color-fg-secondary);
 	}
 
-	/* Limitations */
+	/* Limitations - page-specific component */
 	.limitation {
 		background: var(--color-bg-surface);
 		padding: var(--space-md);
@@ -731,16 +545,20 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		margin: 0;
 	}
 
-	code {
+	/* Code Block - page-specific component */
+	.code-block {
 		font-family: monospace;
-		font-size: 0.875em;
-		background: var(--color-bg-subtle);
-		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-md);
+		overflow-x: auto;
+		color: var(--color-fg-secondary);
+		white-space: pre-wrap;
 	}
 
-	/* Quote */
+	/* Quote - page-specific override (shared uses 4px border, this uses 2px) */
 	.quote {
 		border-left: 2px solid var(--color-border-emphasis);
 		padding-left: var(--space-md);
@@ -768,65 +586,5 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 
 	.quote.featured p {
 		font-size: var(--text-body-lg);
-	}
-
-	/* Code */
-	.code-block {
-		font-family: monospace;
-		font-size: var(--text-body-sm);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		padding: var(--space-md);
-		overflow-x: auto;
-		color: var(--color-fg-secondary);
-		white-space: pre-wrap;
-	}
-
-	/* Footer */
-	.footer {
-		margin-top: var(--space-2xl);
-		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.footer-heading {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-sm);
-	}
-
-	.footer-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-		font-size: var(--text-body-sm);
-	}
-
-	.footer-list li {
-		border: none;
-		padding: 0;
-	}
-
-	.footer-list a {
-		color: var(--color-fg-tertiary);
-		text-decoration: underline;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.footer-list a:hover {
-		color: var(--color-fg-primary);
-	}
-
-	/* Responsive */
-	@media (max-width: 768px) {
-		.container {
-			padding: var(--space-md);
-		}
 	}
 </style>
