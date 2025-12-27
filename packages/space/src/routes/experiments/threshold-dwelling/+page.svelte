@@ -85,7 +85,7 @@
 
 		try {
 			// Find the floor plan SVG element
-			const svgElement = document.querySelector('.plan-view svg') as SVGSVGElement;
+			const svgElement = document.querySelector('svg.floor-plan') as SVGSVGElement;
 			if (!svgElement) {
 				console.error('SVG element not found');
 				isDownloading = false;
