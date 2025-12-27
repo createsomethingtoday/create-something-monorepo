@@ -349,6 +349,16 @@
   --z-tooltip: 300;
 
   /* ==========================================================================
+     Layout Constants
+     ========================================================================== */
+
+  /* Header height - consistent across all properties
+   * Navigation component: py-4 (32px) + content (~40px) = 72px
+   * Used for: fixed sidebars, skip-to-content, scroll offsets
+   */
+  --header-height: 72px;
+
+  /* ==========================================================================
      Breakpoints & Containers
      ========================================================================== */
 
