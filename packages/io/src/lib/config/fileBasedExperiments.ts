@@ -376,6 +376,45 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 `
 	},
 	{
+		id: 'file-render-preview',
+		slug: 'render-preview',
+		title: 'Render Preview: See What the AI Sees',
+		description: 'Interactive SVG-to-PNG preview showing the ControlNet conditioning input. Upload architectural drawings and see how they transform for AI rendering.',
+		excerpt_short: 'Preview the conditioning input for AI architectural renders',
+		excerpt_long: 'This experiment exposes the render pipeline\'s conditioning step. Upload an SVG floor plan and see the Canon-styled PNG that ControlNet will use to guide photorealistic rendering. Interactive crop selection lets you isolate rooms before full render.',
+		category: 'research',
+		tags: ['Render Pipeline', 'ControlNet', 'SVG', 'WASM', 'Architecture', 'AI', 'Transparency'],
+		created_at: '2025-12-27T00:00:00Z',
+		updated_at: '2025-12-27T00:00:00Z',
+		reading_time_minutes: 5,
+		difficulty: 'beginner',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Tool recedes when working
+			'rams-principle-4', // Understandable - see the conditioning
+			'heidegger-aletheia', // Truth revealed through transparency
+			'subtractive-triad' // Canon colors: remove what obscures
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════╗
+    ║   RENDER PREVIEW: SEE WHAT THE AI SEES                                ║
+    ║                                                                       ║
+    ║   ┌─────────────────┐        ┌─────────────────┐        ┌───────────┐ ║
+    ║   │    ┌───┐ ┌───┐  │        │    ▓▓▓   ▓▓▓   │        │  photo-   │ ║
+    ║   │    │   │ │   │  │   →    │    ▓▓▓   ▓▓▓   │   →    │  realistic│ ║
+    ║   │    └───┘ └───┘  │  WASM  │    ▓▓▓▓▓▓▓▓▓   │   AI   │  render   │ ║
+    ║   │    ┌─────────┐  │        │    ▓▓▓▓▓▓▓▓▓   │        │           │ ║
+    ║   │    │         │  │        │    ▓▓▓▓▓▓▓▓▓   │        │           │ ║
+    ║   │    └─────────┘  │        │                 │        │           │ ║
+    ║   └─────────────────┘        └─────────────────┘        └───────────┘ ║
+    ║      Original SVG              Canon Preview           ControlNet    ║
+    ║      (your drawing)          (white on black)          (photorealism)║
+    ║                                                                       ║
+    ║   "See what the AI sees. Control what the AI does."                   ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+`
+	},
+	{
 		id: 'file-kinetic-typography',
 		slug: 'kinetic-typography',
 		title: 'Kinetic Typography: Data-Ink Ratio for Motion',
