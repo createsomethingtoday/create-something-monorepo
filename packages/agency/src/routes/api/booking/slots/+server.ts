@@ -9,15 +9,12 @@ interface SavvyCalSlot {
 	end_at: string;
 }
 
-interface SlotsResponse {
-	data: SavvyCalSlot[];
-}
-
 export const GET: RequestHandler = async ({ url, platform }) => {
 	const apiKey = platform?.env?.SAVVYCAL_API_KEY;
 
 	if (!apiKey) {
-		throw error(500, 'SavvyCal API key not configured');
+		console.error('SAVVYCAL_API_KEY not found in environment');
+		throw error(500, 'Booking service temporarily unavailable');
 	}
 
 	// Get query params
@@ -36,26 +33,46 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			timezone
 		});
 
-		const response = await fetch(
-			`${SAVVYCAL_API_BASE}/links/${LINK_SLUG}/slots?${params}`,
-			{
-				headers: {
-					Authorization: `Bearer ${apiKey}`,
-					'Content-Type': 'application/json'
-				}
+		const apiUrl = `${SAVVYCAL_API_BASE}/links/${LINK_SLUG}/slots?${params}`;
+		console.log('Fetching SavvyCal slots:', apiUrl);
+
+		const response = await fetch(apiUrl, {
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+				Accept: 'application/json'
 			}
-		);
+		});
 
 		if (!response.ok) {
 			const errorText = await response.text();
 			console.error('SavvyCal API error:', response.status, errorText);
+
+			// Return empty slots instead of error for better UX
+			if (response.status === 404) {
+				return json({ slots: [], timezone });
+			}
+
 			throw error(response.status, 'Failed to fetch available slots');
 		}
 
-		const data: SlotsResponse = await response.json();
+		const rawData = (await response.json()) as
+			| SavvyCalSlot[]
+			| { data?: SavvyCalSlot[]; slots?: SavvyCalSlot[] };
+		console.log('SavvyCal response:', JSON.stringify(rawData).slice(0, 200));
+
+		// Handle different response formats
+		let slotsArray: SavvyCalSlot[] = [];
+
+		if (Array.isArray(rawData)) {
+			slotsArray = rawData;
+		} else if (rawData.data && Array.isArray(rawData.data)) {
+			slotsArray = rawData.data;
+		} else if (rawData.slots && Array.isArray(rawData.slots)) {
+			slotsArray = rawData.slots;
+		}
 
 		// Transform to simpler format
-		const slots = data.data.map((slot) => ({
+		const slots = slotsArray.map((slot: SavvyCalSlot) => ({
 			start_at: slot.start_at,
 			end_at: slot.end_at,
 			duration_minutes: Math.round(
@@ -69,7 +86,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		});
 	} catch (err) {
 		console.error('Error fetching slots:', err);
-		if (err instanceof Error && 'status' in err) {
+		if (err && typeof err === 'object' && 'status' in err) {
 			throw err;
 		}
 		throw error(500, 'Failed to fetch available slots');
