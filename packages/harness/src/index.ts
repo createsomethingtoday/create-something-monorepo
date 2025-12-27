@@ -53,6 +53,8 @@ export type {
   ReviewAggregation,
   ReviewContext,
   ReviewedCheckpoint,
+  // Discovery source taxonomy (upstream from VC)
+  DiscoverySource,
 } from './types.js';
 
 export {
@@ -61,6 +63,9 @@ export {
   DEFAULT_SWARM_CONFIG,
   DEFAULT_MODEL_SPECIFIC_CONFIG,
   DEFAULT_REVIEW_PIPELINE_CONFIG,
+  // Discovery source taxonomy
+  DISCOVERY_LABELS,
+  getDiscoveryLabel,
 } from './types.js';
 
 // Spec Parser
@@ -96,6 +101,9 @@ export {
   // Work Extraction (upstream from VC)
   createIssueFromFinding,
   extractWorkFromFindings,
+  // Convenience functions for discovery sources
+  createBlockerIssue,
+  createSelfHealIssue,
 } from './beads.js';
 
 // Session Management
