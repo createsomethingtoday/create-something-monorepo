@@ -213,6 +213,10 @@ function convertToParsedSpec(spec: YamlSpec): ParsedSpec {
     if (spec.property && !labels.includes(spec.property)) {
       labels.push(spec.property);
     }
+    // Add complexity as label for model routing
+    if (f.complexity) {
+      labels.push(`complexity:${f.complexity}`);
+    }
     labels.push(slugify(f.title));
 
     return {
