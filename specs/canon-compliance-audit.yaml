@@ -1,0 +1,73 @@
+title: Canon Design System Compliance Audit
+
+overview: |
+  Audit all CREATE Something properties for Canon design system compliance.
+  Replace hardcoded colors with Canon tokens across .space, .io, .agency, and .ltd.
+  This spec tests model routing with trivial/simple/standard complexity tasks.
+
+features:
+  - title: Fix IO experiments color violations
+    description: Replace hardcoded status colors in IO experiments with Canon semantic tokens
+    complexity: simple
+    priority: 1
+    files:
+      - packages/io/src/routes/experiments/meeting-capture/+page.svelte
+      - packages/io/src/routes/experiments/template-recategorization/+page.svelte
+      - packages/io/src/routes/experiments/validation-zuhandenheit/+page.svelte
+    acceptance:
+      - Replace #22c55e with var(--color-success) or var(--color-data-2)
+      - Replace #ef4444 with var(--color-error)
+      - Replace #f59e0b with var(--color-warning)
+      - test: No hardcoded status colors remain
+        verify: grep -r "#22c55e\|#ef4444\|#f59e0b" packages/io/src/routes/experiments --include="*.svelte" | wc -l | grep "^0$"
+
+  - title: Fix SPACE praxis fallback colors
+    description: Update praxis page to use current Canon success token
+    complexity: trivial
+    priority: 2
+    files:
+      - packages/space/src/routes/praxis/+page.svelte
+    acceptance:
+      - Replace #155724 fallback with current --color-success value
+      - Ensure fallback matches Canon token definition
+      - test: No outdated fallback colors
+        verify: grep -r "#155724" packages/space/src --include="*.svelte" | wc -l | grep "^0$"
+
+  - title: Audit and document AGENCY compliance
+    description: Verify AGENCY property is Canon-compliant (already near 100%)
+    complexity: trivial
+    priority: 3
+    files:
+      - packages/agency/src
+    acceptance:
+      - Confirm single #000000 usage is intentional or fix
+      - Document compliance status
+      - test: Agency passes Canon audit
+        verify: grep -roh "#[0-9a-fA-F]{6}" packages/agency/src --include="*.svelte" 2>/dev/null | wc -l | xargs test 2 -ge
+
+  - title: Verify LTD Canon documentation accuracy
+    description: Ensure LTD Canon docs show correct token values
+    complexity: simple
+    priority: 2
+    files:
+      - packages/ltd/src/routes/canon
+      - packages/ltd/src/routes/brand/+page.svelte
+    acceptance:
+      - Token examples match tokens.css definitions
+      - Brand page colors align with Canon
+      - Error page fallbacks use correct values
+    depends_on:
+      - Fix IO experiments color violations
+
+requirements:
+  - All changes use Canon tokens from packages/components/src/lib/styles/tokens.css
+  - No new hardcoded hex colors introduced
+  - Fallback values (if used) match token definitions
+  - "Build succeeds: pnpm build"
+
+success:
+  - IO experiments use Canon semantic color tokens
+  - SPACE praxis uses current Canon values
+  - AGENCY confirmed compliant
+  - LTD documentation accurate
+  - Total hardcoded color count reduced by 50%+

@@ -1,0 +1,80 @@
+title: Extract Shared IO Experiment CSS
+
+overview: |
+  Address critical DRY violation: Three IO experiment pages share ~300 lines
+  of nearly identical CSS. Extract common styles to a shared stylesheet.
+
+  Affected files:
+  - packages/io/src/routes/experiments/meeting-capture/+page.svelte
+  - packages/io/src/routes/experiments/template-recategorization/+page.svelte
+  - packages/io/src/routes/experiments/validation-zuhandenheit/+page.svelte
+
+features:
+  - title: Create shared experiment page stylesheet
+    description: Extract common CSS patterns to packages/io/src/lib/styles/experiment-page.css
+    complexity: standard
+    priority: 1
+    files:
+      - packages/io/src/lib/styles/experiment-page.css
+    acceptance:
+      - Create new file with shared styles using Canon tokens
+      - Include page, container, header, category-label, title, subtitle, meta classes
+      - Include section, abstract, section-title, subsection-title, content classes
+      - Include typography classes (lead, body-text, em)
+      - Include criterion, criterion.validated/partial/failed classes
+      - Include card, card-title, card-list classes
+      - Include responsive @media query for container padding
+      - All styles use Canon tokens (no hardcoded values)
+
+  - title: Refactor meeting-capture to use shared styles
+    description: Import shared stylesheet and remove duplicated CSS
+    complexity: simple
+    priority: 1
+    files:
+      - packages/io/src/routes/experiments/meeting-capture/+page.svelte
+    acceptance:
+      - Import experiment-page.css at top of style block
+      - Remove styles now in shared file
+      - Keep only page-specific styles (metrics-table, capture-specific classes)
+      - Page renders identically to before
+    depends_on:
+      - Create shared experiment page stylesheet
+
+  - title: Refactor template-recategorization to use shared styles
+    description: Import shared stylesheet and remove duplicated CSS
+    complexity: simple
+    priority: 1
+    files:
+      - packages/io/src/routes/experiments/template-recategorization/+page.svelte
+    acceptance:
+      - Import experiment-page.css at top of style block
+      - Remove styles now in shared file
+      - Keep only page-specific styles
+      - Page renders identically to before
+    depends_on:
+      - Create shared experiment page stylesheet
+
+  - title: Refactor validation-zuhandenheit to use shared styles
+    description: Import shared stylesheet and remove duplicated CSS
+    complexity: simple
+    priority: 1
+    files:
+      - packages/io/src/routes/experiments/validation-zuhandenheit/+page.svelte
+    acceptance:
+      - Import experiment-page.css at top of style block
+      - Remove styles now in shared file
+      - Keep only page-specific styles
+      - Page renders identically to before
+    depends_on:
+      - Create shared experiment page stylesheet
+
+requirements:
+  - All extracted styles use Canon tokens from tokens.css
+  - No visual regression in any experiment page
+  - Shared file follows Canon naming conventions
+  - "Build succeeds: pnpm --filter=io build"
+
+success:
+  - Single source of truth for experiment page styling
+  - Each experiment page reduced by ~250 lines
+  - DRY violations csm-wb9fg and csm-z7zed resolved
