@@ -51,8 +51,7 @@
 		</div>
 	</a>
 
-	<!-- Coming Soon Cards -->
-	<div class="component-card component-card-disabled">
+	<a href="/canon/components/navigation" class="component-card">
 		<div class="card-icon">
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -61,10 +60,16 @@
 		</div>
 		<div class="card-content">
 			<h2 class="card-title">Navigation</h2>
-			<p class="card-description">Sidebar, header, and breadcrumb patterns.</p>
+			<p class="card-description">
+				Header navigation, sidebars, breadcrumbs, and tabs. Patterns for wayfinding.
+			</p>
 		</div>
-		<span class="badge">Soon</span>
-	</div>
+		<div class="card-arrow">
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M5 12h14M12 5l7 7-7 7" />
+			</svg>
+		</div>
+	</a>
 </section>
 
 <!-- Principles Section -->

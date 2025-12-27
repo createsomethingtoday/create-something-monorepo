@@ -47,15 +47,15 @@ export const canonNavigation: NavSection[] = [
 			{ label: 'Overview', href: '/canon/components' },
 			{ label: 'Button', href: '/canon/components/button' },
 			{ label: 'Card', href: '/canon/components/card' },
-			{ label: 'Navigation', href: '/canon/components/navigation', badge: 'Soon' }
+			{ label: 'Navigation', href: '/canon/components/navigation' }
 		]
 	},
 	{
 		title: 'Patterns',
 		items: [
-			{ label: 'Overview', href: '/canon/patterns', badge: 'Soon' },
-			{ label: 'Forms', href: '/canon/patterns/forms', badge: 'Soon' },
-			{ label: 'Loading', href: '/canon/patterns/loading', badge: 'Soon' }
+			{ label: 'Overview', href: '/canon/patterns' },
+			{ label: 'Forms', href: '/canon/patterns/forms' },
+			{ label: 'Loading', href: '/canon/patterns/loading' }
 		]
 	},
 	{
@@ -73,7 +73,7 @@ export const canonNavigation: NavSection[] = [
 			{ label: 'Tokens', href: '/canon/resources/tokens' },
 			{ label: 'Changelog', href: '/canon/resources/changelog' },
 			{ label: 'Contributing', href: '/canon/resources/contributing' },
-			{ label: 'Figma', href: '/canon/resources/figma', badge: 'Soon' }
+			{ label: 'Figma', href: '/canon/resources/figma' }
 		]
 	}
 ];
