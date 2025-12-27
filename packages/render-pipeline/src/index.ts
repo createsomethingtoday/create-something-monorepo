@@ -75,6 +75,19 @@ export {
   type SectionRenderOptions
 } from './section-svg.js';
 
+// Perspective renderer (Three.js → SVG)
+export {
+  initPerspectiveRenderer,
+  createSceneFromPlan,
+  renderToSvg,
+  generatePerspectiveConditioning,
+  THRESHOLD_DWELLING_CAMERAS,
+  type CameraPreset,
+  type RoomView,
+  type PerspectiveRenderOptions,
+  type HeightConfig
+} from './perspective-renderer.js';
+
 import { svgToMonochromePng } from './svg-to-png.js';
 import { render } from './replicate.js';
 import { recommendModel, buildPrompt, getConditioningScale } from './controlnet.js';

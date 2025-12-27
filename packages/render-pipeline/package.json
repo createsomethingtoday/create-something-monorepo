@@ -15,15 +15,20 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "render-threshold": "tsx scripts/render-threshold.ts",
-    "generate-sections": "tsx scripts/generate-sections.ts"
+    "generate-sections": "tsx scripts/generate-sections.ts",
+    "render-perspective": "tsx scripts/render-perspective.ts"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.0",
     "@resvg/resvg-wasm": "^2.6.2",
-    "replicate": "^1.0.0"
+    "jsdom": "^25.0.0",
+    "replicate": "^1.0.0",
+    "three": "^0.170.0"
   },
   "devDependencies": {
+    "@types/jsdom": "^21.0.0",
     "@types/node": "^20.0.0",
+    "@types/three": "^0.170.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },
