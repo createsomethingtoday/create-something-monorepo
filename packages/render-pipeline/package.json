@@ -16,7 +16,9 @@
     "dev": "tsc --watch",
     "render-threshold": "tsx scripts/render-threshold.ts",
     "generate-sections": "tsx scripts/generate-sections.ts",
-    "render-perspective": "tsx scripts/render-perspective.ts"
+    "render-perspective": "tsx scripts/render-perspective.ts",
+    "render-perspective-room": "tsx scripts/render-perspective-room.ts",
+    "render-custom": "tsx scripts/render-perspective-custom.ts"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.0",

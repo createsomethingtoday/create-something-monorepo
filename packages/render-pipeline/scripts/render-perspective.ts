@@ -15,16 +15,15 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import {
   initPerspectiveRenderer,
-  createSceneFromPlan,
+  createRoomScene,
   renderToSvg,
   THRESHOLD_DWELLING_CAMERAS,
+  ROOM_BOUNDS,
   svgToPng,
   type HeightConfig
 } from '../src/index.js';
-import { THRESHOLD_DWELLING } from '../data/threshold-dwelling.js';
 import {
-  THRESHOLD_DWELLING_SECTIONS,
-  ROOM_SECTIONS
+  THRESHOLD_DWELLING_SECTIONS
 } from '../data/threshold-dwelling-sections.js';
 
 const OUTPUT_DIR = path.resolve(
@@ -57,20 +56,20 @@ async function main() {
   // Ensure output directory exists
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
-  // Create 3D scene from floor plan
-  console.log('Creating 3D scene from floor plan data...');
-  const scene = createSceneFromPlan(THRESHOLD_DWELLING, HEIGHTS);
-
   // Filter rooms if specific room requested
+  // Only include rooms that have defined bounds
+  const availableRooms = THRESHOLD_DWELLING_CAMERAS.filter(
+    (r) => r.room in ROOM_BOUNDS
+  );
   const rooms = roomArg
-    ? THRESHOLD_DWELLING_CAMERAS.filter((r) => r.room === roomArg)
-    : THRESHOLD_DWELLING_CAMERAS;
+    ? availableRooms.filter((r) => r.room === roomArg)
+    : availableRooms;
 
   if (roomArg && rooms.length === 0) {
     console.error(`Unknown room: ${roomArg}`);
     console.error(
       'Available rooms:',
-      THRESHOLD_DWELLING_CAMERAS.map((r) => r.room).join(', ')
+      availableRooms.map((r) => r.room).join(', ')
     );
     process.exit(1);
   }
@@ -84,6 +83,10 @@ async function main() {
 
   for (const room of rooms) {
     console.log(`\nRoom: ${room.room}`);
+
+    // Create room-specific 3D scene (focused view, not entire building)
+    console.log(`  Creating 3D scene for ${room.room}...`);
+    const scene = createRoomScene(room.room, HEIGHTS);
 
     for (const camera of room.cameras) {
       const key = `${room.room}-${camera.name}`;

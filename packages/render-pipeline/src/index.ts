@@ -79,11 +79,14 @@ export {
 export {
   initPerspectiveRenderer,
   createSceneFromPlan,
+  createRoomScene,
+  ROOM_BOUNDS,
   renderToSvg,
   generatePerspectiveConditioning,
   THRESHOLD_DWELLING_CAMERAS,
   type CameraPreset,
   type RoomView,
+  type RoomBounds,
   type PerspectiveRenderOptions,
   type HeightConfig
 } from './perspective-renderer.js';
