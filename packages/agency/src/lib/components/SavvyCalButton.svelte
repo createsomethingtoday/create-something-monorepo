@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 
 	interface Props {
-		linkSlug?: string;
 		variant?: 'primary' | 'secondary' | 'ghost';
 		size?: 'sm' | 'md' | 'lg';
 		class?: string;
@@ -10,14 +10,13 @@
 	}
 
 	let {
-		linkSlug = 'createsomething/together',
 		variant = 'primary',
 		size = 'md',
 		class: className = '',
 		children
 	}: Props = $props();
 
-	async function openBooking() {
+	async function handleClick() {
 		// Track analytics
 		try {
 			fetch('/api/analytics/track', {
@@ -33,18 +32,13 @@
 			// Silent fail - don't block booking
 		}
 
-		// Open SavvyCal popup
-		if (browser && typeof window.SavvyCal !== 'undefined') {
-			window.SavvyCal('open', { link: linkSlug });
-		} else if (browser) {
-			// Fallback: open in new tab
-			window.open(`https://savvycal.com/${linkSlug}`, '_blank');
-		}
+		// Navigate to custom booking page
+		goto('/book');
 	}
 </script>
 
 <button
-	onclick={openBooking}
+	onclick={handleClick}
 	class="booking-cta {variant} {size} {className}"
 	type="button"
 >
@@ -52,19 +46,6 @@
 		{@render children()}
 	{:else}
 		<span>Book a discovery call</span>
-		<svg
-			class="arrow-icon"
-			fill="none"
-			stroke="currentColor"
-			viewBox="0 0 24 24"
-			stroke-width="2"
-		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				d="M13 7l5 5m0 0l-5 5m5-5H6"
-			/>
-		</svg>
 	{/if}
 </button>
 
@@ -140,15 +121,5 @@
 	.booking-cta.lg {
 		padding: 1rem 2rem;
 		font-size: var(--text-body-lg);
-	}
-
-	.arrow-icon {
-		width: 1em;
-		height: 1em;
-		transition: transform var(--duration-micro) var(--ease-standard);
-	}
-
-	.booking-cta:hover .arrow-icon {
-		transform: translateX(4px);
 	}
 </style>
