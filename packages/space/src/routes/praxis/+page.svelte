@@ -333,8 +333,8 @@
 	}
 
 	.grade-canonical {
-		background: var(--color-success-subtle, #d4edda);
-		color: var(--color-success, #155724);
+		background: var(--color-success-muted, rgba(68, 170, 68, 0.2));
+		color: var(--color-success, #44aa44);
 	}
 
 	.grade-valid {
@@ -463,7 +463,7 @@
 
 	.triad-success {
 		font-weight: var(--font-medium);
-		color: var(--color-success, #155724) !important;
+		color: var(--color-success, #44aa44) !important;
 	}
 
 	.triad-audit {
