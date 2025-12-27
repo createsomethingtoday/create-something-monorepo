@@ -1,0 +1,15 @@
+# CREATE SOMETHING Ltd - Philosophical Foundation
+# https://createsomething.ltd
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://createsomething.ltd/sitemap.xml
+
+# Block admin and account pages from indexing
+User-agent: *
+Disallow: /admin/
+Disallow: /account/
+Disallow: /api/
+Disallow: /login
