@@ -1,13 +1,1 @@
-/** @type {import('tailwindcss').Config} */
-export default {
-	content: ['./src/**/*.{html,js,svelte,ts}'],
-	theme: {
-		extend: {
-			fontFamily: {
-				sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-				mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace']
-			}
-		}
-	},
-	plugins: []
-};
+export { default } from '@create-something/vertical-shared/tailwind.config.base';
