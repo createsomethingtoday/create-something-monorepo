@@ -92,6 +92,8 @@ export async function renderFromSvg(options: RenderFromSvgOptions): Promise<Rend
     crop,
     width = 1024,
     height = 1024,
+    outputWidth = 1440,
+    outputHeight = 1440,
     conditioningScale,
     outputPath
   } = options;
@@ -116,12 +118,14 @@ export async function renderFromSvg(options: RenderFromSvgOptions): Promise<Rend
   const scale = conditioningScale ?? getConditioningScale('clean-lines');
 
   // Step 3: Render with ControlNet
-  console.log(`Rendering with ${model}...`);
+  console.log(`Rendering with ${model} at ${outputWidth}x${outputHeight}...`);
   return render({
     image: pngBuffer,
     prompt,
     model,
     conditioningScale: scale,
+    outputWidth,
+    outputHeight,
     outputPath
   });
 }

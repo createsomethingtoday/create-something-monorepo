@@ -33,6 +33,35 @@ const OUTPUT_DIR = path.resolve(
   '../space/static/experiments/threshold-dwelling/renders'
 );
 
+// Maximum output dimension for high-res renders
+const MAX_OUTPUT_DIM = 1440;
+
+/**
+ * Calculate output dimensions based on room aspect ratio
+ * Keeps 1440 as the maximum dimension, scales the other proportionally
+ */
+function calculateOutputDimensions(crop: [number, number, number, number]): {
+  width: number;
+  height: number;
+} {
+  const [, , cropWidth, cropHeight] = crop;
+  const aspectRatio = cropWidth / cropHeight;
+
+  if (aspectRatio >= 1) {
+    // Landscape or square: width is 1440
+    return {
+      width: MAX_OUTPUT_DIM,
+      height: Math.round(MAX_OUTPUT_DIM / aspectRatio)
+    };
+  } else {
+    // Portrait: height is 1440
+    return {
+      width: Math.round(MAX_OUTPUT_DIM * aspectRatio),
+      height: MAX_OUTPUT_DIM
+    };
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const svgOnly = args.includes('--svg-only');
@@ -95,7 +124,8 @@ async function main() {
       process.exit(1);
     }
 
-    console.log(`Rendering single room: ${room.name}`);
+    const { width, height } = calculateOutputDimensions(room.crop);
+    console.log(`Rendering single room: ${room.name} (${width}x${height})`);
 
     for (const angle of room.angles) {
       const key = `${room.name}-${angle.suffix}`;
@@ -108,6 +138,8 @@ async function main() {
         prompt,
         model: 'flux-canny-pro',
         crop: room.crop,
+        outputWidth: width,
+        outputHeight: height,
         outputPath: path.join(OUTPUT_DIR, `${key}.jpg`)
       });
 
@@ -123,11 +155,13 @@ async function main() {
     let totalDuration = 0;
 
     for (const room of THRESHOLD_DWELLING_ROOMS) {
+      const { width, height } = calculateOutputDimensions(room.crop);
+
       for (const angle of room.angles) {
         const key = `${room.name}-${angle.suffix}`;
         const prompt = angle.promptAddition ? `${basePrompt}, ${angle.promptAddition}` : basePrompt;
 
-        console.log(`\nRendering ${key} [${completed + 1}/${totalImages}]...`);
+        console.log(`\nRendering ${key} [${completed + 1}/${totalImages}] (${width}x${height})...`);
 
         try {
           const result = await renderFromSvg({
@@ -135,6 +169,8 @@ async function main() {
             prompt,
             model: 'flux-canny-pro',
             crop: room.crop,
+            outputWidth: width,
+            outputHeight: height,
             outputPath: path.join(OUTPUT_DIR, `${key}.jpg`)
           });
 
