@@ -301,7 +301,8 @@
 			renderProgress = Math.min(90, 50 + attempts * 2);
 
 			if (status.status === 'succeeded') {
-				renderedImage = status.output?.[0] || status.output;
+				// Output is already extracted as a string by the status endpoint
+				renderedImage = status.output;
 				renderProgress = 100;
 				return;
 			} else if (status.status === 'failed') {

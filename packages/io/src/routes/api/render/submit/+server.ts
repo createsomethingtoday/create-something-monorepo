@@ -25,7 +25,8 @@ interface ReplicatePrediction {
 }
 
 const REPLICATE_API = 'https://api.replicate.com/v1';
-const MODEL_ID = 'black-forest-labs/flux-canny-pro';
+const MODEL_OWNER = 'black-forest-labs';
+const MODEL_NAME = 'flux-canny-pro';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -59,29 +60,27 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			});
 		}
 
-		// Create prediction via Replicate HTTP API
-		const response = await fetch(`${REPLICATE_API}/predictions`, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${apiToken}`,
-				'Content-Type': 'application/json',
-				Prefer: 'wait' // Wait for result if quick, otherwise return prediction ID
-			},
-			body: JSON.stringify({
-				model: MODEL_ID,
-				input: {
-					control_image: image,
-					prompt: prompt,
-					num_inference_steps: 28,
-					guidance_scale: 3.5,
-					controlnet_conditioning_scale: 1.0,
-					width: 1024,
-					height: 1024,
-					output_format: 'png',
-					output_quality: 100
-				}
-			})
-		});
+		// Create prediction via Replicate HTTP API (models endpoint)
+		// Don't use Prefer: wait - it causes long hangs. Use polling instead.
+		const response = await fetch(
+			`${REPLICATE_API}/models/${MODEL_OWNER}/${MODEL_NAME}/predictions`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${apiToken}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					input: {
+						control_image: image,
+						prompt: prompt,
+						steps: 25,
+						guidance: 30,
+						output_format: 'png'
+					}
+				})
+			}
+		);
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({}));
