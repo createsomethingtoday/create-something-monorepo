@@ -5,6 +5,24 @@
 	 * Canon advantage over Fenestra: Presets are *visible and named*—
 	 * user understands what "threshold-dwelling" means, can learn the vocabulary.
 	 */
+	import {
+		Home,
+		Square,
+		TreeDeciduous,
+		Factory,
+		Leaf,
+		Sunrise,
+		Sunset,
+		CloudSun,
+		Sun,
+		Cloud,
+		Moon,
+		Maximize,
+		Search,
+		CornerUpRight,
+		DoorOpen,
+		PanelTop
+	} from 'lucide-svelte';
 
 	interface Props {
 		onPresetChange?: (presets: {
@@ -16,32 +34,53 @@
 
 	let { onPresetChange }: Props = $props();
 
+	// Icon component mapping
+	const materialIcons: Record<string, typeof Home> = {
+		'threshold-dwelling': Home,
+		'modern-minimal': Square,
+		'warm-contemporary': TreeDeciduous,
+		industrial: Factory,
+		scandinavian: Leaf
+	};
+
+	const lightingIcons: Record<string, typeof Sunrise> = {
+		'golden-hour': Sunrise,
+		'blue-hour': Sunset,
+		morning: CloudSun,
+		midday: Sun,
+		overcast: Cloud,
+		night: Moon
+	};
+
+	const angleIcons: Record<string, typeof Maximize> = {
+		wide: Maximize,
+		detail: Search,
+		corner: CornerUpRight,
+		entrance: DoorOpen,
+		window: PanelTop
+	};
+
 	// Canon Material Presets (from render-pipeline/src/controlnet.ts)
 	const MATERIAL_PRESETS = {
 		'threshold-dwelling': {
 			name: 'Threshold Dwelling',
-			description: 'Concrete, steel, glass, cedar. Miesian architecture.',
-			preview: '🏠'
+			description: 'Concrete, steel, glass, cedar. Miesian architecture.'
 		},
 		'modern-minimal': {
 			name: 'Modern Minimal',
-			description: 'White walls, concrete floors, black steel frames.',
-			preview: '⬜'
+			description: 'White walls, concrete floors, black steel frames.'
 		},
 		'warm-contemporary': {
 			name: 'Warm Contemporary',
-			description: 'Oak flooring, plaster walls, brass fixtures.',
-			preview: '🪵'
+			description: 'Oak flooring, plaster walls, brass fixtures.'
 		},
 		industrial: {
 			name: 'Industrial',
-			description: 'Exposed brick, steel beams, Edison bulbs.',
-			preview: '🏭'
+			description: 'Exposed brick, steel beams, Edison bulbs.'
 		},
 		scandinavian: {
 			name: 'Scandinavian',
-			description: 'Light oak, white walls, cozy textiles.',
-			preview: '🌿'
+			description: 'Light oak, white walls, cozy textiles.'
 		}
 	};
 
@@ -49,33 +88,27 @@
 	const LIGHTING_PRESETS = {
 		'golden-hour': {
 			name: 'Golden Hour',
-			description: 'Warm amber tones, long shadows.',
-			preview: '🌅'
+			description: 'Warm amber tones, long shadows.'
 		},
 		'blue-hour': {
 			name: 'Blue Hour',
-			description: 'Cool blue exterior, warm interior glow.',
-			preview: '🌆'
+			description: 'Cool blue exterior, warm interior glow.'
 		},
 		morning: {
 			name: 'Morning',
-			description: 'Soft diffused sunlight, fresh atmosphere.',
-			preview: '🌤️'
+			description: 'Soft diffused sunlight, fresh atmosphere.'
 		},
 		midday: {
 			name: 'Midday',
-			description: 'Bright natural daylight, clear visibility.',
-			preview: '☀️'
+			description: 'Bright natural daylight, clear visibility.'
 		},
 		overcast: {
 			name: 'Overcast',
-			description: 'Even illumination, no harsh shadows.',
-			preview: '☁️'
+			description: 'Even illumination, no harsh shadows.'
 		},
 		night: {
 			name: 'Night',
-			description: 'Warm interior lighting, night exterior.',
-			preview: '🌙'
+			description: 'Warm interior lighting, night exterior.'
 		}
 	};
 
@@ -83,28 +116,23 @@
 	const ANGLE_PRESETS = {
 		wide: {
 			name: 'Wide',
-			description: 'Full room view, architectural photography.',
-			preview: '📐'
+			description: 'Full room view, architectural photography.'
 		},
 		detail: {
 			name: 'Detail',
-			description: 'Close-up focused composition.',
-			preview: '🔍'
+			description: 'Close-up focused composition.'
 		},
 		corner: {
 			name: 'Corner',
-			description: 'Two walls visible, spatial depth.',
-			preview: '📏'
+			description: 'Two walls visible, spatial depth.'
 		},
 		entrance: {
 			name: 'Entrance',
-			description: 'View from entrance, inviting perspective.',
-			preview: '🚪'
+			description: 'View from entrance, inviting perspective.'
 		},
 		window: {
 			name: 'Window',
-			description: 'Toward window, interior-exterior connection.',
-			preview: '🪟'
+			description: 'Toward window, interior-exterior connection.'
 		}
 	};
 
@@ -130,12 +158,17 @@
 		<p class="section-description">The architectural vocabulary that defines the space.</p>
 		<div class="preset-grid">
 			{#each Object.entries(MATERIAL_PRESETS) as [key, preset]}
+				{@const IconComponent = materialIcons[key]}
 				<button
 					class="preset-card"
 					class:selected={selectedMaterial === key}
 					onclick={() => (selectedMaterial = key)}
 				>
-					<span class="preset-preview">{preset.preview}</span>
+					<span class="preset-preview">
+						{#if IconComponent}
+							<IconComponent size={24} strokeWidth={1.5} />
+						{/if}
+					</span>
 					<span class="preset-name">{preset.name}</span>
 					<span class="preset-description">{preset.description}</span>
 				</button>
@@ -149,12 +182,17 @@
 		<p class="section-description">Time of day sets the emotional tone.</p>
 		<div class="preset-grid lighting-grid">
 			{#each Object.entries(LIGHTING_PRESETS) as [key, preset]}
+				{@const IconComponent = lightingIcons[key]}
 				<button
 					class="preset-card compact"
 					class:selected={selectedLighting === key}
 					onclick={() => (selectedLighting = key)}
 				>
-					<span class="preset-preview">{preset.preview}</span>
+					<span class="preset-preview">
+						{#if IconComponent}
+							<IconComponent size={20} strokeWidth={1.5} />
+						{/if}
+					</span>
 					<span class="preset-name">{preset.name}</span>
 				</button>
 			{/each}
@@ -167,12 +205,17 @@
 		<p class="section-description">How the viewer experiences the space.</p>
 		<div class="preset-grid angle-grid">
 			{#each Object.entries(ANGLE_PRESETS) as [key, preset]}
+				{@const IconComponent = angleIcons[key]}
 				<button
 					class="preset-card compact"
 					class:selected={selectedAngle === key}
 					onclick={() => (selectedAngle = key)}
 				>
-					<span class="preset-preview">{preset.preview}</span>
+					<span class="preset-preview">
+						{#if IconComponent}
+							<IconComponent size={20} strokeWidth={1.5} />
+						{/if}
+					</span>
 					<span class="preset-name">{preset.name}</span>
 				</button>
 			{/each}
