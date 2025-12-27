@@ -27,7 +27,7 @@ export const canonNavigation: NavSection[] = [
 		items: [
 			{ label: 'Introduction', href: '/canon' },
 			{ label: 'Philosophy', href: '/canon/foundations/philosophy' },
-			{ label: 'Quick Start', href: '/canon/resources/get-started', badge: 'Soon' }
+			{ label: 'Quick Start', href: '/canon/resources/get-started' }
 		]
 	},
 	{
@@ -61,17 +61,19 @@ export const canonNavigation: NavSection[] = [
 	{
 		title: 'Guidelines',
 		items: [
-			{ label: 'Accessibility', href: '/canon/guidelines/accessibility', badge: 'Soon' },
-			{ label: 'Content', href: '/canon/guidelines/content', badge: 'Soon' },
-			{ label: 'Theming', href: '/canon/guidelines/theming', badge: 'Soon' }
+			{ label: 'Accessibility', href: '/canon/guidelines/accessibility' },
+			{ label: 'Content', href: '/canon/guidelines/content' },
+			{ label: 'Responsive', href: '/canon/guidelines/responsive' },
+			{ label: 'Theming', href: '/canon/guidelines/theming' }
 		]
 	},
 	{
 		title: 'Resources',
 		items: [
-			{ label: 'Tokens', href: '/canon/resources/tokens', badge: 'Soon' },
-			{ label: 'Figma', href: '/canon/resources/figma', badge: 'Soon' },
-			{ label: 'Contributing', href: '/canon/resources/contributing', badge: 'Soon' }
+			{ label: 'Get Started', href: '/canon/resources/get-started' },
+			{ label: 'Tokens', href: '/canon/resources/tokens' },
+			{ label: 'Contributing', href: '/canon/resources/contributing' },
+			{ label: 'Changelog', href: '/canon/resources/changelog' }
 		]
 	}
 ];
