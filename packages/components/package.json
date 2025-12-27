@@ -12,7 +12,8 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "echo \"No tests yet\" && exit 0"
+		"test": "echo \"No tests yet\" && exit 0",
+		"tokens:export": "node scripts/generate-exports.mjs"
 	},
 	"files": [
 		"dist",
@@ -62,7 +63,10 @@
 			"default": "./dist/actions/index.js"
 		},
 		"./styles/tokens.css": "./dist/styles/tokens.css",
+		"./styles/tokens.scss": "./dist/styles/tokens.scss",
+		"./styles/tokens.dtcg.json": "./dist/styles/tokens.dtcg.json",
 		"./styles/canon.css": "./dist/styles/canon.css",
+		"./styles/canon.json": "./dist/styles/canon.json",
 		"./styles/components.css": "./dist/styles/components.css",
 		"./brand/icons.css": "./dist/brand/icons.css",
 		"./transitions": {
