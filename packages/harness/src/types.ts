@@ -147,6 +147,8 @@ export interface HarnessState {
   pauseReason: string | null;
   /** Total cost across all sessions in USD */
   totalCost: number;
+  /** Last session ID for continuation within same epic */
+  lastSessionId: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

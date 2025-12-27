@@ -201,6 +201,7 @@ export async function initializeHarness(
       checkpointPolicy,
       pauseReason: null,
       totalCost: 0,
+      lastSessionId: null,
     };
 
     return { harnessState, featureMap };
@@ -248,6 +249,7 @@ export async function initializeHarness(
     checkpointPolicy,
     pauseReason: null,
     totalCost: 0,
+    lastSessionId: null,
   };
 
   return { harnessState, featureMap };
@@ -457,6 +459,7 @@ export async function runHarness(
       cwd: options.cwd,
       dryRun: options.dryRun,
       model,
+      resumeSessionId: harnessState.lastSessionId || undefined,
     });
 
     // 6. Handle session result with graceful failure handling
@@ -465,6 +468,12 @@ export async function runHarness(
     // Update totalCost aggregation
     if (sessionResult.costUsd) {
       harnessState.totalCost += sessionResult.costUsd;
+    }
+
+    // Update lastSessionId for session continuity
+    if (sessionResult.sessionId) {
+      harnessState.lastSessionId = sessionResult.sessionId;
+      console.log(`  📎 Session ID saved for continuation: ${sessionResult.sessionId.substring(0, 12)}...`);
     }
 
     if (sessionResult.outcome === 'success') {
@@ -810,6 +819,7 @@ export async function resumeHarness(
     checkpointPolicy: DEFAULT_CHECKPOINT_POLICY,
     pauseReason: null,
     totalCost: 0, // TODO: Restore from checkpoint metadata
+    lastSessionId: null, // TODO: Restore from checkpoint metadata
   };
 
   // 7. Update harness status to running

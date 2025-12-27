@@ -271,6 +271,7 @@ export async function runSession(
       timeout: options.timeout || 30 * 60 * 1000, // 30 min default
       maxTurns: options.maxTurns || 50, // Lower default to prevent runaway sessions
       model: options.model,
+      resumeSessionId: options.resumeSessionId,
     });
 
     // Parse structured metrics from JSON output
@@ -429,7 +430,7 @@ const HARNESS_ALLOWED_TOOLS = [
  */
 async function executeClaudeCode(
   promptFile: string,
-  options: { cwd: string; timeout: number; maxTurns?: number; model?: string }
+  options: { cwd: string; timeout: number; maxTurns?: number; model?: string; resumeSessionId?: string }
 ): Promise<ClaudeCodeResult> {
   return new Promise(async (resolve) => {
     // Read prompt content
@@ -443,6 +444,11 @@ async function executeClaudeCode(
       '--max-turns', String(options.maxTurns || 100),
       '--output-format', 'json',
     ];
+
+    // Add session resume if specified (for continuity within same epic)
+    if (options.resumeSessionId) {
+      args.push('--resume', options.resumeSessionId);
+    }
 
     // Add model selection if specified (cost optimization)
     if (options.model) {
@@ -474,7 +480,11 @@ async function executeClaudeCode(
 
     // Log that we've started (visible in harness output)
     const maxTurnsLimit = options.maxTurns || 50;
-    console.log(`  [Session] Prompt sent (${promptContent.length} chars), max turns: ${maxTurnsLimit}...`);
+    if (options.resumeSessionId) {
+      console.log(`  [Session] Resuming session ${options.resumeSessionId.substring(0, 12)}..., max turns: ${maxTurnsLimit}`);
+    } else {
+      console.log(`  [Session] Prompt sent (${promptContent.length} chars), max turns: ${maxTurnsLimit}...`);
+    }
 
     const timeoutId = setTimeout(() => {
       proc.kill('SIGTERM');
