@@ -315,9 +315,25 @@ export async function runHarness(
 
     // Check for pause request
     if (redirectCheck.shouldPause) {
+      // Create checkpoint before pausing to preserve full context
+      if (checkpointTracker.sessionsResults.length > 0) {
+        console.log(`\n📊 Creating checkpoint before pause...`);
+        lastCheckpoint = await generateReviewedCheckpoint(
+          checkpointTracker,
+          harnessState,
+          `Paused: ${redirectCheck.pauseReason}`,
+          reviewConfig,
+          options.cwd
+        );
+        console.log('\n' + formatCheckpointDisplay(lastCheckpoint));
+        resetTracker(checkpointTracker);
+        harnessState.lastCheckpoint = lastCheckpoint.id;
+      }
+
       harnessState.status = 'paused';
       harnessState.pauseReason = redirectCheck.pauseReason;
       console.log(`\n⏸ Harness paused: ${redirectCheck.pauseReason}`);
+      console.log(`\nTo resume: bd work --resume ${harnessState.id}`);
       break;
     }
 
