@@ -44,6 +44,11 @@ declare global {
 				WHATSAPP_VERIFY_TOKEN?: string;
 				WHATSAPP_ACCESS_TOKEN?: string;
 				WHATSAPP_PHONE_NUMBER_ID?: string;
+				// SavvyCal
+				SAVVYCAL_API_KEY?: string;
+				// Identity Worker (LMS provisioning)
+				IDENTITY_WORKER_URL?: string;
+				IDENTITY_WORKER_SECRET?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;
