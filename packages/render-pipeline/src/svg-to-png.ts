@@ -164,3 +164,99 @@ export async function extractRooms(
 
   return results;
 }
+
+/**
+ * Layout options for compositing images
+ */
+export type CompositeLayout = 'vertical' | 'horizontal' | 'quadrant';
+
+/**
+ * Composite multiple PNG images into a single conditioning image
+ * Used to combine floor plan + section for ControlNet
+ *
+ * @param images - Array of PNG buffers to composite
+ * @param layout - How to arrange images: 'vertical' (top/bottom), 'horizontal' (left/right), 'quadrant' (2x2)
+ * @param outputWidth - Final output width
+ * @param outputHeight - Final output height
+ * @param outputPath - Optional path to save result
+ */
+export async function compositeImages(
+  images: Buffer[],
+  layout: CompositeLayout = 'vertical',
+  outputWidth = 1440,
+  outputHeight = 1440,
+  outputPath?: string
+): Promise<Buffer> {
+  if (images.length === 0) {
+    throw new Error('At least one image required');
+  }
+
+  if (images.length === 1) {
+    // Single image - just return it resized
+    const dataUri = `data:image/png;base64,${images[0].toString('base64')}`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
+      <image href="${dataUri}" x="0" y="0" width="${outputWidth}" height="${outputHeight}" preserveAspectRatio="xMidYMid meet"/>
+    </svg>`;
+
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: outputWidth } });
+    const pngBuffer = resvg.render().asPng();
+
+    if (outputPath) {
+      await fs.mkdir(path.dirname(outputPath), { recursive: true });
+      await fs.writeFile(outputPath, pngBuffer);
+    }
+
+    return Buffer.from(pngBuffer);
+  }
+
+  // Build SVG with embedded images
+  const parts: string[] = [];
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${outputWidth}" height="${outputHeight}">`);
+
+  // White background
+  parts.push(`<rect x="0" y="0" width="${outputWidth}" height="${outputHeight}" fill="white"/>`);
+
+  if (layout === 'vertical') {
+    // Stack images top to bottom
+    const cellHeight = outputHeight / images.length;
+    for (let i = 0; i < images.length; i++) {
+      const dataUri = `data:image/png;base64,${images[i].toString('base64')}`;
+      const y = i * cellHeight;
+      parts.push(`<image href="${dataUri}" x="0" y="${y}" width="${outputWidth}" height="${cellHeight}" preserveAspectRatio="xMidYMid meet"/>`);
+    }
+  } else if (layout === 'horizontal') {
+    // Stack images left to right
+    const cellWidth = outputWidth / images.length;
+    for (let i = 0; i < images.length; i++) {
+      const dataUri = `data:image/png;base64,${images[i].toString('base64')}`;
+      const x = i * cellWidth;
+      parts.push(`<image href="${dataUri}" x="${x}" y="0" width="${cellWidth}" height="${outputHeight}" preserveAspectRatio="xMidYMid meet"/>`);
+    }
+  } else if (layout === 'quadrant') {
+    // 2x2 grid
+    const halfW = outputWidth / 2;
+    const halfH = outputHeight / 2;
+    const positions = [
+      [0, 0], [halfW, 0],
+      [0, halfH], [halfW, halfH]
+    ];
+    for (let i = 0; i < Math.min(images.length, 4); i++) {
+      const dataUri = `data:image/png;base64,${images[i].toString('base64')}`;
+      const [x, y] = positions[i];
+      parts.push(`<image href="${dataUri}" x="${x}" y="${y}" width="${halfW}" height="${halfH}" preserveAspectRatio="xMidYMid meet"/>`);
+    }
+  }
+
+  parts.push('</svg>');
+
+  const svg = parts.join('\n');
+  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: outputWidth } });
+  const pngBuffer = resvg.render().asPng();
+
+  if (outputPath) {
+    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+    await fs.writeFile(outputPath, pngBuffer);
+  }
+
+  return Buffer.from(pngBuffer);
+}

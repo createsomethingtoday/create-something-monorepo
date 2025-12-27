@@ -18,7 +18,14 @@ export type {
 } from './types.js';
 
 // SVG to PNG utilities (Node.js native binding)
-export { svgToPng, svgToMonochromePng, extractRoom, extractRooms } from './svg-to-png.js';
+export {
+  svgToPng,
+  svgToMonochromePng,
+  extractRoom,
+  extractRooms,
+  compositeImages,
+  type CompositeLayout
+} from './svg-to-png.js';
 
 // SVG to PNG utilities (WASM - for edge/browser)
 export {

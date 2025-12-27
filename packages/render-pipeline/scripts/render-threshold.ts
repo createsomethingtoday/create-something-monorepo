@@ -2,8 +2,8 @@
 /**
  * Render Threshold-Dwelling Interiors
  *
- * Demo script that renders photorealistic interiors from the
- * threshold-dwelling floor plan using ControlNet.
+ * Renders photorealistic interiors using combined plan+section conditioning.
+ * The plan provides horizontal layout; the section provides vertical context.
  *
  * Usage:
  *   REPLICATE_API_TOKEN=xxx pnpm render-threshold
@@ -13,6 +13,9 @@
  *
  * To just export the SVG without rendering:
  *   pnpm render-threshold --svg-only
+ *
+ * To skip section conditioning (plan only):
+ *   REPLICATE_API_TOKEN=xxx pnpm render-threshold --plan-only
  */
 
 import * as path from 'path';
@@ -23,14 +26,26 @@ import {
   isConfigured,
   THRESHOLD_DWELLING_ROOMS,
   generateFloorPlanSvg,
-  svgToPng
+  generateSectionSvg,
+  svgToPng,
+  svgToMonochromePng,
+  compositeImages
 } from '../src/index.js';
 import { THRESHOLD_DWELLING } from '../data/threshold-dwelling.js';
+import {
+  THRESHOLD_DWELLING_SECTIONS,
+  ROOM_SECTIONS
+} from '../data/threshold-dwelling-sections.js';
 
 // Use process.cwd() to get monorepo root (script is run from packages/render-pipeline)
 const OUTPUT_DIR = path.resolve(
   process.cwd(),
   '../space/static/experiments/threshold-dwelling/renders'
+);
+
+const SECTIONS_DIR = path.resolve(
+  process.cwd(),
+  '../space/static/experiments/threshold-dwelling/sections'
 );
 
 // Maximum output dimension for high-res renders
@@ -62,17 +77,62 @@ function calculateOutputDimensions(crop: [number, number, number, number]): {
   }
 }
 
+/**
+ * Get section PNG for a room
+ * Returns the most relevant section based on ROOM_SECTIONS mapping
+ */
+async function getSectionPng(roomName: string): Promise<Buffer | null> {
+  const sectionIds = ROOM_SECTIONS[roomName];
+  if (!sectionIds || sectionIds.length === 0) {
+    return null;
+  }
+
+  // Use the first (primary) section for this room
+  const sectionId = sectionIds[0];
+  const sectionPath = path.join(SECTIONS_DIR, `section-${sectionId.toLowerCase()}.png`);
+
+  try {
+    return await fs.readFile(sectionPath);
+  } catch {
+    console.warn(`  Warning: Section ${sectionId} not found at ${sectionPath}`);
+    return null;
+  }
+}
+
+/**
+ * Create composite conditioning image from plan crop and section
+ */
+async function createConditioningImage(
+  planPng: Buffer,
+  sectionPng: Buffer | null,
+  width: number,
+  height: number
+): Promise<Buffer> {
+  if (!sectionPng) {
+    // No section available, use plan only
+    return planPng;
+  }
+
+  // Composite: plan on top (2/3), section on bottom (1/3)
+  // This gives more weight to plan while including vertical context
+  const compositeHeight = Math.round(height * 1.5); // Extra height for section
+
+  return compositeImages([planPng, sectionPng], 'vertical', width, compositeHeight);
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const svgOnly = args.includes('--svg-only');
+  const planOnly = args.includes('--plan-only');
   const roomArg = args.find((a) => !a.startsWith('--'));
 
   // Generate SVG from floor plan data
   console.log('Generating floor plan SVG from data...');
   const svgContent = generateFloorPlanSvg(THRESHOLD_DWELLING);
 
-  // Ensure output directory exists
+  // Ensure output directories exist
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
+  await fs.mkdir(SECTIONS_DIR, { recursive: true });
 
   // Save SVG for reference
   const svgPath = path.join(OUTPUT_DIR, 'floor-plan.svg');
@@ -81,13 +141,30 @@ async function main() {
 
   // Also export a PNG version
   const pngPath = path.join(OUTPUT_DIR, 'floor-plan.png');
-  const pngBuffer = await svgToPng({
+  await svgToPng({
     svgContent,
     width: 1024,
     background: 'white',
     outputPath: pngPath
   });
   console.log(`Saved floor plan PNG: ${pngPath}`);
+
+  // Generate section SVGs and PNGs
+  console.log('\nGenerating section SVGs...');
+  for (const section of THRESHOLD_DWELLING_SECTIONS.sections) {
+    const sectionSvg = generateSectionSvg(THRESHOLD_DWELLING_SECTIONS, section.id);
+    const sectionSvgPath = path.join(SECTIONS_DIR, `section-${section.id.toLowerCase()}.svg`);
+    await fs.writeFile(sectionSvgPath, sectionSvg);
+
+    const sectionPngPath = path.join(SECTIONS_DIR, `section-${section.id.toLowerCase()}.png`);
+    await svgToPng({
+      svgContent: sectionSvg,
+      width: 1440,
+      background: 'white',
+      outputPath: sectionPngPath
+    });
+    console.log(`  ✓ Section ${section.id}`);
+  }
 
   if (svgOnly) {
     console.log('\n--svg-only flag set, skipping rendering.');
@@ -112,6 +189,7 @@ async function main() {
   console.log('\nThreshold-Dwelling Render Pipeline');
   console.log('===================================');
   console.log(`Output dir: ${OUTPUT_DIR}`);
+  console.log(`Conditioning: ${planOnly ? 'Plan only' : 'Plan + Section (combined)'}`);
   console.log(`Base prompt: ${basePrompt.slice(0, 100)}...`);
   console.log();
 
@@ -125,7 +203,10 @@ async function main() {
     }
 
     const { width, height } = calculateOutputDimensions(room.crop);
-    console.log(`Rendering single room: ${room.name} (${width}x${height})`);
+    const sectionPng = planOnly ? null : await getSectionPng(room.name);
+    console.log(
+      `Rendering single room: ${room.name} (${width}x${height})${sectionPng ? ' with section' : ''}`
+    );
 
     for (const angle of room.angles) {
       const key = `${room.name}-${angle.suffix}`;
@@ -133,11 +214,25 @@ async function main() {
 
       console.log(`\nRendering ${key}...`);
 
-      const result = await renderFromSvg({
+      // Generate plan crop PNG
+      const planPng = await svgToMonochromePng({
         svgContent,
+        crop: room.crop,
+        width: width,
+        background: 'white'
+      });
+
+      // Create conditioning image (plan + section if available)
+      const conditioningPng = await createConditioningImage(planPng, sectionPng, width, height);
+
+      // Save conditioning image for debugging
+      const conditioningPath = path.join(OUTPUT_DIR, `${key}-conditioning.png`);
+      await fs.writeFile(conditioningPath, conditioningPng);
+
+      const result = await renderFromSvg({
+        svgContent: `<svg xmlns="http://www.w3.org/2000/svg"><image href="data:image/png;base64,${conditioningPng.toString('base64')}" width="${width}" height="${height}"/></svg>`,
         prompt,
         model: 'flux-canny-pro',
-        crop: room.crop,
         outputWidth: width,
         outputHeight: height,
         outputPath: path.join(OUTPUT_DIR, `${key}.jpg`)
@@ -156,19 +251,37 @@ async function main() {
 
     for (const room of THRESHOLD_DWELLING_ROOMS) {
       const { width, height } = calculateOutputDimensions(room.crop);
+      const sectionPng = planOnly ? null : await getSectionPng(room.name);
+
+      // Generate plan crop PNG once per room
+      const planPng = await svgToMonochromePng({
+        svgContent,
+        crop: room.crop,
+        width: width,
+        background: 'white'
+      });
+
+      // Create conditioning image (plan + section if available)
+      const conditioningPng = await createConditioningImage(planPng, sectionPng, width, height);
 
       for (const angle of room.angles) {
         const key = `${room.name}-${angle.suffix}`;
         const prompt = angle.promptAddition ? `${basePrompt}, ${angle.promptAddition}` : basePrompt;
 
-        console.log(`\nRendering ${key} [${completed + 1}/${totalImages}] (${width}x${height})...`);
+        console.log(
+          `\nRendering ${key} [${completed + 1}/${totalImages}] (${width}x${height})${sectionPng ? ' +section' : ''}...`
+        );
 
         try {
+          // Create inline SVG with conditioning image
+          const conditioningSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+            <image href="data:image/png;base64,${conditioningPng.toString('base64')}" width="${width}" height="${height}"/>
+          </svg>`;
+
           const result = await renderFromSvg({
-            svgContent,
+            svgContent: conditioningSvg,
             prompt,
             model: 'flux-canny-pro',
-            crop: room.crop,
             outputWidth: width,
             outputHeight: height,
             outputPath: path.join(OUTPUT_DIR, `${key}.jpg`)
