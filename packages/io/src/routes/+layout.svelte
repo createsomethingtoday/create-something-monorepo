@@ -47,6 +47,42 @@
 
 	let { children, data } = $props();
 
+	// JSON-LD structured data (extracted to avoid ESLint parser issues with @ symbols)
+	const jsonLd = JSON.stringify({
+		"@context": "https://schema.org",
+		"@type": "WebSite",
+		"name": "CREATE SOMETHING",
+		"alternateName": "AI-Native Development Research",
+		"description": "Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare: development time, costs, error counts, and honest learnings from production systems.",
+		"url": "https://createsomething.io",
+		"inLanguage": "en-US",
+		"author": {
+			"@type": "Person",
+			"name": "Micah Johnson",
+			"url": "https://www.linkedin.com/in/micahryanjohnson/",
+			"jobTitle": "AI-Native Development Researcher"
+		},
+		"publisher": {
+			"@type": "Organization",
+			"name": "CREATE SOMETHING",
+			"logo": {
+				"@type": "ImageObject",
+				"url": "https://createsomething.io/favicon.svg"
+			}
+		},
+		"about": {
+			"@type": "Thing",
+			"name": "AI-Native Development",
+			"description": "Development practices and patterns using AI coding assistants like Claude Code with modern infrastructure"
+		},
+		"keywords": ["AI-native development", "Claude Code experiments", "Cloudflare Workers", "development metrics tracking", "AI-assisted coding", "experiment-driven development", "TanStack Router", "systems thinking", "transparent development costs"],
+		"potentialAction": {
+			"@type": "SearchAction",
+			"target": "https://createsomething.io/articles?q={search_term_string}",
+			"query-input": "required name=search_term_string"
+		}
+	});
+
 	// Handle logout
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
@@ -158,42 +194,7 @@
 	/>
 
 	<!-- Structured Data (JSON-LD) -->
-	{@html `<script type="application/ld+json">
-		{
-			"@context": "https://schema.org",
-			"@type": "WebSite",
-			"name": "CREATE SOMETHING",
-			"alternateName": "AI-Native Development Research",
-			"description": "Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare: development time, costs, error counts, and honest learnings from production systems.",
-			"url": "https://createsomething.io",
-			"inLanguage": "en-US",
-			"author": {
-				"@type": "Person",
-				"name": "Micah Johnson",
-				"url": "https://www.linkedin.com/in/micahryanjohnson/",
-				"jobTitle": "AI-Native Development Researcher"
-			},
-			"publisher": {
-				"@type": "Organization",
-				"name": "CREATE SOMETHING",
-				"logo": {
-					"@type": "ImageObject",
-					"url": "https://createsomething.io/favicon.svg"
-				}
-			},
-			"about": {
-				"@type": "Thing",
-				"name": "AI-Native Development",
-				"description": "Development practices and patterns using AI coding assistants like Claude Code with modern infrastructure"
-			},
-			"keywords": ["AI-native development", "Claude Code experiments", "Cloudflare Workers", "development metrics tracking", "AI-assisted coding", "experiment-driven development", "TanStack Router", "systems thinking", "transparent development costs"],
-			"potentialAction": {
-				"@type": "SearchAction",
-				"target": "https://createsomething.io/articles?q={search_term_string}",
-				"query-input": "required name=search_term_string"
-			}
-		}
-	</script>`}
+	{@html '<script type="application/ld+json">' + jsonLd + '</script>'}
 </svelte:head>
 
 <Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} debug={true} />

@@ -61,7 +61,7 @@
 						name="website"
 						autocomplete="off"
 						tabindex="-1"
-						class="absolute -left-[9999px] opacity-0 pointer-events-none"
+						class="honeypot"
 						aria-hidden="true"
 					/>
 					<div class="flex flex-col sm:flex-row gap-3">
@@ -236,6 +236,14 @@
 	.footer {
 		background: var(--color-bg-pure);
 		border-top: 1px solid var(--color-border-default);
+	}
+
+	/* Honeypot field - completely hidden from users, bots fill it */
+	.honeypot {
+		position: absolute;
+		left: -9999px;
+		opacity: 0;
+		pointer-events: none;
 	}
 
 	.newsletter-heading {
