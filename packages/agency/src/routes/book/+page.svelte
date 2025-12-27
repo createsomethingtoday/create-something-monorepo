@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import SEO from '$lib/components/SEO.svelte';
+	import { SEO } from '@create-something/components';
 	import DatePicker from '$lib/components/booking/DatePicker.svelte';
 	import TimeSlotPicker from '$lib/components/booking/TimeSlotPicker.svelte';
 	import BookingForm from '$lib/components/booking/BookingForm.svelte';

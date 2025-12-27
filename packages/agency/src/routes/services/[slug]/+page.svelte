@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import SEO from '$lib/components/SEO.svelte';
+	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 	const { service } = data;

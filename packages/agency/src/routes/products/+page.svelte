@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SEO from '$lib/components/SEO.svelte';
+	import { SEO } from '@create-something/components';
 	import { products } from '$lib/data/services';
 
 	// Group products by pricing tier
