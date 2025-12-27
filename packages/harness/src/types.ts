@@ -754,3 +754,119 @@ export interface ReviewedCheckpoint extends Checkpoint {
   hasReview: boolean;
   reviewAggregation: ReviewAggregation | null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Self-Healing Baseline (Upstream from VC)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Quality gate type for baseline checks.
+ * Philosophy: Run quality gates before starting new work to prevent
+ * the "broken windows" problem where existing failures mask new regressions.
+ */
+export type QualityGateType = 'tests' | 'typecheck' | 'lint' | 'build';
+
+/**
+ * Configuration for self-healing baseline checks.
+ * Upstream pattern from Steve Yegge's VC project (90.9% quality gate pass rate).
+ */
+export interface BaselineConfig {
+  /** Whether baseline checking is enabled (default: true) */
+  enabled: boolean;
+  /** Which quality gates to run */
+  gates: {
+    /** Run tests before starting work */
+    tests: boolean;
+    /** Run TypeScript type checking */
+    typecheck: boolean;
+    /** Run linter */
+    lint: boolean;
+    /** Run build */
+    build: boolean;
+  };
+  /** Attempt auto-fix for simple failures (lint --fix, etc.) */
+  autoFix: boolean;
+  /** Create blocker issues for failures that can't be auto-fixed */
+  createBlockers: boolean;
+  /** Maximum auto-fix attempts per gate (default: 1) */
+  maxAutoFixAttempts: number;
+  /** Timeout for each gate in ms (default: 5 minutes) */
+  gateTimeoutMs: number;
+  /** Package filter for monorepo (e.g., "harness") */
+  packageFilter?: string;
+}
+
+/**
+ * Result of a single quality gate check.
+ */
+export interface BaselineGate {
+  /** Gate type */
+  name: QualityGateType;
+  /** Whether the gate passed */
+  passed: boolean;
+  /** Command output (truncated if too long) */
+  output: string;
+  /** Duration in ms */
+  durationMs: number;
+  /** Whether auto-fix was attempted */
+  fixAttempted: boolean;
+  /** Whether auto-fix succeeded */
+  fixSucceeded: boolean;
+  /** Exit code from the command */
+  exitCode: number;
+  /** Command that was run */
+  command: string;
+}
+
+/**
+ * Aggregated baseline check result.
+ */
+export interface BaselineResult {
+  /** Whether all gates passed (after any auto-fixes) */
+  passed: boolean;
+  /** Individual gate results */
+  gates: BaselineGate[];
+  /** IDs of blocker issues created for failures */
+  blockerIssues: string[];
+  /** When the baseline check was run */
+  timestamp: string;
+  /** Total duration of all checks in ms */
+  totalDurationMs: number;
+  /** Summary message */
+  summary: string;
+}
+
+/**
+ * Baseline health tracking over time.
+ * Philosophy: Track baseline health to identify flaky tests and systemic issues.
+ */
+export interface BaselineHealth {
+  /** Total baseline checks run */
+  totalChecks: number;
+  /** Checks that passed on first try */
+  passedFirst: number;
+  /** Checks that passed after auto-fix */
+  passedAfterFix: number;
+  /** Checks that failed and required blocker creation */
+  failed: number;
+  /** Pass rate as percentage */
+  passRate: number;
+  /** Most common failing gates */
+  commonFailures: { gate: QualityGateType; count: number }[];
+  /** Last check result */
+  lastResult: BaselineResult | null;
+}
+
+export const DEFAULT_BASELINE_CONFIG: BaselineConfig = {
+  enabled: true,
+  gates: {
+    tests: true,
+    typecheck: true,
+    lint: true,
+    build: false, // Build is expensive, off by default
+  },
+  autoFix: true,
+  createBlockers: true,
+  maxAutoFixAttempts: 1,
+  gateTimeoutMs: 5 * 60 * 1000, // 5 minutes
+};
