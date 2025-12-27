@@ -388,6 +388,7 @@ export async function generateCheckpoint(
     agentContext,
     totalCost: harnessState.totalCost,
     avgCostPerSession,
+    lastSessionId: harnessState.lastSessionId,
   };
 
   // Create checkpoint issue in Beads

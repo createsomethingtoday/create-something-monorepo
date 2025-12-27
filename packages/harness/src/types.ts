@@ -173,6 +173,8 @@ export interface Checkpoint {
   totalCost?: number;
   /** Average cost per session (USD) */
   avgCostPerSession?: number;
+  /** Last session ID for continuation across checkpoints */
+  lastSessionId?: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

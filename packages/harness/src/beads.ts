@@ -396,6 +396,9 @@ function formatCheckpointDescription(checkpoint: Omit<Checkpoint, 'id'>): string
   if (checkpoint.avgCostPerSession !== undefined && checkpoint.avgCostPerSession > 0) {
     lines.push(`- Avg Cost/Session: $${checkpoint.avgCostPerSession.toFixed(4)}`);
   }
+  if (checkpoint.lastSessionId) {
+    lines.push(`- Last Session ID: ${checkpoint.lastSessionId}`);
+  }
 
   return lines.join('\n');
 }
@@ -406,8 +409,9 @@ function formatCheckpointDescription(checkpoint: Omit<Checkpoint, 'id'>): string
 export function parseCheckpointMetadata(description: string): {
   totalCost?: number;
   avgCostPerSession?: number;
+  lastSessionId?: string | null;
 } {
-  const metadata: { totalCost?: number; avgCostPerSession?: number } = {};
+  const metadata: { totalCost?: number; avgCostPerSession?: number; lastSessionId?: string | null } = {};
 
   // Parse Total Cost
   const totalCostMatch = description.match(/- Total Cost: \$([0-9.]+)/);
@@ -419,6 +423,12 @@ export function parseCheckpointMetadata(description: string): {
   const avgCostMatch = description.match(/- Avg Cost\/Session: \$([0-9.]+)/);
   if (avgCostMatch) {
     metadata.avgCostPerSession = parseFloat(avgCostMatch[1]);
+  }
+
+  // Parse Last Session ID
+  const lastSessionMatch = description.match(/- Last Session ID: ([a-z0-9-]+)/);
+  if (lastSessionMatch) {
+    metadata.lastSessionId = lastSessionMatch[1];
   }
 
   return metadata;

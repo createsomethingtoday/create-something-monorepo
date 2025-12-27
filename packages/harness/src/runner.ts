@@ -761,6 +761,7 @@ export async function resumeHarness(
   let lastSessionNumber = 0;
   let lastCheckpointId: string | null = null;
   let restoredTotalCost = 0;
+  let restoredLastSessionId: string | null = null;
 
   if (checkpoints.length > 0) {
     const latestCheckpoint = checkpoints[0];
@@ -770,11 +771,15 @@ export async function resumeHarness(
       lastSessionNumber = parseInt(match[1], 10);
     }
 
-    // Parse checkpoint metadata to restore totalCost
+    // Parse checkpoint metadata to restore totalCost and lastSessionId
     const checkpointMeta = parseCheckpointMetadata(latestCheckpoint.description || '');
     if (checkpointMeta.totalCost !== undefined) {
       restoredTotalCost = checkpointMeta.totalCost;
       console.log(`Restored total cost from checkpoint: $${restoredTotalCost.toFixed(4)}`);
+    }
+    if (checkpointMeta.lastSessionId) {
+      restoredLastSessionId = checkpointMeta.lastSessionId;
+      console.log(`Restored session ID for continuation: ${restoredLastSessionId.substring(0, 12)}...`);
     }
 
     console.log(`Last checkpoint: ${latestCheckpoint.title}`);
@@ -829,7 +834,7 @@ export async function resumeHarness(
     checkpointPolicy: DEFAULT_CHECKPOINT_POLICY,
     pauseReason: null,
     totalCost: restoredTotalCost,
-    lastSessionId: null, // TODO: Restore from checkpoint metadata
+    lastSessionId: restoredLastSessionId,
   };
 
   // 7. Update harness status to running
