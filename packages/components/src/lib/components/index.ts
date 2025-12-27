@@ -21,3 +21,15 @@ export { default as CrossPropertyLink } from './CrossPropertyLink.svelte';
 export { default as SkipToContent } from './SkipToContent.svelte';
 export { default as PrivacyPolicyContent } from './PrivacyPolicyContent.svelte';
 export { default as CookieConsent } from './CookieConsent.svelte';
+
+// Form components
+export {
+	TextField,
+	TextArea,
+	Checkbox,
+	CheckboxGroup,
+	Radio,
+	RadioGroup,
+	Select,
+	Switch
+} from './form/index.js';
