@@ -190,13 +190,28 @@
   --space-3xl: 11.09rem;  /* φ⁵ */
 
   /* ==========================================================================
-     Border Radius
+     Border Radius - 4px Base Unit
+
+     DERIVED from 4px base × integer multipliers.
+     4px aligns with common design system grid (4px/8px).
+
+     Mathematical derivation in: src/lib/visual/layout.ts
+
+     | Step | Multiplier | Calculation | Value  | Use Case            |
+     |------|------------|-------------|--------|---------------------|
+     | sm   | 1.5        | 4 × 1.5     | 6px    | Subtle rounding     |
+     | md   | 2          | 4 × 2       | 8px    | Standard components |
+     | lg   | 3          | 4 × 3       | 12px   | Cards, modals       |
+     | xl   | 4          | 4 × 4       | 16px   | Large containers    |
+     | 2xl  | 6          | 4 × 6       | 24px   | Hero elements       |
+     | full | ∞          | —           | 9999px | Pills, avatars      |
      ========================================================================== */
 
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 6px;    /* 4 × 1.5 */
+  --radius-md: 8px;    /* 4 × 2 */
+  --radius-lg: 12px;   /* 4 × 3 */
+  --radius-xl: 16px;   /* 4 × 4 */
+  --radius-2xl: 24px;  /* 4 × 6 */
   --radius-full: 9999px;
 
   /* ==========================================================================
@@ -263,11 +278,34 @@
   --container-2xl: 1400px;
   --container-prose: 65ch;
 
-  /* Content widths - Golden ratio derived */
-  --width-prose: 42rem;      /* 672px - optimal reading width */
-  --width-content: 52.36rem; /* 838px - content sections */
-  --width-wide: 68rem;       /* 1088px - wide content */
-  --width-narrow: 32.36rem;  /* 518px - narrow content */
+  /* Content widths - DERIVED from golden ratio (φ = 1.618)
+
+     Two interconnected φ chains provide harmonious proportions.
+     Mathematical derivation in: src/lib/visual/layout.ts
+
+     READING CHAIN (base 26rem - optimized for text):
+     | Step  | Power | Calculation | Value   | Use Case            |
+     |-------|-------|-------------|---------|---------------------|
+     | tight | φ⁻¹   | 26 / φ      | 16.07   | Narrow sidebars     |
+     | prose | φ¹    | 26 × φ      | 42.07   | Optimal reading     |
+     | wide  | φ²    | 26 × φ²     | 68.07   | Full content        |
+
+     CONTENT CHAIN (base 20rem - mobile-first):
+     | Step    | Power | Calculation | Value   | Use Case            |
+     |---------|-------|-------------|---------|---------------------|
+     | narrow  | φ¹    | 20 × φ      | 32.36   | Narrow content      |
+     | content | φ²    | 20 × φ²     | 52.36   | Standard content    |
+
+     Why these bases?
+     - 26rem ≈ 52 chars, comfortable for forms/cards
+     - 26 × φ = 42rem ≈ 66-75 chars (optimal reading)
+     - 20rem = 320px, classic mobile viewport
+     ========================================================================== */
+  --width-tight: 16.07rem;   /* 26 / φ - narrow sidebars */
+  --width-narrow: 32.36rem;  /* 20 × φ - narrow content */
+  --width-prose: 42rem;      /* 26 × φ - optimal reading (66-75 chars) */
+  --width-content: 52.36rem; /* 20 × φ² - content sections */
+  --width-wide: 68rem;       /* 26 × φ² - full-width content */
 
   /* ==========================================================================
      View Transitions
