@@ -802,6 +802,61 @@ const orchestrator = new DeploymentOrchestrator();
 await orchestrator.deploy('packages/space');
 ```
 
+## Practical Invocation
+
+### Running Agents in Claude Code
+
+When working with Claude Code, invoke the harness for orchestrated work:
+
+```
+run harness in the background: ultrathink
+```
+
+This pattern combines two capabilities:
+
+| Capability | Purpose | Philosophical Grounding |
+|------------|---------|------------------------|
+| **Background** | Frees conversation, enables parallel work | Tool recedes from attention |
+| **Ultrathink** | Extended reasoning, thorough analysis | Gelassenheit—dwelling rather than rushing |
+
+### When to Use Each Mode
+
+| Mode | Context | Example |
+|------|---------|---------|
+| Foreground (default) | Quick tasks, immediate feedback needed | "Fix this typo", "Add a console.log" |
+| Background | Long-running work, parallel tasks | Feature implementation, refactors |
+| Ultrathink | Complex decisions, architecture | Multi-file changes, system design |
+| Background + Ultrathink | Non-trivial autonomous work | Full feature from spec, major refactor |
+
+### Invocation Examples
+
+```
+# Simple foreground work
+run harness on cs-abc123
+
+# Complex feature work (recommended for non-trivial tasks)
+run harness in the background: ultrathink
+
+# From a spec file
+run harness on specs/auth-feature.yaml
+
+# Create issue and work immediately
+run harness: create and work on "Add user settings page"
+```
+
+### The Dwelling Principle
+
+**Ultrathink** isn't just "think longer"—it embodies Heidegger's **Gelassenheit** (releasement).
+
+Normal thinking rushes toward answers. Extended thinking *dwells* with the problem:
+- Considers more edge cases
+- Explores alternative approaches
+- Reasons about system-level impacts
+
+The irony: by taking more time to think, the tool recedes more completely. Rushed work requires intervention; thorough work completes autonomously.
+
+**Pattern**: Use ultrathink when you want the harness to handle complex work without interruption.
+
 ## The Discipline
 
 ### When NOT to Multi-Agent

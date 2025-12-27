@@ -12,6 +12,51 @@ The harness subagent handles: complexity detection, model routing, session proto
 
 Invoke explicitly or let Claude delegate when `bd work` or harness operations are needed.
 
+## Invocation Patterns
+
+### Background Execution
+
+For long-running work, run the harness in background mode:
+
+```
+run harness in the background: ultrathink
+```
+
+This:
+1. Frees the main conversation for other work
+2. Enables extended thinking for complex reasoning
+3. Allows parallel workstreams
+
+**When to use background**:
+- Multi-file refactors
+- Feature implementation from specs
+- Work expected to exceed 10+ minutes
+
+### Thinking Modes
+
+| Mode | Use Case | Invocation |
+|------|----------|------------|
+| Default | Quick fixes, simple tasks | `run harness` |
+| Ultrathink | Complex planning, architecture | `run harness in the background: ultrathink` |
+
+**Ultrathink** enables extended reasoning—more thorough analysis, better decomposition, deeper consideration of edge cases. Use for non-trivial work.
+
+### Example Invocations
+
+```
+# Simple: Work on a specific issue
+run harness on cs-abc123
+
+# Background with thinking: Complex feature work
+run harness in the background: ultrathink
+
+# With spec file
+run harness on specs/auth-feature.yaml
+
+# Create and work in one command
+run harness: create and work on "Add user settings page"
+```
+
 ## Spec Formats
 
 The harness supports two spec formats (auto-detected):
