@@ -37,6 +37,7 @@ import {
   markIssueSkipped,
   resetIssueForRetry,
   parseCheckpointMetadata,
+  parseCheckpointIssues,
 } from './beads.js';
 import {
   runSession,
@@ -780,6 +781,38 @@ export async function resumeHarness(
     if (checkpointMeta.lastSessionId) {
       restoredLastSessionId = checkpointMeta.lastSessionId;
       console.log(`Restored session ID for continuation: ${restoredLastSessionId.substring(0, 12)}...`);
+    }
+
+    // Parse checkpoint issue lists to detect state deltas
+    const checkpointIssues = parseCheckpointIssues(latestCheckpoint.description || '');
+
+    // Build current state sets for comparison
+    const currentCompletedSet = new Set(completedFeatures.map(f => f.id));
+    const currentPendingSet = new Set(pendingFeatures.map(f => f.id));
+
+    // Detect deltas: issues completed since checkpoint
+    const newCompletions = Array.from(currentCompletedSet).filter(
+      id => !checkpointIssues.completed.includes(id)
+    );
+
+    // Detect deltas: issues that were completed but now aren't (reopened)
+    const reopened = checkpointIssues.completed.filter(
+      id => !currentCompletedSet.has(id)
+    );
+
+    // Log discrepancies for visibility
+    if (newCompletions.length > 0) {
+      console.log(`\n⚠ State delta: ${newCompletions.length} issue(s) completed since checkpoint:`);
+      for (const id of newCompletions) {
+        console.log(`  ✓ ${id}`);
+      }
+    }
+
+    if (reopened.length > 0) {
+      console.log(`\n⚠ State delta: ${reopened.length} issue(s) reopened since checkpoint:`);
+      for (const id of reopened) {
+        console.log(`  ↻ ${id}`);
+      }
     }
 
     console.log(`Last checkpoint: ${latestCheckpoint.title}`);

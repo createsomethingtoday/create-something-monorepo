@@ -435,6 +435,50 @@ export function parseCheckpointMetadata(description: string): {
 }
 
 /**
+ * Parse checkpoint issue lists from a checkpoint issue description.
+ */
+export function parseCheckpointIssues(description: string): {
+  completed: string[];
+  inProgress: string[];
+  failed: string[];
+} {
+  const result = {
+    completed: [] as string[],
+    inProgress: [] as string[],
+    failed: [] as string[],
+  };
+
+  // Parse Completed section
+  const completedMatch = description.match(/## Completed\n((?:- [^\n]+\n?)+)/);
+  if (completedMatch) {
+    result.completed = completedMatch[1]
+      .split('\n')
+      .filter(line => line.startsWith('- '))
+      .map(line => line.replace(/^- /, '').trim());
+  }
+
+  // Parse In Progress section
+  const inProgressMatch = description.match(/## In Progress\n((?:- [^\n]+\n?)+)/);
+  if (inProgressMatch) {
+    result.inProgress = inProgressMatch[1]
+      .split('\n')
+      .filter(line => line.startsWith('- '))
+      .map(line => line.replace(/^- /, '').trim());
+  }
+
+  // Parse Failed section
+  const failedMatch = description.match(/## Failed\n((?:- [^\n]+\n?)+)/);
+  if (failedMatch) {
+    result.failed = failedMatch[1]
+      .split('\n')
+      .filter(line => line.startsWith('- '))
+      .map(line => line.replace(/^- /, '').trim());
+  }
+
+  return result;
+}
+
+/**
  * Create issues from parsed features.
  */
 export async function createIssuesFromFeatures(
