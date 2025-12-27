@@ -28,6 +28,26 @@ Human-curated visual references from Are.na that inform Canon design decisions.
 | `systems-diagrams...` | Anne-Laure Lemaitre | Cybernetics, systematic visualization |
 | `user-interface-fuu0gctxwj8` | Stanislav Govorukhin | UI patterns: smart, elegant (filter for decorative "weird") |
 
+### Philosophical References (Agent Orchestration)
+
+Not visual references, but conceptual references for how AI agents should work.
+
+| Reference | Creator | Content | Why Included |
+|-----------|---------|---------|--------------|
+| [VC (VibeCoder)](https://github.com/steveyegge/vc) | Steve Yegge | Zero Framework Cognition, colony orchestration, quality gates | Yegge created Beads; VC is the canonical reference for agent patterns |
+
+**VC Patterns Adopted:**
+- **Zero Framework Cognition**: Let AI reason; don't constrain with hardcoded heuristics
+- **Quality Gates**: Test → E2E → Review pipeline (90.9% pass rate)
+- **Work Extraction**: Review findings → discovered issues → hermeneutic loop
+- **Bounded Tasks**: Each agent handles focused, well-defined work
+
+**VC Patterns Adapted** (philosophical tension with Zuhandenheit):
+- "AI Supervisor" → reframed as partnership (tool recedes)
+- Orchestration layer → integrated into Claude Code's Task subagents (subtraction)
+
+**Bidirectional exchange**: CREATE SOMETHING contributed directory-aware priority scoping to Beads upstream. VC patterns flow back into harness-patterns.md.
+
 ## Per-Channel Curation Criteria
 
 ### CANON MINIMALISM (`canon-minimalism`)

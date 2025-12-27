@@ -26,6 +26,23 @@ For any decision, ask the three questions in order:
 
 The triad is coherent because it's one principle—**subtractive revelation**—applied at three scales. Truth emerges through disciplined removal at every level of abstraction.
 
+### Zero Framework Cognition
+
+At the meta-level above the Triad: decisions emerge from reasoning about the problem, not from framework assumptions.
+
+| Framework Imprisonment | Framework Freedom |
+|----------------------|-------------------|
+| Default patterns chosen without examination | Each pattern independently defensible |
+| "The framework's way" overrides domain logic | Domain logic selects appropriate tools |
+| Inherited settings become invisible constraints | Assumptions surfaced and examined |
+| Tools determine architecture | Architecture selects tools |
+
+**The question**: "Am I solving this problem, or solving it as the framework expects?"
+
+The Triad removes duplication, excess, and disconnection from *artifacts*. Zero Framework Cognition prevents disconnection in *reasoning*—the most insidious form, where unexamined framework assumptions silently constrain possibility space.
+
+*Provenance: Steve Yegge's VC project. The Beads integration itself exemplifies this—we adopted Beads because the problem demanded agent-native persistence, not because it was a popular framework.*
+
 ## Architecture
 
 ```
@@ -147,6 +164,8 @@ This follows Heidegger's distinction between Zuhandenheit (ready-to-hand) and Vo
 **Gestell Warning**: Automation that fills every gap is not efficiency but invasion. The question is not whether to use technology but whether our systems enable dwelling or merely accelerate consumption.
 
 **Gelassenheit**: Neither rejection nor submission—full engagement without capture. The craftsman uses the hammer; the hammer does not use him.
+
+**Zero Framework Cognition applies here**: Prefer code-based operations not because "that's how we do it" but because composed operations belong in code. The decision is domain-driven, not framework-driven.
 
 ### When to Use Code Mode (via Bash)
 
