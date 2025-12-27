@@ -95,6 +95,14 @@
 
   /* ==========================================================================
      Typography - Golden Ratio Scale (φ = 1.618)
+
+     Mathematical derivation in: src/lib/visual/typography.ts
+
+     Scale uses φ for display/headings, minor third (1.2) for body text.
+     This "pragmatic" approach provides dramatic contrast for headlines
+     while maintaining readability for body text.
+
+     φ = (1 + √5) / 2 = 1.6180339887...
      ========================================================================== */
 
   /* Font families */
@@ -113,7 +121,7 @@
   --leading-tight: 1.25;
   --leading-snug: 1.375;
   --leading-normal: 1.5;
-  --leading-relaxed: 1.618; /* Golden ratio */
+  --leading-relaxed: 1.618; /* φ - Golden ratio */
   --leading-loose: 1.75;
 
   /* Letter spacing */
@@ -124,38 +132,62 @@
   --tracking-wider: 0.05em;
   --tracking-widest: 0.1em;
 
-  /* Type scale - Golden Ratio derived
-   * Base: 1rem (16px)
-   * 1rem × φ⁴ = 6.854rem (display-xl)
-   * 1rem × φ³ = 4.236rem (display)
-   * 1rem × φ² = 2.618rem (h1)
-   * 1rem × φ  = 1.618rem (h2)
+  /* Type scale - DERIVED from mathematical foundations
+   *
+   * Display/Headings: Golden ratio (φ)
+   * | Step       | Power | Value   | Derivation     |
+   * |------------|-------|---------|----------------|
+   * | display-xl | φ⁴    | 6.854   | 1 × φ⁴         |
+   * | display    | φ³    | 4.236   | 1 × φ³         |
+   * | h1         | φ²    | 2.618   | 1 × φ²         |
+   * | h2         | φ¹    | 1.618   | 1 × φ          |
+   *
+   * Body text: Minor third (1.2) for readability
+   * | Step       | Power | Value   | Derivation     |
+   * |------------|-------|---------|----------------|
+   * | h3         | 1.2¹  | 1.200   | 1 × 1.2        |
+   * | h4         | 1.2⁰·⁵| 1.095   | 1 × √1.2       |
+   * | h5/body    | —     | 1.000   | base           |
+   * | h6/body-sm | 1.2⁻⁰·⁵| 0.913  | 1 / √1.2       |
+   * | caption    | 1.2⁻¹ | 0.833   | 1 / 1.2        |
+   * | overline   | φ⁻¹   | 0.618   | 1 / φ          |
    */
-  --text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);
-  --text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);
-  --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);
-  --text-h2: clamp(1.25rem, 2vw + 0.5rem, 1.618rem);
-  --text-h3: clamp(1.125rem, 1vw + 0.5rem, 1.25rem);
-  --text-h4: clamp(1rem, 0.5vw + 0.5rem, 1.125rem);
-  --text-h5: 1rem;
-  --text-h6: 0.875rem;
-  --text-body-lg: 1.125rem;
-  --text-body: 1rem;
-  --text-body-sm: 0.875rem;
-  --text-caption: 0.75rem;
-  --text-overline: 0.618rem; /* 1/φ */
+  --text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);  /* φ⁴ max */
+  --text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);   /* φ³ max */
+  --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);          /* φ² max */
+  --text-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem);          /* φ¹ max */
+  --text-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem);           /* 1.2¹ max */
+  --text-h4: clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem);      /* √1.2 max */
+  --text-h5: 1rem;                                            /* base */
+  --text-h6: 0.913rem;                                        /* 1/√1.2 */
+  --text-body-lg: 1.095rem;                                   /* √1.2 */
+  --text-body: 1rem;                                          /* base */
+  --text-body-sm: 0.913rem;                                   /* 1/√1.2 */
+  --text-caption: 0.833rem;                                   /* 1/1.2 */
+  --text-overline: 0.618rem;                                  /* 1/φ */
 
   /* ==========================================================================
      Spacing - Golden Ratio (φ = 1.618)
+
+     DERIVED from φⁿ where base = 1rem
+     | Step | Power | Value   | Derivation |
+     |------|-------|---------|------------|
+     | xs   | φ⁻¹   | 0.618   | 1 / φ      |
+     | sm   | φ⁰    | 1.000   | base       |
+     | md   | φ¹    | 1.618   | φ          |
+     | lg   | φ²    | 2.618   | φ²         |
+     | xl   | φ³    | 4.236   | φ³         |
+     | 2xl  | φ⁴    | 6.854   | φ⁴         |
+     | 3xl  | φ⁵    | 11.090  | φ⁵         |
      ========================================================================== */
 
-  --space-xs: 0.5rem;
-  --space-sm: 1rem;
-  --space-md: 1.618rem;
-  --space-lg: 2.618rem;
-  --space-xl: 4.236rem;
-  --space-2xl: 6.854rem;
-  --space-3xl: 11.089rem;
+  --space-xs: 0.618rem;   /* φ⁻¹ */
+  --space-sm: 1rem;       /* φ⁰ (base) */
+  --space-md: 1.618rem;   /* φ¹ */
+  --space-lg: 2.618rem;   /* φ² */
+  --space-xl: 4.236rem;   /* φ³ */
+  --space-2xl: 6.854rem;  /* φ⁴ */
+  --space-3xl: 11.09rem;  /* φ⁵ */
 
   /* ==========================================================================
      Border Radius
