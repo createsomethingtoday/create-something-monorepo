@@ -33,3 +33,6 @@ export {
 	Select,
 	Switch
 } from './form/index.js';
+
+// Feedback components
+export { Alert, Toast, Dialog, Progress, Spinner, Skeleton } from './feedback/index.js';
