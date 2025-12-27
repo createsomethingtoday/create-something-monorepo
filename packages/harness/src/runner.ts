@@ -36,6 +36,7 @@ import {
   annotateIssueFailure,
   markIssueSkipped,
   resetIssueForRetry,
+  parseCheckpointMetadata,
 } from './beads.js';
 import {
   runSession,
@@ -759,6 +760,7 @@ export async function resumeHarness(
   const checkpoints = await getHarnessCheckpoints(harnessIssue.id, cwd);
   let lastSessionNumber = 0;
   let lastCheckpointId: string | null = null;
+  let restoredTotalCost = 0;
 
   if (checkpoints.length > 0) {
     const latestCheckpoint = checkpoints[0];
@@ -767,6 +769,14 @@ export async function resumeHarness(
     if (match) {
       lastSessionNumber = parseInt(match[1], 10);
     }
+
+    // Parse checkpoint metadata to restore totalCost
+    const checkpointMeta = parseCheckpointMetadata(latestCheckpoint.description || '');
+    if (checkpointMeta.totalCost !== undefined) {
+      restoredTotalCost = checkpointMeta.totalCost;
+      console.log(`Restored total cost from checkpoint: $${restoredTotalCost.toFixed(4)}`);
+    }
+
     console.log(`Last checkpoint: ${latestCheckpoint.title}`);
   }
 
@@ -818,7 +828,7 @@ export async function resumeHarness(
     lastCheckpoint: lastCheckpointId,
     checkpointPolicy: DEFAULT_CHECKPOINT_POLICY,
     pauseReason: null,
-    totalCost: 0, // TODO: Restore from checkpoint metadata
+    totalCost: restoredTotalCost,
     lastSessionId: null, // TODO: Restore from checkpoint metadata
   };
 

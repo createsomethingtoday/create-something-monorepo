@@ -390,8 +390,38 @@ function formatCheckpointDescription(checkpoint: Omit<Checkpoint, 'id'>): string
   lines.push(`- Session: ${checkpoint.sessionNumber}`);
   lines.push(`- Git Commit: ${checkpoint.gitCommit}`);
   lines.push(`- Timestamp: ${checkpoint.timestamp}`);
+  if (checkpoint.totalCost !== undefined && checkpoint.totalCost > 0) {
+    lines.push(`- Total Cost: $${checkpoint.totalCost.toFixed(4)}`);
+  }
+  if (checkpoint.avgCostPerSession !== undefined && checkpoint.avgCostPerSession > 0) {
+    lines.push(`- Avg Cost/Session: $${checkpoint.avgCostPerSession.toFixed(4)}`);
+  }
 
   return lines.join('\n');
+}
+
+/**
+ * Parse checkpoint metadata from a checkpoint issue description.
+ */
+export function parseCheckpointMetadata(description: string): {
+  totalCost?: number;
+  avgCostPerSession?: number;
+} {
+  const metadata: { totalCost?: number; avgCostPerSession?: number } = {};
+
+  // Parse Total Cost
+  const totalCostMatch = description.match(/- Total Cost: \$([0-9.]+)/);
+  if (totalCostMatch) {
+    metadata.totalCost = parseFloat(totalCostMatch[1]);
+  }
+
+  // Parse Avg Cost/Session
+  const avgCostMatch = description.match(/- Avg Cost\/Session: \$([0-9.]+)/);
+  if (avgCostMatch) {
+    metadata.avgCostPerSession = parseFloat(avgCostMatch[1]);
+  }
+
+  return metadata;
 }
 
 /**
