@@ -1,0 +1,79 @@
+title: Harness Checkpoint Restoration
+property: harness
+complexity: mixed
+
+overview: |
+  Complete the checkpoint restoration system so harness can resume long-running work
+  without losing cost tracking, session context, or progress state.
+  This spec has mixed complexity to test model routing.
+
+features:
+  - title: Restore totalCost from checkpoint metadata
+    description: When resuming a harness run, restore the accumulated cost from the last checkpoint
+    complexity: simple
+    priority: 1
+    files:
+      - packages/harness/src/runner.ts
+      - packages/harness/src/checkpoint.ts
+    acceptance:
+      - Parse totalCost from checkpoint metadata on resume
+      - Add to harnessState.totalCost instead of starting at 0
+      - test: Resumed harness shows correct cumulative cost
+        verify: pnpm --filter=harness test
+
+  - title: Restore lastSessionId for session continuity
+    description: Link sessions via lastSessionId so --resume can chain across checkpoints
+    complexity: simple
+    priority: 1
+    files:
+      - packages/harness/src/runner.ts
+      - packages/harness/src/types.ts
+    acceptance:
+      - Store lastSessionId in checkpoint metadata
+      - Restore on resume and use for --resume flag
+      - Fall back gracefully if session no longer valid
+    depends_on:
+      - Restore totalCost from checkpoint metadata
+
+  - title: Calculate and apply state deltas on resume
+    description: Merge checkpoint state with current reality (issues may have changed)
+    complexity: standard
+    priority: 2
+    files:
+      - packages/harness/src/runner.ts
+      - packages/harness/src/beads.ts
+    acceptance:
+      - Query current issue statuses from Beads on resume
+      - Identify issues completed/failed since checkpoint
+      - Apply delta to harnessState (don't double-count)
+      - Log discrepancies for visibility
+    depends_on:
+      - Restore lastSessionId for session continuity
+
+  - title: Implement pause signaling with graceful recovery
+    description: Allow harness to pause mid-work and resume cleanly
+    complexity: standard
+    priority: 2
+    files:
+      - packages/harness/src/runner.ts
+      - packages/harness/src/redirect.ts
+    acceptance:
+      - Check for pause request before each session
+      - Create checkpoint with full AgentContext on pause
+      - Log pause reason and resume instructions
+      - test: Pause and resume preserves all state
+        verify: pnpm --filter=harness test
+    depends_on:
+      - Calculate and apply state deltas on resume
+
+requirements:
+  - All changes pass typecheck: pnpm --filter=harness exec tsc --noEmit
+  - Build succeeds: pnpm --filter=harness build
+  - Existing tests pass: pnpm --filter=harness test
+  - No regressions in checkpoint creation
+
+success:
+  - Harness can resume from checkpoint with correct cost tracking
+  - Session IDs chain across checkpoint boundaries
+  - State deltas correctly reconcile with Beads reality
+  - Pause/resume cycle preserves full context
