@@ -31,6 +31,9 @@
   export let services: any[] = []; // Service schema for .agency
   export let faqItems: any[] = []; // FAQ schema for AEO
   export let breadcrumbs: any[] = []; // Breadcrumb schema
+  export let reviews: any[] = []; // Review schema with ratings
+  export let video: any = null; // VideoObject schema for video content
+  export let course: any = null; // Course schema for educational content
 
   // Property-specific config
   export let propertyName: 'io' | 'space' | 'agency' | 'ltd' = 'space';
@@ -189,6 +192,77 @@
     }))
   } : null;
 
+  // AggregateRating schema (from reviews)
+  const aggregateRatingSchema = reviews.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': ogType === 'article' ? 'Article' : 'Product',
+    name: title,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1),
+      reviewCount: reviews.length,
+      bestRating: 5,
+      worstRating: 1
+    },
+    review: reviews.map(review => ({
+      '@type': 'Review',
+      author: {
+        '@type': 'Person',
+        name: review.author
+      },
+      datePublished: review.date,
+      reviewBody: review.content,
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: review.rating,
+        bestRating: 5,
+        worstRating: 1
+      }
+    }))
+  } : null;
+
+  // VideoObject schema
+  const videoSchema = video ? {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: video.name || title,
+    description: video.description || description,
+    thumbnailUrl: video.thumbnail || fullOgImage,
+    uploadDate: video.uploadDate,
+    duration: video.duration, // ISO 8601 format (e.g., "PT1M30S")
+    contentUrl: video.contentUrl,
+    embedUrl: video.embedUrl,
+    ...(video.transcript && { transcript: video.transcript })
+  } : null;
+
+  // Course schema
+  const courseSchema = course ? {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: course.name || title,
+    description: course.description || description,
+    provider: {
+      '@type': 'Organization',
+      name: config.name,
+      url: config.domain
+    },
+    ...(course.instructor && {
+      instructor: {
+        '@type': 'Person',
+        name: course.instructor
+      }
+    }),
+    ...(course.datePublished && { datePublished: course.datePublished }),
+    ...(course.hasCourseInstance && {
+      hasCourseInstance: {
+        '@type': 'CourseInstance',
+        courseMode: course.hasCourseInstance.courseMode || 'online',
+        ...(course.hasCourseInstance.startDate && { startDate: course.hasCourseInstance.startDate }),
+        ...(course.hasCourseInstance.endDate && { endDate: course.hasCourseInstance.endDate })
+      }
+    })
+  } : null;
+
   // Robots directive
   const robotsContent = [
     noindex ? 'noindex' : 'index',
@@ -271,6 +345,27 @@
   {#if breadcrumbSchema}
     <script type="application/ld+json">
       {JSON.stringify(breadcrumbSchema)}
+    </script>
+  {/if}
+
+  <!-- AggregateRating Schema -->
+  {#if aggregateRatingSchema}
+    <script type="application/ld+json">
+      {JSON.stringify(aggregateRatingSchema)}
+    </script>
+  {/if}
+
+  <!-- VideoObject Schema -->
+  {#if videoSchema}
+    <script type="application/ld+json">
+      {JSON.stringify(videoSchema)}
+    </script>
+  {/if}
+
+  <!-- Course Schema -->
+  {#if courseSchema}
+    <script type="application/ld+json">
+      {JSON.stringify(courseSchema)}
     </script>
   {/if}
 
