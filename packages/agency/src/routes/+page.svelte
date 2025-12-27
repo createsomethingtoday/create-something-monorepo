@@ -2,7 +2,6 @@
 	import { SEO } from '@create-something/components';
 	import TextRevelation from '$lib/components/TextRevelation.svelte';
 	import SocialProofStrip from '$lib/components/SocialProofStrip.svelte';
-	import PartnershipSection from '$lib/components/PartnershipSection.svelte';
 	import SavvyCalButton from '$lib/components/SavvyCalButton.svelte';
 
 	const services = [
@@ -83,9 +82,6 @@
 		{/each}
 	</div>
 </section>
-
-<!-- Partnership: Half Dozen relationship -->
-<PartnershipSection />
 
 <!-- Act 4: The Invitation -->
 <section class="cta-section">
