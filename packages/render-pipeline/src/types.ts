@@ -48,6 +48,10 @@ export interface RenderOptions {
   steps?: number;
   /** Guidance scale (default: 3.5) */
   guidance?: number;
+  /** Output width in pixels (default: 1024) */
+  outputWidth?: number;
+  /** Output height in pixels (default: 1024) */
+  outputHeight?: number;
   /** Output path for rendered image */
   outputPath?: string;
 }
@@ -70,6 +74,10 @@ export interface RenderFromSvgOptions {
   width?: number;
   /** PNG export height (default: 1024) */
   height?: number;
+  /** Render output width (default: 1024) */
+  outputWidth?: number;
+  /** Render output height (default: 1024) */
+  outputHeight?: number;
   /** Conditioning scale (default: 1.0) */
   conditioningScale?: number;
   /** Output path for rendered image */

@@ -81,6 +81,8 @@ export async function render(options: RenderOptions): Promise<RenderResult> {
     conditioningScale = defaults.conditioningScale,
     steps = defaults.steps,
     guidance = defaults.guidance,
+    outputWidth = 1024,
+    outputHeight = 1024,
     outputPath
   } = options;
 
@@ -105,6 +107,8 @@ export async function render(options: RenderOptions): Promise<RenderResult> {
       num_inference_steps: steps,
       guidance_scale: guidance,
       controlnet_conditioning_scale: conditioningScale,
+      width: outputWidth,
+      height: outputHeight,
       output_format: 'png',
       output_quality: 100
     };
