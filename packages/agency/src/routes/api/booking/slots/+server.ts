@@ -2,11 +2,51 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 const SAVVYCAL_API_BASE = 'https://api.savvycal.com/v1';
-const LINK_SLUG = 'createsomething/together';
+const TARGET_LINK_SLUG = 'together'; // The slug part of the link URL
 
 interface SavvyCalSlot {
 	start_at: string;
 	end_at: string;
+}
+
+interface SavvyCalLink {
+	id: string;
+	slug: string;
+	name: string;
+}
+
+// Cache the link ID to avoid repeated lookups
+let cachedLinkId: string | null = null;
+
+async function getLinkId(apiKey: string): Promise<string | null> {
+	if (cachedLinkId) return cachedLinkId;
+
+	const response = await fetch(`${SAVVYCAL_API_BASE}/links`, {
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			Accept: 'application/json'
+		}
+	});
+
+	if (!response.ok) {
+		console.error('Failed to fetch links:', response.status);
+		return null;
+	}
+
+	const data = (await response.json()) as { entries?: SavvyCalLink[] };
+	console.log('SavvyCal links:', JSON.stringify(data).slice(0, 500));
+
+	const links = data.entries || [];
+	const targetLink = links.find((link) => link.slug === TARGET_LINK_SLUG);
+
+	if (targetLink) {
+		cachedLinkId = targetLink.id;
+		console.log('Found link ID:', cachedLinkId, 'for slug:', TARGET_LINK_SLUG);
+		return cachedLinkId;
+	}
+
+	console.error('Link not found for slug:', TARGET_LINK_SLUG);
+	return null;
 }
 
 export const GET: RequestHandler = async ({ url, platform }) => {
@@ -27,13 +67,20 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	}
 
 	try {
+		// Get the link ID first
+		const linkId = await getLinkId(apiKey);
+		if (!linkId) {
+			console.error('Could not find SavvyCal link');
+			return json({ slots: [], timezone });
+		}
+
 		const params = new URLSearchParams({
 			start_date: startDate,
 			end_date: endDate,
 			timezone
 		});
 
-		const apiUrl = `${SAVVYCAL_API_BASE}/links/${LINK_SLUG}/slots?${params}`;
+		const apiUrl = `${SAVVYCAL_API_BASE}/links/${linkId}/slots?${params}`;
 		console.log('Fetching SavvyCal slots:', apiUrl);
 
 		const response = await fetch(apiUrl, {

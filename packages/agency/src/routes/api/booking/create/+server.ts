@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 const SAVVYCAL_API_BASE = 'https://api.savvycal.com/v1';
-const LINK_SLUG = 'createsomething/together';
+const TARGET_LINK_SLUG = 'together';
 
 interface CreateEventRequest {
 	start_at: string;
@@ -21,6 +21,43 @@ interface SavvyCalEvent {
 	name: string;
 	email: string;
 	timezone: string;
+}
+
+interface SavvyCalLink {
+	id: string;
+	slug: string;
+	name: string;
+}
+
+// Cache the link ID to avoid repeated lookups
+let cachedLinkId: string | null = null;
+
+async function getLinkId(apiKey: string): Promise<string | null> {
+	if (cachedLinkId) return cachedLinkId;
+
+	const response = await fetch(`${SAVVYCAL_API_BASE}/links`, {
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			Accept: 'application/json'
+		}
+	});
+
+	if (!response.ok) {
+		console.error('Failed to fetch links:', response.status);
+		return null;
+	}
+
+	const data = (await response.json()) as { entries?: SavvyCalLink[] };
+	const links = data.entries || [];
+	const targetLink = links.find((link) => link.slug === TARGET_LINK_SLUG);
+
+	if (targetLink) {
+		cachedLinkId = targetLink.id;
+		return cachedLinkId;
+	}
+
+	console.error('Link not found for slug:', TARGET_LINK_SLUG);
+	return null;
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -60,6 +97,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			questions.notes = notes;
 		}
 
+		// Get the link ID first
+		const linkId = await getLinkId(apiKey);
+		if (!linkId) {
+			throw error(500, 'Booking service temporarily unavailable');
+		}
+
 		const eventData = {
 			start_at,
 			end_at,
@@ -69,7 +112,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			...(Object.keys(questions).length > 0 && { questions })
 		};
 
-		const response = await fetch(`${SAVVYCAL_API_BASE}/links/${LINK_SLUG}/events`, {
+		const response = await fetch(`${SAVVYCAL_API_BASE}/links/${linkId}/events`, {
 			method: 'POST',
 			headers: {
 				Authorization: `Bearer ${apiKey}`,
