@@ -55,6 +55,13 @@ export type {
   ReviewedCheckpoint,
   // Discovery source taxonomy (upstream from VC)
   DiscoverySource,
+  // Agent context types (upstream from VC - nondeterministic idempotence)
+  AgentContext,
+  FileModification,
+  IssueUpdate,
+  TaskProgress,
+  TestState,
+  Decision,
 } from './types.js';
 
 export {
@@ -66,6 +73,8 @@ export {
   // Discovery source taxonomy
   DISCOVERY_LABELS,
   getDiscoveryLabel,
+  // Agent context
+  EMPTY_AGENT_CONTEXT,
 } from './types.js';
 
 // Spec Parser
@@ -134,6 +143,21 @@ export {
   hasActiveSwarmBatch,
   generateSwarmCheckpoint,
   formatSwarmProgressDisplay,
+  // Agent context management (upstream from VC - nondeterministic idempotence)
+  recordFileModification,
+  recordIssueUpdate,
+  updateTaskProgress,
+  recordTestState,
+  addAgentNotes,
+  recordBlocker,
+  recordDecision,
+  getAgentContext,
+  clearAgentContext,
+  loadAgentContext,
+  restoreAgentContext,
+  generateResumeBrief,
+  hasResumableContext,
+  formatAgentContextSummary,
 } from './checkpoint.js';
 
 // Redirect Detection

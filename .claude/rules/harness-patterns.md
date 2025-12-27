@@ -235,3 +235,143 @@ VC's "Zero Framework Cognition" principle means no hardcoded heuristics—AI rea
 3. **Reviews as reflection**: Architectural claims are verified by reviewers
 
 The gates don't replace AI judgment—they make AI judgment auditable.
+
+## Pause/Resume with Context (Upstream from VC)
+
+**Nondeterministic Idempotence**: Workflows can be interrupted and resumed anywhere. The AI figures out where it left off.
+
+### AgentContext Schema
+
+When a session pauses or creates a checkpoint, it captures:
+
+```typescript
+interface AgentContext {
+  filesModified: FileModification[];  // What files were changed
+  issuesUpdated: IssueUpdate[];       // Issue status transitions
+  currentTask: TaskProgress | null;   // Where we are in current work
+  testState: TestState | null;        // Test results at pause time
+  agentNotes: string;                 // Free-form observations
+  blockers: string[];                 // Problems encountered
+  decisions: Decision[];              // Choices made and rationale
+  capturedAt: string;                 // When context was saved
+}
+```
+
+### Recording Context During Work
+
+```typescript
+import {
+  createCheckpointTracker,
+  recordFileModification,
+  recordDecision,
+  addAgentNotes,
+  recordTestState,
+} from '@create-something/harness';
+
+const tracker = createCheckpointTracker();
+
+// Record file changes
+recordFileModification(tracker, {
+  path: 'src/lib/auth.ts',
+  summary: 'Added JWT validation middleware',
+  changeType: 'modified',
+  linesAdded: 45,
+  linesRemoved: 12,
+});
+
+// Record decisions
+recordDecision(tracker, {
+  decision: 'Use RS256 for JWT signing',
+  rationale: 'Better security for distributed systems',
+  alternatives: ['HS256', 'ES256'],
+});
+
+// Add notes for context
+addAgentNotes(tracker, 'Auth middleware working. Need to add refresh token logic next.');
+
+// Record test state
+recordTestState(tracker, {
+  passed: 12,
+  failed: 2,
+  skipped: 1,
+  failingTests: ['auth.test.ts: refresh token', 'auth.test.ts: token expiry'],
+  durationMs: 3400,
+});
+```
+
+### Resuming from Context
+
+```typescript
+import {
+  loadAgentContext,
+  generateResumeBrief,
+  hasResumableContext,
+} from '@create-something/harness';
+
+// Check if checkpoint has context
+if (hasResumableContext(lastCheckpoint)) {
+  // Load context
+  const context = loadAgentContext(lastCheckpoint);
+
+  // Generate resume brief for priming prompt
+  const brief = generateResumeBrief(context);
+
+  // Brief is markdown that goes into session priming:
+  // ## Session Resume Brief
+  // ### Current Task
+  // **Issue**: csm-123 - Add auth middleware
+  // **Progress**: 60%
+  // ...
+}
+```
+
+### Resume Brief Format
+
+The `generateResumeBrief()` function produces markdown suitable for session priming:
+
+```markdown
+## Session Resume Brief
+
+*Context captured at: 2025-12-27T12:30:00Z*
+
+### Current Task
+**Issue**: csm-123 - Add auth middleware
+**Progress**: 60%
+**Current Step**: Implementing refresh token logic
+**Remaining**: Token expiry handling, tests
+
+### Files Modified This Session
+- `src/lib/auth.ts` (+45/-12): Added JWT validation middleware
+- `src/routes/api/auth/+server.ts` (+20/-0): Created auth endpoint
+
+### Test State
+- Passed: 12
+- Failed: 2
+- **Failing tests**:
+  - auth.test.ts: refresh token
+  - auth.test.ts: token expiry
+
+### Key Decisions Made
+- **Use RS256 for JWT signing**: Better security for distributed systems
+
+### Notes
+Auth middleware working. Need to add refresh token logic next.
+
+---
+*Resume from this context. The AI should figure out where work left off.*
+```
+
+### Why This Matters
+
+Without context preservation, each session starts fresh and must rediscover:
+- What files were being modified
+- What decisions were made and why
+- What tests are failing
+- What blockers were encountered
+
+With context preservation, sessions can resume mid-task, enabling:
+1. **Longer autonomous runs** (work survives context limits)
+2. **Crash recovery** (interrupted sessions resume cleanly)
+3. **Multi-session continuity** (complex work spans sessions)
+
+This is "nondeterministic idempotence"—the same outcome regardless of when/where the workflow was interrupted.
