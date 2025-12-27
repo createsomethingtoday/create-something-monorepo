@@ -91,15 +91,15 @@
 	/* Sidebar container */
 	.sidebar {
 		position: fixed;
-		top: 0;
+		top: var(--header-height);
 		left: 0;
 		width: 280px;
-		height: 100vh;
+		height: calc(100vh - var(--header-height));
 		background: var(--color-bg-elevated);
 		border-right: 1px solid var(--color-border-default);
 		display: flex;
 		flex-direction: column;
-		z-index: var(--z-fixed);
+		z-index: calc(var(--z-fixed) - 1);
 		transform: translateX(-100%);
 		transition: transform var(--duration-standard) var(--ease-standard);
 	}
@@ -115,12 +115,15 @@
 		}
 	}
 
-	/* Mobile overlay */
+	/* Mobile overlay - starts below main header */
 	.sidebar-overlay {
 		position: fixed;
-		inset: 0;
+		top: var(--header-height);
+		right: 0;
+		bottom: 0;
+		left: 0;
 		background: var(--color-overlay);
-		z-index: calc(var(--z-fixed) - 1);
+		z-index: calc(var(--z-fixed) - 2);
 	}
 
 	@media (min-width: 1024px) {

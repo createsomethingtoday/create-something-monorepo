@@ -56,10 +56,10 @@
 		background: var(--color-bg-pure);
 	}
 
-	/* Mobile header */
+	/* Mobile header - positioned below main Navigation */
 	.mobile-header {
 		position: fixed;
-		top: 0;
+		top: var(--header-height);
 		left: 0;
 		right: 0;
 		height: 56px;
@@ -107,13 +107,13 @@
 	/* Main content area */
 	.doc-main {
 		min-height: 100vh;
-		padding-top: 56px; /* Mobile header height */
+		padding-top: calc(var(--header-height) + 56px); /* Main nav + mobile header */
 	}
 
 	@media (min-width: 1024px) {
 		.doc-main {
 			margin-left: 280px; /* Sidebar width */
-			padding-top: 0;
+			padding-top: var(--header-height); /* Only main nav on desktop */
 		}
 	}
 
