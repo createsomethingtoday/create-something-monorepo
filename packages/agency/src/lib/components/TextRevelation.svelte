@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import SavvyCalButton from './SavvyCalButton.svelte';
 
 	let container: HTMLElement;
 	let scrollProgress = $state(0);
@@ -45,6 +46,11 @@
 	// CTA fades in gradually from 0.8 to 1.0
 	let ctaOpacity = $derived(
 		Math.max(0, Math.min(1, (scrollProgress - 0.8) / 0.15))
+	);
+
+	// Above-fold CTA fades out as scroll begins (visible at start, hidden by 0.15)
+	let aboveFoldOpacity = $derived(
+		Math.max(0, 1 - scrollProgress / 0.15)
 	);
 
 	// Update phase based on scroll - CSS handles transitions, not View Transitions API
@@ -107,6 +113,17 @@
 			{/each}
 		</p>
 
+		<!-- Above-fold CTA: visible immediately, fades out on scroll -->
+		<div
+			class="above-fold-cta"
+			style="--above-fold-opacity: {aboveFoldOpacity};"
+			class:hidden={aboveFoldOpacity <= 0}
+		>
+			<SavvyCalButton variant="primary" size="lg" />
+			<span class="scroll-hint">or scroll to learn more</span>
+		</div>
+
+		<!-- Scroll-driven CTA: appears after reveal complete -->
 		<a
 			href="/services"
 			class="cta"
@@ -221,6 +238,26 @@
 
 	.cta:hover .arrow {
 		transform: translateX(4px);
+	}
+
+	/* Above-fold CTA */
+	.above-fold-cta {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-sm);
+		margin-top: var(--space-lg);
+		opacity: var(--above-fold-opacity, 1);
+		transition: opacity 0.3s var(--ease-standard);
+	}
+
+	.above-fold-cta.hidden {
+		pointer-events: none;
+	}
+
+	.scroll-hint {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	@media (max-width: 768px) {

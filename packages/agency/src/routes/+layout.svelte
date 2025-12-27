@@ -98,6 +98,9 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+	<!-- SavvyCal Booking Widget -->
+	<script src="https://embed.savvycal.com/v1/embed.js" defer></script>
 </svelte:head>
 
 <Analytics property="agency" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
