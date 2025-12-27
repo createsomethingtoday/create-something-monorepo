@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SEO from '$lib/components/SEO.svelte';
+	import { SEO } from '@create-something/components';
 	import TextRevelation from '$lib/components/TextRevelation.svelte';
 	import SocialProofStrip from '$lib/components/SocialProofStrip.svelte';
 	import PartnershipSection from '$lib/components/PartnershipSection.svelte';

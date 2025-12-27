@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SEO from '$lib/components/SEO.svelte';
+	import { SEO } from '@create-something/components';
 	import AssessmentRuntime from '$lib/components/AssessmentRuntime.svelte';
 </script>
 
