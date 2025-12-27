@@ -118,6 +118,7 @@ export async function createIssue(
     priority?: number;
     labels?: string[];
     description?: string;
+    metadata?: Record<string, unknown>;
   },
   cwd?: string
 ): Promise<string> {
@@ -406,12 +407,18 @@ export async function createIssuesFromFeatures(
 
   // Create issues in order (respecting dependencies)
   for (const feature of features) {
+    // Build labels including complexity if specified
+    const labels = [...feature.labels, `harness:${harnessId}`];
+    if (feature.complexity) {
+      labels.push(`complexity:${feature.complexity}`);
+    }
+
     const issueId = await createIssue(
       feature.title,
       {
         type: 'feature',
         priority: feature.priority,
-        labels: [...feature.labels, `harness:${harnessId}`],
+        labels,
         description: formatFeatureDescription(feature),
       },
       cwd

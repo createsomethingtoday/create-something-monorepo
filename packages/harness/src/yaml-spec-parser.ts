@@ -61,6 +61,7 @@ const SCHEMA = {
       "properties": {
         "title": { "type": "string", "minLength": 1 },
         "description": { "type": "string" },
+        "complexity": { "type": "string", "enum": ["trivial", "simple", "standard", "complex"] },
         "priority": { "type": "integer", "enum": [0, 1, 2, 3, 4], "default": 2 },
         "files": { "type": "array", "items": { "type": "string" } },
         "depends_on": { "type": "array", "items": { "type": "string" } },
@@ -106,6 +107,7 @@ interface YamlSpec {
 interface YamlFeature {
   title: string;
   description?: string;
+  complexity?: 'trivial' | 'simple' | 'standard' | 'complex';
   priority?: number;
   files?: string[];
   depends_on?: string[];
@@ -217,6 +219,7 @@ function convertToParsedSpec(spec: YamlSpec): ParsedSpec {
       id,
       title: f.title,
       description: f.description || '',
+      complexity: f.complexity,
       priority: f.priority ?? 2,
       dependsOn,
       blockedBy: [], // Will be populated by buildDependencyGraph

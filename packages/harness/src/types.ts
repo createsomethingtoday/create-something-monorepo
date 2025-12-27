@@ -13,6 +13,7 @@ export interface Feature {
   id: string;
   title: string;
   description: string;
+  complexity?: 'trivial' | 'simple' | 'standard' | 'complex';
   priority: number; // 0-4 (P0=highest)
   dependsOn: string[]; // Feature IDs this depends on
   blockedBy: string[]; // Feature IDs that block this one (reverse of dependsOn)

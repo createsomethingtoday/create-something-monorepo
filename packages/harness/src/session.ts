@@ -215,7 +215,7 @@ export interface SessionOptions {
   maxTokens?: number;
   timeout?: number; // ms
   dryRun?: boolean;
-  /** Maximum turns before session terminates (default: 100) */
+  /** Maximum turns before session terminates (default: 50, prevents runaway sessions) */
   maxTurns?: number;
   /** Model to use: 'opus', 'sonnet', 'haiku' (default: auto) */
   model?: 'opus' | 'sonnet' | 'haiku';
@@ -269,12 +269,18 @@ export async function runSession(
     const result = await executeClaudeCode(promptFile, {
       cwd: options.cwd,
       timeout: options.timeout || 30 * 60 * 1000, // 30 min default
-      maxTurns: options.maxTurns || 100,
+      maxTurns: options.maxTurns || 50, // Lower default to prevent runaway sessions
       model: options.model,
     });
 
     // Parse structured metrics from JSON output
     const metrics = parseJsonMetrics(result.output);
+
+    // Warn if approaching max turns limit
+    const maxTurnsLimit = options.maxTurns || 50;
+    if (metrics.numTurns && metrics.numTurns >= maxTurnsLimit * 0.8) {
+      console.warn(`  ⚠️  Session used ${metrics.numTurns}/${maxTurnsLimit} turns (${Math.round(metrics.numTurns / maxTurnsLimit * 100)}% of limit)`);
+    }
 
     return {
       issueId: issue.id,
@@ -467,7 +473,8 @@ async function executeClaudeCode(
     }
 
     // Log that we've started (visible in harness output)
-    console.log(`  [Session] Prompt sent (${promptContent.length} chars), waiting for response...`);
+    const maxTurnsLimit = options.maxTurns || 50;
+    console.log(`  [Session] Prompt sent (${promptContent.length} chars), max turns: ${maxTurnsLimit}...`);
 
     const timeoutId = setTimeout(() => {
       proc.kill('SIGTERM');

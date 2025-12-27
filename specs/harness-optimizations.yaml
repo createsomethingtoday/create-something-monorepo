@@ -1,6 +1,4 @@
 title: Harness SDK Optimizations
-property: harness
-complexity: mixed
 
 overview: |
   Optimize the CREATE Something Harness to leverage Agent SDK best practices.
@@ -64,9 +62,9 @@ features:
       - Add model selection flag
 
 requirements:
-  - All changes pass typecheck: pnpm --filter=harness exec tsc --noEmit
-  - Build succeeds: pnpm --filter=harness build
-  - Existing tests pass: pnpm --filter=harness test
+  - "All changes pass typecheck: pnpm --filter=harness exec tsc --noEmit"
+  - "Build succeeds: pnpm --filter=harness build"
+  - "Existing tests pass: pnpm --filter=harness test"
 
 success:
   - Model routing observable in session logs

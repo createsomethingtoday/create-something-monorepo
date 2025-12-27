@@ -20,7 +20,7 @@ import type {
   ReviewedCheckpoint,
 } from './types.js';
 import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG, DEFAULT_SWARM_CONFIG, DEFAULT_REVIEW_PIPELINE_CONFIG } from './types.js';
-import { parseSpec, formatSpecSummary } from './spec-parser.js';
+import { parse as parseSpec, formatSpecSummary } from './spec-parser.js';
 import {
   createIssuesFromFeatures,
   createHarnessIssue,
@@ -107,6 +107,12 @@ export function selectModelForTask(issue: BeadsIssue): 'opus' | 'sonnet' | 'haik
   if (labels.includes('model:haiku')) return 'haiku';
   if (labels.includes('model:sonnet')) return 'sonnet';
   if (labels.includes('model:opus')) return 'opus';
+
+  // Complexity from spec (second priority)
+  if (labels.includes('complexity:trivial')) return 'haiku';
+  if (labels.includes('complexity:simple')) return 'sonnet';
+  if (labels.includes('complexity:standard')) return 'sonnet';
+  if (labels.includes('complexity:complex')) return 'opus';
 
   // Haiku: simple mechanical tasks (pattern matching, no reasoning)
   const haikuPatterns = [
