@@ -243,6 +243,7 @@
 	.page-container {
 		background: var(--color-bg-pure);
 		color: var(--color-fg-primary);
+		padding-top: var(--space-xl);
 	}
 
 	.page-title {
