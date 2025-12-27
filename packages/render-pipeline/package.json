@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "render-threshold": "tsx scripts/render-threshold.ts"
+    "render-threshold": "tsx scripts/render-threshold.ts",
+    "generate-sections": "tsx scripts/generate-sections.ts"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.0",

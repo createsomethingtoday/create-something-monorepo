@@ -57,6 +57,17 @@ export {
   type Overhang
 } from './floor-plan-svg.js';
 
+// Section SVG generator
+export {
+  generateSectionSvg,
+  generateRoomSectionSvg,
+  type SectionData,
+  type SectionCut,
+  type HeightZone,
+  type SectionOpening,
+  type SectionRenderOptions
+} from './section-svg.js';
+
 import { svgToMonochromePng } from './svg-to-png.js';
 import { render } from './replicate.js';
 import { recommendModel, buildPrompt, getConditioningScale } from './controlnet.js';
