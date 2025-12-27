@@ -93,6 +93,10 @@
     publisher: organizationSchema,
     inLanguage: 'en-US'
   };
+
+  // Pre-stringify for {@html} rendering
+  const orgSchemaJson = JSON.stringify(organizationSchema);
+  const webSchemaJson = JSON.stringify(websiteSchema);
 </script>
 
 <svelte:head>
@@ -123,12 +127,8 @@
   <meta property="twitter:image" content="{config.domain}/og-image.png" />
 
   <!-- Schema.org JSON-LD -->
-  <script type="application/ld+json">
-    {JSON.stringify(organizationSchema)}
-  </script>
-  <script type="application/ld+json">
-    {JSON.stringify(websiteSchema)}
-  </script>
+  {@html '<script type="application/ld+json">' + orgSchemaJson + '</script>'}
+  {@html '<script type="application/ld+json">' + webSchemaJson + '</script>'}
 
   <!-- Favicons -->
   <link rel="icon" href="/favicon.png" type="image/png" />
