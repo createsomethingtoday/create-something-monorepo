@@ -20,79 +20,93 @@ export interface CanonMapping {
 const canon = loadCanon();
 
 /**
+ * Safe accessor for nested canon properties
+ * Returns undefined if any part of the path doesn't exist
+ */
+function safeGet<T>(obj: any, ...keys: string[]): T | undefined {
+	let current = obj;
+	for (const key of keys) {
+		if (current === undefined || current === null) return undefined;
+		current = current[key];
+	}
+	return current as T;
+}
+
+/**
  * Tailwind utilities that violate Canon principles
  * These should be replaced with Canon tokens
  *
  * Descriptions pulled from canon.json where available.
+ * Note: canon.json uses 'borderRadius' not 'radius', 'background'/'foreground' not 'bg'/'fg'
  */
 export const CANON_MAPPINGS: CanonMapping[] = [
-	// Border radius - using canon.json values
+	// Border radius - using canon.json values (canon.borderRadius)
 	{
 		tailwind: 'rounded-sm',
 		canon: 'var(--radius-sm)',
 		category: 'radius',
-		description: canon.radius.sm.value
+		description: safeGet<string>(canon, 'borderRadius', 'sm', 'value') ?? '6px'
 	},
 	{
 		tailwind: 'rounded-md',
 		canon: 'var(--radius-md)',
 		category: 'radius',
-		description: canon.radius.md.value
+		description: safeGet<string>(canon, 'borderRadius', 'md', 'value') ?? '8px'
 	},
 	{
 		tailwind: 'rounded-lg',
 		canon: 'var(--radius-lg)',
 		category: 'radius',
-		description: canon.radius.lg.value
+		description: safeGet<string>(canon, 'borderRadius', 'lg', 'value') ?? '12px'
 	},
 	{
 		tailwind: 'rounded-xl',
 		canon: 'var(--radius-xl)',
 		category: 'radius',
-		description: canon.radius.xl.value
+		description: safeGet<string>(canon, 'borderRadius', 'xl', 'value') ?? '16px'
 	},
 	{
 		tailwind: 'rounded-full',
 		canon: 'var(--radius-full)',
 		category: 'radius',
-		description: canon.radius.full.value
+		description: safeGet<string>(canon, 'borderRadius', 'full', 'value') ?? '9999px'
 	},
 	{ tailwind: /^rounded-\w+$/, canon: 'var(--radius-*)', category: 'radius' },
 
-	// Background colors - using canon.json values
+	// Background colors - using canon.json values (canon.colors.background)
 	{
 		tailwind: 'bg-black',
 		canon: 'var(--color-bg-pure)',
 		category: 'color',
-		description: canon.colors.bg.pure.value
+		description: safeGet<string>(canon, 'colors', 'background', 'pure', 'value') ?? '#000000'
 	},
 	{
 		tailwind: 'bg-white',
 		canon: 'var(--color-fg-primary)',
 		category: 'color',
-		description: canon.colors.fg.primary.value
+		description: safeGet<string>(canon, 'colors', 'foreground', 'primary', 'value') ?? '#ffffff'
 	},
 	{
 		tailwind: /^bg-white\/5$/,
 		canon: 'var(--color-bg-subtle)',
 		category: 'color',
-		description: canon.colors.bg.subtle.value
+		description: safeGet<string>(canon, 'colors', 'background', 'subtle', 'value') ?? '#1a1a1a'
 	},
 	{
 		tailwind: /^bg-white\/10$/,
 		canon: 'var(--color-bg-surface)',
 		category: 'color',
-		description: canon.colors.bg.surface.value
+		description: safeGet<string>(canon, 'colors', 'background', 'surface', 'value') ?? '#111111'
 	},
 	{ tailwind: /^bg-gray-/, canon: 'var(--color-bg-*)', category: 'color' },
 	{ tailwind: /^bg-slate-/, canon: 'var(--color-bg-*)', category: 'color' },
 
-	// Text colors - using canon.json values
+	// Text colors - using canon.json values (canon.colors.foreground)
 	{
 		tailwind: 'text-white',
 		canon: 'var(--color-fg-primary)',
 		category: 'color',
-		description: canon.colors.fg.primary.value
+		description: safeGet<string>(canon, 'colors', 'foreground', 'primary', 'value') ?? '#ffffff'
 	},
 	{
 		tailwind: 'text-black',
@@ -104,25 +118,29 @@ export const CANON_MAPPINGS: CanonMapping[] = [
 		tailwind: /^text-white\/80$/,
 		canon: 'var(--color-fg-secondary)',
 		category: 'color',
-		description: canon.colors.fg.secondary.value
+		description: safeGet<string>(canon, 'colors', 'foreground', 'secondary', 'value') ?? 'rgba(255, 255, 255, 0.8)'
 	},
 	{
 		tailwind: /^text-white\/60$/,
 		canon: 'var(--color-fg-tertiary)',
 		category: 'color',
-		description: canon.colors.fg.tertiary.value
+		description: safeGet<string>(canon, 'colors', 'foreground', 'tertiary', 'value') ?? 'rgba(255, 255, 255, 0.6)'
 	},
 	{
 		tailwind: /^text-white\/46$/,
 		canon: 'var(--color-fg-muted)',
 		category: 'color',
-		description: `${canon.colors.fg.muted.value} - ${canon.colors.fg.muted.description}`
+		description: (() => {
+			const value = safeGet<string>(canon, 'colors', 'foreground', 'muted', 'value');
+			const desc = safeGet<string>(canon, 'colors', 'foreground', 'muted', 'description');
+			return value && desc ? `${value} - ${desc}` : 'rgba(255, 255, 255, 0.46) - WCAG AA compliant';
+		})()
 	},
 	{
 		tailwind: /^text-white\/20$/,
 		canon: 'var(--color-fg-subtle)',
 		category: 'color',
-		description: canon.colors.fg.subtle.value
+		description: safeGet<string>(canon, 'colors', 'foreground', 'subtle', 'value') ?? 'rgba(255, 255, 255, 0.2)'
 	},
 	{ tailwind: /^text-gray-/, canon: 'var(--color-fg-*)', category: 'color' },
 	{ tailwind: /^text-slate-/, canon: 'var(--color-fg-*)', category: 'color' },
@@ -132,99 +150,99 @@ export const CANON_MAPPINGS: CanonMapping[] = [
 		tailwind: /^border-white\/10$/,
 		canon: 'var(--color-border-default)',
 		category: 'color',
-		description: canon.colors.border.default.value
+		description: safeGet<string>(canon, 'colors', 'border', 'default', 'value') ?? 'rgba(255, 255, 255, 0.1)'
 	},
 	{
 		tailwind: /^border-white\/20$/,
 		canon: 'var(--color-border-emphasis)',
 		category: 'color',
-		description: canon.colors.border.emphasis.value
+		description: safeGet<string>(canon, 'colors', 'border', 'emphasis', 'value') ?? 'rgba(255, 255, 255, 0.2)'
 	},
 	{
 		tailwind: /^border-white\/30$/,
 		canon: 'var(--color-border-strong)',
 		category: 'color',
-		description: canon.colors.border.strong.value
+		description: safeGet<string>(canon, 'colors', 'border', 'strong', 'value') ?? 'rgba(255, 255, 255, 0.3)'
 	},
 	{ tailwind: /^border-gray-/, canon: 'var(--color-border-*)', category: 'color' },
 	{ tailwind: /^border-white$/, canon: 'var(--color-border-*)', category: 'color' },
 	{ tailwind: /^border-black$/, canon: 'var(--color-border-*)', category: 'color' },
 
-	// Shadows - using canon.json values where available
+	// Shadows - using canon.json values (flat structure: canon.shadows.sm, not canon.shadows.elevation.sm)
 	{
 		tailwind: 'shadow-sm',
 		canon: 'var(--shadow-sm)',
 		category: 'shadow',
-		description: canon.shadows.elevation.sm.value
+		description: safeGet<string>(canon, 'shadows', 'sm', 'value') ?? '0 1px 2px 0 rgba(0, 0, 0, 0.5)'
 	},
 	{
 		tailwind: 'shadow-md',
 		canon: 'var(--shadow-md)',
 		category: 'shadow',
-		description: canon.shadows.elevation.md.value
+		description: safeGet<string>(canon, 'shadows', 'md', 'value') ?? '0 4px 6px -1px rgba(0, 0, 0, 0.5)'
 	},
 	{
 		tailwind: 'shadow-lg',
 		canon: 'var(--shadow-lg)',
 		category: 'shadow',
-		description: canon.shadows.elevation.lg.value
+		description: safeGet<string>(canon, 'shadows', 'lg', 'value') ?? '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
 	},
 	{
 		tailwind: 'shadow-xl',
 		canon: 'var(--shadow-xl)',
 		category: 'shadow',
-		description: canon.shadows.elevation.xl.value
+		description: safeGet<string>(canon, 'shadows', 'xl', 'value') ?? '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
 	},
 	{
 		tailwind: 'shadow-2xl',
 		canon: 'var(--shadow-2xl)',
 		category: 'shadow',
-		description: canon.shadows.elevation['2xl'].value
+		description: safeGet<string>(canon, 'shadows', '2xl', 'value') ?? '0 25px 50px -12px rgba(0, 0, 0, 0.75)'
 	},
 	{ tailwind: /^shadow-\w+$/, canon: 'var(--shadow-*)', category: 'shadow' },
 
-	// Typography - using canon.json values
+	// Typography - using canon.json values (flat structure: canon.typography.scale.caption, etc.)
 	{
 		tailwind: 'text-xs',
 		canon: 'var(--text-caption)',
 		category: 'typography',
-		description: canon.typography.scale.utility.caption.value
+		description: safeGet<string>(canon, 'typography', 'scale', 'caption', 'value') ?? '0.833rem'
 	},
 	{
 		tailwind: 'text-sm',
 		canon: 'var(--text-body-sm)',
 		category: 'typography',
-		description: canon.typography.scale.body.sm.value
+		description: safeGet<string>(canon, 'typography', 'scale', 'bodysm', 'value') ?? '0.913rem'
 	},
 	{
 		tailwind: 'text-base',
 		canon: 'var(--text-body)',
 		category: 'typography',
-		description: canon.typography.scale.body.default.value
+		description: safeGet<string>(canon, 'typography', 'scale', 'body', 'value') ?? '1rem'
 	},
 	{
 		tailwind: 'text-lg',
 		canon: 'var(--text-body-lg)',
 		category: 'typography',
-		description: canon.typography.scale.body.lg.value
+		description: safeGet<string>(canon, 'typography', 'scale', 'bodylg', 'value') ?? '1.095rem'
 	},
 	{
 		tailwind: 'text-xl',
 		canon: 'var(--text-h3)',
 		category: 'typography',
-		description: canon.typography.scale.headings.h3.value
+		description: safeGet<string>(canon, 'typography', 'scale', 'h3', 'value') ?? 'clamp(1.02rem, 1vw + 0.5rem, 1.2rem)'
 	},
 	{
 		tailwind: 'text-2xl',
 		canon: 'var(--text-h2)',
 		category: 'typography',
-		description: canon.typography.scale.headings.h2.value
+		description: safeGet<string>(canon, 'typography', 'scale', 'h2', 'value') ?? 'clamp(1.2rem, 2vw + 0.5rem, 1.618rem)'
 	},
 	{
 		tailwind: 'text-3xl',
 		canon: 'var(--text-h1)',
 		category: 'typography',
-		description: canon.typography.scale.headings.h1.value
+		description: safeGet<string>(canon, 'typography', 'scale', 'h1', 'value') ?? 'clamp(1.618rem, 3vw + 1rem, 2.618rem)'
 	},
 	{ tailwind: /^text-\d+xl$/, canon: 'var(--text-*)', category: 'typography' },
 
