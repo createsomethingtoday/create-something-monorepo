@@ -44,9 +44,9 @@ export const canonNavigation: NavSection[] = [
 	{
 		title: 'Components',
 		items: [
-			{ label: 'Overview', href: '/canon/components', badge: 'Soon' },
-			{ label: 'Button', href: '/canon/components/button', badge: 'Soon' },
-			{ label: 'Card', href: '/canon/components/card', badge: 'Soon' },
+			{ label: 'Overview', href: '/canon/components' },
+			{ label: 'Button', href: '/canon/components/button' },
+			{ label: 'Card', href: '/canon/components/card' },
 			{ label: 'Navigation', href: '/canon/components/navigation', badge: 'Soon' }
 		]
 	},
