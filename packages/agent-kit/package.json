@@ -1,0 +1,44 @@
+{
+  "name": "@createsomething/agent-kit",
+  "version": "1.0.0",
+  "description": "Complete AI development environment. WezTerm, Claude Code, Beads, MCP servers—all configured and ready.",
+  "type": "module",
+  "bin": {
+    "agent-kit": "./dist/bin/cli.js"
+  },
+  "files": [
+    "dist",
+    "configs"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "claude-code",
+    "ai",
+    "development",
+    "dotfiles",
+    "wezterm",
+    "mcp"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/agent-kit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/prompts": "^2.4.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "prompts": "^2.4.2"
+  }
+}

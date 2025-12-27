@@ -108,6 +108,12 @@ async function handleCheckoutComplete(
 		return;
 	}
 
+	// Handle Agent-in-a-Box provisioning
+	if (productId === 'agent-in-a-box') {
+		await provisionAgentInABox(session, tier, platform);
+		return;
+	}
+
 	const cache = platform?.env?.CACHE;
 
 	// Store purchase record in KV for quick lookups
@@ -437,6 +443,217 @@ async function suspendVerticalTemplateSite(
 		}
 	} catch (err) {
 		console.error('Error suspending vertical template site:', err);
+	}
+}
+
+/**
+ * Provision Agent-in-a-Box after successful purchase
+ */
+async function provisionAgentInABox(
+	session: Stripe.Checkout.Session,
+	tier: string | undefined,
+	platform: App.Platform | undefined
+) {
+	const customerEmail = session.customer_email || session.customer_details?.email;
+	const validTier = tier === 'solo' || tier === 'team' || tier === 'org' ? tier : 'solo';
+
+	if (!customerEmail) {
+		console.error('Agent-in-a-Box provisioning failed: no customer email');
+		return;
+	}
+
+	// Generate license key (ak_ prefix for easy identification)
+	const licenseKey = `ak_${crypto.randomUUID().replace(/-/g, '')}`;
+
+	// Determine office hours based on tier
+	const officeHoursMap: Record<string, number> = {
+		solo: 4,
+		team: 12,
+		org: 24
+	};
+	const officeHoursRemaining = officeHoursMap[validTier] || 4;
+
+	// Determine team seats based on tier
+	const teamSeatsMap: Record<string, number> = {
+		solo: 1,
+		team: 5,
+		org: 999 // Unlimited for org
+	};
+	const teamSeatsTotal = teamSeatsMap[validTier] || 1;
+
+	const db = platform?.env?.DB;
+
+	if (db) {
+		try {
+			// Store purchase in D1
+			await db
+				.prepare(
+					`
+				INSERT INTO agent_kit_purchases (
+					id, email, tier, license_key, stripe_session_id, stripe_customer_id,
+					office_hours_remaining, team_seats_total, team_seats_used, created_at, updated_at
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
+			`
+				)
+				.bind(
+					crypto.randomUUID(),
+					customerEmail,
+					validTier,
+					licenseKey,
+					session.id,
+					session.customer as string | null,
+					officeHoursRemaining,
+					teamSeatsTotal
+				)
+				.run();
+
+			console.log('Agent-in-a-Box purchase recorded:', {
+				email: customerEmail,
+				tier: validTier,
+				licenseKey: licenseKey.substring(0, 10) + '...',
+				officeHoursRemaining,
+				teamSeatsTotal
+			});
+		} catch (err) {
+			console.error('Failed to store Agent-in-a-Box purchase in D1:', err);
+			// Continue to send email even if D1 fails - support can manually fix
+		}
+	}
+
+	// Provision LMS account via identity worker
+	await provisionLmsAccount(customerEmail, validTier, platform);
+
+	// Send fulfillment email with license key
+	await sendAgentKitEmail(customerEmail, validTier, licenseKey, platform);
+}
+
+/**
+ * Provision LMS account for Agent-in-a-Box purchaser
+ */
+async function provisionLmsAccount(
+	email: string,
+	tier: string,
+	platform: App.Platform | undefined
+) {
+	const identityUrl = platform?.env?.IDENTITY_WORKER_URL || 'https://id.createsomething.space';
+	const identitySecret = platform?.env?.IDENTITY_WORKER_SECRET;
+
+	if (!identitySecret) {
+		console.log('LMS PROVISIONING NEEDED (no identity secret configured):', { email, tier });
+		return;
+	}
+
+	try {
+		const response = await fetch(`${identityUrl}/api/provision`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'x-api-secret': identitySecret
+			},
+			body: JSON.stringify({
+				email,
+				tier: `agent-kit-${tier}`,
+				source: 'agent-in-a-box'
+			})
+		});
+
+		if (response.ok) {
+			console.log(`LMS account provisioned for ${email} (tier: ${tier})`);
+		} else {
+			const error = await response.text();
+			console.error('LMS provisioning failed:', error);
+		}
+	} catch (err) {
+		console.error('Error provisioning LMS account:', err);
+	}
+}
+
+/**
+ * Send fulfillment email for Agent-in-a-Box purchase
+ */
+async function sendAgentKitEmail(
+	email: string,
+	tier: string,
+	licenseKey: string,
+	platform: App.Platform | undefined
+) {
+	const tierNames: Record<string, string> = {
+		solo: 'Solo',
+		team: 'Team',
+		org: 'Organization'
+	};
+	const tierName = tierNames[tier] || 'Solo';
+
+	const resendApiKey = platform?.env?.RESEND_API_KEY;
+
+	if (resendApiKey) {
+		try {
+			const response = await fetch('https://api.resend.com/emails', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${resendApiKey}`
+				},
+				body: JSON.stringify({
+					from: 'CREATE SOMETHING <products@createsomething.agency>',
+					to: email,
+					subject: `Your Agent-in-a-Box (${tierName}) License Key`,
+					html: `
+						<h1>Your Agent-in-a-Box is ready!</h1>
+						<p>Thank you for your purchase. Here's everything you need to get started.</p>
+
+						<h2>1. Install your kit</h2>
+						<p>Run this command in your terminal:</p>
+						<pre style="background: #1a1a1a; color: #fff; padding: 16px; border-radius: 8px; overflow-x: auto;">npx @createsomething/agent-kit --key=${licenseKey}</pre>
+
+						<h2>2. Access learning materials</h2>
+						<p><a href="https://learn.createsomething.space" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Open LMS</a></p>
+
+						<h2>3. Book office hours</h2>
+						<p>You have access to weekly office hours sessions for live Q&A.</p>
+						<p><a href="https://cal.com/createsomething/agent-kit" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Schedule Office Hours</a></p>
+
+						<hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+
+						<h3>What's included:</h3>
+						<ul>
+							<li>Pre-configured WezTerm with Canon color scheme</li>
+							<li>Claude Code settings and skill templates</li>
+							<li>Beads agent-native task management</li>
+							<li>6 MCP server templates (Slack, Linear, Stripe, GitHub, Notion, Cloudflare)</li>
+							<li>Harness specification templates for autonomous work</li>
+						</ul>
+
+						<p style="color: #666; font-size: 14px; margin-top: 24px;">
+							Keep this email safe—your license key is required for installation and updates.
+							<br />Questions? Reply to this email.
+						</p>
+
+						<hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+						<p style="color: #999; font-size: 12px;">CREATE SOMETHING<br/>createsomething.agency</p>
+					`
+				})
+			});
+
+			if (response.ok) {
+				console.log(`Agent-in-a-Box fulfillment email sent to ${email}`);
+			} else {
+				const error = await response.text();
+				console.error('Failed to send Agent-in-a-Box email via Resend:', error);
+			}
+		} catch (err) {
+			console.error('Error sending Agent-in-a-Box email:', err);
+		}
+	} else {
+		// Log for manual fulfillment if no email service configured
+		console.log('AGENT-IN-A-BOX FULFILLMENT EMAIL NEEDED:', {
+			to: email,
+			tier: tierName,
+			licenseKey,
+			installCommand: `npx @createsomething/agent-kit --key=${licenseKey}`,
+			lmsUrl: 'https://learn.createsomething.space',
+			officeHoursUrl: 'https://cal.com/createsomething/agent-kit'
+		});
 	}
 }
 
