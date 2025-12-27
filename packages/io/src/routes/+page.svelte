@@ -10,7 +10,7 @@
 	 */
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import { PapersGrid, SEO } from '@create-something/components';
+	import { PapersGrid, SEO, NewsletterSignup } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;
@@ -45,3 +45,10 @@
 		subtitle="Interactive demonstrations where tools recede into use"
 	/>
 {/if}
+
+<!-- Newsletter CTA -->
+<NewsletterSignup
+	headline="Get the monthly research digest"
+	description="Papers, experiments, and patterns—delivered."
+	source="io-homepage"
+/>

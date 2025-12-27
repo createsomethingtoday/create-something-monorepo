@@ -45,6 +45,81 @@ export interface PraxisExercise {
 export const PRAXIS_EXERCISES: PraxisExercise[] = [
   // ============ GETTING STARTED ============
   {
+    id: 'terminal-canon-setup',
+    lessonId: 'terminal-as-creative-space',
+    pathId: 'getting-started',
+    title: 'Terminal Canon Setup',
+    description: 'Install WezTerm and apply your first Canon configuration.',
+    type: 'code',
+    difficulty: 'beginner',
+    duration: '15 min',
+    objectives: [
+      'Install WezTerm on your system',
+      'Create a basic wezterm.lua configuration',
+      'Apply Canon colors (pure black background)',
+      'Verify the terminal recedes into use'
+    ],
+    beadsTasks: [
+      { title: 'Install WezTerm via package manager', type: 'task', labels: ['learn', 'getting-started'] },
+      { title: 'Create ~/.wezterm.lua configuration file', type: 'task', labels: ['learn'] },
+      { title: 'Apply Canon color palette', type: 'task', labels: ['learn'] },
+      { title: 'Restart and verify configuration', type: 'task', labels: ['learn'] }
+    ],
+    claudeCodePrompt: `## Setup: Track this exercise with Beads
+
+\`\`\`bash
+bd create "Install WezTerm via package manager" --type=task --labels=learn,getting-started
+bd create "Create ~/.wezterm.lua configuration file" --type=task --labels=learn
+bd create "Apply Canon color palette" --type=task --labels=learn
+bd create "Restart and verify configuration" --type=task --labels=learn
+\`\`\`
+
+---
+
+Help me install and configure WezTerm as my terminal foundation.
+
+I want a terminal that "disappears into use"—focused on the work, not the tool.
+
+Walk me through:
+
+1. **Install WezTerm** for my operating system:
+   - macOS: \`brew install --cask wezterm\`
+   - Linux: apt or flatpak
+   - Windows: winget or installer
+
+2. **Create the configuration file**:
+   - Location: ~/.wezterm.lua
+   - Start with a minimal Canon-aligned configuration
+
+3. **Apply Canon colors**:
+   - Background: pure black (#000000)
+   - Foreground: white (#ffffff)
+   - Minimal window chrome
+   - No tab bar (we'll add tabs later)
+
+4. **Configure for performance**:
+   - Enable GPU acceleration
+   - Set animation FPS to 120
+
+5. **Verify it works**:
+   - Restart WezTerm
+   - Check that colors are correct
+   - Confirm minimal chrome is applied
+
+My operating system: [macOS/Linux/Windows]
+Preferred font: [JetBrains Mono / your choice]
+
+## Success Criteria
+
+When complete, your terminal should:
+- Have a pure black background
+- Show white text with no color distractions
+- Feel fast and responsive
+- Show only the content, not the tool
+
+This is Zuhandenheit: the tool recedes; only your work remains.`
+  },
+  {
     id: 'claude-code-first-session',
     lessonId: 'install-claude-code',
     pathId: 'getting-started',

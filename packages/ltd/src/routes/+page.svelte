@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO, NewsletterSignup } from '@create-something/components';
 </script>
 
 <SEO
@@ -136,6 +136,13 @@
 		</div>
 	</div>
 </section>
+
+<!-- Newsletter CTA -->
+<NewsletterSignup
+	headline="Canon updates and new masters"
+	description="The design philosophy newsletter."
+	source="ltd-homepage"
+/>
 
 <style>
 	/* ==========================================================================

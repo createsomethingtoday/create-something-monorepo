@@ -1,0 +1,14 @@
+# CREATE SOMETHING LMS - Learn the Ethos
+# https://learn.createsomething.space
+
+User-agent: *
+Allow: /
+
+# Block auth, account, and API routes from indexing
+Disallow: /account/
+Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+
+Sitemap: https://learn.createsomething.space/sitemap.xml

@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc>https://createsomething.ltd/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Canon Design System -->
+  <url>
+    <loc>https://createsomething.ltd/canon</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Canon Foundations -->
+  <url>
+    <loc>https://createsomething.ltd/canon/foundations/philosophy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/foundations/colors</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/foundations/typography</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/foundations/spacing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/foundations/elevation</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/foundations/motion</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/foundations/layout</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Canon Components -->
+  <url>
+    <loc>https://createsomething.ltd/canon/components</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/components/button</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/components/card</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/components/navigation</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Canon Patterns -->
+  <url>
+    <loc>https://createsomething.ltd/canon/patterns</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/patterns/forms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/patterns/loading</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Canon Guidelines -->
+  <url>
+    <loc>https://createsomething.ltd/canon/guidelines/accessibility</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/guidelines/content</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/guidelines/responsive</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/guidelines/theming</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Canon Resources -->
+  <url>
+    <loc>https://createsomething.ltd/canon/resources/get-started</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/resources/tokens</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/resources/figma</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/resources/contributing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/canon/resources/changelog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Masters -->
+  <url>
+    <loc>https://createsomething.ltd/masters</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Principles -->
+  <url>
+    <loc>https://createsomething.ltd/principles</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Patterns (Philosophy) -->
+  <url>
+    <loc>https://createsomething.ltd/patterns</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/arc</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/breakdown-and-repair</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/code-mode</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/constraint-as-liberation</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/dwelling-in-tools</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/functional-transparency</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/hermeneutic-spiral</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/iterative-reduction</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/negative-space</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/principled-defaults</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/subtractive-triad-audit</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/timeless-materials</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/tool-complementarity</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.ltd/patterns/universal-utility</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Standards -->
+  <url>
+    <loc>https://createsomething.ltd/standards</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Voice -->
+  <url>
+    <loc>https://createsomething.ltd/voice</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Ethos -->
+  <url>
+    <loc>https://createsomething.ltd/ethos</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Taste -->
+  <url>
+    <loc>https://createsomething.ltd/taste</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Brand -->
+  <url>
+    <loc>https://createsomething.ltd/brand</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Presentations -->
+  <url>
+    <loc>https://createsomething.ltd/presentations</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Legal -->
+  <url>
+    <loc>https://createsomething.ltd/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+</urlset>

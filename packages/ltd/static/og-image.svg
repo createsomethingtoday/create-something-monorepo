@@ -1,0 +1,28 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#000000"/>
+
+  <text x="600" y="150" font-family="JetBrains Mono, Courier, monospace" font-size="48" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.05em">
+    CREATE SOMETHING
+  </text>
+
+  <text x="600" y="200" font-family="JetBrains Mono, Courier, monospace" font-size="24" fill="#ffffff" fill-opacity="0.5" text-anchor="middle">
+    .ltd
+  </text>
+
+  <!-- ASCII Art Box -->
+  <text font-family="JetBrains Mono, Courier, monospace" font-size="14" fill="#00ff00" xml:space="preserve">
+    <tspan x="200" y="280">+-------------------------------------------------------+</tspan>
+    <tspan x="200" y="305">|                                                       |</tspan>
+    <tspan x="200" y="330">|   ██╗     ████████╗██████╗                            |</tspan>
+    <tspan x="200" y="355">|   ██║     ╚══██╔══╝██╔══██╗                           |</tspan>
+    <tspan x="200" y="380">|   ██║        ██║   ██║  ██║                           |</tspan>
+    <tspan x="200" y="405">|   ██║        ██║   ██║  ██║                           |</tspan>
+    <tspan x="200" y="430">|   ███████╗   ██║   ██████╔╝                           |</tspan>
+    <tspan x="200" y="455">|   ╚══════╝   ╚═╝   ╚═════╝                            |</tspan>
+    <tspan x="200" y="480">|                                                       |</tspan>
+    <tspan x="200" y="505">|   Weniger, aber besser.                               |</tspan>
+    <tspan x="200" y="530">|   The Canon for "less, but better."                   |</tspan>
+    <tspan x="200" y="555">|                                                       |</tspan>
+    <tspan x="200" y="580">+-------------------------------------------------------+</tspan>
+  </text>
+</svg>

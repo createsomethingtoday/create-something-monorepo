@@ -36,10 +36,11 @@ export const PATHS: Path[] = [
     color: 'path-getting-started',
     lessons: [
       {
-        id: 'install-wezterm',
-        title: 'Install WezTerm',
-        description: 'Your terminal foundation—install it first.',
-        duration: '10 min',
+        id: 'terminal-as-creative-space',
+        title: 'Your Terminal as Creative Space',
+        description: 'Why terminal-first development creates conditions for focused creation.',
+        duration: '15 min',
+        praxis: 'terminal-canon-setup',
       },
       {
         id: 'install-claude-code',

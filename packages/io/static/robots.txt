@@ -1,5 +1,17 @@
-# https://www.robotstxt.org/robotstxt.html
+# CREATE SOMETHING - AI-Native Development Research
+# https://createsomething.io
+
 User-agent: *
-Disallow:
+Allow: /
+
+# Block admin, auth, and API routes from indexing
+Disallow: /admin/
+Disallow: /account/
+Disallow: /api/
+Disallow: /login
+Disallow: /auth/
+Disallow: /confirm
+Disallow: /unsubscribe
+Disallow: /subscribe
 
 Sitemap: https://createsomething.io/sitemap.xml

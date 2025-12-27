@@ -22,3 +22,4 @@ export { processSubscription, generateWelcomeEmailHtml, generateConfirmationEmai
 
 // Components
 export { default as UnsubscribePage } from './UnsubscribePage.svelte';
+export { default as NewsletterSignup } from './NewsletterSignup.svelte';

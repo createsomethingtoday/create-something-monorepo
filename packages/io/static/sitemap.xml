@@ -3,104 +3,210 @@
   <!-- Homepage -->
   <url>
     <loc>https://createsomething.io/</loc>
-    <changefreq>daily</changefreq>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Experiments Page -->
+  <!-- Papers - Research Publications -->
+  <url>
+    <loc>https://createsomething.io/papers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/autonomous-harness-architecture</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/code-mode-hermeneutic-analysis</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/ethos-transfer-agentic-engineering</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/harness-agent-sdk-migration</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/hermeneutic-debugging</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/hermeneutic-triad-review</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/hermeneutic-spiral-ux</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/kickstand-triad-audit</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/subtractive-form-design</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/papers/understanding-graphs</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Experiments -->
   <url>
     <loc>https://createsomething.io/experiments</loc>
-    <changefreq>daily</changefreq>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/agent-continuity</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/agentic-visualization</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/data-patterns</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/dwelling-conversion</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/heideggerian-form-experience</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/kinetic-typography</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/meeting-capture</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/render-preview</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/render-studio</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/template-recategorization</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/text-revelation</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.io/experiments/validation-zuhandenheit</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Methodology Page -->
+  <!-- Plugins -->
   <url>
-    <loc>https://createsomething.io/methodology</loc>
+    <loc>https://createsomething.io/plugins</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Categories Page -->
+  <!-- Methodology -->
+  <url>
+    <loc>https://createsomething.io/methodology</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Categories -->
   <url>
     <loc>https://createsomething.io/categories</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
+    <priority>0.7</priority>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- About Page -->
+  <!-- About -->
   <url>
     <loc>https://createsomething.io/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Contact Page -->
+  <!-- Contact -->
   <url>
     <loc>https://createsomething.io/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Privacy Policy -->
+  <!-- Legal -->
   <url>
     <loc>https://createsomething.io/privacy</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <lastmod>2024-11-14</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <lastmod>2025-12-27</lastmod>
   </url>
-
-  <!-- Terms of Service -->
   <url>
     <loc>https://createsomething.io/terms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Category: Automation -->
-  <url>
-    <loc>https://createsomething.io/category/automation</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Category: Development -->
-  <url>
-    <loc>https://createsomething.io/category/development</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Category: Infrastructure -->
-  <url>
-    <loc>https://createsomething.io/category/infrastructure</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Category: Webflow -->
-  <url>
-    <loc>https://createsomething.io/category/webflow</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Experiment: Zoom Transcript Automation -->
-  <url>
-    <loc>https://createsomething.io/experiments/zoom-transcript-automation-experiment</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-    <lastmod>2024-11-14</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <lastmod>2025-12-27</lastmod>
   </url>
 </urlset>

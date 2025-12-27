@@ -2,105 +2,97 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Homepage -->
   <url>
-    <loc>https://createsomething.io/</loc>
-    <changefreq>daily</changefreq>
+    <loc>https://createsomething.agency/</loc>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Experiments Page -->
+  <!-- Services -->
   <url>
-    <loc>https://createsomething.io/experiments</loc>
-    <changefreq>daily</changefreq>
+    <loc>https://createsomething.agency/services</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Methodology Page -->
+  <!-- Products -->
   <url>
-    <loc>https://createsomething.io/methodology</loc>
+    <loc>https://createsomething.agency/products</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- Discover -->
+  <url>
+    <loc>https://createsomething.agency/discover</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Categories Page -->
+  <!-- Work Portfolio -->
   <url>
-    <loc>https://createsomething.io/categories</loc>
+    <loc>https://createsomething.agency/work</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
+    <priority>0.9</priority>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- About Page -->
+  <!-- Case Studies -->
   <url>
-    <loc>https://createsomething.io/about</loc>
+    <loc>https://createsomething.agency/work/maverick-x</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.agency/work/kickstand</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.agency/work/viralytics</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.agency/work/arc-for-gmail</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-12-27</lastmod>
+  </url>
+
+  <!-- About -->
+  <url>
+    <loc>https://createsomething.agency/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Contact Page -->
+  <!-- Contact -->
   <url>
-    <loc>https://createsomething.io/contact</loc>
+    <loc>https://createsomething.agency/contact</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Privacy Policy -->
-  <url>
-    <loc>https://createsomething.io/privacy</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Terms of Service -->
-  <url>
-    <loc>https://createsomething.io/terms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Category: Automation -->
-  <url>
-    <loc>https://createsomething.io/category/automation</loc>
-    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
+    <lastmod>2025-12-27</lastmod>
   </url>
 
-  <!-- Category: Development -->
+  <!-- Legal -->
   <url>
-    <loc>https://createsomething.io/category/development</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
+    <loc>https://createsomething.agency/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <lastmod>2025-12-27</lastmod>
   </url>
-
-  <!-- Category: Infrastructure -->
   <url>
-    <loc>https://createsomething.io/category/infrastructure</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Category: Webflow -->
-  <url>
-    <loc>https://createsomething.io/category/webflow</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2024-11-14</lastmod>
-  </url>
-
-  <!-- Experiment: Zoom Transcript Automation -->
-  <url>
-    <loc>https://createsomething.io/experiments/zoom-transcript-automation-experiment</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-    <lastmod>2024-11-14</lastmod>
+    <loc>https://createsomething.agency/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <lastmod>2025-12-27</lastmod>
   </url>
 </urlset>
