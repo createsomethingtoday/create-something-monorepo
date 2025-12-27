@@ -87,37 +87,77 @@
 		try {
 			const canonSvg = transformToCanonColors(workingSvg);
 
+			// Parse SVG to get dimensions from viewBox
+			const parser = new DOMParser();
+			const svgDoc = parser.parseFromString(canonSvg, 'image/svg+xml');
+			const svgEl = svgDoc.querySelector('svg');
+
+			let svgWidth = 200; // Default
+			let svgHeight = 150;
+
+			if (svgEl) {
+				// Try to get dimensions from viewBox
+				const viewBox = svgEl.getAttribute('viewBox');
+				if (viewBox) {
+					const [, , w, h] = viewBox.split(/\s+/).map(Number);
+					if (w && h) {
+						svgWidth = w;
+						svgHeight = h;
+					}
+				}
+				// Or from explicit width/height
+				const explicitWidth = parseFloat(svgEl.getAttribute('width') || '0');
+				const explicitHeight = parseFloat(svgEl.getAttribute('height') || '0');
+				if (explicitWidth > 0) svgWidth = explicitWidth;
+				if (explicitHeight > 0) svgHeight = explicitHeight;
+
+				// Ensure SVG has explicit dimensions for canvas rendering
+				svgEl.setAttribute('width', String(svgWidth));
+				svgEl.setAttribute('height', String(svgHeight));
+			}
+
 			const canvas = document.createElement('canvas');
 			const ctx = canvas.getContext('2d');
 			if (!ctx) throw new Error('Could not create canvas context');
 
 			const img = new Image();
-			const blob = new Blob([canonSvg], { type: 'image/svg+xml' });
+
+			// Serialize the modified SVG
+			const serializer = new XMLSerializer();
+			const svgString = svgEl ? serializer.serializeToString(svgEl) : canonSvg;
+			const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
 			const url = URL.createObjectURL(blob);
 
 			await new Promise<void>((resolve, reject) => {
 				img.onload = () => {
 					const targetWidth = 1024;
-					const scale = targetWidth / img.width;
-					canvas.width = targetWidth;
-					canvas.height = img.height * scale;
+					const aspectRatio = svgHeight / svgWidth;
+					const targetHeight = Math.round(targetWidth * aspectRatio);
 
+					canvas.width = targetWidth;
+					canvas.height = targetHeight;
+
+					// Fill with black background
 					ctx.fillStyle = '#000000';
 					ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+					// Draw the SVG
 					ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
 					canonPng = canvas.toDataURL('image/png');
 					URL.revokeObjectURL(url);
 					resolve();
 				};
-				img.onerror = () => {
+				img.onerror = (e) => {
 					URL.revokeObjectURL(url);
-					reject(new Error('Failed to load SVG'));
+					console.error('SVG load error:', e);
+					reject(new Error('Failed to load SVG into canvas'));
 				};
 				img.src = url;
 			});
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Unknown error';
+			console.error('Conditioning preview error:', e);
+			error = e instanceof Error ? e.message : 'Unknown error generating preview';
 		} finally {
 			isProcessing = false;
 			processingMessage = '';

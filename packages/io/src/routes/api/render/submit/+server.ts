@@ -46,13 +46,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const apiToken = env?.REPLICATE_API_TOKEN as string | undefined;
 
 		if (!apiToken) {
-			// Demo mode: return a placeholder response
+			// Demo mode: return the conditioning image as a "simulated render"
+			// This demonstrates the flow even without Replicate API configured
 			console.warn('REPLICATE_API_TOKEN not configured - returning demo response');
 			return json({
 				success: true,
-				predictionId: 'demo-' + Date.now(),
-				status: 'demo',
-				message: 'Demo mode: Replicate API not configured',
+				status: 'succeeded',
+				output: image, // Return the conditioning image as the "rendered" result
+				message: 'Demo mode: Replicate API not configured. Showing conditioning image as placeholder.',
+				demo: true,
 				presets
 			});
 		}
