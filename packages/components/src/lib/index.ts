@@ -27,3 +27,6 @@ export * from './brand/index.js';
 
 // Newsletter (subscription and unsubscribe)
 export * from './newsletter/index.js';
+
+// Icons (Canon icon system)
+export * from './icons/index.js';
