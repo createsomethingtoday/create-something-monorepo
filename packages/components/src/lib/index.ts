@@ -30,3 +30,6 @@ export * from './newsletter/index.js';
 
 // Icons (Canon icon system)
 export * from './icons/index.js';
+
+// Patterns (composition recipes)
+export * from './patterns/index.js';
