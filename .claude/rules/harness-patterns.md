@@ -111,3 +111,69 @@ Or manually convert using the field mapping above. YAML provides:
 - Verify commands (`acceptance: [{test, verify}]`)
 - File tracking (`files`)
 - Model routing hints (`complexity`)
+
+## Quality Gates (Upstream from VC)
+
+The harness implements three quality gate phases aligned with Steve Yegge's VC patterns. VC achieves 90.9% pass rate through automated verification gates.
+
+### Gate 1: Session Completion
+
+Each session must pass before marking work complete:
+
+| Requirement | Label | Notes |
+|-------------|-------|-------|
+| Tests pass | `code-complete` | Unit/integration tests |
+| E2E passes | `verified` | End-to-end validation |
+| Commit exists | `close` | Commit hash required |
+
+```bash
+# Session completes with passing tests
+bd update cs-xyz --status code-complete
+
+# E2E verified (manual or automated)
+bd update cs-xyz --status verified
+
+# Close with commit reference
+bd close cs-xyz
+```
+
+### Gate 2: Checkpoint Review
+
+Triggered: every 3 sessions, every 4 hours, on failure, on redirect.
+
+| Reviewer | Focus | Blocking |
+|----------|-------|----------|
+| Security | Auth, injection, secrets | Critical findings |
+| Architecture | DRY violations (3+ files) | Critical findings |
+| Quality | Testing, conventions | Non-blocking |
+
+Checkpoint pauses work if confidence drops below threshold or critical findings exist.
+
+### Gate 3: Work Extraction
+
+After checkpoint review, actionable findings become issues. This closes the hermeneutic loop: work creates findings → findings create work.
+
+```bash
+# Architecture finding → P2 discovered issue
+bd create "Extract shared validation logic" \
+  --priority P2 \
+  --label harness:discovered \
+  --label refactor
+
+# Link to originating checkpoint
+bd dep add <new-id> discovered-from <checkpoint-id>
+```
+
+**Labels for discovered work:**
+- `harness:discovered` — Created by harness from review findings
+- `harness:escalated` — Created from model escalation pattern
+
+### Why Quality Gates Matter
+
+VC's "Zero Framework Cognition" principle means no hardcoded heuristics—AI reasons about quality. But verification gates ensure reasoning has observable checkpoints:
+
+1. **Tests as contracts**: Code claims are verified by tests
+2. **E2E as integration**: Component claims are verified end-to-end
+3. **Reviews as reflection**: Architectural claims are verified by reviewers
+
+The gates don't replace AI judgment—they make AI judgment auditable.

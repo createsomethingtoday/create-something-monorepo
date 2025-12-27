@@ -718,3 +718,158 @@ export async function resetIssueForRetry(
     // Don't fail if label removal fails
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Work Extraction (Upstream from VC)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Create a Beads issue from a review finding.
+ *
+ * Philosophy: Work extraction closes the hermeneutic loop.
+ * Review findings → discovered issues → future work.
+ * Pattern from Steve Yegge's VC project.
+ *
+ * @param finding - The review finding to convert to an issue
+ * @param checkpointId - The originating checkpoint for 'discovered-from' dependency
+ * @param cwd - Working directory for Beads commands
+ * @returns The created issue ID
+ */
+export async function createIssueFromFinding(
+  finding: {
+    id: string;
+    severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+    category: string;
+    title: string;
+    description: string;
+    file?: string;
+    line?: number;
+    suggestion?: string;
+  },
+  checkpointId: string,
+  cwd?: string
+): Promise<string> {
+  // Map severity to priority
+  const priorityMap: Record<string, number> = {
+    critical: 0, // P0
+    high: 1,     // P1
+    medium: 2,   // P2
+    low: 3,      // P3
+    info: 4,     // P4
+  };
+  const priority = priorityMap[finding.severity] ?? 2;
+
+  // Build description with finding details
+  const descriptionParts: string[] = [finding.description];
+  if (finding.file) {
+    descriptionParts.push(`\nFile: ${finding.file}${finding.line ? `:${finding.line}` : ''}`);
+  }
+  if (finding.suggestion) {
+    descriptionParts.push(`\nSuggestion: ${finding.suggestion}`);
+  }
+  descriptionParts.push(`\nDiscovered from checkpoint: ${checkpointId}`);
+
+  const issueId = await createIssue(
+    finding.title,
+    {
+      type: 'task',
+      priority,
+      labels: ['harness:discovered', finding.category],
+      description: descriptionParts.join(''),
+    },
+    cwd
+  );
+
+  // Link to originating checkpoint with discovered-from dependency
+  await addDependency(issueId, checkpointId, 'discovered-from', cwd);
+
+  console.log(`  [Work Extraction] Created ${issueId} from finding: ${finding.title}`);
+
+  return issueId;
+}
+
+/**
+ * Extract actionable issues from review findings.
+ * Filters for findings that warrant follow-up work.
+ *
+ * @param findings - Array of review findings
+ * @param checkpointId - The originating checkpoint
+ * @param options - Extraction options
+ * @param cwd - Working directory
+ * @returns Array of created issue IDs
+ */
+export async function extractWorkFromFindings(
+  findings: Array<{
+    id: string;
+    severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+    category: string;
+    title: string;
+    description: string;
+    file?: string;
+    line?: number;
+    suggestion?: string;
+    issueId?: string; // Skip if already linked to an issue
+  }>,
+  checkpointId: string,
+  options: {
+    minSeverity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
+    categories?: string[]; // Only extract from these categories
+    maxIssues?: number; // Cap on created issues per checkpoint
+  } = {},
+  cwd?: string
+): Promise<string[]> {
+  const {
+    minSeverity = 'high',
+    categories,
+    maxIssues = 5,
+  } = options;
+
+  // Severity ranking for filtering
+  const severityRank: Record<string, number> = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    info: 4,
+  };
+  const minRank = severityRank[minSeverity];
+
+  // Filter findings
+  const actionableFindings = findings.filter((finding) => {
+    // Skip if already has an issue
+    if (finding.issueId) return false;
+
+    // Check severity threshold
+    if (severityRank[finding.severity] > minRank) return false;
+
+    // Check category filter
+    if (categories && !categories.includes(finding.category)) return false;
+
+    return true;
+  });
+
+  // Sort by severity (most severe first) and limit
+  actionableFindings.sort(
+    (a, b) => severityRank[a.severity] - severityRank[b.severity]
+  );
+  const toCreate = actionableFindings.slice(0, maxIssues);
+
+  if (toCreate.length === 0) {
+    return [];
+  }
+
+  console.log(`  [Work Extraction] Creating ${toCreate.length} issues from checkpoint ${checkpointId}`);
+
+  // Create issues
+  const createdIds: string[] = [];
+  for (const finding of toCreate) {
+    try {
+      const issueId = await createIssueFromFinding(finding, checkpointId, cwd);
+      createdIds.push(issueId);
+    } catch (error) {
+      console.log(`  [Work Extraction] Failed to create issue for: ${finding.title}`);
+    }
+  }
+
+  return createdIds;
+}

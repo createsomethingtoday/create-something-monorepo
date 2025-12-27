@@ -93,6 +93,9 @@ export {
   createIssuesFromFeatures,
   getIssuesChangedSince,
   checkForPauseRequest,
+  // Work Extraction (upstream from VC)
+  createIssueFromFinding,
+  extractWorkFromFindings,
 } from './beads.js';
 
 // Session Management
