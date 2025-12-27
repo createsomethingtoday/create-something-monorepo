@@ -47,6 +47,8 @@ export interface Service {
 	isProductized: boolean; // true = self-serve product, false = consulting
 	// Optional pricing tiers for multi-tier products
 	pricingTiers?: PricingTier[];
+	// Optional deliverables list for products
+	deliverables?: string[];
 }
 
 export const services: Service[] = [
@@ -534,7 +536,7 @@ export const products: Service[] = [
 			'Learning curve for Claude Code best practices'
 		],
 		howItWorks: [
-			'Pre-configured dotfiles and tool setup',
+			'npx @create-something/agent-kit --key=xxx',
 			'MCP server templates for common integrations',
 			'90-day weekly office hours for questions',
 			'LMS access for self-paced learning'
@@ -546,10 +548,60 @@ export const products: Service[] = [
 			stats: ['Full dotfiles', '90-day support', 'LMS access included']
 		},
 		pricing: '$2,500-10,000',
-		timeline: '1 week setup + 90 days',
+		timeline: 'Instant install + 90 days support',
 		icon: 'box',
 		tier: 'accessible',
-		isProductized: true
+		isProductized: true,
+		pricingTiers: [
+			{
+				id: 'solo',
+				name: 'Solo',
+				price: '$2,500',
+				features: [
+					'Complete dotfiles package',
+					'WezTerm + Claude Code configuration',
+					'Beads task management setup',
+					'6 MCP server templates',
+					'LMS access (self-paced)',
+					'4 weekly office hours sessions'
+				]
+			},
+			{
+				id: 'team',
+				name: 'Team',
+				price: '$5,000',
+				features: [
+					'Everything in Solo',
+					'Up to 5 team member licenses',
+					'Team onboarding session (2 hours)',
+					'12 weekly office hours sessions',
+					'Private Slack channel support'
+				],
+				recommended: true
+			},
+			{
+				id: 'org',
+				name: 'Organization',
+				price: '$10,000',
+				features: [
+					'Everything in Team',
+					'Unlimited team licenses',
+					'Custom MCP server development (1)',
+					'24 weekly office hours sessions',
+					'Quarterly review sessions',
+					'Priority support response'
+				]
+			}
+		],
+		deliverables: [
+			'Pre-configured WezTerm with Canon color scheme',
+			'Claude Code settings and skill templates',
+			'Beads agent-native task management',
+			'6 MCP server templates (Slack, Linear, Stripe, GitHub, Notion, Cloudflare)',
+			'Harness specification templates for autonomous work',
+			'LMS access for self-paced learning',
+			'Weekly office hours with live Q&A'
+		]
 	}
 ];
 

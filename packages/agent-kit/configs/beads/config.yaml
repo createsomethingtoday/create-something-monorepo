@@ -1,0 +1,38 @@
+# Beads Configuration - Agent-in-a-Box
+#
+# Agent-first task management that recedes into use.
+# The tool disappears; the work remains.
+#
+# "Weniger, aber besser." — Dieter Rams
+
+# Issue prefix for your repository
+# Change to match your project (e.g., "myapp", "proj")
+issue-prefix: "aib"
+
+# Git branch for beads sync
+sync-branch: "beads-sync"
+
+# Auto-start daemon for fast queries
+auto-start-daemon: true
+
+# Debounce interval for auto-flush
+flush-debounce: "5s"
+
+# ─────────────────────────────────────────────────────────────────────
+# Quick Reference
+# ─────────────────────────────────────────────────────────────────────
+#
+# Session Start:
+#   bv --robot-priority   # Surface highest-impact work
+#   bd ready              # What's unblocked
+#
+# During Work:
+#   bd create "Task"      # Capture discovered work
+#   bd dep add X blocks Y # Record dependencies
+#   bd update X --status in-progress
+#
+# Session End:
+#   bd close X            # Mark completed
+#   bd list               # Verify state
+#
+# ─────────────────────────────────────────────────────────────────────
