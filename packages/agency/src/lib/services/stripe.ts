@@ -55,17 +55,17 @@ export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
 
 	// Agent-in-a-Box has multiple tiers
 	'agent-in-a-box-solo': {
-		priceId: process.env.STRIPE_PRICE_AGENT_KIT_SOLO || 'price_agent_kit_solo_placeholder',
+		priceId: 'price_1SioU0AzstI6Ecr5NjnMDBxq',
 		mode: 'payment',
 		name: 'Agent-in-a-Box Kit (Solo)'
 	},
 	'agent-in-a-box-team': {
-		priceId: process.env.STRIPE_PRICE_AGENT_KIT_TEAM || 'price_agent_kit_team_placeholder',
+		priceId: 'price_1SioV2AzstI6Ecr5uZ2Qt7Ok',
 		mode: 'payment',
 		name: 'Agent-in-a-Box Kit (Team)'
 	},
 	'agent-in-a-box-org': {
-		priceId: process.env.STRIPE_PRICE_AGENT_KIT_ORG || 'price_agent_kit_org_placeholder',
+		priceId: 'price_1SioW9AzstI6Ecr5fzecFIWO',
 		mode: 'payment',
 		name: 'Agent-in-a-Box Kit (Organization)'
 	}
