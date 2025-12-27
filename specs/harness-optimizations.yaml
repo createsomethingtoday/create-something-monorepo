@@ -1,0 +1,75 @@
+title: Harness SDK Optimizations
+property: harness
+complexity: mixed
+
+overview: |
+  Optimize the CREATE Something Harness to leverage Agent SDK best practices.
+  This spec has mixed complexity features to test model routing behavior.
+
+features:
+  - title: Add max-turns limit
+    description: Implement turn limits to prevent infinite loops in autonomous execution
+    complexity: trivial
+    priority: 1
+    files:
+      - packages/harness/src/session.ts
+    acceptance:
+      - Add --max-turns 50 to prevent runaway sessions
+      - Make configurable via HarnessConfig
+      - Log warning when max turns approached
+
+  - title: Parse structured output metrics
+    description: Enhance JSON output parsing for better metrics and error handling
+    complexity: simple
+    priority: 2
+    files:
+      - packages/harness/src/session.ts
+    acceptance:
+      - Parse cost_usd from response for cost tracking
+      - Parse num_turns for session efficiency metrics
+      - Add totalCost aggregation to HarnessState
+      - Surface cost metrics in checkpoint reports
+
+  - title: Add model selection flag
+    description: Allow specifying model per session for cost/capability optimization
+    complexity: standard
+    priority: 1
+    files:
+      - packages/harness/src/session.ts
+      - packages/harness/src/types.ts
+    acceptance:
+      - Add --model option to session config
+      - Use Haiku for trivial tasks (~$0.001/session)
+      - Use Sonnet for simple/standard tasks (~$0.01/session)
+      - Reserve Opus for complex tasks (~$0.10/session)
+      - Infer model from task priority/complexity
+      - test: Different complexity tasks route to different models
+        verify: pnpm --filter=harness test
+
+  - title: Implement session continuity with resume
+    description: Add session reuse for related tasks within the same epic
+    complexity: complex
+    priority: 2
+    files:
+      - packages/harness/src/session.ts
+      - packages/harness/src/runner.ts
+      - packages/harness/src/types.ts
+    acceptance:
+      - Parse session_id from JSON output after first task in epic
+      - Store session_id in HarnessState
+      - Use --resume $session_id for subsequent tasks in same epic
+      - Fall back to new session if resume fails
+      - Add sessionId field to SessionResult type
+    depends_on:
+      - Add model selection flag
+
+requirements:
+  - All changes pass typecheck: pnpm --filter=harness exec tsc --noEmit
+  - Build succeeds: pnpm --filter=harness build
+  - Existing tests pass: pnpm --filter=harness test
+
+success:
+  - Model routing observable in session logs
+  - At least 2 different models used across tasks (Haiku/Sonnet/Opus)
+  - Cost savings measurable vs ultrathink-only execution
+  - Session continuity reduces context overhead for related tasks

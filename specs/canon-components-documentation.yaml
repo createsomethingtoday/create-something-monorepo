@@ -1,0 +1,77 @@
+title: Canon Components Documentation Route
+property: ltd
+complexity: standard
+
+overview: |
+  Complete the /canon/components route in packages/ltd to document Canon component patterns.
+  This serves as a harness test for the recently implemented VC patterns:
+  - Self-healing baseline (quality gates)
+  - Pause/resume with AgentContext
+  - Discovered work taxonomy
+
+features:
+  - title: Stage untracked CopyButton.svelte
+    priority: 0
+    files:
+      - packages/ltd/src/lib/canon/CopyButton.svelte
+    acceptance:
+      - File committed to git
+      - test: Component exports correctly
+        verify: pnpm --filter=ltd exec tsc --noEmit
+
+  - title: Create /canon/components landing page
+    priority: 1
+    files:
+      - packages/ltd/src/routes/canon/components/+page.svelte
+    acceptance:
+      - Route renders without errors
+      - Lists available component documentation pages
+      - Follows Canon dark theme tokens
+    depends_on:
+      - Stage untracked CopyButton.svelte
+
+  - title: Document Button component patterns
+    priority: 1
+    files:
+      - packages/ltd/src/routes/canon/components/button/+page.svelte
+    acceptance:
+      - Shows primary/secondary/ghost variants
+      - Uses CodeBlock with live examples
+      - Documents Canon motion tokens for hover states
+    depends_on:
+      - Create /canon/components landing page
+
+  - title: Document Card component patterns
+    priority: 2
+    files:
+      - packages/ltd/src/routes/canon/components/card/+page.svelte
+    acceptance:
+      - Shows elevation tokens (shadow-sm, shadow-md, shadow-lg)
+      - Demonstrates border-radius usage
+      - Shows interactive hover states
+    depends_on:
+      - Create /canon/components landing page
+
+  - title: Update DocSidebar navigation
+    priority: 2
+    files:
+      - packages/ltd/src/lib/canon/DocSidebar.svelte
+    acceptance:
+      - Components section no longer shows "Soon" badge
+      - Links to new component pages
+      - Active state highlights current page
+    depends_on:
+      - Document Button component patterns
+      - Document Card component patterns
+
+requirements:
+  - All components use Canon tokens (no hardcoded colors)
+  - Motion uses --duration-micro and --ease-standard
+  - Typecheck passes: pnpm --filter=ltd exec tsc --noEmit
+  - Build succeeds: pnpm --filter=ltd build
+
+success:
+  - /canon/components route accessible
+  - At least 2 component documentation pages complete
+  - Navigation updated with working links
+  - Self-healing baseline passes before each session

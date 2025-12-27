@@ -41,6 +41,34 @@ This:
 
 **Ultrathink** enables extended reasoning—more thorough analysis, better decomposition, deeper consideration of edge cases. Use for non-trivial work.
 
+> **Warning: Ultrathink bypasses model routing**
+>
+> When you specify `ultrathink`, the harness uses Opus for ALL tasks regardless of complexity.
+> This is ideal for truly complex architectural work but wastes resources on simple tasks.
+>
+> **Prefer default mode** when:
+> - Spec has mixed complexity (trivial, simple, standard, complex tasks)
+> - You want cost-efficient model selection
+> - Tasks are independent and don't require deep reasoning chains
+>
+> **Use ultrathink** when:
+> - All tasks are genuinely complex (architecture, multi-file refactors)
+> - Extended thinking chains add clear value
+> - You're debugging a specific issue that needs thorough analysis
+
+### Model Routing (Default Mode)
+
+When invoked without `ultrathink`, the harness routes to models based on complexity:
+
+| Complexity | Model | Cost/Session | Use Case |
+|------------|-------|--------------|----------|
+| `trivial` | Haiku | ~$0.001 | Typo fixes, single-line changes |
+| `simple` | Sonnet | ~$0.01 | Small features, bug fixes |
+| `standard` | Sonnet | ~$0.01 | Normal development work |
+| `complex` | Opus | ~$0.10 | Architecture, multi-file refactors |
+
+To test model routing, create specs with mixed complexity features (see `specs/harness-optimizations.yaml`).
+
 ### Example Invocations
 
 ```
