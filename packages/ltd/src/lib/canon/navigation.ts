@@ -27,18 +27,18 @@ export const canonNavigation: NavSection[] = [
 		items: [
 			{ label: 'Introduction', href: '/canon' },
 			{ label: 'Philosophy', href: '/canon/foundations/philosophy' },
-			{ label: 'Quick Start', href: '/canon/resources/get-started' }
+			{ label: 'Quick Start', href: '/canon/resources/get-started', badge: 'Soon' }
 		]
 	},
 	{
 		title: 'Foundations',
 		items: [
 			{ label: 'Colors', href: '/canon/foundations/colors' },
-			{ label: 'Typography', href: '/canon/foundations/typography', badge: 'Soon' },
-			{ label: 'Spacing', href: '/canon/foundations/spacing', badge: 'Soon' },
-			{ label: 'Elevation', href: '/canon/foundations/elevation', badge: 'Soon' },
-			{ label: 'Motion', href: '/canon/foundations/motion', badge: 'Soon' },
-			{ label: 'Layout', href: '/canon/foundations/layout', badge: 'Soon' }
+			{ label: 'Typography', href: '/canon/foundations/typography' },
+			{ label: 'Spacing', href: '/canon/foundations/spacing' },
+			{ label: 'Elevation', href: '/canon/foundations/elevation' },
+			{ label: 'Motion', href: '/canon/foundations/motion' },
+			{ label: 'Layout', href: '/canon/foundations/layout' }
 		]
 	},
 	{
@@ -61,19 +61,17 @@ export const canonNavigation: NavSection[] = [
 	{
 		title: 'Guidelines',
 		items: [
-			{ label: 'Accessibility', href: '/canon/guidelines/accessibility' },
-			{ label: 'Content', href: '/canon/guidelines/content' },
-			{ label: 'Responsive', href: '/canon/guidelines/responsive' },
-			{ label: 'Theming', href: '/canon/guidelines/theming' }
+			{ label: 'Accessibility', href: '/canon/guidelines/accessibility', badge: 'Soon' },
+			{ label: 'Content', href: '/canon/guidelines/content', badge: 'Soon' },
+			{ label: 'Theming', href: '/canon/guidelines/theming', badge: 'Soon' }
 		]
 	},
 	{
 		title: 'Resources',
 		items: [
-			{ label: 'Get Started', href: '/canon/resources/get-started' },
-			{ label: 'Tokens', href: '/canon/resources/tokens' },
-			{ label: 'Contributing', href: '/canon/resources/contributing' },
-			{ label: 'Changelog', href: '/canon/resources/changelog' }
+			{ label: 'Tokens', href: '/canon/resources/tokens', badge: 'Soon' },
+			{ label: 'Figma', href: '/canon/resources/figma', badge: 'Soon' },
+			{ label: 'Contributing', href: '/canon/resources/contributing', badge: 'Soon' }
 		]
 	}
 ];
