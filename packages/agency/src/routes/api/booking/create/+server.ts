@@ -18,9 +18,9 @@ interface SavvyCalEvent {
 	id: string;
 	start_at: string;
 	end_at: string;
-	name: string;
+	display_name: string;
 	email: string;
-	timezone: string;
+	time_zone: string;
 }
 
 interface SavvyCalLink {
@@ -106,9 +106,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const eventData = {
 			start_at,
 			end_at,
-			name,
+			display_name: name,
 			email,
-			timezone,
+			time_zone: timezone,
 			...(Object.keys(questions).length > 0 && { questions })
 		};
 
@@ -124,15 +124,32 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		if (!response.ok) {
 			const errorText = await response.text();
 			console.error('SavvyCal API error:', response.status, errorText);
+			console.error('Request was:', JSON.stringify(eventData));
+			console.error('Link ID:', linkId);
 
 			if (response.status === 409) {
 				throw error(409, 'This time slot is no longer available');
 			}
+			if (response.status === 422) {
+				throw error(422, `Invalid booking data: ${errorText}`);
+			}
 
-			throw error(response.status, 'Failed to create booking');
+			throw error(response.status, `Failed to create booking: ${errorText}`);
 		}
 
-		const data: { data: SavvyCalEvent } = await response.json();
+		const rawResponse = await response.json();
+		console.log('SavvyCal response:', JSON.stringify(rawResponse).slice(0, 500));
+
+		// Handle different response formats
+		const responseEvent = rawResponse.data || rawResponse.event || rawResponse;
+		const event: SavvyCalEvent = {
+			id: responseEvent.id || responseEvent.uuid || 'unknown',
+			start_at: responseEvent.start_at || start_at,
+			end_at: responseEvent.end_at || end_at,
+			display_name: responseEvent.display_name || responseEvent.name || name,
+			email: responseEvent.email || email,
+			time_zone: responseEvent.time_zone || responseEvent.timezone || timezone
+		};
 
 		// Track booking completion
 		if (platform?.env?.DB) {
@@ -146,7 +163,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						'agency',
 						'/book',
 						JSON.stringify({
-							event_id: data.data.id,
+							event_id: event.id,
 							email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3') // Partial redaction
 						})
 					)
@@ -160,18 +177,23 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({
 			success: true,
 			event: {
-				id: data.data.id,
-				start_at: data.data.start_at,
-				end_at: data.data.end_at,
-				name: data.data.name,
-				timezone: data.data.timezone
+				id: event.id,
+				start_at: event.start_at,
+				end_at: event.end_at,
+				name: event.display_name,
+				timezone: event.time_zone
 			}
 		});
-	} catch (err) {
+	} catch (err: unknown) {
 		console.error('Error creating booking:', err);
-		if (err instanceof Error && 'status' in err) {
+		console.error('Error type:', typeof err);
+		console.error('Error constructor:', err?.constructor?.name);
+		// Re-throw SvelteKit HttpErrors
+		if (err && typeof err === 'object' && 'status' in err) {
+			console.error('Re-throwing HttpError with status:', (err as { status: number }).status);
 			throw err;
 		}
-		throw error(500, 'Failed to create booking');
+		const errMsg = err instanceof Error ? err.message : String(err);
+		throw error(500, `Failed to create booking: ${errMsg}`);
 	}
 };
