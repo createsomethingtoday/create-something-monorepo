@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Footer, QuoteBlock } from '@create-something/components';
+	import { QuoteBlock } from '@create-something/components';
 	import type { PageData } from './$types';
 	import PreviewCanvas from './PreviewCanvas.svelte';
 
@@ -304,8 +304,6 @@
 		</p>
 	</footer>
 </article>
-
-<Footer />
 
 <style>
 	.experiment-page {
