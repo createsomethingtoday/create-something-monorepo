@@ -422,10 +422,58 @@ export const DEFAULT_FLUID_VIEWPORTS = {
 };
 
 /**
+ * Fluid scaling factors for responsive typography
+ *
+ * DERIVED from typographic hierarchy and readability requirements:
+ *
+ * | Size Range | Scale Factor | Rationale                          |
+ * |------------|--------------|-----------------------------------|
+ * | > 2rem     | 0.6 (60%)    | Display text: dramatic reduction  |
+ * | > 1.5rem   | 0.7 (70%)    | Headings: moderate reduction      |
+ * | ≤ 1.5rem   | 0.85 (85%)   | Body text: preserve readability   |
+ *
+ * Mathematical basis:
+ * - Threshold 2rem ≈ φ² / 1.3 (between h2 and h1)
+ * - Threshold 1.5rem ≈ φ / 1.08 (between h3 and h2)
+ * - Display (6.854rem) × 0.6 = 4.11rem (still prominent on mobile)
+ * - Body (1rem) × 0.85 = 0.85rem (still legible at 13.6px)
+ *
+ * The 0.6/0.7/0.85 progression follows approximate √φ steps:
+ * - 0.85 / 0.7 ≈ 1.21 (close to √φ ≈ 1.27)
+ * - 0.7 / 0.6 ≈ 1.17 (close to √φ × 0.92)
+ */
+export const FLUID_SCALE_FACTORS = {
+	display: 0.6, // For sizes > 2rem
+	heading: 0.7, // For sizes > 1.5rem
+	body: 0.85 // For sizes ≤ 1.5rem
+} as const;
+
+/**
+ * Size thresholds for fluid scaling (rem)
+ *
+ * Based on typographic hierarchy:
+ * - DISPLAY_THRESHOLD: Where display hierarchy ends (above φ²)
+ * - HEADING_THRESHOLD: Where heading hierarchy ends (above φ)
+ */
+export const FLUID_THRESHOLDS = {
+	display: 2, // Above this: display scaling (0.6)
+	heading: 1.5 // Above this: heading scaling (0.7)
+} as const;
+
+/**
+ * Get fluid scale factor for a given size
+ */
+export function getFluidScaleFactor(size: number): number {
+	if (size > FLUID_THRESHOLDS.display) return FLUID_SCALE_FACTORS.display;
+	if (size > FLUID_THRESHOLDS.heading) return FLUID_SCALE_FACTORS.heading;
+	return FLUID_SCALE_FACTORS.body;
+}
+
+/**
  * Generate fluid type scale with clamp() values
  *
  * For each size, generates a clamp() that scales between
- * 80% at minViewport and 100% at maxViewport.
+ * the appropriate minimum at minViewport and full size at maxViewport.
  *
  * @param scale - Type scale values
  * @param viewports - Min/max viewport widths
@@ -437,9 +485,7 @@ export function generateFluidTypeScale(
 	const result: Partial<Record<TypeScaleStep, string>> = {};
 
 	for (const [name, size] of Object.entries(scale) as [TypeScaleStep, number][]) {
-		// Scale factor: how much to reduce at minimum viewport
-		// Larger sizes scale more aggressively
-		const scaleFactor = size > 2 ? 0.6 : size > 1.5 ? 0.7 : 0.85;
+		const scaleFactor = getFluidScaleFactor(size);
 
 		result[name] = fluidClamp({
 			minViewport: viewports.min,
