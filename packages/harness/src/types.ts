@@ -62,6 +62,41 @@ export interface DependencyGraph {
 // Beads Integration
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Discovery source taxonomy for work extraction.
+ * Upstream pattern from Steve Yegge's VC project.
+ *
+ * Philosophy: Knowing *how* work was discovered informs priority and resolution.
+ * - Blockers need immediate attention
+ * - Related work can be scheduled separately
+ * - Supervisor findings may batch into refactoring sessions
+ */
+export type DiscoverySource =
+  | 'blocker'     // Blocks current work, must address immediately
+  | 'related'     // Related work discovered, can be scheduled separately
+  | 'supervisor'  // AI supervisor (checkpoint review) identified concern
+  | 'self-heal'   // Self-healing baseline discovered issue
+  | 'manual';     // Manually created during session
+
+/**
+ * Label constants for discovered work taxonomy.
+ * Maps DiscoverySource to Beads labels.
+ */
+export const DISCOVERY_LABELS: Record<DiscoverySource, string> = {
+  blocker: 'harness:blocker',
+  related: 'harness:related',
+  supervisor: 'harness:supervisor',
+  'self-heal': 'harness:self-heal',
+  manual: 'harness:discovered',
+} as const;
+
+/**
+ * Get the Beads label for a discovery source.
+ */
+export function getDiscoveryLabel(source: DiscoverySource): string {
+  return DISCOVERY_LABELS[source];
+}
+
 export interface BeadsIssue {
   id: string;
   title: string;

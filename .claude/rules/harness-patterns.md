@@ -154,19 +154,77 @@ Checkpoint pauses work if confidence drops below threshold or critical findings 
 After checkpoint review, actionable findings become issues. This closes the hermeneutic loop: work creates findings → findings create work.
 
 ```bash
-# Architecture finding → P2 discovered issue
+# Architecture finding → discovered issue with appropriate label
 bd create "Extract shared validation logic" \
   --priority P2 \
-  --label harness:discovered \
+  --label harness:supervisor \
   --label refactor
 
 # Link to originating checkpoint
 bd dep add <new-id> discovered-from <checkpoint-id>
 ```
 
-**Labels for discovered work:**
-- `harness:discovered` — Created by harness from review findings
-- `harness:escalated` — Created from model escalation pattern
+## Discovered Work Taxonomy (Upstream from VC)
+
+The discovery source taxonomy categorizes *how* work was found. This informs priority and resolution strategy:
+
+| Label | Discovery Source | Priority Impact | Use Case |
+|-------|------------------|-----------------|----------|
+| `harness:blocker` | `blocker` | +1 boost | Blocks current work, must address immediately |
+| `harness:related` | `related` | None | Related work discovered, can be scheduled separately |
+| `harness:supervisor` | `supervisor` | None | AI supervisor (checkpoint review) identified concern |
+| `harness:self-heal` | `self-heal` | None | Self-healing baseline discovered issue |
+| `harness:discovered` | `manual` | None | Manually created during session (fallback) |
+
+### Automatic Classification
+
+`extractWorkFromFindings()` automatically classifies findings:
+
+- **Critical findings** → `harness:blocker` (blocks advancement)
+- **High/medium findings** → `harness:supervisor` (standard review finding)
+- **Low/info findings** → `harness:related` (can defer)
+
+### Convenience Functions
+
+```typescript
+import {
+  createBlockerIssue,
+  createSelfHealIssue,
+  createIssueFromFinding,
+} from '@create-something/harness';
+
+// Create a blocker that must be resolved before continuing
+await createBlockerIssue(
+  'Fix broken import in AuthService',
+  'Import path changed in upstream dependency',
+  { severity: 'high', checkpointId: 'chk-123' }
+);
+
+// Create a self-heal issue for baseline fix
+await createSelfHealIssue(
+  'Self-heal: Fix failing test in user.test.ts',
+  'Test started failing after dependency update',
+  { checkpointId: 'chk-123' }
+);
+
+// Create with explicit discovery source
+await createIssueFromFinding(
+  finding,
+  checkpointId,
+  { discoverySource: 'related' }
+);
+```
+
+### Why Taxonomy Matters
+
+Knowing *how* work was discovered enables smarter prioritization:
+
+1. **Blockers** interrupt current work immediately
+2. **Supervisor findings** batch into review sessions
+3. **Related work** schedules into future sprints
+4. **Self-heal issues** get special handling (auto-fix attempts)
+
+This is Zero Framework Cognition in action—the taxonomy encodes *meaning*, not just labels. The harness uses these semantics to make intelligent decisions about work ordering and interruption.
 
 ### Why Quality Gates Matter
 

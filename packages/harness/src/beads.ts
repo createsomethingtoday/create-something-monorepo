@@ -15,7 +15,9 @@ import type {
   HarnessState,
   Checkpoint,
   DEFAULT_CHECKPOINT_POLICY,
+  DiscoverySource,
 } from './types.js';
+import { getDiscoveryLabel } from './types.js';
 
 const execAsync = promisify(exec);
 
@@ -730,8 +732,16 @@ export async function resetIssueForRetry(
  * Review findings → discovered issues → future work.
  * Pattern from Steve Yegge's VC project.
  *
+ * The discovery source taxonomy (upstream from VC) categorizes *how* work was found:
+ * - blocker: Blocks current work, must address immediately
+ * - related: Related work discovered, can be scheduled separately
+ * - supervisor: AI supervisor (checkpoint review) identified concern
+ * - self-heal: Self-healing baseline discovered issue
+ * - manual: Manually created during session
+ *
  * @param finding - The review finding to convert to an issue
  * @param checkpointId - The originating checkpoint for 'discovered-from' dependency
+ * @param options - Additional options including discovery source
  * @param cwd - Working directory for Beads commands
  * @returns The created issue ID
  */
@@ -747,8 +757,16 @@ export async function createIssueFromFinding(
     suggestion?: string;
   },
   checkpointId: string,
+  options: {
+    /** How this work was discovered (default: 'supervisor' for review findings) */
+    discoverySource?: DiscoverySource;
+    /** Additional labels to apply */
+    extraLabels?: string[];
+  } = {},
   cwd?: string
 ): Promise<string> {
+  const { discoverySource = 'supervisor', extraLabels = [] } = options;
+
   // Map severity to priority
   const priorityMap: Record<string, number> = {
     critical: 0, // P0
@@ -759,6 +777,11 @@ export async function createIssueFromFinding(
   };
   const priority = priorityMap[finding.severity] ?? 2;
 
+  // Blocker findings get priority boost
+  const adjustedPriority = discoverySource === 'blocker'
+    ? Math.max(0, priority - 1)  // Boost priority for blockers
+    : priority;
+
   // Build description with finding details
   const descriptionParts: string[] = [finding.description];
   if (finding.file) {
@@ -768,13 +791,18 @@ export async function createIssueFromFinding(
     descriptionParts.push(`\nSuggestion: ${finding.suggestion}`);
   }
   descriptionParts.push(`\nDiscovered from checkpoint: ${checkpointId}`);
+  descriptionParts.push(`\nDiscovery source: ${discoverySource}`);
+
+  // Build labels: discovery source label + category + any extra labels
+  const discoveryLabel = getDiscoveryLabel(discoverySource);
+  const labels = [discoveryLabel, finding.category, ...extraLabels];
 
   const issueId = await createIssue(
     finding.title,
     {
       type: 'task',
-      priority,
-      labels: ['harness:discovered', finding.category],
+      priority: adjustedPriority,
+      labels,
       description: descriptionParts.join(''),
     },
     cwd
@@ -783,18 +811,24 @@ export async function createIssueFromFinding(
   // Link to originating checkpoint with discovered-from dependency
   await addDependency(issueId, checkpointId, 'discovered-from', cwd);
 
-  console.log(`  [Work Extraction] Created ${issueId} from finding: ${finding.title}`);
+  console.log(`  [Work Extraction] Created ${issueId} (${discoveryLabel}) from finding: ${finding.title}`);
 
   return issueId;
 }
 
 /**
  * Extract actionable issues from review findings.
- * Filters for findings that warrant follow-up work.
+ * Filters for findings that warrant follow-up work and categorizes them
+ * using the discovery source taxonomy.
+ *
+ * Discovery source assignment logic:
+ * - 'blocker': Critical findings that block advancement
+ * - 'supervisor': Standard review findings (security, architecture, quality)
+ * - 'related': Lower severity findings that can be addressed later
  *
  * @param findings - Array of review findings
  * @param checkpointId - The originating checkpoint
- * @param options - Extraction options
+ * @param options - Extraction options including default discovery source
  * @param cwd - Working directory
  * @returns Array of created issue IDs
  */
@@ -815,6 +849,12 @@ export async function extractWorkFromFindings(
     minSeverity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
     categories?: string[]; // Only extract from these categories
     maxIssues?: number; // Cap on created issues per checkpoint
+    /** Default discovery source (default: 'supervisor') */
+    defaultDiscoverySource?: DiscoverySource;
+    /** Treat critical findings as blockers (default: true) */
+    criticalAsBlocker?: boolean;
+    /** Treat low/info as related work (default: true) */
+    lowAsRelated?: boolean;
   } = {},
   cwd?: string
 ): Promise<string[]> {
@@ -822,6 +862,9 @@ export async function extractWorkFromFindings(
     minSeverity = 'high',
     categories,
     maxIssues = 5,
+    defaultDiscoverySource = 'supervisor',
+    criticalAsBlocker = true,
+    lowAsRelated = true,
   } = options;
 
   // Severity ranking for filtering
@@ -860,11 +903,25 @@ export async function extractWorkFromFindings(
 
   console.log(`  [Work Extraction] Creating ${toCreate.length} issues from checkpoint ${checkpointId}`);
 
-  // Create issues
+  // Create issues with appropriate discovery source
   const createdIds: string[] = [];
   for (const finding of toCreate) {
     try {
-      const issueId = await createIssueFromFinding(finding, checkpointId, cwd);
+      // Determine discovery source based on severity
+      let discoverySource: DiscoverySource = defaultDiscoverySource;
+
+      if (criticalAsBlocker && finding.severity === 'critical') {
+        discoverySource = 'blocker';
+      } else if (lowAsRelated && (finding.severity === 'low' || finding.severity === 'info')) {
+        discoverySource = 'related';
+      }
+
+      const issueId = await createIssueFromFinding(
+        finding,
+        checkpointId,
+        { discoverySource },
+        cwd
+      );
       createdIds.push(issueId);
     } catch (error) {
       console.log(`  [Work Extraction] Failed to create issue for: ${finding.title}`);
@@ -872,4 +929,76 @@ export async function extractWorkFromFindings(
   }
 
   return createdIds;
+}
+
+/**
+ * Create a blocker issue that must be resolved before continuing work.
+ * Convenience function for the 'blocker' discovery source.
+ */
+export async function createBlockerIssue(
+  title: string,
+  description: string,
+  options: {
+    severity?: 'critical' | 'high' | 'medium';
+    category?: string;
+    file?: string;
+    line?: number;
+    checkpointId: string;
+    extraLabels?: string[];
+  },
+  cwd?: string
+): Promise<string> {
+  const finding = {
+    id: `blocker-${Date.now()}`,
+    severity: options.severity || 'high' as const,
+    category: options.category || 'blocker',
+    title,
+    description,
+    file: options.file,
+    line: options.line,
+  };
+
+  return createIssueFromFinding(
+    finding,
+    options.checkpointId,
+    {
+      discoverySource: 'blocker',
+      extraLabels: options.extraLabels,
+    },
+    cwd
+  );
+}
+
+/**
+ * Create a self-heal issue for baseline fix.
+ * Used when preflight checks detect broken baseline.
+ */
+export async function createSelfHealIssue(
+  title: string,
+  description: string,
+  options: {
+    severity?: 'critical' | 'high' | 'medium';
+    category?: string;
+    checkpointId: string;
+    extraLabels?: string[];
+  },
+  cwd?: string
+): Promise<string> {
+  const finding = {
+    id: `self-heal-${Date.now()}`,
+    severity: options.severity || 'high' as const,
+    category: options.category || 'self-heal',
+    title,
+    description,
+  };
+
+  return createIssueFromFinding(
+    finding,
+    options.checkpointId,
+    {
+      discoverySource: 'self-heal',
+      extraLabels: options.extraLabels,
+    },
+    cwd
+  );
 }
