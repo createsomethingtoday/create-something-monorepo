@@ -65,6 +65,7 @@
 		"./styles/tokens.css": "./dist/styles/tokens.css",
 		"./styles/tokens.scss": "./dist/styles/tokens.scss",
 		"./styles/tokens.dtcg.json": "./dist/styles/tokens.dtcg.json",
+		"./styles/tokens.figma.json": "./dist/styles/tokens.figma.json",
 		"./styles/canon.css": "./dist/styles/canon.css",
 		"./styles/canon.json": "./dist/styles/canon.json",
 		"./styles/components.css": "./dist/styles/components.css",

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://tokens.studio/schema.json",
+  "name": "Canon Design System",
+  "description": "CREATE SOMETHING design tokens for Figma integration",
+  "version": "1.0.0",
+  "tokenSets": {
+    "core": {
+      "source": "../src/lib/styles/tokens.figma.json",
+      "description": "Core design tokens (dark theme default)"
+    },
+    "themes/light": {
+      "source": "../src/lib/styles/tokens.figma.json",
+      "description": "Light theme overrides",
+      "extends": ["core"]
+    },
+    "themes/high-contrast": {
+      "source": "../src/lib/styles/tokens.figma.json",
+      "description": "High contrast theme overrides",
+      "extends": ["core"]
+    }
+  },
+  "activeTokenSets": {
+    "core": "enabled",
+    "themes/light": "source",
+    "themes/high-contrast": "source"
+  },
+  "themes": [
+    {
+      "id": "dark",
+      "name": "Dark (Default)",
+      "selectedTokenSets": {
+        "core": "enabled"
+      }
+    },
+    {
+      "id": "light",
+      "name": "Light",
+      "selectedTokenSets": {
+        "core": "enabled",
+        "themes/light": "enabled"
+      }
+    },
+    {
+      "id": "high-contrast",
+      "name": "High Contrast",
+      "selectedTokenSets": {
+        "core": "enabled",
+        "themes/high-contrast": "enabled"
+      }
+    }
+  ],
+  "storageType": {
+    "provider": "jsonbin",
+    "id": null,
+    "secret": null
+  },
+  "syncSettings": {
+    "baseUrl": null,
+    "commitMessage": "chore(tokens): sync design tokens from Canon",
+    "branch": "main"
+  }
+}
