@@ -93,7 +93,250 @@ export async function initPerspectiveRenderer(): Promise<void> {
 }
 
 /**
- * Create 3D scene from floor plan data
+ * Room bounds for focused rendering
+ */
+export interface RoomBounds {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  ceilingHeight: number;
+}
+
+/**
+ * Room bounds for threshold-dwelling
+ */
+export const ROOM_BOUNDS: Record<string, RoomBounds> = {
+  living: { minX: 39, maxX: 65, minZ: 0, maxZ: 13, ceilingHeight: 10 },
+  dining: { minX: 26, maxX: 39, minZ: 0, maxZ: 13, ceilingHeight: 10 },
+  kitchen: { minX: 12, maxX: 26, minZ: 0, maxZ: 13, ceilingHeight: 10 },
+  'primary-bedroom': { minX: 18, maxX: 39, minZ: 20, maxZ: 42, ceilingHeight: 9 },
+  'daughter-bedroom': { minX: 0, maxX: 18, minZ: 20, maxZ: 42, ceilingHeight: 9 },
+  'inlaw-suite': { minX: 39, maxX: 65, minZ: 20, maxZ: 42, ceilingHeight: 9 },
+  pantry: { minX: 0, maxX: 12, minZ: 4, maxZ: 13, ceilingHeight: 9 },
+  entry: { minX: 55, maxX: 65, minZ: 13, maxZ: 20, ceilingHeight: 9 }
+};
+
+/**
+ * Create 3D scene for a specific room (focused view)
+ */
+export function createRoomScene(
+  roomName: string,
+  heights: HeightConfig
+): THREE.Scene {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
+
+  const bounds = ROOM_BOUNDS[roomName];
+  if (!bounds) {
+    throw new Error(`Unknown room: ${roomName}`);
+  }
+
+  const { minX, maxX, minZ, maxZ, ceilingHeight } = bounds;
+  const width = maxX - minX;
+  const depth = maxZ - minZ;
+  const centerX = (minX + maxX) / 2;
+  const centerZ = (minZ + maxZ) / 2;
+
+  // Materials
+  const wallMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
+  const floorMaterial = new THREE.LineBasicMaterial({ color: 0x888888, linewidth: 1 });
+  const ceilingMaterial = new THREE.LineBasicMaterial({ color: 0x666666, linewidth: 1 });
+  const windowMaterial = new THREE.LineBasicMaterial({ color: 0x0066cc, linewidth: 1 });
+
+  // Floor with grid lines
+  const floorGeometry = new THREE.PlaneGeometry(width, depth);
+  const floorEdges = new THREE.EdgesGeometry(floorGeometry);
+  const floor = new THREE.LineSegments(floorEdges, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(centerX, 0, centerZ);
+  scene.add(floor);
+
+  // Add floor grid lines (every 4 feet for tile pattern)
+  for (let x = minX; x <= maxX; x += 4) {
+    const line = createLine3D(x, 0, minZ, x, 0, maxZ, floorMaterial);
+    scene.add(line);
+  }
+  for (let z = minZ; z <= maxZ; z += 4) {
+    const line = createLine3D(minX, 0, z, maxX, 0, z, floorMaterial);
+    scene.add(line);
+  }
+
+  // Ceiling plane with beam grid
+  const ceilingGeometry = new THREE.PlaneGeometry(width, depth);
+  const ceilingEdges = new THREE.EdgesGeometry(ceilingGeometry);
+  const ceiling = new THREE.LineSegments(ceilingEdges, ceilingMaterial);
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.set(centerX, ceilingHeight, centerZ);
+  scene.add(ceiling);
+
+  // Add ceiling grid lines (beam pattern every 6 feet)
+  for (let x = minX; x <= maxX; x += 6) {
+    const line = createLine3D(x, ceilingHeight, minZ, x, ceilingHeight, maxZ, ceilingMaterial);
+    scene.add(line);
+  }
+
+  // Create room walls as vertical planes at boundaries
+  // Back wall (maxZ)
+  const backWall = createWallPlane(minX, maxX, 0, ceilingHeight, maxZ, 'z', wallMaterial);
+  scene.add(backWall);
+
+  // Front wall (minZ) - might be glass
+  if (roomName === 'living' || roomName === 'dining' || roomName === 'kitchen') {
+    // Glass wall with window frames
+    const windowHeight = 7;
+    const sillHeight = 1;
+    // Window frame
+    const windowFrame = createWindowFrame(
+      minX + 2, maxX - 2, sillHeight, sillHeight + windowHeight, minZ, windowMaterial
+    );
+    scene.add(windowFrame);
+    // Wall above window
+    const wallAbove = createWallPlane(minX, maxX, sillHeight + windowHeight, ceilingHeight, minZ, 'z', wallMaterial);
+    scene.add(wallAbove);
+    // Wall below window (sill)
+    const wallBelow = createWallPlane(minX, maxX, 0, sillHeight, minZ, 'z', wallMaterial);
+    scene.add(wallBelow);
+  } else {
+    const frontWall = createWallPlane(minX, maxX, 0, ceilingHeight, minZ, 'z', wallMaterial);
+    scene.add(frontWall);
+  }
+
+  // Left wall (minX)
+  const leftWall = createWallPlane(minZ, maxZ, 0, ceilingHeight, minX, 'x', wallMaterial);
+  scene.add(leftWall);
+
+  // Right wall (maxX) - might have entry for living room
+  if (roomName === 'living' && maxX === 65) {
+    // Entry door opening
+    const doorWidth = 3;
+    const doorHeight = 8;
+    const doorZ = 16; // Entry position
+    // Wall sections around door
+    const wallAboveDoor = createWallPlane(minZ, maxZ, doorHeight, ceilingHeight, maxX, 'x', wallMaterial);
+    scene.add(wallAboveDoor);
+    // Wall sections beside door
+    const wallLeft = createPartialWallPlane(minZ, doorZ - doorWidth/2, 0, ceilingHeight, maxX, 'x', wallMaterial);
+    scene.add(wallLeft);
+    const wallRight = createPartialWallPlane(doorZ + doorWidth/2, maxZ, 0, ceilingHeight, maxX, 'x', wallMaterial);
+    scene.add(wallRight);
+  } else {
+    const rightWall = createWallPlane(minZ, maxZ, 0, ceilingHeight, maxX, 'x', wallMaterial);
+    scene.add(rightWall);
+  }
+
+  // Add vertical corner lines for emphasis
+  addCornerLine(scene, minX, minZ, ceilingHeight, wallMaterial);
+  addCornerLine(scene, maxX, minZ, ceilingHeight, wallMaterial);
+  addCornerLine(scene, minX, maxZ, ceilingHeight, wallMaterial);
+  addCornerLine(scene, maxX, maxZ, ceilingHeight, wallMaterial);
+
+  return scene;
+}
+
+/**
+ * Create a simple 3D line
+ */
+function createLine3D(
+  x1: number, y1: number, z1: number,
+  x2: number, y2: number, z2: number,
+  material: THREE.LineBasicMaterial
+): THREE.Line {
+  const points = [
+    new THREE.Vector3(x1, y1, z1),
+    new THREE.Vector3(x2, y2, z2)
+  ];
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  return new THREE.Line(geometry, material);
+}
+
+/**
+ * Create a wall plane as lines
+ */
+function createWallPlane(
+  start: number, end: number,
+  bottom: number, top: number,
+  position: number,
+  axis: 'x' | 'z',
+  material: THREE.LineBasicMaterial
+): THREE.Group {
+  const group = new THREE.Group();
+
+  if (axis === 'z') {
+    // Wall perpendicular to Z axis
+    // Horizontal lines
+    group.add(createLine3D(start, bottom, position, end, bottom, position, material));
+    group.add(createLine3D(start, top, position, end, top, position, material));
+    // Vertical lines at edges
+    group.add(createLine3D(start, bottom, position, start, top, position, material));
+    group.add(createLine3D(end, bottom, position, end, top, position, material));
+  } else {
+    // Wall perpendicular to X axis
+    group.add(createLine3D(position, bottom, start, position, bottom, end, material));
+    group.add(createLine3D(position, top, start, position, top, end, material));
+    group.add(createLine3D(position, bottom, start, position, top, start, material));
+    group.add(createLine3D(position, bottom, end, position, top, end, material));
+  }
+
+  return group;
+}
+
+/**
+ * Create partial wall (for door openings)
+ */
+function createPartialWallPlane(
+  start: number, end: number,
+  bottom: number, top: number,
+  position: number,
+  axis: 'x' | 'z',
+  material: THREE.LineBasicMaterial
+): THREE.Group {
+  return createWallPlane(start, end, bottom, top, position, axis, material);
+}
+
+/**
+ * Create window frame
+ */
+function createWindowFrame(
+  left: number, right: number,
+  bottom: number, top: number,
+  z: number,
+  material: THREE.LineBasicMaterial
+): THREE.Group {
+  const group = new THREE.Group();
+
+  // Outer frame
+  group.add(createLine3D(left, bottom, z, right, bottom, z, material));
+  group.add(createLine3D(left, top, z, right, top, z, material));
+  group.add(createLine3D(left, bottom, z, left, top, z, material));
+  group.add(createLine3D(right, bottom, z, right, top, z, material));
+
+  // Mullions (vertical dividers every 4 feet)
+  for (let x = left + 4; x < right; x += 4) {
+    group.add(createLine3D(x, bottom, z, x, top, z, material));
+  }
+
+  // Horizontal transom
+  const transomHeight = bottom + (top - bottom) * 0.7;
+  group.add(createLine3D(left, transomHeight, z, right, transomHeight, z, material));
+
+  return group;
+}
+
+/**
+ * Add vertical corner line
+ */
+function addCornerLine(
+  scene: THREE.Scene,
+  x: number, z: number,
+  height: number,
+  material: THREE.LineBasicMaterial
+): void {
+  scene.add(createLine3D(x, 0, z, x, height, z, material));
+}
+
+/**
+ * Create 3D scene from floor plan data (full building - legacy)
  */
 export function createSceneFromPlan(
   plan: FloorPlanData,
@@ -327,10 +570,10 @@ export const THRESHOLD_DWELLING_CAMERAS: RoomView[] = [
     cameras: [
       {
         name: 'wide',
-        position: [55, 5, 6.5],
-        target: [40, 4, 6.5],
+        position: [52, 5, 10],
+        target: [40, 5, 6],
         fov: 75,
-        description: 'wide angle view of living room from east corner'
+        description: 'wide angle view of living room from southeast'
       },
       {
         name: 'seating',
@@ -341,10 +584,10 @@ export const THRESHOLD_DWELLING_CAMERAS: RoomView[] = [
       },
       {
         name: 'corner',
-        position: [52, 5, 0],
-        target: [45, 4, 6],
+        position: [45, 5, 10],
+        target: [52, 5, 2],
         fov: 70,
-        description: 'glass corner with two walls of windows'
+        description: 'looking toward glass corner from interior'
       }
     ]
   },
