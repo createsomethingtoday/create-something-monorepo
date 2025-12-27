@@ -958,8 +958,8 @@
 		flex-shrink: 0;
 	}
 
-	.criterion.validated .check { color: #22c55e; }
-	.criterion.partial .check { color: #f59e0b; }
+	.criterion.validated .check { color: var(--color-success); }
+	.criterion.partial .check { color: var(--color-warning); }
 	.criterion.pending .check { color: var(--color-fg-muted); }
 
 	.criterion strong {
@@ -974,7 +974,7 @@
 	}
 
 	/* Status indicators for table cells */
-	.status-pass { color: #22c55e; font-weight: 600; }
+	.status-pass { color: var(--color-success); font-weight: 600; }
 	.status-partial { color: var(--color-fg-muted); }
 
 	/* Cards */
@@ -1089,7 +1089,7 @@
 		background: var(--color-bg-surface);
 		padding: var(--space-md);
 		border-radius: var(--radius-md);
-		border-left: 4px solid #ef4444;
+		border-left: 4px solid var(--color-error);
 		margin-bottom: var(--space-sm);
 	}
 

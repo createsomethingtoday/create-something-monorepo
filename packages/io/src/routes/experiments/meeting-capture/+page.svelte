@@ -541,9 +541,9 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		flex-shrink: 0;
 	}
 
-	.criterion.validated .check { color: #22c55e; }
-	.criterion.partial .check { color: #f59e0b; }
-	.criterion.failed .check { color: #ef4444; }
+	.criterion.validated .check { color: var(--color-success); }
+	.criterion.partial .check { color: var(--color-warning); }
+	.criterion.failed .check { color: var(--color-error); }
 
 	.criterion strong {
 		display: block;
@@ -582,9 +582,9 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		color: var(--color-fg-secondary);
 	}
 
-	.status-pass { color: #22c55e; font-weight: 600; }
-	.status-partial { color: #f59e0b; font-weight: 600; }
-	.status-fail { color: #ef4444; font-weight: 600; }
+	.status-pass { color: var(--color-success); font-weight: 600; }
+	.status-partial { color: var(--color-warning); font-weight: 600; }
+	.status-fail { color: var(--color-error); font-weight: 600; }
 
 	/* Cards */
 	.card {
@@ -630,8 +630,8 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.card-footer.positive { color: #22c55e; }
-	.card-footer.negative { color: #ef4444; }
+	.card-footer.positive { color: var(--color-success); }
+	.card-footer.negative { color: var(--color-error); }
 
 	/* Triad */
 	.triad-stack {
@@ -715,7 +715,7 @@ Constraints: No UI during recording, <500 LOC total`}</pre>
 		background: var(--color-bg-surface);
 		padding: var(--space-md);
 		border-radius: var(--radius-md);
-		border-left: 4px solid #ef4444;
+		border-left: 4px solid var(--color-error);
 		margin-bottom: var(--space-sm);
 	}
 

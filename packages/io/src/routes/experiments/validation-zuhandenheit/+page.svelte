@@ -450,14 +450,14 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 	.breakdown-box {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-left: 4px solid #ef4444;
+		border-left: 4px solid var(--color-error);
 		border-radius: var(--radius-md);
 		padding: var(--space-md);
 	}
 
 	.breakdown-title {
 		font-weight: 600;
-		color: #ef4444;
+		color: var(--color-error);
 		margin-bottom: var(--space-sm);
 	}
 
@@ -526,8 +526,8 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 	}
 
 	.validation-step.new {
-		border-color: #22c55e;
-		background: rgba(34, 197, 94, 0.05);
+		border-color: var(--color-success);
+		background: var(--color-success-muted);
 	}
 
 	.step-number {
@@ -544,7 +544,7 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 	}
 
 	.validation-step.new .step-number {
-		background: #22c55e;
+		background: var(--color-success);
 		color: #000;
 	}
 
@@ -568,7 +568,7 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 		font-size: var(--text-caption);
 		font-weight: 600;
 		padding: 0.15em 0.5em;
-		background: #22c55e;
+		background: var(--color-success);
 		color: #000;
 		border-radius: var(--radius-sm);
 	}
@@ -594,11 +594,11 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 	}
 
 	.comparison-item.zuhandenheit {
-		border-color: #22c55e;
+		border-color: var(--color-success);
 	}
 
 	.comparison-item.vorhandenheit {
-		border-color: #ef4444;
+		border-color: var(--color-error);
 	}
 
 	.comparison-item h4 {
@@ -608,11 +608,11 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 	}
 
 	.comparison-item.zuhandenheit h4 {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 
 	.comparison-item.vorhandenheit h4 {
-		color: #ef4444;
+		color: var(--color-error);
 	}
 
 	.comparison-item .subtitle {
