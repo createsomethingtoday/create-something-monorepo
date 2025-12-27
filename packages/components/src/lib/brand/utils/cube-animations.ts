@@ -14,6 +14,15 @@
  */
 
 import { CUBE_FACE_OPACITY, type CubeFace } from '../types.js';
+import {
+	calculateFaceOffset,
+	DERIVED_FACE_OFFSETS,
+	CUBE_FACE_NORMALS,
+	debugFaceOffsets
+} from '../../visual/isometric.js';
+
+// Re-export for convenience
+export { calculateFaceOffset, CUBE_FACE_NORMALS, debugFaceOffsets };
 
 // =============================================================================
 // CONSTANTS - Aligned with Canon motion tokens
@@ -60,13 +69,24 @@ export const cubeStagger = {
 
 /**
  * Isometric offset vectors for assembly animations
- * Each face slides in from a direction that emphasizes 3D depth
+ *
+ * DERIVED FROM PROJECTION MATH - not magic numbers.
+ *
+ * Each face slides in perpendicular to its surface, which means:
+ * 1. Get the face's 3D normal vector
+ * 2. Project through isometric transform: toIsometric(nx, ny, nz)
+ * 3. Normalize and scale to desired distance
+ *
+ * Mathematical derivation (distance = 10):
+ * - Top (normal 0,1,0):   projects to (0, -1)     → offset (0, -10)
+ * - Left (normal 0,0,1):  projects to (-0.866, 0.5) → offset (-8.66, 5)
+ * - Right (normal 1,0,0): projects to (0.866, 0.5)  → offset (8.66, 5)
+ *
+ * See isometric.ts:calculateFaceOffset() for the full derivation.
+ *
+ * @see {@link calculateFaceOffset} for dynamic distance calculation
  */
-export const cubeFaceOffsets: Record<CubeFace, { x: number; y: number }> = {
-	top: { x: 0, y: -10 },
-	left: { x: -10, y: 5 },
-	right: { x: 10, y: 5 }
-} as const;
+export const cubeFaceOffsets: Record<CubeFace, { x: number; y: number }> = DERIVED_FACE_OFFSETS;
 
 /**
  * Face render order (back to front for proper layering)

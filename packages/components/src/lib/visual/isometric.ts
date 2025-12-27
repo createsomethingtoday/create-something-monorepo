@@ -115,3 +115,109 @@ export type IsometricBox3D = {
 	origin: { x: number; y: number; z: number };
 	size: { width: number; height: number; depth: number };
 };
+
+// =============================================================================
+// ANIMATION OFFSET DERIVATION
+// =============================================================================
+
+/**
+ * 3D normal vectors for each visible cube face
+ *
+ * In standard isometric view (camera from upper-front-right):
+ * - Top face: Y+ surface, normal points up
+ * - Left face: Z+ surface, normal points toward viewer (appears on left in 2D)
+ * - Right face: X+ surface, normal points right (appears on right in 2D)
+ */
+export const CUBE_FACE_NORMALS: Record<'top' | 'left' | 'right', { x: number; y: number; z: number }> = {
+	top: { x: 0, y: 1, z: 0 },
+	left: { x: 0, y: 0, z: 1 },
+	right: { x: 1, y: 0, z: 0 }
+};
+
+/**
+ * Calculate 2D animation offset for a cube face
+ *
+ * The offset direction is the face's 3D normal projected to 2D isometric space.
+ * This ensures faces "fly in" perpendicular to their surface.
+ *
+ * Mathematical derivation:
+ * 1. Each face has a 3D unit normal vector
+ * 2. Project normal through isometric transform: toIsometric(nx, ny, nz)
+ * 3. Normalize result and scale by desired distance
+ *
+ * @param face - Which cube face ('top', 'left', 'right')
+ * @param distance - How far the face travels during animation (default: 10)
+ * @returns 2D offset { x, y } in screen coordinates
+ *
+ * @example
+ * // Get animation offset for left face
+ * const offset = calculateFaceOffset('left', 10);
+ * // Returns { x: -8.66, y: 5 } - mathematically derived, not magic numbers
+ */
+export function calculateFaceOffset(
+	face: 'top' | 'left' | 'right',
+	distance: number = 10
+): { x: number; y: number } {
+	const normal = CUBE_FACE_NORMALS[face];
+
+	// Project 3D normal to 2D using isometric transform
+	// x_2d = (nx - nz) * cos(30°)
+	// y_2d = (nx + nz) * sin(30°) - ny
+	const projected = toIsometric(normal.x, normal.y, normal.z);
+
+	// Calculate magnitude of projected vector
+	const magnitude = Math.sqrt(projected.x * projected.x + projected.y * projected.y);
+
+	// Handle degenerate case (shouldn't happen with our normals)
+	if (magnitude === 0) {
+		return { x: 0, y: 0 };
+	}
+
+	// Scale to desired distance
+	return {
+		x: (projected.x / magnitude) * distance,
+		y: (projected.y / magnitude) * distance
+	};
+}
+
+/**
+ * Pre-calculated animation offsets for standard distance
+ *
+ * These are derived from calculateFaceOffset() - not magic numbers.
+ *
+ * Derivation for distance = 10:
+ * - Top (0,1,0):   x = 0,     y = -1    → (0, -10)      exact
+ * - Left (0,0,1):  x = -0.866, y = 0.5  → (-8.66, 5)    from projection
+ * - Right (1,0,0): x = 0.866,  y = 0.5  → (8.66, 5)     from projection
+ *
+ * Note: cos(30°) ≈ 0.866, sin(30°) = 0.5
+ */
+export const DERIVED_FACE_OFFSETS: Record<'top' | 'left' | 'right', { x: number; y: number }> = {
+	top: calculateFaceOffset('top', 10),
+	left: calculateFaceOffset('left', 10),
+	right: calculateFaceOffset('right', 10)
+};
+
+/**
+ * Debug helper: print offset derivation
+ */
+export function debugFaceOffsets(distance: number = 10): void {
+	console.log('Cube Face Animation Offset Derivation');
+	console.log('=====================================');
+	console.log(`Distance: ${distance}`);
+	console.log(`ISO_COS (cos 30°): ${ISO_COS.toFixed(4)}`);
+	console.log(`ISO_SIN (sin 30°): ${ISO_SIN.toFixed(4)}`);
+	console.log();
+
+	for (const face of ['top', 'left', 'right'] as const) {
+		const normal = CUBE_FACE_NORMALS[face];
+		const projected = toIsometric(normal.x, normal.y, normal.z);
+		const offset = calculateFaceOffset(face, distance);
+
+		console.log(`${face.toUpperCase()}:`);
+		console.log(`  3D Normal:     (${normal.x}, ${normal.y}, ${normal.z})`);
+		console.log(`  2D Projected:  (${projected.x.toFixed(3)}, ${projected.y.toFixed(3)})`);
+		console.log(`  Final Offset:  (${offset.x.toFixed(2)}, ${offset.y.toFixed(2)})`);
+		console.log();
+	}
+}
