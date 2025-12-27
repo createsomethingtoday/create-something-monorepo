@@ -79,6 +79,57 @@
 	// Client-side PNG download - converts SVG to canvas then PNG
 	let isDownloading = $state(false);
 
+	/**
+	 * Inline computed styles on SVG elements for export.
+	 * When SVG is serialized, CSS classes/variables from external stylesheets are lost.
+	 * This walks each element and inlines the actual computed values.
+	 */
+	function inlineComputedStyles(svgElement: SVGSVGElement, clonedSvg: SVGSVGElement) {
+		// Get all elements from both original and clone
+		const originalElements = svgElement.querySelectorAll('*');
+		const clonedElements = clonedSvg.querySelectorAll('*');
+
+		// Style properties relevant for SVG rendering
+		const styleProps = [
+			'fill',
+			'stroke',
+			'stroke-width',
+			'stroke-dasharray',
+			'opacity',
+			'fill-opacity',
+			'stroke-opacity',
+			'font-family',
+			'font-size',
+			'font-weight',
+			'text-anchor',
+			'dominant-baseline'
+		];
+
+		originalElements.forEach((original, index) => {
+			const clone = clonedElements[index];
+			if (!clone) return;
+
+			const computed = getComputedStyle(original);
+
+			styleProps.forEach(prop => {
+				const value = computed.getPropertyValue(prop);
+				if (value && value !== 'none' && value !== '') {
+					// Set as inline style on the cloned element
+					(clone as HTMLElement).style.setProperty(prop, value);
+				}
+			});
+		});
+
+		// Also inline styles on the SVG root itself
+		const rootComputed = getComputedStyle(svgElement);
+		styleProps.forEach(prop => {
+			const value = rootComputed.getPropertyValue(prop);
+			if (value && value !== 'none' && value !== '') {
+				clonedSvg.style.setProperty(prop, value);
+			}
+		});
+	}
+
 	async function downloadPNG() {
 		if (isDownloading) return;
 		isDownloading = true;
@@ -92,7 +143,7 @@
 				return;
 			}
 
-			// Clone SVG and apply Canon styling (white on black)
+			// Clone SVG
 			const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
 
 			// Get SVG dimensions
@@ -108,6 +159,13 @@
 			clonedSvg.setAttribute('width', String(targetWidth));
 			clonedSvg.setAttribute('height', String(targetHeight));
 
+			// Inline all computed styles from the original SVG
+			// This is necessary because CSS classes/variables are lost during serialization
+			inlineComputedStyles(svgElement, clonedSvg);
+
+			// Add xmlns for proper rendering in Image
+			clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
 			// Create canvas
 			const canvas = document.createElement('canvas');
 			canvas.width = targetWidth;
@@ -118,7 +176,7 @@
 				return;
 			}
 
-			// Fill black background
+			// Fill black background (Canon pure black)
 			ctx.fillStyle = '#000000';
 			ctx.fillRect(0, 0, targetWidth, targetHeight);
 
@@ -141,8 +199,8 @@
 				link.click();
 				isDownloading = false;
 			};
-			img.onerror = () => {
-				console.error('Failed to load SVG');
+			img.onerror = (e) => {
+				console.error('Failed to load SVG:', e);
 				URL.revokeObjectURL(svgUrl);
 				isDownloading = false;
 			};
