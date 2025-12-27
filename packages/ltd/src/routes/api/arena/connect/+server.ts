@@ -25,13 +25,17 @@ interface ConnectBlockRequest {
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
-	const accessToken = platform?.env?.ARENA_API_TOKEN;
+	// Check env var first, then fall back to KV-stored OAuth token
+	let accessToken = platform?.env?.ARENA_API_TOKEN;
+	if (!accessToken && platform?.env?.CACHE) {
+		accessToken = (await platform.env.CACHE.get('arena:access_token')) ?? undefined;
+	}
 
 	if (!accessToken) {
 		return json(
 			{
 				error: 'Are.na API token not configured',
-				message: 'Server configuration missing'
+				message: 'Server configuration missing. Complete OAuth flow at /api/arena/authorize'
 			},
 			{ status: 500 }
 		);
