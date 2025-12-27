@@ -162,7 +162,124 @@ export interface Checkpoint {
   gitCommit: string;
   confidence: number;
   redirectNotes: string | null;
+  /** Agent context for pause/resume (nondeterministic idempotence) */
+  agentContext?: AgentContext;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent Context (Upstream from VC - Nondeterministic Idempotence)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Agent context for pause/resume with full understanding preservation.
+ * Upstream pattern from Steve Yegge's VC project.
+ *
+ * Philosophy: "Nondeterministic Idempotence" - workflows can be interrupted
+ * and resumed anywhere. The AI figures out where it left off by loading
+ * this context into its priming prompt.
+ */
+export interface AgentContext {
+  /** Files modified in this session with summaries */
+  filesModified: FileModification[];
+  /** Issues touched with status changes */
+  issuesUpdated: IssueUpdate[];
+  /** Current task progress */
+  currentTask: TaskProgress | null;
+  /** Test state at checkpoint time */
+  testState: TestState | null;
+  /** Agent's free-form notes and observations */
+  agentNotes: string;
+  /** Blockers encountered during work */
+  blockers: string[];
+  /** Decisions made and their rationale */
+  decisions: Decision[];
+  /** Timestamp of context capture */
+  capturedAt: string;
+}
+
+/**
+ * Record of a file modification for context preservation.
+ */
+export interface FileModification {
+  path: string;
+  /** Brief summary of changes */
+  summary: string;
+  /** Type of change */
+  changeType: 'created' | 'modified' | 'deleted' | 'renamed';
+  /** Lines added (approximate) */
+  linesAdded?: number;
+  /** Lines removed (approximate) */
+  linesRemoved?: number;
+}
+
+/**
+ * Record of an issue status change.
+ */
+export interface IssueUpdate {
+  issueId: string;
+  title: string;
+  fromStatus: string;
+  toStatus: string;
+  /** Optional reason for status change */
+  reason?: string;
+}
+
+/**
+ * Current task progress state.
+ */
+export interface TaskProgress {
+  issueId: string;
+  issueTitle: string;
+  /** Current step description */
+  currentStep: string;
+  /** Progress percentage (0-100) */
+  progressPercent: number;
+  /** Remaining steps description */
+  remainingWork: string;
+  /** Time spent on this task in ms */
+  timeSpentMs: number;
+}
+
+/**
+ * Test state at checkpoint time.
+ */
+export interface TestState {
+  passed: number;
+  failed: number;
+  skipped: number;
+  /** Names of failing tests */
+  failingTests: string[];
+  /** Total duration of test run in ms */
+  durationMs: number;
+}
+
+/**
+ * Record of a decision made during work.
+ */
+export interface Decision {
+  /** What was decided */
+  decision: string;
+  /** Why this choice was made */
+  rationale: string;
+  /** Alternatives considered */
+  alternatives?: string[];
+  /** Timestamp */
+  madeAt: string;
+}
+
+/**
+ * Default empty agent context.
+ */
+export const EMPTY_AGENT_CONTEXT: AgentContext = {
+  filesModified: [],
+  issuesUpdated: [],
+  currentTask: null,
+  testState: null,
+  agentNotes: '',
+  blockers: [],
+  decisions: [],
+  capturedAt: new Date().toISOString(),
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Session

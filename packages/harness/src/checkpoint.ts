@@ -18,8 +18,14 @@ import type {
   ReviewAggregation,
   DetectedModel,
   ClaudeModelFamily,
+  AgentContext,
+  FileModification,
+  IssueUpdate,
+  TaskProgress,
+  TestState,
+  Decision,
 } from './types.js';
-import { DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_MODEL_SPECIFIC_CONFIG } from './types.js';
+import { DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_MODEL_SPECIFIC_CONFIG, EMPTY_AGENT_CONTEXT } from './types.js';
 import { createCheckpointIssue, getOpenIssues, getIssue } from './beads.js';
 import { runReviewPipeline, formatReviewDisplay } from './review-pipeline.js';
 import { createReviewIssue, createFindingIssues } from './review-beads.js';
@@ -35,6 +41,8 @@ interface CheckpointTracker {
   /** Swarm-specific tracking */
   swarmBatches: SwarmBatchTracker[];
   currentSwarmBatch: SwarmBatchTracker | null;
+  /** Agent context for pause/resume (nondeterministic idempotence) */
+  agentContext: AgentContext;
 }
 
 /**
@@ -57,6 +65,7 @@ export function createCheckpointTracker(): CheckpointTracker {
     sessionsResults: [],
     swarmBatches: [],
     currentSwarmBatch: null,
+    agentContext: { ...EMPTY_AGENT_CONTEXT, capturedAt: new Date().toISOString() },
   };
 }
 
@@ -353,6 +362,12 @@ export async function generateCheckpoint(
 
   const confidence = calculateConfidence(tracker.sessionsResults);
 
+  // Capture agent context for pause/resume
+  const agentContext: AgentContext = {
+    ...tracker.agentContext,
+    capturedAt: timestamp,
+  };
+
   const checkpoint: Omit<Checkpoint, 'id'> = {
     harnessId: harnessState.id,
     sessionNumber,
@@ -364,6 +379,7 @@ export async function generateCheckpoint(
     gitCommit,
     confidence,
     redirectNotes,
+    agentContext,
   };
 
   // Create checkpoint issue in Beads
@@ -781,3 +797,281 @@ export async function generateReviewedCheckpoint(
  * Re-export formatReviewDisplay for use in runner.
  */
 export { formatReviewDisplay };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent Context Management (Upstream from VC - Nondeterministic Idempotence)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Record a file modification in the agent context.
+ */
+export function recordFileModification(
+  tracker: CheckpointTracker,
+  modification: FileModification
+): void {
+  // Check if file already exists in modifications (update vs add)
+  const existingIndex = tracker.agentContext.filesModified.findIndex(
+    (f) => f.path === modification.path
+  );
+
+  if (existingIndex >= 0) {
+    // Update existing entry
+    tracker.agentContext.filesModified[existingIndex] = modification;
+  } else {
+    tracker.agentContext.filesModified.push(modification);
+  }
+}
+
+/**
+ * Record an issue status update in the agent context.
+ */
+export function recordIssueUpdate(
+  tracker: CheckpointTracker,
+  update: IssueUpdate
+): void {
+  tracker.agentContext.issuesUpdated.push(update);
+}
+
+/**
+ * Update the current task progress in the agent context.
+ */
+export function updateTaskProgress(
+  tracker: CheckpointTracker,
+  progress: TaskProgress
+): void {
+  tracker.agentContext.currentTask = progress;
+}
+
+/**
+ * Record test state in the agent context.
+ */
+export function recordTestState(
+  tracker: CheckpointTracker,
+  testState: TestState
+): void {
+  tracker.agentContext.testState = testState;
+}
+
+/**
+ * Add agent notes to the context.
+ */
+export function addAgentNotes(
+  tracker: CheckpointTracker,
+  notes: string
+): void {
+  if (tracker.agentContext.agentNotes) {
+    tracker.agentContext.agentNotes += '\n\n' + notes;
+  } else {
+    tracker.agentContext.agentNotes = notes;
+  }
+}
+
+/**
+ * Record a blocker encountered during work.
+ */
+export function recordBlocker(
+  tracker: CheckpointTracker,
+  blocker: string
+): void {
+  tracker.agentContext.blockers.push(blocker);
+}
+
+/**
+ * Record a decision made during work.
+ */
+export function recordDecision(
+  tracker: CheckpointTracker,
+  decision: Omit<Decision, 'madeAt'>
+): void {
+  tracker.agentContext.decisions.push({
+    ...decision,
+    madeAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Get the current agent context from the tracker.
+ */
+export function getAgentContext(tracker: CheckpointTracker): AgentContext {
+  return {
+    ...tracker.agentContext,
+    capturedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Clear the agent context (for use after checkpoint).
+ */
+export function clearAgentContext(tracker: CheckpointTracker): void {
+  tracker.agentContext = {
+    ...EMPTY_AGENT_CONTEXT,
+    capturedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Load agent context from a checkpoint.
+ * Used when resuming a harness session.
+ */
+export function loadAgentContext(checkpoint: Checkpoint): AgentContext {
+  return checkpoint.agentContext || { ...EMPTY_AGENT_CONTEXT };
+}
+
+/**
+ * Restore agent context to a tracker from a checkpoint.
+ * Used when resuming after a pause.
+ */
+export function restoreAgentContext(
+  tracker: CheckpointTracker,
+  checkpoint: Checkpoint
+): void {
+  if (checkpoint.agentContext) {
+    tracker.agentContext = { ...checkpoint.agentContext };
+  }
+}
+
+/**
+ * Generate a resume brief from agent context.
+ * This is injected into the session priming prompt when resuming.
+ *
+ * Philosophy: The resume brief gives the AI enough context to figure out
+ * where it left off. It's designed to be concise but complete.
+ */
+export function generateResumeBrief(context: AgentContext): string {
+  const lines: string[] = [];
+
+  lines.push('## Session Resume Brief');
+  lines.push('');
+  lines.push(`*Context captured at: ${context.capturedAt}*`);
+  lines.push('');
+
+  // Current task (most important for resumption)
+  if (context.currentTask) {
+    lines.push('### Current Task');
+    lines.push(`**Issue**: ${context.currentTask.issueId} - ${context.currentTask.issueTitle}`);
+    lines.push(`**Progress**: ${context.currentTask.progressPercent}%`);
+    lines.push(`**Current Step**: ${context.currentTask.currentStep}`);
+    lines.push(`**Remaining**: ${context.currentTask.remainingWork}`);
+    lines.push('');
+  }
+
+  // Files modified
+  if (context.filesModified.length > 0) {
+    lines.push('### Files Modified This Session');
+    for (const file of context.filesModified.slice(0, 10)) {
+      const stats = file.linesAdded !== undefined
+        ? ` (+${file.linesAdded}/-${file.linesRemoved || 0})`
+        : '';
+      lines.push(`- \`${file.path}\`${stats}: ${file.summary}`);
+    }
+    if (context.filesModified.length > 10) {
+      lines.push(`- ... and ${context.filesModified.length - 10} more files`);
+    }
+    lines.push('');
+  }
+
+  // Issues updated
+  if (context.issuesUpdated.length > 0) {
+    lines.push('### Issues Updated');
+    for (const update of context.issuesUpdated.slice(0, 5)) {
+      lines.push(`- ${update.issueId}: ${update.fromStatus} → ${update.toStatus}`);
+    }
+    if (context.issuesUpdated.length > 5) {
+      lines.push(`- ... and ${context.issuesUpdated.length - 5} more updates`);
+    }
+    lines.push('');
+  }
+
+  // Test state
+  if (context.testState) {
+    lines.push('### Test State');
+    lines.push(`- Passed: ${context.testState.passed}`);
+    lines.push(`- Failed: ${context.testState.failed}`);
+    lines.push(`- Skipped: ${context.testState.skipped}`);
+    if (context.testState.failingTests.length > 0) {
+      lines.push('- **Failing tests**:');
+      for (const test of context.testState.failingTests.slice(0, 5)) {
+        lines.push(`  - ${test}`);
+      }
+    }
+    lines.push('');
+  }
+
+  // Blockers
+  if (context.blockers.length > 0) {
+    lines.push('### Blockers Encountered');
+    for (const blocker of context.blockers) {
+      lines.push(`- ⚠️ ${blocker}`);
+    }
+    lines.push('');
+  }
+
+  // Key decisions
+  if (context.decisions.length > 0) {
+    lines.push('### Key Decisions Made');
+    for (const decision of context.decisions.slice(-3)) {
+      lines.push(`- **${decision.decision}**: ${decision.rationale}`);
+    }
+    if (context.decisions.length > 3) {
+      lines.push(`- ... and ${context.decisions.length - 3} earlier decisions`);
+    }
+    lines.push('');
+  }
+
+  // Agent notes (can be long, so at the end)
+  if (context.agentNotes) {
+    lines.push('### Notes');
+    // Truncate if too long
+    const notes = context.agentNotes.length > 500
+      ? context.agentNotes.slice(0, 500) + '...'
+      : context.agentNotes;
+    lines.push(notes);
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('*Resume from this context. The AI should figure out where work left off.*');
+
+  return lines.join('\n');
+}
+
+/**
+ * Check if a checkpoint has meaningful context to resume from.
+ */
+export function hasResumableContext(checkpoint: Checkpoint): boolean {
+  const ctx = checkpoint.agentContext;
+  if (!ctx) return false;
+
+  return (
+    ctx.currentTask !== null ||
+    ctx.filesModified.length > 0 ||
+    ctx.issuesUpdated.length > 0 ||
+    ctx.blockers.length > 0 ||
+    ctx.agentNotes.length > 0
+  );
+}
+
+/**
+ * Format agent context for display (compact version).
+ */
+export function formatAgentContextSummary(context: AgentContext): string {
+  const parts: string[] = [];
+
+  if (context.currentTask) {
+    parts.push(`Task: ${context.currentTask.issueId} (${context.currentTask.progressPercent}%)`);
+  }
+
+  if (context.filesModified.length > 0) {
+    parts.push(`Files: ${context.filesModified.length} modified`);
+  }
+
+  if (context.blockers.length > 0) {
+    parts.push(`Blockers: ${context.blockers.length}`);
+  }
+
+  if (context.testState) {
+    parts.push(`Tests: ${context.testState.passed}✓ ${context.testState.failed}✗`);
+  }
+
+  return parts.length > 0 ? parts.join(' | ') : 'No context captured';
+}
