@@ -265,12 +265,43 @@
 
   /* ==========================================================================
      Animation & Motion
+
+     Mathematical derivation in: src/lib/visual/easing.ts
+
+     Easing curves use Material Design's standard curves.
+     Duration values follow perceptual thresholds from animation research.
      ========================================================================== */
 
+  /* Easing - cubic-bezier curves for natural motion
+   *
+   * Standard: ease-in-out for most transitions
+   * Decelerate: ease-out for entering elements
+   * Accelerate: ease-in for exiting elements
+   *
+   * See easing.ts for mathematical derivation of control points.
+   */
   --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
   --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
   --ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
 
+  /* Duration - perceptual thresholds
+   *
+   * Based on human perception research:
+   * - <100ms: perceived as instant (system response)
+   * - 100-300ms: perceived as fast (direct manipulation)
+   * - 300-500ms: perceived as normal (state changes)
+   * - >500ms: perceived as slow (deliberate emphasis)
+   *
+   * | Step     | Value  | Use Case                    | Perception    |
+   * |----------|--------|-----------------------------| --------------|
+   * | instant  | 100ms  | System feedback, tooltips   | Instantaneous |
+   * | micro    | 200ms  | Hover states, toggles       | Fast          |
+   * | standard | 300ms  | Page transitions, modals    | Normal        |
+   * | complex  | 500ms  | Multi-step, orchestrated    | Deliberate    |
+   * | slow     | 700ms  | Dramatic emphasis           | Slow          |
+   *
+   * The 100ms base with ~1.5-2× increments balances perception with purpose.
+   */
   --duration-instant: 100ms;
   --duration-micro: 200ms;
   --duration-standard: 300ms;
@@ -284,6 +315,29 @@
 
   /* ==========================================================================
      Z-Index Layers
+
+     Semantic stacking contexts with 10× gaps for flexibility.
+
+     The 10× pattern provides:
+     - Clear semantic hierarchy (each layer is an order of magnitude)
+     - Room for intermediate values (e.g., z-15 between dropdown and sticky)
+     - Easy mental model (dropdown=10, modal=100, tooltip=300)
+
+     | Layer    | Value | Use Case                        | Context        |
+     |----------|-------|--------------------------------|----------------|
+     | base     | 0     | Default stacking               | Document flow  |
+     | dropdown | 10    | Menus, selects, autocomplete   | Inline reveal  |
+     | sticky   | 20    | Sticky headers, sidebars       | Scroll-locked  |
+     | fixed    | 50    | Fixed navbars, FABs            | Viewport-fixed |
+     | modal    | 100   | Dialogs, drawers, sheets       | Focus trap     |
+     | popover  | 200   | Popovers over modals           | Nested overlay |
+     | tooltip  | 300   | Tooltips (always on top)       | Ephemeral info |
+
+     Why these specific values?
+     - 10, 20: Close together (both are "above content" but different purposes)
+     - 50: Jump to "fixed UI" territory
+     - 100: Order of magnitude jump for "blocking overlays"
+     - 200, 300: Nested overlay hierarchy (popover in modal, tooltip over all)
      ========================================================================== */
 
   --z-base: 0;
