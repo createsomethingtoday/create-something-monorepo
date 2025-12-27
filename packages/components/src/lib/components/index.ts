@@ -36,3 +36,14 @@ export {
 
 // Feedback components
 export { Alert, Toast, Dialog, Progress, Spinner, Skeleton } from './feedback/index.js';
+
+// Navigation components
+export {
+	Breadcrumbs,
+	Tabs,
+	Pagination,
+	Tooltip,
+	Popover,
+	DropdownMenu,
+	Drawer
+} from './navigation/index.js';
