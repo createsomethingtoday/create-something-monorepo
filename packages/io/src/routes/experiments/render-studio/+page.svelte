@@ -570,7 +570,7 @@
 
 <style>
 	.studio-page {
-		max-width: 1400px;
+		max-width: var(--width-wide);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--gutter);
 	}
