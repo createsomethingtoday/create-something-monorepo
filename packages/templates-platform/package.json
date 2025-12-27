@@ -15,7 +15,9 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "prepare": "svelte-kit sync || echo ''",
     "db:migrate": "wrangler d1 migrations apply templates-platform-db --local",
-    "db:migrate:prod": "wrangler d1 migrations apply templates-platform-db"
+    "db:migrate:prod": "wrangler d1 migrations apply templates-platform-db",
+    "verify": "tsx scripts/verify-deployment.ts",
+    "verify:all": "tsx scripts/verify-deployment.ts --all"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241205.0",
