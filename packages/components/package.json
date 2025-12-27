@@ -105,6 +105,10 @@
 		"./platform": {
 			"types": "./dist/platform/index.d.ts",
 			"default": "./dist/platform/index.js"
+		},
+		"./patterns": {
+			"types": "./dist/patterns/index.d.ts",
+			"svelte": "./dist/patterns/index.js"
 		}
 	},
 	"peerDependencies": {
