@@ -10,16 +10,18 @@ import { Resvg, initWasm } from '@resvg/resvg-wasm';
 
 let wasmInitialized = false;
 
-// WASM CDN URL - using jsDelivr for reliability
-const RESVG_WASM_URL = 'https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.2/index_bg.wasm';
-
-async function ensureWasmInitialized(): Promise<void> {
+async function ensureWasmInitialized(origin: string): Promise<void> {
   if (wasmInitialized) return;
 
-  // Fetch WASM from CDN
-  const wasmResponse = await fetch(RESVG_WASM_URL);
-  const wasmModule = await wasmResponse.arrayBuffer();
+  // Fetch WASM from our own static folder (bundled with deployment)
+  const wasmUrl = `${origin}/wasm/resvg.wasm`;
+  const wasmResponse = await fetch(wasmUrl);
 
+  if (!wasmResponse.ok) {
+    throw new Error(`Failed to fetch WASM: ${wasmResponse.status} ${wasmResponse.statusText}`);
+  }
+
+  const wasmModule = await wasmResponse.arrayBuffer();
   await initWasm(wasmModule);
   wasmInitialized = true;
 }
@@ -282,30 +284,39 @@ function generateCanonFloorPlanSvg(): string {
 }
 
 export const GET: RequestHandler = async ({ url }) => {
-  const width = parseInt(url.searchParams.get('width') || '1024');
+  try {
+    const width = parseInt(url.searchParams.get('width') || '1024');
 
-  // Initialize WASM if not already done
-  await ensureWasmInitialized();
+    // Initialize WASM if not already done
+    await ensureWasmInitialized(url.origin);
 
-  // Generate Canon-styled SVG
-  const svg = generateCanonFloorPlanSvg();
+    // Generate Canon-styled SVG
+    const svg = generateCanonFloorPlanSvg();
 
-  // Convert to PNG using WASM
-  const resvg = new Resvg(svg, {
-    fitTo: { mode: 'width', value: width }
-  });
+    // Convert to PNG using WASM
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: 'width', value: width }
+    });
 
-  const pngData = resvg.render();
-  const pngBuffer = pngData.asPng();
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
 
-  // Create a new Uint8Array copy for Response compatibility
-  const responseBuffer = new Uint8Array(pngBuffer);
+    // Create a new Uint8Array copy for Response compatibility
+    const responseBuffer = new Uint8Array(pngBuffer);
 
-  return new Response(responseBuffer, {
-    headers: {
-      'Content-Type': 'image/png',
-      'Content-Disposition': 'attachment; filename="threshold-dwelling-floorplan.png"',
-      'Cache-Control': 'public, max-age=31536000'
-    }
-  });
+    return new Response(responseBuffer, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Disposition': 'attachment; filename="threshold-dwelling-floorplan.png"',
+        'Cache-Control': 'public, max-age=31536000'
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const stack = error instanceof Error ? error.stack : '';
+    return new Response(JSON.stringify({ error: message, stack }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 };

@@ -76,6 +76,83 @@
 		}).format(amount);
 	}
 
+	// Client-side PNG download - converts SVG to canvas then PNG
+	let isDownloading = $state(false);
+
+	async function downloadPNG() {
+		if (isDownloading) return;
+		isDownloading = true;
+
+		try {
+			// Find the floor plan SVG element
+			const svgElement = document.querySelector('.plan-view svg') as SVGSVGElement;
+			if (!svgElement) {
+				console.error('SVG element not found');
+				isDownloading = false;
+				return;
+			}
+
+			// Clone SVG and apply Canon styling (white on black)
+			const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+
+			// Get SVG dimensions
+			const viewBox = svgElement.getAttribute('viewBox') || '0 0 1000 600';
+			const [, , vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+
+			// Scale to 2048px width
+			const targetWidth = 2048;
+			const scale = targetWidth / vbWidth;
+			const targetHeight = Math.round(vbHeight * scale);
+
+			// Set explicit dimensions on cloned SVG
+			clonedSvg.setAttribute('width', String(targetWidth));
+			clonedSvg.setAttribute('height', String(targetHeight));
+
+			// Create canvas
+			const canvas = document.createElement('canvas');
+			canvas.width = targetWidth;
+			canvas.height = targetHeight;
+			const ctx = canvas.getContext('2d');
+			if (!ctx) {
+				isDownloading = false;
+				return;
+			}
+
+			// Fill black background
+			ctx.fillStyle = '#000000';
+			ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+			// Convert SVG to data URL
+			const svgData = new XMLSerializer().serializeToString(clonedSvg);
+			const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+			const svgUrl = URL.createObjectURL(svgBlob);
+
+			// Draw SVG to canvas
+			const img = new Image();
+			img.onload = () => {
+				ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+				URL.revokeObjectURL(svgUrl);
+
+				// Trigger download
+				const pngUrl = canvas.toDataURL('image/png');
+				const link = document.createElement('a');
+				link.download = 'threshold-dwelling-floorplan.png';
+				link.href = pngUrl;
+				link.click();
+				isDownloading = false;
+			};
+			img.onerror = () => {
+				console.error('Failed to load SVG');
+				URL.revokeObjectURL(svgUrl);
+				isDownloading = false;
+			};
+			img.src = svgUrl;
+		} catch (error) {
+			console.error('Download failed:', error);
+			isDownloading = false;
+		}
+	}
+
 	// ============================================================================
 	// FLOOR PLAN DATA
 	// ============================================================================
@@ -1023,10 +1100,10 @@
 			<span class="metric-value">{materialPalette.length}</span>
 			<span class="metric-label">Materials {showMaterials ? '−' : '+'}</span>
 		</div>
-		<a href="/experiments/threshold-dwelling/png?width=2048" download="threshold-dwelling-floorplan.png" class="metric clickable download-link">
-			<span class="metric-value">PNG</span>
+		<button type="button" class="metric clickable download-link" onclick={downloadPNG} disabled={isDownloading}>
+			<span class="metric-value">{isDownloading ? '...' : 'PNG'}</span>
 			<span class="metric-label">Download</span>
-		</a>
+		</button>
 	</footer>
 
 	<!-- Budget Details: Collapsible price sheet (Rams: information on demand) -->
