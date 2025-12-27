@@ -58,6 +58,12 @@
 		{ label: 'Voice', href: '/voice' },
 		{ label: 'Ethos', href: '/ethos' }
 	];
+
+	// Canon documentation pages have their own layout with DocSidebar.
+	// The footer does not earn its existence there: the sidebar already
+	// provides navigation, and documentation is a dwelling for study,
+	// not marketing. Weniger, aber besser.
+	const isCanonRoute = $derived((data?.pathname || '/').startsWith('/canon'));
 </script>
 
 <LayoutSEO property="ltd" />
@@ -83,14 +89,16 @@
 		{@render children()}
 	</main>
 
-	<Footer
-		mode="ltd"
-		showNewsletter={false}
-		aboutText="The philosophical foundation for the Create Something ecosystem. Curated wisdom from masters who embody 'less, but better.'"
-		quickLinks={quickLinks}
-		showSocial={true}
-		isAuthenticated={!!data.user}
-	/>
+	{#if !isCanonRoute}
+		<Footer
+			mode="ltd"
+			showNewsletter={false}
+			aboutText="The philosophical foundation for the Create Something ecosystem. Curated wisdom from masters who embody 'less, but better.'"
+			quickLinks={quickLinks}
+			showSocial={true}
+			isAuthenticated={!!data.user}
+		/>
+	{/if}
 
 	<ModeIndicator current="ltd" />
 </div>
