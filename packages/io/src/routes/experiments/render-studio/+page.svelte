@@ -7,7 +7,7 @@
 	 * - SVG operations are explicit (no natural language interpretation)
 	 * - Conditioning image is transparent (see what the AI sees)
 	 */
-	import { Footer, QuoteBlock } from '@create-something/components';
+	import { QuoteBlock } from '@create-something/components';
 	import type { PageData } from './$types';
 	import PresetPicker from './PresetPicker.svelte';
 	import OperationPicker from './OperationPicker.svelte';
@@ -567,8 +567,6 @@
 		</p>
 	</footer>
 </article>
-
-<Footer />
 
 <style>
 	.studio-page {
