@@ -416,6 +416,7 @@ echo "Ready"</pre>
 		font-size: 0.6rem;
 		line-height: 1.2;
 		color: var(--color-fg-tertiary);
+		text-align: center;
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);

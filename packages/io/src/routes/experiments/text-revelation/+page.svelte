@@ -335,6 +335,7 @@
 		font-size: 0.65rem;
 		line-height: 1.2;
 		color: var(--color-fg-muted);
+		text-align: center;
 		overflow-x: auto;
 		margin: var(--space-xl) 0;
 		padding: var(--space-md);

@@ -566,6 +566,7 @@ let phase = $derived(
 		font-size: clamp(0.5rem, 1.2vw, 0.75rem);
 		line-height: 1.2;
 		color: var(--color-fg-secondary);
+		text-align: center;
 		background: var(--color-bg-surface);
 		padding: var(--space-md);
 		border-radius: var(--radius-lg);

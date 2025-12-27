@@ -335,6 +335,7 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 	/* Page-specific overrides */
 	.ascii-art {
 		font-size: 0.6rem; /* Narrower than default 0.65rem for tighter diagram */
+		text-align: center;
 	}
 
 	code {

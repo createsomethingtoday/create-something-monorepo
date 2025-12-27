@@ -314,6 +314,7 @@
 		font-size: 0.65rem;
 		line-height: 1.2;
 		color: var(--color-fg-muted);
+		text-align: center;
 		background: var(--color-bg-surface);
 		padding: var(--space-md);
 		border-radius: var(--radius-md);
