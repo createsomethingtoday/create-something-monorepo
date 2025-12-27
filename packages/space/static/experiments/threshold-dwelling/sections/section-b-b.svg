@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 728 248" width="728" height="248">
+<rect x="0" y="0" width="728" height="248" fill="white"/>
+<line x1="40" y1="208" x2="688" y2="208" stroke="black" stroke-width="2"/>
+<rect x="112" y="208" width="504" height="6" fill="black" stroke="black" stroke-width="1"/>
+<line x1="112" y1="76" x2="268" y2="76" stroke="black" stroke-width="2"/>
+<rect x="112" y="64" width="156" height="12" fill="black" stroke="black" stroke-width="1"/>
+<line x1="268" y1="76" x2="268" y2="100" stroke="black" stroke-width="2"/>
+<text x="190" y="142" font-family="Inter, system-ui, sans-serif" font-size="8" fill="black" text-anchor="middle" dominant-baseline="middle">Dining</text>
+<line x1="122" y1="208" x2="122" y2="76" stroke="black" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="127" y="142" font-family="Inter, system-ui, sans-serif" font-size="6" fill="black" dominant-baseline="middle">11'</text>
+<line x1="268" y1="100" x2="352" y2="100" stroke="black" stroke-width="2"/>
+<rect x="268" y="88" width="84" height="12" fill="black" stroke="black" stroke-width="1"/>
+<text x="310" y="154" font-family="Inter, system-ui, sans-serif" font-size="8" fill="black" text-anchor="middle" dominant-baseline="middle">Hall</text>
+<line x1="278" y1="208" x2="278" y2="100" stroke="black" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="283" y="154" font-family="Inter, system-ui, sans-serif" font-size="6" fill="black" dominant-baseline="middle">9'</text>
+<line x1="352" y1="100" x2="436" y2="100" stroke="black" stroke-width="2"/>
+<rect x="352" y="88" width="84" height="12" fill="black" stroke="black" stroke-width="1"/>
+<text x="394" y="154" font-family="Inter, system-ui, sans-serif" font-size="8" fill="black" text-anchor="middle" dominant-baseline="middle">Primary
+Bedroom</text>
+<line x1="362" y1="208" x2="362" y2="100" stroke="black" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="367" y="154" font-family="Inter, system-ui, sans-serif" font-size="6" fill="black" dominant-baseline="middle">9'</text>
+<line x1="436" y1="100" x2="616" y2="100" stroke="black" stroke-width="2"/>
+<rect x="436" y="88" width="180" height="12" fill="black" stroke="black" stroke-width="1"/>
+<text x="526" y="154" font-family="Inter, system-ui, sans-serif" font-size="8" fill="black" text-anchor="middle" dominant-baseline="middle">Closet/Bath</text>
+<line x1="446" y1="208" x2="446" y2="100" stroke="black" stroke-width="0.5" stroke-dasharray="2 2"/>
+<text x="451" y="154" font-family="Inter, system-ui, sans-serif" font-size="6" fill="black" dominant-baseline="middle">9'</text>
+<line x1="112" y1="208" x2="112" y2="76" stroke="black" stroke-width="2.5"/>
+<line x1="616" y1="208" x2="616" y2="100" stroke="black" stroke-width="2.5"/>
+<line x1="76" y1="64" x2="112" y2="64" stroke="black" stroke-width="1" stroke-dasharray="4 2"/>
+<line x1="616" y1="88" x2="652" y2="88" stroke="black" stroke-width="1" stroke-dasharray="4 2"/>
+<line x1="124" y1="208" x2="124" y2="76" stroke="black" stroke-width="0.5"/>
+<line x1="244" y1="208" x2="244" y2="76" stroke="black" stroke-width="0.5"/>
+<line x1="346" y1="208" x2="346" y2="112" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+<line x1="382" y1="208" x2="382" y2="112" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+<rect x="484" y="112" width="96" height="72" fill="none" stroke="black" stroke-width="1"/>
+<line x1="616" y1="208" x2="616" y2="100" stroke="black" stroke-width="3"/>
+<line x1="112" y1="208" x2="112" y2="76" stroke="black" stroke-width="3"/>
+<line x1="352" y1="208" x2="352" y2="100" stroke="black" stroke-width="2"/>
+<line x1="436" y1="208" x2="436" y2="100" stroke="black" stroke-width="2"/>
+<text x="40" y="25" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="bold" fill="black">SECTION B-B</text>
+<text x="688" y="25" font-family="Inter, system-ui, sans-serif" font-size="8" fill="black" text-anchor="end">Looking West ←</text>
+<line x1="40" y1="228" x2="160" y2="228" stroke="black" stroke-width="1"/>
+<line x1="40" y1="225" x2="40" y2="231" stroke="black" stroke-width="1"/>
+<line x1="160" y1="225" x2="160" y2="231" stroke="black" stroke-width="1"/>
+<text x="100" y="223" font-family="Inter, system-ui, sans-serif" font-size="6" fill="black" text-anchor="middle">10'</text>
+</svg>
