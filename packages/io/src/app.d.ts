@@ -26,6 +26,8 @@ declare global {
 				RESEND_WEBHOOK_SECRET?: string;
 				TURNSTILE_SECRET_KEY?: string;
 				TURNSTILE_SITE_KEY?: string;
+				LINKEDIN_CLIENT_ID?: string;
+				LINKEDIN_CLIENT_SECRET?: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;
