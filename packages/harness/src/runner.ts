@@ -200,6 +200,7 @@ export async function initializeHarness(
       lastCheckpoint: null,
       checkpointPolicy,
       pauseReason: null,
+      totalCost: 0,
     };
 
     return { harnessState, featureMap };
@@ -246,6 +247,7 @@ export async function initializeHarness(
     lastCheckpoint: null,
     checkpointPolicy,
     pauseReason: null,
+    totalCost: 0,
   };
 
   return { harnessState, featureMap };
@@ -459,6 +461,11 @@ export async function runHarness(
 
     // 6. Handle session result with graceful failure handling
     recordSession(checkpointTracker, sessionResult);
+
+    // Update totalCost aggregation
+    if (sessionResult.costUsd) {
+      harnessState.totalCost += sessionResult.costUsd;
+    }
 
     if (sessionResult.outcome === 'success') {
       // Check if this was a successful retry
@@ -802,6 +809,7 @@ export async function resumeHarness(
     lastCheckpoint: lastCheckpointId,
     checkpointPolicy: DEFAULT_CHECKPOINT_POLICY,
     pauseReason: null,
+    totalCost: 0, // TODO: Restore from checkpoint metadata
   };
 
   // 7. Update harness status to running
@@ -1002,9 +1010,12 @@ export async function runParallelSessions(
     console.log('\n' + formatSwarmProgressDisplay(swarmProgress));
   }
 
-  // Record results
+  // Record results and aggregate costs
   for (const result of results) {
     recordSession(checkpointTracker, result);
+    if (result.costUsd) {
+      harnessState.totalCost += result.costUsd;
+    }
   }
 
   return results;

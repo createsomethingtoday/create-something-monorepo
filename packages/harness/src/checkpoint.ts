@@ -362,6 +362,12 @@ export async function generateCheckpoint(
 
   const confidence = calculateConfidence(tracker.sessionsResults);
 
+  // Calculate cost metrics
+  const sessionsWithCost = tracker.sessionsResults.filter(r => r.costUsd !== null && r.costUsd !== undefined);
+  const avgCostPerSession = sessionsWithCost.length > 0
+    ? sessionsWithCost.reduce((sum, r) => sum + (r.costUsd || 0), 0) / sessionsWithCost.length
+    : undefined;
+
   // Capture agent context for pause/resume
   const agentContext: AgentContext = {
     ...tracker.agentContext,
@@ -380,6 +386,8 @@ export async function generateCheckpoint(
     confidence,
     redirectNotes,
     agentContext,
+    totalCost: harnessState.totalCost,
+    avgCostPerSession,
   };
 
   // Create checkpoint issue in Beads
@@ -617,6 +625,14 @@ export function formatCheckpointDisplay(checkpoint: Checkpoint | SwarmCheckpoint
 
   lines.push('');
   lines.push(`Confidence: ${(checkpoint.confidence * 100).toFixed(0)}%`);
+
+  // Show cost metrics if available
+  if (checkpoint.totalCost !== undefined && checkpoint.totalCost > 0) {
+    lines.push(`Total Cost: $${checkpoint.totalCost.toFixed(4)}`);
+  }
+  if (checkpoint.avgCostPerSession !== undefined && checkpoint.avgCostPerSession > 0) {
+    lines.push(`Avg Cost/Session: $${checkpoint.avgCostPerSession.toFixed(4)}`);
+  }
 
   // Show parallelism efficiency for swarm checkpoints
   if (isSwarm && (checkpoint as SwarmCheckpoint).parallelismEfficiency !== null) {

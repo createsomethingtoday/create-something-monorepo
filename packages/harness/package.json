@@ -21,13 +21,16 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "start": "node dist/cli.js",
     "harness": "node dist/cli.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
   },
   "keywords": [
     "claude-code",

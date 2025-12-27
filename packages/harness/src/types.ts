@@ -145,6 +145,8 @@ export interface HarnessState {
   lastCheckpoint: string | null;
   checkpointPolicy: CheckpointPolicy;
   pauseReason: string | null;
+  /** Total cost across all sessions in USD */
+  totalCost: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -165,6 +167,10 @@ export interface Checkpoint {
   redirectNotes: string | null;
   /** Agent context for pause/resume (nondeterministic idempotence) */
   agentContext?: AgentContext;
+  /** Total cost of all sessions up to this checkpoint (USD) */
+  totalCost?: number;
+  /** Average cost per session (USD) */
+  avgCostPerSession?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
