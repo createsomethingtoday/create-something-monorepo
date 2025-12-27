@@ -11,6 +11,30 @@
 		getFurnitureTypes,
 		getAvailableOperations
 	} from './svg-operations';
+	import {
+		Sofa,
+		Users,
+		Tag,
+		Trash2,
+		Circle,
+		BedDouble,
+		Armchair,
+		Square,
+		Flower2
+	} from 'lucide-svelte';
+
+	// Icon component mapping
+	const iconMap: Record<string, typeof Sofa> = {
+		sofa: Sofa,
+		users: Users,
+		tag: Tag,
+		'trash-2': Trash2,
+		circle: Circle,
+		'bed-double': BedDouble,
+		armchair: Armchair,
+		square: Square,
+		'flower-2': Flower2
+	};
 
 	interface Props {
 		onApplyOperation?: (operation: SvgOperation) => void;
@@ -81,13 +105,18 @@
 	<!-- Operation Type Selection -->
 	<div class="operation-buttons">
 		{#each availableOperations as op}
+			{@const IconComponent = iconMap[op.icon]}
 			<button
 				class="operation-button"
 				class:selected={selectedOperationType === op.type}
 				onclick={() => (selectedOperationType = op.type)}
 				title={op.description}
 			>
-				<span class="op-icon">{op.icon}</span>
+				<span class="op-icon">
+					{#if IconComponent}
+						<IconComponent size={20} strokeWidth={1.5} />
+					{/if}
+				</span>
 				<span class="op-name">{op.name}</span>
 			</button>
 		{/each}
@@ -99,12 +128,17 @@
 			<label class="control-label">Furniture Type</label>
 			<div class="furniture-grid">
 				{#each furnitureTypes as f}
+					{@const FurnitureIcon = iconMap[f.icon]}
 					<button
 						class="furniture-button"
 						class:selected={selectedFurniture === f.type}
 						onclick={() => (selectedFurniture = f.type)}
 					>
-						<span>{f.icon}</span>
+						<span class="furniture-icon">
+							{#if FurnitureIcon}
+								<FurnitureIcon size={16} strokeWidth={1.5} />
+							{/if}
+						</span>
 						<span>{f.name}</span>
 					</button>
 				{/each}

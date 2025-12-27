@@ -154,6 +154,7 @@ function insertLabel(svg: string, text: string, position: [number, number]): str
 
 /**
  * Get available furniture types with metadata
+ * Icons are Lucide icon names (rendered in component)
  */
 export function getFurnitureTypes(): Array<{
 	type: FurnitureType;
@@ -161,17 +162,18 @@ export function getFurnitureTypes(): Array<{
 	icon: string;
 }> {
 	return [
-		{ type: 'sofa', name: 'Sofa', icon: '🛋️' },
-		{ type: 'table', name: 'Table', icon: '🪑' },
-		{ type: 'bed', name: 'Bed', icon: '🛏️' },
-		{ type: 'chair', name: 'Chair', icon: '💺' },
-		{ type: 'desk', name: 'Desk', icon: '🖥️' },
-		{ type: 'plant', name: 'Plant', icon: '🪴' }
+		{ type: 'sofa', name: 'Sofa', icon: 'sofa' },
+		{ type: 'table', name: 'Table', icon: 'circle' },
+		{ type: 'bed', name: 'Bed', icon: 'bed-double' },
+		{ type: 'chair', name: 'Chair', icon: 'armchair' },
+		{ type: 'desk', name: 'Desk', icon: 'square' },
+		{ type: 'plant', name: 'Plant', icon: 'flower-2' }
 	];
 }
 
 /**
  * Get available operations for the UI
+ * Icons are Lucide icon names (rendered in component)
  */
 export function getAvailableOperations(): Array<{
 	type: SvgOperation['type'];
@@ -184,25 +186,25 @@ export function getAvailableOperations(): Array<{
 			type: 'add-furniture',
 			name: 'Add Furniture',
 			description: 'Place furniture symbols on the plan',
-			icon: '🛋️'
+			icon: 'sofa'
 		},
 		{
 			type: 'add-people',
 			name: 'Add People',
 			description: 'Add human figures to show scale',
-			icon: '👥'
+			icon: 'users'
 		},
 		{
 			type: 'add-label',
 			name: 'Add Label',
 			description: 'Add text labels to rooms',
-			icon: '🏷️'
+			icon: 'tag'
 		},
 		{
 			type: 'remove-element',
 			name: 'Remove Element',
 			description: 'Remove elements by ID or class',
-			icon: '🗑️'
+			icon: 'trash-2'
 		}
 	];
 }

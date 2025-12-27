@@ -290,6 +290,50 @@
 		operationHistory = [];
 		generateConditioningPreview();
 	}
+
+	// Download image (handles both data URLs and external URLs)
+	async function downloadImage(imageUrl: string, filename: string) {
+		try {
+			// For data URLs, we can download directly
+			if (imageUrl.startsWith('data:')) {
+				const link = document.createElement('a');
+				link.href = imageUrl;
+				link.download = filename;
+				link.click();
+				return;
+			}
+
+			// For external URLs, fetch and convert to blob
+			const response = await fetch(imageUrl);
+			const blob = await response.blob();
+			const objectUrl = URL.createObjectURL(blob);
+
+			const link = document.createElement('a');
+			link.href = objectUrl;
+			link.download = filename;
+			link.click();
+
+			// Clean up
+			URL.revokeObjectURL(objectUrl);
+		} catch (e) {
+			// Fallback: open in new tab
+			window.open(imageUrl, '_blank');
+		}
+	}
+
+	// Download conditioning preview
+	function downloadConditioningPng() {
+		if (canonPng) {
+			downloadImage(canonPng, 'conditioning.png');
+		}
+	}
+
+	// Download rendered image
+	function downloadRenderedImage() {
+		if (renderedImage) {
+			downloadImage(renderedImage, 'render.png');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -379,6 +423,11 @@
 					<div class="conditioning-preview">
 						<img src={canonPng} alt="ControlNet conditioning input" />
 					</div>
+					<div class="preview-actions">
+						<button class="download-button" onclick={downloadConditioningPng}>
+							Download Conditioning PNG
+						</button>
+					</div>
 					<p class="preview-caption">
 						This is what the AI sees. White lines on black preserve geometry.
 					</p>
@@ -425,9 +474,9 @@
 							<img src={renderedImage} alt="Rendered architectural visualization" />
 						</div>
 						<div class="result-actions">
-							<a href={renderedImage} download="render.png" class="download-button">
+							<button class="download-button" onclick={downloadRenderedImage}>
 								Download PNG
-							</a>
+							</button>
 						</div>
 					</div>
 				{/if}
@@ -717,6 +766,12 @@
 		display: block;
 	}
 
+	.preview-actions {
+		display: flex;
+		gap: var(--space-sm);
+		margin-top: var(--space-sm);
+	}
+
 	.preview-caption {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
@@ -813,7 +868,9 @@
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
+		font-family: inherit;
 		text-decoration: none;
+		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
