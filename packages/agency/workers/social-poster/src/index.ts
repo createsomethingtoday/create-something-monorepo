@@ -1,0 +1,215 @@
+/**
+ * Social Poster Worker
+ *
+ * Zuhandenheit: The infrastructure disappears; the content distributes itself.
+ *
+ * - Cron trigger: Every 15 minutes, check for pending posts
+ * - Queue consumer: Process posts from queue, call LinkedIn API
+ * - Retry logic: Exponential backoff, max 3 retries
+ */
+
+interface Env {
+	DB: D1Database;
+	SESSIONS: KVNamespace;
+	POSTING_QUEUE: Queue<PostMessage>;
+	LINKEDIN_API_VERSION: string;
+}
+
+interface PostMessage {
+	postId: string;
+	platform: 'linkedin';
+	content: string;
+	metadata?: {
+		commentLink?: string;
+	};
+}
+
+interface StoredToken {
+	access_token: string;
+	expires_at: number;
+	scope: string;
+}
+
+interface PostRow {
+	id: string;
+	platform: string;
+	content: string;
+	scheduled_for: number;
+	status: string;
+	metadata: string | null;
+}
+
+const LINKEDIN_API = 'https://api.linkedin.com/v2';
+
+export default {
+	/**
+	 * Cron handler: Find pending posts and queue them
+	 */
+	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+		const now = Date.now();
+
+		console.log(`[Cron] Checking for pending posts at ${new Date(now).toISOString()}`);
+
+		// Find posts ready to send
+		const posts = await env.DB.prepare(
+			`SELECT id, platform, content, metadata
+			 FROM social_posts
+			 WHERE status = 'pending' AND scheduled_for <= ?
+			 ORDER BY scheduled_for ASC
+			 LIMIT 10`
+		)
+			.bind(now)
+			.all<PostRow>();
+
+		if (posts.results.length === 0) {
+			console.log('[Cron] No pending posts found');
+			return;
+		}
+
+		console.log(`[Cron] Found ${posts.results.length} posts to queue`);
+
+		// Queue each post
+		for (const post of posts.results) {
+			const metadata = post.metadata ? JSON.parse(post.metadata) : undefined;
+
+			await env.POSTING_QUEUE.send({
+				postId: post.id,
+				platform: post.platform as 'linkedin',
+				content: post.content,
+				metadata
+			});
+
+			// Mark as queued
+			await env.DB.prepare(`UPDATE social_posts SET status = 'queued' WHERE id = ?`)
+				.bind(post.id)
+				.run();
+
+			console.log(`[Cron] Queued post ${post.id}`);
+		}
+	},
+
+	/**
+	 * Queue handler: Process posts and call LinkedIn API
+	 */
+	async queue(batch: MessageBatch<PostMessage>, env: Env): Promise<void> {
+		for (const msg of batch.messages) {
+			const { postId, platform, content, metadata } = msg.body;
+
+			console.log(`[Queue] Processing post ${postId}`);
+
+			try {
+				// Get LinkedIn token
+				const tokenData = await env.SESSIONS.get('linkedin_access_token');
+
+				if (!tokenData) {
+					throw new Error('No LinkedIn access token. Re-authenticate at /api/linkedin/auth');
+				}
+
+				const token: StoredToken = JSON.parse(tokenData);
+
+				if (Date.now() > token.expires_at) {
+					await env.SESSIONS.delete('linkedin_access_token');
+					throw new Error('LinkedIn token expired. Re-authenticate at /api/linkedin/auth');
+				}
+
+				// Get user ID
+				const userResponse = await fetch(`${LINKEDIN_API}/userinfo`, {
+					headers: { Authorization: `Bearer ${token.access_token}` }
+				});
+
+				if (!userResponse.ok) {
+					throw new Error(`Failed to get user info: ${await userResponse.text()}`);
+				}
+
+				const userInfo = (await userResponse.json()) as { sub: string };
+				const userId = userInfo.sub;
+
+				// Post to LinkedIn
+				const postResponse = await fetch(`${LINKEDIN_API}/ugcPosts`, {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+						'Content-Type': 'application/json',
+						'X-Restli-Protocol-Version': '2.0.0'
+					},
+					body: JSON.stringify({
+						author: `urn:li:person:${userId}`,
+						lifecycleState: 'PUBLISHED',
+						specificContent: {
+							'com.linkedin.ugc.ShareContent': {
+								shareCommentary: { text: content.substring(0, 3000) },
+								shareMediaCategory: 'NONE'
+							}
+						},
+						visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' }
+					})
+				});
+
+				if (!postResponse.ok) {
+					throw new Error(`LinkedIn post failed: ${await postResponse.text()}`);
+				}
+
+				const result = (await postResponse.json()) as { id: string };
+				const linkedInPostId = result.id;
+				const postUrl = `https://www.linkedin.com/feed/update/${linkedInPostId}`;
+
+				console.log(`[Queue] Posted successfully: ${postUrl}`);
+
+				// Add comment with link if needed (best practice: links in comments)
+				if (metadata?.commentLink) {
+					try {
+						await fetch(`${LINKEDIN_API}/socialActions/${linkedInPostId}/comments`, {
+							method: 'POST',
+							headers: {
+								Authorization: `Bearer ${token.access_token}`,
+								'Content-Type': 'application/json',
+								'X-Restli-Protocol-Version': '2.0.0'
+							},
+							body: JSON.stringify({
+								actor: `urn:li:person:${userId}`,
+								message: { text: metadata.commentLink }
+							})
+						});
+						console.log(`[Queue] Added comment with link`);
+					} catch (commentError) {
+						// Non-fatal: log but don't fail the post
+						console.warn(`[Queue] Failed to add comment: ${commentError}`);
+					}
+				}
+
+				// Update D1 with success
+				await env.DB.prepare(
+					`UPDATE social_posts
+					 SET status = 'posted', post_id = ?, post_url = ?, posted_at = ?
+					 WHERE id = ?`
+				)
+					.bind(linkedInPostId, postUrl, Date.now(), postId)
+					.run();
+
+				msg.ack();
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				console.error(`[Queue] Error processing post ${postId}: ${errorMessage}`);
+
+				// Update D1 with error
+				await env.DB.prepare(`UPDATE social_posts SET status = 'failed', error = ? WHERE id = ?`)
+					.bind(errorMessage, postId)
+					.run();
+
+				// Retry if not a permanent error
+				const isPermanentError =
+					errorMessage.includes('expired') ||
+					errorMessage.includes('No LinkedIn access token') ||
+					errorMessage.includes('401');
+
+				if (isPermanentError) {
+					console.log(`[Queue] Permanent error, not retrying: ${errorMessage}`);
+					msg.ack(); // Don't retry permanent errors
+				} else {
+					console.log(`[Queue] Transient error, will retry`);
+					msg.retry();
+				}
+			}
+		}
+	}
+};

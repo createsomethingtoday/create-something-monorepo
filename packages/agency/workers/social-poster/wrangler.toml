@@ -1,0 +1,37 @@
+# Social Poster Worker
+# Handles scheduled LinkedIn posts via cron + queue
+
+name = "social-poster"
+main = "src/index.ts"
+compatibility_date = "2025-11-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Cron: Check every 15 minutes for posts to send
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Queue consumer for processing posts
+[[queues.consumers]]
+queue = "social-posting-queue"
+max_batch_size = 1
+max_retries = 3
+max_batch_timeout = 30
+
+# Queue producer binding (for sending messages)
+[[queues.producers]]
+binding = "POSTING_QUEUE"
+queue = "social-posting-queue"
+
+# D1 Database (same as agency)
+[[d1_databases]]
+binding = "DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+# KV for token storage (shared with io and agency)
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "973b18397c4d4b068313152a642f1ad5"
+
+[vars]
+LINKEDIN_API_VERSION = "202412"
