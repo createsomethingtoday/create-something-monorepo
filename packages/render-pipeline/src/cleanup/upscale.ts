@@ -129,7 +129,7 @@ export async function upscale(
   });
 
   // Download result
-  const resultUrl = output as string;
+  const resultUrl = output as unknown as string;
   const response = await fetch(resultUrl);
   if (!response.ok) {
     throw new Error(`Failed to download upscaled image: ${response.statusText}`);

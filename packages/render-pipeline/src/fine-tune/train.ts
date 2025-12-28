@@ -13,8 +13,8 @@ import type {
   TrainingImage
 } from './types.js';
 
-// Flux LoRA trainer model on Replicate
-const FLUX_TRAINER_MODEL = 'ostris/flux-dev-lora-trainer';
+// Flux LoRA trainer model on Replicate (Dec 2025)
+const FLUX_TRAINER_MODEL = 'replicate/fast-flux-trainer';
 
 // H100 cost per second (as of Dec 2025)
 const H100_COST_PER_SECOND = 0.0122;
@@ -73,48 +73,54 @@ export async function startTraining(config: TrainingConfig): Promise<TrainingRes
   console.log(`  LoRA type: ${loraType}`);
   console.log(`  Steps: ${steps}`);
 
-  // Create training
+  // Create training using the trainings API
   const input: Record<string, unknown> = {
     input_images: imagesInput,
     trigger_word: triggerWord,
-    steps,
-    lora_rank: 16, // Standard rank for good quality/size balance
-    optimizer: 'adamw8bit',
-    batch_size: 1,
-    resolution: '512,768,1024', // Multi-resolution training
-    autocaption: !caption, // Auto-caption if no manual caption provided
-    autocaption_prefix: caption || `a photo in the style of ${triggerWord},`
+    lora_type: loraType,
+    training_steps: steps
   };
 
-  const prediction = await client.predictions.create({
-    model: FLUX_TRAINER_MODEL,
-    input
-  });
+  // Use trainings API for fine-tuning
+  const training = await client.trainings.create(
+    'replicate',
+    'fast-flux-trainer',
+    'f463fbfc97389e10a2f443a8a84b6953b1058eafbf0c9af4d84457ff07cb04db',
+    {
+      destination: `${process.env.REPLICATE_USERNAME || 'createsomethingtoday'}/flux-canon`,
+      input
+    }
+  );
 
-  console.log(`  Prediction ID: ${prediction.id}`);
-  console.log(`  Status: ${prediction.status}`);
+  console.log(`  Training ID: ${training.id}`);
+  console.log(`  Status: ${training.status}`);
 
   return {
-    predictionId: prediction.id,
-    status: prediction.status as TrainingResult['status']
+    predictionId: training.id,
+    status: training.status as TrainingResult['status']
   };
 }
 
 /**
  * Wait for training to complete
  *
- * @param predictionId - Prediction ID from startTraining
+ * @param trainingId - Training ID from startTraining
  * @returns Final training result
  */
-export async function waitForTraining(predictionId: string): Promise<TrainingResult> {
+export async function waitForTraining(trainingId: string): Promise<TrainingResult> {
   const client = getClient();
   const startTime = Date.now();
 
-  console.log(`Waiting for training ${predictionId} to complete...`);
+  console.log(`Waiting for training ${trainingId} to complete...`);
 
-  // First fetch the prediction, then wait for it
-  const prediction = await client.predictions.get(predictionId);
-  const completed = await client.wait(prediction);
+  // Poll for training completion
+  let completed = await client.trainings.get(trainingId);
+  while (completed.status === 'starting' || completed.status === 'processing') {
+    await new Promise((resolve) => setTimeout(resolve, 5000)); // Poll every 5s
+    completed = await client.trainings.get(trainingId);
+    console.log(`  Status: ${completed.status}...`);
+  }
+
   const durationSeconds = (Date.now() - startTime) / 1000;
 
   console.log(`  Training completed in ${durationSeconds.toFixed(1)}s`);
@@ -122,33 +128,36 @@ export async function waitForTraining(predictionId: string): Promise<TrainingRes
 
   if (completed.status === 'failed') {
     return {
-      predictionId,
+      predictionId: trainingId,
       status: 'failed',
       error: completed.error as string,
       durationSeconds
     };
   }
 
-  // Extract model URL from output
+  // Extract model URL from output - training output contains the model version
   const output = completed.output as Record<string, unknown> | string;
   let modelUrl: string | undefined;
   let versionId: string | undefined;
 
   if (typeof output === 'string') {
     modelUrl = output;
+    // Extract version from URL like "createsomething/flux-canon:abc123"
+    const match = output.match(/:([a-f0-9]+)$/);
+    if (match) versionId = match[1];
   } else if (output && typeof output === 'object') {
-    modelUrl = (output.weights || output.url || output.output) as string;
+    modelUrl = (output.weights || output.url || output.output || output.version) as string;
     versionId = output.version as string;
   }
 
   // Estimate cost
   const costEstimate = durationSeconds * H100_COST_PER_SECOND;
 
-  console.log(`  Model URL: ${modelUrl}`);
+  console.log(`  Model: ${modelUrl}`);
   console.log(`  Estimated cost: $${costEstimate.toFixed(2)}`);
 
   return {
-    predictionId,
+    predictionId: trainingId,
     status: 'succeeded',
     modelUrl,
     versionId,
@@ -220,13 +229,13 @@ export async function loadManifest(manifestPath: string): Promise<TrainingManife
 /**
  * Check training status
  */
-export async function checkTrainingStatus(predictionId: string): Promise<TrainingResult> {
+export async function checkTrainingStatus(trainingId: string): Promise<TrainingResult> {
   const client = getClient();
-  const prediction = await client.predictions.get(predictionId);
+  const training = await client.trainings.get(trainingId);
 
   return {
-    predictionId,
-    status: prediction.status as TrainingResult['status'],
-    error: prediction.error as string | undefined
+    predictionId: trainingId,
+    status: training.status as TrainingResult['status'],
+    error: training.error as string | undefined
   };
 }

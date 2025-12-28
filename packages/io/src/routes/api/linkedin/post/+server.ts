@@ -17,6 +17,10 @@ interface UserInfoResponse {
 	sub: string;
 }
 
+interface UGCPostResponse {
+	id: string;
+}
+
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const sessions = platform?.env?.SESSIONS;
 
@@ -114,7 +118,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			return json({ error: `Failed to create post: ${errorText}` }, { status: 400 });
 		}
 
-		const result = await postResponse.json();
+		const result = (await postResponse.json()) as UGCPostResponse;
 
 		return json({
 			success: true,
