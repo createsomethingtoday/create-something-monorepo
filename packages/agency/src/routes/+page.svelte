@@ -83,6 +83,37 @@
 	</div>
 </section>
 
+<!-- Ecosystem: Where This Comes From -->
+<section class="ecosystem-section">
+	<div class="ecosystem-container">
+		<p class="ecosystem-label">The Hermeneutic Circle</p>
+		<h2 class="ecosystem-heading">Research-backed. Philosophy-grounded.</h2>
+		<p class="ecosystem-description">
+			Our methods aren't invented—they're validated. .io research proves what works. .ltd canon defines why it matters.
+		</p>
+
+		<div class="ecosystem-grid">
+			<a href="https://createsomething.io" class="ecosystem-card" target="_blank" rel="noopener">
+				<span class="property-tag">.io</span>
+				<h3 class="property-name">Research</h3>
+				<p class="property-desc">Papers and experiments that validate our approach. Peer-reviewed patterns.</p>
+			</a>
+
+			<a href="https://createsomething.space" class="ecosystem-card" target="_blank" rel="noopener">
+				<span class="property-tag">.space</span>
+				<h3 class="property-name">Practice</h3>
+				<p class="property-desc">Learn the patterns we use. Interactive tutorials for AI-native development.</p>
+			</a>
+
+			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" target="_blank" rel="noopener">
+				<span class="property-tag">.ltd</span>
+				<h3 class="property-name">Canon</h3>
+				<p class="property-desc">Crystallization: human judgment encoded for AI execution. The philosophy behind our work.</p>
+			</a>
+		</div>
+	</div>
+</section>
+
 <!-- Act 4: The Invitation -->
 <section class="cta-section">
 	<p class="cta-text">Ready to subtract?</p>
@@ -255,6 +286,80 @@
 		transform: translateX(4px);
 	}
 
+	/* Ecosystem Section */
+	.ecosystem-section {
+		padding: var(--space-2xl) var(--space-xl);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.ecosystem-container {
+		max-width: 1000px;
+		margin: 0 auto;
+		text-align: center;
+	}
+
+	.ecosystem-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-sm);
+	}
+
+	.ecosystem-heading {
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.ecosystem-description {
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
+		max-width: 600px;
+		margin: 0 auto var(--space-xl);
+	}
+
+	.ecosystem-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-lg);
+	}
+
+	.ecosystem-card {
+		display: block;
+		padding: var(--space-lg);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		text-align: left;
+		transition: border-color var(--duration-micro) var(--ease-standard),
+					background var(--duration-micro) var(--ease-standard);
+	}
+
+	.ecosystem-card:hover {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-surface);
+	}
+
+	.property-tag {
+		font-size: var(--text-caption);
+		font-family: monospace;
+		color: var(--color-fg-muted);
+	}
+
+	.property-name {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin: var(--space-xs) 0;
+	}
+
+	.property-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		line-height: var(--leading-relaxed);
+	}
+
 	/* Responsive */
 	@media (max-width: 768px) {
 		.services-grid {
@@ -273,8 +378,13 @@
 
 		.services-section,
 		.principles-section,
-		.cta-section {
+		.cta-section,
+		.ecosystem-section {
 			padding: var(--space-xl) var(--space-lg);
+		}
+
+		.ecosystem-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

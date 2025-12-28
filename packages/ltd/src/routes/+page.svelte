@@ -69,6 +69,29 @@
 	</div>
 </section>
 
+<!-- Featured Pattern: Crystallization -->
+<section class="crystallization py-24 px-6">
+	<div class="max-w-4xl mx-auto">
+		<p class="eyebrow mb-4 text-center">Featured Pattern</p>
+		<h2 class="mb-8 text-center section-heading">Crystallization</h2>
+
+		<div class="crystal-card">
+			<p class="crystal-tagline">Your judgment, crystallized.</p>
+			<p class="crystal-description">
+				Encode human expertise into configurable constraints that AI agents execute within.
+				One expert's taste scales through curated autonomy—not "no humans in the loop,"
+				but human judgment that shapes every decision without requiring constant presence.
+			</p>
+			<div class="crystal-example">
+				<code>harness.config.yaml</code> → Model routing, quality gates, review pipelines
+			</div>
+			<a href="/patterns/crystallization" class="crystal-link">
+				Explore the pattern →
+			</a>
+		</div>
+	</div>
+</section>
+
 <!-- Featured Masters: Contemplation Over Interaction
      These cards invite dwelling, not clicking. The glow suggests interiority —
      "There's a full philosophy here; you're only seeing the surface."
@@ -371,5 +394,65 @@
 	.property-description {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
+	}
+
+	/* ==========================================================================
+	   CRYSTALLIZATION: Featured Pattern
+	   ========================================================================== */
+
+	.crystallization {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.crystal-card {
+		padding: var(--space-xl);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+		text-align: center;
+	}
+
+	.crystal-tagline {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-md);
+	}
+
+	.crystal-description {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		max-width: 600px;
+		margin: 0 auto var(--space-lg);
+	}
+
+	.crystal-example {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-lg);
+	}
+
+	.crystal-example code {
+		font-family: monospace;
+		color: var(--color-fg-tertiary);
+		background: var(--color-bg-elevated);
+		padding: 0.25em 0.5em;
+		border-radius: var(--radius-sm);
+	}
+
+	.crystal-link {
+		display: inline-block;
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+		padding: var(--space-sm) var(--space-md);
+		border: 1px solid var(--color-border-default);
+		transition: border-color var(--duration-micro) var(--ease-standard),
+					background var(--duration-micro) var(--ease-standard);
+	}
+
+	.crystal-link:hover {
+		border-color: var(--color-fg-primary);
+		background: var(--color-bg-elevated);
 	}
 </style>
