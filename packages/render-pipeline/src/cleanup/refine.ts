@@ -6,11 +6,15 @@
  */
 
 import Replicate from 'replicate';
+import sharp from 'sharp';
 import * as fs from 'fs/promises';
 import type { Distraction, DetectionResult } from './detect.js';
 
 // Isaac model on Replicate
 const ISAAC_MODEL = 'perceptron-ai-inc/isaac-0.1';
+
+// Max dimension for Isaac API (smaller than Flux to avoid payload errors)
+const MAX_DIMENSION = 1024;
 
 // Isaac uses 0-1000 coordinate space
 const ISAAC_COORD_MAX = 1000;
@@ -60,6 +64,30 @@ function bufferToDataUri(buffer: Buffer, mimeType = 'image/png'): string {
 }
 
 /**
+ * Resize image if needed to fit within max dimensions
+ */
+async function resizeIfNeeded(buffer: Buffer, maxDim: number): Promise<Buffer> {
+  const metadata = await sharp(buffer).metadata();
+  const width = metadata.width || 1024;
+  const height = metadata.height || 1024;
+
+  const maxSize = Math.max(width, height);
+
+  if (maxSize <= maxDim) {
+    return buffer;
+  }
+
+  const scale = maxDim / maxSize;
+  const newWidth = Math.round(width * scale);
+  const newHeight = Math.round(height * scale);
+
+  return sharp(buffer)
+    .resize(newWidth, newHeight, { fit: 'inside' })
+    .jpeg({ quality: 85 })  // Use JPEG for smaller payload
+    .toBuffer();
+}
+
+/**
  * Convert Isaac box (0-1000) to normalized coordinates (0-1)
  */
 function isaacBoxToNormalized(box: IsaacBox): Distraction {
@@ -106,9 +134,10 @@ export async function refineWithIsaac(
 
   const client = getClient();
 
-  // Read image
+  // Read and resize image for Isaac API
   const imageBuffer = await fs.readFile(imagePath);
-  const imageUri = bufferToDataUri(imageBuffer, 'image/png');
+  const resizedBuffer = await resizeIfNeeded(imageBuffer, MAX_DIMENSION);
+  const imageUri = bufferToDataUri(resizedBuffer, 'image/jpeg');
 
   const prompt = buildRefinementPrompt(distractions);
 
@@ -122,6 +151,7 @@ export async function refineWithIsaac(
         response_style: 'box'  // Request bounding box output
       }
     });
+
 
     // Parse Isaac response
     const response = parseIsaacResponse(output);
@@ -185,12 +215,24 @@ function normalizeIsaacResponse(obj: unknown): IsaacResponse {
     response.text = record.output;
   }
 
+  // Isaac returns structured_output as a JSON string
+  if (typeof record.structured_output === 'string') {
+    try {
+      const parsed = JSON.parse(record.structured_output);
+      if (Array.isArray(parsed)) {
+        response.boxes = parsed.map(normalizeBox).filter(Boolean) as IsaacBox[];
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
   // Extract boxes from various possible formats
-  if (Array.isArray(record.boxes)) {
+  if (!response.boxes && Array.isArray(record.boxes)) {
     response.boxes = record.boxes.map(normalizeBox).filter(Boolean) as IsaacBox[];
-  } else if (Array.isArray(record.points)) {
+  } else if (!response.boxes && Array.isArray(record.points)) {
     response.boxes = record.points.map(normalizeBox).filter(Boolean) as IsaacBox[];
-  } else if (Array.isArray(record.regions)) {
+  } else if (!response.boxes && Array.isArray(record.regions)) {
     response.boxes = record.regions.map(normalizeBox).filter(Boolean) as IsaacBox[];
   }
 
@@ -211,8 +253,16 @@ function normalizeBox(box: unknown): IsaacBox | null {
   let topLeft: [number, number] | null = null;
   let bottomRight: [number, number] | null = null;
 
-  // Format 1: top_left, bottom_right
-  if (Array.isArray(record.top_left) && Array.isArray(record.bottom_right)) {
+  // Format 1a: top_left, bottom_right as objects {x, y}
+  const tl = record.top_left as Record<string, unknown> | undefined;
+  const br = record.bottom_right as Record<string, unknown> | undefined;
+  if (tl && br && typeof tl.x === 'number' && typeof tl.y === 'number' &&
+      typeof br.x === 'number' && typeof br.y === 'number') {
+    topLeft = [tl.x, tl.y];
+    bottomRight = [br.x, br.y];
+  }
+  // Format 1b: top_left, bottom_right as arrays
+  else if (Array.isArray(record.top_left) && Array.isArray(record.bottom_right)) {
     topLeft = record.top_left as [number, number];
     bottomRight = record.bottom_right as [number, number];
   }
