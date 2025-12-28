@@ -178,6 +178,19 @@
 					<p>✓ Compose operations, don't invoke schemas</p>
 				</div>
 			</a>
+
+			<!-- Pattern: Crystallization -->
+			<a href="/patterns/crystallization" class="block border border-canon p-6 hover:border-hover transition-colors">
+				<h3 class="text-lg-canon font-semibold mb-3">Crystallization</h3>
+				<p class="text-sm-canon opacity-60-canon mb-4">
+					Encode human judgment into constraints that AI agents execute within. One expert's taste scales through curated autonomy.
+				</p>
+				<div class="text-xs-canon opacity-40-canon font-mono">
+					<p class="mb-1">✓ Config files over hardcoded heuristics</p>
+					<p class="mb-1">✓ Human decides boundaries, AI works within</p>
+					<p>✓ Expertise becomes portable infrastructure</p>
+				</div>
+			</a>
 		</div>
 	</div>
 </section>
@@ -434,6 +447,10 @@
 
 			<p>
 				When you write code that uses tools as libraries and forget you're invoking an API, that's <strong>Code Mode</strong>.
+			</p>
+
+			<p>
+				When you encode your judgment into a config file and AI agents execute flawlessly within those boundaries, that's <strong>Crystallization</strong>.
 			</p>
 
 			<div class="mt-12 p-6 border border-canon">
