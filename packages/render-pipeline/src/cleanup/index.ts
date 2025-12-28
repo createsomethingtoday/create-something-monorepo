@@ -10,6 +10,7 @@ import * as path from 'path';
 import { generateMask, createDebugVisualization } from './mask.js';
 import { inpaint, isConfigured as isReplicateConfigured } from './inpaint.js';
 import { parseDetectionResults, DETECTION_PROMPT } from './detect.js';
+import { refineWithIsaac, refineDetectionResult } from './refine.js';
 import type { Distraction, DetectionResult, BatchDetectionResult } from './detect.js';
 import type { InpaintModel, InpaintResult } from './inpaint.js';
 
@@ -19,13 +20,16 @@ export type { InpaintModel, InpaintResult } from './inpaint.js';
 export { parseDetectionResults, DETECTION_PROMPT, isValidDistraction } from './detect.js';
 export { generateMask, createDebugVisualization } from './mask.js';
 export { inpaint } from './inpaint.js';
+export { refineWithIsaac, refineDetectionResult } from './refine.js';
 
 /**
  * Options for the cleanup pipeline
  */
 export interface CleanupOptions {
-  /** Inpainting model to use (default: 'lama') */
+  /** Inpainting model to use (default: 'flux') */
   model?: InpaintModel;
+  /** Use Isaac-01 to refine bounding boxes for precision */
+  refine?: boolean;
   /** Save intermediate mask files */
   saveMasks?: boolean;
   /** Save debug visualizations showing detected regions */
@@ -106,7 +110,8 @@ export async function processWithDetection(
 ): Promise<CleanupResult> {
   const startTime = Date.now();
   const {
-    model = 'lama',
+    model = 'flux',
+    refine = false,
     saveMasks = false,
     saveDebug = false,
     outputDir,
@@ -121,17 +126,23 @@ export async function processWithDetection(
   const outDir = outputDir || inputDir;
 
   try {
+    // Optionally refine detections with Isaac-01 for precise bounding boxes
+    let distractions = detection.distractions;
+    if (refine && distractions.length > 0) {
+      distractions = await refineWithIsaac(imagePath, distractions);
+    }
+
     // Save debug visualization if requested
-    if (saveDebug && detection.distractions.length > 0) {
+    if (saveDebug && distractions.length > 0) {
       const debugPath = path.join(outDir, `${inputBase}-debug${inputExt}`);
-      await createDebugVisualization(imagePath, detection.distractions, debugPath);
+      await createDebugVisualization(imagePath, distractions, debugPath);
     }
 
     // If no distractions or dry run, we're done
-    if (detection.distractions.length === 0 || dryRun) {
+    if (distractions.length === 0 || dryRun) {
       return {
         inputPath: imagePath,
-        distractions: detection.distractions,
+        distractions,
         inpainted: false,
         duration: Date.now() - startTime
       };
@@ -142,7 +153,7 @@ export async function processWithDetection(
       ? path.join(outDir, `${inputBase}-mask.png`)
       : undefined;
 
-    const mask = await generateMask(imagePath, detection.distractions, {
+    const mask = await generateMask(imagePath, distractions, {
       outputPath: maskPath
     });
 
@@ -156,7 +167,7 @@ export async function processWithDetection(
     return {
       inputPath: imagePath,
       outputPath,
-      distractions: detection.distractions,
+      distractions,
       inpainted: true,
       duration: Date.now() - startTime
     };

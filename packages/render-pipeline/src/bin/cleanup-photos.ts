@@ -29,6 +29,7 @@ function parseArgs(args: string[]): {
   dryRun: boolean;
   saveMasks: boolean;
   saveDebug: boolean;
+  refine: boolean;
   model: InpaintModel;
   outputDir?: string;
   help: boolean;
@@ -38,6 +39,7 @@ function parseArgs(args: string[]): {
     dryRun: false,
     saveMasks: false,
     saveDebug: false,
+    refine: false,
     model: 'flux' as InpaintModel,
     outputDir: undefined as string | undefined,
     help: false
@@ -54,6 +56,8 @@ function parseArgs(args: string[]): {
       result.saveMasks = true;
     } else if (arg === '--save-debug' || arg === '-d') {
       result.saveDebug = true;
+    } else if (arg === '--refine' || arg === '-r') {
+      result.refine = true;
     } else if (arg === '--model' || arg === '-M') {
       const model = args[++i];
       if (model === 'flux' || model === 'sdxl' || model === 'lama') {
@@ -90,12 +94,16 @@ Detection JSON should contain results from Claude Code agents.
 
 OPTIONS:
   -D, --detections <file>  Read detection results from JSON file
+  -r, --refine             Use Isaac-01 for precise bounding box refinement
   -n, --dry-run            Generate debug images but don't inpaint
   -d, --save-debug         Save debug images showing detected regions
   -m, --save-masks         Save intermediate mask files
   -M, --model <name>       Inpainting model: 'flux' (best), 'sdxl', or 'lama' (fast)
   -o, --output <dir>       Output directory (default: same as input)
   -h, --help               Show this help message
+
+PIPELINE:
+  Claude (editorial) → Isaac (precision, optional) → Flux (inpainting)
 
 INPUT FORMAT:
   {
@@ -199,6 +207,9 @@ async function main(): Promise<void> {
 
   console.log(`Processing ${detections.results.length} image(s)`);
   console.log(`Model: ${args.model}`);
+  if (args.refine) {
+    console.log('Refinement: Isaac-01 (precise bounding boxes)');
+  }
   if (args.dryRun) {
     console.log('DRY RUN - generating debug images only');
   }
@@ -206,6 +217,7 @@ async function main(): Promise<void> {
   // Run cleanup
   const summary = await processBatchWithDetections(detections, {
     dryRun: args.dryRun,
+    refine: args.refine,
     saveMasks: args.saveMasks,
     saveDebug: args.saveDebug,
     model: args.model,
