@@ -14,6 +14,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "cleanup": "tsx src/bin/cleanup-photos.ts",
     "render-threshold": "tsx scripts/render-threshold.ts",
     "generate-sections": "tsx scripts/generate-sections.ts",
     "render-perspective": "tsx scripts/render-perspective.ts",
@@ -25,6 +26,7 @@
     "@resvg/resvg-wasm": "^2.6.2",
     "jsdom": "^25.0.0",
     "replicate": "^1.0.0",
+    "sharp": "^0.33.0",
     "three": "^0.170.0"
   },
   "devDependencies": {
