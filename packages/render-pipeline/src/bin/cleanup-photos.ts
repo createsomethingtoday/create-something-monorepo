@@ -30,6 +30,8 @@ function parseArgs(args: string[]): {
   saveMasks: boolean;
   saveDebug: boolean;
   refine: boolean;
+  upscale: boolean;
+  faceEnhance: boolean;
   model: InpaintModel;
   outputDir?: string;
   help: boolean;
@@ -40,6 +42,8 @@ function parseArgs(args: string[]): {
     saveMasks: false,
     saveDebug: false,
     refine: true,  // Isaac refinement ON by default (Claude's boxes aren't precise)
+    upscale: false,  // Real-ESRGAN upscaling OFF by default (adds processing time)
+    faceEnhance: true,  // Face enhancement ON by default when upscaling
     model: 'flux' as InpaintModel,
     outputDir: undefined as string | undefined,
     help: false
@@ -60,6 +64,14 @@ function parseArgs(args: string[]): {
       result.refine = true;
     } else if (arg === '--no-refine') {
       result.refine = false;
+    } else if (arg === '--upscale' || arg === '-u') {
+      result.upscale = true;
+    } else if (arg === '--no-upscale') {
+      result.upscale = false;
+    } else if (arg === '--face-enhance') {
+      result.faceEnhance = true;
+    } else if (arg === '--no-face-enhance') {
+      result.faceEnhance = false;
     } else if (arg === '--model' || arg === '-M') {
       const model = args[++i];
       if (model === 'flux' || model === 'sdxl' || model === 'lama') {
@@ -97,6 +109,8 @@ Detection JSON should contain results from Claude Code agents.
 OPTIONS:
   -D, --detections <file>  Read detection results from JSON file
   --no-refine              Skip Isaac-01 refinement (not recommended)
+  -u, --upscale            Upscale with Real-ESRGAN after inpainting
+  --no-face-enhance        Disable face enhancement during upscaling
   -n, --dry-run            Generate debug images but don't inpaint
   -d, --save-debug         Save debug images showing detected regions
   -m, --save-masks         Save intermediate mask files
@@ -105,7 +119,7 @@ OPTIONS:
   -h, --help               Show this help message
 
 PIPELINE (default):
-  Claude (editorial) → Isaac (precision) → Flux (inpainting)
+  Claude (editorial) → Isaac (precision) → Flux (inpainting) [→ ESRGAN (upscale)]
 
 INPUT FORMAT:
   {
@@ -212,6 +226,9 @@ async function main(): Promise<void> {
   if (args.refine) {
     console.log('Refinement: Isaac-01 (precise bounding boxes)');
   }
+  if (args.upscale) {
+    console.log(`Upscaling: Real-ESRGAN${args.faceEnhance ? ' + face enhancement' : ''}`);
+  }
   if (args.dryRun) {
     console.log('DRY RUN - generating debug images only');
   }
@@ -220,6 +237,8 @@ async function main(): Promise<void> {
   const summary = await processBatchWithDetections(detections, {
     dryRun: args.dryRun,
     refine: args.refine,
+    upscale: args.upscale,
+    faceEnhance: args.faceEnhance,
     saveMasks: args.saveMasks,
     saveDebug: args.saveDebug,
     model: args.model,

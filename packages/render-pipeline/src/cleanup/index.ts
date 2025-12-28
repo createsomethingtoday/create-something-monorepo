@@ -11,8 +11,10 @@ import { generateMask, createDebugVisualization } from './mask.js';
 import { inpaint, isConfigured as isReplicateConfigured } from './inpaint.js';
 import { parseDetectionResults, DETECTION_PROMPT } from './detect.js';
 import { refineWithIsaac, refineDetectionResult } from './refine.js';
+import { upscale } from './upscale.js';
 import type { Distraction, DetectionResult, BatchDetectionResult } from './detect.js';
 import type { InpaintModel, InpaintResult } from './inpaint.js';
+import type { UpscaleOptions } from './upscale.js';
 
 // Re-export types and utilities
 export type { Distraction, DetectionResult, BatchDetectionResult } from './detect.js';
@@ -21,6 +23,8 @@ export { parseDetectionResults, DETECTION_PROMPT, isValidDistraction } from './d
 export { generateMask, createDebugVisualization } from './mask.js';
 export { inpaint } from './inpaint.js';
 export { refineWithIsaac, refineDetectionResult } from './refine.js';
+export { upscale, upscaleBatch } from './upscale.js';
+export type { UpscaleOptions } from './upscale.js';
 
 /**
  * Options for the cleanup pipeline
@@ -30,6 +34,10 @@ export interface CleanupOptions {
   model?: InpaintModel;
   /** Use Isaac-01 to refine bounding boxes for precision (default: true) */
   refine?: boolean;
+  /** Use Real-ESRGAN to upscale after inpainting (default: false) */
+  upscale?: boolean;
+  /** Enable face enhancement during upscaling (default: true) */
+  faceEnhance?: boolean;
   /** Save intermediate mask files */
   saveMasks?: boolean;
   /** Save debug visualizations showing detected regions */
@@ -112,6 +120,8 @@ export async function processWithDetection(
   const {
     model = 'flux',
     refine = true,  // Isaac refinement ON by default
+    upscale: doUpscale = false,
+    faceEnhance = true,
     saveMasks = false,
     saveDebug = false,
     outputDir,
@@ -158,11 +168,22 @@ export async function processWithDetection(
     });
 
     // Stage 2: Inpaint
-    const outputPath = path.join(outDir, `${inputBase}${suffix}.png`);
+    let outputPath = path.join(outDir, `${inputBase}${suffix}.png`);
     await inpaint(imagePath, mask, {
       model,
       outputPath
     });
+
+    // Stage 3: Upscale (optional)
+    if (doUpscale) {
+      const upscaledPath = path.join(outDir, `${inputBase}${suffix}-upscaled.png`);
+      await upscale(outputPath, {
+        scale: 2,
+        faceEnhance,
+        outputPath: upscaledPath
+      });
+      outputPath = upscaledPath;
+    }
 
     return {
       inputPath: imagePath,
