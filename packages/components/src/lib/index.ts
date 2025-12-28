@@ -33,3 +33,6 @@ export * from './icons/index.js';
 
 // Patterns (composition recipes)
 export * from './patterns/index.js';
+
+// Diagrams (data visualization)
+export * from './diagrams/index.js';
