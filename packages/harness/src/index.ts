@@ -224,6 +224,7 @@ export {
   runReviewer,
   filterFindingsBySeverity,
   getOutcomeIcon,
+  convertDefinitionToConfig,
 } from './reviewer.js';
 
 // Peer Review - Pipeline
@@ -254,4 +255,7 @@ export {
   formatBaselineHealth,
   canProceedWithWork,
   getBaselineBlockers,
+  runConfiguredGates,
+  runCustomGate,
+  attemptCustomAutoFix,
 } from './self-heal.js';

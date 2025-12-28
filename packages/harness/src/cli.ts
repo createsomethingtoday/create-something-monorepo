@@ -15,8 +15,9 @@
 import { initializeHarness, runHarness, resumeHarness, pauseHarness, getHarnessStatus, selectModelForTask } from './runner.js';
 import { getIssue, createIssue, updateIssueStatus } from './beads.js';
 import { runSession } from './session.js';
-import type { StartOptions, PauseOptions, ResumeOptions, ReviewPipelineConfig, ReviewerType, SwarmConfig, BeadsIssue } from './types.js';
-import { DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_SWARM_CONFIG } from './types.js';
+import type { StartOptions, PauseOptions, ResumeOptions, ReviewPipelineConfig, ReviewerType, SwarmConfig, BeadsIssue, HarnessConfig } from './types.js';
+import { DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_SWARM_CONFIG, DEFAULT_HARNESS_CONFIG } from './types.js';
+import { loadConfig, formatConfigDisplay } from './config/index.js';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -78,11 +79,13 @@ COMMANDS:
 WORK OPTIONS:
   --create "title"    Create new issue with title and work on it
   --model <m>         Override model selection (opus|sonnet|haiku)
+  --config <file>     Use custom harness config (default: harness.config.yaml)
   --dry-run           Show what would happen without executing
 
 OPTIONS:
   --checkpoint-every N   Create checkpoint every N sessions (default: 3)
   --max-hours M          Create checkpoint every M hours (default: 4)
+  --config <file>        Use custom harness configuration file
   --dry-run              Print what would happen without executing
   --reason "..."         Reason for pausing (with pause command)
   --harness-id <id>      Specify harness ID (for resume/status)
@@ -133,6 +136,12 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
     dryRun: args.includes('--dry-run'),
   };
 
+  // Load harness configuration
+  const configPath = parseStringArg(args, '--config');
+  const { config: harnessConfig, configPath: loadedConfigPath } = await loadConfig(configPath, cwd);
+
+  console.log(formatConfigDisplay(harnessConfig, loadedConfigPath));
+
   // Parse review configuration
   const noReview = args.includes('--no-review');
   const reviewConfig = noReview ? null : buildReviewConfig(args);
@@ -178,6 +187,7 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
   await runHarness(harnessState, {
     cwd,
     dryRun: options.dryRun,
+    config: harnessConfig,
     reviewConfig: reviewConfig ?? undefined,
     swarmConfig,
   });
@@ -224,7 +234,11 @@ async function handleWork(args: string[], cwd: string): Promise<void> {
   const createTitle = parseStringArg(args, '--create');
   const specFile = parseStringArg(args, '--spec');
   const modelOverride = parseStringArg(args, '--model') as 'opus' | 'sonnet' | 'haiku' | undefined;
+  const configPath = parseStringArg(args, '--config');
   const dryRun = args.includes('--dry-run');
+
+  // Load harness configuration
+  const { config: harnessConfig, configPath: loadedConfigPath } = await loadConfig(configPath, cwd);
 
   let issue: BeadsIssue | null = null;
 
@@ -269,8 +283,8 @@ async function handleWork(args: string[], cwd: string): Promise<void> {
     process.exit(1);
   }
 
-  // Detect complexity and select model
-  const detectedModel = selectModelForTask(issue);
+  // Detect complexity and select model (uses config patterns)
+  const detectedModel = selectModelForTask(issue, harnessConfig);
   const model = modelOverride || detectedModel;
 
   console.log(`

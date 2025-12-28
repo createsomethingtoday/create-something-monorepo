@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type {
   ReviewerConfig,
+  ReviewerDefinition,
   ReviewContext,
   ReviewResult,
   ReviewFinding,
@@ -18,7 +19,27 @@ import type {
   FindingSeverity,
 } from './types.js';
 import { getPromptForReviewer } from './reviewer-prompts.js';
-import { parseModelFromOutput } from './model-detector.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Config Conversion
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Convert a ReviewerDefinition from HarnessConfig to ReviewerConfig.
+ * The `prompt` field from config (which may have been loaded from an external file)
+ * becomes the `customPrompt` that overrides the default prompt.
+ */
+export function convertDefinitionToConfig(def: ReviewerDefinition): ReviewerConfig {
+  return {
+    id: def.id,
+    type: def.type,
+    enabled: def.enabled,
+    canBlock: def.canBlock,
+    customPrompt: def.prompt, // Loaded external prompt becomes customPrompt
+    includePatterns: def.includePatterns,
+    excludePatterns: def.excludePatterns,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Prompt Generation

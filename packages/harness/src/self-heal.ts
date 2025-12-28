@@ -17,8 +17,10 @@ import type {
   BaselineResult,
   BaselineHealth,
   QualityGateType,
+  QualityGatesConfig,
+  QualityGateDefinition,
 } from './types.js';
-import { DEFAULT_BASELINE_CONFIG } from './types.js';
+import { DEFAULT_BASELINE_CONFIG, DEFAULT_HARNESS_CONFIG } from './types.js';
 import { createSelfHealIssue } from './beads.js';
 
 const exec = promisify(execCallback);
@@ -161,6 +163,114 @@ export async function attemptAutoFix(
 }
 
 /**
+ * Run a custom quality gate defined in config.
+ * Supports configurable commands for domain-specific quality checks.
+ */
+export async function runCustomGate(
+  gateDef: QualityGateDefinition,
+  cwd: string,
+  timeoutMs: number = 5 * 60 * 1000
+): Promise<BaselineGate> {
+  const startTime = Date.now();
+  const effectiveTimeout = gateDef.timeout ?? timeoutMs;
+
+  console.log(`  ⏳ Running ${gateDef.name}...`);
+
+  try {
+    const { stdout, stderr } = await Promise.race([
+      exec(gateDef.command, { cwd, maxBuffer: 10 * 1024 * 1024 }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), effectiveTimeout)
+      ),
+    ]);
+
+    const durationMs = Date.now() - startTime;
+    const output = (stdout + stderr).slice(-5000);
+
+    console.log(`  ✅ ${gateDef.name} passed (${(durationMs / 1000).toFixed(1)}s)`);
+
+    return {
+      name: gateDef.name as QualityGateType,
+      passed: true,
+      output,
+      durationMs,
+      fixAttempted: false,
+      fixSucceeded: false,
+      exitCode: 0,
+      command: gateDef.command,
+    };
+  } catch (error) {
+    const durationMs = Date.now() - startTime;
+    const execError = error as { stdout?: string; stderr?: string; code?: number; message?: string };
+
+    const output = ((execError.stdout || '') + (execError.stderr || '') + (execError.message || '')).slice(-5000);
+    const exitCode = execError.code ?? 1;
+
+    console.log(`  ❌ ${gateDef.name} failed (exit ${exitCode}, ${(durationMs / 1000).toFixed(1)}s)`);
+
+    return {
+      name: gateDef.name as QualityGateType,
+      passed: false,
+      output,
+      durationMs,
+      fixAttempted: false,
+      fixSucceeded: false,
+      exitCode,
+      command: gateDef.command,
+    };
+  }
+}
+
+/**
+ * Attempt auto-fix for a custom gate.
+ */
+export async function attemptCustomAutoFix(
+  gate: BaselineGate,
+  gateDef: QualityGateDefinition,
+  cwd: string,
+  timeoutMs: number = 5 * 60 * 1000
+): Promise<BaselineGate> {
+  if (!gateDef.autoFixCommand) {
+    return { ...gate, fixAttempted: true, fixSucceeded: false };
+  }
+
+  console.log(`  🔧 Attempting auto-fix for ${gate.name}...`);
+  const startTime = Date.now();
+
+  try {
+    await exec(gateDef.autoFixCommand, { cwd, maxBuffer: 10 * 1024 * 1024 });
+
+    // Re-run the original check
+    const recheckResult = await runCustomGate(gateDef, cwd, timeoutMs);
+
+    if (recheckResult.passed) {
+      console.log(`  ✅ Auto-fix succeeded for ${gate.name}`);
+      return {
+        ...recheckResult,
+        fixAttempted: true,
+        fixSucceeded: true,
+        durationMs: Date.now() - startTime,
+      };
+    } else {
+      console.log(`  ⚠ Auto-fix ran but ${gate.name} still failing`);
+      return {
+        ...recheckResult,
+        fixAttempted: true,
+        fixSucceeded: false,
+      };
+    }
+  } catch (error) {
+    console.log(`  ⚠ Auto-fix failed for ${gate.name}`);
+    return {
+      ...gate,
+      fixAttempted: true,
+      fixSucceeded: false,
+      durationMs: Date.now() - startTime,
+    };
+  }
+}
+
+/**
  * Create a blocker issue for a failing baseline gate.
  */
 export async function createBaselineBlocker(
@@ -263,6 +373,107 @@ export async function runBaselineCheck(
     : `${failedCount}/${gates.length} gates failed (${blockerIssues.length} blocker issues created)`;
 
   console.log(`\n${passed ? '✅' : '❌'} Baseline: ${summary}\n`);
+
+  return {
+    passed,
+    gates,
+    blockerIssues,
+    timestamp: new Date().toISOString(),
+    totalDurationMs,
+    summary,
+  };
+}
+
+/**
+ * Run quality gates using HarnessConfig's QualityGatesConfig.
+ * Supports both built-in gates and custom domain-specific gates.
+ *
+ * Philosophy: Different domains have different quality criteria.
+ * - Legal: contract-validation, redaction-check
+ * - Finance: audit-trail, compliance-check
+ * - Manufacturing: tolerance-check, bom-validation
+ */
+export async function runConfiguredGates(
+  config: QualityGatesConfig = DEFAULT_HARNESS_CONFIG.qualityGates,
+  cwd: string,
+  packageFilter?: string
+): Promise<BaselineResult> {
+  if (!config.enabled) {
+    return {
+      passed: true,
+      gates: [],
+      blockerIssues: [],
+      timestamp: new Date().toISOString(),
+      totalDurationMs: 0,
+      summary: 'Quality gates disabled',
+    };
+  }
+
+  console.log('\n🔍 Running quality gates...\n');
+  const startTime = Date.now();
+  const gates: BaselineGate[] = [];
+  const blockerIssues: string[] = [];
+
+  // Build BaselineConfig for built-in gates
+  const baselineConfig: BaselineConfig = {
+    enabled: true,
+    gates: config.builtIn,
+    autoFix: config.autoFix,
+    createBlockers: config.createBlockers,
+    maxAutoFixAttempts: 1,
+    gateTimeoutMs: config.gateTimeoutMs,
+    packageFilter,
+  };
+
+  // Run built-in gates first
+  const builtInGates: QualityGateType[] = [];
+  if (config.builtIn.typecheck) builtInGates.push('typecheck');
+  if (config.builtIn.lint) builtInGates.push('lint');
+  if (config.builtIn.tests) builtInGates.push('tests');
+  if (config.builtIn.build) builtInGates.push('build');
+
+  for (const gateType of builtInGates) {
+    let result = await runQualityGate(gateType, baselineConfig, cwd);
+
+    if (!result.passed && config.autoFix) {
+      result = await attemptAutoFix(result, baselineConfig, cwd);
+    }
+
+    gates.push(result);
+
+    if (!result.passed && config.createBlockers) {
+      const blockerId = await createBaselineBlocker(result, cwd);
+      blockerIssues.push(blockerId);
+    }
+  }
+
+  // Run custom gates
+  for (const gateDef of config.custom) {
+    let result = await runCustomGate(gateDef, cwd, config.gateTimeoutMs);
+
+    if (!result.passed && config.autoFix && gateDef.autoFixCommand) {
+      result = await attemptCustomAutoFix(result, gateDef, cwd, config.gateTimeoutMs);
+    }
+
+    gates.push(result);
+
+    // Create blocker if failed and configured (respects per-gate canBlock setting)
+    const shouldBlock = gateDef.canBlock !== false; // default true
+    if (!result.passed && config.createBlockers && shouldBlock) {
+      const blockerId = await createBaselineBlocker(result, cwd);
+      blockerIssues.push(blockerId);
+    }
+  }
+
+  const totalDurationMs = Date.now() - startTime;
+  const passed = gates.every(g => g.passed);
+  const failedCount = gates.filter(g => !g.passed).length;
+
+  const summary = passed
+    ? `All ${gates.length} quality gates passed (${(totalDurationMs / 1000).toFixed(1)}s)`
+    : `${failedCount}/${gates.length} gates failed (${blockerIssues.length} blocker issues created)`;
+
+  console.log(`\n${passed ? '✅' : '❌'} Quality gates: ${summary}\n`);
 
   return {
     passed,

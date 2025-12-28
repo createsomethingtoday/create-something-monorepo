@@ -881,3 +881,236 @@ export const DEFAULT_BASELINE_CONFIG: BaselineConfig = {
   maxAutoFixAttempts: 1,
   gateTimeoutMs: 5 * 60 * 1000, // 5 minutes
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Harness Configuration (Crystallization)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Model routing configuration.
+ * Philosophy: Different domains have different complexity patterns.
+ * - Legal: "argue", "negotiate" → opus; "redact", "tag" → haiku
+ * - Finance: "audit", "strategy" → opus; "reconcile" → haiku
+ * - Web: "architect", "refactor" → opus; "typo", "rename" → haiku
+ */
+export interface ModelRoutingConfig {
+  /** Default model for unmatched tasks */
+  default: 'opus' | 'sonnet' | 'haiku';
+  /** Complexity-based routing */
+  complexity: {
+    trivial: 'opus' | 'sonnet' | 'haiku';
+    simple: 'opus' | 'sonnet' | 'haiku';
+    standard: 'opus' | 'sonnet' | 'haiku';
+    complex: 'opus' | 'sonnet' | 'haiku';
+  };
+  /** Pattern-based overrides (first match wins) */
+  patterns: {
+    haiku: string[];
+    sonnet: string[];
+    opus: string[];
+  };
+  /** Escalation on failure */
+  escalation: {
+    enabled: boolean;
+    maxRetries: number;
+    escalateTo: 'opus' | 'sonnet';
+  };
+}
+
+/**
+ * Quality gate definition for custom gates.
+ * Philosophy: Different domains have different quality criteria.
+ * - Legal: contract-validation, redaction-check
+ * - Finance: audit-trail, compliance-check
+ * - Manufacturing: tolerance-check, bom-validation
+ */
+export interface QualityGateDefinition {
+  /** Gate name (used in reports) */
+  name: string;
+  /** Command to run */
+  command: string;
+  /** Auto-fix command (optional) */
+  autoFixCommand?: string;
+  /** Timeout in ms */
+  timeout?: number;
+  /** Whether this gate can block work */
+  canBlock?: boolean;
+}
+
+/**
+ * Quality gates configuration.
+ */
+export interface QualityGatesConfig {
+  /** Whether baseline checking is enabled */
+  enabled: boolean;
+  /** Built-in gates (tests, typecheck, lint, build) */
+  builtIn: {
+    tests: boolean;
+    typecheck: boolean;
+    lint: boolean;
+    build: boolean;
+  };
+  /** Custom gate definitions */
+  custom: QualityGateDefinition[];
+  /** Auto-fix configuration */
+  autoFix: boolean;
+  /** Create blocker issues for failures */
+  createBlockers: boolean;
+  /** Gate timeout in ms */
+  gateTimeoutMs: number;
+}
+
+/**
+ * Reviewer configuration for custom reviewers.
+ */
+export interface ReviewerDefinition {
+  /** Reviewer ID */
+  id: string;
+  /** Reviewer type */
+  type: ReviewerType;
+  /** Whether enabled */
+  enabled: boolean;
+  /** Whether can block advancement */
+  canBlock?: boolean;
+  /**
+   * Prompt source:
+   * - Inline string: The prompt itself
+   * - File path: "./reviewers/compliance.md"
+   * - Package ref: "@create-something/harness/reviewers/security"
+   */
+  prompt?: string;
+  /** File patterns to include */
+  includePatterns?: string[];
+  /** File patterns to exclude */
+  excludePatterns?: string[];
+}
+
+/**
+ * Reviewers configuration.
+ */
+export interface ReviewersConfig {
+  /** Whether peer review is enabled */
+  enabled: boolean;
+  /** Minimum confidence to auto-advance */
+  minConfidenceToAdvance: number;
+  /** Whether critical findings block advancement */
+  blockOnCritical: boolean;
+  /** Whether high findings block advancement */
+  blockOnHigh: boolean;
+  /** Reviewer definitions */
+  reviewers: ReviewerDefinition[];
+}
+
+/**
+ * Label taxonomy configuration.
+ * Philosophy: Different domains have different categorization needs.
+ * - CREATE SOMETHING: agency, io, space, ltd
+ * - Legal firm: litigation, corporate, ip, employment
+ * - Finance: audit, tax, advisory, compliance
+ */
+export interface LabelTaxonomyConfig {
+  /** Scope labels (property/department) */
+  scope: string[];
+  /** Type labels (work type) */
+  type: string[];
+  /** Discovery source label prefix */
+  discoveryPrefix: string;
+}
+
+/**
+ * Main harness configuration.
+ * Philosophy: Crystallize human judgment into configurable constraints.
+ * The tool recedes; the judgment remains.
+ */
+export interface HarnessConfig {
+  /** Config schema version */
+  version: string;
+  /** Model routing configuration */
+  modelRouting: ModelRoutingConfig;
+  /** Quality gates configuration */
+  qualityGates: QualityGatesConfig;
+  /** Reviewers configuration */
+  reviewers: ReviewersConfig;
+  /** Label taxonomy */
+  labels: LabelTaxonomyConfig;
+  /** Checkpoint policy */
+  checkpoints: CheckpointPolicy;
+  /** Failure handling */
+  failureHandling: FailureHandlingConfig;
+  /** Swarm mode */
+  swarm: SwarmConfig;
+}
+
+/**
+ * Default CREATE SOMETHING harness configuration.
+ * Philosophy: These are the crystallized judgments of CREATE SOMETHING.
+ * Other domains fork and customize.
+ */
+export const DEFAULT_HARNESS_CONFIG: HarnessConfig = {
+  version: '1.0',
+  modelRouting: {
+    default: 'sonnet',
+    complexity: {
+      trivial: 'haiku',
+      simple: 'sonnet',
+      standard: 'sonnet',
+      complex: 'opus',
+    },
+    patterns: {
+      haiku: [
+        'rename', 'typo', 'comment', 'import', 'export',
+        'lint', 'format', 'cleanup', 'remove unused',
+        'add test for', 'update test', 'fix test',
+        'bump version', 'update dependency',
+      ],
+      sonnet: [
+        'add', 'update', 'fix', 'implement',
+        'component', 'endpoint', 'route', 'page',
+        'style', 'css', 'layout',
+        'validation', 'error handling',
+      ],
+      opus: [
+        'architect', 'design', 'refactor', 'migrate',
+        'optimize', 'performance', 'security',
+        'integration', 'system',
+      ],
+    },
+    escalation: {
+      enabled: true,
+      maxRetries: 2,
+      escalateTo: 'opus',
+    },
+  },
+  qualityGates: {
+    enabled: true,
+    builtIn: {
+      tests: true,
+      typecheck: true,
+      lint: true,
+      build: false,
+    },
+    custom: [],
+    autoFix: true,
+    createBlockers: true,
+    gateTimeoutMs: 5 * 60 * 1000,
+  },
+  reviewers: {
+    enabled: true,
+    minConfidenceToAdvance: 0.8,
+    blockOnCritical: true,
+    blockOnHigh: false,
+    reviewers: [
+      { id: 'security', type: 'security', enabled: true, canBlock: true },
+      { id: 'architecture', type: 'architecture', enabled: true, canBlock: true },
+      { id: 'quality', type: 'quality', enabled: true, canBlock: false },
+    ],
+  },
+  labels: {
+    scope: ['agency', 'io', 'space', 'ltd'],
+    type: ['feature', 'bug', 'research', 'refactor'],
+    discoveryPrefix: 'harness:',
+  },
+  checkpoints: DEFAULT_CHECKPOINT_POLICY,
+  failureHandling: DEFAULT_FAILURE_HANDLING_CONFIG,
+  swarm: DEFAULT_SWARM_CONFIG,
+};

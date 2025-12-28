@@ -18,8 +18,10 @@ import type {
   SessionResult,
   ReviewPipelineConfig,
   ReviewedCheckpoint,
+  HarnessConfig,
 } from './types.js';
-import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG, DEFAULT_SWARM_CONFIG, DEFAULT_REVIEW_PIPELINE_CONFIG } from './types.js';
+import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG, DEFAULT_SWARM_CONFIG, DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_HARNESS_CONFIG } from './types.js';
+import { loadConfig, getModelFromConfig, formatConfigDisplay } from './config/index.js';
 import { parse as parseSpec, formatSpecSummary } from './spec-parser.js';
 import {
   createIssuesFromFeatures,
@@ -99,62 +101,19 @@ function isReviewedCheckpoint(checkpoint: Checkpoint | ReviewedCheckpoint): chec
  * - Haiku (~5% of Opus cost): Simple mechanical tasks
  * - Sonnet (~20% of Opus cost): Standard implementations
  * - Opus (baseline): Complex reasoning, architecture, novel work
+ *
+ * @param issue - The issue to select a model for
+ * @param config - Optional harness config (uses defaults if not provided)
  */
-export function selectModelForTask(issue: BeadsIssue): 'opus' | 'sonnet' | 'haiku' {
-  const title = issue.title.toLowerCase();
-  const desc = (issue.description || '').toLowerCase();
+export function selectModelForTask(
+  issue: BeadsIssue,
+  config: HarnessConfig = DEFAULT_HARNESS_CONFIG
+): 'opus' | 'sonnet' | 'haiku' {
+  const title = issue.title + ' ' + (issue.description || '');
   const labels = issue.labels || [];
 
-  // Explicit label override (highest priority)
-  if (labels.includes('model:haiku')) return 'haiku';
-  if (labels.includes('model:sonnet')) return 'sonnet';
-  if (labels.includes('model:opus')) return 'opus';
-
-  // Complexity from spec (second priority)
-  if (labels.includes('complexity:trivial')) return 'haiku';
-  if (labels.includes('complexity:simple')) return 'sonnet';
-  if (labels.includes('complexity:standard')) return 'sonnet';
-  if (labels.includes('complexity:complex')) return 'opus';
-
-  // Haiku: simple mechanical tasks (pattern matching, no reasoning)
-  const haikuPatterns = [
-    'rename', 'typo', 'comment', 'import', 'export',
-    'lint', 'format', 'cleanup', 'remove unused',
-    'add test for', 'update test', 'fix test',
-    'bump version', 'update dependency',
-  ];
-  if (haikuPatterns.some(p => title.includes(p) || desc.includes(p))) {
-    return 'haiku';
-  }
-
-  // Sonnet: standard implementations (clear patterns exist)
-  const sonnetPatterns = [
-    'add', 'update', 'fix', 'implement',
-    'component', 'endpoint', 'route', 'page',
-    'style', 'css', 'layout',
-    'validation', 'error handling',
-  ];
-  if (sonnetPatterns.some(p => title.includes(p))) {
-    return 'sonnet';
-  }
-
-  // Opus: complex tasks requiring deep reasoning
-  // - Architectural decisions
-  // - Multi-file refactors
-  // - Novel implementations
-  // - Debugging complex issues
-  // - Anything with "design", "architect", "refactor", "migrate"
-  const opusPatterns = [
-    'architect', 'design', 'refactor', 'migrate',
-    'optimize', 'performance', 'security',
-    'integration', 'system',
-  ];
-  if (opusPatterns.some(p => title.includes(p) || desc.includes(p))) {
-    return 'opus';
-  }
-
-  // Default to sonnet for unmatched tasks (good balance of cost/capability)
-  return 'sonnet';
+  // Use config-based model selection
+  return getModelFromConfig(config, title, labels);
 }
 
 /**
@@ -268,13 +227,50 @@ export async function runHarness(
     failureConfig?: FailureHandlingConfig;
     reviewConfig?: ReviewPipelineConfig;
     swarmConfig?: SwarmConfig;
+    /** Path to harness config file, or explicit config object */
+    config?: string | HarnessConfig;
   }
 ): Promise<void> {
   const checkpointTracker = createCheckpointTracker();
   const failureTracker = createFailureTracker();
-  const failureConfig = options.failureConfig ?? DEFAULT_FAILURE_HANDLING_CONFIG;
-  const reviewConfig = options.reviewConfig ?? null; // null = no review
-  const swarmConfig = options.swarmConfig ?? DEFAULT_SWARM_CONFIG;
+
+  // Load harness configuration
+  let harnessConfig: HarnessConfig;
+  let configPath: string | null = null;
+
+  if (typeof options.config === 'string') {
+    // Load from file path
+    const loaded = await loadConfig(options.config, options.cwd);
+    harnessConfig = loaded.config;
+    configPath = loaded.configPath;
+  } else if (options.config) {
+    // Use provided config object
+    harnessConfig = options.config;
+  } else {
+    // Auto-discover or use defaults
+    const loaded = await loadConfig(undefined, options.cwd);
+    harnessConfig = loaded.config;
+    configPath = loaded.configPath;
+  }
+
+  // Use config values for harness options (config takes precedence)
+  const failureConfig = options.failureConfig ?? harnessConfig.failureHandling;
+  const reviewConfig = options.reviewConfig ?? (harnessConfig.reviewers.enabled ? {
+    enabled: harnessConfig.reviewers.enabled,
+    minConfidenceToAdvance: harnessConfig.reviewers.minConfidenceToAdvance,
+    blockOnCritical: harnessConfig.reviewers.blockOnCritical,
+    blockOnHigh: harnessConfig.reviewers.blockOnHigh,
+    maxParallelReviewers: 3,
+    reviewerTimeoutMs: 5 * 60 * 1000,
+    reviewers: harnessConfig.reviewers.reviewers.map(r => ({
+      id: r.id,
+      type: r.type,
+      enabled: r.enabled,
+      canBlock: r.canBlock,
+    })),
+  } : null);
+  const swarmConfig = options.swarmConfig ?? harnessConfig.swarm;
+
   let beadsSnapshot = await takeSnapshot(options.cwd);
   let lastCheckpoint: Checkpoint | ReviewedCheckpoint | null = null;
   let redirectNotes: string[] = [];
@@ -283,6 +279,11 @@ export async function runHarness(
   console.log(`  HARNESS RUNNING: ${harnessState.id}`);
   console.log(`  Branch: ${harnessState.gitBranch}`);
   console.log(`  Features: ${harnessState.featuresTotal}`);
+  if (configPath) {
+    console.log(`  Config: ${configPath}`);
+  } else {
+    console.log(`  Config: Built-in CREATE SOMETHING defaults`);
+  }
   console.log(`  Failure Handling: retry=${failureConfig.maxRetries}, continue=${failureConfig.continueOnFailure}`);
   if (reviewConfig?.enabled) {
     const reviewerIds = reviewConfig.reviewers.filter(r => r.enabled).map(r => r.id);
@@ -393,6 +394,7 @@ export async function runHarness(
           cwd: options.cwd,
           dryRun: options.dryRun,
           maxParallel: swarmConfig.maxParallelAgents,
+          harnessConfig,
         }
       );
 
@@ -461,7 +463,7 @@ export async function runHarness(
 
     // 5. Run session with cost-optimized model selection + escalation
     harnessState.currentSession++;
-    const heuristicModel = selectModelForTask(nextIssue);
+    const heuristicModel = selectModelForTask(nextIssue, harnessConfig);
     const { model, escalated, reason: modelReason } = getEffectiveModel(
       failureTracker,
       nextIssue.id,
@@ -997,6 +999,7 @@ export async function runParallelSessions(
     cwd: string;
     dryRun?: boolean;
     maxParallel?: number;
+    harnessConfig?: HarnessConfig;
   }
 ): Promise<SessionResult[]> {
   const maxParallel = options.maxParallel ?? DEFAULT_SWARM_CONFIG.maxParallelAgents;
@@ -1030,8 +1033,8 @@ export async function runParallelSessions(
       relevantFiles: dryContext.relevantFiles,
     };
 
-    // Select model for cost optimization
-    const model = selectModelForTask(issue);
+    // Select model for cost optimization (uses config patterns)
+    const model = selectModelForTask(issue, options.harnessConfig ?? DEFAULT_HARNESS_CONFIG);
     console.log(`  [${agentId}] Starting [${model}]: ${issue.id} - ${issue.title.slice(0, 40)}...`);
 
     try {

@@ -1,0 +1,177 @@
+# CREATE SOMETHING Harness Configuration
+# Crystallize your judgment into configurable constraints.
+#
+# Philosophy: "Curated autonomy" - encode human judgment into config,
+# AI executes within those constraints. One human's expertise scales
+# through AI execution.
+#
+# Place this file in your project root as `harness.config.yaml`
+# or `.harnessrc.yaml` and the harness will auto-discover it.
+
+version: "1.0"
+
+# Model Routing
+# Route tasks to appropriate models based on complexity and patterns.
+# Cost optimization: use cheaper models for simple tasks, save expensive
+# models for complex reasoning.
+modelRouting:
+  # Default model when no patterns match
+  default: sonnet
+
+  # Complexity-based routing (from spec or detection)
+  complexity:
+    trivial: haiku   # ~$0.001/session - typos, single-line fixes
+    simple: sonnet   # ~$0.01/session  - small features, bug fixes
+    standard: sonnet # ~$0.01/session  - normal development
+    complex: opus    # ~$0.10/session  - architecture, multi-file refactors
+
+  # Pattern-based routing (case-insensitive substring match in title)
+  # First match wins. More specific patterns should come first.
+  patterns:
+    haiku:
+      - rename
+      - typo
+      - comment
+      - import
+      - export
+      - version
+      - bump
+      - format
+      - whitespace
+
+    opus:
+      - architect
+      - design
+      - refactor
+      - migrate
+      - security
+      - performance
+      - optimize
+      - review
+
+    sonnet:
+      - add
+      - update
+      - fix
+      - implement
+      - create
+      - remove
+      - delete
+
+  # Model escalation on failure
+  escalation:
+    enabled: true
+    maxRetries: 2
+    escalateTo: opus
+
+# Quality Gates
+# Self-healing baseline checks before starting new work.
+# Philosophy: Prevent "broken windows" - fix existing failures before
+# adding new code. VC achieves 90.9% pass rate through this pattern.
+qualityGates:
+  enabled: true
+
+  # Built-in gates (pnpm-based for monorepos)
+  builtIn:
+    tests: true      # pnpm test
+    typecheck: true  # tsc --noEmit
+    lint: true       # eslint
+    build: false     # Skip build by default (expensive)
+
+  # Custom gates for domain-specific quality checks
+  # Examples for different domains:
+  #
+  # Legal:
+  # - name: contract-validation
+  #   command: pnpm run validate:contracts
+  #   autoFixCommand: null
+  #   canBlock: true
+  #
+  # Finance:
+  # - name: audit-trail
+  #   command: pnpm run check:audit-trail
+  #   canBlock: true
+  #
+  # Manufacturing:
+  # - name: tolerance-check
+  #   command: python scripts/check_tolerances.py
+  #   canBlock: true
+  custom: []
+
+  # Auto-fix configuration
+  autoFix: true          # Attempt eslint --fix for lint failures
+  createBlockers: true   # Create Beads issues for failures
+  gateTimeoutMs: 300000  # 5 minutes per gate
+
+# Reviewers
+# Peer review configuration for checkpoint reviews.
+# Philosophy: Specialized reviewers analyze code for specific concerns.
+reviewers:
+  enabled: true
+  minConfidenceToAdvance: 0.7
+  blockOnCritical: true
+  blockOnHigh: false
+
+  reviewers:
+    - id: security
+      type: security
+      enabled: true
+      canBlock: true
+      # Custom prompt: use a file path for external prompts
+      # prompt: ./reviewers/security.md
+
+    - id: architecture
+      type: architecture
+      enabled: true
+      canBlock: false
+      # Focuses on DRY violations across 3+ files
+
+    - id: quality
+      type: quality
+      enabled: true
+      canBlock: false
+      # Focuses on test coverage, code style, documentation
+
+# Labels
+# Taxonomy for organizing work.
+labels:
+  # Property/scope labels
+  scope:
+    - agency
+    - io
+    - space
+    - ltd
+
+  # Work type labels
+  type:
+    - feature
+    - bug
+    - refactor
+    - research
+    - docs
+
+  # Discovery label prefix (for auto-created issues)
+  discoveryPrefix: harness
+
+# Checkpoint Policy
+# When to create checkpoints and trigger reviews.
+checkpoints:
+  sessionInterval: 3     # Checkpoint every N sessions
+  timeIntervalHours: 4   # Checkpoint every N hours
+  onFailure: true        # Checkpoint when session fails
+  onRedirect: true       # Checkpoint when session redirects
+
+# Failure Handling
+# How to handle session failures.
+failureHandling:
+  maxRetries: 2
+  retryDelay: 2000       # ms between retries
+  createBlockerOnFail: true
+  annotateWithAnalysis: true
+
+# Swarm Configuration
+# Parallel session execution for independent tasks.
+swarm:
+  enabled: true
+  maxParallelAgents: 3
+  minTasksForSwarm: 2
