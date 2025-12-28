@@ -20,13 +20,14 @@ AI-powered photo editing via natural language. Describe what you want done, Clau
 ## How It Works
 
 ```
-User instruction → Claude (locate) → Isaac (refine, optional) → Flux (inpaint)
+User instruction → Claude (locate) → Isaac (refine) → Flux (inpaint) → ESRGAN (upscale, optional)
 ```
 
 1. **User describes** what to remove in natural language
 2. **Claude locates** the item(s) and returns bounding box coordinates
-3. **Isaac refines** coordinates for pixel precision (optional `--refine`)
+3. **Isaac refines** coordinates for pixel precision (default on)
 4. **Flux Fill Pro** inpaints the region seamlessly
+5. **Real-ESRGAN** upscales with face enhancement (optional `--upscale`)
 
 No drawing, no UI. Just describe what you want.
 
@@ -94,7 +95,9 @@ Without specific instructions, Claude identifies common distractions:
 
 | Flag | Description |
 |------|-------------|
-| `--refine`, `-r` | Use Isaac-01 for precise bounding boxes |
+| `--refine`, `-r` | Use Isaac-01 for precise bounding boxes (default: on) |
+| `--upscale`, `-u` | Use Real-ESRGAN to restore quality after inpainting |
+| `--no-face-enhance` | Disable face enhancement during upscaling |
 | `--dry-run`, `-n` | Analyze only, show debug images |
 | `--save-debug`, `-d` | Save debug visualizations |
 | `--save-masks`, `-m` | Save intermediate masks |
@@ -102,11 +105,12 @@ Without specific instructions, Claude identifies common distractions:
 
 ## Pipeline
 
-```
-pnpm --filter=render-pipeline cleanup \
-  --detections=/tmp/detections.json \
-  --refine \
-  --model flux
+```bash
+# Standard (detect → refine → inpaint)
+pnpm --filter=render-pipeline cleanup --detections=/tmp/detections.json
+
+# With quality restoration (adds ESRGAN upscaling)
+pnpm --filter=render-pipeline cleanup --detections=/tmp/detections.json --upscale
 ```
 
 ## Example Sessions
