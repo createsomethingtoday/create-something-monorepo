@@ -28,7 +28,7 @@ export { refineWithIsaac, refineDetectionResult } from './refine.js';
 export interface CleanupOptions {
   /** Inpainting model to use (default: 'flux') */
   model?: InpaintModel;
-  /** Use Isaac-01 to refine bounding boxes for precision */
+  /** Use Isaac-01 to refine bounding boxes for precision (default: true) */
   refine?: boolean;
   /** Save intermediate mask files */
   saveMasks?: boolean;
@@ -111,7 +111,7 @@ export async function processWithDetection(
   const startTime = Date.now();
   const {
     model = 'flux',
-    refine = false,
+    refine = true,  // Isaac refinement ON by default
     saveMasks = false,
     saveDebug = false,
     outputDir,

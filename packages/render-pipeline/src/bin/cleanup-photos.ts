@@ -39,7 +39,7 @@ function parseArgs(args: string[]): {
     dryRun: false,
     saveMasks: false,
     saveDebug: false,
-    refine: false,
+    refine: true,  // Isaac refinement ON by default (Claude's boxes aren't precise)
     model: 'flux' as InpaintModel,
     outputDir: undefined as string | undefined,
     help: false
@@ -58,6 +58,8 @@ function parseArgs(args: string[]): {
       result.saveDebug = true;
     } else if (arg === '--refine' || arg === '-r') {
       result.refine = true;
+    } else if (arg === '--no-refine') {
+      result.refine = false;
     } else if (arg === '--model' || arg === '-M') {
       const model = args[++i];
       if (model === 'flux' || model === 'sdxl' || model === 'lama') {
@@ -94,7 +96,7 @@ Detection JSON should contain results from Claude Code agents.
 
 OPTIONS:
   -D, --detections <file>  Read detection results from JSON file
-  -r, --refine             Use Isaac-01 for precise bounding box refinement
+  --no-refine              Skip Isaac-01 refinement (not recommended)
   -n, --dry-run            Generate debug images but don't inpaint
   -d, --save-debug         Save debug images showing detected regions
   -m, --save-masks         Save intermediate mask files
@@ -102,8 +104,8 @@ OPTIONS:
   -o, --output <dir>       Output directory (default: same as input)
   -h, --help               Show this help message
 
-PIPELINE:
-  Claude (editorial) → Isaac (precision, optional) → Flux (inpainting)
+PIPELINE (default):
+  Claude (editorial) → Isaac (precision) → Flux (inpainting)
 
 INPUT FORMAT:
   {
