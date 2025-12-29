@@ -111,12 +111,10 @@ export interface AnimationConfig {
 export interface KeyInsightProps {
 	/** Insight configuration */
 	insight: InsightConfig;
-	/** Property for branding */
+	/** Property context (for source links) */
 	property?: Property;
 	/** Animation configuration */
 	animation?: AnimationConfig;
-	/** Show export button */
-	showExport?: boolean;
 	/** Variant: full-screen or inline */
 	variant?: 'fullscreen' | 'inline' | 'card';
 	/** Animation direction: forward (full→essence) or reverse (essence→full) */

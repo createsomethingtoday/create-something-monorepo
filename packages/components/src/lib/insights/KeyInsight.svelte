@@ -14,12 +14,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import StatementText from './StatementText.svelte';
-	import type {
-		KeyInsightProps,
-		RevelationPhase,
-		ExportFormat,
-		EXPORT_DIMENSIONS
-	} from './types.js';
+	import type { KeyInsightProps, RevelationPhase } from './types.js';
 
 	// =============================================================================
 	// PROPS
@@ -29,7 +24,6 @@
 		insight,
 		property = 'io',
 		animation = { enabled: true, trigger: 'click' },
-		showExport = true,
 		variant = 'fullscreen',
 		direction = 'forward',
 		class: className = ''
@@ -42,7 +36,6 @@
 	let container: HTMLElement;
 	let phase = $state<RevelationPhase>(animation.enabled ? 'reading' : 'complete');
 	let progress = $state(animation.enabled ? 0 : 1);
-	let isExporting = $state(false);
 	let hasAnimated = $state(!animation.enabled);
 	let showingOriginal = $state(false);
 	let currentDirection = $state<'forward' | 'reverse'>(direction);
@@ -181,68 +174,6 @@
 	});
 
 	// =============================================================================
-	// EXPORT FUNCTIONALITY
-	// =============================================================================
-
-	async function exportAsPNG(format: ExportFormat = 'og') {
-		if (!browser || isExporting) return;
-
-		isExporting = true;
-
-		try {
-			// Dynamic import html2canvas
-			const { default: html2canvas } = await import('html2canvas');
-
-			// Wait for fonts to be ready
-			await document.fonts.ready;
-
-			// Temporarily set complete state for export
-			const originalPhase = phase;
-			phase = 'complete';
-
-			await new Promise((resolve) => setTimeout(resolve, 200));
-
-			const canvas = await html2canvas(container, {
-				backgroundColor: '#000000',
-				scale: 2,
-				logging: false,
-				useCORS: true,
-				allowTaint: true,
-				// Force system font stack in cloned element for reliable rendering
-				onclone: (clonedDoc) => {
-					const clonedContainer = clonedDoc.body.querySelector('.key-insight');
-					if (clonedContainer) {
-						// Apply system font stack that html2canvas can render reliably
-						const style = clonedDoc.createElement('style');
-						style.textContent = `
-							.key-insight, .key-insight * {
-								font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-							}
-							.key-insight code, .key-insight .comparison-code {
-								font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
-							}
-						`;
-						clonedDoc.head.appendChild(style);
-					}
-				}
-			});
-
-			// Restore phase
-			phase = originalPhase;
-
-			// Download
-			const link = document.createElement('a');
-			link.download = `${insight.id}-insight.png`;
-			link.href = canvas.toDataURL('image/png');
-			link.click();
-		} catch (error) {
-			console.error('Export failed:', error);
-		} finally {
-			isExporting = false;
-		}
-	}
-
-	// =============================================================================
 	// DERIVED
 	// =============================================================================
 
@@ -263,7 +194,6 @@
 <article
 	bind:this={container}
 	class="key-insight {containerClass} {className}"
-	class:exporting={isExporting}
 	onclick={handleClick}
 	onkeydown={handleKeydown}
 	role={animation.trigger === 'click' ? 'button' : undefined}
@@ -312,7 +242,7 @@
 		{/if}
 	</div>
 
-	<!-- Footer: Source & export -->
+	<!-- Footer: Source -->
 	<footer class="insight-footer">
 		{#if insight.source}
 			<a href={insight.source.url} class="source-link">
@@ -320,17 +250,6 @@
 			</a>
 		{:else if insight.paperId}
 			<span class="paper-id">{insight.paperId}</span>
-		{/if}
-
-		{#if showExport}
-			<button
-				class="export-btn"
-				onclick={(e) => { e.stopPropagation(); exportAsPNG('og'); }}
-				disabled={isExporting}
-				aria-label="Export as PNG"
-			>
-				{isExporting ? 'Exporting...' : 'Export PNG'}
-			</button>
 		{/if}
 	</footer>
 </article>
@@ -366,10 +285,6 @@
 		padding: var(--space-lg, 2.5rem);
 		border-radius: var(--radius-xl, 16px);
 		border: 2px solid var(--color-border-emphasis, rgba(255,255,255,0.2));
-	}
-
-	.key-insight.exporting {
-		cursor: wait;
 	}
 
 	.key-insight[role="button"] {
@@ -525,28 +440,6 @@
 		font-family: var(--font-mono, ui-monospace, monospace);
 		font-size: var(--text-body-sm, 0.875rem);
 		color: var(--color-fg-muted, rgba(255,255,255,0.46));
-	}
-
-	.export-btn {
-		font-size: var(--text-body-sm, 0.875rem);
-		color: var(--color-fg-tertiary, rgba(255,255,255,0.6));
-		background: transparent;
-		border: 1px solid var(--color-border-default, rgba(255,255,255,0.1));
-		border-radius: var(--radius-md, 8px);
-		padding: 0.5rem 1rem;
-		cursor: pointer;
-		transition: all var(--duration-micro, 200ms) var(--ease-standard);
-	}
-
-	.export-btn:hover:not(:disabled) {
-		color: var(--color-fg-primary);
-		border-color: var(--color-border-emphasis, rgba(255,255,255,0.2));
-		background: var(--color-hover, rgba(255,255,255,0.05));
-	}
-
-	.export-btn:disabled {
-		opacity: 0.5;
-		cursor: wait;
 	}
 
 	/* ==========================================================================

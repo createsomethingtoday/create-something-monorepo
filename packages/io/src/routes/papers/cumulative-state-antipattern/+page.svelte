@@ -75,7 +75,6 @@
 				{insight}
 				property="io"
 				animation={{ enabled: true, trigger: 'click' }}
-				showExport={true}
 				variant="fullscreen"
 			/>
 		</section>
