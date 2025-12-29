@@ -303,4 +303,48 @@ Before the praxis exercise:
 2. Which duplication did you notice first? Which was hardest to see?
 3. What truths are currently scattered across your codebase?
 
-**Praxis**: You'll audit a real codebase for duplication and practice the extraction process.
+---
+
+## Praxis: Identify Duplication
+
+**Exercise ID**: `identify-duplication`
+**Duration**: 15 minutes
+**Difficulty**: Beginner
+
+You'll audit a real codebase for duplication and practice the extraction process.
+
+### Objectives
+
+1. Recognize structural duplication in component code
+2. Distinguish essential similarity from coincidental
+3. Propose a unified abstraction
+
+### Claude Code Prompt
+
+Copy this into Claude Code to begin:
+
+```
+Help me identify duplication patterns in my codebase and create MY unification strategy.
+
+I'm building my own DRY discipline. Analyze [FILE_OR_DIRECTORY] for:
+
+1. **Structural duplication**: Similar component patterns, repeated prop interfaces
+2. **Logic duplication**: Copy-pasted conditionals, repeated data transforms
+3. **Essential vs. coincidental**: Which similarities are fundamental vs. accidental?
+
+For each pattern found:
+- Show me the duplicated code
+- Explain why it's duplication (or why it's not)
+- Propose a unified abstraction
+
+End with MY DRY principle: a one-sentence rule I can apply to future code.
+
+The target I want to analyze: [YOUR_FILE_OR_DIRECTORY]
+```
+
+### Success Criteria
+
+By the end, you should have:
+- Documented 3+ duplication patterns in your codebase
+- Distinguished essential from coincidental similarity
+- Written YOUR DRY principle—a one-sentence rule for future decisions
