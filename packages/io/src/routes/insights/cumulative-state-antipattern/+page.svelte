@@ -46,6 +46,7 @@
 	animation={{ enabled: true, trigger: 'click' }}
 	showExport={true}
 	variant="fullscreen"
+	direction="reverse"
 />
 
 <style>

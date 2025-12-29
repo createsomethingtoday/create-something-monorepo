@@ -21,31 +21,49 @@
 		phase = 'complete',
 		progress = 1,
 		size = 'display',
+		direction = 'forward',
 		class: className = ''
 	}: StatementTextProps = $props();
+
+	// Reverse mode: start coalesced, expand to full
+	const isReverse = $derived(direction === 'reverse');
 
 	// =============================================================================
 	// DERIVED STATE
 	// =============================================================================
 
-	// Phase-based progress values
+	// Phase-based progress values (reversed for reverse mode)
 	const strikeProgress = $derived(
-		phase === 'reading' ? 0 :
-		phase === 'striking' ? progress :
-		1
+		isReverse
+			? (phase === 'complete' ? 0 : phase === 'fading' ? 1 - progress : 1)
+			: (phase === 'reading' ? 0 : phase === 'striking' ? progress : 1)
 	);
 
 	const fadeProgress = $derived(
-		phase === 'reading' || phase === 'striking' ? 0 :
-		phase === 'fading' ? progress :
-		1
+		isReverse
+			? (phase === 'reading' ? 1 : phase === 'striking' ? 1 - progress : 0)
+			: (phase === 'reading' || phase === 'striking' ? 0 : phase === 'fading' ? progress : 1)
 	);
 
 	const coalesceProgress = $derived(
-		phase === 'coalescing' || phase === 'complete' ? progress : 0
+		isReverse
+			? (phase === 'reading' || phase === 'striking' ? 1 : 1 - progress)
+			: (phase === 'coalescing' || phase === 'complete' ? progress : 0)
 	);
 
-	const isCoalesced = $derived(phase === 'coalescing' || phase === 'complete');
+	// In reverse: start coalesced, end expanded
+	const isCoalesced = $derived(
+		isReverse
+			? phase === 'reading' || phase === 'striking'
+			: phase === 'coalescing' || phase === 'complete'
+	);
+
+	// Hidden state: reverse logic for reverse mode
+	const shouldHide = $derived(
+		isReverse
+			? phase === 'reading'  // Start hidden, reveal as animation progresses
+			: phase === 'coalescing' || phase === 'complete'  // Hide after coalescing
+	);
 
 	// Size classes
 	const sizeClass = $derived(
@@ -55,16 +73,18 @@
 	);
 </script>
 
-<p class="statement-text {sizeClass} {className}" class:coalesced={isCoalesced}>
+<p class="statement-text {sizeClass} {className}" class:coalesced={isCoalesced} class:reverse={isReverse}>
 	{#each statement.words as word, i}
-		{@const wordStrike = Math.max(0, Math.min(1, (strikeProgress - i * 0.03) / 0.3))}
-		{@const wordFade = word.keep ? 1 : 1 - fadeProgress}
+		{@const wordStrike = isReverse
+			? Math.max(0, Math.min(1, strikeProgress - (statement.words.length - i - 1) * 0.03))
+			: Math.max(0, Math.min(1, (strikeProgress - i * 0.03) / 0.3))}
+		{@const wordFade = word.keep ? 1 : (isReverse ? fadeProgress : 1 - fadeProgress)}
 		<span
 			class="word"
 			class:keep={word.keep}
 			class:emphasis={word.emphasis}
-			class:removing={!word.keep && phase !== 'reading'}
-			class:hidden={!word.keep && isCoalesced}
+			class:removing={!word.keep && (isReverse ? phase !== 'complete' : phase !== 'reading')}
+			class:hidden={!word.keep && shouldHide}
 			style="--strike: {wordStrike}; --fade: {wordFade};"
 		>
 			{word.text}

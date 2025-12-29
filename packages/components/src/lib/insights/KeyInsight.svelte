@@ -33,6 +33,7 @@
 		animation = { enabled: true, trigger: 'click' },
 		showExport = true,
 		variant = 'fullscreen',
+		direction = 'forward',
 		class: className = ''
 	}: KeyInsightProps = $props();
 
@@ -261,6 +262,7 @@
 				statement={insight.statement}
 				{phase}
 				{progress}
+				{direction}
 				size="display"
 			/>
 		{:else}
@@ -269,7 +271,7 @@
 
 		<!-- Click hint -->
 		{#if showClickHint}
-			<p class="click-hint">Click to reveal</p>
+			<p class="click-hint">{direction === 'reverse' ? 'Click to expand' : 'Click to reveal'}</p>
 		{/if}
 	</div>
 

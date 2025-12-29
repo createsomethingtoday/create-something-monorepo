@@ -119,6 +119,8 @@ export interface KeyInsightProps {
 	showExport?: boolean;
 	/** Variant: full-screen or inline */
 	variant?: 'fullscreen' | 'inline' | 'card';
+	/** Animation direction: forward (full→essence) or reverse (essence→full) */
+	direction?: 'forward' | 'reverse';
 	/** Additional CSS classes */
 	class?: string;
 }
@@ -132,6 +134,8 @@ export interface StatementTextProps {
 	progress?: number;
 	/** Size variant */
 	size?: 'display' | 'headline' | 'body';
+	/** Animation direction: forward (full→essence) or reverse (essence→full) */
+	direction?: 'forward' | 'reverse';
 	/** Additional CSS classes */
 	class?: string;
 }
