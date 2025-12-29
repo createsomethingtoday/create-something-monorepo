@@ -158,7 +158,7 @@
 
 	/* Ghosted words collapse at end of animation */
 	.word.ghosted {
-		display: none;
+		display: none !important;
 	}
 
 	/* Strikethrough effect */
