@@ -1,0 +1,121 @@
+/**
+ * Embedding Provider
+ *
+ * Interface to Voyage AI for generating document embeddings.
+ * Uses voyage-3-lite model ($0.02/1M tokens).
+ */
+
+import VoyageAIClient from 'voyageai';
+import type { GraphNode } from '../types.js';
+
+export interface EmbeddingOptions {
+  /** Voyage AI API key */
+  apiKey: string;
+
+  /** Model to use (default: voyage-3-lite) */
+  model?: string;
+
+  /** Max tokens per document (default: 8000) */
+  maxTokensPerDoc?: number;
+
+  /** Documents per API call (default: 100) */
+  batchSize?: number;
+}
+
+export interface EmbeddingResult {
+  /** Node ID */
+  nodeId: string;
+
+  /** Embedding vector (1024 dimensions for voyage-3-lite) */
+  embedding: number[];
+}
+
+/**
+ * Truncate text to approximate token limit
+ * Rough estimate: 1 token ≈ 4 characters for English
+ */
+function truncateToTokens(text: string, maxTokens: number): string {
+  const maxChars = maxTokens * 4;
+  if (text.length <= maxChars) {
+    return text;
+  }
+  return text.slice(0, maxChars);
+}
+
+/**
+ * Prepare node content for embedding
+ * Combines title and first N tokens of content
+ */
+function prepareNodeText(node: GraphNode, maxTokens: number): string {
+  // Read file content (already available in node.absolutePath)
+  const fs = require('fs');
+  const content = fs.readFileSync(node.absolutePath, 'utf-8');
+
+  // Format: "Title: {title}\n\n{content}"
+  const combined = `Title: ${node.title}\n\nPackage: ${node.package ?? 'root'}\n\nType: ${node.type}\n\n${content}`;
+
+  return truncateToTokens(combined, maxTokens);
+}
+
+/**
+ * Generate embeddings for a batch of nodes
+ */
+export async function generateEmbeddings(
+  nodes: GraphNode[],
+  options: EmbeddingOptions
+): Promise<EmbeddingResult[]> {
+  const {
+    apiKey,
+    model = 'voyage-3-lite',
+    maxTokensPerDoc = 8000,
+    batchSize = 100,
+  } = options;
+
+  const client = new VoyageAIClient({ apiKey });
+  const results: EmbeddingResult[] = [];
+
+  // Process in batches
+  for (let i = 0; i < nodes.length; i += batchSize) {
+    const batch = nodes.slice(i, i + batchSize);
+    const texts = batch.map(node => prepareNodeText(node, maxTokensPerDoc));
+
+    try {
+      console.log(`Embedding batch ${Math.floor(i / batchSize) + 1} (${batch.length} documents)...`);
+
+      const response = await client.embed({
+        input: texts,
+        model,
+      });
+
+      // Map embeddings back to node IDs
+      for (let j = 0; j < batch.length; j++) {
+        results.push({
+          nodeId: batch[j].id,
+          embedding: response.data[j].embedding,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to embed batch starting at index ${i}:`, error);
+      throw error;
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Generate embeddings for specific nodes (incremental update)
+ */
+export async function generateEmbeddingsForNodes(
+  nodes: GraphNode[],
+  options: EmbeddingOptions
+): Promise<Map<string, number[]>> {
+  const results = await generateEmbeddings(nodes, options);
+  const embeddingMap = new Map<string, number[]>();
+
+  for (const result of results) {
+    embeddingMap.set(result.nodeId, result.embedding);
+  }
+
+  return embeddingMap;
+}
