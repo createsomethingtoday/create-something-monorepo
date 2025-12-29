@@ -13,7 +13,7 @@
 		'Name fields for their semantics, not their content.',
 		{
 			statement: parseStatement(
-				'"Published" implied cumulative. It meant current. **Name** **fields** **for** **their** **semantics,** **not** **their** **content.**'
+				'**Name** your **fields** **for** what they truly represent— **their** **semantics,** their behavior— **not** for what they merely store: **their** **content.**'
 			),
 			comparison: createBugFixComparison(
 				'published >= 5',
