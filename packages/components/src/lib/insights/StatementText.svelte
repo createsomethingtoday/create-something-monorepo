@@ -3,9 +3,11 @@
 	 * StatementText - Animated Typography for Insights
 	 *
 	 * Large statement text that reveals its essence through subtraction.
-	 * Words marked as "keep" survive; others strike through and fade.
+	 * Words marked as "keep" survive; others strike through and become ghosted.
 	 *
-	 * Inspired by TextRevelation, adapted for reusable insight display.
+	 * Palimpsest mode (default): Struck words remain visible but faded,
+	 * creating an erasure poetry aesthetic. The archaeology of thought
+	 * stays visible—you see what was removed to arrive at truth.
 	 *
 	 * "Good design is as little design as possible" - Dieter Rams
 	 */
@@ -22,8 +24,13 @@
 		progress = 1,
 		size = 'display',
 		direction = 'forward',
+		variant = 'palimpsest',
 		class: className = ''
 	}: StatementTextProps = $props();
+
+	// Palimpsest: struck words remain visible but ghosted
+	// Collapse: struck words shrink to nothing (original behavior)
+	const isPalimpsest = $derived(variant === 'palimpsest');
 
 	// Reverse mode: start coalesced, expand to full
 	const isReverse = $derived(direction === 'reverse');
@@ -58,9 +65,9 @@
 		phase === 'coalescing' || phase === 'complete'
 	);
 
-	// Hidden state: words collapse at coalescing/complete phases
-	// Works for both directions: forward collapses at end, reverse starts collapsed
-	const shouldHide = $derived(
+	// Ghost state: struck words fade to low opacity at coalescing/complete phases
+	// Palimpsest keeps them visible; collapse hides them entirely
+	const shouldGhost = $derived(
 		phase === 'coalescing' || phase === 'complete'
 	);
 
@@ -72,7 +79,7 @@
 	);
 </script>
 
-<p class="statement-text {sizeClass} {className}" class:coalesced={isCoalesced} class:reverse={isReverse}>
+<p class="statement-text {sizeClass} {className}" class:coalesced={isCoalesced} class:reverse={isReverse} class:palimpsest={isPalimpsest}>
 	{#each statement.words as word, i}
 		{@const wordStrike = isReverse
 			? Math.max(0, Math.min(1, strikeProgress - (statement.words.length - i - 1) * 0.03))
@@ -83,7 +90,7 @@
 			class:keep={word.keep}
 			class:emphasis={word.emphasis}
 			class:removing={!word.keep && (isReverse ? phase !== 'complete' : phase !== 'reading')}
-			class:hidden={!word.keep && shouldHide}
+			class:ghosted={!word.keep && shouldGhost}
 			style="--strike: {wordStrike}; --fade: {wordFade};"
 		>
 			{word.text}
@@ -155,7 +162,20 @@
 		font-weight: var(--font-bold, 700);
 	}
 
-	.word.hidden {
+	/* Palimpsest: ghosted words remain visible but faded */
+	.word.ghosted {
+		opacity: 0.18;
+		font-weight: var(--font-normal, 400);
+	}
+
+	/* Palimpsest: strikethrough stays visible on ghosted words */
+	.palimpsest .word.ghosted .strike {
+		width: 100%;
+		opacity: 0.4;
+	}
+
+	/* Collapse variant: ghosted words shrink to nothing */
+	.statement-text:not(.palimpsest) .word.ghosted {
 		max-width: 0;
 		margin-right: 0;
 		opacity: 0;
@@ -184,7 +204,13 @@
 			opacity: 0.3;
 		}
 
-		.word.hidden {
+		/* Palimpsest: instant ghost state */
+		.palimpsest .word.ghosted {
+			opacity: 0.18;
+		}
+
+		/* Collapse: instant hide */
+		.statement-text:not(.palimpsest) .word.ghosted {
 			display: none;
 		}
 	}
