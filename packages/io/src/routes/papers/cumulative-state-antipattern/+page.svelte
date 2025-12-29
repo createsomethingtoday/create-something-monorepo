@@ -6,18 +6,27 @@
 	 * that punish users for legitimate actions.
 	 */
 
-	import { KeyInsightCard, createInsight, createBugFixComparison } from '@create-something/components';
+	import { KeyInsight, createInsight, createBugFixComparison, parseStatement } from '@create-something/components';
 
 	const insight = createInsight(
 		'cumulative-state-antipattern',
 		'Name fields for their semantics, not their content.',
 		{
+			statement: parseStatement(
+				'"Templates **Published**" implied **cumulative.** It meant **current.** **Name** **fields** **for** **their** **semantics.**'
+			),
 			comparison: createBugFixComparison(
 				'published >= 5',
 				'Penalizes curation',
 				'published + delisted >= 5',
 				'Preserves achievement'
 			),
+			source: {
+				title: 'The Cumulative State Anti-Pattern',
+				url: '/papers/cumulative-state-antipattern',
+				property: 'io'
+			},
+			paperId: 'PAPER-2025-012',
 			category: 'Database Design'
 		}
 	);
@@ -60,11 +69,15 @@
 			</p>
 		</section>
 
-		<!-- Key Insight - Shareable Visual -->
+		<!-- Key Insight - Embedded Interactive Visual -->
 		<section class="key-insight-section">
-			<KeyInsightCard
+			<KeyInsight
 				{insight}
-				href="/insights/cumulative-state-antipattern"
+				property="io"
+				animation={{ enabled: true, trigger: 'click' }}
+				showExport={true}
+				variant="inline"
+				direction="reverse"
 			/>
 		</section>
 
