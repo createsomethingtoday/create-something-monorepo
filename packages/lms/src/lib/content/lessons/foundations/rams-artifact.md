@@ -320,4 +320,49 @@ Before the praxis exercise:
 2. For each, ask: "Does this earn its existence?" Be honest.
 3. What would you remove if you could?
 
-**Praxis**: You'll audit an interface (yours or public) and apply the earning test to every element.
+---
+
+## Praxis: Audit an Artifact
+
+**Exercise ID**: `audit-artifact`
+**Duration**: 20 minutes
+**Difficulty**: Beginner
+
+You'll audit a real component or page and apply the earning test to every element.
+
+### Objectives
+
+1. Apply "Does this earn its existence?" to each element
+2. Identify decorative vs. functional elements
+3. Propose removals with justification
+
+### Claude Code Prompt
+
+Copy this into Claude Code to begin:
+
+```
+Help me audit [COMPONENT_OR_PAGE] using Rams' "Weniger, aber besser" principle.
+
+I'm defining MY standard for what "earns its existence." For each element, ask:
+
+1. **Does this element serve a function?** (If not, it's decorative)
+2. **Is the function essential?** (Could the user accomplish their goal without it?)
+3. **Is this the simplest way to serve that function?**
+
+Analyze [COMPONENT_OR_PAGE] and create a table:
+| Element | Function | Essential? | Simplest? | Verdict |
+|---------|----------|------------|-----------|---------|
+
+For elements that fail: propose removal or simplification.
+
+End with MY Rams principle: a one-sentence test I'll apply to every element I create.
+
+The artifact I want to audit: [YOUR_COMPONENT_OR_PAGE]
+```
+
+### Success Criteria
+
+By the end, you should have:
+- A table auditing every visible element in your artifact
+- A list of elements to remove or simplify
+- Written YOUR Rams principle—a one-sentence test for future elements
