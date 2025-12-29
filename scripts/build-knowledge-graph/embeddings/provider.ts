@@ -92,33 +92,47 @@ export async function generateEmbeddings(
     const batch = nodes.slice(i, i + batchSize);
     const texts = batch.map(node => prepareNodeText(node, maxTokensPerDoc));
 
-    try {
-      const eta = batchNum === 1 ? '' : ` (ETA: ${Math.ceil((totalBatches - batchNum) * batchDelayMs / 60000)}m)`;
-      console.log(`Embedding batch ${batchNum}/${totalBatches} (${batch.length} docs)...${eta}`);
+    // Retry with exponential backoff for rate limits
+    let retries = 0;
+    const maxRetries = 5;
 
-      const response = await client.embed({
-        input: texts,
-        model,
-      });
+    while (retries <= maxRetries) {
+      try {
+        const eta = batchNum === 1 ? '' : ` (ETA: ${Math.ceil((totalBatches - batchNum) * batchDelayMs / 60000)}m)`;
+        console.log(`Embedding batch ${batchNum}/${totalBatches} (${batch.length} docs)...${eta}`);
 
-      // Map embeddings back to node IDs
-      for (let j = 0; j < batch.length; j++) {
-        if (response.data?.[j]?.embedding) {
-          results.push({
-            nodeId: batch[j].id,
-            embedding: response.data[j].embedding,
-          });
+        const response = await client.embed({
+          input: texts,
+          model,
+        });
+
+        // Map embeddings back to node IDs
+        for (let j = 0; j < batch.length; j++) {
+          if (response.data?.[j]?.embedding) {
+            results.push({
+              nodeId: batch[j].id,
+              embedding: response.data[j].embedding,
+            });
+          }
+        }
+
+        // Rate limit delay between batches (skip after last batch)
+        if (i + batchSize < nodes.length) {
+          console.log(`  Rate limiting: waiting ${batchDelayMs / 1000}s...`);
+          await sleep(batchDelayMs);
+        }
+        break; // Success, exit retry loop
+      } catch (error: any) {
+        if (error?.statusCode === 429 && retries < maxRetries) {
+          retries++;
+          const backoffMs = Math.min(60000 * retries, 300000); // 1m, 2m, 3m, 4m, 5m max
+          console.log(`  Rate limited (429). Retry ${retries}/${maxRetries} after ${backoffMs / 1000}s...`);
+          await sleep(backoffMs);
+        } else {
+          console.error(`Failed to embed batch starting at index ${i}:`, error);
+          throw error;
         }
       }
-
-      // Rate limit delay between batches (skip after last batch)
-      if (i + batchSize < nodes.length) {
-        console.log(`  Rate limiting: waiting ${batchDelayMs / 1000}s...`);
-        await sleep(batchDelayMs);
-      }
-    } catch (error) {
-      console.error(`Failed to embed batch starting at index ${i}:`, error);
-      throw error;
     }
   }
 

@@ -53,7 +53,7 @@ const DEFAULT_CONFIG: BuildConfig = {
   ],
   embeddingProvider: 'voyage',
   embeddingModel: DEFAULT_MODEL,
-  batchSize: 100,
+  batchSize: 3, // Tiny batches for free tier (10K TPM = ~3 docs)
   maxTokensPerDoc: 8000,
   similarityThreshold: 0.75,
   maxSemanticEdgesPerNode: 10,
