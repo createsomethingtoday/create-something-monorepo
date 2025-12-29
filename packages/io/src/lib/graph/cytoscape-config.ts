@@ -4,8 +4,13 @@
  * Layout algorithms and Canon-compliant styling for the knowledge graph.
  */
 
-import type { Stylesheet } from 'cytoscape';
 import type { ViewMode } from './types.js';
+
+/** Cytoscape stylesheet entry - using loose type for dynamic data() bindings */
+interface StylesheetEntry {
+  selector: string;
+  style: Record<string, unknown>;
+}
 
 /**
  * Package colors from Canon data visualization palette
@@ -28,7 +33,7 @@ export const PACKAGE_COLORS: Record<string, string> = {
 /**
  * Cytoscape stylesheet with Canon design tokens
  */
-export function createStylesheet(): Stylesheet[] {
+export function createStylesheet(): StylesheetEntry[] {
   return [
     // ===========================================================================
     // Nodes

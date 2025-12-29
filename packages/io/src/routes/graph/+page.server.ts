@@ -11,7 +11,8 @@ import type { PageServerLoad } from './$types';
 import type { GraphData } from '$lib/graph';
 
 export const load: PageServerLoad = async () => {
-	const graphDir = resolve(process.cwd(), '.graph');
+	// Navigate from packages/io to monorepo root
+	const graphDir = resolve(process.cwd(), '../../.graph');
 
 	const nodesPath = resolve(graphDir, 'nodes.json');
 	const edgesPath = resolve(graphDir, 'edges.json');
