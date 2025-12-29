@@ -15,6 +15,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "cleanup": "tsx src/bin/cleanup-photos.ts",
+    "docs": "tsx src/bin/generate-docs.ts",
     "render-threshold": "tsx scripts/render-threshold.ts",
     "generate-sections": "tsx scripts/generate-sections.ts",
     "render-perspective": "tsx scripts/render-perspective.ts",
