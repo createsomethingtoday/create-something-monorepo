@@ -3,11 +3,10 @@
 	 * StatementText - Animated Typography for Insights
 	 *
 	 * Large statement text that reveals its essence through subtraction.
-	 * Words marked as "keep" survive; others strike through and become ghosted.
+	 * Words marked as "keep" survive; others strike through, fade, then collapse.
 	 *
-	 * Palimpsest mode (default): Struck words remain visible but faded,
-	 * creating an erasure poetry aesthetic. The archaeology of thought
-	 * stays visible—you see what was removed to arrive at truth.
+	 * Dual-reading structure: interleave kept words throughout the narrative
+	 * so the full text tells a story while subtraction reveals the principle.
 	 *
 	 * "Good design is as little design as possible" - Dieter Rams
 	 */
@@ -24,13 +23,8 @@
 		progress = 1,
 		size = 'display',
 		direction = 'forward',
-		variant = 'palimpsest',
 		class: className = ''
 	}: StatementTextProps = $props();
-
-	// Palimpsest: struck words remain visible but ghosted
-	// Collapse: struck words shrink to nothing (original behavior)
-	const isPalimpsest = $derived(variant === 'palimpsest');
 
 	// Reverse mode: start coalesced, expand to full
 	const isReverse = $derived(direction === 'reverse');
@@ -79,7 +73,7 @@
 	);
 </script>
 
-<p class="statement-text {sizeClass} {className}" class:coalesced={isCoalesced} class:reverse={isReverse} class:palimpsest={isPalimpsest}>
+<p class="statement-text {sizeClass} {className}" class:coalesced={isCoalesced} class:reverse={isReverse}>
 	{#each statement.words as word, i}
 		{@const wordStrike = isReverse
 			? Math.max(0, Math.min(1, strikeProgress - (statement.words.length - i - 1) * 0.03))
@@ -162,23 +156,9 @@
 		font-weight: var(--font-bold, 700);
 	}
 
-	/* Palimpsest: ghosted words remain visible but faded */
+	/* Ghosted words collapse at end of animation */
 	.word.ghosted {
-		opacity: 0.28;
-		font-weight: var(--font-normal, 400);
-	}
-
-	/* Palimpsest: strikethrough stays visible on ghosted words */
-	.palimpsest .word.ghosted .strike {
-		width: 100%;
-		opacity: 0.4;
-	}
-
-	/* Collapse variant: ghosted words shrink to nothing */
-	.statement-text:not(.palimpsest) .word.ghosted {
-		max-width: 0;
-		margin-right: 0;
-		opacity: 0;
+		display: none;
 	}
 
 	/* Strikethrough effect */
@@ -204,13 +184,7 @@
 			opacity: 0.3;
 		}
 
-		/* Palimpsest: instant ghost state */
-		.palimpsest .word.ghosted {
-			opacity: 0.28;
-		}
-
-		/* Collapse: instant hide */
-		.statement-text:not(.palimpsest) .word.ghosted {
+		.word.ghosted {
 			display: none;
 		}
 	}

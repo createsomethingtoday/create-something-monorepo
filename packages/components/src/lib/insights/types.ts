@@ -136,12 +136,6 @@ export interface StatementTextProps {
 	size?: 'display' | 'headline' | 'body';
 	/** Animation direction: forward (full→essence) or reverse (essence→full) */
 	direction?: 'forward' | 'reverse';
-	/**
-	 * Visual variant for struck words:
-	 * - palimpsest (default): struck words remain visible but ghosted
-	 * - collapse: struck words shrink to nothing
-	 */
-	variant?: 'palimpsest' | 'collapse';
 	/** Additional CSS classes */
 	class?: string;
 }
