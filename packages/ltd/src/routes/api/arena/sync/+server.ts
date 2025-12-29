@@ -22,7 +22,8 @@ import type { Example, Resource } from '$lib/types';
 const CS_CHANNELS = [
 	'canon-minimalism',
 	'motion-language-4hbfmugttwe',
-	'claude-code-puz_2pgfxky'
+	'claude-code-puz_2pgfxky',
+	'architectural-dwelling'
 ];
 
 // External high-quality channels (secondary sources)

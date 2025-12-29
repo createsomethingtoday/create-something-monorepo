@@ -10,6 +10,7 @@ Human-curated visual references from Are.na that inform Canon design decisions.
 | CANON MINIMALISM | `canon-minimalism` | Rams' visual vocabulary | Primary |
 | MOTION LANGUAGE | `motion-language-4hbfmugttwe` | Animation/transition examples | Primary |
 | CLAUDE CODE | `claude-code-puz_2pgfxky` | Human-AI partnership patterns | Primary |
+| ARCHITECTURAL DWELLING | `architectural-dwelling` | Space-making, nature integration | Primary |
 
 ### External (Secondary)
 | Channel | Curator | Content |
@@ -92,6 +93,23 @@ Human-AI partnership patterns. Maps to Heideggerian tool philosophy.
 | Partnership, not delegation | Human as passive observer |
 
 **Curation question**: "Does this show the tool receding, or the tool demanding attention?"
+
+### ARCHITECTURAL DWELLING (`architectural-dwelling`)
+Space-making that embodies Heideggerian dwelling. Architecture as the practice of letting-be.
+
+| Accept | Reject |
+|--------|--------|
+| Buildings that recede into landscape | Architecture as spectacle |
+| "Design for rain, design for moss" | Climate-denial construction |
+| Contemplative retreat spaces | Luxury resort aesthetics |
+| Material honesty (wood, stone, concrete) | Decorative cladding, fake materials |
+| Threshold moments (inside↔outside) | Hermetic sealed environments |
+| Japanese hospitality minimalism | Western hotel maximalism |
+| Light as material | Artificial lighting-first design |
+
+**Curation question**: "Does this space enable dwelling, or demand attention?"
+
+**Seed sources**: NOT A HOTEL competition, Wonderwall projects, Japanese residential architecture
 
 ## Visual Principles (Derived from References)
 
@@ -178,7 +196,7 @@ This enables the hermeneutic flow: **discover** (browsing Are.na) → **curate**
 
 **UI**: Contributors can use the "+ Contribute Reference" button on `/taste`
 
-**Channels**: `canon-minimalism`, `motion-language-4hbfmugttwe`, and `claude-code-puz_2pgfxky` accept contributions
+**Channels**: `canon-minimalism`, `motion-language-4hbfmugttwe`, `claude-code-puz_2pgfxky`, and `architectural-dwelling` accept contributions
 
 ## Hermeneutic Flow
 

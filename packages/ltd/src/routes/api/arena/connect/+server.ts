@@ -16,7 +16,8 @@ import { ArenaClient } from '$lib/integrations/arena';
 const CURATED_CHANNELS = [
 	'canon-minimalism',
 	'motion-language-4hbfmugttwe',
-	'claude-code-puz_2pgfxky'
+	'claude-code-puz_2pgfxky',
+	'architectural-dwelling'
 ];
 
 interface ConnectBlockRequest {

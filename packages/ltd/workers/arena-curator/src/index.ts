@@ -97,6 +97,28 @@ const CURATION_CONFIG = {
 			'no human', 'ai only'
 		],
 		maxPerRun: 2
+	},
+	'architectural-dwelling': {
+		queries: [
+			'japanese architecture minimal',
+			'architecture nature integration',
+			'contemplative retreat space',
+			'not a hotel architecture',
+			'wonderwall architecture',
+			'kengo kuma wood',
+			'tadao ando concrete'
+		],
+		acceptTypes: ['Image', 'Link', 'Media'],
+		positiveSignals: [
+			'dwelling', 'retreat', 'nature', 'moss', 'rain', 'wood', 'stone',
+			'concrete', 'light', 'threshold', 'landscape', 'contemplative',
+			'minimal', 'hospitality', 'japanese', 'ryokan'
+		],
+		negativeSignals: [
+			'luxury', 'resort', 'hotel chain', 'commercial', 'spectacle',
+			'flashy', 'ornate', 'decorated', 'maximalist', 'busy'
+		],
+		maxPerRun: 3
 	}
 } as const;
 
