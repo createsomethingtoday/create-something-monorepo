@@ -2,10 +2,9 @@
 	/**
 	 * KeyInsight - Full-Screen Shareable Insight Visual
 	 *
-	 * A 100vh branded insight display with:
+	 * A 100vh insight display with:
 	 * - Large statement typography
 	 * - Optional bug/fix comparison
-	 * - CREATE SOMETHING branding
 	 * - PNG export capability
 	 * - Scroll or click-triggered animation
 	 *
@@ -14,7 +13,6 @@
 
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import CubeMark from '../brand/marks/CubeMark.svelte';
 	import StatementText from './StatementText.svelte';
 	import type {
 		KeyInsightProps,
@@ -48,26 +46,6 @@
 	let hasAnimated = $state(!animation.enabled);
 	let showingOriginal = $state(false);
 	let currentDirection = $state<'forward' | 'reverse'>(direction);
-
-	// =============================================================================
-	// PROPERTY CONFIG
-	// =============================================================================
-
-	const PROPERTY_NAMES: Record<string, string> = {
-		space: 'createsomething.space',
-		io: 'createsomething.io',
-		agency: 'createsomething.agency',
-		ltd: 'createsomething.ltd',
-		lms: 'learn.createsomething.space'
-	};
-
-	const PROPERTY_LABELS: Record<string, string> = {
-		space: 'Practice',
-		io: 'Research',
-		agency: 'Services',
-		ltd: 'Philosophy',
-		lms: 'Learning'
-	};
 
 	// =============================================================================
 	// ANIMATION LOGIC
@@ -247,9 +225,6 @@
 	// DERIVED
 	// =============================================================================
 
-	const propertyName = $derived(PROPERTY_NAMES[property] || PROPERTY_NAMES.io);
-	const propertyLabel = $derived(PROPERTY_LABELS[property] || PROPERTY_LABELS.io);
-
 	const containerClass = $derived(
 		variant === 'fullscreen' ? 'insight-fullscreen' :
 		variant === 'inline' ? 'insight-inline' :
@@ -274,17 +249,6 @@
 	tabindex={animation.trigger === 'click' ? 0 : undefined}
 	aria-label="Key Insight: {insight.principle}"
 >
-	<!-- Header: Property branding -->
-	<header class="insight-header">
-		<div class="property-brand">
-			<CubeMark size="sm" />
-			<div class="property-text">
-				<span class="property-name">{propertyName}</span>
-				<span class="property-label">{propertyLabel}</span>
-			</div>
-		</div>
-		<span class="insight-label">KEY INSIGHT</span>
-	</header>
 
 	<!-- Main content -->
 	<div class="insight-content">
@@ -337,19 +301,16 @@
 			<span class="paper-id">{insight.paperId}</span>
 		{/if}
 
-		<div class="footer-right">
-			{#if showExport}
-				<button
-					class="export-btn"
-					onclick={(e) => { e.stopPropagation(); exportAsPNG('og'); }}
-					disabled={isExporting}
-					aria-label="Export as PNG"
-				>
-					{isExporting ? 'Exporting...' : 'Export PNG'}
-				</button>
-			{/if}
-			<span class="wordmark">CREATE SOMETHING</span>
-		</div>
+		{#if showExport}
+			<button
+				class="export-btn"
+				onclick={(e) => { e.stopPropagation(); exportAsPNG('og'); }}
+				disabled={isExporting}
+				aria-label="Export as PNG"
+			>
+				{isExporting ? 'Exporting...' : 'Export PNG'}
+			</button>
+		{/if}
 	</footer>
 </article>
 
@@ -397,50 +358,6 @@
 	.key-insight[role="button"]:focus-visible {
 		outline: 2px solid var(--color-focus, rgba(255,255,255,0.5));
 		outline-offset: 4px;
-	}
-
-	/* ==========================================================================
-	   Header
-	   ========================================================================== */
-
-	.insight-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		margin-bottom: auto;
-	}
-
-	.property-brand {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm, 1rem);
-	}
-
-	.property-text {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.property-name {
-		font-family: var(--font-mono, ui-monospace, monospace);
-		font-size: var(--text-body-sm, 0.875rem);
-		color: var(--color-fg-tertiary, rgba(255,255,255,0.6));
-		letter-spacing: 0.05em;
-	}
-
-	.property-label {
-		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-fg-muted, rgba(255,255,255,0.46));
-		text-transform: uppercase;
-		letter-spacing: 0.15em;
-	}
-
-	.insight-label {
-		font-size: var(--text-caption, 0.75rem);
-		font-weight: 700;
-		letter-spacing: 0.2em;
-		color: var(--color-fg-muted, rgba(255,255,255,0.46));
-		text-transform: uppercase;
 	}
 
 	/* ==========================================================================
@@ -589,12 +506,6 @@
 		color: var(--color-fg-muted, rgba(255,255,255,0.46));
 	}
 
-	.footer-right {
-		display: flex;
-		align-items: center;
-		gap: var(--space-md, 1.5rem);
-	}
-
 	.export-btn {
 		font-size: var(--text-body-sm, 0.875rem);
 		color: var(--color-fg-tertiary, rgba(255,255,255,0.6));
@@ -617,14 +528,6 @@
 		cursor: wait;
 	}
 
-	.wordmark {
-		font-family: var(--font-mono, ui-monospace, monospace);
-		font-size: var(--text-body-sm, 0.875rem);
-		font-weight: 500;
-		color: var(--color-fg-muted, rgba(255,255,255,0.46));
-		letter-spacing: 0.1em;
-	}
-
 	/* ==========================================================================
 	   Responsive
 	   ========================================================================== */
@@ -632,11 +535,6 @@
 	@media (max-width: 768px) {
 		.insight-fullscreen {
 			padding: var(--space-lg, 2.5rem);
-		}
-
-		.insight-header {
-			flex-direction: column;
-			gap: var(--space-sm, 1rem);
 		}
 
 		.comparison-row {
@@ -653,10 +551,6 @@
 			flex-direction: column;
 			gap: var(--space-md, 1.5rem);
 			align-items: stretch;
-		}
-
-		.footer-right {
-			justify-content: space-between;
 		}
 
 		.principle-text {
