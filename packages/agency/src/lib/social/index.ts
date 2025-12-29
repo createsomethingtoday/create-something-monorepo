@@ -16,6 +16,15 @@ export {
 	generateSchedule,
 	generatePostId,
 	generateThreadId,
-	formatSchedulePreview
+	formatSchedulePreview,
+	checkScheduleConflicts,
+	suggestConflictFreeStartDate
 } from './strategy';
-export type { PostingMode, DayOfWeek, ScheduledPost, ScheduleOptions } from './strategy';
+export type {
+	PostingMode,
+	DayOfWeek,
+	ScheduledPost,
+	ScheduleOptions,
+	ScheduleConflict,
+	ConflictCheckResult
+} from './strategy';

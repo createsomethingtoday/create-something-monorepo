@@ -248,3 +248,150 @@ export function formatSchedulePreview(
 		preview: posts[i]?.content.substring(0, 80) + (posts[i]?.content.length > 80 ? '...' : '')
 	}));
 }
+
+/**
+ * Conflict detection for scheduled posts
+ *
+ * LinkedIn penalizes multiple posts per day. This detects when new
+ * scheduled posts would conflict with existing pending posts.
+ */
+
+export interface ScheduleConflict {
+	date: string; // ISO date (YYYY-MM-DD)
+	formattedDate: string; // Human readable
+	existingPost: {
+		id: string;
+		threadId: string | null;
+		threadIndex: number | null;
+		preview: string;
+	};
+	newPostIndex: number; // 1-based index in new thread
+}
+
+export interface ConflictCheckResult {
+	hasConflicts: boolean;
+	conflicts: ScheduleConflict[];
+	message: string;
+}
+
+/**
+ * Check if a proposed schedule conflicts with existing pending posts
+ *
+ * @param schedule - Array of dates for the new thread
+ * @param existingPosts - Existing pending posts from database
+ * @param timezone - Timezone for date formatting
+ */
+export function checkScheduleConflicts(
+	schedule: Date[],
+	existingPosts: Array<{
+		id: string;
+		scheduled_for: number;
+		thread_id: string | null;
+		thread_index: number | null;
+		content: string;
+	}>,
+	timezone: string
+): ConflictCheckResult {
+	const conflicts: ScheduleConflict[] = [];
+
+	const dateFormatter = new Intl.DateTimeFormat('en-US', {
+		timeZone: timezone,
+		weekday: 'short',
+		month: 'short',
+		day: 'numeric'
+	});
+
+	// Group existing posts by date (YYYY-MM-DD in local timezone)
+	const existingByDate = new Map<
+		string,
+		{
+			id: string;
+			threadId: string | null;
+			threadIndex: number | null;
+			preview: string;
+		}
+	>();
+
+	for (const post of existingPosts) {
+		const postDate = new Date(post.scheduled_for);
+		const dateKey = getLocalDateKey(postDate, timezone);
+		// Keep first post per date (there shouldn't be multiples, but just in case)
+		if (!existingByDate.has(dateKey)) {
+			existingByDate.set(dateKey, {
+				id: post.id,
+				threadId: post.thread_id,
+				threadIndex: post.thread_index,
+				preview: post.content.substring(0, 60) + (post.content.length > 60 ? '...' : '')
+			});
+		}
+	}
+
+	// Check each scheduled date against existing
+	for (let i = 0; i < schedule.length; i++) {
+		const dateKey = getLocalDateKey(schedule[i], timezone);
+		const existing = existingByDate.get(dateKey);
+
+		if (existing) {
+			conflicts.push({
+				date: dateKey,
+				formattedDate: dateFormatter.format(schedule[i]),
+				existingPost: existing,
+				newPostIndex: i + 1
+			});
+		}
+	}
+
+	const hasConflicts = conflicts.length > 0;
+	let message = '';
+
+	if (hasConflicts) {
+		const dateList = conflicts.map((c) => c.formattedDate).join(', ');
+		message = `${conflicts.length} scheduling conflict${conflicts.length > 1 ? 's' : ''} detected. ` +
+			`Posts already scheduled for: ${dateList}. ` +
+			`LinkedIn penalizes multiple posts per day.`;
+	}
+
+	return { hasConflicts, conflicts, message };
+}
+
+/**
+ * Get a date key (YYYY-MM-DD) in local timezone
+ */
+function getLocalDateKey(date: Date, timezone: string): string {
+	const formatter = new Intl.DateTimeFormat('en-CA', {
+		timeZone: timezone,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	});
+	return formatter.format(date);
+}
+
+/**
+ * Suggest an alternative start date that avoids conflicts
+ *
+ * @param existingPosts - Existing pending posts
+ * @param postCount - Number of posts to schedule
+ * @param timezone - Timezone
+ * @param preferredDays - Preferred days for posting
+ */
+export function suggestConflictFreeStartDate(
+	existingPosts: Array<{ scheduled_for: number }>,
+	postCount: number,
+	timezone: string,
+	preferredDays: DayOfWeek[] = DEFAULT_PREFERRED_DAYS
+): Date {
+	// Find the latest existing post date
+	let latestExisting = new Date();
+	for (const post of existingPosts) {
+		const postDate = new Date(post.scheduled_for);
+		if (postDate > latestExisting) {
+			latestExisting = postDate;
+		}
+	}
+
+	// Start from the day after the latest existing post
+	const startAfter = new Date(latestExisting.getTime() + 24 * 60 * 60 * 1000);
+
+	return getNextOptimalTime(timezone, preferredDays, DEFAULT_PREFERRED_HOUR, startAfter);
+}

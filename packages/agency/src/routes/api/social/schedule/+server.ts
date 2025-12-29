@@ -17,9 +17,11 @@ import {
 	generatePostId,
 	generateThreadId,
 	formatSchedulePreview,
-	getTokenStatus
+	getTokenStatus,
+	checkScheduleConflicts,
+	suggestConflictFreeStartDate
 } from '$lib/social';
-import type { PostingMode } from '$lib/social';
+import type { PostingMode, ScheduleConflict } from '$lib/social';
 
 interface ScheduleRequest {
 	platform: 'linkedin';
@@ -28,6 +30,7 @@ interface ScheduleRequest {
 	timezone?: string;
 	startDate?: string; // ISO date string
 	dryRun?: boolean;
+	forceSchedule?: boolean; // Override conflict detection
 }
 
 interface ScheduledPostRow {
@@ -67,7 +70,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		mode = 'drip',
 		timezone = 'America/Los_Angeles',
 		startDate,
-		dryRun = false
+		dryRun = false,
+		forceSchedule = false
 	} = body;
 
 	// Check LinkedIn token status - only block if not a dry run
@@ -176,6 +180,55 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const threadId = generateThreadId();
 	const now = Date.now();
 
+	// Check for conflicts with existing pending posts (skip for immediate mode)
+	let conflictResult: { hasConflicts: boolean; conflicts: ScheduleConflict[]; message: string } = {
+		hasConflicts: false,
+		conflicts: [],
+		message: ''
+	};
+	let suggestedStartDate: string | undefined;
+
+	if (mode !== 'immediate') {
+		// Get the date range we're scheduling into
+		const minDate = Math.min(...schedule.map((d) => d.getTime()));
+		const maxDate = Math.max(...schedule.map((d) => d.getTime()));
+
+		// Query for existing pending posts in this range (with buffer)
+		const bufferDays = 7 * 24 * 60 * 60 * 1000; // 7 days buffer
+		const existingResult = await db
+			.prepare(
+				`SELECT id, scheduled_for, thread_id, thread_index, content
+				 FROM social_posts
+				 WHERE status = 'pending'
+				   AND scheduled_for >= ?
+				   AND scheduled_for <= ?
+				 ORDER BY scheduled_for ASC`
+			)
+			.bind(minDate - bufferDays, maxDate + bufferDays)
+			.all();
+
+		const existingPosts = (existingResult.results || []) as Array<{
+			id: string;
+			scheduled_for: number;
+			thread_id: string | null;
+			thread_index: number | null;
+			content: string;
+		}>;
+
+		conflictResult = checkScheduleConflicts(schedule, existingPosts, timezone);
+
+		if (conflictResult.hasConflicts) {
+			// Calculate a conflict-free start date
+			const allPendingResult = await db
+				.prepare(`SELECT scheduled_for FROM social_posts WHERE status = 'pending'`)
+				.all();
+			const allPending = (allPendingResult.results || []) as Array<{ scheduled_for: number }>;
+
+			const suggested = suggestConflictFreeStartDate(allPending, postsToSchedule.length, timezone);
+			suggestedStartDate = suggested.toISOString().split('T')[0];
+		}
+	}
+
 	// Prepare preview
 	const preview = formatSchedulePreview(schedule, postsToSchedule, timezone);
 
@@ -191,12 +244,35 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				daysRemaining: tokenStatus.daysRemaining,
 				warning: tokenWarning
 			},
+			conflicts: conflictResult.hasConflicts
+				? {
+						detected: true,
+						count: conflictResult.conflicts.length,
+						message: conflictResult.message,
+						details: conflictResult.conflicts,
+						suggestedStartDate
+					}
+				: { detected: false },
 			scheduled: preview.map((p, i) => ({
 				...p,
 				fullContent: postsToSchedule[i].content,
 				hasCommentLink: !!postsToSchedule[i].commentLink
 			}))
 		});
+	}
+
+	// Block scheduling if conflicts exist (unless forceSchedule is true)
+	if (conflictResult.hasConflicts && !forceSchedule) {
+		return json(
+			{
+				error: 'Schedule conflicts detected',
+				message: conflictResult.message,
+				conflicts: conflictResult.conflicts,
+				suggestedStartDate,
+				hint: 'Use startDate parameter to schedule after existing posts, or set forceSchedule: true to override'
+			},
+			{ status: 409 }
+		);
 	}
 
 	// Insert into D1
@@ -238,7 +314,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		});
 	}
 
-	return json({
+	const response: Record<string, unknown> = {
 		success: true,
 		mode,
 		timezone,
@@ -250,5 +326,16 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			warning: tokenStatus.warning
 		},
 		scheduled: insertedPosts
-	});
+	};
+
+	// Add warning if conflicts were overridden
+	if (conflictResult.hasConflicts && forceSchedule) {
+		response.warning = {
+			message: 'Scheduled despite conflicts (forceSchedule=true)',
+			conflicts: conflictResult.conflicts.length,
+			note: 'LinkedIn may penalize multiple posts on the same day'
+		};
+	}
+
+	return json(response);
 };
