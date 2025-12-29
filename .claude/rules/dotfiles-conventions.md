@@ -173,3 +173,95 @@ When modifying dotfiles:
 2. Comments explain *why*, not *what*
 3. Test in isolation before installing
 4. Update this document if conventions change
+
+## Stripe CLI Patterns
+
+Local webhook development and testing. The tool recedes; Stripe operations happen.
+
+### Installation
+
+```bash
+brew install stripe/stripe-cli/stripe
+stripe login  # Opens browser for auth
+```
+
+### Webhook Development
+
+```bash
+# Forward Stripe webhooks to local server
+stripe listen --forward-to localhost:5173/api/stripe/webhook
+
+# With event filtering (faster startup)
+stripe listen --events checkout.session.completed,customer.subscription.updated \
+  --forward-to localhost:5173/api/stripe/webhook
+```
+
+### Event Replay
+
+```bash
+# Replay a specific event (debugging)
+stripe events resend evt_xxx
+
+# List recent events
+stripe events list --limit 10
+```
+
+### Testing Checkout
+
+```bash
+# Trigger test checkout.session.completed event
+stripe trigger checkout.session.completed
+
+# Trigger subscription events
+stripe trigger customer.subscription.created
+stripe trigger invoice.payment_failed
+```
+
+### Useful Commands
+
+| Command | Purpose |
+|---------|---------|
+| `stripe listen` | Forward webhooks locally |
+| `stripe logs tail` | Real-time API logs |
+| `stripe events list` | Recent webhook events |
+| `stripe customers list` | List customers |
+| `stripe subscriptions list` | List subscriptions |
+
+## Stripe MCP Patterns
+
+AI-assisted Stripe operations via Claude Code. Query production data without leaving the session.
+
+### Configuration
+
+Project-level `.mcp.json` (at monorepo root):
+```json
+{
+  "mcpServers": {
+    "stripe": {
+      "type": "http",
+      "url": "https://mcp.stripe.com"
+    }
+  }
+}
+```
+
+### Usage Examples
+
+Within Claude Code sessions:
+- "List active subscriptions for vertical templates"
+- "Show the last 5 failed webhook deliveries"
+- "What's the status of customer cus_xxx?"
+- "Find invoices for email@example.com"
+
+### Security Notes
+
+- Stripe MCP uses OAuth—authenticates via browser on first use
+- Operations are logged in Stripe Dashboard
+- Use test mode for experiments: prefix queries with "in test mode"
+
+### CLI vs MCP
+
+| Tool | Use Case |
+|------|----------|
+| CLI | Local webhook dev, event replay, testing checkout |
+| MCP | Production queries, AI-assisted debugging, cross-property visibility |

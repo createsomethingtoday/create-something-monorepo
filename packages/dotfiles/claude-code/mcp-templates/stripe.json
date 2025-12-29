@@ -2,31 +2,30 @@
   "_template": "Stripe MCP Server",
   "_description": "Query and manage Stripe payments, customers, subscriptions",
   "_workway": "Payment operations without dashboard context-switching",
-  "_requires": ["STRIPE_SECRET_KEY"],
 
   "stripe": {
-    "command": "npx",
-    "args": ["-y", "@anthropic/mcp-server-stripe"],
-    "env": {
-      "STRIPE_SECRET_KEY": "${STRIPE_SECRET_KEY}"
-    }
+    "type": "http",
+    "url": "https://mcp.stripe.com"
   },
 
   "_setup": [
-    "1. Get API key from https://dashboard.stripe.com/apikeys",
-    "2. Use test key for development: sk_test_...",
-    "3. Set STRIPE_SECRET_KEY in environment"
+    "1. Add to project .mcp.json or ~/.claude/mcp.json",
+    "2. First use will prompt browser OAuth",
+    "3. Operations use your Stripe account permissions"
   ],
 
   "_usage": [
     "Check customer: 'Look up the Stripe customer for email@example.com'",
     "List subscriptions: 'What active subscriptions do we have?'",
-    "Check payment: 'What's the status of invoice inv_xxx?'"
+    "Check payment: 'What's the status of invoice inv_xxx?'",
+    "Debug webhooks: 'Show recent failed webhook deliveries'"
   ],
 
-  "_security": [
-    "Never use production keys in development",
-    "Restrict API key permissions in Stripe Dashboard",
-    "Audit API key usage regularly"
+  "_cli_integration": [
+    "For local webhook testing, use Stripe CLI:",
+    "  stripe listen --forward-to localhost:5173/api/stripe/webhook",
+    "CLI and MCP serve different purposes:",
+    "  - CLI: Local development, webhook forwarding",
+    "  - MCP: Production queries, AI-assisted debugging"
   ]
 }
