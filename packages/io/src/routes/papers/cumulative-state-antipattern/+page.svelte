@@ -5,6 +5,22 @@
 	 * How ambiguous field semantics in database design create invisible bugs
 	 * that punish users for legitimate actions.
 	 */
+
+	import { KeyInsightCard, createInsight, createBugFixComparison } from '@create-something/components';
+
+	const insight = createInsight(
+		'cumulative-state-antipattern',
+		'Name fields for their semantics, not their content.',
+		{
+			comparison: createBugFixComparison(
+				'published >= 5',
+				'Penalizes curation',
+				'published + delisted >= 5',
+				'Preserves achievement'
+			),
+			category: 'Database Design'
+		}
+	);
 </script>
 
 <svelte:head>
@@ -46,28 +62,10 @@
 
 		<!-- Key Insight - Shareable Visual -->
 		<section class="key-insight-section">
-			<div class="key-insight-box">
-				<div class="key-insight-label">KEY INSIGHT</div>
-				<div class="key-insight-content">
-					<div class="formula-comparison">
-						<div class="formula-row formula-before">
-							<span class="formula-label">Bug</span>
-							<code class="formula-code">published >= 5</code>
-							<span class="formula-result">Penalizes curation</span>
-						</div>
-						<div class="formula-divider"></div>
-						<div class="formula-row formula-after">
-							<span class="formula-label">Fix</span>
-							<code class="formula-code">published + delisted >= 5</code>
-							<span class="formula-result">Preserves achievement</span>
-						</div>
-					</div>
-					<p class="key-insight-principle">
-						"Templates Published" implied cumulative. It meant current.<br/>
-						<strong>Name fields for their semantics, not their content.</strong>
-					</p>
-				</div>
-			</div>
+			<KeyInsightCard
+				{insight}
+				href="/insights/cumulative-state-antipattern"
+			/>
 		</section>
 
 		<!-- Metrics -->
@@ -765,121 +763,10 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 		overflow-x: auto;
 	}
 
-	/* Key Insight Visual - Shareable for LinkedIn */
+	/* Key Insight Section */
 	.key-insight-section {
 		margin: var(--space-xl) 0;
-	}
-
-	.key-insight-box {
-		background: var(--color-bg-surface);
-		border: 2px solid var(--color-border-emphasis);
-		border-radius: var(--radius-xl);
-		padding: var(--space-lg);
-		max-width: 600px;
-		margin: 0 auto;
-	}
-
-	.key-insight-label {
-		font-size: var(--text-caption);
-		font-weight: 700;
-		letter-spacing: 0.15em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-md);
-		text-align: center;
-	}
-
-	.key-insight-content {
 		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-	}
-
-	.formula-comparison {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.formula-row {
-		display: grid;
-		grid-template-columns: 60px 1fr auto;
-		gap: var(--space-sm);
-		align-items: center;
-		padding: var(--space-sm);
-		border-radius: var(--radius-md);
-	}
-
-	.formula-before {
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-	}
-
-	.formula-after {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-	}
-
-	.formula-label {
-		font-size: var(--text-body-sm);
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.formula-before .formula-label {
-		color: var(--color-error);
-	}
-
-	.formula-after .formula-label {
-		color: var(--color-success);
-	}
-
-	.formula-code {
-		font-family: ui-monospace, monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
-		background: var(--color-bg-pure);
-		padding: 0.25rem 0.5rem;
-		border-radius: var(--radius-sm);
-	}
-
-	.formula-result {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		text-align: right;
-	}
-
-	.formula-divider {
-		height: 1px;
-		background: var(--color-border-default);
-		margin: var(--space-xs) 0;
-	}
-
-	.key-insight-principle {
-		text-align: center;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: 1.6;
-		margin-top: var(--space-sm);
-	}
-
-	.key-insight-principle strong {
-		color: var(--color-fg-primary);
-		font-weight: 600;
-	}
-
-	/* Responsive adjustments */
-	@media (max-width: 480px) {
-		.formula-row {
-			grid-template-columns: 50px 1fr;
-			gap: 0.5rem;
-		}
-
-		.formula-result {
-			grid-column: 1 / -1;
-			text-align: left;
-			padding-left: 50px;
-			font-size: var(--text-caption);
-		}
+		justify-content: center;
 	}
 </style>

@@ -109,19 +109,35 @@
 		"./patterns": {
 			"types": "./dist/patterns/index.d.ts",
 			"svelte": "./dist/patterns/index.js"
+		},
+		"./insights": {
+			"types": "./dist/insights/index.d.ts",
+			"svelte": "./dist/insights/index.js"
+		},
+		"./diagrams": {
+			"types": "./dist/diagrams/index.d.ts",
+			"svelte": "./dist/diagrams/index.js"
+		},
+		"./icons": {
+			"types": "./dist/icons/index.d.ts",
+			"svelte": "./dist/icons/index.js"
 		}
 	},
 	"peerDependencies": {
 		"@sveltejs/kit": "^2.0.0",
 		"svelte": "^5.0.0",
 		"@create-something/tufte": "workspace:^",
-		"better-sqlite3": "^11.0.0"
+		"better-sqlite3": "^11.0.0",
+		"html2canvas": "^1.4.0"
 	},
 	"peerDependenciesMeta": {
 		"better-sqlite3": {
 			"optional": true
 		},
 		"@create-something/tufte": {
+			"optional": true
+		},
+		"html2canvas": {
 			"optional": true
 		}
 	},

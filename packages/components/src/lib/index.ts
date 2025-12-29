@@ -36,3 +36,6 @@ export * from './patterns/index.js';
 
 // Diagrams (data visualization)
 export * from './diagrams/index.js';
+
+// Insights (shareable key insight visuals)
+export * from './insights/index.js';
