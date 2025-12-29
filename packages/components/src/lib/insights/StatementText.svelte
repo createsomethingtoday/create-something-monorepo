@@ -164,7 +164,7 @@
 
 	/* Palimpsest: ghosted words remain visible but faded */
 	.word.ghosted {
-		opacity: 0.18;
+		opacity: 0.28;
 		font-weight: var(--font-normal, 400);
 	}
 
@@ -206,7 +206,7 @@
 
 		/* Palimpsest: instant ghost state */
 		.palimpsest .word.ghosted {
-			opacity: 0.18;
+			opacity: 0.28;
 		}
 
 		/* Collapse: instant hide */
