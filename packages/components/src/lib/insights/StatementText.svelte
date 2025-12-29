@@ -51,18 +51,16 @@
 			: (phase === 'coalescing' || phase === 'complete' ? progress : 0)
 	);
 
-	// In reverse: start coalesced, end expanded
+	// Text is coalesced (larger, bolder) at coalescing/complete phases
+	// Works for both directions: forward ends here, reverse starts here
 	const isCoalesced = $derived(
-		isReverse
-			? phase === 'reading' || phase === 'striking'
-			: phase === 'coalescing' || phase === 'complete'
+		phase === 'coalescing' || phase === 'complete'
 	);
 
-	// Hidden state: reverse logic for reverse mode
+	// Hidden state: words collapse at coalescing/complete phases
+	// Works for both directions: forward collapses at end, reverse starts collapsed
 	const shouldHide = $derived(
-		isReverse
-			? phase === 'reading'  // Start hidden, reveal as animation progresses
-			: phase === 'coalescing' || phase === 'complete'  // Hide after coalescing
+		phase === 'coalescing' || phase === 'complete'
 	);
 
 	// Size classes
