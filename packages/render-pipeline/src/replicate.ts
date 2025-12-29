@@ -13,7 +13,9 @@ const MODEL_VERSIONS: Record<ControlNetModel, string> = {
   'flux-canny-pro': 'black-forest-labs/flux-canny-pro',
   'flux-depth-pro': 'black-forest-labs/flux-depth-pro',
   'controlnet-scribble': 'jagilley/controlnet-scribble',
-  'interior-design': 'adirik/interior-design'
+  'interior-design': 'adirik/interior-design',
+  // Fine-tuned Canon style model (placeholder - update after training)
+  // 'flux-canon': 'your-username/flux-canon-style:version-hash'
 };
 
 // Default parameters per model
