@@ -72,7 +72,8 @@ export async function handleTemplateUser(
   const publishedTemplates = user.fields['#️⃣👛Templates Published'] ?? 0;
   const rejectedTemplates = user.fields['#️⃣👛Templates Rejected'] ?? 0;
   const submittedTemplates = user.fields['#️⃣👛Templates Submitted'] ?? 0;
-  const delistedTemplates = user.fields['#️⃣👛Templates Delisted'] ?? 0;
+  // Note: delistedTemplates intentionally not used in activeReviews calculation
+  // Delisted templates were already published, so they're counted in publishedTemplates
   const assetsSubmitted30 = user.fields['#️⃣Submission cap count'] ?? 0;
   const bannedInstances = user.fields['❌Banned Instance'] ?? [];
 
@@ -127,7 +128,9 @@ export async function handleTemplateUser(
     hasError = false;
   } else {
     // New creator - check for active reviews
-    const activeReviews = submittedTemplates - publishedTemplates - rejectedTemplates - delistedTemplates;
+    // Note: Don't subtract delistedTemplates - those were already published (counted in publishedTemplates)
+    // before being delisted. Subtracting both would double-count and cause negative activeReviews.
+    const activeReviews = submittedTemplates - publishedTemplates - rejectedTemplates;
 
     if (activeReviews >= 1) {
       message = `${assetsSubmitted30} out of 6 templates submitted this month. Total submitted: ${submittedTemplates}. You already have an active review in progress. Please wait for the review to complete before submitting another template.`;
