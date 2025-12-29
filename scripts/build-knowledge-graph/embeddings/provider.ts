@@ -5,7 +5,8 @@
  * Uses voyage-3-lite model ($0.02/1M tokens).
  */
 
-import VoyageAIClient from 'voyageai';
+import { readFileSync } from 'fs';
+import { VoyageAIClient } from 'voyageai';
 import type { GraphNode } from '../types.js';
 
 export interface EmbeddingOptions {
@@ -18,8 +19,11 @@ export interface EmbeddingOptions {
   /** Max tokens per document (default: 8000) */
   maxTokensPerDoc?: number;
 
-  /** Documents per API call (default: 100) */
+  /** Documents per API call (default: 8 for free tier rate limits) */
   batchSize?: number;
+
+  /** Delay between batches in ms (default: 21000 for 3 RPM limit) */
+  batchDelayMs?: number;
 }
 
 export interface EmbeddingResult {
@@ -47,9 +51,8 @@ function truncateToTokens(text: string, maxTokens: number): string {
  * Combines title and first N tokens of content
  */
 function prepareNodeText(node: GraphNode, maxTokens: number): string {
-  // Read file content (already available in node.absolutePath)
-  const fs = require('fs');
-  const content = fs.readFileSync(node.absolutePath, 'utf-8');
+  // Read file content
+  const content = readFileSync(node.absolutePath, 'utf-8');
 
   // Format: "Title: {title}\n\n{content}"
   const combined = `Title: ${node.title}\n\nPackage: ${node.package ?? 'root'}\n\nType: ${node.type}\n\n${content}`;
@@ -60,6 +63,13 @@ function prepareNodeText(node: GraphNode, maxTokens: number): string {
 /**
  * Generate embeddings for a batch of nodes
  */
+/**
+ * Sleep for specified milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function generateEmbeddings(
   nodes: GraphNode[],
   options: EmbeddingOptions
@@ -68,19 +78,23 @@ export async function generateEmbeddings(
     apiKey,
     model = 'voyage-3-lite',
     maxTokensPerDoc = 8000,
-    batchSize = 100,
+    batchSize = 8, // Small batches for free tier (10K TPM limit)
+    batchDelayMs = 21000, // 21 seconds between batches for 3 RPM limit
   } = options;
 
   const client = new VoyageAIClient({ apiKey });
   const results: EmbeddingResult[] = [];
+  const totalBatches = Math.ceil(nodes.length / batchSize);
 
-  // Process in batches
+  // Process in batches with rate limiting
   for (let i = 0; i < nodes.length; i += batchSize) {
+    const batchNum = Math.floor(i / batchSize) + 1;
     const batch = nodes.slice(i, i + batchSize);
     const texts = batch.map(node => prepareNodeText(node, maxTokensPerDoc));
 
     try {
-      console.log(`Embedding batch ${Math.floor(i / batchSize) + 1} (${batch.length} documents)...`);
+      const eta = batchNum === 1 ? '' : ` (ETA: ${Math.ceil((totalBatches - batchNum) * batchDelayMs / 60000)}m)`;
+      console.log(`Embedding batch ${batchNum}/${totalBatches} (${batch.length} docs)...${eta}`);
 
       const response = await client.embed({
         input: texts,
@@ -89,10 +103,18 @@ export async function generateEmbeddings(
 
       // Map embeddings back to node IDs
       for (let j = 0; j < batch.length; j++) {
-        results.push({
-          nodeId: batch[j].id,
-          embedding: response.data[j].embedding,
-        });
+        if (response.data?.[j]?.embedding) {
+          results.push({
+            nodeId: batch[j].id,
+            embedding: response.data[j].embedding,
+          });
+        }
+      }
+
+      // Rate limit delay between batches (skip after last batch)
+      if (i + batchSize < nodes.length) {
+        console.log(`  Rate limiting: waiting ${batchDelayMs / 1000}s...`);
+        await sleep(batchDelayMs);
       }
     } catch (error) {
       console.error(`Failed to embed batch starting at index ${i}:`, error);
