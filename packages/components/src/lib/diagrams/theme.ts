@@ -3,7 +3,7 @@
  * Canon design tokens with property-aware accents
  */
 
-export type Property = 'io' | 'space' | 'agency' | 'ltd';
+import type { Property } from '../analytics/types.js';
 
 /**
  * Property accent colors
@@ -14,6 +14,7 @@ export const propertyAccents: Record<Property, string> = {
   space: '#22c55e', // Green - practice, experiments
   agency: '#c084fc', // Purple - services, commercial
   ltd: '#ffffff', // White - philosophy, pure Canon
+  lms: '#fbbf24', // Amber - learning, education
 };
 
 /**

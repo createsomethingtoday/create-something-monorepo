@@ -140,11 +140,8 @@
 		display: inline-block;
 		margin-right: 0.3em;
 		opacity: var(--fade, 1);
-		max-width: 30ch;
-		overflow: hidden;
-		vertical-align: bottom;
+		vertical-align: baseline;
 		transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-					max-width 0.8s cubic-bezier(0.4, 0, 0.2, 1),
 					margin 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
@@ -197,10 +194,6 @@
 
 		.size-display.coalesced {
 			font-size: var(--text-h1, 2.5rem);
-		}
-
-		.word {
-			max-width: 20ch;
 		}
 	}
 </style>

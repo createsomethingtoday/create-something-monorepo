@@ -193,17 +193,38 @@
 			// Dynamic import html2canvas
 			const { default: html2canvas } = await import('html2canvas');
 
+			// Wait for fonts to be ready
+			await document.fonts.ready;
+
 			// Temporarily set complete state for export
 			const originalPhase = phase;
 			phase = 'complete';
 
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			await new Promise((resolve) => setTimeout(resolve, 200));
 
 			const canvas = await html2canvas(container, {
 				backgroundColor: '#000000',
 				scale: 2,
 				logging: false,
-				useCORS: true
+				useCORS: true,
+				allowTaint: true,
+				// Force system font stack in cloned element for reliable rendering
+				onclone: (clonedDoc) => {
+					const clonedContainer = clonedDoc.body.querySelector('.key-insight');
+					if (clonedContainer) {
+						// Apply system font stack that html2canvas can render reliably
+						const style = clonedDoc.createElement('style');
+						style.textContent = `
+							.key-insight, .key-insight * {
+								font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+							}
+							.key-insight code, .key-insight .comparison-code {
+								font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
+							}
+						`;
+						clonedDoc.head.appendChild(style);
+					}
+				}
 			});
 
 			// Restore phase

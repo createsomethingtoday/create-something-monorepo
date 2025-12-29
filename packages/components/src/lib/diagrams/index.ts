@@ -9,23 +9,21 @@ export { default as Matrix } from './Matrix.svelte';
 // Types
 export type {
   DiagramConfig,
-  Property,
   FlowNode,
   FlowEdge,
   FlowDiagramData,
   BarChartData,
-  BarChartItem,
+  DataPoint,
   LineChartData,
-  LineChartSeries,
+  LineSeriesData,
   PieChartData,
-  PieChartSlice,
   TimelineData,
   TimelineEvent,
   MatrixData,
   MatrixCell,
 } from './types.js';
 
-// Theme utilities
+// Theme utilities (Property type is exported from brand module)
 export { theme, propertyAccents, getAccentColor, getDataColor } from './theme.js';
 
 // Export utilities
