@@ -1,0 +1,28 @@
+# Webflow Validation Worker
+# Airtable-backed validation for Webflow template/library submissions
+#
+# Canon: The tool recedes; validation just works.
+# Infrastructure disappears; creators submit with confidence.
+
+name = "webflow-validation"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Enable workers.dev subdomain for testing
+workers_dev = true
+
+# Custom domain: webflow-api.createsomething.io (to avoid conflict with existing webflow.createsomething.io)
+# TODO: Update DNS to point to Cloudflare once tested
+routes = [{ pattern = "webflow-api.createsomething.io/*", zone_name = "createsomething.io" }]
+
+[vars]
+ENVIRONMENT = "production"
+# Airtable base ID
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+# Allowed origins for CORS - Webflow properties
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,https://branch--submit-a-template-template-marketplace-b3138c.webflow.io,https://branch--submit-a-library-webflow-marketplace-v1-670053.webflow.io,https://marketing-main.webflow.io,https://developers.webflow.com,https://wf-asset-dashboard.vercel.app,https://wf.createsomething.io,https://wf-form-validation-with-airtable-databa.webflow.io"
+
+# Secrets (set via `wrangler secret put`):
+# - AIRTABLE_API_KEY: Airtable Personal Access Token
+# - WEBFLOW_WEBHOOK_SECRET: HMAC key for webhook signature verification
