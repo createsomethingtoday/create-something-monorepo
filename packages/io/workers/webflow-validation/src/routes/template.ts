@@ -121,8 +121,9 @@ export async function handleTemplateUser(
     // Monthly limit reached
     message = `You have reached your submission limit of 6 templates for the past 30 days. Total submitted: ${submittedTemplates}. Please wait to submit new templates.`;
     hasError = true;
-  } else if (publishedTemplates >= 5 || isWhitelisted) {
+  } else if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
     // Established creator or whitelisted - unlimited concurrent submissions
+    // Note: Include delistedTemplates because delisting shouldn't revoke earned status
     message = `${assetsSubmitted30} out of 6 templates submitted this month. Total submitted: ${submittedTemplates}. You can have unlimited concurrent submissions for review.`;
     hasError = false;
   } else {
