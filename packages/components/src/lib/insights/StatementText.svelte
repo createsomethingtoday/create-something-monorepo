@@ -33,9 +33,10 @@
 	// =============================================================================
 
 	// Phase-based progress values (reversed for reverse mode)
+	// In reverse mode, strikeProgress mirrors progress (1→0) for smooth fade-out
 	const strikeProgress = $derived(
 		isReverse
-			? (phase === 'complete' ? 0 : phase === 'fading' ? 1 - progress : 1)
+			? progress  // Smooth fade: as progress goes 1→0, strike fades out
 			: (phase === 'reading' ? 0 : phase === 'striking' ? progress : 1)
 	);
 
