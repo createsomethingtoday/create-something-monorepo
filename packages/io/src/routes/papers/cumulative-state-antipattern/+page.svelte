@@ -13,7 +13,7 @@
 		'Name fields for their semantics, not their content.',
 		{
 			statement: parseStatement(
-				'"Templates **Published**" implied **cumulative.** It meant **current.** **Name** **fields** **for** **their** **semantics.**'
+				'"Published" implied cumulative. It meant current. **Name** **fields** **for** **their** **semantics,** **not** **their** **content.**'
 			),
 			comparison: createBugFixComparison(
 				'published >= 5',
@@ -69,15 +69,14 @@
 			</p>
 		</section>
 
-		<!-- Key Insight - Embedded Interactive Visual -->
+		<!-- Key Insight - Embedded Interactive Visual (100vw breakout) -->
 		<section class="key-insight-section">
 			<KeyInsight
 				{insight}
 				property="io"
 				animation={{ enabled: true, trigger: 'click' }}
 				showExport={true}
-				variant="inline"
-				direction="reverse"
+				variant="fullscreen"
 			/>
 		</section>
 

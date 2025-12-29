@@ -13,7 +13,7 @@
 		'Name fields for their semantics, not their content.',
 		{
 			statement: parseStatement(
-				'"Templates **Published**" implied **cumulative.** It meant **current.** **Name** **fields** **for** **their** **semantics.**'
+				'"Published" implied cumulative. It meant current. **Name** **fields** **for** **their** **semantics,** **not** **their** **content.**'
 			),
 			comparison: createBugFixComparison(
 				'published >= 5',
@@ -46,7 +46,6 @@
 	animation={{ enabled: true, trigger: 'click' }}
 	showExport={true}
 	variant="fullscreen"
-	direction="reverse"
 />
 
 <style>

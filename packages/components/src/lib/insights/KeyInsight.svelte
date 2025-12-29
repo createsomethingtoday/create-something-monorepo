@@ -46,6 +46,8 @@
 	let progress = $state(animation.enabled ? 0 : 1);
 	let isExporting = $state(false);
 	let hasAnimated = $state(!animation.enabled);
+	let showingOriginal = $state(false);
+	let currentDirection = $state<'forward' | 'reverse'>(direction);
 
 	// =============================================================================
 	// PROPERTY CONFIG
@@ -107,6 +109,49 @@
 		if (animation.trigger === 'click' && !hasAnimated) {
 			startAnimation();
 		}
+	}
+
+	function toggleOriginal() {
+		if (!hasAnimated) return;
+
+		showingOriginal = !showingOriginal;
+		currentDirection = showingOriginal ? 'reverse' : 'forward';
+
+		// Animate the toggle
+		const duration = 2000;
+		const startTime = performance.now();
+		const startProgress = progress;
+		const targetProgress = showingOriginal ? 0 : 1;
+
+		function animateToggle(currentTime: number) {
+			const elapsed = currentTime - startTime;
+			const t = Math.min(1, elapsed / duration);
+			// Ease out cubic
+			const eased = 1 - Math.pow(1 - t, 3);
+			progress = startProgress + (targetProgress - startProgress) * eased;
+
+			// Update phase based on progress
+			if (showingOriginal) {
+				// Reverse: complete → reading
+				if (progress > 0.8) phase = 'coalescing';
+				else if (progress > 0.6) phase = 'fading';
+				else if (progress > 0.4) phase = 'striking';
+				else phase = 'reading';
+			} else {
+				// Forward: reading → complete
+				if (progress < 0.2) phase = 'reading';
+				else if (progress < 0.4) phase = 'striking';
+				else if (progress < 0.6) phase = 'fading';
+				else if (progress < 0.95) phase = 'coalescing';
+				else phase = 'complete';
+			}
+
+			if (t < 1) {
+				requestAnimationFrame(animateToggle);
+			}
+		}
+
+		requestAnimationFrame(animateToggle);
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -262,16 +307,23 @@
 				statement={insight.statement}
 				{phase}
 				{progress}
-				{direction}
+				direction={currentDirection}
 				size="display"
 			/>
 		{:else}
 			<p class="principle-text">{insight.principle}</p>
 		{/if}
 
-		<!-- Click hint -->
+		<!-- Click hint or toggle -->
 		{#if showClickHint}
-			<p class="click-hint">{direction === 'reverse' ? 'Click to expand' : 'Click to reveal'}</p>
+			<p class="click-hint">Click to reveal</p>
+		{:else if hasAnimated && animation.enabled}
+			<button
+				class="toggle-btn"
+				onclick={(e) => { e.stopPropagation(); toggleOriginal(); }}
+			>
+				{showingOriginal ? '← Back to insight' : 'Show original →'}
+			</button>
 		{/if}
 	</div>
 
@@ -489,6 +541,24 @@
 	@keyframes pulse {
 		0%, 100% { opacity: 0.46; }
 		50% { opacity: 0.8; }
+	}
+
+	/* Toggle button */
+	.toggle-btn {
+		font-size: var(--text-body-sm, 0.875rem);
+		color: var(--color-fg-tertiary, rgba(255,255,255,0.6));
+		background: transparent;
+		border: 1px solid var(--color-border-default, rgba(255,255,255,0.1));
+		border-radius: var(--radius-md, 8px);
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		transition: all var(--duration-micro, 200ms) var(--ease-standard);
+	}
+
+	.toggle-btn:hover {
+		color: var(--color-fg-primary);
+		border-color: var(--color-border-emphasis, rgba(255,255,255,0.2));
+		background: var(--color-hover, rgba(255,255,255,0.05));
 	}
 
 	/* ==========================================================================
