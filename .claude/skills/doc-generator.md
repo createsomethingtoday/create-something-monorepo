@@ -1,6 +1,16 @@
 # Doc Generator Skill
 
-AI-powered documentation from screenshots. Describe your app, Claude analyzes UI, generates docs with annotated images.
+Generate documentation from screenshots by embedding live UI components. Screenshots capture intent; components deliver truth.
+
+## Philosophy
+
+**Images aren't the best way to view web components on the web. Web components are.**
+
+When documenting a web UI:
+- Screenshots show what exists (intent capture)
+- Components ARE the documentation (always current, interactive)
+
+The creator disappears; only the creation remains.
 
 ## Usage
 
@@ -14,129 +24,127 @@ AI-powered documentation from screenshots. Describe your app, Claude analyzes UI
 /doc-generator "Admin Guide" --output=./docs ~/Screenshots/*.png
 ```
 
-**With web animations (for motion demos):**
+**With component source:**
 ```
-/doc-generator "Onboarding Flow" --animate ~/Screenshots/*.png
+/doc-generator "Admin Guide" --component-source=packages/fn-app/src/lib/components/ ~/Screenshots/*.png
 ```
 
 ## How It Works
 
 ```
-Screenshots → Claude (analyze UI) → Sharp (crop/highlight) → Markdown + Images
+Screenshots → Claude (identify components) → Markdown with component embeds
 ```
 
 1. **User provides** screenshots and a title
-2. **Claude analyzes** each screenshot for UI elements, user flow steps, and important areas
-3. **Sharp generates** cropped/zoomed/highlighted images
-4. **Markdown output** creates structured documentation with embedded images
-5. **Optional**: HTML with CSS animations for motion demos
+2. **Claude analyzes** each screenshot, identifies UI components
+3. **Output** generates markdown with Svelte component embeds
+4. **Fallback** to description if component can't be embedded
 
-No manual annotation. Just screenshots and a title.
+## Agent Analysis Prompt
 
-## Agent Prompt Template
-
-When analyzing screenshots for documentation:
+When analyzing screenshots:
 
 ```
-Analyze this screenshot for documentation purposes.
+Analyze this screenshot to identify embeddable components.
 
-Context: {title} - {description if provided}
+Context: {title}
 
-Identify:
-1. Key UI elements (buttons, forms, inputs, status indicators)
-2. The user flow step this represents
-3. Important areas to highlight or zoom
+For each distinct UI element:
+1. Identify the likely component name (e.g., FirefliesConnectCard)
+2. Determine its current state (expanded, collapsed, error, success)
+3. Note any props visible from the UI state
 
 Return JSON:
 {
   "pageTitle": "Dashboard - Connect Services",
-  "description": "Main dashboard showing service connection status",
   "userFlowStep": 1,
-  "elements": [
+  "components": [
     {
-      "x": 0.1,
-      "y": 0.2,
-      "width": 0.3,
-      "height": 0.15,
-      "label": "Fireflies Connection Card",
-      "description": "Click to enter your Fireflies API key",
-      "importance": "primary",
-      "action": "Click 'Connect Fireflies' to begin"
+      "name": "FirefliesConnectCard",
+      "state": "expanded",
+      "props": {"state": "expanded", "connected": false},
+      "description": "API key input form for Fireflies connection"
     }
   ],
-  "nextAction": "Connect your Fireflies account to proceed",
-  "docSection": "Getting Started"
+  "narrative": "The dashboard guides users through connecting their services."
 }
 ```
 
-## Output Structure
+## Output Format
 
-```
-docs/
-├── admin-guide.md           # Main documentation
-├── admin-guide.html         # Optional: with CSS animations
-└── images/
-    ├── 01-dashboard.png         # Full screenshot (renamed)
-    ├── 01-dashboard-annotated.png # With highlight overlays
-    ├── 01-zoom-connect-btn.png  # Cropped important areas
-    └── ...
-```
-
-## Generated Markdown Format
+### Component-Driven (Default)
 
 ```markdown
 # Admin Guide
 
 ## 1. Dashboard Overview
 
-![Dashboard](./images/01-dashboard.png)
+<DashboardLayout docMode="static">
+  <FirefliesConnectCard state="disconnected" docMode="static" />
+  <NotionConnectCard state="disconnected" docMode="static" />
+</DashboardLayout>
 
-The dashboard shows your service connection status.
+The dashboard shows your service connection status. Both services start disconnected.
 
-### Connect Fireflies
+## 2. Connect Fireflies
 
-![Connect Button Detail](./images/01-zoom-connect-btn.png)
+<FirefliesConnectCard state="expanded" docMode="static" />
 
 1. Click "Connect Fireflies"
-2. Enter your API key
+2. Enter your API key from fireflies.ai
 3. Click "Connect"
-
----
-
-## 2. Settings
-
-![Settings Page](./images/02-settings.png)
-...
 ```
+
+### Fallback (No Component Available)
+
+When a component can't be embedded (third-party UI, complex state):
+
+```markdown
+## Settings Page
+
+The settings page shows account information, subscription status, and connected accounts.
+
+**Sections:**
+- Account: Email and sign out
+- Subscription: Current plan and usage
+- Connected Accounts: Status of integrations
+- Danger Zone: Account deletion
+```
+
+## Component docMode Convention
+
+Components should support a `docMode` prop:
+
+```svelte
+<script lang="ts">
+  interface Props {
+    docMode?: 'interactive' | 'static' | 'demo';
+  }
+  let { docMode = 'interactive' }: Props = $props();
+</script>
+```
+
+| Mode | Behavior |
+|------|----------|
+| `interactive` | Full functionality (tutorials) |
+| `static` | Displays but doesn't accept input (reference docs) |
+| `demo` | Pre-filled with example data |
 
 ## CLI Options
 
 | Flag | Description |
 |------|-------------|
 | `--output`, `-o` | Output directory (default: `./docs`) |
-| `--animate`, `-a` | Generate HTML with CSS animations for flow demos |
+| `--component-source` | Path to component library |
 | `--dry-run`, `-n` | Analyze only, show what would be generated |
-| `--skip-crops` | Don't generate cropped/zoomed images |
-| `--template` | Custom markdown template file |
 
-## Web Animations (--animate)
+## Component Source Discovery
 
-When `--animate` is enabled, generates HTML with CSS animations to show:
-- Click target highlights (pulsing borders)
-- Scroll indicators
-- Form fill sequences
-- State transitions between screenshots
+The agent looks for components in:
 
-Uses CSS-only animations - no JavaScript, no video production needed.
-
-```html
-<div class="step" data-step="1">
-  <img src="./images/01-dashboard.png" />
-  <div class="highlight pulse" style="left: 10%; top: 20%; width: 30%;">
-    Click here
-  </div>
-</div>
-```
+1. **Explicit path**: `--component-source=path/`
+2. **Conventional paths**: `src/lib/components/`, `src/components/`
+3. **Package exports**: Check `package.json` exports
 
 ## Example Session
 
@@ -145,54 +153,41 @@ User: /doc-generator "F→N Admin Guide" ~/Screenshots/fn-*.png
 
 Claude: Found 8 screenshots. Analyzing...
 
-Screenshot 1: Dashboard - Connect Services
-  - Fireflies card (primary)
-  - Notion card (primary)
-  - Status message (secondary)
+Screenshot 1: Dashboard
+  Components: DashboardLayout, FirefliesConnectCard, NotionConnectCard
 
-Screenshot 2: Fireflies API Key Input
-  - API key field (primary)
-  - Connect button (primary)
-  - Help link (secondary)
+Screenshot 2: Fireflies API Input
+  Components: FirefliesConnectCard (expanded)
+
+Screenshot 3: History
+  Components: SyncHistoryList (empty state)
 
 ...
 
 Generating documentation...
 
-Created:
-  ./docs/f-n-admin-guide.md (163 lines)
-  ./docs/images/ (24 images)
-    - 8 full screenshots
-    - 8 annotated versions
-    - 8 cropped highlights
+Created: ./docs/fn-admin-guide.md
 
-Done! Open ./docs/f-n-admin-guide.md to review.
+Done! Components embedded where available.
 ```
 
-## Files
+## When to Use
 
-- `packages/render-pipeline/src/docs/types.ts` - TypeScript types
-- `packages/render-pipeline/src/docs/analyze.ts` - Analysis prompt/parsing
-- `packages/render-pipeline/src/docs/crop.ts` - Sharp cropping
-- `packages/render-pipeline/src/docs/highlight.ts` - Overlay drawing
-- `packages/render-pipeline/src/docs/generate.ts` - Markdown/HTML output
-- `packages/render-pipeline/src/docs/index.ts` - Pipeline orchestration
-- `packages/render-pipeline/src/bin/generate-docs.ts` - CLI
-
-## Requirements
-
-- Screenshots accessible via filesystem
-- Sharp (bundled with render-pipeline)
-- Claude Code with vision capabilities
+| Scenario | Approach |
+|----------|----------|
+| Documenting your own UI | Component embeds |
+| Documenting third-party tools | Description-based fallback |
+| Interactive tutorials | Components with `docMode="interactive"` |
+| Reference documentation | Components with `docMode="static"` |
 
 ## Philosophy: Zuhandenheit
 
 **The documentation tool should recede.**
 
-- User provides screenshots
-- Claude understands context
-- Tool generates docs
+- User provides screenshots (intent capture)
+- Claude identifies components
+- Output embeds live components
 - Only the documentation remains
 
-No manual annotation, no template editing, no image cropping by hand.
+No image processing. No annotation. No manual cropping.
 **Weniger, aber besser.**
