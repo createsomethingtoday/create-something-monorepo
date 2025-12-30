@@ -230,6 +230,7 @@ async function sendVerticalTemplateWelcomeEmail(
 	platform: App.Platform | undefined
 ) {
 	const resendApiKey = platform?.env?.RESEND_API_KEY;
+	const emailFromSites = platform?.env?.EMAIL_FROM_SITES ?? 'CREATE SOMETHING <sites@createsomething.agency>';
 
 	if (resendApiKey) {
 		try {
@@ -240,7 +241,7 @@ async function sendVerticalTemplateWelcomeEmail(
 					Authorization: `Bearer ${resendApiKey}`
 				},
 				body: JSON.stringify({
-					from: 'CREATE SOMETHING <sites@createsomething.agency>',
+					from: emailFromSites,
 					to: email,
 					subject: `Your site ${subdomain}.createsomething.space is live!`,
 					html: `
@@ -301,6 +302,8 @@ async function sendFulfillmentEmail(
 
 	// Try to send via Resend if API key is configured
 	const resendApiKey = platform?.env?.RESEND_API_KEY;
+	const emailFromProducts = platform?.env?.EMAIL_FROM_PRODUCTS ?? 'CREATE SOMETHING <products@createsomething.agency>';
+
 	if (resendApiKey) {
 		try {
 			const response = await fetch('https://api.resend.com/emails', {
@@ -310,7 +313,7 @@ async function sendFulfillmentEmail(
 					Authorization: `Bearer ${resendApiKey}`
 				},
 				body: JSON.stringify({
-					from: 'CREATE SOMETHING <products@createsomething.agency>',
+					from: emailFromProducts,
 					to: email,
 					subject: `Your ${productName} is ready`,
 					html: `
@@ -585,6 +588,7 @@ async function sendAgentKitEmail(
 	const tierName = tierNames[tier] || 'Solo';
 
 	const resendApiKey = platform?.env?.RESEND_API_KEY;
+	const emailFromProducts = platform?.env?.EMAIL_FROM_PRODUCTS ?? 'CREATE SOMETHING <products@createsomething.agency>';
 
 	if (resendApiKey) {
 		try {
@@ -595,7 +599,7 @@ async function sendAgentKitEmail(
 					Authorization: `Bearer ${resendApiKey}`
 				},
 				body: JSON.stringify({
-					from: 'CREATE SOMETHING <products@createsomething.agency>',
+					from: emailFromProducts,
 					to: email,
 					subject: `Your Agent-in-a-Box (${tierName}) License Key`,
 					html: `
@@ -708,6 +712,7 @@ async function sendDunningEmail(
 	platform: App.Platform | undefined
 ) {
 	const resendApiKey = platform?.env?.RESEND_API_KEY;
+	const emailFromBilling = platform?.env?.EMAIL_FROM_BILLING ?? 'CREATE SOMETHING <billing@createsomething.agency>';
 
 	if (resendApiKey) {
 		try {
@@ -718,7 +723,7 @@ async function sendDunningEmail(
 					Authorization: `Bearer ${resendApiKey}`
 				},
 				body: JSON.stringify({
-					from: 'CREATE SOMETHING <billing@createsomething.agency>',
+					from: emailFromBilling,
 					to: email,
 					subject: 'Action required: Payment failed',
 					html: `

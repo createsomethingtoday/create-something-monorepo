@@ -1,12 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { IDENTITY_API, setSessionCookies, type TokenResponse, type User } from '@create-something/components/auth';
+import { generateCorrelationId, logError } from '@create-something/components/utils';
+import type { ApiResponse } from '@create-something/components/types';
 
 interface LoginResponse extends TokenResponse {
 	user: User;
 }
 
-interface ErrorResponse {
+interface IdentityErrorResponse {
 	error: string;
 }
 
@@ -16,7 +18,10 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		const { email, password } = body;
 
 		if (!email || !password) {
-			return json({ error: 'Email and password are required' }, { status: 400 });
+			return json(
+				{ success: false, error: 'Email and password are required' } as ApiResponse<never>,
+				{ status: 400 }
+			);
 		}
 
 		const response = await fetch(`${IDENTITY_API}/v1/auth/login`, {
@@ -26,8 +31,11 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		});
 
 		if (!response.ok) {
-			const errorResult = (await response.json()) as ErrorResponse;
-			return json({ error: errorResult.error || 'Invalid credentials' }, { status: response.status });
+			const errorResult = (await response.json()) as IdentityErrorResponse;
+			return json(
+				{ success: false, error: errorResult.error || 'Invalid credentials' } as ApiResponse<never>,
+				{ status: response.status }
+			);
 		}
 
 		const result = (await response.json()) as LoginResponse;
@@ -45,9 +53,13 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			isProduction ?? true
 		);
 
-		return json({ success: true, user: result.user });
-	} catch (error) {
-		console.error('Login error:', error);
-		return json({ error: 'Login failed' }, { status: 500 });
+		return json({ success: true, data: { user: result.user } } as ApiResponse<{ user: User }>);
+	} catch (err) {
+		const correlationId = generateCorrelationId();
+		logError('Login', err, correlationId);
+		return json(
+			{ success: false, error: 'Login failed', correlationId } as ApiResponse<never>,
+			{ status: 500 }
+		);
 	}
 };

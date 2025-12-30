@@ -33,6 +33,10 @@ declare global {
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;
+				// Email sender addresses
+				EMAIL_FROM_SITES?: string;
+				EMAIL_FROM_PRODUCTS?: string;
+				EMAIL_FROM_BILLING?: string;
 				// Stripe
 				STRIPE_SECRET_KEY: string;
 				STRIPE_WEBHOOK_SECRET: string;
