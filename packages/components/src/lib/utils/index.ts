@@ -48,10 +48,13 @@ export {
     isValidUrl
 } from './validation.js';
 
-// Error handling utilities
+// Error handling and structured logging
 export {
     generateCorrelationId,
     createErrorResponse,
     logError,
-    type ErrorResponse
+    log,
+    type ErrorResponse,
+    type LogLevel,
+    type LogEntry
 } from './errors.js';
