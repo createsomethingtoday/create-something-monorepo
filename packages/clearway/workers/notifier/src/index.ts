@@ -5,11 +5,13 @@
  * - Schedule reminders (24h and 2h before reservation)
  * - Send waitlist slot notifications
  * - Handle notification retries
+ * - Trigger WORKWAY workflows for automation
  *
  * The infrastructure disappears; notifications arrive.
  */
 
 import type { Reservation, WaitlistEntry, Member } from '$lib/types';
+import { createWorkwayClient, triggerWorkflowSafely } from '$lib/workway';
 
 // ============================================================================
 // Types
@@ -357,6 +359,26 @@ async function sendReminder(message: NotificationMessage, env: Env): Promise<voi
 	if (data.preferences.notification_sms && data.phone) {
 		await sendSMS(env, data.phone, body);
 	}
+
+	// Trigger WORKWAY workflow
+	const workway = createWorkwayClient(env.WORKWAY_API_KEY, env.WORKWAY_ORG_ID);
+	await triggerWorkflowSafely(workway, {
+		workflowId: 'clearway-booking-reminder',
+		event: 'booking.reminder',
+		data: {
+			reservationId: message.reservationId,
+			memberId: message.memberId,
+			facilityId: message.facilityId,
+			courtName: data.courtName,
+			startTime: data.startTime,
+			endTime: data.endTime,
+			facilityName: data.facilityName,
+			minutesBefore: data.minutesBefore,
+			email: data.email,
+			phone: data.phone
+		},
+		idempotencyKey: `booking-reminder-${message.reservationId}-${data.minutesBefore}m`
+	});
 }
 
 async function sendWaitlistOffer(message: NotificationMessage, env: Env): Promise<void> {
@@ -405,6 +427,25 @@ async function sendCancellation(message: NotificationMessage, env: Env): Promise
 	if (data.phone) {
 		await sendSMS(env, data.phone, body);
 	}
+
+	// Trigger WORKWAY workflow
+	const workway = createWorkwayClient(env.WORKWAY_API_KEY, env.WORKWAY_ORG_ID);
+	await triggerWorkflowSafely(workway, {
+		workflowId: 'clearway-booking-cancelled',
+		event: 'booking.cancelled',
+		data: {
+			reservationId: message.reservationId,
+			memberId: message.memberId,
+			facilityId: message.facilityId,
+			courtName: data.courtName,
+			startTime: data.startTime,
+			facilityName: data.facilityName,
+			penaltyApplied: data.penaltyApplied,
+			email: data.email,
+			phone: data.phone
+		},
+		idempotencyKey: `booking-cancelled-${message.reservationId}`
+	});
 }
 
 async function sendConfirmation(message: NotificationMessage, env: Env): Promise<void> {
@@ -425,6 +466,25 @@ async function sendConfirmation(message: NotificationMessage, env: Env): Promise
 	if (data.phone) {
 		await sendSMS(env, data.phone, body);
 	}
+
+	// Trigger WORKWAY workflow
+	const workway = createWorkwayClient(env.WORKWAY_API_KEY, env.WORKWAY_ORG_ID);
+	await triggerWorkflowSafely(workway, {
+		workflowId: 'clearway-booking-confirmed',
+		event: 'booking.confirmed',
+		data: {
+			reservationId: message.reservationId,
+			memberId: message.memberId,
+			facilityId: message.facilityId,
+			courtName: data.courtName,
+			startTime: data.startTime,
+			endTime: data.endTime,
+			facilityName: data.facilityName,
+			email: data.email,
+			phone: data.phone
+		},
+		idempotencyKey: `booking-confirmed-${message.reservationId}`
+	});
 }
 
 // ============================================================================
@@ -1059,4 +1119,6 @@ interface Env {
 	TWILIO_ACCOUNT_SID?: string;
 	TWILIO_AUTH_TOKEN?: string;
 	TWILIO_FROM_NUMBER?: string;
+	WORKWAY_API_KEY?: string;
+	WORKWAY_ORG_ID?: string;
 }

@@ -29,3 +29,5 @@ crons = [
 # - TWILIO_ACCOUNT_SID
 # - TWILIO_AUTH_TOKEN
 # - TWILIO_FROM_NUMBER
+# - WORKWAY_API_KEY (optional: enables workflow automation)
+# - WORKWAY_ORG_ID (optional: for private workflows)

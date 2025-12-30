@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@create-something/components": "workspace:*",
+    "@workwayco/sdk": "link:../../../../../WORKWAY/Cloudflare/packages/sdk",
     "stripe": "^17.5.0"
   },
   "type": "module"
