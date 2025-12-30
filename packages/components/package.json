@@ -12,7 +12,8 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "echo \"No tests yet\" && exit 0",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"tokens:export": "node scripts/generate-exports.mjs"
 	},
 	"files": [
@@ -156,7 +157,8 @@
 		"svelte": "^5.41.0",
 		"svelte-check": "^4.3.3",
 		"typescript": "^5.9.3",
-		"vite": "^7.1.10"
+		"vite": "^7.1.10",
+		"vitest": "^4.0.16"
 	},
 	"keywords": [
 		"svelte",
