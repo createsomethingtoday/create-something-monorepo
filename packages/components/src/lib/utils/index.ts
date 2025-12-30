@@ -65,3 +65,25 @@ export {
     type LogLevel,
     type LogEntry
 } from './errors.js';
+
+// Distributed tracing (W3C Trace Context compatible)
+export {
+    generateTraceId,
+    generateSpanId,
+    parseTraceparent,
+    formatTraceparent,
+    createTraceContext,
+    createChildContext,
+    createSpan,
+    endSpan,
+    setSpanAttribute,
+    addSpanEvent,
+    extractTraceContext,
+    injectTraceContext,
+    formatSpanForLogging,
+    trace,
+    createTracer,
+    type TraceContext,
+    type Span,
+    type SpanEvent
+} from './tracing.js';

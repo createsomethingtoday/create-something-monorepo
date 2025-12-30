@@ -365,7 +365,7 @@ describe('parseBody', () => {
 			json: async () => {
 				throw new Error('Invalid JSON');
 			}
-		} as Request;
+		} as unknown as Request;
 
 		const result = await parseBody(mockRequest, loginSchema);
 		expect(result.success).toBe(false);
