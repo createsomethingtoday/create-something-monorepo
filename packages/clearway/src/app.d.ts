@@ -8,6 +8,12 @@ declare global {
 		}
 		interface Locals {
 			facility?: import('$lib/types').Facility;
+			user?: {
+				id: string;
+				email: string;
+				tier: 'free' | 'pro' | 'agency';
+				source: string;
+			};
 		}
 		interface PageData {}
 		interface PageState {}
