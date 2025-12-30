@@ -3,29 +3,60 @@
   import Button from '$lib/components/Button.svelte';
   import BottomCTA from '$lib/components/BottomCTA.svelte';
 
+  // Location data with court type filters
   const locations = [
     {
       name: 'Grandview Park Tennis Center',
       address: '123 Maplewood Drive, Riverton',
-      image: '/images/tennis-location-012x_1tennis-location-01@2x.avif'
+      image: '/images/tennis-location-012x_1tennis-location-01@2x.avif',
+      courtFilter: 'grandview'
     },
     {
       name: 'Oakridge Sports Complex',
       address: '456 Oakridge Lane, Brookfield',
-      image: '/images/tennis-location-022x_1tennis-location-02@2x.avif'
+      image: '/images/tennis-location-022x_1tennis-location-02@2x.avif',
+      courtFilter: 'oakridge'
     },
     {
       name: 'Riverview Tennis Academy',
       address: '789 Pinecrest Avenue, Hillside',
-      image: '/images/tennis-location-062x_1tennis-location-06@2x.avif'
+      image: '/images/tennis-location-062x_1tennis-location-06@2x.avif',
+      courtFilter: 'riverview'
     },
     {
       name: 'Pinecrest Court Club',
       address: '101 Grandview Road, Lakeshore',
-      image: '/images/tennis-location-072x_1tennis-location-07@2x.avif'
+      image: '/images/tennis-location-072x_1tennis-location-07@2x.avif',
+      courtFilter: 'pinecrest'
     }
   ];
+
+  // Modal state
+  let modalOpen = $state(false);
+  let selectedLocation = $state<typeof locations[0] | null>(null);
+
+  function openModal(location: typeof locations[0]) {
+    selectedLocation = location;
+    modalOpen = true;
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modalOpen = false;
+    selectedLocation = null;
+    document.body.style.overflow = '';
+  }
+
+  // Close on escape key
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && modalOpen) {
+      closeModal();
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
   <title>Locations - The Stack Indoor Pickleball</title>
@@ -69,7 +100,7 @@
               <p class="heading-style-h3">{location.name}</p>
               <p class="location-address">{location.address}</p>
             </div>
-            <Button href="/book">Book a Court</Button>
+            <Button onclick={() => openModal(location)}>Book a Court</Button>
           </div>
         </li>
       {/each}
@@ -101,6 +132,34 @@
 
 <!-- Bottom CTA -->
 <BottomCTA />
+
+<!-- Booking Modal -->
+{#if modalOpen && selectedLocation}
+  <div class="modal-overlay" onclick={closeModal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-title" class="modal-title">{selectedLocation.name}</h2>
+          <p class="modal-subtitle">{selectedLocation.address}</p>
+        </div>
+        <button class="modal-close" onclick={closeModal} aria-label="Close modal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <iframe
+          src="https://clearway.pages.dev/embed?facility=thestack&theme=dark&court_type={selectedLocation.courtFilter}"
+          title="Book a Court at {selectedLocation.name}"
+          frameborder="0"
+          scrolling="no"
+          class="modal-iframe"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .section.is-location-hero {
@@ -335,5 +394,115 @@
 
   .booking-widget iframe {
     display: block;
+  }
+
+  /* Booking Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal-content {
+    background: var(--dark-grey, #1a1a1a);
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s var(--ease-stack, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .modal-title {
+    font-family: var(--font-coolvetica);
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    text-transform: uppercase;
+    color: var(--white);
+    margin: 0 0 0.25rem;
+    line-height: 1.1;
+  }
+
+  .modal-subtitle {
+    font-family: var(--font-satoshi);
+    font-size: 0.875rem;
+    color: var(--light-grey);
+    margin: 0;
+  }
+
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--light-grey);
+    cursor: pointer;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem 0 0;
+    border-radius: 0.5rem;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .modal-close:hover {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  .modal-iframe {
+    width: 100%;
+    min-height: 500px;
+    height: 60vh;
+    border: none;
+  }
+
+  @media (max-width: 767px) {
+    .modal-content {
+      max-height: 95vh;
+    }
+
+    .modal-header {
+      padding: 1rem;
+    }
+
+    .modal-iframe {
+      min-height: 400px;
+      height: 70vh;
+    }
   }
 </style>

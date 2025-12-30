@@ -16,6 +16,7 @@
 		type?: 'button' | 'submit';
 		disabled?: boolean;
 		showArrow?: boolean;
+		onclick?: () => void;
 		children: Snippet;
 	}
 
@@ -25,6 +26,7 @@
 		type = 'button',
 		disabled = false,
 		showArrow = false,
+		onclick,
 		children
 	}: Props = $props();
 
@@ -47,7 +49,7 @@
 		{/if}
 	</a>
 {:else}
-	<button {type} {disabled} class={classes[variant]}>
+	<button {type} {disabled} {onclick} class={classes[variant]}>
 		<span class="z-index-2">
 			{@render children()}
 		</span>
