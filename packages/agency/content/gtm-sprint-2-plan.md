@@ -200,6 +200,9 @@ Post-proposal cadence:
 ### Deliverables
 
 #### 8.1 Funnel Analysis Report
+
+**Template**: [funnel-analysis-sprint-2.md](./reports/funnel-analysis-sprint-2.md)
+
 Review 8 weeks of data:
 - Impressions → Engagement rate
 - Engagement → Profile visits
