@@ -42,6 +42,8 @@
 	let courts = $state<CourtAvailability[]>([]);
 	let selectedCourt = $state<string | null>(null);
 	let selectedSlot = $state<TimeSlot | null>(null);
+	// Unique key for selection comparison (court::time)
+	let selectedKey = $state<string | null>(null);
 
 	// API base URL - use relative path for same-origin, absolute for embeds
 	const API_BASE =
@@ -96,12 +98,14 @@
 		if (slot.status !== 'available') return;
 		selectedCourt = courtId;
 		selectedSlot = slot;
+		selectedKey = `${courtId}::${slot.startTime}`;
 	}
 
 	// Clear selection
 	function clearSelection() {
 		selectedCourt = null;
 		selectedSlot = null;
+		selectedKey = null;
 	}
 
 	// Book the selected slot
@@ -180,8 +184,7 @@
 								class="slot"
 								class:available={slot.status === 'available'}
 								class:peak={slot.priceCents !== null && slot.priceCents > 4000}
-								class:selected={selectedCourt === court.id &&
-									selectedSlot?.startTime === slot.startTime}
+								class:selected={selectedKey === `${court.id}::${slot.startTime}`}
 								onclick={() => selectSlot(court.id, slot)}
 								disabled={slot.status !== 'available'}
 							>
