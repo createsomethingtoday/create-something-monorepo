@@ -28,3 +28,6 @@ bucket_name = "maverick-x-assets"
 # Environment variables
 [vars]
 SITE_NAME = "Maverick X"
+
+# Required secrets (set via: wrangler pages secret put ADMIN_PASSWORD --project-name=maverick-x)
+# - ADMIN_PASSWORD: Admin login password

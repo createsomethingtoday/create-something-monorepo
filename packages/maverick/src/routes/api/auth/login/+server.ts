@@ -6,11 +6,14 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-// Simple password check - in production use proper auth
-const ADMIN_PASSWORD = '***REMOVED***';
-
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	try {
+		const adminPassword = platform?.env?.ADMIN_PASSWORD;
+		if (!adminPassword) {
+			console.error('ADMIN_PASSWORD not configured');
+			throw error(500, 'Server configuration error');
+		}
+
 		const body = await request.json() as { email?: string; password?: string };
 		const { email, password } = body;
 
@@ -19,7 +22,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		}
 
 		// Simple auth check
-		if (password !== ADMIN_PASSWORD) {
+		if (password !== adminPassword) {
 			throw error(401, 'Invalid credentials');
 		}
 
