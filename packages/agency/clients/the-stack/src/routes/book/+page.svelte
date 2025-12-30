@@ -131,7 +131,7 @@
 		max-width: 900px;
 		margin: 0 auto;
 		border-radius: 12px;
-		overflow: hidden;
+		overflow: visible;
 		background: var(--dark-grey);
 		opacity: 0;
 		transform: translateY(1rem);
@@ -141,7 +141,8 @@
 	.booking-widget iframe {
 		display: block;
 		width: 100%;
-		min-height: 600px;
+		min-height: 700px;
+		height: 80vh;
 		border: none;
 		border-radius: 12px;
 	}
