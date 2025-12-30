@@ -6,7 +6,7 @@ export {
     validateCompletionToken
 } from './completion.js';
 
-// D1 Database helpers
+// D1 Database helpers and query builders
 export {
     fetchPublishedPapers,
     fetchPaperBySlug,
@@ -15,10 +15,17 @@ export {
     fetchCategoryStats,
     fetchExperimentStats,
     safeQuery,
+    query,
+    insert,
+    update,
+    QueryBuilder,
+    InsertBuilder,
+    UpdateBuilder,
     PAPER_COLUMNS,
     type CategoryStat,
     type CategoryRow,
-    type ExperimentStats
+    type ExperimentStats,
+    type QueryResult
 } from './db.js';
 
 // Design tokens
