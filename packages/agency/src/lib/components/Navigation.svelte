@@ -25,6 +25,11 @@
 					</a>
 				</li>
 				<li>
+					<a href="/templates" class="nav-link">
+						Templates
+					</a>
+				</li>
+				<li>
 					<a href="/work" class="nav-link">
 						Our Work
 					</a>
@@ -73,6 +78,11 @@
 					<li>
 						<a href="/services" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
 							Services
+						</a>
+					</li>
+					<li>
+						<a href="/templates" class="mobile-link py-2" onclick={() => isMenuOpen = false}>
+							Templates
 						</a>
 					</li>
 					<li>
