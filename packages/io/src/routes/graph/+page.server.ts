@@ -7,7 +7,7 @@
 
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { GraphData } from '$lib/graph';
+import type { GraphData, GraphNode, GraphEdge, BuildMetadata } from '$lib/graph';
 
 export const load: PageServerLoad = async ({ fetch }) => {
 	try {
@@ -26,11 +26,11 @@ export const load: PageServerLoad = async ({ fetch }) => {
 			});
 		}
 
-		// Parse JSON responses
+		// Parse JSON responses with type assertions
 		const [nodes, edges, metadata] = await Promise.all([
-			nodesRes.json(),
-			edgesRes.json(),
-			metadataRes.json(),
+			nodesRes.json() as Promise<GraphNode[]>,
+			edgesRes.json() as Promise<GraphEdge[]>,
+			metadataRes.json() as Promise<BuildMetadata>,
 		]);
 
 		const data: GraphData = {

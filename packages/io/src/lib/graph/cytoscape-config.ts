@@ -13,20 +13,23 @@ interface StylesheetEntry {
 }
 
 /**
- * Package colors from Canon data visualization palette
+ * Package colors - Canon monochrome
+ *
+ * Heideggerian principle: the tool recedes into use.
+ * Colors don't demand attention; structure speaks.
  */
 export const PACKAGE_COLORS: Record<string, string> = {
-  io: '#60a5fa', // --color-data-1 (blue)
-  space: '#22c55e', // --color-data-2 (green)
-  agency: '#c084fc', // --color-data-3 (purple)
-  ltd: '#fbbf24', // --color-data-4 (amber)
-  components: '#f472b6', // --color-data-5 (pink)
-  harness: '#facc15', // --color-data-6 (yellow)
-  lms: '#60a5fa', // Blue (shared with io)
-  dotfiles: '#22c55e', // Green (shared with space)
-  'templates-platform': '#c084fc', // Purple (shared with agency)
-  verticals: '#fbbf24', // Amber (shared with ltd)
-  'cloudflare-sdk': '#f472b6', // Pink (shared with components)
+  io: 'rgba(255, 255, 255, 0.8)', // --color-fg-secondary
+  space: 'rgba(255, 255, 255, 0.8)',
+  agency: 'rgba(255, 255, 255, 0.8)',
+  ltd: 'rgba(255, 255, 255, 0.8)',
+  components: 'rgba(255, 255, 255, 0.8)',
+  harness: 'rgba(255, 255, 255, 0.8)',
+  lms: 'rgba(255, 255, 255, 0.8)',
+  dotfiles: 'rgba(255, 255, 255, 0.8)',
+  'templates-platform': 'rgba(255, 255, 255, 0.8)',
+  verticals: 'rgba(255, 255, 255, 0.8)',
+  'cloudflare-sdk': 'rgba(255, 255, 255, 0.8)',
   root: 'rgba(255, 255, 255, 0.46)', // --color-fg-muted (no package)
 };
 
@@ -36,22 +39,24 @@ export const PACKAGE_COLORS: Record<string, string> = {
 export function createStylesheet(): StylesheetEntry[] {
   return [
     // ===========================================================================
-    // Nodes
+    // Nodes - Canon monochrome with text inside
     // ===========================================================================
     {
       selector: 'node',
       style: {
         'background-color': 'data(color)',
+        'background-opacity': 0.15,
         'border-width': 1,
-        'border-color': 'rgba(255, 255, 255, 0.2)', // --color-border-emphasis
+        'border-color': 'rgba(255, 255, 255, 0.3)', // --color-border-strong
         label: 'data(label)',
-        'font-size': 11,
-        'font-family': '"Geist Mono", "SF Mono", Monaco, monospace',
-        color: '#ffffff', // --color-fg-primary
+        'font-size': 8,
+        'font-family': '"Geist Sans", "Inter", system-ui, sans-serif',
+        color: 'rgba(255, 255, 255, 0.8)', // --color-fg-secondary
         'text-valign': 'center',
         'text-halign': 'center',
-        'text-wrap': 'wrap',
-        'text-max-width': 100,
+        'text-wrap': 'ellipsis',
+        'text-max-width': 'data(size)',
+        'text-overflow-wrap': 'anywhere',
         width: 'data(size)',
         height: 'data(size)',
       },
@@ -251,11 +256,12 @@ export function getLayoutConfig(mode: ViewMode, targetId?: string) {
 
 /**
  * Compute node size based on word count (logarithmic scale)
+ * Larger sizes to fit text inside nodes
  */
 export function computeNodeSize(wordCount: number): number {
-  const minSize = 20;
-  const maxSize = 60;
-  const scale = 8;
+  const minSize = 40;
+  const maxSize = 90;
+  const scale = 10;
 
   const size = minSize + Math.log(wordCount + 1) * scale;
   return Math.min(maxSize, Math.max(minSize, size));
