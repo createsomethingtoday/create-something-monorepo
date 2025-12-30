@@ -1,0 +1,4105 @@
+[
+  {
+    "id": "docs/README.md",
+    "title": "Documentation",
+    "package": null,
+    "type": "readme",
+    "concepts": [],
+    "hash": "ec58c660ae485475",
+    "wordCount": 44,
+    "lastModified": "2025-11-29T00:38:08.973Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/README.md"
+  },
+  {
+    "id": "specs/webflow-dashboard.md",
+    "title": "Webflow Asset Dashboard: SvelteKit Port",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "c28a52d46fd92099",
+    "wordCount": 1241,
+    "lastModified": "2025-12-19T21:57:52.467Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/webflow-dashboard.md"
+  },
+  {
+    "id": "specs/webflow-dashboard-canon-redesign.md",
+    "title": "Webflow Dashboard Canon Redesign",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Zuhandenheit",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "0356e83bcb5f4df8",
+    "wordCount": 599,
+    "lastModified": "2025-12-20T01:26:50.406Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/webflow-dashboard-canon-redesign.md"
+  },
+  {
+    "id": "specs/templates-canon-alignment.md",
+    "title": "Templates Canon Alignment",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "e1187ccb2bf7ef14",
+    "wordCount": 252,
+    "lastModified": "2025-12-18T20:14:01.685Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/templates-canon-alignment.md"
+  },
+  {
+    "id": "specs/taste-llm-context.md",
+    "title": "Taste as Agent Context (LLM.txt)",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "dbe1b0f8e57b3842",
+    "wordCount": 296,
+    "lastModified": "2025-12-23T04:19:47.546Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/taste-llm-context.md"
+  },
+  {
+    "id": "specs/taste-collections-llm.md",
+    "title": "Taste Collections & LLM Context",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "27112c83430fcea7",
+    "wordCount": 489,
+    "lastModified": "2025-12-23T04:19:47.545Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/taste-collections-llm.md"
+  },
+  {
+    "id": "specs/session-duration-fix.md",
+    "title": "Session Duration Tracking Fix",
+    "package": null,
+    "type": "spec",
+    "concepts": [],
+    "hash": "83584bfac2b9a196",
+    "wordCount": 319,
+    "lastModified": "2025-12-23T04:19:47.544Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/session-duration-fix.md"
+  },
+  {
+    "id": "specs/remaining-features.md",
+    "title": "Remaining Features",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "af19415e634498d0",
+    "wordCount": 215,
+    "lastModified": "2025-12-24T13:46:44.312Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/remaining-features.md"
+  },
+  {
+    "id": "specs/plugin-marketplace.md",
+    "title": "CREATE SOMETHING Plugin Marketplace",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon",
+      "Complementarity"
+    ],
+    "hash": "7ec7a09b81946cc6",
+    "wordCount": 373,
+    "lastModified": "2025-12-24T01:32:24.337Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/plugin-marketplace.md"
+  },
+  {
+    "id": "specs/plugin-distribution.md",
+    "title": "Plugin Distribution Page",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon",
+      "Complementarity"
+    ],
+    "hash": "6c63f7eaa3ff945e",
+    "wordCount": 598,
+    "lastModified": "2025-12-24T01:32:24.337Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/plugin-distribution.md"
+  },
+  {
+    "id": "specs/newsletter-infrastructure.md",
+    "title": "Newsletter Infrastructure Completion",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "a5ed4a3af5d011c1",
+    "wordCount": 377,
+    "lastModified": "2025-12-23T04:19:47.544Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/newsletter-infrastructure.md"
+  },
+  {
+    "id": "specs/mobile-responsive-tables.md",
+    "title": "Mobile Responsive Tables",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "bb26c0096db2e0f0",
+    "wordCount": 709,
+    "lastModified": "2025-12-21T09:49:23.682Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/mobile-responsive-tables.md"
+  },
+  {
+    "id": "specs/identity-integration-events.md",
+    "title": "Identity Integration & Event Tracking",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "b49c9c5b664bd66a",
+    "wordCount": 556,
+    "lastModified": "2025-12-23T04:19:47.544Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/identity-integration-events.md"
+  },
+  {
+    "id": "specs/harness-optimizations.md",
+    "title": "Harness Optimizations for Claude Code Headless Mode",
+    "package": null,
+    "type": "spec",
+    "concepts": [],
+    "hash": "b216ef4011ca56be",
+    "wordCount": 444,
+    "lastModified": "2025-12-20T01:26:50.405Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/harness-optimizations.md"
+  },
+  {
+    "id": "specs/gdpr-compliance.md",
+    "title": "GDPR Compliance for Authenticated Users",
+    "package": null,
+    "type": "spec",
+    "concepts": [],
+    "hash": "a76f1ca066bbe7e4",
+    "wordCount": 523,
+    "lastModified": "2025-12-23T04:19:47.543Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/gdpr-compliance.md"
+  },
+  {
+    "id": "specs/developer-onboarding-presentations.md",
+    "title": "Developer Onboarding Series: Presentations 3-6",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads",
+      "Dwelling"
+    ],
+    "hash": "5ce021a26f7b84d7",
+    "wordCount": 535,
+    "lastModified": "2025-12-25T14:25:16.000Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/developer-onboarding-presentations.md"
+  },
+  {
+    "id": "specs/cross-domain-sso.md",
+    "title": "Cross-Domain SSO for CREATE SOMETHING Properties",
+    "package": null,
+    "type": "spec",
+    "concepts": [],
+    "hash": "56f5a7afa5db1bdf",
+    "wordCount": 278,
+    "lastModified": "2025-12-23T16:34:06.065Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/cross-domain-sso.md"
+  },
+  {
+    "id": "specs/construction-document-enhancement.md",
+    "title": "Construction Document Enhancement",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "2877448d7cc4dc88",
+    "wordCount": 360,
+    "lastModified": "2025-12-23T20:23:48.405Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/construction-document-enhancement.md"
+  },
+  {
+    "id": "specs/canon-alignment.md",
+    "title": "CREATE SOMETHING Canon Alignment",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "44e7cec496b40753",
+    "wordCount": 638,
+    "lastModified": "2025-12-18T14:18:11.964Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/canon-alignment.md"
+  },
+  {
+    "id": "specs/canon-alignment-audit.md",
+    "title": "Canon Alignment Audit",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "2d7c49506b3f2f15",
+    "wordCount": 97,
+    "lastModified": "2025-12-19T19:58:30.694Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/canon-alignment-audit.md"
+  },
+  {
+    "id": "specs/brand-module.md",
+    "title": "CREATE SOMETHING Brand Module",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "cd42ad3f05caa8e0",
+    "wordCount": 436,
+    "lastModified": "2025-12-21T16:43:30.078Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/brand-module.md"
+  },
+  {
+    "id": "specs/boris-cherny-infra-improvements.md",
+    "title": "Infrastructure Improvements from Boris Cherny Interview",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "f98c00fe8e700bbb",
+    "wordCount": 249,
+    "lastModified": "2025-12-18T20:37:55.294Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/boris-cherny-infra-improvements.md"
+  },
+  {
+    "id": "specs/anti-concierge.md",
+    "title": "Anti-Concierge: Wayfinding Through Design",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "ed631648b17c62c0",
+    "wordCount": 407,
+    "lastModified": "2025-12-20T12:05:18.892Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/anti-concierge.md"
+  },
+  {
+    "id": "specs/analytics-verification.md",
+    "title": "Analytics Verification Spec",
+    "package": null,
+    "type": "spec",
+    "concepts": [],
+    "hash": "91d544ab2d1abd27",
+    "wordCount": 357,
+    "lastModified": "2025-12-19T02:40:24.441Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/analytics-verification.md"
+  },
+  {
+    "id": "specs/analytics-instrumentation.md",
+    "title": "Analytics Instrumentation Spec",
+    "package": null,
+    "type": "spec",
+    "concepts": [],
+    "hash": "0658b7f51d273e8d",
+    "wordCount": 997,
+    "lastModified": "2025-12-19T02:07:53.574Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/analytics-instrumentation.md"
+  },
+  {
+    "id": "specs/a11y-compliance.md",
+    "title": "CREATE SOMETHING A11y Compliance",
+    "package": null,
+    "type": "spec",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "8d1c9937791da61e",
+    "wordCount": 1156,
+    "lastModified": "2025-12-18T20:14:01.679Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/specs/a11y-compliance.md"
+  },
+  {
+    "id": ".claude/animation-duration-audit-2025-12-18.md",
+    "title": "Animation Duration Token Audit",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "58f99d8d5c95c2de",
+    "wordCount": 582,
+    "lastModified": "2025-12-18T20:12:03.397Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/animation-duration-audit-2025-12-18.md"
+  },
+  {
+    "id": ".claude/alignment-audit-2025-12-02.md",
+    "title": "Hermeneutic Alignment Audit",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "dbd59e52485265ae",
+    "wordCount": 1082,
+    "lastModified": "2025-12-02T16:25:34.702Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/alignment-audit-2025-12-02.md"
+  },
+  {
+    "id": ".claude/DEPLOYMENT-GUIDE.md",
+    "title": "Deployment Guide: The Circle Closes",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "2377cd66b2974e96",
+    "wordCount": 544,
+    "lastModified": "2025-12-13T21:09:01.278Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/DEPLOYMENT-GUIDE.md"
+  },
+  {
+    "id": "packages/triad-audit/README.md",
+    "title": "@createsomething/triad-audit",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Weniger, aber besser"
+    ],
+    "hash": "750f51f65bd5b763",
+    "wordCount": 372,
+    "lastModified": "2025-11-30T06:11:32.708Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/triad-audit/README.md"
+  },
+  {
+    "id": "packages/tufte/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/tufte",
+    "package": null,
+    "type": "understanding",
+    "concepts": [],
+    "hash": "4bc3e9f4259a8317",
+    "wordCount": 357,
+    "lastModified": "2025-11-25T22:30:19.421Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/tufte/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/tufte/README.md",
+    "title": "@create-something/tufte",
+    "package": null,
+    "type": "readme",
+    "concepts": [],
+    "hash": "1909c8a3cae0dc14",
+    "wordCount": 691,
+    "lastModified": "2025-11-24T03:07:56.462Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/tufte/README.md"
+  },
+  {
+    "id": "packages/verticals/UNDERSTANDING.md",
+    "title": "Understanding: Verticals",
+    "package": "verticals",
+    "type": "understanding",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "acdd8755457908df",
+    "wordCount": 988,
+    "lastModified": "2025-12-30T00:43:23.584Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/verticals/README.md",
+    "title": "Verticals",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [],
+    "hash": "7e375c75aca96d15",
+    "wordCount": 130,
+    "lastModified": "2025-12-14T02:03:46.358Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/README.md"
+  },
+  {
+    "id": "packages/webflow-components/README.md",
+    "title": "Maverick X Webflow Components",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "28fb6108be19a0ae",
+    "wordCount": 613,
+    "lastModified": "2025-12-09T19:22:40.754Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-components/README.md"
+  },
+  {
+    "id": "packages/templates-platform/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/templates-platform",
+    "package": "templates-platform",
+    "type": "understanding",
+    "concepts": [
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "1f2c4ef260fea2c0",
+    "wordCount": 712,
+    "lastModified": "2025-12-30T00:41:48.982Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/templates-platform/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/templates-platform/README.md",
+    "title": "@create-something/templates-platform",
+    "package": "templates-platform",
+    "type": "readme",
+    "concepts": [],
+    "hash": "c602db94fae58dd8",
+    "wordCount": 93,
+    "lastModified": "2025-12-14T02:03:48.637Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/templates-platform/README.md"
+  },
+  {
+    "id": "packages/space/UNIFIED_FOOTER_COMPLETE.md",
+    "title": "Unified Footer Implementation — Complete",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "5f61d9410b075fcd",
+    "wordCount": 695,
+    "lastModified": "2025-11-21T18:44:40.664Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/UNIFIED_FOOTER_COMPLETE.md"
+  },
+  {
+    "id": "packages/space/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/space",
+    "package": "space",
+    "type": "understanding",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "de1c204d0a437bd6",
+    "wordCount": 325,
+    "lastModified": "2025-11-25T22:31:48.209Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/space/SUMMARY.md",
+    "title": "Create Something - Complete Setup Summary",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "2bbc46d13668d926",
+    "wordCount": 450,
+    "lastModified": "2025-11-21T18:44:40.662Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/SUMMARY.md"
+  },
+  {
+    "id": "packages/space/SEO_IMPLEMENTATION_GUIDE.md",
+    "title": "SEO & AEO Implementation Guide",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "7cf0da58944565d8",
+    "wordCount": 15,
+    "lastModified": "2025-12-30T00:50:02.753Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/SEO_IMPLEMENTATION_GUIDE.md"
+  },
+  {
+    "id": "packages/space/README.md",
+    "title": "sv",
+    "package": "space",
+    "type": "readme",
+    "concepts": [],
+    "hash": "cac328151065ce19",
+    "wordCount": 76,
+    "lastModified": "2025-11-21T18:44:45.389Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/README.md"
+  },
+  {
+    "id": "packages/space/PROPERTY_ECOSYSTEM.md",
+    "title": "Create Something — Property Ecosystem",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "8f38477715f4c12c",
+    "wordCount": 781,
+    "lastModified": "2025-11-21T18:44:40.653Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/PROPERTY_ECOSYSTEM.md"
+  },
+  {
+    "id": "packages/space/PERFORMANCE_MEASUREMENT_GUIDE.md",
+    "title": "Performance Measurement Guide",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "92b7cee71adf01e5",
+    "wordCount": 370,
+    "lastModified": "2025-11-21T18:44:45.563Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/PERFORMANCE_MEASUREMENT_GUIDE.md"
+  },
+  {
+    "id": "packages/space/NOTION_API_EXPERIMENT_COMPLETE.md",
+    "title": "Notion API 2025-09-03 Migration Experiment - Complete",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "fdbe14a67db3bc3f",
+    "wordCount": 839,
+    "lastModified": "2025-11-21T18:44:45.388Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/NOTION_API_EXPERIMENT_COMPLETE.md"
+  },
+  {
+    "id": "packages/space/NOTION_API_DEPLOYMENT.md",
+    "title": "✅ Notion API Migration Experiment - DEPLOYED TO PRODUCTION",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "3e0e0ec214756089",
+    "wordCount": 202,
+    "lastModified": "2025-11-21T18:44:40.661Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/NOTION_API_DEPLOYMENT.md"
+  },
+  {
+    "id": "packages/space/MIGRATION_SUMMARY.md",
+    "title": "CSS Canon Migration Summary - packages/space/src/routes",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "d58844a807925537",
+    "wordCount": 527,
+    "lastModified": "2025-12-03T18:05:45.782Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/MIGRATION_SUMMARY.md"
+  },
+  {
+    "id": "packages/space/LESS_BUT_BETTER_APPLIED.md",
+    "title": "\"Less, But Better\" Applied to Code Editor",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "24e26a8a7b7376d8",
+    "wordCount": 680,
+    "lastModified": "2025-11-21T18:44:45.390Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/LESS_BUT_BETTER_APPLIED.md"
+  },
+  {
+    "id": "packages/space/INTERACTIVE_CODE_EDITOR_PLAN.md",
+    "title": "Interactive Code Editor - Architecture Plan",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "783b1108c51e3b7b",
+    "wordCount": 403,
+    "lastModified": "2025-11-21T18:44:40.661Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/INTERACTIVE_CODE_EDITOR_PLAN.md"
+  },
+  {
+    "id": "packages/space/IMPLEMENTATION_PLAN.md",
+    "title": "IMPLEMENTATION PLAN: Interactive Experiment Runtime for CREATE SOMETHING SPACE",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "8137d340fbee7197",
+    "wordCount": 1500,
+    "lastModified": "2025-11-21T18:44:45.570Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/IMPLEMENTATION_PLAN.md"
+  },
+  {
+    "id": "packages/space/HINTS_DEPLOYMENT_GUIDE.md",
+    "title": "Hints Deployment Guide",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "99c6ff795b0278d8",
+    "wordCount": 872,
+    "lastModified": "2025-11-21T18:44:45.386Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/HINTS_DEPLOYMENT_GUIDE.md"
+  },
+  {
+    "id": "packages/space/HERMENEUTIC_RUNTIME_COMPARISON.md",
+    "title": "Hermeneutic Circle: Runtime Comparison Re-Integrated",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "4ac152ef0ac39ca7",
+    "wordCount": 980,
+    "lastModified": "2025-11-21T18:44:40.653Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/HERMENEUTIC_RUNTIME_COMPARISON.md"
+  },
+  {
+    "id": "packages/space/GEMINI_CODE_REVIEW_V1.1_HERMENEUTIC.md",
+    "title": "Hermeneutic Circle Analysis: Gemini V1.1 - Second Pass Review",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "6bd8b056f88365f5",
+    "wordCount": 1621,
+    "lastModified": "2025-11-21T18:44:40.664Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/GEMINI_CODE_REVIEW_V1.1_HERMENEUTIC.md"
+  },
+  {
+    "id": "packages/space/GEMINI_CODE_REVIEW_HERMENEUTIC.md",
+    "title": "Hermeneutic Circle Analysis: Gemini 3 Pro Code Quality Review",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Weniger, aber besser",
+      "Gestell"
+    ],
+    "hash": "03d77d6ab20a0e26",
+    "wordCount": 1679,
+    "lastModified": "2025-11-21T18:44:40.662Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/GEMINI_CODE_REVIEW_HERMENEUTIC.md"
+  },
+  {
+    "id": "packages/space/GAME_THEORY_IMPLEMENTATION.md",
+    "title": "Game-Theoretic Mechanism Design Implementation",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "370b08e903bd8ef2",
+    "wordCount": 934,
+    "lastModified": "2025-11-21T18:44:45.563Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/GAME_THEORY_IMPLEMENTATION.md"
+  },
+  {
+    "id": "packages/space/DEPLOYMENT_SUCCESS.md",
+    "title": "🎉 Sandbox Integration - Deployment Success!",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "97d9a4b117f0bfba",
+    "wordCount": 755,
+    "lastModified": "2025-11-21T18:44:45.401Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/DEPLOYMENT_SUCCESS.md"
+  },
+  {
+    "id": "packages/space/DEPLOYMENT_COMPLETE_OLD.md",
+    "title": "Create Something - Pages Deployment & SEO Implementation Complete",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "b1df7052b4a7dcdb",
+    "wordCount": 676,
+    "lastModified": "2025-11-21T18:44:40.654Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/DEPLOYMENT_COMPLETE_OLD.md"
+  },
+  {
+    "id": "packages/space/DEBUGGING_SUMMARY.md",
+    "title": "Debugging Summary - Console Errors Fixed",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "de4e96b22feb940c",
+    "wordCount": 378,
+    "lastModified": "2025-11-21T18:44:45.621Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/DEBUGGING_SUMMARY.md"
+  },
+  {
+    "id": "packages/space/DATABASE_MIGRATION_GUIDE.md",
+    "title": "Database Migration Guide",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "8a9951612542a8cb",
+    "wordCount": 258,
+    "lastModified": "2025-11-21T18:44:45.396Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/DATABASE_MIGRATION_GUIDE.md"
+  },
+  {
+    "id": "packages/space/CSS_CANON_MIGRATION_REPORT.md",
+    "title": "CSS Canon Migration Report",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "bba6d8620c120a91",
+    "wordCount": 775,
+    "lastModified": "2025-12-03T18:08:10.804Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/CSS_CANON_MIGRATION_REPORT.md"
+  },
+  {
+    "id": "packages/space/CLEANUP_COMPLETE.md",
+    "title": "Complete Cleanup Summary",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Dwelling"
+    ],
+    "hash": "384807c5e0d65aa5",
+    "wordCount": 1177,
+    "lastModified": "2025-11-21T18:44:45.389Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/CLEANUP_COMPLETE.md"
+  },
+  {
+    "id": "packages/space/BUG_FIX_COMPLETE.md",
+    "title": "✅ Bug Fix Complete - Notion API Code Execution",
+    "package": "space",
+    "type": "general",
+    "concepts": [],
+    "hash": "9846fe9bd7a2d078",
+    "wordCount": 295,
+    "lastModified": "2025-11-21T18:44:45.564Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/BUG_FIX_COMPLETE.md"
+  },
+  {
+    "id": "packages/space/BRAND_ALIGNMENT_HERMENEUTIC.md",
+    "title": "Hermeneutic Analysis: Brand Alignment Assessment",
+    "package": "space",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "05b8db2f5945a369",
+    "wordCount": 2104,
+    "lastModified": "2025-11-21T18:44:40.654Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/BRAND_ALIGNMENT_HERMENEUTIC.md"
+  },
+  {
+    "id": "packages/meetings/README.md",
+    "title": "@create-something/meetings",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "d272666a25f1e4f5",
+    "wordCount": 214,
+    "lastModified": "2025-12-04T20:05:27.892Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/meetings/README.md"
+  },
+  {
+    "id": "packages/maverick-admin/README.md",
+    "title": "Maverick X Admin",
+    "package": null,
+    "type": "readme",
+    "concepts": [],
+    "hash": "3f0b0b31f710d516",
+    "wordCount": 289,
+    "lastModified": "2025-12-09T19:39:21.932Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/maverick-admin/README.md"
+  },
+  {
+    "id": "packages/maverick-admin/MIGRATION_PLAN.md",
+    "title": "Maverick X: Vercel to Cloudflare Migration Plan",
+    "package": null,
+    "type": "general",
+    "concepts": [],
+    "hash": "cb6cebb51cf1726d",
+    "wordCount": 435,
+    "lastModified": "2025-12-09T19:40:13.847Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/maverick-admin/MIGRATION_PLAN.md"
+  },
+  {
+    "id": "packages/ltd/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/ltd",
+    "package": "ltd",
+    "type": "understanding",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "703c71ef83fb84bc",
+    "wordCount": 418,
+    "lastModified": "2025-11-25T22:31:03.114Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/ltd/SEO_IMPLEMENTATION_GUIDE.md",
+    "title": "SEO & AEO Implementation Guide",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [],
+    "hash": "7cf0da58944565d8",
+    "wordCount": 15,
+    "lastModified": "2025-12-30T00:50:01.489Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/SEO_IMPLEMENTATION_GUIDE.md"
+  },
+  {
+    "id": "packages/ltd/README.md",
+    "title": "createsomething-ltd",
+    "package": "ltd",
+    "type": "readme",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "05feb9fbac223012",
+    "wordCount": 16,
+    "lastModified": "2025-11-19T16:43:38.851Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/README.md"
+  },
+  {
+    "id": "packages/ltd/DESIGN_IMPROVEMENTS.md",
+    "title": "Design Improvements for createsomething.ltd",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [],
+    "hash": "86bb75a3cc5c3d2f",
+    "wordCount": 292,
+    "lastModified": "2025-11-19T16:43:38.851Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/DESIGN_IMPROVEMENTS.md"
+  },
+  {
+    "id": "packages/io/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/io",
+    "package": "io",
+    "type": "understanding",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "a3e63793e6845edd",
+    "wordCount": 1038,
+    "lastModified": "2025-12-24T02:19:24.937Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/io/SPACE_INTEGRATION_GUIDE.md",
+    "title": "SPACE Integration Guide (SvelteKit)",
+    "package": "io",
+    "type": "general",
+    "concepts": [],
+    "hash": "dcc0bd4e9434b4bc",
+    "wordCount": 740,
+    "lastModified": "2025-11-19T17:02:24.397Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/SPACE_INTEGRATION_GUIDE.md"
+  },
+  {
+    "id": "packages/io/SEO_IMPLEMENTATION_GUIDE.md",
+    "title": "SEO & AEO Implementation Guide",
+    "package": "io",
+    "type": "general",
+    "concepts": [],
+    "hash": "7cf0da58944565d8",
+    "wordCount": 15,
+    "lastModified": "2025-12-30T00:50:00.084Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/SEO_IMPLEMENTATION_GUIDE.md"
+  },
+  {
+    "id": "packages/io/README.md",
+    "title": "sv",
+    "package": "io",
+    "type": "readme",
+    "concepts": [],
+    "hash": "cac328151065ce19",
+    "wordCount": 76,
+    "lastModified": "2025-11-19T17:02:24.390Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/README.md"
+  },
+  {
+    "id": "packages/io/HOLIDAY_ROADMAP.md",
+    "title": "Holiday Content Roadmap (Dec 2024 - Jan 2025)",
+    "package": "io",
+    "type": "general",
+    "concepts": [],
+    "hash": "48bf34c92e0d1ed5",
+    "wordCount": 1361,
+    "lastModified": "2025-11-24T15:56:34.919Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/HOLIDAY_ROADMAP.md"
+  },
+  {
+    "id": "packages/io/ARCHITECTURAL_SEPARATION.md",
+    "title": "Architectural Separation: .io vs SPACE",
+    "package": "io",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "050139dc49f9d911",
+    "wordCount": 1085,
+    "lastModified": "2025-11-19T17:02:24.390Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/ARCHITECTURAL_SEPARATION.md"
+  },
+  {
+    "id": "packages/lms/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/lms",
+    "package": "lms",
+    "type": "understanding",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "29c96835b724fe92",
+    "wordCount": 813,
+    "lastModified": "2025-12-30T00:36:25.236Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/lms/README.md",
+    "title": "@create-something/lms",
+    "package": "lms",
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "6ca91231616cbf63",
+    "wordCount": 118,
+    "lastModified": "2025-12-14T02:03:47.145Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/README.md"
+  },
+  {
+    "id": "packages/lms/QUICK_START_PROGRESS.md",
+    "title": "Progress Tracking - Quick Start Guide",
+    "package": "lms",
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "da9f71a20c714c4b",
+    "wordCount": 204,
+    "lastModified": "2025-12-13T21:15:15.458Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/QUICK_START_PROGRESS.md"
+  },
+  {
+    "id": "packages/lms/PROGRESS_USAGE_EXAMPLES.md",
+    "title": "Progress Tracking Usage Examples",
+    "package": "lms",
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "c533e5222682b4c4",
+    "wordCount": 144,
+    "lastModified": "2025-12-13T21:12:48.803Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/PROGRESS_USAGE_EXAMPLES.md"
+  },
+  {
+    "id": "packages/lms/PROGRESS_TRACKING.md",
+    "title": "LMS Progress Tracking Implementation",
+    "package": "lms",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "abdf5e2a06848ad1",
+    "wordCount": 507,
+    "lastModified": "2025-12-13T21:11:31.725Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/PROGRESS_TRACKING.md"
+  },
+  {
+    "id": "packages/lms/PRAXIS_COMPONENTS.md",
+    "title": "Praxis Components Implementation",
+    "package": "lms",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "b61a6f43f889c714",
+    "wordCount": 782,
+    "lastModified": "2025-12-13T17:33:47.758Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/PRAXIS_COMPONENTS.md"
+  },
+  {
+    "id": "packages/lms/IMPLEMENTATION_SUMMARY.md",
+    "title": "LMS Progress Tracking - Implementation Summary",
+    "package": "lms",
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "39d79ac8e6d9b976",
+    "wordCount": 629,
+    "lastModified": "2025-12-13T21:14:26.148Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/IMPLEMENTATION_SUMMARY.md"
+  },
+  {
+    "id": "packages/maverick/README.md",
+    "title": "@create-something/maverick",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "9df6a010fa9d17b1",
+    "wordCount": 108,
+    "lastModified": "2025-12-14T02:03:48.338Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/maverick/README.md"
+  },
+  {
+    "id": "packages/learn/README.md",
+    "title": "@createsomething/learn",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Complementarity"
+    ],
+    "hash": "9faf9ccf61f3b281",
+    "wordCount": 289,
+    "lastModified": "2025-12-15T05:05:48.043Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/learn/README.md"
+  },
+  {
+    "id": "packages/identity-worker/README.md",
+    "title": "@create-something/identity-worker",
+    "package": null,
+    "type": "readme",
+    "concepts": [],
+    "hash": "21b55d6b6c221050",
+    "wordCount": 142,
+    "lastModified": "2025-12-14T02:03:47.901Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/identity-worker/README.md"
+  },
+  {
+    "id": "packages/huggingface-spaces/README.md",
+    "title": "HuggingFace Spaces",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "a4c97ca4c3f3d7d6",
+    "wordCount": 65,
+    "lastModified": "2025-12-14T02:03:45.986Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/huggingface-spaces/README.md"
+  },
+  {
+    "id": "packages/eslint-plugin-canon/README.md",
+    "title": "@create-something/eslint-plugin-canon",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon",
+      "Complementarity"
+    ],
+    "hash": "f4e3c3d88ff4902f",
+    "wordCount": 349,
+    "lastModified": "2025-12-26T14:31:49.521Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/eslint-plugin-canon/README.md"
+  },
+  {
+    "id": "packages/components/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/components",
+    "package": "components",
+    "type": "understanding",
+    "concepts": [],
+    "hash": "13ce5d2b8e70535a",
+    "wordCount": 331,
+    "lastModified": "2025-11-25T22:30:19.249Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/components/README.md",
+    "title": "@create-something/components",
+    "package": "components",
+    "type": "readme",
+    "concepts": [
+      "Weniger, aber besser"
+    ],
+    "hash": "11c91839bc0e67cd",
+    "wordCount": 273,
+    "lastModified": "2025-11-19T16:43:27.690Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/README.md"
+  },
+  {
+    "id": "packages/dotfiles/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/dotfiles",
+    "package": "dotfiles",
+    "type": "understanding",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads"
+    ],
+    "hash": "a94483358b643fdd",
+    "wordCount": 1168,
+    "lastModified": "2025-12-30T00:40:07.355Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/dotfiles/README.md",
+    "title": "@create-something/dotfiles",
+    "package": "dotfiles",
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Canon",
+      "Beads"
+    ],
+    "hash": "d792deb829fefac5",
+    "wordCount": 170,
+    "lastModified": "2025-12-25T18:38:33.000Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/README.md"
+  },
+  {
+    "id": "packages/harness/test-swarm-spec.md",
+    "title": "Test Swarm Orchestration",
+    "package": "harness",
+    "type": "general",
+    "concepts": [],
+    "hash": "59c3c608f583f2ea",
+    "wordCount": 88,
+    "lastModified": "2025-12-23T16:50:21.052Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness/test-swarm-spec.md"
+  },
+  {
+    "id": "packages/harness/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/harness",
+    "package": "harness",
+    "type": "understanding",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Zero Framework Cognition",
+      "Canon",
+      "Beads",
+      "Complementarity"
+    ],
+    "hash": "30bffb7feae5a284",
+    "wordCount": 1172,
+    "lastModified": "2025-12-30T00:38:24.969Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/harness/README.md",
+    "title": "@create-something/harness",
+    "package": "harness",
+    "type": "readme",
+    "concepts": [
+      "Zuhandenheit",
+      "Beads"
+    ],
+    "hash": "d77b9091266fea86",
+    "wordCount": 495,
+    "lastModified": "2025-12-23T16:38:31.024Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness/README.md"
+  },
+  {
+    "id": "packages/agency/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/agency",
+    "package": "agency",
+    "type": "understanding",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "1b0d21d7fe3f5fe0",
+    "wordCount": 383,
+    "lastModified": "2025-12-11T23:38:52.760Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/agency/SEO_IMPLEMENTATION_GUIDE.md",
+    "title": "SEO & AEO Implementation Guide",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "7cf0da58944565d8",
+    "wordCount": 15,
+    "lastModified": "2025-12-30T00:50:00.559Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/SEO_IMPLEMENTATION_GUIDE.md"
+  },
+  {
+    "id": "packages/agency/README.md",
+    "title": "sv",
+    "package": "agency",
+    "type": "readme",
+    "concepts": [],
+    "hash": "cac328151065ce19",
+    "wordCount": 76,
+    "lastModified": "2025-11-21T18:44:50.284Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/README.md"
+  },
+  {
+    "id": "packages/agency/CANON_AUDIT.md",
+    "title": "Canon Audit: .agency Property",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "06976ed4af3b4161",
+    "wordCount": 694,
+    "lastModified": "2025-12-27T22:05:56.225Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/CANON_AUDIT.md"
+  },
+  {
+    "id": "packages/agents/README.md",
+    "title": "@create-something/agents",
+    "package": null,
+    "type": "readme",
+    "concepts": [],
+    "hash": "91ac53f056451365",
+    "wordCount": 37,
+    "lastModified": "2025-12-14T02:03:45.565Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agents/README.md"
+  },
+  {
+    "id": "docs/internal/WARP.md",
+    "title": "CREATE SOMETHING Monorepo",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "f25874e169d35ed8",
+    "wordCount": 307,
+    "lastModified": "2025-12-13T21:09:18.733Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/WARP.md"
+  },
+  {
+    "id": "docs/internal/VOICE_AUDIT.md",
+    "title": "Voice Audit — Legacy Content Review",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "e803ad1b1e9dac33",
+    "wordCount": 841,
+    "lastModified": "2025-11-24T16:24:55.361Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/VOICE_AUDIT.md"
+  },
+  {
+    "id": "docs/internal/SPACE_AGENCY_MIGRATION_COMPLETE.md",
+    "title": ".space & .agency Monorepo Migration - Complete",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "4ac4632e7da0b3b3",
+    "wordCount": 1504,
+    "lastModified": "2025-11-21T18:54:23.052Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/SPACE_AGENCY_MIGRATION_COMPLETE.md"
+  },
+  {
+    "id": "docs/internal/RECONCILIATION_PLAN.md",
+    "title": "Reconciliation Plan: Aligning All Properties to Canon",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "7b7feb741e1b539d",
+    "wordCount": 1623,
+    "lastModified": "2025-11-21T15:57:13.501Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/RECONCILIATION_PLAN.md"
+  },
+  {
+    "id": "docs/internal/PM_AGENT_STATUS.md",
+    "title": "PM Agent Implementation Status",
+    "package": null,
+    "type": "general",
+    "concepts": [],
+    "hash": "87ef08afad55258e",
+    "wordCount": 1233,
+    "lastModified": "2025-12-13T21:09:18.878Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/PM_AGENT_STATUS.md"
+  },
+  {
+    "id": "docs/internal/PHASE_1_IMPLEMENTATION_PLAN.md",
+    "title": "Phase 1: Code Mode Implementation in .space",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Weniger, aber besser"
+    ],
+    "hash": "734edf18c421000e",
+    "wordCount": 1074,
+    "lastModified": "2025-11-21T20:12:56.033Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/PHASE_1_IMPLEMENTATION_PLAN.md"
+  },
+  {
+    "id": "docs/internal/PAPER_TYPE_FIXES_COMPLETE.md",
+    "title": "Paper Type Errors - Resolved",
+    "package": null,
+    "type": "general",
+    "concepts": [],
+    "hash": "f06be0fd7e4e1786",
+    "wordCount": 882,
+    "lastModified": "2025-11-21T19:04:48.920Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/PAPER_TYPE_FIXES_COMPLETE.md"
+  },
+  {
+    "id": "docs/internal/MONOREPO_MIGRATION_RETROSPECTIVE.md",
+    "title": "Technical Retrospective: CREATE SOMETHING Monorepo Migration and Deployment",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Weniger, aber besser"
+    ],
+    "hash": "f5defbe98ffee6a0",
+    "wordCount": 1549,
+    "lastModified": "2025-11-21T19:33:39.076Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/MONOREPO_MIGRATION_RETROSPECTIVE.md"
+  },
+  {
+    "id": "docs/internal/IMPLEMENTATION_SUMMARY.md",
+    "title": "CREATE SOMETHING: Implementation Summary",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "7aa3229204bb4bb7",
+    "wordCount": 1517,
+    "lastModified": "2025-11-21T18:17:12.401Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/IMPLEMENTATION_SUMMARY.md"
+  },
+  {
+    "id": "docs/internal/IMPLEMENTATION_AUDIT.md",
+    "title": "CREATE SOMETHING: Implementation Audit",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "df8e947ab249d18e",
+    "wordCount": 2715,
+    "lastModified": "2025-11-21T15:45:54.047Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/IMPLEMENTATION_AUDIT.md"
+  },
+  {
+    "id": "docs/internal/HERMENEUTIC_ANALYSIS.md",
+    "title": "Hermeneutic Analysis: Standards → Component System Migration",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "2b0e07fc430bb097",
+    "wordCount": 993,
+    "lastModified": "2025-11-21T14:55:13.765Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/HERMENEUTIC_ANALYSIS.md"
+  },
+  {
+    "id": "docs/internal/EXPERIMENT_03_PM_AGENT.md",
+    "title": "Experiment #3: AI PM Agent - Can AI Handle Client Communication While Maintaining Brand Voice?",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "6a14c1ce30fe1b36",
+    "wordCount": 187,
+    "lastModified": "2025-11-24T18:30:12.406Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/EXPERIMENT_03_PM_AGENT.md"
+  },
+  {
+    "id": "docs/internal/CODE_MODE_IMPLEMENTATION_PHASE_0.md",
+    "title": "Code Mode Implementation: Phase 0 Complete ✓",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "265a5bafcb9af8ec",
+    "wordCount": 1171,
+    "lastModified": "2025-11-21T19:36:50.827Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/CODE_MODE_IMPLEMENTATION_PHASE_0.md"
+  },
+  {
+    "id": "docs/patterns/cloudflare-knowledge-graph.md",
+    "title": "Knowledge Graph Pattern for Cloudflare Monorepos",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "a55267a9c7314eac",
+    "wordCount": 407,
+    "lastModified": "2025-12-30T01:44:48.201Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/patterns/cloudflare-knowledge-graph.md"
+  },
+  {
+    "id": "packages/cloudflare-sdk/UNDERSTANDING.md",
+    "title": "Understanding: @create-something/cloudflare-sdk",
+    "package": "cloudflare-sdk",
+    "type": "understanding",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "84d195d363f4f4a7",
+    "wordCount": 701,
+    "lastModified": "2025-12-30T00:44:58.538Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/cloudflare-sdk/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/cloudflare-sdk/README.md",
+    "title": "@create-something/cloudflare-sdk",
+    "package": "cloudflare-sdk",
+    "type": "readme",
+    "concepts": [],
+    "hash": "8e7edd7a60939d18",
+    "wordCount": 117,
+    "lastModified": "2025-12-14T02:03:47.470Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/cloudflare-sdk/README.md"
+  },
+  {
+    "id": "docs/guides/seo.md",
+    "title": "SEO & AEO Implementation Guide",
+    "package": null,
+    "type": "general",
+    "concepts": [],
+    "hash": "17c0fc6fb0658b49",
+    "wordCount": 729,
+    "lastModified": "2025-12-30T00:49:17.080Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/seo.md"
+  },
+  {
+    "id": "docs/guides/UNDERSTANDING_TEMPLATE.md",
+    "title": "Understanding: [Package Name]",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "4bfd7cd6cb4583b3",
+    "wordCount": 166,
+    "lastModified": "2025-11-25T22:29:36.843Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/UNDERSTANDING_TEMPLATE.md"
+  },
+  {
+    "id": "docs/guides/SKILLS.md",
+    "title": "Claude Code Skills: Hermeneutic Workflow Guide",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser",
+      "Dwelling"
+    ],
+    "hash": "e682f313f0b7bae1",
+    "wordCount": 852,
+    "lastModified": "2025-12-02T16:15:04.257Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/SKILLS.md"
+  },
+  {
+    "id": "docs/guides/MIGRATION_GUIDE.md",
+    "title": "Migration Guide: .space and .agency to Monorepo",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "d70141d54b3cf82e",
+    "wordCount": 1160,
+    "lastModified": "2025-11-21T18:31:16.021Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/MIGRATION_GUIDE.md"
+  },
+  {
+    "id": "docs/guides/EXAMPLES.md",
+    "title": "Component Library Examples",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "b97d329ee1cff28e",
+    "wordCount": 273,
+    "lastModified": "2025-12-18T15:52:23.329Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/EXAMPLES.md"
+  },
+  {
+    "id": "docs/guides/COMPONENT_GUIDE.md",
+    "title": "CREATE SOMETHING: Component Usage Guide",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "506c07955e3bd8d4",
+    "wordCount": 953,
+    "lastModified": "2025-11-21T18:29:50.585Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/COMPONENT_GUIDE.md"
+  },
+  {
+    "id": ".claude/memory/deployment-patterns.md",
+    "title": "Deployment Patterns",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon",
+      "Complementarity"
+    ],
+    "hash": "fa8bd07ad9148b86",
+    "wordCount": 156,
+    "lastModified": "2025-12-13T21:08:53.609Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/memory/deployment-patterns.md"
+  },
+  {
+    "id": ".claude/memory/agent-continuity-patterns.md",
+    "title": "Agent Continuity Patterns",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "216a7fc5a72af98d",
+    "wordCount": 309,
+    "lastModified": "2025-12-08T16:26:19.158Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/memory/agent-continuity-patterns.md"
+  },
+  {
+    "id": ".claude/rules/template-deployment-patterns.md",
+    "title": "Template Deployment Patterns",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "f9b8b9a536dd4c49",
+    "wordCount": 417,
+    "lastModified": "2025-12-21T09:49:23.668Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/template-deployment-patterns.md"
+  },
+  {
+    "id": ".claude/rules/taste-reference.md",
+    "title": "Taste Reference",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Zero Framework Cognition",
+      "Canon",
+      "Beads",
+      "Weniger, aber besser",
+      "Gestell",
+      "Gelassenheit",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "6e062a9c37a6a0d5",
+    "wordCount": 972,
+    "lastModified": "2025-12-29T17:02:19.647Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/taste-reference.md"
+  },
+  {
+    "id": ".claude/rules/sveltekit-conventions.md",
+    "title": "SvelteKit Conventions",
+    "package": null,
+    "type": "rule",
+    "concepts": [],
+    "hash": "326ea732ce1c7e26",
+    "wordCount": 31,
+    "lastModified": "2025-12-03T17:27:02.229Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/sveltekit-conventions.md"
+  },
+  {
+    "id": ".claude/rules/social-patterns.md",
+    "title": "Social Posting Patterns",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Subtractive Triad",
+      "Complementarity"
+    ],
+    "hash": "a7e752092d1eedab",
+    "wordCount": 388,
+    "lastModified": "2025-12-28T00:06:19.656Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/social-patterns.md"
+  },
+  {
+    "id": ".claude/rules/neomutt-patterns.md",
+    "title": "Neomutt Patterns",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "fc6749c7526699bc",
+    "wordCount": 305,
+    "lastModified": "2025-12-10T22:48:52.526Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/neomutt-patterns.md"
+  },
+  {
+    "id": ".claude/rules/harness-patterns.md",
+    "title": "Harness Patterns",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Zero Framework Cognition",
+      "Beads"
+    ],
+    "hash": "84aff8f9ad0adbd0",
+    "wordCount": 1279,
+    "lastModified": "2025-12-27T21:02:52.142Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/harness-patterns.md"
+  },
+  {
+    "id": ".claude/rules/dotfiles-conventions.md",
+    "title": "Dotfiles Conventions",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Canon",
+      "Beads",
+      "Complementarity"
+    ],
+    "hash": "037e28240df4bd85",
+    "wordCount": 539,
+    "lastModified": "2025-12-29T21:48:10.923Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/dotfiles-conventions.md"
+  },
+  {
+    "id": ".claude/rules/css-canon.md",
+    "title": "CSS Canon",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "a929ddfc7bfeb2b6",
+    "wordCount": 1484,
+    "lastModified": "2025-12-25T16:34:51.407Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/css-canon.md"
+  },
+  {
+    "id": ".claude/rules/cloudflare-patterns.md",
+    "title": "Cloudflare Patterns",
+    "package": null,
+    "type": "rule",
+    "concepts": [],
+    "hash": "fc8391dc02a218a9",
+    "wordCount": 186,
+    "lastModified": "2025-12-13T21:08:34.815Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/cloudflare-patterns.md"
+  },
+  {
+    "id": ".claude/rules/beads-patterns.md",
+    "title": "Beads Patterns",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads",
+      "Complementarity"
+    ],
+    "hash": "8c7c63617b730b9c",
+    "wordCount": 290,
+    "lastModified": "2025-12-22T18:16:19.751Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/beads-patterns.md"
+  },
+  {
+    "id": ".claude/rules/PROJECT_NAME_REFERENCE.md",
+    "title": "Cloudflare Pages Project Name Reference",
+    "package": null,
+    "type": "rule",
+    "concepts": [
+      "Subtractive Triad",
+      "Complementarity"
+    ],
+    "hash": "1b772b7d22ba0d57",
+    "wordCount": 433,
+    "lastModified": "2025-12-13T21:09:44.632Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/rules/PROJECT_NAME_REFERENCE.md"
+  },
+  {
+    "id": ".claude/skills/voice-validator.md",
+    "title": "Voice Validator",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "eef0e05b6f6f5879",
+    "wordCount": 911,
+    "lastModified": "2025-12-02T16:12:04.780Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/voice-validator.md"
+  },
+  {
+    "id": ".claude/skills/understanding-graphs.md",
+    "title": "Understanding Graphs",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "65414837b3743a45",
+    "wordCount": 138,
+    "lastModified": "2025-12-03T18:38:41.005Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/understanding-graphs.md"
+  },
+  {
+    "id": ".claude/skills/subtractive-review.md",
+    "title": "Subtractive Review",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "43b6d65aefbe6683",
+    "wordCount": 560,
+    "lastModified": "2025-12-02T16:13:05.780Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/subtractive-review.md"
+  },
+  {
+    "id": ".claude/skills/photo-cleanup.md",
+    "title": "Photo Cleanup Skill",
+    "package": null,
+    "type": "general",
+    "concepts": [],
+    "hash": "2025c72a016d145e",
+    "wordCount": 346,
+    "lastModified": "2025-12-28T02:30:25.952Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/photo-cleanup.md"
+  },
+  {
+    "id": ".claude/skills/experiment-scaffold.md",
+    "title": "Experiment Scaffold",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "29dfba2c4bf1fa8d",
+    "wordCount": 440,
+    "lastModified": "2025-12-02T16:14:07.782Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/experiment-scaffold.md"
+  },
+  {
+    "id": ".claude/skills/doc-generator.md",
+    "title": "Doc Generator Skill",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Weniger, aber besser"
+    ],
+    "hash": "b44d3f0a4127b7ad",
+    "wordCount": 300,
+    "lastModified": "2025-12-29T19:01:51.262Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/doc-generator.md"
+  },
+  {
+    "id": ".claude/skills/canon-maintenance.md",
+    "title": "Canon Maintenance",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser",
+      "Gestell",
+      "Gelassenheit",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "1df053432f797aee",
+    "wordCount": 964,
+    "lastModified": "2025-12-11T04:43:15.903Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/canon-maintenance.md"
+  },
+  {
+    "id": ".claude/skills/architectural-visualization.md",
+    "title": "Architectural Visualization",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Weniger, aber besser",
+      "Dwelling"
+    ],
+    "hash": "9d43d0f06669579e",
+    "wordCount": 224,
+    "lastModified": "2025-11-30T08:01:09.214Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/skills/architectural-visualization.md"
+  },
+  {
+    "id": ".claude/commands/experiment.md",
+    "title": "Experiment Scaffold",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "c4ac19f765e06bb8",
+    "wordCount": 271,
+    "lastModified": "2025-12-04T21:50:46.140Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/commands/experiment.md"
+  },
+  {
+    "id": ".claude/commands/deploy.md",
+    "title": "Deploy Command",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Complementarity"
+    ],
+    "hash": "a357ba0699fa07ff",
+    "wordCount": 189,
+    "lastModified": "2025-12-13T21:08:35.538Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/commands/deploy.md"
+  },
+  {
+    "id": ".claude/commands/audit-voice.md",
+    "title": "Audit Voice Command",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "4fe734c8fa92fc86",
+    "wordCount": 314,
+    "lastModified": "2025-12-15T16:08:21.300Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/commands/audit-voice.md"
+  },
+  {
+    "id": ".claude/commands/audit-canon.md",
+    "title": "Audit Canon Command",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "d8fa1668c03acb0c",
+    "wordCount": 108,
+    "lastModified": "2025-12-03T18:38:40.751Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/commands/audit-canon.md"
+  },
+  {
+    "id": ".claude/agents/hermeneutic-reviewer.md",
+    "title": "Hermeneutic Reviewer Agent",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Gestell",
+      "Dwelling"
+    ],
+    "hash": "e36885f136a42a79",
+    "wordCount": 302,
+    "lastModified": "2025-12-11T04:43:27.164Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/agents/hermeneutic-reviewer.md"
+  },
+  {
+    "id": ".claude/agents/harness.md",
+    "title": "After E2E:",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Canon",
+      "Beads"
+    ],
+    "hash": "4cf329e1cbdb2c85",
+    "wordCount": 469,
+    "lastModified": "2025-12-26T05:23:44.164Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/agents/harness.md"
+  },
+  {
+    "id": ".claude/agents/canon-auditor.md",
+    "title": "Canon Auditor Agent",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "b263df08fd9d91d1",
+    "wordCount": 181,
+    "lastModified": "2025-12-03T18:38:40.062Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/agents/canon-auditor.md"
+  },
+  {
+    "id": "papers/published/sveltekit-zuhandenheit.md",
+    "title": "Framework as Equipment: A Phenomenological Analysis of SvelteKit",
+    "package": null,
+    "type": "paper",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "aeb05c3560d274d5",
+    "wordCount": 1879,
+    "lastModified": "2025-12-13T14:56:25.090Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/papers/published/sveltekit-zuhandenheit.md"
+  },
+  {
+    "id": "papers/published/hermeneutic-spiral-ux.md",
+    "title": "The Hermeneutic Spiral in UX Design",
+    "package": null,
+    "type": "paper",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle"
+    ],
+    "hash": "d593135c757891b1",
+    "wordCount": 1025,
+    "lastModified": "2025-12-03T04:51:00.970Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/papers/published/hermeneutic-spiral-ux.md"
+  },
+  {
+    "id": "papers/published/code-mode-hermeneutic-analysis.md",
+    "title": "Code-Mediated Tool Use: A Hermeneutic Analysis of LLM-Tool Interaction",
+    "package": null,
+    "type": "paper",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Complementarity"
+    ],
+    "hash": "0540e0e48ed84aec",
+    "wordCount": 1600,
+    "lastModified": "2025-12-03T04:52:25.958Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/papers/published/code-mode-hermeneutic-analysis.md"
+  },
+  {
+    "id": "packages/verticals/professional-services/README.md",
+    "title": "Professional Services Template",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [],
+    "hash": "49172d70fa98fad2",
+    "wordCount": 40,
+    "lastModified": "2025-12-30T01:38:54.544Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/professional-services/README.md"
+  },
+  {
+    "id": "packages/verticals/professional-services/ENV.md",
+    "title": "Environment Configuration",
+    "package": "verticals",
+    "type": "general",
+    "concepts": [],
+    "hash": "d19af00b531e252f",
+    "wordCount": 9,
+    "lastModified": "2025-12-30T01:38:53.351Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/professional-services/ENV.md"
+  },
+  {
+    "id": "packages/verticals/shared/README.template.md",
+    "title": "{{TEMPLATE_NAME}} Template",
+    "package": "verticals",
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "279e74d5ea50983a",
+    "wordCount": 436,
+    "lastModified": "2025-12-30T01:38:31.792Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/shared/README.template.md"
+  },
+  {
+    "id": "packages/verticals/shared/QUICK_REFERENCE.md",
+    "title": "Canon Quick Reference",
+    "package": "verticals",
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "57e8d351b6ebb4e1",
+    "wordCount": 311,
+    "lastModified": "2025-12-10T15:37:54.971Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/shared/QUICK_REFERENCE.md"
+  },
+  {
+    "id": "packages/verticals/shared/PHILOSOPHY.md",
+    "title": "Design Philosophy",
+    "package": "verticals",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon"
+    ],
+    "hash": "c1a9dc5ced38eaad",
+    "wordCount": 738,
+    "lastModified": "2025-12-10T15:37:37.756Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/shared/PHILOSOPHY.md"
+  },
+  {
+    "id": "packages/verticals/shared/ENV.md",
+    "title": "Environment Configuration",
+    "package": "verticals",
+    "type": "general",
+    "concepts": [],
+    "hash": "eee6dc31b9655372",
+    "wordCount": 168,
+    "lastModified": "2025-12-30T01:37:54.958Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/shared/ENV.md"
+  },
+  {
+    "id": "packages/verticals/personal-injury/README.md",
+    "title": "Personal Injury Template",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [],
+    "hash": "e5cc05b7bda60b48",
+    "wordCount": 30,
+    "lastModified": "2025-12-30T01:38:56.495Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/personal-injury/README.md"
+  },
+  {
+    "id": "packages/verticals/personal-injury/ENV.md",
+    "title": "Environment Configuration",
+    "package": "verticals",
+    "type": "general",
+    "concepts": [],
+    "hash": "d19af00b531e252f",
+    "wordCount": 9,
+    "lastModified": "2025-12-30T01:38:54.027Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/personal-injury/ENV.md"
+  },
+  {
+    "id": "packages/verticals/law-firm/README.md",
+    "title": "Law Firm Template",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [],
+    "hash": "23c2b805117cce58",
+    "wordCount": 32,
+    "lastModified": "2025-12-30T01:38:55.425Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/law-firm/README.md"
+  },
+  {
+    "id": "packages/verticals/law-firm/ENV.md",
+    "title": "Environment Configuration",
+    "package": "verticals",
+    "type": "general",
+    "concepts": [],
+    "hash": "d19af00b531e252f",
+    "wordCount": 9,
+    "lastModified": "2025-12-30T01:38:53.602Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/law-firm/ENV.md"
+  },
+  {
+    "id": "packages/verticals/creative-agency/README.md",
+    "title": "Creative Agency Template",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "665101ddf1567e2c",
+    "wordCount": 224,
+    "lastModified": "2025-12-10T14:13:03.511Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/creative-agency/README.md"
+  },
+  {
+    "id": "packages/verticals/creative-portfolio/README.md",
+    "title": "Creative Portfolio Template",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "41c2b5c564ac3023",
+    "wordCount": 149,
+    "lastModified": "2025-12-10T14:17:32.317Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/creative-portfolio/README.md"
+  },
+  {
+    "id": "packages/verticals/architecture-studio/README.md",
+    "title": "Architecture Studio Template",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "3c4036499a78d7c0",
+    "wordCount": 312,
+    "lastModified": "2025-12-10T14:07:40.996Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/architecture-studio/README.md"
+  },
+  {
+    "id": "packages/space/migrations/README.md",
+    "title": "Database Migrations",
+    "package": "space",
+    "type": "readme",
+    "concepts": [],
+    "hash": "f7ace57f530e1866",
+    "wordCount": 144,
+    "lastModified": "2025-11-21T18:44:40.657Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/space/migrations/README.md"
+  },
+  {
+    "id": "packages/ltd/scripts/README.md",
+    "title": "Database Seeds for CREATE SOMETHING.ltd",
+    "package": "ltd",
+    "type": "readme",
+    "concepts": [],
+    "hash": "a81aa5ec85e5ac13",
+    "wordCount": 381,
+    "lastModified": "2025-11-24T16:21:04.729Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/scripts/README.md"
+  },
+  {
+    "id": "packages/io/docs/visualization-patterns.md",
+    "title": "Data Visualization Patterns for CREATE SOMETHING",
+    "package": "io",
+    "type": "general",
+    "concepts": [],
+    "hash": "8c8909dda5632542",
+    "wordCount": 739,
+    "lastModified": "2025-11-24T02:04:33.064Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/docs/visualization-patterns.md"
+  },
+  {
+    "id": "packages/io/docs/research-references.md",
+    "title": "External Research References",
+    "package": "io",
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle"
+    ],
+    "hash": "c332c2d5d4f232e3",
+    "wordCount": 250,
+    "lastModified": "2025-12-04T18:08:43.076Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/docs/research-references.md"
+  },
+  {
+    "id": "packages/io/docs/newsletter-strategy.md",
+    "title": "Newsletter Content Strategy",
+    "package": "io",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "12873bd16be0bf00",
+    "wordCount": 995,
+    "lastModified": "2025-12-23T04:19:47.511Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/docs/newsletter-strategy.md"
+  },
+  {
+    "id": "packages/huggingface-spaces/subtractive-triad/README.md",
+    "title": "Subtractive Triad Reviewer",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "84b3b6b65627675f",
+    "wordCount": 246,
+    "lastModified": "2025-12-03T20:30:04.190Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/huggingface-spaces/subtractive-triad/README.md"
+  },
+  {
+    "id": "packages/huggingface-spaces/motion-ontology/README.md",
+    "title": "Motion Ontology Analyzer",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit"
+    ],
+    "hash": "a407abf85474146f",
+    "wordCount": 291,
+    "lastModified": "2025-12-03T21:14:26.069Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/huggingface-spaces/motion-ontology/README.md"
+  },
+  {
+    "id": "packages/huggingface-spaces/subtractive-triad-ts/README.md",
+    "title": "Subtractive Triad Reviewer",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "c12522f851d8d517",
+    "wordCount": 260,
+    "lastModified": "2025-12-03T20:59:49.280Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/huggingface-spaces/subtractive-triad-ts/README.md"
+  },
+  {
+    "id": "packages/components/adaptation/vue.md",
+    "title": "Vue Adaptation Guide",
+    "package": "components",
+    "type": "general",
+    "concepts": [
+      "Weniger, aber besser"
+    ],
+    "hash": "d220714af3c5cf88",
+    "wordCount": 83,
+    "lastModified": "2025-11-29T01:52:41.052Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/adaptation/vue.md"
+  },
+  {
+    "id": "packages/components/adaptation/vanilla.md",
+    "title": "Vanilla Adaptation Guide",
+    "package": "components",
+    "type": "general",
+    "concepts": [
+      "Weniger, aber besser"
+    ],
+    "hash": "c63b54ef3c7f15c3",
+    "wordCount": 102,
+    "lastModified": "2025-11-29T01:52:41.234Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/adaptation/vanilla.md"
+  },
+  {
+    "id": "packages/components/adaptation/react.md",
+    "title": "React Adaptation Guide",
+    "package": "components",
+    "type": "general",
+    "concepts": [
+      "Weniger, aber besser"
+    ],
+    "hash": "e907ccab12e6e876",
+    "wordCount": 153,
+    "lastModified": "2025-11-29T01:52:40.883Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/adaptation/react.md"
+  },
+  {
+    "id": "packages/components/adaptation/README.md",
+    "title": "Adaptation Guides",
+    "package": "components",
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "c197aeb7ef590728",
+    "wordCount": 180,
+    "lastModified": "2025-11-29T01:52:40.728Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/adaptation/README.md"
+  },
+  {
+    "id": "packages/components/figma/README.md",
+    "title": "Canon Design System - Figma Integration",
+    "package": "components",
+    "type": "readme",
+    "concepts": [
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "cb19532cdf64ef1d",
+    "wordCount": 556,
+    "lastModified": "2025-12-27T18:34:36.448Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/figma/README.md"
+  },
+  {
+    "id": "packages/dotfiles/beads/README.md",
+    "title": "Beads - Agent-Native Task Management",
+    "package": "dotfiles",
+    "type": "readme",
+    "concepts": [
+      "Zuhandenheit",
+      "Canon",
+      "Beads",
+      "Complementarity"
+    ],
+    "hash": "61044b1566d935ff",
+    "wordCount": 245,
+    "lastModified": "2025-12-13T16:57:03.228Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/beads/README.md"
+  },
+  {
+    "id": "packages/dotfiles/wezterm/README.md",
+    "title": "WezTerm Configuration",
+    "package": "dotfiles",
+    "type": "readme",
+    "concepts": [
+      "Zuhandenheit",
+      "Canon"
+    ],
+    "hash": "da5eace9be38e444",
+    "wordCount": 410,
+    "lastModified": "2025-12-16T03:46:18.427Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/wezterm/README.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/README.md",
+    "title": "Claude Code Configuration",
+    "package": "dotfiles",
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Beads",
+      "Complementarity"
+    ],
+    "hash": "e28e6808ab6afcee",
+    "wordCount": 164,
+    "lastModified": "2025-12-25T18:35:04.626Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/README.md"
+  },
+  {
+    "id": "packages/harness/examples/sample-spec.md",
+    "title": "User Dashboard Project",
+    "package": "harness",
+    "type": "general",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "b986648608b85dbc",
+    "wordCount": 253,
+    "lastModified": "2025-12-18T13:53:38.311Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness/examples/sample-spec.md"
+  },
+  {
+    "id": "packages/harness/specs/infrastructure-improvements.md",
+    "title": "Infrastructure Improvements",
+    "package": "harness",
+    "type": "spec",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "6ec263a5cfcd115f",
+    "wordCount": 132,
+    "lastModified": "2025-12-19T02:06:13.850Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness/specs/infrastructure-improvements.md"
+  },
+  {
+    "id": "packages/agents/coordination/README.md",
+    "title": "@create-something/agent-coordination",
+    "package": null,
+    "type": "readme",
+    "concepts": [],
+    "hash": "bd15298941da5078",
+    "wordCount": 432,
+    "lastModified": "2025-12-13T17:19:21.158Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agents/coordination/README.md"
+  },
+  {
+    "id": "packages/agency/docs/ABUNDANCE_NETWORK_SYSTEM_DOCUMENTATION.md",
+    "title": "Abundance Network: System Documentation",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "6cdd6b57fd6a86b9",
+    "wordCount": 1240,
+    "lastModified": "2025-12-02T22:49:10.978Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/docs/ABUNDANCE_NETWORK_SYSTEM_DOCUMENTATION.md"
+  },
+  {
+    "id": "packages/agency/content/gtm-sprint-2-plan.md",
+    "title": "GTM Sprint 2: Weeks 5-8 Plan",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "e3370ea2976bfaa4",
+    "wordCount": 1213,
+    "lastModified": "2025-12-29T18:38:15.775Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/gtm-sprint-2-plan.md"
+  },
+  {
+    "id": ".claude/experiments/minimal-capture/log.md",
+    "title": "Experiment: Minimal Capture - The Canon's Reach (Retroactive Documentation)",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "4f743d21fe17e8ba",
+    "wordCount": 467,
+    "lastModified": "2025-11-27T17:06:21.885Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/minimal-capture/log.md"
+  },
+  {
+    "id": ".claude/experiments/minimal-capture/SUMMARY.md",
+    "title": "Minimal Capture: Quick Summary",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Canon",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "90764ee44d59ad23",
+    "wordCount": 125,
+    "lastModified": "2025-11-27T17:06:30.312Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/minimal-capture/SUMMARY.md"
+  },
+  {
+    "id": ".claude/experiments/abundance-network/log.md",
+    "title": "Experiment: Abundance Network",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle"
+    ],
+    "hash": "fc29bbd62d37d569",
+    "wordCount": 418,
+    "lastModified": "2025-12-13T21:09:07.550Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/abundance-network/log.md"
+  },
+  {
+    "id": ".claude/experiments/kickstand-triad-audit/log.md",
+    "title": "Experiment: Kickstand Subtractive Triad Audit",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "a3d9b13ff7cc6fa0",
+    "wordCount": 529,
+    "lastModified": "2025-11-29T17:37:24.690Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/kickstand-triad-audit/log.md"
+  },
+  {
+    "id": ".claude/experiments/kickstand-triad-audit/SUMMARY.md",
+    "title": "Kickstand Triad Audit - Summary",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "00dfc022c250896b",
+    "wordCount": 432,
+    "lastModified": "2025-11-29T19:29:30.297Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/kickstand-triad-audit/SUMMARY.md"
+  },
+  {
+    "id": ".claude/experiments/kickstand-triad-audit/PAPER.md",
+    "title": "Subtractive Triad Audit: Kickstand",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle"
+    ],
+    "hash": "5c38d8a6504f7468",
+    "wordCount": 1307,
+    "lastModified": "2025-11-29T17:37:05.891Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/kickstand-triad-audit/PAPER.md"
+  },
+  {
+    "id": ".claude/experiments/format-comparison/RESULTS.md",
+    "title": "Format Comparison: JSON vs TOON vs CSV",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Complementarity"
+    ],
+    "hash": "c3a2c1fb4161fda4",
+    "wordCount": 437,
+    "lastModified": "2025-12-08T16:41:17.609Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/format-comparison/RESULTS.md"
+  },
+  {
+    "id": ".claude/experiments/hermeneutic-transitions/PLAN.md",
+    "title": "Hermeneutic Page Transitions",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "d905907f19515164",
+    "wordCount": 420,
+    "lastModified": "2025-12-06T00:32:49.451Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/.claude/experiments/hermeneutic-transitions/PLAN.md"
+  },
+  {
+    "id": "packages/learn/templates/skill/methodology.md",
+    "title": "Subtractive Triad Skill",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Complementarity"
+    ],
+    "hash": "9cafbb85085750c1",
+    "wordCount": 276,
+    "lastModified": "2025-12-16T03:58:50.614Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/learn/templates/skill/methodology.md"
+  },
+  {
+    "id": "packages/learn/templates/rules/subtractive-triad.md",
+    "title": "Subtractive Triad Rules",
+    "package": null,
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Weniger, aber besser"
+    ],
+    "hash": "a3469b04905874ee",
+    "wordCount": 371,
+    "lastModified": "2025-12-16T03:59:09.152Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/learn/templates/rules/subtractive-triad.md"
+  },
+  {
+    "id": "packages/huggingface-spaces/motion-ontology/hf-deploy/README.md",
+    "title": "Motion Ontology Analyzer",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit"
+    ],
+    "hash": "a407abf85474146f",
+    "wordCount": 291,
+    "lastModified": "2025-12-03T21:14:51.815Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/huggingface-spaces/motion-ontology/hf-deploy/README.md"
+  },
+  {
+    "id": "packages/huggingface-spaces/subtractive-triad-ts/hf-deploy/README.md",
+    "title": "Subtractive Triad Reviewer",
+    "package": null,
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Weniger, aber besser"
+    ],
+    "hash": "c12522f851d8d517",
+    "wordCount": 260,
+    "lastModified": "2025-12-03T20:59:55.354Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/huggingface-spaces/subtractive-triad-ts/hf-deploy/README.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/mcp-templates/README.md",
+    "title": "MCP Server Templates",
+    "package": "dotfiles",
+    "type": "readme",
+    "concepts": [],
+    "hash": "cb8e7c6b811db6b8",
+    "wordCount": 142,
+    "lastModified": "2025-12-25T18:36:09.377Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/mcp-templates/README.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/harness-templates/research.md",
+    "title": "Research Spec: [Research Topic]",
+    "package": "dotfiles",
+    "type": "general",
+    "concepts": [
+      "Beads"
+    ],
+    "hash": "78e6e3ba128223c3",
+    "wordCount": 289,
+    "lastModified": "2025-12-25T18:37:41.146Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/harness-templates/research.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/harness-templates/refactor.md",
+    "title": "Refactor Spec: [Refactor Name]",
+    "package": "dotfiles",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "00a7d489cd27d85f",
+    "wordCount": 348,
+    "lastModified": "2025-12-25T18:37:40.639Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/harness-templates/refactor.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/harness-templates/migration.md",
+    "title": "Migration Spec: [Migration Name]",
+    "package": "dotfiles",
+    "type": "general",
+    "concepts": [
+      "Beads"
+    ],
+    "hash": "1940919afefe19cb",
+    "wordCount": 289,
+    "lastModified": "2025-12-25T18:37:40.401Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/harness-templates/migration.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/harness-templates/feature.md",
+    "title": "Feature Spec: [Feature Name]",
+    "package": "dotfiles",
+    "type": "general",
+    "concepts": [
+      "Beads"
+    ],
+    "hash": "a02dfb52ef0b6e09",
+    "wordCount": 189,
+    "lastModified": "2025-12-25T18:37:40.251Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/harness-templates/feature.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/harness-templates/audit.md",
+    "title": "Audit Spec: [Audit Name]",
+    "package": "dotfiles",
+    "type": "general",
+    "concepts": [
+      "Canon",
+      "Beads"
+    ],
+    "hash": "8a51e0bd92894f5e",
+    "wordCount": 250,
+    "lastModified": "2025-12-25T18:37:40.880Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/harness-templates/audit.md"
+  },
+  {
+    "id": "packages/dotfiles/claude-code/harness-templates/README.md",
+    "title": "Harness Spec Templates",
+    "package": "dotfiles",
+    "type": "readme",
+    "concepts": [
+      "Beads"
+    ],
+    "hash": "e68a203e19d5d92e",
+    "wordCount": 246,
+    "lastModified": "2025-12-25T18:37:40.101Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/claude-code/harness-templates/README.md"
+  },
+  {
+    "id": "packages/agency/content/social/linkedin-thread-triad.md",
+    "title": "LinkedIn Thread: The Subtractive Triad",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "84a19b6d8256b8bb",
+    "wordCount": 482,
+    "lastModified": "2025-12-29T17:03:58.764Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/social/linkedin-thread-triad.md"
+  },
+  {
+    "id": "packages/agency/content/social/linkedin-thread-kickstand.md",
+    "title": "LinkedIn Thread: Kickstand Case Study",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "21233b65ac08091a",
+    "wordCount": 633,
+    "lastModified": "2025-12-27T23:04:00.984Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/social/linkedin-thread-kickstand.md"
+  },
+  {
+    "id": "packages/agency/content/social/linkedin-thread-arc.md",
+    "title": "LinkedIn Thread: Arc Case Study",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "31f70f4ba946cdde",
+    "wordCount": 789,
+    "lastModified": "2025-12-29T19:22:12.798Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/social/linkedin-thread-arc.md"
+  },
+  {
+    "id": "packages/agency/content/social/linkedin-thread-ai-patterns.md",
+    "title": "LinkedIn Thread: AI Agent Patterns",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Beads"
+    ],
+    "hash": "a127da12fca51386",
+    "wordCount": 584,
+    "lastModified": "2025-12-29T17:04:33.158Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/social/linkedin-thread-ai-patterns.md"
+  },
+  {
+    "id": "packages/agency/content/case-studies/arc.md",
+    "title": "Case Study: Arc",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "023dc77183cfbe34",
+    "wordCount": 1219,
+    "lastModified": "2025-12-29T19:21:21.996Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/case-studies/arc.md"
+  },
+  {
+    "id": "packages/agency/content/sales/discovery-call-script.md",
+    "title": "Discovery Call Script",
+    "package": "agency",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "97b57f099e0c9502",
+    "wordCount": 897,
+    "lastModified": "2025-12-29T18:03:47.382Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/sales/discovery-call-script.md"
+  },
+  {
+    "id": "packages/agent-kit/configs/mcp-servers/README.md",
+    "title": "MCP Server Templates",
+    "package": null,
+    "type": "readme",
+    "concepts": [],
+    "hash": "ac153ffef5f77413",
+    "wordCount": 105,
+    "lastModified": "2025-12-27T03:28:33.441Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agent-kit/configs/mcp-servers/README.md"
+  },
+  {
+    "id": "packages/verticals/personal-injury/static/images/README.md",
+    "title": "Personal Injury Template Images",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [],
+    "hash": "6be9812681e76d98",
+    "wordCount": 155,
+    "lastModified": "2025-12-26T17:53:54.061Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/personal-injury/static/images/README.md"
+  },
+  {
+    "id": "packages/verticals/law-firm/static/images/README.md",
+    "title": "Law Firm Template Images",
+    "package": "verticals",
+    "type": "readme",
+    "concepts": [],
+    "hash": "a19d6534f4d34f02",
+    "wordCount": 155,
+    "lastModified": "2025-12-26T17:54:19.120Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/verticals/law-firm/static/images/README.md"
+  },
+  {
+    "id": "packages/templates-platform/src/lib/templates/case-study.md",
+    "title": "Case Study: [Client Name]",
+    "package": "templates-platform",
+    "type": "general",
+    "concepts": [],
+    "hash": "b22b0c8f6af32af4",
+    "wordCount": 399,
+    "lastModified": "2025-12-10T15:25:44.720Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/templates-platform/src/lib/templates/case-study.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/patterns/subtractive-triad-audit-spec.md",
+    "title": "Subtractive Triad Audit System: Specification",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "00e429c3b44f2bd4",
+    "wordCount": 641,
+    "lastModified": "2025-11-28T16:35:32.955Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/patterns/subtractive-triad-audit-spec.md"
+  },
+  {
+    "id": "packages/io/src/lib/webflow/README.md",
+    "title": "Webflow Template Schema",
+    "package": "io",
+    "type": "readme",
+    "concepts": [
+      "Beads"
+    ],
+    "hash": "599f47af0baa31c3",
+    "wordCount": 182,
+    "lastModified": "2025-12-19T16:56:42.596Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/src/lib/webflow/README.md"
+  },
+  {
+    "id": "packages/io/src/lib/analysis/latent-demand-report-2025-12.md",
+    "title": "Latent Demand Analysis Report",
+    "package": "io",
+    "type": "general",
+    "concepts": [
+      "Dwelling"
+    ],
+    "hash": "804d4ebc40830d7a",
+    "wordCount": 2413,
+    "lastModified": "2025-12-23T16:34:06.061Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/src/lib/analysis/latent-demand-report-2025-12.md"
+  },
+  {
+    "id": "packages/lms/src/lib/components/README.md",
+    "title": "Praxis Components",
+    "package": "lms",
+    "type": "readme",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "0f584e02c32630ef",
+    "wordCount": 248,
+    "lastModified": "2025-12-13T17:32:50.689Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/components/README.md"
+  },
+  {
+    "id": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+    "title": "Plugins Feature UNDERSTANDING.md",
+    "package": "io",
+    "type": "understanding",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "a58023e296988e0d",
+    "wordCount": 1050,
+    "lastModified": "2025-12-24T04:19:15.392Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/src/routes/plugins/UNDERSTANDING.md"
+  },
+  {
+    "id": "packages/components/src/lib/utils/LEARNING_TRACKING.md",
+    "title": "Learning Event Tracking",
+    "package": "components",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "71fd4b21c27e2fe8",
+    "wordCount": 334,
+    "lastModified": "2025-12-16T03:57:22.262Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/components/src/lib/utils/LEARNING_TRACKING.md"
+  },
+  {
+    "id": "packages/agency/content/templates/outreach/post-engagement.md",
+    "title": "Post-Engagement Follow-up Templates",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "09d4022e67fa9793",
+    "wordCount": 321,
+    "lastModified": "2025-12-29T18:41:39.894Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/outreach/post-engagement.md"
+  },
+  {
+    "id": "packages/agency/content/templates/outreach/mutual-connection.md",
+    "title": "Mutual Connection / Warm Intro Templates",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "7decfa185cc81c5a",
+    "wordCount": 291,
+    "lastModified": "2025-12-29T18:42:14.198Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/outreach/mutual-connection.md"
+  },
+  {
+    "id": "packages/agency/content/templates/outreach/discovery-invite.md",
+    "title": "Discovery Call Invitation Templates",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "4377a58d1dd1321a",
+    "wordCount": 426,
+    "lastModified": "2025-12-29T18:42:53.266Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/outreach/discovery-invite.md"
+  },
+  {
+    "id": "packages/agency/content/templates/outreach/connection-request.md",
+    "title": "LinkedIn Connection Request Templates",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "162cc97cb0af4ccd",
+    "wordCount": 241,
+    "lastModified": "2025-12-29T18:41:10.375Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/outreach/connection-request.md"
+  },
+  {
+    "id": "packages/agency/content/templates/sales/pricing-framework.md",
+    "title": "Pricing Framework",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "0052ce6d4bf03399",
+    "wordCount": 1120,
+    "lastModified": "2025-12-29T18:53:03.760Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/sales/pricing-framework.md"
+  },
+  {
+    "id": "packages/agency/content/templates/sales/objection-handling.md",
+    "title": "Objection Handling Guide",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "8a6e52d43213b284",
+    "wordCount": 1242,
+    "lastModified": "2025-12-29T18:48:26.735Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/sales/objection-handling.md"
+  },
+  {
+    "id": "packages/agency/content/templates/sales/icp.md",
+    "title": "Ideal Client Profile (ICP)",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "44a2ff1d9642ad1c",
+    "wordCount": 1035,
+    "lastModified": "2025-12-29T18:46:23.574Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/sales/icp.md"
+  },
+  {
+    "id": "packages/agency/content/templates/contracts/sow.md",
+    "title": "Statement of Work Template",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "a52876b80c97d91e",
+    "wordCount": 1541,
+    "lastModified": "2025-12-29T19:11:52.164Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/contracts/sow.md"
+  },
+  {
+    "id": "packages/agency/content/templates/contracts/nda.md",
+    "title": "Non-Disclosure Agreement Template",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "89732fc30efc2e82",
+    "wordCount": 1430,
+    "lastModified": "2025-12-29T19:12:42.215Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/contracts/nda.md"
+  },
+  {
+    "id": "packages/agency/content/templates/contracts/msa.md",
+    "title": "Master Service Agreement",
+    "package": "agency",
+    "type": "general",
+    "concepts": [],
+    "hash": "fe5c8b5cecbfe7c0",
+    "wordCount": 1545,
+    "lastModified": "2025-12-29T19:10:43.352Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agency/content/templates/contracts/msa.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/heidegger-canon/SCRIPT.md",
+    "title": "SCRIPT.md — HEIDEGGER: CANON",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads",
+      "Weniger, aber besser",
+      "Gestell",
+      "Gelassenheit"
+    ],
+    "hash": "ba82a35a59800cfd",
+    "wordCount": 1746,
+    "lastModified": "2025-12-25T14:25:16.000Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/heidegger-canon/SCRIPT.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/developer-onboarding/SCRIPT.md",
+    "title": "Developer Onboarding Video Script",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Weniger, aber besser"
+    ],
+    "hash": "7a76493e2ea8c72f",
+    "wordCount": 788,
+    "lastModified": "2025-12-05T10:15:13.937Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/developer-onboarding/SCRIPT.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/user-onboarding/SCRIPT.md",
+    "title": "User Onboarding Video Script",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Complementarity"
+    ],
+    "hash": "951c30b445025579",
+    "wordCount": 803,
+    "lastModified": "2025-12-05T10:24:13.555Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/user-onboarding/SCRIPT.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/cloudflare-edge/SCRIPT.md",
+    "title": "SCRIPT.md — CLOUDFLARE: EDGE",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Zuhandenheit",
+      "Weniger, aber besser"
+    ],
+    "hash": "b6f461f85bf008eb",
+    "wordCount": 1850,
+    "lastModified": "2025-12-25T14:25:15.999Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/cloudflare-edge/SCRIPT.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/claude-code-partner/SCRIPT.md",
+    "title": "SCRIPT.md — CLAUDE CODE: PARTNER",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "4da05365cb389bde",
+    "wordCount": 1631,
+    "lastModified": "2025-12-25T14:43:13.871Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/claude-code-partner/SCRIPT.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/deployment-dwelling/SCRIPT.md",
+    "title": "SCRIPT.md — DEPLOYMENT: DWELLING",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads",
+      "Weniger, aber besser",
+      "Dwelling"
+    ],
+    "hash": "0c438ea1476cf28e",
+    "wordCount": 1184,
+    "lastModified": "2025-12-25T14:25:15.999Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/deployment-dwelling/SCRIPT.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/canon-design/SCRIPT.md",
+    "title": "SCRIPT.md — CANON: DESIGN",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "0ba318859ff27898",
+    "wordCount": 1286,
+    "lastModified": "2025-12-25T14:25:15.997Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/canon-design/SCRIPT.md"
+  },
+  {
+    "id": "packages/ltd/src/routes/presentations/beads-continuity/SCRIPT.md",
+    "title": "SCRIPT.md — BEADS: CONTINUITY",
+    "package": "ltd",
+    "type": "general",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Beads",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "c33611981c924899",
+    "wordCount": 1236,
+    "lastModified": "2025-12-25T14:25:15.997Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/ltd/src/routes/presentations/beads-continuity/SCRIPT.md"
+  },
+  {
+    "id": "packages/io/src/lib/agents/pm-agent/README.md",
+    "title": "PM Agent for CREATE SOMETHING",
+    "package": "io",
+    "type": "readme",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "6ce100e135875f0f",
+    "wordCount": 770,
+    "lastModified": "2025-11-24T18:33:43.735Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/src/lib/agents/pm-agent/README.md"
+  },
+  {
+    "id": "packages/io/src/lib/agents/pm-agent/GMAIL_SETUP.md",
+    "title": "Gmail Integration Setup for PM Agent",
+    "package": "io",
+    "type": "general",
+    "concepts": [],
+    "hash": "b40a01a09d65e80d",
+    "wordCount": 921,
+    "lastModified": "2025-11-25T02:46:16.419Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/src/lib/agents/pm-agent/GMAIL_SETUP.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/triad-audit.md",
+    "title": "Complete Triad Audit",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad"
+    ],
+    "hash": "54ccf3ab824b60f7",
+    "wordCount": 299,
+    "lastModified": "2025-12-13T20:05:07.103Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/triad-audit.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/trace-connections.md",
+    "title": "Trace Connections",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "5e56282f8c796f8e",
+    "wordCount": 539,
+    "lastModified": "2025-12-13T20:05:07.942Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/trace-connections.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/token-migration.md",
+    "title": "Token Migration",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "96c9af12553a7770",
+    "wordCount": 214,
+    "lastModified": "2025-12-13T20:05:07.300Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/token-migration.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/system-audit.md",
+    "title": "System Audit",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "8fbcce7a2c2af320",
+    "wordCount": 938,
+    "lastModified": "2025-12-13T20:05:08.452Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/system-audit.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/partnership-audit.md",
+    "title": "Partnership Audit",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon",
+      "Complementarity"
+    ],
+    "hash": "e0c07b9845cfdba0",
+    "wordCount": 1834,
+    "lastModified": "2025-12-13T20:18:54.153Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/partnership-audit.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/mcp-setup.md",
+    "title": "MCP Setup: Configuring Claude Code Tools",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser",
+      "Gestell",
+      "Gelassenheit"
+    ],
+    "hash": "d0f546b9b181b8b8",
+    "wordCount": 1296,
+    "lastModified": "2025-12-13T20:16:24.631Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/mcp-setup.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/identify-duplication.md",
+    "title": "Identify Duplication",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [],
+    "hash": "beeed8aa5d6b63cb",
+    "wordCount": 150,
+    "lastModified": "2025-12-13T20:05:06.936Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/identify-duplication.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/discovery-session.md",
+    "title": "Discovery Session",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Hermeneutic Circle"
+    ],
+    "hash": "e199616b7e0cde93",
+    "wordCount": 874,
+    "lastModified": "2025-12-13T20:05:08.181Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/discovery-session.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/build-component.md",
+    "title": "Build a Component",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon"
+    ],
+    "hash": "149a0d105ca3c0d8",
+    "wordCount": 377,
+    "lastModified": "2025-12-13T20:05:07.513Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/build-component.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/praxis/audit-artifact.md",
+    "title": "Audit an Artifact",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [],
+    "hash": "394f8b6224ed7d4d",
+    "wordCount": 579,
+    "lastModified": "2025-12-13T20:05:07.725Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/praxis/audit-artifact.md"
+  },
+  {
+    "id": "packages/io/src/routes/papers/hermeneutic-spiral-ux/MIGRATION_SUMMARY.md",
+    "title": "CSS Canon Migration Summary",
+    "package": "io",
+    "type": "paper",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "848a0b593131c28c",
+    "wordCount": 146,
+    "lastModified": "2025-12-03T18:23:47.392Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/io/src/routes/papers/hermeneutic-spiral-ux/MIGRATION_SUMMARY.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/method/workway-philosophy.md",
+    "title": "WORKWAY Philosophy",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "e57da0aa747730e2",
+    "wordCount": 752,
+    "lastModified": "2025-12-14T00:58:59.161Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/method/workway-philosophy.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/method/scoping-discipline.md",
+    "title": "Scoping Discipline",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "617ed64e044b3bbd",
+    "wordCount": 657,
+    "lastModified": "2025-12-14T00:59:21.159Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/method/scoping-discipline.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/method/discovery-patterns.md",
+    "title": "Discovery Patterns",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "899a3ca6f2a0dc60",
+    "wordCount": 696,
+    "lastModified": "2025-12-14T00:59:14.880Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/method/discovery-patterns.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/method/delivery-rhythm.md",
+    "title": "Delivery Rhythm",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Gelassenheit",
+      "Dwelling"
+    ],
+    "hash": "9998ecbb369526ef",
+    "wordCount": 688,
+    "lastModified": "2025-12-14T00:59:28.032Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/method/delivery-rhythm.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/method/client-education.md",
+    "title": "Client Education",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Complementarity"
+    ],
+    "hash": "088e508f84a9cbf5",
+    "wordCount": 420,
+    "lastModified": "2025-12-14T00:59:34.148Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/method/client-education.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/infrastructure/workers-composition.md",
+    "title": "Workers Composition",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Complementarity"
+    ],
+    "hash": "7e362659fb5cbd56",
+    "wordCount": 310,
+    "lastModified": "2025-12-14T01:01:28.905Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/infrastructure/workers-composition.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/infrastructure/kv-caching.md",
+    "title": "KV Caching Strategies",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "5b85e8c087db1d8b",
+    "wordCount": 329,
+    "lastModified": "2025-12-14T01:01:01.120Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/infrastructure/kv-caching.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/infrastructure/edge-philosophy.md",
+    "title": "Edge Philosophy",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "193e6169c6467c29",
+    "wordCount": 662,
+    "lastModified": "2025-12-14T00:48:18.441Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/infrastructure/edge-philosophy.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/infrastructure/deployment-patterns.md",
+    "title": "Deployment Patterns",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "842e71b7f476e1f0",
+    "wordCount": 385,
+    "lastModified": "2025-12-14T01:01:35.154Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/infrastructure/deployment-patterns.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/infrastructure/d1-patterns.md",
+    "title": "D1 Database Patterns",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "7c03735b823cef6e",
+    "wordCount": 372,
+    "lastModified": "2025-12-14T01:00:54.826Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/infrastructure/d1-patterns.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/systems/template-philosophy.md",
+    "title": "Template Philosophy",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "3e984cf51ad41226",
+    "wordCount": 607,
+    "lastModified": "2025-12-14T01:01:40.722Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/systems/template-philosophy.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/systems/template-architecture.md",
+    "title": "Template Architecture",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "7becf10f589bb0fe",
+    "wordCount": 245,
+    "lastModified": "2025-12-14T01:02:59.287Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/systems/template-architecture.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/systems/platform-integration.md",
+    "title": "Platform Integration",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "124ff8e303e9574e",
+    "wordCount": 282,
+    "lastModified": "2025-12-14T01:02:52.403Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/systems/platform-integration.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/systems/holistic-systems.md",
+    "title": "Holistic Systems",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon"
+    ],
+    "hash": "c47e0aefe456f9d0",
+    "wordCount": 314,
+    "lastModified": "2025-12-14T01:01:47.453Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/systems/holistic-systems.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/systems/automation-patterns.md",
+    "title": "Automation Patterns",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon",
+      "Gestell"
+    ],
+    "hash": "1397705039d0164c",
+    "wordCount": 355,
+    "lastModified": "2025-12-14T01:02:46.593Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/systems/automation-patterns.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/partnership/wezterm-workflow.md",
+    "title": "WezTerm: The Creative Terminal",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon",
+      "Beads",
+      "Weniger, aber besser",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "69db15815dd570f0",
+    "wordCount": 1238,
+    "lastModified": "2025-12-14T01:06:54.900Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/partnership/wezterm-workflow.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/partnership/using-learn-mcp.md",
+    "title": "Using Learn MCP: The Recursive Tool",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "c6dc666c39b094d3",
+    "wordCount": 1423,
+    "lastModified": "2025-12-15T05:13:48.078Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/partnership/using-learn-mcp.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/partnership/tool-configuration.md",
+    "title": "Tool Configuration: Extending Claude Code",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads",
+      "Gelassenheit",
+      "Dwelling"
+    ],
+    "hash": "defcb543d3cc39e0",
+    "wordCount": 1214,
+    "lastModified": "2025-12-14T01:02:32.941Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/partnership/tool-configuration.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/partnership/terminal-philosophy.md",
+    "title": "Terminal Philosophy",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon",
+      "Beads",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "b9e1a293562bc098",
+    "wordCount": 565,
+    "lastModified": "2025-12-14T01:05:56.752Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/partnership/terminal-philosophy.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/partnership/system-philosophy.md",
+    "title": "System Philosophy",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Gestell",
+      "Gelassenheit",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "82ce86cd326b1a40",
+    "wordCount": 1357,
+    "lastModified": "2025-12-14T01:02:25.700Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/partnership/system-philosophy.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/partnership/claude-code-partnership.md",
+    "title": "Human-Agent Partnership",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "87883b704a634530",
+    "wordCount": 3052,
+    "lastModified": "2025-12-14T00:47:51.968Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/partnership/claude-code-partnership.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/foundations/what-is-creation.md",
+    "title": "What is Creation?",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "6f6ad9eeef0ff881",
+    "wordCount": 879,
+    "lastModified": "2025-12-14T00:47:32.937Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/foundations/what-is-creation.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/foundations/triad-application.md",
+    "title": "Applying the Triad",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "e5df0fe865eab097",
+    "wordCount": 1300,
+    "lastModified": "2025-12-14T00:59:53.466Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/foundations/triad-application.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/foundations/rams-artifact.md",
+    "title": "Rams: Artifact Level",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon",
+      "Weniger, aber besser"
+    ],
+    "hash": "053305a11dbf3562",
+    "wordCount": 1112,
+    "lastModified": "2025-12-29T18:05:23.232Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/foundations/rams-artifact.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/foundations/heidegger-system.md",
+    "title": "Heidegger: System Level",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "25ed2036fc5adca0",
+    "wordCount": 1066,
+    "lastModified": "2025-12-14T00:47:39.091Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/foundations/heidegger-system.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/foundations/dry-implementation.md",
+    "title": "DRY: Implementation Level",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "65bf53a6e0d43f9e",
+    "wordCount": 645,
+    "lastModified": "2025-12-29T17:55:24.503Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/foundations/dry-implementation.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/agents/priority-algorithms.md",
+    "title": "Priority Algorithms",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Beads",
+      "Dwelling"
+    ],
+    "hash": "106af2a954992c5a",
+    "wordCount": 443,
+    "lastModified": "2025-12-14T01:02:18.939Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/agents/priority-algorithms.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/agents/hierarchical-telos.md",
+    "title": "Hierarchical Telos",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads"
+    ],
+    "hash": "a9e7dabd171f9bc1",
+    "wordCount": 383,
+    "lastModified": "2025-12-14T01:02:13.261Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/agents/hierarchical-telos.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/agents/ethos-layer.md",
+    "title": "The Ethos Layer",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads"
+    ],
+    "hash": "2e6cb18baa71d747",
+    "wordCount": 425,
+    "lastModified": "2025-12-14T01:02:06.516Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/agents/ethos-layer.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/agents/coordination-primitives.md",
+    "title": "Coordination Primitives",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Beads",
+      "Complementarity"
+    ],
+    "hash": "2c26be34c2862bfa",
+    "wordCount": 417,
+    "lastModified": "2025-12-14T01:02:00.323Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/agents/coordination-primitives.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/agents/agent-philosophy.md",
+    "title": "Agent Philosophy",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "18ed29b787b0880d",
+    "wordCount": 830,
+    "lastModified": "2025-12-14T00:48:32.029Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/agents/agent-philosophy.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/craft/sveltekit-philosophy.md",
+    "title": "SvelteKit Philosophy",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "295b9fa072b2805c",
+    "wordCount": 646,
+    "lastModified": "2025-12-14T01:00:05.584Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/craft/sveltekit-philosophy.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/craft/layout-architecture.md",
+    "title": "Layout Architecture",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon"
+    ],
+    "hash": "eda60bd313c9d8c2",
+    "wordCount": 370,
+    "lastModified": "2025-12-14T01:00:41.290Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/craft/layout-architecture.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/craft/component-patterns.md",
+    "title": "Component Patterns",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Canon",
+      "Dwelling"
+    ],
+    "hash": "d41fc7989dd4bdfe",
+    "wordCount": 466,
+    "lastModified": "2025-12-14T01:00:12.235Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/craft/component-patterns.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/craft/canon-tokens.md",
+    "title": "Canon Design Tokens",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon"
+    ],
+    "hash": "340b6a7a2acc7f5f",
+    "wordCount": 621,
+    "lastModified": "2025-12-14T00:47:45.571Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/craft/canon-tokens.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/craft/animation-restraint.md",
+    "title": "Animation with Restraint",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon"
+    ],
+    "hash": "52127315bc6aced6",
+    "wordCount": 565,
+    "lastModified": "2025-12-14T01:00:47.817Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/craft/animation-restraint.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/advanced/mcp-server-development.md",
+    "title": "MCP Server Development",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "dd5ede99353cbb84",
+    "wordCount": 568,
+    "lastModified": "2025-12-14T00:53:22.103Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/advanced/mcp-server-development.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/advanced/custom-hooks.md",
+    "title": "Custom Hooks: Automation as Dwelling",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Hermeneutic Circle",
+      "Canon",
+      "Gestell",
+      "Gelassenheit",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "3f07a6fd40963c88",
+    "wordCount": 490,
+    "lastModified": "2025-12-14T00:53:29.039Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/advanced/custom-hooks.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/advanced/agent-orchestration.md",
+    "title": "Agent Orchestration: Multi-Agent Patterns",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Canon",
+      "Gestell",
+      "Gelassenheit",
+      "Dwelling",
+      "Complementarity"
+    ],
+    "hash": "23e20a03279db14b",
+    "wordCount": 795,
+    "lastModified": "2025-12-27T18:45:30.402Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/advanced/agent-orchestration.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/getting-started/terminal-as-creative-space.md",
+    "title": "Your Terminal as Creative Space",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Zuhandenheit",
+      "Vorhandenheit",
+      "Canon",
+      "Weniger, aber besser",
+      "Complementarity"
+    ],
+    "hash": "9abea177c5130a08",
+    "wordCount": 609,
+    "lastModified": "2025-12-27T23:04:16.223Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/getting-started/terminal-as-creative-space.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/getting-started/install-claude-code.md",
+    "title": "Install Claude Code CLI",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Gelassenheit",
+      "Complementarity"
+    ],
+    "hash": "f8e39df8c8f3ddc9",
+    "wordCount": 462,
+    "lastModified": "2025-12-16T03:55:10.405Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/getting-started/install-claude-code.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/getting-started/install-beads.md",
+    "title": "Install Beads",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Hermeneutic Circle",
+      "Canon",
+      "Beads"
+    ],
+    "hash": "c7f4f540a4d893ba",
+    "wordCount": 366,
+    "lastModified": "2025-12-16T03:49:05.705Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/getting-started/install-beads.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/getting-started/configure-wezterm.md",
+    "title": "Configure WezTerm",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Canon",
+      "Beads"
+    ],
+    "hash": "c9d0f8040e0015d8",
+    "wordCount": 420,
+    "lastModified": "2025-12-16T03:49:05.519Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/getting-started/configure-wezterm.md"
+  },
+  {
+    "id": "packages/lms/src/lib/content/lessons/getting-started/configure-neomutt.md",
+    "title": "Configure Neomutt",
+    "package": "lms",
+    "type": "lesson",
+    "concepts": [
+      "Subtractive Triad",
+      "Canon",
+      "Beads",
+      "Gelassenheit"
+    ],
+    "hash": "bebca90da4be10b3",
+    "wordCount": 530,
+    "lastModified": "2025-12-16T03:49:05.866Z",
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/lms/src/lib/content/lessons/getting-started/configure-neomutt.md"
+  }
+]
