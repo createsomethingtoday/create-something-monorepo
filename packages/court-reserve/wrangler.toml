@@ -10,55 +10,33 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [[d1_databases]]
 binding = "DB"
 database_name = "court-reserve-db"
-database_id = "TODO_CREATE_D1_DATABASE"
+database_id = "3bdf375f-3689-4e2a-8bcb-ff1599912a89"
 migrations_dir = "migrations"
 
 # KV for facility config cache (5 min TTL)
 [[kv_namespaces]]
 binding = "FACILITY_CACHE"
-id = "TODO_CREATE_KV_NAMESPACE"
+id = "1a67592787bd4e98a3b806278992386a"
 
 # KV for sessions and conversation state
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "TODO_CREATE_KV_NAMESPACE"
+id = "973b18397c4d4b068313152a642f1ad5"
 
 # R2 for assets (facility logos, etc.)
 [[r2_buckets]]
-binding = "ASSETS"
+binding = "R2_STORAGE"
 bucket_name = "court-reserve-assets"
 
 # Workers AI for SMS intent parsing
 [ai]
 binding = "AI"
 
-# Queue for notifications (reminders, waitlist offers)
-[[queues.producers]]
-binding = "NOTIFICATION_QUEUE"
-queue = "court-reserve-notifications"
-
-# Queue consumer for notification worker
-[[queues.consumers]]
-queue = "court-reserve-notifications"
-max_batch_size = 10
-max_batch_timeout = 30
-
-# Durable Object for real-time court state (one per facility)
-[[durable_objects.bindings]]
-name = "COURT_STATE"
-class_name = "CourtStateManager"
-
-# Durable Object migration - SQLite storage for court state
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["CourtStateManager"]
-
-# Cron triggers for scheduled tasks
-[triggers]
-crons = [
-  "*/15 * * * *",  # Every 15 min: process notification queue, check no-shows
-  "0 6 * * *"      # Daily at 6am: analytics aggregation, gap detection
-]
+# NOTE: The following features require a separate Worker (not Pages):
+# - Durable Objects (real-time court state)
+# - Queues (notification processing)
+# - Cron triggers (scheduled tasks)
+# See workers/realtime/ and workers/notifier/ for these features
 
 [vars]
 ENVIRONMENT = "production"
