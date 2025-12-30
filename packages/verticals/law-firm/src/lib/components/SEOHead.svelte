@@ -10,6 +10,7 @@
 		ogImage?: string;
 		ogType?: 'website' | 'article';
 		noindex?: boolean;
+		keywords?: string[];
 	}
 
 	let {
@@ -18,7 +19,8 @@
 		canonical,
 		ogImage = '/og-image.jpg',
 		ogType = 'website',
-		noindex = false
+		noindex = false,
+		keywords = []
 	}: Props = $props();
 
 	const fullTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name;
@@ -32,6 +34,10 @@
 	<meta name="title" content={fullTitle} />
 	<meta name="description" content={description} />
 	<link rel="canonical" href={canonicalUrl} />
+
+	{#if keywords.length > 0}
+		<meta name="keywords" content={keywords.join(', ')} />
+	{/if}
 
 	{#if noindex}
 		<meta name="robots" content="noindex, nofollow" />

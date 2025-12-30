@@ -1,11 +1,11 @@
 {
   "$schema": "https://createsomething.io/schemas/template-manifest.json",
-  "name": "Professional Services",
-  "slug": "professional-services",
+  "name": "Law Firm Template",
+  "slug": "law-firm",
   "version": "1.0.0",
-  "description": "Production-ready template for law firms, accounting practices, and consulting businesses",
+  "description": "Consultations that book themselves. Production-ready law firm website with automated client workflows, CRM integration, and appointment reminders.",
   "category": "professional-services",
-  "subcategories": ["law-firm", "accounting", "consulting", "financial-services"],
+  "subcategories": ["law-firm", "legal-services", "attorney-website", "legal-practice"],
   "author": {
     "name": "CREATE SOMETHING",
     "url": "https://createsomething.agency",
@@ -108,14 +108,18 @@
     "ogImage": true
   },
   "keywords": [
-    "law firm website",
+    "law firm website template",
     "attorney website template",
-    "accounting firm website",
-    "CPA website template",
-    "consulting website",
-    "professional services",
-    "cloudflare pages",
-    "sveltekit template"
+    "legal practice website",
+    "law office website builder",
+    "automated legal intake",
+    "consultation booking automation",
+    "lawyer website template free",
+    "cloudflare law firm",
+    "sveltekit law firm",
+    "workway legal automation",
+    "attorney website builder",
+    "legal website template open source"
   ],
   "created": "2024-12-10",
   "updated": "2024-12-10"

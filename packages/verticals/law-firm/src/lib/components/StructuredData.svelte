@@ -6,9 +6,11 @@
 	interface Props {
 		type?: 'organization' | 'legalService' | 'attorney';
 		page?: 'home' | 'practice-areas' | 'about' | 'attorneys' | 'contact' | 'results' | 'schedule';
+		includeFAQ?: boolean;
+		includeTemplate?: boolean;
 	}
 
-	let { type = 'organization', page = 'home' }: Props = $props();
+	let { type = 'organization', page = 'home', includeFAQ = false, includeTemplate = false }: Props = $props();
 
 	// Law Firm organization schema
 	const organizationSchema = {
@@ -194,12 +196,74 @@
 		}
 	};
 
+	// FAQPage schema for AEO (AI Engine Optimization)
+	const faqPageSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: siteConfig.faq?.map((item) => ({
+			'@type': 'Question',
+			name: item.question,
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: item.answer
+			}
+		}))
+	};
+
+	// SoftwareApplication schema for template (AEO)
+	const softwareApplicationSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'SoftwareApplication',
+		name: 'Law Firm Website Template',
+		applicationCategory: 'WebApplication',
+		operatingSystem: 'Any',
+		offers: {
+			'@type': 'Offer',
+			price: '0',
+			priceCurrency: 'USD',
+			availability: 'https://schema.org/InStock',
+			description: 'Free law firm website template with optional WORKWAY automation'
+		},
+		description: 'Production-ready law firm website template with automated consultation booking, appointment reminders, and client follow-up workflows powered by WORKWAY.',
+		featureList: [
+			'Automated consultation booking',
+			'Appointment reminder workflows',
+			'Post-meeting follow-up automation',
+			'CRM integration (HubSpot, Clio)',
+			'Calendar integration (Calendly)',
+			'SEO optimized with Schema.org',
+			'Mobile responsive design',
+			'Cloudflare Pages hosting'
+		],
+		provider: {
+			'@type': 'Organization',
+			name: 'CREATE SOMETHING',
+			url: 'https://createsomething.agency'
+		},
+		aggregateRating: {
+			'@type': 'AggregateRating',
+			ratingValue: '5.0',
+			reviewCount: '1'
+		},
+		screenshot: `${siteConfig.url}/og-image.jpg`
+	};
+
 	// Combine schemas based on page
 	const schemas = $derived(() => {
 		const result = [organizationSchema, breadcrumbSchemas[page]];
 
 		if (page === 'home') {
 			result.push(webSiteSchema);
+
+			// Add template schema for home page (for template discovery)
+			if (includeTemplate) {
+				result.push(softwareApplicationSchema);
+			}
+		}
+
+		// Add FAQ schema when requested
+		if (includeFAQ && siteConfig.faq?.length > 0) {
+			result.push(faqPageSchema);
 		}
 
 		return result;

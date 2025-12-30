@@ -31,8 +31,24 @@
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead canonical="/" />
-<StructuredData page="home" />
+<SEOHead
+	canonical="/"
+	title="Law Firm Website Template - Automated Client Workflows"
+	description="Production-ready law firm website template with automated consultation booking, appointment reminders, and client follow-up workflows. Free to deploy, powered by WORKWAY."
+	keywords={[
+		'law firm website template',
+		'attorney website template',
+		'legal practice website',
+		'law office website',
+		'automated client intake',
+		'consultation booking automation',
+		'legal website builder',
+		'cloudflare law firm',
+		'sveltekit law firm template',
+		'workway automation'
+	]}
+/>
+<StructuredData page="home" includeFAQ={true} includeTemplate={true} />
 
 <main class="home">
 	<HeroSection />
