@@ -1,0 +1,46 @@
+@import '@create-something/components/styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Court Reserve - Tailwind for structure, Canon for aesthetics */
+
+:root {
+	/* Court Reserve brand - professional, trustworthy */
+	--court-primary: #10b981;
+	--court-primary-dark: #059669;
+}
+
+html {
+	font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: var(--color-bg-pure);
+	color: var(--color-fg-primary);
+}
+
+/* Smooth scrolling with reduced motion respect */
+@media (prefers-reduced-motion: no-preference) {
+	html {
+		scroll-behavior: smooth;
+	}
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+	outline: 2px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+	:root {
+		--color-fg-secondary: rgba(255, 255, 255, 0.95);
+		--color-fg-tertiary: rgba(255, 255, 255, 0.85);
+		--color-border-default: rgba(255, 255, 255, 0.3);
+	}
+}

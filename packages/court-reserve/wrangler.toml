@@ -1,0 +1,69 @@
+# Court Reserve - Autonomous Court Scheduling SaaS
+# The infrastructure disappears; courts get booked.
+
+name = "court-reserve"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# D1 Database - Core data store
+[[d1_databases]]
+binding = "DB"
+database_name = "court-reserve-db"
+database_id = "TODO_CREATE_D1_DATABASE"
+migrations_dir = "migrations"
+
+# KV for facility config cache (5 min TTL)
+[[kv_namespaces]]
+binding = "FACILITY_CACHE"
+id = "TODO_CREATE_KV_NAMESPACE"
+
+# KV for sessions and conversation state
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "TODO_CREATE_KV_NAMESPACE"
+
+# R2 for assets (facility logos, etc.)
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "court-reserve-assets"
+
+# Queue for notifications (reminders, waitlist offers)
+[[queues.producers]]
+binding = "NOTIFICATION_QUEUE"
+queue = "court-reserve-notifications"
+
+# Queue consumer for notification worker
+[[queues.consumers]]
+queue = "court-reserve-notifications"
+max_batch_size = 10
+max_batch_timeout = 30
+
+# Durable Object for real-time court state (one per facility)
+[[durable_objects.bindings]]
+name = "COURT_STATE"
+class_name = "CourtStateManager"
+
+# Durable Object migration - SQLite storage for court state
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CourtStateManager"]
+
+# Cron triggers for scheduled tasks
+[triggers]
+crons = [
+  "*/15 * * * *",  # Every 15 min: process notification queue, check no-shows
+  "0 6 * * *"      # Daily at 6am: analytics aggregation, gap detection
+]
+
+[vars]
+ENVIRONMENT = "production"
+BASE_DOMAIN = "courtreserve.createsomething.space"
+
+# Secrets (configure via `wrangler secret put`):
+# - STRIPE_SECRET_KEY
+# - STRIPE_WEBHOOK_SECRET
+# - TWILIO_ACCOUNT_SID
+# - TWILIO_AUTH_TOKEN
+# - TWILIO_FROM_NUMBER
+# - SENDGRID_API_KEY

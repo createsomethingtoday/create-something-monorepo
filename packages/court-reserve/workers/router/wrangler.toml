@@ -1,0 +1,28 @@
+# Court Reserve Router Worker
+# Routes *.courtreserve.createsomething.space to facility booking pages
+
+name = "court-reserve-router"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Route all subdomains to this worker
+routes = [
+  { pattern = "*.courtreserve.createsomething.space/*", zone_name = "createsomething.space" }
+]
+
+# D1 Database - facility data
+[[d1_databases]]
+binding = "DB"
+database_name = "court-reserve-db"
+database_id = "TODO_CREATE_D1_DATABASE"
+
+# KV Namespace - facility cache
+[[kv_namespaces]]
+binding = "FACILITY_CACHE"
+id = "TODO_CREATE_KV_NAMESPACE"
+
+# R2 Bucket - booking widget assets
+[[r2_buckets]]
+binding = "SITE_BUCKET"
+bucket_name = "court-reserve-assets"
