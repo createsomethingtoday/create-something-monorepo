@@ -19,6 +19,7 @@ declare global {
 				ASSETS: R2Bucket;
 				NOTIFICATION_QUEUE: Queue;
 				COURT_STATE: DurableObjectNamespace;
+				AI?: Ai;
 				STRIPE_SECRET_KEY?: string;
 				STRIPE_WEBHOOK_SECRET?: string;
 				STRIPE_PRICE_BASIC?: string;

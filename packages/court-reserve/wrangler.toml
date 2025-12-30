@@ -28,6 +28,10 @@ id = "TODO_CREATE_KV_NAMESPACE"
 binding = "ASSETS"
 bucket_name = "court-reserve-assets"
 
+# Workers AI for SMS intent parsing
+[ai]
+binding = "AI"
+
 # Queue for notifications (reminders, waitlist offers)
 [[queues.producers]]
 binding = "NOTIFICATION_QUEUE"
