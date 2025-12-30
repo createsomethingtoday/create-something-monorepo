@@ -11,7 +11,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { sendMagicLinkEmail, generateToken, hashToken } from '$lib/email/magic-link';
-import { isValidEmail } from '@create-something/components/utils';
+import { isValidEmail, generateCorrelationId, logError } from '@create-something/components/utils';
 
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 const RATE_LIMIT_WINDOW_HOURS = 1;
@@ -136,8 +136,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const emailResult = await sendMagicLinkEmail(resendApiKey, normalizedEmail, magicLinkUrl);
 
 	if (!emailResult.success) {
-		console.error('Failed to send magic link email:', emailResult.error);
-		throw error(500, 'Failed to send email. Please try again.');
+		const correlationId = generateCorrelationId();
+		logError('Magic link email send', emailResult.error, correlationId, { email: normalizedEmail });
+		throw error(500, `Failed to send email. Please try again. (Ref: ${correlationId})`);
 	}
 
 	return json({

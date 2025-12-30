@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { isValidEmail } from '@create-something/components/utils';
+import { isValidEmail, generateCorrelationId, logError } from '@create-something/components/utils';
 
 interface ContactRequest {
 	name: string;
@@ -74,11 +74,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				.run();
 			dbSaveSucceeded = true;
 		} catch (dbError) {
-			// Log full error for debugging - this is a data integrity issue
-			console.error('Failed to save contact submission to database:', {
-				error: dbError instanceof Error ? dbError.message : String(dbError),
-				email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Partial email for debugging
-				timestamp: new Date().toISOString()
+			// Log with correlation ID for debugging - this is a data integrity issue
+			const dbCorrelationId = generateCorrelationId();
+			logError('Contact form DB save', dbError, dbCorrelationId, {
+				email: email.replace(/(.{2}).*(@.*)/, '$1***$2') // Partial email for debugging
 			});
 			// Continue to send emails - notification email serves as backup record
 		}
@@ -167,20 +166,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		]);
 
 		if (!autoResponse.ok) {
+			const correlationId = generateCorrelationId();
 			const errorData = await autoResponse.json();
-			console.error('Resend auto-response error:', errorData);
+			logError('Resend auto-response', errorData, correlationId, { email });
 			return json(
 				{
 					success: false,
-					message: 'Failed to send confirmation email'
+					message: `Failed to send confirmation email. (Ref: ${correlationId})`
 				},
 				{ status: 500 }
 			);
 		}
 
 		if (!notification.ok) {
+			const correlationId = generateCorrelationId();
 			const errorData = await notification.json();
-			console.error('Resend notification error:', errorData);
+			logError('Resend notification', errorData, correlationId, { email });
 		}
 
 		return json({
@@ -188,11 +189,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			message: 'Message sent successfully! You should receive a confirmation email shortly.'
 		});
 	} catch (err) {
-		console.error('Contact form error:', err);
+		const correlationId = generateCorrelationId();
+		logError('Contact form', err, correlationId);
 		return json(
 			{
 				success: false,
-				message: `Error processing contact form: ${err instanceof Error ? err.message : 'Unknown error'}`
+				message: `Error processing contact form. Please try again. (Ref: ${correlationId})`
 			},
 			{ status: 500 }
 		);

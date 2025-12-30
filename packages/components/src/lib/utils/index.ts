@@ -47,3 +47,11 @@ export {
     sanitizeHtml,
     isValidUrl
 } from './validation.js';
+
+// Error handling utilities
+export {
+    generateCorrelationId,
+    createErrorResponse,
+    logError,
+    type ErrorResponse
+} from './errors.js';

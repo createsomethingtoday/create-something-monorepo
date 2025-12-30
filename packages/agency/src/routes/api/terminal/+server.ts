@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { Paper } from '@create-something/components/types';
+import { generateCorrelationId, logError } from '@create-something/components/utils';
 
 interface TerminalRequest {
 	command: string;
@@ -298,11 +299,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					type: 'error'
 				});
 		}
-	} catch (error) {
-		console.error('Terminal command error:', error);
+	} catch (err) {
+		const correlationId = generateCorrelationId();
+		logError('Terminal command', err, correlationId);
 		return json({
-			output: `Error processing command: ${error instanceof Error ? error.message : 'Unknown error'}`,
-			type: 'error'
+			output: `Error processing command. (Ref: ${correlationId})`,
+			type: 'error',
+			correlationId
 		}, { status: 500 });
 	}
 };
