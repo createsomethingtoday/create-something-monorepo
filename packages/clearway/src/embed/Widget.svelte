@@ -51,6 +51,15 @@
 				? '/api'
 				: 'https://clearway.pages.dev/api';
 
+	// Format ISO timestamp to human-readable time (e.g., "6 AM", "5 PM")
+	function formatTime(isoString: string): string {
+		const date = new Date(isoString);
+		const hours = date.getHours();
+		const ampm = hours >= 12 ? 'PM' : 'AM';
+		const hour12 = hours % 12 || 12;
+		return `${hour12} ${ampm}`;
+	}
+
 	// Fetch availability
 	async function fetchAvailability() {
 		loading = true;
@@ -103,28 +112,17 @@
 		error = null;
 
 		try {
-			// For now, redirect to the booking page with selected slot
-			// In a full implementation, this would create a reservation via API
 			const court = courts.find((c) => c.id === selectedCourt);
 			if (!court) throw new Error('Court not found');
 
 			// Redirect to checkout
-			const checkoutUrl = new URL(`${API_BASE}/../book`);
-			checkoutUrl.searchParams.set('facility', facilitySlug);
-			checkoutUrl.searchParams.set('court', selectedCourt);
-			checkoutUrl.searchParams.set('date', date);
-			checkoutUrl.searchParams.set('start', selectedSlot.startTime);
+			const checkoutParams = new URLSearchParams();
+			checkoutParams.set('facility', facilitySlug);
+			checkoutParams.set('court', selectedCourt);
+			checkoutParams.set('date', date);
+			checkoutParams.set('start', selectedSlot.startTime);
 
-			window.location.href = checkoutUrl.toString();
-
-			// If we had a callback, we'd call it here:
-			// onReservationComplete?.({
-			//   id: 'rsv_xxx',
-			//   courtName: court.name,
-			//   startTime: selectedSlot.startTime,
-			//   endTime: selectedSlot.endTime,
-			//   price: selectedSlot.priceCents || 0
-			// });
+			window.location.href = `/book?${checkoutParams.toString()}`;
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : 'Booking failed';
 			error = errorMsg;
@@ -147,9 +145,9 @@
 	});
 </script>
 
-<div class="court-reserve-widget" data-theme={theme}>
-	<!-- Date Selector -->
-	<div class="widget-header">
+<div class="widget" data-theme={theme}>
+	<!-- Header -->
+	<div class="header">
 		<h3>Book a Court</h3>
 		<input type="date" bind:value={date} class="date-input" />
 	</div>
@@ -158,7 +156,7 @@
 	{#if loading}
 		<div class="loading">
 			<div class="spinner"></div>
-			<p>Loading availability...</p>
+			<p>Loading...</p>
 		</div>
 	{/if}
 
@@ -172,24 +170,24 @@
 
 	<!-- Availability Grid -->
 	{#if !loading && !error && courts.length > 0}
-		<div class="courts-grid">
+		<div class="courts">
 			{#each courts as court}
-				<div class="court-section">
-					<h4 class="court-name">{court.name}</h4>
-					<div class="slots-grid">
+				<div class="court">
+					<h4>{court.name}</h4>
+					<div class="slots">
 						{#each court.slots as slot}
 							<button
 								class="slot"
 								class:available={slot.status === 'available'}
-								class:reserved={slot.status === 'reserved'}
+								class:peak={slot.priceCents !== null && slot.priceCents > 4000}
 								class:selected={selectedCourt === court.id &&
 									selectedSlot?.startTime === slot.startTime}
 								onclick={() => selectSlot(court.id, slot)}
 								disabled={slot.status !== 'available'}
 							>
-								<span class="slot-time">{slot.startTime}</span>
+								<span class="time">{formatTime(slot.startTime)}</span>
 								{#if slot.priceCents !== null}
-									<span class="slot-price">${(slot.priceCents / 100).toFixed(0)}</span>
+									<span class="price">${(slot.priceCents / 100).toFixed(0)}</span>
 								{/if}
 							</button>
 						{/each}
@@ -202,315 +200,280 @@
 	<!-- Empty State -->
 	{#if !loading && !error && courts.length === 0}
 		<div class="empty">
-			<p>No courts available for this date.</p>
+			<p>No courts available.</p>
 		</div>
 	{/if}
 
 	<!-- Booking Panel -->
 	{#if selectedSlot && selectedCourt}
-		<div class="booking-panel">
-			<div class="booking-details">
-				<p>
-					<strong>{courts.find((c) => c.id === selectedCourt)?.name}</strong>
-				</p>
-				<p>
-					{selectedSlot.startTime} - {selectedSlot.endTime}
-				</p>
+		<div class="booking">
+			<div class="details">
+				<strong>{courts.find((c) => c.id === selectedCourt)?.name}</strong>
+				<span>{formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}</span>
 				{#if selectedSlot.priceCents}
-					<p class="price">${(selectedSlot.priceCents / 100).toFixed(2)}</p>
+					<span class="amount">${(selectedSlot.priceCents / 100).toFixed(0)}</span>
 				{/if}
 			</div>
-			<div class="booking-actions">
-				<button class="cancel-btn" onclick={clearSelection}>Cancel</button>
-				<button class="book-btn" onclick={bookSlot}>Book Now</button>
+			<div class="actions">
+				<button class="cancel" onclick={clearSelection}>Cancel</button>
+				<button class="book" onclick={bookSlot}>Book</button>
 			</div>
 		</div>
 	{/if}
 </div>
 
 <style>
-	.court-reserve-widget {
-		font-family:
-			-apple-system,
-			BlinkMacSystemFont,
-			'Segoe UI',
-			Roboto,
-			Oxygen,
-			Ubuntu,
-			Cantarell,
-			sans-serif;
-		border-radius: 12px;
-		padding: 1.5rem;
+	/* Canon Design System - Monochrome First */
+	.widget {
+		font-family: var(--font-sans, 'Stack Sans Notch', system-ui, sans-serif);
+		border-radius: var(--radius-lg, 12px);
+		padding: var(--space-lg, 1.5rem);
 		max-width: 800px;
 		margin: 0 auto;
 	}
 
-	/* Theme: Dark (default) */
-	.court-reserve-widget[data-theme='dark'] {
-		background: #1a1a1a;
-		color: #ffffff;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+	/* Dark Theme (default) */
+	.widget[data-theme='dark'] {
+		background: var(--color-bg-subtle, #1a1a1a);
+		color: var(--color-fg-primary, #ffffff);
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
-	.court-reserve-widget[data-theme='dark'] .date-input,
-	.court-reserve-widget[data-theme='dark'] button {
-		background: #111111;
-		color: #ffffff;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-	}
-
-	.court-reserve-widget[data-theme='dark'] .slot.available {
-		background: rgba(255, 255, 255, 0.05);
-		border-color: rgba(255, 255, 255, 0.2);
-	}
-
-	.court-reserve-widget[data-theme='dark'] .slot.available:hover {
-		background: rgba(255, 255, 255, 0.1);
-	}
-
-	.court-reserve-widget[data-theme='dark'] .slot.selected {
-		background: rgba(255, 255, 255, 0.2);
-		border-color: rgba(255, 255, 255, 0.5);
-	}
-
-	/* Theme: Light */
-	.court-reserve-widget[data-theme='light'] {
-		background: #ffffff;
-		color: #1a1a1a;
-		border: 1px solid rgba(0, 0, 0, 0.1);
-	}
-
-	.court-reserve-widget[data-theme='light'] .date-input,
-	.court-reserve-widget[data-theme='light'] button {
-		background: #f5f5f5;
-		color: #1a1a1a;
-		border: 1px solid rgba(0, 0, 0, 0.2);
-	}
-
-	.court-reserve-widget[data-theme='light'] .slot.available {
-		background: #f5f5f5;
-		border-color: rgba(0, 0, 0, 0.2);
-	}
-
-	.court-reserve-widget[data-theme='light'] .slot.available:hover {
-		background: #e5e5e5;
-	}
-
-	.court-reserve-widget[data-theme='light'] .slot.selected {
-		background: #e0e0e0;
-		border-color: rgba(0, 0, 0, 0.5);
+	.widget[data-theme='dark'] .date-input,
+	.widget[data-theme='dark'] button {
+		background: var(--color-bg-surface, #111111);
+		color: var(--color-fg-primary, #ffffff);
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	/* Header */
-	.widget-header {
+	.header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 1.5rem;
+		margin-bottom: var(--space-lg, 1.5rem);
 	}
 
-	.widget-header h3 {
+	.header h3 {
 		margin: 0;
-		font-size: 1.5rem;
+		font-size: var(--text-h3, 1.25rem);
 		font-weight: 600;
+		color: var(--color-fg-primary, #ffffff);
 	}
 
 	.date-input {
 		padding: 0.5rem 0.75rem;
-		border-radius: 8px;
-		font-size: 1rem;
-		transition: all 0.2s;
+		border-radius: var(--radius-md, 8px);
+		font-size: var(--text-body, 1rem);
+		font-family: inherit;
+		transition: border-color 200ms ease;
 	}
 
 	.date-input:focus {
 		outline: none;
-		border-color: rgba(255, 255, 255, 0.5);
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.3));
 	}
 
 	/* Loading */
 	.loading {
 		text-align: center;
-		padding: 3rem 1rem;
+		padding: var(--space-xl, 3rem) var(--space-sm, 1rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
 	.spinner {
-		width: 40px;
-		height: 40px;
-		margin: 0 auto 1rem;
-		border: 3px solid rgba(255, 255, 255, 0.1);
-		border-top-color: rgba(255, 255, 255, 0.5);
+		width: 32px;
+		height: 32px;
+		margin: 0 auto var(--space-sm, 1rem);
+		border: 2px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-top-color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 	}
 
 	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
+		to { transform: rotate(360deg); }
 	}
 
 	/* Error */
 	.error {
 		text-align: center;
-		padding: 2rem 1rem;
-		color: #d44d4d;
+		padding: var(--space-lg, 1.5rem);
+		color: var(--color-error, #d44d4d);
 	}
 
 	.error button {
-		margin-top: 1rem;
+		margin-top: var(--space-sm, 1rem);
 		padding: 0.5rem 1.5rem;
-		border-radius: 8px;
+		border-radius: var(--radius-md, 8px);
 		cursor: pointer;
-		transition: all 0.2s;
 	}
 
-	.error button:hover {
-		opacity: 0.8;
-	}
-
-	/* Courts Grid */
-	.courts-grid {
+	/* Courts */
+	.courts {
 		display: flex;
 		flex-direction: column;
-		gap: 2rem;
+		gap: var(--space-lg, 1.5rem);
 	}
 
-	.court-section {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.court-name {
-		margin: 0;
-		font-size: 1.125rem;
+	.court h4 {
+		margin: 0 0 var(--space-sm, 0.75rem);
+		font-size: var(--text-body, 1rem);
 		font-weight: 600;
-		opacity: 0.8;
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
 	}
 
-	.slots-grid {
+	.slots {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-		gap: 0.75rem;
+		grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+		gap: 0.5rem;
 	}
 
 	.slot {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.25rem;
-		padding: 0.75rem;
-		border-radius: 8px;
+		gap: 0.125rem;
+		padding: 0.625rem 0.5rem;
+		border-radius: var(--radius-md, 8px);
 		cursor: pointer;
-		transition: all 0.2s;
-		font-size: 0.875rem;
+		transition: all 200ms ease;
+		font-size: var(--text-body-sm, 0.875rem);
 	}
 
 	.slot:disabled {
 		cursor: not-allowed;
-		opacity: 0.3;
+		opacity: 0.25;
 	}
 
-	.slot.reserved {
-		background: rgba(255, 255, 255, 0.02);
-		border-color: rgba(255, 255, 255, 0.05);
+	.slot.available {
+		background: var(--color-bg-surface, rgba(255, 255, 255, 0.05));
+		border-color: var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
-	.slot-time {
+	.slot.available:hover:not(:disabled) {
+		background: var(--color-hover, rgba(255, 255, 255, 0.1));
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+	}
+
+	.slot.selected {
+		background: var(--color-fg-primary, #ffffff);
+		color: var(--color-bg-pure, #000000);
+		border-color: var(--color-fg-primary, #ffffff);
+	}
+
+	.slot.peak .price {
 		font-weight: 600;
 	}
 
-	.slot-price {
-		font-size: 0.75rem;
-		opacity: 0.7;
+	.time {
+		font-weight: 500;
 	}
 
-	/* Empty State */
+	.price {
+		font-size: var(--text-caption, 0.75rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+	}
+
+	.slot.selected .price {
+		color: var(--color-bg-pure, #000000);
+	}
+
+	/* Empty */
 	.empty {
 		text-align: center;
-		padding: 3rem 1rem;
-		opacity: 0.6;
+		padding: var(--space-xl, 3rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
 	/* Booking Panel */
-	.booking-panel {
-		margin-top: 2rem;
-		padding: 1.5rem;
-		border-radius: 8px;
-		background: rgba(255, 255, 255, 0.05);
+	.booking {
+		margin-top: var(--space-lg, 1.5rem);
+		padding: var(--space-md, 1rem);
+		border-radius: var(--radius-md, 8px);
+		background: var(--color-bg-surface, rgba(255, 255, 255, 0.05));
+		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 1rem;
+		gap: var(--space-md, 1rem);
 	}
 
-	.booking-details {
+	.details {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
 	}
 
-	.booking-details p {
-		margin: 0;
+	.details strong {
+		color: var(--color-fg-primary, #ffffff);
 	}
 
-	.booking-details .price {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: #44aa44;
+	.details span {
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		font-size: var(--text-body-sm, 0.875rem);
 	}
 
-	.booking-actions {
-		display: flex;
-		gap: 0.75rem;
-	}
-
-	.book-btn,
-	.cancel-btn {
-		padding: 0.75rem 2rem;
-		border-radius: 8px;
+	.details .amount {
+		font-size: var(--text-body-lg, 1.125rem);
 		font-weight: 600;
-		font-size: 1rem;
+		color: var(--color-fg-primary, #ffffff);
+	}
+
+	.actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.cancel,
+	.book {
+		padding: 0.625rem 1.25rem;
+		border-radius: var(--radius-md, 8px);
+		font-weight: 500;
+		font-size: var(--text-body, 1rem);
 		cursor: pointer;
+		transition: all 200ms ease;
+	}
+
+	.cancel {
+		background: transparent;
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	.cancel:hover {
+		background: var(--color-hover, rgba(255, 255, 255, 0.05));
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+	}
+
+	/* Canon monochrome primary button: inverted colors */
+	.book {
+		background: var(--color-fg-primary, #ffffff);
+		color: var(--color-bg-pure, #000000);
 		border: none;
-		transition: all 0.2s;
 	}
 
-	.book-btn {
-		background: #44aa44;
-		color: white;
-	}
-
-	.book-btn:hover {
-		background: #55bb55;
-	}
-
-	.cancel-btn {
-		background: rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.8);
-	}
-
-	.cancel-btn:hover {
-		background: rgba(255, 255, 255, 0.15);
+	.book:hover {
+		opacity: 0.9;
 	}
 
 	/* Responsive */
 	@media (max-width: 640px) {
-		.slots-grid {
-			grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+		.slots {
+			grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
 		}
 
-		.booking-panel {
+		.booking {
 			flex-direction: column;
 			align-items: stretch;
 		}
 
-		.booking-actions {
+		.actions {
 			width: 100%;
 		}
 
-		.book-btn,
-		.cancel-btn {
+		.cancel,
+		.book {
 			flex: 1;
 		}
 	}
