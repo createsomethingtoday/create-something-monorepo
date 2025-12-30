@@ -233,3 +233,11 @@ When starting a session:
 4. Close issues when completing work
 
 The goal: **Hermeneutic continuity across context boundaries.**
+
+---
+
+## Related Lessons
+
+- [Install Beads](/learn/lessons/getting-started/install-beads) — Installation walkthrough and core workflow introduction
+- [Agent Orchestration](/learn/lessons/advanced/agent-orchestration) — Multi-agent patterns that use Beads for coordination
+- [Agent Philosophy](/learn/lessons/agents/agent-philosophy) — Philosophical foundation for agent-native tools

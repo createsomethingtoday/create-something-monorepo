@@ -922,3 +922,10 @@ When the swarm recedes, the creation reveals itself.
 > **Research Depth**: Read the [Hierarchical Telos paper](https://createsomething.io/papers/hierarchical-telos) for the theoretical foundation of multi-level agent coordination.
 >
 > **Practice**: The CREATE SOMETHING deployment system uses multi-agent patterns—study the [deployment workflow](https://github.com/create-something/create-something-monorepo/tree/main/.github/workflows) to see these patterns in practice.
+
+---
+
+## See Also
+
+- [Harness Patterns](/.claude/rules/harness-patterns.md) — Quality gates, self-healing baseline, discovered work taxonomy from VC patterns
+- [Beads Patterns](/.claude/rules/beads-patterns.md) — Agent-native task management with molecules and cross-project dependencies

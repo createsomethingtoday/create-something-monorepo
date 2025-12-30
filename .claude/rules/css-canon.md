@@ -631,3 +631,11 @@ When Tailwind 4 stabilizes (mid-2025+), consider:
 3. **Option C**: Maintain Tailwind 3 with security monitoring
 
 **Recommendation**: Continue Tailwind 3 with quarterly security review. The "Tailwind for structure, Canon for aesthetics" split naturally reduces Tailwind surface area over time.
+
+---
+
+## Related Lessons
+
+- [Canon Design Tokens](/learn/lessons/craft/canon-tokens) — Semantic token philosophy and migration patterns
+- [Animation Restraint](/learn/lessons/craft/animation-restraint) — When and how to use motion tokens
+- [Component Patterns](/learn/lessons/craft/component-patterns) — Applying Canon tokens in Svelte components

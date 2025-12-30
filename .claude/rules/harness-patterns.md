@@ -576,3 +576,11 @@ if (!canProceedWithWork(baseline, config)) {
 4. **Closes the loop**: Baseline issues become tracked work, not ignored debt
 
 **Philosophy**: The baseline is the foundation. Weak foundations collapse under pressure. Self-healing ensures the foundation stays solid.
+
+---
+
+## Related Lessons
+
+- [Agent Orchestration](/learn/lessons/advanced/agent-orchestration) — Multi-agent patterns for complex work decomposition
+- [Agent Philosophy](/learn/lessons/agents/agent-philosophy) — Philosophical grounding for autonomous agents
+- [Hierarchical Telos](/learn/lessons/agents/hierarchical-telos) — Multi-level purpose coordination in agent systems

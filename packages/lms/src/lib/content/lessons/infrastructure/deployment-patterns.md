@@ -421,3 +421,11 @@ Before moving on:
 > **Canon Reference**: The deployment checklist applies [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—automation that guides toward correct outcomes.
 >
 > **Practice**: Study `.github/workflows/` in any CREATE SOMETHING property for real deployment patterns.
+
+---
+
+## See Also
+
+- [Template Deployment Patterns](/.claude/rules/template-deployment-patterns.md) — Troubleshooting gotchas for multi-tenant template deployments
+- [Cloudflare Patterns](/.claude/rules/cloudflare-patterns.md) — D1, KV, R2 usage and project naming conventions
+- [Templates Platform](/.claude/rules/templates-platform.md) — Router worker architecture for *.createsomething.space

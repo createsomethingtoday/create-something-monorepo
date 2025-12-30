@@ -120,4 +120,11 @@ One more tool remains: Neomutt for terminal email.
 
 ---
 
+## See Also
+
+- [Beads Patterns](/.claude/rules/beads-patterns.md) — Complete command reference, molecules/chemistry system, and robot mode flags
+- [Harness Patterns](/.claude/rules/harness-patterns.md) — Multi-session autonomous work orchestration using Beads
+
+---
+
 *Complete the praxis exercise to install Beads and create your first task.*

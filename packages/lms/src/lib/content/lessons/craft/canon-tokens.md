@@ -319,6 +319,13 @@ The division works because:
 
 ---
 
+## See Also
+
+- [CSS Canon](/.claude/rules/css-canon.md) — Complete token reference with WCAG compliance, motion tokens, and utility class guidelines
+- [Taste Reference](/.claude/rules/taste-reference.md) — Human-curated visual references from Are.na that inform Canon decisions
+
+---
+
 ## Reflection
 
 Before the praxis:

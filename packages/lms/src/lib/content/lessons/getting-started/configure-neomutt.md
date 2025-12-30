@@ -133,4 +133,11 @@ Continue to the Foundations path to learn the Subtractive Triad—the philosophi
 
 ---
 
+## See Also
+
+- [Neomutt Patterns](/.claude/rules/neomutt-patterns.md) — Account setup, keybinding modules, and color scheme reference
+- [Dotfiles Conventions](/.claude/rules/dotfiles-conventions.md) — Terminal tooling philosophy and installation patterns
+
+---
+
 *Complete the praxis exercise to configure Neomutt with Canon colors.*

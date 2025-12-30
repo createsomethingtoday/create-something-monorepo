@@ -195,3 +195,11 @@ These failures share a common cause: **implicit assumptions becoming invisible**
 Each assumption was reasonable. Each broke silently. The fix is not more complexity but more *explicitness*—making the implicit visible so it can recede back into transparent use.
 
 **Weniger, aber besser**: Less magic, better documentation.
+
+---
+
+## Related Lessons
+
+- [Deployment Patterns](/learn/lessons/infrastructure/deployment-patterns) — Zero-friction deployment philosophy and Cloudflare Pages patterns
+- [Template Architecture](/learn/lessons/systems/template-architecture) — Multi-tenant template system design
+- [Edge Philosophy](/learn/lessons/infrastructure/edge-philosophy) — Why edge-first architecture enables Zuhandenheit

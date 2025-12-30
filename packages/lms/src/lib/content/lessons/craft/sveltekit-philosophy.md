@@ -301,3 +301,10 @@ Before moving on:
 > **Canon Reference**: SvelteKit's compiler-first approach embodies [Functional Transparency](https://createsomething.ltd/patterns/functional-transparency)—the mechanism disappears, only the function remains.
 >
 > **Research Depth**: Read [Code Mode Hermeneutic Analysis](https://createsomething.io/papers/code-mode-hermeneutic-analysis) for how framework choice enables or inhibits understanding.
+
+---
+
+## See Also
+
+- [SvelteKit Conventions](/.claude/rules/sveltekit-conventions.md) — File structure, route patterns, component patterns, and load function usage
+- [Cloudflare Patterns](/.claude/rules/cloudflare-patterns.md) — Platform access, D1 queries, and deployment configuration

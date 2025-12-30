@@ -106,4 +106,10 @@ With WezTerm configured, you're working in a Canon-compliant environment. Next: 
 
 ---
 
+## See Also
+
+- [Dotfiles Conventions](/.claude/rules/dotfiles-conventions.md) — Terminal tooling philosophy, keybinding grammar, and color conventions
+
+---
+
 *Complete the praxis exercise to apply the Canon configuration.*
