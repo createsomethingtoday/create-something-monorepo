@@ -1109,6 +1109,17 @@ async function parseJSON<T>(request: Request): Promise<T | null> {
 	}
 }
 
+/**
+ * RFC 5322 compliant email validation
+ * Validates local part, domain format, and proper TLD
+ */
 function isValidEmail(email: string): boolean {
-	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+	if (!email || typeof email !== 'string') {
+		return false;
+	}
+	const trimmed = email.trim();
+	if (trimmed.length < 5 || trimmed.length > 254) {
+		return false;
+	}
+	return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(trimmed);
 }

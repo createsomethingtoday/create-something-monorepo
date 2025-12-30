@@ -11,6 +11,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { sendMagicLinkEmail, generateToken, hashToken } from '$lib/email/magic-link';
+import { isValidEmail } from '@create-something/components/utils';
 
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 const RATE_LIMIT_WINDOW_HOURS = 1;
@@ -43,8 +44,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// Validate email format
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	if (!emailRegex.test(email)) {
+	if (!isValidEmail(email)) {
 		throw error(400, 'Invalid email format');
 	}
 

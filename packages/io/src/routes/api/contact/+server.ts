@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { isValidEmail } from '@create-something/components/utils';
 
 interface ContactRequest {
 	name: string;
@@ -33,8 +34,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			);
 		}
 
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(email)) {
+		if (!isValidEmail(email)) {
 			return json(
 				{
 					success: false,

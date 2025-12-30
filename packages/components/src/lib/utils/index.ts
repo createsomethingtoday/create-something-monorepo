@@ -37,3 +37,13 @@ export {
     type LearningEventMetadata,
     type LearningEventResponse
 } from './learning.js';
+
+// Validation utilities
+export {
+    isValidEmail,
+    normalizeEmail,
+    isValidPhone,
+    normalizePhone,
+    sanitizeHtml,
+    isValidUrl
+} from './validation.js';
