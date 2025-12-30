@@ -61,7 +61,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const env = platform.env;
 
-		// Store contact submission in D1 database (optional)
+		// Store contact submission in D1 database
+		let dbSaveSucceeded = false;
 		try {
 			await env.DB.prepare(
 				`
@@ -71,8 +72,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			)
 				.bind(name, email, message)
 				.run();
+			dbSaveSucceeded = true;
 		} catch (dbError) {
-			console.warn('Contact submissions table not found - skipping DB insert');
+			// Log full error for debugging - this is a data integrity issue
+			console.error('Failed to save contact submission to database:', {
+				error: dbError instanceof Error ? dbError.message : String(dbError),
+				email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Partial email for debugging
+				timestamp: new Date().toISOString()
+			});
+			// Continue to send emails - notification email serves as backup record
 		}
 
 		// Send auto-response to the person who contacted us
@@ -145,6 +153,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     <p><strong>From:</strong> ${name} (${email})</p>
     <p><strong>Message:</strong><br>${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
     <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
+    <p><strong>Database:</strong> ${dbSaveSucceeded ? '✓ Saved' : '⚠️ Failed to save - check logs'}</p>
   </div>
 </body>
 </html>`
