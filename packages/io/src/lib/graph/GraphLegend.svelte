@@ -46,6 +46,13 @@
 			color: 'rgba(255, 255, 255, 0.1)',
 			style: 'dotted',
 			description: 'Content similarity via embeddings'
+		},
+		{
+			type: 'infrastructure',
+			label: 'Infrastructure (D1/KV/R2)',
+			color: '#fbbf24',
+			style: 'solid',
+			description: 'Shared Cloudflare resources'
 		}
 	];
 </script>

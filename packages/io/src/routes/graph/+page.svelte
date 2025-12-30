@@ -17,7 +17,8 @@
 		explicit: true,
 		crossReference: true,
 		concept: true,
-		semantic: false // Semantic edges are dense, start disabled
+		semantic: false, // Semantic edges are dense, start disabled
+		infrastructure: true // Infrastructure edges highlight hidden coupling
 	});
 	let showLabels = $state(true);
 	let showEdgeLabels = $state(false);

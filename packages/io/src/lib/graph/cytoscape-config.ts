@@ -162,6 +162,18 @@ export function createStylesheet(): StylesheetEntry[] {
       },
     },
 
+    // Infrastructure edges (shared Cloudflare resources)
+    {
+      selector: 'edge.infrastructure',
+      style: {
+        'line-color': '#fbbf24', // --color-data-4 (amber)
+        'target-arrow-color': '#fbbf24',
+        width: 2.5,
+        'line-style': 'solid',
+        opacity: 0.8,
+      },
+    },
+
     // Hidden edges (when filtered out)
     {
       selector: 'edge.hidden',

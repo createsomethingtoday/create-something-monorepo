@@ -39,7 +39,8 @@
 			explicit: true,
 			crossReference: true,
 			concept: true,
-			semantic: true
+			semantic: true,
+			infrastructure: true
 		},
 		showLabels = true,
 		showEdgeLabels = false,
@@ -81,6 +82,8 @@
 						return edgeFilters.concept;
 					case 'semantic':
 						return edgeFilters.semantic;
+					case 'infrastructure':
+						return edgeFilters.infrastructure;
 					default:
 						return true;
 				}
@@ -113,6 +116,8 @@
 				return 'rgba(255, 255, 255, 0.2)';
 			case 'semantic':
 				return 'rgba(255, 255, 255, 0.1)';
+			case 'infrastructure':
+				return '#fbbf24'; // amber - high visibility for hidden coupling
 			default:
 				return 'rgba(255, 255, 255, 0.3)';
 		}
@@ -142,6 +147,8 @@
 				return 0.6;
 			case 'semantic':
 				return 0.25;
+			case 'infrastructure':
+				return 0.8; // high visibility - these are hidden coupling
 			default:
 				return 0.5;
 		}

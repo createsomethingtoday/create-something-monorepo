@@ -108,6 +108,14 @@
 				/>
 				<span class="checkbox-text">Semantic (embeddings)</span>
 			</label>
+			<label class="checkbox-label">
+				<input
+					type="checkbox"
+					checked={edgeFilters.infrastructure}
+					onchange={() => handleEdgeFilterToggle('infrastructure')}
+				/>
+				<span class="checkbox-text infrastructure">Infrastructure (D1/KV/R2)</span>
+			</label>
 		</div>
 	</div>
 
@@ -210,5 +218,9 @@
 	.checkbox-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
+	}
+
+	.checkbox-text.infrastructure {
+		color: #fbbf24; /* --color-data-4 (amber) */
 	}
 </style>

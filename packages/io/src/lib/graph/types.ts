@@ -22,6 +22,7 @@ export interface EdgeFilters {
   crossReference: boolean;
   concept: boolean;
   semantic: boolean;
+  infrastructure: boolean;
 }
 
 /**
