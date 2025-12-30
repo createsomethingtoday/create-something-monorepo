@@ -34,7 +34,12 @@ export const canonNavigation: NavSection[] = [
 		title: 'Concepts',
 		items: [
 			{ label: 'Overview', href: '/canon/concepts' },
-			{ label: 'Weniger, aber besser', href: '/canon/concepts/weniger-aber-besser' }
+			{ label: 'Weniger, aber besser', href: '/canon/concepts/weniger-aber-besser' },
+			{ label: 'Zuhandenheit', href: '/canon/concepts/zuhandenheit' },
+			{ label: 'Vorhandenheit', href: '/canon/concepts/vorhandenheit' },
+			{ label: 'Gestell', href: '/canon/concepts/gestell' },
+			{ label: 'Gelassenheit', href: '/canon/concepts/gelassenheit' },
+			{ label: 'Complementarity', href: '/canon/concepts/complementarity' }
 		]
 	},
 	{

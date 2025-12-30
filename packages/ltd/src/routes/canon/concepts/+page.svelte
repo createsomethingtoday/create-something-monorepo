@@ -31,8 +31,7 @@
 		<span class="concept-origin">Dieter Rams</span>
 	</a>
 
-	<!-- Future concepts will be added here -->
-	<div class="concept-card concept-placeholder">
+	<a href="/canon/concepts/zuhandenheit" class="concept-card">
 		<h2>Zuhandenheit</h2>
 		<p class="concept-translation">"Ready-to-hand"</p>
 		<p class="concept-summary">
@@ -40,8 +39,47 @@
 			the hammer disappears—only the hammering remains.
 		</p>
 		<span class="concept-origin">Martin Heidegger</span>
-		<span class="coming-soon">Coming soon</span>
-	</div>
+	</a>
+
+	<a href="/canon/concepts/vorhandenheit" class="concept-card">
+		<h2>Vorhandenheit</h2>
+		<p class="concept-translation">"Present-at-hand"</p>
+		<p class="concept-summary">
+			When tools become objects of attention. Breakdown reveals what
+			was previously invisible. The failure state of design.
+		</p>
+		<span class="concept-origin">Martin Heidegger</span>
+	</a>
+
+	<a href="/canon/concepts/gestell" class="concept-card">
+		<h2>Gestell</h2>
+		<p class="concept-translation">"Enframing"</p>
+		<p class="concept-summary">
+			The danger of technological thinking that reduces everything to
+			standing-reserve. Automation that fills every gap is invasion.
+		</p>
+		<span class="concept-origin">Martin Heidegger</span>
+	</a>
+
+	<a href="/canon/concepts/gelassenheit" class="concept-card">
+		<h2>Gelassenheit</h2>
+		<p class="concept-translation">"Releasement"</p>
+		<p class="concept-summary">
+			Neither rejection nor submission—full engagement without capture.
+			The craftsman uses the hammer; the hammer does not use him.
+		</p>
+		<span class="concept-origin">Martin Heidegger</span>
+	</a>
+
+	<a href="/canon/concepts/complementarity" class="concept-card">
+		<h2>Complementarity</h2>
+		<p class="concept-translation">"Mutual completion"</p>
+		<p class="concept-summary">
+			Human and AI capabilities complete rather than replace each other.
+			Judgment and execution, together forming a whole.
+		</p>
+		<span class="concept-origin">CREATE SOMETHING</span>
+	</a>
 
 	<div class="concept-card concept-placeholder">
 		<h2>Hermeneutic Circle</h2>
