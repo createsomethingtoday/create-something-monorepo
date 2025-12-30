@@ -16,7 +16,7 @@ routes = [{ pattern = "id.createsomething.space", custom_domain = true }]
 [vars]
 ENVIRONMENT = "production"
 # Allowed origins for CORS - all CREATE SOMETHING properties
-ALLOWED_ORIGINS = "https://createsomething.ltd,https://createsomething.io,https://createsomething.space,https://createsomething.agency,https://learn.createsomething.space,https://templates.createsomething.space,https://fn.workway.co,https://www.workway.co,https://workway.co"
+ALLOWED_ORIGINS = "https://createsomething.ltd,https://createsomething.io,https://createsomething.space,https://createsomething.agency,https://learn.createsomething.space,https://templates.createsomething.space,https://clearway.pages.dev,https://fn.workway.co,https://www.workway.co,https://workway.co"
 
 # D1 Database - Unified identity store
 [[d1_databases]]
