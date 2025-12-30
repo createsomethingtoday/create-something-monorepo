@@ -31,6 +31,13 @@ export const canonNavigation: NavSection[] = [
 		]
 	},
 	{
+		title: 'Concepts',
+		items: [
+			{ label: 'Overview', href: '/canon/concepts' },
+			{ label: 'Weniger, aber besser', href: '/canon/concepts/weniger-aber-besser' }
+		]
+	},
+	{
 		title: 'Foundations',
 		items: [
 			{ label: 'Colors', href: '/canon/foundations/colors' },
