@@ -57,14 +57,16 @@
 		error = null;
 
 		try {
-			const url = new URL(`${API_BASE}/availability`);
-			url.searchParams.set('facility', facilitySlug);
-			url.searchParams.set('date', date);
+			// Build URL - handle both relative and absolute paths
+			const params = new URLSearchParams();
+			params.set('facility', facilitySlug);
+			params.set('date', date);
 			if (courtType) {
-				url.searchParams.set('court_type', courtType);
+				params.set('court_type', courtType);
 			}
+			const fetchUrl = `${API_BASE}/availability?${params.toString()}`;
 
-			const response = await fetch(url.toString());
+			const response = await fetch(fetchUrl);
 			if (!response.ok) {
 				throw new Error(`Failed to fetch availability: ${response.statusText}`);
 			}
