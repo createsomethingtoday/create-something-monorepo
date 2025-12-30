@@ -20,7 +20,8 @@ import {
 	verifyTelnyxSignature,
 	replyToMessage,
 	normalizePhone,
-	type TelnyxConfig
+	type TelnyxConfig,
+	type TelnyxWebhookPayload
 } from '$lib/sms/telnyx';
 import { parseIntent } from '$lib/sms/intent-parser';
 import {
@@ -44,7 +45,7 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 	}
 
 	// Parse JSON body (Telnyx sends JSON, not form data)
-	const body = await request.json();
+	const body = (await request.json()) as TelnyxWebhookPayload;
 	const sms = parseIncomingSMS(body);
 
 	if (!sms) {

@@ -51,7 +51,7 @@ export function parseIncomingSMS(body: TelnyxWebhookPayload): IncomingSMS | null
 	};
 }
 
-interface TelnyxWebhookPayload {
+export interface TelnyxWebhookPayload {
 	data: {
 		id: string;
 		event_type: string;
