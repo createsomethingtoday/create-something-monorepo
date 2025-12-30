@@ -417,8 +417,8 @@
 
   .modal-iframe {
     width: 100%;
-    min-height: 500px;
-    height: 60vh;
+    min-height: 600px;
+    height: 70vh;
     border: none;
   }
 
@@ -427,13 +427,13 @@
       max-height: 95vh;
     }
 
-    .modal-header {
-      padding: 1rem;
+    .modal-iframe {
+      min-height: 550px;
+      height: 75vh;
     }
 
-    .modal-iframe {
-      min-height: 400px;
-      height: 70vh;
+    .modal-header {
+      padding: 1rem;
     }
   }
 </style>
