@@ -4,12 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Court Reserve - Tailwind for structure, Canon for aesthetics */
+/* CLEARWAY - Tailwind for structure, Canon for aesthetics */
 
 :root {
-	/* Court Reserve brand - professional, trustworthy */
-	--court-primary: #10b981;
-	--court-primary-dark: #059669;
+	/* CLEARWAY brand - the path opens, obstruction dissolves */
+	--clearway-accent: #10b981;
+	--clearway-accent-emphasis: #059669;
+	--clearway-accent-subtle: rgba(16, 185, 129, 0.15);
 }
 
 html {

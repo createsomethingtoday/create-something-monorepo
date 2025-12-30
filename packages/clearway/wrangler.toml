@@ -1,7 +1,7 @@
-# Court Reserve - Autonomous Court Scheduling SaaS
+# CLEARWAY - Autonomous Court Scheduling
 # The infrastructure disappears; courts get booked.
 
-name = "court-reserve"
+name = "clearway"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".svelte-kit/cloudflare"
@@ -40,9 +40,9 @@ binding = "AI"
 
 [vars]
 ENVIRONMENT = "production"
-BASE_DOMAIN = "courtreserve.createsomething.space"
+BASE_DOMAIN = "clearway.createsomething.space"
 
-# Court Reserve SaaS subscription prices
+# CLEARWAY SaaS subscription prices
 STRIPE_PRICE_BASIC = "price_1Sk5BUAzstI6Ecr5iPn2aC6u"      # $49/month
 STRIPE_PRICE_PRO = "price_1Sk5BVAzstI6Ecr5zAwnT4uT"        # $99/month
 STRIPE_PRICE_ENTERPRISE = "price_1Sk5BVAzstI6Ecr5YyFRtdl3" # $249/month
@@ -50,7 +50,7 @@ STRIPE_PRICE_ENTERPRISE = "price_1Sk5BVAzstI6Ecr5YyFRtdl3" # $249/month
 # Secrets (configure via `wrangler secret put`):
 # - STRIPE_SECRET_KEY
 # - STRIPE_WEBHOOK_SECRET
-# - TWILIO_ACCOUNT_SID
-# - TWILIO_AUTH_TOKEN
-# - TWILIO_FROM_NUMBER
+# - TELNYX_API_KEY
+# - TELNYX_PUBLIC_KEY
+# - TELNYX_MESSAGING_PROFILE_ID
 # - SENDGRID_API_KEY

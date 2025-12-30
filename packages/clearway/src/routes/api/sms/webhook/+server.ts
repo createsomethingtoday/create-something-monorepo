@@ -1,26 +1,27 @@
 /**
  * SMS Webhook Endpoint
  *
- * POST /api/sms/webhook - Receive and process Twilio SMS messages
+ * POST /api/sms/webhook - Receive and process Telnyx SMS messages
  *
  * Flow:
- * 1. Verify Twilio signature
+ * 1. Verify Telnyx signature
  * 2. Look up facility by phone number
  * 3. Look up or create member by phone
  * 4. Parse intent using AI
  * 5. Process conversation state
  * 6. Execute booking action if needed
- * 7. Return TwiML response
+ * 7. Send reply via Telnyx API
  */
 
 import type { RequestHandler } from './$types';
+import { json } from '@sveltejs/kit';
 import {
 	parseIncomingSMS,
-	verifyTwilioSignature,
-	twimlResponse,
-	twimlEmpty,
-	normalizePhone
-} from '$lib/sms/twilio';
+	verifyTelnyxSignature,
+	replyToMessage,
+	normalizePhone,
+	type TelnyxConfig
+} from '$lib/sms/telnyx';
 import { parseIntent } from '$lib/sms/intent-parser';
 import {
 	getConversation,
@@ -33,49 +34,59 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 	const db = platform?.env.DB;
 	const kv = platform?.env.SESSIONS;
 	const ai = platform?.env.AI;
-	const twilioAccountSid = platform?.env.TWILIO_ACCOUNT_SID;
-	const twilioAuthToken = platform?.env.TWILIO_AUTH_TOKEN;
+	const telnyxApiKey = platform?.env.TELNYX_API_KEY;
+	const telnyxPublicKey = platform?.env.TELNYX_PUBLIC_KEY;
+	const telnyxProfileId = platform?.env.TELNYX_MESSAGING_PROFILE_ID;
 
 	if (!db || !kv || !ai) {
 		console.error('Missing required bindings');
-		return new Response(twimlEmpty(), {
-			headers: { 'Content-Type': 'text/xml' }
-		});
+		return json({ success: false, error: 'Server configuration error' }, { status: 500 });
 	}
 
-	// Parse form data
-	const formData = await request.formData();
-	const sms = parseIncomingSMS(formData);
+	// Parse JSON body (Telnyx sends JSON, not form data)
+	const body = await request.json();
+	const sms = parseIncomingSMS(body);
+
+	if (!sms) {
+		// Not a message.received event, acknowledge and exit
+		return json({ success: true });
+	}
 
 	// Verify signature in production
-	if (twilioAccountSid && twilioAuthToken) {
-		const signature = request.headers.get('X-Twilio-Signature') || '';
-		const params: Record<string, string> = {};
-		formData.forEach((value, key) => {
-			params[key] = value.toString();
-		});
+	if (telnyxPublicKey) {
+		const signature = request.headers.get('telnyx-signature-ed25519') || '';
+		const timestamp = request.headers.get('telnyx-timestamp') || '';
+		const rawBody = JSON.stringify(body);
 
-		if (!verifyTwilioSignature(twilioAuthToken, signature, url.toString(), params)) {
-			console.error('Invalid Twilio signature');
-			return new Response(twimlEmpty(), {
-				status: 403,
-				headers: { 'Content-Type': 'text/xml' }
-			});
+		const valid = await verifyTelnyxSignature(telnyxPublicKey, signature, timestamp, rawBody);
+		if (!valid) {
+			console.error('Invalid Telnyx signature');
+			return json({ success: false, error: 'Invalid signature' }, { status: 403 });
 		}
 	}
 
 	// Look up facility by receiving phone number
 	const facility = await db
-		.prepare('SELECT id, name, slug FROM facilities WHERE sms_number = ?')
+		.prepare('SELECT id, name, slug, sms_number FROM facilities WHERE sms_number = ?')
 		.bind(sms.to)
-		.first<{ id: string; name: string; slug: string }>();
+		.first<{ id: string; name: string; slug: string; sms_number: string }>();
 
 	if (!facility) {
 		console.error(`No facility found for phone number: ${sms.to}`);
-		return new Response(
-			twimlResponse("Sorry, this number isn't set up for bookings yet."),
-			{ headers: { 'Content-Type': 'text/xml' } }
-		);
+		// Send error reply
+		if (telnyxApiKey && telnyxProfileId) {
+			await replyToMessage(
+				{
+					apiKey: telnyxApiKey,
+					publicKey: telnyxPublicKey || '',
+					messagingProfileId: telnyxProfileId,
+					fromNumber: sms.to
+				},
+				sms.from,
+				"Sorry, this number isn't set up for bookings yet."
+			);
+		}
+		return json({ success: true });
 	}
 
 	// Look up or create member by phone
@@ -90,8 +101,10 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 		const memberId = `mem_${Date.now()}`;
 		const now = new Date().toISOString();
 		await db
-			.prepare(`INSERT INTO members (id, facility_id, phone, status, created_at, updated_at)
-				VALUES (?, ?, ?, 'active', ?, ?)`)
+			.prepare(
+				`INSERT INTO members (id, facility_id, phone, status, created_at, updated_at)
+				VALUES (?, ?, ?, 'active', ?, ?)`
+			)
 			.bind(memberId, facility.id, phone, now, now)
 			.run();
 		member = { id: memberId, name: '' };
@@ -132,10 +145,11 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 		if (reservations.length === 0) {
 			result.response = "You don't have any upcoming reservations.";
 		} else {
-			result.response = "Your upcoming reservations:\n\n" +
-				reservations.map((r, i) =>
-					`${i + 1}. Court ${r.court_number} - ${formatDateTime(r.start_time)}`
-				).join('\n');
+			result.response =
+				'Your upcoming reservations:\n\n' +
+				reservations
+					.map((r, i) => `${i + 1}. Court ${r.court_number} - ${formatDateTime(r.start_time)}`)
+					.join('\n');
 		}
 	}
 
@@ -146,8 +160,10 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 
 	// Log for analytics
 	await db
-		.prepare(`INSERT INTO sms_logs (id, facility_id, member_id, direction, phone, body, intent, created_at)
-			VALUES (?, ?, ?, 'inbound', ?, ?, ?, ?)`)
+		.prepare(
+			`INSERT INTO sms_logs (id, facility_id, member_id, direction, phone, body, intent, created_at)
+			VALUES (?, ?, ?, 'inbound', ?, ?, ?, ?)`
+		)
 		.bind(
 			`sms_${Date.now()}`,
 			facility.id,
@@ -159,9 +175,40 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 		)
 		.run();
 
-	return new Response(twimlResponse(result.response), {
-		headers: { 'Content-Type': 'text/xml' }
-	});
+	// Send reply via Telnyx API
+	if (telnyxApiKey && telnyxProfileId) {
+		const telnyxConfig: TelnyxConfig = {
+			apiKey: telnyxApiKey,
+			publicKey: telnyxPublicKey || '',
+			messagingProfileId: telnyxProfileId,
+			fromNumber: facility.sms_number
+		};
+
+		const sendResult = await replyToMessage(telnyxConfig, sms.from, result.response);
+
+		// Log outbound message
+		await db
+			.prepare(
+				`INSERT INTO sms_logs (id, facility_id, member_id, direction, phone, body, intent, created_at)
+				VALUES (?, ?, ?, 'outbound', ?, ?, 'reply', ?)`
+			)
+			.bind(
+				`sms_${Date.now()}_out`,
+				facility.id,
+				member.id,
+				phone,
+				result.response.substring(0, 500),
+				new Date().toISOString()
+			)
+			.run();
+
+		if (!sendResult.success) {
+			console.error('Failed to send SMS reply:', sendResult.error);
+		}
+	}
+
+	// Acknowledge webhook
+	return json({ success: true });
 };
 
 /**
@@ -203,11 +250,13 @@ async function executeBooking(
 
 	// Check availability
 	const conflict = await db
-		.prepare(`SELECT id FROM reservations
+		.prepare(
+			`SELECT id FROM reservations
 			WHERE court_id = ?
 			AND status IN ('confirmed', 'pending')
 			AND start_time < ?
-			AND end_time > ?`)
+			AND end_time > ?`
+		)
 		.bind(court.id, endTime.toISOString(), startTime.toISOString())
 		.first();
 
@@ -220,9 +269,11 @@ async function executeBooking(
 	const now = new Date().toISOString();
 
 	await db
-		.prepare(`INSERT INTO reservations
+		.prepare(
+			`INSERT INTO reservations
 			(id, facility_id, court_id, member_id, start_time, end_time, status, booking_source, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, 'confirmed', 'sms', ?, ?)`)
+			VALUES (?, ?, ?, ?, ?, ?, 'confirmed', 'sms', ?, ?)`
+		)
 		.bind(
 			reservationId,
 			facilityId,
@@ -250,14 +301,16 @@ async function getUpcomingReservations(
 ): Promise<Array<{ court_number: number; start_time: string }>> {
 	const now = new Date().toISOString();
 	const { results } = await db
-		.prepare(`SELECT c.court_number, r.start_time
+		.prepare(
+			`SELECT c.court_number, r.start_time
 			FROM reservations r
 			JOIN courts c ON c.id = r.court_id
 			WHERE r.member_id = ?
 			AND r.status IN ('confirmed', 'pending')
 			AND r.start_time > ?
 			ORDER BY r.start_time
-			LIMIT 5`)
+			LIMIT 5`
+		)
 		.bind(memberId, now)
 		.all<{ court_number: number; start_time: string }>();
 
@@ -285,13 +338,17 @@ function parseBookingDateTime(date: string, time: string): Date | null {
 		if (dayIndex !== -1) {
 			targetDate = new Date(now);
 			const currentDay = targetDate.getDay();
-			const daysUntil = (dayIndex - currentDay + 7) % 7 || 7;
+			const daysUntil = ((dayIndex - currentDay + 7) % 7) || 7;
 			targetDate.setDate(targetDate.getDate() + daysUntil);
 		} else {
 			// Try MM/DD format
 			const dateMatch = date.match(/(\d{1,2})\/(\d{1,2})/);
 			if (dateMatch) {
-				targetDate = new Date(now.getFullYear(), parseInt(dateMatch[1], 10) - 1, parseInt(dateMatch[2], 10));
+				targetDate = new Date(
+					now.getFullYear(),
+					parseInt(dateMatch[1], 10) - 1,
+					parseInt(dateMatch[2], 10)
+				);
 			} else {
 				return null;
 			}

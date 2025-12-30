@@ -1,25 +1,25 @@
 /**
- * Court Reserve Embed Widget
+ * CLEARWAY Embed Widget
  *
  * Standalone JavaScript bundle for embedding booking widgets on client sites.
  *
  * Usage:
- * <script src="https://courtreserve.createsomething.space/embed.js"></script>
+ * <script src="https://clearway.createsomething.space/embed.js"></script>
  * <script>
- *   CourtReserve.createWidget({
- *     facilitySlug: 'thestack',
+ *   Clearway.init({
+ *     facility: 'thestack',
  *     container: '#booking-widget',
  *     theme: 'dark',
- *     onReservationComplete: (r) => console.log('Booked!', r)
+ *     onBook: (r) => console.log('Booked!', r)
  *   });
  * </script>
  */
 
 import Widget from './Widget.svelte';
 
-export interface WidgetConfig {
+export interface ClearwayConfig {
 	/** Facility slug (e.g., 'thestack') */
-	facilitySlug: string;
+	facility: string;
 
 	/** CSS selector for container element */
 	container: string;
@@ -34,7 +34,7 @@ export interface WidgetConfig {
 	courtType?: string;
 
 	/** Callback when reservation is completed */
-	onReservationComplete?: (reservation: ReservationResult) => void;
+	onBook?: (reservation: BookingResult) => void;
 
 	/** Callback when widget is ready */
 	onReady?: () => void;
@@ -43,38 +43,38 @@ export interface WidgetConfig {
 	onError?: (error: Error) => void;
 }
 
-export interface ReservationResult {
+export interface BookingResult {
 	id: string;
-	courtName: string;
-	startTime: string;
-	endTime: string;
+	court: string;
+	start: string;
+	end: string;
 	price: number;
 }
 
-export interface WidgetInstance {
+export interface ClearwayInstance {
 	destroy: () => void;
-	updateDate: (date: string) => void;
+	setDate: (date: string) => void;
 	refresh: () => void;
 }
 
 /**
- * Create a Court Reserve booking widget
+ * Initialize a CLEARWAY booking widget
  */
-export function createWidget(config: WidgetConfig): WidgetInstance {
+export function init(config: ClearwayConfig): ClearwayInstance {
 	const {
-		facilitySlug,
+		facility,
 		container,
 		theme = 'dark',
 		date,
 		courtType,
-		onReservationComplete,
+		onBook,
 		onReady,
 		onError
 	} = config;
 
 	// Validate required fields
-	if (!facilitySlug) {
-		const error = new Error('facilitySlug is required');
+	if (!facility) {
+		const error = new Error('facility is required');
 		onError?.(error);
 		throw error;
 	}
@@ -99,11 +99,20 @@ export function createWidget(config: WidgetConfig): WidgetInstance {
 		widget = new Widget({
 			target: containerEl as HTMLElement,
 			props: {
-				facilitySlug,
+				facilitySlug: facility,
 				theme,
 				date: date || new Date().toISOString().split('T')[0],
 				courtType,
-				onReservationComplete,
+				onReservationComplete: onBook
+					? (r: any) =>
+							onBook({
+								id: r.id,
+								court: r.courtName,
+								start: r.startTime,
+								end: r.endTime,
+								price: r.price
+							})
+					: undefined,
 				onError
 			}
 		});
@@ -120,7 +129,7 @@ export function createWidget(config: WidgetConfig): WidgetInstance {
 		destroy: () => {
 			widget.$destroy();
 		},
-		updateDate: (newDate: string) => {
+		setDate: (newDate: string) => {
 			widget.$set({ date: newDate });
 		},
 		refresh: () => {
@@ -131,10 +140,20 @@ export function createWidget(config: WidgetConfig): WidgetInstance {
 	};
 }
 
+// Legacy API for backwards compatibility
+export const createWidget = init;
+
 // Global API
 if (typeof window !== 'undefined') {
+	(window as any).Clearway = {
+		init,
+		createWidget, // Legacy support
+		version: '1.0.0'
+	};
+
+	// Legacy global for backwards compatibility
 	(window as any).CourtReserve = {
-		createWidget,
-		version: '0.1.0'
+		createWidget: init,
+		version: '1.0.0'
 	};
 }

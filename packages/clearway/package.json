@@ -1,5 +1,5 @@
 {
-  "name": "@create-something/court-reserve",
+  "name": "@create-something/clearway",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -11,9 +11,9 @@
     "test:watch": "vitest",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "deploy": "pnpm build && pnpm build:embed && wrangler pages deploy .svelte-kit/cloudflare --project-name=court-reserve",
-    "db:migrate": "wrangler d1 migrations apply court-reserve-db",
-    "db:migrate:local": "wrangler d1 migrations apply court-reserve-db --local",
+    "deploy": "pnpm build && pnpm build:embed && wrangler pages deploy .svelte-kit/cloudflare --project-name=clearway",
+    "db:migrate": "wrangler d1 migrations apply clearway-db",
+    "db:migrate:local": "wrangler d1 migrations apply clearway-db --local",
     "types": "wrangler types"
   },
   "devDependencies": {
