@@ -65,13 +65,13 @@
 		font-size: var(--text-body);
 		font-weight: 500;
 		text-decoration: none;
-		background: var(--clearway-accent);
-		color: #000;
-		transition: background var(--duration-micro) var(--ease-standard);
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		transition: opacity var(--duration-micro) var(--ease-standard);
 	}
 
 	.btn-primary:hover {
-		background: var(--clearway-accent-emphasis);
+		opacity: 0.9;
 	}
 
 	@keyframes fadeInUp {

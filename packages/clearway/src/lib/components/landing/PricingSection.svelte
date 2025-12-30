@@ -133,7 +133,7 @@
 	.example-row.total .example-label,
 	.example-row.total .example-value {
 		font-weight: 600;
-		color: var(--clearway-accent);
+		color: var(--color-fg-primary);
 	}
 
 	.pricing-notes {
@@ -167,12 +167,14 @@
 	}
 
 	.pricing-cta a {
-		color: var(--clearway-accent);
+		color: var(--color-fg-primary);
 		text-decoration: none;
 		font-weight: 500;
+		border-bottom: 1px solid var(--color-border-emphasis);
+		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.pricing-cta a:hover {
-		text-decoration: underline;
+		border-color: var(--color-fg-primary);
 	}
 </style>

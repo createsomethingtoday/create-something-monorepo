@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Value Grid Section
 	// The three core capabilities that make CLEARWAY work
+	// Icons: Lucide (Clock, MessageSquare, Users)
 </script>
 
 <section class="value">
@@ -9,9 +10,9 @@
 		<div class="value-grid">
 			<div class="value-card">
 				<div class="value-icon">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10" />
-						<path d="M12 6v6l4 2" />
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="12" r="10"/>
+						<polyline points="12 6 12 12 16 14"/>
 					</svg>
 				</div>
 				<h3>Real-time State</h3>
@@ -23,8 +24,8 @@
 
 			<div class="value-card">
 				<div class="value-icon">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
 					</svg>
 				</div>
 				<h3>Text to Book</h3>
@@ -36,9 +37,11 @@
 
 			<div class="value-card">
 				<div class="value-icon">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M12 2v20M2 12h20" />
-						<circle cx="12" cy="12" r="10" />
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+						<circle cx="9" cy="7" r="4"/>
+						<path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+						<path d="M16 3.13a4 4 0 0 1 0 7.75"/>
 					</svg>
 				</div>
 				<h3>Smart Waitlist</h3>
@@ -89,10 +92,10 @@
 	}
 
 	.value-icon {
-		width: 3rem;
-		height: 3rem;
+		width: 2.5rem;
+		height: 2.5rem;
 		margin-bottom: var(--space-sm);
-		color: var(--clearway-accent);
+		color: var(--color-fg-secondary);
 	}
 
 	.value-icon svg {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Problem Section
 	// The pain points that CLEARWAY solves
+	// Icons: Lucide (Phone, X, Clock)
 </script>
 
 <section class="problem">
@@ -8,17 +9,31 @@
 		<h2 class="section-title">The Real Problem</h2>
 		<div class="problem-grid">
 			<div class="problem-card">
-				<span class="problem-emoji">&#x1F4DE;</span>
+				<div class="problem-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+					</svg>
+				</div>
 				<h3>Phone Tag</h3>
 				<p>Staff spend hours managing calls. Members wait on hold. Everyone loses.</p>
 			</div>
 			<div class="problem-card">
-				<span class="problem-emoji">&#x274C;</span>
+				<div class="problem-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M18 6 6 18"/>
+						<path d="m6 6 12 12"/>
+					</svg>
+				</div>
 				<h3>Double Bookings</h3>
 				<p>The spreadsheet said it was free. It wasn't. Now two members are upset.</p>
 			</div>
 			<div class="problem-card">
-				<span class="problem-emoji">&#x1F573;&#xFE0F;</span>
+				<div class="problem-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="12" r="10"/>
+						<polyline points="12 6 12 12 16 14"/>
+					</svg>
+				</div>
 				<h3>Empty Prime Slots</h3>
 				<p>6pm Tuesday sits empty while you have a waitlist. Nobody connected the dots.</p>
 			</div>
@@ -68,10 +83,16 @@
 		border-color: var(--color-border-emphasis);
 	}
 
-	.problem-emoji {
-		font-size: 2.5rem;
-		display: block;
-		margin-bottom: var(--space-sm);
+	.problem-icon {
+		width: 3rem;
+		height: 3rem;
+		margin: 0 auto var(--space-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	.problem-icon svg {
+		width: 100%;
+		height: 100%;
 	}
 
 	.problem-card h3 {

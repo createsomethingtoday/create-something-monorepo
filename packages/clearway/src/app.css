@@ -4,14 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CLEARWAY - Tailwind for structure, Canon for aesthetics */
-
-:root {
-	/* CLEARWAY brand - the path opens, obstruction dissolves */
-	--clearway-accent: #10b981;
-	--clearway-accent-emphasis: #059669;
-	--clearway-accent-subtle: rgba(16, 185, 129, 0.15);
-}
+/* CLEARWAY - Tailwind for structure, Canon for aesthetics
+ * Monochrome-first design: the tool recedes, the booking happens
+ */
 
 html {
 	font-family: Inter, system-ui, -apple-system, sans-serif;

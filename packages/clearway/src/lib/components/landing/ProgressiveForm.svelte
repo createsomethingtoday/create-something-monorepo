@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Progressive Form Section
 	// Email-first intake with progressive disclosure
+	// Icon: Lucide (Check)
 
 	let step = $state(1);
 	let email = $state('');
@@ -31,8 +32,12 @@
 
 		{#if submitted}
 			<div class="success-message">
-				<span class="success-icon">&#x2713;</span>
-				<h3>Thank you!</h3>
+				<div class="success-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="20 6 9 17 4 12"/>
+					</svg>
+				</div>
+				<h3>Thank you</h3>
 				<p>We'll be in touch within 24 hours to schedule your demo.</p>
 			</div>
 		{:else}
@@ -184,7 +189,7 @@
 	select:focus,
 	textarea:focus {
 		outline: none;
-		border-color: var(--clearway-accent);
+		border-color: var(--color-border-strong);
 	}
 
 	input::placeholder,
@@ -230,13 +235,13 @@
 	.btn-submit {
 		width: 100%;
 		margin-top: var(--space-sm);
-		background: var(--clearway-accent);
-		color: #000;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
 		border: none;
 	}
 
 	.btn-submit:hover {
-		background: var(--clearway-accent-emphasis);
+		opacity: 0.9;
 	}
 
 	.success-message {
@@ -244,7 +249,7 @@
 		padding: var(--space-xl);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--clearway-accent);
+		border: 1px solid var(--color-border-emphasis);
 	}
 
 	.success-icon {
@@ -254,11 +259,14 @@
 		width: 3rem;
 		height: 3rem;
 		border-radius: var(--radius-full);
-		background: var(--clearway-accent);
-		color: #000;
-		font-size: 1.5rem;
-		font-weight: bold;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
 		margin-bottom: var(--space-sm);
+	}
+
+	.success-icon svg {
+		width: 1.5rem;
+		height: 1.5rem;
 	}
 
 	.success-message h3 {

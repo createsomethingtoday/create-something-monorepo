@@ -1,6 +1,7 @@
 <script lang="ts">
 	// The Stack Showcase Section
 	// Live proof of concept with actual production facility
+	// Icon: Lucide (LayoutGrid)
 </script>
 
 <section id="showcase" class="showcase">
@@ -14,10 +15,17 @@
 		<div class="embed-container">
 			<div class="embed-placeholder">
 				<div class="placeholder-content">
-					<span class="placeholder-icon">&#x1F3BE;</span>
+					<div class="placeholder-icon">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<rect width="7" height="7" x="3" y="3" rx="1"/>
+							<rect width="7" height="7" x="14" y="3" rx="1"/>
+							<rect width="7" height="7" x="14" y="14" rx="1"/>
+							<rect width="7" height="7" x="3" y="14" rx="1"/>
+						</svg>
+					</div>
 					<p>Live booking widget loads here</p>
 					<a href="https://thestackpadel.com/book" target="_blank" rel="noopener" class="placeholder-link">
-						Visit The Stack to book
+						Visit The Stack to book →
 					</a>
 				</div>
 			</div>
@@ -77,9 +85,15 @@
 	}
 
 	.placeholder-icon {
-		font-size: 3rem;
-		display: block;
-		margin-bottom: var(--space-sm);
+		width: 3rem;
+		height: 3rem;
+		margin: 0 auto var(--space-sm);
+		color: var(--color-fg-tertiary);
+	}
+
+	.placeholder-icon svg {
+		width: 100%;
+		height: 100%;
 	}
 
 	.placeholder-content p {
@@ -88,13 +102,14 @@
 	}
 
 	.placeholder-link {
-		color: var(--clearway-accent);
+		color: var(--color-fg-secondary);
 		text-decoration: none;
 		font-weight: 500;
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.placeholder-link:hover {
-		text-decoration: underline;
+		color: var(--color-fg-primary);
 	}
 
 	.testimonial {
@@ -102,7 +117,7 @@
 		padding: var(--space-lg);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
-		border-left: 3px solid var(--clearway-accent);
+		border-left: 3px solid var(--color-border-emphasis);
 	}
 
 	.testimonial p {
