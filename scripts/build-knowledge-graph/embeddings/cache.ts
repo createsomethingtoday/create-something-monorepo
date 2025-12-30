@@ -8,8 +8,8 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import type { EmbeddingCache, GraphNode } from '../types.js';
 
-export const CACHE_VERSION = '1.0.0';
-export const DEFAULT_MODEL = 'voyage-3-lite';
+export const CACHE_VERSION = '2.0.0'; // Bumped for Cloudflare migration
+export const DEFAULT_MODEL = '@cf/baai/bge-base-en-v1.5';
 
 /**
  * Load embedding cache from file

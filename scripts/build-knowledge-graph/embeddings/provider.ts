@@ -1,28 +1,31 @@
 /**
- * Embedding Provider
+ * Embedding Provider - Cloudflare Workers AI
  *
- * Interface to Voyage AI for generating document embeddings.
- * Uses voyage-3-lite model ($0.02/1M tokens).
+ * Uses Cloudflare's BGE embedding model via REST API.
+ * No separate API key needed - uses existing Cloudflare auth.
  */
 
 import { readFileSync } from 'fs';
-import { VoyageAIClient } from 'voyageai';
+import { execSync } from 'child_process';
 import type { GraphNode } from '../types.js';
 
 export interface EmbeddingOptions {
-  /** Voyage AI API key */
-  apiKey: string;
+  /** Cloudflare account ID (from env or wrangler) */
+  accountId?: string;
 
-  /** Model to use (default: voyage-3-lite) */
+  /** Cloudflare API token (from env) */
+  apiToken?: string;
+
+  /** Model to use (default: @cf/baai/bge-base-en-v1.5) */
   model?: string;
 
-  /** Max tokens per document (default: 8000) */
+  /** Max tokens per document (default: 512 for BGE) */
   maxTokensPerDoc?: number;
 
-  /** Documents per API call (default: 8 for free tier rate limits) */
+  /** Documents per API call (default: 20) */
   batchSize?: number;
 
-  /** Delay between batches in ms (default: 21000 for 3 RPM limit) */
+  /** Delay between batches in ms (default: 1000) */
   batchDelayMs?: number;
 }
 
@@ -30,13 +33,17 @@ export interface EmbeddingResult {
   /** Node ID */
   nodeId: string;
 
-  /** Embedding vector (1024 dimensions for voyage-3-lite) */
+  /** Embedding vector (768 dimensions for bge-base) */
   embedding: number[];
 }
 
+/** Default Cloudflare embedding model */
+export const CLOUDFLARE_MODEL = '@cf/baai/bge-base-en-v1.5';
+export const CLOUDFLARE_DIMENSIONS = 768;
+
 /**
  * Truncate text to approximate token limit
- * Rough estimate: 1 token ≈ 4 characters for English
+ * BGE models have 512 token limit
  */
 function truncateToTokens(text: string, maxTokens: number): string {
   const maxChars = maxTokens * 4;
@@ -48,21 +55,13 @@ function truncateToTokens(text: string, maxTokens: number): string {
 
 /**
  * Prepare node content for embedding
- * Combines title and first N tokens of content
  */
 function prepareNodeText(node: GraphNode, maxTokens: number): string {
-  // Read file content
   const content = readFileSync(node.absolutePath, 'utf-8');
-
-  // Format: "Title: {title}\n\n{content}"
   const combined = `Title: ${node.title}\n\nPackage: ${node.package ?? 'root'}\n\nType: ${node.type}\n\n${content}`;
-
   return truncateToTokens(combined, maxTokens);
 }
 
-/**
- * Generate embeddings for a batch of nodes
- */
 /**
  * Sleep for specified milliseconds
  */
@@ -70,69 +69,119 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Get Cloudflare credentials from environment or wrangler
+ */
+function getCloudflareCredentials(): { accountId: string; apiToken: string } {
+  let accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  let apiToken = process.env.CLOUDFLARE_API_TOKEN;
+
+  // Try to get from wrangler whoami if not in env
+  if (!accountId) {
+    try {
+      const whoami = execSync('wrangler whoami 2>/dev/null', { encoding: 'utf-8' });
+      const match = whoami.match(/Account ID[:\s]+([a-f0-9]{32})/i);
+      if (match) accountId = match[1];
+    } catch {
+      // Ignore - will fail later with better error
+    }
+  }
+
+  if (!accountId || !apiToken) {
+    throw new Error(
+      'Cloudflare credentials not found. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables.'
+    );
+  }
+
+  return { accountId, apiToken };
+}
+
+/**
+ * Call Cloudflare Workers AI embedding endpoint
+ */
+async function callCloudflareEmbeddings(
+  texts: string[],
+  accountId: string,
+  apiToken: string,
+  model: string
+): Promise<number[][]> {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text: texts }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Cloudflare AI error (${response.status}): ${error}`);
+  }
+
+  const result = await response.json() as {
+    success: boolean;
+    result: { data: number[][] };
+    errors?: Array<{ message: string }>;
+  };
+
+  if (!result.success) {
+    throw new Error(`Cloudflare AI failed: ${result.errors?.[0]?.message ?? 'Unknown error'}`);
+  }
+
+  return result.result.data;
+}
+
+/**
+ * Generate embeddings for a batch of nodes using Cloudflare Workers AI
+ */
 export async function generateEmbeddings(
   nodes: GraphNode[],
-  options: EmbeddingOptions
+  options: EmbeddingOptions = {}
 ): Promise<EmbeddingResult[]> {
   const {
-    apiKey,
-    model = 'voyage-3-lite',
-    maxTokensPerDoc = 8000,
-    batchSize = 8, // Small batches for free tier (10K TPM limit)
-    batchDelayMs = 21000, // 21 seconds between batches for 3 RPM limit
+    model = CLOUDFLARE_MODEL,
+    maxTokensPerDoc = 512, // BGE limit
+    batchSize = 20,
+    batchDelayMs = 1000,
   } = options;
 
-  const client = new VoyageAIClient({ apiKey });
+  const { accountId, apiToken } = options.accountId && options.apiToken
+    ? { accountId: options.accountId, apiToken: options.apiToken }
+    : getCloudflareCredentials();
+
   const results: EmbeddingResult[] = [];
   const totalBatches = Math.ceil(nodes.length / batchSize);
 
-  // Process in batches with rate limiting
   for (let i = 0; i < nodes.length; i += batchSize) {
     const batchNum = Math.floor(i / batchSize) + 1;
     const batch = nodes.slice(i, i + batchSize);
     const texts = batch.map(node => prepareNodeText(node, maxTokensPerDoc));
 
-    // Retry with exponential backoff for rate limits
-    let retries = 0;
-    const maxRetries = 5;
+    const eta = batchNum === 1 ? '' : ` (ETA: ${Math.ceil((totalBatches - batchNum) * batchDelayMs / 60000)}m)`;
+    console.log(`Embedding batch ${batchNum}/${totalBatches} (${batch.length} docs)...${eta}`);
 
-    while (retries <= maxRetries) {
-      try {
-        const eta = batchNum === 1 ? '' : ` (ETA: ${Math.ceil((totalBatches - batchNum) * batchDelayMs / 60000)}m)`;
-        console.log(`Embedding batch ${batchNum}/${totalBatches} (${batch.length} docs)...${eta}`);
+    try {
+      const embeddings = await callCloudflareEmbeddings(texts, accountId, apiToken, model);
 
-        const response = await client.embed({
-          input: texts,
-          model,
-        });
-
-        // Map embeddings back to node IDs
-        for (let j = 0; j < batch.length; j++) {
-          if (response.data?.[j]?.embedding) {
-            results.push({
-              nodeId: batch[j].id,
-              embedding: response.data[j].embedding,
-            });
-          }
-        }
-
-        // Rate limit delay between batches (skip after last batch)
-        if (i + batchSize < nodes.length) {
-          console.log(`  Rate limiting: waiting ${batchDelayMs / 1000}s...`);
-          await sleep(batchDelayMs);
-        }
-        break; // Success, exit retry loop
-      } catch (error: any) {
-        if (error?.statusCode === 429 && retries < maxRetries) {
-          retries++;
-          const backoffMs = Math.min(60000 * retries, 300000); // 1m, 2m, 3m, 4m, 5m max
-          console.log(`  Rate limited (429). Retry ${retries}/${maxRetries} after ${backoffMs / 1000}s...`);
-          await sleep(backoffMs);
-        } else {
-          console.error(`Failed to embed batch starting at index ${i}:`, error);
-          throw error;
+      for (let j = 0; j < batch.length; j++) {
+        if (embeddings[j]) {
+          results.push({
+            nodeId: batch[j].id,
+            embedding: embeddings[j],
+          });
         }
       }
+
+      // Small delay between batches
+      if (i + batchSize < nodes.length) {
+        await sleep(batchDelayMs);
+      }
+    } catch (error) {
+      console.error(`Failed to embed batch ${batchNum}:`, error);
+      throw error;
     }
   }
 
@@ -144,7 +193,7 @@ export async function generateEmbeddings(
  */
 export async function generateEmbeddingsForNodes(
   nodes: GraphNode[],
-  options: EmbeddingOptions
+  options: EmbeddingOptions = {}
 ): Promise<Map<string, number[]>> {
   const results = await generateEmbeddings(nodes, options);
   const embeddingMap = new Map<string, number[]>();

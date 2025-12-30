@@ -51,10 +51,10 @@ const DEFAULT_CONFIG: BuildConfig = {
     '**/*.test.md',
     '**/CHANGELOG.md',
   ],
-  embeddingProvider: 'voyage',
+  embeddingProvider: 'cloudflare',
   embeddingModel: DEFAULT_MODEL,
-  batchSize: 3, // Tiny batches for free tier (10K TPM = ~3 docs)
-  maxTokensPerDoc: 8000,
+  batchSize: 20, // Cloudflare has generous limits
+  maxTokensPerDoc: 512, // BGE model limit
   similarityThreshold: 0.75,
   maxSemanticEdgesPerNode: 10,
   concepts: CANONICAL_CONCEPTS,
@@ -143,18 +143,20 @@ async function buildGraph(
     } else if (options.dryRun) {
       console.log(`⚠️  Dry run: would embed ${nodesToEmbed.length} documents\n`);
     } else {
-      // Check for API key
-      const apiKey = process.env.VOYAGE_API_KEY;
-      if (!apiKey) {
-        console.error('❌ VOYAGE_API_KEY environment variable not set');
-        console.error('   Set it in .env.local or export it before running this script\n');
+      // Check for Cloudflare credentials
+      const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+      const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+      if (!accountId || !apiToken) {
+        console.error('❌ Cloudflare credentials not set');
+        console.error('   Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables\n');
         process.exit(1);
       }
 
       // Generate new embeddings
       console.log(`Embedding ${nodesToEmbed.length} documents...`);
       const newEmbeddings = await generateEmbeddingsForNodes(nodesToEmbed, {
-        apiKey,
+        accountId,
+        apiToken,
         model: config.embeddingModel,
         maxTokensPerDoc: config.maxTokensPerDoc,
         batchSize: config.batchSize,

@@ -213,8 +213,8 @@ export interface BuildConfig {
   /** Glob patterns to exclude */
   excludePatterns: string[];
 
-  /** Embedding provider: 'voyage' | 'openai' | 'none' */
-  embeddingProvider: 'voyage' | 'openai' | 'none';
+  /** Embedding provider: 'cloudflare' | 'none' */
+  embeddingProvider: 'cloudflare' | 'none';
 
   /** Embedding model name */
   embeddingModel: string;

@@ -39,8 +39,7 @@
     "prettier": "^3.7.4",
     "prettier-plugin-svelte": "^3.4.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.2",
-    "voyageai": "^0.1.0"
+    "typescript": "^5.7.2"
   },
   "engines": {
     "node": ">=20.0.0",
