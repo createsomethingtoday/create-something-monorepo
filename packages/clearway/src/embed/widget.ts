@@ -15,6 +15,7 @@
  * </script>
  */
 
+import { mount } from 'svelte';
 import Widget from './Widget.svelte';
 
 export interface ClearwayConfig {
@@ -32,6 +33,9 @@ export interface ClearwayConfig {
 
 	/** Court type filter (optional) */
 	courtType?: string;
+
+	/** Stripe publishable key for in-widget checkout (optional) */
+	stripePublishableKey?: string;
 
 	/** Callback when reservation is completed */
 	onBook?: (reservation: BookingResult) => void;
@@ -67,6 +71,7 @@ export function init(config: ClearwayConfig): ClearwayInstance {
 		theme = 'dark',
 		date,
 		courtType,
+		stripePublishableKey,
 		onBook,
 		onReady,
 		onError
@@ -94,15 +99,17 @@ export function init(config: ClearwayConfig): ClearwayInstance {
 	}
 
 	// Mount Svelte component
-	let widget: Widget;
+	let widgetInstance: any;
 	try {
-		widget = new Widget({
+		// Svelte 5 mount API
+		widgetInstance = mount(Widget, {
 			target: containerEl as HTMLElement,
 			props: {
 				facilitySlug: facility,
 				theme,
 				date: date || new Date().toISOString().split('T')[0],
 				courtType,
+				stripePublishableKey,
 				onReservationComplete: onBook
 					? (r: any) =>
 							onBook({
@@ -124,20 +131,53 @@ export function init(config: ClearwayConfig): ClearwayInstance {
 		throw error;
 	}
 
+	// Track current date for API
+	let currentDate = date || new Date().toISOString().split('T')[0];
+
 	// Return instance API
-	return {
+	const instance: ClearwayInstance = {
 		destroy: () => {
-			widget.$destroy();
+			// Svelte 5 uses unmount
+			if (widgetInstance && typeof widgetInstance === 'object') {
+				// Clean up mounted component
+				containerEl.innerHTML = '';
+			}
 		},
 		setDate: (newDate: string) => {
-			widget.$set({ date: newDate });
+			currentDate = newDate;
+			// Re-mount with new date (Svelte 5 reactive approach)
+			if (widgetInstance) {
+				instance.destroy();
+				widgetInstance = mount(Widget, {
+					target: containerEl as HTMLElement,
+					props: {
+						facilitySlug: facility,
+						theme,
+						date: newDate,
+						courtType,
+						stripePublishableKey,
+						onReservationComplete: onBook
+							? (r: any) =>
+									onBook({
+										id: r.id,
+										court: r.courtName,
+										start: r.startTime,
+										end: r.endTime,
+										price: r.price
+									})
+							: undefined,
+						onError
+					}
+				});
+			}
 		},
 		refresh: () => {
-			// Trigger a re-fetch by updating the date to itself
-			const currentDate = widget.$$.props.date;
-			widget.$set({ date: currentDate });
+			// Refresh by remounting
+			instance.setDate(currentDate);
 		}
 	};
+
+	return instance;
 }
 
 // Legacy API for backwards compatibility

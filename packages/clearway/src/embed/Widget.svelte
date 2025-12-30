@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { ReservationResult } from './widget';
+	import type { BookingResult } from './widget';
+	import CheckoutForm from './CheckoutForm.svelte';
 
 	// API Response types (matching +server.ts)
 	interface CourtAvailability {
@@ -23,7 +24,8 @@
 		theme?: 'light' | 'dark';
 		date?: string;
 		courtType?: string;
-		onReservationComplete?: (reservation: ReservationResult) => void;
+		stripePublishableKey?: string;
+		onReservationComplete?: (reservation: BookingResult) => void;
 		onError?: (error: Error) => void;
 	}
 
@@ -32,6 +34,7 @@
 		theme = 'dark',
 		date = $bindable(new Date().toISOString().split('T')[0]),
 		courtType,
+		stripePublishableKey,
 		onReservationComplete,
 		onError
 	}: Props = $props();
@@ -44,6 +47,14 @@
 	let selectedSlot = $state<TimeSlot | null>(null);
 	// Unique key for selection comparison (court::time)
 	let selectedKey = $state<string | null>(null);
+
+	// Checkout state
+	let showCheckout = $state(false);
+	let checkoutLoading = $state(false);
+	let reservationId = $state<string | null>(null);
+	let memberName = $state('');
+	let memberEmail = $state('');
+	let facilityName = $state('');
 
 	// API base URL - use relative path for same-origin, absolute for embeds
 	const API_BASE =
@@ -82,8 +93,12 @@
 				throw new Error(`Failed to fetch availability: ${response.statusText}`);
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as {
+				courts?: CourtAvailability[];
+				facility?: { name: string };
+			};
 			courts = data.courts || [];
+			facilityName = data.facility?.name || facilitySlug;
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : 'Failed to load availability';
 			error = errorMsg;
@@ -108,32 +123,94 @@
 		selectedKey = null;
 	}
 
-	// Book the selected slot
-	async function bookSlot() {
+	// Proceed to checkout (show form if name/email not collected yet)
+	function proceedToCheckout() {
+		if (!memberName || !memberEmail) {
+			// Show user info collection form
+			showCheckout = true;
+		} else {
+			// Already have info, create reservation
+			createReservationAndShowPayment();
+		}
+	}
+
+	// Create reservation and show payment form
+	async function createReservationAndShowPayment() {
 		if (!selectedCourt || !selectedSlot) return;
 
-		loading = true;
+		checkoutLoading = true;
 		error = null;
 
 		try {
 			const court = courts.find((c) => c.id === selectedCourt);
 			if (!court) throw new Error('Court not found');
 
-			// Redirect to checkout
-			const checkoutParams = new URLSearchParams();
-			checkoutParams.set('facility', facilitySlug);
-			checkoutParams.set('court', selectedCourt);
-			checkoutParams.set('date', date);
-			checkoutParams.set('start', selectedSlot.startTime);
+			// Create reservation via booking API
+			const response = await fetch(`${API_BASE}/book`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					facility_slug: facilitySlug,
+					court_id: selectedCourt,
+					date: date,
+					start_time: selectedSlot.startTime,
+					member_email: memberEmail,
+					member_name: memberName
+				})
+			});
 
-			window.location.href = `/book?${checkoutParams.toString()}`;
+			if (!response.ok) {
+				const errData = (await response.json()) as { message?: string };
+				throw new Error(errData.message || 'Failed to create reservation');
+			}
+
+			const reservation = (await response.json()) as { id: string };
+			reservationId = reservation.id;
+
+			// Show checkout form
+			showCheckout = true;
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : 'Booking failed';
 			error = errorMsg;
 			onError?.(err instanceof Error ? err : new Error(errorMsg));
 		} finally {
-			loading = false;
+			checkoutLoading = false;
 		}
+	}
+
+	// Handle successful payment
+	function handlePaymentSuccess(result: any) {
+		showCheckout = false;
+
+		// Call completion callback
+		if (onReservationComplete && selectedCourt && selectedSlot) {
+			const court = courts.find((c) => c.id === selectedCourt);
+			onReservationComplete({
+				id: reservationId || '',
+				court: court?.name || '',
+				start: selectedSlot.startTime,
+				end: selectedSlot.endTime,
+				price: selectedSlot.priceCents || 0
+			});
+		}
+
+		// Reset state
+		clearSelection();
+		fetchAvailability(); // Refresh to show updated availability
+	}
+
+	// Handle payment error
+	function handlePaymentError(err: Error) {
+		error = err.message;
+		onError?.(err);
+	}
+
+	// Cancel checkout
+	function cancelCheckout() {
+		showCheckout = false;
+		memberName = '';
+		memberEmail = '';
+		reservationId = null;
 	}
 
 	// Load on mount and when date changes
@@ -208,7 +285,7 @@
 	{/if}
 
 	<!-- Booking Panel -->
-	{#if selectedSlot && selectedCourt}
+	{#if selectedSlot && selectedCourt && !showCheckout}
 		<div class="booking">
 			<div class="details">
 				<strong>{courts.find((c) => c.id === selectedCourt)?.name}</strong>
@@ -219,9 +296,81 @@
 			</div>
 			<div class="actions">
 				<button class="cancel" onclick={clearSelection}>Cancel</button>
-				<button class="book" onclick={bookSlot}>Book</button>
+				<button class="book" onclick={proceedToCheckout} disabled={checkoutLoading}>
+					{#if checkoutLoading}
+						Loading...
+					{:else}
+						Book
+					{/if}
+				</button>
 			</div>
 		</div>
+	{/if}
+
+	<!-- Checkout Form (In-Widget Payment) -->
+	{#if showCheckout && !reservationId}
+		<!-- User Info Collection -->
+		<div class="user-info-form">
+			<h3>Your Information</h3>
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					createReservationAndShowPayment();
+				}}
+			>
+				<div class="field">
+					<label for="name">Name</label>
+					<input
+						type="text"
+						id="name"
+						bind:value={memberName}
+						placeholder="John Smith"
+						required
+						disabled={checkoutLoading}
+					/>
+				</div>
+				<div class="field">
+					<label for="email">Email</label>
+					<input
+						type="email"
+						id="email"
+						bind:value={memberEmail}
+						placeholder="you@example.com"
+						required
+						disabled={checkoutLoading}
+					/>
+				</div>
+				<div class="form-actions">
+					<button type="button" class="cancel" onclick={cancelCheckout} disabled={checkoutLoading}>
+						Cancel
+					</button>
+					<button type="submit" class="book" disabled={checkoutLoading}>
+						{#if checkoutLoading}
+							Creating...
+						{:else}
+							Continue
+						{/if}
+					</button>
+				</div>
+			</form>
+		</div>
+	{:else if showCheckout && reservationId && selectedSlot && selectedCourt && stripePublishableKey}
+		<!-- Payment Form -->
+		<CheckoutForm
+			{reservationId}
+			courtName={courts.find((c) => c.id === selectedCourt)?.name || ''}
+			{facilityName}
+			startTime={selectedSlot.startTime}
+			endTime={selectedSlot.endTime}
+			priceCents={selectedSlot.priceCents || 0}
+			{memberName}
+			{memberEmail}
+			{theme}
+			{stripePublishableKey}
+			onSuccess={handlePaymentSuccess}
+			onError={handlePaymentError}
+			onCancel={cancelCheckout}
+		/>
 	{/if}
 </div>
 
@@ -512,6 +661,91 @@
 		}
 		.book:hover {
 			transform: none;
+		}
+	}
+
+	/* User Info Form */
+	.user-info-form {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		margin: 0;
+		padding: var(--space-lg, 1.5rem);
+		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
+		background: var(--color-bg-surface, #111111);
+		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		border-bottom: none;
+		animation: slideUp var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+		z-index: 100;
+	}
+
+	.user-info-form h3 {
+		margin: 0 0 var(--space-md, 1rem);
+		font-size: var(--text-h4, 1.125rem);
+		font-weight: 600;
+	}
+
+	.user-info-form form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md, 1rem);
+	}
+
+	.field {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.field label {
+		font-size: var(--text-body-sm, 0.875rem);
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		font-weight: 500;
+	}
+
+	.field input {
+		padding: 0.875rem 1rem;
+		border-radius: var(--radius-md, 8px);
+		background: var(--color-bg-subtle, #1a1a1a);
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		color: var(--color-fg-primary, #ffffff);
+		font-size: var(--text-body, 1rem);
+		font-family: inherit;
+		transition: border-color 200ms ease;
+	}
+
+	.field input:focus {
+		outline: none;
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.3));
+	}
+
+	.field input::placeholder {
+		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+	}
+
+	.field input:disabled {
+		opacity: 0.5;
+	}
+
+	.form-actions {
+		display: flex;
+		gap: 0.5rem;
+		margin-top: var(--space-sm, 0.75rem);
+	}
+
+	@media (max-width: 640px) {
+		.user-info-form {
+			padding: var(--space-md, 1rem);
+		}
+
+		.form-actions {
+			flex-direction: column;
+		}
+
+		.form-actions button {
+			width: 100%;
 		}
 	}
 </style>

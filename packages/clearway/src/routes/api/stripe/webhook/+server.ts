@@ -261,7 +261,95 @@ async function handlePaymentSucceeded(
 	paymentIntent: Stripe.PaymentIntent,
 	now: string
 ): Promise<void> {
-	// Update payment record status
+	const reservationId = paymentIntent.metadata?.reservation_id;
+
+	// If this is for a reservation, confirm it
+	if (reservationId) {
+		// First check if reservation exists and is pending
+		const reservation = await db
+			.prepare('SELECT id, status, payment_status FROM reservations WHERE id = ?')
+			.bind(reservationId)
+			.first<{ id: string; status: string; payment_status: string }>();
+
+		if (reservation && reservation.status === 'pending') {
+			// Update reservation to confirmed
+			await db
+				.prepare(
+					`UPDATE reservations
+           SET status = 'confirmed',
+               payment_status = 'paid',
+               stripe_payment_intent_id = ?,
+               confirmed_at = ?,
+               updated_at = ?
+           WHERE id = ? AND status = 'pending'`
+				)
+				.bind(paymentIntent.id, now, now, reservationId)
+				.run();
+
+			// Get reservation details for payment record
+			const fullReservation = await db
+				.prepare(
+					'SELECT facility_id, member_id, rate_cents FROM reservations WHERE id = ?'
+				)
+				.bind(reservationId)
+				.first<{ facility_id: string; member_id: string; rate_cents: number }>();
+
+			if (fullReservation) {
+				// Get member email
+				const member = await db
+					.prepare('SELECT email FROM members WHERE id = ?')
+					.bind(fullReservation.member_id)
+					.first<{ email: string }>();
+
+				// Get facility platform fee
+				const facility = await db
+					.prepare('SELECT platform_fee_bps FROM facilities WHERE id = ?')
+					.bind(fullReservation.facility_id)
+					.first<{ platform_fee_bps: number }>();
+
+				const totalAmount = paymentIntent.amount || 0;
+				const platformFee = Math.round(
+					(totalAmount * (facility?.platform_fee_bps || 500)) / 10000
+				);
+				const facilityAmount = totalAmount - platformFee;
+
+				// Create payment record
+				await db
+					.prepare(
+						`INSERT INTO reservation_payments (
+              id, facility_id, reservation_id, member_email,
+              stripe_payment_intent_id, amount_total, platform_fee, facility_amount,
+              status, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'succeeded', ?, ?)`
+					)
+					.bind(
+						`rp_${Date.now()}`,
+						fullReservation.facility_id,
+						reservationId,
+						member?.email || '',
+						paymentIntent.id,
+						totalAmount,
+						platformFee,
+						facilityAmount,
+						now,
+						now
+					)
+					.run();
+
+				// Update member booking stats
+				await db
+					.prepare(
+						'UPDATE members SET total_bookings = total_bookings + 1, updated_at = ? WHERE id = ?'
+					)
+					.bind(now, fullReservation.member_id)
+					.run();
+
+				console.log(`Payment succeeded for reservation ${reservationId}`);
+			}
+		}
+	}
+
+	// Update payment record status (if exists)
 	await db
 		.prepare(
 			`UPDATE reservation_payments
