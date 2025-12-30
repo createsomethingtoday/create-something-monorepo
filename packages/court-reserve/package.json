@@ -5,12 +5,13 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:embed": "BUILD_EMBED=true vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=court-reserve",
+    "deploy": "pnpm build && pnpm build:embed && wrangler pages deploy .svelte-kit/cloudflare --project-name=court-reserve",
     "db:migrate": "wrangler d1 migrations apply court-reserve-db",
     "db:migrate:local": "wrangler d1 migrations apply court-reserve-db --local",
     "types": "wrangler types"

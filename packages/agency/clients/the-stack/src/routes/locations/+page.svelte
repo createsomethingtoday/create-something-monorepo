@@ -64,9 +64,12 @@
             class="img-cover"
           />
           <div class="locations_card_overlay"></div>
-          <div class="z-index-3">
-            <p class="heading-style-h3">{location.name}</p>
-            <p>{location.address}</p>
+          <div class="z-index-3 card-content">
+            <div>
+              <p class="heading-style-h3">{location.name}</p>
+              <p class="location-address">{location.address}</p>
+            </div>
+            <Button href="/book">Book a Court</Button>
           </div>
         </li>
       {/each}
@@ -207,6 +210,14 @@
     z-index: 3;
   }
 
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    height: 100%;
+  }
+
   .heading-style-h3 {
     font-family: var(--font-coolvetica);
     font-size: clamp(1.5rem, 3vw, 2rem);
@@ -216,7 +227,7 @@
     margin: 0 0 0.5rem;
   }
 
-  .z-index-3 p:not(.heading-style-h3) {
+  .location-address {
     font-family: var(--font-satoshi);
     font-size: 1rem;
     color: var(--light-grey);

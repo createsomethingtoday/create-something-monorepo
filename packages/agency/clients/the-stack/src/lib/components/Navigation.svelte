@@ -15,12 +15,12 @@
 	let isVisible = $state(false);
 
 	const leftLinks = [
-		{ href: '/locations', label: 'book a court' },
-		{ href: '/team', label: 'meet our team' }
+		{ href: '/book', label: 'book a court' },
+		{ href: '/locations', label: 'locations' }
 	];
 
 	const rightLinks = [
-		{ href: '/about', label: 'become a member' },
+		{ href: '/team', label: 'meet our team' },
 		{ href: '/contact', label: 'Contact' }
 	];
 
