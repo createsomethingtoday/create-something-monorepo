@@ -292,21 +292,83 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 			.run();
 	}
 
+	// Release hold in Durable Object
+	if (platform?.env.COURT_STATE) {
+		const id = platform.env.COURT_STATE.idFromName(reservation.facility_id);
+		const stub = platform.env.COURT_STATE.get(id);
+
+		await stub.fetch(
+			new Request('https://dummy/cancel', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					courtId: reservation.court_id,
+					startTime: reservation.start_time,
+					reservationId: params.id
+				})
+			})
+		);
+	}
+
+	// Send cancellation notification
+	if (platform?.env.NOTIFICATION_QUEUE) {
+		const courtInfo = await db
+			.prepare('SELECT c.name as court_name, f.name as facility_name FROM courts c JOIN facilities f ON f.id = c.facility_id WHERE c.id = ?')
+			.bind(reservation.court_id)
+			.first<{ court_name: string; facility_name: string }>();
+
+		const member = await db
+			.prepare('SELECT email, phone FROM members WHERE id = ?')
+			.bind(reservation.member_id)
+			.first<{ email: string; phone: string | null }>();
+
+		if (courtInfo && member) {
+			await platform.env.NOTIFICATION_QUEUE.send({
+				type: 'cancellation',
+				reservationId: params.id,
+				memberId: reservation.member_id,
+				facilityId: reservation.facility_id,
+				data: {
+					courtName: courtInfo.court_name,
+					startTime: reservation.start_time,
+					facilityName: courtInfo.facility_name,
+					penaltyApplied: !policyCheck.withinPolicy,
+					email: member.email,
+					phone: member.phone
+				}
+			});
+		}
+	}
+
 	// Process waitlist for the freed slot
 	const court = await db
-		.prepare('SELECT court_type FROM courts WHERE id = ?')
+		.prepare('SELECT court_type, name FROM courts WHERE id = ?')
 		.bind(reservation.court_id)
-		.first<{ court_type: string }>();
+		.first<{ court_type: string; name: string }>();
 
-	if (court) {
-		const waitlistResult = await processSlotOpening(db, {
-			facilityId: reservation.facility_id,
-			courtId: reservation.court_id,
-			courtType: court.court_type as any,
-			startTime: reservation.start_time,
-			endTime: reservation.end_time,
-			durationMinutes: reservation.duration_minutes
-		});
+	const facilityInfo = await db
+		.prepare('SELECT name FROM facilities WHERE id = ?')
+		.bind(reservation.facility_id)
+		.first<{ name: string }>();
+
+	if (court && facilityInfo) {
+		const waitlistResult = await processSlotOpening(
+			db,
+			{
+				facilityId: reservation.facility_id,
+				courtId: reservation.court_id,
+				courtType: court.court_type as CourtType,
+				startTime: reservation.start_time,
+				endTime: reservation.end_time,
+				durationMinutes: reservation.duration_minutes
+			},
+			{
+				db,
+				notificationQueue: platform?.env.NOTIFICATION_QUEUE,
+				courtName: court.name,
+				facilityName: facilityInfo.name
+			}
+		);
 
 		return json({
 			success: true,

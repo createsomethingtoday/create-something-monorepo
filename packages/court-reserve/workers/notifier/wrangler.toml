@@ -1,0 +1,31 @@
+# Notification Queue Worker
+# Handles reminders, waitlist offers, and notification delivery
+
+name = "court-reserve-notifier"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Database access
+[[d1_databases]]
+binding = "DB"
+database_name = "court-reserve-db"
+database_id = "TODO_CREATE_D1_DATABASE"
+
+# Queue consumer
+[[queues.consumers]]
+queue = "court-reserve-notifications"
+max_batch_size = 10
+max_batch_timeout = 30
+
+# Cron triggers
+[triggers]
+crons = [
+  "*/15 * * * *",  # Every 15 min: queue reminders, check no-shows
+]
+
+# Secrets (configure via `wrangler secret put`)
+# - SENDGRID_API_KEY
+# - TWILIO_ACCOUNT_SID
+# - TWILIO_AUTH_TOKEN
+# - TWILIO_FROM_NUMBER

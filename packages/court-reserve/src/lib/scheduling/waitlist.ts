@@ -31,6 +31,17 @@ export interface PromotionResult {
 	offerExpiresAt?: string;
 }
 
+export interface NotificationQueue {
+	send(message: unknown): Promise<void>;
+}
+
+export interface PromotionContext {
+	db: D1Database;
+	notificationQueue?: NotificationQueue;
+	courtName: string;
+	facilityName: string;
+}
+
 /**
  * Find waitlist entries that match an opened slot
  * Sorted by priority and match quality
@@ -166,7 +177,8 @@ function timeToMinutes(time: string): number {
  */
 export async function processSlotOpening(
 	db: D1Database,
-	slot: SlotOpening
+	slot: SlotOpening,
+	ctx?: PromotionContext
 ): Promise<PromotionResult> {
 	const matches = await findMatchingWaitlistEntries(db, slot);
 
@@ -177,6 +189,17 @@ export async function processSlotOpening(
 	// Get the best match
 	const bestMatch = matches[0];
 	const entry = bestMatch.entry;
+
+	// Fetch member for notifications
+	const member = await db
+		.prepare('SELECT * FROM members WHERE id = ?')
+		.bind(entry.member_id)
+		.first<{ email: string; phone: string | null }>();
+
+	if (!member) {
+		console.error('Member not found for waitlist entry', entry.id);
+		return { promoted: false, action: 'no_match' };
+	}
 
 	// Check if auto-book is enabled
 	if (entry.auto_book) {
@@ -218,6 +241,25 @@ export async function processSlotOpening(
 				)
 				.bind(reservationId, now, entry.id)
 		]);
+
+		// Send auto-book notification
+		if (ctx?.notificationQueue) {
+			await ctx.notificationQueue.send({
+				type: 'waitlist_auto_booked',
+				waitlistId: entry.id,
+				reservationId,
+				memberId: entry.member_id,
+				facilityId: slot.facilityId,
+				data: {
+					courtName: ctx.courtName,
+					startTime: slot.startTime,
+					endTime: slot.endTime,
+					facilityName: ctx.facilityName,
+					email: member.email,
+					phone: member.phone
+				}
+			});
+		}
 
 		return {
 			promoted: true,
@@ -268,6 +310,28 @@ export async function processSlotOpening(
 			)
 			.bind(reservationId, offerExpiresAt, now, entry.id)
 	]);
+
+	// Send offer notification
+	if (ctx?.notificationQueue) {
+		const acceptUrl = `https://courtreserve.createsomething.space/waitlist/accept/${entry.id}`;
+		await ctx.notificationQueue.send({
+			type: 'waitlist_offer',
+			waitlistId: entry.id,
+			reservationId,
+			memberId: entry.member_id,
+			facilityId: slot.facilityId,
+			data: {
+				courtName: ctx.courtName,
+				startTime: slot.startTime,
+				endTime: slot.endTime,
+				facilityName: ctx.facilityName,
+				offerExpiresAt,
+				acceptUrl,
+				email: member.email,
+				phone: member.phone
+			}
+		});
+	}
 
 	return {
 		promoted: true,

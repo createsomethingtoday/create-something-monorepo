@@ -1,0 +1,29 @@
+# CourtStateManager Durable Object Worker
+# Real-time court availability and booking coordination
+
+name = "court-reserve-realtime"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Object binding (references main wrangler.toml)
+[[durable_objects.bindings]]
+name = "COURT_STATE"
+class_name = "CourtStateManager"
+script_name = "court-reserve-realtime"
+
+# Database access
+[[d1_databases]]
+binding = "DB"
+database_name = "court-reserve-db"
+database_id = "TODO_CREATE_D1_DATABASE"
+
+# Queue for notifications
+[[queues.producers]]
+binding = "NOTIFICATION_QUEUE"
+queue = "court-reserve-notifications"
+
+# Durable Object migration
+[[migrations]]
+tag = "v1"
+new_classes = ["CourtStateManager"]
