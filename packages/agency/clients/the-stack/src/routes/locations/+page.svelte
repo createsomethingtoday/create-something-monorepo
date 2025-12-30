@@ -135,8 +135,10 @@
 
 <!-- Booking Modal -->
 {#if modalOpen && selectedLocation}
-  <div class="modal-overlay" onclick={closeModal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="modal-overlay" onclick={closeModal} onkeydown={(e) => e.key === 'Escape' && closeModal()} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="modal-content" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="document">
       <div class="modal-header">
         <div>
           <h2 id="modal-title" class="modal-title">{selectedLocation.name}</h2>
@@ -423,7 +425,7 @@
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: auto;
     animation: slideUp 0.3s var(--ease-stack, cubic-bezier(0.4, 0, 0.2, 1));
   }
 

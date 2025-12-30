@@ -7,6 +7,7 @@
  *   - facility: facility ID or slug (required)
  *   - date: YYYY-MM-DD (required)
  *   - court: court ID (optional, filters to specific court)
+ *   - court_type: location prefix (optional, filters courts by ID prefix, e.g., "grandview")
  */
 
 import { json, error } from '@sveltejs/kit';
@@ -49,6 +50,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	const facilityParam = url.searchParams.get('facility');
 	const date = url.searchParams.get('date');
 	const courtId = url.searchParams.get('court');
+	const courtType = url.searchParams.get('court_type');
 
 	if (!facilityParam || !date) {
 		throw error(400, 'facility and date parameters are required');
@@ -95,6 +97,16 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			throw error(404, 'Court not found');
 		}
 		courts = [court];
+	} else if (courtType) {
+		// Filter courts by ID prefix (e.g., "grandview" matches "crt_grandview1", "crt_grandview2")
+		const prefix = `crt_${courtType}`;
+		const result = await db
+			.prepare(
+				`SELECT * FROM courts WHERE facility_id = ? AND is_active = 1 AND id LIKE ? ORDER BY sort_order`
+			)
+			.bind(facility.id, `${prefix}%`)
+			.all<Court>();
+		courts = result.results || [];
 	} else {
 		const result = await db
 			.prepare(
