@@ -68,7 +68,8 @@ export type EdgeType =
   | 'explicit'        // From UNDERSTANDING.md dependency tables
   | 'cross-reference' // Markdown links between files
   | 'concept'         // Shared concept co-occurrence
-  | 'semantic';       // Embedding similarity above threshold
+  | 'semantic'        // Embedding similarity above threshold
+  | 'infrastructure'; // Shared Cloudflare resources (D1, KV, R2)
 
 export interface EdgeMetadata {
   /** Reason from UNDERSTANDING.md "Why It Matters" column */
@@ -79,6 +80,15 @@ export interface EdgeMetadata {
 
   /** Raw cosine similarity for semantic edges */
   similarity?: number;
+
+  /** Infrastructure resource type (d1, kv, r2, service) */
+  resourceType?: string;
+
+  /** Infrastructure resource ID (database_id, namespace_id, bucket_name) */
+  resourceId?: string;
+
+  /** Binding names on both sides */
+  binding?: string;
 }
 
 export interface GraphEdge {

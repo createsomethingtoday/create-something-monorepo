@@ -19,6 +19,7 @@ import { walkRepository, filterChangedNodes } from './extractors/walker.js';
 import { extractUnderstandingEdges } from './extractors/understanding.js';
 import { extractLinkEdges } from './extractors/links.js';
 import { enrichNodesWithConcepts, createConceptEdges, CANONICAL_CONCEPTS } from './extractors/concepts.js';
+import { extractInfrastructureEdges } from './extractors/infrastructure.js';
 import {
   loadCache,
   saveCache,
@@ -116,7 +117,12 @@ async function buildGraph(
   const conceptEdges = createConceptEdges(nodes, 2);
   console.log(`✓ Created ${conceptEdges.length} concept edges\n`);
 
-  // Step 6: Generate embeddings and semantic edges
+  // Step 6: Extract infrastructure edges (Cloudflare resource sharing)
+  console.log('🔧 Extracting infrastructure dependencies...');
+  const infrastructureEdges = await extractInfrastructureEdges(config.rootDir);
+  console.log(`✓ Found ${infrastructureEdges.length} infrastructure edges\n`);
+
+  // Step 7: Generate embeddings and semantic edges
   let semanticEdges: GraphEdge[] = [];
   let embeddingsUpdated = false;
   let filesReembedded = 0;
@@ -178,19 +184,21 @@ async function buildGraph(
     console.log('⚠️  Skipping embeddings (--skip-embeddings flag)\n');
   }
 
-  // Step 7: Combine all edges
+  // Step 8: Combine all edges
   const allEdges = [
     ...explicitEdges,
     ...linkEdges,
     ...conceptEdges,
+    ...infrastructureEdges,
     ...semanticEdges,
   ];
 
-  // Step 8: Build metadata
+  // Step 9: Build metadata
   const edgesByType = {
     explicit: explicitEdges.length,
     'cross-reference': linkEdges.length,
     concept: conceptEdges.length,
+    infrastructure: infrastructureEdges.length,
     semantic: semanticEdges.length,
   };
 
