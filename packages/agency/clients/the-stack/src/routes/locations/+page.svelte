@@ -108,28 +108,6 @@
   </div>
 </section>
 
-<!-- Booking Section -->
-<section class="section is-booking" id="book" use:inview>
-  <div class="container-large">
-    <div class="booking-header">
-      <h2 class="heading-style-h2">
-        <span class="is-word is-1">Book</span>
-        <span class="is-word is-2">A Court</span>
-      </h2>
-      <p class="text-size-medium">Select a time slot below to reserve your court.</p>
-    </div>
-    <div class="booking-widget">
-      <iframe
-        src="https://clearway.pages.dev/embed?facility=thestack&theme=dark"
-        title="Book a Court"
-        frameborder="0"
-        scrolling="no"
-        style="width: 100%; min-height: 600px; border: none; border-radius: 12px;"
-      ></iframe>
-    </div>
-  </div>
-</section>
-
 <!-- Bottom CTA -->
 <BottomCTA />
 
@@ -347,55 +325,6 @@
     .margin-bottom-72 {
       margin-bottom: 3rem;
     }
-  }
-
-  /* Booking Section */
-  .section.is-booking {
-    padding-top: 4rem;
-    padding-bottom: 6rem;
-    background-color: var(--dark-grey);
-  }
-
-  .booking-header {
-    text-align: center;
-    margin-bottom: 3rem;
-  }
-
-  .heading-style-h2 {
-    font-family: var(--font-coolvetica);
-    font-size: clamp(3rem, 8vw, 7rem);
-    line-height: 0.95;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    color: var(--white);
-    margin: 0 0 1rem;
-  }
-
-  .heading-style-h2 .is-word {
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(0.5em);
-    animation: wordReveal 0.8s var(--ease-stack) forwards;
-  }
-
-  .heading-style-h2 .is-word.is-1 {
-    animation-delay: 0.1s;
-  }
-
-  .heading-style-h2 .is-word.is-2 {
-    animation-delay: 0.2s;
-  }
-
-  .booking-widget {
-    max-width: 900px;
-    margin: 0 auto;
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--black);
-  }
-
-  .booking-widget iframe {
-    display: block;
   }
 
   /* Booking Modal */
