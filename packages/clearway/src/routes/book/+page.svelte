@@ -87,8 +87,8 @@
 		error = null;
 
 		try {
-			// Create reservation
-			const reservationResponse = await fetch('/api/reservations', {
+			// Create reservation via high-level booking API
+			const reservationResponse = await fetch('/api/book', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
