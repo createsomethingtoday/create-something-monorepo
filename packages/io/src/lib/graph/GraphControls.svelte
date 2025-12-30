@@ -162,11 +162,12 @@
 
 	.button-group {
 		display: flex;
+		flex-direction: column;
 		gap: var(--space-xs);
 	}
 
 	.control-btn {
-		flex: 1;
+		width: 100%;
 		padding: var(--space-xs) var(--space-sm);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
@@ -175,6 +176,7 @@
 		border-radius: var(--radius-sm);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
+		text-align: left;
 	}
 
 	.control-btn:hover {
