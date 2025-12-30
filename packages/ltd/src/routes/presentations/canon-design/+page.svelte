@@ -8,10 +8,14 @@
 	 * 1. Philosophy → Principles (Rams, Subtractive Triad)
 	 * 2. Tokens → Artifacts (Canon CSS variables)
 	 * 3. Implementation → Coherence (Tailwind for structure, Canon for aesthetics)
+	 *
+	 * NOTE: This presentation uses live TokenSwatch components to display tokens.
+	 * "Components can BE the documentation" — when tokens change, docs update automatically.
 	 */
 
 	import Presentation from '$lib/components/Presentation.svelte';
 	import Slide from '$lib/components/Slide.svelte';
+	import { TokenSwatch, TokenGrid } from '$lib/components/docs';
 
 	let { data } = $props();
 </script>
@@ -101,48 +105,45 @@
 		</ul>
 	</Slide>
 
-	<!-- Slide 6: Colors - The Hierarchy -->
-	<Slide type="ascii">
+	<!-- Slide 6: Colors - The Hierarchy (LIVE TOKENS) -->
+	<Slide type="content">
 		<span class="number">06</span>
-		<pre>{`
-COLOR HIERARCHY
-
-Semantic Colors (What they mean)
-├── Background Colors (--color-bg-*)
-│   ├── pure (#000000)
-│   ├── elevated (#0a0a0a)
-│   ├── surface (#111111)
-│   └── subtle (#1a1a1a)
-│
-├── Foreground Colors (--color-fg-*)
-│   ├── primary (#ffffff) — main text
-│   ├── secondary (0.8) — secondary text
-│   ├── tertiary (0.6) — de-emphasized
-│   ├── muted (0.46) — WCAG AA compliant
-│   └── subtle (0.2) — very subtle
-│
-└── Border Colors (--color-border-*)
-    ├── default (0.1)
-    ├── emphasis (0.2)
-    └── strong (0.3)
-`}</pre>
+		<h2>Color Hierarchy</h2>
+		<div class="token-columns">
+			<TokenGrid title="Background" columns={1} compact>
+				<TokenSwatch token="--color-bg-pure" label="pure" size="sm" />
+				<TokenSwatch token="--color-bg-elevated" label="elevated" size="sm" />
+				<TokenSwatch token="--color-bg-surface" label="surface" size="sm" />
+				<TokenSwatch token="--color-bg-subtle" label="subtle" size="sm" />
+			</TokenGrid>
+			<TokenGrid title="Foreground" columns={1} compact>
+				<TokenSwatch token="--color-fg-primary" label="primary" size="sm" />
+				<TokenSwatch token="--color-fg-secondary" label="secondary" size="sm" />
+				<TokenSwatch token="--color-fg-tertiary" label="tertiary" size="sm" />
+				<TokenSwatch token="--color-fg-muted" label="muted (AA)" size="sm" />
+			</TokenGrid>
+			<TokenGrid title="Border" columns={1} compact>
+				<TokenSwatch token="--color-border-default" label="default" size="sm" />
+				<TokenSwatch token="--color-border-emphasis" label="emphasis" size="sm" />
+				<TokenSwatch token="--color-border-strong" label="strong" size="sm" />
+			</TokenGrid>
+		</div>
+		<p class="muted">Live tokens — when Canon changes, this presentation updates automatically.</p>
 	</Slide>
 
-	<!-- Slide 7: Semantic Colors -->
+	<!-- Slide 7: Semantic Colors (LIVE TOKENS) -->
 	<Slide type="content">
 		<span class="number">07</span>
 		<h2>Semantic Colors</h2>
-		<p>
-			Beyond neutral grays, semantic colors carry meaning:
-		</p>
-		<ul>
-			<li><strong>Success</strong> — #44aa44 (7.08:1 contrast)</li>
-			<li><strong>Error</strong> — #d44d4d (4.97:1 contrast)</li>
-			<li><strong>Warning</strong> — #aa8844 (6.31:1 contrast)</li>
-			<li><strong>Info</strong> — #5082b9 (5.23:1 contrast)</li>
-		</ul>
+		<p>Beyond neutral grays, semantic colors carry meaning:</p>
+		<TokenGrid columns={2}>
+			<TokenSwatch token="--color-success" label="success (7.08:1)" />
+			<TokenSwatch token="--color-error" label="error (4.97:1)" />
+			<TokenSwatch token="--color-warning" label="warning (6.31:1)" />
+			<TokenSwatch token="--color-info" label="info (5.23:1)" />
+		</TokenGrid>
 		<p class="muted">
-			All WCAG AA compliant on pure black. Includes muted and border variants.
+			All WCAG AA compliant on pure black. Each includes muted and border variants.
 		</p>
 	</Slide>
 
@@ -250,7 +251,7 @@ Is the value dynamic/computed at runtime?
          │         class="flex items-center gap-4"
          │
          └── No → Is it a design/aesthetic concern?
-                  ├── Yes → Use Canon token in <style>
+                  ├── Yes → Use Canon token in scoped styles
                   │         color: var(--color-fg-primary)
                   │
                   └── No → Reconsider if needed at all
@@ -316,4 +317,10 @@ Is the value dynamic/computed at runtime?
 	</Slide>
 </Presentation>
 
-<!-- Styles consolidated in Presentation.svelte (DRY) -->
+<style>
+	.token-columns {
+		display: flex;
+		gap: var(--space-md);
+		justify-content: center;
+	}
+</style>

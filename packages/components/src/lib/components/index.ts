@@ -47,3 +47,6 @@ export {
 	DropdownMenu,
 	Drawer
 } from './navigation/index.js';
+
+// Documentation components (live docs - components ARE the documentation)
+export { TokenSwatch, TokenGrid } from './docs/index.js';
