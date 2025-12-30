@@ -1,12 +1,12 @@
 {
-  "builtAt": "2025-12-30T01:50:19.676Z",
+  "builtAt": "2025-12-30T02:27:09.692Z",
   "nodeCount": 297,
-  "edgeCount": 5440,
+  "edgeCount": 5359,
   "edgesByType": {
     "explicit": 25,
     "cross-reference": 32,
     "concept": 5285,
-    "infrastructure": 98,
+    "infrastructure": 17,
     "semantic": 0
   },
   "nodesByPackage": {
@@ -15,13 +15,13 @@
     "templates-platform": 3,
     "space": 27,
     "ltd": 14,
-    "lms": 62,
     "io": 15,
-    "harness": 5,
-    "dotfiles": 12,
+    "lms": 62,
     "components": 8,
-    "cloudflare-sdk": 2,
-    "agency": 22
+    "dotfiles": 12,
+    "harness": 5,
+    "agency": 22,
+    "cloudflare-sdk": 2
   },
   "embeddingsUpdated": false,
   "filesReembedded": 0

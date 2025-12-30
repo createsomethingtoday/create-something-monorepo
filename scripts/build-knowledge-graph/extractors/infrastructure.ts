@@ -14,7 +14,7 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname, basename } from 'path';
 import { glob } from 'glob';
 import * as TOML from '@iarna/toml';
-import type { GraphEdge } from '../types.js';
+import type { GraphEdge, GraphNode } from '../types.js';
 
 export interface InfraBinding {
   type: 'd1' | 'kv' | 'r2' | 'service' | 'queue' | 'ai' | 'durable_object';
@@ -140,9 +140,34 @@ function getPackageName(wranglerPath: string, rootDir: string): string {
 }
 
 /**
+ * Find the best node to represent a package
+ * Prefers UNDERSTANDING.md > README.md > any other node
+ */
+function findPackageNode(packagePath: string, nodes: GraphNode[]): string | null {
+  // For nested paths like "agency/workers/social-poster", extract base package
+  const basePkg = packagePath.split('/')[0];
+
+  // Priority order for package representation
+  const priorities = [
+    `packages/${basePkg}/UNDERSTANDING.md`,
+    `packages/${basePkg}/README.md`,
+  ];
+
+  for (const nodeId of priorities) {
+    if (nodes.some(n => n.id === nodeId)) {
+      return nodeId;
+    }
+  }
+
+  // Fallback: find any node in this package
+  const packageNode = nodes.find(n => n.package === basePkg);
+  return packageNode?.id ?? null;
+}
+
+/**
  * Extract infrastructure edges from all wrangler configs in the monorepo
  */
-export async function extractInfrastructureEdges(rootDir: string): Promise<InfraEdge[]> {
+export async function extractInfrastructureEdges(rootDir: string, nodes: GraphNode[] = []): Promise<InfraEdge[]> {
   const pattern = resolve(rootDir, '**/wrangler.{toml,jsonc}');
   const files = await glob(pattern, {
     ignore: ['**/node_modules/**'],
@@ -184,9 +209,23 @@ export async function extractInfrastructureEdges(rootDir: string): Promise<Infra
         const a = bindings[i];
         const b = bindings[j];
 
+        // Map package paths to actual node IDs
+        const sourceNode = findPackageNode(a.packagePath, nodes);
+        const targetNode = findPackageNode(b.packagePath, nodes);
+
+        // Skip if either node doesn't exist
+        if (!sourceNode || !targetNode) {
+          continue;
+        }
+
+        // Skip self-loops
+        if (sourceNode === targetNode) {
+          continue;
+        }
+
         edges.push({
-          source: a.packagePath,
-          target: b.packagePath,
+          source: sourceNode,
+          target: targetNode,
           type: 'infrastructure',
           weight: a.type === 'd1' ? 1.0 : 0.7, // D1 sharing is highest coupling
           metadata: {
@@ -199,7 +238,14 @@ export async function extractInfrastructureEdges(rootDir: string): Promise<Infra
     }
   }
 
-  return edges;
+  // Deduplicate edges (same source-target pair)
+  const seen = new Set<string>();
+  return edges.filter(edge => {
+    const key = [edge.source, edge.target].sort().join('::');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /**

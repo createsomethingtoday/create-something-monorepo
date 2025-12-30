@@ -5,7 +5,7 @@
 	 * Interactive visualization of CREATE SOMETHING's documentation architecture.
 	 */
 
-	import { KnowledgeGraph, GraphControls, NodeDetail, GraphLegend } from '$lib/graph';
+	import { KnowledgeGraph, GraphControls, NodeDetail } from '$lib/graph';
 	import type { ViewMode, EdgeFilters, GraphNode } from '$lib/graph';
 	import type { PageData } from './$types';
 
@@ -74,21 +74,6 @@
 	</header>
 
 	<div class="content">
-		<aside class="sidebar">
-			<GraphControls
-				{viewMode}
-				{edgeFilters}
-				{showLabels}
-				{showEdgeLabels}
-				onViewModeChange={handleViewModeChange}
-				onEdgeFilterChange={handleEdgeFilterChange}
-				onToggleLabels={handleToggleLabels}
-				onToggleEdgeLabels={handleToggleEdgeLabels}
-			/>
-
-			<GraphLegend />
-		</aside>
-
 		<main class="main">
 			<div class="graph-wrapper">
 				<KnowledgeGraph
@@ -101,11 +86,29 @@
 					onNodeHover={handleNodeHover}
 				/>
 			</div>
-		</main>
 
-		<aside class="detail">
-			<NodeDetail node={selectedNode} />
-		</aside>
+			<!-- Floating controls overlay -->
+			<div class="controls-overlay">
+				<GraphControls
+					{viewMode}
+					{edgeFilters}
+					{showLabels}
+					{showEdgeLabels}
+					onViewModeChange={handleViewModeChange}
+					onEdgeFilterChange={handleEdgeFilterChange}
+					onToggleLabels={handleToggleLabels}
+					onToggleEdgeLabels={handleToggleEdgeLabels}
+				/>
+			</div>
+
+			<!-- Floating detail panel -->
+			{#if selectedNode}
+				<div class="detail-overlay">
+					<NodeDetail node={selectedNode} />
+					<button class="close-btn" onclick={() => (selectedNode = null)}>×</button>
+				</div>
+			{/if}
+		</main>
 	</div>
 </div>
 
@@ -119,80 +122,105 @@
 	}
 
 	.header {
-		padding: var(--space-md) var(--space-lg);
+		padding: var(--space-sm) var(--space-lg);
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.title {
-		font-size: var(--text-h1);
+		font-size: var(--text-h2);
 		margin: 0 0 var(--space-xs) 0;
 		color: var(--color-fg-primary);
 	}
 
 	.description {
-		font-size: var(--text-body);
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-xs) 0;
+		margin: 0;
 	}
 
 	.build-info {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		margin: 0;
 	}
 
 	.content {
-		display: grid;
-		grid-template-columns: 280px 1fr 320px;
-		gap: var(--space-md);
-		padding: var(--space-md) var(--space-lg);
 		flex: 1;
 		overflow: hidden;
-	}
-
-	.sidebar {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-		overflow-y: auto;
 	}
 
 	.main {
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
+		position: relative;
+		height: 100%;
 	}
 
 	.graph-wrapper {
-		flex: 1;
-		min-height: 0;
+		width: 100%;
+		height: 100%;
 	}
 
-	.detail {
+	/* Floating controls panel */
+	.controls-overlay {
+		position: absolute;
+		top: var(--space-md);
+		left: var(--space-md);
+		max-width: 240px;
+		max-height: calc(100% - var(--space-lg) * 2);
 		overflow-y: auto;
+		z-index: 10;
 	}
 
-	/* Responsive */
-	@media (max-width: 1200px) {
-		.content {
-			grid-template-columns: 240px 1fr;
-			grid-template-rows: 1fr auto;
-		}
-
-		.detail {
-			grid-column: 1 / -1;
-			max-height: 300px;
-		}
+	/* Floating detail panel */
+	.detail-overlay {
+		position: absolute;
+		top: var(--space-md);
+		right: var(--space-md);
+		width: 300px;
+		max-height: calc(100% - var(--space-lg) * 2);
+		overflow-y: auto;
+		z-index: 10;
 	}
 
+	.close-btn {
+		position: absolute;
+		top: var(--space-xs);
+		right: var(--space-xs);
+		width: 24px;
+		height: 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-secondary);
+		font-size: 16px;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.close-btn:hover {
+		background: var(--color-hover);
+		color: var(--color-fg-primary);
+	}
+
+	/* Responsive - stack on mobile */
 	@media (max-width: 768px) {
-		.content {
-			grid-template-columns: 1fr;
-			grid-template-rows: auto 1fr auto;
+		.controls-overlay {
+			top: auto;
+			bottom: var(--space-md);
+			left: var(--space-md);
+			right: var(--space-md);
+			max-width: none;
+			max-height: 40vh;
 		}
 
-		.sidebar {
-			max-height: 200px;
+		.detail-overlay {
+			top: var(--space-md);
+			left: var(--space-md);
+			right: var(--space-md);
+			width: auto;
+			max-height: 40vh;
 		}
 	}
 </style>

@@ -119,7 +119,7 @@ async function buildGraph(
 
   // Step 6: Extract infrastructure edges (Cloudflare resource sharing)
   console.log('🔧 Extracting infrastructure dependencies...');
-  const infrastructureEdges = await extractInfrastructureEdges(config.rootDir);
+  const infrastructureEdges = await extractInfrastructureEdges(config.rootDir, nodes);
   console.log(`✓ Found ${infrastructureEdges.length} infrastructure edges\n`);
 
   // Step 7: Generate embeddings and semantic edges
