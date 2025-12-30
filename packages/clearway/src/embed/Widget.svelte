@@ -389,17 +389,33 @@
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
-	/* Booking Panel */
+	/* Booking Panel - sticky + animated entrance for clear next step */
 	.booking {
+		position: sticky;
+		bottom: 0;
 		margin-top: var(--space-lg, 1.5rem);
-		padding: var(--space-md, 1rem);
-		border-radius: var(--radius-md, 8px);
-		background: var(--color-bg-surface, rgba(255, 255, 255, 0.05));
+		padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
+		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
+		background: var(--color-bg-subtle, #1a1a1a);
 		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		border-bottom: none;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--space-md, 1rem);
+		animation: slideUp var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+	}
+
+	@keyframes slideUp {
+		from {
+			opacity: 0;
+			transform: translateY(100%);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	.details {
@@ -449,15 +465,19 @@
 		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
-	/* Canon monochrome primary button: inverted colors */
+	/* Canon monochrome primary button: inverted colors, prominent */
 	.book {
 		background: var(--color-fg-primary, #ffffff);
 		color: var(--color-bg-pure, #000000);
 		border: none;
+		padding: 0.75rem 2rem;
+		font-size: var(--text-body-lg, 1.125rem);
+		font-weight: 600;
 	}
 
 	.book:hover {
 		opacity: 0.9;
+		transform: scale(1.02);
 	}
 
 	/* Responsive */
@@ -478,6 +498,16 @@
 		.cancel,
 		.book {
 			flex: 1;
+		}
+	}
+
+	/* Reduced motion */
+	@media (prefers-reduced-motion: reduce) {
+		.booking {
+			animation: none;
+		}
+		.book:hover {
+			transform: none;
 		}
 	}
 </style>
