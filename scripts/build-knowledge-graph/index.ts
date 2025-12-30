@@ -143,20 +143,9 @@ async function buildGraph(
     } else if (options.dryRun) {
       console.log(`⚠️  Dry run: would embed ${nodesToEmbed.length} documents\n`);
     } else {
-      // Check for Cloudflare credentials
-      const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-      const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-      if (!accountId || !apiToken) {
-        console.error('❌ Cloudflare credentials not set');
-        console.error('   Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables\n');
-        process.exit(1);
-      }
-
-      // Generate new embeddings
+      // Generate new embeddings (credentials auto-detected from wrangler or env)
       console.log(`Embedding ${nodesToEmbed.length} documents...`);
       const newEmbeddings = await generateEmbeddingsForNodes(nodesToEmbed, {
-        accountId,
-        apiToken,
         model: config.embeddingModel,
         maxTokensPerDoc: config.maxTokensPerDoc,
         batchSize: config.batchSize,

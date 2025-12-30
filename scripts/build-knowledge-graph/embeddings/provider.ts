@@ -70,18 +70,38 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Get Cloudflare credentials from environment or wrangler
+ * Get Cloudflare credentials from environment or wrangler config
  */
 function getCloudflareCredentials(): { accountId: string; apiToken: string } {
   let accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   let apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
-  // Try to get from wrangler whoami if not in env
+  // Try to get account ID from wrangler whoami if not in env
   if (!accountId) {
     try {
       const whoami = execSync('wrangler whoami 2>/dev/null', { encoding: 'utf-8' });
-      const match = whoami.match(/Account ID[:\s]+([a-f0-9]{32})/i);
-      if (match) accountId = match[1];
+      // Match first account ID from the table (format: │ Name │ id │)
+      const match = whoami.match(/│\s+[\w\s]+\s+│\s+([a-f0-9]{32})\s+│/);
+      if (match) {
+        accountId = match[1];
+        console.log(`✓ Using wrangler account: ${accountId.slice(0, 8)}...`);
+      }
+    } catch {
+      // Ignore - will fail later with better error
+    }
+  }
+
+  // Try to get OAuth token from wrangler config if not in env
+  if (!apiToken) {
+    try {
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const wranglerConfigPath = `${homeDir}/Library/Preferences/.wrangler/config/default.toml`;
+      const configContent = readFileSync(wranglerConfigPath, 'utf-8');
+      const tokenMatch = configContent.match(/oauth_token\s*=\s*"([^"]+)"/);
+      if (tokenMatch) {
+        apiToken = tokenMatch[1];
+        console.log('✓ Using wrangler OAuth token');
+      }
     } catch {
       // Ignore - will fail later with better error
     }
@@ -89,7 +109,9 @@ function getCloudflareCredentials(): { accountId: string; apiToken: string } {
 
   if (!accountId || !apiToken) {
     throw new Error(
-      'Cloudflare credentials not found. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables.'
+      'Cloudflare credentials not found. Either:\n' +
+      '  1. Run `wrangler login` to authenticate, or\n' +
+      '  2. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN environment variables.'
     );
   }
 
