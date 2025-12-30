@@ -81,7 +81,7 @@
 		<span class="concept-origin">CREATE SOMETHING</span>
 	</a>
 
-	<div class="concept-card concept-placeholder">
+	<a href="/canon/concepts/hermeneutic-circle" class="concept-card">
 		<h2>Hermeneutic Circle</h2>
 		<p class="concept-translation">"Understanding through parts and whole"</p>
 		<p class="concept-summary">
@@ -89,8 +89,7 @@
 			emerges through iterative interpretation.
 		</p>
 		<span class="concept-origin">Hermeneutic Tradition</span>
-		<span class="coming-soon">Coming soon</span>
-	</div>
+	</a>
 </section>
 
 <style>
@@ -165,19 +164,4 @@
 		letter-spacing: var(--tracking-wider);
 	}
 
-	.concept-placeholder {
-		opacity: 0.6;
-		cursor: default;
-	}
-
-	.coming-soon {
-		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
-		padding: 2px 8px;
-		border-radius: var(--radius-sm);
-	}
 </style>
