@@ -680,5 +680,79 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice, platform: App.Platfo
 		customerId: invoice.customer
 	});
 
-	// TODO: Send dunning email or notification
+	// Get customer email from invoice
+	const customerEmail = invoice.customer_email;
+	if (!customerEmail) {
+		console.log('No customer email on invoice, skipping dunning email');
+		return;
+	}
+
+	// Format amount for display
+	const amountDue = (invoice.amount_due / 100).toFixed(2);
+	const currency = (invoice.currency || 'usd').toUpperCase();
+
+	// Stripe's hosted invoice URL allows customer to retry payment
+	const paymentUrl = invoice.hosted_invoice_url ?? null;
+
+	await sendDunningEmail(customerEmail, amountDue, currency, paymentUrl, platform);
+}
+
+/**
+ * Send dunning email for failed payment
+ */
+async function sendDunningEmail(
+	email: string,
+	amountDue: string,
+	currency: string,
+	paymentUrl: string | null,
+	platform: App.Platform | undefined
+) {
+	const resendApiKey = platform?.env?.RESEND_API_KEY;
+
+	if (resendApiKey) {
+		try {
+			const response = await fetch('https://api.resend.com/emails', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${resendApiKey}`
+				},
+				body: JSON.stringify({
+					from: 'CREATE SOMETHING <billing@createsomething.agency>',
+					to: email,
+					subject: 'Action required: Payment failed',
+					html: `
+						<h1>Your payment couldn't be processed</h1>
+						<p>We tried to charge your payment method for <strong>$${amountDue} ${currency}</strong>, but the payment failed.</p>
+						<p>This can happen if your card expired, has insufficient funds, or was declined by your bank.</p>
+						${paymentUrl ? `
+						<h2>Update your payment</h2>
+						<p><a href="${paymentUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Pay Now</a></p>
+						<p style="color: #666; font-size: 14px;">This link will take you to a secure Stripe page to complete your payment.</p>
+						` : ''}
+						<h2>Need help?</h2>
+						<p>If you believe this is an error or need assistance, reply to this email and we'll help sort it out.</p>
+						<hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+						<p style="color: #999; font-size: 12px;">CREATE SOMETHING<br/>createsomething.agency</p>
+					`
+				})
+			});
+
+			if (response.ok) {
+				console.log(`Dunning email sent to ${email}`);
+			} else {
+				const error = await response.text();
+				console.error('Failed to send dunning email via Resend:', error);
+			}
+		} catch (err) {
+			console.error('Error sending dunning email:', err);
+		}
+	} else {
+		// Log for manual follow-up if no email service configured
+		console.log('DUNNING EMAIL NEEDED:', {
+			to: email,
+			amountDue: `$${amountDue} ${currency}`,
+			paymentUrl
+		});
+	}
 }
