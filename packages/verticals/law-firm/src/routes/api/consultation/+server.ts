@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { createWorkwayClient, isWorkflowSuccess } from '$lib/workway';
 
 /**
  * Consultation Request API
@@ -9,7 +10,7 @@ import type { RequestHandler } from './$types';
  * Flow:
  * 1. Validate request body
  * 2. Store in D1 database
- * 3. Trigger consultation-booking workflow (when WORKWAY integrated)
+ * 3. Trigger consultation-booking workflow via WORKWAY
  * 4. Return confirmation
  */
 
@@ -76,12 +77,47 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				.run();
 		}
 
-		// TODO: Trigger WORKWAY consultation-booking workflow
-		// When integrated:
-		// await workway.trigger('consultation-booking', {
-		//   event: 'consultation.requested',
-		//   data: body
-		// });
+		// Trigger WORKWAY consultation-booking workflow
+		const apiKey = platform?.env.WORKWAY_API_KEY;
+		const orgId = platform?.env.WORKWAY_ORG_ID;
+
+		if (apiKey) {
+			try {
+				const workway = createWorkwayClient({
+					apiKey,
+					organizationId: orgId,
+				});
+
+				const result = await workway.trigger({
+					workflowId: 'consultation-booking',
+					event: 'consultation.requested',
+					data: {
+						name: body.name,
+						email: body.email,
+						company: body.company,
+						phone: body.phone,
+						service: body.service,
+						message: body.message,
+						preferredDate: body.preferredDate,
+						preferredTime: body.preferredTime,
+					},
+					// Use email + date as idempotency key to prevent duplicate bookings
+					idempotencyKey: `consultation-${body.email}-${body.preferredDate}-${body.preferredTime}`,
+				});
+
+				if (isWorkflowSuccess(result)) {
+					console.log('WORKWAY workflow triggered:', result.executionId);
+				} else {
+					console.warn('WORKWAY workflow trigger failed:', result.error);
+					// Continue - don't fail the request if workflow fails
+				}
+			} catch (workwayError) {
+				console.error('WORKWAY integration error:', workwayError);
+				// Continue - don't fail the request if workflow fails
+			}
+		} else {
+			console.warn('WORKWAY_API_KEY not configured - skipping workflow trigger');
+		}
 
 		return json({
 			success: true,
@@ -90,8 +126,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				name: body.name,
 				email: body.email,
 				preferredDate: body.preferredDate,
-				preferredTime: body.preferredTime
-			}
+				preferredTime: body.preferredTime,
+			},
 		});
 	} catch (err) {
 		console.error('Consultation request error:', err);

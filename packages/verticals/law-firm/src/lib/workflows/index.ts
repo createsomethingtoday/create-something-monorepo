@@ -12,9 +12,9 @@
  * Usage with WORKWAY:
  * ```typescript
  * import { consultationBookingWorkflow } from './consultation-booking';
- * import { defineWorkflow } from '@workwayco/sdk';
  *
- * export default defineWorkflow(consultationBookingWorkflow);
+ * // Workflow is already defined using defineWorkflow from @workwayco/sdk
+ * // Deploy to WORKWAY marketplace or use in private workflows
  * ```
  */
 
@@ -25,13 +25,17 @@ export { followUpWorkflow, type FollowUpWorkflow } from './follow-up';
 /**
  * Workflow integration status
  *
- * These workflows are designed for parallel development with WORKWAY SDK.
- * Current status: Stubs defined, awaiting SDK integration.
+ * These workflows are built with WORKWAY SDK.
+ * Current status: SDK connected, workflows defined.
  *
  * Integration checklist:
- * - [ ] Import defineWorkflow from @workwayco/sdk
- * - [ ] Add typed integrations from @workwayco/integrations
- * - [ ] Connect webhook triggers to API routes
+ * - [x] Import defineWorkflow from @workwayco/sdk
+ * - [x] Add typed integrations from @workwayco/sdk
+ * - [x] Connect webhook triggers to API routes
+ * - [ ] Add actual integration implementations (Calendly, HubSpot, Slack)
  * - [ ] Test with local WORKWAY development environment
  * - [ ] Deploy to WORKWAY marketplace
+ *
+ * Note: Integration implementations are TODO comments - waiting for
+ * Calendly, HubSpot, and Slack integrations to be available in WORKWAY.
  */

@@ -45,8 +45,14 @@ export interface CaseResult {
 }
 
 export interface WorkflowConfig {
-	clioIntakeWebhook?: string; // WORKWAY webhook URL
-	calendlyUrl?: string; // Calendly scheduling link
+	// WORKWAY workflow IDs
+	consultationBooking?: string;
+	followUp?: string;
+	appointmentReminder?: string;
+
+	// Legacy: External service URLs (deprecated)
+	clioIntakeWebhook?: string; // Deprecated: Use WORKWAY consultation-booking workflow
+	calendlyUrl?: string; // Deprecated: Use WORKWAY appointment-reminder workflow
 }
 
 export interface LawFirmConfig {
@@ -307,8 +313,14 @@ export const siteConfig: LawFirmConfig = {
 
 	// Workflow Integration
 	workflows: {
-		clioIntakeWebhook: '', // Configure with WORKWAY webhook URL
-		calendlyUrl: '' // Configure with Calendly scheduling link
+		// WORKWAY workflow IDs for this organization
+		consultationBooking: 'consultation-booking',
+		followUp: 'post-meeting-follow-up',
+		appointmentReminder: 'appointment-reminder',
+
+		// Legacy: External service URLs (being replaced by WORKWAY)
+		clioIntakeWebhook: '', // Deprecated: Use WORKWAY consultation-booking workflow
+		calendlyUrl: '' // Deprecated: Use WORKWAY appointment-reminder workflow
 	},
 
 	// Ethics & Compliance

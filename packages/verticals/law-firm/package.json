@@ -32,6 +32,7 @@
 	},
 	"dependencies": {
 		"@create-something/components": "workspace:*",
+		"@workwayco/sdk": "link:../../../../../WORKWAY/Cloudflare/packages/sdk",
 		"lucide-svelte": "^0.554.0"
 	}
 }

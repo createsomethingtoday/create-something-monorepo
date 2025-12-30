@@ -275,55 +275,6 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(jiti@2.6.1)(jsdom@25.0.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
-  packages/court-reserve:
-    dependencies:
-      '@create-something/components':
-        specifier: workspace:*
-        version: link:../components
-      stripe:
-        specifier: ^17.5.0
-        version: 17.7.0
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4.20241127.0
-        version: 4.20251219.0
-      '@sveltejs/adapter-cloudflare':
-        specifier: ^6.0.0
-        version: 6.0.1(@sveltejs/kit@2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.43.12)(vite@6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.43.12)(vite@6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(wrangler@3.114.15(@cloudflare/workers-types@4.20251219.0))
-      '@sveltejs/kit':
-        specifier: ^2.15.1
-        version: 2.48.5(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.43.12)(vite@6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.43.12)(vite@6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
-      '@sveltejs/vite-plugin-svelte':
-        specifier: ^5.0.3
-        version: 5.1.1(svelte@5.43.12)(vite@6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.4.22(postcss@8.5.6)
-      postcss:
-        specifier: ^8.4.49
-        version: 8.5.6
-      svelte:
-        specifier: ^5.16.0
-        version: 5.43.12
-      svelte-check:
-        specifier: ^4.1.1
-        version: 4.3.4(picomatch@4.0.3)(svelte@5.43.12)(typescript@5.9.3)
-      tailwindcss:
-        specifier: ^3.4.17
-        version: 3.4.18(tsx@4.21.0)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-      vite:
-        specifier: ^6.0.6
-        version: 6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
-      vitest:
-        specifier: ^2.1.8
-        version: 2.1.9(@types/node@24.10.1)(jsdom@25.0.1)(terser@5.44.1)
-      wrangler:
-        specifier: ^3.99.0
-        version: 3.114.15(@cloudflare/workers-types@4.20251219.0)
-
   packages/dotfiles: {}
 
   packages/eslint-plugin-canon:
@@ -1090,6 +1041,9 @@ importers:
       '@create-something/components':
         specifier: workspace:*
         version: link:../../components
+      '@workwayco/sdk':
+        specifier: link:../../../../../WORKWAY/Cloudflare/packages/sdk
+        version: link:../../../../../WORKWAY/Cloudflare/packages/sdk
       lucide-svelte:
         specifier: ^0.554.0
         version: 0.554.0(svelte@5.43.12)
