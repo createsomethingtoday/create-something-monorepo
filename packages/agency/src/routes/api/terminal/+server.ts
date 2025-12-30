@@ -1,11 +1,27 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import type { Paper } from '@create-something/components/types';
 
 interface TerminalRequest {
 	command: string;
 	args: string;
 	path: string;
 }
+
+/**
+ * Subset of Paper for list view (papers command)
+ */
+type PaperListItem = Pick<Paper, 'id' | 'title' | 'category' | 'reading_time' | 'difficulty_level'>;
+
+/**
+ * Subset of Paper for detail view (read command)
+ */
+type PaperDetail = Pick<Paper, 'id' | 'title' | 'category' | 'reading_time' | 'difficulty_level' | 'excerpt_short' | 'excerpt_long'>;
+
+/**
+ * Subset of Paper for search results
+ */
+type PaperSearchResult = Pick<Paper, 'id' | 'title' | 'category' | 'excerpt_short'>;
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -40,13 +56,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				}
 
 				// Helper function to create a card for a paper
-				const createCard = (p: any, index: number, offset: string = '') => {
+				const createCard = (p: PaperListItem, index: number, offset: string = '') => {
 					const num = index + 1;
 					const title = p.title.substring(0, 19).padEnd(19, ' ');
 					const category = (p.category || 'Unknown').substring(0, 14);
 					const time = (p.reading_time || '?') + 'min';
 					const categoryTime = `${category} • ${time}`.substring(0, 19).padEnd(19, ' ');
-					const difficulty = `Difficulty: ${(p.difficulty_level || 'N/A').substring(0, 8)}`.substring(0, 19).padEnd(19, ' ');
+					const difficulty = `Difficulty: ${(p.difficulty_level || 'N/A').toString().substring(0, 8)}`.substring(0, 19).padEnd(19, ' ');
 
 					// Placeholder ASCII art patterns (different for each card)
 					const patterns = [
@@ -80,20 +96,21 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				];
 
 				// Process papers in pairs (2 columns)
-				for (let i = 0; i < papers.results.length; i += 2) {
-					const leftPaper = papers.results[i];
-					const rightPaper = papers.results[i + 1];
+				const paperList = papers.results as PaperListItem[];
+				for (let i = 0; i < paperList.length; i += 2) {
+					const leftPaper = paperList[i];
+					const rightPaper = paperList[i + 1];
 
 					// Determine offset for rotation effect
 					// Cards in row 2, 4, 6, etc. get indented
 					const isOffsetRow = Math.floor(i / 2) % 2 === 1;
 					const rowOffset = isOffsetRow ? '    ' : '';
 
-					const leftCard = createCard(leftPaper as any, i, rowOffset);
+					const leftCard = createCard(leftPaper, i, rowOffset);
 
 					if (rightPaper) {
 						// Two cards side by side
-						const rightCard = createCard(rightPaper as any, i + 1, rowOffset);
+						const rightCard = createCard(rightPaper, i + 1, rowOffset);
 						for (let j = 0; j < leftCard.length; j++) {
 							outputLines.push(leftCard[j] + '  ' + rightCard[j].trim());
 						}
@@ -132,11 +149,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				}
 
 				const paper = await DB.prepare(`
-					SELECT * FROM papers
+					SELECT id, title, category, reading_time, difficulty_level, excerpt_short, excerpt_long
+					FROM papers
 					WHERE published = 1
 					ORDER BY created_at DESC
 					LIMIT 1 OFFSET ?
-				`).bind(paperNum - 1).first();
+				`).bind(paperNum - 1).first<PaperDetail>();
 
 				if (!paper) {
 					return json({
@@ -148,16 +166,16 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				const output = [
 					'',
 					'╔════════════════════════════════════════════════════════════════════╗',
-					`║ ${(paper as any).title.padEnd(66, ' ').substring(0, 66)} ║`,
+					`║ ${paper.title.padEnd(66, ' ').substring(0, 66)} ║`,
 					'╚════════════════════════════════════════════════════════════════════╝',
 					'',
-					`Category: ${(paper as any).category}`,
-					`Reading Time: ${(paper as any).reading_time || '?'} minutes`,
-					`Difficulty: ${(paper as any).difficulty_level || 'N/A'}`,
+					`Category: ${paper.category}`,
+					`Reading Time: ${paper.reading_time || '?'} minutes`,
+					`Difficulty: ${paper.difficulty_level || 'N/A'}`,
 					'',
 					'────────────────────────────────────────────────────────────────────',
 					'',
-					(paper as any).excerpt_long || (paper as any).excerpt_short || 'No description available.',
+					paper.excerpt_long || paper.excerpt_short || 'No description available.',
 					'',
 					'Type "papers" to return to the list',
 					''
@@ -192,11 +210,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					});
 				}
 
+				const searchResults = results.results as PaperSearchResult[];
 				const output = [
 					'',
 					`Search results for "${args}":`,
 					'',
-					...results.results.map((p: any, i: number) =>
+					...searchResults.map((p, i) =>
 						`[${i + 1}] ${p.title} (${p.category})\n    ${p.excerpt_short || 'No description'}`
 					),
 					''
@@ -227,11 +246,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				if (path.includes('papers')) {
 					const paperCount = await DB.prepare(
 						'SELECT COUNT(*) as count FROM papers WHERE published = 1'
-					).first();
+					).first<{ count: number }>();
 
 					return json({
 						output: `papers/
-└── [${(paperCount as any)?.count || 0} technical papers]`,
+└── [${paperCount?.count || 0} technical papers]`,
 						type: 'success'
 					});
 				}

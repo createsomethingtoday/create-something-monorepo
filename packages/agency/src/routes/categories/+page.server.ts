@@ -12,9 +12,9 @@ export const load: PageServerLoad = async ({ platform }) => {
       WHERE published = 1 AND is_hidden = 0 AND archived = 0
       GROUP BY category
       ORDER BY count DESC
-    `).all();
+    `).all<{ category: string; count: number }>();
 
-		const categories = (result.results || []).map((row: any) => ({
+		const categories = (result.results || []).map((row) => ({
 			name: row.category.charAt(0).toUpperCase() + row.category.slice(1),
 			slug: row.category,
 			count: row.count

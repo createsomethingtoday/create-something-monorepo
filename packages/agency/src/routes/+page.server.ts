@@ -30,9 +30,9 @@ export const load: PageServerLoad = async ({ platform }) => {
       GROUP BY category
       ORDER BY count DESC
     `
-		).all();
+		).all<{ category: string; count: number }>();
 
-		const categories = (categoryResult.results || []).map((row: any) => ({
+		const categories = (categoryResult.results || []).map((row) => ({
 			name: row.category.charAt(0).toUpperCase() + row.category.slice(1),
 			slug: row.category,
 			count: row.count
