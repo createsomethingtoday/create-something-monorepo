@@ -59,7 +59,7 @@ export interface ConnectAccountStatus {
  */
 export function createStripeClient(secretKey: string): Stripe {
 	return new Stripe(secretKey, {
-		apiVersion: '2024-11-20.acacia'
+		apiVersion: '2025-02-24.acacia'
 	});
 }
 
