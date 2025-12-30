@@ -122,6 +122,7 @@ export interface Reservation {
 	credits_used: number;
 	payment_status: PaymentStatus;
 	stripe_payment_intent_id: string | null;
+	stripe_checkout_session_id: string | null;
 	cancelled_at: string | null;
 	cancellation_reason: string | null;
 	confirmed_at: string | null;

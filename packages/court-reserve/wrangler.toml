@@ -60,6 +60,11 @@ crons = [
 ENVIRONMENT = "production"
 BASE_DOMAIN = "courtreserve.createsomething.space"
 
+# Court Reserve SaaS subscription prices
+STRIPE_PRICE_BASIC = "price_1Sk5BUAzstI6Ecr5iPn2aC6u"      # $49/month
+STRIPE_PRICE_PRO = "price_1Sk5BVAzstI6Ecr5zAwnT4uT"        # $99/month
+STRIPE_PRICE_ENTERPRISE = "price_1Sk5BVAzstI6Ecr5YyFRtdl3" # $249/month
+
 # Secrets (configure via `wrangler secret put`):
 # - STRIPE_SECRET_KEY
 # - STRIPE_WEBHOOK_SECRET
