@@ -403,6 +403,30 @@ All plugin UI uses **Canon tokens** (no hardcoded colors):
 
 ---
 
-*Last validated: 2025-12-23*
+## Related Packages
 
-**This UNDERSTANDING.md follows the "Less, but better" principle—document what's critical to understand, not every detail. When you need deeper knowledge, follow the references to source files.*
+### `@create-something/space` — Hermeneutic Partner
+
+**Relationship**: Theory ↔ Practice
+
+| Aspect | `.io` (This Package) | `.space` |
+|--------|---------------------|----------|
+| Mode of Being | Being-as-Document | Being-as-Experience |
+| Primary Function | Document methodology | Enable hands-on practice |
+| Output | Papers, research | Completed exercises |
+| Validation | Theoretical rigor | Empirical success |
+
+**Shared Architecture Patterns**:
+- `/experiments/` routes (papers here, lessons there)
+- `/methodology/` explaining approach
+- `/categories/` for content organization
+- Same Canon token system and styling
+- Same hermeneutic circle participation
+
+**See**: [`packages/space/UNDERSTANDING.md`](../space/UNDERSTANDING.md)
+
+---
+
+*Last validated: 2025-12-30*
+
+*This UNDERSTANDING.md follows the "Less, but better" principle—document what's critical to understand, not every detail. When you need deeper knowledge, follow the references to source files.*

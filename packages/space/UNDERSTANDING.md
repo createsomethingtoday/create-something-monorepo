@@ -125,4 +125,34 @@ Each lesson follows this canonical structure:
 
 ---
 
-*Last validated: 2024-11-25*
+## Related Packages
+
+### `@create-something/io` — Hermeneutic Partner
+
+**Relationship**: Practice ↔ Theory
+
+| Aspect | `.space` (This Package) | `.io` |
+|--------|------------------------|-------|
+| Mode of Being | Being-as-Experience | Being-as-Document |
+| Primary Function | Enable hands-on practice | Document methodology |
+| Output | Completed exercises | Papers, research |
+| Validation | Empirical success | Theoretical rigor |
+
+**Shared Architecture Patterns**:
+- `/experiments/` routes (lessons here, papers there)
+- `/methodology/` explaining approach
+- `/categories/` for content organization
+- Same Canon token system and styling
+- Same hermeneutic circle participation
+
+**Data Flow**:
+```
+.io publishes theory → .space implements practice
+.space discovers patterns → .io documents findings
+```
+
+**See**: [`packages/io/UNDERSTANDING.md`](../io/UNDERSTANDING.md)
+
+---
+
+*Last validated: 2025-12-30*
