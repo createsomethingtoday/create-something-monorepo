@@ -43,11 +43,13 @@
 	let selectedCourt = $state<string | null>(null);
 	let selectedSlot = $state<TimeSlot | null>(null);
 
-	// API base URL
+	// API base URL - use relative path for same-origin, absolute for embeds
 	const API_BASE =
 		typeof window !== 'undefined' && window.location.hostname === 'localhost'
 			? 'http://localhost:5173/api'
-			: 'https://courtreserve.createsomething.space/api';
+			: typeof window !== 'undefined' && window.location.hostname.includes('clearway')
+				? '/api'
+				: 'https://clearway.pages.dev/api';
 
 	// Fetch availability
 	async function fetchAvailability() {
