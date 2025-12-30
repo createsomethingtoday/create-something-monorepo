@@ -7,8 +7,8 @@
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { Talent, Match, MatchRequest, MatchResult, ApiResponse, PaginatedResponse } from '$lib/types/abundance';
-import { findMatches, generateId } from '$lib/abundance/matching';
+import type { Talent, Match, MatchRequest, MatchResult, ApiResponse, PaginatedResponse, FitBreakdown } from '$lib/types/abundance';
+import { findMatches, generateId, safeJsonParse } from '$lib/abundance/matching';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -45,11 +45,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			SELECT * FROM talent WHERE status = 'active' AND availability != 'unavailable'
 		`).all<Talent>();
 
-		// Parse JSON fields
+		// Parse JSON fields safely
 		const talents: Talent[] = talentResults.map(t => ({
 			...t,
-			skills: JSON.parse(t.skills as unknown as string),
-			styles: t.styles ? JSON.parse(t.styles as unknown as string) : undefined
+			skills: safeJsonParse<string[]>(t.skills, [], 'skills'),
+			styles: safeJsonParse<string[] | undefined>(t.styles, undefined, 'styles')
 		}));
 
 		// Build the match request with optional filters
@@ -168,8 +168,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 		const matches = results.map(m => ({
 			...m,
-			deliverables: m.deliverables ? JSON.parse(m.deliverables as unknown as string) : undefined,
-			fit_breakdown: m.fit_breakdown ? JSON.parse(m.fit_breakdown as unknown as string) : undefined
+			deliverables: safeJsonParse<string[] | undefined>(m.deliverables, undefined, 'deliverables'),
+			fit_breakdown: safeJsonParse<FitBreakdown | undefined>(m.fit_breakdown, undefined, 'fit_breakdown')
 		}));
 
 		// Get total count

@@ -147,3 +147,29 @@ export function findMatches(
 export function generateId(): string {
 	return `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
 }
+
+/**
+ * Safely parse JSON from D1 database fields
+ * Returns defaultValue if parsing fails, logs error for debugging
+ */
+export function safeJsonParse<T>(
+	value: unknown,
+	defaultValue: T,
+	fieldName?: string
+): T {
+	if (value === null || value === undefined) {
+		return defaultValue;
+	}
+
+	try {
+		const stringValue = typeof value === 'string' ? value : String(value);
+		return JSON.parse(stringValue) as T;
+	} catch (err) {
+		console.error('JSON parse error:', {
+			field: fieldName || 'unknown',
+			error: err instanceof Error ? err.message : String(err),
+			valuePreview: String(value).substring(0, 100)
+		});
+		return defaultValue;
+	}
+}

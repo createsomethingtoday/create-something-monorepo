@@ -8,6 +8,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { Talent, ApiResponse } from '$lib/types/abundance';
+import { safeJsonParse } from '$lib/abundance/matching';
 
 export const GET: RequestHandler = async ({ params, platform }) => {
 	try {
@@ -25,8 +26,8 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 
 		const result: Talent = {
 			...talent,
-			skills: JSON.parse(talent.skills as unknown as string),
-			styles: talent.styles ? JSON.parse(talent.styles as unknown as string) : undefined
+			skills: safeJsonParse<string[]>(talent.skills, [], 'skills'),
+			styles: safeJsonParse<string[] | undefined>(talent.styles, undefined, 'styles')
 		};
 
 		return json({ success: true, data: result } as ApiResponse<Talent>);
@@ -110,8 +111,8 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 
 		const result: Talent = {
 			...updated,
-			skills: JSON.parse(updated.skills as unknown as string),
-			styles: updated.styles ? JSON.parse(updated.styles as unknown as string) : undefined
+			skills: safeJsonParse<string[]>(updated.skills, [], 'skills'),
+			styles: safeJsonParse<string[] | undefined>(updated.styles, undefined, 'styles')
 		};
 
 		return json({ success: true, data: result } as ApiResponse<Talent>);

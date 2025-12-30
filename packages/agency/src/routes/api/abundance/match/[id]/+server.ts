@@ -7,7 +7,8 @@
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { Match, ApiResponse } from '$lib/types/abundance';
+import type { Match, ApiResponse, FitBreakdown } from '$lib/types/abundance';
+import { safeJsonParse } from '$lib/abundance/matching';
 
 export const GET: RequestHandler = async ({ params, platform }) => {
 	try {
@@ -25,8 +26,8 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 
 		const result: Match = {
 			...match,
-			deliverables: match.deliverables ? JSON.parse(match.deliverables as unknown as string) : undefined,
-			fit_breakdown: match.fit_breakdown ? JSON.parse(match.fit_breakdown as unknown as string) : undefined
+			deliverables: safeJsonParse<string[] | undefined>(match.deliverables, undefined, 'deliverables'),
+			fit_breakdown: safeJsonParse<FitBreakdown | undefined>(match.fit_breakdown, undefined, 'fit_breakdown')
 		};
 
 		return json({ success: true, data: result } as ApiResponse<Match>);
@@ -115,8 +116,8 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 
 		const result: Match = {
 			...updated,
-			deliverables: updated.deliverables ? JSON.parse(updated.deliverables as unknown as string) : undefined,
-			fit_breakdown: updated.fit_breakdown ? JSON.parse(updated.fit_breakdown as unknown as string) : undefined
+			deliverables: safeJsonParse<string[] | undefined>(updated.deliverables, undefined, 'deliverables'),
+			fit_breakdown: safeJsonParse<FitBreakdown | undefined>(updated.fit_breakdown, undefined, 'fit_breakdown')
 		};
 
 		return json({ success: true, data: result } as ApiResponse<Match>);

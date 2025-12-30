@@ -8,7 +8,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { TalentInput, Talent, ApiResponse, PaginatedResponse } from '$lib/types/abundance';
-import { generateId } from '$lib/abundance/matching';
+import { generateId, safeJsonParse } from '$lib/abundance/matching';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -44,8 +44,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		if (existing) {
 			const talent: Talent = {
 				...existing,
-				skills: JSON.parse(existing.skills as unknown as string),
-				styles: existing.styles ? JSON.parse(existing.styles as unknown as string) : undefined
+				skills: safeJsonParse<string[]>(existing.skills, [], 'skills'),
+				styles: safeJsonParse<string[] | undefined>(existing.styles, undefined, 'styles')
 			};
 			return json({ success: true, data: talent } as ApiResponse<Talent>);
 		}
@@ -85,8 +85,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const talent: Talent = {
 			...created,
-			skills: JSON.parse(created.skills as unknown as string),
-			styles: created.styles ? JSON.parse(created.styles as unknown as string) : undefined
+			skills: safeJsonParse<string[]>(created.skills, [], 'skills'),
+			styles: safeJsonParse<string[] | undefined>(created.styles, undefined, 'styles')
 		};
 
 		return json({ success: true, data: talent } as ApiResponse<Talent>, { status: 201 });
@@ -125,8 +125,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 			const result: Talent = {
 				...talent,
-				skills: JSON.parse(talent.skills as unknown as string),
-				styles: talent.styles ? JSON.parse(talent.styles as unknown as string) : undefined
+				skills: safeJsonParse<string[]>(talent.skills, [], 'skills'),
+				styles: safeJsonParse<string[] | undefined>(talent.styles, undefined, 'styles')
 			};
 
 			return json({ success: true, data: result } as ApiResponse<Talent>);
@@ -143,8 +143,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 			const result: Talent = {
 				...talent,
-				skills: JSON.parse(talent.skills as unknown as string),
-				styles: talent.styles ? JSON.parse(talent.styles as unknown as string) : undefined
+				skills: safeJsonParse<string[]>(talent.skills, [], 'skills'),
+				styles: safeJsonParse<string[] | undefined>(talent.styles, undefined, 'styles')
 			};
 
 			return json({ success: true, data: result } as ApiResponse<Talent>);
@@ -172,8 +172,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 		const talents = results.map(t => ({
 			...t,
-			skills: JSON.parse(t.skills as unknown as string),
-			styles: t.styles ? JSON.parse(t.styles as unknown as string) : undefined
+			skills: safeJsonParse<string[]>(t.skills, [], 'skills'),
+			styles: safeJsonParse<string[] | undefined>(t.styles, undefined, 'styles')
 		}));
 
 		// Get total count (with same filters except pagination)

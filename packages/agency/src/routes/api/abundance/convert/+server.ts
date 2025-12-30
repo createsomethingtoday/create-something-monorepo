@@ -12,7 +12,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { ApiResponse } from '$lib/types/abundance';
-import { generateId } from '$lib/abundance/matching';
+import { generateId, safeJsonParse } from '$lib/abundance/matching';
 
 interface ConvertRequest {
 	phone: string;
@@ -72,8 +72,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					success: true,
 					data: {
 						...existingTalent,
-						skills: JSON.parse(existingTalent.skills as string),
-						styles: existingTalent.styles ? JSON.parse(existingTalent.styles as string) : undefined
+						skills: safeJsonParse<string[]>(existingTalent.skills, [], 'skills'),
+						styles: safeJsonParse<string[] | undefined>(existingTalent.styles, undefined, 'styles')
 					},
 					message: 'User is already registered as talent'
 				});
@@ -116,8 +116,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				success: true,
 				data: {
 					...created,
-					skills: JSON.parse(created?.skills as string || '[]'),
-					styles: created?.styles ? JSON.parse(created.styles as string) : undefined
+					skills: safeJsonParse<string[]>(created?.skills, [], 'skills'),
+					styles: safeJsonParse<string[] | undefined>(created?.styles, undefined, 'styles')
 				},
 				message: 'Converted to talent successfully'
 			}, { status: 201 });
@@ -131,7 +131,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					success: true,
 					data: {
 						...existingSeeker,
-						preferred_formats: existingSeeker.preferred_formats ? JSON.parse(existingSeeker.preferred_formats as string) : undefined
+						preferred_formats: safeJsonParse<string[] | undefined>(existingSeeker.preferred_formats, undefined, 'preferred_formats')
 					},
 					message: 'User is already registered as seeker'
 				});
@@ -174,7 +174,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				success: true,
 				data: {
 					...created,
-					preferred_formats: created?.preferred_formats ? JSON.parse(created.preferred_formats as string) : undefined
+					preferred_formats: safeJsonParse<string[] | undefined>(created?.preferred_formats, undefined, 'preferred_formats')
 				},
 				message: 'Converted to seeker successfully'
 			}, { status: 201 });

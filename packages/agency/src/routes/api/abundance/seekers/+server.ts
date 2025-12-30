@@ -8,7 +8,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { SeekerInput, Seeker, ApiResponse, PaginatedResponse } from '$lib/types/abundance';
-import { generateId } from '$lib/abundance/matching';
+import { generateId, safeJsonParse } from '$lib/abundance/matching';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -34,10 +34,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		).bind(phone.trim()).first<Seeker>();
 
 		if (existing) {
-			// Parse JSON fields
+			// Parse JSON fields safely
 			const seeker: Seeker = {
 				...existing,
-				preferred_formats: existing.preferred_formats ? JSON.parse(existing.preferred_formats as unknown as string) : undefined
+				preferred_formats: safeJsonParse<string[] | undefined>(existing.preferred_formats, undefined, 'preferred_formats')
 			};
 			return json({ success: true, data: seeker } as ApiResponse<Seeker>);
 		}
@@ -74,7 +74,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const seeker: Seeker = {
 			...created,
-			preferred_formats: created.preferred_formats ? JSON.parse(created.preferred_formats as unknown as string) : undefined
+			preferred_formats: safeJsonParse<string[] | undefined>(created.preferred_formats, undefined, 'preferred_formats')
 		};
 
 		return json({ success: true, data: seeker } as ApiResponse<Seeker>, { status: 201 });
@@ -111,7 +111,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 			const result: Seeker = {
 				...seeker,
-				preferred_formats: seeker.preferred_formats ? JSON.parse(seeker.preferred_formats as unknown as string) : undefined
+				preferred_formats: safeJsonParse<string[] | undefined>(seeker.preferred_formats, undefined, 'preferred_formats')
 			};
 
 			return json({ success: true, data: result } as ApiResponse<Seeker>);
@@ -128,7 +128,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 			const result: Seeker = {
 				...seeker,
-				preferred_formats: seeker.preferred_formats ? JSON.parse(seeker.preferred_formats as unknown as string) : undefined
+				preferred_formats: safeJsonParse<string[] | undefined>(seeker.preferred_formats, undefined, 'preferred_formats')
 			};
 
 			return json({ success: true, data: result } as ApiResponse<Seeker>);
@@ -141,7 +141,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 		const seekers = results.map(s => ({
 			...s,
-			preferred_formats: s.preferred_formats ? JSON.parse(s.preferred_formats as unknown as string) : undefined
+			preferred_formats: safeJsonParse<string[] | undefined>(s.preferred_formats, undefined, 'preferred_formats')
 		}));
 
 		// Get total count

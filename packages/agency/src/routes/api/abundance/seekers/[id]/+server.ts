@@ -8,6 +8,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { Seeker, ApiResponse } from '$lib/types/abundance';
+import { safeJsonParse } from '$lib/abundance/matching';
 
 export const GET: RequestHandler = async ({ params, platform }) => {
 	try {
@@ -25,7 +26,7 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 
 		const result: Seeker = {
 			...seeker,
-			preferred_formats: seeker.preferred_formats ? JSON.parse(seeker.preferred_formats as unknown as string) : undefined
+			preferred_formats: safeJsonParse<string[] | undefined>(seeker.preferred_formats, undefined, 'preferred_formats')
 		};
 
 		return json({ success: true, data: result } as ApiResponse<Seeker>);
@@ -99,7 +100,7 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 
 		const result: Seeker = {
 			...updated,
-			preferred_formats: updated.preferred_formats ? JSON.parse(updated.preferred_formats as unknown as string) : undefined
+			preferred_formats: safeJsonParse<string[] | undefined>(updated.preferred_formats, undefined, 'preferred_formats')
 		};
 
 		return json({ success: true, data: result } as ApiResponse<Seeker>);
