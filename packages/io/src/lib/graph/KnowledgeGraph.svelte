@@ -28,6 +28,7 @@
 		edgeFilters?: EdgeFilters;
 		showLabels?: boolean;
 		showEdgeLabels?: boolean;
+		hideOrphans?: boolean;
 		onNodeClick?: (nodeId: string) => void;
 		onNodeHover?: (nodeId: string | null) => void;
 	}
@@ -44,6 +45,7 @@
 		},
 		showLabels = true,
 		showEdgeLabels = false,
+		hideOrphans = true,
 		onNodeClick,
 		onNodeHover
 	}: Props = $props();
@@ -55,53 +57,62 @@
 	 * Convert graph data to Cytoscape elements
 	 */
 	function convertToElements() {
-		// Nodes
-		const nodes = data.nodes.map((node) => ({
-			data: {
-				id: node.id,
-				label: showLabels ? node.title : '',
-				color: PACKAGE_COLORS[node.package ?? 'root'],
-				size: computeNodeSize(node.wordCount),
-				package: node.package,
-				type: node.type,
-				concepts: node.concepts,
-				wordCount: node.wordCount
+		// First, filter edges based on edge type filters
+		const filteredEdges = data.edges.filter((edge) => {
+			switch (edge.type) {
+				case 'explicit':
+					return edgeFilters.explicit;
+				case 'cross-reference':
+					return edgeFilters.crossReference;
+				case 'concept':
+					return edgeFilters.concept;
+				case 'semantic':
+					return edgeFilters.semantic;
+				case 'infrastructure':
+					return edgeFilters.infrastructure;
+				default:
+					return true;
 			}
-		}));
+		});
 
-		// Edges (with filtering)
-		const edges = data.edges
-			.filter((edge) => {
-				// Apply edge type filters
-				switch (edge.type) {
-					case 'explicit':
-						return edgeFilters.explicit;
-					case 'cross-reference':
-						return edgeFilters.crossReference;
-					case 'concept':
-						return edgeFilters.concept;
-					case 'semantic':
-						return edgeFilters.semantic;
-					case 'infrastructure':
-						return edgeFilters.infrastructure;
-					default:
-						return true;
-				}
-			})
-			.map((edge) => ({
+		// Collect connected node IDs (nodes that have at least one visible edge)
+		const connectedNodeIds = new Set<string>();
+		for (const edge of filteredEdges) {
+			connectedNodeIds.add(edge.source);
+			connectedNodeIds.add(edge.target);
+		}
+
+		// Nodes (filter orphans if hideOrphans is true)
+		const nodes = data.nodes
+			.filter((node) => !hideOrphans || connectedNodeIds.has(node.id))
+			.map((node) => ({
 				data: {
-					id: `${edge.source}-${edge.target}`,
-					source: edge.source,
-					target: edge.target,
-					label: showEdgeLabels ? edge.metadata?.reason ?? '' : '',
-					width: computeEdgeWidth(edge.weight),
-					color: getEdgeColor(edge.type),
-					style: getEdgeStyle(edge.type),
-					opacity: getEdgeOpacity(edge.type),
-					type: edge.type
-				},
-				classes: [edge.type, showEdgeLabels ? 'show-label' : ''].filter(Boolean).join(' ')
+					id: node.id,
+					label: showLabels ? node.title : '',
+					color: PACKAGE_COLORS[node.package ?? 'root'],
+					size: computeNodeSize(node.wordCount),
+					package: node.package,
+					type: node.type,
+					concepts: node.concepts,
+					wordCount: node.wordCount
+				}
 			}));
+
+		// Edges
+		const edges = filteredEdges.map((edge) => ({
+			data: {
+				id: `${edge.source}-${edge.target}`,
+				source: edge.source,
+				target: edge.target,
+				label: showEdgeLabels ? edge.metadata?.reason ?? '' : '',
+				width: computeEdgeWidth(edge.weight),
+				color: getEdgeColor(edge.type),
+				style: getEdgeStyle(edge.type),
+				opacity: getEdgeOpacity(edge.type),
+				type: edge.type
+			},
+			classes: [edge.type, showEdgeLabels ? 'show-label' : ''].filter(Boolean).join(' ')
+		}));
 
 		return { nodes, edges };
 	}
@@ -223,7 +234,7 @@
 	// Reactive updates
 	$effect(() => {
 		// Update when data, filters, or focus changes
-		if (cy && (edgeFilters || showLabels || showEdgeLabels || focus)) {
+		if (cy && (edgeFilters || showLabels || showEdgeLabels || hideOrphans || focus)) {
 			updateGraph();
 		}
 	});

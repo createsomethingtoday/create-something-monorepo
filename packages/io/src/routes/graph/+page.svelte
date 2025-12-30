@@ -22,6 +22,7 @@
 	});
 	let showLabels = $state(true);
 	let showEdgeLabels = $state(false);
+	let hideOrphans = $state(true); // Hide disconnected nodes by default
 	let selectedNode: GraphNode | null = $state(null);
 
 	// Handlers
@@ -39,6 +40,10 @@
 
 	function handleToggleEdgeLabels() {
 		showEdgeLabels = !showEdgeLabels;
+	}
+
+	function handleToggleHideOrphans() {
+		hideOrphans = !hideOrphans;
 	}
 
 	function handleNodeClick(nodeId: string) {
@@ -82,6 +87,7 @@
 					{edgeFilters}
 					{showLabels}
 					{showEdgeLabels}
+					{hideOrphans}
 					onNodeClick={handleNodeClick}
 					onNodeHover={handleNodeHover}
 				/>
@@ -94,10 +100,12 @@
 					{edgeFilters}
 					{showLabels}
 					{showEdgeLabels}
+					{hideOrphans}
 					onViewModeChange={handleViewModeChange}
 					onEdgeFilterChange={handleEdgeFilterChange}
 					onToggleLabels={handleToggleLabels}
 					onToggleEdgeLabels={handleToggleEdgeLabels}
+					onToggleHideOrphans={handleToggleHideOrphans}
 				/>
 			</div>
 

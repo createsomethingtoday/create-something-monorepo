@@ -12,10 +12,12 @@
 		edgeFilters: EdgeFilters;
 		showLabels: boolean;
 		showEdgeLabels: boolean;
+		hideOrphans: boolean;
 		onViewModeChange?: (mode: ViewMode) => void;
 		onEdgeFilterChange?: (filters: EdgeFilters) => void;
 		onToggleLabels?: () => void;
 		onToggleEdgeLabels?: () => void;
+		onToggleHideOrphans?: () => void;
 	}
 
 	let {
@@ -23,10 +25,12 @@
 		edgeFilters,
 		showLabels,
 		showEdgeLabels,
+		hideOrphans,
 		onViewModeChange,
 		onEdgeFilterChange,
 		onToggleLabels,
-		onToggleEdgeLabels
+		onToggleEdgeLabels,
+		onToggleHideOrphans
 	}: Props = $props();
 
 	function handleViewModeClick(mode: ViewMode) {
@@ -129,6 +133,10 @@
 			<label class="checkbox-label">
 				<input type="checkbox" checked={showEdgeLabels} onchange={onToggleEdgeLabels} />
 				<span class="checkbox-text">Show edge labels</span>
+			</label>
+			<label class="checkbox-label">
+				<input type="checkbox" checked={hideOrphans} onchange={onToggleHideOrphans} />
+				<span class="checkbox-text">Hide orphan nodes</span>
 			</label>
 		</div>
 	</div>
