@@ -388,5 +388,3 @@ export const siteConfig: LawFirmConfig = {
 		}
 	]
 };
-
-export type { LawFirmConfig };

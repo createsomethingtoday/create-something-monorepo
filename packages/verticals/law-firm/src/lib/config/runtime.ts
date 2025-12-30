@@ -8,11 +8,11 @@
  */
 
 import { browser } from '$app/environment';
-import { siteConfig as staticConfig, type SiteConfig } from './site';
+import { siteConfig as staticConfig, type LawFirmConfig } from './site';
 import { readable } from 'svelte/store';
 
 // Type for the injected config from Router Worker
-interface InjectedConfig extends Partial<SiteConfig> {
+interface InjectedConfig extends Partial<LawFirmConfig> {
 	_tenant?: {
 		id: string;
 		subdomain: string;
@@ -30,7 +30,7 @@ declare global {
 /**
  * Get the current site configuration.
  */
-export function getSiteConfig(): SiteConfig {
+export function getSiteConfig(): LawFirmConfig {
 	if (browser && window.__SITE_CONFIG__) {
 		return mergeConfigs(staticConfig, window.__SITE_CONFIG__);
 	}
@@ -57,7 +57,7 @@ export function getTenantInfo(): InjectedConfig['_tenant'] | null {
 /**
  * Merge runtime config with static defaults
  */
-function mergeConfigs(defaults: SiteConfig, runtime: InjectedConfig): SiteConfig {
+function mergeConfigs(defaults: LawFirmConfig, runtime: InjectedConfig): LawFirmConfig {
 	const { _tenant, ...runtimeConfig } = runtime;
 
 	return {
@@ -81,18 +81,25 @@ function mergeConfigs(defaults: SiteConfig, runtime: InjectedConfig): SiteConfig
 		// Hero
 		hero: { ...defaults.hero, ...(runtimeConfig.hero ?? {}) },
 
-		// Content
-		projects: runtimeConfig.projects ?? defaults.projects,
-		studio: runtimeConfig.studio ? { ...defaults.studio, ...runtimeConfig.studio } : defaults.studio,
-		services: runtimeConfig.services ?? defaults.services,
-		recognition: runtimeConfig.recognition ?? defaults.recognition
-	} as SiteConfig;
+		// Law Firm Specific
+		practiceAreas: runtimeConfig.practiceAreas ?? defaults.practiceAreas,
+		attorneys: runtimeConfig.attorneys ?? defaults.attorneys,
+		results: runtimeConfig.results ?? defaults.results,
+		firm: runtimeConfig.firm ? { ...defaults.firm, ...runtimeConfig.firm } : defaults.firm,
+		workflows: runtimeConfig.workflows ? { ...defaults.workflows, ...runtimeConfig.workflows } : defaults.workflows,
+		disclaimer: runtimeConfig.disclaimer ?? defaults.disclaimer,
+		barAssociations: runtimeConfig.barAssociations ?? defaults.barAssociations,
+		recognition: runtimeConfig.recognition ?? defaults.recognition,
+		statistics: runtimeConfig.statistics ?? defaults.statistics,
+		testimonials: runtimeConfig.testimonials ?? defaults.testimonials,
+		faq: runtimeConfig.faq ?? defaults.faq
+	};
 }
 
 /**
  * Reactive config store for Svelte components
  */
-export const config = readable<SiteConfig>(staticConfig, (set) => {
+export const config = readable<LawFirmConfig>(staticConfig, (set) => {
 	if (browser) {
 		set(getSiteConfig());
 	}

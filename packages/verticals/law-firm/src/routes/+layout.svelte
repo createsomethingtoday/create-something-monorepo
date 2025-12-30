@@ -7,12 +7,12 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { setSiteConfigContext } from '$lib/config/context';
-	import type { SiteConfig } from '$lib/config/site';
+	import type { LawFirmConfig } from '$lib/config/site';
 
 	interface Props {
 		children: import('svelte').Snippet;
 		data: {
-			siteConfig: SiteConfig;
+			siteConfig: LawFirmConfig;
 			tenant: { id: string; subdomain: string; status: string } | null;
 			configSource: 'tenant' | 'preview' | 'static';
 		};

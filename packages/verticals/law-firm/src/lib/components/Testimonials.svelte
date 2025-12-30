@@ -6,7 +6,9 @@
 	interface Testimonial {
 		quote: string;
 		author: string;
-		title: string;
+		title?: string;
+		rating?: number;
+		image?: string;
 	}
 
 	interface Props {
@@ -30,7 +32,9 @@
 					<blockquote class="testimonial-quote">"{testimonial.quote}"</blockquote>
 					<div class="testimonial-author">
 						<span class="author-name">{testimonial.author}</span>
-						<span class="author-company">{testimonial.title}</span>
+						{#if testimonial.title}
+							<span class="author-company">{testimonial.title}</span>
+						{/if}
 					</div>
 				</div>
 			{/each}

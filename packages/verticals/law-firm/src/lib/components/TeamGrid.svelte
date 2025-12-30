@@ -3,15 +3,10 @@
 
 	const siteConfig = getSiteConfigFromContext();
 
-	interface TeamMember {
-		name: string;
-		role: string;
-		bio: string;
-		image?: string;
-	}
+	import type { Attorney } from '$lib/config/site';
 
 	interface Props {
-		team?: TeamMember[];
+		team?: Attorney[];
 	}
 
 	// Helper to generate initials from name
@@ -24,7 +19,7 @@
 			.slice(0, 2);
 	}
 
-	let { team = siteConfig.team }: Props = $props();
+	let { team = siteConfig.attorneys }: Props = $props();
 </script>
 
 <section class="team-section">
@@ -42,7 +37,7 @@
 						<span class="team-initials">{getInitials(member.name)}</span>
 					</div>
 					<h3 class="team-name">{member.name}</h3>
-					<p class="team-role">{member.role}</p>
+					<p class="team-role">{member.title}</p>
 					<p class="team-bio">{member.bio}</p>
 				</div>
 			{/each}

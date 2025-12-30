@@ -10,7 +10,7 @@
  * - Preview: ?tenant=id query param → D1 lookup
  */
 
-import { siteConfig, type SiteConfig } from './site';
+import { siteConfig, type LawFirmConfig } from './site';
 
 // Type for tenant record from D1
 export interface TenantRecord {
@@ -115,7 +115,7 @@ async function loadTenantById(
  * Tenant config overrides defaults, but siteConfig provides
  * structure and fallbacks for missing fields.
  */
-function mergeConfig(tenantConfig: Record<string, unknown>): SiteConfig {
+function mergeConfig(tenantConfig: Record<string, unknown>): LawFirmConfig {
 	// Deep merge with type coercion
 	return {
 		// Identity
@@ -139,8 +139,8 @@ function mergeConfig(tenantConfig: Record<string, unknown>): SiteConfig {
 		// Social
 		social: tenantConfig.social
 			? {
-					instagram: (tenantConfig.social as Record<string, string>).instagram || siteConfig.social.instagram,
-					pinterest: (tenantConfig.social as Record<string, string>).pinterest || siteConfig.social.pinterest
+					linkedin: (tenantConfig.social as Record<string, string>).linkedin || siteConfig.social.linkedin,
+					twitter: (tenantConfig.social as Record<string, string>).twitter || siteConfig.social.twitter
 				}
 			: siteConfig.social,
 
@@ -152,40 +152,59 @@ function mergeConfig(tenantConfig: Record<string, unknown>): SiteConfig {
 		hero: tenantConfig.hero
 			? {
 					image: (tenantConfig.hero as Record<string, string>).image || siteConfig.hero.image,
-					alt: (tenantConfig.hero as Record<string, string>).alt || siteConfig.hero.alt,
-					caption: (tenantConfig.hero as Record<string, string>).caption || siteConfig.hero.caption
+					alt: (tenantConfig.hero as Record<string, string>).alt || siteConfig.hero.alt
 				}
 			: siteConfig.hero,
 
-		// Projects (array - replace entirely if provided)
-		projects: Array.isArray(tenantConfig.projects) && tenantConfig.projects.length > 0
-			? (tenantConfig.projects as unknown as typeof siteConfig.projects)
-			: siteConfig.projects,
+		// Law Firm Specific
+		practiceAreas: Array.isArray(tenantConfig.practiceAreas) && tenantConfig.practiceAreas.length > 0
+			? (tenantConfig.practiceAreas as unknown as typeof siteConfig.practiceAreas)
+			: siteConfig.practiceAreas,
 
-		// Studio
-		studio: tenantConfig.studio
+		attorneys: Array.isArray(tenantConfig.attorneys) && tenantConfig.attorneys.length > 0
+			? (tenantConfig.attorneys as unknown as typeof siteConfig.attorneys)
+			: siteConfig.attorneys,
+
+		results: Array.isArray(tenantConfig.results) && tenantConfig.results.length > 0
+			? (tenantConfig.results as unknown as typeof siteConfig.results)
+			: siteConfig.results,
+
+		firm: tenantConfig.firm
 			? {
-					headline: (tenantConfig.studio as Record<string, unknown>).headline as string || siteConfig.studio.headline,
-					philosophy: (tenantConfig.studio as Record<string, unknown>).philosophy as string || siteConfig.studio.philosophy,
-					approach: Array.isArray((tenantConfig.studio as Record<string, unknown>).approach)
-						? (tenantConfig.studio as Record<string, unknown>).approach as string[]
-						: siteConfig.studio.approach,
-					founders: Array.isArray((tenantConfig.studio as Record<string, unknown>).founders)
-						? (tenantConfig.studio as Record<string, unknown>).founders as typeof siteConfig.studio.founders
-						: siteConfig.studio.founders
+					headline: (tenantConfig.firm as Record<string, unknown>).headline as string || siteConfig.firm.headline,
+					philosophy: (tenantConfig.firm as Record<string, unknown>).philosophy as string || siteConfig.firm.philosophy,
+					values: Array.isArray((tenantConfig.firm as Record<string, unknown>).values)
+						? (tenantConfig.firm as Record<string, unknown>).values as string[]
+						: siteConfig.firm.values,
+					founded: (tenantConfig.firm as Record<string, unknown>).founded as number || siteConfig.firm.founded
 				}
-			: siteConfig.studio,
+			: siteConfig.firm,
 
-		// Services (array - replace entirely if provided)
-		services: Array.isArray(tenantConfig.services) && tenantConfig.services.length > 0
-			? (tenantConfig.services as unknown as typeof siteConfig.services)
-			: siteConfig.services,
+		workflows: tenantConfig.workflows
+			? { ...siteConfig.workflows, ...(tenantConfig.workflows as Record<string, unknown>) }
+			: siteConfig.workflows,
 
-		// Recognition (array - replace entirely if provided)
+		disclaimer: (tenantConfig.disclaimer as string) || siteConfig.disclaimer,
+		barAssociations: Array.isArray(tenantConfig.barAssociations)
+			? (tenantConfig.barAssociations as string[])
+			: siteConfig.barAssociations,
+
 		recognition: Array.isArray(tenantConfig.recognition)
 			? (tenantConfig.recognition as unknown as typeof siteConfig.recognition)
-			: siteConfig.recognition
-	} as SiteConfig;
+			: siteConfig.recognition,
+
+		statistics: Array.isArray(tenantConfig.statistics)
+			? (tenantConfig.statistics as unknown as typeof siteConfig.statistics)
+			: siteConfig.statistics,
+
+		testimonials: Array.isArray(tenantConfig.testimonials)
+			? (tenantConfig.testimonials as unknown as typeof siteConfig.testimonials)
+			: siteConfig.testimonials,
+
+		faq: Array.isArray(tenantConfig.faq)
+			? (tenantConfig.faq as unknown as typeof siteConfig.faq)
+			: siteConfig.faq
+	} as LawFirmConfig;
 }
 
 /**
@@ -199,7 +218,7 @@ function mergeConfig(tenantConfig: Record<string, unknown>): SiteConfig {
 export async function getSiteConfig(
 	url: URL,
 	platform?: { env?: PlatformEnv }
-): Promise<{ config: SiteConfig; tenant: TenantRecord | null; source: 'tenant' | 'preview' | 'static' }> {
+): Promise<{ config: LawFirmConfig; tenant: TenantRecord | null; source: 'tenant' | 'preview' | 'static' }> {
 	const db = platform?.env?.DB;
 
 	// 1. Check for preview mode

@@ -13,11 +13,11 @@
 		areas?: PracticeArea[];
 	}
 
-	// Generate practice areas from siteConfig services
-	const defaultAreas: PracticeArea[] = siteConfig.services.map((service) => ({
-		title: service.name,
-		description: service.description,
-		href: '/services'
+	// Generate practice areas from siteConfig practiceAreas
+	const defaultAreas: PracticeArea[] = siteConfig.practiceAreas.map((area) => ({
+		title: area.name,
+		description: area.description,
+		href: `/practice-areas/${area.slug}`
 	}));
 
 	let { areas = defaultAreas }: Props = $props();

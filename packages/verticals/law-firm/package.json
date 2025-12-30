@@ -3,6 +3,7 @@
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
+	"status": "production",
 	"description": "Law firm template with Clio integration via WORKWAY workflows",
 	"scripts": {
 		"dev": "vite dev",

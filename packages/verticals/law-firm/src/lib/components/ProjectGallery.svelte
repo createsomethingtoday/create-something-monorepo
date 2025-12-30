@@ -16,11 +16,11 @@
 	const siteConfig = getSiteConfigFromContext();
 
 	interface Props {
-		projects?: typeof siteConfig.projects;
+		projects?: typeof siteConfig.results;
 		limit?: number;
 	}
 
-	let { projects = siteConfig.projects, limit }: Props = $props();
+	let { projects = siteConfig.results, limit }: Props = $props();
 
 	const displayProjects = limit ? projects.slice(0, limit) : projects;
 </script>
@@ -29,23 +29,17 @@
 	<div class="gallery-grid">
 		{#each displayProjects as project, index}
 			<a
-				href="/projects/{project.slug}"
+				href="/results#{project.title.toLowerCase().replace(/ /g, '-')}"
 				class="project-item"
 				class:project-item--large={index === 0}
 				style="--delay: {index * 0.1}s"
 			>
 				<div class="project-image-container">
 					<div class="project-image-placeholder"></div>
-					<img
-						src={project.heroImage}
-						alt={project.title}
-						class="project-image"
-						loading={index < 2 ? 'eager' : 'lazy'}
-					/>
 				</div>
 				<div class="project-meta">
 					<span class="project-title">{project.title}</span>
-					<span class="project-location">{project.location}</span>
+					<span class="project-location">{project.outcome}</span>
 				</div>
 			</a>
 		{/each}

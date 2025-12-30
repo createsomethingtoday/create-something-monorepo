@@ -11,6 +11,8 @@ declare global {
 				DB: D1Database;
 				KV: KVNamespace;
 				R2: R2Bucket;
+				WORKWAY_API_KEY?: string;
+				WORKWAY_ORG_ID?: string;
 			};
 			context: ExecutionContext;
 			caches: CacheStorage & { default: Cache };

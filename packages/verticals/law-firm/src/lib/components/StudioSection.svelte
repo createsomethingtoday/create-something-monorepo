@@ -22,9 +22,9 @@
 	}
 
 	let {
-		headline = siteConfig.studio.headline,
-		philosophy = siteConfig.studio.philosophy,
-		approach = siteConfig.studio.approach
+		headline = siteConfig.firm.headline,
+		philosophy = siteConfig.firm.philosophy,
+		approach = siteConfig.firm.values
 	}: Props = $props();
 </script>
 

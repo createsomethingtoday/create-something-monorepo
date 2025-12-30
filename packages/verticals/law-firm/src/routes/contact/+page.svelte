@@ -59,24 +59,24 @@
 			<div class="info-group">
 				<h2 class="info-label">Follow</h2>
 				<div class="social-links">
-					{#if siteConfig.social.instagram}
+					{#if siteConfig.social.linkedin}
 						<a
-							href={siteConfig.social.instagram}
+							href={siteConfig.social.linkedin}
 							class="info-link"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							Instagram
+							LinkedIn
 						</a>
 					{/if}
-					{#if siteConfig.social.pinterest}
+					{#if siteConfig.social.twitter}
 						<a
-							href={siteConfig.social.pinterest}
+							href={siteConfig.social.twitter}
 							class="info-link"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							Pinterest
+							Twitter
 						</a>
 					{/if}
 				</div>

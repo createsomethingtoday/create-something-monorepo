@@ -105,7 +105,10 @@ function mergeWithDefaults(injected: InjectedConfig): LawFirmConfig {
 		workflows: config.workflows ? { ...defaultConfig.workflows, ...config.workflows } : defaultConfig.workflows,
 		disclaimer: config.disclaimer ?? defaultConfig.disclaimer,
 		barAssociations: config.barAssociations ?? defaultConfig.barAssociations,
-		recognition: config.recognition ?? defaultConfig.recognition
+		recognition: config.recognition ?? defaultConfig.recognition,
+		statistics: config.statistics ?? defaultConfig.statistics,
+		testimonials: config.testimonials ?? defaultConfig.testimonials,
+		faq: config.faq ?? defaultConfig.faq
 	};
 }
 
