@@ -1,58 +1,23 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { isValidEmail, generateCorrelationId, logError } from '@create-something/components/utils';
-
-interface ContactRequest {
-	name: string;
-	email: string;
-	message: string;
-}
+import { generateCorrelationId, logError } from '@create-something/components/utils';
+import { contactSchema, parseBody } from '@create-something/components/validation';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
-		const body = (await request.json()) as ContactRequest;
-		const { name, email, message } = body;
-
-		// Validate inputs
-		if (!name || !name.trim()) {
+		// Validate request body with Zod schema
+		const parseResult = await parseBody(request, contactSchema);
+		if (!parseResult.success) {
 			return json(
 				{
 					success: false,
-					message: 'Name is required'
+					message: parseResult.error
 				},
 				{ status: 400 }
 			);
 		}
 
-		if (!email || !email.trim()) {
-			return json(
-				{
-					success: false,
-					message: 'Email is required'
-				},
-				{ status: 400 }
-			);
-		}
-
-		if (!isValidEmail(email)) {
-			return json(
-				{
-					success: false,
-					message: 'Invalid email format'
-				},
-				{ status: 400 }
-			);
-		}
-
-		if (!message || !message.trim()) {
-			return json(
-				{
-					success: false,
-					message: 'Message is required'
-				},
-				{ status: 400 }
-			);
-		}
+		const { name, email, message } = parseResult.data;
 
 		// Access Cloudflare bindings via platform.env
 		if (!platform?.env) {

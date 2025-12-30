@@ -11,7 +11,8 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { sendMagicLinkEmail, generateToken, hashToken } from '$lib/email/magic-link';
-import { isValidEmail, generateCorrelationId, logError } from '@create-something/components/utils';
+import { generateCorrelationId, logError } from '@create-something/components/utils';
+import { magicLinkSchema, parseBody } from '@create-something/components/validation';
 
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 const RATE_LIMIT_WINDOW_HOURS = 1;
@@ -29,31 +30,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		throw error(500, 'Email service not configured');
 	}
 
-	let body: { email?: string; sessionId?: string };
-
-	try {
-		body = await request.json();
-	} catch {
-		throw error(400, 'Invalid JSON body');
+	// Validate request body with Zod schema
+	const parseResult = await parseBody(request, magicLinkSchema);
+	if (!parseResult.success) {
+		throw error(400, parseResult.error);
 	}
 
-	const { email, sessionId } = body;
-
-	if (!email || !sessionId) {
-		throw error(400, 'Missing required fields: email, sessionId');
-	}
-
-	// Validate email format
-	if (!isValidEmail(email)) {
-		throw error(400, 'Invalid email format');
-	}
-
-	// Validate sessionId is UUID-like
-	if (sessionId.length < 32) {
-		throw error(400, 'Invalid sessionId format');
-	}
-
-	const normalizedEmail = email.toLowerCase().trim();
+	const { email, sessionId } = parseResult.data;
+	// Email is already normalized by Zod schema (lowercased and trimmed)
+	const normalizedEmail = email;
 
 	// Check rate limiting
 	const windowStart = Math.floor(Date.now() / 1000) - RATE_LIMIT_WINDOW_HOURS * 3600;

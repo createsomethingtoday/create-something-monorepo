@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { IDENTITY_API, setSessionCookies, type TokenResponse, type User } from '@create-something/components/auth';
 import { generateCorrelationId, logError } from '@create-something/components/utils';
 import type { ApiResponse } from '@create-something/components/types';
+import { signupSchema, parseBody } from '@create-something/components/validation';
 
 interface SignupResponse extends TokenResponse {
 	user: User;
@@ -14,15 +15,16 @@ interface IdentityErrorResponse {
 
 export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	try {
-		const body = (await request.json()) as { email?: string; password?: string; name?: string; source?: string };
-		const { email, password, name, source } = body;
-
-		if (!email || !password) {
+		// Validate request body with Zod schema
+		const parseResult = await parseBody(request, signupSchema);
+		if (!parseResult.success) {
 			return json(
-				{ success: false, error: 'Email and password are required' } as ApiResponse<never>,
+				{ success: false, error: parseResult.error } as ApiResponse<never>,
 				{ status: 400 }
 			);
 		}
+
+		const { email, password, name, source } = parseResult.data;
 
 		const response = await fetch(`${IDENTITY_API}/v1/auth/register`, {
 			method: 'POST',
