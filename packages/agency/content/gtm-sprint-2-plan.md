@@ -6,6 +6,21 @@
 
 ---
 
+## Philosophical Foundation
+
+This GTM strategy embodies the [Hermeneutic Circle](/canon/concepts/hermeneutic-circle): each piece of content informs the next, and understanding deepens through iteration. We don't broadcast—we build a compounding body of thought.
+
+**Core Principles:**
+- **[Weniger, aber besser](/canon/concepts/weniger-aber-besser)**: Fewer, higher-quality touchpoints. One resonant post beats ten forgettable ones.
+- **[Zuhandenheit](/canon/concepts/zuhandenheit)**: Our content should recede—readers remember the insight, not the source. The tool disappears into use.
+- **[Complementarity](/canon/concepts/complementarity)**: We partner with clients, not replace them. GTM messaging emphasizes augmentation, not automation.
+
+**Anti-patterns to avoid:**
+- [Gestell](/canon/concepts/gestell) thinking: treating prospects as "leads to be optimized" rather than humans with problems.
+- Decorative content: posts that seek attention rather than communicate value.
+
+---
+
 ## Sprint Summary
 
 | Phase | Weeks | Focus | Status |
@@ -203,15 +218,24 @@ Analyze threads:
 
 Document learnings for Sprint 3 content.
 
-#### 8.3 Process Retrospective
-What worked:
-- Keep doing
+#### 8.3 Process Retrospective (Subtractive Triad Review)
 
-What didn't:
-- Stop or change
+Apply the [Subtractive Triad](/canon) to our GTM process:
 
-What to try:
-- Experiments for Sprint 3
+| Level | Question | Reflection |
+|-------|----------|------------|
+| **DRY** (Implementation) | What are we duplicating? | Which processes can be unified? |
+| **Rams** (Artifact) | What doesn't earn its existence? | Which activities produced no value? |
+| **Heidegger** (System) | What's disconnected? | Which efforts didn't serve the whole? |
+
+**What worked** (Keep):
+- Activities that produced qualified conversations
+
+**What didn't** (Subtract):
+- Activities that consumed time without producing signal
+
+**What to try** (Experiment):
+- New approaches for Sprint 3
 
 #### 8.4 Sprint 3 Planning
 Based on learnings, plan:

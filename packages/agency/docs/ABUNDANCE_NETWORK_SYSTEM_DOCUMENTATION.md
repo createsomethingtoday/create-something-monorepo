@@ -14,7 +14,7 @@ Abundance Network is a creative matching platform that connects **Seekers** (cli
 **Key Features:**
 - Phone number-based identity (WhatsApp-ready)
 - Intelligent fit scoring algorithm
-- Hermeneutic spiral design (returning users experience streamlined "delta" intake)
+- [Hermeneutic spiral](/canon/concepts/hermeneutic-circle) design (returning users experience streamlined "delta" intake)
 - GPT-ready API via OpenAPI specification
 - Real-time availability matching
 
@@ -454,6 +454,10 @@ Content-Type: application/json
 ---
 
 ## Hermeneutic Spiral Design
+
+This pattern embodies the [Hermeneutic Circle](/canon/concepts/hermeneutic-circle): understanding deepens through iterative engagement. Each interaction builds on previous context, creating richer profiles over time.
+
+**[Zuhandenheit](/canon/concepts/zuhandenheit)**: The system should recede into conversation. Users don't think "I'm updating my profile"—they're just chatting. The infrastructure disappears.
 
 The system is designed for **returning users**. Instead of repeating full intake each time:
 

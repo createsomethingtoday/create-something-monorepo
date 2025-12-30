@@ -5,6 +5,22 @@
 
 ---
 
+## Philosophical Alignment
+
+We seek clients who share our orientation toward tools and technology:
+
+**[Zuhandenheit](/canon/concepts/zuhandenheit) (Ready-to-hand)**: They want AI that recedes into workflow—tools that disappear into use. Not AI as spectacle, but AI as capability. When they say "we want AI," they mean "we want outcomes that AI enables."
+
+**[Weniger, aber besser](/canon/concepts/weniger-aber-besser)**: They value craft over speed, quality over quantity. "Less, but better" resonates with their approach to building products.
+
+**[Complementarity](/canon/concepts/complementarity)**: They see AI as augmenting their team, not replacing it. Partnership, not automation. Human judgment + machine execution.
+
+**Anti-pattern ([Gestell](/canon/concepts/gestell))**: Clients who view technology as pure optimization—"automate everything," "replace the team," "move fast and break things"—are philosophical mismatches.
+
+The qualification questions below help surface this alignment.
+
+---
+
 ## Quick Qualification
 
 ### Green Flags (Pursue)
@@ -217,6 +233,8 @@
 ---
 
 ## Anti-Personas (Who to Avoid)
+
+These patterns represent [Gestell](/canon/concepts/gestell) thinking—technology as pure optimization without regard for craft, quality, or human flourishing. Engagement is possible but requires significant value alignment work.
 
 ### The Tire-Kicker
 

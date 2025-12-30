@@ -1,38 +1,104 @@
-# sv
+# CREATE SOMETHING Agency
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**createsomething.agency** — Being-as-Service
 
-## Creating a project
+The commercial practice of CREATE SOMETHING. Where philosophy becomes delivery.
 
-If you're seeing this, you've probably already done this step. Congrats!
+---
 
-```sh
-# create a new project in the current directory
-npx sv create
+## Hermeneutic Position
 
-# create a new project in my-app
-npx sv create my-app
+`.agency` occupies a specific position in the [Hermeneutic Circle](/canon/concepts/hermeneutic-circle):
+
+```
+.ltd (Philosophy)  → defines principles
+        ↓
+.io (Research)     → validates patterns
+        ↓
+.space (Practice)  → experiments with approaches
+        ↓
+.agency (Services) → applies to client work
+        ↓
+.ltd (Philosophy)  → client outcomes inform evolution
 ```
 
-## Developing
+**Key insight**: .agency is where Canon meets reality. Client constraints test philosophical principles. What survives contact with budgets, timelines, and stakeholder complexity becomes battle-tested methodology.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+---
 
-```sh
-npm run dev
+## The Subtractive Triad in Practice
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+Every .agency engagement applies the [Subtractive Triad](/canon):
+
+| Level | Client Question | Our Response |
+|-------|-----------------|--------------|
+| **DRY** (Implementation) | "Have you built this before?" | Pattern recognition, reference architectures |
+| **Rams** (Artifact) | "Is this feature necessary?" | Scope discipline, ruthless prioritization |
+| **Heidegger** (System) | "Does this serve the business?" | Outcome alignment, strategic coherence |
+
+**Why this matters**: Clients often ask for features they don't need. The Triad provides a framework for having that conversation with rigor rather than opinion.
+
+---
+
+## Core Principles
+
+### Zuhandenheit (Ready-to-hand)
+
+Our deliverables should recede into use. The client shouldn't notice the infrastructure—only the capability it enables. When we've done our job well, the system disappears.
+
+**Test**: "Can the team use this without thinking about how it works?"
+
+### Complementarity
+
+We augment, never replace. Human judgment + machine execution. Client expertise + our methodology.
+
+**Test**: "Is the client more capable after we leave?"
+
+### Gelassenheit (Releasement)
+
+Neither rejection nor submission to technology. We use powerful tools (AI, automation) without being captured by them. We know when to automate and when to preserve human judgment.
+
+**Test**: "Are we solving the problem or just applying technology?"
+
+---
+
+## Package Structure
+
+```
+packages/agency/
+├── src/
+│   ├── routes/              # SvelteKit routes
+│   │   ├── api/             # API endpoints
+│   │   └── admin/           # Internal tools
+│   └── lib/                 # Shared utilities
+├── content/                 # Operational content
+│   ├── sales/               # Discovery scripts, templates
+│   ├── social/              # LinkedIn content
+│   └── templates/           # Reusable deliverables
+├── docs/                    # Client documentation
+└── workers/                 # Cloudflare Workers
 ```
 
-## Building
+---
 
-To create a production version of your app:
+## Development
 
-```sh
-npm run build
+```bash
+# Start dev server
+pnpm dev --filter=agency
+
+# Type check
+pnpm --filter=agency exec tsc --noEmit
+
+# Deploy
+pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
 ```
 
-You can preview the production build with `npm run preview`.
+---
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Related
+
+- [Canon Design System](https://createsomething.ltd/canon) — Philosophical foundation
+- [GTM Sprint Plan](./content/gtm-sprint-2-plan.md) — Current go-to-market execution
+- [ICP Document](./content/templates/sales/icp.md) — Ideal client profile
+- [Pricing Framework](./content/templates/sales/pricing-framework.md) — Value-based pricing

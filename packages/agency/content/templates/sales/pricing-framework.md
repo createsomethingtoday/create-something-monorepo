@@ -5,6 +5,22 @@
 
 ---
 
+## Philosophical Foundation
+
+Pricing is a design decision. It follows the same [Subtractive Triad](/canon) that governs all CREATE SOMETHING work:
+
+| Level | Pricing Application |
+|-------|---------------------|
+| **DRY** (Implementation) | Don't rebuild pricing logic each time—use this framework |
+| **Rams** (Artifact) | Every line item must earn its existence. No padding, no filler |
+| **Heidegger** (System) | Pricing must serve the client relationship, not just extract value |
+
+**The [Zuhandenheit](/canon/concepts/zuhandenheit) test**: When pricing is right, it recedes. The client sees investment and outcome, not a spreadsheet of hours and rates. The price becomes transparent—part of the decision, not the obstacle.
+
+**Anti-pattern ([Gestell](/canon/concepts/gestell))**: Treating clients as "revenue to be optimized" rather than partners to serve. When pricing strategies optimize extraction over value, we've lost the plot.
+
+---
+
 ## Pricing Principles
 
 ### 1. Value-Based, Not Time-Based
@@ -17,7 +33,7 @@ We price based on the outcome we deliver, not the time it takes. A solution that
 
 We are not the cheapest option. We're the option that works. Our pricing reflects:
 - Deep expertise in AI integration
-- Subtractive approach (less code, better outcomes)
+- [Subtractive approach](/canon) (less code, better outcomes)
 - Partnership mindset (we care about your success)
 - Speed to value (we've solved this before)
 
