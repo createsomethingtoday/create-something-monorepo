@@ -12,11 +12,13 @@ This is where the methodology becomes teachable. When someone wants to learn the
 
 | Dependency | Why It Matters |
 |------------|----------------|
-| `@create-something/components` | Shared UI for course interfaces |
+| `@create-something/components` | Shared UI + learning event tracking utilities |
 | `@create-something/tufte` | Visualization for progress tracking |
 | `packages/identity-worker` | Authentication for learner accounts |
 | `marked` | Markdown → HTML for lesson content |
 | Cloudflare Pages + D1 | Edge deployment with database for progress tracking |
+
+**Key Integration**: `@create-something/components/utils/learning.ts` provides the unified `trackLearningEvent()` API that all properties use to send progress data to the LMS.
 
 ## Enables Understanding Of
 
@@ -395,6 +397,24 @@ wrangler d1 migrations apply LMS_DB --remote
 **Project name**: `createsomething-lms` (note: no hyphen between words—see `.claude/rules/PROJECT_NAME_REFERENCE.md`)
 
 **Domain**: `learn.createsomething.space`
+
+## See Also
+
+| Related Package | Connection |
+|-----------------|------------|
+| `@create-something/components` | `utils/learning.ts` sends events here; `utils/completion.ts` for local state |
+| `@create-something/tufte` | Sparkline, progress visualization components |
+
+**Inbound Event Flow**:
+```
+@create-something/components/utils/learning.ts
+  ↓ trackLearningEvent({ property, eventType, metadata })
+/api/events (this package)
+  ↓ INSERT INTO learning_events
+D1 Database
+  ↓ aggregated by
+/progress dashboard
+```
 
 ---
 

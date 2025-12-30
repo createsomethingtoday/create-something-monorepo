@@ -43,6 +43,8 @@ src/lib/
 2. **`src/lib/tokens/spacing.ts`** — Golden ratio spacing system (φ-based)
 3. **`src/lib/components/Navigation.svelte`** — Canonical navigation pattern
 4. **`src/lib/types/paper.ts`** — Paper/experiment data model used across .io and .space
+5. **`src/lib/utils/learning.ts`** — Unified learning event tracking (sends to LMS)
+6. **`src/lib/utils/completion.ts`** — Local experiment completion tracking
 
 ## Key Concepts
 
@@ -51,6 +53,8 @@ src/lib/
 | Design Tokens | Atomic design values (spacing, animation curves) | `src/lib/tokens/` |
 | Paper Type | Data structure for research papers/experiments | `src/lib/types/paper.ts` |
 | Canonical Navigation | Cross-property navigation component | `src/lib/components/Navigation.svelte` |
+| Learning Events | Unified tracking that flows to LMS | `src/lib/utils/learning.ts` |
+| Completion Tracking | Local progress state via localStorage | `src/lib/utils/completion.ts` |
 
 ## This Package Helps You Understand
 
@@ -83,6 +87,24 @@ export type { Paper, Category, PaperMeta } from './types';
 export { completion } from './utils';
 ```
 
+## See Also
+
+| Related Package | Connection |
+|-----------------|------------|
+| `@create-something/lms` | Learning events flow to LMS API; progress visualization uses shared patterns |
+| `@create-something/tufte` | Sparklines and data visualization for progress tracking |
+
+**Cross-Package Learning Flow**:
+```
+Property (io/space/ltd/agency)
+  ↓ trackLearningEvent()
+Components learning.ts
+  ↓ POST /api/events
+LMS API (learn.createsomething.space)
+  ↓ D1 Database
+Progress Dashboard
+```
+
 ---
 
-*Last validated: 2024-11-25*
+*Last validated: 2025-12-29*
