@@ -127,11 +127,16 @@ animation-duration: var(--duration-complex);
 
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
-| **VideoLightbox** | Maverick X | Modal video player | P1 |
-| **Carousel** | shadcn-svelte | Embla-based slides | P2 |
+| **VideoLightbox** | Maverick X | Modal video player | Done |
+| **Carousel** | shadcn-svelte | Generic carousel | Done |
 | **Accordion** | Melt UI/shadcn | Collapsible sections | Done |
 | **ProcessTimeline** | Templates | Step-by-step visual | Done |
-| **TestimonialCarousel** | Templates | Rotating quotes | P2 |
+| **TestimonialCarousel** | Templates | Rotating quotes | Done |
+
+**Implemented in `@create-something/components/content`**:
+- `VideoLightbox` - Modal video player with YouTube/Vimeo support
+- `Carousel` - Generic carousel with auto-play, navigation, and dots
+- `TestimonialCarousel` - Rotating testimonials with ratings and author info
 
 ---
 
@@ -273,13 +278,9 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 | **layout** | Section, SplitSection, BentoGrid, BentoItem, SectionHeader | `@create-something/components/layout` |
 | **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
 | **navigation** | StickyHeader, MobileDrawer, CommandPalette, MenuButton | `@create-something/components/navigation` |
+| **content** | VideoLightbox, Carousel, TestimonialCarousel | `@create-something/components/content` |
 
 ### Remaining Work
-
-**Content Patterns** (P2):
-- VideoLightbox - Modal video player
-- Carousel - Embla-based slides
-- TestimonialCarousel - Rotating quotes
 
 **Form Patterns** (P2):
 - InlineValidation - Real-time feedback
