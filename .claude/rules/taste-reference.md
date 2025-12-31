@@ -49,6 +49,34 @@ Not visual references, but conceptual references for how AI agents should work.
 
 **Bidirectional exchange**: CREATE SOMETHING contributed directory-aware priority scoping to Beads upstream. VC patterns flow back into harness-patterns.md.
 
+### Award Winners (Design Excellence)
+
+Award-winning sites that validate Canon principles. Filtered for functional minimalism, not formal accolades.
+
+| Site | Award | Year | URL | Pattern Demonstrated |
+|------|-------|------|-----|---------------------|
+| Monochrome (ELEMENT) | Awwwards SOTD | 2024 | [awwwards.com/sites/monochrome](https://www.awwwards.com/sites/monochrome) | Single-color constraint, Three.js depth without decoration |
+| Shuka Design | Awwwards HM | 2024 | [awwwards.com/sites/shuka-design](https://www.awwwards.com/sites/shuka-design) | Typography-only hierarchy, no smooth scroll |
+| Typography Principles (Obys) | Awwwards SOTD 7.73 | 2024 | [awwwards.com/sites/typography-principles](https://www.awwwards.com/sites/typography-principles) | Scroll-triggered transitions, horizontal layout |
+| CalArts 2024 | Awwwards HM | 2024 | [awwwards.com/sites/calarts-2024](https://www.awwwards.com/sites/calarts-2024) | Interactive grid with purposeful interaction |
+| U.I.WD. | Awwwards SOTD | 2024 | [awwwards.com/sites/uiwd](https://www.awwwards.com/sites/uiwd) | Typography-first portfolio, minimal chrome |
+| Baseborn Studio | Awwwards | 2024 | [awwwards.com/sites/baseborn](https://www.awwwards.com/sites/baseborn) | Parallax depth, whitespace rhythm |
+
+**Curation criteria**: Design excellence validated by international awards. NOT "what won" but "what won AND aligns with Canon."
+
+| Accept | Reject |
+|--------|--------|
+| Functional minimalism | Decoration that won awards |
+| Typography as structure | Color-dependent hierarchy |
+| Purposeful motion | Animation for attention |
+| Clear information architecture | Complexity mistaken for craft |
+| Timeless black & white aesthetics | Fashion-forward color trends |
+| Constraint as liberation | Technical complexity as virtue |
+
+**Curation question**: "Would Dieter Rams approve, regardless of the award?"
+
+**Philosophy**: These sites prove monochrome constraint produces better design. When color is removed, typography, spacing, and motion must carry all meaning. This forces intentionality. Award-winning B&W sites validate what Canon already knew: constraint is craft.
+
 ## Per-Channel Curation Criteria
 
 ### CANON MINIMALISM (`canon-minimalism`)

@@ -156,6 +156,14 @@ For medals, badges, and leaderboard displays:
 --space-2xl: 6.854rem
 ```
 
+### Scale Progressions
+```css
+--scale-subtle: 0.98      /* Slight shrink on active */
+--scale-micro: 1.02       /* Subtle hover lift */
+--scale-small: 1.05       /* Card hover emphasis */
+--scale-medium: 1.1       /* Modal/overlay entrance */
+```
+
 ### Typography
 ```css
 --text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem)
@@ -169,6 +177,26 @@ For medals, badges, and leaderboard displays:
 --text-caption: 0.75rem
 ```
 
+#### Typography Mixing
+
+Award-winning monochromatic sites use typeface contrast for hierarchy. When color is removed, typeface becomes the primary differentiator.
+
+| Role | Typeface Style | Current Canon | Notes |
+|------|---------------|---------------|-------|
+| Display/Headlines | Serif or display sans | Stack Sans (mono-influenced) | Consider serif for experiments |
+| Body | Neutral sans-serif | Stack Sans | Readability-first |
+| Captions/Meta | Same as body, lighter weight | Stack Sans, reduced opacity | Visual de-emphasis |
+| Code | Monospace | Stack Sans | Already monospace-influenced |
+
+**Principle**: In monochrome, typeface contrast replaces color contrast. Serif headlines against sans-serif body creates visual rhythm without color. Weight variation (700 vs 400) provides hierarchy.
+
+**Current Canon Philosophy**: Stack Sans is intentionally monospace-influenced, creating subtle distinction from typical sans-serif. This gives typography inherent structure even in single-typeface systems.
+
+**Experimental Direction**: For experiments exploring Awwwards patterns, consider pairing:
+- Headlines: Serif display (high contrast serifs like Bodoni, Didot for drama)
+- Body: Stack Sans (existing Canon)
+- This validates whether typeface mixing enhances or distracts from monochrome constraint
+
 ### Animation & Motion
 
 **Philosophy**: Motion should be purposeful, not decorative. Animation reveals state changes and guides attention. When in doubt, don't animate.
@@ -178,6 +206,10 @@ For medals, badges, and leaderboard displays:
 --duration-micro: 200ms    /* Hover states, toggles, micro-interactions */
 --duration-standard: 300ms /* Page transitions, modal open/close */
 --duration-complex: 500ms  /* Multi-step animations, orchestrated sequences */
+
+/* Stagger/Cascade Timing */
+--cascade-step: 50ms       /* Between sibling elements */
+--cascade-group: 100ms     /* Between element groups */
 ```
 
 #### Easing
@@ -225,6 +257,68 @@ Use `--ease-standard` for all animations. Consistent easing creates coherent mot
 .card-lift:hover {
   transform: translateY(-8px);
   box-shadow: var(--shadow-2xl);
+}
+```
+
+#### Hover State Progressions
+
+Award-winning sites use multi-property hover states for subtle emphasis:
+
+**Scale + Border** (most common):
+```css
+.interactive-card {
+  transition: all var(--duration-micro) var(--ease-standard);
+}
+.interactive-card:hover {
+  transform: scale(var(--scale-micro));
+  border-color: var(--color-border-emphasis);
+}
+```
+
+**Underline Reveal** (typography-first):
+```css
+.text-link {
+  position: relative;
+}
+.text-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--color-fg-primary);
+  transition: width var(--duration-micro) var(--ease-standard);
+}
+.text-link:hover::after {
+  width: 100%;
+}
+```
+
+**Staggered Grid** (CalArts pattern):
+```css
+.grid-item {
+  transition: opacity var(--duration-standard) var(--ease-standard);
+  transition-delay: calc(var(--cascade-step) * var(--index));
+}
+.grid:hover .grid-item:not(:hover) {
+  opacity: 0.5;
+}
+```
+
+**Cascading Entrance** (sequential reveal):
+```css
+.cascade-item {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: cascadeIn var(--duration-standard) var(--ease-standard) forwards;
+  animation-delay: calc(var(--cascade-step) * var(--index));
+}
+@keyframes cascadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 ```
 
@@ -318,6 +412,34 @@ Respect users who need increased contrast via `prefers-contrast: more`:
 
 **Philosophy**: Same design language, increased visibility. Structure unchanged, only contrast enhanced.
 
+#### Scroll-Driven Motion
+
+For parallax and viewport-relative animations. Use sparingly—only when depth communicates meaning.
+
+**Parallax Depth Principle**:
+- Foreground: `translateY(calc(var(--scroll) * -0.1))`
+- Midground: `translateY(calc(var(--scroll) * -0.05))`
+- Background: `translateY(calc(var(--scroll) * -0.02))`
+
+**Implementation** (vanilla JS, no libraries):
+```javascript
+const scroll = window.scrollY;
+document.documentElement.style.setProperty('--scroll', scroll);
+```
+
+**When to use parallax**:
+- Layered content with semantic depth (foreground/background meaning)
+- Hero sections where depth reinforces message
+- NOT throughout a page (becomes decoration)
+- NOT on text (readability suffers)
+
+```css
+.parallax-layer {
+  transform: translateY(calc(var(--scroll, 0) * var(--depth-factor)));
+  will-change: transform;
+}
+```
+
 #### Anti-Patterns
 
 Avoid:
@@ -326,6 +448,7 @@ Avoid:
 - Custom easing curves (breaks motion coherence)
 - Animating layout properties (`width`, `height`) — use `transform` instead
 - Auto-playing animations without user trigger
+- Parallax on all content (reserve for intentional depth)
 
 ## Pattern
 
