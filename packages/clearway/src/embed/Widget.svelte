@@ -93,6 +93,22 @@
 				? '/api'
 				: 'https://clearway.pages.dev/api';
 
+	// Re-fetch suggestions when email changes (debounced)
+	let emailDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	$effect(() => {
+		const email = memberEmail; // Track dependency
+		if (email && email.includes('@') && date) {
+			// Debounce to avoid fetching on every keystroke
+			if (emailDebounceTimer) clearTimeout(emailDebounceTimer);
+			emailDebounceTimer = setTimeout(() => {
+				fetchSuggestions();
+			}, 500);
+		}
+		return () => {
+			if (emailDebounceTimer) clearTimeout(emailDebounceTimer);
+		};
+	});
+
 	// Format ISO timestamp to human-readable time (e.g., "6 AM", "5 PM")
 	function formatTime(isoString: string): string {
 		const date = new Date(isoString);
