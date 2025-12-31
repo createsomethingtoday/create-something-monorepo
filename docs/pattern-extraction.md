@@ -27,7 +27,7 @@ Research document for building a 90+/100 pattern library that exceeds Maverick X
 | **CountUp** | Maverick X | IntersectionObserver trigger | Done |
 | **FadeIn** | Universal | `opacity` + `translateY(20px)` | Done |
 | **ParallaxSection** | Lenis/Locomotive | CSS `translateY` with scroll progress | Done |
-| **SmoothScroll** | Lenis | Consider Lenis integration | P3 |
+| **SmoothScroll** | Lenis | Lerp-based inertial scrolling | Done |
 
 **Implemented in `@create-something/components/motion`**:
 - `ScrollReveal` - IntersectionObserver-based reveal with Canon timing
@@ -35,6 +35,7 @@ Research document for building a 90+/100 pattern library that exceeds Maverick X
 - `CountUp` - Animated number counter with easing
 - `FadeIn` - Simple entrance animation wrapper
 - `ParallaxSection` - Multi-layer parallax depth effect with scroll progress
+- `SmoothScroll` - Lenis-style inertial scrolling with lerp interpolation
 
 **2025 Motion Insight**: Lightweight, targeted animations over complex sequences. Focus on scroll-triggered reveals, not decorative motion.
 
@@ -285,7 +286,7 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 
 | Package | Patterns | Import Path |
 |---------|----------|-------------|
-| **motion** | ScrollReveal, StaggerContainer, StaggerItem, CountUp, FadeIn, ParallaxSection | `@create-something/components/motion` |
+| **motion** | ScrollReveal, StaggerContainer, StaggerItem, CountUp, FadeIn, ParallaxSection, SmoothScroll | `@create-something/components/motion` |
 | **interactive** | GlassCard, HoverCard | `@create-something/components/interactive` |
 | **layout** | Section, SplitSection, BentoGrid, BentoItem, SectionHeader | `@create-something/components/layout` |
 | **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters, ExitIntent | `@create-something/components/conversion` |
@@ -295,5 +296,4 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 
 ### Remaining Work
 
-All core patterns implemented. Future enhancements (P3):
-- SmoothScroll - Lenis-based smooth scrolling
+**All patterns complete.** The pattern library now contains 33 reusable components across 7 categories.
