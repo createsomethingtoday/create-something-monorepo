@@ -50,23 +50,43 @@
 		totalLanes: number;
 	}
 
+	// Helper to get clamped time in hours (for visual overlap detection)
+	function getClampedHours(isoString: string, isEnd: boolean): number {
+		const date = new Date(isoString);
+		const hours = date.getHours() + date.getMinutes() / 60;
+		if (isEnd) {
+			return Math.min(hours, END_HOUR);
+		}
+		return Math.max(hours, START_HOUR);
+	}
+
 	// Get reservations for a specific court with lane assignments for overlap handling
 	function getCourtReservations(courtId: string): ReservationWithLane[] {
 		const courtRes = data.reservations.filter((r) => r.court_id === courtId);
 
-		// Sort by start time
-		const sorted = [...courtRes].sort(
-			(a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-		);
+		// Filter out reservations entirely outside operating hours
+		const visible = courtRes.filter((r) => {
+			const startHour = new Date(r.start_time).getHours();
+			const endHour = new Date(r.end_time).getHours();
+			// Keep if any part falls within operating hours
+			return endHour > START_HOUR && startHour < END_HOUR;
+		});
 
-		// Assign lanes to handle overlaps
+		// Sort by clamped start time (visual position)
+		const sorted = [...visible].sort((a, b) => {
+			const aStart = getClampedHours(a.start_time, false);
+			const bStart = getClampedHours(b.start_time, false);
+			return aStart - bStart;
+		});
+
+		// Assign lanes based on VISUAL overlap (using clamped times)
 		const lanes: { end: number; items: typeof sorted }[] = [];
 
 		for (const res of sorted) {
-			const resStart = new Date(res.start_time).getTime();
-			const resEnd = new Date(res.end_time).getTime();
+			const resStart = getClampedHours(res.start_time, false);
+			const resEnd = getClampedHours(res.end_time, true);
 
-			// Find first lane where this reservation fits (no overlap)
+			// Find first lane where this reservation fits (no visual overlap)
 			let assignedLane = lanes.findIndex((lane) => lane.end <= resStart);
 
 			if (assignedLane === -1) {
