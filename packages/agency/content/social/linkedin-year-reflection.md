@@ -9,21 +9,25 @@
 
 ## Post
 
-The best projects we shipped this year had one thing in common: they started by removing things.
+Every codebase we audited this year had the same disease: additions without subtractions.
 
-2024 taught us that "more features" is rarely the answer. The teams that moved fastest were the ones brave enough to delete code, cancel initiatives, and say no to scope creep.
+Features added "for flexibility" that no one used. Abstractions layered on abstractions. Scripts that solved yesterday's problem, never removed. The symptom is always the same: the team can no longer reason about their own system.
 
-Three patterns from our best client engagements:
+One client had 155 automation scripts. We didn't optimize them. We asked: which ones actually run? Which ones produce value? The answer: 13. The other 142 were variations, duplicates, or artifacts from problems that no longer existed.
 
-The 155-to-13 pattern. Kickstand had 155 automation scripts. We didn't optimize them—we identified the 13 that actually mattered. 92% reduction. The rest was noise masquerading as progress.
+92% of the codebase was noise masquerading as progress.
 
-The 80/20 discovery. Arc was drowning in manual reviews. The breakthrough wasn't better automation—it was recognizing that 80% of cases followed predictable patterns. Automate those. Keep humans for the 20% that need judgment.
+This isn't unusual. It's the default. Systems grow by addition. Subtraction requires intention.
 
-The framework trap. Every struggling codebase we audited had the same disease: layers of abstraction added "for flexibility" that no one ever used. The cure is always the same: delete until it hurts, then stop.
+Dieter Rams built his career on "weniger, aber besser"—less, but better. He wasn't talking about minimalism as aesthetic. He meant: every element must earn its existence. What doesn't contribute, detracts.
 
-Dieter Rams said "less, but better" about industrial design. It applies to software, organizations, and strategy.
+The same principle applies to code. To organizations. To strategy.
 
-The question isn't "what should we build next year?"
+The hardest engineering decision isn't what to build. It's what to delete. Deletion feels like loss. But a system you can't understand is already lost.
+
+We're entering a year where AI will make it trivially easy to add more code, more features, more complexity. The teams that win won't be the ones who ship fastest. They'll be the ones disciplined enough to subtract.
+
+The question for 2026 isn't "what should we build?"
 
 It's "what should we stop doing?"
 
@@ -31,27 +35,26 @@ It's "what should we stop doing?"
 
 ## Comment (Post after publishing)
 
-Our framework for disciplined subtraction: createsomething.ltd/ethos
+The framework we use for disciplined subtraction: createsomething.ltd/ethos
 
-What are you planning to remove in 2025?
-
-#SoftwareEngineering #Leadership #Strategy
+#SoftwareEngineering #Leadership #TechnicalDebt
 
 ---
 
 ## Voice Compliance
 
-- [x] Claims backed by specific examples (Kickstand, Arc)
-- [x] Pattern recognition across engagements
-- [x] Master cited (Dieter Rams)
+- [x] Claims backed by specific metric (155→13, 92%)
+- [x] Single concrete example, not listicle
+- [x] Master cited with context (Rams + "weniger, aber besser")
+- [x] Principle articulated, not just asserted
 - [x] No marketing jargon
-- [x] Provocative closing question
-- [x] Self-contained
+- [x] Forward-looking (AI + 2026) makes it timely
+- [x] Self-contained (doesn't depend on other posts)
 
 ---
 
 ## Posting Notes
 
-- Best time: Thu 9:00 AM Pacific
-- Year-end content performs well
-- Character count: ~1,500
+- Best time: Tue Dec 31, 9:00 AM Pacific (year-end timing)
+- Character count: ~1,650
+- Single example (Kickstand) grounds the principle without listicle format
