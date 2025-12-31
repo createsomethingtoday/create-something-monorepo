@@ -46,6 +46,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
 			selectedDate,
 			courts: [],
 			reservations: [],
+			dailyRevenue: 0,
 			prevDate: prevDate.toISOString().split('T')[0],
 			nextDate: nextDate.toISOString().split('T')[0],
 			error: 'Database not available'
@@ -92,10 +93,18 @@ export const load: PageServerLoad = async ({ platform, url }) => {
 			.bind(facilityId, selectedDate)
 			.all<Reservation>();
 
+		const reservations = reservationsResult.results || [];
+
+		// Calculate daily revenue (only confirmed/completed bookings)
+		const dailyRevenue = reservations
+			.filter(r => ['confirmed', 'completed', 'in_progress'].includes(r.status))
+			.reduce((sum, r) => sum + (r.rate_cents || 0), 0);
+
 		return {
 			selectedDate,
 			courts: courtsResult.results || [],
-			reservations: reservationsResult.results || [],
+			reservations,
+			dailyRevenue,
 			prevDate: prevDate.toISOString().split('T')[0],
 			nextDate: nextDate.toISOString().split('T')[0],
 			error: null
@@ -107,6 +116,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
 			selectedDate,
 			courts: [],
 			reservations: [],
+			dailyRevenue: 0,
 			prevDate: prevDate.toISOString().split('T')[0],
 			nextDate: nextDate.toISOString().split('T')[0],
 			error: err instanceof Error ? err.message : 'Failed to load calendar data'

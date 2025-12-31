@@ -131,6 +131,7 @@
 
 			<div class="header-stats">
 				<span class="stat">{data.reservations.length} bookings</span>
+				<span class="stat revenue">${(data.dailyRevenue / 100).toLocaleString()}</span>
 			</div>
 		</div>
 	</header>
@@ -349,9 +350,21 @@
 		text-align: right;
 	}
 
+	.header-stats {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md, 1rem);
+	}
+
 	.stat {
 		font-size: var(--text-body-sm, 0.875rem);
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+	}
+
+	.stat.revenue {
+		font-size: var(--text-h3, 1.25rem);
+		font-weight: 600;
+		color: var(--color-fg-primary, #ffffff);
 	}
 
 	/* Timeline Container */
