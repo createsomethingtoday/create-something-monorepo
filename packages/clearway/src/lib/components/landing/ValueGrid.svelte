@@ -2,13 +2,14 @@
 	// Value Grid Section
 	// The three core capabilities that make CLEARWAY work
 	// Icons: Lucide (Clock, MessageSquare, Users)
+	import { StaggerContainer, StaggerItem } from '@create-something/components/motion';
 </script>
 
 <section class="value">
 	<div class="container">
 		<h2 class="section-title">How It Works</h2>
-		<div class="value-grid">
-			<div class="value-card">
+		<StaggerContainer class="value-grid" staggerDelay={150}>
+			<StaggerItem class="value-card">
 				<div class="value-icon">
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 						<circle cx="12" cy="12" r="10"/>
@@ -20,9 +21,9 @@
 					Every court, every slot, every second. Durable Objects guarantee consistency&mdash;no
 					double bookings, ever.
 				</p>
-			</div>
+			</StaggerItem>
 
-			<div class="value-card">
+			<StaggerItem class="value-card">
 				<div class="value-icon">
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -33,9 +34,9 @@
 					"Reserve court 3 at 6pm tomorrow." AI understands natural language.
 					No app needed&mdash;just SMS.
 				</p>
-			</div>
+			</StaggerItem>
 
-			<div class="value-card">
+			<StaggerItem class="value-card">
 				<div class="value-icon">
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 						<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -49,8 +50,8 @@
 					Cancellations auto-fill. The right member gets notified. Opt-in members
 					book instantly.
 				</p>
-			</div>
-		</div>
+			</StaggerItem>
+		</StaggerContainer>
 	</div>
 </section>
 

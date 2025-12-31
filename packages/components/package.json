@@ -126,7 +126,20 @@
 		"./validation": {
 			"types": "./dist/validation/index.d.ts",
 			"default": "./dist/validation/index.js"
-		}
+		},
+		"./motion": {
+			"types": "./dist/motion/index.d.ts",
+			"svelte": "./dist/motion/index.js"
+		},
+		"./interactive": {
+			"types": "./dist/interactive/index.d.ts",
+			"svelte": "./dist/interactive/index.js"
+		},
+		"./layout": {
+			"types": "./dist/layout/index.d.ts",
+			"svelte": "./dist/layout/index.js"
+		},
+		"./styles/vertical-base.css": "./dist/styles/vertical-base.css"
 	},
 	"peerDependencies": {
 		"@create-something/tufte": "workspace:^",
