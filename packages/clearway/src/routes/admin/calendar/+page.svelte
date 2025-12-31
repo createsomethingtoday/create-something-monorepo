@@ -1,0 +1,510 @@
+<script lang="ts">
+	/**
+	 * Admin Calendar - Timeline View
+	 *
+	 * Shows all reservations across courts for a selected date.
+	 * Reservations displayed as blocks on a timeline grid.
+	 * Canon-compliant: monochrome, opacity for status.
+	 */
+
+	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
+
+	let { data }: { data: PageData } = $props();
+
+	// Operating hours (6am to 10pm)
+	const START_HOUR = 6;
+	const END_HOUR = 22;
+	const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
+
+	// Format date for display
+	function formatDate(dateStr: string): string {
+		const date = new Date(dateStr + 'T12:00:00');
+		return date.toLocaleDateString('en-US', {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
+
+	// Format hour for column header
+	function formatHour(hour: number): string {
+		const ampm = hour >= 12 ? 'PM' : 'AM';
+		const h = hour % 12 || 12;
+		return `${h}${ampm}`;
+	}
+
+	// Get reservations for a specific court
+	function getCourtReservations(courtId: string) {
+		return data.reservations.filter((r) => r.court_id === courtId);
+	}
+
+	// Calculate position and width for a reservation block
+	function getBlockStyle(reservation: { start_time: string; end_time: string }): string {
+		const start = new Date(reservation.start_time);
+		const end = new Date(reservation.end_time);
+
+		const startHour = start.getHours() + start.getMinutes() / 60;
+		const endHour = end.getHours() + end.getMinutes() / 60;
+
+		// Calculate position as percentage of timeline
+		const left = ((startHour - START_HOUR) / (END_HOUR - START_HOUR)) * 100;
+		const width = ((endHour - startHour) / (END_HOUR - START_HOUR)) * 100;
+
+		return `left: ${left}%; width: ${width}%;`;
+	}
+
+	// Format time for display
+	function formatTime(isoString: string): string {
+		const date = new Date(isoString);
+		return date.toLocaleTimeString('en-US', {
+			hour: 'numeric',
+			minute: '2-digit',
+			hour12: true
+		});
+	}
+
+	// Navigate to a date
+	function navigateTo(dateStr: string) {
+		goto(`/admin/calendar?date=${dateStr}`);
+	}
+
+	// Navigate to today
+	function goToday() {
+		const today = new Date().toISOString().split('T')[0];
+		goto(`/admin/calendar?date=${today}`);
+	}
+
+	// Get status class for styling
+	function getStatusClass(status: string): string {
+		switch (status) {
+			case 'confirmed':
+			case 'completed':
+				return 'status-confirmed';
+			case 'pending':
+				return 'status-pending';
+			case 'cancelled':
+			case 'no_show':
+				return 'status-cancelled';
+			default:
+				return '';
+		}
+	}
+</script>
+
+<svelte:head>
+	<title>Calendar - CLEARWAY Admin</title>
+</svelte:head>
+
+<div class="calendar-admin">
+	<!-- Header -->
+	<header class="header">
+		<div class="header-content">
+			<div class="header-nav">
+				<a href="/admin" class="back-link">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+						<path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					Dashboard
+				</a>
+			</div>
+
+			<div class="date-nav">
+				<button class="nav-btn" onclick={() => navigateTo(data.prevDate)} aria-label="Previous day">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+						<path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</button>
+
+				<div class="date-display">
+					<h1>{formatDate(data.selectedDate)}</h1>
+					<button class="today-btn" onclick={goToday}>Today</button>
+				</div>
+
+				<button class="nav-btn" onclick={() => navigateTo(data.nextDate)} aria-label="Next day">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+						<path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</button>
+			</div>
+
+			<div class="header-stats">
+				<span class="stat">{data.reservations.length} bookings</span>
+			</div>
+		</div>
+	</header>
+
+	<!-- Timeline -->
+	<div class="timeline-container">
+		<div class="timeline">
+			<!-- Time headers -->
+			<div class="timeline-header">
+				<div class="court-label-header">Court</div>
+				<div class="hours-header">
+					{#each HOURS as hour}
+						<div class="hour-header">{formatHour(hour)}</div>
+					{/each}
+				</div>
+			</div>
+
+			<!-- Court rows -->
+			<div class="timeline-body">
+				{#each data.courts as court}
+					{@const reservations = getCourtReservations(court.id)}
+					<div class="court-row">
+						<div class="court-label">
+							<span class="court-name">{court.name}</span>
+							<span class="court-count">{reservations.length}</span>
+						</div>
+						<div class="court-timeline">
+							<!-- Hour grid lines -->
+							{#each HOURS as hour}
+								<div class="hour-line"></div>
+							{/each}
+
+							<!-- Reservation blocks -->
+							{#each reservations as reservation}
+								<div
+									class="reservation-block {getStatusClass(reservation.status)}"
+									style={getBlockStyle(reservation)}
+									title="{reservation.member_name} ({formatTime(reservation.start_time)} - {formatTime(reservation.end_time)})"
+								>
+									<span class="block-name">{reservation.member_name}</span>
+									<span class="block-time">{formatTime(reservation.start_time)}</span>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+	</div>
+
+	<!-- Legend -->
+	<div class="legend">
+		<div class="legend-item">
+			<div class="legend-color status-confirmed"></div>
+			<span>Confirmed</span>
+		</div>
+		<div class="legend-item">
+			<div class="legend-color status-pending"></div>
+			<span>Pending</span>
+		</div>
+		<div class="legend-item">
+			<div class="legend-color status-cancelled"></div>
+			<span>Cancelled</span>
+		</div>
+	</div>
+</div>
+
+<style>
+	/* Canon Design System - Admin Calendar */
+	.calendar-admin {
+		min-height: 100vh;
+		background: var(--color-bg-pure, #000000);
+		color: var(--color-fg-primary, #ffffff);
+		font-family: var(--font-sans, 'Stack Sans Notch', system-ui, sans-serif);
+	}
+
+	/* Header */
+	.header {
+		padding: var(--space-md, 1rem) var(--space-xl, 2rem);
+		border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	.header-content {
+		max-width: 1400px;
+		margin: 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-lg, 1.5rem);
+	}
+
+	.header-nav {
+		flex: 1;
+	}
+
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		text-decoration: none;
+		font-size: var(--text-body-sm, 0.875rem);
+		transition: color var(--duration-micro, 100ms) ease;
+	}
+
+	.back-link:hover {
+		color: var(--color-fg-primary, #ffffff);
+	}
+
+	.date-nav {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md, 1rem);
+	}
+
+	.date-display {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	h1 {
+		font-size: var(--text-h3, 1.25rem);
+		font-weight: 600;
+		margin: 0;
+		white-space: nowrap;
+	}
+
+	.today-btn {
+		font-size: var(--text-caption, 0.75rem);
+		font-weight: 500;
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		padding: 0.25rem 0.5rem;
+		border-radius: var(--radius-sm, 4px);
+		transition: color var(--duration-micro, 100ms) ease;
+	}
+
+	.today-btn:hover {
+		color: var(--color-fg-primary, #ffffff);
+	}
+
+	.nav-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		background: transparent;
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-md, 8px);
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		cursor: pointer;
+		transition:
+			border-color var(--duration-micro, 100ms) ease,
+			color var(--duration-micro, 100ms) ease;
+	}
+
+	.nav-btn:hover {
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.25));
+		color: var(--color-fg-primary, #ffffff);
+	}
+
+	.header-stats {
+		flex: 1;
+		text-align: right;
+	}
+
+	.stat {
+		font-size: var(--text-body-sm, 0.875rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+	}
+
+	/* Timeline Container */
+	.timeline-container {
+		padding: var(--space-lg, 1.5rem);
+		overflow-x: auto;
+	}
+
+	.timeline {
+		min-width: 1200px;
+	}
+
+	/* Timeline Header */
+	.timeline-header {
+		display: flex;
+		border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		margin-bottom: var(--space-sm, 0.5rem);
+	}
+
+	.court-label-header {
+		width: 120px;
+		flex-shrink: 0;
+		padding: var(--space-sm, 0.5rem);
+		font-size: var(--text-caption, 0.75rem);
+		font-weight: 500;
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.hours-header {
+		flex: 1;
+		display: flex;
+	}
+
+	.hour-header {
+		flex: 1;
+		padding: var(--space-sm, 0.5rem);
+		font-size: var(--text-caption, 0.75rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		text-align: center;
+	}
+
+	/* Timeline Body */
+	.timeline-body {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.court-row {
+		display: flex;
+		min-height: 60px;
+	}
+
+	.court-label {
+		width: 120px;
+		flex-shrink: 0;
+		padding: var(--space-sm, 0.5rem);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background: var(--color-bg-subtle, #1a1a1a);
+		border-radius: var(--radius-sm, 4px) 0 0 var(--radius-sm, 4px);
+	}
+
+	.court-name {
+		font-weight: 500;
+		font-size: var(--text-body-sm, 0.875rem);
+	}
+
+	.court-count {
+		font-size: var(--text-caption, 0.75rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		background: var(--color-bg-surface, #111111);
+		padding: 0.125rem 0.5rem;
+		border-radius: var(--radius-sm, 4px);
+	}
+
+	.court-timeline {
+		flex: 1;
+		position: relative;
+		display: flex;
+		background: var(--color-bg-surface, #111111);
+		border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
+	}
+
+	.hour-line {
+		flex: 1;
+		border-left: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	.hour-line:first-child {
+		border-left: none;
+	}
+
+	/* Reservation Blocks */
+	.reservation-block {
+		position: absolute;
+		top: 4px;
+		bottom: 4px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 0.25rem 0.5rem;
+		background: var(--color-fg-primary, #ffffff);
+		color: var(--color-bg-pure, #000000);
+		border-radius: var(--radius-sm, 4px);
+		overflow: hidden;
+		cursor: pointer;
+		transition: opacity var(--duration-micro, 100ms) ease;
+	}
+
+	.reservation-block:hover {
+		opacity: 0.9;
+	}
+
+	.block-name {
+		font-size: var(--text-caption, 0.75rem);
+		font-weight: 600;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.block-time {
+		font-size: 0.625rem;
+		opacity: 0.7;
+	}
+
+	/* Status colors using opacity (Canon: monochrome) */
+	.status-confirmed {
+		background: var(--color-fg-primary, #ffffff);
+		opacity: 1;
+	}
+
+	.status-pending {
+		background: var(--color-fg-primary, #ffffff);
+		opacity: 0.6;
+	}
+
+	.status-cancelled {
+		background: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		opacity: 0.3;
+		text-decoration: line-through;
+	}
+
+	/* Legend */
+	.legend {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-lg, 1.5rem);
+		padding: var(--space-md, 1rem);
+		border-top: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: var(--text-caption, 0.75rem);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+	}
+
+	.legend-color {
+		width: 1rem;
+		height: 0.75rem;
+		border-radius: 2px;
+	}
+
+	/* Responsive */
+	@media (max-width: 768px) {
+		.header-content {
+			flex-direction: column;
+			gap: var(--space-md, 1rem);
+		}
+
+		.header-nav,
+		.header-stats {
+			text-align: center;
+		}
+
+		.timeline {
+			min-width: 800px;
+		}
+	}
+
+	/* Focus states */
+	.nav-btn:focus-visible,
+	.today-btn:focus-visible {
+		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline-offset: 2px;
+	}
+
+	/* Reduced motion */
+	@media (prefers-reduced-motion: reduce) {
+		.nav-btn,
+		.today-btn,
+		.reservation-block {
+			transition: none;
+		}
+	}
+</style>

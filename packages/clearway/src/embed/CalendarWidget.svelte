@@ -1,31 +1,25 @@
 <script lang="ts">
+	/**
+	 * CalendarWidget Component
+	 *
+	 * Complete booking widget with calendar week/month view.
+	 * Shows availability at a glance, then detailed slots when day is selected.
+	 * Canon-compliant: monochrome, minimal chrome.
+	 */
+
 	import { onMount } from 'svelte';
-	import type { BookingResult } from './widget';
+	import WeekView from './components/WeekView.svelte';
+	import MonthView from './components/MonthView.svelte';
+	import ViewToggle from './components/ViewToggle.svelte';
 	import CheckoutForm from './CheckoutForm.svelte';
-	import CalendarWidget from './CalendarWidget.svelte';
-
-	// API Response types (matching +server.ts)
-	interface CourtAvailability {
-		id: string;
-		name: string;
-		type: string;
-		surfaceType: string | null;
-		slots: TimeSlot[];
-	}
-
-	interface TimeSlot {
-		startTime: string;
-		endTime: string;
-		status: 'available' | 'reserved' | 'pending' | 'maintenance';
-		priceCents: number | null;
-	}
+	import { createCalendarState, type CalendarView } from './stores/calendar.svelte';
+	import { createAvailabilityCache, type CourtAvailability, type TimeSlot } from './stores/availability-cache.svelte';
+	import { formatDisplayDate, formatDate } from './utils/date-helpers';
+	import type { BookingResult } from './widget';
 
 	interface Props {
 		facilitySlug: string;
 		theme?: 'light' | 'dark';
-		view?: 'slots' | 'calendar';
-		date?: string;
-		courtType?: string;
 		advanceBookingDays?: number;
 		timezone?: string;
 		stripePublishableKey?: string;
@@ -36,9 +30,6 @@
 	let {
 		facilitySlug,
 		theme = 'dark',
-		view = 'slots',
-		date = $bindable(new Date().toISOString().split('T')[0]),
-		courtType,
 		advanceBookingDays = 30,
 		timezone = 'America/Chicago',
 		stripePublishableKey,
@@ -46,13 +37,24 @@
 		onError
 	}: Props = $props();
 
-	// State
-	let loading = $state(true);
-	let error = $state<string | null>(null);
-	let courts = $state<CourtAvailability[]>([]);
-	let selectedCourt = $state<string | null>(null);
+	// API base URL
+	const API_BASE =
+		typeof window !== 'undefined' && window.location.hostname === 'localhost'
+			? 'http://localhost:5173/api'
+			: typeof window !== 'undefined' && window.location.hostname.includes('clearway')
+				? '/api'
+				: 'https://clearway.pages.dev/api';
+
+	// Create stores
+	const calendar = createCalendarState({ advanceBookingDays, timezone });
+	const availabilityCache = createAvailabilityCache(facilitySlug, API_BASE);
+
+	// Current view: 'calendar' or 'slots'
+	let currentView = $state<'calendar' | 'slots'>('calendar');
+
+	// Slot selection state
+	let selectedCourtId = $state<string | null>(null);
 	let selectedSlot = $state<TimeSlot | null>(null);
-	// Unique key for selection comparison (court::time)
 	let selectedKey = $state<string | null>(null);
 
 	// Checkout state
@@ -61,17 +63,27 @@
 	let reservationId = $state<string | null>(null);
 	let memberName = $state('');
 	let memberEmail = $state('');
-	let facilityName = $state('');
 
-	// API base URL - use relative path for same-origin, absolute for embeds
-	const API_BASE =
-		typeof window !== 'undefined' && window.location.hostname === 'localhost'
-			? 'http://localhost:5173/api'
-			: typeof window !== 'undefined' && window.location.hostname.includes('clearway')
-				? '/api'
-				: 'https://clearway.pages.dev/api';
+	// Derived: courts for selected date
+	let selectedDateCourts = $derived(() => {
+		if (!calendar.selectedDate) return [];
+		const availability = availabilityCache.get(calendar.selectedDate);
+		return availability?.courts || [];
+	});
 
-	// Format ISO timestamp to human-readable time (e.g., "6 AM", "5 PM")
+	// Derived: facility name
+	let facilityName = $derived(availabilityCache.facility?.name || facilitySlug);
+
+	/**
+	 * Handle view toggle (week/month)
+	 */
+	function handleViewChange(view: CalendarView) {
+		calendar.setView(view);
+	}
+
+	/**
+	 * Format ISO timestamp to human-readable time
+	 */
 	function formatTime(isoString: string): string {
 		const date = new Date(isoString);
 		const hours = date.getHours();
@@ -80,86 +92,74 @@
 		return `${hour12} ${ampm}`;
 	}
 
-	// Fetch availability
-	async function fetchAvailability() {
-		loading = true;
-		error = null;
-
-		try {
-			// Build URL - handle both relative and absolute paths
-			const params = new URLSearchParams();
-			params.set('facility', facilitySlug);
-			params.set('date', date);
-			if (courtType) {
-				params.set('court_type', courtType);
-			}
-			const fetchUrl = `${API_BASE}/availability?${params.toString()}`;
-
-			const response = await fetch(fetchUrl);
-			if (!response.ok) {
-				throw new Error(`Failed to fetch availability: ${response.statusText}`);
-			}
-
-			const data = (await response.json()) as {
-				courts?: CourtAvailability[];
-				facility?: { name: string };
-			};
-			courts = data.courts || [];
-			facilityName = data.facility?.name || facilitySlug;
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : 'Failed to load availability';
-			error = errorMsg;
-			onError?.(err instanceof Error ? err : new Error(errorMsg));
-		} finally {
-			loading = false;
-		}
+	/**
+	 * Handle date selection from calendar
+	 */
+	function handleDateSelect(date: Date) {
+		// Switch to slots view
+		currentView = 'slots';
 	}
 
-	// Select a time slot
+	/**
+	 * Go back to calendar view
+	 */
+	function handleBackToCalendar() {
+		currentView = 'calendar';
+		clearSlotSelection();
+	}
+
+	/**
+	 * Select a time slot
+	 */
 	function selectSlot(courtId: string, slot: TimeSlot) {
 		if (slot.status !== 'available') return;
-		selectedCourt = courtId;
+		selectedCourtId = courtId;
 		selectedSlot = slot;
 		selectedKey = `${courtId}::${slot.startTime}`;
+		calendar.selectSlot(courtId, slot.startTime);
 	}
 
-	// Clear selection
-	function clearSelection() {
-		selectedCourt = null;
+	/**
+	 * Clear slot selection
+	 */
+	function clearSlotSelection() {
+		selectedCourtId = null;
 		selectedSlot = null;
 		selectedKey = null;
+		calendar.clearSlot();
 	}
 
-	// Proceed to checkout (show form if name/email not collected yet)
+	/**
+	 * Proceed to checkout
+	 */
 	function proceedToCheckout() {
 		if (!memberName || !memberEmail) {
-			// Show user info collection form
 			showCheckout = true;
 		} else {
-			// Already have info, create reservation
 			createReservationAndShowPayment();
 		}
 	}
 
-	// Create reservation and show payment form
+	/**
+	 * Create reservation and show payment
+	 */
 	async function createReservationAndShowPayment() {
-		if (!selectedCourt || !selectedSlot) return;
+		if (!selectedCourtId || !selectedSlot || !calendar.selectedDate) return;
 
 		checkoutLoading = true;
-		error = null;
 
 		try {
-			const court = courts.find((c) => c.id === selectedCourt);
+			const courts = selectedDateCourts();
+			const court = courts.find((c) => c.id === selectedCourtId);
 			if (!court) throw new Error('Court not found');
 
-			// Create reservation via booking API
 			const response = await fetch(`${API_BASE}/book`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					facility_slug: facilitySlug,
-					court_id: selectedCourt,
-					date: date,
+					court_id: selectedCourtId,
+					date: formatDate(calendar.selectedDate),
 					start_time: selectedSlot.startTime,
 					member_email: memberEmail,
 					member_name: memberName
@@ -173,25 +173,24 @@
 
 			const reservation = (await response.json()) as { id: string };
 			reservationId = reservation.id;
-
-			// Show checkout form
 			showCheckout = true;
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : 'Booking failed';
-			error = errorMsg;
 			onError?.(err instanceof Error ? err : new Error(errorMsg));
 		} finally {
 			checkoutLoading = false;
 		}
 	}
 
-	// Handle successful payment
+	/**
+	 * Handle successful payment
+	 */
 	function handlePaymentSuccess(result: any) {
 		showCheckout = false;
 
-		// Call completion callback
-		if (onReservationComplete && selectedCourt && selectedSlot) {
-			const court = courts.find((c) => c.id === selectedCourt);
+		if (onReservationComplete && selectedCourtId && selectedSlot) {
+			const courts = selectedDateCourts();
+			const court = courts.find((c) => c.id === selectedCourtId);
 			onReservationComplete({
 				id: reservationId || '',
 				court: court?.name || '',
@@ -202,119 +201,136 @@
 		}
 
 		// Reset state
-		clearSelection();
-		fetchAvailability(); // Refresh to show updated availability
+		clearSlotSelection();
+		handleBackToCalendar();
+
+		// Invalidate cache for selected date
+		if (calendar.selectedDate) {
+			availabilityCache.invalidate(calendar.selectedDate);
+		}
 	}
 
-	// Handle payment error
+	/**
+	 * Handle payment error
+	 */
 	function handlePaymentError(err: Error) {
-		error = err.message;
 		onError?.(err);
 	}
 
-	// Cancel checkout
+	/**
+	 * Cancel checkout
+	 */
 	function cancelCheckout() {
 		showCheckout = false;
 		memberName = '';
 		memberEmail = '';
 		reservationId = null;
 	}
-
-	// Load on mount and when date changes
-	onMount(() => {
-		fetchAvailability();
-	});
-
-	$effect(() => {
-		// Re-fetch when date changes
-		if (date) {
-			fetchAvailability();
-		}
-	});
 </script>
 
-{#if view === 'calendar'}
-	<!-- Calendar View Mode -->
-	<CalendarWidget
-		{facilitySlug}
-		{theme}
-		{advanceBookingDays}
-		{timezone}
-		{stripePublishableKey}
-		{onReservationComplete}
-		{onError}
-	/>
-{:else}
-<div class="widget" data-theme={theme}>
-	<!-- Header -->
-	<div class="header">
-		<h3>Book a Court</h3>
-		<input type="date" bind:value={date} class="date-input" />
-	</div>
+<div class="calendar-widget" data-theme={theme}>
+	{#if currentView === 'calendar'}
+		<!-- Calendar View -->
+		<div class="calendar-view">
+			<!-- View Toggle -->
+			<div class="view-toggle-wrapper">
+				<ViewToggle
+					value={calendar.view}
+					onchange={handleViewChange}
+				/>
+			</div>
 
-	<!-- Loading State -->
-	{#if loading}
-		<div class="loading">
-			<div class="spinner"></div>
-			<p>Loading...</p>
+			<!-- Week or Month View -->
+			{#if calendar.view === 'week'}
+				<WeekView
+					{calendar}
+					{availabilityCache}
+					onDateSelect={handleDateSelect}
+				/>
+			{:else}
+				<MonthView
+					{calendar}
+					{availabilityCache}
+					onDateSelect={handleDateSelect}
+				/>
+			{/if}
 		</div>
-	{/if}
+	{:else}
+		<!-- Slots View -->
+		<div class="slots-view">
+			<!-- Back button and date header -->
+			<header class="slots-header">
+				<button class="back-btn" onclick={handleBackToCalendar} aria-label="Back to calendar">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+						<path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</button>
+				<h2 class="date-header">
+					{#if calendar.selectedDate}
+						{formatDisplayDate(calendar.selectedDate)}
+					{/if}
+				</h2>
+			</header>
 
-	<!-- Error State -->
-	{#if error && !loading}
-		<div class="error">
-			<p>{error}</p>
-			<button onclick={() => fetchAvailability()}>Retry</button>
-		</div>
-	{/if}
+			<!-- Availability summary -->
+			{#if calendar.selectedDate}
+				{@const availability = availabilityCache.get(calendar.selectedDate)}
+				{#if availability}
+					<p class="availability-summary">
+						{availability.availableSlots} slot{availability.availableSlots === 1 ? '' : 's'} available
+					</p>
+				{/if}
+			{/if}
 
-	<!-- Availability Grid -->
-	{#if !loading && !error && courts.length > 0}
-		<div class="courts">
-			{#each courts as court}
-				<div class="court">
-					<h4>{court.name}</h4>
-					<div class="slots">
-						{#each court.slots as slot}
-							<button
-								class="slot"
-								class:available={slot.status === 'available'}
-								class:peak={slot.priceCents !== null && slot.priceCents > 4000}
-								class:selected={selectedKey === `${court.id}::${slot.startTime}`}
-								onclick={() => selectSlot(court.id, slot)}
-								disabled={slot.status !== 'available'}
-							>
-								<span class="time">{formatTime(slot.startTime)}</span>
-								{#if slot.priceCents !== null}
-									<span class="price">${(slot.priceCents / 100).toFixed(0)}</span>
-								{/if}
-							</button>
-						{/each}
-					</div>
+			<!-- Courts and slots -->
+			{#if selectedDateCourts().length > 0}
+				{@const courts = selectedDateCourts()}
+				<div class="courts">
+					{#each courts as court}
+						<div class="court">
+							<h4>{court.name}</h4>
+							<div class="slots">
+								{#each court.slots as slot}
+									<button
+										class="slot"
+										class:available={slot.status === 'available'}
+										class:peak={slot.priceCents !== null && slot.priceCents > 4000}
+										class:selected={selectedKey === `${court.id}::${slot.startTime}`}
+										onclick={() => selectSlot(court.id, slot)}
+										disabled={slot.status !== 'available'}
+									>
+										<span class="time">{formatTime(slot.startTime)}</span>
+										{#if slot.priceCents !== null}
+											<span class="price">${(slot.priceCents / 100).toFixed(0)}</span>
+										{/if}
+									</button>
+								{/each}
+							</div>
+						</div>
+					{/each}
 				</div>
-			{/each}
-		</div>
-	{/if}
-
-	<!-- Empty State -->
-	{#if !loading && !error && courts.length === 0}
-		<div class="empty">
-			<p>No courts available.</p>
+			{:else}
+				<div class="empty">
+					<p>No courts available for this date.</p>
+				</div>
+			{/if}
 		</div>
 	{/if}
 
 	<!-- Booking Panel -->
-	{#if selectedSlot && selectedCourt && !showCheckout}
+	{#if selectedSlot && selectedCourtId && !showCheckout}
+		{@const courts = selectedDateCourts()}
+		{@const court = courts.find((c) => c.id === selectedCourtId)}
 		<div class="booking">
 			<div class="details">
-				<strong>{courts.find((c) => c.id === selectedCourt)?.name}</strong>
+				<strong>{court?.name}</strong>
 				<span>{formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}</span>
 				{#if selectedSlot.priceCents}
 					<span class="amount">${(selectedSlot.priceCents / 100).toFixed(0)}</span>
 				{/if}
 			</div>
 			<div class="actions">
-				<button class="cancel" onclick={clearSelection}>Cancel</button>
+				<button class="cancel" onclick={clearSlotSelection}>Cancel</button>
 				<button class="book" onclick={proceedToCheckout} disabled={checkoutLoading}>
 					{#if checkoutLoading}
 						Loading...
@@ -326,17 +342,11 @@
 		</div>
 	{/if}
 
-	<!-- Checkout Form (In-Widget Payment) -->
+	<!-- User Info Form -->
 	{#if showCheckout && !reservationId}
-		<!-- User Info Collection -->
 		<div class="user-info-form">
 			<h3>Your Information</h3>
-			<form
-				onsubmit={(e) => {
-					e.preventDefault();
-					createReservationAndShowPayment();
-				}}
-			>
+			<form onsubmit={(e) => { e.preventDefault(); createReservationAndShowPayment(); }}>
 				<div class="field">
 					<label for="name">Name</label>
 					<input
@@ -373,11 +383,12 @@
 				</div>
 			</form>
 		</div>
-	{:else if showCheckout && reservationId && selectedSlot && selectedCourt && stripePublishableKey}
-		<!-- Payment Form -->
+	{:else if showCheckout && reservationId && selectedSlot && selectedCourtId && stripePublishableKey}
+		{@const courts = selectedDateCourts()}
+		{@const court = courts.find((c) => c.id === selectedCourtId)}
 		<CheckoutForm
 			{reservationId}
-			courtName={courts.find((c) => c.id === selectedCourt)?.name || ''}
+			courtName={court?.name || ''}
 			{facilityName}
 			startTime={selectedSlot.startTime}
 			endTime={selectedSlot.endTime}
@@ -391,94 +402,88 @@
 			onCancel={cancelCheckout}
 		/>
 	{/if}
+
+	<!-- Error Display -->
+	{#if availabilityCache.lastError}
+		<div class="error-banner">
+			<p>{availabilityCache.lastError}</p>
+		</div>
+	{/if}
 </div>
-{/if}
 
 <style>
-	/* Canon Design System - Monochrome First */
-	.widget {
+	/* Canon Design System - Monochrome */
+	.calendar-widget {
 		font-family: var(--font-sans, 'Stack Sans Notch', system-ui, sans-serif);
 		border-radius: var(--radius-lg, 12px);
 		padding: var(--space-lg, 1.5rem);
 		max-width: 800px;
 		margin: 0 auto;
+		position: relative;
 	}
 
-	/* Dark Theme (default) */
-	.widget[data-theme='dark'] {
+	/* Dark Theme */
+	.calendar-widget[data-theme='dark'] {
 		background: var(--color-bg-subtle, #1a1a1a);
 		color: var(--color-fg-primary, #ffffff);
 		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
-	.widget[data-theme='dark'] .date-input,
-	.widget[data-theme='dark'] button {
-		background: var(--color-bg-surface, #111111);
-		color: var(--color-fg-primary, #ffffff);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	/* Calendar View */
+	.calendar-view {
+		min-height: 300px;
 	}
 
-	/* Header */
-	.header {
+	.view-toggle-wrapper {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: var(--space-lg, 1.5rem);
+		justify-content: flex-end;
+		margin-bottom: var(--space-md, 1rem);
 	}
 
-	.header h3 {
-		margin: 0;
+	/* Slots View */
+	.slots-view {
+		min-height: 300px;
+	}
+
+	.slots-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md, 1rem);
+		margin-bottom: var(--space-md, 1rem);
+	}
+
+	.back-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		background: transparent;
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-md, 8px);
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		cursor: pointer;
+		transition:
+			border-color var(--duration-micro, 100ms) ease,
+			color var(--duration-micro, 100ms) ease;
+	}
+
+	.back-btn:hover {
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.25));
+		color: var(--color-fg-primary, #ffffff);
+	}
+
+	.date-header {
 		font-size: var(--text-h3, 1.25rem);
 		font-weight: 600;
 		color: var(--color-fg-primary, #ffffff);
+		margin: 0;
 	}
 
-	.date-input {
-		padding: 0.5rem 0.75rem;
-		border-radius: var(--radius-md, 8px);
-		font-size: var(--text-body, 1rem);
-		font-family: inherit;
-		transition: border-color 200ms ease;
-	}
-
-	.date-input:focus {
-		outline: none;
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.3));
-	}
-
-	/* Loading */
-	.loading {
-		text-align: center;
-		padding: var(--space-xl, 3rem) var(--space-sm, 1rem);
+	.availability-summary {
+		font-size: var(--text-body-sm, 0.875rem);
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
-	}
-
-	.spinner {
-		width: 32px;
-		height: 32px;
-		margin: 0 auto var(--space-sm, 1rem);
-		border: 2px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-top-color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		to { transform: rotate(360deg); }
-	}
-
-	/* Error */
-	.error {
-		text-align: center;
-		padding: var(--space-lg, 1.5rem);
-		color: var(--color-error, #d44d4d);
-	}
-
-	.error button {
-		margin-top: var(--space-sm, 1rem);
-		padding: 0.5rem 1.5rem;
-		border-radius: var(--radius-md, 8px);
-		cursor: pointer;
+		margin: 0 0 var(--space-lg, 1.5rem);
 	}
 
 	/* Courts */
@@ -486,7 +491,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-lg, 1.5rem);
-		padding-bottom: 100px; /* Space for fixed booking panel */
+		padding-bottom: 100px;
 	}
 
 	.court h4 {
@@ -512,16 +517,15 @@
 		cursor: pointer;
 		transition: all 200ms ease;
 		font-size: var(--text-body-sm, 0.875rem);
+		background: var(--color-bg-surface, #111111);
+		color: var(--color-fg-primary, #ffffff);
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		font-family: inherit;
 	}
 
 	.slot:disabled {
 		cursor: not-allowed;
 		opacity: 0.25;
-	}
-
-	.slot.available {
-		background: var(--color-bg-surface, rgba(255, 255, 255, 0.05));
-		border-color: var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	.slot.available:hover:not(:disabled) {
@@ -559,7 +563,7 @@
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
-	/* Booking Panel - fixed to bottom of iframe viewport */
+	/* Booking Panel */
 	.booking {
 		position: fixed;
 		bottom: 0;
@@ -581,14 +585,8 @@
 	}
 
 	@keyframes slideUp {
-		from {
-			opacity: 0;
-			transform: translateY(100%);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
+		from { opacity: 0; transform: translateY(100%); }
+		to { opacity: 1; transform: translateY(0); }
 	}
 
 	.details {
@@ -625,6 +623,7 @@
 		font-size: var(--text-body, 1rem);
 		cursor: pointer;
 		transition: all 200ms ease;
+		font-family: inherit;
 	}
 
 	.cancel {
@@ -638,7 +637,6 @@
 		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
-	/* Canon monochrome primary button: inverted colors, prominent */
 	.book {
 		background: var(--color-fg-primary, #ffffff);
 		color: var(--color-bg-pure, #000000);
@@ -650,38 +648,6 @@
 
 	.book:hover {
 		opacity: 0.9;
-		transform: scale(1.02);
-	}
-
-	/* Responsive */
-	@media (max-width: 640px) {
-		.slots {
-			grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-		}
-
-		.booking {
-			flex-direction: column;
-			align-items: stretch;
-		}
-
-		.actions {
-			width: 100%;
-		}
-
-		.cancel,
-		.book {
-			flex: 1;
-		}
-	}
-
-	/* Reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.booking {
-			animation: none;
-		}
-		.book:hover {
-			transform: none;
-		}
 	}
 
 	/* User Info Form */
@@ -696,7 +662,7 @@
 		background: var(--color-bg-surface, #111111);
 		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
 		border-bottom: none;
-		animation: slideUp var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		animation: slideUp var(--duration-standard, 300ms) ease;
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 		z-index: 100;
 	}
@@ -745,27 +711,55 @@
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
 	}
 
-	.field input:disabled {
-		opacity: 0.5;
-	}
-
 	.form-actions {
 		display: flex;
 		gap: 0.5rem;
 		margin-top: var(--space-sm, 0.75rem);
 	}
 
+	/* Error Banner */
+	.error-banner {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		padding: var(--space-md, 1rem);
+		background: var(--color-error, #d44d4d);
+		color: white;
+		text-align: center;
+		z-index: 150;
+	}
+
+	/* Responsive */
 	@media (max-width: 640px) {
-		.user-info-form {
-			padding: var(--space-md, 1rem);
+		.slots {
+			grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+		}
+
+		.booking {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.actions {
+			width: 100%;
+		}
+
+		.cancel,
+		.book {
+			flex: 1;
 		}
 
 		.form-actions {
 			flex-direction: column;
 		}
+	}
 
-		.form-actions button {
-			width: 100%;
+	/* Reduced motion */
+	@media (prefers-reduced-motion: reduce) {
+		.booking,
+		.user-info-form {
+			animation: none;
 		}
 	}
 </style>

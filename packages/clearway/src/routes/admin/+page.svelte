@@ -103,6 +103,15 @@
 				<span class="live-indicator">Demo Instance</span>
 			</div>
 			<div class="header-actions">
+				<a href="/admin/calendar" class="nav-link">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+						<rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+						<path d="M3 8H17" stroke="currentColor" stroke-width="1.5"/>
+						<path d="M7 2V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						<path d="M13 2V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+					</svg>
+					Calendar
+				</a>
 				{#if seedMessage}
 					<span class="seed-message">{seedMessage}</span>
 				{/if}
@@ -311,6 +320,27 @@
 	.seed-button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.nav-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		font-size: var(--text-body-sm, 0.875rem);
+		font-weight: 500;
+		background: transparent;
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-md, 8px);
+		text-decoration: none;
+		transition: all var(--duration-micro, 200ms) var(--ease-standard);
+	}
+
+	.nav-link:hover {
+		background: var(--color-hover, rgba(255, 255, 255, 0.05));
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		color: var(--color-fg-primary, #ffffff);
 	}
 
 	/* Stats Grid */
