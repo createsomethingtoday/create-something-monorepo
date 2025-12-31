@@ -66,12 +66,19 @@ animation-duration: var(--duration-complex);
 
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
-| **CommandPalette** | shadcn-svelte/cmdk-sv | `⌘K` / `Ctrl+K` trigger | P1 |
+| **StickyHeader** | Universal | Scroll-triggered frosted glass | Done |
+| **MobileDrawer** | shadcn-svelte Drawer | Side/bottom sheet variants | Done |
+| **CommandPalette** | cmdk-sv | `⌘K` / `Ctrl+K` trigger | Done |
+| **MenuButton** | Universal | Animated hamburger → X | Done |
 | **MegaMenu** | shadcn-svelte Navigation Menu | Dropdown with sections | P2 |
-| **MobileDrawer** | shadcn-svelte Drawer | Bottom sheet on mobile | P1 |
 | **Breadcrumbs** | shadcn-svelte | Already in components | Done |
-| **StickyHeader** | Universal | Scroll-triggered backdrop | P2 |
 | **Tabs** | Melt UI | Accessible tab interface | P2 |
+
+**Implemented in `@create-something/components/navigation`**:
+- `StickyHeader` - Fixed header with scroll-triggered backdrop blur
+- `MobileDrawer` - Slide-out drawer (left/right/bottom variants)
+- `CommandPalette` - ⌘K triggered fuzzy search with keyboard navigation
+- `MenuButton` - Animated hamburger toggle (44px touch target)
 
 ### 4. Form Patterns
 
@@ -265,13 +272,9 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 | **interactive** | GlassCard | `@create-something/components/interactive` |
 | **layout** | Section, SplitSection, BentoGrid, BentoItem, SectionHeader | `@create-something/components/layout` |
 | **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
+| **navigation** | StickyHeader, MobileDrawer, CommandPalette, MenuButton | `@create-something/components/navigation` |
 
 ### Remaining Work
-
-**Navigation Patterns** (P1):
-- StickyHeader - Scroll-triggered backdrop
-- MobileDrawer - Bottom sheet navigation
-- CommandPalette - ⌘K search
 
 **Content Patterns** (P2):
 - VideoLightbox - Modal video player
