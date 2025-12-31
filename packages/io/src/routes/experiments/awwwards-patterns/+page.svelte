@@ -615,7 +615,7 @@ const scroll = window.scrollY;
 		position: relative;
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-primary);
-		text-decoration: none;
+		text-decoration: none !important;
 		padding-bottom: 0.25em;
 	}
 
