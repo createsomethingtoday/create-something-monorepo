@@ -26,7 +26,7 @@ Research document for building a 90+/100 pattern library that exceeds Maverick X
 | **StaggerContainer** | Framer Motion | Staggered child animations | Done |
 | **CountUp** | Maverick X | IntersectionObserver trigger | Done |
 | **FadeIn** | Universal | `opacity` + `translateY(20px)` | Done |
-| **ParallaxSection** | Lenis/Locomotive | CSS `translateY` with scroll progress | P2 |
+| **ParallaxSection** | Lenis/Locomotive | CSS `translateY` with scroll progress | Done |
 | **SmoothScroll** | Lenis | Consider Lenis integration | P3 |
 
 **Implemented in `@create-something/components/motion`**:
@@ -34,6 +34,7 @@ Research document for building a 90+/100 pattern library that exceeds Maverick X
 - `StaggerContainer` + `StaggerItem` - Staggered child animations
 - `CountUp` - Animated number counter with easing
 - `FadeIn` - Simple entrance animation wrapper
+- `ParallaxSection` - Multi-layer parallax depth effect with scroll progress
 
 **2025 Motion Insight**: Lightweight, targeted animations over complex sequences. Focus on scroll-triggered reveals, not decorative motion.
 
@@ -280,7 +281,7 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 
 | Package | Patterns | Import Path |
 |---------|----------|-------------|
-| **motion** | ScrollReveal, StaggerContainer, StaggerItem, CountUp, FadeIn | `@create-something/components/motion` |
+| **motion** | ScrollReveal, StaggerContainer, StaggerItem, CountUp, FadeIn, ParallaxSection | `@create-something/components/motion` |
 | **interactive** | GlassCard | `@create-something/components/interactive` |
 | **layout** | Section, SplitSection, BentoGrid, BentoItem, SectionHeader | `@create-something/components/layout` |
 | **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
@@ -291,8 +292,8 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 ### Remaining Work
 
 All core patterns implemented. Future enhancements (P2-P3):
-- ParallaxSection - Multi-layer depth effect
 - HoverCard - Link preview on hover
 - MegaMenu - Complex navigation dropdown
 - Tabs - Accessible tab interface
 - ExitIntent - Mouse-leave detection modal
+- SmoothScroll - Lenis-based smooth scrolling
