@@ -43,19 +43,19 @@
 		</p>
 
 		<div class="ecosystem-grid">
-			<a href="https://createsomething.io" class="ecosystem-card" target="_blank" rel="noopener">
+			<a href="https://createsomething.io" class="ecosystem-card" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.io</span>
 				<h3 class="property-name">Research</h3>
 				<p class="property-desc">Papers and experiments. The theory behind what you're learning.</p>
 			</a>
 
-			<a href="https://createsomething.agency" class="ecosystem-card" target="_blank" rel="noopener">
+			<a href="https://createsomething.agency" class="ecosystem-card" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.agency</span>
 				<h3 class="property-name">Apply</h3>
 				<p class="property-desc">See these patterns in production. Client work at the highest standard.</p>
 			</a>
 
-			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" target="_blank" rel="noopener">
+			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
 				<h3 class="property-name">Canon</h3>
 				<p class="property-desc">The philosophy of crystallization. Human judgment encoded for AI execution.</p>
@@ -110,13 +110,39 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: left;
-		transition: border-color var(--duration-micro) var(--ease-standard),
-					background var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
+		/* Cascade entrance */
+		opacity: 0;
+		animation: cardReveal var(--duration-standard) var(--ease-standard) forwards;
+		animation-delay: calc(var(--index, 0) * var(--cascade-step));
 	}
 
 	.ecosystem-card:hover {
+		transform: scale(var(--scale-micro));
 		border-color: var(--color-border-emphasis);
 		background: var(--color-bg-surface);
+	}
+
+	.ecosystem-card:active {
+		transform: scale(var(--scale-subtle));
+	}
+
+	@keyframes cardReveal {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.ecosystem-card {
+			animation: none;
+			opacity: 1;
+		}
 	}
 
 	.property-tag {

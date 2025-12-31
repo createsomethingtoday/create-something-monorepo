@@ -110,7 +110,11 @@
 	.paper-card:hover {
 		border-color: var(--color-border-strong);
 		box-shadow: var(--shadow-xl), 0 0 30px var(--color-hover);
-		transform: translateY(-8px);
+		transform: scale(var(--scale-micro));
+	}
+
+	.paper-card:active {
+		transform: scale(var(--scale-subtle));
 	}
 
 	/* Image Section */
@@ -186,8 +190,8 @@
 	/* Staggered reveal animation - CSS only */
 	.animate-reveal {
 		opacity: 0;
-		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 100ms);
+		animation: reveal var(--duration-complex) var(--ease-standard) forwards;
+		animation-delay: calc(var(--delay, 0) * var(--cascade-group));
 	}
 
 	@keyframes reveal {

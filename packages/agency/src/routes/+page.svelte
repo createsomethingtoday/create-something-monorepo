@@ -55,8 +55,8 @@
 <!-- Act 2: What We Do -->
 <section class="services-section">
 	<div class="services-grid">
-		{#each services as service}
-			<a href={service.href} class="service-card">
+		{#each services as service, i}
+			<a href={service.href} class="service-card" style="--index: {i}">
 				<h3 class="service-title">{service.title}</h3>
 				<p class="service-description">{service.description}</p>
 				<span class="service-arrow">→</span>
@@ -72,7 +72,7 @@
 
 	<div class="principles-list">
 		{#each principles as principle, i}
-			<div class="principle">
+			<div class="principle" style="--index: {i}">
 				<span class="principle-number">{i + 1}</span>
 				<div class="principle-content">
 					<p class="principle-question">{principle.question}</p>
@@ -93,19 +93,19 @@
 		</p>
 
 		<div class="ecosystem-grid">
-			<a href="https://createsomething.io" class="ecosystem-card" target="_blank" rel="noopener">
+			<a href="https://createsomething.io" class="ecosystem-card" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.io</span>
 				<h3 class="property-name">Research</h3>
 				<p class="property-desc">Papers and experiments that validate our approach. Peer-reviewed patterns.</p>
 			</a>
 
-			<a href="https://createsomething.space" class="ecosystem-card" target="_blank" rel="noopener">
+			<a href="https://createsomething.space" class="ecosystem-card" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.space</span>
 				<h3 class="property-name">Practice</h3>
 				<p class="property-desc">Learn the patterns we use. Interactive tutorials for AI-native development.</p>
 			</a>
 
-			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" target="_blank" rel="noopener">
+			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
 				<h3 class="property-name">Canon</h3>
 				<p class="property-desc">Crystallization: human judgment encoded for AI execution. The philosophy behind our work.</p>
@@ -148,13 +148,21 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
-		transition: border-color var(--duration-standard) var(--ease-standard),
-					background var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
+		/* Cascade entrance */
+		opacity: 0;
+		animation: cardReveal var(--duration-standard) var(--ease-standard) forwards;
+		animation-delay: calc(var(--index, 0) * var(--cascade-step));
 	}
 
 	.service-card:hover {
+		transform: scale(var(--scale-micro));
 		border-color: var(--color-border-emphasis);
 		background: var(--color-bg-elevated);
+	}
+
+	.service-card:active {
+		transform: scale(var(--scale-subtle));
 	}
 
 	.service-title {
@@ -217,6 +225,21 @@
 		align-items: flex-start;
 		gap: var(--space-md);
 		text-align: left;
+		/* Cascade entrance */
+		opacity: 0;
+		animation: principleReveal var(--duration-standard) var(--ease-standard) forwards;
+		animation-delay: calc(var(--index, 0) * var(--cascade-group));
+	}
+
+	@keyframes principleReveal {
+		from {
+			opacity: 0;
+			transform: translateX(-16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
 	}
 
 	.principle-number {
@@ -332,13 +355,21 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: left;
-		transition: border-color var(--duration-micro) var(--ease-standard),
-					background var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
+		/* Cascade entrance */
+		opacity: 0;
+		animation: cardReveal var(--duration-standard) var(--ease-standard) forwards;
+		animation-delay: calc(var(--index, 0) * var(--cascade-step));
 	}
 
 	.ecosystem-card:hover {
+		transform: scale(var(--scale-micro));
 		border-color: var(--color-border-emphasis);
 		background: var(--color-bg-surface);
+	}
+
+	.ecosystem-card:active {
+		transform: scale(var(--scale-subtle));
 	}
 
 	.property-tag {
@@ -385,6 +416,28 @@
 
 		.ecosystem-grid {
 			grid-template-columns: 1fr;
+		}
+	}
+
+	/* Shared keyframe for card reveals */
+	@keyframes cardReveal {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* Reduced motion support */
+	@media (prefers-reduced-motion: reduce) {
+		.service-card,
+		.principle,
+		.ecosystem-card {
+			animation: none;
+			opacity: 1;
 		}
 	}
 </style>

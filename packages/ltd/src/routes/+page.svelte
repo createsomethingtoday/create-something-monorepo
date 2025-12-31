@@ -177,7 +177,7 @@
 
 	.hero-entrance {
 		animation: fadeInSettle var(--duration-complex) cubic-bezier(0, 0, 0.2, 1);
-		animation-delay: calc(var(--delay) * 100ms);
+		animation-delay: calc(var(--delay) * var(--cascade-group));
 		animation-fill-mode: both;
 	}
 
@@ -329,10 +329,15 @@
 	}
 
 	.master-card:hover {
+		transform: scale(var(--scale-micro));
 		border-color: var(--color-border-emphasis);
 		background: var(--color-bg-elevated);
 		/* Subtle emphasis on hover — depth suggested through background shift */
 		box-shadow: 0 0 0 1px var(--color-border-emphasis);
+	}
+
+	.master-card:active {
+		transform: scale(var(--scale-subtle));
 	}
 
 	.master-name {
@@ -447,12 +452,16 @@
 		color: var(--color-fg-primary);
 		padding: var(--space-sm) var(--space-md);
 		border: 1px solid var(--color-border-default);
-		transition: border-color var(--duration-micro) var(--ease-standard),
-					background var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.crystal-link:hover {
+		transform: scale(var(--scale-micro));
 		border-color: var(--color-fg-primary);
 		background: var(--color-bg-elevated);
+	}
+
+	.crystal-link:active {
+		transform: scale(var(--scale-subtle));
 	}
 </style>
