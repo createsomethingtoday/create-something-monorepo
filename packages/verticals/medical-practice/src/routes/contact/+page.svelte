@@ -100,6 +100,19 @@
 	</div>
 </section>
 
+<section class="privacy-notice">
+	<div class="container">
+		<div class="notice-box">
+			<h3>Privacy Notice</h3>
+			<p>
+				Please do not include any personal medical information in emails, voicemails, or contact
+				forms. For medical questions or concerns, please call our office directly to speak with a
+				staff member.
+			</p>
+		</div>
+	</div>
+</section>
+
 <section class="booking-section">
 	<div class="container">
 		<h2>Schedule an Appointment</h2>
@@ -188,6 +201,30 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: var(--space-2xl);
+	}
+
+	.privacy-notice {
+		padding: var(--space-xl) 0;
+		background: var(--color-bg-elevated);
+	}
+
+	.notice-box {
+		background: var(--color-bg-surface);
+		padding: var(--space-lg);
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-border-default);
+		max-width: 800px;
+		margin: 0 auto;
+	}
+
+	.notice-box h3 {
+		margin-bottom: var(--space-sm);
+		color: var(--color-fg-primary);
+	}
+
+	.notice-box p {
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
 	}
 
 	.info-section h2,
