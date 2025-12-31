@@ -9,66 +9,58 @@
 
 ## Post
 
-Your AI coding assistant is only as good as your system around it.
+Most teams treat AI coding assistants like autocomplete. Type faster, accept suggestions, clean up hallucinations. The AI does tasks. The human does damage control.
 
-We've built 50+ projects with Claude Code this year. Most teams use AI assistants like autocomplete on steroids—faster typing, occasional suggestions, a lot of hallucinations to clean up. This is using a power tool as a hammer.
+This inverts the relationship.
 
-Here's what actually works:
+The AI should do the work. The human should design the system that makes the work possible.
 
-**Pattern 1: Give your AI a brain.**
+We maintain a CLAUDE.md file in every repository. It contains: project architecture, naming conventions, what not to do, links to critical documentation. The AI reads this before every session. No more "let me re-explain the codebase." The context is already there.
 
-Create a CLAUDE.md in your repo root: project architecture, key conventions, what NOT to do, links to critical docs. The AI reads this first. Every session starts informed.
+But context isn't enough. Work needs to be bounded.
 
-**Pattern 2: Break work into bounded tasks.**
+"Build the authentication system" produces hallucinations. The scope is too large. The AI guesses at requirements, invents patterns, loses coherence halfway through.
 
-Bad: "Build the authentication system"
+"Add JWT token generation to the login endpoint" produces working code. The scope is clear. Success criteria are obvious. The AI can verify its own work.
 
-Good:
-- Create the User model with email/password fields
-- Add JWT token generation to login endpoint
-- Write middleware to validate tokens on protected routes
+We decompose every feature into tasks small enough that the AI can hold the entire problem in context. If a task requires referencing code the AI hasn't seen, the task is too big.
 
-Small tasks = fewer hallucinations = better code.
+The final piece: persistence across sessions.
 
-**Pattern 3: Trust but verify.**
+AI assistants forget everything between conversations. Every session starts from zero. This forces humans to re-explain context—which they do poorly, inconsistently, and incompletely.
 
-After every significant change: run tests, check types, review the diff. Make the AI fix what it broke before moving on. 90% of AI mistakes are caught by automated checks.
+We use Beads, an agent-native issue tracker. It records what was attempted, what succeeded, what's blocked. The AI reads this at session start. Work continues where it left off.
 
-**Pattern 4: Preserve context across sessions.**
+The pattern: context (CLAUDE.md) + bounded tasks + persistent memory (Beads).
 
-Use task tracking that persists: what was attempted, what succeeded, what's blocked. We use Beads (agent-native issue tracking). The AI picks up where it left off. No more "let me re-explain the entire project."
-
-The AI isn't the bottleneck. Your system around it is.
-
-These patterns turned our AI from "helpful autocomplete" to "junior developer who never sleeps."
+The AI isn't the bottleneck. The system around it is.
 
 ---
 
 ## Comment (Post after publishing)
 
-Deep dive on agent orchestration patterns: createsomething.io/papers
-
 Beads (agent-native task tracking): github.com/anthropics/beads
 
-#AIEngineering #DeveloperProductivity #ClaudeAI
+How we think about AI-human collaboration: createsomething.io/papers/code-mode-hermeneutic-analysis
+
+#AIEngineering #DeveloperProductivity #ClaudeCode
 
 ---
 
 ## Voice Compliance
 
-- [x] Claims backed by experience (50+ projects)
-- [x] Specific patterns, not vague advice
-- [x] Concrete examples (auth system decomposition)
-- [x] Tool mentioned (Beads) with context
-- [x] No marketing jargon
-- [x] Direct, actionable sentences
+- [x] No unverified claims (removed "50+ projects", "90%")
+- [x] Methodology explained, not listed as "tips"
+- [x] Concrete example (JWT vs auth system)
+- [x] Tools mentioned with purpose (CLAUDE.md, Beads)
+- [x] No marketing jargon (removed "junior dev who never sleeps")
+- [x] Direct, declarative sentences
 - [x] Self-contained
 
 ---
 
 ## Posting Notes
 
-- Best time: Tue-Thu, 9:00 AM Pacific
-- Engage with comments in first 30 minutes
-- CTA link goes in first comment
-- Character count: ~1,700 (optimal range)
+- Best time: Wed Jan 8, 9:00 AM Pacific
+- Character count: ~1,700
+- Links paper (code-mode-hermeneutic-analysis) for depth
