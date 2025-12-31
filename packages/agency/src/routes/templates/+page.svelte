@@ -121,6 +121,43 @@
 			previewUrl: 'https://medical-practice-template.pages.dev'
 		},
 		{
+			id: 'dental-practice',
+			slug: 'dental-practice',
+			name: 'Dental Practice',
+			tagline: 'Appointments that book themselves',
+			description:
+				'HIPAA-ready dental practice template with automated scheduling, patient intake, treatment reminders, and insurance verification. Integrates with Dentrix, Open Dental, and Eaglesoft.',
+			status: 'production',
+			icon: Stethoscope,
+			workflows: [
+				{
+					name: 'Appointment Scheduling',
+					outcome: 'Patients book online, appointments auto-populate your system'
+				},
+				{
+					name: 'Patient Intake Forms',
+					outcome: 'New patient paperwork completed before arrival'
+				},
+				{
+					name: 'Treatment Reminders',
+					outcome: 'Hygiene appointments book themselves without staff intervention'
+				},
+				{
+					name: 'Insurance Verification',
+					outcome: 'Coverage confirmed before patient arrives'
+				}
+			],
+			features: [
+				'HIPAA-aware form handling',
+				'Practice management integrations',
+				'Before/after galleries',
+				'Emergency appointment routing',
+				'Multi-location support',
+				'ADA accessibility (WCAG AA)'
+			],
+			previewUrl: 'https://dental-practice-template.pages.dev'
+		},
+		{
 			id: 'professional-services',
 			slug: 'professional-services',
 			name: 'Professional Services',
@@ -242,11 +279,11 @@
 	<title>Vertical Templates Marketplace - Industry Websites with Built-in Automation</title>
 	<meta
 		name="description"
-		content="Production-ready website templates for law firms, medical practices, professional services, and more. Each template includes automated workflows powered by WORKWAY. Deploy to Cloudflare in minutes."
+		content="Production-ready website templates for law firms, medical practices, dental practices, professional services, and more. Each template includes automated workflows powered by WORKWAY. Deploy to Cloudflare in minutes."
 	/>
 	<meta
 		name="keywords"
-		content="industry website templates, vertical saas templates, law firm website template, medical practice website, professional services website, automated client intake, consultation booking automation, cloudflare templates, workflow automation, workway templates"
+		content="industry website templates, vertical saas templates, law firm website template, medical practice website, dental practice website, dentist website builder, professional services website, automated client intake, consultation booking automation, cloudflare templates, workflow automation, workway templates"
 	/>
 	{#if data.structuredData}
 		{@html `<script type="application/ld+json">${JSON.stringify(data.structuredData)}</script>`}
@@ -255,8 +292,8 @@
 
 <SEO
 	title="Vertical Templates Marketplace - Industry Websites with Built-in Automation"
-	description="Production-ready website templates for law firms, medical practices, professional services, and more. Each template includes automated workflows powered by WORKWAY. Deploy to Cloudflare in minutes."
-	keywords="industry website templates, vertical saas templates, law firm website template, medical practice website, professional services website, automated client intake, consultation booking automation, cloudflare templates, workflow automation, workway templates"
+	description="Production-ready website templates for law firms, medical practices, dental practices, professional services, and more. Each template includes automated workflows powered by WORKWAY. Deploy to Cloudflare in minutes."
+	keywords="industry website templates, vertical saas templates, law firm website template, medical practice website, dental practice website, dentist website builder, professional services website, automated client intake, consultation booking automation, cloudflare templates, workflow automation, workway templates"
 	ogImage="/og-templates.jpg"
 	propertyName="agency"
 />
@@ -275,11 +312,11 @@
 		</p>
 		<div class="hero-stats">
 			<div class="stat">
-				<span class="stat-value">6</span>
+				<span class="stat-value">7</span>
 				<span class="stat-label">Industry Templates</span>
 			</div>
 			<div class="stat">
-				<span class="stat-value">15+</span>
+				<span class="stat-value">19+</span>
 				<span class="stat-label">Automation Workflows</span>
 			</div>
 			<div class="stat">
@@ -346,9 +383,15 @@
 
 				<!-- Actions -->
 				<div class="template-actions">
-					<a href={template.previewUrl} class="btn btn-secondary" target="_blank" rel="noopener">
-						Preview Template
-					</a>
+					{#if template.slug === 'dental-practice'}
+						<a href="/templates/dental-practice" class="btn btn-secondary">
+							Learn More
+						</a>
+					{:else}
+						<a href={template.previewUrl} class="btn btn-secondary" target="_blank" rel="noopener">
+							Preview Template
+						</a>
+					{/if}
 					<a href="/products/vertical-templates/configure?template={template.slug}" class="btn btn-primary">
 						Deploy Now
 						<ArrowRight size={16} strokeWidth={2} />

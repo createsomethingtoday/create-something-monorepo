@@ -1,0 +1,164 @@
+{
+  "$schema": "https://createsomething.io/schemas/template-manifest.json",
+  "name": "Dental Practice Template",
+  "slug": "dental-practice",
+  "version": "1.0.0",
+  "description": "Appointments that book themselves. HIPAA-ready dental practice website with automated scheduling, patient intake, treatment reminders, and insurance verification workflows.",
+  "category": "healthcare",
+  "subcategories": [
+    "dental-practice",
+    "dentist-website",
+    "orthodontist",
+    "dental-office",
+    "healthcare"
+  ],
+  "author": {
+    "name": "CREATE SOMETHING",
+    "url": "https://createsomething.agency",
+    "support": "https://createsomething.agency/contact"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/createsomething/vertical-healthcare",
+  "demo": "https://dental-practice.createsomething.space",
+  "thumbnail": "/og-image-dental.jpg",
+  "screenshots": [
+    "/screenshots/home.png",
+    "/screenshots/services.png",
+    "/screenshots/team.png",
+    "/screenshots/contact.png"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": [
+        "Complete dental website",
+        "Canon design system",
+        "SEO & structured data",
+        "Mobile responsive",
+        "Contact forms",
+        "HIPAA-conscious architecture",
+        "Practice hours & location",
+        "Service descriptions"
+      ]
+    },
+    "pro": {
+      "price": 99,
+      "currency": "USD",
+      "features": [
+        "Everything in Free",
+        "4 active WORKWAY workflows",
+        "Calendar integration (Calendly/Acuity)",
+        "Automated appointment reminders",
+        "Patient intake automation",
+        "Insurance verification workflow",
+        "Practice management integration",
+        "Treatment recall automation",
+        "Before/after galleries",
+        "Custom domain setup",
+        "Email support"
+      ]
+    },
+    "enterprise": {
+      "price": null,
+      "contact": true,
+      "features": [
+        "Everything in Pro",
+        "Unlimited WORKWAY workflows",
+        "Custom integrations (Dentrix, Open Dental, Eaglesoft)",
+        "Multi-location support",
+        "White-label branding",
+        "Priority support",
+        "Done-for-you setup",
+        "HIPAA compliance consultation"
+      ]
+    }
+  },
+  "stack": {
+    "framework": "sveltekit",
+    "css": "tailwind + canon",
+    "hosting": "cloudflare-pages",
+    "database": "cloudflare-d1",
+    "storage": "cloudflare-r2",
+    "cache": "cloudflare-kv"
+  },
+  "workflows": {
+    "included": [
+      {
+        "name": "appointment-scheduling",
+        "description": "Online booking + calendar sync + practice management integration",
+        "tier": "pro"
+      },
+      {
+        "name": "patient-intake",
+        "description": "Digital forms auto-populate patient records",
+        "tier": "pro"
+      },
+      {
+        "name": "treatment-reminders",
+        "description": "Automated recall for cleanings and checkups",
+        "tier": "pro"
+      },
+      {
+        "name": "insurance-verification",
+        "description": "Pre-appointment eligibility checks",
+        "tier": "pro"
+      }
+    ]
+  },
+  "requirements": {
+    "cloudflare": {
+      "account": true,
+      "d1": true,
+      "kv": true,
+      "r2": true
+    },
+    "optional": {
+      "sendgrid": "Email notifications",
+      "twilio": "SMS notifications",
+      "calendly": "Calendar booking",
+      "dentrix": "Practice management integration",
+      "opendental": "Practice management integration",
+      "eaglesoft": "Practice management integration"
+    }
+  },
+  "compliance": {
+    "hipaa": {
+      "architecture": "HIPAA-conscious design",
+      "encryption": "TLS 1.3, D1/R2 encryption at rest",
+      "disclaimer": "Full HIPAA compliance requires additional configuration and Business Associate Agreements. Deployers are responsible for conducting security assessments and consulting with healthcare compliance experts.",
+      "documentation": "https://github.com/createsomething/vertical-templates/blob/main/medical-practice/HIPAA_COMPLIANCE.md"
+    }
+  },
+  "seo": {
+    "schemaTypes": [
+      "Dentist",
+      "MedicalBusiness",
+      "LocalBusiness",
+      "HealthAndBeautyBusiness"
+    ],
+    "sitemap": true,
+    "robots": true,
+    "ogImage": true,
+    "faqPage": true
+  },
+  "keywords": [
+    "dental practice website template",
+    "dentist website builder",
+    "dental office website",
+    "dental website template",
+    "dentistry website",
+    "orthodontist website template",
+    "dental practice management",
+    "patient portal template",
+    "dental appointment scheduling",
+    "HIPAA compliant dental website",
+    "cloudflare dental template",
+    "automated dental intake",
+    "dental website design",
+    "dentist website free",
+    "sveltekit dental template",
+    "workway dental automation"
+  ],
+  "created": "2024-12-30",
+  "updated": "2024-12-30"
+}

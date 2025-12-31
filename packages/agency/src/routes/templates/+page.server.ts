@@ -64,6 +64,31 @@ export const load: PageServerLoad = async () => {
 				{
 					'@type': 'SoftwareApplication',
 					position: 3,
+					name: 'Dental Practice Website Template',
+					applicationCategory: 'BusinessApplication',
+					offers: {
+						'@type': 'Offer',
+						price: '29.00',
+						priceCurrency: 'USD',
+						priceValidUntil: '2025-12-31',
+						availability: 'https://schema.org/InStock'
+					},
+					description:
+						'HIPAA-ready dental practice website template with automated appointment scheduling, patient intake forms, treatment reminders, and insurance verification workflows.',
+					featureList: [
+						'Automated appointment scheduling',
+						'Patient intake form automation',
+						'Treatment reminder workflows',
+						'Insurance verification',
+						'HIPAA-conscious architecture',
+						'Practice management system integration',
+						'Emergency appointment routing',
+						'Before/after photo galleries'
+					]
+				},
+				{
+					'@type': 'SoftwareApplication',
+					position: 4,
 					name: 'Professional Services Website Template',
 					applicationCategory: 'BusinessApplication',
 					offers: {
@@ -86,7 +111,7 @@ export const load: PageServerLoad = async () => {
 				},
 				{
 					'@type': 'SoftwareApplication',
-					position: 4,
+					position: 5,
 					name: 'Architecture Studio Website Template',
 					applicationCategory: 'BusinessApplication',
 					offers: {
@@ -108,7 +133,7 @@ export const load: PageServerLoad = async () => {
 				},
 				{
 					'@type': 'SoftwareApplication',
-					position: 5,
+					position: 6,
 					name: 'Creative Portfolio Website Template',
 					applicationCategory: 'BusinessApplication',
 					offers: {
@@ -130,7 +155,7 @@ export const load: PageServerLoad = async () => {
 				},
 				{
 					'@type': 'SoftwareApplication',
-					position: 6,
+					position: 7,
 					name: 'Restaurant Website Template',
 					applicationCategory: 'BusinessApplication',
 					offers: {
