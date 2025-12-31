@@ -246,10 +246,45 @@
 	/>
 {:else}
 <div class="widget" data-theme={theme}>
-	<!-- Header -->
-	<div class="header">
+	<!-- Week Navigation Header -->
+	<div class="week-header">
 		<h3>Book a Court</h3>
-		<input type="date" bind:value={date} class="date-input" />
+		<div class="week-nav">
+			<button class="nav-btn" onclick={() => {
+				const d = new Date(date + 'T12:00:00');
+				d.setDate(d.getDate() - 7);
+				date = d.toISOString().split('T')[0];
+			}} aria-label="Previous week">
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+			</button>
+			<div class="week-days">
+				{#each Array.from({ length: 7 }, (_, i) => {
+					const d = new Date(date + 'T12:00:00');
+					const startOfWeek = new Date(d);
+					startOfWeek.setDate(d.getDate() - d.getDay());
+					const day = new Date(startOfWeek);
+					day.setDate(startOfWeek.getDate() + i);
+					return day;
+				}) as day}
+					<button
+						class="day-btn"
+						class:selected={day.toISOString().split('T')[0] === date}
+						class:today={day.toISOString().split('T')[0] === new Date().toISOString().split('T')[0]}
+						onclick={() => { date = day.toISOString().split('T')[0]; }}
+					>
+						<span class="day-name">{day.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+						<span class="day-num">{day.getDate()}</span>
+					</button>
+				{/each}
+			</div>
+			<button class="nav-btn" onclick={() => {
+				const d = new Date(date + 'T12:00:00');
+				d.setDate(d.getDate() + 7);
+				date = d.toISOString().split('T')[0];
+			}} aria-label="Next week">
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+			</button>
+		</div>
 	</div>
 
 	<!-- Loading State -->
@@ -418,32 +453,88 @@
 		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
-	/* Header */
-	.header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
+	/* Week Header */
+	.week-header {
 		margin-bottom: var(--space-lg, 1.5rem);
 	}
 
-	.header h3 {
-		margin: 0;
+	.week-header h3 {
+		margin: 0 0 var(--space-md, 1rem);
 		font-size: var(--text-h3, 1.25rem);
 		font-weight: 600;
 		color: var(--color-fg-primary, #ffffff);
 	}
 
-	.date-input {
-		padding: 0.5rem 0.75rem;
-		border-radius: var(--radius-md, 8px);
-		font-size: var(--text-body, 1rem);
-		font-family: inherit;
-		transition: border-color 200ms ease;
+	.week-nav {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm, 0.5rem);
 	}
 
-	.date-input:focus {
-		outline: none;
+	.nav-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		background: transparent;
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-sm, 6px);
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		cursor: pointer;
+		transition: all 150ms ease;
+		flex-shrink: 0;
+	}
+
+	.nav-btn:hover {
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.25));
+		color: var(--color-fg-primary, #ffffff);
+	}
+
+	.week-days {
+		display: flex;
+		flex: 1;
+		gap: 0.25rem;
+	}
+
+	.day-btn {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.125rem;
+		padding: 0.5rem 0.25rem;
+		background: transparent;
+		border: 1px solid transparent;
+		border-radius: var(--radius-sm, 6px);
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		cursor: pointer;
+		transition: all 150ms ease;
+		font-family: inherit;
+	}
+
+	.day-btn:hover {
+		background: var(--color-hover, rgba(255, 255, 255, 0.05));
+	}
+
+	.day-btn.selected {
+		background: var(--color-fg-primary, #ffffff);
+		color: var(--color-bg-pure, #000000);
+	}
+
+	.day-btn.today:not(.selected) {
 		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.3));
+	}
+
+	.day-name {
+		font-size: var(--text-caption, 0.75rem);
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
+	}
+
+	.day-num {
+		font-size: var(--text-body, 1rem);
+		font-weight: 600;
 	}
 
 	/* Loading */
@@ -486,7 +577,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-lg, 1.5rem);
-		padding-bottom: 100px; /* Space for fixed booking panel */
 	}
 
 	.court h4 {
@@ -559,13 +649,11 @@
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
-	/* Booking Panel - fixed to bottom of iframe viewport */
+	/* Booking Panel - sticky within widget */
 	.booking {
-		position: fixed;
+		position: sticky;
 		bottom: 0;
-		left: 0;
-		right: 0;
-		margin: 0;
+		margin: var(--space-lg, 1.5rem) calc(var(--space-lg, 1.5rem) * -1) calc(var(--space-lg, 1.5rem) * -1);
 		padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
 		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 		background: var(--color-bg-surface, #111111);
@@ -575,20 +663,8 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--space-md, 1rem);
-		animation: slideUp var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 		z-index: 100;
-	}
-
-	@keyframes slideUp {
-		from {
-			opacity: 0;
-			transform: translateY(100%);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
 	}
 
 	.details {
@@ -686,17 +762,14 @@
 
 	/* User Info Form */
 	.user-info-form {
-		position: fixed;
+		position: sticky;
 		bottom: 0;
-		left: 0;
-		right: 0;
-		margin: 0;
+		margin: var(--space-lg, 1.5rem) calc(var(--space-lg, 1.5rem) * -1) calc(var(--space-lg, 1.5rem) * -1);
 		padding: var(--space-lg, 1.5rem);
 		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 		background: var(--color-bg-surface, #111111);
 		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
 		border-bottom: none;
-		animation: slideUp var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 		z-index: 100;
 	}

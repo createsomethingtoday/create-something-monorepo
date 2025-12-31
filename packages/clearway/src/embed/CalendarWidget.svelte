@@ -491,7 +491,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-lg, 1.5rem);
-		padding-bottom: 100px;
 	}
 
 	.court h4 {
@@ -563,13 +562,11 @@
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
-	/* Booking Panel */
+	/* Booking Panel - sticky within widget */
 	.booking {
-		position: fixed;
+		position: sticky;
 		bottom: 0;
-		left: 0;
-		right: 0;
-		margin: 0;
+		margin: var(--space-lg, 1.5rem) calc(var(--space-lg, 1.5rem) * -1) calc(var(--space-lg, 1.5rem) * -1);
 		padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
 		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 		background: var(--color-bg-surface, #111111);
@@ -579,14 +576,8 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--space-md, 1rem);
-		animation: slideUp var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 		z-index: 100;
-	}
-
-	@keyframes slideUp {
-		from { opacity: 0; transform: translateY(100%); }
-		to { opacity: 1; transform: translateY(0); }
 	}
 
 	.details {
@@ -652,17 +643,14 @@
 
 	/* User Info Form */
 	.user-info-form {
-		position: fixed;
+		position: sticky;
 		bottom: 0;
-		left: 0;
-		right: 0;
-		margin: 0;
+		margin: var(--space-lg, 1.5rem) calc(var(--space-lg, 1.5rem) * -1) calc(var(--space-lg, 1.5rem) * -1);
 		padding: var(--space-lg, 1.5rem);
 		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 		background: var(--color-bg-surface, #111111);
 		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
 		border-bottom: none;
-		animation: slideUp var(--duration-standard, 300ms) ease;
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 		z-index: 100;
 	}
