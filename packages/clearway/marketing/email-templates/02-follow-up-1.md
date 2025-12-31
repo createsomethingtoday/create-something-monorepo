@@ -2,44 +2,45 @@
 
 ## Subject Lines
 
-1. "Re: Quick question about your court booking system"
-2. "Following up - CLEARWAY demo for [Facility Name]"
-3. "Bumping this up - court booking widget"
+1. "Did you count the clicks?"
+2. "Re: The 15-step problem"
+3. "Still thinking about that booking flow"
 
 ---
 
 ## Email Template
 
 **From:** [Your Name]
-**Subject:** Re: Quick question about your court booking system
+**Subject:** Did you count the clicks?
 
 Hi [Contact Name],
 
-Wanted to bump this up in case it got buried.
+Quick follow-up on my last email.
 
-I know court scheduling can be a pain point—especially when your booking system redirects players away from your site.
+I asked if you'd ever counted the clicks it takes to book a court. Most people haven't—because when something is painful, we learn to look past it.
 
-CLEARWAY embeds directly on your website. No redirect. Checkout happens in the widget. You pay per booking, not a monthly subscription.
+But your members feel every click. Every redirect. Every "wait, where did my session go?"
 
-**What The Stack saw:**
-- Players complete bookings 40% faster (no redirect friction)
-- Zero monthly software costs
-- Booking widget matches their branding
+Here's the thing: **you can't optimize what you don't notice.**
 
-Here's the live demo: [clearway.createsomething.space](https://clearway.createsomething.space)
+That's why I built CLEARWAY around a simple principle: the best scheduling system is one you forget exists. No redirects. No friction. Just courts getting booked.
 
-Would a 15-minute call make sense? I can walk you through exactly how it works and show you The Stack's setup.
+The Stack Padel runs on it: [clearway.createsomething.space](https://clearway.createsomething.space)
+
+Worth 15 minutes to see it in action?
 
 Best,
 [Your Name]
 
-P.S. - If this isn't the right time, just let me know. I won't keep pinging you.
+P.S. - If timing's off, just let me know. I'll check back in a few months.
 
 ---
 
 ## Notes
 
-- Shorter than original email (people skim follow-ups)
-- Acknowledges busy inbox ("in case it got buried")
-- Adds new data point (40% faster completion)
-- Gives them an out ("if this isn't the right time")
+- **Narrative hook:** Continues the "counting clicks" story from email 1
+- **Philosophy:** "You can't optimize what you don't notice"
+- **Insight:** Pain becomes invisible through habituation
+- **Tagline subtly woven:** "...one you forget exists"
+- Keeps the easy out ("timing's off")
+- Under 120 words (people skim follow-ups)

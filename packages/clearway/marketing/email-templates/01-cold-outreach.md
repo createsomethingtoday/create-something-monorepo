@@ -2,33 +2,32 @@
 
 ## Subject Lines (A/B Test)
 
-1. "Quick question about your court booking system"
-2. "Better court scheduling for [Facility Name]"
-3. "How The Stack filled their courts without lifting a finger"
+1. "I counted the clicks. Have you?"
+2. "The 15-step booking problem"
+3. "What if scheduling just... disappeared?"
 
 ---
 
 ## Email Template
 
 **From:** [Your Name]
-**Subject:** Quick question about your court booking system
+**Subject:** I counted the clicks. Have you?
 
 Hi [Contact Name],
 
-I noticed [Facility Name] is using [Current System / has X courts]. I'm reaching out because we just launched something that might save you a lot of headaches.
+I did something strange yesterday. I counted every click it takes to book a court at a typical facility.
 
-CLEARWAY is an embeddable court booking widget that handles scheduling autonomously. Instead of redirecting players to clunky third-party sites, it lives right on your website—with checkout built in.
+Open the app. Find the calendar. Navigate to the right day. Check the time. It's taken. Check another time. Find it's available. But wait—need a partner. Back out. Search members. Message them. Wait. Go back to calendar. Still available? Book. Confirm. Done.
 
-**The difference:**
-- No redirect to external booking pages
-- Stripe checkout happens in the widget (players never leave your site)
-- You pay per transaction, not a monthly fee
-- 2-minute setup (one line of code)
+**Fifteen steps. Four minutes.** For something that should feel like walking through an open door.
 
-**Live proof:** The Stack Padel in Fort Worth uses it. Their courts fill themselves now.
-Try it: [clearway.createsomething.space](https://clearway.createsomething.space)
+Here's a different way: [clearway.createsomething.space](https://clearway.createsomething.space)
 
-Would you be open to a quick 15-minute call to see if this fits your workflow? I can show you the actual system running at The Stack.
+That's The Stack Padel in Fort Worth. Their members don't count clicks anymore. They just book. The system disappears. The experience remains.
+
+**When scheduling works, you forget it exists.**
+
+Would 15 minutes make sense to show you how it works?
 
 Best,
 [Your Name]
@@ -45,18 +44,20 @@ Best,
 
 ## Personalization Checklist
 
-- [ ] Replace [Facility Name] with actual facility name
 - [ ] Replace [Contact Name] with actual contact name
-- [ ] Replace [Current System] with CourtReserve/Playmetrics/etc. if known
-- [ ] Mention specific facility detail (e.g., "I saw you have 8 indoor courts")
-- [ ] Add local reference if possible (e.g., "Fellow DFW facility owner here")
+- [ ] Reference their specific booking flow if you tested it
+- [ ] Mention facility by name if natural ("I tried booking at [Facility Name]...")
+- [ ] Add local reference if possible ("Fellow DFW operator here")
+- [ ] If you know their current system, reference the redirect pain
 
 ---
 
 ## Notes
 
-- Keep it under 150 words
-- Lead with their problem (clunky systems), not your solution
-- Proof point (The Stack) builds credibility
-- Clear CTA (15-minute call)
+- **Philosophy:** Lead with story, not features
+- **The hook:** Counting clicks creates curiosity and relatability
+- **The contrast:** 15 steps vs. "walking through an open door"
+- **The proof:** Live demo link (The Stack) lets them experience it
+- **The tagline:** "When scheduling works, you forget it exists"
+- Keep it under 175 words
 - No attachments (reduces spam score)

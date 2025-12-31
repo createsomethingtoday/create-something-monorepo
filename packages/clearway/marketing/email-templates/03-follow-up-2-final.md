@@ -3,24 +3,29 @@
 ## Follow-Up #2 (Day 7)
 
 ### Subject Line
-"Last ping - CLEARWAY for [Facility Name]"
+"Why we believe scheduling should be invisible"
 
 ### Email Template
 
 Hi [Contact Name],
 
-I know I've reached out a couple times now about CLEARWAY. This will be my last email.
+I'll keep this short because I know you're busy.
 
-If you're happy with your current court booking system, totally understand. But if player drop-off during checkout is costing you bookings, we should talk.
+There's a principle in design: the best tools are ones you don't notice. A hammer in use is invisible—you think about the nail, not the hammer. Only when it breaks do you see it.
 
-**CLEARWAY difference:**
-- Embeds on your site (players never leave)
-- Stripe checkout in-widget
-- Usage-based pricing (no monthly fees)
+Most booking systems are always broken. They constantly demand attention. Redirects. Logins. Confirmations. They never let you forget they exist.
 
-The Stack's case study is here: [clearway.createsomething.space](https://clearway.createsomething.space)
+**We built CLEARWAY on a different belief:**
 
-If you want to see it in action, just reply "yes" and I'll send over a calendar link.
+When scheduling works, you forget it exists.
+
+Your members should think about playing pickleball—not about booking systems.
+
+That's it. That's the whole pitch.
+
+If it resonates: [clearway.createsomething.space](https://clearway.createsomething.space)
+
+If not, no hard feelings.
 
 Best,
 [Your Name]
@@ -30,22 +35,21 @@ Best,
 ## Final Follow-Up (Day 14)
 
 ### Subject Line
-"Breaking up is hard to do..."
+"The invisible system (final note)"
 
 ### Email Template
 
 Hi [Contact Name],
 
-This is officially my last email. I promise.
+Last email from me—promise.
 
-If court booking isn't a priority right now, I totally get it. But I wanted to leave you with this:
+I've been building booking software that disappears. Software where members book courts without thinking about booking. Where the infrastructure recedes and the experience remains.
 
-**CLEARWAY helped The Stack:**
-- Eliminate booking redirects (players stay on their site)
-- Cut monthly software costs (usage-based pricing)
-- Get up and running in under 10 minutes
+The Stack Padel in Fort Worth runs on it. Their members don't count clicks anymore.
 
-If things change and you want to revisit, my inbox is open.
+If that ever becomes interesting, you know where to find me: [clearway.createsomething.space](https://clearway.createsomething.space)
+
+Until then, good luck filling courts.
 
 Best,
 [Your Name]
@@ -54,11 +58,12 @@ Best,
 
 ## Notes
 
-- **Day 7 email:** Creates urgency ("last email")
-- **Day 14 email:** Breakup email (humor defuses persistence)
-- Both give clear next step (reply "yes" or reach out later)
-- Leaves door open without being pushy
-- If no response after Day 14, move to "Nurture" status in tracking
+- **Day 7 email:** Philosophy-led (the hammer analogy)
+- **Day 14 email:** Dignified close, vision-focused
+- **Narrative arc complete:** Clicks → Awareness → Philosophy → Vision
+- Both leave door open without desperation
+- No "breakup humor"—maintains brand voice
+- If no response after Day 14, move to "Nurture" status
 
 ---
 

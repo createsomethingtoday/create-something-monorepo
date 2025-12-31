@@ -2,7 +2,9 @@
 
 ## The One-Liner
 
-**The infrastructure disappears; courts get booked.**
+**When scheduling works, you forget it exists.**
+
+*Alternative:* The infrastructure disappears; courts get booked.
 
 ---
 
@@ -154,22 +156,111 @@ Try the actual production system at [clearway.createsomething.space](https://cle
 
 ---
 
+## Demo Script: The Invisibility Demo
+
+### Opening (30 seconds)
+
+**Say:** "I'm going to show you something invisible."
+
+**Pause.** Let that land.
+
+**Say:** "Most software demos show you features. Buttons. Settings. Dashboards. I'm going to show you what happens when a tool works so well, you stop noticing it."
+
+### The Contrast (3 minutes)
+
+**Say:** "First, let me show you what *visible* scheduling looks like."
+
+**Show:** A typical booking flow (CourtReserve or similar):
+1. Click "Book a Court"
+2. Redirect to external site
+3. Log in (or create account)
+4. Navigate calendar
+5. Select time
+6. Enter payment details
+7. Confirm
+8. Redirect back (or not)
+
+**Count out loud:** "One... two... three..." as you click through each step.
+
+**Say:** "Fifteen steps. Four minutes. For something that should feel like walking through an open door."
+
+### Watch It Disappear (7 minutes)
+
+**Say:** "Now watch what happens when the tool recedes."
+
+**Show:** The Stack Padel's live widget at clearway.createsomething.space
+
+**Do:** Book a court. Don't narrate excessively.
+
+**Say (quietly):** "Notice what you're *not* noticing."
+
+**After booking:**
+- "No redirect. You never left the site."
+- "Checkout happened right there."
+- "Stripe handled payment. Funds go directly to the facility."
+
+**Say:** "The system disappeared. The experience remained."
+
+### The Philosophy (2 minutes)
+
+**Say:** "There's a principle in design: the best tools are ones you don't notice. A hammer in use is invisible—you think about the nail, not the hammer. Only when it breaks do you see it."
+
+**Say:** "Most booking systems are always broken. They constantly demand attention."
+
+**Say:** "We built CLEARWAY on a different belief: **When scheduling works, you forget it exists.**"
+
+**Say:** "Your members should think about playing pickleball—not about booking systems."
+
+### Close (2 minutes)
+
+**Say:** "That's it. That's the whole pitch."
+
+**Ask:** "Questions?"
+
+**After questions:**
+- "What would it take to try this on your site?"
+- "We can set up a trial in 2-3 days. One script tag."
+- "If it doesn't work, no hard feelings."
+
+### Key Phrases to Use
+
+| Instead of... | Say... |
+|---------------|--------|
+| "Features" | "What you won't notice" |
+| "Our software" | "The tool that recedes" |
+| "Booking system" | "Invisible scheduling" |
+| "Widget" | "The embed" |
+| "Platform" | "The infrastructure" |
+
+### What NOT to Say
+
+- Don't oversell. Let the demo speak.
+- Don't compare features head-to-head. Compare *experiences*.
+- Don't promise results. Show proof (The Stack).
+- Don't say "AI" or "automation." Say "disappears" or "recedes."
+
+---
+
 ## Key Messages
 
-### For Emails
-- **No redirect:** Players book and pay on your site
-- **Usage-based pricing:** Pay per booking, not flat monthly fee
-- **2-minute setup:** One script tag, done
+### For Emails (Narrative Arc)
+- **Day 0 (Cold):** "I counted the clicks. Have you?" — The 15-step story
+- **Day 3 (Follow-up):** "Did you count the clicks?" — You can't optimize what you don't notice
+- **Day 7 (Philosophy):** "Why we believe scheduling should be invisible" — The hammer analogy
+- **Day 14 (Final):** "The invisible system" — Vision-focused close
 
 ### For Calls
-- **The Stack proof point:** Live production system (try it yourself)
-- **Redirect friction kills bookings:** Every redirect = 30-40% drop-off
-- **You pay only when courts fill:** No bookings = $0 cost
+- **Opening:** "I'm going to show you something invisible"
+- **Contrast:** Count the clicks (15 steps, 4 minutes)
+- **Demo:** "Watch it disappear" at The Stack
+- **Philosophy:** "When scheduling works, you forget it exists"
+- **Close:** "That's it. That's the whole pitch."
 
 ### For Landing Page
-- **Zuhandenheit:** "The infrastructure disappears; courts get booked."
-- **Developer-first:** API, webhooks, embeddable widget
-- **Proven at The Stack:** Case study with live demo
+- **Tagline:** "When scheduling works, you forget it exists."
+- **Subtitle:** "CLEARWAY doesn't automate court booking. It removes the need to think about it."
+- **CTA:** "See It Disappear"
+- **Proof:** "Watch the Tool Recede" — Live widget demo
 
 ---
 
@@ -225,7 +316,19 @@ Try the actual production system at [clearway.createsomething.space](https://cle
 
 ## Notes
 
-- Value prop focuses on **outcome** (courts get booked), not **technology** (embeddable widget)
-- Proof point (The Stack) is critical—leads with live demo, not promises
-- Pricing model is transparent (5% per transaction vs. $150-300/month)
-- Objection handling addresses "why switch?" and "how long to set up?"
+### Philosophy
+- **Core principle:** Zuhandenheit (ready-to-hand) — tools that recede into transparent use
+- **Tagline:** "When scheduling works, you forget it exists"
+- Value prop focuses on **experience** (invisibility), not **technology** (widget)
+- Proof point (The Stack) is critical—show, don't tell
+
+### Narrative Arc
+- **Email sequence:** Story → Question → Philosophy → Vision
+- **Demo script:** Contrast → Disappearance → Philosophy → Close
+- **Landing page:** Problem narrative → Live proof → Philosophy section
+
+### What Changed (December 2025)
+- One-liner updated from "The infrastructure disappears; courts get booked" to "When scheduling works, you forget it exists"
+- Email templates rewritten with Heideggerian narrative arc
+- Demo script added: "The Invisibility Demo"
+- Key messages aligned across touchpoints
