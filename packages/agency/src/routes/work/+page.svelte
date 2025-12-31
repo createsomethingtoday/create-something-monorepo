@@ -32,6 +32,31 @@
 <section class="py-24 px-6">
 		<div class="max-w-7xl mx-auto">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+				<!-- The Stack -->
+				<a
+					href="/work/the-stack"
+					class="block p-12 transition-colors group case-study-card"
+				>
+					<div class="mb-6">
+						<span class="body-xs font-mono body-muted">CLIENT: THE STACK</span>
+					</div>
+					<h2 class="heading-2 font-semibold mb-4 heading-hover">
+						The Stack
+					</h2>
+					<p class="body-lg body-tertiary mb-8 leading-relaxed">
+						Pickleball facility with seamless court booking. CLEARWAY embed eliminates phone calls—courts fill themselves.
+					</p>
+					<div class="space-y-3 body-sm body-muted">
+						<p>→ CLEARWAY embeddable widget</p>
+						<p>→ 8 courts across 4 locations</p>
+						<p>→ 24/7 booking, zero staff required</p>
+					</div>
+					<div class="mt-8 pt-6 section-border">
+						<p class="body-xs body-muted uppercase tracking-wider mb-2">Pattern Applied</p>
+						<p class="body-sm body-tertiary">Zuhandenheit: The tool recedes into transparent use</p>
+					</div>
+				</a>
+
 				<!-- Kickstand -->
 				<a
 					href="/work/kickstand"
