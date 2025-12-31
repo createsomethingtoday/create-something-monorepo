@@ -20,6 +20,22 @@
 		priceCents: number | null;
 	}
 
+	// AI Suggestion types (matching /api/suggestions)
+	interface SlotSuggestion {
+		courtId: string;
+		courtName: string;
+		startTime: string;
+		endTime: string;
+		score: number;
+		reason: 'frequent_time' | 'frequent_court' | 'frequent_day' | 'pattern_match' | 'new_user';
+	}
+
+	interface SuggestionResponse {
+		suggestions: SlotSuggestion[];
+		personalized: boolean;
+		computeTimeMs: number;
+	}
+
 	interface Props {
 		facilitySlug: string;
 		theme?: 'light' | 'dark';
@@ -29,6 +45,7 @@
 		advanceBookingDays?: number;
 		timezone?: string;
 		stripePublishableKey?: string;
+		memberEmail?: string; // For AI personalization
 		onReservationComplete?: (reservation: BookingResult) => void;
 		onError?: (error: Error) => void;
 	}
@@ -42,6 +59,7 @@
 		advanceBookingDays = 30,
 		timezone = 'America/Chicago',
 		stripePublishableKey,
+		memberEmail: propMemberEmail,
 		onReservationComplete,
 		onError
 	}: Props = $props();
@@ -54,6 +72,10 @@
 	let selectedSlot = $state<TimeSlot | null>(null);
 	// Unique key for selection comparison (court::time)
 	let selectedKey = $state<string | null>(null);
+
+	// AI Suggestion state
+	let suggestedSlots = $state<Set<string>>(new Set()); // Set of "courtId::startTime" keys
+	let suggestionsPersonalized = $state(false);
 
 	// Checkout state
 	let showCheckout = $state(false);
@@ -80,10 +102,46 @@
 		return `${hour12} ${ampm}`;
 	}
 
-	// Fetch availability
+	// Fetch AI-powered suggestions (runs in parallel with availability)
+	async function fetchSuggestions(): Promise<void> {
+		try {
+			const params = new URLSearchParams();
+			params.set('facility', facilitySlug);
+			params.set('date', date);
+			// Use prop email or previously entered email for personalization
+			const emailForPersonalization = propMemberEmail || memberEmail;
+			if (emailForPersonalization) {
+				params.set('email', emailForPersonalization);
+			}
+
+			const response = await fetch(`${API_BASE}/suggestions?${params.toString()}`);
+			if (!response.ok) {
+				// Silently fail - suggestions are optional enhancement
+				return;
+			}
+
+			const data = (await response.json()) as SuggestionResponse;
+
+			// Convert suggestions to a Set of keys for O(1) lookup
+			const newSuggested = new Set<string>();
+			for (const suggestion of data.suggestions) {
+				newSuggested.add(`${suggestion.courtId}::${suggestion.startTime}`);
+			}
+			suggestedSlots = newSuggested;
+			suggestionsPersonalized = data.personalized;
+		} catch {
+			// Silently fail - suggestions are optional enhancement
+			suggestedSlots = new Set();
+			suggestionsPersonalized = false;
+		}
+	}
+
+	// Fetch availability (and suggestions in parallel)
 	async function fetchAvailability() {
 		loading = true;
 		error = null;
+		// Clear suggestions when date changes
+		suggestedSlots = new Set();
 
 		try {
 			// Build URL - handle both relative and absolute paths
@@ -95,7 +153,12 @@
 			}
 			const fetchUrl = `${API_BASE}/availability?${params.toString()}`;
 
-			const response = await fetch(fetchUrl);
+			// Fetch availability and suggestions in parallel
+			const [response] = await Promise.all([
+				fetch(fetchUrl),
+				fetchSuggestions() // Fire and forget - doesn't block availability
+			]);
+
 			if (!response.ok) {
 				throw new Error(`Failed to fetch availability: ${response.statusText}`);
 			}
@@ -316,6 +379,7 @@
 								class:available={slot.status === 'available'}
 								class:peak={slot.priceCents !== null && slot.priceCents > 4000}
 								class:selected={selectedKey === `${court.id}::${slot.startTime}`}
+								class:suggested={suggestedSlots.has(`${court.id}::${slot.startTime}`)}
 								onclick={() => selectSlot(court.id, slot)}
 								disabled={slot.status !== 'available'}
 							>
@@ -602,6 +666,7 @@
 		cursor: pointer;
 		transition: all 200ms ease;
 		font-size: var(--text-body-sm, 0.875rem);
+		position: relative; /* For suggested ::before pseudo-element */
 	}
 
 	.slot:disabled {
@@ -623,6 +688,23 @@
 		background: var(--color-fg-primary, #ffffff);
 		color: var(--color-bg-pure, #000000);
 		border-color: var(--color-fg-primary, #ffffff);
+	}
+
+	/* AI-suggested slots - subtle emphasis, no "AI" announcement
+	   Philosophy: The tool recedes; the user thinks "this is my usual time" */
+	.slot.suggested:not(.selected) {
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.25));
+		box-shadow: 0 0 0 1px var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	.slot.suggested:not(.selected)::before {
+		content: '';
+		position: absolute;
+		inset: -2px;
+		border-radius: inherit;
+		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		pointer-events: none;
+		opacity: 0.6;
 	}
 
 	.slot.peak .price {
