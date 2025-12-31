@@ -151,6 +151,10 @@
 			"types": "./dist/content/index.d.ts",
 			"svelte": "./dist/content/index.js"
 		},
+		"./forms": {
+			"types": "./dist/forms/index.d.ts",
+			"svelte": "./dist/forms/index.js"
+		},
 		"./styles/vertical-base.css": "./dist/styles/vertical-base.css"
 	},
 	"peerDependencies": {

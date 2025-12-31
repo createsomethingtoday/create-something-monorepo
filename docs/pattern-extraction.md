@@ -85,11 +85,16 @@ animation-duration: var(--duration-complex);
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
 | **ProgressiveForm** | Maverick X/Templates | Multi-step disclosure | Done |
-| **InlineValidation** | Superforms | Real-time feedback | P1 |
+| **FormField** | Custom | Validation wrapper with error display | Done |
+| **Combobox** | shadcn-svelte | Searchable select | Done |
+| **DatePicker** | Melt UI | Calendar with dropdowns | Done |
 | **FileUpload** | Maverick X | Drag-drop with preview | P2 |
 | **OTPInput** | shadcn-svelte | PIN entry pattern | P3 |
-| **Combobox** | shadcn-svelte | Searchable select | P1 |
-| **DatePicker** | Melt UI | Calendar with dropdowns | P2 |
+
+**Implemented in `@create-something/components/forms`**:
+- `FormField` - Form field wrapper with label, validation, and error display
+- `Combobox` - Searchable select dropdown with keyboard navigation
+- `DatePicker` - Calendar-based date selection with month/year navigation
 
 ### 5. Conversion Patterns
 
@@ -279,10 +284,10 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 | **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
 | **navigation** | StickyHeader, MobileDrawer, CommandPalette, MenuButton | `@create-something/components/navigation` |
 | **content** | VideoLightbox, Carousel, TestimonialCarousel | `@create-something/components/content` |
+| **forms** | FormField, Combobox, DatePicker | `@create-something/components/forms` |
 
 ### Remaining Work
 
-**Form Patterns** (P2):
-- InlineValidation - Real-time feedback
-- Combobox - Searchable select
-- DatePicker - Calendar selection
+**Form Patterns** (P3):
+- FileUpload - Drag-drop with preview
+- OTPInput - PIN entry pattern
