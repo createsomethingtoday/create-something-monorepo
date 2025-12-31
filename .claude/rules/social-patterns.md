@@ -7,7 +7,7 @@ Automated LinkedIn posting with research-backed timing. The tool recedes; the co
 ```
 packages/agency/
 ├── content/social/
-│   └── linkedin-thread-*.md        # Content files
+│   └── linkedin-*.md               # Longform content files
 ├── src/lib/social/
 │   ├── linkedin-client.ts          # API client
 │   ├── linkedin-parser.ts          # Markdown parser
@@ -33,65 +33,112 @@ packages/agency/
 | **Links** | Put in comments, not post body | CXL |
 | **Content length** | 1500+ chars = more reach | Closely |
 
-**Key insight**: Multi-post "threads" in rapid succession trigger penalties. Use `drip` mode.
+**Canon insight**: Daily longform posts, each self-contained. No threading—LinkedIn has no native thread structure. One complete insight per day.
 
-## Posting Modes
+## Strategy: Daily Longform
 
-| Mode | Posts | Timing | Use Case |
-|------|-------|--------|----------|
-| `drip` | 1/day | Tue/Thu 9am | Multi-part content (default) |
-| `longform` | 1 total | Next optimal slot | Consolidated pieces |
-| `immediate` | All now | 1-min delays | Testing only |
+| Principle | Application |
+|-----------|-------------|
+| **One post per weekday** | Mon-Fri at 9am local time |
+| **Self-contained** | Each post stands alone (no "as I mentioned yesterday") |
+| **1500+ characters** | LinkedIn rewards depth over brevity |
+| **CTA in comments** | Links in first comment, not post body |
+| **Conflict detection** | Prevents double-posting on same day |
+
+### Posting Modes
+
+| Mode | Use Case | When |
+|------|----------|------|
+| `longform` | Daily insights (recommended) | Default for all content |
+| `drip` | Multi-part series | Only when content genuinely requires multiple days |
+| `immediate` | Testing only | Never in production |
+
+## Content Format
+
+Each content file is a complete, standalone post:
+
+```markdown
+# LinkedIn Post: Title
+
+**Campaign:** identifier
+**Target:** LinkedIn
+**Type:** Longform post
+**CTA:** url
+
+---
+
+## Post
+
+Your complete post content here.
+
+1500+ characters recommended.
+
+Multiple paragraphs for readability.
+
+Concrete examples, specific metrics.
+
+---
+
+## Comment (Post after publishing)
+
+CTA link and hashtags go here.
+
+#Hashtag1 #Hashtag2 #Hashtag3
+
+---
+
+## Voice Compliance
+
+- [x] Claims backed by methodology
+- [x] Self-contained (no thread references)
+- [x] No marketing jargon
+```
+
+The parser:
+- Extracts content from `## Post` section
+- Extracts comment content from `## Comment` section
+- Validates character count (warns if <1500)
+- Checks hashtag count (warns if >5)
 
 ## API Reference
 
 ### Schedule Posts
 
 ```bash
+# Schedule a longform post for next available weekday
+curl -X POST https://createsomething.agency/api/social/schedule \
+  -H "Content-Type: application/json" \
+  -d '{"platform":"linkedin","content":"<markdown>","mode":"longform"}'
+
 # Dry run (preview schedule)
 curl -X POST https://createsomething.agency/api/social/schedule \
   -H "Content-Type: application/json" \
-  -d '{"platform":"linkedin","content":"<markdown>","mode":"drip","dryRun":true}'
-
-# Actual scheduling (requires LinkedIn auth)
-curl -X POST https://createsomething.agency/api/social/schedule \
-  -H "Content-Type: application/json" \
-  -d '{"platform":"linkedin","content":"<markdown>","mode":"drip"}'
+  -d '{"platform":"linkedin","content":"<markdown>","mode":"longform","dryRun":true}'
 ```
 
 **Request:**
 ```typescript
 {
-  platform: 'linkedin',           // Only LinkedIn supported
-  content: string,                // Raw markdown or content name
-  mode?: 'drip' | 'longform' | 'immediate',  // Default: drip
+  platform: 'linkedin',
+  content: string,                // Raw markdown or content file path
+  mode?: 'longform' | 'drip',     // Default: longform
   timezone?: string,              // Default: America/Los_Angeles
-  startDate?: string,             // ISO date, default: next optimal day
   dryRun?: boolean                // Preview without scheduling
 }
 ```
 
-**Response (dry run):**
+**Response:**
 ```json
 {
-  "dryRun": true,
-  "mode": "drip",
-  "timezone": "America/Los_Angeles",
-  "threadId": "thread_xxx",
-  "totalPosts": 7,
+  "scheduled": {
+    "scheduledFor": "Tue, Jan 7, 9:00 AM PST",
+    "preview": "Most automation fails...",
+    "characterCount": 1650
+  },
   "tokenStatus": {
     "connected": true,
-    "daysRemaining": 55,
-    "warning": null
-  },
-  "scheduled": [
-    {
-      "scheduledFor": "Tue, Dec 30, 9:00 AM PST",
-      "preview": "1/7: Most automation fails...",
-      "fullContent": "...",
-      "hasCommentLink": false
-    }
-  ]
+    "daysRemaining": 55
+  }
 }
 ```
 
@@ -106,48 +153,8 @@ curl https://createsomething.agency/api/social/status?campaign=kickstand
 ### Cancel Posts
 
 ```bash
-# Cancel single post
 curl -X DELETE "https://createsomething.agency/api/social/cancel?id=sp_xxx"
-
-# Cancel entire thread
-curl -X DELETE "https://createsomething.agency/api/social/cancel?thread=thread_xxx"
 ```
-
-## Content Format
-
-Content files follow this markdown structure:
-
-```markdown
-# LinkedIn Thread: Title
-
-**Campaign:** identifier
-**Target:** LinkedIn
-**Type:** N-tweet thread
-**CTA:** url
-
----
-
-## Thread
-
-### Tweet 1 (Hook)
-
-Content for first post.
-
----
-
-### Tweet 2 (Topic)
-
-Content for second post.
-
----
-```
-
-The parser:
-- Extracts content between `### Tweet N` headers
-- Adds thread labels (1/7, 2/7, etc.)
-- Converts `**bold**` to plain text (LinkedIn doesn't support markdown)
-- Extracts hashtags from final post
-- Detects and moves links to comments
 
 ## Worker Behavior
 
@@ -176,12 +183,9 @@ CREATE TABLE social_posts (
   post_url TEXT,                  -- URL to view post
   error TEXT,                     -- Error message if failed
   campaign TEXT,                  -- Source campaign identifier
-  thread_id TEXT,                 -- Groups posts in thread
-  thread_index INTEGER,           -- Position (1-based)
-  thread_total INTEGER,           -- Total in thread
   created_at INTEGER NOT NULL,
   posted_at INTEGER,
-  metadata TEXT                   -- JSON (commentLink, etc.)
+  metadata TEXT                   -- JSON (commentContent, etc.)
 );
 ```
 
@@ -199,24 +203,21 @@ Check token status:
 curl https://createsomething.agency/api/social/status | jq .tokenStatus
 ```
 
-## Workflow
+## Daily Workflow
 
 ```bash
-# 1. Authenticate (once every ~60 days)
-# Visit: https://createsomething.io/api/linkedin/auth
+# 1. Create content file
+# packages/agency/content/social/linkedin-{topic}.md
 
 # 2. Check token status
 curl https://createsomething.agency/api/social/status | jq .tokenStatus
 
-# 3. Dry run to preview schedule
+# 3. Schedule for next available weekday
 curl -X POST https://createsomething.agency/api/social/schedule \
   -H "Content-Type: application/json" \
-  -d @/tmp/schedule-request.json | jq .
+  -d '{"platform":"linkedin","content":"...","mode":"longform"}'
 
-# 4. Schedule for real (remove dryRun flag)
-# Posts will be sent automatically at scheduled times
-
-# 5. Monitor
+# 4. Monitor
 curl https://createsomething.agency/api/social/status?status=pending
 ```
 
@@ -225,7 +226,7 @@ curl https://createsomething.agency/api/social/status?status=pending
 | Level | Question | Answer |
 |-------|----------|--------|
 | **DRY** | Have I built this before? | Reuses io's OAuth, shared KV |
-| **Rams** | Does this earn existence? | Research-backed timing, zero manual intervention |
-| **Heidegger** | Does this serve the whole? | Enables GTM Phase 3 at scale |
+| **Rams** | Does this earn existence? | Each post self-contained, 1500+ chars |
+| **Heidegger** | Does this serve the whole? | Daily insights enable GTM at scale |
 
-When the tool works, you schedule once and forget. The infrastructure disappears; the content distributes itself.
+The infrastructure disappears; the content distributes itself. One complete thought per day, every weekday.

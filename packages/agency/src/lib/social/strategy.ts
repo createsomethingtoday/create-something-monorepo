@@ -9,6 +9,13 @@
  * - Tue-Wed 8-9am or 10-11am local time
  * - Max 1 post/day (penalty for multiple)
  * - Max 5 hashtags (penalty for more)
+ * - 1500+ chars = more reach (favor longform)
+ *
+ * Strategy: Daily longform posts
+ * - Each post is self-contained (no threading)
+ * - One post per weekday at optimal time
+ * - CTA links in comments, not post body
+ * - Use conflict detection to prevent double-posting
  */
 
 export type PostingMode = 'drip' | 'longform' | 'immediate';
@@ -34,7 +41,9 @@ export interface ScheduleOptions {
 }
 
 // Research-backed optimal posting days and times
-const DEFAULT_PREFERRED_DAYS: DayOfWeek[] = ['tue', 'wed', 'thu'];
+// All weekdays for daily posting; Tue-Thu historically highest engagement
+const DEFAULT_PREFERRED_DAYS: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
+const OPTIMAL_DAYS: DayOfWeek[] = ['tue', 'wed', 'thu']; // Highest engagement
 const DEFAULT_PREFERRED_HOUR = 9; // 9am local time
 
 const DAY_MAP: Record<DayOfWeek, number> = {
@@ -395,3 +404,26 @@ export function suggestConflictFreeStartDate(
 
 	return getNextOptimalTime(timezone, preferredDays, DEFAULT_PREFERRED_HOUR, startAfter);
 }
+
+/**
+ * Get the next available posting slot for daily longform content
+ *
+ * This is the recommended pattern for CREATE SOMETHING:
+ * - Schedule one longform post per weekday
+ * - Each post is self-contained (no threading)
+ * - Use conflict detection to avoid double-posting
+ *
+ * @param existingPosts - Already scheduled posts
+ * @param timezone - IANA timezone string
+ */
+export function getNextDailySlot(
+	existingPosts: Array<{ scheduled_for: number }>,
+	timezone: string
+): Date {
+	return suggestConflictFreeStartDate(existingPosts, 1, timezone, DEFAULT_PREFERRED_DAYS);
+}
+
+/**
+ * Export optimal days for visibility in API responses
+ */
+export { OPTIMAL_DAYS, DEFAULT_PREFERRED_DAYS, DEFAULT_PREFERRED_HOUR };
