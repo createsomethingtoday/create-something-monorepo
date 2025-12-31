@@ -135,6 +135,14 @@
 		</div>
 	</header>
 
+	<!-- Error State -->
+	{#if data.error}
+		<div class="error-banner">
+			<span class="error-icon">⚠</span>
+			<span>{data.error}</span>
+		</div>
+	{/if}
+
 	<!-- Timeline -->
 	<div class="timeline-container">
 		<div class="timeline">
@@ -150,6 +158,14 @@
 
 			<!-- Court rows -->
 			<div class="timeline-body">
+				{#if data.courts.length === 0}
+					<div class="empty-state">
+						<p>No courts available</p>
+						{#if !data.error}
+							<p class="empty-hint">Configure courts in your facility settings</p>
+						{/if}
+					</div>
+				{/if}
 				{#each data.courts as court}
 					{@const reservations = getCourtReservations(court.id)}
 					<div class="court-row">
@@ -200,6 +216,37 @@
 
 <style>
 	/* Canon Design System - Admin Calendar */
+	.error-banner {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: var(--space-md, 1rem) var(--space-xl, 2rem);
+		background: var(--color-bg-subtle, #1a1a1a);
+		border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		font-size: var(--text-body-sm, 0.875rem);
+	}
+
+	.error-icon {
+		opacity: 0.7;
+	}
+
+	.empty-state {
+		padding: var(--space-xl, 2rem);
+		text-align: center;
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+	}
+
+	.empty-state p {
+		margin: 0;
+	}
+
+	.empty-hint {
+		font-size: var(--text-caption, 0.75rem);
+		margin-top: 0.5rem !important;
+		opacity: 0.7;
+	}
+
 	.calendar-admin {
 		min-height: 100vh;
 		background: var(--color-bg-pure, #000000);
