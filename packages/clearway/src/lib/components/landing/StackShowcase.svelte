@@ -87,10 +87,7 @@
 					</button>
 				{:else}
 					<p class="prompt-text revealed">
-						Notice the subtle highlights on her preferred slots. No announcement. Just there.
-					</p>
-					<p class="prompt-hint">
-						Try it: select a slot and enter <code>sarah.demo@clearway.test</code> as email.
+						Her preferred slots are already highlighted. No search. No filters. Just there.
 					</p>
 				{/if}
 			</div>
@@ -246,21 +243,6 @@
 	.prompt-text.revealed {
 		color: var(--color-fg-tertiary);
 		font-style: italic;
-	}
-
-	.prompt-hint {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin: var(--space-xs) 0 0;
-	}
-
-	.prompt-hint code {
-		font-family: 'JetBrains Mono', monospace;
-		font-size: var(--text-caption);
-		background: var(--color-bg-surface);
-		padding: 2px 6px;
-		border-radius: var(--radius-sm);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.reveal-btn {
