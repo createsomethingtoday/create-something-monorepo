@@ -110,13 +110,14 @@ animation-duration: var(--duration-complex);
 | **StickyCTA** | Templates | Journey-aware floating CTA | Done |
 | **ProcessSteps** | Templates | Numbered step timeline | Done |
 | **MetricCounters** | Templates | Animated counter statistics | Done |
-| **ExitIntent** | SaaS patterns | Mouse-leave detection | P2 |
+| **ExitIntent** | SaaS patterns | Mouse-leave detection | Done |
 
 **Implemented in `@create-something/components/conversion`**:
 - `TrustSignals` - Logo wall with variants (clients/certifications/associations)
 - `StickyCTA` - Contextual CTA that evolves based on scroll depth (early/mid/late journey)
 - `ProcessSteps` - Numbered process timeline with connector lines
 - `MetricCounters` - Animated statistics with staggered reveal
+- `ExitIntent` - Mouse-leave detection modal with session/local storage tracking
 
 ### 6. Layout Patterns
 
@@ -287,7 +288,7 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 | **motion** | ScrollReveal, StaggerContainer, StaggerItem, CountUp, FadeIn, ParallaxSection | `@create-something/components/motion` |
 | **interactive** | GlassCard, HoverCard | `@create-something/components/interactive` |
 | **layout** | Section, SplitSection, BentoGrid, BentoItem, SectionHeader | `@create-something/components/layout` |
-| **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
+| **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters, ExitIntent | `@create-something/components/conversion` |
 | **navigation** | StickyHeader, MobileDrawer, CommandPalette, MenuButton, Tabs, MegaMenu | `@create-something/components/navigation` |
 | **content** | VideoLightbox, Carousel, TestimonialCarousel | `@create-something/components/content` |
 | **forms** | FormField, Combobox, DatePicker, FileUpload, OTPInput | `@create-something/components/forms` |
@@ -295,5 +296,4 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 ### Remaining Work
 
 All core patterns implemented. Future enhancements (P3):
-- ExitIntent - Mouse-leave detection modal
 - SmoothScroll - Lenis-based smooth scrolling
