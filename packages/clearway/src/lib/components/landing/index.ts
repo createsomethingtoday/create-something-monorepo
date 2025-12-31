@@ -10,4 +10,3 @@ export { default as PricingSection } from './PricingSection.svelte';
 export { default as ProgressiveForm } from './ProgressiveForm.svelte';
 export { default as Footer } from './Footer.svelte';
 export { default as ScrollReveal } from './ScrollReveal.svelte';
-export { default as CourtLinesBackground } from './CourtLinesBackground.svelte';

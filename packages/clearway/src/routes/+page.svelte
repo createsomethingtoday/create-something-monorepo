@@ -10,8 +10,7 @@
 		PricingSection,
 		ProgressiveForm,
 		Footer,
-		ScrollReveal,
-		CourtLinesBackground
+		ScrollReveal
 	} from '$lib/components/landing';
 </script>
 
@@ -29,7 +28,6 @@
 	<meta property="og:type" content="website" />
 </svelte:head>
 
-<CourtLinesBackground />
 <main>
 	<HeroSection />
 	<ScrollReveal>
