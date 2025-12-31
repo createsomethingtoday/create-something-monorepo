@@ -370,9 +370,10 @@
 	}
 
 	.stat-value {
-		font-size: var(--text-h1, 2rem);
+		font-size: clamp(1.25rem, 3vw, 1.75rem);
 		font-weight: 700;
 		margin: 0.25rem 0;
+		white-space: nowrap;
 	}
 
 	.stat-detail {

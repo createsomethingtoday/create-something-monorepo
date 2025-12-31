@@ -35,24 +35,86 @@
 		return `${h}${ampm}`;
 	}
 
-	// Get reservations for a specific court
-	function getCourtReservations(courtId: string) {
-		return data.reservations.filter((r) => r.court_id === courtId);
+	// Reservation with lane info for stacking
+	interface ReservationWithLane {
+		id: string;
+		court_id: string;
+		member_name: string;
+		member_email: string;
+		start_time: string;
+		end_time: string;
+		status: string;
+		booking_source: string;
+		rate_cents: number | null;
+		lane: number;
+		totalLanes: number;
+	}
+
+	// Get reservations for a specific court with lane assignments for overlap handling
+	function getCourtReservations(courtId: string): ReservationWithLane[] {
+		const courtRes = data.reservations.filter((r) => r.court_id === courtId);
+
+		// Sort by start time
+		const sorted = [...courtRes].sort(
+			(a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+		);
+
+		// Assign lanes to handle overlaps
+		const lanes: { end: number; items: typeof sorted }[] = [];
+
+		for (const res of sorted) {
+			const resStart = new Date(res.start_time).getTime();
+			const resEnd = new Date(res.end_time).getTime();
+
+			// Find first lane where this reservation fits (no overlap)
+			let assignedLane = lanes.findIndex((lane) => lane.end <= resStart);
+
+			if (assignedLane === -1) {
+				// No available lane, create new one
+				assignedLane = lanes.length;
+				lanes.push({ end: resEnd, items: [] });
+			} else {
+				// Update lane end time
+				lanes[assignedLane].end = resEnd;
+			}
+
+			lanes[assignedLane].items.push(res);
+		}
+
+		// Build result with lane info
+		const result: ReservationWithLane[] = [];
+		const totalLanes = lanes.length || 1;
+
+		for (let laneIdx = 0; laneIdx < lanes.length; laneIdx++) {
+			for (const res of lanes[laneIdx].items) {
+				result.push({
+					...res,
+					lane: laneIdx,
+					totalLanes
+				});
+			}
+		}
+
+		return result;
 	}
 
 	// Calculate position and width for a reservation block
-	function getBlockStyle(reservation: { start_time: string; end_time: string }): string {
+	function getBlockStyle(reservation: ReservationWithLane): string {
 		const start = new Date(reservation.start_time);
 		const end = new Date(reservation.end_time);
 
 		const startHour = start.getHours() + start.getMinutes() / 60;
 		const endHour = end.getHours() + end.getMinutes() / 60;
 
-		// Calculate position as percentage of timeline
+		// Calculate horizontal position as percentage of timeline
 		const left = ((startHour - START_HOUR) / (END_HOUR - START_HOUR)) * 100;
 		const width = ((endHour - startHour) / (END_HOUR - START_HOUR)) * 100;
 
-		return `left: ${left}%; width: ${width}%;`;
+		// Calculate vertical position based on lane
+		const laneHeight = 100 / reservation.totalLanes;
+		const top = reservation.lane * laneHeight;
+
+		return `left: ${left}%; width: ${width}%; top: ${top}%; height: ${laneHeight}%;`;
 	}
 
 	// Format time for display
@@ -169,7 +231,9 @@
 				{/if}
 				{#each data.courts as court}
 					{@const reservations = getCourtReservations(court.id)}
-					<div class="court-row">
+					{@const maxLanes = reservations.length > 0 ? reservations[0].totalLanes : 1}
+					{@const rowHeight = Math.max(80, maxLanes * 32)}
+					<div class="court-row" style="min-height: {rowHeight}px;">
 						<div class="court-label">
 							<span class="court-name">{court.name}</span>
 							<span class="court-count">{reservations.length}</span>
@@ -417,7 +481,7 @@
 
 	.court-row {
 		display: flex;
-		min-height: 60px;
+		min-height: 80px;
 	}
 
 	.court-label {
@@ -464,18 +528,20 @@
 	/* Reservation Blocks */
 	.reservation-block {
 		position: absolute;
-		top: 4px;
-		bottom: 4px;
+		/* top/height set via inline style based on lane */
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		padding: 0.25rem 0.5rem;
+		padding: 2px 0.5rem;
+		margin: 2px 0;
+		box-sizing: border-box;
 		background: var(--color-fg-primary, #ffffff);
 		color: var(--color-bg-pure, #000000);
 		border-radius: var(--radius-sm, 4px);
 		overflow: hidden;
 		cursor: pointer;
 		transition: opacity var(--duration-micro, 100ms) ease;
+		min-height: 0;
 	}
 
 	.reservation-block:hover {
