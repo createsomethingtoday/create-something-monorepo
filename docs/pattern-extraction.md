@@ -50,10 +50,11 @@ animation-duration: var(--duration-complex);
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
 | **GlassCard** | Universal | `backdrop-filter: blur()` | Done |
-| **HoverCard** | shadcn-svelte | Preview on link hover | P2 |
+| **HoverCard** | shadcn-svelte | Preview on link hover | Done |
 
 **Implemented in `@create-something/components/interactive`**:
 - `GlassCard` - Frosted glass effect with Canon tokens
+- `HoverCard` - Link/profile preview on hover with smart positioning
 
 **Removed patterns** (don't fit Canon ethos):
 - ~~ShimmerButton~~ - Gradient sweep too flashy, prefer subtle state changes
@@ -282,7 +283,7 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 | Package | Patterns | Import Path |
 |---------|----------|-------------|
 | **motion** | ScrollReveal, StaggerContainer, StaggerItem, CountUp, FadeIn, ParallaxSection | `@create-something/components/motion` |
-| **interactive** | GlassCard | `@create-something/components/interactive` |
+| **interactive** | GlassCard, HoverCard | `@create-something/components/interactive` |
 | **layout** | Section, SplitSection, BentoGrid, BentoItem, SectionHeader | `@create-something/components/layout` |
 | **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
 | **navigation** | StickyHeader, MobileDrawer, CommandPalette, MenuButton | `@create-something/components/navigation` |
@@ -291,8 +292,7 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 
 ### Remaining Work
 
-All core patterns implemented. Future enhancements (P2-P3):
-- HoverCard - Link preview on hover
+All core patterns implemented. Future enhancements (P3):
 - MegaMenu - Complex navigation dropdown
 - Tabs - Accessible tab interface
 - ExitIntent - Mouse-leave detection modal
