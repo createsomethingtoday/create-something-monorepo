@@ -79,7 +79,12 @@
 	}
 
 	.btn-primary:hover:not(:disabled) {
-		opacity: 0.9;
+		transform: scale(var(--scale-micro));
+		opacity: 0.95;
+	}
+
+	.btn-primary:active:not(:disabled) {
+		transform: scale(var(--scale-subtle));
 	}
 
 	/* Secondary Variant */
@@ -90,7 +95,12 @@
 	}
 
 	.btn-secondary:hover:not(:disabled) {
+		transform: scale(var(--scale-micro));
 		background: var(--color-active);
+	}
+
+	.btn-secondary:active:not(:disabled) {
+		transform: scale(var(--scale-subtle));
 	}
 
 	/* Ghost Variant */
@@ -100,7 +110,12 @@
 	}
 
 	.btn-ghost:hover:not(:disabled) {
+		transform: scale(var(--scale-micro));
 		background: var(--color-hover);
+	}
+
+	.btn-ghost:active:not(:disabled) {
+		transform: scale(var(--scale-subtle));
 	}
 
 	/* Focus states for accessibility */

@@ -188,17 +188,36 @@
 		color: var(--color-fg-tertiary);
 	}
 
-	/* Navigation Links */
+	/* Navigation Links - Underline Reveal Pattern */
 	.nav-link {
+		position: relative;
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-secondary);
+		text-decoration: none;
 		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	/* Underline reveal on hover (Pattern 2: Typography-First Links) */
+	.nav-link::after {
+		content: '';
+		position: absolute;
+		bottom: -2px;
+		left: 0;
+		width: 0;
+		height: 1px;
+		background: var(--color-fg-primary);
+		transition: width var(--duration-micro) var(--ease-standard);
 	}
 
 	.nav-link:hover,
 	.nav-link.active {
 		color: var(--color-fg-primary);
+	}
+
+	.nav-link:hover::after,
+	.nav-link.active::after {
+		width: 100%;
 	}
 
 	/* CTA Button */

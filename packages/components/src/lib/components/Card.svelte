@@ -104,14 +104,19 @@
 		border-radius: var(--radius-xl);
 	}
 
-	/* Hover effect */
+	/* Hover effect - Scale + Border Progression (Pattern 1) */
 	.card-hover {
 		cursor: pointer;
 	}
 
 	.card-hover:hover {
-		transform: translateY(-8px);
-		box-shadow: var(--shadow-2xl);
+		transform: scale(var(--scale-micro));
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.card-hover:active {
+		transform: scale(var(--scale-subtle));
 	}
 
 	/* Focus states for accessibility */
