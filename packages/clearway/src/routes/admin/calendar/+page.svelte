@@ -87,7 +87,8 @@
 			const resEnd = getClampedHours(res.end_time, true);
 
 			// Find first lane where this reservation fits (no visual overlap)
-			let assignedLane = lanes.findIndex((lane) => lane.end <= resStart);
+			// Require small gap to prevent edge-to-edge visual overlap
+			let assignedLane = lanes.findIndex((lane) => lane.end < resStart);
 
 			if (assignedLane === -1) {
 				// No available lane, create new one
