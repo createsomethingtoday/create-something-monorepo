@@ -7,6 +7,7 @@
 		ProblemSection,
 		StackShowcase,
 		ValueGrid,
+		PhilosophySection,
 		PricingSection,
 		ProgressiveForm,
 		Footer,
@@ -15,15 +16,15 @@
 </script>
 
 <svelte:head>
-	<title>CLEARWAY - Autonomous Court Scheduling</title>
+	<title>CLEARWAY - When Scheduling Works, You Forget It Exists</title>
 	<meta
 		name="description"
-		content="The infrastructure disappears; courts get booked. AI-powered court reservation that handles scheduling, waitlists, and optimization autonomously."
+		content="CLEARWAY doesn't automate court booking. It removes the need to think about it. AI-powered scheduling that recedes into invisibility."
 	/>
-	<meta property="og:title" content="CLEARWAY - Autonomous Court Scheduling" />
+	<meta property="og:title" content="CLEARWAY - When Scheduling Works, You Forget It Exists" />
 	<meta
 		property="og:description"
-		content="The infrastructure disappears; courts get booked."
+		content="When scheduling works, you forget it exists."
 	/>
 	<meta property="og:type" content="website" />
 </svelte:head>
@@ -38,6 +39,9 @@
 	</ScrollReveal>
 	<ScrollReveal delay={100}>
 		<ValueGrid />
+	</ScrollReveal>
+	<ScrollReveal delay={100}>
+		<PhilosophySection />
 	</ScrollReveal>
 	<ScrollReveal delay={100}>
 		<PricingSection />

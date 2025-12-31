@@ -1,13 +1,16 @@
 <script lang="ts">
-	// Pricing Section
-	// 5% platform fee, transparent model
+	// Pricing Section - "Pay When Courts Fill"
+	// Outcome-aligned pricing model
 </script>
 
 <section class="pricing">
 	<div class="container">
-		<h2 class="section-title">Simple Pricing</h2>
+		<h2 class="section-title">Pay When Courts Fill</h2>
 		<p class="section-subtitle">
-			5% platform fee. No monthly minimums.
+			We don't charge for features. We charge for filled courts.
+		</p>
+		<p class="section-philosophy">
+			5% of bookings. No monthly fees. Our success is your success.
 		</p>
 
 		<div class="pricing-example">
@@ -72,6 +75,13 @@
 		font-size: var(--text-body-lg);
 		text-align: center;
 		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-sm);
+	}
+
+	.section-philosophy {
+		font-size: var(--text-body);
+		text-align: center;
+		color: var(--color-fg-tertiary);
 		margin: 0 0 var(--space-xl);
 	}
 

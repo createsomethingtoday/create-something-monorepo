@@ -60,11 +60,14 @@
 			<span class="title-clear" class:visible={phase !== 'lines'}>CLEAR</span><span class="title-way" class:visible={phase !== 'lines'}>WAY</span>
 		</h1>
 		<p class="hero-tagline" class:visible={phase === 'content'}>
-			The infrastructure disappears. Courts get booked.
+			When scheduling works, you forget it exists.
+		</p>
+		<p class="hero-subtitle" class:visible={phase === 'content'}>
+			CLEARWAY doesn't automate court booking. It removes the need to think about it.
 		</p>
 		<div class="hero-cta" class:visible={phase === 'content'}>
-			<a href="#showcase" class="btn btn-primary">See it Live</a>
-			<a href="#request-demo" class="btn btn-secondary">Get Started Free</a>
+			<a href="#showcase" class="btn btn-primary">See It Disappear</a>
+			<a href="#request-demo" class="btn btn-secondary">Start Free</a>
 		</div>
 	</div>
 </section>
@@ -190,6 +193,22 @@
 	}
 
 	.hero-tagline.visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.hero-subtitle {
+		font-size: clamp(1rem, 1.5vw, 1.125rem);
+		line-height: 1.6;
+		color: var(--color-fg-muted, rgba(255,255,255,0.46));
+		margin: 0 0 var(--space-xl, 3rem);
+		opacity: 0;
+		transform: translateY(20px);
+		transition: opacity 700ms cubic-bezier(0.0, 0.0, 0.2, 1) 150ms,
+					transform 700ms cubic-bezier(0.0, 0.0, 0.2, 1) 150ms;
+	}
+
+	.hero-subtitle.visible {
 		opacity: 1;
 		transform: translateY(0);
 	}

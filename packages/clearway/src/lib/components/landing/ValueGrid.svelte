@@ -1,53 +1,54 @@
 <script lang="ts">
-	// Value Grid Section
-	// The three core capabilities that make CLEARWAY work
-	// Icons: Lucide (Clock, MessageSquare, Users)
+	// Value Grid Section - "How Invisibility Works"
+	// Four principles that enable tool recession
+	// Philosophy over features
 </script>
 
 <section class="value">
 	<div class="container">
-		<h2 class="section-title">How It Works</h2>
+		<h2 class="section-title">How Invisibility Works</h2>
+		<p class="section-subtitle">
+			Four principles that make scheduling disappear.
+		</p>
+
 		<div class="value-grid">
 			<div class="value-card">
-				<div class="value-icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<circle cx="12" cy="12" r="10"/>
-						<polyline points="12 6 12 12 16 14"/>
-					</svg>
-				</div>
-				<h3>Real-time State</h3>
-				<p>
-					Every court, every slot, every second. Durable Objects guarantee consistency&mdash;no
-					double bookings, ever.
+				<div class="value-number">01</div>
+				<h3>Anticipation</h3>
+				<p class="value-principle">We suggest before you search.</p>
+				<p class="value-detail">
+					CLEARWAY knows Tuesday 6pm is your time. When you open the app,
+					your court is already suggested.
 				</p>
 			</div>
 
 			<div class="value-card">
-				<div class="value-icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-					</svg>
-				</div>
-				<h3>Text to Book</h3>
-				<p>
-					"Reserve court 3 at 6pm tomorrow." AI understands natural language.
-					No app needed&mdash;just SMS.
+				<div class="value-number">02</div>
+				<h3>Elimination</h3>
+				<p class="value-principle">We remove steps, not hide them.</p>
+				<p class="value-detail">
+					Most software hides complexity behind menus.
+					We delete it entirely. Fewer decisions means less friction.
 				</p>
 			</div>
 
 			<div class="value-card">
-				<div class="value-icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-						<circle cx="9" cy="7" r="4"/>
-						<path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-						<path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-					</svg>
-				</div>
-				<h3>Smart Waitlist</h3>
-				<p>
-					Cancellations auto-fill. The right member gets notified. Opt-in members
-					book instantly.
+				<div class="value-number">03</div>
+				<h3>Adaptation</h3>
+				<p class="value-principle">We learn your patterns silently.</p>
+				<p class="value-detail">
+					Who you play with, when you play, which courts you prefer.
+					CLEARWAY remembers so you don't have to.
+				</p>
+			</div>
+
+			<div class="value-card">
+				<div class="value-number">04</div>
+				<h3>Recession</h3>
+				<p class="value-principle">We disappear when we work.</p>
+				<p class="value-detail">
+					The goal isn't a better booking system.
+					It's no system at all&mdash;just courts that are ready when you are.
 				</p>
 			</div>
 		</div>
@@ -69,13 +70,20 @@
 		font-size: var(--text-h2);
 		font-weight: 600;
 		text-align: center;
-		margin: 0 0 var(--space-xl);
+		margin: 0 0 var(--space-sm);
 		color: var(--color-fg-primary);
+	}
+
+	.section-subtitle {
+		font-size: var(--text-body-lg);
+		text-align: center;
+		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-xl);
 	}
 
 	.value-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
 		gap: var(--space-md);
 	}
 
@@ -91,16 +99,12 @@
 		border-color: var(--color-border-emphasis);
 	}
 
-	.value-icon {
-		width: 2.5rem;
-		height: 2.5rem;
+	.value-number {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-muted);
 		margin-bottom: var(--space-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	.value-icon svg {
-		width: 100%;
-		height: 100%;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.value-card h3 {
@@ -110,10 +114,17 @@
 		color: var(--color-fg-primary);
 	}
 
-	.value-card p {
+	.value-principle {
 		font-size: var(--text-body);
-		line-height: 1.6;
 		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-sm);
+		font-style: italic;
+	}
+
+	.value-detail {
+		font-size: var(--text-body-sm);
+		line-height: 1.6;
+		color: var(--color-fg-tertiary);
 		margin: 0;
 	}
 </style>

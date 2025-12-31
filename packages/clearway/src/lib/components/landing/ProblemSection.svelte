@@ -1,46 +1,66 @@
 <script lang="ts">
-	// Problem Section
-	// The pain points that CLEARWAY solves
-	// Icons: Lucide (Phone, X, Clock)
+	// Problem Section - "The Broken Promise"
+	// A narrative that exposes the friction in traditional scheduling
+	// Transforms from Vorhandenheit (visible, demanding) to invitation for Zuhandenheit
 </script>
 
 <section class="problem">
 	<div class="container">
-		<h2 class="section-title">The Real Problem</h2>
-		<div class="problem-grid">
-			<div class="problem-card">
-				<div class="problem-icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-					</svg>
-				</div>
-				<h3>Phone Tag</h3>
-				<p>Staff spend hours managing calls. Members wait on hold. Everyone loses.</p>
+		<h2 class="section-title">The Broken Promise</h2>
+
+		<div class="narrative">
+			<p class="narrative-lead">
+				Every scheduling system promises to save time.
+			</p>
+
+			<p class="narrative-body">
+				But watch what happens:
+			</p>
+
+			<div class="journey">
+				<p class="journey-setup">
+					A member wants to play pickleball tomorrow at 6pm.
+				</p>
+
+				<ol class="journey-steps">
+					<li>Open the app</li>
+					<li>Find the calendar</li>
+					<li>Navigate to tomorrow</li>
+					<li>Check 6pm&mdash;<span class="strike">taken</span></li>
+					<li>Check 7pm&mdash;available</li>
+					<li>But wait, they need a partner</li>
+					<li>Back out to member directory</li>
+					<li>Search for available players</li>
+					<li>Message a friend</li>
+					<li>Wait for response</li>
+					<li>Return to calendar</li>
+					<li>Is 7pm still available?</li>
+					<li>Book the slot</li>
+					<li>Confirmation email</li>
+					<li>Done.</li>
+				</ol>
+
+				<p class="journey-verdict">
+					<span class="stat">Fifteen steps.</span>
+					<span class="stat">Four minutes.</span>
+				</p>
 			</div>
-			<div class="problem-card">
-				<div class="problem-icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M18 6 6 18"/>
-						<path d="m6 6 12 12"/>
-					</svg>
-				</div>
-				<h3>Double Bookings</h3>
-				<p>The spreadsheet said it was free. It wasn't. Now two members are upset.</p>
-			</div>
-			<div class="problem-card">
-				<div class="problem-icon">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<circle cx="12" cy="12" r="10"/>
-						<polyline points="12 6 12 12 16 14"/>
-					</svg>
-				</div>
-				<h3>Empty Prime Slots</h3>
-				<p>6pm Tuesday sits empty while you have a waitlist. Nobody connected the dots.</p>
+
+			<p class="narrative-insight">
+				The "time-saving" system just created four minutes of friction.
+			</p>
+
+			<div class="reframe">
+				<p class="reframe-explanation">
+					<strong>This is what we mean by visible scheduling.</strong><br />
+					You see every step. You feel every click. The infrastructure announces itself constantly.
+				</p>
+
+				<p class="reframe-question">
+					What if booking a court felt like walking through an open door?
+				</p>
 			</div>
 		</div>
-		<p class="problem-insight">
-			The problem isn't scheduling&mdash;it's that scheduling demands attention.
-		</p>
 	</div>
 </section>
 
@@ -51,7 +71,7 @@
 	}
 
 	.container {
-		max-width: 72rem;
+		max-width: 48rem;
 		margin: 0 auto;
 	}
 
@@ -63,57 +83,117 @@
 		color: var(--color-fg-primary);
 	}
 
-	.problem-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-		gap: var(--space-md);
-		margin-bottom: var(--space-xl);
+	.narrative {
+		text-align: center;
 	}
 
-	.problem-card {
+	.narrative-lead {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-md);
+	}
+
+	.narrative-body {
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
+		margin: 0 0 var(--space-lg);
+	}
+
+	.journey {
 		padding: var(--space-lg);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		text-align: center;
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		margin: 0 0 var(--space-lg);
+		text-align: left;
 	}
 
-	.problem-card:hover {
-		border-color: var(--color-border-emphasis);
+	.journey-setup {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-md);
+		font-style: italic;
 	}
 
-	.problem-icon {
-		width: 3rem;
-		height: 3rem;
-		margin: 0 auto var(--space-sm);
-		color: var(--color-fg-tertiary);
+	.journey-steps {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 var(--space-md);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
 	}
 
-	.problem-icon svg {
-		width: 100%;
-		height: 100%;
+	.journey-steps li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		padding-left: var(--space-md);
+		position: relative;
 	}
 
-	.problem-card h3 {
+	.journey-steps li::before {
+		content: counter(list-item) ".";
+		position: absolute;
+		left: 0;
+		color: var(--color-fg-subtle);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.strike {
+		text-decoration: line-through;
+		color: var(--color-error);
+	}
+
+	.journey-verdict {
+		display: flex;
+		gap: var(--space-md);
+		justify-content: center;
+		margin: 0;
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.stat {
 		font-size: var(--text-h3);
 		font-weight: 600;
-		margin: 0 0 var(--space-xs);
 		color: var(--color-fg-primary);
 	}
 
-	.problem-card p {
-		font-size: var(--text-body);
-		line-height: 1.6;
-		color: var(--color-fg-secondary);
-		margin: 0;
-	}
-
-	.problem-insight {
+	.narrative-insight {
 		font-size: var(--text-body-lg);
-		text-align: center;
 		color: var(--color-fg-tertiary);
 		font-style: italic;
+		margin: 0 0 var(--space-xl);
+	}
+
+	.reframe {
+		padding: var(--space-lg);
+		border-left: 2px solid var(--color-border-emphasis);
+		text-align: left;
+	}
+
+	.reframe-explanation {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-md);
+		line-height: 1.7;
+	}
+
+	.reframe-explanation strong {
+		color: var(--color-fg-primary);
+	}
+
+	.reframe-question {
+		font-size: var(--text-h3);
+		color: var(--color-fg-primary);
 		margin: 0;
+		font-weight: 500;
+	}
+
+	/* Reduced motion */
+	@media (prefers-reduced-motion: reduce) {
+		.journey-steps li {
+			transition: none;
+		}
 	}
 </style>

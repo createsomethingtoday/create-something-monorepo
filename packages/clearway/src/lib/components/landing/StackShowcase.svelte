@@ -18,10 +18,10 @@
 
 <section id="showcase" class="showcase">
 	<div class="container">
-		<h2 class="section-title">See It Live</h2>
+		<h2 class="section-title">Watch the Tool Recede</h2>
 		<p class="section-subtitle">
-			CLEARWAY powers court booking at The Stack Padel.
-			Try the actual production system.
+			This is the actual production system at The Stack Padel.
+			Notice what you don't notice&mdash;no friction, no thinking, just booking.
 		</p>
 
 		<div class="embed-container">
@@ -43,12 +43,9 @@
 			</div>
 		</div>
 
-		<blockquote class="testimonial">
-			<p>
-				"We stopped thinking about scheduling. Courts just... fill themselves now."
-			</p>
-			<cite>&mdash; The Stack Operations</cite>
-		</blockquote>
+		<p class="showcase-note">
+			Live production system. Book a real court.
+		</p>
 	</div>
 </section>
 
@@ -78,25 +75,11 @@
 		margin: 0 0 var(--space-xl);
 	}
 
-	.testimonial {
-		margin: 0;
-		padding: var(--space-lg);
-		border-radius: var(--radius-lg);
-		background: var(--color-bg-surface);
-		border-left: 3px solid var(--color-border-emphasis);
-	}
-
-	.testimonial p {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-sm);
-		font-style: italic;
-	}
-
-	.testimonial cite {
+	.showcase-note {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		font-style: normal;
+		color: var(--color-fg-muted);
+		text-align: center;
+		margin: 0;
 	}
 
 	/* Skeleton loader (Canon: --duration-slow = 700ms for transitions) */
