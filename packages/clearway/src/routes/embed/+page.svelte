@@ -2,10 +2,11 @@
 	import { page } from '$app/stores';
 	import Widget from '../../embed/Widget.svelte';
 
-	// Get params from URL: /embed?facility=thestack&theme=dark
+	// Get params from URL: /embed?facility=thestack&theme=dark&email=user@example.com
 	const facilitySlug = $page.url.searchParams.get('facility') || 'thestack';
 	const theme = ($page.url.searchParams.get('theme') as 'light' | 'dark') || 'dark';
 	const courtType = $page.url.searchParams.get('court_type') || undefined;
+	const memberEmail = $page.url.searchParams.get('email') || undefined;
 </script>
 
 <svelte:head>
@@ -22,7 +23,7 @@
 </svelte:head>
 
 <div class="embed-wrapper" data-theme={theme}>
-	<Widget {facilitySlug} {theme} {courtType} />
+	<Widget {facilitySlug} {theme} {courtType} {memberEmail} />
 </div>
 
 <style>

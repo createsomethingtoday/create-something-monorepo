@@ -1,14 +1,29 @@
 <script lang="ts">
 	// The Stack Showcase Section
-	// Live proof of concept with actual production facility
+	// Live proof of concept with AI-powered personalization
 	import { onMount } from 'svelte';
 	import Widget from '../../../embed/Widget.svelte';
+	import AdminInsightsPreview from './AdminInsightsPreview.svelte';
 
 	let isLoading = true;
+	let memberEmail: string | undefined = undefined;
+	let showPersonalization = false;
+	let activeView: 'member' | 'admin' = 'member';
+
+	function revealPersonalization() {
+		memberEmail = 'sarah.demo@clearway.test';
+		showPersonalization = true;
+	}
+
+	function setView(view: 'member' | 'admin') {
+		activeView = view;
+		if (view === 'member' && !showPersonalization) {
+			// Reset to show the reveal button
+			memberEmail = undefined;
+		}
+	}
 
 	onMount(() => {
-		// Widget loading typically completes within 1-2 seconds
-		// Show skeleton during initial load, then fade in widget
 		const timer = setTimeout(() => {
 			isLoading = false;
 		}, 800);
@@ -18,34 +33,72 @@
 
 <section id="showcase" class="showcase">
 	<div class="container">
-		<h2 class="section-title">Watch the Tool Recede</h2>
+		<h2 class="section-title">Intelligence That Recedes</h2>
 		<p class="section-subtitle">
-			This is the actual production system at The Stack Padel.
-			Notice what you don't notice&mdash;no friction, no thinking, just booking.
+			For members: preferences remembered. For admins: insights surfaced.
 		</p>
 
-		<div class="embed-container">
-			{#if isLoading}
-				<div class="skeleton-widget">
-					<div class="skeleton-header">
-						<div class="skeleton-title"></div>
-						<div class="skeleton-subtitle"></div>
-					</div>
-					<div class="skeleton-grid">
-						{#each Array(6) as _}
-							<div class="skeleton-slot"></div>
-						{/each}
-					</div>
-				</div>
-			{/if}
-			<div class="widget-wrapper" class:loading={isLoading}>
-				<Widget facilitySlug="thestack" theme="dark" />
-			</div>
+		<div class="view-toggle">
+			<button
+				class="toggle-btn"
+				class:active={activeView === 'member'}
+				onclick={() => setView('member')}
+			>
+				Member View
+			</button>
+			<button
+				class="toggle-btn"
+				class:active={activeView === 'admin'}
+				onclick={() => setView('admin')}
+			>
+				Admin View
+			</button>
 		</div>
 
-		<p class="showcase-note">
-			Live production system. Book a real court.
-		</p>
+		{#if activeView === 'member'}
+			<div class="embed-container">
+				{#if isLoading}
+					<div class="skeleton-widget">
+						<div class="skeleton-header">
+							<div class="skeleton-title"></div>
+							<div class="skeleton-subtitle"></div>
+						</div>
+						<div class="skeleton-grid">
+							{#each Array(6) as _}
+								<div class="skeleton-slot"></div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+				<div class="widget-wrapper" class:loading={isLoading}>
+					{#key memberEmail}
+						<Widget facilitySlug="thestack" theme="dark" {memberEmail} />
+					{/key}
+				</div>
+			</div>
+
+			<div class="personalization-prompt">
+				{#if !showPersonalization}
+					<p class="prompt-text">
+						Sarah books Tuesdays and Thursdays at 6pm on Grandview Court 1.
+					</p>
+					<button class="reveal-btn" onclick={revealPersonalization}>
+						Show Sarah's View
+					</button>
+				{:else}
+					<p class="prompt-text revealed">
+						Notice the subtle highlights on her preferred slots. No announcement. Just there.
+					</p>
+					<p class="prompt-hint">
+						Try it: select a slot and enter <code>sarah.demo@clearway.test</code> as email.
+					</p>
+				{/if}
+			</div>
+		{:else}
+			<div class="admin-container">
+				<AdminInsightsPreview />
+			</div>
+		{/if}
 	</div>
 </section>
 
@@ -72,14 +125,42 @@
 		font-size: var(--text-body-lg);
 		text-align: center;
 		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-xl);
+		margin: 0 0 var(--space-lg);
 	}
 
-	.showcase-note {
+	.view-toggle {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-xs);
+		margin-bottom: var(--space-lg);
+	}
+
+	.toggle-btn {
+		padding: var(--space-xs) var(--space-md);
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		text-align: center;
-		margin: 0;
+		font-weight: 500;
+		color: var(--color-fg-tertiary);
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.toggle-btn:hover {
+		color: var(--color-fg-secondary);
+		border-color: var(--color-border-emphasis);
+	}
+
+	.toggle-btn.active {
+		color: var(--color-fg-primary);
+		background: var(--color-bg-surface);
+		border-color: var(--color-border-emphasis);
+	}
+
+	.admin-container {
+		max-width: 32rem;
+		margin: 0 auto;
 	}
 
 	/* Skeleton loader (Canon: --duration-slow = 700ms for transitions) */
@@ -140,7 +221,7 @@
 	.embed-container {
 		position: relative;
 		min-height: 320px;
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-lg);
 	}
 
 	.widget-wrapper {
@@ -151,13 +232,62 @@
 		opacity: 0;
 	}
 
+	.personalization-prompt {
+		text-align: center;
+		padding: var(--space-md);
+	}
+
+	.prompt-text {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-sm);
+	}
+
+	.prompt-text.revealed {
+		color: var(--color-fg-tertiary);
+		font-style: italic;
+	}
+
+	.prompt-hint {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		margin: var(--space-xs) 0 0;
+	}
+
+	.prompt-hint code {
+		font-family: 'JetBrains Mono', monospace;
+		font-size: var(--text-caption);
+		background: var(--color-bg-surface);
+		padding: 2px 6px;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.reveal-btn {
+		padding: var(--space-xs) var(--space-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		color: var(--color-fg-primary);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-md);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.reveal-btn:hover {
+		background: var(--color-hover);
+		border-color: var(--color-border-strong);
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.skeleton-title,
 		.skeleton-subtitle,
 		.skeleton-slot {
 			animation: none;
 		}
-		.widget-wrapper {
+		.widget-wrapper,
+		.reveal-btn {
 			transition: none;
 		}
 		.widget-wrapper.loading {

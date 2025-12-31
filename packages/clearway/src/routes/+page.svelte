@@ -4,7 +4,6 @@
 
 	import {
 		HeroSection,
-		ProblemSection,
 		StackShowcase,
 		ValueGrid,
 		PhilosophySection,
@@ -32,9 +31,6 @@
 <main>
 	<HeroSection />
 	<ScrollReveal>
-		<ProblemSection />
-	</ScrollReveal>
-	<ScrollReveal delay={100}>
 		<StackShowcase />
 	</ScrollReveal>
 	<ScrollReveal delay={100}>

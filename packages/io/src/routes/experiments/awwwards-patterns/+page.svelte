@@ -639,8 +639,6 @@ const scroll = window.scrollY;
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
 		gap: var(--space-sm);
-		/* Define cascade timing locally until Canon tokens are in CSS */
-		--cascade-step: 50ms;
 	}
 
 	.stagger-item {
@@ -707,8 +705,6 @@ const scroll = window.scrollY;
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-sm);
-		/* Define cascade timing locally until Canon tokens are in CSS */
-		--cascade-step: 50ms;
 	}
 
 	.cascade-item {

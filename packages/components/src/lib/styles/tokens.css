@@ -308,6 +308,42 @@
   --duration-complex: 500ms;
   --duration-slow: 700ms;
 
+  /* Cascade timing - DERIVED from perceptual grouping
+   *
+   * Staggered animations need spacing that creates rhythm without
+   * feeling disconnected. Based on Gestalt proximity principles:
+   * - Elements <50ms apart feel like a group
+   * - Elements >150ms apart feel independent
+   *
+   * | Step  | Value | Use Case                       |
+   * |-------|-------|--------------------------------|
+   * | step  | 50ms  | Between sibling items          |
+   * | group | 100ms | Between logical groups         |
+   *
+   * Usage: transition-delay: calc(var(--cascade-step) * var(--index));
+   */
+  --cascade-step: 50ms;
+  --cascade-group: 100ms;
+
+  /* Scale transforms - DERIVED for hover emphasis
+   *
+   * Award-winning B&W sites use subtle scale for interaction feedback.
+   * Values chosen for perceivability without distraction.
+   *
+   * | Step   | Value | Use Case                       |
+   * |--------|-------|--------------------------------|
+   * | subtle | 0.98  | Active/pressed state (shrink)  |
+   * | micro  | 1.02  | Card hover, button lift        |
+   * | small  | 1.05  | Emphasized hover states        |
+   * | medium | 1.1   | Modal/overlay entrance         |
+   *
+   * Usage: transform: scale(var(--scale-micro));
+   */
+  --scale-subtle: 0.98;
+  --scale-micro: 1.02;
+  --scale-small: 1.05;
+  --scale-medium: 1.1;
+
   /* Opacity states */
   --opacity-muted: 0.6;
   --opacity-hover: 0.8;
