@@ -14,9 +14,5 @@ export { default as StaggerItem } from './StaggerItem.svelte';
 export { default as CountUp } from './CountUp.svelte';
 export { default as FadeIn } from './FadeIn.svelte';
 export { default as ParallaxSection } from './ParallaxSection.svelte';
-export {
-	default as SmoothScroll,
-	SMOOTH_SCROLL_KEY,
-	createScrollState,
-	type ScrollState
-} from './SmoothScroll.svelte';
+export { default as SmoothScroll } from './SmoothScroll.svelte';
+export { SMOOTH_SCROLL_KEY, createScrollState, type ScrollState } from './smooth-scroll';
