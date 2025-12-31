@@ -41,6 +41,10 @@ export interface ParsedThread {
 
 /**
  * Parse a LinkedIn thread markdown file
+ *
+ * Supports two formats:
+ * 1. Thread format: ## Thread with ### Tweet/Post N sections
+ * 2. Longform format: ## Post with single content block
  */
 export function parseThread(markdown: string): ParsedThread {
 	const lines = markdown.split('\n');
@@ -52,12 +56,19 @@ export function parseThread(markdown: string): ParsedThread {
 	const posts: ParsedPost[] = [];
 	let currentPost: { label: string; lines: string[] } | null = null;
 	let inThread = false;
+	let inLongform = false;
+	let inComment = false;
 	let inHashtags = false;
+	let commentContent = '';
 
 	for (const line of lines) {
-		// Parse title
+		// Parse title (both formats)
 		if (line.startsWith('# LinkedIn Thread:')) {
 			metadata.title = line.replace('# LinkedIn Thread:', '').trim();
+			continue;
+		}
+		if (line.startsWith('# LinkedIn Post:')) {
+			metadata.title = line.replace('# LinkedIn Post:', '').trim();
 			continue;
 		}
 		if (line.startsWith('# ') && !metadata.title) {
@@ -83,13 +94,46 @@ export function parseThread(markdown: string): ParsedThread {
 			continue;
 		}
 
-		// Detect thread section start
+		// Detect thread section start (multi-post format)
 		if (line.trim() === '## Thread') {
 			inThread = true;
+			inLongform = false;
 			continue;
 		}
 
-		// Detect hashtags section
+		// Detect longform post section (single post format)
+		if (line.trim() === '## Post') {
+			inLongform = true;
+			inThread = false;
+			currentPost = { label: 'Longform', lines: [] };
+			continue;
+		}
+
+		// Detect comment section (for CTA/hashtags)
+		if (line.includes('## Comment')) {
+			inComment = true;
+			inLongform = false;
+			inThread = false;
+			// Save pending longform post
+			if (currentPost && currentPost.lines.length > 0) {
+				posts.push(buildPost(currentPost, posts.length, 0, metadata.hashtags));
+				currentPost = null;
+			}
+			continue;
+		}
+
+		// Accumulate comment content
+		if (inComment && !line.startsWith('---') && !line.startsWith('## ')) {
+			commentContent += line + '\n';
+			// Extract hashtags from comment
+			const hashtagMatches = line.match(/#\w+/g);
+			if (hashtagMatches) {
+				metadata.hashtags.push(...hashtagMatches);
+			}
+			continue;
+		}
+
+		// Detect hashtags section (legacy format)
 		if (line.includes('Suggested hashtags')) {
 			inHashtags = true;
 			continue;
@@ -103,22 +147,24 @@ export function parseThread(markdown: string): ParsedThread {
 			continue;
 		}
 
-		// Stop at sections after Thread
-		if (line.startsWith('## ') && line.trim() !== '## Thread') {
+		// Stop at other sections
+		if (line.startsWith('## ') && !['## Thread', '## Post', '## Comment'].includes(line.trim())) {
 			inThread = false;
+			inLongform = false;
+			inComment = false;
 			// Save any pending post
-			if (currentPost) {
+			if (currentPost && currentPost.lines.length > 0) {
 				posts.push(buildPost(currentPost, posts.length, 0, metadata.hashtags));
 				currentPost = null;
 			}
 			continue;
 		}
 
-		// Parse individual posts (### Tweet N (Label))
+		// Parse individual posts (### Tweet N (Label)) - thread format
 		const tweetMatch = line.match(/^### (?:Tweet|Post) (\d+)(?: \(([^)]+)\))?/);
 		if (tweetMatch) {
 			// Save previous post
-			if (currentPost) {
+			if (currentPost && currentPost.lines.length > 0) {
 				posts.push(buildPost(currentPost, posts.length, 0, metadata.hashtags));
 			}
 			currentPost = {
@@ -128,9 +174,14 @@ export function parseThread(markdown: string): ParsedThread {
 			continue;
 		}
 
-		// Accumulate content for current post
+		// Accumulate content for current post (both formats)
 		if (currentPost && line.trim() !== '---') {
 			currentPost.lines.push(line);
+		}
+
+		// Accumulate longform content
+		if (inLongform && currentPost && line.trim() !== '---') {
+			// Already handled above
 		}
 	}
 

@@ -338,10 +338,10 @@
 
 	<div class="templates-grid">
 		{#each productionTemplates as template}
+			{@const Icon = template.icon}
 			<article class="template-card production">
 				<div class="template-header">
 					<div class="template-icon">
-						{@const Icon = template.icon}
 						<Icon size={28} strokeWidth={1.5} />
 					</div>
 					<div class="template-meta">
@@ -413,10 +413,10 @@
 
 	<div class="templates-grid">
 		{#each developmentTemplates as template}
+			{@const Icon = template.icon}
 			<article class="template-card development">
 				<div class="template-header">
 					<div class="template-icon muted">
-						{@const Icon = template.icon}
 						<Icon size={28} strokeWidth={1.5} />
 					</div>
 					<div class="template-meta">
