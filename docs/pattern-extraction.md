@@ -88,13 +88,15 @@ animation-duration: var(--duration-complex);
 | **FormField** | Custom | Validation wrapper with error display | Done |
 | **Combobox** | shadcn-svelte | Searchable select | Done |
 | **DatePicker** | Melt UI | Calendar with dropdowns | Done |
-| **FileUpload** | Maverick X | Drag-drop with preview | P2 |
-| **OTPInput** | shadcn-svelte | PIN entry pattern | P3 |
+| **FileUpload** | Maverick X | Drag-drop with preview | Done |
+| **OTPInput** | shadcn-svelte | PIN entry pattern | Done |
 
 **Implemented in `@create-something/components/forms`**:
 - `FormField` - Form field wrapper with label, validation, and error display
 - `Combobox` - Searchable select dropdown with keyboard navigation
 - `DatePicker` - Calendar-based date selection with month/year navigation
+- `FileUpload` - Drag-drop file upload with preview and validation
+- `OTPInput` - PIN/verification code entry with auto-advance
 
 ### 5. Conversion Patterns
 
@@ -284,10 +286,13 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 | **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
 | **navigation** | StickyHeader, MobileDrawer, CommandPalette, MenuButton | `@create-something/components/navigation` |
 | **content** | VideoLightbox, Carousel, TestimonialCarousel | `@create-something/components/content` |
-| **forms** | FormField, Combobox, DatePicker | `@create-something/components/forms` |
+| **forms** | FormField, Combobox, DatePicker, FileUpload, OTPInput | `@create-something/components/forms` |
 
 ### Remaining Work
 
-**Form Patterns** (P3):
-- FileUpload - Drag-drop with preview
-- OTPInput - PIN entry pattern
+All core patterns implemented. Future enhancements (P2-P3):
+- ParallaxSection - Multi-layer depth effect
+- HoverCard - Link preview on hover
+- MegaMenu - Complex navigation dropdown
+- Tabs - Accessible tab interface
+- ExitIntent - Mouse-leave detection modal
