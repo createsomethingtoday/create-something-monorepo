@@ -106,9 +106,13 @@
 		const startHour = start.getHours() + start.getMinutes() / 60;
 		const endHour = end.getHours() + end.getMinutes() / 60;
 
+		// Clamp to visible range (reservations outside operating hours get clipped)
+		const clampedStart = Math.max(startHour, START_HOUR);
+		const clampedEnd = Math.min(endHour, END_HOUR);
+
 		// Calculate horizontal position as percentage of timeline
-		const left = ((startHour - START_HOUR) / (END_HOUR - START_HOUR)) * 100;
-		const width = ((endHour - startHour) / (END_HOUR - START_HOUR)) * 100;
+		const left = ((clampedStart - START_HOUR) / (END_HOUR - START_HOUR)) * 100;
+		const width = ((clampedEnd - clampedStart) / (END_HOUR - START_HOUR)) * 100;
 
 		// Calculate vertical position based on lane
 		const laneHeight = 100 / reservation.totalLanes;
@@ -514,6 +518,7 @@
 		display: flex;
 		background: var(--color-bg-surface, #111111);
 		border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
+		overflow: hidden;
 	}
 
 	.hour-line {
