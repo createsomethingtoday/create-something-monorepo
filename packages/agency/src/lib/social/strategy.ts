@@ -181,14 +181,20 @@ export function generateSchedule(postCount: number, options: ScheduleOptions): D
 	}
 
 	if (mode === 'longform') {
-		// Single post at next optimal time
-		const optimalTime = getNextOptimalTime(
-			timezone,
-			preferredDays || DEFAULT_PREFERRED_DAYS,
-			preferredHour || DEFAULT_PREFERRED_HOUR,
-			startDate || new Date()
-		);
-		schedule.push(optimalTime);
+		// Single post - use exact startDate if provided, otherwise find next optimal
+		if (startDate) {
+			// Use the provided date at the preferred hour
+			const exactTime = setLocalHour(startDate, preferredHour || DEFAULT_PREFERRED_HOUR, timezone);
+			schedule.push(exactTime);
+		} else {
+			const optimalTime = getNextOptimalTime(
+				timezone,
+				preferredDays || DEFAULT_PREFERRED_DAYS,
+				preferredHour || DEFAULT_PREFERRED_HOUR,
+				new Date()
+			);
+			schedule.push(optimalTime);
+		}
 		return schedule;
 	}
 
