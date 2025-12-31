@@ -118,7 +118,7 @@
 
 	.auth-card {
 		width: 100%;
-		max-width: 400px;
+		max-width: 440px;
 		padding: var(--space-xl, 2rem);
 		background: var(--color-bg-subtle, #1a1a1a);
 		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));

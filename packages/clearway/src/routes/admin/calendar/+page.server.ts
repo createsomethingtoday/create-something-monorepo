@@ -10,7 +10,7 @@ import type { PageServerLoad } from './$types';
 interface Court {
 	id: string;
 	name: string;
-	type: string;
+	court_type: string;
 	sort_order: number;
 }
 
@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
 		const courtsResult = await db
 			.prepare(
 				`
-				SELECT id, name, type, sort_order
+				SELECT id, name, court_type, sort_order
 				FROM courts
 				WHERE facility_id = ?
 				ORDER BY sort_order
