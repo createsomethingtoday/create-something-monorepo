@@ -22,12 +22,18 @@ Research document for building a 90+/100 pattern library that exceeds Maverick X
 
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
-| **ScrollReveal** | GSAP ScrollTrigger | Use `--duration-standard` (300ms) | P1 |
-| **ParallaxSection** | Lenis/Locomotive | CSS `translateY` with scroll progress | P1 |
-| **StaggerContainer** | Framer Motion | Use `--duration-micro` intervals | P1 |
-| **CountUp** | Maverick X | IntersectionObserver trigger | P2 |
-| **FadeIn** | Universal | `opacity` + `translateY(20px)` | P1 |
+| **ScrollReveal** | GSAP ScrollTrigger | IntersectionObserver + Canon tokens | Done |
+| **StaggerContainer** | Framer Motion | Staggered child animations | Done |
+| **CountUp** | Maverick X | IntersectionObserver trigger | Done |
+| **FadeIn** | Universal | `opacity` + `translateY(20px)` | Done |
+| **ParallaxSection** | Lenis/Locomotive | CSS `translateY` with scroll progress | P2 |
 | **SmoothScroll** | Lenis | Consider Lenis integration | P3 |
+
+**Implemented in `@create-something/components/motion`**:
+- `ScrollReveal` - IntersectionObserver-based reveal with Canon timing
+- `StaggerContainer` + `StaggerItem` - Staggered child animations
+- `CountUp` - Animated number counter with easing
+- `FadeIn` - Simple entrance animation wrapper
 
 **2025 Motion Insight**: Lightweight, targeted animations over complex sequences. Focus on scroll-triggered reveals, not decorative motion.
 
@@ -42,8 +48,11 @@ animation-duration: var(--duration-complex);
 
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
-| **GlassCard** | Universal | `backdrop-filter: blur()` | P1 |
+| **GlassCard** | Universal | `backdrop-filter: blur()` | Done |
 | **HoverCard** | shadcn-svelte | Preview on link hover | P2 |
+
+**Implemented in `@create-something/components/interactive`**:
+- `GlassCard` - Frosted glass effect with Canon tokens
 
 **Removed patterns** (don't fit Canon ethos):
 - ~~ShimmerButton~~ - Gradient sweep too flashy, prefer subtle state changes
@@ -79,21 +88,33 @@ animation-duration: var(--duration-complex);
 
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
-| **StickyFooterCTA** | Templates | Fixed bottom bar | P1 |
+| **TrustSignals** | Templates | Logo wall with grayscale hover | Done |
+| **StickyCTA** | Templates | Journey-aware floating CTA | Done |
+| **ProcessSteps** | Templates | Numbered step timeline | Done |
+| **MetricCounters** | Templates | Animated counter statistics | Done |
 | **ExitIntent** | SaaS patterns | Mouse-leave detection | P2 |
-| **FloatingCTA** | Universal | Fixed position button | P2 |
-| **TrustSignals** | Templates | Logo wall, testimonials | Done |
-| **MetricCounters** | Maverick X | Animated stats | P1 |
+
+**Implemented in `@create-something/components/conversion`**:
+- `TrustSignals` - Logo wall with variants (clients/certifications/associations)
+- `StickyCTA` - Contextual CTA that evolves based on scroll depth (early/mid/late journey)
+- `ProcessSteps` - Numbered process timeline with connector lines
+- `MetricCounters` - Animated statistics with staggered reveal
 
 ### 6. Layout Patterns
 
 | Pattern | Source | Canon Compatibility | Priority |
 |---------|--------|---------------------|----------|
-| **BentoGrid** | Maverick X | Asymmetric grid system | P1 |
-| **SplitSection** | Lexington | Two-column with variants | P1 |
-| **FullBleedHero** | Templates | Video/image background | Done |
+| **Section** | Templates | Consistent section wrapper | Done |
+| **SplitSection** | Lexington | Two-column with variants | Done |
+| **BentoGrid** | Maverick X | Asymmetric grid system | Done |
+| **SectionHeader** | Templates | Title/subtitle pattern | Done |
 | **StickySection** | Awwwards | Scroll-locked content | P2 |
-| **AsymmetricGallery** | Templates | Variable-size grid | Done |
+
+**Implemented in `@create-something/components/layout`**:
+- `Section` - Consistent section wrapper with Canon spacing variants
+- `SplitSection` - Two-column layout with flexible ratios (50-50, 60-40, etc.)
+- `BentoGrid` + `BentoItem` - Asymmetric grid system
+- `SectionHeader` - Standardized title/subtitle pattern
 
 ### 7. Content Patterns
 
@@ -234,10 +255,30 @@ Direct ports from React to Svelte (reference: `/Users/micahjohnson/Documents/Git
 
 ---
 
-## Next Steps
+## Implementation Status
 
-1. Create `packages/components/src/lib/motion/` directory
-2. Port ScrollReveal from Maverick X (GSAP → Svelte/IntersectionObserver)
-3. Port MagneticHover from Maverick X (spring physics)
-4. Create ShimmerButton with Canon tokens
-5. Apply to Clearway as proof-of-concept
+### Completed Pattern Libraries
+
+| Package | Patterns | Import Path |
+|---------|----------|-------------|
+| **motion** | ScrollReveal, StaggerContainer, StaggerItem, CountUp, FadeIn | `@create-something/components/motion` |
+| **interactive** | GlassCard | `@create-something/components/interactive` |
+| **layout** | Section, SplitSection, BentoGrid, BentoItem, SectionHeader | `@create-something/components/layout` |
+| **conversion** | TrustSignals, StickyCTA, ProcessSteps, MetricCounters | `@create-something/components/conversion` |
+
+### Remaining Work
+
+**Navigation Patterns** (P1):
+- StickyHeader - Scroll-triggered backdrop
+- MobileDrawer - Bottom sheet navigation
+- CommandPalette - ⌘K search
+
+**Content Patterns** (P2):
+- VideoLightbox - Modal video player
+- Carousel - Embla-based slides
+- TestimonialCarousel - Rotating quotes
+
+**Form Patterns** (P2):
+- InlineValidation - Real-time feedback
+- Combobox - Searchable select
+- DatePicker - Calendar selection
