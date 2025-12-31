@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Footer, QuoteBlock } from '@create-something/components';
+	import { QuoteBlock } from '@create-something/components';
 
-	// Scroll tracking for parallax
-	let scrollY = $state(0);
+	// Parallax tracking - relative to container
+	let parallaxContainer: HTMLElement;
+	let parallaxOffset = $state(0);
+
+	// Cascade container for intersection observer
+	let cascadeContainer: HTMLElement;
 
 	// Demo states
 	let gridHovered = $state(false);
@@ -17,17 +21,38 @@
 
 	onMount(() => {
 		const handleScroll = () => {
-			scrollY = window.scrollY;
+			if (parallaxContainer) {
+				const rect = parallaxContainer.getBoundingClientRect();
+				const containerCenter = rect.top + rect.height / 2;
+				const viewportCenter = window.innerHeight / 2;
+				// Offset from center of viewport - gives smooth parallax as you scroll past
+				parallaxOffset = (viewportCenter - containerCenter) * 0.1;
+			}
 		};
 
 		window.addEventListener('scroll', handleScroll, { passive: true });
+		handleScroll(); // Initial calculation
 
-		// Trigger cascade after mount
-		setTimeout(() => {
-			cascadeVisible = true;
-		}, 100);
+		// Trigger cascade when section comes into view
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting && !cascadeVisible) {
+						cascadeVisible = true;
+					}
+				});
+			},
+			{ threshold: 0.3 }
+		);
 
-		return () => window.removeEventListener('scroll', handleScroll);
+		if (cascadeContainer) {
+			observer.observe(cascadeContainer);
+		}
+
+		return () => {
+			window.removeEventListener('scroll', handleScroll);
+			observer.disconnect();
+		};
 	});
 </script>
 
@@ -208,22 +233,22 @@
 			midground, and background layers move at different rates on scroll.
 		</p>
 
-		<div class="demo-container parallax-demo">
+		<div class="demo-container parallax-demo" bind:this={parallaxContainer}>
 			<div
 				class="parallax-layer background"
-				style="transform: translateY({scrollY * -0.02}px)"
+				style="transform: translateY({parallaxOffset * 0.2}px)"
 			>
 				Background
 			</div>
 			<div
 				class="parallax-layer midground"
-				style="transform: translateY({scrollY * -0.05}px)"
+				style="transform: translateY({parallaxOffset * 0.5}px)"
 			>
 				Midground
 			</div>
 			<div
 				class="parallax-layer foreground"
-				style="transform: translateY({scrollY * -0.1}px)"
+				style="transform: translateY({parallaxOffset * 1}px)"
 			>
 				Foreground
 			</div>
@@ -258,7 +283,7 @@ const scroll = window.scrollY;
 			Each element fades in with a slight delay, creating rhythm.
 		</p>
 
-		<div class="demo-container">
+		<div class="demo-container" bind:this={cascadeContainer}>
 			<div class="cascade-container">
 				{#each ['Principle 1', 'Principle 2', 'Principle 3', 'Principle 4'] as principle, i}
 					<div class="cascade-item" class:visible={cascadeVisible} style="--index: {i}">
@@ -423,8 +448,6 @@ const scroll = window.scrollY;
 		<p class="principles">Tests: Rams Principle 10 (Less Design), Heidegger (Zuhandenheit)</p>
 	</footer>
 </article>
-
-<Footer />
 
 <style>
 	.experiment-page {
@@ -616,6 +639,8 @@ const scroll = window.scrollY;
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
 		gap: var(--space-sm);
+		/* Define cascade timing locally until Canon tokens are in CSS */
+		--cascade-step: 50ms;
 	}
 
 	.stagger-item {
@@ -626,7 +651,7 @@ const scroll = window.scrollY;
 		text-align: center;
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		transition: opacity var(--duration-standard) var(--ease-standard);
+		transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
 		transition-delay: calc(var(--cascade-step) * var(--index));
 		cursor: pointer;
 	}
@@ -682,6 +707,8 @@ const scroll = window.scrollY;
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-sm);
+		/* Define cascade timing locally until Canon tokens are in CSS */
+		--cascade-step: 50ms;
 	}
 
 	.cascade-item {
@@ -695,7 +722,7 @@ const scroll = window.scrollY;
 	}
 
 	.cascade-item.visible {
-		animation: cascadeIn var(--duration-standard) var(--ease-standard) forwards;
+		animation: cascadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 		animation-delay: calc(var(--cascade-step) * var(--index));
 	}
 
