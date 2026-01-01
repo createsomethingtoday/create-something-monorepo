@@ -21,6 +21,7 @@ interface PostMessage {
 	content: string;
 	metadata?: {
 		commentLink?: string;
+		organizationId?: string;
 	};
 }
 
@@ -112,17 +113,26 @@ export default {
 					throw new Error('LinkedIn token expired. Re-authenticate at /api/linkedin/auth');
 				}
 
-				// Get user ID
-				const userResponse = await fetch(`${LINKEDIN_API}/userinfo`, {
-					headers: { Authorization: `Bearer ${token.access_token}` }
-				});
+				// Determine author: organization or personal
+				let author: string;
 
-				if (!userResponse.ok) {
-					throw new Error(`Failed to get user info: ${await userResponse.text()}`);
+				if (metadata?.organizationId) {
+					// Post as organization
+					author = `urn:li:organization:${metadata.organizationId}`;
+					console.log(`[Queue] Posting as organization: ${metadata.organizationId}`);
+				} else {
+					// Post as personal - need to get user ID
+					const userResponse = await fetch(`${LINKEDIN_API}/userinfo`, {
+						headers: { Authorization: `Bearer ${token.access_token}` }
+					});
+
+					if (!userResponse.ok) {
+						throw new Error(`Failed to get user info: ${await userResponse.text()}`);
+					}
+
+					const userInfo = (await userResponse.json()) as { sub: string };
+					author = `urn:li:person:${userInfo.sub}`;
 				}
-
-				const userInfo = (await userResponse.json()) as { sub: string };
-				const userId = userInfo.sub;
 
 				// Post to LinkedIn
 				const postResponse = await fetch(`${LINKEDIN_API}/ugcPosts`, {
@@ -133,7 +143,7 @@ export default {
 						'X-Restli-Protocol-Version': '2.0.0'
 					},
 					body: JSON.stringify({
-						author: `urn:li:person:${userId}`,
+						author,
 						lifecycleState: 'PUBLISHED',
 						specificContent: {
 							'com.linkedin.ugc.ShareContent': {
@@ -166,7 +176,7 @@ export default {
 								'X-Restli-Protocol-Version': '2.0.0'
 							},
 							body: JSON.stringify({
-								actor: `urn:li:person:${userId}`,
+								actor: author, // Same author as the post (person or organization)
 								message: { text: metadata.commentLink }
 							})
 						});

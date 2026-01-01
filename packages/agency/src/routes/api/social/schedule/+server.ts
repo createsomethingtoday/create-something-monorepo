@@ -31,6 +31,7 @@ interface ScheduleRequest {
 	startDate?: string; // ISO date string
 	dryRun?: boolean;
 	forceSchedule?: boolean; // Override conflict detection
+	organizationId?: string; // Post as organization instead of personal account
 }
 
 interface ScheduledPostRow {
@@ -71,7 +72,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		timezone = 'America/Los_Angeles',
 		startDate,
 		dryRun = false,
-		forceSchedule = false
+		forceSchedule = false,
+		organizationId
 	} = body;
 
 	// Check LinkedIn token status - only block if not a dry run
@@ -93,6 +95,28 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	if (tokenStatus.warning) {
 		console.warn('LinkedIn token warning:', tokenStatus.warning);
+	}
+
+	// Validate organizationId if provided
+	if (organizationId) {
+		const authorizedOrgs = tokenStatus.organizations || [];
+		const org = authorizedOrgs.find((o) => o.id === organizationId);
+
+		if (!org) {
+			return json(
+				{
+					error: `Not authorized to post as organization ${organizationId}`,
+					authorizedOrganizations: authorizedOrgs.map((o) => ({
+						id: o.id,
+						name: o.name
+					})),
+					message: authorizedOrgs.length > 0
+						? `Authorized organizations: ${authorizedOrgs.map((o) => `${o.name} (${o.id})`).join(', ')}`
+						: 'No organizations found. Re-authenticate at /api/linkedin/auth to refresh.'
+				},
+				{ status: 403 }
+			);
+		}
 	}
 
 	if (targetPlatform !== 'linkedin') {
@@ -257,10 +281,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			timezone,
 			threadId,
 			totalPosts: postsToSchedule.length,
+			...(organizationId && { organizationId }),
 			tokenStatus: {
 				connected: tokenStatus.connected,
 				daysRemaining: tokenStatus.daysRemaining,
-				warning: tokenWarning
+				warning: tokenWarning,
+				organizations: tokenStatus.organizations?.map((o) => ({ id: o.id, name: o.name }))
 			},
 			conflicts: conflictResult.hasConflicts
 				? {
@@ -312,7 +338,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const post = postsToSchedule[i];
 		const scheduledFor = schedule[i];
 
-		const metadata = post.commentLink ? JSON.stringify({ commentLink: post.commentLink }) : null;
+		// Build metadata object with optional fields
+		const metadataObj: { commentLink?: string; organizationId?: string } = {};
+		if (post.commentLink) metadataObj.commentLink = post.commentLink;
+		if (organizationId) metadataObj.organizationId = organizationId;
+		const metadata = Object.keys(metadataObj).length > 0 ? JSON.stringify(metadataObj) : null;
 
 		await db
 			.prepare(
@@ -349,10 +379,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		timezone,
 		threadId,
 		totalPosts: postsToSchedule.length,
+		...(organizationId && { organizationId }),
 		tokenStatus: {
 			connected: tokenStatus.connected,
 			daysRemaining: tokenStatus.daysRemaining,
-			warning: tokenStatus.warning
+			warning: tokenStatus.warning,
+			organizations: tokenStatus.organizations?.map((o) => ({ id: o.id, name: o.name }))
 		},
 		scheduled: insertedPosts
 	};

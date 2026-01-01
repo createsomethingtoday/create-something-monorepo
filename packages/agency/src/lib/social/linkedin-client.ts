@@ -20,10 +20,17 @@ export interface LinkedInUserInfo {
 	email?: string;
 }
 
+export interface OrganizationInfo {
+	id: string;
+	name: string;
+	vanityName?: string;
+}
+
 export interface StoredToken {
 	access_token: string;
 	expires_at: number;
 	scope: string;
+	organizations?: OrganizationInfo[];
 }
 
 export class LinkedInClient {
@@ -60,10 +67,14 @@ export class LinkedInClient {
 	 * Post text content to LinkedIn
 	 *
 	 * @param text - The post content (max 3000 chars)
+	 * @param organizationId - Optional org ID to post as organization instead of personal
 	 * @returns Post ID and URL
 	 */
-	async post(text: string): Promise<PostResult> {
-		const userId = await this.getUserId();
+	async post(text: string, organizationId?: string): Promise<PostResult> {
+		// Determine author: organization or personal
+		const author = organizationId
+			? `urn:li:organization:${organizationId}`
+			: `urn:li:person:${await this.getUserId()}`;
 
 		const response = await fetch(`${LINKEDIN_API}/ugcPosts`, {
 			method: 'POST',
@@ -73,7 +84,7 @@ export class LinkedInClient {
 				'X-Restli-Protocol-Version': '2.0.0'
 			},
 			body: JSON.stringify({
-				author: `urn:li:person:${userId}`,
+				author,
 				lifecycleState: 'PUBLISHED',
 				specificContent: {
 					'com.linkedin.ugc.ShareContent': {
@@ -109,9 +120,13 @@ export class LinkedInClient {
 	 *
 	 * @param postId - The URN of the post (urn:li:share:xxx or urn:li:ugcPost:xxx)
 	 * @param text - Comment text containing the link
+	 * @param organizationId - Optional org ID to comment as organization
 	 */
-	async addComment(postId: string, text: string): Promise<void> {
-		const userId = await this.getUserId();
+	async addComment(postId: string, text: string, organizationId?: string): Promise<void> {
+		// Determine actor: organization or personal
+		const actor = organizationId
+			? `urn:li:organization:${organizationId}`
+			: `urn:li:person:${await this.getUserId()}`;
 
 		const response = await fetch(`${LINKEDIN_API}/socialActions/${postId}/comments`, {
 			method: 'POST',
@@ -121,7 +136,7 @@ export class LinkedInClient {
 				'X-Restli-Protocol-Version': '2.0.0'
 			},
 			body: JSON.stringify({
-				actor: `urn:li:person:${userId}`,
+				actor,
 				message: {
 					text: text
 				}
@@ -190,6 +205,7 @@ export async function getTokenStatus(
 	daysRemaining?: number;
 	scope?: string;
 	warning?: string;
+	organizations?: OrganizationInfo[];
 }> {
 	const tokenData = await kv.get('linkedin_access_token');
 
@@ -206,6 +222,7 @@ export async function getTokenStatus(
 		expiresAt: new Date(token.expires_at).toISOString(),
 		daysRemaining,
 		scope: token.scope,
+		organizations: token.organizations,
 		...(daysRemaining <= 7 && { warning: `Token expires in ${daysRemaining} days` })
 	};
 }

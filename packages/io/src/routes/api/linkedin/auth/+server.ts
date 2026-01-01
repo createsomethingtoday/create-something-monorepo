@@ -21,12 +21,17 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 
 	const redirectUri = `${url.origin}/api/linkedin/callback`;
 
+	// Scopes:
+	// - openid, profile, email: User identity
+	// - w_member_social: Post as personal account
+	// - r_organization_social: Read organization info (to list administrable orgs)
+	// - w_organization_social: Post as organization
 	const params = new URLSearchParams({
 		response_type: 'code',
 		client_id: clientId,
 		redirect_uri: redirectUri,
 		state: state,
-		scope: 'openid profile email w_member_social'
+		scope: 'openid profile email w_member_social r_organization_social w_organization_social'
 	});
 
 	throw redirect(302, `${LINKEDIN_AUTH_URL}?${params.toString()}`);

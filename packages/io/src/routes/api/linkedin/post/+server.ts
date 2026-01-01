@@ -3,14 +3,22 @@ import type { RequestHandler } from './$types';
 
 const LINKEDIN_API = 'https://api.linkedin.com/v2';
 
+interface OrganizationInfo {
+	id: string;
+	name: string;
+	vanityName?: string;
+}
+
 interface StoredToken {
 	access_token: string;
 	expires_at: number;
 	scope: string;
+	organizations?: OrganizationInfo[];
 }
 
 interface PostRequest {
 	text: string;
+	organizationId?: string;
 }
 
 interface UserInfoResponse {
@@ -64,26 +72,46 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'Missing or invalid text field' }, { status: 400 });
 	}
 
-	// Get user's LinkedIn ID using userinfo endpoint
-	let userId: string;
-	try {
-		const userResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
-			headers: {
-				Authorization: `Bearer ${token.access_token}`
-			}
-		});
+	// Determine author: organization or personal
+	let author: string;
 
-		if (!userResponse.ok) {
-			const errorText = await userResponse.text();
-			console.error('Failed to get user info:', errorText);
-			return json({ error: 'Failed to get LinkedIn user info' }, { status: 400 });
+	if (body.organizationId) {
+		// Validate organization ID is in the list of authorized organizations
+		const authorizedOrgs = token.organizations || [];
+		const org = authorizedOrgs.find((o) => o.id === body.organizationId);
+
+		if (!org) {
+			return json(
+				{
+					error: `Not authorized to post as organization ${body.organizationId}. ` +
+						`Authorized organizations: ${authorizedOrgs.map((o) => `${o.name} (${o.id})`).join(', ') || 'none'}`
+				},
+				{ status: 403 }
+			);
 		}
 
-		const userInfo = (await userResponse.json()) as UserInfoResponse;
-		userId = userInfo.sub;
-	} catch (err) {
-		console.error('User info error:', err);
-		return json({ error: 'Failed to fetch LinkedIn user info' }, { status: 500 });
+		author = `urn:li:organization:${body.organizationId}`;
+	} else {
+		// Get user's LinkedIn ID using userinfo endpoint
+		try {
+			const userResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
+				headers: {
+					Authorization: `Bearer ${token.access_token}`
+				}
+			});
+
+			if (!userResponse.ok) {
+				const errorText = await userResponse.text();
+				console.error('Failed to get user info:', errorText);
+				return json({ error: 'Failed to get LinkedIn user info' }, { status: 400 });
+			}
+
+			const userInfo = (await userResponse.json()) as UserInfoResponse;
+			author = `urn:li:person:${userInfo.sub}`;
+		} catch (err) {
+			console.error('User info error:', err);
+			return json({ error: 'Failed to fetch LinkedIn user info' }, { status: 500 });
+		}
 	}
 
 	// Create post using UGC Posts API
@@ -96,7 +124,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				'X-Restli-Protocol-Version': '2.0.0'
 			},
 			body: JSON.stringify({
-				author: `urn:li:person:${userId}`,
+				author,
 				lifecycleState: 'PUBLISHED',
 				specificContent: {
 					'com.linkedin.ugc.ShareContent': {
@@ -153,6 +181,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 		connected: !isExpired,
 		expiresAt: new Date(token.expires_at).toISOString(),
 		scope: token.scope,
+		organizations: token.organizations || [],
 		...(isExpired && { authUrl: '/api/linkedin/auth' })
 	});
 };
