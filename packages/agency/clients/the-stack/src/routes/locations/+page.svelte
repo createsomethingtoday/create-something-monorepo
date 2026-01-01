@@ -133,7 +133,6 @@
           src="https://clearway.pages.dev/embed?facility=thestack&theme=dark&court_type={selectedLocation.courtFilter}"
           title="Book a Court at {selectedLocation.name}"
           frameborder="0"
-          scrolling="no"
           class="modal-iframe"
         ></iframe>
       </div>
@@ -417,8 +416,8 @@
 
   .modal-iframe {
     width: 100%;
-    min-height: 600px;
-    height: 70vh;
+    min-height: 700px;
+    height: 80vh;
     border: none;
   }
 
@@ -428,8 +427,8 @@
     }
 
     .modal-iframe {
-      min-height: 550px;
-      height: 75vh;
+      min-height: 650px;
+      height: 85vh;
     }
 
     .modal-header {
