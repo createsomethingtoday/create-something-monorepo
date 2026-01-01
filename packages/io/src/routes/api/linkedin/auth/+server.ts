@@ -24,14 +24,14 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 	// Scopes:
 	// - openid, profile, email: User identity
 	// - w_member_social: Post as personal account
-	// - r_organization_social: Read organization info (to list administrable orgs)
-	// - w_organization_social: Post as organization
+	// Note: Organization scopes (r_organization_social, w_organization_social) require
+	// LinkedIn Marketing Developer Platform approval. Add them once approved.
 	const params = new URLSearchParams({
 		response_type: 'code',
 		client_id: clientId,
 		redirect_uri: redirectUri,
 		state: state,
-		scope: 'openid profile email w_member_social r_organization_social w_organization_social'
+		scope: 'openid profile email w_member_social'
 	});
 
 	throw redirect(302, `${LINKEDIN_AUTH_URL}?${params.toString()}`);
