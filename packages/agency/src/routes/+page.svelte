@@ -54,9 +54,9 @@
 
 <!-- Act 2: What We Do -->
 <section class="services-section">
-	<div class="services-grid">
+	<div class="services-grid highlight-grid">
 		{#each services as service, i}
-			<a href={service.href} class="service-card" style="--index: {i}">
+			<a href={service.href} class="service-card highlight-item" style="--index: {i}">
 				<h3 class="service-title">{service.title}</h3>
 				<p class="service-description">{service.description}</p>
 				<span class="service-arrow">→</span>
@@ -70,9 +70,9 @@
 	<h2 class="principles-heading">The Subtractive Triad</h2>
 	<p class="principles-subtext">Three questions. One discipline.</p>
 
-	<div class="principles-list">
+	<div class="principles-list highlight-flex">
 		{#each principles as principle, i}
-			<div class="principle" style="--index: {i}">
+			<div class="principle highlight-item" style="--index: {i}">
 				<span class="principle-number">{i + 1}</span>
 				<div class="principle-content">
 					<p class="principle-question">{principle.question}</p>
@@ -92,20 +92,20 @@
 			Our methods aren't invented—they're validated. .io research proves what works. .ltd canon defines why it matters.
 		</p>
 
-		<div class="ecosystem-grid">
-			<a href="https://createsomething.io" class="ecosystem-card" style="--index: 0" target="_blank" rel="noopener">
+		<div class="ecosystem-grid highlight-grid">
+			<a href="https://createsomething.io" class="ecosystem-card highlight-item" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.io</span>
 				<h3 class="property-name">Research</h3>
 				<p class="property-desc">Papers and experiments that validate our approach. Peer-reviewed patterns.</p>
 			</a>
 
-			<a href="https://createsomething.space" class="ecosystem-card" style="--index: 1" target="_blank" rel="noopener">
+			<a href="https://createsomething.space" class="ecosystem-card highlight-item" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.space</span>
 				<h3 class="property-name">Practice</h3>
 				<p class="property-desc">Learn the patterns we use. Interactive tutorials for AI-native development.</p>
 			</a>
 
-			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" style="--index: 2" target="_blank" rel="noopener">
+			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
 				<h3 class="property-name">Canon</h3>
 				<p class="property-desc">Crystallization: human judgment encoded for AI execution. The philosophy behind our work.</p>

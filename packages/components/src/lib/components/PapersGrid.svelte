@@ -27,9 +27,9 @@
 		</div>
 
 		<!-- Responsive Grid - Matches Webflow inspiration -->
-		<ul class="papers-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="list">
+		<ul class="papers-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 highlight-grid" role="list">
 			{#each papers as paper, index (paper.id)}
-				<li>
+				<li class="highlight-item" style="--index: {index}">
 					<PaperCard
 						{paper}
 						rotation={rotations[index % rotations.length]}

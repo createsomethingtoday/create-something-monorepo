@@ -295,7 +295,25 @@ Award-winning sites use multi-property hover states for subtle emphasis:
 }
 ```
 
-**Staggered Grid** (CalArts pattern):
+**Staggered Grid / Highlight** (CalArts pattern):
+
+Use the built-in utility classes from `canon.css`:
+```html
+<div class="grid highlight-grid">
+  <div class="highlight-item" style="--index: 0">Item 1</div>
+  <div class="highlight-item" style="--index: 1">Item 2</div>
+  <div class="highlight-item" style="--index: 2">Item 3</div>
+</div>
+```
+
+Variants:
+| Class | Sibling Opacity | Use Case |
+|-------|----------------|----------|
+| `.highlight-grid` / `.highlight-flex` | 0.5 | Default (clear focus) |
+| `.highlight-subtle` | 0.7 | Gentle dimming |
+| `.highlight-strong` | 0.3 | Dramatic focus |
+
+Or implement manually:
 ```css
 .grid-item {
   transition: opacity var(--duration-standard) var(--ease-standard);

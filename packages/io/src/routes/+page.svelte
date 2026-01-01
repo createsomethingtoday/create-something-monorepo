@@ -55,20 +55,20 @@
 			.io documents what works. .space teaches it. .agency applies it. .ltd defines why it matters.
 		</p>
 
-		<div class="ecosystem-grid">
-			<a href="https://createsomething.space" class="ecosystem-card" style="--index: 0" target="_blank" rel="noopener">
+		<div class="ecosystem-grid highlight-grid">
+			<a href="https://createsomething.space" class="ecosystem-card highlight-item" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.space</span>
 				<h3 class="property-name">Practice</h3>
 				<p class="property-desc">Interactive tutorials. Learn by doing what research discovers.</p>
 			</a>
 
-			<a href="https://createsomething.agency" class="ecosystem-card" style="--index: 1" target="_blank" rel="noopener">
+			<a href="https://createsomething.agency" class="ecosystem-card highlight-item" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.agency</span>
 				<h3 class="property-name">Apply</h3>
 				<p class="property-desc">Client work held to research standards. Theory becomes delivery.</p>
 			</a>
 
-			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" style="--index: 2" target="_blank" rel="noopener">
+			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
 				<h3 class="property-name">Canon</h3>
 				<p class="property-desc">The philosophical foundation. Crystallized judgment that guides all work.</p>

@@ -42,20 +42,20 @@
 			.space teaches through doing. .io provides the research. .agency applies it professionally. .ltd defines the standards.
 		</p>
 
-		<div class="ecosystem-grid">
-			<a href="https://createsomething.io" class="ecosystem-card" style="--index: 0" target="_blank" rel="noopener">
+		<div class="ecosystem-grid highlight-grid">
+			<a href="https://createsomething.io" class="ecosystem-card highlight-item" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.io</span>
 				<h3 class="property-name">Research</h3>
 				<p class="property-desc">Papers and experiments. The theory behind what you're learning.</p>
 			</a>
 
-			<a href="https://createsomething.agency" class="ecosystem-card" style="--index: 1" target="_blank" rel="noopener">
+			<a href="https://createsomething.agency" class="ecosystem-card highlight-item" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.agency</span>
 				<h3 class="property-name">Apply</h3>
 				<p class="property-desc">See these patterns in production. Client work at the highest standard.</p>
 			</a>
 
-			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card" style="--index: 2" target="_blank" rel="noopener">
+			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
 				<h3 class="property-name">Canon</h3>
 				<p class="property-desc">The philosophy of crystallization. Human judgment encoded for AI execution.</p>

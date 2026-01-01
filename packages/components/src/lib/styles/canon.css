@@ -743,4 +743,63 @@ pre code.hljs {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
+
+  /* ==========================================================================
+     Highlight Grid/Flex Pattern (CalArts Pattern)
+     ==========================================================================
+
+     When hovering over a parent container, the hovered child stays at full
+     opacity while siblings dim. Creates focus and hierarchy through interaction.
+
+     Usage:
+       <div class="highlight-grid">
+         <div class="highlight-item" style="--index: 0">Item 1</div>
+         <div class="highlight-item" style="--index: 1">Item 2</div>
+         <div class="highlight-item" style="--index: 2">Item 3</div>
+       </div>
+
+     Variants:
+       .highlight-grid   - Default (0.5 opacity for non-hovered items)
+       .highlight-subtle - Subtle dimming (0.7 opacity)
+       .highlight-strong - Strong dimming (0.3 opacity)
+
+     Philosophy: The hovered item "reveals" itself while others recede.
+     This is Zuhandenheit applied to interaction—focus on the tool in use.
+     ========================================================================== */
+
+  /* Base item styles with cascade transition delay */
+  .highlight-item {
+    transition: opacity var(--duration-standard) var(--ease-standard),
+                transform var(--duration-micro) var(--ease-standard);
+    transition-delay: calc(var(--cascade-step) * var(--index, 0));
+  }
+
+  /* Default highlight: 0.5 opacity for non-hovered siblings */
+  .highlight-grid:hover .highlight-item:not(:hover),
+  .highlight-flex:hover .highlight-item:not(:hover) {
+    opacity: 0.5;
+  }
+
+  /* Subtle variant: 0.7 opacity (gentler dimming) */
+  .highlight-subtle:hover .highlight-item:not(:hover) {
+    opacity: 0.7;
+  }
+
+  /* Strong variant: 0.3 opacity (dramatic focus) */
+  .highlight-strong:hover .highlight-item:not(:hover) {
+    opacity: 0.3;
+  }
+
+  /* Optional: Slight scale on hover for emphasis */
+  .highlight-item:hover {
+    transform: scale(var(--scale-micro));
+  }
+
+  /* Reduced motion: instant transitions, no cascade delay */
+  @media (prefers-reduced-motion: reduce) {
+    .highlight-item {
+      transition-duration: 0.01ms;
+      transition-delay: 0ms;
+    }
+  }
 }

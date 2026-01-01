@@ -100,9 +100,9 @@
 	<div class="max-w-7xl mx-auto">
 		<h3 class="mb-12 text-center section-heading">Featured Masters</h3>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-8 highlight-grid">
 			{#each [ { name: 'Dieter Rams', discipline: 'Industrial Design', tagline: '10 Principles of Good Design', slug: 'dieter-rams' }, { name: 'Ludwig Mies van der Rohe', discipline: 'Architecture', tagline: 'Less is more', slug: 'mies-van-der-rohe' } ] as master, i}
-				<a href="/masters/{master.slug}" class="master-card block p-8" style="--card-delay: {i * 150}ms">
+				<a href="/masters/{master.slug}" class="master-card highlight-item block p-8" style="--card-delay: {i * 150}ms; --index: {i}">
 					<p class="discipline mb-4">{master.discipline}</p>
 					<h4 class="master-name mb-2">{master.name}</h4>
 					<p class="tagline">{master.tagline}</p>
@@ -123,8 +123,8 @@
 	<div class="max-w-5xl mx-auto">
 		<h3 class="mb-12 text-center">How This Guides the Ecosystem</h3>
 
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-			<div>
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-12 highlight-grid">
+			<div class="highlight-item" style="--index: 0">
 				<div class="mb-4">
 					<span class="property-label">.io</span>
 					<h4 class="property-title mt-1">Research</h4>
@@ -135,7 +135,7 @@
 				</p>
 			</div>
 
-			<div>
+			<div class="highlight-item" style="--index: 1">
 				<div class="mb-4">
 					<span class="property-label">.space</span>
 					<h4 class="property-title mt-1">Practice</h4>
@@ -146,7 +146,7 @@
 				</p>
 			</div>
 
-			<div>
+			<div class="highlight-item" style="--index: 2">
 				<div class="mb-4">
 					<span class="property-label">.agency</span>
 					<h4 class="property-title mt-1">Services</h4>

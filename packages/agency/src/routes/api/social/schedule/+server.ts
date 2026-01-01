@@ -170,11 +170,29 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		});
 	}
 
+	// Parse and validate startDate
+	let parsedStartDate: Date | undefined;
+	let dateAdjusted = false;
+
+	if (startDate) {
+		parsedStartDate = new Date(startDate);
+
+		// Check if the parsed date is in the past
+		const now = new Date();
+		if (parsedStartDate <= now) {
+			dateAdjusted = true;
+			console.warn(
+				`[Schedule API] Requested startDate ${startDate} parsed to past date ` +
+				`${parsedStartDate.toISOString()}. Will auto-adjust to future.`
+			);
+		}
+	}
+
 	// Generate schedule
 	const schedule = generateSchedule(postsToSchedule.length, {
 		timezone,
 		mode,
-		startDate: startDate ? new Date(startDate) : undefined
+		startDate: parsedStartDate
 	});
 
 	const threadId = generateThreadId();
@@ -233,7 +251,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const preview = formatSchedulePreview(schedule, postsToSchedule, timezone);
 
 	if (dryRun) {
-		return json({
+		const dryRunResponse: Record<string, unknown> = {
 			dryRun: true,
 			mode,
 			timezone,
@@ -258,7 +276,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				fullContent: postsToSchedule[i].content,
 				hasCommentLink: !!postsToSchedule[i].commentLink
 			}))
-		});
+		};
+
+		// Add warning if date was adjusted from past to future
+		if (dateAdjusted) {
+			dryRunResponse.dateAdjusted = {
+				originalRequest: startDate,
+				message: `Requested date "${startDate}" was in the past. Automatically adjusted to next optimal time.`,
+				adjustedTo: schedule[0]?.toISOString()
+			};
+		}
+
+		return json(dryRunResponse);
 	}
 
 	// Block scheduling if conflicts exist (unless forceSchedule is true)
@@ -334,6 +363,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			message: 'Scheduled despite conflicts (forceSchedule=true)',
 			conflicts: conflictResult.conflicts.length,
 			note: 'LinkedIn may penalize multiple posts on the same day'
+		};
+	}
+
+	// Add warning if date was adjusted from past to future
+	if (dateAdjusted) {
+		response.dateAdjusted = {
+			originalRequest: startDate,
+			message: `Requested date "${startDate}" was in the past. Automatically adjusted to next optimal time.`,
+			adjustedTo: schedule[0]?.toISOString()
 		};
 	}
 

@@ -70,19 +70,13 @@ export function getNextOptimalTime(
 	preferredHour: number = DEFAULT_PREFERRED_HOUR,
 	after: Date = new Date()
 ): Date {
-	// Convert to local timezone
-	const formatter = new Intl.DateTimeFormat('en-US', {
-		timeZone: timezone,
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit',
-		hour: '2-digit',
-		minute: '2-digit',
-		hour12: false
-	});
+	// CRITICAL: Always ensure we're scheduling in the future relative to NOW
+	// This prevents year-rollover bugs where "January 5" parses as last year
+	const now = new Date();
+	const effectiveAfter = after > now ? after : now;
 
-	// Start from current time or specified date
-	let candidate = new Date(after);
+	// Start from current time or specified date (whichever is later)
+	let candidate = new Date(effectiveAfter);
 
 	// Look up to 14 days ahead
 	for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
@@ -101,15 +95,15 @@ export function getNextOptimalTime(
 			// Set to preferred hour in local timezone
 			const targetDate = setLocalHour(testDate, preferredHour, timezone);
 
-			// Make sure it's in the future
-			if (targetDate > after) {
+			// Make sure it's in the future (relative to NOW, not just 'after')
+			if (targetDate > now && targetDate > effectiveAfter) {
 				return targetDate;
 			}
 		}
 	}
 
 	// Fallback: just use tomorrow at preferred hour
-	const tomorrow = new Date(after);
+	const tomorrow = new Date(now);
 	tomorrow.setDate(tomorrow.getDate() + 1);
 	return setLocalHour(tomorrow, preferredHour, timezone);
 }
@@ -185,7 +179,26 @@ export function generateSchedule(postCount: number, options: ScheduleOptions): D
 		if (startDate) {
 			// Use the provided date at the preferred hour
 			const exactTime = setLocalHour(startDate, preferredHour || DEFAULT_PREFERRED_HOUR, timezone);
-			schedule.push(exactTime);
+
+			// CRITICAL: Ensure scheduled time is in the future
+			// This prevents year-rollover bugs (e.g., "January 5" in December parsing as last year)
+			const now = new Date();
+			if (exactTime <= now) {
+				// Date is in the past - find next optimal time starting from now instead
+				console.warn(
+					`[Schedule] Requested date ${startDate.toISOString()} is in the past. ` +
+					`Finding next optimal time from now.`
+				);
+				const optimalTime = getNextOptimalTime(
+					timezone,
+					preferredDays || DEFAULT_PREFERRED_DAYS,
+					preferredHour || DEFAULT_PREFERRED_HOUR,
+					now
+				);
+				schedule.push(optimalTime);
+			} else {
+				schedule.push(exactTime);
+			}
 		} else {
 			const optimalTime = getNextOptimalTime(
 				timezone,
