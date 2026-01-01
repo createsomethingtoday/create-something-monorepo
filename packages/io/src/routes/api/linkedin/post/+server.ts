@@ -2,6 +2,85 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 const LINKEDIN_API = 'https://api.linkedin.com/v2';
+const RESEND_API = 'https://api.resend.com/emails';
+const FROM_ADDRESS = 'CREATE SOMETHING <noreply@createsomething.io>';
+const NOTIFY_EMAIL = 'micah@createsomething.io';
+
+/**
+ * Send cross-post reminder email for personal posts
+ */
+async function sendCrossPostReminder(
+	apiKey: string,
+	postContent: string,
+	postUrl: string
+): Promise<void> {
+	const preview = postContent.length > 300
+		? postContent.substring(0, 300) + '...'
+		: postContent;
+
+	const escapedPreview = preview
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;');
+
+	const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
+    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
+    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
+    h1 { font-size: 24px; font-weight: 600; margin: 0 0 24px 0; }
+    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
+    .button { display: inline-block; background: #ffffff; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 8px 8px 8px 0; }
+    .preview { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 16px; margin: 24px 0; font-size: 14px; color: rgba(255, 255, 255, 0.7); white-space: pre-wrap; }
+    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">CREATE SOMETHING</div>
+    <h1>Cross-Post Reminder</h1>
+    <p>A post just went live on your personal LinkedIn. Consider cross-posting to company pages:</p>
+    <div style="margin: 24px 0;">
+      <a href="https://www.linkedin.com/company/110433670/admin/feed/" class="button">Post to CREATE SOMETHING</a>
+      <a href="https://www.linkedin.com/company/35463531/admin/feed/" class="button">Post to WORKWAY</a>
+    </div>
+    <p><strong>Your post:</strong></p>
+    <div class="preview">${escapedPreview}</div>
+    <a href="${postUrl}" class="button" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #fff;">View Original Post</a>
+    <div class="footer">
+      <p>This reminder is temporary until LinkedIn approves organization posting scopes.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+	try {
+		const response = await fetch(RESEND_API, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				from: FROM_ADDRESS,
+				to: NOTIFY_EMAIL,
+				subject: 'Cross-Post Reminder: New LinkedIn post published',
+				html,
+			}),
+		});
+
+		if (!response.ok) {
+			console.warn('Failed to send cross-post reminder:', await response.text());
+		} else {
+			console.log('Cross-post reminder sent');
+		}
+	} catch (err) {
+		console.warn('Error sending reminder:', err);
+	}
+}
 
 interface OrganizationInfo {
 	id: string;
@@ -147,10 +226,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const result = (await postResponse.json()) as UGCPostResponse;
+		const postUrl = `https://www.linkedin.com/feed/update/${result.id}`;
+
+		// Send cross-post reminder for personal posts (not organization posts)
+		const resendApiKey = platform?.env?.RESEND_API_KEY;
+		if (!body.organizationId && resendApiKey) {
+			await sendCrossPostReminder(resendApiKey, body.text, postUrl);
+		}
 
 		return json({
 			success: true,
 			postId: result.id,
+			postUrl,
 			message: 'Post published to LinkedIn'
 		});
 	} catch (err) {
