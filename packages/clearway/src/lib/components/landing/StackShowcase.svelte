@@ -80,7 +80,7 @@
 			<div class="personalization-prompt">
 				{#if !showPersonalization}
 					<p class="prompt-text">
-						Sarah books Tuesdays and Thursdays at 6pm on Grandview Court 1.
+						Sarah books Tuesdays and Thursdays at noon on Grandview Court 1.
 					</p>
 					<button class="reveal-btn" onclick={revealPersonalization}>
 						Show Sarah's View

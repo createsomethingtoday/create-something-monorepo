@@ -138,12 +138,17 @@
 
 			const data = (await response.json()) as SuggestionResponse;
 
-			// Convert suggestions to a Set of keys for O(1) lookup
-			const newSuggested = new Set<string>();
-			for (const suggestion of data.suggestions) {
-				newSuggested.add(`${suggestion.courtId}::${suggestion.startTime}`);
+			// Only highlight slots for personalized suggestions (known members)
+			// Generic "new_user" suggestions shouldn't show highlights
+			if (data.personalized) {
+				const newSuggested = new Set<string>();
+				for (const suggestion of data.suggestions) {
+					newSuggested.add(`${suggestion.courtId}::${suggestion.startTime}`);
+				}
+				suggestedSlots = newSuggested;
+			} else {
+				suggestedSlots = new Set();
 			}
-			suggestedSlots = newSuggested;
 			suggestionsPersonalized = data.personalized;
 		} catch {
 			// Silently fail - suggestions are optional enhancement
@@ -706,21 +711,14 @@
 		border-color: var(--color-fg-primary, #ffffff);
 	}
 
-	/* AI-suggested slots - subtle emphasis, no "AI" announcement
+	/* AI-suggested slots - visible but not intrusive
 	   Philosophy: The tool recedes; the user thinks "this is my usual time" */
 	.slot.suggested:not(.selected) {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.25));
-		box-shadow: 0 0 0 1px var(--color-border-default, rgba(255, 255, 255, 0.1));
-	}
-
-	.slot.suggested:not(.selected)::before {
-		content: '';
-		position: absolute;
-		inset: -2px;
-		border-radius: inherit;
-		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
-		pointer-events: none;
-		opacity: 0.6;
+		border-color: rgba(255, 255, 255, 0.4);
+		background: rgba(255, 255, 255, 0.08);
+		box-shadow:
+			0 0 0 1px rgba(255, 255, 255, 0.15),
+			0 0 12px rgba(255, 255, 255, 0.1);
 	}
 
 	.slot.peak .price {
