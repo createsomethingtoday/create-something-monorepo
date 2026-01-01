@@ -46,6 +46,7 @@
 		timezone?: string;
 		stripePublishableKey?: string;
 		memberEmail?: string; // For AI personalization
+		embedded?: boolean; // True when rendered in iframe (fixed booking bar)
 		onReservationComplete?: (reservation: BookingResult) => void;
 		onError?: (error: Error) => void;
 	}
@@ -60,6 +61,7 @@
 		timezone = 'America/Chicago',
 		stripePublishableKey,
 		memberEmail: propMemberEmail,
+		embedded = false,
 		onReservationComplete,
 		onError
 	}: Props = $props();
@@ -120,6 +122,9 @@
 	let memberName = $state('');
 	let memberEmail = $state('');
 	let facilityName = $state('');
+
+	// Element refs for scrolling
+	let bookingRef: HTMLDivElement | null = null;
 
 	// API base URL - use relative path for same-origin, absolute for embeds
 	const API_BASE =
@@ -249,6 +254,13 @@
 		selectedCourt = courtId;
 		selectedSlot = slot;
 		selectedKey = key;
+
+		// Auto-scroll to booking bar when embedded (use timeout to ensure DOM updated)
+		if (embedded) {
+			setTimeout(() => {
+				bookingRef?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+			}, 50);
+		}
 	}
 
 	// Clear selection
@@ -373,7 +385,7 @@
 		{onError}
 	/>
 {:else}
-<div class="widget" class:has-selection={selectedSlot && !showCheckout} data-theme={theme}>
+<div class="widget" class:has-selection={selectedSlot && !showCheckout} class:embedded data-theme={theme}>
 	<!-- Week Navigation Header -->
 	<div class="week-header">
 		<h3>Book a Court</h3>
@@ -494,7 +506,7 @@
 
 	<!-- Booking Panel -->
 	{#if selectedSlot && selectedCourt && !showCheckout}
-		<div class="booking">
+		<div class="booking" bind:this={bookingRef}>
 			<div class="details">
 				<strong>{courts.find((c) => c.id === selectedCourt)?.name}</strong>
 				<span>{formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}</span>
@@ -868,12 +880,11 @@
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
-	/* Booking Panel - fixed at bottom of viewport for iframe embedding */
+	/* Booking Panel - sticky by default, fixed when embedded in iframe */
 	.booking {
-		position: fixed;
+		position: sticky;
 		bottom: 0;
-		left: 0;
-		right: 0;
+		margin: var(--space-lg, 1.5rem) calc(var(--space-lg, 1.5rem) * -1) calc(var(--space-lg, 1.5rem) * -1);
 		padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
 		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 		background: var(--color-bg-surface, #111111);
@@ -885,6 +896,14 @@
 		gap: var(--space-md, 1rem);
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 		z-index: 100;
+	}
+
+	/* When embedded in iframe, use fixed positioning */
+	.widget.embedded .booking {
+		position: fixed;
+		left: 0;
+		right: 0;
+		margin: 0;
 	}
 
 	.details {

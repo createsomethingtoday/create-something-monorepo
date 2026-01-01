@@ -24,7 +24,7 @@
 </svelte:head>
 
 <div class="embed-wrapper" data-theme={theme}>
-	<Widget {facilitySlug} {theme} {courtType} {memberEmail} />
+	<Widget {facilitySlug} {theme} {courtType} {memberEmail} embedded={true} />
 </div>
 
 <style>
