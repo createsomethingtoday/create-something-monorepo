@@ -35,3 +35,6 @@ id = "973b18397c4d4b068313152a642f1ad5"
 
 [vars]
 LINKEDIN_API_VERSION = "202412"
+
+# RESEND_API_KEY must be added as a secret:
+# wrangler secret put RESEND_API_KEY -c wrangler.toml

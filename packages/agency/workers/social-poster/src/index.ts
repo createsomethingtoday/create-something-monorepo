@@ -46,19 +46,32 @@ const RESEND_API = 'https://api.resend.com/emails';
 const FROM_ADDRESS = 'CREATE SOMETHING <noreply@createsomething.io>';
 const NOTIFY_EMAIL = 'micah@createsomething.io';
 
-/**
- * Send cross-post reminder email for personal posts
- */
-async function sendCrossPostReminder(
-	apiKey: string,
-	postContent: string,
-	postUrl: string
-): Promise<void> {
-	const preview = postContent.length > 300
-		? postContent.substring(0, 300) + '...'
-		: postContent;
+// Organization ID → Name mapping
+const ORGANIZATIONS: Record<string, { name: string; adminUrl: string }> = {
+	'110433670': {
+		name: 'CREATE SOMETHING',
+		adminUrl: 'https://www.linkedin.com/company/110433670/admin/feed/'
+	},
+	'35463531': {
+		name: 'WORKWAY',
+		adminUrl: 'https://www.linkedin.com/company/35463531/admin/feed/'
+	}
+};
 
-	const escapedPreview = preview
+/**
+ * Send reminder email for scheduled organization posts
+ * (Until LinkedIn approves org posting scopes)
+ */
+async function sendOrgPostReminder(
+	apiKey: string,
+	organizationId: string,
+	postContent: string
+): Promise<void> {
+	const org = ORGANIZATIONS[organizationId];
+	const orgName = org?.name || `Organization ${organizationId}`;
+	const adminUrl = org?.adminUrl || `https://www.linkedin.com/company/${organizationId}/admin/feed/`;
+
+	const escapedContent = postContent
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;');
@@ -74,22 +87,20 @@ async function sendCrossPostReminder(
     h1 { font-size: 24px; font-weight: 600; margin: 0 0 24px 0; }
     p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
     .button { display: inline-block; background: #ffffff; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 8px 8px 8px 0; }
-    .preview { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 16px; margin: 24px 0; font-size: 14px; color: rgba(255, 255, 255, 0.7); white-space: pre-wrap; }
+    .content { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 16px; margin: 24px 0; font-size: 14px; color: rgba(255, 255, 255, 0.9); white-space: pre-wrap; }
     .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo">CREATE SOMETHING</div>
-    <h1>Cross-Post Reminder</h1>
-    <p>A post just went live on your personal LinkedIn. Consider cross-posting to company pages:</p>
+    <h1>Time to Post: ${orgName}</h1>
+    <p>A scheduled post for <strong>${orgName}</strong> is ready. Copy the content below and post it manually:</p>
     <div style="margin: 24px 0;">
-      <a href="https://www.linkedin.com/company/110433670/admin/feed/" class="button">Post to CREATE SOMETHING</a>
-      <a href="https://www.linkedin.com/company/35463531/admin/feed/" class="button">Post to WORKWAY</a>
+      <a href="${adminUrl}" class="button">Open ${orgName} Admin</a>
     </div>
-    <p><strong>Your post:</strong></p>
-    <div class="preview">${escapedPreview}</div>
-    <a href="${postUrl}" class="button" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #fff;">View Original Post</a>
+    <p><strong>Content to post:</strong></p>
+    <div class="content">${escapedContent}</div>
     <div class="footer">
       <p>This reminder is temporary until LinkedIn approves organization posting scopes.</p>
     </div>
@@ -107,15 +118,15 @@ async function sendCrossPostReminder(
 			body: JSON.stringify({
 				from: FROM_ADDRESS,
 				to: NOTIFY_EMAIL,
-				subject: 'Cross-Post Reminder: New LinkedIn post published',
+				subject: `LinkedIn Reminder: Post to ${orgName}`,
 				html,
 			}),
 		});
 
 		if (!response.ok) {
-			console.warn('[Queue] Failed to send cross-post reminder:', await response.text());
+			console.warn('[Queue] Failed to send org post reminder:', await response.text());
 		} else {
-			console.log('[Queue] Cross-post reminder sent');
+			console.log(`[Queue] Org post reminder sent for ${orgName}`);
 		}
 	} catch (err) {
 		console.warn('[Queue] Error sending reminder:', err);
@@ -179,6 +190,27 @@ export default {
 			console.log(`[Queue] Processing post ${postId}`);
 
 			try {
+				// Organization posts: send reminder instead of posting (until scopes approved)
+				if (metadata?.organizationId) {
+					if (!env.RESEND_API_KEY) {
+						throw new Error('RESEND_API_KEY not configured for org post reminders');
+					}
+
+					await sendOrgPostReminder(env.RESEND_API_KEY, metadata.organizationId, content);
+
+					// Mark as reminded (not posted - manual action required)
+					await env.DB.prepare(
+						`UPDATE social_posts SET status = 'reminded', posted_at = ? WHERE id = ?`
+					)
+						.bind(Date.now(), postId)
+						.run();
+
+					console.log(`[Queue] Sent reminder for org post ${postId}`);
+					msg.ack();
+					continue;
+				}
+
+				// Personal posts: actually post to LinkedIn
 				// Get LinkedIn token
 				const tokenData = await env.SESSIONS.get('linkedin_access_token');
 
@@ -193,26 +225,17 @@ export default {
 					throw new Error('LinkedIn token expired. Re-authenticate at /api/linkedin/auth');
 				}
 
-				// Determine author: organization or personal
-				let author: string;
+				// Get user ID for personal post
+				const userResponse = await fetch(`${LINKEDIN_API}/userinfo`, {
+					headers: { Authorization: `Bearer ${token.access_token}` }
+				});
 
-				if (metadata?.organizationId) {
-					// Post as organization
-					author = `urn:li:organization:${metadata.organizationId}`;
-					console.log(`[Queue] Posting as organization: ${metadata.organizationId}`);
-				} else {
-					// Post as personal - need to get user ID
-					const userResponse = await fetch(`${LINKEDIN_API}/userinfo`, {
-						headers: { Authorization: `Bearer ${token.access_token}` }
-					});
-
-					if (!userResponse.ok) {
-						throw new Error(`Failed to get user info: ${await userResponse.text()}`);
-					}
-
-					const userInfo = (await userResponse.json()) as { sub: string };
-					author = `urn:li:person:${userInfo.sub}`;
+				if (!userResponse.ok) {
+					throw new Error(`Failed to get user info: ${await userResponse.text()}`);
 				}
+
+				const userInfo = (await userResponse.json()) as { sub: string };
+				const author = `urn:li:person:${userInfo.sub}`;
 
 				// Post to LinkedIn
 				const postResponse = await fetch(`${LINKEDIN_API}/ugcPosts`, {
@@ -275,11 +298,6 @@ export default {
 				)
 					.bind(linkedInPostId, postUrl, Date.now(), postId)
 					.run();
-
-				// Send cross-post reminder for personal posts (not organization posts)
-				if (!metadata?.organizationId && env.RESEND_API_KEY) {
-					await sendCrossPostReminder(env.RESEND_API_KEY, content, postUrl);
-				}
 
 				msg.ack();
 			} catch (error) {
