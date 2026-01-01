@@ -207,7 +207,8 @@
 	}
 
 	.case-study-card:hover {
-		border-color: var(--color-fg-primary);
+		border-color: var(--color-border-emphasis);
+		transform: scale(var(--scale-micro));
 	}
 
 	/* Methodology card */

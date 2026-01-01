@@ -94,6 +94,7 @@
 	.catalog-card:hover {
 		border-color: var(--color-border-emphasis);
 		background: var(--color-hover);
+		transform: scale(var(--scale-micro));
 	}
 
 	.card-header {

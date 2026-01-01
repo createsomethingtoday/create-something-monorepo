@@ -99,7 +99,7 @@
 
 	.cta-btn:hover {
 		background: var(--color-fg-secondary);
-		transform: scale(1.05);
+		transform: scale(var(--scale-small));
 		box-shadow: var(--shadow-xl);
 	}
 

@@ -45,7 +45,7 @@
 
 {#if relatedPapers.length > 0}
 	<section class="related-section w-full max-w-5xl mx-auto px-6 py-16">
-		<div class="animate-reveal" style="--delay: 0">
+		<div class="animate-reveal" style="--index: 0">
 			<h2 class="section-title mb-8">Related Articles</h2>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -53,7 +53,7 @@
 					<a
 						href={`/experiments/${paper.slug}`}
 						class="group block h-full animate-reveal"
-						style="--delay: {index + 1}"
+						style="--index: {index + 1}"
 						aria-label="Read article: {paper.title}"
 					>
 						<article class="related-card h-full overflow-hidden">
@@ -221,7 +221,7 @@
 		opacity: 0;
 		transform: translateY(20px);
 		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 100ms);
+		animation-delay: calc(var(--index, 0) * var(--cascade-group));
 	}
 
 	@keyframes reveal {

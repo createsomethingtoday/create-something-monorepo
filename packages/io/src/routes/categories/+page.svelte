@@ -36,9 +36,9 @@
   <!-- Categories Grid -->
   <section class="py-16 px-6">
     <div class="max-w-5xl mx-auto">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 highlight-grid">
         {#each categories as category, index}
-          <div class="animate-reveal" style="--delay: {index + 1}">
+          <div class="animate-reveal highlight-item" style="--delay: {index + 1}; --index: {index}">
             <a
               href="/category/{category.slug}"
               class="category-card group block relative p-8 min-h-[160px] overflow-hidden"
@@ -156,7 +156,7 @@
     opacity: 0;
     transform: translateY(20px);
     animation: reveal var(--duration-complex) var(--ease-standard) forwards;
-    animation-delay: calc(var(--delay, 0) * 100ms);
+    animation-delay: calc(var(--delay, 0) * var(--cascade-group));
   }
 
   @keyframes reveal {
