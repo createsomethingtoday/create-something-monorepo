@@ -38,6 +38,7 @@
 				src="https://clearway.pages.dev/embed?facility=thestack&theme=dark"
 				title="Book a Court"
 				frameborder="0"
+				scrolling="yes"
 			></iframe>
 		</div>
 	</div>
@@ -130,7 +131,7 @@
 		max-width: 900px;
 		margin: 0 auto;
 		border-radius: 12px;
-		overflow: visible;
+		overflow: hidden;
 		background: var(--dark-grey);
 		opacity: 0;
 		transform: translateY(1rem);

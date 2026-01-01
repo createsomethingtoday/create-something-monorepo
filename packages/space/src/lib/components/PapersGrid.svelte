@@ -27,11 +27,11 @@
 		</div>
 
 		<!-- Adaptive Grid - Adjusts layout based on item count -->
-		<ul class="papers-list {papers.length <= 3
+		<ul class="papers-list highlight-grid {papers.length <= 3
 			? 'grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto'
 			: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'}" role="list">
 			{#each papers as paper, index (paper.id)}
-				<li>
+				<li class="highlight-item" style="--index: {index}">
 					<PaperCard
 						{paper}
 						rotation={rotations[index % rotations.length]}

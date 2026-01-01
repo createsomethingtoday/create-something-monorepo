@@ -18,6 +18,7 @@
 			padding: 0;
 			background: transparent;
 			overflow-x: hidden;
+			overflow-y: auto;
 		}
 	</style>
 </svelte:head>
@@ -29,6 +30,7 @@
 <style>
 	.embed-wrapper {
 		min-height: 100vh;
+		height: auto;
 		padding: var(--space-md, 1rem);
 	}
 

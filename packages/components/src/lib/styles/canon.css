@@ -790,8 +790,9 @@ pre code.hljs {
     opacity: 0.3;
   }
 
-  /* Optional: Slight scale on hover for emphasis */
+  /* Hovered item: full opacity + slight scale for emphasis */
   .highlight-item:hover {
+    opacity: 1;
     transform: scale(var(--scale-micro));
   }
 

@@ -235,12 +235,20 @@
 		}
 	}
 
-	// Select a time slot
+	// Select a time slot (or toggle off if already selected)
 	function selectSlot(courtId: string, slot: TimeSlot) {
 		if (slot.status !== 'available') return;
+
+		// Toggle off if clicking the same slot
+		const key = `${courtId}::${slot.startTime}`;
+		if (selectedKey === key) {
+			clearSelection();
+			return;
+		}
+
 		selectedCourt = courtId;
 		selectedSlot = slot;
-		selectedKey = `${courtId}::${slot.startTime}`;
+		selectedKey = key;
 	}
 
 	// Clear selection
@@ -365,7 +373,7 @@
 		{onError}
 	/>
 {:else}
-<div class="widget" data-theme={theme}>
+<div class="widget" class:has-selection={selectedSlot && !showCheckout} data-theme={theme}>
 	<!-- Week Navigation Header -->
 	<div class="week-header">
 		<h3>Book a Court</h3>
@@ -583,6 +591,11 @@
 		padding: var(--space-lg, 1.5rem);
 		max-width: 800px;
 		margin: 0 auto;
+	}
+
+	/* Add bottom padding when booking bar is visible */
+	.widget.has-selection {
+		padding-bottom: 5rem;
 	}
 
 	/* Dark Theme (default) */
@@ -855,11 +868,12 @@
 		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
 	}
 
-	/* Booking Panel - sticky within widget */
+	/* Booking Panel - fixed at bottom of viewport for iframe embedding */
 	.booking {
-		position: sticky;
+		position: fixed;
 		bottom: 0;
-		margin: var(--space-lg, 1.5rem) calc(var(--space-lg, 1.5rem) * -1) calc(var(--space-lg, 1.5rem) * -1);
+		left: 0;
+		right: 0;
 		padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
 		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 		background: var(--color-bg-surface, #111111);
