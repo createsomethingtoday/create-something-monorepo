@@ -73,6 +73,42 @@
 	// Unique key for selection comparison (court::time)
 	let selectedKey = $state<string | null>(null);
 
+	// Court filter state
+	let selectedLocations = $state<Set<string>>(new Set()); // Empty = show all
+
+	// Extract unique location prefixes from court names (e.g., "Grandview" from "Grandview Court 1")
+	function getLocationPrefix(courtName: string): string {
+		// Extract the location name (everything before "Court" or just the first word)
+		const match = courtName.match(/^(.+?)\s+Court/i);
+		return match ? match[1].trim() : courtName.split(' ')[0];
+	}
+
+	// Derived: unique locations from all courts
+	let uniqueLocations = $derived.by(() => {
+		const locations = new Set<string>();
+		for (const court of courts) {
+			locations.add(getLocationPrefix(court.name));
+		}
+		return Array.from(locations).sort();
+	});
+
+	// Derived: filtered courts based on selected locations
+	let filteredCourts = $derived.by(() => {
+		if (selectedLocations.size === 0) return courts; // Show all if none selected
+		return courts.filter(court => selectedLocations.has(getLocationPrefix(court.name)));
+	});
+
+	// Toggle location filter
+	function toggleLocation(location: string) {
+		const newSet = new Set(selectedLocations);
+		if (newSet.has(location)) {
+			newSet.delete(location);
+		} else {
+			newSet.add(location);
+		}
+		selectedLocations = newSet;
+	}
+
 	// AI Suggestion state
 	let suggestedSlots = $state<Set<string>>(new Set()); // Set of "courtId::startTime" keys
 	let suggestionsPersonalized = $state(false);
@@ -371,6 +407,26 @@
 		</div>
 	</div>
 
+	<!-- Location Filter (only show if multiple locations) -->
+	{#if uniqueLocations.length > 1}
+		<div class="location-filter">
+			{#each uniqueLocations as location}
+				<button
+					class="filter-chip"
+					class:active={selectedLocations.has(location)}
+					onclick={() => toggleLocation(location)}
+				>
+					{location}
+				</button>
+			{/each}
+			{#if selectedLocations.size > 0}
+				<button class="filter-clear" onclick={() => selectedLocations = new Set()}>
+					Show All
+				</button>
+			{/if}
+		</div>
+	{/if}
+
 	<!-- Loading State -->
 	{#if loading}
 		<div class="loading">
@@ -388,9 +444,9 @@
 	{/if}
 
 	<!-- Availability Grid -->
-	{#if !loading && !error && courts.length > 0}
+	{#if !loading && !error && filteredCourts.length > 0}
 		<div class="courts">
-			{#each courts as court}
+			{#each filteredCourts as court}
 				<div class="court">
 					<h4>{court.name}</h4>
 					<div class="slots">
@@ -420,6 +476,11 @@
 	{#if !loading && !error && courts.length === 0}
 		<div class="empty">
 			<p>No courts available.</p>
+		</div>
+	{:else if !loading && !error && filteredCourts.length === 0}
+		<div class="empty">
+			<p>No courts match your filter.</p>
+			<button class="filter-clear" onclick={() => selectedLocations = new Set()}>Show All Courts</button>
 		</div>
 	{/if}
 
@@ -620,6 +681,54 @@
 	.day-num {
 		font-size: var(--text-body, 1rem);
 		font-weight: 600;
+	}
+
+	/* Location Filter */
+	.location-filter {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-bottom: var(--space-md, 1rem);
+		padding-bottom: var(--space-md, 1rem);
+		border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	.filter-chip {
+		padding: 0.375rem 0.75rem;
+		font-size: var(--text-body-sm, 0.875rem);
+		font-weight: 500;
+		background: transparent;
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-full, 9999px);
+		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		cursor: pointer;
+		transition: all 150ms ease;
+	}
+
+	.filter-chip:hover {
+		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.25));
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+	}
+
+	.filter-chip.active {
+		background: var(--color-fg-primary, #ffffff);
+		border-color: var(--color-fg-primary, #ffffff);
+		color: var(--color-bg-pure, #000000);
+	}
+
+	.filter-clear {
+		padding: 0.375rem 0.75rem;
+		font-size: var(--text-body-sm, 0.875rem);
+		font-weight: 500;
+		background: transparent;
+		border: none;
+		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		cursor: pointer;
+		transition: color 150ms ease;
+	}
+
+	.filter-clear:hover {
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
 	}
 
 	/* Loading */

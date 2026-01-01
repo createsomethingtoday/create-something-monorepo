@@ -140,8 +140,8 @@
 	.booking-widget iframe {
 		display: block;
 		width: 100%;
-		min-height: 700px;
-		height: 80vh;
+		min-height: calc(100vh - 12rem);
+		height: calc(100vh - 12rem);
 		border: none;
 		border-radius: 12px;
 	}
