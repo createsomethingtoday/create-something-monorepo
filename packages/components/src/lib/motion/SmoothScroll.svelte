@@ -17,13 +17,10 @@
 	 *
 	 * @example
 	 * // Access scroll state in child components
-	 * <script>
-	 *   import { getContext } from 'svelte';
-	 *   import { SMOOTH_SCROLL_KEY, type ScrollState } from '@create-something/components/motion';
-	 *
-	 *   const scrollState = getContext<Writable<ScrollState>>(SMOOTH_SCROLL_KEY);
-	 *   // Use $scrollState.progress, $scrollState.velocity, etc.
-	 * </script>
+	 * // import { getContext } from 'svelte';
+	 * // import { SMOOTH_SCROLL_KEY, type ScrollState } from '@create-something/components/motion';
+	 * // const scrollState = getContext<Writable<ScrollState>>(SMOOTH_SCROLL_KEY);
+	 * // Use $scrollState.progress, $scrollState.velocity, etc.
 	 */
 	import { onMount, setContext } from 'svelte';
 	import { browser } from '$app/environment';
