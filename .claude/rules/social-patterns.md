@@ -33,23 +33,59 @@ packages/agency/
 | **Links** | Put in comments, not post body | CXL |
 | **Content length** | 1500+ chars = more reach | Closely |
 
-**Canon insight**: Daily longform posts, each self-contained. No threading—LinkedIn has no native thread structure. One complete insight per day.
+**Canon insight**: Quality over volume. Each post serves the unified thesis. No threading—LinkedIn has no native thread structure.
 
-## Strategy: Daily Longform
+## Strategy: Unified Thesis (Updated January 2026)
+
+**The Core Thesis** (every post must connect to this):
+
+> "AI development works when you treat LLMs as partners, not tools. Peter Norvig proved it empirically. We've built the methodology. Here's what we've learned."
+
+**Gateway Paper**: [The Norvig Partnership](https://createsomething.io/papers/norvig-partnership) — Empirical validation from Peter Norvig's Advent of Code 2025 experiments.
+
+### Post Types (All Connecting to Thesis)
+
+| Type | Example | Thesis Connection |
+|------|---------|-------------------|
+| **Norvig validation** | Empirical findings, 20x speed | External authority proves thesis |
+| **Case studies** | Kickstand, Arc | Partnership methodology in production |
+| **Methodology** | Subtractive Triad, quality gates | How the partnership actually works |
+| **Anti-patterns** | What fails with replacement mindset | Contrast reinforces thesis |
+
+### What NOT to Post
+
+| Content Type | Why Stop |
+|--------------|----------|
+| LMS promotional content | Doesn't connect to partnership thesis |
+| Pure aesthetic images | Demands attention without advancing argument |
+| Scattered updates | Fragments rather than serves the whole |
+| Daily volume for its own sake | Dilutes signal with noise |
+
+### The Heideggerian Test
+
+Before posting, ask:
+
+1. **Does this recede into the thesis?** (Zuhandenheit) Or does it demand attention for itself?
+2. **Does this serve the hermeneutic whole?** (Heidegger) Or is it a fragment?
+3. **Does this earn its existence?** (Rams) Or is it posting for posting's sake?
+
+If any answer is wrong, don't post.
+
+### Cadence
 
 | Principle | Application |
 |-----------|-------------|
-| **One post per weekday** | Mon-Fri at 9am local time |
-| **Self-contained** | Each post stands alone (no "as I mentioned yesterday") |
-| **1500+ characters** | LinkedIn rewards depth over brevity |
-| **CTA in comments** | Links in first comment, not post body |
-| **Conflict detection** | Prevents double-posting on same day |
+| **2-3 posts per week** | Quality over volume |
+| **Self-contained** | Each post stands alone |
+| **1500+ characters** | LinkedIn rewards depth |
+| **CTA in comments** | Links in first comment, gateway paper default |
+| **Thesis connection required** | Every post must serve the unified message |
 
 ### Posting Modes
 
 | Mode | Use Case | When |
 |------|----------|------|
-| `longform` | Daily insights (recommended) | Default for all content |
+| `longform` | Thesis-connected insights | Default for all content |
 | `drip` | Multi-part series | Only when content genuinely requires multiple days |
 | `immediate` | Testing only | Never in production |
 
