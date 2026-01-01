@@ -706,9 +706,10 @@
 	}
 
 	.slot.selected {
-		background: var(--color-fg-primary, #ffffff);
-		color: var(--color-bg-pure, #000000);
-		border-color: var(--color-fg-primary, #ffffff);
+		background: #ffffff !important;
+		color: #000000 !important;
+		border-color: #ffffff !important;
+		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 	}
 
 	/* AI-suggested slots - visible but not intrusive
