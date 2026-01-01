@@ -29,9 +29,11 @@
 <section class="py-16 px-6">
 	<div class="max-w-7xl mx-auto">
 		{#if data.masters && data.masters.length > 0}
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-				{#each data.masters as master}
-					<MasterCard {master} />
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 highlight-grid">
+				{#each data.masters as master, index}
+					<div class="highlight-item" style="--index: {index}">
+						<MasterCard {master} />
+					</div>
 				{/each}
 			</div>
 		{:else}

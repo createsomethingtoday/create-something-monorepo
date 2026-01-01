@@ -202,9 +202,9 @@
 <main class="papers-page">
 
 	{#if resultCount > 0}
-		<section class="papers-grid">
-			{#each filteredAndSortedPapers as paper}
-				<a href="/papers/{paper.slug}" class="paper-card">
+		<section class="papers-grid highlight-flex">
+			{#each filteredAndSortedPapers as paper, index}
+				<a href="/papers/{paper.slug}" class="paper-card highlight-item" style="--index: {index}">
 					<div class="paper-content">
 						<div class="paper-meta flex">
 							<span class="paper-category">{paper.category}</span>

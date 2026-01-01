@@ -47,23 +47,23 @@
       Learn to architect with AI—not as automation, but as partnership.
     </p>
 
-    <div class="stack-grid">
-      <div class="stack-item">
+    <div class="stack-grid highlight-flex">
+      <div class="stack-item highlight-item" style="--index: 0">
         <div class="stack-icon"><Terminal size={28} strokeWidth={1.5} /></div>
         <div class="stack-name">WezTerm</div>
         <div class="stack-role">Terminal as dwelling</div>
       </div>
-      <div class="stack-item">
+      <div class="stack-item highlight-item" style="--index: 1">
         <div class="stack-icon"><Code2 size={28} strokeWidth={1.5} /></div>
         <div class="stack-name">Claude Code</div>
         <div class="stack-role">AI partnership</div>
       </div>
-      <div class="stack-item">
+      <div class="stack-item highlight-item" style="--index: 2">
         <div class="stack-icon"><Cloud size={28} strokeWidth={1.5} /></div>
         <div class="stack-name">Cloudflare</div>
         <div class="stack-role">Edge infrastructure</div>
       </div>
-      <div class="stack-item">
+      <div class="stack-item highlight-item" style="--index: 3">
         <div class="stack-icon">
           <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -74,7 +74,7 @@
         <div class="stack-name">SvelteKit</div>
         <div class="stack-role">Minimal reactivity</div>
       </div>
-      <div class="stack-item">
+      <div class="stack-item highlight-item" style="--index: 4">
         <div class="stack-icon"><Mail size={28} strokeWidth={1.5} /></div>
         <div class="stack-name">Neomutt</div>
         <div class="stack-role">Email that recedes</div>
@@ -90,9 +90,9 @@
   <section class="mb-20">
     <h2 class="section-title">Learning Paths</h2>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {#each PATHS as path}
-        <a href="/paths/{path.id}" class="path-card {path.color}">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 highlight-grid">
+      {#each PATHS as path, index}
+        <a href="/paths/{path.id}" class="path-card highlight-item {path.color}" style="--index: {index}">
           <!-- Path indicator -->
           <div class="flex items-center gap-3 mb-4">
             <div class="path-dot"></div>
@@ -152,9 +152,9 @@
       The same methodology that built this LMS.
     </p>
 
-    <div class="capabilities-grid">
-      {#each CAPABILITIES as cap}
-        <div class="capability-card">
+    <div class="capabilities-grid highlight-grid">
+      {#each CAPABILITIES as cap, index}
+        <div class="capability-card highlight-item" style="--index: {index}">
           <div class="capability-icon">
             <svelte:component this={cap.icon} size={32} strokeWidth={1.5} />
           </div>
