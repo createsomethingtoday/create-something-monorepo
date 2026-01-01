@@ -43,23 +43,117 @@ packages/agency/
 
 **Gateway Paper**: [The Norvig Partnership](https://createsomething.io/papers/norvig-partnership) — Empirical validation from Peter Norvig's Advent of Code 2025 experiments.
 
+---
+
+## Multi-Account Strategy
+
+Three accounts, three purposes. Each recedes into its function (Zuhandenheit).
+
+### Account Roles
+
+| Account | Purpose | Content Origin | Voice |
+|---------|---------|----------------|-------|
+| **CREATE SOMETHING** | Research institution | Primary for papers, methodology, experiments | Formal, analytical |
+| **WORKWAY** | Methodology in practice | Primary for vertical template, business building | Practical, applied |
+| **Personal (Micah)** | Hermeneutic synthesis | Reposts + commentary | Reflective, contextual |
+
+### The Flow
+
+```
+Daily work (Webflow) → Insights emerge
+        ↓
+Papers/experiments written → Posted to CREATE SOMETHING
+        ↓
+Micah reposts → Adds personal context ("Here's what I'm learning...")
+        ↓
+WORKWAY demonstrates → Methodology applied to real business
+        ↓
+Micah reposts → Endorses with practitioner perspective
+```
+
+### Why This Works
+
+**Personal account becomes curation, not origin.**
+
+Previously: Micah's account was origin for everything → scattered, no thesis
+Now: Micah's account synthesizes and contextualizes → unified voice
+
+This follows the hermeneutic circle:
+- CREATE SOMETHING = parts (individual papers, experiments)
+- WORKWAY = application (methodology in practice)
+- Personal = whole (synthesis, connecting parts)
+
+### Account-Specific Guidelines
+
+#### CREATE SOMETHING (Primary Research)
+
+| Do | Don't |
+|----|-------|
+| Post papers with key insights | Post personal updates |
+| Share experiments with methodology | Cross-post WORKWAY content |
+| Announce research findings | Use casual voice |
+| Link to gateway paper | Promote LMS directly |
+
+**Voice**: "Our research shows..." / "This paper examines..." / "The methodology demonstrates..."
+
+#### WORKWAY (Practice Layer)
+
+| Do | Don't |
+|----|-------|
+| Share building-in-public updates | Post theoretical content |
+| Show methodology applied | Cross-post CREATE SOMETHING papers |
+| Document decisions with Canon lens | Use research voice |
+| Link back to methodology when relevant | Ignore the hermeneutic connection |
+
+**Voice**: "We're building..." / "Here's how we applied..." / "The Subtractive Triad in action..."
+
+#### Personal (Micah)
+
+| Do | Don't |
+|----|-------|
+| Repost CREATE SOMETHING with context | Originate methodology posts |
+| Repost WORKWAY with endorsement | Scatter across unrelated topics |
+| Add practitioner perspective | Post without thesis connection |
+| Share Webflow-adjacent insights | Mix Webflow employer content |
+| Be transparent about the system | Pretend accounts are separate |
+
+**Voice**: "I've been working on..." / "This is why..." / "Here's what I'm learning..."
+
+### Transparency Principle
+
+Be open about the multi-account strategy. The community respects authenticity over performance.
+
+Sample transparency post:
+> "I've been posting scattered content for months. Papers, LMS promos, random thoughts. It diluted the message.
+>
+> Here's the new approach: CREATE SOMETHING posts research. WORKWAY posts practice. I repost and add context.
+>
+> Why? Each account should serve one purpose. Mine was trying to serve all three. Now it synthesizes instead of originates.
+>
+> Less, but better—applied to LinkedIn itself."
+
+---
+
 ### Post Types (All Connecting to Thesis)
 
-| Type | Example | Thesis Connection |
-|------|---------|-------------------|
-| **Norvig validation** | Empirical findings, 20x speed | External authority proves thesis |
-| **Case studies** | Kickstand, Arc | Partnership methodology in production |
-| **Methodology** | Subtractive Triad, quality gates | How the partnership actually works |
-| **Anti-patterns** | What fails with replacement mindset | Contrast reinforces thesis |
+| Type | Example | Thesis Connection | Primary Account |
+|------|---------|-------------------|-----------------|
+| **Norvig validation** | Empirical findings, 20x speed | External authority proves thesis | CREATE SOMETHING |
+| **Case studies** | Kickstand, Arc | Partnership methodology in production | CREATE SOMETHING |
+| **Methodology** | Subtractive Triad, quality gates | How the partnership actually works | CREATE SOMETHING |
+| **Anti-patterns** | What fails with replacement mindset | Contrast reinforces thesis | CREATE SOMETHING |
+| **Building-in-public** | WORKWAY decisions, template evolution | Methodology applied | WORKWAY |
+| **Synthesis** | Connecting insights to practice | Hermeneutic circle | Personal |
 
 ### What NOT to Post
 
-| Content Type | Why Stop |
-|--------------|----------|
-| LMS promotional content | Doesn't connect to partnership thesis |
-| Pure aesthetic images | Demands attention without advancing argument |
-| Scattered updates | Fragments rather than serves the whole |
-| Daily volume for its own sake | Dilutes signal with noise |
+| Content Type | Why Stop | Any Account |
+|--------------|----------|-------------|
+| LMS promotional content | Doesn't connect to partnership thesis | All |
+| Pure aesthetic images | Demands attention without argument | All |
+| Scattered updates | Fragments rather than serves whole | Personal |
+| Daily volume for its own sake | Dilutes signal with noise | All |
+| Webflow employer content | Separate concern, different context | Personal |
 
 ### The Heideggerian Test
 
@@ -68,18 +162,19 @@ Before posting, ask:
 1. **Does this recede into the thesis?** (Zuhandenheit) Or does it demand attention for itself?
 2. **Does this serve the hermeneutic whole?** (Heidegger) Or is it a fragment?
 3. **Does this earn its existence?** (Rams) Or is it posting for posting's sake?
+4. **Is this the right account?** Each account has one purpose.
 
-If any answer is wrong, don't post.
+If any answer is wrong, don't post (or move to correct account).
 
 ### Cadence
 
-| Principle | Application |
-|-----------|-------------|
-| **2-3 posts per week** | Quality over volume |
-| **Self-contained** | Each post stands alone |
-| **1500+ characters** | LinkedIn rewards depth |
-| **CTA in comments** | Links in first comment, gateway paper default |
-| **Thesis connection required** | Every post must serve the unified message |
+| Account | Frequency | Focus |
+|---------|-----------|-------|
+| CREATE SOMETHING | 1-2/week | Papers, experiments, methodology |
+| WORKWAY | 1-2/week | Building-in-public, applied methodology |
+| Personal | 2-3/week | Reposts with context, synthesis |
+
+Total visible activity: ~5-6 posts/week, but coherent across three voices.
 
 ### Posting Modes
 
