@@ -216,7 +216,7 @@ console.log(\`Found \${functions.length} functions\`);`;
 				</div>
 
 				<div class="editor-description">
-					<p class="body-text-sm">
+					<p class="body-copy-sm">
 						Write the tool invocations needed to complete the task. Use XML-like syntax:
 					</p>
 					<pre class="example-code">{`<invoke name="Read">
@@ -284,7 +284,7 @@ console.log(\`Found \${functions.length} functions\`);`;
 				</div>
 
 				<div class="editor-description">
-					<p class="body-text-sm">
+					<p class="body-copy-sm">
 						Write familiar code using standard library patterns:
 					</p>
 					<pre class="example-code">{`const content = await fs.readFile(...);
@@ -531,8 +531,8 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.task-card {
-		background: rgba(59, 130, 246, 0.1);
-		border: 1px solid rgba(59, 130, 246, 0.3);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-xl);
 	}
 
@@ -572,7 +572,7 @@ const result = content.filter(...);`}</pre>
 		color: var(--color-fg-secondary);
 	}
 
-	.body-text-sm {
+	.body-copy-sm {
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 	}
@@ -590,13 +590,13 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.mode-ready-to-hand {
-		background: rgba(34, 197, 94, 0.1);
-		border-color: rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border-color: var(--color-success-border);
 	}
 
 	.mode-present-at-hand {
-		background: rgba(251, 191, 36, 0.1);
-		border-color: rgba(251, 191, 36, 0.3);
+		background: var(--color-warning-muted);
+		border-color: var(--color-warning-border);
 	}
 
 	.mode-title {
@@ -606,11 +606,11 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.mode-ready-to-hand .mode-title {
-		color: rgb(34, 197, 94);
+		color: var(--color-success);
 	}
 
 	.mode-present-at-hand .mode-title {
-		color: rgb(251, 191, 36);
+		color: var(--color-warning);
 	}
 
 	.mode-description {
@@ -621,8 +621,8 @@ const result = content.filter(...);`}</pre>
 	/* Task */
 	.task-badge {
 		font-size: var(--text-caption);
-		color: rgba(59, 130, 246, 0.9);
-		background: rgba(59, 130, 246, 0.2);
+		color: var(--color-info);
+		background: var(--color-info-muted);
 		padding: 0.25rem 0.5rem;
 		border-radius: var(--radius-sm);
 	}
@@ -664,13 +664,13 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.mode-label-vorhanden {
-		background: rgba(251, 191, 36, 0.2);
-		color: rgb(251, 191, 36);
+		background: var(--color-warning-muted);
+		color: var(--color-warning);
 	}
 
 	.mode-label-zuhanden {
-		background: rgba(34, 197, 94, 0.2);
-		color: rgb(34, 197, 94);
+		background: var(--color-success-muted);
+		color: var(--color-success);
 	}
 
 	.editor-description {
@@ -717,9 +717,9 @@ const result = content.filter(...);`}</pre>
 	.complete-button {
 		width: 100%;
 		padding: var(--space-sm) var(--space-md);
-		background: rgba(34, 197, 94, 0.2);
-		color: rgb(34, 197, 94);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		color: var(--color-success);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-md);
 		font-weight: 500;
 		cursor: pointer;
@@ -727,7 +727,7 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.complete-button:hover {
-		background: rgba(34, 197, 94, 0.3);
+		background: var(--color-success-border);
 	}
 
 	/* Code Textarea */
@@ -775,9 +775,9 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.attention-button.active {
-		background: rgba(59, 130, 246, 0.2);
-		border-color: rgba(59, 130, 246, 0.5);
-		color: rgb(59, 130, 246);
+		background: var(--color-info-muted);
+		border-color: var(--color-info-border);
+		color: var(--color-info);
 	}
 
 	/* Completed State */
@@ -796,7 +796,7 @@ const result = content.filter(...);`}</pre>
 
 	.time-value {
 		font-weight: 700;
-		color: rgb(59, 130, 246);
+		color: var(--color-info);
 	}
 
 	.attention-result {
@@ -836,11 +836,11 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.metric-value-success {
-		color: rgb(34, 197, 94);
+		color: var(--color-success);
 	}
 
 	.metric-value-warning {
-		color: rgb(251, 191, 36);
+		color: var(--color-warning);
 	}
 
 	/* Attention Analysis */
@@ -867,11 +867,11 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.attention-focus-success {
-		color: rgb(34, 197, 94);
+		color: var(--color-success);
 	}
 
 	.attention-focus-warning {
-		color: rgb(251, 191, 36);
+		color: var(--color-warning);
 	}
 
 	/* Reflection */
@@ -1010,9 +1010,9 @@ const result = content.filter(...);`}</pre>
 
 	.paper-cta {
 		padding: var(--space-sm) var(--space-lg);
-		background: rgba(59, 130, 246, 0.2);
-		color: rgb(59, 130, 246);
-		border: 1px solid rgba(59, 130, 246, 0.3);
+		background: var(--color-info-muted);
+		color: var(--color-info);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-md);
 		font-weight: 500;
 		text-decoration: none;
@@ -1021,6 +1021,6 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.paper-cta:hover {
-		background: rgba(59, 130, 246, 0.3);
+		background: var(--color-info-border);
 	}
 </style>
