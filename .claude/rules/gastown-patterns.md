@@ -388,7 +388,7 @@ Workers auto-spawn, check hooks, execute, complete.
 3. Session recycling
 4. Worker cleanup
 
-The daemon pings the Steward every few minutes with "Do your job" (DYFJ signal). Steward propagates this downward to other workers.
+The daemon pings the Steward every few minutes with an **Impetus** signal. Steward propagates this downward to other workers.
 
 **Boot the Dog**: Special dog awakened every 5 minutes just to check on the Steward. Decides if Steward needs a heartbeat, nudge, restart, or to be left alone.
 
@@ -521,7 +521,7 @@ gt wake
 | **Slinging** | `gt sling`—assign work to a worker's hook |
 | **Burning** | Destroying a wisp after completion |
 | **Squashing** | Compressing a wisp to a single-line digest in Git |
-| **DYFJ** | "Do Your Freakin' Job"—heartbeat signal from daemon |
+| **Impetus** | Heartbeat signal from daemon—triggers patrol check |
 
 ## Architectural Comparison
 
