@@ -229,6 +229,29 @@ Canon palette (pure black, pure white, muted accents):
 | Border | `#333333` |
 | Active border | `#ffffff` |
 
+### Clipboard Integration
+
+tmux 3.2+ uses native clipboard support with pbcopy/pbpaste on macOS:
+
+| Keys | Action |
+|------|--------|
+| `Ctrl-a [` | Enter copy mode |
+| `v` (in copy mode) | Begin selection |
+| `y` (in copy mode) | Copy to system clipboard |
+| `Ctrl-a ]` | Paste from system clipboard |
+| Mouse drag | Copy selection to clipboard |
+
+**Paste app compatibility**: The clipboard integration uses `pbcopy` which writes to the system clipboard. The Paste app monitors this clipboard, so all tmux copies appear in Paste history.
+
+**Troubleshooting**: If copy/paste stops working:
+```bash
+# Reload tmux config
+tmux source-file ~/.tmux.conf
+
+# Verify pbcopy works
+echo "test" | pbcopy && pbpaste
+```
+
 ### Session Management
 
 ```bash
