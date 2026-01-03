@@ -169,6 +169,32 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────
+# Beads Prefix Fix (workaround for upstream bug)
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "Installing Beads prefix fix..."
+
+BEADS_FIX="$DOTFILES_DIR/shell/beads-prefix-fix.sh"
+
+if [ -n "$SHELL_RC" ] && [ -f "$BEADS_FIX" ]; then
+    BEADS_SOURCE="source \"$BEADS_FIX\""
+    if ! grep -q "beads-prefix-fix" "$SHELL_RC" 2>/dev/null; then
+        echo "" >> "$SHELL_RC"
+        echo "# Beads prefix resolution workaround (upstream bug)" >> "$SHELL_RC"
+        echo "$BEADS_SOURCE" >> "$SHELL_RC"
+        echo "  Added Beads prefix fix to $SHELL_RC"
+        echo "  Workaround: bd show csm-xyz now strips prefix → bd show xyz"
+    else
+        echo "  Beads prefix fix already configured in $SHELL_RC"
+    fi
+else
+    echo "  Warning: Could not configure Beads prefix fix"
+    echo "  Add this to your shell config manually:"
+    echo "    source \"$BEADS_FIX\""
+fi
+
+# ─────────────────────────────────────────────────────────────
 # Neovim
 # ─────────────────────────────────────────────────────────────
 
