@@ -133,6 +133,42 @@ if ! command -v gt &> /dev/null; then
 fi
 
 # ─────────────────────────────────────────────────────────────
+# Shell Aliases (Gastown nomenclature)
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "Installing Gastown nomenclature aliases..."
+
+# Detect shell configuration file
+if [ -n "$ZSH_VERSION" ] || [ -f ~/.zshrc ]; then
+    SHELL_RC="$HOME/.zshrc"
+elif [ -n "$BASH_VERSION" ] || [ -f ~/.bashrc ]; then
+    SHELL_RC="$HOME/.bashrc"
+else
+    SHELL_RC=""
+fi
+
+GASTOWN_ALIASES="$DOTFILES_DIR/shell/gastown-aliases.sh"
+
+if [ -n "$SHELL_RC" ] && [ -f "$GASTOWN_ALIASES" ]; then
+    # Add source line if not already present
+    GASTOWN_SOURCE="source \"$GASTOWN_ALIASES\""
+    if ! grep -q "gastown-aliases" "$SHELL_RC" 2>/dev/null; then
+        echo "" >> "$SHELL_RC"
+        echo "# CREATE SOMETHING Gastown nomenclature aliases" >> "$SHELL_RC"
+        echo "$GASTOWN_SOURCE" >> "$SHELL_RC"
+        echo "  Added Gastown aliases to $SHELL_RC"
+        echo "  Aliases: coordinator → gt mayor, worker → gt polecat, steward → gt deacon"
+    else
+        echo "  Gastown aliases already configured in $SHELL_RC"
+    fi
+else
+    echo "  Warning: Could not detect shell rc file"
+    echo "  Add this to your shell config manually:"
+    echo "    source \"$GASTOWN_ALIASES\""
+fi
+
+# ─────────────────────────────────────────────────────────────
 # Neovim
 # ─────────────────────────────────────────────────────────────
 

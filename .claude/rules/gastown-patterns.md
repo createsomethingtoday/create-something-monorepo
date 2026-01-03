@@ -26,6 +26,22 @@ CREATE SOMETHING uses selective renaming for Canon alignment:
 
 When reading upstream Gastown docs, translate: Mayor→Coordinator, Polecat→Worker, Deacon→Steward.
 
+### Shell Aliases
+
+CREATE SOMETHING provides shell aliases for the renamed roles:
+
+```bash
+# Source aliases (automatic after running dotfiles installer)
+source packages/dotfiles/shell/gastown-aliases.sh
+
+# Now use canonical terminology:
+coordinator attach    # equivalent to: gt mayor attach
+worker list          # equivalent to: gt polecat list
+steward health-check # equivalent to: gt deacon health-check
+```
+
+All examples in this document use CREATE SOMETHING terminology with upstream equivalents noted.
+
 ## Architecture
 
 ```
@@ -68,7 +84,7 @@ gt status
 # Enter coordinator session
 gt prime
 # Or attach directly
-gt coordinator attach
+coordinator attach       # alias for: gt mayor attach
 
 # Create convoy (batched work)
 gt convoy create "Feature name" cs-xxx cs-yyy
@@ -107,11 +123,11 @@ Using tmux keybindings (prefix is `Ctrl-a`):
 | `Ctrl-a g r` | Attach to Refinery |
 | `Ctrl-a g s` | Session picker |
 
-Or via `gt`:
+Or via shell aliases:
 ```bash
-gt coordinator attach
-gt witness attach
-gt refinery attach
+coordinator attach   # gt mayor attach
+gt witness attach    # (no alias - Witness kept)
+gt refinery attach   # (no alias - Refinery kept)
 ```
 
 ## When to Use Gastown vs Harness
@@ -172,7 +188,7 @@ Agent-to-agent communication:
 
 | Message Type | From → To | Purpose |
 |--------------|-----------|---------|
-| `POLECAT_DONE` | Worker → Witness | Work completed |
+| `WORKER_DONE` | Worker → Witness | Work completed (upstream: `POLECAT_DONE`) |
 | `MERGE_READY` | Witness → Refinery | Branch ready |
 | `MERGED` | Refinery → Witness | Successfully merged |
 | `MERGE_FAILED` | Refinery → Worker | Needs remediation |
@@ -229,7 +245,7 @@ gt witness attach
 # Look for health check failures
 
 # Manually restart worker
-gt polecat restart worker-1
+worker restart worker-1   # alias for: gt polecat restart worker-1
 ```
 
 ### Merge Conflicts
