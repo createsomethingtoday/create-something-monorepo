@@ -77,8 +77,19 @@ config.key_tables = {
 	copy_mode = keys_config.copy_mode,
 }
 
--- Leader key for compound commands (like tmux prefix)
-config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }
+-- NOTE: No WezTerm leader key—tmux owns Ctrl-a prefix
+-- This avoids conflicts in Gastown multi-agent sessions
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- tmux Integration (Gastown)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- CSI u mode: Required for Shift+Enter and modifier keys to pass through to tmux
+config.enable_csi_u_key_encoding = true
+
+-- Ensure proper key handling for tmux
+config.send_composed_key_when_left_alt_is_pressed = false
+config.send_composed_key_when_right_alt_is_pressed = false
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Shell

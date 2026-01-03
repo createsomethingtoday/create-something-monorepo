@@ -241,7 +241,7 @@ tmux 3.2+ uses native clipboard support with pbcopy/pbpaste on macOS:
 | `Ctrl-a ]` | Paste from system clipboard |
 | Mouse drag | Copy selection to clipboard |
 
-**Paste app compatibility**: The clipboard integration uses `pbcopy` which writes to the system clipboard. The Paste app monitors this clipboard, so all tmux copies appear in Paste history.
+**Paste app compatibility**: The clipboard integration uses `pbcopy` which writes to the system clipboard. The Paste app monitors this clipboard, so all tmux copies appear in Paste history. The `allow-passthrough on` setting ensures Paste app sequences reach applications.
 
 **Troubleshooting**: If copy/paste stops working:
 ```bash
@@ -250,6 +250,26 @@ tmux source-file ~/.tmux.conf
 
 # Verify pbcopy works
 echo "test" | pbcopy && pbpaste
+```
+
+### WezTerm + tmux Integration
+
+WezTerm provides rendering; tmux provides session persistence. Key settings for Gastown:
+
+**WezTerm** (`wezterm.lua`):
+- `enable_csi_u_key_encoding = true` — Shift+Enter passes through to tmux
+- No leader key — tmux owns `Ctrl-a`
+
+**tmux** (`tmux.conf`):
+- `set -s extended-keys on` — Accepts CSI u sequences
+- `set -g allow-passthrough on` — Paste app compatibility
+
+**Reload both after changes**:
+```bash
+# Reload tmux
+tmux source-file ~/.tmux.conf
+
+# WezTerm auto-reloads, or press Cmd+Shift+R
 ```
 
 ### Session Management
