@@ -47,9 +47,40 @@ alias gtr='tmux attach -t gt-csm-refinery 2>/dev/null || echo "gt-csm-refinery n
 # gts - list all Gastown sessions
 alias gts='tmux list-sessions 2>/dev/null | grep "^gt-" || echo "No Gastown sessions running"'
 
-# Polecat shortcuts (dynamic workers)
-alias gtf='tmux attach -t gt-csm-furiosa 2>/dev/null || echo "furiosa not running"'
-alias gtn='tmux attach -t gt-csm-nux 2>/dev/null || echo "nux not running"'
+# gtp - attach to polecat (dynamic lookup)
+# Usage: gtp [name] - attach to named polecat, or pick from list
+gtp() {
+  local sessions=$(tmux list-sessions -F '#{session_name}' 2>/dev/null | grep '^gt-csm-polecat-\|^gt-csm-[a-z]*$' | grep -v 'witness\|refinery')
+
+  if [[ -z "$sessions" ]]; then
+    echo "No polecats running"
+    return 1
+  fi
+
+  if [[ -n "$1" ]]; then
+    # Attach to named polecat
+    local match=$(echo "$sessions" | grep -i "$1" | head -1)
+    if [[ -n "$match" ]]; then
+      tmux attach -t "$match"
+    else
+      echo "No polecat matching '$1'. Running:"
+      echo "$sessions" | sed 's/gt-csm-/  /'
+    fi
+  else
+    # Show picker if multiple, attach if one
+    local count=$(echo "$sessions" | wc -l | tr -d ' ')
+    if [[ "$count" -eq 1 ]]; then
+      tmux attach -t "$sessions"
+    else
+      echo "Polecats running:"
+      echo "$sessions" | nl -w2 -s') ' | sed 's/gt-csm-//'
+      echo -n "Pick (1-$count): "
+      read choice
+      local target=$(echo "$sessions" | sed -n "${choice}p")
+      [[ -n "$target" ]] && tmux attach -t "$target"
+    fi
+  fi
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Note: Functions are available in current shell; subshells will inherit
@@ -68,6 +99,5 @@ if [[ -n "$GT_DEBUG" ]]; then
   echo "  gtw         → attach to gt-csm-witness"
   echo "  gtr         → attach to gt-csm-refinery"
   echo "  gts         → list Gastown sessions"
-  echo "  gtf         → attach to furiosa"
-  echo "  gtn         → attach to nux"
+  echo "  gtp [name]  → attach to polecat (picker if no name)"
 fi
