@@ -80,31 +80,58 @@ async function sendOrgPostReminder(
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
   <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
-    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
-    h1 { font-size: 24px; font-weight: 600; margin: 0 0 24px 0; }
-    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
-    .button { display: inline-block; background: #ffffff; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 8px 8px 8px 0; }
-    .content { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 16px; margin: 24px 0; font-size: 14px; color: rgba(255, 255, 255, 0.9); white-space: pre-wrap; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
+    :root { color-scheme: dark; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="logo">CREATE SOMETHING</div>
-    <h1>Time to Post: ${orgName}</h1>
-    <p>A scheduled post for <strong>${orgName}</strong> is ready. Copy the content below and post it manually:</p>
-    <div style="margin: 24px 0;">
-      <a href="${adminUrl}" class="button">Open ${orgName} Admin</a>
-    </div>
-    <p><strong>Content to post:</strong></p>
-    <div class="content">${escapedContent}</div>
-    <div class="footer">
-      <p>This reminder is temporary until LinkedIn approves organization posting scopes.</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #000000;">
+    <tr>
+      <td align="center" style="padding: 48px 24px;">
+        <table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width: 560px;">
+          <tr>
+            <td style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #757575; padding-bottom: 48px;">
+              Create Something
+            </td>
+          </tr>
+          <tr>
+            <td style="font-size: 24px; font-weight: 600; color: #ffffff; line-height: 1.3; padding-bottom: 16px;">
+              ${orgName}
+            </td>
+          </tr>
+          <tr>
+            <td style="font-size: 14px; color: #757575; padding-bottom: 32px;">
+              Scheduled post ready for manual publish
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom: 32px;">
+              <a href="${adminUrl}" style="display: inline-block; background-color: #ffffff; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; font-size: 14px;">Open LinkedIn Admin →</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #757575; padding-bottom: 12px;">
+              Content
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; padding: 20px; font-size: 14px; line-height: 1.7; color: #e5e5e5; white-space: pre-wrap;">
+              ${escapedContent}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top: 48px; border-top: 1px solid #1a1a1a; margin-top: 48px;">
+              <p style="font-size: 13px; color: #4d4d4d; margin: 0;">
+                Manual posting required for organization pages.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
@@ -118,7 +145,7 @@ async function sendOrgPostReminder(
 			body: JSON.stringify({
 				from: FROM_ADDRESS,
 				to: NOTIFY_EMAIL,
-				subject: `LinkedIn Reminder: Post to ${orgName}`,
+				subject: `${orgName} — Post Ready`,
 				html,
 			}),
 		});
