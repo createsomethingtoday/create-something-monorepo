@@ -67,8 +67,8 @@
 
 <!-- Act 3: How We Think -->
 <section class="principles-section">
-	<h2 class="principles-heading">The Subtractive Triad</h2>
-	<p class="principles-subtext">Three questions. One discipline.</p>
+	<h2 class="principles-heading">How We Work</h2>
+	<p class="principles-subtext">Three questions before every decision.</p>
 
 	<div class="principles-list highlight-flex">
 		{#each principles as principle, i}
@@ -86,10 +86,10 @@
 <!-- Ecosystem: Where This Comes From -->
 <section class="ecosystem-section">
 	<div class="ecosystem-container">
-		<p class="ecosystem-label">The Hermeneutic Circle</p>
-		<h2 class="ecosystem-heading">Research-backed. Philosophy-grounded.</h2>
+		<p class="ecosystem-label">The Method</p>
+		<h2 class="ecosystem-heading">Validated approach. Measurable results.</h2>
 		<p class="ecosystem-description">
-			Our methods aren't invented—they're validated. .io research proves what works. .ltd canon defines why it matters.
+			Our methods aren't invented—they're tested. Research proves what works. We document why, so you can verify.
 		</p>
 
 		<div class="ecosystem-grid highlight-grid">
@@ -107,8 +107,8 @@
 
 			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
-				<h3 class="property-name">Canon</h3>
-				<p class="property-desc">Crystallization: human judgment encoded for AI execution. The philosophy behind our work.</p>
+				<h3 class="property-name">Principles</h3>
+				<p class="property-desc">The design discipline behind our work. Why we subtract instead of add.</p>
 			</a>
 		</div>
 	</div>
