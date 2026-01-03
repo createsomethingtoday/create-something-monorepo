@@ -755,7 +755,7 @@ useEffect(() => {
 
 	.completed-badge {
 		padding: 0.25rem 0.75rem;
-		background: rgba(34, 197, 94, 0.2);
+		background: var(--color-success-muted);
 		color: var(--color-success);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
@@ -820,7 +820,7 @@ useEffect(() => {
 
 	.prediction-option.selected {
 		border-color: var(--color-fg-primary);
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--color-hover);
 	}
 
 	.prediction-option:disabled {
@@ -854,7 +854,7 @@ useEffect(() => {
 
 	.correct-badge {
 		padding: 0.25rem 0.5rem;
-		background: rgba(34, 197, 94, 0.2);
+		background: var(--color-success-muted);
 		color: var(--color-success);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
@@ -910,7 +910,7 @@ useEffect(() => {
 
 	.badge-success {
 		padding: 0.25rem 0.75rem;
-		background: rgba(34, 197, 94, 0.2);
+		background: var(--color-success-muted);
 		color: var(--color-success);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
@@ -918,7 +918,7 @@ useEffect(() => {
 
 	.badge-neutral {
 		padding: 0.25rem 0.75rem;
-		background: rgba(251, 191, 36, 0.2);
+		background: var(--color-warning-muted);
 		color: var(--color-warning);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
@@ -958,8 +958,8 @@ useEffect(() => {
 
 	/* Assumption Reveal */
 	.assumption-reveal {
-		background: rgba(59, 130, 246, 0.1);
-		border: 1px solid rgba(59, 130, 246, 0.3);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-lg);
 		padding: 1.5rem;
 		margin-top: 1rem;
@@ -967,7 +967,7 @@ useEffect(() => {
 
 	.assumption-label {
 		font-size: var(--text-h3);
-		color: rgb(147, 197, 253);
+		color: var(--color-info);
 		margin-bottom: 0.75rem;
 	}
 
@@ -981,8 +981,8 @@ useEffect(() => {
 		gap: 1rem;
 		margin-top: 1.5rem;
 		padding: 1rem;
-		background: rgba(34, 197, 94, 0.1);
-		border: 1px solid rgba(34, 197, 94, 0.3);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-md);
 	}
 
