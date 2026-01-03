@@ -656,6 +656,162 @@ Most components combine all three approaches:
 </style>
 ```
 
+## Canon Fallback Pattern
+
+CSS custom properties support fallback values using the syntax `var(--token, fallback)`. This pattern enables progressive enhancement, component isolation, and defensive coding within the Canon system.
+
+### Syntax
+
+```css
+/* Basic syntax */
+property: var(--token, fallback-value);
+
+/* Nested fallbacks (fallback to another Canon token) */
+property: var(--local-token, var(--color-fg-secondary));
+```
+
+### When to Use Fallbacks
+
+| Scenario | Pattern | Example |
+|----------|---------|---------|
+| **Local customization** | Component defines local token, falls back to Canon | `var(--path-color, var(--color-fg-secondary))` |
+| **Progressive enhancement** | Runtime value, safe default | `var(--scroll, 0)` |
+| **Cascade animations** | Per-element index, default to first | `var(--index, 0)` |
+| **Component isolation** | Works without Canon loaded | `var(--duration-complex, 500ms)` |
+
+### Fallback Types
+
+#### 1. Hardcoded Fallback (Last Resort)
+
+Use when the component must work even if Canon tokens aren't loaded:
+
+```css
+.icon-spin {
+  animation: spin var(--duration-complex, 500ms) linear infinite;
+}
+```
+
+**Use sparingly.** If you're writing many hardcoded fallbacks, the component may be too decoupled from Canon.
+
+#### 2. Canon Token Fallback (Preferred)
+
+Use when you want a local override that defaults to Canon:
+
+```css
+.learning-path {
+  /* Local customization point, falls back to Canon token */
+  background: var(--path-color, var(--color-fg-secondary));
+}
+
+/* Override for specific contexts */
+.learning-path.completed {
+  --path-color: var(--color-success);
+}
+```
+
+**Best for:** Themeable components, state variations, contextual styling.
+
+#### 3. Computed Fallback (Dynamic Values)
+
+Use when the value is computed at runtime:
+
+```css
+.cascade-item {
+  /* --index set via inline style: style="--index: 0" */
+  transition-delay: calc(var(--cascade-step) * var(--index, 0));
+}
+
+.parallax-layer {
+  /* --scroll updated via JS on scroll */
+  transform: translateY(calc(var(--scroll, 0) * var(--depth-factor, -0.05)));
+}
+```
+
+**Best for:** Animation orchestration, scroll-driven effects, per-instance values.
+
+### Examples in Canon
+
+```css
+/* From canon.css - cascade animation with fallback */
+.highlight-item {
+  transition-delay: calc(var(--cascade-step) * var(--index, 0));
+}
+
+/* From icons.css - animation with Canon token fallback */
+.icon-pulse {
+  animation: icon-pulse var(--duration-complex, 500ms) var(--ease-standard, ease) infinite;
+}
+
+/* From lms - local token with Canon fallback */
+.path-segment {
+  stroke: var(--path-color, var(--color-fg-secondary));
+}
+```
+
+### Anti-Patterns
+
+#### Don't: Fallback to Magic Numbers
+
+```css
+/* ❌ Violation: hardcoded magic value */
+.card {
+  border-radius: var(--radius-lg, 12px);
+}
+
+/* ✅ Fixed: either trust Canon or import tokens.css */
+.card {
+  border-radius: var(--radius-lg);
+}
+```
+
+If you need the fallback, the component likely isn't importing Canon correctly.
+
+#### Don't: Over-Fallback Everything
+
+```css
+/* ❌ Violation: defensive to the point of uselessness */
+.element {
+  color: var(--color-fg-primary, #ffffff);
+  background: var(--color-bg-surface, #111111);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-md, 1.618rem);
+}
+```
+
+This suggests the component doesn't trust Canon is loaded. Fix the import, don't add fallbacks everywhere.
+
+#### Don't: Fallback to Non-Canon Values
+
+```css
+/* ❌ Violation: fallback breaks Canon consistency */
+.element {
+  color: var(--local-color, #ff5500);  /* Not a Canon color! */
+}
+
+/* ✅ Fixed: fallback to Canon token */
+.element {
+  color: var(--local-color, var(--color-fg-tertiary));
+}
+```
+
+### Decision Flowchart
+
+```
+Does the value need runtime customization?
+├── Yes → Is it set via inline style (--index, --scroll)?
+│         ├── Yes → Use computed fallback: var(--token, 0)
+│         └── No → Use Canon token fallback: var(--local, var(--canon-token))
+└── No → Is the component meant to work without Canon?
+         ├── Yes → Use hardcoded fallback (sparingly)
+         └── No → Don't use fallback, trust Canon import
+```
+
+### Philosophy
+
+**Zuhandenheit Applied**: Fallbacks should be invisible during normal operation. They exist for edge cases and progressive enhancement—not as the primary mechanism. If your component relies heavily on fallbacks, it's no longer using Canon; it's working around it.
+
+**The Subtractive Test**: Does this fallback earn its existence? If the answer is "in case Canon isn't loaded," the real question is "why isn't Canon loaded?"
+
 ## Detection Patterns
 
 Tailwind design utilities to flag:
