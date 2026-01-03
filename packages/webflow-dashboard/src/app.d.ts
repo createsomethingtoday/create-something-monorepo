@@ -8,6 +8,7 @@ declare global {
 				UPLOADS: R2Bucket;
 				AIRTABLE_API_KEY: string;
 				AIRTABLE_BASE_ID: string;
+				CRON_SECRET?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

@@ -3,17 +3,32 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	let status = $state<'verifying' | 'success' | 'error'>('verifying');
-	let errorMessage = $state<string | null>(null);
+	interface PageData {
+		status: 'no-token' | 'rate-limited' | 'invalid' | 'not-found' | 'expired' | 'error';
+		error: string | null;
+		retryAfter?: number;
+	}
 
-	onMount(async () => {
-		const token = $page.url.searchParams.get('token');
+	let { data } = $props<{ data: PageData }>();
 
-		if (!token) {
-			status = 'error';
-			errorMessage = 'No verification token provided';
-			return;
-		}
+	// Map server status to UI status
+	type UIStatus = 'verifying' | 'success' | 'error' | 'no-token';
+
+	function getInitialStatus(): UIStatus {
+		// If server already determined an error, show it immediately
+		if (data.status === 'no-token') return 'no-token';
+		if (data.error) return 'error';
+		// Otherwise, show verifying (though server-side should have redirected on success)
+		return 'verifying';
+	}
+
+	let status = $state<UIStatus>(getInitialStatus());
+	let errorMessage = $state<string | null>(data.error);
+
+	// Client-side verification fallback for manual token entry
+	async function verifyToken(token: string) {
+		status = 'verifying';
+		errorMessage = null;
 
 		try {
 			const response = await fetch('/api/auth/verify-token', {
@@ -22,7 +37,7 @@
 				body: JSON.stringify({ token })
 			});
 
-			const data = await response.json();
+			const responseData = await response.json();
 
 			if (response.ok) {
 				status = 'success';
@@ -32,14 +47,35 @@
 				}, 1500);
 			} else {
 				status = 'error';
-				const errorData = data as { error?: string };
+				const errorData = responseData as { error?: string };
 				errorMessage = errorData.error || 'Verification failed';
 			}
 		} catch {
 			status = 'error';
 			errorMessage = 'An error occurred during verification';
 		}
+	}
+
+	// Handle case where token was in URL but needs client-side verification
+	onMount(async () => {
+		const token = $page.url.searchParams.get('token');
+
+		// If we have a token but status is still verifying, try client-side
+		// This handles edge cases where server-side verification wasn't possible
+		if (token && status === 'verifying') {
+			await verifyToken(token);
+		}
 	});
+
+	// Token input for manual entry
+	let tokenInput = $state('');
+
+	function handleSubmit(e: Event) {
+		e.preventDefault();
+		if (tokenInput.trim()) {
+			verifyToken(tokenInput.trim());
+		}
+	}
 </script>
 
 <svelte:head>
@@ -69,6 +105,29 @@
 				</svg>
 				<h1>Verification successful</h1>
 				<p class="subtitle">Redirecting to dashboard...</p>
+			</div>
+		{:else if status === 'no-token'}
+			<div class="status-message">
+				<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+					<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+				</svg>
+				<h1>Enter verification token</h1>
+				<p class="subtitle">Paste your verification token from the email</p>
+				<form class="token-form" onsubmit={handleSubmit}>
+					<input
+						type="text"
+						class="token-input"
+						bind:value={tokenInput}
+						placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+						autocomplete="off"
+						spellcheck="false"
+					/>
+					<button type="submit" class="verify-button" disabled={!tokenInput.trim()}>
+						Verify
+					</button>
+				</form>
+				<a href="/login" class="retry-link">Request a new verification email</a>
 			</div>
 		{:else}
 			<div class="status-message error">
@@ -169,5 +228,57 @@
 
 	.retry-link:hover {
 		opacity: 0.8;
+	}
+
+	.token-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		width: 100%;
+		margin-top: var(--space-md);
+	}
+
+	.token-input {
+		width: 100%;
+		padding: var(--space-sm);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-primary);
+		font-family: monospace;
+		font-size: var(--text-body-sm);
+		text-align: center;
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.token-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.token-input:focus {
+		outline: none;
+		border-color: var(--color-info);
+	}
+
+	.verify-button {
+		width: 100%;
+		padding: var(--space-sm);
+		background: var(--color-fg-primary);
+		border: none;
+		border-radius: var(--radius-md);
+		color: var(--color-bg-pure);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		cursor: pointer;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.verify-button:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+
+	.verify-button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 </style>

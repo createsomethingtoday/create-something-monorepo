@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { Badge, Card, CardHeader, CardTitle, CardContent, Button } from './ui';
 	import type { Asset } from '$lib/server/airtable';
+	import { submissionStore } from '$lib/stores/submission';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		assets: Asset[];
 		variant?: 'default' | 'compact';
+		userEmail?: string;
 	}
 
 	interface Submission {
@@ -15,12 +18,49 @@
 		status: string;
 	}
 
-	let { assets, variant = 'default' }: Props = $props();
+	let { assets, variant = 'default', userEmail }: Props = $props();
 
 	let isTooltipOpen = $state(false);
+	let storeData = $state<typeof $submissionStore | null>(null);
 
-	// Calculate submissions within the 30-day window
+	// Initialize store with assets and optionally fetch external data
+	onMount(() => {
+		submissionStore.setAssets(assets);
+		if (userEmail) {
+			submissionStore.refresh(userEmail);
+		}
+
+		// Subscribe to store updates
+		const unsubscribe = submissionStore.subscribe((data) => {
+			storeData = data;
+		});
+
+		return unsubscribe;
+	});
+
+	// Update store when assets change
+	$effect(() => {
+		submissionStore.setAssets(assets);
+	});
+
+	// Calculate submissions within the 30-day window (local calculation)
 	const submissionData = $derived(() => {
+		// Use store data if available and loaded
+		if (storeData && !storeData.isLoading) {
+			return {
+				submissions: storeData.submissions,
+				remainingSubmissions: storeData.remainingSubmissions,
+				isAtLimit: storeData.isAtLimit,
+				nextExpiryDate: storeData.nextExpiryDate,
+				publishedCount: storeData.publishedTemplates,
+				totalSubmitted: storeData.submittedTemplates,
+				assetsSubmitted30: storeData.assetsSubmitted30,
+				isWhitelisted: storeData.isWhitelisted,
+				isLoading: storeData.isLoading
+			};
+		}
+
+		// Fallback to local calculation
 		const now = new Date();
 		const thirtyDaysAgo = new Date(
 			Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30, 0, 0, 0, 0)
@@ -75,7 +115,9 @@
 			nextExpiryDate,
 			publishedCount,
 			totalSubmitted,
-			assetsSubmitted30: submissions.length
+			assetsSubmitted30: submissions.length,
+			isWhitelisted: false,
+			isLoading: false
 		};
 	});
 

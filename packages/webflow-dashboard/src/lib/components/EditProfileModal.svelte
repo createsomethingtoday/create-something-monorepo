@@ -31,8 +31,10 @@
 		name: '',
 		legalName: '',
 		biography: '',
-		profileImage: null as string | null
+		avatarUrl: null as string | null
 	});
+
+	let successMessage = $state<string | null>(null);
 
 	let modalRef: HTMLDivElement | undefined = $state();
 
@@ -42,22 +44,29 @@
 	});
 
 	interface ProfileData {
+		id: string;
 		name?: string;
 		legalName?: string;
 		biography?: string;
-		profileImage?: string | null;
+		avatarUrl?: string | null;
+		email?: string;
 	}
 
 	async function loadProfile() {
 		try {
 			const response = await fetch('/api/profile');
-			if (!response.ok) throw new Error('Failed to load profile');
+			if (!response.ok) {
+				if (response.status === 401) {
+					throw new Error('Please log in to view your profile');
+				}
+				throw new Error('Failed to load profile');
+			}
 			const profile = (await response.json()) as ProfileData;
 			formData = {
 				name: profile.name || '',
 				legalName: profile.legalName || '',
 				biography: profile.biography || '',
-				profileImage: profile.profileImage || null
+				avatarUrl: profile.avatarUrl || null
 			};
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load profile';
@@ -81,20 +90,45 @@
 	async function handleSave() {
 		isSaving = true;
 		error = null;
+		successMessage = null;
 
 		try {
+			// Only send the editable fields, not avatarUrl (which is read-only in current API)
+			const updateData = {
+				name: formData.name,
+				legalName: formData.legalName,
+				biography: formData.biography
+			};
+
 			const response = await fetch('/api/profile', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(formData)
+				body: JSON.stringify(updateData)
 			});
 
 			if (!response.ok) {
-				const errorData = (await response.json()) as { message?: string };
-				throw new Error(errorData.message || 'Failed to save profile');
+				if (response.status === 401) {
+					throw new Error('Session expired. Please log in again.');
+				}
+				const errorData = (await response.json()) as { message?: string; error?: string };
+				throw new Error(errorData.message || errorData.error || 'Failed to save profile');
 			}
 
-			onClose();
+			// Update local state with response
+			const updated = (await response.json()) as ProfileData;
+			formData = {
+				name: updated.name || '',
+				legalName: updated.legalName || '',
+				biography: updated.biography || '',
+				avatarUrl: updated.avatarUrl || null
+			};
+
+			successMessage = 'Profile saved successfully';
+
+			// Auto-close after brief success message
+			setTimeout(() => {
+				onClose();
+			}, 1500);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to save profile';
 		} finally {
@@ -146,14 +180,18 @@
 
 						<TabsContent value="profile" active={activeTab === 'profile'}>
 							<div class="form">
+								{#if successMessage}
+									<div class="success-message">{successMessage}</div>
+								{/if}
+
 								{#if error}
 									<div class="error-message">{error}</div>
 								{/if}
 
 								<div class="form-field">
 									<ImageUploader
-										value={formData.profileImage}
-										onchange={(url) => (formData.profileImage = url)}
+										value={formData.avatarUrl}
+										onchange={(url) => (formData.avatarUrl = url)}
 										label="Profile Image"
 										description="WebP images only, square format recommended"
 										disabled={isSaving}
@@ -290,5 +328,27 @@
 		border-radius: var(--radius-md);
 		color: var(--color-error);
 		font-size: var(--text-body-sm);
+	}
+
+	.success-message {
+		padding: var(--space-sm);
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+		border-radius: var(--radius-md);
+		color: var(--color-success);
+		font-size: var(--text-body-sm);
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+	}
+
+	.success-message::before {
+		content: '';
+		display: inline-block;
+		width: 16px;
+		height: 16px;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2344aa44' stroke-width='2'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E");
+		background-size: contain;
+		background-repeat: no-repeat;
 	}
 </style>

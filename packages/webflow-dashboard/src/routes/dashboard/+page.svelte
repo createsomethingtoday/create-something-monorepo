@@ -42,8 +42,8 @@
 				toast.success('Asset archived successfully');
 				invalidate('app:assets');
 			} else {
-				const error = await response.json();
-				toast.error(error.message || 'Failed to archive asset');
+				const errorData = (await response.json()) as { message?: string };
+				toast.error(errorData.message || 'Failed to archive asset');
 			}
 		} catch {
 			toast.error('Failed to archive asset');

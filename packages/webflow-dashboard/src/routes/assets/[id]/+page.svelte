@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { goto } from '$app/navigation';
+	import type { Asset } from '$lib/server/airtable';
+	import { goto, invalidateAll } from '$app/navigation';
 	import {
 		Header,
 		Card,
@@ -21,14 +22,19 @@
 		TableCell,
 		StatusBadge
 	} from '$lib/components';
+	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
+	import { toast } from '$lib/stores/toast';
 
 	let { data }: { data: PageData } = $props();
 
 	let activeTab = $state('overview');
 	let showPerformance = $state(false);
 	let imageError = $state(false);
+	let showEditModal = $state(false);
+	let isArchiving = $state(false);
 
-	const asset = data.asset;
+	// Use reactive state so updates refresh the view
+	let asset = $state<Asset>(data.asset);
 
 	// Format dates
 	function formatDate(dateStr?: string): string {
@@ -62,6 +68,87 @@
 
 	// Can show metrics for non-Upcoming and non-Rejected statuses
 	const canShowMetrics = !['Upcoming', 'Rejected'].includes(asset.status);
+
+	// Can edit if not delisted
+	const canEdit = !asset.status.includes('Delisted');
+
+	// Can archive if not already delisted
+	const canArchive = !asset.status.includes('Delisted');
+
+	function handleEditClick() {
+		showEditModal = true;
+	}
+
+	function handleEditClose() {
+		showEditModal = false;
+	}
+
+	interface AssetUpdateData {
+		name?: string;
+		description?: string;
+		descriptionShort?: string;
+		websiteUrl?: string;
+		previewUrl?: string;
+		thumbnailUrl?: string | null;
+		secondaryThumbnailUrl?: string | null;
+		carouselImages?: string[];
+	}
+
+	async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
+		const response = await fetch(`/api/assets/${asset.id}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(updateData)
+		});
+
+		if (!response.ok) {
+			const data = (await response.json()) as { message?: string };
+			throw new Error(data.message || 'Failed to update asset');
+		}
+
+		const result = (await response.json()) as { asset: typeof asset };
+
+		// Update local state with new asset data
+		asset = result.asset;
+
+		// Reset image error state in case thumbnail changed
+		imageError = false;
+	}
+
+	async function handleArchive(): Promise<void> {
+		const response = await fetch(`/api/assets/${asset.id}/archive`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' }
+		});
+
+		if (!response.ok) {
+			const data = (await response.json()) as { message?: string };
+			throw new Error(data.message || 'Failed to archive asset');
+		}
+
+		// Navigate back to dashboard after successful archive
+		goto('/dashboard');
+	}
+
+	async function handleArchiveClick() {
+		if (isArchiving) return;
+
+		if (!confirm('Are you sure you want to archive this asset? This will remove it from the marketplace.')) {
+			return;
+		}
+
+		isArchiving = true;
+
+		try {
+			await handleArchive();
+			toast.success('Asset archived successfully');
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to archive asset';
+			toast.error(message);
+		} finally {
+			isArchiving = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -108,8 +195,25 @@
 						</Button>
 					{/if}
 					{#if asset.marketplaceUrl}
-						<Button variant="default" size="sm" onclick={() => window.open(asset.marketplaceUrl, '_blank')}>
+						<Button variant="outline" size="sm" onclick={() => window.open(asset.marketplaceUrl, '_blank')}>
 							View on Marketplace
+						</Button>
+					{/if}
+					{#if canEdit}
+						<Button variant="default" size="sm" onclick={handleEditClick}>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+								<path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+							</svg>
+							Edit
+						</Button>
+					{/if}
+					{#if canArchive}
+						<Button variant="destructive" size="sm" onclick={handleArchiveClick} disabled={isArchiving}>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+							</svg>
+							{isArchiving ? 'Archiving...' : 'Archive'}
 						</Button>
 					{/if}
 				</div>
@@ -441,6 +545,16 @@
 		</div>
 	</main>
 </div>
+
+<!-- Edit Modal -->
+{#if showEditModal}
+	<EditAssetModal
+		{asset}
+		onClose={handleEditClose}
+		onSave={handleEditSave}
+		onArchive={canArchive ? handleArchive : undefined}
+	/>
+{/if}
 
 <style>
 	.detail-page {

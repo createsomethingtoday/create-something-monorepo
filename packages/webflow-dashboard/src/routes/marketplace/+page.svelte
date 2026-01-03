@@ -4,14 +4,53 @@
 	import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
 	import type { PageData } from './$types';
 
+	interface LeaderboardEntry {
+		templateName: string;
+		category: string;
+		totalSales30d: number;
+		totalRevenue30d?: number;
+		salesRank: number;
+		revenueRank: number;
+		isUserTemplate: boolean;
+	}
+
+	interface CategoryEntry {
+		category: string;
+		subcategory: string;
+		templatesInSubcategory: number;
+		totalSales30d: number;
+		avgRevenuePerTemplate: number;
+		revenueRank: number;
+	}
+
+	interface Insight {
+		type: 'opportunity' | 'trend' | 'warning';
+		message: string;
+	}
+
+	interface LeaderboardResponse {
+		leaderboard: LeaderboardEntry[];
+		userTemplates: LeaderboardEntry[];
+		summary: {
+			totalMarketplaceSales: number;
+			userBestRank: number | null;
+			lastUpdated: string;
+		};
+	}
+
+	interface CategoriesResponse {
+		categories: CategoryEntry[];
+		insights: Insight[];
+	}
+
 	let { data }: { data: PageData } = $props();
 
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
-	let leaderboard = $state<unknown[]>([]);
-	let categories = $state<unknown[]>([]);
-	let insights = $state<unknown[]>([]);
-	let userTemplates = $state<unknown[]>([]);
+	let leaderboard = $state<LeaderboardEntry[]>([]);
+	let categories = $state<CategoryEntry[]>([]);
+	let insights = $state<Insight[]>([]);
+	let userTemplates = $state<LeaderboardEntry[]>([]);
 	let summary = $state({
 		totalMarketplaceSales: 0,
 		userBestRank: null as number | null,
@@ -36,8 +75,8 @@
 				throw new Error('Failed to load marketplace data');
 			}
 
-			const leaderboardData = await leaderboardRes.json();
-			const categoriesData = await categoriesRes.json();
+			const leaderboardData = (await leaderboardRes.json()) as LeaderboardResponse;
+			const categoriesData = (await categoriesRes.json()) as CategoriesResponse;
 
 			leaderboard = leaderboardData.leaderboard;
 			userTemplates = leaderboardData.userTemplates;
