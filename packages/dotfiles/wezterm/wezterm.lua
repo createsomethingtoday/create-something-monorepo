@@ -84,8 +84,9 @@ config.key_tables = {
 -- tmux Integration (Gastown)
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- CSI u mode: Required for Shift+Enter and modifier keys to pass through to tmux
-config.enable_csi_u_key_encoding = true
+-- CSI u mode disabled: causes [13;2u garbage when zsh doesn't handle sequences
+-- Trade-off: Shift+Enter becomes regular Enter, but clipboard/Paste app works
+config.enable_csi_u_key_encoding = false
 
 -- Ensure proper key handling for tmux
 config.send_composed_key_when_left_alt_is_pressed = false

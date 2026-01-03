@@ -231,7 +231,7 @@ Canon palette (pure black, pure white, muted accents):
 
 ### Clipboard Integration
 
-tmux 3.2+ uses native clipboard support with pbcopy/pbpaste on macOS:
+tmux uses `pbcopy`/`pbpaste` for system clipboard (Paste app compatible):
 
 | Keys | Action |
 |------|--------|
@@ -241,15 +241,26 @@ tmux 3.2+ uses native clipboard support with pbcopy/pbpaste on macOS:
 | `Ctrl-a ]` | Paste from system clipboard |
 | Mouse drag | Copy selection to clipboard |
 
-**Paste app compatibility**: The clipboard integration uses `pbcopy` which writes to the system clipboard. The Paste app monitors this clipboard, so all tmux copies appear in Paste history. The `allow-passthrough on` setting ensures Paste app sequences reach applications.
+**Paste app compatibility**:
+- `set -s set-clipboard off` disables OSC 52 (terminal-internal clipboard)
+- `set -s copy-command 'pbcopy'` ensures copies go through system clipboard
+- WezTerm has explicit `Cmd+C`/`Cmd+V` bindings to `Clipboard`
+- `Cmd+Shift+V` is disabled in WezTerm so Paste app can intercept it
+
+**Critical**: OSC 52 (`set-clipboard on`) bypasses the system clipboard entirely, breaking clipboard managers. Always use `set-clipboard off` with `copy-command 'pbcopy'`.
 
 **Troubleshooting**: If copy/paste stops working:
 ```bash
 # Reload tmux config
 tmux source-file ~/.tmux.conf
 
+# Reload WezTerm config (Cmd+Shift+R or automatic)
+
 # Verify pbcopy works
 echo "test" | pbcopy && pbpaste
+
+# Verify Paste app sees it
+# Open Paste app (Cmd+Shift+V) - "test" should appear
 ```
 
 ### WezTerm + tmux Integration
@@ -259,10 +270,14 @@ WezTerm provides rendering; tmux provides session persistence. Key settings for 
 **WezTerm** (`wezterm.lua`):
 - `enable_csi_u_key_encoding = true` — Shift+Enter passes through to tmux
 - No leader key — tmux owns `Ctrl-a`
+- Explicit `Cmd+C/V` clipboard bindings — ensures system clipboard use
+- `Cmd+Shift+V` disabled — allows Paste app to intercept
 
 **tmux** (`tmux.conf`):
 - `set -s extended-keys on` — Accepts CSI u sequences
-- `set -g allow-passthrough on` — Paste app compatibility
+- `set -s set-clipboard off` — Disables OSC 52 (use system clipboard)
+- `set -s copy-command 'pbcopy'` — Routes copies to system clipboard
+- `set -g allow-passthrough on` — App-specific sequences
 
 **Reload both after changes**:
 ```bash

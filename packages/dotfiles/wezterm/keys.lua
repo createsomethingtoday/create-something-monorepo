@@ -78,6 +78,19 @@ local keys = {
 	{ key = '0', mods = mod, action = act.ResetFontSize },
 
 	-- ─────────────────────────────────────────────────────────────────────────
+	-- Clipboard (explicit bindings for Paste app compatibility)
+	-- ─────────────────────────────────────────────────────────────────────────
+	{ key = 'c', mods = mod, action = act.CopyTo('Clipboard') },
+	{ key = 'v', mods = mod, action = act.PasteFrom('Clipboard') },
+	-- Cmd+Shift+V: Let Paste app handle this (passthrough to system)
+	{ key = 'V', mods = mod .. '|SHIFT', action = act.DisableDefaultAssignment },
+
+	-- ─────────────────────────────────────────────────────────────────────────
+	-- Shift+Enter: Send regular Enter (newline)
+	-- ─────────────────────────────────────────────────────────────────────────
+	{ key = 'Return', mods = 'SHIFT', action = act.SendString('\r') },
+
+	-- ─────────────────────────────────────────────────────────────────────────
 	-- Quick Actions
 	-- ─────────────────────────────────────────────────────────────────────────
 	{ key = 'p', mods = mod, action = act.ActivateCommandPalette },
