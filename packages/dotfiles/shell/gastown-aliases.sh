@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # CREATE SOMETHING Gastown Nomenclature Aliases
 # Maps canonical terms to Gastown upstream commands
 # The tool recedes; the work remains.
@@ -48,10 +48,8 @@ alias gtr='tmux attach -t gt-csm-refinery 2>/dev/null || echo "gt-csm-refinery n
 alias gts='tmux list-sessions 2>/dev/null | grep "^gt-" || echo "No Gastown sessions running"'
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Export for subshells
+# Note: Functions are available in current shell; subshells will inherit
 # ─────────────────────────────────────────────────────────────────────────────
-
-export -f coordinator worker steward
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Verification (silent unless GT_DEBUG is set)
