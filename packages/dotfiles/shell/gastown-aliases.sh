@@ -32,6 +32,22 @@ steward() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Quick Session Attach (from outside tmux)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# gtm - attach to Mayor/Coordinator session
+alias gtm='tmux attach -t gt-mayor 2>/dev/null || echo "gt-mayor not running. Start with: gt start"'
+
+# gtw - attach to Witness session
+alias gtw='tmux attach -t gt-csm-witness 2>/dev/null || echo "gt-csm-witness not running. Start with: gt start"'
+
+# gtr - attach to Refinery session
+alias gtr='tmux attach -t gt-csm-refinery 2>/dev/null || echo "gt-csm-refinery not running. Start with: gt start"'
+
+# gts - list all Gastown sessions
+alias gts='tmux list-sessions 2>/dev/null | grep "^gt-" || echo "No Gastown sessions running"'
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Export for subshells
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -46,4 +62,8 @@ if [[ -n "$GT_DEBUG" ]]; then
   echo "  coordinator → gt mayor"
   echo "  worker      → gt polecat"
   echo "  steward     → gt deacon"
+  echo "  gtm         → attach to gt-mayor"
+  echo "  gtw         → attach to gt-csm-witness"
+  echo "  gtr         → attach to gt-csm-refinery"
+  echo "  gts         → list Gastown sessions"
 fi
