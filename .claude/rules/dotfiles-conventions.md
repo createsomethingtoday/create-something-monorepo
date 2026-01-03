@@ -174,6 +174,82 @@ When modifying dotfiles:
 3. Test in isolation before installing
 4. Update this document if conventions change
 
+## tmux Patterns
+
+tmux provides session persistence inside WezTerm for Gastown multi-agent orchestration.
+
+### Philosophy
+
+WezTerm handles rendering (Canon colors, GPU acceleration); tmux handles session management (detach, reattach, background processes). Together they enable persistent agent sessions.
+
+### Configuration
+
+Location: `packages/dotfiles/tmux/tmux.conf`
+
+```bash
+# Install
+ln -sf /path/to/create-something-monorepo/packages/dotfiles/tmux/tmux.conf ~/.tmux.conf
+```
+
+### Keybinding Grammar
+
+Matches WezTerm where possible:
+
+| tmux Keys | WezTerm Equivalent | Action |
+|-----------|-------------------|--------|
+| `Ctrl-a d` | `Cmd+d` | Split horizontal |
+| `Ctrl-a D` | `Cmd+Shift+d` | Split vertical |
+| `Ctrl-a h/j/k/l` | `Cmd+Shift+h/j/k/l` | Navigate panes |
+| `Alt+h/j/k/l` | — | Navigate panes (no prefix) |
+| `Ctrl-a w` | `Cmd+w` | Close pane |
+| `Ctrl-a t` | `Cmd+t` | New window |
+| `Ctrl-a e` | `Cmd+Shift+e` | Rename window |
+| `Ctrl-a K` | `Cmd+k` | Clear screen |
+
+### Gastown Shortcuts
+
+Quick attach to Gastown roles:
+
+| Keys | Action |
+|------|--------|
+| `Ctrl-a g c` | Attach to Coordinator |
+| `Ctrl-a g w` | Attach to Witness |
+| `Ctrl-a g r` | Attach to Refinery |
+| `Ctrl-a g s` | Session picker |
+
+### Colors
+
+Canon palette (pure black, pure white, muted accents):
+
+| Element | Color |
+|---------|-------|
+| Background | `#000000` |
+| Foreground | `#ffffff` |
+| Inactive | `#666666` |
+| Border | `#333333` |
+| Active border | `#ffffff` |
+
+### Session Management
+
+```bash
+# Start Gastown (creates tmux sessions)
+gt start
+
+# Attach to session
+tmux attach -t gt-coordinator
+
+# Detach (Ctrl-a z)
+# Reattach later with same command
+
+# List sessions
+tmux list-sessions
+
+# Kill session
+tmux kill-session -t session-name
+```
+
+See [Gastown Patterns](./gastown-patterns.md) for full multi-agent documentation.
+
 ## Stripe CLI Patterns
 
 Local webhook development and testing. The tool recedes; Stripe operations happen.

@@ -234,6 +234,30 @@ When starting a session:
 
 The goal: **Hermeneutic continuity across context boundaries.**
 
+## Gastown Integration
+
+For multi-agent work, Beads integrates with [Gastown](./gastown-patterns.md):
+
+```bash
+# Gastown commands that use Beads
+gt convoy create "Feature" cs-xxx cs-yyy  # Batch issues into convoy
+gt sling cs-xxx csm                       # Assign issue to rig
+gt hook                                   # Check current assignment
+gt done                                   # Complete and sync
+
+# Molecules in Gastown
+bd mol current                            # Where am I in workflow?
+bd close <step> --continue                # Propulsion: close + advance
+bd mol squash                             # Compress to digest
+```
+
+| Tool | Scope | Persistence |
+|------|-------|-------------|
+| `bd` (Beads) | Issue tracking, molecules | Git-synced |
+| `gt` (Gastown) | Agent coordination | tmux sessions |
+
+Gastown builds on Beads; all work ultimately lives in `.beads/issues.jsonl`.
+
 ---
 
 ## Related Lessons

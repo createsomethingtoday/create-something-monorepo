@@ -579,6 +579,43 @@ if (!canProceedWithWork(baseline, config)) {
 
 ---
 
+## Gastown Integration
+
+For multi-session coordination, use Gastown instead of harness. See [Gastown Patterns](./gastown-patterns.md).
+
+### When to Use Each
+
+| Scenario | Tool | Why |
+|----------|------|-----|
+| Single issue, sequential work | **Harness** | Lower overhead, simpler |
+| Spec with 3+ independent features | **Gastown** | Parallel workers |
+| Multi-property parallel work | **Gastown** | Workers per property |
+| Background long-running task | **Gastown** | Survives session limits |
+| Complex multi-step orchestration | **Gastown** | Witness + Refinery |
+
+### Relationship
+
+- **Harness** = single Claude Code session with subagents
+- **Gastown** = multiple Claude Code instances coordinated via tmux
+
+Harness handles focused work; Gastown handles distributed work. They complement, not compete.
+
+### Quick Reference
+
+```bash
+# Gastown commands (multi-session)
+gt start                    # Launch Full Stack mode
+gt convoy create "Feature"  # Batch work
+gt sling cs-xxx csm         # Assign to rig
+gt status                   # Monitor
+
+# Harness commands (single-session)
+bd work cs-xxx              # Work on issue
+bd work --spec spec.yaml    # Parse spec
+```
+
+---
+
 ## Related Lessons
 
 - [Agent Orchestration](/learn/lessons/advanced/agent-orchestration) — Multi-agent patterns for complex work decomposition

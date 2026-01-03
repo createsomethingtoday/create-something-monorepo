@@ -96,6 +96,43 @@ if ! command -v wezterm &> /dev/null; then
 fi
 
 # ─────────────────────────────────────────────────────────────
+# tmux (for Gastown multi-agent orchestration)
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "Installing tmux configuration..."
+
+# Backup existing tmux config
+if [ -f ~/.tmux.conf ] && [ ! -L ~/.tmux.conf ]; then
+    echo "  Backing up existing tmux config to ~/.tmux.conf.backup"
+    mv ~/.tmux.conf ~/.tmux.conf.backup
+elif [ -L ~/.tmux.conf ]; then
+    rm ~/.tmux.conf
+fi
+
+# Symlink tmux config
+ln -sf "$DOTFILES_DIR/tmux/tmux.conf" ~/.tmux.conf
+echo "  Symlinked tmux.conf → ~/.tmux.conf"
+
+# Check if tmux is installed
+if ! command -v tmux &> /dev/null; then
+    echo ""
+    echo "  tmux not found. Install with:"
+    echo "    macOS: brew install tmux"
+    echo "    Linux: sudo apt install tmux"
+    echo ""
+fi
+
+# Check if Gastown is installed
+if ! command -v gt &> /dev/null; then
+    echo ""
+    echo "  Gastown (gt) not found. Install with:"
+    echo "    go install github.com/steveyegge/gastown/cmd/gt@latest"
+    echo "  Gastown provides multi-agent orchestration for Claude Code."
+    echo ""
+fi
+
+# ─────────────────────────────────────────────────────────────
 # Neovim
 # ─────────────────────────────────────────────────────────────
 
@@ -209,10 +246,16 @@ echo "  1. Configure email credentials if skipped: ~/.config/neomutt/credentials
 echo "  2. Configure Claude Code MCP servers: ~/.claude/settings.json"
 echo "     - Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN for Cloudflare MCP"
 echo "     - See ~/.claude/mcp-templates/ for additional server configs"
-echo "  3. Launch tools to verify:"
+echo "  3. Set up Gastown (multi-agent orchestration):"
+echo "     - gt install ~/gt"
+echo "     - gt rig add csm /path/to/create-something-monorepo"
+echo "     - gt start (launches tmux sessions)"
+echo "  4. Launch tools to verify:"
 echo "     - neomutt (email)"
 echo "     - wezterm (terminal)"
+echo "     - tmux (session persistence)"
 echo "     - claude (AI development)"
 echo ""
 echo "Harness templates available at: ~/.claude/harness-templates/"
+echo "Gastown documentation: .claude/rules/gastown-patterns.md"
 echo ""
