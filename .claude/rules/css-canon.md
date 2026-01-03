@@ -489,6 +489,116 @@ Avoid:
 </style>
 ```
 
+## Fallback Pattern
+
+**Principle**: Components should work even when Canon tokens aren't loaded.
+
+### Why Fallbacks Matter
+
+Canon components may be used in contexts where `tokens.css` hasn't been imported:
+- Third-party integrations
+- Component library consumers who use their own design system
+- Isolated testing environments
+- Progressive enhancement during CSS load
+
+Fallbacks enable **graceful degradation**: if tokens are missing, components still render correctly with hardcoded values matching the Canon defaults.
+
+### When to Use Fallbacks
+
+| Context | Use Fallbacks | Why |
+|---------|---------------|-----|
+| **Standalone components** | ✅ Yes | May be used without full Canon import |
+| **Property-specific components** | ✅ Yes | Portability between properties |
+| **tokens.css / canon.css** | ❌ No | These ARE the definitions |
+| **vertical-base.css** | ❌ No | Designed for use with tokens.css |
+| **Property app.css** | ❌ No | Always imports Canon first |
+
+### Fallback Syntax
+
+```css
+/* Without fallback — breaks if token undefined */
+background: var(--color-bg-surface);
+
+/* With fallback — graceful degradation */
+background: var(--color-bg-surface, #111111);
+```
+
+### Common Fallback Values
+
+Reference table for component authors:
+
+| Token | Fallback Value | Category |
+|-------|----------------|----------|
+| `--color-bg-pure` | `#000000` | Background |
+| `--color-bg-surface` | `#111111` | Background |
+| `--color-bg-subtle` | `#1a1a1a` | Background |
+| `--color-fg-primary` | `#ffffff` | Foreground |
+| `--color-fg-secondary` | `rgba(255, 255, 255, 0.8)` | Foreground |
+| `--color-fg-muted` | `rgba(255, 255, 255, 0.46)` | Foreground |
+| `--color-border-default` | `rgba(255, 255, 255, 0.1)` | Border |
+| `--color-border-emphasis` | `rgba(255, 255, 255, 0.2)` | Border |
+| `--radius-sm` | `6px` | Border radius |
+| `--radius-md` | `8px` | Border radius |
+| `--radius-lg` | `12px` | Border radius |
+| `--space-xs` | `0.618rem` | Spacing |
+| `--space-sm` | `1rem` | Spacing |
+| `--space-md` | `1.618rem` | Spacing |
+| `--space-lg` | `2.618rem` | Spacing |
+| `--text-body` | `1rem` | Typography |
+| `--text-body-sm` | `0.875rem` | Typography |
+| `--text-body-lg` | `1.125rem` | Typography |
+| `--duration-micro` | `200ms` | Animation |
+| `--duration-standard` | `300ms` | Animation |
+| `--ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | Animation |
+
+### Example: Component with Fallbacks
+
+```svelte
+<style>
+  .card {
+    background: var(--color-bg-surface, #111111);
+    border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-lg, 12px);
+    padding: var(--space-lg, 2.618rem);
+    transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+
+  .card:hover {
+    border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+  }
+
+  .title {
+    color: var(--color-fg-primary, #ffffff);
+    font-size: var(--text-body-lg, 1.125rem);
+  }
+
+  .description {
+    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+    font-size: var(--text-body, 1rem);
+  }
+</style>
+```
+
+### Anti-Pattern: Inconsistent Fallbacks
+
+```css
+/* ❌ Wrong fallback value (doesn't match token) */
+background: var(--color-bg-surface, #222222);
+
+/* ✅ Correct fallback value (matches tokens.css) */
+background: var(--color-bg-surface, #111111);
+```
+
+Always use the exact value from `tokens.css` as the fallback. Mismatched fallbacks create visual inconsistency when tokens aren't loaded.
+
+### Subtractive Triad Application
+
+| Level | Principle | Application |
+|-------|-----------|-------------|
+| **DRY** | Single source | Fallback values match `tokens.css` exactly |
+| **Rams** | Earn existence | Only add fallbacks where portability is needed |
+| **Heidegger** | Serve the whole | Components work in any context |
+
 ## Utility Class vs Inline Style Decision
 
 **Principle**: Utility classes for composition, inline styles for truly dynamic values.
