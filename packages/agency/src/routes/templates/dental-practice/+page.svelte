@@ -504,7 +504,7 @@
 	/* Hero */
 	.hero {
 		padding: var(--space-2xl) var(--space-lg);
-		background: #000000;
+		background: var(--color-bg-pure, #000000);
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
@@ -567,7 +567,7 @@
 	}
 
 	.stat :global(.star-icon) {
-		color: #ffd700;
+		color: var(--color-rank-gold, #ffd700);
 	}
 
 	/* Workflows Section */
@@ -694,7 +694,7 @@
 	/* Features Section */
 	.features-section {
 		padding: var(--space-2xl) var(--space-lg);
-		background: #000000;
+		background: var(--color-bg-pure, #000000);
 	}
 
 	.features-grid {
@@ -808,7 +808,7 @@
 	/* Pricing Section */
 	.pricing-section {
 		padding: var(--space-2xl) var(--space-lg);
-		background: #000000;
+		background: var(--color-bg-pure, #000000);
 	}
 
 	.pricing-grid {
@@ -1052,7 +1052,7 @@
 	/* FAQ Section */
 	.faq-section {
 		padding: var(--space-2xl) var(--space-lg);
-		background: #000000;
+		background: var(--color-bg-pure, #000000);
 	}
 
 	.faq-list {

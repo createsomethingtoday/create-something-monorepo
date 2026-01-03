@@ -231,6 +231,6 @@
 	}
 
 	.checkbox-text.infrastructure {
-		color: #fbbf24; /* --color-data-4 (amber) */
+		color: var(--color-data-4, #fbbf24);
 	}
 </style>

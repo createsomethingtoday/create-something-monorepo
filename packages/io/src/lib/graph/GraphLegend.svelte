@@ -50,7 +50,7 @@
 		{
 			type: 'infrastructure',
 			label: 'Infrastructure (D1/KV/R2)',
-			color: '#fbbf24',
+			color: 'var(--color-data-4, #fbbf24)',
 			style: 'solid',
 			description: 'Shared Cloudflare resources'
 		}

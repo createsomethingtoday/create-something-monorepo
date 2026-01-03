@@ -128,7 +128,7 @@
 			case 'semantic':
 				return 'rgba(255, 255, 255, 0.1)';
 			case 'infrastructure':
-				return '#fbbf24'; // amber - high visibility for hidden coupling
+				return 'var(--color-data-4, #fbbf24)'; // amber - high visibility for hidden coupling
 			default:
 				return 'rgba(255, 255, 255, 0.3)';
 		}

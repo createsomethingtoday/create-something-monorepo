@@ -558,7 +558,7 @@
 	/* Hero */
 	.hero {
 		padding: var(--space-2xl) var(--space-lg);
-		background: #000000;
+		background: var(--color-bg-pure, #000000);
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
@@ -627,7 +627,7 @@
 	/* Templates Section */
 	.templates-section {
 		padding: var(--space-2xl) var(--space-lg);
-		background: #000000;
+		background: var(--color-bg-pure, #000000);
 	}
 
 	.templates-section.development {
@@ -877,7 +877,7 @@
 	/* Value Prop */
 	.value-prop {
 		padding: var(--space-2xl) var(--space-lg);
-		background: #000000;
+		background: var(--color-bg-pure, #000000);
 		border-top: 1px solid var(--color-border-default);
 	}
 
