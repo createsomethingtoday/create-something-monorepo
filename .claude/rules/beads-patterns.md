@@ -42,7 +42,13 @@ bd dep add <id> blocks <other>           # Add dependency
 
 ## Molecules & Chemistry (v0.34.0)
 
-The molecule system uses a chemistry metaphor for work templates:
+The molecule system uses a chemistry metaphor for work templates. This is part of the **MEOW Stack** (Molecular Expression of Work):
+
+```
+Beads → Epics → Molecules → Protomolecules → Formulas → Wisps
+```
+
+See [Gastown Patterns](./gastown-patterns.md#meow-stack-molecular-expression-of-work) for the full hierarchy.
 
 | Phase | Type | Persistence | Use Case |
 |-------|------|-------------|----------|
