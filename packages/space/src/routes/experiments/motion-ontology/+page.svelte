@@ -572,8 +572,9 @@
     color: var(--color-fg-tertiary);
   }
 
-  .form-input {
-    background: rgba(0, 0, 0, 0.5);
+  .form-input,
+  .form-select {
+    background: var(--color-overlay);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     color: var(--color-fg-primary);
@@ -589,7 +590,7 @@
   }
 
   .error-text {
-    color: rgb(248, 113, 113);
+    color: var(--color-error);
     font-size: var(--text-body-sm);
   }
 
@@ -697,7 +698,7 @@
   }
 
   .metric-card {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-bg-surface);
     border-radius: var(--radius-md);
     font-size: var(--text-body-sm);
   }
@@ -720,7 +721,7 @@
   }
 
   .code-block {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-bg-surface);
     border-radius: var(--radius-md);
     font-size: var(--text-body-sm);
   }
@@ -734,11 +735,11 @@
   }
 
   .code-keyword {
-    color: rgb(192, 132, 252);
+    color: var(--color-data-3);
   }
 
   .code-selector {
-    color: rgb(103, 232, 249);
+    color: var(--color-info);
   }
 
   .caption-text {
@@ -765,5 +766,103 @@
 
   .term-label {
     color: var(--color-fg-tertiary);
+  }
+
+  /* Missing class definitions - migrated to Canon */
+  .recommendation-box {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .debug-box {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .metric-box {
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-md);
+  }
+
+  .framework-card {
+    background: var(--color-hover);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+  }
+
+  .framework-text {
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+  }
+
+  .list-heading {
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-fg-tertiary);
+  }
+
+  .property-tag {
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .metadata-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .capture-time {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+  }
+
+  .confidence-row {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .confidence-track {
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-full);
+  }
+
+  .confidence-fill {
+    background: var(--color-success);
+    border-radius: var(--radius-full);
+    transition: width var(--duration-standard) var(--ease-standard);
+  }
+
+  .action-keep {
+    color: var(--color-success);
+  }
+
+  .action-remove {
+    color: var(--color-error);
+  }
+
+  .action-modify {
+    color: var(--color-warning);
+  }
+
+  .modification-text {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+    font-style: italic;
+  }
+
+  .status-success {
+    color: var(--color-success);
+  }
+
+  .status-error {
+    color: var(--color-error);
+  }
+
+  .status-warning {
+    color: var(--color-warning);
   }
 </style>
