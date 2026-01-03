@@ -493,7 +493,7 @@
 	}
 
 	.select-input {
-		background: rgba(0, 0, 0, 0.5);
+		background: var(--color-overlay);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
@@ -505,7 +505,7 @@
 	}
 
 	.form-input {
-		background: rgba(0, 0, 0, 0.5);
+		background: var(--color-overlay);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
