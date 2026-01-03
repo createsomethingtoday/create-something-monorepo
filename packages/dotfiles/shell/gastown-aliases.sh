@@ -47,6 +47,10 @@ alias gtr='tmux attach -t gt-csm-refinery 2>/dev/null || echo "gt-csm-refinery n
 # gts - list all Gastown sessions
 alias gts='tmux list-sessions 2>/dev/null | grep "^gt-" || echo "No Gastown sessions running"'
 
+# Polecat shortcuts (dynamic workers)
+alias gtf='tmux attach -t gt-csm-furiosa 2>/dev/null || echo "furiosa not running"'
+alias gtn='tmux attach -t gt-csm-nux 2>/dev/null || echo "nux not running"'
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Note: Functions are available in current shell; subshells will inherit
 # ─────────────────────────────────────────────────────────────────────────────
@@ -64,4 +68,6 @@ if [[ -n "$GT_DEBUG" ]]; then
   echo "  gtw         → attach to gt-csm-witness"
   echo "  gtr         → attach to gt-csm-refinery"
   echo "  gts         → list Gastown sessions"
+  echo "  gtf         → attach to furiosa"
+  echo "  gtn         → attach to nux"
 fi
