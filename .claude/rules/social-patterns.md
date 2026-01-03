@@ -39,23 +39,56 @@ packages/agency/
 
 **The Core Thesis** (every post must connect to this):
 
-> "AI development works when you treat LLMs as partners, not tools. Peter Norvig proved it empirically. We've built the methodology. Here's what we've learned."
+> "Better outcomes through systematic discipline. Norvig achieved 20x improvement. Kickstand reduced 155 scripts to 13. Here's the methodology—and why it works."
 
 **Gateway Paper**: [The Norvig Partnership](https://createsomething.io/papers/norvig-partnership) — Empirical validation from Peter Norvig's Advent of Code 2025 experiments.
+
+### Presentation Order
+
+**Lead with**: Outcomes → Methodology → Philosophy (available for depth)
+
+| Position | Content | Example |
+|----------|---------|---------|
+| First sentence | Metric or outcome | "155 scripts → 13" |
+| Middle | Concrete methodology | "Bounded tasks, quality gates, systematic review" |
+| Closing (optional) | Philosophy anchor | "Rooted in design discipline" |
+
+**The Earned Depth Principle**: Philosophy can appear in social content, but it must *earn* its place—after outcomes establish credibility.
+
+**The test**: Would removing this philosophy term weaken the post? If yes, keep it. If no, cut it.
+
+### Terminology Boundaries
+
+| Context | Lead With | Philosophy Use |
+|---------|-----------|----------------|
+| LinkedIn posts | Outcome, metric, or problem | OK after proof; brief anchor ("rooted in Rams' principle") |
+| .agency content | Business value, case study | Name frameworks after demonstrating them |
+| .io papers | Research question or finding | Full vocabulary with clear definitions |
+| .ltd | Philosophy is the content | Unrestricted |
+
+**Examples**:
+- ✓ "Zuhandenheit—ready-to-hand. The hammer disappears when hammering." (explains a real concept)
+- ✗ "Applying Heideggerian phenomenology to our CI pipeline" (jargon that obscures)
+- ✓ "Dieter Rams called it 'less, but better'" (accessible reference)
+- ✗ "The hermeneutic circle of .ltd → .io → .space" (insider language)
+
+**Reserve for .ltd only**: "Heidegger," "phenomenology," "hermeneutic," "Zuhandenheit," "Vorhandenheit"
+
+**OK in social with explanation**: "Subtractive Triad" (if you explain all three), "Canon" (if you define it), "Rams' principles" (widely recognized)
 
 ---
 
 ## Multi-Account Strategy
 
-Three accounts, three purposes. Each recedes into its function (Zuhandenheit).
+Three accounts, three purposes. Each recedes into its function.
 
 ### Account Roles
 
 | Account | Purpose | Content Origin | Voice |
 |---------|---------|----------------|-------|
-| **CREATE SOMETHING** | Research institution | Primary for papers, methodology, experiments | Formal, analytical |
+| **CREATE SOMETHING** | Research institution | Primary for papers, methodology, experiments | Evidence-first, methodology-backed |
 | **WORKWAY** | Methodology in practice | Primary for vertical template, business building | Practical, applied |
-| **Personal (Micah)** | Hermeneutic synthesis | Reposts + commentary | Reflective, contextual |
+| **Personal (Micah)** | Practitioner perspective | Reposts + commentary | Learning alongside, honest struggles |
 
 ### The Flow
 
@@ -78,10 +111,10 @@ Micah reposts → Endorses with practitioner perspective
 Previously: Micah's account was origin for everything → scattered, no thesis
 Now: Micah's account synthesizes and contextualizes → unified voice
 
-This follows the hermeneutic circle:
-- CREATE SOMETHING = parts (individual papers, experiments)
-- WORKWAY = application (methodology in practice)
-- Personal = whole (synthesis, connecting parts)
+Each account has one job:
+- CREATE SOMETHING = document what works (evidence)
+- WORKWAY = demonstrate it in practice (application)
+- Personal = share the practitioner journey (learning)
 
 ### Account-Specific Guidelines
 
@@ -94,7 +127,7 @@ This follows the hermeneutic circle:
 | Announce research findings | Use casual voice |
 | Link to gateway paper | Promote LMS directly |
 
-**Voice**: "Our research shows..." / "This paper examines..." / "The methodology demonstrates..."
+**Voice**: "155 scripts → 13. Here's the systematic approach..." / "20x improvement. The methodology..." / "Here's what we found across 47 projects..."
 
 #### WORKWAY (Practice Layer)
 
@@ -103,9 +136,9 @@ This follows the hermeneutic circle:
 | Share building-in-public updates | Post theoretical content |
 | Show methodology applied | Cross-post CREATE SOMETHING papers |
 | Document decisions with Canon lens | Use research voice |
-| Link back to methodology when relevant | Ignore the hermeneutic connection |
+| Link back to methodology when relevant | Ignore the system connection |
 
-**Voice**: "We're building..." / "Here's how we applied..." / "The Subtractive Triad in action..."
+**Voice**: "We're building..." / "Day 14: Here's what we shipped..." / "This decision saved us 3 days..."
 
 #### Personal (Micah)
 
@@ -134,16 +167,16 @@ Sample transparency post:
 
 ---
 
-### Post Types (All Connecting to Thesis)
+### Post Types (Priority Order)
 
-| Type | Example | Thesis Connection | Primary Account |
-|------|---------|-------------------|-----------------|
-| **Norvig validation** | Empirical findings, 20x speed | External authority proves thesis | CREATE SOMETHING |
-| **Case studies** | Kickstand, Arc | Partnership methodology in production | CREATE SOMETHING |
-| **Methodology** | Subtractive Triad, quality gates | How the partnership actually works | CREATE SOMETHING |
-| **Anti-patterns** | What fails with replacement mindset | Contrast reinforces thesis | CREATE SOMETHING |
-| **Building-in-public** | WORKWAY decisions, template evolution | Methodology applied | WORKWAY |
-| **Synthesis** | Connecting insights to practice | Hermeneutic circle | Personal |
+| Priority | Type | Example | Lead With | Primary Account |
+|----------|------|---------|-----------|-----------------|
+| 1 | **Case studies** | Kickstand (155→13), Arc (73% reduction) | Metrics, before/after | CREATE SOMETHING |
+| 2 | **Methodology bites** | Bounded tasks, quality gates | Concrete steps, no framework names | CREATE SOMETHING |
+| 3 | **Anti-patterns** | What fails with replacement mindset | Relatable problems | CREATE SOMETHING |
+| 4 | **Norvig validation** | Empirical findings, 20x speed | Earned credibility (not lead) | CREATE SOMETHING |
+| — | **Building-in-public** | WORKWAY decisions, template evolution | What we shipped/learned | WORKWAY |
+| — | **Synthesis** | Connecting insights to practice | Personal context | Personal |
 
 ### What NOT to Post
 
@@ -155,13 +188,13 @@ Sample transparency post:
 | Daily volume for its own sake | Dilutes signal with noise | All |
 | Webflow employer content | Separate concern, different context | Personal |
 
-### The Heideggerian Test
+### Pre-Post Checklist
 
 Before posting, ask:
 
-1. **Does this recede into the thesis?** (Zuhandenheit) Or does it demand attention for itself?
-2. **Does this serve the hermeneutic whole?** (Heidegger) Or is it a fragment?
-3. **Does this earn its existence?** (Rams) Or is it posting for posting's sake?
+1. **Does this lead with outcome or insight?** Not philosophy, not framework name.
+2. **Does this serve the unified thesis?** Or is it a disconnected fragment?
+3. **Does this earn its existence?** Would the audience miss it if I didn't post?
 4. **Is this the right account?** Each account has one purpose.
 
 If any answer is wrong, don't post (or move to correct account).
@@ -511,13 +544,13 @@ That's what we're building with WORKWAY. AI that recedes into the work.
 | **Quote synthesis** | Quote tweet | Personal | Adding context to others' posts |
 | **Reply engagement** | Reply | Any | Substantive responses to AI community |
 
-### The X-Specific Heideggerian Test
+### X Pre-Post Checklist
 
 Before posting, ask:
 
 1. **Does this invite conversation?** X rewards replies. One-way broadcasts underperform.
 2. **Can this stand alone?** Unlike LinkedIn, X posts get seen out of context.
-3. **Is this screenshot-worthy?** The best X content gets screenshotted and shared.
+3. **Does it lead with insight or outcome?** Not philosophy name-dropping.
 4. **Would I reply to this?** If not, why would anyone else?
 
 ### Engagement Strategy (Critical for Algorithm)
@@ -551,51 +584,52 @@ See relevant post → Substantive reply (not "great post!")
 
 #### Research Finding Thread
 ```
-1/ [Hook: Counterintuitive finding or question]
+1/ [Hook: Metric or outcome that surprises]
+   Example: "20x faster. That's what Norvig achieved."
 
-2/ [Context: Why this matters]
+2/ [Context: What was tried, what worked]
 
-3/ [Finding 1 with specific example]
+3/ [Finding 1 with specific metric]
 
-4/ [Finding 2 with specific example]
+4/ [Finding 2 with specific metric]
 
-5/ [Finding 3 with specific example]
+5/ [Finding 3 with specific metric]
 
-6/ [Implication: What to do differently]
+6/ [Methodology: What to do differently]
 
 7/ [CTA: Link + question to invite replies]
 ```
 
 #### Build Log Thread
 ```
-1/ [What I built/broke/learned today]
+1/ [Outcome: What shipped, what broke, specific result]
+   Example: "Deleted 400 lines of code. Here's what happened."
 
 2/ [The decision I faced]
 
-3/ [How Canon/methodology informed the choice]
+3/ [What I tried / systematic approach]
 
-4/ [Result: What happened]
+4/ [Result: What happened, with numbers if possible]
 
-5/ [Reflection: What I'd do differently]
+5/ [What I'd do differently]
 ```
 
 #### Anti-Pattern Thread
 ```
-1/ Most [X] fails because of [common mistake].
+1/ [Relatable problem with specific failure]
+   Example: "Most automation projects fail within 90 days."
 
 Here's what I've seen across [N] projects:
 
-2/ Mistake 1: [Description]
-   Why it fails: [Explanation]
+2/ Mistake 1: [Description + what happens]
 
-3/ Mistake 2: [Description]
-   Why it fails: [Explanation]
+3/ Mistake 2: [Description + what happens]
 
-4/ The alternative: [Partnership approach]
+4/ The alternative: [Concrete approach, not framework name]
 
-5/ Specific example: [Case study]
+5/ Specific example: [Case study with metrics]
 
-6/ The mindset shift: [Core insight]
+6/ What to do instead: [Actionable steps]
 ```
 
 ### What NOT to Post on X
@@ -1087,26 +1121,254 @@ Clearer than mixing everything in one feed."
 
 ---
 
-### Launch Sequence
+---
 
-**Week 1: Establish presence**
-- Create @createsmthng and @workway_dev accounts
-- Set bios and pinned tweets per above
-- Header images: Canon-aligned (monochrome, typography-forward)
-- Follow 50-100 relevant accounts
-- Leave 10 substantive replies/day
+## X Launch Checklist
 
-**Week 2-3: Build rhythm**
-- First research thread (Norvig paper)
-- First build log (WORKWAY day 1)
-- Personal account starts quote-tweeting
-- Continue reply engagement
+### Phase 0: Pre-Launch Setup (Day -7 to -1)
 
-**Week 4+: Steady state**
-- Cadence established
-- Threads when genuinely new insight exists
-- Build logs during active development
-- Personal synthesis ongoing
+#### Account Creation
+- [ ] Create @createsmthng X account
+- [ ] Create @workway_dev X account
+- [ ] Verify email on both accounts
+- [ ] Enable 2FA on both accounts
+
+#### Profile Setup: @createsmthng
+- [ ] Set display name: "CREATE SOMETHING"
+- [ ] Set bio (see Account Setup above)
+- [ ] Set location: "createsomething.io"
+- [ ] Upload profile image (Canon logo, monochrome)
+- [ ] Upload header image (typography-forward, monochrome)
+- [ ] Set website: createsomething.io
+- [ ] Pin thesis tweet (placeholder until Norvig thread)
+
+#### Profile Setup: @workway_dev
+- [ ] Set display name: "WORKWAY"
+- [ ] Set bio (see Account Setup above)
+- [ ] Set location: "workway.co"
+- [ ] Upload profile image (WORKWAY logo)
+- [ ] Upload header image (terminal/SDK screenshot)
+- [ ] Set website: workway.co
+- [ ] Pin Day 1 placeholder tweet
+
+#### Profile Setup: Personal Account
+- [ ] Update bio to include @createsmthng mention
+- [ ] Prepare pinned tweet (mindset shift)
+
+#### Pre-Launch Engagement (Critical)
+- [ ] Follow 50-100 relevant accounts from @createsmthng:
+  - Claude Code users
+  - Cursor community
+  - AI development practitioners
+  - Indie hackers building with AI
+  - Philosophy of technology accounts
+- [ ] Follow 50-100 relevant accounts from @workway_dev:
+  - n8n community
+  - Automation builders
+  - TypeScript developers
+  - Cloudflare Workers community
+  - Indie SaaS founders
+- [ ] Begin 10-reply-per-day habit (both accounts)
+- [ ] Identify 20 accounts to engage with regularly
+
+---
+
+### Phase 1: Launch Week (Days 1-7)
+
+#### Day 1: @createsmthng Launch
+- [ ] Post Norvig Partnership thread (7 tweets)
+- [ ] Pin thread to profile
+- [ ] From personal account: Quote-tweet with Option A, B, or C
+- [ ] Engage with every reply within first hour
+- [ ] Continue 10-reply engagement throughout day
+
+#### Day 2: @workway_dev Launch
+- [ ] Post WORKWAY Day 1 thread (7 tweets)
+- [ ] Pin thread to profile
+- [ ] From personal account: Quote-tweet with automation angle
+- [ ] From @createsmthng: Retweet with brief comment connecting methodology
+- [ ] Engage with every reply within first hour
+
+#### Days 3-7: Establish Rhythm
+- [ ] @createsmthng: 1 single-tweet insight per day
+- [ ] @workway_dev: 1 build update per day (can be single tweet)
+- [ ] Personal: 1-2 quote-tweets per day
+- [ ] All accounts: Continue 10-reply engagement
+- [ ] Track: Which content gets replies vs. just likes?
+
+#### Week 1 Content Calendar
+
+| Day | @createsmthng | @workway_dev | Personal |
+|-----|---------------|--------------|----------|
+| Mon | Norvig thread (pinned) | — | QT Norvig |
+| Tue | Methodology bite | Day 1 thread (pinned) | QT WORKWAY |
+| Wed | — | Build update | QT either |
+| Thu | Anti-pattern observation | SDK progress | Original insight |
+| Fri | — | Build update | QT + week reflection |
+| Sat | Rest / engage only | Rest / engage only | Rest |
+| Sun | Rest / engage only | Rest / engage only | Rest |
+
+---
+
+### Phase 2: Build Momentum (Weeks 2-3)
+
+#### Weekly Rhythm
+- [ ] @createsmthng: 1 thread + 2-3 single tweets
+- [ ] @workway_dev: 4-5 build updates
+- [ ] Personal: 5-7 posts (QTs + originals)
+- [ ] All: Daily engagement (10 replies minimum)
+
+#### Content Goals
+- [ ] @createsmthng: Second research thread (different paper or insight)
+- [ ] @workway_dev: First "Day N" progress thread
+- [ ] Personal: First original thread (not QT)
+
+#### Engagement Goals
+- [ ] 100 followers per account (quality over quantity)
+- [ ] 10+ replies on threads
+- [ ] Identify 5 accounts who consistently engage (nurture these)
+
+#### Week 2 Focus: @createsmthng Depth
+| Day | Content |
+|-----|---------|
+| Mon | Single tweet: Subtractive Triad explained simply |
+| Tue | Thread: Anti-patterns in AI development |
+| Wed | Engage only |
+| Thu | Single tweet: Case study snippet |
+| Fri | Engage only |
+
+#### Week 3 Focus: @workway_dev Progress
+| Day | Content |
+|-----|---------|
+| Mon | Build update: What we shipped |
+| Tue | Build update: Decision we made |
+| Wed | Thread: "Week 2 learnings" |
+| Thu | Build update: What broke |
+| Fri | Build update: What's next |
+
+---
+
+### Phase 3: Steady State (Week 4+)
+
+#### Cadence (Sustainable)
+
+| Account | Frequency | Content Mix |
+|---------|-----------|-------------|
+| @createsmthng | 3-4/week | 1 thread/2 weeks + single tweets |
+| @workway_dev | 4-5/week | Build updates during active dev |
+| Personal | 5-7/week | QTs + engagement + occasional original |
+
+#### Monthly Rhythm
+- [ ] Week 1: Major thread from @createsmthng (research/paper)
+- [ ] Week 2: Progress thread from @workway_dev
+- [ ] Week 3: Engagement-heavy, single tweets
+- [ ] Week 4: Reflection + planning next month
+
+#### Quality Checks
+- [ ] Review: Which threads got best engagement?
+- [ ] Review: Which single tweets resonated?
+- [ ] Adjust: Double down on what works
+- [ ] Prune: Stop doing what doesn't
+
+---
+
+### Metrics Dashboard
+
+#### Track Weekly
+
+| Metric | @createsmthng | @workway_dev | Personal |
+|--------|---------------|--------------|----------|
+| Followers | — | — | — |
+| Thread replies | — | — | — |
+| Profile visits | — | — | — |
+| Link clicks (UTM) | — | — | — |
+
+#### Targets (Week 4)
+- [ ] @createsmthng: 200 followers, 20+ thread replies
+- [ ] @workway_dev: 150 followers, 15+ thread replies
+- [ ] Personal: Engagement rate up
+- [ ] Createsomething.io traffic from X: measurable
+
+#### What to Ignore
+- Raw impressions (vanity)
+- Follower count growth rate (vanity)
+- Likes without replies (passive)
+
+---
+
+### Emergency Protocols
+
+#### If a thread flops (< 5 replies)
+1. Don't delete—looks bad
+2. Analyze: Was the hook weak? Wrong timing? Wrong audience?
+3. Quote-tweet from personal with different angle
+4. Move on—not every thread hits
+
+#### If negative engagement
+1. Respond once, substantively
+2. Don't get defensive
+3. If trolling, ignore
+4. If valid criticism, acknowledge and learn
+
+#### If account gets restricted
+1. Don't panic—new accounts sometimes trigger spam filters
+2. Appeal through official channels
+3. Continue with other accounts
+4. Build slowly—don't spam follow/unfollow
+
+---
+
+### Launch Day Checklist (Print This)
+
+**Morning (before posting):**
+- [ ] Coffee ☕
+- [ ] Review thread one more time
+- [ ] Check for typos
+- [ ] Confirm links work
+- [ ] Have reply content ready
+
+**Post thread:**
+- [ ] Post from @createsmthng (or @workway_dev)
+- [ ] Immediately engage with any replies
+- [ ] Quote-tweet from personal within 30 min
+- [ ] Cross-post announcement to LinkedIn (if applicable)
+
+**First hour (critical):**
+- [ ] Respond to EVERY reply
+- [ ] Like replies even if you don't respond
+- [ ] Retweet good quote-tweets
+- [ ] Don't leave the app
+
+**Rest of day:**
+- [ ] Check every 2 hours
+- [ ] Continue engaging
+- [ ] Note what resonates for future content
+
+**End of day:**
+- [ ] Screenshot metrics
+- [ ] Note learnings
+- [ ] Plan tomorrow's content
+
+---
+
+### Quick Reference: Account Handles
+
+| Account | Handle | Purpose |
+|---------|--------|---------|
+| CREATE SOMETHING | @createsmthng | Research, papers, methodology |
+| WORKWAY | @workway_dev | Build logs, SDK updates, marketplace |
+| Personal | [your handle] | Synthesis, QTs, personal context |
+
+### Quick Reference: Content Types
+
+| Type | Account | Format |
+|------|---------|--------|
+| Research thread | @createsmthng | 5-7 tweets |
+| Methodology bite | @createsmthng | Single tweet |
+| Build log | @workway_dev | Single tweet + image |
+| Progress thread | @workway_dev | 4-6 tweets |
+| Quote-tweet | Personal | QT + 2-4 lines |
+| Hot take | Personal | Single tweet |
 
 ### Metrics That Matter
 
@@ -1122,12 +1384,12 @@ Clearer than mixing everything in one feed."
 - Impressions without engagement (empty reach)
 - Likes without replies (passive consumption)
 
-### Subtractive Triad (X Application)
+### Quality Check (X Application)
 
-| Level | Question | Answer |
-|-------|----------|--------|
-| **DRY** | Am I repeating myself? | Each thread offers NEW insight |
-| **Rams** | Does this tweet earn existence? | No filler, no engagement bait |
-| **Heidegger** | Does this serve the whole? | Every post connects to partnership thesis |
+| Question | Answer |
+|----------|--------|
+| Am I repeating myself? | Each thread offers NEW insight |
+| Does this tweet earn existence? | No filler, no engagement bait |
+| Does this serve the unified thesis? | Every post connects to outcomes |
 
 The feed should feel like a coherent body of work, not scattered thoughts.
