@@ -194,8 +194,8 @@
   }
 
   .paper-link.completed {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.3);
+    background: var(--color-success-muted);
+    border-color: var(--color-success-border);
   }
 
   .back-link {
