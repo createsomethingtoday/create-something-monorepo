@@ -5,6 +5,19 @@
 
 ---
 
+## Recognition Patterns
+
+You might feel pressure to pitch during discovery calls. Here's what works better: genuine curiosity about their situation.
+
+| You might reach for | What serves the conversation |
+|---------------------|------------------------------|
+| Jumping to solutions | "Tell me more about that" |
+| Filling silence | Letting them think |
+| Proving expertise | Asking questions that reveal your understanding |
+| Closing the deal | Clarity for both parties |
+
+---
+
 ## Before the Call (5 min prep)
 
 Review any available context:

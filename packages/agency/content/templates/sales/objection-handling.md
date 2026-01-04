@@ -5,6 +5,18 @@
 
 ---
 
+## Recognition Patterns
+
+You might feel defensive when you hear an objection. That's natural. Here's what works better: treat each objection as a signal about what the prospect actually needs.
+
+| You might feel | What's actually happening | What serves both parties |
+|----------------|---------------------------|--------------------------|
+| Defensive | Prospect is sharing real concerns | Opportunity to understand better |
+| Rushed to respond | Surface objection masking deeper concern | Space to explore what's underneath |
+| Need to "win" | Prospect evaluating fit | Chance to help them decide (even if it's no) |
+
+---
+
 ## The Response Framework
 
 ### LAER Method
@@ -373,7 +385,7 @@ The challenge with AI projects is that ROI depends heavily on your specific situ
 
 ---
 
-## Internal Resistance Objections
+## Internal Stakeholder Objections
 
 ### "I'm on board, but I need to convince my team/boss"
 

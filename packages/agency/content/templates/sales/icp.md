@@ -5,6 +5,19 @@
 
 ---
 
+## Recognition Patterns
+
+You might feel tempted to pursue every lead. Here's how to recognize which prospects deserve your attention.
+
+| You might reach for | What serves better |
+|---------------------|-------------------|
+| "Any client is a good client" | Clients who share our values become partners |
+| Chasing the biggest budgets | Right-fit clients at any budget outperform misaligned enterprises |
+| Saying yes to everything | Clear criteria protect everyone's time |
+| Avoiding difficult conversations | Early qualification saves months of friction |
+
+---
+
 ## Philosophical Alignment
 
 We seek clients who share our orientation toward tools and technology:
