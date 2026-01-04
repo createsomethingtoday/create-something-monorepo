@@ -49,6 +49,48 @@
 					Show what works better. Meet readers where they are.
 				</p>
 			</div>
+
+			<div class="recognition-box p-6 my-8">
+				<p class="box-title mb-4">The Resistance</p>
+				<p class="box-description mb-4">
+					Steven Pressfield names the enemy in <em>The War of Art</em>: Resistance. In writing, it manifests as:
+				</p>
+				<div class="transformation-table my-4">
+					<table>
+						<thead>
+							<tr>
+								<th>The Resistance Whispers</th>
+								<th>What It Really Is</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>"Use 'leverage'—it sounds professional"</td>
+								<td>Marketing jargon</td>
+							</tr>
+							<tr>
+								<td>"Keep it vague—you can't be wrong"</td>
+								<td>Vague claims</td>
+							</tr>
+							<tr>
+								<td>"Add a clever metaphor"</td>
+								<td>Decoration</td>
+							</tr>
+							<tr>
+								<td>"This Heideggerian reference shows depth"</td>
+								<td>Philosophy without purpose</td>
+							</tr>
+							<tr>
+								<td>"Success stories only—hide the failures"</td>
+								<td>Dishonesty</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<p class="box-description mt-4">
+					When you catch yourself reaching for jargon, you've caught the Resistance. Name it. Transform it.
+				</p>
+			</div>
 		</div>
 	</div>
 </section>

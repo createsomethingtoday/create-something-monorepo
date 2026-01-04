@@ -15,6 +15,19 @@ This audit helps you recognize patterns to transform.
 /audit-voice [path]
 ```
 
+## Orwell's Rules
+
+From "Politics and the English Language" (1946)—the foundation of the writing lineage:
+
+1. Never use a metaphor, simile, or figure of speech you've seen in print
+2. Never use a long word where a short one will do
+3. If it's possible to cut a word, cut it
+4. Never use the passive where you can use the active
+5. Never use jargon if you can think of an everyday equivalent
+6. **Break any of these rules sooner than say anything outright barbarous**
+
+Rules 1-5 are subtractive. Rule 6 is Heideggerian—judgment over formula.
+
 ## What It Checks
 
 ### Marketing Jargon
@@ -88,15 +101,26 @@ Papers SHOULD include:
 ```markdown
 ## Voice Audit: [path]
 
-### Patterns to Transform (N)
+### Marketing Jargon (N)
+
+Words that feel professional but communicate little:
 
 1. **[file:line]**: `cutting-edge` — What do you actually mean?
-2. **[file:line]**: `solutions` — Replace with specific description
+2. **[file:line]**: `solutions` — Replace with specific description.
 
 ### Vague Claims (N)
 
+Safe statements that can't be disproven:
+
 1. **[file:line]**: `Fast load times` — Replace with specific metric (e.g., "0.8s load time")
 2. **[file:line]**: `Many users` — Replace with count (e.g., "47 active users")
+
+### Orwell Violations (N)
+
+Rules 1-5 broken:
+
+1. **[file:line]**: `utilize` → Use `use` (Rule 2: short words)
+2. **[file:line]**: Passive voice detected → Rewrite active (Rule 4)
 
 ### Terminology (N)
 
@@ -106,16 +130,25 @@ Papers SHOULD include:
 
 1. **[file]**: Case study missing "What This Doesn't Prove" section
 
+### Leverage Point Analysis
+
+Where to intervene:
+- **Parameters** (word fixes): N items
+- **Rules** (pattern changes): N items
+- **Paradigms** (assumption shifts): N items
+
 ### Manual Review Required
 
 These need human judgment:
 - Does this pass the Hermeneutic Test?
 - Is the specificity meaningful in context?
 - Is the master citation relevant or forced?
+- Which leverage point should be addressed first?
 
 ### Reference
 
 See https://createsomething.ltd/voice for full Voice standards.
+See https://createsomething.io/papers/intellectual-genealogy for lineage context.
 ```
 
 ## Scope
@@ -159,6 +192,20 @@ Human-accessible bridge to philosophical concepts:
 | Safe statements that can't be disproven | Vague claims | — |
 | Elements for "interest" not function | Decoration | — |
 
+## Systems Thinking Lens
+
+Donella Meadows' leverage points reveal where intervention matters most. Voice violations often occur at the wrong level:
+
+| Violation Type | Leverage Level | Better Approach |
+|---------------|----------------|-----------------|
+| Fixing word choice | Parameters (low) | Change the pattern |
+| Adding more content | Stocks (low) | Improve flow |
+| Enforcing rules | Rules (medium) | Enable self-organization |
+| Changing voice | Goals (high) | Articulate purpose |
+| Questioning assumptions | Paradigms (highest) | Transform understanding |
+
+**The insight**: Don't just fix words. Ask why those words appeared. Jargon often signals paradigm-level confusion—address it there.
+
 ## Philosophy
 
 The Voice is not a brand guideline—it's a philosophical commitment to clarity, honesty, and empirical rigor.
@@ -171,7 +218,25 @@ This audit helps enforce the Five Principles:
 4. **Useful Over Interesting** — Help readers implement, not just understand.
 5. **Grounded Over Trendy** — Connect to timeless principles.
 
+## The Intellectual Genealogy
+
+Voice emerges from three parallel lineages:
+
+| Layer | Philosophy | Writing | Systems |
+|-------|------------|---------|---------|
+| **Foundational** | Heidegger | Orwell | Wiener |
+| **Methodological** | Gadamer | Zinsser | Meadows |
+| **Applied** | Rams | Fenton/Lee | Senge |
+
+Each column addresses a different dimension:
+- **Philosophy** reveals what good work *is*
+- **Writing** makes clarity teachable
+- **Systems** shows why problems arise from structure
+
+See [Intellectual Genealogy](https://createsomething.io/papers/intellectual-genealogy) for the complete documentation.
+
 ## Reference
 
 - [voice-canon.md](../.claude/rules/voice-canon.md) — Ecosystem voice guidelines
-- [taste-reference.md](../.claude/rules/taste-reference.md) — Writing style masters
+- [taste-reference.md](../.claude/rules/taste-reference.md) — Writing and visual style masters
+- [Intellectual Genealogy Paper](https://createsomething.io/papers/intellectual-genealogy) — Complete lineage documentation

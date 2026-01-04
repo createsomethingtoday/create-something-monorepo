@@ -2,6 +2,36 @@
 
 Ecosystem-wide writing guidelines. Clarity is the goal.
 
+## The Intellectual Genealogy
+
+Voice emerges from three parallel lineages:
+
+| Layer | Philosophy | Writing | Systems |
+|-------|------------|---------|---------|
+| **Foundational** | Heidegger | Orwell | Wiener |
+| **Methodological** | Gadamer | Zinsser | Meadows |
+| **Applied** | Rams | Fenton/Lee | Senge |
+
+Each column addresses a different dimension of CREATE SOMETHING's work:
+- **Philosophy** reveals what good work *is* (ontological)
+- **Writing** makes clarity teachable and applicable
+- **Systems** shows why problems arise from structure, not actors
+
+See [Intellectual Genealogy](https://createsomething.io/papers/intellectual-genealogy) for complete documentation.
+
+## Orwell's Rules
+
+From "Politics and the English Language" (1946)—the foundation:
+
+1. Never use a metaphor, simile, or figure of speech you've seen in print
+2. Never use a long word where a short one will do
+3. If it's possible to cut a word, cut it
+4. Never use the passive where you can use the active
+5. Never use jargon if you can think of an everyday equivalent
+6. **Break any of these rules sooner than say anything outright barbarous**
+
+Rules 1-5 are subtractive. Rule 6 is Heideggerian—judgment over formula.
+
 ## The Recognition Framework
 
 Good writing recedes. When it works, readers understand the idea without noticing the prose. When writing demands attention—when you catch yourself reaching for jargon—you've found something to transform.
@@ -239,6 +269,7 @@ If any answer is "no," revise.
 ## Related Documentation
 
 - [/voice](https://createsomething.ltd/voice) — The canonical voice guide
+- [Intellectual Genealogy](https://createsomething.io/papers/intellectual-genealogy) — Complete lineage documentation
 - [css-canon.md](./css-canon.md) — Visual canon (Tailwind for structure, Canon for aesthetics)
 - [taste-reference.md](./taste-reference.md) — Visual and writing style references
 - [social-patterns.md](./social-patterns.md) — Social posting voice
