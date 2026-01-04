@@ -55,15 +55,15 @@ Not visual references, but stylistic references for how we write.
 
 #### The Lineage
 
-Writing has a philosophical genealogy parallel to design:
+CREATE SOMETHING's intellectual foundations span philosophy, writing, and systems:
 
-| Layer | Philosophy | Writing | Function |
-|-------|------------|---------|----------|
-| **Foundational** | Heidegger (*Being and Time*) | Orwell (*Politics and the English Language*) | Reveals hidden ontological structure |
-| **Methodological** | Gadamer (*Truth and Method*) | Zinsser (*On Writing Well*) | Makes it teachable, applicable |
-| **Applied** | Dieter Rams (Ten Principles) | Fenton/Lee (*Nicely Said*) | Practice in specific medium |
+| Layer | Philosophy | Writing | Systems | Function |
+|-------|------------|---------|---------|----------|
+| **Foundational** | Heidegger (*Being and Time*) | Orwell (*Politics and the English Language*) | Wiener (*Cybernetics*) | Reveals hidden ontological structure |
+| **Methodological** | Gadamer (*Truth and Method*) | Zinsser (*On Writing Well*) | Meadows (*Thinking in Systems*) | Makes it teachable, applicable |
+| **Applied** | Dieter Rams (Ten Principles) | Fenton/Lee (*Nicely Said*) | Senge (*The Fifth Discipline*) | Practice in specific medium |
 
-**Why this matters**: Orwell doesn't say "write clearly because it's pleasant." He says unclear writing is how people hide from truth—including from themselves. That's an *ontological* claim about language and being, not style advice.
+**Why this matters**: Each column addresses a different dimension of CREATE SOMETHING's work. Orwell shows that clarity is ethical. Meadows shows that problems arise from structure. Together: we write clearly about systems that we understand deeply.
 
 #### The Masters
 
@@ -115,6 +115,67 @@ A human-accessible bridge to philosophical concepts:
 | Elements for "interest" not function | Decoration | — |
 
 **The connection**: Orwell reveals that jargon and obscurity are *political*—they serve evasion. Heidegger reveals that tool-breakdown makes the invisible visible. Together: unclear writing is a breakdown we should notice, diagnose, and repair.
+
+### Systems Thinking Masters
+
+Not visual references, but structural references for how we understand interconnection.
+
+#### The Lineage
+
+Systems thinking has its own philosophical genealogy:
+
+| Layer | Philosophy | Systems | Function |
+|-------|------------|---------|----------|
+| **Foundational** | Heidegger (*Being and Time*) | Wiener (*Cybernetics*) / Bertalanffy (*General System Theory*) | Reveals the formal structure of interconnection |
+| **Methodological** | Gadamer (*Truth and Method*) | Meadows (*Thinking in Systems*) | Makes systems visible to practitioners |
+| **Applied** | Dieter Rams (Ten Principles) | Senge (*The Fifth Discipline*) | Practice in organizations |
+
+**Why this matters**: Meadows doesn't say "use systems thinking because it's useful." She reveals that most problems arise from *system structure*, not bad actors—that's an ontological claim about causation, not a technique.
+
+#### The Masters
+
+| Master | Work | Contribution to Canon |
+|--------|------|----------------------|
+| **Norbert Wiener** | *Cybernetics* (1948) | Feedback loops; the mathematics of circular causality; foundational science |
+| **Ludwig von Bertalanffy** | *General System Theory* (1968) | Systems as wholes; isomorphism across domains; formal foundations |
+| **Donella H. Meadows** | *Thinking in Systems* (2008) | Stocks, flows, delays; leverage points; makes the invisible visible |
+| **Peter Senge** | *The Fifth Discipline* (1990) | Mental models; organizational learning; systems in practice |
+
+#### Meadows' Core Insight
+
+From *Thinking in Systems*:
+
+> "We can't control systems or figure them out. But we can dance with them."
+
+And her hierarchy of leverage points reveals where intervention matters:
+
+1. **Transcending paradigms** (highest leverage)
+2. **Paradigm shifts**
+3. **Goals of the system**
+4. **Self-organization**
+5. **Rules of the system**
+6. **Information flows**
+7. **Reinforcing/balancing feedback**
+8. **Delays**
+9. **Stock and flow structures**
+10. **Buffers**
+11. **Numbers/parameters** (lowest leverage)
+
+**Canon adoption**: CREATE SOMETHING operates at levels 2-5. The Subtractive Triad is a paradigm (level 2). The hermeneutic circle defines goals (level 3). Canon tokens enable self-organization (level 4). Voice guidelines are rules (level 5).
+
+#### Canon Connection
+
+Systems thinking underlies CREATE SOMETHING's structure:
+
+| CREATE SOMETHING Element | Systems Concept |
+|--------------------------|-----------------|
+| Subtractive Triad (DRY → Rams → Heidegger) | Nested feedback loops at different scales |
+| Hermeneutic circle (.ltd → .io → .space → .agency) | Circular causality; each property feeds the next |
+| Template evolution | Stocks (templates) and flows (deployments, learning) |
+| Agent orchestration (Beads, Gastown) | Distributed control; emergence from local rules |
+| Canon tokens | Leverage point: rules that enable self-organization |
+
+**The insight**: CREATE SOMETHING is itself a system. Understanding Meadows helps us see where to intervene—not at the level of individual artifacts (low leverage) but at the level of paradigms and goals (high leverage).
 
 ### Award Winners (Design Excellence)
 
