@@ -157,6 +157,54 @@ Level 3: Heidegger (System)
 		</div>
 	</section>
 
+	<!-- Cost Impact -->
+	<section class="py-16 px-6 section-border">
+		<div class="max-w-3xl mx-auto">
+			<h2 class="mb-8">Cost Impact</h2>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+				<div class="text-center p-6 metric-card">
+					<p class="heading-2 font-bold mb-2">$40/day</p>
+					<p class="body-sm metric-label">Before optimization</p>
+					<p class="body-xs metric-sublabel mt-1">~$1,200/month projected</p>
+				</div>
+				<div class="text-center p-6 metric-card">
+					<p class="heading-2 font-bold mb-2">$39/mo</p>
+					<p class="body-sm metric-label">After optimization</p>
+					<p class="body-xs metric-sublabel mt-1">97% reduction</p>
+				</div>
+			</div>
+
+			<div class="space-y-6 body-lg leading-relaxed">
+				<p>
+					Runaway API costs were consuming <strong>$40/day</strong> before the Subtractive Triad audit
+					identified inefficient scraping patterns and duplicate data accumulation.
+				</p>
+
+				<p><strong>Root causes identified:</strong></p>
+
+				<ul class="space-y-3 body body-tertiary pl-6">
+					<li class="flex items-start gap-3">
+						<span class="body-subtle mt-1">—</span>
+						<span>89% duplicate data (11,104 redundant records)</span>
+					</li>
+					<li class="flex items-start gap-3">
+						<span class="body-subtle mt-1">—</span>
+						<span>Redundant API calls from orphaned scripts</span>
+					</li>
+					<li class="flex items-start gap-3">
+						<span class="body-subtle mt-1">—</span>
+						<span>Missing deduplication in data pipeline</span>
+					</li>
+				</ul>
+
+				<p>
+					After optimization: same coverage of 100 venues, 4x daily monitoring, <strong>97% lower cost</strong>.
+				</p>
+			</div>
+		</div>
+	</section>
+
 	<!-- Pattern Validation -->
 	<section class="py-16 px-6 section-border">
 		<div class="max-w-3xl mx-auto">
