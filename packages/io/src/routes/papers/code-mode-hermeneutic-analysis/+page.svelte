@@ -369,24 +369,33 @@ TOOL RECEDES INTO USE`}</pre>
 					</p>
 				</div>
 
-				<div class="grid md:grid-cols-2 gap-4 mt-4">
-					<div class="p-4 comparison-error">
-						<h4 class="mb-2 comparison-heading comparison-error-heading">Avoid</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• Complex tool schemas requiring explicit understanding</li>
-							<li>• Rigid invocation formats</li>
-							<li>• Forcing the model to enumerate available tools</li>
-						</ul>
-					</div>
+				<p>
+					When you catch yourself designing tool interfaces, notice these patterns:
+				</p>
 
-					<div class="p-4 comparison-success">
-						<h4 class="mb-2 comparison-heading comparison-success-heading">Prefer</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• Familiar programming interfaces</li>
-							<li>• Natural composition patterns</li>
-							<li>• Tool capabilities that "just work"</li>
-						</ul>
-					</div>
+				<div class="responsive-table-scroll mt-4">
+					<table class="w-full table-auto">
+						<thead>
+							<tr class="table-header">
+								<th class="table-cell">You might reach for...</th>
+								<th class="table-cell">What serves agents better</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="table-row">
+								<td class="table-cell">Complex tool schemas requiring explicit understanding</td>
+								<td class="table-cell">Familiar programming interfaces</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Rigid invocation formats</td>
+								<td class="table-cell">Natural composition patterns</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Forcing the model to enumerate available tools</td>
+								<td class="table-cell">Tool capabilities that "just work"</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 
 				<h3 class="mt-6 subsection-heading">MCP and Code Mode</h3>

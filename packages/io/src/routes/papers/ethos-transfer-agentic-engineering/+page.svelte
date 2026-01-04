@@ -133,27 +133,44 @@
 					"Does this serve the whole?" (Heidegger)—become transparent background to all creative activity.
 				</p>
 
-				<div class="grid md:grid-cols-2 gap-4 mt-6">
-					<div class="p-4 comparison-warning">
-						<h4 class="mb-2 comparison-heading comparison-warning-heading">Learning About (Vorhandenheit)</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• "I know the three levels of the Triad"</li>
-							<li>• "I can recite Rams' 10 principles"</li>
-							<li>• "I passed the methodology quiz"</li>
-							<li>• Methodology as object of study</li>
-						</ul>
-					</div>
+				<p>
+					When you catch yourself thinking about the methodology rather than using it, you've found the gap.
+					Here's how to recognize where you are:
+				</p>
 
-					<div class="p-4 comparison-success">
-						<h4 class="mb-2 comparison-heading comparison-success-heading">Dwelling Within (Zuhandenheit)</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• "I noticed duplicate code before writing it"</li>
-							<li>• "I removed a feature because it didn't earn its existence"</li>
-							<li>• "I restructured for system coherence"</li>
-							<li>• Methodology as transparent practice</li>
-						</ul>
-					</div>
+				<div class="responsive-table-scroll mt-4">
+					<table class="w-full table-auto">
+						<thead>
+							<tr class="table-header">
+								<th class="table-cell">You might find yourself saying...</th>
+								<th class="table-cell">What dwelling looks like instead</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="table-row">
+								<td class="table-cell">"I know the three levels of the Triad"</td>
+								<td class="table-cell">"I noticed duplicate code before writing it"</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">"I can recite Rams' 10 principles"</td>
+								<td class="table-cell">"I removed a feature because it didn't earn its existence"</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">"I passed the methodology quiz"</td>
+								<td class="table-cell">"I restructured for system coherence"</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Methodology as object of study</td>
+								<td class="table-cell">Methodology as transparent practice</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
+
+				<p class="mt-4">
+					The first column isn't wrong—it's a necessary stage. But if you stay there, you're still standing
+					outside the methodology looking in.
+				</p>
 			</div>
 		</section>
 
