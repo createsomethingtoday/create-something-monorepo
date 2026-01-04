@@ -53,22 +53,56 @@ Not visual references, but conceptual references for how AI agents should work.
 
 Not visual references, but stylistic references for how we write.
 
+#### The Lineage
+
+Writing has a philosophical genealogy parallel to design:
+
+| Layer | Philosophy | Writing | Function |
+|-------|------------|---------|----------|
+| **Foundational** | Heidegger (*Being and Time*) | Orwell (*Politics and the English Language*) | Reveals hidden ontological structure |
+| **Methodological** | Gadamer (*Truth and Method*) | Zinsser (*On Writing Well*) | Makes it teachable, applicable |
+| **Applied** | Dieter Rams (Ten Principles) | Fenton/Lee (*Nicely Said*) | Practice in specific medium |
+
+**Why this matters**: Orwell doesn't say "write clearly because it's pleasant." He says unclear writing is how people hide from truth—including from themselves. That's an *ontological* claim about language and being, not style advice.
+
+#### The Masters
+
 | Master | Work | Contribution to Canon |
 |--------|------|----------------------|
-| **Nicole Fenton & Kate Kiefer Lee** | "Nicely Said" | Transformation examples; user-centered clarity; practical warmth |
-| **Dieter Rams** | Ten Principles | Declarative compression; aphoristic wisdom; "less, but better" |
+| **George Orwell** | "Politics and the English Language" (1946) | Clarity as ethics; obscurity as political evasion; 6 pages that changed everything |
+| **William Zinsser** | "On Writing Well" | Accessible methodology; makes clarity teachable; the practitioner's guide |
+| **Nicole Fenton & Kate Kiefer Lee** | "Nicely Said" | Transformation examples; user-centered clarity; applied to web/digital |
 | **Edward Tufte** | Visual Display of Quantitative Information | Empirical grounding; "show the data"; high density |
+| **Dieter Rams** | Ten Principles | Declarative compression; aphoristic wisdom; "less, but better" |
 | **Charles & Ray Eames** | — | "The best for the most for the least"; functional elegance |
 | **Ludwig Mies van der Rohe** | — | "Less is more"; "God is in the details"; architectural austerity |
 
-**Fenton/Lee Patterns Adopted:**
+#### Orwell's Core Insight
+
+From "Politics and the English Language":
+
+> "Political language... is designed to make lies sound truthful and murder respectable, and to give an appearance of solidity to pure wind."
+
+This reframes clarity as *ethical*, not aesthetic. Bad writing isn't just unpleasant—it enables bad thinking. Orwell's rules:
+
+1. Never use a metaphor, simile, or figure of speech you've seen in print
+2. Never use a long word where a short one will do
+3. If it's possible to cut a word, cut it
+4. Never use the passive where you can use the active
+5. Never use jargon if you can think of an everyday equivalent
+6. Break any of these rules sooner than say anything outright barbarous
+
+**Canon adoption**: Rules 1-5 are subtractive. Rule 6 is Heideggerian—judgment over formula.
+
+#### Fenton/Lee Patterns Adopted
+
 - **Transformation examples**: Show before/after, not just rules
 - **User-centered framing**: Meet readers where they are
 - **Plain language advocacy**: Prefer common words to insider vocabulary
 - **Warmth where appropriate**: Acknowledge reader's struggles
 - **Recognition over confrontation**: Help readers notice patterns, then transform them
 
-**Heideggerian Connection**
+#### Heideggerian Connection
 
 A human-accessible bridge to philosophical concepts:
 
@@ -79,6 +113,8 @@ A human-accessible bridge to philosophical concepts:
 | Words that sound important but mean little | Marketing jargon | — |
 | Safe statements that can't be disproven | Vague claims | — |
 | Elements for "interest" not function | Decoration | — |
+
+**The connection**: Orwell reveals that jargon and obscurity are *political*—they serve evasion. Heidegger reveals that tool-breakdown makes the invisible visible. Together: unclear writing is a breakdown we should notice, diagnose, and repair.
 
 ### Award Winners (Design Excellence)
 
