@@ -565,7 +565,7 @@ Types (1.1)
 			<p class="footer-text">
 				This methodology paper is part of the CREATE SOMETHING research program exploring
 				AI-native development patterns. View the
-				<a href="/experiments/nba-live" class="footer-link">
+				<a href="https://createsomething.space/experiments/nba-live" class="footer-link">
 					NBA Live Analytics Dashboard
 				</a>
 				or read more about our
