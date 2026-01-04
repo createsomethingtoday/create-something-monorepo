@@ -49,6 +49,37 @@ Not visual references, but conceptual references for how AI agents should work.
 
 **Bidirectional exchange**: CREATE SOMETHING contributed directory-aware priority scoping to Beads upstream. VC patterns flow back into harness-patterns.md.
 
+### Writing Masters (Voice References)
+
+Not visual references, but stylistic references for how we write.
+
+| Master | Work | Contribution to Canon |
+|--------|------|----------------------|
+| **Nicole Fenton & Kate Kiefer Lee** | "Nicely Said" | Transformation examples; user-centered clarity; practical warmth |
+| **Dieter Rams** | Ten Principles | Declarative compression; aphoristic wisdom; "less, but better" |
+| **Edward Tufte** | Visual Display of Quantitative Information | Empirical grounding; "show the data"; high density |
+| **Charles & Ray Eames** | — | "The best for the most for the least"; functional elegance |
+| **Ludwig Mies van der Rohe** | — | "Less is more"; "God is in the details"; architectural austerity |
+
+**Fenton/Lee Patterns Adopted:**
+- **Transformation examples**: Show before/after, not just rules
+- **User-centered framing**: Meet readers where they are
+- **Plain language advocacy**: Prefer common words to insider vocabulary
+- **Warmth where appropriate**: Acknowledge reader's struggles
+- **Recognition over confrontation**: Help readers notice patterns, then transform them
+
+**Heideggerian Connection**
+
+A human-accessible bridge to philosophical concepts:
+
+| What It Feels Like | Canon Term | Heidegger Term |
+|-------------------|------------|----------------|
+| You don't notice the prose | Transparent writing | Zuhandenheit |
+| You notice the prose | Writing breakdown | Vorhandenheit |
+| Words that sound important but mean little | Marketing jargon | — |
+| Safe statements that can't be disproven | Vague claims | — |
+| Elements for "interest" not function | Decoration | — |
+
 ### Award Winners (Design Excellence)
 
 Award-winning sites that validate Canon principles. Filtered for functional minimalism, not formal accolades.

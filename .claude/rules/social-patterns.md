@@ -180,13 +180,17 @@ Sample transparency post:
 
 ### What NOT to Post
 
-| Content Type | Why Stop | Any Account |
-|--------------|----------|-------------|
-| LMS promotional content | Doesn't connect to partnership thesis | All |
-| Pure aesthetic images | Demands attention without argument | All |
-| Scattered updates | Fragments rather than serves whole | Personal |
-| Daily volume for its own sake | Dilutes signal with noise | All |
-| Webflow employer content | Separate concern, different context | Personal |
+These patterns look productive but fragment rather than focus. Recognize them, then choose clarity.
+
+| Content Type | You Might Think | What Serves Readers Better |
+|--------------|-----------------|---------------------------|
+| LMS promotional content | "I need to promote my products" | Content that connects to partnership thesis |
+| Pure aesthetic images | "This will get engagement" | Argument with supporting visuals |
+| Scattered updates | "Stay active, post often" | Coherent posts that serve the whole |
+| Daily volume for its own sake | "Consistency is key" | Signal over noise |
+| Webflow employer content | "It shows my experience" | Keep concerns separate |
+
+*Activity without coherence is noise.*
 
 ### Pre-Post Checklist
 
@@ -634,13 +638,15 @@ Here's what I've seen across [N] projects:
 
 ### What NOT to Post on X
 
-| Content Type | Why Avoid |
-|--------------|-----------|
-| Threads that are really LinkedIn posts | Different format, different rhythm |
-| "🧵 Thread" without immediate value | Hook must be in tweet 1 |
-| Promotional without insight | X audience detects and punishes |
-| Hot takes without substance | Controversy without contribution |
-| Engagement bait ("Reply with X") | Feels manipulative |
+Recognize these patterns—they look productive but undermine trust.
+
+| Content Type | You Might Think | What Serves Readers Better |
+|--------------|-----------------|---------------------------|
+| Threads that are really LinkedIn posts | "I'll just reformat it slightly" | Write native to the platform's rhythm |
+| "🧵 Thread" without immediate value | "They'll keep reading" | Earn attention in tweet 1 |
+| Promotional without insight | "I need to get the word out" | Insight first, promotion second |
+| Hot takes without substance | "Controversy drives engagement" | Contribution over controversy |
+| Engagement bait ("Reply with X") | "It works for growth" | Trust over metrics |
 
 ### Cross-Platform Flow
 
