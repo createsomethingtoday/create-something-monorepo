@@ -36,7 +36,7 @@
 
 			<p>
 				Dieter Rams asked: "Is my design good design?" We ask the same of every experiment, every
-				paper, every line of code. The answer requires ruthless honesty.
+				paper, every line of code. The answer requires honest self-examination.
 			</p>
 
 			<p>

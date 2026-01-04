@@ -132,7 +132,7 @@
 				<p class="text-sm-canon opacity-60-canon mb-4">
 					Code Mode requires fluency—keyboard shortcuts, language idioms,
 					tooling mastery. Investment in fluency pays dividends in flow.
-					The unfluent user constantly fights the medium.
+					Without fluency, you notice the medium instead of the creation.
 				</p>
 				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Master one language deeply before broadening</p>
