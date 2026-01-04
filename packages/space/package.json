@@ -21,6 +21,8 @@
 		"@sveltejs/adapter-cloudflare": "^7.2.4",
 		"@sveltejs/kit": "^2.47.1",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/d3-force": "^3.0.10",
+		"@types/d3-selection": "^3.0.11",
 		"@types/node": "^24.10.1",
 		"autoprefixer": "^10.4.22",
 		"highlight.js": "^11.11.1",
@@ -49,6 +51,8 @@
 		"@create-something/components": "workspace:*",
 		"@create-something/tufte": "workspace:*",
 		"@resvg/resvg-wasm": "^2.6.2",
-		"codemirror": "^6.0.2"
+		"codemirror": "^6.0.2",
+		"d3-force": "^3.0.0",
+		"d3-selection": "^3.0.0"
 	}
 }

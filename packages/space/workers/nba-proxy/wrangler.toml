@@ -1,0 +1,28 @@
+# NBA Proxy Worker
+# Proxies NBA.com Stats API with rate limiting and caching
+# Meta-experiment: spec-driven development with harness/Gastown
+
+name = "nba-proxy"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+main = "src/index.ts"
+compatibility_date = "2025-11-15"
+compatibility_flags = ["nodejs_compat"]
+
+# KV for caching live game data (30s TTL)
+[[kv_namespaces]]
+binding = "CACHE"
+id = "bcb39a6258fe49b79da9dc9b09440934"
+
+# D1 for player baselines
+[[d1_databases]]
+binding = "DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+NBA_API_BASE_URL = "https://cdn.nba.com/static/json"
+RATE_LIMIT_REQUESTS = "10"
+RATE_LIMIT_WINDOW_MS = "60000"
+CACHE_TTL_SECONDS = "30"
