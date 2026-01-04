@@ -659,6 +659,59 @@
 	</div>
 </section>
 
+<!-- The Lineage -->
+<section class="section-divider py-16 px-6">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">The Lineage</h2>
+
+		<div class="space-y-6 masters-description leading-relaxed">
+			<p>
+				CREATE SOMETHING's intellectual foundations span philosophy, writing, and systems. Each discipline
+				has a three-layer genealogy:
+			</p>
+
+			<!-- Lineage Table -->
+			<div class="overflow-x-auto my-8">
+				<table class="lineage-table w-full">
+					<thead>
+						<tr>
+							<th class="text-left py-2 px-3">Layer</th>
+							<th class="text-left py-2 px-3">Philosophy</th>
+							<th class="text-left py-2 px-3">Writing</th>
+							<th class="text-left py-2 px-3">Systems</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td class="py-2 px-3 font-medium">Foundational</td>
+							<td class="py-2 px-3">Heidegger</td>
+							<td class="py-2 px-3">Orwell</td>
+							<td class="py-2 px-3">Wiener</td>
+						</tr>
+						<tr>
+							<td class="py-2 px-3 font-medium">Methodological</td>
+							<td class="py-2 px-3">Gadamer</td>
+							<td class="py-2 px-3">Zinsser</td>
+							<td class="py-2 px-3">Meadows</td>
+						</tr>
+						<tr>
+							<td class="py-2 px-3 font-medium">Applied</td>
+							<td class="py-2 px-3">Rams</td>
+							<td class="py-2 px-3">Fenton/Lee</td>
+							<td class="py-2 px-3">Senge</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<p>
+				Foundational works reveal hidden structure. Methodological works make it teachable.
+				Applied works demonstrate practice in specific domains.
+			</p>
+		</div>
+	</div>
+</section>
+
 <!-- How the Masters Wrote -->
 <section class="section-divider py-16 px-6">
 	<div class="max-w-3xl mx-auto">
@@ -671,7 +724,31 @@
 			</p>
 
 			<div class="space-y-6 mt-6">
+				<!-- Foundational: Orwell -->
 				<div class="master-quote pl-4">
+					<p class="master-layer mb-1">Foundational</p>
+					<p class="master-name mb-1">George Orwell</p>
+					<p class="master-approach mb-2">
+						Clarity as ethics. Obscurity as political evasion. Six pages that changed everything.
+					</p>
+					<p class="quote-text">"Political language is designed to make lies sound truthful and murder respectable."</p>
+					<p class="quote-text">"If it is possible to cut a word out, always cut it out."</p>
+				</div>
+
+				<!-- Methodological: Zinsser -->
+				<div class="master-quote pl-4">
+					<p class="master-layer mb-1">Methodological</p>
+					<p class="master-name mb-1">William Zinsser</p>
+					<p class="master-approach mb-2">
+						Accessible methodology. Makes clarity teachable. The practitioner's bridge.
+					</p>
+					<p class="quote-text">"Clutter is the disease of American writing."</p>
+					<p class="quote-text">"Writing is thinking on paper."</p>
+				</div>
+
+				<!-- Applied: Fenton/Lee -->
+				<div class="master-quote pl-4">
+					<p class="master-layer mb-1">Applied</p>
 					<p class="master-name mb-1">Nicole Fenton & Kate Kiefer Lee</p>
 					<p class="master-approach mb-2">
 						Transformation examples. User-centered clarity. Practical warmth.
@@ -680,7 +757,23 @@
 					<p class="quote-text">"Show what to do, not just what to avoid."</p>
 				</div>
 
+				<div class="master-divider my-8"></div>
+
+				<!-- Systems: Meadows -->
 				<div class="master-quote pl-4">
+					<p class="master-layer mb-1">Systems</p>
+					<p class="master-name mb-1">Donella Meadows</p>
+					<p class="master-approach mb-2">
+						Stocks, flows, leverage points. Makes systems visible to practitioners.
+					</p>
+					<p class="quote-text">"We can't control systems or figure them out. But we can dance with them."</p>
+				</div>
+
+				<div class="master-divider my-8"></div>
+
+				<!-- Design Masters -->
+				<div class="master-quote pl-4">
+					<p class="master-layer mb-1">Design</p>
 					<p class="master-name mb-1">Dieter Rams</p>
 					<p class="master-approach mb-2">
 						Declarative principles. No fluff. Compressed wisdom.
@@ -865,6 +958,32 @@
 
 	.master-quote {
 		border-left: 2px solid var(--color-border-emphasis);
+	}
+
+	.lineage-table {
+		font-size: var(--text-body-sm);
+		border-collapse: collapse;
+	}
+
+	.lineage-table th {
+		color: var(--color-fg-tertiary);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.lineage-table td {
+		color: var(--color-fg-secondary);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.master-layer {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+	}
+
+	.master-divider {
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.master-name {
