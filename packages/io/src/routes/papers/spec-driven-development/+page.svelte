@@ -74,7 +74,7 @@
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					<strong class="text-emphasis">Central Question:</strong> Can spec-driven development be
-					managed by agents using harness and Beads abstractions, producing both working software
+					managed by agents using harness and <a href="https://github.com/steveyegge/beads" class="body-link">Beads</a> abstractions, producing both working software
 					and methodology documentation?
 				</p>
 
@@ -280,7 +280,7 @@ Types (1.1)
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<div class="p-4 callout-yellow">
-					<p class="callout-text-yellow"><strong>Execution:</strong> Parallel convoy (after Infrastructure)</p>
+					<p class="callout-text-yellow"><strong>Execution:</strong> Parallel <a href="https://github.com/steveyegge/gastown" class="callout-link-yellow">convoy</a> (after Infrastructure)</p>
 					<p class="callout-meta-yellow">Features: Landing, Duo Synergy, Defensive Impact, Shot Network</p>
 				</div>
 
@@ -823,5 +823,27 @@ Types (1.1)
 
 	.footer-link:hover {
 		color: var(--color-fg-secondary);
+	}
+
+	/* Body text links */
+	.body-link {
+		text-decoration: underline;
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.body-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	/* Callout links */
+	.callout-link-yellow {
+		text-decoration: underline;
+		color: var(--color-data-4);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.callout-link-yellow:hover {
+		color: var(--color-fg-primary);
 	}
 </style>
