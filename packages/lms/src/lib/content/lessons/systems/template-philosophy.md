@@ -222,7 +222,7 @@ After 3-5 deployments:
 
 After 10+ deployments:
 - Patterns are proven
-- Constraints are battle-tested
+- Constraints are production-proven
 - Extensions are documented
 
 **Every deployment teaches the template something.**

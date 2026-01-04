@@ -234,7 +234,7 @@
 				</p>
 				<p>
 					<strong class="text-primary">Real client work.</strong> Every agent in the library has been
-					battle-tested in production. Not toy examples—actual systems that solve real problems.
+					proven in production. Not toy examples—actual systems that solve real problems.
 				</p>
 			</div>
 		</div>

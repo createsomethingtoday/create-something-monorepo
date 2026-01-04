@@ -56,7 +56,7 @@ export const services: Service[] = [
 		id: 'web-development',
 		title: 'Web Development',
 		description:
-			"Production-ready web platforms built on battle-tested patterns. We ship fast because we've solved these problems before—now we unify them into your codebase.",
+			"Production-ready web platforms built on proven patterns. We ship fast because we've solved these problems before—now we unify them into your codebase.",
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
@@ -74,7 +74,7 @@ export const services: Service[] = [
 		],
 
 		howItWorks: [
-			'CREATE SOMETHING component library (battle-tested)',
+			'CREATE SOMETHING component library (production-proven)',
 			'Type-safe TypeScript throughout',
 			'Cloudflare Pages deployment (global edge)',
 			'Automation opportunity assessment included'
