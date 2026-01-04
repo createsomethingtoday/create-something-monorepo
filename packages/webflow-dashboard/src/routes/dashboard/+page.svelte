@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto, invalidate } from '$app/navigation';
-	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats, EditProfileModal, SubmissionTracker } from '$lib/components';
+	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats, EditProfileModal, SubmissionTracker, StatsBar } from '$lib/components';
 	import { toast } from '$lib/stores/toast';
 
 	let { data }: { data: PageData } = $props();
@@ -53,20 +53,6 @@
 	async function handleRefreshAssets() {
 		invalidate('app:assets');
 	}
-
-	// Calculate stats from assets
-	const stats = $derived(() => {
-		const assets = data.assets || [];
-		const published = assets.filter((a) => a.status === 'Published').length;
-		const pending = assets.filter((a) => ['Upcoming', 'Scheduled'].includes(a.status)).length;
-		const totalRevenue = assets.reduce((sum, a) => sum + (a.cumulativeRevenue || 0), 0);
-
-		return {
-			totalTemplates: published,
-			pendingReview: pending,
-			totalRevenue
-		};
-	});
 </script>
 
 <svelte:head>
@@ -83,39 +69,22 @@
 
 	<main class="main-content">
 		<div class="content-wrapper">
-			<!-- Overview Section -->
+			<!-- Overview Section - Tufte: High density, minimal chrome -->
 			<section class="overview-section">
-				<h1 class="page-title">Welcome back</h1>
-				<p class="page-subtitle">Here's an overview of your Webflow templates and assets.</p>
-
-				<div class="dashboard-grid">
-					<!-- Quick Stats -->
-					<div class="quick-stats">
-						<Card>
-							<CardHeader>
-								<CardTitle>Total Templates</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div class="stat-value">{stats().totalTemplates}</div>
-								<p class="stat-label">Published templates</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader>
-								<CardTitle>Pending Review</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div class="stat-value">{stats().pendingReview}</div>
-								<p class="stat-label">Awaiting approval</p>
-							</CardContent>
-						</Card>
-
-						<SubmissionTracker assets={data.assets || []} />
+				<div class="page-header">
+					<div class="header-text">
+						<h1 class="page-title">Welcome back</h1>
+						<p class="page-subtitle">Your Webflow templates at a glance.</p>
 					</div>
+					<SubmissionTracker assets={data.assets || []} variant="compact" />
+				</div>
 
-					<!-- Detailed Stats -->
-					<div class="detailed-stats">
+				<!-- Tufte: Single-line high-density metrics bar -->
+				<StatsBar assets={data.assets || []} />
+
+				<!-- Detailed breakdown in compact grid -->
+				<div class="dashboard-grid">
+					<div class="stats-column">
 						<OverviewStats assets={data.assets || []} />
 					</div>
 				</div>
@@ -156,59 +125,55 @@
 	}
 
 	.overview-section {
-		margin-bottom: var(--space-xl);
-	}
-
-	.page-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs);
-	}
-
-	.page-subtitle {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-lg);
-	}
-
-	.dashboard-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-lg);
-	}
-
-	.quick-stats {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-md);
+		margin-bottom: var(--space-xl);
 	}
 
-	.detailed-stats {
+	.page-header {
 		display: flex;
-		flex-direction: column;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-md);
 	}
 
-	@media (max-width: 1024px) {
-		.dashboard-grid {
-			grid-template-columns: 1fr;
-		}
+	.header-text {
+		flex: 1;
 	}
 
-	.stat-value {
-		font-size: var(--text-display);
+	.page-title {
+		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		line-height: 1;
+		margin: 0;
 	}
 
-	.stat-label {
+	.page-subtitle {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 		margin: var(--space-xs) 0 0;
 	}
 
+	.dashboard-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--space-md);
+	}
+
+	.stats-column {
+		display: flex;
+		flex-direction: column;
+	}
+
 	.assets-section {
 		margin-bottom: var(--space-xl);
+	}
+
+	@media (max-width: 640px) {
+		.page-header {
+			flex-direction: column;
+			align-items: stretch;
+		}
 	}
 </style>

@@ -27,10 +27,23 @@
 
 	const showMetrics = !['Upcoming', 'Rejected'].includes(cleanedStatus);
 
+	// Tufte: Show relationships, not just numbers
+	// Conversion rate = purchases / viewers (key performance indicator)
+	const conversionRate = $derived(() => {
+		if (!showMetrics || !asset.uniqueViewers || asset.uniqueViewers === 0) return null;
+		return ((asset.cumulativePurchases || 0) / asset.uniqueViewers) * 100;
+	});
+
+	// Revenue per purchase (average order value)
+	const avgOrderValue = $derived(() => {
+		if (!showMetrics || !asset.cumulativePurchases || asset.cumulativePurchases === 0) return null;
+		return (asset.cumulativeRevenue || 0) / asset.cumulativePurchases;
+	});
+
 	function formatDate(dateStr?: string): string {
 		if (!dateStr) return '—';
 		try {
-			return new Date(dateStr).toLocaleDateString();
+			return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 		} catch {
 			return '—';
 		}
@@ -38,11 +51,13 @@
 
 	function formatNumber(num?: number): string {
 		if (num === undefined || num === null) return '0';
+		if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
 		return num.toLocaleString();
 	}
 
 	function formatCurrency(num?: number): string {
 		if (num === undefined || num === null) return '$0';
+		if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
 		return `$${num.toLocaleString()}`;
 	}
 </script>
@@ -73,13 +88,23 @@
 	</TableCell>
 	{#if showPerformance}
 		<TableCell class="text-center">
-			<span class="metric">{showMetrics ? formatNumber(asset.uniqueViewers) : '—'}</span>
+			<span class="metric tabular">{showMetrics ? formatNumber(asset.uniqueViewers) : '—'}</span>
 		</TableCell>
 		<TableCell class="text-center">
-			<span class="metric">{showMetrics ? formatNumber(asset.cumulativePurchases) : '—'}</span>
+			<div class="metric-stack">
+				<span class="metric tabular">{showMetrics ? formatNumber(asset.cumulativePurchases) : '—'}</span>
+				{#if conversionRate() !== null}
+					<span class="metric-sub">{conversionRate().toFixed(1)}%</span>
+				{/if}
+			</div>
 		</TableCell>
 		<TableCell class="text-center">
-			<span class="metric">{showMetrics ? formatCurrency(asset.cumulativeRevenue) : '—'}</span>
+			<div class="metric-stack">
+				<span class="metric tabular">{showMetrics ? formatCurrency(asset.cumulativeRevenue) : '—'}</span>
+				{#if avgOrderValue() !== null}
+					<span class="metric-sub">${avgOrderValue().toFixed(0)}/ea</span>
+				{/if}
+			</div>
 		</TableCell>
 	{/if}
 	<TableCell>
@@ -129,5 +154,22 @@
 	.metric {
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
+	}
+
+	.metric.tabular {
+		font-variant-numeric: tabular-nums;
+	}
+
+	.metric-stack {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.125rem;
+	}
+
+	.metric-sub {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		font-variant-numeric: tabular-nums;
 	}
 </style>
