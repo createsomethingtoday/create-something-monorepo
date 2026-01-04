@@ -439,13 +439,39 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 		/**
 		 * Verify asset ownership by email.
+		 * Matches the original Next.js logic which checks multiple email fields.
 		 */
 		async verifyAssetOwnership(assetId: string, email: string): Promise<boolean> {
 			try {
 				const record = await base(TABLES.ASSETS).find(assetId);
-				const creatorEmails = record.fields['📧Emails (from 🎨Creator)'] as string | undefined;
-				if (!creatorEmails) return false;
-				return creatorEmails.toLowerCase().includes(email.toLowerCase());
+				const normalizedEmail = email.toLowerCase();
+
+				// Check all possible creator email fields (matching original Next.js implementation)
+				const emailFields = [
+					'🎨📧 Creator Email',
+					'🎨📧 Creator WF Account Email',
+					'📧Emails (from 🎨Creator)'
+				];
+
+				for (const field of emailFields) {
+					const fieldValue = record.fields[field];
+					if (!fieldValue) continue;
+
+					// Handle array format (linked records)
+					if (Array.isArray(fieldValue)) {
+						if (fieldValue.some(e => String(e).toLowerCase().includes(normalizedEmail))) {
+							return true;
+						}
+					}
+					// Handle string format
+					else if (typeof fieldValue === 'string') {
+						if (fieldValue.toLowerCase().includes(normalizedEmail)) {
+							return true;
+						}
+					}
+				}
+
+				return false;
 			} catch {
 				return false;
 			}
