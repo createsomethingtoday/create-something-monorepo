@@ -7,7 +7,7 @@
   "types": "./dist/index.d.ts",
   "bin": {
     "harness": "./dist/cli.js",
-    "gt-smart-sling": "./bin/gt-smart-sling"
+    "gt-smart-sling": "./dist/bin/gt-smart-sling.js"
   },
   "exports": {
     ".": {
@@ -16,8 +16,7 @@
     }
   },
   "files": [
-    "dist",
-    "bin"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
