@@ -48,3 +48,6 @@ csm/csm/.repo.git
 # MCP configuration
 # Note: Project .mcp.json is tracked (uses HTTP-based servers, no local keys)
 # User-level config (~/.claude/mcp.json) may contain keys - don't commit that
+
+# Gastown nested repositories
+csm/.repo.git

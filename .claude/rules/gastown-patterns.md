@@ -8,7 +8,8 @@ Gastown coordinates multiple Claude Code instances. Here's how to use it.
 |-------------------|----------|
 | Start Gastown | `gt start` |
 | Create a batch of work | `gt convoy create "Feature" cs-xxx cs-yyy` |
-| Assign work to a worker | `gt sling cs-xxx csm` |
+| Assign work to a worker | `gt-smart-sling cs-xxx csm` (smart routing) |
+| Assign work manually | `gt sling cs-xxx csm --quality=shiny` |
 | Check your current task | `gt hook` |
 | Mark work complete | `gt done` |
 | Stop everything | `gt shutdown` |
@@ -35,17 +36,19 @@ gt start
 # 2. Create a convoy with three issues
 gt convoy create "Auth feature" cs-login cs-session cs-middleware
 
-# 3. Assign work to workers
-gt sling cs-login csm
-gt sling cs-session csm
-gt sling cs-middleware csm
+# 3. Assign work to workers (smart routing picks the right model)
+gt-smart-sling cs-login csm
+gt-smart-sling cs-session csm
+gt-smart-sling cs-middleware csm
 
-# 4. Workers auto-spawn, execute, complete
+# 4. Workers auto-spawn with appropriate quality level, execute, complete
 # Watch progress:
 gt convoy list
 ```
 
-**What happens**: Each issue gets a worker. Workers run in parallel. When they finish, Refinery merges their changes.
+**What happens**: Each issue gets a worker with the right model (based on labels/title). Workers run in parallel. When they finish, Refinery merges their changes.
+
+**Cost optimization**: Smart routing automatically uses Haiku for simple tasks, Opus for complex work, saving ~18% on typical workloads.
 
 ## Roles
 
@@ -76,8 +79,44 @@ gt wake          # Wake sleeping town
 gt convoy create "Name" cs-xxx cs-yyy    # Batch issues
 gt convoy list                            # See active convoys
 gt convoy show <id>                       # Track progress
-gt sling cs-xxx csm                       # Assign to rig
+gt sling cs-xxx csm                       # Assign to rig (manual quality)
+gt-smart-sling cs-xxx csm                # Assign with auto quality detection
 ```
+
+### Smart Slinging (Model Routing)
+
+**NEW**: Use `gt-smart-sling` instead of `gt sling` for automatic model routing based on Beads labels.
+
+```bash
+# Smart routing based on issue labels/title
+gt-smart-sling cs-abc123 csm
+
+# With extra flags (passed through to gt sling)
+gt-smart-sling cs-abc123 csm --force
+gt-smart-sling cs-abc123 csm --message "Focus on performance"
+```
+
+**How it works**:
+1. Reads Beads issue labels
+2. Maps to Gastown quality level:
+   - `model:haiku` or `complexity:trivial` → `--quality=basic` (Haiku ~$0.001)
+   - `model:sonnet` or `complexity:simple/standard` → `--quality=shiny` (Sonnet ~$0.01)
+   - `model:opus` or `complexity:complex` → `--quality=chrome` (Opus ~$0.10)
+3. Pattern matches title (e.g., "rename" → basic, "architect" → chrome)
+4. Calls `gt sling` with appropriate quality
+
+**Label your issues**:
+```bash
+# Explicit model override
+bd create "Fix typo in README" --label model:haiku
+bd create "Architect new system" --label model:opus
+
+# Or use complexity labels (spec files)
+bd create "Rename variable" --label complexity:trivial
+bd create "Refactor auth system" --label complexity:complex
+```
+
+**Cost savings**: ~90% on trivial tasks (Haiku vs Sonnet), quality where it matters (Opus for complex work).
 
 ### Worker Operations
 

@@ -16,8 +16,15 @@ import type {
   Checkpoint,
   BeadsIssue,
   DEFAULT_REVIEW_PIPELINE_CONFIG,
+  SessionOutcome,
 } from './types.js';
 import { runReviewer, getOutcomeIcon } from './reviewer.js';
+import {
+  createFailureTracker,
+  type FailureTracker,
+  getEffectiveModel,
+  recordSuccessfulRetry,
+} from './failure-handler.js';
 
 const execAsync = promisify(exec);
 
@@ -153,6 +160,9 @@ export async function runReviewPipeline(
 
   console.log(`\n🔍 Running peer review: ${enabledReviewers.length} reviewer(s)`);
 
+  // Create failure tracker for reviewers (enables model escalation)
+  const failureTracker = createFailureTracker();
+
   // Run reviewers in parallel (respecting maxParallelReviewers)
   const results: ReviewResult[] = [];
 
@@ -167,6 +177,7 @@ export async function runReviewPipeline(
         return runReviewer(reviewer, context, {
           cwd,
           timeoutMs: config.reviewerTimeoutMs,
+          failureTracker,
         });
       })
     );
@@ -175,9 +186,43 @@ export async function runReviewPipeline(
       const icon = getOutcomeIcon(result.outcome);
       const findingsText =
         result.findings.length > 0 ? `(${result.findings.length} findings)` : '';
+      const modelText = result.model ? ` [${result.model}]` : '';
       console.log(
-        `    [${result.reviewerId}] ${icon} ${result.outcome} ${findingsText} - ${result.summary.slice(0, 60)}...`
+        `    [${result.reviewerId}] ${icon} ${result.outcome}${modelText} ${findingsText} - ${result.summary.slice(0, 60)}...`
       );
+
+      // Track result in failure tracker (for future escalation)
+      if (result.outcome !== 'pass' && result.outcome !== 'pass_with_findings') {
+        // Convert ReviewOutcome to SessionOutcome
+        const sessionOutcome: SessionOutcome = result.outcome === 'error' ? 'failure' : 'partial';
+
+        const existingRecord = failureTracker.records.get(result.reviewerId) || {
+          issueId: result.reviewerId,
+          attempts: [],
+          lastOutcome: sessionOutcome,
+          finalAction: 'retry',
+        };
+
+        existingRecord.attempts.push({
+          attemptNumber: existingRecord.attempts.length + 1,
+          timestamp: new Date().toISOString(),
+          outcome: sessionOutcome,
+          error: result.error || null,
+          durationMs: result.durationMs,
+          model: result.model,
+        });
+
+        existingRecord.lastOutcome = sessionOutcome;
+        failureTracker.records.set(result.reviewerId, existingRecord);
+        failureTracker.totalFailures++;
+      } else {
+        // Successful review
+        const attemptCount = failureTracker.records.get(result.reviewerId)?.attempts.length || 0;
+        if (attemptCount > 0) {
+          recordSuccessfulRetry(failureTracker, result.reviewerId);
+        }
+      }
+
       results.push(result);
     }
   }

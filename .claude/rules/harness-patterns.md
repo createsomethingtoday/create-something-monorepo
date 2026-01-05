@@ -180,6 +180,74 @@ bd create "Extract shared validation logic" \
 
 ---
 
+## Reviewer Model Routing
+
+Harness automatically selects the most cost-effective model for each reviewer type:
+
+| Reviewer Type | Model | Cost | Rationale |
+|---------------|-------|------|-----------|
+| **Security** | Haiku | ~$0.001 | Pattern detection (known vulnerabilities, secrets) |
+| **Architecture** | Opus | ~$0.10 | Deep analysis (DRY violations, coupling, design) |
+| **Quality** | Sonnet | ~$0.01 | Balanced review (conventions, tests) |
+| **Custom** | Sonnet | ~$0.01 | Safe default for user-defined reviewers |
+
+### Cost Savings
+
+**Before** (all Sonnet):
+- 3 reviewers × $0.01 = $0.03 per checkpoint
+
+**After** (routed):
+- Security (Haiku): $0.001
+- Architecture (Opus): $0.10
+- Quality (Sonnet): $0.01
+- **Total**: ~$0.11 per checkpoint
+
+**But**: Architecture reviews now catch issues that Sonnet would miss, reducing expensive rework.
+
+### Overriding Model Selection
+
+If you need to force a specific model for a reviewer:
+
+```yaml
+# harness.config.yaml
+reviewers:
+  reviewers:
+    - id: security
+      type: security
+      enabled: true
+      model: opus  # Force Opus for thorough security review
+```
+
+**When to override**:
+- Security review of critical auth code → Force Opus
+- Architecture review of simple refactor → Force Sonnet to save cost
+- Custom reviewer for complex domain logic → Force Opus
+
+### Reviewer Escalation (Self-Healing)
+
+Reviewers automatically escalate to more capable models when they fail, implementing the same self-healing pattern as main tasks:
+
+**Escalation thresholds**:
+| Reviewer Type | Initial Model | After 1 Failure | After 2 Failures |
+|---------------|---------------|-----------------|------------------|
+| Security | Haiku (~$0.001) | Sonnet (~$0.01) | Opus (~$0.10) |
+| Quality | Sonnet (~$0.01) | Sonnet (no escalation yet) | Opus (~$0.10) |
+| Architecture | Opus (~$0.10) | Opus (already maximum) | Opus |
+
+**Example flow** (Security review):
+```
+Attempt 1: Haiku → fails (pattern detection missed something)
+Attempt 2: Auto-escalates to Sonnet → succeeds
+```
+
+**Philosophy**: When cheaper models fail, escalate to opus rather than giving up. The system repairs itself by using more capable tools when simpler ones fail.
+
+**Heideggerian framing**: The tool (cheaper model) has broken down, becoming present-at-hand. Escalation returns the system to ready-to-hand operation.
+
+**Cost impact**: Escalation only happens on failure. If Haiku succeeds (most security reviews), you save 90% vs always using Sonnet. The occasional escalation is cheaper than running everything on Opus.
+
+---
+
 ## Discovered Work Labels
 
 When harness finds new work during a session:

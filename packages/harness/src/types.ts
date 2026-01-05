@@ -668,6 +668,8 @@ export interface ReviewResult {
   confidence: number; // 0-1
   durationMs: number;
   error?: string;
+  /** Model used for this review (for escalation tracking) */
+  model?: 'opus' | 'sonnet' | 'haiku';
 }
 
 /**
@@ -687,6 +689,15 @@ export interface ReviewerConfig {
   includePatterns?: string[];
   /** Files/patterns to exclude */
   excludePatterns?: string[];
+  /**
+   * Override the default model for this reviewer type.
+   * If not specified, uses getReviewerModel() defaults:
+   * - security → haiku (pattern detection)
+   * - architecture → opus (deep analysis)
+   * - quality → sonnet (balanced)
+   * - custom → sonnet (safe default)
+   */
+  model?: 'haiku' | 'sonnet' | 'opus';
 }
 
 /**
@@ -983,6 +994,11 @@ export interface ReviewerDefinition {
   includePatterns?: string[];
   /** File patterns to exclude */
   excludePatterns?: string[];
+  /**
+   * Override the default model for this reviewer type.
+   * If not specified, uses getReviewerModel() defaults.
+   */
+  model?: 'haiku' | 'sonnet' | 'opus';
 }
 
 /**
