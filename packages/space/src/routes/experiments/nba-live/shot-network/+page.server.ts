@@ -35,11 +35,13 @@ export interface TeamNetwork {
 
 export const load: PageServerLoad = async ({ url }) => {
 	const gameId = url.searchParams.get('gameId');
+	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
 
 	if (!gameId) {
 		return {
 			error: 'No game selected',
 			gameId: null,
+			date,
 			network: {
 				home: null as TeamNetwork | null,
 				away: null as TeamNetwork | null,
@@ -63,6 +65,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		return {
 			error: pbpResult.error.message,
 			gameId,
+			date,
 			network: { home: null, away: null },
 			players: { home: [], away: [] },
 			cached: false,
@@ -74,6 +77,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		return {
 			error: boxscoreResult.error.message,
 			gameId,
+			date,
 			network: { home: null, away: null },
 			players: { home: [], away: [] },
 			cached: false,
@@ -178,6 +182,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	return {
 		error: null,
 		gameId,
+		date,
 		network: {
 			home: buildTeamNetwork(players.home, homeTeamId),
 			away: buildTeamNetwork(players.away, awayTeamId),

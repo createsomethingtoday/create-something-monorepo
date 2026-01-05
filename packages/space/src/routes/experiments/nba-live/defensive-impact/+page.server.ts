@@ -21,11 +21,13 @@ interface TeamDefensiveStats {
 
 export const load: PageServerLoad = async ({ url }) => {
 	const gameId = url.searchParams.get('gameId');
+	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
 
 	if (!gameId) {
 		return {
 			error: 'No game selected',
 			gameId: null,
+			date,
 			defensive: {
 				home: null as TeamDefensiveStats | null,
 				away: null as TeamDefensiveStats | null,
@@ -51,6 +53,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		return {
 			error: pbpResult.error.message,
 			gameId,
+			date,
 			defensive: { home: null, away: null },
 			players: { home: [], away: [] },
 			shots: [],
@@ -63,6 +66,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		return {
 			error: boxscoreResult.error.message,
 			gameId,
+			date,
 			defensive: { home: null, away: null },
 			players: { home: [], away: [] },
 			shots: [],
@@ -125,6 +129,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	return {
 		error: null,
 		gameId,
+		date,
 		defensive: {
 			home: calculateDefensiveStats(awayShots), // Home defense vs away offense
 			away: calculateDefensiveStats(homeShots), // Away defense vs home offense

@@ -11,11 +11,13 @@ import type { DuoStats, Player } from '$lib/nba/types';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const gameId = url.searchParams.get('gameId');
+	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
 
 	if (!gameId) {
 		return {
 			error: 'No game selected',
 			gameId: null,
+			date,
 			duos: {
 				home: [] as DuoStats[],
 				away: [] as DuoStats[],
@@ -39,6 +41,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		return {
 			error: pbpResult.error.message,
 			gameId,
+			date,
 			duos: { home: [], away: [] },
 			players: { home: [], away: [] },
 			cached: false,
@@ -50,6 +53,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		return {
 			error: boxscoreResult.error.message,
 			gameId,
+			date,
 			duos: { home: [], away: [] },
 			players: { home: [], away: [] },
 			cached: false,
@@ -75,6 +79,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	return {
 		error: null,
 		gameId,
+		date,
 		duos: {
 			home: homeDuos,
 			away: awayDuos,

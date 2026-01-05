@@ -10,10 +10,15 @@
 	import type { Game } from '$lib/nba/types';
 	import GameSelector from '$lib/components/nba/GameSelector.svelte';
 	import GameHighlightCard from '$lib/components/nba/GameHighlightCard.svelte';
+	import DatePicker from '$lib/components/nba/DatePicker.svelte';
 	import { selectGameOfTheNight } from '$lib/nba/calculations';
 	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle, TrendingUp } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Check if viewing today
+	const today = new Date().toISOString().split('T')[0];
+	const isToday = $derived(data.currentDate === today);
 
 	let selectedGame = $state<Game | null>(null);
 
@@ -65,8 +70,19 @@
 		<p class="category">Experiment</p>
 		<h1 class="title">NBA Live Analytics</h1>
 		<p class="subtitle">
-			Watch how players work together, defend their matchups, and create scoring opportunities—updated every 30 seconds during live games.
+			{#if isToday}
+				Watch how players work together, defend their matchups, and create scoring opportunities—updated every 30 seconds during live games.
+			{:else}
+				See how players worked together, defended their matchups, and created scoring opportunities in past games.
+			{/if}
 		</p>
+	</div>
+</section>
+
+<!-- Date Navigation (Tufte: show the data upfront) -->
+<section class="date-section">
+	<div class="container">
+		<DatePicker currentDate={data.currentDate} baseUrl="/experiments/nba-live" />
 	</div>
 </section>
 
@@ -118,13 +134,19 @@
 <!-- Game Selector -->
 <section class="games-section">
 	<div class="container">
-		<h2 class="section-label">Today's Games</h2>
+		<h2 class="section-label">{isToday ? "Today's Games" : 'Games'}</h2>
 
 		{#if data.error}
 			<div class="error-state">
 				<AlertCircle size={24} />
-				<p class="error-message">We couldn't load today's games.</p>
-				<p class="error-hint">The NBA data feed may be temporarily unavailable. Check back in a few minutes.</p>
+				<p class="error-message">We couldn't load {isToday ? "today's" : 'these'} games.</p>
+				<p class="error-hint">
+					{#if isToday}
+						The NBA data feed may be temporarily unavailable. Check back in a few minutes.
+					{:else}
+						Data for this date may not be available yet, or the feed may be temporarily down.
+					{/if}
+				</p>
 			</div>
 		{:else}
 			<GameSelector
@@ -172,7 +194,7 @@
 			<div class="analysis-grid">
 				{#each analysisOptions as option}
 					<a
-						href="/experiments/nba-live/{option.slug}?gameId={selectedGame.id}"
+						href="/experiments/nba-live/{option.slug}?gameId={selectedGame.id}&date={data.currentDate}"
 						class="analysis-card"
 					>
 						<div class="card-header">
@@ -194,13 +216,19 @@
 {#if finalCount > 0}
 	<section class="insights-link-section">
 		<div class="container">
-			<a href="/experiments/nba-live/league-insights" class="insights-link-card">
+			<a
+				href="/experiments/nba-live/league-insights?date={data.currentDate}"
+				class="insights-link-card"
+			>
 				<div class="insights-link-header">
 					<TrendingUp size={20} class="insights-link-icon" />
 					<h3 class="insights-link-title">League Insights</h3>
 				</div>
 				<p class="insights-link-description">
-					See league-wide trends from today's {finalCount} completed {finalCount === 1 ? 'game' : 'games'}.
+					See league-wide trends from {isToday ? "today's" : "this date's"} {finalCount} completed {finalCount ===
+					1
+						? 'game'
+						: 'games'}.
 					Ball movement correlation, competitive balance, and more.
 				</p>
 				<span class="insights-link-action">
@@ -261,6 +289,11 @@
 		color: var(--color-fg-secondary);
 		line-height: 1.6;
 		max-width: 40rem;
+	}
+
+	/* Date Navigation (Tufte: prominent but minimal) */
+	.date-section {
+		padding-bottom: var(--space-md);
 	}
 
 	/* Status Bar */

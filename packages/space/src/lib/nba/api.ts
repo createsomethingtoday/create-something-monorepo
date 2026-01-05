@@ -202,15 +202,18 @@ function determineShotZone(x: number, y: number, distance: number): ShotZone {
 // ============================================
 
 /**
- * Fetch today's games
+ * Fetch games for a specific date
+ * @param date - YYYY-MM-DD format (defaults to today)
  */
-export async function fetchLiveGames(): Promise<NBAApiResult<Game[]>> {
+export async function fetchLiveGames(date?: string): Promise<NBAApiResult<Game[]>> {
 	const correlationId = generateCorrelationId();
-	const result = await fetchWithTimeout<NBAScoreboardResponse>(`${NBA_PROXY_URL}/games/today`);
+	const endpoint = date ? `/games/${date}` : '/games/today';
+	const result = await fetchWithTimeout<NBAScoreboardResponse>(`${NBA_PROXY_URL}${endpoint}`);
 
 	if (!result.success) {
 		console.error('[fetchLiveGames] Failed to fetch games', {
 			correlationId,
+			date: date || 'today',
 			error: result.error
 		});
 		return result;
@@ -244,6 +247,7 @@ export async function fetchLiveGames(): Promise<NBAApiResult<Game[]>> {
 
 		console.log('[fetchLiveGames] Successfully fetched games', {
 			correlationId,
+			date: date || 'today',
 			gameCount: games.length,
 			live: games.filter(g => g.status === 'live').length,
 			final: games.filter(g => g.status === 'final').length
