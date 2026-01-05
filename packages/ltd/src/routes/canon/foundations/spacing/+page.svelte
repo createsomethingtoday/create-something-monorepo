@@ -55,17 +55,17 @@
 	<p class="eyebrow">Foundations</p>
 	<h1>Spacing</h1>
 	<p class="lead">
-		A spacing scale built on the golden ratio (φ = 1.618), creating natural rhythm and
-		proportion across all layouts.
+		Seven spacing values that work together. Based on the golden ratio, so 
+		your padding, margins, and gaps always feel proportional.
 	</p>
 </header>
 
 <!-- Philosophy -->
 <section class="section">
-	<h2>The Scale</h2>
+	<h2>How the scale works</h2>
 	<p>
-		Each step multiplies or divides by φ. Starting from 1rem (base), larger values multiply
-		upward; smaller values divide downward. The result is spacing that relates harmoniously.
+		Start with 1rem as your base. Multiply by 1.618 for larger spaces, divide for smaller. 
+		Adjacent elements look balanced because they share the same underlying ratio.
 	</p>
 
 	<div class="phi-scale">
@@ -87,7 +87,7 @@
 <section class="section">
 	<h2>Spacing Tokens</h2>
 	<p class="section-description">
-		Use these tokens for padding, margins, gaps, and any spatial relationships.
+		Copy these into your CSS for padding, margins, and gaps. The visual shows actual size.
 	</p>
 
 	<div class="spacing-grid">

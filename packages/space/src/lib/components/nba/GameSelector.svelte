@@ -3,10 +3,11 @@
 	 * GameSelector Component
 	 *
 	 * Displays today's NBA games as selectable cards.
-	 * Used on the NBA Live experiment landing page.
+	 * Tufte principle: show the data upfront, minimal decoration.
 	 */
 
 	import type { Game } from '$lib/nba/types';
+	import { Radio, Clock, CheckCircle } from 'lucide-svelte';
 
 	interface Props {
 		games: Game[];
@@ -15,32 +16,6 @@
 	}
 
 	let { games, selectedGameId, onselect }: Props = $props();
-
-	function getStatusLabel(status: Game['status']): string {
-		switch (status) {
-			case 'live':
-				return 'LIVE';
-			case 'final':
-				return 'FINAL';
-			case 'scheduled':
-				return 'SCHEDULED';
-			default:
-				return status.toUpperCase();
-		}
-	}
-
-	function getStatusClass(status: Game['status']): string {
-		switch (status) {
-			case 'live':
-				return 'status-live';
-			case 'final':
-				return 'status-final';
-			case 'scheduled':
-				return 'status-scheduled';
-			default:
-				return '';
-		}
-	}
 
 	function formatGameClock(game: Game): string {
 		if (game.status === 'scheduled') {
@@ -56,8 +31,9 @@
 
 {#if games.length === 0}
 	<div class="empty-state">
+		<Clock size={24} />
 		<p class="empty-text">No games scheduled for today</p>
-		<p class="empty-subtext">Check back later or explore historical data</p>
+		<p class="empty-subtext">Check back later for the next slate</p>
 	</div>
 {:else}
 	<div class="games-grid">
@@ -65,163 +41,150 @@
 			<button
 				class="game-card"
 				class:selected={selectedGameId === game.id}
+				class:live={game.status === 'live'}
 				onclick={() => onselect?.(game)}
 			>
 				<div class="game-header">
-					<span class="status-badge {getStatusClass(game.status)}">
-						{getStatusLabel(game.status)}
+					<span class="status-indicator">
+						{#if game.status === 'live'}
+							<Radio size={14} class="status-icon status-icon--live" />
+							<span class="status-label status-label--live">Live</span>
+						{:else if game.status === 'final'}
+							<CheckCircle size={14} class="status-icon" />
+							<span class="status-label">Final</span>
+						{:else}
+							<Clock size={14} class="status-icon" />
+							<span class="status-label">{formatGameClock(game)}</span>
+						{/if}
 					</span>
-					<span class="game-clock">{formatGameClock(game)}</span>
 				</div>
 
-				<div class="teams-container">
-					<div class="team away">
-						<span class="team-abbr">{game.awayTeam.abbreviation}</span>
-						<span class="team-score">{game.awayScore}</span>
-					</div>
-					<span class="vs-divider">@</span>
-					<div class="team home">
-						<span class="team-score">{game.homeScore}</span>
-						<span class="team-abbr">{game.homeTeam.abbreviation}</span>
-					</div>
+				<div class="matchup">
+					<span class="team-abbr">{game.awayTeam.abbreviation}</span>
+					<span class="score">{game.awayScore}</span>
+					<span class="at">@</span>
+					<span class="score">{game.homeScore}</span>
+					<span class="team-abbr">{game.homeTeam.abbreviation}</span>
 				</div>
 
-				<div class="game-footer">
-					<span class="arena-name">{game.arena}</span>
-				</div>
+				{#if game.status === 'live' && game.gameClock}
+					<div class="game-clock">Q{game.quarter} · {game.gameClock}</div>
+				{/if}
 			</button>
 		{/each}
 	</div>
 {/if}
 
 <style>
+	/* Empty state */
 	.empty-state {
 		text-align: center;
 		padding: var(--space-xl) var(--space-md);
+		color: var(--color-fg-muted);
+	}
+
+	.empty-state :global(svg) {
+		margin-bottom: var(--space-sm);
 	}
 
 	.empty-text {
 		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
 		margin-bottom: var(--space-xs);
 	}
 
 	.empty-subtext {
-		color: var(--color-fg-muted);
 		font-size: var(--text-body-sm);
 	}
 
+	/* Grid */
 	.games-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: var(--space-md);
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		gap: var(--space-sm);
 	}
 
+	/* Card */
 	.game-card {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		border-radius: var(--radius-md);
+		padding: var(--space-sm) var(--space-md);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: border-color var(--duration-micro) var(--ease-standard);
 		text-align: left;
 		width: 100%;
 	}
 
 	.game-card:hover {
 		border-color: var(--color-border-emphasis);
-		background: var(--color-hover);
 	}
 
 	.game-card.selected {
 		border-color: var(--color-fg-primary);
-		background: var(--color-active);
 	}
 
+	.game-card.live {
+		border-left: 3px solid var(--color-success);
+	}
+
+	/* Header */
 	.game-header {
+		margin-bottom: var(--space-xs);
+	}
+
+	.status-indicator {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		margin-bottom: var(--space-sm);
+		gap: var(--space-xs);
 	}
 
-	.status-badge {
-		font-size: var(--text-caption);
-		font-weight: 600;
-		padding: 0.25rem 0.5rem;
-		border-radius: var(--radius-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.status-live {
-		background: var(--color-error-muted);
-		color: var(--color-error);
-	}
-
-	.status-final {
-		background: var(--color-bg-subtle);
+	.game-card :global(.status-icon) {
 		color: var(--color-fg-muted);
 	}
 
-	.status-scheduled {
-		background: var(--color-info-muted);
-		color: var(--color-info);
+	.game-card :global(.status-icon--live) {
+		color: var(--color-success);
 	}
 
-	.game-clock {
-		font-size: var(--text-body-sm);
+	.status-label {
+		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
+	}
+
+	.status-label--live {
+		color: var(--color-success);
+		font-weight: 500;
+	}
+
+	/* Matchup (Tufte: data-ink ratio) */
+	.matchup {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-xs);
 		font-variant-numeric: tabular-nums;
-	}
-
-	.teams-container {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: var(--space-sm) 0;
-	}
-
-	.team {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-	}
-
-	.team.away {
-		flex-direction: row;
-	}
-
-	.team.home {
-		flex-direction: row;
 	}
 
 	.team-abbr {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-body);
 		font-weight: 600;
 		color: var(--color-fg-primary);
 	}
 
-	.team-score {
+	.score {
 		font-size: var(--text-h3);
 		font-weight: 700;
-		color: var(--color-fg-primary);
-		font-variant-numeric: tabular-nums;
+		color: var(--color-fg-secondary);
 	}
 
-	.vs-divider {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
-	}
-
-	.game-footer {
-		margin-top: var(--space-sm);
-		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.arena-name {
+	.at {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	/* Game clock */
+	.game-clock {
+		font-size: var(--text-caption);
+		color: var(--color-success);
+		margin-top: var(--space-xs);
 	}
 </style>

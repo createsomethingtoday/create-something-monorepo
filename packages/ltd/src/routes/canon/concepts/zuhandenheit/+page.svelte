@@ -15,204 +15,160 @@
 	<span class="concept-label">Concept</span>
 	<h1 class="concept-title">Zuhandenheit</h1>
 	<p class="concept-pronunciation">/ˈtsuːhandn̩haɪt/</p>
-	<p class="concept-translation">German: "Ready-to-hand" (literally: "to-hand-ness")</p>
+	<p class="concept-translation">German: "Ready-to-hand" — when tools disappear into use</p>
 </header>
 
 <section class="concept-section">
-	<h2>Definition</h2>
-	<blockquote class="definition-block">
-		<p>
-			The mode of being in which tools recede into transparent use. When working well,
-			the hammer disappears—only the hammering remains. The tool is not noticed; the work
-			is accomplished. This is the goal of all Canon design: infrastructure that disappears,
-			leaving only the work.
-		</p>
+	<h2>The Test</h2>
+	<blockquote class="test-block">
+		<p>"Does this get out of the way, or demand attention?"</p>
 	</blockquote>
-</section>
-
-<section class="concept-section">
-	<h2>Origin</h2>
 	<p>
-		Martin Heidegger introduced <em>Zuhandenheit</em> in <em>Being and Time</em> (1927) as
-		part of his phenomenological analysis of everyday existence. For Heidegger, we don't
-		primarily encounter things as objects to be studied (present-at-hand) but as equipment
-		to be used (ready-to-hand).
-	</p>
-	<p>
-		The carpenter doesn't think about the hammer—she thinks about the nail. The hammer
-		withdraws into the act of hammering. Only when the hammer breaks or proves too heavy
-		does it become an object of attention. This withdrawal-into-use is Zuhandenheit.
+		If people notice the design, something's wrong. Success means the work gets done and the tool is forgotten.
 	</p>
 </section>
 
 <section class="concept-section">
-	<h2>In Canon</h2>
+	<h2>What It Means</h2>
 	<p>
-		Zuhandenheit is the design criterion for every Canon decision:
+		Think about using a hammer. When it works well, you don't think about the hammer—you think about the nail. The tool disappears from your awareness.
+	</p>
+	<p>
+		Only when the hammer breaks or feels too heavy do you suddenly notice it. That shift from invisible to visible is what we're trying to prevent. Good design means infrastructure that disappears, leaving only the work.
+	</p>
+</section>
+
+<section class="concept-section">
+	<h2>Where You'll See This</h2>
+	<p>
+		This guides every Canon design decision:
 	</p>
 
 	<div class="manifestation-grid">
 		<div class="manifestation">
 			<h3>Infrastructure</h3>
 			<p>
-				Cloudflare Workers, D1 databases, KV stores—all should be invisible during normal
-				operation. When deployment works, you don't think about deployment.
+				When deployment works, you don't think about deployment. Cloudflare Workers, databases, storage—all invisible during normal use.
 			</p>
 		</div>
 
 		<div class="manifestation">
 			<h3>Components</h3>
 			<p>
-				A button that requires thought about styling has failed. Canon components should
-				be used without consulting documentation for basic operations.
+				If a button makes you think about styling, it's failed. Canon components work without checking documentation.
 			</p>
 		</div>
 
 		<div class="manifestation">
 			<h3>AI Partnership</h3>
 			<p>
-				Claude Code at its best is not noticed. The code appears; the commit happens;
-				the deployment succeeds. The tool recedes; the work remains.
+				At its best, you don't notice Claude Code. The code appears, the commit happens, the deployment succeeds. Just the work remains.
 			</p>
 		</div>
 
 		<div class="manifestation">
 			<h3>Motion</h3>
 			<p>
-				Animation that draws attention to itself has failed. Motion should guide attention,
-				not demand it. 200ms, one easing curve, purposeful transitions.
+				Animation that draws attention has failed. Motion should guide your eye, not demand your focus.
 			</p>
 		</div>
 	</div>
 </section>
 
 <section class="concept-section">
-	<h2>Zuhandenheit vs. Vorhandenheit</h2>
+	<h2>Working vs. Broken</h2>
 	<p>
-		These two modes form a complementary pair:
+		Two states. One is success, one signals failure:
 	</p>
 
 	<div class="comparison-table">
 		<div class="mode ready">
 			<h3>Zuhandenheit</h3>
-			<p class="mode-translation">Ready-to-hand</p>
+			<p class="mode-translation">Ready-to-hand (working)</p>
 			<ul>
-				<li>Tool withdraws into use</li>
-				<li>Engaged, practical involvement</li>
-				<li>The work matters, not the tool</li>
-				<li>Primordial mode of being</li>
-				<li>Success state</li>
+				<li>Tool fades into background</li>
+				<li>You focus on the work</li>
+				<li>The tool is invisible</li>
+				<li>This is the goal</li>
 			</ul>
 		</div>
 		<div class="mode present">
 			<h3>Vorhandenheit</h3>
-			<p class="mode-translation">Present-at-hand</p>
+			<p class="mode-translation">Present-at-hand (broken)</p>
 			<ul>
-				<li>Tool becomes object of attention</li>
-				<li>Detached, theoretical observation</li>
-				<li>The tool matters, not the work</li>
-				<li>Derived mode (from breakdown)</li>
-				<li>Failure state (in design)</li>
+				<li>Tool demands attention</li>
+				<li>You focus on the tool</li>
+				<li>Something went wrong</li>
+				<li>Failure reveals hidden assumptions</li>
 			</ul>
 		</div>
 	</div>
 
 	<p>
-		Heidegger argued that Western philosophy overvalued Vorhandenheit—treating everything
-		as objects for detached study. But our primary relationship with the world is
-		Zuhandenheit: engaged, practical, tool-using. Canon design returns us to this primordial
-		mode.
+		When you notice the tool, you've shifted from ready-to-hand to present-at-hand. The breakdown shows you what was hidden.
 	</p>
 </section>
 
 <section class="concept-section">
-	<h2>Breakdown and Repair</h2>
+	<h2>Three Ways Tools Break Down</h2>
 	<p>
-		Zuhandenheit reveals itself through its absence. When a tool breaks, becomes missing,
-		or proves unsuitable, it shifts from ready-to-hand to present-at-hand. We suddenly
-		notice what was previously invisible.
-	</p>
-	<p>
-		Canon treats breakdowns as information:
+		Breakdowns are useful—they reveal what you couldn't see before:
 	</p>
 
 	<ul class="breakdown-list">
 		<li>
-			<strong>Conspicuousness</strong> — The tool breaks. A component throws an error.
-			This reveals dependencies we hadn't noticed.
+			<strong>It breaks</strong> — A component throws an error. Now you see the dependencies you forgot about.
 		</li>
 		<li>
-			<strong>Obtrusiveness</strong> — The tool is missing. A feature we assumed exists
-			doesn't. This reveals our assumptions.
+			<strong>It's missing</strong> — You reach for a feature that doesn't exist. Now you see your assumptions.
 		</li>
 		<li>
-			<strong>Obstinacy</strong> — The tool doesn't fit. The component doesn't match the
-			use case. This reveals the gap between design and reality.
+			<strong>It doesn't fit</strong> — The component exists but doesn't match your needs. Now you see the gap between design and reality.
 		</li>
 	</ul>
 
 	<p>
-		The goal of repair is not just to fix the tool but to restore Zuhandenheit—to make
-		the tool disappear again into transparent use.
+		The goal: fix it so the tool disappears again. See <a href="/patterns/breakdown-and-repair">Breakdown and Repair</a> for more.
 	</p>
 </section>
 
 <section class="concept-section">
-	<h2>The Zuhandenheit Test</h2>
+	<h2>What Gets in the Way</h2>
 	<p>
-		When evaluating any design decision, ask:
-	</p>
-
-	<blockquote class="test-block">
-		<p>"Does this recede into use, or demand attention?"</p>
-	</blockquote>
-
-	<p>
-		If users notice the design, the tool, the infrastructure—something has failed.
-		Success is invisibility. The work gets done; the means are forgotten.
-	</p>
-</section>
-
-<section class="concept-section">
-	<h2>Anti-Patterns</h2>
-	<p>
-		What prevents Zuhandenheit:
+		These patterns break transparent use:
 	</p>
 
 	<ul class="antipattern-list">
 		<li>
-			<strong>Decorative complexity</strong> — Animation that seeks attention. UI flourishes
-			that have no function. Every ornament is a small breakdown.
+			<strong>Decorative complexity</strong> — Animations that show off. UI flourishes with no purpose. Every ornament is a tiny breakdown.
 		</li>
 		<li>
-			<strong>Cognitive load</strong> — Documentation required for basic use. Options that
-			demand decisions. Every question is a moment of presence-at-hand.
+			<strong>Cognitive load</strong> — Needing documentation for basic tasks. Too many options demanding decisions.
 		</li>
 		<li>
-			<strong>Inconsistency</strong> — Different patterns in different places. The user
-			must think about which pattern applies here.
+			<strong>Inconsistency</strong> — Different patterns in different places. You have to stop and think: which one applies here?
 		</li>
 		<li>
-			<strong>Unreliability</strong> — Tools that sometimes work. Intermittent failure
-			creates perpetual anxiety—the tool never fully recedes.
+			<strong>Unreliability</strong> — Tools that sometimes work. When you can't trust it, you're always watching it.
 		</li>
 	</ul>
 </section>
 
 <section class="concept-section references">
-	<h2>References</h2>
+	<h2>The Philosophy</h2>
+	<p>
+		Martin Heidegger introduced <em>Zuhandenheit</em> (ready-to-hand) in <em>Being and Time</em> (1927). His insight: we don't first encounter things as objects to study—we encounter them as equipment to use. The theoretical view comes later, usually after something breaks.
+	</p>
+	<h3>Further Reading</h3>
 	<ul class="reference-list">
 		<li>
-			Heidegger, Martin. <em>Being and Time</em>. Trans. Macquarrie & Robinson. New York: Harper & Row, 1962. §15-18.
+			Heidegger, Martin. <em>Being and Time</em>. Trans. Macquarrie & Robinson. Harper & Row, 1962. §15-18.
 		</li>
 		<li>
-			Dreyfus, Hubert. <em>Being-in-the-World: A Commentary on Heidegger's Being and Time, Division I</em>. MIT Press, 1991.
+			Dreyfus, Hubert. <em>Being-in-the-World</em>. MIT Press, 1991.
 		</li>
 		<li>
 			<a href="/canon/concepts/vorhandenheit">Canon Concept: Vorhandenheit</a>
-		</li>
-		<li>
-			<a href="/canon/foundations/philosophy">Canon Foundations: Philosophy</a>
 		</li>
 		<li>
 			<a href="/patterns/breakdown-and-repair">Pattern: Breakdown and Repair</a>

@@ -2,16 +2,16 @@
 	/**
 	 * Hero Section for createsomething.io
 	 *
-	 * Showcases the ontological distinction between:
-	 *   - Experiments (Zuhandenheit) → Engaged practice, reader as participant
-	 *   - Papers (Vorhandenheit) → Detached analysis, reader as observer
+	 * Two paths to the same understanding:
+	 *   - Experiments: Try it yourself, see what happens
+	 *   - Papers: Read the analysis, understand the patterns
 	 *
-	 * Both paths lead to understanding; the difference is in HOW you engage.
+	 * The distinction is practical: some people learn by doing, others by reading.
+	 * Both lead to the same insights.
 	 *
-	 * VISUAL DISTINCTION (Heideggerian Alignment):
-	 * The two cards should not just describe but EMBODY their ontological character:
-	 *   - Experiments: Prominent lift, warmer hover, participatory engagement
-	 *   - Papers: Subtle shift, cooler interaction, observational stance
+	 * VISUAL DISTINCTION:
+	 *   - Experiments: More interactive hover (you're going to DO something)
+	 *   - Papers: Subtle hover (you're going to READ something)
 	 */
 </script>
 
@@ -24,13 +24,13 @@
 
 		<!-- Main Headline -->
 		<h1 class="headline animate-reveal" style="--delay: 1">
-			Systems Thinking for AI-Native Development
+			AI Development Research with Real Data
 		</h1>
 
 		<!-- Subheadline -->
 		<p class="subheadline animate-reveal" style="--delay: 2">
-			Research with tracked experiments and rigorous methodology.
-			Each piece documents what was built, measured results, and honest learnings.
+			47 tracked experiments. 15 research papers. Every piece shows what was built,
+			how long it took, what it cost, and what actually worked.
 		</p>
 
 		<!-- The Two Paths -->
@@ -43,10 +43,10 @@
 					</svg>
 				</div>
 				<h2 class="path-title">Experiments</h2>
-				<p class="path-mode">Zuhandenheit</p>
+				<p class="path-mode">Try it yourself</p>
 				<p class="path-description">
-					Engaged practice. Interactive demonstrations where tools recede into use.
-					You participate; patterns emerge through doing.
+					Interactive demonstrations you can run. Build something, see the results,
+					learn by doing. Each experiment tracks time, cost, and outcomes.
 				</p>
 				<span class="path-cta">
 					Explore Experiments
@@ -69,10 +69,10 @@
 					</svg>
 				</div>
 				<h2 class="path-title">Papers</h2>
-				<p class="path-mode">Vorhandenheit</p>
+				<p class="path-mode">Read the analysis</p>
 				<p class="path-description">
-					Detached analysis. Theoretical grounding where concepts are examined.
-					You observe; understanding deepens through reflection.
+					Research papers with methodology, data, and conclusions. Each paper
+					documents what we tested, what we found, and what it means.
 				</p>
 				<span class="path-cta">
 					Read Papers
@@ -83,10 +83,9 @@
 			</a>
 		</div>
 
-		<!-- Hermeneutic Circle Note -->
+		<!-- Connection Note -->
 		<p class="hermeneutic-note animate-reveal" style="--delay: 4">
-			Both paths connect. Experiments test what papers theorize. Papers ground what experiments reveal.
-			<span class="note-label">— The Hermeneutic Circle</span>
+			Both paths connect. Experiments test what papers theorize. Papers explain what experiments reveal.
 		</p>
 	</div>
 </section>

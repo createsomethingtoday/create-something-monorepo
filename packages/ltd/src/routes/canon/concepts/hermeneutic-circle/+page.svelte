@@ -15,39 +15,28 @@
 	<span class="concept-label">Concept</span>
 	<h1 class="concept-title">Hermeneutic Circle</h1>
 	<p class="concept-pronunciation">/ˌhɜːrməˈnjuːtɪk/</p>
-	<p class="concept-translation">From Greek: "interpretation" — the art of understanding</p>
+	<p class="concept-translation">From Greek "interpretation" — understanding through parts and whole</p>
 </header>
 
 <section class="concept-section">
-	<h2>Definition</h2>
+	<h2>What It Means</h2>
 	<blockquote class="definition-block">
 		<p>
-			The interpretive principle that understanding emerges through the recursive relationship
-			between parts and whole. We understand sentences through words, yet understand words
-			through sentences. Neither is prior; understanding emerges through iteration. In Canon,
-			the hermeneutic circle describes how CREATE SOMETHING's properties inform each other:
-			philosophy informs practice, practice tests philosophy, and the system evolves.
+			You understand sentences through words, and words through sentences. Neither comes first—meaning emerges through going back and forth. At CREATE SOMETHING, this describes how our properties work together: philosophy shapes practice, practice tests philosophy, and the whole system evolves.
 		</p>
 	</blockquote>
 </section>
 
 <section class="concept-section">
-	<h2>Origin</h2>
+	<h2>Where It Comes From</h2>
 	<p>
-		The concept originates in biblical interpretation—understanding a passage requires
-		understanding the whole text, yet understanding the whole requires understanding passages.
-		Friedrich Schleiermacher formalized this as a methodological principle.
+		This started with interpreting religious texts—you need the whole book to understand a verse, but you need verses to understand the book. Friedrich Schleiermacher turned this into a formal method.
 	</p>
 	<p>
-		Heidegger transformed it from methodology to ontology in <em>Being and Time</em> (1927).
-		The circle is not a problem to escape but the structure of understanding itself. We always
-		already have some understanding (fore-understanding) that shapes what we can see. The
-		circle is not vicious but productive—each iteration deepens comprehension.
+		Heidegger took it further in <em>Being and Time</em> (1927). For him, the circle isn't a problem to solve—it's how understanding works. We always bring assumptions that shape what we see. Each pass through the circle deepens what we know.
 	</p>
 	<p>
-		Gadamer extended this in <em>Truth and Method</em> (1960), emphasizing that understanding
-		is always situated, historical, and dialogical. We bring our horizon to the text; the text
-		expands our horizon. Understanding is not reproduction but fusion.
+		Gadamer built on this in <em>Truth and Method</em> (1960): understanding is always shaped by context and history. You bring your perspective to a text; the text expands your perspective. Understanding isn't copying—it's transformation.
 	</p>
 </section>
 

@@ -10,15 +10,10 @@
 	import type { Game } from '$lib/nba/types';
 	import GameSelector from '$lib/components/nba/GameSelector.svelte';
 	import GameHighlightCard from '$lib/components/nba/GameHighlightCard.svelte';
-	import DatePicker from '$lib/components/nba/DatePicker.svelte';
 	import { selectGameOfTheNight } from '$lib/nba/calculations';
 	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle, TrendingUp } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
-
-	// Check if viewing today
-	const today = new Date().toISOString().split('T')[0];
-	const isToday = $derived(data.currentDate === today);
 
 	let selectedGame = $state<Game | null>(null);
 
@@ -70,19 +65,8 @@
 		<p class="category">Experiment</p>
 		<h1 class="title">NBA Live Analytics</h1>
 		<p class="subtitle">
-			{#if isToday}
-				Watch how players work together, defend their matchups, and create scoring opportunities—updated every 30 seconds during live games.
-			{:else}
-				See how players worked together, defended their matchups, and created scoring opportunities in past games.
-			{/if}
+			Watch how players work together, defend their matchups, and create scoring opportunities—updated every 30 seconds during live games.
 		</p>
-	</div>
-</section>
-
-<!-- Date Navigation (Tufte: show the data upfront) -->
-<section class="date-section">
-	<div class="container">
-		<DatePicker currentDate={data.currentDate} baseUrl="/experiments/nba-live" />
 	</div>
 </section>
 
@@ -194,7 +178,7 @@
 			<div class="analysis-grid">
 				{#each analysisOptions as option}
 					<a
-						href="/experiments/nba-live/{option.slug}?gameId={selectedGame.id}&date={data.currentDate}"
+						href="/experiments/nba-live/{option.slug}?gameId={selectedGame.id}"
 						class="analysis-card"
 					>
 						<div class="card-header">

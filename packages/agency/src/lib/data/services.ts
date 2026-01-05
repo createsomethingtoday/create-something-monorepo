@@ -56,7 +56,7 @@ export const services: Service[] = [
 		id: 'web-development',
 		title: 'Web Development',
 		description:
-			"Production-ready web platforms built on proven patterns. We ship fast because we've solved these problems before—now we unify them into your codebase.",
+			'3 weeks to production. Sub-100ms response times. Edge-deployed, zero maintenance. Sites that ship fast because we use patterns that already work.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
@@ -74,7 +74,7 @@ export const services: Service[] = [
 		],
 
 		howItWorks: [
-			'CREATE SOMETHING component library (production-proven)',
+			'Production-proven component library',
 			'Type-safe TypeScript throughout',
 			'Cloudflare Pages deployment (global edge)',
 			'Automation opportunity assessment included'
@@ -97,7 +97,7 @@ export const services: Service[] = [
 		id: 'automation',
 		title: 'AI Automation Systems',
 		description:
-			'Intelligent systems that eliminate manual work. Not chatbots—actual automation that processes data, makes decisions, and integrates with your existing tools.',
+			'60-70% time savings on manual work. 120 hours/week of research became automated. Not chatbots—systems that process data, make decisions, and talk to your tools.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
@@ -138,7 +138,7 @@ export const services: Service[] = [
 		id: 'agentic-systems',
 		title: 'Agentic Systems Engineering',
 		description:
-			'Long-running AI workflows that coordinate across hours or days. The system handles complexity; you handle strategy.',
+			'155 scripts became 13. 92% cost reduction. Long-running AI that makes decisions while you sleep—the system handles complexity, you handle strategy.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -179,7 +179,7 @@ export const services: Service[] = [
 		id: 'partnership',
 		title: 'Ongoing Systems Partnership',
 		description:
-			"Continuous evolution of your AI infrastructure. We maintain what we build, optimize what's running, and develop new automation monthly.",
+			'2-4 new automation features per month. 4-hour response time. We maintain what we build, optimize what runs, and ship new capabilities monthly.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -200,7 +200,7 @@ export const services: Service[] = [
 			'System maintenance and monitoring',
 			'Performance optimization (speed + cost)',
 			'New automation development (2-4 features/month)',
-			'Research collaboration (your systems → .io papers)'
+			'Research collaboration (your systems become case studies)'
 		],
 
 		proof: {
@@ -220,7 +220,7 @@ export const services: Service[] = [
 		id: 'transformation',
 		title: 'AI-Native Transformation',
 		description:
-			'Teach your team to build what we build. Hands-on training, guided projects, and internal playbook development.',
+			'Your team builds AI systems in 90 days. Hands-on training, a guided project shipped to production, and an internal playbook you keep.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -261,7 +261,7 @@ export const services: Service[] = [
 		id: 'advisory',
 		title: 'Strategic Advisory',
 		description:
-			'Quarterly strategic planning and architecture review. Philosophy-driven guidance on AI infrastructure decisions.',
+			'Monthly office hours. Quarterly architecture reviews. Priority support with 4-hour response. External perspective on your AI roadmap.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -282,13 +282,13 @@ export const services: Service[] = [
 			'Quarterly strategic planning sessions',
 			'Architecture review of your systems',
 			'Performance optimization guidance',
-			'Pre-publication access to .io research'
+			'Pre-publication access to research'
 		],
 
 		proof: {
 			caseStudy: '/work/kickstand',
 			name: 'Kickstand',
-			headline: 'Philosophy eliminates decision paralysis',
+			headline: 'Clear roadmap eliminates decision paralysis',
 			stats: ['Quarterly reports', 'Monthly office hours', 'Priority support']
 		},
 
@@ -312,7 +312,7 @@ export const products: Service[] = [
 		id: 'ai-readiness-assessment',
 		title: 'AI Readiness Assessment',
 		description:
-			'Discover where AI can create the most impact in your workflow. Three questions that reveal your starting point on the Subtractive Triad.',
+			'3 minutes to know where to start. Three questions, instant recommendation, no signup required.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
@@ -328,7 +328,7 @@ export const products: Service[] = [
 		],
 		howItWorks: [
 			'3-minute interactive assessment',
-			'Maps your situation to the Subtractive Triad',
+			'Maps your situation to your biggest opportunity',
 			'Personalized recommendation based on responses',
 			'Optional consultation pathway if complexity warrants'
 		],
@@ -348,14 +348,14 @@ export const products: Service[] = [
 		id: 'triad-audit-template',
 		title: 'Triad Audit Template',
 		description:
-			'The same framework we use internally to evaluate automation opportunities. Apply DRY → Rams → Heidegger to your own systems.',
+			'The exact framework behind the 155→13 script reduction. 1 hour to evaluate your systems for automation potential.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
 		whenToUse: [
 			'You want to evaluate your own systems for automation potential',
 			'Your team needs a shared vocabulary for AI decisions',
-			'You prefer DIY with philosophical grounding'
+			'You prefer DIY with a proven framework'
 		],
 		whatThisRemoves: [
 			'Ad-hoc automation decisions without framework',
@@ -364,14 +364,14 @@ export const products: Service[] = [
 		],
 		howItWorks: [
 			'Downloadable audit template (Markdown)',
-			'Step-by-step Subtractive Triad walkthrough',
-			'Example applications from real projects',
+			'Step-by-step walkthrough with real examples',
+			'Case study from Kickstand (155→13 scripts)',
 			'Integration with Claude Code via skill file'
 		],
 		proof: {
 			caseStudy: 'https://createsomething.io/papers/kickstand-triad-audit',
 			name: 'Kickstand Triad Audit',
-			headline: 'The framework behind CREATE SOMETHING methodology',
+			headline: 'The framework behind 92% script reduction',
 			stats: ['3-level audit', 'Production-tested', 'Open methodology']
 		},
 		pricing: 'Free',
@@ -384,19 +384,19 @@ export const products: Service[] = [
 		id: 'canon-css-starter',
 		title: 'Canon CSS Starter',
 		description:
-			"The design tokens powering all CREATE SOMETHING properties. Dieter Rams' principles encoded as CSS custom properties.",
+			'5 minutes to consistent design. WCAG AA compliant, golden ratio spacing, the same tokens powering 4 production sites.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
 		whenToUse: [
 			'You want a minimal, principled CSS foundation',
-			"You appreciate Rams' \"less, but better\" philosophy",
-			'You need consistent tokens across projects'
+			'You need consistent tokens across projects',
+			'You prefer established patterns over starting from scratch'
 		],
 		whatThisRemoves: [
 			'Decision fatigue over color/spacing/typography',
 			'Inconsistent visual language across projects',
-			'Arbitrary design choices without philosophical grounding'
+			'Arbitrary design choices that drift over time'
 		],
 		howItWorks: [
 			'npm install @create-something/components',
@@ -421,7 +421,7 @@ export const products: Service[] = [
 		id: 'vertical-templates',
 		title: 'Vertical Templates',
 		description:
-			'Industry-specific website templates with built-in lead capture. Deploy to Cloudflare in minutes, customize with Canon design system.',
+			'Professional website deployed same day. Built-in lead capture, analytics, and edge hosting. No dev time, no maintenance.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
@@ -485,7 +485,7 @@ export const products: Service[] = [
 		id: 'automation-patterns',
 		title: 'Automation Patterns Pack',
 		description:
-			'Skip 20 hours of pattern discovery. The same automation playbook I use with fractional CTO clients—now for solo builders.',
+			'Skip 20 hours of research. 10 copy-paste patterns, 3 Claude Code skills, shell scripts that work immediately. Used across 10+ client engagements.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
@@ -521,7 +521,7 @@ export const products: Service[] = [
 		id: 'agent-in-a-box',
 		title: 'Agent-in-a-Box Kit',
 		description:
-			'Complete AI development environment. WezTerm, Claude Code, Beads, MCP servers—all configured and ready. 90 days of onboarding support.',
+			'The exact setup behind the 155→13 script reduction. One command to install. 90 days of weekly office hours. Start shipping in an hour.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',

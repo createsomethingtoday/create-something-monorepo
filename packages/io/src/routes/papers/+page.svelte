@@ -2,14 +2,8 @@
 	/**
 	 * Research Papers Index
 	 *
-	 * Displays formal research papers that provide theoretical grounding
-	 * for CREATE SOMETHING's methodology.
-	 *
-	 * Papers = Vorhandenheit (present-at-hand)
-	 *   → Detached analysis, reader as observer
-	 *
-	 * Experiments = Zuhandenheit (ready-to-hand)
-	 *   → Engaged practice, reader as participant
+	 * Papers document what we tested, what we found, and what it means.
+	 * Each paper includes methodology, data, and conclusions you can verify.
 	 */
 
 	let { data } = $props();
@@ -97,7 +91,7 @@
 				{#if isFiltered}
 					{resultCount} of {papers.length} papers
 				{:else}
-					{papers.length} papers — theoretical grounding for AI-native development
+					{papers.length} papers — methodology, data, and conclusions you can verify
 				{/if}
 			</p>
 		</div>

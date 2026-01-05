@@ -8,7 +8,7 @@
 	// Search state
 	let searchQuery = $state('');
 
-	// Master filter state (hermeneutic filtering by philosophical lineage)
+	// Master filter state (filter by design methodology)
 	type MasterFilter = 'all' | 'rams' | 'heidegger' | 'tufte' | 'canon';
 	let masterFilter: MasterFilter = $state('all');
 
@@ -153,7 +153,7 @@
 				</div>
 			</div>
 
-			<!-- Master Filter Chips (Hermeneutic filtering) -->
+			<!-- Filter by Design Methodology -->
 			<div class="flex justify-center">
 				<div class="flex flex-wrap justify-center gap-2">
 					<button
@@ -165,24 +165,28 @@
 					<button
 						onclick={() => masterFilter = 'rams'}
 						class="filter-chip {masterFilter === 'rams' ? 'active' : ''}"
+						title="Dieter Rams - Less, but better"
 					>
-						Rams
+						Minimalism
 					</button>
 					<button
 						onclick={() => masterFilter = 'heidegger'}
 						class="filter-chip {masterFilter === 'heidegger' ? 'active' : ''}"
+						title="Tool transparency - when tools recede into use"
 					>
-						Heidegger
+						Tool Design
 					</button>
 					<button
 						onclick={() => masterFilter = 'tufte'}
 						class="filter-chip {masterFilter === 'tufte' ? 'active' : ''}"
+						title="Edward Tufte - Data visualization"
 					>
-						Tufte
+						Data Viz
 					</button>
 					<button
 						onclick={() => masterFilter = 'canon'}
 						class="filter-chip {masterFilter === 'canon' ? 'active' : ''}"
+						title="CREATE SOMETHING canonical patterns"
 					>
 						Canon
 					</button>

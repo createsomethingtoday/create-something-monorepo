@@ -28,33 +28,33 @@
 					<!-- Core Identity -->
 					<div class="core-identity">
 						<p class="lead-text">
-							CREATE SOMETHING SPACE is a community playground for testing ideas around AI-native development. Fork experiments, break things, learn in public.
+							<strong>What to try:</strong> Pick an experiment. Fork it. Break it. See what you learn.
 						</p>
 
 						<p>
-							This is the experimental layer that sits alongside <a href="https://createsomething.io" class="link">createsomething.io</a> — where the rigorous research happens. While the main site documents tracked experiments with precise metrics, .space is where the community can fork those experiments, try variations, and share learnings.
+							This is where you test ideas before they're ready for <a href="https://createsomething.io" class="link">createsomething.io</a>. The main site tracks experiments with precise metrics. Here, you can fork those experiments, try variations, and figure out what actually works through trial and error.
 						</p>
 
 						<p>
-							Every experiment here feeds back into the research. Your forks, modifications, and results help inform what works in AI-native development. It's a collaborative space for testing what happens when humans and AI build together.
+							Everything you build here feeds back into the research. When you find something interesting—or break something in a useful way—that becomes part of what we collectively know about AI-native development.
 						</p>
 					</div>
 
 					<!-- Philosophy -->
 					<div class="philosophy-card">
-						<h3 class="card-title">How it works</h3>
+						<h3 class="card-title">How to use this space</h3>
 						<p class="card-text">
-							Browse experiments, fork the ones that interest you, modify them however you want, and share what you learn. Break things. Try crazy ideas. Test edge cases. The goal is to collectively understand what works in AI-native development — not through theory, but through actual experimentation with real systems.
+							Browse experiments. Fork one that interests you. Modify it however you want. Share what you learn. There's no pressure to get things right—this is where you test edge cases and try ideas that might not work. The goal is to learn together what actually works when humans and AI build together.
 						</p>
 					</div>
 
 					<!-- Background -->
 					<div class="background-section">
 						<p>
-							I studied at Texas A&M and earned a UI/UX Design Certification from Boulder Digital Arts. My career has taken me through Webflow development, API integrations, marketplace architecture, and now full-time system design at Webflow — always with a focus on automation and developer experience.
+							I've spent my career moving from Webflow development to API integrations to marketplace architecture, now doing full-time system design at Webflow. Texas A&M, UI/UX certification from Boulder Digital Arts. The common thread: automation and developer experience.
 						</p>
 						<p>
-							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration and conversation about systems.
+							Based in Kennedale, Texas. Find me on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> if you want to talk about systems.
 						</p>
 					</div>
 				</div>
@@ -71,7 +71,11 @@
 				</h2>
 
 				<p class="section-text">
-					Community experiments testing AI-native development patterns. Real implementations you can fork, modify, and learn from. Each experiment documents what was tried, what worked, what didn't, and why. No theory — just practical tests of building production systems with AI.
+					Real experiments you can fork and modify. Each one documents what was tried, what worked, what didn't, and why. No theory—just practical tests of building production systems with AI.
+				</p>
+
+				<p class="section-text">
+					<strong>Notice what's different:</strong> Most AI content shows the finished result. Here, you see the process—including the parts that didn't work.
 				</p>
 			</div>
 		</div>
@@ -82,26 +86,30 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8">
 				<h2>
-					Experiment Categories
+					Where to Start
 				</h2>
+
+				<p class="section-text mb-4">
+					Pick a category that matches what you're working on. Each experiment includes setup instructions and expected outcomes.
+				</p>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each [
 						{
 							title: 'Browser Automation',
-							description: 'Testing AI-generated browser automation scripts with Cloudflare Workers and Puppeteer'
+							description: 'Try AI-generated browser scripts with Cloudflare Workers and Puppeteer. Good starting point if you need to scrape or automate web tasks.'
 						},
 						{
 							title: 'API Integration',
-							description: 'Experiments connecting various APIs and services using AI-assisted development'
+							description: 'Connect APIs and services using AI-assisted development. Useful for building workflows that span multiple systems.'
 						},
 						{
 							title: 'Database Patterns',
-							description: 'Testing different database patterns with D1, KV, and other Cloudflare services'
+							description: 'Test different database approaches with D1, KV, and Cloudflare services. Start here if you need to figure out data storage.'
 						},
 						{
 							title: 'UI Components',
-							description: 'Building and testing reusable UI components with AI assistance'
+							description: 'Build and test reusable UI components with AI assistance. Best if you want to speed up frontend work.'
 						}
 					] as topic, index}
 						<div

@@ -6,7 +6,7 @@
 	<title>Viralytics — Case Study | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="Autonomous A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists."
+		content="20 discovery queries daily. 4 chart sources scraped automatically. Runs at 7 AM UTC, zero human involvement. A&R team reviews qualified leads, not raw data."
 	/>
 </svelte:head>
 
@@ -17,16 +17,16 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">AI Discovery Agent</p>
 			<h1 class="mb-6">Viralytics</h1>
 			<p class="heading-2 body-tertiary leading-relaxed mb-8">
-				Autonomous A&R discovery agent that identifies independent artists with viral momentum across Spotify charts and city playlists
+				20 discovery queries daily. 4 chart sources scraped automatically. Runs at 7 AM UTC while you sleep. A&R team reviews qualified leads, not raw data.
 			</p>
 			<div class="flex flex-wrap gap-4 body-sm body-muted">
-				<span>• Cloudflare Workers</span>
-				<span>• Puppeteer Scraping</span>
-				<span>• AI Analysis</span>
-				<span>• Notion Integration</span>
+				<span>• 20 daily discovery queries</span>
+				<span>• 4 chart sources</span>
+				<span>• Zero human involvement</span>
+				<span>• Qualified leads to Notion</span>
 			</div>
 		</div>
 	</section>

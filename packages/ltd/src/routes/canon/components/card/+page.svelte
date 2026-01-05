@@ -6,23 +6,23 @@
 <header class="page-header">
 	<h1 class="page-title">Card</h1>
 	<p class="page-description">
-		Container component for grouping related content. Uses Canon elevation and border-radius tokens
-		to create visual hierarchy through subtle depth.
+		Cards group related content together. Pick an elevation level to show how important each card
+		is—from flat surfaces to floating panels.
 	</p>
 </header>
 
 <!-- Elevation Section -->
 <section class="section">
-	<h2 class="section-title">Elevation Levels</h2>
+	<h2 class="section-title">Choose Your Depth</h2>
 	<p class="section-description">
-		Cards use shadow tokens to create depth. Three levels: subtle (flat surface), medium (standard
-		card), and large (elevated modal).
+		More shadow means more visual weight. Use subtle for inline content, medium for most cards,
+		and large for modals that need attention.
 	</p>
 
 	<!-- Subtle Elevation -->
 	<div class="example-group">
 		<h3 class="example-title">Subtle</h3>
-		<p class="example-description">Minimal shadow, nearly flat. Use for inline content cards.</p>
+		<p class="example-description">Almost flat. Good for content that lives within the page.</p>
 
 		<div class="preview">
 			<div class="card card-subtle">
@@ -55,7 +55,7 @@
 	<!-- Medium Elevation -->
 	<div class="example-group">
 		<h3 class="example-title">Medium</h3>
-		<p class="example-description">Standard card elevation. Use for most card components.</p>
+		<p class="example-description">Your go-to choice for most cards and content containers.</p>
 
 		<div class="preview">
 			<div class="card card-medium">
@@ -89,7 +89,7 @@
 	<div class="example-group">
 		<h3 class="example-title">Large</h3>
 		<p class="example-description">
-			High elevation for modals and overlays. Use sparingly for prominent surfaces.
+			Floats above the page. Save this for modals, dialogs, and important overlays.
 		</p>
 
 		<div class="preview">
@@ -123,10 +123,10 @@
 
 <!-- Border Radius Section -->
 <section class="section">
-	<h2 class="section-title">Border Radius</h2>
+	<h2 class="section-title">Rounded Corners</h2>
 	<p class="section-description">
-		Canon provides radius tokens from sharp to fully rounded. Cards typically use
-		<code>--radius-lg</code> (12px) for balanced softness.
+		Use <code>--radius-lg</code> (12px) for most cards. Smaller elements like tags can use tighter
+		corners.
 	</p>
 
 	<div class="radius-demo">
@@ -185,16 +185,15 @@
 
 <!-- Interactive States Section -->
 <section class="section">
-	<h2 class="section-title">Interactive States</h2>
+	<h2 class="section-title">Clickable Cards</h2>
 	<p class="section-description">
-		Cards can be interactive. Use hover states with Canon motion tokens for smooth transitions.
+		Make cards interactive when the whole surface should be clickable, like a list of articles or products.
 	</p>
 
 	<div class="example-group">
-		<h3 class="example-title">Clickable Card</h3>
+		<h3 class="example-title">Hover Effect</h3>
 		<p class="example-description">
-			Hover lifts the card and emphasizes the border. Uses <code>--duration-micro</code> for quick
-			response.
+			The card lifts on hover so users know it's clickable. Try it below.
 		</p>
 
 		<div class="preview">
@@ -236,8 +235,8 @@
 
 <!-- Token Reference -->
 <section class="section">
-	<h2 class="section-title">Token Reference</h2>
-	<p class="section-description">Complete list of tokens used in Card components.</p>
+	<h2 class="section-title">Tokens Used</h2>
+	<p class="section-description">These variables power all card styles. Copy them into your project.</p>
 
 	<div class="token-table">
 		<div class="token-section">

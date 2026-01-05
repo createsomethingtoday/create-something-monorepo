@@ -6,8 +6,8 @@
 <header class="hero">
 	<h1 class="hero-title">Components</h1>
 	<p class="hero-subtitle">
-		Reusable UI components that embody the Canon aesthetic. Built with Svelte, designed for
-		subtraction.
+		Ready-to-use components you can copy into your project. Each one includes working code and
+		design tokens that just work.
 	</p>
 </header>
 
@@ -22,7 +22,7 @@
 		<div class="card-content">
 			<h2 class="card-title">Button</h2>
 			<p class="card-description">
-				Primary, secondary, and ghost variants. Follows Canon motion tokens for hover states.
+				Prompt users to take action with primary, secondary, and ghost styles.
 			</p>
 		</div>
 		<div class="card-arrow">
@@ -41,7 +41,7 @@
 		<div class="card-content">
 			<h2 class="card-title">Card</h2>
 			<p class="card-description">
-				Container component with elevation tokens. Supports subtle, surface, and elevated states.
+				Group related content together with three depth levels to choose from.
 			</p>
 		</div>
 		<div class="card-arrow">
@@ -61,7 +61,7 @@
 		<div class="card-content">
 			<h2 class="card-title">Navigation</h2>
 			<p class="card-description">
-				Header navigation, sidebars, breadcrumbs, and tabs. Patterns for wayfinding.
+				Help users find their way with headers, sidebars, breadcrumbs, and tabs.
 			</p>
 		</div>
 		<div class="card-arrow">
@@ -74,34 +74,34 @@
 
 <!-- Principles Section -->
 <section class="principles">
-	<h2 class="section-title">Component Philosophy</h2>
+	<h2 class="section-title">How We Build These</h2>
 	<p class="section-description">
-		Every Canon component follows the Subtractive Triad—evaluated at three levels of abstraction.
+		We test each component against three questions before shipping it.
 	</p>
 
 	<div class="principles-grid">
 		<div class="principle-item">
-			<h3>DRY (Implementation)</h3>
-			<p>Components unify patterns. No duplicated variants.</p>
+			<h3>One Pattern, One Place</h3>
+			<p>If a component already exists, use it. No duplicates.</p>
 		</div>
 
 		<div class="principle-item">
-			<h3>Rams (Artifact)</h3>
-			<p>Every prop, every variant must earn its existence.</p>
+			<h3>Earn Your Place</h3>
+			<p>Every prop and variant must solve a real problem.</p>
 		</div>
 
 		<div class="principle-item">
-			<h3>Heidegger (System)</h3>
-			<p>Components serve the design system. Tools recede into use.</p>
+			<h3>Disappear When Working</h3>
+			<p>Good tools get out of the way. You should focus on your work, not ours.</p>
 		</div>
 	</div>
 </section>
 
 <!-- Token Reference -->
 <section class="token-reference">
-	<h2 class="section-title">Component Tokens</h2>
+	<h2 class="section-title">Design Tokens</h2>
 	<p class="section-description">
-		All components use Canon tokens for consistency. No hardcoded colors, spacing, or motion.
+		Use these variables for colors, spacing, and motion. They keep your design consistent automatically.
 	</p>
 
 	<div class="token-grid">

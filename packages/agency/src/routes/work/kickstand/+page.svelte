@@ -6,7 +6,7 @@
 	<title>Kickstand — Case Study | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="Venue intelligence system audit using the Subtractive Triad framework. Achieved 92% script reduction and 48% health score improvement."
+		content="155 scripts became 13. $40/day became $39/month. Health score: 6.2 to 9.2. A venue intelligence system that actually works."
 	/>
 </svelte:head>
 
@@ -17,16 +17,15 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Venue Intelligence</p>
 			<h1 class="mb-6">Kickstand</h1>
 			<p class="heading-2 body-tertiary leading-relaxed mb-8">
-				Venue intelligence system with health monitoring, automated cleanup scripts, and real-time status dashboards
+				155 scripts became 13. $40/day became $39/month. A system that works without anyone thinking about it.
 			</p>
 			<div class="flex flex-wrap gap-4 body-sm body-muted">
-				<span>• Cloudflare Workers</span>
-				<span>• D1 Database</span>
-				<span>• TypeScript</span>
-				<span>• Subtractive Triad</span>
+				<span>• 92% script reduction</span>
+				<span>• 97% cost reduction</span>
+				<span>• 48% health improvement</span>
 			</div>
 		</div>
 	</section>

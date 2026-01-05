@@ -420,11 +420,9 @@ useEffect(() => {
 <section class="relative pb-12 px-6">
 	<div class="max-w-4xl mx-auto text-center space-y-4">
 		<h1 class="hero-title">Hermeneutic Debugging</h1>
-		<p class="hero-subtitle italic">The circle of understanding in code</p>
+		<p class="hero-subtitle italic">Try this: 8 iterations of the same bug</p>
 		<p class="hero-description max-w-2xl mx-auto">
-			Walk through a real debugging session where a simple logo animation required
-			<span class="highlight-text">8 iterations</span> to solve. Experience how each failed fix
-			reveals <span class="highlight-text">hidden assumptions</span> we didn't know we held.
+			A simple logo animation took <span class="highlight-text">8 attempts</span> to get right. Each failed fix revealed an assumption we didn't know we had. Walk through the same process—predict what will happen, then see what actually happens.
 		</p>
 	</div>
 </section>
@@ -611,17 +609,19 @@ useEffect(() => {
 	</div>
 </section>
 
-<!-- Key Insight -->
+<!-- What You Learned -->
 <section class="px-6 pb-16">
 	<div class="max-w-4xl mx-auto">
 		<div class="insight-card p-8 text-center space-y-4">
-			<h2 class="insight-title">Key Insight</h2>
+			<h2 class="insight-title">What You Just Experienced</h2>
 			<p class="insight-text">
-				Debugging is interpretation. Each failed fix reveals hidden assumptions about how the system works.
-				Understanding emerges through the hermeneutic circle: attempt, observe, revise, repeat.
+				Each failed fix revealed an assumption you didn't know you had. That's the pattern: attempt, observe what actually happens, revise your understanding.
 			</p>
 			<p class="insight-quote">
 				"One observation is worth more than ten guesses."
+			</p>
+			<p class="insight-next">
+				<strong>Try this in your next bug:</strong> Before the second fix attempt, write down what assumption the first failure revealed.
 			</p>
 		</div>
 	</div>
@@ -1077,6 +1077,12 @@ useEffect(() => {
 		color: var(--color-fg-tertiary);
 		font-style: italic;
 		font-size: var(--text-body);
+	}
+
+	.insight-next {
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body);
+		margin-top: var(--space-sm);
 	}
 
 	/* Read More */

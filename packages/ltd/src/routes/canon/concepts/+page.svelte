@@ -14,9 +14,7 @@
 <header class="page-header">
 	<h1>Concepts</h1>
 	<p class="page-intro">
-		Canonical definitions for the philosophical vocabulary that grounds Canon.
-		Each concept represents a principle that informs design decisions across
-		CREATE SOMETHING properties.
+		The ideas behind Canon. Each concept shapes how we make design decisions—click any card to learn more.
 	</p>
 </header>
 
@@ -25,68 +23,61 @@
 		<h2>Weniger, aber besser</h2>
 		<p class="concept-translation">"Less, but better"</p>
 		<p class="concept-summary">
-			The principle that quality emerges through disciplined subtraction.
-			Every element must earn its existence.
+			Quality comes from removing what doesn't belong. If it doesn't serve a purpose, it doesn't stay.
 		</p>
 		<span class="concept-origin">Dieter Rams</span>
 	</a>
 
 	<a href="/canon/concepts/zuhandenheit" class="concept-card">
 		<h2>Zuhandenheit</h2>
-		<p class="concept-translation">"Ready-to-hand"</p>
+		<p class="concept-translation">"Ready-to-hand" — tools that disappear into use</p>
 		<p class="concept-summary">
-			Tools that recede into transparent use. When working well,
-			the hammer disappears—only the hammering remains.
+			Good tools get out of your way. You don't think about the hammer—you think about the nail.
 		</p>
 		<span class="concept-origin">Martin Heidegger</span>
 	</a>
 
 	<a href="/canon/concepts/vorhandenheit" class="concept-card">
 		<h2>Vorhandenheit</h2>
-		<p class="concept-translation">"Present-at-hand"</p>
+		<p class="concept-translation">"Present-at-hand" — when tools demand attention</p>
 		<p class="concept-summary">
-			When tools become objects of attention. Breakdown reveals what
-			was previously invisible. The failure state of design.
+			When you notice the design, something's broken. Failure makes the invisible visible.
 		</p>
 		<span class="concept-origin">Martin Heidegger</span>
 	</a>
 
 	<a href="/canon/concepts/gestell" class="concept-card">
 		<h2>Gestell</h2>
-		<p class="concept-translation">"Enframing"</p>
+		<p class="concept-translation">"Enframing" — seeing everything as a resource</p>
 		<p class="concept-summary">
-			The danger of technological thinking that reduces everything to
-			standing-reserve. Automation that fills every gap is invasion.
+			The trap of treating everything as raw material to optimize. Not every gap needs filling.
 		</p>
 		<span class="concept-origin">Martin Heidegger</span>
 	</a>
 
 	<a href="/canon/concepts/gelassenheit" class="concept-card">
 		<h2>Gelassenheit</h2>
-		<p class="concept-translation">"Releasement"</p>
+		<p class="concept-translation">"Releasement" — using tools without being used by them</p>
 		<p class="concept-summary">
-			Neither rejection nor submission—full engagement without capture.
-			The craftsman uses the hammer; the hammer does not use him.
+			Use technology fully, but stay free from it. The craftsman uses the hammer; the hammer doesn't use him.
 		</p>
 		<span class="concept-origin">Martin Heidegger</span>
 	</a>
 
 	<a href="/canon/concepts/complementarity" class="concept-card">
 		<h2>Complementarity</h2>
-		<p class="concept-translation">"Mutual completion"</p>
+		<p class="concept-translation">"Mutual completion" — humans and AI working together</p>
 		<p class="concept-summary">
-			Human and AI capabilities complete rather than replace each other.
-			Judgment and execution, together forming a whole.
+			Human judgment + AI execution = more than either alone. Partnership, not replacement.
 		</p>
 		<span class="concept-origin">CREATE SOMETHING</span>
 	</a>
 
 	<a href="/canon/concepts/hermeneutic-circle" class="concept-card">
 		<h2>Hermeneutic Circle</h2>
-		<p class="concept-translation">"Understanding through parts and whole"</p>
+		<p class="concept-translation">"Parts and whole" — understanding through iteration</p>
 		<p class="concept-summary">
-			Parts inform the whole; the whole informs parts. Understanding
-			emerges through iterative interpretation.
+			You understand sentences through words, and words through sentences. Each pass deepens meaning.
 		</p>
 		<span class="concept-origin">Hermeneutic Tradition</span>
 	</a>

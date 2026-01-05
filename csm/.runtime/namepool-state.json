@@ -1,0 +1,11 @@
+{
+  "rig_name": "csm",
+  "theme": "mad-max",
+  "in_use": {
+    "furiosa": true,
+    "nux": true,
+    "slit": true
+  },
+  "overflow_next": 51,
+  "max_size": 50
+}

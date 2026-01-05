@@ -25,87 +25,21 @@
 		<p class="typ-body-sm tracking-widest uppercase fg-tertiary mb-4">Pattern</p>
 		<h1 class="mb-6">Breakdown and Repair</h1>
 		<p class="typ-h3 fg-secondary leading-relaxed">
-			When tools fail, distinguish between fixing and repairing. Fixes restore function;
-			repairs restructure understanding. Both are necessary—but only repair prevents recurrence.
+			Something broke. Before you fix it, ask: will this break again?
+			Fixes restore function. Repairs prevent recurrence.
 		</p>
 	</div>
 </section>
 
-<!-- Quote -->
+<!-- When to Use This Pattern -->
 <section class="py-12 px-6">
 	<div class="max-w-3xl mx-auto">
-		<div class="p-6 border border-canon">
-			<p class="typ-body-lg fg-secondary italic">
-				"The breakdown triggers a shift from ready-to-hand to present-at-hand, making
-				visible the normally-hidden assumptions embedded in our practice."
-			</p>
-			<p class="typ-body-sm fg-muted mt-2">— Stahl, interpreting Heidegger</p>
-		</div>
-	</div>
-</section>
-
-<!-- Definition -->
-<section class="py-16 px-6">
-	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Definition</h2>
-
-		<div class="space-y-6 typ-body fg-secondary leading-relaxed">
-			<p>
-				<strong>Breakdown</strong> is Heidegger's term for the moment when a tool stops
-				working and suddenly becomes visible. The carpenter's hammer, normally transparent
-				in use (<em>Zuhandenheit</em>), becomes an object of attention (<em>Vorhandenheit</em>)
-				when its head comes loose.
-			</p>
-
-			<p>
-				Gerry Stahl, in his analysis of Heideggerian concepts for software design,
-				identifies a critical distinction: <strong>fixing</strong> versus <strong>repairing</strong>.
-			</p>
-
-			<div class="grid md:grid-cols-2 gap-6 my-8">
-				<div class="p-6 border border-canon">
-					<h3 class="typ-body-lg font-semibold mb-3">Fixing</h3>
-					<p class="typ-body-sm fg-tertiary">
-						Mechanical correction. Reattach the hammer head. Restart the service.
-						Rollback the deployment. The symptom is addressed; the tool works again.
-					</p>
-				</div>
-				<div class="p-6 border border-canon">
-					<h3 class="typ-body-lg font-semibold mb-3">Repairing</h3>
-					<p class="typ-body-sm fg-tertiary">
-						Restructuring understanding. Document why the head came loose. Update
-						deployment patterns. Change the conceptual framework so this class of
-						failure becomes impossible.
-					</p>
-				</div>
-			</div>
-
-			<p>
-				Fixing restores function. Repairing prevents recurrence. A system that only fixes
-				accumulates the same breakdowns. A system that repairs evolves its understanding.
-			</p>
-
-			<div class="p-6 border border-canon my-8">
-				<p class="typ-body-sm fg-tertiary italic">
-					"True repair requires restructuring one's conceptual framework and language—not
-					just mechanical correction."
-				</p>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- The Two Responses -->
-<section class="py-16 px-6 border-t border-canon">
-	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">The Two Responses</h2>
-
-		<div class="space-y-8">
-			<div class="border border-canon p-6">
-				<h3 class="typ-body-lg font-semibold mb-3">1. Immediate Fix (Necessary)</h3>
-				<p class="typ-body-sm fg-tertiary mb-4">
-					When infrastructure fails, restore service first. Users need the system working.
-					This is triage—essential but insufficient.
+		<h2 class="mb-6">When to Use This Pattern</h2>
+		<div class="grid md:grid-cols-2 gap-6">
+			<div class="p-6 border border-canon">
+				<h3 class="typ-body-lg font-semibold mb-3">Fixing (do this first)</h3>
+				<p class="typ-body-sm fg-tertiary mb-3">
+					Get it working again. Users need the system up.
 				</p>
 				<div class="typ-caption fg-muted font-mono">
 					<p class="mb-1">• Rollback the broken deployment</p>
@@ -113,80 +47,87 @@
 					<p>• Restart the crashed service</p>
 				</div>
 			</div>
-
-			<div class="border border-canon p-6">
-				<h3 class="typ-body-lg font-semibold mb-3">2. Structural Repair (Essential)</h3>
-				<p class="typ-body-sm fg-tertiary mb-4">
-					After the immediate crisis, ask: what assumption was invisible until it broke?
-					Document the failure. Update patterns. Make the implicit explicit.
+			<div class="p-6 border border-canon">
+				<h3 class="typ-body-lg font-semibold mb-3">Repairing (do this after)</h3>
+				<p class="typ-body-sm fg-tertiary mb-3">
+					Prevent recurrence. Update documentation and patterns.
 				</p>
 				<div class="typ-caption fg-muted font-mono">
-					<p class="mb-1">• Document why the route pattern needed /*</p>
-					<p class="mb-1">• Add to deployment checklist</p>
-					<p>• Update conceptual model in rules files</p>
+					<p class="mb-1">• Document what assumption was wrong</p>
+					<p class="mb-1">• Add to the relevant checklist</p>
+					<p>• Update the rules so this can't repeat</p>
 				</div>
 			</div>
-		</div>
-
-		<div class="p-6 border border-canon mt-8">
-			<h4 class="typ-body-sm font-semibold mb-3">The Hermeneutic Loop</h4>
-			<p class="typ-body-sm fg-tertiary">
-				Stahl emphasizes that understanding moves cyclically: preunderstanding → breakdown
-				→ reinterpretation → revised understanding. Each breakdown is an opportunity to
-				enter this loop and emerge with better conceptual tools.
-			</p>
 		</div>
 	</div>
 </section>
 
-<!-- Application -->
+<!-- How It Works -->
 <section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Application</h2>
+		<h2 class="mb-8">How It Works</h2>
 
 		<div class="space-y-6 typ-body fg-secondary leading-relaxed">
 			<p>
-				In CREATE SOMETHING practice, this pattern appears in
-				<code class="inline-code">.claude/rules/</code>
-				files. When deployment fails, we don't just fix—we repair by updating the rules
-				that govern future deployments.
+				When something breaks, you notice what was previously invisible. The deployment
+				that "just worked" now reveals its assumptions. The config that was obvious
+				turns out to have hidden dependencies.
 			</p>
-
-			<div class="overflow-x-auto">
-				<table class="w-full typ-body-sm border border-canon">
-					<thead class="border-b border-canon">
-						<tr>
-							<th class="table-header">Breakdown</th>
-							<th class="table-header">Fix</th>
-							<th class="table-header">Repair</th>
-						</tr>
-					</thead>
-					<tbody class="fg-secondary">
-						<tr class="border-b border-canon">
-							<td class="p-4">Route pattern missing /*</td>
-							<td class="p-4">Add /* to wrangler.toml</td>
-							<td class="p-4">Document in template-deployment-patterns.md</td>
-						</tr>
-						<tr class="border-b border-canon">
-							<td class="p-4">Fallback overwrites index</td>
-							<td class="p-4">Rename to 200.html</td>
-							<td class="p-4">Add to deployment checklist</td>
-						</tr>
-						<tr>
-							<td class="p-4">DNS conflicts with worker</td>
-							<td class="p-4">Remove wildcard record</td>
-							<td class="p-4">Explain why in Canon Reflection section</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
 
 			<p>
-				The <code class="inline-code">Canon Reflection</code>
-				section at the end of pattern documents is where repair happens: we articulate
-				the implicit assumption that failed, making it explicit so future work can avoid it.
+				A system that only fixes accumulates the same breakdowns. A system that repairs
+				evolves its understanding. The goal isn't just to get it working—it's to make
+				this class of failure impossible.
 			</p>
+
+			<div class="p-6 border border-canon my-8">
+				<p class="typ-body-sm fg-tertiary italic">
+					"True repair requires restructuring understanding—not just mechanical correction."
+				</p>
+			</div>
 		</div>
+	</div>
+</section>
+
+<!-- Real Examples -->
+<section class="py-16 px-6 border-t border-canon">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">Real Examples</h2>
+
+		<div class="overflow-x-auto">
+			<table class="w-full typ-body-sm border border-canon">
+				<thead class="border-b border-canon">
+					<tr>
+						<th class="table-header">What Broke</th>
+						<th class="table-header">The Fix</th>
+						<th class="table-header">The Repair</th>
+					</tr>
+				</thead>
+				<tbody class="fg-secondary">
+					<tr class="border-b border-canon">
+						<td class="p-4">Route pattern missing /*</td>
+						<td class="p-4">Add /* to wrangler.toml</td>
+						<td class="p-4">Document in template-deployment-patterns.md</td>
+					</tr>
+					<tr class="border-b border-canon">
+						<td class="p-4">Fallback overwrites index</td>
+						<td class="p-4">Rename to 200.html</td>
+						<td class="p-4">Add to deployment checklist</td>
+					</tr>
+					<tr>
+						<td class="p-4">DNS conflicts with worker</td>
+						<td class="p-4">Remove wildcard record</td>
+						<td class="p-4">Explain why in Canon Reflection section</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p class="typ-body fg-secondary mt-6 leading-relaxed">
+			The <code class="inline-code">Canon Reflection</code> section at the end of pattern
+			documents is where repair happens: articulate the assumption that failed, so future
+			work avoids it.
+		</p>
 	</div>
 </section>
 
@@ -220,16 +161,29 @@
 	</div>
 </section>
 
-<!-- Source -->
+<!-- The Philosophy (for those who want it) -->
 <section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Source</h2>
+		<h2 class="mb-8">The Philosophy</h2>
 
-		<div class="border border-canon p-6">
+		<div class="space-y-6 typ-body fg-secondary leading-relaxed">
+			<p>
+				Heidegger called this moment—when tools stop working and become visible—<em>Vorhandenheit</em>
+				("present-at-hand"). When everything works, tools recede into use (<em>Zuhandenheit</em>,
+				"ready-to-hand"). Breakdowns reveal what was previously invisible.
+			</p>
+
+			<p>
+				Gerry Stahl applied this to software: the distinction between <strong>fixing</strong>
+				(mechanical correction) and <strong>repairing</strong> (restructuring understanding).
+				Understanding moves cyclically: preunderstanding → breakdown → reinterpretation →
+				revised understanding.
+			</p>
+		</div>
+
+		<div class="border border-canon p-6 mt-8">
 			<p class="typ-body-sm fg-tertiary mb-4">
-				This pattern draws from Gerry Stahl's interpretation of Heideggerian concepts
-				for software design, particularly the distinction between mechanical fixing
-				and conceptual repairing.
+				Source: Stahl's interpretation of Heideggerian concepts for software design.
 			</p>
 			<a
 				href="https://gerrystahl.net/publications/dissertations/computer/d5.1.html"

@@ -161,10 +161,9 @@ console.log(\`Found \${functions.length} functions\`);`;
 <section class="relative pb-12 px-6">
 	<div class="max-w-6xl mx-auto text-center space-y-4">
 		<h1 class="hero-title">Code Mode</h1>
-		<p class="hero-subtitle italic">The Zuhandenheit Experiment</p>
+		<p class="hero-subtitle italic">Try this: The Zuhandenheit Experiment</p>
 		<p class="hero-description max-w-3xl mx-auto">
-			Experience Heidegger's tool-transparency distinction firsthand. Complete the same task
-			twice—once with direct tool calling, once with Code Mode. Notice where your attention goes.
+			Complete the same task twice—once with tool calling, once with familiar code. Notice where your attention goes. That's the point of this experiment.
 		</p>
 	</div>
 </section>
@@ -174,23 +173,21 @@ console.log(\`Found \${functions.length} functions\`);`;
 	<div class="max-w-6xl mx-auto space-y-8">
 		<!-- Context -->
 		<div class="content-card p-6 space-y-4">
-			<h2 class="section-title">The Question</h2>
+			<h2 class="section-title">What to watch for</h2>
 			<p class="body-text leading-relaxed">
-				Heidegger distinguished between two modes of encountering tools:
+				There are two modes of using tools. You'll feel both in this experiment:
 			</p>
 			<div class="grid md:grid-cols-2 gap-4 mt-4">
 				<div class="mode-card mode-ready-to-hand">
-					<h3 class="mode-title">Zuhandenheit (Ready-to-hand)</h3>
+					<h3 class="mode-title">Ready-to-hand (Zuhandenheit)</h3>
 					<p class="mode-description">
-						The hammer disappears when hammering. Your attention flows <em>through</em> the tool to
-						the task. The tool recedes into transparent use.
+						The hammer disappears when hammering. You think about the nail, not the tool. This is what you're aiming for.
 					</p>
 				</div>
 				<div class="mode-card mode-present-at-hand">
-					<h3 class="mode-title">Vorhandenheit (Present-at-hand)</h3>
+					<h3 class="mode-title">Present-at-hand (Vorhandenheit)</h3>
 					<p class="mode-description">
-						The hammer breaks, or feels too heavy. You must think <em>about</em> the tool itself.
-						The tool demands attention, obstructing the task.
+						You stop to think about the tool itself—how to hold it, how it works. The tool demands attention instead of receding.
 					</p>
 				</div>
 			</div>
@@ -474,9 +471,9 @@ const result = content.filter(...);`}</pre>
 		<div class="paper-link-card p-6">
 			<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
 				<div class="space-y-2">
-					<h3 class="paper-link-title">Read the Full Analysis</h3>
+					<h3 class="paper-link-title">Want the deeper explanation?</h3>
 					<p class="paper-link-description">
-						Explore the phenomenological framework behind this experiment in the complete paper.
+						The philosophical framework behind this experiment is documented in the full paper—including why this matters for AI tool design.
 					</p>
 				</div>
 				<a
@@ -485,7 +482,7 @@ const result = content.filter(...);`}</pre>
 					rel="noopener noreferrer"
 					class="paper-cta"
 				>
-					Code Mode: A Hermeneutic Analysis →
+					Read the full paper →
 				</a>
 			</div>
 		</div>

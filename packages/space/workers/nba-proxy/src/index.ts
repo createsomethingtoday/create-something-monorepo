@@ -8,7 +8,7 @@
  * - Rate limiting (10 req/min to NBA.com)
  * - KV caching with 30s TTL for live data
  * - Error handling with correlation IDs
- * - Endpoints: /games/today, /games/:date (YYYY-MM-DD), /game/:id/pbp, /game/:id/matchups, /game/:id/shots
+ * - Endpoints: /games/today, /game/:id/pbp, /game/:id/boxscore, /baselines, /league-averages/:season
  */
 
 export interface Env {
@@ -169,26 +169,18 @@ async function fetchFromNBA(
 }
 
 // Route handlers
-async function handleGames(env: Env, correlationId: string, date?: string): Promise<Response> {
+async function handleGamesToday(env: Env, correlationId: string): Promise<Response> {
 	try {
-		// Use provided date or default to today (YYYY-MM-DD format)
-		const dateStr = date || new Date().toISOString().slice(0, 10);
-
-		// Validate date format
-		if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-			return errorResponse('Invalid date format. Use YYYY-MM-DD', correlationId, 400);
-		}
-
-		// NBA.com scoreboard endpoint (uses YYYYMMDD format)
-		const nbaDateStr = dateStr.replace(/-/g, '');
+		// NBA.com scoreboard endpoint
+		const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 		const url = `${env.NBA_API_BASE_URL}/liveData/scoreboard/todaysScoreboard_00.json`;
-		const cacheKey = `nba:scoreboard:${nbaDateStr}`;
+		const cacheKey = `nba:scoreboard:${today}`;
 
 		const { data, cached } = await fetchFromNBA(url, env, correlationId, cacheKey);
 		return successResponse(data, correlationId, cached);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
-		console.error(`[${correlationId}] Games error (date: ${date}):`, message);
+		console.error(`[${correlationId}] Games today error:`, message);
 		return errorResponse(message, correlationId, message.includes('Rate limited') ? 429 : 500);
 	}
 }
@@ -326,13 +318,7 @@ export default {
 		}
 
 		if (path === '/games/today') {
-			return handleGames(env, correlationId);
-		}
-
-		// /games/:date (YYYY-MM-DD format)
-		const gamesDateMatch = path.match(/^\/games\/(\d{4}-\d{2}-\d{2})$/);
-		if (gamesDateMatch) {
-			return handleGames(env, correlationId, gamesDateMatch[1]);
+			return handleGamesToday(env, correlationId);
 		}
 
 		// /game/:id/pbp

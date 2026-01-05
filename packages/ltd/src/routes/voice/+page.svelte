@@ -12,16 +12,60 @@
 		<p class="eyebrow mb-4">Writing Standards</p>
 		<h1 class="mb-6">Voice</h1>
 		<p class="header-description leading-relaxed">
-			How we write across the CREATE SOMETHING ecosystem. Not a style guide—a philosophical
-			commitment to clarity, honesty, and empirical rigor.
+			Write for your reader, not yourself. Say what you mean. Cut what you can.
 		</p>
 	</div>
 </section>
 
-<!-- Recognition -->
+<!-- What to Do This Week -->
 <section class="py-16 px-6">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Recognition</h2>
+		<h2 class="mb-8">What to Do This Week</h2>
+
+		<div class="space-y-6 recognition-description leading-relaxed">
+			<p class="recognition-intro">
+				Before publishing anything, check your writing against these three tests:
+			</p>
+
+			<div class="recognition-box p-6 my-8">
+				<div class="space-y-4">
+					<div class="flex items-start gap-3">
+						<span class="checkmark mt-1">1.</span>
+						<div>
+							<p class="box-title">Can you cut a word?</p>
+							<p class="box-description">If yes, cut it. Every word must earn its place.</p>
+						</div>
+					</div>
+					<div class="flex items-start gap-3">
+						<span class="checkmark mt-1">2.</span>
+						<div>
+							<p class="box-title">Would your grandmother understand?</p>
+							<p class="box-description">If not, simplify. Jargon obscures; plain language reveals.</p>
+						</div>
+					</div>
+					<div class="flex items-start gap-3">
+						<span class="checkmark mt-1">3.</span>
+						<div>
+							<p class="box-title">Can someone act on this?</p>
+							<p class="box-description">If not, add specifics. Vague advice helps no one.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<p>
+				These aren't style preferences. George Orwell argued that <strong>clarity is ethical</strong>—obscure
+				writing enables obscure thinking. When you catch yourself reaching for jargon, pause. Ask what
+				you actually mean. Say that instead.
+			</p>
+		</div>
+	</div>
+</section>
+
+<!-- Recognition -->
+<section class="py-16 px-6 section-divider">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">How to Recognize Good Writing</h2>
 
 		<div class="space-y-6 recognition-description leading-relaxed">
 			<p class="recognition-intro">
@@ -30,19 +74,13 @@
 
 			<p>
 				When writing works, it's transparent. When it breaks—when you catch yourself
-				reaching for jargon—the writing becomes visible. Heidegger called this moment
-				<em>Vorhandenheit</em>: present-at-hand. The tool demands attention instead of serving.
-			</p>
-
-			<p>
-				These guidelines help you recognize that moment. When you notice the writing,
-				you can transform it.
+				reaching for jargon—the writing becomes visible. That's your signal to transform it.
 			</p>
 
 			<div class="recognition-box p-6 my-8">
 				<p class="box-title mb-4">The Pattern</p>
 				<p class="box-description">
-					Recognize → Transform → Return to clarity.
+					<strong>Notice</strong> when writing feels off → <strong>Transform</strong> it → <strong>Return</strong> to clarity.
 				</p>
 				<p class="box-description mt-4">
 					Nicole Fenton and Kate Kiefer Lee call this "writing for your reader, not yourself."
@@ -51,44 +89,44 @@
 			</div>
 
 			<div class="recognition-box p-6 my-8">
-				<p class="box-title mb-4">The Resistance</p>
+				<p class="box-title mb-4">What the Resistance Sounds Like</p>
 				<p class="box-description mb-4">
-					Steven Pressfield names the enemy in <em>The War of Art</em>: Resistance. In writing, it manifests as:
+					Steven Pressfield named the internal force that fights against clear expression. Here's how it shows up in writing:
 				</p>
 				<div class="transformation-table my-4">
 					<table>
 						<thead>
 							<tr>
-								<th>The Resistance Whispers</th>
-								<th>What It Really Is</th>
+								<th>You might think...</th>
+								<th>What's actually happening</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr>
 								<td>"Use 'leverage'—it sounds professional"</td>
-								<td>Marketing jargon</td>
+								<td>Hiding behind jargon</td>
 							</tr>
 							<tr>
 								<td>"Keep it vague—you can't be wrong"</td>
-								<td>Vague claims</td>
+								<td>Avoiding commitment</td>
 							</tr>
 							<tr>
 								<td>"Add a clever metaphor"</td>
-								<td>Decoration</td>
+								<td>Decorating instead of clarifying</td>
 							</tr>
 							<tr>
-								<td>"This Heideggerian reference shows depth"</td>
-								<td>Philosophy without purpose</td>
+								<td>"This philosophical reference shows depth"</td>
+								<td>Impressing instead of helping</td>
 							</tr>
 							<tr>
 								<td>"Success stories only—hide the failures"</td>
-								<td>Dishonesty</td>
+								<td>Polishing instead of being honest</td>
 							</tr>
 						</tbody>
 					</table>
 				</div>
 				<p class="box-description mt-4">
-					When you catch yourself reaching for jargon, you've caught the Resistance. Name it. Transform it.
+					When you catch yourself reaching for jargon, pause. That's your signal. Ask what you actually mean.
 				</p>
 			</div>
 		</div>

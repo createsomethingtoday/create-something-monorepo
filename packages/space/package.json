@@ -53,6 +53,7 @@
 		"@resvg/resvg-wasm": "^2.6.2",
 		"codemirror": "^6.0.2",
 		"d3-force": "^3.0.0",
-		"d3-selection": "^3.0.0"
+		"d3-selection": "^3.0.0",
+		"lucide-svelte": "^0.562.0"
 	}
 }
