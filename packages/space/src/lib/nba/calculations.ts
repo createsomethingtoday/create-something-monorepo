@@ -18,6 +18,7 @@ import type {
 	ShotCreationEdge,
 	ShotNetworkGraph,
 	ShotZone,
+	Game,
 } from './types';
 
 // League average constants (2024-25 season estimates)
@@ -472,4 +473,61 @@ export function getImpactColorClass(
 		case 'poor':
 			return 'text-error';
 	}
+}
+
+/**
+ * Select the "Game of the Night" from a list of completed games.
+ *
+ * Criteria (in priority order):
+ * 1. Highest total scoring game (most exciting offensive display)
+ * 2. Closest margin of victory (most competitive)
+ *
+ * @param games - Array of completed games
+ * @returns The selected game, reason for selection, and optional highlight stat
+ */
+export function selectGameOfTheNight(games: Game[]): {
+	game: Game;
+	reason: 'highest-scoring' | 'closest-margin';
+	highlightStat?: string;
+} | null {
+	// Filter to completed games only
+	const completedGames = games.filter((g) => g.status === 'final');
+
+	if (completedGames.length === 0) {
+		return null;
+	}
+
+	// Find highest scoring game
+	const highestScoring = completedGames.reduce((max, game) => {
+		const totalPoints = game.homeScore + game.awayScore;
+		const maxTotal = max.homeScore + max.awayScore;
+		return totalPoints > maxTotal ? game : max;
+	});
+
+	// Find closest game
+	const closestGame = completedGames.reduce((closest, game) => {
+		const margin = Math.abs(game.homeScore - game.awayScore);
+		const closestMargin = Math.abs(closest.homeScore - closest.awayScore);
+		return margin < closestMargin ? game : closest;
+	});
+
+	// Determine which to feature (prefer high scoring unless game was extremely close)
+	const highestTotal = highestScoring.homeScore + highestScoring.awayScore;
+	const closestMargin = Math.abs(closestGame.homeScore - closestGame.awayScore);
+
+	// Feature closest game if margin is <= 5 points
+	if (closestMargin <= 5 && closestGame.id !== highestScoring.id) {
+		return {
+			game: closestGame,
+			reason: 'closest-margin',
+			highlightStat: `Down to the wire finish`,
+		};
+	}
+
+	// Otherwise feature highest scoring
+	return {
+		game: highestScoring,
+		reason: 'highest-scoring',
+		highlightStat: `Combined for ${highestTotal} points`,
+	};
 }
