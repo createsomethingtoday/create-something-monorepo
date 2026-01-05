@@ -396,10 +396,36 @@ export async function fetchPlayerBaselines(
 
 /**
  * Extract shots from play-by-play actions
+ *
+ * Data quality fix: Filters out invalid shots where required fields are missing.
+ * This prevents division by zero and infinity errors in calculations.
  */
 export function extractShots(actions: PlayByPlayAction[], gameId: string): Shot[] {
 	return actions
-		.filter((a) => a.actionType === 'shot' && a.shotType)
+		.filter((a) => {
+			// Must be a shot action
+			if (a.actionType !== 'shot') return false;
+
+			// Must have shot type (prevents undefined/null issues)
+			if (!a.shotType) {
+				console.warn(`[extractShots] Shot missing shotType: ${a.actionId} - ${a.description}`);
+				return false;
+			}
+
+			// Must have shot result (prevents invalid made/missed determination)
+			if (!a.shotResult) {
+				console.warn(`[extractShots] Shot missing shotResult: ${a.actionId} - ${a.description}`);
+				return false;
+			}
+
+			// Must have team and player IDs
+			if (!a.teamId || !a.playerId) {
+				console.warn(`[extractShots] Shot missing teamId or playerId: ${a.actionId}`);
+				return false;
+			}
+
+			return true;
+		})
 		.map((a) => ({
 			id: a.actionId,
 			gameId,
