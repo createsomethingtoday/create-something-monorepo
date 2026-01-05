@@ -205,9 +205,14 @@ function determineShotZone(x: number, y: number, distance: number): ShotZone {
  * Fetch today's games
  */
 export async function fetchLiveGames(): Promise<NBAApiResult<Game[]>> {
+	const correlationId = generateCorrelationId();
 	const result = await fetchWithTimeout<NBAScoreboardResponse>(`${NBA_PROXY_URL}/games/today`);
 
 	if (!result.success) {
+		console.error('[fetchLiveGames] Failed to fetch games', {
+			correlationId,
+			error: result.error
+		});
 		return result;
 	}
 
@@ -237,6 +242,13 @@ export async function fetchLiveGames(): Promise<NBAApiResult<Game[]>> {
 			arena: g.arenaName,
 		}));
 
+		console.log('[fetchLiveGames] Successfully fetched games', {
+			correlationId,
+			gameCount: games.length,
+			live: games.filter(g => g.status === 'live').length,
+			final: games.filter(g => g.status === 'final').length
+		});
+
 		return {
 			success: true,
 			data: games,
@@ -244,11 +256,15 @@ export async function fetchLiveGames(): Promise<NBAApiResult<Game[]>> {
 			timestamp: result.timestamp,
 		};
 	} catch (error) {
+		console.error('[fetchLiveGames] Failed to parse games', {
+			correlationId,
+			error
+		});
 		return {
 			success: false,
 			error: createError(
 				error instanceof Error ? error.message : 'Failed to parse games',
-				generateCorrelationId()
+				correlationId
 			),
 		};
 	}
@@ -260,11 +276,16 @@ export async function fetchLiveGames(): Promise<NBAApiResult<Game[]>> {
 export async function fetchGamePBP(
 	gameId: string
 ): Promise<NBAApiResult<PlayByPlayAction[]>> {
+	const correlationId = generateCorrelationId();
 	const result = await fetchWithTimeout<NBAPlayByPlayResponse>(
 		`${NBA_PROXY_URL}/game/${gameId}/pbp`
 	);
 
 	if (!result.success) {
+		console.error(`[fetchGamePBP] Failed to fetch PBP for ${gameId}`, {
+			correlationId,
+			error: result.error
+		});
 		return result;
 	}
 
@@ -299,6 +320,13 @@ export async function fetchGamePBP(
 			};
 		});
 
+		const shotActions = actions.filter(a => a.actionType === 'shot');
+		console.log(`[fetchGamePBP] Successfully parsed PBP for ${gameId}`, {
+			correlationId,
+			totalActions: actions.length,
+			shotActions: shotActions.length
+		});
+
 		return {
 			success: true,
 			data: actions,
@@ -306,11 +334,15 @@ export async function fetchGamePBP(
 			timestamp: result.timestamp,
 		};
 	} catch (error) {
+		console.error(`[fetchGamePBP] Failed to parse PBP for ${gameId}`, {
+			correlationId,
+			error
+		});
 		return {
 			success: false,
 			error: createError(
 				error instanceof Error ? error.message : 'Failed to parse PBP',
-				generateCorrelationId()
+				correlationId
 			),
 		};
 	}
@@ -318,46 +350,100 @@ export async function fetchGamePBP(
 
 /**
  * Fetch boxscore for a game
+ *
+ * Data quality fixes:
+ * - Validates player roster sizes (NBA teams typically have 12-15 active players)
+ * - Filters out players with missing critical data
+ * - Logs correlation IDs for debugging data quality issues
  */
 export async function fetchGameBoxScore(
 	gameId: string
 ): Promise<NBAApiResult<{ home: Player[]; away: Player[] }>> {
+	const correlationId = generateCorrelationId();
 	const result = await fetchWithTimeout<NBABoxScoreResponse>(
 		`${NBA_PROXY_URL}/game/${gameId}/boxscore`
 	);
 
 	if (!result.success) {
+		console.error(`[fetchGameBoxScore] Failed to fetch boxscore for ${gameId}`, {
+			correlationId,
+			error: result.error
+		});
 		return result;
 	}
 
 	try {
-		const mapPlayers = (team: NBABoxScoreResponse['game']['homeTeam']): Player[] =>
-			team.players.map((p) => ({
-				id: p.personId.toString(),
-				name: `${p.firstName} ${p.familyName}`,
-				firstName: p.firstName,
-				lastName: p.familyName,
-				teamId: team.teamId.toString(),
-				teamAbbr: team.teamTricode,
-				position: (p.position || 'G') as Player['position'],
-				jerseyNumber: p.jerseyNum,
-			}));
+		const mapPlayers = (team: NBABoxScoreResponse['game']['homeTeam'], teamType: 'home' | 'away'): Player[] => {
+			const players = team.players
+				.filter((p) => {
+					// Filter out players with missing critical data
+					if (!p.personId || !p.firstName || !p.familyName) {
+						console.warn(`[fetchGameBoxScore] Player missing critical data in ${teamType} team`, {
+							correlationId,
+							gameId,
+							teamId: team.teamId,
+							player: p
+						});
+						return false;
+					}
+					return true;
+				})
+				.map((p) => ({
+					id: p.personId.toString(),
+					name: `${p.firstName} ${p.familyName}`,
+					firstName: p.firstName,
+					lastName: p.familyName,
+					teamId: team.teamId.toString(),
+					teamAbbr: team.teamTricode,
+					position: (p.position || 'G') as Player['position'],
+					jerseyNumber: p.jerseyNum,
+				}));
+
+			// Validate roster size (NBA teams typically 12-15 active players)
+			if (players.length < 8 || players.length > 20) {
+				console.warn(`[fetchGameBoxScore] Unusual roster size for ${teamType} team`, {
+					correlationId,
+					gameId,
+					teamId: team.teamId,
+					teamAbbr: team.teamTricode,
+					playerCount: players.length,
+					expected: '12-15 players'
+				});
+			}
+
+			return players;
+		};
+
+		const homePlayers = mapPlayers(result.data.game.homeTeam, 'home');
+		const awayPlayers = mapPlayers(result.data.game.awayTeam, 'away');
+
+		console.log(`[fetchGameBoxScore] Successfully parsed boxscore for ${gameId}`, {
+			correlationId,
+			homeTeam: result.data.game.homeTeam.teamTricode,
+			awayTeam: result.data.game.awayTeam.teamTricode,
+			homePlayers: homePlayers.length,
+			awayPlayers: awayPlayers.length
+		});
 
 		return {
 			success: true,
 			data: {
-				home: mapPlayers(result.data.game.homeTeam),
-				away: mapPlayers(result.data.game.awayTeam),
+				home: homePlayers,
+				away: awayPlayers,
 			},
 			cached: result.cached,
 			timestamp: result.timestamp,
 		};
 	} catch (error) {
+		console.error(`[fetchGameBoxScore] Failed to parse boxscore for ${gameId}`, {
+			correlationId,
+			error
+		});
 		return {
 			success: false,
 			error: createError(
 				error instanceof Error ? error.message : 'Failed to parse boxscore',
-				generateCorrelationId()
+				correlationId
 			),
 		};
 	}
