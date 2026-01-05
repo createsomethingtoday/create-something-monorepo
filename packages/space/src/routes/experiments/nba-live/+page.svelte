@@ -11,7 +11,7 @@
 	import GameSelector from '$lib/components/nba/GameSelector.svelte';
 	import GameHighlightCard from '$lib/components/nba/GameHighlightCard.svelte';
 	import { selectGameOfTheNight } from '$lib/nba/calculations';
-	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle } from 'lucide-svelte';
+	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle, TrendingUp } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -186,6 +186,27 @@
 					</a>
 				{/each}
 			</div>
+		</div>
+	</section>
+{/if}
+
+<!-- League Insights Link -->
+{#if finalCount > 0}
+	<section class="insights-link-section">
+		<div class="container">
+			<a href="/experiments/nba-live/league-insights" class="insights-link-card">
+				<div class="insights-link-header">
+					<TrendingUp size={20} class="insights-link-icon" />
+					<h3 class="insights-link-title">League Insights</h3>
+				</div>
+				<p class="insights-link-description">
+					See league-wide trends from today's {finalCount} completed {finalCount === 1 ? 'game' : 'games'}.
+					Ball movement correlation, competitive balance, and more.
+				</p>
+				<span class="insights-link-action">
+					View insights <ArrowRight size={14} />
+				</span>
+			</a>
 		</div>
 	</section>
 {/if}
@@ -466,6 +487,63 @@
 
 	.analysis-card:hover .card-action {
 		color: var(--color-fg-secondary);
+	}
+
+	/* Insights Link Section */
+	.insights-link-section {
+		padding-bottom: var(--space-lg);
+	}
+
+	.insights-link-card {
+		background: var(--color-bg-surface);
+		border: 2px solid var(--color-data-1);
+		border-radius: var(--radius-lg);
+		padding: var(--space-md);
+		text-decoration: none;
+		display: block;
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.insights-link-card:hover {
+		border-color: var(--color-fg-primary);
+	}
+
+	.insights-link-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		margin-bottom: var(--space-sm);
+	}
+
+	.insights-link-card :global(.insights-link-icon) {
+		color: var(--color-data-1);
+	}
+
+	.insights-link-title {
+		font-size: var(--text-body-lg);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.insights-link-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.5;
+		margin-bottom: var(--space-sm);
+	}
+
+	.insights-link-action {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.insights-link-card:hover .insights-link-action {
+		color: var(--color-fg-primary);
 	}
 
 	/* About Section */
