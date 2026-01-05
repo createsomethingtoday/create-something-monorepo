@@ -2,13 +2,15 @@
  * NBA Proxy Worker
  *
  * Proxies NBA.com Stats API with rate limiting and caching.
+ * Stores daily snapshots for historical data access.
  * Part of the meta-experiment testing spec-driven development.
  *
  * Features:
  * - Rate limiting (10 req/min to NBA.com)
  * - KV caching with 30s TTL for live data
+ * - D1 storage for historical snapshots (captured nightly at 2am ET)
  * - Error handling with correlation IDs
- * - Endpoints: /games/today, /game/:id/pbp, /game/:id/boxscore, /baselines, /league-averages/:season
+ * - Endpoints: /games/today, /games/:date, /game/:id/pbp, /game/:id/boxscore, /baselines, /league-averages/:season
  */
 
 export interface Env {
@@ -185,6 +187,46 @@ async function handleGamesToday(env: Env, correlationId: string): Promise<Respon
 	}
 }
 
+async function handleGamesByDate(
+	date: string,
+	env: Env,
+	correlationId: string
+): Promise<Response> {
+	try {
+		const today = new Date().toISOString().slice(0, 10);
+
+		// If requesting today's games, fetch live data
+		if (date === today) {
+			return handleGamesToday(env, correlationId);
+		}
+
+		// Check D1 for historical data
+		console.log(`[${correlationId}] Checking D1 for historical data: ${date}`);
+		const snapshot = await env.DB.prepare(
+			'SELECT scoreboard_json, captured_at FROM game_snapshots WHERE date = ?'
+		)
+			.bind(date)
+			.first();
+
+		if (snapshot) {
+			console.log(`[${correlationId}] Found historical data for ${date}`);
+			const data = JSON.parse(snapshot.scoreboard_json as string);
+			return successResponse(data, correlationId, true);
+		}
+
+		// No historical data available
+		return errorResponse(
+			`No data available for ${date}. Historical data is captured nightly starting from the day this feature was deployed.`,
+			correlationId,
+			404
+		);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		console.error(`[${correlationId}] Games by date error for ${date}:`, message);
+		return errorResponse(message, correlationId, 500);
+	}
+}
+
 async function handleGamePBP(
 	gameId: string,
 	env: Env,
@@ -286,6 +328,81 @@ function handleHealth(correlationId: string): Response {
 	);
 }
 
+// Daily snapshot capture (runs at 2am ET via cron)
+async function captureSnapshot(env: Env): Promise<void> {
+	const correlationId = generateCorrelationId();
+
+	// Capture previous day's games (cron runs at 2am, so games from "yesterday" are complete)
+	const yesterday = new Date();
+	yesterday.setDate(yesterday.getDate() - 1);
+	const date = yesterday.toISOString().slice(0, 10); // YYYY-MM-DD
+
+	console.log(`[${correlationId}] Starting daily snapshot capture for ${date}`);
+
+	try {
+		// Update metadata to pending
+		await env.DB.prepare(
+			'INSERT INTO snapshot_metadata (date, status, attempt_count, last_attempt_at) VALUES (?, ?, 0, ?) ON CONFLICT(date) DO UPDATE SET status = ?, attempt_count = attempt_count + 1, last_attempt_at = ?'
+		)
+			.bind(date, 'pending', Date.now(), 'pending', Date.now())
+			.run();
+
+		// Fetch today's scoreboard (which has yesterday's completed games)
+		const url = `${env.NBA_API_BASE_URL}/liveData/scoreboard/todaysScoreboard_00.json`;
+		const response = await fetch(url, {
+			headers: {
+				'User-Agent': 'CREATE-SOMETHING-NBA-Proxy/1.0',
+				Accept: 'application/json',
+				Referer: 'https://www.nba.com/',
+			},
+		});
+
+		if (!response.ok) {
+			throw new Error(`NBA API error: ${response.status} ${response.statusText}`);
+		}
+
+		const data = await response.json();
+		const gameCount = data?.scoreboard?.games?.length || 0;
+
+		// Store snapshot
+		await env.DB.prepare(
+			'INSERT INTO game_snapshots (date, scoreboard_json, game_count, captured_at) VALUES (?, ?, ?, ?) ON CONFLICT(date) DO UPDATE SET scoreboard_json = ?, game_count = ?, captured_at = ?'
+		)
+			.bind(
+				date,
+				JSON.stringify(data),
+				gameCount,
+				Date.now(),
+				JSON.stringify(data),
+				gameCount,
+				Date.now()
+			)
+			.run();
+
+		// Update metadata to captured
+		await env.DB.prepare(
+			'UPDATE snapshot_metadata SET status = ?, error_message = NULL WHERE date = ?'
+		)
+			.bind('captured', date)
+			.run();
+
+		console.log(`[${correlationId}] Successfully captured ${gameCount} games for ${date}`);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		console.error(`[${correlationId}] Snapshot capture failed for ${date}:`, message);
+
+		// Update metadata to failed
+		await env.DB.prepare(
+			'UPDATE snapshot_metadata SET status = ?, error_message = ? WHERE date = ?'
+		)
+			.bind('failed', message, date)
+			.run();
+
+		// Re-throw to trigger retry
+		throw error;
+	}
+}
+
 // Main router
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -321,6 +438,12 @@ export default {
 			return handleGamesToday(env, correlationId);
 		}
 
+		// /games/:date (YYYY-MM-DD format)
+		const gamesDateMatch = path.match(/^\/games\/(\d{4}-\d{2}-\d{2})$/);
+		if (gamesDateMatch) {
+			return handleGamesByDate(gamesDateMatch[1], env, correlationId);
+		}
+
 		// /game/:id/pbp
 		const pbpMatch = path.match(/^\/game\/(\d+)\/pbp$/);
 		if (pbpMatch) {
@@ -352,5 +475,9 @@ export default {
 
 		// 404 for unknown routes
 		return errorResponse(`Not found: ${path}`, correlationId, 404);
+	},
+
+	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+		ctx.waitUntil(captureSnapshot(env));
 	},
 };

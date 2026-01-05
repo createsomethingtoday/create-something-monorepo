@@ -19,6 +19,11 @@ binding = "DB"
 database_name = "create-something-db"
 database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
 
+# Cron trigger for daily snapshot capture
+# Runs at 2am ET (7am UTC during EST, 6am UTC during EDT)
+[triggers]
+crons = ["0 7 * * *"]
+
 # Environment variables
 [vars]
 ENVIRONMENT = "production"
