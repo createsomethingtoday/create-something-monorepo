@@ -98,6 +98,10 @@ This is why creation is a discipline, not a talent. You develop the eye through 
 
 ## What You'll Learn
 
+**Before this course**: You see creation as addition. More features = better product.
+
+**After this course**: You see creation as subtraction. Every decision asks "what can I remove?"
+
 In the lessons ahead, you'll develop each level:
 
 1. **DRY** → Recognizing and unifying duplication
