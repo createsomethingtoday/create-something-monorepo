@@ -42,7 +42,7 @@
 				analyzed the same codebase simultaneously, producing complementary findings. The architecture
 				reviewer detected 4 pairs of nearly-identical files across packages; the security reviewer
 				identified IDOR vulnerabilities; the quality reviewer noted inconsistent error handling. This
-				paper analyzes how this hermeneutic triad—the interplay between reviewers, harness, and
+				paper analyzes how this <strong>hermeneutic triad</strong> (a three-part interpretive system where different perspectives—reviewers, harness, agent—work together to reveal understanding that no single perspective could achieve alone)—the interplay between reviewers, harness, and
 				agent—creates a self-correcting system that surfaces issues no single perspective would catch.
 			</p>
 		</section>

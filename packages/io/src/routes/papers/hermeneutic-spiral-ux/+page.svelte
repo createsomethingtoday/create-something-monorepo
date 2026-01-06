@@ -55,7 +55,7 @@
 				Modern digital systems suffer from a peculiar form of amnesia. Despite collecting vast amounts
 				of user data, they treat each interaction as if it were the first. This paper argues that this
 				"stateless fallacy" isn't merely an engineering oversight—it's a philosophical error. By applying
-				Heidegger's hermeneutic circle to user experience design, we propose the <em>Hermeneutic Spiral</em>,
+				Heidegger's <strong>hermeneutic circle</strong> (a philosophical method where understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) to user experience design, we propose the <em>Hermeneutic Spiral</em>,
 				where each interaction builds upon previous understanding rather than starting fresh. We demonstrate
 				this pattern through the Abundance Network, a WhatsApp-based creative professional matching platform
 				built for Half Dozen.
