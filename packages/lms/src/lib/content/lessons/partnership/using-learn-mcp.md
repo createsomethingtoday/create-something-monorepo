@@ -228,7 +228,7 @@ or more precisely:
 │                                                                 │
 │ ## The Compiler Advantage                                       │
 │                                                                 │
-│ Most frameworks ship a runtime to the browser...                │
+│ Most frameworks include a runtime to the browser...                │
 │                                                                 │
 │ [Full markdown content continues...]                            │
 │                                                                 │

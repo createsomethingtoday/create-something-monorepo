@@ -406,7 +406,7 @@ Yes—coherent, composable, unified
 You've mastered the triad when:
 
 1. **You ask the questions unconsciously** → They become how you see
-2. **You catch issues before they ship** → The questions surface problems during design
+2. **You catch issues before release** → The questions surface problems during design
 3. **You spiral naturally** → You move between levels as understanding deepens
 
 **The work is training your perception.** The more you practice, the faster you see.

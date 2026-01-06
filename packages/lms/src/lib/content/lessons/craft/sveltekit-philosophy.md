@@ -126,7 +126,7 @@ With `use:enhance`: Form submits via fetch, page updates without reload.
 
 **The JavaScript enhancement disappears if it's not needed.**
 
-Users with slow connections or disabled JavaScript get a working experience. Everyone else gets the enhanced version. You don't ship code to handle the degraded case—it's the default.
+Users with slow connections or disabled JavaScript get a working experience. Everyone else gets the enhanced version. You don't send code to handle the degraded case—it's the default.
 
 ## The Subtractive Triad in SvelteKit
 
@@ -286,7 +286,7 @@ Every design decision asks: "What can we remove?"
 
 Before moving on:
 
-1. In your current framework, what runtime features ship with every page?
+1. In your current framework, what runtime features include with every page?
 2. What configuration could be replaced by convention?
 3. Where does your framework become visible to users?
 
