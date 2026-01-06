@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 
-	let isDark = $state(false);
+	// Default to dark mode (dark is default, no attribute needed)
+	let isDark = $state(true);
 
 	// Initialize from localStorage or system preference
 	$effect(() => {
@@ -10,6 +11,7 @@
 			if (stored) {
 				isDark = stored === 'dark';
 			} else {
+				// Default to system preference, but default to dark if no preference
 				isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 			}
 			updateTheme();
@@ -18,7 +20,13 @@
 
 	function updateTheme() {
 		if (browser) {
-			document.documentElement.classList.toggle('dark', isDark);
+			if (isDark) {
+				// Dark mode is default - remove attribute
+				document.documentElement.removeAttribute('data-theme');
+			} else {
+				// Light mode - set data-theme attribute
+				document.documentElement.setAttribute('data-theme', 'light');
+			}
 			localStorage.setItem('theme', isDark ? 'dark' : 'light');
 		}
 	}
