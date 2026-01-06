@@ -83,8 +83,8 @@
 
 			<h3 class="subsection-heading">1.1 Heideggerian Framing</h3>
 			<p class="leading-relaxed body-text">
-				Per the CREATE Something philosophy, infrastructure should exhibit <em>Zuhandenheit</em>
-				(ready-to-hand)—receding into transparent use. The harness should be invisible when working
+				Per the CREATE Something philosophy, infrastructure should exhibit <strong><em>Zuhandenheit</em></strong>
+				(ready-to-hand: when a tool disappears into transparent use, like a hammer during skilled carpentry)—receding into transparent use. The harness should be invisible when working
 				correctly; failures should surface clearly with actionable context.
 			</p>
 
