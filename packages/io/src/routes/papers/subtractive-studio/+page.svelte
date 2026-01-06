@@ -39,7 +39,7 @@
 			<p class="leading-relaxed body-text">
 				The digital services industry operates on an additive assumption: more features, more
 				services, more complexity equals more value. This paper proposes an alternative grounded in
-				phenomenology and design philosophy. CREATE SOMETHING is a <em>subtractive studio</em>—an
+				<strong>phenomenology</strong> (the philosophical study of structures of experience and consciousness—how things show themselves to us through lived experience) and design philosophy. CREATE SOMETHING is a <em>subtractive studio</em>—an
 				organization whose primary discipline is the removal of what obscures. We articulate the
 				Subtractive Triad (DRY, Rams, Heidegger) as operational philosophy, demonstrate how
 				philosophy functions as infrastructure rather than marketing, and establish the hermeneutic
@@ -170,7 +170,7 @@
 				<h3 class="subsection-heading mt-6">DRY: Implementation Level</h3>
 
 				<p>
-					"Don't Repeat Yourself" is not merely a coding principle. It's an ontological stance:
+					"Don't Repeat Yourself" is not merely a coding principle. It's an <strong>ontological</strong> (concerning the fundamental nature of being and existence) stance:
 					duplication is disconnection. When the same logic exists in two places, they will
 					inevitably drift apart. The system loses coherence.
 				</p>
@@ -292,7 +292,7 @@ Every creation exists simultaneously at three levels:
 
 		<!-- Section 4: The Hermeneutic Circle -->
 		<section class="space-y-6">
-			<h2 class="section-heading">IV. The Hermeneutic Circle as Architecture</h2>
+			<h2 class="section-heading">IV. The <strong>Hermeneutic Circle</strong> (a philosophical method where understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) as Architecture</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
