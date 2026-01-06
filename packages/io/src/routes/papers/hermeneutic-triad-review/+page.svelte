@@ -549,9 +549,204 @@ $ pnpm --filter=space exec tsc --noEmit  # ✓`}</pre>
 			</div>
 		</section>
 
-		<!-- Section 9: Conclusion -->
+		<!-- Section 9: How to Apply This -->
 		<section class="space-y-6">
-			<h2 class="section-heading">IX. Conclusion: Collaboration, Not Control</h2>
+			<h2 class="section-heading">IX. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<p>
+					This section shows how to configure parallel peer review in your own autonomous
+					development workflows. The pattern works for any harness system that supports
+					checkpoints and issue creation.
+				</p>
+
+				<h3 class="subsection-heading">Step-by-Step Process</h3>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-primary">{`Step 1: Configure Reviewers (Human)
+Define three specialized reviewers in harness config:
+- architecture: DRY violations, coupling, module boundaries
+- security: OWASP Top 10, auth gaps, injection risks
+- quality: Error handling, test coverage, maintainability
+Ensure orthogonal perspectives (minimal overlap).
+
+Step 2: Set Blocking Rules (Human)
+Decide which reviewers can pause execution:
+- architecture: blocking (structural issues compound)
+- security: blocking (vulnerabilities are critical)
+- quality: advisory (minor issues can queue)
+Configure pauseOnCritical: true for blocking reviewers.
+
+Step 3: Enable Parallel Execution (Agent)
+Run reviewers simultaneously, not sequentially:
+- Each receives same git diff and file context
+- Total review time = longest single reviewer
+- Results merge into unified findings list
+Use Promise.all() or equivalent concurrency primitive.
+
+Step 4: Create Finding Issues (Agent)
+When reviewer returns critical findings:
+- Create Beads issue for each finding
+- Label with reviewer name and severity
+- Link to checkpoint for context
+- Add dependencies if findings are related
+
+Step 5: Pause and Surface (Harness)
+When blocking reviewer fails:
+- Halt execution immediately
+- Generate checkpoint summary
+- Preserve agent context for resumption
+- Alert human for review decision
+
+Step 6: Resolve and Resume (Agent + Human)
+Human reviews findings, agent implements fixes:
+- Close findings with commit references
+- Update harness context with resolution
+- Re-run reviewers if needed
+- Resume execution when clear`}</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: API Endpoint Duplication</h3>
+
+				<p>
+					Let's say your agent builds three similar API routes across different packages:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// packages/shop/src/routes/api/subscribe/+server.ts
+export async function POST({ request }) {
+  const { email } = await request.json();
+  const token = generateToken(email);
+  await db.insert(subscribers).values({ email, token });
+  await sendConfirmationEmail(email, token);
+  return json({ success: true });
+}
+
+// packages/blog/src/routes/api/subscribe/+server.ts
+export async function POST({ request }) {
+  const { email } = await request.json();
+  const token = generateToken(email);
+  await db.insert(blogSubscribers).values({ email, token });
+  await sendConfirmationEmail(email, token);
+  return json({ success: true });
+}
+
+// packages/newsletter/src/routes/api/subscribe/+server.ts
+export async function POST({ request }) {
+  const { email } = await request.json();
+  const token = generateToken(email);
+  await db.insert(newsletterSubscribers).values({ email, token });
+  await sendConfirmationEmail(email, token);
+  return json({ success: true });
+}`}</pre>
+				</div>
+
+				<p class="mt-4">
+					The architecture reviewer detects:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-warning">{`[CRITICAL] Duplicated subscription logic across 3 packages
+→ packages/shop/src/routes/api/subscribe/+server.ts
+→ packages/blog/src/routes/api/subscribe/+server.ts
+→ packages/newsletter/src/routes/api/subscribe/+server.ts
+→ Only differs in table name
+→ Recommend: Extract to @myapp/subscriptions package`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Meanwhile, the security reviewer flags:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-warning">{`[HIGH] Missing rate limiting on subscription endpoints
+→ All three endpoints accept unlimited POST requests
+→ Vulnerable to subscription bombing
+→ Recommend: Add rate limiting middleware`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Harness creates issues for both findings, pauses, and alerts human. Agent then:
+				</p>
+
+				<ol class="list-decimal list-inside space-y-2 pl-4">
+					<li>Creates <code class="inline-code">@myapp/subscriptions</code> package</li>
+					<li>Extracts shared logic to <code class="inline-code">processSubscription(table, email)</code></li>
+					<li>Adds rate limiting middleware to all endpoints</li>
+					<li>Updates consumers to import shared function</li>
+					<li>Closes findings with commit references</li>
+				</ol>
+
+				<h3 class="mt-6 subsection-heading">When to Use Parallel Peer Review</h3>
+
+				<p>
+					Use this pattern when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Autonomous work:</strong> Agent-driven development with harness orchestration</li>
+					<li><strong>Multi-file changes:</strong> Checkpoints cover significant scope (3+ files)</li>
+					<li><strong>Quality gates matter:</strong> Structural or security issues can't accumulate silently</li>
+					<li><strong>Hermeneutic continuity:</strong> Work spans multiple sessions, understanding must persist</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't use for:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>Single-file changes or trivial fixes</li>
+					<li>Exploratory prototyping (no established patterns yet)</li>
+					<li>Emergency hotfixes (review adds latency)</li>
+					<li>Human-driven development (peer review happens via PR)</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Calibrating Reviewer Sensitivity</h3>
+
+				<p>
+					Over time, tune your reviewers based on false positive rates:
+				</p>
+
+				<div class="responsive-table-scroll mt-4">
+					<table class="w-full table-auto">
+						<thead>
+							<tr class="table-header">
+								<th class="table-cell">Symptom</th>
+								<th class="table-cell">Adjustment</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="table-row">
+								<td class="table-cell">Too many trivial findings</td>
+								<td class="table-cell">Increase severity threshold for pause</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Missing critical issues</td>
+								<td class="table-cell">Add specific patterns to reviewer prompts</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Reviews taking too long</td>
+								<td class="table-cell">Reduce context window or use faster model</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Human overriding frequently</td>
+								<td class="table-cell">Demote reviewer to advisory (non-blocking)</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<p class="mt-4 text-emphasis">
+					The goal is a self-correcting system, not a gate-keeping system. Reviewers should
+					catch real issues while allowing good work to proceed. Calibrate continuously based
+					on outcomes.
+				</p>
+			</div>
+		</section>
+
+		<!-- Section 10: Conclusion -->
+		<section class="space-y-6">
+			<h2 class="section-heading">X. Conclusion: Collaboration, Not Control</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -738,6 +933,19 @@ $ pnpm --filter=space exec tsc --noEmit  # ✓`}</pre>
 		padding: 0.125rem 0.5rem;
 		border-radius: var(--radius-sm);
 		font-family: monospace;
+	}
+
+	.code-block-success {
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+		border-radius: var(--radius-lg);
+		font-size: var(--text-body-sm);
+		overflow-x: auto;
+	}
+
+	.text-emphasis {
+		color: var(--color-fg-primary);
+		font-weight: 500;
 	}
 
 	/* Info Cards */
