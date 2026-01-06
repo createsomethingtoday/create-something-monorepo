@@ -94,13 +94,33 @@ This reframes clarity as *ethical*, not aesthetic. Bad writing isn't just unplea
 
 **Canon adoption**: Rules 1-5 are subtractive. Rule 6 is Heideggerian—judgment over formula.
 
-#### Fenton/Lee Patterns Adopted
+#### Fenton/Lee's Core Insight
+
+From "Nicely Said: Writing for the Web with Style and Purpose":
+
+> "Good writing serves the reader, not the writer. It meets people where they are and helps them get where they want to go."
+
+This reframes clarity as *service*, not showmanship. Fenton and Lee bridge Orwell's ethical clarity with practical application for digital content. Their transformation examples:
+
+**Before/After Examples** (the Fenton/Lee method):
+
+| Before | After | Why |
+|--------|-------|-----|
+| "Utilize our platform" | "Use our tools" | Shorter word, same meaning |
+| "Solutions for your needs" | "Tools for building websites" | Specific over vague |
+| "Simply click here" | "Click here to start" | "Simply" implies it's obvious (dismissive) |
+| "Please be advised that..." | "Starting May 1..." | Direct over bureaucratic |
+| "Best-in-class features" | "Fast search, real-time updates" | Specific features over marketing jargon |
+
+**Fenton/Lee Patterns Adopted**:
 
 - **Transformation examples**: Show before/after, not just rules
 - **User-centered framing**: Meet readers where they are
 - **Plain language advocacy**: Prefer common words to insider vocabulary
 - **Warmth where appropriate**: Acknowledge reader's struggles
 - **Recognition over confrontation**: Help readers notice patterns, then transform them
+- **Active voice preference**: "We built this" not "This was built"
+- **Conversational tone**: Write like you talk (but edited)
 
 #### Heideggerian Connection
 
