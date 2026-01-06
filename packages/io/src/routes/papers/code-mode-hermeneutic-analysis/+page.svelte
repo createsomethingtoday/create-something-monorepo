@@ -36,12 +36,12 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper applies Heidegger's phenomenological analysis of ready-to-hand (<em>Zuhandenheit</em>)
-				versus present-at-hand (<em>Vorhandenheit</em>) to contemporary Large Language Model (LLM) agent
+				This paper applies Heidegger's phenomenological analysis of ready-to-hand (<strong><em>Zuhandenheit</em></strong>—when a tool disappears into transparent use, like a hammer during hammering)
+				versus present-at-hand (<strong><em>Vorhandenheit</em></strong>—when a tool becomes an object of conscious attention, like a broken hammer you must examine) to contemporary Large Language Model (LLM) agent
 				architecture, specifically examining the distinction between direct tool calling and code-mediated
 				tool access (Code Mode). We argue that Code Mode achieves Zuhandenheit—tools becoming transparent
 				in use—while traditional tool calling forces Vorhandenheit—tools as objects of conscious focus.
-				This is not merely an optimization but an ontological shift in how agents relate to tools.
+				This is not merely an optimization but an <strong>ontological</strong> (concerning the fundamental nature of being and existence) shift in how agents relate to tools.
 			</p>
 		</section>
 
@@ -70,7 +70,7 @@
 				</p>
 
 				<p>
-					This paper proposes an alternative explanation grounded in Heidegger's phenomenology.
+					This paper proposes an alternative explanation grounded in Heidegger's <strong>phenomenology</strong> (the philosophical study of structures of experience and consciousness—how things show themselves to us through lived experience, not abstract theory).
 					We argue that Code Mode succeeds because it achieves what Heidegger calls
 					<em>Zuhandenheit</em>—the ready-to-hand relationship where tools recede from conscious
 					attention into transparent use. Direct tool calling, by contrast, forces
