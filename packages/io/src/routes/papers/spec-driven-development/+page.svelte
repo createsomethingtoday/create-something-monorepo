@@ -509,9 +509,174 @@ Types (1.1)
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">9. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<p>
+					This section translates the methodology into actionable steps. Whether you're building
+					a dashboard, API, or full-stack feature, spec-driven development follows the same process.
+				</p>
+
+				<h3 class="subsection-heading">Step-by-Step Process</h3>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-primary">{`Step 1: Write the Spec Before Code (Human)
+Create a YAML specification with:
+- Project title and complexity annotation
+- Features grouped into phases
+- Explicit dependency graphs (depends_on arrays)
+- Acceptance criteria (testable, observable)
+- File paths for each feature
+
+Step 2: Identify Execution Strategy (Human)
+Determine which phases run:
+- Sequential (dependencies required)
+- Parallel convoy (isolated files, shared infrastructure)
+- Mark complexity: trivial, simple, standard, complex
+
+Step 3: Create Feature Issues (Agent)
+Use Beads to create issues from spec:
+\`bd mol spawn <spec-file> --property <value>\`
+Each feature becomes an issue with:
+- Dependencies enforced
+- Complexity-based model selection
+- Acceptance criteria as checklist
+
+Step 4: Execute Infrastructure First (Agent)
+Sequential implementation of foundational features:
+- Types before clients
+- Database schema before queries
+- Worker/server before calculations
+Validate each with acceptance criteria before proceeding.
+
+Step 5: Execute Features in Parallel (Agent)
+For convoy-eligible features:
+- Confirm file isolation (no overlaps)
+- Run parallel sessions (different agents or sequential with context switch)
+- Merge when all features reach code-complete
+
+Step 6: Document Gaps (Human + Agent)
+After implementation, capture:
+- What the spec didn't predict
+- Why gaps occurred (API changes, integration complexity)
+- How understanding evolved
+This becomes the methodology artifact (like this paper).</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: E-Commerce Cart Feature</h3>
+
+				<p>
+					Let's say you're adding a shopping cart to an existing e-commerce site:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`title: Shopping Cart with Checkout Flow
+property: shop
+complexity: standard
+
+features:
+  - title: Cart types and schema
+    priority: 1
+    complexity: simple
+    files:
+      - packages/shop/src/types/cart.ts
+      - packages/shop/migrations/0015_cart_table.sql
+    acceptance:
+      - test: CartItem interface has product_id, quantity, price
+        verify: pnpm --filter=shop exec tsc --noEmit
+      - D1 migration creates cart_items table
+
+  - title: Cart API (add, remove, update)
+    priority: 1
+    complexity: standard
+    depends_on:
+      - Cart types and schema
+    files:
+      - packages/shop/src/routes/api/cart/+server.ts
+      - packages/shop/src/lib/cart.ts
+    acceptance:
+      - POST /api/cart/add returns 200 with updated cart
+      - DELETE /api/cart/remove/:id removes item
+      - Cart persists across sessions (D1)
+
+  - title: Cart UI component
+    priority: 2
+    complexity: simple
+    depends_on:
+      - Cart API (add, remove, update)
+    files:
+      - packages/shop/src/components/Cart.svelte
+      - packages/shop/src/components/CartItem.svelte
+    acceptance:
+      - Cart displays items with quantity controls
+      - Total price updates on quantity change
+      - Empty state shows "Your cart is empty"
+
+  - title: Checkout flow
+    priority: 2
+    complexity: complex
+    depends_on:
+      - Cart API (add, remove, update)
+    files:
+      - packages/shop/src/routes/checkout/+page.svelte
+      - packages/shop/src/routes/checkout/+page.server.ts
+      - packages/shop/src/lib/payment.ts
+    acceptance:
+      - Checkout validates cart not empty
+      - Stripe payment intent created
+      - Order confirmation email sent
+      - Cart cleared after successful payment`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Execution strategy:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Phase 1 (Sequential):</strong> Cart types → Cart API</li>
+					<li><strong>Phase 2 (Parallel):</strong> Cart UI and Checkout flow can run simultaneously—isolated files</li>
+					<li><strong>Validation:</strong> Each feature has testable acceptance criteria</li>
+					<li><strong>Complexity:</strong> Checkout marked complex for Opus model (Stripe integration, email)</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">When to Use Spec-Driven Development</h3>
+
+				<p>
+					Use this approach when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Multi-file features:</strong> 3+ files that need coordination</li>
+					<li><strong>Clear dependencies:</strong> Infrastructure → Features → Polish structure exists</li>
+					<li><strong>Agent execution:</strong> Work will be done by AI agents (harness, Claude Code)</li>
+					<li><strong>Methodology capture:</strong> You want documentation as a first-class artifact</li>
+					<li><strong>Parallel work:</strong> Features can be built simultaneously by different agents</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't use for:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>Quick fixes or single-file changes</li>
+					<li>Exploratory prototyping (unknown requirements)</li>
+					<li>Hotfixes or emergency patches</li>
+					<li>Refactoring where behavior doesn't change</li>
+				</ul>
+
+				<p class="mt-4 text-emphasis">
+					The upfront cost of spec creation pays off through reduced rework, automatic issue
+					creation, and methodology documentation. For complex features, spec-driven development
+					produces both working code and lasting understanding.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">9. Conclusion</h2>
+			<h2 class="section-heading">10. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -786,6 +951,14 @@ Types (1.1)
 		background: var(--color-bg-surface);
 		padding: 0.125rem 0.5rem;
 		border-radius: var(--radius-sm);
+	}
+
+	.code-block-success {
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+		border-radius: var(--radius-lg);
+		font-size: var(--text-body-sm);
+		overflow-x: auto;
 	}
 
 	/* Quote Box */
