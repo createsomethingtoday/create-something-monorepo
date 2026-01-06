@@ -441,9 +441,215 @@ Every creation exists simultaneously at three levels:
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">VI. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Building Your Subtractive Practice</h3>
+				<p>
+					To apply the Subtractive Triad to your own creative practice or organization:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">Step 1: Choose Your First Layer (Human)
+Start with implementation (DRY). This is the most concrete and actionable.
+Before proceeding to artifact or system levels, establish the discipline of
+eliminating duplication.
+
+Step 2: Audit for Duplication (Human)
+Examine your work for repetition:
+- Code: Same logic in multiple places?
+- Design: Same patterns solved differently?
+- Process: Same explanation given multiple times?
+
+Step 3: Unify Through Abstraction (Human + Agent)
+Don't just copy-paste. Extract the pattern. Name it. Document why it exists.
+Create shared components, design tokens, or written principles depending on medium.
+
+Step 4: Move to Artifact Level (Human)
+Apply Rams' question: "Does this earn its existence?"
+For every element in your work, ask what would be lost if you removed it.
+If the answer is "nothing" or "not much," remove it.
+
+Step 5: Validate Against the Whole (Human)
+Ask Heidegger's question: "Does this serve the whole?"
+Does this component integrate with the larger system, or does it create
+disconnection? Isolated excellence is failure.
+
+Step 6: Institutionalize as Infrastructure (Human + Agent)
+Don't let principles remain aspirational. Encode them:
+- CSS tokens that enforce constraints
+- Linting rules that catch violations
+- Shared libraries that embody patterns
+- Documentation that explains "why," not just "what"</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Applying the Triad to a Design System</h3>
+				<p>
+					Let's say you're building a design system for your organization:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// Implementation Level (DRY)
+// Before: Color defined in 12 different component files
+.button { background: #4353ff; }
+.nav-item { border-color: #4353ff; }
+.link { color: #4353ff; }
+
+// After: Unified through tokens
+:root {
+  --color-primary: #4353ff;
+}
+.button { background: var(--color-primary); }
+.nav-item { border-color: var(--color-primary); }
+.link { color: var(--color-primary); }
+
+// Artifact Level (Rams)
+// Before: 8 different button variants
+<Button variant="primary" />
+<Button variant="secondary" />
+<Button variant="tertiary" />
+<Button variant="ghost" />
+<Button variant="outline" />
+<Button variant="link" />
+<Button variant="danger" />
+<Button variant="success" />
+
+// After: Only what earns existence
+<Button /> // Default: primary action
+<Button variant="secondary" /> // Lower emphasis
+<Button variant="danger" /> // Destructive action
+
+// Removed: ghost, outline, link (use semantic HTML instead)
+// Removed: success (use confirmation feedback, not button color)
+
+// System Level (Heidegger)
+// Before: Button exists in isolation
+<Button onClick={handleSubmit}>Submit</Button>
+
+// After: Button serves form's purpose
+<Form onSubmit={handleSubmit}>
+  <Input name="email" />
+  <Button type="submit">Submit</Button>
+</Form>
+
+// The button isn't primary; the form is. Button recedes into transparent use.`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice how each level builds on the previous:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>DRY</strong>: Unified color definition prevents drift</li>
+					<li><strong>Rams</strong>: Removed variants that don't justify their complexity</li>
+					<li><strong>Heidegger</strong>: Button serves form's purpose, not its own appearance</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Creating Philosophy as Infrastructure</h3>
+				<p>
+					To make principles operational rather than aspirational:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// 1. Encode constraints as tooling
+// .eslintrc.js
+module.exports = {
+  rules: {
+    // Enforce DRY: catch magic numbers
+    'no-magic-numbers': ['error', { ignore: [0, 1] }],
+
+    // Enforce Rams: limit component complexity
+    'complexity': ['error', { max: 10 }],
+
+    // Enforce Heidegger: require semantic naming
+    'id-length': ['error', { min: 3, exceptions: ['id', 'i'] }],
+  },
+};
+
+// 2. Create generative systems
+// scripts/generate-component.js
+// Auto-generates components following Canon constraints
+const template = (name) => \`
+import { useCanonTokens } from '@/design-system';
+
+export function \${name}() {
+  const tokens = useCanonTokens();
+
+  return (
+    <div style={{
+      padding: tokens.spacing.md,
+      borderRadius: tokens.radius.lg,
+    }}>
+      {/* Content */}
+    </div>
+  );
+}
+\`;
+
+// 3. Document rationale, not just rules
+// CANON.md
+## Why We Don't Use Arbitrary Values
+
+**Principle**: Every spacing value must come from the golden ratio scale.
+
+**Rationale**: Arbitrary spacing (like \`padding: 13px\`) creates visual noise.
+The golden ratio (1.618) produces naturally harmonious proportions that work
+across scales without manual tuning.
+
+**How to Apply**: Use tokens: \`--space-xs\`, \`--space-sm\`, \`--space-md\`, etc.
+Never hardcode pixel values for spacing.`}</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">When to Apply (and When Not To)</h3>
+				<p>
+					Apply the Subtractive Triad when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Starting a new system</strong>: Establish constraints early, before complexity accumulates</li>
+					<li><strong>Refactoring existing work</strong>: Use as lens to identify what to remove</li>
+					<li><strong>Onboarding new team members</strong>: Provides clear decision-making framework</li>
+					<li><strong>Experiencing drift</strong>: When implementations diverge, reconnect through shared principles</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't apply when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>Exploring genuinely new territory (premature abstraction is harmful)</li>
+					<li>Working on throwaway prototypes (overhead not justified)</li>
+					<li>The team lacks shared context (philosophy requires common language)</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Measuring Subtractive Success</h3>
+				<p>
+					How do you know the Triad is working?
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">✓ DRY (Implementation): Changing a pattern updates all instances automatically
+✓ Rams (Artifact): Team can explain why every element exists
+✓ Heidegger (System): Components integrate seamlessly without custom glue code
+✓ Infrastructure: Violations are caught by tooling, not code review
+✓ Onboarding: New contributors understand constraints within first week
+✓ Evolution: System ages well—additions feel coherent, not bolted-on</pre>
+				</div>
+
+				<p class="mt-4 emphasis-text">
+					The ultimate test: Can you describe value <em>without mentioning technology</em>?
+					If your explanation requires implementation details, you're thinking additively.
+					Subtractive thinking reveals outcomes: "Meetings follow up on themselves"
+					not "SMTP integration with CRM webhooks."
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">VI. Conclusion: Position Is Practice</h2>
+			<h2 class="section-heading">VII. Conclusion: Position Is Practice</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -711,6 +917,26 @@ Every creation exists simultaneously at three levels:
 	}
 
 	.footer-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.code-block-success {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-border-default));
+		border-radius: var(--radius-lg);
+		overflow-x: auto;
+	}
+
+	.code-secondary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.emphasis-text {
+		color: var(--color-fg-primary);
+	}
+
+	.subsection-heading {
+		font-size: var(--text-h3);
 		color: var(--color-fg-primary);
 	}
 </style>
