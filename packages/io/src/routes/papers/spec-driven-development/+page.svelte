@@ -562,17 +562,17 @@ After implementation, capture:
 - What the spec didn't predict
 - Why gaps occurred (API changes, integration complexity)
 - How understanding evolved
-This becomes the methodology artifact (like this paper).&lt;/pre&gt;
-				&lt;/div&gt;
+This becomes the methodology artifact (like this paper).`}</pre>
+				</div>
 
-				&lt;h3 class="mt-6 subsection-heading"&gt;Real-World Example: E-Commerce Cart Feature&lt;/h3&gt;
+				<h3 class="mt-6 subsection-heading">Real-World Example: E-Commerce Cart Feature</h3>
 
-				&lt;p&gt;
+				<p>
 					Let's say you're adding a shopping cart to an existing e-commerce site:
-				&lt;/p&gt;
+				</p>
 
-				&lt;div class="p-4 font-mono code-block"&gt;
-					&lt;pre class="code-primary"&gt;{`title: Shopping Cart with Checkout Flow
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`title: Shopping Cart with Checkout Flow
 property: shop
 complexity: standard
 

@@ -579,17 +579,17 @@ Validate Zuhandenheit by measuring:
 				</p>
 
 				<div class="p-4 font-mono code-block">
-					<pre class="code-primary"># Before: Tool Calling (Vorhandenheit)
+					<pre class="code-primary">{`# Before: Tool Calling (Vorhandenheit)
 # Agent must explicitly think about tool schemas
 
-&lt;tool_call&gt;
-  &lt;name&gt;database_query&lt;/name&gt;
-  &lt;arguments&gt;
-    &lt;table&gt;users&lt;/table&gt;
-    &lt;filter&gt;{"{\"status\": \"active\"}"}&lt;/filter&gt;
-    &lt;limit&gt;10&lt;/limit&gt;
-  &lt;/arguments&gt;
-&lt;/tool_call&gt;
+<tool_call>
+  <name>database_query</name>
+  <arguments>
+    <table>users</table>
+    <filter>{"status": "active"}</filter>
+    <limit>10</limit>
+  </arguments>
+</tool_call>
 
 # Problems:
 # - Schema attention: Agent thinks about table/filter/limit format
@@ -611,7 +611,7 @@ const activeUsers = await db.users
 
 // Composition is natural
 const usersWithPosts = await Promise.all(
-  activeUsers.map(async (user) =&gt; ({
+  activeUsers.map(async (user) => ({
     ...user,
     posts: await db.posts.where({ userId: user.id }).all()
   }))
@@ -628,7 +628,7 @@ try {
 # Benefits:
 # ✓ Tool recedes: Agent writes "get active users", not "call database tool"
 # ✓ Composition works: Promise.all, map, chaining—all familiar patterns
-# ✓ Errors are standard: try/catch instead of parsing tool error schemas</pre>
+# ✓ Errors are standard: try/catch instead of parsing tool error schemas`}</pre>
 				</div>
 
 				<p class="mt-4">

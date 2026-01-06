@@ -340,7 +340,7 @@
 				</p>
 
 				<div class="p-4 font-mono code-block-success">
-					<pre class="code-secondary">Step 1: Identify Conditional Fields (Human)
+					<pre class="code-secondary">{`Step 1: Identify Conditional Fields (Human)
 Find fields that only apply in certain contexts:
 - Payment method fields (only for paid plans)
 - Shipping address (only for physical products)
@@ -375,7 +375,7 @@ Check whether users still get confused:
 ✓ Reduced support questions about "what to enter"
 ✓ Fewer submission errors requiring manual cleanup
 ✓ Faster form completion time
-✗ Users asking "where did that field go?"</pre>
+✗ Users asking "where did that field go?"`}</pre>
 				</div>
 
 				<h3 class="mt-6 subsection-heading">Real-World Example: E-commerce Checkout Form</h3>
@@ -384,7 +384,7 @@ Check whether users still get confused:
 				</p>
 
 				<div class="p-4 font-mono code-block">
-					<pre class="code-primary"># Before: Instruction-Based (Disconnection)
+					<pre class="code-primary">{`# Before: Instruction-Based (Disconnection)
 ┌─────────────────────────────────────────┐
 │ Product Type: [Physical Product ▼]     │
 │                                         │
@@ -432,20 +432,20 @@ Check whether users still get confused:
 
 // Implementation:
 {productType === 'physical' && (
-  &lt;ShippingAddressFields /&gt;
+  <ShippingAddressFields />
 )}
 
 {productType === 'digital' && (
-  &lt;FormField
+  <FormField
     label="Delivery Email"
     description="We'll send your download link here"
     required
-  /&gt;
+  />
 )}
 
 // Clear shipping when switching to digital
 if (name === 'productType' && value === 'digital') {
-  setFormData(prev =&gt; ({
+  setFormData(prev => ({
     ...prev,
     shippingStreet: '',
     shippingCity: '',
@@ -457,7 +457,7 @@ if (name === 'productType' && value === 'digital') {
 # ✓ Impossible to fill wrong fields (they don't exist)
 # ✓ No instruction confusion (only applicable fields visible)
 # ✓ Faster completion (fewer fields to consider)
-# ✓ Zero manual cleanup (no incorrect data to clear)</pre>
+# ✓ Zero manual cleanup (no incorrect data to clear)`}</pre>
 				</div>
 
 				<p class="mt-4">
