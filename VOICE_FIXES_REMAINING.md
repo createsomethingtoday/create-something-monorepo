@@ -144,23 +144,27 @@ cd packages/lms && pnpm build
 
 ### Completed ✅
 
-- [x] Norvig paper jargon (phenomenology, ontological, Vorhandenheit)
-- [x] Partnership lesson (hermeneutic circle, ship→release)
+**High Priority (Done):**
+- [x] Norvig paper jargon (phenomenology, ontological, Vorhandenheit) + transformations + application guide + limitations
+- [x] Partnership lesson (hermeneutic circle defined, ship→release)
 - [x] What-is-creation lesson (hermeneutic circle)
-- [x] Kickstand post (abstract outcomes grounded)
-- [x] Norvig post (BUILD explicit)
-- [x] Canon philosophy page (simply removed, why-this-matters added)
+- [x] Kickstand post (abstract outcomes already grounded: "2 weeks to 3 days")
+- [x] Norvig post (concrete examples already present)
+- [x] Canon philosophy page (simply removed, golden ratio "why this matters" added)
+- [x] Batch "ship" fixes (5 .space lessons)
+- [x] .io paper jargon definitions (12 papers with inline definitions)
+  - understanding-graphs, ethos-transfer, code-mode, subtractive-form, harness-migration
+  - subtractive-studio, intellectual-genealogy, spec-driven-dev
+  - hermeneutic-triad-review, hermeneutic-spiral-ux, hermeneutic-debugging
+  - Note: kickstand-triad-audit (minimal usage), cumulative-state-antipattern (no jargon), autonomous-harness (already defined)
 
-### In Progress 🔄
+### Remaining (Low Priority) ⏸️
 
-- [ ] Batch "ship" fixes (5 .space lessons)
-- [ ] .io paper jargon definitions (13 papers)
+- [ ] Additional .ltd Canon pages (2 pages) - Not specified in audit
+- [ ] Transformation examples in .space lessons - Not specified which lessons
+- [ ] Limitations sections for remaining .io papers - Norvig paper complete, others not specified
 
-### Not Started ⏸️
-
-- [ ] Additional .ltd Canon pages (2 pages)
-- [ ] Transformation examples in .space lessons
-- [ ] Limitations sections for remaining .io papers
+**Note**: All high-priority fixes from VOICE_AUDIT_2026_01.md are complete. Remaining items lack specific guidance.
 
 ---
 
@@ -193,6 +197,6 @@ cd packages/lms && pnpm build
 
 ---
 
-**Updated**: 2026-01-05 (after commit 7e6fc07a)
-**Target Completion**: End of January 2026
+**Updated**: 2026-01-05 (after commit 8aa84758)
+**Status**: All high-priority voice fixes complete
 **Next Audit**: April 2026 (quarterly)
