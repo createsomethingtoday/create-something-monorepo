@@ -39,7 +39,7 @@
 				Traditional debugging assumes a linear path: identify symptom, trace cause, apply fix.
 				This paper argues that complex bugs resist linear analysis because they emerge from
 				<em>hidden assumptions</em>—what Heidegger calls our "fore-structure" of understanding.
-				By applying the hermeneutic circle to debugging, we demonstrate that the path to solution
+				By applying the <strong>hermeneutic circle</strong> (<em>a philosophical concept describing how understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts</em>) to debugging, we demonstrate that the path to solution
 				requires iterative interpretation where each failed attempt reveals previously invisible
 				assumptions. We document this through a case study: a React logo animation that required
 				eight iterations to solve, each revealing deeper truths about component lifecycle,
@@ -130,7 +130,7 @@
 
 				<blockquote class="pl-4 italic my-4 blockquote">
 					"The circle of understanding is not an orbit in which any random kind of knowledge
-					may move; it is the expression of the existential fore-structure of Dasein itself."
+					may move; it is the expression of the existential fore-structure of <strong>Dasein</strong> (<em>human existence as being-in-the-world—our condition of already being immersed in contexts, relationships, and understanding</em>) itself."
 					<br />— Heidegger, <em>Being and Time</em>
 				</blockquote>
 
