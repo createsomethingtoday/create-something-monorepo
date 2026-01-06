@@ -538,7 +538,7 @@ Determine which phases run:
 
 Step 3: Create Feature Issues (Agent)
 Use Beads to create issues from spec:
-\`bd mol spawn <spec-file> --property <value>\`
+\`bd mol spawn &lt;spec-file&gt; --property &lt;value&gt;\`
 Each feature becomes an issue with:
 - Dependencies enforced
 - Complexity-based model selection

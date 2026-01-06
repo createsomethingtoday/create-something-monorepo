@@ -642,7 +642,7 @@ const result = await spawn('claude', args, { input: deployPrompt });
 					After analyzing actual usage, you discover the harness needs:
 				</p>
 
-				<ul class="list-disc list-inside space-y-1 pl-4 text-sm">
+				<ul class="list-disc list-inside space-y-1 pl-4 list-small">
 					<li>File operations to read wrangler.toml and Worker scripts</li>
 					<li>Git to check status and create deployment tags</li>
 					<li>Wrangler to deploy and check deployment status</li>
@@ -1001,5 +1001,9 @@ await db.deployments.create({
 
 	.emphasis-text {
 		color: var(--color-fg-primary);
+	}
+
+	.list-small {
+		font-size: var(--text-body-sm);
 	}
 </style>

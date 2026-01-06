@@ -405,13 +405,13 @@ TOOL RECEDES INTO USE`}</pre>
 				<div class="grid md:grid-cols-2 gap-4 mt-4">
 					<div class="p-4 info-card">
 						<h4 class="mb-2 card-heading-muted">Tool-calling MCP:</h4>
-						<pre class="code-secondary">{`<use_mcp_tool>
-  <server>filesystem</server>
-  <tool>read_file</tool>
-  <arguments>
+						<pre class="code-secondary">{`&lt;use_mcp_tool&gt;
+  &lt;server&gt;filesystem&lt;/server&gt;
+  &lt;tool&gt;read_file&lt;/tool&gt;
+  &lt;arguments&gt;
     {"path": "/src/index.ts"}
-  </arguments>
-</use_mcp_tool>`}</pre>
+  &lt;/arguments&gt;
+&lt;/use_mcp_tool&gt;`}</pre>
 					</div>
 
 					<div class="p-4 comparison-success">
