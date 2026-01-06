@@ -146,6 +146,49 @@
 		font-size: var(--text-body-sm);
 	}
 
+	/* Scheduled game state */
+	:global(.nba-scheduled-state) {
+		text-align: center;
+		padding: var(--space-xl);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	:global(.nba-scheduled-icon) {
+		display: block;
+		margin: 0 auto var(--space-md);
+		color: var(--color-fg-tertiary);
+	}
+
+	:global(.nba-scheduled-title) {
+		font-size: var(--text-h2);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-sm);
+	}
+
+	:global(.nba-scheduled-message) {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		margin-bottom: var(--space-xs);
+		max-width: 40rem;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	:global(.nba-scheduled-message strong) {
+		color: var(--color-fg-primary);
+		font-weight: 600;
+	}
+
+	:global(.nba-scheduled-hint) {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-md);
+	}
+
 	:global(.nba-back-link) {
 		display: inline-flex;
 		align-items: center;

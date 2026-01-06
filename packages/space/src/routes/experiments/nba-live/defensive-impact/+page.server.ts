@@ -7,9 +7,9 @@
  */
 
 import type { PageServerLoad } from './$types';
-import { fetchGamePBP, fetchGameBoxScore, fetchPlayerBaselines, extractShots } from '$lib/nba/api';
+import { fetchGamePBP, fetchGameBoxScore, fetchPlayerBaselines, fetchLiveGames, extractShots } from '$lib/nba/api';
 import { calculateTeamExpectedPoints } from '$lib/nba/calculations';
-import type { Player, Shot, PlayerBaseline } from '$lib/nba/types';
+import type { Player, Shot, PlayerBaseline, Game } from '$lib/nba/types';
 
 interface TeamDefensiveStats {
 	shotsAllowed: number;
@@ -28,6 +28,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			error: 'No game selected',
 			gameId: null,
 			date,
+			game: null as Game | null,
 			defensive: {
 				home: null as TeamDefensiveStats | null,
 				away: null as TeamDefensiveStats | null,
@@ -37,6 +38,28 @@ export const load: PageServerLoad = async ({ url }) => {
 				away: [] as Player[],
 			},
 			shots: [] as Shot[],
+			cached: false,
+			timestamp: new Date().toISOString(),
+		};
+	}
+
+	// Fetch game info to check status
+	const gamesResult = await fetchLiveGames(date);
+	const game = gamesResult.success
+		? gamesResult.data.find((g) => g.id === gameId)
+		: null;
+
+	// If game is scheduled, show a waiting state
+	if (game && game.status === 'scheduled') {
+		return {
+			error: null,
+			gameId,
+			date,
+			game,
+			scheduled: true,
+			defensive: { home: null, away: null },
+			players: { home: [], away: [] },
+			shots: [],
 			cached: false,
 			timestamp: new Date().toISOString(),
 		};
@@ -54,6 +77,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			error: pbpResult.error.message,
 			gameId,
 			date,
+			game,
 			defensive: { home: null, away: null },
 			players: { home: [], away: [] },
 			shots: [],
@@ -67,6 +91,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			error: boxscoreResult.error.message,
 			gameId,
 			date,
+			game,
 			defensive: { home: null, away: null },
 			players: { home: [], away: [] },
 			shots: [],
@@ -130,6 +155,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		error: null,
 		gameId,
 		date,
+		game,
+		scheduled: false,
 		defensive: {
 			home: calculateDefensiveStats(awayShots), // Home defense vs away offense
 			away: calculateDefensiveStats(homeShots), // Away defense vs home offense

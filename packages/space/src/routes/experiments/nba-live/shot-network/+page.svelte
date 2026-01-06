@@ -47,7 +47,32 @@
 <!-- Status -->
 <section class="nba-section">
 	<div class="nba-container">
-		{#if data.error}
+		{#if data.scheduled && data.game}
+			<div class="nba-scheduled-state">
+				<Clock size={32} class="nba-scheduled-icon" />
+				<h2 class="nba-scheduled-title">
+					{data.game.awayTeam.abbreviation} @ {data.game.homeTeam.abbreviation}
+				</h2>
+				<p class="nba-scheduled-message">
+					This game hasn't started yet. Check back at{' '}
+					<strong>
+						{new Date(data.game.startTime).toLocaleTimeString([], {
+							hour: 'numeric',
+							minute: '2-digit',
+							timeZoneName: 'short'
+						})}
+					</strong>
+					{' '}to see shot network analysis.
+				</p>
+				<p class="nba-scheduled-hint">
+					The page will automatically refresh every 30 seconds and show live data once the game starts.
+				</p>
+				<a href="/experiments/nba-live" class="nba-back-link">
+					<ArrowLeft size={14} />
+					Back to all games
+				</a>
+			</div>
+		{:else if data.error}
 			<div class="nba-error-state">
 				<AlertCircle size={24} />
 				<p class="nba-error-message">{data.error}</p>
@@ -78,7 +103,7 @@
 </section>
 
 <!-- Networks -->
-{#if !data.error && data.gameId}
+{#if !data.error && !data.scheduled && data.gameId}
 	<section class="nba-section">
 		<div class="nba-container">
 			<div class="nba-grid-2">

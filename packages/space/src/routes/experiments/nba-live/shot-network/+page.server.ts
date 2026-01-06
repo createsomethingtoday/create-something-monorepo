@@ -6,8 +6,8 @@
  */
 
 import type { PageServerLoad } from './$types';
-import { fetchGamePBP, fetchGameBoxScore } from '$lib/nba/api';
-import type { Player } from '$lib/nba/types';
+import { fetchGamePBP, fetchGameBoxScore, fetchLiveGames } from '$lib/nba/api';
+import type { Player, Game } from '$lib/nba/types';
 
 export interface NetworkNode {
 	id: string;
@@ -42,6 +42,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			error: 'No game selected',
 			gameId: null,
 			date,
+			game: null as Game | null,
 			network: {
 				home: null as TeamNetwork | null,
 				away: null as TeamNetwork | null,
@@ -50,6 +51,27 @@ export const load: PageServerLoad = async ({ url }) => {
 				home: [] as Player[],
 				away: [] as Player[],
 			},
+			cached: false,
+			timestamp: new Date().toISOString(),
+		};
+	}
+
+	// Fetch game info to check status
+	const gamesResult = await fetchLiveGames(date);
+	const game = gamesResult.success
+		? gamesResult.data.find((g) => g.id === gameId)
+		: null;
+
+	// If game is scheduled, show a waiting state
+	if (game && game.status === 'scheduled') {
+		return {
+			error: null,
+			gameId,
+			date,
+			game,
+			scheduled: true,
+			network: { home: null, away: null },
+			players: { home: [], away: [] },
 			cached: false,
 			timestamp: new Date().toISOString(),
 		};
@@ -66,6 +88,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			error: pbpResult.error.message,
 			gameId,
 			date,
+			game,
 			network: { home: null, away: null },
 			players: { home: [], away: [] },
 			cached: false,
@@ -78,6 +101,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			error: boxscoreResult.error.message,
 			gameId,
 			date,
+			game,
 			network: { home: null, away: null },
 			players: { home: [], away: [] },
 			cached: false,
@@ -183,6 +207,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		error: null,
 		gameId,
 		date,
+		game,
+		scheduled: false,
 		network: {
 			home: buildTeamNetwork(players.home, homeTeamId),
 			away: buildTeamNetwork(players.away, awayTeamId),

@@ -83,9 +83,9 @@
 				<h3 class="mt-6 subsection-heading">The Hermeneutic Gap</h3>
 
 				<p>
-					Heidegger distinguished between two modes of understanding. In <em>Vorhandenheit</em> (present-at-hand),
+					Heidegger distinguished between two modes of understanding. In <strong><em>Vorhandenheit</em></strong> (present-at-hand: when a tool becomes an object of conscious attention, like examining a broken hammer's weight and material),
 					we contemplate things as objects with properties—we study the hammer's weight, material, and shape.
-					In <em>Zuhandenheit</em> (ready-to-hand), tools recede into transparent use—the hammer disappears
+					In <strong><em>Zuhandenheit</em></strong> (ready-to-hand: when a tool disappears into transparent use, like a hammer during skilled carpentry), tools recede into transparent use—the hammer disappears
 					when hammering.
 				</p>
 
@@ -472,7 +472,7 @@ repeat yourself"
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
-					The hermeneutic circle connects understanding and practice. In methodology adoption, this
+					The <strong>hermeneutic circle</strong> (a philosophical concept describing how understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) connects understanding and practice. In methodology adoption, this
 					becomes a feedback loop where users contribute to the methodology's evolution:
 				</p>
 

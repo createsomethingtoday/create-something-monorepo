@@ -2,9 +2,15 @@
   "rig_name": "csm",
   "theme": "mad-max",
   "in_use": {
+    "capable": true,
+    "cheedo": true,
+    "dag": true,
+    "dementus": true,
     "furiosa": true,
     "nux": true,
-    "slit": true
+    "rictus": true,
+    "slit": true,
+    "toast": true
   },
   "overflow_next": 51,
   "max_size": 50

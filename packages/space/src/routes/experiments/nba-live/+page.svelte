@@ -12,6 +12,8 @@
 	import GameHighlightCard from '$lib/components/nba/GameHighlightCard.svelte';
 	import { selectGameOfTheNight } from '$lib/nba/calculations';
 	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle, TrendingUp } from 'lucide-svelte';
+	import { invalidate } from '$app/navigation';
+	import { onMount, onDestroy } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -49,6 +51,36 @@
 
 	// Select game of the night from completed games
 	const gameOfTheNight = $derived(selectGameOfTheNight(data.games));
+
+	// Check if we're viewing today's games (used in error messages)
+	const isToday = true; // Always true since we only show today's games
+
+	// Auto-refresh every 30 seconds when games are live or scheduled
+	let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+	onMount(() => {
+		// Only poll if there are live or scheduled games (no need when all are final)
+		const hasActiveGames = data.games.some(g => g.status === 'live' || g.status === 'scheduled');
+
+		if (hasActiveGames) {
+			console.log('[NBA Live] Starting 30-second auto-refresh polling');
+			pollInterval = setInterval(
+				() => {
+					console.log('[NBA Live] Refreshing game data...');
+					invalidate('/experiments/nba-live');
+				},
+				30 * 1000 // 30 seconds
+			);
+		} else {
+			console.log('[NBA Live] All games final - polling disabled');
+		}
+	});
+
+	onDestroy(() => {
+		if (pollInterval) {
+			clearInterval(pollInterval);
+		}
+	});
 </script>
 
 <svelte:head>
