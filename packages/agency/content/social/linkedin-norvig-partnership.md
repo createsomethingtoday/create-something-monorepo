@@ -29,7 +29,7 @@ Partnership, not replacement. Norvig didn't hand problems to the AI and walk awa
 
 The AI wasn't autonomous. It was collaborative. The human retained authority over what to build, how to evaluate correctness, when something was good enough. The AI handled translation from problem to code.
 
-This validates what we've been building: systems where AI does the work and humans design the environment that makes work possible. Context files. Bounded tasks. Persistent memory across sessions.
+This validates what we've been building at CREATE SOMETHING: harness systems where AI executes and humans provide judgment. Concrete examples: CLAUDE.md context files that persist conventions, bounded tasks with quality gates, and Beads for session-persistent memory. The infrastructure disappears; the partnership remains.
 
 The question isn't "can AI code?" It's "how do we work with AI?"
 

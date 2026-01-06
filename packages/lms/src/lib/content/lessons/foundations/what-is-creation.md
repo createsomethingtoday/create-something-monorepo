@@ -102,7 +102,7 @@ In the lessons ahead, you'll develop each level:
 
 1. **DRY** → Recognizing and unifying duplication
 2. **Rams** → Judging what earns its existence (Weniger, aber besser)
-3. **Heidegger** → Understanding systems through the hermeneutic circle
+3. **Heidegger** → Understanding systems through the **hermeneutic circle** (how parts and whole inform each other through iterative interpretation—each component gains meaning from the system, the system gains meaning from its components)
 4. **Application** → Using all three levels together
 
 By the end, you won't just know the Subtractive Triad—you'll see through it. The questions will become automatic:

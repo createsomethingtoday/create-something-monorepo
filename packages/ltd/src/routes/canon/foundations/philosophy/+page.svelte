@@ -63,7 +63,7 @@
 
 	<p>
 		Canon's goal is Zuhandenheit: a design system that disappears into use. When you reach for
-		<code>var(--space-md)</code>, you shouldn't think about the golden ratio—you should simply
+		<code>var(--space-md)</code>, you shouldn't think about the golden ratio—you
 		achieve the spacing that feels right.
 	</p>
 </section>
@@ -240,6 +240,13 @@
 		Each step in the scale multiplies by φ. The result: spacing that relates harmoniously at
 		every level. Adjacent elements feel balanced. The mathematics recede; the harmony remains.
 	</p>
+
+	<div class="callout-info">
+		<h3 class="callout-heading">Why This Matters</h3>
+		<p>
+			The golden ratio isn't decoration—it's practical. When spacing follows φ, layouts compose predictably. A card with <code>--space-md</code> padding naturally nests inside a section with <code>--space-lg</code> margins. The proportions align without manual adjustment. This is why Zuhandenheit works: the system makes correct spacing automatic.
+		</p>
+	</div>
 </section>
 
 <!-- Color Philosophy -->
