@@ -92,7 +92,7 @@
 				</div>
 
 				<p>
-					This follows the hermeneutic circle: pre-understanding (the spec) meets emergent
+					This follows the <strong>hermeneutic circle</strong> (a philosophical method where understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts): pre-understanding (the spec) meets emergent
 					understanding (implementation), and the gap between them reveals methodology insights.
 				</p>
 			</div>
