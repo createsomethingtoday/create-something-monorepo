@@ -329,9 +329,176 @@
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">VII. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Applying Subtractive Form Design</h3>
+				<p>
+					To apply the "absence is clearer than instruction" principle to your own interfaces:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">Step 1: Identify Conditional Fields (Human)
+Find fields that only apply in certain contexts:
+- Payment method fields (only for paid plans)
+- Shipping address (only for physical products)
+- OAuth URLs (only for API-based apps)
+- Tax ID (only for business accounts)
+
+Step 2: Ask the Hermeneutic Question (Human)
+For each conditional field: "Does this serve the whole in ALL contexts?"
+If no → it's a candidate for conditional rendering
+
+Step 3: Examine Current Instruction Patterns (Human)
+Look for these warning signs:
+- "Leave blank if..."
+- "Only fill this if..."
+- "Not applicable for..."
+- "(Optional for X, required for Y)"
+These indicate fields fighting their context
+
+Step 4: Implement Conditional Rendering (Human + Agent)
+Replace instructions with logic:
+❌ Field visible with "(leave blank for X)"
+✓ Field only renders when applicable
+
+Step 5: Add State Clearing (Agent)
+When context changes, clear inapplicable values:
+if (contextChanged && fieldNoLongerApplies) {
+  setFormData(prev => ({ ...prev, fieldName: '' }));
+}
+
+Step 6: Validate Clarity Through User Testing (Human)
+Check whether users still get confused:
+✓ Reduced support questions about "what to enter"
+✓ Fewer submission errors requiring manual cleanup
+✓ Faster form completion time
+✗ Users asking "where did that field go?"</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: E-commerce Checkout Form</h3>
+				<p>
+					Let's apply this to a checkout form that handles both digital and physical products:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary"># Before: Instruction-Based (Disconnection)
+┌─────────────────────────────────────────┐
+│ Product Type: [Physical Product ▼]     │
+│                                         │
+│ Email: [________________]               │
+│                                         │
+│ Shipping Address                        │
+│ (Leave blank for digital products)      │
+│ Street: [____________________________]  │
+│ City: [____________________________]    │
+│ State: [____________________________]   │
+│                                         │
+│ Digital Delivery Email                  │
+│ (Only for digital products)             │
+│ Email: [____________________________]   │
+└─────────────────────────────────────────┘
+
+# Problems:
+# - Users buying physical products enter shipping in both places
+# - Digital product buyers confused about which email to use
+# - Support team manually clears incorrect shipping addresses
+# - Instructions compete with visible empty fields
+
+---
+
+# After: Subtractive (Reconnection)
+┌─────────────────────────────────────────┐
+│ Product Type: [Physical Product ▼]     │
+│                                         │
+│ Contact Email: [___________________]    │
+│                                         │
+│ Shipping Address                        │
+│ Street: [____________________________]  │
+│ City: [____________________________]    │
+│ State: [____________________________]   │
+└─────────────────────────────────────────┘
+
+// When user switches to Digital Product:
+┌─────────────────────────────────────────┐
+│ Product Type: [Digital Product ▼]      │
+│                                         │
+│ Delivery Email: [___________________]   │
+│                                         │
+│ (No shipping fields shown)              │
+└─────────────────────────────────────────┘
+
+// Implementation:
+{productType === 'physical' && (
+  &lt;ShippingAddressFields /&gt;
+)}
+
+{productType === 'digital' && (
+  &lt;FormField
+    label="Delivery Email"
+    description="We'll send your download link here"
+    required
+  /&gt;
+)}
+
+// Clear shipping when switching to digital
+if (name === 'productType' && value === 'digital') {
+  setFormData(prev =&gt; ({
+    ...prev,
+    shippingStreet: '',
+    shippingCity: '',
+    shippingState: ''
+  }));
+}
+
+# Benefits:
+# ✓ Impossible to fill wrong fields (they don't exist)
+# ✓ No instruction confusion (only applicable fields visible)
+# ✓ Faster completion (fewer fields to consider)
+# ✓ Zero manual cleanup (no incorrect data to clear)</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice: The form adapts to context. When buying digital products, shipping fields
+					<em>don't exist</em>. No instruction can achieve this clarity—only absence can.
+				</p>
+
+				<h3 class="mt-6 subsection-heading">When to Apply Subtractive Form Design</h3>
+				<p>
+					Use conditional rendering (hide inapplicable fields) when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Clear context switching</strong>: User selects between mutually exclusive options (product type, account type, app capability)</li>
+					<li><strong>Field meaninglessness</strong>: In some contexts, the field literally has no valid value (OAuth URL for non-OAuth apps)</li>
+					<li><strong>Recurring confusion</strong>: Users consistently fill fields incorrectly despite instructions</li>
+					<li><strong>Manual cleanup required</strong>: Your team has to clear incorrect values after submission</li>
+				</ul>
+
+				<p class="mt-4">
+					Keep fields visible (but maybe disabled) when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Future applicability</strong>: Field will become relevant later in the flow (locked until previous step completes)</li>
+					<li><strong>Awareness matters</strong>: Users benefit from knowing the field exists even if they can't fill it yet</li>
+					<li><strong>Optional but relevant</strong>: Field applies but isn't required (legitimately optional)</li>
+					<li><strong>Progressive disclosure</strong>: Showing structure of upcoming steps</li>
+				</ul>
+
+				<p class="mt-4 emphasis-text">
+					The principle is <strong>disconnection detection</strong>. When a field doesn't serve
+					the whole in its current context, hiding it reconnects the form to the user's mental
+					model. Absence becomes the clearest instruction.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">VII. Conclusion</h2>
+			<h2 class="section-heading">VIII. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -543,6 +710,26 @@
 		color: var(--color-fg-secondary);
 		font-family: monospace;
 		font-size: var(--text-body-sm);
+	}
+
+	.code-block-success {
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+		border-radius: var(--radius-md);
+		overflow-x: auto;
+	}
+
+	.code-secondary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.code-primary {
+		color: var(--color-fg-primary);
+	}
+
+	.emphasis-text {
+		font-style: italic;
+		color: var(--color-fg-secondary);
 	}
 
 	.principle-box {
