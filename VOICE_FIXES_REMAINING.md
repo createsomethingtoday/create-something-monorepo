@@ -147,24 +147,27 @@ cd packages/lms && pnpm build
 **High Priority (Done):**
 - [x] Norvig paper jargon (phenomenology, ontological, Vorhandenheit) + transformations + application guide + limitations
 - [x] Partnership lesson (hermeneutic circle defined, ship→release)
-- [x] What-is-creation lesson (hermeneutic circle)
+- [x] What-is-creation lesson (hermeneutic circle + Before/After transformation)
 - [x] Kickstand post (abstract outcomes already grounded: "2 weeks to 3 days")
 - [x] Norvig post (concrete examples already present)
 - [x] Canon philosophy page (simply removed, golden ratio "why this matters" added)
 - [x] Batch "ship" fixes (5 .space lessons)
+- [x] Condescending language removed (all instances from lessons)
 - [x] .io paper jargon definitions (12 papers with inline definitions)
   - understanding-graphs, ethos-transfer, code-mode, subtractive-form, harness-migration
   - subtractive-studio, intellectual-genealogy, spec-driven-dev
   - hermeneutic-triad-review, hermeneutic-spiral-ux, hermeneutic-debugging
   - Note: kickstand-triad-audit (minimal usage), cumulative-state-antipattern (no jargon), autonomous-harness (already defined)
 
-### Remaining (Low Priority) ⏸️
+### Remaining (Requires Contextual Work) 📋
 
-- [ ] Additional .ltd Canon pages (2 pages) - Not specified in audit
-- [ ] Transformation examples in .space lessons - Not specified which lessons
-- [ ] Limitations sections for remaining .io papers - Norvig paper complete, others not specified
+The audit recommends these additions to ALL .io papers, but only provides detailed specs for Norvig:
 
-**Note**: All high-priority fixes from VOICE_AUDIT_2026_01.md are complete. Remaining items lack specific guidance.
+- [ ] "How to Apply This" sections (11 papers) - Would require understanding each paper's research to create contextually appropriate application guides
+- [ ] Transformation examples / Before-After comparisons (11 papers) - Would require identifying appropriate methodology sections and creating relevant examples
+- [ ] Limitations sections (11 papers) - Would require understanding each paper's research scope and methodology boundaries
+
+**Status**: All high-priority, well-specified voice fixes complete. Remaining items are recommended but require research-specific content creation rather than find-and-replace transformations.
 
 ---
 
@@ -197,6 +200,6 @@ cd packages/lms && pnpm build
 
 ---
 
-**Updated**: 2026-01-05 (after commit 8aa84758)
-**Status**: All high-priority voice fixes complete
+**Updated**: 2026-01-05 (after commit 62e04914)
+**Status**: All well-specified voice fixes complete; remaining items require contextual research
 **Next Audit**: April 2026 (quarterly)
