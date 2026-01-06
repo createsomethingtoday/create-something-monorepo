@@ -581,9 +581,178 @@ export async function runSession(
 			</ol>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">8. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Migrating Your Own Harness or Autonomous Agent</h3>
+				<p>
+					To apply this migration pattern to your autonomous Claude Code orchestration:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">Step 1: Audit Current Tool Access (Human)
+List all tools your harness currently uses. Check headless session logs or code
+that spawns Claude. If using --dangerously-skip-permissions, you have unlimited
+access by default.
+
+Step 2: Categorize Essential Tools (Human)
+Group tools by purpose:
+- Core file operations (Read, Write, Edit, Glob, Grep)
+- Version control (Bash(git:*))
+- Package management (Bash(pnpm:*), Bash(npm:*))
+- Build/deploy (Bash(wrangler:*), domain-specific commands)
+- MCP integrations (mcp__cloudflare__*, mcp__airtable__*, etc.)
+
+Step 3: Create Explicit Allowlist (Human)
+Build your ALLOWED_TOOLS string. Start conservative—add only what you've verified
+is needed. You can expand later if sessions fail.
+
+Step 4: Add Runaway Prevention (Human + Agent)
+Set --max-turns based on observed session lengths. Use 2-3x your average as a
+safety margin. If most sessions complete in 30-50 turns, set --max-turns 100.
+
+Step 5: Enable Cost Tracking (Agent)
+Add --output-format json to capture session metadata. Parse stdout to extract
+costUsd, numTurns, sessionId. Store these for analysis.
+
+Step 6: Test on Non-Critical Work First (Human)
+Run the migrated harness on low-stakes tasks. Verify tools aren't blocked.
+Check that turn limits don't prevent legitimate completion.</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Migrating a Deployment Harness</h3>
+				<p>
+					Let's say you have a harness that autonomously deploys Cloudflare Workers. Before migration:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// Before: Unsafe pattern
+const args = [
+  '-p',
+  '--dangerously-skip-permissions',
+];
+
+const result = await spawn('claude', args, { input: deployPrompt });
+// No cost tracking, no runaway prevention, unrestricted tool access`}</pre>
+				</div>
+
+				<p class="mt-4">
+					After analyzing actual usage, you discover the harness needs:
+				</p>
+
+				<ul class="list-disc list-inside space-y-1 pl-4 text-sm">
+					<li>File operations to read wrangler.toml and Worker scripts</li>
+					<li>Git to check status and create deployment tags</li>
+					<li>Wrangler to deploy and check deployment status</li>
+					<li>Cloudflare MCP to update KV/D1 data if needed</li>
+				</ul>
+
+				<p class="mt-4">
+					After migration:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// After: Agent SDK best practices
+const DEPLOY_ALLOWED_TOOLS = [
+  // Core file operations
+  'Read', 'Write', 'Edit', 'Glob', 'Grep',
+
+  // Version control (scoped)
+  'Bash(git:status)', 'Bash(git:tag)', 'Bash(git:log)',
+
+  // Deployment (scoped)
+  'Bash(wrangler:deploy)', 'Bash(wrangler:tail)', 'Bash(wrangler:whoami)',
+
+  // Cloudflare MCP (explicit)
+  'mcp__cloudflare__worker_deploy',
+  'mcp__cloudflare__kv_put',
+  'mcp__cloudflare__d1_query',
+].join(',');
+
+const args = [
+  '-p',
+  '--allowedTools', DEPLOY_ALLOWED_TOOLS,
+  '--max-turns', '50',  // Deployments are fast; low limit appropriate
+  '--output-format', 'json',
+  '--model', 'sonnet',  // Sonnet sufficient for deployments
+];
+
+const result = await spawn('claude', args, { input: deployPrompt });
+
+// Parse metrics
+const metrics = JSON.parse(result.stdout);
+console.log(\`Deployment cost: $\${metrics.costUsd}\`);
+console.log(\`Turns used: \${metrics.numTurns}/50\`);
+
+// Store for analysis
+await db.deployments.create({
+  sessionId: metrics.sessionId,
+  costUsd: metrics.costUsd,
+  numTurns: metrics.numTurns,
+  timestamp: new Date(),
+});`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Scoped Bash patterns</strong>: <code>git:status</code> allowed, <code>git:reset --hard</code> blocked</li>
+					<li><strong>Lower turn limit</strong>: Deployments complete in 10-20 turns; 50 provides headroom</li>
+					<li><strong>Model selection</strong>: Sonnet is 5x cheaper than Opus, sufficient for standard deploys</li>
+					<li><strong>Metrics capture</strong>: JSON output enables cost analysis over time</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">When to Expand Tool Access</h3>
+				<p>
+					Add tools to the allowlist when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Sessions fail with "permission denied"</strong>: Check logs, identify blocked tool, evaluate if it should be allowed</li>
+					<li><strong>New workflow requirements</strong>: Adding database migrations? Add <code>mcp__cloudflare__d1_query</code></li>
+					<li><strong>Peer review identifies missing capability</strong>: Architecture reviewer notes the harness can't perform needed operation</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't add tools when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>The request is "just in case"—only add verified needs</li>
+					<li>A safer alternative exists (prefer <code>WebFetch</code> over <code>Bash(curl:*)</code>)</li>
+					<li>The operation should require human approval (don't automate destructive operations)</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Validating the Migration</h3>
+				<p>
+					After migration, validate success by:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">✓ Zero sessions blocked by missing tool permissions
+✓ All sessions complete within turn limits (or fail for legitimate reasons)
+✓ Cost tracking data populates correctly
+✓ Model selection matches task complexity (Haiku for simple, Opus for complex)
+✓ Peer reviews run and surface appropriate findings
+✓ No degradation in harness capabilities compared to legacy approach</pre>
+				</div>
+
+				<p class="mt-4 emphasis-text">
+					The goal is <strong>explicit security without operational cost</strong>. If the migration
+					blocks legitimate work or significantly slows execution, the allowlist is too restrictive.
+					If it allows operations that shouldn't be automated, it's too permissive. Iterate until
+					the harness operates transparently—Zuhandenheit achieved.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">8. Conclusion</h2>
+			<h2 class="section-heading">9. Conclusion</h2>
 
 			<p class="leading-relaxed body-text">
 				The Agent SDK migration improves the CREATE Something Harness without degrading operational
@@ -813,5 +982,24 @@ export async function runSession(
 
 	.paper-footer {
 		border-top: 1px solid var(--color-border-default);
+	}
+
+	.code-block-success {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-border-default));
+		border-radius: var(--radius-lg);
+		padding: var(--space-md);
+		overflow-x: auto;
+		font-family: ui-monospace, monospace;
+		font-size: var(--text-body-sm);
+		white-space: pre;
+	}
+
+	.code-secondary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.emphasis-text {
+		color: var(--color-fg-primary);
 	}
 </style>
