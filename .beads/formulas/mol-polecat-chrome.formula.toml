@@ -1,0 +1,61 @@
+# Polecat Formula: Chrome Quality (Opus)
+# For complex architectural work requiring deep reasoning
+
+name = "mol-polecat-chrome"
+description = "Premium polecat workflow for complex tasks using Opus model"
+quality = "chrome"
+model = "opus"
+
+[[variables]]
+name = "issue_id"
+description = "The issue ID to work on"
+required = true
+
+[[steps]]
+id = "research"
+title = "Deep research"
+description = "Understand full context, review related systems, identify patterns"
+
+[[steps]]
+id = "architecture"
+title = "Design architecture"
+description = "Plan system structure, consider implications, design for maintainability"
+
+[[steps]]
+id = "validate"
+title = "Validate approach"
+description = "Check against Subtractive Triad, ensure Canon compliance, review trade-offs"
+
+[[steps]]
+id = "implement"
+title = "Careful implementation"
+description = "Write code with attention to patterns, edge cases, future maintainability"
+
+[[steps]]
+id = "comprehensive-test"
+title = "Comprehensive testing"
+description = "Unit tests, integration tests, edge case coverage, performance check"
+
+[[steps]]
+id = "review-quality"
+title = "Quality review"
+description = "DRY audit, Canon compliance, documentation quality, architectural fitness"
+
+[[steps]]
+id = "document"
+title = "Document decisions"
+description = "Explain architectural choices, document patterns, update relevant guides"
+
+[[steps]]
+id = "finalize"
+title = "Commit and report"
+description = "Detailed commit message, comprehensive issue update, lessons learned"
+
+[success_criteria]
+criteria = [
+  "All tests passing with comprehensive coverage",
+  "Architecture aligns with Canon principles",
+  "Code demonstrates Subtractive Triad application",
+  "Documentation complete and clear",
+  "Issue updated with architectural decisions and rationale"
+]
