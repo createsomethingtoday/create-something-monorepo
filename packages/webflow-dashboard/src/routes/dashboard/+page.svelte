@@ -1,13 +1,17 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import type { Asset } from '$lib/server/airtable';
 	import { goto, invalidate } from '$app/navigation';
-	import { Header, Card, CardHeader, CardTitle, CardContent, AssetsDisplay, OverviewStats, EditProfileModal, SubmissionTracker, StatsBar } from '$lib/components';
+	import { Header, AssetsDisplay, OverviewStats, EditProfileModal, SubmissionTracker, StatsBar } from '$lib/components';
+	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
 	import { toast } from '$lib/stores/toast';
 
 	let { data }: { data: PageData } = $props();
 
 	let searchTerm = $state('');
 	let isProfileOpen = $state(false);
+	let isEditModalOpen = $state(false);
+	let currentEditingAsset = $state<Asset | null>(null);
 
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
@@ -31,8 +35,44 @@
 	}
 
 	function handleEditAsset(id: string) {
-		// Edit modal will be implemented in Phase 7
-		console.log('Edit asset:', id);
+		const asset = data.assets?.find((a) => a.id === id);
+		if (asset) {
+			currentEditingAsset = asset;
+			isEditModalOpen = true;
+		}
+	}
+
+	function handleEditClose() {
+		isEditModalOpen = false;
+		currentEditingAsset = null;
+	}
+
+	async function handleEditSave(updateData: {
+		name?: string;
+		description?: string;
+		descriptionShort?: string;
+		websiteUrl?: string;
+		previewUrl?: string;
+		thumbnailUrl?: string | null;
+		secondaryThumbnailUrl?: string | null;
+		carouselImages?: string[];
+	}): Promise<void> {
+		if (!currentEditingAsset) return;
+
+		const response = await fetch(`/api/assets/${currentEditingAsset.id}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(updateData)
+		});
+
+		if (!response.ok) {
+			const errorData = (await response.json()) as { message?: string };
+			throw new Error(errorData.message || 'Failed to update asset');
+		}
+
+		toast.success('Asset updated successfully');
+		handleEditClose();
+		await handleRefreshAssets();
 	}
 
 	async function handleArchiveAsset(id: string) {
@@ -106,6 +146,14 @@
 
 	{#if isProfileOpen}
 		<EditProfileModal onClose={handleProfileClose} />
+	{/if}
+
+	{#if isEditModalOpen && currentEditingAsset}
+		<EditAssetModal
+			asset={currentEditingAsset}
+			onClose={handleEditClose}
+			onSave={handleEditSave}
+		/>
 	{/if}
 </div>
 
