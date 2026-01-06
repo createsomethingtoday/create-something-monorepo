@@ -384,7 +384,7 @@ Check whether users still get confused:
 				</p>
 
 				<div class="p-4 font-mono code-block">
-					<pre class="code-primary">{`# Before: Instruction-Based (Disconnection)
+					<pre class="code-primary"># Before: Instruction-Based (Disconnection)
 ┌─────────────────────────────────────────┐
 │ Product Type: [Physical Product ▼]     │
 │                                         │
@@ -457,7 +457,7 @@ if (name === 'productType' && value === 'digital') {
 # ✓ Impossible to fill wrong fields (they don't exist)
 # ✓ No instruction confusion (only applicable fields visible)
 # ✓ Faster completion (fewer fields to consider)
-# ✓ Zero manual cleanup (no incorrect data to clear)`}</pre>
+# ✓ Zero manual cleanup (no incorrect data to clear)</pre>
 				</div>
 
 				<p class="mt-4">
