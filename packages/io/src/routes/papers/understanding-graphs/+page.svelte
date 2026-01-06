@@ -122,7 +122,7 @@
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
-					We applied Heidegger's <em>hermeneutic circle</em>—the interpretive method where
+					We applied Heidegger's <strong><em>hermeneutic circle</em></strong> (a philosophical method of interpretation where understanding deepens through iterative movement between parts and whole—each informs the other in a spiraling process)—the interpretive method where
 					understanding emerges through movement between whole and parts. The "whole" was the
 					CREATE SOMETHING methodology; the "part" was dependency documentation.
 				</p>
