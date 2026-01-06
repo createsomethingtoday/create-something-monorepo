@@ -549,8 +549,8 @@ Signs of Vorhandenheit:
 
 Step 3: Expose Code Interfaces Where Possible (Human + Agent)
 Convert Vorhandenheit tools to code-accessible libraries:
-❌ <tool_call name="database_query">
-   <sql>SELECT * FROM users WHERE id = ?</sql>
+❌ &lt;tool_call name="database_query"&gt;
+   &lt;sql&gt;SELECT * FROM users WHERE id = ?&lt;/sql&gt;
 ✓ const user = await db.users.findById(userId);
 
 Step 4: Provide Familiar Patterns (Human)
@@ -586,7 +586,7 @@ Validate Zuhandenheit by measuring:
   &lt;name&gt;database_query&lt;/name&gt;
   &lt;arguments&gt;
     &lt;table&gt;users&lt;/table&gt;
-    &lt;filter&gt;{"status": "active"}&lt;/filter&gt;
+    &lt;filter&gt;{"{\"status\": \"active\"}"}&lt;/filter&gt;
     &lt;limit&gt;10&lt;/limit&gt;
   &lt;/arguments&gt;
 &lt;/tool_call&gt;

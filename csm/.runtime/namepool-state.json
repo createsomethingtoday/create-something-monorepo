@@ -7,10 +7,12 @@
     "dag": true,
     "dementus": true,
     "furiosa": true,
+    "keeper": true,
     "nux": true,
     "rictus": true,
     "slit": true,
-    "toast": true
+    "toast": true,
+    "valkyrie": true
   },
   "overflow_next": 51,
   "max_size": 50

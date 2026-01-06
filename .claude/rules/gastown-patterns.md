@@ -118,6 +118,67 @@ bd create "Refactor auth system" --label complexity:complex
 
 **Cost savings**: ~90% on trivial tasks (Haiku vs Sonnet), quality where it matters (Opus for complex work).
 
+### Haiku Swarms (Advanced)
+
+For parallelizable work with clear subtasks, deploy a **Haiku swarm**: Sonnet plans → multiple Haiku workers execute → Opus reviews.
+
+**Pattern**: **Plan → Execute → Review** at scale.
+
+```bash
+# Create convoy with parallelizable work
+gt convoy create "User Profile Feature" cs-component cs-api cs-tests cs-styles
+
+# Option 1: Deploy Haiku swarm (automatic)
+gt swarm deploy convoy-abc --planner=sonnet --executor=haiku --reviewer=opus
+# Sonnet breaks down convoy → spawns Haiku worker per task → Opus final review
+
+# Option 2: Manual Haiku slinging (more control)
+for issue in cs-component cs-api cs-tests cs-styles; do
+  gt-smart-sling $issue csm &  # Parallel execution
+done
+wait
+```
+
+**What happens**:
+1. **Planning phase** (Sonnet): Analyzes convoy, identifies parallelizable subtasks
+2. **Execution phase** (Haiku): Spawns one worker per subtask, all run in parallel
+3. **Review phase** (Opus): Merges branches, reviews for security/architecture issues
+
+**Cost comparison**:
+
+| Approach | Models | Cost | Time |
+|----------|--------|------|------|
+| Sequential Sonnet | 4× Sonnet | $0.04 | 120 min |
+| Parallel Sonnet | 4× Sonnet | $0.04 | 30 min |
+| **Haiku Swarm** | 1× Sonnet + 4× Haiku + 1× Opus | **$0.114** | **30 min** |
+
+**When to use Haiku swarms**:
+- ✓ 4+ independent tasks (components, tests, endpoints)
+- ✓ Each task is well-defined (clear file targets)
+- ✓ Tasks don't depend on each other
+- ✗ Tasks require coordination (use Sonnet throughout)
+- ✗ Single complex architectural task (use Opus)
+
+**Labeling for swarms**:
+
+Tag convoy issues for automatic Haiku routing:
+
+```bash
+# Tag each subtask
+bd label add cs-component model:haiku complexity:simple
+bd label add cs-api model:haiku complexity:simple
+bd label add cs-tests model:haiku complexity:trivial
+bd label add cs-styles model:haiku complexity:trivial
+
+# Now smart-sling automatically uses Haiku
+gt-smart-sling cs-component csm  # → Haiku worker
+gt-smart-sling cs-api csm        # → Haiku worker
+```
+
+**The insight**: Haiku achieves 90% of Sonnet's performance on bounded tasks. When work can be parallelized, Haiku swarms deliver massive cost savings (~70%) without sacrificing quality—because Opus still reviews the final result.
+
+**See [Model Routing Optimization](./model-routing-optimization.md) for detailed swarm strategies.**
+
 ### Worker Operations
 
 ```bash

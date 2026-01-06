@@ -7,7 +7,8 @@
   "types": "./dist/index.d.ts",
   "bin": {
     "harness": "./dist/cli.js",
-    "gt-smart-sling": "./dist/bin/gt-smart-sling.js"
+    "gt-smart-sling": "./dist/bin/gt-smart-sling.js",
+    "routing-report": "./dist/bin/routing-report.js"
   },
   "exports": {
     ".": {

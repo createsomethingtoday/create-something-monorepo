@@ -210,6 +210,38 @@ export {
   isModelContextSensitive,
 } from './model-detector.js';
 
+// Model Routing
+export type {
+  RoutingDecision,
+  ComplexityAnalysis,
+  ModelSuggestion,
+} from './model-routing.js';
+
+export {
+  selectModel,
+  analyzeComplexity,
+  getCostEstimate,
+  formatRoutingDecision,
+  validateModelSelection,
+  suggestModelImprovement,
+} from './model-routing.js';
+
+// Routing Experiments
+export type {
+  RoutingExperiment,
+  ExperimentStats,
+} from './routing-experiments.js';
+
+export {
+  logExperiment,
+  readExperiments,
+  calculateStats,
+  generateReport,
+  exportToCSV,
+  quickLog,
+  printLatestExperiments,
+} from './routing-experiments.js';
+
 // Peer Review - Prompts
 export {
   getPromptForReviewer,

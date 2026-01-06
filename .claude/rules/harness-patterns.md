@@ -51,14 +51,45 @@ run harness: create and work on "Add user settings page"
 
 ### Model Routing (Default Mode)
 
-When you don't specify ultrathink, harness picks the model:
+When you don't specify ultrathink, harness uses the **Plan → Execute → Review** pattern:
+
+**Sonnet plans → Haiku executes → Opus reviews (when critical)**
 
 | Complexity | Model | Cost | Example |
 |------------|-------|------|---------|
-| trivial | Haiku | ~$0.001 | Typo fix |
-| simple | Sonnet | ~$0.01 | Bug fix |
-| standard | Sonnet | ~$0.01 | Normal feature |
-| complex | Opus | ~$0.10 | Multi-file refactor |
+| trivial | Haiku | ~$0.001 | Typo fix, rename variable |
+| simple | Haiku | ~$0.001 | Single-file edit, CRUD scaffolding |
+| standard | Sonnet | ~$0.01 | Multi-file feature, business logic |
+| complex | Opus | ~$0.10 | Architecture design, security-critical |
+
+**Key insight**: Haiku achieves 90% of Sonnet's performance on well-defined execution tasks while costing 10x less.
+
+#### When Haiku Executes
+
+Haiku is ideal for bounded, well-defined tasks:
+- Single-file edits with clear instructions
+- CRUD endpoint scaffolding
+- Test file creation
+- Linting and formatting fixes
+- Component generation from templates
+- Simple refactors (rename, extract)
+
+#### When Sonnet Plans
+
+Sonnet handles coordination and complexity:
+- Multi-file feature implementation
+- API design and contracts
+- Task decomposition
+- Integration work
+
+#### When Opus Reviews
+
+Opus provides deep analysis for critical paths:
+- Security-critical code (auth, payments)
+- Architecture audits
+- Performance optimization
+
+**See [Model Routing Optimization](./model-routing-optimization.md) for detailed routing strategies.**
 
 ---
 

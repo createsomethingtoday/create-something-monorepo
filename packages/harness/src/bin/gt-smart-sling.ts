@@ -26,18 +26,16 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import {
+  selectModel,
+  formatRoutingDecision,
+  type RoutingDecision,
+} from '../model-routing.js';
+import type { ClaudeModelFamily, BeadsIssue } from '../types.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
-
-interface BeadsIssue {
-  id: string;
-  title: string;
-  description: string;
-  labels: string[];
-  status: string;
-}
 
 type QualityLevel = 'basic' | 'shiny' | 'chrome';
 
@@ -77,59 +75,31 @@ function readBeadsIssue(issueId: string, cwd: string = process.cwd()): BeadsIssu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Model Selection Logic (from harness)
+// Model Selection Logic (using model-routing.ts)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Map Beads labels to Gastown quality level.
- *
- * Priority:
- * 1. Explicit model:X labels
- * 2. Complexity:X labels
- * 3. Pattern matching on title
- * 4. Default (shiny)
+ * Map routing decision to Gastown quality level.
  */
-function selectQualityLevel(issue: BeadsIssue): QualityLevel {
-  const labels = issue.labels || [];
-  const title = (issue.title + ' ' + (issue.description || '')).toLowerCase();
+function modelToQuality(model: ClaudeModelFamily): QualityLevel {
+  const mapping: Record<ClaudeModelFamily, QualityLevel> = {
+    haiku: 'basic',
+    sonnet: 'shiny',
+    opus: 'chrome',
+    unknown: 'shiny', // Default to Sonnet
+  };
 
-  // 1. Explicit model labels (highest priority)
-  if (labels.includes('model:haiku')) return 'basic';
-  if (labels.includes('model:sonnet')) return 'shiny';
-  if (labels.includes('model:opus')) return 'chrome';
+  return mapping[model] || 'shiny';
+}
 
-  // 2. Complexity labels (second priority)
-  if (labels.includes('complexity:trivial')) return 'basic';
-  if (labels.includes('complexity:simple')) return 'shiny';
-  if (labels.includes('complexity:standard')) return 'shiny';
-  if (labels.includes('complexity:complex')) return 'chrome';
+/**
+ * Select quality level using the harness model routing logic.
+ */
+function selectQualityLevel(issue: BeadsIssue): { quality: QualityLevel; decision: RoutingDecision } {
+  const decision = selectModel(issue);
+  const quality = modelToQuality(decision.model);
 
-  // 3. Pattern matching (third priority)
-  // Haiku patterns (mechanical tasks)
-  const haikuPatterns = [
-    'rename', 'typo', 'comment', 'import', 'export',
-    'lint', 'format', 'cleanup', 'remove unused',
-    'add test', 'update test', 'fix test',
-    'bump version', 'update dependency',
-  ];
-
-  if (haikuPatterns.some(p => title.includes(p))) {
-    return 'basic';
-  }
-
-  // Opus patterns (complex reasoning)
-  const opusPatterns = [
-    'architect', 'design', 'refactor', 'migrate',
-    'optimize', 'performance', 'security',
-    'integration', 'system',
-  ];
-
-  if (opusPatterns.some(p => title.includes(p))) {
-    return 'chrome';
-  }
-
-  // 4. Default (Sonnet equivalent)
-  return 'shiny';
+  return { quality, decision };
 }
 
 /**
@@ -196,11 +166,13 @@ Flags are passed through to gt sling:
     process.exit(1);
   }
 
-  // Select quality level
-  const quality = selectQualityLevel(issue);
+  // Select quality level using model routing
+  const { quality, decision } = selectQualityLevel(issue);
 
   console.log(`📋 Issue: ${issue.id} - ${issue.title}`);
   console.log(`🎯 Quality: ${formatQuality(quality)}`);
+  console.log(`🧠 Routing: ${decision.model} (${decision.strategy}, ${(decision.confidence * 100).toFixed(0)}% confidence)`);
+  console.log(`💡 Rationale: ${decision.rationale}`);
   console.log(`🚀 Target: ${target}`);
 
   // Build gt sling command
