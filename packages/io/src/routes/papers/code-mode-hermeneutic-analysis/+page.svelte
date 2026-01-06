@@ -158,12 +158,12 @@
 				<p>In traditional LLM tool architectures, the model generates structured tool invocations:</p>
 
 				<div class="p-4 font-mono code-block">
-					<pre class="code-primary">{`<tool_call>
-  <name>file_read</name>
-  <arguments>
-    <path>/src/index.ts</path>
-  </arguments>
-</tool_call>`}</pre>
+					<pre class="code-primary">{`&lt;tool_call&gt;
+  &lt;name&gt;file_read&lt;/name&gt;
+  &lt;arguments&gt;
+    &lt;path&gt;/src/index.ts&lt;/path&gt;
+  &lt;/arguments&gt;
+&lt;/tool_call&gt;`}</pre>
 				</div>
 
 				<p>The model must:</p>
@@ -181,7 +181,7 @@
 				<div class="p-4 font-mono code-block-success">
 					<pre class="code-success">{`const content = await fs.readFile('/src/index.ts', 'utf-8');
 const lines = content.split('\\n');
-const functionDefs = lines.filter(l => l.includes('function'));
+const functionDefs = lines.filter(l =&gt; l.includes('function'));
 console.log(\`Found \${functionDefs.length} functions\`);`}</pre>
 				</div>
 
@@ -230,7 +230,7 @@ console.log(\`Found \${functionDefs.length} functions\`);`}</pre>
        ↓
   "Let me construct a valid tool call"
        ↓
-  <tool_call>...</tool_call>
+  &lt;tool_call&gt;...&lt;/tool_call&gt;
 
          ↓
 TOOL AS OBJECT OF FOCUS`}</pre>
@@ -719,15 +719,15 @@ try {
 				</p>
 
 				<div class="p-4 font-mono code-block">
-					<pre class="code-secondary">{`<invoke name="Read">
-  <parameter name="file_path">/path/to/file</parameter>
-</invoke>
+					<pre class="code-secondary">{`&lt;invoke name="Read"&gt;
+  &lt;parameter name="file_path"&gt;/path/to/file&lt;/parameter&gt;
+&lt;/invoke&gt;
 
-<invoke name="Edit">
-  <parameter name="file_path">/path/to/file</parameter>
-  <parameter name="old_string">...</parameter>
-  <parameter name="new_string">...</parameter>
-</invoke>`}</pre>
+&lt;invoke name="Edit"&gt;
+  &lt;parameter name="file_path"&gt;/path/to/file&lt;/parameter&gt;
+  &lt;parameter name="old_string"&gt;...&lt;/parameter&gt;
+  &lt;parameter name="new_string"&gt;...&lt;/parameter&gt;
+&lt;/invoke&gt;`}</pre>
 				</div>
 
 				<p>

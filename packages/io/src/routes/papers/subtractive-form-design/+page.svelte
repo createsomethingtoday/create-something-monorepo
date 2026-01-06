@@ -244,7 +244,7 @@
 
 				<div class="p-4 code-block">
 					<pre><code>{`if (name === 'appCapabilities' && value === 'Designer Extension') {
-  setFormData(prev => ({
+  setFormData(prev =&gt; ({
     ...prev,
     appInstallUrl: ''
   }));
