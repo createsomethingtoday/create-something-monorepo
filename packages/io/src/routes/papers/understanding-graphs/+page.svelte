@@ -413,9 +413,128 @@
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">6. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Creating Your First Understanding Graph</h3>
+				<p>
+					To apply this methodology to your own codebase:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">Step 1: Pick a Package (Human)
+Start with a package you know well. Understanding graphs work best when written by
+someone who already understands the code.
+
+Step 2: Answer the Hermeneutic Questions (Human)
+- Purpose: What does this package do? (one sentence)
+- Position: How does it fit in the larger system?
+- Entry points: What 3-5 files should someone read first?
+- Key concepts: What terms might confuse a newcomer?
+
+Step 3: Identify Understanding-Critical Dependencies (Human)
+Don't list all imports. Ask: "Which dependencies would someone need to understand
+to make sense of THIS package?" Usually 2-4 packages maximum.
+
+Step 4: Capture Bidirectional Relationships (Human)
+For each dependency, explain:
+- Why it matters (what does it enable?)
+- What understanding of this package clarifies understanding of the dependency
+
+Step 5: Create UNDERSTANDING.md (Human + Agent)
+Use the canonical format. Claude Code can help structure it, but the semantic
+insights must come from human understanding.
+
+Step 6: Validate Against Checklist (Agent)
+Use the understanding-graphs Skill to verify:
+✓ One-sentence purpose exists
+✓ 3-5 entry points identified
+✓ Each dependency has "why it matters" explanation
+✓ Bidirectional relationships captured
+✓ No exhaustive mapping (keep it minimal)</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Adding to a New Package</h3>
+				<p>
+					Let's say you're adding an authentication package to your monorepo:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`# Understanding: @myapp/auth
+
+> **Manages user authentication and session handling**
+
+## Ontological Position
+**Mode of Being**: Foundation service
+Auth sits at the infrastructure layer. Every user-facing package depends on it
+for identity verification, but it remains independent of business logic.
+
+## Depends On (Understanding-Critical)
+| Dependency | Why It Matters |
+|------------|----------------|
+| \`@myapp/database\` | Auth stores sessions and user records in Postgres. Understanding how we query users clarifies the session lifecycle. |
+| \`@myapp/crypto\` | Password hashing and token signing happen here. Understanding our hash algorithm clarifies why session tokens look the way they do. |
+
+## Enables Understanding Of
+| Consumer | What This Clarifies |
+|----------|---------------------|
+| \`@myapp/api\` | API routes use \`requireAuth()\` middleware. Understanding how we verify tokens clarifies why certain endpoints fail when tokens expire. |
+| \`@myapp/web\` | The login form posts to \`/auth/login\`. Understanding our session creation flow clarifies why users stay logged in across page refreshes. |
+
+## To Understand This Package, Read
+1. **src/session.ts** — Session creation, verification, and cleanup
+2. **src/middleware/requireAuth.ts** — How we protect routes
+3. **src/password.ts** — Hashing and comparison logic
+4. **tests/session.test.ts** — Edge cases (expired tokens, invalid signatures)
+
+## Key Concepts
+| Concept | Definition | Where |
+|---------|------------|-------|
+| Session token | JWT containing user ID and expiry, signed with secret | \`src/session.ts\` |
+| Refresh flow | How we extend sessions without re-prompting for password | \`src/refresh.ts\` |
+| Password hash | bcrypt hash with 12 rounds, never stored in plain text | \`src/password.ts\` |`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice: This captures <em>understanding-critical</em> relationships, not every import.
+					The database package is mentioned because session storage is fundamental to comprehension.
+					The logging package (which auth also uses) is NOT mentioned because it's not critical
+					to understanding how auth works.
+				</p>
+
+				<h3 class="mt-6 subsection-heading">When to Update Understanding Graphs</h3>
+				<p>
+					Update UNDERSTANDING.md when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Architecture changes</strong>: New dependencies, removed dependencies, changed package purpose</li>
+					<li><strong>Entry points change</strong>: Files you'd recommend reading first are different</li>
+					<li><strong>Key concepts evolve</strong>: Terminology or fundamental patterns shift</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't update for:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>Bug fixes that don't change understanding</li>
+					<li>Performance optimizations that don't change entry points</li>
+					<li>Adding new functions that don't introduce new concepts</li>
+				</ul>
+
+				<p class="mt-4 emphasis-text">
+					The goal is <strong>stable understanding</strong>, not comprehensive documentation.
+					Understanding graphs should age well—update only when the mental model changes.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">6. Conclusion</h2>
+			<h2 class="section-heading">7. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -579,12 +698,23 @@
 		overflow-x: auto;
 	}
 
+	.code-block-success {
+		background-color: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-border-default));
+		border-radius: var(--radius-lg);
+		overflow-x: auto;
+	}
+
 	.code-comment {
 		color: var(--color-fg-muted);
 	}
 
 	.code-primary {
 		color: var(--color-fg-secondary);
+	}
+
+	.code-secondary {
+		color: var(--color-fg-tertiary);
 	}
 
 	.inline-code {
