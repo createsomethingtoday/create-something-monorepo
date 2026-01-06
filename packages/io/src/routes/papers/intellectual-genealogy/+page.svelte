@@ -63,7 +63,7 @@
 						<tbody>
 							<tr>
 								<td class="py-3 layer-label">Foundational</td>
-								<td class="py-3">Reveals hidden ontological structure</td>
+								<td class="py-3">Reveals hidden <strong>ontological</strong> (concerning the fundamental nature of being and existence) structure</td>
 								<td class="py-3">Often difficult, academic, revolutionary</td>
 							</tr>
 							<tr>
@@ -145,7 +145,7 @@
 						<p class="master-work">Being and Time (1927)</p>
 					</div>
 					<p class="master-contribution">
-						Heidegger's distinction between <em>Zuhandenheit</em> (ready-to-hand) and
+						Heidegger's distinction between <strong><em>Zuhandenheit</em></strong> (ready-to-hand: when a tool disappears into transparent use, like a hammer during skilled carpentry) and
 						<em>Vorhandenheit</em> (present-at-hand) reveals how tools function. When a hammer
 						works, we don't notice it—we notice the nail. When it breaks, the hammer becomes
 						visible. This is the foundation of CREATE SOMETHING's tool philosophy:
@@ -160,7 +160,7 @@
 						<p class="master-work">Truth and Method (1960)</p>
 					</div>
 					<p class="master-contribution">
-						Gadamer's hermeneutic circle shows how understanding works: we understand parts
+						Gadamer's <strong>hermeneutic circle</strong> (a philosophical method where understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) shows how understanding works: we understand parts
 						through the whole and the whole through parts. This becomes CREATE SOMETHING's
 						four-property structure: .ltd (philosophy) → .io (research) → .space (practice) →
 						.agency (services) → .ltd. Each property informs the others. Understanding is
