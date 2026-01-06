@@ -4,7 +4,7 @@
 
 **Core Insight**: Human-agent partnership is not delegation of grunt work but *division by capability*. Each participant does what they do best, creating a whole greater than either part.
 
-This follows the Subtractive Triad's third level—**Heidegger's hermeneutic circle**: the human and agent form a system where each serves the whole. Neither dominates; both contribute according to their nature.
+This follows the Subtractive Triad's third level—**Heidegger's hermeneutic circle** (the idea that you understand parts by seeing the whole, and understand the whole by examining the parts—understanding deepens through iteration). In partnership: the human and agent form a system where each serves the whole. You can't understand the human's role without seeing the agent's, and vice versa.
 
 ---
 
