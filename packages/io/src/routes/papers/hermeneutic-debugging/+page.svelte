@@ -402,9 +402,227 @@ useEffect(() => {
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">VI. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<p>
+					This section translates the Hermeneutic Debugging pattern into a practical workflow.
+					The approach applies to any complex bug where your initial assumptions prove inadequate—
+					React state issues, async timing problems, CSS cascade mysteries, or API integration failures.
+				</p>
+
+				<h3 class="subsection-heading">Step-by-Step Process</h3>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-primary">{`Step 1: Articulate Your Assumptions (Human)
+Before coding, write down what you believe to be true:
+- "State persists across navigations"
+- "useEffect runs once per render"
+- "Component doesn't remount on route change"
+- "sessionStorage survives page refresh"
+These become your fore-structure (what you bring to the problem).
+
+Step 2: Implement Based on Current Understanding (Agent)
+Code the fix using your current assumptions:
+- Write the solution that "should work"
+- Don't overthink—use the most obvious approach
+- This is a hypothesis test, not the final answer
+
+Step 3: Observe the Failure (Human + Agent)
+When it doesn't work, observe carefully:
+- Add console.logs at every decision point
+- Log component lifecycle (mount, unmount, re-render)
+- Log state values before and after changes
+- Log timing (setTimeout, async operations)
+Let the system show you what's happening.
+
+Step 4: Identify the Exposed Assumption (Human)
+Review the logs and ask: "What did I assume that isn't true?"
+- Expected: Effect runs once → Reality: Runs twice (strict mode)
+- Expected: Component persists → Reality: Remounts on navigation
+- Expected: Ref survives → Reality: Resets on remount
+Name the gap between assumption and reality.
+
+Step 5: Revise Your Fore-Structure (Human)
+Update your mental model with the new understanding:
+- Add to assumption list: "Component remounts on route change"
+- Update hypothesis: "Need persistence beyond component lifecycle"
+- Consider new approaches: sessionStorage, context, URL params
+
+Step 6: Iterate Until Aligned (Agent + Human)
+Return to Step 2 with revised understanding:
+- Implement new solution based on updated assumptions
+- Observe again (leave console.logs in)
+- Revise if needed
+- Repeat until solution works consistently`}</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Async Race Condition</h3>
+
+				<p>
+					Let's say you have a search input that should debounce API calls, but results
+					display out of order when typing quickly:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// Iteration 1: Naive debounce
+const [query, setQuery] = useState('');
+const [results, setResults] = useState([]);
+
+useEffect(() => {
+  const timer = setTimeout(async () => {
+    const data = await searchAPI(query);
+    setResults(data);
+  }, 300);
+  return () => clearTimeout(timer);
+}, [query]);`}</pre>
+				</div>
+
+				<p class="mt-4">
+					<strong>Problem:</strong> Type "react", then quickly change to "vue". Sometimes React
+					results appear after Vue results.
+				</p>
+
+				<p class="mt-4">
+					<strong>Assumption exposed:</strong> "The last request to start will be the last to finish."
+					This is false—network timing varies. Fast queries can finish after slow ones.
+				</p>
+
+				<div class="p-4 mt-4 font-mono code-block">
+					<pre class="code-primary">{`// Iteration 2: Request cancellation
+useEffect(() => {
+  let cancelled = false;
+
+  const timer = setTimeout(async () => {
+    console.log('[Search] Sending request for:', query);
+    const data = await searchAPI(query);
+
+    if (!cancelled) {
+      console.log('[Search] Setting results for:', query);
+      setResults(data);
+    } else {
+      console.log('[Search] Cancelled results for:', query);
+    }
+  }, 300);
+
+  return () => {
+    cancelled = true;
+    clearTimeout(timer);
+  };
+}, [query]);`}</pre>
+				</div>
+
+				<p class="mt-4">
+					<strong>Observation from logs:</strong> Cancellation flag works, but results still arrive
+					out of order because <code class="inline-code">cancelled</code> only prevents <em>setting</em>
+					results, not the network request.
+				</p>
+
+				<p class="mt-4">
+					<strong>Assumption exposed:</strong> "Setting cancelled = true stops the API call." False—
+					it only prevents state update. The request continues.
+				</p>
+
+				<div class="p-4 mt-4 font-mono code-block-success">
+					<pre class="code-success">{`// Iteration 3: AbortController
+useEffect(() => {
+  const controller = new AbortController();
+
+  const timer = setTimeout(async () => {
+    try {
+      const data = await searchAPI(query, { signal: controller.signal });
+      setResults(data);
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('[Search] Request aborted for:', query);
+      }
+    }
+  }, 300);
+
+  return () => {
+    controller.abort();
+    clearTimeout(timer);
+  };
+}, [query]);`}</pre>
+				</div>
+
+				<p class="mt-4">
+					<strong>Solution:</strong> AbortController actually cancels the network request, not just
+					the state update. Results now display in correct order.
+				</p>
+
+				<h3 class="mt-6 subsection-heading">When to Use Hermeneutic Debugging</h3>
+
+				<p>
+					Use this approach when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Initial fix fails:</strong> Your "obvious" solution doesn't work</li>
+					<li><strong>Behavior is mysterious:</strong> System does something you can't explain</li>
+					<li><strong>Multiple attempts needed:</strong> You're on iteration 3+ of the same bug</li>
+					<li><strong>Timing or lifecycle involved:</strong> Async, effects, component mounting</li>
+					<li><strong>Framework-specific quirks:</strong> React strict mode, Next.js remounting, etc.</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't overthink for:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>Syntax errors (linter catches these)</li>
+					<li>Typos or undefined variables</li>
+					<li>Simple logic errors (wrong comparison operator)</li>
+					<li>First attempt at a fix (try the obvious solution first)</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Console.log Best Practices</h3>
+
+				<p>
+					Effective observation requires good logging. Use these patterns:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// 1. Label your logs clearly
+console.log('[Component Init]', { props, state });
+console.log('[Effect Running]', { dependency1, dependency2 });
+console.log('[Cleanup]', 'Clearing timeout');
+
+// 2. Log the full context, not just values
+console.log('[API Response]', {
+  url,
+  status: response.status,
+  data: response.data,
+  timestamp: Date.now()
+});
+
+// 3. Use objects for multiple values
+// Good: console.log({ query, results, timestamp })
+// Bad: console.log(query, results, timestamp)  // Hard to distinguish
+
+// 4. Track lifecycle explicitly
+useEffect(() => {
+  console.log('[Effect] Mount or Update', { deps });
+  return () => console.log('[Effect] Cleanup', { deps });
+}, [deps]);
+
+// 5. Remove logs after understanding
+// Once the bug is fixed and you understand why,
+// remove console.logs. They served their purpose.`}</pre>
+				</div>
+
+				<p class="mt-4 text-emphasis">
+					The hermeneutic circle favors observation over speculation. One well-placed console.log
+					reveals more than hours of "thinking it through." Debug by seeing, not by imagining.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">VI. Conclusion</h2>
+			<h2 class="section-heading">VII. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -603,6 +821,30 @@ useEffect(() => {
 	.card-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
+	}
+
+	.code-block-success {
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+		border-radius: var(--radius-lg);
+		font-size: var(--text-body-sm);
+		overflow-x: auto;
+	}
+
+	.code-success {
+		color: var(--color-data-2);
+	}
+
+	.inline-code {
+		background: var(--color-bg-surface);
+		padding: 0.125rem 0.5rem;
+		border-radius: var(--radius-sm);
+		font-family: monospace;
+	}
+
+	.text-emphasis {
+		color: var(--color-fg-primary);
+		font-weight: 500;
 	}
 
 	.quote-box {
