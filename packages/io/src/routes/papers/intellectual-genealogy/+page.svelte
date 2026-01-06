@@ -428,9 +428,214 @@
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">IX. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Tracing Your Own Intellectual Genealogy</h3>
+				<p>
+					To identify and document the intellectual foundations of your own methodology:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">Step 1: Identify Your Core Questions (Human)
+What fundamental questions does your work answer?
+- Philosophy: How do you understand being/reality/tools?
+- Communication: How do you ensure clarity?
+- Systems: How do you see interconnection?
+- Add your own dimensions as appropriate.
+
+Step 2: Trace Backwards from Practice (Human)
+For each principle you use, ask: "Who taught me this?"
+Don't just list influences—trace the chain:
+- Who formalized the insight into teachable method?
+- Who first revealed the underlying structure?
+
+Step 3: Map the Three Layers (Human)
+Organize your sources into:
+- Foundational: Revolutionary, difficult, paradigm-shifting
+- Methodological: Accessible synthesis, practitioner-focused
+- Applied: Concrete implementation in your domain
+
+Step 4: Validate Coherence (Human)
+Do your sources support each other, or do they conflict?
+Intellectual genealogy should reveal convergence, not pastiche.
+If sources contradict, resolve before claiming them as foundation.
+
+Step 5: Document the Connections (Human + Agent)
+Create a canonical reference showing:
+- Who influenced what elements of your methodology
+- How sources at different layers relate
+- What reading path enables others to trace your thinking
+
+Step 6: Update as You Evolve (Human)
+Genealogy isn't static. As you discover new sources or refine
+understanding, update the record. Intellectual honesty requires
+acknowledging when you learn something changes your foundation.</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Building a Content Strategy Methodology</h3>
+				<p>
+					Let's say you're developing a methodology for content strategy. You might discover:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`# My Content Strategy Genealogy
+
+## The Three Dimensions
+
+| Layer          | Philosophy       | Writing          | Systems           |
+|----------------|------------------|------------------|-------------------|
+| Foundational   | Wittgenstein     | Orwell           | Shannon           |
+| Methodological | Searle           | Strunk & White   | Tufte             |
+| Applied        | Krug             | Redish           | Halvorson         |
+
+## How They Connect
+
+### Philosophy Lineage: Meaning Through Use
+- **Wittgenstein** (Philosophical Investigations): "Meaning is use in the language game"
+  Revealed that words don't have inherent meaning—they gain meaning through context.
+
+- **Searle** (Speech Acts): "Saying something is doing something"
+  Made Wittgenstein's insight teachable: classify how language acts (assert, promise, command).
+
+- **Krug** (Don't Make Me Think): "Users don't read, they scan"
+  Applied speech act theory to web content: every headline is a promise, every button a command.
+
+### Writing Lineage: Clarity as Ethics
+- **Orwell** (Politics and the English Language): Bad writing enables bad thinking.
+
+- **Strunk & White** (Elements of Style): Compressed Orwell into teachable rules.
+
+- **Redish** (Letting Go of the Words): Applied clarity principles to web writing.
+  Users scan; write for scanning, not for reading.
+
+### Systems Lineage: Information Architecture
+- **Shannon** (Mathematical Theory of Communication): Information = reduction of uncertainty.
+
+- **Tufte** (Visual Display of Quantitative Information): Made information design visual.
+  Show data in ways that reduce cognitive load.
+
+- **Halvorson** (Content Strategy for the Web): Applied information architecture to content.
+  Content isn't just words—it's structured data that reduces user uncertainty.
+
+## The Convergent Insight
+
+All three lineages arrive at the same conclusion from different angles:
+**Content succeeds when it reduces friction between user intent and system response.**
+
+- Philosophy: Language games work when participants share context
+- Writing: Clear prose removes obstacles to understanding
+- Systems: Good IA reduces uncertainty about where to find what you need
+
+This convergence validates the principle. It's not arbitrary—it's discovered
+independently across three traditions.`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice how each source builds on the previous layer:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Foundational</strong>: Revealed hidden structure (meaning = use, clarity = ethics, information = uncertainty reduction)</li>
+					<li><strong>Methodological</strong>: Made it teachable (speech acts, style rules, visual principles)</li>
+					<li><strong>Applied</strong>: Showed implementation (web usability, web writing, content strategy)</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Using Genealogy to Guide Learning</h3>
+				<p>
+					Once you've traced your intellectual lineage, use it to:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`// 1. Create a reading path for team members
+// Start with applied (most accessible), move to methodological, then foundational
+
+const onboardingPath = {
+  week1: [
+    { title: "Don't Make Me Think", author: "Krug", layer: "Applied" },
+    { title: "Letting Go of the Words", author: "Redish", layer: "Applied" },
+  ],
+  week2: [
+    { title: "Elements of Style", author: "Strunk & White", layer: "Methodological" },
+    { title: "Visual Display of Quantitative Information", author: "Tufte", layer: "Methodological" },
+  ],
+  month2: [
+    { title: "Philosophical Investigations", author: "Wittgenstein", layer: "Foundational" },
+    { note: "Difficult but rewarding. Explains why language works the way it does." },
+  ],
+};
+
+// 2. Reference genealogy in decision-making
+// When debating approach, cite the lineage
+
+"We should use active voice because Orwell showed passive voice obscures agency.
+Strunk & White formalized this as 'use active voice.' Redish applied it to web
+content. This isn't preference—it's a tested principle across three layers."
+
+// 3. Identify gaps in your foundation
+// If you can't trace a principle to intellectual roots, question it
+
+const principles = [
+  { principle: "Clarity over cleverness", traced: true, source: "Orwell → Strunk → Redish" },
+  { principle: "Always use sans-serif fonts", traced: false, source: "???" },
+  { principle: "Content = structured data", traced: true, source: "Shannon → Tufte → Halvorson" },
+];
+
+// "Sans-serif fonts" can't be traced—it's preference, not principle.
+// Either find intellectual foundation or remove from methodology.`}</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">When to Trace Genealogy (and When Not To)</h3>
+				<p>
+					Trace intellectual genealogy when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Formalizing methodology</strong>: Before teaching others, understand your own foundations</li>
+					<li><strong>Experiencing internal conflict</strong>: When principles seem to contradict, genealogy reveals hidden coherence (or exposes real problems)</li>
+					<li><strong>Onboarding team members</strong>: Provides reading path that builds understanding systematically</li>
+					<li><strong>Defending decisions</strong>: "Because I said so" is weak; "because this principle traces to tested insight" is strong</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't trace genealogy when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>You're still exploring—premature formalization stifles discovery</li>
+					<li>The work is domain-specific preference, not universal principle</li>
+					<li>Genealogy becomes academic exercise divorced from practice</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Validating Your Genealogy</h3>
+				<p>
+					How do you know your intellectual genealogy is sound?
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">✓ Coherence: Sources support each other, don't contradict
+✓ Three-layer structure: Foundation → Method → Application for each dimension
+✓ Convergence: Different lineages arrive at similar insights independently
+✓ Teachability: Reading path enables others to understand your thinking
+✓ Practitioner utility: Team references genealogy during actual work, not just onboarding
+✓ Evolution: You update genealogy as understanding deepens, not treat it as static</pre>
+				</div>
+
+				<p class="mt-4 emphasis-text">
+					The ultimate test: Can team members explain <em>why</em> a principle matters,
+					not just <em>what</em> it is? If they can trace reasoning back through the layers—
+					from applied practice to methodological framework to foundational insight—
+					your genealogy is working. If they treat principles as arbitrary rules,
+					the genealogy needs better documentation or the principles need re-examination.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">IX. Conclusion</h2>
+			<h2 class="section-heading">X. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -691,5 +896,27 @@
 
 	.responsive-table-scroll {
 		overflow-x: auto;
+	}
+
+	.code-block-success {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-border-default));
+		border-radius: var(--radius-lg);
+		overflow-x: auto;
+	}
+
+	.code-secondary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.emphasis-text {
+		color: var(--color-fg-primary);
+	}
+
+	.subsection-heading {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-top: var(--space-md);
 	}
 </style>
