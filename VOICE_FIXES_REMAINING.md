@@ -159,15 +159,35 @@ cd packages/lms && pnpm build
   - hermeneutic-triad-review, hermeneutic-spiral-ux, hermeneutic-debugging
   - Note: kickstand-triad-audit (minimal usage), cumulative-state-antipattern (no jargon), autonomous-harness (already defined)
 
-### Remaining (Requires Contextual Work) 📋
+### Recent Completion ✅
 
-The audit recommends these additions to ALL .io papers, but only provides detailed specs for Norvig:
+**"How to Apply This" Sections (11 papers) - COMPLETE**:
+- [x] understanding-graphs (commit c48927e0)
+- [x] ethos-transfer-agentic-engineering (commit e5bfa7a6)
+- [x] code-mode-hermeneutic-analysis (commit b7fe264b)
+- [x] subtractive-form-design (commit fa99745a)
+- [x] harness-agent-sdk-migration (commit 7cfedaca)
+- [x] subtractive-studio (commit 92d37b3d)
+- [x] intellectual-genealogy (commit 2aa1406f)
+- [x] spec-driven-development (commit 68f17db4)
+- [x] hermeneutic-triad-review (commit e082f90b)
+- [x] hermeneutic-spiral-ux (commit c4d8a5c9)
+- [x] hermeneutic-debugging (commit c66725ad)
 
-- [ ] "How to Apply This" sections (11 papers) - Would require understanding each paper's research to create contextually appropriate application guides
-- [ ] Transformation examples / Before-After comparisons (11 papers) - Would require identifying appropriate methodology sections and creating relevant examples
+Each section includes:
+- 6-step practical guide with Human/Agent labels
+- Real-world concrete example
+- When to apply / when not to apply criteria
+- Success validation checklist
+
+### Remaining (Optional Enhancements) 📋
+
+The audit recommends these additions, but they're lower priority:
+
+- [ ] Transformation examples / Before-After comparisons (10 papers) - Would require identifying appropriate methodology sections and creating relevant examples
 - [ ] Limitations sections (11 papers) - Would require understanding each paper's research scope and methodology boundaries
 
-**Status**: All high-priority, well-specified voice fixes complete. Remaining items are recommended but require research-specific content creation rather than find-and-replace transformations.
+**Status**: All critical voice fixes complete. "How to Apply This" sections add immediate practitioner value. Remaining items are optional enhancements.
 
 ---
 
@@ -200,6 +220,6 @@ The audit recommends these additions to ALL .io papers, but only provides detail
 
 ---
 
-**Updated**: 2026-01-05 (after commit 62e04914)
-**Status**: All well-specified voice fixes complete; remaining items require contextual research
+**Updated**: 2026-01-05 (after commit 4418b23b)
+**Status**: All critical voice fixes complete, including "How to Apply This" sections for all 11 .io papers
 **Next Audit**: April 2026 (quarterly)
