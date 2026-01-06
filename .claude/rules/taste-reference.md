@@ -72,7 +72,6 @@ CREATE SOMETHING's intellectual foundations span philosophy, writing, and system
 | **George Orwell** | "Politics and the English Language" (1946) | Clarity as ethics; obscurity as political evasion; 6 pages that changed everything |
 | **William Zinsser** | "On Writing Well" | Accessible methodology; makes clarity teachable; the practitioner's guide |
 | **Nicole Fenton & Kate Kiefer Lee** | "Nicely Said" | Transformation examples; user-centered clarity; applied to web/digital |
-| **Steven Pressfield** | "The War of Art" (2002) | The Resistance; names the internal force opposing creative work |
 | **Edward Tufte** | Visual Display of Quantitative Information | Empirical grounding; "show the data"; high density |
 | **Dieter Rams** | Ten Principles | Declarative compression; aphoristic wisdom; "less, but better" |
 | **Charles & Ray Eames** | — | "The best for the most for the least"; functional elegance |
@@ -94,23 +93,6 @@ This reframes clarity as *ethical*, not aesthetic. Bad writing isn't just unplea
 6. Break any of these rules sooner than say anything outright barbarous
 
 **Canon adoption**: Rules 1-5 are subtractive. Rule 6 is Heideggerian—judgment over formula.
-
-#### Pressfield's Core Insight
-
-From "The War of Art" (2002):
-
-> "Resistance is the most toxic force on the planet. It is the root of more unhappiness than poverty, disease, and erectile dysfunction. To yield to Resistance deforms our spirit. It stunts us and makes us less than we are and were born to be."
-
-Pressfield names what Orwell couldn't: the *internal* force opposing clarity. Orwell reveals that jargon serves political evasion; Pressfield reveals that we reach for jargon to avoid the vulnerability of direct expression. The Resistance isn't external—it lives in us.
-
-**The Resistance manifests as**:
-- Reaching for impressive vocabulary instead of clear language
-- Adding "just in case" features instead of shipping
-- Researching endlessly instead of creating
-- Perfecting instead of completing
-- Any activity that feels productive but avoids the real work
-
-**Canon adoption**: Orwell addresses what obscures (external); Pressfield addresses *why* we obscure (internal). Together they complete the picture: we must recognize the Resistance before we can apply the subtractive discipline.
 
 #### Fenton/Lee Patterns Adopted
 
