@@ -241,6 +241,13 @@
 		every level. Adjacent elements feel balanced. The mathematics recede; the harmony remains.
 	</p>
 
+	<p class="mt-4">
+		<strong>Why the golden ratio?</strong> It appears throughout nature—flower petals,
+		nautilus shells, human proportions. Using it in spacing creates rhythm that feels
+		natural, not arbitrary. Your eye recognizes the pattern subconsciously, even if you
+		can't name it.
+	</p>
+
 	<div class="callout-info">
 		<h3 class="callout-heading">Why This Matters</h3>
 		<p>
