@@ -36,6 +36,8 @@
 	 * </Paper>
 	 */
 
+	import type { Snippet } from 'svelte';
+
 	interface Props {
 		title: string;
 		subtitle?: string;
@@ -45,7 +47,12 @@
 		level?: string;
 		author?: string;
 		date?: string;
-		children?: any;
+		abstract?: Snippet;
+		metrics?: Snippet;
+		content?: Snippet;
+		references?: Snippet;
+		footer?: Snippet;
+		children?: Snippet;
 	}
 
 	let {
@@ -56,7 +63,13 @@
 		readTime,
 		level,
 		author,
-		date
+		date,
+		abstract,
+		metrics,
+		content,
+		references,
+		footer,
+		children
 	}: Props = $props();
 </script>
 
@@ -86,48 +99,48 @@
 			{/if}
 		</div>
 
-		<!-- Abstract Section (optional slot) -->
-		{#if $$slots.abstract}
+		<!-- Abstract Section (optional snippet) -->
+		{#if abstract}
 			<section class="pl-6 space-y-4 abstract-section">
 				<h2 class="section-heading">Abstract</h2>
 				<div class="leading-relaxed body-text">
-					{@render children?.abstract?.()}
+					{@render abstract()}
 				</div>
 			</section>
 		{/if}
 
-		<!-- Metrics Section (optional slot) -->
-		{#if $$slots.metrics}
+		<!-- Metrics Section (optional snippet) -->
+		{#if metrics}
 			<section class="metrics-section">
-				{@render children?.metrics?.()}
+				{@render metrics()}
 			</section>
 		{/if}
 
 		<!-- Main Content -->
-		{#if $$slots.content}
+		{#if content}
 			<div class="content-wrapper">
-				{@render children?.content?.()}
+				{@render content()}
 			</div>
-		{:else if $$slots.default}
+		{:else if children}
 			<div class="content-wrapper">
-				{@render children?.()}
+				{@render children()}
 			</div>
 		{/if}
 
-		<!-- References Section (optional slot) -->
-		{#if $$slots.references}
+		<!-- References Section (optional snippet) -->
+		{#if references}
 			<section class="space-y-4">
 				<h2 class="section-heading">References</h2>
 				<div class="references-list">
-					{@render children?.references?.()}
+					{@render references()}
 				</div>
 			</section>
 		{/if}
 
-		<!-- Footer Section (optional slot) -->
-		{#if $$slots.footer}
+		<!-- Footer Section (optional snippet) -->
+		{#if footer}
 			<div class="pt-6 paper-footer">
-				{@render children?.footer?.()}
+				{@render footer()}
 			</div>
 		{/if}
 	</div>
