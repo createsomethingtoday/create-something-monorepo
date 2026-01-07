@@ -13,6 +13,7 @@
 import hermeneuticSpiralUx from '../../../../../papers/published/hermeneutic-spiral-ux.md?raw';
 import codeModeHermeneutic from '../../../../../papers/published/code-mode-hermeneutic-analysis.md?raw';
 import sveltekitZuhandenheit from '../../../../../papers/published/sveltekit-zuhandenheit.md?raw';
+import webflowDashboardRefactor from '../../../../../papers/published/webflow-dashboard-refactor.md?raw';
 
 /**
  * Map of paper slugs to their markdown content
@@ -20,7 +21,8 @@ import sveltekitZuhandenheit from '../../../../../papers/published/sveltekit-zuh
 export const paperContent: Record<string, string> = {
 	'hermeneutic-spiral-ux': hermeneuticSpiralUx,
 	'code-mode-hermeneutic-analysis': codeModeHermeneutic,
-	'sveltekit-zuhandenheit': sveltekitZuhandenheit
+	'sveltekit-zuhandenheit': sveltekitZuhandenheit,
+	'webflow-dashboard-refactor': webflowDashboardRefactor
 };
 
 /**
