@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import StatusBadge from './StatusBadge.svelte';
+	import KineticNumber from './KineticNumber.svelte';
 	import type { Asset } from '$lib/server/airtable';
 
 	interface Props {
@@ -72,13 +74,14 @@
 <div class="overview-stats">
 	<!-- Performance Summary -->
 	{#if totals().viewers > 0 || totals().purchases > 0 || totals().revenue > 0}
-		<Card>
-			<CardHeader>
-				<CardTitle>Performance Summary</CardTitle>
-			</CardHeader>
-			<CardContent>
+		<div in:fade={{ duration: 300, delay: 0 }}>
+			<Card>
+				<CardHeader>
+					<CardTitle>Performance Summary</CardTitle>
+				</CardHeader>
+				<CardContent>
 				<div class="performance-grid">
-					<div class="performance-item">
+					<div class="performance-item" in:fly={{ y: 20, duration: 400, delay: 100 }}>
 						<div class="performance-icon viewers">
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -86,46 +89,48 @@
 							</svg>
 						</div>
 						<div class="performance-content">
-							<span class="performance-value">{totals().viewers.toLocaleString()}</span>
+							<span class="performance-value"><KineticNumber value={totals().viewers} /></span>
 							<span class="performance-label">Total Viewers</span>
 						</div>
 					</div>
 
-					<div class="performance-item">
+					<div class="performance-item" in:fly={{ y: 20, duration: 400, delay: 200 }}>
 						<div class="performance-icon purchases">
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
 							</svg>
 						</div>
 						<div class="performance-content">
-							<span class="performance-value">{totals().purchases.toLocaleString()}</span>
+							<span class="performance-value"><KineticNumber value={totals().purchases} /></span>
 							<span class="performance-label">Total Purchases</span>
 						</div>
 					</div>
 
-					<div class="performance-item">
+					<div class="performance-item" in:fly={{ y: 20, duration: 400, delay: 300 }}>
 						<div class="performance-icon revenue">
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
 							</svg>
 						</div>
 						<div class="performance-content">
-							<span class="performance-value">${totals().revenue.toLocaleString()}</span>
+							<span class="performance-value"><KineticNumber value={totals().revenue} prefix="$" /></span>
 							<span class="performance-label">Total Revenue</span>
 						</div>
 					</div>
 				</div>
-			</CardContent>
-		</Card>
+				</CardContent>
+			</Card>
+		</div>
 	{/if}
 
 	<!-- Status Distribution -->
 	{#if sortedStatuses().length > 0}
-		<Card>
-			<CardHeader>
-				<CardTitle>Status Distribution</CardTitle>
-			</CardHeader>
-			<CardContent>
+		<div in:fade={{ duration: 300, delay: 400 }}>
+			<Card>
+				<CardHeader>
+					<CardTitle>Status Distribution</CardTitle>
+				</CardHeader>
+				<CardContent>
 				<div class="distribution-list">
 					{#each sortedStatuses() as status}
 						{@const data = statusBreakdown()[status]}
@@ -152,8 +157,9 @@
 					<span class="total-label">Total Assets</span>
 					<span class="total-value">{assets.length}</span>
 				</div>
-			</CardContent>
-		</Card>
+				</CardContent>
+			</Card>
+		</div>
 	{/if}
 </div>
 
@@ -170,13 +176,26 @@
 		gap: var(--space-md);
 	}
 
+	/* Highlight grid pattern: siblings dim on hover */
+	.performance-grid:hover .performance-item:not(:hover) {
+		opacity: 0.5;
+	}
+
 	.performance-item {
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
 		padding: var(--space-sm);
 		background: var(--color-bg-subtle);
+		border: 1px solid transparent;
 		border-radius: var(--radius-md);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.performance-item:hover {
+		background: var(--color-hover);
+		transform: scale(1.02);
+		border: 1px solid var(--color-border-emphasis);
 	}
 
 	.performance-icon {
@@ -264,7 +283,14 @@
 	.distribution-fill {
 		height: 100%;
 		border-radius: var(--radius-full);
-		transition: width var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-standard) var(--ease-standard);
+		animation: progressFill 1s var(--ease-standard);
+	}
+
+	@keyframes progressFill {
+		from {
+			width: 0;
+		}
 	}
 
 	.distribution-total {
@@ -285,5 +311,22 @@
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.performance-item,
+		.distribution-fill {
+			transition: none;
+			animation: none;
+		}
+
+		.performance-item:hover {
+			transform: none;
+		}
+
+		/* Keep opacity transitions for reduced motion users - they're subtle */
+		.performance-grid:hover .performance-item:not(:hover) {
+			opacity: 0.8;
+		}
 	}
 </style>

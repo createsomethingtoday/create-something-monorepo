@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	type Variant = 'default' | 'elevated';
+	type Variant = 'default' | 'elevated' | 'glass';
 
 	interface Props extends HTMLAttributes<HTMLDivElement> {
 		variant?: Variant;
@@ -41,7 +41,32 @@
 	}
 
 	.card-elevated:hover {
-		transform: translateY(-4px);
+		transform: translateY(-4px) scale(1.01);
 		box-shadow: var(--shadow-lg);
+		border-color: var(--color-border-emphasis);
+	}
+
+	.card-glass {
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	}
+
+	.card-glass:hover {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(255, 255, 255, 0.15);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.card {
+			transition: none;
+		}
+
+		.card-elevated:hover,
+		.card-glass:hover {
+			transform: none;
+		}
 	}
 </style>

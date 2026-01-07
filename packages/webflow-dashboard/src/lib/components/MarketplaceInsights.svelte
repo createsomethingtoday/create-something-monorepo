@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
 	import { Card, CardHeader, CardTitle, CardContent, Badge } from './ui';
 	import Sparkline from './Sparkline.svelte';
+	import KineticNumber from './KineticNumber.svelte';
 	import { TrendingUp, TrendingDown, Minus, Trophy, Target, Zap, AlertTriangle } from 'lucide-svelte';
 
 	interface LeaderboardEntry {
@@ -158,19 +160,19 @@
 
 <div class="marketplace-insights">
 	<!-- Summary Stats -->
-	<div class="summary-grid">
+	<div class="summary-grid" in:fade={{ duration: 300 }}>
 		<Card>
 			<CardContent>
-				<div class="stat-card">
+				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 0 }}>
 					<span class="stat-label">Marketplace Sales (30d)</span>
-					<span class="stat-value">{summary.totalMarketplaceSales.toLocaleString()}</span>
+					<span class="stat-value"><KineticNumber value={summary.totalMarketplaceSales} /></span>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardContent>
-				<div class="stat-card">
+				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 100 }}>
 					<span class="stat-label">Your Best Rank</span>
 					<span class="stat-value">
 						{summary.userBestRank ? `#${summary.userBestRank}` : '-'}
@@ -181,18 +183,18 @@
 
 		<Card>
 			<CardContent>
-				<div class="stat-card">
+				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 200 }}>
 					<span class="stat-label">Your Templates in Top 50</span>
-					<span class="stat-value">{userTemplates.length}</span>
+					<span class="stat-value"><KineticNumber value={userTemplates.length} /></span>
 				</div>
 			</CardContent>
 		</Card>
 
 		<Card>
 			<CardContent>
-				<div class="stat-card">
+				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 300 }}>
 					<span class="stat-label">Categories Tracked</span>
-					<span class="stat-value">{categories.length}</span>
+					<span class="stat-value"><KineticNumber value={categories.length} /></span>
 				</div>
 			</CardContent>
 		</Card>
@@ -239,7 +241,12 @@
 			{#each leaderboard.slice(0, 5) as template, index}
 				{@const badge = getRankBadge(index)}
 				{@const trendData = template.trendData || generateTrendData(template.totalSales30d, index + 1)}
-				<div class="leaderboard-card" class:user-template={template.isUserTemplate}>
+				<div
+					class="leaderboard-card"
+					class:user-template={template.isUserTemplate}
+					style="--index: {index}"
+					in:fly={{ y: 20, duration: 400, delay: index * 100 }}
+				>
 					<div class="leaderboard-header">
 						<div class="rank-badge rank-{index + 1}">
 							{#if index === 0}
@@ -675,6 +682,13 @@
 
 	.leaderboard-card:hover {
 		background: var(--color-hover);
+		border-color: var(--color-border-emphasis);
+		transform: scale(1.02);
+	}
+
+	/* Highlight grid pattern */
+	.leaderboard-grid:hover .leaderboard-card:not(:hover) {
+		opacity: 0.6;
 	}
 
 	.leaderboard-card.user-template {
@@ -1200,5 +1214,24 @@
 		font-size: var(--text-h2);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
+	}
+
+	/* Reduced motion support */
+	@media (prefers-reduced-motion: reduce) {
+		.leaderboard-card,
+		.category-card,
+		.table-mobile-card {
+			transition: none;
+		}
+
+		.leaderboard-card:hover,
+		.category-card:hover {
+			transform: none;
+		}
+
+		/* Keep opacity transitions - they're subtle */
+		.leaderboard-grid:hover .leaderboard-card:not(:hover) {
+			opacity: 0.8;
+		}
 	}
 </style>
