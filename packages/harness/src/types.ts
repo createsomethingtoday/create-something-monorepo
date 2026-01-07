@@ -98,6 +98,46 @@ export function getDiscoveryLabel(source: DiscoverySource): string {
   return DISCOVERY_LABELS[source];
 }
 
+/**
+ * Executable seed for Beads issues (Bloom-inspired pattern).
+ *
+ * Seeds make issues executable - they contain all the context needed
+ * for Ralph/harness to directly consume and execute the issue.
+ *
+ * Philosophy: Issues aren't just descriptions - they're specifications.
+ */
+export interface BeadsIssueSeed {
+  /** Behavior to achieve or measure */
+  behavior: string;
+  /** Example transcripts/outputs showing success */
+  examples?: string[];
+  /** Configuration for execution (Ralph, harness, etc.) */
+  config?: {
+    /** Maximum iterations for Ralph loops */
+    maxIterations?: number;
+    /** Model escalation strategy */
+    escalation?: {
+      enabled: boolean;
+      initialModel?: 'haiku' | 'sonnet' | 'opus';
+      escalationThreshold?: number;
+    };
+    /** Harness-specific config */
+    harness?: {
+      useRalphEscalation?: boolean;
+      reviewers?: string[];
+    };
+  };
+  /** Acceptance criteria (testable conditions) */
+  acceptance?: Array<{
+    /** Criterion description */
+    test: string;
+    /** How to verify (command or manual check) */
+    verify?: string;
+  }>;
+  /** Completion promise string for Ralph */
+  completionPromise?: string;
+}
+
 export interface BeadsIssue {
   id: string;
   title: string;
@@ -109,12 +149,32 @@ export interface BeadsIssue {
   created_at: string;
   updated_at: string;
   closed_at: string | null;
-  metadata?: Record<string, unknown>;
+  /** Metadata including optional seed */
+  metadata?: {
+    /** Executable seed (Bloom-inspired) */
+    seed?: BeadsIssueSeed;
+    /** Other metadata fields */
+    [key: string]: unknown;
+  };
   dependencies?: Array<{
     issue_id: string;
     depends_on_id: string;
     type: string;
   }>;
+}
+
+/**
+ * Check if an issue has an executable seed.
+ */
+export function hasExecutableSeed(issue: BeadsIssue): boolean {
+  return !!issue.metadata?.seed;
+}
+
+/**
+ * Get the seed from a Beads issue.
+ */
+export function getIssueSeed(issue: BeadsIssue): BeadsIssueSeed | undefined {
+  return issue.metadata?.seed as BeadsIssueSeed | undefined;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -652,6 +712,7 @@ export interface ReviewFinding {
   description: string;
   file?: string;
   line?: number;
+  quote?: string; // Verbatim code quote (prevents hallucinations, Anthropic best practice)
   suggestion?: string;
   issueId?: string; // Related Beads issue if applicable
 }
@@ -668,6 +729,8 @@ export interface ReviewResult {
   confidence: number; // 0-1
   durationMs: number;
   error?: string;
+  /** Model used for this review (for escalation tracking) */
+  model?: 'opus' | 'sonnet' | 'haiku';
 }
 
 /**
@@ -687,6 +750,15 @@ export interface ReviewerConfig {
   includePatterns?: string[];
   /** Files/patterns to exclude */
   excludePatterns?: string[];
+  /**
+   * Override the default model for this reviewer type.
+   * If not specified, uses getReviewerModel() defaults:
+   * - security → haiku (pattern detection)
+   * - architecture → opus (deep analysis)
+   * - quality → sonnet (balanced)
+   * - custom → sonnet (safe default)
+   */
+  model?: 'haiku' | 'sonnet' | 'opus';
 }
 
 /**
@@ -741,6 +813,8 @@ export interface ReviewAggregation {
   shouldAdvance: boolean;
   blockingReasons: string[];
   timestamp: string;
+  /** Meta-review results (Bloom-inspired synthesis) */
+  metaReview?: any; // Import would create circular dependency, use 'any' for now
 }
 
 /**
@@ -797,6 +871,8 @@ export interface BaselineConfig {
   };
   /** Attempt auto-fix for simple failures (lint --fix, etc.) */
   autoFix: boolean;
+  /** Use Ralph escalation for iterative fixing (tests, typecheck) */
+  useRalphEscalation: boolean;
   /** Create blocker issues for failures that can't be auto-fixed */
   createBlockers: boolean;
   /** Maximum auto-fix attempts per gate (default: 1) */
@@ -877,6 +953,7 @@ export const DEFAULT_BASELINE_CONFIG: BaselineConfig = {
     build: false, // Build is expensive, off by default
   },
   autoFix: true,
+  useRalphEscalation: false,
   createBlockers: true,
   maxAutoFixAttempts: 1,
   gateTimeoutMs: 5 * 60 * 1000, // 5 minutes
@@ -983,6 +1060,11 @@ export interface ReviewerDefinition {
   includePatterns?: string[];
   /** File patterns to exclude */
   excludePatterns?: string[];
+  /**
+   * Override the default model for this reviewer type.
+   * If not specified, uses getReviewerModel() defaults.
+   */
+  model?: 'haiku' | 'sonnet' | 'opus';
 }
 
 /**

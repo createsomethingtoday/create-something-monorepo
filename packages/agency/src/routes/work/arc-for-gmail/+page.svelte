@@ -6,7 +6,7 @@
 	<title>Arc for Gmail — Case Study | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="Multi-user Gmail to Notion sync built with Claude Code. Delivered to Half Dozen using the Arc pattern."
+		content="11 hours to production (vs 25-30 estimated). $6.30 in AI costs (vs $3,750 manual). Gmail to Notion sync that just works."
 	/>
 </svelte:head>
 
@@ -17,17 +17,15 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Email Automation</p>
 			<h1 class="mb-6">Arc for Gmail</h1>
 			<p class="heading-2 body-tertiary leading-relaxed mb-8">
-				Multi-user OAuth-based Gmail→Notion sync with Workers AI summaries and automatic contact
-				management
+				11 hours to production. $6.30 in AI costs. Label an email, it appears in your CRM with an AI summary.
 			</p>
 			<div class="flex gap-4 body-sm body-muted">
-				<span>• Cloudflare Workers</span>
-				<span>• Workers AI</span>
-				<span>• Notion API 2025-09-03</span>
-				<span>• Gmail API</span>
+				<span>• 55-65% time savings</span>
+				<span>• 99.8% cost savings</span>
+				<span>• 5-minute sync cycles</span>
 			</div>
 		</div>
 	</section>

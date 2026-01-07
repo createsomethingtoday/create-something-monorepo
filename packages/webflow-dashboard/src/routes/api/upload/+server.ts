@@ -1,25 +1,30 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { uploadToR2 } from '$lib/server/r2';
+import {
+	validateWebP,
+	validateFileSize,
+	validateMimeType,
+	validateThumbnailAspectRatio,
+	THUMBNAIL_ASPECT_RATIO
+} from '$lib/utils/upload-validation';
+
+/** Maximum file size: 10MB */
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /**
- * Validate that a file is actually a WebP image by checking file headers
- * WebP files start with RIFF followed by file size, then WEBP
+ * Upload a file to R2 storage.
+ *
+ * POST /api/upload
+ *
+ * Form data:
+ * - file: The file to upload (required, must be WebP)
+ * - type: Upload type - 'thumbnail' | 'image' (optional, default: 'image')
+ * - width: Image width in pixels (optional, for thumbnail validation)
+ * - height: Image height in pixels (optional, for thumbnail validation)
+ *
+ * When type=thumbnail, validates the 150:199 aspect ratio.
  */
-function isWebP(arrayBuffer: ArrayBuffer): boolean {
-	const header = new TextDecoder('ascii').decode(new Uint8Array(arrayBuffer.slice(0, 4)));
-	const type = new TextDecoder('ascii').decode(new Uint8Array(arrayBuffer.slice(8, 12)));
-	return header === 'RIFF' && type === 'WEBP';
-}
-
-/**
- * Generate a unique filename for the upload
- */
-function generateFilename(originalName: string): string {
-	const uniqueSuffix = `${Date.now()}_${Math.round(Math.random() * 1e9)}`;
-	const safeName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
-	return `${uniqueSuffix}_${safeName}`;
-}
-
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	// Require authentication
 	if (!locals.user?.email) {
@@ -34,49 +39,58 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	try {
 		const formData = await request.formData();
 		const file = formData.get('file');
+		const uploadType = formData.get('type')?.toString() || 'image';
+		const width = formData.get('width');
+		const height = formData.get('height');
 
 		if (!file || !(file instanceof File)) {
 			throw error(400, 'No file uploaded');
 		}
 
 		// Validate MIME type
-		if (file.type !== 'image/webp') {
+		if (!validateMimeType(file.type)) {
 			throw error(400, 'Only WebP images are allowed');
 		}
 
-		// Validate file size (max 10MB)
-		const MAX_SIZE = 10 * 1024 * 1024;
-		if (file.size > MAX_SIZE) {
+		// Validate file size
+		if (!validateFileSize(file.size, MAX_FILE_SIZE)) {
 			throw error(400, 'File size must be less than 10MB');
 		}
 
 		// Read file and validate WebP format
 		const arrayBuffer = await file.arrayBuffer();
-		if (!isWebP(arrayBuffer)) {
+		if (!validateWebP(arrayBuffer)) {
 			throw error(400, 'Invalid WebP file format');
 		}
 
-		// Generate unique filename with user prefix for organization
-		const userPrefix = locals.user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '_');
-		const filename = `${userPrefix}/${generateFilename(file.name || 'upload.webp')}`;
+		// Validate thumbnail aspect ratio if type=thumbnail and dimensions provided
+		if (uploadType === 'thumbnail' && width && height) {
+			const w = parseInt(width.toString(), 10);
+			const h = parseInt(height.toString(), 10);
 
-		// Upload to R2
-		await uploads.put(filename, arrayBuffer, {
-			httpMetadata: {
-				contentType: 'image/webp'
-			},
-			customMetadata: {
-				uploadedBy: locals.user.email,
-				uploadedAt: new Date().toISOString()
+			if (!isNaN(w) && !isNaN(h) && !validateThumbnailAspectRatio(w, h)) {
+				throw error(
+					400,
+					`Invalid thumbnail aspect ratio. Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height}`
+				);
+			}
+		}
+
+		// Upload to R2 using the utility function
+		const result = await uploadToR2(uploads, arrayBuffer, {
+			filename: file.name || 'upload.webp',
+			userEmail: locals.user.email,
+			contentType: 'image/webp',
+			metadata: {
+				uploadType
 			}
 		});
 
-		// Construct the public URL
-		// Note: R2 public access must be enabled on the bucket, or use a Worker to serve files
-		// For now, return a path that can be served via a separate endpoint
-		const url = `/api/uploads/${filename}`;
-
-		return json({ url, filename });
+		return json({
+			url: result.url,
+			key: result.key,
+			size: result.size
+		});
 	} catch (err) {
 		if (err && typeof err === 'object' && 'status' in err) {
 			throw err; // Re-throw SvelteKit errors

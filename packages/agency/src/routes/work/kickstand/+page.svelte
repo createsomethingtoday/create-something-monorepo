@@ -6,7 +6,7 @@
 	<title>Kickstand — Case Study | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="Venue intelligence system audit using the Subtractive Triad framework. Achieved 92% script reduction and 48% health score improvement."
+		content="155 scripts became 13. $40/day became $39/month. Health score: 6.2 to 9.2. A venue intelligence system that actually works."
 	/>
 </svelte:head>
 
@@ -17,16 +17,15 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Half Dozen</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Venue Intelligence</p>
 			<h1 class="mb-6">Kickstand</h1>
 			<p class="heading-2 body-tertiary leading-relaxed mb-8">
-				Venue intelligence system with health monitoring, automated cleanup scripts, and real-time status dashboards
+				155 scripts became 13. $40/day became $39/month. A system that works without anyone thinking about it.
 			</p>
 			<div class="flex flex-wrap gap-4 body-sm body-muted">
-				<span>• Cloudflare Workers</span>
-				<span>• D1 Database</span>
-				<span>• TypeScript</span>
-				<span>• Subtractive Triad</span>
+				<span>• 92% script reduction</span>
+				<span>• 97% cost reduction</span>
+				<span>• 48% health improvement</span>
 			</div>
 		</div>
 	</section>
@@ -153,6 +152,54 @@ Level 3: Heidegger (System)
 						<span>48% health score improvement (6.2 → 9.2)</span>
 					</li>
 				</ul>
+			</div>
+		</div>
+	</section>
+
+	<!-- Cost Impact -->
+	<section class="py-16 px-6 section-border">
+		<div class="max-w-3xl mx-auto">
+			<h2 class="mb-8">Cost Impact</h2>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+				<div class="text-center p-6 metric-card">
+					<p class="heading-2 font-bold mb-2">$40/day</p>
+					<p class="body-sm metric-label">Before optimization</p>
+					<p class="body-xs metric-sublabel mt-1">~$1,200/month projected</p>
+				</div>
+				<div class="text-center p-6 metric-card">
+					<p class="heading-2 font-bold mb-2">$39/mo</p>
+					<p class="body-sm metric-label">After optimization</p>
+					<p class="body-xs metric-sublabel mt-1">97% reduction</p>
+				</div>
+			</div>
+
+			<div class="space-y-6 body-lg leading-relaxed">
+				<p>
+					Runaway API costs were consuming <strong>$40/day</strong> before the Subtractive Triad audit
+					identified inefficient scraping patterns and duplicate data accumulation.
+				</p>
+
+				<p><strong>Root causes identified:</strong></p>
+
+				<ul class="space-y-3 body body-tertiary pl-6">
+					<li class="flex items-start gap-3">
+						<span class="body-subtle mt-1">—</span>
+						<span>89% duplicate data (11,104 redundant records)</span>
+					</li>
+					<li class="flex items-start gap-3">
+						<span class="body-subtle mt-1">—</span>
+						<span>Redundant API calls from orphaned scripts</span>
+					</li>
+					<li class="flex items-start gap-3">
+						<span class="body-subtle mt-1">—</span>
+						<span>Missing deduplication in data pipeline</span>
+					</li>
+				</ul>
+
+				<p>
+					After optimization: same coverage of 100 venues, 4x daily monitoring, <strong>97% lower cost</strong>.
+				</p>
 			</div>
 		</div>
 	</section>

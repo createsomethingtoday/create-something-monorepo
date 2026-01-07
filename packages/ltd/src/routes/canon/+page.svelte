@@ -10,8 +10,8 @@
 	<p class="eyebrow">Design System</p>
 	<h1 class="hero-title">Canon</h1>
 	<p class="hero-subtitle">
-		Less, but better. A comprehensive design system grounded in Dieter Rams' principles
-		and Heideggerian philosophy.
+		Everything you need to build interfaces that feel right. Colors, typography, 
+		components, and the thinking behind each decision.
 	</p>
 </header>
 
@@ -19,7 +19,7 @@
 <section class="philosophy-quote">
 	<blockquote>
 		<p>"Weniger, aber besser"</p>
-		<cite>— Dieter Rams</cite>
+		<cite>— Dieter Rams (Less, but better)</cite>
 	</blockquote>
 </section>
 
@@ -37,7 +37,7 @@
 				</svg>
 			</div>
 			<h3>Foundations</h3>
-			<p>Colors, typography, spacing, and motion — the building blocks of Canon.</p>
+			<p>Start here. Colors, typography, spacing, and motion tokens you can copy directly into your project.</p>
 		</a>
 
 		<!-- Components -->
@@ -51,7 +51,7 @@
 				</svg>
 			</div>
 			<h3>Components</h3>
-			<p>Reusable UI components that embody the Canon aesthetic.</p>
+			<p>Ready-to-use buttons, cards, navigation, and form elements with code examples.</p>
 		</a>
 
 		<!-- Patterns -->
@@ -64,7 +64,7 @@
 				</svg>
 			</div>
 			<h3>Patterns</h3>
-			<p>Common interaction patterns for forms, navigation, and feedback.</p>
+			<p>How to handle forms, loading states, and navigation across your application.</p>
 			<span class="badge">Coming Soon</span>
 		</a>
 
@@ -78,47 +78,48 @@
 				</svg>
 			</div>
 			<h3>Philosophy</h3>
-			<p>The Heideggerian foundation — tools that recede into use.</p>
+			<p>Why we made these choices. The principles that guide every design decision.</p>
 		</a>
 	</div>
 </section>
 
 <!-- Principles Section -->
 <section class="principles">
-	<h2 class="section-title">The Subtractive Triad</h2>
+	<h2 class="section-title">How We Decide What Stays</h2>
 	<p class="section-description">
-		Every element in Canon must pass through three levels of evaluation.
+		Before adding anything to Canon, we ask three questions.
 	</p>
 
 	<div class="triad-grid">
 		<div class="triad-item">
-			<span class="triad-label">Implementation</span>
-			<h3>DRY</h3>
-			<p class="triad-question">"Have I built this before?"</p>
-			<p class="triad-action">Unify</p>
+			<span class="triad-label">First</span>
+			<h3>Does it already exist?</h3>
+			<p class="triad-question">If we've built something similar, we combine them into one solution.</p>
+			<p class="triad-action">→ Unify</p>
 		</div>
 
 		<div class="triad-item">
-			<span class="triad-label">Artifact</span>
-			<h3>Rams</h3>
-			<p class="triad-question">"Does this earn its existence?"</p>
-			<p class="triad-action">Remove</p>
+			<span class="triad-label">Second</span>
+			<h3>Does it earn its place?</h3>
+			<p class="triad-question">Every element needs a clear purpose. Decoration without function gets cut.</p>
+			<p class="triad-action">→ Remove</p>
 		</div>
 
 		<div class="triad-item">
-			<span class="triad-label">System</span>
-			<h3>Heidegger</h3>
-			<p class="triad-question">"Does this serve the whole?"</p>
-			<p class="triad-action">Reconnect</p>
+			<span class="triad-label">Third</span>
+			<h3>Does it fit the whole?</h3>
+			<p class="triad-question">Each piece should work with everything else. If it doesn't, we rethink it.</p>
+			<p class="triad-action">→ Reconnect</p>
 		</div>
 	</div>
 </section>
 
 <!-- Token Preview -->
 <section class="token-preview">
-	<h2 class="section-title">Mathematical Foundation</h2>
+	<h2 class="section-title">Spacing That Feels Natural</h2>
 	<p class="section-description">
-		Canon uses the golden ratio (φ = 1.618) for spacing and typography scales.
+		We use the golden ratio (1.618) for spacing. It creates visual rhythm that feels 
+		balanced without you having to think about why.
 	</p>
 
 	<div class="token-examples">

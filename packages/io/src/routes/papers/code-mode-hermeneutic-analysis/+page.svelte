@@ -36,12 +36,12 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper applies Heidegger's phenomenological analysis of ready-to-hand (<em>Zuhandenheit</em>)
-				versus present-at-hand (<em>Vorhandenheit</em>) to contemporary Large Language Model (LLM) agent
+				This paper applies Heidegger's phenomenological analysis of ready-to-hand (<strong><em>Zuhandenheit</em></strong>—when a tool disappears into transparent use, like a hammer during hammering)
+				versus present-at-hand (<strong><em>Vorhandenheit</em></strong>—when a tool becomes an object of conscious attention, like a broken hammer you must examine) to contemporary Large Language Model (LLM) agent
 				architecture, specifically examining the distinction between direct tool calling and code-mediated
 				tool access (Code Mode). We argue that Code Mode achieves Zuhandenheit—tools becoming transparent
 				in use—while traditional tool calling forces Vorhandenheit—tools as objects of conscious focus.
-				This is not merely an optimization but an ontological shift in how agents relate to tools.
+				This is not merely an optimization but an <strong>ontological</strong> (concerning the fundamental nature of being and existence) shift in how agents relate to tools.
 			</p>
 		</section>
 
@@ -70,7 +70,7 @@
 				</p>
 
 				<p>
-					This paper proposes an alternative explanation grounded in Heidegger's phenomenology.
+					This paper proposes an alternative explanation grounded in Heidegger's <strong>phenomenology</strong> (the philosophical study of structures of experience and consciousness—how things show themselves to us through lived experience, not abstract theory).
 					We argue that Code Mode succeeds because it achieves what Heidegger calls
 					<em>Zuhandenheit</em>—the ready-to-hand relationship where tools recede from conscious
 					attention into transparent use. Direct tool calling, by contrast, forces
@@ -158,12 +158,12 @@
 				<p>In traditional LLM tool architectures, the model generates structured tool invocations:</p>
 
 				<div class="p-4 font-mono code-block">
-					<pre class="code-primary">{`<tool_call>
-  <name>file_read</name>
-  <arguments>
-    <path>/src/index.ts</path>
-  </arguments>
-</tool_call>`}</pre>
+					<pre class="code-primary">{`&lt;tool_call&gt;
+  &lt;name&gt;file_read&lt;/name&gt;
+  &lt;arguments&gt;
+    &lt;path&gt;/src/index.ts&lt;/path&gt;
+  &lt;/arguments&gt;
+&lt;/tool_call&gt;`}</pre>
 				</div>
 
 				<p>The model must:</p>
@@ -181,7 +181,7 @@
 				<div class="p-4 font-mono code-block-success">
 					<pre class="code-success">{`const content = await fs.readFile('/src/index.ts', 'utf-8');
 const lines = content.split('\\n');
-const functionDefs = lines.filter(l => l.includes('function'));
+const functionDefs = lines.filter(l =&gt; l.includes('function'));
 console.log(\`Found \${functionDefs.length} functions\`);`}</pre>
 				</div>
 
@@ -230,7 +230,7 @@ console.log(\`Found \${functionDefs.length} functions\`);`}</pre>
        ↓
   "Let me construct a valid tool call"
        ↓
-  <tool_call>...</tool_call>
+  &lt;tool_call&gt;...&lt;/tool_call&gt;
 
          ↓
 TOOL AS OBJECT OF FOCUS`}</pre>
@@ -369,24 +369,33 @@ TOOL RECEDES INTO USE`}</pre>
 					</p>
 				</div>
 
-				<div class="grid md:grid-cols-2 gap-4 mt-4">
-					<div class="p-4 comparison-error">
-						<h4 class="mb-2 comparison-heading comparison-error-heading">Avoid</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• Complex tool schemas requiring explicit understanding</li>
-							<li>• Rigid invocation formats</li>
-							<li>• Forcing the model to enumerate available tools</li>
-						</ul>
-					</div>
+				<p>
+					When you catch yourself designing tool interfaces, notice these patterns:
+				</p>
 
-					<div class="p-4 comparison-success">
-						<h4 class="mb-2 comparison-heading comparison-success-heading">Prefer</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• Familiar programming interfaces</li>
-							<li>• Natural composition patterns</li>
-							<li>• Tool capabilities that "just work"</li>
-						</ul>
-					</div>
+				<div class="responsive-table-scroll mt-4">
+					<table class="w-full table-auto">
+						<thead>
+							<tr class="table-header">
+								<th class="table-cell">You might reach for...</th>
+								<th class="table-cell">What serves agents better</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="table-row">
+								<td class="table-cell">Complex tool schemas requiring explicit understanding</td>
+								<td class="table-cell">Familiar programming interfaces</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Rigid invocation formats</td>
+								<td class="table-cell">Natural composition patterns</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Forcing the model to enumerate available tools</td>
+								<td class="table-cell">Tool capabilities that "just work"</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 
 				<h3 class="mt-6 subsection-heading">MCP and Code Mode</h3>
@@ -396,13 +405,13 @@ TOOL RECEDES INTO USE`}</pre>
 				<div class="grid md:grid-cols-2 gap-4 mt-4">
 					<div class="p-4 info-card">
 						<h4 class="mb-2 card-heading-muted">Tool-calling MCP:</h4>
-						<pre class="code-secondary">{`<use_mcp_tool>
-  <server>filesystem</server>
-  <tool>read_file</tool>
-  <arguments>
+						<pre class="code-secondary">{`&lt;use_mcp_tool&gt;
+  &lt;server&gt;filesystem&lt;/server&gt;
+  &lt;tool&gt;read_file&lt;/tool&gt;
+  &lt;arguments&gt;
     {"path": "/src/index.ts"}
-  </arguments>
-</use_mcp_tool>`}</pre>
+  &lt;/arguments&gt;
+&lt;/use_mcp_tool&gt;`}</pre>
 					</div>
 
 					<div class="p-4 comparison-success">
@@ -512,9 +521,155 @@ const content = await filesystem
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">IX. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Designing LLM Tools for Zuhandenheit</h3>
+				<p>
+					To apply this phenomenological analysis to your own LLM agent architecture:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">Step 1: Identify Your Agent's Tools (Human)
+List everything your agent needs to accomplish its tasks:
+- File operations (read, write, search)
+- API calls (external services)
+- Data transformations (parse, validate, format)
+- System operations (run commands, check status)
+
+Step 2: Evaluate Current Tool-Relationship Mode (Human)
+For each tool, ask: Is this Zuhandenheit (transparent) or Vorhandenheit (requires attention)?
+Signs of Vorhandenheit:
+- Complex schemas requiring extensive documentation
+- Multi-step invocation (get ID, then call tool, then parse result)
+- Frequent hallucination of tool capabilities
+- Poor composition (hard to chain multiple tools)
+
+Step 3: Expose Code Interfaces Where Possible (Human + Agent)
+Convert Vorhandenheit tools to code-accessible libraries:
+❌ &lt;tool_call name="database_query"&gt;
+   &lt;sql&gt;SELECT * FROM users WHERE id = ?&lt;/sql&gt;
+✓ const user = await db.users.findById(userId);
+
+Step 4: Provide Familiar Patterns (Human)
+Use programming paradigms the model has seen:
+- Standard library interfaces (fs.readFile, not custom schemas)
+- Common composition patterns (promises, streams, iterators)
+- Conventional error handling (try/catch, null checks)
+
+Step 5: Enable Sandbox Execution (Agent)
+Let models write and run code in safe environments:
+- Isolated execution context (containers, VMs, or process isolation)
+- Time/memory limits to prevent runaway execution
+- Automatic cleanup of temporary resources
+
+Step 6: Test for Tool-Transparency (Agent)
+Validate Zuhandenheit by measuring:
+✓ Task completion rate (does it work?)
+✓ Composition success (can agent chain multiple operations?)
+✓ Attention patterns (does model focus on task or tool mechanics?)
+✗ Hallucination rate (does model invent non-existent capabilities?)</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Converting MCP Server to Code Mode</h3>
+				<p>
+					Let's say you have an MCP server that exposes database operations. Here's how to move from tool calling to Code Mode:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`# Before: Tool Calling (Vorhandenheit)
+# Agent must explicitly think about tool schemas
+
+<tool_call>
+  <name>database_query</name>
+  <arguments>
+    <table>users</table>
+    <filter>{"status": "active"}</filter>
+    <limit>10</limit>
+  </arguments>
+</tool_call>
+
+# Problems:
+# - Schema attention: Agent thinks about table/filter/limit format
+# - Poor composition: Hard to join results with another query
+# - No type safety: "status" could be typo, no validation until runtime
+
+---
+
+# After: Code Mode (Zuhandenheit)
+# Tools exposed as familiar library
+
+import { db } from '@mcp/database';
+
+// Agent thinks about the task, not the tool
+const activeUsers = await db.users
+  .where({ status: 'active' })
+  .limit(10)
+  .all();
+
+// Composition is natural
+const usersWithPosts = await Promise.all(
+  activeUsers.map(async (user) => ({
+    ...user,
+    posts: await db.posts.where({ userId: user.id }).all()
+  }))
+);
+
+// Error handling is conventional
+try {
+  const user = await db.users.findById(userId);
+  if (!user) throw new Error('User not found');
+} catch (error) {
+  console.error('Database error:', error);
+}
+
+# Benefits:
+# ✓ Tool recedes: Agent writes "get active users", not "call database tool"
+# ✓ Composition works: Promise.all, map, chaining—all familiar patterns
+# ✓ Errors are standard: try/catch instead of parsing tool error schemas`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice: The code version lets the tool <em>disappear</em>. The agent's attention flows
+					to "get users with their posts" rather than "construct correct tool invocation schema."
+					This is Zuhandenheit—the hammer disappears when hammering.
+				</p>
+
+				<h3 class="mt-6 subsection-heading">When to Use Code Mode vs. Tool Calling</h3>
+				<p>
+					Use Code Mode when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Complex composition</strong>: Tasks require chaining multiple operations</li>
+					<li><strong>Familiar patterns exist</strong>: The tool fits standard library semantics (file I/O, HTTP, database queries)</li>
+					<li><strong>Error handling matters</strong>: You need try/catch, retries, conditional logic</li>
+					<li><strong>Performance is acceptable</strong>: Sandbox overhead is worth the composition benefits</li>
+				</ul>
+
+				<p class="mt-4">
+					Use tool calling when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Atomic operations</strong>: Single, simple actions (send email, log event)</li>
+					<li><strong>Security requirements</strong>: Direct tool calling provides clearer audit trails</li>
+					<li><strong>No sandbox available</strong>: Environment doesn't support code execution</li>
+					<li><strong>Explicit control needed</strong>: You want to see exactly what the agent invokes</li>
+				</ul>
+
+				<p class="mt-4 emphasis-text">
+					The goal is <strong>tool-transparency</strong>. When the model can focus on the task
+					rather than tool mechanics, you've achieved Zuhandenheit. The tool recedes into use.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">IX. Conclusion</h2>
+			<h2 class="section-heading">X. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -545,9 +700,9 @@ const content = await filesystem
 			</div>
 		</section>
 
-		<!-- Section 10: Postscript -->
+		<!-- Section 11: Postscript -->
 		<section class="space-y-6">
-			<h2 class="section-heading">X. Postscript: A Self-Referential Observation</h2>
+			<h2 class="section-heading">XI. Postscript: A Self-Referential Observation</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<div class="p-4 comparison-warning">
@@ -564,15 +719,15 @@ const content = await filesystem
 				</p>
 
 				<div class="p-4 font-mono code-block">
-					<pre class="code-secondary">{`<invoke name="Read">
-  <parameter name="file_path">/path/to/file</parameter>
-</invoke>
+					<pre class="code-secondary">{`&lt;invoke name="Read"&gt;
+  &lt;parameter name="file_path"&gt;/path/to/file&lt;/parameter&gt;
+&lt;/invoke&gt;
 
-<invoke name="Edit">
-  <parameter name="file_path">/path/to/file</parameter>
-  <parameter name="old_string">...</parameter>
-  <parameter name="new_string">...</parameter>
-</invoke>`}</pre>
+&lt;invoke name="Edit"&gt;
+  &lt;parameter name="file_path"&gt;/path/to/file&lt;/parameter&gt;
+  &lt;parameter name="old_string"&gt;...&lt;/parameter&gt;
+  &lt;parameter name="new_string"&gt;...&lt;/parameter&gt;
+&lt;/invoke&gt;`}</pre>
 				</div>
 
 				<p>
@@ -756,6 +911,11 @@ const content = await filesystem
 		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
+	}
+
+	.emphasis-text {
+		font-style: italic;
+		color: var(--color-fg-secondary);
 	}
 
 	.code-block-warning {

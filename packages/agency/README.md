@@ -22,7 +22,7 @@ The commercial practice of CREATE SOMETHING. Where philosophy becomes delivery.
 .ltd (Philosophy)  → client outcomes inform evolution
 ```
 
-**Key insight**: .agency is where Canon meets reality. Client constraints test philosophical principles. What survives contact with budgets, timelines, and stakeholder complexity becomes battle-tested methodology.
+**Key insight**: .agency is where Canon meets reality. Client constraints test philosophical principles. What survives contact with budgets, timelines, and stakeholder complexity becomes proven methodology.
 
 ---
 

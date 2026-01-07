@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 		// Run all queries in parallel
 		const [
-			// Legacy analytics_events queries
+			// Unified analytics queries
 			totalViewsResult,
 			viewsByPropertyResult,
 			topPagesResult,
@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			topCountriesResult,
 			dailyViewsResult,
 			topReferrersResult,
-			// Unified events queries
+			// Behavioral analytics
 			unifiedCategoryBreakdown,
 			unifiedTopActions,
 			unifiedSessionStats,
@@ -29,88 +29,104 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			// Cross-property flow data
 			propertyTransitions,
 		] = await Promise.all([
-			// Total page views (legacy)
+			// Total page views from unified_events
 			db
 				.prepare(
-					`SELECT COUNT(*) as count FROM analytics_events
-					WHERE event_type = 'page_view'
+					`SELECT COUNT(*) as count FROM unified_events
+					WHERE category = 'navigation' AND action = 'page_view'
 					AND created_at >= datetime('now', '-${days} days')`
 				)
 				.first(),
 
-			// Page views by property (legacy)
+			// Page views by property from unified_events
 			db
 				.prepare(
 					`SELECT property, COUNT(*) as count
-					FROM analytics_events
-					WHERE event_type = 'page_view'
+					FROM unified_events
+					WHERE category = 'navigation' AND action = 'page_view'
 					AND created_at >= datetime('now', '-${days} days')
 					GROUP BY property
 					ORDER BY count DESC`
 				)
 				.all(),
 
-			// Top pages (legacy)
+			// Top pages from unified_events (extract path from url)
 			db
 				.prepare(
-					`SELECT path, property, COUNT(*) as count
-					FROM analytics_events
-					WHERE event_type = 'page_view'
+					`SELECT
+						CASE
+							WHEN instr(url, '?') > 0 THEN substr(url, instr(url, '://') + 3)
+							ELSE substr(url, instr(url, '://') + 3)
+						END as full_url,
+						substr(
+							CASE
+								WHEN instr(url, '?') > 0 THEN substr(url, 1, instr(url, '?') - 1)
+								ELSE url
+							END,
+							instr(url, '://') + 3 + instr(substr(url, instr(url, '://') + 3), '/')
+						) as path,
+						property,
+						COUNT(*) as count
+					FROM unified_events
+					WHERE category = 'navigation' AND action = 'page_view'
 					AND created_at >= datetime('now', '-${days} days')
-					AND path IS NOT NULL
+					AND url IS NOT NULL
 					GROUP BY path, property
 					ORDER BY count DESC
 					LIMIT 10`
 				)
 				.all(),
 
-			// Top experiments (legacy)
+			// Top experiments from unified_events (extract from URL)
 			db
 				.prepare(
-					`SELECT e.experiment_id, p.title, COUNT(*) as count
-					FROM analytics_events e
-					LEFT JOIN papers p ON e.experiment_id = p.id
-					WHERE e.event_type IN ('page_view', 'experiment_view')
-					AND e.experiment_id IS NOT NULL
-					AND e.created_at >= datetime('now', '-${days} days')
-					GROUP BY e.experiment_id, p.title
-					ORDER BY count DESC
-					LIMIT 10`
-				)
-				.all(),
-
-			// Top countries (legacy)
-			db
-				.prepare(
-					`SELECT country, COUNT(*) as count
-					FROM analytics_events
-					WHERE event_type = 'page_view'
+					`SELECT
+						substr(url, instr(url, '/experiments/') + 13) as experiment_id,
+						COUNT(*) as count
+					FROM unified_events
+					WHERE category = 'navigation'
+					AND action = 'page_view'
+					AND url LIKE '%/experiments/%'
 					AND created_at >= datetime('now', '-${days} days')
-					AND country != ''
-					GROUP BY country
+					GROUP BY experiment_id
 					ORDER BY count DESC
 					LIMIT 10`
 				)
 				.all(),
 
-			// Daily page views (legacy)
+			// Top countries from unified_events
+			db
+				.prepare(
+					`SELECT ip_country as country, COUNT(*) as count
+					FROM unified_events
+					WHERE category = 'navigation' AND action = 'page_view'
+					AND created_at >= datetime('now', '-${days} days')
+					AND ip_country IS NOT NULL
+					AND ip_country != ''
+					GROUP BY ip_country
+					ORDER BY count DESC
+					LIMIT 10`
+				)
+				.all(),
+
+			// Daily page views from unified_events
 			db
 				.prepare(
 					`SELECT DATE(created_at) as date, COUNT(*) as count
-					FROM analytics_events
-					WHERE event_type = 'page_view'
+					FROM unified_events
+					WHERE category = 'navigation' AND action = 'page_view'
 					AND created_at >= datetime('now', '-30 days')
 					GROUP BY DATE(created_at)
 					ORDER BY date ASC`
 				)
 				.all(),
 
-			// Referrers (legacy)
+			// Referrers from unified_events
 			db
 				.prepare(
 					`SELECT referrer, COUNT(*) as count
-					FROM analytics_events
-					WHERE event_type = 'page_view'
+					FROM unified_events
+					WHERE category = 'navigation' AND action = 'page_view'
 					AND created_at >= datetime('now', '-${days} days')
 					AND referrer IS NOT NULL
 					AND referrer != ''

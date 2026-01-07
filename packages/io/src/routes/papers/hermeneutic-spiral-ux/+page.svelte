@@ -55,7 +55,7 @@
 				Modern digital systems suffer from a peculiar form of amnesia. Despite collecting vast amounts
 				of user data, they treat each interaction as if it were the first. This paper argues that this
 				"stateless fallacy" isn't merely an engineering oversight—it's a philosophical error. By applying
-				Heidegger's hermeneutic circle to user experience design, we propose the <em>Hermeneutic Spiral</em>,
+				Heidegger's <strong>hermeneutic circle</strong> (a philosophical method where understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) to user experience design, we propose the <em>Hermeneutic Spiral</em>,
 				where each interaction builds upon previous understanding rather than starting fresh. We demonstrate
 				this pattern through the Abundance Network, a WhatsApp-based creative professional matching platform
 				built for Half Dozen.
@@ -539,9 +539,234 @@ Use this context to personalize recommendations.`}</pre>
 			</div>
 		</section>
 
+		<!-- How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">VIII. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<p>
+					This section translates the Hermeneutic Spiral pattern into concrete implementation
+					steps. The pattern works for any conversational system with persistent user context—
+					chatbots, intake forms, onboarding flows, or customer service tools.
+				</p>
+
+				<h3 class="subsection-heading">Step-by-Step Process</h3>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-primary">{`Step 1: Identify Stable vs. Variable Fields (Human)
+Categorize user information by persistence:
+- Stable: Identity, brand, organization, preferences (persist forever)
+- Semi-stable: Contact info, team members, budget range (confirm if stale)
+- Variable: Current need, timeline, specific requirements (ask each time)
+
+Step 2: Implement Context Schema (Agent)
+Create a schema that captures:
+- User identity (phone, email, or auth token)
+- Stable fields (name, brand, industry, style preferences)
+- Session history (past requests, timestamps, outcomes)
+- Interaction metadata (first_seen, total_sessions, last_seen)
+Store in KV, database, or session storage based on scale.
+
+Step 3: Build Delta Detection Logic (Agent)
+Write a function that determines what to ask:
+- Skip questions for fields we already know
+- Confirm semi-stable fields if stale (>90 days)
+- Offer previous values as defaults when applicable
+- Always ask for variable fields (current need, budget)
+
+Step 4: Design Conversational Flow (Human)
+Create two conversation paths:
+- First-time: Full intake (name, brand, preferences, need)
+- Returning: Context-aware ("Welcome back, [name]! Still with [brand]?")
+Ensure returning flow feels natural, not robotic.
+
+Step 5: Add Graceful Degradation (Agent)
+Handle partial context gracefully:
+- If name exists but brand missing: "Hi [name]! What are you working on?"
+- If context is stale: "Still with [brand]? Anything changed?"
+- If fields conflict: Ask for confirmation rather than assuming
+
+Step 6: Test Context Persistence (Human)
+Validate that context survives:
+- Session boundaries (page refresh, browser close)
+- Component remounting (React/Svelte/Vue lifecycle)
+- Authentication flows (login/logout)
+- Multi-device access (phone → desktop)`}</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Customer Support Chatbot</h3>
+
+				<p>
+					Let's say you're building a support chatbot for a SaaS product:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary">{`interface UserContext {
+  // Stable (persist forever)
+  user_id: string;
+  name: string;
+  company: string;
+  plan: 'starter' | 'pro' | 'enterprise';
+  industry?: string;
+
+  // Semi-stable (confirm if >90 days)
+  contact_email?: string;
+  contact_phone?: string;
+  preferred_language?: string;
+
+  // Session history (accumulates)
+  past_tickets: Array<{
+    issue_type: string;
+    resolved: boolean;
+    created_at: string;
+  }>;
+
+  // Metadata
+  first_interaction: string;
+  total_sessions: number;
+  last_seen: string;
+}
+
+function buildConversation(context: UserContext): Message[] {
+  const messages: Message[] = [];
+
+  // First-time flow
+  if (!context.name) {
+    messages.push({ text: "Hi! I'm here to help. What's your name?" });
+    return messages;
+  }
+
+  // Returning flow
+  const greeting = \`Welcome back, \${context.name}!\`;
+
+  // Check for repeated issues
+  const recentTickets = context.past_tickets.filter(
+    t => Date.now() - new Date(t.created_at).getTime() < 7 * 24 * 60 * 60 * 1000
+  );
+
+  if (recentTickets.some(t => !t.resolved)) {
+    messages.push({
+      text: \`\${greeting} I see you have an open issue. Want to follow up on that?\`
+    });
+  } else {
+    messages.push({
+      text: \`\${greeting} How can I help you today?\`
+    });
+  }
+
+  return messages;
+}`}</pre>
+				</div>
+
+				<p class="mt-4">
+					<strong>First interaction:</strong>
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-secondary">{`Bot: Hi! I'm here to help. What's your name?
+User: Sarah
+Bot: Nice to meet you, Sarah! What company are you with?
+User: Acme Corp
+Bot: Got it. What issue can I help you with?
+User: Users can't log in
+Bot: Let me create a ticket for login issues...`}</pre>
+				</div>
+
+				<p class="mt-4">
+					<strong>Return interaction (1 week later):</strong>
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-success">{`Bot: Welcome back, Sarah! I see you have an open issue about login problems.
+     Want to follow up on that?
+User: Yes, is it fixed?
+Bot: Let me check the ticket status...
+     [Checks ticket #1234]
+     Yes! Our team resolved it yesterday. Login should work now.
+     Are you still experiencing issues?
+User: No, it's working. Thanks!
+Bot: Great! Anything else I can help with?`}</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice: The bot remembered Sarah's name, company, and open ticket. The conversation
+					feels continuous, not like starting over.
+				</p>
+
+				<h3 class="mt-6 subsection-heading">When to Use the Hermeneutic Spiral</h3>
+
+				<p>
+					Use this pattern when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Multi-session interactions:</strong> Users return multiple times over weeks/months</li>
+					<li><strong>Identity is consistent:</strong> Phone number, email, or auth token persists</li>
+					<li><strong>Context accumulates value:</strong> Past interactions inform future ones</li>
+					<li><strong>Reduced friction matters:</strong> Saving 30 seconds per session adds up</li>
+					<li><strong>Relationship-driven:</strong> You're building a service, not a one-off transaction</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't use for:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>One-time interactions (contact forms, surveys)</li>
+					<li>Anonymous users where identity can't persist</li>
+					<li>High-security contexts where caching user data is risky</li>
+					<li>Exploratory conversations where context doesn't help</li>
+				</ul>
+
+				<h3 class="mt-6 subsection-heading">Privacy and Data Handling</h3>
+
+				<p>
+					Context persistence raises privacy considerations. Implement safeguards:
+				</p>
+
+				<div class="responsive-table-scroll mt-4">
+					<table class="w-full data-table">
+						<thead>
+							<tr class="table-header-row">
+								<th class="text-left py-2 table-header">Concern</th>
+								<th class="text-left py-2 table-header">Mitigation</th>
+							</tr>
+						</thead>
+						<tbody class="table-body">
+							<tr class="table-row">
+								<td class="py-2">User awareness</td>
+								<td class="py-2">Show "We remember you" message on return visits</td>
+							</tr>
+							<tr class="table-row">
+								<td class="py-2">Data deletion</td>
+								<td class="py-2">Provide "Forget me" button to clear context</td>
+							</tr>
+							<tr class="table-row">
+								<td class="py-2">Consent</td>
+								<td class="py-2">Explicit opt-in for storing sensitive fields</td>
+							</tr>
+							<tr class="table-row">
+								<td class="py-2">Stale data</td>
+								<td class="py-2">Auto-expire context after 180 days of inactivity</td>
+							</tr>
+							<tr>
+								<td class="py-2">Compliance</td>
+								<td class="py-2">GDPR/CCPA-compliant data export and deletion</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<p class="mt-4 text-emphasis">
+					The Hermeneutic Spiral respects user time while respecting user privacy. Persistent
+					context should feel helpful, not invasive. Test with real users to calibrate.
+				</p>
+			</div>
+		</section>
+
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">VIII. Conclusion</h2>
+			<h2 class="section-heading">IX. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -754,6 +979,18 @@ Use this context to personalize recommendations.`}</pre>
 
 	.table-success {
 		color: var(--color-success);
+	}
+
+	.code-block-success {
+		background: var(--color-success-muted);
+		border: 1px solid var(--color-success-border);
+		border-radius: var(--radius-lg);
+		font-size: var(--text-body-sm);
+	}
+
+	.text-emphasis {
+		color: var(--color-fg-primary);
+		font-weight: 500;
 	}
 
 	.callout-info {

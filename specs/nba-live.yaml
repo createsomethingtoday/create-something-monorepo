@@ -1,0 +1,230 @@
+title: NBA Live Analytics Dashboard
+
+overview: |
+  Meta-experiment testing spec-driven development with harness/Gastown abstractions.
+  Vehicle: Real-time NBA analytics dashboard with three specialized views.
+  Dual artifact: Working dashboard + Methodology documentation.
+
+  Hypothesis: Spec-driven development can be agent-managed, producing both
+  working software and actionable methodology insights.
+
+property: space
+
+features:
+  # ========================================
+  # PHASE 1: Infrastructure (Sequential)
+  # ========================================
+
+  - title: TypeScript Types and Interfaces
+    description: Define all NBA data types, API responses, and component props
+    complexity: simple
+    priority: 1
+    files:
+      - packages/space/src/lib/nba/types.ts
+    acceptance:
+      - Player, Game, Shot, Matchup, DuoPair interfaces defined
+      - API response types matching NBA.com stats structure
+      - DARKO-compatible baseline statistics types
+      - Play-by-play action types with possession tracking
+      - test: Types compile without errors
+        verify: pnpm --filter=space exec tsc --noEmit
+
+  - title: D1 Schema for Player Baselines
+    description: Create migration for storing DARKO baseline statistics
+    complexity: simple
+    priority: 1
+    files:
+      - packages/space/migrations/0013_nba_baselines.sql
+    acceptance:
+      - player_baselines table with DARKO metrics (offensive_rating, defensive_rating, etc.)
+      - season_averages table for historical comparison
+      - Indexes on player_id and season for efficient lookups
+      - test: Migration applies successfully
+        verify: wrangler d1 migrations apply create-something-space-db --local
+    depends_on:
+      - TypeScript Types and Interfaces
+
+  - title: NBA Proxy Worker
+    description: Worker to proxy NBA.com API with rate limiting and caching
+    complexity: complex
+    priority: 1
+    files:
+      - packages/space/workers/nba-proxy/src/index.ts
+      - packages/space/workers/nba-proxy/wrangler.toml
+      - packages/space/workers/nba-proxy/package.json
+    acceptance:
+      - Rate limiting (max 10 req/min to NBA.com)
+      - KV caching with 30s TTL for live data
+      - Endpoints /games/today, /game/:id/pbp, /game/:id/matchups, /game/:id/shots
+      - Error handling with correlation IDs following CREATE SOMETHING patterns
+      - Health check endpoint at /health
+      - test: Worker responds to health check
+        verify: curl http://localhost:8787/health
+    depends_on:
+      - TypeScript Types and Interfaces
+
+  - title: API Client Module
+    description: SvelteKit server-side NBA data fetching with polling support
+    complexity: standard
+    priority: 1
+    files:
+      - packages/space/src/lib/nba/api.ts
+      - packages/space/src/lib/nba/polling.ts
+    acceptance:
+      - fetchLiveGames(), fetchGamePBP(), fetchMatchups(), fetchShots() functions
+      - Polling hook for 30s intervals with cleanup on component destroy
+      - Error handling with fallback to cached data
+      - Type-safe responses using types from types.ts
+    depends_on:
+      - NBA Proxy Worker
+      - TypeScript Types and Interfaces
+
+  - title: Calculation Engine
+    description: Efficiency and impact calculation functions with unit tests
+    complexity: standard
+    priority: 1
+    files:
+      - packages/space/src/lib/nba/calculations.ts
+      - packages/space/src/lib/nba/calculations.test.ts
+    acceptance:
+      - calculateDuoEfficiency(actions) returns DuoStats with PPP, frequency, synergy score
+      - calculateDefensiveImpact(matchups, baselines) returns Impact with vs-expected delta
+      - calculateExpectedPoints(shot, shooter) returns xPts based on shot type and shooter baseline
+      - All calculations testable with mock data
+      - test: Calculation tests pass
+        verify: pnpm --filter=space test -- src/lib/nba/calculations.test.ts
+    depends_on:
+      - TypeScript Types and Interfaces
+      - D1 Schema for Player Baselines
+
+  # ========================================
+  # PHASE 2: Pages (Parallel - Convoy)
+  # ========================================
+
+  - title: Landing Page with Game Selector
+    description: Experiment entry point with live game picker
+    complexity: standard
+    priority: 2
+    files:
+      - packages/space/src/routes/experiments/nba-live/+page.svelte
+      - packages/space/src/routes/experiments/nba-live/+page.server.ts
+      - packages/space/src/lib/components/nba/GameSelector.svelte
+    acceptance:
+      - List of today's games from NBA API
+      - Game cards showing teams, score, quarter, game clock
+      - Click navigates to specialized views (duo-synergy, defensive-impact, shot-network)
+      - Canon styling using design tokens (no hardcoded colors)
+      - ASCII art hero matching experiment pattern from motion-ontology
+      - Loading and error states
+    depends_on:
+      - API Client Module
+
+  - title: Duo Synergy Page
+    description: Two-man action efficiency visualization using LayerCake
+    complexity: standard
+    priority: 2
+    files:
+      - packages/space/src/routes/experiments/nba-live/duo-synergy/+page.svelte
+      - packages/space/src/routes/experiments/nba-live/duo-synergy/+page.server.ts
+      - packages/space/src/lib/components/nba/DuoChart.svelte
+    acceptance:
+      - LayerCake bar chart showing duo PPP (points per possession)
+      - Heatmap grid of all duo combinations on current roster
+      - Comparison to league average baseline
+      - Real-time polling updates chart every 30s
+      - Accessible color scale using Canon data tokens
+      - Tooltips with detailed duo statistics
+    depends_on:
+      - Calculation Engine
+      - API Client Module
+
+  - title: Defensive Impact Page
+    description: Matchup impact vs expected performance visualization
+    complexity: standard
+    priority: 2
+    files:
+      - packages/space/src/routes/experiments/nba-live/defensive-impact/+page.svelte
+      - packages/space/src/routes/experiments/nba-live/defensive-impact/+page.server.ts
+      - packages/space/src/lib/components/nba/DefensiveHeatmap.svelte
+    acceptance:
+      - Matchup matrix showing defender vs attacker combinations
+      - Color coding for impact (better/worse than expected from D1 baselines)
+      - D1 baseline lookup for expected defensive values
+      - Tooltips with detailed stats (points allowed, expected, delta)
+      - Filter by position or player
+    depends_on:
+      - Calculation Engine
+      - API Client Module
+      - D1 Schema for Player Baselines
+
+  - title: Shot Network Page
+    description: Force-directed shot creation graph using D3
+    complexity: complex
+    priority: 2
+    files:
+      - packages/space/src/routes/experiments/nba-live/shot-network/+page.svelte
+      - packages/space/src/routes/experiments/nba-live/shot-network/+page.server.ts
+      - packages/space/src/lib/components/nba/ShotNetwork.svelte
+    acceptance:
+      - D3 force-directed graph (only page using D3 directly)
+      - Nodes are players, sized proportionally to shot creation volume
+      - Edges represent assists/passes, thickness proportional to frequency
+      - Expected points overlay showing xPts for each player
+      - Interactive hover showing player stats
+      - Animation for live updates without jarring redraws
+    depends_on:
+      - Calculation Engine
+      - API Client Module
+
+  # ========================================
+  # PHASE 3: Polish & Documentation
+  # ========================================
+
+  - title: Experiment Registration
+    description: Add to fileBasedExperiments.ts with metadata
+    complexity: trivial
+    priority: 3
+    files:
+      - packages/space/src/lib/config/fileBasedExperiments.ts
+    acceptance:
+      - Entry matches existing pattern (see motion-ontology for reference)
+      - ASCII art diagram showing the three visualization approaches
+      - tests_principles includes hermeneutic-spiral, tool-complementarity, rams-principle-10
+      - Correct category (research) and difficulty (advanced)
+      - Tags include Visualization, Real-time, Agent-Orchestration, Spec-Driven
+    depends_on:
+      - Landing Page with Game Selector
+
+  - title: Methodology Documentation
+    description: Document the meta-experiment results as a paper
+    complexity: standard
+    priority: 3
+    files:
+      - packages/io/src/routes/papers/spec-driven-development/+page.svelte
+      - packages/io/src/routes/papers/spec-driven-development/+page.server.ts
+    acceptance:
+      - Records cost metrics (model usage, tokens, total spend)
+      - Records time metrics (wall clock per feature, total duration)
+      - Records quality metrics (test pass rate, rework rate)
+      - Comparison between spec-driven vs ad-hoc development approaches
+      - Reflects on what worked and what didn't
+      - Recommendations for optimal convoy batch sizes and complexity estimation
+    depends_on:
+      - Duo Synergy Page
+      - Defensive Impact Page
+      - Shot Network Page
+
+requirements:
+  - "All pages use Canon CSS tokens (no hardcoded colors per css-canon.md)"
+  - "Polling respects component lifecycle (cleanup on destroy)"
+  - "NBA API errors gracefully degrade to cached data with visual indicator"
+  - "LayerCake for all charts except force-directed (D3)"
+  - "Build succeeds: pnpm --filter=space build"
+  - "Types check: pnpm --filter=space exec tsc --noEmit"
+
+success:
+  - Dashboard shows live NBA data with 30s refresh during active games
+  - All three visualization pages render correctly with real data
+  - Meta-experiment produces actionable methodology insights
+  - Cost and quality metrics documented in methodology paper
+  - Total cost under $1.50, total time under 3 hours

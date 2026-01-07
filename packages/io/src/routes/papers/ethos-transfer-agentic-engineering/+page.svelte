@@ -83,9 +83,9 @@
 				<h3 class="mt-6 subsection-heading">The Hermeneutic Gap</h3>
 
 				<p>
-					Heidegger distinguished between two modes of understanding. In <em>Vorhandenheit</em> (present-at-hand),
+					Heidegger distinguished between two modes of understanding. In <strong><em>Vorhandenheit</em></strong> (present-at-hand: when a tool becomes an object of conscious attention, like examining a broken hammer's weight and material),
 					we contemplate things as objects with properties—we study the hammer's weight, material, and shape.
-					In <em>Zuhandenheit</em> (ready-to-hand), tools recede into transparent use—the hammer disappears
+					In <strong><em>Zuhandenheit</em></strong> (ready-to-hand: when a tool disappears into transparent use, like a hammer during skilled carpentry), tools recede into transparent use—the hammer disappears
 					when hammering.
 				</p>
 
@@ -133,27 +133,44 @@
 					"Does this serve the whole?" (Heidegger)—become transparent background to all creative activity.
 				</p>
 
-				<div class="grid md:grid-cols-2 gap-4 mt-6">
-					<div class="p-4 comparison-warning">
-						<h4 class="mb-2 comparison-heading comparison-warning-heading">Learning About (Vorhandenheit)</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• "I know the three levels of the Triad"</li>
-							<li>• "I can recite Rams' 10 principles"</li>
-							<li>• "I passed the methodology quiz"</li>
-							<li>• Methodology as object of study</li>
-						</ul>
-					</div>
+				<p>
+					When you catch yourself thinking about the methodology rather than using it, you've found the gap.
+					Here's how to recognize where you are:
+				</p>
 
-					<div class="p-4 comparison-success">
-						<h4 class="mb-2 comparison-heading comparison-success-heading">Dwelling Within (Zuhandenheit)</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• "I noticed duplicate code before writing it"</li>
-							<li>• "I removed a feature because it didn't earn its existence"</li>
-							<li>• "I restructured for system coherence"</li>
-							<li>• Methodology as transparent practice</li>
-						</ul>
-					</div>
+				<div class="responsive-table-scroll mt-4">
+					<table class="w-full table-auto">
+						<thead>
+							<tr class="table-header">
+								<th class="table-cell">You might find yourself saying...</th>
+								<th class="table-cell">What dwelling looks like instead</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="table-row">
+								<td class="table-cell">"I know the three levels of the Triad"</td>
+								<td class="table-cell">"I noticed duplicate code before writing it"</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">"I can recite Rams' 10 principles"</td>
+								<td class="table-cell">"I removed a feature because it didn't earn its existence"</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">"I passed the methodology quiz"</td>
+								<td class="table-cell">"I restructured for system coherence"</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Methodology as object of study</td>
+								<td class="table-cell">Methodology as transparent practice</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
+
+				<p class="mt-4">
+					The first column isn't wrong—it's a necessary stage. But if you stay there, you're still standing
+					outside the methodology looking in.
+				</p>
 			</div>
 		</section>
 
@@ -455,7 +472,7 @@ repeat yourself"
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
-					The hermeneutic circle connects understanding and practice. In methodology adoption, this
+					The <strong>hermeneutic circle</strong> (a philosophical concept describing how understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) connects understanding and practice. In methodology adoption, this
 					becomes a feedback loop where users contribute to the methodology's evolution:
 				</p>
 
@@ -576,9 +593,134 @@ Ethos Construction (Personalization)
 			</div>
 		</section>
 
-		<!-- Section 10: Conclusion -->
+		<!-- How to Apply This -->
 		<section class="space-y-6">
-			<h2 class="section-heading">X. Conclusion: Methodology as Infrastructure</h2>
+			<h2 class="section-heading">X. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Building Methodology Transfer into Your Tools</h3>
+				<p>
+					To apply this methodology transfer approach to your own teaching/coaching systems:
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">Step 1: Identify Where Your Users Already Dwell (Human)
+Don't build a separate learning platform. Find where your users do their actual work.
+For developers: terminal, IDE, code reviews
+For designers: Figma, design files, browser
+For writers: text editor, CMS, draft reviews
+
+Step 2: Create Passive Learning Infrastructure (Human + Agent)
+Build foundational content delivery:
+- Lessons with clear acceptance criteria
+- Reflection prompts (mandatory articulation)
+- Progress tracking (prerequisites, completion state)
+- Caching for offline access
+
+Step 3: Add Real-Time Coaching Layer (Agent)
+Integrate methodology guidance into actual work:
+- File watchers to detect patterns (DRY violations, etc.)
+- Contextual prompts during creation ("Does this earn its existence?")
+- Immediate feedback on methodology adherence
+- Coaching appears IN the flow, not as separate notification
+
+Step 4: Enable Ethos Construction (Human + Agent)
+Let users define their own principles derived from your methodology:
+- API for articulating personal principles
+- Validation against canonical foundation
+- Personal audit thresholds (what matters most to them)
+- Continuous monitoring against THEIR ethos, not just yours
+
+Step 5: Close the Hermeneutic Circle (Agent)
+Feed learner insights back to improve the methodology:
+- Parse reflections for depth, confusion, action items
+- Analyze audit trends across users
+- Identify where teaching fails (repeated confusion)
+- Update canon based on learner contributions
+
+Step 6: Validate Dwelling, Not Just Learning (Human)
+Check whether users have moved from Vorhandenheit to Zuhandenheit:
+✓ Do they apply principles without prompting?
+✓ Do they teach others using the methodology?
+✓ Have principles become transparent in their work?
+✗ Are they still reciting definitions rather than embodying practice?</pre>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Real-World Example: Teaching Code Review Standards</h3>
+				<p>
+					Let's say you want to help your team internalize your code review principles:
+				</p>
+
+				<div class="p-4 font-mono code-block">
+					<pre class="code-primary"># Passive Learning (Vorhandenheit)
+❌ Weekly training sessions on "Good Code Reviews"
+❌ Documentation wiki with code review checklist
+❌ Certification quiz after reading materials
+
+# Active Dwelling (Zuhandenheit)
+✓ GitHub Action that runs on PR creation:
+  - Checks for test coverage (your DRY principle)
+  - Flags unclear variable names (your clarity principle)
+  - Suggests reviewers based on file ownership
+  - Posts contextual guidance: "This PR touches auth.
+    Remember: security changes require 2 approvals"
+
+✓ Terminal tool (claude-review) that developers run:
+  $ claude-review --before-commit
+  > Checking against YOUR team's ethos...
+  > ⚠️  New function duplicates logic in utils/format.ts
+  > 💡 Your principle: "Every pattern appears once"
+  > Suggestion: Extract shared formatter
+
+✓ Monthly ethos refinement:
+  Team discusses: "Should we add accessibility to our principles?"
+  AI analyzes past PR comments to show current implicit values
+  Team adopts new principle, system starts checking for it
+
+Result: Code review standards aren't taught—they're LIVED through tools that
+recede into transparent use. The methodology disappears when creating.</pre>
+				</div>
+
+				<p class="mt-4">
+					Notice: The learning happens <em>where work happens</em>. No context switch. The tool
+					doesn't pull developers to a training platform—it brings methodology to the terminal,
+					the PR, the moment of creation.
+				</p>
+
+				<h3 class="mt-6 subsection-heading">When to Apply This Pattern</h3>
+				<p>
+					Use agentic methodology transfer when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Practice matters more than knowledge</strong>: The methodology is embodied in action, not memorized as facts</li>
+					<li><strong>Users have a dwelling place</strong>: There's a clear environment where work actually happens</li>
+					<li><strong>Feedback loops are possible</strong>: You can monitor application and provide real-time coaching</li>
+					<li><strong>Personalization adds value</strong>: Users can build their own ethos derived from canonical principles</li>
+				</ul>
+
+				<p class="mt-4">
+					Don't use this pattern when:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>The goal is certification or compliance (knowledge verification, not practice adoption)</li>
+					<li>Users work in too many different environments (no single dwelling place)</li>
+					<li>The methodology is purely conceptual (no observable practice to monitor)</li>
+					<li>Passive learning is sufficient (simple factual knowledge transfer)</li>
+				</ul>
+
+				<p class="mt-4 emphasis-text">
+					The goal is <strong>dwelling</strong>, not learning. When users no longer think about
+					the methodology but simply embody it in their work, you've achieved Zuhandenheit.
+					The tool recedes; the practice remains.
+				</p>
+			</div>
+		</section>
+
+		<!-- Section 11: Conclusion -->
+		<section class="space-y-6">
+			<h2 class="section-heading">XI. Conclusion: Methodology as Infrastructure</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -733,6 +875,11 @@ Ethos Construction (Personalization)
 		border: 1px solid var(--color-success-border);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
+	}
+
+	.emphasis-text {
+		font-style: italic;
+		color: var(--color-fg-secondary);
 	}
 
 	.code-primary {

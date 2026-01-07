@@ -16,23 +16,23 @@
      This embodies "releasement" — non-willful action that invites contemplation. -->
 <section class="hero pt-24 pb-32 px-6">
 	<div class="max-w-4xl mx-auto text-center">
-		<p class="eyebrow mb-6 hero-entrance" style="--delay: 0">Being-as-Standard</p>
+		<p class="eyebrow mb-6 hero-entrance" style="--delay: 0">Design Philosophy</p>
 
 		<h1 class="mb-8 hero-entrance" style="--delay: 1">
-			The Canon for<br />"Less, But Better"
+			Less, But Better
 		</h1>
 
 		<p class="hero-text mb-12 max-w-2xl mx-auto leading-relaxed hero-entrance" style="--delay: 2">
-			The philosophical foundation for the Create Something ecosystem. Curated wisdom from masters
-			who proved that simplicity is the ultimate sophistication.
+			Design principles that help you make better decisions. Learn from Dieter Rams, 
+			Mies van der Rohe, and other masters who shaped how we think about quality.
 		</p>
 
 		<div class="flex flex-col sm:flex-row gap-4 justify-center hero-entrance" style="--delay: 3">
 			<a href="/masters" class="btn-primary">
-				Explore Masters
+				Meet the Masters
 			</a>
 			<a href="/ethos" class="btn-secondary">
-				Read Our Ethos
+				Our Approach
 			</a>
 		</div>
 	</div>
@@ -47,23 +47,22 @@
 
 		<div class="manifesto-body">
 			<p>
-				<strong>Less, but better.</strong> This isn't minimalism for aesthetics. It's discipline for
-				clarity. It's constraint for excellence.
+				<strong>Less, but better.</strong> Not minimalism for its own sake—a way to focus 
+				on what matters. When you remove the unnecessary, what remains gets stronger.
 			</p>
 
 			<p>
-				Every element must justify its existence. Every principle must withstand scrutiny.
-				Decoration is dishonest. Complexity is lazy. Simplicity is the hardest work.
+				This is how we work: before adding anything, we ask whether it earns its place. 
+				The same question applies to every feature, every word, every decision.
 			</p>
 
 			<p>
-				This is the measuring stick for everything we build at Create Something. Not "What can we
-				add?" but "What must remain?"
+				Simple isn't easy. It takes more effort to make something clear than to leave it 
+				complicated. That effort is worth it.
 			</p>
 
 			<p class="attribution pt-6">
-				— The standards by which .io research is evaluated, .space experiments are designed, and
-				.agency services are delivered.
+				— How we evaluate research, design experiments, and deliver client work.
 			</p>
 		</div>
 	</div>
@@ -121,7 +120,7 @@
 <!-- Ecosystem Integration -->
 <section class="ecosystem py-24 px-6">
 	<div class="max-w-5xl mx-auto">
-		<h3 class="mb-12 text-center">How This Guides the Ecosystem</h3>
+		<h3 class="mb-12 text-center">Where We Apply These Principles</h3>
 
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-12 highlight-grid">
 			<div class="highlight-item" style="--index: 0">
@@ -130,8 +129,8 @@
 					<h4 class="property-title mt-1">Research</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					Papers are evaluated against canonical standards. Does this research meet Rams' principles?
-					Does it embody "less, but better"?
+					We publish papers and tools. Each one answers a specific question 
+					with measurable results you can reproduce.
 				</p>
 			</div>
 
@@ -141,8 +140,8 @@
 					<h4 class="property-title mt-1">Practice</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					Experiments are designed with canonical frameworks. Each exercise teaches a principle from
-					the masters, not just technical skills.
+					We run experiments and share what we learn. You'll find working code, 
+					honest assessments, and lessons from things that didn't work.
 				</p>
 			</div>
 
@@ -152,8 +151,8 @@
 					<h4 class="property-title mt-1">Services</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					Client work is held to these standards. We don't just build—we build according to
-					principles that have stood the test of time.
+					We build software for clients. Same principles, applied to real business 
+					problems with deadlines and budgets.
 				</p>
 			</div>
 		</div>

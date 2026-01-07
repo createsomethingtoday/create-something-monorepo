@@ -6,7 +6,7 @@
 	<title>Our Work | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="Real client projects applying AI-native development to business challenges. Case studies showing how research becomes production."
+		content="155 scripts became 13. 73% time savings on manual work. 24/7 automation replacing phone calls. Real metrics from real projects."
 	/>
 </svelte:head>
 
@@ -14,15 +14,9 @@
 <section class="relative pt-32 pb-16 px-6 hero-section">
 	<div class="max-w-7xl mx-auto">
 		<div class="text-center space-y-6">
-			<h1 class="hero-title font-bold">Our Work</h1>
+			<h1 class="hero-title font-bold">What We've Shipped</h1>
 			<p class="body-lg body-tertiary max-w-3xl mx-auto">
-				Real client projects applying canonical patterns from
-				<a
-					href="https://createsomething.ltd"
-					class="hover:body-secondary underline"
-				>
-					createsomething.ltd
-				</a>. Each case study shows how research becomes production.
+				Production systems with real metrics. Every project tracked, every outcome measured.
 			</p>
 		</div>
 	</div>
@@ -38,22 +32,22 @@
 					class="block p-12 transition-colors group case-study-card"
 				>
 					<div class="mb-6">
-						<span class="body-xs font-mono body-muted">CLIENT: THE STACK</span>
+						<span class="body-xs font-mono body-muted">PICKLEBALL FACILITY</span>
 					</div>
 					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						The Stack
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
-						Pickleball facility with seamless court booking. CLEARWAY embed eliminates phone calls—courts fill themselves.
+						24/7 booking replaced phone calls. 8 courts fill themselves across 4 locations.
 					</p>
 					<div class="space-y-3 body-sm body-muted">
-						<p>→ CLEARWAY embeddable widget</p>
-						<p>→ 8 courts across 4 locations</p>
-						<p>→ 24/7 booking, zero staff required</p>
+						<p>→ 24/7 automated booking</p>
+						<p>→ 8 courts, 4 locations</p>
+						<p>→ Zero staff involvement</p>
 					</div>
 					<div class="mt-8 pt-6 section-border">
-						<p class="body-xs body-muted uppercase tracking-wider mb-2">Pattern Applied</p>
-						<p class="body-sm body-tertiary">Zuhandenheit: The tool recedes into transparent use</p>
+						<p class="body-xs body-muted uppercase tracking-wider mb-2">Outcome</p>
+						<p class="body-sm body-tertiary">Staff focus on facilities, not phones</p>
 					</div>
 				</a>
 
@@ -63,22 +57,22 @@
 					class="block p-12 transition-colors group case-study-card"
 				>
 					<div class="mb-6">
-						<span class="body-xs font-mono body-muted">CLIENT: HALF DOZEN</span>
+						<span class="body-xs font-mono body-muted">VENUE INTELLIGENCE</span>
 					</div>
 					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Kickstand
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
-						Venue intelligence system with health monitoring, automated cleanup scripts, and real-time status dashboards
+						155 scripts became 13. $40/day became $39/month. Health score jumped from 6.2 to 9.2.
 					</p>
 					<div class="space-y-3 body-sm body-muted">
-						<p>→ Cloudflare Workers + D1</p>
-						<p>→ 92% script reduction via Subtractive Triad</p>
-						<p>→ Health score: 6.2 → 9.2</p>
+						<p>→ 92% script reduction</p>
+						<p>→ 97% cost reduction</p>
+						<p>→ 48% health improvement</p>
 					</div>
 					<div class="mt-8 pt-6 section-border">
-						<p class="body-xs body-muted uppercase tracking-wider mb-2">Pattern Applied</p>
-						<p class="body-sm body-tertiary">Subtractive Triad: DRY → Rams → Heidegger</p>
+						<p class="body-xs body-muted uppercase tracking-wider mb-2">Outcome</p>
+						<p class="body-sm body-tertiary">System works; team doesn't think about it</p>
 					</div>
 				</a>
 
@@ -88,22 +82,22 @@
 					class="block p-12 transition-colors group case-study-card"
 				>
 					<div class="mb-6">
-						<span class="body-xs font-mono body-muted">CLIENT: HALF DOZEN</span>
+						<span class="body-xs font-mono body-muted">EMAIL AUTOMATION</span>
 					</div>
 					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Arc for Gmail
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
-						Multi-user Gmail→Notion sync with AI-powered summaries and automatic contact management
+						11 hours to production (vs 25-30 estimated). $6.30 in AI costs (vs $3,750 manual). 99.8% cost savings.
 					</p>
 					<div class="space-y-3 body-sm body-muted">
-						<p>→ Cloudflare Workers + Workers AI</p>
-						<p>→ OAuth-based multi-tenant sync</p>
-						<p>→ Production-deployed, 5-min cycles</p>
+						<p>→ 5-minute sync cycles</p>
+						<p>→ AI-generated summaries</p>
+						<p>→ Auto-created contacts</p>
 					</div>
 					<div class="mt-8 pt-6 section-border">
-						<p class="body-xs body-muted uppercase tracking-wider mb-2">Pattern Applied</p>
-						<p class="body-sm body-tertiary">Arc: Efficient connection between points</p>
+						<p class="body-xs body-muted uppercase tracking-wider mb-2">Outcome</p>
+						<p class="body-sm body-tertiary">Label an email, it appears in CRM</p>
 					</div>
 				</a>
 
@@ -113,22 +107,22 @@
 					class="block p-12 transition-colors group case-study-card"
 				>
 					<div class="mb-6">
-						<span class="body-xs font-mono body-muted">CLIENT: MAVERICK X</span>
+						<span class="body-xs font-mono body-muted">CORPORATE WEBSITE</span>
 					</div>
 					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Maverick X
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
-						Corporate website for industrial chemistry company with product showcases across oil & gas, mining, and water treatment
+						Sub-second load times. 3 product lines, 3 sectors, clear paths to contact for each.
 					</p>
 					<div class="space-y-3 body-sm body-muted">
-						<p>→ Next.js 14 + Tailwind CSS</p>
-						<p>→ Sector-specific landing pages</p>
-						<p>→ Production-deployed on Vercel</p>
+						<p>→ &lt;1s page loads</p>
+						<p>→ 3 sector landing pages</p>
+						<p>→ Edge-deployed globally</p>
 					</div>
 					<div class="mt-8 pt-6 section-border">
-						<p class="body-xs body-muted uppercase tracking-wider mb-2">Pattern Applied</p>
-						<p class="body-sm body-tertiary">Weniger, aber besser: Less, but better</p>
+						<p class="body-xs body-muted uppercase tracking-wider mb-2">Outcome</p>
+						<p class="body-sm body-tertiary">Complex chemistry explained clearly</p>
 					</div>
 				</a>
 
@@ -138,22 +132,22 @@
 					class="block p-12 transition-colors group case-study-card"
 				>
 					<div class="mb-6">
-						<span class="body-xs font-mono body-muted">CLIENT: HALF DOZEN</span>
+						<span class="body-xs font-mono body-muted">AI DISCOVERY AGENT</span>
 					</div>
 					<h2 class="heading-2 font-semibold mb-4 heading-hover">
 						Viralytics
 					</h2>
 					<p class="body-lg body-tertiary mb-8 leading-relaxed">
-						AI-powered A&R discovery agent identifying independent artists with viral momentum across Spotify charts
+						20 discovery queries daily across 4 chart sources. Runs at 7 AM UTC, zero human involvement.
 					</p>
 					<div class="space-y-3 body-sm body-muted">
-						<p>→ Cloudflare Workers + Puppeteer</p>
-						<p>→ 20 discovery queries daily</p>
-						<p>→ Notion integration for A&R review</p>
+						<p>→ 4 chart sources scraped daily</p>
+						<p>→ 20 discovery queries</p>
+						<p>→ Qualified artists → Notion queue</p>
 					</div>
 					<div class="mt-8 pt-6 section-border">
-						<p class="body-xs body-muted uppercase tracking-wider mb-2">Pattern Applied</p>
-						<p class="body-sm body-tertiary">Data-ink ratio: Maximize signal, minimize noise</p>
+						<p class="body-xs body-muted uppercase tracking-wider mb-2">Outcome</p>
+						<p class="body-sm body-tertiary">A&R team reviews qualified leads, not raw data</p>
 					</div>
 				</a>
 			</div>
@@ -164,10 +158,10 @@
 <section class="py-24 px-6">
 	<div class="max-w-4xl mx-auto text-center">
 		<div class="p-12 methodology-card">
-			<h2 class="heading-2 font-semibold mb-4">See Our Methodology</h2>
+			<h2 class="heading-2 font-semibold mb-4">How We Track Results</h2>
 			<p class="body-tertiary mb-8 leading-relaxed">
-				Every project starts as a tracked experiment. View our research and development process
-				at createsomething.io.
+				Every project is a tracked experiment. Time measured, costs logged, outcomes documented.
+				See the full methodology at createsomething.io.
 			</p>
 			<a
 				href="https://createsomething.io"

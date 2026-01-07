@@ -325,7 +325,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
-		 * Update an asset.
+		 * Update an asset (text fields only).
 		 */
 		async updateAsset(id: string, data: Partial<Pick<Asset, 'name' | 'description' | 'descriptionShort' | 'websiteUrl' | 'previewUrl'>>): Promise<Asset | null> {
 			const fields: Record<string, string> = {};
@@ -364,14 +364,114 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
+		 * Update an asset with images.
+		 * Images should be passed as arrays of URLs.
+		 */
+		async updateAssetWithImages(
+			id: string,
+			data: {
+				name?: string;
+				description?: string;
+				descriptionShort?: string;
+				websiteUrl?: string;
+				previewUrl?: string;
+				thumbnailUrl?: string | null;
+				secondaryThumbnailUrl?: string | null;
+				carouselImages?: string[];
+			}
+		): Promise<Asset | null> {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const fields: Record<string, any> = {};
+
+			// Text fields
+			if (data.name !== undefined) fields['Name'] = data.name;
+			if (data.description !== undefined) fields['📝Description'] = data.description;
+			if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
+			if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
+			if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
+
+			// Image fields - Airtable expects array of { url: string }
+			if (data.thumbnailUrl !== undefined) {
+				fields['🖼️Thumbnail Image'] = data.thumbnailUrl
+					? [{ url: data.thumbnailUrl }]
+					: [];
+			}
+			if (data.secondaryThumbnailUrl !== undefined) {
+				fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
+					? [{ url: data.secondaryThumbnailUrl }]
+					: [];
+			}
+			if (data.carouselImages !== undefined) {
+				fields['🖼️Carousel Images'] = data.carouselImages.map(url => ({ url }));
+			}
+
+			if (Object.keys(fields).length === 0) {
+				return null;
+			}
+
+			try {
+				const records = await base(TABLES.ASSETS).update([{ id, fields }]);
+				const record = records[0];
+				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
+				const cleanedStatus = rawStatus.replace(/[^\w\s]/g, '').trim() as Asset['status'];
+				const carouselImages = (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(img => img.url) || [];
+
+				return {
+					id: record.id,
+					name: record.fields['Name'] as string || '',
+					description: record.fields['📝Description'] as string || '',
+					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
+					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
+					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
+					status: cleanedStatus,
+					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
+					secondaryThumbnailUrl: (record.fields['fldzKxNCXcgCnEwxu'] as { url: string }[] | undefined)?.[0]?.url,
+					carouselImages,
+					websiteUrl: record.fields['🔗Website URL'] as string,
+					previewUrl: record.fields['🔗Preview Site URL'] as string,
+					marketplaceUrl: record.fields['🔗Marketplace URL'] as string
+				};
+			} catch (err) {
+				console.error('Error updating asset with images:', err);
+				return null;
+			}
+		},
+
+		/**
 		 * Verify asset ownership by email.
+		 * Matches the original Next.js logic which checks multiple email fields.
 		 */
 		async verifyAssetOwnership(assetId: string, email: string): Promise<boolean> {
 			try {
 				const record = await base(TABLES.ASSETS).find(assetId);
-				const creatorEmails = record.fields['📧Emails (from 🎨Creator)'] as string | undefined;
-				if (!creatorEmails) return false;
-				return creatorEmails.toLowerCase().includes(email.toLowerCase());
+				const normalizedEmail = email.toLowerCase();
+
+				// Check all possible creator email fields (matching original Next.js implementation)
+				const emailFields = [
+					'🎨📧 Creator Email',
+					'🎨📧 Creator WF Account Email',
+					'📧Emails (from 🎨Creator)'
+				];
+
+				for (const field of emailFields) {
+					const fieldValue = record.fields[field];
+					if (!fieldValue) continue;
+
+					// Handle array format (linked records)
+					if (Array.isArray(fieldValue)) {
+						if (fieldValue.some(e => String(e).toLowerCase().includes(normalizedEmail))) {
+							return true;
+						}
+					}
+					// Handle string format
+					else if (typeof fieldValue === 'string') {
+						if (fieldValue.toLowerCase().includes(normalizedEmail)) {
+							return true;
+						}
+					}
+				}
+
+				return false;
 			} catch {
 				return false;
 			}

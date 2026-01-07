@@ -16,8 +16,22 @@ import type {
   Checkpoint,
   BeadsIssue,
   DEFAULT_REVIEW_PIPELINE_CONFIG,
+  SessionOutcome,
 } from './types.js';
 import { runReviewer, getOutcomeIcon } from './reviewer.js';
+import {
+  createFailureTracker,
+  type FailureTracker,
+  getEffectiveModel,
+  recordSuccessfulRetry,
+} from './failure-handler.js';
+import {
+  runMetaReview,
+  formatMetaReviewDisplay,
+  DEFAULT_META_REVIEW_CONFIG,
+  type MetaReviewConfig,
+  type MetaReviewResult,
+} from './meta-review.js';
 
 const execAsync = promisify(exec);
 
@@ -153,6 +167,9 @@ export async function runReviewPipeline(
 
   console.log(`\n🔍 Running peer review: ${enabledReviewers.length} reviewer(s)`);
 
+  // Create failure tracker for reviewers (enables model escalation)
+  const failureTracker = createFailureTracker();
+
   // Run reviewers in parallel (respecting maxParallelReviewers)
   const results: ReviewResult[] = [];
 
@@ -167,6 +184,7 @@ export async function runReviewPipeline(
         return runReviewer(reviewer, context, {
           cwd,
           timeoutMs: config.reviewerTimeoutMs,
+          failureTracker,
         });
       })
     );
@@ -175,15 +193,63 @@ export async function runReviewPipeline(
       const icon = getOutcomeIcon(result.outcome);
       const findingsText =
         result.findings.length > 0 ? `(${result.findings.length} findings)` : '';
+      const modelText = result.model ? ` [${result.model}]` : '';
       console.log(
-        `    [${result.reviewerId}] ${icon} ${result.outcome} ${findingsText} - ${result.summary.slice(0, 60)}...`
+        `    [${result.reviewerId}] ${icon} ${result.outcome}${modelText} ${findingsText} - ${result.summary.slice(0, 60)}...`
       );
+
+      // Track result in failure tracker (for future escalation)
+      if (result.outcome !== 'pass' && result.outcome !== 'pass_with_findings') {
+        // Convert ReviewOutcome to SessionOutcome
+        const sessionOutcome: SessionOutcome = result.outcome === 'error' ? 'failure' : 'partial';
+
+        const existingRecord = failureTracker.records.get(result.reviewerId) || {
+          issueId: result.reviewerId,
+          attempts: [],
+          lastOutcome: sessionOutcome,
+          finalAction: 'retry',
+        };
+
+        existingRecord.attempts.push({
+          attemptNumber: existingRecord.attempts.length + 1,
+          timestamp: new Date().toISOString(),
+          outcome: sessionOutcome,
+          error: result.error || null,
+          durationMs: result.durationMs,
+          model: result.model,
+        });
+
+        existingRecord.lastOutcome = sessionOutcome;
+        failureTracker.records.set(result.reviewerId, existingRecord);
+        failureTracker.totalFailures++;
+      } else {
+        // Successful review
+        const attemptCount = failureTracker.records.get(result.reviewerId)?.attempts.length || 0;
+        if (attemptCount > 0) {
+          recordSuccessfulRetry(failureTracker, result.reviewerId);
+        }
+      }
+
       results.push(result);
     }
   }
 
   // Aggregate results
-  return aggregateReviewResults(checkpoint.id, results, config);
+  const aggregation = aggregateReviewResults(checkpoint.id, results, config);
+
+  // Run meta-review if enabled and there are sufficient findings
+  const metaReviewConfig = DEFAULT_META_REVIEW_CONFIG; // TODO: Accept from config
+  if (metaReviewConfig.enabled && aggregation.totalFindings >= metaReviewConfig.minFindingsThreshold) {
+    console.log('\n🔬 Running meta-review to synthesize patterns...');
+    const metaReview = await runMetaReview(aggregation, metaReviewConfig);
+
+    console.log(formatMetaReviewDisplay(metaReview));
+
+    // Store meta-review in aggregation for later use
+    (aggregation as any).metaReview = metaReview;
+  }
+
+  return aggregation;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

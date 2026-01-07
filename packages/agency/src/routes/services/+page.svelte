@@ -72,7 +72,7 @@
 
 <SEO
 	title="Services"
-	description="We remove what obscures your business. AI automation, agentic systems, and transformation consulting—each service applies the Subtractive Triad."
+	description="155 scripts became 13. 120 hours/week of research became automated. AI automation, agentic systems, and web platforms—we build what you'll actually use."
 	keywords="agentic systems, AI automation, autonomous systems, web development, transformation consulting, strategic advisory"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -95,11 +95,11 @@
 				{/if}
 			</p>
 		{:else}
-			<p class="eyebrow">Weniger, aber besser</p>
+			<p class="eyebrow">What we do</p>
 			<h1 class="hero-title">Ship faster. Eliminate manual work.</h1>
 			<p class="hero-subtitle">
-				Every offering applies the same discipline: identify what's accumulating, question whether it
-				earns its existence, and remove what doesn't serve the whole.
+				155 scripts became 13. 120 hours/week of research became automated. 26 hours built what 120 hours was estimated for.
+				Here's how we do it.
 			</p>
 		{/if}
 	</div>
@@ -110,7 +110,7 @@
 	<div class="max-w-5xl mx-auto px-6">
 		<div class="section-header">
 			<h2 class="section-title">Products</h2>
-			<p class="section-subtitle">Self-serve tools and templates. Start immediately.</p>
+			<p class="section-subtitle">Start today. No calls, no proposals—just tools that work.</p>
 		</div>
 		<div class="products-grid">
 			{#each displayProducts as product, index}
@@ -146,7 +146,7 @@
 	<div class="max-w-5xl mx-auto px-6">
 		<div class="section-header">
 			<h2 class="section-title">Consulting Services</h2>
-			<p class="section-subtitle">Custom engagements for complex challenges.</p>
+			<p class="section-subtitle">When you need hands-on work, not just tools. We've shipped 40+ production systems.</p>
 		</div>
 		<div class="services-grid">
 			{#each displayServices as service, index}
@@ -256,13 +256,13 @@
 <section class="pricing-section">
 	<div class="max-w-3xl mx-auto px-6 text-center">
 		<div class="pricing-qualifier">
-			<h3 class="qualifier-title">On pricing</h3>
+			<h3 class="qualifier-title">What it costs</h3>
 			<p class="qualifier-text">
-				Engagements typically range from $5,000 to $50,000+ depending on scope and complexity. We'd
-				rather understand your situation before discussing numbers.
+				Products start at $49/month. Consulting ranges from $5,000 to $50,000+ depending on scope.
+				Most projects land between $15K-$25K and ship in 4-8 weeks.
 			</p>
 			<p class="qualifier-note">
-				The first conversation is always free. We'll tell you honestly if we're the right fit.
+				30-minute intro call is free. We'll tell you honestly if we're the right fit—and if not, where else to look.
 			</p>
 		</div>
 	</div>

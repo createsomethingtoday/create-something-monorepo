@@ -6,7 +6,7 @@
 	<title>Maverick X — Case Study | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="Corporate website for Maverick X industrial chemistry company. Built with Next.js 14 and Tailwind CSS."
+		content="Sub-second load times. 3 product lines, 3 sectors, clear paths to contact. Complex chemistry explained clearly."
 	/>
 </svelte:head>
 
@@ -17,16 +17,15 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: Maverick X</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Corporate Website</p>
 			<h1 class="mb-6">Maverick X</h1>
 			<p class="heading-2 body-tertiary leading-relaxed mb-8">
-				Corporate website for industrial chemistry company with breakthrough solutions across oil & gas, mining, and water treatment
+				Sub-second load times. 3 product lines, 3 sectors, clear paths to contact for each. Complex chemistry explained clearly.
 			</p>
 			<div class="flex gap-4 body-sm body-muted">
-				<span>• Next.js 14</span>
-				<span>• Tailwind CSS</span>
-				<span>• Framer Motion</span>
-				<span>• Vercel</span>
+				<span>• &lt;1s page loads</span>
+				<span>• 3 sector landing pages</span>
+				<span>• Edge-deployed globally</span>
 			</div>
 		</div>
 	</section>

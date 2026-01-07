@@ -49,6 +49,154 @@ Not visual references, but conceptual references for how AI agents should work.
 
 **Bidirectional exchange**: CREATE SOMETHING contributed directory-aware priority scoping to Beads upstream. VC patterns flow back into harness-patterns.md.
 
+### Writing Masters (Voice References)
+
+Not visual references, but stylistic references for how we write.
+
+#### The Lineage
+
+CREATE SOMETHING's intellectual foundations span philosophy, writing, and systems:
+
+| Layer | Philosophy | Writing | Systems | Function |
+|-------|------------|---------|---------|----------|
+| **Foundational** | Heidegger (*Being and Time*) | Orwell (*Politics and the English Language*) | Wiener (*Cybernetics*) | Reveals hidden ontological structure |
+| **Methodological** | Gadamer (*Truth and Method*) | Zinsser (*On Writing Well*) | Meadows (*Thinking in Systems*) | Makes it teachable, applicable |
+| **Applied** | Dieter Rams (Ten Principles) | Fenton/Lee (*Nicely Said*) | Senge (*The Fifth Discipline*) | Practice in specific medium |
+
+**Why this matters**: Each column addresses a different dimension of CREATE SOMETHING's work. Orwell shows that clarity is ethical. Meadows shows that problems arise from structure. Together: we write clearly about systems that we understand deeply.
+
+#### The Masters
+
+| Master | Work | Contribution to Canon |
+|--------|------|----------------------|
+| **George Orwell** | "Politics and the English Language" (1946) | Clarity as ethics; obscurity as political evasion; 6 pages that changed everything |
+| **William Zinsser** | "On Writing Well" | Accessible methodology; makes clarity teachable; the practitioner's guide |
+| **Nicole Fenton & Kate Kiefer Lee** | "Nicely Said" | Transformation examples; user-centered clarity; applied to web/digital |
+| **Edward Tufte** | Visual Display of Quantitative Information | Empirical grounding; "show the data"; high density |
+| **Dieter Rams** | Ten Principles | Declarative compression; aphoristic wisdom; "less, but better" |
+| **Charles & Ray Eames** | — | "The best for the most for the least"; functional elegance |
+| **Ludwig Mies van der Rohe** | — | "Less is more"; "God is in the details"; architectural austerity |
+
+#### Orwell's Core Insight
+
+From "Politics and the English Language":
+
+> "Political language... is designed to make lies sound truthful and murder respectable, and to give an appearance of solidity to pure wind."
+
+This reframes clarity as *ethical*, not aesthetic. Bad writing isn't just unpleasant—it enables bad thinking. Orwell's rules:
+
+1. Never use a metaphor, simile, or figure of speech you've seen in print
+2. Never use a long word where a short one will do
+3. If it's possible to cut a word, cut it
+4. Never use the passive where you can use the active
+5. Never use jargon if you can think of an everyday equivalent
+6. Break any of these rules sooner than say anything outright barbarous
+
+**Canon adoption**: Rules 1-5 are subtractive. Rule 6 is Heideggerian—judgment over formula.
+
+#### Fenton/Lee's Core Insight
+
+From "Nicely Said: Writing for the Web with Style and Purpose":
+
+> "Good writing serves the reader, not the writer. It meets people where they are and helps them get where they want to go."
+
+This reframes clarity as *service*, not showmanship. Fenton and Lee bridge Orwell's ethical clarity with practical application for digital content. Their transformation examples:
+
+**Before/After Examples** (the Fenton/Lee method):
+
+| Before | After | Why |
+|--------|-------|-----|
+| "Utilize our platform" | "Use our tools" | Shorter word, same meaning |
+| "Solutions for your needs" | "Tools for building websites" | Specific over vague |
+| "Simply click here" | "Click here to start" | "Simply" implies it's obvious (dismissive) |
+| "Please be advised that..." | "Starting May 1..." | Direct over bureaucratic |
+| "Best-in-class features" | "Fast search, real-time updates" | Specific features over marketing jargon |
+
+**Fenton/Lee Patterns Adopted**:
+
+- **Transformation examples**: Show before/after, not just rules
+- **User-centered framing**: Meet readers where they are
+- **Plain language advocacy**: Prefer common words to insider vocabulary
+- **Warmth where appropriate**: Acknowledge reader's struggles
+- **Recognition over confrontation**: Help readers notice patterns, then transform them
+- **Active voice preference**: "We built this" not "This was built"
+- **Conversational tone**: Write like you talk (but edited)
+
+#### Heideggerian Connection
+
+A human-accessible bridge to philosophical concepts:
+
+| What It Feels Like | Canon Term | Heidegger Term |
+|-------------------|------------|----------------|
+| You don't notice the prose | Transparent writing | Zuhandenheit |
+| You notice the prose | Writing breakdown | Vorhandenheit |
+| Words that sound important but mean little | Marketing jargon | — |
+| Safe statements that can't be disproven | Vague claims | — |
+| Elements for "interest" not function | Decoration | — |
+
+**The connection**: Orwell reveals that jargon and obscurity are *political*—they serve evasion. Heidegger reveals that tool-breakdown makes the invisible visible. Together: unclear writing is a breakdown we should notice, diagnose, and repair.
+
+### Systems Thinking Masters
+
+Not visual references, but structural references for how we understand interconnection.
+
+#### The Lineage
+
+Systems thinking has its own philosophical genealogy:
+
+| Layer | Philosophy | Systems | Function |
+|-------|------------|---------|----------|
+| **Foundational** | Heidegger (*Being and Time*) | Wiener (*Cybernetics*) / Bertalanffy (*General System Theory*) | Reveals the formal structure of interconnection |
+| **Methodological** | Gadamer (*Truth and Method*) | Meadows (*Thinking in Systems*) | Makes systems visible to practitioners |
+| **Applied** | Dieter Rams (Ten Principles) | Senge (*The Fifth Discipline*) | Practice in organizations |
+
+**Why this matters**: Meadows doesn't say "use systems thinking because it's useful." She reveals that most problems arise from *system structure*, not bad actors—that's an ontological claim about causation, not a technique.
+
+#### The Masters
+
+| Master | Work | Contribution to Canon |
+|--------|------|----------------------|
+| **Norbert Wiener** | *Cybernetics* (1948) | Feedback loops; the mathematics of circular causality; foundational science |
+| **Ludwig von Bertalanffy** | *General System Theory* (1968) | Systems as wholes; isomorphism across domains; formal foundations |
+| **Donella H. Meadows** | *Thinking in Systems* (2008) | Stocks, flows, delays; leverage points; makes the invisible visible |
+| **Peter Senge** | *The Fifth Discipline* (1990) | Mental models; organizational learning; systems in practice |
+
+#### Meadows' Core Insight
+
+From *Thinking in Systems*:
+
+> "We can't control systems or figure them out. But we can dance with them."
+
+And her hierarchy of leverage points reveals where intervention matters:
+
+1. **Transcending paradigms** (highest leverage)
+2. **Paradigm shifts**
+3. **Goals of the system**
+4. **Self-organization**
+5. **Rules of the system**
+6. **Information flows**
+7. **Reinforcing/balancing feedback**
+8. **Delays**
+9. **Stock and flow structures**
+10. **Buffers**
+11. **Numbers/parameters** (lowest leverage)
+
+**Canon adoption**: CREATE SOMETHING operates at levels 2-5. The Subtractive Triad is a paradigm (level 2). The hermeneutic circle defines goals (level 3). Canon tokens enable self-organization (level 4). Voice guidelines are rules (level 5).
+
+#### Canon Connection
+
+Systems thinking underlies CREATE SOMETHING's structure:
+
+| CREATE SOMETHING Element | Systems Concept |
+|--------------------------|-----------------|
+| Subtractive Triad (DRY → Rams → Heidegger) | Nested feedback loops at different scales |
+| Hermeneutic circle (.ltd → .io → .space → .agency) | Circular causality; each property feeds the next |
+| Template evolution | Stocks (templates) and flows (deployments, learning) |
+| Agent orchestration (Beads, Gastown) | Distributed control; emergence from local rules |
+| Canon tokens | Leverage point: rules that enable self-organization |
+
+**The insight**: CREATE SOMETHING is itself a system. Understanding Meadows helps us see where to intervene—not at the level of individual artifacts (low leverage) but at the level of paradigms and goals (high leverage).
+
 ### Award Winners (Design Excellence)
 
 Award-winning sites that validate Canon principles. Filtered for functional minimalism, not formal accolades.

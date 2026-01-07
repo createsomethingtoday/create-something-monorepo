@@ -1,0 +1,16 @@
+{"ts":"2026-01-03T18:43:02Z","source":"gt","type":"session_start","actor":"deacon","payload":{"actor_pid":"deacon-42378","cwd":"/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/deacon","role":"deacon","session_id":"deacon-42378","topic":"patrol"},"visibility":"feed"}
+{"ts":"2026-01-03T18:43:03Z","source":"gt","type":"nudge","actor":"deacon","payload":{"reason":"[from deacon] session-started","rig":"","target":"deacon"},"visibility":"feed"}
+{"ts":"2026-01-03T18:43:06Z","source":"gt","type":"session_start","actor":"mayor","payload":{"actor_pid":"mayor-42644","cwd":"/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo","role":"mayor","session_id":"mayor-42644"},"visibility":"feed"}
+{"ts":"2026-01-03T18:50:07Z","source":"gt","type":"session_start","actor":"deacon","payload":{"actor_pid":"deacon-53222","cwd":"/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/deacon","role":"deacon","session_id":"deacon-53222","topic":"patrol"},"visibility":"feed"}
+{"ts":"2026-01-03T18:50:09Z","source":"gt","type":"nudge","actor":"deacon","payload":{"reason":"[from deacon] session-started","rig":"","target":"deacon"},"visibility":"feed"}
+{"ts":"2026-01-03T18:50:12Z","source":"gt","type":"session_start","actor":"mayor","payload":{"actor_pid":"mayor-53631","cwd":"/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo","role":"mayor","session_id":"mayor-53631"},"visibility":"feed"}
+{"ts":"2026-01-03T18:55:15Z","source":"gt","type":"sling","actor":"mayor","payload":{"bead":"lyd2z","target":"csm-social/polecats/refactor"},"visibility":"feed"}
+{"ts":"2026-01-04T17:29:00Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"furiosa","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-05T18:30:37Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"nux","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-05T18:32:27Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"slit","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-05T23:03:28Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"rictus","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-05T23:51:12Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"dementus","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-06T00:35:05Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"capable","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-06T00:42:58Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"toast","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-06T00:43:28Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"dag","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-06T00:44:11Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"cheedo","rig":"csm"},"visibility":"feed"}

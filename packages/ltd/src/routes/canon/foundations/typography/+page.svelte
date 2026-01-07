@@ -85,18 +85,18 @@
 	<p class="eyebrow">Foundations</p>
 	<h1>Typography</h1>
 	<p class="lead">
-		A type scale derived from the golden ratio (φ = 1.618), creating natural visual hierarchy
-		that feels harmonious at every size.
+		Text sizes that work together naturally. We use the golden ratio (1.618) so every 
+		heading and paragraph relates harmoniously—no guesswork needed.
 	</p>
 </header>
 
 <!-- Philosophy -->
 <section class="section">
-	<h2>The Golden Ratio</h2>
+	<h2>Why the golden ratio?</h2>
 	<p>
-		Canon's type scale is built on φ (phi), the golden ratio. Larger sizes multiply by φ;
-		smaller sizes divide. The result is proportions found throughout nature—from nautilus
-		shells to spiral galaxies.
+		φ (phi) = 1.618. You'll find this ratio in nature—shells, flowers, galaxies. When 
+		you multiply each text size by 1.618, the result just feels right. Your headlines 
+		and body text look like they belong together.
 	</p>
 
 	<div class="phi-derivation">
@@ -117,8 +117,8 @@
 	</div>
 
 	<p>
-		For the middle range (body text and small headings), we use the minor third (1.2) for
-		finer granularity. Both ratios create harmonic progressions—they're musical.
+		For body text and small headings, we use a minor third (1.2) for finer steps. 
+		Both ratios create progressions that feel musical—each size is in tune with the next.
 	</p>
 </section>
 
@@ -126,7 +126,8 @@
 <section class="section">
 	<h2>Type Scale</h2>
 	<p class="section-description">
-		Display and heading sizes use fluid typography with <code>clamp()</code> for responsive scaling.
+		These sizes scale smoothly from mobile to desktop using <code>clamp()</code>. 
+		Pick a token and the responsive behavior is built in.
 	</p>
 
 	<h3>Display & Headings</h3>
@@ -166,7 +167,8 @@
 <section class="section">
 	<h2>Font Families</h2>
 	<p class="section-description">
-		Three font stacks for different purposes, each with robust fallbacks.
+		Three fonts with fallbacks for when they don't load. Sans for interfaces, 
+		mono for code, serif for editorial moments.
 	</p>
 
 	<div class="font-families">
@@ -209,7 +211,8 @@
 <section class="section">
 	<h2>Font Weights</h2>
 	<p class="section-description">
-		Five weights provide sufficient range without excess.
+		Five weights—from light to bold. That's enough range for any hierarchy without 
+		overwhelming the reader.
 	</p>
 
 	<div class="weights-demo">
@@ -232,7 +235,8 @@
 <section class="section">
 	<h2>Line Heights</h2>
 	<p class="section-description">
-		Line height creates vertical rhythm. Note that <code>--leading-relaxed</code> is exactly φ (1.618).
+		More space between lines makes text easier to read. Use <code>--leading-relaxed</code> (1.618) 
+		for body text—it's the golden ratio again.
 	</p>
 
 	<div class="leading-demo">

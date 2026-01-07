@@ -260,7 +260,7 @@ function validateOrder(order: Order) {
 }
 
 // You return to processOrder with new understanding
-// Now you see the flow: validate → charge → ship → notify
+// Now you see the flow: validate → charge → fulfill → notify
 // This informs how you'd modify it
 
 // You read chargeCustomer to understand payment flow

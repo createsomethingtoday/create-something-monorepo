@@ -82,21 +82,21 @@
 	<p class="eyebrow">Foundations</p>
 	<h1>Colors</h1>
 	<p class="lead">
-		A functional minimalist palette built on black and white, with semantic colors for feedback
-		and a data visualization palette for charts and graphs.
+		Every color you need, ready to copy. Black and white for structure. 
+		Opacity for hierarchy. Semantic colors when something needs attention.
 	</p>
 </header>
 
 <!-- Philosophy -->
 <section class="section">
-	<h2>Philosophy</h2>
+	<h2>Why so few colors?</h2>
 	<p>
-		Canon's color system embraces functional minimalism. The primary palette is black and white,
-		with opacity creating hierarchy rather than additional colors. Semantic colors serve specific
-		purposes—success, error, warning, and information—never decoration.
+		More colors mean more decisions. We use black and white as the foundation, then adjust 
+		opacity to create hierarchy—no need to pick new shades. When you need to show success, 
+		error, or a warning, semantic colors do the work.
 	</p>
 	<blockquote class="philosophy-quote">
-		"Color is not to decorate, but to communicate."
+		"Color communicates. Decoration distracts."
 	</blockquote>
 </section>
 
@@ -104,7 +104,7 @@
 <section class="section">
 	<h2>Backgrounds</h2>
 	<p class="section-description">
-		Four background levels create depth through subtle elevation. Use elevation, not color, for hierarchy.
+		Four levels from pure black to subtle grey. Stack them to create depth—like layers of paper.
 	</p>
 	<div class="token-grid">
 		{#each backgroundColors as color}
@@ -117,8 +117,8 @@
 <section class="section">
 	<h2>Foregrounds</h2>
 	<p class="section-description">
-		Five foreground levels create text hierarchy. All are white with varying opacity.
-		Contrast ratios are measured against <code>--color-bg-pure</code>.
+		Five text colors, all white at different opacities. Use brighter for headlines, 
+		dimmer for captions. Contrast ratios shown help you stay accessible.
 	</p>
 	<div class="token-grid">
 		{#each foregroundColors as color}
@@ -154,8 +154,8 @@
 <section class="section">
 	<h2>Semantic Colors</h2>
 	<p class="section-description">
-		Functional colors for system feedback. All are WCAG AA compliant (4.5:1+) on pure black.
-		Each has <code>-muted</code> and <code>-border</code> variants.
+		Four colors that mean something: success, error, warning, info. Each comes with 
+		<code>-muted</code> and <code>-border</code> variants for backgrounds and outlines.
 	</p>
 	<div class="token-grid">
 		{#each semanticColors as color}
@@ -215,8 +215,8 @@
 <section class="section">
 	<h2>Data Visualization</h2>
 	<p class="section-description">
-		Six-color palette for charts, graphs, and data displays. Each has a <code>-muted</code> variant
-		for backgrounds.
+		Six distinct colors for charts and graphs. They're designed to look different even 
+		to colorblind users. Use <code>-muted</code> variants for area fills.
 	</p>
 	<div class="token-grid">
 		{#each dataVizColors as color}
@@ -240,9 +240,10 @@
 
 <!-- Usage -->
 <section class="section">
-	<h2>Usage</h2>
+	<h2>How to use</h2>
 	<p class="section-description">
-		Always use CSS custom properties, never hardcoded values.
+		Copy the token names into your CSS. Never hardcode hex values—tokens let you 
+		change the whole palette later without hunting through files.
 	</p>
 	<CodeBlock code={usageExample} language="css" title="colors.css" />
 </section>

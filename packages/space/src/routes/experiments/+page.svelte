@@ -109,8 +109,11 @@
 				{#if isFiltered}
 					{resultCount} of {papers.length} experiments
 				{:else}
-					{papers.length} experiments — fork them, try them, break them, learn from them
+					<strong>Pick one and try it.</strong> {papers.length} experiments ready to fork, modify, or learn from.
 				{/if}
+			</p>
+			<p class="hero-hint">
+				Each experiment documents what worked, what didn't, and why. Start with whatever matches your current project.
 			</p>
 		</div>
 
@@ -153,7 +156,8 @@
 			</div>
 
 			<!-- Master Filter Chips (Hermeneutic filtering) -->
-			<div class="flex justify-center">
+			<div class="flex flex-col items-center gap-2">
+				<p class="filter-hint">Filter by design principle:</p>
 				<div class="flex flex-wrap justify-center gap-2">
 					<button
 						onclick={() => masterFilter = 'all'}
@@ -164,24 +168,28 @@
 					<button
 						onclick={() => masterFilter = 'rams'}
 						class="filter-chip {masterFilter === 'rams' ? 'filter-chip-active' : ''}"
+						title="Dieter Rams' 10 principles of good design"
 					>
 						Rams
 					</button>
 					<button
 						onclick={() => masterFilter = 'heidegger'}
 						class="filter-chip {masterFilter === 'heidegger' ? 'filter-chip-active' : ''}"
+						title="Heidegger's tool philosophy—when tools recede into use"
 					>
 						Heidegger
 					</button>
 					<button
 						onclick={() => masterFilter = 'tufte'}
 						class="filter-chip {masterFilter === 'tufte' ? 'filter-chip-active' : ''}"
+						title="Tufte's data visualization principles"
 					>
 						Tufte
 					</button>
 					<button
 						onclick={() => masterFilter = 'canon'}
 						class="filter-chip {masterFilter === 'canon' ? 'filter-chip-active' : ''}"
+						title="CREATE SOMETHING Canon patterns"
 					>
 						Canon
 					</button>
@@ -220,12 +228,12 @@
 	<PapersGrid papers={filteredAndSortedPapers} title="" subtitle="" />
 {:else}
 	<div class="text-center py-16 px-6">
-		<p class="empty-message">No experiments match your search.</p>
+		<p class="empty-message">No experiments match your search. Try a different filter or search term.</p>
 		<button
 			onclick={() => { searchQuery = ''; masterFilter = 'all'; }}
 			class="clear-button"
 		>
-			Clear filters
+			Show all experiments
 		</button>
 	</div>
 {/if}
@@ -240,8 +248,21 @@
 
 	.hero-subtitle {
 		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		text-align: center;
+	}
+
+	.hero-hint {
+		font-size: var(--text-body);
 		color: var(--color-fg-muted);
 		text-align: center;
+		max-width: 40rem;
+		margin: 0 auto;
+	}
+
+	.filter-hint {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	.search-input {

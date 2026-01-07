@@ -7,17 +7,20 @@
 	const services = [
 		{
 			title: 'Agentic Systems',
-			description: 'AI that runs autonomously. Not chatbots—agents that process 500+ decisions while you sleep.',
+			metric: '155 → 13 scripts',
+			description: 'AI that runs your operations. Not chatbots—agents that make decisions while you sleep.',
 			href: '/services/agentic-systems'
 		},
 		{
 			title: 'Web Platforms',
-			description: 'Sub-100ms response times. Cloudflare edge. No frameworks, no bloat.',
+			metric: '3 weeks to production',
+			description: 'Fast sites on Cloudflare edge. Sub-100ms response, zero maintenance.',
 			href: '/services/web-development'
 		},
 		{
 			title: 'Workflow Automation',
-			description: 'Manual processes become autonomous. 60-70% time savings, measured.',
+			metric: '60-70% time savings',
+			description: 'Manual work becomes automated. We measure the hours saved.',
 			href: '/services/automation'
 		}
 	];
@@ -57,6 +60,7 @@
 	<div class="services-grid highlight-grid">
 		{#each services as service, i}
 			<a href={service.href} class="service-card highlight-item" style="--index: {i}">
+				<span class="service-metric">{service.metric}</span>
 				<h3 class="service-title">{service.title}</h3>
 				<p class="service-description">{service.description}</p>
 				<span class="service-arrow">→</span>
@@ -67,8 +71,8 @@
 
 <!-- Act 3: How We Think -->
 <section class="principles-section">
-	<h2 class="principles-heading">The Subtractive Triad</h2>
-	<p class="principles-subtext">Three questions. One discipline.</p>
+	<h2 class="principles-heading">How We Work</h2>
+	<p class="principles-subtext">Three questions before every decision.</p>
 
 	<div class="principles-list highlight-flex">
 		{#each principles as principle, i}
@@ -86,29 +90,29 @@
 <!-- Ecosystem: Where This Comes From -->
 <section class="ecosystem-section">
 	<div class="ecosystem-container">
-		<p class="ecosystem-label">The Hermeneutic Circle</p>
-		<h2 class="ecosystem-heading">Research-backed. Philosophy-grounded.</h2>
+		<p class="ecosystem-label">How We Work</p>
+		<h2 class="ecosystem-heading">Research-backed. Measured outcomes.</h2>
 		<p class="ecosystem-description">
-			Our methods aren't invented—they're validated. .io research proves what works. .ltd canon defines why it matters.
+			Every approach is tested first. We publish what works (and what doesn't) so you can verify the method before hiring us.
 		</p>
 
 		<div class="ecosystem-grid highlight-grid">
 			<a href="https://createsomething.io" class="ecosystem-card highlight-item" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.io</span>
 				<h3 class="property-name">Research</h3>
-				<p class="property-desc">Papers and experiments that validate our approach. Peer-reviewed patterns.</p>
+				<p class="property-desc">47 experiments published. Real metrics: time, cost, errors. See what worked.</p>
 			</a>
 
 			<a href="https://createsomething.space" class="ecosystem-card highlight-item" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.space</span>
 				<h3 class="property-name">Practice</h3>
-				<p class="property-desc">Learn the patterns we use. Interactive tutorials for AI-native development.</p>
+				<p class="property-desc">Learn the same patterns we use. Tutorials that show you how to build it yourself.</p>
 			</a>
 
 			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
-				<h3 class="property-name">Canon</h3>
-				<p class="property-desc">Crystallization: human judgment encoded for AI execution. The philosophy behind our work.</p>
+				<h3 class="property-name">Principles</h3>
+				<p class="property-desc">Rooted in Rams' design discipline: "Less, but better." The philosophy behind the work.</p>
 			</a>
 		</div>
 	</div>
@@ -163,6 +167,14 @@
 
 	.service-card:active {
 		transform: scale(var(--scale-subtle));
+	}
+
+	.service-metric {
+		display: block;
+		font-size: var(--text-body-sm);
+		font-family: monospace;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-xs);
 	}
 
 	.service-title {

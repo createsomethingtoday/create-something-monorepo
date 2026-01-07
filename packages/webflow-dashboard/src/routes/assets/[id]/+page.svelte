@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { goto } from '$app/navigation';
+	import type { Asset } from '$lib/server/airtable';
+	import { goto, invalidateAll } from '$app/navigation';
 	import {
 		Header,
 		Card,
@@ -19,16 +20,37 @@
 		TableRow,
 		TableHead,
 		TableCell,
-		StatusBadge
+		StatusBadge,
+		Sparkline
 	} from '$lib/components';
+	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
+	import { toast } from '$lib/stores/toast';
+	import {
+		ArrowLeft,
+		Eye,
+		ExternalLink,
+		Store,
+		Pencil,
+		Archive,
+		BarChart3,
+		AlertTriangle,
+		Users,
+		ShoppingCart,
+		DollarSign,
+		TrendingUp,
+		Percent
+	} from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let activeTab = $state('overview');
 	let showPerformance = $state(false);
 	let imageError = $state(false);
+	let showEditModal = $state(false);
+	let isArchiving = $state(false);
 
-	const asset = data.asset;
+	// Use reactive state so updates refresh the view
+	let asset = $state<Asset>(data.asset);
 
 	// Format dates
 	function formatDate(dateStr?: string): string {
@@ -61,7 +83,112 @@
 	}
 
 	// Can show metrics for non-Upcoming and non-Rejected statuses
-	const canShowMetrics = !['Upcoming', 'Rejected'].includes(asset.status);
+	const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
+
+	// Can edit if not delisted
+	const canEdit = $derived(!asset.status.includes('Delisted'));
+
+	// Can archive if not already delisted
+	const canArchive = $derived(!asset.status.includes('Delisted'));
+
+	// Tufte: Calculate derived metrics for relationships
+	const conversionRate = $derived(() => {
+		if (!canShowMetrics || !asset.uniqueViewers || asset.uniqueViewers === 0) return null;
+		return ((asset.cumulativePurchases || 0) / asset.uniqueViewers) * 100;
+	});
+
+	const avgOrderValue = $derived(() => {
+		if (!canShowMetrics || !asset.cumulativePurchases || asset.cumulativePurchases === 0) return null;
+		return (asset.cumulativeRevenue || 0) / asset.cumulativePurchases;
+	});
+
+	// Simulated trend data (would come from historical API in production)
+	const viewersTrend = $derived(() => {
+		if (!canShowMetrics || !asset.uniqueViewers) return [];
+		const base = asset.uniqueViewers / 4;
+		return [base * 0.7, base * 0.85, base * 0.95, base];
+	});
+
+	const revenueTrend = $derived(() => {
+		if (!canShowMetrics || !asset.cumulativeRevenue) return [];
+		const base = asset.cumulativeRevenue / 4;
+		return [base * 0.6, base * 0.8, base * 0.9, base];
+	});
+
+	function handleEditClick() {
+		showEditModal = true;
+	}
+
+	function handleEditClose() {
+		showEditModal = false;
+	}
+
+	interface AssetUpdateData {
+		name?: string;
+		description?: string;
+		descriptionShort?: string;
+		websiteUrl?: string;
+		previewUrl?: string;
+		thumbnailUrl?: string | null;
+		secondaryThumbnailUrl?: string | null;
+		carouselImages?: string[];
+	}
+
+	async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
+		const response = await fetch(`/api/assets/${asset.id}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(updateData)
+		});
+
+		if (!response.ok) {
+			const data = (await response.json()) as { message?: string };
+			throw new Error(data.message || 'Failed to update asset');
+		}
+
+		const result = (await response.json()) as { asset: typeof asset };
+
+		// Update local state with new asset data
+		asset = result.asset;
+
+		// Reset image error state in case thumbnail changed
+		imageError = false;
+	}
+
+	async function handleArchive(): Promise<void> {
+		const response = await fetch(`/api/assets/${asset.id}/archive`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' }
+		});
+
+		if (!response.ok) {
+			const data = (await response.json()) as { message?: string };
+			throw new Error(data.message || 'Failed to archive asset');
+		}
+
+		// Navigate back to dashboard after successful archive
+		goto('/dashboard');
+	}
+
+	async function handleArchiveClick() {
+		if (isArchiving) return;
+
+		if (!confirm('Are you sure you want to archive this asset? This will remove it from the marketplace.')) {
+			return;
+		}
+
+		isArchiving = true;
+
+		try {
+			await handleArchive();
+			toast.success('Asset archived successfully');
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to archive asset';
+			toast.error(message);
+		} finally {
+			isArchiving = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -76,9 +203,7 @@
 			<!-- Breadcrumb / Back Navigation -->
 			<div class="breadcrumb">
 				<button type="button" class="back-btn" onclick={handleBack}>
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M19 12H5M12 19l-7-7 7-7" />
-					</svg>
+					<ArrowLeft size={20} />
 					Back to Dashboard
 				</button>
 			</div>
@@ -92,24 +217,32 @@
 				<div class="header-actions">
 					{#if asset.previewUrl}
 						<Button variant="outline" size="sm" onclick={() => window.open(asset.previewUrl, '_blank')}>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-								<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-							</svg>
+							<Eye size={16} />
 							Preview
 						</Button>
 					{/if}
 					{#if asset.websiteUrl}
 						<Button variant="outline" size="sm" onclick={() => window.open(asset.websiteUrl, '_blank')}>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-							</svg>
+							<ExternalLink size={16} />
 							View Live
 						</Button>
 					{/if}
 					{#if asset.marketplaceUrl}
-						<Button variant="default" size="sm" onclick={() => window.open(asset.marketplaceUrl, '_blank')}>
-							View on Marketplace
+						<Button variant="outline" size="sm" onclick={() => window.open(asset.marketplaceUrl, '_blank')}>
+							<Store size={16} />
+							Marketplace
+						</Button>
+					{/if}
+					{#if canEdit}
+						<Button variant="default" size="sm" onclick={handleEditClick}>
+							<Pencil size={16} />
+							Edit
+						</Button>
+					{/if}
+					{#if canArchive}
+						<Button variant="destructive" size="sm" onclick={handleArchiveClick} disabled={isArchiving}>
+							<Archive size={16} />
+							{isArchiving ? 'Archiving...' : 'Archive'}
 						</Button>
 					{/if}
 				</div>
@@ -163,9 +296,7 @@
 											size="sm"
 											onclick={() => (showPerformance = !showPerformance)}
 										>
-											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-												<path d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-9" />
-											</svg>
+											<BarChart3 size={16} />
 											{showPerformance ? 'Hide' : 'Show'} Performance
 										</Button>
 									</div>
@@ -244,9 +375,7 @@
 								<Card class="rejection-card">
 									<CardHeader>
 										<div class="rejection-header">
-											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-												<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.834-2.694-.834-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-											</svg>
+											<AlertTriangle size={20} />
 											<CardTitle>Rejection Feedback</CardTitle>
 										</div>
 									</CardHeader>
@@ -297,7 +426,7 @@
 								</CardContent>
 							</Card>
 
-							<!-- Quick Stats Card -->
+							<!-- Quick Stats Card - Tufte: High density with sparklines -->
 							{#if canShowMetrics}
 								<Card>
 									<CardHeader>
@@ -305,19 +434,44 @@
 									</CardHeader>
 									<CardContent>
 										<div class="quick-stats">
-											<div class="stat-item">
-												<span class="stat-number">{formatNumber(asset.uniqueViewers)}</span>
+											<div class="stat-item viewers">
+												<div class="stat-header">
+													<Users size={14} class="stat-icon" />
+													<span class="stat-number">{formatNumber(asset.uniqueViewers)}</span>
+												</div>
 												<span class="stat-label">Viewers</span>
+												{#if viewersTrend().length > 0}
+													<Sparkline data={viewersTrend()} color="var(--color-info)" />
+												{/if}
 											</div>
-											<div class="stat-item">
-												<span class="stat-number">{formatNumber(asset.cumulativePurchases)}</span>
+											<div class="stat-item purchases">
+												<div class="stat-header">
+													<ShoppingCart size={14} class="stat-icon" />
+													<span class="stat-number">{formatNumber(asset.cumulativePurchases)}</span>
+												</div>
 												<span class="stat-label">Purchases</span>
+												{#if conversionRate() !== null}
+													<span class="stat-secondary">{conversionRate()?.toFixed(1)}% conv</span>
+												{/if}
 											</div>
-											<div class="stat-item">
-												<span class="stat-number">{formatCurrency(asset.cumulativeRevenue)}</span>
+											<div class="stat-item revenue">
+												<div class="stat-header">
+													<DollarSign size={14} class="stat-icon" />
+													<span class="stat-number">{formatCurrency(asset.cumulativeRevenue)}</span>
+												</div>
 												<span class="stat-label">Revenue</span>
+												{#if revenueTrend().length > 0}
+													<Sparkline data={revenueTrend()} color="var(--color-success)" filled />
+												{/if}
 											</div>
 										</div>
+										{#if avgOrderValue() !== null}
+											<div class="derived-stat">
+												<TrendingUp size={14} class="derived-icon" />
+												<span class="derived-label">Avg Order:</span>
+												<span class="derived-value">{formatCurrency(avgOrderValue() ?? 0)}</span>
+											</div>
+										{/if}
 									</CardContent>
 								</Card>
 							{/if}
@@ -441,6 +595,16 @@
 		</div>
 	</main>
 </div>
+
+<!-- Edit Modal -->
+{#if showEditModal}
+	<EditAssetModal
+		{asset}
+		onClose={handleEditClose}
+		onSave={handleEditSave}
+		onArchive={canArchive ? handleArchive : undefined}
+	/>
+{/if}
 
 <style>
 	.detail-page {
@@ -675,24 +839,84 @@
 	.quick-stats {
 		display: flex;
 		justify-content: space-between;
-		text-align: center;
+		gap: var(--space-sm);
 	}
 
 	.stat-item {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		align-items: center;
+		gap: 0.25rem;
+		flex: 1;
+	}
+
+	.stat-header {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+	}
+
+	.stat-item :global(.stat-icon) {
+		flex-shrink: 0;
+	}
+
+	.stat-item.viewers :global(.stat-icon) {
+		color: var(--color-info);
+	}
+
+	.stat-item.purchases :global(.stat-icon) {
+		color: var(--color-warning);
+	}
+
+	.stat-item.revenue :global(.stat-icon) {
+		color: var(--color-success);
 	}
 
 	.stat-number {
-		font-size: var(--text-h3);
+		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.stat-label {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	.stat-secondary {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		padding: 0.125rem 0.375rem;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-sm);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.derived-stat {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.375rem;
+		margin-top: var(--space-sm);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.derived-stat :global(.derived-icon) {
+		color: var(--color-fg-tertiary);
+	}
+
+	.derived-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.derived-value {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.details-table {

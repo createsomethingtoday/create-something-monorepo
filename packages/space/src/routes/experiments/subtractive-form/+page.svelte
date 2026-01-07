@@ -137,10 +137,10 @@
 	<div class="max-w-4xl mx-auto space-y-4">
 		<h1 class="hero-title">Subtractive Form Design</h1>
 		<p class="hero-subtitle italic">
-			When Absence Is Clearer Than Instruction
+			Try this: Watch what happens when you hide the field
 		</p>
 		<p class="hero-description max-w-2xl mx-auto">
-			Experience Heidegger's hermeneutic question—<span class="highlight-text">"Does this serve the whole?"</span>—applied to form field design. Watch how hiding inapplicable fields eliminates an entire category of user errors.
+			A form field with "leave blank for Designer Extensions" got filled out 68% of the time anyway. The fix wasn't better instructions—it was removing the field entirely. Try it yourself below.
 		</p>
 	</div>
 </section>
@@ -151,9 +151,9 @@
 		<div class="approach-toggle p-6">
 			<div class="flex items-center justify-between mb-6">
 				<div>
-					<h2 class="card-title">Choose Your Approach</h2>
+					<h2 class="card-title">Try Both Approaches</h2>
 					<p class="body-text-light mt-1">
-						Compare instructional vs. subtractive form design
+						Switch between them and notice how it feels to fill out the form
 					</p>
 				</div>
 				<button
@@ -291,7 +291,7 @@
 <section class="px-6 pb-12">
 	<div class="max-w-4xl mx-auto">
 		<div class="metrics-card p-6">
-			<h2 class="card-title mb-6">Simulated Error Rates</h2>
+			<h2 class="card-title mb-6">What Actually Happened</h2>
 
 			<div class="grid md:grid-cols-3 gap-4">
 				{#each ['Data Client v2', 'Designer Extension', 'Hybrid'] as capability}
@@ -316,44 +316,46 @@
 			</div>
 
 			<div class="insight-box p-4 mt-6">
-				<h3 class="insight-heading">Key Insight</h3>
+				<h3 class="insight-heading">Notice What Happened</h3>
 				<p class="insight-text">
-					A visible field implies it should be filled. Documentation cannot overcome this affordance.
-					For Designer Extensions, the error rate drops from <strong>68% to 0%</strong> by simply hiding the field.
+					A visible field implies it should be filled—no amount of "leave blank" instructions changes that.
+					For Designer Extensions, errors dropped from <strong>68% to 0%</strong> by simply hiding the field.
 				</p>
 			</div>
 		</div>
 	</div>
 </section>
 
-<!-- The Hermeneutic Question -->
+<!-- What This Reveals -->
 <section class="px-6 pb-12">
 	<div class="max-w-4xl mx-auto">
 		<div class="principle-card p-8">
 			<div class="space-y-6">
 				<div>
-					<h2 class="principle-heading">The Hermeneutic Question</h2>
-					<p class="principle-quote">"Does this field serve the whole?"</p>
+					<h2 class="principle-heading">What This Reveals</h2>
+					<p class="principle-quote">Sometimes the fix isn't better instructions—it's removing the field entirely.</p>
 				</div>
 
 				<div class="space-y-4 body-text-light">
 					<p>
-						When the Install URL field appeared for Designer Extensions, it created disconnection at every level:
+						When the Install URL field appeared for Designer Extensions, problems cascaded:
 					</p>
 					<ul class="list-disc list-inside space-y-2 pl-4">
-						<li><strong>Developers</strong>: Confusion about what to enter</li>
-						<li><strong>Review Team</strong>: Manual clearing of incorrect values</li>
+						<li><strong>Developers</strong>: Confused about what to enter</li>
+						<li><strong>Review Team</strong>: Spent time clearing incorrect values</li>
 						<li><strong>Submissions</strong>: Delayed by rejection/re-submission cycles</li>
-						<li><strong>Form System</strong>: Field meaning didn't match usage</li>
 					</ul>
 					<p>
-						<strong>Answer: No.</strong> The field didn't serve the whole. The solution was subtractive: remove it.
+						The field didn't belong there. Removing it fixed all three problems at once.
 					</p>
 				</div>
 
 				<div class="principle-box p-6">
 					<p class="principle-statement">
 						Absence is clearer than instruction.
+					</p>
+					<p class="principle-next">
+						<strong>Try this pattern:</strong> Next time you add a "leave blank if..." instruction, ask whether hiding the field would work better.
 					</p>
 				</div>
 			</div>
@@ -367,9 +369,9 @@
 		<div class="paper-link-card p-6">
 			<div class="flex items-center justify-between">
 				<div>
-					<h3 class="card-title mb-2">Read the Full Paper</h3>
+					<h3 class="card-title mb-2">Want the Deeper Explanation?</h3>
 					<p class="body-text-light">
-						Deep dive into the hermeneutic analysis and implementation details
+						The full paper covers the philosophy behind "subtractive form design" and when to apply it
 					</p>
 				</div>
 				<a
@@ -678,6 +680,13 @@
 		font-weight: 600;
 		text-align: center;
 		color: var(--color-fg-primary);
+	}
+
+	.principle-next {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		text-align: center;
+		margin-top: var(--space-sm);
 	}
 
 	.paper-link-card {

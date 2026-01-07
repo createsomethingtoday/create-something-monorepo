@@ -28,7 +28,7 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 	return json({ asset });
 };
 
-// PATCH - Update asset
+// PATCH - Update asset (text fields only, legacy)
 export const PATCH: RequestHandler = async ({ params, request, locals, platform }) => {
 	if (!locals.user?.email) {
 		throw error(401, 'Unauthorized');
@@ -63,6 +63,66 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
 	}
 
 	const updatedAsset = await airtable.updateAsset(params.id, body);
+	if (!updatedAsset) {
+		throw error(500, 'Failed to update asset');
+	}
+
+	return json({ asset: updatedAsset });
+};
+
+// PUT - Update asset with images
+export const PUT: RequestHandler = async ({ params, request, locals, platform }) => {
+	if (!locals.user?.email) {
+		throw error(401, 'Unauthorized');
+	}
+
+	if (!platform?.env) {
+		throw error(500, 'Platform environment not available');
+	}
+
+	const airtable = getAirtableClient(platform.env);
+
+	// Verify ownership
+	const isOwner = await airtable.verifyAssetOwnership(params.id, locals.user.email);
+	if (!isOwner) {
+		throw error(403, 'You do not have permission to edit this asset');
+	}
+
+	const body = (await request.json()) as {
+		name?: string;
+		description?: string;
+		descriptionShort?: string;
+		websiteUrl?: string;
+		previewUrl?: string;
+		thumbnailUrl?: string | null;
+		secondaryThumbnailUrl?: string | null;
+		carouselImages?: string[];
+	};
+
+	// Validate required fields
+	if (body.name !== undefined && typeof body.name !== 'string') {
+		throw error(400, 'Name must be a string');
+	}
+
+	// Check name uniqueness if name is being changed
+	if (body.name) {
+		const nameCheck = await airtable.checkAssetNameUniqueness(body.name, params.id);
+		if (!nameCheck.unique) {
+			throw error(400, 'An asset with this name already exists');
+		}
+	}
+
+	// Validate image arrays
+	if (body.carouselImages !== undefined) {
+		if (!Array.isArray(body.carouselImages)) {
+			throw error(400, 'Carousel images must be an array');
+		}
+		if (body.carouselImages.some((url) => typeof url !== 'string')) {
+			throw error(400, 'All carousel image URLs must be strings');
+		}
+	}
+
+	const updatedAsset = await airtable.updateAssetWithImages(params.id, body);
 	if (!updatedAsset) {
 		throw error(500, 'Failed to update asset');
 	}

@@ -1,0 +1,103 @@
+title: NBA Live Analytics Enhancements
+
+overview: |
+  Four related improvements to the NBA Live experiment based on insights
+  from analyzing completed games on January 4, 2026.
+
+  Background: Analysis revealed that ball movement (assists) correlates with
+  scoring efficiency (+15.8 pts/game), and data quality issues exist in the
+  NBA proxy worker.
+
+property: space
+complexity: standard
+
+features:
+  - title: Assist-to-Scoring Correlation Visualization
+    description: |
+      Add a scatter plot showing relationship between team assists and total points
+      across all games analyzed. Validates the +15.8 pts insight visually.
+    priority: 1
+    files:
+      - packages/space/src/lib/components/nba/CorrelationChart.svelte
+      - packages/space/src/routes/experiments/nba-live/league-insights/+page.svelte
+    acceptance:
+      - Scatter plot with assists (x-axis) vs total points (y-axis)
+      - Trend line showing positive correlation
+      - Data points labeled with team abbreviations
+      - Uses LayerCake for consistency with other NBA charts
+      - Canon color tokens (no hardcoded colors)
+      - test: Chart renders with sample data
+        verify: pnpm --filter=space dev
+
+  - title: Game of the Night Highlight Card
+    description: |
+      Component showing the highest-scoring or most competitive game with
+      key stats. Surfaces interesting games at a glance.
+    priority: 1
+    files:
+      - packages/space/src/lib/components/nba/GameHighlightCard.svelte
+      - packages/space/src/routes/experiments/nba-live/+page.svelte
+    acceptance:
+      - Card shows matchup, final score, and highlight stat
+      - "Game of the Night" badge for featured game
+      - Auto-selects based on criteria (highest scoring OR closest margin)
+      - Responsive card design matching GameSelector pattern
+      - Canon styling
+      - test: Card displays with mock game data
+        verify: pnpm --filter=space dev
+
+  - title: League Insights Analysis Page
+    description: |
+      New analysis page showing league-wide trends from completed games.
+      Includes pace analysis, three-point volume, ball movement patterns.
+    priority: 1
+    files:
+      - packages/space/src/routes/experiments/nba-live/league-insights/+page.svelte
+      - packages/space/src/routes/experiments/nba-live/league-insights/+page.server.ts
+      - packages/space/src/lib/nba/league-calculations.ts
+    acceptance:
+      - Fetches all completed games from current day
+      - Calculates league averages (scoring, pace, assists, 3PT attempts)
+      - Displays correlation chart (from feature 1)
+      - Shows competitive balance (close games vs blowouts)
+      - Home court advantage percentage
+      - Real-time polling updates every 60s (games complete less often)
+      - Navigation link from main NBA Live page
+      - test: Page loads and displays metrics
+        verify: pnpm --filter=space dev
+    depends_on:
+      - Assist-to-Scoring Correlation Visualization
+
+  - title: NBA Proxy Data Quality Fixes
+    description: |
+      Fix shot counting filter and investigate player-team assignment mixing
+      discovered during analysis. Ensure data integrity for calculations.
+    priority: 1
+    files:
+      - packages/space/workers/nba-proxy/src/index.ts
+      - packages/space/src/lib/nba/api.ts
+      - packages/space/src/lib/nba/calculations.ts
+    acceptance:
+      - Shot counting returns correct totals (not 0 or Infinity)
+      - Player boxscore data correctly filtered by team
+      - Add data validation layer flagging incomplete responses
+      - Log correlation IDs for debugging data quality issues
+      - test: Fetch game data and verify shot counts
+        verify: |
+          curl https://nba-proxy.createsomething.workers.dev/game/0022500495/pbp | \
+          jq '.data.game.actions | map(select(.actionType | contains("shot"))) | length'
+
+requirements:
+  - All visualizations use LayerCake (consistency)
+  - Canon CSS tokens only (no hardcoded colors per css-canon.md)
+  - Real-time polling respects component lifecycle (cleanup on destroy)
+  - NBA API errors degrade gracefully to cached data with visual indicator
+  - Build succeeds: pnpm --filter=space build
+  - Types check: pnpm --filter=space exec tsc --noEmit
+
+success:
+  - League insights page shows trends from completed games
+  - Assist-scoring correlation visualized and interactive
+  - Game of the Night card highlights most interesting matchup
+  - Data quality issues resolved (accurate shot counts, correct team assignments)
+  - All charts and components use Canon design system

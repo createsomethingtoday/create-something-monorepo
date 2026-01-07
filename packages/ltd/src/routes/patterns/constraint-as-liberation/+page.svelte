@@ -23,53 +23,59 @@
 		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">Pattern</p>
 		<h1 class="mb-6">Constraint as Liberation</h1>
 		<p class="text-xl-canon opacity-70-canon leading-relaxed">
-			Limitation breeds creativity. The fewer options, the clearer the path.
-			Rams' 10 principles. Mies' steel and glass. The Eameses' plywood.
+			Fewer options, clearer path. Pick your constraints deliberately. Master them before expanding.
 		</p>
 	</div>
 </section>
 
-<!-- Quote -->
+<!-- When to Use This Pattern -->
 <section class="py-12 px-6">
 	<div class="max-w-3xl mx-auto">
-		<div class="p-6 border border-canon">
-			<p class="text-lg-canon opacity-70-canon italic">
-				"The enemy of art is the absence of limitations."
-			</p>
-			<p class="text-sm-canon opacity-40-canon mt-2">— Orson Welles</p>
+		<h2 class="mb-6">When to Use This Pattern</h2>
+		<div class="grid md:grid-cols-2 gap-6">
+			<div class="p-6 border border-canon">
+				<h3 class="text-lg-canon font-semibold mb-3">Use when you notice...</h3>
+				<ul class="space-y-2 text-sm-canon opacity-70-canon">
+					<li>• Too many options slowing decisions</li>
+					<li>• Output feels scattered or inconsistent</li>
+					<li>• Analysis paralysis blocking progress</li>
+					<li>• Team debates the same choices repeatedly</li>
+				</ul>
+			</div>
+			<div class="p-6 border border-canon">
+				<h3 class="text-lg-canon font-semibold mb-3">The fix</h3>
+				<ul class="space-y-2 text-sm-canon opacity-70-canon">
+					<li>• Choose constraints deliberately (not by accident)</li>
+					<li>• Document them visibly</li>
+					<li>• Master them before expanding</li>
+					<li>• Let constraints eliminate decisions</li>
+				</ul>
+			</div>
 		</div>
 	</div>
 </section>
 
-<!-- Definition -->
-<section class="py-16 px-6">
+<!-- How It Works -->
+<section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Definition</h2>
+		<h2 class="mb-8">How It Works</h2>
 
 		<div class="space-y-6 text-base-canon opacity-70-canon leading-relaxed">
 			<p>
-				<strong>Constraint as Liberation</strong> recognizes that freedom comes not from
-				unlimited choice but from deliberate limitation. When everything is possible,
-				nothing is clear. When boundaries are set, creativity focuses.
+				When everything is possible, nothing is clear. When boundaries are set, creativity focuses.
+				This isn't restriction—it's liberation from endless negotiation.
 			</p>
 
 			<p>
-				The masters understood this instinctively. Dieter Rams constrained himself to
-				10 principles—not 50, not 3. Mies van der Rohe limited his palette to steel,
-				glass, and travertine. Charles and Ray Eames spent years mastering plywood
-				before expanding to other materials.
-			</p>
-
-			<p>
-				In software, the same principle applies. A limited component library forces
-				consistency. A restricted color palette creates visual harmony. A fixed grid
-				system enables layout decisions without endless negotiation.
+				In software: a limited component library forces consistency. A restricted color palette
+				creates visual harmony. A fixed grid system makes layout decisions automatic.
 			</p>
 
 			<div class="p-6 border border-canon my-8">
-				<p class="text-sm-canon opacity-60-canon italic">
-					"The constraint is not the obstacle—it is the path."
+				<p class="text-lg-canon opacity-70-canon italic">
+					"The enemy of art is the absence of limitations."
 				</p>
+				<p class="text-sm-canon opacity-40-canon mt-2">— Orson Welles</p>
 			</div>
 		</div>
 	</div>
@@ -78,7 +84,7 @@
 <!-- Principles -->
 <section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Principles</h2>
+		<h2 class="mb-8">Four Rules for Working with Constraints</h2>
 
 		<div class="space-y-8">
 			<div class="border border-canon p-6">

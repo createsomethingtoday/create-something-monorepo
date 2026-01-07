@@ -1,5 +1,14 @@
 <script lang="ts">
 	import { Button } from './ui';
+	import { toast } from '$lib/stores/toast';
+	import {
+		validateWebP,
+		validateFileSize,
+		validateMimeType,
+		validateAspectRatio,
+		getImageDimensions,
+		THUMBNAIL_ASPECT_RATIO
+	} from '$lib/utils/upload-validation';
 
 	interface Props {
 		value?: string | null;
@@ -10,6 +19,8 @@
 		label?: string;
 		description?: string;
 		disabled?: boolean;
+		/** Upload type for thumbnail validation */
+		uploadType?: 'image' | 'thumbnail';
 	}
 
 	let {
@@ -20,7 +31,8 @@
 		aspectRatio = null,
 		label = 'Image',
 		description = 'Only WebP images are accepted',
-		disabled = false
+		disabled = false,
+		uploadType = 'image'
 	}: Props = $props();
 
 	let isDragOver = $state(false);
@@ -29,76 +41,118 @@
 	let uploadProgress = $state(0);
 	let fileInput: HTMLInputElement;
 
-	async function validateAspectRatio(file: File): Promise<boolean> {
-		if (!aspectRatio) return true;
+	/**
+	 * Validate file on the client side before uploading.
+	 * Returns null if valid, or an error message if invalid.
+	 */
+	async function validateFile(file: File): Promise<string | null> {
+		// Validate file type
+		if (!validateMimeType(file.type)) {
+			return `Invalid file type. Only WebP images are accepted`;
+		}
 
-		return new Promise((resolve) => {
-			const img = new Image();
-			img.onload = () => {
-				const actualRatio = img.width / img.height;
-				const expectedRatio = aspectRatio.width / aspectRatio.height;
-				// Allow 5% tolerance
-				const tolerance = 0.05;
-				const isValid = Math.abs(actualRatio - expectedRatio) / expectedRatio < tolerance;
-				URL.revokeObjectURL(img.src);
-				resolve(isValid);
-			};
-			img.onerror = () => {
-				URL.revokeObjectURL(img.src);
-				resolve(false);
-			};
-			img.src = URL.createObjectURL(file);
-		});
+		// Validate file size
+		if (!validateFileSize(file.size, maxSize)) {
+			return `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB`;
+		}
+
+		// Deep WebP validation - check magic bytes
+		try {
+			const buffer = await file.arrayBuffer();
+			if (!validateWebP(buffer)) {
+				return 'Invalid WebP file format. The file does not contain valid WebP data.';
+			}
+		} catch {
+			return 'Failed to read file';
+		}
+
+		// Get image dimensions for aspect ratio validation
+		const dimensions = await getImageDimensions(file);
+		if (!dimensions) {
+			return 'Failed to read image dimensions';
+		}
+
+		// Validate aspect ratio if specified
+		if (aspectRatio) {
+			if (!validateAspectRatio(dimensions.width, dimensions.height, aspectRatio.width, aspectRatio.height)) {
+				return `Invalid aspect ratio. Expected ${aspectRatio.width}:${aspectRatio.height}`;
+			}
+		}
+
+		// For thumbnails, validate the standard 150:199 ratio
+		if (uploadType === 'thumbnail') {
+			if (!validateAspectRatio(
+				dimensions.width,
+				dimensions.height,
+				THUMBNAIL_ASPECT_RATIO.width,
+				THUMBNAIL_ASPECT_RATIO.height,
+				THUMBNAIL_ASPECT_RATIO.tolerance
+			)) {
+				return `Invalid thumbnail aspect ratio. Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height}`;
+			}
+		}
+
+		return null;
 	}
 
 	async function uploadFile(file: File) {
 		error = null;
 
-		// Validate file type
-		if (!file.type.match(accept.replace('*', '.*'))) {
-			error = `Invalid file type. Expected ${accept}`;
+		// Client-side validation
+		const validationError = await validateFile(file);
+		if (validationError) {
+			error = validationError;
+			toast.error(validationError);
 			return;
-		}
-
-		// Validate file size
-		if (file.size > maxSize) {
-			error = `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB`;
-			return;
-		}
-
-		// Validate aspect ratio if specified
-		if (aspectRatio) {
-			const isValidRatio = await validateAspectRatio(file);
-			if (!isValidRatio) {
-				error = `Invalid aspect ratio. Expected ${aspectRatio.width}:${aspectRatio.height}`;
-				return;
-			}
 		}
 
 		isUploading = true;
 		uploadProgress = 0;
 
 		try {
+			// Get dimensions for server-side validation
+			const dimensions = await getImageDimensions(file);
+
 			const formData = new FormData();
 			formData.append('file', file);
+			formData.append('type', uploadType);
+
+			// Include dimensions for thumbnail validation on server
+			if (dimensions) {
+				formData.append('width', dimensions.width.toString());
+				formData.append('height', dimensions.height.toString());
+			}
+
+			// Simulate progress for better UX (actual progress tracking would require XHR)
+			const progressInterval = setInterval(() => {
+				if (uploadProgress < 90) {
+					uploadProgress += 10;
+				}
+			}, 100);
 
 			const response = await fetch('/api/upload', {
 				method: 'POST',
 				body: formData
 			});
 
+			clearInterval(progressInterval);
+
 			if (!response.ok) {
-				const data = await response.json().catch(() => ({}));
-				throw new Error(data.message || 'Upload failed');
+				const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+				throw new Error(errorData.message || 'Upload failed');
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as { url: string; key: string; size: number };
 			uploadProgress = 100;
 			onchange?.(data.url);
+			toast.success('Image uploaded successfully');
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Upload failed';
+			const message = err instanceof Error ? err.message : 'Upload failed';
+			error = message;
+			toast.error(message);
 		} finally {
 			isUploading = false;
+			uploadProgress = 0;
 		}
 	}
 
@@ -138,6 +192,7 @@
 	function handleRemove() {
 		onchange?.(null);
 		error = null;
+		toast.info('Image removed');
 	}
 
 	function handleClick() {
@@ -181,11 +236,16 @@
 
 			{#if isUploading}
 				<div class="upload-progress">
-					<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10" stroke-opacity="0.2" />
-						<path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
-					</svg>
-					<span>Uploading...</span>
+					<div class="progress-bar-container">
+						<div class="progress-bar" style="width: {uploadProgress}%"></div>
+					</div>
+					<div class="progress-text">
+						<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10" stroke-opacity="0.2" />
+							<path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
+						</svg>
+						<span>Uploading... {uploadProgress}%</span>
+					</div>
 				</div>
 			{:else}
 				<svg
@@ -283,14 +343,39 @@
 
 	.upload-progress {
 		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-sm);
+		width: 100%;
+		padding: 0 var(--space-md);
+	}
+
+	.progress-bar-container {
+		width: 100%;
+		height: 4px;
+		background: var(--color-border-default);
+		border-radius: var(--radius-full);
+		overflow: hidden;
+	}
+
+	.progress-bar {
+		height: 100%;
+		background: var(--color-fg-primary);
+		border-radius: var(--radius-full);
+		transition: width var(--duration-micro) var(--ease-standard);
+	}
+
+	.progress-text {
+		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
 		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
 	}
 
 	.spinner {
-		width: 24px;
-		height: 24px;
+		width: 20px;
+		height: 20px;
 		animation: spin 1s linear infinite;
 	}
 

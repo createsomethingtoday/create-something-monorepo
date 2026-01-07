@@ -24,6 +24,10 @@ export { default as ImageUploader } from './ImageUploader.svelte';
 // Analytics components
 export { default as MarketplaceInsights } from './MarketplaceInsights.svelte';
 
+// Tufte-inspired data visualization
+export { default as Sparkline } from './Sparkline.svelte';
+export { default as StatsBar } from './StatsBar.svelte';
+
 // Validation components
 export { default as GsapValidationModal } from './GsapValidationModal.svelte';
 

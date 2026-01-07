@@ -26,7 +26,7 @@
 			<div class="border-l-2 border-emphasis pl-6">
 				<h3 class="text-xl-canon font-semibold mb-3">1. Justification</h3>
 				<p class="opacity-70-canon leading-relaxed">
-					Every element must justify its existence. If it cannot, it must be removed. Decoration is dishonest. Complexity is lazy.
+					Every element must justify its existence. If it cannot, consider removing it. Decoration often obscures meaning. Complexity often signals unclear thinking.
 				</p>
 			</div>
 
@@ -368,7 +368,7 @@
 			</div>
 
 			<p class="text-sm-canon opacity-60-canon italic pt-4">
-				If any answer is "no," the work is not ready.
+				If any answer is "no," consider what needs to change before shipping.
 			</p>
 		</div>
 	</div>

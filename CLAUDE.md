@@ -102,6 +102,27 @@ bd close X                    # Mark completed
 
 See `.claude/rules/beads-patterns.md` for full reference.
 
+## Agent Orchestration
+
+Three patterns for different work scopes:
+
+| Pattern | Scope | Use When |
+|---------|-------|----------|
+| **Ralph** | Single session iteration | Tests failing, refinement loops, fix-until-green |
+| **Harness** | Single session workflow | Sequential multi-step features, spec-driven work |
+| **Gastown** | Multi-session parallel | 3+ independent features, background work |
+
+**Ralph**: Iterative refinement through self-referential feedback loops. The prompt never changes—your work does. Use `/ralph-loop` for test-fix loops and refinement until criteria met.
+
+**Harness**: Autonomous work sessions with quality gates and peer review. Uses Anthropic prompt engineering best practices (prefilled responses, quote-based findings, chain-of-thought) for 99% parsing accuracy and <5% false positive rate. Reviewers: Security (Haiku), Architecture (Opus), Quality (Sonnet). Use `bd work` for single issues or `bd work --spec` for spec-driven features with checkpoints.
+
+**Gastown**: Multi-agent orchestration via tmux. Use `gt convoy create` to batch work, `gt sling` to assign to workers, parallel execution at scale.
+
+See pattern files for detailed usage:
+- `.claude/rules/ralph-patterns.md` - Iterative refinement
+- `.claude/rules/harness-patterns.md` - Workflow orchestration
+- `.claude/rules/gastown-patterns.md` - Multi-agent coordination
+
 ## Development Commands
 
 ```bash

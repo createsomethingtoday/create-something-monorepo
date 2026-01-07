@@ -6,9 +6,8 @@
 <header class="page-header">
 	<h1 class="page-title">Navigation</h1>
 	<p class="page-description">
-		Navigation components provide wayfinding through the interface. Headers orient, sidebars
-		structure, and breadcrumbs trace paths. Each pattern follows Canon motion tokens for
-		consistent, purposeful transitions.
+		Help users find their way around your site. Headers show where they are, sidebars reveal
+		what's available, and breadcrumbs let them retrace their steps.
 	</p>
 </header>
 
@@ -16,14 +15,13 @@
 <section class="section">
 	<h2 class="section-title">Header Navigation</h2>
 	<p class="section-description">
-		The primary navigation bar appears at the top of every page. It includes the logo, main links,
-		and optional call-to-action or user menu.
+		The bar at the top of every page. Add your logo, main links, and a login button or user menu.
 	</p>
 
 	<div class="example-group">
 		<h3 class="example-title">Basic Header</h3>
 		<p class="example-description">
-			Fixed or static positioning. Mobile menu appears below 1024px breakpoint.
+			Works on mobile too—links collapse into a menu on smaller screens.
 		</p>
 
 		<div class="preview preview-nav">
@@ -66,7 +64,7 @@
 	<div class="example-group">
 		<h3 class="example-title">With CTA and User Menu</h3>
 		<p class="example-description">
-			Add a call-to-action button and authenticated user dropdown.
+			Add an "Upgrade" button or user avatar for logged-in visitors.
 		</p>
 
 		<div class="preview preview-nav">
@@ -106,14 +104,14 @@
 <section class="section">
 	<h2 class="section-title">Sidebar Navigation</h2>
 	<p class="section-description">
-		Sidebar navigation provides structured navigation for documentation, dashboards, and
-		applications with deep hierarchies.
+		Best for docs, dashboards, and apps with lots of pages. Group links into sections so users
+		can scan quickly.
 	</p>
 
 	<div class="example-group">
 		<h3 class="example-title">Documentation Sidebar</h3>
 		<p class="example-description">
-			Grouped sections with expandable items. Active state shows current page.
+			Sections expand to show nested pages. The current page is highlighted automatically.
 		</p>
 
 		<div class="preview preview-sidebar">
@@ -194,14 +192,13 @@
 <section class="section">
 	<h2 class="section-title">Breadcrumbs</h2>
 	<p class="section-description">
-		Breadcrumbs show the user's location within a hierarchical structure. They provide a trail
-		back to the starting point.
+		Show users where they are and let them jump back to parent pages with one click.
 	</p>
 
 	<div class="example-group">
 		<h3 class="example-title">Basic Breadcrumbs</h3>
 		<p class="example-description">
-			The last item represents the current page and is not a link.
+			Each step is clickable except the current page.
 		</p>
 
 		<div class="preview">
@@ -241,7 +238,7 @@
 	<div class="example-group">
 		<h3 class="example-title">With Home Icon</h3>
 		<p class="example-description">
-			Replace the first item's text with a home icon for compact navigation.
+			Save space by using an icon instead of "Home" text.
 		</p>
 
 		<div class="preview">

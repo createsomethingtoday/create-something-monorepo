@@ -16,27 +16,55 @@
 		<p class="eyebrow mb-4">Our Philosophy</p>
 		<h1 class="mb-6">Ethos</h1>
 		<p class="intro-text leading-relaxed">
-			How we apply the canon of "less, but better" across the Create Something ecosystem.
+			Remove what doesn't earn its place. Keep what serves the work.
 		</p>
 	</div>
 </section>
 
-
-
-<!-- Core Philosophy -->
+<!-- What This Means in Practice -->
 <section class="py-16 px-6">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Less, But Better</h2>
+		<h2 class="mb-8">What This Means in Practice</h2>
 
 		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
 			<p>
-				<strong>This isn't minimalism for aesthetics.</strong> It's discipline for clarity. It's constraint
-				for excellence.
+				Before adding anything—a feature, a paragraph, a design element—ask three questions:
 			</p>
 
+			<div class="border border-canon p-6 my-8">
+				<div class="space-y-4">
+					<div class="flex items-start gap-3">
+						<span class="opacity-40-canon">1.</span>
+						<span><strong>Have I built this before?</strong> If yes, unify it.</span>
+					</div>
+					<div class="flex items-start gap-3">
+						<span class="opacity-40-canon">2.</span>
+						<span><strong>Does this earn its existence?</strong> If not, remove it.</span>
+					</div>
+					<div class="flex items-start gap-3">
+						<span class="opacity-40-canon">3.</span>
+						<span><strong>Does this serve the whole?</strong> If not, reconnect or remove it.</span>
+					</div>
+				</div>
+			</div>
+
+			<p>
+				This isn't minimalism for aesthetics. It's discipline for clarity. Every element must justify
+				its place—in code, in writing, in design.
+			</p>
+		</div>
+	</div>
+</section>
+
+<!-- Core Philosophy -->
+<section class="py-16 px-6 border-t border-canon">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">The Principle: Less, But Better</h2>
+
+		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
 			<p>
 				Dieter Rams asked: "Is my design good design?" We ask the same of every experiment, every
-				paper, every line of code. The answer requires ruthless honesty.
+				paper, every line of code. The answer requires honest self-examination.
 			</p>
 
 			<p>

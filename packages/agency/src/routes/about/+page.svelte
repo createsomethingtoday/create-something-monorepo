@@ -5,7 +5,7 @@
 
 <SEO
 	title="About"
-	description="Agentic systems engineering: building AI automation workflows and autonomous systems that run businesses. Research-backed, production-tested methodologies."
+	description="155 scripts became 13. 120 hours/week of research became automated. We build AI systems that run businesses—backed by 40+ production deployments."
 	keywords="agentic engineering, AI automation, autonomous systems, Cloudflare Workers, Claude Code, AI agents, background automation"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -16,40 +16,40 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8 animate-reveal">
 				<h1 class="hero-title mb-8">
-					Agentic Systems Engineering
+					40+ Production Systems. Real Metrics.
 				</h1>
 
 				<div class="space-y-8">
 					<!-- Core Identity -->
 					<div class="space-y-6 leading-relaxed body-lg">
 						<p class="body-xl font-medium">
-							We build AI systems that run businesses autonomously — from background automation workflows to long-running intelligent agents.
+							155 scripts became 13. 120 hours/week of research became automated. We build AI systems that run businesses—background automation, intelligent agents, and the infrastructure that makes them reliable.
 						</p>
 
 						<p>
-							This isn't generic "AI consulting." We're systems engineers who build production infrastructure. Every project is backed by research from <a href="https://createsomething.io" class="link">createsomething.io</a>, tracked with real metrics (time, cost, errors), and published as case studies.
+							Not consulting. Engineering. Every project ships production code, tracks real metrics (time saved, costs reduced, errors prevented), and gets documented as a case study on <a href="https://createsomething.io" class="link">createsomething.io</a>.
 						</p>
 
 						<p>
-							Web development is our entry point. During builds, we discover workflow inefficiencies in your operations. Then we propose automation systems. Eventually, we build autonomous agents that make decisions and orchestrate complex processes while you sleep.
+							We start with web development—fast sites on Cloudflare's edge. During the build, we find your workflow bottlenecks. Then we fix them with automation. Eventually, we build systems that make decisions while you sleep.
 						</p>
 					</div>
 
-					<!-- Philosophy -->
+					<!-- What You Get -->
 					<div class="card-surface space-y-4">
-						<h3 class="heading-3">Our Approach</h3>
+						<h3 class="heading-3">What You Get</h3>
 						<p class="body-secondary leading-relaxed">
-							Every system we build becomes a research experiment. We track precise metrics. We document what works and what doesn't. We publish honest results. Your production systems contribute to the collective knowledge of AI-native engineering — and you benefit from insights across our entire client base.
+							Real metrics from your project: time saved, costs reduced, errors prevented. A case study documenting what worked (and what didn't). And ongoing access to insights from our entire client base—patterns that worked for one client often work for others.
 						</p>
 					</div>
 
 					<!-- Background -->
 					<div class="space-y-4 body">
 						<p>
-							Led by Micah Johnson — Texas A&M graduate, UI/UX Design certified (Boulder Digital Arts), systems architect at Webflow. Career spanning Webflow development, API integrations, marketplace architecture, and now full-time agentic systems engineering.
+							Led by Micah Johnson. 10 years at Webflow—API integrations, marketplace architecture, enterprise systems. Texas A&M graduate. UI/UX certified (Boulder Digital Arts). Now building AI systems full-time.
 						</p>
 						<p>
-							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration on complex automation challenges.
+							Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for complex automation projects.
 						</p>
 					</div>
 				</div>
@@ -66,7 +66,7 @@
 				</h2>
 
 				<p class="body-lg leading-relaxed">
-					Production-grade automation systems and autonomous AI agents. Multi-user OAuth integrations. Background processing pipelines. Long-running workflows with durable execution. These aren't experiments — they're business-critical infrastructure running on Cloudflare's global edge network.
+					Automation systems processing thousands of records daily. OAuth integrations connecting 10+ services. AI agents that run for hours without human input. All production-grade, all on Cloudflare's edge network, all with monitoring and error handling built in.
 				</p>
 			</div>
 		</div>
@@ -77,26 +77,26 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-8">
 				<h2 class="heading-2">
-					Service Categories
+					What We Do
 				</h2>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each [
 						{
 							title: 'Web Development',
-							description: 'Fast, template-based websites that serve as your entry point to automation discovery'
+							description: '3 weeks to production. Sub-100ms response times. Edge-deployed sites that ship fast.'
 						},
 						{
-							title: 'AI Automation Systems',
-							description: 'Background workflows with OAuth, API orchestration, and intelligent data processing'
+							title: 'Workflow Automation',
+							description: '60-70% time savings on manual work. Systems that process data and talk to your tools.'
 						},
 						{
-							title: 'Agentic Engineering',
-							description: 'Long-running AI agents with autonomous decision-making and workflow orchestration'
+							title: 'Agentic Systems',
+							description: '155 scripts became 13. AI that makes decisions while you sleep.'
 						},
 						{
-							title: 'Systems Partnership',
-							description: 'Ongoing optimization and expansion of your AI infrastructure with tracked experiments'
+							title: 'Ongoing Partnership',
+							description: '2-4 new features per month. 4-hour response time. We maintain what we build.'
 						}
 					] as topic, index}
 						<div

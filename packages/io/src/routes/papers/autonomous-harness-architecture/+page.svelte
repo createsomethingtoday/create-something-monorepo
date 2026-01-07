@@ -64,36 +64,37 @@
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					As AI agents become more capable, a fundamental question emerges: how do humans maintain
-					meaningful control over autonomous systems without becoming bottlenecks? Two extremes
-					present themselves:
+					meaningful control over autonomous systems without becoming bottlenecks?
 				</p>
 
-				<div class="grid md:grid-cols-2 gap-4 mt-4">
-					<div class="p-4 comparison-warning">
-						<h4 class="mb-2 comparison-heading comparison-warning-heading">Full Autonomy</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• Agent runs without oversight</li>
-							<li>• Maximum efficiency</li>
-							<li>• No human agency</li>
-							<li>• Errors compound silently</li>
-						</ul>
-					</div>
+				<p>
+					You might find yourself reaching for one of two extremes:
+				</p>
 
-					<div class="p-4 comparison-warning">
-						<h4 class="mb-2 comparison-heading comparison-warning-heading">Full Oversight</h4>
-						<ul class="space-y-1 comparison-list">
-							<li>• Human approves each action</li>
-							<li>• Maximum control</li>
-							<li>• Bottleneck on human attention</li>
-							<li>• Defeats purpose of automation</li>
-						</ul>
-					</div>
+				<div class="responsive-table-scroll mt-4">
+					<table class="w-full table-auto">
+						<thead>
+							<tr class="table-header">
+								<th class="table-cell">You might try...</th>
+								<th class="table-cell">What happens</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="table-row">
+								<td class="table-cell">Full autonomy: "Let the agent handle everything"</td>
+								<td class="table-cell">Errors compound silently. You lose agency.</td>
+							</tr>
+							<tr class="table-row">
+								<td class="table-cell">Full oversight: "I'll approve every action"</td>
+								<td class="table-cell">You become the bottleneck. Automation's purpose is defeated.</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 
 				<p class="mt-4">
-					Both extremes fail. Full autonomy sacrifices human agency; full oversight sacrifices
-					efficiency. The question becomes: <strong>what is the minimum oversight that preserves
-					meaningful human control?</strong>
+					When you catch yourself at either extreme, you've found the tension this paper addresses:
+					<strong>what is the minimum oversight that preserves meaningful human control?</strong>
 				</p>
 
 				<p>

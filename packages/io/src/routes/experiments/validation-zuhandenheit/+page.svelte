@@ -441,7 +441,7 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 
 	.validation-step.new .step-number {
 		background: var(--color-success);
-		color: #000;
+		color: var(--color-bg-pure);
 	}
 
 	.step-content {
@@ -465,7 +465,7 @@ if (file.name.length > MAX_FILENAME_LENGTH) {
 		font-weight: 600;
 		padding: 0.15em 0.5em;
 		background: var(--color-success);
-		color: #000;
+		color: var(--color-bg-pure);
 		border-radius: var(--radius-sm);
 	}
 

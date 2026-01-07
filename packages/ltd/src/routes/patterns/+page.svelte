@@ -12,15 +12,54 @@
 		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
 		<h1 class="mb-6">Patterns</h1>
 		<p class="text-xl-canon opacity-70-canon leading-relaxed">
-			Repeating solutions from the masters. How "less, but better" manifests across domains.
+			Repeatable solutions that work. Choose the pattern that fits your problem.
 		</p>
 	</div>
 </section>
 
-<!-- Good Patterns -->
+<!-- Quick Start -->
 <section class="py-16 px-6">
 	<div class="max-w-5xl mx-auto">
-		<h2 class="mb-12">Patterns to Embrace</h2>
+		<h2 class="mb-8">Where to Start</h2>
+
+		<div class="space-y-6 text-base-canon opacity-70-canon leading-relaxed mb-12">
+			<p>
+				Not sure which pattern you need? Here's how to choose:
+			</p>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div class="border border-canon p-6">
+					<h3 class="text-lg-canon font-semibold mb-3">Building something new?</h3>
+					<p class="text-sm-canon opacity-60-canon mb-3">Start with constraints, not features.</p>
+					<a href="/patterns/constraint-as-liberation" class="text-sm-canon underline hover:opacity-70-canon">
+						Constraint as Liberation →
+					</a>
+				</div>
+
+				<div class="border border-canon p-6">
+					<h3 class="text-lg-canon font-semibold mb-3">Something broke?</h3>
+					<p class="text-sm-canon opacity-60-canon mb-3">Fix it, then document why.</p>
+					<a href="/patterns/breakdown-and-repair" class="text-sm-canon underline hover:opacity-70-canon">
+						Breakdown and Repair →
+					</a>
+				</div>
+
+				<div class="border border-canon p-6">
+					<h3 class="text-lg-canon font-semibold mb-3">Too much complexity?</h3>
+					<p class="text-sm-canon opacity-60-canon mb-3">Remove until only essential remains.</p>
+					<a href="/patterns/iterative-reduction" class="text-sm-canon underline hover:opacity-70-canon">
+						Iterative Reduction →
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Good Patterns -->
+<section class="py-16 px-6 border-t border-canon">
+	<div class="max-w-5xl mx-auto">
+		<h2 class="mb-12">All Patterns</h2>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 			<!-- Pattern: Constraint as Liberation -->

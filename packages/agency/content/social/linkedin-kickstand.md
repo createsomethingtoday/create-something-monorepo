@@ -30,7 +30,7 @@ Results:
 - Health score: 6.2 to 9.2 (48% improvement)
 - 30 to 0 TypeScript errors
 
-But the real win: they can reason about their system now.
+But the real win: new developer onboarding dropped from 2 weeks to 3 days. When you can reason about your system, you can teach it.
 
 "Less, but better" is not minimalism for aesthetics. It's operational clarity. You can't scale what you can't understand. You can't maintain what you can't see.
 

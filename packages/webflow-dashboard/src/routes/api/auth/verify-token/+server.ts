@@ -74,12 +74,13 @@ export const POST: RequestHandler = async ({ request, platform, cookies, getClie
 		await setSession(platform!.env.SESSIONS, sessionToken, result.email);
 
 		// Set HTTP-only cookie
+		// Note: sameSite 'none' required for cross-origin Webflow integration
 		cookies.set('session_token', sessionToken, {
 			httpOnly: true,
 			secure: true,
 			path: '/',
-			maxAge: 7200, // 2 hours
-			sameSite: 'lax'
+			maxAge: 60 * 60 * 2, // 2 hours
+			sameSite: 'none'
 		});
 
 		// Clear the verification token in Airtable

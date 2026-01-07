@@ -589,6 +589,60 @@ pre code.hljs {
   .border-info { border-color: var(--color-info-border); }
 
   /* ==========================================================================
+     Border Radius Utilities
+     ==========================================================================
+
+     Canon-compliant alternatives to Tailwind's rounded-* utilities.
+     Use these instead of hardcoded border-radius values.
+
+     Migration guide (Tailwind → Canon):
+       rounded-sm   → .rounded-sm   → var(--radius-sm)   // 6px
+       rounded-md   → .rounded-md   → var(--radius-md)   // 8px
+       rounded-lg   → .rounded-lg   → var(--radius-lg)   // 12px
+       rounded-xl   → .rounded-xl   → var(--radius-xl)   // 16px
+       rounded-full → .rounded-full → var(--radius-full) // 9999px
+
+     Philosophy: Consistent border radii create visual harmony. These values
+     follow a subtle progression that feels natural without being mechanical.
+     ========================================================================== */
+
+  .rounded-sm { border-radius: var(--radius-sm); }
+  .rounded-md { border-radius: var(--radius-md); }
+  .rounded-lg { border-radius: var(--radius-lg); }
+  .rounded-xl { border-radius: var(--radius-xl); }
+  .rounded-full { border-radius: var(--radius-full); }
+
+  /* Shadow Utilities
+   * Canon-compliant alternatives to Tailwind's shadow-* utilities.
+   * Use these for consistent elevation and depth across the system.
+   *
+   * Migration guide (Tailwind → Canon):
+   *   shadow-sm  → .shadow-sm  → var(--shadow-sm)      // Subtle card shadow
+   *   shadow-md  → .shadow-md  → var(--shadow-md)      // Standard elevation
+   *   shadow-lg  → .shadow-lg  → var(--shadow-lg)      // Prominent elevation
+   *   shadow-xl  → .shadow-xl  → var(--shadow-xl)      // High elevation
+   *   shadow-2xl → .shadow-2xl → var(--shadow-2xl)     // Maximum elevation
+   *
+   * Special shadows for specific use cases:
+   *   .shadow-glow-sm → Subtle glow effect
+   *   .shadow-glow-md → Medium glow effect
+   *   .shadow-glow-lg → Strong glow effect
+   *
+   * Philosophy: Shadows create depth and hierarchy. Use sparingly—not every
+   * element needs elevation. Reserve higher shadows for modals and overlays.
+   */
+
+  .shadow-sm { box-shadow: var(--shadow-sm); }
+  .shadow-md { box-shadow: var(--shadow-md); }
+  .shadow-lg { box-shadow: var(--shadow-lg); }
+  .shadow-xl { box-shadow: var(--shadow-xl); }
+  .shadow-2xl { box-shadow: var(--shadow-2xl); }
+  .shadow-glow-sm { box-shadow: var(--shadow-glow-sm); }
+  .shadow-glow-md { box-shadow: var(--shadow-glow-md); }
+  .shadow-glow-lg { box-shadow: var(--shadow-glow-lg); }
+  .shadow-none { box-shadow: none; }
+
+  /* ==========================================================================
      Hero Pattern - Unified across all properties
      Pattern: eyebrow (context) → hero-title (assertion) → hero-subtitle/description (evidence)
      ========================================================================== */

@@ -129,7 +129,7 @@
 				<div class="text-xs-canon opacity-40-canon font-mono">
 					<p class="mb-1">✓ Choose based on requirements, not hype</p>
 					<p class="mb-1">✓ Innovation in product, not in infrastructure</p>
-					<p>✓ "Boring" = battle-tested = trustworthy</p>
+					<p>✓ "Boring" = production-proven = trustworthy</p>
 				</div>
 			</div>
 		</div>

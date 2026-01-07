@@ -62,7 +62,7 @@
 			});
 
 			if (!response.ok) {
-				const data = await response.json();
+				const data = (await response.json()) as { message?: string };
 				throw new Error(data.message || 'Validation failed');
 			}
 

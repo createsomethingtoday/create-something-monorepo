@@ -5,6 +5,19 @@
 
 ---
 
+## Recognition Patterns
+
+Pricing conversations can feel uncomfortable. Here's how to recognize common patterns and what serves both parties better.
+
+| You might feel | What's happening | What serves the conversation |
+|----------------|------------------|------------------------------|
+| Urge to discount | Wanting to close the deal | Exploring scope alternatives instead |
+| Defensive about rates | Feeling judged | Confidence in value delivered |
+| Rush to quote | Pressure to provide numbers | "Let me understand your situation first" |
+| Need to justify | Explaining every line item | Focusing on outcomes, not inputs |
+
+---
+
 ## Philosophical Foundation
 
 Pricing is a design decision. It follows the same [Subtractive Triad](/canon) that governs all CREATE SOMETHING work:

@@ -6,24 +6,23 @@
 <header class="page-header">
 	<h1 class="page-title">Button</h1>
 	<p class="page-description">
-		Primary actions, secondary options, and ghost variations. All button states follow Canon motion
-		tokens for smooth, purposeful transitions.
+		Use buttons when you need users to take action. Choose primary for the main action, secondary
+		for alternatives, and ghost when you want something subtle.
 	</p>
 </header>
 
 <!-- Variants Section -->
 <section class="section">
-	<h2 class="section-title">Variants</h2>
+	<h2 class="section-title">Pick the Right Style</h2>
 	<p class="section-description">
-		Buttons come in three variants: primary for main actions, secondary for alternatives, and ghost
-		for subtle interactions.
+		Each variant serves a different purpose. Here's how to choose.
 	</p>
 
 	<!-- Primary Button -->
 	<div class="example-group">
 		<h3 class="example-title">Primary</h3>
 		<p class="example-description">
-			Use for primary actions. High contrast with background fill.
+			The main action on a page. Use just one per section so it stands out.
 		</p>
 
 		<div class="preview">
@@ -59,7 +58,7 @@
 	<!-- Secondary Button -->
 	<div class="example-group">
 		<h3 class="example-title">Secondary</h3>
-		<p class="example-description">Use for secondary actions. Outlined with transparent fill.</p>
+		<p class="example-description">An alternative action that doesn't compete with primary.</p>
 
 		<div class="preview">
 			<button class="btn btn-secondary">Secondary Button</button>
@@ -95,7 +94,7 @@
 	<div class="example-group">
 		<h3 class="example-title">Ghost</h3>
 		<p class="example-description">
-			Use for tertiary actions. No border, minimal visual weight.
+			Low-priority actions like "Cancel" or navigation links styled as buttons.
 		</p>
 
 		<div class="preview">
@@ -131,28 +130,28 @@
 
 <!-- Motion Section -->
 <section class="section">
-	<h2 class="section-title">Motion Tokens</h2>
+	<h2 class="section-title">How Buttons Move</h2>
 	<p class="section-description">
-		All button interactions use Canon motion tokens for consistent, purposeful animation.
+		Buttons respond to hover and click with subtle animations that feel natural.
 	</p>
 
 	<div class="motion-demo">
 		<div class="motion-item">
 			<h4>Hover Transition</h4>
 			<code>transition: all var(--duration-micro) var(--ease-standard);</code>
-			<p>200ms transition for background, border, and color changes.</p>
+			<p>Quick 200ms fade when users hover over buttons.</p>
 		</div>
 
 		<div class="motion-item">
 			<h4>Transform on Hover</h4>
 			<code>transform: translateY(-1px);</code>
-			<p>Subtle lift on primary buttons to indicate interactivity.</p>
+			<p>Primary buttons lift slightly—just enough to feel clickable.</p>
 		</div>
 
 		<div class="motion-item">
 			<h4>Active State</h4>
 			<code>transform: translateY(0);</code>
-			<p>Return to baseline on click for tactile feedback.</p>
+			<p>Pressing down feels like pushing a real button.</p>
 		</div>
 	</div>
 
@@ -186,8 +185,8 @@
 
 <!-- Token Reference -->
 <section class="section">
-	<h2 class="section-title">Token Reference</h2>
-	<p class="section-description">All button styles use Canon design tokens.</p>
+	<h2 class="section-title">Tokens Used</h2>
+	<p class="section-description">Copy these into your styles for consistent buttons.</p>
 
 	<div class="token-table">
 		<div class="token-row">

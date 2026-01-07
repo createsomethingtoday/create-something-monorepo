@@ -1,0 +1,95 @@
+title: Anthropic Prompt Engineering Improvements
+
+overview: |
+  Integrate Anthropic's prompt engineering best practices into harness reviewers
+  and baseline self-healing to reduce parsing failures and false positives.
+
+  Based on https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/
+
+  Expected Impact:
+  - Parsing success: 95% → 99% (+4%)
+  - False positive rate: 15% → 5% (-10%)
+  - Ralph baseline iterations: 8 avg → 5 avg (-37%)
+
+property: harness
+complexity: standard
+
+features:
+  - title: Add prefilled responses to reviewers
+    description: |
+      Force JSON structure by prefilling the assistant's response.
+      Eliminates preambles like "Here's my analysis..." that cause parsing failures.
+    complexity: simple
+    priority: 1
+    files:
+      - packages/harness/src/reviewer.ts
+    acceptance:
+      - Modify executeReviewerSession() to append prefilled response
+      - Prefilled response: '{\n  "outcome":'
+      - Update extractJsonFromOutput() to handle prefilled responses
+      - If output doesn't start with {, prepend prefill
+      - test: Run reviewer on test checkpoint, verify JSON parses without code blocks
+        verify: pnpm --filter=harness test
+
+  - title: Add quote-based prompting to Architecture reviewer
+    description: |
+      Require verbatim code quotes for every finding to reduce hallucinations.
+      Grounds findings in actual code, prevents imagined DRY violations.
+    complexity: simple
+    priority: 1
+    files:
+      - packages/harness/src/reviewer-prompts.ts
+      - packages/harness/src/types.ts
+    acceptance:
+      - Add "Critical Requirement: Quote Grounding" section to ARCHITECTURE_REVIEWER_PROMPT
+      - Show example finding with quote field
+      - Require: "If you cannot quote the exact code, do not report the finding"
+      - Add quote?: string field to ReviewFinding interface
+      - test: Architecture review includes verbatim quotes in findings
+        verify: pnpm --filter=harness test
+    depends_on:
+      - Add prefilled responses to reviewers
+
+  - title: Add explicit CoT to Opus reviewers
+    description: |
+      Add <thinking> tag instructions to Architecture reviewer for better reasoning.
+      Makes Opus show step-by-step logic before conclusions.
+    complexity: trivial
+    priority: 2
+    files:
+      - packages/harness/src/reviewer-prompts.ts
+    acceptance:
+      - Add "Reasoning Process" section to ARCHITECTURE_REVIEWER_PROMPT
+      - Instruct to use <thinking> tags before final JSON
+      - List 4 reasoning steps (patterns, abstraction, coupling, impacts)
+      - Note: Thinking not included in JSON output
+      - Verify prompt renders correctly in reviewer execution
+
+  - title: Add quote-based prompting to baseline self-healing
+    description: |
+      Require quotes from test output before Ralph attempts fixes.
+      Prevents fixing non-existent errors, reduces wasted iterations.
+    complexity: trivial
+    priority: 2
+    files:
+      - packages/harness/src/ralph-escalation.ts
+    acceptance:
+      - Update tests prompt in generateBaselinePrompt()
+      - Wrap output in <test_output> tags
+      - Add instruction: "Quote error messages verbatim before attempting fixes"
+      - Require quoting: test name, expected vs actual, stack trace
+      - Verify prompt structure with XML tags
+
+requirements:
+  - "All changes pass typecheck: pnpm --filter=harness exec tsc --noEmit"
+  - "Build succeeds: pnpm --filter=harness build"
+  - "Existing tests pass: pnpm --filter=harness test"
+  - "No breaking changes to reviewer API"
+
+success:
+  - Reviewer prompts include prefilled responses
+  - Architecture reviewer requires quotes in findings
+  - Architecture reviewer includes CoT instructions
+  - Baseline prompts use quote-based structure
+  - All type definitions updated
+  - Tests pass

@@ -1,10 +1,35 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 
 	let email = $state('');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-	let success = $state(false);
+
+	async function handleSubmit(e: Event) {
+		e.preventDefault();
+		loading = true;
+		error = null;
+
+		try {
+			const response = await fetch('/api/auth/login', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email })
+			});
+
+			if (response.ok) {
+				// Redirect to verify page (same as original Next.js behavior)
+				goto('/verify');
+			} else {
+				const data = (await response.json()) as { error?: string };
+				error = data.error || 'Login failed. Please check your email and try again.';
+			}
+		} catch {
+			error = 'An error occurred during the login process. Please try again.';
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -23,64 +48,33 @@
 		<h1>Asset Dashboard</h1>
 		<p class="subtitle">Sign in to manage your Webflow templates</p>
 
-		{#if success}
-			<div class="success-message">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-					<polyline points="22 4 12 14.01 9 11.01" />
-				</svg>
-				<div>
-					<strong>Check your email</strong>
-					<p>We sent a verification link to {email}</p>
-				</div>
+		<form onsubmit={handleSubmit}>
+			<div class="form-group">
+				<label for="email">Email address</label>
+				<input
+					type="email"
+					id="email"
+					name="email"
+					bind:value={email}
+					placeholder="you@webflow.com"
+					required
+					disabled={loading}
+				/>
 			</div>
-		{:else}
-			<form
-				method="POST"
-				action="/api/auth/login"
-				use:enhance={() => {
-					loading = true;
-					error = null;
-					return async ({ result }) => {
-						loading = false;
-						if (result.type === 'success') {
-							success = true;
-						} else if (result.type === 'failure') {
-							const data = result.data as { error?: string } | undefined;
-							error = data?.error || 'An error occurred';
-						} else if (result.type === 'error') {
-							error = result.error?.message || 'An error occurred';
-						}
-					};
-				}}
-			>
-				<div class="form-group">
-					<label for="email">Email address</label>
-					<input
-						type="email"
-						id="email"
-						name="email"
-						bind:value={email}
-						placeholder="you@webflow.com"
-						required
-						disabled={loading}
-					/>
-				</div>
 
-				{#if error}
-					<div class="error-message">{error}</div>
+			{#if error}
+				<div class="error-message">{error}</div>
+			{/if}
+
+			<button type="submit" class="submit-button" disabled={loading || !email}>
+				{#if loading}
+					<span class="spinner"></span>
+					Sending...
+				{:else}
+					Continue with Email
 				{/if}
-
-				<button type="submit" class="submit-button" disabled={loading || !email}>
-					{#if loading}
-						<span class="spinner"></span>
-						Sending...
-					{:else}
-						Continue with Email
-					{/if}
-				</button>
-			</form>
-		{/if}
+			</button>
+		</form>
 
 		<p class="footer-text">
 			Only authorized Webflow template creators can access this dashboard.
@@ -172,32 +166,6 @@
 		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-md);
 		margin-bottom: var(--space-md);
-	}
-
-	.success-message {
-		display: flex;
-		gap: var(--space-sm);
-		padding: var(--space-md);
-		color: var(--color-success);
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		border-radius: var(--radius-md);
-	}
-
-	.success-message svg {
-		flex-shrink: 0;
-		margin-top: 2px;
-	}
-
-	.success-message strong {
-		display: block;
-		color: var(--color-fg-primary);
-	}
-
-	.success-message p {
-		margin: var(--space-xs) 0 0;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
 	}
 
 	.submit-button {

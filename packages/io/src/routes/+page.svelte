@@ -2,9 +2,9 @@
 	/**
 	 * createsomething.io Landing Page
 	 *
-	 * The entry point presents two paths:
-	 *   - Experiments (Zuhandenheit) → Engaged practice
-	 *   - Papers (Vorhandenheit) → Detached analysis
+	 * Two paths to the same understanding:
+	 *   - Experiments: Try it yourself, see what happens
+	 *   - Papers: Read the analysis, understand the patterns
 	 *
 	 * Featured experiments are showcased below the hero.
 	 */
@@ -28,8 +28,8 @@
 
 <SEO
 	title="AI-Native Development Research"
-	description="Systems thinking for AI-native development. Experiments demonstrate through practice; papers ground through analysis. Both paths connect through the hermeneutic circle."
-	keywords="AI-native development, Claude Code, Cloudflare Workers, experiments, research papers, systems thinking, Zuhandenheit, Vorhandenheit"
+	description="47 tracked experiments. 15 research papers. Real data on what works in AI-native development—time, cost, and outcomes."
+	keywords="AI-native development, Claude Code, Cloudflare Workers, experiments, research papers, systems thinking"
 	ogImage="/og-image.svg"
 	propertyName="io"
 />
@@ -42,36 +42,36 @@
 	<PapersGrid
 		papers={featuredExperiments}
 		title="Featured Experiments"
-		subtitle="Interactive demonstrations where tools recede into use"
+		subtitle="Try these yourself—each tracks time, cost, and what actually worked"
 	/>
 {/if}
 
 <!-- Ecosystem Navigation -->
 <section class="ecosystem">
 	<div class="ecosystem-container">
-		<p class="ecosystem-label">The Hermeneutic Circle</p>
+		<p class="ecosystem-label">The CREATE SOMETHING Ecosystem</p>
 		<h2 class="ecosystem-heading">Research flows into practice</h2>
 		<p class="ecosystem-description">
-			.io documents what works. .space teaches it. .agency applies it. .ltd defines why it matters.
+			.io documents what works. .space teaches it. .agency applies it to client work.
 		</p>
 
 		<div class="ecosystem-grid highlight-grid">
 			<a href="https://createsomething.space" class="ecosystem-card highlight-item" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.space</span>
-				<h3 class="property-name">Practice</h3>
-				<p class="property-desc">Interactive tutorials. Learn by doing what research discovers.</p>
+				<h3 class="property-name">Learn</h3>
+				<p class="property-desc">Step-by-step tutorials. Build what we've researched.</p>
 			</a>
 
 			<a href="https://createsomething.agency" class="ecosystem-card highlight-item" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.agency</span>
 				<h3 class="property-name">Apply</h3>
-				<p class="property-desc">Client work held to research standards. Theory becomes delivery.</p>
+				<p class="property-desc">Client projects using these methods. Real results, real timelines.</p>
 			</a>
 
 			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
-				<h3 class="property-name">Canon</h3>
-				<p class="property-desc">The philosophical foundation. Crystallized judgment that guides all work.</p>
+				<h3 class="property-name">Why</h3>
+				<p class="property-desc">The principles behind the methodology. Design philosophy made explicit.</p>
 			</a>
 		</div>
 	</div>

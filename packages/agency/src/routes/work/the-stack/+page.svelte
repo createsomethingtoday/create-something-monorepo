@@ -6,12 +6,12 @@
 	<title>The Stack — Case Study | CREATE SOMETHING Agency</title>
 	<meta
 		name="description"
-		content="Family-owned pickleball facility eliminates booking friction with CLEARWAY's embeddable court reservation system. Courts fill themselves."
+		content="24/7 booking replaced phone calls. 8 courts across 4 locations fill themselves. Zero staff involvement required."
 	/>
 	<meta property="og:title" content="The Stack — Case Study | CREATE SOMETHING Agency" />
 	<meta
 		property="og:description"
-		content="Pickleball facility eliminates booking friction with CLEARWAY's embeddable court reservation system."
+		content="24/7 booking replaced phone calls. 8 courts across 4 locations fill themselves. Zero staff involvement required."
 	/>
 	<meta property="og:type" content="article" />
 </svelte:head>
@@ -23,16 +23,16 @@
 			<div class="mb-6">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
 			</div>
-			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Client: The Stack Indoor Pickleball</p>
+			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Pickleball Facility</p>
 			<h1 class="mb-6">The Stack</h1>
 			<p class="heading-2 body-tertiary leading-relaxed mb-8">
-				Family-owned pickleball facility with seamless court booking. No phone calls, no spreadsheets—courts fill themselves.
+				24/7 booking replaced phone calls. 8 courts across 4 locations fill themselves while staff focus on facilities.
 			</p>
 			<div class="flex flex-wrap gap-4 body-sm body-muted">
-				<span>• CLEARWAY Embed</span>
-				<span>• Stripe Checkout</span>
-				<span>• Real-time Availability</span>
-				<span>• Multi-location</span>
+				<span>• 24/7 automated booking</span>
+				<span>• 8 courts, 4 locations</span>
+				<span>• Zero staff involvement</span>
+				<span>• Prepaid eliminates no-shows</span>
 			</div>
 		</div>
 	</section>

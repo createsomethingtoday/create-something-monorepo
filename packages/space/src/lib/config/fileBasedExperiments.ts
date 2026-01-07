@@ -303,6 +303,46 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     |   Understanding emerges through iteration.      |
     +-------------------------------------------------+
 `
+	},
+	{
+		id: 'file-nba-live',
+		slug: 'nba-live',
+		title: 'NBA Live Analytics: Spec-Driven Development Meta-Experiment',
+		description:
+			'Real-time NBA analytics dashboard testing whether spec-driven development produces both working software and methodology documentation.',
+		excerpt_short: 'Spec-driven development through live sports analytics',
+		excerpt_long:
+			'A meta-experiment using live NBA data to test spec-driven development methodology. Three analytical views—Duo Synergy, Defensive Impact, and Shot Network—validate the hypothesis that structured specs can guide agent-based development. The dashboard itself is the artifact; the methodology documentation is the meta-artifact.',
+		category: 'methodology',
+		tags: ['Spec-Driven', 'Agent Orchestration', 'Data Visualization', 'Tufte', 'D3', 'Meta-Experiment'],
+		created_at: '2026-01-04T00:00:00Z',
+		updated_at: '2026-01-04T00:00:00Z',
+		reading_time_minutes: 20,
+		difficulty: 'advanced',
+		is_file_based: true,
+		is_executable: 1,
+		tests_principles: [
+			'rams-principle-2', // Useful - delivers real analytical value
+			'rams-principle-4', // Understandable - clear methodology explanations
+			'rams-principle-8', // Thorough - complete analytical coverage
+			'heidegger-zuhandenheit' // Tools recede - infrastructure disappears
+		],
+		ascii_art: `
+    +-------------------------------------------------+
+    |   NBA LIVE ANALYTICS                            |
+    |                                                 |
+    |   [Duo Synergy]  [Defensive]  [Shot Network]    |
+    |        PPP        Impact          D3 Graph      |
+    |                                                 |
+    |   ┌─────────────────────────────────────────┐   |
+    |   │  NBA API ──► Worker ──► D1 ──► Views    │   |
+    |   │             (30s KV)                    │   |
+    |   └─────────────────────────────────────────┘   |
+    |                                                 |
+    |   Spec-driven development produces             |
+    |   both software and methodology.               |
+    +-------------------------------------------------+
+`
 	}
 ];
 

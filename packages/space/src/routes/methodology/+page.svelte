@@ -28,11 +28,11 @@
       </h1>
 
       <p class="intro-text">
-        What makes CREATE SOMETHING different from AI blogs: we don't just document results—we document the <strong>process</strong> of building with AI agents.
+        <strong>What to do this week:</strong> Start tracking your AI development work. Even rough notes beat nothing.
       </p>
 
       <p class="body-text">
-        Every experiment is tracked with automated logging, real costs from APIs, precise time measurements, and intervention documentation. This transforms anecdotes into reproducible experiments.
+        Most AI content is "I built X with Claude" without any way to verify the claim. We track everything: real costs, actual time, every error and intervention. Try this yourself—you'll learn more in one tracked session than a month of undocumented work.
       </p>
     </div>
   </div>
@@ -43,7 +43,7 @@
   <div class="max-w-6xl mx-auto">
     <div>
       <h2 class="mb-12 centered">
-        How We Work
+        Try This Workflow
       </h2>
 
       <!-- Pipeline Visual -->
@@ -105,7 +105,7 @@
 
       <div class="centered">
         <p class="intro-text font-medium">
-          This is research, not blogging.
+          Notice what changes when you track: you catch patterns you'd otherwise miss.
         </p>
       </div>
     </div>
@@ -117,7 +117,7 @@
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
       <h2 class="mb-8">
-        Every Experiment Tracked With
+        What to Capture (Start Simple)
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -178,29 +178,33 @@
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
       <h2 class="mb-8">
-        Three Tracking Modes
+        Pick Your Starting Point
       </h2>
+
+      <p class="body-text mb-6">
+        Already mid-project? That's fine. You can start tracking anywhere—just be honest about what you measured vs. estimated.
+      </p>
 
       <div class="space-y-6">
         {#each [
           {
-            mode: 'Real-Time Tracking',
-            tag: 'Ideal',
-            description: 'Start tracking from day one. Get complete data on every iteration, error, and decision.',
+            mode: 'Start Fresh',
+            tag: 'Best Data',
+            description: 'Track from the first prompt. You get complete data on every iteration, error, and decision.',
             dataQuality: 'High confidence, precise metrics',
             useCase: 'New experiments starting from scratch'
           },
           {
-            mode: 'Mid-Flight Tracking',
-            tag: 'Practical',
-            description: 'Start tracking on an in-progress project. Combine real-time data with git history reconstruction.',
+            mode: 'Pick Up Mid-Project',
+            tag: 'Most Common',
+            description: 'Realize halfway through that this is worth tracking? Combine real-time data going forward with what you can reconstruct from git history.',
             dataQuality: 'Mixed: estimates for past work, precise for future',
             useCase: 'Active projects you realize are experiment-worthy'
           },
           {
-            mode: 'Retroactive Documentation',
+            mode: 'Document After the Fact',
             tag: 'Still Valuable',
-            description: 'Document already-deployed projects. Reconstruct from git, APIs, and memory.',
+            description: 'Already shipped? Reconstruct from git commits, API logs, and memory. Just be transparent about limitations.',
             dataQuality: 'Lower confidence, acknowledged limitations',
             useCase: 'Completed projects with production data'
           }
@@ -242,20 +246,24 @@
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
       <h2 class="mb-8">
-        Why This Matters
+        What Changes When You Track
       </h2>
+
+      <p class="body-text mb-6">
+        Try tracking one project. Notice the difference in what you learn.
+      </p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div class="space-y-4">
           <h3 class="card-heading">
-            Without Tracking
+            Before: Just Building
           </h3>
           <ul class="comparison-list">
             {#each [
               '"I built X with AI" (anecdote)',
-              'No reproducibility',
-              "Can't verify claims",
-              'Just another AI blog'
+              'No way to replicate your success',
+              "Can't prove it worked",
+              'You forget what actually happened'
             ] as item}
               <li class="flex items-start gap-3">
                 <svg class="check-icon w-5 h-5 flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -269,14 +277,14 @@
 
         <div class="space-y-4">
           <h3 class="card-heading">
-            With Tracking
+            After: Building + Tracking
           </h3>
           <ul class="comparison-list">
             {#each [
-              '"I built X: 26 hrs, $27, 78% savings" (data)',
-              'Others can replicate experiments',
-              'Transparent methodology',
-              'Scientific research platform'
+              '"I built X: 26 hrs, $27, 78% savings" (proof)',
+              'Others can try your approach',
+              'You spot patterns across projects',
+              'You actually remember what worked'
             ] as item}
               <li class="flex items-start gap-3">
                 <svg class="check-icon w-5 h-5 flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -291,7 +299,7 @@
 
       <div class="highlight-box p-6 mt-8">
         <p class="intro-text leading-relaxed">
-          The tracking methodology transforms "prompting and hoping" into <strong>systematic evaluation with reproducible results</strong>. This is what separates research from blogging.
+          The real benefit: you learn from your own work. Without data, every project is a one-off. With data, patterns emerge across experiments.
         </p>
       </div>
     </div>
@@ -303,11 +311,11 @@
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
       <h2 class="mb-8">
-        For Researchers: Use This Methodology
+        Ready to Try It?
       </h2>
 
       <p class="body-large">
-        Want to adopt this approach for your own AI-native development research? The experiment tracking system is available as a Claude Code Skill.
+        The experiment tracking system is available as a Claude Code Skill. Here's how to get started:
       </p>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -372,11 +380,11 @@
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8">
       <h2 class="mb-8">
-        Methodology in Action
+        See It in Practice
       </h2>
 
       <p class="body-large">
-        Example from <a href="/experiments/zoom-transcript-automation-experiment" class="link-text">Experiment #1: Zoom Transcript Automation</a>
+        Here's what tracking looks like on a real project—<a href="/experiments/zoom-transcript-automation-experiment" class="link-text">Experiment #1: Zoom Transcript Automation</a>:
       </p>
 
       <div class="card p-6">
@@ -408,7 +416,7 @@
 
           <div class="pt-2">
             <p class="list-item">
-              <strong class="link-text">Reproducibility:</strong> Starting prompt, tracking logs, and architecture decisions documented
+              <strong class="link-text">What you can try:</strong> Start with just time and error counts. Add cost tracking once you've got the habit.
             </p>
           </div>
         </div>
@@ -419,7 +427,7 @@
           href="/experiments/zoom-transcript-automation-experiment"
           class="experiment-link inline-flex items-center gap-2"
         >
-          Read the full experiment
+          See the full experiment with all the details
           <svg class="w-4 h-4" stroke-width="2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>

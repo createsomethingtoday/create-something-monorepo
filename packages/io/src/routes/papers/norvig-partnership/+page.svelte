@@ -65,9 +65,8 @@
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
-					In phenomenology, we reason from <em>how things show themselves</em>. In empiricism,
-					we reason from <em>what can be measured</em>. These approaches converge when lived
-					experience becomes quantifiable and measurement reveals ontological truth.
+					In <strong>phenomenology</strong> (the study of how things show themselves to us through experience), we reason from <em>how things show themselves</em>. In <strong>empiricism</strong> (the study of what can be measured through observation), we reason from <em>what can be measured</em>. These approaches converge when lived
+					experience becomes quantifiable and measurement reveals <strong>ontological truth</strong> (truth about the fundamental nature of things).
 				</p>
 
 				<p>
@@ -83,8 +82,8 @@
 					This paper examines that convergence. We show how Norvig's empirical findings validate
 					CREATE SOMETHING's phenomenological framework for understanding AI-human collaboration,
 					and how his conclusion—"I should use an LLM as an assistant for all my coding"—marks
-					the transition from <em>Vorhandenheit</em> (tool-as-object) to <em>Zuhandenheit</em>
-					(tool-as-transparent-equipment).
+					the transition from <em>Vorhandenheit</em> (tool-as-object: when the tool demands attention) to <em>Zuhandenheit</em>
+					(tool-as-transparent-equipment: when the tool disappears into use).
 				</p>
 			</div>
 		</section>
@@ -146,6 +145,24 @@
 					Norvig co-authored the definitive AI textbook, spent decades at Google, and approaches
 					programming with both theoretical depth and practical rigor. His conclusion carries weight
 					<em>because</em> he's skeptical by training.
+				</p>
+
+				<h3 class="mt-6 subsection-heading">Limitations</h3>
+
+				<p>
+					Norvig's methodology has clear boundaries:
+				</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li><strong>Self-contained puzzles</strong>: Advent of Code problems are isolated. Real-world software involves complex dependencies and evolving requirements.</li>
+					<li><strong>Single developer</strong>: Norvig worked alone. Team dynamics with multiple humans and AI assistants remain unexplored.</li>
+					<li><strong>Algorithmic domain</strong>: His examples focus on algorithmic problems. User interface design, product decisions, and business logic may show different patterns.</li>
+					<li><strong>No long-term maintenance</strong>: Puzzles are solved once. Production software requires ongoing maintenance, debugging, and evolution.</li>
+					<li><strong>Expert practitioner</strong>: Norvig brings decades of experience. Results may differ for less experienced developers who rely more heavily on AI judgment.</li>
+				</ul>
+
+				<p class="mt-4">
+					These limitations don't invalidate the findings—they define the scope. Norvig demonstrates that LLM partnership works for algorithmic programming tasks completed by expert developers. Broader application requires further validation.
 				</p>
 			</div>
 		</section>
@@ -353,7 +370,7 @@ Human: → Moves to next puzzle</pre>
 
 				<p>
 					When Day 1 Part 2 failed, Norvig didn't abandon the LLM—he provided feedback. The LLM
-					adjusted. This pattern exemplifies the <em>hermeneutic circle</em>: understanding deepens
+					adjusted. This pattern exemplifies the <em>hermeneutic circle</em> (a philosophical concept describing how understanding deepens through iterative cycles of interpretation and feedback): understanding deepens
 					through iterative refinement.
 				</p>
 
@@ -496,6 +513,76 @@ Human: → Moves to next puzzle</pre>
 					first principles, don't constrain with hardcoded heuristics. The LLM that solves Advent
 					of Code puzzles by understanding the problem is the same LLM that should architect software
 					by understanding requirements.
+				</p>
+			</div>
+		</section>
+
+		<!-- Section VII.5: How to Apply This -->
+		<section class="space-y-6">
+			<h2 class="section-heading">VII.5. How to Apply This</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<h3 class="subsection-heading">Starting Your Own Partnership Practice</h3>
+
+				<p>
+					Norvig's experience provides a concrete template for AI-human partnership.
+					Here's how to apply it to your work:
+				</p>
+
+				<div class="grid md:grid-cols-2 gap-4 mt-4">
+					<div class="p-4 comparison-success">
+						<h4 class="mb-2 comparison-heading comparison-success-heading">Manual Approach</h4>
+						<ul class="space-y-2 comparison-list">
+							<li>• Read puzzle/requirement</li>
+							<li>• Design solution mentally</li>
+							<li>• Write code manually</li>
+							<li>• Debug until it works</li>
+							<li>• Time: 30-60 minutes per puzzle</li>
+						</ul>
+					</div>
+
+					<div class="p-4 comparison-success">
+						<h4 class="mb-2 comparison-heading comparison-success-heading">LLM-First Approach (Norvig's Pattern)</h4>
+						<ul class="space-y-2 comparison-list">
+							<li>• Read puzzle/requirement</li>
+							<li>• Paste to LLM</li>
+							<li>• Review generated code</li>
+							<li>• Test, provide feedback if needed</li>
+							<li>• Time: 2-3 minutes per puzzle</li>
+						</ul>
+					</div>
+				</div>
+
+				<h3 class="mt-6 subsection-heading">Practical Partnership Example</h3>
+
+				<p>
+					Let's say you need to add a newsletter subscription form to your website.
+				</p>
+
+				<div class="p-4 font-mono code-block-success">
+					<pre class="code-secondary">You: "Add a newsletter subscription form with:
+- Email validation
+- Loading states
+- Success/error handling
+- POST to /api/newsletter
+Follow the ContactForm.svelte pattern"
+
+Claude Code:
+1. Reads ContactForm.svelte (learning your pattern)
+2. Creates NewsletterForm.svelte
+3. Adds API endpoint
+4. Writes tests
+5. Shows you the result
+
+You: *Tests form, confirms it works*
+You: "Perfect, ship it"
+
+Manual coding time: 45 minutes
+Partnership time: 5 minutes</pre>
+				</div>
+
+				<p class="mt-4">
+					The speed improvement (9x in this example, 20x in Norvig's) comes from the LLM handling execution while you retain judgment. You still decide what to build, verify correctness, and determine when it's good enough.
 				</p>
 			</div>
 		</section>

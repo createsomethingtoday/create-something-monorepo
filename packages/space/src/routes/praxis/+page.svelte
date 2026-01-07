@@ -127,7 +127,7 @@
 	<header class="header">
 		<div>
 			<h1>Integration Praxis</h1>
-			<p>Understanding through practice</p>
+			<p>Learn by doing. Each exercise reveals a pattern you'll use in real projects.</p>
 		</div>
 		<span class="progress">{progress}</span>
 	</header>
@@ -161,12 +161,12 @@
 		<section class="panel info">
 			<div class="section">
 				<div class="section-header">
-					<span class="label">Context</span>
+					<span class="label">What to Try</span>
 					<span class="pattern">{exercise.pattern}</span>
 				</div>
 				<div class="section-content">
-					<p><strong>Situation:</strong> {exercise.context.situation}</p>
-					<p><strong>Task:</strong> {exercise.context.task}</p>
+					<p><strong>The situation:</strong> {exercise.context.situation}</p>
+					<p><strong>Your task:</strong> {exercise.context.task}</p>
 					<p class="notice">{exercise.context.notice}</p>
 				</div>
 			</div>
@@ -181,29 +181,29 @@
 			{#if isValid && !hasReflected}
 				<div class="section reflection">
 					<div class="section-header">
-						<span class="label">{isCanonical ? 'Canonical Pattern' : 'Subtractive Triad Audit'}</span>
+						<span class="label">{isCanonical ? 'Nice work' : 'Before you continue'}</span>
 						{#if grade !== 'bug'}
 							<span class="grade grade-{grade}">{grade.replace('_', ' ')}</span>
 						{/if}
 					</div>
 					<div class="section-content">
 						{#if isCanonical}
-							<p class="triad-success">You used the canonical pattern.</p>
-							<p class="triad-note">The Subtractive Triad found nothing to subtract.</p>
+							<p class="triad-success">You found the canonical pattern.</p>
+							<p class="triad-note">Nothing to simplify—this is the approach that works.</p>
 						{:else if triadFeedback}
 							<div class="triad-audit">
 								<p class="audit-label">{getTriadLabel(triadFeedback.level)}</p>
 								<p class="audit-feedback">{triadFeedback.feedback}</p>
 							</div>
-							<p class="triad-note">Consider refactoring, or continue to see the canonical pattern.</p>
+							<p class="triad-note">You can try again, or continue to see the canonical pattern.</p>
 						{:else}
-							<p class="triad-intro">Before the pattern reveals, consider your solution:</p>
+							<p class="triad-intro">Take a moment to look at what you wrote:</p>
 							<div class="triad-questions">
-								<p><strong>DRY:</strong> Is there duplication to unify?</p>
-								<p><strong>Rams:</strong> Is there anything to remove?</p>
+								<p><strong>DRY:</strong> Any repeated code that could be unified?</p>
+								<p><strong>Rams:</strong> Anything to remove?</p>
 								<p><strong>Heidegger:</strong> Does this serve the whole?</p>
 							</div>
-							<p class="triad-note">If you used AI, apply these questions to its output.</p>
+							<p class="triad-note">If you used AI, apply these questions to its output too.</p>
 						{/if}
 						<button class="btn-continue" onclick={confirmReflection}>
 							Continue to Pattern
@@ -229,8 +229,8 @@
 
 	{#if isLastExercise && showPattern}
 		<footer class="completion">
-			<h2>Praxis Complete</h2>
-			<p>You've encountered the patterns that emerge through building with WORKWAY.</p>
+			<h2>Nice work</h2>
+			<p>You've practiced the patterns that come up again and again when building with WORKWAY. Here's what you covered:</p>
 			<ul>
 				<li>Structured errors over strings</li>
 				<li>Explicit timeouts over implicit trust</li>
@@ -238,11 +238,12 @@
 				<li>Signature verification over payload trust</li>
 				<li>Honest capabilities over optimistic claims</li>
 			</ul>
+			<p class="next-step">Next step: Try these patterns in a real project. You'll notice when they apply.</p>
 			<div class="actions">
 				<a href="https://github.com/WORKWAYCO/WORKWAY" class="btn-primary" target="_blank"
-					>DEVELOPERS.md</a
+					>Read DEVELOPERS.md</a
 				>
-				<a href="/experiments" class="btn-secondary">Experiments</a>
+				<a href="/experiments" class="btn-secondary">Browse Experiments</a>
 			</div>
 		</footer>
 	{/if}
