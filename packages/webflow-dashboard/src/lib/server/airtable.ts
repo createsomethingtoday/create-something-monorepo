@@ -95,6 +95,7 @@ export interface Asset {
 	status: 'Draft' | 'Scheduled' | 'Upcoming' | 'Published' | 'Rejected' | 'Delisted';
 	thumbnailUrl?: string;
 	secondaryThumbnailUrl?: string;
+	secondaryThumbnails?: string[];
 	carouselImages?: string[];
 	websiteUrl?: string;
 	previewUrl?: string;

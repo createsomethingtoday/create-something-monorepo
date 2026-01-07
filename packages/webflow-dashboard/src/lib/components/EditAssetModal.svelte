@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label, Textarea } from './ui';
 	import ImageUploader from './ImageUploader.svelte';
+	import CarouselUploader from './CarouselUploader.svelte';
+	import SecondaryThumbnailUploader from './SecondaryThumbnailUploader.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { toast } from '$lib/stores/toast';
 
@@ -19,6 +21,7 @@
 		previewUrl?: string;
 		thumbnailUrl?: string | null;
 		secondaryThumbnailUrl?: string | null;
+		secondaryThumbnails?: string[];
 		carouselImages?: string[];
 	}
 
@@ -36,6 +39,9 @@
 	// Image state
 	let thumbnailUrl = $state<string | null>(asset.thumbnailUrl || null);
 	let secondaryThumbnailUrl = $state<string | null>(asset.secondaryThumbnailUrl || null);
+	let secondaryThumbnails = $state<string[]>(
+		asset.secondaryThumbnails || (asset.secondaryThumbnailUrl ? [asset.secondaryThumbnailUrl] : [])
+	);
 	let carouselImages = $state<string[]>(asset.carouselImages || []);
 
 	// UI state
@@ -123,18 +129,12 @@
 		thumbnailUrl = url;
 	}
 
-	function handleSecondaryThumbnailChange(url: string | null) {
-		secondaryThumbnailUrl = url;
+	function handleSecondaryThumbnailsChange(urls: string[]) {
+		secondaryThumbnails = urls;
 	}
 
-	function handleCarouselImageAdd(url: string | null) {
-		if (url && carouselImages.length < 5) {
-			carouselImages = [...carouselImages, url];
-		}
-	}
-
-	function handleCarouselImageRemove(index: number) {
-		carouselImages = carouselImages.filter((_, i) => i !== index);
+	function handleCarouselImagesChange(urls: string[]) {
+		carouselImages = urls;
 	}
 
 	async function handleSubmit(e: Event) {
@@ -162,7 +162,8 @@
 				websiteUrl: formData.websiteUrl,
 				previewUrl: formData.previewUrl,
 				thumbnailUrl,
-				secondaryThumbnailUrl,
+				secondaryThumbnailUrl: secondaryThumbnails[0] || null, // Backward compatibility
+				secondaryThumbnails,
 				carouselImages
 			});
 			toast.success('Asset updated successfully');
@@ -296,61 +297,34 @@
 					<!-- Image Fields -->
 					<div class="form-section">
 						<h3 class="section-title">Images</h3>
-						<div class="image-grid">
-							<div class="image-field">
-								<ImageUploader
-									value={thumbnailUrl}
-									onchange={handleThumbnailChange}
-									label="Primary Thumbnail"
-									description="7:9 aspect ratio recommended"
-									aspectRatio={{ width: 7, height: 9 }}
-								/>
-							</div>
-
-							<div class="image-field">
-								<ImageUploader
-									value={secondaryThumbnailUrl}
-									onchange={handleSecondaryThumbnailChange}
-									label="Secondary Thumbnail"
-									description="16:10 aspect ratio recommended"
-									aspectRatio={{ width: 16, height: 10 }}
-								/>
-							</div>
+						<div class="image-field">
+							<ImageUploader
+								value={thumbnailUrl}
+								onchange={handleThumbnailChange}
+								label="Primary Thumbnail"
+								description="Main thumbnail for your asset"
+								aspectRatio={{ width: 7, height: 9 }}
+							/>
 						</div>
 
-						<div class="carousel-section">
-							<Label>Carousel Images (max 5)</Label>
-							<p class="carousel-hint">
-								{carouselImages.length}/5 images uploaded. 16:10 aspect ratio recommended.
-							</p>
-							<div class="carousel-grid">
-								{#each carouselImages as image, index}
-									<div class="carousel-item">
-										<img src={image} alt="Carousel {index + 1}" class="carousel-preview" />
-										<button
-											type="button"
-											class="carousel-remove"
-											aria-label="Remove carousel image {index + 1}"
-											onclick={() => handleCarouselImageRemove(index)}
-										>
-											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-												<path d="M18 6L6 18M6 6l12 12" />
-											</svg>
-										</button>
-									</div>
-								{/each}
-								{#if carouselImages.length < 5}
-									<div class="carousel-add">
-										<ImageUploader
-											value={null}
-											onchange={handleCarouselImageAdd}
-											label=""
-											description="Add image"
-											aspectRatio={{ width: 16, height: 10 }}
-										/>
-									</div>
-								{/if}
-							</div>
+						<div class="carousel-field">
+							<CarouselUploader
+								value={carouselImages}
+								onchange={handleCarouselImagesChange}
+								minImages={3}
+								maxImages={8}
+								aspectRatio={{ width: 16, height: 10 }}
+								disabled={isLoading}
+							/>
+						</div>
+
+						<div class="secondary-field">
+							<SecondaryThumbnailUploader
+								value={secondaryThumbnails}
+								onchange={handleSecondaryThumbnailsChange}
+								maxImages={2}
+								disabled={isLoading}
+							/>
 						</div>
 					</div>
 				</form>
@@ -477,79 +451,10 @@
 		font-size: var(--text-body-sm);
 	}
 
-	.image-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-md);
-	}
-
-	@media (max-width: 640px) {
-		.image-grid {
-			grid-template-columns: 1fr;
-		}
-	}
-
-	.image-field {
-		/* Image uploader container */
-	}
-
-	.carousel-section {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.carousel-hint {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin: 0;
-	}
-
-	.carousel-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-		gap: var(--space-sm);
-	}
-
-	.carousel-item {
-		position: relative;
-		border-radius: var(--radius-md);
-		overflow: hidden;
-		border: 1px solid var(--color-border-default);
-	}
-
-	.carousel-preview {
-		width: 100%;
-		aspect-ratio: 16/10;
-		object-fit: cover;
-		display: block;
-	}
-
-	.carousel-remove {
-		position: absolute;
-		top: var(--space-xs);
-		right: var(--space-xs);
-		width: 24px;
-		height: 24px;
-		border-radius: 50%;
-		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
-		color: var(--color-fg-secondary);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.carousel-remove:hover {
-		background: var(--color-error-muted);
-		border-color: var(--color-error-border);
-		color: var(--color-error);
-	}
-
-	.carousel-add {
-		min-height: 80px;
+	.image-field,
+	.carousel-field,
+	.secondary-field {
+		/* Field containers */
 	}
 
 	.modal-footer {
