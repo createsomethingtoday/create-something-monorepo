@@ -803,4 +803,293 @@ pre code.hljs {
       transition-delay: 0ms;
     }
   }
+
+  /* ==========================================================================
+     Cascading Entrance Pattern
+     ==========================================================================
+
+     Sequential reveal animation for list items, grid children.
+     Each item fades in with slight upward motion, staggered by index.
+
+     Usage:
+       <div class="cascade-container">
+         <div class="cascade-item" style="--index: 0">Item 1</div>
+         <div class="cascade-item" style="--index: 1">Item 2</div>
+         <div class="cascade-item" style="--index: 2">Item 3</div>
+       </div>
+
+     Philosophy: Sequential reveals create narrative rhythm. Each item
+     "arrives" in turn, guiding attention through the content hierarchy.
+     ========================================================================== */
+
+  /* Base cascade item - initially hidden, animates in */
+  .cascade-item {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: cascadeIn var(--duration-standard) var(--ease-standard) forwards;
+    animation-delay: calc(var(--cascade-step) * var(--index, 0));
+  }
+
+  @keyframes cascadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Fast cascade - for dense lists */
+  .cascade-fast .cascade-item {
+    animation-duration: var(--duration-micro);
+  }
+
+  /* Slow cascade - for hero sections */
+  .cascade-slow .cascade-item {
+    animation-duration: var(--duration-complex);
+    animation-delay: calc(var(--cascade-group) * var(--index, 0));
+  }
+
+  /* Reduced motion: no animation */
+  @media (prefers-reduced-motion: reduce) {
+    .cascade-item {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+  }
+
+  /* ==========================================================================
+     Underline Reveal Pattern
+     ==========================================================================
+
+     Animated underline that expands on hover. Typography-first interaction.
+
+     Usage:
+       <a href="#" class="underline-reveal">Link text</a>
+
+     Philosophy: The underline reveals intention. Motion guides attention
+     without demanding it—the link becomes "ready-to-hand" on interaction.
+     ========================================================================== */
+
+  .underline-reveal {
+    position: relative;
+    text-decoration: none;
+  }
+
+  .underline-reveal::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width var(--duration-micro) var(--ease-standard);
+  }
+
+  .underline-reveal:hover::after {
+    width: 100%;
+  }
+
+  /* Reduced motion: instant underline */
+  @media (prefers-reduced-motion: reduce) {
+    .underline-reveal::after {
+      transition-duration: 0.01ms;
+    }
+  }
+
+  /* ==========================================================================
+     Interactive Scale Pattern
+     ==========================================================================
+
+     Scale + border emphasis on hover. Common pattern for interactive cards.
+
+     Usage:
+       <div class="interactive-scale">Card content</div>
+
+     Philosophy: Subtle scale creates depth. The element "lifts" toward
+     the user, indicating interactivity without jarring motion.
+     ========================================================================== */
+
+  .interactive-scale {
+    transition: transform var(--duration-micro) var(--ease-standard),
+                border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .interactive-scale:hover {
+    transform: scale(var(--scale-micro));
+    border-color: var(--color-border-emphasis);
+  }
+
+  .interactive-scale:active {
+    transform: scale(var(--scale-subtle));
+  }
+
+  /* Reduced motion: no transform */
+  @media (prefers-reduced-motion: reduce) {
+    .interactive-scale:hover,
+    .interactive-scale:active {
+      transform: none;
+    }
+  }
+
+  /* ==========================================================================
+     Button State Utilities
+     ==========================================================================
+
+     Shared button state patterns that can be composed with btn-* classes.
+     These provide consistent disabled, loading, and pressed states.
+
+     Usage:
+       <button class="btn btn-primary btn-disabled">Disabled</button>
+       <button class="btn btn-secondary btn-loading">Loading...</button>
+
+     Philosophy: Button states communicate affordance. Disabled buttons
+     recede; loading buttons indicate work in progress; pressed buttons
+     confirm action receipt.
+     ========================================================================== */
+
+  /* Disabled state - reduced opacity, no interaction */
+  .btn-disabled,
+  .btn:disabled,
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Loading state - subtle pulse animation */
+  .btn-loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+  }
+
+  .btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 1em;
+    height: 1em;
+    top: 50%;
+    left: 50%;
+    margin-top: -0.5em;
+    margin-left: -0.5em;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: var(--radius-full);
+    animation: btn-spin var(--duration-slow) linear infinite;
+  }
+
+  @keyframes btn-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Active/pressed state - scale down for tactile feedback */
+  .btn-press:active {
+    transform: scale(var(--scale-subtle));
+  }
+
+  /* Icon button - square with centered icon */
+  .btn-icon {
+    padding: var(--space-sm);
+    aspect-ratio: 1;
+  }
+
+  /* Small button variant */
+  .btn-sm {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-body-sm);
+  }
+
+  /* Large button variant */
+  .btn-lg {
+    padding: var(--space-md) var(--space-lg);
+    font-size: var(--text-body-lg);
+  }
+
+  /* Reduced motion: no spin animation */
+  @media (prefers-reduced-motion: reduce) {
+    .btn-loading::after {
+      animation: none;
+      border-style: dotted;
+    }
+
+    .btn-press:active {
+      transform: none;
+    }
+  }
+
+  /* ==========================================================================
+     Card Utility Patterns
+     ==========================================================================
+
+     Composable card patterns for consistent styling across properties.
+     Use with the base .card class from components.css.
+
+     Usage:
+       <div class="card card-interactive">Hover me</div>
+       <div class="card card-gradient">Gradient border</div>
+
+     Philosophy: Cards contain and elevate content. Interactive cards
+     invite exploration; static cards present information.
+     ========================================================================== */
+
+  /* Interactive card - lifts and highlights on hover */
+  .card-interactive {
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-border-emphasis);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .card-interactive:active {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Subtle card - minimal border, surface background */
+  .card-subtle {
+    background: var(--color-bg-surface);
+    border-color: transparent;
+  }
+
+  .card-subtle:hover {
+    border-color: var(--color-border-default);
+  }
+
+  /* Gradient border card */
+  .card-gradient {
+    border: 1px solid transparent;
+    background-image: linear-gradient(var(--color-bg-elevated), var(--color-bg-elevated)),
+                      linear-gradient(135deg, var(--color-border-emphasis), var(--color-border-default));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  /* Glow card - soft glow on hover */
+  .card-glow:hover {
+    box-shadow: var(--shadow-glow-md);
+  }
+
+  /* Slide card - horizontal movement on hover */
+  .card-slide {
+    transition: transform var(--duration-micro) var(--ease-standard),
+                border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .card-slide:hover {
+    transform: translateX(4px);
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Reduced motion: no transforms */
+  @media (prefers-reduced-motion: reduce) {
+    .card-interactive:hover,
+    .card-interactive:active,
+    .card-slide:hover {
+      transform: none;
+    }
+  }
 }
