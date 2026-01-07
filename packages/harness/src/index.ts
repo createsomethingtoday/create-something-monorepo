@@ -55,6 +55,8 @@ export type {
   ReviewedCheckpoint,
   // Discovery source taxonomy (upstream from VC)
   DiscoverySource,
+  // Beads seed types (Bloom-inspired)
+  BeadsIssueSeed,
   // Agent context types (upstream from VC - nondeterministic idempotence)
   AgentContext,
   FileModification,
@@ -70,6 +72,27 @@ export type {
   BaselineHealth,
 } from './types.js';
 
+// Model Organisms (Bloom-inspired validation framework)
+export type {
+  OrganismComplexity,
+  ModelOrganism,
+  OrganismValidation,
+  OrganismSuite,
+  RoutingMetrics,
+} from './model-organisms.js';
+
+export {
+  STANDARD_ORGANISMS,
+  organismToBeadsIssue,
+  isModelOrganism,
+  getOrganismMetadata,
+  validateRouting,
+  calculateRoutingMetrics,
+  formatRoutingMetrics,
+  createStandardSuite,
+  createMinimalSuite,
+} from './model-organisms.js';
+
 export {
   DEFAULT_CHECKPOINT_POLICY,
   DEFAULT_FAILURE_HANDLING_CONFIG,
@@ -79,6 +102,9 @@ export {
   // Discovery source taxonomy
   DISCOVERY_LABELS,
   getDiscoveryLabel,
+  // Beads seed helpers (Bloom-inspired)
+  hasExecutableSeed,
+  getIssueSeed,
   // Agent context
   EMPTY_AGENT_CONTEXT,
   // Self-healing baseline
@@ -267,6 +293,21 @@ export {
   formatReviewDisplay,
   formatFindingsReport,
 } from './review-pipeline.js';
+
+// Peer Review - Meta-Review (Bloom-inspired)
+export type {
+  MetaReviewResult,
+  CrossCuttingPattern,
+  DiscoveredIssue,
+  MetaReviewConfig,
+} from './meta-review.js';
+
+export {
+  runMetaReview,
+  selectMetaReviewModel,
+  formatMetaReviewDisplay,
+  DEFAULT_META_REVIEW_CONFIG,
+} from './meta-review.js';
 
 // Peer Review - Beads Integration
 export {

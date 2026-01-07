@@ -110,16 +110,91 @@ export async function runQualityGate(
 }
 
 /**
+ * Attempt to fix a failing gate using Ralph escalation.
+ * Supports: tests, typecheck
+ *
+ * Uses iterative refinement with model escalation (Haiku → Sonnet → Opus)
+ * to fix baseline failures before starting work on new features.
+ */
+export async function attemptRalphFix(
+  gate: BaselineGate,
+  config: BaselineConfig,
+  cwd: string
+): Promise<BaselineGate> {
+  // Only tests and typecheck support Ralph fixing
+  if (gate.name !== 'tests' && gate.name !== 'typecheck') {
+    return { ...gate, fixAttempted: false, fixSucceeded: false };
+  }
+
+  console.log(`  🔧 Attempting Ralph escalation fix for ${gate.name}...`);
+  console.log(`  ⚠️  Note: Ralph integration requires manual execution`);
+  console.log(`  Run: ralph-escalate "<prompt>" --max-iterations 15 --escalate`);
+
+  // Generate Ralph execution plan
+  const { fixFailingBaselineWithRalph } = await import('./ralph-escalation.js');
+
+  const startTime = Date.now();
+
+  try {
+    const result = await fixFailingBaselineWithRalph(
+      gate.name as 'tests' | 'typecheck',
+      gate.output
+    );
+
+    console.log(`  📋 Ralph execution plan generated`);
+    console.log(`     Estimated cost: $${result.cost.toFixed(3)}`);
+    console.log(`     Iterations: ${result.iterations}`);
+    console.log(`     Final model: ${result.finalModel}`);
+
+    // Re-run the original check to see if it passes now
+    // (In manual mode, this would only pass after user executes Ralph)
+    const recheckResult = await runQualityGate(gate.name, config, cwd);
+
+    if (recheckResult.passed) {
+      console.log(`  ✅ Ralph fix succeeded for ${gate.name}`);
+      return {
+        ...recheckResult,
+        fixAttempted: true,
+        fixSucceeded: true,
+        durationMs: Date.now() - startTime,
+      };
+    } else {
+      console.log(`  ⚠ ${gate.name} still failing after Ralph execution`);
+      return {
+        ...recheckResult,
+        fixAttempted: true,
+        fixSucceeded: false,
+      };
+    }
+  } catch (error) {
+    console.log(`  ⚠ Ralph fix planning failed for ${gate.name}`);
+    return {
+      ...gate,
+      fixAttempted: true,
+      fixSucceeded: false,
+      durationMs: Date.now() - startTime,
+    };
+  }
+}
+
+/**
  * Attempt to auto-fix a failing gate.
  * Currently supports:
  * - lint: Run with --fix flag
+ * - tests: Ralph escalation (if enabled)
+ * - typecheck: Ralph escalation (if enabled)
  */
 export async function attemptAutoFix(
   gate: BaselineGate,
   config: BaselineConfig,
   cwd: string
 ): Promise<BaselineGate> {
-  // Only lint supports auto-fix currently
+  // Try Ralph for tests/typecheck if available
+  if ((gate.name === 'tests' || gate.name === 'typecheck') && config.useRalphEscalation) {
+    return attemptRalphFix(gate, config, cwd);
+  }
+
+  // Only lint supports simple auto-fix
   if (gate.name !== 'lint') {
     return { ...gate, fixAttempted: true, fixSucceeded: false };
   }
@@ -419,6 +494,7 @@ export async function runConfiguredGates(
     enabled: true,
     gates: config.builtIn,
     autoFix: config.autoFix,
+    useRalphEscalation: false, // QualityGatesConfig doesn't expose this yet
     createBlockers: config.createBlockers,
     maxAutoFixAttempts: 1,
     gateTimeoutMs: config.gateTimeoutMs,

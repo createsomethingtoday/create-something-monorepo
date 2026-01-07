@@ -25,6 +25,13 @@ import {
   getEffectiveModel,
   recordSuccessfulRetry,
 } from './failure-handler.js';
+import {
+  runMetaReview,
+  formatMetaReviewDisplay,
+  DEFAULT_META_REVIEW_CONFIG,
+  type MetaReviewConfig,
+  type MetaReviewResult,
+} from './meta-review.js';
 
 const execAsync = promisify(exec);
 
@@ -228,7 +235,21 @@ export async function runReviewPipeline(
   }
 
   // Aggregate results
-  return aggregateReviewResults(checkpoint.id, results, config);
+  const aggregation = aggregateReviewResults(checkpoint.id, results, config);
+
+  // Run meta-review if enabled and there are sufficient findings
+  const metaReviewConfig = DEFAULT_META_REVIEW_CONFIG; // TODO: Accept from config
+  if (metaReviewConfig.enabled && aggregation.totalFindings >= metaReviewConfig.minFindingsThreshold) {
+    console.log('\n🔬 Running meta-review to synthesize patterns...');
+    const metaReview = await runMetaReview(aggregation, metaReviewConfig);
+
+    console.log(formatMetaReviewDisplay(metaReview));
+
+    // Store meta-review in aggregation for later use
+    (aggregation as any).metaReview = metaReview;
+  }
+
+  return aggregation;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

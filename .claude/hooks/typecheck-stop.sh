@@ -50,7 +50,7 @@ for pkg in $PACKAGES_TO_CHECK; do
 
   if [[ -d "$PKG_DIR" ]]; then
     # Run tsc --noEmit and capture errors
-    TSC_OUTPUT=$(cd "$PKG_DIR" && npx tsc --noEmit 2>&1) || {
+    TSC_OUTPUT=$(cd "$PKG_DIR" && pnpm exec tsc --noEmit 2>&1) || {
       ERRORS="$ERRORS\n\n=== $pkg ===\n$TSC_OUTPUT"
     }
   fi
