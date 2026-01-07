@@ -6,12 +6,14 @@
  * Smart Sling: Intelligently route Gastown workers based on Beads labels.
  *
  * Philosophy: Reuse harness model routing logic for Gastown workers.
- * Maps Beads issue complexity to Gastown quality levels:
- * - trivial/haiku → --quality=basic (Haiku ~$0.001)
- * - simple/standard/sonnet → --quality=shiny (Sonnet ~$0.01)
- * - complex/opus → --quality=chrome (Opus ~$0.10)
+ * Maps Beads issue complexity to Gastown flags:
+ * - trivial/haiku → --agent haiku (v0.2.2+) or --quality=basic (v0.1.x-v0.2.1)
+ * - simple/standard/sonnet → --agent sonnet or --quality=shiny
+ * - complex/opus → --agent opus or --quality=chrome
  *
- * Compatible with Gastown v0.1.1 - v0.2.1 using --quality flag.
+ * Version Detection:
+ * - v0.1.1 - v0.2.1: Uses --quality flag
+ * - v0.2.2+ (unreleased): Uses --agent flag
  *
  * Usage:
  *   gt-smart-sling cs-abc123 csm
@@ -20,8 +22,8 @@
  * This wrapper:
  * 1. Reads the Beads issue
  * 2. Checks for model: or complexity: labels
- * 3. Maps to appropriate --quality flag
- * 4. Calls gt sling with quality level
+ * 3. Detects Gastown version
+ * 4. Calls gt sling with appropriate flag format
  */
 
 import { execSync } from 'node:child_process';
@@ -173,13 +175,34 @@ Flags are passed through to gt sling:
   const { quality, decision } = selectQualityLevel(issue);
 
   console.log(`📋 Issue: ${issue.id} - ${issue.title}`);
-  console.log(`🎯 Quality: ${formatQuality(quality)}`);
-  console.log(`🧠 Routing: ${decision.model} (${decision.strategy}, ${(decision.confidence * 100).toFixed(0)}% confidence)`);
+  console.log(`🎯 Model: ${decision.model} (${formatQuality(quality)})`);
+  console.log(`🧠 Routing: ${decision.strategy}, ${(decision.confidence * 100).toFixed(0)}% confidence`);
   console.log(`💡 Rationale: ${decision.rationale}`);
   console.log(`🚀 Target: ${target}`);
 
-  // Build gt sling command (compatible with Gastown v0.1.1 - v0.2.1)
-  const cmd = ['gt', 'sling', issueId, target, '--quality', quality, ...extraFlags];
+  // Detect Gastown version and use appropriate flag
+  // v0.2.2+ has --agent flag, earlier versions use --quality
+  let cmd: string[];
+  try {
+    // Check if --agent flag exists by testing help output
+    const helpOutput = execSync('gt sling --help 2>&1', { encoding: 'utf-8' });
+    const hasAgentFlag = helpOutput.includes('--agent');
+    
+    if (hasAgentFlag) {
+      // v0.2.2+: Use --agent flag with configured agent alias
+      // User should have configured: gt config agent set haiku "claude --model haiku"
+      cmd = ['gt', 'sling', issueId, target, '--agent', decision.model, ...extraFlags];
+      console.log(`🔧 Using: --agent ${decision.model} (Gastown v0.2.2+)`);
+    } else {
+      // v0.1.1 - v0.2.1: Use --quality flag
+      cmd = ['gt', 'sling', issueId, target, '--quality', quality, ...extraFlags];
+      console.log(`🔧 Using: --quality ${quality} (Gastown v0.1.x-v0.2.1)`);
+    }
+  } catch {
+    // Fallback to --quality if version detection fails
+    cmd = ['gt', 'sling', issueId, target, '--quality', quality, ...extraFlags];
+    console.log(`🔧 Using: --quality ${quality} (fallback)`);
+  }
 
   console.log(`\n$ ${cmd.join(' ')}\n`);
 

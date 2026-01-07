@@ -22,7 +22,12 @@
 - `--quality=shiny` → Sonnet (~$0.01)
 - `--quality=chrome` → Opus (~$0.10)
 
-**Note**: Future Gastown versions may change this API. The current implementation is compatible with all released versions (v0.1.1, v0.2.0, v0.2.1).
+**Gastown v0.2.2+ (unreleased)**: Uses `--agent` flag
+- `--agent haiku` → Uses configured haiku agent
+- `--agent sonnet` → Uses configured sonnet agent
+- `--agent opus` → Uses configured opus agent
+
+**Implementation**: `gt-smart-sling` auto-detects version and uses appropriate flag format.
 
 ## Problem Statement
 
