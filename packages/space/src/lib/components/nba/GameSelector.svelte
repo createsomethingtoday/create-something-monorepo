@@ -8,11 +8,20 @@
 
 	import type { Game } from '$lib/nba/types';
 	import { Radio, Clock, CheckCircle } from 'lucide-svelte';
+	import VolumeMetric from './VolumeMetric.svelte';
+
+	interface GameWithVolume extends Game {
+		volumeMetric?: {
+			awayMadeFG: number;
+			homeMadeFG: number;
+			differential: number;
+		};
+	}
 
 	interface Props {
-		games: Game[];
+		games: GameWithVolume[];
 		selectedGameId?: string;
-		onselect?: (game: Game) => void;
+		onselect?: (game: GameWithVolume) => void;
 	}
 
 	let { games, selectedGameId, onselect }: Props = $props();
@@ -69,6 +78,16 @@
 
 				{#if game.status === 'live' && game.gameClock}
 					<div class="game-clock">Q{game.quarter} · {game.gameClock}</div>
+				{/if}
+
+				{#if game.volumeMetric}
+					<VolumeMetric
+						awayTeam={game.awayTeam.abbreviation}
+						homeTeam={game.homeTeam.abbreviation}
+						awayMadeFG={game.volumeMetric.awayMadeFG}
+						homeMadeFG={game.volumeMetric.homeMadeFG}
+						differential={game.volumeMetric.differential}
+					/>
 				{/if}
 			</button>
 		{/each}

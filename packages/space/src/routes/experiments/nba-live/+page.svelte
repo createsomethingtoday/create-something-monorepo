@@ -10,10 +10,10 @@
 	import type { Game } from '$lib/nba/types';
 	import GameSelector from '$lib/components/nba/GameSelector.svelte';
 	import GameHighlightCard from '$lib/components/nba/GameHighlightCard.svelte';
+	import DateNavigation from '$lib/components/nba/DateNavigation.svelte';
 	import { selectGameOfTheNight } from '$lib/nba/calculations';
 	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle, TrendingUp } from 'lucide-svelte';
 	import { invalidate } from '$app/navigation';
-	import { onMount, onDestroy } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -42,6 +42,14 @@
 
 	function handleGameSelect(game: Game) {
 		selectedGame = game;
+
+		// Smooth scroll to game details section
+		setTimeout(() => {
+			const analysisSection = document.getElementById('game-details');
+			if (analysisSection) {
+				analysisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		}, 50); // Brief delay to ensure DOM has updated
 	}
 
 	// Count games by status for the summary
@@ -52,34 +60,56 @@
 	// Select game of the night from completed games
 	const gameOfTheNight = $derived(selectGameOfTheNight(data.games));
 
-	// Check if we're viewing today's games (used in error messages)
-	const isToday = true; // Always true since we only show today's games
+	// Check if we're viewing today's games (used in labels and messaging)
+	const isToday = $derived(data.currentDate === new Date().toISOString().split('T')[0]);
+
+	// Format date display for section headers
+	const dateLabel = $derived.by(() => {
+		if (isToday) return "Today's Games";
+
+		const date = new Date(data.currentDate + 'T00:00:00');
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		const dateObj = new Date(date);
+		dateObj.setHours(0, 0, 0, 0);
+
+		const diffDays = Math.floor((dateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+		if (diffDays === -1) return "Yesterday's Games";
+
+		return `Games - ${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
+	});
 
 	// Auto-refresh every 30 seconds when games are live or scheduled
-	let pollInterval: ReturnType<typeof setInterval> | null = null;
-
-	onMount(() => {
-		// Only poll if there are live or scheduled games (no need when all are final)
+	// Uses $effect to reactively start/stop polling when date changes
+	$effect(() => {
 		const hasActiveGames = data.games.some(g => g.status === 'live' || g.status === 'scheduled');
+		const viewingToday = data.currentDate === new Date().toISOString().split('T')[0];
 
-		if (hasActiveGames) {
+		if (viewingToday && hasActiveGames) {
 			console.log('[NBA Live] Starting 30-second auto-refresh polling');
-			pollInterval = setInterval(
+			const interval = setInterval(
 				() => {
 					console.log('[NBA Live] Refreshing game data...');
 					invalidate('/experiments/nba-live');
 				},
 				30 * 1000 // 30 seconds
 			);
+
+			// Cleanup on dependency change or component unmount
+			return () => {
+				console.log('[NBA Live] Stopping auto-refresh polling');
+				clearInterval(interval);
+			};
 		} else {
-			console.log('[NBA Live] All games final - polling disabled');
+			console.log('[NBA Live] Polling disabled', { viewingToday, hasActiveGames });
 		}
 	});
 
-	onDestroy(() => {
-		if (pollInterval) {
-			clearInterval(pollInterval);
-		}
+	// Clear selected game when date changes
+	$effect(() => {
+		data.currentDate; // Track dependency
+		selectedGame = null;
 	});
 </script>
 
@@ -105,7 +135,7 @@
 <!-- Data Status -->
 <section class="status-section">
 	<div class="container">
-		<div class="status-bar">
+		<div class="status-bar" role="status" aria-live="polite">
 			<div class="status-indicator">
 				{#if data.error}
 					<AlertCircle size={16} class="status-icon status-icon--error" />
@@ -147,20 +177,35 @@
 	</section>
 {/if}
 
+<!-- Date Navigation -->
+<section class="date-section">
+	<div class="container">
+		<DateNavigation currentDate={data.currentDate} />
+	</div>
+</section>
+
 <!-- Game Selector -->
 <section class="games-section">
 	<div class="container">
-		<h2 class="section-label">{isToday ? "Today's Games" : 'Games'}</h2>
+		<h2 class="section-label">{dateLabel}</h2>
 
 		{#if data.error}
 			<div class="error-state">
 				<AlertCircle size={24} />
 				<p class="error-message">We couldn't load {isToday ? "today's" : 'these'} games.</p>
 				<p class="error-hint">
+					The NBA data feed may be temporarily unavailable. Check back in a few minutes.
+				</p>
+			</div>
+		{:else if data.noGamesScheduled}
+			<div class="empty-state">
+				<Clock size={24} />
+				<p class="empty-message">No games scheduled for this date</p>
+				<p class="empty-hint">
 					{#if isToday}
-						The NBA data feed may be temporarily unavailable. Check back in a few minutes.
+						The schedule hasn't been published yet. Games are typically added a few hours before tip-off—check back later today.
 					{:else}
-						Data for this date may not be available yet, or the feed may be temporarily down.
+						We only have game data starting from Jan 5, 2026.
 					{/if}
 				</p>
 			</div>
@@ -189,7 +234,7 @@
 
 <!-- Analysis Options -->
 {#if selectedGame}
-	<section class="analysis-section">
+	<section id="game-details" class="analysis-section">
 		<div class="container">
 			<div class="selected-game">
 				<h2 class="matchup">
@@ -434,11 +479,35 @@
 		font-size: var(--text-body-sm);
 	}
 
+	/* Empty State (No Games Scheduled) */
+	.empty-state {
+		text-align: center;
+		padding: var(--space-xl);
+		color: var(--color-fg-muted);
+	}
+
+	.empty-state :global(svg) {
+		display: block;
+		margin-inline: auto;
+		margin-bottom: var(--space-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.empty-message {
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.empty-hint {
+		font-size: var(--text-body-sm);
+	}
+
 	/* Analysis Section */
 	.analysis-section {
 		padding-bottom: var(--space-xl);
 		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-lg);
+		scroll-margin-top: var(--space-lg);
 	}
 
 	.selected-game {

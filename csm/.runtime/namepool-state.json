@@ -2,18 +2,27 @@
   "rig_name": "csm",
   "theme": "mad-max",
   "in_use": {
+    "ace": true,
+    "angharad": true,
     "capable": true,
     "cheedo": true,
+    "coma": true,
     "dag": true,
     "dementus": true,
     "furiosa": true,
+    "immortan": true,
+    "imperator": true,
     "keeper": true,
+    "max": true,
     "morsov": true,
     "nux": true,
+    "organic": true,
     "rictus": true,
     "slit": true,
+    "splendid": true,
     "toast": true,
-    "valkyrie": true
+    "valkyrie": true,
+    "warboy": true
   },
   "overflow_next": 51,
   "max_size": 50

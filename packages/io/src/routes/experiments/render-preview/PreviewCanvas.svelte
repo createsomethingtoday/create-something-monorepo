@@ -1,10 +1,12 @@
 <script lang="ts">
 	interface Props {
 		pngDataUrl: string;
+		viewBoxWidth: number;
+		viewBoxHeight: number;
 		onCropChange?: (crop: [number, number, number, number] | null) => void;
 	}
 
-	let { pngDataUrl, onCropChange }: Props = $props();
+	let { pngDataUrl, viewBoxWidth, viewBoxHeight, onCropChange }: Props = $props();
 
 	// Canvas state
 	let canvas: HTMLCanvasElement | null = $state(null);
@@ -93,9 +95,9 @@
 
 		// Convert canvas coordinates to SVG viewBox coordinates
 		if (currentCrop && canvas && onCropChange) {
-			// This is a simplified conversion - in production you'd need the original SVG viewBox
-			const scaleX = 100 / canvas.width; // Assuming 0-100 viewBox
-			const scaleY = 100 / canvas.height;
+			// Use actual viewBox dimensions for accurate coordinate conversion
+			const scaleX = viewBoxWidth / canvas.width;
+			const scaleY = viewBoxHeight / canvas.height;
 			const crop: [number, number, number, number] = [
 				Math.round(currentCrop.x * scaleX),
 				Math.round(currentCrop.y * scaleY),

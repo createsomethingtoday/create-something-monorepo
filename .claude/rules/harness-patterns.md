@@ -416,6 +416,7 @@ See [Gastown Patterns](./gastown-patterns.md) for distributed work.
 
 ## Related
 
+- [Ralph Patterns](./ralph-patterns.md) - Iterative refinement loops (complements harness for test-fix scenarios)
 - [Agent Orchestration](/learn/lessons/advanced/agent-orchestration)
 - [Agent Philosophy](/learn/lessons/agents/agent-philosophy)
 - [Gastown Patterns](./gastown-patterns.md)
