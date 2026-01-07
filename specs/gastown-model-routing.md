@@ -1,6 +1,6 @@
 # Gastown Model Routing
 
-**Status**: ✅ Implemented (2026-01-05)
+**Status**: ✅ Implemented (2026-01-05) | ⚠️ Updated for Gastown v0.2.2 (2026-01-07)
 
 ## Implementation Summary
 
@@ -11,8 +11,16 @@
 
 **Gastown Workers**: Smart wrapper created (`gt-smart-sling`)
 - Reads Beads issue labels
-- Maps to Gastown quality levels (basic/shiny/chrome)
-- Passes through to `gt sling --quality=X`
+- Maps to Gastown agent overrides (v0.2.2+)
+- Passes through to `gt sling --agent claude --model <model>`
+
+## Breaking Change: Gastown v0.2.2
+
+**⚠️ IMPORTANT**: Gastown v0.2.2 removed the `--quality` flag from `gt sling`. The `gt-smart-sling` wrapper has been updated to use the new `--agent claude --model <model>` pattern:
+
+- `--quality=basic` → `--agent claude --model haiku`
+- `--quality=shiny` → `--agent claude --model sonnet`
+- `--quality=chrome` → `--agent claude --model opus`
 
 ## Problem Statement
 

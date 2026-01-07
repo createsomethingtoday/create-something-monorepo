@@ -9,7 +9,7 @@ Gastown coordinates multiple Claude Code instances. Here's how to use it.
 | Start Gastown | `gt start` |
 | Create a batch of work | `gt convoy create "Feature" cs-xxx cs-yyy` |
 | Assign work to a worker | `gt-smart-sling cs-xxx csm` (smart routing) |
-| Assign work manually | `gt sling cs-xxx csm --quality=shiny` |
+| Assign work manually | `gt sling cs-xxx csm --agent claude --model sonnet` |
 | Check your current task | `gt hook` |
 | Mark work complete | `gt done` |
 | Stop everything | `gt shutdown` |
@@ -69,9 +69,26 @@ gt convoy list
 ```bash
 gt start         # Launch all sessions
 gt shutdown      # Stop everything
-gt status        # Check what's running
+gt status        # Check what's running (compact format)
+gt status --watch # Watch mode with auto-refresh (v0.2.2+)
 gt wake          # Wake sleeping town
 ```
+
+### Rig Operational State (v0.2.2+)
+
+Control rig lifecycle without losing work:
+
+```bash
+gt rig park <rig>      # Pause daemon auto-start (preserves sessions)
+gt rig unpark <rig>    # Resume daemon auto-start
+gt rig dock <rig>      # Stop all sessions, prevent auto-start
+gt rig undock <rig>    # Resume normal operation
+gt rig status <rig>    # Show park/dock state
+```
+
+**Use cases**:
+- `park`: Temporarily pause work while keeping sessions alive
+- `dock`: Full stop for maintenance or debugging
 
 ### Working with Convoys
 
@@ -79,8 +96,8 @@ gt wake          # Wake sleeping town
 gt convoy create "Name" cs-xxx cs-yyy    # Batch issues
 gt convoy list                            # See active convoys
 gt convoy show <id>                       # Track progress
-gt sling cs-xxx csm                       # Assign to rig (manual quality)
-gt-smart-sling cs-xxx csm                # Assign with auto quality detection
+gt sling cs-xxx csm                       # Assign to rig (uses default model)
+gt-smart-sling cs-xxx csm                # Assign with auto model routing
 ```
 
 ### Smart Slinging (Model Routing)
@@ -98,12 +115,14 @@ gt-smart-sling cs-abc123 csm --message "Focus on performance"
 
 **How it works**:
 1. Reads Beads issue labels
-2. Maps to Gastown quality level:
-   - `model:haiku` or `complexity:trivial` → `--quality=basic` (Haiku ~$0.001)
-   - `model:sonnet` or `complexity:simple/standard` → `--quality=shiny` (Sonnet ~$0.01)
-   - `model:opus` or `complexity:complex` → `--quality=chrome` (Opus ~$0.10)
-3. Pattern matches title (e.g., "rename" → basic, "architect" → chrome)
-4. Calls `gt sling` with appropriate quality
+2. Maps to Gastown agent override (v0.2.2+):
+   - `model:haiku` or `complexity:trivial` → `--agent claude --model haiku` (Haiku ~$0.001)
+   - `model:sonnet` or `complexity:simple/standard` → `--agent claude --model sonnet` (Sonnet ~$0.01)
+   - `model:opus` or `complexity:complex` → `--agent claude --model opus` (Opus ~$0.10)
+3. Pattern matches title (e.g., "rename" → haiku, "architect" → opus)
+4. Calls `gt sling` with appropriate agent model override
+
+**Note**: Gastown v0.2.2 removed the `--quality` flag. `gt-smart-sling` now uses `--agent claude --model <model>` pattern.
 
 **Label your issues**:
 ```bash
@@ -358,6 +377,7 @@ Work outcomes are guaranteed regardless of crashes or restarts. This is "nondete
 
 ## Related Documentation
 
+- [Ralph Patterns](./ralph-patterns.md) - Iterative refinement (enables worker self-rescue)
 - [Harness Patterns](./harness-patterns.md) - Single-session orchestration
 - [Beads Patterns](./beads-patterns.md) - Issue tracking
 - [Dotfiles Conventions](./dotfiles-conventions.md) - tmux configuration

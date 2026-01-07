@@ -52,10 +52,14 @@ bv --robot-priority     # AI-optimized ranking (JSON)
 ```bash
 bd create "Fix login bug"                    # Create issue
 bd create "Add caching" --priority P1        # With priority
+bd create "Test issue" --dry-run            # Preview without creating (v0.2.2+)
+bd create "Test issue" --dry-run --json     # Preview as JSON
 bd update cs-abc --status in-progress        # Start working
 bd close cs-abc                              # Mark done
 bd label add cs-abc agency                   # Add scope label
 ```
+
+**Dry-run preview**: Use `--dry-run` to validate issue creation before actually creating. Useful for scripting and validation.
 
 ### Dependencies
 
@@ -205,4 +209,6 @@ This is what "nondeterministic idempotence" means in plain English: **different 
 
 - [Install Beads](/learn/lessons/getting-started/install-beads) — Setup walkthrough
 - [Agent Orchestration](/learn/lessons/advanced/agent-orchestration) — Multi-agent patterns
+- [Ralph Patterns](./ralph-patterns.md) — Iterative refinement (use ralph-retry label)
+- [Harness Patterns](./harness-patterns.md) — Single-session workflows
 - [Gastown Patterns](./gastown-patterns.md) — Full orchestration system

@@ -245,15 +245,32 @@ async function handleWork(args: string[], cwd: string): Promise<void> {
   // Mode 1: Create new issue and work on it
   if (createTitle) {
     console.log(`\n🆕 Creating issue: "${createTitle}"\n`);
-    if (dryRun) {
-      console.log('[DRY RUN] Would create issue and work on it');
-      return;
-    }
-    const issueId = await createIssue(createTitle, {
+    const createResult = await createIssue(createTitle, {
       description: 'Created via harness work --create',
       priority: 2,
       type: 'task',
+      dryRun,
     }, cwd);
+    
+    if (dryRun) {
+      const preview = createResult as import('./beads.js').IssuePreview;
+      console.log('[DRY RUN] Would create issue:');
+      console.log(`  ID: ${preview.id || '(will be generated)'}`);
+      console.log(`  Title: ${preview.title}`);
+      console.log(`  Type: ${preview.type}`);
+      console.log(`  Priority: P${preview.priority}`);
+      console.log(`  Status: ${preview.status}`);
+      if (preview.labels?.length) {
+        console.log(`  Labels: ${preview.labels.join(', ')}`);
+      }
+      if (preview.description) {
+        console.log(`  Description: ${preview.description.slice(0, 100)}${preview.description.length > 100 ? '...' : ''}`);
+      }
+      console.log('\n[DRY RUN] Would then work on this issue.');
+      return;
+    }
+    
+    const issueId = createResult as string;
     issue = await getIssue(issueId, cwd);
   }
   // Mode 2: Parse spec file and work through issues

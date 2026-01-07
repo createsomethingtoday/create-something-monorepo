@@ -109,7 +109,27 @@ export async function getIssue(issueId: string, repoRoot?: string): Promise<Bead
 }
 
 /**
+ * Preview data returned from dry-run issue creation.
+ */
+export interface IssuePreview {
+  id?: string; // Will be generated if not provided
+  title: string;
+  type: string;
+  priority: number;
+  status: string;
+  labels?: string[];
+  description?: string;
+  targetRig?: string;
+}
+
+/**
  * Create a new issue in Beads.
+ * 
+ * @param title - Issue title
+ * @param options - Issue creation options
+ * @param options.dryRun - If true, preview issue without creating (uses bd create --dry-run)
+ * @param cwd - Working directory for Beads commands
+ * @returns Issue ID if created, or IssuePreview if dryRun is true
  */
 export async function createIssue(
   title: string,
@@ -119,9 +139,10 @@ export async function createIssue(
     labels?: string[];
     description?: string;
     metadata?: Record<string, unknown>;
+    dryRun?: boolean;
   },
   cwd?: string
-): Promise<string> {
+): Promise<string | IssuePreview> {
   // Escape shell special characters: double quotes, backticks, dollar signs
   const escapedTitle = title
     .replace(/\\/g, '\\\\')
@@ -156,7 +177,38 @@ export async function createIssue(
     args.push(`-d "Created by harness"`);
   }
 
+  // Add --dry-run flag if requested (Beads v0.2.2+ feature)
+  if (options?.dryRun) {
+    args.push('--dry-run', '--json');
+  }
+
   const output = await bd(args.join(' '), cwd);
+
+  // Handle dry-run output (JSON format)
+  if (options?.dryRun) {
+    try {
+      const preview = JSON.parse(output) as IssuePreview;
+      return preview;
+    } catch {
+      // Fallback: parse human-readable output
+      const preview: IssuePreview = {
+        title,
+        type: issueType,
+        priority: options?.priority ?? 2,
+        status: 'open',
+        labels: options?.labels,
+        description: options?.description,
+      };
+      
+      // Try to extract ID from output if present
+      const idMatch = output.match(/ID:\s*([^\n]+)/i);
+      if (idMatch && !idMatch[1].includes('will be generated')) {
+        preview.id = idMatch[1].trim();
+      }
+      
+      return preview;
+    }
+  }
 
   // Parse the issue ID from output (e.g., "Created issue: create-something-monorepo-abc")
   const match = output.match(/Created issue:\s+(\S+)/i) || output.match(/([a-z0-9]+-[a-z0-9]+)/i);
@@ -303,7 +355,7 @@ export async function createHarnessIssue(
 
   const description = `Harness run for: ${specFile}\nFeatures: ${featuresTotal}\nStarted: ${new Date().toISOString()}`;
 
-  const issueId = await createIssue(
+  const result = await createIssue(
     `Harness: ${title}`,
     {
       type: 'epic', // Use epic for harness parent issues
@@ -317,7 +369,8 @@ export async function createHarnessIssue(
   // Note: Beads may not support metadata directly via CLI
   // For now, we track metadata separately or enhance later
 
-  return issueId;
+  // createIssue returns string when not in dry-run mode
+  return result as string;
 }
 
 /**
@@ -329,7 +382,7 @@ export async function createCheckpointIssue(
 ): Promise<string> {
   const description = formatCheckpointDescription(checkpoint);
 
-  const issueId = await createIssue(
+  const result = await createIssue(
     `Checkpoint #${checkpoint.sessionNumber}: ${checkpoint.summary.slice(0, 50)}`,
     {
       type: 'task', // Use task for checkpoint issues
@@ -340,7 +393,8 @@ export async function createCheckpointIssue(
     cwd
   );
 
-  return issueId;
+  // createIssue returns string when not in dry-run mode
+  return result as string;
 }
 
 /**
@@ -497,7 +551,7 @@ export async function createIssuesFromFeatures(
       labels.push(`complexity:${feature.complexity}`);
     }
 
-    const issueId = await createIssue(
+    const result = await createIssue(
       feature.title,
       {
         type: 'feature',
@@ -508,6 +562,8 @@ export async function createIssuesFromFeatures(
       cwd
     );
 
+    // createIssue returns string when not in dry-run mode
+    const issueId = result as string;
     featureToIssue.set(feature.id, issueId);
   }
 
@@ -888,7 +944,7 @@ export async function createIssueFromFinding(
   const discoveryLabel = getDiscoveryLabel(discoverySource);
   const labels = [discoveryLabel, finding.category, ...extraLabels];
 
-  const issueId = await createIssue(
+  const result = await createIssue(
     finding.title,
     {
       type: 'task',
@@ -898,6 +954,9 @@ export async function createIssueFromFinding(
     },
     cwd
   );
+
+  // createIssue returns string when not in dry-run mode
+  const issueId = result as string;
 
   // Link to originating checkpoint with discovered-from dependency
   await addDependency(issueId, checkpointId, 'discovered-from', cwd);

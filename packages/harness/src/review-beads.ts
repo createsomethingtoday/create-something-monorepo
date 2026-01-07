@@ -31,7 +31,7 @@ export async function createReviewIssue(
     priority = 1; // High → P1
   }
 
-  const issueId = await createIssue(
+  const result = await createIssue(
     `Review: ${aggregation.overallOutcome} (${aggregation.totalFindings} findings)`,
     {
       type: 'task',
@@ -47,6 +47,9 @@ export async function createReviewIssue(
     },
     cwd
   );
+
+  // createIssue returns string when not in dry-run mode
+  const issueId = result as string;
 
   // Link to the checkpoint
   try {
@@ -84,7 +87,7 @@ export async function createFindingIssues(
   // Create issues for each important finding
   for (const { finding, reviewerId } of importantFindings) {
     try {
-      const issueId = await createIssue(
+      const result = await createIssue(
         `[${finding.severity.toUpperCase()}] ${finding.title}`,
         {
           type: 'bug', // Findings are bugs to fix
@@ -100,6 +103,8 @@ export async function createFindingIssues(
         },
         cwd
       );
+      // createIssue returns string when not in dry-run mode
+      const issueId = result as string;
       issueIds.push(issueId);
     } catch (error) {
       console.log(`  [Warning] Could not create issue for finding: ${finding.title}`);
