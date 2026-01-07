@@ -12,6 +12,8 @@ html {
 	font-family: var(--font-sans);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	transition: background-color var(--duration-standard) var(--ease-standard),
+		color var(--duration-standard) var(--ease-standard);
 }
 
 body {
@@ -19,6 +21,8 @@ body {
 	background: var(--color-bg-pure);
 	color: var(--color-fg-primary);
 	line-height: var(--leading-normal);
+	transition: background-color var(--duration-standard) var(--ease-standard),
+		color var(--duration-standard) var(--ease-standard);
 }
 
 /* Dark mode is default, light mode via data attribute */
@@ -35,6 +39,8 @@ body {
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
+	html,
+	body,
 	*,
 	*::before,
 	*::after {

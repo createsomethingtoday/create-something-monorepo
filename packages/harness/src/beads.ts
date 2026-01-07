@@ -64,7 +64,9 @@ async function bv(args: string, cwd?: string): Promise<string> {
 export async function readAllIssues(repoRoot?: string): Promise<BeadsIssue[]> {
   try {
     // Try using bd CLI first (more reliable)
-    const output = await bd('list --json --all', repoRoot);
+    // Note: Using --json without --all to get open issues by default
+    // --all flag appears to have different filtering behavior in some bd versions
+    const output = await bd('list --json', repoRoot);
     return JSON.parse(output) as BeadsIssue[];
   } catch {
     // Fallback to JSONL file

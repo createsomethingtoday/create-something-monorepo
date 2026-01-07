@@ -1,0 +1,15 @@
+{
+  "name": "@create-something/webflow-automation",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Airtable automation scripts for Webflow integrations",
+  "type": "module",
+  "scripts": {
+    "validate": "tsc --noEmit",
+    "test": "echo 'No tests yet'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
+

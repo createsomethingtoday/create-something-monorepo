@@ -23,3 +23,4 @@
 {"ts":"2026-01-07T17:49:07Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"angharad","rig":"csm"},"visibility":"feed"}
 {"ts":"2026-01-07T17:49:53Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"max","rig":"csm"},"visibility":"feed"}
 {"ts":"2026-01-07T17:53:44Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"immortan","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-07T17:54:27Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"bullet","rig":"csm"},"visibility":"feed"}
