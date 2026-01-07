@@ -6,10 +6,12 @@
  * Smart Sling: Intelligently route Gastown workers based on Beads labels.
  *
  * Philosophy: Reuse harness model routing logic for Gastown workers.
- * Maps Beads issue complexity to Gastown agent overrides:
- * - trivial/haiku → --agent claude --model haiku
- * - simple/standard/sonnet → --agent claude --model sonnet (default)
- * - complex/opus → --agent claude --model opus
+ * Maps Beads issue complexity to Gastown quality levels:
+ * - trivial/haiku → --quality=basic (Haiku ~$0.001)
+ * - simple/standard/sonnet → --quality=shiny (Sonnet ~$0.01)
+ * - complex/opus → --quality=chrome (Opus ~$0.10)
+ *
+ * Compatible with Gastown v0.1.1 - v0.2.1 using --quality flag.
  *
  * Usage:
  *   gt-smart-sling cs-abc123 csm
@@ -18,8 +20,8 @@
  * This wrapper:
  * 1. Reads the Beads issue
  * 2. Checks for model: or complexity: labels
- * 3. Maps to appropriate --agent override
- * 4. Calls gt sling with agent model selection
+ * 3. Maps to appropriate --quality flag
+ * 4. Calls gt sling with quality level
  */
 
 import { execSync } from 'node:child_process';
@@ -37,7 +39,7 @@ import type { ClaudeModelFamily, BeadsIssue } from '../types.js';
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Note: Gastown v0.2.2 removed --quality flag, now uses --agent overrides
+type QualityLevel = 'basic' | 'shiny' | 'chrome';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Beads Issue Reading
@@ -79,36 +81,40 @@ function readBeadsIssue(issueId: string, cwd: string = process.cwd()): BeadsIssu
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Map routing decision to Gastown agent override flags.
- * Gastown v0.2.2+ uses --agent claude --model <model> instead of --quality.
+ * Map routing decision to Gastown quality level.
+ * Compatible with Gastown v0.1.1 - v0.2.1.
  */
-function modelToAgentFlags(model: ClaudeModelFamily): string[] {
-  // Map model to --agent claude --model <model> flags
-  const modelName = model === 'unknown' ? 'sonnet' : model; // Default to Sonnet
-  return ['--agent', 'claude', '--model', modelName];
-}
-
-/**
- * Select model and build agent flags using the harness model routing logic.
- */
-function selectAgentFlags(issue: BeadsIssue): { agentFlags: string[]; decision: RoutingDecision } {
-  const decision = selectModel(issue);
-  const agentFlags = modelToAgentFlags(decision.model);
-
-  return { agentFlags, decision };
-}
-
-/**
- * Format model for display.
- */
-function formatModel(model: ClaudeModelFamily): string {
-  const map: Record<ClaudeModelFamily, string> = {
-    haiku: 'haiku (Haiku ~$0.001)',
-    sonnet: 'sonnet (Sonnet ~$0.01)',
-    opus: 'opus (Opus ~$0.10)',
-    unknown: 'sonnet (Sonnet ~$0.01)',
+function modelToQuality(model: ClaudeModelFamily): QualityLevel {
+  const mapping: Record<ClaudeModelFamily, QualityLevel> = {
+    haiku: 'basic',
+    sonnet: 'shiny',
+    opus: 'chrome',
+    unknown: 'shiny', // Default to Sonnet
   };
-  return map[model] || 'sonnet (Sonnet ~$0.01)';
+
+  return mapping[model] || 'shiny';
+}
+
+/**
+ * Select quality level using the harness model routing logic.
+ */
+function selectQualityLevel(issue: BeadsIssue): { quality: QualityLevel; decision: RoutingDecision } {
+  const decision = selectModel(issue);
+  const quality = modelToQuality(decision.model);
+
+  return { quality, decision };
+}
+
+/**
+ * Format quality level for display.
+ */
+function formatQuality(level: QualityLevel): string {
+  const map: Record<QualityLevel, string> = {
+    basic: 'basic (Haiku ~$0.001)',
+    shiny: 'shiny (Sonnet ~$0.01)',
+    chrome: 'chrome (Opus ~$0.10)',
+  };
+  return map[level];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,11 +139,11 @@ Examples:
 This wrapper:
 1. Reads the Beads issue (${args[0] || 'ISSUE_ID'})
 2. Checks for model: or complexity: labels
-3. Maps to Gastown agent override:
-   - trivial/haiku → --agent claude --model haiku (Haiku ~$0.001)
-   - simple/standard/sonnet → --agent claude --model sonnet (Sonnet ~$0.01)
-   - complex/opus → --agent claude --model opus (Opus ~$0.10)
-4. Calls gt sling with appropriate agent model
+3. Maps to Gastown quality level:
+   - trivial/haiku → --quality=basic (Haiku ~$0.001)
+   - simple/standard/sonnet → --quality=shiny (Sonnet ~$0.01)
+   - complex/opus → --quality=chrome (Opus ~$0.10)
+4. Calls gt sling with appropriate quality
 
 Model Selection Priority:
 1. Explicit labels (model:haiku, model:sonnet, model:opus)
@@ -163,29 +169,16 @@ Flags are passed through to gt sling:
     process.exit(1);
   }
 
-  // Select agent flags using model routing
-  const { agentFlags, decision } = selectAgentFlags(issue);
+  // Select quality level using model routing
+  const { quality, decision } = selectQualityLevel(issue);
 
   console.log(`📋 Issue: ${issue.id} - ${issue.title}`);
-  console.log(`🎯 Model: ${formatModel(decision.model)}`);
+  console.log(`🎯 Quality: ${formatQuality(quality)}`);
   console.log(`🧠 Routing: ${decision.model} (${decision.strategy}, ${(decision.confidence * 100).toFixed(0)}% confidence)`);
   console.log(`💡 Rationale: ${decision.rationale}`);
   console.log(`🚀 Target: ${target}`);
 
-  // Build gt sling command
-  // Note: Gastown v0.2.2+ uses --agent claude --model <model> instead of --quality
-  // For backward compatibility with v0.1.x, we use --quality flag
-  // When Gastown v0.2.2+ is installed, this will need to be updated
-  const qualityMap: Record<ClaudeModelFamily, string> = {
-    haiku: 'basic',
-    sonnet: 'shiny',
-    opus: 'chrome',
-    unknown: 'shiny',
-  };
-  const quality = qualityMap[decision.model] || 'shiny';
-  
-  // Try --agent format first (v0.2.2+), fall back to --quality (v0.1.x)
-  // For now, use --quality since most installations are v0.1.x
+  // Build gt sling command (compatible with Gastown v0.1.1 - v0.2.1)
   const cmd = ['gt', 'sling', issueId, target, '--quality', quality, ...extraFlags];
 
   console.log(`\n$ ${cmd.join(' ')}\n`);
