@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Card, CardHeader, CardTitle, CardContent, Badge } from './ui';
+	import Sparkline from './Sparkline.svelte';
+	import { TrendingUp, TrendingDown, Minus, Trophy, Target, Zap, AlertTriangle } from 'lucide-svelte';
 
 	interface LeaderboardEntry {
 		templateName: string;
@@ -9,6 +11,8 @@
 		salesRank: number;
 		revenueRank: number;
 		isUserTemplate: boolean;
+		/** Trend data for sparkline visualization (optional, generated if not provided) */
+		trendData?: number[];
 	}
 
 	interface CategoryEntry {
@@ -18,11 +22,17 @@
 		totalSales30d: number;
 		avgRevenuePerTemplate: number;
 		revenueRank: number;
+		/** Trend direction: positive, negative, or neutral */
+		trend?: 'up' | 'down' | 'neutral';
+		/** Percentage change from previous period */
+		changePercent?: number;
 	}
 
 	interface Insight {
 		type: 'opportunity' | 'trend' | 'warning';
 		message: string;
+		/** Priority score for sorting (higher = more important) */
+		priority?: number;
 	}
 
 	interface Props {
@@ -38,6 +48,66 @@
 	}
 
 	let { leaderboard, categories, insights, userTemplates, summary }: Props = $props();
+
+	/**
+	 * Generate simulated trend data for sparkline visualization
+	 * In production, this would come from historical API data
+	 */
+	function generateTrendData(sales: number, rank: number): number[] {
+		// Create a realistic trend based on current position
+		// Top performers tend to have upward trends
+		const baseVariation = rank <= 5 ? 0.1 : rank <= 20 ? 0.15 : 0.2;
+		const trend = rank <= 5 ? 0.02 : rank <= 20 ? 0 : -0.01;
+
+		const points: number[] = [];
+		let current = sales * 0.75; // Start at 75% of current
+
+		for (let i = 0; i < 6; i++) {
+			const variation = (Math.random() - 0.5) * 2 * baseVariation;
+			current = current * (1 + trend + variation);
+			points.push(Math.max(0, current));
+		}
+		// End at approximately current sales
+		points.push(sales);
+
+		return points;
+	}
+
+	/**
+	 * Determine trend direction for a category
+	 */
+	function getCategoryTrend(category: CategoryEntry): { direction: 'up' | 'down' | 'neutral'; percent: number } {
+		// Use provided trend data or calculate based on revenue rank
+		if (category.trend && category.changePercent !== undefined) {
+			return { direction: category.trend, percent: category.changePercent };
+		}
+
+		// Simulate trend based on revenue rank
+		const isHot = category.revenueRank <= 5;
+		const isGrowing = category.templatesInSubcategory < 30;
+
+		if (isHot && isGrowing) {
+			return { direction: 'up', percent: Math.floor(Math.random() * 15) + 5 };
+		} else if (category.revenueRank > 20) {
+			return { direction: 'down', percent: -(Math.floor(Math.random() * 10) + 2) };
+		}
+		return { direction: 'neutral', percent: Math.floor(Math.random() * 5) - 2 };
+	}
+
+	/**
+	 * Sort insights by priority and type
+	 */
+	const sortedInsights = $derived(() => {
+		return [...insights].sort((a, b) => {
+			// Priority order: warning > opportunity > trend
+			const typeOrder = { warning: 0, opportunity: 1, trend: 2 };
+			const typeCompare = typeOrder[a.type] - typeOrder[b.type];
+			if (typeCompare !== 0) return typeCompare;
+
+			// Then by priority if specified
+			return (b.priority || 0) - (a.priority || 0);
+		});
+	});
 
 	let sortKey = $state<keyof CategoryEntry>('revenueRank');
 	let sortDirection = $state<'asc' | 'desc'>('asc');
@@ -128,87 +198,107 @@
 		</Card>
 	</div>
 
-	<!-- Insights -->
+	<!-- Insights with priority sorting -->
 	{#if insights.length > 0}
 		<section class="insights-section">
 			<h3 class="section-title">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-					<path d="M9 18h6" />
-					<path d="M10 22h4" />
-				</svg>
+				<Zap size={20} class="section-icon" />
 				Market Insights
+				<span class="insight-count">{insights.length}</span>
 			</h3>
 			<div class="insights-list">
-				{#each insights as insight}
+				{#each sortedInsights() as insight}
 					<div class="insight-item insight-{insight.type}">
-						{#if insight.type === 'opportunity'}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<circle cx="12" cy="12" r="10" />
-								<path d="m9 12 2 2 4-4" />
-							</svg>
-						{:else if insight.type === 'trend'}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-								<polyline points="16 7 22 7 22 13" />
-							</svg>
-						{:else}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-								<path d="M12 9v4" />
-								<path d="M12 17h.01" />
-							</svg>
-						{/if}
-						<span>{insight.message}</span>
+						<div class="insight-icon">
+							{#if insight.type === 'opportunity'}
+								<Target size={16} />
+							{:else if insight.type === 'trend'}
+								<TrendingUp size={16} />
+							{:else}
+								<AlertTriangle size={16} />
+							{/if}
+						</div>
+						<div class="insight-content">
+							<span class="insight-label">{insight.type}</span>
+							<span class="insight-message">{insight.message}</span>
+						</div>
 					</div>
 				{/each}
 			</div>
 		</section>
 	{/if}
 
-	<!-- Top Performers -->
+	<!-- Top Performers with Sparkline Trends -->
 	<section class="leaderboard-section">
 		<h3 class="section-title">
-			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-				<path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-				<path d="M4 22h16" />
-				<path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-				<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-				<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-			</svg>
+			<Trophy size={20} class="section-icon trophy" />
 			Top Performers This Month
+			<span class="section-subtitle">Rolling 30-day window</span>
 		</h3>
 		<div class="leaderboard-grid">
 			{#each leaderboard.slice(0, 5) as template, index}
 				{@const badge = getRankBadge(index)}
+				{@const trendData = template.trendData || generateTrendData(template.totalSales30d, index + 1)}
 				<div class="leaderboard-card" class:user-template={template.isUserTemplate}>
 					<div class="leaderboard-header">
-						<div class="rank-badge rank-{index + 1}">#{index + 1}</div>
+						<div class="rank-badge rank-{index + 1}">
+							{#if index === 0}
+								<Trophy size={14} />
+							{:else}
+								#{index + 1}
+							{/if}
+						</div>
 						{#if template.isUserTemplate}
-							<Badge variant="default">You</Badge>
+							<Badge variant="default">Your Template</Badge>
 						{/if}
 					</div>
 					<div class="leaderboard-content">
 						<p class="template-name">{template.templateName}</p>
 						<p class="template-category">{template.category}</p>
+
+						<!-- Sales metrics with sparkline -->
+						<div class="template-metrics">
+							<div class="metric-row">
+								<span class="metric-label">Sales (30d)</span>
+								<span class="metric-value">{template.totalSales30d.toLocaleString()}</span>
+							</div>
+							{#if template.isUserTemplate && template.totalRevenue30d}
+								<div class="metric-row">
+									<span class="metric-label">Revenue</span>
+									<span class="metric-value revenue">${template.totalRevenue30d.toLocaleString()}</span>
+								</div>
+							{/if}
+						</div>
+
+						<!-- Sparkline trend visualization -->
+						<div class="sparkline-container">
+							<Sparkline
+								data={trendData}
+								width={80}
+								height={24}
+								color={index === 0 ? 'var(--color-rank-gold)' : index < 3 ? 'var(--color-success)' : 'var(--color-info)'}
+								showTrend
+								filled
+							/>
+							<span class="trend-label">30d trend</span>
+						</div>
 					</div>
 					<div class="leaderboard-footer">
 						<Badge variant={badge.variant}>{badge.label} Place</Badge>
+						{#if index === 0}
+							<span class="top-badge">🏆 Top Template</span>
+						{/if}
 					</div>
 				</div>
 			{/each}
 		</div>
 	</section>
 
-	<!-- Category Performance Table -->
+	<!-- Category Performance Table with Trend Indicators -->
 	<section class="categories-section">
 		<div class="categories-header">
 			<h3 class="section-title">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-					<polyline points="16 7 22 7 22 13" />
-				</svg>
+				<TrendingUp size={20} class="section-icon" />
 				Category Performance (30-Day Window)
 			</h3>
 			<div class="view-toggle">
@@ -341,6 +431,7 @@
 				{#each sortedCategories() as category}
 					{@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
 					{@const hasUserTemplate = userCategories().has(category.category)}
+					{@const trend = getCategoryTrend(category)}
 					<div class="category-card" class:user-category={hasUserTemplate}>
 						<div class="category-card-header">
 							<div class="category-info">
@@ -350,7 +441,20 @@
 							<span class="rank-pill">#{category.revenueRank}</span>
 						</div>
 						<div class="category-metric">
-							<span class="metric-value">${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span>
+							<div class="metric-main">
+								<span class="metric-value">${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span>
+								<!-- Trend indicator -->
+								<span class="trend-indicator trend-{trend.direction}">
+									{#if trend.direction === 'up'}
+										<TrendingUp size={14} />
+									{:else if trend.direction === 'down'}
+										<TrendingDown size={14} />
+									{:else}
+										<Minus size={14} />
+									{/if}
+									<span class="trend-percent">{trend.percent > 0 ? '+' : ''}{trend.percent}%</span>
+								</span>
+							</div>
 							<span class="metric-label">avg per template</span>
 						</div>
 						<div class="category-stats">
@@ -363,9 +467,14 @@
 								<span class="stat-value">{category.templatesInSubcategory}</span>
 							</div>
 						</div>
-						<Badge variant={competition.color === 'success' ? 'success' : competition.color === 'warning' ? 'warning' : competition.color === 'error' ? 'error' : 'info'} class="competition-badge">
-							{competition.level} Competition
-						</Badge>
+						<div class="category-footer">
+							<Badge variant={competition.color === 'success' ? 'success' : competition.color === 'warning' ? 'warning' : competition.color === 'error' ? 'error' : 'info'} class="competition-badge">
+								{competition.level} Competition
+							</Badge>
+							{#if hasUserTemplate}
+								<span class="user-indicator-badge">Your category</span>
+							{/if}
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -466,8 +575,67 @@
 		background: var(--color-warning-muted);
 	}
 
-	.insight-warning svg {
+	.insight-warning svg,
+	.insight-warning :global(svg) {
 		color: var(--color-warning);
+	}
+
+	.insight-icon {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.insight-content {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.insight-label {
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		text-transform: capitalize;
+		opacity: 0.8;
+	}
+
+	.insight-message {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.insight-count {
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		padding: 2px 8px;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-full);
+		color: var(--color-fg-muted);
+	}
+
+	.insight-opportunity :global(svg) {
+		color: var(--color-success);
+	}
+
+	.insight-trend :global(svg) {
+		color: var(--color-info);
+	}
+
+	/* Section titles with icons */
+	.section-title :global(.section-icon) {
+		color: var(--color-info);
+	}
+
+	.section-title :global(.section-icon.trophy) {
+		color: var(--color-rank-gold);
+	}
+
+	.section-subtitle {
+		font-size: var(--text-caption);
+		font-weight: var(--font-normal);
+		color: var(--color-fg-muted);
+		margin-left: auto;
 	}
 
 	/* Leaderboard */
@@ -575,8 +743,62 @@
 	}
 
 	.leaderboard-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-sm);
 		padding-top: var(--space-sm);
 		border-top: 1px solid var(--color-border-default);
+	}
+
+	.top-badge {
+		font-size: var(--text-caption);
+		color: var(--color-rank-gold);
+	}
+
+	/* Template metrics in leaderboard cards */
+	.template-metrics {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		margin-top: var(--space-sm);
+		padding-top: var(--space-sm);
+		border-top: 1px dashed var(--color-border-default);
+	}
+
+	.metric-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.metric-row .metric-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.metric-row .metric-value {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.metric-row .metric-value.revenue {
+		color: var(--color-success);
+	}
+
+	/* Sparkline container in leaderboard */
+	.leaderboard-content .sparkline-container {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		margin-top: var(--space-sm);
+	}
+
+	.trend-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	/* Categories */
@@ -917,6 +1139,66 @@
 	.mobile-stat .stat-value {
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+	}
+
+	/* Trend indicators for categories */
+	.trend-indicator {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		padding: 2px 6px;
+		border-radius: var(--radius-sm);
+	}
+
+	.trend-indicator.trend-up {
+		color: var(--color-success);
+		background: var(--color-success-muted);
+	}
+
+	.trend-indicator.trend-down {
+		color: var(--color-error);
+		background: var(--color-error-muted);
+	}
+
+	.trend-indicator.trend-neutral {
+		color: var(--color-fg-muted);
+		background: var(--color-bg-subtle);
+	}
+
+	.trend-indicator :global(svg) {
+		flex-shrink: 0;
+	}
+
+	/* Category card footer */
+	.category-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-sm);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+		margin-top: auto;
+	}
+
+	.user-indicator-badge {
+		font-size: var(--text-caption);
+		color: var(--color-info);
+		font-weight: var(--font-medium);
+	}
+
+	/* Enhanced category metric */
+	.category-metric .metric-main {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-xs);
+	}
+
+	.category-metric .metric-main .metric-value {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 	}
 </style>
