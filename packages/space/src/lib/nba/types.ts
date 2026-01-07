@@ -299,6 +299,7 @@ export interface SeasonAverage {
 
 export interface NBAScoreboardResponse {
 	scoreboard: {
+		gameDate: string; // YYYY-MM-DD in Pacific Time
 		games: NBAGameSummary[];
 	};
 }
@@ -463,7 +464,7 @@ export interface NBAApiError {
 }
 
 export type NBAApiResult<T> =
-	| { success: true; data: T; cached: boolean; timestamp: string }
+	| { success: true; data: T; cached: boolean; timestamp: string; gameDate?: string }
 	| { success: false; error: NBAApiError };
 
 // ============================================

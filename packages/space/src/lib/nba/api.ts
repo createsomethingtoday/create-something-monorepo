@@ -248,6 +248,7 @@ export async function fetchLiveGames(date?: string): Promise<NBAApiResult<Game[]
 		console.log('[fetchLiveGames] Successfully fetched games', {
 			correlationId,
 			date: date || 'today',
+			gameDate: result.data.scoreboard.gameDate,
 			gameCount: games.length,
 			live: games.filter(g => g.status === 'live').length,
 			final: games.filter(g => g.status === 'final').length
@@ -258,6 +259,7 @@ export async function fetchLiveGames(date?: string): Promise<NBAApiResult<Game[]
 			data: games,
 			cached: result.cached,
 			timestamp: result.timestamp,
+			gameDate: result.data.scoreboard.gameDate, // Include NBA's game date (Pacific Time)
 		};
 	} catch (error) {
 		console.error('[fetchLiveGames] Failed to parse games', {

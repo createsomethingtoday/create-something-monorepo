@@ -476,6 +476,57 @@ export function getImpactColorClass(
 }
 
 /**
+ * Calculate made field goal differential from play-by-play
+ *
+ * The refinement metric: volume beats efficiency.
+ * If differential ≥8, bet on the team making more shots.
+ */
+export function calculateFGDifferential(actions: PlayByPlayAction[]): {
+	homeTeam: { teamId: string; madeFG: number };
+	awayTeam: { teamId: string; madeFG: number };
+	differential: number;
+	volumeAdvantage: 'home' | 'away' | 'even';
+} | null {
+	const teams = new Map<string, { madeFG: number }>();
+
+	// Count made field goals per team
+	actions
+		.filter((a) => a.actionType === 'shot' && a.shotResult === 'made')
+		.forEach((a) => {
+			if (!teams.has(a.teamId)) {
+				teams.set(a.teamId, { madeFG: 0 });
+			}
+			teams.get(a.teamId)!.madeFG++;
+		});
+
+	if (teams.size !== 2) return null;
+
+	const teamStats = [...teams.entries()];
+	const [team1, team2] = teamStats;
+
+	const diff = Math.abs(team1[1].madeFG - team2[1].madeFG);
+	const advantage =
+		diff < 3 ? 'even' : team1[1].madeFG > team2[1].madeFG ? 'home' : 'away';
+
+	// Assume first team in actions is away team (common API pattern)
+	const firstTeamId = actions.find((a) => a.teamId)?.teamId;
+	const isTeam1Away = team1[0] === firstTeamId;
+
+	return {
+		homeTeam: {
+			teamId: isTeam1Away ? team2[0] : team1[0],
+			madeFG: isTeam1Away ? team2[1].madeFG : team1[1].madeFG,
+		},
+		awayTeam: {
+			teamId: isTeam1Away ? team1[0] : team2[0],
+			madeFG: isTeam1Away ? team1[1].madeFG : team2[1].madeFG,
+		},
+		differential: diff,
+		volumeAdvantage: advantage,
+	};
+}
+
+/**
  * Select the "Game of the Night" from a list of completed games.
  *
  * Criteria (in priority order):

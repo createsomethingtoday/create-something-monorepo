@@ -8,7 +8,8 @@
   "bin": {
     "harness": "./dist/cli.js",
     "gt-smart-sling": "./dist/bin/gt-smart-sling.js",
-    "routing-report": "./dist/bin/routing-report.js"
+    "routing-report": "./dist/bin/routing-report.js",
+    "ralph-escalate": "./dist/bin/ralph-escalate.js"
   },
   "exports": {
     ".": {

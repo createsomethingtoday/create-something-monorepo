@@ -193,7 +193,9 @@ async function handleGamesByDate(
 	correlationId: string
 ): Promise<Response> {
 	try {
-		const today = new Date().toISOString().slice(0, 10);
+		// NBA operates on Pacific Time - use PT for "today" comparison
+		const pacificDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+		const today = pacificDate.toISOString().slice(0, 10);
 
 		// If requesting today's games, fetch live data
 		if (date === today) {
@@ -328,12 +330,14 @@ function handleHealth(correlationId: string): Response {
 	);
 }
 
-// Daily snapshot capture (runs at 2am ET via cron)
+// Daily snapshot capture (runs at 2am PT via cron)
 async function captureSnapshot(env: Env): Promise<void> {
 	const correlationId = generateCorrelationId();
 
-	// Capture previous day's games (cron runs at 2am, so games from "yesterday" are complete)
-	const yesterday = new Date();
+	// Capture previous day's games (cron runs at 2am PT, so games from "yesterday" are complete)
+	// Use Pacific Time since NBA operates on PT
+	const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+	const yesterday = new Date(now);
 	yesterday.setDate(yesterday.getDate() - 1);
 	const date = yesterday.toISOString().slice(0, 10); // YYYY-MM-DD
 

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "exp_nba_qhd4f",
+    "timestamp": 1736114400000,
+    "taskId": "csm-qhd4f",
+    "description": "Update NBA proxy to support /games/:date endpoint",
+    "modelUsed": "haiku",
+    "routingStrategy": "pattern-match",
+    "routingConfidence": 0.85,
+    "success": true,
+    "cost": 0.001,
+    "notes": "Pattern matching would have routed to Haiku. Already implemented."
+  },
+  {
+    "id": "exp_nba_pmqjy",
+    "timestamp": 1736114401000,
+    "taskId": "csm-pmqjy",
+    "description": "Update NBA proxy to accept date parameter",
+    "modelUsed": "haiku",
+    "routingStrategy": "pattern-match",
+    "routingConfidence": 0.85,
+    "success": true,
+    "cost": 0.001,
+    "notes": "Duplicate of qhd4f. Simple execution task."
+  },
+  {
+    "id": "exp_nba_2x0sx",
+    "timestamp": 1736114402000,
+    "taskId": "csm-2x0sx",
+    "description": "Add league-insights analysis page to NBA Live",
+    "modelUsed": "sonnet",
+    "routingStrategy": "default",
+    "routingConfidence": 0.6,
+    "success": true,
+    "cost": 0.01,
+    "notes": "Multi-file feature requiring coordination. Sonnet appropriate."
+  },
+  {
+    "id": "exp_nba_9rbmd",
+    "timestamp": 1736114403000,
+    "taskId": "csm-9rbmd",
+    "description": "Create Game of the Night highlight card component",
+    "modelUsed": "haiku",
+    "routingStrategy": "pattern-match",
+    "routingConfidence": 0.85,
+    "success": true,
+    "cost": 0.001,
+    "notes": "Single component creation. Pattern match to Haiku."
+  },
+  {
+    "id": "exp_dashboard_4x3ek",
+    "timestamp": 1736140200000,
+    "taskId": "csm-4x3ek",
+    "description": "Add /api/routing/experiments endpoint",
+    "modelUsed": "haiku",
+    "routingStrategy": "complexity-label",
+    "routingConfidence": 0.95,
+    "success": true,
+    "cost": 0.001,
+    "notes": "Simple API endpoint. Haiku correctly selected. Read JSONL and return JSON."
+  },
+  {
+    "id": "exp_dashboard_m9cx7",
+    "timestamp": 1736140201000,
+    "taskId": "csm-m9cx7",
+    "description": "Create routing experiments visualization component",
+    "modelUsed": "haiku",
+    "routingStrategy": "complexity-label",
+    "routingConfidence": 0.95,
+    "success": true,
+    "cost": 0.001,
+    "notes": "Simple Svelte component with Canon tokens. Haiku appropriate."
+  },
+  {
+    "id": "exp_dashboard_a0t3q",
+    "timestamp": 1736140202000,
+    "taskId": "csm-a0t3q",
+    "description": "Create /experiments/routing-dashboard route",
+    "modelUsed": "haiku",
+    "routingStrategy": "complexity-label",
+    "routingConfidence": 0.95,
+    "success": true,
+    "cost": 0.001,
+    "notes": "Simple route page wiring component and data. Haiku correct."
+  },
+  {
+    "id": "exp_dashboard_rn6tv",
+    "timestamp": 1736140203000,
+    "taskId": "csm-rn6tv",
+    "description": "Implement experiment stats aggregation logic",
+    "modelUsed": "sonnet",
+    "routingStrategy": "complexity-label",
+    "routingConfidence": 0.95,
+    "success": true,
+    "cost": 0.01,
+    "notes": "Complex logic with derived state, success rates, cost calculations. Sonnet appropriate for standard complexity."
+  }
+]
