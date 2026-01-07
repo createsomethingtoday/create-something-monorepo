@@ -9,7 +9,8 @@ const TABLES = {
 	API_KEYS: 'tblU5rI3WiQerozvX',
 	TAGS: '🏷️Tags (Free Form)',
 	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
-	LEADERBOARD: 'tblcXLVLYobhNmrg6'
+	LEADERBOARD: 'tblcXLVLYobhNmrg6',
+	ASSET_VERSIONS: 'tblAssetVersionHistory'
 } as const;
 
 // Airtable field IDs for authentication
@@ -133,6 +134,25 @@ export interface ApiKey {
 	lastUsedAt?: string;
 	scopes: string[];
 	status: 'Active' | 'Revoked' | 'Expired';
+}
+
+export interface AssetVersion {
+	id: string;
+	assetId: string;
+	versionNumber: number;
+	createdAt: string;
+	createdBy: string;
+	changes: string;
+	snapshot: {
+		name?: string;
+		description?: string;
+		descriptionShort?: string;
+		websiteUrl?: string;
+		previewUrl?: string;
+		thumbnailUrl?: string;
+		secondaryThumbnailUrl?: string;
+		carouselImages?: string[];
+	};
 }
 
 // ==================== AIRTABLE CLIENT ====================
@@ -794,6 +814,155 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				avgRevenuePerTemplate: Number(record.fields['AVG_REVENUE_PER_TEMPLATE']) || 0,
 				revenueRank: Number(record.fields['REVENUE_RANK']) || 0
 			}));
+		},
+
+		// ==================== ASSET VERSIONS ====================
+
+		/**
+		 * Create a new version of an asset.
+		 * Captures current state as a snapshot before any changes are made.
+		 */
+		async createAssetVersion(
+			assetId: string,
+			createdBy: string,
+			changes: string
+		): Promise<AssetVersion | null> {
+			try {
+				// Get current asset state
+				const asset = await this.getAsset(assetId);
+				if (!asset) return null;
+
+				// Get the next version number
+				const existingVersions = await base(TABLES.ASSET_VERSIONS)
+					.select({
+						filterByFormula: `{Asset ID} = '${escapeAirtableString(assetId)}'`,
+						sort: [{ field: 'Version Number', direction: 'desc' }],
+						maxRecords: 1
+					})
+					.firstPage();
+
+				const nextVersion = existingVersions.length > 0
+					? (Number(existingVersions[0].fields['Version Number']) || 0) + 1
+					: 1;
+
+				// Create snapshot of current state
+				const snapshot = {
+					name: asset.name,
+					description: asset.description,
+					descriptionShort: asset.descriptionShort,
+					websiteUrl: asset.websiteUrl,
+					previewUrl: asset.previewUrl,
+					thumbnailUrl: asset.thumbnailUrl,
+					secondaryThumbnailUrl: asset.secondaryThumbnailUrl,
+					carouselImages: asset.carouselImages
+				};
+
+				// Create version record
+				const records = await base(TABLES.ASSET_VERSIONS).create([{
+					fields: {
+						'Asset ID': assetId,
+						'Version Number': nextVersion,
+						'Created By': createdBy,
+						'Changes': changes,
+						'Snapshot': JSON.stringify(snapshot),
+						'Created At': new Date().toISOString()
+					}
+				}]);
+
+				const record = records[0];
+				return {
+					id: record.id,
+					assetId: record.fields['Asset ID'] as string,
+					versionNumber: record.fields['Version Number'] as number,
+					createdAt: record.fields['Created At'] as string,
+					createdBy: record.fields['Created By'] as string,
+					changes: record.fields['Changes'] as string,
+					snapshot: JSON.parse(record.fields['Snapshot'] as string)
+				};
+			} catch (err) {
+				console.error('Error creating asset version:', err);
+				return null;
+			}
+		},
+
+		/**
+		 * Get all versions for an asset.
+		 */
+		async getAssetVersions(assetId: string): Promise<AssetVersion[]> {
+			try {
+				const records = await base(TABLES.ASSET_VERSIONS)
+					.select({
+						filterByFormula: `{Asset ID} = '${escapeAirtableString(assetId)}'`,
+						sort: [{ field: 'Version Number', direction: 'desc' }]
+					})
+					.all();
+
+				return records.map(record => ({
+					id: record.id,
+					assetId: record.fields['Asset ID'] as string,
+					versionNumber: record.fields['Version Number'] as number,
+					createdAt: record.fields['Created At'] as string,
+					createdBy: record.fields['Created By'] as string,
+					changes: record.fields['Changes'] as string,
+					snapshot: JSON.parse(record.fields['Snapshot'] as string)
+				}));
+			} catch (err) {
+				console.error('Error getting asset versions:', err);
+				return [];
+			}
+		},
+
+		/**
+		 * Get a specific version by ID.
+		 */
+		async getAssetVersion(versionId: string): Promise<AssetVersion | null> {
+			try {
+				const record = await base(TABLES.ASSET_VERSIONS).find(versionId);
+				return {
+					id: record.id,
+					assetId: record.fields['Asset ID'] as string,
+					versionNumber: record.fields['Version Number'] as number,
+					createdAt: record.fields['Created At'] as string,
+					createdBy: record.fields['Created By'] as string,
+					changes: record.fields['Changes'] as string,
+					snapshot: JSON.parse(record.fields['Snapshot'] as string)
+				};
+			} catch {
+				return null;
+			}
+		},
+
+		/**
+		 * Rollback an asset to a previous version.
+		 * Creates a new version entry documenting the rollback.
+		 */
+		async rollbackAssetToVersion(
+			assetId: string,
+			versionId: string,
+			rolledBackBy: string
+		): Promise<Asset | null> {
+			try {
+				// Get the version to rollback to
+				const version = await this.getAssetVersion(versionId);
+				if (!version) return null;
+
+				// Verify it's for the correct asset
+				if (version.assetId !== assetId) return null;
+
+				// Create a version of the current state before rollback
+				await this.createAssetVersion(
+					assetId,
+					rolledBackBy,
+					`Rollback to version ${version.versionNumber}`
+				);
+
+				// Apply the snapshot
+				const updatedAsset = await this.updateAssetWithImages(assetId, version.snapshot);
+				return updatedAsset;
+			} catch (err) {
+				console.error('Error rolling back asset:', err);
+				return null;
+			}
 		}
 	};
 }

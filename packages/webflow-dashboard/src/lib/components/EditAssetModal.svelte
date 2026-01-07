@@ -155,6 +155,27 @@
 		isLoading = true;
 
 		try {
+			// Create version snapshot before saving changes
+			const changedFields: string[] = [];
+			if (formData.name !== asset.name) changedFields.push('name');
+			if (formData.description !== (asset.description || '')) changedFields.push('description');
+			if (formData.descriptionShort !== (asset.descriptionShort || '')) changedFields.push('short description');
+			if (formData.websiteUrl !== (asset.websiteUrl || '')) changedFields.push('website URL');
+			if (formData.previewUrl !== (asset.previewUrl || '')) changedFields.push('preview URL');
+			if (thumbnailUrl !== asset.thumbnailUrl) changedFields.push('thumbnail');
+			if (JSON.stringify(secondaryThumbnails) !== JSON.stringify(asset.secondaryThumbnails || [])) changedFields.push('secondary thumbnails');
+			if (JSON.stringify(carouselImages) !== JSON.stringify(asset.carouselImages || [])) changedFields.push('carousel images');
+
+			if (changedFields.length > 0) {
+				// Create version before saving
+				const changesDescription = `Updated ${changedFields.join(', ')}`;
+				await fetch(`/api/assets/${asset.id}/versions`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ changes: changesDescription })
+				});
+			}
+
 			await onSave({
 				name: formData.name.trim(),
 				description: formData.description,
