@@ -366,6 +366,9 @@ interface ClaudeCodeResult {
  * - Orchestration: Task, TodoWrite
  * - CREATE Something: Skill (for canon-maintenance, deploy, audit-canon)
  * - MCP: Cloudflare tools for infrastructure
+ *
+ * NOTE: Uses Claude Code 2.1.0+ wildcard syntax: Bash(command *)
+ * Supports wildcards at any position: Bash(* install), Bash(git * main)
  */
 const HARNESS_ALLOWED_TOOLS = [
   // Core file operations
@@ -376,26 +379,26 @@ const HARNESS_ALLOWED_TOOLS = [
   'Grep',
   'NotebookEdit',
 
-  // Bash with granular patterns
-  'Bash(git:*)',
-  'Bash(pnpm:*)',
-  'Bash(npm:*)',
-  'Bash(npx:*)',
-  'Bash(node:*)',
-  'Bash(tsc:*)',
-  'Bash(wrangler:*)',  // Cloudflare deployments
-  'Bash(bd:*)',        // Beads CLI
-  'Bash(bv:*)',        // Beads viewer
-  'Bash(grep:*)',
-  'Bash(find:*)',
-  'Bash(ls:*)',
-  'Bash(cat:*)',
-  'Bash(mkdir:*)',
-  'Bash(rm:*)',
-  'Bash(cp:*)',
-  'Bash(mv:*)',
-  'Bash(echo:*)',
-  'Bash(test:*)',
+  // Bash with wildcard patterns (Claude Code 2.1.0+)
+  'Bash(git *)',        // All git commands
+  'Bash(pnpm *)',       // All pnpm commands
+  'Bash(npm *)',        // All npm commands
+  'Bash(npx *)',        // All npx commands
+  'Bash(node *)',       // Node execution
+  'Bash(tsc *)',        // TypeScript compiler
+  'Bash(wrangler *)',   // Cloudflare deployments
+  'Bash(bd *)',         // Beads CLI
+  'Bash(bv *)',         // Beads viewer
+  'Bash(grep *)',       // Search
+  'Bash(find *)',       // File discovery
+  'Bash(ls *)',         // Listing
+  'Bash(cat *)',        // Reading
+  'Bash(mkdir *)',      // Directory creation
+  'Bash(rm *)',         // Removal
+  'Bash(cp *)',         // Copy
+  'Bash(mv *)',         // Move
+  'Bash(echo *)',       // Output
+  'Bash(test *)',       // Test conditions
 
   // Orchestration
   'Task',

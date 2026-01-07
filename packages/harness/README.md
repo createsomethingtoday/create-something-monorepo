@@ -69,10 +69,10 @@ const HARNESS_ALLOWED_TOOLS = [
   // Core file operations
   'Read', 'Write', 'Edit', 'Glob', 'Grep', 'NotebookEdit',
 
-  // Bash with granular patterns
-  'Bash(git:*)', 'Bash(pnpm:*)', 'Bash(npm:*)', 'Bash(npx:*)',
-  'Bash(node:*)', 'Bash(tsc:*)', 'Bash(wrangler:*)',
-  'Bash(bd:*)', 'Bash(bv:*)',  // Beads CLI
+  // Bash with wildcard patterns (Claude Code 2.1.0+)
+  'Bash(git *)', 'Bash(pnpm *)', 'Bash(npm *)', 'Bash(npx *)',
+  'Bash(node *)', 'Bash(tsc *)', 'Bash(wrangler *)',
+  'Bash(bd *)', 'Bash(bv *)',  // Beads CLI
 
   // Orchestration
   'Task', 'TodoWrite', 'WebFetch', 'WebSearch',
@@ -88,7 +88,43 @@ const HARNESS_ALLOWED_TOOLS = [
 
 **Security improvement**: Replaces `--dangerously-skip-permissions` with explicit allowlist.
 
+**Wildcard syntax** (Claude Code 2.1.0+): Supports wildcards at any position: `Bash(* install)`, `Bash(git * main)`.
+
 **Runaway prevention**: `--max-turns 100` prevents infinite loops.
+
+## Claude Code 2.1.0+ Features
+
+The harness leverages several new Claude Code capabilities:
+
+### Hooks Support
+
+The harness agent uses PreToolUse hooks for workflow automation:
+
+- **Auto-sync before close**: Automatically runs `bd sync` before `bd close` commands
+- **Commit message validation**: Ensures git commits include issue references `[cs-xxx]`
+- **Scoped to agent lifecycle**: Hooks only apply during harness sessions
+
+### Skill Hot-Reload
+
+Skills in `.claude/skills/` reload automatically without restart:
+
+- Faster iteration on harness workflow improvements
+- Test new priming strategies without session interruption
+- Create project-specific skills that load immediately
+
+### Improved Session Persistence
+
+Better recovery from failures:
+
+- Fixed 409 conflicts during checkpoint creation
+- Files and skills properly discovered on `--resume`
+- Subagents correctly inherit model configuration
+
+### Security Improvements
+
+- Sensitive data (OAuth tokens, API keys) no longer exposed in debug logs
+- Wildcard bash permissions for cleaner security policy
+- Better permission prompt reduction for complex commands
 
 ## Spec Format
 

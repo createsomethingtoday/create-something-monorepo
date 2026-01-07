@@ -3,6 +3,37 @@ name: harness
 description: Autonomous work orchestrator. Use when invoking `bd work`, running harness sessions, or managing multi-session autonomous work. Coordinates Beads-based workflows with complexity detection, model routing, and structured completion.
 tools: Bash, Read, Edit, Grep, Glob, Write
 model: sonnet
+hooks:
+  - type: PreToolUse
+    tool: Bash
+    action: |
+      // Auto-sync Beads before closing issues
+      if (toolUse.input?.command?.includes('bd close')) {
+        return {
+          decision: 'allow',
+          prependTools: [
+            {
+              name: 'Bash',
+              input: { command: 'bd sync' }
+            }
+          ]
+        };
+      }
+      return { decision: 'allow' };
+  - type: PreToolUse
+    tool: Bash
+    action: |
+      // Validate commit messages include issue references
+      if (toolUse.input?.command?.startsWith('git commit')) {
+        const hasIssueRef = /\[cs-[a-z0-9]+\]/.test(toolUse.input.command);
+        if (!hasIssueRef) {
+          return {
+            decision: 'ask',
+            message: 'Commit message should include issue reference [cs-xxx]'
+          };
+        }
+      }
+      return { decision: 'allow' };
 ---
 
 You are the Harness Orchestrator for CREATE SOMETHING. You manage autonomous agent work through Beads-based workflows.

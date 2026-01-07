@@ -137,6 +137,65 @@ bd create "Refactor auth system" --label complexity:complex
 
 **Cost savings**: ~90% on trivial tasks (Haiku vs Sonnet), quality where it matters (Opus for complex work).
 
+### Forked Contexts (Claude Code 2.1.0+)
+
+**NEW**: Skills and slash commands can run in isolated sub-agent contexts with `context: fork` in frontmatter.
+
+**When to use forked contexts**:
+- ✓ Worker needs complete isolation (no shared context)
+- ✓ Task might pollute main context with large files
+- ✓ Experimental work that shouldn't affect main session
+- ✗ Task needs access to parent context (use regular context)
+- ✗ Results need to be immediately available (forked contexts are separate)
+
+**Example: Create a forked convoy worker skill**
+
+Create `.claude/skills/convoy-worker-isolated.md`:
+
+```markdown
+---
+name: convoy-worker-isolated
+description: Execute convoy work in fully isolated context
+context: fork
+agent: worker
+tools: Read, Write, Edit, Grep, Glob, Bash
+---
+
+You are a Gastown convoy worker running in an isolated context.
+
+## Your Task
+
+Execute the assigned issue without access to parent context.
+When complete, commit your work and signal via `gt done`.
+
+## Protocol
+
+1. Check hook: `gt hook`
+2. Read issue: `bd show <issue-id>`
+3. Execute work autonomously
+4. Run tests
+5. Commit with issue reference
+6. Signal completion: `gt done`
+```
+
+**Usage**:
+
+```bash
+# Traditional worker (shared context)
+gt sling cs-xyz csm
+
+# Forked worker (isolated context)
+claude "Use convoy-worker-isolated skill for cs-xyz"
+```
+
+**Benefits of forked contexts**:
+- Worker crashes don't affect coordinator
+- Large file operations don't pollute context
+- Experimental approaches can be tested safely
+- Context overflow is contained to the worker
+
+**Cost consideration**: Forked contexts start fresh, so there's a small overhead for context priming. Use judiciously.
+
 ### Haiku Swarms (Advanced)
 
 For parallelizable work with clear subtasks, deploy a **Haiku swarm**: Sonnet plans → multiple Haiku workers execute → Opus reviews.
@@ -206,6 +265,55 @@ gt done              # Mark work complete
 gt mail inbox        # Check messages
 gt handoff           # Graceful session restart
 ```
+
+### Unified Backgrounding (Claude Code 2.1.0+)
+
+**NEW**: `Ctrl+B` now backgrounds both bash commands AND agents simultaneously.
+
+**Use cases**:
+- Worker running long test suite → background it, work on another issue
+- Multiple workers stuck on slow operations → background all at once
+- Need to inspect state while worker is running → background, check, resume
+
+**How it works**:
+
+```bash
+# Worker running long operation
+gt hook  # cs-xyz: Running integration tests...
+# Press Ctrl+B → worker backgrounds
+
+# Check status from coordinator
+gt status --watch
+
+# Worker completes in background, signals via mail
+gt mail inbox  # WORKER_DONE from worker-3
+```
+
+**Benefits**:
+- Workers can run truly in parallel without blocking tmux
+- Long-running operations don't lock up sessions
+- Better resource utilization (CPU cores working in parallel)
+- Natural flow: background, check progress, resume
+
+**Pattern: Background all workers in a convoy**
+
+```bash
+# Start convoy
+gt convoy create "Feature" cs-a cs-b cs-c cs-d
+
+# Sling all work
+for issue in cs-a cs-b cs-c cs-d; do
+  gt-smart-sling $issue csm
+done
+
+# In each worker session: Ctrl+B to background
+# All workers now running in parallel
+
+# Monitor from coordinator
+gt convoy show <convoy-id>  # See live progress
+```
+
+**GUPP + Backgrounding = True Parallelism**: Workers start immediately (GUPP) and run in background (Ctrl+B). This is how Gastown achieves 3x speedup.
 
 ### Session Navigation (tmux)
 
