@@ -245,27 +245,18 @@ interface FetchResult {
 }
 
 /**
- * Fetch submission status from external API with retry mechanism
+ * Fetch submission status from server-side proxy API with retry mechanism
  */
 async function fetchExternalStatus(
 	userEmail: string,
 	retryCount = 0
 ): Promise<FetchResult | null> {
-	const isDevMode = isDevEnvironment();
-
-	// Skip external API in development due to CORS
-	if (isDevMode) {
-		console.log('[SubmissionStore] Development mode: Skipping external API (CORS)');
-		// Update store to indicate dev mode
-		submissionState.update(state => ({ ...state, isDevMode: true }));
-		return null;
-	}
-
 	try {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-		const response = await fetch('https://check-asset-name.vercel.app/api/checkTemplateuser', {
+		// Call our server-side proxy endpoint (avoids CORS)
+		const response = await fetch('/api/submission-status', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -276,8 +267,10 @@ async function fetchExternalStatus(
 
 		clearTimeout(timeoutId);
 
+		// Handle error responses
 		if (!response.ok) {
-			throw new Error(`API returned ${response.status}: ${response.statusText}`);
+			const errorData = await response.json().catch(() => ({ hasError: true, message: 'Unknown error' }));
+			throw new Error(errorData.message || `API returned ${response.status}`);
 		}
 
 		const data: ExternalApiResponse = await response.json();
@@ -293,7 +286,7 @@ async function fetchExternalStatus(
 		};
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-		console.error(`[SubmissionStore] External API error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, errorMessage);
+		console.error(`[SubmissionStore] API error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, errorMessage);
 
 		// Retry logic
 		if (retryCount < MAX_RETRIES - 1) {
