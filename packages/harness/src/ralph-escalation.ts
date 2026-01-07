@@ -256,10 +256,24 @@ export function generateBaselinePrompt(
     tests: {
       prompt: `Fix failing baseline tests.
 
-Test output:
+<test_output>
 ${output}
+</test_output>
 
-Keep iterating until all tests pass. Output <promise>BASELINE_CLEAN</promise>.`,
+## Instructions
+
+1. Read the test output carefully. Quote the exact error messages.
+2. For each failure, identify:
+   - Test name (quote verbatim)
+   - Expected vs actual (quote verbatim)
+   - Stack trace file/line
+3. Fix the root cause (not the symptom).
+4. Run tests again.
+5. Repeat until all pass.
+
+**Critical**: Quote error messages verbatim before attempting fixes. This prevents fixing non-existent errors and reduces wasted iterations.
+
+Output <promise>BASELINE_CLEAN</promise> when all tests pass.`,
       completionPromise: 'BASELINE_CLEAN',
     },
     typecheck: {

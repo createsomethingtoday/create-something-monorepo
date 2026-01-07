@@ -712,6 +712,7 @@ export interface ReviewFinding {
   description: string;
   file?: string;
   line?: number;
+  quote?: string; // Verbatim code quote (prevents hallucinations, Anthropic best practice)
   suggestion?: string;
   issueId?: string; // Related Beads issue if applicable
 }
