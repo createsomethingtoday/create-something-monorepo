@@ -172,9 +172,21 @@ Flags are passed through to gt sling:
   console.log(`💡 Rationale: ${decision.rationale}`);
   console.log(`🚀 Target: ${target}`);
 
-  // Build gt sling command with agent override flags
-  // Gastown v0.2.2+ uses --agent claude --model <model> instead of --quality
-  const cmd = ['gt', 'sling', issueId, target, ...agentFlags, ...extraFlags];
+  // Build gt sling command
+  // Note: Gastown v0.2.2+ uses --agent claude --model <model> instead of --quality
+  // For backward compatibility with v0.1.x, we use --quality flag
+  // When Gastown v0.2.2+ is installed, this will need to be updated
+  const qualityMap: Record<ClaudeModelFamily, string> = {
+    haiku: 'basic',
+    sonnet: 'shiny',
+    opus: 'chrome',
+    unknown: 'shiny',
+  };
+  const quality = qualityMap[decision.model] || 'shiny';
+  
+  // Try --agent format first (v0.2.2+), fall back to --quality (v0.1.x)
+  // For now, use --quality since most installations are v0.1.x
+  const cmd = ['gt', 'sling', issueId, target, '--quality', quality, ...extraFlags];
 
   console.log(`\n$ ${cmd.join(' ')}\n`);
 
