@@ -1,13 +1,25 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="32" height="32" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <!-- Black background -->
-  <rect width="32" height="32" fill="#000000"/>
+  <rect width="200" height="200" fill="#000000"/>
   
-  <!-- Simple "M" mark for Maverick X -->
-  <path d="M 6 24 L 6 8 L 10 16 L 14 8 L 14 24 M 18 24 L 18 12 L 26 12 L 22 18 L 26 24" 
-        stroke="#FFFFFF" 
-        stroke-width="2" 
-        stroke-linecap="round" 
-        stroke-linejoin="round" 
-        fill="none"/>
+  <!-- Maverick X molecular emblem in white (traced from favicon-template.png) -->
+  <g transform="translate(20, 35)">
+    <!-- Top left small circle -->
+    <circle cx="33" cy="25" r="17" fill="#FFFFFF"/>
+    
+    <!-- Bottom left tiny circle -->
+    <circle cx="13" cy="50" r="10" fill="#FFFFFF"/>
+    
+    <!-- Center-left medium circle -->
+    <circle cx="50" cy="62" r="24" fill="#FFFFFF"/>
+    
+    <!-- Top right large circle -->
+    <circle cx="110" cy="20" r="35" fill="#FFFFFF"/>
+    
+    <!-- Center-right medium circle -->
+    <circle cx="100" cy="85" r="28" fill="#FFFFFF"/>
+    
+    <!-- Bottom right large circle -->
+    <circle cx="130" cy="130" r="35" fill="#FFFFFF"/>
+  </g>
 </svg>
