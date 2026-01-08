@@ -560,7 +560,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			try {
 				const escapedEmail = escapeAirtableString(email);
 				console.log('[Airtable] Searching for creator with email:', email);
+				console.log('[Airtable] Escaped email for query:', escapedEmail);
 				
+				// Match original Next.js implementation exactly
 				const records = await base(TABLES.CREATORS)
 					.select({
 						filterByFormula: `OR(
