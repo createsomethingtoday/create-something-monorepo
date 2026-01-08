@@ -12,6 +12,7 @@
 	import Introduction from '$lib/components/Introduction.svelte';
 	import Explainer from '$lib/components/Explainer.svelte';
 	import ProductShowcase from '$lib/components/ProductShowcase.svelte';
+	import SEO from '$lib/components/SEO.svelte';
 
 	interface Props {
 		data: PageData;
@@ -19,12 +20,53 @@
 
 	let { data }: Props = $props();
 	const content = data.content;
+
+	const jsonLd = {
+		"@context": "https://schema.org",
+		"@type": "Organization",
+		"name": "Maverick X",
+		"description": "Advanced chemical solutions for oil & gas, mining & metals, and water treatment",
+		"url": "https://maverickx.com",
+		"logo": "https://maverickx.com/images/full-logo.svg",
+		"sameAs": [
+			"https://www.linkedin.com/company/maverick-x"
+		],
+		"contactPoint": {
+			"@type": "ContactPoint",
+			"contactType": "Sales",
+			"email": "contact@maverickx.com"
+		},
+		"areaServed": "Worldwide",
+		"hasOfferCatalog": {
+			"@type": "OfferCatalog",
+			"name": "Chemical Solutions",
+			"itemListElement": [
+				{
+					"@type": "Product",
+					"name": "PetroX",
+					"description": "Advanced oilfield chemistry solutions"
+				},
+				{
+					"@type": "Product",
+					"name": "LithX",
+					"description": "Mining & metal extraction chemistry"
+				},
+				{
+					"@type": "Product",
+					"name": "HydroX",
+					"description": "Water treatment chemistry"
+				}
+			]
+		}
+	};
 </script>
 
-<svelte:head>
-	<title>Maverick X | Chemistry That Outperforms</title>
-	<meta name="description" content="Breakthrough chemical solutions across oil & gas, mining & metals, and water treatment. More oil. More metals. Smarter chemistry." />
-</svelte:head>
+<SEO
+	title="Maverick X | Chemistry That Outperforms"
+	description="Breakthrough chemical solutions across oil & gas, mining & metals, and water treatment. More oil. More metals. Smarter chemistry."
+	canonical="https://maverickx.com"
+	{jsonLd}
+/>
 
 <!-- Hero Section -->
 <KineticHero

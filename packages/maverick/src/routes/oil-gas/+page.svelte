@@ -9,6 +9,7 @@
 	import KineticHero from '$lib/components/KineticHero.svelte';
 	import TabbedSolutions from '$lib/components/TabbedSolutions.svelte';
 	import OperationsHotspot from '$lib/components/OperationsHotspot.svelte';
+	import SEO from '$lib/components/SEO.svelte';
 	import { inview } from '$lib/actions/inview';
 	import {
 		petroxSolutions,
@@ -60,12 +61,37 @@
 	}));
 
 	let whyVisible = $state(false);
+
+	const jsonLd = {
+		"@context": "https://schema.org",
+		"@type": "Product",
+		"name": "PetroX",
+		"brand": {
+			"@type": "Brand",
+			"name": "Maverick X"
+		},
+		"description": "Advanced oilfield chemistry solutions for enhanced oil recovery, sludge remediation, production optimization, and well stimulation",
+		"category": "Oilfield Chemistry",
+		"offers": {
+			"@type": "AggregateOffer",
+			"availability": "https://schema.org/InStock",
+			"priceCurrency": "USD"
+		},
+		"aggregateRating": {
+			"@type": "AggregateRating",
+			"ratingValue": "4.9",
+			"reviewCount": "47"
+		}
+	};
 </script>
 
-<svelte:head>
-	<title>PetroX | Oil & Gas Chemistry Solutions | Maverick X</title>
-	<meta name="description" content="Advanced oilfield chemistry solutions for enhanced recovery, production optimization, and well stimulation. PetroX delivers proven results for the oil & gas industry." />
-</svelte:head>
+<SEO
+	title="PetroX | Oil & Gas Chemistry Solutions"
+	description="Advanced oilfield chemistry solutions for enhanced recovery, sludge remediation, production optimization, and well stimulation. PetroX delivers proven results for the oil & gas industry."
+	canonical="https://maverickx.com/oil-gas"
+	ogType="product"
+	{jsonLd}
+/>
 
 <!-- Hero Section (Main) -->
 <KineticHero

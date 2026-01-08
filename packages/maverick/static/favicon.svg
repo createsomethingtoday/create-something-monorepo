@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" fill="#212121"/>
-  <text x="4" y="24" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#FF7A00">MX</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background -->
+  <rect width="32" height="32" fill="#000000"/>
+  
+  <!-- Simple "M" mark for Maverick X -->
+  <path d="M 6 24 L 6 8 L 10 16 L 14 8 L 14 24 M 18 24 L 18 12 L 26 12 L 22 18 L 26 24" 
+        stroke="#FFFFFF" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        fill="none"/>
 </svg>

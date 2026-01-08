@@ -1,0 +1,23 @@
+{
+  "name": "Maverick X - Chemistry That Outperforms",
+  "short_name": "Maverick X",
+  "description": "Advanced chemical solutions for oil & gas, mining & metals, and water treatment. Non-hazardous chemistry at ambient temperature.",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}
+
