@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Header, Button, Card } from '$lib/components';
-	import GsapValidationModal from '$lib/components/GsapValidationModal.svelte';
 	import type { PageData } from './$types';
+	import type { ComponentType } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let isGsapModalOpen = $state(false);
+	
+	// Lazy-loaded modal component
+	let GsapValidationModal = $state<ComponentType | null>(null);
 
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
@@ -17,7 +20,12 @@
 		goto('/dashboard');
 	}
 
-	function handleOpenGsapValidator() {
+	async function handleOpenGsapValidator() {
+		// Lazy load the GsapValidationModal component
+		if (!GsapValidationModal) {
+			const module = await import('$lib/components/GsapValidationModal.svelte');
+			GsapValidationModal = module.default;
+		}
 		isGsapModalOpen = true;
 	}
 </script>
@@ -151,11 +159,14 @@
 </div>
 
 <!-- GSAP Validation Modal -->
-<GsapValidationModal
-	isOpen={isGsapModalOpen}
-	onClose={() => isGsapModalOpen = false}
-	userEmail={data.user?.email}
-/>
+{#if isGsapModalOpen && GsapValidationModal}
+	<svelte:component
+		this={GsapValidationModal}
+		isOpen={isGsapModalOpen}
+		onClose={() => isGsapModalOpen = false}
+		userEmail={data.user?.email}
+	/>
+{/if}
 
 <style>
 	.validation-page {

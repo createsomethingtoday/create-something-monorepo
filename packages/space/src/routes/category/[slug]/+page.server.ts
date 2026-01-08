@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import type { Paper } from '$lib/types/paper';
 
 export const load: PageServerLoad = async ({ params, platform }) => {
 	const { slug } = params;
@@ -16,7 +17,7 @@ export const load: PageServerLoad = async ({ params, platform }) => {
       SELECT * FROM papers
       WHERE category = ? AND published = 1 AND is_hidden = 0 AND archived = 0
       ORDER BY created_at DESC
-    `).bind(slug).all();
+    `).bind(slug).all<Paper>();
 
 		const papers = result.results || [];
 

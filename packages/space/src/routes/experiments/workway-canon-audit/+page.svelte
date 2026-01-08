@@ -482,10 +482,6 @@
     border-bottom: 1px solid var(--color-border-default);
   }
 
-  .table-row-last {
-    /* No border on last row */
-  }
-
   /* Status indicator */
   .status-resolved {
     color: var(--color-success);

@@ -349,8 +349,8 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 /**
  * Get all file-based experiments, transformed to match Paper interface
  */
-export function getFileBasedExperiments() {
-	return fileBasedExperiments.map(transformExperimentToPaper);
+export function getFileBasedExperiments(): import('$lib/types/paper').Paper[] {
+	return fileBasedExperiments.map(transformExperimentToPaper) as unknown as import('$lib/types/paper').Paper[];
 }
 
 /**

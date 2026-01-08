@@ -65,7 +65,7 @@
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as { success: boolean; output?: string[]; kvState?: { key: string; value: any }[]; error?: string };
       const endTime = performance.now();
 
       // Store previous execution time before updating
@@ -84,7 +84,7 @@
           onComplete();
         }
       } else {
-        output = [`Error: ${result.error}`];
+        output = [`Error: ${result.error || 'Unknown error'}`];
       }
     } catch (err) {
       output = [`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`];

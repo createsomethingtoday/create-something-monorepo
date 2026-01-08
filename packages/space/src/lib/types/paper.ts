@@ -18,6 +18,9 @@ export interface Paper extends BasePaper {
 
   // Route override for file-based experiments
   route?: string
+
+  // Philosophical principles being tested (file-based experiments)
+  tests_principles?: string[]
 }
 
 // ============================================================================

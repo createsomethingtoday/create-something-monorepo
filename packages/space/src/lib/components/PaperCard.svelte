@@ -192,10 +192,6 @@
 		color: var(--color-fg-secondary);
 	}
 
-	.badge-wrapper {
-		/* Layout only */
-	}
-
 	.badge {
 		padding: 0.25rem 0.75rem;
 		background: var(--color-hover);

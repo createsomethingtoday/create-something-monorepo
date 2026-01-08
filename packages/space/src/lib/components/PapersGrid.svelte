@@ -76,10 +76,6 @@
 		font-size: var(--text-body-lg);
 	}
 
-	.empty-state {
-
-	}
-
 	.empty-icon {
 		font-size: 4rem;
 		margin-bottom: 1.5rem;

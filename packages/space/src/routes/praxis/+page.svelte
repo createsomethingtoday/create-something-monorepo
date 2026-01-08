@@ -52,8 +52,8 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ exerciseId: exercise.id, code })
 			});
-			const result = await response.json();
-			output = result.success ? result.output : [`Error: ${result.error}`];
+			const result = await response.json() as { success: boolean; output?: string[]; error?: string; valid?: boolean; grade?: ValidationGrade; triadFeedback?: any };
+			output = result.success ? result.output || [] : [`Error: ${result.error || 'Unknown error'}`];
 			isValid = result.valid === true;
 			grade = result.grade || 'bug';
 			triadFeedback = result.triadFeedback;

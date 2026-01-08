@@ -38,7 +38,7 @@
 					<!-- Contact Button -->
 					<a href="/contact" class="contact-btn group relative px-6 py-2 overflow-hidden">
 						<span class="relative z-10">Contact</span>
-						<div class="contact-btn-overlay absolute inset-0 translate-y-full group-hover:translate-y-0 transition-transform" />
+						<div class="contact-btn-overlay absolute inset-0 translate-y-full group-hover:translate-y-0 transition-transform"></div>
 					</a>
 				</li>
 			</ul>

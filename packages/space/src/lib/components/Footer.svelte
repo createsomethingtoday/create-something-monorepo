@@ -15,7 +15,7 @@
 				body: JSON.stringify({ email, website })
 			});
 
-			const data = await response.json();
+			const data = await response.json() as { success: boolean; message?: string };
 
 			if (data.success) {
 				status = 'success';

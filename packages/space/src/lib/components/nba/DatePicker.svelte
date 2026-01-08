@@ -18,8 +18,14 @@
 
 	// Parse current date
 	const date = $derived(new Date(currentDate));
-	const today = $derived(new Date());
-	today.setHours(0, 0, 0, 0);
+	
+	function getTodayAtMidnight() {
+		const d = new Date();
+		d.setHours(0, 0, 0, 0);
+		return d;
+	}
+	
+	const today = $derived(getTodayAtMidnight());
 
 	// Check if we're viewing today
 	const isToday = $derived(

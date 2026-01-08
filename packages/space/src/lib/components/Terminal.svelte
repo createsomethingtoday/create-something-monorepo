@@ -76,7 +76,7 @@
 				throw new Error(`Command failed: ${response.statusText}`);
 			}
 
-			const result = await response.json();
+			const result = await response.json() as CommandResponse;
 
 			// Handle special commands that affect terminal state
 			if (command === 'cd' && result.newPath) {

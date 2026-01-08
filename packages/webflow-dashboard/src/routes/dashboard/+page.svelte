@@ -2,9 +2,9 @@
 	import type { PageData } from './$types';
 	import type { Asset } from '$lib/server/airtable';
 	import { goto, invalidate } from '$app/navigation';
-	import { Header, AssetsDisplay, OverviewStats, EditProfileModal, SubmissionTracker, StatsBar } from '$lib/components';
-	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
+	import { Header, AssetsDisplay, OverviewStats, SubmissionTracker, StatsBar } from '$lib/components';
 	import { toast } from '$lib/stores/toast';
+	import type { ComponentType } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -12,6 +12,10 @@
 	let isProfileOpen = $state(false);
 	let isEditModalOpen = $state(false);
 	let currentEditingAsset = $state<Asset | null>(null);
+	
+	// Lazy-loaded modal components
+	let EditProfileModal = $state<ComponentType | null>(null);
+	let EditAssetModal = $state<ComponentType | null>(null);
 
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
@@ -22,7 +26,12 @@
 		searchTerm = term;
 	}
 
-	function handleProfileClick() {
+	async function handleProfileClick() {
+		// Lazy load the EditProfileModal component
+		if (!EditProfileModal) {
+			const module = await import('$lib/components/EditProfileModal.svelte');
+			EditProfileModal = module.default;
+		}
 		isProfileOpen = true;
 	}
 
@@ -34,9 +43,14 @@
 		goto(`/assets/${id}`);
 	}
 
-	function handleEditAsset(id: string) {
+	async function handleEditAsset(id: string) {
 		const asset = data.assets?.find((a) => a.id === id);
 		if (asset) {
+			// Lazy load the EditAssetModal component
+			if (!EditAssetModal) {
+				const module = await import('$lib/components/EditAssetModal.svelte');
+				EditAssetModal = module.default;
+			}
 			currentEditingAsset = asset;
 			isEditModalOpen = true;
 		}
@@ -144,12 +158,13 @@
 		</div>
 	</main>
 
-	{#if isProfileOpen}
-		<EditProfileModal onClose={handleProfileClose} />
+	{#if isProfileOpen && EditProfileModal}
+		<svelte:component this={EditProfileModal} onClose={handleProfileClose} />
 	{/if}
 
-	{#if isEditModalOpen && currentEditingAsset}
-		<EditAssetModal
+	{#if isEditModalOpen && currentEditingAsset && EditAssetModal}
+		<svelte:component
+			this={EditAssetModal}
 			asset={currentEditingAsset}
 			onClose={handleEditClose}
 			onSave={handleEditSave}

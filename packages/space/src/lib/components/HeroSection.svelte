@@ -85,9 +85,6 @@
 </section>
 
 <style>
-	.hero {
-		/* Layout only - keep Tailwind classes */
-	}
 
 	.eyebrow {
 		font-size: var(--text-body);

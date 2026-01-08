@@ -33,6 +33,7 @@ export interface FileBasedExperiment {
 	difficulty: 'beginner' | 'intermediate' | 'advanced';
 	is_file_based: true; // Marker to distinguish from database experiments
 	is_executable?: 0 | 1; // Optional: 1 = interactive, 0 = documentation-only
+	featured?: number; // Featured priority (optional, defaults to 0)
 	ascii_art?: string;
 	// Hermeneutic Circle: Which principles does this experiment test?
 	// Note: Some experiments have QUALITATIVE evidence (existence proves principle)
@@ -45,7 +46,16 @@ export interface FileBasedExperiment {
 /**
  * Transform a FileBasedExperiment to match Paper interface fields
  */
-export function transformExperimentToPaper(exp: FileBasedExperiment) {
+export function transformExperimentToPaper(exp: FileBasedExperiment): Omit<FileBasedExperiment, 'reading_time_minutes' | 'difficulty'> & {
+	reading_time: number;
+	published_at: string;
+	difficulty_level: 'beginner' | 'intermediate' | 'advanced';
+	published: number;
+	is_hidden: number;
+	archived: number;
+	featured: number;
+	route: string;
+} {
 	return {
 		...exp,
 		reading_time: exp.reading_time_minutes,
@@ -54,6 +64,7 @@ export function transformExperimentToPaper(exp: FileBasedExperiment) {
 		published: 1,
 		is_hidden: 0,
 		archived: 0,
+		featured: exp.featured || 0,
 		// Route override: use exp.route if set, otherwise default to /experiments/{slug}
 		route: exp.route || `/experiments/${exp.slug}`
 	};

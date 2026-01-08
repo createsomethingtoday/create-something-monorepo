@@ -406,7 +406,7 @@
 					});
 
 					if (response.ok) {
-						const result = await response.json();
+						const result = await response.json() as { newPath?: string; output?: string; type?: TerminalLine['type'] };
 						if (result.newPath) {
 							currentPath = result.newPath;
 						}
@@ -604,6 +604,10 @@
 		bind:this={terminalRef}
 		class="terminal-content flex-1 overflow-y-auto p-6 font-mono"
 		onclick={() => inputRef?.focus()}
+		onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef?.focus(); } }}
+		role="button"
+		tabindex="0"
+		aria-label="Terminal output area. Click or press Enter to focus input."
 	>
 		<div class="max-w-6xl mx-auto space-y-1">
 			{#each lines as line, index (line.id)}
@@ -671,6 +675,17 @@
 								isCardNavigationMode = false;
 								papers = [];
 							}}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									processCommand(`read ${paper.id}`);
+									isCardNavigationMode = false;
+									papers = [];
+								}
+							}}
+							role="button"
+							tabindex="0"
+							aria-label={`Read paper: ${paper.title}`}
 						>
 							<pre class="leading-tight">{borderChars.tl}{borderChars.h.repeat(
 									width

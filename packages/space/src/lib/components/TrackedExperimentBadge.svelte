@@ -114,10 +114,6 @@
 		color: var(--color-fg-muted);
 	}
 
-	.badge-text {
-		/* Inherits color from parent */
-	}
-
 	.stats-card {
 		padding: 1.5rem;
 		background: var(--color-bg-surface);

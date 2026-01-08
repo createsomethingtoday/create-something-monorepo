@@ -39,7 +39,7 @@
 					});
 				}, 0);
 			}
-		} else if (hasHtmlContent) {
+		} else if (hasHtmlContent && contentToRender) {
 			renderedContent = contentToRender;
 		}
 	});

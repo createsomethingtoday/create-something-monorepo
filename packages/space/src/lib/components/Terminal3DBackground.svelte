@@ -74,7 +74,7 @@
 <canvas
 	bind:this={canvasRef}
 	class="canvas-bg fixed inset-0 w-full h-full pointer-events-none opacity-20 z-0"
-/>
+></canvas>
 
 <style>
 	.canvas-bg {

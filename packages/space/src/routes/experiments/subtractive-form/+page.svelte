@@ -45,7 +45,10 @@
 	let errorMessage = $state('');
 
 	// Simulated error rates based on approach
-	const errorRates = {
+	const errorRates: {
+		instructional: { [key: string]: number };
+		subtractive: { [key: string]: number };
+	} = {
 		instructional: {
 			'Data Client v2': 5,
 			'Designer Extension': 68, // High error rate when field visible but shouldn't be filled
