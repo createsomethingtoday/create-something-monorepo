@@ -1,0 +1,52 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#000000"/>
+
+  <!-- Grid pattern -->
+  <defs>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Brand badge -->
+  <rect x="100" y="100" width="180" height="36" rx="18" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="130" y="124" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="rgba(255,255,255,0.8)" letter-spacing="0.1em">BUILD IN PUBLIC</text>
+
+  <!-- Main title -->
+  <text x="100" y="220" font-family="Inter, system-ui, sans-serif" font-size="72" font-weight="800" fill="#ffffff" letter-spacing="-0.02em">OUTERFIELDS</text>
+
+  <!-- Subtitle -->
+  <text x="100" y="290" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="400" fill="rgba(255,255,255,0.6)">Premium Content Networks That Convert</text>
+
+  <!-- Description -->
+  <text x="100" y="360" font-family="Inter, system-ui, sans-serif" font-size="20" fill="rgba(255,255,255,0.46)">Build streaming platforms better than Uscreen.</text>
+  <text x="100" y="390" font-family="Inter, system-ui, sans-serif" font-size="20" fill="rgba(255,255,255,0.46)">Custom branding, analytics, monetization, community.</text>
+
+  <!-- Feature pills -->
+  <rect x="100" y="440" width="120" height="32" rx="16" fill="rgba(255,255,255,0.1)"/>
+  <text x="130" y="461" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="rgba(255,255,255,0.8)">Streaming</text>
+
+  <rect x="240" y="440" width="120" height="32" rx="16" fill="rgba(255,255,255,0.1)"/>
+  <text x="268" y="461" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="rgba(255,255,255,0.8)">Analytics</text>
+
+  <rect x="380" y="440" width="140" height="32" rx="16" fill="rgba(255,255,255,0.1)"/>
+  <text x="402" y="461" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="rgba(255,255,255,0.8)">Monetization</text>
+
+  <rect x="540" y="440" width="120" height="32" rx="16" fill="rgba(255,255,255,0.1)"/>
+  <text x="562" y="461" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="rgba(255,255,255,0.8)">Community</text>
+
+  <!-- URL -->
+  <text x="100" y="560" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="500" fill="rgba(255,255,255,0.3)">outerfields.createsomething.agency</text>
+
+  <!-- Decorative elements -->
+  <circle cx="1050" cy="200" r="100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <circle cx="1050" cy="200" r="60" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <circle cx="1050" cy="200" r="20" fill="rgba(255,255,255,0.2)"/>
+
+  <!-- Progress indicator -->
+  <rect x="900" y="450" width="200" height="4" rx="2" fill="rgba(255,255,255,0.1)"/>
+  <rect x="900" y="450" width="130" height="4" rx="2" fill="rgba(255,255,255,0.8)"/>
+  <text x="900" y="485" font-family="Inter, system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.46)">Day 60 of 90</text>
+</svg>

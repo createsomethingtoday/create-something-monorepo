@@ -1,0 +1,17 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "outerfields-pcn",
+	"compatibility_date": "2025-01-01",
+	"pages_build_output_dir": ".svelte-kit/cloudflare",
+
+	"vars": {
+		"ENVIRONMENT": "production"
+	},
+
+	"kv_namespaces": [
+		{
+			"binding": "VIDEO_STATS",
+			"id": "outerfields-video-stats"
+		}
+	]
+}

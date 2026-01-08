@@ -1,0 +1,46 @@
+# OUTERFIELDS - robots.txt
+# https://outerfields.createsomething.agency
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://outerfields.createsomething.agency/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Block admin and API routes
+Disallow: /api/
+Disallow: /admin-demo/
+Disallow: /demo/
+
+# Allow important assets
+Allow: /*.css
+Allow: /*.js
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.svg
+Allow: /*.webp
+
+# AI/LLM Crawlers - Welcome for AEO
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /

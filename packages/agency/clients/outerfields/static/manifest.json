@@ -1,0 +1,45 @@
+{
+	"name": "OUTERFIELDS",
+	"short_name": "OUTERFIELDS",
+	"description": "Premium Content Networks That Convert - Build streaming platforms better than Uscreen",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#000000",
+	"theme_color": "#000000",
+	"orientation": "portrait-primary",
+	"icons": [
+		{
+			"src": "/favicon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any"
+		},
+		{
+			"src": "/apple-touch-icon.svg",
+			"sizes": "180x180",
+			"type": "image/svg+xml",
+			"purpose": "any maskable"
+		}
+	],
+	"categories": ["business", "productivity", "entertainment"],
+	"lang": "en-US",
+	"dir": "ltr",
+	"scope": "/",
+	"prefer_related_applications": false,
+	"shortcuts": [
+		{
+			"name": "Demo",
+			"short_name": "Demo",
+			"description": "Try the OUTERFIELDS demo",
+			"url": "/demo",
+			"icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+		},
+		{
+			"name": "Documentation",
+			"short_name": "Docs",
+			"description": "View technical documentation",
+			"url": "/docs",
+			"icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+		}
+	]
+}

@@ -1,0 +1,6 @@
+# Video files are too large for Git
+# Host these via Cloudflare R2 or similar CDN
+*.mp4
+*.webm
+*.mov
+*.avi
