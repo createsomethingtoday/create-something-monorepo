@@ -3,6 +3,8 @@
 	import { onMount } from 'svelte';
 
 	let mobileMenuOpen = false;
+	let currentSlide = 0;
+	let galleryImages: HTMLElement;
 
 	const categories = [
 		'JEWELRY',
@@ -28,8 +30,31 @@
 		{ id: 4, name: 'MIDI SKIRT', price: 495, image: '/images/iconic-midi-skirt.png' }
 	];
 
-	// Scroll-reveal animation
+	// Gallery slider functions
+	function slideGallery(direction: number) {
+		const totalSlides = 3;
+		currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+		updateSlider();
+	}
+
+	function goToSlide(index: number) {
+		currentSlide = index;
+		updateSlider();
+	}
+
+	function updateSlider() {
+		if (galleryImages) {
+			const slideWidth = galleryImages.clientWidth;
+			galleryImages.scrollTo({
+				left: currentSlide * (slideWidth + 24), // 24px = gap
+				behavior: 'smooth'
+			});
+		}
+	}
+
+	// Scroll-reveal animation & slider initialization
 	onMount(() => {
+		// Intersection Observer for scroll animations
 		const observer = new IntersectionObserver(
 			(entries) => {
 				entries.forEach((entry) => {
@@ -48,6 +73,30 @@
 			observer.observe(el);
 		});
 
+		// Touch swipe support for gallery slider
+		let touchStartX = 0;
+		let touchEndX = 0;
+
+		if (galleryImages) {
+			galleryImages.addEventListener('touchstart', (e) => {
+				touchStartX = e.changedTouches[0].screenX;
+			});
+
+			galleryImages.addEventListener('touchend', (e) => {
+				touchEndX = e.changedTouches[0].screenX;
+				handleSwipe();
+			});
+		}
+
+		function handleSwipe() {
+			const swipeThreshold = 50;
+			if (touchStartX - touchEndX > swipeThreshold) {
+				slideGallery(1); // Swipe left, go next
+			} else if (touchEndX - touchStartX > swipeThreshold) {
+				slideGallery(-1); // Swipe right, go prev
+			}
+		}
+
 		return () => observer.disconnect();
 	});
 </script>
@@ -55,6 +104,19 @@
 <svelte:head>
 	<title>SILHOUETTES — Designed as Quiet Uniform for Modern Life</title>
 	<meta name="description" content="Timeless style crafted for modern expression. Discover our collection of ready-to-wear, accessories, and signature pieces." />
+
+	<!-- Performance optimizations -->
+	<link rel="preload" href="/images/product-wool-coat.png" as="image" />
+	<link rel="preload" href="/images/product-trousers.png" as="image" />
+	<link rel="preload" href="/images/gallery-1.png" as="image" />
+	<link rel="dns-prefetch" href="https://api.cloudflare.com" />
+
+	<!-- Open Graph / Social -->
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="SILHOUETTES — Designed as Quiet Uniform for Modern Life" />
+	<meta property="og:description" content="Timeless style crafted for modern expression. Discover our collection of ready-to-wear, accessories, and signature pieces." />
+	<meta property="og:image" content="/images/statement-front.png" />
+	<meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
 
 <!-- Navigation with mix-blend-mode -->
@@ -184,15 +246,32 @@
 				A collection is a thoughtful edit of designs, unified by intention, material, and silhouette.
 			</p>
 		</div>
-		<div class="gallery-images stagger-children stagger-standard">
-			<div class="gallery-item hover-card" style="--index: 0">
-				<img src="/images/gallery-1.png" alt="Silhouettes Gallery 1" loading="lazy" />
+		<div class="gallery-slider">
+			<button class="slider-arrow slider-prev" aria-label="Previous image" on:click={() => slideGallery(-1)}>
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M15 18l-6-6 6-6"/>
+				</svg>
+			</button>
+			<div class="gallery-images" bind:this={galleryImages}>
+				<div class="gallery-item hover-card">
+					<img src="/images/gallery-1.png" alt="Silhouettes Gallery 1" loading="lazy" />
+				</div>
+				<div class="gallery-item hover-card">
+					<img src="/images/gallery-2.png" alt="Silhouettes Gallery 2" loading="lazy" />
+				</div>
+				<div class="gallery-item hover-card">
+					<img src="/images/gallery-3.png" alt="Silhouettes Gallery 3" loading="lazy" />
+				</div>
 			</div>
-			<div class="gallery-item hover-card" style="--index: 1">
-				<img src="/images/gallery-2.png" alt="Silhouettes Gallery 2" loading="lazy" />
-			</div>
-			<div class="gallery-item hover-card" style="--index: 2">
-				<img src="/images/gallery-3.png" alt="Silhouettes Gallery 3" loading="lazy" />
+			<button class="slider-arrow slider-next" aria-label="Next image" on:click={() => slideGallery(1)}>
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M9 18l6-6-6-6"/>
+				</svg>
+			</button>
+			<div class="slider-dots">
+				<button class="slider-dot {currentSlide === 0 ? 'active' : ''}" aria-label="Go to image 1" on:click={() => goToSlide(0)}></button>
+				<button class="slider-dot {currentSlide === 1 ? 'active' : ''}" aria-label="Go to image 2" on:click={() => goToSlide(1)}></button>
+				<button class="slider-dot {currentSlide === 2 ? 'active' : ''}" aria-label="Go to image 3" on:click={() => goToSlide(2)}></button>
 			</div>
 		</div>
 	</div>
@@ -705,20 +784,31 @@
 		line-height: 1.6;
 	}
 
+	.gallery-slider {
+		position: relative;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+
 	.gallery-images {
 		display: flex;
 		gap: var(--space-md);
-		overflow-x: auto;
+		overflow-x: hidden;
+		scroll-behavior: smooth;
+		scroll-snap-type: x mandatory;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.gallery-item {
-		width: 320px;
+		width: 100%;
 		aspect-ratio: 3/4;
 		flex-shrink: 0;
 		background: var(--color-bg-subtle);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		padding: var(--space-xs);
 		overflow: hidden;
+		scroll-snap-align: center;
+		transition: transform var(--duration-standard) var(--ease-standard);
 	}
 
 	.gallery-item img {
@@ -727,6 +817,61 @@
 		object-fit: cover;
 		display: block;
 		background: var(--color-bg-subtle);
+	}
+
+	.slider-arrow {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		z-index: 10;
+		background: rgba(0, 0, 0, 0.5);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		color: white;
+		width: 48px;
+		height: 48px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+		backdrop-filter: blur(8px);
+	}
+
+	.slider-arrow:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.4);
+		transform: translateY(-50%) scale(1.05);
+	}
+
+	.slider-prev {
+		left: -24px;
+	}
+
+	.slider-next {
+		right: -24px;
+	}
+
+	.slider-dots {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-sm);
+		margin-top: var(--space-lg);
+	}
+
+	.slider-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.3);
+		border: none;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.slider-dot.active,
+	.slider-dot:hover {
+		background: rgba(255, 255, 255, 1);
+		transform: scale(1.2);
 	}
 
 	/* Icons of the Wardrobe */
