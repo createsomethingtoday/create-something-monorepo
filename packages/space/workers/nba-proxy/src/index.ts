@@ -391,6 +391,10 @@ async function captureSnapshot(env: Env): Promise<void> {
 			.run();
 
 		console.log(`[${correlationId}] Successfully captured ${gameCount} games for ${date}`);
+		
+		// Archive play-by-play and box scores for completed games
+		await archiveCompletedGames(env, data, date, correlationId);
+		
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		console.error(`[${correlationId}] Snapshot capture failed for ${date}:`, message);
@@ -405,6 +409,142 @@ async function captureSnapshot(env: Env): Promise<void> {
 		// Re-throw to trigger retry
 		throw error;
 	}
+}
+
+// Archive play-by-play and box scores for completed games
+async function archiveCompletedGames(
+	env: Env,
+	scoreboardData: any,
+	date: string,
+	correlationId: string
+): Promise<void> {
+	const games = scoreboardData?.scoreboard?.games || [];
+	const finalGames = games.filter((g: any) => g.gameStatus === 3); // Status 3 = Final
+	
+	console.log(`[${correlationId}] Archiving ${finalGames.length} completed games for ${date}`);
+	
+	for (const game of finalGames) {
+		const gameId = game.gameId;
+		const homeTeam = game.homeTeam.teamTricode;
+		const awayTeam = game.awayTeam.teamTricode;
+		
+		try {
+			// Check if already archived
+			const existing = await env.DB.prepare(
+				'SELECT has_pbp, has_boxscore FROM archive_metadata WHERE game_id = ?'
+			)
+				.bind(gameId)
+				.first();
+			
+			const needsPBP = !existing || !existing.has_pbp;
+			const needsBoxscore = !existing || !existing.has_boxscore;
+			
+			if (!needsPBP && !needsBoxscore) {
+				console.log(`[${correlationId}] Game ${gameId} already archived, skipping`);
+				continue;
+			}
+			
+			// Archive play-by-play
+			if (needsPBP) {
+				try {
+					const pbpUrl = `${env.NBA_API_BASE_URL}/liveData/playbyplay/playbyplay_${gameId}.json`;
+					const pbpResponse = await fetch(pbpUrl, {
+						headers: {
+							'User-Agent': 'CREATE-SOMETHING-NBA-Proxy/1.0',
+							Accept: 'application/json',
+							Referer: 'https://www.nba.com/',
+						},
+					});
+					
+					if (pbpResponse.ok) {
+						const pbpData = await pbpResponse.json();
+						const actionCount = pbpData?.game?.actions?.length || 0;
+						
+						await env.DB.prepare(
+							`INSERT INTO pbp_archive (game_id, game_date, home_team, away_team, pbp_json, action_count, archived_at)
+							 VALUES (?, ?, ?, ?, ?, ?, ?)
+							 ON CONFLICT(game_id) DO UPDATE SET pbp_json = excluded.pbp_json, action_count = excluded.action_count, archived_at = excluded.archived_at`
+						)
+							.bind(gameId, date, homeTeam, awayTeam, JSON.stringify(pbpData), actionCount, Date.now())
+							.run();
+						
+						console.log(`[${correlationId}]   ✓ Archived PBP for ${awayTeam} @ ${homeTeam} (${actionCount} actions)`);
+					}
+				} catch (pbpError) {
+					console.error(`[${correlationId}]   ✗ Failed to archive PBP for ${gameId}:`, pbpError);
+				}
+			}
+			
+			// Archive box score
+			if (needsBoxscore) {
+				try {
+					const boxUrl = `${env.NBA_API_BASE_URL}/liveData/boxscore/boxscore_${gameId}.json`;
+					const boxResponse = await fetch(boxUrl, {
+						headers: {
+							'User-Agent': 'CREATE-SOMETHING-NBA-Proxy/1.0',
+							Accept: 'application/json',
+							Referer: 'https://www.nba.com/',
+						},
+					});
+					
+					if (boxResponse.ok) {
+						const boxData = await boxResponse.json();
+						const playerCount = 
+							(boxData?.game?.homeTeam?.players?.length || 0) +
+							(boxData?.game?.awayTeam?.players?.length || 0);
+						
+						await env.DB.prepare(
+							`INSERT INTO boxscore_archive (game_id, game_date, home_team, away_team, boxscore_json, player_count, archived_at)
+							 VALUES (?, ?, ?, ?, ?, ?, ?)
+							 ON CONFLICT(game_id) DO UPDATE SET boxscore_json = excluded.boxscore_json, player_count = excluded.player_count, archived_at = excluded.archived_at`
+						)
+							.bind(gameId, date, homeTeam, awayTeam, JSON.stringify(boxData), playerCount, Date.now())
+							.run();
+						
+						console.log(`[${correlationId}]   ✓ Archived boxscore for ${awayTeam} @ ${homeTeam} (${playerCount} players)`);
+					}
+				} catch (boxError) {
+					console.error(`[${correlationId}]   ✗ Failed to archive boxscore for ${gameId}:`, boxError);
+				}
+			}
+			
+			// Update archive metadata
+			await env.DB.prepare(
+				`INSERT INTO archive_metadata (game_id, game_date, status, has_pbp, has_boxscore, attempt_count, last_attempt_at)
+				 VALUES (?, ?, 'archived', 1, 1, 1, ?)
+				 ON CONFLICT(game_id) DO UPDATE SET
+				   status = 'archived',
+				   has_pbp = 1,
+				   has_boxscore = 1,
+				   attempt_count = attempt_count + 1,
+				   last_attempt_at = excluded.last_attempt_at,
+				   error_message = NULL`
+			)
+				.bind(gameId, date, Date.now())
+				.run();
+			
+			// Rate limiting: small delay between games
+			await new Promise(resolve => setTimeout(resolve, 500));
+			
+		} catch (gameError) {
+			console.error(`[${correlationId}]   ✗ Failed to archive game ${gameId}:`, gameError);
+			
+			// Record failure in metadata
+			await env.DB.prepare(
+				`INSERT INTO archive_metadata (game_id, game_date, status, attempt_count, last_attempt_at, error_message)
+				 VALUES (?, ?, 'failed', 1, ?, ?)
+				 ON CONFLICT(game_id) DO UPDATE SET
+				   status = 'failed',
+				   attempt_count = attempt_count + 1,
+				   last_attempt_at = excluded.last_attempt_at,
+				   error_message = excluded.error_message`
+			)
+				.bind(gameId, date, Date.now(), gameError instanceof Error ? gameError.message : 'Unknown error')
+				.run();
+		}
+	}
+	
+	console.log(`[${correlationId}] Archive complete for ${date}`);
 }
 
 // Main router
