@@ -21,7 +21,7 @@
 	const chartWidth = 400;
 	const chartHeight = duos.length * 60 + 40; // 60px per bar + padding
 	const barHeight = 40;
-	const labelWidth = 120;
+	const labelWidth = 140; // Increased from 120 to accommodate longer names
 	const maxPPP = 1.8; // Max scale for PPP
 	const leagueAvgPPP = 1.12;
 
@@ -80,14 +80,18 @@
 			{#each duos as duo, i}
 				{@const y = 30 + i * 60}
 				{@const barWidth = scalePPP(duo.pointsPerPossession)}
+				{@const duoName = getDuoName(duo)}
 
 				<!-- Duo name label -->
 				<text
 					x="5"
 					y={y + barHeight / 2 + 4}
 					class="chart-label"
+					textLength={duoName.length > 16 ? labelWidth - 10 : undefined}
+					lengthAdjust={duoName.length > 16 ? 'spacingAndGlyphs' : undefined}
 				>
-					{getDuoName(duo)}
+					<title>{duo.duo.player1Name} / {duo.duo.player2Name}</title>
+					{duoName}
 				</text>
 
 				<!-- Bar background -->
@@ -113,7 +117,7 @@
 
 				<!-- PPP value -->
 				<text
-					x={labelWidth + Math.max(0, barWidth) + 8}
+					x={labelWidth + Math.max(0, barWidth) + 6}
 					y={y + barHeight / 2 + 4}
 					class="chart-value"
 				>
