@@ -18,6 +18,25 @@ export interface Player {
 	teamAbbr: string;
 	position: Position;
 	jerseyNumber: string;
+	// Statistics (when available from box score)
+	stats?: PlayerStats;
+}
+
+export interface PlayerStats {
+	minutes: string;
+	points: number;
+	assists: number;
+	reboundsTotal: number;
+	steals: number;
+	blocks: number;
+	turnovers: number;
+	fieldGoalsMade: number;
+	fieldGoalsAttempted: number;
+	threePointersMade: number;
+	threePointersAttempted: number;
+	freeThrowsMade: number;
+	freeThrowsAttempted: number;
+	plusMinusPoints: number;
 }
 
 export type Position = 'G' | 'F' | 'C' | 'G-F' | 'F-C' | 'F-G' | 'C-F';
@@ -42,6 +61,23 @@ export interface Game {
 	gameClock: string;
 	startTime: string;
 	arena?: string;
+	// Team statistics (when available from box score)
+	homeStats?: TeamStats;
+	awayStats?: TeamStats;
+}
+
+export interface TeamStats {
+	assists: number;
+	rebounds: number;
+	steals: number;
+	blocks: number;
+	turnovers: number;
+	fieldGoalsMade: number;
+	fieldGoalsAttempted: number;
+	threePointersMade: number;
+	threePointersAttempted: number;
+	freeThrowsMade: number;
+	freeThrowsAttempted: number;
 }
 
 export type GameStatus = 'scheduled' | 'live' | 'halftime' | 'final';

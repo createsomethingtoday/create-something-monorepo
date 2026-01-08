@@ -84,12 +84,9 @@ export function calculateLeagueInsights(games: Game[]): LeagueInsights {
 			homeWins++;
 		}
 
-		// For correlation data, we need assists per team
-		// Since we don't have actual assist data in the Game type, we'll estimate
-		// In reality, this would come from boxscore data
-		// For now, use a placeholder that creates realistic correlation
-		const homeAssists = estimateAssists(game.homeScore);
-		const awayAssists = estimateAssists(game.awayScore);
+		// Use real stats if available, otherwise estimate
+		const homeAssists = game.homeStats?.assists ?? estimateAssists(game.homeScore);
+		const awayAssists = game.awayStats?.assists ?? estimateAssists(game.awayScore);
 
 		totalAssists += homeAssists + awayAssists;
 
@@ -105,8 +102,10 @@ export function calculateLeagueInsights(games: Game[]): LeagueInsights {
 			totalPoints: game.awayScore,
 		});
 
-		// Estimate 3PT attempts (league average is ~35 per team per game)
-		total3PtAttempts += 70; // 35 per team × 2 teams
+		// Use real 3PT attempts if available, otherwise estimate
+		const home3PtAttempts = game.homeStats?.threePointersAttempted ?? 35;
+		const away3PtAttempts = game.awayStats?.threePointersAttempted ?? 35;
+		total3PtAttempts += home3PtAttempts + away3PtAttempts;
 	}
 
 	const gamesCount = completedGames.length;

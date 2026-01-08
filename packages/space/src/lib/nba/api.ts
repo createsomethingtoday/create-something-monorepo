@@ -403,6 +403,23 @@ export async function fetchGameBoxScore(
 					teamAbbr: team.teamTricode,
 					position: (p.position || 'G') as Player['position'],
 					jerseyNumber: p.jerseyNum,
+					// Include statistics
+					stats: {
+						minutes: p.statistics.minutes,
+						points: p.statistics.points,
+						assists: p.statistics.assists,
+						reboundsTotal: p.statistics.reboundsTotal,
+						steals: p.statistics.steals,
+						blocks: p.statistics.blocks,
+						turnovers: p.statistics.turnovers,
+						fieldGoalsMade: p.statistics.fieldGoalsMade,
+						fieldGoalsAttempted: p.statistics.fieldGoalsAttempted,
+						threePointersMade: p.statistics.threePointersMade,
+						threePointersAttempted: p.statistics.threePointersAttempted,
+						freeThrowsMade: p.statistics.freeThrowsMade,
+						freeThrowsAttempted: p.statistics.freeThrowsAttempted,
+						plusMinusPoints: p.statistics.plusMinusPoints
+					}
 				}));
 
 			// Validate roster size (NBA teams typically 12-15 active players)
@@ -484,6 +501,102 @@ export async function fetchPlayerBaselines(
 		cached: result.cached,
 		timestamp: result.timestamp,
 	};
+}
+
+/**
+ * Fetch games with detailed team statistics for insights
+ * @param date - YYYY-MM-DD format (defaults to today)
+ */
+export async function fetchGamesWithStats(date?: string): Promise<NBAApiResult<Game[]>> {
+	// First fetch basic games
+	const gamesResult = await fetchLiveGames(date);
+
+	if (!gamesResult.success) {
+		return gamesResult;
+	}
+
+	// For each completed game, try to fetch box score and add team stats
+	const gamesWithStats = await Promise.all(
+		gamesResult.data.map(async (game) => {
+			// Only fetch box scores for completed games
+			if (game.status !== 'final') {
+				return game;
+			}
+
+			try {
+				const boxScoreResult = await fetchGameBoxScore(game.id);
+
+				if (!boxScoreResult.success) {
+					console.warn(`[fetchGamesWithStats] Failed to fetch boxscore for ${game.id}`, {
+						gameId: game.id,
+						error: boxScoreResult.error
+					});
+					return game; // Return game without stats
+				}
+
+				// Aggregate team stats from player stats
+				const homeStats = aggregateTeamStats(boxScoreResult.data.home);
+				const awayStats = aggregateTeamStats(boxScoreResult.data.away);
+
+				return {
+					...game,
+					homeStats,
+					awayStats
+				};
+			} catch (error) {
+				console.error(`[fetchGamesWithStats] Error processing game ${game.id}`, { error });
+				return game; // Return game without stats
+			}
+		})
+	);
+
+	return {
+		success: true,
+		data: gamesWithStats,
+		cached: gamesResult.cached,
+		timestamp: gamesResult.timestamp,
+		gameDate: gamesResult.gameDate
+	};
+}
+
+/**
+ * Aggregate individual player stats into team totals
+ */
+function aggregateTeamStats(players: Player[]): import('./types').TeamStats {
+	return players.reduce(
+		(teamStats, player) => {
+			if (!player.stats) {
+				return teamStats;
+			}
+
+			return {
+				assists: teamStats.assists + player.stats.assists,
+				rebounds: teamStats.rebounds + player.stats.reboundsTotal,
+				steals: teamStats.steals + player.stats.steals,
+				blocks: teamStats.blocks + player.stats.blocks,
+				turnovers: teamStats.turnovers + player.stats.turnovers,
+				fieldGoalsMade: teamStats.fieldGoalsMade + player.stats.fieldGoalsMade,
+				fieldGoalsAttempted: teamStats.fieldGoalsAttempted + player.stats.fieldGoalsAttempted,
+				threePointersMade: teamStats.threePointersMade + player.stats.threePointersMade,
+				threePointersAttempted: teamStats.threePointersAttempted + player.stats.threePointersAttempted,
+				freeThrowsMade: teamStats.freeThrowsMade + player.stats.freeThrowsMade,
+				freeThrowsAttempted: teamStats.freeThrowsAttempted + player.stats.freeThrowsAttempted
+			};
+		},
+		{
+			assists: 0,
+			rebounds: 0,
+			steals: 0,
+			blocks: 0,
+			turnovers: 0,
+			fieldGoalsMade: 0,
+			fieldGoalsAttempted: 0,
+			threePointersMade: 0,
+			threePointersAttempted: 0,
+			freeThrowsMade: 0,
+			freeThrowsAttempted: 0
+		}
+	);
 }
 
 /**
