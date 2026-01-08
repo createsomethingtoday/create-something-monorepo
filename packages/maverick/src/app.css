@@ -107,6 +107,26 @@
     outline-offset: 2px;
   }
 
+  /* Skip to main content link - Accessibility */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-bg-pure);
+    color: var(--color-fg-primary);
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 2px solid var(--color-border-emphasis);
+    border-radius: var(--radius-sm);
+    z-index: 9999;
+    transition: top var(--duration-micro) var(--ease-standard);
+  }
+
+  .skip-link:focus {
+    top: 8px;
+    left: 8px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
