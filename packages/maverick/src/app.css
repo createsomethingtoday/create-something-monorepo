@@ -5,13 +5,6 @@
 /* =============================================================================
    MAVERICK X DESIGN SYSTEM
    "Chemistry That Outperforms" - Industrial precision meets minimal design
-   
-   Custom dark-themed Canon tokens → Shared vertical-base.css → Template overrides
-   ============================================================================= */
-
-/* =============================================================================
-   MAVERICK X CUSTOM TOKENS
-   Dark theme with industrial precision - overrides standard Canon palette
    ============================================================================= */
 
 :root {
@@ -96,36 +89,55 @@
   --duration-micro: 200ms;
   --duration-standard: 300ms;
   --duration-complex: 500ms;
-
-  /* Fonts - System stack for performance */
-  --font-sans: 'Inter', 'Inter Tight', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-semibold: 600;
-
-  /* Z-index layers */
-  --z-tooltip: 9999;
 }
 
 /* =============================================================================
-   SHARED VERTICAL BASE
-   Import common patterns: skip-link, focus states, reduced motion, etc.
-   ============================================================================= */
-
-@import '@create-something/components/styles/vertical-base.css';
-
-/* =============================================================================
-   MAVERICK X SPECIFIC OVERRIDES
+   BASE STYLES
    ============================================================================= */
 
 @layer base {
   html {
-    scroll-padding-top: 5rem; /* Account for fixed header */
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
   }
 
-  /* Override skip-link for dark theme */
+  /* Global focus indicator using Canon token */
+  *:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Skip to main content link - Accessibility */
   .skip-link {
-    background: var(--color-bg-pure);
-    color: var(--color-fg-primary);
-    border: 2px solid var(--color-border-emphasis);
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    z-index: 9999;
+    transition: top var(--duration-micro) var(--ease-standard);
+  }
+
+  .skip-link:focus {
+    top: var(--space-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
