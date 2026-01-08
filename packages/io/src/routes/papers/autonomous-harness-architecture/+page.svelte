@@ -6,6 +6,409 @@
 	 * demonstrating how progress reports preserve human agency without
 	 * requiring proactive management.
 	 */
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+
+	// Modal state
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	const fullUrl = 'https://createsomething.io/papers/autonomous-harness-architecture';
+
+	// Generate markdown with FULL content
+	const paperContent = `
+# The Autonomous Harness
+
+Agent Orchestration with Human Agency—how progress reports enable reactive steering without proactive management.
+
+**Category:** Architecture
+**Reading Time:** 15 min read
+**Difficulty:** Advanced
+**Paper ID:** PAPER-2025-008
+
+## Abstract
+
+Traditional agent orchestration requires constant human oversight—approving each action, reviewing each output, managing each session. This paper presents an alternative architecture: the autonomous harness. Drawing on Heidegger's concepts of dwelling and tool-being, we argue that effective human-agent collaboration requires the harness to *recede into transparent operation*. Humans engage through progress reports—reactive steering rather than proactive management. The harness runs autonomously; humans redirect when needed. This preserves agency without ceremony, enabling both machine efficiency and human control.
+
+> "The harness recedes into transparent operation. When working, you don't think about the harness—you review progress and redirect when needed."
+> — CREATE SOMETHING Harness Philosophy
+
+## I. Introduction: The Orchestration Problem
+
+As AI agents become more capable, a fundamental question emerges: how do humans maintain meaningful control over autonomous systems without becoming bottlenecks?
+
+You might find yourself reaching for one of two extremes:
+
+| You might try... | What happens |
+|-----------------|--------------|
+| Full autonomy: "Let the agent handle everything" | Errors compound silently. You lose agency. |
+| Full oversight: "I'll approve every action" | You become the bottleneck. Automation's purpose is defeated. |
+
+When you catch yourself at either extreme, you've found the tension this paper addresses: **what is the minimum oversight that preserves meaningful human control?**
+
+This paper argues that the answer is *progress reports*—periodic checkpoints that enable reactive steering. The harness runs autonomously; humans engage only when they choose to. This is not abdication of control but a different *mode* of control.
+
+## II. Philosophical Foundation: Dwelling and Tool-Being
+
+### Heidegger's Tool Analysis
+
+In *Being and Time*, Heidegger distinguishes two modes of encountering equipment. In *Zuhandenheit* (ready-to-hand), tools recede into transparent use—the hammer disappears when hammering. In *Vorhandenheit* (present-at-hand), tools become objects of contemplation—we notice the hammer when it breaks.
+
+> "The peculiarity of what is proximally ready-to-hand is that, in its readiness-to-hand, it must, as it were, withdraw in order to be ready-to-hand quite authentically."
+
+A well-functioning harness should exhibit Zuhandenheit: it should recede into the background, enabling work without demanding attention. When humans must constantly approve, review, or manage the harness, it becomes present-at-hand—an obstacle rather than an aid.
+
+### Dwelling as Mode of Being
+
+Heidegger's concept of *dwelling* extends this analysis. To dwell is not merely to reside in a location but to be at home, to care for a place, to let things be what they are. Applied to agent orchestration:
+
+- **The agent dwells in the codebase**—working within it, caring for it
+- **The human dwells in oversight**—reviewing progress, redirecting when needed
+- **The harness enables both dwellings**—without capturing either
+
+The key insight: the harness must not demand the human's dwelling. The human should be able to walk away, return when ready, and find coherent progress reports waiting.
+
+## III. The Gestell Warning: Automation Without Invasion
+
+Heidegger's later work warns of *Gestell*—the technological enframing that reduces everything to standing-reserve, resources to be optimized. A naive harness implementation risks Gestell: automation that fills every gap, leaving no space for human judgment.
+
+\`\`\`
+// Gestell: Technology as total capture
+while (true) {
+  const task = await getNextTask();
+  await executeWithoutOversight(task);  // No checkpoint
+  await markComplete(task);              // No review
+  // Human has no entry point
+}
+\`\`\`
+
+The danger is not automation itself but automation that *forecloses human agency*. The harness must create space for human engagement without requiring it. This is *Gelassenheit*—releasement toward things. Neither rejection nor submission; full engagement without capture.
+
+### Checkpoint as Clearing
+
+The solution is the *checkpoint*—a periodic clearing where humans can engage. Checkpoints create structured opportunities for oversight without demanding it:
+
+\`\`\`
+// Gelassenheit: Automation with clearing
+while (!complete && !paused) {
+  const task = await selectHighestPriority();
+  const result = await runSession(task);
+
+  if (shouldCheckpoint(result)) {
+    await createProgressReport();      // Human CAN engage
+    await checkForRedirects();         // Human CAN redirect
+  }
+  // Human agency preserved without ceremony
+}
+\`\`\`
+
+## IV. Architecture: The Autonomous Harness
+
+The CREATE SOMETHING harness implements these philosophical principles in concrete architecture. The design follows the Subtractive Triad:
+
+- **DRY**: One system (Beads) for all tracking—no parallel infrastructure
+- **Rams**: Only essential components—runner, checkpoints, redirects
+- **Heidegger**: Serves the work, not itself—transparent operation
+
+### Core Components
+
+\`\`\`
+┌─────────────────────────────────────────────────────────────┐
+│                     HARNESS RUNNER                          │
+│                                                             │
+│   Session 1 ──► Session 2 ──► Session 3 ──► ...            │
+│       │             │             │                         │
+│       ▼             ▼             ▼                         │
+│   Checkpoint    Checkpoint    Checkpoint                    │
+└───────┬─────────────┬─────────────┬─────────────────────────┘
+        │             │             │
+        ▼             ▼             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                BEADS (Human Interface)                      │
+│                                                             │
+│   bd progress  - Review checkpoints                         │
+│   bd update    - Redirect priorities                        │
+│   bd create    - Inject urgent work                         │
+└─────────────────────────────────────────────────────────────┘
+\`\`\`
+
+### Everything is a Beads Issue
+
+The harness uses Beads—CREATE SOMETHING's agent-native issue tracker—for all state. No new file formats, no separate databases. The tool recedes:
+
+| Concept | Implementation |
+|---------|---------------|
+| Work items | \`issue_type: feature\` |
+| Progress reports | \`label: checkpoint\` |
+| Harness state | \`issue_type: epic\` with \`label: harness\` |
+| Redirects | Priority changes on existing issues |
+
+## V. The Session Loop: Autonomous Execution
+
+Each harness run follows a predictable loop. The agent spawns Claude Code sessions, each primed with context about recent progress, current task, and any redirect notes.
+
+### Session Priming
+
+Before each session, the harness generates a priming prompt:
+
+\`\`\`
+# Harness Session Context
+
+## Current Task
+**Issue**: cs-xyz - Implement user dashboard
+**Priority**: P1
+**Blocked by**: Nothing
+**Blocks**: cs-abc (dashboard tests)
+
+## Recent Git Commits
+- abc123: Add login endpoint
+- def456: Add session management
+
+## Last Checkpoint Summary
+Completed auth flow. 8/42 features done.
+
+## Redirect Notes
+Human updated cs-ghi from P2 → P0.
+
+## Session Goal
+Complete the dashboard layout. Commit if tests pass.
+\`\`\`
+
+### Session Outcomes
+
+Each session produces one of four outcomes:
+
+- **Success**: Task completed. Issue marked closed. Git commit created.
+- **Partial**: Some progress. Issue remains open. Progress noted.
+- **Failed**: Task could not be completed. Checkpoint triggered.
+- **Context Overflow**: Session hit context limit. Auto-continues in new session.
+
+## VI. Checkpoints: The Human Interface
+
+Checkpoints are progress reports created as Beads issues. They summarize what happened, what's next, and whether human attention is needed.
+
+### Checkpoint Policy
+
+| Trigger | Default | Description |
+|---------|---------|-------------|
+| \`afterSessions\` | 3 | Checkpoint every N sessions |
+| \`afterHours\` | 4 | Checkpoint every M hours |
+| \`onError\` | true | Checkpoint on task failure |
+| \`onConfidenceBelow\` | 0.7 | Pause if confidence drops |
+
+### Checkpoint Content
+
+\`\`\`
+═══════════════════════════════════════════════════════════════
+  CHECKPOINT #12
+  2025-12-18T14:00:00Z
+═══════════════════════════════════════════════════════════════
+
+Completed 5 of 6 tasks in this checkpoint period.
+1 task(s) failed and may need attention.
+
+Overall progress: 35/42 features.
+
+✓ Completed: cs-a1b2, cs-c3d4, cs-e5f6, cs-g7h8, cs-i9j0
+✗ Failed: cs-k1l2
+◐ In Progress: cs-m3n4
+
+Confidence: 85%
+Git Commit: abc123def
+═══════════════════════════════════════════════════════════════
+\`\`\`
+
+Humans review checkpoints when they choose—\`bd progress\`. The harness doesn't push notifications; it creates artifacts for pull-based review.
+
+## VII. Redirects: Reactive Steering
+
+The harness watches Beads for changes between sessions. When humans modify priorities or create urgent issues, the harness detects and responds:
+
+| Human Action | Harness Response |
+|--------------|------------------|
+| \`bd update cs-xyz --priority P0\` | Issue jumps to front of queue |
+| \`bd create "Urgent fix" --priority P0\` | New work added at top priority |
+| \`bd close cs-abc\` | Harness stops working on issue |
+| Create issue with \`pause\` label | Harness pauses for review |
+
+This is *reactive steering*: humans don't manage the harness; they redirect it when their priorities change. The harness handles the mechanics; humans provide direction.
+
+### Redirect Detection
+
+\`\`\`typescript
+async function checkForRedirects(snapshot: IssueSnapshot): Redirect[] {
+  const current = await readAllIssues();
+  const redirects: Redirect[] = [];
+
+  for (const issue of current) {
+    const prev = snapshot.get(issue.id);
+
+    // Detect priority changes
+    if (prev && prev.priority !== issue.priority) {
+      redirects.push({
+        type: 'priority_change',
+        issueId: issue.id,
+        from: prev.priority,
+        to: issue.priority
+      });
+    }
+
+    // Detect new urgent issues
+    if (!prev && issue.priority === 0) {
+      redirects.push({
+        type: 'urgent_injection',
+        issueId: issue.id
+      });
+    }
+  }
+
+  return redirects;
+}
+\`\`\`
+
+## VIII. Human Workflow: Agency Without Ceremony
+
+The harness workflow optimizes for human agency without ceremony:
+
+### Starting Work
+
+\`\`\`bash
+# 1. Write a spec (markdown PRD)
+vim specs/my-project.md
+
+# 2. Start the harness
+harness start specs/my-project.md
+
+# 3. Walk away—work continues autonomously
+\`\`\`
+
+### Monitoring Progress
+
+\`\`\`bash
+# Check progress when ready
+bd progress
+
+# Output:
+# Harness: cs-harness-xyz (running)
+# Sessions: 12 | Features: 8/42 | Failed: 1
+#
+# Recent Checkpoints:
+# - cs-cp-003 (2h ago): Dashboard 60% complete
+# - cs-cp-002 (6h ago): Auth flow complete
+# - cs-cp-001 (10h ago): Initial scaffolding
+
+# Deep dive into a checkpoint
+bd show cs-cp-003
+\`\`\`
+
+### Redirecting
+
+\`\`\`bash
+# "I need payments before dashboard"
+bd update cs-payments --priority P0
+
+# "Stop working on the old API"
+bd close cs-old-api --reason "Deprecated"
+
+# "Add this urgent fix"
+bd create "Fix: Login broken on Safari" --priority P0
+
+# Next session automatically picks up the redirect
+\`\`\`
+
+Notice what's missing: no approval dialogs, no status meetings, no context switches. The human engages when they choose, using commands they already know.
+
+## IX. Implementation: The CREATE SOMETHING Harness
+
+The harness is implemented as a TypeScript package in the CREATE SOMETHING monorepo:
+
+\`\`\`
+packages/harness/
+├── src/
+│   ├── types.ts          # Type definitions
+│   ├── spec-parser.ts    # Markdown PRD parsing
+│   ├── beads.ts          # Beads CLI integration
+│   ├── session.ts        # Claude Code spawning
+│   ├── checkpoint.ts     # Progress report generation
+│   ├── redirect.ts       # Change detection
+│   ├── runner.ts         # Main orchestration loop
+│   ├── cli.ts            # CLI entry point
+│   └── index.ts          # Exports
+├── package.json
+└── README.md
+\`\`\`
+
+### Spec Parser
+
+The harness parses markdown PRDs into structured features with dependencies.
+
+### Session Spawning
+
+\`\`\`typescript
+export async function runSession(
+  context: PrimingContext,
+  options: SessionOptions
+): Promise<SessionResult> {
+  const primingPrompt = generatePrimingPrompt(context);
+
+  const process = spawn('claude', [
+    '--dangerously-skip-permissions',
+    '--print', primingPrompt
+  ], {
+    cwd: options.workDir,
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  // Monitor for completion, errors, or context overflow
+  return monitorSession(process, options);
+}
+\`\`\`
+
+## X. Evaluation: Canon Alignment in Practice
+
+The harness is currently being evaluated on the Canon Alignment spec—a 26-feature project to ensure CSS design consistency across all CREATE SOMETHING properties.
+
+| Metric | Value |
+|--------|-------|
+| Total Features | 26 |
+| Feature Sections | 8 |
+| Dependencies | 18 (intra-section) |
+| Checkpoint Policy | Every 3 sessions or 4 hours |
+
+The evaluation tests the harness's ability to:
+- Parse complex specs with multiple sections
+- Create issues with proper dependencies
+- Spawn Claude Code sessions with context
+- Generate meaningful checkpoints
+- Detect and respond to redirects
+
+Results will be published in a follow-up paper once the Canon Alignment run completes.
+
+## XI. Conclusion: The Tool Recedes
+
+The autonomous harness represents a different philosophy of human-agent collaboration. Rather than requiring constant oversight, it creates space for human agency through structured checkpoints. Rather than demanding attention, it waits for engagement.
+
+This is Heidegger's tool-being applied to orchestration: the harness recedes into transparent operation. When it works well, you don't think about it—you review progress and redirect when needed.
+
+> "The hammer disappears when hammering. The harness disappears when working."
+
+The goal is not automation for its own sake but automation that preserves what matters: human judgment, human priorities, human agency. The harness handles the mechanics; humans provide the direction. This is Gelassenheit—neither rejection nor submission, but full engagement without capture.
+
+The infrastructure disappears; only the work remains.
+
+## References
+
+1. Heidegger, M. (1927). *Being and Time*. Trans. Macquarrie & Robinson.
+2. Heidegger, M. (1954). *The Question Concerning Technology*.
+3. Anthropic. (2025). "Building Effective Agents." anthropic.com/research/building-effective-agents
+4. Anthropic. (2025). "Claude Code Documentation."
+5. CREATE SOMETHING. (2025). "Beads: Agent-Native Issue Tracking."
+6. CREATE SOMETHING. (2025). "The Subtractive Triad." createsomething.ltd/principles
+`.trim();
 </script>
 
 <svelte:head>
@@ -30,6 +433,17 @@
 				<span>•</span>
 				<span>Advanced</span>
 			</div>
+			<PageActions
+				title="The Autonomous Harness: Agent Orchestration with Human Agency"
+				content={paperContent}
+				metadata={{
+					category: 'Architecture',
+					sourceUrl: fullUrl,
+					keywords: ['agent-orchestration', 'harness', 'heidegger', 'autonomous-agents', 'zuhandenheit']
+				}}
+				claudePrompt="Help me understand this research paper on autonomous agent orchestration and how to apply the harness pattern."
+				onpreview={handlePreview}
+			/>
 		</div>
 
 		<!-- Abstract -->
@@ -763,6 +1177,12 @@ cs-003: Session management
 		</div>
 	</div>
 </div>
+
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="Paper Markdown"
+/>
 
 <style>
 	/* Structure: Tailwind | Design: Canon */
