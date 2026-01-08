@@ -1,0 +1,118 @@
+@import '@create-something/components/styles/canon.css';
+
+:root {
+	/* Fashion-specific overrides */
+	--font-display: 'Arial Black', 'Impact', sans-serif;
+	--font-body: 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: var(--color-bg-pure);
+	color: var(--color-fg-primary);
+	font-family: var(--font-body);
+	line-height: 1.4;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography scale for editorial impact - Stitch-inspired */
+h1 {
+	font-family: var(--font-display);
+	font-size: clamp(5rem, 14vw, 16rem);
+	font-weight: 900;
+	line-height: 0.8;
+	letter-spacing: -0.03em;
+	text-transform: uppercase;
+}
+
+h2 {
+	font-family: var(--font-display);
+	font-size: clamp(2.5rem, 7vw, 8rem);
+	font-weight: 900;
+	line-height: 0.85;
+	letter-spacing: -0.02em;
+	text-transform: uppercase;
+}
+
+h3 {
+	font-size: var(--text-h3);
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+p {
+	font-size: var(--text-body);
+	line-height: 1.6;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+	transition: opacity var(--duration-micro) var(--ease-standard);
+}
+
+a:hover {
+	opacity: 0.7;
+}
+
+button {
+	font-family: inherit;
+	cursor: pointer;
+	background: none;
+	border: none;
+	padding: 0;
+}
+
+/* Editorial Effects - Stitch patterns */
+.mix-blend-invert {
+	mix-blend-mode: difference;
+	color: white;
+}
+
+.grayscale-hover {
+	filter: grayscale(1);
+	transition: filter var(--duration-standard) var(--ease-standard);
+}
+
+.grayscale-hover:hover {
+	filter: grayscale(0);
+}
+
+.text-watermark {
+	position: absolute;
+	font-size: clamp(8rem, 25vw, 25rem);
+	font-weight: 900;
+	color: var(--color-fg-subtle);
+	pointer-events: none;
+	user-select: none;
+	line-height: 1;
+	z-index: 0;
+}
+
+/* Utility classes */
+.container {
+	max-width: 1600px;
+	margin: 0 auto;
+	padding: 0 var(--space-lg);
+}
+
+.section {
+	padding: var(--space-2xl) 0;
+}
+
+@media (max-width: 768px) {
+	.section {
+		padding: var(--space-xl) 0;
+	}
+
+	.container {
+		padding: 0 var(--space-md);
+	}
+}

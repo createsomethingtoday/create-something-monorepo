@@ -20,6 +20,8 @@
 
 @import './tokens.css';
 @import './components.css';
+@import './editorial.css';
+@import './animations.css';
 
 /* ==========================================================================
    Base Styles - Wrapped in @layer base for Tailwind compatibility
