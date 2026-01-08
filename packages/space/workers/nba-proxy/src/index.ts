@@ -367,13 +367,18 @@ async function captureSnapshot(env: Env): Promise<void> {
 
 		const data = await response.json();
 		const gameCount = data?.scoreboard?.games?.length || 0;
+		
+		// Use the actual game date from the NBA API response, not our calculated date
+		// This ensures the date key matches what users expect when querying by date
+		const actualGameDate = data?.scoreboard?.gameDate || date;
+		console.log(`[${correlationId}] Calculated date: ${date}, NBA API game date: ${actualGameDate}`);
 
-		// Store snapshot
+		// Store snapshot using the NBA's game date
 		await env.DB.prepare(
 			'INSERT INTO game_snapshots (date, scoreboard_json, game_count, captured_at) VALUES (?, ?, ?, ?) ON CONFLICT(date) DO UPDATE SET scoreboard_json = ?, game_count = ?, captured_at = ?'
 		)
 			.bind(
-				date,
+				actualGameDate,
 				JSON.stringify(data),
 				gameCount,
 				Date.now(),
@@ -383,17 +388,17 @@ async function captureSnapshot(env: Env): Promise<void> {
 			)
 			.run();
 
-		// Update metadata to captured
+		// Update metadata to captured (use actual game date)
 		await env.DB.prepare(
-			'UPDATE snapshot_metadata SET status = ?, error_message = NULL WHERE date = ?'
+			'INSERT INTO snapshot_metadata (date, status, attempt_count, last_attempt_at) VALUES (?, ?, 1, ?) ON CONFLICT(date) DO UPDATE SET status = ?, error_message = NULL, last_attempt_at = ?'
 		)
-			.bind('captured', date)
+			.bind(actualGameDate, 'captured', Date.now(), 'captured', Date.now())
 			.run();
 
-		console.log(`[${correlationId}] Successfully captured ${gameCount} games for ${date}`);
+		console.log(`[${correlationId}] Successfully captured ${gameCount} games for ${actualGameDate}`);
 		
 		// Archive play-by-play and box scores for completed games
-		await archiveCompletedGames(env, data, date, correlationId);
+		await archiveCompletedGames(env, data, actualGameDate, correlationId);
 		
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
