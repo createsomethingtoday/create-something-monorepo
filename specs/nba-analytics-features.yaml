@@ -1,0 +1,286 @@
+title: NBA Live Analytics - Advanced Features
+
+overview: |
+  Implement five high-impact analytics features identified from analyzing
+  January 7, 2026 game data. Features focus on clutch performance, game
+  excitement, pace analysis, overtime trends, and blowout detection.
+  
+  Context: Analysis of 9 completed games revealed:
+  - 45% of games decided by ≤4 points (clutch situations matter)
+  - 22% overtime rate (fatigue/endurance tracking needed)
+  - 56% blowout rate (garbage time stat inflation)
+  - 193-254 point variance (pace affects all stats)
+  
+  All features leverage existing PBP archives and box score data that
+  populate automatically via nightly cron job.
+
+property: space
+
+features:
+  # ========================================
+  # PHASE 1: Core Analytics (High Priority)
+  # ========================================
+
+  - title: Clutch Performance Calculator
+    description: |
+      Track player and team performance in high-pressure situations
+      (last 2 minutes of close games). Uses archived PBP data to identify
+      clutch moments and calculate specialized metrics.
+    complexity: standard
+    priority: 1
+    files:
+      - packages/space/src/lib/nba/clutch-calculator.ts
+      - packages/space/src/lib/nba/clutch-calculator.test.ts
+    acceptance:
+      - calculateClutchStats(pbpActions, threshold=5) filters last 2 min of games ≤5 pt margin
+      - Returns ClutchStats { playerFG%, assists, turnovers, pointsScored, possessions }
+      - Handles both regular and OT periods correctly
+      - Calculates "ice in veins" rating (composite clutch score 0-100)
+      - Unit tests with mock PBP data covering edge cases
+      - test: Clutch calculator tests pass
+        verify: pnpm --filter=space test -- src/lib/nba/clutch-calculator.test.ts
+    depends_on: []
+
+  - title: Game Excitement Score Algorithm
+    description: |
+      Auto-detect "Game of the Night" using composite scoring algorithm.
+      Combines competitiveness, star performances, and special circumstances
+      (OT, buzzer beaters) to surface best games for casual fans.
+    complexity: standard
+    priority: 1
+    files:
+      - packages/space/src/lib/nba/excitement-score.ts
+      - packages/space/src/lib/nba/excitement-score.test.ts
+    acceptance:
+      - calculateExcitementScore(game) returns 0-100 score
+      - Factors include final margin (closer = higher), lead changes, OT bonus (+20)
+      - Star power index (40+ pt performances = +15, 30+ = +10)
+      - Total points excitement (240+ = +10)
+      - Multiple comebacks detection (+5 each)
+      - Returns breakdown of score components for explainability
+      - test: Algorithm correctly ranks Jan 7 games (UTA@OKC should score highest)
+        verify: pnpm --filter=space test -- src/lib/nba/excitement-score.test.ts
+    depends_on: []
+
+  - title: Pace and Tempo Analyzer
+    description: |
+      Calculate possessions per game and pace factor from PBP data.
+      Enables stat normalization (e.g., PPP instead of raw points).
+      Essential for comparing players across different tempo teams.
+    complexity: standard
+    priority: 1
+    files:
+      - packages/space/src/lib/nba/pace-calculator.ts
+      - packages/space/src/lib/nba/pace-calculator.test.ts
+    acceptance:
+      - calculatePace(pbpActions) estimates possessions using formula
+      - Formula: FGA + 0.44*FTA - ORB + TOV (standard NBA method)
+      - Returns { possessions, pacePerGame, pointsPerPossession }
+      - Handles incomplete data gracefully (partial games, missing actions)
+      - Compares to league average pace (provide context)
+      - test: Pace calculator produces reasonable values (90-110 possessions typical)
+        verify: pnpm --filter=space test -- src/lib/nba/pace-calculator.test.ts
+    depends_on: []
+
+  # ========================================
+  # PHASE 2: Specialized Analytics (Medium Priority)
+  # ========================================
+
+  - title: Overtime Performance Tracker
+    description: |
+      Compare REG vs OT performance to identify fatigue patterns and
+      endurance outliers. 22% of Jan 7 games went to OT, making this
+      a significant factor.
+    complexity: standard
+    priority: 2
+    files:
+      - packages/space/src/lib/nba/overtime-analyzer.ts
+      - packages/space/src/lib/nba/overtime-analyzer.test.ts
+    acceptance:
+      - calculateOTDifferential(pbpActions, boxScore) separates REG from OT periods
+      - Returns { regFG%, otFG%, regPPP, otPPP, fatigueIndex }
+      - Fatigue index based on shooting % decline and turnover increase
+      - Player endurance score (minutes played correlation with OT performance)
+      - Team OT win% compared to league average
+      - test: Correctly separates periods and calculates differentials
+        verify: pnpm --filter=space test -- src/lib/nba/overtime-analyzer.test.ts
+    depends_on:
+      - Pace and Tempo Analyzer
+
+  - title: Blowout and Garbage Time Detector
+    description: |
+      Identify when games become non-competitive and flag stats that occur
+      during garbage time. Prevents stat inflation from misleading analysis.
+      56% of Jan 7 games were blowouts.
+    complexity: standard
+    priority: 2
+    files:
+      - packages/space/src/lib/nba/blowout-detector.ts
+      - packages/space/src/lib/nba/blowout-detector.test.ts
+    acceptance:
+      - detectGarbageTime(pbpActions, threshold=15) identifies "point of no return"
+      - Algorithm: 15+ point lead with <5 min remaining = garbage time
+      - Returns { garbageTimeStart, affectedPlayers[], inflatedStats[] }
+      - Flags bench players getting extended minutes in blowouts
+      - Provides "reliability score" for each player's stats (0-100)
+      - test: Correctly identifies garbage time in sample games
+        verify: pnpm --filter=space test -- src/lib/nba/blowout-detector.test.ts
+    depends_on: []
+
+  # ========================================
+  # PHASE 3: UI Integration (Parallel - Convoy)
+  # ========================================
+
+  - title: Clutch Performance Page
+    description: |
+      New page showing clutch performance leaderboards and situational stats.
+      Answers "who performs when it matters most?"
+    complexity: standard
+    priority: 3
+    files:
+      - packages/space/src/routes/experiments/nba-live/clutch/+page.svelte
+      - packages/space/src/routes/experiments/nba-live/clutch/+page.server.ts
+      - packages/space/src/lib/components/nba/ClutchLeaderboard.svelte
+    acceptance:
+      - Leaderboard showing top clutch performers (ice in veins rating)
+      - Filter by date range (today, last 7 days, season)
+      - Player cards showing clutch FG%, assists, turnovers
+      - Visual indicator for "clutch gene" (rating 80+)
+      - Comparison to non-clutch performance for same players
+      - Canon styling with design tokens
+      - Polling updates every 60s during live games
+      - test: Page loads and displays clutch stats
+        verify: pnpm --filter=space dev
+    depends_on:
+      - Clutch Performance Calculator
+
+  - title: Game of the Night Card
+    description: |
+      Prominent card on main NBA Live page showing auto-selected best game
+      with excitement score and key highlights.
+    complexity: simple
+    priority: 3
+    files:
+      - packages/space/src/lib/components/nba/GameOfNightCard.svelte
+      - packages/space/src/routes/experiments/nba-live/+page.svelte (update)
+    acceptance:
+      - Large featured card above game list
+      - "⭐ Game of the Night" badge with excitement score
+      - Shows matchup, final score, highlight player (if 40+ pts)
+      - Click navigates to game detail/analysis
+      - Auto-updates when new game completes
+      - Animated entrance when game becomes featured
+      - Canon styling matching GameSelector pattern
+      - test: Card displays with highest excitement score game
+        verify: pnpm --filter=space dev
+    depends_on:
+      - Game Excitement Score Algorithm
+
+  - title: Pace Analysis Dashboard
+    description: |
+      Section on main page or separate page showing pace comparisons,
+      points per possession leaders, and tempo impact on scoring.
+    complexity: standard
+    priority: 3
+    files:
+      - packages/space/src/routes/experiments/nba-live/pace/+page.svelte
+      - packages/space/src/routes/experiments/nba-live/pace/+page.server.ts
+      - packages/space/src/lib/components/nba/PaceChart.svelte
+    acceptance:
+      - Bar chart showing team pace (possessions per game)
+      - Scatter plot: pace vs total points (correlation visualization)
+      - Points per possession leaderboard (offensive efficiency)
+      - Color coding for fast pace (>105), average (95-105), slow (<95)
+      - Comparison to league average baseline
+      - LayerCake charts for consistency
+      - Canon design tokens
+      - test: Charts render with sample pace data
+        verify: pnpm --filter=space dev
+    depends_on:
+      - Pace and Tempo Analyzer
+
+  - title: Overtime Insights Component
+    description: |
+      Widget showing OT stats and fatigue indicators for games that went
+      to overtime. Can be embedded in game detail pages.
+    complexity: simple
+    priority: 3
+    files:
+      - packages/space/src/lib/components/nba/OvertimeInsights.svelte
+    acceptance:
+      - Only displays if game went to OT (conditional rendering)
+      - Shows REG vs OT performance differential
+      - Fatigue index visualization (color-coded 0-100)
+      - Player endurance scores with minutes played
+      - Comparison to team's OT win rate
+      - Compact widget format (embeddable)
+      - Canon styling
+      - test: Widget renders correctly for OT games
+        verify: pnpm --filter=space dev
+    depends_on:
+      - Overtime Performance Tracker
+
+  - title: Garbage Time Warning Indicator
+    description: |
+      Visual indicator on player stat cards when stats occurred during
+      garbage time. Helps users interpret inflated numbers correctly.
+    complexity: simple
+    priority: 3
+    files:
+      - packages/space/src/lib/components/nba/GarbageTimeIndicator.svelte
+    acceptance:
+      - ⚠️ icon with tooltip explaining garbage time
+      - Shows reliability score (0-100) for player's stats
+      - "Stats inflated by garbage time" warning text
+      - Only displays when blowout detected and player affected
+      - Subtle orange/yellow warning color (Canon tokens)
+      - Accessible tooltip with keyboard navigation
+      - test: Indicator shows for garbage time players, hidden otherwise
+        verify: pnpm --filter=space dev
+    depends_on:
+      - Blowout and Garbage Time Detector
+
+  # ========================================
+  # PHASE 4: Integration and Navigation
+  # ========================================
+
+  - title: Analytics Navigation Menu
+    description: |
+      Update main NBA Live page with navigation to all analytics features.
+      Clear information architecture for new capabilities.
+    complexity: trivial
+    priority: 4
+    files:
+      - packages/space/src/routes/experiments/nba-live/+page.svelte
+    acceptance:
+      - Tab or button navigation to Clutch, Pace, League Insights pages
+      - Active state highlighting for current view
+      - Responsive navigation (mobile-friendly)
+      - Preserves game selector state across navigation
+      - Canon button styling
+      - test: Navigation links work and preserve state
+        verify: pnpm --filter=space dev
+    depends_on:
+      - Clutch Performance Page
+      - Pace Analysis Dashboard
+
+requirements:
+  - All calculations use archived PBP and box score data from D1
+  - Graceful degradation if historical data not yet available
+  - Unit tests for all calculation modules (70%+ coverage)
+  - Canon CSS tokens only (no hardcoded colors per css-canon.md)
+  - LayerCake for all charts (consistency)
+  - Real-time polling respects component lifecycle
+  - Build succeeds: pnpm --filter=space build
+  - Types check: pnpm --filter=space exec tsc --noEmit
+
+success:
+  - Five analytics features implemented and tested
+  - Clutch performance tracking identifies pressure performers
+  - Game of the Night automatically highlights best matchups
+  - Pace analysis enables stat normalization
+  - Overtime trends reveal fatigue patterns
+  - Garbage time detection prevents misleading stats
+  - All features integrate seamlessly into existing NBA Live dashboard
+  - Total development time under 6 hours
+  - User-facing documentation explains each feature
