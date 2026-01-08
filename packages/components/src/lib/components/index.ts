@@ -50,3 +50,7 @@ export {
 
 // Documentation components (live docs - components ARE the documentation)
 export { TokenSwatch, TokenGrid } from './docs/index.js';
+
+// Page action components
+export { default as PageActions } from './PageActions.svelte';
+export { default as MarkdownPreviewModal } from './MarkdownPreviewModal.svelte';

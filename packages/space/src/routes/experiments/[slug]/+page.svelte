@@ -4,7 +4,7 @@
 	import ExperimentRuntime from '$lib/components/ExperimentRuntime.svelte';
 	import ExperimentCodeEditor from '$lib/components/ExperimentCodeEditor.svelte';
 	import RelatedPapersCard from '$lib/components/RelatedPapersCard.svelte';
-	import { RelatedArticles } from '@create-something/components';
+	import { RelatedArticles, PageActions, MarkdownPreviewModal } from '@create-something/components';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
 	import { isExecutable, isCodeExperiment } from '$lib/types/paper';
@@ -30,6 +30,10 @@
 	// Completion tracking
 	let isCompleted = $state(false);
 
+	// Modal state for markdown preview
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
 	// Next paper recommendation (must also be derived)
 	const nextPaper = $derived(getNextPaper([paper, ...relatedPapers], paper.slug));
 
@@ -42,6 +46,28 @@
 		isCompleted = true;
 		markExperimentCompleted(paper.slug);
 	}
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	// Generate markdown content for export
+	const experimentContent = $derived(`
+## ${paper.title}
+
+${paper.description || paper.excerpt_long || ''}
+
+**Category**: ${paper.category}
+**Type**: ${canRunTerminal ? 'Terminal Experiment' : isCodeEditor ? 'Code Editor Experiment' : 'Interactive Experiment'}
+
+${paper.content || ''}
+
+---
+
+**Interactive Version**: ${fullUrl}
+**Research Paper**: ${ioUrl}
+	`.trim());
 
 	// Use $effect to handle completion state on route changes
 	$effect(() => {
@@ -128,9 +154,20 @@
 				</svg>
 			</a>
 
-			<!-- Right: Share Buttons -->
+			<!-- Right: Share Buttons & Page Actions -->
 			<div class="flex items-center gap-3">
 				<ShareButtons title={paper.title} url={fullUrl} {isCompleted} />
+				<PageActions
+					title={paper.title}
+					content={experimentContent}
+					metadata={{
+						category: paper.category,
+						sourceUrl: fullUrl,
+						keywords: paper.focus_keywords?.split(',').map(k => k.trim())
+					}}
+					claudePrompt="Help me understand this experiment and how to apply it."
+					onpreview={handlePreview}
+				/>
 			</div>
 		</div>
 	</div>
@@ -174,6 +211,13 @@
 		</a>
 	</div>
 </div>
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="Experiment Markdown"
+/>
 
 <style>
   .experiment-page {

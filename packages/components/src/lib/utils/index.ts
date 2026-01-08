@@ -87,3 +87,13 @@ export {
     type Span,
     type SpanEvent
 } from './tracing.js';
+
+// Markdown formatting and export
+// Note: clipboard utilities not exported here to avoid conflict with diagrams/export.ts
+// Import directly from '@create-something/components/utils/clipboard' if needed
+export {
+    formatPageMarkdown,
+    generateClaudeUrl,
+    truncateForUrl,
+    type PageMetadata
+} from './markdown.js';
