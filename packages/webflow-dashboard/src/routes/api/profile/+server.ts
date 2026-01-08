@@ -2,12 +2,22 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
 
+// Helper to add no-cache headers to API responses
+const noCacheHeaders = {
+	'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+	'Pragma': 'no-cache',
+	'Expires': '0'
+};
+
 export const GET: RequestHandler = async ({ locals, platform }) => {
 	try {
 		// Check authentication
 		if (!locals.user?.email) {
 			console.error('[Profile API] No user email in locals');
-			return json({ error: 'Unauthorized', details: 'No user email' }, { status: 401 });
+			return json(
+				{ error: 'Unauthorized', details: 'No user email' },
+				{ status: 401, headers: noCacheHeaders }
+			);
 		}
 
 		console.log('[Profile API] Fetching profile for:', locals.user.email);
@@ -21,11 +31,14 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				hasEnv: !!platform?.env
 			};
 			console.error('[Profile API] Missing Airtable env vars:', envStatus);
-			return json({ 
-				error: 'Server configuration error', 
-				details: 'Missing Airtable credentials',
-				debug: envStatus
-			}, { status: 500 });
+			return json(
+				{
+					error: 'Server configuration error',
+					details: 'Missing Airtable credentials',
+					debug: envStatus
+				},
+				{ status: 500, headers: noCacheHeaders }
+			);
 		}
 
 		const airtable = getAirtableClient(platform.env);
@@ -33,32 +46,41 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 		if (!creator) {
 			console.error('[Profile API] Creator not found for:', locals.user.email);
-			return json({ 
-				error: 'Profile not found',
-				details: `No creator found for email: ${locals.user.email}`
-			}, { status: 404 });
+			return json(
+				{
+					error: 'Profile not found',
+					details: `No creator found for email: ${locals.user.email}`
+				},
+				{ status: 404, headers: noCacheHeaders }
+			);
 		}
 
 		console.log('[Profile API] Successfully fetched profile for:', locals.user.email);
-		
-		return json({
-			id: creator.id,
-			name: creator.name,
-			email: locals.user.email,
-			avatarUrl: creator.avatarUrl,
-			biography: creator.biography,
-			legalName: creator.legalName
-		});
+
+		return json(
+			{
+				id: creator.id,
+				name: creator.name,
+				email: locals.user.email,
+				avatarUrl: creator.avatarUrl,
+				biography: creator.biography,
+				legalName: creator.legalName
+			},
+			{ headers: noCacheHeaders }
+		);
 	} catch (err) {
 		console.error('[Profile API] Unexpected error:', err);
 		const errorMessage = err instanceof Error ? err.message : 'Unknown error';
 		const errorStack = err instanceof Error ? err.stack : undefined;
-		
-		return json({ 
-			error: 'Internal server error',
-			message: errorMessage,
-			stack: errorStack
-		}, { status: 500 });
+
+		return json(
+			{
+				error: 'Internal server error',
+				message: errorMessage,
+				stack: errorStack
+			},
+			{ status: 500, headers: noCacheHeaders }
+		);
 	}
 };
 
@@ -108,14 +130,17 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 
 		console.log('[Profile API PATCH] Successfully updated profile for:', locals.user.email);
 
-		return json({
-			id: updated.id,
-			name: updated.name,
-			email: locals.user.email,
-			avatarUrl: updated.avatarUrl,
-			biography: updated.biography,
-			legalName: updated.legalName
-		});
+		return json(
+			{
+				id: updated.id,
+				name: updated.name,
+				email: locals.user.email,
+				avatarUrl: updated.avatarUrl,
+				biography: updated.biography,
+				legalName: updated.legalName
+			},
+			{ headers: noCacheHeaders }
+		);
 	} catch (err) {
 		console.error('[Profile API PATCH] Error:', err);
 		if (err instanceof Error && 'status' in err) {
