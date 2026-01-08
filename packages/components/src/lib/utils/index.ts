@@ -99,3 +99,13 @@ export {
 // Clipboard utilities (text copying - not diagram export)
 // For diagram export, use copyDiagramToClipboard from diagrams/export.ts
 export { copyToClipboard } from './clipboard.js';
+
+// Content loader types (implementations in each package)
+export type {
+	BaseFrontmatter,
+	PaperFrontmatter,
+	PatternFrontmatter,
+	CanonFrontmatter,
+	WorkFrontmatter,
+	ContentItem
+} from './content-loader.js';
