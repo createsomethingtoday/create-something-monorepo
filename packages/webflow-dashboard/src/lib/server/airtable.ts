@@ -561,12 +561,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				console.log('[Airtable] Searching for creator with email:', email);
 				console.log('[Airtable] Using table ID:', TABLES.CREATORS);
 				
-				// Match original Next.js implementation EXACTLY - no escaping, direct email
-				const formula = `OR(
-					FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0,
-					FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0,
-					FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0
-				)`;
+				// Single-line formula to avoid any whitespace issues
+				const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
 				
 				console.log('[Airtable] Formula:', formula);
 				

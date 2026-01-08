@@ -22,7 +22,9 @@ import type {
 } from './types.js';
 import { DEFAULT_CHECKPOINT_POLICY, DEFAULT_FAILURE_HANDLING_CONFIG, DEFAULT_SWARM_CONFIG, DEFAULT_REVIEW_PIPELINE_CONFIG, DEFAULT_HARNESS_CONFIG } from './types.js';
 import { loadConfig, getModelFromConfig, formatConfigDisplay } from './config/index.js';
-import { parse as parseSpec, formatSpecSummary } from './spec-parser.js';
+import { parse as parseMarkdownSpec, formatSpecSummary } from './spec-parser.js';
+import { parseYamlSpec } from './yaml-spec-parser.js';
+import type { ParsedSpec } from './types.js';
 import {
   createIssuesFromFeatures,
   createHarnessIssue,
@@ -125,9 +127,10 @@ export async function initializeHarness(
 ): Promise<{ harnessState: HarnessState; featureMap: Map<string, string> }> {
   console.log(`\n🚀 Initializing harness from spec: ${options.specFile}\n`);
 
-  // Read and parse spec
+  // Read and parse spec (detect format by extension)
   const specContent = await readFile(options.specFile, 'utf-8');
-  const spec = parseSpec(specContent);
+  const isYaml = options.specFile.endsWith('.yaml') || options.specFile.endsWith('.yml');
+  const spec: ParsedSpec = isYaml ? parseYamlSpec(specContent) : parseMarkdownSpec(specContent);
 
   console.log(formatSpecSummary(spec));
   console.log(`\nParsed ${spec.features.length} features from spec.\n`);

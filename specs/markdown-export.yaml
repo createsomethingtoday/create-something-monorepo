@@ -1,0 +1,206 @@
+title: CREATE SOMETHING Markdown Export Feature
+property: io
+complexity: standard
+
+overview: |
+  Add Claude.ai-style page export functionality to all CREATE SOMETHING properties.
+  Users can copy page content as Markdown, preview it, or send directly to Claude.ai.
+  
+  Properties: .ltd, .io, .agency, .space
+
+features:
+  # Phase 1: Shared Utilities (packages/components)
+  - title: Create clipboard.ts utility
+    complexity: simple
+    labels: [feature, components]
+    description: |
+      Create clipboard utility in packages/components/src/lib/utils/clipboard.ts
+      
+      Requirements:
+      - copyToClipboard(text: string): Promise<boolean>
+      - Returns true on success, false on failure
+      - Works across browsers (fallback for older browsers)
+      - No external dependencies
+    acceptance:
+      - Function exports copyToClipboard
+      - Returns Promise<boolean>
+      - Uses navigator.clipboard with fallback
+
+  - title: Create markdown.ts utility
+    complexity: simple
+    labels: [feature, components]
+    description: |
+      Create markdown formatting utility in packages/components/src/lib/utils/markdown.ts
+      
+      Requirements:
+      - formatPageMarkdown(title, content, metadata?): string
+      - generateClaudeUrl(content, prompt?): string
+      - truncateForUrl(content, maxLength): string
+      - Handle URL length limits (~8KB)
+    acceptance:
+      - Function exports formatPageMarkdown
+      - Function exports generateClaudeUrl
+      - URL truncation handles edge cases
+
+  - title: Create PageActions.svelte component
+    complexity: standard
+    labels: [feature, components]
+    depends_on:
+      - Create clipboard.ts utility
+      - Create markdown.ts utility
+    description: |
+      Create PageActions dropdown in packages/components/src/lib/components/PageActions.svelte
+      
+      Props:
+      - content: string (markdown content)
+      - title: string (page title)
+      - claudePrompt?: string (optional context for Claude)
+      
+      Actions:
+      1. Copy page as Markdown - copies to clipboard with feedback
+      2. Open Markdown - opens MarkdownPreviewModal
+      3. Chat in Claude.ai - opens claude.ai/new?q=...
+      
+      Styling:
+      - Use Canon tokens (--color-fg-muted, --duration-micro)
+      - Icon buttons with hover states
+      - Phosphor-style icons (inline SVGs)
+    files:
+      - packages/components/src/lib/components/PageActions.svelte
+    acceptance:
+      - Component renders dropdown with 3 actions
+      - Copy action shows success feedback
+      - Claude action opens correct URL
+
+  - title: Create MarkdownPreviewModal.svelte
+    complexity: simple
+    labels: [feature, components]
+    depends_on:
+      - Create clipboard.ts utility
+    description: |
+      Create modal for viewing markdown in packages/components/src/lib/components/MarkdownPreviewModal.svelte
+      
+      Features:
+      - Displays raw markdown with monospace font
+      - Copy button in modal header
+      - Close button and ESC key support
+      - Scrollable content area
+      
+      Styling:
+      - Use Canon tokens
+      - Match existing modal patterns in the codebase
+    acceptance:
+      - Modal displays markdown content
+      - Copy button works
+      - ESC key closes modal
+
+  - title: Export new components from index.ts
+    complexity: trivial
+    labels: [feature, components]
+    depends_on:
+      - Create PageActions.svelte component
+      - Create MarkdownPreviewModal.svelte
+    description: |
+      Update packages/components/src/lib/index.ts and packages/components/src/lib/components/index.ts
+      to export PageActions, MarkdownPreviewModal, and utility functions.
+    acceptance:
+      - PageActions exported from @create-something/components
+      - MarkdownPreviewModal exported
+      - Utility functions exported
+
+  # Phase 2: Integration (.io)
+  - title: Add PageActions to .io paper pages
+    complexity: simple
+    labels: [feature, io]
+    depends_on:
+      - Export new components from index.ts
+    description: |
+      Integrate PageActions into packages/io/src/routes/papers/[slug]/+page.svelte
+      
+      Markdown content should include:
+      - Title and subtitle
+      - Abstract
+      - Full content
+      - Keywords
+      - Source URL
+    files:
+      - packages/io/src/routes/papers/[slug]/+page.svelte
+    acceptance:
+      - PageActions visible on paper pages
+      - Markdown includes title, abstract, content
+
+  - title: Add PageActions to .io experiment pages
+    complexity: simple
+    labels: [feature, io]
+    depends_on:
+      - Export new components from index.ts
+    description: |
+      Integrate PageActions into packages/io/src/routes/experiments/[slug]/+page.svelte
+      
+      Markdown content should include:
+      - Experiment title and description
+      - Category
+      - Related papers/experiments
+    files:
+      - packages/io/src/routes/experiments/[slug]/+page.svelte
+    acceptance:
+      - PageActions visible on experiment pages
+
+  # Phase 3: Integration (.ltd)
+  - title: Add PageActions to .ltd pattern pages
+    complexity: standard
+    labels: [feature, ltd]
+    depends_on:
+      - Export new components from index.ts
+    description: |
+      Integrate PageActions into packages/ltd/src/routes/patterns/*/+page.svelte
+      
+      Pattern pages include: arc, breakdown-and-repair, code-mode, constraint-as-liberation,
+      crystallization, dwelling-in-tools, functional-transparency, hermeneutic-spiral,
+      iterative-reduction, negative-space, principled-defaults, subtractive-triad-audit,
+      timeless-materials, tool-complementarity, universal-utility
+    acceptance:
+      - PageActions visible on all pattern pages
+
+  - title: Add PageActions to .ltd canon pages
+    complexity: standard
+    labels: [feature, ltd]
+    depends_on:
+      - Export new components from index.ts
+    description: |
+      Integrate PageActions into packages/ltd/src/routes/canon/*/+page.svelte
+      
+      Canon sections: concepts, foundations, guidelines, patterns, resources
+    acceptance:
+      - PageActions visible on all canon pages
+
+  # Phase 4: Integration (.agency, .space)
+  - title: Add PageActions to .agency work pages
+    complexity: simple
+    labels: [feature, agency]
+    depends_on:
+      - Export new components from index.ts
+    description: |
+      Integrate PageActions into packages/agency/src/routes/work/*/+page.svelte
+      
+      Work pages include: arc-for-gmail, kickstand, maverick-x, the-stack, viralytics
+    files:
+      - packages/agency/src/routes/work/arc-for-gmail/+page.svelte
+      - packages/agency/src/routes/work/kickstand/+page.svelte
+      - packages/agency/src/routes/work/maverick-x/+page.svelte
+    acceptance:
+      - PageActions visible on all work pages
+
+  - title: Add PageActions to .space experiment pages
+    complexity: simple
+    labels: [feature, space]
+    depends_on:
+      - Export new components from index.ts
+    description: |
+      Integrate PageActions into packages/space/src/routes/experiments/[slug]/+page.svelte
+      
+      Uses dynamic routing for all experiments.
+    files:
+      - packages/space/src/routes/experiments/[slug]/+page.svelte
+    acceptance:
+      - PageActions visible on space experiment pages
