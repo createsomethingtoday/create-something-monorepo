@@ -9,7 +9,7 @@
 	import { Clock, TrendingDown, AlertTriangle } from 'lucide-svelte';
 	import AnalyticsNav from '$lib/components/nba/AnalyticsNav.svelte';
 	import OvertimeInsights from '$lib/components/nba/OvertimeInsights.svelte';
-	import DateNav from '$lib/components/nba/DateNav.svelte';
+	import DateNavigation from '$lib/components/nba/DateNavigation.svelte';
 	import type { PageData } from './$types';
 	
 	let { data }: { data: PageData } = $props();
@@ -40,7 +40,7 @@
 					</p>
 				</div>
 			</div>
-			<DateNav date={data.date} />
+			<DateNavigation currentDate={data.date} baseUrl="/experiments/nba-live/overtime" />
 		</header>
 		
 		{#if totalOvertimeGames > 0}
