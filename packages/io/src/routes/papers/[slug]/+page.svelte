@@ -15,8 +15,57 @@
 	 */
 
 	import { marked, Renderer } from 'marked';
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
 
-	let { data } = $props();
+	let { data} = $props();
+
+	// Modal state for markdown preview
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	// Generate full URL for metadata
+	const fullUrl = $derived(`https://createsomething.io/papers/${data.paper.slug}`);
+
+	// Generate markdown content for export
+	const paperContent = $derived(`
+## ${data.paper.title}
+
+${data.paper.subtitle ? `*${data.paper.subtitle}*\n\n` : ''}
+
+**Authors**: ${data.paper.authors.join(', ')}  
+**Category**: ${data.paper.category}  
+**Reading Time**: ${data.paper.reading_time} minutes  
+**Difficulty**: ${data.paper.difficulty_level}  
+
+### Abstract
+
+${data.paper.abstract}
+
+**Keywords**: ${data.paper.keywords.join(', ')}
+
+${data.paper.content || data.paper.excerpt_long || ''}
+
+${data.paper.tests_principles && data.paper.tests_principles.length > 0 ? `
+### Principles Validated
+
+${data.paper.tests_principles.map(p => `- ${p}`).join('\n')}
+` : ''}
+
+${data.paper.related_experiments && data.paper.related_experiments.length > 0 ? `
+### Related Experiments
+
+${data.paper.related_experiments.map(exp => `- [${exp}](https://createsomething.io/experiments/${exp})`).join('\n')}
+` : ''}
+
+---
+
+**Full Paper**: ${fullUrl}
+	`.trim());
 
 	// Custom renderer that adds IDs to headers for anchor links
 	const renderer = new Renderer();
@@ -58,6 +107,19 @@
 			<span class="category">{data.paper.category}</span>
 			<span class="reading-time">{data.paper.reading_time} min read</span>
 			<span class="difficulty">{data.paper.difficulty_level}</span>
+			<PageActions
+				title={data.paper.title}
+				content={paperContent}
+				metadata={{
+					author: data.paper.authors.join(', '),
+					date: new Date(data.paper.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+					category: data.paper.category,
+					sourceUrl: fullUrl,
+					keywords: data.paper.keywords
+				}}
+				claudePrompt="Help me understand this research paper and its practical applications."
+				onpreview={handlePreview}
+			/>
 		</div>
 
 		<h1 class="paper-title">{data.paper.title}</h1>
@@ -155,6 +217,13 @@
 		</div>
 	</footer>
 </article>
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="Paper Markdown"
+/>
 
 <style>
 	.paper {
