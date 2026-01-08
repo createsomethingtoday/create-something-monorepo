@@ -1,0 +1,116 @@
+---
+category: "Canon"
+section: "Resources"
+title: "Token Reference"
+description: "Complete reference of all Canon design tokens. CSS custom properties for colors, typography, spacing, and more."
+lead: "Complete list of Canon's CSS custom properties. Copy tokens directly
+		or download the full token file."
+publishedAt: "2026-01-08"
+published: true
+---
+
+
+<h2>Overview</h2>
+<p class="section-description">
+		Canon provides {tokenCategories.reduce((sum, cat) =&gt; sum + cat.count, 0)} design tokens
+		across five categories.
+	</p>
+<div class="category-grid">
+		{#each tokenCategories as category}
+			<a class="category-card" href="{category.href}">
+<h3>{category.name}</h3>
+<span class="token-count">{category.count} tokens</span>
+</a>
+		{/each}
+	</div>
+
+
+
+<h2>Download</h2>
+<p class="section-description">
+		Get the token files for use in your project.
+	</p>
+<div class="download-grid">
+<div class="download-card">
+<h3>CSS Tokens</h3>
+<p>Raw CSS custom properties. Import directly into your stylesheet.</p>
+<code>@import '@create-something/components/styles/tokens.css';</code>
+</div>
+<div class="download-card">
+<h3>Full Canon</h3>
+<p>Tokens plus base styles and utility classes.</p>
+<code>@import '@create-something/components/styles/canon.css';</code>
+</div>
+</div>
+
+
+
+<h2>Color Tokens</h2>
+<p class="section-description">
+		Background, foreground, border, semantic, and data visualization colors.
+		Contrast ratios are measured against <code>--color-bg-pure</code>.
+	</p>
+<codeblock code="{allTokensExample}" language="css" title="colors.css"></codeblock>
+
+
+
+<h2>Spacing Tokens</h2>
+<p class="section-description">
+		Spacing scale based on the golden ratio (1.618). Creates natural visual rhythm.
+	</p>
+<codeblock code="{spacingTokens}" language="css" title="spacing.css"></codeblock>
+<div class="spacing-visual">
+<div class="space-sample xs"><span>xs</span></div>
+<div class="space-sample sm"><span>sm</span></div>
+<div class="space-sample md"><span>md</span></div>
+<div class="space-sample lg"><span>lg</span></div>
+<div class="space-sample xl"><span>xl</span></div>
+</div>
+
+
+
+<h2>Typography Tokens</h2>
+<p class="section-description">
+		Fluid font sizes, weights, line heights, and letter spacing.
+	</p>
+<codeblock code="{typographyTokens}" language="css" title="typography.css"></codeblock>
+
+
+
+<h2>Layout Tokens</h2>
+<p class="section-description">
+		Border radius, shadows, z-index scale, and breakpoints.
+	</p>
+<codeblock code="{layoutTokens}" language="css" title="layout.css"></codeblock>
+
+
+
+<h2>Motion Tokens</h2>
+<p class="section-description">
+		Animation durations and easing curve for consistent motion.
+	</p>
+<codeblock code="{motionTokens}" language="css" title="motion.css"></codeblock>
+
+
+
+<h2>Usage Pattern</h2>
+<p class="section-description">
+		Always use tokens via CSS custom properties. Never hardcode values.
+	</p>
+<div class="usage-comparison">
+<div class="usage-card wrong">
+<h3>Avoid</h3>
+<pre><code>background: #111111;
+color: rgba(255, 255, 255, 0.8);
+border-radius: 12px;
+padding: 16px;</code></pre>
+</div>
+<div class="usage-card right">
+<h3>Prefer</h3>
+<pre><code>background: var(--color-bg-surface);
+color: var(--color-fg-secondary);
+border-radius: var(--radius-lg);
+padding: var(--space-sm);</code></pre>
+</div>
+</div>
+

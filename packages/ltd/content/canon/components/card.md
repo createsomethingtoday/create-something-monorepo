@@ -1,0 +1,251 @@
+---
+category: "Canon"
+section: "Components"
+title: "Card"
+publishedAt: "2026-01-08"
+published: true
+---
+
+
+<h2 class="section-title">Choose Your Depth</h2>
+<p class="section-description">
+		More shadow means more visual weight. Use subtle for inline content, medium for most cards,
+		and large for modals that need attention.
+	</p>
+<!-- Subtle Elevation -->
+<div class="example-group">
+<h3 class="example-title">Subtle</h3>
+<p class="example-description">Almost flat. Good for content that lives within the page.</p>
+<div class="preview">
+<div class="card card-subtle">
+<h4 class="card-title">Subtle Card</h4>
+<p class="card-body">
+					Uses <code>--shadow-sm</code> for minimal elevation. Blends with background while
+					maintaining subtle separation.
+				</p>
+</div>
+</div>
+<codeblock class="card card-subtle" code="{`&lt;div">
+<h4>Subtle Card</h4>
+<p>Minimal elevation for inline content.</p>
+</codeblock></div>
+<style>
+  .card-subtle {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	
+<!-- Medium Elevation -->
+<div class="example-group">
+<h3 class="example-title">Medium</h3>
+<p class="example-description">Your go-to choice for most cards and content containers.</p>
+<div class="preview">
+<div class="card card-medium">
+<h4 class="card-title">Medium Card</h4>
+<p class="card-body">
+					Uses <code>--shadow-md</code> for standard elevation. Clear separation from background
+					while remaining grounded.
+				</p>
+</div>
+</div>
+<codeblock class="card card-medium" code="{`&lt;div">
+<h4>Medium Card</h4>
+<p>Standard elevation for card components.</p>
+</codeblock></div>
+<style>
+  .card-medium {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	
+<!-- Large Elevation -->
+<div class="example-group">
+<h3 class="example-title">Large</h3>
+<p class="example-description">
+			Floats above the page. Save this for modals, dialogs, and important overlays.
+		</p>
+<div class="preview">
+<div class="card card-large">
+<h4 class="card-title">Large Card</h4>
+<p class="card-body">
+					Uses <code>--shadow-lg</code> for prominent elevation. Floats above content, suitable for
+					dialogs and popovers.
+				</p>
+</div>
+</div>
+<codeblock class="card card-large" code="{`&lt;div">
+<h4>Large Card</h4>
+<p>High elevation for modals and overlays.</p>
+</codeblock></div>
+<style>
+  .card-large {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	
+
+
+
+<h2 class="section-title">Rounded Corners</h2>
+<p class="section-description">
+		Use <code>--radius-lg</code> (12px) for most cards. Smaller elements like tags can use tighter
+		corners.
+	</p>
+<div class="radius-demo">
+<div class="radius-example">
+<div class="radius-box radius-sm">
+<span>sm</span>
+</div>
+<code>--radius-sm</code>
+<span>6px</span>
+</div>
+<div class="radius-example">
+<div class="radius-box radius-md">
+<span>md</span>
+</div>
+<code>--radius-md</code>
+<span>8px</span>
+</div>
+<div class="radius-example">
+<div class="radius-box radius-lg">
+<span>lg</span>
+</div>
+<code>--radius-lg</code>
+<span>12px (recommended)</span>
+</div>
+<div class="radius-example">
+<div class="radius-box radius-xl">
+<span>xl</span>
+</div>
+<code>--radius-xl</code>
+<span>16px</span>
+</div>
+</div>
+<codeblock *="" --radius-full="" --radius-lg="" .card-header="" .card-tag="" and="" badges="" border-radius:="" can="" cards="" code="{`.card" elements="" for="" inner="" language="css" pills="" radius="" smaller="" standard="" title="Border radius usage" use="" var(--radius-full);="" var(--radius-lg);="" var(--radius-md);="" {="" }="" }`}=""></codeblock>
+
+
+
+<h2 class="section-title">Clickable Cards</h2>
+<p class="section-description">
+		Make cards interactive when the whole surface should be clickable, like a list of articles or products.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Hover Effect</h3>
+<p class="example-description">
+			The card lifts on hover so users know it's clickable. Try it below.
+		</p>
+<div class="preview">
+<button class="card card-interactive">
+<h4 class="card-title">Interactive Card</h4>
+<p class="card-body">
+					Hover to see elevation change and border emphasis. Transform and shadow animate with
+					--duration-micro (200ms).
+				</p>
+</button>
+</div>
+<codeblock class="card card-interactive" code="{`&lt;button">
+<h4>Interactive Card</h4>
+<p>Hover to see elevation change.</p>
+
+<style>
+  .card-interactive {
+    transition: all var(--duration-micro) var(--ease-standard);
+    cursor: pointer;
+  }
+
+  .card-interactive:hover {
+    border-color: var(--color-border-emphasis);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .card-interactive:active {
+    transform: translateY(0);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Tokens Used</h2>
+<p class="section-description">These variables power all card styles. Copy them into your project.</p>
+<div class="token-table">
+<div class="token-section">
+<h4>Elevation</h4>
+<div class="token-row">
+<code>--shadow-sm</code>
+<span>Subtle shadow for minimal elevation</span>
+</div>
+<div class="token-row">
+<code>--shadow-md</code>
+<span>Standard shadow for card components</span>
+</div>
+<div class="token-row">
+<code>--shadow-lg</code>
+<span>Large shadow for modals and overlays</span>
+</div>
+</div>
+<div class="token-section">
+<h4>Border Radius</h4>
+<div class="token-row">
+<code>--radius-sm</code>
+<span>6px — Subtle rounding</span>
+</div>
+<div class="token-row">
+<code>--radius-md</code>
+<span>8px — Medium rounding</span>
+</div>
+<div class="token-row">
+<code>--radius-lg</code>
+<span>12px — Recommended for cards</span>
+</div>
+<div class="token-row">
+<code>--radius-xl</code>
+<span>16px — Large rounding</span>
+</div>
+</div>
+<div class="token-section">
+<h4>Colors</h4>
+<div class="token-row">
+<code>--color-bg-surface</code>
+<span>#111111 — Card background</span>
+</div>
+<div class="token-row">
+<code>--color-border-default</code>
+<span>rgba(255,255,255,0.1) — Default border</span>
+</div>
+<div class="token-row">
+<code>--color-border-emphasis</code>
+<span>rgba(255,255,255,0.2) — Hover border</span>
+</div>
+</div>
+<div class="token-section">
+<h4>Motion</h4>
+<div class="token-row">
+<code>--duration-micro</code>
+<span>200ms — Hover transitions</span>
+</div>
+<div class="token-row">
+<code>--ease-standard</code>
+<span>cubic-bezier(0.4, 0.0, 0.2, 1)</span>
+</div>
+</div>
+</div>
+

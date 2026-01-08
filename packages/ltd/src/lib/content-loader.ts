@@ -37,6 +37,11 @@ export interface PatternFrontmatter extends BaseFrontmatter {
 export interface CanonFrontmatter extends BaseFrontmatter {
 	subtitle?: string;
 	category?: string;
+	section?: string;
+	pronunciation?: string;
+	translation?: string;
+	description?: string;
+	lead?: string;
 	order?: number;
 }
 
@@ -118,20 +123,46 @@ export async function getPatternSlugs(): Promise<string[]> {
 }
 
 /**
- * Load a single canon page by slug
+ * Load a single canon page by path
+ * @param path - Path parts (e.g., [] for index, ['concepts'] for section, ['concepts', 'zuhandenheit'] for page)
  */
-export async function loadCanonBySlug(slug: string): Promise<ContentItem<CanonFrontmatter>> {
+export async function loadCanonByPath(
+	path: string[]
+): Promise<ContentItem<CanonFrontmatter>> {
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: CanonFrontmatter;
-	}>('../content/canon/*.md');
+	}>('../content/canon/**/*.md');
 
-	const items = await loadMarkdownContent(modules, false);
-	const item = items.find((i) => i.slug === slug);
-
-	if (!item) {
-		throw error(404, `Canon page not found: ${slug}`);
+	// Convert path to expected file path
+	let expectedPath: string;
+	if (path.length === 0) {
+		// Root index
+		expectedPath = '../content/canon/index.md';
+	} else if (path.length === 1) {
+		// Section index (e.g., concepts/index.md)
+		expectedPath = `../content/canon/${path[0]}/index.md`;
+	} else {
+		// Nested page (e.g., concepts/zuhandenheit.md)
+		const section = path[0];
+		const slug = path.slice(1).join('/');
+		expectedPath = `../content/canon/${section}/${slug}.md`;
 	}
+
+	// Find matching module
+	const resolver = modules[expectedPath];
+	if (!resolver) {
+		throw error(404, `Canon page not found: ${path.join('/')}`);
+	}
+
+	const mod = await resolver();
+	const slug = path[path.length - 1] || 'index';
+
+	const item = {
+		frontmatter: mod.metadata,
+		component: mod.default,
+		slug
+	};
 
 	if (item.frontmatter.published === false || item.frontmatter.hidden === true) {
 		throw error(404, 'Canon page not available');
@@ -141,13 +172,38 @@ export async function loadCanonBySlug(slug: string): Promise<ContentItem<CanonFr
 }
 
 /**
- * Get all canon page slugs for static generation
+ * Get all canon page paths for static generation
+ * @returns Array of path arrays (e.g., [[], ['concepts'], ['concepts', 'zuhandenheit']])
  */
-export async function getCanonSlugs(): Promise<string[]> {
+export async function getCanonPaths(): Promise<string[][]> {
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: CanonFrontmatter;
-	}>('../content/canon/*.md');
-	const items = await loadMarkdownContent(modules, true);
-	return items.map((item) => item.slug);
+	}>('../content/canon/**/*.md');
+
+	const paths: string[][] = [];
+
+	for (const path of Object.keys(modules)) {
+		// Extract path parts from: ../content/canon/concepts/zuhandenheit.md
+		const match = path.match(/\.\.\/content\/canon\/(.+)\.md$/);
+		if (!match) continue;
+
+		const parts = match[1].split('/');
+
+		// Handle index files
+		if (parts[parts.length - 1] === 'index') {
+			if (parts.length === 1) {
+				// Root index
+				paths.push([]);
+			} else {
+				// Section index (e.g., concepts/index.md -> ['concepts'])
+				paths.push(parts.slice(0, -1));
+			}
+		} else {
+			// Regular page (e.g., concepts/zuhandenheit.md -> ['concepts', 'zuhandenheit'])
+			paths.push(parts);
+		}
+	}
+
+	return paths;
 }

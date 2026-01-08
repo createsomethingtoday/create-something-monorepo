@@ -1,0 +1,479 @@
+---
+category: "Canon"
+section: "Components"
+title: "Navigation"
+publishedAt: "2026-01-08"
+published: true
+---
+
+
+<h2 class="section-title">Header Navigation</h2>
+<p class="section-description">
+		The bar at the top of every page. Add your logo, main links, and a login button or user menu.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Basic Header</h3>
+<p class="example-description">
+			Works on mobile too—links collapse into a menu on smaller screens.
+		</p>
+<div class="preview preview-nav">
+<nav class="demo-nav">
+<div class="demo-nav-container">
+<a class="demo-nav-logo" href="#">
+						CREATE
+						<span class="demo-nav-logo-suffix">.something</span>
+</a>
+<div class="demo-nav-links">
+<a class="demo-nav-link active" href="#">Home</a>
+<a class="demo-nav-link" href="#">About</a>
+<a class="demo-nav-link" href="#">Contact</a>
+</div>
+</div>
+</nav>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Navigation } from '@create-something/components';
+
+  const links = [
+    { label: 'Home', href: '/' },
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' }
+  ];
+
+<navigation currentpath="{$page.url.pathname}" logo="CREATE" logosuffix=".something" {links}=""></navigation>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">With CTA and User Menu</h3>
+<p class="example-description">
+			Add an "Upgrade" button or user avatar for logged-in visitors.
+		</p>
+<div class="preview preview-nav">
+<nav class="demo-nav">
+<div class="demo-nav-container">
+<a class="demo-nav-logo" href="#">App</a>
+<div class="demo-nav-links">
+<a class="demo-nav-link" href="#">Dashboard</a>
+<a class="demo-nav-link" href="#">Settings</a>
+<a class="demo-nav-cta" href="#">Upgrade</a>
+<div class="demo-user-menu">
+<div class="demo-user-avatar">MJ</div>
+</div>
+</div>
+</div>
+</nav>
+</div>
+<codeblock '="" '123'="" 'dashboard',="" 'settings',="" 'user@example.com',="" =="" ]}="" code="{`&lt;Navigation" ctahref="/pricing" ctalabel="Upgrade" dashboard'="" email:="" href:="" id:="" label:="" links="{[" logo="App" onlogout="{()" settings'="" user="{{" {="" }="" },="" }}=""> signOut()}
+/&gt;`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Sidebar Navigation</h2>
+<p class="section-description">
+		Best for docs, dashboards, and apps with lots of pages. Group links into sections so users
+		can scan quickly.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Documentation Sidebar</h3>
+<p class="example-description">
+			Sections expand to show nested pages. The current page is highlighted automatically.
+		</p>
+<div class="preview preview-sidebar">
+<aside class="demo-sidebar">
+<div class="demo-sidebar-header">
+<span class="demo-sidebar-logo">Canon</span>
+<span class="demo-sidebar-suffix">Design System</span>
+</div>
+<nav class="demo-sidebar-nav">
+<div class="demo-nav-section">
+<h3 class="demo-nav-section-title">Getting Started</h3>
+<ul class="demo-nav-list">
+<li><a class="demo-sidebar-link active" href="#">Introduction</a></li>
+<li><a class="demo-sidebar-link" href="#">Philosophy</a></li>
+<li><a class="demo-sidebar-link" href="#">Quick Start</a></li>
+</ul>
+</div>
+<div class="demo-nav-section">
+<h3 class="demo-nav-section-title">Components</h3>
+<ul class="demo-nav-list">
+<li><a class="demo-sidebar-link" href="#">Button</a></li>
+<li><a class="demo-sidebar-link" href="#">Card</a></li>
+<li><a class="demo-sidebar-link" href="#">Navigation</a></li>
+</ul>
+</div>
+</nav>
+</aside>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { page } from '$app/stores';
+
+  interface NavSection {
+    title: string;
+    items: { label: string; href: string; badge?: string }[];
+  }
+
+  const navigation: NavSection[] = [
+    {
+      title: 'Getting Started',
+      items: [
+        { label: 'Introduction', href: '/docs' },
+        { label: 'Philosophy', href: '/docs/philosophy' },
+        { label: 'Quick Start', href: '/docs/quick-start' }
+      ]
+    }
+  ];
+
+<aside class="sidebar">
+<nav aria-label="Documentation">
+    {#each navigation as section}
+      <div class="nav-section">
+<h3 class="nav-section-title">{section.title}</h3>
+<ul>
+          {#each section.items as item}
+            <li>
+<a =="item.href}" class:active="{$page.url.pathname" href="{item.href}">
+                {item.label}
+              </a>
+</li>
+          {/each}
+        </ul>
+</div>
+    {/each}
+  </nav>
+</aside>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Breadcrumbs</h2>
+<p class="section-description">
+		Show users where they are and let them jump back to parent pages with one click.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Basic Breadcrumbs</h3>
+<p class="example-description">
+			Each step is clickable except the current page.
+		</p>
+<div class="preview">
+<nav aria-label="Breadcrumb" class="demo-breadcrumbs">
+<ol class="demo-breadcrumbs-list">
+<li class="demo-breadcrumbs-item">
+<a class="demo-breadcrumbs-link" href="#">Home</a>
+<span class="demo-breadcrumbs-separator">/</span>
+</li>
+<li class="demo-breadcrumbs-item">
+<a class="demo-breadcrumbs-link" href="#">Components</a>
+<span class="demo-breadcrumbs-separator">/</span>
+</li>
+<li class="demo-breadcrumbs-item">
+<span class="demo-breadcrumbs-current">Navigation</span>
+</li>
+</ol>
+</nav>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Breadcrumbs } from '@create-something/components';
+
+  const items = [
+    { label: 'Home', href: '/' },
+    { label: 'Components', href: '/components' },
+    { label: 'Navigation' } // No href = current page
+  ];
+
+<breadcrumbs {items}=""></breadcrumbs>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">With Home Icon</h3>
+<p class="example-description">
+			Save space by using an icon instead of "Home" text.
+		</p>
+<div class="preview">
+<nav aria-label="Breadcrumb" class="demo-breadcrumbs">
+<ol class="demo-breadcrumbs-list">
+<li class="demo-breadcrumbs-item">
+<a class="demo-breadcrumbs-link" href="#">
+<svg class="demo-home-icon" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+</a>
+<span class="demo-breadcrumbs-separator">/</span>
+</li>
+<li class="demo-breadcrumbs-item">
+<a class="demo-breadcrumbs-link" href="#">Products</a>
+<span class="demo-breadcrumbs-separator">/</span>
+</li>
+<li class="demo-breadcrumbs-item">
+<span class="demo-breadcrumbs-current">Widget Pro</span>
+</li>
+</ol>
+</nav>
+</div>
+<codeblock '="" 'home',="" 'products',="" 'widget="" ]}="" code="{`&lt;Breadcrumbs" href:="" items="{[" label:="" pro'="" products'="" showhomeicon="{true}" {="" }="" },=""></codeblock>`}
+			language="svelte"
+		/&gt;
+	</div>
+
+
+
+<h2 class="section-title">Tabs</h2>
+<p class="section-description">
+		Tabs organize content into separate views where only one is visible at a time. Full keyboard
+		navigation with arrow keys.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Default Tabs</h3>
+<p class="example-description">
+			Underline indicator shows the active tab. Use arrow keys to navigate.
+		</p>
+<div class="preview">
+<div class="demo-tabs">
+<div class="demo-tabs-list" role="tablist">
+<button aria-selected="true" class="demo-tab active" role="tab">Overview</button>
+<button aria-selected="false" class="demo-tab" role="tab">Features</button>
+<button aria-selected="false" class="demo-tab" role="tab">Pricing</button>
+</div>
+<div class="demo-tab-panel">
+<p>Tab panel content appears here.</p>
+</div>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Tabs } from '@create-something/components';
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'features', label: 'Features' },
+    { id: 'pricing', label: 'Pricing' }
+  ];
+
+  let activeTab = 'overview';
+
+<tabs bind:activetab="" {tabs}="">
+  {#snippet children(tabId)}
+    {#if tabId === 'overview'}
+      <p>Overview content here.</p>
+    {:else if tabId === 'features'}
+      <p>Features content here.</p>
+    {:else}
+      <p>Pricing content here.</p>
+    {/if}
+  {/snippet}
+</tabs>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Pills Variant</h3>
+<p class="example-description">
+			Pill-shaped tabs with elevated active state.
+		</p>
+<div class="preview">
+<div class="demo-tabs demo-tabs-pills">
+<div class="demo-tabs-list-pills" role="tablist">
+<button aria-selected="true" class="demo-tab-pill active" role="tab">All</button>
+<button aria-selected="false" class="demo-tab-pill" role="tab">Active</button>
+<button aria-selected="false" class="demo-tab-pill" role="tab">Archived</button>
+</div>
+</div>
+</div>
+<codeblock 'active'="" 'active',="" 'all'="" 'all',="" 'archived'="" 'archived',="" ]}="" code="{`&lt;Tabs" id:="" label:="" tabs="{[" variant="pills" {="" }="" },="">
+<!-- content -->
+`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Mobile Navigation</h2>
+<p class="section-description">
+		Mobile navigation patterns ensure touch-friendly interaction with 44px minimum touch targets.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Mobile Menu Button</h3>
+<p class="example-description">
+			Hamburger icon toggles to close icon when open. Slide-down animation respects reduced motion.
+		</p>
+<div class="preview">
+<div class="demo-mobile-menu">
+<button aria-expanded="false" aria-label="Open menu" class="demo-menu-button">
+<svg class="demo-menu-icon" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+<codeblock 'close="" 'open="" :="" ?="" aria-expanded="{mobileMenuOpen}" aria-label="{mobileMenuOpen" class="nav-menu-button" code="{`&lt;button" menu'="" menu'}="" onclick="{toggleMobileMenu}">
+  {#if mobileMenuOpen}
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+  {:else}
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+  {/if}
+
+<style>
+  .nav-menu-button {
+    width: 44px;
+    height: 44px; /* WCAG minimum touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Drawer Navigation</h3>
+<p class="example-description">
+			Full-height drawer slides in from the left with overlay backdrop.
+		</p>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Drawer } from '@create-something/components';
+
+  let open = $state(false);
+
+<drawer bind:open="" position="left">
+<nav class="drawer-nav">
+<a href="/">Home</a>
+<a href="/about">About</a>
+<a href="/contact">Contact</a>
+</nav>
+</drawer>
+<style>
+  .drawer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Motion Tokens</h2>
+<p class="section-description">
+		All navigation transitions use Canon motion tokens for consistent, purposeful animation.
+	</p>
+<div class="motion-demo">
+<div class="motion-item">
+<h4>Link Hover</h4>
+<code>transition: color var(--duration-micro) var(--ease-standard);</code>
+<p>200ms color transition for link hover states.</p>
+</div>
+<div class="motion-item">
+<h4>Mobile Menu</h4>
+<code>animation: slide-down 0.2s cubic-bezier(0.4, 0, 0.2, 1);</code>
+<p>Slide-down animation when menu opens.</p>
+</div>
+<div class="motion-item">
+<h4>Sidebar Transform</h4>
+<code>transition: transform var(--duration-standard) var(--ease-standard);</code>
+<p>300ms transform for sidebar show/hide.</p>
+</div>
+</div>
+<codeblock (prefers-reduced-motion:="" .animate-slide-down="" .nav-link="" .sidebar="" animation:="" code="{`@media" language="css" none;="" reduce)="" title="Reduced motion support" transition:="" {="" }="" }`}=""></codeblock>
+
+
+
+<h2 class="section-title">Accessibility</h2>
+<p class="section-description">
+		Navigation components follow WAI-ARIA patterns for keyboard and screen reader accessibility.
+	</p>
+<div class="accessibility-grid">
+<div class="a11y-item">
+<h4>Semantic Markup</h4>
+<ul>
+<li>Use <code>&lt;nav&gt;</code> with <code>aria-label</code></li>
+<li>Breadcrumbs use <code>&lt;ol&gt;</code> for ordered lists</li>
+<li>Tabs use proper <code>role="tablist"</code> pattern</li>
+</ul>
+</div>
+<div class="a11y-item">
+<h4>Keyboard Navigation</h4>
+<ul>
+<li>Tab key navigates between interactive elements</li>
+<li>Arrow keys navigate within tab groups</li>
+<li>Escape key closes mobile menus</li>
+</ul>
+</div>
+<div class="a11y-item">
+<h4>ARIA States</h4>
+<ul>
+<li><code>aria-current="page"</code> for current link</li>
+<li><code>aria-expanded</code> for collapsible menus</li>
+<li><code>aria-selected</code> for tab selection</li>
+</ul>
+</div>
+<div class="a11y-item">
+<h4>Focus Management</h4>
+<ul>
+<li>Visible focus indicators with <code>--color-focus</code></li>
+<li>Focus trap within mobile drawers</li>
+<li>Skip-to-content link at page top</li>
+</ul>
+</div>
+</div>
+
+
+
+<h2 class="section-title">Token Reference</h2>
+<p class="section-description">Navigation components use these Canon design tokens.</p>
+<div class="token-table">
+<div class="token-row">
+<code>--duration-micro</code>
+<span>200ms - Link hover transitions</span>
+</div>
+<div class="token-row">
+<code>--duration-standard</code>
+<span>300ms - Menu and sidebar transitions</span>
+</div>
+<div class="token-row">
+<code>--ease-standard</code>
+<span>cubic-bezier(0.4, 0.0, 0.2, 1) - All navigation motion</span>
+</div>
+<div class="token-row">
+<code>--color-fg-secondary</code>
+<span>rgba(255, 255, 255, 0.8) - Default link color</span>
+</div>
+<div class="token-row">
+<code>--color-fg-muted</code>
+<span>rgba(255, 255, 255, 0.46) - Inactive link color</span>
+</div>
+<div class="token-row">
+<code>--color-hover</code>
+<span>rgba(255, 255, 255, 0.05) - Hover background</span>
+</div>
+<div class="token-row">
+<code>--color-active</code>
+<span>rgba(255, 255, 255, 0.1) - Active background</span>
+</div>
+<div class="token-row">
+<code>--color-focus</code>
+<span>rgba(255, 255, 255, 0.5) - Focus ring color</span>
+</div>
+<div class="token-row">
+<code>--z-fixed</code>
+<span>50 - Fixed header z-index</span>
+</div>
+<div class="token-row">
+<code>--z-modal</code>
+<span>100 - Mobile overlay z-index</span>
+</div>
+</div>
+

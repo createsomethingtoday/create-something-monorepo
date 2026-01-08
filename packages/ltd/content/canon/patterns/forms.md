@@ -1,0 +1,564 @@
+---
+category: "Canon"
+section: "Patterns"
+title: "Forms"
+publishedAt: "2026-01-08"
+published: true
+---
+
+
+<h2 class="section-title">The Problem</h2>
+<p class="section-description">
+		Forms are points of friction. Users abandon forms that feel overwhelming, confusing, or
+		broken. Good form design reduces cognitive load while ensuring data validity.
+	</p>
+<div class="problem-grid">
+<div class="problem-item">
+<h3>Overwhelm</h3>
+<p>Too many fields visible at once causes decision fatigue.</p>
+</div>
+<div class="problem-item">
+<h3>Unclear Expectations</h3>
+<p>Missing labels, placeholders, or help text leave users guessing.</p>
+</div>
+<div class="problem-item">
+<h3>Late Validation</h3>
+<p>Discovering errors only after submission frustrates users.</p>
+</div>
+<div class="problem-item">
+<h3>Poor Error Recovery</h3>
+<p>Vague error messages don't help users fix problems.</p>
+</div>
+</div>
+
+
+
+<h2 class="section-title">Input Fields</h2>
+<p class="section-description">
+		All form inputs follow a consistent structure: label, input, description, and error state.
+	</p>
+<div class="example-group">
+<h3 class="example-title">TextField</h3>
+<p class="example-description">
+			Standard text input with label, placeholder, and helper text.
+		</p>
+<div class="preview">
+<div class="demo-form">
+<div class="demo-field">
+<label class="demo-label" for="demo-name">
+						Full Name
+						<span class="demo-required">*</span>
+</label>
+<input class="demo-input" id="demo-name" placeholder="Enter your full name" type="text"/>
+<p class="demo-description">As it appears on your ID.</p>
+</div>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { TextField } from '@create-something/components';
+
+  let name = $state('');
+
+<textfield bind:value="{name}" description="As it appears on your ID." label="Full Name" placeholder="Enter your full name" required=""></textfield>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Error State</h3>
+<p class="example-description">
+			Error styling with descriptive message helps users recover.
+		</p>
+<div class="preview">
+<div class="demo-form">
+<div class="demo-field demo-field-error">
+<label class="demo-label" for="demo-email">
+						Email Address
+						<span class="demo-required">*</span>
+</label>
+<input aria-describedby="email-error" aria-invalid="true" class="demo-input demo-input-error" id="demo-email" type="email" value="invalid-email"/>
+<p class="demo-error" id="email-error" role="alert">
+						Please enter a valid email address.
+					</p>
+</div>
+</div>
+</div>
+<codeblock bind:value="{email}" code="{`&lt;TextField" error="{emailError}" label="Email Address" required="" type="email"></codeblock>
+<!-- CSS for error state -->
+<style>
+  .has-error .textfield-input {
+    border-color: var(--color-error);
+  }
+
+  .has-error .textfield-input:focus {
+    box-shadow: 0 0 0 3px var(--color-error-muted);
+  }
+
+  .textfield-error {
+    font-size: var(--text-caption);
+    color: var(--color-error);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</div>
+<div class="example-group">
+<h3 class="example-title">Size Variants</h3>
+<p class="example-description">
+			Small, medium (default), and large sizes for different contexts.
+		</p>
+<div class="preview">
+<div class="demo-form demo-form-horizontal">
+<div class="demo-field">
+<label class="demo-label demo-label-sm" for="demo-sm">Small</label>
+<input class="demo-input demo-input-sm" id="demo-sm" placeholder="Small input" type="text"/>
+</div>
+<div class="demo-field">
+<label class="demo-label" for="demo-md">Medium</label>
+<input class="demo-input" id="demo-md" placeholder="Medium input" type="text"/>
+</div>
+<div class="demo-field">
+<label class="demo-label demo-label-lg" for="demo-lg">Large</label>
+<input class="demo-input demo-input-lg" id="demo-lg" placeholder="Large input" type="text"/>
+</div>
+</div>
+</div>
+<codeblock code="{`&lt;TextField" label="Small" placeholder="Small input" size="sm"></codeblock>
+<textfield label="Medium" placeholder="Medium input" size="md"></textfield>
+<textfield label="Large" placeholder="Large input" size="lg"></textfield>`}
+			language="svelte"
+		/&gt;
+	</div>
+
+
+
+<h2 class="section-title">Selection Controls</h2>
+<p class="section-description">
+		Checkboxes, radio buttons, and switches for selecting options.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Checkbox</h3>
+<p class="example-description">
+			For binary choices or selecting multiple options from a set.
+		</p>
+<div class="preview">
+<div class="demo-form">
+<div class="demo-checkbox-group">
+<label class="demo-checkbox">
+<input checked="" class="demo-checkbox-input" type="checkbox"/>
+<span class="demo-checkbox-box"></span>
+<span class="demo-checkbox-label">Email notifications</span>
+</label>
+<label class="demo-checkbox">
+<input class="demo-checkbox-input" type="checkbox"/>
+<span class="demo-checkbox-box"></span>
+<span class="demo-checkbox-label">SMS notifications</span>
+</label>
+<label class="demo-checkbox">
+<input class="demo-checkbox-input" disabled="" type="checkbox"/>
+<span class="demo-checkbox-box"></span>
+<span class="demo-checkbox-label">Push notifications (coming soon)</span>
+</label>
+</div>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Checkbox, CheckboxGroup } from '@create-something/components';
+
+  let notifications = $state(['email']);
+
+<checkboxgroup 'email="" 'email',="" 'push="" 'push',="" 'sms="" 'sms',="" ]}="" bind:value="{notifications}" disabled:="" label="Notification Preferences" label:="" notifications'="" notifications',="" options="{[" true="" value:="" {="" }="" },=""></checkboxgroup>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Radio Group</h3>
+<p class="example-description">
+			For selecting exactly one option from a mutually exclusive set.
+		</p>
+<div class="preview">
+<div class="demo-form">
+<fieldset class="demo-radio-group">
+<legend class="demo-legend">Subscription Plan</legend>
+<label class="demo-radio">
+<input checked="" class="demo-radio-input" name="plan" type="radio"/>
+<span class="demo-radio-circle"></span>
+<span class="demo-radio-content">
+<span class="demo-radio-label">Free</span>
+<span class="demo-radio-description">Basic features, limited storage</span>
+</span>
+</label>
+<label class="demo-radio">
+<input class="demo-radio-input" name="plan" type="radio"/>
+<span class="demo-radio-circle"></span>
+<span class="demo-radio-content">
+<span class="demo-radio-label">Pro</span>
+<span class="demo-radio-description">All features, unlimited storage</span>
+</span>
+</label>
+<label class="demo-radio">
+<input class="demo-radio-input" name="plan" type="radio"/>
+<span class="demo-radio-circle"></span>
+<span class="demo-radio-content">
+<span class="demo-radio-label">Enterprise</span>
+<span class="demo-radio-description">Custom features, dedicated support</span>
+</span>
+</label>
+</fieldset>
+</div>
+</div>
+<codeblock 'all="" 'basic="" 'custom'="" 'enterprise',="" 'free',="" 'pro',="" ]}="" bind:value="{plan}" code="{`&lt;RadioGroup" description:="" features'="" label="Subscription Plan" label:="" options="{[" value:="" {="" }="" },=""></codeblock>`}
+			language="svelte"
+		/&gt;
+	</div>
+<div class="example-group">
+<h3 class="example-title">Switch</h3>
+<p class="example-description">
+			For toggling a setting on or off with immediate effect.
+		</p>
+<div class="preview">
+<div class="demo-form">
+<label class="demo-switch-container">
+<span class="demo-switch-label">Dark mode</span>
+<button aria-checked="true" class="demo-switch demo-switch-on" role="switch" type="button">
+<span class="demo-switch-thumb"></span>
+</button>
+</label>
+</div>
+</div>
+<codeblock =="" bind:checked="{darkMode}" code="{`&lt;Switch" label="Dark mode" onchange="{(checked)"> updateTheme(checked)}
+/&gt;`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Form Layout</h2>
+<p class="section-description">
+		Layout patterns organize form fields for clarity and flow.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Stacked Layout</h3>
+<p class="example-description">
+			Default vertical layout. Each field gets full width.
+		</p>
+<div class="preview">
+<form class="demo-form-layout">
+<header class="demo-form-header">
+<h2 class="demo-form-title">Contact Information</h2>
+<p class="demo-form-description">We'll use this to get in touch.</p>
+</header>
+<div class="demo-form-content">
+<div class="demo-field">
+<label class="demo-label" for="layout-name">Name</label>
+<input class="demo-input" id="layout-name" type="text"/>
+</div>
+<div class="demo-field">
+<label class="demo-label" for="layout-email">Email</label>
+<input class="demo-input" id="layout-email" type="email"/>
+</div>
+<div class="demo-field">
+<label class="demo-label" for="layout-message">Message</label>
+<textarea class="demo-input demo-textarea" id="layout-message" rows="3"></textarea>
+</div>
+</div>
+<footer class="demo-form-actions">
+<button class="demo-btn demo-btn-ghost" type="button">Cancel</button>
+<button class="demo-btn demo-btn-primary" type="submit">Submit</button>
+</footer>
+</form>
+</div>
+<codeblock code="{`&lt;FormLayout" description="We'll use this to get in touch." onsubmit="{handleSubmit}" title="Contact Information">
+<textfield label="Name" name="name"></textfield>
+<textfield label="Email" name="email" type="email"></textfield>
+<textarea label="Message" name="message" rows="{3}"></textarea>
+
+  {#snippet actions()}
+    <button variant="ghost">Cancel</button>
+<button type="submit">Submit</button>
+  {/snippet}
+`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Two-Column Layout</h3>
+<p class="example-description">
+			For forms with many short fields. Collapses to single column on mobile.
+		</p>
+<div class="preview">
+<form class="demo-form-layout">
+<div class="demo-form-content demo-form-two-column">
+<div class="demo-field">
+<label class="demo-label" for="col-first">First Name</label>
+<input class="demo-input" id="col-first" type="text"/>
+</div>
+<div class="demo-field">
+<label class="demo-label" for="col-last">Last Name</label>
+<input class="demo-input" id="col-last" type="text"/>
+</div>
+<div class="demo-field">
+<label class="demo-label" for="col-city">City</label>
+<input class="demo-input" id="col-city" type="text"/>
+</div>
+<div class="demo-field">
+<label class="demo-label" for="col-postal">Postal Code</label>
+<input class="demo-input" id="col-postal" type="text"/>
+</div>
+</div>
+</form>
+</div>
+<codeblock code="{`&lt;FormLayout" variant="two-column">
+<textfield label="First Name" name="firstName"></textfield>
+<textfield label="Last Name" name="lastName"></textfield>
+<textfield label="City" name="city"></textfield>
+<textfield label="Postal Code" name="postal"></textfield>
+`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Validation Patterns</h2>
+<p class="section-description">
+		Validate early and provide clear, actionable feedback.
+	</p>
+<div class="validation-grid">
+<div class="validation-item">
+<h3>Validate on Blur</h3>
+<p>
+				Check field validity when the user leaves the field. Don't interrupt while typing.
+			</p>
+<codeblock =="" code="{`onblur={(e)"> {
+  if (!e.currentTarget.validity.valid) {
+    error = 'Invalid email';
+  } else {
+    error = null;
+  }
+}}`}
+				language="typescript"
+			/&gt;
+		</codeblock></div>
+<div class="validation-item">
+<h3>Validate on Submit</h3>
+<p>
+				Always validate the entire form before submission. Show all errors at once.
+			</p>
+<codeblock =="" code="{`onsubmit={(e)"> {
+  e.preventDefault();
+  const errors = validateForm(formData);
+  if (Object.keys(errors).length) {
+    setErrors(errors);
+    return;
+  }
+  submit(formData);
+}}`}
+				language="typescript"
+			/&gt;
+		</codeblock></div>
+<div class="validation-item">
+<h3>Clear on Fix</h3>
+<p>
+				Remove error state as soon as the user corrects the problem.
+			</p>
+<codeblock =="" code="{`oninput={(e)"> {
+  if (error &amp;&amp; e.currentTarget.validity.valid) {
+    error = null;
+  }
+}}`}
+				language="typescript"
+			/&gt;
+		</codeblock></div>
+</div>
+
+
+
+<h2 class="section-title">Multi-Step Forms</h2>
+<p class="section-description">
+		Break long forms into manageable steps with clear progress indication.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Step Indicator</h3>
+<p class="example-description">
+			Shows current position and allows navigation to completed steps.
+		</p>
+<div class="preview">
+<nav aria-label="Form progress" class="demo-steps">
+<ol class="demo-steps-list">
+<li class="demo-step demo-step-complete">
+<span class="demo-step-indicator">
+<svg fill="currentColor" height="12" viewbox="0 0 24 24" width="12">
+<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+</svg>
+</span>
+<span class="demo-step-label">Account</span>
+</li>
+<li class="demo-step demo-step-current">
+<span class="demo-step-indicator">2</span>
+<span class="demo-step-label">Profile</span>
+</li>
+<li class="demo-step">
+<span class="demo-step-indicator">3</span>
+<span class="demo-step-label">Preferences</span>
+</li>
+<li class="demo-step">
+<span class="demo-step-indicator">4</span>
+<span class="demo-step-label">Confirm</span>
+</li>
+</ol>
+</nav>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { MultiStepForm, FormStep } from '@create-something/components';
+
+  let currentStep = 1;
+  const steps = [
+    { id: 1, label: 'Account', complete: true },
+    { id: 2, label: 'Profile', complete: false },
+    { id: 3, label: 'Preferences', complete: false },
+    { id: 4, label: 'Confirm', complete: false }
+  ];
+
+<multistepform bind:currentstep="" {steps}="">
+<formstep step="{1}">
+<textfield label="Email" name="email"></textfield>
+<textfield label="Password" name="password" type="password"></textfield>
+</formstep>
+<formstep step="{2}">
+<textfield label="Display Name" name="displayName"></textfield>
+<textarea label="Bio" name="bio"></textarea>
+</formstep>
+<!-- ... more steps ... -->
+</multistepform>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Accessibility</h2>
+<p class="section-description">
+		Forms must be usable by everyone, including keyboard and screen reader users.
+	</p>
+<div class="a11y-grid">
+<div class="a11y-item">
+<h4>Labels</h4>
+<ul>
+<li>Every input needs a visible <code>&lt;label&gt;</code></li>
+<li>Use <code>for</code> attribute to associate label with input</li>
+<li>Don't rely on placeholder as the only label</li>
+</ul>
+</div>
+<div class="a11y-item">
+<h4>Error Messages</h4>
+<ul>
+<li>Use <code>aria-invalid="true"</code> on invalid inputs</li>
+<li>Link errors with <code>aria-describedby</code></li>
+<li>Use <code>role="alert"</code> for dynamic errors</li>
+</ul>
+</div>
+<div class="a11y-item">
+<h4>Required Fields</h4>
+<ul>
+<li>Use <code>aria-required="true"</code></li>
+<li>Visual indicator (asterisk) with hidden label text</li>
+<li>Explain format at form start, not per field</li>
+</ul>
+</div>
+<div class="a11y-item">
+<h4>Focus Management</h4>
+<ul>
+<li>Visible focus indicators (3px solid)</li>
+<li>Focus first error on validation failure</li>
+<li>Announce success after submission</li>
+</ul>
+</div>
+</div>
+
+
+
+<h2 class="section-title">Token Reference</h2>
+<p class="section-description">Form patterns use these Canon design tokens.</p>
+<div class="token-table">
+<div class="token-row">
+<code>--color-bg-elevated</code>
+<span>Input background color</span>
+</div>
+<div class="token-row">
+<code>--color-border-default</code>
+<span>Default input border</span>
+</div>
+<div class="token-row">
+<code>--color-border-emphasis</code>
+<span>Hover and focus border</span>
+</div>
+<div class="token-row">
+<code>--color-focus</code>
+<span>Focus ring color (3px solid)</span>
+</div>
+<div class="token-row">
+<code>--color-error</code>
+<span>Error text and border</span>
+</div>
+<div class="token-row">
+<code>--color-error-muted</code>
+<span>Error focus ring background</span>
+</div>
+<div class="token-row">
+<code>--space-xs / --space-sm / --space-md</code>
+<span>Field spacing and padding</span>
+</div>
+<div class="token-row">
+<code>--radius-md</code>
+<span>Input border radius</span>
+</div>
+<div class="token-row">
+<code>--duration-micro</code>
+<span>Border and focus transitions (200ms)</span>
+</div>
+</div>
+
+
+
+<h2 class="section-title">Anti-Patterns</h2>
+<p class="section-description">Common form mistakes to avoid.</p>
+<div class="anti-patterns">
+<div class="anti-pattern">
+<h4>Placeholder-only Labels</h4>
+<p>
+				Placeholders disappear when the user types, leaving no context. Always use visible labels.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Blocking Validation</h4>
+<p>
+				Don't prevent typing while validating. Show errors after blur, not during input.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Vague Error Messages</h4>
+<p>
+				"Invalid input" doesn't help. Be specific: "Password must be at least 8 characters."
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Required Asterisks Only</h4>
+<p>
+				Asterisks need explanation. Add "* Required" legend or use <code>aria-required</code>.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Tiny Touch Targets</h4>
+<p>
+				Inputs must be at least 44px tall for mobile. Use <code>min-height: 44px</code>.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>No Loading State</h4>
+<p>
+				Show a spinner or disable the submit button during submission to prevent double-submit.
+			</p>
+</div>
+</div>
+

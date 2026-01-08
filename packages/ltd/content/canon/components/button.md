@@ -1,0 +1,164 @@
+---
+category: "Canon"
+section: "Components"
+title: "Button"
+publishedAt: "2026-01-08"
+published: true
+---
+
+
+<h2 class="section-title">Pick the Right Style</h2>
+<p class="section-description">
+		Each variant serves a different purpose. Here's how to choose.
+	</p>
+<!-- Primary Button -->
+<div class="example-group">
+<h3 class="example-title">Primary</h3>
+<p class="example-description">
+			The main action on a page. Use just one per section so it stands out.
+		</p>
+<div class="preview">
+<button class="btn btn-primary">Primary Button</button>
+<button class="btn btn-primary" disabled="">Disabled</button>
+</div>
+<codeblock class="btn btn-primary" code="{`&lt;button">
+  Primary Button
+
+<style>
+  .btn-primary {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    border: none;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<!-- Secondary Button -->
+<div class="example-group">
+<h3 class="example-title">Secondary</h3>
+<p class="example-description">An alternative action that doesn't compete with primary.</p>
+<div class="preview">
+<button class="btn btn-secondary">Secondary Button</button>
+<button class="btn btn-secondary" disabled="">Disabled</button>
+</div>
+<codeblock class="btn btn-secondary" code="{`&lt;button">
+  Secondary Button
+
+<style>
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-fg-primary);
+    border: 1px solid var(--color-border-default);
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-hover);
+    border-color: var(--color-border-emphasis);
+  }
+
+  .btn-secondary:active {
+    background: var(--color-active);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<!-- Ghost Button -->
+<div class="example-group">
+<h3 class="example-title">Ghost</h3>
+<p class="example-description">
+			Low-priority actions like "Cancel" or navigation links styled as buttons.
+		</p>
+<div class="preview">
+<button class="btn btn-ghost">Ghost Button</button>
+<button class="btn btn-ghost" disabled="">Disabled</button>
+</div>
+<codeblock class="btn btn-ghost" code="{`&lt;button">
+  Ghost Button
+
+<style>
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-fg-secondary);
+    border: none;
+  }
+
+  .btn-ghost:hover {
+    background: var(--color-hover);
+    color: var(--color-fg-primary);
+  }
+
+  .btn-ghost:active {
+    background: var(--color-active);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">How Buttons Move</h2>
+<p class="section-description">
+		Buttons respond to hover and click with subtle animations that feel natural.
+	</p>
+<div class="motion-demo">
+<div class="motion-item">
+<h4>Hover Transition</h4>
+<code>transition: all var(--duration-micro) var(--ease-standard);</code>
+<p>Quick 200ms fade when users hover over buttons.</p>
+</div>
+<div class="motion-item">
+<h4>Transform on Hover</h4>
+<code>transform: translateY(-1px);</code>
+<p>Primary buttons lift slightly—just enough to feel clickable.</p>
+</div>
+<div class="motion-item">
+<h4>Active State</h4>
+<code>transform: translateY(0);</code>
+<p>Pressing down feels like pushing a real button.</p>
+</div>
+</div>
+<codeblock !important;="" (prefers-reduced-motion:="" *="" .btn="" .btn:active="" .btn:hover="" @media="" all="" applies="" background="" base="" change="" changes="" code="{`.btn" down="" effect="" for="" language="css" lift="" none="" none;="" others="" preferences="" press="" primary,="" reduce)="" respect="" state="" title="Complete motion pattern" to="" transform:="" transition="" transition:="" translatey(-1px);="" translatey(0);="" user="" var(--duration-micro)="" var(--ease-standard);="" {="" }="" }`}=""></codeblock>
+
+
+
+<h2 class="section-title">Tokens Used</h2>
+<p class="section-description">Copy these into your styles for consistent buttons.</p>
+<div class="token-table">
+<div class="token-row">
+<code>--duration-micro</code>
+<span>200ms — Hover and focus transitions</span>
+</div>
+<div class="token-row">
+<code>--ease-standard</code>
+<span>cubic-bezier(0.4, 0.0, 0.2, 1) — Material Design easing</span>
+</div>
+<div class="token-row">
+<code>--color-hover</code>
+<span>rgba(255, 255, 255, 0.05) — Hover background overlay</span>
+</div>
+<div class="token-row">
+<code>--color-active</code>
+<span>rgba(255, 255, 255, 0.1) — Active state background</span>
+</div>
+<div class="token-row">
+<code>--color-border-default</code>
+<span>rgba(255, 255, 255, 0.1) — Default border color</span>
+</div>
+<div class="token-row">
+<code>--color-border-emphasis</code>
+<span>rgba(255, 255, 255, 0.2) — Hover border color</span>
+</div>
+</div>
+

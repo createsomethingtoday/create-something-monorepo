@@ -11,26 +11,39 @@
 		title?: string;
 		subtitle?: string;
 		category?: string;
+		section?: string;
+		pronunciation?: string;
+		translation?: string;
+		lead?: string;
 		publishedAt?: string;
 	}
 
-	let { title, subtitle, category, publishedAt }: Props = $props();
+	let { title, subtitle, category, section, pronunciation, translation, lead, publishedAt }: Props = $props();
 </script>
 
 <!-- Header -->
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-3xl mx-auto">
 		<a href={category === 'Pattern' ? '/patterns' : '/canon'} class="typ-body-sm fg-muted hover:fg-tertiary transition-opacity mb-8 inline-block">
-			← All {category === 'Pattern' ? 'Patterns' : 'Canon'}
+			← All {category === 'Pattern' ? 'Patterns' : category === 'Canon' && section ? section : 'Canon'}
 		</a>
-		{#if category}
-			<p class="typ-body-sm tracking-widest uppercase fg-tertiary mb-4">{category}</p>
+		{#if category || section}
+			<p class="typ-body-sm tracking-widest uppercase fg-tertiary mb-4">{category || section}</p>
 		{/if}
 		{#if title}
 			<h1 class="mb-6">{title}</h1>
 		{/if}
+		{#if pronunciation}
+			<p class="typ-body-sm fg-tertiary font-mono mb-2">{pronunciation}</p>
+		{/if}
+		{#if translation}
+			<p class="typ-body fg-secondary mb-4">{translation}</p>
+		{/if}
 		{#if subtitle}
 			<p class="typ-h3 fg-secondary leading-relaxed">{subtitle}</p>
+		{/if}
+		{#if lead}
+			<p class="typ-body-lg fg-secondary leading-relaxed mt-4">{lead}</p>
 		{/if}
 		{#if publishedAt}
 			<p class="typ-caption fg-muted mt-4">

@@ -1,0 +1,544 @@
+---
+category: "Canon"
+section: "Patterns"
+title: "Loading"
+publishedAt: "2026-01-08"
+published: true
+---
+
+
+<h2 class="section-title">The Problem</h2>
+<p class="section-description">
+		Unresponsive interfaces feel broken. When users take action and see nothing happen, they
+		assume failure and retry, creating duplicate requests and frustration.
+	</p>
+<div class="problem-grid">
+<div class="problem-item">
+<h3>Perceived Slowness</h3>
+<p>Without feedback, even fast operations feel slow.</p>
+</div>
+<div class="problem-item">
+<h3>Layout Shift</h3>
+<p>Content that appears suddenly causes jarring jumps.</p>
+</div>
+<div class="problem-item">
+<h3>Uncertainty</h3>
+<p>Users don't know if the system is working or frozen.</p>
+</div>
+<div class="problem-item">
+<h3>Retry Storms</h3>
+<p>Impatient users click repeatedly, overloading systems.</p>
+</div>
+</div>
+
+
+
+<h2 class="section-title">Skeleton Screens</h2>
+<p class="section-description">
+		Skeleton screens show the structure of content before it loads, reducing perceived wait time
+		and preventing layout shift.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Text Skeleton</h3>
+<p class="example-description">
+			Placeholder for text content. Width varies to suggest natural text rhythm.
+		</p>
+<div class="preview">
+<div class="demo-skeleton-text-group">
+<div class="demo-skeleton demo-skeleton-text" style="width: 100%"></div>
+<div class="demo-skeleton demo-skeleton-text" style="width: 85%"></div>
+<div class="demo-skeleton demo-skeleton-text" style="width: 92%"></div>
+<div class="demo-skeleton demo-skeleton-text" style="width: 60%"></div>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Skeleton } from '@create-something/components';
+
+<!-- Text paragraph skeleton -->
+<div class="skeleton-group">
+<skeleton variant="text" width="100%"></skeleton>
+<skeleton variant="text" width="85%"></skeleton>
+<skeleton variant="text" width="92%"></skeleton>
+<skeleton variant="text" width="60%"></skeleton>
+</div>
+<style>
+  .skeleton-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Card Skeleton</h3>
+<p class="example-description">
+			Composite skeleton matching a card's structure.
+		</p>
+<div class="preview">
+<div class="demo-card-skeleton">
+<div class="demo-skeleton demo-skeleton-rectangular"></div>
+<div class="demo-card-skeleton-content">
+<div class="demo-skeleton demo-skeleton-text" style="width: 70%"></div>
+<div class="demo-skeleton demo-skeleton-text" style="width: 100%"></div>
+<div class="demo-skeleton demo-skeleton-text" style="width: 40%"></div>
+</div>
+</div>
+</div>
+<codeblock --="" card="" code="{`&lt;!--" matching="" papercard="" skeleton="" structure="">
+<div class="card-skeleton">
+<skeleton height="160px" variant="rectangular"></skeleton>
+<div class="card-skeleton-content">
+<skeleton variant="text" width="70%"></skeleton>
+<skeleton variant="text" width="100%"></skeleton>
+<skeleton variant="text" width="40%"></skeleton>
+</div>
+</div>
+<style>
+  .card-skeleton {
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .card-skeleton-content {
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+</style>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Avatar and Circular</h3>
+<p class="example-description">
+			Circular skeletons for avatars and icons.
+		</p>
+<div class="preview">
+<div class="demo-avatar-skeleton-row">
+<div class="demo-skeleton demo-skeleton-circular demo-skeleton-sm"></div>
+<div class="demo-skeleton demo-skeleton-circular"></div>
+<div class="demo-skeleton demo-skeleton-circular demo-skeleton-lg"></div>
+</div>
+</div>
+<codeblock code="{`&lt;Skeleton" height="32px" variant="circular" width="32px"></codeblock>
+<skeleton height="40px" variant="circular" width="40px"></skeleton>
+<skeleton height="56px" variant="circular" width="56px"></skeleton>`}
+			language="svelte"
+		/&gt;
+	</div>
+<div class="example-group">
+<h3 class="example-title">List Skeleton</h3>
+<p class="example-description">
+			Multiple items with avatar and text for list views.
+		</p>
+<div class="preview">
+<div class="demo-list-skeleton">
+				{#each [1, 2, 3] as _}
+					<div class="demo-list-item-skeleton">
+<div class="demo-skeleton demo-skeleton-circular"></div>
+<div class="demo-list-item-text">
+<div class="demo-skeleton demo-skeleton-text" style="width: 50%"></div>
+<div class="demo-skeleton demo-skeleton-text" style="width: 80%"></div>
+</div>
+</div>
+				{/each}
+			</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { LoadingSkeleton } from '@create-something/components';
+
+<!-- Pre-composed list skeleton pattern -->
+<loadingskeleton count="{3}" variant="list"></loadingskeleton>
+<!-- Or compose manually -->
+{#each Array(3) as _}
+  <div class="list-item">
+<skeleton variant="circular"></skeleton>
+<div class="list-item-text">
+<skeleton variant="text" width="50%"></skeleton>
+<skeleton variant="text" width="80%"></skeleton>
+</div>
+</div>
+{/each}`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+
+
+
+<h2 class="section-title">Spinners</h2>
+<p class="section-description">
+		Spinners indicate indeterminate loading when the duration is unknown. Use sparingly, as
+		skeleton screens are generally preferred.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Size Variants</h3>
+<p class="example-description">
+			Four sizes for different contexts: inline (sm), button (md), section (lg), page (xl).
+		</p>
+<div class="preview">
+<div class="demo-spinner-row">
+<div class="demo-spinner-item">
+<div class="demo-spinner demo-spinner-sm"></div>
+<span>Small (16px)</span>
+</div>
+<div class="demo-spinner-item">
+<div class="demo-spinner demo-spinner-md"></div>
+<span>Medium (24px)</span>
+</div>
+<div class="demo-spinner-item">
+<div class="demo-spinner demo-spinner-lg"></div>
+<span>Large (32px)</span>
+</div>
+<div class="demo-spinner-item">
+<div class="demo-spinner demo-spinner-xl"></div>
+<span>XL (48px)</span>
+</div>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Spinner } from '@create-something/components';
+
+<spinner label="Loading..." size="sm"></spinner>
+<spinner label="Loading..." size="md"></spinner>
+<spinner label="Loading..." size="lg"></spinner>
+<spinner label="Loading..." size="xl"></spinner>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Button Loading State</h3>
+<p class="example-description">
+			Replace button text with spinner during submission.
+		</p>
+<div class="preview">
+<div class="demo-button-row">
+<button class="demo-btn demo-btn-primary">Submit</button>
+<button class="demo-btn demo-btn-primary demo-btn-loading" disabled="">
+<div class="demo-spinner demo-spinner-btn"></div>
+<span>Submitting...</span>
+</button>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  let loading = $state(false);
+
+  async function handleSubmit() {
+    loading = true;
+    try {
+      await submitForm();
+    } finally {
+      loading = false;
+    }
+  }
+
+<button disabled="{loading}" onclick="{handleSubmit}">
+  {#if loading}
+    <spinner size="sm"></spinner>
+<span>Submitting...</span>
+  {:else}
+    Submit
+  {/if}
+</button>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Centered Spinner</h3>
+<p class="example-description">
+			Full-width centered spinner for section or page loading.
+		</p>
+<div class="preview" style="min-height: 200px;">
+<div class="demo-spinner-centered">
+<div class="demo-spinner demo-spinner-lg"></div>
+</div>
+</div>
+<codeblock centered="" code="{`&lt;Spinner" label="Loading content..." size="lg"></codeblock>`}
+			language="svelte"
+		/&gt;
+	</div>
+
+
+
+<h2 class="section-title">Progress Indicators</h2>
+<p class="section-description">
+		Progress bars show determinate progress when the completion percentage is known.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Linear Progress</h3>
+<p class="example-description">
+			Horizontal bar showing percentage complete.
+		</p>
+<div class="preview">
+<div class="demo-progress-group">
+<div class="demo-progress-item">
+<div class="demo-progress-header">
+<span>Uploading files...</span>
+<span>45%</span>
+</div>
+<div class="demo-progress-bar">
+<div class="demo-progress-fill" style="width: 45%"></div>
+</div>
+</div>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { Progress } from '@create-something/components';
+
+  let progress = $state(45);
+
+<progress label="Uploading files..." max="{100}" showvalue="" value="{progress}"></progress>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Indeterminate Progress</h3>
+<p class="example-description">
+			Animated bar for operations with unknown duration.
+		</p>
+<div class="preview">
+<div class="demo-progress-bar demo-progress-indeterminate">
+<div class="demo-progress-fill-indeterminate"></div>
+</div>
+</div>
+<codeblock code="{`&lt;Progress" indeterminate="" label="Processing..."></codeblock>`}
+			language="svelte"
+		/&gt;
+	</div>
+<div class="example-group">
+<h3 class="example-title">Step Progress</h3>
+<p class="example-description">
+			For multi-step processes like forms or wizards.
+		</p>
+<div class="preview">
+<div class="demo-step-progress">
+<div class="demo-step-progress-bar">
+<div class="demo-step-progress-fill" style="width: 50%"></div>
+</div>
+<div class="demo-step-progress-label">Step 2 of 4</div>
+</div>
+</div>
+<codeblock code="{`&lt;Progress" label="Step 2 of 4" max="{4}" value="{2}" variant="steps"></codeblock>`}
+			language="svelte"
+		/&gt;
+	</div>
+
+
+
+<h2 class="section-title">Loading Overlay</h2>
+<p class="section-description">
+		Overlay patterns block interaction during critical operations.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Full Page Overlay</h3>
+<p class="example-description">
+			Blocks entire page during authentication or initial data load.
+		</p>
+<div class="preview preview-overlay">
+<div class="demo-page-content">
+<p>Page content appears here...</p>
+</div>
+<div class="demo-overlay">
+<div class="demo-overlay-content">
+<div class="demo-spinner demo-spinner-lg"></div>
+<p>Loading application...</p>
+</div>
+</div>
+</div>
+<codeblock code="{`&lt;script" lang="ts">
+  import { LoadingOverlay } from '@create-something/components';
+
+  let loading = $state(true);
+
+
+{#if loading}
+  <loadingoverlay message="Loading application..."></loadingoverlay>
+{/if}
+
+<main>
+<!-- Page content -->
+</main>`}
+			language="svelte"
+		/&gt;
+	</codeblock></div>
+<div class="example-group">
+<h3 class="example-title">Section Overlay</h3>
+<p class="example-description">
+			Blocks only a portion of the page while content loads.
+		</p>
+<div class="preview">
+<div class="demo-section-with-overlay">
+<div class="demo-section-content">
+<div class="demo-skeleton demo-skeleton-text" style="width: 80%"></div>
+<div class="demo-skeleton demo-skeleton-text" style="width: 60%"></div>
+</div>
+<div class="demo-section-overlay">
+<div class="demo-spinner demo-spinner-md"></div>
+</div>
+</div>
+</div>
+<codeblock class="section-container" code="{`&lt;div">
+<loadingoverlay variant="section" visible="{loading}"></loadingoverlay>
+<div class="section-content">
+    {#if data}
+      <!-- Render data -->
+    {/if}
+  </div>
+</codeblock></div>`}
+			language="svelte"
+		/&gt;
+	
+
+
+
+<h2 class="section-title">Choosing a Pattern</h2>
+<p class="section-description">
+		Different loading states require different feedback patterns.
+	</p>
+<div class="choice-grid">
+<div class="choice-item">
+<h3>Skeleton Screens</h3>
+<p class="choice-when">When:</p>
+<ul>
+<li>Loading page content or lists</li>
+<li>Layout structure is known in advance</li>
+<li>Duration is typically under 3 seconds</li>
+</ul>
+<p class="choice-why">
+				Reduces perceived wait time by showing structure immediately.
+			</p>
+</div>
+<div class="choice-item">
+<h3>Spinners</h3>
+<p class="choice-when">When:</p>
+<ul>
+<li>Button or inline loading states</li>
+<li>Brief operations (under 2 seconds)</li>
+<li>Unknown or variable layout</li>
+</ul>
+<p class="choice-why">
+				Simple feedback for short, contained operations.
+			</p>
+</div>
+<div class="choice-item">
+<h3>Progress Bars</h3>
+<p class="choice-when">When:</p>
+<ul>
+<li>File uploads or downloads</li>
+<li>Multi-step processes</li>
+<li>Progress percentage is calculable</li>
+</ul>
+<p class="choice-why">
+				Shows actual progress, sets expectations for wait time.
+			</p>
+</div>
+<div class="choice-item">
+<h3>Overlays</h3>
+<p class="choice-when">When:</p>
+<ul>
+<li>Critical operations that must complete</li>
+<li>Preventing user interaction is necessary</li>
+<li>Authentication or checkout flows</li>
+</ul>
+<p class="choice-why">
+				Prevents conflicting actions during important operations.
+			</p>
+</div>
+</div>
+
+
+
+<h2 class="section-title">Reduced Motion</h2>
+<p class="section-description">
+		All loading animations must respect <code>prefers-reduced-motion</code>.
+	</p>
+<div class="example-group">
+<h3 class="example-title">Motion Alternatives</h3>
+<p class="example-description">
+			When motion is reduced, provide static alternatives that still communicate loading.
+		</p>
+<codeblock (prefers-reduced-motion:="" *="" -="" .progress-fill="" .progress-indeterminate="" .skeleton="" .spinner="" 0.7;="" 30%;="" 35%;="" @media="" animation,="" animation:="" bar="" border-color:="" border-top-color:="" code="{`/*" gray="" indeterminate="" indicator="" language="css" left:="" none;="" opacity:="" progress="" pulse,="" reduce)="" shows="" skeleton="" spinner="" static="" stops="" var(--color-fg-muted);="" var(--color-fg-primary);="" width:="" {="" }="" }`}=""></codeblock>
+</div>
+
+
+
+<h2 class="section-title">Token Reference</h2>
+<p class="section-description">Loading patterns use these Canon design tokens.</p>
+<div class="token-table">
+<div class="token-row">
+<code>--color-bg-subtle</code>
+<span>Skeleton background color (#1a1a1a)</span>
+</div>
+<div class="token-row">
+<code>--color-border-default</code>
+<span>Spinner track color</span>
+</div>
+<div class="token-row">
+<code>--color-fg-primary</code>
+<span>Spinner accent, progress fill</span>
+</div>
+<div class="token-row">
+<code>--color-overlay</code>
+<span>Overlay backdrop (rgba(0,0,0,0.5))</span>
+</div>
+<div class="token-row">
+<code>--radius-sm / --radius-md</code>
+<span>Skeleton border radius</span>
+</div>
+<div class="token-row">
+<code>--radius-full</code>
+<span>Spinner and circular skeleton</span>
+</div>
+<div class="token-row">
+<code>--z-modal</code>
+<span>Loading overlay z-index (100)</span>
+</div>
+</div>
+
+
+
+<h2 class="section-title">Anti-Patterns</h2>
+<p class="section-description">Common loading mistakes to avoid.</p>
+<div class="anti-patterns">
+<div class="anti-pattern">
+<h4>Spinner for Everything</h4>
+<p>
+				Don't use spinners when you can show structure. Skeleton screens reduce perceived
+				wait time more effectively.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>No Loading State</h4>
+<p>
+				Any operation over 100ms needs feedback. Users assume broken UI without response.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Layout Shift</h4>
+<p>
+				Match skeleton dimensions to final content. Jumping layouts frustrate users.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Ignoring Reduced Motion</h4>
+<p>
+				Animated loaders can cause discomfort. Always provide static alternatives.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Overlong Spinners</h4>
+<p>
+				If loading takes more than 10 seconds, show progress or allow cancellation.
+			</p>
+</div>
+<div class="anti-pattern">
+<h4>Blocking Non-Critical</h4>
+<p>
+				Don't overlay the entire page for a single component. Load progressively.
+			</p>
+</div>
+</div>
+
