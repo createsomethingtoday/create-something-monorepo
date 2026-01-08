@@ -22,7 +22,7 @@
 	const chartHeight = duos.length * 60 + 40; // 60px per bar + padding
 	const barHeight = 40;
 	const labelWidth = 140; // Increased from 120 to accommodate longer names
-	const maxPPP = 1.8; // Max scale for PPP
+	const maxPPP = 2.2; // Max scale for PPP (handles high-performing duos at 2.0+)
 	const leagueAvgPPP = 1.12;
 	const rightMargin = 70; // Space for PPP value and delta
 
@@ -80,7 +80,8 @@
 
 			{#each duos as duo, i}
 				{@const y = 30 + i * 60}
-				{@const barWidth = scalePPP(duo.pointsPerPossession)}
+				{@const maxBarWidth = chartWidth - labelWidth - rightMargin}
+				{@const barWidth = Math.min(scalePPP(duo.pointsPerPossession), maxBarWidth)}
 				{@const duoName = getDuoName(duo)}
 
 				<!-- Duo name label -->
