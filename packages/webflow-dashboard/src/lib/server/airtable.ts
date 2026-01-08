@@ -554,30 +554,38 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 		/**
 		 * Get creator profile by email.
+		 * Matches the original Next.js implementation by searching across multiple email fields.
 		 */
 		async getCreatorByEmail(email: string): Promise<Creator | null> {
-			const escapedEmail = escapeAirtableString(email);
-			const records = await base(TABLES.CREATORS)
-				.select({
-					filterByFormula: `OR(
-						FIND('${escapedEmail}', LOWER({📧Emails})),
-						{📧Emails} = '${escapedEmail}'
-					)`
-				})
-				.firstPage();
+			try {
+				const escapedEmail = escapeAirtableString(email);
+				const records = await base(TABLES.CREATORS)
+					.select({
+						filterByFormula: `OR(
+							FIND("${escapedEmail}", ARRAYJOIN({📧Email}, ",")) > 0,
+							FIND("${escapedEmail}", ARRAYJOIN({📧WF Account Email}, ",")) > 0,
+							FIND("${escapedEmail}", ARRAYJOIN({📧Emails}, ",")) > 0
+						)`,
+						maxRecords: 1
+					})
+					.firstPage();
 
-			if (records.length === 0) return null;
+				if (records.length === 0) return null;
 
-			const record = records[0];
-			return {
-				id: record.id,
-				name: record.fields['🎨Name'] as string || '',
-				email: email,
-				emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
-				avatarUrl: (record.fields['🖼️Avatar'] as { url: string }[] | undefined)?.[0]?.url,
-				biography: record.fields['📝Biography'] as string,
-				legalName: record.fields['📜Legal Name'] as string
-			};
+				const record = records[0];
+				return {
+					id: record.id,
+					name: record.fields['🎨Name'] as string || record.fields['Name'] as string || '',
+					email: email,
+					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
+					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url || (record.fields['🖼️Avatar'] as { url: string }[] | undefined)?.[0]?.url,
+					biography: record.fields['📝Biography'] as string || record.fields['ℹ️Biography'] as string,
+					legalName: record.fields['📜Legal Name'] as string || record.fields['ℹ️Legal Name'] as string
+				};
+			} catch (err) {
+				console.error('Error fetching creator by email:', err);
+				return null;
+			}
 		},
 
 		/**
