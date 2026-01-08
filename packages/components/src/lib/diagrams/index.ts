@@ -32,6 +32,7 @@ export {
   exportToSvg,
   downloadBlob,
   downloadDiagram,
-  copyToClipboard,
+  copyDiagramToClipboard,
+  copyToClipboard, // Deprecated alias for backward compatibility
   type ExportOptions,
 } from './export.js';

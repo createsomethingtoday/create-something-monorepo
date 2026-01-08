@@ -163,7 +163,7 @@ function inlineStyles(element: Element): void {
 /**
  * Copy diagram to clipboard as PNG
  */
-export async function copyToClipboard(
+export async function copyDiagramToClipboard(
   svgElement: SVGElement,
   options: ExportOptions = {}
 ): Promise<void> {
@@ -179,3 +179,9 @@ export async function copyToClipboard(
     throw new Error('Failed to copy to clipboard. Browser may not support clipboard API.');
   }
 }
+
+/**
+ * Alias for backward compatibility
+ * @deprecated Use copyDiagramToClipboard instead
+ */
+export const copyToClipboard = copyDiagramToClipboard;

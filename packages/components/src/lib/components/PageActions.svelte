@@ -8,7 +8,7 @@
 	 * Canon: Tools recede into use. The export happens; the infrastructure disappears.
 	 */
 
-	import { copyToClipboard } from '../diagrams/export.js';
+	import { copyToClipboard } from '../utils/clipboard.js';
 	import { formatPageMarkdown, generateClaudeUrl } from '../utils/markdown.js';
 	import type { PageMetadata } from '../utils/markdown.js';
 

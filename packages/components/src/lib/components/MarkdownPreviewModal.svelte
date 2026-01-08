@@ -9,7 +9,7 @@
 	 */
 
 	import { focusTrap } from '../actions/a11y.js';
-	import { copyToClipboard } from '../diagrams/export.js';
+	import { copyToClipboard } from '../utils/clipboard.js';
 
 	interface Props {
 		/** Whether the modal is open */

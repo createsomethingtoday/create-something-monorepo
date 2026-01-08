@@ -89,11 +89,13 @@ export {
 } from './tracing.js';
 
 // Markdown formatting and export
-// Note: clipboard utilities not exported here to avoid conflict with diagrams/export.ts
-// Import directly from '@create-something/components/utils/clipboard' if needed
 export {
     formatPageMarkdown,
     generateClaudeUrl,
     truncateForUrl,
     type PageMetadata
 } from './markdown.js';
+
+// Clipboard utilities (text copying - not diagram export)
+// For diagram export, use copyDiagramToClipboard from diagrams/export.ts
+export { copyToClipboard } from './clipboard.js';
