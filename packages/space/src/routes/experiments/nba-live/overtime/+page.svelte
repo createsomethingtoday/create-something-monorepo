@@ -42,7 +42,14 @@
 			</div>
 			<DateNavigation currentDate={data.date} baseUrl="/experiments/nba-live/overtime" />
 		</header>
-		
+
+		<!-- Data Note -->
+		{#if data.dataNote}
+			<div class="data-note">
+				<p>{data.dataNote}</p>
+			</div>
+		{/if}
+
 		{#if totalOvertimeGames > 0}
 			<!-- Summary Stats -->
 			<div class="summary-grid">
@@ -243,6 +250,21 @@
 	.methodology strong {
 		color: var(--color-text-primary);
 		font-weight: var(--font-weight-semibold);
+	}
+
+	.data-note {
+		padding: var(--space-4);
+		background: var(--color-surface-raised);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-3);
+		margin-bottom: var(--space-6);
+	}
+
+	.data-note p {
+		margin: 0;
+		font-size: var(--font-size-sm);
+		color: var(--color-text-secondary);
+		line-height: 1.6;
 	}
 	
 	/* Empty State */

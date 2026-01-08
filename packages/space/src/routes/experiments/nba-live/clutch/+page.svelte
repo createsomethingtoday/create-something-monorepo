@@ -62,6 +62,13 @@
 			<DateNavigation currentDate={data.date} baseUrl="/experiments/nba-live/clutch" />
 		</header>
 		
+		<!-- Data Note -->
+		{#if data.dataNote}
+			<div class="data-note">
+				<p>{data.dataNote}</p>
+			</div>
+		{/if}
+
 		<!-- Stats Summary -->
 		{#if data.clutchStats.length > 0}
 			<div class="summary-cards">
@@ -246,6 +253,21 @@
 		font-weight: var(--font-weight-bold);
 		color: var(--color-text-primary);
 		font-variant-numeric: tabular-nums;
+	}
+
+	.data-note {
+		padding: var(--space-4);
+		background: var(--color-surface-raised);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-3);
+		margin-bottom: var(--space-6);
+	}
+
+	.data-note p {
+		margin: 0;
+		font-size: var(--font-size-sm);
+		color: var(--color-text-secondary);
+		line-height: 1.6;
 	}
 	
 	.leaderboard {

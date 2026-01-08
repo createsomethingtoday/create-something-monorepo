@@ -1,19 +1,26 @@
 <script lang="ts">
 	/**
 	 * Overtime Insights Component
-	 * 
+	 *
 	 * Embeddable widget showing REG vs OT performance comparison.
 	 * Displays fatigue index and performance differential.
 	 */
-	
+
 	import type { OvertimeDifferential } from '$lib/nba/overtime-analyzer';
 	import { TrendingDown, TrendingUp, AlertTriangle, Clock } from 'lucide-svelte';
-	
+
 	interface Props {
-		differential: OvertimeDifferential;
+		differential: OvertimeDifferential & {
+			gameId?: string;
+			homeTeam?: string;
+			awayTeam?: string;
+			homeScore?: number;
+			awayScore?: number;
+			periods?: number;
+		};
 		compact?: boolean;
 	}
-	
+
 	let { differential, compact = false }: Props = $props();
 	
 	// Determine fatigue severity
@@ -42,12 +49,20 @@
 	<!-- Header -->
 	<div class="header">
 		<Clock size={16} />
-		<h3 class="title">Overtime Performance</h3>
-		{#if differential.overtimePeriods > 1}
-			<span class="badge">{differential.overtimePeriods}OT</span>
+		<h3 class="title">{differential.playerName}</h3>
+		{#if differential.periods && differential.periods > 4}
+			<span class="badge">{differential.periods - 4}OT</span>
 		{/if}
 	</div>
-	
+
+	<!-- Game Info -->
+	{#if differential.homeScore !== undefined && differential.awayScore !== undefined}
+		<div class="game-score">
+			<span class="final-label">Final</span>
+			<span class="score">{differential.awayScore} - {differential.homeScore}</span>
+		</div>
+	{/if}
+
 	<!-- Fatigue Index -->
 	<div class="fatigue-meter">
 		<div class="meter-label">
@@ -55,93 +70,36 @@
 			<span class="meter-value" style="color: {fatigueColor()}">{differential.fatigueIndex}/100</span>
 		</div>
 		<div class="meter-bar">
-			<div 
-				class="meter-fill" 
+			<div
+				class="meter-fill"
 				class:severe={fatigueLevel() === 'severe'}
 				class:moderate={fatigueLevel() === 'moderate'}
 				style="width: {differential.fatigueIndex}%"
 			></div>
 		</div>
-	</div>
-	
-	<!-- Stats Comparison -->
-	<div class="stats-grid">
-		<!-- Points -->
-		<div class="stat-card">
-			<div class="stat-label">Points</div>
-			<div class="stat-comparison">
-				<span class="reg-value">{differential.regularStats.points.toFixed(1)}</span>
-				<span class="arrow">→</span>
-				<span class="ot-value">{differential.overtimeStats.points.toFixed(1)}</span>
-			</div>
-			<div class="stat-change" class:decline={isDecline(differential.regularStats.points - differential.overtimeStats.points)}>
-				{#if isDecline(differential.regularStats.points - differential.overtimeStats.points)}
-					<TrendingDown size={14} />
-				{:else}
-					<TrendingUp size={14} />
-				{/if}
-				<span>{formatChange(differential.overtimeStats.points - differential.regularStats.points)}</span>
-			</div>
-		</div>
-		
-		<!-- FG% -->
-		<div class="stat-card">
-			<div class="stat-label">FG%</div>
-			<div class="stat-comparison">
-				<span class="reg-value">{(differential.regularStats.fgPct * 100).toFixed(1)}%</span>
-				<span class="arrow">→</span>
-				<span class="ot-value">{(differential.overtimeStats.fgPct * 100).toFixed(1)}%</span>
-			</div>
-			<div class="stat-change" class:decline={isDecline(differential.overtimeStats.fgPct - differential.regularStats.fgPct)}>
-				{#if isDecline(differential.overtimeStats.fgPct - differential.regularStats.fgPct)}
-					<TrendingDown size={14} />
-				{:else}
-					<TrendingUp size={14} />
-				{/if}
-				<span>{formatChange((differential.overtimeStats.fgPct - differential.regularStats.fgPct) * 100, '%')}</span>
-			</div>
-		</div>
-		
-		<!-- Turnovers -->
-		<div class="stat-card">
-			<div class="stat-label">Turnovers</div>
-			<div class="stat-comparison">
-				<span class="reg-value">{differential.regularStats.turnovers.toFixed(1)}</span>
-				<span class="arrow">→</span>
-				<span class="ot-value">{differential.overtimeStats.turnovers.toFixed(1)}</span>
-			</div>
-			<div class="stat-change" class:decline={!isDecline(differential.overtimeStats.turnovers - differential.regularStats.turnovers)}>
-				{#if differential.overtimeStats.turnovers > differential.regularStats.turnovers}
-					<TrendingUp size={14} />
-				{:else}
-					<TrendingDown size={14} />
-				{/if}
-				<span>{formatChange(differential.overtimeStats.turnovers - differential.regularStats.turnovers)}</span>
-			</div>
-		</div>
-		
-		<!-- Minutes -->
-		<div class="stat-card">
-			<div class="stat-label">Minutes</div>
-			<div class="stat-comparison">
-				<span class="reg-value">{differential.regularStats.minutes.toFixed(1)}</span>
-				<span class="arrow">→</span>
-				<span class="ot-value">{differential.overtimeStats.minutes.toFixed(1)}</span>
-			</div>
-			<div class="stat-change">
-				<Clock size={14} />
-				<span>{formatChange(differential.overtimeStats.minutes - differential.regularStats.minutes)}</span>
-			</div>
+		<div class="fatigue-description">
+			{#if fatigueLevel() === 'severe'}
+				Severe fatigue - significant performance decline
+			{:else if fatigueLevel() === 'moderate'}
+				Moderate fatigue - noticeable decline
+			{:else}
+				Minimal fatigue - maintained performance
+			{/if}
 		</div>
 	</div>
-	
+
 	<!-- Fatigue Warning -->
 	{#if fatigueLevel() === 'severe'}
 		<div class="warning">
 			<AlertTriangle size={14} />
-			<span>Severe fatigue detected - performance significantly declined in OT</span>
+			<span>High fatigue indicators detected in this overtime game</span>
 		</div>
 	{/if}
+
+	<!-- Data Note -->
+	<div class="note">
+		<p>Full REG vs OT stat breakdown requires play-by-play data (coming soon)</p>
+	</div>
 </div>
 
 <style>
@@ -223,67 +181,47 @@
 	.meter-fill.severe {
 		background: var(--color-error);
 	}
-	
-	.stats-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-2);
+
+	.fatigue-description {
+		font-size: var(--font-size-sm);
+		color: var(--color-text-secondary);
+		margin-top: var(--space-1);
 	}
-	
-	.compact .stats-grid {
-		grid-template-columns: 1fr;
-	}
-	
-	.stat-card {
+
+	.game-score {
 		display: flex;
-		flex-direction: column;
-		gap: var(--space-1);
+		align-items: center;
+		gap: var(--space-2);
 		padding: var(--space-2);
 		background: var(--color-surface);
 		border-radius: var(--radius-2);
 	}
-	
-	.stat-label {
+
+	.final-label {
 		font-size: var(--font-size-xs);
 		font-weight: var(--font-weight-medium);
 		color: var(--color-text-tertiary);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
 	}
-	
-	.stat-comparison {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		font-size: var(--font-size-base);
-		font-weight: var(--font-weight-semibold);
-		font-variant-numeric: tabular-nums;
-	}
-	
-	.reg-value {
-		color: var(--color-text-secondary);
-	}
-	
-	.arrow {
-		color: var(--color-text-tertiary);
-		font-size: var(--font-size-sm);
-	}
-	
-	.ot-value {
+
+	.score {
+		font-size: var(--font-size-lg);
+		font-weight: var(--font-weight-bold);
 		color: var(--color-text-primary);
-	}
-	
-	.stat-change {
-		display: flex;
-		align-items: center;
-		gap: var(--space-1);
-		font-size: var(--font-size-sm);
-		color: var(--color-success);
 		font-variant-numeric: tabular-nums;
 	}
-	
-	.stat-change.decline {
-		color: var(--color-error);
+
+	.note {
+		padding: var(--space-2);
+		background: var(--color-surface);
+		border-radius: var(--radius-2);
+	}
+
+	.note p {
+		margin: 0;
+		font-size: var(--font-size-xs);
+		color: var(--color-text-tertiary);
+		font-style: italic;
 	}
 	
 	.warning {
@@ -296,12 +234,5 @@
 		border-radius: var(--radius-2);
 		font-size: var(--font-size-sm);
 		color: var(--color-error);
-	}
-	
-	/* Mobile responsive */
-	@media (max-width: 640px) {
-		.stats-grid {
-			grid-template-columns: 1fr;
-		}
 	}
 </style>
