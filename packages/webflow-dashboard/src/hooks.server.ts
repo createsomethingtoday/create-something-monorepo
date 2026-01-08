@@ -1,6 +1,14 @@
 import type { Handle } from '@sveltejs/kit';
 import { getSession } from '$lib/server/kv';
 
+// No-cache headers for API responses to prevent browser caching issues
+const noCacheHeaders = {
+	'Content-Type': 'application/json',
+	'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+	'Pragma': 'no-cache',
+	'Expires': '0'
+};
+
 /**
  * Server hooks for session management.
  *
@@ -33,10 +41,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 				headers: { Location: '/login' }
 			});
 		}
-		// Return 401 for API routes
+		// Return 401 for API routes with no-cache headers
 		return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 			status: 401,
-			headers: { 'Content-Type': 'application/json' }
+			headers: noCacheHeaders
 		});
 	}
 
