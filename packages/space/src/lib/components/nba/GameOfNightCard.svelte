@@ -101,167 +101,167 @@
 		all: unset;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-3);
-		padding: var(--space-5);
-		background: var(--color-surface-raised);
-		border: 2px solid var(--color-border);
-		border-radius: var(--radius-3);
+		gap: var(--space-md);
+		padding: var(--space-2xl);
+		background: var(--color-bg-elevated);
+		border: 2px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
 		cursor: pointer;
-		transition: all 0.2s ease;
+		transition: all var(--duration-micro) var(--ease-standard);
 		width: 100%;
 		box-sizing: border-box;
 	}
-	
+
 	.game-of-night-card:hover {
-		border-color: var(--color-primary);
+		border-color: var(--color-data-1);
 		transform: translateY(-2px);
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+		box-shadow: var(--shadow-lg);
 	}
-	
+
 	.game-of-night-card:focus-visible {
-		outline: 2px solid var(--color-primary);
+		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
 	}
-	
+
 	/* Special styling for high-excitement games */
 	.game-of-night-card.instant-classic {
 		border-color: var(--color-warning);
-		background: linear-gradient(135deg, var(--color-surface-raised) 0%, rgba(255, 193, 7, 0.05) 100%);
+		background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-warning-muted) 100%);
 	}
-	
+
 	.game-of-night-card.game-of-night {
-		border-color: var(--color-primary);
-		background: linear-gradient(135deg, var(--color-surface-raised) 0%, rgba(99, 102, 241, 0.05) 100%);
+		border-color: var(--color-data-1);
+		background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-data-1-muted) 100%);
 	}
-	
+
 	.badge {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-semibold);
-		color: var(--color-text-primary);
+		gap: var(--space-sm);
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-primary);
 	}
-	
+
 	.score-pill {
 		margin-left: auto;
-		padding: var(--space-1) var(--space-2);
-		background: var(--color-primary);
-		color: var(--color-text-on-primary);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-data-1);
+		color: var(--color-bg-pure);
 		border-radius: var(--radius-full);
-		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-bold);
+		font-size: var(--text-caption);
+		font-weight: 700;
 	}
-	
+
 	.matchup {
 		display: flex;
 		align-items: center;
-		gap: var(--space-4);
-		padding: var(--space-3) 0;
+		gap: var(--space-lg);
+		padding: var(--space-md) 0;
 	}
-	
+
 	.team {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-1);
+		gap: var(--space-xs);
 		flex: 1;
 	}
-	
+
 	.team.away {
 		align-items: flex-start;
 	}
-	
+
 	.team.home {
 		align-items: flex-end;
 	}
-	
+
 	.team-name {
-		font-size: var(--font-size-lg);
-		font-weight: var(--font-weight-semibold);
-		color: var(--color-text-primary);
+		font-size: var(--text-body-lg);
+		font-weight: 600;
+		color: var(--color-fg-primary);
 	}
-	
+
 	.team-score {
-		font-size: var(--font-size-3xl);
-		font-weight: var(--font-weight-bold);
-		color: var(--color-text-primary);
+		font-size: var(--text-display);
+		font-weight: 700;
+		color: var(--color-fg-primary);
 		font-variant-numeric: tabular-nums;
 	}
-	
+
 	.vs {
-		font-size: var(--font-size-sm);
-		color: var(--color-text-secondary);
-		font-weight: var(--font-weight-medium);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		font-weight: 500;
 	}
-	
+
 	.meta {
 		display: flex;
 		align-items: center;
-		gap: var(--space-4);
+		gap: var(--space-lg);
 		flex-wrap: wrap;
-		padding-top: var(--space-2);
-		border-top: 1px solid var(--color-border);
-		font-size: var(--font-size-sm);
-		color: var(--color-text-secondary);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 	}
-	
+
 	.status {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
+		gap: var(--space-sm);
 	}
-	
+
 	.live-indicator {
 		color: var(--color-error);
-		animation: pulse 2s ease-in-out infinite;
+		animation: pulse var(--duration-complex) var(--ease-standard) infinite;
 	}
-	
+
 	@keyframes pulse {
 		0%, 100% { opacity: 1; }
 		50% { opacity: 0.5; }
 	}
-	
+
 	.top-performer {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
-		color: var(--color-primary);
-		font-weight: var(--font-weight-medium);
+		gap: var(--space-sm);
+		color: var(--color-data-1);
+		font-weight: 500;
 	}
-	
+
 	.excitement-breakdown {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
-		padding: var(--space-2) var(--space-3);
-		background: var(--color-surface);
-		border-radius: var(--radius-2);
-		font-size: var(--font-size-sm);
-		color: var(--color-text-secondary);
+		gap: var(--space-sm);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
 	}
-	
+
 	.explanation {
 		flex: 1;
 	}
-	
+
 	/* Responsive */
 	@media (max-width: 640px) {
 		.game-of-night-card {
-			padding: var(--space-4);
+			padding: var(--space-lg);
 		}
-		
+
 		.team-name {
-			font-size: var(--font-size-base);
+			font-size: var(--text-body);
 		}
-		
+
 		.team-score {
-			font-size: var(--font-size-2xl);
+			font-size: var(--text-h2);
 		}
-		
+
 		.meta {
 			flex-direction: column;
 			align-items: flex-start;
-			gap: var(--space-2);
+			gap: var(--space-sm);
 		}
 	}
 </style>
