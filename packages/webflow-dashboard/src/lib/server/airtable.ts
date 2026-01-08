@@ -558,23 +558,25 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 */
 		async getCreatorByEmail(email: string): Promise<Creator | null> {
 			try {
-				const escapedEmail = escapeAirtableString(email);
 				console.log('[Airtable] Searching for creator with email:', email);
-				console.log('[Airtable] Escaped email for query:', escapedEmail);
+				console.log('[Airtable] Using table ID:', TABLES.CREATORS);
 				
-				// Match original Next.js implementation exactly
+				// Match original Next.js implementation EXACTLY - no escaping, direct email
+				const formula = `OR(
+					FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0,
+					FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0,
+					FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0
+				)`;
+				
+				console.log('[Airtable] Formula:', formula);
+				
 				const records = await base(TABLES.CREATORS)
 					.select({
-						filterByFormula: `OR(
-							FIND("${escapedEmail}", ARRAYJOIN({📧Email}, ",")) > 0,
-							FIND("${escapedEmail}", ARRAYJOIN({📧WF Account Email}, ",")) > 0,
-							FIND("${escapedEmail}", ARRAYJOIN({📧Emails}, ",")) > 0
-						)`,
-						maxRecords: 1
+						filterByFormula: formula
 					})
 					.firstPage();
 
-				console.log('[Airtable] Found records:', records.length);
+				console.log('[Airtable] Query completed. Found records:', records.length);
 				
 				if (records.length === 0) {
 					console.log('[Airtable] No creator found for email:', email);
