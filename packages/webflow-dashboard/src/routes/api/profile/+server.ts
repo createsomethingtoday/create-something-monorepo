@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import Airtable from 'airtable';
 import { getAirtableClient } from '$lib/server/airtable';
 
 // Helper to add no-cache headers to API responses
@@ -20,65 +21,53 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			);
 		}
 
-		console.log('[Profile API] Fetching profile for:', locals.user.email);
+		const email = locals.user.email;
+		console.log('[Profile API] Fetching profile for:', email);
 
 		// Verify environment variables
 		if (!platform?.env?.AIRTABLE_API_KEY || !platform?.env?.AIRTABLE_BASE_ID) {
-			const envStatus = {
-				hasApiKey: !!platform?.env?.AIRTABLE_API_KEY,
-				hasBaseId: !!platform?.env?.AIRTABLE_BASE_ID,
-				hasPlatform: !!platform,
-				hasEnv: !!platform?.env
-			};
-			console.error('[Profile API] Missing Airtable env vars:', envStatus);
 			return json(
-				{
-					error: 'Server configuration error',
-					details: 'Missing Airtable credentials',
-					debug: envStatus
-				},
+				{ error: 'Server configuration error', details: 'Missing Airtable credentials' },
 				{ status: 500, headers: noCacheHeaders }
 			);
 		}
 
-		const airtable = getAirtableClient(platform.env);
-		const creator = await airtable.getCreatorByEmail(locals.user.email);
+		// Direct Airtable query (same as working debug endpoint)
+		const base = new Airtable({ apiKey: platform.env.AIRTABLE_API_KEY }).base(platform.env.AIRTABLE_BASE_ID);
+		const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
+		
+		const records = await base('tbljt0plqxdMARZXb')
+			.select({ filterByFormula: formula })
+			.firstPage();
 
-		if (!creator) {
-			console.error('[Profile API] Creator not found for:', locals.user.email);
+		if (records.length === 0) {
+			console.error('[Profile API] Creator not found for:', email);
 			return json(
-				{
-					error: 'Profile not found',
-					details: `No creator found for email: ${locals.user.email}`
-				},
+				{ error: 'Profile not found', details: `No creator found for email: ${email}` },
 				{ status: 404, headers: noCacheHeaders }
 			);
 		}
 
-		console.log('[Profile API] Successfully fetched profile for:', locals.user.email);
+		const record = records[0];
+		console.log('[Profile API] Successfully fetched profile for:', email);
 
 		return json(
 			{
-				id: creator.id,
-				name: creator.name,
-				email: locals.user.email,
-				avatarUrl: creator.avatarUrl,
-				biography: creator.biography,
-				legalName: creator.legalName
+				id: record.id,
+				name: (record.fields['Name'] as string) || '',
+				email: email,
+				avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+				biography: record.fields['ℹ️Biography'] as string,
+				legalName: record.fields['ℹ️Legal Name'] as string
 			},
 			{ headers: noCacheHeaders }
 		);
 	} catch (err) {
 		console.error('[Profile API] Unexpected error:', err);
 		const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-		const errorStack = err instanceof Error ? err.stack : undefined;
 
 		return json(
-			{
-				error: 'Internal server error',
-				message: errorMessage,
-				stack: errorStack
-			},
+			{ error: 'Internal server error', message: errorMessage },
 			{ status: 500, headers: noCacheHeaders }
 		);
 	}

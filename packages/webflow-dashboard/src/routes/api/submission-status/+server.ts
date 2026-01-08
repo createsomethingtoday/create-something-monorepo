@@ -37,7 +37,7 @@ const REQUEST_TIMEOUT_MS = 10000; // 10 seconds
 export const POST: RequestHandler = async ({ request }) => {
 	try {
 		// Parse request body
-		const body = await request.json();
+		const body = await request.json() as { email?: string };
 		const { email } = body;
 
 		// Validate email

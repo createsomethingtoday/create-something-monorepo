@@ -269,7 +269,7 @@ async function fetchExternalStatus(
 
 		// Handle error responses
 		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({ hasError: true, message: 'Unknown error' }));
+			const errorData = await response.json().catch(() => ({ hasError: true, message: 'Unknown error' })) as { hasError: boolean; message?: string };
 			throw new Error(errorData.message || `API returned ${response.status}`);
 		}
 
