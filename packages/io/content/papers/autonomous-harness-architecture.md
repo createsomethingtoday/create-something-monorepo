@@ -1,26 +1,16 @@
-<script lang="ts">
-	/**
-	 * The Autonomous Harness: Agent Orchestration with Human Agency
-	 *
-	 * Applying Heidegger's dwelling concept to autonomous agent systems,
-	 * demonstrating how progress reports preserve human agency without
-	 * requiring proactive management.
-	 */
-	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+---
+title: "The Autonomous Harness"
+subtitle: "Agent Orchestration with Human Agency"
+authors: ["Micah Johnson"]
+category: "Architecture"
+abstract: "Traditional agent orchestration requires constant human oversight. This paper presents an alternative: the autonomous harness. Drawing on Heidegger's concepts of dwelling and tool-being, we argue that effective human-agent collaboration requires the harness to recede into transparent operation. Humans engage through progress reports—reactive steering rather than proactive management."
+keywords: ["agent orchestration", "autonomy", "Heidegger", "dwelling", "tool-being", "Beads", "harness"]
+publishedAt: "2025-12-18"
+readingTime: 15
+difficulty: "advanced"
+published: true
+---
 
-	// Modal state
-	let showMarkdownPreview = $state(false);
-	let markdownContent = $state('');
-
-	function handlePreview(markdown: string) {
-		markdownContent = markdown;
-		showMarkdownPreview = true;
-	}
-
-	const fullUrl = 'https://createsomething.io/papers/autonomous-harness-architecture';
-
-	// Generate markdown with FULL content
-	const paperContent = `
 # The Autonomous Harness
 
 Agent Orchestration with Human Agency—how progress reports enable reactive steering without proactive management.
@@ -1404,4 +1394,3 @@ cs-003: Session management
 	.text-link:hover {
 		color: var(--color-fg-primary);
 	}
-</style>
