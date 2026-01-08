@@ -1,5 +1,84 @@
 <script lang="ts">
-	// Footer is provided by layout
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { page } from '$app/stores';
+
+	// Modal state
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	// Extract full URL for metadata
+	const fullUrl = $derived(`${$page.url.origin}${$page.url.pathname}`);
+
+	// Construct comprehensive markdown content for export
+	const workContent = $derived(`
+## Challenge
+
+Kickstand had grown organically over time, accumulating technical debt: 155 active scripts, 30 TypeScript errors, and documentation scattered across multiple formats. The system worked but was becoming difficult to maintain and extend.
+
+**Initial assessment:**
+- 155 active scripts (many redundant or orphaned)
+- 30 TypeScript errors blocking type safety
+- Documentation inconsistency across README, CLAUDE.md, ARCHITECTURE.md
+- Health score: 6.2/10
+
+## Solution: The Subtractive Triad
+
+This project was the first formal application of the Subtractive Triad framework: DRY → Rams → Heidegger.
+
+### The Three Levels:
+
+**Level 1: DRY (Implementation)**
+→ "Have I built this before?"
+→ Action: Unify
+→ Result: Consolidated 155 → 13 scripts
+
+**Level 2: Rams (Artifact)**
+→ "Does this earn its existence?"
+→ Action: Remove
+→ Result: Fixed 30 → 0 TypeScript errors
+
+**Level 3: Heidegger (System)**
+→ "Does this serve the whole?"
+→ Action: Reconnect
+→ Result: Unified documentation canon
+
+**Key insight:** "Creation is the discipline of removing what obscures. Each level of the triad subtracts differently—duplication, excess, disconnection—but all reveal the same truth."
+
+## Results
+
+**Validated outcomes:**
+- Removed 142 orphaned/redundant scripts (92% reduction)
+- TypeScript strict mode enabled with zero errors (100% fix rate)
+- Documentation unified into canonical UNDERSTANDING.md format
+- 48% health score improvement (6.2 → 9.2)
+
+### Cost Impact
+
+**Before optimization:** $40/day (~$1,200/month projected)
+**After optimization:** $39/month (97% reduction)
+
+**Root causes identified:**
+- 89% duplicate data (11,104 redundant records)
+- Redundant API calls from orphaned scripts
+- Missing deduplication in data pipeline
+
+After optimization: same coverage of 100 venues, 4x daily monitoring, 97% lower cost.
+
+## Pattern Validation
+
+Kickstand was the first production application of the Subtractive Triad. The framework proved that systematic subtraction at three levels—implementation, artifact, system—yields compounding benefits.
+
+The triad has since been formalized into the Kickstand Triad Audit experiment and documented in the CREATE SOMETHING canon.
+
+---
+
+**Full experiment documentation:** https://createsomething.io/experiments/kickstand-triad-audit
+`);
 </script>
 
 <svelte:head>
@@ -14,8 +93,19 @@
 	<!-- Hero -->
 	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
-			<div class="mb-6">
+			<div class="mb-6 flex items-center justify-between">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
+				<PageActions
+					title="Kickstand Case Study"
+					content={workContent}
+					metadata={{
+						category: 'Venue Intelligence',
+						sourceUrl: fullUrl,
+						keywords: ['Subtractive Triad', 'DRY', 'Technical Debt', 'Cost Optimization', 'System Health']
+					}}
+					claudePrompt="Help me understand this case study and how to apply the Subtractive Triad to my own codebase."
+					onpreview={handlePreview}
+				/>
 			</div>
 			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Venue Intelligence</p>
 			<h1 class="mb-6">Kickstand</h1>
@@ -249,6 +339,14 @@ Level 3: Heidegger (System)
 			</a>
 		</div>
 	</section>
+</div>
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="Kickstand Case Study Markdown"
+/>
 
 <style>
 	.page-container {
@@ -391,5 +489,3 @@ Level 3: Heidegger (System)
 		border-color: var(--color-border-emphasis);
 	}
 </style>
-
-</div>

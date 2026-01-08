@@ -1,5 +1,73 @@
 <script lang="ts">
-	// Footer is provided by layout
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { page } from '$app/stores';
+
+	// Modal state
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	// Extract full URL for metadata
+	const fullUrl = $derived(`${$page.url.origin}${$page.url.pathname}`);
+
+	// Construct comprehensive markdown content for export
+	const workContent = $derived(`
+## Challenge
+
+Maverick X needed a corporate website to communicate their breakthrough industrial chemistry solutions across three distinct sectors: oil & gas recovery, mining & metals extraction, and water treatment.
+
+**Requirements:**
+- Clear product differentiation (PetroX, LithX, DME)
+- Sector-specific landing pages with technical depth
+- Professional aesthetic for B2B industrial audience
+- Performance-optimized for fast load times
+
+## Solution: "Less, But Better"
+
+This project applied Dieter Rams' tenth principle: as little design as possible. Industrial chemistry is complex—the website's job is to clarify, not complicate.
+
+### Design Decisions:
+- Three products, three colors, three sections
+- No unnecessary animations or decorations
+- Technical content presented clearly
+- Fast paths to contact for each sector
+
+### Principles Applied:
+- **Understandable:** Complex chemistry made accessible
+- **As little as possible:** Remove until it breaks
+- **Honest:** No inflated claims, real technical specs
+
+## Technical Implementation
+
+**Technology Stack:**
+- Next.js 14 (App Router)
+- Tailwind CSS
+- TypeScript
+- Framer Motion (animations)
+
+**Deployment:**
+- Vercel (automatic deploys)
+- Edge network distribution
+- Image optimization
+- SEO-optimized meta tags
+
+## Results
+
+Deployed to production with three sector-specific landing pages and clear product positioning.
+
+**Metrics:**
+- 3 product lines
+- 3 sector pages
+- <1s load times (sub-second TTFB)
+
+---
+
+**Live site:** https://maverickx.createsomething.io
+`);
 </script>
 
 <svelte:head>
@@ -14,8 +82,19 @@
 	<!-- Hero -->
 	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
-			<div class="mb-6">
+			<div class="mb-6 flex items-center justify-between">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
+				<PageActions
+					title="Maverick X Case Study"
+					content={workContent}
+					metadata={{
+						category: 'Corporate Website',
+						sourceUrl: fullUrl,
+						keywords: ['Dieter Rams', 'Industrial Chemistry', 'B2B', 'Performance Optimization', 'Next.js']
+					}}
+					claudePrompt="Help me understand this corporate website case study and the application of Dieter Rams' design principles."
+					onpreview={handlePreview}
+				/>
 			</div>
 			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Corporate Website</p>
 			<h1 class="mb-6">Maverick X</h1>
@@ -188,6 +267,14 @@
 			</a>
 		</div>
 	</section>
+</div>
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="Maverick X Case Study Markdown"
+/>
 
 <style>
 	.page-container {
@@ -326,5 +413,3 @@
 		border-color: var(--color-border-emphasis);
 	}
 </style>
-
-</div>

@@ -1,5 +1,90 @@
 <script lang="ts">
-	// Footer is provided by layout
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { page } from '$app/stores';
+
+	// Modal state
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	// Extract full URL for metadata
+	const fullUrl = $derived(`${$page.url.origin}${$page.url.pathname}`);
+
+	// Construct comprehensive markdown content for export
+	const workContent = $derived(`
+## Challenge
+
+Half Dozen's A&R team needed a way to discover independent artists before they blow up. Manual tracking across multiple chart sources was time-consuming and inconsistent. The solution needed to identify artists with viral momentum and present actionable intelligence.
+
+**Technical requirements:**
+- Scrape Spotify charts (Global Daily, City Pulse playlists)
+- Track chart positions, rank changes, days on chart
+- Filter for independent artists (non-major label)
+- Calculate "Viralytics Score" for discovery prioritization
+- Automatically add qualified artists to Notion for review
+
+## System Architecture
+
+\`\`\`
+Chart Sources (Spotify, City Pulse)
+    ↓
+chart-scraper Worker (Puppeteer)
+    ↓
+chart-service Worker (API + Storage)
+    ↓
+D1 Database (charts, artists, metrics)
+    ↓
+viralytics-workflow (Daily 7 AM UTC)
+    ↓
+AI Analysis (OpenAI + Perplexity)
+    ↓
+Notion (A&R Review Queue)
+\`\`\`
+
+**Key components:**
+- **chart-scraper**: Browser Rendering API with Puppeteer for scraping protected charts
+- **chart-service**: API orchestrator that fetches, caches, and stores chart data
+- **viralytics-workflow**: Daily AI agent that discovers and qualifies artists
+
+## AI-Powered Discovery
+
+The viralytics workflow runs 20 SQL queries daily to identify artists with viral potential:
+
+**Discovery Queries:**
+- **Trending New Entries**: New in top 50, last 14 days
+- **Rapid Climbers**: 8+ position jump in 7 days
+- **Cross-Market Momentum**: Charting in 2+ markets
+- **Independent Rising**: Non-major label, top 30
+
+Each candidate is scored using the **Viralytics Score**—a composite metric combining chart velocity, market breadth, and independence status.
+
+## Results
+
+**Production status:**
+- Chart scraping operational (4 sources: Global, Denver, NYC, Austin)
+- Daily workflow triggering at 7 AM UTC
+- Notion integration for A&R review queue
+- Cloudflare D1 migration in progress (from Neon PostgreSQL)
+
+**Metrics:**
+- 4+ chart sources scraped automatically
+- Daily automated discovery (7 AM UTC workflow)
+- 20 discovery queries (multi-signal analysis)
+
+## Applying the Canon
+
+Viralytics applies **Tufte's data-ink ratio** principle: the system maximizes signal (actionable artist discoveries) and minimizes noise (irrelevant chart data).
+
+The 20-query discovery engine embodies **Rams' Principle 10** (as little as possible)—each query targets a specific signal. No query exists without justification.
+
+---
+
+**Full experiment documentation:** https://createsomething.io
+	`);
 </script>
 
 <svelte:head>
@@ -14,8 +99,19 @@
 	<!-- Hero -->
 	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
-			<div class="mb-6">
+			<div class="mb-6 flex items-center justify-between">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
+				<PageActions
+					title="Viralytics Case Study"
+					content={workContent}
+					metadata={{
+						category: 'AI Discovery Agent',
+						sourceUrl: fullUrl,
+						keywords: ['AI Discovery', 'Chart Scraping', 'Viralytics', 'Music Analytics', 'Notion Integration']
+					}}
+					claudePrompt="Help me understand this AI-powered discovery system and how to build similar automated intelligence tools."
+					onpreview={handlePreview}
+				/>
 			</div>
 			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">AI Discovery Agent</p>
 			<h1 class="mb-6">Viralytics</h1>
@@ -235,6 +331,14 @@ Notion (A&R Review Queue)
 			</a>
 		</div>
 	</section>
+</div>
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="Viralytics Case Study Markdown"
+/>
 
 <style>
 	.page-container {

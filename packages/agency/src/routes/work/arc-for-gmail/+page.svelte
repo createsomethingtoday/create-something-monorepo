@@ -1,5 +1,102 @@
 <script lang="ts">
-	// Footer is provided by layout
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { page } from '$app/stores';
+
+	// Modal state
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	// Extract full URL for metadata
+	const fullUrl = $derived(`${$page.url.origin}${$page.url.pathname}`);
+
+	// Construct comprehensive markdown content for export
+	const workContent = $derived(`
+## Challenge
+
+Half Dozen needed a way to capture important email interactions in their Notion workspace without manual copying. The system had to support multiple team members, preserve email formatting, and automatically categorize internal vs. external participants.
+
+**Technical constraints:**
+- Multi-user OAuth (multiple Gmail accounts)
+- HTML email → Notion block conversion
+- Character encoding issues (mojibake)
+- Notion API 2025-09-03 (new data_source_id architecture)
+- Bespoke contact categorization (halfdozen.co domain handling)
+
+## Solution: The Arc Pattern
+
+This project validated the **Arc pattern**: efficient connection between points. Gmail → Notion as a one-way sync with minimal transformation.
+
+### The Arc Implementation:
+
+\`\`\`
+Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
+
+1. User labels email "Log to Notion"
+2. Worker syncs every 5 minutes (cron)
+3. HTML → Notion blocks (minimal transformation)
+4. AI summary generation (Workers AI)
+5. Contact auto-creation + categorization
+\`\`\`
+
+**Arc principles applied:**
+- **Single direction:** Gmail→Notion only, no bidirectional complexity
+- **Minimal transformation:** Preserve email structure, sanitize only when necessary
+- **OAuth-based:** Users authorize their own accounts, no API key management
+- **Serverless:** Cloudflare Workers at the edge, scales automatically
+
+## Technical Implementation
+
+**Infrastructure:**
+- Cloudflare Workers (serverless)
+- KV Storage (thread tracking, OAuth tokens)
+- Cron Triggers (5-minute sync cycle)
+- Workers AI (email summarization)
+
+**API Integration:**
+- Gmail API (OAuth 2.0, thread fetching)
+- Notion API 2025-09-03 (data_source_id)
+- Workers AI (@cf/meta/llama-3.1-8b-instruct)
+- node-html-parser (email conversion)
+
+**Key Technical Challenges Solved:**
+
+1. **Character Encoding (Mojibake)**: Email HTML contains broken UTF-8 sequences. Built comprehensive sanitization removing 40+ mojibake patterns while preserving valid punctuation.
+
+2. **Rich Text Array Limits**: Notion enforces 100-item limit per rich_text array. Implemented automatic paragraph splitting for long emails with many inline formatting changes.
+
+3. **Contact Categorization**: Bespoke logic: halfdozen.co emails → Owner field (internal team), external emails → Contacts database with auto-creation and relation linking.
+
+4. **HTML → Notion Conversion**: Preserves bold, italic, links, headings, lists, quotes, code blocks. Skips tables and images. Maintains email thread structure with dividers.
+
+## Results
+
+**Validated outcomes:**
+- Email formatting preserved (links, bold, italic, structure)
+- Contacts auto-created and linked via relations
+- AI summaries generated for quick context
+- Internal vs. external participant categorization working
+- Production-stable on 5-minute cron (no failures)
+
+**Development Approach:**
+- Time to production: ~11 hours (vs. 25-30 hours traditional)
+- Cost: ~$6.30 in AI costs (vs. $3,750 manual development)
+- ROI: 99.8% cost savings, 55-65% time savings
+
+## Pattern Validation
+
+Arc for Gmail was the first implementation of the Arc pattern. Its success in production validates that "efficient connection between points" is a canonical approach worth replicating.
+
+The pattern proved **reusable**: Arc for Fireflies (transcripts → Notion) is next, following the exact same principles with different endpoints.
+
+---
+
+**Full experiment documentation:** https://createsomething.io
+	`);
 </script>
 
 <svelte:head>
@@ -14,8 +111,19 @@
 	<!-- Hero -->
 	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
-			<div class="mb-6">
+			<div class="mb-6 flex items-center justify-between">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
+				<PageActions
+					title="Arc for Gmail Case Study"
+					content={workContent}
+					metadata={{
+						category: 'Email Automation',
+						sourceUrl: fullUrl,
+						keywords: ['Arc Pattern', 'Gmail', 'Notion', 'OAuth', 'AI Automation', 'Serverless']
+					}}
+					claudePrompt="Help me understand this Arc pattern and how to apply it to my own integration projects."
+					onpreview={handlePreview}
+				/>
 			</div>
 			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Email Automation</p>
 			<h1 class="mb-6">Arc for Gmail</h1>
@@ -309,6 +417,14 @@ Gmail (OAuth)  ──────arc──────>  Notion (OAuth)
 			</a>
 		</div>
 	</section>
+</div>
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="Arc for Gmail Case Study Markdown"
+/>
 
 <style>
 	.page-container {

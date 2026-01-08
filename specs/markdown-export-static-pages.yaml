@@ -1,0 +1,72 @@
+title: Markdown Export - Static Pages Integration
+property: ltd
+complexity: simple
+overview: |
+  Complete the PageActions markdown export feature for remaining static pages.
+  The pattern is established from .io and .space dynamic routes.
+  Apply the same 6-step integration to .ltd patterns, .ltd canon, and .agency work pages.
+
+features:
+  - title: Add PageActions to .ltd pattern pages
+    description: |
+      Integrate PageActions into all 15 pattern detail pages.
+      Follow the established pattern: import components, add modal state, 
+      create handlePreview, generate content with $derived, add PageActions 
+      and MarkdownPreviewModal components.
+    complexity: simple
+    files:
+      - packages/ltd/src/routes/patterns/hermeneutic-spiral/+page.svelte
+      - packages/ltd/src/routes/patterns/constraint-as-liberation/+page.svelte
+      - packages/ltd/src/routes/patterns/breakdown-and-repair/+page.svelte
+      - packages/ltd/src/routes/patterns/timeless-materials/+page.svelte
+      - packages/ltd/src/routes/patterns/code-mode/+page.svelte
+      - packages/ltd/src/routes/patterns/crystallization/+page.svelte
+      - packages/ltd/src/routes/patterns/universal-utility/+page.svelte
+      - packages/ltd/src/routes/patterns/tool-complementarity/+page.svelte
+      - packages/ltd/src/routes/patterns/subtractive-triad-audit/+page.svelte
+      - packages/ltd/src/routes/patterns/principled-defaults/+page.svelte
+      - packages/ltd/src/routes/patterns/negative-space/+page.svelte
+      - packages/ltd/src/routes/patterns/iterative-reduction/+page.svelte
+      - packages/ltd/src/routes/patterns/functional-transparency/+page.svelte
+      - packages/ltd/src/routes/patterns/dwelling-in-tools/+page.svelte
+      - packages/ltd/src/routes/patterns/arc/+page.svelte
+
+  - title: Add PageActions to .ltd canon concept pages
+    description: |
+      Integrate PageActions into canon concept documentation pages.
+      Extract title and content from the page structure for markdown export.
+    complexity: simple
+    files:
+      - packages/ltd/src/routes/canon/concepts/zuhandenheit/+page.svelte
+      - packages/ltd/src/routes/canon/concepts/hermeneutic-circle/+page.svelte
+      - packages/ltd/src/routes/canon/concepts/gelassenheit/+page.svelte
+      - packages/ltd/src/routes/canon/concepts/gestell/+page.svelte
+      - packages/ltd/src/routes/canon/concepts/vorhandenheit/+page.svelte
+      - packages/ltd/src/routes/canon/concepts/complementarity/+page.svelte
+      - packages/ltd/src/routes/canon/concepts/weniger-aber-besser/+page.svelte
+
+  - title: Add PageActions to .ltd canon foundation pages
+    description: |
+      Integrate PageActions into canon foundation documentation.
+      Include design token information in the markdown export.
+    complexity: simple
+    files:
+      - packages/ltd/src/routes/canon/foundations/philosophy/+page.svelte
+      - packages/ltd/src/routes/canon/foundations/typography/+page.svelte
+      - packages/ltd/src/routes/canon/foundations/spacing/+page.svelte
+      - packages/ltd/src/routes/canon/foundations/colors/+page.svelte
+      - packages/ltd/src/routes/canon/foundations/layout/+page.svelte
+      - packages/ltd/src/routes/canon/foundations/motion/+page.svelte
+      - packages/ltd/src/routes/canon/foundations/elevation/+page.svelte
+
+  - title: Add PageActions to .agency work pages
+    description: |
+      Integrate PageActions into agency case study pages.
+      Extract challenge, solution, results for comprehensive markdown export.
+    complexity: simple
+    files:
+      - packages/agency/src/routes/work/kickstand/+page.svelte
+      - packages/agency/src/routes/work/viralytics/+page.svelte
+      - packages/agency/src/routes/work/the-stack/+page.svelte
+      - packages/agency/src/routes/work/maverick-x/+page.svelte
+      - packages/agency/src/routes/work/arc-for-gmail/+page.svelte

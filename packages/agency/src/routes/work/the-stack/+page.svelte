@@ -1,5 +1,111 @@
 <script lang="ts">
-	// Footer is provided by layout
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { page } from '$app/stores';
+
+	// Modal state
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
+
+	// Extract full URL for metadata
+	const fullUrl = $derived(`${$page.url.origin}${$page.url.pathname}`);
+
+	// Construct comprehensive markdown content for export
+	const workContent = $derived(`
+## Challenge
+
+The Stack runs multiple indoor pickleball facilities across the region. Each location manages court bookings for walk-ins, members, and drop-in sessions. Before CLEARWAY, the team juggled phone reservations, manual calendars, and payment processing across locations.
+
+**Problems with the old system:**
+- Staff spent hours answering booking calls instead of managing facilities
+- No real-time visibility into court availability across locations
+- Payment collection happened on-site, creating friction and no-shows
+- Website visitors had no way to book directly—only contact forms
+
+*The ask: "Can people just book courts from our website?"*
+
+## Solution
+
+We embedded CLEARWAY directly into The Stack's website. Players see real-time court availability, select a time slot, pay with Stripe, and receive instant confirmation—all without leaving the site.
+
+**What we built:**
+- Single-line embed integration (no backend required for The Stack)
+- In-widget Stripe checkout with instant payment confirmation
+- Real-time court availability across all 4 locations (8 courts total)
+- Dark theme widget matching The Stack's branding
+- WORKWAY notifications for booking confirmations and updates
+
+### The entire integration:
+\`\`\`html
+<iframe
+  src="https://clearway.pages.dev/embed?facility=thestack&theme=dark"
+  title="Book a Court"
+  frameborder="0"
+></iframe>
+\`\`\`
+
+*One iframe. Zero backend complexity for the client.*
+
+## How It Works
+
+1. **Player visits the booking page** - The CLEARWAY widget loads instantly, showing all available courts across locations with real-time slot availability.
+
+2. **Select court and time** - Players choose their preferred location, date, and time slot. Pricing is transparent: $40/hour off-peak, $50/hour during evening rush (5-8pm weekdays).
+
+3. **Pay with Stripe** - Stripe checkout opens directly in the widget. No redirects, no separate payment pages. Card gets charged, court gets booked.
+
+4. **Confirmation and notifications** - Instant confirmation email with booking details. WORKWAY handles reminder notifications and any booking changes.
+
+## Results
+
+**Metrics:**
+- 8 courts online across 4 locations
+- 24/7 booking availability with no staff required
+- Zero backend maintenance for The Stack
+
+> "We stopped thinking about scheduling. Courts just... fill themselves now."
+> — The Stack Operations Team
+
+**Operational outcomes:**
+- Players book courts at 2am, noon, or any time—without staff involvement
+- Payment happens before the booking, eliminating no-shows and on-site friction
+- Real-time availability across all locations visible on a single page
+- Staff focus on facility operations instead of answering phones
+
+## The Pattern: Zuhandenheit
+
+CLEARWAY embodies **Zuhandenheit**—ready-to-hand. The booking system recedes into transparent use. Players don't think about "using court reservation software." They just book courts.
+
+The Stack's team doesn't manage a booking platform. They run pickleball facilities. The technology becomes invisible, leaving only the outcome: courts that fill themselves.
+
+*Design principle: "The tool recedes; the outcome remains."*
+
+This case study validates CLEARWAY's embeddable architecture. Facilities of any size can add professional court booking with a single iframe—no engineering team required.
+
+## Technical Implementation
+
+**Stack:**
+- SvelteKit 5 for The Stack website
+- CLEARWAY embed widget
+- Cloudflare Pages deployment for both site and widget
+- Cloudflare D1 for court and reservation data
+- Stripe for payment processing with in-widget checkout
+- WORKWAY for booking notifications and confirmations
+
+**Key features:**
+- Dynamic pricing: $40 off-peak, $50 peak hours
+- Court type filtering (Sport Court, Hardwood, Rubberized surfaces)
+- Location-based court display (Grandview, Oakridge, Riverview, Pinecrest)
+- 14-day advance booking window with 24-hour cancellation policy
+
+---
+
+*Full source code available in the create-something-monorepo. The Stack site demonstrates CLEARWAY's embeddable architecture in production.*
+`);
 </script>
 
 <svelte:head>
@@ -20,8 +126,19 @@
 	<!-- Hero -->
 	<section class="hero-section pt-32 pb-16 px-6">
 		<div class="max-w-4xl mx-auto">
-			<div class="mb-6">
+			<div class="mb-6 flex items-center justify-between">
 				<a href="/work" class="body-sm link-muted">← Back to Work</a>
+				<PageActions
+					title="The Stack Case Study"
+					content={workContent}
+					metadata={{
+						category: 'Pickleball Facility',
+						sourceUrl: fullUrl,
+						keywords: ['CLEARWAY', 'Court Booking', 'Zuhandenheit', 'Embeddable Widget', 'Stripe Integration']
+					}}
+					claudePrompt="Help me understand this case study and how CLEARWAY's embeddable architecture works for facility booking systems."
+					onpreview={handlePreview}
+				/>
 			</div>
 			<p class="body-sm tracking-widest uppercase body-tertiary mb-4">Pickleball Facility</p>
 			<h1 class="mb-6">The Stack</h1>
@@ -326,6 +443,13 @@
 		</div>
 	</section>
 </div>
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title="The Stack Case Study Markdown"
+/>
 
 <style>
 	.page-container {
