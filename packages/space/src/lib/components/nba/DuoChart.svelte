@@ -18,16 +18,17 @@
 	let { duos, title, teamAbbr }: Props = $props();
 
 	// Chart dimensions
-	const chartWidth = 400;
+	const chartWidth = 450; // Increased from 400 to prevent value overlap
 	const chartHeight = duos.length * 60 + 40; // 60px per bar + padding
 	const barHeight = 40;
 	const labelWidth = 140; // Increased from 120 to accommodate longer names
 	const maxPPP = 1.8; // Max scale for PPP
 	const leagueAvgPPP = 1.12;
+	const rightMargin = 70; // Space for PPP value and delta
 
 	// Scale PPP to pixels
 	function scalePPP(ppp: number): number {
-		return ((ppp / maxPPP) * (chartWidth - labelWidth - 60));
+		return ((ppp / maxPPP) * (chartWidth - labelWidth - rightMargin));
 	}
 
 	// Get bar color based on performance vs league average
@@ -98,7 +99,7 @@
 				<rect
 					x={labelWidth}
 					y={y}
-					width={chartWidth - labelWidth - 60}
+					width={chartWidth - labelWidth - rightMargin}
 					height={barHeight}
 					fill="var(--color-bg-surface)"
 					rx="4"
@@ -117,7 +118,7 @@
 
 				<!-- PPP value -->
 				<text
-					x={labelWidth + Math.max(0, barWidth) + 6}
+					x={labelWidth + Math.max(0, barWidth) + 8}
 					y={y + barHeight / 2 + 4}
 					class="chart-value"
 				>
@@ -126,7 +127,7 @@
 
 				<!-- Delta indicator -->
 				<text
-					x={chartWidth - 10}
+					x={chartWidth - 5}
 					y={y + barHeight / 2 + 4}
 					text-anchor="end"
 					class="chart-delta"
