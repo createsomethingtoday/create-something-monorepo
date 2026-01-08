@@ -223,6 +223,10 @@ export async function createIssue(
 
 /**
  * Update an issue's status.
+ * 
+ * NOTE: We force a sync after closing to ensure the change is immediately
+ * visible to subsequent bd list calls. Without this, the harness can get
+ * stuck in an infinite loop selecting the same "completed" task.
  */
 export async function updateIssueStatus(
   issueId: string,
@@ -231,6 +235,8 @@ export async function updateIssueStatus(
 ): Promise<void> {
   if (status === 'closed') {
     await bd(`close ${issueId}`, cwd);
+    // Force sync to ensure closure is reflected in bd list immediately
+    await bd('sync', cwd);
   } else {
     await bd(`update ${issueId} --status=${status}`, cwd);
   }
