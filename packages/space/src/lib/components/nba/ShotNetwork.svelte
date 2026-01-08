@@ -42,7 +42,7 @@
 
 	let { nodes, edges, title, teamAbbr }: Props = $props();
 
-	let svgElement: SVGSVGElement;
+	let svgElement = $state<SVGSVGElement>();
 	let simulation: d3Force.Simulation<NetworkNode, NetworkEdge> | null = null;
 
 	// Chart dimensions

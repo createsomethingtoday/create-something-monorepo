@@ -340,11 +340,6 @@
     font-weight: 500;
   }
 
-  .insight-description {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
-  }
-
   .cta-button {
     background: var(--color-fg-primary);
     color: var(--color-bg-pure);

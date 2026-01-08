@@ -281,6 +281,7 @@ Contact Create Something:
 		bind:this={terminalRef}
 		class="terminal-content flex-1 overflow-y-auto p-6"
 		onclick={() => inputRef?.focus()}
+		onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef?.focus(); } }}
 		use:keyboardClick={{ onclick: () => inputRef?.focus() }}
 		role="button"
 		tabindex="0"

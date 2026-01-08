@@ -1045,10 +1045,6 @@ useEffect(() => {
 		opacity: 0.9;
 	}
 
-	.text-muted {
-		color: var(--color-fg-muted);
-	}
-
 	.helper-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

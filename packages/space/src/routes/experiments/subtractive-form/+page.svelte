@@ -420,10 +420,6 @@
 		text-align: center;
 	}
 
-	.highlight-text {
-		color: var(--color-fg-secondary);
-	}
-
 	.approach-toggle {
 		background: var(--color-hover);
 		border: 1px solid var(--color-border-default);

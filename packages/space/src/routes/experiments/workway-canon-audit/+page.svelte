@@ -400,11 +400,6 @@
     color: var(--color-fg-primary);
   }
 
-  .insight-description {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
-  }
-
   .cta-button {
     background: var(--color-fg-primary);
     color: var(--color-bg-pure);
