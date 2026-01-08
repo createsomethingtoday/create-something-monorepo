@@ -223,7 +223,7 @@
 <style>
 	.pace-page {
 		min-height: 100vh;
-		background: var(--color-bg-surface);
+		background: var(--color-bg-pure);
 	}
 
 	.container {
@@ -273,7 +273,7 @@
 		align-items: center;
 		gap: var(--space-lg);
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
@@ -338,7 +338,7 @@
 		flex-direction: column;
 		gap: var(--space-sm);
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
@@ -454,7 +454,7 @@
 		flex-direction: column;
 		gap: var(--space-md);
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 2px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: all 0.2s ease;

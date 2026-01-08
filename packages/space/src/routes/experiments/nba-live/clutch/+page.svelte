@@ -190,7 +190,7 @@
 <style>
 	.clutch-page {
 		min-height: 100vh;
-		background: var(--color-bg-surface);
+		background: var(--color-bg-pure);
 	}
 
 	.container {
@@ -237,7 +237,7 @@
 
 	.summary-card {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
@@ -257,7 +257,7 @@
 
 	.data-note {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		margin-bottom: var(--space-2xl);
@@ -271,7 +271,7 @@
 	}
 
 	.leaderboard {
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-xl);
@@ -325,7 +325,7 @@
 	}
 
 	.table-row:hover {
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		transform: translateX(4px);
 	}
 
@@ -385,7 +385,7 @@
 
 	.rating-bar {
 		height: 4px;
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border-radius: var(--radius-full);
 		overflow: hidden;
 	}

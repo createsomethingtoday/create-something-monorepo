@@ -169,7 +169,7 @@
 
 	.summary-card {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
@@ -254,7 +254,7 @@
 
 	.data-note {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
+		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		margin-bottom: var(--space-2xl);
