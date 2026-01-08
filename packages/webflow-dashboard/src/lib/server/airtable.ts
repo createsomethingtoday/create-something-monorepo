@@ -559,6 +559,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		async getCreatorByEmail(email: string): Promise<Creator | null> {
 			try {
 				const escapedEmail = escapeAirtableString(email);
+				console.log('[Airtable] Searching for creator with email:', email);
+				
 				const records = await base(TABLES.CREATORS)
 					.select({
 						filterByFormula: `OR(
@@ -570,33 +572,57 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					})
 					.firstPage();
 
-				if (records.length === 0) return null;
+				console.log('[Airtable] Found records:', records.length);
+				
+				if (records.length === 0) {
+					console.log('[Airtable] No creator found for email:', email);
+					return null;
+				}
 
 				const record = records[0];
-				return {
+				console.log('[Airtable] Record field keys:', Object.keys(record.fields));
+				
+				// Use the exact field names from the original Next.js implementation
+				const creator = {
 					id: record.id,
-					name: record.fields['🎨Name'] as string || record.fields['Name'] as string || '',
+					name: (record.fields['Name'] as string) || '', // Match original: 'Name' not '🎨Name'
 					email: email,
 					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
-					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url || (record.fields['🖼️Avatar'] as { url: string }[] | undefined)?.[0]?.url,
-					biography: record.fields['📝Biography'] as string || record.fields['ℹ️Biography'] as string,
-					legalName: record.fields['📜Legal Name'] as string || record.fields['ℹ️Legal Name'] as string
+					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+					biography: (record.fields['ℹ️Biography'] as string), // Match original: 'ℹ️Biography' not '📝Biography'
+					legalName: (record.fields['ℹ️Legal Name'] as string) // Match original: 'ℹ️Legal Name' not '📜Legal Name'
 				};
+				
+				console.log('[Airtable] Returning creator:', {
+					id: creator.id,
+					name: creator.name,
+					hasAvatar: !!creator.avatarUrl,
+					hasBio: !!creator.biography,
+					hasLegalName: !!creator.legalName
+				});
+				
+				return creator;
 			} catch (err) {
-				console.error('Error fetching creator by email:', err);
+				console.error('[Airtable] Error fetching creator by email:', err);
+				console.error('[Airtable] Error details:', {
+					message: (err as Error).message,
+					stack: (err as Error).stack
+				});
 				return null;
 			}
 		},
 
 		/**
 		 * Update creator profile.
+		 * Uses the same field names as the original Next.js implementation.
 		 */
 		async updateCreator(id: string, data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName'>>): Promise<Creator | null> {
 			const fields: Record<string, string> = {};
 
-			if (data.name !== undefined) fields['🎨Name'] = data.name;
-			if (data.biography !== undefined) fields['📝Biography'] = data.biography;
-			if (data.legalName !== undefined) fields['📜Legal Name'] = data.legalName;
+			// Match original Next.js field names
+			if (data.name !== undefined) fields['Name'] = data.name;
+			if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
+			if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
 
 			if (Object.keys(fields).length === 0) {
 				return null;
@@ -607,14 +633,15 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const record = records[0];
 				return {
 					id: record.id,
-					name: record.fields['🎨Name'] as string || '',
+					name: (record.fields['Name'] as string) || '', // Match original field name
 					email: (record.fields['📧Emails'] as string)?.split(',')[0]?.trim() || '',
 					emails: (record.fields['📧Emails'] as string)?.split(',').map(e => e.trim()),
-					avatarUrl: (record.fields['🖼️Avatar'] as { url: string }[] | undefined)?.[0]?.url,
-					biography: record.fields['📝Biography'] as string,
-					legalName: record.fields['📜Legal Name'] as string
+					avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+					biography: (record.fields['ℹ️Biography'] as string), // Match original field name
+					legalName: (record.fields['ℹ️Legal Name'] as string) // Match original field name
 				};
-			} catch {
+			} catch (err) {
+				console.error('[Airtable] Error updating creator:', err);
 				return null;
 			}
 		},
