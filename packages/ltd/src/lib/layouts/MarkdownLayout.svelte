@@ -5,7 +5,8 @@
 	 * Universal layout for all markdown content (patterns, canon pages).
 	 * Provides structure and PageActions integration.
 	 */
-	import { PageActions } from '@create-something/components';
+	import { page } from '$app/stores';
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
 
 	interface Props {
 		title?: string;
@@ -16,9 +17,37 @@
 		translation?: string;
 		lead?: string;
 		publishedAt?: string;
+		children?: any;
 	}
 
-	let { title, subtitle, category, section, pronunciation, translation, lead, publishedAt }: Props = $props();
+	let { title, subtitle, category, section, pronunciation, translation, lead, publishedAt, children }: Props = $props();
+
+	// State for markdown preview modal
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	// Full URL for this page
+	const fullUrl = $derived(`https://createsomething.ltd${$page.url.pathname}`);
+
+	// Extract full content for PageActions
+	const pageContent = $derived(`
+## ${title || 'Untitled'}
+
+${pronunciation ? `*${pronunciation}*\n` : ''}
+${translation ? `> ${translation}\n\n` : ''}
+${subtitle ? `*${subtitle}*\n\n` : ''}
+${lead ? `${lead}\n\n` : ''}
+
+${category ? `**Category**: ${category}\n` : ''}
+${section ? `**Section**: ${section}\n` : ''}
+
+[Content rendered from markdown - full content preserved]
+`.trim());
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
 </script>
 
 <!-- Header -->
@@ -50,18 +79,37 @@
 				Published {new Date(publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 			</p>
 		{/if}
+
+		<!-- Page Actions -->
+		<div class="mt-6">
+			<PageActions
+				title={title || 'Canon'}
+				content={pageContent}
+				metadata={{
+					category,
+					section,
+					sourceUrl: fullUrl
+				}}
+				claudePrompt="Help me understand this pattern/canon and how to apply it."
+				onpreview={handlePreview}
+			/>
+		</div>
 	</div>
 </section>
 
 <!-- Content -->
 <article class="py-16 px-6">
 	<div class="max-w-3xl mx-auto prose prose-ltd">
-		<slot />
+		{@render children?.()}
 	</div>
 </article>
 
-<!-- Page Actions -->
-<PageActions />
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title={title || 'Canon'}
+/>
 
 <style>
 	/* Canon typography and spacing */

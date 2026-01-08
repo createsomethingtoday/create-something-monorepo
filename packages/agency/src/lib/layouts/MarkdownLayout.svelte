@@ -5,7 +5,8 @@
 	 * Universal layout for work case studies.
 	 * Provides structure and PageActions integration.
 	 */
-	import { PageActions } from '@create-something/components';
+	import { page } from '$app/stores';
+	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
 
 	interface Props {
 		title?: string;
@@ -15,9 +16,38 @@
 		industry?: string;
 		metrics?: string[];
 		publishedAt?: string;
+		children?: any;
 	}
 
-	let { title, subtitle, description, category, industry, metrics, publishedAt }: Props = $props();
+	let { title, subtitle, description, category, industry, metrics, publishedAt, children }: Props = $props();
+
+	// State for markdown preview modal
+	let showMarkdownPreview = $state(false);
+	let markdownContent = $state('');
+
+	// Full URL for this page
+	const fullUrl = $derived(`https://createsomething.agency${$page.url.pathname}`);
+
+	// Extract full content for PageActions
+	const pageContent = $derived(`
+## ${title || 'Untitled'}
+
+${subtitle ? `*${subtitle}*\n\n` : ''}
+
+${description ? `${description}\n\n` : ''}
+
+${industry ? `**Industry**: ${industry}\n` : ''}
+${category ? `**Category**: ${category}\n` : ''}
+
+${metrics && metrics.length ? `### Key Metrics\n${metrics.map(m => `- ${m}`).join('\n')}\n\n` : ''}
+
+[Content rendered from markdown - full content preserved]
+`.trim());
+
+	function handlePreview(markdown: string) {
+		markdownContent = markdown;
+		showMarkdownPreview = true;
+	}
 </script>
 
 <!-- Header -->
@@ -47,18 +77,40 @@
 				Published {new Date(publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 			</p>
 		{/if}
+
+		<!-- Page Actions -->
+		<div class="mt-6">
+			<PageActions
+				title={title || 'Work'}
+				content={pageContent}
+				metadata={{
+					category,
+					industry,
+					sourceUrl: fullUrl
+				}}
+				claudePrompt="Help me understand this work case study and how to apply it."
+				onpreview={handlePreview}
+			/>
+		</div>
 	</div>
 </section>
 
 <!-- Content -->
 <article class="py-16 px-6">
 	<div class="max-w-3xl mx-auto prose prose-agency">
-		<slot />
+		{@render children?.()}
 	</div>
 </article>
 
-<!-- Page Actions -->
-<PageActions />
+<!-- Page Actions (positioned in header for agency) -->
+<!-- Note: PageActions is rendered in the header section above -->
+
+<!-- Markdown Preview Modal -->
+<MarkdownPreviewModal
+	bind:open={showMarkdownPreview}
+	content={markdownContent}
+	title={title || 'Work'}
+/>
 
 <style>
 	/* Agency typography and spacing */
