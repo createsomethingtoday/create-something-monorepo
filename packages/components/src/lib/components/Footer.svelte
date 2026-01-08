@@ -49,14 +49,14 @@
 	let message = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 	let turnstileToken = $state('');
 	let turnstileWidgetId: string | null = null;
-	let turnstileContainer: HTMLDivElement;
+	let turnstileContainer = $state<HTMLDivElement>();
 
 	// Load Turnstile script and render widget
 	onMount(() => {
 		if (!showNewsletter || !turnstileSiteKey) return;
 
 		// Check if script already loaded
-		if (window.turnstile) {
+		if ((window as any).turnstile) {
 			renderTurnstile();
 			return;
 		}
@@ -76,16 +76,16 @@
 
 		return () => {
 			// Cleanup
-			if (turnstileWidgetId && window.turnstile) {
-				window.turnstile.remove(turnstileWidgetId);
+			if (turnstileWidgetId && (window as any).turnstile) {
+				(window as any).turnstile.remove(turnstileWidgetId);
 			}
 		};
 	});
 
 	function renderTurnstile() {
-		if (!turnstileContainer || !window.turnstile || !turnstileSiteKey) return;
+		if (!turnstileContainer || !(window as any).turnstile || !turnstileSiteKey) return;
 
-		turnstileWidgetId = window.turnstile.render(turnstileContainer, {
+		turnstileWidgetId = (window as any).turnstile.render(turnstileContainer, {
 			sitekey: turnstileSiteKey,
 			callback: (token: string) => {
 				turnstileToken = token;
@@ -140,8 +140,8 @@
 				message = { type: 'success', text: data.message };
 				email = '';
 				// Reset Turnstile for next submission
-				if (window.turnstile && turnstileWidgetId) {
-					window.turnstile.reset(turnstileWidgetId);
+				if ((window as any).turnstile && turnstileWidgetId) {
+					(window as any).turnstile.reset(turnstileWidgetId);
 					turnstileToken = '';
 				}
 			} else {
@@ -192,17 +192,6 @@
 		setTimeout(() => {
 			window.location.href = href;
 		}, 300);
-	}
-
-	// TypeScript declarations for Turnstile
-	declare global {
-		interface Window {
-			turnstile?: {
-				render: (container: HTMLElement, options: any) => string;
-				reset: (widgetId: string) => void;
-				remove: (widgetId: string) => void;
-			};
-		}
 	}
 </script>
 
