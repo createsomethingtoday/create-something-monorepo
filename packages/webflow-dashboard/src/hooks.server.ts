@@ -22,7 +22,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	// Protected routes check
-	const protectedPaths = ['/dashboard', '/assets', '/profile', '/api/protected'];
+	const protectedPaths = ['/dashboard', '/assets', '/profile', '/api/profile', '/api/keys', '/api/assets', '/api/analytics'];
 	const isProtectedRoute = protectedPaths.some((path) => event.url.pathname.startsWith(path));
 
 	if (isProtectedRoute && !event.locals.user) {

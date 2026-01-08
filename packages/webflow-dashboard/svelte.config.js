@@ -6,10 +6,8 @@ const config = {
 	preprocess: vitePreprocess(),
 	kit: {
 		adapter: adapter({
-			routes: {
-				include: ['/*'],
-				exclude: ['<all>']
-			}
+			// Let SvelteKit handle route configuration automatically
+			// This ensures API routes are properly handled by the worker
 		})
 	}
 };
