@@ -10,6 +10,7 @@
 	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ComponentLab from '$lib/components/ComponentLab.svelte';
 	import PlatformComponents from '$lib/components/PlatformComponents.svelte';
+	import AIAnalytics from '$lib/components/AIAnalytics.svelte';
 	import ResourceLinks from '$lib/components/ResourceLinks.svelte';
 	import FeatureComparison from '$lib/components/FeatureComparison.svelte';
 	import Pricing from '$lib/components/Pricing.svelte';
@@ -18,8 +19,8 @@
 	// SEO Configuration
 	const seo = {
 		title: 'OUTERFIELDS | Premium Content Networks That Convert',
-		description: 'Build streaming platforms better than Uscreen. Custom branding, advanced analytics, community features, and monetization tools. Follow our 90-day build in public journey.',
-		keywords: 'video streaming platform, content network, OTT platform, video monetization, Uscreen alternative, streaming service, video hosting, membership platform, creator economy',
+		description: 'Build streaming platforms better than Uscreen. AI-powered analytics, custom branding, community features, and monetization tools. Follow our 90-day build in public journey.',
+		keywords: 'video streaming platform, content network, OTT platform, video monetization, AI analytics, Uscreen alternative, streaming service, video hosting, membership platform, creator economy',
 		url: 'https://outerfields.createsomething.agency',
 		image: 'https://outerfields.createsomething.agency/og-image.svg',
 		siteName: 'OUTERFIELDS',
@@ -63,6 +64,7 @@
 		featureList: [
 			'Adaptive video streaming',
 			'Custom branding and white-label',
+			'AI-powered analytics and content strategy',
 			'Advanced analytics dashboard',
 			'Subscription and pay-per-view monetization',
 			'Community and engagement tools',
@@ -189,6 +191,7 @@
 	<FeaturedVideos />
 	<ComponentLab />
 	<PlatformComponents />
+	<AIAnalytics />
 	<ResourceLinks />
 	<FeatureComparison />
 	<Pricing />
