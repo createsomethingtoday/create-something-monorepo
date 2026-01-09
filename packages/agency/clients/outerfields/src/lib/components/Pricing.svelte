@@ -215,10 +215,10 @@
 	}
 
 	.pricing-card.highlight {
-		border-color: var(--color-primary);
+		border-color: var(--color-brand);
 		background: linear-gradient(
 			to bottom,
-			rgba(124, 43, 238, 0.1),
+			var(--color-brand-muted),
 			var(--color-bg-surface)
 		);
 	}
@@ -241,8 +241,8 @@
 	}
 
 	.card-badge.popular {
-		background: var(--color-primary);
-		border-color: var(--color-primary);
+		background: var(--color-brand);
+		border-color: var(--color-brand);
 		color: white;
 	}
 
@@ -264,9 +264,9 @@
 	}
 
 	.highlight .card-icon {
-		background: rgba(124, 43, 238, 0.2);
-		border-color: rgba(124, 43, 238, 0.3);
-		color: var(--color-primary);
+		background: var(--color-brand-muted);
+		border-color: var(--color-brand-glow);
+		color: var(--color-brand);
 	}
 
 	.card-name {
@@ -355,13 +355,13 @@
 	}
 
 	.card-cta.primary {
-		background: var(--color-primary);
-		border-color: var(--color-primary);
+		background: var(--color-brand);
+		border-color: var(--color-brand);
 		color: white;
 	}
 
 	.card-cta.primary:hover {
-		background: var(--color-primary-hover);
+		background: var(--color-brand-hover);
 		transform: translateY(-1px);
 	}
 

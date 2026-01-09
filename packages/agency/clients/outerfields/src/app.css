@@ -23,6 +23,12 @@
 	--color-primary-muted: rgba(255, 255, 255, 0.1);
 	--color-primary-glow: rgba(255, 255, 255, 0.2);
 
+	/* Brand Accent - OUTERFIELDS Purple */
+	--color-brand: #7c2bee;
+	--color-brand-hover: #6a24cc;
+	--color-brand-muted: rgba(124, 43, 238, 0.2);
+	--color-brand-glow: rgba(124, 43, 238, 0.3);
+
 	/* Background */
 	--color-bg-pure: #000000;
 	--color-bg-elevated: #0a0a0a;
@@ -371,28 +377,60 @@ body {
 	object-fit: cover;
 }
 
+/* Play Button - Glassmorphism (Global) */
+.play-button {
+	width: 3.5rem;
+	height: 3.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.15);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	color: white;
+	border-radius: 50%;
+	transform: scale(0.9);
+	transition: all var(--duration-micro) var(--ease-standard);
+}
+
+.play-button:hover,
+.video-card:hover .play-button,
+.content-card:hover .play-button {
+	transform: scale(1);
+	background: rgba(255, 255, 255, 0.25);
+	border-color: rgba(255, 255, 255, 0.4);
+}
+
+.play-button svg {
+	flex-shrink: 0;
+}
+
+/* Legacy alias */
 .video-play-button {
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	transform: translate(-50%, -50%);
-	width: 4rem;
-	height: 4rem;
+	transform: translate(-50%, -50%) scale(0.9);
+	width: 3.5rem;
+	height: 3.5rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--color-bg-pure);
-	border: 2px solid var(--color-fg-primary);
+	background: rgba(255, 255, 255, 0.15);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	color: white;
 	border-radius: 50%;
-	color: var(--color-fg-primary);
 	z-index: 2;
 	transition: all var(--duration-micro) var(--ease-standard);
 }
 
 .video-card:hover .video-play-button {
-	background: var(--color-fg-primary);
-	color: var(--color-bg-pure);
-	transform: translate(-50%, -50%) scale(1.1);
+	background: rgba(255, 255, 255, 0.25);
+	border-color: rgba(255, 255, 255, 0.4);
+	transform: translate(-50%, -50%) scale(1);
 }
 
 /* ==========================================================================

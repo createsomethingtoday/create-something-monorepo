@@ -475,26 +475,7 @@
 		opacity: 1;
 	}
 
-	.play-button {
-		width: 3rem;
-		height: 3rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border-radius: 50%;
-		transform: scale(0.8);
-		transition: transform var(--duration-micro) var(--ease-standard);
-	}
-
-	.content-card:hover .play-button {
-		transform: scale(1);
-	}
-
-	.play-button :global(svg) {
-		flex-shrink: 0;
-	}
+	/* Play button styles are global in app.css */
 
 	.card-info {
 		padding: 0 0.25rem;

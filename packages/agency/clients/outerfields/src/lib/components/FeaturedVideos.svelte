@@ -220,10 +220,7 @@
 		transform: translateY(-4px);
 	}
 
-	.video-card:hover .play-button {
-		transform: scale(1.1);
-		background: var(--color-fg-primary);
-	}
+	/* Play button hover styles are global in app.css */
 
 	.video-thumbnail {
 		position: relative;
@@ -256,17 +253,7 @@
 		background: rgba(0, 0, 0, 0.3);
 	}
 
-	.play-button {
-		width: 4rem;
-		height: 4rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(255, 255, 255, 0.9);
-		border-radius: 50%;
-		color: var(--color-bg-pure);
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
+	/* Play button base styles are global in app.css */
 
 	.video-duration {
 		position: absolute;
