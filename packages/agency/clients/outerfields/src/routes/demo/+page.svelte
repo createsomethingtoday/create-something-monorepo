@@ -4,8 +4,39 @@
 	 *
 	 * Netflix-style video browsing experience demonstrating
 	 * the user-facing side of the PCN platform.
+	 * Uses shared VideoModal component for video playback (DRY).
 	 */
 	import { Star, Play, Plus, Info, ArrowRight } from 'lucide-svelte';
+	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
+	import VideoModal from '$lib/components/VideoModal.svelte';
+
+	// Cloudflare R2 CDN base URL (same as marketing page)
+	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
+
+	// Video source mapping for demo content
+	const videoSources: Record<string, string> = {
+		'1': `${CDN_BASE}/videos/weatherford-promo.mp4`,
+		'2': `${CDN_BASE}/videos/texas-state-fair.mp4`,
+		'3': `${CDN_BASE}/videos/gotv-uscca.mp4`,
+		'4': `${CDN_BASE}/videos/hilti-anchors.mp4`,
+		'5': `${CDN_BASE}/videos/staccato-promo.mp4`,
+		'6': `${CDN_BASE}/videos/uscca-expo-promo.mp4`,
+		'7': `${CDN_BASE}/videos/weatherford-promo.mp4`,
+		'8': `${CDN_BASE}/videos/texas-state-fair.mp4`,
+		'9': `${CDN_BASE}/videos/gotv-uscca.mp4`,
+		'10': `${CDN_BASE}/videos/hilti-anchors.mp4`,
+		'11': `${CDN_BASE}/videos/staccato-promo.mp4`,
+		'12': `${CDN_BASE}/videos/uscca-expo-promo.mp4`,
+		featured: `${CDN_BASE}/videos/gotv-uscca.mp4`
+	};
+
+	// Engagement data for heatmap visualization
+	const engagementData: Record<string, number[]> = {
+		'1': [0.3, 0.4, 0.5, 0.7, 0.9, 1.0, 0.95, 0.85, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.1],
+		'2': [0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 0.8, 0.95, 1.0, 0.9, 0.75, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.2, 0.15, 0.1],
+		'3': [0.4, 0.35, 0.3, 0.35, 0.5, 0.7, 0.85, 1.0, 0.9, 0.7, 0.5, 0.4, 0.5, 0.7, 0.9, 0.95, 0.8, 0.5, 0.3, 0.2],
+		featured: [0.5, 0.6, 0.7, 0.85, 1.0, 0.9, 0.75, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08, 0.05, 0.05]
+	};
 
 	interface ContentItem {
 		id: string;
@@ -33,15 +64,30 @@
 	let { data }: Props = $props();
 
 	let featuredContent = {
-		title: 'Wildlife Photography: African Safari',
+		id: 'featured',
+		title: 'Building OUTERFIELDS: The Journey',
 		description:
-			'Join world-renowned photographer Marcus Chen on an extraordinary journey through the African savanna. Learn professional techniques for capturing wildlife in their natural habitat.',
+			'Documentary-style behind-the-scenes of the OUTERFIELDS team building the Premium Content Network platform. See how we architect edge-first systems, design with Canon principles, and build for creators.',
 		thumbnail:
-			'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1920&h=800&fit=crop',
-		duration: '3h 45min',
+			'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&h=800&fit=crop',
+		duration: '16 min',
 		rating: '4.9',
-		year: '2024'
+		year: '2024',
+		category: 'Featured'
 	};
+
+	function playVideo(item: ContentItem | typeof featuredContent) {
+		const video: Video = {
+			id: item.id,
+			title: item.title,
+			description: 'episode' in item ? `${item.episode} • ${item.duration}` : item.duration,
+			duration: item.duration,
+			thumbnail: item.thumbnail,
+			category: 'category' in item ? item.category : 'Demo',
+			src: videoSources[item.id] || videoSources['featured']
+		};
+		videoPlayer.play(video);
+	}
 </script>
 
 <svelte:head>
@@ -69,7 +115,7 @@
 			</div>
 			<p class="hero-description">{featuredContent.description}</p>
 			<div class="hero-actions">
-				<button class="btn-play">
+				<button class="btn-play" onclick={() => playVideo(featuredContent)}>
 					<Play size={20} />
 					Play
 				</button>
@@ -91,7 +137,7 @@
 				<h2 class="category-title">{category.title}</h2>
 				<div class="content-row">
 					{#each category.items as item}
-						<article class="content-card">
+						<button class="content-card" onclick={() => playVideo(item)}>
 							<div class="card-thumbnail">
 								<img src={item.thumbnail} alt={item.title} loading="lazy" />
 								{#if item.isNew}
@@ -103,9 +149,9 @@
 									</div>
 								{/if}
 								<div class="card-overlay">
-									<button class="play-button">
+									<span class="play-button">
 										<Play size={24} />
-									</button>
+									</span>
 								</div>
 							</div>
 							<div class="card-info">
@@ -122,7 +168,7 @@
 									{/if}
 								</div>
 							</div>
-						</article>
+						</button>
 					{/each}
 				</div>
 			</section>
@@ -139,6 +185,9 @@
 		</a>
 	</div>
 </div>
+
+<!-- Shared video modal component (DRY: reused from marketing page) -->
+<VideoModal {engagementData} />
 
 <style>
 	.portal {
@@ -339,6 +388,13 @@
 		width: 280px;
 		scroll-snap-align: start;
 		cursor: pointer;
+		/* Button reset for interactive card */
+		background: none;
+		border: none;
+		padding: 0;
+		text-align: left;
+		font: inherit;
+		color: inherit;
 	}
 
 	.card-thumbnail {
@@ -410,9 +466,7 @@
 		justify-content: center;
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
-		border: none;
 		border-radius: 50%;
-		cursor: pointer;
 		transform: scale(0.8);
 		transition: transform var(--duration-micro) var(--ease-standard);
 	}

@@ -56,12 +56,9 @@
 				'Frosted glass frame chrome effect',
 				'Responsive layout with scroll areas'
 			],
-			usage: `<!-- Svelte 5 with $state() rune -->
-<script lang="ts">
-  let activeTab = $state<'user' | 'admin'>('user');
-</script>
+			usage: `<PlatformPreview />
 
-<PlatformPreview />`
+<!-- Uses Svelte 5 $state() internally for tab switching -->`
 		},
 		{
 			id: 'feature-comparison',
@@ -162,13 +159,9 @@
 				'Live view counts via videoStats store',
 				'Fullscreen support with native API'
 			],
-			usage: `<!-- Integrates with videoPlayer and videoStats stores -->
-<script lang="ts">
-  import { videoPlayer } from '$lib/stores/videoPlayer';
-  import { videoStats } from '$lib/stores/videoStats';
-</script>
+			usage: `<FeaturedVideos />
 
-<FeaturedVideos />`
+<!-- Integrates with videoPlayer and videoStats stores -->`
 		},
 		{
 			id: 'mini-player',
@@ -207,12 +200,9 @@
 				'Arrow flow visualization',
 				'Dynamic icon rendering via iconMap'
 			],
-			usage: `<!-- Uses $state() for accordion behavior -->
-<script lang="ts">
-  let activeComponent = $state<string | null>(null);
-</script>
+			usage: `<PlatformComponents />
 
-<PlatformComponents />`
+<!-- Uses $state() internally for accordion behavior -->`
 		},
 		{
 			id: 'build-progress',
@@ -283,14 +273,9 @@
 				'Logout button with icon',
 				'Mobile-responsive link hiding'
 			],
-			usage: `<script lang="ts">
-  interface Props {
-    user?: { id: string; email: string; name?: string; role: string } | null;
-  }
-  let { user = null }: Props = $props();
-</script>
+			usage: `<Navigation {user} />
 
-<Navigation {user} />`
+<!-- user prop: { id, email, name?, role } | null -->`
 		},
 		{
 			id: 'footer',

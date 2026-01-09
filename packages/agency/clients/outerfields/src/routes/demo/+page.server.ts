@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		redirect(302, '/login?redirect=/demo');
 	}
 
-	// Return demo content data
+	// Return demo content data - OUTERFIELDS team building the PCN
 	return {
 		user: {
 			name: 'Demo User',
@@ -20,95 +20,113 @@ export const load: PageServerLoad = async ({ cookies }) => {
 				items: [
 					{
 						id: '1',
-						title: 'Advanced Photography Techniques',
-						thumbnail: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=400&h=225&fit=crop',
-						progress: 65,
-						duration: '45 min',
-						episode: 'Episode 3'
+						title: 'Building the Video Player',
+						thumbnail:
+							'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=225&fit=crop',
+						progress: 72,
+						duration: '28 min',
+						episode: 'Dev Log #14'
 					},
 					{
 						id: '2',
-						title: 'Digital Marketing Masterclass',
-						thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop',
-						progress: 30,
-						duration: '1h 20min',
-						episode: 'Episode 7'
+						title: 'Designing the Admin Dashboard',
+						thumbnail:
+							'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=225&fit=crop',
+						progress: 45,
+						duration: '42 min',
+						episode: 'Design #8'
 					}
 				]
 			},
 			{
-				title: 'Popular This Week',
+				title: 'Platform Development',
 				items: [
 					{
 						id: '3',
-						title: 'Landscape Photography: Iceland',
-						thumbnail: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&h=225&fit=crop',
-						duration: '2h 15min',
-						views: '12.5K'
+						title: 'Architecture Deep Dive: Edge-First Design',
+						thumbnail:
+							'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=225&fit=crop',
+						duration: '1h 15min',
+						views: '2.4K'
 					},
 					{
 						id: '4',
-						title: 'Portrait Lighting Workshop',
-						thumbnail: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=225&fit=crop',
-						duration: '1h 45min',
-						views: '8.2K'
+						title: 'Building Real-Time Analytics',
+						thumbnail:
+							'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=225&fit=crop',
+						duration: '52 min',
+						views: '1.8K'
 					},
 					{
 						id: '5',
-						title: 'Street Photography Essentials',
-						thumbnail: 'https://images.unsplash.com/photo-1502759683299-cdcd6974244f?w=400&h=225&fit=crop',
-						duration: '55 min',
-						views: '15.3K'
+						title: 'Multi-Tenant Routing with Cloudflare',
+						thumbnail:
+							'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=225&fit=crop',
+						duration: '38 min',
+						views: '3.1K'
 					},
 					{
 						id: '6',
-						title: 'Editing Workflow Pro Tips',
-						thumbnail: 'https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=400&h=225&fit=crop',
-						duration: '1h 10min',
-						views: '6.7K'
+						title: 'Stripe Integration: Subscriptions & Webhooks',
+						thumbnail:
+							'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=225&fit=crop',
+						duration: '1h 05min',
+						views: '2.9K'
 					}
 				]
 			},
 			{
-				title: 'Recently Added',
+				title: 'Design System',
 				items: [
 					{
 						id: '7',
-						title: 'Night Photography Secrets',
-						thumbnail: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=400&h=225&fit=crop',
-						duration: '1h 30min',
+						title: 'Canon Tokens: Building a Design Language',
+						thumbnail:
+							'https://images.unsplash.com/photo-1561070791-36c11767b26a?w=400&h=225&fit=crop',
+						duration: '35 min',
 						isNew: true
 					},
 					{
 						id: '8',
-						title: 'Drone Cinematography',
-						thumbnail: 'https://images.unsplash.com/photo-1508138221679-760a23a2286b?w=400&h=225&fit=crop',
-						duration: '2h 00min',
+						title: 'Motion Design: Purposeful Animation',
+						thumbnail:
+							'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=225&fit=crop',
+						duration: '28 min',
 						isNew: true
 					},
 					{
 						id: '9',
-						title: 'Color Grading Fundamentals',
-						thumbnail: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=400&h=225&fit=crop',
+						title: 'Component Architecture in Svelte 5',
+						thumbnail:
+							'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=225&fit=crop',
 						duration: '45 min',
 						isNew: true
 					}
 				]
 			},
 			{
-				title: 'Your Watchlist',
+				title: 'Team Insights',
 				items: [
 					{
 						id: '10',
-						title: 'Macro Photography Deep Dive',
-						thumbnail: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=225&fit=crop',
-						duration: '1h 15min'
+						title: 'Why We Built OUTERFIELDS',
+						thumbnail:
+							'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=225&fit=crop',
+						duration: '18 min'
 					},
 					{
 						id: '11',
-						title: 'Studio Setup Guide',
-						thumbnail: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400&h=225&fit=crop',
-						duration: '50 min'
+						title: 'The Problem with Uscreen',
+						thumbnail:
+							'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=225&fit=crop',
+						duration: '24 min'
+					},
+					{
+						id: '12',
+						title: 'Creator-First Philosophy',
+						thumbnail:
+							'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=225&fit=crop',
+						duration: '15 min'
 					}
 				]
 			}
