@@ -65,7 +65,7 @@
 
 	let featuredContent = {
 		id: 'featured',
-		title: 'Building OUTERFIELDS: The Journey',
+		title: 'Building OUTERFIELDS: The Odyssey',
 		description:
 			'Documentary-style behind-the-scenes of the OUTERFIELDS team building the Premium Content Network platform. See how we architect edge-first systems, design with Canon principles, and build for creators.',
 		thumbnail: '/thumbnails/hero-building-outerfields.jpg',
