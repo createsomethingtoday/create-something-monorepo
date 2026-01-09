@@ -68,8 +68,7 @@
 		title: 'Building OUTERFIELDS: The Journey',
 		description:
 			'Documentary-style behind-the-scenes of the OUTERFIELDS team building the Premium Content Network platform. See how we architect edge-first systems, design with Canon principles, and build for creators.',
-		thumbnail:
-			'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&h=800&fit=crop',
+		thumbnail: '/thumbnails/hero-building-outerfields.jpg',
 		duration: '16 min',
 		rating: '4.9',
 		year: '2024',

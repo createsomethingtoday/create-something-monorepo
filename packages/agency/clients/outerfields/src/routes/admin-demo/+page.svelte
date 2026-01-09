@@ -2,10 +2,37 @@
 	/**
 	 * OUTERFIELDS Admin Dashboard Demo
 	 *
-	 * Analytics dashboard for content creators showing
+	 * Fully interactive analytics dashboard for content creators showing
 	 * views, subscribers, revenue, and content management.
+	 * All elements are clickable, filterable, and sortable.
 	 */
-	import { Upload, Eye, Users, CreditCard, TrendingUp, UserPlus, MessageCircle, CheckCircle, Bell, RefreshCw, Pencil, BarChart3, MoreVertical, Info, ArrowRight } from 'lucide-svelte';
+	import {
+		Upload,
+		Eye,
+		Users,
+		CreditCard,
+		TrendingUp,
+		UserPlus,
+		MessageCircle,
+		CheckCircle,
+		Bell,
+		RefreshCw,
+		Pencil,
+		BarChart3,
+		MoreVertical,
+		Info,
+		ArrowRight,
+		Search,
+		Filter,
+		X,
+		ChevronUp,
+		ChevronDown,
+		Play,
+		Trash2,
+		Copy,
+		ExternalLink,
+		ArrowUpDown
+	} from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
 
 	interface Activity {
@@ -16,14 +43,22 @@
 		time: string;
 	}
 
-	interface Upload {
+	interface UploadItem {
 		id: string;
 		title: string;
 		thumbnail: string;
 		status: string;
 		views?: string;
+		viewsNum?: number;
 		progress?: number;
 		uploadedAt: string;
+		uploadedAtNum?: number;
+	}
+
+	interface ChartPeriodData {
+		labels: string[];
+		views: number[];
+		engagement: number[];
 	}
 
 	interface Props {
@@ -38,17 +73,128 @@
 				engagement: string;
 				engagementChange: string;
 			};
-			chartData: {
-				labels: string[];
-				views: number[];
-				engagement: number[];
-			};
+			chartData: ChartPeriodData;
 			recentActivity: Activity[];
-			uploads: Upload[];
+			uploads: UploadItem[];
 		};
 	}
 
 	let { data }: Props = $props();
+
+	// ============================================
+	// STATE
+	// ============================================
+
+	// Chart period selection
+	type ChartPeriod = '7d' | '30d' | '90d';
+	let selectedPeriod = $state<ChartPeriod>('7d');
+
+	// Different data for each period
+	const chartDataByPeriod: Record<ChartPeriod, ChartPeriodData> = {
+		'7d': {
+			labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+			views: [12000, 19000, 15000, 22000, 18000, 24000, 21000],
+			engagement: [45, 52, 48, 62, 55, 68, 65]
+		},
+		'30d': {
+			labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+			views: [85000, 92000, 78000, 105000],
+			engagement: [52, 58, 55, 62]
+		},
+		'90d': {
+			labels: ['Jan', 'Feb', 'Mar'],
+			views: [320000, 380000, 420000],
+			engagement: [48, 55, 62]
+		}
+	};
+
+	// Table sorting
+	type SortField = 'title' | 'status' | 'views' | 'uploadedAt';
+	type SortDirection = 'asc' | 'desc';
+	let sortField = $state<SortField>('uploadedAt');
+	let sortDirection = $state<SortDirection>('desc');
+
+	// Status filtering
+	type StatusFilter = 'all' | 'published' | 'processing' | 'draft';
+	let statusFilter = $state<StatusFilter>('all');
+
+	// Activity type filtering
+	type ActivityFilter = 'all' | 'subscription' | 'view' | 'comment' | 'upload';
+	let activityFilter = $state<ActivityFilter>('all');
+
+	// Search
+	let searchQuery = $state('');
+
+	// Modals
+	let showUploadModal = $state(false);
+	let showVideoModal = $state(false);
+	let selectedVideo = $state<UploadItem | null>(null);
+	let showActivityExpanded = $state(false);
+	let showStatDetail = $state<string | null>(null);
+
+	// Video action menu
+	let activeActionMenu = $state<string | null>(null);
+
+	// ============================================
+	// COMPUTED / DERIVED
+	// ============================================
+
+	// Current chart data based on period
+	let currentChartData = $derived(chartDataByPeriod[selectedPeriod]);
+
+	// Add numeric values for sorting
+	const uploadsWithNumbers: UploadItem[] = data.uploads.map((u, i) => ({
+		...u,
+		viewsNum: u.views === '-' ? 0 : parseFloat(u.views?.replace('K', '000').replace('.', '') || '0'),
+		uploadedAtNum: data.uploads.length - i // Most recent = highest
+	}));
+
+	// Filtered and sorted uploads
+	let filteredUploads = $derived.by(() => {
+		let result = [...uploadsWithNumbers];
+
+		// Apply search filter
+		if (searchQuery) {
+			result = result.filter((u) => u.title.toLowerCase().includes(searchQuery.toLowerCase()));
+		}
+
+		// Apply status filter
+		if (statusFilter !== 'all') {
+			result = result.filter((u) => u.status === statusFilter);
+		}
+
+		// Apply sorting
+		result.sort((a, b) => {
+			let comparison = 0;
+			switch (sortField) {
+				case 'title':
+					comparison = a.title.localeCompare(b.title);
+					break;
+				case 'status':
+					comparison = a.status.localeCompare(b.status);
+					break;
+				case 'views':
+					comparison = (a.viewsNum || 0) - (b.viewsNum || 0);
+					break;
+				case 'uploadedAt':
+					comparison = (a.uploadedAtNum || 0) - (b.uploadedAtNum || 0);
+					break;
+			}
+			return sortDirection === 'asc' ? comparison : -comparison;
+		});
+
+		return result;
+	});
+
+	// Filtered activities
+	let filteredActivities = $derived.by(() => {
+		if (activityFilter === 'all') return data.recentActivity;
+		return data.recentActivity.filter((a) => a.type === activityFilter);
+	});
+
+	// ============================================
+	// HELPERS
+	// ============================================
 
 	function getStatusClass(status: string): string {
 		switch (status) {
@@ -74,11 +220,93 @@
 	function getActivityIcon(type: string): ComponentType {
 		return activityIconMap[type] || activityIconMap.default;
 	}
+
+	function toggleSort(field: SortField) {
+		if (sortField === field) {
+			sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+		} else {
+			sortField = field;
+			sortDirection = 'desc';
+		}
+	}
+
+	function openVideoDetails(video: UploadItem) {
+		selectedVideo = video;
+		showVideoModal = true;
+		activeActionMenu = null;
+	}
+
+	function toggleActionMenu(id: string) {
+		activeActionMenu = activeActionMenu === id ? null : id;
+	}
+
+	function closeModals() {
+		showUploadModal = false;
+		showVideoModal = false;
+		showStatDetail = null;
+		activeActionMenu = null;
+	}
+
+	// Stat detail data
+	const statDetails: Record<
+		string,
+		{ title: string; description: string; breakdown: { label: string; value: string }[] }
+	> = {
+		views: {
+			title: 'Total Views Breakdown',
+			description: 'Detailed view analytics across all content',
+			breakdown: [
+				{ label: 'YouTube Embeds', value: '485K' },
+				{ label: 'Direct Platform', value: '620K' },
+				{ label: 'Social Shares', value: '95K' }
+			]
+		},
+		subscribers: {
+			title: 'Subscriber Analytics',
+			description: 'Subscriber growth and retention metrics',
+			breakdown: [
+				{ label: 'Free Tier', value: '32.1K' },
+				{ label: 'Premium', value: '8.4K' },
+				{ label: 'Enterprise', value: '4.7K' }
+			]
+		},
+		revenue: {
+			title: 'Revenue Breakdown',
+			description: 'Monthly revenue by source',
+			breakdown: [
+				{ label: 'Subscriptions', value: '$38,200' },
+				{ label: 'One-time Purchases', value: '$8,400' },
+				{ label: 'Tips & Donations', value: '$5,800' }
+			]
+		},
+		engagement: {
+			title: 'Engagement Metrics',
+			description: 'How users interact with your content',
+			breakdown: [
+				{ label: 'Avg. Watch Time', value: '12:34' },
+				{ label: 'Completion Rate', value: '72%' },
+				{ label: 'Comments/Video', value: '45' }
+			]
+		}
+	};
 </script>
 
 <svelte:head>
 	<title>Dashboard | OUTERFIELDS Admin Demo</title>
 </svelte:head>
+
+<!-- Close menus on click outside and handle escape key for modals -->
+<svelte:window
+	onclick={() => {
+		activeActionMenu = null;
+	}}
+	onkeydown={(e) => {
+		if (e.key === 'Escape') {
+			closeModals();
+			showActivityExpanded = false;
+		}
+	}}
+/>
 
 <div class="dashboard">
 	<!-- Header -->
@@ -88,16 +316,30 @@
 			<p class="header-subtitle">Welcome back! Here's what's happening with your content.</p>
 		</div>
 		<div class="header-actions">
-			<button class="btn-upload">
+			<div class="search-box">
+				<Search size={16} />
+				<input
+					type="text"
+					placeholder="Search videos..."
+					bind:value={searchQuery}
+					class="search-input"
+				/>
+				{#if searchQuery}
+					<button class="search-clear" onclick={() => (searchQuery = '')}>
+						<X size={14} />
+					</button>
+				{/if}
+			</div>
+			<button class="btn-upload" onclick={() => (showUploadModal = true)}>
 				<Upload size={20} />
 				Upload Video
 			</button>
 		</div>
 	</header>
 
-	<!-- Stats Grid -->
+	<!-- Stats Grid - Clickable -->
 	<section class="stats-grid">
-		<div class="stat-card">
+		<button class="stat-card" onclick={() => (showStatDetail = 'views')}>
 			<div class="stat-icon views">
 				<Eye size={20} />
 			</div>
@@ -106,9 +348,10 @@
 				<span class="stat-value">{data.stats.totalViews}</span>
 				<span class="stat-change positive">{data.stats.viewsChange} this month</span>
 			</div>
-		</div>
+			<ArrowRight size={16} class="stat-arrow" />
+		</button>
 
-		<div class="stat-card">
+		<button class="stat-card" onclick={() => (showStatDetail = 'subscribers')}>
 			<div class="stat-icon subscribers">
 				<Users size={20} />
 			</div>
@@ -117,9 +360,10 @@
 				<span class="stat-value">{data.stats.subscribers}</span>
 				<span class="stat-change positive">{data.stats.subscribersChange} this month</span>
 			</div>
-		</div>
+			<ArrowRight size={16} class="stat-arrow" />
+		</button>
 
-		<div class="stat-card">
+		<button class="stat-card" onclick={() => (showStatDetail = 'revenue')}>
 			<div class="stat-icon revenue">
 				<CreditCard size={20} />
 			</div>
@@ -128,9 +372,10 @@
 				<span class="stat-value">{data.stats.revenue}</span>
 				<span class="stat-change positive">{data.stats.revenueChange} this month</span>
 			</div>
-		</div>
+			<ArrowRight size={16} class="stat-arrow" />
+		</button>
 
-		<div class="stat-card">
+		<button class="stat-card" onclick={() => (showStatDetail = 'engagement')}>
 			<div class="stat-icon engagement">
 				<TrendingUp size={20} />
 			</div>
@@ -139,7 +384,8 @@
 				<span class="stat-value">{data.stats.engagement}</span>
 				<span class="stat-change positive">{data.stats.engagementChange} this month</span>
 			</div>
-		</div>
+			<ArrowRight size={16} class="stat-arrow" />
+		</button>
 	</section>
 
 	<!-- Main Content -->
@@ -149,20 +395,46 @@
 			<div class="section-header">
 				<h2>Analytics Overview</h2>
 				<div class="chart-controls">
-					<button class="chart-btn active">7 Days</button>
-					<button class="chart-btn">30 Days</button>
-					<button class="chart-btn">90 Days</button>
+					<button
+						class="chart-btn"
+						class:active={selectedPeriod === '7d'}
+						onclick={() => (selectedPeriod = '7d')}
+					>
+						7 Days
+					</button>
+					<button
+						class="chart-btn"
+						class:active={selectedPeriod === '30d'}
+						onclick={() => (selectedPeriod = '30d')}
+					>
+						30 Days
+					</button>
+					<button
+						class="chart-btn"
+						class:active={selectedPeriod === '90d'}
+						onclick={() => (selectedPeriod = '90d')}
+					>
+						90 Days
+					</button>
 				</div>
 			</div>
 			<div class="chart-placeholder">
 				<div class="chart-bars">
-					{#each data.chartData.views as value, i}
+					{#each currentChartData.views as value, i}
 						<div class="chart-bar-wrapper">
-							<div
-								class="chart-bar"
-								style="height: {(value / Math.max(...data.chartData.views)) * 100}%"
-							></div>
-							<span class="chart-label">{data.chartData.labels[i]}</span>
+							<div class="chart-bar-group">
+								<div
+									class="chart-bar views"
+									style="height: {(value / Math.max(...currentChartData.views)) * 100}%"
+									title="{value.toLocaleString()} views"
+								></div>
+								<div
+									class="chart-bar engagement"
+									style="height: {currentChartData.engagement[i]}%"
+									title="{currentChartData.engagement[i]}% engagement"
+								></div>
+							</div>
+							<span class="chart-label">{currentChartData.labels[i]}</span>
 						</div>
 					{/each}
 				</div>
@@ -183,12 +455,47 @@
 		<section class="activity-section">
 			<div class="section-header">
 				<h2>Recent Activity</h2>
-				<button type="button" class="view-all-btn">View All</button>
+				<button type="button" class="view-all-btn" onclick={() => (showActivityExpanded = true)}>
+					View All
+				</button>
 			</div>
+
+			<!-- Activity Filter -->
+			<div class="filter-pills">
+				<button
+					class="filter-pill"
+					class:active={activityFilter === 'all'}
+					onclick={() => (activityFilter = 'all')}
+				>
+					All
+				</button>
+				<button
+					class="filter-pill"
+					class:active={activityFilter === 'subscription'}
+					onclick={() => (activityFilter = 'subscription')}
+				>
+					Subs
+				</button>
+				<button
+					class="filter-pill"
+					class:active={activityFilter === 'view'}
+					onclick={() => (activityFilter = 'view')}
+				>
+					Views
+				</button>
+				<button
+					class="filter-pill"
+					class:active={activityFilter === 'comment'}
+					onclick={() => (activityFilter = 'comment')}
+				>
+					Comments
+				</button>
+			</div>
+
 			<div class="activity-list">
-				{#each data.recentActivity as activity}
+				{#each filteredActivities as activity}
 					{@const ActivityIcon = getActivityIcon(activity.type)}
-					<div class="activity-item">
+					<button class="activity-item">
 						<div class="activity-icon" class:subscription={activity.type === 'subscription'}>
 							<ActivityIcon size={16} />
 						</div>
@@ -202,8 +509,11 @@
 							{/if}
 						</div>
 						<span class="activity-time">{activity.time}</span>
-					</div>
+					</button>
 				{/each}
+				{#if filteredActivities.length === 0}
+					<div class="empty-state">No activity matching filter</div>
+				{/if}
 			</div>
 		</section>
 	</div>
@@ -212,25 +522,95 @@
 	<section class="uploads-section">
 		<div class="section-header">
 			<h2>Recent Uploads</h2>
-			<button type="button" class="view-all-btn">Manage All Videos</button>
+			<div class="table-controls">
+				<div class="status-filter">
+					<Filter size={14} />
+					<select bind:value={statusFilter}>
+						<option value="all">All Status</option>
+						<option value="published">Published</option>
+						<option value="processing">Processing</option>
+						<option value="draft">Draft</option>
+					</select>
+				</div>
+				<button type="button" class="view-all-btn">Manage All Videos</button>
+			</div>
 		</div>
 		<div class="uploads-table-wrapper">
 			<table class="uploads-table">
 				<thead>
 					<tr>
-						<th>Video</th>
-						<th>Status</th>
-						<th>Views</th>
-						<th>Uploaded</th>
+						<th>
+							<button class="sort-header" onclick={() => toggleSort('title')}>
+								Video
+								{#if sortField === 'title'}
+									{#if sortDirection === 'asc'}
+										<ChevronUp size={14} />
+									{:else}
+										<ChevronDown size={14} />
+									{/if}
+								{:else}
+									<ArrowUpDown size={14} class="sort-inactive" />
+								{/if}
+							</button>
+						</th>
+						<th>
+							<button class="sort-header" onclick={() => toggleSort('status')}>
+								Status
+								{#if sortField === 'status'}
+									{#if sortDirection === 'asc'}
+										<ChevronUp size={14} />
+									{:else}
+										<ChevronDown size={14} />
+									{/if}
+								{:else}
+									<ArrowUpDown size={14} class="sort-inactive" />
+								{/if}
+							</button>
+						</th>
+						<th>
+							<button class="sort-header" onclick={() => toggleSort('views')}>
+								Views
+								{#if sortField === 'views'}
+									{#if sortDirection === 'asc'}
+										<ChevronUp size={14} />
+									{:else}
+										<ChevronDown size={14} />
+									{/if}
+								{:else}
+									<ArrowUpDown size={14} class="sort-inactive" />
+								{/if}
+							</button>
+						</th>
+						<th>
+							<button class="sort-header" onclick={() => toggleSort('uploadedAt')}>
+								Uploaded
+								{#if sortField === 'uploadedAt'}
+									{#if sortDirection === 'asc'}
+										<ChevronUp size={14} />
+									{:else}
+										<ChevronDown size={14} />
+									{/if}
+								{:else}
+									<ArrowUpDown size={14} class="sort-inactive" />
+								{/if}
+							</button>
+						</th>
 						<th>Actions</th>
 					</tr>
 				</thead>
 				<tbody>
-					{#each data.uploads as upload}
+					{#each filteredUploads as upload}
 						<tr>
 							<td class="video-cell">
-								<img src={upload.thumbnail} alt={upload.title} class="video-thumb" />
-								<span class="video-title">{upload.title}</span>
+								<button class="video-thumb-btn" onclick={() => openVideoDetails(upload)}>
+									<img src={upload.thumbnail} alt={upload.title} class="video-thumb" />
+									<span class="thumb-play">
+										<Play size={16} />
+									</span>
+								</button>
+								<button class="video-title-btn" onclick={() => openVideoDetails(upload)}>
+									{upload.title}
+								</button>
 							</td>
 							<td>
 								<span class="status-badge {getStatusClass(upload.status)}">
@@ -246,19 +626,61 @@
 							<td>{upload.uploadedAt}</td>
 							<td>
 								<div class="action-buttons">
-									<button class="action-btn" title="Edit">
+									<button
+										class="action-btn"
+										title="Edit"
+										onclick={() => openVideoDetails(upload)}
+									>
 										<Pencil size={16} />
 									</button>
 									<button class="action-btn" title="Analytics">
 										<BarChart3 size={16} />
 									</button>
-									<button class="action-btn" title="More">
-										<MoreVertical size={16} />
-									</button>
+									<div class="action-menu-wrapper">
+										<button
+											class="action-btn"
+											title="More"
+											onclick={(e) => {
+												e.stopPropagation();
+												toggleActionMenu(upload.id);
+											}}
+										>
+											<MoreVertical size={16} />
+										</button>
+										{#if activeActionMenu === upload.id}
+											<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+											<div class="action-menu" onclick={(e) => e.stopPropagation()} role="menu" tabindex="-1">
+												<button class="menu-item">
+													<Play size={14} />
+													Preview
+												</button>
+												<button class="menu-item">
+													<Copy size={14} />
+													Duplicate
+												</button>
+												<button class="menu-item">
+													<ExternalLink size={14} />
+													Share Link
+												</button>
+												<hr />
+												<button class="menu-item danger">
+													<Trash2 size={14} />
+													Delete
+												</button>
+											</div>
+										{/if}
+									</div>
 								</div>
 							</td>
 						</tr>
 					{/each}
+					{#if filteredUploads.length === 0}
+						<tr>
+							<td colspan="5" class="empty-state">
+								No videos match your search or filter criteria
+							</td>
+						</tr>
+					{/if}
 				</tbody>
 			</table>
 		</div>
@@ -267,13 +689,236 @@
 	<!-- Demo Notice -->
 	<div class="demo-notice">
 		<Info size={20} />
-		<p>This is a demo of the OUTERFIELDS admin dashboard. Data shown is for demonstration purposes only.</p>
+		<p>
+			This is a demo of the OUTERFIELDS admin dashboard. Data shown is for demonstration purposes
+			only.
+		</p>
 		<a href="/demo" class="switch-link">
 			Switch to User Portal
 			<ArrowRight size={16} />
 		</a>
 	</div>
 </div>
+
+<!-- Upload Modal -->
+{#if showUploadModal}
+	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+	<div class="modal-overlay" onclick={closeModals} role="presentation">
+		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+			<div class="modal-header">
+				<h3 id="upload-modal-title">Upload Video</h3>
+				<button class="modal-close" onclick={closeModals}>
+					<X size={20} />
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="upload-dropzone">
+					<Upload size={48} />
+					<p>Drag and drop your video here</p>
+					<span>or</span>
+					<button class="btn-browse">Browse Files</button>
+					<p class="upload-hint">MP4, MOV, or WebM up to 10GB</p>
+				</div>
+				<div class="upload-form">
+					<label>
+						Title
+						<input type="text" placeholder="Enter video title" />
+					</label>
+					<label>
+						Description
+						<textarea placeholder="Describe your video..."></textarea>
+					</label>
+					<label>
+						Visibility
+						<select>
+							<option>Public</option>
+							<option>Members Only</option>
+							<option>Premium Only</option>
+							<option>Draft</option>
+						</select>
+					</label>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn-secondary" onclick={closeModals}>Cancel</button>
+				<button class="btn-primary">Upload</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Video Detail Modal -->
+{#if showVideoModal && selectedVideo}
+	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+	<div class="modal-overlay" onclick={closeModals} role="presentation">
+		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+		<div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="video-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+			<div class="modal-header">
+				<h3 id="video-modal-title">{selectedVideo.title}</h3>
+				<button class="modal-close" onclick={closeModals}>
+					<X size={20} />
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="video-detail-grid">
+					<div class="video-preview">
+						<img src={selectedVideo.thumbnail} alt={selectedVideo.title} />
+						<div class="preview-overlay">
+							<button class="btn-play-lg">
+								<Play size={32} />
+							</button>
+						</div>
+					</div>
+					<div class="video-meta">
+						<div class="meta-row">
+							<span class="meta-label">Status</span>
+							<span class="status-badge {getStatusClass(selectedVideo.status)}">
+								{selectedVideo.status}
+							</span>
+						</div>
+						<div class="meta-row">
+							<span class="meta-label">Views</span>
+							<span>{selectedVideo.views || '0'}</span>
+						</div>
+						<div class="meta-row">
+							<span class="meta-label">Uploaded</span>
+							<span>{selectedVideo.uploadedAt}</span>
+						</div>
+						<div class="meta-row">
+							<span class="meta-label">Engagement</span>
+							<span>72%</span>
+						</div>
+					</div>
+				</div>
+				<div class="video-actions-grid">
+					<button class="action-card">
+						<Pencil size={20} />
+						<span>Edit Details</span>
+					</button>
+					<button class="action-card">
+						<BarChart3 size={20} />
+						<span>View Analytics</span>
+					</button>
+					<button class="action-card">
+						<ExternalLink size={20} />
+						<span>Share Link</span>
+					</button>
+					<button class="action-card danger">
+						<Trash2 size={20} />
+						<span>Delete</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Stat Detail Modal -->
+{#if showStatDetail}
+	{@const detail = statDetails[showStatDetail]}
+	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+	<div class="modal-overlay" onclick={closeModals} role="presentation">
+		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="stat-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+			<div class="modal-header">
+				<h3 id="stat-modal-title">{detail.title}</h3>
+				<button class="modal-close" onclick={closeModals}>
+					<X size={20} />
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="stat-description">{detail.description}</p>
+				<div class="stat-breakdown">
+					{#each detail.breakdown as item}
+						<div class="breakdown-row">
+							<span class="breakdown-label">{item.label}</span>
+							<span class="breakdown-value">{item.value}</span>
+						</div>
+					{/each}
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn-primary" onclick={closeModals}>Close</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Expanded Activity Modal -->
+{#if showActivityExpanded}
+	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+	<div class="modal-overlay" onclick={() => (showActivityExpanded = false)} role="presentation">
+		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+		<div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="activity-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+			<div class="modal-header">
+				<h3 id="activity-modal-title">All Activity</h3>
+				<button class="modal-close" onclick={() => (showActivityExpanded = false)}>
+					<X size={20} />
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="filter-pills modal-filters">
+					<button
+						class="filter-pill"
+						class:active={activityFilter === 'all'}
+						onclick={() => (activityFilter = 'all')}
+					>
+						All
+					</button>
+					<button
+						class="filter-pill"
+						class:active={activityFilter === 'subscription'}
+						onclick={() => (activityFilter = 'subscription')}
+					>
+						Subscriptions
+					</button>
+					<button
+						class="filter-pill"
+						class:active={activityFilter === 'view'}
+						onclick={() => (activityFilter = 'view')}
+					>
+						Views
+					</button>
+					<button
+						class="filter-pill"
+						class:active={activityFilter === 'comment'}
+						onclick={() => (activityFilter = 'comment')}
+					>
+						Comments
+					</button>
+					<button
+						class="filter-pill"
+						class:active={activityFilter === 'upload'}
+						onclick={() => (activityFilter = 'upload')}
+					>
+						Uploads
+					</button>
+				</div>
+				<div class="activity-list expanded">
+					{#each filteredActivities as activity}
+						{@const ActivityIcon = getActivityIcon(activity.type)}
+						<div class="activity-item">
+							<div class="activity-icon" class:subscription={activity.type === 'subscription'}>
+								<ActivityIcon size={16} />
+							</div>
+							<div class="activity-content">
+								<span class="activity-message">{activity.message}</span>
+								{#if activity.user}
+									<span class="activity-detail">{activity.user}</span>
+								{/if}
+								{#if activity.detail}
+									<span class="activity-detail">{activity.detail}</span>
+								{/if}
+							</div>
+							<span class="activity-time">{activity.time}</span>
+						</div>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.dashboard {
@@ -288,6 +933,8 @@
 		justify-content: space-between;
 		align-items: flex-start;
 		margin-bottom: 2rem;
+		gap: 1rem;
+		flex-wrap: wrap;
 	}
 
 	.dashboard-header h1 {
@@ -301,6 +948,49 @@
 		font-size: 0.875rem;
 		color: var(--color-fg-muted);
 		margin: 0;
+	}
+
+	.header-actions {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+
+	.search-box {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		background: var(--glass-bg);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-muted);
+	}
+
+	.search-input {
+		background: none;
+		border: none;
+		color: var(--color-fg-primary);
+		font-size: 0.875rem;
+		width: 200px;
+		outline: none;
+	}
+
+	.search-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.search-clear {
+		display: flex;
+		padding: 0.25rem;
+		background: none;
+		border: none;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+	}
+
+	.search-clear:hover {
+		color: var(--color-fg-primary);
 	}
 
 	.btn-upload {
@@ -337,6 +1027,30 @@
 		background: var(--glass-bg);
 		border: 1px solid var(--color-border-default);
 		border-radius: 0.75rem;
+		cursor: pointer;
+		text-align: left;
+		transition: all var(--duration-micro) var(--ease-standard);
+		position: relative;
+	}
+
+	.stat-card:hover {
+		border-color: var(--color-border-strong);
+		transform: translateY(-2px);
+	}
+
+	.stat-card :global(.stat-arrow) {
+		position: absolute;
+		right: 1rem;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-fg-subtle);
+		opacity: 0;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.stat-card:hover :global(.stat-arrow) {
+		opacity: 1;
+		color: var(--color-primary);
 	}
 
 	.stat-icon {
@@ -346,6 +1060,7 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 0.5rem;
+		flex-shrink: 0;
 	}
 
 	.stat-icon.views {
@@ -407,6 +1122,8 @@
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 1rem;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 
 	.section-header h2 {
@@ -427,6 +1144,29 @@
 
 	.view-all-btn:hover {
 		text-decoration: underline;
+	}
+
+	.table-controls {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+
+	.status-filter {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--color-fg-muted);
+	}
+
+	.status-filter select {
+		background: var(--glass-bg);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.375rem;
+		color: var(--color-fg-primary);
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+		cursor: pointer;
 	}
 
 	/* Chart Section */
@@ -480,13 +1220,33 @@
 		height: 100%;
 	}
 
-	.chart-bar {
+	.chart-bar-group {
+		display: flex;
+		gap: 4px;
+		align-items: flex-end;
+		height: 100%;
 		width: 100%;
-		max-width: 40px;
-		background: linear-gradient(to top, var(--color-primary), rgba(124, 43, 238, 0.5));
+		justify-content: center;
+	}
+
+	.chart-bar {
+		width: 40%;
+		max-width: 20px;
 		border-radius: 0.25rem 0.25rem 0 0;
-		margin-top: auto;
 		transition: height var(--duration-standard) var(--ease-standard);
+		cursor: pointer;
+	}
+
+	.chart-bar.views {
+		background: linear-gradient(to top, var(--color-primary), rgba(124, 43, 238, 0.5));
+	}
+
+	.chart-bar.engagement {
+		background: linear-gradient(to top, #22c55e, rgba(34, 197, 94, 0.5));
+	}
+
+	.chart-bar:hover {
+		opacity: 0.8;
 	}
 
 	.chart-label {
@@ -532,16 +1292,53 @@
 		border-radius: 0.75rem;
 	}
 
+	.filter-pills {
+		display: flex;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.filter-pill {
+		padding: 0.375rem 0.75rem;
+		background: transparent;
+		color: var(--color-fg-muted);
+		border: 1px solid var(--color-border-default);
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.filter-pill:hover,
+	.filter-pill.active {
+		background: var(--color-primary-muted);
+		color: var(--color-primary);
+		border-color: rgba(124, 43, 238, 0.3);
+	}
+
 	.activity-list {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 0.75rem;
 	}
 
 	.activity-item {
 		display: flex;
 		align-items: flex-start;
 		gap: 0.75rem;
+		padding: 0.5rem;
+		background: none;
+		border: none;
+		border-radius: 0.5rem;
+		cursor: pointer;
+		text-align: left;
+		width: 100%;
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.activity-item:hover {
+		background: var(--color-bg-surface);
 	}
 
 	.activity-icon {
@@ -553,6 +1350,7 @@
 		background: var(--color-bg-surface);
 		border-radius: 50%;
 		color: var(--color-fg-muted);
+		flex-shrink: 0;
 	}
 
 	.activity-icon.subscription {
@@ -568,6 +1366,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		min-width: 0;
 	}
 
 	.activity-message {
@@ -578,12 +1377,22 @@
 	.activity-detail {
 		font-size: 0.75rem;
 		color: var(--color-fg-muted);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.activity-time {
 		font-size: 0.75rem;
 		color: var(--color-fg-subtle);
 		white-space: nowrap;
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 2rem;
+		color: var(--color-fg-muted);
+		font-size: 0.875rem;
 	}
 
 	/* Uploads Table */
@@ -623,10 +1432,41 @@
 		border-bottom: none;
 	}
 
+	.sort-header {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		background: none;
+		border: none;
+		color: var(--color-fg-muted);
+		font-size: 0.75rem;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+		padding: 0;
+	}
+
+	.sort-header:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.sort-header :global(.sort-inactive) {
+		opacity: 0.3;
+	}
+
 	.video-cell {
 		display: flex;
 		align-items: center;
 		gap: 1rem;
+	}
+
+	.video-thumb-btn {
+		position: relative;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
 	}
 
 	.video-thumb {
@@ -634,12 +1474,39 @@
 		height: 45px;
 		object-fit: cover;
 		border-radius: 0.375rem;
+		display: block;
 	}
 
-	.video-title {
+	.thumb-play {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.5);
+		border-radius: 0.375rem;
+		color: white;
+		opacity: 0;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.video-thumb-btn:hover .thumb-play {
+		opacity: 1;
+	}
+
+	.video-title-btn {
 		font-size: 0.875rem;
 		font-weight: 500;
 		color: var(--color-fg-primary);
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+		padding: 0;
+	}
+
+	.video-title-btn:hover {
+		text-decoration: underline;
 	}
 
 	.status-badge {
@@ -710,6 +1577,53 @@
 		flex-shrink: 0;
 	}
 
+	.action-menu-wrapper {
+		position: relative;
+	}
+
+	.action-menu {
+		position: absolute;
+		right: 0;
+		top: 100%;
+		margin-top: 0.25rem;
+		min-width: 160px;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		padding: 0.5rem;
+		z-index: 100;
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	}
+
+	.menu-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.5rem 0.75rem;
+		background: none;
+		border: none;
+		color: var(--color-fg-secondary);
+		font-size: 0.875rem;
+		text-align: left;
+		cursor: pointer;
+		border-radius: 0.375rem;
+	}
+
+	.menu-item:hover {
+		background: var(--color-bg-subtle);
+	}
+
+	.menu-item.danger {
+		color: #ef4444;
+	}
+
+	.action-menu hr {
+		border: none;
+		border-top: 1px solid var(--color-border-default);
+		margin: 0.5rem 0;
+	}
+
 	/* Demo Notice */
 	.demo-notice {
 		display: flex;
@@ -754,9 +1668,312 @@
 		flex-shrink: 0;
 	}
 
+	/* Modals */
+	.modal-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.8);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		padding: 1rem;
+	}
+
+	.modal {
+		background: #0a0a0a;
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+		width: 100%;
+		max-width: 480px;
+		max-height: 90vh;
+		overflow-y: auto;
+	}
+
+	.modal.modal-lg {
+		max-width: 640px;
+	}
+
+	.modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.5rem;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.modal-header h3 {
+		margin: 0;
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.modal-close {
+		display: flex;
+		padding: 0.5rem;
+		background: none;
+		border: none;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		border-radius: 0.375rem;
+	}
+
+	.modal-close:hover {
+		background: var(--color-bg-subtle);
+		color: var(--color-fg-primary);
+	}
+
+	.modal-body {
+		padding: 1.5rem;
+	}
+
+	.modal-footer {
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
+		padding: 1.5rem;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.btn-primary {
+		padding: 0.75rem 1.5rem;
+		background: var(--color-primary);
+		color: var(--color-bg-pure);
+		border: none;
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.btn-secondary {
+		padding: 0.75rem 1.5rem;
+		background: transparent;
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	/* Upload Modal */
+	.upload-dropzone {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 3rem 2rem;
+		border: 2px dashed var(--color-border-emphasis);
+		border-radius: 0.75rem;
+		text-align: center;
+		margin-bottom: 1.5rem;
+		color: var(--color-fg-muted);
+	}
+
+	.upload-dropzone p {
+		margin: 0;
+		font-size: 1rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.upload-dropzone span {
+		font-size: 0.875rem;
+	}
+
+	.btn-browse {
+		padding: 0.625rem 1.25rem;
+		background: var(--color-primary-muted);
+		color: var(--color-primary);
+		border: none;
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.upload-hint {
+		font-size: 0.75rem !important;
+		color: var(--color-fg-subtle) !important;
+	}
+
+	.upload-form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.upload-form label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.upload-form input,
+	.upload-form textarea,
+	.upload-form select {
+		padding: 0.75rem;
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-primary);
+		font-size: 0.875rem;
+	}
+
+	.upload-form textarea {
+		min-height: 100px;
+		resize: vertical;
+	}
+
+	/* Video Detail Modal */
+	.video-detail-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.video-preview {
+		position: relative;
+		border-radius: 0.5rem;
+		overflow: hidden;
+	}
+
+	.video-preview img {
+		width: 100%;
+		aspect-ratio: 16/9;
+		object-fit: cover;
+		display: block;
+	}
+
+	.preview-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.4);
+	}
+
+	.btn-play-lg {
+		width: 4rem;
+		height: 4rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-primary);
+		border: none;
+		border-radius: 50%;
+		color: white;
+		cursor: pointer;
+	}
+
+	.video-meta {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.meta-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem;
+		background: var(--color-bg-subtle);
+		border-radius: 0.5rem;
+	}
+
+	.meta-label {
+		font-size: 0.875rem;
+		color: var(--color-fg-muted);
+	}
+
+	.video-actions-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 0.75rem;
+	}
+
+	.action-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 1rem;
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-secondary);
+		font-size: 0.75rem;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.action-card:hover {
+		background: var(--color-bg-surface);
+		border-color: var(--color-border-strong);
+	}
+
+	.action-card.danger {
+		color: #ef4444;
+	}
+
+	/* Stat Detail Modal */
+	.stat-description {
+		color: var(--color-fg-muted);
+		font-size: 0.875rem;
+		margin: 0 0 1.5rem;
+	}
+
+	.stat-breakdown {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.breakdown-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1rem;
+		background: var(--color-bg-subtle);
+		border-radius: 0.5rem;
+	}
+
+	.breakdown-label {
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.breakdown-value {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.modal-filters {
+		margin-bottom: 1.5rem;
+	}
+
+	.activity-list.expanded {
+		max-height: 400px;
+		overflow-y: auto;
+	}
+
 	@media (max-width: 1024px) {
 		.dashboard-main {
 			grid-template-columns: 1fr;
+		}
+
+		.video-detail-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.video-actions-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 
@@ -768,6 +1985,19 @@
 		.dashboard-header {
 			flex-direction: column;
 			gap: 1rem;
+		}
+
+		.header-actions {
+			width: 100%;
+			flex-direction: column;
+		}
+
+		.search-box {
+			width: 100%;
+		}
+
+		.search-input {
+			width: 100%;
 		}
 
 		.btn-upload {
@@ -784,6 +2014,16 @@
 		.demo-notice {
 			flex-direction: column;
 			text-align: center;
+		}
+
+		.section-header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.table-controls {
+			width: 100%;
+			flex-wrap: wrap;
 		}
 	}
 </style>

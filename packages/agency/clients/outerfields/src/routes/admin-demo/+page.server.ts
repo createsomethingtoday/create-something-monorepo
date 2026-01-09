@@ -54,32 +54,32 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		uploads: [
 			{
 				id: '1',
-				title: 'Night Photography Secrets',
-				thumbnail: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=120&h=68&fit=crop',
+				title: 'Canon Design Tokens',
+				thumbnail: '/thumbnails/canon-tokens.jpg',
 				status: 'published',
 				views: '1.2K',
 				uploadedAt: '2 hours ago'
 			},
 			{
 				id: '2',
-				title: 'Drone Cinematography Basics',
-				thumbnail: 'https://images.unsplash.com/photo-1508138221679-760a23a2286b?w=120&h=68&fit=crop',
+				title: 'Motion Design System',
+				thumbnail: '/thumbnails/motion-design.jpg',
 				status: 'processing',
 				progress: 78,
 				uploadedAt: '4 hours ago'
 			},
 			{
 				id: '3',
-				title: 'Color Grading Masterclass',
-				thumbnail: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=120&h=68&fit=crop',
+				title: 'Svelte 5 Components',
+				thumbnail: '/thumbnails/svelte-components.jpg',
 				status: 'draft',
 				views: '-',
 				uploadedAt: '1 day ago'
 			},
 			{
 				id: '4',
-				title: 'Studio Lighting Setup',
-				thumbnail: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=120&h=68&fit=crop',
+				title: 'Why We Built OUTERFIELDS',
+				thumbnail: '/thumbnails/why-we-built.jpg',
 				status: 'published',
 				views: '8.5K',
 				uploadedAt: '3 days ago'
