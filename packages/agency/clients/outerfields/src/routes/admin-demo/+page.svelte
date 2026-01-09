@@ -1495,15 +1495,15 @@
 	}
 
 	.chart-placeholder {
-		margin-top: 1.5rem;
+		margin-top: 1rem;
 	}
 
 	.chart-bars {
 		display: flex;
 		align-items: flex-end;
-		gap: 1rem;
-		height: 200px;
-		padding-bottom: 2rem;
+		gap: 0.75rem;
+		height: 240px;
+		padding: 0 0.5rem 2rem 0.5rem;
 	}
 
 	.chart-bar-wrapper {
@@ -1516,7 +1516,7 @@
 
 	.chart-bar-group {
 		display: flex;
-		gap: 4px;
+		gap: 6px;
 		align-items: flex-end;
 		height: 100%;
 		width: 100%;
@@ -1524,8 +1524,9 @@
 	}
 
 	.chart-bar {
-		width: 40%;
-		max-width: 20px;
+		width: 45%;
+		max-width: 28px;
+		min-width: 18px;
 		border-radius: 0.25rem 0.25rem 0 0;
 		transition: height var(--duration-standard) var(--ease-standard);
 		cursor: pointer;
@@ -1553,7 +1554,9 @@
 		display: flex;
 		justify-content: center;
 		gap: 1.5rem;
-		margin-top: 1rem;
+		margin-top: 1.25rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.legend-item {
