@@ -107,25 +107,6 @@
     outline-offset: 2px;
   }
 
-  /* Skip to main content link - Accessibility */
-  .skip-link {
-    position: absolute;
-    top: -100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    font-weight: 600;
-    z-index: 9999;
-    transition: top var(--duration-micro) var(--ease-standard);
-  }
-
-  .skip-link:focus {
-    top: var(--space-sm);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;

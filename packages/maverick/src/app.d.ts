@@ -8,7 +8,6 @@ declare global {
 				SESSIONS: KVNamespace;
 				CONTENT: KVNamespace;
 				MEDIA_BUCKET: R2Bucket;
-				ADMIN_PASSWORD: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

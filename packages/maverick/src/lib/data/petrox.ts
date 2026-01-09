@@ -45,7 +45,7 @@ export const petroxSolutions: PetroxSolution[] = [
 		description:
 			'Advanced iron sulfide dissolution chemistry for production equipment and flowlines.',
 		details:
-			'PetroX Iron removes iron sulfide scale and deposits that form in production tubing, separators, and tanks. The chelation-based formula works at ambient temperature, avoiding the hazards and costs of traditional acid treatments while protecting infrastructure integrity. Compatible with THPS-based biocide programs for comprehensive production system protection.',
+			'PetroX Iron removes iron sulfide scale and deposits that form in production tubing, separators, and tanks. The chelation-based formula works at ambient temperature, avoiding the hazards and costs of traditional acid treatments while protecting infrastructure integrity.',
 		image: '/images/petrox-processing.jpg',
 		features: [
 			'Prevents iron precipitation',
@@ -163,7 +163,7 @@ export const petroxSolutions: PetroxSolution[] = [
 		description:
 			'Microbiological control for sulfate-reducing bacteria and biofilm prevention.',
 		details:
-			'PetroX Biocide controls microbial activity that leads to souring, corrosion, and hydrogen sulfide generation. The THPS-based formulation provides broad-spectrum efficacy against sulfate-reducing bacteria while remaining compatible with production chemistry and safe for downhole equipment.',
+			'PetroX Biocide controls microbial activity that leads to souring, corrosion, and hydrogen sulfide generation. The broad-spectrum formulation targets sulfate-reducing bacteria while remaining compatible with production chemistry.',
 		image: '/images/petrox-fracturing.jpg',
 		features: [
 			'Broad-spectrum efficacy',
