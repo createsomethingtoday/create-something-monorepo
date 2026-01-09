@@ -1,0 +1,28 @@
+{
+  "convoy": {
+    "id": "convoy-Q-S1i3KGJY",
+    "epicId": "epic-e2e-test",
+    "name": "E2E Test Convoy",
+    "issueIds": [
+      "csm-zc6ap",
+      "csm-3gs6j",
+      "csm-xkoz4"
+    ],
+    "status": "pending",
+    "createdAt": "2026-01-09T22:11:15.580Z",
+    "completedAt": null,
+    "workers": {},
+    "costTracker": null
+  },
+  "workers": [],
+  "costTracker": {
+    "sessionCosts": {},
+    "workerCosts": {},
+    "convoyCost": 0,
+    "epicBudget": null,
+    "epicRemaining": null
+  },
+  "checkpointIds": [],
+  "createdAt": "2026-01-09T22:11:15.580Z",
+  "updatedAt": "2026-01-09T22:11:15.581Z"
+}
