@@ -14,6 +14,17 @@
 	// Cloudflare R2 CDN base URL
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
+	// Engagement data: normalized values (0-1) for heatmap visualization
+	// Simulates "Most Replayed" data showing where viewers watch most
+	const engagementData: Record<string, number[]> = {
+		v1: [0.3, 0.4, 0.5, 0.7, 0.9, 1.0, 0.95, 0.85, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.1],
+		v2: [0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 0.8, 0.95, 1.0, 0.9, 0.75, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.2, 0.15, 0.1],
+		v3: [0.4, 0.35, 0.3, 0.35, 0.5, 0.7, 0.85, 1.0, 0.9, 0.7, 0.5, 0.4, 0.5, 0.7, 0.9, 0.95, 0.8, 0.5, 0.3, 0.2],
+		v4: [0.2, 0.4, 0.6, 0.8, 1.0, 0.95, 0.85, 0.7, 0.55, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.12, 0.1, 0.08, 0.05],
+		v5: [0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.0, 0.95, 0.85, 0.7, 0.55, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0.1],
+		v6: [0.5, 0.6, 0.7, 0.85, 1.0, 0.9, 0.75, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08, 0.05, 0.05]
+	};
+
 	const videos: Video[] = [
 		{
 			id: 'v1',
@@ -70,6 +81,64 @@
 			src: `${CDN_BASE}/videos/uscca-expo-promo.mp4`
 		}
 	];
+
+	// Generate SVG path for engagement heatmap
+	function generateEngagementPath(data: number[]): string {
+		const width = 100;
+		const height = 100;
+		const step = width / (data.length - 1);
+
+		// Start from bottom-left
+		let path = `M 0 ${height}`;
+
+		// Draw the curve
+		data.forEach((value, i) => {
+			const x = i * step;
+			const y = height - (value * height * 0.8); // Scale to 80% of height
+
+			if (i === 0) {
+				path += ` L ${x} ${y}`;
+			} else {
+				// Smooth curve using quadratic bezier
+				const prevX = (i - 1) * step;
+				const midX = (prevX + x) / 2;
+				path += ` Q ${prevX + step/2} ${y} ${x} ${y}`;
+			}
+		});
+
+		// Close path back to bottom-right and bottom-left
+		path += ` L ${width} ${height} L 0 ${height} Z`;
+
+		return path;
+	}
+
+	// Get current video's engagement data
+	function getCurrentEngagementData(): number[] {
+		const videoId = $videoPlayer.activeVideo?.id;
+		return videoId ? (engagementData[videoId] || []) : [];
+	}
+
+	let showEngagementTooltip = $state(false);
+	let engagementTooltipX = $state(0);
+	let engagementTooltipValue = $state(0);
+
+	function handleProgressHover(e: MouseEvent) {
+		const bar = e.currentTarget as HTMLElement;
+		const rect = bar.getBoundingClientRect();
+		const percent = (e.clientX - rect.left) / rect.width;
+		const data = getCurrentEngagementData();
+
+		if (data.length > 0) {
+			const index = Math.min(Math.floor(percent * data.length), data.length - 1);
+			engagementTooltipX = percent * 100;
+			engagementTooltipValue = Math.round(data[index] * 100);
+			showEngagementTooltip = true;
+		}
+	}
+
+	function handleProgressLeave() {
+		showEngagementTooltip = false;
+	}
 
 	let videoElement: HTMLVideoElement | null = $state(null);
 	let playerContainer: HTMLDivElement | null = $state(null);
@@ -272,8 +341,36 @@
 								{/if}
 							</button>
 							<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-							<div class="progress-bar" onclick={handleProgressClick}>
+							<div
+								class="progress-bar"
+								onclick={handleProgressClick}
+								onmousemove={handleProgressHover}
+								onmouseleave={handleProgressLeave}
+							>
+								<!-- Engagement heatmap visualization -->
+								{#if getCurrentEngagementData().length > 0}
+									<svg class="engagement-heatmap" viewBox="0 0 100 100" preserveAspectRatio="none">
+										<defs>
+											<linearGradient id="engagementGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+												<stop offset="0%" stop-color="rgba(124, 43, 238, 0)" />
+												<stop offset="50%" stop-color="rgba(124, 43, 238, 0.4)" />
+												<stop offset="100%" stop-color="rgba(124, 43, 238, 0.8)" />
+											</linearGradient>
+										</defs>
+										<path
+											d={generateEngagementPath(getCurrentEngagementData())}
+											fill="url(#engagementGradient)"
+										/>
+									</svg>
+								{/if}
 								<div class="progress-fill" style="width: {progressPercent}%"></div>
+								<!-- Engagement tooltip -->
+								{#if showEngagementTooltip}
+									<div class="engagement-tooltip" style="left: {engagementTooltipX}%">
+										<span class="tooltip-label">Most Replayed</span>
+										<span class="tooltip-value">{engagementTooltipValue}% of viewers watched this</span>
+									</div>
+								{/if}
 							</div>
 							<span class="time-display">
 								{formatTime($videoPlayer.currentTime)} / {formatTime($videoPlayer.duration)}
@@ -674,17 +771,75 @@
 
 	.progress-bar {
 		flex: 1;
-		height: 4px;
-		background: rgba(255, 255, 255, 0.3);
-		border-radius: 2px;
+		height: 24px;
+		background: rgba(255, 255, 255, 0.1);
+		border-radius: 4px;
 		cursor: pointer;
+		position: relative;
+		overflow: visible;
+	}
+
+	.progress-bar:hover {
+		height: 28px;
+	}
+
+	.engagement-heatmap {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		border-radius: 4px;
+		pointer-events: none;
 	}
 
 	.progress-fill {
-		height: 100%;
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		height: 3px;
 		background: var(--color-primary);
 		border-radius: 2px;
 		transition: width 0.1s linear;
+		z-index: 2;
+	}
+
+	.engagement-tooltip {
+		position: absolute;
+		bottom: calc(100% + 8px);
+		transform: translateX(-50%);
+		background: rgba(0, 0, 0, 0.9);
+		border: 1px solid var(--color-border-default);
+		border-radius: 6px;
+		padding: 0.5rem 0.75rem;
+		white-space: nowrap;
+		z-index: 10;
+		pointer-events: none;
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+	}
+
+	.engagement-tooltip::after {
+		content: '';
+		position: absolute;
+		top: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+		border: 6px solid transparent;
+		border-top-color: rgba(0, 0, 0, 0.9);
+	}
+
+	.tooltip-label {
+		font-size: 0.625rem;
+		font-weight: 600;
+		color: var(--color-primary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.tooltip-value {
+		font-size: 0.75rem;
+		color: var(--color-fg-primary);
 	}
 
 	.time-display {
