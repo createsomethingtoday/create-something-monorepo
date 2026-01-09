@@ -11,51 +11,54 @@
 	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 	import { videoStats } from '$lib/stores/videoStats';
 
+	// Cloudflare R2 CDN base URL
+	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
+
 	const videos: Video[] = [
 		{
 			id: 'v1',
 			title: 'Weatherford, TX Promo',
 			description: 'Showcasing the best of Weatherford, Texas',
 			duration: '0:57',
-			thumbnail: '/videos/weatherford-promo.mp4',
+			thumbnail: `${CDN_BASE}/thumbnails/weatherford-promo.jpg`,
 			category: 'Promo',
-			src: '/videos/weatherford-promo.mp4'
+			src: `${CDN_BASE}/videos/weatherford-promo.mp4`
 		},
 		{
 			id: 'v2',
 			title: 'Outerfields Takes on the Texas State Fair',
 			description: 'Experience the Texas State Fair with Outerfields',
 			duration: '0:57',
-			thumbnail: '/videos/texas-state-fair.mp4',
+			thumbnail: `${CDN_BASE}/thumbnails/texas-state-fair.jpg`,
 			category: 'Event',
-			src: '/videos/texas-state-fair.mp4'
+			src: `${CDN_BASE}/videos/texas-state-fair.mp4`
 		},
 		{
 			id: 'v3',
 			title: 'GOTV USCCA POD Jerry Yanis',
 			description: 'Jerry Yanis discusses GOTV with USCCA',
 			duration: '12:19',
-			thumbnail: '/videos/gotv-uscca.mp4',
+			thumbnail: `${CDN_BASE}/thumbnails/gotv-uscca.jpg`,
 			category: 'Podcast',
-			src: '/videos/gotv-uscca.mp4'
+			src: `${CDN_BASE}/videos/gotv-uscca.mp4`
 		},
 		{
 			id: 'v4',
 			title: 'Hilti Cast In Anchors',
 			description: 'Professional product showcase for Hilti anchors',
 			duration: '0:57',
-			thumbnail: '/videos/hilti-anchors.mp4',
+			thumbnail: `${CDN_BASE}/thumbnails/hilti-anchors.jpg`,
 			category: 'Product',
-			src: '/videos/hilti-anchors.mp4'
+			src: `${CDN_BASE}/videos/hilti-anchors.mp4`
 		},
 		{
 			id: 'v5',
 			title: 'STACCATO Prairie Fire Gun Range Promo',
 			description: 'Prairie Fire Gun Range promotional trailer',
 			duration: '1:16',
-			thumbnail: '/videos/staccato-promo.mp4',
+			thumbnail: `${CDN_BASE}/thumbnails/staccato-promo.jpg`,
 			category: 'Promo',
-			src: '/videos/staccato-promo.mp4'
+			src: `${CDN_BASE}/videos/staccato-promo.mp4`
 		}
 	];
 
@@ -156,9 +159,7 @@
 			{#each videos as video}
 				<button class="video-card" onclick={() => playVideo(video)}>
 					<div class="video-thumbnail">
-						<video src={video.src} preload="metadata" muted playsinline>
-							<track kind="captions" />
-						</video>
+						<img src={video.thumbnail} alt={video.title} loading="lazy" />
 						<div class="video-overlay">
 							<span class="play-button">
 								<Play size={32} />
@@ -352,14 +353,14 @@
 		background: #000;
 	}
 
-	.video-thumbnail video {
+	.video-thumbnail img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
 		transition: transform var(--duration-standard) var(--ease-standard);
 	}
 
-	.video-card:hover .video-thumbnail video {
+	.video-card:hover .video-thumbnail img {
 		transform: scale(1.05);
 	}
 
