@@ -97,7 +97,21 @@
 	<!-- Featured Hero -->
 	<section class="featured-hero">
 		<div class="hero-backdrop">
-			<img src={featuredContent.thumbnail} alt={featuredContent.title} />
+			<!-- Sketchfab 3D embed background -->
+			<iframe
+				title="OUTERFIELDS 3D Experience"
+				class="sketchfab-embed"
+				frameborder="0"
+				allowfullscreen
+				mozallowfullscreen="true"
+				webkitallowfullscreen="true"
+				allow="autoplay; fullscreen; xr-spatial-tracking"
+				xr-spatial-tracking
+				execution-while-out-of-viewport
+				execution-while-not-rendered
+				web-share
+				src="https://sketchfab.com/models/d6521362b37b48e3a82bce4911409303/embed?autospin=0.2&autostart=1&preload=1&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_hint=0&ui_ar=1&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0&ui_theme=dark&dnt=1"
+			></iframe>
 			<div class="hero-gradient"></div>
 		</div>
 
@@ -207,12 +221,16 @@
 	.hero-backdrop {
 		position: absolute;
 		inset: 0;
+		overflow: hidden;
 	}
 
-	.hero-backdrop img {
+	.hero-backdrop :global(.sketchfab-embed) {
 		width: 100%;
-		height: 100%;
-		object-fit: cover;
+		height: 120%;
+		border: none;
+		pointer-events: none;
+		transform: scale(1.1);
+		transform-origin: center center;
 	}
 
 	.hero-gradient {
