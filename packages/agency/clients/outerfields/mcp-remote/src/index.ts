@@ -258,7 +258,9 @@ function handleMCPRequest(request: MCPRequest): MCPResponse {
 					protocolVersion: '2024-11-05',
 					serverInfo: {
 						name: SERVER_NAME,
-						version: SERVER_VERSION
+						version: SERVER_VERSION,
+						// OUTERFIELDS brand logo (purple circle with "OF" monogram)
+						icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMiIgZmlsbD0iIzdjMmJlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PRjwvdGV4dD48L3N2Zz4='
 					},
 					capabilities: {
 						tools: {}
