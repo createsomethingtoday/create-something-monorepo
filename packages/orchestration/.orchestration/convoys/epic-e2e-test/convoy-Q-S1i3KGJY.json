@@ -8,17 +8,59 @@
       "csm-3gs6j",
       "csm-xkoz4"
     ],
-    "status": "pending",
+    "status": "active",
     "createdAt": "2026-01-09T22:11:15.580Z",
     "completedAt": null,
-    "workers": {},
+    "workers": {
+      "csm-zc6ap": "worker-test-1",
+      "csm-3gs6j": "worker-test-2",
+      "csm-xkoz4": "worker-test-3"
+    },
     "costTracker": null
   },
-  "workers": [],
+  "workers": [
+    {
+      "workerId": "worker-test-1",
+      "issueId": "csm-zc6ap",
+      "status": "running",
+      "taskId": null,
+      "checkpoint": null,
+      "costUsd": 0.003,
+      "startedAt": "2026-01-09T22:09:56.602Z",
+      "completedAt": null,
+      "error": null
+    },
+    {
+      "workerId": "worker-test-2",
+      "issueId": "csm-3gs6j",
+      "status": "running",
+      "taskId": null,
+      "checkpoint": null,
+      "costUsd": 0.002,
+      "startedAt": "2026-01-09T21:46:56.603Z",
+      "completedAt": null,
+      "error": null
+    },
+    {
+      "workerId": "worker-test-3",
+      "issueId": "csm-xkoz4",
+      "status": "completed",
+      "taskId": null,
+      "checkpoint": null,
+      "costUsd": 0.001,
+      "startedAt": "2026-01-09T22:09:56.602Z",
+      "completedAt": "2026-01-09T22:11:56.602Z",
+      "error": null
+    }
+  ],
   "costTracker": {
     "sessionCosts": {},
-    "workerCosts": {},
-    "convoyCost": 0,
+    "workerCosts": {
+      "worker-test-1": 0.003,
+      "worker-test-2": 0.002,
+      "worker-test-3": 0.001
+    },
+    "convoyCost": 0.006,
     "epicBudget": null,
     "epicRemaining": null
   },
