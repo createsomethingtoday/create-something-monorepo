@@ -327,8 +327,8 @@ export default {
 			);
 		}
 
-		// MCP endpoint - handles both GET (SSE) and POST (JSON-RPC)
-		if (url.pathname === '/mcp') {
+		// SSE endpoint - handles both GET (SSE) and POST (JSON-RPC)
+		if (url.pathname === '/sse') {
 			// GET request - SSE streaming for server-to-client messages
 			if (request.method === 'GET') {
 				// Return SSE stream (keep-alive)
