@@ -36,7 +36,7 @@ export async function getConvoyIssues(convoyId: string): Promise<BeadsIssue[]> {
   const label = `convoy:${convoyId}`;
 
   try {
-    const { stdout } = await execAsync(`bd list --label ${label} --format json`);
+    const { stdout } = await execAsync(`bd list --label ${label} --json`);
 
     if (!stdout.trim()) {
       return [];
@@ -115,7 +115,7 @@ This issue blocks completion of the convoy.`;
  */
 export async function getIssue(issueId: string): Promise<BeadsIssue | null> {
   try {
-    const { stdout } = await execAsync(`bd show ${issueId} --format json`);
+    const { stdout } = await execAsync(`bd show ${issueId} --json`);
 
     if (!stdout.trim()) {
       return null;
@@ -141,7 +141,7 @@ export async function getIssues(issueIds: string[]): Promise<BeadsIssue[]> {
  */
 export async function isIssueBlocked(issueId: string): Promise<boolean> {
   try {
-    const { stdout } = await execAsync(`bd deps list ${issueId} --format json`);
+    const { stdout } = await execAsync(`bd deps list ${issueId} --json`);
 
     if (!stdout.trim()) {
       return false;
