@@ -4,8 +4,25 @@
 	 *
 	 * Fixed navigation with logo, links, and auth buttons
 	 */
-	import { Infinity } from 'lucide-svelte';
+	import { Infinity, LogOut, User } from 'lucide-svelte';
 	import { page } from '$app/stores';
+	import { NAV_LINKS } from '$lib/constants/navigation';
+
+	interface Props {
+		user?: {
+			id: string;
+			email: string;
+			name?: string;
+			role: string;
+		} | null;
+	}
+
+	let { user = null }: Props = $props();
+
+	async function handleLogout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		window.location.href = '/';
+	}
 </script>
 
 <header class="nav-header">
@@ -21,16 +38,35 @@
 
 			<!-- Desktop Nav Links -->
 			<nav class="nav-links">
-				<a href="/" class="nav-link" class:active={$page.url.pathname === '/'}>Home</a>
-				<a href="/#features" class="nav-link">Features</a>
-				<a href="/#pricing" class="nav-link">Pricing</a>
-				<a href="/demo" class="nav-link">Demo</a>
+				{#each NAV_LINKS as link}
+					<a
+						href={link.href}
+						class="nav-link"
+						class:active={$page.url.pathname === link.href}
+					>
+						{link.label}
+					</a>
+				{/each}
 			</nav>
 		</div>
 
 		<div class="nav-right">
-			<a href="/login" class="nav-link">Log In</a>
-			<a href="/login" class="btn-primary">Get Started</a>
+			{#if user}
+				<span class="user-info">
+					<User size={16} />
+					<span class="user-name">{user.name || user.email}</span>
+					{#if user.role === 'admin'}
+						<span class="role-badge">Admin</span>
+					{/if}
+				</span>
+				<button class="btn-logout" onclick={handleLogout}>
+					<LogOut size={16} />
+					<span>Log Out</span>
+				</button>
+			{:else}
+				<a href="/login" class="nav-link">Log In</a>
+				<a href="/login" class="btn-primary">Get Started</a>
+			{/if}
 		</div>
 	</div>
 </header>
@@ -114,12 +150,71 @@
 		gap: 1.5rem;
 	}
 
+	.user-info {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.user-info :global(svg) {
+		opacity: 0.7;
+	}
+
+	.user-name {
+		max-width: 150px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.role-badge {
+		padding: 0.125rem 0.5rem;
+		background: var(--color-primary);
+		border-radius: 9999px;
+		font-size: 0.625rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.btn-logout {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-logout:hover {
+		background: var(--color-bg-surface);
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+	}
+
 	@media (max-width: 768px) {
 		.nav-links {
 			display: none;
 		}
 
 		.nav-right .nav-link {
+			display: none;
+		}
+
+		.user-info .user-name {
+			display: none;
+		}
+
+		.btn-logout span {
 			display: none;
 		}
 	}

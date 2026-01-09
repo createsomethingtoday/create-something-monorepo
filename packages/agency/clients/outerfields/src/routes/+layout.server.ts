@@ -7,34 +7,38 @@ import type { LayoutServerLoad } from './$types';
  */
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
-	const sessionToken = cookies.get('session');
+	const accessToken = cookies.get('access_token');
+	const userRole = cookies.get('user_role');
 
-	if (!sessionToken) {
+	if (!accessToken) {
 		return {
 			user: null
 		};
 	}
 
 	try {
-		// In production, this would validate the session token with the Identity API
-		// For demo purposes, we'll decode a simple mock token
-		const [, payload] = sessionToken.split('.');
-		if (!payload) {
+		// Decode the demo token (base64 encoded JSON)
+		const userData = JSON.parse(atob(accessToken));
+
+		// Check if token is expired
+		if (userData.exp && userData.exp < Date.now()) {
+			cookies.delete('access_token', { path: '/' });
+			cookies.delete('user_role', { path: '/' });
 			return { user: null };
 		}
 
-		const userData = JSON.parse(atob(payload));
-
 		return {
 			user: {
-				id: userData.sub,
+				id: userData.id,
 				email: userData.email,
-				role: userData.role || 'user'
+				name: userData.name,
+				role: userRole || userData.role || 'user'
 			}
 		};
 	} catch (error) {
 		// Invalid token, clear it
-		cookies.delete('session', { path: '/' });
+		cookies.delete('access_token', { path: '/' });
+		cookies.delete('user_role', { path: '/' });
 		return { user: null };
 	}
 };

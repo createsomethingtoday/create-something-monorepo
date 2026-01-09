@@ -16,15 +16,23 @@
 
 	interface Props {
 		children: import('svelte').Snippet;
+		data: {
+			user: {
+				id: string;
+				email: string;
+				name?: string;
+				role: string;
+			} | null;
+		};
 	}
 
-	let { children }: Props = $props();
+	let { children, data }: Props = $props();
 </script>
 
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
 <div class="page-wrapper">
-	<Navigation />
+	<Navigation user={data.user} />
 	<main id="main-content" class="main-wrapper" tabindex="-1">
 		{@render children()}
 	</main>

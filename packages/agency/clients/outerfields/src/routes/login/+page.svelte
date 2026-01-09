@@ -6,6 +6,7 @@
 	 */
 	import { Infinity, AlertCircle, CheckCircle, Loader2, LogIn, UserPlus, ShieldCheck, User } from 'lucide-svelte';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { DEMO_ACCOUNTS } from '$lib/constants/navigation';
 
 	interface Props {
 		data: {
@@ -24,12 +25,6 @@
 	let email = $state('');
 	let password = $state('');
 	let name = $state('');
-
-	// Demo accounts
-	const demoAccounts = [
-		{ label: 'User Demo', email: 'demo@outerfields.com', password: 'demo123', role: 'user' },
-		{ label: 'Admin Demo', email: 'admin@outerfields.com', password: 'demo123', role: 'admin' }
-	];
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -58,7 +53,7 @@
 			}
 
 			await invalidateAll();
-			goto(data.redirectTo);
+			goto(data.redirectTo || '/demo');
 		} catch {
 			error = 'An unexpected error occurred';
 		} finally {
@@ -66,7 +61,7 @@
 		}
 	}
 
-	function fillDemoCredentials(demo: (typeof demoAccounts)[0]) {
+	function fillDemoCredentials(demo: (typeof DEMO_ACCOUNTS)[0]) {
 		email = demo.email;
 		password = demo.password;
 		mode = 'login';
@@ -187,7 +182,7 @@
 			</div>
 
 			<div class="demo-accounts">
-				{#each demoAccounts as demo}
+				{#each DEMO_ACCOUNTS as demo}
 					<button type="button" class="demo-btn" onclick={() => fillDemoCredentials(demo)}>
 						<span class="demo-icon" class:admin={demo.role === 'admin'}>
 							{#if demo.role === 'admin'}

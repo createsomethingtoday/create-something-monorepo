@@ -279,7 +279,7 @@
 	.dashboard {
 		min-height: 100vh;
 		background: var(--color-bg-pure);
-		padding: 2rem 4%;
+		padding: 6rem 4% 2rem;
 	}
 
 	/* Header */
@@ -762,7 +762,7 @@
 
 	@media (max-width: 768px) {
 		.dashboard {
-			padding: 1.5rem 5%;
+			padding: 5rem 5% 1.5rem;
 		}
 
 		.dashboard-header {

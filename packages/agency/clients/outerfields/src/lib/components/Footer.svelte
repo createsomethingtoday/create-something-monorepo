@@ -4,17 +4,18 @@
 	 *
 	 * Minimal footer with links and copyright
 	 */
+	import { FOOTER_LINKS } from '$lib/constants/navigation';
 </script>
 
 <footer class="footer">
 	<div class="footer-container">
 		<div class="footer-left">
-			<p class="copyright">&copy; 2025 OUTERFIELDS. All rights reserved.</p>
+			<p class="copyright">&copy; {new Date().getFullYear()} OUTERFIELDS. All rights reserved.</p>
 		</div>
 		<div class="footer-right">
-			<a href="/privacy" class="footer-link">Privacy</a>
-			<a href="/terms" class="footer-link">Terms</a>
-			<a href="/contact" class="footer-link">Contact</a>
+			{#each FOOTER_LINKS as link}
+				<a href={link.href} class="footer-link">{link.label}</a>
+			{/each}
 		</div>
 	</div>
 </footer>

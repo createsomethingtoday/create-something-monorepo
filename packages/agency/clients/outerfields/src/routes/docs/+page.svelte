@@ -4,7 +4,81 @@
 	 *
 	 * Technical documentation hub for the PCN platform
 	 */
-	import { BookOpen, Code, Zap, Shield, Database, Globe, ArrowRight } from 'lucide-svelte';
+	import { BookOpen, Code, Zap, Shield, Database, Globe, ArrowRight, Play, BarChart3, TrendingUp } from 'lucide-svelte';
+
+	interface ComponentDoc {
+		id: string;
+		name: string;
+		version: string;
+		description: string;
+		icon: typeof Play;
+		features: string[];
+		usage: string;
+	}
+
+	const components: ComponentDoc[] = [
+		{
+			id: 'cinematic-player',
+			name: 'Cinematic Player',
+			version: 'v2.1.0',
+			description: 'Responsive video container with custom controls overlay and gradient masking for immersive viewing experiences.',
+			icon: Play,
+			features: [
+				'Adaptive bitrate streaming',
+				'Custom progress bar with preview thumbnails',
+				'Keyboard shortcuts & accessibility',
+				'Picture-in-picture support',
+				'Fullscreen with gesture controls'
+			],
+			usage: `<CinematicPlayer
+  src="/videos/course-intro.mp4"
+  poster="/thumbnails/intro.jpg"
+  autoplay={false}
+  onProgress={(time) => trackEngagement(time)}
+/>`
+		},
+		{
+			id: 'engagement-heatmap',
+			name: 'Engagement Heatmap',
+			version: 'v1.0.0',
+			description: 'Real-time viewer engagement visualization with peak detection and analytics overlay for content optimization.',
+			icon: BarChart3,
+			features: [
+				'Real-time engagement tracking',
+				'Peak moment detection',
+				'Drop-off point analysis',
+				'Rewatch segment highlighting',
+				'Export analytics data'
+			],
+			usage: `<EngagementHeatmap
+  videoId="vid_123"
+  segments={engagementData}
+  showPeaks={true}
+  onSegmentClick={(segment) => seekTo(segment.time)}
+/>`
+		},
+		{
+			id: 'metric-card',
+			name: 'Metric Card',
+			version: 'v3.0.1',
+			description: 'High-contrast data visualization card with status indicators and subtle effects for dashboard displays.',
+			icon: TrendingUp,
+			features: [
+				'Real-time value updates',
+				'Trend indicators (up/down/neutral)',
+				'Sparkline mini-charts',
+				'Customizable thresholds',
+				'Loading and error states'
+			],
+			usage: `<MetricCard
+  label="Active Viewers"
+  value={1234}
+  trend="+12%"
+  status="success"
+  sparkline={viewerHistory}
+/>`
+		}
+	];
 
 	const sections = [
 		{
@@ -82,6 +156,46 @@
 				</div>
 			{/each}
 		</div>
+
+		<section class="components-section">
+			<div class="section-title">
+				<Code size={24} />
+				<h2>Component Library</h2>
+			</div>
+			<p class="section-description">Production-ready components for building premium content experiences.</p>
+
+			<div class="components-grid">
+				{#each components as component}
+					<div class="component-doc-card" id={component.id}>
+						<div class="component-header">
+							<div class="component-icon">
+								<svelte:component this={component.icon} size={20} />
+							</div>
+							<div class="component-title-row">
+								<h3>{component.name}</h3>
+								<span class="component-version">{component.version}</span>
+							</div>
+						</div>
+
+						<p class="component-description">{component.description}</p>
+
+						<div class="component-features">
+							<h4>Features</h4>
+							<ul>
+								{#each component.features as feature}
+									<li>{feature}</li>
+								{/each}
+							</ul>
+						</div>
+
+						<div class="component-usage">
+							<h4>Usage</h4>
+							<pre><code>{component.usage}</code></pre>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</section>
 
 		<section class="help-section">
 			<h2>Need Help?</h2>
@@ -330,6 +444,157 @@
 
 	.back-link:hover {
 		color: var(--color-primary);
+	}
+
+	/* Components Section */
+	.components-section {
+		margin-bottom: 4rem;
+	}
+
+	.section-title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.section-title :global(svg) {
+		color: var(--color-primary);
+	}
+
+	.section-title h2 {
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.section-description {
+		font-size: 1rem;
+		color: var(--color-fg-muted);
+		margin: 0 0 2rem;
+	}
+
+	.components-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1.5rem;
+	}
+
+	.component-doc-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+		padding: 2rem;
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.component-doc-card:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.component-header {
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.component-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		background: var(--color-primary);
+		background: linear-gradient(135deg, var(--color-primary), rgba(124, 43, 238, 0.6));
+		border-radius: 0.75rem;
+		color: var(--color-fg-primary);
+		flex-shrink: 0;
+	}
+
+	.component-title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.component-title-row h3 {
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.component-version {
+		font-size: 0.625rem;
+		font-family: monospace;
+		color: var(--color-fg-muted);
+		background: var(--color-bg-subtle);
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.25rem;
+	}
+
+	.component-description {
+		font-size: 0.9375rem;
+		color: var(--color-fg-secondary);
+		margin: 0 0 1.5rem;
+		line-height: 1.6;
+	}
+
+	.component-features {
+		margin-bottom: 1.5rem;
+	}
+
+	.component-features h4,
+	.component-usage h4 {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin: 0 0 0.75rem;
+	}
+
+	.component-features ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+		gap: 0.5rem;
+	}
+
+	.component-features li {
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+		padding-left: 1.25rem;
+		position: relative;
+	}
+
+	.component-features li::before {
+		content: '•';
+		position: absolute;
+		left: 0;
+		color: var(--color-primary);
+	}
+
+	.component-usage pre {
+		margin: 0;
+		padding: 1rem 1.25rem;
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		overflow-x: auto;
+	}
+
+	.component-usage code {
+		font-family: 'SF Mono', Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+		font-size: 0.8125rem;
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		white-space: pre;
 	}
 
 	@media (max-width: 640px) {

@@ -4,14 +4,14 @@
 	 *
 	 * Live previews of design system components
 	 */
-	import { ArrowUpRight, Play, Code } from 'lucide-svelte';
+	import { ArrowUpRight, Play } from 'lucide-svelte';
 
 	interface Component {
 		id: string;
 		name: string;
 		version: string;
 		description: string;
-		type: 'video' | 'nav' | 'metric';
+		type: 'video' | 'heatmap' | 'metric';
 	}
 
 	const components: Component[] = [
@@ -23,11 +23,11 @@
 			type: 'video'
 		},
 		{
-			id: 'glass-nav',
-			name: 'Glass Nav',
-			version: 'v1.4.2',
-			description: 'Top-level navigation utilizing backdrop-filter blur and semi-transparent layers.',
-			type: 'nav'
+			id: 'engagement-heatmap',
+			name: 'Engagement Heatmap',
+			version: 'v1.0.0',
+			description: 'Real-time viewer engagement visualization with peak detection and analytics overlay.',
+			type: 'heatmap'
 		},
 		{
 			id: 'metric-card',
@@ -76,18 +76,31 @@
 									</div>
 								</div>
 							</div>
-						{:else if component.type === 'nav'}
-							<div class="preview-nav">
-								<div class="nav-mock">
-									<div class="nav-left">
-										<div class="nav-dot"></div>
-										<div class="nav-bar"></div>
+						{:else if component.type === 'heatmap'}
+							<div class="preview-heatmap">
+								<div class="heatmap-mock">
+									<div class="heatmap-header">
+										<div class="heatmap-label"></div>
+										<div class="heatmap-time">2:34</div>
 									</div>
-									<div class="nav-links">
-										<div class="nav-link"></div>
-										<div class="nav-link"></div>
+									<div class="heatmap-bars">
+										<div class="heatmap-bar" style="--height: 30%"></div>
+										<div class="heatmap-bar" style="--height: 45%"></div>
+										<div class="heatmap-bar peak" style="--height: 90%"></div>
+										<div class="heatmap-bar" style="--height: 75%"></div>
+										<div class="heatmap-bar" style="--height: 60%"></div>
+										<div class="heatmap-bar" style="--height: 50%"></div>
+										<div class="heatmap-bar peak" style="--height: 85%"></div>
+										<div class="heatmap-bar" style="--height: 55%"></div>
+										<div class="heatmap-bar" style="--height: 40%"></div>
+										<div class="heatmap-bar" style="--height: 35%"></div>
 									</div>
-									<div class="nav-avatar"></div>
+									<div class="heatmap-timeline">
+										<div class="timeline-track">
+											<div class="timeline-progress"></div>
+											<div class="timeline-cursor"></div>
+										</div>
+									</div>
 								</div>
 							</div>
 						{:else if component.type === 'metric'}
@@ -104,11 +117,7 @@
 						{/if}
 
 						<div class="preview-overlay">
-							<button class="copy-button">
-								<Code size={16} />
-								Copy Code
-							</button>
-							<button class="docs-button">View Docs</button>
+							<button class="docs-button primary">View Docs</button>
 						</div>
 					</div>
 
@@ -236,37 +245,31 @@
 		opacity: 1;
 	}
 
-	.copy-button {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border: none;
-		border-radius: 0.5rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
-	}
-
-	.copy-button:hover {
-		opacity: 0.9;
-	}
-
 	.docs-button {
-		background: none;
-		border: none;
+		padding: 0.5rem 1.25rem;
+		background: transparent;
+		border: 1px solid var(--color-border-emphasis);
 		color: var(--color-fg-muted);
+		border-radius: 0.5rem;
 		font-size: 0.875rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.docs-button:hover {
 		color: var(--color-fg-primary);
+		border-color: var(--color-fg-primary);
+	}
+
+	.docs-button.primary {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border: none;
+	}
+
+	.docs-button.primary:hover {
+		opacity: 0.9;
 	}
 
 	.card-footer {
@@ -328,66 +331,101 @@
 		border-radius: 2px;
 	}
 
-	/* Nav Preview */
-	.preview-nav {
+	/* Heatmap Preview */
+	.preview-heatmap {
 		width: 100%;
 		height: 100%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		padding: 1.5rem;
-		background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.02), transparent);
+		background: radial-gradient(ellipse at bottom, rgba(124, 43, 238, 0.1), transparent);
 	}
 
-	.nav-mock {
-		width: 100%;
+	.heatmap-mock {
+		width: 90%;
+		height: 80%;
 		display: flex;
-		align-items: center;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.heatmap-header {
+		display: flex;
 		justify-content: space-between;
-		padding: 0.75rem 1rem;
-		background: rgba(255, 255, 255, 0.1);
-		backdrop-filter: blur(8px);
-		border: 1px solid rgba(255, 255, 255, 0.05);
-		border-radius: 0.5rem;
-	}
-
-	.nav-left {
-		display: flex;
 		align-items: center;
-		gap: 0.5rem;
 	}
 
-	.nav-dot {
-		width: 0.75rem;
-		height: 0.75rem;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 50%;
+	.heatmap-label {
+		width: 4rem;
+		height: 0.5rem;
+		background: rgba(255, 255, 255, 0.3);
+		border-radius: 0.25rem;
 	}
 
-	.nav-bar {
-		width: 3rem;
-		height: 0.75rem;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 9999px;
+	.heatmap-time {
+		font-size: 0.625rem;
+		font-family: monospace;
+		color: var(--color-fg-muted);
 	}
 
-	.nav-links {
+	.heatmap-bars {
+		flex: 1;
 		display: flex;
-		gap: 0.5rem;
+		align-items: flex-end;
+		gap: 0.25rem;
 	}
 
-	.nav-link {
-		width: 2rem;
-		height: 0.75rem;
+	.heatmap-bar {
+		flex: 1;
+		height: var(--height);
+		background: linear-gradient(to top, var(--color-primary), rgba(124, 43, 238, 0.4));
+		border-radius: 0.125rem 0.125rem 0 0;
+		opacity: 0.7;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.heatmap-bar.peak {
+		opacity: 1;
+		box-shadow: 0 0 8px rgba(124, 43, 238, 0.5);
+	}
+
+	.preview-heatmap:hover .heatmap-bar {
+		opacity: 0.9;
+	}
+
+	.preview-heatmap:hover .heatmap-bar.peak {
+		opacity: 1;
+	}
+
+	.heatmap-timeline {
+		height: 0.25rem;
+	}
+
+	.timeline-track {
+		position: relative;
+		width: 100%;
+		height: 100%;
 		background: rgba(255, 255, 255, 0.1);
-		border-radius: 9999px;
+		border-radius: 0.125rem;
 	}
 
-	.nav-avatar {
-		width: 1rem;
-		height: 1rem;
+	.timeline-progress {
+		width: 40%;
+		height: 100%;
+		background: var(--color-fg-primary);
+		border-radius: 0.125rem;
+	}
+
+	.timeline-cursor {
+		position: absolute;
+		top: -0.125rem;
+		left: 40%;
+		width: 0.5rem;
+		height: 0.5rem;
 		background: var(--color-fg-primary);
 		border-radius: 50%;
+		transform: translateX(-50%);
 	}
 
 	/* Metric Preview */
