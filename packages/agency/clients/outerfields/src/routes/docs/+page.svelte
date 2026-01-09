@@ -2,83 +2,317 @@
 	/**
 	 * OUTERFIELDS Documentation
 	 *
-	 * Technical documentation hub for the PCN platform
+	 * Comprehensive component library documentation for the PCN platform
 	 */
-	import { BookOpen, Code, Zap, Shield, Database, Globe, ArrowRight, Play, BarChart3, TrendingUp } from 'lucide-svelte';
+	import {
+		BookOpen, Code, Zap, Shield, Database, Globe, ArrowRight,
+		Play, BarChart3, TrendingUp, Layout, Video, Users, CreditCard,
+		Rocket, MessageSquare, Grid3X3, Calendar, Link, Infinity,
+		Eye, Minimize2, Layers
+	} from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
 
 	interface ComponentDoc {
 		id: string;
 		name: string;
-		version: string;
+		category: string;
 		description: string;
-		icon: typeof Play;
+		icon: ComponentType;
+		props: { name: string; type: string; default?: string; description: string }[];
 		features: string[];
 		usage: string;
 	}
 
 	const components: ComponentDoc[] = [
+		// Landing Page Components
 		{
-			id: 'cinematic-player',
-			name: 'Cinematic Player',
-			version: 'v2.1.0',
-			description: 'Responsive video container with custom controls overlay and gradient masking for immersive viewing experiences.',
-			icon: Play,
+			id: 'hero-section',
+			name: 'HeroSection',
+			category: 'Landing Page',
+			description: 'Full-width hero with gradient mesh background, animated ping badge, browser mockup preview, and stats row. Uses clamp() for responsive typography.',
+			icon: Layout,
+			props: [],
 			features: [
-				'Adaptive bitrate streaming',
-				'Custom progress bar with preview thumbnails',
-				'Keyboard shortcuts & accessibility',
-				'Picture-in-picture support',
-				'Fullscreen with gesture controls'
+				'Gradient mesh background with radial overlays',
+				'Animated ping badge with pulsing dot',
+				'Browser chrome mockup with frosted nav',
+				'Responsive stats row (3 key metrics)',
+				'CTA buttons with hover transforms'
 			],
-			usage: `<CinematicPlayer
-  src="/videos/course-intro.mp4"
-  poster="/thumbnails/intro.jpg"
-  autoplay={false}
-  onProgress={(time) => trackEngagement(time)}
-/>`
+			usage: `<!-- Self-contained, no props required -->
+<HeroSection />`
 		},
 		{
-			id: 'engagement-heatmap',
-			name: 'Engagement Heatmap',
-			version: 'v1.0.0',
-			description: 'Real-time viewer engagement visualization with peak detection and analytics overlay for content optimization.',
+			id: 'platform-preview',
+			name: 'PlatformPreview',
+			category: 'Landing Page',
+			description: 'Interactive tabbed preview showing User Portal and Admin Dashboard experiences. Uses Svelte 5 $state() for tab switching with frame chrome browser UI.',
+			icon: Layers,
+			props: [],
+			features: [
+				'Tab switching with $state() rune',
+				'User portal: nav, hero, content rails',
+				'Admin dashboard: sidebar, stats grid, chart',
+				'Frosted glass frame chrome effect',
+				'Responsive layout with scroll areas'
+			],
+			usage: `<!-- Svelte 5 with $state() rune -->
+<script lang="ts">
+  let activeTab = $state<'user' | 'admin'>('user');
+</script>
+
+<PlatformPreview />`
+		},
+		{
+			id: 'feature-comparison',
+			name: 'FeatureComparison',
+			category: 'Landing Page',
+			description: 'Side-by-side comparison table showing OUTERFIELDS advantages over Uscreen. Uses check/x icons for boolean values and highlighted text for strings.',
 			icon: BarChart3,
+			props: [],
 			features: [
-				'Real-time engagement tracking',
-				'Peak moment detection',
-				'Drop-off point analysis',
-				'Rewatch segment highlighting',
-				'Export analytics data'
+				'8 feature comparison rows',
+				'Boolean values with Check/X icons',
+				'String values with highlight styling',
+				'Sticky headers on scroll',
+				'Mobile-responsive table layout'
 			],
-			usage: `<EngagementHeatmap
-  videoId="vid_123"
-  segments={engagementData}
-  showPeaks={true}
-  onSegmentClick={(segment) => seekTo(segment.time)}
-/>`
+			usage: `<!-- Comparison data is internal -->
+<FeatureComparison />`
 		},
 		{
-			id: 'metric-card',
-			name: 'Metric Card',
-			version: 'v3.0.1',
-			description: 'High-contrast data visualization card with status indicators and subtle effects for dashboard displays.',
-			icon: TrendingUp,
+			id: 'pricing',
+			name: 'Pricing',
+			category: 'Landing Page',
+			description: 'Three-tier pricing grid with Creator ($49), Professional ($149), and Business ($399) plans. Professional tier is highlighted with border emphasis.',
+			icon: CreditCard,
+			props: [],
 			features: [
-				'Real-time value updates',
-				'Trend indicators (up/down/neutral)',
-				'Sparkline mini-charts',
-				'Customizable thresholds',
-				'Loading and error states'
+				'Three pricing tiers with feature lists',
+				'Highlighted "Most Popular" tier',
+				'Transaction fee disclosure (2.9% + 30¢)',
+				'CTA buttons per tier',
+				'Responsive grid (3→1 column)'
 			],
-			usage: `<MetricCard
-  label="Active Viewers"
-  value={1234}
-  trend="+12%"
-  status="success"
-  sparkline={viewerHistory}
-/>`
+			usage: `<Pricing />`
+		},
+		{
+			id: 'demo-cta',
+			name: 'DemoCTA',
+			category: 'Landing Page',
+			description: 'Call-to-action section with rocket badge, animated concentric rings, and dual CTA buttons. Used to drive demo signups.',
+			icon: Rocket,
+			props: [],
+			features: [
+				'Rocket emoji badge with animation',
+				'Animated visual rings (3 concentric)',
+				'Primary/secondary CTA buttons',
+				'Glass card background effect',
+				'Centered layout with max-width'
+			],
+			usage: `<DemoCTA />`
+		},
+		{
+			id: 'testimonials',
+			name: 'Testimonials',
+			category: 'Landing Page',
+			description: 'Creator success stories with quotes, avatar images, and revenue/subscriber stats. Two-column grid layout with glass card styling.',
+			icon: MessageSquare,
+			props: [],
+			features: [
+				'Quote cards with creator attribution',
+				'Avatar images (64px circles)',
+				'Revenue and subscriber metrics',
+				'Star ratings display',
+				'Two-column responsive grid'
+			],
+			usage: `<Testimonials />`
+		},
+		{
+			id: 'ecosystem-features',
+			name: 'EcosystemFeatures',
+			category: 'Landing Page',
+			description: 'Isometric 3D card layout showing Admin features (left tilt) and User features (right tilt). Uses CSS transforms for perspective effect.',
+			icon: Grid3X3,
+			props: [],
+			features: [
+				'Isometric 3D card transforms',
+				'Admin features: Analytics, Content, Revenue, Community',
+				'User features: Library, Progress, Community, Mobile',
+				'Hover animations with scale',
+				'Icon badges with gradient backgrounds'
+			],
+			usage: `<!-- CSS transforms: rotateY(8deg) rotateX(2deg) -->
+<EcosystemFeatures />`
+		},
+
+		// Video Components
+		{
+			id: 'featured-videos',
+			name: 'FeaturedVideos',
+			category: 'Video',
+			description: 'Interactive video grid with modal player, engagement heatmap, mini-player support, and live view counts via Cloudflare KV. Full-featured video experience.',
+			icon: Video,
+			props: [],
+			features: [
+				'6 video cards with thumbnails from R2 CDN',
+				'Modal player with custom controls',
+				'Engagement heatmap (Most Replayed visualization)',
+				'Picture-in-picture mini-player mode',
+				'Live view counts via videoStats store',
+				'Fullscreen support with native API'
+			],
+			usage: `<!-- Integrates with videoPlayer and videoStats stores -->
+<script lang="ts">
+  import { videoPlayer } from '$lib/stores/videoPlayer';
+  import { videoStats } from '$lib/stores/videoStats';
+</script>
+
+<FeaturedVideos />`
+		},
+		{
+			id: 'mini-player',
+			name: 'MiniPlayer',
+			category: 'Video',
+			description: 'Persistent picture-in-picture style player that stays in bottom-right corner. Syncs with videoPlayer store for seamless playback continuity.',
+			icon: Minimize2,
+			props: [],
+			features: [
+				'Fixed position bottom-right',
+				'Play/pause toggle overlay',
+				'Progress bar with fill animation',
+				'Expand to modal action',
+				'Close button to dismiss',
+				'Store synchronization with $effect()'
+			],
+			usage: `<!-- Rendered conditionally via store state -->
+{#if $videoPlayer.mode === 'mini'}
+  <MiniPlayer />
+{/if}`
+		},
+
+		// Architecture Components
+		{
+			id: 'platform-components',
+			name: 'PlatformComponents',
+			category: 'Architecture',
+			description: 'Rams-style breakdown of 6 essential platform systems with expandable feature lists. Includes system overview diagram showing Creator → OUTERFIELDS → Viewers flow.',
+			icon: Layers,
+			props: [],
+			features: [
+				'6 component cards with icons',
+				'Expandable feature lists on click',
+				'$state() for active component tracking',
+				'System overview diagram',
+				'Arrow flow visualization',
+				'Dynamic icon rendering via iconMap'
+			],
+			usage: `<!-- Uses $state() for accordion behavior -->
+<script lang="ts">
+  let activeComponent = $state<string | null>(null);
+</script>
+
+<PlatformComponents />`
+		},
+		{
+			id: 'build-progress',
+			name: 'BuildProgress',
+			category: 'Architecture',
+			description: 'Visual timeline showing 90-day build journey with milestone markers. Displays Concept → Core UI → Beta → Launch progression.',
+			icon: Calendar,
+			props: [],
+			features: [
+				'Progress bar with percentage fill',
+				'4 milestone markers (Day 1, 30, 60, 90)',
+				'Current milestone ping animation',
+				'Complete/current/upcoming states',
+				'Responsive milestone labels'
+			],
+			usage: `<!-- Milestones are internal data -->
+<BuildProgress />`
+		},
+		{
+			id: 'resource-links',
+			name: 'ResourceLinks',
+			category: 'Architecture',
+			description: 'Two-column grid linking to Technical Documentation and Design Guidelines. Uses BookOpen and Palette icons with arrow hover effect.',
+			icon: Link,
+			props: [],
+			features: [
+				'Two resource cards (Docs, Design)',
+				'Lucide icons with arrow indicators',
+				'Hover border emphasis',
+				'Glass card background',
+				'Links to /docs and /design routes'
+			],
+			usage: `<ResourceLinks />`
+		},
+		{
+			id: 'component-lab',
+			name: 'ComponentLab',
+			category: 'Architecture',
+			description: 'Live previews of 3 design system components (Cinematic Player, Engagement Heatmap, Metric Card) with hover overlay linking to docs.',
+			icon: Code,
+			props: [],
+			features: [
+				'3 component preview cards',
+				'Gradient placeholder visuals',
+				'Hover overlay with "View Docs" button',
+				'Badge labels for component names',
+				'Links to component anchor IDs'
+			],
+			usage: `<ComponentLab />`
+		},
+
+		// Layout Components
+		{
+			id: 'navigation',
+			name: 'Navigation',
+			category: 'Layout',
+			description: 'Fixed header with logo, nav links, and auth-aware buttons. Shows user info with role badge when logged in, or login/signup CTAs when not.',
+			icon: Infinity,
+			props: [
+				{ name: 'user', type: 'User | null', default: 'null', description: 'Current user object with id, email, name, role' }
+			],
+			features: [
+				'Fixed position with gradient background',
+				'Infinity logo icon with brand name',
+				'Nav links from constants/navigation.ts',
+				'Auth state awareness via props',
+				'User info with role badge (Admin)',
+				'Logout button with icon',
+				'Mobile-responsive link hiding'
+			],
+			usage: `<script lang="ts">
+  interface Props {
+    user?: { id: string; email: string; name?: string; role: string } | null;
+  }
+  let { user = null }: Props = $props();
+</script>
+
+<Navigation {user} />`
+		},
+		{
+			id: 'footer',
+			name: 'Footer',
+			category: 'Layout',
+			description: 'Minimal footer with copyright and links. Uses FOOTER_LINKS from constants for DRY compliance.',
+			icon: Layout,
+			props: [],
+			features: [
+				'Copyright with dynamic year',
+				'Footer links from constants',
+				'Flexbox layout (left/right)',
+				'Mobile stacking behavior',
+				'Border-top separator'
+			],
+			usage: `<!-- Links from FOOTER_LINKS constant -->
+<Footer />`
 		}
 	];
+
+	// Group components by category
+	const categories = [...new Set(components.map(c => c.category))];
 
 	const sections = [
 		{
@@ -116,7 +350,7 @@
 
 <svelte:head>
 	<title>Documentation | OUTERFIELDS</title>
-	<meta name="description" content="OUTERFIELDS technical documentation - API references, integration guides, and platform architecture." />
+	<meta name="description" content="OUTERFIELDS component library and API documentation - Build premium content networks." />
 </svelte:head>
 
 <div class="docs-page">
@@ -127,7 +361,7 @@
 			</div>
 			<h1>Documentation</h1>
 			<p class="docs-subtitle">
-				Everything you need to build, integrate, and scale your premium content network.
+				Component library and technical documentation for building premium content networks.
 			</p>
 		</header>
 
@@ -135,6 +369,7 @@
 			<input type="text" placeholder="Search documentation..." class="search-input" />
 		</div>
 
+		<!-- Quick Start Sections -->
 		<div class="docs-grid">
 			{#each sections as section}
 				<div class="doc-card">
@@ -157,43 +392,163 @@
 			{/each}
 		</div>
 
+		<!-- Component Library -->
 		<section class="components-section">
 			<div class="section-title">
 				<Code size={24} />
 				<h2>Component Library</h2>
 			</div>
-			<p class="section-description">Production-ready components for building premium content experiences.</p>
+			<p class="section-description">
+				{components.length} production-ready Svelte 5 components for building premium content experiences.
+			</p>
 
-			<div class="components-grid">
-				{#each components as component}
-					<div class="component-doc-card" id={component.id}>
-						<div class="component-header">
-							<div class="component-icon">
-								<svelte:component this={component.icon} size={20} />
+			<!-- Category Navigation -->
+			<div class="category-nav">
+				{#each categories as category}
+					<a href="#category-{category.toLowerCase().replace(/ /g, '-')}" class="category-link">
+						{category}
+						<span class="category-count">{components.filter(c => c.category === category).length}</span>
+					</a>
+				{/each}
+			</div>
+
+			<!-- Components by Category -->
+			{#each categories as category}
+				<div class="category-section" id="category-{category.toLowerCase().replace(/ /g, '-')}">
+					<h3 class="category-title">{category} Components</h3>
+					<div class="components-grid">
+						{#each components.filter(c => c.category === category) as component}
+							<div class="component-doc-card" id={component.id}>
+								<div class="component-header">
+									<div class="component-icon">
+										<svelte:component this={component.icon} size={20} />
+									</div>
+									<div class="component-title-row">
+										<h4>{component.name}</h4>
+										<span class="component-category-badge">{component.category}</span>
+									</div>
+								</div>
+
+								<p class="component-description">{component.description}</p>
+
+								{#if component.props.length > 0}
+									<div class="component-props">
+										<h5>Props</h5>
+										<div class="props-table">
+											{#each component.props as prop}
+												<div class="prop-row">
+													<code class="prop-name">{prop.name}</code>
+													<code class="prop-type">{prop.type}</code>
+													{#if prop.default}
+														<code class="prop-default">{prop.default}</code>
+													{/if}
+													<span class="prop-description">{prop.description}</span>
+												</div>
+											{/each}
+										</div>
+									</div>
+								{/if}
+
+								<div class="component-features">
+									<h5>Features</h5>
+									<ul>
+										{#each component.features as feature}
+											<li>{feature}</li>
+										{/each}
+									</ul>
+								</div>
+
+								<div class="component-usage">
+									<h5>Usage</h5>
+									<pre><code>{component.usage}</code></pre>
+								</div>
 							</div>
-							<div class="component-title-row">
-								<h3>{component.name}</h3>
-								<span class="component-version">{component.version}</span>
-							</div>
+						{/each}
+					</div>
+				</div>
+			{/each}
+		</section>
+
+		<!-- Design Tokens Reference -->
+		<section class="tokens-section">
+			<div class="section-title">
+				<Eye size={24} />
+				<h2>Design Tokens</h2>
+			</div>
+			<p class="section-description">
+				CSS custom properties used throughout the component library.
+			</p>
+
+			<div class="tokens-grid">
+				<div class="token-card">
+					<h4>Colors</h4>
+					<div class="token-list">
+						<div class="token-item">
+							<span class="token-swatch" style="background: #ffffff"></span>
+							<code>--color-primary</code>
+							<span>#ffffff</span>
 						</div>
-
-						<p class="component-description">{component.description}</p>
-
-						<div class="component-features">
-							<h4>Features</h4>
-							<ul>
-								{#each component.features as feature}
-									<li>{feature}</li>
-								{/each}
-							</ul>
+						<div class="token-item">
+							<span class="token-swatch" style="background: #000000"></span>
+							<code>--color-bg-pure</code>
+							<span>#000000</span>
 						</div>
-
-						<div class="component-usage">
-							<h4>Usage</h4>
-							<pre><code>{component.usage}</code></pre>
+						<div class="token-item">
+							<span class="token-swatch" style="background: rgba(255,255,255,0.05)"></span>
+							<code>--color-bg-surface</code>
+							<span>rgba(255,255,255,0.05)</span>
+						</div>
+						<div class="token-item">
+							<span class="token-swatch" style="background: rgba(255,255,255,0.6)"></span>
+							<code>--color-fg-muted</code>
+							<span>rgba(255,255,255,0.6)</span>
 						</div>
 					</div>
-				{/each}
+				</div>
+
+				<div class="token-card">
+					<h4>Animation</h4>
+					<div class="token-list">
+						<div class="token-item">
+							<code>--duration-micro</code>
+							<span>200ms</span>
+						</div>
+						<div class="token-item">
+							<code>--duration-standard</code>
+							<span>300ms</span>
+						</div>
+						<div class="token-item">
+							<code>--duration-complex</code>
+							<span>500ms</span>
+						</div>
+						<div class="token-item">
+							<code>--ease-standard</code>
+							<span>cubic-bezier(0.4, 0, 0.2, 1)</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="token-card">
+					<h4>Typography</h4>
+					<div class="token-list">
+						<div class="token-item">
+							<code>--text-display</code>
+							<span>clamp(2.5rem, 4vw + 1.5rem, 5rem)</span>
+						</div>
+						<div class="token-item">
+							<code>--text-h1</code>
+							<span>clamp(2rem, 3vw + 1rem, 3.5rem)</span>
+						</div>
+						<div class="token-item">
+							<code>--text-body</code>
+							<span>1rem</span>
+						</div>
+						<div class="token-item">
+							<code>--text-body-sm</code>
+							<span>0.875rem</span>
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -309,7 +664,7 @@
 		justify-content: center;
 		width: 3rem;
 		height: 3rem;
-		background: var(--color-bg-subtle);
+		background: var(--color-bg-pure);
 		border-radius: 0.75rem;
 		color: var(--color-primary);
 		margin-bottom: 1rem;
@@ -363,89 +718,6 @@
 		opacity: 1;
 	}
 
-	.help-section {
-		text-align: center;
-		padding: 3rem;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: 1rem;
-		margin-bottom: 3rem;
-	}
-
-	.help-section h2 {
-		font-size: 1.5rem;
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: 0 0 0.5rem;
-	}
-
-	.help-section p {
-		font-size: 1rem;
-		color: var(--color-fg-muted);
-		margin: 0 0 1.5rem;
-	}
-
-	.help-actions {
-		display: flex;
-		gap: 1rem;
-		justify-content: center;
-		flex-wrap: wrap;
-	}
-
-	.btn-secondary {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: 0.5rem;
-		color: var(--color-fg-primary);
-		text-decoration: none;
-		font-weight: 500;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.btn-secondary:hover {
-		border-color: var(--color-border-emphasis);
-		background: var(--color-hover);
-	}
-
-	.btn-outline {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: transparent;
-		border: 1px solid var(--color-border-default);
-		border-radius: 0.5rem;
-		color: var(--color-fg-secondary);
-		text-decoration: none;
-		font-weight: 500;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.btn-outline:hover {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
-	}
-
-	.docs-footer {
-		padding-top: 2rem;
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.back-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.back-link:hover {
-		color: var(--color-primary);
-	}
-
 	/* Components Section */
 	.components-section {
 		margin-bottom: 4rem;
@@ -473,6 +745,64 @@
 		font-size: 1rem;
 		color: var(--color-fg-muted);
 		margin: 0 0 2rem;
+	}
+
+	/* Category Navigation */
+	.category-nav {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-bottom: 2rem;
+		padding-bottom: 1.5rem;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.category-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 9999px;
+		color: var(--color-fg-secondary);
+		text-decoration: none;
+		font-size: 0.875rem;
+		font-weight: 500;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.category-link:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+	}
+
+	.category-count {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 1.25rem;
+		height: 1.25rem;
+		padding: 0 0.375rem;
+		background: var(--color-bg-pure);
+		border-radius: 9999px;
+		font-size: 0.625rem;
+		font-weight: 600;
+		color: var(--color-fg-muted);
+	}
+
+	/* Category Sections */
+	.category-section {
+		margin-bottom: 3rem;
+	}
+
+	.category-title {
+		font-size: 1.125rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 1.5rem;
+		padding-bottom: 0.75rem;
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.components-grid {
@@ -507,9 +837,8 @@
 		width: 2.5rem;
 		height: 2.5rem;
 		background: var(--color-primary);
-		background: linear-gradient(135deg, var(--color-primary), rgba(124, 43, 238, 0.6));
 		border-radius: 0.75rem;
-		color: var(--color-fg-primary);
+		color: var(--color-bg-pure);
 		flex-shrink: 0;
 	}
 
@@ -520,20 +849,22 @@
 		flex-wrap: wrap;
 	}
 
-	.component-title-row h3 {
+	.component-title-row h4 {
 		font-size: 1.25rem;
 		font-weight: 600;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
-	.component-version {
+	.component-category-badge {
 		font-size: 0.625rem;
 		font-family: monospace;
 		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
+		background: var(--color-bg-pure);
 		padding: 0.25rem 0.5rem;
 		border-radius: 0.25rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
 	.component-description {
@@ -543,18 +874,67 @@
 		line-height: 1.6;
 	}
 
-	.component-features {
+	/* Props Table */
+	.component-props {
 		margin-bottom: 1.5rem;
 	}
 
-	.component-features h4,
-	.component-usage h4 {
+	.component-props h5,
+	.component-features h5,
+	.component-usage h5 {
 		font-size: 0.75rem;
 		font-weight: 600;
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin: 0 0 0.75rem;
+	}
+
+	.props-table {
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		overflow: hidden;
+	}
+
+	.prop-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr auto 2fr;
+		gap: 1rem;
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid var(--color-border-default);
+		align-items: center;
+	}
+
+	.prop-row:last-child {
+		border-bottom: none;
+	}
+
+	.prop-name {
+		font-size: 0.8125rem;
+		color: var(--color-primary);
+	}
+
+	.prop-type {
+		font-size: 0.75rem;
+		color: var(--color-fg-muted);
+	}
+
+	.prop-default {
+		font-size: 0.75rem;
+		color: var(--color-fg-subtle);
+		background: var(--color-bg-surface);
+		padding: 0.125rem 0.375rem;
+		border-radius: 0.25rem;
+	}
+
+	.prop-description {
+		font-size: 0.8125rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.component-features {
+		margin-bottom: 1.5rem;
 	}
 
 	.component-features ul {
@@ -597,6 +977,158 @@
 		white-space: pre;
 	}
 
+	/* Design Tokens Section */
+	.tokens-section {
+		margin-bottom: 4rem;
+	}
+
+	.tokens-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+		gap: 1.5rem;
+	}
+
+	.token-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+		padding: 1.5rem;
+	}
+
+	.token-card h4 {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 1rem;
+	}
+
+	.token-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.token-item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: 0.8125rem;
+	}
+
+	.token-swatch {
+		width: 1.25rem;
+		height: 1.25rem;
+		border-radius: 0.25rem;
+		border: 1px solid var(--color-border-default);
+		flex-shrink: 0;
+	}
+
+	.token-item code {
+		font-family: monospace;
+		color: var(--color-primary);
+		flex-shrink: 0;
+	}
+
+	.token-item span:last-child {
+		color: var(--color-fg-muted);
+		margin-left: auto;
+	}
+
+	/* Help Section */
+	.help-section {
+		text-align: center;
+		padding: 3rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+		margin-bottom: 3rem;
+	}
+
+	.help-section h2 {
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 0.5rem;
+	}
+
+	.help-section p {
+		font-size: 1rem;
+		color: var(--color-fg-muted);
+		margin: 0 0 1.5rem;
+	}
+
+	.help-actions {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+
+	.btn-secondary {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.5rem;
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-primary);
+		text-decoration: none;
+		font-weight: 500;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-secondary:hover {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-surface-hover);
+	}
+
+	.btn-outline {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.5rem;
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-secondary);
+		text-decoration: none;
+		font-weight: 500;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-outline:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+	}
+
+	.docs-footer {
+		padding-top: 2rem;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.back-link {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		text-decoration: none;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.back-link:hover {
+		color: var(--color-primary);
+	}
+
+	@media (max-width: 768px) {
+		.prop-row {
+			grid-template-columns: 1fr;
+			gap: 0.25rem;
+		}
+
+		.prop-description {
+			margin-top: 0.5rem;
+		}
+	}
+
 	@media (max-width: 640px) {
 		.docs-page {
 			padding: 6rem 1rem 3rem;
@@ -604,6 +1136,10 @@
 
 		.docs-grid {
 			grid-template-columns: 1fr;
+		}
+
+		.category-nav {
+			justify-content: center;
 		}
 	}
 </style>

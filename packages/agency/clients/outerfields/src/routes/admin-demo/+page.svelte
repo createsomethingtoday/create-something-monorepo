@@ -309,13 +309,13 @@
 		gap: 0.5rem;
 		padding: 0.75rem 1.25rem;
 		background: var(--color-primary);
-		color: white;
+		color: var(--color-bg-pure);
 		border: none;
 		border-radius: 0.5rem;
 		font-size: 0.875rem;
-		font-weight: 500;
+		font-weight: 600;
 		cursor: pointer;
-		transition: transform var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.btn-upload:hover {

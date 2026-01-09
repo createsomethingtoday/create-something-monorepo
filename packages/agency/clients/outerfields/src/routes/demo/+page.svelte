@@ -195,6 +195,7 @@
 		display: inline-block;
 		padding: 0.25rem 0.75rem;
 		background: var(--color-primary);
+		color: var(--color-bg-pure);
 		border-radius: 0.25rem;
 		font-size: 0.75rem;
 		font-weight: 600;
