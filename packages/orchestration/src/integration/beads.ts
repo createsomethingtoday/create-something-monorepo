@@ -9,6 +9,9 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import type { BeadsIssue, SessionOutcome } from '@create-something/harness';
 
+// Re-export BeadsIssue for other orchestration modules
+export type { BeadsIssue };
+
 const execAsync = promisify(exec);
 
 /**
@@ -112,16 +115,20 @@ This issue blocks completion of the convoy.`;
 
 /**
  * Get issue by ID.
+ *
+ * Note: Uses bd list instead of bd show because bd show doesn't work
+ * for issues flagged as test pollution. bd list --json returns all issues.
  */
 export async function getIssue(issueId: string): Promise<BeadsIssue | null> {
   try {
-    const { stdout } = await execAsync(`bd show ${issueId} --json`);
+    const { stdout } = await execAsync(`bd list --json`);
 
     if (!stdout.trim()) {
       return null;
     }
 
-    return JSON.parse(stdout) as BeadsIssue;
+    const issues = JSON.parse(stdout) as BeadsIssue[];
+    return issues.find((issue) => issue.id === issueId) || null;
   } catch (error) {
     console.warn(`Failed to get issue ${issueId}:`, error);
     return null;
@@ -141,7 +148,7 @@ export async function getIssues(issueIds: string[]): Promise<BeadsIssue[]> {
  */
 export async function isIssueBlocked(issueId: string): Promise<boolean> {
   try {
-    const { stdout } = await execAsync(`bd deps list ${issueId} --json`);
+    const { stdout } = await execAsync(`bd dep list ${issueId} --json`);
 
     if (!stdout.trim()) {
       return false;

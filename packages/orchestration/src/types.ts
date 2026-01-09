@@ -344,4 +344,8 @@ export interface WorkerConfig {
   cwd: string;
   /** Budget for this worker (null if no budget) */
   budget: number | null;
+  /** Model to use for this worker (optional override) */
+  modelOverride?: 'haiku' | 'sonnet' | 'opus';
+  /** Actual model being used (set during spawn) */
+  model?: 'haiku' | 'sonnet' | 'opus';
 }

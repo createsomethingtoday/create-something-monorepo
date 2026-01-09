@@ -11,6 +11,7 @@ import { createSessionCommand } from '../cli/session.js';
 import { createConvoyCommand } from '../cli/convoy.js';
 import { createWorkCommand } from '../cli/work.js';
 import { createCostCommand } from '../cli/cost.js';
+import { createWitnessCommand } from '../cli/witness.js';
 
 const program = new Command();
 
@@ -24,6 +25,7 @@ program.addCommand(createSessionCommand());
 program.addCommand(createConvoyCommand());
 program.addCommand(createWorkCommand());
 program.addCommand(createCostCommand());
+program.addCommand(createWitnessCommand());
 
 // Parse arguments
 program.parse(process.argv);

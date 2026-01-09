@@ -8,6 +8,7 @@ import { Command } from 'commander';
 import {
   createConvoy,
   listConvoys,
+  loadConvoy,
   getConvoyStatus,
   updateConvoyStatus,
   deleteConvoy,
@@ -15,6 +16,8 @@ import {
 import { labelConvoyIssues, getIssues, getReadyIssues } from '../integration/beads.js';
 import { formatCostSummary } from '../cost/report.js';
 import { generateConvoyReport } from '../cost/report.js';
+import { startBackgroundConvoy, attachToBackgroundConvoy } from '../session/background.js';
+import { performConvoyReview, resumeConvoyAfterReview } from '../checkpoint/review.js';
 
 /**
  * Create convoy CLI command group.
@@ -197,6 +200,136 @@ export function createConvoyCommand(): Command {
         console.log(`Note: Workers are not automatically terminated. Use 'orch work' commands to manage workers.`);
       } catch (error) {
         console.error('Error cancelling convoy:', error);
+        process.exit(1);
+      }
+    });
+
+  // orch convoy background <convoy-id>
+  convoy
+    .command('background <convoyId>')
+    .description('Start convoy in background mode')
+    .option('--epic <id>', 'Epic ID (for faster lookup)')
+    .option('--no-witness', 'Disable witness monitoring')
+    .action(async (convoyId: string, options) => {
+      try {
+        const loaded = await loadConvoy(convoyId, options.epic);
+
+        if (!loaded) {
+          console.error(`Convoy ${convoyId} not found`);
+          process.exit(1);
+        }
+
+        const { convoy } = loaded;
+
+        console.log(`Starting convoy ${convoyId} in background...`);
+        console.log(`Witness monitoring: ${options.witness ? 'enabled' : 'disabled'}`);
+        console.log('');
+
+        // Start background convoy with optional witness
+        await startBackgroundConvoy({
+          convoy,
+          detach: true,
+          witnessEnabled: options.witness !== false,
+        });
+
+      } catch (error) {
+        console.error('Error starting background convoy:', error);
+        process.exit(1);
+      }
+    });
+
+  // orch convoy attach <convoy-id>
+  convoy
+    .command('attach <convoyId>')
+    .description('Attach to running background convoy')
+    .option('--epic <id>', 'Epic ID (for faster lookup)')
+    .action(async (convoyId: string, options) => {
+      try {
+        console.log(`Attaching to convoy ${convoyId}...`);
+        console.log('');
+
+        // Attach to background convoy
+        await attachToBackgroundConvoy(convoyId, options.epic);
+
+      } catch (error) {
+        console.error('Error attaching to convoy:', error);
+        process.exit(1);
+      }
+    });
+
+  // orch convoy review <convoy-id>
+  convoy
+    .command('review <convoyId>')
+    .description('Trigger convoy-wide review')
+    .option('--epic <id>', 'Epic ID (for faster lookup)')
+    .option('--checkpoint <id>', 'Checkpoint ID (creates new if not provided)')
+    .action(async (convoyId: string, options) => {
+      try {
+        console.log(`Reviewing convoy ${convoyId}...`);
+        console.log('');
+
+        // Generate checkpoint ID if not provided
+        const checkpointId = options.checkpoint || `ckpt-${Date.now()}`;
+
+        // Perform convoy-wide review
+        const result = await performConvoyReview(
+          convoyId,
+          checkpointId,
+          options.epic
+        );
+
+        // Display results
+        console.log('');
+        if (result.overallPass) {
+          console.log('✓ Review passed');
+        } else {
+          console.log(`⚠️  Review found ${result.blockers.length} blocking issues`);
+        }
+
+        // Show findings
+        if (result.findings.length > 0) {
+          console.log('');
+          console.log('Findings:');
+          for (const finding of result.findings) {
+            const icon = finding.severity === 'critical' ? '🔴' :
+                        finding.severity === 'warning' ? '⚠️' : 'ℹ️';
+            console.log(`${icon} [${finding.reviewer}] ${finding.finding}`);
+            if (finding.location) {
+              console.log(`   Location: ${finding.location}`);
+            }
+          }
+        }
+
+        if (!result.overallPass) {
+          console.log('');
+          console.log(`Resume with: orch convoy resume ${convoyId}`);
+        }
+
+      } catch (error) {
+        console.error('Error reviewing convoy:', error);
+        process.exit(1);
+      }
+    });
+
+  // orch convoy resume <convoy-id>
+  convoy
+    .command('resume <convoyId>')
+    .description('Resume convoy after review fixes')
+    .option('--epic <id>', 'Epic ID (for faster lookup)')
+    .action(async (convoyId: string, options) => {
+      try {
+        console.log(`Resuming convoy ${convoyId}...`);
+        console.log('');
+
+        // Resume convoy after review fixes
+        await resumeConvoyAfterReview(convoyId, options.epic);
+
+        console.log('');
+        console.log('Convoy resumed successfully');
+        console.log('Workers will continue execution');
+
+      } catch (error) {
+        console.error('Error resuming convoy:', error);
         process.exit(1);
       }
     });

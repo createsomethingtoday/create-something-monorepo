@@ -16,6 +16,15 @@ import type {
   HealthReport,
 } from '../types.js';
 import type { BeadsIssue } from '@create-something/harness';
+import {
+  selectModel,
+  shouldEscalateModel,
+  generateModelCostBreakdown,
+  formatModelCostBreakdown,
+  type ClaudeModelFamily,
+  type ModelCostBreakdown,
+} from '../integration/model-routing.js';
+import { getIssue, createBlockerIssue } from '../integration/beads.js';
 
 const WORKER_DIR = '.orchestration/workers';
 
@@ -337,4 +346,152 @@ export async function listWorkers(convoy: Convoy, cwd: string = process.cwd()): 
     }
     throw error;
   }
+}
+
+/**
+ * Handle worker failure with model escalation.
+ *
+ * Philosophy: Failure-driven escalation (Haiku → Sonnet → Opus).
+ * If cheaper model fails, escalate to more capable model before giving up.
+ */
+export async function handleWorkerFailure(
+  worker: WorkerStatus,
+  convoy: Convoy,
+  config: WorkerConfig,
+  cwd: string = process.cwd()
+): Promise<void> {
+  const signal = await readWorkerSignal(worker.workerId, cwd);
+  if (!signal) {
+    console.warn(`No signal for failed worker ${worker.workerId}, cannot escalate`);
+    return;
+  }
+
+  // Determine current model (from worker metadata or config)
+  const currentModel = (worker as any).model || config.model || 'sonnet';
+
+  // Track failure count (read from worker metadata)
+  const failures = (worker as any).failures || 0;
+
+  // Check if we should escalate
+  const escalation = shouldEscalateModel(currentModel as ClaudeModelFamily, failures);
+
+  if (escalation.escalate) {
+    console.log(`⬆️  Worker ${worker.workerId} escalating from ${currentModel} to ${escalation.toModel}`);
+    console.log(`   Reason: ${escalation.reason}`);
+
+    // Respawn worker with escalated model
+    await respawnWorkerWithModel(worker, convoy, escalation.toModel, config, cwd);
+  } else {
+    // Already at Opus or escalation threshold not met
+    console.log(`🛑 Worker ${worker.workerId} failed with ${currentModel}, creating blocker`);
+
+    // Create blocker issue for human intervention
+    await createBlockerIssue(
+      worker.workerId,
+      worker.issueId,
+      `Failed with ${currentModel} model after ${failures} attempts`,
+      convoy.id
+    );
+  }
+}
+
+/**
+ * Respawn worker with upgraded model.
+ *
+ * Philosophy: Same issue, better model. Track as new worker for cost accounting.
+ */
+export async function respawnWorkerWithModel(
+  failedWorker: WorkerStatus,
+  convoy: Convoy,
+  model: ClaudeModelFamily,
+  config: WorkerConfig,
+  cwd: string = process.cwd()
+): Promise<WorkerStatus> {
+  // Get the issue
+  const issue = await getIssue(failedWorker.issueId);
+  if (!issue) {
+    throw new Error(`Issue ${failedWorker.issueId} not found for worker respawn`);
+  }
+
+  // Ensure we have a valid model (not 'unknown')
+  if (model === 'unknown') {
+    throw new Error('Cannot respawn worker with unknown model');
+  }
+
+  // Spawn new worker with upgraded model
+  const newConfig: WorkerConfig = {
+    ...config,
+    model,
+    modelOverride: model,
+  };
+
+  const newWorker = await spawnWorker(convoy, issue, newConfig);
+
+  // Track lineage (new worker replaces failed worker)
+  (newWorker as any).replacesWorker = failedWorker.workerId;
+  (newWorker as any).model = model;
+  (newWorker as any).failures = ((failedWorker as any).failures || 0) + 1;
+
+  console.log(`   New worker: ${newWorker.workerId} (model: ${model})`);
+
+  return newWorker;
+}
+
+/**
+ * Generate model cost breakdown for convoy.
+ *
+ * Shows cost distribution across models.
+ */
+export async function generateConvoyModelCostReport(
+  convoy: Convoy,
+  cwd: string = process.cwd()
+): Promise<ModelCostBreakdown> {
+  const workers = await listWorkers(convoy, cwd);
+
+  const sessions = workers.map((worker) => ({
+    model: ((worker as any).model || 'sonnet') as ClaudeModelFamily,
+    cost: worker.costUsd,
+  }));
+
+  return generateModelCostBreakdown(sessions);
+}
+
+/**
+ * Format and display convoy model cost report.
+ */
+export async function displayConvoyModelCostReport(
+  convoy: Convoy,
+  cwd: string = process.cwd()
+): Promise<void> {
+  const breakdown = await generateConvoyModelCostReport(convoy, cwd);
+  console.log('');
+  console.log(formatModelCostBreakdown(breakdown));
+  console.log('');
+}
+
+/**
+ * Select optimal model for issue at worker spawn time.
+ *
+ * Uses model routing to determine best starting model.
+ */
+export function selectWorkerModel(issue: BeadsIssue, config?: WorkerConfig): ClaudeModelFamily {
+  // Override takes precedence
+  if (config?.modelOverride) {
+    return config.modelOverride;
+  }
+
+  // Use routing heuristics
+  const decision = selectModel(issue);
+  return decision.model;
+}
+
+/**
+ * Extended worker status with model tracking.
+ *
+ * This extends WorkerStatus at runtime with model information.
+ */
+export interface WorkerStatusWithModel extends WorkerStatus {
+  model: ClaudeModelFamily;
+  failures: number;
+  replacesWorker?: string; // Lineage tracking
 }
