@@ -117,7 +117,7 @@
 						{/if}
 
 						<div class="preview-overlay">
-							<button class="docs-button primary">View Docs</button>
+							<a href="/docs#{component.id === 'player' ? 'video-modal-docs' : component.id === 'engagement-heatmap' ? 'heatmap-docs' : 'metric-docs'}" class="docs-button primary">View Docs</a>
 						</div>
 					</div>
 
@@ -246,6 +246,7 @@
 	}
 
 	.docs-button {
+		display: inline-block;
 		padding: 0.5rem 1.25rem;
 		background: transparent;
 		border: 1px solid var(--color-border-emphasis);
@@ -253,6 +254,7 @@
 		border-radius: 0.5rem;
 		font-size: 0.875rem;
 		font-weight: 500;
+		text-decoration: none;
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
@@ -269,6 +271,7 @@
 	}
 
 	.docs-button.primary:hover {
+		color: var(--color-bg-pure);
 		opacity: 0.9;
 	}
 

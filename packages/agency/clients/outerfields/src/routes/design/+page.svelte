@@ -4,7 +4,7 @@
 	 *
 	 * Typography, color palettes, accessibility standards, and component library
 	 */
-	import { Palette, Type, Accessibility, Layout, Sparkles, Box, ExternalLink } from 'lucide-svelte';
+	import { Palette, Type, Accessibility, Layout, Sparkles, Box, ArrowUpRight } from 'lucide-svelte';
 	import { videoPlayer } from '$lib/stores/videoPlayer';
 	import VideoModal from '$lib/components/VideoModal.svelte';
 
@@ -86,18 +86,18 @@
 			</p>
 		</header>
 
-		<section class="lab-container">
-			<div class="lab-header">
-				<div class="header-content">
-					<Box size={24} />
-					<h2 class="lab-title">Component Lab</h2>
-					<p class="lab-description">Live previews of our atomic design system elements.</p>
+		<section class="lab-section">
+			<div class="lab-container">
+				<div class="lab-header">
+					<div class="header-content">
+						<h2 class="lab-title">Component Lab</h2>
+						<p class="lab-description">Live previews of our atomic design system elements.</p>
+					</div>
+					<a href="/docs" class="view-all">
+						View Full System
+						<ArrowUpRight size={16} />
+					</a>
 				</div>
-				<a href="/docs" class="view-all">
-					View Full System
-					<ExternalLink size={16} />
-				</a>
-			</div>
 
 			<div class="components-grid">
 				<!-- Cinematic Player -->
@@ -115,7 +115,7 @@
 							/>
 							<div class="video-gradient"></div>
 							<div class="video-controls">
-								<button class="play-button" onclick={() => videoPlayer.play(sampleVideo)}>
+								<button class="play-button" onclick={() => videoPlayer.play(sampleVideo)} aria-label="Play video">
 									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"></path></svg>
 								</button>
 								<div class="progress-bar">
@@ -124,7 +124,7 @@
 							</div>
 						</div>
 						<div class="preview-overlay">
-							<button class="docs-button primary" onclick={() => window.location.hash = 'video-modal-docs'}>View Docs</button>
+							<a href="/docs#video-modal-docs" class="docs-button primary">View Docs</a>
 						</div>
 					</div>
 					<div class="card-footer">
@@ -168,7 +168,7 @@
 							</div>
 						</div>
 						<div class="preview-overlay">
-							<button class="docs-button primary" onclick={() => window.location.hash = 'heatmap-docs'}>View Docs</button>
+							<a href="/docs#heatmap-docs" class="docs-button primary">View Docs</a>
 						</div>
 					</div>
 					<div class="card-footer">
@@ -198,7 +198,7 @@
 							</div>
 						</div>
 						<div class="preview-overlay">
-							<button class="docs-button primary" onclick={() => window.location.hash = 'metric-docs'}>View Docs</button>
+							<a href="/docs#metric-docs" class="docs-button primary">View Docs</a>
 						</div>
 					</div>
 					<div class="card-footer">
@@ -208,6 +208,7 @@
 					</div>
 				</div>
 			</div>
+		</div>
 		</section>
 
 		<section class="design-section">
@@ -609,8 +610,11 @@
 	}
 
 	/* Component Lab Styles */
-	.lab-container {
+	.lab-section {
 		margin-bottom: 4rem;
+	}
+
+	.lab-container {
 		padding: 2rem;
 		background: linear-gradient(135deg, rgba(124, 43, 238, 0.03) 0%, transparent 50%);
 		border: 1px solid var(--color-border-default);
@@ -628,12 +632,8 @@
 
 	.header-content {
 		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	.header-content :global(svg) {
-		color: var(--color-primary);
+		flex-direction: column;
+		gap: 0.25rem;
 	}
 
 	.lab-title {
@@ -646,7 +646,7 @@
 	.lab-description {
 		font-size: 0.875rem;
 		color: var(--color-fg-muted);
-		margin: 0.25rem 0 0 2.5rem;
+		margin: 0;
 	}
 
 	.view-all {
@@ -1055,10 +1055,6 @@
 		.lab-header {
 			flex-direction: column;
 			align-items: flex-start;
-		}
-
-		.lab-description {
-			margin-left: 0;
 		}
 
 		.principles-grid {

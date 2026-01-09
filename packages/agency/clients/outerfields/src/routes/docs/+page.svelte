@@ -454,6 +454,138 @@
 			{/each}
 		</section>
 
+		<!-- Detailed Component Documentation -->
+		<section class="detailed-docs-section">
+			<div class="section-title">
+				<Code size={24} />
+				<h2>Detailed Component Documentation</h2>
+			</div>
+			<p class="section-description">
+				Deep dive into our most powerful components with live examples and implementation details.
+			</p>
+
+			<!-- Cinematic Player Documentation -->
+			<div class="doc-content" id="video-modal-docs">
+				<h3>Cinematic Player</h3>
+				<p>
+					Our video player tracks when viewers replay parts of your videos. You see exactly which moments resonate. No guessing.
+				</p>
+
+				<h4>What It Does</h4>
+				<ul>
+					<li>Full-screen video playback</li>
+					<li>Custom play/pause controls that match your brand</li>
+					<li>Tracks every second watched (stored in Cloudflare KV)</li>
+					<li>Shows "Most Replayed" heatmap overlay</li>
+					<li>Picture-in-picture mode (keeps playing while browsing)</li>
+				</ul>
+
+				<h4>How Engagement Tracking Works</h4>
+				<p>
+					The player divides your video into 20 equal segments. Every time someone watches a segment, we record it. When they seek backwards to rewatch something, we weight that twice as much. This data becomes your engagement heatmap.
+				</p>
+
+				<h4>Integration</h4>
+				<pre><code>import &#123; videoPlayer &#125; from '$lib/stores/videoPlayer';
+
+const video = &#123;
+  id: 'v1',
+  title: 'Your Video Title',
+  src: 'https://cdn.example.com/video.mp4',
+  thumbnail: 'https://cdn.example.com/thumb.jpg'
+&#125;;
+
+// Open the player
+videoPlayer.play(video);</code></pre>
+
+				<h4>Data Storage</h4>
+				<p>
+					Engagement data lives in Cloudflare KV with the key <code>engagement:&#123;videoId&#125;</code>. Each bucket stores watch counts. Replay events count double.
+				</p>
+			</div>
+
+			<!-- Engagement Heatmap Documentation -->
+			<div class="doc-content" id="heatmap-docs">
+				<h3>Engagement Heatmap</h3>
+				<p>
+					See which parts of your video people replay. The heatmap shows engagement intensity as vertical bars. Taller bars = more replays.
+				</p>
+
+				<h4>What It Shows</h4>
+				<ul>
+					<li>20 bars representing video segments (each is 5% of total duration)</li>
+					<li>Bar height = engagement level (0-100%)</li>
+					<li>Animated reveal when the player opens</li>
+					<li>Real-time updates as viewers interact</li>
+				</ul>
+
+				<h4>How to Read It</h4>
+				<p>
+					Tall bars mean viewers rewound and rewatched that part. Short bars mean people watched once and moved on. Use this to find:
+				</p>
+				<ul>
+					<li>Hooks that work (tall bars early on)</li>
+					<li>Confusing parts (tall bars in the middle = people rewatching to understand)</li>
+					<li>Drop-off points (sudden decrease in bar height)</li>
+				</ul>
+
+				<h4>Technical Implementation</h4>
+				<pre><code>// Data structure from KV
+&#123;
+  "videoId": "v1",
+  "buckets": [0.3, 0.5, 0.9, 0.7, ...], // 20 values
+  "live": true
+&#125;
+
+// Normalized to 0-1 range for visualization
+const maxValue = Math.max(...buckets);
+const heights = buckets.map(v => (v / maxValue) * 100);</code></pre>
+
+				<h4>Performance</h4>
+				<p>
+					Heatmap data fetches once when the player opens. Updates happen via POST when viewers interact (debounced to every 2 seconds to reduce API calls).
+				</p>
+			</div>
+
+			<!-- Metric Card Documentation -->
+			<div class="doc-content" id="metric-docs">
+				<h3>Metric Card</h3>
+				<p>
+					Clean, animated number displays for your key metrics. Shows total views, watch time, or any other stat that matters.
+				</p>
+
+				<h4>Features</h4>
+				<ul>
+					<li>Animated count-up on first load</li>
+					<li>Icon + label + large number layout</li>
+					<li>Trend indicator (up/down arrow with percentage)</li>
+					<li>Glassmorphism background effect</li>
+				</ul>
+
+				<h4>Example Usage</h4>
+				<pre><code>&lt;div class="metric-card"&gt;
+  &lt;div class="metric-icon"&gt;
+    &lt;Eye size=&#123;20&#125; /&gt;
+  &lt;/div&gt;
+  &lt;div class="metric-label"&gt;Total Views&lt;/div&gt;
+  &lt;div class="metric-value"&gt;847,293&lt;/div&gt;
+  &lt;div class="metric-trend positive"&gt;
+    ↑ 12.3%
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+				<h4>Animation Details</h4>
+				<p>
+					The count-up animation uses JavaScript's <code>requestAnimationFrame</code> for smooth 60fps rendering. It increments from 0 to the target value over 1.2 seconds with easing.
+				</p>
+
+				<h4>When to Use</h4>
+				<p>
+					Use metric cards for your dashboard overview. They work best when showing 3-4 key numbers side-by-side. Keep labels short (1-2 words).
+				</p>
+			</div>
+		</section>
+
 		<!-- Design Tokens Reference -->
 		<section class="tokens-section">
 			<div class="section-title">
@@ -960,6 +1092,98 @@
 		color: var(--color-fg-secondary);
 		line-height: 1.6;
 		white-space: pre;
+	}
+
+	/* Detailed Docs Section */
+	.detailed-docs-section {
+		margin-bottom: 4rem;
+	}
+
+	.doc-content {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+		padding: 2rem;
+		margin-bottom: 2rem;
+		transition: border-color var(--duration-micro) var(--ease-standard);
+		scroll-margin-top: 12rem; /* Account for fixed header + generous breathing room */
+	}
+
+	.doc-content:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.doc-content h3 {
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 1rem;
+	}
+
+	.doc-content h4 {
+		font-size: 1.125rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 1.5rem 0 0.75rem;
+	}
+
+	.doc-content h4:first-of-type {
+		margin-top: 1rem;
+	}
+
+	.doc-content p {
+		font-size: 1rem;
+		color: var(--color-fg-secondary);
+		line-height: 1.7;
+		margin: 0 0 1rem;
+	}
+
+	.doc-content ul {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 1rem;
+	}
+
+	.doc-content li {
+		font-size: 0.9375rem;
+		color: var(--color-fg-secondary);
+		padding-left: 1.5rem;
+		position: relative;
+		margin-bottom: 0.5rem;
+		line-height: 1.6;
+	}
+
+	.doc-content li::before {
+		content: '→';
+		position: absolute;
+		left: 0;
+		color: var(--color-primary);
+	}
+
+	.doc-content pre {
+		margin: 0 0 1rem;
+		padding: 1.25rem;
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		overflow-x: auto;
+	}
+
+	.doc-content code {
+		font-family: 'SF Mono', Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+		font-size: 0.8125rem;
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		white-space: pre;
+	}
+
+	.doc-content p code {
+		background: var(--color-bg-pure);
+		padding: 0.125rem 0.375rem;
+		border-radius: 0.25rem;
+		font-size: 0.875rem;
+		color: var(--color-primary);
+		white-space: nowrap;
 	}
 
 	/* Design Tokens Section */

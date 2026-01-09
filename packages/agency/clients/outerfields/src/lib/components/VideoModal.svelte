@@ -3,25 +3,24 @@
 	 * OUTERFIELDS Video Modal
 	 *
 	 * Shared video player modal with full controls, mini-player (PiP),
-	 * and engagement heatmap visualization.
+	 * and LIVE engagement heatmap visualization ("Most Replayed").
 	 *
 	 * Usage:
-	 *   <VideoModal {engagementData} />
+	 *   <VideoModal />
 	 *
 	 * Control via videoPlayer store:
 	 *   videoPlayer.play(video) - Open modal with video
 	 *   videoPlayer.minimize() - Switch to mini-player
 	 *   videoPlayer.close() - Close player
+	 *
+	 * Engagement tracking:
+	 *   - Automatically tracks watch events during playback
+	 *   - Tracks replay events when user seeks backwards
+	 *   - Fetches and displays live aggregated data
 	 */
 	import { Play, Pause, X, Volume2, VolumeX, Minimize2, Maximize2 } from 'lucide-svelte';
 	import { videoPlayer } from '$lib/stores/videoPlayer';
-
-	interface Props {
-		/** Optional engagement heatmap data per video ID */
-		engagementData?: Record<string, number[]>;
-	}
-
-	let { engagementData = {} }: Props = $props();
+	import { engagementStats } from '$lib/stores/engagementStats';
 
 	let videoElement: HTMLVideoElement | null = $state(null);
 	let playerContainer: HTMLDivElement | null = $state(null);
@@ -29,6 +28,7 @@
 	let showEngagementTooltip = $state(false);
 	let engagementTooltipX = $state(0);
 	let engagementTooltipValue = $state(0);
+	let lastSeekTime = $state(0); // Track for replay detection
 
 	// Generate SVG path for engagement heatmap
 	function generateEngagementPath(data: number[]): string {
@@ -55,7 +55,7 @@
 
 	function getCurrentEngagementData(): number[] {
 		const videoId = $videoPlayer.activeVideo?.id;
-		return videoId ? engagementData[videoId] || [] : [];
+		return videoId ? $engagementStats.data[videoId] || [] : [];
 	}
 
 	function handleProgressHover(e: MouseEvent) {
@@ -75,6 +75,16 @@
 	function handleProgressLeave() {
 		showEngagementTooltip = false;
 	}
+
+	// Fetch engagement data when a video is opened
+	$effect(() => {
+		const videoId = $videoPlayer.activeVideo?.id;
+		if (videoId && $videoPlayer.mode !== 'hidden') {
+			// Fetch live engagement data for this video
+			engagementStats.fetchEngagement(videoId);
+			engagementStats.resetTracking(videoId);
+		}
+	});
 
 	// Sync video element with store state
 	$effect(() => {
@@ -111,8 +121,17 @@
 
 	function handleTimeUpdate() {
 		if (videoElement) {
-			videoPlayer.updateTime(videoElement.currentTime);
-			progressPercent = (videoElement.currentTime / videoElement.duration) * 100;
+			const currentTime = videoElement.currentTime;
+			const duration = videoElement.duration;
+
+			videoPlayer.updateTime(currentTime);
+			progressPercent = (currentTime / duration) * 100;
+
+			// Track engagement during playback
+			const videoId = $videoPlayer.activeVideo?.id;
+			if (videoId && duration > 0 && $videoPlayer.isPlaying) {
+				engagementStats.trackWatch(videoId, currentTime, duration);
+			}
 		}
 	}
 
@@ -130,7 +149,17 @@
 		const rect = bar.getBoundingClientRect();
 		const percent = (e.clientX - rect.left) / rect.width;
 		if (videoElement) {
-			videoElement.currentTime = percent * videoElement.duration;
+			const newTime = percent * videoElement.duration;
+			const oldTime = videoElement.currentTime;
+
+			// Track replay if seeking backwards
+			const videoId = $videoPlayer.activeVideo?.id;
+			if (videoId && newTime < oldTime - 2) {
+				// Seeked back more than 2 seconds = replay
+				engagementStats.trackReplay(videoId, newTime, videoElement.duration);
+			}
+
+			videoElement.currentTime = newTime;
 		}
 	}
 
