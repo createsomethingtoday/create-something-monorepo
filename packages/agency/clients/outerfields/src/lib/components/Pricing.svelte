@@ -89,9 +89,9 @@
 			</p>
 		</div>
 
-		<div class="pricing-grid">
-			{#each tiers as tier}
-				<div class="pricing-card" class:highlight={tier.highlight}>
+		<div class="pricing-grid highlight-grid">
+			{#each tiers as tier, index}
+				<div class="pricing-card highlight-item" style="--index: {index}" class:highlight={tier.highlight}>
 					{#if tier.note}
 						<span class="card-badge" class:popular={tier.highlight}>{tier.note}</span>
 					{/if}
@@ -206,12 +206,16 @@
 		padding: 2rem;
 		display: flex;
 		flex-direction: column;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-standard) var(--ease-standard),
+			opacity var(--duration-standard) var(--ease-standard),
+			transform var(--duration-micro) var(--ease-standard);
+		transition-delay: calc(var(--cascade-step, 50ms) * var(--index, 0));
 	}
 
 	.pricing-card:hover {
 		border-color: var(--color-border-emphasis);
-		transform: translateY(-4px);
+		transform: translateY(-4px) scale(var(--scale-micro, 1.02));
+		opacity: 1 !important; /* Override highlight-grid opacity dimming */
 	}
 
 	.pricing-card.highlight {

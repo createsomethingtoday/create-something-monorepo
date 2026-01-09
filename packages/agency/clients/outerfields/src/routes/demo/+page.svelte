@@ -71,7 +71,7 @@
 		thumbnail: '/thumbnails/hero-building-outerfields.jpg',
 		duration: '16 min',
 		rating: '4.9',
-		year: '2024',
+		year: '2026',
 		category: 'Featured'
 	};
 
@@ -439,6 +439,7 @@
 		left: 0.5rem;
 		padding: 0.25rem 0.5rem;
 		background: var(--color-primary);
+		color: var(--color-bg-pure); /* Black text on white background */
 		border-radius: 0.25rem;
 		font-size: 0.625rem;
 		font-weight: 700;

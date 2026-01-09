@@ -60,6 +60,12 @@
 	--duration-standard: 300ms;
 	--duration-complex: 500ms;
 
+	/* Cascade/Stagger Timing */
+	--cascade-step: 50ms; /* Between sibling elements */
+
+	/* Scale Progressions */
+	--scale-micro: 1.02; /* Subtle hover lift */
+
 	/* Glass Effect */
 	--glass-bg: rgba(255, 255, 255, 0.03);
 	--glass-border: rgba(255, 255, 255, 0.1);
@@ -434,6 +440,39 @@ body {
 }
 
 /* ==========================================================================
+   Highlight Grid Pattern (CalArts-inspired)
+   Dims non-hovered siblings, creates focus effect
+   ========================================================================== */
+
+.highlight-item {
+	transition: opacity var(--duration-standard) var(--ease-standard),
+		transform var(--duration-micro) var(--ease-standard);
+	transition-delay: calc(var(--cascade-step) * var(--index, 0));
+}
+
+/* Default highlight: 0.5 opacity for non-hovered siblings */
+.highlight-grid:hover .highlight-item:not(:hover),
+.highlight-flex:hover .highlight-item:not(:hover) {
+	opacity: 0.5;
+}
+
+/* Subtle variant: 0.7 opacity (gentler dimming) */
+.highlight-subtle:hover .highlight-item:not(:hover) {
+	opacity: 0.7;
+}
+
+/* Strong variant: 0.3 opacity (dramatic focus) */
+.highlight-strong:hover .highlight-item:not(:hover) {
+	opacity: 0.3;
+}
+
+/* Hovered item: full opacity + slight scale for emphasis */
+.highlight-item:hover {
+	opacity: 1;
+	transform: scale(var(--scale-micro));
+}
+
+/* ==========================================================================
    Reduced Motion
    ========================================================================== */
 
@@ -445,5 +484,10 @@ body {
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;
 		scroll-behavior: auto !important;
+	}
+
+	.highlight-item {
+		transition-duration: 0.01ms;
+		transition-delay: 0ms;
 	}
 }

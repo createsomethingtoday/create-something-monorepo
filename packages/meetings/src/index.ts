@@ -8,9 +8,12 @@
  *   GET  /meetings/:id - Get single meeting
  *   GET  /search      - Full-text search transcripts
  *   POST /reprocess/:id - Reprocess a failed meeting
+ *
+ * Queue Consumer:
+ *   Processes audio files asynchronously (no timeout issues)
  */
 
-import type { Env, Meeting, MeetingResponse } from './types';
+import type { Env, Meeting, MeetingResponse, ProcessingMessage } from './types';
 import { handleUpload } from './handlers/upload';
 import { processAudio } from './handlers/process';
 
@@ -51,7 +54,7 @@ export default {
         response = await handleGetMeeting(id, env);
       } else if (path.startsWith('/reprocess/') && request.method === 'POST') {
         const id = path.split('/')[2];
-        response = await handleReprocess(id, env, ctx);
+        response = await handleReprocess(id, env);
       } else if (path === '/search' && request.method === 'GET') {
         response = await handleSearch(url, env);
       } else if (path === '/health') {
@@ -79,6 +82,64 @@ export default {
         { error: error instanceof Error ? error.message : 'Internal error' },
         500
       );
+    }
+  },
+
+  /**
+   * Queue Consumer - processes audio files asynchronously
+   * Has 15 minute timeout vs 30 second HTTP timeout
+   */
+  async queue(
+    batch: MessageBatch<ProcessingMessage>,
+    env: Env
+  ): Promise<void> {
+    for (const message of batch.messages) {
+      const { meetingId, audioKey } = message.body;
+
+      console.log(`Processing meeting ${meetingId} from queue (attempt ${message.attempts})`);
+
+      try {
+        // Get audio from R2
+        const audioObject = await env.STORAGE.get(audioKey);
+        if (!audioObject) {
+          throw new Error(`Audio not found in R2: ${audioKey}`);
+        }
+
+        const audioBuffer = await audioObject.arrayBuffer();
+        console.log(`Audio loaded: ${(audioBuffer.byteLength / 1024 / 1024).toFixed(2)} MB`);
+
+        // Process the audio (transcribe + summarize)
+        await processAudio(meetingId, audioBuffer, audioKey, env);
+
+        // Acknowledge successful processing
+        message.ack();
+        console.log(`Successfully processed meeting ${meetingId}`);
+      } catch (error) {
+        console.error(`Failed to process meeting ${meetingId}:`, error);
+
+        // Retry up to 3 times (configured in wrangler.toml)
+        if (message.attempts < 3) {
+          message.retry({ delaySeconds: 60 * message.attempts }); // 1min, 2min, 3min backoff
+          console.log(`Retrying meeting ${meetingId} in ${60 * message.attempts}s`);
+        } else {
+          // After 3 failures, mark as failed and ack (moves to DLQ)
+          await env.DB.prepare(`
+            UPDATE meetings SET
+              status = 'failed',
+              error_message = ?,
+              updated_at = datetime('now')
+            WHERE id = ?
+          `)
+            .bind(
+              error instanceof Error ? error.message : 'Unknown error after 3 retries',
+              meetingId
+            )
+            .run();
+
+          message.ack(); // Will go to dead letter queue
+          console.log(`Meeting ${meetingId} failed after 3 attempts, moved to DLQ`);
+        }
+      }
     }
   },
 };
@@ -137,8 +198,7 @@ async function handleGetMeeting(id: string, env: Env): Promise<Response> {
 
 async function handleReprocess(
   id: string,
-  env: Env,
-  ctx: ExecutionContext
+  env: Env
 ): Promise<Response> {
   // Get the meeting
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?')
@@ -156,16 +216,14 @@ async function handleReprocess(
     );
   }
 
-  // Get audio from R2
-  const audioObject = await env.STORAGE.get(meeting.audio_key);
+  // Verify audio exists in R2
+  const audioObject = await env.STORAGE.head(meeting.audio_key);
   if (!audioObject) {
     return jsonResponse(
       { success: false, message: 'Audio file not found in storage' },
       404
     );
   }
-
-  const audioBuffer = await audioObject.arrayBuffer();
 
   // Update status
   await env.DB.prepare(
@@ -174,16 +232,16 @@ async function handleReprocess(
     .bind(id)
     .run();
 
-  // Reprocess in background
-  ctx.waitUntil(
-    processAudio(id, audioBuffer, meeting.audio_key, env).catch((error) => {
-      console.error(`Reprocessing failed for ${id}:`, error);
-    })
-  );
+  // Queue for reprocessing (uses the same queue consumer)
+  const message: ProcessingMessage = {
+    meetingId: id,
+    audioKey: meeting.audio_key,
+  };
+  await env.PROCESSING_QUEUE.send(message);
 
   return jsonResponse({
     success: true,
-    message: 'Reprocessing started',
+    message: 'Reprocessing queued',
   });
 }
 

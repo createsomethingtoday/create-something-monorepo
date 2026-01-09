@@ -18,6 +18,7 @@ declare global {
 				DB?: D1Database;
 				KV?: KVNamespace;
 				VIDEO_STATS?: KVNamespace;
+				AI?: Ai;
 			};
 		}
 	}

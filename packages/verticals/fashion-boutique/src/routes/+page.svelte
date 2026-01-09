@@ -1,38 +1,15 @@
 <script lang="ts">
 	import { Menu, X, Instagram, Mail } from 'lucide-svelte';
 	import { onMount } from 'svelte';
+	import { siteConfig } from '$lib/config/runtime';
 
 	let mobileMenuOpen = false;
 	let currentSlide = 0;
 	let galleryImages: HTMLElement;
 
-	const categories = [
-		'JEWELRY',
-		'SHOES',
-		'READY TO WEAR',
-		'BAGS',
-		'ACCESSORIES',
-		'GARDEROB',
-		'SIGNATURE PIECES'
-	];
-
-	const newProducts = [
-		{ id: 1, name: 'RELAXED WOOL COAT', price: 895, category: 'OUTERWEAR', image: '/images/product-wool-coat.png' },
-		{ id: 2, name: 'HIGH-WAIST TROUSERS', price: 425, category: 'PANTS', image: '/images/product-trousers.png' },
-		{ id: 3, name: 'SILK WRAP DRESS', price: 695, category: 'DRESSES', image: '/images/product-wrap-dress.png' },
-		{ id: 4, name: 'OVERSIZED SHIRT DRESS', price: 545, category: 'DRESSES', image: '/images/product-shirt-dress.png' }
-	];
-
-	const iconicPieces = [
-		{ id: 1, name: 'TAILORED BLAZER', price: 995, image: '/images/iconic-blazer.png' },
-		{ id: 2, name: 'CASHMERE SWEATER', price: 625, image: '/images/iconic-sweater.png' },
-		{ id: 3, name: 'LEATHER JACKET', price: 1895, image: '/images/iconic-leather-jacket.png' },
-		{ id: 4, name: 'MIDI SKIRT', price: 495, image: '/images/iconic-midi-skirt.png' }
-	];
-
 	// Gallery slider functions
 	function slideGallery(direction: number) {
-		const totalSlides = 3;
+		const totalSlides = $siteConfig.gallery.length;
 		currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
 		updateSlider();
 	}
@@ -102,20 +79,27 @@
 </script>
 
 <svelte:head>
-	<title>SILHOUETTES — Designed as Quiet Uniform for Modern Life</title>
-	<meta name="description" content="Timeless style crafted for modern expression. Discover our collection of ready-to-wear, accessories, and signature pieces." />
+	<title>{$siteConfig.name} — {$siteConfig.tagline}</title>
+	<meta name="description" content={$siteConfig.tagline} />
 
 	<!-- Performance optimizations -->
-	<link rel="preload" href="/images/product-wool-coat.png" as="image" />
-	<link rel="preload" href="/images/product-trousers.png" as="image" />
-	<link rel="preload" href="/images/gallery-1.png" as="image" />
-	<link rel="dns-prefetch" href="https://api.cloudflare.com" />
+	{#if $siteConfig.products.new[0]}
+		<link rel="preload" href={$siteConfig.products.new[0].image} as="image" />
+	{/if}
+	{#if $siteConfig.products.new[1]}
+		<link rel="preload" href={$siteConfig.products.new[1].image} as="image" />
+	{/if}
+	{#if $siteConfig.gallery[0]}
+		<link rel="preload" href={$siteConfig.gallery[0]} as="image" />
+	{/if}
 
 	<!-- Open Graph / Social -->
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="SILHOUETTES — Designed as Quiet Uniform for Modern Life" />
-	<meta property="og:description" content="Timeless style crafted for modern expression. Discover our collection of ready-to-wear, accessories, and signature pieces." />
-	<meta property="og:image" content="/images/statement-front.png" />
+	<meta property="og:title" content="{$siteConfig.name} — {$siteConfig.tagline}" />
+	<meta property="og:description" content={$siteConfig.tagline} />
+	{#if $siteConfig.gallery[0]}
+		<meta property="og:image" content={$siteConfig.gallery[0]} />
+	{/if}
 	<meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
 
@@ -152,16 +136,12 @@
 	<div class="hero-content animate-fade-in">
 		<div class="hero-meta">
 			<div class="hero-meta-left">
-				<p class="hero-artist">MATS GUSTAFSON — TOKYO</p>
 				<p class="hero-description">
-					In 'Silhouettes', Swedish artist Mats Gustafson interprets Toteme's Fall/Winter 25 Collection.
+					{$siteConfig.tagline}
 				</p>
 			</div>
-			<div class="hero-meta-right">
-				NOT JUST ANY BRAND
-			</div>
 		</div>
-		<h1 class="hero-title">SILHOUETTES</h1>
+		<h1 class="hero-title">{$siteConfig.name}</h1>
 	</div>
 </section>
 
@@ -170,7 +150,7 @@
 	<div class="container">
 		<div class="statement-grid">
 			<div class="statement-text">
-				<h2>DESIGNED AS QUIET<br/>UNIFORM FOR<br/>MODERN LIFE IN</h2>
+				<h2>DESIGNED WITH<br/>RESTRAINT AND<br/>INTENTION</h2>
 			</div>
 			<div class="statement-images">
 				<div class="statement-img-back">
@@ -181,10 +161,10 @@
 				</div>
 			</div>
 			<div class="statement-description">
-				<h3>THE STORY BEHIND BRAND</h3>
+				<h3>OUR PHILOSOPHY</h3>
 				<p>
-					Totême creates refined essentials defined by restraint, material integrity, and timeless form.
-					Designed to integrate seamlessly into a modern wardrobe with quiet confidence and lasting relevance.
+					{$siteConfig.tagline}. Each piece is selected for enduring design,
+					refined materials, and effortless versatility.
 				</p>
 			</div>
 		</div>
@@ -196,11 +176,11 @@
 	<span class="text-watermark" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">COLLECTION</span>
 	<div class="container">
 		<div class="categories-grid stagger-children stagger-quick">
-			{#each categories as category, i}
+			{#each $siteConfig.categories as category, i}
 				<div class="category-item" style="--index: {i}">
 					<span class="category-number">{String(i + 1).padStart(2, '0')}</span>
-					<a href="/category/{category.toLowerCase().replace(/\s+/g, '-')}" class="category-link underline-reveal">
-						{category}
+					<a href="/category/{category.slug}" class="category-link underline-reveal">
+						{category.name}
 					</a>
 				</div>
 			{/each}
@@ -218,7 +198,7 @@
 			</p>
 		</div>
 		<div class="products-grid stagger-children stagger-standard">
-			{#each newProducts as product, i}
+			{#each $siteConfig.products.new as product, i}
 				<a href="/product/{product.id}" class="product-card hover-lift" style="--index: {i}">
 					<div class="product-image grayscale-scale-hover">
 						<img src={product.image} alt={product.name} loading="lazy" />
@@ -237,13 +217,13 @@
 
 <!-- Gallery Section - Dark -->
 <section class="gallery section animate-on-scroll">
-	<div class="gallery-label">01 SILHOUETTES</div>
+	<div class="gallery-label">01 {$siteConfig.name}</div>
 	<div class="gallery-content">
 		<div class="gallery-text">
 			<div class="gallery-icon"></div>
-			<p class="gallery-title">SILHOUETTES</p>
+			<p class="gallery-title">{$siteConfig.name}</p>
 			<p class="gallery-description">
-				A collection is a thoughtful edit of designs, unified by intention, material, and silhouette.
+				{$siteConfig.tagline}
 			</p>
 		</div>
 		<div class="gallery-slider">
@@ -253,15 +233,11 @@
 				</svg>
 			</button>
 			<div class="gallery-images" bind:this={galleryImages}>
-				<div class="gallery-item hover-card">
-					<img src="/images/gallery-1.png" alt="Silhouettes Gallery 1" loading="lazy" />
-				</div>
-				<div class="gallery-item hover-card">
-					<img src="/images/gallery-2.png" alt="Silhouettes Gallery 2" loading="lazy" />
-				</div>
-				<div class="gallery-item hover-card">
-					<img src="/images/gallery-3.png" alt="Silhouettes Gallery 3" loading="lazy" />
-				</div>
+				{#each $siteConfig.gallery as image, i}
+					<div class="gallery-item hover-card">
+						<img src={image} alt="{$siteConfig.name} Gallery {i + 1}" loading="lazy" />
+					</div>
+				{/each}
 			</div>
 			<button class="slider-arrow slider-next" aria-label="Next image" on:click={() => slideGallery(1)}>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -269,9 +245,9 @@
 				</svg>
 			</button>
 			<div class="slider-dots">
-				<button class="slider-dot {currentSlide === 0 ? 'active' : ''}" aria-label="Go to image 1" on:click={() => goToSlide(0)}></button>
-				<button class="slider-dot {currentSlide === 1 ? 'active' : ''}" aria-label="Go to image 2" on:click={() => goToSlide(1)}></button>
-				<button class="slider-dot {currentSlide === 2 ? 'active' : ''}" aria-label="Go to image 3" on:click={() => goToSlide(2)}></button>
+				{#each $siteConfig.gallery as _, i}
+					<button class="slider-dot {currentSlide === i ? 'active' : ''}" aria-label="Go to image {i + 1}" on:click={() => goToSlide(i)}></button>
+				{/each}
 			</div>
 		</div>
 	</div>
@@ -282,11 +258,10 @@
 	<div class="container">
 		<div class="icons-wrapper">
 			<div class="icons-text">
-				<h2>ICONS OF THE<br/>WARDROBE</h2>
+				<h2>SIGNATURE<br/>PIECES</h2>
 				<p>
-					TIMELESS PIECES THAT DEFINE THE TOTÊME WARDROBE. SELECTED FOR ENDURING DESIGN,
-					REFINED MATERIALS, AND EFFORTLESS VERSATILITY. WORN SEASON AFTER SEASON AS MODERN
-					ESSENTIALS FOR WOMEN SEEKING QUIET CONFIDENCE AND PERMANENCE.
+					TIMELESS PIECES SELECTED FOR ENDURING DESIGN, REFINED MATERIALS, AND EFFORTLESS
+					VERSATILITY. WORN SEASON AFTER SEASON AS MODERN ESSENTIALS.
 				</p>
 			</div>
 			<div class="icons-image">
@@ -309,7 +284,7 @@
 		<div class="timeless-grid-wrapper">
 			<span class="text-watermark" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">SIGNATURE</span>
 			<div class="products-grid timeless-grid stagger-children stagger-standard">
-				{#each iconicPieces as product, i}
+				{#each $siteConfig.products.iconic as product, i}
 					<div class="product-card timeless-card hover-lift" style="--offset: {i * 20}px; --index: {i}">
 						<div class="product-image grayscale-scale-hover">
 							<img src={product.image} alt={product.name} loading="lazy" />
@@ -371,18 +346,30 @@
 
 			<div class="footer-info" style="--index: 2">
 				<h4>CONTACT</h4>
-				<a href="mailto:info@toteme.com" class="underline-reveal">EMAIL US</a>
-				<a href="/stores" class="underline-reveal">STORE LOCATIONS</a>
-				<a href="/services" class="underline-reveal">CLIENT SERVICES</a>
-				<a href="/social" class="underline-reveal">SOCIAL MEDIAS</a>
+				{#if $siteConfig.contact.email}
+					<a href="mailto:{$siteConfig.contact.email}" class="underline-reveal">EMAIL US</a>
+				{/if}
+				{#if $siteConfig.contact.phone}
+					<a href="tel:{$siteConfig.contact.phone}" class="underline-reveal">CALL US</a>
+				{/if}
+				{#if $siteConfig.social.instagram}
+					<a href={$siteConfig.social.instagram} target="_blank" rel="noopener noreferrer" class="underline-reveal">INSTAGRAM</a>
+				{/if}
+				{#if $siteConfig.social.pinterest}
+					<a href={$siteConfig.social.pinterest} target="_blank" rel="noopener noreferrer" class="underline-reveal">PINTEREST</a>
+				{/if}
 			</div>
 		</div>
 
 		<div class="footer-brand">
-			<h1 class="footer-logo-text">TOTEME</h1>
+			<h1 class="footer-logo-text">{$siteConfig.name}</h1>
 			<div class="footer-logo-symbol">
 				<div class="logo-symbol large"></div>
 			</div>
+		</div>
+
+		<div class="footer-bottom">
+			<p>© {new Date().getFullYear()} {$siteConfig.name}. All rights reserved.</p>
 		</div>
 	</div>
 </footer>
@@ -1075,6 +1062,20 @@
 		position: absolute;
 		right: 0;
 		bottom: 0;
+	}
+
+	.footer-bottom {
+		margin-top: var(--space-xl);
+		padding-top: var(--space-lg);
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		text-align: center;
+	}
+
+	.footer-bottom p {
+		font-size: var(--text-caption);
+		color: rgba(255, 255, 255, 0.46);
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 
 	/* Responsive */

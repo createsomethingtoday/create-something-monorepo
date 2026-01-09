@@ -13,5 +13,9 @@
 			"binding": "VIDEO_STATS",
 			"id": "55a1177ee7c3491589c19094e38df0f7"
 		}
-	]
+	],
+
+	"ai": {
+		"binding": "AI"
+	}
 }

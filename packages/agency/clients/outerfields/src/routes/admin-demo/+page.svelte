@@ -128,12 +128,19 @@
 	// Modals
 	let showUploadModal = $state(false);
 	let showVideoModal = $state(false);
+	let showAnalyticsModal = $state(false);
 	let selectedVideo = $state<UploadItem | null>(null);
 	let showActivityExpanded = $state(false);
 	let showStatDetail = $state<string | null>(null);
 
 	// Video action menu
 	let activeActionMenu = $state<string | null>(null);
+
+	// Analytics chat
+	type ChatMessage = { role: 'user' | 'assistant'; content: string };
+	let chatMessages = $state<ChatMessage[]>([]);
+	let chatInput = $state('');
+	let isSendingMessage = $state(false);
 
 	// ============================================
 	// COMPUTED / DERIVED
@@ -236,6 +243,12 @@
 		activeActionMenu = null;
 	}
 
+	function openAnalytics(video: UploadItem) {
+		selectedVideo = video;
+		showAnalyticsModal = true;
+		activeActionMenu = null;
+	}
+
 	function toggleActionMenu(id: string) {
 		activeActionMenu = activeActionMenu === id ? null : id;
 	}
@@ -243,8 +256,70 @@
 	function closeModals() {
 		showUploadModal = false;
 		showVideoModal = false;
+		showAnalyticsModal = false;
 		showStatDetail = null;
 		activeActionMenu = null;
+		// Reset chat when closing analytics modal
+		if (!showAnalyticsModal) {
+			chatMessages = [];
+			chatInput = '';
+		}
+	}
+
+	// Analytics chat
+	async function sendChatMessage() {
+		if (!chatInput.trim() || isSendingMessage || !selectedVideo) return;
+
+		const userMessage = chatInput.trim();
+		chatInput = '';
+
+		// Add user message to chat
+		chatMessages = [...chatMessages, { role: 'user', content: userMessage }];
+
+		isSendingMessage = true;
+
+		try {
+			const response = await fetch('/api/analytics-chat', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					message: userMessage,
+					videoAnalytics: {
+						title: selectedVideo.title,
+						views: selectedVideo.views
+					}
+				})
+			});
+
+			const data = await response.json();
+
+			if (data.success && data.message) {
+				chatMessages = [...chatMessages, { role: 'assistant', content: data.message }];
+			} else {
+				chatMessages = [
+					...chatMessages,
+					{ role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+				];
+			}
+		} catch (error) {
+			console.error('Chat error:', error);
+			chatMessages = [
+				...chatMessages,
+				{
+					role: 'assistant',
+					content: 'Sorry, I couldn\'t connect to the AI service. Please try again.'
+				}
+			];
+		} finally {
+			isSendingMessage = false;
+		}
+	}
+
+	function handleChatKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			sendChatMessage();
+		}
 	}
 
 	// Stat detail data
@@ -633,7 +708,7 @@
 									>
 										<Pencil size={16} />
 									</button>
-									<button class="action-btn" title="Analytics">
+									<button class="action-btn" title="Analytics" onclick={() => openAnalytics(upload)}>
 										<BarChart3 size={16} />
 									</button>
 									<div class="action-menu-wrapper">
@@ -765,9 +840,9 @@
 					<div class="video-preview">
 						<img src={selectedVideo.thumbnail} alt={selectedVideo.title} />
 						<div class="preview-overlay">
-							<button class="btn-play-lg">
+							<span class="play-button play-button-lg">
 								<Play size={32} />
-							</button>
+							</span>
 						</div>
 					</div>
 					<div class="video-meta">
@@ -914,6 +989,225 @@
 							<span class="activity-time">{activity.time}</span>
 						</div>
 					{/each}
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Analytics Modal -->
+{#if showAnalyticsModal && selectedVideo}
+	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+	<div class="modal-overlay" onclick={closeModals} role="presentation">
+		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+		<div class="modal modal-lg analytics-modal" role="dialog" aria-modal="true" aria-labelledby="analytics-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+			<div class="modal-header">
+				<h3 id="analytics-modal-title">Analytics: {selectedVideo.title}</h3>
+				<button class="modal-close" onclick={closeModals}>
+					<X size={20} />
+				</button>
+			</div>
+			<div class="modal-body">
+				<!-- Key Metrics Grid -->
+				<div class="analytics-metrics">
+					<div class="metric-card">
+						<div class="metric-label">Total Views</div>
+						<div class="metric-value">{selectedVideo.views.toLocaleString()}</div>
+						<div class="metric-change positive">+12.5% vs last 7 days</div>
+					</div>
+					<div class="metric-card">
+						<div class="metric-label">Avg Watch Time</div>
+						<div class="metric-value">4m 32s</div>
+						<div class="metric-change positive">+8.3% vs last 7 days</div>
+					</div>
+					<div class="metric-card">
+						<div class="metric-label">Engagement Rate</div>
+						<div class="metric-value">24.8%</div>
+						<div class="metric-change negative">-2.1% vs last 7 days</div>
+					</div>
+					<div class="metric-card">
+						<div class="metric-label">Subscribers Gained</div>
+						<div class="metric-value">847</div>
+						<div class="metric-change positive">+34.2% vs last 7 days</div>
+					</div>
+				</div>
+
+				<!-- Engagement Breakdown -->
+				<div class="analytics-section">
+					<h4>Engagement Breakdown</h4>
+					<div class="engagement-stats">
+						<div class="engagement-row">
+							<span class="engagement-label">Likes</span>
+							<div class="engagement-bar">
+								<div class="engagement-fill" style="width: 89%"></div>
+							</div>
+							<span class="engagement-value">12.4K</span>
+						</div>
+						<div class="engagement-row">
+							<span class="engagement-label">Comments</span>
+							<div class="engagement-bar">
+								<div class="engagement-fill" style="width: 67%"></div>
+							</div>
+							<span class="engagement-value">2.8K</span>
+						</div>
+						<div class="engagement-row">
+							<span class="engagement-label">Shares</span>
+							<div class="engagement-bar">
+								<div class="engagement-fill" style="width: 45%"></div>
+							</div>
+							<span class="engagement-value">1.2K</span>
+						</div>
+						<div class="engagement-row">
+							<span class="engagement-label">Saves</span>
+							<div class="engagement-bar">
+								<div class="engagement-fill" style="width: 34%"></div>
+							</div>
+							<span class="engagement-value">892</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Audience Retention -->
+				<div class="analytics-section">
+					<h4>Audience Retention</h4>
+					<div class="retention-chart">
+						<svg viewBox="0 0 400 120" preserveAspectRatio="none">
+							<polyline
+								points="0,100 50,95 100,85 150,70 200,55 250,60 300,70 350,85 400,95"
+								fill="rgba(255,255,255,0.1)"
+								stroke="rgba(255,255,255,0.5)"
+								stroke-width="2"
+							/>
+						</svg>
+						<div class="retention-labels">
+							<span>0%</span>
+							<span>25%</span>
+							<span>50%</span>
+							<span>75%</span>
+							<span>100%</span>
+						</div>
+					</div>
+					<p class="retention-note">Peak retention at 3m 15s (78% of viewers)</p>
+				</div>
+
+				<!-- Traffic Sources -->
+				<div class="analytics-section">
+					<h4>Traffic Sources</h4>
+					<div class="traffic-sources">
+						<div class="traffic-item">
+							<div class="traffic-label">
+								<span class="traffic-dot" style="background: #4a9eff"></span>
+								Browse Features
+							</div>
+							<span class="traffic-value">42%</span>
+						</div>
+						<div class="traffic-item">
+							<div class="traffic-label">
+								<span class="traffic-dot" style="background: #7c3aed"></span>
+								Suggested Videos
+							</div>
+							<span class="traffic-value">28%</span>
+						</div>
+						<div class="traffic-item">
+							<div class="traffic-label">
+								<span class="traffic-dot" style="background: #22c55e"></span>
+								External Links
+							</div>
+							<span class="traffic-value">18%</span>
+						</div>
+						<div class="traffic-item">
+							<div class="traffic-label">
+								<span class="traffic-dot" style="background: #f59e0b"></span>
+								Search
+							</div>
+							<span class="traffic-value">12%</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Geographic Distribution -->
+				<div class="analytics-section">
+					<h4>Top Locations</h4>
+					<div class="locations-list">
+						<div class="location-item">
+							<span class="location-name">United States</span>
+							<span class="location-value">34.2%</span>
+						</div>
+						<div class="location-item">
+							<span class="location-name">United Kingdom</span>
+							<span class="location-value">18.5%</span>
+						</div>
+						<div class="location-item">
+							<span class="location-name">Canada</span>
+							<span class="location-value">12.8%</span>
+						</div>
+						<div class="location-item">
+							<span class="location-name">Australia</span>
+							<span class="location-value">9.3%</span>
+						</div>
+						<div class="location-item">
+							<span class="location-name">Germany</span>
+							<span class="location-value">7.1%</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- AI Content Strategist Chat -->
+				<div class="analytics-section analytics-chat-section">
+					<h4>💡 Content Strategy Assistant</h4>
+					<p class="chat-intro">
+						Ask me anything about your video's performance or get content ideas based on what's
+						working.
+					</p>
+
+					<div class="chat-container">
+						{#if chatMessages.length === 0}
+							<div class="chat-empty">
+								<p>Start a conversation to get insights and content ideas!</p>
+								<div class="chat-suggestions">
+									<button class="suggestion-btn" onclick={() => (chatInput = 'Why is this video performing well?')}>
+										Why is this video performing well?
+									</button>
+									<button class="suggestion-btn" onclick={() => (chatInput = 'What content should I create next?')}>
+										What content should I create next?
+									</button>
+									<button class="suggestion-btn" onclick={() => (chatInput = 'How can I improve engagement?')}>
+										How can I improve engagement?
+									</button>
+								</div>
+							</div>
+						{:else}
+							<div class="chat-messages">
+								{#each chatMessages as message}
+									<div class="chat-message" class:user={message.role === 'user'} class:assistant={message.role === 'assistant'}>
+										<div class="message-content">{message.content}</div>
+									</div>
+								{/each}
+								{#if isSendingMessage}
+									<div class="chat-message assistant">
+										<div class="message-content typing">Thinking...</div>
+									</div>
+								{/if}
+							</div>
+						{/if}
+
+						<div class="chat-input-wrapper">
+							<input
+								type="text"
+								class="chat-input"
+								placeholder="Ask about your analytics or get content ideas..."
+								bind:value={chatInput}
+								onkeydown={handleChatKeydown}
+								disabled={isSendingMessage}
+							/>
+							<button class="chat-send-btn" onclick={sendChatMessage} disabled={!chatInput.trim() || isSendingMessage} aria-label="Send message">
+								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<line x1="22" y1="2" x2="11" y2="13"></line>
+									<polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+								</svg>
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -1587,7 +1881,9 @@
 		top: 100%;
 		margin-top: 0.25rem;
 		min-width: 160px;
-		background: var(--color-bg-surface);
+		background: rgba(10, 10, 10, 0.95); /* Nearly opaque dark background */
+		backdrop-filter: blur(8px); /* Glassmorphic blur */
+		-webkit-backdrop-filter: blur(8px);
 		border: 1px solid var(--color-border-default);
 		border-radius: 0.5rem;
 		padding: 0.5rem;
@@ -1858,17 +2154,15 @@
 		background: rgba(0, 0, 0, 0.4);
 	}
 
-	.btn-play-lg {
+	/* Larger variant of the glassmorphic play button for modals */
+	.play-button-lg {
 		width: 4rem;
 		height: 4rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--color-primary);
-		border: none;
-		border-radius: 50%;
-		color: white;
-		cursor: pointer;
+	}
+
+	.play-button-lg :global(svg) {
+		width: 32px;
+		height: 32px;
 	}
 
 	.video-meta {
@@ -1961,6 +2255,349 @@
 	.activity-list.expanded {
 		max-height: 400px;
 		overflow-y: auto;
+	}
+
+	/* Analytics Modal */
+	.analytics-metrics {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 1rem;
+		margin-bottom: 2rem;
+	}
+
+	.metric-card {
+		padding: 1.5rem;
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.75rem;
+	}
+
+	.metric-label {
+		font-size: 0.875rem;
+		color: var(--color-fg-muted);
+		margin-bottom: 0.5rem;
+	}
+
+	.metric-value {
+		font-size: 1.75rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin-bottom: 0.25rem;
+	}
+
+	.metric-change {
+		font-size: 0.75rem;
+		font-weight: 500;
+	}
+
+	.metric-change.positive {
+		color: var(--color-success);
+	}
+
+	.metric-change.negative {
+		color: var(--color-error);
+	}
+
+	.analytics-section {
+		margin-bottom: 2rem;
+	}
+
+	.analytics-section h4 {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-bottom: 1rem;
+	}
+
+	.engagement-stats {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.engagement-row {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.engagement-label {
+		min-width: 80px;
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.engagement-bar {
+		flex: 1;
+		height: 8px;
+		background: var(--color-bg-subtle);
+		border-radius: 4px;
+		overflow: hidden;
+	}
+
+	.engagement-fill {
+		height: 100%;
+		background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
+		transition: width 0.3s ease;
+	}
+
+	.engagement-value {
+		min-width: 60px;
+		text-align: right;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.retention-chart {
+		position: relative;
+		width: 100%;
+		height: 200px;
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		margin-bottom: 0.5rem;
+		padding: 1rem;
+	}
+
+	.retention-chart svg {
+		width: 100%;
+		height: 100%;
+	}
+
+	.retention-labels {
+		display: flex;
+		justify-content: space-between;
+		padding: 0 0.5rem;
+		font-size: 0.75rem;
+		color: var(--color-fg-muted);
+	}
+
+	.retention-note {
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+		margin-top: 0.5rem;
+	}
+
+	.traffic-sources {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.traffic-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem;
+		background: var(--color-bg-subtle);
+		border-radius: 0.5rem;
+	}
+
+	.traffic-label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.traffic-dot {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+	}
+
+	.traffic-value {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.locations-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.location-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem;
+		background: var(--color-bg-subtle);
+		border-radius: 0.5rem;
+	}
+
+	.location-name {
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.location-value {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	/* Analytics Chat */
+	.analytics-chat-section {
+		border-top: 1px solid var(--color-border-default);
+		padding-top: 2rem;
+	}
+
+	.chat-intro {
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+		margin-bottom: 1rem;
+	}
+
+	.chat-container {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.75rem;
+		overflow: hidden;
+	}
+
+	.chat-empty {
+		padding: 2rem;
+		text-align: center;
+	}
+
+	.chat-empty p {
+		font-size: 0.875rem;
+		color: var(--color-fg-muted);
+		margin-bottom: 1.5rem;
+	}
+
+	.chat-suggestions {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		max-width: 400px;
+		margin: 0 auto;
+	}
+
+	.suggestion-btn {
+		padding: 0.75rem 1rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-secondary);
+		font-size: 0.875rem;
+		text-align: left;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.suggestion-btn:hover {
+		background: var(--color-bg-elevated);
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+		transform: translateY(-2px);
+	}
+
+	.chat-messages {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding: 1.5rem;
+		max-height: 400px;
+		overflow-y: auto;
+	}
+
+	.chat-message {
+		display: flex;
+	}
+
+	.chat-message.user {
+		justify-content: flex-end;
+	}
+
+	.chat-message.assistant {
+		justify-content: flex-start;
+	}
+
+	.message-content {
+		max-width: 80%;
+		padding: 0.75rem 1rem;
+		border-radius: 0.75rem;
+		font-size: 0.875rem;
+		line-height: 1.5;
+		white-space: pre-wrap;
+	}
+
+	.chat-message.user .message-content {
+		background: rgba(255, 255, 255, 0.1);
+		color: var(--color-fg-primary);
+	}
+
+	.chat-message.assistant .message-content {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		color: var(--color-fg-secondary);
+	}
+
+	.message-content.typing {
+		animation: pulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.5; }
+	}
+
+	.chat-input-wrapper {
+		display: flex;
+		gap: 0.5rem;
+		padding: 1rem;
+		border-top: 1px solid var(--color-border-default);
+		background: var(--color-bg-elevated);
+	}
+
+	.chat-input {
+		flex: 1;
+		padding: 0.75rem 1rem;
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-primary);
+		font-size: 0.875rem;
+		outline: none;
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.chat-input:focus {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.chat-input:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.chat-send-btn {
+		padding: 0.75rem 1rem;
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-primary);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.chat-send-btn:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.15);
+		border-color: var(--color-border-emphasis);
+		transform: translateY(-2px);
+	}
+
+	.chat-send-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	@media (max-width: 1024px) {

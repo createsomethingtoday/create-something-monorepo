@@ -1,0 +1,38 @@
+{
+  "id": "tpl_fashion_boutique",
+  "slug": "fashion-boutique",
+  "name": "Fashion Boutique",
+  "version": "1.0.0",
+  "category": "ecommerce",
+  "description": "TOTEME-inspired minimalist fashion e-commerce with AI-generated imagery",
+  "features": [
+    "Mix-blend-mode navigation",
+    "Grayscale-to-color hover effects",
+    "Interactive gallery slider",
+    "Scroll-triggered animations",
+    "Canon design system",
+    "AI-generated product imagery"
+  ],
+  "tiers": {
+    "free": {
+      "price": 0,
+      "features": ["Up to 8 products", "1 category", "Basic contact form"],
+      "limits": {
+        "products": 8,
+        "categories": 1
+      }
+    },
+    "pro": {
+      "price": 29,
+      "features": [
+        "Unlimited products",
+        "Unlimited categories",
+        "Custom domain",
+        "WORKWAY automation"
+      ],
+      "limits": {}
+    }
+  },
+  "demoUrl": "https://fashion-boutique-demo.createsomething.space",
+  "previewImage": "/images/template-preview.png"
+}

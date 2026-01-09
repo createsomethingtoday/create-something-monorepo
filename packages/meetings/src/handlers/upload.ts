@@ -1,16 +1,15 @@
 /**
  * Upload Handler
- * Receives audio files, stores in R2, processes inline
- * "From sound to understanding in one request"
+ * Receives audio files, stores in R2, queues for processing
+ * "From sound to understanding through the queue"
  */
 
-import type { Env, UploadRequest, UploadResponse } from '../types';
-import { processAudio } from './process';
+import type { Env, UploadRequest, UploadResponse, ProcessingMessage } from '../types';
 
 export async function handleUpload(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     const contentType = request.headers.get('content-type') || '';
@@ -89,25 +88,19 @@ export async function handleUpload(
       )
       .run();
 
-    // Process in background using waitUntil
-    // Re-read from R2 to ensure buffer is valid in async context
-    ctx.waitUntil(
-      (async () => {
-        const audioObject = await env.STORAGE.get(audioKey);
-        if (!audioObject) {
-          throw new Error('Audio not found in R2');
-        }
-        const buffer = await audioObject.arrayBuffer();
-        await processAudio(meetingId, buffer, audioKey, env);
-      })().catch((error) => {
-        console.error(`Background processing failed for ${meetingId}:`, error);
-      })
-    );
+    // Queue for async processing (no timeout issues)
+    const message: ProcessingMessage = {
+      meetingId,
+      audioKey,
+    };
+    await env.PROCESSING_QUEUE.send(message);
+
+    console.log(`Queued meeting ${meetingId} for processing`);
 
     return jsonResponse<UploadResponse>({
       success: true,
       meetingId,
-      message: 'Meeting uploaded, processing started',
+      message: 'Meeting uploaded and queued for processing',
     });
   } catch (error) {
     console.error('Upload error:', error);

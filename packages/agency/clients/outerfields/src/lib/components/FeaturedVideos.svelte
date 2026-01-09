@@ -108,9 +108,9 @@
 			</p>
 		</div>
 
-		<div class="videos-grid">
-			{#each videos as video}
-				<button class="video-card" onclick={() => playVideo(video)}>
+		<div class="videos-grid highlight-grid">
+			{#each videos as video, index}
+				<button class="video-card highlight-item" style="--index: {index}" onclick={() => playVideo(video)}>
 					<div class="video-thumbnail">
 						<img src={video.thumbnail} alt={video.title} loading="lazy" />
 						<div class="video-overlay">
@@ -201,12 +201,16 @@
 		overflow: hidden;
 		cursor: pointer;
 		text-align: left;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard),
+			opacity var(--duration-standard) var(--ease-standard),
+			transform var(--duration-micro) var(--ease-standard);
+		transition-delay: calc(var(--cascade-step, 50ms) * var(--index, 0));
 	}
 
 	.video-card:hover {
 		border-color: var(--color-border-strong);
-		transform: translateY(-4px);
+		transform: translateY(-4px) scale(1.02);
+		opacity: 1 !important; /* Override highlight-grid opacity dimming */
 	}
 
 	/* Play button hover styles are global in app.css */

@@ -7,6 +7,7 @@ export interface Env {
   DB: D1Database;
   STORAGE: R2Bucket;
   AI: Ai;
+  PROCESSING_QUEUE: Queue<ProcessingMessage>;
   ANTHROPIC_API_KEY: string;
   ASSEMBLYAI_API_KEY: string;
   ENVIRONMENT: string;

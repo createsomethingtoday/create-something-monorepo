@@ -24,6 +24,18 @@ binding = "AI"
 
 # Environment variables (set via wrangler secret)
 # ANTHROPIC_API_KEY - for Claude summarization
+# ASSEMBLYAI_API_KEY - for large file transcription
 
 [vars]
 ENVIRONMENT = "development"
+
+# Queue for async processing (avoids waitUntil timeout)
+[[queues.producers]]
+queue = "meetings-processing"
+binding = "PROCESSING_QUEUE"
+
+[[queues.consumers]]
+queue = "meetings-processing"
+max_batch_size = 1
+max_retries = 3
+dead_letter_queue = "meetings-processing-dlq"

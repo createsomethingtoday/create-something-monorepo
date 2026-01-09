@@ -33,9 +33,9 @@
 			</p>
 		</div>
 
-		<div class="ecosystem-cards">
+		<div class="ecosystem-cards highlight-grid">
 			<!-- Admin Card -->
-			<div class="eco-card admin-card">
+			<div class="eco-card admin-card highlight-item" style="--index: 0">
 				<div class="card-inner">
 					<div class="card-header">
 						<span class="card-icon">
@@ -60,7 +60,7 @@
 			</div>
 
 			<!-- User Card -->
-			<div class="eco-card user-card">
+			<div class="eco-card user-card highlight-item" style="--index: 1">
 				<div class="card-inner">
 					<div class="card-header">
 						<span class="card-icon">
@@ -142,7 +142,9 @@
 	.eco-card {
 		position: relative;
 		transform-style: preserve-3d;
-		transition: transform 0.4s ease, box-shadow 0.4s ease;
+		transition: transform 0.4s ease, box-shadow 0.4s ease,
+			opacity var(--duration-standard) var(--ease-standard);
+		transition-delay: calc(var(--cascade-step, 50ms) * var(--index, 0));
 	}
 
 	.eco-card.admin-card {
@@ -154,8 +156,9 @@
 	}
 
 	.eco-card:hover {
-		transform: rotateY(0) rotateX(0) translateY(-8px);
+		transform: rotateY(0) rotateX(0) translateY(-8px) scale(var(--scale-micro, 1.02));
 		z-index: 10;
+		opacity: 1 !important; /* Override highlight-grid opacity dimming */
 	}
 
 	.card-inner {

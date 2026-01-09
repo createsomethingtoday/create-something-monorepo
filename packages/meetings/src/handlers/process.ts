@@ -79,6 +79,7 @@ export async function processAudio(
 
 /**
  * Transcribe audio - uses Whisper for small files, AssemblyAI for large files
+ * Falls back to AssemblyAI if Whisper fails (e.g., m4a format issues)
  */
 async function transcribeAudioChunked(
   audioBuffer: ArrayBuffer,
@@ -87,13 +88,26 @@ async function transcribeAudioChunked(
   const totalSize = audioBuffer.byteLength;
   console.log(`Transcribing audio: ${totalSize} bytes (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
 
-  // If file is small enough, use Cloudflare Workers AI (Whisper)
+  // If file is small enough, try Cloudflare Workers AI (Whisper) first
   if (totalSize <= WHISPER_LIMIT) {
-    console.log('Using Cloudflare Workers AI (Whisper)');
-    return transcribeWithWhisper(audioBuffer, env);
+    console.log('Trying Cloudflare Workers AI (Whisper)');
+    try {
+      return await transcribeWithWhisper(audioBuffer, env);
+    } catch (whisperError) {
+      console.error('Whisper transcription failed:', whisperError);
+
+      // Fall back to AssemblyAI if available
+      if (env.ASSEMBLYAI_API_KEY) {
+        console.log('Falling back to AssemblyAI');
+        return transcribeWithAssemblyAI(audioBuffer, env);
+      }
+
+      // No fallback available, re-throw
+      throw whisperError;
+    }
   }
 
-  // Large file: use AssemblyAI
+  // Large file: use AssemblyAI directly
   if (!env.ASSEMBLYAI_API_KEY) {
     throw new Error(`Audio file too large (${(totalSize / 1024 / 1024).toFixed(2)} MB) and no ASSEMBLYAI_API_KEY configured`);
   }

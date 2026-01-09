@@ -55,9 +55,9 @@
 			</p>
 		</div>
 
-		<div class="testimonials-grid">
-			{#each testimonials as testimonial}
-				<article class="testimonial-card">
+		<div class="testimonials-grid highlight-grid">
+			{#each testimonials as testimonial, index}
+				<article class="testimonial-card highlight-item" style="--index: {index}">
 					<div class="quote-icon">
 						<span class="material-symbols-outlined">format_quote</span>
 					</div>
@@ -157,13 +157,17 @@
 		background: var(--glass-bg);
 		border: 1px solid var(--color-border-default);
 		border-radius: 1rem;
-		transition: all 0.3s ease;
+		transition: all var(--duration-standard) var(--ease-standard),
+			opacity var(--duration-standard) var(--ease-standard),
+			transform var(--duration-micro) var(--ease-standard);
+		transition-delay: calc(var(--cascade-step, 50ms) * var(--index, 0));
 	}
 
 	.testimonial-card:hover {
 		border-color: var(--color-border-strong);
-		transform: translateY(-4px);
+		transform: translateY(-4px) scale(var(--scale-micro, 1.02));
 		box-shadow: 0 20px 40px -15px rgba(255, 255, 255, 0.1);
+		opacity: 1 !important; /* Override highlight-grid opacity dimming */
 	}
 
 	.quote-icon {
