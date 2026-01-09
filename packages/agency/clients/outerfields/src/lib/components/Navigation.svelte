@@ -30,7 +30,7 @@
 
 		<div class="nav-right">
 			<a href="/login" class="nav-link">Log In</a>
-			<a href="/signup" class="btn-primary">Get Started</a>
+			<a href="/login" class="btn-primary">Get Started</a>
 		</div>
 	</div>
 </header>

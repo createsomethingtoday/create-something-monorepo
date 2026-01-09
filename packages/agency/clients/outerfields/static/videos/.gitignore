@@ -1,8 +1,0 @@
-# Video and thumbnail files are hosted via Cloudflare R2
-# https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev
-*.mp4
-*.webm
-*.mov
-*.avi
-*.jpg
-*.png
