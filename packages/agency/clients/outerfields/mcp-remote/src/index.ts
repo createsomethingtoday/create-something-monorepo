@@ -259,8 +259,8 @@ function handleMCPRequest(request: MCPRequest): MCPResponse {
 					serverInfo: {
 						name: SERVER_NAME,
 						version: SERVER_VERSION,
-						// OUTERFIELDS brand logo (purple circle with "OF" monogram)
-						icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMiIgZmlsbD0iIzdjMmJlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PRjwvdGV4dD48L3N2Zz4='
+						// OUTERFIELDS favicon (black rounded square with white circle and dot)
+						icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIEJhY2tncm91bmQgLS0+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzAwMDAwMCIvPgoKICA8IS0tIE91dGVyIHJpbmcgLS0+CiAgPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KCiAgPCEtLSBJbm5lciBkb3QgLS0+CiAgPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNCIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4K'
 					},
 					capabilities: {
 						tools: {}
@@ -299,7 +299,7 @@ export default {
 		const corsHeaders = {
 			'Access-Control-Allow-Origin': '*',
 			'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-			'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+			'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
 			'Access-Control-Max-Age': '86400'
 		};
 
@@ -327,36 +327,72 @@ export default {
 			);
 		}
 
-		// MCP JSON-RPC endpoint
-		if (url.pathname === '/mcp' && request.method === 'POST') {
-			try {
-				const mcpRequest = (await request.json()) as MCPRequest;
-				const mcpResponse = handleMCPRequest(mcpRequest);
+		// MCP endpoint - handles both GET (SSE) and POST (JSON-RPC)
+		if (url.pathname === '/mcp') {
+			// GET request - SSE streaming for server-to-client messages
+			if (request.method === 'GET') {
+				// Return SSE stream (keep-alive)
+				const stream = new ReadableStream({
+					start(controller) {
+						// Send initial comment to establish connection
+						controller.enqueue(new TextEncoder().encode(': connected\n\n'));
 
-				return new Response(JSON.stringify(mcpResponse), {
-					headers: {
-						...corsHeaders,
-						'Content-Type': 'application/json'
+						// Keep connection alive with periodic pings
+						const keepAlive = setInterval(() => {
+							controller.enqueue(new TextEncoder().encode(': ping\n\n'));
+						}, 15000);
+
+						// Store cleanup function
+						(controller as any).cleanup = () => clearInterval(keepAlive);
+					},
+					cancel(controller) {
+						if ((controller as any).cleanup) {
+							(controller as any).cleanup();
+						}
 					}
 				});
-			} catch (error) {
-				return new Response(
-					JSON.stringify({
-						jsonrpc: '2.0',
-						id: null,
-						error: {
-							code: -32700,
-							message: 'Parse error'
-						}
-					}),
-					{
-						status: 400,
+
+				return new Response(stream, {
+					headers: {
+						...corsHeaders,
+						'Content-Type': 'text/event-stream',
+						'Cache-Control': 'no-cache',
+						'Connection': 'keep-alive'
+					}
+				});
+			}
+
+			// POST request - JSON-RPC message
+			if (request.method === 'POST') {
+				try {
+					const mcpRequest = (await request.json()) as MCPRequest;
+					const mcpResponse = handleMCPRequest(mcpRequest);
+
+					return new Response(JSON.stringify(mcpResponse), {
 						headers: {
 							...corsHeaders,
 							'Content-Type': 'application/json'
 						}
-					}
-				);
+					});
+				} catch (error) {
+					return new Response(
+						JSON.stringify({
+							jsonrpc: '2.0',
+							id: null,
+							error: {
+								code: -32700,
+								message: 'Parse error'
+							}
+						}),
+						{
+							status: 400,
+							headers: {
+								...corsHeaders,
+								'Content-Type': 'application/json'
+							}
+						}
+					);
+				}
 			}
 		}
 
