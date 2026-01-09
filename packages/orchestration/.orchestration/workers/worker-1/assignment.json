@@ -1,0 +1,28 @@
+{
+  "workerId": "worker-1",
+  "issueId": "csm-h9zcu",
+  "convoyId": "convoy-erc5g_82fd",
+  "epicId": "voice-audit-agency",
+  "issue": {
+    "id": "csm-h9zcu",
+    "title": "Voice audit: Hero section and CTAs",
+    "status": "open",
+    "priority": 1,
+    "labels": ["agency", "complexity:simple", "voice-audit"],
+    "description": "Audit the hero section headline and call-to-action text on createsomething.agency for voice canon compliance. Focus on: marketing jargon, vague claims, philosophy placement, CTA clarity."
+  },
+  "context": {
+    "url": "https://createsomething.agency/",
+    "section": "hero",
+    "property": ".agency",
+    "currentText": {
+      "headline": "We help businesses identify operational inefficiencies and implement AI-powered automation solutions that streamline workflows and remove what obscures.",
+      "cta": "Book a discovery call or scroll to learn more"
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "workerId": "worker-5",
+  "issueId": "csm-qvlu9",
+  "convoyId": "convoy-erc5g_82fd",
+  "epicId": "voice-audit-agency",
+  "issue": {
+    "id": "csm-qvlu9",
+    "title": "Voice audit: Research ecosystem section",
+    "status": "open",
+    "priority": 1,
+    "labels": ["agency", "complexity:trivial", "voice-audit"],
+    "description": "Audit the three property descriptions (.io, .space, .ltd) in the research ecosystem section. Verify specificity and value clarity."
+  },
+  "context": {
+    "url": "https://createsomething.agency/",
+    "section": "research-ecosystem",
+    "property": ".agency",
+    "currentText": {
+      "io": "47 experiments published. Real metrics: time, cost, errors.",
+      "space": "Learn the same patterns we use. Tutorials that show you how to build it yourself.",
+      "ltd": "Rooted in Rams' design discipline: 'Less, but better.'"
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}
