@@ -1,0 +1,13 @@
+name = "outerfields-pcn"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+[vars]
+ENVIRONMENT = "production"
+
+[[kv_namespaces]]
+binding = "VIDEO_STATS"
+id = "55a1177ee7c3491589c19094e38df0f7"
+
+[ai]
+binding = "AI"
