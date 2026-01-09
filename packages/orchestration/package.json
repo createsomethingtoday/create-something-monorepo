@@ -1,0 +1,36 @@
+{
+  "name": "@create-something/orchestration",
+  "version": "0.1.0",
+  "description": "Multi-session orchestration layer with quality gates and cost tracking",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "orch": "./dist/bin/orch.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  },
+  "keywords": [
+    "orchestration",
+    "checkpoint",
+    "session",
+    "beads",
+    "harness"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "MIT",
+  "dependencies": {
+    "@create-something/harness": "workspace:*",
+    "commander": "^12.0.0",
+    "nanoid": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
