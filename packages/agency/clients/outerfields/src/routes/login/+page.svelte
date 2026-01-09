@@ -204,11 +204,11 @@
 
 <style>
 	.auth-container {
-		min-height: calc(100vh - 80px);
+		min-height: 100vh;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem 1.5rem;
+		padding: 6rem 1.5rem 2rem;
 	}
 
 	.auth-card {
