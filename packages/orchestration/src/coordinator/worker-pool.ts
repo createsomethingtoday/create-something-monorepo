@@ -178,6 +178,10 @@ export async function readWorkerSignal(
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return null;
     }
+    // Handle corrupted JSON gracefully
+    if (error instanceof SyntaxError) {
+      return null;
+    }
     throw error;
   }
 }
