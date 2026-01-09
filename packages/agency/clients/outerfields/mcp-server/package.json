@@ -1,0 +1,39 @@
+{
+  "name": "@outerfields/pcn-tools",
+  "version": "1.0.0",
+  "description": "MCP server for OUTERFIELDS Premium Content Network - AI-native platform exploration and guidance",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "outerfields-pcn": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "mcp",
+    "outerfields",
+    "pcn",
+    "video-streaming",
+    "claude-desktop"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
