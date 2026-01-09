@@ -187,9 +187,10 @@
 			</div>
 			<div class="activity-list">
 				{#each data.recentActivity as activity}
+					{@const ActivityIcon = getActivityIcon(activity.type)}
 					<div class="activity-item">
 						<div class="activity-icon" class:subscription={activity.type === 'subscription'}>
-							<svelte:component this={getActivityIcon(activity.type)} size={16} />
+							<ActivityIcon size={16} />
 						</div>
 						<div class="activity-content">
 							<span class="activity-message">{activity.message}</span>

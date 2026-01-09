@@ -22,8 +22,8 @@
 			<!-- Desktop Nav Links -->
 			<nav class="nav-links">
 				<a href="/" class="nav-link" class:active={$page.url.pathname === '/'}>Home</a>
-				<a href="#features" class="nav-link">Features</a>
-				<a href="#pricing" class="nav-link">Pricing</a>
+				<a href="/#features" class="nav-link">Features</a>
+				<a href="/#pricing" class="nav-link">Pricing</a>
 				<a href="/demo" class="nav-link">Demo</a>
 			</nav>
 		</div>

@@ -16,7 +16,7 @@ export interface Video {
 	src: string;
 }
 
-export type PlayerMode = 'hidden' | 'fullscreen' | 'mini';
+export type PlayerMode = 'hidden' | 'modal' | 'fullscreen' | 'mini';
 
 interface VideoPlayerState {
 	activeVideo: Video | null;
@@ -48,7 +48,7 @@ function createVideoPlayerStore() {
 			update(state => ({
 				...state,
 				activeVideo: video,
-				mode: 'fullscreen',
+				mode: 'modal',
 				isPlaying: true,
 				currentTime: 0
 			}));
@@ -71,7 +71,19 @@ function createVideoPlayerStore() {
 		},
 
 		maximize: () => {
+			update(state => ({ ...state, mode: 'modal' }));
+		},
+
+		enterFullscreen: () => {
 			update(state => ({ ...state, mode: 'fullscreen' }));
+		},
+
+		exitFullscreen: () => {
+			update(state => ({ ...state, mode: 'modal' }));
+		},
+
+		setMode: (mode: PlayerMode) => {
+			update(state => ({ ...state, mode }));
 		},
 
 		close: () => {

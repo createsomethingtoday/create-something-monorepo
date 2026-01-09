@@ -96,6 +96,7 @@
 
 		<div class="components-grid">
 			{#each components as component}
+				{@const Icon = iconMap[component.icon]}
 				<button
 					class="component-card"
 					class:active={activeComponent === component.id}
@@ -104,7 +105,7 @@
 					<div class="component-header">
 						<span class="component-number">{component.number}</span>
 						<span class="component-icon">
-							<svelte:component this={iconMap[component.icon]} size={20} />
+							<Icon size={20} />
 						</span>
 					</div>
 

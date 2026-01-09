@@ -12,6 +12,7 @@
 	import PlatformComponents from '$lib/components/PlatformComponents.svelte';
 	import ResourceLinks from '$lib/components/ResourceLinks.svelte';
 	import FeatureComparison from '$lib/components/FeatureComparison.svelte';
+	import Pricing from '$lib/components/Pricing.svelte';
 	import DemoCTA from '$lib/components/DemoCTA.svelte';
 
 	// SEO Configuration
@@ -190,5 +191,6 @@
 	<PlatformComponents />
 	<ResourceLinks />
 	<FeatureComparison />
+	<Pricing />
 	<DemoCTA />
 </main>

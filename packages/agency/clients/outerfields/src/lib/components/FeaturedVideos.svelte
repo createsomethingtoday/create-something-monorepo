@@ -6,7 +6,7 @@
 	 * Integrates with videoPlayer store for persistent mini-player support
 	 * Shows live view counts via Cloudflare KV
 	 */
-	import { Play, Pause, X, Volume2, VolumeX, Minimize2, Eye } from 'lucide-svelte';
+	import { Play, Pause, X, Volume2, VolumeX, Minimize2, Maximize2, Eye } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 	import { videoStats } from '$lib/stores/videoStats';
@@ -59,21 +59,42 @@
 			thumbnail: `${CDN_BASE}/thumbnails/staccato-promo.jpg`,
 			category: 'Promo',
 			src: `${CDN_BASE}/videos/staccato-promo.mp4`
+		},
+		{
+			id: 'v6',
+			title: 'USCCA Expo Promo Tim Kennedy',
+			description: 'Tim Kennedy at the USCCA Expo',
+			duration: '0:42',
+			thumbnail: `${CDN_BASE}/thumbnails/uscca-expo-promo.jpg`,
+			category: 'Promo',
+			src: `${CDN_BASE}/videos/uscca-expo-promo.mp4`
 		}
 	];
 
 	let videoElement: HTMLVideoElement | null = $state(null);
+	let playerContainer: HTMLDivElement | null = $state(null);
 	let progressPercent = $state(0);
 
-	// Sync video element with store state when in fullscreen mode
+	// Sync video element with store state when player is active
 	$effect(() => {
-		if (videoElement && $videoPlayer.mode === 'fullscreen') {
+		if (videoElement && $videoPlayer.mode !== 'hidden') {
 			if ($videoPlayer.isPlaying) {
 				videoElement.play().catch(() => {});
 			} else {
 				videoElement.pause();
 			}
 		}
+	});
+
+	// Handle native fullscreen changes
+	$effect(() => {
+		function handleFullscreenChange() {
+			if (!document.fullscreenElement && $videoPlayer.mode === 'fullscreen') {
+				videoPlayer.exitFullscreen();
+			}
+		}
+		document.addEventListener('fullscreenchange', handleFullscreenChange);
+		return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
 	});
 
 	$effect(() => {
@@ -143,6 +164,18 @@
 		const secs = Math.floor(seconds % 60);
 		return `${mins}:${secs.toString().padStart(2, '0')}`;
 	}
+
+	async function toggleFullscreen() {
+		if (!playerContainer) return;
+
+		if (document.fullscreenElement) {
+			await document.exitFullscreen();
+			videoPlayer.exitFullscreen();
+		} else {
+			await playerContainer.requestFullscreen();
+			videoPlayer.enterFullscreen();
+		}
+	}
 </script>
 
 <section class="videos-section" id="videos">
@@ -187,10 +220,11 @@
 	</div>
 </section>
 
-{#if $videoPlayer.mode === 'fullscreen' && $videoPlayer.activeVideo}
+{#if ($videoPlayer.mode === 'modal' || $videoPlayer.mode === 'fullscreen') && $videoPlayer.activeVideo}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="video-player-overlay"
+		class:is-fullscreen={$videoPlayer.mode === 'fullscreen'}
 		onclick={closePlayer}
 		onkeydown={(e) => e.key === 'Escape' && closePlayer()}
 		role="dialog"
@@ -198,7 +232,7 @@
 		tabindex="-1"
 	>
 		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
-		<div class="video-player" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="document">
+		<div bind:this={playerContainer} class="video-player" class:is-fullscreen={$videoPlayer.mode === 'fullscreen'} onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="document">
 			<div class="player-header">
 				<button
 					class="header-button"
@@ -262,6 +296,13 @@
 							>
 								<Minimize2 size={24} />
 							</button>
+							<button
+								class="control-button"
+								onclick={toggleFullscreen}
+								aria-label={$videoPlayer.mode === 'fullscreen' ? 'Exit fullscreen' : 'Enter fullscreen'}
+							>
+								<Maximize2 size={24} />
+							</button>
 						</div>
 					</div>
 				</div>
@@ -271,6 +312,60 @@
 					<p class="player-description">{$videoPlayer.activeVideo.description}</p>
 				</div>
 			</div>
+		</div>
+	</div>
+{/if}
+
+{#if $videoPlayer.mode === 'mini' && $videoPlayer.activeVideo}
+	<div class="mini-player">
+		<div class="mini-player-video">
+			<video
+				bind:this={videoElement}
+				src={$videoPlayer.activeVideo.src}
+				ontimeupdate={handleTimeUpdate}
+				onloadedmetadata={handleLoadedMetadata}
+				onended={() => videoPlayer.pause()}
+				autoplay
+				playsinline
+				muted={$videoPlayer.muted}
+			>
+				<track kind="captions" />
+			</video>
+			<div class="mini-player-overlay">
+				<button
+					class="mini-control-button"
+					onclick={() => videoPlayer.togglePlay()}
+					aria-label={$videoPlayer.isPlaying ? 'Pause' : 'Play'}
+				>
+					{#if $videoPlayer.isPlaying}
+						<Pause size={20} />
+					{:else}
+						<Play size={20} />
+					{/if}
+				</button>
+			</div>
+		</div>
+		<div class="mini-player-info">
+			<span class="mini-player-title">{$videoPlayer.activeVideo.title}</span>
+			<div class="mini-player-actions">
+				<button
+					class="mini-action-button"
+					onclick={() => videoPlayer.maximize()}
+					aria-label="Expand video"
+				>
+					<Maximize2 size={16} />
+				</button>
+				<button
+					class="mini-action-button"
+					onclick={closePlayer}
+					aria-label="Close video"
+				>
+					<X size={16} />
+				</button>
+			</div>
+		</div>
+		<div class="mini-progress-bar">
+			<div class="mini-progress-fill" style="width: {progressPercent}%"></div>
 		</div>
 	</div>
 {/if}
@@ -354,14 +449,18 @@
 	}
 
 	.video-thumbnail img {
+		display: block;
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		object-position: center;
+		/* Scale up slightly to crop out any letterboxing in source images */
+		transform: scale(1.15);
 		transition: transform var(--duration-standard) var(--ease-standard);
 	}
 
 	.video-card:hover .video-thumbnail img {
-		transform: scale(1.05);
+		transform: scale(1.2);
 	}
 
 	.video-overlay {
@@ -420,6 +519,12 @@
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		margin: 0 0 0.5rem;
+		/* Prevent multi-line titles from causing uneven card heights */
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.video-description {
@@ -427,6 +532,12 @@
 		color: var(--color-fg-muted);
 		margin: 0;
 		line-height: 1.5;
+		/* Truncate to one line for consistent card heights */
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.video-views {
@@ -629,9 +740,165 @@
 		.videos-grid {
 			grid-template-columns: repeat(3, 1fr);
 		}
+	}
 
-		.video-card:first-child {
-			grid-column: span 2;
+	/* Native fullscreen mode */
+	.video-player-overlay.is-fullscreen {
+		background: #000;
+		padding: 0;
+	}
+
+	.video-player.is-fullscreen {
+		max-width: none;
+		width: 100%;
+		height: 100%;
+		border: none;
+		border-radius: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.video-player.is-fullscreen .player-content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.video-player.is-fullscreen .player-video {
+		flex: 1;
+		aspect-ratio: unset;
+	}
+
+	.video-player.is-fullscreen .player-info {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+		padding: 3rem 2rem 2rem;
+		transform: translateY(100%);
+		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	.video-player.is-fullscreen:hover .player-info {
+		transform: translateY(0);
+	}
+
+	/* Mini-player (picture-in-picture style) */
+	.mini-player {
+		position: fixed;
+		bottom: 1.5rem;
+		right: 1.5rem;
+		z-index: 1000;
+		width: 320px;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.75rem;
+		overflow: hidden;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+	}
+
+	.mini-player-video {
+		position: relative;
+		aspect-ratio: 16 / 9;
+		background: #000;
+	}
+
+	.mini-player-video video {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.mini-player-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.3);
+		opacity: 0;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.mini-player:hover .mini-player-overlay {
+		opacity: 1;
+	}
+
+	.mini-control-button {
+		width: 2.5rem;
+		height: 2.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.9);
+		border: none;
+		border-radius: 50%;
+		color: var(--color-bg-pure);
+		cursor: pointer;
+		transition: transform var(--duration-micro) var(--ease-standard);
+	}
+
+	.mini-control-button:hover {
+		transform: scale(1.1);
+	}
+
+	.mini-player-info {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1rem;
+		gap: 0.75rem;
+	}
+
+	.mini-player-title {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		flex: 1;
+	}
+
+	.mini-player-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.mini-action-button {
+		width: 1.75rem;
+		height: 1.75rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: transparent;
+		border: none;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.mini-action-button:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.mini-progress-bar {
+		height: 3px;
+		background: rgba(255, 255, 255, 0.2);
+	}
+
+	.mini-progress-fill {
+		height: 100%;
+		background: var(--color-primary);
+		transition: width 0.1s linear;
+	}
+
+	@media (max-width: 480px) {
+		.mini-player {
+			width: calc(100% - 2rem);
+			left: 1rem;
+			right: 1rem;
 		}
 	}
 </style>
