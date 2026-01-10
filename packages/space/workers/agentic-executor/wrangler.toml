@@ -1,0 +1,58 @@
+# Agentic Executor Worker Configuration
+# Queue consumer + Durable Objects for session management
+
+name = "agentic-executor"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# ============================================================================
+# Bindings
+# ============================================================================
+
+# D1 Database (shared with main app)
+[[d1_databases]]
+binding = "DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+# R2 Bucket (for preview deployments)
+[[r2_buckets]]
+binding = "SITE_BUCKET"
+bucket_name = "templates-site-assets"
+
+# Queue Consumer
+[[queues.consumers]]
+queue = "agentic-queue"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "agentic-dlq"
+
+# Queue Producer (for creating tasks)
+[[queues.producers]]
+binding = "AGENTIC_QUEUE"
+queue = "agentic-queue"
+
+# Durable Objects
+[[durable_objects.bindings]]
+name = "AGENTIC_SESSION"
+class_name = "AgenticSession"
+script_name = "agentic-executor"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["AgenticSession"]
+
+# ============================================================================
+# Environment Variables
+# ============================================================================
+
+[vars]
+# Add any non-sensitive config here
+
+# ============================================================================
+# Secrets (set via wrangler secret put)
+# ============================================================================
+
+# ANTHROPIC_API_KEY - set via: wrangler secret put ANTHROPIC_API_KEY
