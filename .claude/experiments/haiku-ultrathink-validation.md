@@ -26,18 +26,18 @@ From Reddit/Discord discussions (December 2025):
 
 Select 10 tasks spanning complexity tiers:
 
-| Task ID | Type | Complexity | Description |
-|---------|------|------------|-------------|
-| T1 | Refactor | Trivial | Extract duplicate validation logic |
-| T2 | Feature | Simple | Add pagination to existing list |
-| T3 | Bug fix | Simple | Fix TypeScript type errors |
-| T4 | Refactor | Standard | Restructure auth module (DRY violations) |
-| T5 | Feature | Standard | Add caching layer to API |
-| T6 | Planning | Standard | Design database migration strategy |
-| T7 | Debug | Standard | Fix intermittent test failures |
-| T8 | Refactor | Complex | Extract shared business logic across 5 files |
-| T9 | Feature | Complex | Implement OAuth flow with PKCE |
-| T10 | Architecture | Complex | Design multi-tenant routing strategy |
+| Task ID | Beads Issue | Type | Complexity | Description |
+|---------|-------------|------|------------|-------------|
+| T1 | csm-y3vos | Refactor | Trivial | Extract duplicate validation logic |
+| T2 | csm-srz9n | Feature | Simple | Add pagination to existing list |
+| T3 | csm-x0pko | Bug fix | Simple | Fix TypeScript type errors |
+| T4 | csm-lajbf | Refactor | Standard | Restructure auth module (DRY violations) |
+| T5 | csm-t53za | Feature | Standard | Add caching layer to API |
+| T6 | csm-p84o0 | Planning | Standard | Design database migration strategy |
+| T7 | csm-zi9nk | Debug | Standard | Fix intermittent test failures |
+| T8 | csm-dieul | Refactor | Complex | Extract shared business logic across 5 files |
+| T9 | csm-uv9ox | Feature | Complex | Implement OAuth flow with PKCE |
+| T10 | csm-bg71a | Architecture | Complex | Design multi-tenant routing strategy |
 
 ### Execution Pattern
 
@@ -102,6 +102,56 @@ interface TaskExecution {
 }
 ```
 
+## Implementation Guidance
+
+Based on community experience and Anthropic documentation (Jan 2026):
+
+### What Haiku + Ultrathink Provides
+
+- **Extended thinking mode**: Internal reasoning budget before emitting answer, significantly improves multi-step coding and tool-using tasks
+- **Performance**: Matches Sonnet 4 on coding and agent tasks while being faster and cheaper
+- **Community validation**: Successful use as subagents with Sonnet coordinating, "pretty good" reliability for code exploration and structured coding
+
+### Cost Management
+
+**Thinking budget strategy**:
+- Start with **small thinking budget (~1K tokens)** for most tasks
+- Only raise budget for tasks that repeatedly fail quality gates
+- Ultrathink is overkill for trivial operations (simple CRUD, styling)
+- Thinking tokens are billed separately as output
+
+**Best use cases for ultrathink**:
+- Architecture and complex logic
+- Deep design decisions
+- Non-trivial Workers logic
+- Trickier SvelteKit hooks
+- Cross-file changes
+
+**Skip ultrathink for**:
+- Simple Cloudflare/SvelteKit primitives
+- Trivial code edits
+- Styling changes
+
+### Reliability Boundaries
+
+**Known limits** (per Anthropic documentation):
+- Computer-use / agent success rates: **~50%**
+- "Not reliable enough for autonomous operation" without guardrails
+- Ultrathink improves reasoning but does NOT create perfect self-driving agent
+
+**Required safeguards**:
+- Quality gates: tests, typecheck, deploy dry-runs
+- Escalation paths to Sonnet/Opus for repeated failures
+- Human review for complex decisions
+
+### Recommended Pattern
+
+1. **Planner**: Claude Code with Sonnet 4.5 for bd issues and acceptance criteria
+2. **Primary executor**: Haiku 4.5 with extended thinking for most coding, always behind quality gates
+3. **Escalation**: Sonnet (or Opus) only for small percentage of tasks that repeatedly fail Haiku + tests
+
+This experiment validates whether this pattern delivers the claimed cost savings while maintaining quality.
+
 ## Expected Results
 
 **If H1 is true**: Haiku + ultrathink completes 8-9 of 10 tasks with same quality as Sonnet
@@ -116,10 +166,10 @@ interface TaskExecution {
 
 ### Phase 1: Task Preparation (30 min)
 
-- [ ] Create 10 Beads issues for test tasks
-- [ ] Label with complexity tiers
-- [ ] Define acceptance criteria for each
-- [ ] Prepare test files/environments
+- [x] Create 10 Beads issues for test tasks
+- [x] Label with complexity tiers
+- [x] Define acceptance criteria for each
+- [ ] Prepare test files/environments (deferred to execution phase)
 
 ### Phase 2: Haiku + Ultrathink Execution (3-4 hours)
 
@@ -200,7 +250,21 @@ _Results will be documented here as experiment progresses._
 
 ### Phase 1: Task Preparation
 
-**Status**: Not started
+**Status**: Complete (2026-01-10)
+
+**Created issues**:
+- T1: csm-y3vos (Trivial: Extract duplicate validation logic)
+- T2: csm-srz9n (Simple: Add pagination to existing list)
+- T3: csm-x0pko (Simple: Fix TypeScript type errors)
+- T4: csm-lajbf (Standard: Restructure auth module)
+- T5: csm-t53za (Standard: Add caching layer to API)
+- T6: csm-p84o0 (Standard: Design database migration strategy)
+- T7: csm-zi9nk (Standard: Fix intermittent test failures)
+- T8: csm-dieul (Complex: Extract shared business logic)
+- T9: csm-uv9ox (Complex: Implement OAuth flow with PKCE)
+- T10: csm-bg71a (Complex: Design multi-tenant routing strategy)
+
+All issues labeled with `experiment:haiku-ultrathink` and appropriate complexity tiers.
 
 ### Phase 2: Haiku + Ultrathink Execution
 
