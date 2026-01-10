@@ -272,7 +272,7 @@ All issues labeled with `experiment:haiku-ultrathink` and appropriate complexity
 
 ### Phase 3: Sonnet Baseline Execution
 
-**Status**: In progress (5/10 tasks complete)
+**Status**: In progress (6/10 tasks complete)
 
 #### T1: Extract duplicate validation logic (csm-y3vos)
 
@@ -512,6 +512,68 @@ All issues labeled with `experiment:haiku-ultrathink` and appropriate complexity
 - Graceful degradation: cache errors don't break requests
 - X-Cache header enables monitoring cache effectiveness
 - Pattern reusable for other high-traffic API endpoints
+
+#### T6: Design database migration strategy (csm-p84o0)
+
+**Execution**: Sonnet 4.5 (baseline)
+
+**Exploration** (~5 min):
+- Used Glob to discover 70+ migration files across all packages
+- Read three representative migrations showing different patterns:
+  - Simple table creation (`io/migrations/009_user_plugins.sql`)
+  - Complex constraint modification (`templates-platform/migrations/0009_fix_tier_constraint.sql`)
+  - Foreign key relationships (`lms/migrations/0006_module_enrollment.sql`)
+- Analyzed existing documentation:
+  - `space/migrations/README.md` - Manual wrangler execution approach
+  - `space/DATABASE_MIGRATION_GUIDE.md` - Troubleshooting and verification
+- Identified gaps: No automated runner, inconsistent naming (3-digit vs 4-digit), no migration tracking
+
+**Plan** (~3 min):
+- Create comprehensive strategy document at `packages/components/docs/DATABASE_MIGRATION_STRATEGY.md`
+- Document three core migration patterns discovered
+- Define best practices (naming convention, idempotency, testing)
+- Provide automation recommendations (4-phase roadmap)
+- Create troubleshooting guide
+- Establish rollback procedures
+
+**Plan quality**: Excellent (no human revisions needed)
+
+**Implementation** (~10 min):
+- Created DATABASE_MIGRATION_STRATEGY.md with:
+  - Current state analysis (70+ migrations across 6 databases)
+  - Three core patterns with SQL examples
+  - Best practices section (naming, idempotency, documentation standards)
+  - Automation roadmap:
+    - Phase 1: Migration tracking table
+    - Phase 2: Automated runner script
+    - Phase 3: CI/CD integration
+    - Phase 4: Schema validation
+  - Rollback procedures (forward-only strategy)
+  - Troubleshooting guide (5 common errors + fixes)
+  - Migration checklist (before creating, before applying)
+
+**Results**:
+- ✅ Strategy complete: Comprehensive document created
+- ✅ Patterns documented: All 3 patterns with code examples
+- ✅ Automation path: 4-phase roadmap from manual to automated
+- ✅ Reusable: Applicable to all 6 databases in monorepo
+- 📊 Document length: ~600 lines (thorough coverage)
+- 📊 Code examples: 12 SQL snippets showing patterns
+- 📊 Files created: 1 (strategy document)
+
+**Metrics**:
+- Estimated cost: ~$0.01 (Sonnet)
+- Total time: ~18 minutes
+- Success: ✅ Yes
+- Human revisions: 0
+
+**Notes**:
+- Planning task (no code implementation required)
+- Document serves as canonical reference for all future migrations
+- Identified SQLite-specific constraints (no ALTER CONSTRAINT, requires table recreation)
+- Recommended 4-digit naming standard to fix inconsistencies
+- Automation roadmap balances immediate needs (tracking) with future goals (CI/CD)
+- Rollback strategy acknowledges SQLite DDL limitations (no transaction rollback)
 
 ### Phase 4: Analysis
 
