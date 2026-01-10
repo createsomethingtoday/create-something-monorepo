@@ -1,5 +1,29 @@
 # Dual-Agent Routing Strategy
 
+⚠️ **Status: Experimental - Not Recommended (2026-01-09)**
+
+Orchestration experiments (Jan 2026) showed this pattern is **not viable at current scale**:
+
+**Findings**:
+- **Gemini CLI**: 50% success rate, API quota exhaustion after 1 task, stdout extraction issues
+- **GPT-4 API**: Authentication failures (invalid token issuer)
+- **Codex CLI**: File access failures even with valid auth
+- **Claude Code Direct**: ✅ 100% success rate, <10 seconds per task, zero errors
+
+**Economics**:
+- Current workload: 54 LMS files
+- Direct execution cost: $0.54 (54 × $0.01)
+- Orchestrated cost: $0.016 (54 × $0.0003) + infrastructure investment
+- **Break-even point**: ~300 files (we're at 18% of break-even)
+
+**Recommendation**: Use direct Claude Code execution until workload exceeds 300+ files where orchestration cost savings justify infrastructure fragility.
+
+**Full findings**: See [Orchestrated Code Generation](../.claude/experiments/orchestrated-code-generation.md)
+
+---
+
+**Original proposal follows for reference.**
+
 Cost optimization through intelligent model routing while maintaining operational stability.
 
 ## Architecture
