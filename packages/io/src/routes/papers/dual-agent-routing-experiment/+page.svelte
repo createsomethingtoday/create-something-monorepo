@@ -36,23 +36,25 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents a cost optimization experiment: routing pattern-based tasks
-				to Gemini Flash ($0.0003/task) and complex reasoning to Claude Sonnet ($0.01/task).
-				Applied to voice audits of 27 research papers, the system achieved 97% cost savings
-				($0.0081 vs $0.27) while maintaining quality. We then validated the audit findings
-				by deploying Gemini to implement the recommended changes, resulting in 482 lines
-				removed across 5 papers—demonstrating that cost optimization and quality improvement
-				can converge when routing decisions are made correctly.
+				This paper documents a cost optimization experiment with partial success and critical
+				learnings. We routed voice audits to Gemini Flash ($0.0003/task) achieving 97% cost
+				savings on Phase 1 (27 audits: $0.0081 vs $0.27 Sonnet baseline). Phase 2 implementation
+				validated the approach: 5 of 17 papers successfully updated (482 lines removed), but 12
+				papers failed due to code extraction issues when Gemini's responses didn't properly close
+				markdown blocks. Key finding: the two-phase approach (audit → implement) works as designed—
+				implementation exposed quality issues that auditing alone wouldn't catch. This validates
+				using cheaper models for pattern-based work, but only with robust quality gates.
 			</p>
 		</section>
 
 		<!-- The Numbers -->
 		<section class="p-6 quote-box">
 			<div class="text-center">
-				<p class="mb-4 font-bold stat-large">97% Cost Savings</p>
+				<p class="mb-4 font-bold stat-large">Partial Success with Critical Learnings</p>
 				<p class="body-text">
-					27 voice audits: $0.0081 (Gemini Flash) vs $0.27 (Claude Sonnet)<br/>
-					5 implementations: 482 lines removed, all changes applied successfully
+					Phase 1: 27 audits at $0.0081 (97% savings vs Sonnet)<br/>
+					Phase 2: 5 of 17 papers successfully updated (482 lines removed)<br/>
+					12 papers failed - code extraction issues exposed by quality gates
 				</p>
 			</div>
 		</section>
@@ -176,13 +178,15 @@ Phase 2: Implementation (Gemini Flash)
 					<li>Issues identified: Dense terminology, academic structures, jargon</li>
 				</ul>
 
-				<h3 class="mt-6 subsection-heading">Phase 2: Implementation (5 papers)</h3>
+				<h3 class="mt-6 subsection-heading">Phase 2: Implementation</h3>
 
-				<div class="p-4 info-card">
+				<h4 class="mt-4 font-semibold body-text">First Batch (5 papers) - Success</h4>
+
+				<div class="p-4 comparison-success">
 					<div class="grid md:grid-cols-3 gap-4">
 						<div>
 							<p class="mb-1 card-heading">Papers Updated</p>
-							<p class="card-text">5 of 27</p>
+							<p class="card-text">5 of 17</p>
 						</div>
 						<div>
 							<p class="mb-1 card-heading">Lines Changed</p>
@@ -194,6 +198,31 @@ Phase 2: Implementation (Gemini Flash)
 						</div>
 					</div>
 				</div>
+
+				<h4 class="mt-4 font-semibold body-text">Second Batch (12 papers) - Extraction Failure</h4>
+
+				<div class="p-4 comparison-error">
+					<div class="grid md:grid-cols-3 gap-4">
+						<div>
+							<p class="mb-1 card-heading">Papers Attempted</p>
+							<p class="card-text">12 of 17</p>
+						</div>
+						<div>
+							<p class="mb-1 card-heading">Build Failures</p>
+							<p class="card-text">12 syntax errors</p>
+						</div>
+						<div>
+							<p class="mb-1 card-heading">Root Cause</p>
+							<p class="card-text">Unclosed code blocks</p>
+						</div>
+					</div>
+				</div>
+
+				<p class="mt-4">
+					<strong>Critical finding</strong>: Gemini Flash's responses didn't properly close markdown
+					code blocks, causing incomplete file extraction. Files were truncated mid-content, resulting
+					in unclosed tags, missing CSS, and syntax errors.
+				</p>
 
 				<p><strong>Changes applied:</strong></p>
 
@@ -469,17 +498,23 @@ Phase 2: Implementation (Gemini Flash)
 				<h3 class="subsection-heading">What We Learned</h3>
 
 				<p>
-					This experiment demonstrates that <strong>intelligent model routing is not just
-					cost optimization—it's quality enablement</strong>. By reserving expensive models
-					for complex reasoning and routing pattern-based work to cheaper models, we can:
+					This experiment had <strong>partial success with critical learnings</strong>. The two-phase
+					approach worked as designed—implementation exposed quality issues that auditing alone
+					wouldn't catch:
 				</p>
 
 				<ul class="list-disc list-inside space-y-2 pl-4">
-					<li>Audit all CREATE SOMETHING content for voice compliance (~$0.05 total)</li>
-					<li>Scale quality gates without scaling costs</li>
-					<li>Validate AI recommendations through implementation</li>
-					<li>Make "Nicely Said" principles actionable, not aspirational</li>
+					<li><strong>Phase 1 (Auditing) worked</strong>: 27 papers audited at 97% cost savings</li>
+					<li><strong>Phase 2 (Implementation) validated quality</strong>: 5 of 17 papers successfully updated</li>
+					<li><strong>12 papers failed due to code extraction</strong>: Gemini's unclosed code blocks caused file truncation</li>
+					<li><strong>The failure proved the method</strong>: Without implementation, we wouldn't have caught this</li>
 				</ul>
+
+				<p class="mt-4">
+					<strong>Key insight</strong>: Cheaper models can execute pattern-based work, but only with
+					robust quality gates. The two-phase approach (audit → implement) is essential—audits alone
+					would have looked successful while hiding critical flaws.
+				</p>
 
 				<h3 class="mt-6 subsection-heading">The Broader Implication</h3>
 
@@ -514,22 +549,31 @@ Phase 2: Implementation (Gemini Flash)
 
 				<h3 class="mt-6 subsection-heading">Recommended Next Steps</h3>
 
-				<p><strong>For CREATE SOMETHING</strong>:</p>
+				<p><strong>Fix code extraction</strong>:</p>
 
 				<ul class="list-disc list-inside space-y-2 pl-4">
-					<li>Integrate <code class="code-inline">bd-smart-route</code> into harness as default</li>
-					<li>Extend voice audits to .agency and .space properties</li>
-					<li>Document routing patterns in <code class="code-inline">model-routing-optimization.md</code></li>
-					<li>Track routing accuracy metrics over time</li>
+					<li>Improve regex to handle unclosed code blocks more robustly</li>
+					<li>Add file validation before writing (check for unclosed tags, truncated CSS)</li>
+					<li>Consider Claude Haiku as fallback when Gemini extraction fails</li>
+					<li>Retry with better prompting: "You MUST close all code blocks with ```"</li>
+				</ul>
+
+				<p class="mt-4"><strong>For CREATE SOMETHING</strong>:</p>
+
+				<ul class="list-disc list-inside space-y-2 pl-4">
+					<li>Complete voice audits for 12 remaining papers using Claude Haiku</li>
+					<li>Integrate quality gates (syntax check, build test) before committing</li>
+					<li>Document the two-phase validation pattern in harness</li>
+					<li>Track extraction failure rates across models</li>
 				</ul>
 
 				<p class="mt-4"><strong>For the industry</strong>:</p>
 
 				<ul class="list-disc list-inside space-y-2 pl-4">
-					<li>Pattern-based tasks don't need the most expensive models</li>
-					<li>Explicit constraints enable cheaper execution</li>
-					<li>Implementation validates theoretical recommendations</li>
-					<li>Canon principles are cost optimization mechanisms</li>
+					<li>Cheaper models work for pattern-based tasks—with caveats</li>
+					<li>Always validate generated code through implementation/compilation</li>
+					<li>Audit phases alone are insufficient—implementation exposes hidden issues</li>
+					<li>Quality gates are essential when routing to cheaper models</li>
 				</ul>
 
 				<div class="p-6 mt-6 quote-box">
