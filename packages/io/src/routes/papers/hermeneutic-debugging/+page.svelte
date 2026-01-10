@@ -20,7 +20,8 @@
 			<div class="font-mono mb-4 paper-id">PAPER-2025-005</div>
 			<h1 class="mb-3 paper-title">Hermeneutic Debugging</h1>
 			<p class="max-w-3xl paper-subtitle">
-				This paper applies Heidegger's hermeneutic circle to software debugging, showing that understanding comes from iterative interpretation, rather than step-by-step analysis.
+				Applying Heidegger's hermeneutic circle to software debugging—demonstrating
+				that understanding emerges through iterative interpretation, not linear analysis.
 			</p>
 			<div class="flex gap-4 mt-4 paper-meta">
 				<span>Methodology</span>
@@ -35,11 +36,12 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				Traditional debugging follows a direct path: find the symptom, trace the cause, and apply a fix.
-				This paper argues that complex bugs resist linear analysis because they arise from
-				<em>hidden assumptions</em>—what Heidegger calls our "fore-structure," or pre-existing understanding.
-				By applying the <strong>hermeneutic circle</strong> (<em>a philosophical idea where understanding grows through repeated interpretation: you understand individual pieces by seeing the whole picture, and the whole picture by examining its pieces) to debugging, we demonstrate that the path to solution
-				requires iterative interpretation where each failed attempt reveals assumptions we didn't realize we had. We document this through a case study: a React logo animation that required
+				Traditional debugging assumes a linear path: identify symptom, trace cause, apply fix.
+				This paper argues that complex bugs resist linear analysis because they emerge from
+				<em>hidden assumptions</em>—what Heidegger calls our "fore-structure" of understanding.
+				By applying the <strong>hermeneutic circle</strong> (<em>a philosophical concept describing how understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts</em>) to debugging, we demonstrate that the path to solution
+				requires iterative interpretation where each failed attempt reveals previously invisible
+				assumptions. We document this through a case study: a React logo animation that required
 				eight iterations to solve, each revealing deeper truths about component lifecycle,
 				state persistence, and the gap between code and runtime behavior.
 			</p>
@@ -101,7 +103,7 @@
 				<h3 class="subsection-heading">Fore-structure: What We Bring</h3>
 
 				<p>
-					Heidegger pointed out that we always bring pre-existing ideas to any situation. We always
+					Heidegger observes that we never approach anything with a blank slate. We always
 					bring a "fore-structure" of understanding—prior assumptions that shape what we see.
 					In debugging, this fore-structure includes:
 				</p>
@@ -121,18 +123,21 @@
 				<h3 class="mt-6 subsection-heading">The Circle: Parts and Whole</h3>
 
 				<p>
-					The hermeneutic circle explains how understanding develops: we understand parts by seeing the whole, and the whole by examining its parts. Each interpretation gives us a better grasp, revealing new aspects.
+					The hermeneutic circle describes how understanding emerges: we understand the parts
+					through the whole, and the whole through its parts. Each interpretation deepens our
+					grasp, revealing new dimensions.
 				</p>
 
 				<blockquote class="pl-4 italic my-4 blockquote">
 					"The circle of understanding is not an orbit in which any random kind of knowledge
-					may move; it is the expression of the existential fore-structure of <strong>Dasein</strong> (<em>a philosophical term for human existence, referring to how we're already involved in contexts, relationships, and understanding</em>) itself."
+					may move; it is the expression of the existential fore-structure of <strong>Dasein</strong> (<em>human existence as being-in-the-world—our condition of already being immersed in contexts, relationships, and understanding</em>) itself."
 					<br />— Heidegger, <em>Being and Time</em>
 				</blockquote>
 
 				<p>
 					Applied to debugging: each failed fix isn't just a wrong answer—it's a <em>revelation</em>.
-					It exposes an assumption we didn't realize we had. The bug continues not because we're unskilled, but because our pre-existing understanding doesn't yet match reality.
+					It exposes an assumption we didn't know we held. The bug persists not because we lack
+					skill, but because our fore-structure hasn't yet aligned with reality.
 				</p>
 			</div>
 		</section>
@@ -621,13 +626,17 @@ useEffect(() => {
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
-					The logo animation bug wasn't complex—it was <em>concealed</em>. The code seemed right because our understanding was wrong. Only by using the hermeneutic circle—trying, failing, watching, and revising—could we make our interpretation match reality.
+					The logo animation bug wasn't complex—it was <em>concealed</em>. The code looked
+					correct because our understanding was incorrect. Only by entering the hermeneutic
+					circle—attempting, failing, observing, revising—could we align our interpretation
+					with reality.
 				</p>
 
 				<p>
 					This is the fundamental insight: <strong>debugging is interpretation</strong>. The
 					bug exists in the gap between what we think the code does and what it actually does.
-					Closing that gap needs less cleverness and more humility—a willingness to have our assumptions proven wrong.
+					Closing that gap requires not more cleverness, but more humility—the willingness
+					to let our assumptions be overturned.
 				</p>
 
 				<div class="p-6 mt-6 quote-box">
@@ -858,4 +867,16 @@ useEffect(() => {
 	}
 
 	.footer-text {
-		font-size: var
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.footer-link {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+	}
+
+	.footer-link:hover {
+		color: var(--color-fg-primary);
+	}
+</style>

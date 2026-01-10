@@ -38,8 +38,7 @@
 				form field design. Through a case study of Webflow's app submission form, we demonstrate that form fields which don't apply
 				to certain contexts create systemic disconnection: developers enter incorrect values, reviewers manually clear them, and
 				submissions are delayed. The solution is subtractive: hide fields that don't apply rather than instructing users to leave
-				them blank. This reveals a general principle: absence is clearer than instruction.
-				Hiding irrelevant fields is more effective than instructing users to leave them blank. This highlights a key principle: absence is clearer than instruction.
+				them blank. This reveals a general principle: <strong>absence is clearer than instruction</strong>.
 			</p>
 		</section>
 
@@ -92,7 +91,6 @@
 
 				<p>
 					Despite this instruction, developers submitting Designer Extensions consistently entered incorrect URLs:
-					Despite this instruction, developers often entered incorrect URLs when submitting Designer Extensions:
 				</p>
 
 				<ul class="list-disc list-inside space-y-2 pl-4">
@@ -165,7 +163,6 @@
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					The instruction to "leave blank for Designer Extensions" failed for predictable reasons:
-					The instruction to "leave blank for Designer Extensions" failed for the following reasons:
 				</p>
 
 				<ol class="list-decimal list-inside space-y-4 pl-4">
@@ -326,8 +323,8 @@
 				</div>
 
 				<p>
-					The change eliminates an entire category of submission errors by making incorrect input impossible rather than discouraged.
-					This change completely eliminates a category of submission errors by preventing incorrect input, rather than just discouraging it.
+					The change eliminates an entire category of submission errors by making incorrect input impossible
+					rather than discouraged.
 				</p>
 			</div>
 		</section>
@@ -340,7 +337,6 @@
 				<h3 class="subsection-heading">Applying Subtractive Form Design</h3>
 				<p>
 					To apply the "absence is clearer than instruction" principle to your own interfaces:
-					To implement the "absence is clearer than instruction" principle in your own interfaces:
 				</p>
 
 				<div class="p-4 font-mono code-block-success">
@@ -493,8 +489,9 @@ if (name === 'productType' && value === 'digital') {
 				</ul>
 
 				<p class="mt-4 emphasis-text">
-					The principle is disconnection detection. When a field doesn't serve the whole in its current context, hiding it reconnects the form to the user's mental model. Absence becomes the clearest instruction.
-					The key is to identify disconnection. If a field is irrelevant in the current context, hiding it aligns the form with the user's expectations. Absence becomes the clearest instruction.
+					The principle is <strong>disconnection detection</strong>. When a field doesn't serve
+					the whole in its current context, hiding it reconnects the form to the user's mental
+					model. Absence becomes the clearest instruction.
 				</p>
 			</div>
 		</section>
@@ -508,7 +505,6 @@ if (name === 'productType' && value === 'digital') {
 					This case study demonstrates the Subtractive Triad's third level—Heidegger's hermeneutic question—applied
 					to form design. When a field doesn't serve the whole system, removing it reconnects stakeholders more
 					effectively than any amount of documentation.
-					This case study applies Heidegger's hermeneutic question to form design. Removing irrelevant fields improves the user experience more than documentation.
 				</p>
 
 				<p>

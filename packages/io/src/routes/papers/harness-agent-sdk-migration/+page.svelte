@@ -19,7 +19,7 @@
 			<div class="font-mono mb-4 paper-id">PAPER-2025-002</div>
 			<h1 class="mb-3 paper-title">Harness Agent SDK Migration: Empirical Analysis</h1>
 			<p class="max-w-3xl paper-subtitle">
-				Improved Security, Reliability, and Cost with Explicit Tool Permissions
+				Security, Reliability, and Cost Improvements Through Explicit Tool Permissions
 			</p>
 			<div class="flex gap-4 mt-4 paper-meta">
 				<span>Case Study</span>
@@ -34,9 +34,12 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents the migration of the CREATE Something Harness from older methods to Agent SDK best practices.
-				We analyze the impact on security, reliability, and efficiency based on data from a live Canon Redesign project (21 features across 19 files).
-				The migration replaces <code>--dangerously-skip-permissions</code> with <code>--allowedTools</code> for better security, prevents runaway sessions with <code>--max-turns</code>, and tracks costs using structured JSON output.
+				This paper documents the migration of the CREATE Something Harness from legacy headless mode
+				patterns to Agent SDK best practices. We analyze the trade-offs between security, reliability,
+				and operational efficiency, drawing from empirical observation of a live Canon Redesign project
+				(21 features across 19 files). The migration replaces <code>--dangerously-skip-permissions</code>
+				with explicit <code>--allowedTools</code>, adds runaway prevention via <code>--max-turns</code>,
+				and enables cost tracking through structured JSON output parsing.
 			</p>
 		</section>
 
@@ -81,7 +84,7 @@
 			<h3 class="subsection-heading">1.1 Heideggerian Framing</h3>
 			<p class="leading-relaxed body-text">
 				Per the CREATE Something philosophy, infrastructure should exhibit <strong><em>Zuhandenheit</em></strong>
-				(ready-to-hand: like a hammer during skilled carpentry). This means the harness should be invisible when working
+				(ready-to-hand: when a tool disappears into transparent use, like a hammer during skilled carpentry)—receding into transparent use. The harness should be invisible when working
 				correctly; failures should surface clearly with actionable context.
 			</p>
 
@@ -345,7 +348,8 @@ export async function runSession(
 			</div>
 
 			<p class="leading-relaxed body-text">
-				The architecture reviewer raised valid concerns (token consistency, pattern adherence) without blocking progress, aligning with the intended "first-pass analysis" approach.
+				<strong>Finding:</strong> Architecture reviewer surfaces legitimate concerns (token consistency,
+				pattern adherence) without blocking progress. This matches the intended "first-pass analysis" philosophy.
 			</p>
 		</section>
 
@@ -738,10 +742,10 @@ await db.deployments.create({
 				</div>
 
 				<p class="mt-4 emphasis-text">
-					The goal is <strong>explicit security without increasing operational cost</strong>. If the migration
+					The goal is <strong>explicit security without operational cost</strong>. If the migration
 					blocks legitimate work or significantly slows execution, the allowlist is too restrictive.
 					If it allows operations that shouldn't be automated, it's too permissive. Iterate until
-					the harness operates transparently—achieving Zuhandenheit.
+					the harness operates transparently—Zuhandenheit achieved.
 				</p>
 			</div>
 		</section>
@@ -757,7 +761,7 @@ await db.deployments.create({
 			</p>
 
 			<p class="leading-relaxed body-text">
-				The key insight: <strong>restrictive defaults with explicit exceptions</strong> are more
+				The key insight: <strong>restrictive defaults with explicit exceptions</strong> is more
 				maintainable than <strong>permissive defaults with implicit risks</strong>.
 			</p>
 
@@ -917,4 +921,89 @@ await db.deployments.create({
 		color: var(--color-fg-primary);
 	}
 
-	.
+	.metric-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-xs);
+	}
+
+	.metric-success {
+		color: var(--color-success);
+	}
+
+	.data-table {
+		border-collapse: collapse;
+		font-size: var(--text-body-sm);
+	}
+
+	.data-table th,
+	.data-table td {
+		padding: var(--space-sm);
+		text-align: left;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.data-table th {
+		color: var(--color-fg-tertiary);
+		font-weight: var(--font-medium);
+		background: var(--color-bg-subtle);
+	}
+
+	.data-table td {
+		color: var(--color-fg-secondary);
+	}
+
+	.code-block {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-md);
+		overflow-x: auto;
+		font-family: ui-monospace, monospace;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		white-space: pre;
+	}
+
+	code {
+		font-family: ui-monospace, monospace;
+		background: var(--color-bg-subtle);
+		padding: 0.125rem 0.375rem;
+		border-radius: var(--radius-sm);
+		font-size: 0.9em;
+	}
+
+	.callout-box {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		border-left: 3px solid var(--color-info);
+	}
+
+	.paper-footer {
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.code-block-success {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-border-default));
+		border-radius: var(--radius-lg);
+		padding: var(--space-md);
+		overflow-x: auto;
+		font-family: ui-monospace, monospace;
+		font-size: var(--text-body-sm);
+		white-space: pre;
+	}
+
+	.code-secondary {
+		color: var(--color-fg-tertiary);
+	}
+
+	.emphasis-text {
+		color: var(--color-fg-primary);
+	}
+
+	.list-small {
+		font-size: var(--text-body-sm);
+	}
+</style>
