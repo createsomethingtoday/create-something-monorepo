@@ -26,13 +26,15 @@ export const GET: RequestHandler = async ({ params, platform }) => {
     }
 
     // Calculate budget status
+    const budgetValue = session.budget as number;
+    const costConsumed = session.cost_consumed as number;
     const budget = {
-      allocated: session.budget,
-      consumed: session.cost_consumed,
-      verified: session.verified_cost || session.cost_consumed,
-      remaining: session.budget - session.cost_consumed,
-      percentUsed: (session.cost_consumed / session.budget) * 100,
-      atWarningThreshold: (session.cost_consumed / session.budget) >= 0.80,
+      allocated: budgetValue,
+      consumed: costConsumed,
+      verified: (session.verified_cost as number) || costConsumed,
+      remaining: budgetValue - costConsumed,
+      percentUsed: (costConsumed / budgetValue) * 100,
+      atWarningThreshold: (costConsumed / budgetValue) >= 0.80,
       exhausted: session.status === 'budget_exhausted'
     };
 
@@ -77,7 +79,7 @@ export const GET: RequestHandler = async ({ params, platform }) => {
       },
       budget,
       preview: session.preview_url,
-      qualityReports: session.quality_reports ? JSON.parse(session.quality_reports) : null,
+      qualityReports: session.quality_reports ? JSON.parse(session.quality_reports as string) : null,
       reviewStatus: session.review_status,
       iterations: iterations.results.map((i: any) => ({
         iteration: i.iteration,

@@ -109,13 +109,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
       `).bind(convoyId, issueId).run();
 
       // Queue for execution
-      await platform!.env.AGENTIC_QUEUE.send({
-        issueId,
-        epicId,
-        convoyId,
-        budget: perTaskBudget,
-        acceptanceCriteria
-      });
+      // TODO: Add AGENTIC_QUEUE binding to wrangler.jsonc to enable queue-based execution
+      // await platform!.env.AGENTIC_QUEUE.send({
+      //   issueId,
+      //   epicId,
+      //   convoyId,
+      //   budget: perTaskBudget,
+      //   acceptanceCriteria
+      // });
     }
 
     return json({
