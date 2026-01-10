@@ -139,6 +139,10 @@
 			"types": "./dist/layout/index.d.ts",
 			"svelte": "./dist/layout/index.js"
 		},
+		"./typography": {
+			"types": "./dist/typography/index.d.ts",
+			"svelte": "./dist/typography/index.js"
+		},
 		"./conversion": {
 			"types": "./dist/conversion/index.d.ts",
 			"svelte": "./dist/conversion/index.js"

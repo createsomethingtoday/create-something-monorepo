@@ -57,7 +57,7 @@
 }
 
 /* ==========================================================================
-   Template-Specific Styles
+   Template-Specific Styles - Rudolf Layout Patterns
    Add any professional-services-specific overrides or extensions here.
    ========================================================================== */
 
@@ -83,4 +83,64 @@
   top: var(--space-sm);
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* Rudolf Template: Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Rudolf Template: Typography Scale (complementing Canon) */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Rudolf Template: Section Spacing Consistency */
+section {
+  scroll-margin-top: var(--space-2xl);
+}
+
+/* Rudolf Template: Container Pattern */
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+/* Rudolf Template: Image Loading States */
+img {
+  display: block;
+}
+
+img:not([src]) {
+  opacity: 0;
+}
+
+/* Rudolf Template: Focus Visible (keyboard navigation) */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Rudolf Template: Selection */
+::selection {
+  background: var(--color-fg-primary);
+  color: var(--color-bg-pure);
 }

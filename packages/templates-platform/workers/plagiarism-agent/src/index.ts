@@ -506,7 +506,11 @@ async function closeCase(
     console.log(`[Case Closure] ${plagiarismCase.id}: Major violation flagged for human review (confidence: ${confidence})`);
   } else {
     // High confidence or non-major decision: auto-action
-    fields[AIRTABLE_FIELDS.OUTCOME] = DECISION_TO_OUTCOME[decision];
+    const outcome = DECISION_TO_OUTCOME[decision];
+    // Only set outcome if not empty (Airtable rejects empty select options)
+    if (outcome) {
+      fields[AIRTABLE_FIELDS.OUTCOME] = outcome;
+    }
   }
 
   // Add editorial scores if available (Tier 2 results)

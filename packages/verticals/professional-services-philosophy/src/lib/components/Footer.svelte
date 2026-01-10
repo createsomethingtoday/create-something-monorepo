@@ -1,12 +1,8 @@
 <script lang="ts">
 	/**
-	 * Footer - DWELL-Inspired Minimal Footer
+	 * Footer - Rudolf Template Style
 	 *
-	 * Simple, elegant, recedes into the page.
-	 * Contact info, social links, legal. Nothing more.
-	 *
-	 * "The footer should feel like a quiet ending,
-	 * not an afterthought."
+	 * Clean 3-column layout: Contact, Links, Location
 	 */
 
 	import { siteConfig } from '$lib/config/context';
@@ -16,66 +12,49 @@
 
 <footer class="footer">
 	<div class="footer-container">
-		<!-- Main content: three columns -->
-		<div class="footer-main">
-			<!-- Left: Studio info -->
-			<div class="footer-studio">
-				<span class="footer-name">{$siteConfig.name}</span>
-				<address class="footer-address">
-					<span>{$siteConfig.address.street}</span>
-					<span>{$siteConfig.address.city}, {$siteConfig.address.state} {$siteConfig.address.zip}</span>
-				</address>
+		<div class="footer-grid">
+			<!-- Column 1: Brand & Contact -->
+			<div class="footer-col">
+				<h3 class="footer-brand">{$siteConfig.name}</h3>
+				<p class="footer-tagline">{$siteConfig.tagline}</p>
+				<div class="footer-contact">
+					<a href="mailto:{$siteConfig.email}" class="footer-link">
+						{$siteConfig.email}
+					</a>
+					<a href="tel:{$siteConfig.phone}" class="footer-link">
+						{$siteConfig.phone}
+					</a>
+				</div>
 			</div>
 
-			<!-- Middle: Site navigation -->
-			<div class="footer-nav">
-				<nav class="footer-links" aria-label="Footer navigation">
+			<!-- Column 2: Quick Links -->
+			<div class="footer-col">
+				<h4 class="footer-heading">Quick Links</h4>
+				<nav class="footer-nav">
 					<a href="/projects" class="footer-link">Projects</a>
 					<a href="/services" class="footer-link">Services</a>
-					<a href="/team" class="footer-link">Team</a>
-					<a href="/studio" class="footer-link">Studio</a>
-					<a href="/about" class="footer-link">About</a>
+					<a href="/studio" class="footer-link">About</a>
 					<a href="/contact" class="footer-link">Contact</a>
 				</nav>
 			</div>
 
-			<!-- Right: Contact & Social -->
-			<div class="footer-contact">
-				<a href="mailto:{$siteConfig.email}" class="footer-email">{$siteConfig.email}</a>
-				<a href="tel:{$siteConfig.phone}" class="footer-phone">{$siteConfig.phone}</a>
-				<div class="footer-social">
-					{#if $siteConfig.social.instagram}
-						<a
-							href={$siteConfig.social.instagram}
-							class="social-link"
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label="Instagram"
-						>
-							Instagram
-						</a>
-					{/if}
-					{#if $siteConfig.social.pinterest}
-						<a
-							href={$siteConfig.social.pinterest}
-							class="social-link"
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label="Pinterest"
-						>
-							Pinterest
-						</a>
-					{/if}
-				</div>
+			<!-- Column 3: Location -->
+			<div class="footer-col">
+				<h4 class="footer-heading">Location</h4>
+				<address class="footer-address">
+					{$siteConfig.address.street}<br />
+					{$siteConfig.address.city}, {$siteConfig.address.state} {$siteConfig.address.zip}
+				</address>
 			</div>
 		</div>
 
-		<!-- Bottom: copyright & legal -->
 		<div class="footer-bottom">
-			<span class="footer-copyright">&copy; {currentYear} {$siteConfig.name}</span>
+			<p class="footer-copyright">
+				&copy; {currentYear} {$siteConfig.name}. All rights reserved.
+			</p>
 			<div class="footer-legal">
-				<a href="/privacy" class="legal-link">Privacy</a>
-				<a href="/terms" class="legal-link">Terms</a>
+				<a href="/privacy" class="footer-legal-link">Privacy</a>
+				<a href="/terms" class="footer-legal-link">Terms</a>
 			</div>
 		</div>
 	</div>
@@ -83,176 +62,112 @@
 
 <style>
 	.footer {
-		background: var(--color-bg-pure);
-		border-top: 1px solid var(--color-border-default);
-		padding: var(--space-2xl) 0 var(--space-xl);
+		background: #000;
+		color: #fff;
+		padding: 5rem 1.5rem 2rem;
 	}
 
 	.footer-container {
-		max-width: var(--width-wide);
+		max-width: 1400px;
 		margin: 0 auto;
-		padding: 0 var(--space-lg);
 	}
 
-	.footer-main {
+	.footer-grid {
 		display: grid;
-		grid-template-columns: 1fr;
-		gap: var(--space-xl);
-		padding-bottom: var(--space-xl);
+		grid-template-columns: 2fr 1fr 1fr;
+		gap: 4rem;
+		margin-bottom: 4rem;
 	}
 
-	@media (min-width: 768px) {
-		.footer-main {
-			grid-template-columns: 1fr 1fr 1fr;
-		}
+	.footer-brand {
+		font-size: 1.5rem;
+		font-weight: 600;
+		margin: 0 0 0.5rem 0;
 	}
 
-	/* Footer navigation */
+	.footer-tagline {
+		color: rgba(255, 255, 255, 0.6);
+		margin: 0 0 1.5rem 0;
+		font-size: 1rem;
+	}
+
+	.footer-contact {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.footer-heading {
+		font-size: 0.875rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin: 0 0 1.5rem 0;
+		color: rgba(255, 255, 255, 0.4);
+	}
+
 	.footer-nav {
 		display: flex;
 		flex-direction: column;
-	}
-
-	.footer-links {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
-
-	@media (min-width: 768px) {
-		.footer-links {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: var(--space-xs) var(--space-md);
-		}
+		gap: 0.75rem;
 	}
 
 	.footer-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		color: rgba(255, 255, 255, 0.8);
 		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color 0.3s;
 	}
 
 	.footer-link:hover {
-		color: var(--color-fg-primary);
-	}
-
-	/* Studio info */
-	.footer-studio {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-	}
-
-	.footer-name {
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		letter-spacing: var(--tracking-wider);
-		text-transform: uppercase;
+		color: #fff;
 	}
 
 	.footer-address {
 		font-style: normal;
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		color: rgba(255, 255, 255, 0.8);
+		line-height: 1.6;
 	}
 
-	/* Contact */
-	.footer-contact {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	@media (min-width: 768px) {
-		.footer-contact {
-			text-align: right;
-			align-items: flex-end;
-		}
-	}
-
-	.footer-email,
-	.footer-phone {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.footer-email:hover,
-	.footer-phone:hover {
-		color: var(--color-fg-primary);
-	}
-
-	.footer-social {
-		display: flex;
-		gap: var(--space-md);
-		margin-top: var(--space-sm);
-	}
-
-	.social-link {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		text-decoration: none;
-		letter-spacing: var(--tracking-wide);
-		text-transform: uppercase;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.social-link:hover {
-		color: var(--color-fg-primary);
-	}
-
-	/* Bottom bar */
 	.footer-bottom {
 		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	@media (min-width: 768px) {
-		.footer-bottom {
-			flex-direction: row;
-			justify-content: space-between;
-			align-items: center;
-		}
+		justify-content: space-between;
+		align-items: center;
+		padding-top: 2rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
 	.footer-copyright {
-		font-size: var(--text-caption);
-		color: var(--color-fg-subtle);
+		color: rgba(255, 255, 255, 0.4);
+		font-size: 0.875rem;
+		margin: 0;
 	}
 
 	.footer-legal {
 		display: flex;
-		gap: var(--space-md);
+		gap: 2rem;
 	}
 
-	.legal-link {
-		font-size: var(--text-caption);
-		color: var(--color-fg-subtle);
+	.footer-legal-link {
+		color: rgba(255, 255, 255, 0.4);
 		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
+		font-size: 0.875rem;
+		transition: color 0.3s;
 	}
 
-	.legal-link:hover {
-		color: var(--color-fg-muted);
+	.footer-legal-link:hover {
+		color: #fff;
 	}
 
-	/* Reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.footer-email,
-		.footer-phone,
-		.social-link,
-		.legal-link {
-			transition: none;
+	@media (max-width: 768px) {
+		.footer-grid {
+			grid-template-columns: 1fr;
+			gap: 2.5rem;
+		}
+
+		.footer-bottom {
+			flex-direction: column;
+			gap: 1rem;
+			text-align: center;
 		}
 	}
 </style>

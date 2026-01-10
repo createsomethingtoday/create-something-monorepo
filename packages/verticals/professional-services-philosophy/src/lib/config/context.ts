@@ -81,6 +81,10 @@ export function mergeWithDefaults(injected: InjectedConfig): SiteConfig {
 		locale: config.locale ?? defaultConfig.locale,
 		hero: { ...defaultConfig.hero, ...((config.hero as object) ?? {}) },
 		projects: config.projects ?? defaultConfig.projects,
+		philosophy: config.philosophy ? { ...defaultConfig.philosophy, ...(config.philosophy as object) } : defaultConfig.philosophy,
+		practiceAreas: config.practiceAreas ?? defaultConfig.practiceAreas,
+		outcomes: config.outcomes ?? defaultConfig.outcomes,
+		team: config.team ?? defaultConfig.team,
 		studio: config.studio ? { ...defaultConfig.studio, ...(config.studio as object) } : defaultConfig.studio,
 		services: config.services ?? defaultConfig.services,
 		recognition: config.recognition ?? defaultConfig.recognition

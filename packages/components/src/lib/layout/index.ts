@@ -13,3 +13,4 @@ export { default as SplitSection } from './SplitSection.svelte';
 export { default as BentoGrid } from './BentoGrid.svelte';
 export { default as BentoItem } from './BentoItem.svelte';
 export { default as SectionHeader } from './SectionHeader.svelte';
+export { default as ProjectGridInteractive } from './ProjectGridInteractive.svelte';

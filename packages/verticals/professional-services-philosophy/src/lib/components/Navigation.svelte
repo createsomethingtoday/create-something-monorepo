@@ -1,14 +1,9 @@
 <script lang="ts">
 	/**
-	 * Navigation - DWELL-Inspired Minimal Header
+	 * Navigation - Rudolf Template Style
 	 *
-	 * The navigation recedes. It's there when needed,
-	 * invisible when not.
-	 *
-	 * Three links only: Projects, Studio, Contact.
-	 * Fewer choices, clearer intent.
-	 *
-	 * "Architecture should recede into experience."
+	 * Layout: Logo left | Links center | CTA button right
+	 * Features: Transparent on top, solid on scroll
 	 */
 
 	import { page } from '$app/stores';
@@ -18,10 +13,10 @@
 	let mobileMenuOpen = $state(false);
 	let scrolled = $state(false);
 
-	// DWELL-minimal: only essential pages
 	const navLinks = [
 		{ href: '/projects', label: 'Projects' },
-		{ href: '/studio', label: 'Studio' },
+		{ href: '/services', label: 'Services' },
+		{ href: '/studio', label: 'About' },
 		{ href: '/contact', label: 'Contact' }
 	];
 
@@ -41,8 +36,9 @@
 
 <nav class="nav" class:nav--scrolled={scrolled}>
 	<div class="nav-container">
+		<!-- Logo -->
 		<a href="/" class="logo">
-			<span class="logo-text">{$siteConfig.name}</span>
+			{$siteConfig.name}
 		</a>
 
 		<!-- Desktop Navigation -->
@@ -59,6 +55,11 @@
 			{/each}
 		</div>
 
+		<!-- CTA Button -->
+		<a href="/contact" class="nav-cta">
+			Let's Talk
+		</a>
+
 		<!-- Mobile Menu Button -->
 		<button
 			class="mobile-menu-btn"
@@ -72,17 +73,19 @@
 
 	<!-- Mobile Menu -->
 	{#if mobileMenuOpen}
-		<div class="mobile-menu animate-slide-down">
-			{#each navLinks as link, index}
+		<div class="mobile-menu">
+			{#each navLinks as link}
 				<a
 					href={link.href}
-					class="mobile-nav-link animate-fade-in"
+					class="mobile-nav-link"
 					onclick={() => (mobileMenuOpen = false)}
-					style="--delay: {index}"
 				>
 					{link.label}
 				</a>
 			{/each}
+			<a href="/contact" class="mobile-cta" onclick={() => (mobileMenuOpen = false)}>
+				Let's Talk
+			</a>
 		</div>
 	{/if}
 </nav>
@@ -93,70 +96,92 @@
 		top: 0;
 		left: 0;
 		right: 0;
-		z-index: var(--z-sticky);
+		z-index: 100;
 		background: transparent;
-		transition: background var(--duration-standard) var(--ease-standard);
+		transition: background 0.3s ease, box-shadow 0.3s ease;
 	}
 
 	.nav--scrolled {
-		background: color-mix(in srgb, var(--color-bg-pure) 90%, transparent);
-		backdrop-filter: blur(10px);
-		-webkit-backdrop-filter: blur(10px);
+		background: rgba(255, 255, 255, 0.98);
+		box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 	}
 
 	.nav-container {
-		max-width: var(--width-wide);
+		max-width: 1400px;
 		margin: 0 auto;
-		padding: var(--space-md) var(--space-lg);
+		padding: 1.25rem 1.5rem;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 	}
 
 	.logo {
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: #000;
 		text-decoration: none;
+		letter-spacing: -0.01em;
 	}
 
-	.logo-text {
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		letter-spacing: var(--tracking-wider);
-		text-transform: uppercase;
-		opacity: 0.9;
-		transition: opacity var(--duration-micro) var(--ease-standard);
-	}
-
-	.logo:hover .logo-text {
-		opacity: 1;
+	.nav:not(.nav--scrolled) .logo {
+		color: #fff;
 	}
 
 	.nav-links {
 		display: none;
-		gap: var(--space-xl);
+		gap: 2.5rem;
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
 	}
 
-	@media (min-width: 768px) {
+	@media (min-width: 1024px) {
 		.nav-links {
 			display: flex;
 		}
 	}
 
 	.nav-link {
-		color: var(--color-fg-secondary);
+		color: #000;
 		text-decoration: none;
-		font-size: var(--text-caption);
-		font-weight: var(--font-normal);
-		letter-spacing: var(--tracking-wide);
-		text-transform: uppercase;
-		opacity: 0.7;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		font-size: 0.9rem;
+		transition: opacity 0.3s;
+	}
+
+	.nav:not(.nav--scrolled) .nav-link {
+		color: #fff;
 	}
 
 	.nav-link:hover,
 	.nav-link.active {
-		opacity: 1;
-		color: var(--color-fg-primary);
+		opacity: 0.6;
+	}
+
+	.nav-cta {
+		display: none;
+		padding: 0.75rem 1.5rem;
+		background: #000;
+		color: #fff;
+		text-decoration: none;
+		font-size: 0.9rem;
+		border-radius: 100px;
+		transition: all 0.3s ease;
+	}
+
+	.nav:not(.nav--scrolled) .nav-cta {
+		background: #fff;
+		color: #000;
+	}
+
+	.nav-cta:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+
+	@media (min-width: 768px) {
+		.nav-cta {
+			display: inline-block;
+		}
 	}
 
 	/* Mobile menu button */
@@ -166,13 +191,13 @@
 		justify-content: center;
 		background: none;
 		border: none;
-		padding: var(--space-xs);
+		padding: 0.5rem;
 		cursor: pointer;
 		width: 44px;
 		height: 44px;
 	}
 
-	@media (min-width: 768px) {
+	@media (min-width: 1024px) {
 		.mobile-menu-btn {
 			display: none;
 		}
@@ -180,29 +205,38 @@
 
 	.hamburger {
 		display: block;
-		width: 20px;
-		height: 1px;
-		background: var(--color-fg-primary);
+		width: 22px;
+		height: 2px;
+		background: #000;
 		position: relative;
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: background 0.2s;
+	}
+
+	.nav:not(.nav--scrolled) .hamburger {
+		background: #fff;
+	}
+
+	.nav:not(.nav--scrolled) .hamburger::before,
+	.nav:not(.nav--scrolled) .hamburger::after {
+		background: #fff;
 	}
 
 	.hamburger::before,
 	.hamburger::after {
 		content: '';
 		position: absolute;
-		width: 20px;
-		height: 1px;
-		background: var(--color-fg-primary);
-		transition: transform var(--duration-micro) var(--ease-standard);
+		width: 22px;
+		height: 2px;
+		background: #000;
+		transition: transform 0.2s;
 	}
 
 	.hamburger::before {
-		top: -6px;
+		top: -7px;
 	}
 
 	.hamburger::after {
-		top: 6px;
+		top: 7px;
 	}
 
 	.hamburger.open {
@@ -210,11 +244,13 @@
 	}
 
 	.hamburger.open::before {
-		transform: rotate(45deg) translate(4px, 4px);
+		background: #000;
+		transform: rotate(45deg) translate(5px, 5px);
 	}
 
 	.hamburger.open::after {
-		transform: rotate(-45deg) translate(4px, -4px);
+		background: #000;
+		transform: rotate(-45deg) translate(5px, -5px);
 	}
 
 	/* Mobile menu */
@@ -225,74 +261,38 @@
 		right: 0;
 		display: flex;
 		flex-direction: column;
-		padding: var(--space-lg);
-		background: color-mix(in srgb, var(--color-bg-pure) 95%, transparent);
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
+		padding: 1.5rem;
+		background: #fff;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 	}
 
-	@media (min-width: 768px) {
+	@media (min-width: 1024px) {
 		.mobile-menu {
 			display: none;
 		}
 	}
 
 	.mobile-nav-link {
-		color: var(--color-fg-primary);
+		color: #000;
 		text-decoration: none;
-		font-size: var(--text-h3);
-		font-weight: var(--font-light);
-		padding: var(--space-sm) 0;
-		letter-spacing: var(--tracking-tight);
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		font-size: 1.25rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 	}
 
 	.mobile-nav-link:hover {
-		opacity: 0.7;
+		opacity: 0.6;
 	}
 
-	/* Animations */
-	.animate-slide-down {
-		animation: slideDown var(--duration-micro) var(--ease-standard) forwards;
-	}
-
-	.animate-fade-in {
-		opacity: 0;
-		animation: fadeIn var(--duration-micro) var(--ease-standard) forwards;
-		animation-delay: calc(var(--delay, 0) * 50ms);
-	}
-
-	@keyframes slideDown {
-		from {
-			opacity: 0;
-			transform: translateY(-8px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes fadeIn {
-		to {
-			opacity: 1;
-		}
-	}
-
-	/* Reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.nav,
-		.logo-text,
-		.nav-link,
-		.hamburger,
-		.hamburger::before,
-		.hamburger::after,
-		.animate-slide-down,
-		.animate-fade-in {
-			transition: none;
-			animation: none;
-			opacity: 1;
-			transform: none;
-		}
+	.mobile-cta {
+		display: inline-block;
+		padding: 1rem 2rem;
+		background: #000;
+		color: #fff;
+		text-decoration: none;
+		font-size: 1rem;
+		border-radius: 100px;
+		text-align: center;
+		margin-top: 1.5rem;
 	}
 </style>
