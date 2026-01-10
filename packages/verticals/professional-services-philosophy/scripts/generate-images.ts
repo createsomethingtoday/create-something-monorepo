@@ -2,7 +2,7 @@
  * Generate images using Cloudflare Workers AI (Flux)
  *
  * Usage:
- *   cd packages/verticals/professional-services
+ *   cd packages/verticals/professional-services-philosophy
  *   npx tsx scripts/generate-images.ts
  *
  * Authentication: Uses wrangler's stored OAuth token automatically.
@@ -42,11 +42,9 @@ function getApiToken(): string {
 	throw new Error('No Cloudflare API token found. Set CLOUDFLARE_API_TOKEN env var.');
 }
 
-const STYLE = `Professional architectural photography, minimalist modern architecture,
-natural materials wood glass concrete, warm interior lighting at golden hour,
-clean editorial style, ultra sharp details, photorealistic, 8K,
-no vignette, no radial gradient, no white overlay, no fog effect, even lighting across frame,
-clear unobstructed view, magazine quality, Dwell magazine style`;
+const STYLE = `Professional architectural photography, award-winning composition,
+natural lighting, ultra sharp details, photorealistic, 8K resolution,
+no vignette, no radial gradient, clean unobstructed view, Dwell magazine style`;
 
 interface ImageSpec {
 	filename: string;
@@ -54,101 +52,103 @@ interface ImageSpec {
 }
 
 const IMAGES: ImageSpec[] = [
-	// Forest Cabin - Hero
+	// === Opening Gallery (4 images) ===
 	{
-		filename: 'projects/hero-forest-cabin.jpg',
-		prompt: `${STYLE}. Stunning glass pavilion house nestled among tall pine trees in a Pacific Northwest forest,
-		floor-to-ceiling windows, black steel frame, warm amber interior lighting glowing at dusk,
-		western red cedar cladding, pine trees frame composition, misty atmosphere, golden hour`
+		filename: 'gallery/residential.jpg',
+		prompt: `${STYLE}. Stunning modern residential home with clean white facade,
+		large floor-to-ceiling windows, flat roof with wooden overhang,
+		manicured lawn and mature olive trees, Mediterranean blue sky,
+		warm golden hour lighting, luxury real estate photography`
+	},
+	{
+		filename: 'gallery/commercial.jpg',
+		prompt: `${STYLE}. Contemporary glass office tower reflecting clouds,
+		geometric steel and glass facade, dramatic low angle perspective,
+		urban downtown skyline background, sharp architectural lines,
+		blue hour twilight lighting, corporate headquarters building`
+	},
+	{
+		filename: 'gallery/interior.jpg',
+		prompt: `${STYLE}. Luxury minimalist living room interior,
+		double height ceiling with floor-to-ceiling windows,
+		white oak herringbone floors, designer furniture,
+		neutral cream palette with warm wood accents, natural light flooding in,
+		architectural digest style interior`
+	},
+	{
+		filename: 'gallery/landscape.jpg',
+		prompt: `${STYLE}. Modern landscape architecture design,
+		geometric infinity pool with clean edges,
+		manicured ornamental grasses and sculptural plantings,
+		stone terrace overlooking rolling hills, sunset sky,
+		contemporary outdoor living space`
 	},
 
-	// Hillside Residence - Exterior
+	// === Selected Works Projects ===
 	{
-		filename: 'projects/exterior-hillside.jpg',
-		prompt: `${STYLE}. Dramatic cantilevered modern house on steep forested hillside,
-		cedar cladding weathered silver-grey, floor-to-ceiling glass walls,
-		multiple volumes stepping down slope, native landscaping, sweeping valley views,
-		Pacific Northwest architecture, golden hour light`
+		filename: 'projects/casa-moderna.jpg',
+		prompt: `${STYLE}. Casa Moderna - stunning contemporary villa,
+		white stucco walls with floor-to-ceiling glass, cantilevered roof,
+		swimming pool in foreground reflecting the architecture,
+		mature palm trees and Mediterranean landscaping,
+		golden hour with warm interior lights glowing, luxury residence`
+	},
+	{
+		filename: 'projects/urban-loft.jpg',
+		prompt: `${STYLE}. Industrial loft apartment interior,
+		exposed brick walls and steel beam ceiling,
+		polished concrete floors, open floor plan,
+		large factory windows with city view,
+		modern furniture mixed with industrial elements,
+		warm afternoon light streaming through windows`
+	},
+	{
+		filename: 'projects/horizon-tower.jpg',
+		prompt: `${STYLE}. Horizon Tower - sleek glass skyscraper,
+		twisting geometric form reaching into blue sky,
+		reflective glass facade with horizontal sun shades,
+		modern urban plaza at base with water feature,
+		dramatic upward perspective, corporate architecture`
+	},
+	{
+		filename: 'projects/zen-retreat.jpg',
+		prompt: `${STYLE}. Japanese-inspired luxury spa resort building,
+		low horizontal pavilion with deep wooden overhangs,
+		reflecting pool with floating stones,
+		bamboo groves and maple trees surrounding,
+		zen garden with raked gravel, tranquil atmosphere,
+		twilight lighting with warm interior glow`
 	},
 
-	// Coastal Retreat - Exterior
+	// === Background Images ===
 	{
-		filename: 'projects/exterior-coastal.jpg',
-		prompt: `${STYLE}. Modernist beach house with horizontal lines on California coast,
-		weathered cedar siding, large overhanging roof protecting glass walls,
-		ipe wood deck, native coastal grasses, ocean visible in background,
-		Sea Ranch inspired architecture, soft afternoon light`
+		filename: 'backgrounds/stats-bg.jpg',
+		prompt: `${STYLE}. Dramatic architectural interior atrium,
+		multi-story space with geometric skylight above,
+		clean white walls with subtle shadows,
+		minimalist design with sculptural staircase,
+		natural light filtering down, slightly desaturated tones,
+		suitable for text overlay`
+	},
+	{
+		filename: 'backgrounds/contact-bg.jpg',
+		prompt: `${STYLE}. Modern architecture studio workshop,
+		large scale architectural model on table,
+		drawings and plans in background,
+		warm task lighting, creative atmosphere,
+		architects hands visible working on model,
+		professional workspace environment`
 	},
 
-	// Meadow Studio - Exterior
+	// === Hero Background ===
 	{
-		filename: 'projects/exterior-meadow.jpg',
-		prompt: `${STYLE}. Low-slung modernist pavilion in wildflower meadow,
-		black timber cladding, large glass walls, flat roof with deep overhang,
-		prefabricated cedar modules, golden grasses surrounding structure,
-		mountains in distance, Hudson Valley landscape`
-	},
-
-	// Interior - Modern chair by window
-	{
-		filename: 'projects/interior-chair.jpg',
-		prompt: `${STYLE}. Minimalist interior with iconic mid-century modern lounge chair,
-		floor-to-ceiling window with forest view, polished concrete floor,
-		natural light streaming in, warm wood accents, architectural detail shot`
-	},
-
-	// Interior - Architect's desk
-	{
-		filename: 'projects/interior-desk.jpg',
-		prompt: `${STYLE}. Modern home office with built-in walnut desk,
-		large window overlooking trees, architectural drawings on desk,
-		minimal decor, task lamp, floating shelves with books,
-		warm afternoon light, creative workspace`
-	},
-
-	// Interior - Built-in shelving
-	{
-		filename: 'projects/interior-shelf.jpg',
-		prompt: `${STYLE}. Floor-to-ceiling built-in oak bookshelf in modern home,
-		books and objects carefully arranged, window light from side,
-		craftsmanship detail of joinery visible, warm wood tones,
-		architectural millwork, minimalist styling`
-	},
-
-	// Interior - Kitchen
-	{
-		filename: 'projects/interior-kitchen.jpg',
-		prompt: `${STYLE}. Modern kitchen in architect-designed home,
-		white oak cabinetry, concrete countertops, large window with nature view,
-		pendant lights over island, open shelving, minimalist design,
-		warm morning light, professional appliances`
-	},
-
-	// Interior - Bedroom
-	{
-		filename: 'projects/interior-bedroom.jpg',
-		prompt: `${STYLE}. Serene master bedroom with glass wall overlooking forest,
-		low platform bed with white linens, oak floors,
-		minimal nightstands, soft morning light filtering through trees,
-		architectural simplicity, warm neutral palette`
-	},
-
-	// Architect headshot
-	{
-		filename: 'headshot-architect.jpg',
-		prompt: `Professional headshot portrait of architect in their 40s,
-		wearing black turtleneck, confident thoughtful expression,
-		modern white studio background, soft natural lighting,
-		editorial portrait style, sharp focus, warm approachable`
-	},
-
-	// OG Image
-	{
-		filename: 'og-image.jpg',
-		prompt: `${STYLE}. Aerial view of modern cedar house in Pacific Northwest forest,
-		multiple glass pavilions connected by covered walkways,
-		native landscaping, harmony between architecture and nature,
-		golden hour, long shadows, architectural masterplan view`
+		filename: 'backgrounds/hero-bg.jpg',
+		prompt: `${STYLE}. Aerial view of modern architectural complex,
+		white geometric buildings among lush green landscape,
+		multiple connected pavilions with courtyards,
+		harmony between built form and nature,
+		soft morning light, slight mist in distance,
+		masterplan composition view`
 	}
 ];
 
@@ -188,8 +188,8 @@ async function generateImage(spec: ImageSpec, apiToken: string): Promise<void> {
 }
 
 async function main() {
-	console.log('Professional Services Image Generator (Cloudflare Flux)');
-	console.log('=======================================================\n');
+	console.log('Rudolf Template Image Generator (Cloudflare Flux)');
+	console.log('==================================================\n');
 
 	const apiToken = getApiToken();
 	console.log(`Using API token: ${apiToken.substring(0, 10)}...\n`);

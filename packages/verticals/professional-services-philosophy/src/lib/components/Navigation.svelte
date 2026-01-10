@@ -4,11 +4,22 @@
 	 *
 	 * Layout: Logo left | Links center | CTA button right
 	 * Features: Transparent on top, solid on scroll
+	 *
+	 * Props:
+	 *   variant: 'dark' | 'light' - Initial background type
+	 *     - 'dark': White text on transparent (for dark hero images)
+	 *     - 'light': Dark text on transparent (for light backgrounds)
 	 */
 
 	import { page } from '$app/stores';
 	import { siteConfig } from '$lib/config/context';
 	import { onMount } from 'svelte';
+
+	interface Props {
+		variant?: 'dark' | 'light';
+	}
+
+	let { variant = 'dark' }: Props = $props();
 
 	let mobileMenuOpen = $state(false);
 	let scrolled = $state(false);
@@ -34,7 +45,7 @@
 	});
 </script>
 
-<nav class="nav" class:nav--scrolled={scrolled}>
+<nav class="nav" class:nav--scrolled={scrolled} class:nav--light={variant === 'light'}>
 	<div class="nav-container">
 		<!-- Logo -->
 		<a href="/" class="logo">
@@ -127,6 +138,11 @@
 		color: #fff;
 	}
 
+	/* Light variant: dark text on transparent for light backgrounds */
+	.nav.nav--light:not(.nav--scrolled) .logo {
+		color: #000;
+	}
+
 	.nav-links {
 		display: none;
 		gap: 2.5rem;
@@ -152,6 +168,10 @@
 		color: #fff;
 	}
 
+	.nav.nav--light:not(.nav--scrolled) .nav-link {
+		color: #000;
+	}
+
 	.nav-link:hover,
 	.nav-link.active {
 		opacity: 0.6;
@@ -171,6 +191,11 @@
 	.nav:not(.nav--scrolled) .nav-cta {
 		background: #fff;
 		color: #000;
+	}
+
+	.nav.nav--light:not(.nav--scrolled) .nav-cta {
+		background: #000;
+		color: #fff;
 	}
 
 	.nav-cta:hover {
@@ -219,6 +244,16 @@
 	.nav:not(.nav--scrolled) .hamburger::before,
 	.nav:not(.nav--scrolled) .hamburger::after {
 		background: #fff;
+	}
+
+	/* Light variant hamburger */
+	.nav.nav--light:not(.nav--scrolled) .hamburger {
+		background: #000;
+	}
+
+	.nav.nav--light:not(.nav--scrolled) .hamburger::before,
+	.nav.nav--light:not(.nav--scrolled) .hamburger::after {
+		background: #000;
 	}
 
 	.hamburger::before,

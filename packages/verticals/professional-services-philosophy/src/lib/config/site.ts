@@ -65,11 +65,12 @@ export const siteConfig = {
 			context: 'SaaS platform authentication',
 			year: '2024',
 			category: 'AI-Native Development',
-			heroImage: '/og-image.jpg',
+			heroImage: '/projects/casa-moderna.jpg',
+			location: 'San Francisco, CA',
 			description:
 				'26 hours actual vs 120 estimated. Claude Code for component generation, human review for security architecture.',
 			tech: ['Claude Code', 'SvelteKit', 'Cloudflare Workers', 'D1'],
-			images: ['/og-image.jpg', '/og-image.jpg']
+			images: ['/projects/casa-moderna.jpg', '/gallery/interior.jpg']
 		},
 		{
 			slug: 'workflow-automation',
@@ -79,11 +80,12 @@ export const siteConfig = {
 			context: 'Build automation for agency client',
 			year: '2024',
 			category: 'System Architecture',
-			heroImage: '/og-image.jpg',
+			heroImage: '/projects/horizon-tower.jpg',
+			location: 'New York, NY',
 			description:
 				'WORKWAY SDK composable workflows. Bounded tasks with quality gates. Tools recede into transparent use.',
 			tech: ['WORKWAY SDK', 'Cloudflare Workers', 'TypeScript'],
-			images: ['/og-image.jpg', '/og-image.jpg']
+			images: ['/projects/horizon-tower.jpg', '/gallery/commercial.jpg']
 		},
 		{
 			slug: 'multi-tenant-platform',
@@ -93,11 +95,12 @@ export const siteConfig = {
 			context: 'Template platform for vertical SaaS',
 			year: '2024',
 			category: 'AI-Native Development',
-			heroImage: '/og-image.jpg',
+			heroImage: '/projects/urban-loft.jpg',
+			location: 'Austin, TX',
 			description:
 				'Router worker + R2 assets + D1 tenants. Edge-first architecture. Partnership at every decision point.',
 			tech: ['SvelteKit', 'Cloudflare Pages', 'D1', 'R2'],
-			images: ['/og-image.jpg', '/og-image.jpg']
+			images: ['/projects/urban-loft.jpg', '/gallery/interior.jpg']
 		},
 		{
 			slug: 'api-modernization',
@@ -107,11 +110,12 @@ export const siteConfig = {
 			context: 'REST → GraphQL migration',
 			year: '2023',
 			category: 'System Architecture',
-			heroImage: '/og-image.jpg',
+			heroImage: '/projects/zen-retreat.jpg',
+			location: 'Seattle, WA',
 			description:
 				'Incremental migration strategy. Zero downtime. Claude Code for resolver generation, human architectural oversight.',
 			tech: ['GraphQL', 'TypeScript', 'PostgreSQL'],
-			images: ['/og-image.jpg', '/og-image.jpg']
+			images: ['/projects/zen-retreat.jpg', '/gallery/landscape.jpg']
 		},
 		{
 			slug: 'edge-compute-migration',
@@ -121,11 +125,12 @@ export const siteConfig = {
 			context: 'Serverless to Cloudflare Workers',
 			year: '2023',
 			category: 'Technical Advisory',
-			heroImage: '/og-image.jpg',
+			heroImage: '/gallery/residential.jpg',
+			location: 'Los Angeles, CA',
 			description:
 				'Global distribution. Cold start elimination. Philosophy: serve users where they are.',
 			tech: ['Cloudflare Workers', 'D1', 'KV'],
-			images: ['/og-image.jpg', '/og-image.jpg']
+			images: ['/gallery/residential.jpg', '/gallery/commercial.jpg']
 		}
 	],
 

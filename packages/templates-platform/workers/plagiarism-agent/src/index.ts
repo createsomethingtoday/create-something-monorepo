@@ -10,6 +10,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import puppeteer from '@cloudflare/puppeteer';
 
 // =============================================================================
 // TYPES
@@ -20,6 +21,7 @@ interface Env {
   SCREENSHOTS: R2Bucket;
   CASE_QUEUE: Queue;
   AI: any;
+  BROWSER: any;
   ANTHROPIC_API_KEY: string;
   AIRTABLE_API_KEY: string;
   AIRTABLE_BASE_ID: string;
@@ -94,6 +96,12 @@ export default {
       return getCaseStatus(caseId!, env);
     }
 
+    // Test endpoint: Fetch Airtable record and trigger webhook
+    if (url.pathname.startsWith('/test-record/')) {
+      const recordId = url.pathname.split('/').pop();
+      return testRecordWebhook(recordId!, env);
+    }
+
     return new Response('Plagiarism Agent Ready', { status: 200 });
   },
 
@@ -144,6 +152,64 @@ export default {
 };
 
 // =============================================================================
+// AIRTABLE SCREENSHOT PROCESSING
+// =============================================================================
+
+/**
+ * Download and store screenshots provided by the submitter in Airtable.
+ * Airtable attachment format: [{ url, filename, size, type }, ...]
+ */
+async function processProvidedScreenshots(
+  caseId: string,
+  screenshots: any[],
+  env: Env
+): Promise<void> {
+  try {
+    // Airtable provides attachments as array - use first two as original/copy
+    const [screenshot1, screenshot2] = screenshots;
+
+    if (!screenshot1?.url || !screenshot2?.url) {
+      console.log('[Screenshots] Provided screenshots missing URLs, will fall back to Browser Rendering');
+      return;
+    }
+
+    console.log(`[Screenshots] Downloading provided screenshots: ${screenshot1.filename}, ${screenshot2.filename}`);
+
+    // Download both screenshots in parallel
+    const [img1Response, img2Response] = await Promise.all([
+      fetch(screenshot1.url),
+      fetch(screenshot2.url)
+    ]);
+
+    if (!img1Response.ok || !img2Response.ok) {
+      console.error('[Screenshots] Failed to download provided screenshots');
+      return;
+    }
+
+    const [img1Buffer, img2Buffer] = await Promise.all([
+      img1Response.arrayBuffer(),
+      img2Response.arrayBuffer()
+    ]);
+
+    // Store in R2 with same naming convention as Browser Rendering
+    const originalKey = `${caseId}/original.jpg`;
+    const copyKey = `${caseId}/copy.jpg`;
+
+    await Promise.all([
+      env.SCREENSHOTS.put(originalKey, img1Buffer),
+      env.SCREENSHOTS.put(copyKey, img2Buffer)
+    ]);
+
+    console.log(`[Screenshots] Stored provided screenshots: ${originalKey} (${img1Buffer.byteLength} bytes), ${copyKey} (${img2Buffer.byteLength} bytes)`);
+  } catch (error: any) {
+    console.error('[Screenshots] Error processing provided screenshots:', {
+      message: error?.message || String(error),
+      name: error?.name
+    });
+  }
+}
+
+// =============================================================================
 // WEBHOOK HANDLER
 // =============================================================================
 
@@ -152,6 +218,14 @@ async function handleAirtableWebhook(request: Request, env: Env): Promise<Respon
 
   const caseId = `case_${generateId()}`;
   const now = Date.now();
+
+  // Extract fields with defaults for missing values
+  const fields = payload.fields || {};
+  const reporterEmail = fields['Submitter\'s Email'] || 'unknown@example.com';
+  const originalUrl = fields['Preview URL of Offended Template'] || '';
+  const allegedCopyUrl = fields['Preview URL of Offending Template'] || '';
+  const complaintText = fields['Offense'] || 'No complaint text provided';
+  const allegedCreator = fields['Violating creator'] || 'Unknown';
 
   await env.DB.prepare(`
     INSERT INTO plagiarism_cases (
@@ -162,13 +236,21 @@ async function handleAirtableWebhook(request: Request, env: Env): Promise<Respon
   `).bind(
     caseId,
     payload.recordId,
-    payload.fields['Submitter\'s Email'],
-    payload.fields['Preview URL of Offended Template'],
-    payload.fields['Preview URL of Offending Template'],
-    payload.fields['Offense'],
-    payload.fields['Violating creator'],
+    reporterEmail,
+    originalUrl,
+    allegedCopyUrl,
+    complaintText,
+    allegedCreator,
     now
   ).run();
+
+  // Check if submitter provided screenshots
+  const screenshots = fields['Screenshots'] || [];
+  if (screenshots.length >= 2) {
+    // Use submitter's screenshots instead of capturing new ones
+    console.log(`[Webhook] Processing ${screenshots.length} provided screenshots`);
+    await processProvidedScreenshots(caseId, screenshots, env);
+  }
 
   // Queue for Tier 1 processing
   await env.CASE_QUEUE.send({ caseId, tier: 1 });
@@ -195,20 +277,130 @@ async function getCaseStatus(caseId: string, env: Env): Promise<Response> {
   return Response.json(result);
 }
 
+async function testRecordWebhook(recordId: string, env: Env): Promise<Response> {
+  try {
+    // Fetch the Airtable record
+    const response = await fetch(
+      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_TABLE_ID}/${recordId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${env.AIRTABLE_API_KEY}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      return Response.json({ error: `Airtable API error: ${response.status}` }, { status: 500 });
+    }
+
+    const record = await response.json() as any;
+    const screenshots = record.fields['Screenshots'] || [];
+
+    console.log(`[Test] Fetched record ${recordId} with ${screenshots.length} screenshots`);
+
+    // Create webhook payload
+    const webhookPayload = {
+      recordId: record.id,
+      fields: {
+        "Submitter's Email": record.fields["Submitter's Email"],
+        "Preview URL of Offended Template": record.fields["Preview URL of Offended Template"],
+        "Preview URL of Offending Template": record.fields["Preview URL of Offending Template"],
+        "Offense": record.fields["Offense"],
+        "Violating creator": record.fields["Violating creator"],
+        "Screenshots": screenshots
+      }
+    };
+
+    // Trigger webhook handler directly
+    const webhookResponse = await handleAirtableWebhook(
+      new Request('http://localhost/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload)
+      }),
+      env
+    );
+
+    const webhookResult = await webhookResponse.json();
+
+    return Response.json({
+      airtableRecord: {
+        id: record.id,
+        screenshotCount: screenshots.length,
+        screenshotFilenames: screenshots.map((s: any) => s.filename)
+      },
+      webhookResult
+    });
+  } catch (error: any) {
+    console.error('[Test] Error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
+
 // =============================================================================
 // SCREENSHOT CAPTURE
 // =============================================================================
 
 async function captureScreenshot(url: string, env: Env): Promise<ArrayBuffer | null> {
+  let browser;
   try {
-    // Screenshot capture requires Browser Rendering setup
-    // For now, screenshots can be manually uploaded to R2: {caseId}/original.jpg and {caseId}/copy.jpg
-    // TODO: Implement Browser Rendering API when enabled
-    console.log(`[Screenshot] Skipping capture for ${url} - implement Browser Rendering if needed`);
+    console.log(`[Screenshot] Starting capture for ${url}`);
+
+    // Launch browser using Cloudflare Browser Rendering
+    console.log('[Screenshot] Launching browser...');
+    browser = await puppeteer.launch(env.BROWSER);
+    console.log('[Screenshot] Browser launched successfully');
+
+    const page = await browser.newPage();
+    console.log('[Screenshot] New page created');
+
+    // Set viewport for consistent screenshots
+    await page.setViewport({ width: 1280, height: 720 });
+    console.log('[Screenshot] Viewport set');
+
+    // Navigate to URL with timeout
+    console.log(`[Screenshot] Navigating to ${url}...`);
+    await page.goto(url, {
+      waitUntil: 'load',  // Changed from 'networkidle0' - more lenient
+      timeout: 60000      // Increased from 30s to 60s
+    });
+    console.log('[Screenshot] Page loaded');
+
+    // Capture screenshot as JPEG
+    // For vision analysis, we capture above-the-fold content (first ~3 viewports)
+    // to stay within the 128K token context limit while capturing key design elements
+    console.log('[Screenshot] Capturing screenshot...');
+    const screenshot = await page.screenshot({
+      type: 'jpeg',
+      quality: 60,      // Reduced from 85 to save tokens
+      fullPage: false,  // Viewport only to stay under token limit
+      clip: {
+        x: 0,
+        y: 0,
+        width: 1280,
+        height: 2160    // 3 viewports worth (720 * 3)
+      }
+    });
+
+    console.log(`[Screenshot] SUCCESS: Captured ${url} (${screenshot.byteLength} bytes)`);
+
+    return screenshot.buffer;
+  } catch (error: any) {
+    console.error(`[Screenshot] FAILED for ${url}:`, {
+      message: error?.message || String(error),
+      stack: error?.stack,
+      name: error?.name
+    });
     return null;
-  } catch (error) {
-    console.error(`[Screenshot] Failed to capture ${url}:`, error);
-    return null;
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+        console.log('[Screenshot] Browser closed');
+      } catch (e) {
+        console.error('[Screenshot] Error closing browser:', e);
+      }
+    }
   }
 }
 
@@ -259,30 +451,44 @@ async function getVisionAnalysis(
       return null;
     }
 
-    // Convert R2 objects to base64 for Workers AI
-    const originalBase64 = btoa(String.fromCharCode(...new Uint8Array(await originalImg.arrayBuffer())));
-    const copyBase64 = btoa(String.fromCharCode(...new Uint8Array(await copyImg.arrayBuffer())));
+    // Convert R2 objects to byte arrays for Workers AI
+    const originalBytes = new Uint8Array(await originalImg.arrayBuffer());
+    const copyBytes = new Uint8Array(await copyImg.arrayBuffer());
+
+    console.log(`[Vision] Analyzing screenshots (${originalBytes.length} bytes, ${copyBytes.length} bytes)`);
 
     // Use Cloudflare's vision model to analyze both screenshots
+    // The model expects images as arrays of numbers
     const response = await env.AI.run('@cf/meta/llama-3.2-11b-vision-instruct', {
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Compare these two website screenshots for plagiarism. Analyze layout, design elements, typography, color schemes, spacing, and component structure. Describe specific similarities and differences.' },
-            { type: 'image', image: originalBase64 },
-            { type: 'text', text: 'vs' },
-            { type: 'image', image: copyBase64 }
-          ]
-        }
-      ]
+      prompt: 'Compare these two website screenshots for plagiarism. Analyze layout, design elements, typography, color schemes, spacing, and component structure. Describe specific similarities and differences.',
+      image: [Array.from(originalBytes), Array.from(copyBytes)]
     });
 
+    console.log('[Vision] Analysis complete');
     return response.response || null;
-  } catch (error) {
-    console.error('[Vision] Analysis failed:', error);
+  } catch (error: any) {
+    console.error('[Vision] Analysis failed:', {
+      message: error?.message || String(error),
+      name: error?.name
+    });
     return null;
   }
+}
+
+/**
+ * Convert Uint8Array to base64 without causing stack overflow.
+ * Standard btoa(String.fromCharCode(...array)) fails on large images.
+ */
+function arrayBufferToBase64(bytes: Uint8Array): string {
+  const CHUNK_SIZE = 0x8000; // 32KB chunks
+  let binary = '';
+
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, Math.min(i + CHUNK_SIZE, bytes.length));
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
 }
 
 // =============================================================================
@@ -293,18 +499,31 @@ async function runTier1Screening(
   plagiarismCase: PlagiarismCase,
   env: Env
 ): Promise<void> {
-  // Capture screenshots in background (don't block on this)
-  const screenshotPromise = captureAndStoreScreenshots(
-    plagiarismCase.id,
-    plagiarismCase.originalUrl,
-    plagiarismCase.allegedCopyUrl,
-    env
-  );
+  // Check if screenshots already exist in R2 (from Airtable submission)
+  const existingScreenshots = await Promise.all([
+    env.SCREENSHOTS.head(`${plagiarismCase.id}/original.jpg`),
+    env.SCREENSHOTS.head(`${plagiarismCase.id}/copy.jpg`)
+  ]);
+
+  const hasProvidedScreenshots = existingScreenshots[0] && existingScreenshots[1];
+
+  // Only capture new screenshots if submitter didn't provide them
+  if (!hasProvidedScreenshots) {
+    console.log('[Tier 1] No provided screenshots found, capturing via Browser Rendering');
+    const screenshotPromise = captureAndStoreScreenshots(
+      plagiarismCase.id,
+      plagiarismCase.originalUrl,
+      plagiarismCase.allegedCopyUrl,
+      env
+    );
+    await screenshotPromise;
+  } else {
+    console.log('[Tier 1] Using submitter-provided screenshots');
+  }
 
   // Get vision analysis if screenshots available
   let visionAnalysis: string | null = null;
   try {
-    await screenshotPromise;
     visionAnalysis = await getVisionAnalysis(plagiarismCase.id, env);
     if (visionAnalysis) {
       console.log(`[Tier 1] Vision analysis: ${visionAnalysis.substring(0, 200)}...`);
@@ -450,7 +669,7 @@ Return JSON:
 }`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-3-7-sonnet-20250219',
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }]
   });

@@ -35,9 +35,9 @@ max_retries = 3
 [ai]
 binding = "AI"
 
-# Note: Browser Rendering binding removed until screenshot capture is implemented.
-# Screenshots can be manually uploaded to R2: {caseId}/original.jpg and {caseId}/copy.jpg
-# Vision analysis will automatically run if screenshots are present.
+# Browser Rendering API binding
+[browser]
+binding = "BROWSER"
 
 [vars]
 ENVIRONMENT = "production"

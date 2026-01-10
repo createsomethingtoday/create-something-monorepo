@@ -27,28 +27,28 @@
 	<div class="gallery-grid">
 		<a href="/projects" class="gallery-item">
 			<img
-				src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80"
+				src="/gallery/residential.jpg"
 				alt="Modern residential architecture"
 				class="gallery-img"
 			/>
 		</a>
 		<a href="/projects" class="gallery-item">
 			<img
-				src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"
+				src="/gallery/commercial.jpg"
 				alt="Commercial building design"
 				class="gallery-img"
 			/>
 		</a>
 		<a href="/projects" class="gallery-item">
 			<img
-				src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80"
+				src="/gallery/interior.jpg"
 				alt="Interior design project"
 				class="gallery-img"
 			/>
 		</a>
 		<a href="/projects" class="gallery-item">
 			<img
-				src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80"
+				src="/gallery/landscape.jpg"
 				alt="Landscape architecture"
 				class="gallery-img"
 			/>
@@ -99,7 +99,7 @@
 			<a href="/projects" class="work-item large">
 				<div class="work-image-wrapper">
 					<img
-						src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80"
+						src="/projects/casa-moderna.jpg"
 						alt="Casa Moderna"
 						class="work-img"
 					/>
@@ -116,7 +116,7 @@
 			<a href="/projects" class="work-item">
 				<div class="work-image-wrapper">
 					<img
-						src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80"
+						src="/projects/urban-loft.jpg"
 						alt="Urban Loft"
 						class="work-img"
 					/>
@@ -133,7 +133,7 @@
 			<a href="/projects" class="work-item">
 				<div class="work-image-wrapper">
 					<img
-						src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"
+						src="/projects/horizon-tower.jpg"
 						alt="Horizon Tower"
 						class="work-img"
 					/>
@@ -150,7 +150,7 @@
 			<a href="/projects" class="work-item wide">
 				<div class="work-image-wrapper">
 					<img
-						src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80"
+						src="/projects/zen-retreat.jpg"
 						alt="Zen Retreat"
 						class="work-img"
 					/>
@@ -202,7 +202,7 @@
 <section class="stats-section">
 	<div class="stats-bg">
 		<img
-			src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80"
+			src="/backgrounds/stats-bg.jpg"
 			alt="Architecture background"
 			class="stats-bg-img"
 		/>
@@ -303,7 +303,7 @@
 <section class="contact-cta" id="contact">
 	<div class="contact-bg">
 		<img
-			src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80"
+			src="/backgrounds/contact-bg.jpg"
 			alt="Contact background"
 			class="contact-bg-img"
 		/>

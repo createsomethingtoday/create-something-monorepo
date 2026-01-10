@@ -9,7 +9,9 @@
     "tail": "wrangler tail"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1"
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@cloudflare/puppeteer": "^1.0.4",
+    "puppeteer-core": "^24.34.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",

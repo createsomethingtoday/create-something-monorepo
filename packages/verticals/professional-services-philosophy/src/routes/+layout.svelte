@@ -4,6 +4,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import { onNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import { initSiteConfig } from '$lib/config/context';
 	import type { SiteConfig } from '$lib/config/site';
 
@@ -17,6 +18,16 @@
 	}
 
 	let { children, data }: Props = $props();
+
+	// Pages with light backgrounds need dark nav text
+	const lightBackgroundPages = ['/services', '/contact', '/team', '/about', '/studio', '/privacy', '/terms'];
+
+	// Derive nav variant from current route
+	let navVariant = $derived(
+		lightBackgroundPages.some((p) => $page.url.pathname === p || $page.url.pathname.startsWith(p + '/'))
+			? 'light'
+			: 'dark'
+	) as 'light' | 'dark';
 
 	// View Transitions API
 	onNavigate((navigation) => {
@@ -39,7 +50,7 @@
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
 <div class="layout">
-	<Navigation />
+	<Navigation variant={navVariant} />
 	<main id="main-content" tabindex="-1">
 		{@render children()}
 	</main>
