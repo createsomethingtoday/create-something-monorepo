@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { contactSchema, parseBody } from '@create-something/components/validation';
+import { contactSchema, parseBody, type ContactInput } from '@create-something/components/validation';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			);
 		}
 
-		const { name, email, message, service, company, assessment_id } = parseResult.data;
+		const { name, email, message, service, company, assessment_id } = parseResult.data as ContactInput;
 
 		// Access Cloudflare bindings via platform.env
 		if (!platform?.env) {
