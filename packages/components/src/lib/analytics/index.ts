@@ -91,6 +91,9 @@ export {
 	type AnalyticsQueryOptions,
 } from './server.js';
 
+// Shared tracking handler (for /api/analytics/track endpoints)
+export { trackAnalyticsEvent, type TrackAnalyticsResult } from './track.js';
+
 // Components
 export { default as PopularContent } from './PopularContent.svelte';
 export { default as UserInteractionsPanel } from './UserInteractionsPanel.svelte';

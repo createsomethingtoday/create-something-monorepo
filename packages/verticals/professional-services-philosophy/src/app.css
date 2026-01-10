@@ -1,0 +1,86 @@
+/*
+  CREATE SOMETHING Design System - Canon Tokens
+  Vertical Template: Professional Services - Philosophy Edition
+
+  Philosophy: "Weniger, aber besser" - Dieter Rams
+  Heideggerian framing: Tools recede. Partnership remains.
+
+  Tailwind for structure, Canon for aesthetics.
+  Pure monochrome. Golden ratio spacing. Typography-driven hierarchy.
+
+  TYPOGRAPHY: System fonts for template neutrality.
+  This template demonstrates Canon principles through subtractive design.
+*/
+
+/* ==========================================================================
+   Canon Design Tokens - Single Source of Truth
+   Import from @create-something/components (MUST come before @tailwind)
+   ========================================================================== */
+@import '@create-something/components/styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Vertical Template Base - Shared across all verticals
+   Import AFTER Tailwind to apply Canon base styles
+   (PostCSS warning expected but styles are still processed)
+   ========================================================================== */
+@import '@create-something/components/styles/vertical-base.css';
+
+/* ==========================================================================
+   Template-Specific Token Overrides
+   Professional Services: System fonts for template neutrality
+   ========================================================================== */
+
+:root {
+  /* Override fonts - use system fonts for template neutrality */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Extended spacing for professional services */
+  --space-4xl: 17.942rem;
+  --section-padding: var(--space-3xl);
+  --section-padding-sm: var(--space-2xl);
+
+  /* Extended width tokens */
+  --width-avatar: 6.18rem;
+  --width-avatar-sm: 3.82rem;
+  --width-icon: 1.5rem;
+  --width-icon-lg: 2.427rem;
+  --width-icon-xl: 3.927rem;
+
+  /* View Transition Duration - Contemplative (Being-as-Canon) */
+  --view-transition-duration: 500ms;
+}
+
+/* ==========================================================================
+   Template-Specific Styles
+   Add any professional-services-specific overrides or extensions here.
+   ========================================================================== */
+
+/* Skip link - ensure visibility only on focus (accessibility)
+   This overrides any potential cascade issues from import order */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-fg-primary);
+  color: var(--color-bg-pure);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-body-sm);
+  text-decoration: none;
+  z-index: 9999;
+  transition: top var(--duration-micro) var(--ease-standard);
+}
+
+.skip-link:focus {
+  top: var(--space-sm);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
