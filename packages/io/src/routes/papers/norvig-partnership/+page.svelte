@@ -21,8 +21,8 @@
 			<div class="font-mono mb-4 paper-id">PAPER-2026-001</div>
 			<h1 class="mb-3 paper-title">The Norvig Partnership</h1>
 			<p class="max-w-3xl paper-subtitle">
-				When Empiricism Validates Phenomenology—How Peter Norvig's Advent of Code 2025 experiments
-				confirm Heideggerian predictions about AI-human collaboration.
+				How Peter Norvig's Advent of Code 2025 experiments
+				confirm predictions about AI-human collaboration.
 			</p>
 			<div class="flex gap-4 mt-4 paper-meta">
 				<span>Research</span>
@@ -41,8 +41,7 @@
 				and Director of Research at Google—published an empirical analysis of LLM performance on
 				Advent of Code 2025. His findings: LLMs were "maybe 20 times faster" than manual coding,
 				produced correct answers to every puzzle, and demonstrated mastery of professional concepts.
-				This paper demonstrates that Norvig's empirical observations validate phenomenological
-				predictions made by CREATE SOMETHING about the nature of AI-human partnership. When Norvig
+				This paper shows how Norvig's findings support CREATE SOMETHING's ideas about AI-human partnership. When Norvig
 				concludes he "should use an LLM as an assistant for all my coding," he marks the
 				<em>Zuhandenheit</em> moment—when a tool recedes so completely from attention that it
 				becomes inseparable from the practice itself.
@@ -66,7 +65,7 @@
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					In <strong>phenomenology</strong> (the study of how things show themselves to us through experience), we reason from <em>how things show themselves</em>. In <strong>empiricism</strong> (the study of what can be measured through observation), we reason from <em>what can be measured</em>. These approaches converge when lived
-					experience becomes quantifiable and measurement reveals <strong>ontological truth</strong> (truth about the fundamental nature of things).
+					experience becomes quantifiable and measurement reveals <strong>fundamental truth</strong> (truth about the fundamental nature of things).
 				</p>
 
 				<p>
@@ -141,7 +140,7 @@
 				<h3 class="mt-6 subsection-heading">The Rigor</h3>
 
 				<p>
-					What makes Norvig's analysis compelling is not just the data but the <em>researcher</em>.
+					Norvig's analysis is compelling because of his expertise.
 					Norvig co-authored the definitive AI textbook, spent decades at Google, and approaches
 					programming with both theoretical depth and practical rigor. His conclusion carries weight
 					<em>because</em> he's skeptical by training.
@@ -271,9 +270,7 @@ when the puzzle requires checking pairs independently."</pre>
 				</p>
 
 				<p>
-					This is Zuhandenheit: the tool's being is not its measurable properties (20x speed)
-					but its function within practice (how I code). The hammer's being is hammering, not
-					its weight or material. The LLM's being is assistance, not its benchmark scores.
+					The tool's value isn't just its measurable properties (like 20x speed) but how it changes our work (how I code). A hammer is for hammering, not just its weight. An LLM is for assistance, not just benchmark scores.
 				</p>
 
 				<div class="p-6 mt-6 quote-box">
@@ -383,7 +380,7 @@ Human: → Moves to next puzzle</pre>
 				</div>
 
 				<p>
-					Each failure-feedback-success cycle strengthens both participants:
+					Each cycle of failure, feedback, and success strengthens both the human and the AI.
 				</p>
 
 				<ul class="list-disc list-inside space-y-2 pl-4">
@@ -716,9 +713,7 @@ Partnership time: 5 minutes</pre>
 				</p>
 
 				<p>
-					Neither approach is complete alone. Empiricism without phenomenology measures effects
-					without understanding essence. Phenomenology without empiricism predicts structures
-					without validating their manifestation. Together, they enable deeper understanding.
+					Empiricism alone measures effects without understanding why. Phenomenology alone predicts without proof. Together, they enable deeper understanding.
 				</p>
 
 				<div class="p-6 mt-6 quote-box">
@@ -751,215 +746,4 @@ Partnership time: 5 minutes</pre>
 			<p class="footer-text">
 				This paper examines the convergence of empirical AI research and phenomenological philosophy
 				through Peter Norvig's Advent of Code 2025 analysis. Part of CREATE SOMETHING's ongoing research
-				into AI-human partnership patterns.
-			</p>
-			<div class="flex justify-between mt-4">
-				<a href="/papers" class="footer-link">← All Papers</a>
-				<a href="/papers/code-mode-hermeneutic-analysis" class="footer-link">Code Mode Analysis →</a>
-			</div>
-		</div>
-	</div>
-</div>
-
-<style>
-	/* Structure: Tailwind | Design: Canon */
-
-	/* Container */
-	.paper-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
-	}
-
-	/* Header */
-	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.paper-id {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
-	}
-
-	.paper-title {
-		font-size: var(--text-h1);
-	}
-
-	.paper-subtitle {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
-	}
-
-	.paper-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-	}
-
-	/* Abstract */
-	.abstract-section {
-		border-left: 4px solid var(--color-border-emphasis);
-	}
-
-	/* Typography */
-	.section-heading {
-		font-size: var(--text-h2);
-	}
-
-	.subsection-heading {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-	}
-
-	.body-text {
-		color: var(--color-fg-secondary);
-	}
-
-	/* Quote Box */
-	.quote-box {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.quote-text {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
-	}
-
-	.quote-attribution {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-	}
-
-	/* Code Blocks */
-	.code-block {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		font-size: var(--text-body-sm);
-	}
-
-	.code-block-success {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		border-radius: var(--radius-lg);
-		font-size: var(--text-body-sm);
-	}
-
-	.code-primary {
-		color: var(--color-fg-primary);
-	}
-
-	.code-secondary {
-		color: var(--color-fg-secondary);
-	}
-
-	/* Comparison Cards */
-	.comparison-success {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		border-radius: var(--radius-lg);
-	}
-
-	.comparison-warning {
-		background: var(--color-warning-muted);
-		border: 1px solid var(--color-warning-border);
-		border-radius: var(--radius-lg);
-	}
-
-	.comparison-error {
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-lg);
-	}
-
-	.comparison-heading {
-		font-size: var(--text-body-lg);
-	}
-
-	.comparison-success-heading {
-		color: var(--color-success);
-	}
-
-	.comparison-warning-heading {
-		color: var(--color-warning);
-	}
-
-	.comparison-error-heading {
-		color: var(--color-error);
-	}
-
-	.comparison-list {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-	}
-
-	/* Info Cards */
-	.info-card {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.card-heading {
-		font-weight: 600;
-		color: var(--color-fg-secondary);
-	}
-
-	.card-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-	}
-
-	.card-list {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-	}
-
-	/* Callout */
-	.callout-info {
-		background: var(--color-info-muted);
-		border: 1px solid var(--color-info-border);
-		border-radius: var(--radius-lg);
-	}
-
-	.callout-heading {
-		font-size: var(--text-h3);
-		color: var(--color-info);
-	}
-
-	/* References */
-	.references-list {
-		color: var(--color-fg-tertiary);
-	}
-
-	/* Footer */
-	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.footer-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-	}
-
-	.footer-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.footer-link:hover {
-		color: var(--color-fg-primary);
-	}
-
-	/* Links */
-	.text-link {
-		text-decoration: underline;
-		color: var(--color-fg-secondary);
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.text-link:hover {
-		color: var(--color-fg-primary);
-	}
-</style>
+				into AI-human partnership patterns
