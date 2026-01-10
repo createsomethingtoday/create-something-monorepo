@@ -7,7 +7,8 @@
 
 import type { Cookies } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
-import { setSessionCookies, type TokenResponse, type User } from './cookies.js';
+import { setSessionCookies } from './cookies.js';
+import type { TokenResponse, User } from './types.js';
 import { generateCorrelationId, logError } from '../utils/index.js';
 import type { ApiResponse } from '../types/index.js';
 

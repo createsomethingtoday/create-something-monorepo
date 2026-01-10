@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { trackAnalyticsEvent } from '@create-something/components/lib/analytics/track.js';
+import { trackAnalyticsEvent } from '@create-something/components/analytics';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const db = platform?.env?.DB;

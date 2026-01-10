@@ -165,7 +165,6 @@ function mergeConfig(tenantConfig: Record<string, unknown>): SiteConfig {
 		// Studio
 		studio: tenantConfig.studio
 			? {
-					headline: (tenantConfig.studio as Record<string, unknown>).headline as string || siteConfig.studio.headline,
 					philosophy: (tenantConfig.studio as Record<string, unknown>).philosophy as string || siteConfig.studio.philosophy,
 					approach: Array.isArray((tenantConfig.studio as Record<string, unknown>).approach)
 						? (tenantConfig.studio as Record<string, unknown>).approach as string[]
