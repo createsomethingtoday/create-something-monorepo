@@ -99,6 +99,15 @@ export {
 	AuthenticationError,
 } from './server.js';
 
+// Auth endpoint handlers (DRY utilities)
+export {
+	getDomainConfig,
+	handleIdentityResponse,
+	createAuthErrorResponse,
+	handleIdentityError,
+	type DomainConfig,
+} from './handlers.js';
+
 // UI Components
 export {
 	createAuthStore,
