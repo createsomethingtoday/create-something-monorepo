@@ -103,7 +103,9 @@ export const contactSchema = z.object({
 		.transform((v) => v.trim()),
 	phone: optionalPhoneSchema,
 	company: z.string().max(100).optional(),
-	subject: z.string().max(200).optional()
+	subject: z.string().max(200).optional(),
+	service: z.string().max(100).optional(),
+	assessment_id: z.string().max(50).optional()
 });
 
 export type ContactInput = z.infer<typeof contactSchema>;
