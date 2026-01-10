@@ -47,6 +47,25 @@
 			</p>
 		</section>
 
+		<!-- Update Notice -->
+		<section class="p-6 comparison-warning">
+			<h3 class="mb-3 comparison-heading comparison-warning-heading">
+				⚠️ Update (2026-01-09)
+			</h3>
+			<p class="leading-relaxed body-text">
+				Subsequent orchestration experiments found additional limitations beyond the code
+				extraction issues documented here. Testing Gemini CLI, GPT-4 API, and Codex CLI
+				showed 0-50% success rates and API quota exhaustion. Direct Claude Code execution
+				achieved 100% success rate in &lt;10 seconds per task. Break-even analysis indicates
+				orchestration only justifies cost at 300+ files (current workload: 54 files).
+			</p>
+			<p class="mt-3 body-text">
+				<strong>Recommendation</strong>: Use direct Claude Code execution for current scale.
+				See <a href="/papers/codex-orchestration" class="underline">Orchestrated Code Generation</a>
+				for complete findings.
+			</p>
+		</section>
+
 		<!-- The Numbers -->
 		<section class="p-6 quote-box">
 			<div class="text-center">
