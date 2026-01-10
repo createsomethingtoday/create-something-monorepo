@@ -1,11 +1,43 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ platform }) => {
+const CACHE_KEY = 'admin:stats';
+const CACHE_TTL = 300; // 5 minutes
+
+interface StatsResponse {
+	experiments: number;
+	submissions: number;
+	subscribers: number;
+	executions: number;
+}
+
+export const GET: RequestHandler = async ({ platform, url }) => {
 	const db = platform?.env?.DB;
+	const cache = platform?.env?.CACHE;
 
 	if (!db) {
 		return json({ error: 'Database not available' }, { status: 500 });
+	}
+
+	// Check for cache bypass flag (for admin refresh)
+	const bypassCache = url.searchParams.get('refresh') === 'true';
+
+	// Try to get from cache first
+	if (cache && !bypassCache) {
+		try {
+			const cached = await cache.get<StatsResponse>(CACHE_KEY, { type: 'json' });
+			if (cached) {
+				return json(cached, {
+					headers: {
+						'X-Cache': 'HIT',
+						'Cache-Control': 'public, max-age=300'
+					}
+				});
+			}
+		} catch (e) {
+			console.error('Cache read error:', e);
+			// Continue to database query on cache error
+		}
 	}
 
 	try {
@@ -58,11 +90,30 @@ export const GET: RequestHandler = async ({ platform }) => {
 			console.error('Error counting executions:', e);
 		}
 
-		return json({
+		const stats: StatsResponse = {
 			experiments: experimentsCount,
 			submissions: submissionsCount,
 			subscribers: subscribersCount,
 			executions: executionsCount
+		};
+
+		// Store in cache for future requests
+		if (cache) {
+			try {
+				await cache.put(CACHE_KEY, JSON.stringify(stats), {
+					expirationTtl: CACHE_TTL
+				});
+			} catch (e) {
+				console.error('Cache write error:', e);
+				// Don't fail request on cache write error
+			}
+		}
+
+		return json(stats, {
+			headers: {
+				'X-Cache': 'MISS',
+				'Cache-Control': 'public, max-age=300'
+			}
 		});
 	} catch (error) {
 		console.error('Failed to fetch admin stats:', error);
