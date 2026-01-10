@@ -43,7 +43,7 @@
 
 <SEO
 	title="Agentic Systems Engineering"
-	description="We build AI systems that run your business autonomously. From web development to automation workflows to long-running AI agents. Research-backed agentic engineering."
+	description="We build AI systems that run your business autonomously. From web development to automation workflows to long-running AI agents. Systematic approach with measured outcomes."
 	keywords="agentic systems, AI automation, autonomous systems, Cloudflare Workers, Claude Code, web development, AI agents"
 	ogImage="/og-image.svg"
 	propertyName="agency"
