@@ -34,7 +34,7 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents the application of Heidegger's system-level <strong>hermeneutic question</strong> (a method of interpretation that asks whether each part serves the understanding of the whole, not just whether it's technically correct)—<em>"Does this serve the whole?"</em>—to
+				This case study the application of Heidegger's system-level <strong>hermeneutic question</strong> (a method of interpretation that asks whether each part serves the understanding of the whole, not just whether it's technically correct)—<em>"Does this serve the whole?"</em>—to
 				form field design. Through a case study of Webflow's app submission form, we demonstrate that form fields which don't apply
 				to certain contexts create systemic disconnection: developers enter incorrect values, reviewers manually clear them, and
 				submissions are delayed. The solution is subtractive: hide fields that don't apply rather than instructing users to leave

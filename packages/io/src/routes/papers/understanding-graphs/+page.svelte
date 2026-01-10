@@ -39,7 +39,7 @@
 		<section class="abstract-section space-y-4">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="body-text leading-relaxed">
-				This paper presents <em>Understanding Graphs</em>: a minimal, human-readable approach to
+				This case study presents <em>Understanding Graphs</em>: a minimal, human-readable approach to
 				documenting codebase relationships that embodies Dieter Rams' principle "Weniger, aber besser"
 				(less, but better). Through hermeneutic analysis, we identified that traditional dependency
 				graphs fail the minimalism test—they capture <em>all</em> relationships when only

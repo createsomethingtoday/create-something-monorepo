@@ -34,7 +34,7 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents the migration of the CREATE Something Harness from legacy headless mode
+				This case study the migration of the CREATE Something Harness from legacy headless mode
 				patterns to Agent SDK best practices. We analyze the trade-offs between security, reliability,
 				and operational efficiency, drawing from empirical observation of a live Canon Redesign project
 				(21 features across 19 files). The migration replaces <code>--dangerously-skip-permissions</code>

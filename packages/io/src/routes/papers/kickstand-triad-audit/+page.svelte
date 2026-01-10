@@ -50,7 +50,7 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents the application of the <em>Subtractive Triad</em> framework to Kickstand,
+				This case study applies the <em>Subtractive Triad</em> framework to Kickstand,
 				a venue intelligence automation system serving Half Dozen (a CREATE SOMETHING client). The system
 				had evolved through multiple architectural phases (Node.js → Railway → Cloudflare Workers),
 				accumulating significant technical debt. Through systematic application of three subtractive
@@ -189,7 +189,7 @@
 					<p class="callout-meta-blue">Score: 5/10 — Critical duplication found</p>
 				</div>
 
-				<h3 class="mt-6 subsection-heading">Finding: Parallel Runtime Implementations</h3>
+				<h3 class="mt-6 subsection-heading">Finding: Duplicate Code in Two Runtimes</h3>
 				<p>
 					The codebase maintained <strong>two complete implementations</strong> of core services—one
 					in Node.js and one in Cloudflare Workers TypeScript:
@@ -233,7 +233,7 @@
 					</table>
 				</div>
 
-				<h3 class="mt-6 subsection-heading">Action: Unified to Workers</h3>
+				<h3 class="mt-6 subsection-heading">What We Did</h3>
 				<ul class="list-disc list-inside space-y-2 pl-4">
 					<li>Marked Node.js services with <code class="code-inline">@deprecated</code> notices</li>
 					<li>Fixed 30 TypeScript errors in Workers implementation</li>
@@ -253,7 +253,7 @@
 					<p class="callout-meta-yellow">Score: 6/10 — Significant excess found</p>
 				</div>
 
-				<h3 class="mt-6 subsection-heading">Finding: Script Proliferation</h3>
+				<h3 class="mt-6 subsection-heading">Finding: 155 Scripts, Only 13 Needed</h3>
 				<p>
 					<strong>155 JavaScript files</strong> in the scripts directory, with only ~20 actively needed:
 				</p>
@@ -283,7 +283,7 @@
 					</div>
 				</div>
 
-				<h3 class="mt-6 subsection-heading">Action: Archived Obsolete Artifacts</h3>
+				<h3 class="mt-6 subsection-heading">What We Did</h3>
 				<ul class="list-disc list-inside space-y-2 pl-4">
 					<li>Moved 153 scripts to organized archive directories</li>
 					<li>Archived Railway configuration to <code class="code-inline">config/archive/</code></li>
@@ -303,9 +303,9 @@
 					<p class="callout-meta-green">Score: 7/10 — Minor disconnection found</p>
 				</div>
 
-				<h3 class="mt-6 subsection-heading">Finding: Architectural Confusion</h3>
+				<h3 class="mt-6 subsection-heading">Finding: Outdated Documentation</h3>
 				<p>
-					The README described three different deployment targets, creating systemic incoherence:
+					The README listed three different platforms. Only one was actually in use:
 				</p>
 
 				<div class="p-4 font-mono code-block">
@@ -320,7 +320,7 @@
 					undocumented within the system itself.
 				</p>
 
-				<h3 class="mt-6 subsection-heading">Action: Unified Documentation</h3>
+				<h3 class="mt-6 subsection-heading">What We Did</h3>
 				<ul class="list-disc list-inside space-y-2 pl-4">
 					<li>Rewrote <code class="code-inline">README.md</code> for Cloudflare Workers architecture</li>
 					<li>Created <code class="code-inline">docs/ARCHITECTURE.md</code> documenting system context</li>

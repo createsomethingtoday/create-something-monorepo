@@ -641,7 +641,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 		<!-- Footer -->
 		<div class="pt-6 paper-footer">
 			<p class="footer-text">
-				This paper documents the Webflow Dashboard refactor from Next.js/Vercel to
+				This case study the Webflow Dashboard refactor from Next.js/Vercel to
 				SvelteKit/Cloudflare, completed January 2026.
 			</p>
 			<div class="flex justify-between mt-4">

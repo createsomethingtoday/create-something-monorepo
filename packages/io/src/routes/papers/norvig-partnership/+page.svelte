@@ -79,7 +79,7 @@
 				</p>
 
 				<p>
-					This paper examines that convergence. We show how Norvig's empirical findings validate
+					This case study examines that convergence. We show how Norvig's empirical findings validate
 					CREATE SOMETHING's phenomenological framework for understanding AI-human collaboration,
 					and how his conclusion—"I should use an LLM as an assistant for all my coding"—marks
 					the transition from <em>Vorhandenheit</em> (tool-as-object: when the tool demands attention) to <em>Zuhandenheit</em>

@@ -37,7 +37,7 @@
 				Every methodology has ancestors. CREATE SOMETHING's intellectual foundation spans three
 				parallel lineages—philosophy, writing, and systems thinking—each following the same
 				three-layer structure: <em>foundational</em> (reveals hidden structure), <em>methodological</em>
-				(makes it teachable), and <em>applied</em> (practice in specific medium). This paper documents
+				(makes it teachable), and <em>applied</em> (practice in specific medium). This case study
 				the complete genealogy and explains why understanding these roots matters for practitioners.
 			</p>
 		</section>

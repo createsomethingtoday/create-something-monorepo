@@ -95,7 +95,7 @@
 				</p>
 
 				<p>
-					This paper argues that Claude Code in the terminal bridges this gap by meeting users where they
+					We argue that Claude Code in the terminal bridges this gap by meeting users where they
 					already dwell—in the flow of actual work.
 				</p>
 			</div>

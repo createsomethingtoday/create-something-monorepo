@@ -36,7 +36,7 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents a live case study from December 2025 where the CREATE SOMETHING harness
+				This case study covers a live case study from December 2025 where the CREATE SOMETHING harness
 				orchestrated parallel peer reviews that identified critical DRY violations in newsletter
 				subscription code. Three specialized reviewers—architecture, security, and quality—each
 				analyzed the same codebase simultaneously, producing complementary findings. The architecture

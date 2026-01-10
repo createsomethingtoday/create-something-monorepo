@@ -40,7 +40,7 @@
 		<section class="abstract-section space-y-4">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="body-text leading-relaxed">
-				This paper presents empirical validation of intelligent model routing in AI-native
+				This case study presents empirical validation of intelligent model routing in AI-native
 				development workflows. We implemented a 4-tier routing system that automatically
 				selects Claude model families (Haiku, Sonnet, Opus) based on task complexity,
 				achieving <strong>100% success rate across 8 tasks</strong> with <strong>67.5%

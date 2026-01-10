@@ -37,7 +37,7 @@
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
 				Traditional debugging assumes a linear path: identify symptom, trace cause, apply fix.
-				This paper argues that complex bugs resist linear analysis because they emerge from
+				We argue that complex bugs resist linear analysis because they emerge from
 				<em>hidden assumptions</em>—what Heidegger calls our "fore-structure" of understanding.
 				By applying the <strong>hermeneutic circle</strong> (<em>a philosophical concept describing how understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts</em>) to debugging, we demonstrate that the path to solution
 				requires iterative interpretation where each failed attempt reveals previously invisible
@@ -667,7 +667,7 @@ useEffect(() => {
 		<!-- Footer -->
 		<div class="pt-6 paper-footer">
 			<p class="footer-text">
-				This paper documents a real debugging session from December 2025. The logo animation
+				This case study covers a real debugging session from December 2025. The logo animation
 				is now in production at maverickx.com. The console logs have been removed.
 			</p>
 			<div class="flex justify-between mt-4">

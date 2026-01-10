@@ -36,7 +36,7 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents a cost optimization experiment with partial success and critical
+				This case study covers a cost optimization experiment with partial success and critical
 				learnings. We routed voice audits to Gemini Flash ($0.0003/task) achieving 97% cost
 				savings on Phase 1 (27 audits: $0.0081 vs $0.27 Sonnet baseline). Phase 2 implementation
 				validated the approach: 5 of 17 papers successfully updated (482 lines removed), but 12

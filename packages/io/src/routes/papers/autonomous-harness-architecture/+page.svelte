@@ -37,7 +37,7 @@
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
 				Traditional agent orchestration requires constant human oversight—approving each action,
-				reviewing each output, managing each session. This paper presents an alternative architecture:
+				reviewing each output, managing each session. This case study presents an alternative architecture:
 				the autonomous harness. Drawing on Heidegger's concepts of dwelling and tool-being, we argue
 				that effective human-agent collaboration requires the harness to <em>recede into transparent
 				operation</em>. Humans engage through progress reports—reactive steering rather than proactive
@@ -98,7 +98,7 @@
 				</p>
 
 				<p>
-					This paper argues that the answer is <em>progress reports</em>—periodic checkpoints that
+					We argue that the answer is <em>progress reports</em>—periodic checkpoints that
 					enable reactive steering. The harness runs autonomously; humans engage only when they
 					choose to. This is not abdication of control but a different <em>mode</em> of control.
 				</p>
@@ -753,7 +753,7 @@ cs-003: Session management
 		<!-- Footer -->
 		<div class="pt-6 paper-footer">
 			<p class="footer-text">
-				This paper documents the CREATE SOMETHING harness architecture, implemented in
+				This case study the CREATE SOMETHING harness architecture, implemented in
 				<code class="inline-code">packages/harness/</code> of the monorepo.
 			</p>
 			<div class="flex justify-between mt-4">

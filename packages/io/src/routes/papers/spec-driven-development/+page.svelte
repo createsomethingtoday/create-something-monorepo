@@ -36,7 +36,7 @@
 		<section class="pl-6 space-y-4 abstract-section">
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
-				This paper documents a meta-experiment testing whether <strong>structured specifications</strong>
+				This case study covers a meta-experiment testing whether <strong>structured specifications</strong>
 				can effectively guide agent-based development. The vehicle is an NBA Live Analytics Dashboard
 				with three analytical views—Duo Synergy, Defensive Impact, and Shot Network. The hypothesis:
 				spec-driven development produces both working software and methodology documentation as

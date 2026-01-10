@@ -53,7 +53,7 @@
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
 				Modern digital systems suffer from a peculiar form of amnesia. Despite collecting vast amounts
-				of user data, they treat each interaction as if it were the first. This paper argues that this
+				of user data, they treat each interaction as if it were the first. We argue that this
 				"stateless fallacy" isn't merely an engineering oversight—it's a philosophical error. By applying
 				Heidegger's <strong>hermeneutic circle</strong> (a philosophical method where understanding deepens through iterative interpretation—you understand parts through the whole, and the whole through its parts) to user experience design, we propose the <em>Hermeneutic Spiral</em>,
 				where each interaction builds upon previous understanding rather than starting fresh. We demonstrate
