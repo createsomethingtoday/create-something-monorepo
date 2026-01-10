@@ -1,0 +1,43 @@
+# Plagiarism Detection Agent
+# Three-tier AI system for reviewing template plagiarism reports
+#
+# Canon: The infrastructure recedes; decisions emerge.
+
+name = "plagiarism-agent"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# D1 Database - plagiarism cases storage
+[[d1_databases]]
+binding = "DB"
+database_name = "templates-platform-db"
+database_id = "a06516a5-6c4b-472f-8826-d730e3a74926"
+
+# R2 - screenshot storage
+[[r2_buckets]]
+binding = "SCREENSHOTS"
+bucket_name = "plagiarism-screenshots"
+
+# Queue - async case processing
+[[queues.producers]]
+binding = "CASE_QUEUE"
+queue = "plagiarism-cases"
+
+[[queues.consumers]]
+queue = "plagiarism-cases"
+max_batch_size = 1
+max_batch_timeout = 60
+max_retries = 3
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# Note: Browser Rendering binding removed until screenshot capture is implemented.
+# Screenshots can be manually uploaded to R2: {caseId}/original.jpg and {caseId}/copy.jpg
+# Vision analysis will automatically run if screenshots are present.
+
+[vars]
+ENVIRONMENT = "production"
