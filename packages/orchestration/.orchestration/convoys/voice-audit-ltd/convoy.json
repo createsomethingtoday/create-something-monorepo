@@ -1,0 +1,60 @@
+{
+  "id": "convoy-fd8a2b",
+  "name": "Voice Audit: createsomething.ltd",
+  "epicId": "voice-audit-ltd",
+  "issueIds": [
+    "csm-47tmp",
+    "csm-r88mu",
+    "csm-92aw7",
+    "csm-z7dma",
+    "csm-3vmcp"
+  ],
+  "status": "completed",
+  "createdAt": "2026-01-09T22:52:00Z",
+  "completedAt": "2026-01-09T22:59:00Z",
+  "workers": [
+    {
+      "workerId": "worker-ltd-1",
+      "issueId": "csm-47tmp",
+      "status": "completed",
+      "costUsd": 0.001
+    },
+    {
+      "workerId": "worker-ltd-2",
+      "issueId": "csm-r88mu",
+      "status": "completed",
+      "costUsd": 0.001
+    },
+    {
+      "workerId": "worker-ltd-3",
+      "issueId": "csm-92aw7",
+      "status": "completed",
+      "costUsd": 0.001
+    },
+    {
+      "workerId": "worker-ltd-4",
+      "issueId": "csm-z7dma",
+      "status": "completed",
+      "costUsd": 0.001
+    },
+    {
+      "workerId": "worker-ltd-5",
+      "issueId": "csm-3vmcp",
+      "status": "completed",
+      "costUsd": 0.001
+    }
+  ],
+  "costTracker": {
+    "sessionCosts": {},
+    "workerCosts": {
+      "worker-ltd-1": 0.001,
+      "worker-ltd-2": 0.001,
+      "worker-ltd-3": 0.001,
+      "worker-ltd-4": 0.001,
+      "worker-ltd-5": 0.001
+    },
+    "convoyCost": 0.005,
+    "epicBudget": null,
+    "epicRemaining": null
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/harness-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server for CREATE SOMETHING harness protocol",
+  "main": "dist/index.js",
+  "bin": {
+    "harness-mcp": "./dist/index.js",
+    "bd-smart-route": "./dist/bin/bd-smart-route.js",
+    "bd-batch-process": "./dist/bin/bd-batch-process.js",
+    "gemini-apply-fixes": "./dist/bin/gemini-apply-fixes.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "echo \"Tests coming soon\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

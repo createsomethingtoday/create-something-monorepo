@@ -1,0 +1,20 @@
+{
+  "workerId": "worker-ltd-4",
+  "issueId": "csm-z7dma",
+  "convoyId": "convoy-fd8a2b",
+  "epicId": "voice-audit-ltd",
+  "context": {
+    "url": "https://createsomething.ltd/",
+    "section": "masters",
+    "property": ".ltd",
+    "currentText": {
+      "dieter_rams": "Industrial Design - 10 Principles of Good Design",
+      "mies_van_der_rohe": "Architecture - Less is more"
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}

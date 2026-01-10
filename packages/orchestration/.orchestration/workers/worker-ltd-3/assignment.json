@@ -1,0 +1,19 @@
+{
+  "workerId": "worker-ltd-3",
+  "issueId": "csm-92aw7",
+  "convoyId": "convoy-fd8a2b",
+  "epicId": "voice-audit-ltd",
+  "context": {
+    "url": "https://createsomething.ltd/",
+    "section": "crystallization",
+    "property": ".ltd",
+    "currentText": {
+      "headline": "Your judgment, crystallized. Encode human expertise into configurable constraints that AI agents execute within."
+    }
+  },
+  "config": {
+    "model": "haiku",
+    "timeout": 3600,
+    "skillName": "voice-audit-worker"
+  }
+}
