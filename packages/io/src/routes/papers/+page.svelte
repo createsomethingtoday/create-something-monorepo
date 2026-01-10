@@ -20,6 +20,10 @@
 	type CategoryFilter = 'all' | 'research' | 'case-study' | 'methodology';
 	let categoryFilter: CategoryFilter = $state('all');
 
+	// Pagination state
+	let currentPage = $state(1);
+	const itemsPerPage = 12;
+
 	// Check if a paper matches the search query
 	function matchesSearch(paper: typeof papers[0]): boolean {
 		if (!searchQuery.trim()) return true;
@@ -75,6 +79,24 @@
 	// Result count for display
 	const resultCount = $derived(filteredAndSortedPapers.length);
 	const isFiltered = $derived(searchQuery.trim() !== '' || categoryFilter !== 'all');
+
+	// Pagination calculations
+	const totalPages = $derived(Math.ceil(filteredAndSortedPapers.length / itemsPerPage));
+	const paginatedPapers = $derived.by(() => {
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		const endIndex = startIndex + itemsPerPage;
+		return filteredAndSortedPapers.slice(startIndex, endIndex);
+	});
+
+	// Reset to page 1 when filters change
+	$effect(() => {
+		// Access dependencies
+		searchQuery;
+		categoryFilter;
+		sortBy;
+		// Reset page
+		currentPage = 1;
+	});
 </script>
 
 <svelte:head>
@@ -197,7 +219,7 @@
 
 	{#if resultCount > 0}
 		<section class="papers-grid highlight-flex">
-			{#each filteredAndSortedPapers as paper, index}
+			{#each paginatedPapers as paper, index}
 				<a href="/papers/{paper.slug}" class="paper-card highlight-item" style="--index: {index}">
 					<div class="paper-content">
 						<div class="paper-meta flex">
@@ -223,6 +245,58 @@
 				</a>
 			{/each}
 		</section>
+
+		<!-- Pagination Controls -->
+		{#if totalPages > 1}
+			<nav class="pagination-nav" aria-label="Papers pagination">
+				<div class="pagination-container">
+					<button
+						onclick={() => currentPage = currentPage - 1}
+						disabled={currentPage === 1}
+						class="pagination-button"
+						aria-label="Previous page"
+					>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+						</svg>
+						Previous
+					</button>
+
+					<div class="pagination-pages">
+						{#each Array.from({ length: totalPages }, (_, i) => i + 1) as page}
+							{#if page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)}
+								<button
+									onclick={() => currentPage = page}
+									class="pagination-page {currentPage === page ? 'active' : ''}"
+									aria-label="Page {page}"
+									aria-current={currentPage === page ? 'page' : undefined}
+								>
+									{page}
+								</button>
+							{:else if page === currentPage - 2 || page === currentPage + 2}
+								<span class="pagination-ellipsis">...</span>
+							{/if}
+						{/each}
+					</div>
+
+					<button
+						onclick={() => currentPage = currentPage + 1}
+						disabled={currentPage === totalPages}
+						class="pagination-button"
+						aria-label="Next page"
+					>
+						Next
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+					</button>
+				</div>
+
+				<p class="pagination-info">
+					Page {currentPage} of {totalPages} • Showing {paginatedPapers.length} of {resultCount} papers
+				</p>
+			</nav>
+		{/if}
 	{:else}
 		<div class="empty-state">
 			<p class="empty-message">No papers match your search.</p>
@@ -382,6 +456,93 @@
 	.clear-button:hover {
 		color: var(--color-fg-primary);
 		background: var(--color-bg-surface);
+	}
+
+	/* Pagination */
+	.pagination-nav {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-md);
+		margin-top: var(--space-lg);
+		padding: var(--space-md) 0;
+	}
+
+	.pagination-container {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.pagination-button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-xs) var(--space-sm);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-secondary);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.pagination-button:hover:not(:disabled) {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+		border-color: var(--color-border-emphasis);
+	}
+
+	.pagination-button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	.pagination-pages {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+	}
+
+	.pagination-page {
+		min-width: 2.5rem;
+		height: 2.5rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-xs);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-secondary);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.pagination-page:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-hover);
+		border-color: var(--color-border-emphasis);
+	}
+
+	.pagination-page.active {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-color: var(--color-fg-primary);
+	}
+
+	.pagination-ellipsis {
+		padding: 0 var(--space-xs);
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+	}
+
+	.pagination-info {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		text-align: center;
 	}
 
 	/* Existing paper card styles remain unchanged as they already use Canon */

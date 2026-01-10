@@ -272,7 +272,7 @@ All issues labeled with `experiment:haiku-ultrathink` and appropriate complexity
 
 ### Phase 3: Sonnet Baseline Execution
 
-**Status**: In progress (1/10 tasks complete)
+**Status**: In progress (2/10 tasks complete)
 
 #### T1: Extract duplicate validation logic (csm-y3vos)
 
@@ -313,6 +313,55 @@ All issues labeled with `experiment:haiku-ultrathink` and appropriate complexity
 - Plan was straightforward and executed without issues
 - Type regeneration required running `pnpm run package` in components
 - Schema extension approach maintains backward compatibility
+
+#### T2: Add pagination to existing list (csm-srz9n)
+
+**Execution**: Sonnet 4.5 (baseline)
+
+**Exploration** (~1 min):
+- Found papers listing page without pagination
+- Page displays all filtered papers at once
+- Uses Svelte 5 runes for reactive state
+
+**Plan** (~1 min):
+- Add pagination state (currentPage, itemsPerPage = 12)
+- Calculate pagination (totalPages, paginatedPapers slice)
+- Auto-reset to page 1 when filters change
+- Add pagination UI (prev/next buttons, page numbers)
+- Style with Canon tokens
+
+**Plan quality**: Excellent (no human revisions needed)
+
+**Implementation** (~5 min):
+- Added pagination state using Svelte 5 $state
+- Added derived calculations ($derived for totalPages and paginatedPapers)
+- Added $effect to reset page when filters change
+- Changed rendering from filteredAndSortedPapers to paginatedPapers
+- Added complete pagination UI component:
+  - Previous/Next buttons with disabled states
+  - Page number buttons with active state
+  - Smart ellipsis for skipped pages
+  - Pagination info text
+- Added Canon-compliant CSS styles for all pagination components
+
+**Results**:
+- ✅ Tests pass: Type checking clean
+- ✅ Acceptance met: Pagination controls shown, page navigation works
+- ✅ No regressions: Existing filter/search/sort functionality unchanged
+- 📊 Lines added: ~130 (pagination logic + UI + styles)
+- 📊 UX improvement: Shows 12 papers per page instead of all at once
+
+**Metrics**:
+- Estimated cost: ~$0.01 (Sonnet)
+- Total time: ~7 minutes
+- Success: ✅ Yes
+- Human revisions: 0
+
+**Notes**:
+- Svelte 5 runes made reactive pagination straightforward
+- Smart page number display (ellipsis for gaps) improves UX
+- Auto-reset on filter change prevents confusing empty pages
+- Canon styling maintains visual consistency with existing controls
 
 ### Phase 4: Analysis
 
