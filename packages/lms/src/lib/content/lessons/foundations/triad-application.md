@@ -176,7 +176,7 @@ This requires all three levels.
 - Can we serve that need with less?
 - Does it make the essential harder to see?
 
-**Result**: Our product is a project management tool. Users work in teams. Real-time collaboration (seeing others' cursors, live updates) significantly improves the core workflow.
+**Result**: Our product is a project management tool. Users work in teams. Real-time collaboration (seeing others' cursors, live updates) reduces coordination overhead—no more "who's editing this?" questions.
 
 **Rams Decision**: Yes, this earns its existence. It directly serves the core user need.
 

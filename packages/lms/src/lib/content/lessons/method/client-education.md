@@ -161,7 +161,7 @@ To adjust the cache time, change this constant..."
 ### Users
 - Workflow integration
 - Feature usage
-- Best practices
+- Proven patterns
 - Support resources
 
 ```markdown

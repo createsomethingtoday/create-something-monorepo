@@ -65,7 +65,7 @@ Understand the present before imagining the future:
 - Pain points (explicit frustrations)
 - Workarounds (adaptations that reveal gaps)
 - Dependencies (connections that constrain change)
-- Expertise (knowledge that should be leveraged)
+- Expertise (knowledge to apply)
 
 ### Phase 2: Desired State (What Should Be)
 
