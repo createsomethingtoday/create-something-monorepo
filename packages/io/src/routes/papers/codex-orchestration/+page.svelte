@@ -109,7 +109,7 @@
 			<p class="callout-title">Status: Orchestration Rejected</p>
 			<p class="callout-text">
 				All three executors (Gemini CLI, GPT-4 API, Codex CLI) failed or required significant
-				workarounds. Meanwhile, Claude Code direct execution completed the same task in <10 seconds
+				workarounds. Meanwhile, Claude Code direct execution completed the same task in &lt;10 seconds
 				with zero errors. **Conclusion**: For small-scale work (1-10 tasks), orchestration adds
 				complexity without value. Direct execution wins on reliability, speed, and simplicity. Use
 				Claude Code directly until work scales to 100+ tasks where cost savings justify
@@ -481,7 +481,7 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 				(sed, cat, find failed) → tool visible across 3 attempts, environment-specific blocker
 			</li>
 			<li>
-				<strong>Claude Code</strong>: Completed voice audit in <10 seconds, zero errors → tool
+				<strong>Claude Code</strong>: Completed voice audit in &lt;10 seconds, zero errors → tool
 				completely invisible (Zuhandenheit achieved)
 			</li>
 		</ul>
@@ -504,7 +504,7 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 					Codex CLI (v0.80.0) exists with proposed capabilities (exec, apply, MCP). Architecture
 					is sound. Execution blocked by file access errors even with valid authentication.
 					Environment-specific issues (path with spaces, sandbox restrictions) prevent practical
-					use. Meanwhile, Claude Code direct execution completed the same task in <10 seconds.
+					use. Meanwhile, Claude Code direct execution completed the same task in &lt;10 seconds.
 				</p>
 			</div>
 
