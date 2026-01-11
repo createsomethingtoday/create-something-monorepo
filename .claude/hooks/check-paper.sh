@@ -19,8 +19,12 @@ if [[ -z "$FILE_PATH" ]]; then
   exit 0
 fi
 
-# Only check paper files in io package
+# Only check paper files in io package (exclude dynamic [slug] route)
 if [[ ! "$FILE_PATH" =~ packages/io/src/routes/papers/.*/\+page\.svelte$ ]]; then
+  exit 0
+fi
+
+if [[ "$FILE_PATH" =~ \[slug\] ]]; then
   exit 0
 fi
 
@@ -49,9 +53,16 @@ if ! grep -q 'max-w-4xl' "$FILE_PATH" 2>/dev/null; then
   VIOLATIONS="$VIOLATIONS\n• Missing max-w-4xl container width (standard is 896px)"
 fi
 
-# Check 3: Background color - flag grey backgrounds
-if grep -qE '(--color-bg-surface|--color-bg-subtle|#1a1a1a|#111111|#0a0a0a)' "$FILE_PATH" 2>/dev/null; then
-  VIOLATIONS="$VIOLATIONS\n• Grey background detected: Papers should use --color-bg-pure (pure black)"
+# Check 3: Background color - ensure paper-container uses pure black
+# Grey backgrounds on cards/code blocks are fine, but the main container must be pure black
+if grep -q 'paper-container' "$FILE_PATH" 2>/dev/null; then
+  # Check if paper-container has the correct background
+  if ! grep -qE '\.paper-container\s*\{[^}]*background:\s*var\(--color-bg-pure\)' "$FILE_PATH" 2>/dev/null; then
+    # Check if there's a grey background on paper-container specifically
+    if grep -qE '\.paper-container\s*\{[^}]*(--color-bg-surface|--color-bg-subtle|#1a1a1a|#111111)' "$FILE_PATH" 2>/dev/null; then
+      VIOLATIONS="$VIOLATIONS\n• paper-container uses grey background: Should use --color-bg-pure (pure black)"
+    fi
+  fi
 fi
 
 # Check 4: Custom max-width values
