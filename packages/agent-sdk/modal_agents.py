@@ -864,6 +864,16 @@ PACKAGE_TO_PROJECT = {
     "packages/templates-platform": "templates-platform",
 }
 
+# Package path to pnpm package name mapping
+PACKAGE_TO_NAME = {
+    "packages/space": "@create-something/space",
+    "packages/io": "@create-something/io",
+    "packages/agency": "@create-something/agency",
+    "packages/ltd": "@create-something/ltd",
+    "packages/lms": "@create-something/lms",
+    "packages/templates-platform": "@create-something/templates-platform",
+}
+
 CLOUDFLARE_ACCOUNT_ID = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
 
@@ -969,6 +979,32 @@ def deploy(payload: dict = {}) -> dict:
             cwd="/tmp/repo", check=True, capture_output=True, text=True
         )
 
+        # Build utility packages (export compiled JS, not Svelte components)
+        print("Building utility packages...")
+        util_build = subprocess.run(
+            ["pnpm", "--filter", "@create-something/eslint-plugin-canon",
+             "--filter", "@create-something/render-pipeline", "build"],
+            cwd="/tmp/repo", capture_output=True, text=True, timeout=300
+        )
+        print(f"Utility build exit code: {util_build.returncode}")
+        if util_build.returncode != 0:
+            print(f"Warning: Utility package build failed!")
+            print(f"stderr: {util_build.stderr[:500] if util_build.stderr else 'none'}")
+
+        # Package Svelte component libraries (need 'package' to create dist/ folder)
+        # Both components and tufte export from dist/ via svelte-package
+        print("Packaging Svelte libraries (components, tufte)...")
+        svelte_package = subprocess.run(
+            ["pnpm", "--filter", "@create-something/components",
+             "--filter", "@create-something/tufte", "package"],
+            cwd="/tmp/repo", capture_output=True, text=True, timeout=300
+        )
+        print(f"Svelte package exit code: {svelte_package.returncode}")
+        if svelte_package.returncode != 0:
+            print(f"Warning: Svelte package failed!")
+            print(f"stderr: {svelte_package.stderr[:500] if svelte_package.stderr else 'none'}")
+            print(f"stdout: {svelte_package.stdout[:500] if svelte_package.stdout else 'none'}")
+
         # Build and deploy each affected package
         for pkg_path in affected:
             project_name = PACKAGE_TO_PROJECT.get(pkg_path)
@@ -978,16 +1014,26 @@ def deploy(payload: dict = {}) -> dict:
             pkg_result = {"package": pkg_path, "project": project_name}
 
             try:
-                # Build the package
-                pkg_name = pkg_path.split("/")[-1]
+                # Build the package with its dependencies
+                pkg_name = PACKAGE_TO_NAME.get(pkg_path, pkg_path.split("/")[-1])
+                print(f"Building package: {pkg_name} (from {pkg_path})")
+                build_cmd = ["pnpm", "--filter", f"{pkg_name}...", "build"]
+                print(f"Build command: {' '.join(build_cmd)}")
                 build_result = subprocess.run(
-                    ["pnpm", "--filter", pkg_name, "build"],
+                    build_cmd,
                     cwd="/tmp/repo", capture_output=True, text=True, timeout=300
                 )
+                print(f"Build exit code: {build_result.returncode}")
 
                 if build_result.returncode != 0:
                     pkg_result["status"] = "build_failed"
-                    pkg_result["error"] = build_result.stderr[:500]
+                    # Capture both stdout and stderr for debugging
+                    error_output = (build_result.stderr or "") + (build_result.stdout or "")
+                    # Get first 1000 and last 1000 chars to see both the error and context
+                    if len(error_output) > 2000:
+                        pkg_result["error"] = error_output[:1000] + "\n...[truncated]...\n" + error_output[-1000:]
+                    else:
+                        pkg_result["error"] = error_output
                     errors.append(pkg_result)
                     continue
 
@@ -1105,16 +1151,52 @@ def deploy_package(package: str) -> dict:
             cwd="/tmp/repo", check=True, capture_output=True, text=True
         )
 
-        # Build
-        pkg_name = package.split("/")[-1]
-        print(f"Building {pkg_name}...")
-        build_result = subprocess.run(
-            ["pnpm", "--filter", pkg_name, "build"],
+        # Build utility packages (export compiled JS, not Svelte components)
+        print("Building utility packages...")
+        util_build = subprocess.run(
+            ["pnpm", "--filter", "@create-something/eslint-plugin-canon",
+             "--filter", "@create-something/render-pipeline", "build"],
             cwd="/tmp/repo", capture_output=True, text=True, timeout=300
         )
+        print(f"Utility build exit code: {util_build.returncode}")
+        if util_build.returncode != 0:
+            print(f"Utility build stderr: {util_build.stderr[:500] if util_build.stderr else 'none'}")
+
+        # Package Svelte component libraries (need 'package' to create dist/ folder)
+        # Both components and tufte export from dist/ via svelte-package
+        print("Packaging Svelte libraries (components, tufte)...")
+        svelte_package = subprocess.run(
+            ["pnpm", "--filter", "@create-something/components",
+             "--filter", "@create-something/tufte", "package"],
+            cwd="/tmp/repo", capture_output=True, text=True, timeout=300
+        )
+        print(f"Svelte package exit code: {svelte_package.returncode}")
+        if svelte_package.returncode != 0:
+            print(f"Svelte package stderr: {svelte_package.stderr[:500] if svelte_package.stderr else 'none'}")
+
+        # Build the target package with its dependencies
+        pkg_name = PACKAGE_TO_NAME.get(package, package.split("/")[-1])
+        print(f"Building {pkg_name}...")
+        build_result = subprocess.run(
+            ["pnpm", "--filter", f"{pkg_name}...", "build"],
+            cwd="/tmp/repo", capture_output=True, text=True, timeout=300
+        )
+        print(f"Build exit code: {build_result.returncode}")
 
         if build_result.returncode != 0:
-            return {"success": False, "error": build_result.stderr[:1000], "phase": "build"}
+            print("Build failed!")
+            error_output = (build_result.stderr or "") + (build_result.stdout or "")
+            # Search for the actual error message in the output
+            # Vite errors usually contain "error:" or "Error:"
+            lines = error_output.split('\n')
+            error_lines = [l for l in lines if 'error' in l.lower() or 'Error' in l or 'cannot resolve' in l.lower() or 'failed to resolve' in l.lower()]
+            if error_lines:
+                print(f"Key error lines found:\n" + '\n'.join(error_lines[:20]))
+            # Also show full output up to 5000 chars
+            print(f"\nFull output (up to 5000 chars):\n{error_output[:5000]}")
+            return {"success": False, "error": error_output[:3000], "phase": "build"}
+
+        print("Build succeeded!")
 
         # Deploy
         deploy_dir = f"/tmp/repo/{package}/.svelte-kit/cloudflare"
