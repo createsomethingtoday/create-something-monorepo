@@ -200,6 +200,29 @@ Generate a CREATE SOMETHING {content_type} from this Beads issue.
 - Title: {title}
 - Description: {description}
 
+## CRITICAL: Research First - Truth Only
+
+**You MUST research the codebase before writing.** Every claim must be verified.
+
+### Step 1: Find Relevant Files
+```bash
+# Search for files related to the topic
+find . -type f \\( -name "*.ts" -o -name "*.py" -o -name "*.svelte" \\) | xargs grep -l "<topic>" | head -20
+ls -la packages/
+```
+
+### Step 2: Read and Extract Facts
+- Read actual source files
+- Note real function/class names
+- Extract actual metrics (line counts, file counts, etc.)
+- Check git history: `git log --oneline <file> | head -5`
+
+### Step 3: Write From Evidence
+- Every metric must have a source
+- Cite file paths: "In `src/lib/auth.ts:42`..."
+- Say "Not measured" if data doesn't exist
+- No hypothetical examples or invented statistics
+
 ## Output Requirements
 
 1. Create directory: {output_dir}
@@ -208,16 +231,13 @@ Generate a CREATE SOMETHING {content_type} from this Beads issue.
    - Canon design tokens (var(--color-*), var(--radius-*), var(--text-*))
    - NO Tailwind design utilities (bg-white, rounded-lg, etc.)
    - Tailwind ONLY for layout (flex, grid, p-*, m-*, gap-*)
-   - Proper <script lang="ts"> with types
-   - Semantic HTML structure
+   - Types DEFINED INLINE (not imported from external files)
+   - Escape curly braces in code: {{`code here`}}
 
 3. {"Create +page.server.ts if data fetching needed" if content_type == "experiment" else "No server file needed for static paper"}
 
 4. Content structure:
-   {"- Live data visualization with real metrics" if content_type == "experiment" else "- Research paper with hypothesis, methodology, findings"}
-   - Clear sections with proper headings
-   - Tables for data comparison
-   - Code examples where relevant
+   {"- Live data from REAL endpoints\n   - Actual metrics display" if content_type == "experiment" else "- Research question\\n   - Methodology (files examined)\\n   - Findings with file:line citations\\n   - Limitations section"}
 
 5. After creating files, close the Beads issue:
    bd close {ISSUE_ID} --no-db
