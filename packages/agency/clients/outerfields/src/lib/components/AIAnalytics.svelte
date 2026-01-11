@@ -3,9 +3,11 @@
 	 * OUTERFIELDS AI Analytics
 	 *
 	 * Showcases AI-powered content strategy assistant that helps creators
-	 * understand their analytics and generate content ideas
+	 * understand their analytics and generate content ideas.
+	 *
+	 * Now interactive: clicking sample questions triggers Claude-powered responses.
 	 */
-	import { MessageSquare, Sparkles, TrendingUp, Lightbulb, Brain, BarChart3 } from 'lucide-svelte';
+	import { MessageSquare, Sparkles, TrendingUp, Lightbulb, Brain, BarChart3, Loader2, RotateCcw } from 'lucide-svelte';
 
 	interface Feature {
 		icon: any;
@@ -37,6 +39,57 @@
 		'How can I improve audience retention?',
 		'Where is my traffic coming from?'
 	];
+
+	// Demo analytics context
+	const demoAnalytics = {
+		title: 'Creator Masterclass: Building Your Audience',
+		views: '2.4M',
+		engagement: '24.8%',
+		avgWatch: '4m 32s'
+	};
+
+	// Interactive state
+	let selectedQuestion = $state<string | null>(null);
+	let response = $state<string | null>(null);
+	let isLoading = $state(false);
+	let error = $state<string | null>(null);
+
+	async function askQuestion(question: string) {
+		selectedQuestion = question;
+		isLoading = true;
+		response = null;
+		error = null;
+
+		try {
+			const res = await fetch('/api/analytics-chat-claude', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					message: question,
+					videoAnalytics: demoAnalytics
+				})
+			});
+
+			const data = await res.json();
+
+			if (data.success) {
+				response = data.message;
+			} else {
+				error = data.error || 'Something went wrong. Please try again.';
+			}
+		} catch (err) {
+			error = 'Failed to connect. Please try again.';
+			console.error('Analytics chat error:', err);
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	function resetChat() {
+		selectedQuestion = null;
+		response = null;
+		error = null;
+	}
 </script>
 
 <section class="ai-analytics-section" id="ai-analytics">
@@ -96,15 +149,57 @@
 				</div>
 
 				<div class="conversation-preview">
-					<div class="sample-questions">
-						<span class="questions-label">Try asking:</span>
-						{#each sampleQuestions as question}
-							<button class="sample-question">
+					{#if !selectedQuestion}
+						<!-- Initial state: show sample questions -->
+						<div class="sample-questions">
+							<span class="questions-label">Try asking:</span>
+							{#each sampleQuestions as question}
+								<button
+									class="sample-question"
+									onclick={() => askQuestion(question)}
+								>
+									<MessageSquare size={14} />
+									{question}
+								</button>
+							{/each}
+						</div>
+					{:else}
+						<!-- Active state: show selected question and response -->
+						<div class="chat-active">
+							<div class="user-message">
 								<MessageSquare size={14} />
-								{question}
-							</button>
-						{/each}
-					</div>
+								<span>{selectedQuestion}</span>
+							</div>
+
+							{#if isLoading}
+								<div class="ai-response loading">
+									<div class="typing-indicator">
+										<Loader2 size={16} class="spinner" />
+										<span>Claude is thinking...</span>
+									</div>
+								</div>
+							{:else if error}
+								<div class="ai-response error">
+									<span>{error}</span>
+								</div>
+							{:else if response}
+								<div class="ai-response">
+									<div class="response-header">
+										<Brain size={14} />
+										<span>Claude</span>
+									</div>
+									<p class="response-text">{response}</p>
+								</div>
+							{/if}
+
+							{#if !isLoading}
+								<button class="reset-button" onclick={resetChat}>
+									<RotateCcw size={14} />
+									Ask another question
+								</button>
+							{/if}
+						</div>
+					{/if}
 				</div>
 			</div>
 
@@ -366,6 +461,108 @@
 
 	.sample-question:hover {
 		border-color: var(--color-border-emphasis);
+		background: var(--color-hover);
+	}
+
+	/* Interactive chat state */
+	.chat-active {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		height: 100%;
+	}
+
+	.user-message {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.5rem;
+		padding: 0.75rem 1rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		color: var(--color-fg-primary);
+	}
+
+	.ai-response {
+		flex: 1;
+		padding: 1rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		min-height: 120px;
+	}
+
+	.ai-response.loading {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.ai-response.error {
+		border-color: var(--color-error-border);
+		background: var(--color-error-muted);
+		color: var(--color-error);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.typing-indicator {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--color-fg-muted);
+		font-size: 0.875rem;
+	}
+
+	.typing-indicator :global(.spinner) {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
+	}
+
+	.response-header {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin-bottom: 0.75rem;
+	}
+
+	.response-text {
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+		line-height: 1.7;
+		margin: 0;
+		white-space: pre-wrap;
+	}
+
+	.reset-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.625rem 1rem;
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		font-size: 0.8125rem;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.reset-button:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
 		background: var(--color-hover);
 	}
 

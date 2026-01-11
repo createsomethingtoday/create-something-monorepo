@@ -19,6 +19,7 @@ declare global {
 				KV?: KVNamespace;
 				VIDEO_STATS?: KVNamespace;
 				AI?: Ai;
+				ANTHROPIC_API_KEY?: string;
 			};
 		}
 	}

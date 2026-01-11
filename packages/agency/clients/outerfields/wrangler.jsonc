@@ -4,6 +4,10 @@
 	"compatibility_date": "2025-01-01",
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
 
+	// Set ANTHROPIC_API_KEY as a secret:
+	// wrangler secret put ANTHROPIC_API_KEY --env production
+	// The demo will use fallback responses if not configured.
+
 	"vars": {
 		"ENVIRONMENT": "production"
 	},
