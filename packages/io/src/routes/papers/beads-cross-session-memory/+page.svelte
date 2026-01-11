@@ -200,27 +200,27 @@
 
     <section class="abstract">
         <p style="font: var(--text-body); color: var(--color-fg-primary);">
-            This paper explores the critical challenge of context loss in AI development sessions and introduces Beads as a novel solution for cross-session memory persistence. Traditional AI interactions are often stateless, leading to repetitive context setting and fragmented problem-solving. Beads addresses this by externalizing AI's working memory into a Git-committable `.beads/issues.jsonl` file, enabling continuous context, issue tracking, and collaborative AI development. We detail the Beads workflow, its architectural patterns for memory persistence, and discuss its profound implications for enhancing AI's ability to tackle complex, long-running tasks.
+            AI development sessions are stateless: when a session ends, context disappears. Developers re-explain problems, re-provide code snippets, re-describe what they already tried. Beads solves this by storing issues in <code>.beads/issues.jsonl</code>, a Git-committed file that persists across sessions. This paper documents how Beads works, its integration with development workflows, and what it enables for multi-session AI work.
         </p>
     </section>
 
     <section>
         <h2>I. Introduction: Why Cross-Session Memory Matters</h2>
         <p>
-            In the rapidly evolving landscape of AI-assisted development, the ability for an AI to maintain context across multiple interactions and sessions is paramount. Without persistent memory, each new session with an AI agent often begins as a blank slate, forcing developers to re-explain problems, re-provide context, and re-iterate previous findings. This "AI amnesia" significantly hinders productivity, limits the complexity of problems AI can effectively assist with, and ultimately undermines the promise of intelligent, continuous collaboration.
+            AI agents forget everything when a session ends. Each new conversation starts blank—developers re-explain problems, re-provide context, re-iterate findings. This wastes time and limits AI to simple, single-session tasks.
         </p>
         <p>
-            The challenge lies in bridging the ephemeral nature of AI sessions with the persistent, evolving state of a software project. Human developers naturally carry context from one day to the next, remembering ongoing tasks, past decisions, and unresolved issues. For AI to truly augment this process, it must possess a similar capability: a robust, reliable mechanism for cross-session memory. Beads emerges as a foundational tool designed to imbue AI with this essential persistence, transforming fragmented interactions into a cohesive, cumulative development journey.
+            Human developers carry context naturally: yesterday's debugging session informs today's fix. AI needs the same capability. Beads provides it by storing issues in <code>.beads/issues.jsonl</code>, a Git-committed file that any session can read. Work survives restarts, context limits, even crashes.
         </p>
     </section>
 
     <section>
         <h2>II. The Problem: What Happens When Sessions End</h2>
         <p>
-            The core problem Beads solves stems from the inherent statelessness of most AI interaction models. Whether through a chat interface, an API call, or a temporary development environment, AI sessions typically have a finite lifespan. Once a session concludes—be it due to a browser tab closing, a server timeout, or an explicit reset—all accumulated context, partial solutions, and ongoing investigative threads are irrevocably lost.
+            AI sessions end. Browser tabs close. Context windows fill. Servers timeout. When they do, everything disappears: partial solutions, debugging progress, the thread of investigation you were following.
         </p>
         <p>
-            This loss manifests in several critical pain points for developers:
+            This creates concrete problems:
         </p>
         <ul>
             <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Repetitive Context Setting:</strong> Developers must repeatedly provide the same background information, code snippets, or problem descriptions to the AI.</li>
@@ -256,10 +256,10 @@
     <section>
         <h2>III. The Solution: How Beads Works</h2>
         <p>
-            Beads addresses the problem of AI amnesia by introducing a structured, persistent memory layer that is external to the AI's runtime session. This memory is managed through a dedicated local directory, `.beads/`, and specifically through a file named `issues.jsonl`. This file serves as the canonical source of truth for all ongoing and historical issues, tasks, and observations that the AI is tracking.
+            Beads stores issues in a local directory (<code>.beads/</code>) using a single file: <code>issues.jsonl</code>. Each line is a JSON object representing one issue. This file is the source of truth for what AI is tracking.
         </p>
         <p>
-            Crucially, `.beads/issues.jsonl` is designed to be Git-committable. This design choice provides several powerful benefits:
+            The file is Git-committed alongside your code. This gives you:
         </p>
         <ul>
             <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Version Control:</strong> Every change to an issue, every new piece of context, is tracked and auditable through Git history.</li>
@@ -341,25 +341,25 @@ bd sync
     <section>
         <h2>IV. Integration Patterns: Context Survival and Work Extraction</h2>
         <p>
-            The design of Beads facilitates several powerful integration patterns that elevate AI's utility beyond simple query-response systems.
+            Beads enables two patterns: context that survives sessions, and work extraction during sessions.
         </p>
 
         <h3>A. Context Survival Across Sessions</h3>
         <p>
-            The primary pattern enabled by Beads is the seamless survival of AI context. When a developer resumes work on a project, the AI can load the current state of all open issues from `issues.jsonl`. This means the AI "remembers" what it was working on, what problems were identified, and what progress was made in previous sessions. This allows for:
+            When a developer resumes work, AI loads open issues from <code>issues.jsonl</code>. It knows what it was working on, what problems exist, and what was already tried. This enables:
         </p>
         <ul>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Seamless Handoffs:</strong> AI can pick up exactly where it left off, even after days or weeks.</li>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Long-Term Project Engagement:</strong> AI can contribute to projects over their entire lifecycle, accumulating knowledge specific to that codebase.</li>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Reduced Cognitive Load:</strong> Developers spend less time re-orienting the AI, freeing up mental resources for actual problem-solving.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Session handoffs:</strong> AI picks up where it left off, even after days.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Project-specific knowledge:</strong> AI accumulates understanding of your codebase over time.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Less re-explaining:</strong> Developers stop repeating context; AI already knows.</li>
         </ul>
 
         <h3>B. Work Extraction and Granular Tracking</h3>
         <p>
-            Beads empowers the AI to not only remember high-level issues but also to extract and track granular sub-tasks or observations. As the AI processes code or developer prompts, it can identify new problems, potential improvements, or necessary refactorings. These can then be automatically or semi-automatically added as new entries in `issues.jsonl`, creating a dynamic, AI-curated backlog.
+            AI doesn't just track what you tell it—it discovers work while processing code. It identifies sub-tasks, potential improvements, or refactoring needs. These become new entries in <code>issues.jsonl</code>, building a dynamic backlog.
         </p>
         <p>
-            This pattern transforms the AI from a reactive assistant into a proactive project contributor, capable of:
+            This enables:
         </p>
         <ul>
             <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Automated Issue Identification:</strong> AI can flag code smells, security vulnerabilities, or performance bottlenecks as new issues.</li>
@@ -392,21 +392,20 @@ bd sync
     </section>
 
     <section>
-        <h2>V. Results & Discussion: Benefits and Limitations</h2>
+        <h2>V. Results & Discussion: What Works and What Doesn't</h2>
         <p>
-            The implementation of Beads' cross-session memory patterns yields significant benefits for AI-assisted development:
+            <strong>What works:</strong>
         </p>
         <ul>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Enhanced Efficiency:</strong> Developers save time by eliminating repetitive context-setting, allowing AI to immediately contribute to the task at hand.</li>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Increased Problem Complexity:</strong> AI can now assist with larger, more intricate problems that span multiple sessions, as its memory is preserved and accessible.</li>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Improved AI "Intelligence":</strong> Over time, the `issues.jsonl` file becomes a rich, project-specific knowledge base, allowing the AI to develop a deeper understanding of the codebase and its history.</li>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Seamless Collaboration:</strong> The Git-committable nature of `issues.jsonl` means that AI's context and progress are shared across development teams, fostering a truly collaborative AI experience.</li>
-            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Auditability and Traceability:</strong> Every AI-driven decision or observation, captured as an issue update, is version-controlled, providing a clear audit trail.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>No more re-explaining:</strong> Developers stop repeating context. AI reads <code>issues.jsonl</code> and knows what's happening.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Multi-session tasks become possible:</strong> Problems that span days or weeks can be tracked continuously.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Project-specific knowledge accumulates:</strong> The file becomes a record of what was tried, what worked, what failed.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Team sharing via Git:</strong> Push <code>.beads/</code> to share AI context across developers.</li>
+            <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Audit trail:</strong> Every decision is version-controlled.</li>
         </ul>
 
-        <h3>Limitations and Future Directions:</h3>
         <p>
-            While Beads offers a robust solution, certain considerations and areas for future development exist:
+            <strong>What doesn't work yet:</strong>
         </p>
         <ul>
             <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>`issues.jsonl` Bloat:</strong> For very long-running projects with numerous issues, the `issues.jsonl` file could grow large. Strategies for archiving or summarizing closed issues might be necessary.</li>
@@ -415,27 +414,25 @@ bd sync
             <li style="font: var(--text-body); color: var(--color-fg-primary);"><strong>Automated Context Pruning:</strong> Developing intelligent mechanisms for the AI to automatically prioritize and prune less relevant historical context to optimize prompt length and focus.</li>
         </ul>
         <p>
-            Future work will focus on enhancing the AI's ability to autonomously manage its memory within the Beads framework, including proactive issue creation, intelligent summarization of issue histories, and more sophisticated context retrieval mechanisms to further reduce developer overhead and maximize AI utility.
+            <strong>Future work:</strong> Automatic issue creation, intelligent summarization of long histories, and smarter context retrieval to keep prompts focused.
         </p>
     </section>
 
     <section class="references">
         <h2>References</h2>
         <ul>
-            <li><a href="https://beads.dev/docs/memory-patterns" target="_blank">Beads Documentation: Persistent Memory Patterns</a></li>
-            <li><a href="https://beads.dev/docs/workflow-guide" target="_blank">Beads Documentation: Core Workflow Guide</a></li>
-            <li><a href="https://beads.dev/blog/ai-context-problem" target="_blank">Beads Blog: Addressing the AI Context Problem</a></li>
-            <li><a href="https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository" target="_blank">Git SCM Documentation: Recording Changes</a></li>
+            <li><code>.claude/rules/beads-patterns.md</code> — Beads workflow patterns and commands</li>
+            <li><code>.beads/issues.jsonl</code> — Git-committed issue storage</li>
+            <li><code>packages/harness/src/beads.ts</code> — Harness integration</li>
+            <li><code>CLAUDE.md</code> — Task management philosophy</li>
         </ul>
     </section>
 
     <footer>
         <nav>
-            <a href="/">Home</a>
-            <a href="/about">About Beads</a>
-            <a href="/contact">Contact</a>
-            <a href="/privacy">Privacy Policy</a>
+            <a href="/papers">← All Papers</a>
+            <a href="/papers/agent-sdk-gemini-tools-integration">Gemini Tools Integration →</a>
         </nav>
-        <p style="margin-top: var(--space-sm);">&copy; 2026 Beads Research. All rights reserved.</p>
+        <p style="margin-top: var(--space-sm);">CREATE SOMETHING Research • 2026</p>
     </footer>
 </div>

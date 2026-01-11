@@ -78,7 +78,7 @@
   <section class="abstract-section">
     <h2>Abstract</h2>
     <p class="abstract-text">
-      Large Language Models (LLMs) often struggle with generating contextually accurate and verifiable content when detached from real-time data sources. This paper details the integration of `bash` and `file_read` tools into the Agent SDK's Gemini provider, a critical step towards enabling codebase-grounded AI research. We explore the implementation of these tools, the robust safety controls safeguarding the monorepo, and the agentic loop pattern that facilitates iterative, fact-checked content generation. The findings demonstrate a significant improvement in the quality and verifiability of generated papers, albeit with considerations for increased token usage and operational costs, ultimately justifying the investment for high-fidelity research.
+      LLMs generate plausible but often inaccurate content when they can't access the actual codebase. This paper documents the integration of <code>bash</code> and <code>file_read</code> tools into the Agent SDK's Gemini provider. We cover: how the tools work, the allowlist-based safety controls, and the agentic loop that enables iterative tool use. The result: papers that reference real file paths, actual line numbers, and verifiable code. Tradeoff: higher token usage. For technical documentation, the precision is worth the cost.
     </p>
   </section>
 
@@ -90,10 +90,10 @@
       </p>
     </div>
     <p class="body-text">
-      In the rapidly evolving landscape of AI-driven content generation, Large Language Models (LLMs) have demonstrated remarkable capabilities in synthesizing information and producing creative text. However, a persistent challenge remains: the tendency for LLMs to "hallucinate" or provide generic, unverified information when disconnected from real-time, authoritative data sources. For CREATE SOMETHING, a research and development organization deeply rooted in its monorepo, the need for AI-generated content to be factually grounded in the actual implementation details of its codebase is paramount. Generic advice, while often plausible, lacks the precision and verifiability required for high-quality technical papers.
+      LLMs hallucinate. Without access to your actual code, they generate plausible but unverifiable content. They'll describe a feature in general terms but miss the exact file paths, function names, or configuration values that define the current implementation. For CREATE SOMETHING's technical papers, this is a problem: generic advice isn't useful; we need papers grounded in real code.
     </p>
     <p class="body-text">
-      This paper addresses the fundamental problem of bridging the epistemic gap between an LLM's vast but static training data and the dynamic, ever-changing state of a live software repository. We introduce the `GeminiToolsProvider`, an extension to the Agent SDK that empowers Gemini models with direct, controlled access to the monorepo via `bash` and `file_read` tools. This integration transforms Gemini from a purely generative model into a research agent capable of examining source code, extracting real metrics, and grounding its outputs in the concrete realities of the codebase.
+      This paper documents <code>GeminiToolsProvider</code>, an Agent SDK extension that gives Gemini controlled access to the monorepo via <code>bash</code> and <code>file_read</code> tools. The model can search code with grep, read specific files, and use what it finds in its output. The result: papers that cite actual line numbers and file paths.
     </p>
   </section>
 
@@ -141,7 +141,7 @@
       <li>Defined clear objectives for "codebase-grounded content" to guide implementation.</li>
     </ul>
     <p class="body-text">
-      The outcome of this analysis was the strategic decision to develop the `GeminiToolsProvider`, specifically designed to integrate direct codebase access tools. This approach ensures that AI-generated papers are not merely plausible but are rigorously verifiable against the actual state of the monorepo, elevating their quality and trustworthiness.
+      The outcome: <code>GeminiToolsProvider</code> with bash and file_read tools. Papers become verifiable against the actual codebase.
     </p>
   </section>
 
@@ -149,7 +149,7 @@
     <h2 class="section-heading">III. Methodology: The GeminiToolsProvider Architecture</h2>
     <div class="callout-box">
       <p class="callout-text">
-        "What is the architectural approach to integrate powerful shell and file system access into a Gemini-powered agent while maintaining safety and control?"
+        "How do we give Gemini shell and file access without breaking the monorepo?"
       </p>
     </div>
     <p class="body-text">
@@ -212,7 +212,7 @@ FILE_READ_TOOL_SCHEMA = {
       <li>Integrated these tools into the Gemini client via `self.types.Tool(function_declarations=[bash_func, file_read_func])` (lines 109).</li>
     </ul>
     <p class="body-text">
-      This architectural pattern ensures that the tools are not merely external utilities but are deeply integrated into the agent's reasoning process, allowing for dynamic and context-aware interaction with the codebase. The outcome is a Gemini provider that is "codebase-aware" and capable of generating "grounded papers" (packages/agent-sdk/src/create_something_agents/providers/gemini_tools.py:3-8).
+      The tools are integrated into Gemini's reasoning process—the model decides when to search and when to read files. The outcome: a provider that generates papers with real file paths and line numbers (packages/agent-sdk/src/create_something_agents/providers/gemini_tools.py:3-8).
     </p>
   </section>
 
@@ -224,7 +224,7 @@ FILE_READ_TOOL_SCHEMA = {
       </p>
     </div>
     <p class="body-text">
-      Granting an AI agent direct shell access, even for research purposes, introduces significant security risks. Unrestricted `bash` commands could lead to accidental data loss, system modification, or even malicious actions. To mitigate these risks, the `GeminiToolsProvider` implements a robust set of safety controls, primarily through an allowlist for `bash` commands and strict path validation for `file_read` operations.
+      Shell access creates security risks. Unrestricted <code>bash</code> commands could delete files, modify config, or execute arbitrary code. The <code>GeminiToolsProvider</code> mitigates this with an allowlist for bash commands and path validation for file reads.
     </p>
     <p class="body-text">
       The `_is_command_safe` method (packages/agent-sdk/src/create_something_agents/providers/gemini_tools.py:99-111) is central to `bash` safety. It checks if a command starts with an allowed prefix from `ALLOWED_BASH_PREFIXES` (lines 48-50) and ensures it does not contain any `BLOCKED_PATTERNS` (lines 52-54). This dual-layer approach prevents the execution of destructive commands like `rm`, `mv`, or `sudo`, while permitting safe inspection commands such as `grep`, `find`, and `cat`.
@@ -277,7 +277,7 @@ FILE_READ_TOOL_SCHEMA = {
       <li>Introduced output truncation for both tools to manage context window usage effectively.</li>
     </ul>
     <p class="body-text">
-      These safety measures are crucial for maintaining the integrity of the monorepo while enabling powerful AI capabilities. The outcome is a controlled environment where the agent can explore and extract information without posing an undue risk, fostering trust in its autonomous operations.
+      The outcome: the agent can search and read, but can't delete, write, or execute arbitrary commands.
     </p>
   </section>
 
@@ -289,7 +289,7 @@ FILE_READ_TOOL_SCHEMA = {
       </p>
     </div>
     <p class="body-text">
-      The true power of the `GeminiToolsProvider` lies in its implementation of an agentic loop, a multi-turn interaction pattern that mimics human research and problem-solving. Instead of a single prompt-response exchange, the agent can dynamically call tools, receive their outputs, and use that new information to inform subsequent reasoning steps or further tool calls. This iterative process allows for deep exploration and refinement of understanding.
+      <code>GeminiToolsProvider</code> implements an agentic loop—a multi-turn pattern where the model calls tools, gets results, and uses those results to call more tools. Instead of a single prompt/response, the agent iterates: search for a pattern, read a promising file, search within that file, synthesize findings.
     </p>
     <p class="body-text">
       The `execute` method (packages/agent-sdk/src/create_something_agents/providers/gemini_tools.py:190-280) orchestrates this loop. It sends the initial task to Gemini, and if the model decides to call a `bash` or `file_read` tool, the provider intercepts this call, executes the tool, and then feeds the result back into the conversation history. This cycle continues for a maximum of `max_tool_calls` (default 20, line 81) iterations, or until Gemini produces a final, non-tool-calling output. This enables complex research workflows, such as:
@@ -315,7 +315,7 @@ FILE_READ_TOOL_SCHEMA = {
       <li>Enabled Gemini's `thinking_config` with a `thinking_budget` (default 8192, line 80) to support complex reasoning between tool calls.</li>
     </ul>
     <p class="body-text">
-      The outcome is a more capable and adaptable agent that can perform sophisticated research tasks, leading to more accurate and deeply grounded papers. The agentic loop is a cornerstone of creating truly autonomous and intelligent research agents.
+      The outcome: papers cite real file paths and line numbers. The agent found them by searching.
     </p>
   </section>
 
@@ -327,7 +327,7 @@ FILE_READ_TOOL_SCHEMA = {
       </p>
     </div>
     <p class="body-text">
-      The integration of `bash` and `file_read` tools significantly elevates the quality and verifiability of AI-generated research papers. As noted in `packages/agent-sdk/experiments/test-gemini-tools.py` (lines 8-11), the expected improvements include "Real file paths instead of generic references," "Actual metrics from the codebase," "Specific code examples," and "Grounded philosophical claims." This shift from generic to specific, from theoretical to empirical, is invaluable for CREATE SOMETHING's research mandate.
+      With tools, papers include "Real file paths instead of generic references," "Actual metrics from the codebase," "Specific code examples," and "Grounded philosophical claims" (packages/agent-sdk/experiments/test-gemini-tools.py:8-11). The difference: generic vs. specific, theoretical vs. verifiable.
     </p>
     <p class="body-text">
       However, this enhanced capability comes with a tradeoff: increased operational cost. Each tool call, along with the model's "thinking" process (enabled by `thinking_config`), consumes tokens. The `GeminiToolsProvider` meticulously tracks `total_input_tokens`, `total_output_tokens`, and `total_thinking_tokens` (packages/agent-sdk/src/create_something_agents/providers/gemini_tools.py:196-198) to provide a clear cost breakdown. While a baseline model might generate a paper in a single, less expensive turn, a tool-augmented agent might engage in multiple tool calls and reasoning steps, accumulating higher token counts. For high-fidelity research papers, this cost is justified by the significant improvement in verifiability and accuracy.
@@ -337,10 +337,10 @@ FILE_READ_TOOL_SCHEMA = {
   <section class="section-block">
     <h2 class="section-heading">VII. Limitations & Future Directions</h2>
     <p class="body-text">
-      While the `GeminiToolsProvider` represents a significant advancement in codebase-grounded AI research, several limitations remain. The current implementation restricts bash commands to a predefined allowlist, which may limit complex research scenarios requiring specialized tooling. Additionally, the output truncation (10,000 chars for bash, 15,000 for file_read) can result in incomplete data for very large files or extensive search results.
+      <strong>What doesn't work yet:</strong> The bash allowlist restricts complex scenarios—you can grep but not run arbitrary analysis scripts. Output truncation (10,000 chars for bash, 15,000 for file_read) loses data on large files or broad searches.
     </p>
     <p class="body-text">
-      Future work could explore: dynamic tool approval workflows for edge cases, integration with more sophisticated search tools like ripgrep with context windows, and federated access patterns for multi-repository research. The foundation laid by this integration positions CREATE SOMETHING for continued advancement in autonomous, codebase-aware AI agents.
+      <strong>Future work:</strong> Dynamic tool approval for edge cases, integration with ripgrep for context-aware search, and patterns for multi-repository access.
     </p>
   </section>
 
