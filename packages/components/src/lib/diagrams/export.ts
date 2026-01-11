@@ -179,9 +179,3 @@ export async function copyDiagramToClipboard(
     throw new Error('Failed to copy to clipboard. Browser may not support clipboard API.');
   }
 }
-
-/**
- * Alias for backward compatibility
- * @deprecated Use copyDiagramToClipboard instead
- */
-export const copyToClipboard = copyDiagramToClipboard;
