@@ -9,10 +9,7 @@
 
 <svelte:head>
 	<title>The Subtractive Studio: Philosophy as Infrastructure | CREATE SOMETHING.io</title>
-	<meta
-		name="description"
-		content="Most agencies add. CREATE SOMETHING removes what obscures. A positioning paper on philosophy as infrastructure, not marketing."
-	/>
+	<meta name="description" content="Most agencies add. CREATE SOMETHING removes what obscures. A positioning paper on philosophy as infrastructure, not marketing." />
 </svelte:head>
 
 <div class="min-h-screen p-6 paper-container">

@@ -9,10 +9,7 @@
 
 <svelte:head>
 	<title>Haiku + Ultrathink Validation | CREATE SOMETHING.io</title>
-	<meta
-		name="description"
-		content="Empirical validation of Haiku 4.5 + ultrathink achieving near-Sonnet performance at fraction of cost."
-	/>
+	<meta name="description" content="Empirical validation of Haiku 4.5 + ultrathink achieving near-Sonnet performance at fraction of cost." />
 </svelte:head>
 
 <div class="min-h-screen p-6 paper-container">
