@@ -85,8 +85,10 @@ def get_issue_details(issue_id: str, monorepo: Path) -> dict | None:
         return None
 
     try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError:
+        issues = json.loads(result.stdout)
+        # bd show returns a list, get the first issue
+        return issues[0] if isinstance(issues, list) else issues
+    except (json.JSONDecodeError, IndexError):
         return None
 
 

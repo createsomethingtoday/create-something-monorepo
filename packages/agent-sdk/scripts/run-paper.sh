@@ -109,8 +109,10 @@ async def main():
         return 1
 
     try:
-        issue = json.loads(result.stdout)
-    except json.JSONDecodeError:
+        issues = json.loads(result.stdout)
+        # bd show returns a list, get the first (and only) issue
+        issue = issues[0] if isinstance(issues, list) else issues
+    except (json.JSONDecodeError, IndexError) as e:
         print(f"❌ Failed to parse issue JSON: {result.stdout}")
         return 1
 
