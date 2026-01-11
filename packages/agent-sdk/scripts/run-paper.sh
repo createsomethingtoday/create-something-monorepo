@@ -80,19 +80,21 @@ echo -e "Dry run: $DRY_RUN"
 [ -n "$FORCE_MODEL" ] && echo -e "Force model: $FORCE_MODEL"
 echo ""
 
-# Run the generator
-python3 << PYTHON_SCRIPT
+# Run the generator - pass variables via environment to avoid heredoc issues
+export ISSUE_ID DRY_RUN FORCE_MODEL MONOREPO_DIR
+python3 << 'PYTHON_SCRIPT'
 import asyncio
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-# Configuration
-ISSUE_ID = "$ISSUE_ID"
-DRY_RUN = "$DRY_RUN" == "true"
-FORCE_MODEL = "$FORCE_MODEL" or None
-MONOREPO = Path("$MONOREPO_DIR")
+# Configuration from environment
+ISSUE_ID = os.environ.get("ISSUE_ID", "")
+DRY_RUN = os.environ.get("DRY_RUN", "false") == "true"
+FORCE_MODEL = os.environ.get("FORCE_MODEL") or None
+MONOREPO = Path(os.environ.get("MONOREPO_DIR", "."))
 
 async def main():
     """Generate paper or experiment from Beads issue."""
@@ -200,28 +202,32 @@ Generate a CREATE SOMETHING {content_type} from this Beads issue.
 - Title: {title}
 - Description: {description}
 
-## CRITICAL: Research First - Truth Only
+## MANDATORY: Use Tools Before Writing
 
-**You MUST research the codebase before writing.** Every claim must be verified.
+**You MUST call bash and file_read tools before writing ANY content.**
 
-### Step 1: Find Relevant Files
-```bash
-# Search for files related to the topic
-find . -type f \\( -name "*.ts" -o -name "*.py" -o -name "*.svelte" \\) | xargs grep -l "<topic>" | head -20
-ls -la packages/
-```
+### Step 1: Search with bash tool (REQUIRED)
+Call the bash tool to search the codebase:
+- Search .claude/rules/ directory for documentation
+- Search packages/ for implementations
+- Run grep commands to find relevant files
 
-### Step 2: Read and Extract Facts
+### Step 2: Read files with file_read tool (REQUIRED)
+After searching, read the files you found:
+- Read .claude/rules/*.md files for patterns
+- Read CLAUDE.md for architecture
 - Read actual source files
-- Note real function/class names
-- Extract actual metrics (line counts, file counts, etc.)
-- Check git history: `git log --oneline <file> | head -5`
 
-### Step 3: Write From Evidence
-- Every metric must have a source
-- Cite file paths: "In `src/lib/auth.ts:42`..."
-- Say "Not measured" if data doesn't exist
-- No hypothetical examples or invented statistics
+### Step 3: Extract facts from what you read
+From the actual file contents:
+- Quote exact text with line numbers
+- Note real function/class names
+- Count actual metrics from files
+
+### Step 4: Write paper citing your sources
+Every claim must cite a file you read.
+
+**If you write without calling bash or file_read first, your paper will be rejected.**
 
 ## Output Requirements
 
@@ -307,7 +313,7 @@ Generate complete, production-ready content. No placeholders.
     print(f"✅ Success: {result.success}")
     print(f"📊 Model: {result.model}")
     print(f"🔄 Iterations: {result.iterations}")
-    print(f"💰 Cost: \${result.cost_usd:.4f}")
+    print(f"💰 Cost: ${result.cost_usd:.4f}")
     print(f"{'=' * 60}")
 
     if result.success:
