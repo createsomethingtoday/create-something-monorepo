@@ -34,17 +34,32 @@ Every experiment in `packages/space/src/routes/experiments/` must include:
 
 ### 2. Container Width (Required)
 
-Experiments should use consistent max-width:
+Experiments fall into two categories:
 
+**Content-focused experiments** (articles, explorations):
 ```svelte
 <div class="max-w-4xl mx-auto">
   <!-- Experiment content -->
 </div>
 ```
 
+**Dashboard-style experiments** (data visualization, multi-column layouts):
+```css
+.container {
+  max-width: 1400px;  /* or 56rem */
+  margin: 0 auto;
+}
+```
+
 **Check for**:
-- Custom `max-width` pixel values (should use `max-w-4xl` or similar)
 - Missing container width constraints
+- Using `--space-*` tokens for max-width (these are spacing tokens, NOT width values)
+
+**DO NOT CHANGE** existing max-width values like `1400px` or `56rem` to Canon tokens. The `--space-*` tokens are for padding/margins (~6-110px), not container widths.
+
+**Wide container experiments** (preserve their existing widths):
+- `nba-live/**` — Dashboard with multi-column layouts
+- `threshold-dwelling` — Full-width architectural visualization
 
 ### 3. Canon CSS Tokens (Required)
 
@@ -88,7 +103,8 @@ function trackExperiment(action: string, data?: Record<string, unknown>) {
 ### Pass 1: Structure Check
 
 1. Does file have `<svelte:head>` with `<title>` and `<meta name="description">`?
-2. Does content use `max-w-4xl` or similar container?
+2. Does content have a width constraint? (Either `max-w-4xl` or explicit `max-width` in CSS)
+3. **VERIFY**: Is `max-width` using a proper value (px, rem, or Tailwind class)? Never use `--space-*` tokens for width.
 
 ### Pass 2: Canon Compliance
 
@@ -148,8 +164,10 @@ SUGGESTED FIXES:
 | Anti-Pattern | Correct Pattern |
 |--------------|-----------------|
 | Missing `<svelte:head>` | Include with title + description |
-| `max-width: 800px` | Use `max-w-4xl` class |
-| No container width | Wrap in `max-w-4xl mx-auto` |
+| No container width | Wrap in `max-w-4xl mx-auto` or use CSS `max-width` |
+| `max-width: var(--space-*)` | **WRONG** — Use `1400px`, `56rem`, or Tailwind `max-w-*` |
+
+**CRITICAL**: Never replace `max-width: 1400px` with `var(--space-2xl)`. Space tokens are for padding/margins (~6-110px), not container widths. Dashboard experiments need 1400px+ widths.
 
 ## Flexibility vs Papers
 
@@ -164,7 +182,8 @@ Unlike papers, experiments:
 ## Pre-Publish Checklist
 
 - [ ] `<svelte:head>` with title and meta description?
-- [ ] Container uses `max-w-4xl` or similar?
+- [ ] Container has width constraint (`max-w-4xl` for content, `1400px`/`56rem` for dashboards)?
+- [ ] NOT using `--space-*` tokens for max-width (those are spacing, not widths)?
 - [ ] Colors use Canon tokens (`--color-*`)?
 - [ ] Border radius uses Canon tokens (`--radius-*`)?
 - [ ] Shadows use Canon tokens (`--shadow-*`)?
