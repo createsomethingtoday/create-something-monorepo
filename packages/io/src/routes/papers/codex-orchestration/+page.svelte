@@ -1,6 +1,9 @@
-<script lang="ts">
-	import { SEO } from '@create-something/components';
+<svelte:head>
+	<title>Codex Orchestration: Claude Code Planning + Autonomous Execution | CREATE SOMETHING.io</title>
+	<meta name="description" content="Research paper: Using Codex as autonomous executor triggered by Claude Code planning. Clean tool boundaries, 80% cost savings, fire-and-forget execution pattern." />
+</svelte:head>
 
+<script lang="ts">
 	const metadata = {
 		title: 'Codex Orchestration: Claude Code Planning + Autonomous Execution',
 		date: '2026-01-09',
@@ -68,19 +71,13 @@
 	];
 </script>
 
-<SEO
-	title={metadata.title}
-	description="Research paper: Using Codex as autonomous executor triggered by Claude Code planning. Clean tool boundaries, 80% cost savings, fire-and-forget execution pattern."
-	keywords="codex, claude code, orchestration, MCP, agent patterns, cost optimization"
-	ogImage="/og-image.svg"
-	propertyName="io"
-/>
+<div class="min-h-screen p-6 paper-container">
+	<div class="max-w-4xl mx-auto space-y-12">
+		<header class="pb-8 paper-header">
+			<div class="font-mono mb-4 paper-id">PAPER-2026-005</div>
+			<h1 class="mb-3 paper-title">{metadata.title}</h1>
 
-<article class="paper-container">
-	<header class="paper-header">
-		<h1 class="paper-title">{metadata.title}</h1>
-
-		<div class="paper-meta">
+			<div class="paper-meta">
 			<time class="meta-item">{metadata.date}</time>
 			<span class="meta-item status-{metadata.status.toLowerCase()}">{metadata.status}</span>
 		</div>
@@ -163,7 +160,7 @@
 
 		<h3 class="subsection-heading">Key Differentiators</h3>
 
-		<div class="differentiator-grid">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-6 differentiator-grid">
 			<div class="differentiator">
 				<h4 class="diff-title">Native File Operations</h4>
 				<p class="diff-text">
@@ -269,7 +266,7 @@ codex-work --issue "cs-abc123" --acceptance "See above"
 	<section class="paper-section">
 		<h2 class="section-heading">Cost Analysis</h2>
 
-		<div class="cost-breakdown">
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 cost-breakdown">
 			<div class="cost-card">
 				<h4 class="cost-title">Baseline (Sonnet Alone)</h4>
 				<div class="cost-amount">$0.01</div>
@@ -306,7 +303,7 @@ codex-work --issue "cs-abc123" --acceptance "See above"
 
 		<p class="leading-relaxed body-text">Codex isn't always the right choice. Gemini CLI edges out when:</p>
 
-		<div class="use-case-grid">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-6 use-case-grid">
 			<div class="use-case">
 				<h4 class="use-case-title">Google Cloud Native</h4>
 				<p class="use-case-text">
@@ -648,14 +645,20 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 			{/each}
 		</ul>
 	</footer>
-</article>
+	</div>
+</div>
 
 <style>
 	/* Paper Container */
 	.paper-container {
-		max-width: 800px;
-		margin: 0 auto;
-		padding: var(--space-2xl) var(--space-lg);
+		background: var(--color-bg-pure);
+		color: var(--color-fg-primary);
+	}
+
+	.paper-id {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		letter-spacing: 0.1em;
 	}
 
 	/* Header */
@@ -751,6 +754,10 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 		border-color: var(--color-success);
 	}
 
+	.callout-error {
+		border-color: var(--color-error);
+	}
+
 	.callout-title {
 		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
@@ -817,6 +824,10 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 		color: var(--color-fg-tertiary);
 	}
 
+	.table-highlight {
+		background: var(--color-bg-surface);
+	}
+
 	code {
 		padding: 2px 6px;
 		background: var(--color-bg-surface);
@@ -830,9 +841,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 	/* Grids */
 	.differentiator-grid,
 	.use-case-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-lg);
 		margin: var(--space-lg) 0;
 	}
 
@@ -891,9 +899,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 
 	/* Cost Breakdown */
 	.cost-breakdown {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-md);
 		margin: var(--space-lg) 0;
 	}
 
@@ -1045,23 +1050,4 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 		color: var(--color-fg-primary);
 	}
 
-	/* Responsive */
-	@media (max-width: 768px) {
-		.paper-container {
-			padding: var(--space-xl) var(--space-md);
-		}
-
-		.differentiator-grid,
-		.use-case-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.cost-breakdown {
-			grid-template-columns: 1fr;
-		}
-
-		.paper-title {
-			font-size: var(--text-h2);
-		}
-	}
 </style>
