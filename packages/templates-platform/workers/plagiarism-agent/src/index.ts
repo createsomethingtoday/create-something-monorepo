@@ -11,6 +11,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import puppeteer from '@cloudflare/puppeteer';
+import { runAgentInvestigation, saveAgentState, loadAgentState } from './agent-mode';
 
 // =============================================================================
 // TYPES
@@ -77,6 +78,10 @@ const AIRTABLE_FIELDS = {
 // Below this threshold, flag for human review instead of auto-delisting
 const MAJOR_VIOLATION_CONFIDENCE_THRESHOLD = 0.9;
 
+// Tier 2 → Tier 3 escalation threshold
+// Cases with confidence below this get code-level analysis
+const TIER3_ESCALATION_THRESHOLD = 0.75;
+
 // =============================================================================
 // MAIN WORKER (Webhook Handler)
 // =============================================================================
@@ -100,6 +105,12 @@ export default {
     if (url.pathname.startsWith('/test-record/')) {
       const recordId = url.pathname.split('/').pop();
       return testRecordWebhook(recordId!, env);
+    }
+
+    // Agent mode endpoint: Run agentic investigation for content policy violations
+    if (url.pathname.startsWith('/agent/')) {
+      const caseId = url.pathname.split('/').pop();
+      return runAgentMode(caseId!, env);
     }
 
     return new Response('Plagiarism Agent Ready', { status: 200 });
@@ -333,6 +344,88 @@ async function testRecordWebhook(recordId: string, env: Env): Promise<Response> 
     });
   } catch (error: any) {
     console.error('[Test] Error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// =============================================================================
+// AGENT MODE (Content Policy Expansion)
+// =============================================================================
+
+/**
+ * Run agentic investigation for content policy violations.
+ * Uses Claude Agent SDK with iterative evidence gathering.
+ *
+ * This is for expansion beyond plagiarism: harassment, hate speech, DMCA, etc.
+ */
+async function runAgentMode(caseId: string, env: Env): Promise<Response> {
+  try {
+    console.log(`[Agent Mode] Starting investigation for case ${caseId}`);
+
+    // Fetch case from database
+    const result = await env.DB.prepare(
+      'SELECT * FROM plagiarism_cases WHERE id = ?'
+    ).bind(caseId).first();
+
+    if (!result) {
+      return Response.json({ error: 'Case not found' }, { status: 404 });
+    }
+
+    // Convert to ContentPolicyCase format
+    const contentCase = {
+      id: result.id as string,
+      policyType: 'plagiarism' as const, // For now, only plagiarism supported
+      reporterEmail: result.reporter_email as string,
+      targetUrl: result.alleged_copy_url as string,
+      complaintText: result.complaint_text as string,
+      context: result.original_url as string, // Original work URL as context
+      createdAt: result.created_at as number
+    };
+
+    // Run agent investigation
+    const startTime = Date.now();
+    const violation = await runAgentInvestigation(contentCase, env, 10);
+    const duration = Date.now() - startTime;
+
+    console.log(`[Agent Mode] Investigation completed in ${duration}ms`, violation);
+
+    // Update case with results
+    await env.DB.prepare(`
+      UPDATE plagiarism_cases
+      SET
+        status = 'completed',
+        tier3_decision = ?,
+        tier3_confidence = ?,
+        tier3_reasoning = ?,
+        tier3_cost = ?
+      WHERE id = ?
+    `).bind(
+      violation.decision,
+      violation.confidence,
+      violation.reasoning,
+      0.15, // Sonnet cost estimate (will be actual from agent usage)
+      caseId
+    ).run();
+
+    // Update Airtable with decision
+    const airtableFields: Record<string, string> = {
+      [AIRTABLE_FIELDS.DECISION]: DECISION_TO_AIRTABLE[violation.decision],
+      [AIRTABLE_FIELDS.OUTCOME]: DECISION_TO_OUTCOME[violation.decision]
+    };
+
+    await updateAirtable(env, result.airtable_record_id as string, airtableFields);
+
+    return Response.json({
+      caseId,
+      decision: violation.decision,
+      confidence: violation.confidence,
+      reasoning: violation.reasoning,
+      recommendedAction: violation.recommendedAction,
+      evidenceSummary: violation.evidenceSummary,
+      duration: `${(duration / 1000).toFixed(2)}s`
+    });
+  } catch (error: any) {
+    console.error('[Agent Mode] Error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
@@ -633,7 +726,17 @@ Return JSON:
     plagiarismCase.id
   ).run();
 
-  if (result.decision === 'unclear') {
+  // Escalate to Tier 3 for code analysis if:
+  // 1. Decision is explicitly "unclear"
+  // 2. Confidence is below threshold - visual evidence insufficient
+  // 3. Decision is "minor" or "major" but confidence below threshold - needs more evidence
+  const shouldEscalate =
+    result.decision === 'unclear' ||
+    result.confidence < TIER3_ESCALATION_THRESHOLD ||
+    (result.decision !== 'no_violation' && result.confidence < TIER3_ESCALATION_THRESHOLD);
+
+  if (shouldEscalate) {
+    console.log(`[Tier 2] Escalating to Tier 3 for code analysis (confidence: ${result.confidence}, threshold: ${TIER3_ESCALATION_THRESHOLD})`);
     await env.CASE_QUEUE.send({ caseId: plagiarismCase.id, tier: 3 });
   } else {
     await closeCase(plagiarismCase, result.decision as FinalDecision, result, env);
@@ -646,6 +749,95 @@ Return JSON:
 // TIER 3: Claude Sonnet Judgment
 // =============================================================================
 
+/**
+ * Fetch and compare HTML/CSS/JS from both URLs.
+ * Used when vision analysis is inconclusive and we need code-level evidence.
+ */
+async function fetchCodeComparison(
+  originalUrl: string,
+  copyUrl: string
+): Promise<string | null> {
+  try {
+    console.log('[Code Analysis] Fetching HTML/CSS/JS from both URLs');
+
+    // Fetch both pages in parallel
+    const [originalResponse, copyResponse] = await Promise.all([
+      fetch(originalUrl),
+      fetch(copyUrl)
+    ]);
+
+    if (!originalResponse.ok || !copyResponse.ok) {
+      console.log('[Code Analysis] Failed to fetch one or both URLs');
+      return null;
+    }
+
+    const [originalHtml, copyHtml] = await Promise.all([
+      originalResponse.text(),
+      copyResponse.text()
+    ]);
+
+    // Extract key structural elements for comparison
+    const extractPatterns = (html: string) => {
+      return {
+        // CSS animations and transitions
+        animations: html.match(/@keyframes\s+[\w-]+\s*{[^}]+}/g) || [],
+        transitions: html.match(/transition:\s*[^;]+;/g) || [],
+
+        // Layout structure
+        gridLayouts: html.match(/display:\s*grid[^}]*}/g) || [],
+        flexLayouts: html.match(/display:\s*flex[^}]*}/g) || [],
+
+        // Component patterns (classes and IDs)
+        classNames: Array.from(new Set(html.match(/class="[^"]+"/g) || [])).slice(0, 50),
+
+        // Sections and structure
+        sections: html.match(/<section[^>]*>/g)?.length || 0,
+        headers: html.match(/<header[^>]*>/g)?.length || 0,
+        navs: html.match(/<nav[^>]*>/g)?.length || 0
+      };
+    };
+
+    const originalPatterns = extractPatterns(originalHtml);
+    const copyPatterns = extractPatterns(copyHtml);
+
+    // Build comparison summary
+    const summary = `
+CODE ANALYSIS:
+
+Original URL Patterns:
+- Animations: ${originalPatterns.animations.length} keyframe definitions
+- Transitions: ${originalPatterns.transitions.length} transitions
+- Grid layouts: ${originalPatterns.gridLayouts.length}
+- Flex layouts: ${originalPatterns.flexLayouts.length}
+- Sections: ${originalPatterns.sections}
+
+Copy URL Patterns:
+- Animations: ${copyPatterns.animations.length} keyframe definitions
+- Transitions: ${copyPatterns.transitions.length} transitions
+- Grid layouts: ${copyPatterns.gridLayouts.length}
+- Flex layouts: ${copyPatterns.flexLayouts.length}
+- Sections: ${copyPatterns.sections}
+
+Animation Samples (first 3 from each):
+Original: ${originalPatterns.animations.slice(0, 3).join('\n')}
+Copy: ${copyPatterns.animations.slice(0, 3).join('\n')}
+
+Structural Similarity Indicators:
+- Similar animation count: ${Math.abs(originalPatterns.animations.length - copyPatterns.animations.length) <= 2}
+- Similar section count: ${Math.abs(originalPatterns.sections - copyPatterns.sections) <= 1}
+- Similar layout patterns: ${Math.abs(originalPatterns.gridLayouts.length - copyPatterns.gridLayouts.length) <= 2}
+`;
+
+    return summary;
+  } catch (error: any) {
+    console.error('[Code Analysis] Error:', {
+      message: error?.message || String(error),
+      name: error?.name
+    });
+    return null;
+  }
+}
+
 async function runTier3Judgment(
   plagiarismCase: PlagiarismCase,
   tier2Result: any,
@@ -653,11 +845,33 @@ async function runTier3Judgment(
 ): Promise<void> {
   const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
+  // Check if Tier 2 indicated need for more evidence
+  const needsCodeAnalysis =
+    tier2Result.confidence < 0.7 ||
+    tier2Result.extent === 'moderate'; // Moderate extent is borderline
+
+  let codeAnalysis: string | null = null;
+  if (needsCodeAnalysis) {
+    console.log('[Tier 3] Tier 2 was inconclusive - fetching HTML/CSS/JS for comparison');
+    codeAnalysis = await fetchCodeComparison(
+      plagiarismCase.originalUrl,
+      plagiarismCase.allegedCopyUrl
+    );
+  }
+
   const prompt = `Make final judgment on plagiarism case:
 
 Original: ${plagiarismCase.originalUrl}
 Alleged copy: ${plagiarismCase.allegedCopyUrl}
-Tier 2 Analysis: ${JSON.stringify(tier2Result)}
+Complaint: ${plagiarismCase.complaintText}
+
+Tier 2 Visual Analysis: ${JSON.stringify(tier2Result)}
+
+${codeAnalysis ? `\nHTML/CSS/JS Code Analysis:\n${codeAnalysis}` : ''}
+
+${codeAnalysis ?
+  'The code analysis provides additional evidence about animations, layouts, and structural patterns that were not visible in screenshots.' :
+  'No code analysis was performed as visual evidence was sufficient.'}
 
 Provide final decision with detailed reasoning and confidence level.
 
@@ -684,7 +898,7 @@ Return JSON:
 
   await closeCase(plagiarismCase, result.decision as FinalDecision, result, env);
 
-  console.log(`[Tier 3] ${plagiarismCase.id}: ${result.decision} ($${TIER_COSTS.TIER3})`);
+  console.log(`[Tier 3] ${plagiarismCase.id}: ${result.decision} ($${TIER_COSTS.TIER3})${codeAnalysis ? ' (with code analysis)' : ''}`);
 }
 
 // =============================================================================

@@ -1,0 +1,26 @@
+# CREATE SOMETHING Agent SDK - Local Development
+# docker-compose up --build
+
+services:
+  agent-server:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
+      - DEBUG=false
+    volumes:
+      # Mount monorepo for file access (skills, templates)
+      - ../../:/workspace:ro
+      # Mount current directory for development
+      - ./src:/app/src:ro
+      - ./server:/app/server:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped

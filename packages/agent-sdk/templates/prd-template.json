@@ -1,0 +1,57 @@
+{
+  "title": "Feature Name",
+  "description": "Brief description of what this feature accomplishes",
+  "created": "2026-01-11T00:00:00Z",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Foundation: Create database schema",
+      "description": "Set up the data layer for this feature",
+      "acceptance": [
+        "Migration file exists",
+        "Schema matches requirements",
+        "Migration applies cleanly"
+      ],
+      "files": ["packages/*/migrations/"],
+      "passes": false
+    },
+    {
+      "id": "story-2",
+      "title": "API: Create core endpoint",
+      "description": "Implement the main API functionality",
+      "acceptance": [
+        "Endpoint responds to correct HTTP method",
+        "Returns expected data shape",
+        "Handles errors gracefully",
+        "Tests pass"
+      ],
+      "files": ["packages/*/src/routes/api/"],
+      "passes": false
+    },
+    {
+      "id": "story-3",
+      "title": "UI: Create component",
+      "description": "Build the user-facing component",
+      "acceptance": [
+        "Component renders correctly",
+        "Follows Canon design tokens",
+        "Handles loading/error states",
+        "Accessible (keyboard, screen reader)"
+      ],
+      "files": ["packages/*/src/lib/components/"],
+      "passes": false
+    },
+    {
+      "id": "story-4",
+      "title": "Integration: Wire up page",
+      "description": "Connect component to data and add route",
+      "acceptance": [
+        "Page accessible at expected route",
+        "Data flows from API to component",
+        "Full user flow works end-to-end"
+      ],
+      "files": ["packages/*/src/routes/"],
+      "passes": false
+    }
+  ]
+}

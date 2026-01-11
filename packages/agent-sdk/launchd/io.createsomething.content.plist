@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>io.createsomething.content</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agent-sdk/scripts/run-content.sh</string>
+    </array>
+
+    <!-- Run 4x per week: Tue, Wed, Thu, Fri at 9:00 AM -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <!-- Tuesday (2) -->
+        <dict>
+            <key>Weekday</key>
+            <integer>2</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <!-- Wednesday (3) -->
+        <dict>
+            <key>Weekday</key>
+            <integer>3</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <!-- Thursday (4) -->
+        <dict>
+            <key>Weekday</key>
+            <integer>4</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <!-- Friday (5) -->
+        <dict>
+            <key>Weekday</key>
+            <integer>5</integer>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/createsomething-content.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/createsomething-content.error.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agent-sdk</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/micahjohnson/go/bin</string>
+    </dict>
+
+    <!-- Don't start immediately on load -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

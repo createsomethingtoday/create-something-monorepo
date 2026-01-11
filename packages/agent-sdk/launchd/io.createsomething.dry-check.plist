@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>io.createsomething.dry-check</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agent-sdk/scripts/run-dry-check.sh</string>
+    </array>
+
+    <!-- Run twice weekly: Tuesday (2) and Friday (5) at 10:00 AM -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Weekday</key>
+            <integer>2</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>5</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/createsomething-dry-check.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/createsomething-dry-check.error.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agent-sdk</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/micahjohnson/go/bin</string>
+    </dict>
+
+    <!-- Don't start immediately on load -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

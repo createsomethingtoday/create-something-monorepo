@@ -1,0 +1,41 @@
+# CREATE SOMETHING Agent Gateway Worker
+# Routes requests from Cloudflare edge to Python agent server
+
+name = "agent-gateway"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Queue for async agent tasks
+[[queues.consumers]]
+queue = "agent-tasks"
+max_batch_size = 1
+max_retries = 3
+max_batch_timeout = 30
+
+[[queues.producers]]
+queue = "agent-tasks"
+binding = "AGENT_QUEUE"
+
+# D1 for agent run logging
+[[d1_databases]]
+binding = "DB"
+database_name = "agent-runs"
+database_id = "placeholder-replace-with-actual-id"
+
+# KV for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "placeholder-replace-with-actual-id"
+
+[vars]
+# Python agent server URL (configure per environment)
+AGENT_SERVER_URL = "http://localhost:8000"
+
+# Secrets (set via wrangler secret put)
+# AGENT_API_KEY = ""
+
+[env.production]
+vars = { AGENT_SERVER_URL = "https://agents.createsomething.io" }
+
+[env.staging]
+vars = { AGENT_SERVER_URL = "https://agents-staging.createsomething.io" }

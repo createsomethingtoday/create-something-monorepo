@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>io.createsomething.monitor</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agent-sdk/scripts/run-monitor.sh</string>
+    </array>
+
+    <!-- Run every hour at minute 0 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/createsomething-monitor.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/createsomething-monitor.error.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/agent-sdk</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/micahjohnson/go/bin</string>
+    </dict>
+
+    <!-- Don't start immediately on load -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
