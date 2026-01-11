@@ -588,6 +588,63 @@ def health() -> dict:
 
 @app.function(volumes={"/logs": logs_volume})
 @modal.fastapi_endpoint(method="GET")
+def status() -> dict:
+    """Public status page data - current health of all CREATE SOMETHING properties."""
+    import os
+    from datetime import timedelta
+
+    # Load current state
+    state = {}
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE) as f:
+            state = json.load(f)
+
+    last_status = state.get("last_status", {})
+    issues_reported = state.get("issues_reported", {})
+
+    # Determine overall status
+    all_healthy = all(s.get("healthy", True) for s in last_status.values()) if last_status else True
+
+    # Get recent incidents from logs (last 7 days)
+    incidents = []
+    for i in range(7):
+        date = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+        log_file = f"/logs/monitor/{date}.jsonl"
+        if os.path.exists(log_file):
+            with open(log_file) as f:
+                for line in f:
+                    entry = json.loads(line)
+                    if entry.get("changes"):
+                        for change in entry["changes"]:
+                            incidents.append({
+                                "timestamp": entry["timestamp"],
+                                "message": change,
+                            })
+
+    # Build response
+    properties = []
+    for domain in ["createsomething.io", "createsomething.space", "createsomething.agency", "createsomething.ltd"]:
+        prop_status = last_status.get(domain, {})
+        properties.append({
+            "domain": domain,
+            "healthy": prop_status.get("healthy", True),
+            "status_code": prop_status.get("status_code", 0),
+            "down_since": issues_reported.get(domain),
+        })
+
+    return {
+        "status": "operational" if all_healthy else "degraded",
+        "all_healthy": all_healthy,
+        "properties": properties,
+        "incidents": sorted(incidents, key=lambda x: x["timestamp"], reverse=True)[:20],
+        "last_check": state.get("last_status", {}).get("createsomething.io", {}).get("checked_at")
+                      if last_status else None,
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+
+
+@app.function(volumes={"/logs": logs_volume})
+@modal.fastapi_endpoint(method="GET")
 def logs(agent: str = "all", days: int = 1) -> dict:
     """Get recent agent logs."""
     import os
