@@ -154,6 +154,8 @@ def save_monitor_state(state: dict):
     os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
+    # Commit volume to ensure persistence across container instances
+    logs_volume.commit()
 
 
 def check_property(url: str) -> tuple[bool, int, str]:
@@ -676,8 +678,146 @@ def logs(agent: str = "all", days: int = 1) -> dict:
 
 
 # ============================================================================
-# LOCAL TESTING
+# TRIGGER ENDPOINTS (for testing and manual runs)
 # ============================================================================
+
+@app.function(volumes={"/logs": logs_volume})
+@modal.fastapi_endpoint(method="POST")
+def trigger(agent: str = "monitor") -> dict:
+    """Trigger an agent run manually. POST /trigger?agent=monitor"""
+    agents_map = {
+        "monitor": lambda: run_monitor_check(),
+    }
+    if agent not in agents_map:
+        return {"error": f"Unknown agent: {agent}", "available": list(agents_map.keys())}
+
+    return agents_map[agent]()
+
+
+def run_monitor_check() -> dict:
+    """Run monitor check directly (for trigger endpoint)."""
+    import os
+    import httpx
+
+    os.makedirs("/logs/monitor", exist_ok=True)
+    timestamp = datetime.utcnow().isoformat()
+
+    PROPERTIES = [
+        "https://createsomething.io",
+        "https://createsomething.space",
+        "https://createsomething.agency",
+        "https://createsomething.ltd",
+    ]
+
+    state = load_monitor_state()
+    results = {}
+    changes = []
+
+    for url in PROPERTIES:
+        domain = url.replace("https://", "")
+        try:
+            response = httpx.get(url, timeout=10, follow_redirects=True)
+            healthy = response.status_code == 200
+            status_code = response.status_code
+            error = ""
+        except Exception as e:
+            healthy = False
+            status_code = 0
+            error = str(e)
+
+        results[domain] = {
+            "healthy": healthy,
+            "status_code": status_code,
+            "error": error,
+            "checked_at": timestamp,
+        }
+
+        prev_status = state["last_status"].get(domain, {})
+        was_healthy = prev_status.get("healthy", True)
+
+        if healthy and not was_healthy:
+            changes.append(f"✅ {domain}: RECOVERED")
+            if domain in state["issues_reported"]:
+                del state["issues_reported"][domain]
+        elif not healthy and was_healthy:
+            changes.append(f"🔴 {domain}: DOWN (HTTP {status_code})")
+            state["issues_reported"][domain] = timestamp
+
+    state["last_status"] = results
+    state["last_check"] = timestamp
+    save_monitor_state(state)
+
+    all_healthy = all(r["healthy"] for r in results.values())
+    log_entry = {
+        "timestamp": timestamp,
+        "agent": "monitor",
+        "success": True,
+        "all_healthy": all_healthy,
+        "changes": changes,
+        "cost_usd": 0,
+    }
+
+    log_path = f"/logs/monitor/{datetime.utcnow().strftime('%Y-%m-%d')}.jsonl"
+    with open(log_path, "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
+
+    return {
+        "success": True,
+        "all_healthy": all_healthy,
+        "changes": changes,
+        "timestamp": timestamp,
+    }
+
+
+@app.function(volumes={"/logs": logs_volume})
+def simulate_outage(domain: str = "createsomething.space"):
+    """Simulate an outage for testing alerting."""
+    import os
+
+    os.makedirs("/logs/monitor", exist_ok=True)
+    timestamp = datetime.utcnow().isoformat()
+
+    # Load current state
+    state = load_monitor_state()
+
+    # Mark the domain as down
+    state["last_status"][domain] = {
+        "healthy": False,
+        "status_code": 503,
+        "error": "Simulated outage for testing",
+    }
+    state["issues_reported"][domain] = timestamp
+
+    save_monitor_state(state)
+
+    # Log the simulated outage
+    log_entry = {
+        "timestamp": timestamp,
+        "agent": "monitor",
+        "success": True,
+        "all_healthy": False,
+        "status": state["last_status"],
+        "changes": [f"🔴 {domain}: DOWN (simulated outage)"],
+        "ongoing_issues": [domain],
+        "cost_usd": 0,
+        "simulated": True,
+    }
+
+    log_path = f"/logs/monitor/{datetime.utcnow().strftime('%Y-%m-%d')}.jsonl"
+    with open(log_path, "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
+
+    print(f"✓ Simulated outage for {domain}")
+    return {"simulated": True, "domain": domain, "timestamp": timestamp}
+
+
+@app.function(volumes={"/logs": logs_volume})
+def clear_outage():
+    """Clear simulated outage - run real health check."""
+    result = monitor_agent.local()
+    print("✓ Cleared simulated outage, ran real health check")
+    return result
+
 
 @app.local_entrypoint()
 def main():
