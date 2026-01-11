@@ -70,7 +70,7 @@
 
 <style>
 	.container {
-		max-width: 1400px;
+		max-width: 87.5rem;
 		margin: 0 auto;
 		padding: var(--space-xl) var(--space-lg);
 	}

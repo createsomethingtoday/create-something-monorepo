@@ -14,10 +14,7 @@
 
 <svelte:head>
 	<title>Minimal Capture | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content="An experiment in propagation: when tools built for others absorb the design canon."
-	/>
+	<meta name="description" content="An experiment in propagation: when tools built for others absorb the design canon." />
 </svelte:head>
 
 <!-- ASCII Art Hero -->

@@ -26,10 +26,15 @@
 	);
 </script>
 
+<svelte:head>
+	<title>Overtime Performance | NBA Live Analytics</title>
+	<meta name="description" content="REG vs OT performance comparison - fatigue patterns and performance decline in extended play" />
+</svelte:head>
+
 <div class="overtime-page">
 	<AnalyticsNav />
-	
-	<div class="container">
+
+	<div class="container max-w-7xl">
 		<header class="page-header">
 			<div class="title-section">
 				<Clock size={32} />
@@ -123,7 +128,7 @@
 	}
 
 	.container {
-		max-width: 1400px;
+		max-width: var(--space-2xl);
 		margin: 0 auto;
 		padding: var(--space-2xl);
 	}

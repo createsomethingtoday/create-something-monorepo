@@ -18,10 +18,7 @@
 
 <svelte:head>
 	<title>Defensive Impact | NBA Live Analytics</title>
-	<meta
-		name="description"
-		content="How well is each defender limiting their matchup? See actual vs expected shooting percentages."
-	/>
+	<meta name="description" content="How well is each defender limiting their matchup? See actual vs expected shooting percentages." />
 </svelte:head>
 
 <!-- Header -->

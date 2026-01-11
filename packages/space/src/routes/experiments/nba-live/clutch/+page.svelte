@@ -47,8 +47,8 @@
 
 <div class="clutch-page">
 	<AnalyticsNav />
-	
-	<div class="container">
+
+	<div class="container max-w-7xl">
 		<!-- Header -->
 		<header class="page-header">
 			<div class="title-section">
@@ -194,7 +194,7 @@
 	}
 
 	.container {
-		max-width: 1400px;
+		max-width: var(--space-2xl);
 		margin: 0 auto;
 		padding: var(--space-2xl) var(--space-lg);
 	}
@@ -426,9 +426,9 @@
 	}
 
 	/* Icon colors for podium */
-	:global(.gold) { color: #FFD700; }
-	:global(.silver) { color: #C0C0C0; }
-	:global(.bronze) { color: #CD7F32; }
+	:global(.gold) { color: var(--color-rank-gold); }
+	:global(.silver) { color: var(--color-fg-secondary); }
+	:global(.bronze) { color: var(--color-rank-bronze); }
 
 	/* Mobile responsive */
 	@media (max-width: 768px) {

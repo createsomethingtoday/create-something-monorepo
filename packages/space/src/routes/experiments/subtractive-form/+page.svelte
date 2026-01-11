@@ -105,10 +105,7 @@
 
 <svelte:head>
 	<title>Subtractive Form Design | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content="Experience the 'absence is clearer than instruction' principle firsthand through interactive form design."
-	/>
+	<meta name="description" content="Experience the 'absence is clearer than instruction' principle firsthand through interactive form design." />
 </svelte:head>
 
 <!-- ASCII Art Hero -->

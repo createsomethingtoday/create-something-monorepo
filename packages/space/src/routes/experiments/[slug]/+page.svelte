@@ -95,13 +95,7 @@ ${paper.content || ''}
 
 <svelte:head>
 	<title>{paper.title} | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content={paper.description ||
-			paper.excerpt_long ||
-			paper.excerpt_short ||
-			'Interactive experiment from CREATE SOMETHING'}
-	/>
+	<meta name="description" content={paper.description || paper.excerpt_long || paper.excerpt_short || 'Interactive experiment from CREATE SOMETHING'} />
 	<meta
 		name="keywords"
 		content={paper.focus_keywords || `${paper.category}, experiments, interactive, hands-on`}

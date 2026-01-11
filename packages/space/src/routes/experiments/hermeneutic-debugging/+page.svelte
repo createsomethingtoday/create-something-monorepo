@@ -387,10 +387,7 @@ useEffect(() => {
 
 <svelte:head>
 	<title>Hermeneutic Debugging | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content="Experience the hermeneutic circle in debugging. Walk through 8 iterations of a React bug, predicting outcomes and discovering hidden assumptions."
-	/>
+	<meta name="description" content="Experience the hermeneutic circle in debugging. Walk through 8 iterations of a React bug, predicting outcomes and discovering hidden assumptions." />
 </svelte:head>
 
 <!-- ASCII Art Hero -->

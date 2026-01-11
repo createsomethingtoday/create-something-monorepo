@@ -115,15 +115,12 @@
 
 <svelte:head>
 	<title>NBA Live Analytics | CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="Analyze live NBA games through duo synergy, defensive impact, and shot creation networks. Real data, real-time insights."
-	/>
+	<meta name="description" content="Analyze live NBA games through duo synergy, defensive impact, and shot creation networks. Real data, real-time insights." />
 </svelte:head>
 
 <!-- Header -->
 <section class="page-header">
-	<div class="container">
+	<div class="container max-w-7xl">
 		<p class="category">Experiment</p>
 		<h1 class="title">NBA Live Analytics</h1>
 		<p class="subtitle">
@@ -320,7 +317,7 @@
 <style>
 	/* Layout */
 	.container {
-		max-width: 56rem;
+		max-width: var(--space-2xl);
 		margin: 0 auto;
 		padding: 0 var(--space-md);
 	}

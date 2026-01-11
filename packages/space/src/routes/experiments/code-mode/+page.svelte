@@ -126,10 +126,7 @@ console.log(\`Found \${functions.length} functions\`);`;
 
 <svelte:head>
 	<title>Code Mode: The Zuhandenheit Experiment | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content="Experience Heidegger's tool-transparency distinction. Which mode lets tools recede into use?"
-	/>
+	<meta name="description" content="Experience Heidegger's tool-transparency distinction. Which mode lets tools recede into use?" />
 </svelte:head>
 
 <!-- ASCII Art Hero -->

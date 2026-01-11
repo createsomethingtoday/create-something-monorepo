@@ -18,10 +18,7 @@
 
 <svelte:head>
 	<title>Shot Network | NBA Live Analytics</title>
-	<meta
-		name="description"
-		content="Who creates shots for whom? See the passing connections that lead to scoring opportunities."
-	/>
+	<meta name="description" content="Who creates shots for whom? See the passing connections that lead to scoring opportunities." />
 </svelte:head>
 
 <!-- Header -->

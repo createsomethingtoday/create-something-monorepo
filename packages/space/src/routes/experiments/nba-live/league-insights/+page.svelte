@@ -38,15 +38,12 @@
 
 <svelte:head>
 	<title>League Insights | NBA Live Analytics</title>
-	<meta
-		name="description"
-		content="League-wide trends and patterns from today's NBA games. Ball movement, competitive balance, and scoring analysis."
-	/>
+	<meta name="description" content="League-wide trends and patterns from today's NBA games. Ball movement, competitive balance, and scoring analysis." />
 </svelte:head>
 
 <!-- Header -->
 <section class="page-header">
-	<div class="container">
+	<div class="container max-w-7xl">
 		<a href="/experiments/nba-live" class="back-link">
 			<ArrowLeft size={16} />
 			Back to NBA Live
@@ -221,7 +218,7 @@
 <style>
 	/* Layout */
 	.container {
-		max-width: 56rem;
+		max-width: var(--space-2xl);
 		margin: 0 auto;
 		padding: 0 var(--space-md);
 	}

@@ -18,10 +18,7 @@
 
 <svelte:head>
 	<title>Duo Synergy | NBA Live Analytics</title>
-	<meta
-		name="description"
-		content="Which two-player combinations are most effective? Compare points per possession against the league average."
-	/>
+	<meta name="description" content="Which two-player combinations are most effective? Compare points per possession against the league average." />
 </svelte:head>
 
 <!-- Header -->

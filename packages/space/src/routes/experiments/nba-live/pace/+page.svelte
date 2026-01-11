@@ -67,8 +67,8 @@
 
 <div class="pace-page">
 	<AnalyticsNav />
-	
-	<div class="container">
+
+	<div class="container max-w-7xl">
 		<!-- Header -->
 		<header class="page-header">
 			<div class="title-section">
@@ -227,7 +227,7 @@
 	}
 
 	.container {
-		max-width: 1400px;
+		max-width: var(--space-2xl);
 		margin: 0 auto;
 		padding: var(--space-2xl) var(--space-lg);
 	}
@@ -285,7 +285,7 @@
 		width: 48px;
 		height: 48px;
 		background: var(--color-data-1);
-		color: #000000;
+		color: var(--color-bg-pure);
 		border-radius: var(--radius-sm);
 	}
 
@@ -430,12 +430,12 @@
 
 	.badge.fast {
 		background: var(--color-success);
-		color: #000000;
+		color: var(--color-bg-pure);
 	}
 
 	.badge.slow {
 		background: var(--color-fg-secondary);
-		color: #000000;
+		color: var(--color-bg-pure);
 	}
 
 	.badge.average {
@@ -534,12 +534,12 @@
 
 	.indicator.high {
 		background: var(--color-success);
-		color: #000000;
+		color: var(--color-bg-pure);
 	}
 
 	.indicator.low {
 		background: var(--color-error);
-		color: #ffffff;
+		color: var(--color-fg-primary);
 	}
 
 	.indicator.average {

@@ -153,10 +153,7 @@
 
 <svelte:head>
 	<title>Motion Ontology | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content="Analyze UI motion through Heidegger's phenomenological framework. Does motion disclose or decorate?"
-	/>
+	<meta name="description" content="Analyze UI motion through Heidegger's phenomenological framework. Does motion disclose or decorate?" />
 </svelte:head>
 
 <!-- ASCII Art Hero -->

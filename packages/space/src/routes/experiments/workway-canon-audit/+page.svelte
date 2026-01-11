@@ -13,10 +13,7 @@
 
 <svelte:head>
 	<title>WORKWAY Canon Audit | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content="Applying Dieter Rams' 10 Principles to SDK development. The hermeneutic circle in practice."
-	/>
+	<meta name="description" content="Applying Dieter Rams' 10 Principles to SDK development. The hermeneutic circle in practice." />
 </svelte:head>
 
 <!-- ASCII Art Hero -->

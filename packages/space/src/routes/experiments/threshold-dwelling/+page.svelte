@@ -1020,10 +1020,7 @@
 
 <svelte:head>
 	<title>Threshold Dwelling · CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="Architectural visualization using Heidegger threshold zones. Tufte small multiples, Miesian clarity."
-	/>
+	<meta name="description" content="Architectural visualization using Heidegger threshold zones. Tufte small multiples, Miesian clarity." />
 </svelte:head>
 
 <svelte:window onkeydown={handleGlobalKeydown} />
@@ -1038,7 +1035,7 @@
 	Canon: Golden ratio proportions (φ = 1.618)
 -->
 
-<div class="dwelling" class:has-expanded={expandedView !== null}>
+<div class="dwelling max-w-7xl" class:has-expanded={expandedView !== null}>
 	<!-- Header: Minimal, informational -->
 	<header class="dwelling-header">
 		<h1 class="dwelling-title">{pavilion.name}</h1>
@@ -1236,7 +1233,7 @@
 		grid-template-rows: auto 1fr auto auto auto;
 		gap: var(--space-md);
 		padding: var(--space-lg);
-		max-width: 1400px;
+		max-width: var(--space-2xl);
 		margin: 0 auto;
 	}
 
