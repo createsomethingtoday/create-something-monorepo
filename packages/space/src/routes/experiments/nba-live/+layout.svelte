@@ -25,7 +25,7 @@
 
 	/* Container */
 	:global(.nba-container) {
-		max-width: var(--space-2xl);
+		max-width: 56rem;
 		margin: 0 auto;
 		padding: 0 var(--space-md);
 	}

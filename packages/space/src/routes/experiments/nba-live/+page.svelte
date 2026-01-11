@@ -120,7 +120,7 @@
 
 <!-- Header -->
 <section class="page-header">
-	<div class="container max-w-7xl">
+	<div class="container">
 		<p class="category">Experiment</p>
 		<h1 class="title">NBA Live Analytics</h1>
 		<p class="subtitle">
@@ -317,7 +317,7 @@
 <style>
 	/* Layout */
 	.container {
-		max-width: var(--space-2xl);
+		max-width: 56rem;
 		margin: 0 auto;
 		padding: 0 var(--space-md);
 	}
