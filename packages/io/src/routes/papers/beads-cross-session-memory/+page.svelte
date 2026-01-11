@@ -31,7 +31,7 @@
     }
 
     .container {
-        max-width: 900px;
+        max-width: 800px;
         margin: 0 auto;
         background-color: var(--color-bg-surface);
         padding: var(--space-lg);

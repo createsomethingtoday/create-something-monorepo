@@ -364,7 +364,7 @@ FILE_READ_TOOL_SCHEMA = {
 
 <style>
   .page-container {
-    max-width: 65ch;
+    max-width: 800px;
     margin: 0 auto;
     padding: var(--space-lg);
     color: var(--color-fg-secondary);
