@@ -175,6 +175,7 @@ D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patter
 
 - `motion-analysis`: Analyze CSS animations from URLs
 - `canon-maintenance`: Enforce CREATE SOMETHING design standards
+- `audit-paper`: Validate paper styling against standard template patterns (proactive + manual)
 
 ## Code Mode: Tools Should Recede
 
