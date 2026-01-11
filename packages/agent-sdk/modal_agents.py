@@ -14,6 +14,20 @@ Scheduled Agents (5 cron jobs - Modal free tier limit):
 On-Demand Agents (run via launchd locally or `modal run`):
 - Canon Audit: CSS compliance (daily via launchd)
 - DRY Check: Duplication analysis (Tue/Fri via launchd)
+
+Webhook Endpoints:
+- POST /deploy: GitHub webhook for auto-deployment on push to main
+  Configure in GitHub: Settings → Webhooks → Add webhook
+  URL: https://createsomethingtoday--cs-agents-deploy.modal.run
+  Content type: application/json
+  Events: Just the push event
+
+Manual Deployment:
+  modal run modal_agents.py::deploy_package --package packages/io
+
+Required Secrets:
+  - anthropic-api-key: For Claude agents
+  - cloudflare-api-token: For deployments (CLOUDFLARE_API_TOKEN)
 """
 
 import modal
@@ -654,7 +668,7 @@ def logs(agent: str = "all", days: int = 1) -> dict:
 
     results = []
     agents = [agent] if agent != "all" else [
-        "monitor", "canon-audit", "dry-check",
+        "monitor", "deploy", "canon-audit", "dry-check",
         "review", "resolution", "coordinator", "content"
     ]
 
@@ -817,6 +831,333 @@ def clear_outage():
     result = monitor_agent.local()
     print("✓ Cleared simulated outage, ran real health check")
     return result
+
+
+# ============================================================================
+# DEPLOYMENT AGENT
+# ============================================================================
+
+# Image with Node.js for building SvelteKit projects
+deploy_image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .apt_install("curl", "git", "ca-certificates")
+    .run_commands(
+        # Install Node.js 20 LTS
+        "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -",
+        "apt-get install -y nodejs",
+        # Install pnpm
+        "npm install -g pnpm@9",
+        # Install wrangler
+        "npm install -g wrangler",
+    )
+    .pip_install("httpx>=0.27.0")
+)
+
+# Package to Cloudflare Pages project mapping
+# See .claude/rules/PROJECT_NAME_REFERENCE.md for exact names
+PACKAGE_TO_PROJECT = {
+    "packages/space": "create-something-space",
+    "packages/io": "create-something-io",
+    "packages/agency": "create-something-agency",
+    "packages/ltd": "createsomething-ltd",
+    "packages/lms": "createsomething-lms",
+    "packages/templates-platform": "templates-platform",
+}
+
+CLOUDFLARE_ACCOUNT_ID = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+
+def detect_affected_packages(changed_files: list[str]) -> set[str]:
+    """Detect which packages are affected by changed files."""
+    affected = set()
+    for file_path in changed_files:
+        for pkg_path in PACKAGE_TO_PROJECT.keys():
+            if file_path.startswith(pkg_path):
+                affected.add(pkg_path)
+                break
+        # Also check shared packages that affect all
+        if file_path.startswith("packages/components"):
+            # Components affect all SvelteKit apps
+            affected.update([
+                "packages/space", "packages/io",
+                "packages/agency", "packages/ltd"
+            ])
+    return affected
+
+
+@app.function(
+    image=deploy_image,
+    volumes={"/logs": logs_volume},
+    secrets=[modal.Secret.from_name("cloudflare-api-token")],
+    timeout=600,  # 10 minutes for builds
+)
+@modal.fastapi_endpoint(method="POST")
+def deploy(payload: dict = {}) -> dict:
+    """
+    GitHub webhook endpoint for auto-deployment.
+
+    Configure in GitHub repo settings:
+      Webhook URL: https://createsomethingtoday--cs-agents-deploy.modal.run
+      Content type: application/json
+      Events: Just the push event
+    """
+    import os
+    import subprocess
+
+    timestamp = datetime.utcnow().isoformat()
+    os.makedirs("/logs/deploy", exist_ok=True)
+
+    # Parse GitHub webhook payload
+    ref = payload.get("ref", "")
+    if ref != "refs/heads/main":
+        return {"skipped": True, "reason": f"Not main branch: {ref}"}
+
+    commits = payload.get("commits", [])
+    if not commits:
+        return {"skipped": True, "reason": "No commits in push"}
+
+    # Collect all changed files
+    changed_files = set()
+    for commit in commits:
+        changed_files.update(commit.get("added", []))
+        changed_files.update(commit.get("modified", []))
+        changed_files.update(commit.get("removed", []))
+
+    # Detect affected packages
+    affected = detect_affected_packages(list(changed_files))
+    if not affected:
+        log_entry = {
+            "timestamp": timestamp,
+            "agent": "deploy",
+            "success": True,
+            "skipped": True,
+            "reason": "No deployable packages affected",
+            "changed_files": list(changed_files)[:20],
+        }
+        log_path = f"/logs/deploy/{datetime.utcnow().strftime('%Y-%m-%d')}.jsonl"
+        with open(log_path, "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
+        logs_volume.commit()
+        return {"skipped": True, "reason": "No deployable packages affected"}
+
+    # Check for Cloudflare credentials
+    cf_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+    if not cf_token:
+        return {
+            "error": "CLOUDFLARE_API_TOKEN not configured",
+            "setup": "Run: modal secret create cloudflare-api-token CLOUDFLARE_API_TOKEN=<token>"
+        }
+
+    # Clone the repo
+    repo_url = payload.get("repository", {}).get("clone_url", "")
+    if not repo_url:
+        repo_url = "https://github.com/createsomethingtoday/create-something-monorepo.git"
+
+    results = []
+    errors = []
+
+    try:
+        # Clone repo to /tmp/repo
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, "/tmp/repo"],
+            check=True, capture_output=True, text=True
+        )
+
+        # Install dependencies
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            cwd="/tmp/repo", check=True, capture_output=True, text=True
+        )
+
+        # Build and deploy each affected package
+        for pkg_path in affected:
+            project_name = PACKAGE_TO_PROJECT.get(pkg_path)
+            if not project_name:
+                continue
+
+            pkg_result = {"package": pkg_path, "project": project_name}
+
+            try:
+                # Build the package
+                pkg_name = pkg_path.split("/")[-1]
+                build_result = subprocess.run(
+                    ["pnpm", "--filter", pkg_name, "build"],
+                    cwd="/tmp/repo", capture_output=True, text=True, timeout=300
+                )
+
+                if build_result.returncode != 0:
+                    pkg_result["status"] = "build_failed"
+                    pkg_result["error"] = build_result.stderr[:500]
+                    errors.append(pkg_result)
+                    continue
+
+                # Deploy to Cloudflare Pages
+                deploy_dir = f"/tmp/repo/{pkg_path}/.svelte-kit/cloudflare"
+                deploy_result = subprocess.run(
+                    [
+                        "wrangler", "pages", "deploy", deploy_dir,
+                        "--project-name", project_name,
+                    ],
+                    cwd="/tmp/repo",
+                    env={**os.environ, "CLOUDFLARE_API_TOKEN": cf_token},
+                    capture_output=True, text=True, timeout=120
+                )
+
+                if deploy_result.returncode != 0:
+                    pkg_result["status"] = "deploy_failed"
+                    pkg_result["error"] = deploy_result.stderr[:500]
+                    errors.append(pkg_result)
+                else:
+                    pkg_result["status"] = "deployed"
+                    # Extract URL from output
+                    for line in deploy_result.stdout.split("\n"):
+                        if "https://" in line and ".pages.dev" in line:
+                            pkg_result["url"] = line.strip()
+                            break
+                    results.append(pkg_result)
+
+            except subprocess.TimeoutExpired:
+                pkg_result["status"] = "timeout"
+                errors.append(pkg_result)
+            except Exception as e:
+                pkg_result["status"] = "error"
+                pkg_result["error"] = str(e)
+                errors.append(pkg_result)
+
+    except subprocess.CalledProcessError as e:
+        return {
+            "success": False,
+            "error": f"Setup failed: {e.stderr[:500] if e.stderr else str(e)}"
+        }
+    finally:
+        # Cleanup
+        subprocess.run(["rm", "-rf", "/tmp/repo"], capture_output=True)
+
+    # Log the deployment
+    log_entry = {
+        "timestamp": timestamp,
+        "agent": "deploy",
+        "success": len(errors) == 0,
+        "affected_packages": list(affected),
+        "deployed": results,
+        "errors": errors,
+        "commit": commits[-1].get("id", "")[:8] if commits else "",
+        "author": commits[-1].get("author", {}).get("name", "") if commits else "",
+    }
+
+    log_path = f"/logs/deploy/{datetime.utcnow().strftime('%Y-%m-%d')}.jsonl"
+    with open(log_path, "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
+    logs_volume.commit()
+
+    return {
+        "success": len(errors) == 0,
+        "deployed": results,
+        "errors": errors,
+        "timestamp": timestamp,
+    }
+
+
+@app.function(
+    image=deploy_image,
+    volumes={"/logs": logs_volume},
+    secrets=[modal.Secret.from_name("cloudflare-api-token")],
+    timeout=600,
+)
+def deploy_package(package: str) -> dict:
+    """
+    Manually deploy a specific package.
+
+    Usage: modal run modal_agents.py::deploy_package --package packages/io
+    """
+    import os
+    import subprocess
+
+    timestamp = datetime.utcnow().isoformat()
+    os.makedirs("/logs/deploy", exist_ok=True)
+
+    if package not in PACKAGE_TO_PROJECT:
+        return {"error": f"Unknown package: {package}", "available": list(PACKAGE_TO_PROJECT.keys())}
+
+    project_name = PACKAGE_TO_PROJECT[package]
+    cf_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+
+    if not cf_token:
+        return {
+            "error": "CLOUDFLARE_API_TOKEN not configured",
+            "setup": "Run: modal secret create cloudflare-api-token CLOUDFLARE_API_TOKEN=<token>"
+        }
+
+    repo_url = "https://github.com/createsomethingtoday/create-something-monorepo.git"
+
+    try:
+        # Clone repo
+        print(f"Cloning {repo_url}...")
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, "/tmp/repo"],
+            check=True, capture_output=True, text=True
+        )
+
+        # Install dependencies
+        print("Installing dependencies...")
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            cwd="/tmp/repo", check=True, capture_output=True, text=True
+        )
+
+        # Build
+        pkg_name = package.split("/")[-1]
+        print(f"Building {pkg_name}...")
+        build_result = subprocess.run(
+            ["pnpm", "--filter", pkg_name, "build"],
+            cwd="/tmp/repo", capture_output=True, text=True, timeout=300
+        )
+
+        if build_result.returncode != 0:
+            return {"success": False, "error": build_result.stderr[:1000], "phase": "build"}
+
+        # Deploy
+        deploy_dir = f"/tmp/repo/{package}/.svelte-kit/cloudflare"
+        print(f"Deploying to {project_name}...")
+        deploy_result = subprocess.run(
+            ["wrangler", "pages", "deploy", deploy_dir, "--project-name", project_name],
+            cwd="/tmp/repo",
+            env={**os.environ, "CLOUDFLARE_API_TOKEN": cf_token},
+            capture_output=True, text=True, timeout=120
+        )
+
+        if deploy_result.returncode != 0:
+            return {"success": False, "error": deploy_result.stderr[:1000], "phase": "deploy"}
+
+        # Extract URL
+        url = None
+        for line in deploy_result.stdout.split("\n"):
+            if "https://" in line and ".pages.dev" in line:
+                url = line.strip()
+                break
+
+        # Log
+        log_entry = {
+            "timestamp": timestamp,
+            "agent": "deploy",
+            "success": True,
+            "package": package,
+            "project": project_name,
+            "url": url,
+            "manual": True,
+        }
+        log_path = f"/logs/deploy/{datetime.utcnow().strftime('%Y-%m-%d')}.jsonl"
+        with open(log_path, "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
+        logs_volume.commit()
+
+        print(f"✓ Deployed {package} to {project_name}")
+        return {"success": True, "package": package, "project": project_name, "url": url}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+    finally:
+        subprocess.run(["rm", "-rf", "/tmp/repo"], capture_output=True)
 
 
 @app.local_entrypoint()
