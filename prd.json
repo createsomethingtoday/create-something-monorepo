@@ -34,7 +34,7 @@
         "Documents integration points with PMS APIs"
       ],
       "files": [".claude/rules/dental-scheduling.md"],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-3",

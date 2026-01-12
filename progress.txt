@@ -36,3 +36,48 @@ Created comprehensive HIPAA compliance documentation at `.claude/rules/hipaa-com
 - Minimum necessary determinations work best as decision trees/matrices
 - Common violations section helps prevent mistakes proactively
 - Integration with existing dental-api-integration.md patterns ensures cohesive documentation
+Completed: 2026-01-12T22:06:34Z
+Thread log: .ralph-archive/iteration-1-20260112-160417.log
+
+---
+## Iteration 2
+Started: 2026-01-12T22:06:36Z
+
+### Story: story-2 - Create dental scheduling skill documentation
+
+**What was implemented:**
+Created comprehensive dental scheduling documentation at `.claude/rules/dental-scheduling.md` covering:
+- No-show rescheduling workflow with detailed 7-step process (query, validate, search, apply constraints, rank, contact, log)
+- Appointment conflict resolution pattern with priority matrix and resolution strategies
+- Waitlist management workflow with 7-step automated slot filling process
+- Provider constraints: time (working hours, breaks, buffer), expertise (procedure-specific), fatigue management (complexity scoring)
+- Equipment constraints: chair availability (types, sterilization buffer), X-ray scheduling (setup/exposure/processing times)
+- Patient preferences patterns with scoring algorithm (time of day, provider continuity, day of week, family clustering)
+- PMS integration points with API endpoint mapping for Dentrix, Open Dental, and Eaglesoft
+- Rate limiting strategy with exponential backoff implementation
+- Full HIPAA compliance integration with example compliant API calls
+
+**Files Changed:**
+- Created: `.claude/rules/dental-scheduling.md` (511 lines)
+
+**Acceptance Criteria Verified:**
+- ✅ File exists at .claude/rules/dental-scheduling.md
+- ✅ Documents no-show rescheduling workflow with 7 steps - Complete with code examples
+- ✅ Includes appointment conflict resolution pattern - Priority matrix and implementation
+- ✅ Documents waitlist management workflow - 7-step process with example code
+- ✅ Defines provider constraints (time, expertise, fatigue) - All three constraint types documented with implementations
+- ✅ Defines equipment constraints (chairs, X-ray) - Chair types, buffer times, X-ray scheduling logic
+- ✅ Lists patient preferences patterns - Preference types and ranking algorithm with 4-tier scoring
+- ✅ Documents integration points with PMS APIs - Complete endpoint mapping table for all 3 PMS systems
+
+**Learnings for future iterations:**
+- Scheduling patterns benefit from concrete code examples showing implementation
+- Constraint systems (provider, equipment) need both conceptual explanation and practical algorithms
+- Preference matching works best as scored ranking system with clear point values
+- PMS integration requires explicit endpoint mapping per system (Dentrix, Open Dental, Eaglesoft)
+- Rate limiting strategy must account for different PMS system limits (60-200 req/min)
+- HIPAA compliance must be threaded through all workflows with example compliant calls
+- Python code examples with type hints and docstrings make patterns immediately actionable
+
+Completed: 2026-01-12T22:23:18Z
+
