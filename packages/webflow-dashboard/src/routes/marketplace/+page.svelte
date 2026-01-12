@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Header, Button } from '$lib/components';
 	import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
-	import { Clock, ChevronLeft, AlertCircle } from 'lucide-svelte';
+	import { Clock, ChevronLeft, AlertCircle, BarChart3 } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	interface LeaderboardEntry {
@@ -169,7 +169,8 @@
 								</span>
 							</p>
 							<p class="sync-note">
-								📊 Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window
+								<BarChart3 size={12} />
+								Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window
 							</p>
 						</div>
 					{/if}
@@ -288,11 +289,19 @@
 	}
 
 	.sync-note {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		margin: 0;
 		padding-left: 22px; /* Align with text above (icon width + gap) */
 		font-style: italic;
+	}
+
+	.sync-note :global(svg) {
+		flex-shrink: 0;
+		color: var(--color-info);
 	}
 
 	.loading-container {
