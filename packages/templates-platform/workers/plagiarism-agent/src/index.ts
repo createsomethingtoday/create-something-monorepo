@@ -853,9 +853,16 @@ async function runTier3Judgment(
   let codeAnalysis: string | null = null;
   if (needsCodeAnalysis) {
     console.log('[Tier 3] Tier 2 was inconclusive - fetching HTML/CSS/JS for comparison');
+
+    // Sanitize URLs (Airtable fields may contain markdown/HTML formatting)
+    const cleanOriginalUrl = sanitizeUrl(plagiarismCase.originalUrl);
+    const cleanCopyUrl = sanitizeUrl(plagiarismCase.allegedCopyUrl);
+
+    console.log(`[Code Analysis] Sanitized URLs: ${cleanOriginalUrl} vs ${cleanCopyUrl}`);
+
     codeAnalysis = await fetchCodeComparison(
-      plagiarismCase.originalUrl,
-      plagiarismCase.allegedCopyUrl
+      cleanOriginalUrl,
+      cleanCopyUrl
     );
   }
 
@@ -997,6 +1004,35 @@ function generateId(): string {
 
 function capitalizeFirst(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Sanitize URL from Airtable field that may contain:
+ * - Markdown/HTML angle brackets: <https://example.com>
+ * - Multiple URLs separated by newlines
+ * - Extra whitespace
+ *
+ * Returns the first valid URL found, or the original string if no URL pattern detected.
+ */
+function sanitizeUrl(rawUrl: string): string {
+  if (!rawUrl) return rawUrl;
+
+  // Remove angle brackets and trim
+  let cleaned = rawUrl
+    .replace(/^</, '')  // Remove leading <
+    .replace(/>$/, '')  // Remove trailing >
+    .trim();
+
+  // If multiple URLs (separated by newlines), take the first one
+  const lines = cleaned.split('\n').map(line => line.trim()).filter(Boolean);
+  if (lines.length > 0) {
+    cleaned = lines[0];
+  }
+
+  // Remove any remaining angle brackets
+  cleaned = cleaned.replace(/[<>]/g, '');
+
+  return cleaned;
 }
 
 function extractJSON(text: string): any {
