@@ -8,6 +8,11 @@ Each agent is configured with appropriate skills and system prompts.
 from agents.client_agent import ClientConfig, create_client_agent
 from agents.content_agent import create_content_agent
 from agents.coordinator_agent import create_coordinator_agent
+from agents.gtm_agent import (
+    create_campaign_tracker,
+    create_gtm_agent,
+    create_lead_qualifier,
+)
 from agents.monitor_agent import create_cost_monitor_agent, create_monitor_agent
 from agents.research_agent import create_research_agent
 from agents.resolution_agent import (
@@ -25,6 +30,10 @@ from agents.template_deployer import create_template_deployer, verify_deployment
 __all__ = [
     # Orchestration
     "create_coordinator_agent",
+    # GTM (Go-To-Market)
+    "create_gtm_agent",
+    "create_campaign_tracker",
+    "create_lead_qualifier",
     # Monitoring
     "create_monitor_agent",
     "create_cost_monitor_agent",
