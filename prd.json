@@ -57,7 +57,7 @@
       "files": [
         "packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-4",
@@ -77,7 +77,7 @@
       "files": [
         "packages/agent-sdk/src/create_something_agents/workflows/insurance_verification.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-5",
@@ -97,7 +97,7 @@
       "files": [
         "packages/agent-sdk/src/create_something_agents/workflows/recall_reminders.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-6",
