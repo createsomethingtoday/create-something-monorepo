@@ -12,6 +12,7 @@ from create_something_agents.tools.files import (
     file_write_tool,
 )
 from create_something_agents.tools.beads import beads_tool, execute_beads
+from create_something_agents.tools.dental import dental_api_tool, execute_dental_api
 
 __all__ = [
     # Bash
@@ -25,4 +26,7 @@ __all__ = [
     # Beads
     "beads_tool",
     "execute_beads",
+    # Dental API
+    "dental_api_tool",
+    "execute_dental_api",
 ]
