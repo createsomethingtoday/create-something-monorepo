@@ -107,16 +107,18 @@
 	.btn-link {
 		background: transparent;
 		color: var(--color-info);
+		text-decoration: none;
+		padding: 0;
+		height: auto;
+	}
+
+	.btn-link:hover:not(:disabled) {
 		text-decoration: underline;
 		text-underline-offset: 4px;
 	}
 
-	.btn-link:hover:not(:disabled) {
-		opacity: 0.8;
-	}
-
 	/* Sizes */
-	.btn-default:not(.btn-sm):not(.btn-lg):not(.btn-icon) {
+	.btn:not(.btn-sm):not(.btn-lg):not(.btn-icon) {
 		height: 2.25rem;
 		padding: 0.5rem 1rem;
 		font-size: var(--text-body-sm);

@@ -229,7 +229,12 @@
 		align-items: center;
 		gap: var(--space-xs);
 		margin-bottom: var(--space-md);
-		color: var(--color-info);
+		color: var(--color-fg-secondary);
+		font-weight: var(--font-normal);
+	}
+
+	:global(.back-link:hover) {
+		color: var(--color-fg-primary);
 	}
 
 	.page-header {
