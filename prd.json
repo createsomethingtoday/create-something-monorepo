@@ -16,7 +16,9 @@
         "Contains minimum necessary determinations matrix",
         "Includes compliance checklist"
       ],
-      "files": [".claude/rules/hipaa-compliance.md"],
+      "files": [
+        ".claude/rules/hipaa-compliance.md"
+      ],
       "passes": true
     },
     {
@@ -33,7 +35,9 @@
         "Lists patient preferences patterns",
         "Documents integration points with PMS APIs"
       ],
-      "files": [".claude/rules/dental-scheduling.md"],
+      "files": [
+        ".claude/rules/dental-scheduling.md"
+      ],
       "passes": true
     },
     {
@@ -50,7 +54,9 @@
         "No PHI in logs (only patient_id references)",
         "Includes docstrings for all public functions"
       ],
-      "files": ["packages/agent-sdk/src/create_something_agents/tools/dental.py"],
+      "files": [
+        "packages/agent-sdk/src/create_something_agents/tools/dental.py"
+      ],
       "passes": true
     },
     {
@@ -67,7 +73,9 @@
         "Registers dental_api_handler with PMS credentials",
         "Includes docstring explaining purpose"
       ],
-      "files": ["packages/agent-sdk/agents/dental_scheduler.py"],
+      "files": [
+        "packages/agent-sdk/agents/dental_scheduler.py"
+      ],
       "passes": true
     },
     {
@@ -84,7 +92,9 @@
         "Includes beads-patterns skill for task tracking",
         "Includes docstring explaining orchestration role"
       ],
-      "files": ["packages/agent-sdk/agents/dental_coordinator.py"],
+      "files": [
+        "packages/agent-sdk/agents/dental_coordinator.py"
+      ],
       "passes": true
     },
     {
@@ -101,8 +111,10 @@
         "All endpoints return DentalAgentResponse model",
         "Includes helper functions for response extraction"
       ],
-      "files": ["packages/agent-sdk/server/main.py"],
-      "passes": false
+      "files": [
+        "packages/agent-sdk/server/main.py"
+      ],
+      "passes": true
     },
     {
       "id": "story-7",
@@ -119,8 +131,10 @@
         "Includes error handling and rate limiting check",
         "Returns JSON response"
       ],
-      "files": ["packages/agency/workers/dental-agent-router/src/index.ts"],
-      "passes": false
+      "files": [
+        "packages/agency/workers/dental-agent-router/src/index.ts"
+      ],
+      "passes": true
     }
   ]
 }
