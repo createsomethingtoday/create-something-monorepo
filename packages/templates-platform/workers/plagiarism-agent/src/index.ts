@@ -754,27 +754,11 @@ Return JSON:
  * Used when vision analysis is inconclusive and we need code-level evidence.
  */
 async function fetchCodeComparison(
-  originalUrl: string,
+  originalUrls: string[],
   copyUrl: string
 ): Promise<string | null> {
   try {
-    console.log('[Code Analysis] Fetching HTML/CSS/JS from both URLs');
-
-    // Fetch both pages in parallel
-    const [originalResponse, copyResponse] = await Promise.all([
-      fetch(originalUrl),
-      fetch(copyUrl)
-    ]);
-
-    if (!originalResponse.ok || !copyResponse.ok) {
-      console.log('[Code Analysis] Failed to fetch one or both URLs');
-      return null;
-    }
-
-    const [originalHtml, copyHtml] = await Promise.all([
-      originalResponse.text(),
-      copyResponse.text()
-    ]);
+    console.log(`[Code Analysis] Comparing ${copyUrl} against ${originalUrls.length} original URL(s)`);
 
     // Extract key structural elements for comparison
     const extractPatterns = (html: string) => {
@@ -797,35 +781,79 @@ async function fetchCodeComparison(
       };
     };
 
-    const originalPatterns = extractPatterns(originalHtml);
+    // Fetch copy URL
+    const copyResponse = await fetch(copyUrl);
+    if (!copyResponse.ok) {
+      console.log('[Code Analysis] Failed to fetch copy URL');
+      return null;
+    }
+    const copyHtml = await copyResponse.text();
     const copyPatterns = extractPatterns(copyHtml);
 
-    // Build comparison summary
-    const summary = `
-CODE ANALYSIS:
+    // Fetch and analyze each original URL
+    const comparisons: string[] = [];
 
-Original URL Patterns:
+    for (let i = 0; i < originalUrls.length; i++) {
+      const originalUrl = originalUrls[i];
+      console.log(`[Code Analysis] Fetching original ${i + 1}/${originalUrls.length}: ${originalUrl}`);
+
+      try {
+        const originalResponse = await fetch(originalUrl);
+        if (!originalResponse.ok) {
+          console.log(`[Code Analysis] Failed to fetch original URL: ${originalUrl}`);
+          comparisons.push(`\n--- Original URL ${i + 1}: ${originalUrl} ---\nFailed to fetch (HTTP ${originalResponse.status})\n`);
+          continue;
+        }
+
+        const originalHtml = await originalResponse.text();
+        const originalPatterns = extractPatterns(originalHtml);
+
+        // Calculate similarity scores
+        const animationSimilarity = Math.abs(originalPatterns.animations.length - copyPatterns.animations.length) <= 2;
+        const sectionSimilarity = Math.abs(originalPatterns.sections - copyPatterns.sections) <= 1;
+        const layoutSimilarity = Math.abs(originalPatterns.gridLayouts.length - copyPatterns.gridLayouts.length) <= 2;
+
+        const comparison = `
+--- Original URL ${i + 1}: ${originalUrl} ---
+
+Original Patterns:
 - Animations: ${originalPatterns.animations.length} keyframe definitions
 - Transitions: ${originalPatterns.transitions.length} transitions
 - Grid layouts: ${originalPatterns.gridLayouts.length}
 - Flex layouts: ${originalPatterns.flexLayouts.length}
 - Sections: ${originalPatterns.sections}
 
-Copy URL Patterns:
+Animation Samples (first 3):
+${originalPatterns.animations.slice(0, 3).join('\n') || 'None'}
+
+Similarity to Copy:
+- Similar animation count: ${animationSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.animations.length - copyPatterns.animations.length)} difference)
+- Similar section count: ${sectionSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.sections - copyPatterns.sections)} difference)
+- Similar layout patterns: ${layoutSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.gridLayouts.length - copyPatterns.gridLayouts.length)} grid difference)
+`;
+
+        comparisons.push(comparison);
+      } catch (error: any) {
+        console.error(`[Code Analysis] Error fetching ${originalUrl}:`, error.message);
+        comparisons.push(`\n--- Original URL ${i + 1}: ${originalUrl} ---\nError: ${error.message}\n`);
+      }
+    }
+
+    // Build final summary
+    const summary = `
+CODE ANALYSIS (${originalUrls.length} Original URL${originalUrls.length > 1 ? 's' : ''} vs Copy):
+
+Copy URL: ${copyUrl}
 - Animations: ${copyPatterns.animations.length} keyframe definitions
 - Transitions: ${copyPatterns.transitions.length} transitions
 - Grid layouts: ${copyPatterns.gridLayouts.length}
 - Flex layouts: ${copyPatterns.flexLayouts.length}
 - Sections: ${copyPatterns.sections}
 
-Animation Samples (first 3 from each):
-Original: ${originalPatterns.animations.slice(0, 3).join('\n')}
-Copy: ${copyPatterns.animations.slice(0, 3).join('\n')}
+Copy Animation Samples (first 3):
+${copyPatterns.animations.slice(0, 3).join('\n') || 'None'}
 
-Structural Similarity Indicators:
-- Similar animation count: ${Math.abs(originalPatterns.animations.length - copyPatterns.animations.length) <= 2}
-- Similar section count: ${Math.abs(originalPatterns.sections - copyPatterns.sections) <= 1}
-- Similar layout patterns: ${Math.abs(originalPatterns.gridLayouts.length - copyPatterns.gridLayouts.length) <= 2}
+${comparisons.join('\n')}
 `;
 
     return summary;
@@ -854,14 +882,22 @@ async function runTier3Judgment(
   if (needsCodeAnalysis) {
     console.log('[Tier 3] Tier 2 was inconclusive - fetching HTML/CSS/JS for comparison');
 
-    // Sanitize URLs (Airtable fields may contain markdown/HTML formatting)
-    const cleanOriginalUrl = sanitizeUrl(plagiarismCase.originalUrl);
-    const cleanCopyUrl = sanitizeUrl(plagiarismCase.allegedCopyUrl);
+    // Extract all URLs from Airtable fields (may contain multiple URLs)
+    const originalUrls = extractAllUrls(plagiarismCase.originalUrl);
+    const copyUrls = extractAllUrls(plagiarismCase.allegedCopyUrl);
 
-    console.log(`[Code Analysis] Sanitized URLs: ${cleanOriginalUrl} vs ${cleanCopyUrl}`);
+    // If extraction failed, fall back to sanitizing single URL
+    const cleanOriginalUrls = originalUrls.length > 0
+      ? originalUrls
+      : [sanitizeUrl(plagiarismCase.originalUrl)];
+    const cleanCopyUrl = copyUrls.length > 0
+      ? copyUrls[0]  // Copy URL should be single
+      : sanitizeUrl(plagiarismCase.allegedCopyUrl);
+
+    console.log(`[Code Analysis] Found ${cleanOriginalUrls.length} original URL(s), comparing against: ${cleanCopyUrl}`);
 
     codeAnalysis = await fetchCodeComparison(
-      cleanOriginalUrl,
+      cleanOriginalUrls,
       cleanCopyUrl
     );
   }
@@ -1033,6 +1069,40 @@ function sanitizeUrl(rawUrl: string): string {
   cleaned = cleaned.replace(/[<>]/g, '');
 
   return cleaned;
+}
+
+/**
+ * Extract ALL URLs from Airtable field.
+ * Handles markdown/HTML angle brackets and newline separation.
+ *
+ * Returns array of clean URLs.
+ */
+function extractAllUrls(rawUrl: string): string[] {
+  if (!rawUrl) return [];
+
+  // Split by newlines and process each line
+  const lines = rawUrl
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  const urls: string[] = [];
+
+  for (const line of lines) {
+    // Remove angle brackets
+    let cleaned = line
+      .replace(/^</, '')
+      .replace(/>$/, '')
+      .replace(/[<>]/g, '')
+      .trim();
+
+    // Basic URL validation
+    if (cleaned && (cleaned.startsWith('http://') || cleaned.startsWith('https://'))) {
+      urls.push(cleaned);
+    }
+  }
+
+  return urls;
 }
 
 function extractJSON(text: string): any {
