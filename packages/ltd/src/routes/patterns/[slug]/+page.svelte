@@ -8,7 +8,9 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const { pattern } = data;
+	
+	// Use $derived for reactivity on client-side navigation
+	let pattern = $derived(data.pattern);
 </script>
 
 <svelte:head>

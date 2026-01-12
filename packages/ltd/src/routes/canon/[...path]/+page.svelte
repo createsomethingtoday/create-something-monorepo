@@ -8,7 +8,9 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const { canonPage, pathParts } = data;
+	
+	// Use $derived for reactivity on client-side navigation
+	let canonPage = $derived(data.canonPage);
 </script>
 
 <svelte:head>
