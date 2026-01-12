@@ -68,6 +68,14 @@ class PlagiarismAnalysisResult:
     section_comparisons: List[SectionComparison]
     reasoning: str
     cost_estimate: float
+    # Global similarity signals (explicitly separated to avoid misinterpretation)
+    vector_similarity_overall: float = 0.0
+    vector_similarity_source: Literal['vectorize', 'local_proxy', 'unavailable'] = 'unavailable'
+    vector_html_similarity: float = 0.0
+    vector_css_similarity: float = 0.0
+    vector_js_similarity: float = 0.0
+    local_html_similarity: float = 0.0
+    local_css_similarity: float = 0.0
 
 
 # =============================================================================
@@ -403,43 +411,47 @@ Scoring guide:
 """
         
         # Call vision API based on provider
-        if self.provider_name == 'claude':
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=1000,
-                temperature=0,
-                messages=[{
-                    'role': 'user',
-                    'content': [
-                        {
-                            'type': 'image',
-                            'source': {
-                                'type': 'base64',
-                                'media_type': 'image/png',
-                                'data': img1_base64
-                            }
-                        },
-                        {
-                            'type': 'image',
-                            'source': {
-                                'type': 'base64',
-                                'media_type': 'image/png',
-                                'data': img2_base64
-                            }
-                        },
-                        {'type': 'text', 'text': prompt}
-                    ]
-                }]
-            )
-            response_text = response.content[0].text
-        else:
-            # Gemini vision
-            response = self.client.generate_content([
-                prompt,
-                Image.open(screenshot1_path),
-                Image.open(screenshot2_path)
-            ])
-            response_text = response.text
+        try:
+            if self.provider_name == 'claude':
+                response = self.client.messages.create(
+                    model=self.model,
+                    max_tokens=1000,
+                    temperature=0,
+                    messages=[{
+                        'role': 'user',
+                        'content': [
+                            {
+                                'type': 'image',
+                                'source': {
+                                    'type': 'base64',
+                                    'media_type': 'image/png',
+                                    'data': img1_base64
+                                }
+                            },
+                            {
+                                'type': 'image',
+                                'source': {
+                                    'type': 'base64',
+                                    'media_type': 'image/png',
+                                    'data': img2_base64
+                                }
+                            },
+                            {'type': 'text', 'text': prompt}
+                        ]
+                    }]
+                )
+                response_text = response.content[0].text
+            else:
+                # Gemini vision
+                response = self.client.generate_content([
+                    prompt,
+                    Image.open(screenshot1_path),
+                    Image.open(screenshot2_path)
+                ])
+                response_text = response.text
+        except Exception as e:
+            # No mock score on failure: return 0 with explicit error evidence
+            return 0.0, f"VISUAL_COMPARE_FAILED: {type(e).__name__}: {e}"
         
         # Parse JSON response
         try:
@@ -452,23 +464,27 @@ Scoring guide:
                 json_str = response_text
             
             result = json.loads(json_str)
-            
-            similarity = result['similarity_score'] / 100  # Convert to 0-1
-            evidence = f"{result['evidence']}\n\nDifferences: {result['differences']}"
-            
+
+            if 'similarity_score' not in result:
+                raise KeyError('similarity_score')
+            if not isinstance(result['similarity_score'], (int, float)):
+                raise TypeError('similarity_score must be a number')
+
+            similarity = float(result['similarity_score']) / 100  # Convert to 0-1
+            evidence = f"{result.get('evidence', '')}\n\nDifferences: {result.get('differences', '')}".strip()
+
+            # Clamp to [0,1] to avoid garbage-in
+            similarity = max(0.0, min(1.0, similarity))
+
             return similarity, evidence
         
         except (json.JSONDecodeError, KeyError) as e:
             print(f"Error parsing visual comparison response: {e}")
             print(f"Response: {response_text}")
-            
-            # Fallback: extract number from text
-            numbers = re.findall(r'\b\d+\b', response_text)
-            if numbers:
-                similarity = int(numbers[0]) / 100
-                return similarity, response_text
-            
-            return 0.5, "Error parsing response"
+
+            # No heuristic “number picking” fallback: that can create fake confidence.
+            # Return 0 with explicit error evidence so downstream logic can’t treat it as “similar”.
+            return 0.0, f"VISUAL_COMPARE_PARSE_FAILED: {type(e).__name__}: {e}\nRaw response: {response_text[:500]}"
 
 
 # =============================================================================
@@ -862,12 +878,16 @@ class MultiModalPlagiarismAnalyzer:
                 vector_similarity_overall = vector_result['overall']
                 vector_html = vector_result['html']
                 vector_css = vector_result['css']
+                vector_js = vector_result.get('js', 0.0)
+                vector_source: Literal['vectorize', 'local_proxy', 'unavailable'] = 'vectorize'
             else:
                 # Fall back to local HTML/CSS analysis
                 print("   📊 Computing local similarity (vector DB unavailable)...")
                 vector_similarity_overall = None
                 vector_html = None
                 vector_css = None
+                vector_js = None
+                vector_source = 'unavailable'
             
             # Step 1.6: Extract HTML structure and CSS patterns (always do local analysis)
             print("🔍 Analyzing HTML structure and CSS...")
@@ -936,11 +956,12 @@ class MultiModalPlagiarismAnalyzer:
                     
                     # Use vector similarity from database or compute locally
                     if vector_similarity_overall is not None:
-                        # Use vector database result
+                        # NOTE: this is a GLOBAL vector similarity, not section-specific.
                         vector_sim = vector_similarity_overall
                     else:
-                        # Use local HTML/CSS similarity as proxy for vector similarity
+                        # Use local HTML/CSS similarity as a proxy (explicitly marked)
                         vector_sim = (html_similarity + css_similarity) / 2
+                        vector_source = 'local_proxy'
                     
                     # Determine pattern
                     pattern = self._determine_pattern(vector_sim, visual_sim)
@@ -949,8 +970,10 @@ class MultiModalPlagiarismAnalyzer:
                         section_type=orig_section.type,
                         vector_similarity=vector_sim,
                         visual_similarity=visual_sim,
-                        html_similarity=html_similarity,  # Overall HTML similarity
-                        css_similarity=css_similarity,     # Overall CSS similarity
+                        # NOTE: html_similarity/css_similarity here are GLOBAL local similarities
+                        # (not section-specific). Kept for convenience in reporting.
+                        html_similarity=html_similarity,
+                        css_similarity=css_similarity,
                         pattern=pattern,
                         confidence=min(vector_sim, visual_sim),
                         evidence=evidence
@@ -1039,7 +1062,14 @@ class MultiModalPlagiarismAnalyzer:
                 sections_analyzed=len(comparisons),
                 section_comparisons=comparisons,
                 reasoning=reasoning + f"\n\nInteraction Analysis: {interaction_verdict} ({interaction_similarity:.1f}% similar)",
-                cost_estimate=cost
+                cost_estimate=cost,
+                vector_similarity_overall=float(vector_similarity_overall or 0.0),
+                vector_similarity_source=vector_source,
+                vector_html_similarity=float(vector_html or 0.0),
+                vector_css_similarity=float(vector_css or 0.0),
+                vector_js_similarity=float(vector_js or 0.0),
+                local_html_similarity=float(html_similarity),
+                local_css_similarity=float(css_similarity)
             )
             
             return result
