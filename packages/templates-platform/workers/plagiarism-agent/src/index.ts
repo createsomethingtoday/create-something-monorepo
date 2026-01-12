@@ -736,45 +736,122 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 // =============================================================================
 
 /**
- * Fetch and compare HTML/CSS/JS from both URLs.
- * Used when vision analysis is inconclusive and we need code-level evidence.
+ * Fetch and compare HTML/CSS/JS from both URLs using Puppeteer for full rendering.
+ * Detects CSS animations, JavaScript animations, and Webflow-specific patterns.
  */
 async function fetchCodeComparison(
   originalUrls: string[],
-  copyUrl: string
+  copyUrl: string,
+  browser?: any
 ): Promise<string | null> {
   try {
     console.log(`[Code Analysis] Comparing ${copyUrl} against ${originalUrls.length} original URL(s)`);
 
-    // Extract key structural elements for comparison
-    const extractPatterns = (html: string) => {
+    // Extract comprehensive patterns including JavaScript animations
+    const extractPatterns = async (html: string, url: string) => {
+      // CSS animations and transitions
+      const cssAnimations = html.match(/@keyframes\s+[\w-]+\s*{[^}]+}/g) || [];
+      const cssTransitions = html.match(/transition:\s*[^;]+;/g) || [];
+
+      // Layout structure
+      const gridLayouts = html.match(/display:\s*grid[^}]*}/g) || [];
+      const flexLayouts = html.match(/display:\s*flex[^}]*}/g) || [];
+
+      // Sections and structure
+      const sections = html.match(/<section[^>]*>/g)?.length || 0;
+      const headers = html.match(/<header[^>]*>/g)?.length || 0;
+      const navs = html.match(/<nav[^>]*>/g)?.length || 0;
+
+      // JavaScript animation library detection
+      const jsLibraries: string[] = [];
+      if (html.includes('gsap') || html.includes('GreenSock')) jsLibraries.push('GSAP');
+      if (html.includes('framer-motion') || html.includes('motion.')) jsLibraries.push('Framer Motion');
+      if (html.includes('anime.min.js') || html.includes('anime(')) jsLibraries.push('Anime.js');
+      if (html.includes('aos.js') || html.includes('data-aos')) jsLibraries.push('AOS (Animate On Scroll)');
+      if (html.includes('scroll-trigger') || html.includes('ScrollTrigger')) jsLibraries.push('ScrollTrigger');
+      if (html.includes('lottie') || html.includes('bodymovin')) jsLibraries.push('Lottie');
+
+      // Webflow-specific patterns
+      const webflowPatterns = {
+        interactions: (html.match(/data-w-id="[^"]+"/g) || []).length,
+        ixData: html.includes('window.Webflow && window.Webflow.require("ix2")'),
+        animations: (html.match(/data-animation="[^"]+"/g) || []).length,
+        triggers: (html.match(/data-w-trigger="[^"]+"/g) || []).length
+      };
+
+      // Extract inline script content for animation patterns
+      const scriptTags = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
+      let animationCalls = 0;
+      for (const script of scriptTags) {
+        // Count animation-related function calls
+        if (script.match(/\.animate\(|\.transition\(|\.to\(|\.from\(|requestAnimationFrame/)) {
+          animationCalls++;
+        }
+      }
+
       return {
-        // CSS animations and transitions
-        animations: html.match(/@keyframes\s+[\w-]+\s*{[^}]+}/g) || [],
-        transitions: html.match(/transition:\s*[^;]+;/g) || [],
+        // CSS-based
+        cssAnimations: cssAnimations.length,
+        cssTransitions: cssTransitions.length,
+        cssAnimationSamples: cssAnimations.slice(0, 2),
 
-        // Layout structure
-        gridLayouts: html.match(/display:\s*grid[^}]*}/g) || [],
-        flexLayouts: html.match(/display:\s*flex[^}]*}/g) || [],
+        // Layout
+        gridLayouts: gridLayouts.length,
+        flexLayouts: flexLayouts.length,
 
-        // Component patterns (classes and IDs)
-        classNames: Array.from(new Set(html.match(/class="[^"]+"/g) || [])).slice(0, 50),
+        // Structure
+        sections,
+        headers,
+        navs,
 
-        // Sections and structure
-        sections: html.match(/<section[^>]*>/g)?.length || 0,
-        headers: html.match(/<header[^>]*>/g)?.length || 0,
-        navs: html.match(/<nav[^>]*>/g)?.length || 0
+        // JavaScript animations
+        jsLibraries,
+        animationCalls,
+
+        // Webflow
+        webflowPatterns,
+        isWebflow: html.includes('Webflow') || html.includes('webflow')
       };
     };
 
+    // Helper: Fetch HTML with fallback (try Puppeteer first if available, then plain fetch)
+    const fetchHtml = async (url: string): Promise<string> => {
+      // Try plain fetch first (faster, works for most sites)
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        if (response.ok) {
+          return await response.text();
+        }
+      } catch (error) {
+        console.log(`[Code Analysis] Plain fetch failed for ${url}, will try Puppeteer if available`);
+      }
+
+      // Fallback: Try Puppeteer if browser is available (renders JavaScript)
+      if (browser) {
+        try {
+          console.log(`[Code Analysis] Using Puppeteer to render ${url}`);
+          const page = await browser.newPage();
+          await page.goto(url, { waitUntil: 'networkidle0', timeout: 15000 });
+          const html = await page.content();
+          await page.close();
+          return html;
+        } catch (error: any) {
+          console.error(`[Code Analysis] Puppeteer failed:`, error.message);
+        }
+      }
+
+      throw new Error(`Failed to fetch ${url} with both fetch and Puppeteer`);
+    };
+
     // Fetch copy URL
-    const copyResponse = await fetch(copyUrl);
-    if (!copyResponse.ok) {
-      console.log('[Code Analysis] Failed to fetch copy URL');
-      return null;
-    }
-    const copyHtml = await copyResponse.text();
-    const copyPatterns = extractPatterns(copyHtml);
+    console.log('[Code Analysis] Fetching copy URL...');
+    const copyHtml = await fetchHtml(copyUrl);
+    const copyPatterns = await extractPatterns(copyHtml, copyUrl);
 
     // Fetch and analyze each original URL
     const comparisons: string[] = [];
@@ -784,38 +861,43 @@ async function fetchCodeComparison(
       console.log(`[Code Analysis] Fetching original ${i + 1}/${originalUrls.length}: ${originalUrl}`);
 
       try {
-        const originalResponse = await fetch(originalUrl);
-        if (!originalResponse.ok) {
-          console.log(`[Code Analysis] Failed to fetch original URL: ${originalUrl}`);
-          comparisons.push(`\n--- Original URL ${i + 1}: ${originalUrl} ---\nFailed to fetch (HTTP ${originalResponse.status})\n`);
-          continue;
-        }
-
-        const originalHtml = await originalResponse.text();
-        const originalPatterns = extractPatterns(originalHtml);
+        const originalHtml = await fetchHtml(originalUrl);
+        const originalPatterns = await extractPatterns(originalHtml, originalUrl);
 
         // Calculate similarity scores
-        const animationSimilarity = Math.abs(originalPatterns.animations.length - copyPatterns.animations.length) <= 2;
+        const cssAnimSimilarity = Math.abs(originalPatterns.cssAnimations - copyPatterns.cssAnimations) <= 2;
         const sectionSimilarity = Math.abs(originalPatterns.sections - copyPatterns.sections) <= 1;
-        const layoutSimilarity = Math.abs(originalPatterns.gridLayouts.length - copyPatterns.gridLayouts.length) <= 2;
+        const layoutSimilarity = Math.abs(originalPatterns.gridLayouts - copyPatterns.gridLayouts) <= 2;
+
+        // Check for shared JavaScript libraries
+        const sharedLibraries = originalPatterns.jsLibraries.filter(lib =>
+          copyPatterns.jsLibraries.includes(lib)
+        );
 
         const comparison = `
 --- Original URL ${i + 1}: ${originalUrl} ---
 
 Original Patterns:
-- Animations: ${originalPatterns.animations.length} keyframe definitions
-- Transitions: ${originalPatterns.transitions.length} transitions
-- Grid layouts: ${originalPatterns.gridLayouts.length}
-- Flex layouts: ${originalPatterns.flexLayouts.length}
+- CSS Animations: ${originalPatterns.cssAnimations} keyframe definitions
+- CSS Transitions: ${originalPatterns.cssTransitions} transitions
+- JavaScript Libraries: ${originalPatterns.jsLibraries.join(', ') || 'None detected'}
+- Animation Calls: ${originalPatterns.animationCalls} detected
+- Grid layouts: ${originalPatterns.gridLayouts}
+- Flex layouts: ${originalPatterns.flexLayouts}
 - Sections: ${originalPatterns.sections}
+${originalPatterns.isWebflow ? `- Webflow Site: YES
+  - Interactions: ${originalPatterns.webflowPatterns.interactions}
+  - IX2 Animations: ${originalPatterns.webflowPatterns.ixData ? 'YES' : 'NO'}` : ''}
 
-Animation Samples (first 3):
-${originalPatterns.animations.slice(0, 3).join('\n') || 'None'}
+CSS Animation Samples (first 2):
+${originalPatterns.cssAnimationSamples.join('\n\n') || 'None'}
 
 Similarity to Copy:
-- Similar animation count: ${animationSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.animations.length - copyPatterns.animations.length)} difference)
+- Similar CSS animation count: ${cssAnimSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.cssAnimations - copyPatterns.cssAnimations)} difference)
 - Similar section count: ${sectionSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.sections - copyPatterns.sections)} difference)
-- Similar layout patterns: ${layoutSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.gridLayouts.length - copyPatterns.gridLayouts.length)} grid difference)
+- Similar layout patterns: ${layoutSimilarity ? 'YES' : 'NO'} (${Math.abs(originalPatterns.gridLayouts - copyPatterns.gridLayouts)} grid difference)
+- Shared JS Libraries: ${sharedLibraries.length > 0 ? sharedLibraries.join(', ') : 'None'}
+${(originalPatterns.isWebflow && copyPatterns.isWebflow) ? `- Both are Webflow sites with similar interaction counts` : ''}
 `;
 
         comparisons.push(comparison);
@@ -830,14 +912,19 @@ Similarity to Copy:
 CODE ANALYSIS (${originalUrls.length} Original URL${originalUrls.length > 1 ? 's' : ''} vs Copy):
 
 Copy URL: ${copyUrl}
-- Animations: ${copyPatterns.animations.length} keyframe definitions
-- Transitions: ${copyPatterns.transitions.length} transitions
-- Grid layouts: ${copyPatterns.gridLayouts.length}
-- Flex layouts: ${copyPatterns.flexLayouts.length}
+- CSS Animations: ${copyPatterns.cssAnimations} keyframe definitions
+- CSS Transitions: ${copyPatterns.cssTransitions} transitions
+- JavaScript Libraries: ${copyPatterns.jsLibraries.join(', ') || 'None detected'}
+- Animation Calls: ${copyPatterns.animationCalls} detected
+- Grid layouts: ${copyPatterns.gridLayouts}
+- Flex layouts: ${copyPatterns.flexLayouts}
 - Sections: ${copyPatterns.sections}
+${copyPatterns.isWebflow ? `- Webflow Site: YES
+  - Interactions: ${copyPatterns.webflowPatterns.interactions}
+  - IX2 Animations: ${copyPatterns.webflowPatterns.ixData ? 'YES' : 'NO'}` : ''}
 
-Copy Animation Samples (first 3):
-${copyPatterns.animations.slice(0, 3).join('\n') || 'None'}
+CSS Animation Samples (first 2):
+${copyPatterns.cssAnimationSamples.join('\n\n') || 'None'}
 
 ${comparisons.join('\n')}
 `;
@@ -877,10 +964,29 @@ async function runTier3Judgment(
 
   console.log(`[Code Analysis] Found ${cleanOriginalUrls.length} original URL(s), comparing against: ${cleanCopyUrl}`);
 
-  const codeAnalysis = await fetchCodeComparison(
-    cleanOriginalUrls,
-    cleanCopyUrl
-  );
+  // Launch Puppeteer browser for JavaScript rendering (fallback if plain fetch fails)
+  let browser;
+  try {
+    browser = await puppeteer.launch(env.BROWSER);
+    console.log('[Code Analysis] Puppeteer browser launched successfully');
+  } catch (error: any) {
+    console.log('[Code Analysis] Puppeteer unavailable, will use plain fetch only:', error.message);
+  }
+
+  let codeAnalysis: string | null = null;
+  try {
+    codeAnalysis = await fetchCodeComparison(
+      cleanOriginalUrls,
+      cleanCopyUrl,
+      browser
+    );
+  } finally {
+    // Always close browser to free resources
+    if (browser) {
+      await browser.close();
+      console.log('[Code Analysis] Puppeteer browser closed');
+    }
+  }
 
   const prompt = `Make final judgment on plagiarism case:
 
@@ -893,8 +999,18 @@ Tier 2 Visual Analysis: ${JSON.stringify(tier2Result)}
 HTML/CSS/JS Code Analysis:
 ${codeAnalysis || 'Code analysis failed - URLs may be inaccessible'}
 
-Visual similarity can be misleading. The code analysis reveals the true structural patterns:
-animations, transitions, grid/flex layouts, and implementation details not visible in screenshots.
+CRITICAL: Visual similarity can be misleading. The code analysis reveals the truth:
+
+1. CSS Animations/Transitions: Direct evidence of copied keyframes and timing
+2. JavaScript Libraries: GSAP, Framer Motion, Anime.js usage indicates implementation approach
+3. Webflow Patterns: IX2 interactions, data-w-id attributes show Webflow-specific copying
+4. Layout Patterns: Grid/flex structures reveal design system similarities
+5. Animation Calls: JavaScript animation function usage shows implementation details
+
+If both sites use the same JavaScript animation library with similar counts, this is STRONG evidence.
+If both are Webflow sites with similar interaction counts, this is STRONG evidence.
+CSS keyframe matches are DEFINITIVE proof of copying.
+
 Use both visual and code evidence to make your final determination.
 
 Provide final decision with detailed reasoning and confidence level.
