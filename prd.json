@@ -51,7 +51,7 @@
         "Includes docstrings for all public functions"
       ],
       "files": ["packages/agent-sdk/src/create_something_agents/tools/dental.py"],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-4",
@@ -68,7 +68,7 @@
         "Includes docstring explaining purpose"
       ],
       "files": ["packages/agent-sdk/agents/dental_scheduler.py"],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-5",

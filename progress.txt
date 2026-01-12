@@ -81,3 +81,102 @@ Created comprehensive dental scheduling documentation at `.claude/rules/dental-s
 
 Completed: 2026-01-12T22:23:18Z
 
+Completed: 2026-01-12T22:09:24Z
+Thread log: .ralph-archive/iteration-2-20260112-160636.log
+
+---
+## Iteration 3
+Started: 2026-01-12T22:09:26Z
+
+### Story: story-3 - Implement dental API tool handlers
+
+**What was implemented:**
+Created HIPAA-compliant dental API tool handlers at `packages/agent-sdk/src/create_something_agents/tools/dental.py` with:
+- dental_api_tool schema defining 7 PMS API actions (get_appointments, check_availability, create_appointment, update_appointment, cancel_appointment, get_patient_preferences, query_waitlist)
+- execute_dental_api function with full audit logging integration
+- 7 private API functions implementing each action using httpx.AsyncClient for async HTTP calls
+- Support for Dentrix, Open Dental, and Eaglesoft PMS systems
+- _log_audit_trail function with structured JSON logging and 6-year retention note
+- Minimum necessary PHI access patterns (only patient_id, no names/details in logs)
+- Complete docstrings for all public and private functions explaining HIPAA compliance
+- Updated tools/__init__.py to export dental_api_tool and execute_dental_api
+
+**Files Changed:**
+- Created: `packages/agent-sdk/src/create_something_agents/tools/dental.py` (469 lines)
+- Updated: `packages/agent-sdk/src/create_something_agents/tools/__init__.py` (added dental imports)
+
+**Acceptance Criteria Verified:**
+- ✅ File exists at packages/agent-sdk/src/create_something_agents/tools/dental.py
+- ✅ Implements dental_api_tool schema with 7 actions - All actions defined in enum
+- ✅ Implements execute_dental_api function with audit logging - Routes to private functions, logs all calls
+- ✅ Implements 7 private API functions - _get_appointments, _check_availability, _create_appointment, _update_appointment, _cancel_appointment, _get_patient_preferences, _query_waitlist
+- ✅ Includes _log_audit_trail function with 6-year retention note - Complete with 189,216,000 second TTL comment
+- ✅ All functions use httpx.AsyncClient - All 7 private functions use async with httpx.AsyncClient()
+- ✅ No PHI in logs (only patient_id references) - All audit logs use de-identified patient_id only
+- ✅ Includes docstrings for all public functions - execute_dental_api and all 7 private functions have complete docstrings
+
+**Learnings for future iterations:**
+- HIPAA-compliant API tools require strict PHI minimization in all log statements
+- Async HTTP client (httpx.AsyncClient) enables efficient rate-limited API calls
+- Tool schema enums provide clear action boundaries for agent decision-making
+- Private function pattern (_function_name) keeps implementation details encapsulated
+- Audit trail structure must match HIPAA logging requirements from documentation
+- Each PMS system (Dentrix, Open Dental, Eaglesoft) has different endpoint patterns requiring conditional routing
+- Type hints in function signatures improve agent understanding of required parameters
+- Comprehensive docstrings explaining HIPAA compliance rationale help maintain compliance in future changes
+
+Completed: 2026-01-12T22:29:00Z
+Completed: 2026-01-12T22:12:16Z
+Thread log: .ralph-archive/iteration-3-20260112-160926.log
+
+---
+## Iteration 4
+Started: 2026-01-12T22:12:18Z
+
+### Story: story-4 - Create dental scheduler specialist agent
+
+**What was implemented:**
+Created dental appointment scheduling specialist agent at `packages/agent-sdk/agents/dental_scheduler.py` with:
+- Uses Claude Haiku model (claude-haiku-4-20250514) for cost-effective scheduling operations
+- Implements create_dental_scheduler factory function with task, pms_config, and practice_id parameters
+- Comprehensive system prompt covering all 4 core responsibilities:
+  1. No-show rescheduling (7-step workflow from query to log outcome)
+  2. Open slot finding with provider/equipment constraints
+  3. Conflict resolution (double-bookings, equipment shortages)
+  4. Workload management (provider fatigue scoring, complexity limits)
+- Complete HIPAA compliance section in system prompt:
+  - Never log PHI (only patient_id, appointment_id, correlation_id)
+  - 6-year audit retention requirement
+  - Minimum necessary PHI access patterns
+- Detailed 7-step no-show rescheduling workflow with specific dental_api actions
+- Provider constraints (time, expertise, fatigue with 24-point complexity max)
+- Equipment constraints (chair types, sterilization buffers, X-ray timing)
+- Conflict resolution pattern (detect → assess → alternatives → propose → execute/escalate)
+- Waitlist management workflow (query → rank → offer → first wins → update)
+- Registers dental_api tool handler with execute_dental_api function
+- Complete docstring with example usage
+
+**Files Changed:**
+- Created: `packages/agent-sdk/agents/dental_scheduler.py` (163 lines)
+
+**Acceptance Criteria Verified:**
+- ✅ File exists at packages/agent-sdk/agents/dental_scheduler.py
+- ✅ Uses Claude Haiku model for cost-effectiveness - claude-haiku-4-20250514
+- ✅ Implements create_dental_scheduler factory function - with task, pms_config, practice_id parameters
+- ✅ Task includes 4 responsibilities - No-shows, open slots, conflicts, workload in "Your Responsibilities" section
+- ✅ Task includes HIPAA compliance rules - Complete "HIPAA Compliance Requirements" section
+- ✅ Task includes workflow (7 steps from query to log) - Detailed "Workflow: No-Show Rescheduling (7 Steps)" section
+- ✅ Registers dental_api_handler with PMS credentials - agent.register_tool_handler("dental_api", execute_dental_api)
+- ✅ Includes docstring explaining purpose - Complete with example usage showing pms_config and practice_id
+
+**Learnings for future iterations:**
+- Specialist agents benefit from using cost-effective models (Haiku) for bounded, well-defined tasks
+- System prompts should include concrete workflows with specific tool actions for each step
+- HIPAA compliance requirements must be explicit (what to log, what never to log)
+- Provider/equipment constraint systems need clear scoring mechanisms (complexity points, buffer times)
+- Conflict resolution patterns work best as decision trees (detect → assess → propose → execute)
+- Tool registration pattern (agent.register_tool_handler) enables dynamic tool availability
+- Factory function pattern with context injection (pms_config, practice_id) enables reusable agents
+- Docstring examples should show realistic usage with all required parameters
+
+Completed: 2026-01-12T22:32:00Z
