@@ -229,12 +229,12 @@
 		align-items: center;
 		gap: var(--space-xs);
 		margin-bottom: var(--space-md);
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-muted);
 		font-weight: var(--font-normal);
 	}
 
 	:global(.back-link:hover) {
-		color: var(--color-fg-primary);
+		color: var(--color-fg-secondary);
 	}
 
 	.page-header {
