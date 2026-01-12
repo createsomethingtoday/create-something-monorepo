@@ -486,7 +486,7 @@ class MultiModalPlagiarismAnalyzer:
     ):
         self.screenshot_capture = ScreenshotCapture(screenshot_dir)
         self.visual_comparator = VisualComparator(vision_provider)
-        self.worker_url = worker_url or os.getenv('PLAGIARISM_WORKER_URL', 'https://plagiarism-agent.workers.dev')
+        self.worker_url = worker_url or os.getenv('PLAGIARISM_WORKER_URL', 'https://plagiarism-agent.createsomething.workers.dev')
     
     async def get_vector_similarity(self, url1: str, url2: str) -> Dict[str, Any]:
         """
