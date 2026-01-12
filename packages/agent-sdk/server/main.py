@@ -30,6 +30,12 @@ from create_something_agents import (
 from agents.dental_coordinator import create_dental_coordinator
 from agents.dental_scheduler import create_dental_scheduler
 
+# Import workflow modules
+from create_something_agents.workflows import no_show_recovery
+from create_something_agents.workflows import insurance_verification
+from create_something_agents.workflows import recall_reminders
+from create_something_agents.analytics import conversion_tracking
+
 
 class AgentRequest(BaseModel):
     """Request to run an agent task."""
@@ -101,6 +107,33 @@ class DentalAgentResponse(BaseModel):
     operation: str
     correlation_id: str
     timestamp: str
+
+
+class WorkflowRequest(BaseModel):
+    """Request for individual workflow execution."""
+
+    practice_id: str = Field(..., description="Practice identifier")
+    pms_config: dict[str, Any] = Field(..., description="PMS system configuration")
+    correlation_id: str | None = Field(default=None, description="Request correlation ID")
+
+
+class WorkflowResponse(BaseModel):
+    """Response from workflow execution."""
+
+    success: bool
+    workflow_results: dict[str, Any] = Field(..., description="Workflow-specific results")
+    audit_id: str = Field(..., description="Audit trail correlation ID")
+    timestamp: str
+    error: str | None = None
+
+
+class DailyReportResponse(BaseModel):
+    """Response from daily analytics report."""
+
+    success: bool
+    report: dict[str, Any] = Field(..., description="Daily analytics report data")
+    timestamp: str
+    error: str | None = None
 
 
 # Modal Configuration for Dental Agent SDK
@@ -287,7 +320,7 @@ async def health_check() -> HealthResponse:
 
 
 @app.get("/")
-async def root() -> dict[str, str]:
+async def root() -> dict[str, Any]:
     """Root endpoint with API info."""
     return {
         "name": "CREATE SOMETHING Agent Server",
@@ -298,6 +331,14 @@ async def root() -> dict[str, str]:
         "dental": {
             "schedule": "/agents/dental/schedule",
             "daily-ops": "/agents/dental/daily-ops",
+            "workflows": {
+                "no-show-recovery": "/agents/dental/workflows/no-show-recovery",
+                "insurance-verification": "/agents/dental/workflows/insurance-verification",
+                "recall-reminders": "/agents/dental/workflows/recall-reminders"
+            },
+            "analytics": {
+                "daily-report": "/agents/dental/analytics/daily-report"
+            }
         },
     }
 
@@ -466,6 +507,278 @@ async def daily_operations_scheduler():
     #     ))
 
     print(f"[{timestamp}] Daily operations scheduler completed")
+
+
+# Workflow Endpoints
+@app.post("/agents/dental/workflows/no-show-recovery", response_model=WorkflowResponse)
+async def no_show_recovery_workflow(request: WorkflowRequest) -> WorkflowResponse:
+    """
+    Execute no-show appointment recovery workflow.
+
+    Detects no-show appointments from PMS and matches them with waitlist patients
+    based on appointment type, time preferences, and provider availability.
+
+    Returns:
+        WorkflowResponse with:
+        - no_shows: List of detected no-show appointments
+        - matches: Dictionary mapping appointment_id to ranked waitlist matches
+        - stats: Summary statistics (total_no_shows, total_matches, etc.)
+    """
+    correlation_id = request.correlation_id or generate_correlation_id()
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    try:
+        # Mock PMS API client (in production, this would be a real client)
+        pms_client = request.pms_config
+
+        # Detect no-show appointments
+        no_shows = no_show_recovery.detect_no_shows(
+            pms_api_client=pms_client,
+            days_back=7,
+            correlation_id=correlation_id
+        )
+
+        # For demonstration, create mock waitlist
+        # In production, this would query actual waitlist from PMS
+        mock_waitlist = []
+
+        # Match waitlist patients to no-show slots
+        all_matches = no_show_recovery.rank_all_matches(
+            no_shows=no_shows,
+            waitlist=mock_waitlist,
+            max_matches_per_slot=3
+        )
+
+        # Build workflow results
+        workflow_results = {
+            "no_shows": len(no_shows),
+            "matches": {
+                appt_id: [
+                    {
+                        "patient_id": match.patient.patient_id,
+                        "score": match.score,
+                        "appointment_type": match.patient.appointment_type
+                    }
+                    for match in matches
+                ]
+                for appt_id, matches in all_matches.items()
+            },
+            "stats": {
+                "total_no_shows": len(no_shows),
+                "total_matches": sum(len(matches) for matches in all_matches.values()),
+                "practice_id": request.practice_id
+            }
+        }
+
+        return WorkflowResponse(
+            success=True,
+            workflow_results=workflow_results,
+            audit_id=correlation_id,
+            timestamp=timestamp
+        )
+
+    except Exception as e:
+        return WorkflowResponse(
+            success=False,
+            workflow_results={},
+            audit_id=correlation_id,
+            timestamp=timestamp,
+            error=f"No-show recovery workflow failed: {e!s}"
+        )
+
+
+@app.post("/agents/dental/workflows/insurance-verification", response_model=WorkflowResponse)
+async def insurance_verification_workflow(request: WorkflowRequest) -> WorkflowResponse:
+    """
+    Execute insurance verification workflow.
+
+    Queries PMS for upcoming appointments and verifies insurance eligibility
+    via clearinghouse APIs. Flags appointments with coverage issues.
+
+    Returns:
+        WorkflowResponse with:
+        - verified: List of successfully verified appointments
+        - flagged: List of appointments with coverage issues
+        - stats: Summary statistics (total_verified, issues_found, etc.)
+    """
+    correlation_id = request.correlation_id or generate_correlation_id()
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    try:
+        # Mock PMS API client
+        pms_client = request.pms_config
+
+        # Verify insurance eligibility for upcoming appointments
+        verification_results = insurance_verification.verify_upcoming_appointments(
+            pms_api_client=pms_client,
+            days_ahead=7,
+            correlation_id=correlation_id
+        )
+
+        # Build workflow results
+        workflow_results = {
+            "verified": [
+                {
+                    "appointment_id": result.get("appointment_id"),
+                    "status": result.get("status"),
+                    "patient_id": result.get("patient_id")
+                }
+                for result in verification_results
+                if result.get("status") == "active"
+            ],
+            "flagged": [
+                {
+                    "appointment_id": result.get("appointment_id"),
+                    "status": result.get("status"),
+                    "patient_id": result.get("patient_id"),
+                    "issue": result.get("issue")
+                }
+                for result in verification_results
+                if result.get("status") != "active"
+            ],
+            "stats": {
+                "total_verified": len(verification_results),
+                "issues_found": len([r for r in verification_results if r.get("status") != "active"]),
+                "practice_id": request.practice_id
+            }
+        }
+
+        return WorkflowResponse(
+            success=True,
+            workflow_results=workflow_results,
+            audit_id=correlation_id,
+            timestamp=timestamp
+        )
+
+    except Exception as e:
+        return WorkflowResponse(
+            success=False,
+            workflow_results={},
+            audit_id=correlation_id,
+            timestamp=timestamp,
+            error=f"Insurance verification workflow failed: {e!s}"
+        )
+
+
+@app.post("/agents/dental/workflows/recall-reminders", response_model=WorkflowResponse)
+async def recall_reminders_workflow(request: WorkflowRequest) -> WorkflowResponse:
+    """
+    Execute recall reminder workflow.
+
+    Identifies overdue patients and sends personalized recall reminders for
+    routine appointments (cleanings, exams, etc.).
+
+    Returns:
+        WorkflowResponse with:
+        - overdue_patients: List of identified overdue patients
+        - reminders_sent: List of successfully sent reminders
+        - stats: Summary statistics (total_overdue, reminders_sent, etc.)
+    """
+    correlation_id = request.correlation_id or generate_correlation_id()
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    try:
+        # Mock PMS API client
+        pms_client = request.pms_config
+
+        # Identify overdue patients
+        overdue_patients = recall_reminders.identify_overdue_patients(
+            pms_api_client=pms_client,
+            months_overdue=6,
+            correlation_id=correlation_id
+        )
+
+        # Send recall reminders
+        reminder_results = recall_reminders.send_recall_reminders(
+            overdue_patients=overdue_patients,
+            pms_api_client=pms_client,
+            correlation_id=correlation_id
+        )
+
+        # Build workflow results
+        workflow_results = {
+            "overdue_patients": len(overdue_patients),
+            "reminders_sent": len([r for r in reminder_results if r.get("status") == "sent"]),
+            "reminders": [
+                {
+                    "patient_id": result.get("patient_id"),
+                    "status": result.get("status"),
+                    "reminder_type": result.get("reminder_type")
+                }
+                for result in reminder_results
+            ],
+            "stats": {
+                "total_overdue": len(overdue_patients),
+                "reminders_sent": len([r for r in reminder_results if r.get("status") == "sent"]),
+                "practice_id": request.practice_id
+            }
+        }
+
+        return WorkflowResponse(
+            success=True,
+            workflow_results=workflow_results,
+            audit_id=correlation_id,
+            timestamp=timestamp
+        )
+
+    except Exception as e:
+        return WorkflowResponse(
+            success=False,
+            workflow_results={},
+            audit_id=correlation_id,
+            timestamp=timestamp,
+            error=f"Recall reminders workflow failed: {e!s}"
+        )
+
+
+@app.get("/agents/dental/analytics/daily-report", response_model=DailyReportResponse)
+async def daily_analytics_report(
+    practice_id: str,
+    date: str | None = None
+) -> DailyReportResponse:
+    """
+    Get daily analytics report for a practice.
+
+    Retrieves conversion tracking metrics for:
+    - No-show recovery (slots offered, accepted, booked)
+    - Insurance verification (verified, issues flagged, issues resolved)
+    - Recall reminders (reminders sent, responses, bookings)
+
+    Args:
+        practice_id: Practice identifier
+        date: Optional date in YYYY-MM-DD format (defaults to today)
+
+    Returns:
+        DailyReportResponse with comprehensive analytics report
+    """
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    try:
+        # Parse date or use today
+        if date:
+            report_date = datetime.fromisoformat(date).date()
+        else:
+            report_date = datetime.now(timezone.utc).date()
+
+        # Generate daily report
+        report = conversion_tracking.generate_daily_report(
+            practice_id=practice_id,
+            date=report_date
+        )
+
+        return DailyReportResponse(
+            success=True,
+            report=report,
+            timestamp=timestamp
+        )
+
+    except Exception as e:
+        return DailyReportResponse(
+            success=False,
+            report={},
+            timestamp=timestamp,
+            error=f"Failed to generate daily report: {e!s}"
+        )
 
 
 if __name__ == "__main__":
