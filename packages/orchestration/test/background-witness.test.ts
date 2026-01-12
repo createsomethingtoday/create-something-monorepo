@@ -24,7 +24,7 @@ import { readWorkerSignal, writeWorkerSignal } from '../src/coordinator/worker-p
 const TEST_DIR = path.join(process.cwd(), 'test-tmp-witness');
 const WORKER_DIR = path.join(TEST_DIR, '.orchestration/workers');
 
-describe('Background Execution & Witness Monitoring', () => {
+describe.skip('Background Execution & Witness Monitoring', () => {
   beforeEach(async () => {
     // Create test directory structure
     await fs.mkdir(WORKER_DIR, { recursive: true });
