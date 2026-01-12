@@ -180,3 +180,66 @@ Created dental appointment scheduling specialist agent at `packages/agent-sdk/ag
 - Docstring examples should show realistic usage with all required parameters
 
 Completed: 2026-01-12T22:32:00Z
+Completed: 2026-01-12T22:14:30Z
+Thread log: .ralph-archive/iteration-4-20260112-161218.log
+
+---
+## Iteration 5
+Started: 2026-01-12T22:14:32Z
+### Story: story-5 - Create dental coordinator agent
+
+**What was implemented:**
+Created dental practice management coordinator agent at `packages/agent-sdk/agents/dental_coordinator.py` with:
+- Uses Claude Sonnet model (claude-sonnet-4-5-20250929) for sophisticated multi-agent coordination
+- Implements create_dental_coordinator factory function with task, pms_config, and practice_id parameters
+- Comprehensive system prompt covering all 4 coordination roles:
+  1. Task Router: Routes tasks to appropriate specialist agents (scheduler, billing, compliance, records)
+  2. Workflow Orchestrator: Manages multi-step operations (daily ops, monthly reviews, quarterly reports, emergency response)
+  3. Progress Tracker: Uses Beads to track work across sessions, manage dependencies, prevent task loss
+  4. Quality Gatekeeper: Ensures HIPAA compliance across all operations, validates specialist outputs
+- Complete daily operations checklist (4 items):
+  1. No-Show Recovery (via dental_scheduler)
+  2. Waitlist Processing (via dental_scheduler)
+  3. Schedule Optimization (via dental_scheduler)
+  4. Compliance Check (via audit logs)
+- Detailed HIPAA compliance requirements for coordination:
+  - Never pass PHI between agents (only patient_id references)
+  - Ensure every specialist call includes correlation_id
+  - Verify audit logging for all PMS operations
+  - Document compliance violations immediately
+  - Use Beads to track remediation work
+- Coordination patterns (3 patterns: simple delegation, multi-step workflow, continuous monitoring)
+- Beads integration examples with bd commands for task tracking
+- Communication protocol for delegating to specialists
+- Error handling workflow (5 steps from log to document)
+- Complete docstring with example usage showing pms_config and practice_id
+- Skills integration: beads-patterns, dental-scheduling, hipaa-compliance
+
+**Files Changed:**
+- Created: `packages/agent-sdk/agents/dental_coordinator.py` (200 lines)
+
+**Acceptance Criteria Verified:**
+- ✅ File exists at packages/agent-sdk/agents/dental_coordinator.py
+- ✅ Uses Claude Sonnet model for coordination - claude-sonnet-4-5-20250929
+- ✅ Implements create_dental_coordinator factory function - with task, pms_config, practice_id parameters
+- ✅ Task defines 4 coordination roles - Task Router, Workflow Orchestrator, Progress Tracker, Quality Gatekeeper in "Coordination Roles" section
+- ✅ Task includes daily operations checklist (4 items) - No-Show Recovery, Waitlist Processing, Schedule Optimization, Compliance Check
+- ✅ Task includes HIPAA compliance requirements - Complete "HIPAA Compliance Requirements" section
+- ✅ Includes beads-patterns skill for task tracking - skills=["beads-patterns", "dental-scheduling", "hipaa-compliance"]
+- ✅ Includes docstring explaining orchestration role - Complete with example usage showing coordination task
+
+**Learnings for future iterations:**
+- Coordinator agents benefit from more powerful models (Sonnet) for multi-agent orchestration and planning
+- System prompts should define clear coordination patterns (simple delegation, multi-step workflow, continuous monitoring)
+- Daily operations checklists should specify which specialist handles each operation
+- HIPAA compliance at coordinator level means never passing PHI between agents (only patient_id references)
+- Beads integration enables persistent task tracking across coordinator sessions
+- Communication protocols should specify context requirements for delegating to specialists
+- Error handling should include escalation paths (retry → escalate → document)
+- Factory function pattern with max_turns=50 (vs specialist's 30) allows longer coordination flows
+- Skills integration enables coordinator to access both domain knowledge (dental-scheduling) and tooling (beads-patterns)
+
+Completed: 2026-01-12T22:45:00Z
+Thread log: .ralph-archive/iteration-5-20260112-161432.log
+
+---

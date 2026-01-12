@@ -85,7 +85,7 @@
         "Includes docstring explaining orchestration role"
       ],
       "files": ["packages/agent-sdk/agents/dental_coordinator.py"],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-6",
