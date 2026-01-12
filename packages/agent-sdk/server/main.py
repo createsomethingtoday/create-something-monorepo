@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
+import modal
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -24,6 +25,10 @@ from create_something_agents import (
     RalphConfig,
     RalphStopHook,
 )
+
+# Import dental agent factories
+from agents.dental_coordinator import create_dental_coordinator
+from agents.dental_scheduler import create_dental_scheduler
 
 
 class AgentRequest(BaseModel):
@@ -70,6 +75,41 @@ class HealthResponse(BaseModel):
     status: str
     version: str
     timestamp: str
+
+
+# Dental Agent Models
+class DentalAgentRequest(BaseModel):
+    """Request for dental agent operations."""
+
+    practice_id: str = Field(..., description="Practice identifier")
+    operation: str = Field(..., description="Operation to perform: schedule, daily-ops")
+    task: str = Field(..., description="Specific task description")
+    pms_config: dict[str, Any] = Field(..., description="PMS system configuration")
+    correlation_id: str | None = Field(default=None, description="Request correlation ID")
+
+
+class DentalAgentResponse(BaseModel):
+    """Response from dental agent execution."""
+
+    success: bool
+    output: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+    practice_id: str
+    operation: str
+    correlation_id: str
+    timestamp: str
+
+
+# Modal Configuration for Dental Agent SDK
+modal_image = (
+    modal.Image.debian_slim()
+    .pip_install("anthropic", "httpx", "fastapi", "pydantic")
+)
+
+app_modal = modal.App("dental-agent-sdk", image=modal_image)
 
 
 @asynccontextmanager
@@ -255,7 +295,177 @@ async def root() -> dict[str, str]:
         "docs": "/docs",
         "health": "/health",
         "run": "/run",
+        "dental": {
+            "schedule": "/agents/dental/schedule",
+            "daily-ops": "/agents/dental/daily-ops",
+        },
     }
+
+
+# Dental Agent Helper Functions
+def extract_agent_response_data(result: AgentResult) -> tuple[str, str, int, int, float]:
+    """Extract response data from agent result.
+
+    Returns:
+        Tuple of (output, model, input_tokens, output_tokens, cost_usd)
+    """
+    return (
+        result.output,
+        result.model,
+        result.input_tokens,
+        result.output_tokens,
+        result.cost_usd,
+    )
+
+
+def generate_correlation_id() -> str:
+    """Generate a unique correlation ID for request tracking."""
+    return f"dental-{uuid.uuid4()}"
+
+
+# Dental Agent Endpoints
+@app.post("/agents/dental/schedule", response_model=DentalAgentResponse)
+async def dental_schedule(request: DentalAgentRequest) -> DentalAgentResponse:
+    """Execute dental appointment scheduling operations.
+
+    This endpoint handles scheduling-specific operations like:
+    - No-show rescheduling
+    - Open slot finding
+    - Conflict resolution
+    - Workload management
+
+    Uses the dental scheduler specialist agent (Haiku model for cost-effectiveness).
+    """
+    correlation_id = request.correlation_id or generate_correlation_id()
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    try:
+        # Create dental scheduler agent
+        agent = create_dental_scheduler(
+            task=request.task,
+            pms_config=request.pms_config,
+            practice_id=request.practice_id,
+        )
+
+        # Execute
+        result: AgentResult = await agent.run()
+
+        # Extract response data
+        output, model, input_tokens, output_tokens, cost_usd = extract_agent_response_data(result)
+
+        return DentalAgentResponse(
+            success=result.success,
+            output=output,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost_usd=cost_usd,
+            practice_id=request.practice_id,
+            operation="schedule",
+            correlation_id=correlation_id,
+            timestamp=timestamp,
+        )
+
+    except Exception as e:
+        return DentalAgentResponse(
+            success=False,
+            output=f"Scheduling operation failed: {e!s}",
+            model="claude-haiku-4-20250514",
+            input_tokens=0,
+            output_tokens=0,
+            cost_usd=0.0,
+            practice_id=request.practice_id,
+            operation="schedule",
+            correlation_id=correlation_id,
+            timestamp=timestamp,
+        )
+
+
+@app.post("/agents/dental/daily-ops", response_model=DentalAgentResponse)
+async def dental_daily_ops(request: DentalAgentRequest) -> DentalAgentResponse:
+    """Execute dental practice daily operations.
+
+    This endpoint handles multi-agent coordination for daily operations:
+    - No-show recovery
+    - Waitlist processing
+    - Schedule optimization
+    - Compliance checks
+
+    Uses the dental coordinator agent (Sonnet model for sophisticated orchestration).
+    """
+    correlation_id = request.correlation_id or generate_correlation_id()
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    try:
+        # Create dental coordinator agent
+        agent = create_dental_coordinator(
+            task=request.task,
+            pms_config=request.pms_config,
+            practice_id=request.practice_id,
+        )
+
+        # Execute
+        result: AgentResult = await agent.run()
+
+        # Extract response data
+        output, model, input_tokens, output_tokens, cost_usd = extract_agent_response_data(result)
+
+        return DentalAgentResponse(
+            success=result.success,
+            output=output,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost_usd=cost_usd,
+            practice_id=request.practice_id,
+            operation="daily-ops",
+            correlation_id=correlation_id,
+            timestamp=timestamp,
+        )
+
+    except Exception as e:
+        return DentalAgentResponse(
+            success=False,
+            output=f"Daily operations failed: {e!s}",
+            model="claude-sonnet-4-5-20250929",
+            input_tokens=0,
+            output_tokens=0,
+            cost_usd=0.0,
+            practice_id=request.practice_id,
+            operation="daily-ops",
+            correlation_id=correlation_id,
+            timestamp=timestamp,
+        )
+
+
+# Modal Scheduled Function
+@app_modal.function(schedule=modal.Cron("0 6 * * *"))
+async def daily_operations_scheduler():
+    """Scheduled function to trigger daily operations for all active practices.
+
+    Runs at 6:00 AM UTC daily to:
+    1. Query active practices from database
+    2. Trigger daily-ops endpoint for each practice
+    3. Log execution results
+
+    This function would need access to a database of practices in production.
+    For now, it serves as a placeholder for the scheduled trigger pattern.
+    """
+    timestamp = datetime.now(timezone.utc).isoformat()
+    print(f"[{timestamp}] Daily operations scheduler triggered")
+
+    # TODO: In production, query practice database and trigger daily-ops for each
+    # Example:
+    # practices = await get_active_practices()
+    # for practice in practices:
+    #     await dental_daily_ops(DentalAgentRequest(
+    #         practice_id=practice.id,
+    #         operation="daily-ops",
+    #         task="Execute daily operations checklist",
+    #         pms_config=practice.pms_config,
+    #     ))
+
+    print(f"[{timestamp}] Daily operations scheduler completed")
 
 
 if __name__ == "__main__":
