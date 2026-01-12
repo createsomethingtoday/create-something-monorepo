@@ -1,0 +1,34 @@
+{
+  "comparisons": [
+    {
+      "original": "https://scalerfy.webflow.io/",
+      "copy": "https://fluora.webflow.io/",
+      "code_analysis": {
+        "ast_similarity_score": 0.0,
+        "webflow_interactions": 25,
+        "shared_javascript_functions": []
+      },
+      "vision_analysis": {
+        "visual_similarity": "moderate",
+        "animation_similarity": "Cannot determine from static screenshots",
+        "layout_similarity": "Similar dark-themed layout with portfolio sections",
+        "confidence": 0.7
+      }
+    },
+    {
+      "original": "https://interiora.webflow.io/home-02",
+      "copy": "https://fluora.webflow.io/",
+      "code_analysis": {
+        "ast_similarity_score": 0.0,
+        "webflow_interactions": 25,
+        "shared_javascript_functions": []
+      },
+      "vision_analysis": {
+        "visual_similarity": "moderate",
+        "animation_similarity": "Similar circular elements in headers",
+        "layout_similarity": "Similar minimalist approach with section-based structure",
+        "confidence": 0.7
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-01-11 11:52:29",
+  "results": [
+    {
+      "pipeline": "single-pass-gemini-pro",
+      "cost": 0.0292375,
+      "phase_costs": {
+        "Gemini-Pro": 0.0292375
+      },
+      "duration": 44.571725845336914,
+      "lines": 417,
+      "canon_score": 96.66666666666667,
+      "structure_score": 87.5,
+      "anti_patterns": 0,
+      "error": null
+    },
+    {
+      "pipeline": "single-pass-gemini-flash",
+      "cost": 0.0041781,
+      "phase_costs": {
+        "Gemini-Flash": 0.0041781
+      },
+      "duration": 30.821594953536987,
+      "lines": 472,
+      "canon_score": 93.33333333333333,
+      "structure_score": 87.5,
+      "anti_patterns": 0,
+      "error": null
+    },
+    {
+      "pipeline": "plan-execute-sonnet-gemini-pro",
+      "cost": 0.043079894,
+      "phase_costs": {
+        "planning": 2.8644e-05,
+        "execution": 0.04305125
+      },
+      "duration": 93.50989413261414,
+      "lines": 594,
+      "canon_score": 90.0,
+      "structure_score": 87.5,
+      "anti_patterns": 0,
+      "error": null
+    },
+    {
+      "pipeline": "plan-execute-opus-gemini-pro",
+      "cost": 0.04162116999999999,
+      "phase_costs": {
+        "planning": 0.00012117,
+        "execution": 0.041499999999999995
+      },
+      "duration": 98.72233605384827,
+      "lines": 657,
+      "canon_score": 90.0,
+      "structure_score": 87.5,
+      "anti_patterns": 0,
+      "error": null
+    },
+    {
+      "pipeline": "triad-opus-sonnet-gemini-pro",
+      "cost": 0.045465953,
+      "phase_costs": {
+        "planning": 0.00014836499999999997,
+        "validation": 2.0088e-05,
+        "execution": 0.045297500000000004
+      },
+      "duration": 140.12159061431885,
+      "lines": 312,
+      "canon_score": 0.0,
+      "structure_score": 62.5,
+      "anti_patterns": 0,
+      "error": null
+    }
+  ]
+}

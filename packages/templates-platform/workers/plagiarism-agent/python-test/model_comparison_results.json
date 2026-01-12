@@ -1,0 +1,163 @@
+{
+  "test_case": {
+    "record_id": "recfXPwdMUAYZusRK",
+    "case_id": "case_zpyh3cxga2r",
+    "reporter": "craiggarner@sent.com",
+    "original_url": "https://webflow.com/templates/html/prospect-website-template",
+    "copy_url": "https://webflow.com/templates/html/pathwise-website-template",
+    "complaint": "The template \"Pathwise\" borrows too many of the layout ideas and visual motifs from our two best selling templates.",
+    "human_decision": "no_violation",
+    "current_ai_decision": "no_violation",
+    "current_ai_decision_rerun": "minor",
+    "human_outcome": "No action taken",
+    "violator": "Unknown"
+  },
+  "comparison": {
+    "human_decision": "no_violation",
+    "results": [
+      {
+        "model": "Claude Sonnet 3.7 (All-Sonnet)",
+        "decision": "minor",
+        "confidence": 0.7,
+        "aligned_with_human": false,
+        "cost": 0.15,
+        "duration": "3.9s"
+      },
+      {
+        "model": "Gemini (gemini-2.0-flash-exp)",
+        "decision": "minor",
+        "confidence": 0.75,
+        "aligned_with_human": false,
+        "cost": 0.1,
+        "duration": "2.2s"
+      },
+      {
+        "model": "Hybrid (Llama \u2192 Haiku \u2192 Sonnet) - Original",
+        "decision": "no_violation",
+        "confidence": 0.7,
+        "aligned_with_human": true,
+        "cost": 0.17,
+        "duration": "180.0s"
+      }
+    ],
+    "alignment": {
+      "Claude Sonnet 3.7 (All-Sonnet)": false,
+      "Gemini (gemini-2.0-flash-exp)": false,
+      "Hybrid (Llama \u2192 Haiku \u2192 Sonnet) - Original": true
+    }
+  },
+  "detailed_results": [
+    {
+      "model_name": "Claude Sonnet 3.7 (All-Sonnet)",
+      "decision": "minor",
+      "confidence": 0.7,
+      "reasoning": "The code analysis shows significant similarities between the templates, particularly in the use of identical JavaScript libraries (GSAP and Lottie) and nearly identical Webflow interactions (23 vs 24). However, the complaint is vague about specific layout ideas and visual motifs that were allegedly copied. The technical implementation shows high similarity in interaction patterns, but without visual evidence or more specific details about copied design elements, it's difficult to determine if this constitutes a major violation. The similarity in Webflow interactions suggests some level of copying of functional elements.",
+      "extent": "moderate",
+      "transformation": "minimal",
+      "importance": "minor",
+      "impact": "moderate_harm",
+      "cost_usd": 0.15,
+      "duration_seconds": 3.8876988887786865,
+      "code_evidence": {
+        "original": {
+          "css_animations": 0,
+          "css_transitions": 0,
+          "js_libraries": [
+            "GSAP",
+            "Lottie"
+          ],
+          "webflow_interactions": 23,
+          "sections": 0,
+          "grid_layouts": 0,
+          "flex_layouts": 0
+        },
+        "copy": {
+          "css_animations": 0,
+          "css_transitions": 0,
+          "js_libraries": [
+            "GSAP",
+            "Lottie"
+          ],
+          "webflow_interactions": 24,
+          "sections": 0,
+          "grid_layouts": 0,
+          "flex_layouts": 0
+        },
+        "comparison": {
+          "css_animations_match": true,
+          "webflow_similarity": 1,
+          "js_libraries_overlap": [
+            "Lottie",
+            "GSAP"
+          ],
+          "section_count_diff": 0
+        }
+      },
+      "visual_evidence": "N/A (code-only analysis)"
+    },
+    {
+      "model_name": "Gemini (gemini-2.0-flash-exp)",
+      "decision": "minor",
+      "confidence": 0.75,
+      "reasoning": "The analysis indicates a very high Webflow similarity score (1.0), and significant overlap in Javascript libraries (GSAP and Lottie) despite no code similarity. Given that the complaint mentions layout and visual motifs, the Webflow similarity being at 100% suggests that the overall structure and interaction design are highly similar, implying a significant borrowing of the complainant's design. This is more than just coincidental similarity, suggesting a direct derivation of the template structure and feel. The number of interactions is nearly identical suggesting the user experience is very similar.",
+      "extent": "moderate",
+      "transformation": "minimal",
+      "importance": "significant",
+      "impact": "moderate_harm",
+      "cost_usd": 0.1,
+      "duration_seconds": 2.1888909339904785,
+      "code_evidence": {
+        "original": {
+          "css_animations": 0,
+          "css_transitions": 0,
+          "js_libraries": [
+            "GSAP",
+            "Lottie"
+          ],
+          "webflow_interactions": 23,
+          "sections": 0,
+          "grid_layouts": 0,
+          "flex_layouts": 0
+        },
+        "copy": {
+          "css_animations": 0,
+          "css_transitions": 0,
+          "js_libraries": [
+            "GSAP",
+            "Lottie"
+          ],
+          "webflow_interactions": 24,
+          "sections": 0,
+          "grid_layouts": 0,
+          "flex_layouts": 0
+        },
+        "comparison": {
+          "css_animations_match": true,
+          "webflow_similarity": 1,
+          "js_libraries_overlap": [
+            "Lottie",
+            "GSAP"
+          ],
+          "section_count_diff": 0
+        }
+      },
+      "visual_evidence": "N/A (code-only analysis)"
+    },
+    {
+      "model_name": "Hybrid (Llama \u2192 Haiku \u2192 Sonnet) - Original",
+      "decision": "no_violation",
+      "confidence": 0.7,
+      "reasoning": "Layout similarities within acceptable industry standards. No substantial copying detected.",
+      "extent": "minimal",
+      "transformation": "high",
+      "importance": "peripheral",
+      "impact": "little_no_harm",
+      "cost_usd": 0.17,
+      "duration_seconds": 180,
+      "code_evidence": {
+        "note": "See case_zpyh3cxga2r in database"
+      },
+      "visual_evidence": "No substantial visual plagiarism detected"
+    }
+  ]
+}

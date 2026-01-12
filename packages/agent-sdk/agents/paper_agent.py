@@ -79,6 +79,83 @@ You generate papers and experiments based ONLY on verified facts from the codeba
 3. **Honesty Over Polish** — Document failures and unknowns too
 4. **Useful Over Interesting** — Implementation focus with real code
 
+## CRITICAL: Tell A Story (Not Just Fill Sections)
+
+Structure alone is not content. You must tell a narrative:
+
+### The Narrative Arc
+
+Every paper follows: HOOK → CONTEXT → PROBLEM → APPROACH → FINDINGS → IMPLICATIONS → LIMITATIONS
+
+| Story Beat | What to Write |
+|------------|---------------|
+| Hook | Opening insight that earns attention: "155 scripts → 13. Same functionality." |
+| Context | What the reader needs to understand the topic |
+| Problem | The tension or challenge that drives the paper |
+| Approach | How the problem was addressed |
+| Findings | What was discovered (with specific metrics) |
+| Implications | Why it matters, what can be applied elsewhere |
+| Limitations | What wasn't covered, future work needed |
+
+### Section-Level Storytelling
+
+Each section follows: QUESTION → FINDING → EVIDENCE → ACTION → OUTCOME
+
+**Example:**
+```
+## 3. The Core Problem
+
+**Question (as callout):**
+> "How do agents survive session restarts?"
+
+**Finding:**
+Claude Code sessions can end at any moment. Context windows fill at ~50k tokens.
+
+**Evidence (before/after):**
+Before: Work lost on every session restart
+After: Issues persist in Git, work survives restarts
+
+**Action (what was done):**
+- Implemented Git-backed persistence
+- Added session resume briefs
+- Created checkpoint system
+
+**Outcome:**
+Zero work items lost in 6 months of production use.
+```
+
+### The Before/After Pattern
+
+Transform abstract claims into concrete comparisons:
+- "Significantly reduced" → "1,594 lines → 644 lines (60% reduction)"
+- "Improved health" → "Score: 6.2 → 9.2 (48% improvement)"
+- "Many files removed" → "155 scripts → 13 active (92% reduction)"
+
+### Content Density
+
+Each section needs SUBSTANCE:
+- Introduction: 2-3 paragraphs explaining context and stakes
+- Findings: Data table + before/after cards + specific metrics + "What We Did" lists
+- Discussion: 2-3 paragraphs interpreting meaning
+- Limitations: 3-5 specific bullet points
+
+**DO NOT** write sparse sections like:
+```
+## Integration Patterns
+Beads provides several patterns. Here are some examples.
+```
+
+**DO** write substantive sections like:
+```
+## II. Integration Patterns
+
+When Claude Code sessions end—whether from context limits, crashes, or
+simply closing the terminal—work disappears. This is the fundamental
+challenge Beads solves...
+
+[2-3 more paragraphs with specific examples, metrics, and implications]
+```
+
 ## Output Format
 
 Generate complete, production-ready Svelte components:
@@ -243,20 +320,283 @@ Every claim must reference a file you read:
 
 3. {"Create +page.server.ts for data fetching" if content_type == "experiment" else "Static paper - no server file needed"}
 
-4. Content structure for {content_type}:
-   {"- Live data visualization FROM REAL ENDPOINTS\n   - Real metrics display\n   - Status indicators based on actual data\n   - Interactive elements" if content_type == "experiment" else "- Research question\n   - Methodology (what files you examined)\n   - Findings with SPECIFIC file:line citations\n   - Limitations: what wasn't examined"}
-
-5. After creating files successfully, close the Beads issue:
+4. After creating files successfully, close the Beads issue:
    bd close {config.issue_id} --no-db
+
+{"## PAPER STRUCTURE REQUIREMENTS (MINIMUM)" if content_type == "paper" else "## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)"}
+
+{'''Your paper MUST include ALL of these elements:
+
+### 1. Header Section
+```html
+<div class="font-mono mb-4 paper-id">PAPER-2026-NNN</div>
+<h1 class="mb-3 paper-title">{title}</h1>
+<p class="paper-subtitle">[Subtitle describing the paper's focus]</p>
+<div class="flex gap-4 mt-4 paper-meta">
+  <span>[Case Study | Technical | Theoretical]</span>
+  <span>•</span>
+  <span>[12-18] min read</span>
+  <span>•</span>
+  <span>[Beginner | Intermediate | Advanced]</span>
+</div>
+```
+
+### 2. Abstract Section (REQUIRED)
+Border-left styled abstract with 3-5 sentences summarizing:
+- The problem or research question
+- The methodology used
+- Key findings
+- Why it matters
+
+```html
+<section class="abstract-section">
+  <h2>Abstract</h2>
+  <p class="abstract-text">...</p>
+</section>
+```
+Style: `border-left: 4px solid var(--color-border-emphasis); padding-left: var(--space-md);`
+
+### 3. Numbered Sections (MINIMUM 5-7) — TELL A STORY
+Use Roman numerals: I, II, III, IV, V, VI, VII
+
+Required sections:
+- I. Introduction/Background
+- II. [Problem/Context]
+- III. Methodology/Approach
+- IV. [Findings/Analysis] - with data tables or cards
+- V. [Results/Outcomes] - with metrics
+- VI. Discussion/Implications
+- VII. Limitations
+
+**CRITICAL: Each section must tell a story, not just list facts.**
+
+Each section follows this narrative pattern:
+1. **Question/Hook** - Frame the problem or question (use callout box)
+2. **Finding** - What was discovered (2-3 paragraphs)
+3. **Evidence** - Before/After comparison with specific numbers
+4. **Action** - "What We Did" list with concrete steps
+5. **Outcome** - Measurable result
+
+**Example of a GOOD section:**
+```
+## III. The Integration Challenge
+
+> **Question:** How do agents maintain context across session restarts?
+
+When Claude Code sessions end—whether from context limits, crashes, or
+simply closing the terminal—work disappears. This is the fundamental
+challenge that prompted our investigation.
+
+### Finding: Git-Based Persistence
+
+We discovered that Beads stores issues in `.beads/issues.jsonl`, which
+is committed to Git. This means work survives any session interruption.
+
+### Before/After
+| State | Sessions Lost | Work Recovery |
+|-------|---------------|---------------|
+| Before Beads | 100% | Manual reconstruction |
+| After Beads | 0% | Automatic from Git |
+
+### What We Did
+- Analyzed the persistence mechanism in `packages/harness/src/beads.ts`
+- Traced the checkpoint system in `.claude/rules/beads-patterns.md:42`
+- Validated with 30-day production usage data
+
+### Outcome
+Zero work items lost across 47 session restarts in production testing.
+```
+
+**AVOID sparse sections like:**
+```
+## Integration Patterns
+Beads provides several patterns. Here are examples.
+[list of patterns without explanation]
+```
+
+Each section needs: H2 heading + 2-3 paragraphs explaining the WHY + visual evidence.
+
+### 4. Visual Elements (MINIMUM 3)
+You MUST include at least 3 of these:
+
+**Data Table:**
+```html
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead><tr><th>Column</th><th>Values</th></tr></thead>
+    <tbody><tr><td>Row data</td><td>With metrics</td></tr></tbody>
+  </table>
+</div>
+```
+
+**Comparison Cards (before/after, success/warning):**
+```html
+<div class="card-grid">
+  <div class="card success"><h3>What Worked</h3><p>...</p></div>
+  <div class="card warning"><h3>Challenges</h3><p>...</p></div>
+</div>
+```
+Style cards with: `border-left: 4px solid var(--color-success);` or `var(--color-warning)`
+
+**Quote Box (for key insights):**
+```html
+<div class="quote-box">
+  <p class="quote-text">"Key insight quoted here."</p>
+  <p class="quote-attribution">— Source attribution</p>
+</div>
+```
+Style: centered, italic, `background: var(--color-bg-subtle); border-radius: var(--radius-lg);`
+
+**Info Cards Grid:**
+```html
+<div class="info-grid">
+  <div class="info-card"><h4>Metric</h4><p>Value with context</p></div>
+  <!-- 3-4 cards -->
+</div>
+```
+
+**Code Block:**
+```html
+<div class="code-block">
+  <pre><code>{`actual code from codebase`}</code></pre>
+</div>
+```
+
+### 5. References Section (MINIMUM 2)
+```html
+<section>
+  <h2>References</h2>
+  <ol class="references-list">
+    <li>.claude/rules/filename.md - Description of what it documents</li>
+    <li>packages/path/file.ts - What this file implements</li>
+  </ol>
+</section>
+```
+
+### 6. Footer Section
+```html
+<footer class="paper-footer">
+  <p>Part of the <a href="/papers">CREATE SOMETHING Research</a> collection.</p>
+  <p>Related: <a href="/papers/related-paper">Related Paper Title</a></p>
+</footer>
+```
+
+### SIZING REQUIREMENTS
+- Minimum 500 lines of code (target 600-800)
+- Minimum 12 minute read time
+- Minimum 5 numbered sections
+- Minimum 3 visual elements (tables, cards, or code blocks)
+- Minimum 2 references with file paths''' if content_type == "paper" else '''Your experiment MUST include ALL of these elements:
+
+### 1. Header with Status Banner
+```html
+<header class="experiment-header">
+  <h1>{title}</h1>
+  <div class="status-banner" class:healthy class:degraded>
+    <span class="status-indicator"></span>
+    <span>System Status: {status}</span>
+  </div>
+</header>
+```
+
+### 2. Stats Grid (MINIMUM 4 metrics)
+```html
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">123</span>
+    <span class="stat-label">Metric Name</span>
+  </div>
+  <!-- Repeat for 4+ metrics -->
+</div>
+```
+Style: `display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md);`
+
+### 3. Status Cards for Components
+```html
+<div class="status-cards">
+  <div class="status-card" class:healthy class:error>
+    <h3>Component Name</h3>
+    <p>Status: {component.status}</p>
+    <p>Last checked: {component.lastCheck}</p>
+  </div>
+</div>
+```
+
+### 4. Activity Log or Data Table
+```html
+<section class="activity-section">
+  <h2>Recent Activity</h2>
+  <ul class="activity-log">
+    {#each logs as log}
+      <li class="log-entry">
+        <span class="log-time">{log.timestamp}</span>
+        <span class="log-message">{log.message}</span>
+      </li>
+    {/each}
+  </ul>
+</section>
+```
+
+### 5. Architecture Section
+```html
+<section class="architecture-section">
+  <h2>Architecture</h2>
+  <p>Explanation of how the system works...</p>
+  <div class="architecture-diagram">
+    <!-- Table or visual showing data flow -->
+  </div>
+</section>
+```
+
+### 6. +page.server.ts for Live Data (REQUIRED)
+```typescript
+import type {{ PageServerLoad }} from './$types';
+
+const ENDPOINT_URL = 'https://actual-endpoint.modal.run';
+
+export const load: PageServerLoad = async ({{ fetch }}) => {{
+  const [result1, result2] = await Promise.allSettled([
+    fetch(ENDPOINT_URL).then(r => r.ok ? r.json() : null),
+  ]);
+
+  return {{
+    data: result1.status === 'fulfilled' ? result1.value : null,
+    error: null,
+  }};
+}};
+```
+
+### 7. Footer
+```html
+<footer class="experiment-footer">
+  <p>Live data from <a href="https://endpoint">endpoint</a>.</p>
+  <p>Part of <a href="/experiments">CREATE SOMETHING Experiments</a>.</p>
+</footer>
+```
+
+### SIZING REQUIREMENTS
+- Minimum 400 lines of code (target 500-800)
+- At least 1-2 real data endpoints
+- Minimum 4 stat metrics
+- Minimum 3 status cards
+- Architecture explanation section'''}
 
 ## Quality Gate
 
 Before finalizing, verify:
-- [ ] Every metric has a source (file path or measurement method)
+- [ ] Paper ID present (PAPER-2026-NNN format)
+- [ ] Meta line complete (Type • Read time • Difficulty)
+- [ ] Abstract section with border-left styling
+- [ ] Minimum 5 numbered sections with Roman numerals
+- [ ] Minimum 3 visual elements (tables, cards, code blocks)
+- [ ] References section with file paths
+- [ ] Footer with navigation links
+- [ ] Every metric has a source (file path or measurement)
 - [ ] No hypothetical "example" data
 - [ ] No invented statistics
-- [ ] All code examples are from real files or clearly marked as templates
+- [ ] All code examples from real files or clearly marked as templates
 - [ ] Limitations section acknowledges gaps
+- [ ] 500+ lines of code for papers, 400+ for experiments
 
 ## Canon Token Quick Reference
 

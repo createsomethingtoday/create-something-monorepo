@@ -23,6 +23,7 @@ class ProviderResult:
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     iterations: int = 1
     error: str | None = None
+    metadata: dict[str, Any] | None = None  # Provider-specific metadata (e.g., thinking tokens)
 
     @property
     def total_tokens(self) -> int:

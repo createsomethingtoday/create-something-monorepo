@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-01-11 11:45:25",
+  "results": [
+    {
+      "pipeline": "single-pass-gemini-pro",
+      "cost": 0,
+      "phase_costs": {},
+      "duration": 0.0,
+      "lines": 0,
+      "canon_score": 0.0,
+      "structure_score": 0.0,
+      "anti_patterns": 0,
+      "error": "GOOGLE_API_KEY or GEMINI_API_KEY not set"
+    },
+    {
+      "pipeline": "single-pass-gemini-flash",
+      "cost": 0,
+      "phase_costs": {},
+      "duration": 0.0,
+      "lines": 0,
+      "canon_score": 0.0,
+      "structure_score": 0.0,
+      "anti_patterns": 0,
+      "error": "GOOGLE_API_KEY or GEMINI_API_KEY not set"
+    },
+    {
+      "pipeline": "plan-execute-sonnet-gemini-pro",
+      "cost": 0.0,
+      "phase_costs": {},
+      "duration": 0.0,
+      "lines": 0,
+      "canon_score": 0.0,
+      "structure_score": 0.0,
+      "anti_patterns": 0,
+      "error": "Planning failed: \"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\""
+    },
+    {
+      "pipeline": "plan-execute-opus-gemini-pro",
+      "cost": 0.0,
+      "phase_costs": {},
+      "duration": 0.0,
+      "lines": 0,
+      "canon_score": 0.0,
+      "structure_score": 0.0,
+      "anti_patterns": 0,
+      "error": "Planning failed: \"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\""
+    },
+    {
+      "pipeline": "triad-opus-sonnet-gemini-pro",
+      "cost": 0.0,
+      "phase_costs": {},
+      "duration": 0.0,
+      "lines": 0,
+      "canon_score": 0.0,
+      "structure_score": 0.0,
+      "anti_patterns": 0,
+      "error": "Planning failed: \"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\""
+    }
+  ]
+}

@@ -15,6 +15,67 @@ import Anthropic from '@anthropic-ai/sdk';
 import puppeteer from '@cloudflare/puppeteer';
 
 // =============================================================================
+// RETRY / BACKOFF (Anthropic overload resilience)
+// =============================================================================
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableAnthropicError(error: any): boolean {
+  const status = error?.status ?? error?.response?.status;
+  const msg = (error?.message || '').toLowerCase();
+  // Common transient failures
+  return (
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 529 || // overloaded
+    msg.includes('overloaded') ||
+    msg.includes('timeout') ||
+    msg.includes('econnreset') ||
+    msg.includes('etimedout') ||
+    msg.includes('temporarily') ||
+    msg.includes('rate limit')
+  );
+}
+
+async function anthropicCreateWithRetry(
+  anthropic: Anthropic,
+  params: Anthropic.MessageCreateParamsNonStreaming,
+  options?: { maxRetries?: number; baseDelayMs?: number }
+): Promise<Anthropic.Message> {
+  const maxRetries = options?.maxRetries ?? 3;
+  const baseDelayMs = options?.baseDelayMs ?? 750;
+
+  let attempt = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      return await anthropic.messages.create(params);
+    } catch (error: any) {
+      attempt += 1;
+      const retryable = isRetryableAnthropicError(error);
+      if (!retryable || attempt > maxRetries) {
+        throw error;
+      }
+
+      const backoff = Math.min(8000, baseDelayMs * Math.pow(2, attempt - 1));
+      const jitter = Math.floor(Math.random() * 250);
+      const delay = backoff + jitter;
+
+      console.log(`[Agent] Anthropic request failed (attempt ${attempt}/${maxRetries}) - retrying in ${delay}ms`, {
+        status: error?.status,
+        message: error?.message
+      });
+
+      await sleep(delay);
+    }
+  }
+}
+
+// =============================================================================
 // TYPES
 // =============================================================================
 
@@ -484,9 +545,11 @@ Begin investigation.`;
     console.log(`[Agent] Iteration ${state.iteration}/${maxIterations}`);
 
     try {
-      const response = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 4096,
+      const response = await anthropicCreateWithRetry(anthropic, {
+        model: 'claude-3-7-sonnet-20250219',
+        temperature: 0,
+        // Lower token budget reduces load and latency in high-traffic windows
+        max_tokens: 2500,
         system: systemPrompt,
         messages,
         tools: TOOLS

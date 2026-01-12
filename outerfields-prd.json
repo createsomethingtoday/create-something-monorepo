@@ -1,0 +1,407 @@
+{
+  "title": "Outerfields PCN Landing Page Redesign",
+  "description": "Transform the Outerfields landing page into a Netflix-style gated content platform with $99 lifetime membership as the core conversion goal. Implement premium content network with tiered video access, authentication, Stripe integration, and analytics dashboard.",
+  "created": "2026-01-12T00:00:00Z",
+  "target_package": "packages/agency/clients/outerfields",
+  "stories": [
+    {
+      "id": "story-1",
+      "phase": "Phase 1: Foundational",
+      "title": "Authentication and User System",
+      "description": "Implement authentication system with email/password, session management, and user state tracking. Set up database schema for users, subscriptions, and content access.",
+      "acceptance": [
+        "User registration with email/password works",
+        "Login/logout functionality complete",
+        "Session persistence across page reloads",
+        "User state tracked in database (D1)",
+        "Protected routes redirect to login",
+        "Tests pass: pnpm test --filter=outerfields"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/routes/auth/+page.svelte",
+        "packages/agency/clients/outerfields/src/lib/server/auth.ts",
+        "packages/agency/clients/outerfields/migrations/001_users.sql"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-2",
+      "phase": "Phase 1: Foundational",
+      "title": "Stripe $99 Membership Integration",
+      "description": "Integrate Stripe Checkout for $99 one-time payment. Create membership activation flow that grants access after successful payment. Store subscription status in database.",
+      "acceptance": [
+        "Stripe Checkout session created for $99 payment",
+        "Webhook handler processes successful payment",
+        "User granted 'lifetime_member' status after payment",
+        "Membership status persists in database",
+        "Payment confirmation page displays",
+        "Test mode payment completes successfully"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/routes/api/stripe/checkout/+server.ts",
+        "packages/agency/clients/outerfields/src/routes/api/stripe/webhook/+server.ts",
+        "packages/agency/clients/outerfields/src/routes/membership/success/+page.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-3",
+      "phase": "Phase 1: Foundational",
+      "title": "Gated Access System Foundation",
+      "description": "Create gated access component that checks user membership status. Implement modal overlay for non-members with upgrade CTA. Define access tiers: fully_playable, preview_with_gate.",
+      "acceptance": [
+        "GatedContent component checks membership status",
+        "Non-members see modal with 'Unlock Full Access' CTA",
+        "Members bypass gate and see full content",
+        "Modal links to /membership/upgrade route",
+        "Access tiers defined in types",
+        "Component uses Canon tokens for styling"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/GatedContent.svelte",
+        "packages/agency/clients/outerfields/src/lib/types/access.ts",
+        "packages/agency/clients/outerfields/src/routes/membership/upgrade/+page.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-4",
+      "phase": "Phase 1: Foundational",
+      "title": "Video Content Database and Basic Player",
+      "description": "Set up database schema for video content with metadata (title, description, duration, thumbnail, access_tier). Create basic video player component with controls.",
+      "acceptance": [
+        "Migration creates videos table with all fields",
+        "Sample seed data for 5+ videos loads successfully",
+        "VideoPlayer component renders video with controls",
+        "Video metadata displays (title, duration)",
+        "Thumbnail shown before play",
+        "Player respects access_tier field"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/migrations/002_videos.sql",
+        "packages/agency/clients/outerfields/src/lib/server/seed-videos.ts",
+        "packages/agency/clients/outerfields/src/lib/components/VideoPlayer.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-5",
+      "phase": "Phase 1: Foundational",
+      "title": "Netflix-Style Content Category Component",
+      "description": "Create CategoryRow component with horizontal scrolling. Implement arrow navigation and video card grid. Style matches Netflix aesthetic with Canon tokens.",
+      "acceptance": [
+        "CategoryRow displays videos in horizontal scroll",
+        "Left/right arrow buttons navigate content",
+        "Video cards show thumbnail, title, duration",
+        "Hover state reveals play button",
+        "Responsive design works on mobile",
+        "Uses --color-bg-surface and Canon spacing tokens"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/CategoryRow.svelte",
+        "packages/agency/clients/outerfields/src/lib/components/VideoCard.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-6",
+      "phase": "Phase 2: Core Experience",
+      "title": "Hero Section with Galaxy Animation",
+      "description": "Create hero section with 'Building Outerfields: The Odyssey' title, galaxy/space animation background, and primary CTA. Implement scroll-triggered parallax effect.",
+      "acceptance": [
+        "Hero section renders with galaxy animation",
+        "Title 'Building Outerfields: The Odyssey' displays with --text-display",
+        "Animation uses Canvas or CSS for stars/galaxy effect",
+        "Primary CTA button leads to /membership",
+        "Parallax scroll effect works smoothly",
+        "Animation respects prefers-reduced-motion"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/routes/+page.svelte",
+        "packages/agency/clients/outerfields/src/lib/components/GalaxyHero.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-7",
+      "phase": "Phase 2: Core Experience",
+      "title": "Analytics Dashboard Section with Gated Preview",
+      "description": "Create Analytics Dashboard section showing real-time metrics from ClickUp, Instagram, YouTube. Gate detailed metrics behind membership with preview visible to all.",
+      "acceptance": [
+        "Dashboard section displays on homepage",
+        "Preview shows 3-4 high-level metrics (tasks, followers, views)",
+        "Detailed metrics gated behind GatedContent component",
+        "Non-members see 'Unlock Full Analytics' modal",
+        "Real-time data fetched from APIs (or mock data initially)",
+        "Chart visualizations use Canon color tokens"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/AnalyticsDashboard.svelte",
+        "packages/agency/clients/outerfields/src/routes/api/analytics/+server.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-8",
+      "phase": "Phase 2: Core Experience",
+      "title": "Crew Call Series Content Category",
+      "description": "Implement Crew Call Series category with 20+ episodes. Mix of fully playable (3-4 episodes) and preview-with-gate access. Load video data from database.",
+      "acceptance": [
+        "Crew Call Series section renders on homepage",
+        "Shows 20+ episodes in CategoryRow",
+        "First 3-4 episodes are fully_playable",
+        "Remaining episodes preview_with_gate (30-60 sec)",
+        "Video metadata accurate (titles, thumbnails)",
+        "Gating works correctly for non-members"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/server/content/crew-call-series.ts",
+        "packages/agency/clients/outerfields/src/routes/+page.server.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-9",
+      "phase": "Phase 2: Core Experience",
+      "title": "Reconnecting Relationships Content Category",
+      "description": "Add Reconnecting Relationships category with 3 episodes. All episodes fully playable to showcase high-quality content and drive conversions.",
+      "acceptance": [
+        "Reconnecting Relationships section renders",
+        "3 episodes display with metadata",
+        "All episodes set to fully_playable access tier",
+        "Video player works for all episodes",
+        "Thumbnail quality high resolution",
+        "Section positioned strategically on page"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/server/content/reconnecting-relationships.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-10",
+      "phase": "Phase 2: Core Experience",
+      "title": "Kodiak Series and Lincoln Manufacturing Council",
+      "description": "Implement Kodiak Series (8 episodes) and Lincoln Manufacturing Council (7-8 episodes) categories. Mix of preview and full access.",
+      "acceptance": [
+        "Both categories render on homepage",
+        "Kodiak Series: 8 episodes with mixed access tiers",
+        "Lincoln Manufacturing: 7-8 episodes with mixed access",
+        "Video cards display correctly in CategoryRow",
+        "Gating logic works for each video individually",
+        "Episode metadata accurate"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/server/content/kodiak-series.ts",
+        "packages/agency/clients/outerfields/src/lib/server/content/lincoln-manufacturing.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-11",
+      "phase": "Phase 2: Core Experience",
+      "title": "Guns Out TV Podcast and Films",
+      "description": "Add Guns Out TV Podcast category (13 episodes) and Films category (1 film: '20 Leaders'). Podcast mixed access, film fully playable.",
+      "acceptance": [
+        "Guns Out TV Podcast section with 13 episodes",
+        "Films section with '20 Leaders' featured prominently",
+        "Podcast episodes: mix of preview and full access",
+        "Film: fully_playable to showcase quality",
+        "Both categories styled consistently",
+        "Video metadata complete"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/server/content/guns-out-tv.ts",
+        "packages/agency/clients/outerfields/src/lib/server/content/films.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-12",
+      "phase": "Phase 2: Core Experience",
+      "title": "Coming Soon and Exclusive Content Trailers",
+      "description": "Create Coming Soon section with 5 exclusive content trailers. All trailers fully playable to build anticipation and demonstrate value.",
+      "acceptance": [
+        "Coming Soon section renders",
+        "5 trailers display with high-quality thumbnails",
+        "All trailers fully_playable",
+        "Trailers show upcoming content themes",
+        "Section positioned near end of homepage",
+        "Builds urgency and FOMO"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/server/content/coming-soon.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-13",
+      "phase": "Phase 2: Core Experience",
+      "title": "Component Lab / Digital Tools Section",
+      "description": "Create Component Lab section showcasing tools and templates. Gate interactive features behind membership with preview of tool library visible.",
+      "acceptance": [
+        "Component Lab section displays on homepage",
+        "Tool library preview shows 6-8 tools",
+        "Interactive features gated behind membership",
+        "Non-members see tool list but can't use them",
+        "'Unlock Full Access' CTA appears on interaction",
+        "Section demonstrates practical value"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/ComponentLab.svelte",
+        "packages/agency/clients/outerfields/src/routes/tools/+page.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-14",
+      "phase": "Phase 3: Value Enhancement",
+      "title": "Journey Section with Code+Media+Build+Sell Formula",
+      "description": "Create Journey section explaining the Code+Media+Build+Sell approach. Use visual diagram or step-by-step cards to illustrate the formula.",
+      "acceptance": [
+        "Journey section renders between hero and content",
+        "4 steps clearly illustrated: Code, Media, Build, Sell",
+        "Visual diagram or card grid layout",
+        "Each step has icon and description",
+        "Section uses Canon spacing tokens",
+        "Mobile-responsive design"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/JourneySection.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-15",
+      "phase": "Phase 3: Value Enhancement",
+      "title": "Competitive Comparison Section",
+      "description": "Add competitive comparison showing Outerfields vs Patreon, Substack, and YouTube memberships. Highlight unique value propositions and pricing advantage.",
+      "acceptance": [
+        "Comparison table displays 4 columns",
+        "Features compared: access model, pricing, content depth, tools",
+        "Outerfields advantages highlighted visually",
+        "$99 lifetime vs monthly recurring emphasized",
+        "Uses --color-success for Outerfields checkmarks",
+        "Section positioned before final pricing"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/CompetitiveComparison.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-16",
+      "phase": "Phase 3: Value Enhancement",
+      "title": "Calendly Discovery Call Integration",
+      "description": "Integrate Calendly widget for discovery call scheduling. Add CTA section for users who want direct consultation before purchasing.",
+      "acceptance": [
+        "Calendly widget embedded on /discovery route",
+        "CTA section on homepage links to discovery call",
+        "Widget loads Outerfields Calendly link",
+        "Form submission confirmation appears",
+        "Section positioned near competitive comparison",
+        "Mobile-friendly widget display"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/routes/discovery/+page.svelte",
+        "packages/agency/clients/outerfields/src/lib/components/DiscoveryCallCTA.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-17",
+      "phase": "Phase 3: Value Enhancement",
+      "title": "Single Pricing Section for $99 Lifetime",
+      "description": "Create focused pricing section with single offer: $99 lifetime membership. Emphasize value, one-time payment, and full access benefits.",
+      "acceptance": [
+        "Pricing section displays single plan card",
+        "Price shown: $99 (one-time payment)",
+        "Benefits listed: unlimited access, all content, tools, future updates",
+        "Primary CTA button leads to Stripe checkout",
+        "Social proof or testimonial included",
+        "Section uses --color-success for CTA"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/PricingSection.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-18",
+      "phase": "Phase 3: Value Enhancement",
+      "title": "How It All Connects Section Flow",
+      "description": "Update or create 'How It All Connects' section showing the complete Outerfields ecosystem and how different components work together.",
+      "acceptance": [
+        "Section explains content → tools → community flow",
+        "Visual diagram or interconnected cards",
+        "Shows value of integrated approach",
+        "Positioned after content categories",
+        "Reinforces why membership matters",
+        "Uses Canon tokens consistently"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/HowItConnects.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-19",
+      "phase": "Phase 4: Polish & Optimization",
+      "title": "Copy Polish and Urgency Messaging",
+      "description": "Refine all copy throughout the site. Add urgency messaging where appropriate (limited spots, early access, exclusive content). Ensure voice matches Canon standards.",
+      "acceptance": [
+        "All section headlines compelling and clear",
+        "CTAs use action-oriented language",
+        "Urgency elements added (not aggressive)",
+        "Copy follows Voice Canon principles",
+        "No marketing jargon (flagged by audit-voice)",
+        "Testimonials or social proof integrated"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/content/copy.ts",
+        "packages/agency/clients/outerfields/src/routes/+page.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-20",
+      "phase": "Phase 4: Polish & Optimization",
+      "title": "Mobile Refinement and Responsive Design",
+      "description": "Ensure all components work perfectly on mobile devices. Test horizontal scrolling, video playback, modals, and forms on small screens.",
+      "acceptance": [
+        "All CategoryRow components scroll smoothly on mobile",
+        "Video player controls accessible on touch screens",
+        "Gated content modals display correctly",
+        "Navigation menu works on mobile",
+        "Font sizes use clamp() for responsive scaling",
+        "Touch targets meet accessibility guidelines (44px min)"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/app.css",
+        "packages/agency/clients/outerfields/src/lib/components/*.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-21",
+      "phase": "Phase 4: Polish & Optimization",
+      "title": "Technical Documentation and Testing",
+      "description": "Create technical documentation for the implementation. Write tests for critical paths: authentication, payment flow, gated access. Document deployment process.",
+      "acceptance": [
+        "README.md documents local setup and deployment",
+        "Tests cover authentication flow (login, logout, session)",
+        "Tests cover Stripe webhook handling",
+        "Tests cover gated access logic",
+        "E2E test for complete conversion funnel",
+        "All tests pass: pnpm test --filter=outerfields"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/README.md",
+        "packages/agency/clients/outerfields/tests/auth.test.ts",
+        "packages/agency/clients/outerfields/tests/membership.test.ts",
+        "packages/agency/clients/outerfields/tests/e2e/conversion-funnel.spec.ts"
+      ],
+      "passes": false
+    }
+  ]
+}

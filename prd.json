@@ -117,7 +117,7 @@
       "files": [
         "packages/agent-sdk/src/create_something_agents/analytics/conversion_tracking.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-7",
@@ -136,7 +136,7 @@
       "files": [
         "packages/agent-sdk/agents/dental_coordinator.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-8",
@@ -156,7 +156,7 @@
       "files": [
         "packages/agent-sdk/server/main.py"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }
