@@ -35,6 +35,7 @@
 			totalMarketplaceSales: number;
 			userBestRank: number | null;
 			lastUpdated: string;
+			nextUpdateDate?: string;
 		};
 	}
 
@@ -54,8 +55,41 @@
 	let summary = $state({
 		totalMarketplaceSales: 0,
 		userBestRank: null as number | null,
-		lastUpdated: ''
+		lastUpdated: '',
+		nextUpdateDate: undefined as string | undefined
 	});
+	
+	/**
+	 * Format the last updated timestamp
+	 */
+	function formatLastUpdated(isoDate: string): string {
+		const date = new Date(isoDate);
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+		
+		if (diffDays === 0) return 'today';
+		if (diffDays === 1) return 'yesterday';
+		if (diffDays < 7) return `${diffDays} days ago`;
+		
+		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+	}
+	
+	/**
+	 * Format the next update date
+	 */
+	function formatNextUpdate(isoDate: string): string {
+		const date = new Date(isoDate);
+		const now = new Date();
+		const diffMs = date.getTime() - now.getTime();
+		const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+		
+		if (diffDays === 0) return 'today';
+		if (diffDays === 1) return 'tomorrow';
+		if (diffDays < 7) return `in ${diffDays} days`;
+		
+		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+	}
 
 	$effect(() => {
 		loadData();
@@ -122,15 +156,27 @@
 				<div class="header-content">
 					<h1 class="page-title">Marketplace Insights</h1>
 					<p class="page-subtitle">
-						Weekly marketplace trends, top performers, and opportunities for your next template
+						Weekly marketplace snapshot with 30-day performance data
 					</p>
-					<p class="sync-info">
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="10" />
-							<path d="M12 6v6l4 2" />
-						</svg>
-						Data synced weekly (Mondays at 4 PM UTC) • Rolling 30-day window
-					</p>
+					{#if summary.lastUpdated}
+						<div class="sync-info-container">
+							<p class="sync-info">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<circle cx="12" cy="12" r="10" />
+									<path d="M12 6v6l4 2" />
+								</svg>
+								<span class="sync-text">
+									Last updated: <strong>{formatLastUpdated(summary.lastUpdated)}</strong>
+									{#if summary.nextUpdateDate}
+										<span class="next-update">• Next update: {formatNextUpdate(summary.nextUpdateDate)}</span>
+									{/if}
+								</span>
+							</p>
+							<p class="sync-note">
+								📊 Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window
+							</p>
+						</div>
+					{/if}
 				</div>
 			</div>
 
@@ -212,13 +258,49 @@
 		margin: 0 0 var(--space-sm);
 	}
 
+	.sync-info-container {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		margin-top: var(--space-sm);
+	}
+
 	.sync-info {
 		display: flex;
 		align-items: center;
 		gap: var(--space-xs);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin: 0;
+	}
+
+	.sync-info svg {
+		flex-shrink: 0;
+		color: var(--color-info);
+	}
+
+	.sync-text {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		flex-wrap: wrap;
+	}
+
+	.sync-text strong {
+		color: var(--color-fg-primary);
+		font-weight: var(--font-semibold);
+	}
+
+	.next-update {
+		color: var(--color-fg-muted);
+	}
+
+	.sync-note {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		margin: 0;
+		padding-left: 22px; /* Align with text above (icon width + gap) */
+		font-style: italic;
 	}
 
 	.loading-container {

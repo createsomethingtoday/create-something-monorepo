@@ -46,6 +46,7 @@
 			totalMarketplaceSales: number;
 			userBestRank: number | null;
 			lastUpdated: string;
+			nextUpdateDate?: string;
 		};
 	}
 
@@ -164,8 +165,12 @@
 		<Card>
 			<CardContent>
 				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 0 }}>
-					<span class="stat-label">Marketplace Sales (30d)</span>
+					<div class="stat-header">
+						<span class="stat-label">Total Sales (30d)</span>
+						<span class="stat-badge">Weekly Snapshot</span>
+					</div>
 					<span class="stat-value"><KineticNumber value={summary.totalMarketplaceSales} /></span>
+					<span class="stat-note">across all categories</span>
 				</div>
 			</CardContent>
 		</Card>
@@ -529,8 +534,15 @@
 	.stat-card {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-xs);
 		padding: var(--space-xs) 0;
+	}
+
+	.stat-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		flex-wrap: wrap;
 	}
 
 	.stat-card .stat-label {
@@ -541,12 +553,29 @@
 		letter-spacing: 0.02em;
 	}
 
+	.stat-badge {
+		font-size: 10px;
+		padding: 2px 6px;
+		background: var(--color-info-muted);
+		color: var(--color-info);
+		border-radius: var(--radius-sm);
+		font-weight: var(--font-medium);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
 	.stat-card .stat-value {
 		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		line-height: 1.2;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.stat-note {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		font-style: italic;
 	}
 
 	.section-title {

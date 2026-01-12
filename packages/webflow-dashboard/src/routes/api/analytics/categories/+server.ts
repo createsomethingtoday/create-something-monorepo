@@ -4,8 +4,15 @@ import { getAirtableClient } from '$lib/server/airtable';
 
 /**
  * API endpoint to fetch category performance data
- * Data Sync: Weekly on Mondays at 16:00 UTC
- * Shows: Rolling 30-day window of performance data
+ * 
+ * DATA UPDATE SCHEDULE:
+ * - Source: Webflow's external data pipeline updates Airtable weekly
+ * - Schedule: Every Monday at 16:00 UTC (4 PM UTC)
+ * - Window: Rolling 30-day performance data
+ * - Frequency: Category data remains static between weekly updates
+ * 
+ * IMPORTANT: The category sales numbers will NOT change daily. They only update
+ * when Webflow's external system refreshes the Airtable data on Mondays at 4 PM UTC.
  */
 export const GET: RequestHandler = async ({ locals, platform }) => {
 	if (!locals.user?.email) {
