@@ -639,7 +639,8 @@ Decide:
 - "obvious_yes": Clear plagiarism
 - "needs_analysis": Requires detailed review
 
-Return JSON: {"decision": "...", "reasoning": "..."}`;
+IMPORTANT: Return ONLY valid JSON, nothing else. No markdown, no formatting, no explanatory text.
+Format: {"decision": "...", "reasoning": "..."}`;
 
   const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
     messages: [{ role: 'user', content: prompt }]
@@ -697,7 +698,7 @@ Provide editorial scores:
 - importance: peripheral | minor | significant | major
 - impact: little/no harm | moderate harm | significant harm
 
-Return JSON:
+IMPORTANT: Return ONLY valid JSON, nothing else.
 {
   "decision": "no_violation" | "minor" | "major" | "unclear",
   "confidence": 0.0-1.0,
@@ -918,7 +919,7 @@ ${codeAnalysis ?
 
 Provide final decision with detailed reasoning and confidence level.
 
-Return JSON:
+IMPORTANT: Return ONLY valid JSON, nothing else.
 {
   "decision": "no_violation" | "minor" | "major",
   "reasoning": "Detailed explanation",
