@@ -265,5 +265,26 @@ published: true
 <p>
 		Philosophy without application is empty. Here is how Canon's philosophy manifests in code:
 	</p>
-<codeblock *="" .card="" .card:hover="" 1.="" 1px="" 2.="" 3.="" a="" all="" applied="" background:="" border-color="" border-color:="" border-radius:="" border:="" code="{`/*" coherence="" component="" consistent="" decoration="" don't="" dry:="" existing="" gradients,="" heidegger:="" hover="" language="css" necessary="" no="" only="" or="" other="" padding:="" properties="" rams:="" reinvent="" serve="" shadows,="" solid="" states="" subtractive="" system's="" the="" title="subtractive-component.css" to="" tokens,="" transition:="" triad="" use="" var(--color-bg-surface);="" var(--color-border-default);="" var(--color-border-emphasis);="" var(--duration-micro)="" var(--ease-standard);="" var(--radius-lg);="" var(--space-md);="" with="" {="" }="" }`}=""></codeblock>
+
+```css
+/* Subtractive Triad Applied */
+.card {
+  /* 1. DRY: Use existing tokens, don't reinvent */
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  
+  /* 2. Rams: Only necessary properties */
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  
+  /* 3. Heidegger: Serve the system's coherence */
+  transition: all var(--duration-micro) var(--ease-standard);
+}
+
+.card:hover {
+  /* Consistent hover states with other components */
+  border-color: var(--color-border-emphasis);
+  /* No gradients, shadows, or decoration */
+}
+```
 
