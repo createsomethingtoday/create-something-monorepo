@@ -1,0 +1,126 @@
+{
+  "title": "Dental Practice Management Agent - Phase 1 Foundation",
+  "description": "Build HIPAA-compliant dental practice management agent foundation with skills documentation, API tools, and specialist agents",
+  "created": "2026-01-12T00:00:00Z",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Create HIPAA compliance skill documentation",
+      "description": "Document HIPAA compliance requirements including encryption, access controls, audit logging, BAA requirements, and minimum necessary determinations",
+      "acceptance": [
+        "File exists at .claude/rules/hipaa-compliance.md",
+        "Includes absolute rules (never log PHI, encryption requirements)",
+        "Documents audit logging requirements with example JSON",
+        "Includes data minimization guidelines",
+        "Provides BAA template clauses",
+        "Contains minimum necessary determinations matrix",
+        "Includes compliance checklist"
+      ],
+      "files": [".claude/rules/hipaa-compliance.md"],
+      "passes": true
+    },
+    {
+      "id": "story-2",
+      "title": "Create dental scheduling skill documentation",
+      "description": "Document dental appointment scheduling patterns including workflows, rules, and integration points",
+      "acceptance": [
+        "File exists at .claude/rules/dental-scheduling.md",
+        "Documents no-show rescheduling workflow with 7 steps",
+        "Includes appointment conflict resolution pattern",
+        "Documents waitlist management workflow",
+        "Defines provider constraints (time, expertise, fatigue)",
+        "Defines equipment constraints (chairs, X-ray)",
+        "Lists patient preferences patterns",
+        "Documents integration points with PMS APIs"
+      ],
+      "files": [".claude/rules/dental-scheduling.md"],
+      "passes": false
+    },
+    {
+      "id": "story-3",
+      "title": "Implement dental API tool handlers",
+      "description": "Create HIPAA-compliant tool handlers for dental PMS system integration supporting Dentrix, Open Dental, and Eaglesoft",
+      "acceptance": [
+        "File exists at packages/agent-sdk/src/create_something_agents/tools/dental.py",
+        "Implements dental_api_tool schema with 7 actions",
+        "Implements execute_dental_api function with audit logging",
+        "Implements 7 private API functions (_get_appointments, _check_availability, etc.)",
+        "Includes _log_audit_trail function with 6-year retention note",
+        "All functions use httpx.AsyncClient",
+        "No PHI in logs (only patient_id references)",
+        "Includes docstrings for all public functions"
+      ],
+      "files": ["packages/agent-sdk/src/create_something_agents/tools/dental.py"],
+      "passes": false
+    },
+    {
+      "id": "story-4",
+      "title": "Create dental scheduler specialist agent",
+      "description": "Build specialist agent for appointment scheduling operations using Haiku model",
+      "acceptance": [
+        "File exists at packages/agent-sdk/agents/dental_scheduler.py",
+        "Uses Claude Haiku model for cost-effectiveness",
+        "Implements create_dental_scheduler factory function",
+        "Task includes 4 responsibilities (no-shows, open slots, conflicts, workload)",
+        "Task includes HIPAA compliance rules",
+        "Task includes workflow (7 steps from query to log)",
+        "Registers dental_api_handler with PMS credentials",
+        "Includes docstring explaining purpose"
+      ],
+      "files": ["packages/agent-sdk/agents/dental_scheduler.py"],
+      "passes": false
+    },
+    {
+      "id": "story-5",
+      "title": "Create dental coordinator agent",
+      "description": "Build central orchestration agent that routes to specialist agents using Sonnet model",
+      "acceptance": [
+        "File exists at packages/agent-sdk/agents/dental_coordinator.py",
+        "Uses Claude Sonnet model for coordination",
+        "Implements create_dental_coordinator factory function",
+        "Task defines 4 coordination roles",
+        "Task includes daily operations checklist (4 items)",
+        "Task includes HIPAA compliance requirements",
+        "Includes beads-patterns skill for task tracking",
+        "Includes docstring explaining orchestration role"
+      ],
+      "files": ["packages/agent-sdk/agents/dental_coordinator.py"],
+      "passes": false
+    },
+    {
+      "id": "story-6",
+      "title": "Extend FastAPI server for Modal deployment",
+      "description": "Add dental agent endpoints to existing FastAPI server with Modal configuration",
+      "acceptance": [
+        "Updates packages/agent-sdk/server/main.py (extends existing)",
+        "Creates Modal app named 'dental-agent-sdk'",
+        "Defines Modal image with anthropic, httpx, fastapi, pydantic",
+        "Implements POST /agents/dental/schedule endpoint",
+        "Implements POST /agents/dental/daily-ops endpoint",
+        "Includes scheduled daily_operations_scheduler function (6am cron)",
+        "All endpoints return DentalAgentResponse model",
+        "Includes helper functions for response extraction"
+      ],
+      "files": ["packages/agent-sdk/server/main.py"],
+      "passes": false
+    },
+    {
+      "id": "story-7",
+      "title": "Create Cloudflare Worker edge router",
+      "description": "Build edge router Worker that calls Modal backend and handles auth, rate limiting, audit logging",
+      "acceptance": [
+        "File exists at packages/agency/workers/dental-agent-router/src/index.ts",
+        "Implements fetch handler with Env interface (MODAL_ENDPOINT_URL, MODAL_API_KEY, DB, AUDIT_LOG)",
+        "Extracts practice_id and operation from request",
+        "Queries D1 for practice config and validation",
+        "Gets encrypted PMS config from D1",
+        "Calls Modal endpoint with full context",
+        "Logs to KV AUDIT_LOG with 6-year TTL",
+        "Includes error handling and rate limiting check",
+        "Returns JSON response"
+      ],
+      "files": ["packages/agency/workers/dental-agent-router/src/index.ts"],
+      "passes": false
+    }
+  ]
+}
