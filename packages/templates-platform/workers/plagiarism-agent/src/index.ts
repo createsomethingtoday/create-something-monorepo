@@ -1077,9 +1077,11 @@ function extractAllUrls(rawUrl: string): string[] {
       .replace(/[<>]/g, '')
       .trim();
 
-    // Basic URL validation
-    if (cleaned && (cleaned.startsWith('http://') || cleaned.startsWith('https://'))) {
-      urls.push(cleaned);
+    // Handle labels before URLs (e.g., "Hollow template: https://...")
+    // Extract URL starting from http:// or https://
+    const urlMatch = cleaned.match(/(https?:\/\/[^\s]+)/);
+    if (urlMatch) {
+      urls.push(urlMatch[1]);
     }
   }
 
