@@ -654,16 +654,11 @@ Format: {"decision": "...", "reasoning": "..."}`;
     WHERE id = ?
   `).bind(result.decision, result.reasoning, plagiarismCase.id).run();
 
-  if (result.decision === 'obvious_not') {
-    await closeCase(plagiarismCase, 'no_violation', null, env);
-  } else if (result.decision === 'obvious_yes') {
-    // Tier 1 "obvious_yes" is treated as high confidence major violation
-    await closeCase(plagiarismCase, 'major', { confidence: 1.0, reasoning: result.reasoning }, env);
-  } else {
-    await env.CASE_QUEUE.send({ caseId: plagiarismCase.id, tier: 2 });
-  }
+  // ALWAYS escalate to Tier 2 for proper analysis, even for "obvious" cases
+  // Tier 1 is just a quick visual screening - all cases need code validation
+  await env.CASE_QUEUE.send({ caseId: plagiarismCase.id, tier: 2 });
 
-  console.log(`[Tier 1] ${plagiarismCase.id}: ${result.decision}`);
+  console.log(`[Tier 1] ${plagiarismCase.id}: ${result.decision} (escalating to Tier 2)`);
 }
 
 // =============================================================================
