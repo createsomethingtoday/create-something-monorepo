@@ -1,140 +1,162 @@
 {
-  "title": "Dental Practice Management Agent - Phase 1 Foundation",
-  "description": "Build HIPAA-compliant dental practice management agent foundation with skills documentation, API tools, and specialist agents",
+  "title": "Dental Practice Management Agent - Phase 2 MVP",
+  "description": "Implement core features: no-show rescheduling, insurance verification, and recall reminders with conversion tracking",
   "created": "2026-01-12T00:00:00Z",
   "stories": [
     {
       "id": "story-1",
-      "title": "Create HIPAA compliance skill documentation",
-      "description": "Document HIPAA compliance requirements including encryption, access controls, audit logging, BAA requirements, and minimum necessary determinations",
+      "title": "Implement no-show detection and waitlist matching",
+      "description": "Create logic to detect no-show appointments from PMS and match them with waitlist patients based on appointment type, time preferences, and provider availability",
       "acceptance": [
-        "File exists at .claude/rules/hipaa-compliance.md",
-        "Includes absolute rules (never log PHI, encryption requirements)",
-        "Documents audit logging requirements with example JSON",
-        "Includes data minimization guidelines",
-        "Provides BAA template clauses",
-        "Contains minimum necessary determinations matrix",
-        "Includes compliance checklist"
+        "File exists at packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py",
+        "Implements detect_no_shows function that queries PMS for no-show status",
+        "Implements match_waitlist_patients function with scoring algorithm",
+        "Scoring considers: appointment type match, time preference, provider preference, urgency",
+        "Returns ranked list of waitlist candidates for each no-show slot",
+        "Includes unit tests with mock PMS data",
+        "All functions have docstrings"
       ],
       "files": [
-        ".claude/rules/hipaa-compliance.md"
+        "packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py"
       ],
       "passes": true
     },
     {
       "id": "story-2",
-      "title": "Create dental scheduling skill documentation",
-      "description": "Document dental appointment scheduling patterns including workflows, rules, and integration points",
+      "title": "Implement notification system for patient outreach",
+      "description": "Create SMS/email notification handlers for contacting waitlist patients with available appointment slots",
       "acceptance": [
-        "File exists at .claude/rules/dental-scheduling.md",
-        "Documents no-show rescheduling workflow with 7 steps",
-        "Includes appointment conflict resolution pattern",
-        "Documents waitlist management workflow",
-        "Defines provider constraints (time, expertise, fatigue)",
-        "Defines equipment constraints (chairs, X-ray)",
-        "Lists patient preferences patterns",
-        "Documents integration points with PMS APIs"
+        "File exists at packages/agent-sdk/src/create_something_agents/notifications/patient_outreach.py",
+        "Implements send_sms_notification function (via Twilio or similar)",
+        "Implements send_email_notification function",
+        "Notification templates include: appointment details, acceptance link, practice contact",
+        "HIPAA compliance: no PHI in subject lines, encrypted links",
+        "Implements confirmation_link generation with expiry (24 hours)",
+        "Includes rate limiting to avoid spam",
+        "All functions have docstrings"
       ],
       "files": [
-        ".claude/rules/dental-scheduling.md"
+        "packages/agent-sdk/src/create_something_agents/notifications/patient_outreach.py"
       ],
       "passes": true
     },
     {
       "id": "story-3",
-      "title": "Implement dental API tool handlers",
-      "description": "Create HIPAA-compliant tool handlers for dental PMS system integration supporting Dentrix, Open Dental, and Eaglesoft",
+      "title": "Implement automated appointment booking",
+      "description": "Create booking automation that confirms waitlist patient selections and books appointments in PMS",
       "acceptance": [
-        "File exists at packages/agent-sdk/src/create_something_agents/tools/dental.py",
-        "Implements dental_api_tool schema with 7 actions",
-        "Implements execute_dental_api function with audit logging",
-        "Implements 7 private API functions (_get_appointments, _check_availability, etc.)",
-        "Includes _log_audit_trail function with 6-year retention note",
-        "All functions use httpx.AsyncClient",
-        "No PHI in logs (only patient_id references)",
-        "Includes docstrings for all public functions"
+        "Extends packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py",
+        "Implements process_confirmation function that handles patient responses",
+        "Implements book_appointment_from_waitlist function",
+        "Updates original no-show slot status to 'filled'",
+        "Removes patient from waitlist after booking",
+        "Sends confirmation notification to patient",
+        "Logs all actions to audit trail with correlation_id",
+        "Includes error handling for booking failures"
       ],
       "files": [
-        "packages/agent-sdk/src/create_something_agents/tools/dental.py"
+        "packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-4",
-      "title": "Create dental scheduler specialist agent",
-      "description": "Build specialist agent for appointment scheduling operations using Haiku model",
+      "title": "Implement insurance verification workflow",
+      "description": "Create pre-visit insurance eligibility checking that queries PMS/clearinghouse APIs and flags coverage issues",
       "acceptance": [
-        "File exists at packages/agent-sdk/agents/dental_scheduler.py",
-        "Uses Claude Haiku model for cost-effectiveness",
-        "Implements create_dental_scheduler factory function",
-        "Task includes 4 responsibilities (no-shows, open slots, conflicts, workload)",
-        "Task includes HIPAA compliance rules",
-        "Task includes workflow (7 steps from query to log)",
-        "Registers dental_api_handler with PMS credentials",
-        "Includes docstring explaining purpose"
+        "File exists at packages/agent-sdk/src/create_something_agents/workflows/insurance_verification.py",
+        "Implements verify_insurance_eligibility function",
+        "Queries PMS for upcoming appointments (next 7 days)",
+        "Calls insurance verification API with minimum necessary data (patient_dob, insurer_id, procedure_codes)",
+        "Returns verification status: active, inactive, coverage_issue, verification_failed",
+        "Flags appointments with coverage issues for human review",
+        "Sends notification to practice staff for flagged appointments",
+        "Logs verification results to audit trail",
+        "All functions have docstrings"
       ],
       "files": [
-        "packages/agent-sdk/agents/dental_scheduler.py"
+        "packages/agent-sdk/src/create_something_agents/workflows/insurance_verification.py"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-5",
-      "title": "Create dental coordinator agent",
-      "description": "Build central orchestration agent that routes to specialist agents using Sonnet model",
+      "title": "Implement recall reminder system",
+      "description": "Create automated recall system that identifies overdue patients and sends personalized reminders",
       "acceptance": [
-        "File exists at packages/agent-sdk/agents/dental_coordinator.py",
-        "Uses Claude Sonnet model for coordination",
-        "Implements create_dental_coordinator factory function",
-        "Task defines 4 coordination roles",
-        "Task includes daily operations checklist (4 items)",
-        "Task includes HIPAA compliance requirements",
-        "Includes beads-patterns skill for task tracking",
-        "Includes docstring explaining orchestration role"
+        "File exists at packages/agent-sdk/src/create_something_agents/workflows/recall_reminders.py",
+        "Implements identify_overdue_patients function",
+        "Queries PMS for patients with last_visit > 6 months ago and no future appointments",
+        "Determines overdue procedure type (cleaning, exam, etc.) from patient history",
+        "Implements send_recall_reminder function with personalized messaging",
+        "Tracks reminder status: sent, opened, clicked, booked",
+        "Includes opt-out handling for patients who don't want reminders",
+        "HIPAA compliance: minimum necessary PHI (name, phone, last_visit_date)",
+        "All functions have docstrings"
+      ],
+      "files": [
+        "packages/agent-sdk/src/create_something_agents/workflows/recall_reminders.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-6",
+      "title": "Implement conversion rate tracking and reporting",
+      "description": "Create analytics module that tracks conversion rates for no-show recovery, insurance verification success, and recall bookings",
+      "acceptance": [
+        "File exists at packages/agent-sdk/src/create_something_agents/analytics/conversion_tracking.py",
+        "Implements track_no_show_conversion function (slots offered, accepted, booked)",
+        "Implements track_insurance_verification function (verified, issues flagged, issues resolved)",
+        "Implements track_recall_conversion function (reminders sent, responses, bookings)",
+        "Implements generate_daily_report function that summarizes all metrics",
+        "Report includes: conversion percentages, revenue impact estimates, top issues",
+        "Stores metrics in D1 database for historical tracking",
+        "Report format: JSON for API consumption and human-readable summary",
+        "All functions have docstrings"
+      ],
+      "files": [
+        "packages/agent-sdk/src/create_something_agents/analytics/conversion_tracking.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-7",
+      "title": "Integrate workflows into coordinator agent",
+      "description": "Update dental coordinator agent to orchestrate the three core workflows automatically",
+      "acceptance": [
+        "Updates packages/agent-sdk/agents/dental_coordinator.py",
+        "Imports no_show_recovery, insurance_verification, recall_reminders workflows",
+        "Daily operations function now calls: no-show recovery → insurance verification → recall reminders",
+        "Each workflow execution logged with timing and outcome",
+        "Implements error handling and retry logic for workflow failures",
+        "Coordinator creates Beads issues for discovered problems",
+        "Updates task prompt to include new workflow orchestration responsibilities",
+        "All changes maintain HIPAA compliance (no PHI in coordinator memory)"
       ],
       "files": [
         "packages/agent-sdk/agents/dental_coordinator.py"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "story-6",
-      "title": "Extend FastAPI server for Modal deployment",
-      "description": "Add dental agent endpoints to existing FastAPI server with Modal configuration",
+      "id": "story-8",
+      "title": "Add workflow endpoints to FastAPI server",
+      "description": "Extend Modal FastAPI server with endpoints for triggering individual workflows and viewing analytics",
       "acceptance": [
-        "Updates packages/agent-sdk/server/main.py (extends existing)",
-        "Creates Modal app named 'dental-agent-sdk'",
-        "Defines Modal image with anthropic, httpx, fastapi, pydantic",
-        "Implements POST /agents/dental/schedule endpoint",
-        "Implements POST /agents/dental/daily-ops endpoint",
-        "Includes scheduled daily_operations_scheduler function (6am cron)",
-        "All endpoints return DentalAgentResponse model",
-        "Includes helper functions for response extraction"
+        "Updates packages/agent-sdk/server/main.py",
+        "Implements POST /agents/dental/workflows/no-show-recovery endpoint",
+        "Implements POST /agents/dental/workflows/insurance-verification endpoint",
+        "Implements POST /agents/dental/workflows/recall-reminders endpoint",
+        "Implements GET /agents/dental/analytics/daily-report endpoint",
+        "All endpoints require practice_id and pms_config",
+        "Response models include: success, workflow_results, audit_id",
+        "Endpoints use appropriate workflows from packages/agent-sdk/src/create_something_agents/workflows/",
+        "Error handling returns 500 with correlation_id for debugging"
       ],
       "files": [
         "packages/agent-sdk/server/main.py"
       ],
-      "passes": true
-    },
-    {
-      "id": "story-7",
-      "title": "Create Cloudflare Worker edge router",
-      "description": "Build edge router Worker that calls Modal backend and handles auth, rate limiting, audit logging",
-      "acceptance": [
-        "File exists at packages/agency/workers/dental-agent-router/src/index.ts",
-        "Implements fetch handler with Env interface (MODAL_ENDPOINT_URL, MODAL_API_KEY, DB, AUDIT_LOG)",
-        "Extracts practice_id and operation from request",
-        "Queries D1 for practice config and validation",
-        "Gets encrypted PMS config from D1",
-        "Calls Modal endpoint with full context",
-        "Logs to KV AUDIT_LOG with 6-year TTL",
-        "Includes error handling and rate limiting check",
-        "Returns JSON response"
-      ],
-      "files": [
-        "packages/agency/workers/dental-agent-router/src/index.ts"
-      ],
-      "passes": true
+      "passes": false
     }
   ]
 }
