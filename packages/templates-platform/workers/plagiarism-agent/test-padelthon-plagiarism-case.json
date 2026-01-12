@@ -1,0 +1,13 @@
+{
+  "recordId": "test_padelthon_major_violation",
+  "fields": {
+    "Submitter's Email": "accounts@byq.studio",
+    "Preview URL of Offending Template": "https://padelthon.webflow.io/",
+    "Preview URL of Offended Template": "Hollow: https://hollow-template.webflow.io/\nForerunner: https://forerunner-template.webflow.io/\nEvermind: https://evermind-template.webflow.io/\nFoster & Reeves: https://foster-and-reeves.webflow.io/\n&Fold: https://andfold.webflow.io/\nFor:human: https://for-human-template.webflow.io/",
+    "Offense": "The Padelthon template by Pylos Studio copies a substantial number of layouts, patterns, and design decisions from multiple BYQ Studio products. The overlaps appear across almost every major section and map directly to elements from Hollow, Forerunner, Evermind, Foster & Reeves, &Fold, and For:human.\n\nThis is not inspiration. This is a template built by stitching together reconstructed versions of our sections, almost one-to-one. Examples:\n\n• Full-width hero pattern from Hollow, including exact stacked card layout with rotated image frames\n• Footer and background treatment from Evermind almost line by line\n• Stats section and grid layout from Foster & Reeves, including spacing, alignment, column structure\n• Project list layout from Foster & Reeves, recreated for coaching programs with same row-image-arrow pattern\n• Values/features layout from Foster & Reeves, including icon placement, box structure, alignment\n• Testimonial carousel from Forerunner and Evermind, including card sizes, alignment, quote-icon composition\n• Approach section with numbered list from Foster & Reeves\n• &Fold: full-width image with centered person photo overlay, blurred glass tile, text block placement, three-row list underneath - layout, structure, and visual logic copied directly\n\nNearly every part traces back to one of our templates. It's the sheer volume and consistency of replication, right down to the smallest details.",
+    "Violating creator": "Pylos Studio",
+    "Date": "12/2/2025",
+    "Decision": "Major violation",
+    "Outcome": "Delisted template"
+  }
+}

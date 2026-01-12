@@ -104,6 +104,18 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    // CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Max-Age': '86400'
+        }
+      });
+    }
+
     // Airtable webhook endpoint
     if (url.pathname === '/webhook' && request.method === 'POST') {
       return handleAirtableWebhook(request, env);
@@ -155,6 +167,55 @@ export default {
         });
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // Vector compare endpoint: Compare two templates directly
+    if (url.pathname === '/api/compare' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { originalUrl, allegedCopyUrl } = body;
+
+        if (!originalUrl || !allegedCopyUrl) {
+          return new Response(JSON.stringify({
+            error: 'Missing required fields: originalUrl, allegedCopyUrl'
+          }), { status: 400 });
+        }
+
+        console.log(`[API] Comparing ${originalUrl} vs ${allegedCopyUrl}`);
+
+        // Use vector similarity analysis
+        const vectorSimilarity = await analyzeVectorSimilarity(
+          originalUrl,
+          allegedCopyUrl,
+          env.OPENAI_API_KEY
+        );
+
+        return new Response(JSON.stringify({
+          originalUrl,
+          allegedCopyUrl,
+          vectorSimilarity,
+          timestamp: Date.now()
+        }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+          }
+        });
+      } catch (error: any) {
+        console.error('[API] Compare error:', error);
+        return new Response(JSON.stringify({
+          error: error.message,
+          details: error.stack
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
       }
     }
 
