@@ -1,9 +1,13 @@
 import { defineMDSveXConfig as defineConfig } from 'mdsvex';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const config = defineConfig({
 	extensions: ['.md'],
 	layout: {
-		_: './src/lib/layouts/MarkdownLayout.svelte'
+		_: join(__dirname, 'src/lib/layouts/MarkdownLayout.svelte')
 	}
 });
 

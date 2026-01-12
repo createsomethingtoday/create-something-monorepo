@@ -94,7 +94,7 @@ export async function loadPatternBySlug(slug: string): Promise<ContentItem<Patte
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: PatternFrontmatter;
-	}>('../content/patterns/*.md');
+	}>('/content/patterns/*.md');
 
 	const items = await loadMarkdownContent(modules, false);
 	const item = items.find((i) => i.slug === slug);
@@ -117,7 +117,7 @@ export async function getPatternSlugs(): Promise<string[]> {
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: PatternFrontmatter;
-	}>('../content/patterns/*.md');
+	}>('/content/patterns/*.md');
 	const items = await loadMarkdownContent(modules, true);
 	return items.map((item) => item.slug);
 }
@@ -132,30 +132,26 @@ export async function loadCanonByPath(
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: CanonFrontmatter;
-	}>('../content/canon/**/*.md');
+	}>('/content/canon/**/*.md');
 
 	// Convert path to expected file path
 	let expectedPath: string;
 	if (path.length === 0) {
 		// Root index
-		expectedPath = '../content/canon/index.md';
+		expectedPath = '/content/canon/index.md';
 	} else if (path.length === 1) {
 		// Section index (e.g., concepts/index.md)
-		expectedPath = `../content/canon/${path[0]}/index.md`;
+		expectedPath = `/content/canon/${path[0]}/index.md`;
 	} else {
 		// Nested page (e.g., concepts/zuhandenheit.md)
 		const section = path[0];
 		const slug = path.slice(1).join('/');
-		expectedPath = `../content/canon/${section}/${slug}.md`;
+		expectedPath = `/content/canon/${section}/${slug}.md`;
 	}
 
 	// Find matching module
 	const resolver = modules[expectedPath];
 	if (!resolver) {
-		// Debug: log available modules and expected path
-		console.error('Expected path:', expectedPath);
-		console.error('Available modules:', Object.keys(modules));
-		console.error('Total modules found:', Object.keys(modules).length);
 		throw error(404, `Canon page not found: ${path.join('/')}`);
 	}
 
@@ -183,13 +179,13 @@ export async function getCanonPaths(): Promise<string[][]> {
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: CanonFrontmatter;
-	}>('../content/canon/**/*.md');
+	}>('/content/canon/**/*.md');
 
 	const paths: string[][] = [];
 
 	for (const path of Object.keys(modules)) {
-		// Extract path parts from: ../content/canon/concepts/zuhandenheit.md
-		const match = path.match(/\.\.\/content\/canon\/(.+)\.md$/);
+		// Extract path parts from: /content/canon/concepts/zuhandenheit.md
+		const match = path.match(/\/content\/canon\/(.+)\.md$/);
 		if (!match) continue;
 
 		const parts = match[1].split('/');
