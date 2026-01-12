@@ -18,6 +18,12 @@ import {
   analyzeVectorSimilarity,
   type VectorSimilarity 
 } from './vector-similarity';
+import {
+  indexTemplate,
+  findSimilarTemplates,
+  getIndexStats,
+  type TemplateMetadata
+} from './indexer';
 
 // =============================================================================
 // TYPES
@@ -29,6 +35,7 @@ interface Env {
   CASE_QUEUE: Queue;
   AI: any;
   BROWSER: any;
+  VECTORIZE: VectorizeIndex;
   ANTHROPIC_API_KEY: string;
   OPENAI_API_KEY: string;
   AIRTABLE_API_KEY: string;
@@ -119,6 +126,75 @@ export default {
       const caseId = url.pathname.split('/').pop();
       const dryRun = url.searchParams.get('dry_run') === '1' || url.searchParams.get('dryRun') === '1';
       return runAgentMode(caseId!, env, { dryRun });
+    }
+
+    // Vector index endpoint: Index a template
+    if (url.pathname === '/index' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { id, url: templateUrl, name, creator } = body;
+
+        if (!id || !templateUrl || !name) {
+          return new Response(JSON.stringify({
+            error: 'Missing required fields: id, url, name'
+          }), { status: 400 });
+        }
+
+        const success = await indexTemplate(
+          id,
+          templateUrl,
+          { name, creator: creator || 'Unknown', url: templateUrl },
+          env
+        );
+
+        return new Response(JSON.stringify({
+          success,
+          message: success ? `Template ${id} indexed successfully` : `Failed to index ${id}`
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // Vector query endpoint: Find similar templates
+    if (url.pathname === '/query' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { url: queryUrl, topK = 10 } = body;
+
+        if (!queryUrl) {
+          return new Response(JSON.stringify({
+            error: 'Missing required field: url'
+          }), { status: 400 });
+        }
+
+        const results = await findSimilarTemplates(queryUrl, env, topK);
+
+        return new Response(JSON.stringify({
+          query_url: queryUrl,
+          results,
+          count: results.length
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // Vector stats endpoint: Get index statistics
+    if (url.pathname === '/stats' && request.method === 'GET') {
+      try {
+        const stats = await getIndexStats(env);
+
+        return new Response(JSON.stringify(stats), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
     }
 
     return new Response('Plagiarism Agent Ready', { status: 200 });

@@ -39,5 +39,10 @@ binding = "AI"
 [browser]
 binding = "BROWSER"
 
+# Vectorize - template similarity search
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "plagiarism-templates"
+
 [vars]
 ENVIRONMENT = "production"
