@@ -727,21 +727,11 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
     plagiarismCase.id
   ).run();
 
-  // Escalate to Tier 3 for code analysis if:
-  // 1. Decision is explicitly "unclear"
-  // 2. Confidence is below threshold - visual evidence insufficient
-  // 3. Decision is "minor" or "major" but confidence below threshold - needs more evidence
-  const shouldEscalate =
-    result.decision === 'unclear' ||
-    result.confidence < TIER3_ESCALATION_THRESHOLD ||
-    (result.decision !== 'no_violation' && result.confidence < TIER3_ESCALATION_THRESHOLD);
-
-  if (shouldEscalate) {
-    console.log(`[Tier 2] Escalating to Tier 3 for code analysis (confidence: ${result.confidence}, threshold: ${TIER3_ESCALATION_THRESHOLD})`);
-    await env.CASE_QUEUE.send({ caseId: plagiarismCase.id, tier: 3 });
-  } else {
-    await closeCase(plagiarismCase, result.decision as FinalDecision, result, env);
-  }
+  // ALWAYS escalate to Tier 3 for code-level validation
+  // Visual analysis alone can be misleading - screenshots can be manipulated
+  // Code patterns reveal the truth: animations, layouts, structural similarities
+  console.log(`[Tier 2] Escalating to Tier 3 for mandatory code analysis (confidence: ${result.confidence})`);
+  await env.CASE_QUEUE.send({ caseId: plagiarismCase.id, tier: 3 });
 
   console.log(`[Tier 2] ${plagiarismCase.id}: ${result.decision} ($${TIER_COSTS.TIER2})`);
 }
@@ -874,34 +864,28 @@ async function runTier3Judgment(
 ): Promise<void> {
   const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
-  // Check if Tier 2 indicated need for more evidence
-  const needsCodeAnalysis =
-    tier2Result.confidence < 0.7 ||
-    tier2Result.extent === 'moderate'; // Moderate extent is borderline
+  // ALWAYS fetch code comparison - visual analysis alone can be manipulated
+  // Someone could submit convincing screenshots but have identical underlying code
+  console.log('[Tier 3] Fetching HTML/CSS/JS for code-level validation');
 
-  let codeAnalysis: string | null = null;
-  if (needsCodeAnalysis) {
-    console.log('[Tier 3] Tier 2 was inconclusive - fetching HTML/CSS/JS for comparison');
+  // Extract all URLs from Airtable fields (may contain multiple URLs)
+  const originalUrls = extractAllUrls(plagiarismCase.originalUrl);
+  const copyUrls = extractAllUrls(plagiarismCase.allegedCopyUrl);
 
-    // Extract all URLs from Airtable fields (may contain multiple URLs)
-    const originalUrls = extractAllUrls(plagiarismCase.originalUrl);
-    const copyUrls = extractAllUrls(plagiarismCase.allegedCopyUrl);
+  // If extraction failed, fall back to sanitizing single URL
+  const cleanOriginalUrls = originalUrls.length > 0
+    ? originalUrls
+    : [sanitizeUrl(plagiarismCase.originalUrl)];
+  const cleanCopyUrl = copyUrls.length > 0
+    ? copyUrls[0]  // Copy URL should be single
+    : sanitizeUrl(plagiarismCase.allegedCopyUrl);
 
-    // If extraction failed, fall back to sanitizing single URL
-    const cleanOriginalUrls = originalUrls.length > 0
-      ? originalUrls
-      : [sanitizeUrl(plagiarismCase.originalUrl)];
-    const cleanCopyUrl = copyUrls.length > 0
-      ? copyUrls[0]  // Copy URL should be single
-      : sanitizeUrl(plagiarismCase.allegedCopyUrl);
+  console.log(`[Code Analysis] Found ${cleanOriginalUrls.length} original URL(s), comparing against: ${cleanCopyUrl}`);
 
-    console.log(`[Code Analysis] Found ${cleanOriginalUrls.length} original URL(s), comparing against: ${cleanCopyUrl}`);
-
-    codeAnalysis = await fetchCodeComparison(
-      cleanOriginalUrls,
-      cleanCopyUrl
-    );
-  }
+  const codeAnalysis = await fetchCodeComparison(
+    cleanOriginalUrls,
+    cleanCopyUrl
+  );
 
   const prompt = `Make final judgment on plagiarism case:
 
@@ -911,11 +895,12 @@ Complaint: ${plagiarismCase.complaintText}
 
 Tier 2 Visual Analysis: ${JSON.stringify(tier2Result)}
 
-${codeAnalysis ? `\nHTML/CSS/JS Code Analysis:\n${codeAnalysis}` : ''}
+HTML/CSS/JS Code Analysis:
+${codeAnalysis || 'Code analysis failed - URLs may be inaccessible'}
 
-${codeAnalysis ?
-  'The code analysis provides additional evidence about animations, layouts, and structural patterns that were not visible in screenshots.' :
-  'No code analysis was performed as visual evidence was sufficient.'}
+Visual similarity can be misleading. The code analysis reveals the true structural patterns:
+animations, transitions, grid/flex layouts, and implementation details not visible in screenshots.
+Use both visual and code evidence to make your final determination.
 
 Provide final decision with detailed reasoning and confidence level.
 
@@ -942,7 +927,7 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 
   await closeCase(plagiarismCase, result.decision as FinalDecision, result, env);
 
-  console.log(`[Tier 3] ${plagiarismCase.id}: ${result.decision} ($${TIER_COSTS.TIER3})${codeAnalysis ? ' (with code analysis)' : ''}`);
+  console.log(`[Tier 3] ${plagiarismCase.id}: ${result.decision} ($${TIER_COSTS.TIER3}) (code analysis: ${codeAnalysis ? 'success' : 'failed'})`);
 }
 
 // =============================================================================
