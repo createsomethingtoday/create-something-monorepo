@@ -4,13 +4,14 @@
  * Loads patterns from markdown content files using MDsveX.
  * This route serves ALL patterns that don't have their own dedicated folder.
  *
- * Static .svelte pattern routes have been migrated to markdown content.
+ * Uses universal load (+page.ts) because Svelte components can't be serialized
+ * from server to client in SSR mode.
  */
 
-import type { PageServerLoad } from './$types';
+import type { PageLoad } from './$types';
 import { loadPatternBySlug } from '$lib/content-loader';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageLoad = async ({ params }) => {
 	const { slug } = params;
 	const pattern = await loadPatternBySlug(slug);
 
