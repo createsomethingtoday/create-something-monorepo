@@ -1,17 +1,14 @@
 /**
- * Canon Dynamic Route - Universal Load Function
+ * Canon Dynamic Route - Server Load Function
  *
  * Handles all nested canon pages using catch-all [...path] route.
  * Supports root (/canon), sections (/canon/concepts), and nested pages (/canon/concepts/zuhandenheit).
- *
- * Note: Uses universal load (+page.ts) instead of server load (+page.server.ts)
- * because Svelte components can't be serialized for SSR transfer.
  */
 
-import type { PageLoad } from './$types';
+import type { PageServerLoad } from './$types';
 import { loadCanonByPath } from '$lib/content-loader';
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	// Parse path: undefined for root, "concepts" for section, "concepts/zuhandenheit" for page
 	const pathParts = params.path ? params.path.split('/') : [];
 

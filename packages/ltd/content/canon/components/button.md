@@ -3,7 +3,7 @@ category: "Canon"
 section: "Components"
 title: "Button"
 publishedAt: "2026-01-08"
-published: false
+published: true
 ---
 
 
