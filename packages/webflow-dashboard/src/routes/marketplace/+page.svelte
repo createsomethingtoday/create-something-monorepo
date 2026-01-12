@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Header, Button } from '$lib/components';
 	import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
+	import { Clock, ChevronLeft, AlertCircle } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	interface LeaderboardEntry {
@@ -145,9 +146,7 @@
 		<div class="content-wrapper">
 			<!-- Back Navigation -->
 			<Button variant="link" onclick={handleBackToDashboard} class="back-link">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M15 19l-7-7 7-7" />
-				</svg>
+				<ChevronLeft size={16} />
 				Back to Dashboard
 			</Button>
 
@@ -161,10 +160,7 @@
 					{#if summary.lastUpdated}
 						<div class="sync-info-container">
 							<p class="sync-info">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<circle cx="12" cy="12" r="10" />
-									<path d="M12 6v6l4 2" />
-								</svg>
+								<Clock size={14} />
 								<span class="sync-text">
 									Last updated: <strong>{formatLastUpdated(summary.lastUpdated)}</strong>
 									{#if summary.nextUpdateDate}
@@ -192,11 +188,7 @@
 				</div>
 			{:else if error}
 				<div class="error-container">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10" />
-						<path d="M12 8v4" />
-						<path d="M12 16h.01" />
-					</svg>
+					<AlertCircle size={20} />
 					<div>
 						<p class="error-title">Failed to load marketplace insights</p>
 						<p class="error-message">{error}</p>
