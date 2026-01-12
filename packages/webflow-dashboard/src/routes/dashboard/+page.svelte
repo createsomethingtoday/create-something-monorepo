@@ -94,7 +94,8 @@
 			const response = await fetch(`/api/assets/${id}/archive`, { method: 'POST' });
 			if (response.ok) {
 				toast.success('Asset archived successfully');
-				invalidate('app:assets');
+				// Await invalidate to ensure data refresh completes
+				await invalidate('app:assets');
 			} else {
 				const errorData = (await response.json()) as { message?: string };
 				toast.error(errorData.message || 'Failed to archive asset');

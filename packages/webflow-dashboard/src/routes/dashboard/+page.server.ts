@@ -1,7 +1,11 @@
 import type { PageServerLoad } from './$types';
 import { getAirtableClient, type Asset } from '$lib/server/airtable';
 
-export const load: PageServerLoad = async ({ locals, platform }) => {
+export const load: PageServerLoad = async ({ locals, platform, depends }) => {
+	// Mark this load function as dependent on 'app:assets'
+	// so invalidate('app:assets') will trigger a reload
+	depends('app:assets');
+	
 	// User is guaranteed to exist here due to hooks.server.ts protection
 	let assets: Asset[] = [];
 
