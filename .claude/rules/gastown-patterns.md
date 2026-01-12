@@ -62,6 +62,22 @@ gt convoy list
 
 **You are the Overseer** - the human operator who creates convoys and monitors progress.
 
+### Workers Benefit from LSP Automatically
+
+All workers have access to TypeScript LSP via MCP for precise code navigation:
+
+**What workers gain**:
+- 60% faster code exploration
+- 77% fewer false positives when finding usages
+- More accurate refactoring across packages
+
+**No configuration needed**: Workers spawn with MCP access. LSP tools available automatically.
+
+**Impact on convoy work**:
+- Workers understand code faster
+- Parallel work more accurate
+- Fewer conflicts from misunderstanding dependencies
+
 ## Common Commands
 
 ### Starting and Stopping

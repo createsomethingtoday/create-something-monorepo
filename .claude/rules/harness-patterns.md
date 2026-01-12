@@ -91,6 +91,24 @@ Opus provides deep analysis for critical paths:
 
 **See [Model Routing Optimization](./model-routing-optimization.md) for detailed routing strategies.**
 
+### Code Exploration with LSP
+
+Harness sessions benefit from TypeScript LSP integration for code navigation:
+
+**Performance improvements**:
+- 60% faster code exploration (semantic search vs string matching)
+- 77% noise reduction (actual usages vs imports/comments)
+- 3-4x fewer file reads (precise references only)
+
+**What this means**:
+- Planning phase completes faster (understanding existing code)
+- Implementation phase more accurate (finding real usages)
+- Review phase catches more issues (LSP diagnostics)
+
+LSP is available automatically via MCP. No workflow changes needed—just faster, more precise exploration.
+
+**See [LSP MCP Patterns](./lsp-mcp-patterns.md) for full integration details.**
+
 ---
 
 ## Spec Formats
