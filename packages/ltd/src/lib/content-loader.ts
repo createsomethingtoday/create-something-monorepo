@@ -152,6 +152,10 @@ export async function loadCanonByPath(
 	// Find matching module
 	const resolver = modules[expectedPath];
 	if (!resolver) {
+		// Debug: log available modules and expected path
+		console.error('Expected path:', expectedPath);
+		console.error('Available modules:', Object.keys(modules));
+		console.error('Total modules found:', Object.keys(modules).length);
 		throw error(404, `Canon page not found: ${path.join('/')}`);
 	}
 
