@@ -231,11 +231,13 @@
 		margin-bottom: var(--space-md);
 		color: var(--color-fg-muted);
 		font-weight: var(--font-normal);
+		background: transparent !important;
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	:global(.back-link:hover) {
 		color: var(--color-fg-primary);
+		background: transparent !important;
 	}
 
 	/* Ensure maximum contrast on hover in both modes */
