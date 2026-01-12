@@ -234,7 +234,7 @@
 	}
 
 	:global(.back-link:hover) {
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-primary);
 	}
 
 	.page-header {
