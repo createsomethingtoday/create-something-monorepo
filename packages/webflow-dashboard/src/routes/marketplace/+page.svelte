@@ -231,10 +231,20 @@
 		margin-bottom: var(--space-md);
 		color: var(--color-fg-muted);
 		font-weight: var(--font-normal);
+		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	:global(.back-link:hover) {
 		color: var(--color-fg-primary);
+	}
+
+	/* Ensure maximum contrast on hover in both modes */
+	:global([data-theme="light"] .back-link:hover) {
+		color: #000000;
+	}
+
+	:global([data-theme="dark"] .back-link:hover) {
+		color: #ffffff;
 	}
 
 	.page-header {
