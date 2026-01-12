@@ -48,3 +48,8 @@ csm/csm/.repo.git
 # MCP configuration
 # Note: Project .mcp.json is tracked (uses HTTP-based servers, no local keys)
 # User-level config (~/.claude/mcp.json) may contain keys - don't commit that
+
+# LSP MCP (lsmcp)
+.lsmcp/
+!.lsmcp/config.json
+# Keep config.json tracked, ignore cache/index/memories

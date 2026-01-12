@@ -210,6 +210,25 @@ Use direct tool calls (Read, Write, Edit, Grep, Glob) when:
 - **Claude Code's specialized tools are better**: Edit tool's surgical replacement
 - **Visibility is needed**: User sees tool invocations in the UI
 
+### LSP MCP for Code Navigation
+
+For TypeScript code navigation, prefer LSP over Grep when precision matters:
+
+**Use LSP (via MCP) when:**
+- Finding actual usages vs string matches (`lsp_find_references`)
+- Getting type information (`lsp_hover`)
+- Renaming symbols across packages (`lsp_rename_symbol`)
+- Checking TypeScript errors (`lsp_diagnostics`)
+
+**Use Grep when:**
+- Searching CSS, HTML, Markdown (non-TypeScript)
+- Pattern matching string literals
+- Quick filename searches
+
+**The win**: 77% noise reduction, 60% faster exploration.
+
+See `.claude/rules/lsp-mcp-patterns.md` for full integration guide.
+
 ### Cloudflare SDK
 
 For composed Cloudflare operations, use `@create-something/cloudflare-sdk`:

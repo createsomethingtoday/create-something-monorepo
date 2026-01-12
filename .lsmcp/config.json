@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/mizchi/lsmcp/main/schema.json",
+  "preset": "typescript",
+  "settings": {
+    "autoIndex": true,
+    "indexConcurrency": 4,
+    "maxFileSize": 10000,
+    "enableWatchers": true,
+    "memoryLimit": 2048
+  },
+  "workspaceRoot": ".",
+  "include": [
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "packages/**/*.svelte"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.svelte-kit/**",
+    "**/build/**",
+    "**/.wrangler/**"
+  ]
+}

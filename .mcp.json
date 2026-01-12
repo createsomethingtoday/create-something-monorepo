@@ -3,6 +3,10 @@
     "stripe": {
       "type": "http",
       "url": "https://mcp.stripe.com"
+    },
+    "lsmcp": {
+      "command": "npx",
+      "args": ["-y", "@mizchi/lsmcp", "mcp"]
     }
   }
 }

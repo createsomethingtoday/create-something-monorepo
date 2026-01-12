@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
+    "@mizchi/lsmcp": "^0.10.0",
     "@typescript-eslint/parser": "^8.50.1",
     "glob": "^13.0.0",
     "prettier": "^3.7.4",
