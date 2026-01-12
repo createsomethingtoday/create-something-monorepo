@@ -883,16 +883,22 @@
 		padding: var(--space-xs) var(--space-sm);
 		border: none;
 		border-radius: var(--radius-md);
-		background: var(--color-bg-surface);
-		color: var(--color-fg-secondary);
+		background: transparent;
+		color: var(--color-fg-muted);
 		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
+	.toggle-btn:hover:not(.active) {
+		color: var(--color-fg-secondary);
+	}
+
 	.toggle-btn.active {
-		background: var(--color-info);
+		background: var(--color-bg-surface);
 		color: var(--color-fg-primary);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.table-container {
