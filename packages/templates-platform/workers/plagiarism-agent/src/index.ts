@@ -12,6 +12,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 import puppeteer from '@cloudflare/puppeteer';
 import { runAgentInvestigation, saveAgentState, loadAgentState } from './agent-mode';
+import { 
+  normalizeWebflowUrl, 
+  extractUrls, 
+  analyzeVectorSimilarity,
+  type VectorSimilarity 
+} from './vector-similarity';
 
 // =============================================================================
 // TYPES
@@ -24,6 +30,7 @@ interface Env {
   AI: any;
   BROWSER: any;
   ANTHROPIC_API_KEY: string;
+  OPENAI_API_KEY: string;
   AIRTABLE_API_KEY: string;
   AIRTABLE_BASE_ID: string;
   AIRTABLE_TABLE_ID: string;
@@ -110,7 +117,8 @@ export default {
     // Agent mode endpoint: Run agentic investigation for content policy violations
     if (url.pathname.startsWith('/agent/')) {
       const caseId = url.pathname.split('/').pop();
-      return runAgentMode(caseId!, env);
+      const dryRun = url.searchParams.get('dry_run') === '1' || url.searchParams.get('dryRun') === '1';
+      return runAgentMode(caseId!, env, { dryRun });
     }
 
     return new Response('Plagiarism Agent Ready', { status: 200 });
@@ -224,6 +232,63 @@ async function processProvidedScreenshots(
 // WEBHOOK HANDLER
 // =============================================================================
 
+function safeFieldToString(value: any): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+
+  if (Array.isArray(value)) {
+    // Prefer human-friendly names if present on objects; otherwise join stringified values
+    const parts = value.map((entry) => {
+      if (entry && typeof entry === 'object') {
+        return entry.name ?? entry.title ?? entry.email ?? JSON.stringify(entry);
+      }
+      if (typeof entry === 'string' || typeof entry === 'number' || typeof entry === 'boolean') {
+        return String(entry);
+      }
+      return '';
+    }).filter(Boolean);
+
+    return parts.join(', ');
+  }
+
+  if (typeof value === 'object') {
+    return value.name ?? value.title ?? value.email ?? JSON.stringify(value);
+  }
+
+  return '';
+}
+
+async function resetCaseForRerun(caseId: string, env: Env): Promise<void> {
+  await env.DB.prepare(`
+    UPDATE plagiarism_cases
+    SET
+      status = 'pending',
+      completed_at = NULL,
+      tier1_decision = NULL,
+      tier1_reasoning = NULL,
+      tier2_decision = NULL,
+      tier2_report = NULL,
+      tier2_screenshot_ids = NULL,
+      tier3_decision = NULL,
+      tier3_reasoning = NULL,
+      tier3_confidence = NULL,
+      final_decision = NULL,
+      cost_usd = 0.0
+    WHERE id = ?
+  `).bind(caseId).run();
+}
+
+async function findExistingCaseIdByAirtableRecordId(
+  airtableRecordId: string,
+  env: Env
+): Promise<string | null> {
+  const row = await env.DB.prepare(
+    `SELECT id FROM plagiarism_cases WHERE airtable_record_id = ?`
+  ).bind(airtableRecordId).first();
+  return (row?.id as string | undefined) ?? null;
+}
+
 async function handleAirtableWebhook(request: Request, env: Env): Promise<Response> {
   const payload = await request.json() as any;
 
@@ -232,11 +297,18 @@ async function handleAirtableWebhook(request: Request, env: Env): Promise<Respon
 
   // Extract fields with defaults for missing values
   const fields = payload.fields || {};
-  const reporterEmail = fields['Submitter\'s Email'] || 'unknown@example.com';
-  const originalUrl = fields['Preview URL of Offended Template'] || '';
-  const allegedCopyUrl = fields['Preview URL of Offending Template'] || '';
-  const complaintText = fields['Offense'] || 'No complaint text provided';
-  const allegedCreator = fields['Violating creator'] || 'Unknown';
+  const reporterEmail = safeFieldToString(fields['Submitter\'s Email']) || 'unknown@example.com';
+  const originalUrlRaw = safeFieldToString(fields['Preview URL of Offended Template']);
+  const allegedCopyUrlRaw = safeFieldToString(fields['Preview URL of Offending Template']);
+  const complaintText = safeFieldToString(fields['Offense']) || 'No complaint text provided';
+  const allegedCreator = safeFieldToString(fields['Violating creator']) || 'Unknown';
+
+  // Normalize URLs (convert preview URLs to published URLs)
+  const originalUrls = extractUrls(originalUrlRaw);
+  const originalUrl = originalUrls[0] || originalUrlRaw; // Use first URL for primary comparison
+  const allegedCopyUrl = normalizeWebflowUrl(allegedCopyUrlRaw);
+
+  console.log(`[Webhook] Normalized URLs: ${originalUrl} vs ${allegedCopyUrl}`);
 
   await env.DB.prepare(`
     INSERT INTO plagiarism_cases (
@@ -322,7 +394,35 @@ async function testRecordWebhook(recordId: string, env: Env): Promise<Response> 
       }
     };
 
-    // Trigger webhook handler directly
+    // If we've already processed this Airtable record, reuse the same case id and re-queue it
+    // (airtable_record_id is UNIQUE in D1)
+    const existingCaseId = await findExistingCaseIdByAirtableRecordId(record.id, env);
+    if (existingCaseId) {
+      console.log(`[Test] Record already exists in D1 as ${existingCaseId}; resetting + re-queuing`);
+
+      await resetCaseForRerun(existingCaseId, env);
+
+      if (screenshots.length >= 2) {
+        await processProvidedScreenshots(existingCaseId, screenshots, env);
+      }
+
+      await env.CASE_QUEUE.send({ caseId: existingCaseId, tier: 1 });
+
+      return Response.json({
+        airtableRecord: {
+          id: record.id,
+          screenshotCount: screenshots.length,
+          screenshotFilenames: screenshots.map((s: any) => s.filename)
+        },
+        webhookResult: {
+          caseId: existingCaseId,
+          status: 'requeued',
+          estimatedTime: '1-2 minutes'
+        }
+      });
+    }
+
+    // Trigger webhook handler directly (first-time processing)
     const webhookResponse = await handleAirtableWebhook(
       new Request('http://localhost/webhook', {
         method: 'POST',
@@ -358,7 +458,11 @@ async function testRecordWebhook(recordId: string, env: Env): Promise<Response> 
  *
  * This is for expansion beyond plagiarism: harassment, hate speech, DMCA, etc.
  */
-async function runAgentMode(caseId: string, env: Env): Promise<Response> {
+async function runAgentMode(
+  caseId: string,
+  env: Env,
+  options?: { dryRun?: boolean }
+): Promise<Response> {
   try {
     console.log(`[Agent Mode] Starting investigation for case ${caseId}`);
 
@@ -389,31 +493,35 @@ async function runAgentMode(caseId: string, env: Env): Promise<Response> {
 
     console.log(`[Agent Mode] Investigation completed in ${duration}ms`, violation);
 
-    // Update case with results
-    await env.DB.prepare(`
-      UPDATE plagiarism_cases
-      SET
-        status = 'completed',
-        tier3_decision = ?,
-        tier3_confidence = ?,
-        tier3_reasoning = ?,
-        tier3_cost = ?
-      WHERE id = ?
-    `).bind(
-      violation.decision,
-      violation.confidence,
-      violation.reasoning,
-      0.15, // Sonnet cost estimate (will be actual from agent usage)
-      caseId
-    ).run();
+    if (!options?.dryRun) {
+      // Update case with results (use existing schema fields)
+      await env.DB.prepare(`
+        UPDATE plagiarism_cases
+        SET
+          tier3_decision = ?,
+          tier3_confidence = ?,
+          tier3_reasoning = ?,
+          final_decision = ?,
+          status = 'completed',
+          completed_at = ?
+        WHERE id = ?
+      `).bind(
+        violation.decision,
+        violation.confidence,
+        violation.reasoning,
+        violation.decision,
+        Date.now(),
+        caseId
+      ).run();
 
-    // Update Airtable with decision
-    const airtableFields: Record<string, string> = {
-      [AIRTABLE_FIELDS.DECISION]: DECISION_TO_AIRTABLE[violation.decision],
-      [AIRTABLE_FIELDS.OUTCOME]: DECISION_TO_OUTCOME[violation.decision]
-    };
+      // Update Airtable with decision
+      const airtableFields: Record<string, string> = {
+        [AIRTABLE_FIELDS.DECISION]: DECISION_TO_AIRTABLE[violation.decision],
+        [AIRTABLE_FIELDS.OUTCOME]: DECISION_TO_OUTCOME[violation.decision]
+      };
 
-    await updateAirtable(env, result.airtable_record_id as string, airtableFields);
+      await updateAirtable(env, result.airtable_record_id as string, airtableFields);
+    }
 
     return Response.json({
       caseId,
@@ -422,7 +530,8 @@ async function runAgentMode(caseId: string, env: Env): Promise<Response> {
       reasoning: violation.reasoning,
       recommendedAction: violation.recommendedAction,
       evidenceSummary: violation.evidenceSummary,
-      duration: `${(duration / 1000).toFixed(2)}s`
+      duration: `${(duration / 1000).toFixed(2)}s`,
+      dryRun: Boolean(options?.dryRun)
     });
   } catch (error: any) {
     console.error('[Agent Mode] Error:', error);
@@ -705,6 +814,7 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 
   const response = await anthropic.messages.create({
     model: 'claude-3-5-haiku-20241022',
+    temperature: 0,
     max_tokens: 1000,
     messages: [{ role: 'user', content: prompt }]
   });
@@ -713,11 +823,12 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 
   await env.DB.prepare(`
     UPDATE plagiarism_cases
-    SET tier2_decision = ?, tier2_report = ?, cost_usd = ?
+    SET tier2_decision = ?, tier2_report = ?, tier2_screenshot_ids = ?, cost_usd = ?
     WHERE id = ?
   `).bind(
     result.decision,
     JSON.stringify(result),
+    visionAnalysis ? JSON.stringify([`${plagiarismCase.id}/original.jpg`, `${plagiarismCase.id}/copy.jpg`]) : null,
     TIER_COSTS.TIER2,
     plagiarismCase.id
   ).run();
@@ -988,6 +1099,24 @@ async function runTier3Judgment(
     }
   }
 
+  // NEW: Vector Similarity Analysis
+  let vectorAnalysis: VectorSimilarity | null = null;
+  if (env.OPENAI_API_KEY) {
+    console.log('[Vector] Computing vector similarity...');
+    try {
+      vectorAnalysis = await analyzeVectorSimilarity(
+        cleanOriginalUrls[0],
+        cleanCopyUrl,
+        env.OPENAI_API_KEY
+      );
+      console.log('[Vector] Similarity computed:', vectorAnalysis);
+    } catch (error: any) {
+      console.log('[Vector] Error computing similarity:', error.message);
+    }
+  } else {
+    console.log('[Vector] Skipping vector analysis (no OPENAI_API_KEY configured)');
+  }
+
   const prompt = `Make final judgment on plagiarism case:
 
 Original: ${plagiarismCase.originalUrl}
@@ -999,7 +1128,26 @@ Tier 2 Visual Analysis: ${JSON.stringify(tier2Result)}
 HTML/CSS/JS Code Analysis:
 ${codeAnalysis || 'Code analysis failed - URLs may be inaccessible'}
 
-CRITICAL: Visual similarity can be misleading. The code analysis reveals the truth:
+${vectorAnalysis ? `
+Vector Similarity Analysis (Semantic Code Comparison):
+- HTML Structure Similarity: ${(vectorAnalysis.html_similarity * 100).toFixed(1)}%
+- CSS Pattern Similarity: ${(vectorAnalysis.css_similarity * 100).toFixed(1)}%
+- JavaScript Logic Similarity: ${(vectorAnalysis.js_similarity * 100).toFixed(1)}%
+- Webflow Interaction Similarity: ${(vectorAnalysis.webflow_similarity * 100).toFixed(1)}%
+- DOM Hierarchy Similarity: ${(vectorAnalysis.dom_similarity * 100).toFixed(1)}%
+- Overall Semantic Similarity: ${(vectorAnalysis.overall * 100).toFixed(1)}%
+- Verdict: ${vectorAnalysis.verdict}
+
+INTERPRETATION:
+- High similarity (>85%): Strong evidence of copying, even if code is refactored/renamed
+- Moderate similarity (70-85%): Significant structural overlap, investigate further
+- Low similarity (<70%): Different implementations, likely independent work
+
+Vector analysis uses embeddings to detect semantic similarity that pattern matching might miss.
+This catches renamed classes, refactored code, and structural copying.
+` : 'Vector analysis not available'}
+
+CRITICAL: Visual similarity can be misleading. The code and vector analyses reveal the truth:
 
 1. CSS Animations/Transitions: Direct evidence of copied keyframes and timing
 2. JavaScript Libraries: GSAP, Framer Motion, Anime.js usage indicates implementation approach
@@ -1024,6 +1172,7 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 
   const response = await anthropic.messages.create({
     model: 'claude-3-7-sonnet-20250219',
+    temperature: 0,
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }]
   });

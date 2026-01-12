@@ -12,6 +12,7 @@
 - [x] `AIRTABLE_API_KEY` - Set
 - [x] `AIRTABLE_BASE_ID` - Set (appr9Ws3qU2ivrGbC)
 - [x] `AIRTABLE_TABLE_ID` - Set (tblKcOdBV5c7L2sro)
+- [ ] `OPENAI_API_KEY` - **NEW: Required for vector similarity analysis**
 
 ## ⚠️ Remaining Setup
 
@@ -23,6 +24,18 @@ echo "YOUR_ANTHROPIC_API_KEY" | wrangler secret put ANTHROPIC_API_KEY
 ```
 
 Get your API key from: https://console.anthropic.com/settings/keys
+
+### 1b. Set OpenAI API Key (for Vector Similarity)
+
+```bash
+cd packages/templates-platform/workers/plagiarism-agent
+echo "YOUR_OPENAI_API_KEY" | wrangler secret put OPENAI_API_KEY
+```
+
+Get your API key from: https://platform.openai.com/api-keys
+
+**Note**: Vector similarity analysis adds ~$0.002 per case for semantic code comparison.
+If not set, the system will skip vector analysis and rely on pattern matching only.
 
 ### 2. Configure Airtable Webhook
 
