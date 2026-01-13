@@ -16,14 +16,14 @@
 		{
 			"binding": "DB",
 			"database_name": "outerfields-db",
-			"database_id": "placeholder-replace-after-creation"
+			"database_id": "1841903d-9c2d-4b8b-809a-3aef68d2c8f0"
 		}
 	],
 
 	"kv_namespaces": [
 		{
 			"binding": "SESSIONS",
-			"id": "placeholder-replace-after-creation"
+			"id": "973b18397c4d4b068313152a642f1ad5"
 		},
 		{
 			"binding": "VIDEO_STATS",
