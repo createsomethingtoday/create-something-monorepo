@@ -35,7 +35,7 @@
 	};
 
 	// Filter assets by search term
-	const filteredAssets = $derived(() => {
+	const filteredAssets = $derived.by(() => {
 		if (!searchTerm.trim()) return assets;
 		const term = searchTerm.toLowerCase();
 		return assets.filter(
@@ -47,10 +47,10 @@
 	});
 
 	// Group assets by status
-	const groupedAssets = $derived(() => {
+	const groupedAssets = $derived.by(() => {
 		const groups: Record<string, Asset[]> = {};
 
-		for (const asset of filteredAssets()) {
+		for (const asset of filteredAssets) {
 			const status = asset.status;
 			if (!groups[status]) {
 				groups[status] = [];
@@ -86,8 +86,8 @@
 	});
 
 	// Get sorted status keys
-	const sortedStatuses = $derived(() => {
-		return statusOrder.filter((status) => groupedAssets()[status]?.length > 0);
+	const sortedStatuses = $derived.by(() => {
+		return statusOrder.filter((status) => groupedAssets[status]?.length > 0);
 	});
 
 	function toggleStatus(status: string) {
@@ -112,7 +112,7 @@
 	}
 
 	function getVisibleAssets(status: string): Asset[] {
-		const all = groupedAssets()[status] || [];
+		const all = groupedAssets[status] || [];
 		if (expandedStatuses.includes(status)) {
 			return all;
 		}
@@ -146,7 +146,7 @@
 		</Button>
 	</div>
 
-	{#if sortedStatuses().length === 0}
+	{#if sortedStatuses.length === 0}
 		<Card>
 			<CardContent>
 				<div class="empty-state">
@@ -165,8 +165,8 @@
 			</CardContent>
 		</Card>
 	{:else}
-		{#each sortedStatuses() as status}
-			{@const statusAssets = groupedAssets()[status] || []}
+		{#each sortedStatuses as status}
+			{@const statusAssets = groupedAssets[status] || []}
 			{@const visibleAssets = getVisibleAssets(status)}
 			{@const config = statusConfig[status] || { icon: '•', bgClass: '' }}
 			{@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(status)}
