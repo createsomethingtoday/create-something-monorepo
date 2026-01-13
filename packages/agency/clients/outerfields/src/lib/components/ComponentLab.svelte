@@ -263,8 +263,13 @@
 	}
 
 	.gate-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 		text-align: center;
 		max-width: 20rem;
+		width: 100%;
 	}
 
 	.gate-title {
