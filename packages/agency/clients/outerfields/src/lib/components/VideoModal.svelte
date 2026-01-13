@@ -148,7 +148,7 @@
 		const bar = e.currentTarget as HTMLElement;
 		const rect = bar.getBoundingClientRect();
 		const percent = (e.clientX - rect.left) / rect.width;
-		if (videoElement) {
+		if (videoElement && Number.isFinite(videoElement.duration)) {
 			const newTime = percent * videoElement.duration;
 			const oldTime = videoElement.currentTime;
 
