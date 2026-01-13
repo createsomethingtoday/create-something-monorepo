@@ -515,7 +515,20 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					.select({ filterByFormula: formula, maxRecords: 1 })
 					.firstPage();
 
-				return matches.length > 0;
+				if (matches.length > 0) return true;
+
+				// Final fallback: use the same email lookup field + FIND(...) pattern used by the dashboard list query.
+				// This is intentionally "dumb" because Airtable formula semantics can differ between lookup/rollup types.
+				const dashboardLikeFormula = `AND(
+					RECORD_ID() = '${escapeAirtableString(assetId)}',
+					FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)}))
+				)`;
+
+				const dashboardMatches = await base(TABLES.ASSETS)
+					.select({ filterByFormula: dashboardLikeFormula, maxRecords: 1 })
+					.firstPage();
+
+				return dashboardMatches.length > 0;
 			} catch {
 				return false;
 			}
@@ -540,6 +553,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					{ present: boolean; type: 'array' | 'string' | 'other'; matched: boolean; length?: number }
 				>;
 				formulaMatched: boolean;
+				dashboardLikeFormulaMatched: boolean;
 			};
 		}> {
 			const normalizedEmail = email.toLowerCase();
@@ -605,7 +619,22 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				formulaMatched = false;
 			}
 
-			const isOwner = anyFieldMatched || formulaMatched;
+			// Dashboard-like fallback (same as getAssetsByEmail logic, but scoped to one record)
+			let dashboardLikeFormulaMatched = false;
+			try {
+				const dashboardLikeFormula = `AND(
+					RECORD_ID() = '${escapeAirtableString(assetId)}',
+					FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)}))
+				)`;
+				const matches = await base(TABLES.ASSETS)
+					.select({ filterByFormula: dashboardLikeFormula, maxRecords: 1 })
+					.firstPage();
+				dashboardLikeFormulaMatched = matches.length > 0;
+			} catch {
+				dashboardLikeFormulaMatched = false;
+			}
+
+			const isOwner = anyFieldMatched || formulaMatched || dashboardLikeFormulaMatched;
 
 			return {
 				isOwner,
@@ -613,7 +642,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					assetId,
 					userEmailHash,
 					emailFields: fieldDiagnostics,
-					formulaMatched
+					formulaMatched,
+					dashboardLikeFormulaMatched
 				}
 			};
 		},
