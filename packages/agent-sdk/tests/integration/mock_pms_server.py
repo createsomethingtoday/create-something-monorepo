@@ -229,7 +229,7 @@ class MockPMSClient:
         self.db = db or MockPMSDatabase()
         self.audit_log: List[Dict[str, Any]] = []
 
-    async def get_appointments(
+    def get_appointments(
         self,
         status: Optional[str] = None,
         date_from: Optional[str] = None,
@@ -274,7 +274,7 @@ class MockPMSClient:
 
         return self.db.get_patient(patient_id)
 
-    async def query_waitlist(
+    def query_waitlist(
         self, appointment_type: Optional[str] = None, correlation_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Mock GET /waitlist endpoint."""
@@ -288,7 +288,7 @@ class MockPMSClient:
         results = self.db.get_waitlist(appointment_type)
         return {"results": results, "count": len(results)}
 
-    async def get_patient_preferences(
+    def get_patient_preferences(
         self, patient_id: str, correlation_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Mock GET /patients/{id}/preferences endpoint."""

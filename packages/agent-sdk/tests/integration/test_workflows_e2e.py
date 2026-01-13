@@ -61,7 +61,7 @@ class TestEndToEndNoShowRecovery:
         """
         # Step 1: Get no-show appointments from mock PMS
         # Note: Must include appointment_id in fields list for conversion to work
-        no_shows_response = await mock_pms_client.get_appointments(
+        no_shows_response = mock_pms_client.get_appointments(
             status="no_show",
             date_from=(datetime.now() - timedelta(days=7)).isoformat(),
             date_to=datetime.now().isoformat(),
@@ -87,7 +87,7 @@ class TestEndToEndNoShowRecovery:
         assert no_shows[0].appointment_type in ["cleaning", "exam"]
 
         # Step 2: Query waitlist and match patients
-        waitlist_response = await mock_pms_client.query_waitlist(correlation_id=correlation_id)
+        waitlist_response = mock_pms_client.query_waitlist(correlation_id=correlation_id)
         waitlist_data = waitlist_response["results"]
 
         # Convert waitlist data to WaitlistPatient objects
@@ -167,7 +167,7 @@ class TestEndToEndNoShowRecovery:
     async def test_phi_access_logging_at_each_step(self, mock_pms_client, correlation_id):
         """Verify PHI access is logged at every step of the workflow."""
         # Query appointments
-        await mock_pms_client.get_appointments(
+        mock_pms_client.get_appointments(
             status="no_show",
             date_from=(datetime.now() - timedelta(days=7)).isoformat(),
             date_to=datetime.now().isoformat(),
@@ -175,10 +175,10 @@ class TestEndToEndNoShowRecovery:
         )
 
         # Query waitlist
-        await mock_pms_client.query_waitlist(correlation_id=correlation_id)
+        mock_pms_client.query_waitlist(correlation_id=correlation_id)
 
         # Get patient preferences
-        await mock_pms_client.get_patient_preferences("patient_004", correlation_id=correlation_id)
+        mock_pms_client.get_patient_preferences("patient_004", correlation_id=correlation_id)
 
         # Verify audit log
         audit_log = mock_pms_client.get_audit_trail()
@@ -200,7 +200,7 @@ class TestEndToEndNoShowRecovery:
     async def test_transactional_booking_success_path(self, mock_pms_client, correlation_id):
         """Test that successful booking completes all transactional steps."""
         # Setup: get no-show appointments
-        no_shows_response = await mock_pms_client.get_appointments(
+        no_shows_response = mock_pms_client.get_appointments(
             status="no_show",
             correlation_id=correlation_id
         )
@@ -216,7 +216,7 @@ class TestEndToEndNoShowRecovery:
             provider_id=cleaning_appt["provider_id"]
         )
 
-        waitlist_response = await mock_pms_client.query_waitlist(
+        waitlist_response = mock_pms_client.query_waitlist(
             appointment_type="cleaning", correlation_id=correlation_id
         )
         waitlist_patient_data = waitlist_response["results"][0]
@@ -245,7 +245,7 @@ class TestEndToEndNoShowRecovery:
     async def test_transactional_booking_rollback_on_failure(self, mock_pms_client, correlation_id):
         """Test that booking failures maintain consistent state (no partial updates)."""
         # Setup
-        no_shows_response = await mock_pms_client.get_appointments(
+        no_shows_response = mock_pms_client.get_appointments(
             status="no_show",
             correlation_id=correlation_id
         )
@@ -371,7 +371,7 @@ class TestMinimumNecessaryPHI:
         correlation_id = "test-min-phi-001"
 
         # Query appointments with field filtering
-        response = await mock_pms_client.get_appointments(
+        response = mock_pms_client.get_appointments(
             status="no_show",
             fields="patient_id,phone,email,appointment_date,appointment_type,status",
             correlation_id=correlation_id
@@ -393,7 +393,7 @@ class TestMinimumNecessaryPHI:
         correlation_id = "test-min-phi-002"
 
         # Query waitlist
-        response = await mock_pms_client.query_waitlist(correlation_id=correlation_id)
+        response = mock_pms_client.query_waitlist(correlation_id=correlation_id)
         waitlist_data = response["results"]
 
         # Verify returned data doesn't include prohibited PHI
