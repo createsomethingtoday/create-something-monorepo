@@ -6,6 +6,7 @@
 	 * of premium content networks. Interactive demos, live components,
 	 * and transparent development.
 	 */
+	import UrgencyBanner from '$lib/components/UrgencyBanner.svelte';
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import JourneySection from '$lib/components/JourneySection.svelte';
 	import BuildProgress from '$lib/components/BuildProgress.svelte';
@@ -189,6 +190,8 @@
 	{@html `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`}
 	{@html `<script type="application/ld+json">${JSON.stringify(webPageSchema)}</script>`}
 </svelte:head>
+
+<UrgencyBanner />
 
 <main>
 	<HeroSection />

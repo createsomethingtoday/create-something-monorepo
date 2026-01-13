@@ -25,3 +25,18 @@
 {"ts":"2026-01-07T17:53:44Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"immortan","rig":"csm"},"visibility":"feed"}
 {"ts":"2026-01-07T17:54:27Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"bullet","rig":"csm"},"visibility":"feed"}
 {"ts":"2026-01-13T02:00:33Z","source":"gt","type":"session_start","actor":"deacon","payload":{"actor_pid":"deacon-79212","cwd":"/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/deacon","role":"deacon","session_id":"deacon-79212","topic":"patrol"},"visibility":"feed"}
+{"ts":"2026-01-13T02:05:30Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"toecutter","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:05:38Z","source":"gt","type":"sling","actor":"unknown","payload":{"bead":"create-something-monorepo-o38","target":"csm/polecats/toecutter"},"visibility":"feed"}
+{"ts":"2026-01-13T02:06:07Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"goose","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:06:09Z","source":"gt","type":"sling","actor":"unknown","payload":{"bead":"create-something-monorepo-p4e","target":"csm/polecats/goose"},"visibility":"feed"}
+{"ts":"2026-01-13T02:06:38Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"nightrider","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:06:39Z","source":"gt","type":"sling","actor":"unknown","payload":{"bead":"create-something-monorepo-duj","target":"csm/polecats/nightrider"},"visibility":"feed"}
+{"ts":"2026-01-13T02:07:11Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"glory","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:07:12Z","source":"gt","type":"sling","actor":"unknown","payload":{"bead":"create-something-monorepo-e5e","target":"csm/polecats/glory"},"visibility":"feed"}
+{"ts":"2026-01-13T02:07:43Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"scrotus","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:09:38Z","source":"gt","type":"nudge","actor":"/witness","payload":{"reason":"[from /witness] Database migrated. Please retry 'gt hook' to check your work assignment.","rig":"csm","target":"csm/glory"},"visibility":"feed"}
+{"ts":"2026-01-13T02:16:38Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"chumbucket","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:16:59Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"corpus","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:17:20Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"dinki","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:17:43Z","source":"gt","type":"spawn","actor":"gt","payload":{"polecat":"prime","rig":"csm"},"visibility":"feed"}
+{"ts":"2026-01-13T02:17:55Z","source":"gt","type":"mail","actor":"csm/witness","payload":{"subject":"WITNESS: Mayor stopped, work unassigned","to":"csm/mayor"},"visibility":"feed"}

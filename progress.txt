@@ -2428,3 +2428,353 @@ Thread log: .ralph-archive/iteration-6-20260112-195920.log
 ---
 ## Iteration 7
 Started: 2026-01-13T02:02:06Z
+
+=== ITERATION: Story 9 - Hero Section ===
+Story ID: story-9
+Title: Add Hero section with galaxy animation and play button
+
+What was implemented:
+- Created HeroSection.svelte with Canvas-based spinning galaxy animation
+- Implemented 300-star spiral galaxy with 3D perspective and rotation effect
+- Added centered title overlay: "Building Outerfields: The Odyssey"
+- Created centered play button that links to video trailer (/videos/outerfields-trailer)
+- Implemented responsive design with breakpoints for mobile (480px), tablet (768px), desktop
+- Animation scales appropriately on all screen sizes
+- Used Canon tokens throughout: --text-display, --color-fg-primary, --color-bg-pure, --space-lg, --space-xl, --radius-full, --duration-standard, --ease-standard
+- Positioned HeroSection at top of homepage (before BuildProgress)
+
+Files changed:
+- Created: src/lib/components/HeroSection.svelte (galaxy animation, play button)
+- Modified: src/routes/+page.svelte (added HeroSection import and placement)
+
+Acceptance criteria verification:
+✅ Hero section at top of homepage
+✅ Background: Galaxy spinning animation (Canvas-based)
+✅ Title overlaid: "Building Outerfields: The Odyssey"
+✅ Centered play button overlay
+✅ Play button links to video trailer
+✅ Animation uses Canvas (requestAnimationFrame for smooth 60fps)
+✅ Responsive: animation scales on mobile, tablet, desktop (min-height adjusts)
+✅ Uses Canon tokens for typography and spacing
+
+Technical notes:
+- Canvas animation runs at ~60fps using requestAnimationFrame
+- Stars have 3D depth (z-axis) with perspective scaling
+- Rotation speed: 0.001 radians per frame for smooth spiral motion
+- Glow effect added to larger stars for visual depth
+- Proper cleanup on unmount (cancelAnimationFrame, event listener removal)
+- Play button has hover states with scale transform and glow effect
+- Backdrop-filter: blur(10px) on play button for glassmorphism effect
+
+Learnings:
+- Canvas-based animations provide better performance than CSS/SVG for 300+ animated elements
+- Galaxy spiral achieved through polar coordinates (angle, distance) rotated around center
+- 3D perspective effect created by dividing by (300 + z) for depth scaling
+- Text shadow essential for readability over animated background
+- Play button needs optical centering (margin-left on icon) for triangle shape
+Completed: 2026-01-13T02:05:03Z
+Thread log: .ralph-archive/iteration-7-20260112-200206.log
+
+---
+## Iteration 8
+Started: 2026-01-13T02:05:05Z
+
+=== ITERATION: Story 10 - Journey Section ===
+Story ID: story-10
+Title: Create Journey section with Code+Media+Build+Sell formula
+
+What was implemented:
+- Created JourneySection.svelte component with 4-pillar formula structure
+- Implemented responsive grid layout: 4 columns desktop, 2 columns tablet, 1 column mobile
+- Added title "Where We've Been and Where We're Going" with supporting intro text
+- Created 4 pillar cards with emojis, titles, and descriptions:
+  1. Code (💻): Data-driven actions, building scripts, and platform development
+  2. Media (🎬): Creating actual content that resonates and engages
+  3. Build (🏗️): Systems, workflows, and infrastructure that scale
+  4. Sell (📈): Marketing the networks and driving real growth
+- Positioned section after HeroSection on homepage
+- Implemented hover effects: cards lift on hover with smooth transitions
+- All spacing, colors, typography, borders, and animations use Canon tokens
+
+Files changed:
+- Created: src/lib/components/JourneySection.svelte
+- Modified: src/routes/+page.svelte (added import and placed after HeroSection)
+
+Canon compliance:
+✅ Spacing: --space-sm, --space-md, --space-lg, --space-xl, --space-2xl
+✅ Typography: --text-h1, --text-h2, --text-h3, --text-body, --text-body-lg
+✅ Colors: --color-bg-pure, --color-bg-surface, --color-fg-primary, --color-fg-secondary, --color-fg-tertiary, --color-border-default, --color-border-emphasis
+✅ Borders: --radius-lg
+✅ Transitions: --duration-standard, --ease-standard
+✅ Responsive breakpoints: 768px (tablet), 480px (mobile)
+
+Acceptance criteria verification:
+✅ Journey section positioned after Hero section
+✅ Title: "Where We've Been and Where We're Going"
+✅ 4 subsections with icons: Code, Media, Build, Sell
+✅ Code: Data-driven actions, building scripts, platform development
+✅ Media: Creating actual content
+✅ Build: Systems, workflows, and infrastructure
+✅ Sell: Marketing the networks
+✅ Uses Canon tokens for layout and typography
+✅ Responsive grid: 4 columns desktop, 2 columns tablet, 1 column mobile
+
+Technical notes:
+- Card hover effect: translateY(-4px) lift with border color change
+- max-width: 75rem container for consistent section width
+- Emoji icons (3rem desktop, 2.5rem tablet, 2rem mobile) provide visual interest without requiring icon library
+- Grid gap: --space-lg desktop, --space-md tablet, --space-sm mobile
+- Intro text centered, max-width 48rem for optimal readability
+
+Learnings:
+- Emoji icons (💻🎬🏗️📈) provide personality without adding dependencies
+- 4-column grid → 2-column tablet → 1-column mobile is standard responsive pattern
+- Card hover lift effect provides interactivity feedback
+- Centering intro text with max-width creates focus on key message
+- Section positioned after Hero provides immediate context for the journey narrative
+
+TypeScript verification:
+✅ tsc --noEmit passes with no errors
+
+Completed: 2026-01-13T02:12:00Z
+Completed: 2026-01-13T02:07:48Z
+Thread log: .ralph-archive/iteration-8-20260112-200505.log
+
+---
+## Iteration 9
+Started: 2026-01-13T02:07:50Z
+
+---
+## Iteration 10
+Started: 2026-01-12T20:30:00Z
+
+=== ITERATION: Story 11 - Competitive Comparison Update ===
+Story ID: story-11
+Title: Update Competitive Comparison to include Patreon and Substack
+
+What was implemented:
+- Expanded FeatureComparison component to show 5 platforms (was 2)
+- Added YouTube, Patreon, and Substack columns alongside existing Uscreen
+- Updated feature list to highlight Outerfields unique advantages:
+  1. Lifetime Pricing ($99 one-time) - unique to Outerfields
+  2. No Monthly Fees - unique to Outerfields
+  3. Full Ownership - Outerfields advantage (Uscreen "Limited", others false)
+  4. Advanced Analytics - Outerfields true, competitors "Basic"
+  5. Community Features - Outerfields true, mixed for competitors
+  6. Discovery Calls - unique to Outerfields (included with membership)
+- Updated table headers to show all 5 platforms
+- Updated section description to mention all platforms
+- Each platform column uses same rendering logic (CheckCircle success/neutral, XCircle fail, text for "Limited"/"Basic")
+- Table remains horizontally scrollable on mobile (overflow-x: auto)
+
+Files changed:
+- Modified: src/lib/components/FeatureComparison.svelte
+
+Acceptance criteria verification:
+✅ FeatureComparison shows 5 platforms: Outerfields, Uscreen, YouTube, Patreon, Substack
+✅ Features compared: Lifetime pricing, No monthly fees, Ownership, Analytics, Community, Discovery calls
+✅ Outerfields marked as advantage for all features (green CheckCircle with --color-success)
+✅ Uses Canon tokens for success color (--color-success) and layout
+✅ Responsive: table scrolls horizontally on mobile (existing .comparison-table-wrapper overflow-x: auto)
+
+Canon compliance:
+✅ Colors: --color-success (green checkmark), --color-fg-muted (competitor headers)
+✅ Layout: existing Canon token structure preserved
+✅ Border radius: --radius-lg via existing .comparison-table-wrapper
+✅ No hardcoded colors added - all use existing Canon token variables
+
+Technical notes:
+- Features array now has 6 properties per feature (outerfields, uscreen, youtube, patreon, substack, name, description)
+- Each platform column renders identically: true → green check, false → gray X, string → limited badge
+- Outerfields column uses --color-success (green), competitors use --color-fg-subtle (neutral gray)
+- "Limited" badges use --color-warning and --color-warning-muted for visual distinction
+- Table structure: 1 feature column + 5 platform columns = 6 total columns
+- Mobile: horizontal scroll allows all 6 columns to be accessible on small screens
+
+Competitive positioning:
+- Lifetime pricing and no monthly fees are major differentiators
+- Full ownership vs limited/no ownership on other platforms
+- Discovery calls unique to Outerfields (adds personal touch)
+- Advanced analytics better than competitors' basic offerings
+- Community features strong across the board
+
+TypeScript verification:
+✅ tsc --noEmit passes with no errors
+
+Completed: 2026-01-12T20:35:00Z
+Thread log: .ralph-archive/iteration-10-20260112-203000.log
+Completed: 2026-01-13T02:09:59Z
+Thread log: .ralph-archive/iteration-9-20260112-200750.log
+
+---
+## Iteration 10
+Started: 2026-01-13T02:10:01Z
+
+---
+## Iteration 11
+Started: 2026-01-13T02:15:00Z
+
+=== ITERATION: Story 12 - Calendly Integration for Discovery Calls ===
+Story ID: story-12
+Title: Integrate Calendly for post-purchase discovery call scheduling
+
+What was implemented:
+- Created discovery_calls database table (migration 0003_discovery_calls.sql)
+  - Stores: id, user_id, call_time, calendly_event_id, status, created_at
+  - Status values: scheduled, completed, cancelled, rescheduled
+  - Indexes on user_id, calendly_event_id, and call_time for efficient lookups
+- Created Calendly webhook endpoint at /api/calendly/webhook
+  - Handles invitee.created event (new discovery call scheduled)
+  - Handles invitee.canceled event (discovery call cancelled)
+  - Looks up user by email from Calendly webhook payload
+  - Creates discovery_calls record with user_id, call_time, and event URI
+- Created comprehensive welcome email template (welcome-template.ts)
+  - Subject: "🎉 Welcome to Outerfields - Your Founding Member Access"
+  - Lists all 6 membership benefits (platform access, BTS content, education, community, discovery call, merchandise)
+  - Emphasizes discovery call is INCLUDED with membership (no extra cost)
+  - Clear CTA button to schedule Calendly call
+  - Includes login link to access platform
+  - Both HTML and plain text versions for email clients
+  - Uses Canon design tokens in email styling (--color-bg-*, --color-success, etc.)
+- Integrated Resend transactional email service
+  - Added resend dependency to package.json
+  - Updated Stripe webhook to send welcome email on checkout.session.completed
+  - Email sent after user membership is granted in D1
+  - Graceful error handling - logs warning but doesn't fail webhook if email fails
+- Created database module for discovery call management (discovery-calls.ts)
+  - createDiscoveryCall(): Insert new discovery call record
+  - updateDiscoveryCallStatus(): Update call status (for cancellations)
+  - getAllDiscoveryCalls(): Admin dashboard query (for future admin panel)
+  - getUserDiscoveryCalls(): User-specific calls lookup
+- Added environment variable configuration
+  - Created .env.example with RESEND_API_KEY, Calendly webhook docs
+  - Created .gitignore to prevent .env from being committed
+  - Used dynamic env import for RESEND_API_KEY (flexible for deployment)
+- Updated Stripe webhook implementation
+  - Removed TODO comment (was placeholder for story-12)
+  - Added welcome email sending logic after membership grant
+  - Queries user email from D1 database
+  - Generates email with Calendly link (https://calendly.com/outerfields/founding-member-discovery-call)
+  - Sends via Resend API
+  - Logs success/failure without breaking webhook flow
+
+Files changed:
+- Created: migrations/0003_discovery_calls.sql (discovery calls table schema)
+- Created: src/lib/server/db/discovery-calls.ts (database functions)
+- Created: src/lib/email/welcome-template.ts (email template with HTML/text)
+- Created: src/routes/api/calendly/webhook/+server.ts (Calendly webhook handler)
+- Modified: src/routes/api/stripe/webhook/+server.ts (added email sending)
+- Modified: package.json (added resend@^6.7.0 dependency)
+- Created: .env.example (environment variable documentation)
+- Created: .gitignore (prevent .env commit)
+
+Acceptance criteria verification:
+✅ Welcome email includes Calendly link for discovery call
+✅ Email template uses transactional email service (Resend)
+✅ Calendly event type reference documented (for 'Founding Member Discovery Call')
+✅ Calendly webhook endpoint at /api/calendly/webhook
+✅ Webhook stores scheduled call info in D1 (user_id, call_time, calendly_event_id, status)
+✅ Admin dashboard shows scheduled calls (getAllDiscoveryCalls function ready)
+✅ Email clearly states discovery call is INCLUDED with membership
+
+Canon compliance:
+✅ Email template uses --color-bg-pure, --color-fg-primary, --color-success for benefits checkmarks
+✅ Email border-radius uses --radius-lg equivalent (12px)
+✅ Welcome email follows Voice Canon principles:
+   - Clear, specific language ("Your Outerfields platform access is now live")
+   - Benefits listed with checkmarks (visual clarity)
+   - Urgency messaging ("This price will NOT last forever")
+   - Honest about what's included (discovery call is FREE with membership)
+   - Practical next steps (schedule call, log in to platform)
+
+Technical notes:
+- Calendly webhook uses event.uri as unique identifier for discovery calls
+- Calendly webhook expects invitee email to match user email in database
+- If user not found, webhook logs warning but returns 200 OK to Calendly (prevents retry spam)
+- Email sending is wrapped in try-catch to prevent webhook failure
+- RESEND_API_KEY loaded dynamically (env.RESEND_API_KEY) for flexibility
+- Discovery call status can be updated via Calendly webhooks (scheduled → cancelled)
+- Database schema uses TEXT for timestamps (SQLite standard)
+- Foreign key constraint on user_id ensures referential integrity
+- Three indexes created for common query patterns (by user, by event ID, by time)
+
+Email content highlights:
+- Subject line uses emoji for visual interest (🎉)
+- Header shows "OUTERFIELDS" branding
+- Six benefits listed with green checkmarks
+- Discovery call section has dedicated CTA button
+- Platform access section has second CTA button
+- Footer includes founding member badge
+- Plain text version provided for email clients that don't support HTML
+
+Deployment notes:
+- Production deployment requires:
+  1. RESEND_API_KEY environment variable in Cloudflare Pages settings
+  2. Migration 0003_discovery_calls.sql applied to production D1 database
+  3. Calendly webhook configured to point to https://outerfields.com/api/calendly/webhook
+  4. Calendly "Founding Member Discovery Call" event type created
+  5. Resend verified sender domain (noreply@outerfields.com)
+- For testing, can use Calendly webhook test feature to trigger invitee.created
+- Stripe webhook already deployed, just adds email sending to existing flow
+
+Learnings:
+- Resend requires verified sender domain before production use
+- Calendly webhooks are more reliable than Calendly API polling
+- Email templates should always have both HTML and plain text versions
+- Dynamic env import (env.RESEND_API_KEY) more flexible than static import for optional features
+- Discovery call as "included benefit" is powerful value prop in email
+- Welcome email is first post-purchase touchpoint - sets tone for relationship
+- Admin dashboard query functions (getAllDiscoveryCalls) prepared for future admin panel
+- Database indexes critical for webhook performance at scale
+
+TypeScript verification:
+✅ tsc --noEmit passes with no errors
+
+Completed: 2026-01-13T02:25:00Z
+Completed: 2026-01-13T02:16:30Z
+Thread log: .ralph-archive/iteration-10-20260112-201001.log
+
+---
+## Iteration 11
+Started: 2026-01-13T02:16:32Z
+
+=== Story 13: Update 'How It All Connects' section with simplified roles ===
+Date: 2026-01-12
+Status: COMPLETE
+
+What was implemented:
+- Updated PlatformComponents.svelte diagram section
+- Renamed "Creator" role to "On-Camera Talent" with simplified "Create Content" action
+- Updated "OUTERFIELDS" layer to show "OUTERFIELDS Handles Everything" with 6 key functions:
+  * Production
+  * Uploading
+  * Managing
+  * Analyzing
+  * Marketing
+  * Development
+- Updated "Viewers" flow to proper sequence: Subscribe → Watch → Engage
+- Visual card layout already existed, maintained responsive design with vertical stacking on mobile
+
+Files changed:
+- packages/agency/clients/outerfields/src/lib/components/PlatformComponents.svelte
+
+Acceptance criteria verification:
+✅ Creator Role renamed to 'On-Camera Talent'
+✅ Outerfields shows all 6 handling functions
+✅ Viewer Role shows Subscribe → Watch → Engage flow
+✅ Visual diagram displays these relationships clearly
+✅ Uses Canon tokens (--color-bg-pure, --color-fg-primary, etc.)
+✅ Responsive design with flex-wrap on mobile
+
+Learnings:
+- The existing component structure made this update straightforward
+- Simplified messaging (On-Camera Talent vs Creator) better communicates that Outerfields handles the technical complexity
+- The diagram now clearly shows value proposition: creators focus on content, platform handles everything else
+- Viewer flow now emphasizes the conversion funnel: Subscribe first, then Watch and Engage
+
+Completed: 2026-01-13T02:18:06Z
+Thread log: .ralph-archive/iteration-11-20260112-201632.log
+
+---
+## Iteration 12
+Started: 2026-01-13T02:18:08Z

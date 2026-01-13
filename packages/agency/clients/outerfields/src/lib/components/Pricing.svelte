@@ -51,11 +51,16 @@
 <section class="pricing-section" id="pricing">
 	<div class="pricing-container">
 		<div class="section-header">
-			<span class="section-badge">Founding Member Pricing</span>
+			<span class="section-badge">⚡ Pre-Sale Phase - Limited Time</span>
 			<h2 class="section-title">The Only Option: Founding Member - $99 Lifetime Access</h2>
 			<p class="section-description">
 				Get in now at founding member pricing. This price will <strong>NOT</strong> last forever.
+				Once we launch, pricing increases significantly.
 			</p>
+			<div class="urgency-callout">
+				<strong>🎯 Founding Member Status:</strong> You're getting this at the lowest price we'll ever
+				offer. Lock it in before it's gone.
+			</div>
 		</div>
 
 		<div class="pricing-card-wrapper">
@@ -81,6 +86,9 @@
 				<div class="urgency-message">
 					<p><strong>⚠️ This price will NOT last forever</strong></p>
 					<p>Lock in founding member pricing now before it increases</p>
+					<p class="urgency-detail">
+						Early adopters save 70%+ vs. post-launch pricing. Join the founding members today.
+					</p>
 				</div>
 
 				<ul class="features-list">
@@ -93,7 +101,7 @@
 				</ul>
 
 				<button class="card-cta" on:click={handleCheckout} disabled={loading}>
-					{loading ? 'Redirecting to checkout...' : 'Become a Founding Member - $99'}
+					{loading ? 'Redirecting to checkout...' : '🔒 Claim Your Lifetime Access - $99'}
 				</button>
 
 				{#if errorMessage}
@@ -170,6 +178,25 @@
 
 	.section-description strong {
 		color: var(--color-warning);
+	}
+
+	.urgency-callout {
+		margin-top: 1.5rem;
+		padding: 1rem 1.5rem;
+		background: var(--color-warning-muted);
+		border: 2px solid var(--color-warning-border);
+		border-radius: 0.75rem;
+		font-size: 0.9375rem;
+		color: var(--color-fg-secondary);
+		text-align: center;
+		max-width: 42rem;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	.urgency-callout strong {
+		color: var(--color-warning);
+		font-weight: 700;
 	}
 
 	.pricing-card-wrapper {
@@ -286,6 +313,13 @@
 
 	.urgency-message strong {
 		color: var(--color-warning);
+	}
+
+	.urgency-detail {
+		margin-top: 0.5rem !important;
+		font-size: 0.8125rem !important;
+		color: var(--color-fg-muted) !important;
+		font-style: italic;
 	}
 
 	.features-list {

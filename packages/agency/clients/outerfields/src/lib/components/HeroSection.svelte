@@ -31,7 +31,16 @@
 	</div>
 
 	<div class="hero-content">
+		<div class="hero-badge">
+			<span class="badge-text">🎯 Founding Member Pre-Sale - Limited Time Only</span>
+		</div>
+
 		<h1 class="hero-title">Building Outerfields: The Odyssey</h1>
+
+		<p class="hero-subtitle">
+			Join the founding members getting lifetime access for $99. This price will <strong>NOT</strong> last
+			forever.
+		</p>
 
 		<button class="play-button" onclick={handlePlayClick} aria-label="Play trailer">
 			<svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -89,12 +98,43 @@
 		padding: var(--space-lg);
 	}
 
+	.hero-badge {
+		margin-bottom: var(--space-md);
+	}
+
+	.badge-text {
+		display: inline-block;
+		padding: 0.5rem 1rem;
+		background: rgba(170, 136, 68, 0.2);
+		border: 1px solid var(--color-warning-border);
+		border-radius: 9999px;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-warning);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		backdrop-filter: blur(10px);
+	}
+
 	.hero-title {
 		font-size: var(--text-display);
 		font-weight: 700;
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-md);
 		text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+	}
+
+	.hero-subtitle {
+		font-size: 1.25rem;
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-xl);
+		text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+		line-height: 1.6;
+	}
+
+	.hero-subtitle strong {
+		color: var(--color-warning);
+		font-weight: 700;
 	}
 
 	.play-button {
@@ -136,8 +176,17 @@
 			max-height: 700px;
 		}
 
+		.badge-text {
+			font-size: 0.75rem;
+			padding: 0.375rem 0.75rem;
+		}
+
 		.hero-title {
 			font-size: var(--text-h1);
+		}
+
+		.hero-subtitle {
+			font-size: 1.125rem;
 		}
 
 		.play-button {
@@ -157,8 +206,16 @@
 			max-height: 600px;
 		}
 
+		.badge-text {
+			font-size: 0.6875rem;
+		}
+
 		.hero-title {
 			font-size: var(--text-h2);
+		}
+
+		.hero-subtitle {
+			font-size: 1rem;
 		}
 
 		.play-button {

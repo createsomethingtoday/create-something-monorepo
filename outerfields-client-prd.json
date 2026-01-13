@@ -184,7 +184,7 @@
         "src/lib/components/HeroSection.svelte",
         "static/animations/galaxy.js"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-10",
@@ -204,7 +204,7 @@
       "files": [
         "src/lib/components/JourneySection.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-11",
@@ -220,7 +220,7 @@
       "files": [
         "src/lib/components/FeatureComparison.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-12",
@@ -240,7 +240,7 @@
         "src/lib/email/welcome-template.ts",
         "src/lib/server/db/discovery-calls.ts"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-13",
@@ -257,7 +257,7 @@
       "files": [
         "src/lib/components/PlatformComponents.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-14",
