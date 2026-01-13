@@ -3,7 +3,7 @@
 	 * OUTERFIELDS Pricing
 	 * Single $99 lifetime membership - Founding Member offer
 	 */
-	import { Check, Crown } from 'lucide-svelte';
+	import { Check, Crown, Zap, Target, AlertTriangle, Lock } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 
 	let loading = false;
@@ -51,15 +51,21 @@
 <section class="pricing-section" id="pricing">
 	<div class="pricing-container">
 		<div class="section-header">
-			<span class="section-badge">⚡ Pre-Sale Phase - Limited Time</span>
+			<span class="section-badge">
+				<Zap size={14} />
+				Pre-Sale Phase - Limited Time
+			</span>
 			<h2 class="section-title">The Only Option: Founding Member - $99 Lifetime Access</h2>
 			<p class="section-description">
 				Get in now at founding member pricing. This price will <strong>NOT</strong> last forever.
 				Once we launch, pricing increases significantly.
 			</p>
 			<div class="urgency-callout">
-				<strong>🎯 Founding Member Status:</strong> You're getting this at the lowest price we'll ever
-				offer. Lock it in before it's gone.
+				<strong>
+					<Target size={16} />
+					Founding Member Status:
+				</strong>
+				You're getting this at the lowest price we'll ever offer. Lock it in before it's gone.
 			</div>
 		</div>
 
@@ -84,7 +90,12 @@
 				</div>
 
 				<div class="urgency-message">
-					<p><strong>⚠️ This price will NOT last forever</strong></p>
+					<p>
+						<strong>
+							<AlertTriangle size={16} />
+							This price will NOT last forever
+						</strong>
+					</p>
 					<p>Lock in founding member pricing now before it increases</p>
 					<p class="urgency-detail">
 						Early adopters save 70%+ vs. post-launch pricing. Join the founding members today.
@@ -101,7 +112,12 @@
 				</ul>
 
 				<button class="card-cta" on:click={handleCheckout} disabled={loading}>
-					{loading ? 'Redirecting to checkout...' : '🔒 Claim Your Lifetime Access - $99'}
+					{#if loading}
+						Redirecting to checkout...
+					{:else}
+						<Lock size={18} />
+						Claim Your Lifetime Access - $99
+					{/if}
 				</button>
 
 				{#if errorMessage}
@@ -148,7 +164,9 @@
 	}
 
 	.section-badge {
-		display: inline-block;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
 		padding: 0.375rem 0.75rem;
 		background: var(--color-warning-muted);
 		border: 1px solid var(--color-warning-border);
@@ -195,8 +213,17 @@
 	}
 
 	.urgency-callout strong {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		color: var(--color-warning);
 		font-weight: 700;
+	}
+
+	.urgency-message strong {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 	}
 
 	.pricing-card-wrapper {
@@ -345,6 +372,10 @@
 
 	.card-cta {
 		width: 100%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
 		padding: 1.125rem 1.5rem;
 		background: var(--color-brand);
 		border: none;

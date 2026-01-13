@@ -5,6 +5,8 @@
 	 * Reuses the Sketchfab 3D embed from the demo page.
 	 * Shows title "Building Outerfields: The Odyssey" with centered play button.
 	 */
+	import { Target, Play } from 'lucide-svelte';
+
 	function handlePlayClick() {
 		window.location.href = '/videos/outerfields-trailer';
 	}
@@ -26,7 +28,10 @@
 
 	<div class="hero-content">
 		<div class="hero-badge">
-			<span class="badge-text">🎯 Founding Member Pre-Sale - Limited Time Only</span>
+			<span class="badge-text">
+				<Target size={16} />
+				Founding Member Pre-Sale - Limited Time Only
+			</span>
 		</div>
 
 		<h1 class="hero-title">Building Outerfields: The Odyssey</h1>
@@ -37,9 +42,7 @@
 		</p>
 
 		<button class="play-button" onclick={handlePlayClick} aria-label="Play trailer">
-			<svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
-			</svg>
+			<Play class="play-icon" />
 		</button>
 	</div>
 </section>
@@ -97,7 +100,9 @@
 	}
 
 	.badge-text {
-		display: inline-block;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		padding: 0.5rem 1rem;
 		background: rgba(170, 136, 68, 0.2);
 		border: 1px solid var(--color-warning-border);
@@ -157,11 +162,10 @@
 		transform: scale(1.05);
 	}
 
-	.play-icon {
+	:global(.play-icon) {
 		width: 48px;
 		height: 48px;
 		color: var(--color-fg-primary);
-		margin-left: 8px;
 	}
 
 	@media (max-width: 768px) {
@@ -188,7 +192,7 @@
 			height: 90px;
 		}
 
-		.play-icon {
+		:global(.play-icon) {
 			width: 36px;
 			height: 36px;
 		}
@@ -217,7 +221,7 @@
 			height: 75px;
 		}
 
-		.play-icon {
+		:global(.play-icon) {
 			width: 30px;
 			height: 30px;
 		}

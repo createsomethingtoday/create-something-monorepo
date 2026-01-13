@@ -4,6 +4,7 @@
 	 *
 	 * Creator success stories and quotes
 	 */
+	import { Quote } from 'lucide-svelte';
 
 	interface Testimonial {
 		quote: string;
@@ -59,7 +60,7 @@
 			{#each testimonials as testimonial, index}
 				<article class="testimonial-card highlight-item" style="--index: {index}">
 					<div class="quote-icon">
-						<span class="material-symbols-outlined">format_quote</span>
+						<Quote size={32} />
 					</div>
 					<blockquote class="testimonial-quote">
 						"{testimonial.quote}"
@@ -178,9 +179,6 @@
 		opacity: 0.3;
 	}
 
-	.quote-icon .material-symbols-outlined {
-		font-size: 2rem;
-	}
 
 	.testimonial-quote {
 		font-size: 1rem;

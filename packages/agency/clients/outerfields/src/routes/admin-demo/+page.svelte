@@ -31,7 +31,8 @@
 		Trash2,
 		Copy,
 		ExternalLink,
-		ArrowUpDown
+		ArrowUpDown,
+		Lightbulb
 	} from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
 
@@ -1173,7 +1174,10 @@
 
 				<!-- AI Content Strategist Chat -->
 				<div class="analytics-section analytics-chat-section">
-					<h4>💡 Content Strategy Assistant</h4>
+					<h4 class="chat-title">
+						<Lightbulb size={18} />
+						Content Strategy Assistant
+					</h4>
 					<p class="chat-intro">
 						Ask me anything about your video's performance or get content ideas based on what's
 						working.
@@ -2466,6 +2470,13 @@
 	.analytics-chat-section {
 		border-top: 1px solid var(--color-border-default);
 		padding-top: 2rem;
+	}
+
+	.chat-title {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0 0 0.5rem;
 	}
 
 	.chat-intro {

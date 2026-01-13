@@ -4,6 +4,7 @@
 	 *
 	 * Isometric card layout showing Admin and User platform features
 	 */
+	import { Shield, CheckCircle, LayoutDashboard, Tv, PlayCircle } from 'lucide-svelte';
 
 	const adminFeatures = [
 		'Real-time Analytics Dashboard',
@@ -39,7 +40,7 @@
 				<div class="card-inner">
 					<div class="card-header">
 						<span class="card-icon">
-							<span class="material-symbols-outlined">admin_panel_settings</span>
+							<Shield size={24} />
 						</span>
 						<h3 class="card-title">Creator Dashboard</h3>
 						<p class="card-subtitle">Command center for your content empire</p>
@@ -47,13 +48,13 @@
 					<ul class="card-features">
 						{#each adminFeatures as feature}
 							<li>
-								<span class="material-symbols-outlined">check_circle</span>
+								<CheckCircle size={18} />
 								{feature}
 							</li>
 						{/each}
 					</ul>
 					<a href="/admin-demo" class="card-cta">
-						<span class="material-symbols-outlined">dashboard</span>
+						<LayoutDashboard size={18} />
 						Explore Admin Demo
 					</a>
 				</div>
@@ -64,7 +65,7 @@
 				<div class="card-inner">
 					<div class="card-header">
 						<span class="card-icon">
-							<span class="material-symbols-outlined">tv</span>
+							<Tv size={24} />
 						</span>
 						<h3 class="card-title">Viewer Experience</h3>
 						<p class="card-subtitle">Premium streaming your audience deserves</p>
@@ -72,13 +73,13 @@
 					<ul class="card-features">
 						{#each userFeatures as feature}
 							<li>
-								<span class="material-symbols-outlined">check_circle</span>
+								<CheckCircle size={18} />
 								{feature}
 							</li>
 						{/each}
 					</ul>
 					<a href="/demo" class="card-cta">
-						<span class="material-symbols-outlined">play_circle</span>
+						<PlayCircle size={18} />
 						Explore User Demo
 					</a>
 				</div>
@@ -192,8 +193,8 @@
 		margin-bottom: 1rem;
 	}
 
-	.card-icon .material-symbols-outlined {
-		font-size: 1.5rem;
+	.card-icon :global(svg) {
+		flex-shrink: 0;
 	}
 
 	.card-title {
@@ -229,8 +230,8 @@
 		border-bottom: none;
 	}
 
-	.card-features .material-symbols-outlined {
-		font-size: 1.25rem;
+	.card-features :global(svg) {
+		flex-shrink: 0;
 		color: var(--color-fg-secondary);
 	}
 
@@ -254,8 +255,8 @@
 		box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
 	}
 
-	.card-cta .material-symbols-outlined {
-		font-size: 1.25rem;
+	.card-cta :global(svg) {
+		flex-shrink: 0;
 	}
 
 	@media (max-width: 768px) {
