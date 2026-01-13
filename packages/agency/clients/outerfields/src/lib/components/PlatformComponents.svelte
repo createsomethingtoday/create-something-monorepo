@@ -141,22 +141,23 @@
 			</div>
 			<div class="diagram-visual">
 				<div class="diagram-layer creator">
-					<span class="layer-label">Creator</span>
+					<span class="layer-label">On-Camera Talent</span>
 					<div class="layer-nodes">
-						<span class="node">Upload</span>
-						<span class="node">Manage</span>
-						<span class="node">Analyze</span>
+						<span class="node">Create Content</span>
 					</div>
 				</div>
 				<div class="diagram-connector">
 					<ArrowDown size={24} />
 				</div>
 				<div class="diagram-layer platform">
-					<span class="layer-label">OUTERFIELDS</span>
+					<span class="layer-label">OUTERFIELDS Handles Everything</span>
 					<div class="layer-nodes">
-						<span class="node">Process</span>
-						<span class="node">Store</span>
-						<span class="node">Deliver</span>
+						<span class="node">Production</span>
+						<span class="node">Uploading</span>
+						<span class="node">Managing</span>
+						<span class="node">Analyzing</span>
+						<span class="node">Marketing</span>
+						<span class="node">Development</span>
 					</div>
 				</div>
 				<div class="diagram-connector">
@@ -165,9 +166,9 @@
 				<div class="diagram-layer viewer">
 					<span class="layer-label">Viewers</span>
 					<div class="layer-nodes">
+						<span class="node">Subscribe</span>
 						<span class="node">Watch</span>
 						<span class="node">Engage</span>
-						<span class="node">Subscribe</span>
 					</div>
 				</div>
 			</div>
