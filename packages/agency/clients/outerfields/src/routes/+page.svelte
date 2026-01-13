@@ -7,6 +7,7 @@
 	 * and transparent development.
 	 */
 	import HeroSection from '$lib/components/HeroSection.svelte';
+	import JourneySection from '$lib/components/JourneySection.svelte';
 	import BuildProgress from '$lib/components/BuildProgress.svelte';
 	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ContentCategories from '$lib/components/ContentCategories.svelte';
@@ -191,6 +192,7 @@
 
 <main>
 	<HeroSection />
+	<JourneySection />
 	<BuildProgress />
 	<FeaturedVideos />
 	<ContentCategories />
