@@ -1,7 +1,10 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import Stripe from 'stripe';
+import { Resend } from 'resend';
 import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '$env/static/private';
+import { generateWelcomeEmail } from '$lib/email/welcome-template';
+import { env } from '$env/dynamic/private';
 
 /**
  * POST /api/stripe/webhook
@@ -69,8 +72,47 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 				console.log(`Granted membership to user ${userId}`);
 
-				// TODO: Send welcome email with Calendly link for discovery call
-				// This will be implemented in story-12
+				// Send welcome email with Calendly link for discovery call
+				try {
+					const resendApiKey = env.RESEND_API_KEY;
+					if (!resendApiKey) {
+						console.warn('RESEND_API_KEY not configured - skipping welcome email');
+						break;
+					}
+
+					const resend = new Resend(resendApiKey);
+
+					// Get user details
+					const user = await db
+						.prepare('SELECT email FROM users WHERE id = ?')
+						.bind(userId)
+						.first<{ email: string }>();
+
+					if (user?.email) {
+						// Calendly link for discovery calls (update with your actual Calendly URL)
+						const calendlyLink =
+							'https://calendly.com/outerfields/founding-member-discovery-call';
+
+						const emailContent = generateWelcomeEmail({
+							userName: '', // Could add name field to users table
+							userEmail: user.email,
+							calendlyLink
+						});
+
+						await resend.emails.send({
+							from: 'Outerfields <noreply@outerfields.com>',
+							to: user.email,
+							subject: emailContent.subject,
+							html: emailContent.html,
+							text: emailContent.text
+						});
+
+						console.log(`Welcome email sent to ${user.email}`);
+					}
+				} catch (emailErr) {
+					// Log error but don't fail the webhook
+					console.error('Failed to send welcome email:', emailErr);
+				}
 
 				break;
 			}
