@@ -18,20 +18,25 @@
 	import type { Video as DbVideo } from '$lib/server/db/videos';
 	import { authStore } from '$lib/stores/auth';
 
-	// Cloudflare R2 CDN base URL (public bucket)
+	// Cloudflare R2 CDN base URL (public bucket) - used for video assets only
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
-	// Coming Soon thumbnails: Flux-generated trailers in /thumbnails/trailers/
-	const COMING_SOON_THUMBNAILS_BY_ID: Record<string, string> = {
-		vid_trailer_1: '/thumbnails/trailers/trailer01.jpg',
-		vid_trailer_2: '/thumbnails/trailers/trailer02.jpg',
-		vid_trailer_3: '/thumbnails/trailers/trailer03.jpg',
-		vid_trailer_4: '/thumbnails/trailers/trailer04.jpg',
-		vid_trailer_5: '/thumbnails/trailers/trailer05.jpg'
-	};
-
-	function getComingSoonThumbnail(v: DbVideo): string {
-		return COMING_SOON_THUMBNAILS_BY_ID[v.id] || '/thumbnails/hero-building-outerfields.jpg';
+	/**
+	 * Get thumbnail path - uses local static thumbnails (Flux-generated)
+	 * All thumbnails are stored in /static/thumbnails/ and served at /thumbnails/
+	 *
+	 * D1 stores paths like: /thumbnails/crew-call/ep01.jpg
+	 * Static folder has:    static/thumbnails/crew-call/ep01.jpg
+	 * Served at:            /thumbnails/crew-call/ep01.jpg ✓
+	 */
+	function getThumbnailPath(v: DbVideo): string {
+		// D1 thumbnail_path is already in the correct format: /thumbnails/...
+		// Just use it directly since static folder serves at that path
+		if (v.thumbnail_path.startsWith('/thumbnails/')) {
+			return v.thumbnail_path;
+		}
+		// Fallback: prefix with /thumbnails if missing
+		return `/thumbnails${v.thumbnail_path.startsWith('/') ? '' : '/'}${v.thumbnail_path}`;
 	}
 
 	type RowTier = 'free' | 'preview' | 'gated';
@@ -85,7 +90,7 @@
 		return {
 			id: v.id,
 			title: v.title,
-			thumbnail: v.category === 'coming-soon' ? getComingSoonThumbnail(v) : toAssetUrl(v.thumbnail_path),
+			thumbnail: getThumbnailPath(v),
 			duration: formatClock(v.duration),
 			tier: v.tier,
 			category: v.category,
@@ -99,9 +104,9 @@
 			title: v.title,
 			description: v.description || '',
 			duration: formatClock(v.duration),
-			thumbnail: v.category === 'coming-soon' ? getComingSoonThumbnail(v) : toAssetUrl(v.thumbnail_path),
+			thumbnail: getThumbnailPath(v),
 			category: titleFromCategoryId(v.category),
-			src: toAssetUrl(v.asset_path)
+			src: toAssetUrl(v.asset_path)  // Videos still come from R2 CDN
 		};
 	}
 
