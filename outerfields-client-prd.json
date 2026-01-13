@@ -84,7 +84,7 @@
         "src/lib/components/VideoCard.svelte",
         "src/routes/+page.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-5",

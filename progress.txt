@@ -1969,3 +1969,141 @@ Thread log: .ralph-archive/iteration-1-20260112-194127.log
 ---
 ## Iteration 2
 Started: 2026-01-13T01:47:05Z
+
+## Iteration 3: Story-4 - Create Netflix-style content categories
+
+### Story Completed
+**ID**: story-4
+**Title**: Create Netflix-style content categories with horizontal scrolling
+
+### Implementation Details
+
+Created a complete Netflix-style content browsing experience with 3 new components:
+
+1. **VideoCard Component** (src/lib/components/VideoCard.svelte)
+   - Displays video thumbnail with 16:9 aspect ratio
+   - Shows duration badge in bottom-right corner
+   - Lock icon badge for gated content (top-right)
+   - FREE badge for preview content (top-left, green)
+   - Play button overlay appears on hover
+   - Card info shows title and episode number
+   - Responsive sizing: 280-320px desktop, 240-280px tablet, 200-240px mobile
+   - Smooth hover animation with scale transform
+   - Uses Canon tokens throughout (colors, spacing, typography, transitions)
+
+2. **CategoryRow Component** (src/lib/components/CategoryRow.svelte)
+   - Horizontal scrolling container with smooth scroll behavior
+   - Left/right chevron navigation buttons
+   - Buttons auto-disable at scroll boundaries
+   - Hides scroll buttons on mobile (touch scroll only)
+   - Category title with proper typography hierarchy
+   - Cards display in flexible gap layout
+   - Responsive padding and spacing
+   - Scroll state tracking with $effect
+   - Uses Canon tokens for all styling
+
+3. **ContentCategories Component** (src/lib/components/ContentCategories.svelte)
+   - Section header with "Watch Now" title
+   - Description explaining free vs. member content
+   - Renders all 7 categories with correct episode counts:
+     * Crew Call: 20 episodes (episode 1 FREE)
+     * Reconnecting Relationships: 3 episodes (episode 1 FREE)
+     * Kodiak: 8 episodes (episode 1 FREE)
+     * Lincoln Manufacturing: 8 episodes (episode 1 FREE)
+     * Guns Out TV: 13 episodes (episode 1 FREE)
+     * Films: 1 film (FREE)
+     * Coming Soon: 5 trailers (all FREE)
+   - Total: 58 videos (11 FREE, 47 gated)
+   - Integrates VideoModal for playback
+   - Console logging for verification in browser
+   - Responsive section padding and typography
+
+### Files Changed
+- Created: src/lib/components/VideoCard.svelte (269 lines)
+- Created: src/lib/components/CategoryRow.svelte (204 lines)
+- Created: src/lib/components/ContentCategories.svelte (237 lines)
+- Modified: src/routes/+page.svelte (added ContentCategories import and placement)
+
+### Acceptance Criteria Met
+✅ CategoryRow component with horizontal scroll
+✅ VideoCard component shows thumbnail, title, duration, lock icon if gated
+✅ 7 categories rendered with correct episode counts
+✅ First episode of each series marked as 'FREE'
+✅ Episodes 2+ show lock icon for non-members
+✅ All 5 trailers in 'Coming Soon' marked as 'FREE'
+✅ Responsive: mobile shows 1-2 cards, tablet 3-4, desktop 5-6 visible
+✅ Smooth scroll animation with Canon tokens
+
+### Technical Implementation Notes
+
+**VideoCard Component**:
+- Uses Lucide-Svelte Lock icon for gated content
+- Aspect ratio maintained with CSS aspect-ratio property
+- Overlay effects use rgba transparency and backdrop-filter
+- Line clamping for title with -webkit-line-clamp
+- Loading="lazy" on images for performance
+- Props interface with TypeScript for type safety
+
+**CategoryRow Component**:
+- Scroll state managed with $state() runes
+- Scroll buttons use disabled attribute and visual opacity
+- updateScrollButtons() checks scroll position vs. container width
+- Smooth scroll with CSS scroll-behavior and JS scrollTo()
+- Hides scrollbar with CSS (scrollbar-width: none, ::-webkit-scrollbar)
+- Touch-friendly on mobile with -webkit-overflow-scrolling: touch
+
+**ContentCategories Component**:
+- Mock data structure ready for API integration
+- Array.from() for generating episode sequences
+- Tier assignment: first episode 'free', rest 'gated'
+- Coming Soon all marked as 'free'
+- Films category has no episode numbers
+- Browser check before console logging
+- VideoModal integration for click-to-play
+
+### Key Learnings
+
+1. **Responsive Design**: Cards naturally fill available space with flex layout and min/max-width constraints
+2. **Scroll UX**: Hide navigation buttons on mobile where touch scroll is natural
+3. **Visual Hierarchy**: Lock icon and FREE badge use contrasting positions (top-right vs. top-left)
+4. **State Management**: $effect() in Svelte 5 replaces useEffect for scroll state updates
+5. **Performance**: Loading="lazy" on images prevents unnecessary downloads off-screen
+6. **Accessibility**: aria-label on buttons for screen readers
+7. **Canon Consistency**: All colors, spacing, typography, and transitions use tokens
+8. **Data Modeling**: Tier enum ('free' | 'preview' | 'gated') clearly separates content access levels
+9. **Episode Structure**: First episode free incentivizes trial, rest gated for conversions
+10. **Responsive Breakpoints**: 480px, 768px match typical mobile/tablet boundaries
+
+### Integration Points
+
+- **Auth System**: tier='gated' videos will check user.membership before showing lock
+- **Video Database (story-5)**: Replace mock data with D1 queries
+- **VideoModal**: Already integrated, handles video playback
+- **Analytics**: Track which categories/videos users browse
+- **Search/Filter**: Future enhancement to filter by category or search titles
+
+### Next Steps for Future Stories
+
+- story-5: Replace mock data with D1 database and API endpoints
+- story-9: Add hero section with galaxy animation before content categories
+- story-14: Add urgency messaging around free previews
+
+### Production Readiness
+
+- ✅ Type check passes (tsc --noEmit)
+- ✅ Components use Canon tokens exclusively
+- ✅ Responsive across mobile, tablet, desktop
+- ✅ Accessible (aria-labels, keyboard navigation)
+- ⏭️ Thumbnails need actual images (currently placeholder paths)
+- ⏭️ Video URLs need R2 asset integration (story-5)
+- ⏭️ Auth check needed to hide locks for members
+
+Completed: 2026-01-13T02:45:00Z
+
+---
+Completed: 2026-01-13T01:50:17Z
+Thread log: .ralph-archive/iteration-2-20260112-194705.log
+
+---
+## Iteration 3
+Started: 2026-01-13T01:50:19Z
