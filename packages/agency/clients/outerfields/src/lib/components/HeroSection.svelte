@@ -3,12 +3,27 @@
 	 * OUTERFIELDS Hero Section
 	 *
 	 * Reuses the Sketchfab 3D embed from the demo page.
-	 * Shows title "Building Outerfields: The Odyssey" with centered play button.
+	 * Shows title with centered play button that opens Texas State Fair video.
 	 */
 	import { Target, Play } from 'lucide-svelte';
+	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
+
+	// Cloudflare R2 CDN base URL
+	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
+
+	// Hero video: Outerfields Takes on the Texas State Fair
+	const heroVideo: Video = {
+		id: 'hero-texas-fair',
+		title: 'Outerfields Takes on the Texas State Fair',
+		description: 'Experience the Texas State Fair with Outerfields',
+		duration: '0:57',
+		thumbnail: `${CDN_BASE}/thumbnails/texas-state-fair.jpg`,
+		category: 'Event',
+		src: `${CDN_BASE}/videos/texas-state-fair.mp4`
+	};
 
 	function handlePlayClick() {
-		window.location.href = '/videos/outerfields-trailer';
+		videoPlayer.play(heroVideo);
 	}
 </script>
 
