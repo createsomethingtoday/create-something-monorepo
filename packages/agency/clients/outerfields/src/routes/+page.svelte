@@ -18,6 +18,10 @@
 	import FeatureComparison from '$lib/components/FeatureComparison.svelte';
 	import Pricing from '$lib/components/Pricing.svelte';
 	import DemoCTA from '$lib/components/DemoCTA.svelte';
+	import { authStore } from '$lib/stores/auth';
+
+	// Member-only: behind-the-scenes content (docs/design links, roadmap, internal tools)
+	const isMember = $derived($authStore.user?.membership ?? false);
 
 	// SEO Configuration
 	const seo = {
@@ -192,15 +196,19 @@
 
 <main>
 	<HeroSection />
-	<JourneySection />
-	<BuildProgress />
-	<FeaturedVideos />
 	<ContentCategories />
+	<FeaturedVideos />
+	<JourneySection />
 	<AnalyticsDashboard />
-	<ComponentLab />
 	<PlatformComponents />
 	<AIAnalytics />
-	<ResourceLinks />
+
+	{#if isMember}
+		<BuildProgress />
+		<ComponentLab />
+		<ResourceLinks />
+	{/if}
+
 	<FeatureComparison />
 	<Pricing />
 	<DemoCTA />

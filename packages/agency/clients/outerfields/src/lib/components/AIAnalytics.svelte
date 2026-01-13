@@ -7,7 +7,10 @@
 	 *
 	 * Now interactive: clicking sample questions triggers Claude-powered responses.
 	 */
-	import { MessageSquare, Sparkles, TrendingUp, Lightbulb, Brain, BarChart3, Loader2, RotateCcw } from 'lucide-svelte';
+	import { MessageSquare, Sparkles, TrendingUp, Lightbulb, Brain, BarChart3, Loader2, RotateCcw, Lock } from 'lucide-svelte';
+	import { authStore } from '$lib/stores/auth';
+
+	const isMember = $derived($authStore.user?.membership ?? false);
 
 	interface Feature {
 		icon: any;
@@ -55,6 +58,11 @@
 	let error = $state<string | null>(null);
 
 	async function askQuestion(question: string) {
+		if (!isMember) {
+			document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+			return;
+		}
+
 		selectedQuestion = question;
 		isLoading = true;
 		response = null;
@@ -127,7 +135,7 @@
 				<h3 class="demo-title">Ask Anything About Your Analytics</h3>
 			</div>
 
-			<div class="chat-preview">
+			<div class="chat-preview" class:blurred={!isMember}>
 				<div class="analytics-panel">
 					<div class="analytics-header">
 						<BarChart3 size={16} />
@@ -203,6 +211,21 @@
 					{/if}
 				</div>
 			</div>
+
+			{#if !isMember}
+				<div class="members-overlay">
+					<div class="overlay-content">
+						<div class="overlay-icon" aria-hidden="true">
+							<Lock size={44} />
+						</div>
+						<h4 class="overlay-title">Members Only</h4>
+						<p class="overlay-description">
+							Unlock the AI assistant and full analytics tooling with the $99 lifetime membership.
+						</p>
+						<a href="#pricing" class="overlay-cta">Unlock Lifetime Access - $99</a>
+					</div>
+				</div>
+			{/if}
 
 			<div class="demo-cta">
 				<p class="demo-cta-text">
@@ -339,6 +362,71 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: 1rem;
 		padding: 2rem;
+		position: relative;
+	}
+
+	.chat-preview.blurred {
+		filter: blur(8px);
+		pointer-events: none;
+		user-select: none;
+	}
+
+	.members-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		backdrop-filter: blur(8px);
+		background: rgba(0, 0, 0, 0.7);
+		border-radius: 1rem;
+		z-index: 10;
+	}
+
+	.members-overlay .overlay-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		max-width: 28rem;
+		padding: 2rem;
+	}
+
+	.members-overlay .overlay-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 1rem;
+	}
+
+	.members-overlay .overlay-title {
+		margin: 0 0 0.5rem;
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.members-overlay .overlay-description {
+		margin: 0 0 1.5rem;
+		color: var(--color-fg-muted);
+		line-height: 1.6;
+	}
+
+	.members-overlay .overlay-cta {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.875rem 1.5rem;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border-radius: var(--radius-md);
+		font-weight: 700;
+		text-decoration: none;
+		transition: transform var(--duration-micro) var(--ease-standard);
+	}
+
+	.members-overlay .overlay-cta:hover {
+		transform: translateY(-2px);
 	}
 
 	.demo-header {

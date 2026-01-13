@@ -30,13 +30,12 @@
 		</div>
 
 		<h1 class="progress-title">
-			Pre-Sale
-			<span class="highlight">Launch Timeline</span>
+			Platform
+			<span class="highlight">Roadmap</span>
 		</h1>
 
 		<p class="progress-description">
-			We’re in the pre-sale phase now. Track the major milestones from concept → beta → launch as we
-			finish the platform and ship founding member access.
+			Track what’s shipped and what’s next as we expand the network experience and ship founding member access.
 		</p>
 
 		<div class="timeline-wrapper">

@@ -11,11 +11,11 @@
 
 <section class="journey-section">
 	<div class="journey-container">
-		<h2 class="journey-title">Where We've Been and Where We're Going</h2>
+		<h2 class="journey-title">How OUTERFIELDS Works</h2>
 
 		<p class="journey-intro">
-			Building OUTERFIELDS is more than just code—it's a complete formula for creating
-			sustainable content networks. Here's our approach:
+			A premium content network is the product. OUTERFIELDS blends code, media, systems, and distribution
+			into one subscriber experience.
 		</p>
 
 		<div class="pillars-grid">

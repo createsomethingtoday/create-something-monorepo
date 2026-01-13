@@ -16,6 +16,7 @@
 	import { onMount } from 'svelte';
 	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
+	import { authStore } from '$lib/stores/auth';
 
 	// Cloudflare R2 CDN base URL (public bucket)
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
@@ -35,6 +36,9 @@
 	let isLoading = $state(true);
 	let loadError = $state<string | null>(null);
 	let playerVideosById = $state<Record<string, PlayerVideo>>({});
+	let rowVideosById = $state<Record<string, RowVideo>>({});
+
+	const isMember = $derived($authStore.user?.membership ?? false);
 
 	function formatClock(totalSeconds: number): string {
 		const s = Math.max(0, Math.floor(totalSeconds));
@@ -89,6 +93,12 @@
 	}
 
 	function handleVideoClick(videoId: string) {
+		const row = rowVideosById[videoId];
+		if (row?.tier === 'gated' && !isMember) {
+			document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+			return;
+		}
+
 		const video = playerVideosById[videoId];
 		if (!video) return;
 		videoPlayer.play(video);
@@ -112,7 +122,9 @@
 			const rows: Array<{ title: string; videos: RowVideo[] }> = Object.entries(grouped)
 				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([categoryId, vids]) => {
-					for (const v of vids) byId[v.id] = buildPlayerVideo(v);
+					for (const v of vids) {
+						byId[v.id] = buildPlayerVideo(v);
+					}
 					return {
 						title: titleFromCategoryId(categoryId),
 						videos: vids.map(buildRowVideo)
@@ -121,10 +133,12 @@
 
 			playerVideosById = byId;
 			categories = rows;
+			rowVideosById = Object.fromEntries(rows.flatMap(r => r.videos.map(v => [v.id, v])));
 		} catch (err) {
 			loadError = err instanceof Error ? err.message : 'Failed to load videos';
 			categories = [];
 			playerVideosById = {};
+			rowVideosById = {};
 		} finally {
 			isLoading = false;
 		}

@@ -15,41 +15,41 @@
 				<div class="rocket-badge">
 					<Rocket size={32} />
 				</div>
-				<h2 class="demo-title">Ready to Launch Your Platform?</h2>
+				<h2 class="demo-title">Ready to Unlock OUTERFIELDS?</h2>
 				<p class="demo-description">
-					Join thousands of creators building premium content networks.
-					Start free, scale when you're ready.
+					Experience a PCN like a real subscriber. Most content, tools, and behind-the-scenes are members-only.
+					Founding members get lifetime access for $99.
 				</p>
 
 				<div class="demo-features">
 					<div class="feature-item">
 						<CheckCircle size={20} />
-						<span>No credit card required</span>
+						<span>Lifetime access (founding members)</span>
 					</div>
 					<div class="feature-item">
 						<CheckCircle size={20} />
-						<span>Full platform access</span>
+						<span>Full library + tools + analytics</span>
 					</div>
 					<div class="feature-item">
 						<CheckCircle size={20} />
-						<span>Cancel anytime</span>
+						<span>Members-only behind-the-scenes</span>
 					</div>
 				</div>
 
 				<div class="demo-actions">
-					<a href="/signup" class="btn-primary glow">
+					<a href="#pricing" class="btn-primary glow">
 						<Rocket size={20} />
-						Get Started Free
+						Unlock Lifetime Access - $99
 					</a>
-					<a href="/demo" class="btn-secondary">
+					<a href="/login?redirect=/" class="btn-secondary">
 						<PlayCircle size={20} />
-						Try the Demo
+						Sign In
 					</a>
 				</div>
 
 				<p class="demo-note">
 					<Clock size={18} />
-					Setup takes less than 5 minutes
+					Preview is public — full access is members-only
 				</p>
 			</div>
 
