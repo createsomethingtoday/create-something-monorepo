@@ -11,15 +11,15 @@
 	// Cloudflare R2 CDN base URL
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
-	// Hero video: Outerfields Takes on the Texas State Fair
+	// Hero video: STACCATO Prairie Fire Gun Range Promo
 	const heroVideo: Video = {
-		id: 'hero-texas-fair',
-		title: 'Outerfields Takes on the Texas State Fair',
-		description: 'Experience the Texas State Fair with Outerfields',
-		duration: '0:57',
-		thumbnail: `${CDN_BASE}/thumbnails/texas-state-fair.jpg`,
-		category: 'Event',
-		src: `${CDN_BASE}/videos/texas-state-fair.mp4`
+		id: 'hero-staccato',
+		title: 'STACCATO Prairie Fire Gun Range Promo',
+		description: 'Prairie Fire Gun Range promotional trailer',
+		duration: '1:16',
+		thumbnail: `${CDN_BASE}/thumbnails/staccato-promo.jpg`,
+		category: 'Promo',
+		src: `${CDN_BASE}/videos/staccato-promo.mp4`
 	};
 
 	function handlePlayClick() {
