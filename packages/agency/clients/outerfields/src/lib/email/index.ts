@@ -5,5 +5,6 @@
  */
 
 export { sendEmail, type EmailResult } from './service';
+export { renderEmailLayout, escapeHtml, ctaButton, divider, type EmailLayoutOptions } from './layout';
 export { generateWelcomeEmail, type WelcomeEmailData } from './welcome-template';
 export { sendPresentationEmail, type PresentationEmailData } from './presentation-template';

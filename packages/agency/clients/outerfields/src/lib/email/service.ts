@@ -14,6 +14,11 @@ export interface EmailResult {
 	error?: string;
 }
 
+export interface SendEmailOptions {
+	from?: string;
+	replyTo?: string;
+}
+
 /**
  * Send an email via Resend
  */
@@ -22,9 +27,13 @@ export async function sendEmail(
 	to: string,
 	subject: string,
 	html: string,
-	text?: string
+	text?: string,
+	options?: SendEmailOptions
 ): Promise<EmailResult> {
 	try {
+		const from = options?.from ?? FROM_ADDRESS;
+		const replyTo = options?.replyTo;
+
 		const response = await fetch(RESEND_API, {
 			method: 'POST',
 			headers: {
@@ -32,8 +41,9 @@ export async function sendEmail(
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				from: FROM_ADDRESS,
+				from,
 				to,
+				...(replyTo && { replyTo }),
 				subject,
 				html,
 				...(text && { text })
