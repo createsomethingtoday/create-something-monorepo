@@ -6,34 +6,7 @@
 	 * Code + Media + Build + Sell formula
 	 */
 
-	interface JourneyPillar {
-		icon: string;
-		title: string;
-		description: string;
-	}
-
-	const pillars: JourneyPillar[] = [
-		{
-			icon: '💻',
-			title: 'Code',
-			description: 'Data-driven actions, building scripts, and platform development'
-		},
-		{
-			icon: '🎬',
-			title: 'Media',
-			description: 'Creating actual content that resonates and engages'
-		},
-		{
-			icon: '🏗️',
-			title: 'Build',
-			description: 'Systems, workflows, and infrastructure that scale'
-		},
-		{
-			icon: '📈',
-			title: 'Sell',
-			description: 'Marketing the networks and driving real growth'
-		}
-	];
+	import { Code2, Clapperboard, HardHat, TrendingUp } from 'lucide-svelte';
 </script>
 
 <section class="journey-section">
@@ -46,13 +19,37 @@
 		</p>
 
 		<div class="pillars-grid">
-			{#each pillars as pillar}
-				<div class="pillar-card">
-					<div class="pillar-icon">{pillar.icon}</div>
-					<h3 class="pillar-title">{pillar.title}</h3>
-					<p class="pillar-description">{pillar.description}</p>
+			<div class="pillar-card">
+				<div class="pillar-icon" aria-hidden="true">
+					<Code2 size={44} />
 				</div>
-			{/each}
+				<h3 class="pillar-title">Code</h3>
+				<p class="pillar-description">Data-driven actions, building scripts, and platform development</p>
+			</div>
+
+			<div class="pillar-card">
+				<div class="pillar-icon" aria-hidden="true">
+					<Clapperboard size={44} />
+				</div>
+				<h3 class="pillar-title">Media</h3>
+				<p class="pillar-description">Creating actual content that resonates and engages</p>
+			</div>
+
+			<div class="pillar-card">
+				<div class="pillar-icon" aria-hidden="true">
+					<HardHat size={44} />
+				</div>
+				<h3 class="pillar-title">Build</h3>
+				<p class="pillar-description">Systems, workflows, and infrastructure that scale</p>
+			</div>
+
+			<div class="pillar-card">
+				<div class="pillar-icon" aria-hidden="true">
+					<TrendingUp size={44} />
+				</div>
+				<h3 class="pillar-title">Sell</h3>
+				<p class="pillar-description">Marketing the networks and driving real growth</p>
+			</div>
 		</div>
 	</div>
 </section>
@@ -107,7 +104,10 @@
 	}
 
 	.pillar-icon {
-		font-size: 3rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-fg-primary);
 		margin-bottom: var(--space-md);
 	}
 
@@ -140,9 +140,7 @@
 			padding: var(--space-lg);
 		}
 
-		.pillar-icon {
-			font-size: 2.5rem;
-		}
+		/* icon sizing handled by component props */
 	}
 
 	/* Mobile: 1 column */
@@ -161,7 +159,6 @@
 		}
 
 		.pillar-icon {
-			font-size: 2rem;
 			margin-bottom: var(--space-sm);
 		}
 
