@@ -1,0 +1,289 @@
+<script lang="ts">
+	/**
+	 * OUTERFIELDS Investor Presentation
+	 *
+	 * A clean, compelling pitch deck for investors and partners.
+	 * Designed for fullscreen presentation or link sharing.
+	 */
+	import Presentation from '$lib/components/Presentation.svelte';
+	import Slide from '$lib/components/Slide.svelte';
+</script>
+
+<svelte:head>
+	<title>OUTERFIELDS | Investor Presentation</title>
+	<meta name="description" content="OUTERFIELDS Premium Content Network - Investor Pitch Deck" />
+	<meta name="robots" content="noindex" />
+</svelte:head>
+
+<Presentation title="OUTERFIELDS" subtitle="Premium Content Network">
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 1: Title
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="title">
+		<span class="number">01</span>
+		<div class="logo">∞</div>
+		<h1>OUTERFIELDS</h1>
+		<p class="subtitle">Premium Content Network</p>
+		<p class="tagline">The Netflix of Outdoor & Action Content</p>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 2: The Problem
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="content">
+		<span class="number">02</span>
+		<h2>The Problem</h2>
+		<p>
+			Creators in hunting, firearms, and outdoor content have <span class="highlight">no dedicated platform</span>.
+		</p>
+		<ul>
+			<li>YouTube demonetizes and restricts their content</li>
+			<li>Instagram limits reach and censors posts</li>
+			<li>No premium destination for engaged audiences</li>
+			<li>Fans willing to pay have nowhere to go</li>
+		</ul>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 3: Market Size
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="stat">
+		<span class="number">03</span>
+		<div class="stat-value">$15.3B</div>
+		<div class="stat-label">U.S. Hunting & Shooting Sports Market</div>
+		<div class="stat-context">
+			15.2M hunters. 81M target shooters. An underserved audience that spends—and is fiercely loyal to brands that serve them.
+		</div>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 4: The Solution
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="content">
+		<span class="number">04</span>
+		<h2>The Solution: OUTERFIELDS</h2>
+		<p>
+			A <span class="highlight">premium content network</span> built for outdoor and action creators.
+		</p>
+		<ul>
+			<li>Netflix-style experience for hunting, firearms & outdoor content</li>
+			<li>AI-powered analytics dashboard for creators</li>
+			<li>Behind-the-scenes exclusives and training content</li>
+			<li>Direct-to-fan monetization—no platform interference</li>
+		</ul>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 5: Product Demo
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="image">
+		<span class="number">05</span>
+		<div class="product-preview">
+			<div class="preview-card">
+				<div class="preview-header">
+					<span class="preview-logo">∞</span>
+					<span>OUTERFIELDS</span>
+				</div>
+				<div class="preview-content">
+					<div class="preview-hero">Premium Content, No Compromises</div>
+					<div class="preview-grid">
+						<div class="preview-item"></div>
+						<div class="preview-item"></div>
+						<div class="preview-item"></div>
+						<div class="preview-item"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<p class="caption">Live demo: <a href="https://outerfields.createsomething.agency" target="_blank">outerfields.createsomething.agency</a></p>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 6: Business Model
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="split">
+		<span class="number">06</span>
+		<div class="left">
+			<h2>Founding Members</h2>
+			<p><span class="brand">$99</span> one-time payment</p>
+			<p>Lifetime access to all content, analytics, and exclusives.</p>
+			<p class="muted">30-day money-back guarantee</p>
+		</div>
+		<div class="divider"></div>
+		<div class="right">
+			<h2>Future: Creator Revenue Share</h2>
+			<p>Creators earn from subscriptions</p>
+			<p>Platform takes 15% (vs. 30-50% on others)</p>
+			<p class="muted">Aligned incentives</p>
+		</div>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 7: Traction
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="stat">
+		<span class="number">07</span>
+		<div class="stat-value">50+</div>
+		<div class="stat-label">Premium Videos at Launch</div>
+		<div class="stat-context">
+			Content from established creators. Multiple series in production. Behind-the-scenes exclusives that can't be found elsewhere.
+		</div>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 8: Technology
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="content">
+		<span class="number">08</span>
+		<h2>Technology Stack</h2>
+		<p>
+			Built on <span class="highlight">Cloudflare's edge infrastructure</span> for global performance.
+		</p>
+		<ul>
+			<li>Sub-50ms video delivery worldwide (R2 + CDN)</li>
+			<li>AI-powered engagement analytics (Workers AI)</li>
+			<li>Zero-downtime deployments (Cloudflare Pages)</li>
+			<li>Scales automatically—no DevOps overhead</li>
+		</ul>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 9: Competitive Advantage
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="content">
+		<span class="number">09</span>
+		<h2>Why OUTERFIELDS Wins</h2>
+		<ul>
+			<li><span class="em">First mover</span> in premium outdoor content network</li>
+			<li><span class="em">Creator-aligned</span> revenue model (85% to creators)</li>
+			<li><span class="em">No content restrictions</span> on legal firearms/hunting</li>
+			<li><span class="em">AI-native</span> analytics others can't match</li>
+			<li><span class="em">Loyal audience</span> that pays and stays</li>
+		</ul>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 10: Roadmap
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="content">
+		<span class="number">10</span>
+		<h2>Roadmap</h2>
+		<ul>
+			<li><span class="em">Q1 2026:</span> Founding member launch (live now)</li>
+			<li><span class="em">Q2 2026:</span> Creator portal & revenue share</li>
+			<li><span class="em">Q3 2026:</span> Mobile apps (iOS/Android)</li>
+			<li><span class="em">Q4 2026:</span> Live events & merchandise integration</li>
+		</ul>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 11: The Ask
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="content">
+		<span class="number">11</span>
+		<h2>The Opportunity</h2>
+		<p>
+			We're raising a <span class="highlight">seed round</span> to accelerate growth.
+		</p>
+		<ul>
+			<li>Creator acquisition and content licensing</li>
+			<li>Mobile app development</li>
+			<li>Marketing to target audience</li>
+			<li>Team expansion (engineering + content)</li>
+		</ul>
+	</Slide>
+
+	<!-- ═══════════════════════════════════════════════════════════════════
+	     SLIDE 12: Close
+	     ═══════════════════════════════════════════════════════════════════ -->
+	<Slide type="title">
+		<span class="number">12</span>
+		<div class="logo">∞</div>
+		<h1>OUTERFIELDS</h1>
+		<p class="subtitle">The Premium Content Network</p>
+		<p class="tagline">
+			<a href="https://outerfields.createsomething.agency" class="cta-link">outerfields.createsomething.agency</a>
+		</p>
+	</Slide>
+</Presentation>
+
+<style>
+	/* Product Preview Card */
+	.product-preview {
+		width: 100%;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+
+	.preview-card {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 1rem);
+		overflow: hidden;
+	}
+
+	.preview-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 1rem 1.5rem;
+		border-bottom: 1px solid var(--color-border-default);
+		font-weight: 600;
+		font-size: 0.875rem;
+	}
+
+	.preview-logo {
+		font-size: 1.25rem;
+	}
+
+	.preview-content {
+		padding: 2rem;
+	}
+
+	.preview-hero {
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-bottom: 1.5rem;
+		text-align: center;
+	}
+
+	.preview-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 0.75rem;
+	}
+
+	.preview-item {
+		aspect-ratio: 16/9;
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-sm, 0.5rem);
+	}
+
+	/* Caption link */
+	.caption a {
+		color: var(--color-brand, #7c2bee);
+		text-decoration: none;
+	}
+
+	.caption a:hover {
+		text-decoration: underline;
+	}
+
+	/* CTA Link */
+	:global(.cta-link) {
+		color: var(--color-brand, #7c2bee) !important;
+		text-decoration: none;
+		font-weight: 500;
+	}
+
+	:global(.cta-link:hover) {
+		text-decoration: underline;
+	}
+
+	@media (max-width: 640px) {
+		.preview-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+</style>

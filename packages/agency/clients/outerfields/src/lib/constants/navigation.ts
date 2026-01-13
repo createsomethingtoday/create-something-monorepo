@@ -28,7 +28,8 @@ export const NAV_LINKS: NavLink[] = [
 export const FOOTER_LINKS: FooterLink[] = [
 	{ label: 'Privacy', href: '/privacy' },
 	{ label: 'Terms', href: '/terms' },
-	{ label: 'Contact', href: '/contact' }
+	{ label: 'Contact', href: '/contact' },
+	{ label: 'Presentation', href: '/presentation' }
 ];
 
 // Demo accounts for login page
