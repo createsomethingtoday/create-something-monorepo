@@ -58,6 +58,31 @@ interface PlagiarismCase {
 type FinalDecision = 'no_violation' | 'minor' | 'major';
 
 // =============================================================================
+// EVIDENCE PERSISTENCE (Transparency)
+// =============================================================================
+
+async function storeEvidence(
+  env: Env,
+  caseId: string,
+  kind: string,
+  data: unknown
+): Promise<void> {
+  try {
+    await env.DB.prepare(`
+      INSERT INTO plagiarism_evidence (case_id, kind, data_json, created_at)
+      VALUES (?, ?, ?, ?)
+    `).bind(
+      caseId,
+      kind,
+      JSON.stringify(data),
+      Date.now()
+    ).run();
+  } catch (error: any) {
+    console.log('[Evidence] Failed to store evidence (non-fatal):', error?.message || String(error));
+  }
+}
+
+// =============================================================================
 // CONSTANTS
 // =============================================================================
 
@@ -1101,8 +1126,13 @@ async function fetchCodeComparison(
     const copyHtml = await fetchHtml(copyUrl);
     const copyPatterns = await extractPatterns(copyHtml, copyUrl);
 
+    // Persist tangible metrics for the copy page
+    // (do not store full HTML; store counts + small samples only)
+    // Note: caseId isn't available here; Tier 3 stores the aggregate structure.
+
     // Fetch and analyze each original URL
     const comparisons: string[] = [];
+    const originalsMetrics: any[] = [];
 
     for (let i = 0; i < originalUrls.length; i++) {
       const originalUrl = originalUrls[i];
@@ -1121,6 +1151,17 @@ async function fetchCodeComparison(
         const sharedLibraries = originalPatterns.jsLibraries.filter(lib =>
           copyPatterns.jsLibraries.includes(lib)
         );
+
+        originalsMetrics.push({
+          originalUrl,
+          originalPatterns,
+          deltas: {
+            cssAnimationsDiff: Math.abs(originalPatterns.cssAnimations - copyPatterns.cssAnimations),
+            sectionsDiff: Math.abs(originalPatterns.sections - copyPatterns.sections),
+            gridLayoutsDiff: Math.abs(originalPatterns.gridLayouts - copyPatterns.gridLayouts),
+            sharedLibraries
+          }
+        });
 
         const comparison = `
 --- Original URL ${i + 1}: ${originalUrl} ---
@@ -1177,7 +1218,15 @@ ${copyPatterns.cssAnimationSamples.join('\n\n') || 'None'}
 ${comparisons.join('\n')}
 `;
 
-    return summary;
+    // Attach structured metrics to the returned string (delimited JSON)
+    // Tier 3 will parse this out and persist it in D1 evidence.
+    const structured = {
+      copyUrl,
+      copyPatterns,
+      originals: originalsMetrics
+    };
+
+    return `${summary}\n\n--- STRUCTURED_CODE_METRICS_JSON ---\n${JSON.stringify(structured)}`;
   } catch (error: any) {
     console.error('[Code Analysis] Error:', {
       message: error?.message || String(error),
@@ -1236,6 +1285,20 @@ async function runTier3Judgment(
     }
   }
 
+  // Persist structured code metrics (if present)
+  if (codeAnalysis && codeAnalysis.includes('--- STRUCTURED_CODE_METRICS_JSON ---')) {
+    try {
+      const parts = codeAnalysis.split('--- STRUCTURED_CODE_METRICS_JSON ---');
+      const json = parts[1]?.trim();
+      if (json) {
+        const structured = JSON.parse(json);
+        await storeEvidence(env, plagiarismCase.id, 'tier3_code_metrics', structured);
+      }
+    } catch (error: any) {
+      console.log('[Evidence] Failed to parse/store structured code metrics:', error?.message || String(error));
+    }
+  }
+
   // NEW: Vector Similarity Analysis
   let vectorAnalysis: VectorSimilarity | null = null;
   if (env.OPENAI_API_KEY) {
@@ -1252,6 +1315,24 @@ async function runTier3Judgment(
     }
   } else {
     console.log('[Vector] Skipping vector analysis (no OPENAI_API_KEY configured)');
+  }
+
+  if (vectorAnalysis) {
+    await storeEvidence(env, plagiarismCase.id, 'tier3_vector_similarity', vectorAnalysis);
+  }
+
+  // NEW: Vectorize nearest neighbors (tangible list of similar templates)
+  try {
+    if (env.OPENAI_API_KEY && env.VECTORIZE) {
+      const neighbors = await findSimilarTemplates(cleanCopyUrl, env, 10);
+      await storeEvidence(env, plagiarismCase.id, 'tier3_vectorize_neighbors', {
+        queryUrl: cleanCopyUrl,
+        topK: 10,
+        neighbors
+      });
+    }
+  } catch (error: any) {
+    console.log('[Vectorize] Neighbor query failed (non-fatal):', error?.message || String(error));
   }
 
   const prompt = `Make final judgment on plagiarism case:
