@@ -87,22 +87,24 @@
 		<span class="type">{asset.type}</span>
 	</TableCell>
 	{#if showPerformance}
+		{@const cr = conversionRate()}
+		{@const aov = avgOrderValue()}
 		<TableCell class="text-center">
 			<span class="metric tabular">{showMetrics ? formatNumber(asset.uniqueViewers) : '—'}</span>
 		</TableCell>
 		<TableCell class="text-center">
 			<div class="metric-stack">
 				<span class="metric tabular">{showMetrics ? formatNumber(asset.cumulativePurchases) : '—'}</span>
-				{#if conversionRate() !== null}
-					<span class="metric-sub">{conversionRate().toFixed(1)}%</span>
+				{#if cr !== null}
+					<span class="metric-sub">{cr.toFixed(1)}%</span>
 				{/if}
 			</div>
 		</TableCell>
 		<TableCell class="text-center">
 			<div class="metric-stack">
 				<span class="metric tabular">{showMetrics ? formatCurrency(asset.cumulativeRevenue) : '—'}</span>
-				{#if avgOrderValue() !== null}
-					<span class="metric-sub">${avgOrderValue().toFixed(0)}/ea</span>
+				{#if aov !== null}
+					<span class="metric-sub">${aov.toFixed(0)}/ea</span>
 				{/if}
 			</div>
 		</TableCell>

@@ -348,12 +348,16 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Update an asset (text fields only).
 		 */
-		async updateAsset(id: string, data: Partial<Pick<Asset, 'name' | 'description' | 'descriptionShort' | 'websiteUrl' | 'previewUrl'>>): Promise<Asset | null> {
+		async updateAsset(
+			id: string,
+			data: Partial<Pick<Asset, 'name' | 'description' | 'descriptionShort' | 'descriptionLongHtml' | 'websiteUrl' | 'previewUrl'>>
+		): Promise<Asset | null> {
 			const fields: Record<string, string> = {};
 
 			if (data.name !== undefined) fields['Name'] = data.name;
 			if (data.description !== undefined) fields['📝Description'] = data.description;
 			if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
+			if (data.descriptionLongHtml !== undefined) fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
 			if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
 			if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
 
@@ -372,6 +376,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					name: record.fields['Name'] as string || '',
 					description: record.fields['📝Description'] as string || '',
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
+					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
 					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
@@ -394,6 +399,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				name?: string;
 				description?: string;
 				descriptionShort?: string;
+				descriptionLongHtml?: string;
 				websiteUrl?: string;
 				previewUrl?: string;
 				thumbnailUrl?: string | null;
@@ -408,6 +414,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			if (data.name !== undefined) fields['Name'] = data.name;
 			if (data.description !== undefined) fields['📝Description'] = data.description;
 			if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
+			if (data.descriptionLongHtml !== undefined) fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
 			if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
 			if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
 

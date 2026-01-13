@@ -4,18 +4,21 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { Header, AssetsDisplay, OverviewStats, SubmissionTracker, StatsBar } from '$lib/components';
 	import { toast } from '$lib/stores/toast';
-	import type { ComponentType } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let searchTerm = $state('');
 	let isProfileOpen = $state(false);
 	let isEditModalOpen = $state(false);
+	let isLoadingEditAsset = $state(false);
 	let currentEditingAsset = $state<Asset | null>(null);
 	
 	// Lazy-loaded modal components
-	let EditProfileModal = $state<ComponentType | null>(null);
-	let EditAssetModal = $state<ComponentType | null>(null);
+	// NOTE: Svelte 5 dynamic component typing is a bit different; keep this permissive for lazy-loading.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let EditProfileModal = $state<any>(null);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let EditAssetModal = $state<any>(null);
 
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
@@ -44,15 +47,30 @@
 	}
 
 	async function handleEditAsset(id: string) {
-		const asset = data.assets?.find((a) => a.id === id);
-		if (asset) {
-			// Lazy load the EditAssetModal component
-			if (!EditAssetModal) {
-				const module = await import('$lib/components/EditAssetModal.svelte');
-				EditAssetModal = module.default;
+		// Lazy load the EditAssetModal component
+		if (!EditAssetModal) {
+			const module = await import('$lib/components/EditAssetModal.svelte');
+			EditAssetModal = module.default;
+		}
+
+		isLoadingEditAsset = true;
+		try {
+			// Fetch full asset details (includes short + long description fields)
+			const response = await fetch(`/api/assets/${id}`);
+			if (!response.ok) {
+				const errorData = (await response.json()) as { message?: string };
+				throw new Error(errorData.message || 'Failed to load asset details');
 			}
-			currentEditingAsset = asset;
+			const result = (await response.json()) as { asset: Asset };
+			currentEditingAsset = result.asset;
 			isEditModalOpen = true;
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to load asset details';
+			toast.error(message);
+			currentEditingAsset = null;
+			isEditModalOpen = false;
+		} finally {
+			isLoadingEditAsset = false;
 		}
 	}
 
@@ -63,8 +81,8 @@
 
 	async function handleEditSave(updateData: {
 		name?: string;
-		description?: string;
 		descriptionShort?: string;
+		descriptionLongHtml?: string;
 		websiteUrl?: string;
 		previewUrl?: string;
 		thumbnailUrl?: string | null;

@@ -15,8 +15,8 @@
 
 	interface AssetUpdateData {
 		name?: string;
-		description?: string;
 		descriptionShort?: string;
+		descriptionLongHtml?: string;
 		websiteUrl?: string;
 		previewUrl?: string;
 		thumbnailUrl?: string | null;
@@ -30,10 +30,35 @@
 	// Form state
 	let formData = $state({
 		name: asset.name,
-		description: asset.description || '',
 		descriptionShort: asset.descriptionShort || '',
+		descriptionLongHtml: asset.descriptionLongHtml || asset.description || '',
 		websiteUrl: asset.websiteUrl || '',
 		previewUrl: asset.previewUrl || ''
+	});
+
+	// Keep form state in sync when editing a different asset without remounting the component
+	let lastAssetId = $state(asset.id);
+	$effect(() => {
+		if (asset.id !== lastAssetId) {
+			lastAssetId = asset.id;
+
+			formData = {
+				name: asset.name,
+				descriptionShort: asset.descriptionShort || '',
+				descriptionLongHtml: asset.descriptionLongHtml || asset.description || '',
+				websiteUrl: asset.websiteUrl || '',
+				previewUrl: asset.previewUrl || ''
+			};
+
+			thumbnailUrl = asset.thumbnailUrl || null;
+			secondaryThumbnailUrl = asset.secondaryThumbnailUrl || null;
+			secondaryThumbnails = asset.secondaryThumbnails || (asset.secondaryThumbnailUrl ? [asset.secondaryThumbnailUrl] : []);
+			carouselImages = asset.carouselImages || [];
+
+			error = null;
+			nameError = null;
+			isCheckingName = false;
+		}
 	});
 
 	// Image state
@@ -158,8 +183,8 @@
 			// Create version snapshot before saving changes
 			const changedFields: string[] = [];
 			if (formData.name !== asset.name) changedFields.push('name');
-			if (formData.description !== (asset.description || '')) changedFields.push('description');
 			if (formData.descriptionShort !== (asset.descriptionShort || '')) changedFields.push('short description');
+			if (formData.descriptionLongHtml !== (asset.descriptionLongHtml || asset.description || '')) changedFields.push('long description');
 			if (formData.websiteUrl !== (asset.websiteUrl || '')) changedFields.push('website URL');
 			if (formData.previewUrl !== (asset.previewUrl || '')) changedFields.push('preview URL');
 			if (thumbnailUrl !== asset.thumbnailUrl) changedFields.push('thumbnail');
@@ -178,8 +203,8 @@
 
 			await onSave({
 				name: formData.name.trim(),
-				description: formData.description,
 				descriptionShort: formData.descriptionShort,
+				descriptionLongHtml: formData.descriptionLongHtml,
 				websiteUrl: formData.websiteUrl,
 				previewUrl: formData.previewUrl,
 				thumbnailUrl,
@@ -283,10 +308,10 @@
 						</div>
 
 						<div class="form-field">
-							<Label for="description">Description</Label>
+							<Label for="descriptionLongHtml">Long Description</Label>
 							<Textarea
-								id="description"
-								bind:value={formData.description}
+								id="descriptionLongHtml"
+								bind:value={formData.descriptionLongHtml}
 								placeholder="Detailed description"
 								rows={4}
 							/>

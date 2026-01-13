@@ -175,7 +175,7 @@
 			file,
 			status: 'pending',
 			progress: 0,
-			error: null
+			error: undefined
 		}));
 
 		uploadQueue = [...uploadQueue, ...newItems];

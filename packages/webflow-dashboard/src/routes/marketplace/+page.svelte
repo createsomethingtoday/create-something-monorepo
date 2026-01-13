@@ -53,11 +53,11 @@
 	let categories = $state<CategoryEntry[]>([]);
 	let insights = $state<Insight[]>([]);
 	let userTemplates = $state<LeaderboardEntry[]>([]);
-	let summary = $state({
+	let summary = $state<LeaderboardResponse['summary']>({
 		totalMarketplaceSales: 0,
-		userBestRank: null as number | null,
+		userBestRank: null,
 		lastUpdated: '',
-		nextUpdateDate: undefined as string | undefined
+		nextUpdateDate: undefined
 	});
 	
 	/**

@@ -125,8 +125,8 @@
 
 	interface AssetUpdateData {
 		name?: string;
-		description?: string;
 		descriptionShort?: string;
+		descriptionLongHtml?: string;
 		websiteUrl?: string;
 		previewUrl?: string;
 		thumbnailUrl?: string | null;

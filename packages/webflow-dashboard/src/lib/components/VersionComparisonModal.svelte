@@ -32,6 +32,12 @@
 	let toVersion = $state<AssetVersion | null>(null);
 	let differences = $state<VersionDiff[]>([]);
 
+	interface ComparisonResponse {
+		fromVersion: AssetVersion;
+		toVersion: AssetVersion;
+		differences: VersionDiff[];
+	}
+
 	async function loadComparison() {
 		if (!open) return;
 
@@ -45,7 +51,7 @@
 				throw new Error('Failed to load comparison');
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as ComparisonResponse;
 			fromVersion = data.fromVersion;
 			toVersion = data.toVersion;
 			differences = data.differences;
@@ -88,76 +94,51 @@
 	}
 </script>
 
-<Dialog {open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-	<div class="modal-content">
-		<div class="modal-header">
-			<h2 class="modal-title">Version Comparison</h2>
+<Dialog isOpen={open} onClose={onClose} title="Version Comparison" size="xl">
+	{#if isLoading}
+		<div class="p-6">
+			<p class="loading-text">Loading comparison...</p>
+		</div>
+	{:else if fromVersion && toVersion}
+		<div class="comparison-header">
+			<div class="version-info">
+				<Badge>v{fromVersion.versionNumber}</Badge>
+				<span class="version-date">{formatDate(fromVersion.createdAt)}</span>
+				<p class="version-author">By {fromVersion.createdBy}</p>
+			</div>
+			<span class="arrow">→</span>
+			<div class="version-info">
+				<Badge>v{toVersion.versionNumber}</Badge>
+				<span class="version-date">{formatDate(toVersion.createdAt)}</span>
+				<p class="version-author">By {toVersion.createdBy}</p>
+			</div>
 		</div>
 
-		{#if isLoading}
-			<div class="p-6">
-				<p class="loading-text">Loading comparison...</p>
-			</div>
-		{:else if fromVersion && toVersion}
-			<div class="comparison-header">
-				<div class="version-info">
-					<Badge>v{fromVersion.versionNumber}</Badge>
-					<span class="version-date">{formatDate(fromVersion.createdAt)}</span>
-					<p class="version-author">By {fromVersion.createdBy}</p>
-				</div>
-				<span class="arrow">→</span>
-				<div class="version-info">
-					<Badge>v{toVersion.versionNumber}</Badge>
-					<span class="version-date">{formatDate(toVersion.createdAt)}</span>
-					<p class="version-author">By {toVersion.createdBy}</p>
-				</div>
-			</div>
-
-			<div class="differences">
-				{#if differences.length === 0}
-					<p class="no-changes">No changes detected between these versions.</p>
-				{:else}
-					{#each differences as diff}
-						<div class="diff-item">
-							<div class="diff-field">{formatFieldName(diff.field)}</div>
-							<div class="diff-values">
-								<div class="diff-old">
-									<span class="diff-label">Old:</span>
-									<span class="diff-value">{formatValue(diff.oldValue)}</span>
-								</div>
-								<div class="diff-new">
-									<span class="diff-label">New:</span>
-									<span class="diff-value">{formatValue(diff.newValue)}</span>
-								</div>
+		<div class="differences">
+			{#if differences.length === 0}
+				<p class="no-changes">No changes detected between these versions.</p>
+			{:else}
+				{#each differences as diff}
+					<div class="diff-item">
+						<div class="diff-field">{formatFieldName(diff.field)}</div>
+						<div class="diff-values">
+							<div class="diff-old">
+								<span class="diff-label">Old:</span>
+								<span class="diff-value">{formatValue(diff.oldValue)}</span>
+							</div>
+							<div class="diff-new">
+								<span class="diff-label">New:</span>
+								<span class="diff-value">{formatValue(diff.newValue)}</span>
 							</div>
 						</div>
-					{/each}
-				{/if}
-			</div>
-		{/if}
-	</div>
+					</div>
+				{/each}
+			{/if}
+		</div>
+	{/if}
 </Dialog>
 
 <style>
-	.modal-content {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		max-width: 800px;
-		max-height: 80vh;
-		overflow-y: auto;
-	}
-
-	.modal-header {
-		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.modal-title {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-		margin: 0;
-	}
-
 	.loading-text {
 		color: var(--color-fg-secondary);
 	}

@@ -48,8 +48,8 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
 
 	const body = (await request.json()) as {
 		name?: string;
-		description?: string;
 		descriptionShort?: string;
+		descriptionLongHtml?: string;
 		websiteUrl?: string;
 		previewUrl?: string;
 	};
@@ -90,8 +90,8 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
 
 	const body = (await request.json()) as {
 		name?: string;
-		description?: string;
 		descriptionShort?: string;
+		descriptionLongHtml?: string;
 		websiteUrl?: string;
 		previewUrl?: string;
 		thumbnailUrl?: string | null;
@@ -102,6 +102,12 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
 	// Validate required fields
 	if (body.name !== undefined && typeof body.name !== 'string') {
 		throw error(400, 'Name must be a string');
+	}
+	if (body.descriptionShort !== undefined && typeof body.descriptionShort !== 'string') {
+		throw error(400, 'Short description must be a string');
+	}
+	if (body.descriptionLongHtml !== undefined && typeof body.descriptionLongHtml !== 'string') {
+		throw error(400, 'Long description must be a string');
 	}
 
 	// Check name uniqueness if name is being changed

@@ -113,11 +113,14 @@
 
 		<path d={sparkData().path} fill="none" stroke={color} stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
 
-		{#if showExtremes && sparkData().minPoint && sparkData().maxPoint}
-			<!-- Min point (subtle) -->
-			<circle cx={sparkData().minPoint.x} cy={sparkData().minPoint.y} r="2" fill="var(--color-error)" />
-			<!-- Max point -->
-			<circle cx={sparkData().maxPoint.x} cy={sparkData().maxPoint.y} r="2" fill="var(--color-success)" />
+		{#if showExtremes}
+			{@const sd = sparkData()}
+			{#if sd.minPoint && sd.maxPoint}
+				<!-- Min point (subtle) -->
+				<circle cx={sd.minPoint.x} cy={sd.minPoint.y} r="2" fill="var(--color-error)" />
+				<!-- Max point -->
+				<circle cx={sd.maxPoint.x} cy={sd.maxPoint.y} r="2" fill="var(--color-success)" />
+			{/if}
 		{/if}
 	</svg>
 

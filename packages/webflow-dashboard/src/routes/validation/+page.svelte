@@ -2,14 +2,14 @@
 	import { goto } from '$app/navigation';
 	import { Header, Button, Card } from '$lib/components';
 	import type { PageData } from './$types';
-	import type { ComponentType } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let isGsapModalOpen = $state(false);
 	
 	// Lazy-loaded modal component
-	let GsapValidationModal = $state<ComponentType | null>(null);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let GsapValidationModal = $state<any>(null);
 
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
