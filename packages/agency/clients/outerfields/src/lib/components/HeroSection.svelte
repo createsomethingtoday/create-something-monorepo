@@ -1,110 +1,39 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
-
-	let canvas: HTMLCanvasElement;
-	let animationFrameId: number;
-
-	interface Star {
-		x: number;
-		y: number;
-		z: number;
-		size: number;
-		brightness: number;
-	}
-
-	onMount(() => {
-		if (!browser || !canvas) return;
-
-		const ctx = canvas.getContext('2d');
-		if (!ctx) return;
-
-		const resizeCanvas = () => {
-			canvas.width = canvas.offsetWidth;
-			canvas.height = canvas.offsetHeight;
-		};
-		resizeCanvas();
-		window.addEventListener('resize', resizeCanvas);
-
-		const stars: Star[] = [];
-		const numStars = 300;
-		let rotation = 0;
-
-		for (let i = 0; i < numStars; i++) {
-			const angle = Math.random() * Math.PI * 2;
-			const distance = Math.random() * 400;
-			const z = Math.random() * 500;
-
-			stars.push({
-				x: Math.cos(angle) * distance,
-				y: Math.sin(angle) * distance,
-				z: z,
-				size: Math.random() * 2 + 0.5,
-				brightness: Math.random() * 0.5 + 0.5
-			});
-		}
-
-		const animate = () => {
-			const centerX = canvas.width / 2;
-			const centerY = canvas.height / 2;
-			
-			ctx.fillStyle = '#000000';
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-			rotation += 0.001;
-
-			stars.forEach((star) => {
-				const angle = Math.atan2(star.y, star.x) + rotation;
-				const distance = Math.sqrt(star.x * star.x + star.y * star.y);
-
-				const x = centerX + Math.cos(angle) * distance;
-				const y = centerY + Math.sin(angle) * distance;
-
-				const scale = 300 / (300 + star.z);
-				const size = star.size * scale;
-				const opacity = star.brightness * scale;
-
-				ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity + ')';
-				ctx.beginPath();
-				ctx.arc(x, y, size, 0, Math.PI * 2);
-				ctx.fill();
-
-				if (star.size > 1.5) {
-					const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
-					gradient.addColorStop(0, 'rgba(255, 255, 255, ' + (opacity * 0.3) + ')');
-					gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-					ctx.fillStyle = gradient;
-					ctx.beginPath();
-					ctx.arc(x, y, size * 3, 0, Math.PI * 2);
-					ctx.fill();
-				}
-			});
-
-			animationFrameId = requestAnimationFrame(animate);
-		};
-
-		animate();
-
-		return () => {
-			window.removeEventListener('resize', resizeCanvas);
-			if (animationFrameId) {
-				cancelAnimationFrame(animationFrameId);
-			}
-		};
-	});
-
+	/**
+	 * OUTERFIELDS Hero Section
+	 *
+	 * Reuses the Sketchfab 3D embed from the demo page.
+	 * Shows title "Building Outerfields: The Odyssey" with centered play button.
+	 */
 	function handlePlayClick() {
 		window.location.href = '/videos/outerfields-trailer';
 	}
 </script>
 
 <section class="hero">
-	<canvas bind:this={canvas} class="galaxy-canvas" />
+	<div class="hero-backdrop">
+		<!-- Reuse Sketchfab 3D embed from demo page -->
+		<iframe
+			title="OUTERFIELDS 3D Experience"
+			class="sketchfab-embed"
+			frameborder="0"
+			allowfullscreen
+			mozallowfullscreen="true"
+			webkitallowfullscreen="true"
+			allow="autoplay; fullscreen; xr-spatial-tracking"
+			xr-spatial-tracking
+			execution-while-out-of-viewport
+			execution-while-not-rendered
+			web-share
+			src="https://sketchfab.com/models/d6521362b37b48e3a82bce4911409303/embed?autospin=0.2&autostart=1&preload=1&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_hint=0&ui_ar=1&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0&ui_theme=dark&dnt=1"
+		></iframe>
+		<div class="hero-gradient"></div>
+	</div>
 
 	<div class="hero-content">
 		<h1 class="hero-title">Building Outerfields: The Odyssey</h1>
 
-		<button class="play-button" on:click={handlePlayClick} aria-label="Play trailer">
+		<button class="play-button" onclick={handlePlayClick} aria-label="Play trailer">
 			<svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
 			</svg>
@@ -115,10 +44,10 @@
 <style>
 	.hero {
 		position: relative;
-		width: 100%;
 		height: 100vh;
 		min-height: 600px;
 		max-height: 900px;
+		margin-bottom: 2rem;
 		overflow: hidden;
 		background: var(--color-bg-pure);
 		display: flex;
@@ -126,13 +55,30 @@
 		justify-content: center;
 	}
 
-	.galaxy-canvas {
+	.hero-backdrop {
 		position: absolute;
-		top: 0;
-		left: 0;
+		inset: 0;
+		overflow: hidden;
+	}
+
+	.hero-backdrop :global(.sketchfab-embed) {
 		width: 100%;
-		height: 100%;
+		height: 120%;
+		border: none;
 		pointer-events: none;
+		transform: scale(1.1);
+		transform-origin: center center;
+	}
+
+	.hero-gradient {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			to bottom,
+			transparent 0%,
+			rgba(0, 0, 0, 0.3) 50%,
+			var(--color-bg-pure) 100%
+		);
 	}
 
 	.hero-content {
