@@ -233,6 +233,64 @@ npm install -g @outerfields/pcn-tools
 
 This is what "better than Uscreen" means in practice. Your platform doesn't just work well—it *explains itself*.
 
+## Editing Presentations via PRs (Recommended)
+
+OUTERFIELDS presentations are implemented as SvelteKit routes using the shared `Presentation` + `Slide` components.
+
+**Goal**: the client edits decks in a *presentations-only* repo, opens a PR, and the deployed OUTERFIELDS site updates after merge.
+
+### 1) Get the presentations repo
+
+Clone the presentations-only repository (ask CREATE SOMETHING for the repo URL):
+
+```bash
+git clone <outerfields-presentations-repo-url>
+cd outerfields-presentations
+```
+
+### 2) Give Claude Desktop file access (restricted to that repo)
+
+In your Claude Desktop config file, add a filesystem MCP server that is scoped to your local presentations folder.
+
+Example (macOS):
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/ABSOLUTE/PATH/TO/outerfields-presentations"
+      ]
+    },
+    "outerfields-pcn": {
+      "command": "npx",
+      "args": ["@outerfields/pcn-tools"]
+    }
+  }
+}
+```
+
+**Why this works**:
+- `outerfields-pcn` helps Claude understand *how the platform works*
+- `filesystem` lets Claude *edit only the presentations repo* (no monorepo access)
+
+### 3) What Claude should edit
+
+Decks should live as routes (e.g. `presentations/<deck-slug>/+page.svelte`) and compose:
+- `Presentation` (`$lib/components/Presentation.svelte`)
+- `Slide` (`$lib/components/Slide.svelte`)
+- Any **approved embedded components** (CREATE SOMETHING will provide the allowlist; Claude can assemble embeds safely)
+
+### 4) The workflow
+
+1. Chat with Claude: “Create a new deck for <audience> at /presentations/<slug>”
+2. Claude edits the Svelte files in the presentations repo
+3. Client opens a PR
+4. Merge → Cloudflare Pages deploys → share the updated deck URL
+
 ## Need Help?
 
 **Email**: micah@createsomething.io
