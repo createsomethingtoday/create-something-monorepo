@@ -26,6 +26,7 @@ preview_id = "placeholder-replace-after-creation"
 [[kv_namespaces]]
 binding = "VIDEO_STATS"
 id = "55a1177ee7c3491589c19094e38df0f7"
+preview_id = "55a1177ee7c3491589c19094e38df0f7"
 
 # R2 Bucket for video assets (videos and thumbnails)
 # Create with: wrangler r2 bucket create outerfields-videos
