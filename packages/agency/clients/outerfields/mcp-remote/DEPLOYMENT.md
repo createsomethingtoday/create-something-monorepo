@@ -134,6 +134,54 @@ Documentation lives in `src/docs.ts`. To update:
 
 Changes are live immediately (no client update needed).
 
+## Enabling Presentation Management (Option B)
+
+By default this remote MCP server is **read-only** (documentation + guidance).
+
+To let Claude Desktop **create/edit presentations** in `outerfields-presentations` and trigger an **automatic deploy**, you must configure two things:
+
+### 1) Worker secrets (Cloudflare)
+
+Set these secrets on the `outerfields-pcn-mcp` Worker:
+
+- **`ADMIN_TOKEN`**: shared secret used to authorize write operations
+- **`GITHUB_TOKEN`**: GitHub token with access to:
+  - `createsomethingtoday/outerfields-presentations` (write)
+  - `createsomethingtoday/create-something-monorepo` (repository dispatch)
+
+Recommended: create a **fine‑grained PAT** scoped to just those repos and permissions:
+- Contents: Read & write (presentations repo)
+- Repository dispatch / Actions: Read & write (monorepo)
+
+Set via Wrangler:
+
+```bash
+wrangler secret put ADMIN_TOKEN --config wrangler.toml
+wrangler secret put GITHUB_TOKEN --config wrangler.toml
+```
+
+Optional vars (defaults are fine):
+- `PRESENTATIONS_REPO` (default: `createsomethingtoday/outerfields-presentations`)
+- `PRESENTATIONS_BRANCH` (default: `main`)
+- `MONOREPO_REPO` (default: `createsomethingtoday/create-something-monorepo`)
+- `MONOREPO_DISPATCH_EVENT` (default: `outerfields_presentations_updated`)
+
+### 2) Monorepo sync workflow
+
+The monorepo listens for a `repository_dispatch` event and runs a `git subtree pull` to sync:
+
+- `packages/agency/clients/outerfields/src/routes/presentations/`
+
+This sync commit triggers the normal Cloudflare deploy for OUTERFIELDS.
+
+### 3) Client connector URL (Claude Desktop)
+
+Clients should install the existing MCP server via a Custom Connector URL that includes the token:
+
+- `https://outerfields-pcn-mcp.createsomething.workers.dev/sse?token=<ADMIN_TOKEN>`
+
+This ensures **write tools are only usable** by people who have the token.
+
 ## Monitoring
 
 ### View Logs
