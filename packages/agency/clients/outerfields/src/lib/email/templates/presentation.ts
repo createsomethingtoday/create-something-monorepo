@@ -31,20 +31,21 @@ function generatePresentationHtml(data: PresentationEmailData): string {
 	const bodyHtml = `
 ${draftNotice}
 <p>Hi ${escapeHtml(recipientName)},</p>
-<p>Here’s the OUTERFIELDS investor presentation link.</p>
+<p>Here’s the <strong style="color:#ffffff;">mock presentation</strong> we’re sharing with our client first.</p>
 ${divider()}
 <div class="section">
   <h2>What it covers</h2>
-  <ul class="bullets">
-    <li>Market opportunity</li>
-    <li>Product and demo</li>
-    <li>Business model</li>
-    <li>Technology stack</li>
-    <li>Roadmap</li>
+  <!-- Use plain list styles for maximum email-client compatibility (no pseudo-elements) -->
+  <ul style="margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.8); list-style-type: disc;">
+    <li style="margin: 0 0 10px 0;">Market opportunity</li>
+    <li style="margin: 0 0 10px 0;">Product and demo</li>
+    <li style="margin: 0 0 10px 0;">Business model</li>
+    <li style="margin: 0 0 10px 0;">Technology stack</li>
+    <li style="margin: 0;">Roadmap</li>
   </ul>
 </div>
 <div class="cta">
-  ${ctaButton(presentationUrl, 'Open the presentation')}
+  ${ctaButton(presentationUrl, 'Open the mock presentation')}
   <p class="hint">Press <strong style="color:#ffffff;">F</strong> for fullscreen. Use arrow keys (or click) to navigate.</p>
 </div>
 ${divider()}
@@ -53,10 +54,10 @@ ${divider()}
 `;
 
 	return renderEmailLayout({
-		title: 'Investor presentation',
+		title: 'Mock presentation',
 		bodyHtml,
 		options: {
-			preheader: 'OUTERFIELDS investor presentation link',
+			preheader: 'OUTERFIELDS mock presentation link',
 			headerSubtitle: 'Presentation link',
 			footerHtml: `<p class="muted" style="margin-top: 8px;">Sent by CREATE SOMETHING</p>`
 		}
@@ -68,11 +69,11 @@ function generatePresentationText(data: PresentationEmailData): string {
 
 	const draftNotice = isDraft ? 'DRAFT FOR APPROVAL\nReply with edits or “approved”.\n\n---\n\n' : '';
 
-	return `${draftNotice}OUTERFIELDS — Investor presentation
+	return `${draftNotice}OUTERFIELDS — Mock presentation
 
 Hi ${recipientName},
 
-Here’s the OUTERFIELDS investor presentation link:
+Here’s the mock presentation we’re sharing with our client first:
 ${presentationUrl}
 
 What it covers:
@@ -97,8 +98,8 @@ export async function sendPresentationEmail(
 	data: PresentationEmailData
 ): Promise<EmailResult> {
 	const subject = data.isDraft
-		? '[DRAFT FOR APPROVAL] OUTERFIELDS Investor Presentation'
-		: 'OUTERFIELDS Investor Presentation';
+		? '[DRAFT FOR APPROVAL] OUTERFIELDS Mock Presentation'
+		: 'OUTERFIELDS Mock Presentation';
 
 	const html = generatePresentationHtml(data);
 	const text = generatePresentationText(data);
