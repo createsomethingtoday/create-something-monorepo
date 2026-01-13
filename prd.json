@@ -39,7 +39,7 @@
       "files": [
         "packages/agent-sdk/tests/notifications/test_patient_outreach.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-3",
