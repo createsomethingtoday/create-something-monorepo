@@ -7,6 +7,7 @@
 	import { Infinity, AlertCircle, CheckCircle, Loader2, LogIn, UserPlus, ShieldCheck, User } from 'lucide-svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { DEMO_ACCOUNTS } from '$lib/constants/navigation';
+	import { authStore } from '$lib/stores/auth';
 
 	interface Props {
 		data: {
@@ -50,6 +51,11 @@
 			if (!response.ok) {
 				error = result.error || `${mode === 'login' ? 'Login' : 'Signup'} failed`;
 				return;
+			}
+
+			// Update auth store with user data
+			if (result.success && result.data?.user) {
+				authStore.setUser(result.data.user);
 			}
 
 			await invalidateAll();

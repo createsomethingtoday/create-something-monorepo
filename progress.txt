@@ -1591,3 +1591,73 @@ Started: 2026-01-13T01:30:08Z
 ---
 ## Iteration 1
 Started: 2026-01-13T01:30:59Z
+
+---
+## Iteration 1
+Started: 2026-01-13T01:32:15Z
+
+---
+## Story-1: Implement gated video playback system with 30-60 second previews
+**Status**: ✅ Complete
+**Date**: 2026-01-12
+**Commit**: 2a051665
+
+### What Was Implemented
+Created a complete video gating system with three core components:
+
+1. **VideoPlayer.svelte** - Main component with Svelte 5 runes
+   - Plays video for configurable preview duration (default 45 seconds)
+   - Pauses video and shows subscription gate overlay when preview expires
+   - Gate overlay includes value proposition, 6 benefits, and clear $99 CTA
+   - Resumes playback automatically when user becomes a member
+   - Smooth fade transitions for gate appearance/disappearance
+   - Fully responsive with Canon token styling
+
+2. **auth.ts** - Authentication state management
+   - Svelte writable store for auth state
+   - Tracks: authenticated status, user object, loading state
+   - User interface includes membership boolean
+   - Methods: setUser, setUnauthenticated, setLoading, logout
+
+3. **video-gating.ts** - Core gating logic
+   - shouldShowGate() function: returns false for members, true when currentTime >= previewDuration
+   - DEFAULT_PREVIEW_DURATION = 45 seconds (middle of 30-60 range)
+   - GATE_FADE_DURATION = 500ms for smooth transitions
+
+### Files Changed
+- Created: packages/agency/clients/outerfields/src/lib/components/VideoPlayer.svelte (262 lines)
+- Created: packages/agency/clients/outerfields/src/lib/stores/auth.ts (60 lines)
+- Created: packages/agency/clients/outerfields/src/lib/utils/video-gating.ts (43 lines)
+
+### Acceptance Criteria Met
+✅ VideoPlayer plays video for 30-60 seconds for non-members
+✅ At time limit, video pauses and gate overlay fades in smoothly
+✅ Gate overlay shows 'Subscribe to continue watching' with value statement
+✅ Clear CTA button to $99 membership
+✅ Gate does NOT appear for authenticated members
+✅ Video resumes playback after successful subscription
+
+### Key Learnings
+1. Svelte 5 $effect() is perfect for reactive side effects (showing/hiding gate based on derived state)
+2. Separate showGate and gateVisible states enable smooth CSS transitions
+3. Canon tokens provide consistent styling across dark theme (--color-bg-surface, --color-fg-primary, etc.)
+4. Time checking via both ontimeupdate and setInterval ensures accurate gate timing
+5. Gate benefits list uses semantic HTML with ::before pseudo-element for checkmarks
+
+### Technical Notes
+- Uses Svelte 5 runes: $props, $state, $derived, $effect
+- TypeScript compilation passes with no errors
+- Responsive design with mobile breakpoint at 768px
+- Gate overlay uses rgba(0,0,0,0.95) background for strong contrast
+- CTA button has scale transforms on hover/active for tactile feedback
+
+Completed: 2026-01-13T01:36:39Z
+Thread log: .ralph-archive/iteration-1-20260112-193215.log
+
+---
+## Iteration 2
+Started: 2026-01-13T01:36:41Z
+
+---
+## Iteration 1
+Started: 2026-01-13T01:37:23Z

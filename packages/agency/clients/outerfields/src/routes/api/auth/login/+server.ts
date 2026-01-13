@@ -1,21 +1,22 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { randomUUID } from 'crypto';
 
-// Demo accounts for the landing page showcase
-const DEMO_ACCOUNTS = [
-	{
-		email: 'demo@outerfields.com',
-		password: 'demo123',
-		user: { id: 'demo_user_001', email: 'demo@outerfields.com', name: 'Demo User', role: 'user' }
-	},
-	{
-		email: 'admin@outerfields.com',
-		password: 'demo123',
-		user: { id: 'demo_admin_001', email: 'admin@outerfields.com', name: 'Admin Demo', role: 'admin' }
-	}
-];
+// Simple password hashing for demo (in production use bcrypt)
+async function hashPassword(password: string): Promise<string> {
+	const encoder = new TextEncoder();
+	const data = encoder.encode(password);
+	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+	const passwordHash = await hashPassword(password);
+	return passwordHash === hash;
+}
+
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	try {
 		const body = await request.json();
 		const { email, password } = body;
@@ -24,38 +25,74 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			return json({ success: false, error: 'Email and password are required' }, { status: 400 });
 		}
 
-		// Check for demo accounts first
-		const demoAccount = DEMO_ACCOUNTS.find(
-			(account) => account.email === email && account.password === password
-		);
-
-		if (demoAccount) {
-			// Generate a simple demo token (not for production use)
-			const demoToken = btoa(JSON.stringify({ ...demoAccount.user, exp: Date.now() + 3600000 }));
-
-			// Set session cookies for demo
-			cookies.set('access_token', demoToken, {
-				path: '/',
-				httpOnly: true,
-				secure: true,
-				sameSite: 'lax',
-				maxAge: 60 * 60 // 1 hour
-			});
-
-			cookies.set('user_role', demoAccount.user.role, {
-				path: '/',
-				httpOnly: false,
-				secure: true,
-				sameSite: 'lax',
-				maxAge: 60 * 60 // 1 hour
-			});
-
-			return json({ success: true, data: { user: demoAccount.user } });
+		// Check if DB and SESSIONS are available
+		if (!platform?.env.DB || !platform?.env.SESSIONS) {
+			return json(
+				{ success: false, error: 'Database not configured' },
+				{ status: 500 }
+			);
 		}
 
-		// For non-demo accounts, return invalid credentials
-		// (In production, this would call the real Identity API)
-		return json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+		// Find user in database
+		const result = await platform.env.DB.prepare(
+			'SELECT id, email, name, password_hash, membership, created_at FROM users WHERE email = ?'
+		)
+			.bind(email)
+			.first<{
+				id: string;
+				email: string;
+				name: string;
+				password_hash: string;
+				membership: number;
+				created_at: number;
+			}>();
+
+		if (!result) {
+			return json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+		}
+
+		// Verify password
+		const passwordValid = await verifyPassword(password, result.password_hash);
+		if (!passwordValid) {
+			return json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+		}
+
+		// Create session
+		const sessionToken = randomUUID();
+		const sessionData = {
+			userId: result.id,
+			email: result.email,
+			name: result.name,
+			membership: result.membership === 1,
+			createdAt: Date.now()
+		};
+
+		// Store session in KV with 24-hour expiration
+		await platform.env.SESSIONS.put(
+			`session:${sessionToken}`,
+			JSON.stringify(sessionData),
+			{ expirationTtl: 60 * 60 * 24 } // 24 hours
+		);
+
+		// Set session cookie
+		cookies.set('session_token', sessionToken, {
+			path: '/',
+			httpOnly: true,
+			secure: true,
+			sameSite: 'lax',
+			maxAge: 60 * 60 * 24 // 24 hours
+		});
+
+		// Return user data (without password hash)
+		const user = {
+			id: result.id,
+			email: result.email,
+			name: result.name,
+			membership: result.membership === 1,
+			createdAt: new Date(result.created_at).toISOString()
+		};
+
+		return json({ success: true, data: { user } });
 	} catch (err) {
 		console.error('Login error:', err);
 		return json({ success: false, error: 'Login failed' }, { status: 500 });

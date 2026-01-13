@@ -21,7 +21,7 @@
         "src/lib/stores/auth.ts",
         "src/lib/utils/video-gating.ts"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-2",

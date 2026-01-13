@@ -47,7 +47,14 @@ function createAuthStore() {
 			update(state => ({ ...state, loading }));
 		},
 
-		logout: () => {
+		logout: async () => {
+			// Call logout API to clear session
+			try {
+				await fetch('/api/auth/logout', { method: 'POST' });
+			} catch (error) {
+				console.error('Logout error:', error);
+			}
+
 			set({
 				authenticated: false,
 				user: null,

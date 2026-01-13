@@ -5,6 +5,18 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [vars]
 ENVIRONMENT = "production"
 
+# D1 Database for user accounts
+[[d1_databases]]
+binding = "DB"
+database_name = "outerfields-db"
+database_id = "placeholder-will-be-created"
+
+# KV Namespace for session storage
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "placeholder-will-be-created"
+
+# KV Namespace for video stats
 [[kv_namespaces]]
 binding = "VIDEO_STATS"
 id = "55a1177ee7c3491589c19094e38df0f7"

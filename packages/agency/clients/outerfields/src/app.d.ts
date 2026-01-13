@@ -7,8 +7,9 @@ declare global {
 			user?: {
 				id: string;
 				email: string;
-				name?: string;
-				role: 'user' | 'admin';
+				name: string;
+				membership: boolean;
+				createdAt: string;
 			};
 		}
 		// interface PageData {}
@@ -16,7 +17,7 @@ declare global {
 		interface Platform {
 			env: {
 				DB?: D1Database;
-				KV?: KVNamespace;
+				SESSIONS?: KVNamespace;
 				VIDEO_STATS?: KVNamespace;
 				AI?: Ai;
 				ANTHROPIC_API_KEY?: string;
