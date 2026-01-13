@@ -59,8 +59,144 @@ ultrawide monitors with dark themed interfaces, minimal and clean composition`;
 interface ImageSpec {
 	filename: string;
 	prompt: string;
-	category: 'hero' | 'thumbnail';
+	category: 'hero' | 'thumbnail' | 'episode';
 }
+
+// Helper to generate episode thumbnails
+function generateEpisodeSpecs(): ImageSpec[] {
+	const specs: ImageSpec[] = [];
+
+	// Crew Call (20 episodes) - Documentary crew/production
+	const crewCallThemes = [
+		'initial team meeting around conference table',
+		'equipment setup with camera rigs',
+		'lighting design with softboxes',
+		'sound check with boom mic',
+		'first shots being captured',
+		'director reviewing footage on monitor',
+		'crew lunch break moment',
+		'afternoon shoot on location',
+		'golden hour filming outdoors',
+		'night scene with dramatic lighting',
+		'editing session at workstation',
+		'color grading on calibrated monitor',
+		'sound mixing in studio',
+		'visual effects review',
+		'final cut preview screening',
+		'team celebration with high-fives',
+		'wrap party preparation',
+		'equipment teardown and packing',
+		'final goodbyes between crew',
+		'series finale wrap with awards'
+	];
+	for (let i = 0; i < 20; i++) {
+		specs.push({
+			filename: `crew-call/ep${String(i + 1).padStart(2, '0')}.jpg`,
+			category: 'episode',
+			prompt: `${STYLE}. Documentary crew call scene. Behind the scenes of professional film production.
+			${crewCallThemes[i]}. Camera operators, directors, and crew collaborating.
+			Professional film equipment, monitors, purple accent lighting. Authentic documentary feel.`
+		});
+	}
+
+	// Reconnecting Relationships (3 episodes)
+	const reconnectThemes = [
+		'First meeting - two people cautiously reconnecting at a quiet cafe',
+		'Deep conversation - intimate emotional moment with meaningful eye contact',
+		'Reconciliation - embrace or handshake signifying renewed connection'
+	];
+	for (let i = 0; i < 3; i++) {
+		specs.push({
+			filename: `reconnecting/ep${String(i + 1).padStart(2, '0')}.jpg`,
+			category: 'episode',
+			prompt: `${STYLE}. Emotional documentary scene about reconnecting relationships.
+			${reconnectThemes[i]}. Intimate portrait photography, warm but moody lighting.
+			Purple accents, authentic emotional storytelling moment.`
+		});
+	}
+
+	// Kodiak (8 episodes) - Alaska wilderness
+	const kodiakThemes = [
+		'Arrival in Alaska - bush plane landing on remote lake',
+		'First bear sighting - massive Kodiak bear in the distance',
+		'Camp setup in wilderness - tents against mountain backdrop',
+		'Fishing expedition - salmon jumping in pristine stream',
+		'Storm survival - dramatic weather over rugged landscape',
+		'Wildlife tracking - following animal trails through forest',
+		'Final encounter - close interaction with wildlife',
+		'Journey home - departure from wilderness'
+	];
+	for (let i = 0; i < 8; i++) {
+		specs.push({
+			filename: `kodiak/ep${String(i + 1).padStart(2, '0')}.jpg`,
+			category: 'episode',
+			prompt: `${STYLE}. Alaska wilderness documentary scene. Kodiak Island adventure.
+			${kodiakThemes[i]}. Dramatic outdoor cinematography, purple twilight tones.
+			Rugged landscapes, survival elements, nature documentary aesthetic.`
+		});
+	}
+
+	// Lincoln Manufacturing (8 episodes) - Industrial
+	const lincolnThemes = [
+		'Factory overview - wide shot of manufacturing floor',
+		'Assembly line - precision machinery in action',
+		'Quality control - inspector examining parts',
+		'Worker profiles - skilled tradesperson at work',
+		'Innovation lab - R&D team with prototypes',
+		'Shipping logistics - warehouse operations',
+		'Customer stories - product in real-world use',
+		'Future vision - modern automation and robotics'
+	];
+	for (let i = 0; i < 8; i++) {
+		specs.push({
+			filename: `lincoln/ep${String(i + 1).padStart(2, '0')}.jpg`,
+			category: 'episode',
+			prompt: `${STYLE}. Industrial manufacturing documentary scene. American craftsmanship.
+			${lincolnThemes[i]}. Factory floor, precision machinery, workers in action.
+			Industrial lighting with purple accents, professional documentary style.`
+		});
+	}
+
+	// Guns Out TV (13 episodes) - Fitness/bodybuilding
+	const gunsOutThemes = [
+		'Gym introduction - entering a serious training facility',
+		'Morning routine - early workout dedication',
+		'Heavy lifting - intense squat or deadlift moment',
+		'Cardio session - treadmill or rowing intensity',
+		'Nutrition planning - meal prep and supplements',
+		'Competition prep - posing practice in mirror',
+		'Posing practice - perfecting stage presence',
+		'Team training - group workout motivation',
+		'Mental preparation - focused visualization',
+		'Competition day - backstage pump-up',
+		'Stage performance - under the lights',
+		'Results and reflection - post-competition analysis',
+		'Season finale - transformation celebration'
+	];
+	for (let i = 0; i < 13; i++) {
+		specs.push({
+			filename: `guns-out/ep${String(i + 1).padStart(2, '0')}.jpg`,
+			category: 'episode',
+			prompt: `${STYLE}. Fitness and bodybuilding documentary scene. Athletic excellence.
+			${gunsOutThemes[i]}. Gym environment, intense training moments.
+			Dramatic lighting with purple accents, competition documentary aesthetic.`
+		});
+	}
+
+	// Films (1 feature)
+	specs.push({
+		filename: 'films/featured.jpg',
+		category: 'episode',
+		prompt: `${STYLE}. Cinematic film key art. Dramatic movie poster composition.
+		Silhouette of protagonist against dramatic lighting backdrop.
+		Purple and black color scheme, professional film marketing aesthetic.
+		Feature film premiere artwork, Netflix-quality key art.`
+	});
+
+	return specs;
+}
+
+const EPISODE_IMAGES = generateEpisodeSpecs();
 
 const IMAGES: ImageSpec[] = [
 	// ============================================
@@ -225,7 +361,9 @@ const IMAGES: ImageSpec[] = [
 		prompt: `${STYLE}. Studio portrait with dramatic lighting: subject in profile, sharp rim light,
 		minimal background, purple accent glow. Premium streaming trailer thumbnail feel,
 		authentic documentary tone.`
-	}
+	},
+	// Episode thumbnails for all series
+	...EPISODE_IMAGES
 ];
 
 async function generateImage(spec: ImageSpec, apiToken: string): Promise<void> {
@@ -273,13 +411,27 @@ async function main() {
 
 	const heroes = IMAGES.filter((i) => i.category === 'hero');
 	const thumbnails = IMAGES.filter((i) => i.category === 'thumbnail');
+	const episodes = IMAGES.filter((i) => i.category === 'episode');
 
-	console.log(`📷 Generating ${heroes.length} hero image(s) and ${thumbnails.length} thumbnails...\n`);
+	console.log(`📷 Generating ${heroes.length} hero, ${thumbnails.length} thumbnails, ${episodes.length} episodes...\n`);
+
+	// Filter to only generate missing thumbnails
+	const missing = IMAGES.filter((spec) => {
+		const outputPath = path.join(OUTPUT_DIR, spec.filename);
+		return !fs.existsSync(outputPath);
+	});
+
+	if (missing.length === 0) {
+		console.log('✨ All thumbnails already exist! Use --force to regenerate.\n');
+		return;
+	}
+
+	console.log(`🔍 Found ${missing.length} missing thumbnails to generate...\n`);
 
 	let success = 0;
 	let failed = 0;
 
-	for (const spec of IMAGES) {
+	for (const spec of missing) {
 		try {
 			await generateImage(spec, apiToken);
 			success++;

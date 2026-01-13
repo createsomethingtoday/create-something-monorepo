@@ -21,14 +21,13 @@
 	// Cloudflare R2 CDN base URL (public bucket)
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
-	// Coming Soon thumbnails: ship with the app (Flux-generated + committed) so the
-	// landing page doesn't depend on external R2 uploads for teaser art.
+	// Coming Soon thumbnails: Flux-generated trailers in /thumbnails/trailers/
 	const COMING_SOON_THUMBNAILS_BY_ID: Record<string, string> = {
-		vid_trailer_1: '/thumbnails/why-we-built.jpg',
-		vid_trailer_2: '/thumbnails/creator-first.jpg',
-		vid_trailer_3: '/thumbnails/problem-uscreen.jpg',
-		vid_trailer_4: '/thumbnails/motion-design.jpg',
-		vid_trailer_5: '/thumbnails/realtime-analytics.jpg'
+		vid_trailer_1: '/thumbnails/trailers/trailer01.jpg',
+		vid_trailer_2: '/thumbnails/trailers/trailer02.jpg',
+		vid_trailer_3: '/thumbnails/trailers/trailer03.jpg',
+		vid_trailer_4: '/thumbnails/trailers/trailer04.jpg',
+		vid_trailer_5: '/thumbnails/trailers/trailer05.jpg'
 	};
 
 	function getComingSoonThumbnail(v: DbVideo): string {
