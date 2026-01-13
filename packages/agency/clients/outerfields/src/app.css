@@ -3,10 +3,11 @@
   Premium Content Network Platform
 
   Philosophy: Pure black and white, systematic minimalism
-  Font: Inter - geometric precision, optimal readability
+  Font: Canon system (Stack Sans Notch with system fallbacks, JetBrains Mono for code)
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* JetBrains Mono for code/monospace */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -92,12 +93,17 @@
 	--radius-xl: 1.5rem;
 	--radius-full: 9999px;
 
+	/* Font Families (Canon alignment) */
+	--font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+
 	/* Typography Scale */
 	--text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);
 	--text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);
 	--text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);
 	--text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);
 	--text-body: 1rem;
+	--text-body-lg: 1.125rem;
 	--text-body-sm: 0.875rem;
 	--text-caption: 0.75rem;
 }
@@ -118,13 +124,17 @@
 
 body {
 	color: var(--color-fg-primary);
-	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	font-family: var(--font-sans);
 	font-size: 1rem;
 	line-height: 1.6;
 	background-color: var(--color-bg-pure);
 	margin: 0;
 	overflow-x: hidden;
-	font-feature-settings: 'cv01', 'cv02', 'cv03', 'cv04';
+	font-optical-sizing: auto;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
 }
 
 /* Custom Scrollbar */
