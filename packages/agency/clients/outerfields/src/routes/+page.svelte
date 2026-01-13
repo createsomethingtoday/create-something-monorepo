@@ -1,10 +1,9 @@
 <script lang="ts">
 	/**
-	 * OUTERFIELDS - Build in Public Lab
+	 * OUTERFIELDS - Gated Membership Platform (Netflix-style)
 	 *
-	 * Showcases our 90-day journey building the next generation
-	 * of premium content networks. Interactive demos, live components,
-	 * and transparent development.
+	 * $99 lifetime founding member pre-sale with gated video access,
+	 * Stripe checkout, and platform ecosystem previews.
 	 */
 	import UrgencyBanner from '$lib/components/UrgencyBanner.svelte';
 	import HeroSection from '$lib/components/HeroSection.svelte';
@@ -24,7 +23,8 @@
 	// SEO Configuration
 	const seo = {
 		title: 'OUTERFIELDS | Premium Content Networks That Convert',
-		description: 'Build streaming platforms better than Uscreen. AI-powered analytics, custom branding, community features, and monetization tools. Follow our 90-day build in public journey.',
+		description:
+			'Outerfields is a Netflix-style gated membership platform. Join as a founding member for $99 lifetime access: premium content, tools, analytics, and an included discovery call.',
 		keywords: 'video streaming platform, content network, OTT platform, video monetization, AI analytics, Uscreen alternative, streaming service, video hosting, membership platform, creator economy',
 		url: 'https://outerfields.createsomething.agency',
 		image: 'https://outerfields.createsomething.agency/og-image.svg',
@@ -62,9 +62,9 @@
 		description: 'Premium content network platform with video streaming, monetization, analytics, and community features.',
 		offers: {
 			'@type': 'Offer',
-			price: '0',
+			price: '99',
 			priceCurrency: 'USD',
-			description: 'Free demo available'
+			description: 'Founding member pre-sale: $99 lifetime access'
 		},
 		featureList: [
 			'Adaptive video streaming',

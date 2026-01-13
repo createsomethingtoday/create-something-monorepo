@@ -1012,7 +1012,7 @@
 				<div class="analytics-metrics">
 					<div class="metric-card">
 						<div class="metric-label">Total Views</div>
-						<div class="metric-value">{selectedVideo.views.toLocaleString()}</div>
+						<div class="metric-value">{selectedVideo.views ?? '—'}</div>
 						<div class="metric-change positive">+12.5% vs last 7 days</div>
 					</div>
 					<div class="metric-card">

@@ -1,3 +1,112 @@
+# Outerfields Deployment (Cloudflare Pages)
+
+This package deploys to **Cloudflare Pages** using `@sveltejs/adapter-cloudflare`.
+
+## Prereqs
+
+- `pnpm install` at repo root
+- Cloudflare account access for the target project
+- Stripe + Resend credentials (optional Resend)
+
+## Required Cloudflare bindings
+
+Bindings are declared in:
+- `wrangler.toml` (primary)
+- `wrangler.jsonc` (kept in sync for reference)
+
+### D1
+
+- **Binding**: `DB`
+- **Used by**: auth (`users`), videos, discovery calls, Stripe webhook membership upgrades
+- **Migrations**: `migrations/*.sql`
+
+Create D1:
+
+```bash
+wrangler d1 create outerfields-db
+```
+
+Then update `wrangler.toml` / `wrangler.jsonc` with the returned `database_id`.
+
+Apply migrations:
+
+```bash
+wrangler d1 migrations apply outerfields-db --remote
+```
+
+### KV
+
+- **Binding**: `SESSIONS` (required)
+- **Binding**: `VIDEO_STATS` (required)
+
+Create KV namespaces:
+
+```bash
+wrangler kv:namespace create SESSIONS
+wrangler kv:namespace create VIDEO_STATS
+```
+
+Then update `wrangler.toml` / `wrangler.jsonc` with the returned IDs.
+
+### R2 (video assets)
+
+- **Binding**: `VIDEO_ASSETS`
+- **Bucket**: `outerfields-videos`
+
+Create bucket:
+
+```bash
+wrangler r2 bucket create outerfields-videos
+```
+
+Upload assets (example):
+
+```bash
+# videos/thumbnails live in the repo under static/ (and/or your local export folder)
+wrangler r2 object put outerfields-videos/thumbnails/example.jpg --file ./static/thumbnails/example.jpg
+```
+
+## Required environment variables / secrets
+
+### Stripe (required for checkout + webhook)
+
+- `STRIPE_SECRET_KEY` (secret)
+- `STRIPE_WEBHOOK_SECRET` (secret)
+
+```bash
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_WEBHOOK_SECRET
+```
+
+### Resend (optional for welcome emails)
+
+- `RESEND_API_KEY` (secret)
+
+```bash
+wrangler secret put RESEND_API_KEY
+```
+
+## Deploy
+
+Build locally:
+
+```bash
+pnpm -C packages/agency/clients/outerfields build
+```
+
+Deploy to Pages:
+
+```bash
+wrangler pages deploy .svelte-kit/cloudflare
+```
+
+## Post-deploy checklist
+
+- Verify `/api/auth/signup` creates a user and sets `session_token`
+- Verify `/api/auth/login` sets `session_token` and `hooks.server.ts` hydrates `locals.user`
+- Verify Stripe webhook endpoint receives events and flips `users.membership = 1`
+- Verify video endpoints and `VIDEO_STATS` reads/writes
+
 # Outerfields Production Deployment Guide
 
 Complete checklist for deploying Outerfields to Cloudflare Pages with all required bindings.

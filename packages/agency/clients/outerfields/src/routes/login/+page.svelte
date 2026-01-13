@@ -172,7 +172,9 @@
 			{#if mode === 'login'}
 				<p>
 					Don't have an account?
-					<button type="button" onclick={() => (mode = 'signup')}>Create one</button>
+					<button type="button" onclick={() => goto(`/signup?redirect=${encodeURIComponent(data.redirectTo || '/demo')}`)}>
+						Create one
+					</button>
 				</p>
 			{:else}
 				<p>

@@ -12,10 +12,29 @@
 		"ENVIRONMENT": "production"
 	},
 
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "outerfields-db",
+			"database_id": "placeholder-replace-after-creation"
+		}
+	],
+
 	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "placeholder-replace-after-creation"
+		},
 		{
 			"binding": "VIDEO_STATS",
 			"id": "55a1177ee7c3491589c19094e38df0f7"
+		}
+	],
+
+	"r2_buckets": [
+		{
+			"binding": "VIDEO_ASSETS",
+			"bucket_name": "outerfields-videos"
 		}
 	],
 

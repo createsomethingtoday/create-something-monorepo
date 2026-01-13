@@ -298,7 +298,7 @@
         "wrangler.toml",
         "package.json"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

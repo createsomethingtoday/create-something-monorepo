@@ -13,122 +13,122 @@
 	 * 7. Coming Soon (5 trailers)
 	 */
 	import CategoryRow from './CategoryRow.svelte';
-	import VideoModal from './VideoModal.svelte';
-	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
+	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
+	import type { Video as DbVideo } from '$lib/server/db/videos';
 
-	// Mock data structure - in production, this would come from API
-	const categories = [
-		{
-			title: 'Crew Call',
-			videos: Array.from({ length: 20 }, (_, i) => ({
-				id: `crew-call-${i + 1}`,
-				title: `Crew Call Episode ${i + 1}`,
-				thumbnail: `/thumbnails/crew-call-${i + 1}.jpg`,
-				duration: '45:00',
-				tier: i === 0 ? 'free' : 'gated',
-				category: 'crew-call',
-				episodeNumber: i + 1
-			}))
-		},
-		{
-			title: 'Reconnecting Relationships',
-			videos: Array.from({ length: 3 }, (_, i) => ({
-				id: `reconnecting-${i + 1}`,
-				title: `Reconnecting Relationships Episode ${i + 1}`,
-				thumbnail: `/thumbnails/reconnecting-${i + 1}.jpg`,
-				duration: '30:00',
-				tier: i === 0 ? 'free' : 'gated',
-				category: 'reconnecting',
-				episodeNumber: i + 1
-			}))
-		},
-		{
-			title: 'Kodiak',
-			videos: Array.from({ length: 8 }, (_, i) => ({
-				id: `kodiak-${i + 1}`,
-				title: `Kodiak Episode ${i + 1}`,
-				thumbnail: `/thumbnails/kodiak-${i + 1}.jpg`,
-				duration: '25:00',
-				tier: i === 0 ? 'free' : 'gated',
-				category: 'kodiak',
-				episodeNumber: i + 1
-			}))
-		},
-		{
-			title: 'Lincoln Manufacturing',
-			videos: Array.from({ length: 8 }, (_, i) => ({
-				id: `lincoln-${i + 1}`,
-				title: `Lincoln Manufacturing Episode ${i + 1}`,
-				thumbnail: `/thumbnails/lincoln-${i + 1}.jpg`,
-				duration: '35:00',
-				tier: i === 0 ? 'free' : 'gated',
-				category: 'lincoln',
-				episodeNumber: i + 1
-			}))
-		},
-		{
-			title: 'Guns Out TV',
-			videos: Array.from({ length: 13 }, (_, i) => ({
-				id: `guns-out-${i + 1}`,
-				title: `Guns Out TV Episode ${i + 1}`,
-				thumbnail: `/thumbnails/guns-out-${i + 1}.jpg`,
-				duration: '20:00',
-				tier: i === 0 ? 'free' : 'gated',
-				category: 'guns-out',
-				episodeNumber: i + 1
-			}))
-		},
-		{
-			title: 'Films',
-			videos: [
-				{
-					id: 'film-1',
-					title: 'Feature Film',
-					thumbnail: '/thumbnails/film-1.jpg',
-					duration: '1:45:00',
-					tier: 'free' as const,
-					category: 'films',
-					episodeNumber: undefined
-				}
-			]
-		},
-		{
-			title: 'Coming Soon',
-			videos: Array.from({ length: 5 }, (_, i) => ({
-				id: `trailer-${i + 1}`,
-				title: `Upcoming Project ${i + 1} Trailer`,
-				thumbnail: `/thumbnails/trailer-${i + 1}.jpg`,
-				duration: '2:30',
-				tier: 'free' as const,
-				category: 'coming-soon',
-				episodeNumber: undefined
-			}))
-		}
-	];
+	// Cloudflare R2 CDN base URL (public bucket)
+	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
-	let selectedVideoId = $state<string | null>(null);
-	let showModal = $state(false);
+	type RowTier = 'free' | 'preview' | 'gated';
+	interface RowVideo {
+		id: string;
+		title: string;
+		thumbnail: string;
+		duration: string;
+		tier: RowTier;
+		category: string;
+		episodeNumber?: number;
+	}
+
+	let categories = $state<Array<{ title: string; videos: RowVideo[] }>>([]);
+	let isLoading = $state(true);
+	let loadError = $state<string | null>(null);
+	let playerVideosById = $state<Record<string, PlayerVideo>>({});
+
+	function formatClock(totalSeconds: number): string {
+		const s = Math.max(0, Math.floor(totalSeconds));
+		const hours = Math.floor(s / 3600);
+		const minutes = Math.floor((s % 3600) / 60);
+		const seconds = s % 60;
+		if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+	}
+
+	function titleFromCategoryId(categoryId: string): string {
+		const map: Record<string, string> = {
+			'crew-call': 'Crew Call',
+			'reconnecting-relationships': 'Reconnecting Relationships',
+			kodiak: 'Kodiak',
+			'lincoln-manufacturing': 'Lincoln Manufacturing',
+			'guns-out-tv': 'Guns Out TV',
+			films: 'Films',
+			'coming-soon': 'Coming Soon'
+		};
+		return map[categoryId] || categoryId;
+	}
+
+	function toAssetUrl(path: string): string {
+		if (path.startsWith('http://') || path.startsWith('https://')) return path;
+		// Normalize leading slash so CDN_BASE + "/videos/..." doesn't double-slash
+		return `${CDN_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+	}
+
+	function buildRowVideo(v: DbVideo): RowVideo {
+		return {
+			id: v.id,
+			title: v.title,
+			thumbnail: toAssetUrl(v.thumbnail_path),
+			duration: formatClock(v.duration),
+			tier: v.tier,
+			category: v.category,
+			...(v.episode_number ? { episodeNumber: v.episode_number } : {})
+		};
+	}
+
+	function buildPlayerVideo(v: DbVideo): PlayerVideo {
+		return {
+			id: v.id,
+			title: v.title,
+			description: v.description || '',
+			duration: formatClock(v.duration),
+			thumbnail: toAssetUrl(v.thumbnail_path),
+			category: titleFromCategoryId(v.category),
+			src: toAssetUrl(v.asset_path)
+		};
+	}
 
 	function handleVideoClick(videoId: string) {
-		selectedVideoId = videoId;
-		showModal = true;
+		const video = playerVideosById[videoId];
+		if (!video) return;
+		videoPlayer.play(video);
 	}
 
-	function closeModal() {
-		showModal = false;
-		selectedVideoId = null;
-	}
+	onMount(async () => {
+		try {
+			isLoading = true;
+			loadError = null;
 
-	// Verify episode counts
-	const totalVideos = categories.reduce((sum, cat) => sum + cat.videos.length, 0);
-	const freeVideos = categories.reduce((sum, cat) =>
-		sum + cat.videos.filter(v => v.tier === 'free').length, 0
-	);
+			const response = await fetch('/api/videos?grouped=true');
+			const result = await response.json();
 
-	if (browser) {
-		console.log(`Total videos: ${totalVideos}`);
-		console.log(`Free videos: ${freeVideos} (5 first episodes + 1 film + 5 trailers)`);
-	}
+			if (!response.ok || !result?.success) {
+				throw new Error(result?.error || 'Failed to load videos');
+			}
+
+			const grouped = result.data as Record<string, DbVideo[]>;
+
+			const byId: Record<string, PlayerVideo> = {};
+			const rows: Array<{ title: string; videos: RowVideo[] }> = Object.entries(grouped)
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([categoryId, vids]) => {
+					for (const v of vids) byId[v.id] = buildPlayerVideo(v);
+					return {
+						title: titleFromCategoryId(categoryId),
+						videos: vids.map(buildRowVideo)
+					};
+				});
+
+			playerVideosById = byId;
+			categories = rows;
+		} catch (err) {
+			loadError = err instanceof Error ? err.message : 'Failed to load videos';
+			categories = [];
+			playerVideosById = {};
+		} finally {
+			isLoading = false;
+		}
+	});
 </script>
 
 <section class="content-categories">
@@ -141,21 +141,18 @@
 	</div>
 
 	<div class="categories">
-		{#each categories as category}
-			<CategoryRow
-				title={category.title}
-				videos={category.videos}
-				onVideoClick={handleVideoClick}
-			/>
-		{/each}
+		{#if isLoading}
+			<p class="empty-state">Loading videos…</p>
+		{:else if loadError}
+			<p class="empty-state">{loadError}</p>
+		{:else if categories.length === 0}
+			<p class="empty-state">No videos available yet.</p>
+		{:else}
+			{#each categories as category}
+				<CategoryRow title={category.title} videos={category.videos} onVideoClick={handleVideoClick} />
+			{/each}
+		{/if}
 	</div>
-
-	{#if showModal && selectedVideoId}
-		<VideoModal
-			videoId={selectedVideoId}
-			onClose={closeModal}
-		/>
-	{/if}
 </section>
 
 <style>
@@ -188,6 +185,12 @@
 	.categories {
 		display: flex;
 		flex-direction: column;
+	}
+
+	.empty-state {
+		text-align: center;
+		color: var(--color-fg-muted);
+		padding: var(--space-lg);
 	}
 
 	/* Responsive */

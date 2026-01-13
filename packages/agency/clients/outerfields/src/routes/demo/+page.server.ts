@@ -1,10 +1,9 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ cookies }) => {
-	// Check if authenticated
-	const accessToken = cookies.get('access_token');
-	if (!accessToken) {
+export const load: PageServerLoad = async ({ locals }) => {
+	// Check if authenticated via session (hooks.server.ts sets locals.user)
+	if (!locals.user) {
 		redirect(302, '/login?redirect=/demo');
 	}
 
@@ -12,7 +11,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	// Uses locally generated Flux AI thumbnails
 	return {
 		user: {
-			name: 'Demo User',
+			name: locals.user.name,
 			avatar: null
 		},
 		categories: [

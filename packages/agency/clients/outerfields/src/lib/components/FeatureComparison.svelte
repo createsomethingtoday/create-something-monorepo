@@ -6,14 +6,74 @@
 	 */
 	import { Infinity, CheckCircle, XCircle, Rocket } from 'lucide-svelte';
 
-	const features = [
-		{ name: 'Lifetime Pricing', outerfields: true, uscreen: false, youtube: false, patreon: false, substack: false, description: 'One-time $99 payment, lifetime access' },
-		{ name: 'No Monthly Fees', outerfields: true, uscreen: false, youtube: false, patreon: false, substack: false, description: 'No recurring subscription charges' },
-		{ name: 'Full Ownership', outerfields: true, uscreen: 'Limited', youtube: false, patreon: false, substack: false, description: 'You own your content and platform' },
-		{ name: 'Advanced Analytics', outerfields: true, uscreen: 'Basic', youtube: 'Basic', patreon: 'Basic', substack: 'Basic', description: 'Real-time engagement metrics and AI insights' },
-		{ name: 'Community Features', outerfields: true, uscreen: false, youtube: 'Limited', patreon: true, substack: 'Limited', description: 'Built-in forums, comments, and engagement' },
-		{ name: 'Discovery Calls', outerfields: true, uscreen: false, youtube: false, patreon: false, substack: false, description: 'Included 1-on-1 strategy call with membership' }
-	] as const;
+	type ComparisonValue = true | false | 'Limited' | 'Basic';
+
+	type FeatureRow = {
+		name: string;
+		description: string;
+		outerfields: ComparisonValue;
+		uscreen: ComparisonValue;
+		youtube: ComparisonValue;
+		patreon: ComparisonValue;
+		substack: ComparisonValue;
+	};
+
+	const features: FeatureRow[] = [
+		{
+			name: 'Lifetime Pricing',
+			outerfields: true,
+			uscreen: false,
+			youtube: false,
+			patreon: false,
+			substack: false,
+			description: 'One-time $99 payment, lifetime access'
+		},
+		{
+			name: 'No Monthly Fees',
+			outerfields: true,
+			uscreen: false,
+			youtube: false,
+			patreon: false,
+			substack: false,
+			description: 'No recurring subscription charges'
+		},
+		{
+			name: 'Full Ownership',
+			outerfields: true,
+			uscreen: 'Limited',
+			youtube: false,
+			patreon: false,
+			substack: false,
+			description: 'You own your content and platform'
+		},
+		{
+			name: 'Advanced Analytics',
+			outerfields: true,
+			uscreen: 'Basic',
+			youtube: 'Basic',
+			patreon: 'Basic',
+			substack: 'Basic',
+			description: 'Real-time engagement metrics and AI insights'
+		},
+		{
+			name: 'Community Features',
+			outerfields: true,
+			uscreen: false,
+			youtube: 'Limited',
+			patreon: true,
+			substack: 'Limited',
+			description: 'Built-in forums, comments, and engagement'
+		},
+		{
+			name: 'Discovery Calls',
+			outerfields: true,
+			uscreen: false,
+			youtube: false,
+			patreon: false,
+			substack: false,
+			description: 'Included 1-on-1 strategy call with membership'
+		}
+	];
 </script>
 
 <section class="comparison-section" id="features">

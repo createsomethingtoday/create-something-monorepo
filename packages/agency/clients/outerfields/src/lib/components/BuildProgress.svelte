@@ -1,8 +1,8 @@
 <script lang="ts">
 	/**
-	 * OUTERFIELDS Build Progress Timeline
+	 * OUTERFIELDS Pre-Sale Progress Timeline
 	 *
-	 * Shows the 90-day build in public journey
+	 * Shows the current pre-sale build timeline toward launch.
 	 */
 
 	interface Milestone {
@@ -26,17 +26,17 @@
 	<div class="progress-container">
 		<div class="progress-badge">
 			<span class="badge-dot"></span>
-			<span>Build in Public</span>
+			<span>Pre-Sale Progress</span>
 		</div>
 
 		<h1 class="progress-title">
-			Building the Future
-			<span class="highlight">In Public</span>
+			Pre-Sale
+			<span class="highlight">Launch Timeline</span>
 		</h1>
 
 		<p class="progress-description">
-			Follow our 90-day journey as we architect the next generation of content networks.
-			Transparent milestones, open-source components, and real-time progress.
+			We’re in the pre-sale phase now. Track the major milestones from concept → beta → launch as we
+			finish the platform and ship founding member access.
 		</p>
 
 		<div class="timeline-wrapper">

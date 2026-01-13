@@ -4,6 +4,13 @@
 **PRD File:** `outerfields-prd.json`
 **Target Package:** `packages/agency/clients/outerfields`
 
+## Update (2026-01-13)
+
+This mapping document reflects an earlier point-in-time snapshot.
+
+- **Current direction**: Netflix-style gated membership PRD is the source of truth.
+- **Build-in-Public PRD**: out of date and should be treated as archived context.
+
 ## Executive Summary
 
 **Critical Finding:** The actual Outerfields implementation diverges fundamentally from the PRD specification.

@@ -31,12 +31,8 @@
 	};
 
 	// Engagement data for heatmap visualization
-	const engagementData: Record<string, number[]> = {
-		'1': [0.3, 0.4, 0.5, 0.7, 0.9, 1.0, 0.95, 0.85, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.1],
-		'2': [0.2, 0.3, 0.5, 0.6, 0.65, 0.7, 0.8, 0.95, 1.0, 0.9, 0.75, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.2, 0.15, 0.1],
-		'3': [0.4, 0.35, 0.3, 0.35, 0.5, 0.7, 0.85, 1.0, 0.9, 0.7, 0.5, 0.4, 0.5, 0.7, 0.9, 0.95, 0.8, 0.5, 0.3, 0.2],
-		featured: [0.5, 0.6, 0.7, 0.85, 1.0, 0.9, 0.75, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08, 0.05, 0.05]
-	};
+	// Note: Engagement heatmap is sourced from KV via the shared VideoModal store,
+	// so we don't pass in local mock engagement data here.
 
 	interface ContentItem {
 		id: string;
@@ -103,13 +99,7 @@
 				class="sketchfab-embed"
 				frameborder="0"
 				allowfullscreen
-				mozallowfullscreen="true"
-				webkitallowfullscreen="true"
-				allow="autoplay; fullscreen; xr-spatial-tracking"
-				xr-spatial-tracking
-				execution-while-out-of-viewport
-				execution-while-not-rendered
-				web-share
+				allow="autoplay; fullscreen"
 				src="https://sketchfab.com/models/d6521362b37b48e3a82bce4911409303/embed?autospin=0.2&autostart=1&preload=1&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_hint=0&ui_ar=1&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0&ui_theme=dark&dnt=1"
 			></iframe>
 			<div class="hero-gradient"></div>
@@ -191,7 +181,10 @@
 	<!-- Demo Notice -->
 	<div class="demo-notice">
 		<Info size={20} />
-		<p>This is a demo of the OUTERFIELDS user portal. Content is for demonstration purposes only.</p>
+		<p>
+			This is a demo of the OUTERFIELDS user portal. Signed in as <strong>{data.user.name}</strong>.
+			Content is for demonstration purposes only.
+		</p>
 		<a href="/admin-demo" class="switch-link">
 			Switch to Admin View
 			<ArrowRight size={16} />
@@ -200,7 +193,7 @@
 </div>
 
 <!-- Shared video modal component (DRY: reused from marketing page) -->
-<VideoModal {engagementData} />
+<VideoModal />
 
 <style>
 	.portal {

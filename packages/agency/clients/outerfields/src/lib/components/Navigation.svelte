@@ -12,8 +12,9 @@
 		user?: {
 			id: string;
 			email: string;
-			name?: string;
-			role: string;
+			name: string;
+			membership: boolean;
+			createdAt: string;
 		} | null;
 	}
 
@@ -55,8 +56,8 @@
 				<span class="user-info">
 					<User size={16} />
 					<span class="user-name">{user.name || user.email}</span>
-					{#if user.role === 'admin'}
-						<span class="role-badge">Admin</span>
+					{#if user.membership}
+						<span class="role-badge">Member</span>
 					{/if}
 				</span>
 				<button class="btn-logout" onclick={handleLogout}>

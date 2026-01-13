@@ -1,6 +1,5 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { randomUUID } from 'crypto';
 
 // Simple password hashing for demo (in production use bcrypt)
 async function hashPassword(password: string): Promise<string> {
@@ -58,7 +57,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		}
 
 		// Create session
-		const sessionToken = randomUUID();
+		const sessionToken = crypto.randomUUID();
 		const sessionData = {
 			userId: result.id,
 			email: result.email,
@@ -75,10 +74,11 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		);
 
 		// Set session cookie
+		const isSecure = new URL(request.url).protocol === 'https:';
 		cookies.set('session_token', sessionToken, {
 			path: '/',
 			httpOnly: true,
-			secure: true,
+			secure: isSecure,
 			sameSite: 'lax',
 			maxAge: 60 * 60 * 24 // 24 hours
 		});

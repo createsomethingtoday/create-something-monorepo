@@ -4,7 +4,7 @@
   "created": "2026-01-12T00:00:00Z",
   "updated": "2026-01-12T20:00:00Z",
   "target_package": "packages/agency/clients/outerfields",
-  "implementation_notes": "CRITICAL: Actual implementation diverges significantly from PRD. Current site is 'Build in Public Lab' showcase with 3-tier monthly SaaS pricing ($49/$149/$399), NOT Netflix-style gated membership with $99 lifetime. Many PRD stories (8-12, 14, 16) describe content categories that don't exist. Infrastructure components (VideoModal, BuildProgress, EcosystemFeatures, PlatformPreview) were built but not specified in PRD.",
+  "implementation_notes": "UPDATE 2026-01-13: Netflix-style gated membership is the current PRD direction. Build-in-Public docs are out of date and should be treated as archived context. The Outerfields package now includes Stripe checkout/webhook, auth with D1+KV sessions, video APIs, and founding member $99 lifetime pricing; remaining work is primarily production deployment configuration.",
   "stories": [
     {
       "id": "story-1",
