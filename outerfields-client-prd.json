@@ -278,7 +278,7 @@
         "src/lib/components/UrgencyBanner.svelte",
         "src/lib/components/Footer.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-15",
