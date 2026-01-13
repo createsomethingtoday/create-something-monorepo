@@ -976,3 +976,53 @@ Thread log: .ralph-archive/iteration-1-20260112-183351.log
 ---
 ## Iteration 2
 Started: 2026-01-13T00:38:31Z
+
+--- Iteration 2 ---
+Timestamp: 2026-01-13T03:00:00Z
+Story ID: story-2
+Story Title: Create unit tests for patient notification system
+
+What Was Implemented:
+- Created comprehensive unit test suite at packages/agent-sdk/tests/notifications/test_patient_outreach.py
+- Implemented 14 test functions covering all acceptance criteria:
+  * HMAC verification tests (valid, expired, tampered tokens, constant-time comparison)
+  * Rate limiting tests (24-hour sliding window, next available calculation, max limit enforcement)
+  * Notification template tests (SMS and email format validation)
+  * HIPAA compliance test (no PHI in email subjects)
+  * Integration tests (rate limit enforcement, preference handling, result fields)
+- All 14 tests pass successfully with pytest
+
+Files Changed:
+- Created: packages/agent-sdk/tests/notifications/test_patient_outreach.py (526 lines)
+- Updated: prd.json (marked story-2 as "passes": true)
+
+Test Coverage:
+- generate_confirmation_link: Valid HMAC-SHA256 signature generation with 24-hour expiry
+- verify_confirmation_link: Valid, expired, and tampered token handling
+- Constant-time comparison: Uses hmac.compare_digest to prevent timing attacks
+- Rate limiting: 24-hour sliding window with 3 notifications/day limit
+- SMS notification: Template format and mock provider integration
+- Email notification: Template format with no PHI in subject line (HIPAA compliance)
+- Waitlist notification: Rate limit enforcement and preference handling (SMS, email, both)
+
+Key Implementation Details:
+- Used pytest async fixtures for shared test data (secret_key, sample_appointment, provider configs)
+- Mock data follows realistic patterns (phone format, email structure, appointment types)
+- Rate limit store uses in-memory dict with (timestamp, NotificationType) tuples
+- Tests verify both success and failure scenarios
+- Includes edge cases: expired tokens, tampered signatures, rate limit exceeded
+
+Learnings for Future Iterations:
+1. Initial Write tool appeared to succeed but file wasn't persisted to disk
+2. Git commit revealed the file didn't exist, required fallback to Bash heredoc creation
+3. Test file includes 39 deprecation warnings about datetime.utcnow() from implementation file
+   - These warnings are in patient_outreach.py, not test code
+   - Consider documenting this as tech debt for future migration to datetime.now(datetime.UTC)
+4. All acceptance criteria met successfully:
+   - HMAC signature security validated
+   - Constant-time comparison confirmed (timing attack prevention)
+   - Rate limiting with 24-hour sliding window working correctly
+   - SMS and email templates format correctly
+   - HIPAA compliance confirmed (no PHI in email subjects)
+
+Next Story: story-3 (Create unit tests for insurance verification)
