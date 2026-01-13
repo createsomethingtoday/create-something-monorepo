@@ -52,7 +52,7 @@
 	<div class="pricing-container">
 		<div class="section-header">
 			<span class="section-badge">Founding Member Pricing</span>
-			<h2 class="section-title">The Only Option: $99 Lifetime Access</h2>
+			<h2 class="section-title">The Only Option: Founding Member - $99 Lifetime Access</h2>
 			<p class="section-description">
 				Get in now at founding member pricing. This price will <strong>NOT</strong> last forever.
 			</p>
