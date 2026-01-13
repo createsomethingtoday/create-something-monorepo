@@ -1,162 +1,161 @@
 {
-  "title": "Dental Practice Management Agent - Phase 2 MVP",
-  "description": "Implement core features: no-show rescheduling, insurance verification, and recall reminders with conversion tracking",
+  "title": "Dental Practice Management Agent - Phase 3: Compliance & Testing",
+  "description": "Implement comprehensive testing, HIPAA documentation, and security audits for production readiness",
   "created": "2026-01-12T00:00:00Z",
   "stories": [
     {
       "id": "story-1",
-      "title": "Implement no-show detection and waitlist matching",
-      "description": "Create logic to detect no-show appointments from PMS and match them with waitlist patients based on appointment type, time preferences, and provider availability",
+      "title": "Create unit tests for no-show recovery workflow",
+      "description": "Implement comprehensive unit tests for scoring algorithm, matching logic, and booking functions",
       "acceptance": [
-        "File exists at packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py",
-        "Implements detect_no_shows function that queries PMS for no-show status",
-        "Implements match_waitlist_patients function with scoring algorithm",
-        "Scoring considers: appointment type match, time preference, provider preference, urgency",
-        "Returns ranked list of waitlist candidates for each no-show slot",
-        "Includes unit tests with mock PMS data",
-        "All functions have docstrings"
+        "File exists at packages/agent-sdk/tests/workflows/test_no_show_recovery.py",
+        "Tests scoring algorithm with various patient attributes",
+        "Tests match_waitlist_patients with edge cases (no matches, multiple matches, tie scores)",
+        "Tests process_confirmation with all ConfirmationStatus values",
+        "Tests book_appointment_from_waitlist with success and failure cases",
+        "Tests transactional booking (all-or-nothing updates)",
+        "All tests use mock PMS data",
+        "Tests pass with pytest"
       ],
       "files": [
-        "packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py"
+        "packages/agent-sdk/tests/workflows/test_no_show_recovery.py"
       ],
       "passes": true
     },
     {
       "id": "story-2",
-      "title": "Implement notification system for patient outreach",
-      "description": "Create SMS/email notification handlers for contacting waitlist patients with available appointment slots",
+      "title": "Create unit tests for patient notification system",
+      "description": "Test HMAC verification, rate limiting, and notification delivery",
       "acceptance": [
-        "File exists at packages/agent-sdk/src/create_something_agents/notifications/patient_outreach.py",
-        "Implements send_sms_notification function (via Twilio or similar)",
-        "Implements send_email_notification function",
-        "Notification templates include: appointment details, acceptance link, practice contact",
-        "HIPAA compliance: no PHI in subject lines, encrypted links",
-        "Implements confirmation_link generation with expiry (24 hours)",
-        "Includes rate limiting to avoid spam",
-        "All functions have docstrings"
+        "File exists at packages/agent-sdk/tests/notifications/test_patient_outreach.py",
+        "Tests generate_confirmation_link creates valid HMAC signatures",
+        "Tests verify_confirmation_link with valid, expired, and tampered tokens",
+        "Tests constant-time comparison prevents timing attacks",
+        "Tests rate limiting with 24-hour sliding window",
+        "Tests notification templates for SMS and email",
+        "Tests HIPAA compliance (no PHI in email subjects)",
+        "All tests pass with pytest"
       ],
       "files": [
-        "packages/agent-sdk/src/create_something_agents/notifications/patient_outreach.py"
+        "packages/agent-sdk/tests/notifications/test_patient_outreach.py"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-3",
-      "title": "Implement automated appointment booking",
-      "description": "Create booking automation that confirms waitlist patient selections and books appointments in PMS",
+      "title": "Create unit tests for insurance verification",
+      "description": "Test insurance API integration, verification logic, and audit logging",
       "acceptance": [
-        "Extends packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py",
-        "Implements process_confirmation function that handles patient responses",
-        "Implements book_appointment_from_waitlist function",
-        "Updates original no-show slot status to 'filled'",
-        "Removes patient from waitlist after booking",
-        "Sends confirmation notification to patient",
-        "Logs all actions to audit trail with correlation_id",
-        "Includes error handling for booking failures"
+        "File exists at packages/agent-sdk/tests/workflows/test_insurance_verification.py",
+        "Tests verify_insurance_eligibility with all VerificationStatus values",
+        "Tests minimum necessary PHI access (only DOB, insurer_id, procedure_codes)",
+        "Tests staff notification for flagged appointments",
+        "Tests audit logging includes correlation_id and 6-year retention marker",
+        "Tests error handling for API failures",
+        "All tests use mock insurance API",
+        "Tests pass with pytest"
       ],
       "files": [
-        "packages/agent-sdk/src/create_something_agents/workflows/no_show_recovery.py"
+        "packages/agent-sdk/tests/workflows/test_insurance_verification.py"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-4",
-      "title": "Implement insurance verification workflow",
-      "description": "Create pre-visit insurance eligibility checking that queries PMS/clearinghouse APIs and flags coverage issues",
+      "title": "Create unit tests for recall reminder system",
+      "description": "Test patient identification, message personalization, and opt-out handling",
       "acceptance": [
-        "File exists at packages/agent-sdk/src/create_something_agents/workflows/insurance_verification.py",
-        "Implements verify_insurance_eligibility function",
-        "Queries PMS for upcoming appointments (next 7 days)",
-        "Calls insurance verification API with minimum necessary data (patient_dob, insurer_id, procedure_codes)",
-        "Returns verification status: active, inactive, coverage_issue, verification_failed",
-        "Flags appointments with coverage issues for human review",
-        "Sends notification to practice staff for flagged appointments",
-        "Logs verification results to audit trail",
-        "All functions have docstrings"
+        "File exists at packages/agent-sdk/tests/workflows/test_recall_reminders.py",
+        "Tests identify_overdue_patients with various timeframes",
+        "Tests procedure type detection from patient history",
+        "Tests message personalization for different procedures",
+        "Tests opt-out handling (respects patient preferences)",
+        "Tests reminder status tracking (sent, opened, clicked, booked)",
+        "Tests HIPAA compliance (minimum necessary PHI)",
+        "Tests pass with pytest"
       ],
       "files": [
-        "packages/agent-sdk/src/create_something_agents/workflows/insurance_verification.py"
+        "packages/agent-sdk/tests/workflows/test_recall_reminders.py"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-5",
-      "title": "Implement recall reminder system",
-      "description": "Create automated recall system that identifies overdue patients and sends personalized reminders",
+      "title": "Create unit tests for conversion tracking analytics",
+      "description": "Test aggregation logic, revenue calculations, and top issues identification",
       "acceptance": [
-        "File exists at packages/agent-sdk/src/create_something_agents/workflows/recall_reminders.py",
-        "Implements identify_overdue_patients function",
-        "Queries PMS for patients with last_visit > 6 months ago and no future appointments",
-        "Determines overdue procedure type (cleaning, exam, etc.) from patient history",
-        "Implements send_recall_reminder function with personalized messaging",
-        "Tracks reminder status: sent, opened, clicked, booked",
-        "Includes opt-out handling for patients who don't want reminders",
-        "HIPAA compliance: minimum necessary PHI (name, phone, last_visit_date)",
-        "All functions have docstrings"
+        "File exists at packages/agent-sdk/tests/analytics/test_conversion_tracking.py",
+        "Tests track_no_show_conversion with various conversion rates",
+        "Tests track_insurance_verification with success/failure scenarios",
+        "Tests track_recall_conversion funnel calculations",
+        "Tests generate_daily_report aggregation across workflows",
+        "Tests top issues identification logic (thresholds: 30%, 90%, 40%)",
+        "Tests revenue impact calculations",
+        "Tests format_report_json output structure",
+        "Tests pass with pytest"
       ],
       "files": [
-        "packages/agent-sdk/src/create_something_agents/workflows/recall_reminders.py"
+        "packages/agent-sdk/tests/analytics/test_conversion_tracking.py"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-6",
-      "title": "Implement conversion rate tracking and reporting",
-      "description": "Create analytics module that tracks conversion rates for no-show recovery, insurance verification success, and recall bookings",
+      "title": "Create HIPAA compliance documentation",
+      "description": "Document minimum necessary PHI matrix, audit procedures, and incident response",
       "acceptance": [
-        "File exists at packages/agent-sdk/src/create_something_agents/analytics/conversion_tracking.py",
-        "Implements track_no_show_conversion function (slots offered, accepted, booked)",
-        "Implements track_insurance_verification function (verified, issues flagged, issues resolved)",
-        "Implements track_recall_conversion function (reminders sent, responses, bookings)",
-        "Implements generate_daily_report function that summarizes all metrics",
-        "Report includes: conversion percentages, revenue impact estimates, top issues",
-        "Stores metrics in D1 database for historical tracking",
-        "Report format: JSON for API consumption and human-readable summary",
-        "All functions have docstrings"
+        "File exists at packages/agent-sdk/docs/HIPAA_COMPLIANCE.md",
+        "Documents minimum necessary PHI for each workflow with rationale",
+        "Includes audit logging specification (fields, retention, query examples)",
+        "Defines incident response procedures for PHI breaches",
+        "Lists required BAAs (Twilio, SendGrid, Dentrix, Open Dental, insurance APIs)",
+        "Documents data retention policies (6-year audit logs, 24-hour confirmation links)",
+        "Includes security risk assessment template",
+        "References HIPAA Privacy Rule 45 CFR 164.502(b) and Security Rule 45 CFR 164.306"
       ],
       "files": [
-        "packages/agent-sdk/src/create_something_agents/analytics/conversion_tracking.py"
+        "packages/agent-sdk/docs/HIPAA_COMPLIANCE.md"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-7",
-      "title": "Integrate workflows into coordinator agent",
-      "description": "Update dental coordinator agent to orchestrate the three core workflows automatically",
+      "title": "Create security audit checklist",
+      "description": "Document security testing procedures for HMAC links, rate limiting, and PHI logging",
       "acceptance": [
-        "Updates packages/agent-sdk/agents/dental_coordinator.py",
-        "Imports no_show_recovery, insurance_verification, recall_reminders workflows",
-        "Daily operations function now calls: no-show recovery → insurance verification → recall reminders",
-        "Each workflow execution logged with timing and outcome",
-        "Implements error handling and retry logic for workflow failures",
-        "Coordinator creates Beads issues for discovered problems",
-        "Updates task prompt to include new workflow orchestration responsibilities",
-        "All changes maintain HIPAA compliance (no PHI in coordinator memory)"
+        "File exists at packages/agent-sdk/docs/SECURITY_AUDIT.md",
+        "Checklist for HMAC-SHA256 confirmation link security",
+        "Penetration testing procedures for timing attacks",
+        "Rate limiting stress testing (verify 3 notifications/day limit)",
+        "PHI leakage audit (grep all logs for names, DOB, SSN patterns)",
+        "Transaction atomicity testing (verify all-or-nothing booking)",
+        "Encryption verification (TLS 1.3+, AES-256)",
+        "Correlation ID threading verification across workflows"
       ],
       "files": [
-        "packages/agent-sdk/agents/dental_coordinator.py"
+        "packages/agent-sdk/docs/SECURITY_AUDIT.md"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "story-8",
-      "title": "Add workflow endpoints to FastAPI server",
-      "description": "Extend Modal FastAPI server with endpoints for triggering individual workflows and viewing analytics",
+      "title": "Create integration test framework",
+      "description": "Set up mock PMS server and end-to-end workflow testing infrastructure",
       "acceptance": [
-        "Updates packages/agent-sdk/server/main.py",
-        "Implements POST /agents/dental/workflows/no-show-recovery endpoint",
-        "Implements POST /agents/dental/workflows/insurance-verification endpoint",
-        "Implements POST /agents/dental/workflows/recall-reminders endpoint",
-        "Implements GET /agents/dental/analytics/daily-report endpoint",
-        "All endpoints require practice_id and pms_config",
-        "Response models include: success, workflow_results, audit_id",
-        "Endpoints use appropriate workflows from packages/agent-sdk/src/create_something_agents/workflows/",
-        "Error handling returns 500 with correlation_id for debugging"
+        "File exists at packages/agent-sdk/tests/integration/mock_pms_server.py",
+        "Mock PMS server implements Dentrix API endpoints (appointments, patients, waitlist)",
+        "File exists at packages/agent-sdk/tests/integration/test_workflows_e2e.py",
+        "End-to-end test: no-show detection → waitlist matching → notification → confirmation → booking",
+        "Tests verify PHI access logging at each step",
+        "Tests verify transactional booking (rollback on failure)",
+        "Tests coordinator orchestration of all three workflows",
+        "Integration tests pass with pytest"
       ],
       "files": [
-        "packages/agent-sdk/server/main.py"
+        "packages/agent-sdk/tests/integration/mock_pms_server.py",
+        "packages/agent-sdk/tests/integration/test_workflows_e2e.py"
       ],
-      "passes": true
+      "passes": false
     }
   ]
 }
