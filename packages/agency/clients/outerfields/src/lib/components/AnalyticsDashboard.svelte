@@ -249,7 +249,9 @@
 			{#if !isMember}
 				<div class="members-overlay">
 					<div class="overlay-content">
-						<Lock size={48} />
+						<div class="overlay-icon" aria-hidden="true">
+							<Lock size={48} />
+						</div>
 						<h3>Members Only</h3>
 						<p>Get full access to analytics dashboards with real-time data from ClickUp, Instagram, YouTube, and more.</p>
 						<a href="#pricing" class="unlock-btn">
@@ -496,9 +498,18 @@
 	}
 
 	.overlay-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 		text-align: center;
 		max-width: 28rem;
 		padding: 2rem;
+	}
+
+	.overlay-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.overlay-content h3 {
