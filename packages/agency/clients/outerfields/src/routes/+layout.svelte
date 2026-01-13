@@ -13,6 +13,8 @@
 	import Navigation from '$lib/components/Navigation.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import MiniPlayer from '$lib/components/MiniPlayer.svelte';
+	import { authStore } from '$lib/stores/auth';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		children: import('svelte').Snippet;
@@ -20,13 +22,23 @@
 			user: {
 				id: string;
 				email: string;
-				name?: string;
-				role: string;
+				name: string;
+				membership: boolean;
+				createdAt: string;
 			} | null;
 		};
 	}
 
 	let { children, data }: Props = $props();
+
+	// Initialize auth store when data loads
+	onMount(() => {
+		if (data.user) {
+			authStore.setUser(data.user);
+		} else {
+			authStore.setUnauthenticated();
+		}
+	});
 </script>
 
 <a href="#main-content" class="skip-link">Skip to main content</a>

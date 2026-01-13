@@ -42,7 +42,7 @@
         "src/routes/api/auth/logout/+server.ts",
         "src/hooks.server.ts"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-3",

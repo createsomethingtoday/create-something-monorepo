@@ -1,0 +1,161 @@
+{
+  "title": "Dental Practice Management Agent - Phase 3: Compliance & Testing",
+  "description": "Implement comprehensive testing, HIPAA documentation, and security audits for production readiness",
+  "created": "2026-01-12T00:00:00Z",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Create unit tests for no-show recovery workflow",
+      "description": "Implement comprehensive unit tests for scoring algorithm, matching logic, and booking functions",
+      "acceptance": [
+        "File exists at packages/agent-sdk/tests/workflows/test_no_show_recovery.py",
+        "Tests scoring algorithm with various patient attributes",
+        "Tests match_waitlist_patients with edge cases (no matches, multiple matches, tie scores)",
+        "Tests process_confirmation with all ConfirmationStatus values",
+        "Tests book_appointment_from_waitlist with success and failure cases",
+        "Tests transactional booking (all-or-nothing updates)",
+        "All tests use mock PMS data",
+        "Tests pass with pytest"
+      ],
+      "files": [
+        "packages/agent-sdk/tests/workflows/test_no_show_recovery.py"
+      ],
+      "passes": true
+    },
+    {
+      "id": "story-2",
+      "title": "Create unit tests for patient notification system",
+      "description": "Test HMAC verification, rate limiting, and notification delivery",
+      "acceptance": [
+        "File exists at packages/agent-sdk/tests/notifications/test_patient_outreach.py",
+        "Tests generate_confirmation_link creates valid HMAC signatures",
+        "Tests verify_confirmation_link with valid, expired, and tampered tokens",
+        "Tests constant-time comparison prevents timing attacks",
+        "Tests rate limiting with 24-hour sliding window",
+        "Tests notification templates for SMS and email",
+        "Tests HIPAA compliance (no PHI in email subjects)",
+        "All tests pass with pytest"
+      ],
+      "files": [
+        "packages/agent-sdk/tests/notifications/test_patient_outreach.py"
+      ],
+      "passes": true
+    },
+    {
+      "id": "story-3",
+      "title": "Create unit tests for insurance verification",
+      "description": "Test insurance API integration, verification logic, and audit logging",
+      "acceptance": [
+        "File exists at packages/agent-sdk/tests/workflows/test_insurance_verification.py",
+        "Tests verify_insurance_eligibility with all VerificationStatus values",
+        "Tests minimum necessary PHI access (only DOB, insurer_id, procedure_codes)",
+        "Tests staff notification for flagged appointments",
+        "Tests audit logging includes correlation_id and 6-year retention marker",
+        "Tests error handling for API failures",
+        "All tests use mock insurance API",
+        "Tests pass with pytest"
+      ],
+      "files": [
+        "packages/agent-sdk/tests/workflows/test_insurance_verification.py"
+      ],
+      "passes": true
+    },
+    {
+      "id": "story-4",
+      "title": "Create unit tests for recall reminder system",
+      "description": "Test patient identification, message personalization, and opt-out handling",
+      "acceptance": [
+        "File exists at packages/agent-sdk/tests/workflows/test_recall_reminders.py",
+        "Tests identify_overdue_patients with various timeframes",
+        "Tests procedure type detection from patient history",
+        "Tests message personalization for different procedures",
+        "Tests opt-out handling (respects patient preferences)",
+        "Tests reminder status tracking (sent, opened, clicked, booked)",
+        "Tests HIPAA compliance (minimum necessary PHI)",
+        "Tests pass with pytest"
+      ],
+      "files": [
+        "packages/agent-sdk/tests/workflows/test_recall_reminders.py"
+      ],
+      "passes": true
+    },
+    {
+      "id": "story-5",
+      "title": "Create unit tests for conversion tracking analytics",
+      "description": "Test aggregation logic, revenue calculations, and top issues identification",
+      "acceptance": [
+        "File exists at packages/agent-sdk/tests/analytics/test_conversion_tracking.py",
+        "Tests track_no_show_conversion with various conversion rates",
+        "Tests track_insurance_verification with success/failure scenarios",
+        "Tests track_recall_conversion funnel calculations",
+        "Tests generate_daily_report aggregation across workflows",
+        "Tests top issues identification logic (thresholds: 30%, 90%, 40%)",
+        "Tests revenue impact calculations",
+        "Tests format_report_json output structure",
+        "Tests pass with pytest"
+      ],
+      "files": [
+        "packages/agent-sdk/tests/analytics/test_conversion_tracking.py"
+      ],
+      "passes": true
+    },
+    {
+      "id": "story-6",
+      "title": "Create HIPAA compliance documentation",
+      "description": "Document minimum necessary PHI matrix, audit procedures, and incident response",
+      "acceptance": [
+        "File exists at packages/agent-sdk/docs/HIPAA_COMPLIANCE.md",
+        "Documents minimum necessary PHI for each workflow with rationale",
+        "Includes audit logging specification (fields, retention, query examples)",
+        "Defines incident response procedures for PHI breaches",
+        "Lists required BAAs (Twilio, SendGrid, Dentrix, Open Dental, insurance APIs)",
+        "Documents data retention policies (6-year audit logs, 24-hour confirmation links)",
+        "Includes security risk assessment template",
+        "References HIPAA Privacy Rule 45 CFR 164.502(b) and Security Rule 45 CFR 164.306"
+      ],
+      "files": [
+        "packages/agent-sdk/docs/HIPAA_COMPLIANCE.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "story-7",
+      "title": "Create security audit checklist",
+      "description": "Document security testing procedures for HMAC links, rate limiting, and PHI logging",
+      "acceptance": [
+        "File exists at packages/agent-sdk/docs/SECURITY_AUDIT.md",
+        "Checklist for HMAC-SHA256 confirmation link security",
+        "Penetration testing procedures for timing attacks",
+        "Rate limiting stress testing (verify 3 notifications/day limit)",
+        "PHI leakage audit (grep all logs for names, DOB, SSN patterns)",
+        "Transaction atomicity testing (verify all-or-nothing booking)",
+        "Encryption verification (TLS 1.3+, AES-256)",
+        "Correlation ID threading verification across workflows"
+      ],
+      "files": [
+        "packages/agent-sdk/docs/SECURITY_AUDIT.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "story-8",
+      "title": "Create integration test framework",
+      "description": "Set up mock PMS server and end-to-end workflow testing infrastructure",
+      "acceptance": [
+        "File exists at packages/agent-sdk/tests/integration/mock_pms_server.py",
+        "Mock PMS server implements Dentrix API endpoints (appointments, patients, waitlist)",
+        "File exists at packages/agent-sdk/tests/integration/test_workflows_e2e.py",
+        "End-to-end test: no-show detection → waitlist matching → notification → confirmation → booking",
+        "Tests verify PHI access logging at each step",
+        "Tests verify transactional booking (rollback on failure)",
+        "Tests coordinator orchestration of all three workflows",
+        "Integration tests pass with pytest"
+      ],
+      "files": [
+        "packages/agent-sdk/tests/integration/mock_pms_server.py",
+        "packages/agent-sdk/tests/integration/test_workflows_e2e.py"
+      ],
+      "passes": true
+    }
+  ]
+}
