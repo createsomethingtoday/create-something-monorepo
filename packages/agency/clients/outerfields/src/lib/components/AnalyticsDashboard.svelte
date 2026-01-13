@@ -8,6 +8,13 @@
 	import { BarChart3, TrendingUp, Users, Clock, Lock } from 'lucide-svelte';
 	import { authStore } from '$lib/stores/auth';
 
+	interface Props {
+		forceUnlocked?: boolean;
+		interactive?: boolean;
+	}
+
+	let { forceUnlocked = false, interactive = true }: Props = $props();
+
 	interface DashboardData {
 		videoEngagement?: {
 			totalViews: number;
@@ -36,11 +43,27 @@
 	let error = $state<string | null>(null);
 
 	// Check if user is a member
-	const isMember = $derived($authStore.user?.membership ?? false);
+	const isMember = $derived(forceUnlocked ? true : ($authStore.user?.membership ?? false));
 
 	// Fetch analytics data
 	async function fetchAnalytics() {
 		if (!isMember) {
+			loading = false;
+			return;
+		}
+
+		if (!interactive) {
+			// Presentation mode: avoid network calls; show representative mock data.
+			data = {
+				videoEngagement: {
+					totalViews: 12547,
+					avgWatchTime: '4m 32s',
+					topVideo: 'Episode 1: The Beginning'
+				},
+				instagram: { followers: 8200, engagement: 4.8, recentPosts: 12 },
+				youtube: { subscribers: 3100, views: 42000, avgViews: 1200 },
+				clickup: { activeTasks: 23, completedToday: 7, progress: 64 }
+			};
 			loading = false;
 			return;
 		}

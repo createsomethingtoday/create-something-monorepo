@@ -5,12 +5,21 @@
 	 * Showcases AI-powered content strategy assistant that helps creators
 	 * understand their analytics and generate content ideas.
 	 *
-	 * Now interactive: clicking sample questions triggers Claude-powered responses.
+	 * Props:
+	 * - `forceUnlocked`: bypass membership gating (for presentation/demo use)
+	 * - `interactive`: when false, uses canned responses (no network calls)
 	 */
 	import { MessageSquare, Sparkles, TrendingUp, Lightbulb, Brain, BarChart3, Loader2, RotateCcw, Lock } from 'lucide-svelte';
 	import { authStore } from '$lib/stores/auth';
 
-	const isMember = $derived($authStore.user?.membership ?? false);
+	interface Props {
+		forceUnlocked?: boolean;
+		interactive?: boolean;
+	}
+
+	let { forceUnlocked = false, interactive = true }: Props = $props();
+
+	const isMember = $derived(forceUnlocked ? true : ($authStore.user?.membership ?? false));
 
 	interface Feature {
 		icon: any;
@@ -67,6 +76,16 @@
 		isLoading = true;
 		response = null;
 		error = null;
+
+		if (!interactive) {
+			// Presentation mode: no network calls, show a representative response.
+			await new Promise((r) => setTimeout(r, 350));
+			response =
+				`Your audience is re-watching the first 30 seconds and dropping around 1:10. ` +
+				`Try a tighter hook, move the payoff earlier, and publish a short cut that points back to the full episode.`;
+			isLoading = false;
+			return;
+		}
 
 		try {
 			const res = await fetch('/api/analytics-chat-claude', {
