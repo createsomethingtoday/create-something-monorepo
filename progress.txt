@@ -1665,3 +1665,173 @@ Started: 2026-01-13T01:37:23Z
 ## Completed
 All stories completed at: 2026-01-13T01:39:46Z
 Total iterations: 0
+
+---
+## Story-2: Create authentication system with member/non-member states
+**Status**: ✅ Complete
+**Date**: 2026-01-13
+**Commit**: 2ebf7954
+
+### What Was Implemented
+Created a complete session-based authentication system with D1 database storage and KV session management:
+
+1. **D1 Database Schema** (migrations/0001_auth_system.sql)
+   - Created users table with: id, email, password_hash, name, membership, stripe_customer_id, timestamps
+   - Added indexes on email and membership columns for query performance
+   - Password hashing using SHA-256 (production would use bcrypt)
+
+2. **KV Session Management**
+   - Sessions stored in SESSIONS KV namespace with 24-hour TTL
+   - Session data includes: userId, email, name, membership, createdAt
+   - Session tokens generated via crypto.randomUUID()
+   - Automatic expiration handled by KV TTL (expirationTtl: 86400 seconds)
+
+3. **Login API Endpoint** (src/routes/api/auth/login/+server.ts)
+   - Validates email/password from request body
+   - Queries D1 database for user by email
+   - Verifies password hash using SHA-256
+   - Creates session token and stores in KV with 24-hour expiration
+   - Sets httpOnly, secure cookie with session token
+   - Returns user data (excluding password hash)
+
+4. **Logout API Endpoint** (src/routes/api/auth/logout/+server.ts)
+   - Retrieves session token from cookie
+   - Deletes session from KV namespace
+   - Clears session cookie
+   - Returns success response
+
+5. **Authentication Middleware** (src/hooks.server.ts)
+   - Runs on every request via SvelteKit handle hook
+   - Retrieves session token from cookie
+   - Fetches session data from KV
+   - Sets user in event.locals for access in load functions
+   - Clears invalid session cookies automatically
+
+6. **Auth Store Enhancement** (src/lib/stores/auth.ts)
+   - Enhanced logout method to call logout API endpoint
+   - Maintains client-side auth state (authenticated, user, loading)
+   - User interface includes membership boolean for video gating
+
+7. **Type Definitions** (src/app.d.ts)
+   - Updated App.Locals interface with User type
+   - Added SESSIONS KV binding to Platform.env
+   - User interface: id, email, name, membership, createdAt
+
+8. **Layout Updates**
+   - Updated +layout.server.ts to pass user from locals
+   - Updated login +page.server.ts to check locals.user instead of cookies
+   - Redirect authenticated users away from login page
+
+9. **Wrangler Configuration** (wrangler.toml)
+   - Added D1 database binding: "DB" → "outerfields-db"
+   - Added KV namespace binding: "SESSIONS" → (to be created)
+   - Placeholder IDs for local development (will be created in production)
+
+### Files Changed
+- Created: migrations/0001_auth_system.sql (11 lines)
+- Created: src/hooks.server.ts (50 lines)
+- Updated: src/app.d.ts (SESSIONS binding, User interface)
+- Updated: src/routes/api/auth/login/+server.ts (100 lines) - D1 + KV implementation
+- Updated: src/routes/api/auth/logout/+server.ts (22 lines) - KV session clearing
+- Updated: src/lib/stores/auth.ts (logout API call)
+- Updated: src/routes/+layout.server.ts (simplified to use locals)
+- Updated: src/routes/login/+page.server.ts (use locals.user)
+- Updated: wrangler.toml (D1 and SESSIONS bindings)
+
+### Acceptance Criteria Met
+✅ Auth store tracks authentication state (authenticated, unauthenticated)
+✅ Auth store tracks membership status (member, non-member)
+✅ Login page at /login with email/password (already existed from previous work)
+✅ Session persists in KV with 24-hour expiration (expirationTtl: 86400)
+✅ Middleware checks auth status on gated routes (hooks.server.ts)
+✅ Logout functionality clears session (API + KV deletion)
+
+### Key Learnings
+1. **SvelteKit hooks.server.ts pattern**: The handle hook runs on every request, perfect for session validation
+2. **KV TTL for sessions**: Using expirationTtl in KV.put() auto-expires sessions, no manual cleanup needed
+3. **Locals for auth state**: Setting user in event.locals makes it available in all load functions
+4. **Session token security**: httpOnly + secure + sameSite prevents XSS and CSRF attacks
+5. **D1 boolean storage**: D1 stores booleans as integers (0/1), need to convert to boolean in code
+6. **Middleware runs before load**: hooks.server.ts sets locals.user, then layout.server.ts passes it to pages
+7. **Password hashing**: Used SHA-256 for demo; production should use bcrypt or Argon2
+8. **Cookie-based sessions**: Session token in cookie, actual session data in KV for security
+9. **Type safety**: Proper TypeScript interfaces in app.d.ts ensure type safety across the app
+10. **Wrangler placeholders**: Can use placeholder IDs in wrangler.toml for local dev, replace with real IDs for production
+
+### Technical Notes
+- Password hashing: SHA-256 via Web Crypto API (demo only, use bcrypt in production)
+- Session token: crypto.randomUUID() provides secure random tokens
+- D1 query pattern: prepare().bind().first() for single row, prepare().bind().all() for multiple
+- KV expiration: 60 * 60 * 24 = 86400 seconds = 24 hours
+- Cookie maxAge: Also set to 86400 seconds to match KV expiration
+- TypeScript: All endpoints properly typed with RequestHandler from ./$types
+- Error handling: Try-catch blocks with proper error responses and logging
+
+### Integration Points
+- **VideoPlayer component**: Can now check authStore.user.membership to hide gate
+- **Future Stripe integration**: Login endpoint ready to accept membership updates from webhook
+- **Protected routes**: Can add redirect logic in +page.server.ts load functions by checking locals.user
+- **Admin routes**: Can check locals.user for admin role (once implemented)
+
+Completed: 2026-01-13T01:42:00Z
+
+---
+## Story-2: Create authentication system with member/non-member states
+**Status**: ✅ Complete
+**Date**: 2026-01-12
+**Commit**: 9309521a
+
+### What Was Implemented
+Enhanced existing authentication system to properly integrate with the auth store for client-side state management:
+
+1. **Updated Login Page** (src/routes/login/+page.svelte)
+   - Added import of authStore from $lib/stores/auth
+   - Modified handleSubmit to update auth store after successful login
+   - Sets user data in store using authStore.setUser(result.data.user)
+   - Maintains existing demo account functionality and signup toggle
+
+2. **Updated Root Layout** (src/routes/+layout.svelte)
+   - Added authStore import and onMount lifecycle hook
+   - Initializes auth store on page load with server-provided user data
+   - Calls authStore.setUser(data.user) if user exists
+   - Calls authStore.setUnauthenticated() if no user session
+   - Updated Props interface to match actual user shape (id, email, name, membership, createdAt)
+
+3. **Existing Auth Infrastructure** (Already Implemented)
+   - Auth store (src/lib/stores/auth.ts) - tracks auth state and membership
+   - Login API (src/routes/api/auth/login/+server.ts) - handles login with D1 and KV sessions
+   - Logout API (src/routes/api/auth/logout/+server.ts) - clears sessions
+   - Middleware (src/hooks.server.ts) - checks session on every request, populates event.locals.user
+   - Layout server load (src/routes/+layout.server.ts) - loads user from locals for all pages
+
+### Files Changed
+- Modified: src/routes/login/+page.svelte (added authStore integration)
+- Modified: src/routes/+layout.svelte (added initialization logic)
+
+### Acceptance Criteria Met
+✅ Auth store tracks authentication state (authenticated, unauthenticated)
+✅ Auth store tracks membership status (member, non-member)
+✅ Login page at /login with email/password
+✅ Session persists in KV with 24-hour expiration
+✅ Middleware checks auth status on gated routes
+✅ Logout functionality clears session
+
+### Key Learnings
+1. The authentication infrastructure was already well-implemented, just needed client-side store integration
+2. onMount in the root layout is the right place to initialize global auth state from server data
+3. The auth flow works: hooks.server.ts → +layout.server.ts → +layout.svelte → authStore
+4. Login API returns { success: true, data: { user } } format, which we use to update the store
+5. TypeScript compilation passes with no errors after interface updates
+
+### Technical Notes
+- Session stored in KV with `session:${token}` key pattern, 24-hour TTL
+- Password hashing uses SHA-256 for demo (production should use bcrypt)
+- Session cookie is httpOnly, secure, sameSite: 'lax' for security
+- Auth store is a writable Svelte store with helper methods (setUser, logout, etc.)
+- User object includes: id, email, name, membership (boolean), createdAt
+
+Completed: 2026-01-13T01:52:00Z
+
+---
+## Iteration 1
+Started: 2026-01-13T01:41:27Z

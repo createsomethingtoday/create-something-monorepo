@@ -1,146 +1,123 @@
 <script lang="ts">
 	/**
 	 * OUTERFIELDS Pricing
-	 *
-	 * Clear, honest pricing. No hidden fees, no gotchas.
-	 * "Nicely said" — straightforward value propositions.
+	 * Single $99 lifetime membership - Founding Member offer
 	 */
-	import { Check, Zap, Crown, Building2 } from 'lucide-svelte';
+	import { Check, Crown } from 'lucide-svelte';
+	import { goto } from '$app/navigation';
 
-	interface PricingTier {
-		name: string;
-		price: number;
-		period: string;
-		description: string;
-		icon: typeof Check;
-		features: string[];
-		highlight?: boolean;
-		cta: string;
-		note?: string;
-	}
+	let loading = false;
+	let errorMessage = '';
 
-	const tiers: PricingTier[] = [
-		{
-			name: 'Creator',
-			price: 49,
-			period: '/month',
-			description: 'Everything you need to launch your content library.',
-			icon: Zap,
-			features: [
-				'Up to 100 videos',
-				'1,000 subscribers',
-				'Basic analytics',
-				'Custom domain',
-				'Email support',
-				'No transaction fees on first $5K/mo'
-			],
-			cta: 'Start Creating',
-			note: '14-day free trial'
-		},
-		{
-			name: 'Professional',
-			price: 149,
-			period: '/month',
-			description: 'For creators ready to grow their audience.',
-			icon: Crown,
-			features: [
-				'Unlimited videos',
-				'10,000 subscribers',
-				'Advanced analytics & cohorts',
-				'White-label mobile apps',
-				'Priority support',
-				'Community features',
-				'No transaction fees on first $25K/mo'
-			],
-			highlight: true,
-			cta: 'Go Professional',
-			note: 'Most popular'
-		},
-		{
-			name: 'Business',
-			price: 399,
-			period: '/month',
-			description: 'Full platform control for serious operations.',
-			icon: Building2,
-			features: [
-				'Everything in Professional',
-				'Unlimited subscribers',
-				'API access & webhooks',
-				'SSO & team management',
-				'Dedicated account manager',
-				'Custom integrations',
-				'No transaction fees'
-			],
-			cta: 'Contact Sales'
-		}
+	const benefits = [
+		'Lifetime access to all platform content (50+ videos)',
+		'Behind-the-scenes exclusive content',
+		'Educational resources and training materials',
+		'Member-only resource library',
+		'Included 1-on-1 discovery call',
+		'Exclusive Outerfields merchandise'
 	];
 
-	const transactionFee = '2.9% + 30¢';
+	async function handleCheckout() {
+		loading = true;
+		errorMessage = '';
+
+		try {
+			const response = await fetch('/api/stripe/checkout', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+
+			const result = await response.json();
+
+			if (!result.success) {
+				throw new Error(result.error || 'Failed to create checkout session');
+			}
+
+			// Redirect to Stripe Checkout
+			if (result.data.url) {
+				window.location.href = result.data.url;
+			}
+		} catch (err) {
+			console.error('Checkout error:', err);
+			errorMessage = err instanceof Error ? err.message : 'Something went wrong';
+			loading = false;
+		}
+	}
 </script>
 
 <section class="pricing-section" id="pricing">
 	<div class="pricing-container">
 		<div class="section-header">
-			<span class="section-badge">Simple Pricing</span>
-			<h2 class="section-title">Honest pricing. No surprises.</h2>
+			<span class="section-badge">Founding Member Pricing</span>
+			<h2 class="section-title">The Only Option: $99 Lifetime Access</h2>
 			<p class="section-description">
-				Choose a plan that fits your stage. Scale up as you grow.
-				Cancel anytime—we don't believe in lock-ins.
+				Get in now at founding member pricing. This price will <strong>NOT</strong> last forever.
 			</p>
 		</div>
 
-		<div class="pricing-grid highlight-grid">
-			{#each tiers as tier, index}
-				<div class="pricing-card highlight-item" style="--index: {index}" class:highlight={tier.highlight}>
-					{#if tier.note}
-						<span class="card-badge" class:popular={tier.highlight}>{tier.note}</span>
-					{/if}
+		<div class="pricing-card-wrapper">
+			<div class="pricing-card">
+				<span class="card-badge">Founding Member</span>
 
-					<div class="card-header">
-						<div class="card-icon">
-							<svelte:component this={tier.icon} size={24} />
-						</div>
-						<h3 class="card-name">{tier.name}</h3>
-						<p class="card-description">{tier.description}</p>
+				<div class="card-header">
+					<div class="card-icon">
+						<Crown size={32} />
 					</div>
-
-					<div class="card-pricing">
-						<span class="price-currency">$</span>
-						<span class="price-amount">{tier.price}</span>
-						<span class="price-period">{tier.period}</span>
-					</div>
-
-					<ul class="features-list">
-						{#each tier.features as feature}
-							<li class="feature-item">
-								<Check size={16} />
-								<span>{feature}</span>
-							</li>
-						{/each}
-					</ul>
-
-					<a
-						href={tier.name === 'Business' ? '/contact' : '/signup'}
-						class="card-cta"
-						class:primary={tier.highlight}
-					>
-						{tier.cta}
-					</a>
+					<h3 class="card-name">Lifetime Access</h3>
+					<p class="card-description">
+						One payment. Lifetime access. All features. No recurring fees. Ever.
+					</p>
 				</div>
-			{/each}
+
+				<div class="card-pricing">
+					<span class="price-currency">$</span>
+					<span class="price-amount">99</span>
+					<span class="price-period">one-time</span>
+				</div>
+
+				<div class="urgency-message">
+					<p><strong>⚠️ This price will NOT last forever</strong></p>
+					<p>Lock in founding member pricing now before it increases</p>
+				</div>
+
+				<ul class="features-list">
+					{#each benefits as benefit}
+						<li class="feature-item">
+							<Check size={16} />
+							<span>{benefit}</span>
+						</li>
+					{/each}
+				</ul>
+
+				<button class="card-cta" on:click={handleCheckout} disabled={loading}>
+					{loading ? 'Redirecting to checkout...' : 'Become a Founding Member - $99'}
+				</button>
+
+				{#if errorMessage}
+					<div class="error-message">
+						{errorMessage}
+					</div>
+				{/if}
+
+				<div class="guarantee">
+					<p>
+						<strong>100% Satisfaction Guarantee</strong><br />
+						Not satisfied? Full refund within 30 days, no questions asked.
+					</p>
+				</div>
+			</div>
 		</div>
 
 		<div class="pricing-footer">
-			<p class="transaction-note">
-				Payment processing: <strong>{transactionFee}</strong> per transaction (Stripe).
-				That's it. You keep the rest.
-			</p>
 			<div class="trust-badges">
-				<span class="trust-item">No setup fees</span>
+				<span class="trust-item">✓ Secure payment via Stripe</span>
 				<span class="trust-divider">·</span>
-				<span class="trust-item">No hidden costs</span>
+				<span class="trust-item">✓ No hidden fees</span>
 				<span class="trust-divider">·</span>
-				<span class="trust-item">Cancel anytime</span>
+				<span class="trust-item">✓ 30-day guarantee</span>
 			</div>
 		</div>
 	</div>
@@ -153,7 +130,7 @@
 	}
 
 	.pricing-container {
-		max-width: 72rem;
+		max-width: 56rem;
 		margin: 0 auto;
 	}
 
@@ -165,12 +142,12 @@
 	.section-badge {
 		display: inline-block;
 		padding: 0.375rem 0.75rem;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		background: var(--color-warning-muted);
+		border: 1px solid var(--color-warning-border);
 		border-radius: 9999px;
 		font-size: 0.75rem;
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-warning);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin-bottom: 1rem;
@@ -191,40 +168,22 @@
 		line-height: 1.7;
 	}
 
-	.pricing-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 1.5rem;
-		margin-bottom: 3rem;
+	.section-description strong {
+		color: var(--color-warning);
+	}
+
+	.pricing-card-wrapper {
+		max-width: 32rem;
+		margin: 0 auto 3rem;
 	}
 
 	.pricing-card {
 		position: relative;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		border: 2px solid var(--color-brand);
 		border-radius: 1rem;
-		padding: 2rem;
-		display: flex;
-		flex-direction: column;
-		transition: all var(--duration-standard) var(--ease-standard),
-			opacity var(--duration-standard) var(--ease-standard),
-			transform var(--duration-micro) var(--ease-standard);
-		transition-delay: calc(var(--cascade-step, 50ms) * var(--index, 0));
-	}
-
-	.pricing-card:hover {
-		border-color: var(--color-border-emphasis);
-		transform: translateY(-4px) scale(var(--scale-micro, 1.02));
-		opacity: 1 !important; /* Override highlight-grid opacity dimming */
-	}
-
-	.pricing-card.highlight {
-		border-color: var(--color-brand);
-		background: linear-gradient(
-			to bottom,
-			var(--color-brand-muted),
-			var(--color-bg-surface)
-		);
+		padding: 2.5rem;
+		box-shadow: 0 0 0 4px var(--color-brand-muted);
 	}
 
 	.card-badge {
@@ -232,78 +191,66 @@
 		top: -0.75rem;
 		left: 50%;
 		transform: translateX(-50%);
-		padding: 0.25rem 0.75rem;
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
+		padding: 0.375rem 1rem;
+		background: var(--color-brand);
 		border-radius: 9999px;
-		font-size: 0.6875rem;
-		font-weight: 600;
-		color: var(--color-fg-muted);
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: white;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		white-space: nowrap;
-	}
-
-	.card-badge.popular {
-		background: var(--color-brand);
-		border-color: var(--color-brand);
-		color: white;
 	}
 
 	.card-header {
-		margin-bottom: 1.5rem;
+		margin-bottom: 2rem;
+		text-align: center;
 	}
 
 	.card-icon {
-		width: 3rem;
-		height: 3rem;
+		width: 4rem;
+		height: 4rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: 0.75rem;
-		color: var(--color-fg-secondary);
-		margin-bottom: 1rem;
-	}
-
-	.highlight .card-icon {
 		background: var(--color-brand-muted);
-		border-color: var(--color-brand-glow);
+		border: 2px solid var(--color-brand);
+		border-radius: 1rem;
 		color: var(--color-brand);
+		margin: 0 auto 1rem;
 	}
 
 	.card-name {
-		font-size: 1.25rem;
+		font-size: 1.5rem;
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		margin: 0 0 0.5rem;
 	}
 
 	.card-description {
-		font-size: 0.875rem;
+		font-size: 0.9375rem;
 		color: var(--color-fg-muted);
 		margin: 0;
-		line-height: 1.5;
+		line-height: 1.6;
 	}
 
 	.card-pricing {
 		display: flex;
 		align-items: baseline;
+		justify-content: center;
 		margin-bottom: 1.5rem;
 		padding-bottom: 1.5rem;
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.price-currency {
-		font-size: 1.5rem;
+		font-size: 2rem;
 		font-weight: 600;
 		color: var(--color-fg-secondary);
-		margin-right: 0.125rem;
+		margin-right: 0.25rem;
 	}
 
 	.price-amount {
-		font-size: 3rem;
+		font-size: 4rem;
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		line-height: 1;
@@ -311,24 +258,48 @@
 	}
 
 	.price-period {
-		font-size: 1rem;
+		font-size: 1.125rem;
 		color: var(--color-fg-muted);
-		margin-left: 0.25rem;
+		margin-left: 0.5rem;
+	}
+
+	.urgency-message {
+		background: var(--color-warning-muted);
+		border: 1px solid var(--color-warning-border);
+		border-radius: 0.75rem;
+		padding: 1rem;
+		margin-bottom: 2rem;
+		text-align: center;
+	}
+
+	.urgency-message p {
+		margin: 0;
+		font-size: 0.875rem;
+		color: var(--color-fg-secondary);
+		line-height: 1.5;
+	}
+
+	.urgency-message p:first-child {
+		font-size: 1rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.urgency-message strong {
+		color: var(--color-warning);
 	}
 
 	.features-list {
 		list-style: none;
 		padding: 0;
 		margin: 0 0 2rem;
-		flex: 1;
 	}
 
 	.feature-item {
 		display: flex;
 		align-items: flex-start;
 		gap: 0.75rem;
-		padding: 0.5rem 0;
-		font-size: 0.875rem;
+		padding: 0.75rem 0;
+		font-size: 0.9375rem;
 		color: var(--color-fg-secondary);
 	}
 
@@ -339,48 +310,60 @@
 	}
 
 	.card-cta {
-		display: block;
 		width: 100%;
-		padding: 0.875rem 1.5rem;
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: 0.5rem;
-		font-size: 0.9375rem;
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		text-align: center;
-		text-decoration: none;
+		padding: 1.125rem 1.5rem;
+		background: var(--color-brand);
+		border: none;
+		border-radius: 0.75rem;
+		font-size: 1.0625rem;
+		font-weight: 700;
+		color: white;
+		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.card-cta:hover {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
-	}
-
-	.card-cta.primary {
-		background: var(--color-brand);
-		border-color: var(--color-brand);
-		color: white;
-	}
-
-	.card-cta.primary:hover {
+	.card-cta:hover:not(:disabled) {
 		background: var(--color-brand-hover);
-		transform: translateY(-1px);
+		transform: translateY(-2px);
+		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+	}
+
+	.card-cta:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.error-message {
+		margin-top: 1rem;
+		padding: 0.75rem;
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		color: var(--color-error);
+		text-align: center;
+	}
+
+	.guarantee {
+		margin-top: 1.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--color-border-default);
+		text-align: center;
+	}
+
+	.guarantee p {
+		font-size: 0.875rem;
+		color: var(--color-fg-muted);
+		margin: 0;
+		line-height: 1.6;
+	}
+
+	.guarantee strong {
+		color: var(--color-fg-primary);
 	}
 
 	.pricing-footer {
 		text-align: center;
-	}
-
-	.transaction-note {
-		font-size: 0.875rem;
-		color: var(--color-fg-muted);
-		margin: 0 0 1rem;
-	}
-
-	.transaction-note strong {
-		color: var(--color-fg-secondary);
 	}
 
 	.trust-badges {
@@ -388,8 +371,8 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.75rem;
-		font-size: 0.8125rem;
-		color: var(--color-fg-subtle);
+		font-size: 0.875rem;
+		color: var(--color-fg-muted);
 	}
 
 	.trust-item {
@@ -400,26 +383,26 @@
 		opacity: 0.5;
 	}
 
-	@media (max-width: 1024px) {
-		.pricing-grid {
-			grid-template-columns: 1fr;
-			max-width: 28rem;
-			margin-left: auto;
-			margin-right: auto;
-		}
-
-		.pricing-card.highlight {
-			order: -1;
-		}
-	}
-
 	@media (max-width: 640px) {
 		.pricing-section {
 			padding: 4rem 1rem;
 		}
 
+		.pricing-card {
+			padding: 2rem 1.5rem;
+		}
+
+		.price-amount {
+			font-size: 3rem;
+		}
+
 		.trust-badges {
-			flex-wrap: wrap;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
+		.trust-divider {
+			display: none;
 		}
 	}
 </style>
