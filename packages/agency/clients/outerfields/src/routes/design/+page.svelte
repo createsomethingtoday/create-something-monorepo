@@ -4,7 +4,7 @@
 	 *
 	 * Typography, color palettes, accessibility standards, and component library
 	 */
-	import { Palette, Type, Accessibility, Layout, Sparkles, Box, ArrowUpRight } from 'lucide-svelte';
+	import { Palette, Type, Accessibility, Layout, Sparkles, Box, ArrowUpRight, Play } from 'lucide-svelte';
 	import { videoPlayer } from '$lib/stores/videoPlayer';
 	import VideoModal from '$lib/components/VideoModal.svelte';
 
@@ -116,7 +116,7 @@
 							<div class="video-gradient"></div>
 							<div class="video-controls">
 								<button class="play-button" onclick={() => videoPlayer.play(sampleVideo)} aria-label="Play video">
-									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"></path></svg>
+									<Play size={20} />
 								</button>
 								<div class="progress-bar">
 									<div class="progress-fill"></div>

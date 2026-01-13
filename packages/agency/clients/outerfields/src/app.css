@@ -34,6 +34,8 @@
 	--color-bg-elevated: #0a0a0a;
 	--color-bg-surface: rgba(255, 255, 255, 0.05);
 	--color-bg-surface-hover: rgba(255, 255, 255, 0.1);
+	--color-bg-subtle: rgba(255, 255, 255, 0.03);
+	--color-bg-subtle-hover: rgba(255, 255, 255, 0.06);
 
 	/* Foreground */
 	--color-fg-primary: #ffffff;
@@ -49,10 +51,14 @@
 	/* Status Colors */
 	--color-success: #44aa44;
 	--color-success-muted: rgba(68, 170, 68, 0.2);
+	--color-success-border: rgba(68, 170, 68, 0.3);
 	--color-warning: #aa8844;
 	--color-warning-muted: rgba(170, 136, 68, 0.2);
+	--color-warning-muted-soft: rgba(170, 136, 68, 0.15);
+	--color-warning-border: rgba(170, 136, 68, 0.3);
 	--color-error: #d44d4d;
 	--color-error-muted: rgba(212, 77, 77, 0.2);
+	--color-error-border: rgba(212, 77, 77, 0.3);
 
 	/* Animation */
 	--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -70,6 +76,21 @@
 	--glass-bg: rgba(255, 255, 255, 0.03);
 	--glass-border: rgba(255, 255, 255, 0.1);
 	--glass-blur: 10px;
+
+	/* Spacing Scale (used across components) */
+	--space-xs: 0.5rem;
+	--space-sm: 0.75rem;
+	--space-md: 1rem;
+	--space-lg: 1.5rem;
+	--space-xl: 2rem;
+	--space-2xl: 3rem;
+
+	/* Radius Scale (used across components) */
+	--radius-sm: 0.5rem;
+	--radius-md: 0.75rem;
+	--radius-lg: 1rem;
+	--radius-xl: 1.5rem;
+	--radius-full: 9999px;
 
 	/* Typography Scale */
 	--text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);
@@ -302,13 +323,13 @@ body {
 .badge-success {
 	color: var(--color-success);
 	background-color: var(--color-success-muted);
-	border-color: rgba(16, 185, 129, 0.3);
+	border-color: var(--color-success-border);
 }
 
 .badge-warning {
 	color: var(--color-warning);
 	background-color: var(--color-warning-muted);
-	border-color: rgba(245, 158, 11, 0.3);
+	border-color: var(--color-warning-border);
 }
 
 .badge-default {
