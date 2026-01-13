@@ -6,6 +6,7 @@
 	 * of premium content networks. Interactive demos, live components,
 	 * and transparent development.
 	 */
+	import HeroSection from '$lib/components/HeroSection.svelte';
 	import BuildProgress from '$lib/components/BuildProgress.svelte';
 	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ContentCategories from '$lib/components/ContentCategories.svelte';
@@ -189,6 +190,7 @@
 </svelte:head>
 
 <main>
+	<HeroSection />
 	<BuildProgress />
 	<FeaturedVideos />
 	<ContentCategories />

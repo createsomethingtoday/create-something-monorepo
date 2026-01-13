@@ -1,0 +1,197 @@
+{
+  "title": "Dental Practice Management Agent - Phase 3.1: Production Implementation",
+  "description": "Implement missing production code from Phase 3 scaffold: HMAC security, PMS integration, audit logging, notification delivery",
+  "created": "2026-01-12T00:00:00Z",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Implement HMAC-SHA256 confirmation link security",
+      "description": "Replace placeholder token handling with real HMAC-SHA256 signature verification, 24-hour expiry, and constant-time comparison",
+      "acceptance": [
+        "File: src/create_something_agents/notifications/patient_outreach.py",
+        "Function generate_confirmation_link creates HMAC-SHA256 signature",
+        "Function verify_confirmation_link validates signature with constant-time comparison",
+        "24-hour expiry enforced (reject tokens older than 86400 seconds)",
+        "Test: python -c 'from src.create_something_agents.notifications.patient_outreach import generate_confirmation_link, verify_confirmation_link; link = generate_confirmation_link(\"pat_123\", \"appt_456\", \"secret\"); assert verify_confirmation_link(link, \"secret\") == True; assert \"signature=\" in link'",
+        "NO TODO comments in patient_outreach.py",
+        "Tests pass: pytest tests/notifications/test_patient_outreach.py::test_generate_confirmation_link_creates_valid_hmac -v",
+        "Tests pass: pytest tests/notifications/test_patient_outreach.py::test_verify_confirmation_link_valid_token -v"
+      ],
+      "files": [
+        "src/create_something_agents/notifications/patient_outreach.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-2",
+      "title": "Implement audit logging with KV storage",
+      "description": "Add _log_audit_trail function that writes to Cloudflare KV with 6-year retention (189,216,000 seconds)",
+      "acceptance": [
+        "File: src/create_something_agents/workflows/audit.py created",
+        "Function _log_audit_trail accepts: action, patient_id, appointment_id, correlation_id, fields_accessed",
+        "Function writes JSON to KV with key format: audit:{correlation_id}:{timestamp}",
+        "KV entry has 6-year TTL (expirationTtl: 189216000)",
+        "Audit entry includes: timestamp (ISO 8601), workflow, purpose, patient_id, fields_accessed, action, correlation_id",
+        "Test: python -c 'from src.create_something_agents.workflows.audit import _log_audit_trail; result = _log_audit_trail(action=\"test\", patient_id=\"pat_123\", appointment_id=\"appt_456\", correlation_id=\"test-123\", fields_accessed=[\"phone\", \"email\"]); assert result[\"correlation_id\"] == \"test-123\"; assert result[\"ttl\"] == 189216000'",
+        "NO TODO comments in audit.py",
+        "All workflow files import and call _log_audit_trail",
+        "Tests pass: pytest tests/workflows/test_audit.py -v"
+      ],
+      "files": [
+        "src/create_something_agents/workflows/audit.py",
+        "tests/workflows/test_audit.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-3",
+      "title": "Implement PMS API client for Dentrix",
+      "description": "Create DentrixClient with real API methods replacing all placeholder implementations",
+      "acceptance": [
+        "File: src/create_something_agents/clients/dentrix.py created",
+        "Class DentrixClient implements: get_appointments, update_appointment, get_waitlist, remove_from_waitlist",
+        "All methods use httpx for HTTP requests with proper error handling",
+        "Methods return typed results (not raw JSON strings)",
+        "NO hardcoded mock data in dentrix.py",
+        "File: src/create_something_agents/workflows/no_show_recovery.py updated",
+        "detect_no_shows uses DentrixClient.get_appointments (not commented out)",
+        "book_appointment_from_waitlist uses DentrixClient.update_appointment (not commented out)",
+        "NO 'appt_placeholder' or 'patient_placeholder' strings in no_show_recovery.py",
+        "Test: python -c 'from src.create_something_agents.clients.dentrix import DentrixClient; client = DentrixClient(base_url=\"http://test\", api_key=\"test\"); assert hasattr(client, \"get_appointments\"); assert hasattr(client, \"update_appointment\")'",
+        "Tests pass: pytest tests/clients/test_dentrix.py -v",
+        "NO TODO comments in workflows/no_show_recovery.py"
+      ],
+      "files": [
+        "src/create_something_agents/clients/dentrix.py",
+        "tests/clients/test_dentrix.py",
+        "src/create_something_agents/workflows/no_show_recovery.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-4",
+      "title": "Implement notification delivery via Twilio and SendGrid",
+      "description": "Replace mock notification responses with actual API calls to Twilio (SMS) and SendGrid (email)",
+      "acceptance": [
+        "File: src/create_something_agents/clients/twilio_client.py created",
+        "File: src/create_something_agents/clients/sendgrid_client.py created",
+        "TwilioClient.send_sms makes actual API call (not mock)",
+        "SendGridClient.send_email makes actual API call (not mock)",
+        "Both clients handle API errors and return proper NotificationResult",
+        "File: src/create_something_agents/notifications/patient_outreach.py updated",
+        "_send_sms_notification calls TwilioClient.send_sms (not commented out)",
+        "_send_email_notification calls SendGridClient.send_email (not commented out)",
+        "NO 'Mock success for demonstration' comments in patient_outreach.py",
+        "Test: python -c 'from src.create_something_agents.clients.twilio_client import TwilioClient; client = TwilioClient(account_sid=\"test\", auth_token=\"test\", from_number=\"+1555\"); assert hasattr(client, \"send_sms\")'",
+        "Tests pass: pytest tests/clients/test_twilio.py -v",
+        "Tests pass: pytest tests/clients/test_sendgrid.py -v",
+        "NO TODO comments in notifications/patient_outreach.py"
+      ],
+      "files": [
+        "src/create_something_agents/clients/twilio_client.py",
+        "src/create_something_agents/clients/sendgrid_client.py",
+        "tests/clients/test_twilio.py",
+        "tests/clients/test_sendgrid.py",
+        "src/create_something_agents/notifications/patient_outreach.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-5",
+      "title": "Implement rate limiting with KV-based sliding window",
+      "description": "Add check_rate_limit function that enforces 3 notifications/day per patient using Cloudflare KV",
+      "acceptance": [
+        "File: src/create_something_agents/notifications/rate_limit.py created",
+        "Function check_rate_limit(patient_id: str, kv_client: Any) -> tuple[bool, Optional[datetime]]",
+        "Uses KV key format: rate_limit:{patient_id}",
+        "Stores list of timestamps for last 24 hours (sliding window)",
+        "Returns (can_send: bool, next_available: Optional[datetime])",
+        "Enforces max 3 notifications per 24-hour period",
+        "Function _record_notification(patient_id: str, kv_client: Any) updates timestamp list",
+        "Test: python -c 'from src.create_something_agents.notifications.rate_limit import check_rate_limit, _record_notification; from unittest.mock import Mock; kv = Mock(); kv.get.return_value = None; can_send, next_time = check_rate_limit(\"pat_123\", kv); assert can_send == True'",
+        "File: src/create_something_agents/notifications/patient_outreach.py updated",
+        "send_waitlist_notification calls check_rate_limit before sending (not commented out)",
+        "Notification blocked if rate limit exceeded",
+        "NO TODO comments in rate_limit.py",
+        "Tests pass: pytest tests/notifications/test_patient_outreach.py::test_check_rate_limit_sliding_window -v",
+        "Tests pass: pytest tests/notifications/test_patient_outreach.py::test_send_waitlist_notification_rate_limit -v"
+      ],
+      "files": [
+        "src/create_something_agents/notifications/rate_limit.py",
+        "tests/notifications/test_rate_limit.py",
+        "src/create_something_agents/notifications/patient_outreach.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-6",
+      "title": "Replace hardcoded mock data with real PMS queries",
+      "description": "Remove all hardcoded patient data from recall_reminders.py and insurance_verification.py, use actual PMS API calls",
+      "acceptance": [
+        "File: src/create_something_agents/workflows/recall_reminders.py",
+        "NO hardcoded mock_patients list (lines 82-109 removed)",
+        "identify_overdue_patients calls DentrixClient.get_patients (not TODO comment)",
+        "personalize_reminder_message calls DentrixClient.get_patient_history (not TODO comment)",
+        "File: src/create_something_agents/workflows/insurance_verification.py",
+        "verify_insurance_eligibility calls actual insurance API (not mock 'ACTIVE' status)",
+        "get_upcoming_appointments calls DentrixClient.get_appointments (not empty list)",
+        "NO 'Mock implementation for development' comments in either file",
+        "Test: python -c 'from src.create_something_agents.workflows.recall_reminders import identify_overdue_patients; import inspect; source = inspect.getsource(identify_overdue_patients); assert \"mock_patients\" not in source'",
+        "Tests pass: pytest tests/workflows/test_recall_reminders.py -v",
+        "Tests pass: pytest tests/workflows/test_insurance_verification.py -v",
+        "NO TODO comments in recall_reminders.py",
+        "NO TODO comments in insurance_verification.py"
+      ],
+      "files": [
+        "src/create_something_agents/workflows/recall_reminders.py",
+        "src/create_something_agents/workflows/insurance_verification.py"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-7",
+      "title": "Add validation gate to prevent placeholder code",
+      "description": "Create pre-commit validation script that blocks commits with TODO comments, mock implementations, or placeholder strings",
+      "acceptance": [
+        "File: scripts/validate-production-code.sh created",
+        "Script checks for: TODO comments, 'Mock.*for development', 'placeholder', '# Production:' followed by commented code",
+        "Script exits with code 1 if any pattern found in src/ files",
+        "Script exits with code 0 if no patterns found",
+        "File: .git/hooks/pre-commit created (or updated)",
+        "Hook calls scripts/validate-production-code.sh before allowing commit",
+        "Test: echo '# TODO: test' > /tmp/test.py && scripts/validate-production-code.sh /tmp/test.py; test $? -eq 1",
+        "Test: echo 'def foo(): pass' > /tmp/test.py && scripts/validate-production-code.sh /tmp/test.py; test $? -eq 0",
+        "Documentation: Add validation gate to README.md with examples of blocked patterns"
+      ],
+      "files": [
+        "scripts/validate-production-code.sh",
+        ".git/hooks/pre-commit",
+        "README.md"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-8",
+      "title": "Integration tests with real services (staging)",
+      "description": "Update integration tests to use real Twilio/SendGrid/PMS staging credentials, not mocks",
+      "acceptance": [
+        "File: tests/integration/test_workflows_e2e.py updated",
+        "Tests use DentrixClient with staging API credentials (from env vars)",
+        "Tests use TwilioClient with test credentials (Twilio test mode)",
+        "Tests use SendGridClient with sandbox mode",
+        "NO MockPMSClient in integration tests (move to tests/unit/)",
+        "Tests verify actual API responses (not hardcoded success)",
+        "Test HMAC signatures with real crypto (not mocked verification)",
+        "Test audit logs written to actual KV namespace (staging)",
+        "Environment variables documented in .env.example",
+        "Tests pass: DENTRIX_API_KEY=test_key TWILIO_TEST_MODE=true pytest tests/integration/ -v",
+        "Tests verify side effects (KV entries exist, emails in SendGrid sandbox)"
+      ],
+      "files": [
+        "tests/integration/test_workflows_e2e.py",
+        ".env.example"
+      ],
+      "passes": false
+    }
+  ]
+}

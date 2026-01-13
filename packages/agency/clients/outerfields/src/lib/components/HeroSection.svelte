@@ -1,441 +1,228 @@
 <script lang="ts">
-	/**
-	 * OUTERFIELDS Hero Section
-	 *
-	 * Landing page hero with headline, subheadline, CTAs, and browser mockup
-	 */
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+
+	let canvas: HTMLCanvasElement;
+	let animationFrameId: number;
+
+	interface Star {
+		x: number;
+		y: number;
+		z: number;
+		size: number;
+		brightness: number;
+	}
+
+	onMount(() => {
+		if (!browser || !canvas) return;
+
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		const resizeCanvas = () => {
+			canvas.width = canvas.offsetWidth;
+			canvas.height = canvas.offsetHeight;
+		};
+		resizeCanvas();
+		window.addEventListener('resize', resizeCanvas);
+
+		const stars: Star[] = [];
+		const numStars = 300;
+		let rotation = 0;
+
+		for (let i = 0; i < numStars; i++) {
+			const angle = Math.random() * Math.PI * 2;
+			const distance = Math.random() * 400;
+			const z = Math.random() * 500;
+
+			stars.push({
+				x: Math.cos(angle) * distance,
+				y: Math.sin(angle) * distance,
+				z: z,
+				size: Math.random() * 2 + 0.5,
+				brightness: Math.random() * 0.5 + 0.5
+			});
+		}
+
+		const animate = () => {
+			const centerX = canvas.width / 2;
+			const centerY = canvas.height / 2;
+			
+			ctx.fillStyle = '#000000';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+			rotation += 0.001;
+
+			stars.forEach((star) => {
+				const angle = Math.atan2(star.y, star.x) + rotation;
+				const distance = Math.sqrt(star.x * star.x + star.y * star.y);
+
+				const x = centerX + Math.cos(angle) * distance;
+				const y = centerY + Math.sin(angle) * distance;
+
+				const scale = 300 / (300 + star.z);
+				const size = star.size * scale;
+				const opacity = star.brightness * scale;
+
+				ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity + ')';
+				ctx.beginPath();
+				ctx.arc(x, y, size, 0, Math.PI * 2);
+				ctx.fill();
+
+				if (star.size > 1.5) {
+					const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+					gradient.addColorStop(0, 'rgba(255, 255, 255, ' + (opacity * 0.3) + ')');
+					gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+					ctx.fillStyle = gradient;
+					ctx.beginPath();
+					ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			});
+
+			animationFrameId = requestAnimationFrame(animate);
+		};
+
+		animate();
+
+		return () => {
+			window.removeEventListener('resize', resizeCanvas);
+			if (animationFrameId) {
+				cancelAnimationFrame(animationFrameId);
+			}
+		};
+	});
+
+	function handlePlayClick() {
+		window.location.href = '/videos/outerfields-trailer';
+	}
 </script>
 
 <section class="hero">
-	<div class="hero-background">
-		<div class="gradient-mesh"></div>
-		<div class="hero-image">
-			<img
-				src="https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1920&h=800&fit=crop"
-				alt="Content creator studio"
-			/>
-		</div>
-	</div>
+	<canvas bind:this={canvas} class="galaxy-canvas" />
 
 	<div class="hero-content">
-		<div class="hero-badge">
-			<span class="badge-dot-container">
-				<span class="badge-dot"></span>
-				<span class="badge-ping"></span>
-			</span>
-			<span>Premium Content Networks</span>
-		</div>
+		<h1 class="hero-title">Building Outerfields: The Odyssey</h1>
 
-		<h1 class="hero-title">
-			Build Streaming Platforms
-			<span class="highlight">That Convert</span>
-		</h1>
-
-		<p class="hero-description">
-			OUTERFIELDS delivers the complete PCN solution. Custom branding, advanced analytics,
-			community features, and monetization tools. Better than Uscreen, built for creators who
-			demand more.
-		</p>
-
-		<div class="hero-ctas">
-			<a href="/demo" class="btn-primary">
-				<span class="material-symbols-outlined">play_circle</span>
-				Experience the Demo
-			</a>
-			<a href="#features" class="btn-secondary">
-				<span class="material-symbols-outlined">info</span>
-				See Features
-			</a>
-		</div>
-
-		<!-- Browser Mockup Preview -->
-		<div class="browser-mockup">
-			<div class="browser-chrome">
-				<div class="browser-dots">
-					<span class="dot red"></span>
-					<span class="dot yellow"></span>
-					<span class="dot green"></span>
-				</div>
-				<div class="browser-url">
-					<span class="material-symbols-outlined">lock</span>
-					app.outerfields.com
-				</div>
-			</div>
-			<div class="browser-content">
-				<div class="mockup-preview">
-					<div class="mockup-nav">
-						<span class="mockup-logo">OUTERFIELDS</span>
-						<div class="mockup-nav-items">
-							<span>Home</span>
-							<span>Series</span>
-							<span>Movies</span>
-						</div>
-					</div>
-					<div class="mockup-hero-area">
-						<div class="mockup-featured">
-							<span class="mockup-badge">Featured</span>
-							<div class="mockup-title-block"></div>
-							<div class="mockup-desc-block"></div>
-							<div class="mockup-buttons">
-								<span class="mockup-btn primary">Play</span>
-								<span class="mockup-btn secondary">+ List</span>
-							</div>
-						</div>
-					</div>
-					<div class="mockup-content-row">
-						<div class="mockup-card"></div>
-						<div class="mockup-card"></div>
-						<div class="mockup-card"></div>
-						<div class="mockup-card"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="hero-stats">
-			<div class="stat">
-				<span class="stat-value">128K+</span>
-				<span class="stat-label">Active Subscribers</span>
-			</div>
-			<div class="stat-divider"></div>
-			<div class="stat">
-				<span class="stat-value">$2.4M</span>
-				<span class="stat-label">Creator Revenue</span>
-			</div>
-			<div class="stat-divider"></div>
-			<div class="stat">
-				<span class="stat-value">99.9%</span>
-				<span class="stat-label">Uptime</span>
-			</div>
-		</div>
+		<button class="play-button" on:click={handlePlayClick} aria-label="Play trailer">
+			<svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
+			</svg>
+		</button>
 	</div>
 </section>
 
 <style>
 	.hero {
 		position: relative;
-		min-height: 100vh;
+		width: 100%;
+		height: 100vh;
+		min-height: 600px;
+		max-height: 900px;
+		overflow: hidden;
+		background: var(--color-bg-pure);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 8rem 1.5rem 4rem;
-		overflow: hidden;
 	}
 
-	.hero-background {
-		position: absolute;
-		inset: 0;
-		z-index: 0;
-	}
-
-	.hero-image {
-		position: absolute;
-		inset: 0;
-		opacity: 0.15;
-	}
-
-	.hero-image img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	.gradient-mesh {
+	.galaxy-canvas {
 		position: absolute;
 		top: 0;
-		left: 50%;
-		transform: translateX(-50%);
+		left: 0;
 		width: 100%;
-		height: 80%;
-		background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+		height: 100%;
 		pointer-events: none;
-		z-index: 1;
 	}
 
 	.hero-content {
 		position: relative;
-		z-index: 1;
-		max-width: 60rem;
+		z-index: 10;
 		text-align: center;
-	}
-
-	.hero-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: 9999px;
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--color-fg-secondary);
-		margin-bottom: 1.5rem;
-	}
-
-	.badge-dot-container {
-		position: relative;
-		width: 0.5rem;
-		height: 0.5rem;
-	}
-
-	.badge-dot {
-		position: absolute;
-		inset: 0;
-		background: var(--color-primary);
-		border-radius: 50%;
-	}
-
-	.badge-ping {
-		position: absolute;
-		inset: 0;
-		background: var(--color-primary);
-		border-radius: 50%;
-		animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-	}
-
-	@keyframes ping {
-		75%, 100% {
-			transform: scale(2);
-			opacity: 0;
-		}
+		max-width: 800px;
+		padding: var(--space-lg);
 	}
 
 	.hero-title {
-		font-size: clamp(2.5rem, 6vw, 4.5rem);
-		font-weight: 800;
-		line-height: 1.1;
-		letter-spacing: -0.02em;
-		margin: 0 0 1.5rem;
+		font-size: var(--text-display);
+		font-weight: 700;
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xl);
+		text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
 	}
 
-	.highlight {
-		display: block;
-		background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, #ffffff 50%, rgba(255, 255, 255, 0.6) 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
-
-	.hero-description {
-		font-size: 1.125rem;
-		line-height: 1.7;
-		color: var(--color-fg-muted);
-		max-width: 40rem;
-		margin: 0 auto 2.5rem;
-	}
-
-	.hero-ctas {
-		display: flex;
-		gap: 1rem;
-		justify-content: center;
-		flex-wrap: wrap;
-		margin-bottom: 3rem;
-	}
-
-	/* Browser Mockup */
-	.browser-mockup {
-		max-width: 48rem;
-		margin: 0 auto 3rem;
-		border-radius: 0.75rem;
-		overflow: hidden;
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-pure);
-		box-shadow: 0 25px 50px -12px rgba(255, 255, 255, 0.1);
-	}
-
-	.browser-chrome {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 0.75rem 1rem;
-		background: var(--color-bg-surface);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.browser-dots {
-		display: flex;
-		gap: 0.375rem;
-	}
-
-	.browser-dots .dot {
-		width: 0.75rem;
-		height: 0.75rem;
-		border-radius: 50%;
-	}
-
-	.browser-dots .dot.red { background: #ff5f57; }
-	.browser-dots .dot.yellow { background: #febc2e; }
-	.browser-dots .dot.green { background: #28c840; }
-
-	.browser-url {
-		flex: 1;
+	.play-button {
+		width: 120px;
+		height: 120px;
+		border-radius: var(--radius-full);
+		background: rgba(255, 255, 255, 0.1);
+		border: 3px solid var(--color-fg-primary);
+		cursor: pointer;
+		transition: all var(--duration-standard) var(--ease-standard);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.375rem;
-		font-size: 0.75rem;
-		color: var(--color-fg-subtle);
-		background: var(--color-bg-pure);
-		padding: 0.375rem 1rem;
-		border-radius: 0.375rem;
+		margin: 0 auto;
+		backdrop-filter: blur(10px);
 	}
 
-	.browser-url .material-symbols-outlined {
-		font-size: 0.875rem;
-		color: var(--color-success);
+	.play-button:hover {
+		transform: scale(1.1);
+		background: rgba(255, 255, 255, 0.2);
+		border-color: var(--color-fg-secondary);
+		box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
 	}
 
-	.browser-content {
-		padding: 0;
+	.play-button:active {
+		transform: scale(1.05);
 	}
 
-	.mockup-preview {
-		background: var(--color-bg-pure);
-	}
-
-	.mockup-nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.75rem 1rem;
-		background: rgba(0, 0, 0, 0.5);
-	}
-
-	.mockup-logo {
-		font-size: 0.75rem;
-		font-weight: 700;
+	.play-icon {
+		width: 48px;
+		height: 48px;
 		color: var(--color-fg-primary);
+		margin-left: 8px;
 	}
 
-	.mockup-nav-items {
-		display: flex;
-		gap: 1rem;
-		font-size: 0.625rem;
-		color: var(--color-fg-muted);
-	}
-
-	.mockup-hero-area {
-		background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%);
-		padding: 2rem 1rem;
-	}
-
-	.mockup-featured {
-		max-width: 12rem;
-	}
-
-	.mockup-badge {
-		display: inline-block;
-		padding: 0.125rem 0.375rem;
-		background: var(--color-fg-primary);
-		border-radius: 0.125rem;
-		font-size: 0.5rem;
-		font-weight: 700;
-		color: var(--color-bg-pure);
-		text-transform: uppercase;
-		margin-bottom: 0.5rem;
-	}
-
-	.mockup-title-block {
-		width: 80%;
-		height: 1rem;
-		background: var(--color-fg-primary);
-		border-radius: 0.125rem;
-		margin-bottom: 0.375rem;
-	}
-
-	.mockup-desc-block {
-		width: 60%;
-		height: 0.5rem;
-		background: var(--color-fg-muted);
-		border-radius: 0.125rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.mockup-buttons {
-		display: flex;
-		gap: 0.375rem;
-	}
-
-	.mockup-btn {
-		font-size: 0.5rem;
-		font-weight: 600;
-		padding: 0.25rem 0.5rem;
-		border-radius: 0.25rem;
-	}
-
-	.mockup-btn.primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-	}
-
-	.mockup-btn.secondary {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
-	}
-
-	.mockup-content-row {
-		display: flex;
-		gap: 0.5rem;
-		padding: 1rem;
-	}
-
-	.mockup-card {
-		width: 4rem;
-		height: 2.5rem;
-		background: var(--color-bg-surface);
-		border-radius: 0.25rem;
-		border: 1px solid var(--color-border-default);
-	}
-
-	.hero-stats {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 2rem;
-		flex-wrap: wrap;
-	}
-
-	.stat {
-		text-align: center;
-	}
-
-	.stat-value {
-		display: block;
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-fg-primary);
-	}
-
-	.stat-label {
-		font-size: 0.875rem;
-		color: var(--color-fg-subtle);
-	}
-
-	.stat-divider {
-		width: 1px;
-		height: 2.5rem;
-		background: var(--color-border-default);
-	}
-
-	@media (max-width: 640px) {
-		.hero-stats {
-			flex-direction: column;
-			gap: 1.5rem;
+	@media (max-width: 768px) {
+		.hero {
+			min-height: 500px;
+			max-height: 700px;
 		}
 
-		.stat-divider {
-			display: none;
+		.hero-title {
+			font-size: var(--text-h1);
 		}
 
-		.browser-mockup {
-			display: none;
+		.play-button {
+			width: 90px;
+			height: 90px;
 		}
 
-		.mockup-nav-items {
-			display: none;
+		.play-icon {
+			width: 36px;
+			height: 36px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.hero {
+			min-height: 400px;
+			max-height: 600px;
+		}
+
+		.hero-title {
+			font-size: var(--text-h2);
+		}
+
+		.play-button {
+			width: 75px;
+			height: 75px;
+		}
+
+		.play-icon {
+			width: 30px;
+			height: 30px;
 		}
 	}
 </style>

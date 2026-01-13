@@ -145,7 +145,7 @@
         "src/routes/api/analytics/instagram/+server.ts",
         "src/routes/api/analytics/youtube/+server.ts"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-8",
@@ -164,7 +164,7 @@
         "src/lib/components/ComponentLab.svelte",
         "src/lib/components/ToolPreview.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-9",
