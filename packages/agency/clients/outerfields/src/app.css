@@ -4,10 +4,8 @@
 
   Philosophy: Pure black and white, systematic minimalism
   Font: Canon system (Stack Sans Notch with system fallbacks, JetBrains Mono for code)
+  Fonts loaded in app.html for optimal performance
 */
-
-/* JetBrains Mono for code/monospace */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
