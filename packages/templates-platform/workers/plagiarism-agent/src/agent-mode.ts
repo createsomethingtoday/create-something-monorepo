@@ -252,6 +252,83 @@ const TOOLS: Anthropic.Tool[] = [
 ];
 
 // =============================================================================
+// AGENT CONTROL (reduce tool spam, force convergence)
+// =============================================================================
+
+const REQUIRED_SCREENSHOT_LABELS = ['original', 'copy'] as const;
+const REQUIRED_VISUAL_COMPARISONS = 1;
+const FORCE_CONCLUDE_AT_ITERATION = 6;
+
+function toolByName(name: string): Anthropic.Tool | null {
+  const tool = TOOLS.find((t) => t.name === name);
+  return tool ?? null;
+}
+
+function pickTools(names: string[]): Anthropic.Tool[] {
+  return names.map(toolByName).filter(Boolean) as Anthropic.Tool[];
+}
+
+function getEvidenceCount(state: AgentState, type: Evidence['type']): number {
+  return state.evidenceGathered.filter((e) => e.type === type).length;
+}
+
+function hasScreenshotLabel(state: AgentState, label: string): boolean {
+  return state.evidenceGathered.some(
+    (e) => e.type === 'screenshot' && e.data?.label === label
+  );
+}
+
+function getConvergenceDirective(state: AgentState, contentCase: ContentPolicyCase): string {
+  const missingOriginal = !hasScreenshotLabel(state, 'original');
+  const missingCopy = !hasScreenshotLabel(state, 'copy');
+  const comparisons = getEvidenceCount(state, 'comparison');
+  const css = getEvidenceCount(state, 'css');
+
+  if (missingOriginal) {
+    return `Call capture_screenshot now with:\n- url: ${contentCase.context || contentCase.targetUrl}\n- label: "original"\n\nDo not do anything else.`;
+  }
+  if (missingCopy) {
+    return `Call capture_screenshot now with:\n- url: ${contentCase.targetUrl}\n- label: "copy"\n\nDo not do anything else.`;
+  }
+  if (comparisons < REQUIRED_VISUAL_COMPARISONS) {
+    return `Call compare_visual_similarity now with:\n- image1Label: "original"\n- image2Label: "copy"\n\nDo not do anything else.`;
+  }
+  if (css < 1 && state.iteration < FORCE_CONCLUDE_AT_ITERATION) {
+    return `Gather minimal code evidence, then stop.\n\n1) Call fetch_html for BOTH URLs:\n- ${contentCase.context || '(missing original url)'}\n- ${contentCase.targetUrl}\n\n2) For EACH HTML response, call extract_css_patterns with the HTML.\n\nThen you must be ready to conclude next.`;
+  }
+
+  return `You have enough evidence. Call conclude_investigation now.\n\nReturn a decision (no_violation/minor/major) with confidence, reasoning, recommendedAction, and 3-6 bullet evidenceSummary items.`;
+}
+
+function getAllowedToolsForState(state: AgentState, contentCase: ContentPolicyCase): Anthropic.Tool[] {
+  const comparisons = getEvidenceCount(state, 'comparison');
+  const css = getEvidenceCount(state, 'css');
+
+  // Force conclude once we have minimal evidence or we've reached the deadline.
+  if (state.iteration >= FORCE_CONCLUDE_AT_ITERATION && comparisons >= 1) {
+    return pickTools(['conclude_investigation']);
+  }
+
+  // Stage 1: capture required screenshots (exact labels)
+  if (!hasScreenshotLabel(state, 'original') || !hasScreenshotLabel(state, 'copy')) {
+    return pickTools(['capture_screenshot']);
+  }
+
+  // Stage 2: run one visual comparison
+  if (comparisons < REQUIRED_VISUAL_COMPARISONS) {
+    return pickTools(['compare_visual_similarity']);
+  }
+
+  // Stage 3: minimal code signal (HTML + CSS patterns), then conclude
+  if (css < 1 && state.iteration < FORCE_CONCLUDE_AT_ITERATION) {
+    return pickTools(['fetch_html', 'extract_css_patterns']);
+  }
+
+  // Stage 4: conclude
+  return pickTools(['conclude_investigation']);
+}
+
+// =============================================================================
 // TOOL IMPLEMENTATIONS
 // =============================================================================
 
@@ -269,10 +346,10 @@ async function executeToolCall(
         return await captureScreenshot(toolInput.url, toolInput.label, state, env);
 
       case 'fetch_html':
-        return await fetchHtml(toolInput.url);
+        return await fetchHtml(toolInput.url, state);
 
       case 'extract_css_patterns':
-        return await extractCssPatterns(toolInput.html);
+        return await extractCssPatterns(toolInput.html, state);
 
       case 'analyze_text_content':
         return await analyzeTextContent(toolInput.html, toolInput.policyType, env);
@@ -342,9 +419,17 @@ async function captureScreenshot(
   }
 }
 
-async function fetchHtml(url: string): Promise<ToolResult> {
+async function fetchHtml(url: string, state: AgentState): Promise<ToolResult> {
   const response = await fetch(url);
   const html = await response.text();
+
+  // Store in agent state (truncated)
+  state.evidenceGathered.push({
+    type: 'html',
+    source: url,
+    data: { length: html.length, snippet: html.substring(0, 2000) },
+    timestamp: Date.now()
+  });
 
   return {
     toolName: 'fetch_html',
@@ -352,13 +437,20 @@ async function fetchHtml(url: string): Promise<ToolResult> {
   };
 }
 
-async function extractCssPatterns(html: string): Promise<ToolResult> {
+async function extractCssPatterns(html: string, state: AgentState): Promise<ToolResult> {
   const patterns = {
     animations: html.match(/@keyframes\s+[\w-]+\s*\{[^}]+\}/g) || [],
     transitions: html.match(/transition:\s*[^;]+;/g) || [],
     gridLayouts: html.match(/display:\s*grid[^}]*\}/g) || [],
     flexLayouts: html.match(/display:\s*flex[^}]*\}/g) || []
   };
+
+  state.evidenceGathered.push({
+    type: 'css',
+    source: 'extract_css_patterns',
+    data: patterns,
+    timestamp: Date.now()
+  });
 
   return {
     toolName: 'extract_css_patterns',
@@ -509,6 +601,12 @@ Your task: Investigate the reported content policy violation and make a decision
 - Complaint: ${contentCase.complaintText}
 ${contentCase.context ? `- Additional Context: ${contentCase.context}` : ''}
 
+CRITICAL (plagiarism cases):
+- Capture ONLY two screenshots with labels "original" (context/original URL) and "copy" (target URL)
+- Run compare_visual_similarity exactly once ("original" vs "copy")
+- Fetch HTML for both URLs and run extract_css_patterns on each
+- Call conclude_investigation by iteration ${FORCE_CONCLUDE_AT_ITERATION} at the latest
+
 **Your Process:**
 1. Gather evidence using available tools (screenshots, HTML, text analysis, etc.)
 2. Analyze evidence iteratively
@@ -545,6 +643,14 @@ Begin investigation.`;
     console.log(`[Agent] Iteration ${state.iteration}/${maxIterations}`);
 
     try {
+      // Add a short directive to prevent wandering.
+      messages.push({
+        role: 'user',
+        content: getConvergenceDirective(state, contentCase)
+      });
+
+      const tools = getAllowedToolsForState(state, contentCase);
+
       const response = await anthropicCreateWithRetry(anthropic, {
         model: 'claude-3-7-sonnet-20250219',
         temperature: 0,
@@ -552,7 +658,7 @@ Begin investigation.`;
         max_tokens: 2500,
         system: systemPrompt,
         messages,
-        tools: TOOLS
+        tools
       });
 
       // Check stop reason
