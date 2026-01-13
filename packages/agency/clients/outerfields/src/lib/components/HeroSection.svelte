@@ -95,8 +95,9 @@
 		inset: 0;
 		background: linear-gradient(
 			to bottom,
-			transparent 0%,
-			rgba(0, 0, 0, 0.3) 50%,
+			rgba(0, 0, 0, 0.55) 0%,
+			rgba(0, 0, 0, 0.65) 45%,
+			rgba(0, 0, 0, 0.75) 70%,
 			var(--color-bg-pure) 100%
 		);
 	}
