@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
 
 // GET - Fetch single asset
-export const GET: RequestHandler = async ({ params, locals, platform }) => {
+export const GET: RequestHandler = async ({ params, locals, platform, url }) => {
 	if (!locals.user?.email) {
 		throw error(401, 'Unauthorized');
 	}
@@ -15,8 +15,21 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 	const airtable = getAirtableClient(platform.env);
 
 	// Verify ownership
+	const debug = url.searchParams.get('debug') === '1';
 	const isOwner = await airtable.verifyAssetOwnership(params.id, locals.user.email);
 	if (!isOwner) {
+		if (debug) {
+			const details = await airtable.debugAssetOwnership(params.id, locals.user.email);
+			console.error('[Asset API] Ownership denied', details.debug);
+			return json(
+				{
+					error: 'Forbidden',
+					message: 'You do not have permission to view this asset',
+					debug: details.debug
+				},
+				{ status: 403 }
+			);
+		}
 		throw error(403, 'You do not have permission to view this asset');
 	}
 

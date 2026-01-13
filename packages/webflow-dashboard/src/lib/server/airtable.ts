@@ -522,6 +522,103 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
+		 * Debuggable ownership check.
+		 *
+		 * IMPORTANT: Returns diagnostics without exposing any creator emails from Airtable.
+		 * Use for troubleshooting 403s on /api/assets/[id] while authenticated.
+		 */
+		async debugAssetOwnership(
+			assetId: string,
+			email: string
+		): Promise<{
+			isOwner: boolean;
+			debug: {
+				assetId: string;
+				userEmailHash: string;
+				emailFields: Record<
+					string,
+					{ present: boolean; type: 'array' | 'string' | 'other'; matched: boolean; length?: number }
+				>;
+				formulaMatched: boolean;
+			};
+		}> {
+			const normalizedEmail = email.toLowerCase();
+			const userEmailHash = createHash('sha256').update(normalizedEmail).digest('hex').slice(0, 12);
+
+			const emailFields = [
+				'🎨📧 Creator Email',
+				'🎨📧 Creator WF Account Email',
+				'📧Emails (from 🎨Creator)'
+			] as const;
+
+			const fieldDiagnostics: Record<
+				string,
+				{ present: boolean; type: 'array' | 'string' | 'other'; matched: boolean; length?: number }
+			> = {};
+
+			let record: Airtable.Record<Airtable.FieldSet> | null = null;
+			try {
+				record = await base(TABLES.ASSETS).find(assetId);
+			} catch {
+				record = null;
+			}
+
+			let anyFieldMatched = false;
+			for (const field of emailFields) {
+				const value = record?.fields?.[field];
+				if (!value) {
+					fieldDiagnostics[field] = { present: false, type: 'other', matched: false };
+					continue;
+				}
+
+				if (Array.isArray(value)) {
+					const matched = value.some((e) => String(e).toLowerCase().includes(normalizedEmail));
+					fieldDiagnostics[field] = { present: true, type: 'array', matched, length: value.length };
+					if (matched) anyFieldMatched = true;
+				} else if (typeof value === 'string') {
+					const matched = value.toLowerCase().includes(normalizedEmail);
+					fieldDiagnostics[field] = { present: true, type: 'string', matched, length: value.length };
+					if (matched) anyFieldMatched = true;
+				} else {
+					fieldDiagnostics[field] = { present: true, type: 'other', matched: false };
+				}
+			}
+
+			// Formula fallback (robust to Airtable field types / lookup vs string)
+			const escapedEmail = escapeAirtableString(normalizedEmail);
+			const formula = `AND(
+				RECORD_ID() = '${escapeAirtableString(assetId)}',
+				OR(
+					FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator Email}, ",")), IFERROR(LOWER({🎨📧 Creator Email}), ""))) > 0,
+					FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator WF Account Email}, ",")), IFERROR(LOWER({🎨📧 Creator WF Account Email}), ""))) > 0,
+					FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({📧Emails (from 🎨Creator)}, ",")), IFERROR(LOWER({📧Emails (from 🎨Creator)}), ""))) > 0
+				)
+			)`;
+
+			let formulaMatched = false;
+			try {
+				const matches = await base(TABLES.ASSETS)
+					.select({ filterByFormula: formula, maxRecords: 1 })
+					.firstPage();
+				formulaMatched = matches.length > 0;
+			} catch {
+				formulaMatched = false;
+			}
+
+			const isOwner = anyFieldMatched || formulaMatched;
+
+			return {
+				isOwner,
+				debug: {
+					assetId,
+					userEmailHash,
+					emailFields: fieldDiagnostics,
+					formulaMatched
+				}
+			};
+		},
+
+		/**
 		 * Archive an asset (change status to Delisted).
 		 */
 		async archiveAsset(id: string): Promise<{ success: boolean; error?: string }> {
