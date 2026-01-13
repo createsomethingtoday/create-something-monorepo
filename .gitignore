@@ -53,3 +53,4 @@ csm/csm/.repo.git
 .lsmcp/
 !.lsmcp/config.json
 # Keep config.json tracked, ignore cache/index/memories
+__pycache__/
