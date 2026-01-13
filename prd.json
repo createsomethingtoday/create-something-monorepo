@@ -58,7 +58,7 @@
       "files": [
         "packages/agent-sdk/tests/workflows/test_insurance_verification.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-4",
