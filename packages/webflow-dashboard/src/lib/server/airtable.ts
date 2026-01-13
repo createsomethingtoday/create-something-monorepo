@@ -470,11 +470,28 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Matches the original Next.js logic which checks multiple email fields.
 		 */
 		async verifyAssetOwnership(assetId: string, email: string): Promise<boolean> {
+			const normalizedEmail = email.toLowerCase();
+			const escapedEmail = escapeAirtableString(normalizedEmail);
+			const escapedAssetId = escapeAirtableString(assetId);
+
+			// 1) Fast path: if the asset appears in the user's dashboard list, they should be able to fetch it.
+			// This uses the same field + formula shape as getAssetsByEmail(), scoped to a single record.
+			try {
+				const dashboardLikeFormula = `AND(
+					RECORD_ID() = '${escapedAssetId}',
+					FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)}))
+				)`;
+				const dashboardMatches = await base(TABLES.ASSETS)
+					.select({ filterByFormula: dashboardLikeFormula, maxRecords: 1 })
+					.firstPage();
+				if (dashboardMatches.length > 0) return true;
+			} catch {
+				// continue to next checks
+			}
+
+			// 2) Field-based check (best-effort): works when the record can be fetched and the email fields are present.
 			try {
 				const record = await base(TABLES.ASSETS).find(assetId);
-				const normalizedEmail = email.toLowerCase();
-
-				// Check all possible creator email fields (matching original Next.js implementation)
 				const emailFields = [
 					'🎨📧 Creator Email',
 					'🎨📧 Creator WF Account Email',
@@ -485,53 +502,35 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					const fieldValue = record.fields[field];
 					if (!fieldValue) continue;
 
-					// Handle array format (linked records)
 					if (Array.isArray(fieldValue)) {
-						if (fieldValue.some(e => String(e).toLowerCase().includes(normalizedEmail))) {
-							return true;
-						}
-					}
-					// Handle string format
-					else if (typeof fieldValue === 'string') {
-						if (fieldValue.toLowerCase().includes(normalizedEmail)) {
-							return true;
-						}
+						if (fieldValue.some((e) => String(e).toLowerCase().includes(normalizedEmail))) return true;
+					} else if (typeof fieldValue === 'string') {
+						if (fieldValue.toLowerCase().includes(normalizedEmail)) return true;
 					}
 				}
+			} catch {
+				// continue to next checks
+			}
 
-				// Fallback: formula-based check (robust to Airtable field types / lookup vs string)
-				// This aligns with how we filter assets on the dashboard (getAssetsByEmail).
-				const escapedEmail = escapeAirtableString(normalizedEmail);
+			// 3) Robust formula check (best-effort): handles mixed Airtable field types.
+			try {
 				const formula = `AND(
-					RECORD_ID() = '${escapeAirtableString(assetId)}',
+					RECORD_ID() = '${escapedAssetId}',
 					OR(
 						FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator Email}, ",")), IFERROR(LOWER({🎨📧 Creator Email}), ""))) > 0,
 						FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator WF Account Email}, ",")), IFERROR(LOWER({🎨📧 Creator WF Account Email}), ""))) > 0,
 						FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({📧Emails (from 🎨Creator)}, ",")), IFERROR(LOWER({📧Emails (from 🎨Creator)}), ""))) > 0
 					)
 				)`;
-
 				const matches = await base(TABLES.ASSETS)
 					.select({ filterByFormula: formula, maxRecords: 1 })
 					.firstPage();
-
 				if (matches.length > 0) return true;
-
-				// Final fallback: use the same email lookup field + FIND(...) pattern used by the dashboard list query.
-				// This is intentionally "dumb" because Airtable formula semantics can differ between lookup/rollup types.
-				const dashboardLikeFormula = `AND(
-					RECORD_ID() = '${escapeAirtableString(assetId)}',
-					FIND('${escapedEmail}', LOWER({📧Emails (from 🎨Creator)}))
-				)`;
-
-				const dashboardMatches = await base(TABLES.ASSETS)
-					.select({ filterByFormula: dashboardLikeFormula, maxRecords: 1 })
-					.firstPage();
-
-				return dashboardMatches.length > 0;
 			} catch {
-				return false;
+				// fall through
 			}
+
+			return false;
 		},
 
 		/**
