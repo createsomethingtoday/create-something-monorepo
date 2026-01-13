@@ -1,59 +1,69 @@
-# Outerfields Deployment (Cloudflare Pages)
+# Outerfields Production Deployment (Cloudflare Pages)
 
-This package deploys to **Cloudflare Pages** using `@sveltejs/adapter-cloudflare`.
+This app deploys to **Cloudflare Pages** via `@sveltejs/adapter-cloudflare`.
 
-## Prereqs
+## Source of truth
 
-- `pnpm install` at repo root
-- Cloudflare account access for the target project
-- Stripe + Resend credentials (optional Resend)
+- **Bindings**: `wrangler.toml` (primary). `wrangler.jsonc` is reference-only.
+- **Migrations**: `migrations/*.sql`
 
-## Required Cloudflare bindings
+## Local checks (no Cloudflare access needed)
 
-Bindings are declared in:
-- `wrangler.toml` (primary)
-- `wrangler.jsonc` (kept in sync for reference)
+From repo root:
+
+```bash
+pnpm --filter @create-something/outerfields check
+pnpm --filter @create-something/outerfields build
+```
+
+## Cloudflare resources (required)
 
 ### D1
 
 - **Binding**: `DB`
-- **Used by**: auth (`users`), videos, discovery calls, Stripe webhook membership upgrades
-- **Migrations**: `migrations/*.sql`
+- **Name**: `outerfields-db`
+- **Used by**: auth (`users`), videos (`videos`), discovery calls (`discovery_calls`), Stripe membership upgrades
 
-Create D1:
+Create:
 
 ```bash
+cd packages/agency/clients/outerfields
 wrangler d1 create outerfields-db
 ```
 
-Then update `wrangler.toml` / `wrangler.jsonc` with the returned `database_id`.
-
-Apply migrations:
+Update `wrangler.toml` with the returned `database_id`, then apply migrations:
 
 ```bash
+pnpm migrate
+# or:
 wrangler d1 migrations apply outerfields-db --remote
 ```
 
+Migrations:
+- `migrations/0001_auth_system.sql`
+- `migrations/0002_videos.sql`
+- `migrations/0003_discovery_calls.sql`
+
 ### KV
 
-- **Binding**: `SESSIONS` (required)
-- **Binding**: `VIDEO_STATS` (required)
+- **Binding**: `SESSIONS` (auth sessions; cookie `session_token`)
+- **Binding**: `VIDEO_STATS` (views + engagement)
 
-Create KV namespaces:
+Create:
 
 ```bash
 wrangler kv:namespace create SESSIONS
 wrangler kv:namespace create VIDEO_STATS
 ```
 
-Then update `wrangler.toml` / `wrangler.jsonc` with the returned IDs.
+Paste the returned IDs into `wrangler.toml` (including `preview_id`).
 
-### R2 (video assets)
+### R2
 
 - **Binding**: `VIDEO_ASSETS`
 - **Bucket**: `outerfields-videos`
 
-Create bucket:
+Create:
 
 ```bash
 wrangler r2 bucket create outerfields-videos
@@ -62,50 +72,57 @@ wrangler r2 bucket create outerfields-videos
 Upload assets (example):
 
 ```bash
-# videos/thumbnails live in the repo under static/ (and/or your local export folder)
-wrangler r2 object put outerfields-videos/thumbnails/example.jpg --file ./static/thumbnails/example.jpg
+wrangler r2 object put outerfields-videos/videos/example.mp4 --file ./assets/videos/example.mp4
+wrangler r2 object put outerfields-videos/thumbnails/example.jpg --file ./assets/thumbnails/example.jpg
 ```
 
-## Required environment variables / secrets
+Note: the app builds public URLs using a fixed CDN base + the stored `asset_path`/`thumbnail_path`. If you use a different public hostname, update the CDN base in:
+- `src/lib/components/FeaturedVideos.svelte`
+- `src/lib/components/ContentCategories.svelte`
 
-### Stripe (required for checkout + webhook)
+## Secrets / env vars
 
-- `STRIPE_SECRET_KEY` (secret)
-- `STRIPE_WEBHOOK_SECRET` (secret)
+### Stripe (required)
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+Set these in the Pages project environment variables (recommended), or via CLI:
 
 ```bash
-wrangler secret put STRIPE_SECRET_KEY
-wrangler secret put STRIPE_WEBHOOK_SECRET
+wrangler pages secret put STRIPE_SECRET_KEY
+wrangler pages secret put STRIPE_WEBHOOK_SECRET
 ```
 
-### Resend (optional for welcome emails)
+### Resend (optional)
 
-- `RESEND_API_KEY` (secret)
+- `RESEND_API_KEY`
+
+If unset, the Stripe webhook will skip welcome emails.
 
 ```bash
-wrangler secret put RESEND_API_KEY
+wrangler pages secret put RESEND_API_KEY
 ```
 
 ## Deploy
 
-Build locally:
-
 ```bash
-pnpm -C packages/agency/clients/outerfields build
+cd packages/agency/clients/outerfields
+pnpm build
+wrangler pages deploy .svelte-kit/cloudflare --project-name=outerfields-pcn
 ```
 
-Deploy to Pages:
+## Post-deploy sanity checks
 
-```bash
-wrangler pages deploy .svelte-kit/cloudflare
-```
-
-## Post-deploy checklist
-
-- Verify `/api/auth/signup` creates a user and sets `session_token`
-- Verify `/api/auth/login` sets `session_token` and `hooks.server.ts` hydrates `locals.user`
-- Verify Stripe webhook endpoint receives events and flips `users.membership = 1`
-- Verify video endpoints and `VIDEO_STATS` reads/writes
+- **Auth**
+  - `POST /api/auth/signup` creates a user + sets `session_token`
+  - `POST /api/auth/login` sets `session_token` and `hooks.server.ts` hydrates `locals.user`
+- **Content**
+  - `GET /api/videos?grouped=true` returns grouped videos
+  - `ContentCategories` loads and plays videos via the shared `VideoModal`
+- **Membership**
+  - `POST /api/stripe/checkout` returns a Stripe URL
+  - Stripe webhook sets `users.membership = 1` on `checkout.session.completed`
 
 # Outerfields Production Deployment Guide
 
