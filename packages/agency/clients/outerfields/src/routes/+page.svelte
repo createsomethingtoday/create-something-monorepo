@@ -9,6 +9,7 @@
 	import BuildProgress from '$lib/components/BuildProgress.svelte';
 	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ContentCategories from '$lib/components/ContentCategories.svelte';
+	import AnalyticsDashboard from '$lib/components/AnalyticsDashboard.svelte';
 	import ComponentLab from '$lib/components/ComponentLab.svelte';
 	import PlatformComponents from '$lib/components/PlatformComponents.svelte';
 	import AIAnalytics from '$lib/components/AIAnalytics.svelte';
@@ -191,6 +192,7 @@
 	<BuildProgress />
 	<FeaturedVideos />
 	<ContentCategories />
+	<AnalyticsDashboard />
 	<ComponentLab />
 	<PlatformComponents />
 	<AIAnalytics />

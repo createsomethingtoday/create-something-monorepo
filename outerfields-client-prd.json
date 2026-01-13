@@ -105,7 +105,7 @@
         "src/routes/api/videos/+server.ts",
         "src/routes/api/videos/[id]/+server.ts"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-6",
@@ -124,7 +124,7 @@
       "files": [
         "src/lib/components/Pricing.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-7",
