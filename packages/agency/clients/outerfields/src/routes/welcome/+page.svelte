@@ -57,7 +57,7 @@
 <div class="welcome-page">
 	{#if loading}
 		<div class="loading-state">
-			<div class="spinner" />
+			<div class="spinner"></div>
 			<p>Verifying your membership...</p>
 		</div>
 	{:else if verificationComplete}
@@ -91,9 +91,10 @@
 
 				<div class="steps-grid">
 					{#each nextSteps as step, index}
+						{@const Icon = step.icon}
 						<div class="step-card" style="--index: {index}">
 							<div class="step-icon">
-								<svelte:component this={step.icon} size={24} />
+								<Icon size={24} />
 							</div>
 							<h3 class="step-title">{step.title}</h3>
 							<p class="step-description">{step.description}</p>

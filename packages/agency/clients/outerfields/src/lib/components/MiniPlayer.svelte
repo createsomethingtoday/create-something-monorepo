@@ -87,10 +87,9 @@
 				</span>
 			</div>
 
-			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-			<div class="mini-progress" onclick={handleProgressClick}>
+			<button type="button" class="mini-progress" onclick={handleProgressClick} aria-label="Seek">
 				<div class="mini-progress-fill" style="width: {progressPercent}%"></div>
-			</div>
+			</button>
 
 			<div class="mini-buttons">
 				<button
@@ -204,11 +203,14 @@
 	}
 
 	.mini-progress {
+		width: 100%;
 		height: 3px;
 		background: var(--color-border-default);
 		border-radius: 2px;
 		margin-bottom: 0.5rem;
 		cursor: pointer;
+		border: none;
+		padding: 0;
 	}
 
 	.mini-progress-fill {

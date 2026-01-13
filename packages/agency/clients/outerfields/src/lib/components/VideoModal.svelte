@@ -187,7 +187,7 @@
 	<div
 		class="video-player-overlay"
 		class:is-fullscreen={$videoPlayer.mode === 'fullscreen'}
-		onclick={closePlayer}
+		onclick={(e) => e.target === e.currentTarget && closePlayer()}
 		onkeydown={(e) => e.key === 'Escape' && closePlayer()}
 		role="dialog"
 		aria-modal="true"
@@ -198,9 +198,6 @@
 			bind:this={playerContainer}
 			class="video-player"
 			class:is-fullscreen={$videoPlayer.mode === 'fullscreen'}
-			onclick={(e) => e.stopPropagation()}
-			onkeydown={(e) => e.stopPropagation()}
-			role="document"
 		>
 			<div class="player-header">
 				<button

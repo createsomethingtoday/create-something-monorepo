@@ -267,11 +267,6 @@
 		max-width: 20rem;
 	}
 
-	.lock-icon {
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-md);
-	}
-
 	.gate-title {
 		font-size: var(--text-body-lg);
 		font-weight: 700;

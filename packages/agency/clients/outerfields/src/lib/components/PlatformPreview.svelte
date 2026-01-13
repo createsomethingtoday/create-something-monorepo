@@ -280,10 +280,6 @@
 		background: var(--color-bg-surface-hover);
 	}
 
-	.tab-button .material-symbols-outlined {
-		font-size: 1.25rem;
-	}
-
 	.preview-frame {
 		border-radius: 1rem;
 		overflow: hidden;
@@ -422,10 +418,6 @@
 		border: 1px solid var(--color-border-default);
 	}
 
-	.preview-btn .material-symbols-outlined {
-		font-size: 1rem;
-	}
-
 	.preview-rail {
 		padding: 1.5rem;
 	}
@@ -489,10 +481,6 @@
 		background: var(--color-bg-surface);
 	}
 
-	.sidebar-item .material-symbols-outlined {
-		font-size: 1.25rem;
-	}
-
 	.admin-main {
 		flex: 1;
 		padding: 1.5rem;
@@ -526,10 +514,6 @@
 		cursor: pointer;
 	}
 
-	.admin-upload .material-symbols-outlined {
-		font-size: 1rem;
-	}
-
 	.admin-stats {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
@@ -556,10 +540,6 @@
 		background: var(--color-bg-surface);
 		border-radius: 0.5rem;
 		color: var(--color-fg-muted);
-	}
-
-	.stat-icon .material-symbols-outlined {
-		font-size: 1rem;
 	}
 
 	.stat-info {

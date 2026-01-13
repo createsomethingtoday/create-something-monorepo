@@ -298,6 +298,7 @@
 		margin: 0 0 1.5rem;
 		display: -webkit-box;
 		-webkit-line-clamp: 3;
+		line-clamp: 3;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
@@ -553,6 +554,7 @@
 
 		.hero-description {
 			-webkit-line-clamp: 2;
+			line-clamp: 2;
 		}
 
 		.categories {

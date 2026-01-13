@@ -107,9 +107,10 @@
 
 		<div class="features-grid">
 			{#each features as feature}
+				{@const Icon = feature.icon}
 				<div class="feature-card">
 					<span class="feature-icon">
-						<svelte:component this={feature.icon} size={24} />
+						<Icon size={24} />
 					</span>
 					<h3 class="feature-title">{feature.title}</h3>
 					<p class="feature-description">{feature.description}</p>

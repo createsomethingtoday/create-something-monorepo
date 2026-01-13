@@ -723,22 +723,21 @@
 											<MoreVertical size={16} />
 										</button>
 										{#if activeActionMenu === upload.id}
-											<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-											<div class="action-menu" onclick={(e) => e.stopPropagation()} role="menu" tabindex="-1">
-												<button class="menu-item">
+											<div class="action-menu" role="menu" tabindex="-1">
+												<button class="menu-item" onclick={(e) => e.stopPropagation()}>
 													<Play size={14} />
 													Preview
 												</button>
-												<button class="menu-item">
+												<button class="menu-item" onclick={(e) => e.stopPropagation()}>
 													<Copy size={14} />
 													Duplicate
 												</button>
-												<button class="menu-item">
+												<button class="menu-item" onclick={(e) => e.stopPropagation()}>
 													<ExternalLink size={14} />
 													Share Link
 												</button>
 												<hr />
-												<button class="menu-item danger">
+												<button class="menu-item danger" onclick={(e) => e.stopPropagation()}>
 													<Trash2 size={14} />
 													Delete
 												</button>
@@ -777,10 +776,14 @@
 
 <!-- Upload Modal -->
 {#if showUploadModal}
-	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-	<div class="modal-overlay" onclick={closeModals} role="presentation">
-		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		onclick={(e) => e.target === e.currentTarget && closeModals()}
+		onkeydown={(e) => e.key === 'Escape' && closeModals()}
+		role="presentation"
+		tabindex="-1"
+	>
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title" tabindex="-1">
 			<div class="modal-header">
 				<h3 id="upload-modal-title">Upload Video</h3>
 				<button class="modal-close" onclick={closeModals}>
@@ -825,10 +828,14 @@
 
 <!-- Video Detail Modal -->
 {#if showVideoModal && selectedVideo}
-	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-	<div class="modal-overlay" onclick={closeModals} role="presentation">
-		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-		<div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="video-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		onclick={(e) => e.target === e.currentTarget && closeModals()}
+		onkeydown={(e) => e.key === 'Escape' && closeModals()}
+		role="presentation"
+		tabindex="-1"
+	>
+		<div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="video-modal-title" tabindex="-1">
 			<div class="modal-header">
 				<h3 id="video-modal-title">{selectedVideo.title}</h3>
 				<button class="modal-close" onclick={closeModals}>
@@ -892,10 +899,14 @@
 <!-- Stat Detail Modal -->
 {#if showStatDetail}
 	{@const detail = statDetails[showStatDetail]}
-	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-	<div class="modal-overlay" onclick={closeModals} role="presentation">
-		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="stat-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		onclick={(e) => e.target === e.currentTarget && closeModals()}
+		onkeydown={(e) => e.key === 'Escape' && closeModals()}
+		role="presentation"
+		tabindex="-1"
+	>
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="stat-modal-title" tabindex="-1">
 			<div class="modal-header">
 				<h3 id="stat-modal-title">{detail.title}</h3>
 				<button class="modal-close" onclick={closeModals}>
@@ -922,10 +933,14 @@
 
 <!-- Expanded Activity Modal -->
 {#if showActivityExpanded}
-	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-	<div class="modal-overlay" onclick={() => (showActivityExpanded = false)} role="presentation">
-		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-		<div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="activity-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		onclick={(e) => e.target === e.currentTarget && (showActivityExpanded = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showActivityExpanded = false)}
+		role="presentation"
+		tabindex="-1"
+	>
+		<div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="activity-modal-title" tabindex="-1">
 			<div class="modal-header">
 				<h3 id="activity-modal-title">All Activity</h3>
 				<button class="modal-close" onclick={() => (showActivityExpanded = false)}>
@@ -997,10 +1012,14 @@
 
 <!-- Analytics Modal -->
 {#if showAnalyticsModal && selectedVideo}
-	<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-	<div class="modal-overlay" onclick={closeModals} role="presentation">
-		<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-		<div class="modal modal-lg analytics-modal" role="dialog" aria-modal="true" aria-labelledby="analytics-modal-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		onclick={(e) => e.target === e.currentTarget && closeModals()}
+		onkeydown={(e) => e.key === 'Escape' && closeModals()}
+		role="presentation"
+		tabindex="-1"
+	>
+		<div class="modal modal-lg analytics-modal" role="dialog" aria-modal="true" aria-labelledby="analytics-modal-title" tabindex="-1">
 			<div class="modal-header">
 				<h3 id="analytics-modal-title">Analytics: {selectedVideo.title}</h3>
 				<button class="modal-close" onclick={closeModals}>
