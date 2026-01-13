@@ -58,7 +58,21 @@
 			// Fetch full asset details (includes short + long description fields)
 			const response = await fetch(`/api/assets/${id}`);
 			if (!response.ok) {
-				const errorData = (await response.json()) as { message?: string };
+				// If forbidden, fetch debug payload (same session/cookies) to help troubleshoot Airtable ownership matching
+				if (response.status === 403) {
+					try {
+						const dbgRes = await fetch(`/api/assets/${id}?debug=1`);
+						const dbgJson = await dbgRes.json();
+						// eslint-disable-next-line no-console
+						console.error('[EditAssetModal][OwnershipDebug]', dbgJson);
+						toast.error('Permission denied loading asset details. Debug info logged to console.');
+					} catch (e) {
+						// eslint-disable-next-line no-console
+						console.error('[EditAssetModal][OwnershipDebug] Failed to load debug info', e);
+					}
+				}
+
+				const errorData = (await response.json().catch(() => ({}))) as { message?: string };
 				throw new Error(errorData.message || 'Failed to load asset details');
 			}
 			const result = (await response.json()) as { asset: Asset };
