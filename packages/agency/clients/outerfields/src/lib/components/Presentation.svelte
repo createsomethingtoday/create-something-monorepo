@@ -117,10 +117,12 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
 	class="presentation"
 	class:fullscreen={isFullscreen}
 	bind:this={containerRef}
+	tabindex="0"
 	role="application"
 	aria-label="Presentation: {title}"
 >
