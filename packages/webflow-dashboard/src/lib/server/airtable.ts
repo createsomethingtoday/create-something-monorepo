@@ -499,7 +499,23 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					}
 				}
 
-				return false;
+				// Fallback: formula-based check (robust to Airtable field types / lookup vs string)
+				// This aligns with how we filter assets on the dashboard (getAssetsByEmail).
+				const escapedEmail = escapeAirtableString(normalizedEmail);
+				const formula = `AND(
+					RECORD_ID() = '${escapeAirtableString(assetId)}',
+					OR(
+						FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator Email}, ",")), IFERROR(LOWER({🎨📧 Creator Email}), ""))) > 0,
+						FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({🎨📧 Creator WF Account Email}, ",")), IFERROR(LOWER({🎨📧 Creator WF Account Email}), ""))) > 0,
+						FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({📧Emails (from 🎨Creator)}, ",")), IFERROR(LOWER({📧Emails (from 🎨Creator)}), ""))) > 0
+					)
+				)`;
+
+				const matches = await base(TABLES.ASSETS)
+					.select({ filterByFormula: formula, maxRecords: 1 })
+					.firstPage();
+
+				return matches.length > 0;
 			} catch {
 				return false;
 			}
