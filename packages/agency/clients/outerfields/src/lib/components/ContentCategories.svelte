@@ -21,6 +21,20 @@
 	// Cloudflare R2 CDN base URL (public bucket)
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
+	// Coming Soon thumbnails: ship with the app (Flux-generated + committed) so the
+	// landing page doesn't depend on external R2 uploads for teaser art.
+	const COMING_SOON_THUMBNAILS_BY_ID: Record<string, string> = {
+		vid_trailer_1: '/thumbnails/why-we-built.jpg',
+		vid_trailer_2: '/thumbnails/creator-first.jpg',
+		vid_trailer_3: '/thumbnails/problem-uscreen.jpg',
+		vid_trailer_4: '/thumbnails/motion-design.jpg',
+		vid_trailer_5: '/thumbnails/realtime-analytics.jpg'
+	};
+
+	function getComingSoonThumbnail(v: DbVideo): string {
+		return COMING_SOON_THUMBNAILS_BY_ID[v.id] || '/thumbnails/hero-building-outerfields.jpg';
+	}
+
 	type RowTier = 'free' | 'preview' | 'gated';
 	interface RowVideo {
 		id: string;
@@ -72,7 +86,7 @@
 		return {
 			id: v.id,
 			title: v.title,
-			thumbnail: toAssetUrl(v.thumbnail_path),
+			thumbnail: v.category === 'coming-soon' ? getComingSoonThumbnail(v) : toAssetUrl(v.thumbnail_path),
 			duration: formatClock(v.duration),
 			tier: v.tier,
 			category: v.category,
@@ -86,7 +100,7 @@
 			title: v.title,
 			description: v.description || '',
 			duration: formatClock(v.duration),
-			thumbnail: toAssetUrl(v.thumbnail_path),
+			thumbnail: v.category === 'coming-soon' ? getComingSoonThumbnail(v) : toAssetUrl(v.thumbnail_path),
 			category: titleFromCategoryId(v.category),
 			src: toAssetUrl(v.asset_path)
 		};

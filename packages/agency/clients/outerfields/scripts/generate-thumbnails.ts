@@ -43,7 +43,11 @@ function getApiToken(): string {
 		}
 	}
 
-	throw new Error('No Cloudflare API token found. Set CLOUDFLARE_API_TOKEN env var.');
+	throw new Error(
+		'No Cloudflare API token found.\n' +
+			'- Preferred: set CLOUDFLARE_API_TOKEN (API Token with access to Cloudflare AI).\n' +
+			'- Fallback: wrangler oauth_token from ~/.wrangler/config/default.toml (may not have AI permissions).\n'
+	);
 }
 
 // Consistent OUTERFIELDS visual style
@@ -180,6 +184,47 @@ const IMAGES: ImageSpec[] = [
 		fitness instructor - each in their element. Collage style composition showing
 		different creative pursuits unified by technology. Community celebration moment.
 		Inspirational, warm lighting despite dark overall aesthetic.`
+	}
+	,
+
+	// ============================================
+	// COMING SOON TRAILERS (Content Catalog)
+	// Paths match seeded D1 values under /thumbnails/trailers/trailer0X.jpg
+	// ============================================
+	{
+		filename: 'trailers/trailer01.jpg',
+		category: 'thumbnail',
+		prompt: `${STYLE}. Cinematic teaser key art for an upcoming premium docuseries.
+		Abstract silhouette on dark background, subtle purple rim light, dramatic contrast.
+		Minimal typography space, modern streaming-platform vibe, high-end trailer thumbnail.`
+	},
+	{
+		filename: 'trailers/trailer02.jpg',
+		category: 'thumbnail',
+		prompt: `${STYLE}. Close-up of a director's monitor on set showing a scene in progress.
+		Hands adjusting camera rig, moody lighting, purple accents, documentary authenticity.
+		High-end streaming trailer thumbnail composition.`
+	},
+	{
+		filename: 'trailers/trailer03.jpg',
+		category: 'thumbnail',
+		prompt: `${STYLE}. Macro shot of audio waveform and timeline editor on a dark UI.
+		Editing markers, b-roll thumbnails, purple highlights, cinematic post-production mood.
+		Premium trailer thumbnail, minimal composition.`
+	},
+	{
+		filename: 'trailers/trailer04.jpg',
+		category: 'thumbnail',
+		prompt: `${STYLE}. Wide shot of a night city scene with neon purple reflections.
+		Minimal figures, suspenseful atmosphere, cinematic lighting, clean negative space.
+		Premium streaming trailer thumbnail key art.`
+	},
+	{
+		filename: 'trailers/trailer05.jpg',
+		category: 'thumbnail',
+		prompt: `${STYLE}. Studio portrait with dramatic lighting: subject in profile, sharp rim light,
+		minimal background, purple accent glow. Premium streaming trailer thumbnail feel,
+		authentic documentary tone.`
 	}
 ];
 

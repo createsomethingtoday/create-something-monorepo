@@ -4,7 +4,7 @@
 	 * Displays a video thumbnail with metadata for horizontal category rows.
 	 * Shows lock icon for gated content, FREE badge for preview content.
 	 */
-	import { Lock } from 'lucide-svelte';
+	import { Lock, Play } from 'lucide-svelte';
 
 	interface Props {
 		id: string;
@@ -67,7 +67,9 @@
 
 		<!-- Play overlay on hover -->
 		<div class="play-overlay">
-			<div class="play-icon">▶</div>
+			<div class="play-icon" aria-hidden="true">
+				<Play size={28} />
+			</div>
 		</div>
 	</div>
 
