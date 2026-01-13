@@ -2,19 +2,17 @@
 	/**
 	 * OUTERFIELDS Feature Comparison
 	 *
-	 * Comparison table showing OUTERFIELDS vs Uscreen
+	 * Comparison table showing OUTERFIELDS vs Uscreen, YouTube, Patreon, Substack
 	 */
 	import { Infinity, CheckCircle, XCircle, Rocket } from 'lucide-svelte';
 
 	const features = [
-		{ name: 'Custom Branding', outerfields: true, uscreen: 'Limited', description: 'Full white-label customization' },
-		{ name: 'Advanced Analytics', outerfields: true, uscreen: 'Basic', description: 'Real-time engagement metrics' },
-		{ name: 'Community Features', outerfields: true, uscreen: false, description: 'Built-in forums and comments' },
-		{ name: 'AI Recommendations', outerfields: true, uscreen: false, description: 'Smart content suggestions' },
-		{ name: 'Multi-tier Pricing', outerfields: true, uscreen: true, description: 'Flexible subscription tiers' },
-		{ name: 'Live Streaming', outerfields: true, uscreen: true, description: 'Built-in live streaming' },
-		{ name: 'Mobile Apps', outerfields: 'Coming Soon', uscreen: true, description: 'Native iOS/Android apps' },
-		{ name: 'Creator Tools', outerfields: true, uscreen: 'Limited', description: 'Advanced content management' }
+		{ name: 'Lifetime Pricing', outerfields: true, uscreen: false, youtube: false, patreon: false, substack: false, description: 'One-time $99 payment, lifetime access' },
+		{ name: 'No Monthly Fees', outerfields: true, uscreen: false, youtube: false, patreon: false, substack: false, description: 'No recurring subscription charges' },
+		{ name: 'Full Ownership', outerfields: true, uscreen: 'Limited', youtube: false, patreon: false, substack: false, description: 'You own your content and platform' },
+		{ name: 'Advanced Analytics', outerfields: true, uscreen: 'Basic', youtube: 'Basic', patreon: 'Basic', substack: 'Basic', description: 'Real-time engagement metrics and AI insights' },
+		{ name: 'Community Features', outerfields: true, uscreen: false, youtube: 'Limited', patreon: true, substack: 'Limited', description: 'Built-in forums, comments, and engagement' },
+		{ name: 'Discovery Calls', outerfields: true, uscreen: false, youtube: false, patreon: false, substack: false, description: 'Included 1-on-1 strategy call with membership' }
 	] as const;
 </script>
 
@@ -24,7 +22,7 @@
 			<span class="section-badge">Why Choose Us</span>
 			<h2 class="section-title">Better Than the Competition</h2>
 			<p class="section-description">
-				See how OUTERFIELDS stacks up against Uscreen and other platforms.
+				See how OUTERFIELDS stacks up against Uscreen, YouTube, Patreon, and Substack.
 			</p>
 		</div>
 
@@ -40,6 +38,9 @@
 							OUTERFIELDS
 						</th>
 						<th class="brand-header competitor">Uscreen</th>
+						<th class="brand-header competitor">YouTube</th>
+						<th class="brand-header competitor">Patreon</th>
+						<th class="brand-header competitor">Substack</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -69,6 +70,45 @@
 									</span>
 								{:else if typeof feature.uscreen === 'string'}
 									<span class="value-text limited">{feature.uscreen}</span>
+								{:else}
+									<span class="check-icon fail">
+										<XCircle size={24} />
+									</span>
+								{/if}
+							</td>
+							<td class="value-cell">
+								{#if feature.youtube === true}
+									<span class="check-icon neutral">
+										<CheckCircle size={24} />
+									</span>
+								{:else if typeof feature.youtube === 'string'}
+									<span class="value-text limited">{feature.youtube}</span>
+								{:else}
+									<span class="check-icon fail">
+										<XCircle size={24} />
+									</span>
+								{/if}
+							</td>
+							<td class="value-cell">
+								{#if feature.patreon === true}
+									<span class="check-icon neutral">
+										<CheckCircle size={24} />
+									</span>
+								{:else if typeof feature.patreon === 'string'}
+									<span class="value-text limited">{feature.patreon}</span>
+								{:else}
+									<span class="check-icon fail">
+										<XCircle size={24} />
+									</span>
+								{/if}
+							</td>
+							<td class="value-cell">
+								{#if feature.substack === true}
+									<span class="check-icon neutral">
+										<CheckCircle size={24} />
+									</span>
+								{:else if typeof feature.substack === 'string'}
+									<span class="value-text limited">{feature.substack}</span>
 								{:else}
 									<span class="check-icon fail">
 										<XCircle size={24} />
