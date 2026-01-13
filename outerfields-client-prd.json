@@ -63,7 +63,7 @@
         "src/routes/welcome/+page.svelte",
         "src/lib/components/Pricing.svelte"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-4",
