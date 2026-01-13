@@ -201,7 +201,8 @@
 	<JourneySection />
 	<AnalyticsDashboard />
 	<PlatformComponents />
-	<AIAnalytics />
+	<!-- Client request: allow chat demo on landing page (no membership gate) -->
+	<AIAnalytics forceUnlocked />
 
 	{#if isMember}
 		<BuildProgress />
