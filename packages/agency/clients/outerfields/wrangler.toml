@@ -5,21 +5,34 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [vars]
 ENVIRONMENT = "production"
 
-# D1 Database for user accounts
+# D1 Database for user accounts, videos, and discovery calls
+# Create with: wrangler d1 create outerfields-db
+# Then replace database_id below
 [[d1_databases]]
 binding = "DB"
 database_name = "outerfields-db"
-database_id = "placeholder-will-be-created"
+database_id = "placeholder-replace-after-creation"
+preview_database_id = "placeholder-replace-after-creation"
 
-# KV Namespace for session storage
+# KV Namespace for session storage (24-hour TTL)
+# Create with: wrangler kv:namespace create SESSIONS
+# Then replace id below
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "placeholder-will-be-created"
+id = "placeholder-replace-after-creation"
+preview_id = "placeholder-replace-after-creation"
 
-# KV Namespace for video stats
+# KV Namespace for video engagement stats
 [[kv_namespaces]]
 binding = "VIDEO_STATS"
 id = "55a1177ee7c3491589c19094e38df0f7"
+
+# R2 Bucket for video assets (videos and thumbnails)
+# Create with: wrangler r2 bucket create outerfields-videos
+[[r2_buckets]]
+binding = "VIDEO_ASSETS"
+bucket_name = "outerfields-videos"
+preview_bucket_name = "outerfields-videos-preview"
 
 [ai]
 binding = "AI"

@@ -7,7 +7,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=outerfields-pcn",
+    "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=outerfields-pcn --branch=preview",
+    "migrate": "wrangler d1 migrations apply outerfields-db",
+    "migrate:list": "wrangler d1 migrations list outerfields-db",
+    "db:shell": "wrangler d1 execute outerfields-db --command",
+    "types": "wrangler types"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",

@@ -6,7 +6,7 @@
 	 * Members see full interactive dashboard with real ClickUp, Instagram, and YouTube data.
 	 */
 	import { BarChart3, TrendingUp, Users, Clock, Lock } from 'lucide-svelte';
-	import { siteConfig } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth';
 
 	interface DashboardData {
 		videoEngagement?: {
@@ -36,7 +36,7 @@
 	let error = $state<string | null>(null);
 
 	// Check if user is a member
-	const isMember = $derived($siteConfig.isMember ?? false);
+	const isMember = $derived($authStore.user?.membership ?? false);
 
 	// Fetch analytics data
 	async function fetchAnalytics() {
