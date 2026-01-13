@@ -1,338 +1,444 @@
 # HIPAA Compliance Documentation
 
-## Purpose
-
-This document defines HIPAA compliance requirements for dental practice management AI agents, including minimum necessary PHI determinations, audit procedures, incident response, and security controls.
-
-## Table of Contents
-
-1. [Minimum Necessary PHI by Workflow](#minimum-necessary-phi-by-workflow)
-2. [Audit Logging Specification](#audit-logging-specification)
-3. [Incident Response Procedures](#incident-response-procedures)
-4. [Business Associate Agreements](#business-associate-agreements)
-5. [Data Retention Policies](#data-retention-policies)
-6. [Security Risk Assessment](#security-risk-assessment)
-7. [Legal References](#legal-references)
+**Dental Practice Management Agent - Phase 3**
+**Document Version:** 1.0
+**Last Updated:** 2026-01-12
+**Regulatory References:** 45 CFR 164.502(b) (Privacy Rule), 45 CFR 164.306 (Security Rule)
 
 ---
 
-## Minimum Necessary PHI by Workflow
+## Table of Contents
 
-Per HIPAA Privacy Rule 45 CFR 164.502(b), covered entities must limit PHI access to the minimum necessary to accomplish the intended purpose. This section documents the minimum necessary determination for each workflow.
+1. [Overview](#overview)
+2. [Minimum Necessary PHI Matrix](#minimum-necessary-phi-matrix)
+3. [Audit Logging Specification](#audit-logging-specification)
+4. [Incident Response Procedures](#incident-response-procedures)
+5. [Required Business Associate Agreements (BAAs)](#required-business-associate-agreements-baas)
+6. [Data Retention Policies](#data-retention-policies)
+7. [Security Risk Assessment Template](#security-risk-assessment-template)
 
-### No-Show Recovery Workflow
+---
 
-**Purpose**: Reschedule patients who missed appointments by matching with waitlist candidates.
+## Overview
 
-| PHI Element | Required? | Rationale |
-|-------------|-----------|-----------|
-| `patient_id` | ✅ Yes | Unique identifier for linking appointments and waitlist entries |
-| `phone` | ✅ Yes | Contact method for notification delivery |
-| `email` | ✅ Yes | Alternative contact method |
-| `appointment_date` | ✅ Yes | Determines original appointment time for matching |
-| `appointment_type` | ✅ Yes | Must match procedure type (cleaning vs exam vs root canal) |
-| `status` | ✅ Yes | Identifies no-show appointments |
-| `duration` | ✅ Yes | Ensures replacement slot matches time requirements |
-| `provider_id` | ✅ Yes | Enables provider continuity preference matching |
-| `name` | ❌ No | Not needed for matching algorithm or notifications (uses patient_id) |
-| `clinical_notes` | ❌ No | Not relevant to scheduling decisions |
-| `imaging` | ❌ No | Not relevant to scheduling decisions |
-| `full_history` | ❌ No | Not relevant to scheduling decisions |
-| `treatment_plans` | ❌ No | Not relevant to scheduling decisions |
+This document outlines HIPAA compliance requirements and procedures for the Dental Practice Management Agent system. The system processes Protected Health Information (PHI) to automate dental practice workflows including appointment scheduling, insurance verification, and patient recall reminders.
 
-**Access Pattern Example**:
-```python
-# ✅ CORRECT: Minimum necessary fields
+**Regulatory Basis:**
+- **HIPAA Privacy Rule** (45 CFR 164.502(b)): Requires "minimum necessary" PHI access
+- **HIPAA Security Rule** (45 CFR 164.306): Requires administrative, physical, and technical safeguards
+
+**System Scope:**
+- No-show appointment rescheduling
+- Insurance verification workflow
+- Recall reminder system
+- Patient notification system
+
+---
+
+## Minimum Necessary PHI Matrix
+
+Per HIPAA Privacy Rule 45 CFR 164.502(b), covered entities must make reasonable efforts to limit PHI to the minimum necessary to accomplish the intended purpose.
+
+### Workflow 1: No-Show Rescheduling
+
+| PHI Field | Required | Rationale |
+|-----------|----------|-----------|
+| \`patient_id\` | ✓ | De-identified reference for tracking |
+| \`phone\` | ✓ | Required for patient contact |
+| \`email\` | ✓ | Alternative contact method |
+| \`appointment_date\` | ✓ | Scheduling context |
+| \`appointment_type\` | ✓ | Determines available provider/equipment |
+| \`status\` | ✓ | Identifies no-show appointments |
+| \`patient_name\` | ✗ | Not needed - use patient_id |
+| \`clinical_notes\` | ✗ | Not relevant to scheduling |
+| \`imaging\` | ✗ | Not relevant to scheduling |
+| \`treatment_plans\` | ✗ | Not relevant to scheduling |
+| \`full_medical_history\` | ✗ | Not relevant to scheduling |
+
+**Access Pattern:**
+\`\`\`python
+# CORRECT - Minimum necessary fields
 appointments = pms_client.get_appointments(
     status="no_show",
-    fields="patient_id,phone,email,appointment_date,appointment_type,status,duration,provider_id"
+    date_from=today - timedelta(days=7),
+    fields="patient_id,phone,email,appointment_date,appointment_type,status"
 )
 
-# ❌ WRONG: Requesting entire patient record
-appointments = pms_client.get_patient_records(status="no_show")
-```
+# INCORRECT - Over-fetching PHI
+appointments = pms_client.get_patients(patient_id)  # Returns full patient record
+\`\`\`
 
-### Insurance Verification Workflow
+### Workflow 2: Insurance Verification
 
-**Purpose**: Verify insurance eligibility for upcoming appointments.
+| PHI Field | Required | Rationale |
+|-----------|----------|-----------|
+| \`patient_id\` | ✓ | De-identified reference for tracking |
+| \`patient_dob\` | ✓ | Required for insurer verification |
+| \`insurer_id\` | ✓ | Identifies insurance provider |
+| \`procedure_codes\` | ✓ | Determines coverage eligibility |
+| \`patient_name\` | ✗ | Not needed for verification API |
+| \`balances\` | ✗ | Not relevant to eligibility check |
+| \`prior_claims\` | ✗ | Not relevant to current verification |
+| \`diagnoses\` | ✗ | Not required for eligibility |
+| \`treatment_history\` | ✗ | Not relevant to verification |
 
-| PHI Element | Required? | Rationale |
-|-------------|-----------|-----------|
-| `patient_id` | ✅ Yes | Unique identifier for linking verification results |
-| `patient_dob` | ✅ Yes | Required by insurance clearinghouse APIs for identity verification |
-| `insurer_id` | ✅ Yes | Identifies which insurance plan to verify |
-| `procedure_codes` | ✅ Yes | Determines coverage for specific procedures |
-| `appointment_date` | ✅ Yes | Verifies coverage at time of service |
-| `name` | ❌ No | Not needed for insurance API calls |
-| `phone` | ❌ No | Not needed for verification |
-| `balances` | ❌ No | Not relevant to eligibility determination |
-| `prior_claims` | ❌ No | Not relevant to eligibility determination |
-| `diagnoses` | ❌ No | Not relevant to eligibility determination |
-| `treatment_history` | ❌ No | Not relevant to eligibility determination |
-
-**Access Pattern Example**:
-```python
-# ✅ CORRECT: Minimum necessary fields
-eligibility = insurance_api.verify_eligibility(
-    patient_dob="1980-05-15",
-    insurer_id="ins_12345",
-    procedure_codes=["D0120", "D1110"]
+**Access Pattern:**
+\`\`\`python
+# CORRECT - Minimum necessary fields
+verification = insurance_api.verify_eligibility(
+    patient_dob=patient.dob,
+    insurer_id=patient.insurer_id,
+    procedure_codes=["D0120", "D0274"]
 )
 
-# ❌ WRONG: Including unnecessary patient details
-eligibility = insurance_api.verify_eligibility(
-    patient_name="John Doe",
-    patient_dob="1980-05-15",
-    patient_phone="555-0123",
-    insurer_id="ins_12345",
-    procedure_codes=["D0120", "D1110"],
-    prior_claims=prior_claim_history
-)
-```
+# INCORRECT - Over-fetching PHI
+patient_record = pms_client.get_patient_full_record(patient_id)
+\`\`\`
 
-### Recall Reminder Workflow
+### Workflow 3: Recall Reminders
 
-**Purpose**: Identify overdue patients and send reminders for preventive care.
+| PHI Field | Required | Rationale |
+|-----------|----------|-----------|
+| \`patient_id\` | ✓ | De-identified reference for tracking |
+| \`name\` | ✓ | Personalization in reminder message |
+| \`phone\` | ✓ | Required for SMS delivery |
+| \`last_visit_date\` | ✓ | Determines overdue status |
+| \`overdue_procedure_type\` | ✓ | Reminder context (e.g., "cleaning") |
+| \`detailed_chart\` | ✗ | Not relevant to reminder |
+| \`payment_status\` | ✗ | Not relevant to recall |
+| \`clinical_notes\` | ✗ | Not relevant to reminder |
+| \`imaging\` | ✗ | Not relevant to reminder |
 
-| PHI Element | Required? | Rationale |
-|-------------|-----------|-----------|
-| `patient_id` | ✅ Yes | Unique identifier for tracking reminder status |
-| `name` | ✅ Yes | Personalize reminder messages ("Hi Sarah, it's time...") |
-| `phone` | ✅ Yes | SMS delivery |
-| `email` | ✅ Yes | Email delivery |
-| `last_visit_date` | ✅ Yes | Calculate days since last visit for reminder messaging |
-| `overdue_procedure_type` | ✅ Yes | Personalize message (cleaning vs exam vs X-ray) |
-| `detailed_chart` | ❌ No | Not relevant to reminder messaging |
-| `payment_status` | ❌ No | Not relevant to preventive care reminders |
-| `clinical_notes` | ❌ No | Not relevant to reminder messaging |
-| `diagnosis_codes` | ❌ No | Not relevant to reminder messaging |
-
-**Access Pattern Example**:
-```python
-# ✅ CORRECT: Minimum necessary fields
-overdue_patients = pms_client.get_patients(
-    last_visit_before="2025-07-01",
-    fields="patient_id,name,phone,email,last_visit_date,overdue_procedure_type"
+**Access Pattern:**
+\`\`\`python
+# CORRECT - Minimum necessary fields
+overdue_patients = pms_client.get_overdue_patients(
+    procedure_type="cleaning",
+    overdue_days_min=180,
+    fields="patient_id,name,phone,last_visit_date,overdue_procedure_type"
 )
 
-# ❌ WRONG: Requesting full patient records
-overdue_patients = pms_client.get_patients(
-    last_visit_before="2025-07-01",
-    include_full_chart=True
-)
-```
+# INCORRECT - Over-fetching PHI
+patients = pms_client.get_all_patients()  # Returns full records
+\`\`\`
 
 ---
 
 ## Audit Logging Specification
 
-Per HIPAA Security Rule 45 CFR 164.312(b), information systems must implement audit controls to record and examine access to PHI.
+Per HIPAA Security Rule 45 CFR 164.312(b), implement audit controls to record and examine activity in systems containing PHI.
 
-### Required Audit Log Fields
+### Required Log Fields
 
-Every PHI access must log the following fields:
+Every PHI access event MUST log the following fields:
+
+\`\`\`json
+{
+  "timestamp": "2026-01-12T22:00:00.000Z",
+  "action": "appointment_query",
+  "actor_id": "user_abc123",
+  "actor_type": "agent",
+  "practice_id": "practice_xyz789",
+  "patient_id": "patient_456",
+  "resource_type": "appointment",
+  "resource_id": "appt_789",
+  "outcome": "success",
+  "ip_address": "192.0.2.1",
+  "user_agent": "dental-agent-router/1.0",
+  "correlation_id": "req_abc123"
+}
+\`\`\`
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `timestamp` | ISO 8601 | UTC timestamp of action | `2026-01-12T22:00:00.000Z` |
-| `action` | string | Action performed | `appointment_query`, `patient_update`, `insurance_verify` |
-| `actor_id` | string | Who performed action | `user_abc123`, `agent_scheduler_001` |
-| `actor_type` | enum | Type of actor | `human`, `agent`, `system` |
-| `practice_id` | string | Practice context | `practice_xyz789` |
-| `patient_id` | string | De-identified patient reference | `patient_456` |
-| `resource_type` | string | PHI resource accessed | `appointment`, `patient`, `insurance` |
-| `resource_id` | string | Specific resource ID | `appt_789` |
-| `outcome` | enum | Success or failure | `success`, `failure`, `partial` |
-| `ip_address` | string | Source IP (if applicable) | `192.0.2.1` |
-| `user_agent` | string | Client identifier | `dental-agent-router/1.0` |
-| `correlation_id` | string | Request trace ID | `dental_abc123` |
+| \`timestamp\` | ISO 8601 | UTC timestamp of action | \`2026-01-12T22:00:00.000Z\` |
+| \`action\` | string | Action performed | \`appointment_query\`, \`patient_update\` |
+| \`actor_id\` | string | Who performed action | \`user_abc123\`, \`agent_scheduler_001\` |
+| \`actor_type\` | enum | Type of actor | \`human\`, \`agent\`, \`system\` |
+| \`practice_id\` | string | Practice context | \`practice_xyz789\` |
+| \`patient_id\` | string | De-identified patient reference | \`patient_456\` |
+| \`resource_type\` | string | PHI resource accessed | \`appointment\`, \`patient\`, \`insurance\` |
+| \`resource_id\` | string | Specific resource ID | \`appt_789\` |
+| \`outcome\` | enum | Success or failure | \`success\`, \`failure\`, \`partial\` |
+| \`ip_address\` | string | Source IP (if applicable) | \`192.0.2.1\` |
+| \`user_agent\` | string | Client identifier | \`dental-agent-router/1.0\` |
+| \`correlation_id\` | string | Request trace ID | \`req_abc123\` |
 
-### Audit Log Retention
+### Retention Period
 
-**Requirement**: HIPAA mandates 6-year retention for audit logs.
+**Requirement:** Audit logs MUST be retained for **6 years** per HIPAA requirements (45 CFR 164.530(j)).
 
-**Implementation**:
-```typescript
-// Cloudflare KV example
-const sixYearsTTL = 6 * 365 * 24 * 60 * 60; // 189,216,000 seconds
+**Implementation:**
+\`\`\`python
+# Cloudflare KV with 6-year TTL
+six_years_ttl = 6 * 365 * 24 * 60 * 60  # 189,216,000 seconds
 await env.AUDIT_LOG.put(
-  `audit:${correlation_id}`,
-  JSON.stringify(auditEntry),
-  { expirationTtl: sixYearsTTL }
-);
-```
+    f"audit:{correlation_id}",
+    json.dumps(audit_entry),
+    expirationTtl=six_years_ttl
+)
+\`\`\`
 
-### Audit Log Query Examples
+### Query Examples
 
-**Find all accesses for a specific patient**:
-```sql
--- D1 example
-SELECT * FROM audit_logs
-WHERE patient_id = 'patient_456'
-ORDER BY timestamp DESC
-LIMIT 100;
-```
+**Example 1: Find all PHI access by a specific actor**
+\`\`\`python
+# Query audit logs for specific actor
+logs = await env.DB.prepare("""
+    SELECT * FROM audit_logs
+    WHERE actor_id = ?
+    AND timestamp >= ?
+    ORDER BY timestamp DESC
+""").bind(actor_id, cutoff_date).all()
+\`\`\`
 
-**Find all insurance verifications today**:
-```sql
-SELECT * FROM audit_logs
-WHERE action = 'insurance_verify'
-  AND timestamp >= datetime('now', 'start of day')
-ORDER BY timestamp DESC;
-```
+**Example 2: Find all access to specific patient**
+\`\`\`python
+# Query audit logs for specific patient
+logs = await env.DB.prepare("""
+    SELECT * FROM audit_logs
+    WHERE patient_id = ?
+    AND timestamp >= ?
+    ORDER BY timestamp DESC
+""").bind(patient_id, cutoff_date).all()
+\`\`\`
 
-**Find all failed operations in last 24 hours**:
-```sql
-SELECT * FROM audit_logs
-WHERE outcome = 'failure'
-  AND timestamp >= datetime('now', '-1 day')
-ORDER BY timestamp DESC;
-```
+**Example 3: Find failed PHI access attempts**
+\`\`\`python
+# Query failed access attempts
+logs = await env.DB.prepare("""
+    SELECT * FROM audit_logs
+    WHERE outcome = 'failure'
+    AND timestamp >= ?
+    ORDER BY timestamp DESC
+""").bind(cutoff_date).all()
+\`\`\`
+
+### Prohibited Logging Practices
+
+**Never log PHI directly:**
+
+\`\`\`python
+# ❌ WRONG - Logs PHI
+logger.info(f"Scheduled appointment for {patient_name} on {date}")
+
+# ✅ CORRECT - Logs action without PHI
+logger.info("Scheduled appointment", extra={
+    "patient_id": patient_id,
+    "action": "appointment_scheduled",
+    "correlation_id": correlation_id,
+    "timestamp": datetime.utcnow().isoformat()
+})
+\`\`\`
 
 ---
 
 ## Incident Response Procedures
 
-Per HIPAA Breach Notification Rule 45 CFR 164.404, covered entities must notify affected individuals, HHS, and potentially the media in case of PHI breaches.
+### PHI Breach Definition
 
-### Definition of a Breach
-
-A breach is an impermissible use or disclosure that compromises the security or privacy of PHI.
-
-**Examples of Breaches**:
-- PHI exposed in application logs
-- PHI sent to incorrect patient
-- Unauthorized access to patient records
-- Lost or stolen device containing unencrypted PHI
-- PHI visible in email subject lines
-
-**Not Considered Breaches** (if immediately corrected):
-- Unintentional access by authorized staff acting in good faith
-- Inadvertent disclosure to another authorized person at the practice
-- PHI that cannot reasonably be retained
+A breach is the acquisition, access, use, or disclosure of PHI in a manner not permitted under the HIPAA Privacy Rule that compromises the security or privacy of the PHI (45 CFR 164.402).
 
 ### Incident Response Steps
 
-**1. Detection and Containment (0-1 hour)**
+#### 1. Detection and Containment (0-2 hours)
 
-- Identify the breach source and scope
-- Immediately disable affected system access
-- Preserve evidence (logs, screenshots, affected systems)
-- Notify security team and practice administrator
+**Immediate Actions:**
+1. Identify the scope of the breach:
+   - Which patients are affected?
+   - What PHI was exposed?
+   - How was it exposed?
+   - When did the breach occur?
 
-**Action Checklist**:
-- [ ] Stop the breach (disable access, revoke credentials)
-- [ ] Document timeline (when breach occurred, when detected)
-- [ ] Preserve all relevant logs and system states
-- [ ] Notify practice security officer
+2. Contain the breach:
+   - Disable compromised credentials immediately
+   - Rotate API keys if compromised
+   - Block suspicious IP addresses
+   - Isolate affected systems
 
-**2. Assessment (1-24 hours)**
+**Query Example - Identify affected patients:**
+\`\`\`python
+# Find all patients accessed during breach window
+affected_patients = await env.DB.prepare("""
+    SELECT DISTINCT patient_id
+    FROM audit_logs
+    WHERE timestamp BETWEEN ? AND ?
+    AND (actor_id = ? OR ip_address = ?)
+""").bind(breach_start, breach_end, compromised_actor_id, suspicious_ip).all()
+\`\`\`
 
-Determine:
-- How many patients affected?
-- What PHI was exposed (names, DOB, SSN, diagnosis codes, etc.)?
-- Was PHI encrypted?
-- Who had unauthorized access?
-- What is the likelihood of re-identification?
+#### 2. Risk Assessment (2-24 hours)
 
-**Risk Assessment Matrix**:
+Determine if the breach requires notification per 45 CFR 164.402:
 
-| PHI Type | Encrypted? | Exposure Scope | Risk Level |
-|----------|-----------|----------------|------------|
-| Patient IDs only | Yes | Internal staff | Low |
-| Patient IDs only | No | External | Medium |
-| Names + DOB | Yes | Internal staff | Medium |
-| Names + DOB | No | External | High |
-| Names + DOB + SSN | Any | Any | Critical |
-| Clinical notes | Any | External | Critical |
+| Factor | Low Risk | High Risk |
+|--------|----------|-----------|
+| **PHI Type** | De-identified IDs only | Names, DOB, SSN, clinical data |
+| **Access Duration** | <1 hour | >24 hours |
+| **Recipient** | Internal authorized user | External unauthorized party |
+| **Data Use** | No evidence of use | Evidence of data extraction |
+| **Mitigation** | Immediate containment | Delayed detection |
 
-**3. Notification (24-60 days)**
+**Risk Assessment Template:**
+\`\`\`
+Breach ID: [AUTO-GENERATED]
+Date Detected: [TIMESTAMP]
+Detection Method: [Monitoring alert / User report / Audit review]
 
-Per 45 CFR 164.404(b), notification must occur **without unreasonable delay** and **no later than 60 days** after discovery.
+Scope:
+- Patients Affected: [COUNT]
+- PHI Fields Exposed: [LIST]
+- Access Duration: [HOURS]
+- Access Method: [API / Direct DB / Export]
 
-**Who to Notify**:
+Risk Level: [LOW / MEDIUM / HIGH]
+Notification Required: [YES / NO]
+Justification: [FREE TEXT]
 
-| Recipients | When | Method |
-|-----------|------|--------|
-| **Affected individuals** | < 500 people: within 60 days | Written notice (first-class mail or email if opted in) |
-| **Affected individuals** | ≥ 500 people: immediately | Written notice + substitute notice (media or prominent web posting) |
-| **HHS** | < 500 people: annually | Log on HHS web portal |
-| **HHS** | ≥ 500 people: within 60 days | Immediate report to HHS |
-| **Media** | ≥ 500 people in state/jurisdiction | Prominent media outlets |
+Containment Actions Taken:
+- [ACTION 1 with timestamp]
+- [ACTION 2 with timestamp]
+\`\`\`
 
-**Notification Content Requirements**:
+#### 3. Notification (24-60 days)
 
-Notices must include:
-- Brief description of what happened
-- Types of PHI involved (names, DOB, SSN, etc.)
-- Steps individuals should take to protect themselves
-- What the practice is doing to investigate and prevent recurrence
-- Contact information for questions
+**If breach affects 500+ individuals:**
+- Notify affected individuals within 60 days (45 CFR 164.404)
+- Notify HHS Office for Civil Rights within 60 days
+- Notify prominent media outlets
 
-**4. Remediation and Documentation**
+**If breach affects <500 individuals:**
+- Notify affected individuals within 60 days
+- Document in annual report to HHS
 
-- Implement fixes to prevent recurrence
-- Update security policies and training
-- Document entire incident response process
-- Retain all documentation for 6 years
+**Notification Template (Patient):**
+\`\`\`
+Subject: Important Notice Regarding Your Health Information
+
+Dear [Patient Name],
+
+We are writing to inform you of a data security incident that may have
+involved some of your protected health information.
+
+What Happened:
+[Brief description of incident]
+
+What Information Was Involved:
+[Specific PHI fields exposed]
+
+What We Are Doing:
+[Steps taken to investigate and prevent recurrence]
+
+What You Can Do:
+[Recommended actions for patient]
+
+For More Information:
+Contact: [Practice contact information]
+Reference: [Incident ID]
+
+Sincerely,
+[Practice Name]
+[HIPAA Privacy Officer Contact]
+\`\`\`
+
+#### 4. Documentation (Ongoing)
+
+Maintain a breach log per 45 CFR 164.414(b):
+
+\`\`\`python
+# Breach log entry
+breach_log = {
+    "breach_id": "breach_001",
+    "date_discovered": "2026-01-12T10:30:00Z",
+    "date_occurred": "2026-01-10T14:00:00Z",
+    "description": "Unauthorized API access via compromised credentials",
+    "patients_affected": 127,
+    "phi_exposed": ["patient_id", "phone", "email", "appointment_dates"],
+    "notification_date": "2026-02-15",
+    "corrective_actions": [
+        "Rotated all API keys",
+        "Implemented IP allowlisting",
+        "Enhanced monitoring alerts"
+    ]
+}
+\`\`\`
 
 ---
 
-## Business Associate Agreements
+## Required Business Associate Agreements (BAAs)
 
-Per HIPAA Privacy Rule 45 CFR 164.502(e), covered entities must have signed Business Associate Agreements (BAAs) with all vendors who access PHI.
+Per HIPAA Privacy Rule 45 CFR 164.502(e), covered entities must obtain satisfactory assurances through a Business Associate Agreement (BAA) that the business associate will appropriately safeguard PHI.
 
 ### Required BAAs
 
-| Vendor Type | Examples | BAA Required? |
-|-------------|----------|---------------|
-| **Cloud Hosting** | Cloudflare, Modal, AWS | ✅ Yes |
-| **PMS Vendors** | Dentrix, Open Dental, Eaglesoft | ✅ Yes |
-| **Insurance Clearinghouses** | Availity, Change Healthcare, DentalXChange | ✅ Yes |
-| **Communication Providers** | Twilio (SMS), SendGrid (email) | ✅ Yes |
-| **AI Model Providers** | Anthropic (Claude Code) | ✅ Yes |
-| **Analytics** | Only if receiving PHI | ✅ Yes if PHI shared |
-| **Backup Providers** | If storing PHI backups | ✅ Yes |
+| Service Provider | Service Type | PHI Exposure | BAA Required |
+|-----------------|--------------|--------------|--------------|
+| **Twilio** | SMS notifications | Patient phone numbers, appointment reminders | ✓ Yes |
+| **SendGrid** | Email notifications | Patient emails, appointment reminders | ✓ Yes |
+| **Dentrix** | PMS integration | Full patient records, appointments, clinical data | ✓ Yes |
+| **Open Dental** | PMS integration | Full patient records, appointments, clinical data | ✓ Yes |
+| **Eaglesoft** | PMS integration | Full patient records, appointments, clinical data | ✓ Yes |
+| **Insurance APIs** | Eligibility verification | Patient DOB, insurer ID, procedure codes | ✓ Yes |
+| **Cloudflare** | Hosting infrastructure | All stored PHI (D1, KV, R2) | ✓ Yes |
+| **Anthropic Claude** | AI processing | De-identified data only (no direct PHI exposure) | ✓ Yes (precautionary) |
 
 ### BAA Template Clauses
 
-**1. Permitted Uses**
+Every BAA MUST include:
 
-> "Business Associate agrees to use and disclose PHI only as permitted by this Agreement or as required by law. Business Associate may use or disclose PHI for the following purposes:
-> - No-show appointment recovery
-> - Insurance eligibility verification
-> - Patient recall reminders
-> - Aggregate analytics (de-identified data only)"
+1. **Permitted Uses and Disclosures**
+   \`\`\`
+   Business Associate may use or disclose PHI only to perform the
+   following services for Covered Entity:
+   - [Specific service description]
+   - [No broader permissions]
+   \`\`\`
 
-**2. Safeguards**
+2. **Safeguards Requirement**
+   \`\`\`
+   Business Associate agrees to implement administrative, physical,
+   and technical safeguards that reasonably and appropriately protect
+   the confidentiality, integrity, and availability of electronic PHI.
+   \`\`\`
 
-> "Business Associate agrees to implement administrative, physical, and technical safeguards that reasonably and appropriately protect the confidentiality, integrity, and availability of electronic PHI (ePHI), including:
-> - Encryption at rest (AES-256)
-> - Encryption in transit (TLS 1.3+)
-> - Access controls (role-based, least privilege)
-> - Audit logging (6-year retention)
-> - Regular security risk assessments"
+3. **Subcontractor Requirements**
+   \`\`\`
+   Business Associate shall ensure that any subcontractors that create,
+   receive, maintain, or transmit PHI on behalf of Business Associate
+   agree to the same restrictions and conditions that apply to Business
+   Associate.
+   \`\`\`
 
-**3. Breach Notification**
+4. **Breach Notification**
+   \`\`\`
+   Business Associate shall notify Covered Entity of any breach of
+   unsecured PHI within 60 days of discovery.
+   \`\`\`
 
-> "Business Associate agrees to notify Covered Entity of any Breach of Unsecured PHI within **60 calendar days** of discovery. Notification shall include:
-> - Description of breach
-> - Types of PHI involved
-> - Number of individuals affected
-> - Date of breach discovery
-> - Mitigation steps taken"
+5. **Audit Rights**
+   \`\`\`
+   Covered Entity has the right to audit Business Associate's compliance
+   with this Agreement and applicable HIPAA regulations.
+   \`\`\`
 
-**4. Subcontractors**
+6. **Data Destruction**
+   \`\`\`
+   Upon termination, Business Associate shall return or destroy all PHI
+   and retain no copies, except as required by law.
+   \`\`\`
 
-> "Business Associate shall ensure that any subcontractors who access PHI agree to substantially similar BAA terms as those imposed on Business Associate."
+### BAA Verification Checklist
 
-**5. Data Destruction**
+Before going live with any vendor:
 
-> "Upon termination of this Agreement, Business Associate shall return or destroy all PHI in its possession, except where retention is required by law."
-
-**6. Audit Rights**
-
-> "Covered Entity has the right to audit Business Associate's compliance with this Agreement and applicable HIPAA regulations upon reasonable notice."
+- [ ] BAA executed and signed by both parties
+- [ ] BAA includes all required clauses above
+- [ ] Vendor's security documentation reviewed
+- [ ] Vendor's incident response procedures documented
+- [ ] Vendor's encryption standards verified (TLS 1.3+, AES-256)
+- [ ] Vendor's audit log capabilities confirmed
+- [ ] Vendor's data retention policies documented
+- [ ] Emergency contact information obtained
 
 ---
 
@@ -340,182 +446,212 @@ Per HIPAA Privacy Rule 45 CFR 164.502(e), covered entities must have signed Busi
 
 ### Audit Logs: 6 Years
 
-**Requirement**: HIPAA Security Rule 45 CFR 164.316(b)(2)(i) requires audit logs be retained for 6 years.
+**Requirement:** Per HIPAA 45 CFR 164.530(j), audit logs must be retained for 6 years.
 
-**Implementation**:
-```typescript
-// Cloudflare KV with 6-year TTL
-const SIX_YEARS_IN_SECONDS = 189216000;
-await env.AUDIT_LOG.put(
-  `audit:${correlation_id}`,
-  JSON.stringify(auditEntry),
-  { expirationTtl: SIX_YEARS_IN_SECONDS }
-);
-```
+**Implementation:**
+- Store in Cloudflare KV with 6-year TTL (189,216,000 seconds)
+- Backup to R2 for redundancy
+- Immutable append-only logs (no deletion/modification)
+
+**Verification:**
+\`\`\`python
+# Verify retention policy
+six_years_seconds = 6 * 365 * 24 * 60 * 60
+assert audit_log_ttl == six_years_seconds, "Audit log TTL must be 6 years"
+\`\`\`
 
 ### Confirmation Links: 24 Hours
 
-**Requirement**: Patient confirmation links should expire after 24 hours to minimize risk window.
+**Requirement:** Patient confirmation links for appointment rescheduling expire after 24 hours to minimize exposure window.
 
-**Implementation**:
-```python
-# HMAC-based confirmation link with 24-hour expiry
-CONFIRMATION_LINK_EXPIRY_HOURS = 24
+**Implementation:**
+\`\`\`python
+# Generate confirmation link with 24-hour expiration
+expiration_time = int(time.time()) + (24 * 60 * 60)  # 24 hours
+confirmation_link = generate_confirmation_link(
+    patient_id=patient_id,
+    appointment_id=appointment_id,
+    expiration=expiration_time
+)
+\`\`\`
 
-def generate_confirmation_link(patient_id: str, appointment_id: str) -> str:
-    expires_at = int(time.time()) + (CONFIRMATION_LINK_EXPIRY_HOURS * 3600)
-    # ... HMAC signature generation
-```
+**Rationale:** Reduces risk of unauthorized access if link is intercepted.
 
-### Rate Limit Counters: 24 Hours
+### PMS API Credentials: 90 Days
 
-**Requirement**: Notification rate limits use 24-hour sliding windows.
+**Requirement:** Rotate PMS API credentials quarterly (every 90 days).
 
-**Implementation**:
-```python
-# Rate limit counter with 24-hour TTL
-rate_limit_ttl = 24 * 60 * 60  # 86,400 seconds
-await redis.setex(f"rate_limit:{patient_id}", rate_limit_ttl, notification_count)
-```
+**Implementation:**
+- Calendar reminder for credential rotation
+- Automated notification 7 days before expiration
+- Grace period: 7 days after expiration (with warnings)
 
-### Patient Records: Varies by State
+**Rotation Procedure:**
+\`\`\`python
+# Check credential age
+credential_age_days = (datetime.now() - credential_created_date).days
+if credential_age_days > 90:
+    logger.warning(f"PMS credential age: {credential_age_days} days - rotation required")
+    # Trigger rotation workflow
+\`\`\`
 
-**Note**: Patient medical records retention varies by state law (typically 7-10 years after last treatment, or longer for minors).
+### Patient Session Timeout: 15 Minutes
 
-**This system does NOT store patient medical records**, only operational data (appointments, insurance verifications, reminders). Retention of operational data follows practice's own policies.
+**Requirement:** Inactive sessions with PHI access expire after 15 minutes.
 
----
+**Implementation:**
+\`\`\`python
+# Session timeout configuration
+SESSION_TIMEOUT_SECONDS = 15 * 60  # 15 minutes
 
-## Security Risk Assessment
-
-Per HIPAA Security Rule 45 CFR 164.308(a)(1)(ii)(A), covered entities must conduct periodic risk assessments.
-
-### Risk Assessment Template
-
-Complete this assessment **annually** or after significant system changes.
-
-#### 1. Asset Inventory
-
-| Asset | PHI Stored? | Encryption? | Access Controls? |
-|-------|-------------|-------------|------------------|
-| D1 Database (practice configs) | Yes (patient_id references) | ✅ Yes (at rest) | ✅ Yes (Cloudflare IAM) |
-| KV Namespace (audit logs) | Yes (patient_id references) | ✅ Yes (at rest) | ✅ Yes (Cloudflare IAM) |
-| Modal Backend (agent execution) | Transient only | ✅ Yes (in transit TLS 1.3) | ✅ Yes (API key auth) |
-| PMS API Credentials | Yes (stored encrypted) | ✅ Yes (AES-256) | ✅ Yes (Cloudflare Workers KMS) |
-
-#### 2. Threat Identification
-
-| Threat | Likelihood | Impact | Risk Level |
-|--------|------------|--------|------------|
-| Unauthorized access to D1 database | Low | High | Medium |
-| PHI exposure in application logs | Medium | High | **High** |
-| Compromised PMS API credentials | Low | Critical | Medium |
-| Rate limit bypass (notification spam) | Medium | Low | Low |
-| HMAC signature forgery | Low | Medium | Low |
-| Insider threat (practice staff) | Medium | Medium | Medium |
-| DDoS attack on edge router | Medium | Low | Low |
-
-#### 3. Mitigation Controls
-
-| Threat | Mitigation | Effectiveness |
-|--------|-----------|---------------|
-| Unauthorized D1 access | Cloudflare IAM, least privilege roles | ✅ Effective |
-| PHI in logs | Audit all log statements, use only patient_id | ✅ Effective |
-| Compromised credentials | Quarterly rotation, encrypted storage, KMS | ✅ Effective |
-| Rate limit bypass | Sliding window rate limiting, per-patient counters | ✅ Effective |
-| HMAC forgery | HMAC-SHA256 with strong secret, constant-time comparison | ✅ Effective |
-| Insider threat | Audit logging, correlation IDs, quarterly access reviews | ⚠️ Partial |
-| DDoS | Cloudflare DDoS protection, rate limiting | ✅ Effective |
-
-#### 4. Residual Risk
-
-After implementing all controls:
-
-| Risk Area | Residual Risk | Acceptance |
-|-----------|---------------|------------|
-| PHI exposure in logs | **Medium** (human error possible) | Mitigate with code review + quarterly log audits |
-| Insider threat | **Medium** (authorized access hard to prevent) | Mitigate with audit logging + correlation ID tracking |
-| All other threats | **Low** | Acceptable |
-
-#### 5. Action Items
-
-- [ ] Quarterly: Rotate PMS API credentials
-- [ ] Quarterly: Audit all log statements for PHI leakage
-- [ ] Quarterly: Review user access permissions
-- [ ] Annually: Conduct full HIPAA Security Rule assessment
-- [ ] Annually: Update BAAs with all vendors
-- [ ] Continuously: Monitor audit logs for anomalous access patterns
+# Verify timeout
+if (current_time - last_activity_time) > SESSION_TIMEOUT_SECONDS:
+    # Terminate session
+    await terminate_session(session_id)
+\`\`\`
 
 ---
 
-## Legal References
+## Security Risk Assessment Template
 
-### HIPAA Privacy Rule
+Per HIPAA Security Rule 45 CFR 164.308(a)(1)(ii)(A), conduct annual security risk assessments.
 
-**45 CFR 164.502(b)** - Minimum Necessary Standard
-> "A covered entity must make reasonable efforts to limit protected health information to the minimum necessary to accomplish the intended purpose."
+### Risk Assessment Framework
 
-**45 CFR 164.512** - Uses and Disclosures for Treatment, Payment, and Health Care Operations
-> Permits PHI use for treatment (appointment scheduling), payment (insurance verification), and operations (recall reminders) without patient authorization.
+#### Step 1: Identify PHI Assets
 
-### HIPAA Security Rule
+| Asset | PHI Type | Storage Location | Access Method |
+|-------|----------|------------------|---------------|
+| Appointment records | Patient ID, dates, provider | Dentrix PMS | API |
+| Patient demographics | Name, DOB, contact info | Open Dental PMS | API |
+| Insurance records | Policy numbers, eligibility | Insurance API | API |
+| Audit logs | De-identified access logs | Cloudflare KV | Direct |
+| Confirmation links | HMAC-signed URLs | Email/SMS | One-time use |
 
-**45 CFR 164.306** - Security Standards: General Rules
-> "Covered entities must ensure the confidentiality, integrity, and availability of all electronic protected health information (ePHI) the covered entity creates, receives, maintains, or transmits."
+#### Step 2: Identify Threats and Vulnerabilities
 
-**45 CFR 164.312(b)** - Audit Controls
-> "Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use electronic protected health information."
+| Threat | Vulnerability | Likelihood | Impact | Risk Score |
+|--------|--------------|------------|--------|------------|
+| Unauthorized API access | Weak credentials | Medium | High | High |
+| PHI exposure in logs | Improper logging | Low | Critical | High |
+| HMAC link compromise | Timing attack | Low | Medium | Medium |
+| Rate limit bypass | Insufficient throttling | Low | Medium | Low |
+| Session hijacking | Long timeout | Medium | High | High |
+| SQL injection | Unparameterized queries | Low | Critical | Medium |
 
-**45 CFR 164.316(b)(2)(i)** - Time Limit for Retention
-> "Retain documentation for 6 years from the date of creation or the date when it last was in effect, whichever is later."
+**Risk Score Formula:**
+\`\`\`
+Risk Score = Likelihood × Impact
+- Low: 1-3
+- Medium: 4-6
+- High: 7-9
+- Critical: 10+
+\`\`\`
 
-### HIPAA Breach Notification Rule
+#### Step 3: Document Current Controls
 
-**45 CFR 164.404** - Notification to Individuals
-> "Covered entity shall notify each individual whose unsecured PHI has been, or is reasonably believed to have been, accessed, acquired, used, or disclosed as a result of a breach."
+| Control | Type | Implementation | Effectiveness |
+|---------|------|----------------|---------------|
+| API authentication | Technical | OAuth 2.0 + API keys | High |
+| Encryption at rest | Technical | AES-256 (Cloudflare) | High |
+| Encryption in transit | Technical | TLS 1.3 | High |
+| Audit logging | Technical | All PHI access logged | High |
+| Rate limiting | Technical | 3 notifications/patient/day | Medium |
+| HMAC verification | Technical | Constant-time comparison | High |
+| Session timeout | Administrative | 15-minute inactivity | Medium |
+| Minimum necessary | Administrative | PHI field restrictions | High |
 
-**45 CFR 164.408** - Notification to the Secretary (HHS)
-> "If breach affects ≥500 individuals: notify HHS within 60 days. If < 500 individuals: log annually."
+#### Step 4: Identify Gaps and Recommendations
+
+| Gap | Recommendation | Priority | Timeline |
+|-----|----------------|----------|----------|
+| No automated credential rotation | Implement 90-day rotation | High | Q1 2026 |
+| Manual audit log review | Implement automated alerting | Medium | Q2 2026 |
+| Single-factor API authentication | Require MFA for human users | High | Q1 2026 |
+| No penetration testing | Engage third-party security firm | Medium | Q2 2026 |
+| No disaster recovery drill | Schedule annual DR test | Low | Q3 2026 |
+
+#### Step 5: Annual Review Schedule
+
+**Quarterly Reviews:**
+- Q1: Credential rotation verification
+- Q2: Audit log analysis
+- Q3: Vendor BAA status check
+- Q4: Full risk assessment update
+
+**Annual Deep Dive:**
+- External penetration testing
+- Security control effectiveness review
+- Incident response drill
+- HIPAA regulation update review
+
+### Assessment Documentation
+
+\`\`\`
+Security Risk Assessment
+Date: [YYYY-MM-DD]
+Assessor: [Name, Title]
+Scope: Dental Practice Management Agent System
+
+Executive Summary:
+[2-3 paragraphs summarizing findings]
+
+Assets Reviewed: [COUNT]
+Threats Identified: [COUNT]
+High-Risk Items: [COUNT]
+Recommendations: [COUNT]
+
+Next Assessment Due: [YYYY-MM-DD]
+
+Signature: ___________________
+HIPAA Security Officer
+\`\`\`
 
 ---
 
-## Implementation Checklist
+## Appendix: Quick Reference
 
-### Development Phase
+### Minimum Necessary Checklist
 
-- [ ] All PHI access queries use minimum necessary fields
-- [ ] No PHI in application logs (only patient_id, appointment_id)
-- [ ] Encryption implemented (AES-256 at rest, TLS 1.3 in transit)
-- [ ] Audit logging implemented with 6-year retention
-- [ ] HMAC-SHA256 for confirmation links with 24-hour expiry
-- [ ] Rate limiting implemented (3 notifications/day per patient)
+Before accessing PHI, ask:
+1. Can I use patient_id instead of patient_name?
+2. Do I need full patient record, or just specific fields?
+3. Can I filter the query to reduce result set?
+4. Is there a more limited field set that would work?
 
-### Deployment Phase
+### Audit Logging Checklist
 
-- [ ] BAAs signed with all vendors (Cloudflare, Modal, Anthropic, Twilio, SendGrid, PMS vendors)
-- [ ] PMS API credentials encrypted and stored securely
-- [ ] Cloudflare Workers KMS configured for credential decryption
-- [ ] D1 database access restricted to authorized roles only
-- [ ] Penetration testing completed
-- [ ] Vulnerability scanning scheduled
+Every PHI access must log:
+- [ ] Timestamp (ISO 8601)
+- [ ] Action performed
+- [ ] Actor ID and type
+- [ ] Patient ID (de-identified)
+- [ ] Resource accessed
+- [ ] Outcome (success/failure)
+- [ ] Correlation ID
 
-### Operational Phase
+### Incident Response Contacts
 
-- [ ] Quarterly credential rotation scheduled
-- [ ] Quarterly log audit for PHI leakage
-- [ ] Quarterly access control review
-- [ ] Annual HIPAA Security Rule risk assessment
-- [ ] Annual BAA review with all vendors
-- [ ] Incident response plan tested at least annually
-- [ ] Staff training completed on PHI handling
+| Role | Name | Phone | Email |
+|------|------|-------|-------|
+| HIPAA Privacy Officer | [TBD] | [TBD] | [TBD] |
+| HIPAA Security Officer | [TBD] | [TBD] | [TBD] |
+| Practice Manager | [TBD] | [TBD] | [TBD] |
+| IT Director | [TBD] | [TBD] | [TBD] |
+| Legal Counsel | [TBD] | [TBD] | [TBD] |
 
 ---
 
-## Conclusion
+## Document Revision History
 
-This HIPAA Compliance Documentation provides the foundation for secure, compliant dental practice management AI agents. All workflows, audit procedures, and incident response protocols reference this document as the authoritative source for compliance requirements.
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0 | 2026-01-12 | Dental Agent Team | Initial documentation |
 
-**For Questions**: Contact the practice's HIPAA Security Officer or legal counsel.
+---
 
-**Last Updated**: 2026-01-12
-**Review Frequency**: Annually or after significant system changes
+**References:**
+- HIPAA Privacy Rule: 45 CFR Part 164 Subpart E
+- HIPAA Security Rule: 45 CFR Part 164 Subpart C
+- HHS Breach Notification Rule: 45 CFR Part 164 Subpart D
+- HHS Guidance on Minimum Necessary: https://www.hhs.gov/hipaa/for-professionals/privacy/guidance/minimum-necessary-requirement/index.html
