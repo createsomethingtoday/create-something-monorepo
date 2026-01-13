@@ -1,0 +1,304 @@
+{
+  "title": "Outerfields: Netflix-Style Gated Membership Platform",
+  "description": "Build a gated video platform with 7 content categories, 50+ videos, $99 lifetime membership, and Stripe/Calendly integrations",
+  "created": "2026-01-12T00:00:00Z",
+  "target_package": "packages/agency/clients/outerfields",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Implement gated video playback system with 30-60 second previews",
+      "description": "Create VideoPlayer component that plays 30-60 seconds then shows subscription gate overlay. Gate should be smooth, professional, and clearly prompt $99 membership.",
+      "acceptance": [
+        "VideoPlayer component plays video for 30-60 seconds for non-members",
+        "At time limit, video pauses and gate overlay fades in smoothly",
+        "Gate overlay shows 'Subscribe to continue watching' with value statement",
+        "Clear CTA button to $99 membership",
+        "Gate does NOT appear for authenticated members",
+        "Video resumes playback after successful subscription"
+      ],
+      "files": [
+        "src/lib/components/VideoPlayer.svelte",
+        "src/lib/stores/auth.ts",
+        "src/lib/utils/video-gating.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-2",
+      "title": "Create authentication system with member/non-member states",
+      "description": "Implement auth system that tracks membership status. Members see full videos, non-members see previews. Use Cloudflare D1 for user storage.",
+      "acceptance": [
+        "Auth store tracks authentication state (authenticated, unauthenticated)",
+        "Auth store tracks membership status (member, non-member)",
+        "Login page at /login with email/password",
+        "Session persists in KV with 24-hour expiration",
+        "Middleware checks auth status on gated routes",
+        "Logout functionality clears session"
+      ],
+      "files": [
+        "src/lib/stores/auth.ts",
+        "src/routes/login/+page.svelte",
+        "src/routes/api/auth/login/+server.ts",
+        "src/routes/api/auth/logout/+server.ts",
+        "src/hooks.server.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-3",
+      "title": "Build Stripe $99 lifetime membership checkout flow",
+      "description": "Integrate Stripe for one-time $99 payment. On success, grant lifetime membership access and redirect to welcome page.",
+      "acceptance": [
+        "Pricing section shows single $99 lifetime membership option",
+        "CTA button 'Become a Founding Member - $99' redirects to Stripe Checkout",
+        "Stripe Checkout Session created with $99 one-time payment",
+        "Webhook at /api/stripe/webhook handles checkout.session.completed",
+        "On success, user record updated with membership: true",
+        "User redirected to /welcome with membership access",
+        "Welcome email sent with platform access instructions"
+      ],
+      "files": [
+        "src/routes/api/stripe/checkout/+server.ts",
+        "src/routes/api/stripe/webhook/+server.ts",
+        "src/routes/welcome/+page.svelte",
+        "src/lib/components/Pricing.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-4",
+      "title": "Create Netflix-style content categories with horizontal scrolling",
+      "description": "Implement 7 content categories: Crew Call (20+ eps), Reconnecting Relationships (3 eps), Kodiak (8 eps), Lincoln Manufacturing (7-8 eps), Guns Out TV (13 eps), Films (1), Coming Soon (5 trailers). Each category is a horizontal scroll row.",
+      "acceptance": [
+        "CategoryRow component with horizontal scroll",
+        "VideoCard component shows thumbnail, title, duration, lock icon if gated",
+        "7 categories rendered with correct episode counts",
+        "First episode of each series marked as 'FREE'",
+        "Episodes 2+ show lock icon for non-members",
+        "All 5 trailers in 'Coming Soon' marked as 'FREE'",
+        "Responsive: mobile shows 1-2 cards, tablet 3-4, desktop 5-6 visible",
+        "Smooth scroll animation with Canon tokens"
+      ],
+      "files": [
+        "src/lib/components/CategoryRow.svelte",
+        "src/lib/components/VideoCard.svelte",
+        "src/routes/+page.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-5",
+      "title": "Create video content database with tiering metadata",
+      "description": "Set up Cloudflare D1 database with videos table. Store all 50+ videos with metadata: category, episode number, tier (free/preview/gated), duration, R2 asset path.",
+      "acceptance": [
+        "D1 migration creates 'videos' table",
+        "Videos table has: id, title, category, episode_number, tier, duration, asset_path, thumbnail_path",
+        "Seed data includes all 50+ videos from PDF",
+        "Tier 1 (free): 5 trailers + 5 first episodes (10 videos)",
+        "Tier 2 (preview+gate): All episodes 2+ (~40 videos)",
+        "API endpoint /api/videos returns videos by category",
+        "API endpoint /api/videos/[id] returns single video details"
+      ],
+      "files": [
+        "migrations/0002_videos.sql",
+        "src/lib/server/db/videos.ts",
+        "src/routes/api/videos/+server.ts",
+        "src/routes/api/videos/[id]/+server.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-6",
+      "title": "Revise Pricing section to single $99 lifetime offer",
+      "description": "Replace existing 3-tier pricing with single Founding Member offer. Include all 6 benefits, urgency messaging, and CTA button.",
+      "acceptance": [
+        "Pricing section shows ONLY $99 lifetime membership",
+        "Title: 'The Only Option: Founding Member - $99 Lifetime Access'",
+        "Lists 6 benefits: Platform access, Behind-the-scenes, Education, Resources, Discovery call, Merchandise",
+        "Urgency messaging: 'This price will NOT last forever', 'Founding member pricing'",
+        "CTA button: 'Become a Founding Member - $99'",
+        "Button links to Stripe checkout flow",
+        "Remove all other pricing tiers completely",
+        "Uses Canon tokens for styling"
+      ],
+      "files": [
+        "src/lib/components/Pricing.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-7",
+      "title": "Build Analytics Dashboard preview with gated overlay",
+      "description": "Create analytics dashboard section that shows preview of metrics (view counts, engagement, project progress) with blur effect or 'Members Only' overlay for non-members.",
+      "acceptance": [
+        "Analytics section positioned BEFORE 'Experience the Platform'",
+        "Shows preview of: Video engagement, view counts, replay patterns, project/task progress",
+        "Non-members see blurred content or 'Members Only' overlay",
+        "Analytics Chatbot feature teased: 'Ask Your Analytics Anything'",
+        "Members see full interactive dashboard with real data",
+        "Connect to real APIs: ClickUp tasks, Instagram metrics, YouTube stats",
+        "Blur effect uses Canon tokens and CSS backdrop-filter"
+      ],
+      "files": [
+        "src/lib/components/AnalyticsDashboard.svelte",
+        "src/routes/api/analytics/clickup/+server.ts",
+        "src/routes/api/analytics/instagram/+server.ts",
+        "src/routes/api/analytics/youtube/+server.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-8",
+      "title": "Update Component Lab to show tool previews with membership gates",
+      "description": "Rename to 'Digital Tools' section. Show 4 tool previews: Brand Chatbot, Cinematic Video Player, Engagement Heatmap, Analytics & Metrics. Non-members see preview, members get full access.",
+      "acceptance": [
+        "Section renamed to 'Digital Tools' or 'Platform Features'",
+        "4 tools displayed with preview screenshots or limited demos",
+        "Tools: Live Chatbot (brand/vision), Cinematic Video Player, Engagement Heatmap, Analytics & Metrics",
+        "Non-members see 'Unlock with Membership' messaging",
+        "Members see fully interactive tools",
+        "Preview images use Canon tokens for borders and spacing",
+        "Clear visual distinction between preview and member access"
+      ],
+      "files": [
+        "src/lib/components/ComponentLab.svelte",
+        "src/lib/components/ToolPreview.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-9",
+      "title": "Add Hero section with galaxy animation and play button",
+      "description": "Implement hero section with spinning galaxy animation (already created by developer), title 'Building Outerfields: The Odyssey', centered play button overlay linking to video trailer.",
+      "acceptance": [
+        "Hero section at top of homepage",
+        "Background: Galaxy spinning animation (developer-created asset)",
+        "Title overlaid: 'Building Outerfields: The Odyssey'",
+        "Centered play button overlay",
+        "Play button links to video trailer about PCN",
+        "Animation uses Canvas or Three.js",
+        "Responsive: animation scales on mobile, tablet, desktop",
+        "Uses Canon tokens for typography and spacing"
+      ],
+      "files": [
+        "src/lib/components/HeroSection.svelte",
+        "static/animations/galaxy.js"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-10",
+      "title": "Create Journey section with Code+Media+Build+Sell formula",
+      "description": "Add Journey section explaining 'Where we've been and where we're going' using the 4-part formula: Code (data-driven actions, scripts, platform dev), Media (content creation), Build (systems, workflows, infrastructure), Sell (marketing).",
+      "acceptance": [
+        "Journey section positioned after Hero section",
+        "Title: 'Where We've Been and Where We're Going'",
+        "4 subsections with icons: Code, Media, Build, Sell",
+        "Code: Data-driven actions, building scripts, platform development",
+        "Media: Creating actual content",
+        "Build: Systems, workflows, and infrastructure",
+        "Sell: Marketing the networks",
+        "Uses Canon tokens for layout and typography",
+        "Responsive grid: 4 columns desktop, 2 columns tablet, 1 column mobile"
+      ],
+      "files": [
+        "src/lib/components/JourneySection.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-11",
+      "title": "Update Competitive Comparison to include Patreon and Substack",
+      "description": "Add Patreon and Substack to existing FeatureComparison component. Show Outerfields advantages across all platforms.",
+      "acceptance": [
+        "FeatureComparison shows 5 platforms: Outerfields, Uscreen, YouTube, Patreon, Substack",
+        "Features compared: Lifetime pricing, No monthly fees, Ownership, Analytics, Community, Discovery calls",
+        "Outerfields marked as advantage for all features",
+        "Uses Canon tokens for success color (--color-success) and layout",
+        "Responsive: table scrolls horizontally on mobile"
+      ],
+      "files": [
+        "src/lib/components/FeatureComparison.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-12",
+      "title": "Integrate Calendly for post-purchase discovery call scheduling",
+      "description": "After Stripe checkout completes, send user email with Calendly link to schedule their included discovery call. Store Calendly webhook data in D1.",
+      "acceptance": [
+        "Welcome email includes Calendly link for discovery call",
+        "Email template uses transactional email service (SendGrid or Resend)",
+        "Calendly event type created for 'Founding Member Discovery Call'",
+        "Calendly webhook endpoint at /api/calendly/webhook",
+        "Webhook stores scheduled call info in D1 (user_id, call_time, status)",
+        "Admin dashboard shows scheduled calls",
+        "Email clearly states discovery call is INCLUDED with membership"
+      ],
+      "files": [
+        "src/routes/api/calendly/webhook/+server.ts",
+        "src/lib/email/welcome-template.ts",
+        "src/lib/server/db/discovery-calls.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-13",
+      "title": "Update 'How It All Connects' section with simplified roles",
+      "description": "Simplify Creator Role to 'On-Camera Talent' and Viewer Role to 'Subscribe → Watch → Engage'. Show Outerfields handles everything else.",
+      "acceptance": [
+        "Creator Role renamed to 'On-Camera Talent'",
+        "Outerfields handles: Production, Uploading, Managing, Analyzing, Marketing, Development",
+        "Viewer Role shows flow: Subscribe → Watch → Engage",
+        "Visual diagram or card layout shows these relationships",
+        "Uses Canon tokens for layout and colors",
+        "Responsive: stacks vertically on mobile"
+      ],
+      "files": [
+        "src/lib/components/PlatformComponents.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-14",
+      "title": "Add urgency messaging and founding member branding throughout site",
+      "description": "Add urgency messaging in multiple locations: 'This price will NOT last forever', 'Pre-sale phase', 'Founding member pricing'. Emphasize limited-time $99 offer.",
+      "acceptance": [
+        "Urgency messaging in Hero section",
+        "Urgency messaging in Pricing section (3+ distinct messages)",
+        "Banner at top of page: 'Pre-sale phase - Platform being built'",
+        "Footer includes 'Founding Member' badge/messaging",
+        "CTA buttons emphasize urgency: 'Claim Your Lifetime Access'",
+        "Uses Canon tokens for warning color (--color-warning) if needed",
+        "Messaging is prominent but not aggressive"
+      ],
+      "files": [
+        "src/lib/components/HeroSection.svelte",
+        "src/lib/components/Pricing.svelte",
+        "src/lib/components/UrgencyBanner.svelte",
+        "src/lib/components/Footer.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-15",
+      "title": "Deploy to production with proper Cloudflare bindings",
+      "description": "Deploy updated site to Cloudflare Pages with all required bindings: D1 database, KV namespace for sessions, R2 bucket for video assets.",
+      "acceptance": [
+        "wrangler.toml configured with D1, KV, R2 bindings",
+        "Build succeeds: pnpm build --filter=outerfields",
+        "Deploy succeeds: wrangler pages deploy",
+        "All migrations applied to production D1",
+        "Video assets uploaded to R2 bucket",
+        "Site accessible at production domain",
+        "Stripe webhook configured to production URL",
+        "All environment variables set in Cloudflare dashboard"
+      ],
+      "files": [
+        "wrangler.toml",
+        "package.json"
+      ],
+      "passes": false
+    }
+  ]
+}

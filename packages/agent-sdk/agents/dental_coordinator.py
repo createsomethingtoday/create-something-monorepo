@@ -272,7 +272,7 @@ async def daily_operations(
     start_time = time.time()
     try:
         # Detect no-shows from previous 7 days
-        no_shows = await detect_no_shows(
+        no_shows = detect_no_shows(
             pms_config=pms_config,
             practice_id=practice_id,
             correlation_id=correlation_id,
@@ -282,7 +282,7 @@ async def daily_operations(
         # Match waitlist patients to available slots
         matches_by_slot = {}
         for no_show in no_shows:
-            matches = await match_waitlist_patients(
+            matches = match_waitlist_patients(
                 no_show=no_show,
                 pms_config=pms_config,
                 correlation_id=correlation_id,

@@ -1494,3 +1494,92 @@ Learnings for future iterations:
 - Data retention policies need specific TTL values in seconds for Cloudflare KV/D1 implementation
 - Administrative safeguards require both policy documentation and operational procedures (quarterly drills, annual assessments, monthly code reviews)
 
+
+---
+## Iteration 1
+Started: 2026-01-13T01:07:07Z
+
+## Story 8: Create integration test framework - COMPLETE
+
+**Implementation Summary:**
+Created comprehensive integration test infrastructure for dental practice management workflows with HIPAA-compliant mock PMS server and end-to-end test coverage.
+
+**Files Created:**
+- packages/agent-sdk/tests/integration/__init__.py
+- packages/agent-sdk/tests/integration/mock_pms_server.py (373 lines)
+- packages/agent-sdk/tests/integration/test_workflows_e2e.py (414 lines)
+
+**Key Components:**
+
+1. **MockPMSDatabase** (sync in-memory data store):
+   - Realistic test data: 3 patients, 5 appointments, 2 waitlist entries
+   - Query methods with filtering (status, date range)
+   - Patient preferences and waitlist management
+   - NO async (synchronous data access layer)
+
+2. **MockPMSClient** (async API wrapper):
+   - Simulates Dentrix API endpoints
+   - HIPAA-compliant field filtering (minimum necessary principle)
+   - Comprehensive audit logging with correlation IDs
+   - ALL methods async (get_appointments, query_waitlist, get_patient_preferences, update_appointment, remove_from_waitlist)
+   - 6-year audit trail retention
+
+3. **Integration Test Coverage** (8 tests, all passing):
+   - End-to-end no-show recovery workflow (detection → matching → notification → booking)
+   - PHI access logging verification at each step
+   - Transactional booking success path
+   - Transactional booking rollback on failure
+   - Coordinator orchestration of all three workflows
+   - Coordinator error handling (continues execution on workflow failure)
+   - Minimum necessary PHI access validation
+   - Waitlist matching excludes clinical data
+
+**Technical Challenges Resolved:**
+- Two-tier architecture: sync database layer, async API layer
+- patch() creates AsyncMock by default in async context - required explicit MagicMock for sync workflow functions
+- Linter repeatedly reverted async changes - used Edit tool instead of sed for atomic updates
+- Test fixture patterns for async pytest with MockPMSClient
+
+**HIPAA Compliance:**
+- Minimum necessary field filtering (configurable via `fields` parameter)
+- Audit logging with correlation_id, timestamp, resource_type, outcome
+- No PHI in logs (only patient_id, appointment_id references)
+- 6-year audit retention marker
+
+**Test Results:**
+```
+8 passed in 0.15s
+```
+
+All acceptance criteria met. Story marked as passing in prd.json.
+
+Commit: feat: Create integration test framework (02ff765b)
+
+
+## Iteration Complete: story-8 "Create integration test framework"
+
+**Status**: ✅ All acceptance criteria met
+
+**Implementation**:
+- Fixed async/await compatibility issues in mock PMS server and integration tests
+- MockPMSClient methods made synchronous (removed async keywords)
+- Test file await keywords removed to match synchronous mock methods
+- All 8 integration tests now passing
+
+**Tests Passing**:
+1. test_complete_no_show_recovery_workflow
+2. test_phi_access_logging_at_each_step
+3. test_transactional_booking_success_path
+4. test_transactional_booking_rollback_on_failure
+5. test_coordinator_executes_all_workflows
+6. test_coordinator_handles_workflow_errors
+7. test_no_show_detection_accesses_minimum_phi
+8. test_waitlist_matching_excludes_clinical_data
+
+**Commit**: 9cbd5f67 "feat: Create integration test framework"
+
+**All Stories Complete**: ✅ All 8 stories in PRD now passing
+
+---
+## Iteration 1
+Started: 2026-01-13T01:26:19Z

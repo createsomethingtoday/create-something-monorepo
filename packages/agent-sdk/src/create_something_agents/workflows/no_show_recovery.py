@@ -117,30 +117,31 @@ def detect_no_shows(
     start_date = end_date - timedelta(days=days_back)
 
     # Query PMS for no-show appointments
-    # In production, this would call pms_api_client.get_appointments()
-    # with appropriate filters and field selection
-
     no_shows: List[NoShowAppointment] = []
 
-    # Example implementation (would be replaced with actual PMS API call):
-    # response = pms_api_client.get_appointments(
-    #     status=AppointmentStatus.NO_SHOW,
-    #     date_from=start_date,
-    #     date_to=end_date,
-    #     fields="patient_id,phone,email,appointment_date,appointment_type,status,duration,provider_id"
-    # )
-    #
-    # for appt in response.get("appointments", []):
-    #     no_shows.append(NoShowAppointment(
-    #         appointment_id=appt["id"],
-    #         patient_id=appt["patient_id"],
-    #         appointment_date=datetime.fromisoformat(appt["appointment_date"]),
-    #         appointment_type=appt["appointment_type"],
-    #         duration_minutes=appt["duration"],
-    #         provider_id=appt["provider_id"],
-    #         phone=appt.get("phone"),
-    #         email=appt.get("email")
-    #     ))
+    # Check if this is a mock client or real PMS client
+    if hasattr(pms_api_client, 'get_appointments'):
+        # Call the PMS API
+        response = pms_api_client.get_appointments(
+            status=AppointmentStatus.NO_SHOW.value,
+            date_from=start_date.isoformat(),
+            date_to=end_date.isoformat(),
+            fields="appointment_id,patient_id,phone,email,appointment_date,appointment_type,status,duration_minutes,provider_id",
+            correlation_id=correlation_id
+        )
+
+        # Parse response and create NoShowAppointment objects
+        for appt in response.get("results", []):
+            no_shows.append(NoShowAppointment(
+                appointment_id=appt["appointment_id"],
+                patient_id=appt["patient_id"],
+                appointment_date=datetime.fromisoformat(appt["appointment_date"]),
+                appointment_type=appt["appointment_type"],
+                duration_minutes=appt["duration_minutes"],
+                provider_id=appt["provider_id"],
+                phone=appt.get("phone"),
+                email=appt.get("email")
+            ))
 
     return no_shows
 

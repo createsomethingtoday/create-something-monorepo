@@ -1,0 +1,197 @@
+{
+  "title": "Outerfields Build in Public Lab - Completion",
+  "description": "Complete the Build in Public Lab showcase for Outerfields PCN platform. Focus on documentation, testing, and polish to make the showcase production-ready.",
+  "created": "2026-01-12T21:00:00Z",
+  "target_package": "packages/agency/clients/outerfields",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Technical Documentation and README",
+      "description": "Create comprehensive README documenting the Build in Public Lab showcase. Include local setup, deployment, architecture overview, and component documentation.",
+      "acceptance": [
+        "README.md exists at packages/agency/clients/outerfields/",
+        "Documents local development setup (pnpm install, dev server)",
+        "Explains Build in Public Lab concept and 90-day timeline",
+        "Lists all 9 showcase components with descriptions",
+        "Documents Cloudflare integrations (R2 CDN, KV stores)",
+        "Includes deployment instructions for Cloudflare Pages",
+        "Links to live demo and related documentation"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/README.md"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-2",
+      "title": "Component Tests for Showcase Features",
+      "description": "Write unit tests for key showcase components to ensure stability. Focus on BuildProgress, FeaturedVideos, VideoModal, and ComponentLab.",
+      "acceptance": [
+        "Tests directory exists at packages/agency/clients/outerfields/tests/",
+        "BuildProgress.test.ts tests timeline rendering and day calculation",
+        "FeaturedVideos.test.ts tests video grid and KV integration",
+        "VideoModal.test.ts tests player controls and engagement tracking",
+        "ComponentLab.test.ts tests tool showcase and interaction",
+        "All tests pass: pnpm test --filter=outerfields",
+        "Test coverage >60% for tested components"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/tests/components/BuildProgress.test.ts",
+        "packages/agency/clients/outerfields/tests/components/FeaturedVideos.test.ts",
+        "packages/agency/clients/outerfields/tests/components/VideoModal.test.ts",
+        "packages/agency/clients/outerfields/tests/components/ComponentLab.test.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-3",
+      "title": "E2E Test for User Journey",
+      "description": "Create E2E test that validates the complete user journey through the Build in Public Lab: homepage → build progress → featured videos → component lab → pricing.",
+      "acceptance": [
+        "E2E test file exists at packages/agency/clients/outerfields/tests/e2e/showcase-journey.spec.ts",
+        "Test navigates through key sections in order",
+        "Validates BuildProgress timeline displays correctly",
+        "Clicks and plays a video from FeaturedVideos",
+        "Interacts with ComponentLab tools",
+        "Verifies pricing tiers display ($49/$149/$399)",
+        "Test passes with Playwright or similar E2E framework"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/tests/e2e/showcase-journey.spec.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-4",
+      "title": "Mobile Responsive Verification",
+      "description": "Verify and fix any mobile responsive issues. Ensure all components work correctly on mobile viewports (375px, 768px, 1024px).",
+      "acceptance": [
+        "All components tested on 375px (mobile), 768px (tablet), 1024px (desktop)",
+        "VideoModal controls accessible on touch screens",
+        "Navigation menu functional on mobile",
+        "ComponentLab tools interactive on mobile",
+        "Typography scales correctly with clamp()",
+        "No horizontal scroll issues on mobile",
+        "Touch targets meet 44px minimum accessibility standard"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/app.css"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-5",
+      "title": "Performance Optimization",
+      "description": "Optimize bundle size and performance. Lazy load videos, optimize images, ensure fast First Contentful Paint.",
+      "acceptance": [
+        "VideoModal lazy loads video content",
+        "Images use appropriate sizes with srcset",
+        "Bundle size <500KB (excluding video assets)",
+        "Lighthouse score >90 on performance",
+        "First Contentful Paint <1.5s",
+        "No console errors or warnings in production build"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/VideoModal.svelte",
+        "packages/agency/clients/outerfields/src/lib/components/FeaturedVideos.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-6",
+      "title": "SEO and Meta Tags",
+      "description": "Ensure proper SEO meta tags, Open Graph tags, and structured data for social sharing and search visibility.",
+      "acceptance": [
+        "All pages have unique title and description meta tags",
+        "Open Graph tags present for social sharing",
+        "Twitter Card tags configured",
+        "Structured data (JSON-LD) for Organization and WebSite",
+        "Canonical URLs set correctly",
+        "robots.txt and sitemap.xml exist",
+        "No duplicate meta tags or missing alt text"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/app.html",
+        "packages/agency/clients/outerfields/src/routes/+page.svelte",
+        "packages/agency/clients/outerfields/static/robots.txt",
+        "packages/agency/clients/outerfields/static/sitemap.xml"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-7",
+      "title": "Deployment Documentation",
+      "description": "Document the Cloudflare Pages deployment process with step-by-step instructions for future updates.",
+      "acceptance": [
+        "DEPLOYMENT.md exists at packages/agency/clients/outerfields/",
+        "Documents Cloudflare Pages setup (project, domain, build settings)",
+        "Explains R2 bucket configuration for video assets",
+        "Documents KV namespace setup for view counts and engagement",
+        "Includes environment variables configuration",
+        "Provides rollback instructions",
+        "Documents monitoring and analytics setup"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/DEPLOYMENT.md"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-8",
+      "title": "Copy Polish and Voice Canon Compliance",
+      "description": "Review and refine all copy throughout the site to ensure clarity, compelling messaging, and Voice Canon compliance.",
+      "acceptance": [
+        "All section headlines are clear and compelling",
+        "CTAs use action-oriented language",
+        "No marketing jargon flagged by /audit-voice",
+        "Pricing tier descriptions are specific and benefit-focused",
+        "BuildProgress timeline copy explains the 90-day journey",
+        "Testimonials provide specific value statements",
+        "Copy follows Voice Canon: clarity over cleverness, specificity over generality"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/routes/+page.svelte",
+        "packages/agency/clients/outerfields/src/lib/components/BuildProgress.svelte",
+        "packages/agency/clients/outerfields/src/lib/components/Pricing.svelte",
+        "packages/agency/clients/outerfields/src/lib/components/Testimonials.svelte"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-9",
+      "title": "Analytics Integration",
+      "description": "Integrate analytics tracking for Build in Public metrics. Track video plays, component interactions, and user journey.",
+      "acceptance": [
+        "Cloudflare Web Analytics or Plausible integrated",
+        "Custom events tracked: video plays, tool interactions, pricing tier views",
+        "Build progress milestones logged as events",
+        "No PII collected, privacy-friendly tracking",
+        "Analytics dashboard accessible to team",
+        "Weekly metrics summary automated"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/app.html",
+        "packages/agency/clients/outerfields/src/lib/analytics.ts"
+      ],
+      "passes": false
+    },
+    {
+      "id": "story-10",
+      "title": "Accessibility Audit and Fixes",
+      "description": "Perform accessibility audit using axe or similar tool. Fix any WCAG 2.1 AA violations.",
+      "acceptance": [
+        "Axe DevTools reports 0 violations",
+        "All images have descriptive alt text",
+        "Interactive elements have focus indicators",
+        "Color contrast meets WCAG AA standards (4.5:1 text, 3:1 UI)",
+        "Keyboard navigation works for all interactive elements",
+        "Screen reader tested with VoiceOver or NVDA",
+        "ARIA labels present where needed"
+      ],
+      "files": [
+        "packages/agency/clients/outerfields/src/lib/components/*.svelte"
+      ],
+      "passes": false
+    }
+  ]
+}

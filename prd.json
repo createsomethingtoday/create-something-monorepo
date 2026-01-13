@@ -77,7 +77,7 @@
       "files": [
         "packages/agent-sdk/tests/workflows/test_recall_reminders.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-5",
@@ -97,7 +97,7 @@
       "files": [
         "packages/agent-sdk/tests/analytics/test_conversion_tracking.py"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-6",
@@ -116,7 +116,7 @@
       "files": [
         "packages/agent-sdk/docs/HIPAA_COMPLIANCE.md"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-7",
@@ -135,7 +135,7 @@
       "files": [
         "packages/agent-sdk/docs/SECURITY_AUDIT.md"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "story-8",
@@ -155,7 +155,7 @@
         "packages/agent-sdk/tests/integration/mock_pms_server.py",
         "packages/agent-sdk/tests/integration/test_workflows_e2e.py"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

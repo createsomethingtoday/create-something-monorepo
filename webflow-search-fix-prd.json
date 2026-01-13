@@ -1,0 +1,23 @@
+{
+  "title": "Fix Webflow Dashboard Search Functionality",
+  "description": "Fix incorrect $derived syntax in AssetsDisplay.svelte that breaks search filtering",
+  "created": "2026-01-13T00:45:00Z",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Fix $derived syntax in filteredAssets",
+      "description": "The filteredAssets computed value uses incorrect Svelte 5 syntax - it wraps the logic in a function which breaks reactivity. Need to either remove the function wrapper or use $derived.by(). Also need to update line 53 to not call filteredAssets as a function.",
+      "acceptance": [
+        "filteredAssets uses correct Svelte 5 $derived syntax (either inline expression or $derived.by())",
+        "Line 53 accesses filteredAssets as a value, not a function call",
+        "Search input filters assets by name, type, and status",
+        "Build completes without TypeScript errors",
+        "No console errors when typing in search input"
+      ],
+      "files": [
+        "packages/webflow-dashboard/src/lib/components/AssetsDisplay.svelte"
+      ],
+      "passes": true
+    }
+  ]
+}
