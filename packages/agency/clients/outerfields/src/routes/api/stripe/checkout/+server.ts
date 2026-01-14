@@ -1,15 +1,19 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import Stripe from 'stripe';
-import { STRIPE_SECRET_KEY } from '$env/static/private';
 
 /**
  * POST /api/stripe/checkout
  * Creates a Stripe Checkout Session for $99 lifetime membership
  */
-export const POST: RequestHandler = async ({ request, url, locals }) => {
+export const POST: RequestHandler = async ({ request, url, locals, platform }) => {
 	try {
-		const stripe = new Stripe(STRIPE_SECRET_KEY, {
+		const stripeKey = platform?.env?.STRIPE_SECRET_KEY;
+		if (!stripeKey) {
+			return json({ success: false, error: 'Stripe not configured' }, { status: 500 });
+		}
+
+		const stripe = new Stripe(stripeKey, {
 			apiVersion: '2025-12-15.clover'
 		});
 

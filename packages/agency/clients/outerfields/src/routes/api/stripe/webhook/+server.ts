@@ -2,9 +2,7 @@ import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
-import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '$env/static/private';
 import { generateWelcomeEmail } from '$lib/email/welcome-template';
-import { env } from '$env/dynamic/private';
 
 /**
  * POST /api/stripe/webhook
@@ -12,7 +10,15 @@ import { env } from '$env/dynamic/private';
  * to grant lifetime membership access
  */
 export const POST: RequestHandler = async ({ request, platform }) => {
-	const stripe = new Stripe(STRIPE_SECRET_KEY, {
+	const stripeKey = platform?.env?.STRIPE_SECRET_KEY;
+	const webhookSecret = platform?.env?.STRIPE_WEBHOOK_SECRET;
+
+	if (!stripeKey || !webhookSecret) {
+		console.error('Stripe not configured');
+		return json({ success: false, error: 'Stripe not configured' }, { status: 500 });
+	}
+
+	const stripe = new Stripe(stripeKey, {
 		apiVersion: '2025-12-15.clover'
 	});
 
@@ -29,7 +35,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	try {
 		// Verify webhook signature
-		event = stripe.webhooks.constructEvent(body, signature, STRIPE_WEBHOOK_SECRET);
+		event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
 	} catch (err) {
 		console.error('Webhook signature verification failed:', err);
 		return json(
@@ -74,7 +80,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 				// Send welcome email with Calendly link for discovery call
 				try {
-					const resendApiKey = env.RESEND_API_KEY;
+					const resendApiKey = platform?.env?.RESEND_API_KEY;
 					if (!resendApiKey) {
 						console.warn('RESEND_API_KEY not configured - skipping welcome email');
 						break;
