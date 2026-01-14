@@ -30,7 +30,7 @@ const PRESETS: Record<string, UpdateData> = {
 	'video-landing-page': {
 		title: 'Video Landing Pages — Live',
 		summary: 'Your platform now has dedicated video landing pages. Every video gets its own shareable URL.',
-		imageUrl: 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev/email/video-landing-page-1768401013198.png',
+		imageUrl: 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev/email/video-landing-page.png',
 		imageAlt: 'Video landing page showing the player, Up Next sidebar, and engagement metrics',
 		features: `<ul style="margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.8);">
 <li style="margin-bottom: 10px;"><strong style="color:#fff;">Each video = a destination.</strong> Share links directly to any content.</li>

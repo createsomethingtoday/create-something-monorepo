@@ -21,7 +21,8 @@ import { existsSync, statSync } from 'fs';
 import { basename, extname } from 'path';
 
 // R2 Configuration
-const R2_BUCKET = 'outerfields-videos';
+// Note: outerfields-media has public access; outerfields-videos does not
+const R2_BUCKET = 'outerfields-media';
 const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 const EMAIL_PREFIX = 'email';
 
@@ -109,7 +110,7 @@ function uploadToR2(filePath: string, r2Key: string): void {
 	console.log(`   Key: ${r2Key}`);
 
 	try {
-		execSync(`wrangler r2 object put "${R2_BUCKET}/${r2Key}" --file="${filePath}"`, {
+		execSync(`wrangler r2 object put "${R2_BUCKET}/${r2Key}" --file="${filePath}" --remote`, {
 			stdio: 'inherit',
 			cwd: process.cwd()
 		});
