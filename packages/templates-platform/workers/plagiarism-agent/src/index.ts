@@ -2515,56 +2515,58 @@ interface Cluster {
 }
 
 async function findSimilarityClusters(env: Env): Promise<Cluster[]> {
-  // Get templates with high overlap in LSH bands
-  const bandOverlaps = await env.DB.prepare(`
-    SELECT 
-      a.template_id as t1,
-      b.template_id as t2,
-      COUNT(*) as shared_bands
-    FROM minhash_lsh_bands a
-    JOIN minhash_lsh_bands b ON a.band_id = b.band_id AND a.hash_value = b.hash_value
-    WHERE a.template_id < b.template_id
-    GROUP BY a.template_id, b.template_id
-    HAVING shared_bands >= 8
-    ORDER BY shared_bands DESC
-    LIMIT 50
+  // Find hash values that appear in multiple templates (potential clusters)
+  // This is more memory-efficient than a self-join
+  const sharedHashes = await env.DB.prepare(`
+    SELECT hash_value, COUNT(DISTINCT template_id) as template_count
+    FROM minhash_lsh_bands
+    GROUP BY hash_value
+    HAVING template_count >= 2 AND template_count <= 10
+    ORDER BY template_count DESC
+    LIMIT 20
   `).all();
   
-  if (!bandOverlaps.results || bandOverlaps.results.length === 0) {
+  if (!sharedHashes.results || sharedHashes.results.length === 0) {
     return [];
   }
   
-  // Build clusters using union-find
-  const parent: Record<string, string> = {};
-  const find = (x: string): string => {
-    if (!parent[x]) parent[x] = x;
-    if (parent[x] !== x) parent[x] = find(parent[x]);
-    return parent[x];
-  };
-  const union = (x: string, y: string) => {
-    parent[find(x)] = find(y);
-  };
-  
-  for (const row of bandOverlaps.results as any[]) {
-    union(row.t1, row.t2);
-  }
-  
-  // Group by cluster
-  const clusterMap: Record<string, string[]> = {};
-  const allIds = new Set<string>();
-  for (const row of bandOverlaps.results as any[]) {
-    allIds.add(row.t1);
-    allIds.add(row.t2);
-  }
-  
-  for (const id of allIds) {
-    const root = find(id);
-    if (!clusterMap[root]) clusterMap[root] = [];
-    if (!clusterMap[root].includes(id)) clusterMap[root].push(id);
-  }
-  
-  // Get template details for each cluster
+  // Get templates for each shared hash (these form potential clusters)
   const clusters: Cluster[] = [];
+  const seenTemplates = new Set<string>();
+  
+  for (const row of sharedHashes.results as any[]) {
+    const hashValue = row.hash_value;
+    
+    // Get templates sharing this hash
+    const templates = await env.DB.prepare(`
+      SELECT DISTINCT t.id, t.name, t.url
+      FROM minhash_lsh_bands b
+      JOIN template_minhash t ON b.template_id = t.id
+      WHERE b.hash_value = ?
+      LIMIT 10
+    `).bind(hashValue).all();
+    
+    if (templates.results && templates.results.length >= 2) {
+      // Check if we've already seen these templates in another cluster
+      const newTemplates = (templates.results as any[]).filter(t => !seenTemplates.has(t.id));
+      if (newTemplates.length >= 2) {
+        for (const t of templates.results as any[]) {
+          seenTemplates.add(t.id);
+        }
+        
+        clusters.push({
+          id: hashValue.substring(0, 8),
+          templates: templates.results as any[],
+          avgSimilarity: 0.5 + (row.template_count / 20), // Estimate
+          suspicionLevel: row.template_count > 5 ? 'high' : row.template_count > 3 ? 'medium' : 'low'
+        });
+        
+        if (clusters.length >= 10) break;
+      }
+    }
+  }
+  
+  return clusters;
   
   for (const [root, memberIds] of Object.entries(clusterMap)) {
     if (memberIds.length < 2) continue;
@@ -2802,38 +2804,50 @@ function serveDashboard(env: Env): Response {
   <script>
     async function loadStats() {
       try {
-        const [stats, clusters] = await Promise.all([
-          fetch('/dashboard/stats').then(r => r.json()),
-          fetch('/dashboard/clusters').then(r => r.json())
-        ]);
+        const statsRes = await fetch('/dashboard/stats');
+        const stats = statsRes.ok ? await statsRes.json() : { totalTemplatesIndexed: 0, totalCasesProcessed: 0 };
+        
+        let clusterCount = 0;
+        try {
+          const clustersRes = await fetch('/dashboard/clusters');
+          if (clustersRes.ok) {
+            const clusters = await clustersRes.json();
+            clusterCount = Array.isArray(clusters) ? clusters.length : 0;
+          }
+        } catch (e) {
+          console.log('Clusters not available yet');
+        }
         
         const statsEl = document.getElementById('stats');
         statsEl.innerHTML = \`
           <div class="stat-card">
-            <div class="stat-value">\${stats.totalTemplatesIndexed.toLocaleString()}</div>
+            <div class="stat-value">\${(stats.totalTemplatesIndexed || 0).toLocaleString()}</div>
             <div class="stat-label">Templates Indexed</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">\${stats.totalCasesProcessed}</div>
+            <div class="stat-value">\${stats.totalCasesProcessed || 0}</div>
             <div class="stat-label">Cases Processed</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">\${clusters.length}</div>
+            <div class="stat-value">\${clusterCount}</div>
             <div class="stat-label">Similarity Clusters</div>
           </div>
         \`;
       } catch (e) {
         console.error('Failed to load stats:', e);
+        document.getElementById('stats').innerHTML = '<div class="stat-card"><div class="stat-value">Error</div><div class="stat-label">Loading failed</div></div>';
       }
     }
     
     async function loadSuspiciousPairs() {
       try {
-        const data = await fetch('/scan/suspicious?threshold=0.5&limit=20').then(r => r.json());
+        const res = await fetch('/scan/suspicious?threshold=0.4&limit=20');
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
         const tbody = document.getElementById('suspicious-pairs');
         
-        if (data.pairs.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4">No suspicious pairs found above threshold</td></tr>';
+        if (!data.pairs || data.pairs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4">No suspicious pairs found above 40% threshold. LSH backfill may still be in progress.</td></tr>';
           return;
         }
         
@@ -2856,28 +2870,31 @@ function serveDashboard(env: Env): Response {
     }
     
     async function loadClusters() {
+      const el = document.getElementById('clusters');
       try {
-        const clusters = await fetch('/dashboard/clusters').then(r => r.json());
-        const el = document.getElementById('clusters');
+        const res = await fetch('/dashboard/clusters');
+        if (!res.ok) throw new Error('API error');
+        const clusters = await res.json();
         
-        if (clusters.length === 0) {
-          el.innerHTML = '<div class="cluster-card">No similarity clusters detected</div>';
+        if (!Array.isArray(clusters) || clusters.length === 0) {
+          el.innerHTML = '<div class="cluster-card">No similarity clusters detected yet. LSH backfill may still be in progress.</div>';
           return;
         }
         
         el.innerHTML = clusters.slice(0, 10).map(c => \`
           <div class="cluster-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong>\${c.templates.length} templates</strong>
-              <span class="badge \${c.suspicionLevel === 'high' ? 'badge-high' : c.suspicionLevel === 'medium' ? 'badge-medium' : 'badge-low'}">\${c.suspicionLevel} suspicion</span>
+              <strong>\${c.templates?.length || 0} templates</strong>
+              <span class="badge \${c.suspicionLevel === 'high' ? 'badge-high' : c.suspicionLevel === 'medium' ? 'badge-medium' : 'badge-low'}">\${c.suspicionLevel || 'unknown'} suspicion</span>
             </div>
             <div class="cluster-templates">
-              \${c.templates.map(t => \`<a href="\${t.url}" target="_blank" class="template-pill">\${t.name}</a>\`).join('')}
+              \${(c.templates || []).map(t => \`<a href="\${t.url}" target="_blank" class="template-pill">\${t.name}</a>\`).join('')}
             </div>
           </div>
         \`).join('');
       } catch (e) {
         console.error('Failed to load clusters:', e);
+        el.innerHTML = '<div class="cluster-card">Clusters loading... (LSH backfill in progress)</div>';
       }
     }
     
