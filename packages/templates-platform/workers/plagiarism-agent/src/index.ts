@@ -837,19 +837,47 @@ export default {
     if (url.pathname === '/scan/template' && request.method === 'POST') {
       try {
         const body = await request.json() as any;
-        const { url: templateUrl, threshold = 0.35 } = body;
+        const { url: templateUrl, threshold = 0.35, debug = false } = body;
         
         if (!templateUrl) {
           return new Response(JSON.stringify({ error: 'Missing url' }), { status: 400 });
         }
         
-        const results = await scanTemplateForPlagiarism(templateUrl, threshold, env);
+        const results = await scanTemplateForPlagiarism(templateUrl, threshold, env, debug);
         
         return new Response(JSON.stringify(results), {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // DETAILED COMPARISON: Tufte-style evidence view
+    // ==========================================================================
+    if (url.pathname === '/compare' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { url1, url2, id1, id2 } = body;
+        
+        const comparison = await generateDetailedComparison(url1 || id1, url2 || id2, env);
+        
+        return new Response(JSON.stringify(comparison), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // Comparison UI
+    if (url.pathname.startsWith('/compare/') && request.method === 'GET') {
+      const parts = url.pathname.split('/');
+      if (parts.length >= 4) {
+        const id1 = parts[2];
+        const id2 = parts[3];
+        return serveComparisonPage(id1, id2, env);
       }
     }
 
@@ -2416,68 +2444,97 @@ interface ScanResult {
 async function scanTemplateForPlagiarism(
   templateUrl: string,
   threshold: number,
-  env: Env
-): Promise<ScanResult> {
-  const content = await fetchPublishedContent(templateUrl);
+  env: Env,
+  debug = false
+): Promise<ScanResult & { debug?: any }> {
+  // Normalize URL for lookup
+  const normalizedUrl = templateUrl.replace(/\/$/, '') + '/';
+  const urlWithoutSlash = templateUrl.replace(/\/$/, '');
   
-  if (!content) {
-    return {
-      url: templateUrl,
-      indexed: false,
-      matches: [],
-      recommendation: 'Could not fetch template content'
-    };
+  console.log(`[Scan] Looking for URL: ${normalizedUrl} or ${urlWithoutSlash}`);
+  
+  // First, check if this template is already indexed
+  const existingTemplate = await env.DB.prepare(
+    'SELECT id, name, combined_signature, combined_shingles FROM template_minhash WHERE url = ? OR url = ?'
+  ).bind(normalizedUrl, urlWithoutSlash).first();
+  
+  console.log(`[Scan] Found existing template: ${existingTemplate ? existingTemplate.id : 'none'}`);
+  
+  let querySig: number[];
+  let templateId: string | null = null;
+  let isIndexed = false;
+  
+  if (existingTemplate) {
+    // Use stored signature
+    isIndexed = true;
+    templateId = existingTemplate.id as string;
+    querySig = deserializeSignatureCompact(
+      existingTemplate.combined_signature as string,
+      existingTemplate.combined_shingles as number,
+      'combined'
+    );
+  } else {
+    // Fetch and compute fresh
+    const content = await fetchPublishedContent(templateUrl);
+    
+    if (!content) {
+      return {
+        url: templateUrl,
+        indexed: false,
+        matches: [],
+        recommendation: 'Could not fetch template content'
+      };
+    }
+    
+    querySig = computeCombinedMinHash(content.html, content.css, content.javascript);
   }
   
-  // Compute MinHash signature
-  const combinedMinHash = computeCombinedMinHash(content.html, content.css, content.javascript);
-  const lshBands = computeLSHBandHashes(combinedMinHash);
+  // Compare against all other templates (exclude self if indexed)
+  const allTemplates = templateId 
+    ? await env.DB.prepare('SELECT * FROM template_minhash WHERE id != ?').bind(templateId).all()
+    : await env.DB.prepare('SELECT * FROM template_minhash').all();
   
-  // Query for similar templates
-  const bandConditions = lshBands.map((_, i) => `(band_id = 'band_${i}' AND hash_value = ?)`).join(' OR ');
-  
-  const candidateRows = await env.DB.prepare(`
-    SELECT DISTINCT template_id FROM minhash_lsh_bands 
-    WHERE ${bandConditions}
-    LIMIT 100
-  `).bind(...lshBands).all();
+  console.log(`[Scan] Comparing against ${allTemplates.results?.length || 0} templates, threshold=${threshold}`);
   
   const matches: ScanResult['matches'] = [];
+  let highestSim = 0;
+  let highestMatch = '';
   
-  if (candidateRows.results && candidateRows.results.length > 0) {
-    const candidateIds = candidateRows.results.map((r: any) => r.template_id);
-    const placeholders = candidateIds.map(() => '?').join(',');
-    
-    const signatureRows = await env.DB.prepare(`
-      SELECT id, name, url, creator, combined_signature 
-      FROM template_minhash 
-      WHERE id IN (${placeholders})
-    `).bind(...candidateIds).all();
-    
-    if (signatureRows.results) {
-      for (const row of signatureRows.results as any[]) {
-        const sig = deserializeSignatureCompact(row.combined_signature);
-        const similarity = estimateSimilarity(combinedMinHash, sig);
-        
-        if (similarity >= threshold) {
-          let verdict = 'low_concern';
-          if (similarity > 0.7) {
-            verdict = 'high_similarity';
-          } else if (similarity > 0.5) {
-            verdict = 'moderate_similarity';
-          }
-          
-          matches.push({
-            id: row.id,
-            name: row.name,
-            url: row.url,
-            similarity,
-            verdict
-          });
+  if (allTemplates.results) {
+    for (const row of allTemplates.results as any[]) {
+      const candidateSig = deserializeSignatureCompact(
+        row.combined_signature,
+        row.combined_shingles,
+        'combined'
+      );
+      const simResult = estimateSimilarity(querySig, candidateSig);
+      const similarity = simResult.jaccardEstimate;
+      
+      if (similarity > highestSim) {
+        highestSim = similarity;
+        highestMatch = row.id;
+      }
+      
+      if (similarity >= threshold) {
+        let verdict = 'low_concern';
+        if (similarity > 0.7) {
+          verdict = 'high_similarity';
+        } else if (similarity > 0.5) {
+          verdict = 'moderate_similarity';
         }
+        
+        matches.push({
+          id: row.id,
+          name: row.name,
+          url: row.url,
+          similarity,
+          verdict
+        });
       }
     }
   }
+  
+  console.log(`[Scan] Found ${matches.length} matches above threshold. Highest sim: ${highestSim} (${highestMatch})`);
   
   // Sort by similarity
   matches.sort((a, b) => b.similarity - a.similarity);
@@ -2495,12 +2552,27 @@ async function scanTemplateForPlagiarism(
     }
   }
   
-  return {
+  const result: ScanResult & { debug?: any } = {
     url: templateUrl,
-    indexed: true,
+    indexed: isIndexed,
     matches: matches.slice(0, 20),
     recommendation
   };
+  
+  if (debug) {
+    result.debug = {
+      templateId,
+      threshold,
+      totalCompared: allTemplates.results?.length || 0,
+      matchesFound: matches.length,
+      highestSimilarity: highestSim,
+      highestMatchId: highestMatch,
+      querySigLength: querySig?.signature?.length,
+      querySigNumShingles: querySig?.numShingles
+    };
+  }
+  
+  return result;
 }
 
 // =============================================================================
@@ -2589,6 +2661,683 @@ async function findSimilarityClusters(env: Env): Promise<Cluster[]> {
   return clusters.sort((a, b) => b.templates.length - a.templates.length);
 }
 
+// =============================================================================
+// DETAILED COMPARISON - Tufte-style evidence analysis
+// =============================================================================
+
+interface PatternMatch {
+  type: 'class' | 'property' | 'animation' | 'color' | 'gradient' | 'variable' | 'structure';
+  value: string;
+  context?: string;
+}
+
+interface ComparisonResult {
+  template1: { id: string; name: string; url: string };
+  template2: { id: string; name: string; url: string };
+  overallSimilarity: number;
+  breakdown: {
+    cssClasses: { similarity: number; shared: string[]; unique1: string[]; unique2: string[] };
+    cssProperties: { similarity: number; shared: PatternMatch[]; };
+    animations: { similarity: number; shared: string[]; };
+    colors: { similarity: number; shared: string[]; };
+    structure: { similarity: number; patterns: string[]; };
+  };
+  evidence: {
+    matchingPatterns: PatternMatch[];
+    codeExcerpts: Array<{ label: string; code1: string; code2: string; similarity: number }>;
+  };
+}
+
+async function generateDetailedComparison(
+  ref1: string,
+  ref2: string,
+  env: Env
+): Promise<ComparisonResult> {
+  // Get template data - ref can be id or url
+  const t1 = await env.DB.prepare(
+    'SELECT * FROM template_minhash WHERE id = ? OR url = ? OR url = ?'
+  ).bind(ref1, ref1, ref1.replace(/\/$/, '') + '/').first();
+  
+  const t2 = await env.DB.prepare(
+    'SELECT * FROM template_minhash WHERE id = ? OR url = ? OR url = ?'
+  ).bind(ref2, ref2, ref2.replace(/\/$/, '') + '/').first();
+  
+  if (!t1 || !t2) {
+    throw new Error(`Template not found: ${!t1 ? ref1 : ref2}`);
+  }
+  
+  // Fetch fresh content for detailed analysis
+  const [content1, content2] = await Promise.all([
+    fetchPublishedContent(t1.url as string),
+    fetchPublishedContent(t2.url as string)
+  ]);
+  
+  if (!content1 || !content2) {
+    throw new Error('Could not fetch template content');
+  }
+  
+  // Extract detailed patterns
+  const classes1 = extractAllClasses(content1.css, content1.html);
+  const classes2 = extractAllClasses(content2.css, content2.html);
+  
+  const props1 = extractDetailedCssProperties(content1.css);
+  const props2 = extractDetailedCssProperties(content2.css);
+  
+  const animations1 = extractAnimations(content1.css);
+  const animations2 = extractAnimations(content2.css);
+  
+  const colors1 = extractColors(content1.css);
+  const colors2 = extractColors(content2.css);
+  
+  // Calculate shared elements
+  const sharedClasses = classes1.filter(c => classes2.includes(c));
+  const sharedAnimations = animations1.filter(a => animations2.includes(a));
+  const sharedColors = colors1.filter(c => colors2.includes(c));
+  
+  // Find matching property patterns
+  const sharedProps: PatternMatch[] = [];
+  for (const p1 of props1) {
+    for (const p2 of props2) {
+      if (p1.value === p2.value && p1.type === p2.type) {
+        sharedProps.push(p1);
+        break;
+      }
+    }
+  }
+  
+  // Calculate similarity from stored signatures
+  const sig1 = deserializeSignatureCompact(t1.combined_signature as string, t1.combined_shingles as number, 'combined');
+  const sig2 = deserializeSignatureCompact(t2.combined_signature as string, t2.combined_shingles as number, 'combined');
+  const simResult = estimateSimilarity(sig1, sig2);
+  
+  // Extract code excerpts for visual comparison
+  const codeExcerpts = extractMatchingCodeExcerpts(content1, content2, sharedClasses.slice(0, 5));
+  
+  return {
+    template1: { id: t1.id as string, name: t1.name as string, url: t1.url as string },
+    template2: { id: t2.id as string, name: t2.name as string, url: t2.url as string },
+    overallSimilarity: simResult.jaccardEstimate,
+    breakdown: {
+      cssClasses: {
+        similarity: sharedClasses.length / Math.max(classes1.length, classes2.length, 1),
+        shared: sharedClasses.slice(0, 30),
+        unique1: classes1.filter(c => !classes2.includes(c)).slice(0, 15),
+        unique2: classes2.filter(c => !classes1.includes(c)).slice(0, 15)
+      },
+      cssProperties: {
+        similarity: sharedProps.length / Math.max(props1.length, props2.length, 1),
+        shared: sharedProps.slice(0, 20)
+      },
+      animations: {
+        similarity: sharedAnimations.length / Math.max(animations1.length, animations2.length, 1),
+        shared: sharedAnimations
+      },
+      colors: {
+        similarity: sharedColors.length / Math.max(colors1.length, colors2.length, 1),
+        shared: sharedColors.slice(0, 20)
+      },
+      structure: {
+        similarity: 0, // Placeholder for HTML structure comparison
+        patterns: []
+      }
+    },
+    evidence: {
+      matchingPatterns: [...sharedProps.slice(0, 10), ...sharedAnimations.map(a => ({ type: 'animation' as const, value: a }))],
+      codeExcerpts
+    }
+  };
+}
+
+function extractAllClasses(css: string, html: string): string[] {
+  const classes = new Set<string>();
+  
+  // From CSS selectors
+  const cssClassRegex = /\.([a-zA-Z_][\w-]*)/g;
+  let match;
+  while ((match = cssClassRegex.exec(css)) !== null) {
+    const cls = match[1];
+    // Filter out Webflow framework classes
+    if (!cls.startsWith('w-') && !cls.startsWith('wf-') && !cls.startsWith('w_')) {
+      classes.add(cls);
+    }
+  }
+  
+  // From HTML class attributes
+  const htmlClassRegex = /class="([^"]+)"/g;
+  while ((match = htmlClassRegex.exec(html)) !== null) {
+    const classList = match[1].split(/\s+/);
+    for (const cls of classList) {
+      if (cls && !cls.startsWith('w-') && !cls.startsWith('wf-') && !cls.startsWith('w_')) {
+        classes.add(cls);
+      }
+    }
+  }
+  
+  return Array.from(classes).sort();
+}
+
+function extractDetailedCssProperties(css: string): PatternMatch[] {
+  const props: PatternMatch[] = [];
+  
+  // Extract CSS variable definitions
+  const varRegex = /--[\w-]+:\s*([^;]+)/g;
+  let match;
+  while ((match = varRegex.exec(css)) !== null) {
+    props.push({ type: 'variable', value: match[0].trim() });
+  }
+  
+  // Extract transform values
+  const transformRegex = /transform:\s*([^;]+)/g;
+  while ((match = transformRegex.exec(css)) !== null) {
+    props.push({ type: 'property', value: `transform: ${match[1].trim()}` });
+  }
+  
+  // Extract transition values
+  const transitionRegex = /transition:\s*([^;]+)/g;
+  while ((match = transitionRegex.exec(css)) !== null) {
+    props.push({ type: 'property', value: `transition: ${match[1].trim()}` });
+  }
+  
+  // Extract box-shadow values
+  const shadowRegex = /box-shadow:\s*([^;]+)/g;
+  while ((match = shadowRegex.exec(css)) !== null) {
+    props.push({ type: 'property', value: `box-shadow: ${match[1].trim().slice(0, 60)}...` });
+  }
+  
+  // Extract border-radius values (unique design choices)
+  const radiusRegex = /border-radius:\s*([^;]+)/g;
+  while ((match = radiusRegex.exec(css)) !== null) {
+    const value = match[1].trim();
+    if (value !== '0' && value !== '0px' && value !== '50%') {
+      props.push({ type: 'property', value: `border-radius: ${value}` });
+    }
+  }
+  
+  return props;
+}
+
+function extractAnimations(css: string): string[] {
+  const animations: string[] = [];
+  
+  // Extract @keyframes names
+  const keyframesRegex = /@keyframes\s+([\w-]+)/g;
+  let match;
+  while ((match = keyframesRegex.exec(css)) !== null) {
+    animations.push(match[1]);
+  }
+  
+  return animations;
+}
+
+function extractColors(css: string): string[] {
+  const colors = new Set<string>();
+  
+  // Hex colors
+  const hexRegex = /#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g;
+  let match;
+  while ((match = hexRegex.exec(css)) !== null) {
+    const hex = match[0].toLowerCase();
+    // Filter out very common colors
+    if (!['#fff', '#ffffff', '#000', '#000000', '#333', '#333333'].includes(hex)) {
+      colors.add(hex);
+    }
+  }
+  
+  // RGB/RGBA colors
+  const rgbRegex = /rgba?\([^)]+\)/g;
+  while ((match = rgbRegex.exec(css)) !== null) {
+    colors.add(match[0]);
+  }
+  
+  // HSL colors
+  const hslRegex = /hsla?\([^)]+\)/g;
+  while ((match = hslRegex.exec(css)) !== null) {
+    colors.add(match[0]);
+  }
+  
+  return Array.from(colors).slice(0, 30);
+}
+
+function extractMatchingCodeExcerpts(
+  content1: { html: string; css: string },
+  content2: { html: string; css: string },
+  sharedClasses: string[]
+): Array<{ label: string; code1: string; code2: string; similarity: number }> {
+  const excerpts: Array<{ label: string; code1: string; code2: string; similarity: number }> = [];
+  
+  for (const cls of sharedClasses.slice(0, 5)) {
+    // Find CSS rule for this class in both files
+    const cssRegex1 = new RegExp(`\\.${cls}\\s*\\{[^}]*\\}`, 'g');
+    const match1 = content1.css.match(cssRegex1);
+    const match2 = content2.css.match(cssRegex1);
+    
+    if (match1 && match2) {
+      const code1 = match1[0].slice(0, 300);
+      const code2 = match2[0].slice(0, 300);
+      
+      // Simple similarity: count matching characters
+      let matches = 0;
+      const shorter = Math.min(code1.length, code2.length);
+      for (let i = 0; i < shorter; i++) {
+        if (code1[i] === code2[i]) matches++;
+      }
+      
+      excerpts.push({
+        label: `.${cls}`,
+        code1,
+        code2,
+        similarity: matches / Math.max(code1.length, code2.length)
+      });
+    }
+  }
+  
+  return excerpts;
+}
+
+// Tufte-style comparison page
+function serveComparisonPage(id1: string, id2: string, env: Env): Response {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Template Comparison</title>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=ET+Book:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fffff8;
+      --text: #111;
+      --muted: #666;
+      --accent: #a00;
+      --border: #ddd;
+      --code-bg: #f7f7f5;
+      --highlight: rgba(255, 230, 0, 0.3);
+      --match-high: #c41d1d;
+      --match-med: #d68600;
+      --match-low: #2d8a2d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'ET Book', Palatino, 'Palatino Linotype', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 15px;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 4rem;
+    }
+    
+    /* Tufte-style headings */
+    h1 { font-size: 2.5rem; font-weight: 400; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    h2 { font-size: 1.4rem; font-weight: 400; font-style: italic; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; }
+    
+    .subtitle { color: var(--muted); font-style: italic; margin-bottom: 2rem; }
+    
+    /* Header with similarity score */
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
+    .similarity-score {
+      font-size: 3rem;
+      font-weight: 400;
+      line-height: 1;
+    }
+    .similarity-score.high { color: var(--match-high); }
+    .similarity-score.medium { color: var(--match-med); }
+    .similarity-score.low { color: var(--match-low); }
+    .similarity-label { font-size: 0.875rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    
+    /* Template info cards */
+    .templates-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    .template-info {
+      background: var(--code-bg);
+      padding: 1rem 1.25rem;
+      border-left: 3px solid var(--accent);
+    }
+    .template-name { font-weight: 600; margin-bottom: 0.25rem; }
+    .template-url { font-size: 0.875rem; color: var(--muted); word-break: break-all; }
+    .template-url a { color: var(--accent); text-decoration: none; }
+    .template-url a:hover { text-decoration: underline; }
+    
+    /* Breakdown sparklines */
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .breakdown-item { text-align: center; }
+    .breakdown-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 0.5rem auto;
+      max-width: 100px;
+    }
+    .breakdown-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .breakdown-value { font-size: 1.5rem; font-weight: 400; }
+    .breakdown-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    
+    /* Evidence section - small multiples */
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      margin: 1rem 0;
+    }
+    .evidence-cell {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      background: var(--code-bg);
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .evidence-cell:nth-child(odd) { border-right: 1px solid var(--border); }
+    .evidence-header {
+      background: var(--bg);
+      font-family: 'ET Book', serif;
+      font-weight: 600;
+      font-size: 0.875rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .evidence-sim {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      font-weight: 400;
+    }
+    
+    /* Shared patterns list */
+    .patterns-list {
+      columns: 3;
+      column-gap: 2rem;
+      margin: 1rem 0;
+    }
+    .pattern-item {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      padding: 0.25rem 0;
+      break-inside: avoid;
+    }
+    .pattern-type {
+      display: inline-block;
+      width: 60px;
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+    
+    /* Color swatches - small multiples */
+    .color-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .color-swatch {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .color-swatch::after {
+      content: attr(data-color);
+      position: absolute;
+      bottom: -1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      color: var(--muted);
+    }
+    
+    /* Classes comparison */
+    .classes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5rem;
+      margin: 1rem 0;
+    }
+    .classes-column h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .classes-list {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      line-height: 1.8;
+    }
+    .classes-list .shared { color: var(--match-high); }
+    .classes-list .unique { color: var(--muted); }
+    
+    /* Sidenotes - Tufte style */
+    .sidenote {
+      float: right;
+      clear: right;
+      margin-right: -35%;
+      width: 30%;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 4rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    .icon { display: inline-flex; align-items: center; vertical-align: middle; margin-right: 0.25rem; }
+    .icon svg { width: 1em; height: 1em; }
+    
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    .back-link:hover { color: var(--accent); }
+    
+    @media (max-width: 1200px) {
+      body { padding: 1.5rem; }
+      .patterns-list { columns: 2; }
+      .sidenote { display: none; }
+    }
+    @media (max-width: 768px) {
+      .templates-row, .evidence-grid, .classes-grid { grid-template-columns: 1fr; }
+      .breakdown-grid { grid-template-columns: repeat(2, 1fr); }
+      .patterns-list { columns: 1; }
+    }
+  </style>
+</head>
+<body>
+  <a href="/dashboard" class="back-link"><span class="icon"><i data-lucide="arrow-left"></i></span> Back to Dashboard</a>
+  
+  <div id="content">
+    <div class="loading">Loading comparison data...</div>
+  </div>
+  
+  <script>
+    lucide.createIcons();
+    
+    async function loadComparison() {
+      try {
+        const res = await fetch('/compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id1: '${id1}', id2: '${id2}' })
+        });
+        
+        if (!res.ok) throw new Error('Failed to load comparison');
+        const data = await res.json();
+        renderComparison(data);
+      } catch (e) {
+        document.getElementById('content').innerHTML = '<div class="loading">Error loading comparison: ' + e.message + '</div>';
+      }
+    }
+    
+    function renderComparison(data) {
+      const simClass = data.overallSimilarity > 0.7 ? 'high' : data.overallSimilarity > 0.5 ? 'medium' : 'low';
+      const simPercent = (data.overallSimilarity * 100).toFixed(0);
+      
+      document.getElementById('content').innerHTML = \`
+        <div class="header">
+          <div>
+            <h1>Template Comparison</h1>
+            <p class="subtitle">Detailed analysis of structural and stylistic similarities</p>
+          </div>
+          <div style="text-align: right;">
+            <div class="similarity-label">Overall Similarity</div>
+            <div class="similarity-score \${simClass}">\${simPercent}%</div>
+          </div>
+        </div>
+        
+        <div class="templates-row">
+          <div class="template-info">
+            <div class="template-name">\${data.template1.name}</div>
+            <div class="template-url"><a href="\${data.template1.url}" target="_blank">\${data.template1.url}</a></div>
+          </div>
+          <div class="template-info">
+            <div class="template-name">\${data.template2.name}</div>
+            <div class="template-url"><a href="\${data.template2.url}" target="_blank">\${data.template2.url}</a></div>
+          </div>
+        </div>
+        
+        <h2>Similarity Breakdown</h2>
+        <div class="breakdown-grid">
+          \${renderBreakdownItem('CSS Classes', data.breakdown.cssClasses.similarity)}
+          \${renderBreakdownItem('CSS Properties', data.breakdown.cssProperties.similarity)}
+          \${renderBreakdownItem('Animations', data.breakdown.animations.similarity)}
+          \${renderBreakdownItem('Color Palette', data.breakdown.colors.similarity)}
+        </div>
+        
+        <h2>Shared CSS Classes</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Classes present in both templates (excluding Webflow framework classes)
+        </p>
+        <div class="classes-grid">
+          <div class="classes-column">
+            <h4>Shared (\${data.breakdown.cssClasses.shared.length})</h4>
+            <div class="classes-list">
+              \${data.breakdown.cssClasses.shared.map(c => '<span class="shared">.' + c + '</span>').join('<br>')}
+            </div>
+          </div>
+          <div class="classes-column">
+            <h4>Only in \${data.template1.name}</h4>
+            <div class="classes-list">
+              \${data.breakdown.cssClasses.unique1.map(c => '<span class="unique">.' + c + '</span>').join('<br>')}
+            </div>
+          </div>
+          <div class="classes-column">
+            <h4>Only in \${data.template2.name}</h4>
+            <div class="classes-list">
+              \${data.breakdown.cssClasses.unique2.map(c => '<span class="unique">.' + c + '</span>').join('<br>')}
+            </div>
+          </div>
+        </div>
+        
+        \${data.breakdown.colors.shared.length > 0 ? \`
+        <h2>Shared Color Palette</h2>
+        <div class="color-swatches">
+          \${data.breakdown.colors.shared.map(c => '<div class="color-swatch" style="background: ' + c + ';" data-color="' + c + '"></div>').join('')}
+        </div>
+        \` : ''}
+        
+        \${data.breakdown.animations.shared.length > 0 ? \`
+        <h2>Shared Animations</h2>
+        <div class="patterns-list">
+          \${data.breakdown.animations.shared.map(a => '<div class="pattern-item"><span class="pattern-type">keyframe</span>@' + a + '</div>').join('')}
+        </div>
+        \` : ''}
+        
+        \${data.evidence.codeExcerpts.length > 0 ? \`
+        <h2>Code Comparison</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Side-by-side CSS rules for shared classes
+        </p>
+        <div class="evidence-grid">
+          \${data.evidence.codeExcerpts.map(e => \`
+            <div class="evidence-cell evidence-header">
+              \${e.label} <span class="evidence-sim" style="background: \${e.similarity > 0.8 ? 'rgba(196,29,29,0.15)' : e.similarity > 0.5 ? 'rgba(214,134,0,0.15)' : 'rgba(45,138,45,0.15)'}">\${(e.similarity * 100).toFixed(0)}% match</span>
+            </div>
+            <div class="evidence-cell evidence-header">
+              \${e.label}
+            </div>
+            <div class="evidence-cell">\${escapeHtml(e.code1)}</div>
+            <div class="evidence-cell">\${escapeHtml(e.code2)}</div>
+          \`).join('')}
+        </div>
+        \` : ''}
+        
+        \${data.breakdown.cssProperties.shared.length > 0 ? \`
+        <h2>Matching CSS Properties</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Custom properties, transforms, transitions, and shadows that appear in both templates
+        </p>
+        <div class="patterns-list">
+          \${data.breakdown.cssProperties.shared.map(p => '<div class="pattern-item"><span class="pattern-type">' + p.type + '</span>' + escapeHtml(p.value) + '</div>').join('')}
+        </div>
+        \` : ''}
+      \`;
+      
+      lucide.createIcons();
+    }
+    
+    function renderBreakdownItem(label, similarity) {
+      const percent = (similarity * 100).toFixed(0);
+      const color = similarity > 0.5 ? 'var(--match-high)' : similarity > 0.3 ? 'var(--match-med)' : 'var(--match-low)';
+      return \`
+        <div class="breakdown-item">
+          <div class="breakdown-value">\${percent}%</div>
+          <div class="breakdown-bar">
+            <div class="breakdown-fill" style="width: \${percent}%; background: \${color};"></div>
+          </div>
+          <div class="breakdown-label">\${label}</div>
+        </div>
+      \`;
+    }
+    
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    
+    loadComparison();
+  </script>
+</body>
+</html>`;
+  
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html' }
+  });
+}
+
 async function getDashboardStats(env: Env): Promise<any> {
   const [totalCount, caseCount, recentCases] = await Promise.all([
     env.DB.prepare('SELECT COUNT(*) as count FROM template_minhash').first(),
@@ -2616,6 +3365,7 @@ function serveDashboard(env: Env): Response {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Plagiarism Detection Dashboard</title>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     :root {
       --bg: #0a0a0f;
@@ -2741,11 +3491,19 @@ function serveDashboard(env: Env): Response {
     #scan-results { margin-top: 1rem; }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    .icon { display: inline-flex; align-items: center; justify-content: center; }
+    .icon svg { width: 1.25em; height: 1.25em; stroke-width: 2; }
+    h1 .icon svg { width: 1.5em; height: 1.5em; }
+    .section-title .icon { color: var(--accent); }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔍 Plagiarism Detection Dashboard</h1>
+    <div class="header-row">
+      <span class="icon"><i data-lucide="scan-search"></i></span>
+      <h1>Plagiarism Detection Dashboard</h1>
+    </div>
     <p class="subtitle">MinHash LSH Index with 9,500+ templates</p>
     
     <div class="stats-grid" id="stats">
@@ -2764,7 +3522,7 @@ function serveDashboard(env: Env): Response {
     </div>
     
     <div class="section">
-      <h2 class="section-title">🔎 Scan Template</h2>
+      <h2 class="section-title"><span class="icon"><i data-lucide="search"></i></span> Scan Template</h2>
       <div class="scan-form">
         <div class="form-row">
           <input type="text" id="scan-url" placeholder="Enter template URL (e.g., https://example.webflow.io/)">
@@ -2775,7 +3533,7 @@ function serveDashboard(env: Env): Response {
     </div>
     
     <div class="section">
-      <h2 class="section-title">⚠️ Suspicious Pairs</h2>
+      <h2 class="section-title"><span class="icon" style="color: var(--warning);"><i data-lucide="alert-triangle"></i></span> Suspicious Pairs</h2>
       <div class="table-container">
         <table>
           <thead>
@@ -2794,7 +3552,7 @@ function serveDashboard(env: Env): Response {
     </div>
     
     <div class="section">
-      <h2 class="section-title">🔗 Similarity Clusters</h2>
+      <h2 class="section-title"><span class="icon"><i data-lucide="git-branch"></i></span> Similarity Clusters</h2>
       <div id="clusters">
         <div class="cluster-card loading">Loading clusters...</div>
       </div>
@@ -2917,17 +3675,21 @@ function serveDashboard(env: Env): Response {
           return;
         }
         
+        // Extract the scanned template's ID from the URL
+        const scannedId = url.replace(/https?:\\/\\//, '').replace(/\\.webflow\\.io\\/?.*/, '').replace(/[^a-z0-9-]/gi, '-');
+        
         resultsEl.innerHTML = \`
           <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 8px;">
             <strong>\${data.recommendation}</strong>
             \${data.matches.length > 0 ? \`
               <table style="margin-top: 1rem; width: 100%;">
-                <thead><tr><th>Template</th><th>Similarity</th></tr></thead>
+                <thead><tr><th>Template</th><th>Similarity</th><th>Details</th></tr></thead>
                 <tbody>
                   \${data.matches.slice(0, 10).map(m => \`
                     <tr>
                       <td><a href="\${m.url}" target="_blank">\${m.name}</a></td>
                       <td>\${(m.similarity * 100).toFixed(0)}%</td>
+                      <td><a href="/compare/\${scannedId}/\${m.id}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="git-compare" style="width: 14px; height: 14px;"></i> Compare</a></td>
                     </tr>
                   \`).join('')}
                 </tbody>
@@ -2935,10 +3697,14 @@ function serveDashboard(env: Env): Response {
             \` : ''}
           </div>
         \`;
+        lucide.createIcons();
       } catch (e) {
         resultsEl.innerHTML = \`<div style="color: var(--danger)">Failed to scan: \${e.message}</div>\`;
       }
     }
+    
+    // Initialize Lucide icons
+    lucide.createIcons();
     
     // Load everything on page load
     loadStats();
