@@ -23,7 +23,7 @@
  */
 
 const RESEND_API = 'https://api.resend.com';
-const FROM_ADDRESS = 'CREATE SOMETHING <hello@createsomething.io>';
+const FROM_ADDRESS = 'Micah Johnson <micah@createsomething.io>';
 
 // Presets for common updates
 const PRESETS: Record<string, UpdateData> = {
