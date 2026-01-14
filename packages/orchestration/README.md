@@ -14,7 +14,10 @@ Extends harness patterns with multi-session durability. Sessions can crash, rest
 - **Cost tracking**: Budget enforcement with warnings
 - **Quality gates**: Baseline checks at session start
 - **Git-based persistence**: Checkpoints committed for durability
-- **Resume briefs**: Full context restoration
+- **Resume briefs**: Full context restoration with "what didn't work" sections
+- **Agent reflection**: Extract learnings from completed convoys (RoboDev-inspired)
+- **Postmortem pipeline**: Capture incident learnings into prevention rules
+- **Work metrics**: Track cycle time, iterations, and reviewer efficacy
 
 ## Installation
 
@@ -50,6 +53,61 @@ orch session pause --epic my-feature --reason "End of day"
 
 ```bash
 orch session list --epic my-feature
+```
+
+### Agent Reflection (RoboDev-Inspired)
+
+After completing work, reflect on what was learned:
+
+```bash
+# Reflect on a convoy
+orch reflect convoy <convoy-id> --epic <epic-id>
+
+# Reflect on an entire epic
+orch reflect epic <epic-id>
+
+# Apply learnings to rule files
+orch reflect apply <reflection-id>
+
+# View pending learnings
+orch reflect pending
+```
+
+### Postmortem Pipeline
+
+Capture incident learnings as prevention rules:
+
+```bash
+# Create postmortem from incident issue
+orch postmortem create <issue-id> --auto-analyze --auto-rules
+
+# Review generated rules
+orch postmortem show <postmortem-id>
+
+# Approve and apply rules
+orch postmortem approve <postmortem-id>
+orch postmortem apply <postmortem-id>
+```
+
+### Work Metrics
+
+Track cycle time, iterations, and reviewer efficacy:
+
+```bash
+# Collect metrics for a convoy
+orch metrics convoy <convoy-id> --epic <epic-id> --save
+
+# Collect metrics for an epic
+orch metrics epic <epic-id> --save
+
+# Generate report
+orch metrics report <target-id>
+
+# Compare two targets
+orch metrics compare <target-a> <target-b>
+
+# View summary
+orch metrics summary
 ```
 
 ## Programmatic API
@@ -151,9 +209,9 @@ interface OrchestrationContext extends AgentContext {
 }
 ```
 
-## Phase 1 Status (MVP)
+## Phase Status
 
-**Implemented**:
+**Phase 1 (MVP) - Complete**:
 - ✓ Session lifecycle (start, pause, resume, complete)
 - ✓ Checkpoint storage (Git-based)
 - ✓ Checkpoint policy (time/event/cost triggers)
@@ -162,7 +220,14 @@ interface OrchestrationContext extends AgentContext {
 - ✓ Harness baseline integration
 - ✓ CLI commands (`orch session`)
 
-**Not Yet Implemented** (Phase 2+):
+**Phase 2 (RoboDev-Inspired) - Complete**:
+- ✓ Agent reflection (`orch reflect`) - Extract learnings from completed work
+- ✓ Postmortem pipeline (`orch postmortem`) - Incident → prevention rules
+- ✓ Work metrics (`orch metrics`) - Cycle time, iterations, reviewer efficacy
+- ✓ "What didn't work" sections in checkpoint reports
+- ✓ Full context mode (`harness work --full-context`)
+
+**Phase 3 (Planned)**:
 - Convoy support (multi-issue coordination)
 - Worker pool management
 - Background execution via Task subagents

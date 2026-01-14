@@ -123,6 +123,87 @@ export {
   getReadyIssues,
 } from './integration/beads.js';
 
+// Reflection and learning
+export {
+  analyzeConvoy,
+  analyzeEpic,
+  identifyCorrections,
+  identifyFailurePatterns,
+  extractLearnings,
+  saveReflection,
+  loadReflection,
+  listReflections,
+  applyLearning,
+  applyAllLearnings,
+  getPendingLearningSummary,
+  generateLearningsReport,
+  DEFAULT_REFLECTION_CONFIG,
+} from './reflection/index.js';
+
+export type {
+  Learning,
+  LearningType,
+  LearningSource,
+  ReflectionResult,
+  ReflectionTarget,
+  ReflectionStats,
+  IssueMetrics,
+  ReflectionConfig,
+  StoredReflection,
+} from './reflection/index.js';
+
+// Postmortem analysis
+export {
+  createPostmortem,
+  analyzeRootCause,
+  generatePreventionRules,
+  savePostmortem,
+  loadPostmortem,
+  listPostmortems,
+  updatePostmortemStatus,
+  applyPreventionRule,
+  applyAllRules,
+  formatPostmortemReport,
+  DEFAULT_POSTMORTEM_CONFIG,
+} from './postmortem/index.js';
+
+export type {
+  Postmortem,
+  RootCause,
+  RootCauseCategory,
+  Impact,
+  TimelineEvent,
+  PreventionRule,
+  PostmortemStatus,
+  PostmortemConfig,
+  StoredPostmortem,
+} from './postmortem/index.js';
+
+// Metrics tracking
+export {
+  collectIssueMetrics,
+  collectConvoyMetrics,
+  collectEpicMetrics,
+  computeAggregateMetrics,
+  computeTrends,
+  saveMetrics,
+  loadMetrics,
+  listMetrics,
+  generateMetricsReport,
+  EMPTY_REVIEWER_FINDINGS,
+} from './metrics/index.js';
+
+export type {
+  WorkMetrics,
+  ReviewerFindings,
+  FindingsSummary,
+  AggregateMetrics,
+  ComplexityMetrics,
+  MetricsTrend,
+  TrendDataPoint,
+  StoredMetrics,
+} from './metrics/index.js';
+
 // Types
 export type {
   OrchestrationContext,

@@ -229,6 +229,7 @@ async function handleStop(args: string[], cwd: string): Promise<void> {
  *   harness work <issue-id>              Work on existing issue
  *   harness work --create "Title"        Create and work on new issue
  *   harness work --spec <file>           Parse spec and work through issues
+ *   harness work <issue-id> --full-context   Deep context retrieval mode
  */
 async function handleWork(args: string[], cwd: string): Promise<void> {
   const createTitle = parseStringArg(args, '--create');
@@ -236,6 +237,7 @@ async function handleWork(args: string[], cwd: string): Promise<void> {
   const modelOverride = parseStringArg(args, '--model') as 'opus' | 'sonnet' | 'haiku' | undefined;
   const configPath = parseStringArg(args, '--config');
   const dryRun = args.includes('--dry-run');
+  const fullContext = args.includes('--full-context');
 
   // Load harness configuration
   const { config: harnessConfig, configPath: loadedConfigPath } = await loadConfig(configPath, cwd);
@@ -318,16 +320,32 @@ async function handleWork(args: string[], cwd: string): Promise<void> {
    Detected model: ${detectedModel}
    ${modelOverride ? `Override: ${modelOverride}` : ''}
    Using: ${model.toUpperCase()}
+${fullContext ? '\n🔎 Full Context Mode: ENABLED (deep context retrieval)' : ''}
 `);
 
   if (dryRun) {
     console.log('[DRY RUN] Would mark in_progress and spawn Claude Code session');
+    if (fullContext) {
+      console.log('[DRY RUN] Full context mode would search:');
+      console.log('  - .claude/rules/ for relevant patterns');
+      console.log('  - Beads history for similar past issues');
+      console.log('  - Monorepo for related code patterns');
+      console.log('  - .io papers for relevant research');
+    }
     return;
   }
 
   // Mark issue in progress
   console.log(`→ Marking ${issue.id} as in_progress...`);
   await updateIssueStatus(issue.id, 'in_progress', cwd);
+
+  // Gather full context if requested
+  let fullContextPriming = '';
+  if (fullContext) {
+    console.log(`→ Gathering full context...`);
+    fullContextPriming = await gatherFullContext(issue, cwd);
+    console.log(`   Found ${fullContextPriming.split('\n').length} lines of context\n`);
+  }
 
   // Spawn Claude Code session
   console.log(`→ Spawning Claude Code session with ${model}...\n`);
@@ -338,6 +356,7 @@ async function handleWork(args: string[], cwd: string): Promise<void> {
     lastCheckpoint: null,
     redirectNotes: [],
     sessionGoal: `Complete issue ${issue.id}: ${issue.title}`,
+    fullContextPriming: fullContext ? fullContextPriming : undefined,
   };
 
   const result = await runSession(issue, primingContext, {
@@ -436,6 +455,241 @@ function buildSwarmConfig(args: string[]): SwarmConfig {
   config.minTasksForSwarm = minTasks;
 
   return config;
+}
+
+/**
+ * Gather full context for an issue.
+ *
+ * Philosophy: Like RoboDev's "minimum viable prompt" approach, let the agent
+ * find context instead of requiring the user to specify it. This searches:
+ * 1. .claude/rules/ for relevant patterns
+ * 2. Beads history for similar past issues
+ * 3. Monorepo for related code patterns
+ * 4. .io papers for relevant research
+ */
+async function gatherFullContext(issue: BeadsIssue, cwd: string): Promise<string> {
+  const lines: string[] = [];
+  const title = issue.title.toLowerCase();
+  const description = (issue.description || '').toLowerCase();
+  const labels = issue.labels || [];
+
+  lines.push('## Full Context (Auto-Retrieved)');
+  lines.push('');
+  lines.push('*This context was automatically gathered based on the issue. Use it to inform your approach.*');
+  lines.push('');
+
+  // 1. Search .claude/rules/ for relevant patterns
+  const rulesContext = await searchRulesForContext(title, description, labels, cwd);
+  if (rulesContext) {
+    lines.push('### Relevant Patterns from .claude/rules/');
+    lines.push('');
+    lines.push(rulesContext);
+    lines.push('');
+  }
+
+  // 2. Search Beads history for similar issues
+  const historyContext = await searchBeadsHistory(title, description, cwd);
+  if (historyContext) {
+    lines.push('### Similar Past Issues');
+    lines.push('');
+    lines.push(historyContext);
+    lines.push('');
+  }
+
+  // 3. Infer related code patterns from labels
+  const codeContext = inferCodeContext(labels);
+  if (codeContext) {
+    lines.push('### Related Code Patterns');
+    lines.push('');
+    lines.push(codeContext);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Search .claude/rules/ for relevant patterns.
+ */
+async function searchRulesForContext(
+  title: string,
+  description: string,
+  labels: string[],
+  cwd: string
+): Promise<string | null> {
+  const { readdir, readFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+
+  const rulesDir = join(cwd, '.claude/rules');
+  const relevantFiles: { file: string; relevance: number }[] = [];
+
+  // Keywords to match against rule files
+  const keywords = extractKeywords(title + ' ' + description);
+
+  try {
+    const files = await readdir(rulesDir);
+
+    for (const file of files) {
+      if (!file.endsWith('.md')) continue;
+
+      const filePath = join(rulesDir, file);
+      const content = await readFile(filePath, 'utf-8');
+      const lower = content.toLowerCase();
+
+      // Calculate relevance score
+      let relevance = 0;
+      for (const keyword of keywords) {
+        if (lower.includes(keyword)) {
+          relevance++;
+        }
+      }
+
+      // Check labels
+      for (const label of labels) {
+        if (file.includes(label) || lower.includes(label)) {
+          relevance += 2;
+        }
+      }
+
+      if (relevance > 0) {
+        relevantFiles.push({ file, relevance });
+      }
+    }
+
+    // Sort by relevance and take top 3
+    relevantFiles.sort((a, b) => b.relevance - a.relevance);
+    const topFiles = relevantFiles.slice(0, 3);
+
+    if (topFiles.length === 0) {
+      return null;
+    }
+
+    const lines: string[] = [];
+    for (const { file } of topFiles) {
+      lines.push(`- **${file}**: Review this file for relevant patterns`);
+    }
+
+    return lines.join('\n');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Search Beads history for similar issues.
+ */
+async function searchBeadsHistory(
+  title: string,
+  description: string,
+  cwd: string
+): Promise<string | null> {
+  try {
+    const { exec } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const execAsync = promisify(exec);
+
+    // Get closed issues
+    const { stdout } = await execAsync('bd list --status closed --json', { cwd });
+    const closedIssues = JSON.parse(stdout) as BeadsIssue[];
+
+    if (closedIssues.length === 0) {
+      return null;
+    }
+
+    // Find similar issues by keyword matching
+    const keywords = extractKeywords(title + ' ' + description);
+    const similar: { issue: BeadsIssue; score: number }[] = [];
+
+    for (const issue of closedIssues) {
+      const issueText = (issue.title + ' ' + (issue.description || '')).toLowerCase();
+      let score = 0;
+
+      for (const keyword of keywords) {
+        if (issueText.includes(keyword)) {
+          score++;
+        }
+      }
+
+      if (score > 0) {
+        similar.push({ issue, score });
+      }
+    }
+
+    // Sort by score and take top 3
+    similar.sort((a, b) => b.score - a.score);
+    const topSimilar = similar.slice(0, 3);
+
+    if (topSimilar.length === 0) {
+      return null;
+    }
+
+    const lines: string[] = [];
+    for (const { issue } of topSimilar) {
+      lines.push(`- **${issue.id}**: ${issue.title}`);
+      if (issue.description) {
+        lines.push(`  ${issue.description.slice(0, 100)}...`);
+      }
+    }
+
+    return lines.join('\n');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Infer code context from labels.
+ */
+function inferCodeContext(labels: string[]): string | null {
+  const contexts: string[] = [];
+
+  for (const label of labels) {
+    const lower = label.toLowerCase();
+
+    if (lower.includes('cloudflare') || lower.includes('d1') || lower.includes('kv')) {
+      contexts.push('- Review `cloudflare-patterns.md` for D1/KV best practices');
+    }
+    if (lower.includes('svelte') || lower.includes('route')) {
+      contexts.push('- Review `sveltekit-conventions.md` for routing patterns');
+    }
+    if (lower.includes('css') || lower.includes('style')) {
+      contexts.push('- Review `css-canon.md` for styling guidelines');
+    }
+    if (lower.includes('security') || lower.includes('auth')) {
+      contexts.push('- Review `error-handling-patterns.md` for security patterns');
+    }
+    if (lower.includes('api') || lower.includes('endpoint')) {
+      contexts.push('- Review `sveltekit-conventions.md` for API patterns');
+    }
+  }
+
+  if (contexts.length === 0) {
+    return null;
+  }
+
+  return [...new Set(contexts)].join('\n');
+}
+
+/**
+ * Extract keywords from text for matching.
+ */
+function extractKeywords(text: string): string[] {
+  // Remove common words and extract meaningful keywords
+  const stopWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+    'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'this', 'that',
+    'these', 'those', 'it', 'its', 'they', 'them', 'their', 'we', 'us', 'our',
+    'you', 'your', 'i', 'me', 'my', 'he', 'him', 'his', 'she', 'her',
+  ]);
+
+  const words = text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !stopWords.has(word));
+
+  return [...new Set(words)];
 }
 
 main().catch((error) => {

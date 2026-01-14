@@ -69,6 +69,19 @@ export function generateResumeBrief(checkpoint: StoredCheckpoint): string {
     lines.push('');
   }
 
+  // What Didn't Work section - critical for learning from past failures
+  const whatDidntWork = extractWhatDidntWork(context);
+  if (whatDidntWork.length > 0) {
+    lines.push('### What Didn\'t Work');
+    lines.push('');
+    lines.push('*These approaches were tried and failed. Avoid repeating them:*');
+    lines.push('');
+    for (const item of whatDidntWork) {
+      lines.push(`- ✗ ${item}`);
+    }
+    lines.push('');
+  }
+
   lines.push('---');
   lines.push('');
 
@@ -122,9 +135,62 @@ export function formatCheckpointSummary(checkpoint: StoredCheckpoint): string {
     lines.push(`  - Current task: ${context.currentTask.issueId} (${context.currentTask.progressPercent}%)`);
   }
 
+  // What Didn't Work section - document failures for learning
+  const whatDidntWork = extractWhatDidntWork(context);
+  if (whatDidntWork.length > 0) {
+    lines.push('');
+    lines.push('───────────────────────────────────────────────────────────────');
+    lines.push('What Didn\'t Work:');
+    for (const item of whatDidntWork) {
+      lines.push(`  ✗ ${item}`);
+    }
+  }
+
   lines.push(`═══════════════════════════════════════════════════════════════`);
 
   return lines.join('\n');
+}
+
+/**
+ * Extract "what didn't work" from checkpoint context.
+ *
+ * Philosophy: Documenting failures is as important as documenting successes.
+ * This aligns with voice canon principle of honest documentation.
+ */
+function extractWhatDidntWork(context: OrchestrationContext): string[] {
+  const items: string[] = [];
+
+  // Blockers are explicit failures
+  for (const blocker of context.blockers) {
+    items.push(blocker.description);
+  }
+
+  // Agent notes with failure indicators
+  const failureKeywords = [
+    'failed',
+    'error',
+    'didn\'t work',
+    'couldn\'t',
+    'unable to',
+    'wrong',
+    'incorrect',
+    'retry',
+    'reverted',
+    'rolled back',
+  ];
+
+  for (const note of context.agentNotes) {
+    const lower = note.toLowerCase();
+    if (failureKeywords.some((kw) => lower.includes(kw))) {
+      // Truncate long notes
+      const truncated = note.length > 100 ? note.slice(0, 97) + '...' : note;
+      if (!items.includes(truncated)) {
+        items.push(truncated);
+      }
+    }
+  }
+
+  return items;
 }
 
 /**
