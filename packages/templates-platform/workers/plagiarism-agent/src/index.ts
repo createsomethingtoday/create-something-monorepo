@@ -605,17 +605,17 @@ export default {
           Date.now()
         ).run();
         
-        // Store LSH buckets for fast lookup
-        // Delete old buckets first (for re-indexing)
+        // Store LSH bands for fast lookup
+        // Delete old bands first (for re-indexing)
         await env.DB.prepare(
-          'DELETE FROM minhash_lsh_buckets WHERE template_id = ?'
+          'DELETE FROM minhash_lsh_bands WHERE template_id = ?'
         ).bind(id).run();
         
-        // Insert new buckets
+        // Insert new bands
         for (let bandIndex = 0; bandIndex < lshBands.length; bandIndex++) {
           await env.DB.prepare(
-            'INSERT INTO minhash_lsh_buckets (band_index, band_hash, template_id) VALUES (?, ?, ?)'
-          ).bind(bandIndex, lshBands[bandIndex], id).run();
+            'INSERT INTO minhash_lsh_bands (band_id, hash_value, template_id) VALUES (?, ?, ?)'
+          ).bind(`band_${bandIndex}`, lshBands[bandIndex], id).run();
         }
 
         console.log(`[MinHash] ✅ Indexed ${id} (${cssSig.numShingles} CSS shingles, ${lshBands.length} LSH bands)`);
@@ -723,6 +723,72 @@ export default {
       }
     }
 
+    // MinHash backfill: Populate LSH bands for existing templates
+    if (url.pathname === '/minhash/backfill-lsh' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const limit = Math.min(body.limit || 5, 10); // Small batches to avoid SQLite limits
+        
+        // Get templates that need LSH band population
+        const templates = await env.DB.prepare(`
+          SELECT id, combined_signature 
+          FROM template_minhash 
+          WHERE id NOT IN (SELECT DISTINCT template_id FROM minhash_lsh_bands)
+          ORDER BY indexed_at 
+          LIMIT ?
+        `).bind(limit).all();
+        
+        if (!templates.results || templates.results.length === 0) {
+          const totalBands = await env.DB.prepare('SELECT COUNT(*) as count FROM minhash_lsh_bands').first();
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'All templates have LSH bands',
+            processed: 0,
+            totalBands: totalBands?.count || 0
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        
+        let bandsInserted = 0;
+        
+        // Process each template individually but use batch for bands within a template
+        for (const row of templates.results as any[]) {
+          try {
+            const sig = deserializeSignatureCompact(row.combined_signature);
+            const lshBands = computeLSHBandHashes(sig);
+            
+            // Build batch insert for 16 bands of this template
+            const values = lshBands.map((_, i) => '(?, ?, ?)').join(',');
+            const params: any[] = [];
+            for (let i = 0; i < lshBands.length; i++) {
+              params.push(`band_${i}`, lshBands[i], row.id);
+            }
+            
+            await env.DB.prepare(
+              `INSERT OR IGNORE INTO minhash_lsh_bands (band_id, hash_value, template_id) VALUES ${values}`
+            ).bind(...params).run();
+            
+            bandsInserted += lshBands.length;
+          } catch (e) {
+            console.log(`[Backfill] Failed for ${row.id}:`, e);
+          }
+        }
+        
+        const remaining = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM template_minhash 
+          WHERE id NOT IN (SELECT DISTINCT template_id FROM minhash_lsh_bands)
+        `).first();
+        
+        return new Response(JSON.stringify({
+          success: true,
+          processed: templates.results.length,
+          bandsInserted,
+          remaining: remaining?.count || 0
+        }), { headers: { 'Content-Type': 'application/json' } });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
     // MinHash stats: Get index statistics
     if (url.pathname === '/minhash/stats' && request.method === 'GET') {
       try {
@@ -738,6 +804,77 @@ export default {
           totalIndexed: countResult?.count || 0,
           recentTemplates: sampleResult.results
         }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // PLAGIARISM SCAN: Find suspicious template pairs
+    // ==========================================================================
+    if (url.pathname === '/scan/suspicious' && request.method === 'GET') {
+      try {
+        const threshold = parseFloat(url.searchParams.get('threshold') || '0.4');
+        const limit = parseInt(url.searchParams.get('limit') || '100');
+        
+        const suspiciousPairs = await findSuspiciousPairs(env, threshold, limit);
+        
+        return new Response(JSON.stringify({
+          threshold,
+          count: suspiciousPairs.length,
+          pairs: suspiciousPairs
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // Scan a specific template against the index
+    if (url.pathname === '/scan/template' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { url: templateUrl, threshold = 0.35 } = body;
+        
+        if (!templateUrl) {
+          return new Response(JSON.stringify({ error: 'Missing url' }), { status: 400 });
+        }
+        
+        const results = await scanTemplateForPlagiarism(templateUrl, threshold, env);
+        
+        return new Response(JSON.stringify(results), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // DASHBOARD: Visual cluster analysis
+    // ==========================================================================
+    if (url.pathname === '/dashboard' && request.method === 'GET') {
+      return serveDashboard(env);
+    }
+
+    if (url.pathname === '/dashboard/clusters' && request.method === 'GET') {
+      try {
+        const clusters = await findSimilarityClusters(env);
+        return new Response(JSON.stringify(clusters), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    if (url.pathname === '/dashboard/stats' && request.method === 'GET') {
+      try {
+        const stats = await getDashboardStats(env);
+        return new Response(JSON.stringify(stats), {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error: any) {
@@ -1318,13 +1455,141 @@ function arrayBufferToBase64(bytes: Uint8Array): string {
 }
 
 // =============================================================================
-// TIER 1: Workers AI Screening (with optional vision)
+// MINHASH PRE-SCREENING
+// =============================================================================
+
+interface MinHashPreScreenResult {
+  cssSimilarity: number;
+  classOverlap: number;
+  propertySimilarity: number;
+  similarCount: number;
+  verdict: string;
+  topMatches: Array<{ id: string; name: string; similarity: number }>;
+}
+
+async function runMinHashPreScreening(
+  plagiarismCase: PlagiarismCase,
+  env: Env
+): Promise<MinHashPreScreenResult | null> {
+  try {
+    console.log(`[MinHash] Pre-screening: ${plagiarismCase.originalUrl} vs ${plagiarismCase.allegedCopyUrl}`);
+
+    // Fetch content from both URLs
+    const [content1, content2] = await Promise.all([
+      fetchPublishedContent(plagiarismCase.originalUrl),
+      fetchPublishedContent(plagiarismCase.allegedCopyUrl)
+    ]);
+
+    if (!content1 || !content2) {
+      console.log('[MinHash] Could not fetch content from one or both URLs');
+      return null;
+    }
+
+    // Compute MinHash signatures
+    const cssMinHash1 = computeCssMinHash(content1.css);
+    const cssMinHash2 = computeCssMinHash(content2.css);
+    const cssSimilarity = estimateSimilarity(cssMinHash1, cssMinHash2);
+
+    // Compare custom classes
+    const classes1 = extractCustomClasses(content1.css);
+    const classes2 = extractCustomClasses(content2.css);
+    const sharedClasses = classes1.filter(c => classes2.includes(c));
+    const classOverlap = sharedClasses.length / Math.max(classes1.length, classes2.length, 1);
+
+    // Compare CSS properties
+    const propertyComparison = compareProperties(content1.css, content2.css);
+    const propertySimilarity = propertyComparison.declarationSimilarity;
+
+    // Check if alleged copy exists in index and find similar templates
+    let similarCount = 0;
+    let topMatches: Array<{ id: string; name: string; similarity: number }> = [];
+    
+    try {
+      // Search for templates similar to the alleged copy
+      const htmlMinHash = computeHtmlMinHash(content2.html);
+      const combinedMinHash = computeCombinedMinHash(content2.html, content2.css, content2.javascript);
+      
+      // Query the LSH index for similar templates
+      const lshBands = computeLSHBandHashes(combinedMinHash);
+      const bandConditions = lshBands.map((_, i) => `(band_id = 'band_${i}' AND hash_value = ?)`).join(' OR ');
+      
+      const candidateRows = await env.DB.prepare(`
+        SELECT DISTINCT template_id FROM minhash_lsh_bands 
+        WHERE ${bandConditions}
+      `).bind(...lshBands).all();
+      
+      if (candidateRows.results && candidateRows.results.length > 0) {
+        const candidateIds = candidateRows.results.map((r: any) => r.template_id);
+        
+        // Get signatures for candidates
+        const placeholders = candidateIds.map(() => '?').join(',');
+        const signatureRows = await env.DB.prepare(`
+          SELECT id, name, combined_signature FROM template_minhash 
+          WHERE id IN (${placeholders})
+        `).bind(...candidateIds).all();
+        
+        if (signatureRows.results) {
+          const matches = signatureRows.results
+            .map((row: any) => {
+              const sig = deserializeSignatureCompact(row.combined_signature);
+              const similarity = estimateSimilarity(combinedMinHash, sig);
+              return { id: row.id, name: row.name, similarity };
+            })
+            .filter(m => m.similarity > 0.3)
+            .sort((a, b) => b.similarity - a.similarity);
+          
+          similarCount = matches.length;
+          topMatches = matches.slice(0, 5);
+        }
+      }
+    } catch (error) {
+      console.log('[MinHash] Error querying index (non-fatal):', error);
+    }
+
+    // Determine verdict based on MinHash signals
+    let verdict = 'inconclusive';
+    if (cssSimilarity > 0.35 && classOverlap < 0.1) {
+      verdict = 'likely_plagiarism'; // High CSS similarity but different class names = renamed
+    } else if (cssSimilarity > 0.35 && classOverlap > 0.25) {
+      verdict = 'same_creator_or_clone'; // High similarity with shared classes = same creator
+    } else if (cssSimilarity < 0.25 && classOverlap < 0.05) {
+      verdict = 'likely_unrelated'; // Low similarity on all metrics
+    } else if (propertySimilarity > 0.25) {
+      verdict = 'suspicious_patterns'; // Similar CSS properties even if classes differ
+    }
+
+    const result: MinHashPreScreenResult = {
+      cssSimilarity,
+      classOverlap,
+      propertySimilarity,
+      similarCount,
+      verdict,
+      topMatches
+    };
+
+    // Store as evidence
+    await storeEvidence(env, plagiarismCase.id, 'minhash_prescreen', result);
+
+    console.log(`[MinHash] Pre-screen: CSS=${(cssSimilarity*100).toFixed(1)}%, Classes=${(classOverlap*100).toFixed(1)}%, Verdict=${verdict}`);
+
+    return result;
+  } catch (error) {
+    console.log('[MinHash] Pre-screening failed (non-fatal):', error);
+    return null;
+  }
+}
+
+// =============================================================================
+// TIER 1: Workers AI Screening (with optional vision + MinHash)
 // =============================================================================
 
 async function runTier1Screening(
   plagiarismCase: PlagiarismCase,
   env: Env
 ): Promise<void> {
+  // --- STEP 1: MinHash Pre-Screening (runs in parallel with screenshots) ---
+  const minhashPromise = runMinHashPreScreening(plagiarismCase, env);
+
   // Check if screenshots already exist in R2 (from Airtable submission)
   const existingScreenshots = await Promise.all([
     env.SCREENSHOTS.head(`${plagiarismCase.id}/original.jpg`),
@@ -1347,6 +1612,12 @@ async function runTier1Screening(
     console.log('[Tier 1] Using submitter-provided screenshots');
   }
 
+  // Wait for MinHash results
+  const minhashResults = await minhashPromise;
+  const minhashSummary = minhashResults 
+    ? `\nMinHash Code Analysis:\n- CSS Similarity: ${(minhashResults.cssSimilarity * 100).toFixed(1)}%\n- Class Overlap: ${(minhashResults.classOverlap * 100).toFixed(1)}%\n- Property Similarity: ${(minhashResults.propertySimilarity * 100).toFixed(1)}%\n- Similar Templates Found: ${minhashResults.similarCount}\n- Verdict: ${minhashResults.verdict}`
+    : '';
+
   // Get vision analysis if screenshots available
   let visionAnalysis: string | null = null;
   try {
@@ -1366,10 +1637,11 @@ Alleged copy: ${plagiarismCase.allegedCopyUrl}
 Complaint: ${plagiarismCase.complaintText}
 
 ${visionAnalysis ? `\nVisual Analysis:\n${visionAnalysis}\n` : ''}
+${minhashSummary}
 
 Decide:
-- "obvious_not": Clearly not plagiarism
-- "obvious_yes": Clear plagiarism
+- "obvious_not": Clearly not plagiarism (MinHash shows low similarity, no shared patterns)
+- "obvious_yes": Clear plagiarism (MinHash shows high CSS similarity with low class overlap - indicates renamed classes)
 - "needs_analysis": Requires detailed review
 
 IMPORTANT: Return ONLY valid JSON, nothing else. No markdown, no formatting, no explanatory text.
@@ -2052,4 +2324,614 @@ function extractJSON(text: string): any {
 
     throw new Error(`Could not extract JSON from response: ${text.substring(0, 100)}`);
   }
+}
+
+// =============================================================================
+// PLAGIARISM SCANNING
+// =============================================================================
+
+interface SuspiciousPair {
+  template1: { id: string; name: string; url: string; creator: string | null };
+  template2: { id: string; name: string; url: string; creator: string | null };
+  similarity: number;
+  verdict: string;
+}
+
+async function findSuspiciousPairs(
+  env: Env,
+  threshold: number,
+  limit: number
+): Promise<SuspiciousPair[]> {
+  const suspicious: SuspiciousPair[] = [];
+  
+  // Get all templates with their signatures
+  const templates = await env.DB.prepare(`
+    SELECT id, name, url, creator, combined_signature 
+    FROM template_minhash 
+    ORDER BY indexed_at DESC 
+    LIMIT 500
+  `).all();
+  
+  if (!templates.results || templates.results.length < 2) {
+    return [];
+  }
+  
+  // Compare each template with others using LSH bands to find candidates
+  const templatesArray = templates.results as any[];
+  
+  for (let i = 0; i < Math.min(templatesArray.length, 100); i++) {
+    const t1 = templatesArray[i];
+    const sig1 = deserializeSignatureCompact(t1.combined_signature);
+    
+    for (let j = i + 1; j < templatesArray.length; j++) {
+      const t2 = templatesArray[j];
+      
+      // Skip same creator (legitimate similarity)
+      if (t1.creator && t2.creator && t1.creator === t2.creator) {
+        continue;
+      }
+      
+      const sig2 = deserializeSignatureCompact(t2.combined_signature);
+      const similarity = estimateSimilarity(sig1, sig2);
+      
+      if (similarity >= threshold) {
+        // Determine if this looks like plagiarism vs legitimate
+        let verdict = 'needs_review';
+        if (similarity > 0.8) {
+          verdict = 'high_similarity_different_creators';
+        } else if (similarity > 0.5) {
+          verdict = 'moderate_similarity';
+        }
+        
+        suspicious.push({
+          template1: { id: t1.id, name: t1.name, url: t1.url, creator: t1.creator },
+          template2: { id: t2.id, name: t2.name, url: t2.url, creator: t2.creator },
+          similarity,
+          verdict
+        });
+        
+        if (suspicious.length >= limit) {
+          return suspicious.sort((a, b) => b.similarity - a.similarity);
+        }
+      }
+    }
+  }
+  
+  return suspicious.sort((a, b) => b.similarity - a.similarity);
+}
+
+interface ScanResult {
+  url: string;
+  indexed: boolean;
+  matches: Array<{
+    id: string;
+    name: string;
+    url: string;
+    similarity: number;
+    verdict: string;
+  }>;
+  recommendation: string;
+}
+
+async function scanTemplateForPlagiarism(
+  templateUrl: string,
+  threshold: number,
+  env: Env
+): Promise<ScanResult> {
+  const content = await fetchPublishedContent(templateUrl);
+  
+  if (!content) {
+    return {
+      url: templateUrl,
+      indexed: false,
+      matches: [],
+      recommendation: 'Could not fetch template content'
+    };
+  }
+  
+  // Compute MinHash signature
+  const combinedMinHash = computeCombinedMinHash(content.html, content.css, content.javascript);
+  const lshBands = computeLSHBandHashes(combinedMinHash);
+  
+  // Query for similar templates
+  const bandConditions = lshBands.map((_, i) => `(band_id = 'band_${i}' AND hash_value = ?)`).join(' OR ');
+  
+  const candidateRows = await env.DB.prepare(`
+    SELECT DISTINCT template_id FROM minhash_lsh_bands 
+    WHERE ${bandConditions}
+    LIMIT 100
+  `).bind(...lshBands).all();
+  
+  const matches: ScanResult['matches'] = [];
+  
+  if (candidateRows.results && candidateRows.results.length > 0) {
+    const candidateIds = candidateRows.results.map((r: any) => r.template_id);
+    const placeholders = candidateIds.map(() => '?').join(',');
+    
+    const signatureRows = await env.DB.prepare(`
+      SELECT id, name, url, creator, combined_signature 
+      FROM template_minhash 
+      WHERE id IN (${placeholders})
+    `).bind(...candidateIds).all();
+    
+    if (signatureRows.results) {
+      for (const row of signatureRows.results as any[]) {
+        const sig = deserializeSignatureCompact(row.combined_signature);
+        const similarity = estimateSimilarity(combinedMinHash, sig);
+        
+        if (similarity >= threshold) {
+          let verdict = 'low_concern';
+          if (similarity > 0.7) {
+            verdict = 'high_similarity';
+          } else if (similarity > 0.5) {
+            verdict = 'moderate_similarity';
+          }
+          
+          matches.push({
+            id: row.id,
+            name: row.name,
+            url: row.url,
+            similarity,
+            verdict
+          });
+        }
+      }
+    }
+  }
+  
+  // Sort by similarity
+  matches.sort((a, b) => b.similarity - a.similarity);
+  
+  // Generate recommendation
+  let recommendation = 'No significant matches found - template appears original';
+  if (matches.length > 0) {
+    const topMatch = matches[0];
+    if (topMatch.similarity > 0.7) {
+      recommendation = `HIGH CONCERN: ${(topMatch.similarity * 100).toFixed(0)}% match with "${topMatch.name}" - recommend detailed review`;
+    } else if (topMatch.similarity > 0.5) {
+      recommendation = `MODERATE CONCERN: ${(topMatch.similarity * 100).toFixed(0)}% match with "${topMatch.name}" - may warrant review`;
+    } else {
+      recommendation = `LOW CONCERN: Closest match is ${(topMatch.similarity * 100).toFixed(0)}% with "${topMatch.name}"`;
+    }
+  }
+  
+  return {
+    url: templateUrl,
+    indexed: true,
+    matches: matches.slice(0, 20),
+    recommendation
+  };
+}
+
+// =============================================================================
+// DASHBOARD
+// =============================================================================
+
+interface Cluster {
+  id: string;
+  templates: Array<{ id: string; name: string; url: string }>;
+  avgSimilarity: number;
+  suspicionLevel: string;
+}
+
+async function findSimilarityClusters(env: Env): Promise<Cluster[]> {
+  // Get templates with high overlap in LSH bands
+  const bandOverlaps = await env.DB.prepare(`
+    SELECT 
+      a.template_id as t1,
+      b.template_id as t2,
+      COUNT(*) as shared_bands
+    FROM minhash_lsh_bands a
+    JOIN minhash_lsh_bands b ON a.band_id = b.band_id AND a.hash_value = b.hash_value
+    WHERE a.template_id < b.template_id
+    GROUP BY a.template_id, b.template_id
+    HAVING shared_bands >= 8
+    ORDER BY shared_bands DESC
+    LIMIT 50
+  `).all();
+  
+  if (!bandOverlaps.results || bandOverlaps.results.length === 0) {
+    return [];
+  }
+  
+  // Build clusters using union-find
+  const parent: Record<string, string> = {};
+  const find = (x: string): string => {
+    if (!parent[x]) parent[x] = x;
+    if (parent[x] !== x) parent[x] = find(parent[x]);
+    return parent[x];
+  };
+  const union = (x: string, y: string) => {
+    parent[find(x)] = find(y);
+  };
+  
+  for (const row of bandOverlaps.results as any[]) {
+    union(row.t1, row.t2);
+  }
+  
+  // Group by cluster
+  const clusterMap: Record<string, string[]> = {};
+  const allIds = new Set<string>();
+  for (const row of bandOverlaps.results as any[]) {
+    allIds.add(row.t1);
+    allIds.add(row.t2);
+  }
+  
+  for (const id of allIds) {
+    const root = find(id);
+    if (!clusterMap[root]) clusterMap[root] = [];
+    if (!clusterMap[root].includes(id)) clusterMap[root].push(id);
+  }
+  
+  // Get template details for each cluster
+  const clusters: Cluster[] = [];
+  
+  for (const [root, memberIds] of Object.entries(clusterMap)) {
+    if (memberIds.length < 2) continue;
+    
+    const placeholders = memberIds.map(() => '?').join(',');
+    const members = await env.DB.prepare(`
+      SELECT id, name, url FROM template_minhash WHERE id IN (${placeholders})
+    `).bind(...memberIds).all();
+    
+    if (members.results && members.results.length >= 2) {
+      clusters.push({
+        id: root,
+        templates: members.results as any[],
+        avgSimilarity: 0.6, // Approximate - would need to compute exactly
+        suspicionLevel: memberIds.length > 5 ? 'high' : memberIds.length > 3 ? 'medium' : 'low'
+      });
+    }
+  }
+  
+  return clusters.sort((a, b) => b.templates.length - a.templates.length);
+}
+
+async function getDashboardStats(env: Env): Promise<any> {
+  const [totalCount, caseCount, recentCases] = await Promise.all([
+    env.DB.prepare('SELECT COUNT(*) as count FROM template_minhash').first(),
+    env.DB.prepare('SELECT COUNT(*) as count FROM plagiarism_cases').first(),
+    env.DB.prepare(`
+      SELECT id, original_url, alleged_copy_url, final_decision, created_at 
+      FROM plagiarism_cases 
+      ORDER BY created_at DESC 
+      LIMIT 10
+    `).all()
+  ]);
+  
+  return {
+    totalTemplatesIndexed: totalCount?.count || 0,
+    totalCasesProcessed: caseCount?.count || 0,
+    recentCases: recentCases.results || [],
+    lastUpdated: new Date().toISOString()
+  };
+}
+
+function serveDashboard(env: Env): Response {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plagiarism Detection Dashboard</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --text: #e4e4e7;
+      --muted: #71717a;
+      --accent: #8b5cf6;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--muted); margin-bottom: 2rem; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--accent); }
+    .stat-label { color: var(--muted); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .section { margin-bottom: 2rem; }
+    .section-title { font-size: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
+    .badge-high { background: rgba(239,68,68,0.2); color: var(--danger); }
+    .badge-medium { background: rgba(245,158,11,0.2); color: var(--warning); }
+    .badge-low { background: rgba(34,197,94,0.2); color: var(--success); }
+    .table-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: rgba(255,255,255,0.02); color: var(--muted); font-weight: 500; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .similarity-bar {
+      width: 100px;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .similarity-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+    .cluster-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .cluster-templates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .template-pill {
+      background: var(--border);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+    }
+    .scan-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .form-row { display: flex; gap: 1rem; }
+    input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    input[type="text"]:focus { outline: none; border-color: var(--accent); }
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .loading { animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    #scan-results { margin-top: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Plagiarism Detection Dashboard</h1>
+    <p class="subtitle">MinHash LSH Index with 9,500+ templates</p>
+    
+    <div class="stats-grid" id="stats">
+      <div class="stat-card">
+        <div class="stat-value loading">-</div>
+        <div class="stat-label">Templates Indexed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value loading">-</div>
+        <div class="stat-label">Cases Processed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value loading">-</div>
+        <div class="stat-label">Suspicious Clusters</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">🔎 Scan Template</h2>
+      <div class="scan-form">
+        <div class="form-row">
+          <input type="text" id="scan-url" placeholder="Enter template URL (e.g., https://example.webflow.io/)">
+          <button onclick="scanTemplate()">Scan for Plagiarism</button>
+        </div>
+        <div id="scan-results"></div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">⚠️ Suspicious Pairs</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Template 1</th>
+              <th>Template 2</th>
+              <th>Similarity</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="suspicious-pairs">
+            <tr><td colspan="4" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">🔗 Similarity Clusters</h2>
+      <div id="clusters">
+        <div class="cluster-card loading">Loading clusters...</div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    async function loadStats() {
+      try {
+        const [stats, clusters] = await Promise.all([
+          fetch('/dashboard/stats').then(r => r.json()),
+          fetch('/dashboard/clusters').then(r => r.json())
+        ]);
+        
+        const statsEl = document.getElementById('stats');
+        statsEl.innerHTML = \`
+          <div class="stat-card">
+            <div class="stat-value">\${stats.totalTemplatesIndexed.toLocaleString()}</div>
+            <div class="stat-label">Templates Indexed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">\${stats.totalCasesProcessed}</div>
+            <div class="stat-label">Cases Processed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">\${clusters.length}</div>
+            <div class="stat-label">Similarity Clusters</div>
+          </div>
+        \`;
+      } catch (e) {
+        console.error('Failed to load stats:', e);
+      }
+    }
+    
+    async function loadSuspiciousPairs() {
+      try {
+        const data = await fetch('/scan/suspicious?threshold=0.5&limit=20').then(r => r.json());
+        const tbody = document.getElementById('suspicious-pairs');
+        
+        if (data.pairs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4">No suspicious pairs found above threshold</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = data.pairs.map(p => \`
+          <tr>
+            <td><a href="\${p.template1.url}" target="_blank">\${p.template1.name}</a></td>
+            <td><a href="\${p.template2.url}" target="_blank">\${p.template2.name}</a></td>
+            <td>
+              <div class="similarity-bar">
+                <div class="similarity-fill" style="width: \${p.similarity * 100}%; background: \${p.similarity > 0.7 ? 'var(--danger)' : p.similarity > 0.5 ? 'var(--warning)' : 'var(--success)'}"></div>
+              </div>
+              \${(p.similarity * 100).toFixed(0)}%
+            </td>
+            <td><span class="badge \${p.similarity > 0.7 ? 'badge-high' : p.similarity > 0.5 ? 'badge-medium' : 'badge-low'}">\${p.verdict}</span></td>
+          </tr>
+        \`).join('');
+      } catch (e) {
+        console.error('Failed to load suspicious pairs:', e);
+      }
+    }
+    
+    async function loadClusters() {
+      try {
+        const clusters = await fetch('/dashboard/clusters').then(r => r.json());
+        const el = document.getElementById('clusters');
+        
+        if (clusters.length === 0) {
+          el.innerHTML = '<div class="cluster-card">No similarity clusters detected</div>';
+          return;
+        }
+        
+        el.innerHTML = clusters.slice(0, 10).map(c => \`
+          <div class="cluster-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>\${c.templates.length} templates</strong>
+              <span class="badge \${c.suspicionLevel === 'high' ? 'badge-high' : c.suspicionLevel === 'medium' ? 'badge-medium' : 'badge-low'}">\${c.suspicionLevel} suspicion</span>
+            </div>
+            <div class="cluster-templates">
+              \${c.templates.map(t => \`<a href="\${t.url}" target="_blank" class="template-pill">\${t.name}</a>\`).join('')}
+            </div>
+          </div>
+        \`).join('');
+      } catch (e) {
+        console.error('Failed to load clusters:', e);
+      }
+    }
+    
+    async function scanTemplate() {
+      const url = document.getElementById('scan-url').value.trim();
+      if (!url) return alert('Please enter a URL');
+      
+      const resultsEl = document.getElementById('scan-results');
+      resultsEl.innerHTML = '<div class="loading">Scanning...</div>';
+      
+      try {
+        const data = await fetch('/scan/template', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, threshold: 0.3 })
+        }).then(r => r.json());
+        
+        if (data.error) {
+          resultsEl.innerHTML = \`<div style="color: var(--danger)">Error: \${data.error}</div>\`;
+          return;
+        }
+        
+        resultsEl.innerHTML = \`
+          <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 8px;">
+            <strong>\${data.recommendation}</strong>
+            \${data.matches.length > 0 ? \`
+              <table style="margin-top: 1rem; width: 100%;">
+                <thead><tr><th>Template</th><th>Similarity</th></tr></thead>
+                <tbody>
+                  \${data.matches.slice(0, 10).map(m => \`
+                    <tr>
+                      <td><a href="\${m.url}" target="_blank">\${m.name}</a></td>
+                      <td>\${(m.similarity * 100).toFixed(0)}%</td>
+                    </tr>
+                  \`).join('')}
+                </tbody>
+              </table>
+            \` : ''}
+          </div>
+        \`;
+      } catch (e) {
+        resultsEl.innerHTML = \`<div style="color: var(--danger)">Failed to scan: \${e.message}</div>\`;
+      }
+    }
+    
+    // Load everything on page load
+    loadStats();
+    loadSuspiciousPairs();
+    loadClusters();
+  </script>
+</body>
+</html>`;
+
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html' }
+  });
 }
