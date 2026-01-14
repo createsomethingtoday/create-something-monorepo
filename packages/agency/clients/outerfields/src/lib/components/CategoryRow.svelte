@@ -20,10 +20,17 @@
 	interface Props {
 		title: string;
 		videos: Video[];
+		/** Use links to /watch/[id] instead of click handlers */
+		useLinks?: boolean;
+		/** Handler for video clicks (used if useLinks is false) */
 		onVideoClick?: (videoId: string) => void;
 	}
 
-	let { title, videos, onVideoClick }: Props = $props();
+	let { title, videos, useLinks = false, onVideoClick }: Props = $props();
+
+	function getVideoHref(videoId: string): string | undefined {
+		return useLinks ? `/watch/${videoId}` : undefined;
+	}
 
 	let scrollContainer: HTMLDivElement;
 	let canScrollLeft = $state(false);
@@ -95,7 +102,8 @@
 			{#each videos as video (video.id)}
 				<VideoCard
 					{...video}
-					onClick={() => onVideoClick?.(video.id)}
+					href={getVideoHref(video.id)}
+					onClick={useLinks ? undefined : () => onVideoClick?.(video.id)}
 				/>
 			{/each}
 		</div>

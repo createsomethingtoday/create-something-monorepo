@@ -181,7 +181,7 @@
 			<p class="empty-state">No videos available yet.</p>
 		{:else}
 			{#each categories as category}
-				<CategoryRow title={category.title} videos={category.videos} onVideoClick={handleVideoClick} />
+				<CategoryRow title={category.title} videos={category.videos} useLinks={true} />
 			{/each}
 		{/if}
 	</div>

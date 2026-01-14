@@ -3,6 +3,7 @@
 	 * VideoCard Component
 	 * Displays a video thumbnail with metadata for horizontal category rows.
 	 * Shows lock icon for gated content, FREE badge for preview content.
+	 * Supports both link navigation (href) and click handlers (onClick).
 	 */
 	import { Lock, Play } from 'lucide-svelte';
 
@@ -14,6 +15,7 @@
 		tier: 'free' | 'preview' | 'gated';
 		category: string;
 		episodeNumber?: number;
+		href?: string;
 		onClick?: () => void;
 	}
 
@@ -25,19 +27,26 @@
 		tier,
 		category,
 		episodeNumber,
+		href,
 		onClick
 	}: Props = $props();
 
 	// Determine if this video should show as locked
 	const isLocked = tier === 'gated';
 	const isFree = tier === 'free';
+
+	// Use link if href provided and no onClick, otherwise use button
+	const useLink = $derived(!!href && !onClick);
+
+	function handleClick(e: MouseEvent) {
+		if (onClick) {
+			e.preventDefault();
+			onClick();
+		}
+	}
 </script>
 
-<button
-	class="video-card"
-	onclick={onClick}
-	aria-label={`Play ${title}`}
->
+{#snippet cardContent()}
 	<div class="thumbnail-container">
 		<img
 			src={thumbnail}
@@ -79,7 +88,25 @@
 			<p class="episode-number">Episode {episodeNumber}</p>
 		{/if}
 	</div>
-</button>
+{/snippet}
+
+{#if useLink}
+	<a
+		href={href}
+		class="video-card"
+		aria-label={`Watch ${title}`}
+	>
+		{@render cardContent()}
+	</a>
+{:else}
+	<button
+		class="video-card"
+		onclick={handleClick}
+		aria-label={`Play ${title}`}
+	>
+		{@render cardContent()}
+	</button>
+{/if}
 
 <style>
 	.video-card {
@@ -93,6 +120,8 @@
 		padding: 0;
 		cursor: pointer;
 		transition: transform var(--duration-micro) var(--ease-standard);
+		text-decoration: none;
+		color: inherit;
 	}
 
 	.video-card:hover {
