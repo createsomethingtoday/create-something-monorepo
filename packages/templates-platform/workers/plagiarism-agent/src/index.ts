@@ -16,6 +16,7 @@ import {
   normalizeWebflowUrl, 
   extractUrls, 
   analyzeVectorSimilarity,
+  fetchPublishedContent,
   type VectorSimilarity 
 } from './vector-similarity';
 import {
@@ -24,6 +25,22 @@ import {
   getIndexStats,
   type TemplateMetadata
 } from './indexer';
+import {
+  computeCssMinHash,
+  computeHtmlMinHash,
+  computeCombinedMinHash,
+  estimateSimilarity,
+  serializeSignatureCompact,
+  deserializeSignatureCompact,
+  compareCss,
+  compareCustomClasses,
+  compareProperties,
+  extractCustomClasses,
+  computeLSHBandHashes,
+  serializeLSHBands,
+  type MinHashSignature,
+  type SimilarityResult
+} from './minhash';
 
 // =============================================================================
 // TYPES
@@ -120,6 +137,141 @@ const MAJOR_VIOLATION_CONFIDENCE_THRESHOLD = 0.9;
 // Tier 2 → Tier 3 escalation threshold
 // Cases with confidence below this get code-level analysis
 const TIER3_ESCALATION_THRESHOLD = 0.75;
+
+// =============================================================================
+// MINHASH HELPERS
+// =============================================================================
+
+/**
+ * Fetch HTML, CSS, and JS content from a template URL
+ */
+async function fetchTemplateContent(templateUrl: string): Promise<{
+  html: string;
+  css: string;
+  js: string;
+}> {
+  const content = await fetchPublishedContent(templateUrl);
+  
+  if (!content) {
+    return { html: '', css: '', js: '' };
+  }
+  
+  return {
+    html: content.html || '',
+    css: content.css || '',
+    js: content.javascript || ''
+  };
+}
+
+/**
+ * Interpret MinHash Jaccard similarity as a plagiarism verdict
+ * 
+ * Unlike embedding cosine similarity (which has a ~95% baseline for Webflow),
+ * Jaccard similarity has a much lower baseline because it measures actual
+ * set intersection of shingles.
+ */
+function interpretMinHashSimilarity(jaccard: number): {
+  verdict: 'high_similarity' | 'moderate_similarity' | 'low_similarity' | 'distinct';
+  description: string;
+  recommendation: string;
+} {
+  if (jaccard >= 0.7) {
+    return {
+      verdict: 'high_similarity',
+      description: `${(jaccard * 100).toFixed(1)}% Jaccard similarity indicates very similar structure`,
+      recommendation: 'Strong evidence of copying - recommend MAJOR violation'
+    };
+  } else if (jaccard >= 0.4) {
+    return {
+      verdict: 'moderate_similarity',
+      description: `${(jaccard * 100).toFixed(1)}% Jaccard similarity indicates significant overlap`,
+      recommendation: 'Possible partial copying - recommend manual review'
+    };
+  } else if (jaccard >= 0.2) {
+    return {
+      verdict: 'low_similarity',
+      description: `${(jaccard * 100).toFixed(1)}% Jaccard similarity indicates some common patterns`,
+      recommendation: 'Likely coincidental similarity - recommend MINOR or NO violation'
+    };
+  } else {
+    return {
+      verdict: 'distinct',
+      description: `${(jaccard * 100).toFixed(1)}% Jaccard similarity indicates distinct templates`,
+      recommendation: 'No significant similarity - recommend NO violation'
+    };
+  }
+}
+
+/**
+ * Combined interpretation using multiple signals
+ * 
+ * This catches plagiarism even when:
+ * - Class names are changed (uses property comparison)
+ * - Properties are reordered (uses fingerprints)
+ * - Colors/gradients/animations are copied (uses pattern matching)
+ */
+function interpretCombinedSimilarity(
+  classJaccard: number,
+  declarationJaccard: number,
+  patternMatches: { colors: number; gradients: number; animations: number; customProperties: number; keyframes: number }
+): {
+  verdict: 'high_similarity' | 'moderate_similarity' | 'low_similarity' | 'distinct';
+  description: string;
+  recommendation: string;
+  signals: { name: string; value: string; weight: string }[];
+} {
+  // Calculate pattern match score
+  const patternScore = (
+    (patternMatches.gradients > 0 ? 0.3 : 0) +      // Gradients are highly specific
+    (patternMatches.animations > 0 ? 0.2 : 0) +     // Animations are template-specific
+    (patternMatches.keyframes > 0 ? 0.2 : 0) +      // Keyframes are template-specific
+    (patternMatches.customProperties > 2 ? 0.2 : 0) + // Multiple CSS vars = same design system
+    (patternMatches.colors > 5 ? 0.1 : 0)           // Many shared colors
+  );
+  
+  // Weighted combination of signals
+  const combinedScore = (
+    classJaccard * 0.3 +           // Class names (can be renamed)
+    declarationJaccard * 0.4 +     // Property blocks (hard to change)
+    patternScore * 0.3             // Specific patterns (very hard to change)
+  );
+  
+  const signals = [
+    { name: 'Class names', value: `${(classJaccard * 100).toFixed(1)}%`, weight: '30%' },
+    { name: 'Property blocks', value: `${(declarationJaccard * 100).toFixed(1)}%`, weight: '40%' },
+    { name: 'Pattern matches', value: `${(patternScore * 100).toFixed(0)}%`, weight: '30%' }
+  ];
+  
+  if (combinedScore >= 0.5 || declarationJaccard >= 0.4) {
+    return {
+      verdict: 'high_similarity',
+      description: `Combined score ${(combinedScore * 100).toFixed(1)}% indicates significant structural copying`,
+      recommendation: 'Strong evidence of copying - recommend MAJOR violation',
+      signals
+    };
+  } else if (combinedScore >= 0.25 || declarationJaccard >= 0.2) {
+    return {
+      verdict: 'moderate_similarity',
+      description: `Combined score ${(combinedScore * 100).toFixed(1)}% indicates partial copying or shared patterns`,
+      recommendation: 'Possible copying - recommend manual review',
+      signals
+    };
+  } else if (combinedScore >= 0.1 || patternScore > 0.3) {
+    return {
+      verdict: 'low_similarity',
+      description: `Combined score ${(combinedScore * 100).toFixed(1)}% indicates some shared elements`,
+      recommendation: 'Minor overlap - likely coincidental or common patterns',
+      signals
+    };
+  } else {
+    return {
+      verdict: 'distinct',
+      description: `Combined score ${(combinedScore * 100).toFixed(1)}% indicates distinct templates`,
+      recommendation: 'No significant similarity - recommend NO violation',
+      signals
+    };
+  }
+}
 
 // =============================================================================
 // MAIN WORKER (Webhook Handler)
@@ -276,6 +428,316 @@ export default {
         const stats = await getIndexStats(env);
 
         return new Response(JSON.stringify(stats), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // MINHASH ENDPOINTS - Full file comparison without token limits
+    // ==========================================================================
+
+    // MinHash compare: Compare two templates using MinHash (full files)
+    if (url.pathname === '/minhash/compare' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { url1, url2 } = body;
+
+        if (!url1 || !url2) {
+          return new Response(JSON.stringify({
+            error: 'Missing required fields: url1, url2'
+          }), { status: 400 });
+        }
+
+        console.log(`[MinHash] Comparing ${url1} vs ${url2}`);
+
+        // Fetch CSS from both URLs
+        const [content1, content2] = await Promise.all([
+          fetchTemplateContent(url1),
+          fetchTemplateContent(url2)
+        ]);
+
+        if (!content1.css && !content1.html) {
+          return new Response(JSON.stringify({
+            error: `Failed to fetch content from ${url1}`
+          }), { status: 400 });
+        }
+
+        if (!content2.css && !content2.html) {
+          return new Response(JSON.stringify({
+            error: `Failed to fetch content from ${url2}`
+          }), { status: 400 });
+        }
+
+        // Compute MinHash signatures
+        const sig1 = computeCombinedMinHash(content1.html, content1.css, content1.js);
+        const sig2 = computeCombinedMinHash(content2.html, content2.css, content2.js);
+
+        // Also compute separate CSS similarity for comparison
+        const cssSig1 = computeCssMinHash(content1.css);
+        const cssSig2 = computeCssMinHash(content2.css);
+
+        const combinedSimilarity = estimateSimilarity(sig1, sig2);
+        const cssSimilarity = estimateSimilarity(cssSig1, cssSig2);
+        
+        // Token-only comparison (custom classes only, no Webflow boilerplate)
+        const customClassComparison = compareCustomClasses(content1.css, content2.css);
+        
+        // Property-based comparison (catches renamed classes with same styles)
+        const propertyComparison = compareProperties(content1.css, content2.css);
+
+        return new Response(JSON.stringify({
+          url1,
+          url2,
+          // RECOMMENDED: Custom class comparison (filters out Webflow framework)
+          customClasses: {
+            jaccardSimilarity: customClassComparison.jaccardEstimate,
+            confidence: customClassComparison.confidence,
+            sharedCount: customClassComparison.shingleOverlapEstimate,
+            shared: customClassComparison.shared,
+            uniqueToUrl1: customClassComparison.uniqueToFirst,
+            uniqueToUrl2: customClassComparison.uniqueToSecond
+          },
+          // NEW: Property-based comparison (catches renamed classes)
+          properties: {
+            declarationSimilarity: propertyComparison.declarationSimilarity,
+            fingerprintSimilarity: propertyComparison.fingerprintSimilarity,
+            patternMatches: propertyComparison.patternMatches,
+            sharedDeclarations: propertyComparison.sharedDeclarations.slice(0, 5),
+            sharedFingerprints: propertyComparison.sharedFingerprints.slice(0, 5)
+          },
+          // Full MinHash (includes character shingles - may have false positives)
+          combined: {
+            jaccardSimilarity: combinedSimilarity.jaccardEstimate,
+            confidence: combinedSimilarity.confidence,
+            shingleOverlap: combinedSimilarity.shingleOverlapEstimate,
+            totalShingles: { url1: sig1.numShingles, url2: sig2.numShingles }
+          },
+          css: {
+            jaccardSimilarity: cssSimilarity.jaccardEstimate,
+            confidence: cssSimilarity.confidence,
+            shingleOverlap: cssSimilarity.shingleOverlapEstimate,
+            totalShingles: { url1: cssSig1.numShingles, url2: cssSig2.numShingles }
+          },
+          fileSizes: {
+            url1: { css: content1.css.length, html: content1.html.length },
+            url2: { css: content2.css.length, html: content2.html.length }
+          },
+          // Combined interpretation using multiple signals
+          interpretation: interpretCombinedSimilarity(
+            customClassComparison.jaccardEstimate,
+            propertyComparison.declarationSimilarity,
+            propertyComparison.patternMatches
+          )
+        }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (error: any) {
+        console.error('[MinHash] Compare error:', error);
+        return new Response(JSON.stringify({
+          error: error.message,
+          stack: error.stack
+        }), { status: 500 });
+      }
+    }
+
+    // MinHash index: Store a template's MinHash signature
+    if (url.pathname === '/minhash/index' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { id, url: templateUrl, name, creator } = body;
+
+        if (!id || !templateUrl) {
+          return new Response(JSON.stringify({
+            error: 'Missing required fields: id, url'
+          }), { status: 400 });
+        }
+
+        console.log(`[MinHash] Indexing ${id}: ${templateUrl}`);
+
+        // Fetch content
+        const content = await fetchTemplateContent(templateUrl);
+
+        if (!content.css && !content.html) {
+          return new Response(JSON.stringify({
+            error: `Failed to fetch content from ${templateUrl}`
+          }), { status: 400 });
+        }
+
+        // Compute signatures
+        const cssSig = computeCssMinHash(content.css);
+        const htmlSig = computeHtmlMinHash(content.html);
+        const combinedSig = computeCombinedMinHash(content.html, content.css, content.js);
+        
+        // Compute LSH band hashes for O(1) candidate lookup
+        const lshBands = computeLSHBandHashes(combinedSig.signature);
+
+        // Store in D1
+        await env.DB.prepare(`
+          INSERT OR REPLACE INTO template_minhash (
+            id, name, url, creator,
+            css_signature, html_signature, combined_signature,
+            lsh_bands,
+            css_shingles, html_shingles, combined_shingles,
+            css_size_bytes, html_size_bytes,
+            indexed_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          id,
+          name || id,
+          templateUrl,
+          creator || null,
+          serializeSignatureCompact(cssSig),
+          serializeSignatureCompact(htmlSig),
+          serializeSignatureCompact(combinedSig),
+          serializeLSHBands(lshBands),
+          cssSig.numShingles,
+          htmlSig.numShingles,
+          combinedSig.numShingles,
+          content.css.length,
+          content.html.length,
+          Date.now(),
+          Date.now()
+        ).run();
+        
+        // Store LSH buckets for fast lookup
+        // Delete old buckets first (for re-indexing)
+        await env.DB.prepare(
+          'DELETE FROM minhash_lsh_buckets WHERE template_id = ?'
+        ).bind(id).run();
+        
+        // Insert new buckets
+        for (let bandIndex = 0; bandIndex < lshBands.length; bandIndex++) {
+          await env.DB.prepare(
+            'INSERT INTO minhash_lsh_buckets (band_index, band_hash, template_id) VALUES (?, ?, ?)'
+          ).bind(bandIndex, lshBands[bandIndex], id).run();
+        }
+
+        console.log(`[MinHash] ✅ Indexed ${id} (${cssSig.numShingles} CSS shingles, ${lshBands.length} LSH bands)`);
+
+        return new Response(JSON.stringify({
+          success: true,
+          id,
+          url: templateUrl,
+          shingles: {
+            css: cssSig.numShingles,
+            html: htmlSig.numShingles,
+            combined: combinedSig.numShingles
+          },
+          fileSizes: {
+            css: content.css.length,
+            html: content.html.length
+          }
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        console.error('[MinHash] Index error:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // MinHash find similar: Find templates similar to a given one
+    if (url.pathname.startsWith('/minhash/similar/') && request.method === 'GET') {
+      try {
+        const templateId = url.pathname.split('/').pop();
+        const threshold = parseFloat(url.searchParams.get('threshold') || '0.3');
+
+        // Get the query template's signature
+        const queryResult = await env.DB.prepare(
+          'SELECT * FROM template_minhash WHERE id = ?'
+        ).bind(templateId).first();
+
+        if (!queryResult) {
+          return new Response(JSON.stringify({
+            error: `Template ${templateId} not found in index`
+          }), { status: 404 });
+        }
+
+        // Get all other templates
+        const allTemplates = await env.DB.prepare(
+          'SELECT * FROM template_minhash WHERE id != ?'
+        ).bind(templateId).all();
+
+        // Deserialize query signature
+        const querySig = deserializeSignatureCompact(
+          queryResult.combined_signature as string,
+          queryResult.combined_shingles as number,
+          'combined'
+        );
+
+        // Compare against all templates
+        const similarities: Array<{
+          id: string;
+          name: string;
+          url: string;
+          creator: string | null;
+          similarity: number;
+          confidence: string;
+        }> = [];
+
+        for (const template of allTemplates.results) {
+          const candidateSig = deserializeSignatureCompact(
+            template.combined_signature as string,
+            template.combined_shingles as number,
+            'combined'
+          );
+
+          const similarity = estimateSimilarity(querySig, candidateSig);
+
+          if (similarity.jaccardEstimate >= threshold) {
+            similarities.push({
+              id: template.id as string,
+              name: template.name as string,
+              url: template.url as string,
+              creator: template.creator as string | null,
+              similarity: similarity.jaccardEstimate,
+              confidence: similarity.confidence
+            });
+          }
+        }
+
+        // Sort by similarity descending
+        similarities.sort((a, b) => b.similarity - a.similarity);
+
+        return new Response(JSON.stringify({
+          query: {
+            id: queryResult.id,
+            name: queryResult.name,
+            url: queryResult.url
+          },
+          threshold,
+          matches: similarities,
+          totalIndexed: allTemplates.results.length + 1
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        console.error('[MinHash] Similar error:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // MinHash stats: Get index statistics
+    if (url.pathname === '/minhash/stats' && request.method === 'GET') {
+      try {
+        const countResult = await env.DB.prepare(
+          'SELECT COUNT(*) as count FROM template_minhash'
+        ).first();
+
+        const sampleResult = await env.DB.prepare(
+          'SELECT id, name, url, creator, css_shingles, html_shingles FROM template_minhash ORDER BY indexed_at DESC LIMIT 10'
+        ).all();
+
+        return new Response(JSON.stringify({
+          totalIndexed: countResult?.count || 0,
+          recentTemplates: sampleResult.results
+        }), {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error: any) {
@@ -657,32 +1119,32 @@ async function runAgentMode(
 
     if (!options?.dryRun) {
       // Update case with results (use existing schema fields)
-      await env.DB.prepare(`
-        UPDATE plagiarism_cases
-        SET
-          tier3_decision = ?,
-          tier3_confidence = ?,
-          tier3_reasoning = ?,
+    await env.DB.prepare(`
+      UPDATE plagiarism_cases
+      SET
+        tier3_decision = ?,
+        tier3_confidence = ?,
+        tier3_reasoning = ?,
           final_decision = ?,
           status = 'completed',
           completed_at = ?
-        WHERE id = ?
-      `).bind(
-        violation.decision,
-        violation.confidence,
-        violation.reasoning,
+      WHERE id = ?
+    `).bind(
+      violation.decision,
+      violation.confidence,
+      violation.reasoning,
         violation.decision,
         Date.now(),
-        caseId
-      ).run();
+      caseId
+    ).run();
 
-      // Update Airtable with decision
-      const airtableFields: Record<string, string> = {
-        [AIRTABLE_FIELDS.DECISION]: DECISION_TO_AIRTABLE[violation.decision],
-        [AIRTABLE_FIELDS.OUTCOME]: DECISION_TO_OUTCOME[violation.decision]
-      };
+    // Update Airtable with decision
+    const airtableFields: Record<string, string> = {
+      [AIRTABLE_FIELDS.DECISION]: DECISION_TO_AIRTABLE[violation.decision],
+      [AIRTABLE_FIELDS.OUTCOME]: DECISION_TO_OUTCOME[violation.decision]
+    };
 
-      await updateAirtable(env, result.airtable_record_id as string, airtableFields);
+    await updateAirtable(env, result.airtable_record_id as string, airtableFields);
     }
 
     return Response.json({

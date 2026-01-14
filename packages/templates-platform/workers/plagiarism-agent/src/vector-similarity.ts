@@ -84,6 +84,13 @@ export interface FetchedContent {
 
 /**
  * Fetch published content from URL with error handling
+ * 
+ * Captures:
+ * - Full HTML page
+ * - All linked CSS files (up to 5)
+ * - All inline <style> blocks
+ * - All inline <script> blocks
+ * - All external JS files (up to 3)
  */
 export async function fetchPublishedContent(url: string): Promise<FetchedContent | null> {
   try {
@@ -100,15 +107,31 @@ export async function fetchPublishedContent(url: string): Promise<FetchedContent
 
     const html = await response.text();
 
-    // Extract CSS links from HTML
+    // Extract CSS from linked files (up to 5)
     const cssLinks = extractCssLinks(html, url);
     const cssContents = await Promise.all(
-      cssLinks.slice(0, 3).map(link => fetchCss(link)) // Limit to 3 main CSS files
+      cssLinks.slice(0, 5).map(link => fetchCss(link))
     );
-    const css = cssContents.filter(c => c).join('\n\n');
+    
+    // Extract inline <style> blocks
+    const inlineCss = extractInlineStyles(html);
+    
+    // Combine all CSS
+    const css = [...cssContents.filter(c => c), inlineCss].join('\n\n');
 
-    // Extract inline scripts
-    const javascript = extractInlineScripts(html);
+    // Extract inline <script> blocks
+    const inlineJs = extractInlineScripts(html);
+    
+    // Extract external JS files (up to 3)
+    const jsLinks = extractJsLinks(html, url);
+    const jsContents = await Promise.all(
+      jsLinks.slice(0, 3).map(link => fetchJs(link))
+    );
+    
+    // Combine all JavaScript
+    const javascript = [inlineJs, ...jsContents.filter(j => j)].join('\n\n');
+
+    console.log(`[Vector] Fetched ${url}: HTML=${html.length}, CSS=${css.length}, JS=${javascript.length} bytes`);
 
     return { html, css, javascript, url };
   } catch (error) {
@@ -148,6 +171,75 @@ async function fetchCss(url: string): Promise<string> {
     }
   } catch (error) {
     console.log(`[Vector] Failed to fetch CSS: ${url}`);
+  }
+  return '';
+}
+
+/**
+ * Extract inline <style> blocks from HTML
+ */
+function extractInlineStyles(html: string): string {
+  const styles: string[] = [];
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+  let match;
+
+  while ((match = styleRegex.exec(html)) !== null) {
+    const content = match[1].trim();
+    if (content) {
+      styles.push(content);
+    }
+  }
+
+  return styles.join('\n\n');
+}
+
+/**
+ * Extract external JS file links from HTML
+ */
+function extractJsLinks(html: string, baseUrl: string): string[] {
+  const links: string[] = [];
+  const scriptRegex = /<script[^>]+src=["']([^"']+)["'][^>]*>/gi;
+  let match;
+
+  while ((match = scriptRegex.exec(html)) !== null) {
+    let src = match[1];
+    
+    // Skip common CDN scripts that aren't template-specific
+    if (src.includes('jquery') || 
+        src.includes('webflow.js') ||
+        src.includes('analytics') ||
+        src.includes('gtag') ||
+        src.includes('cloudflare')) {
+      continue;
+    }
+    
+    // Convert relative URLs to absolute
+    if (src.startsWith('//')) {
+      src = 'https:' + src;
+    } else if (src.startsWith('/')) {
+      const base = new URL(baseUrl);
+      src = base.origin + src;
+    } else if (!src.startsWith('http')) {
+      const base = new URL(baseUrl);
+      src = base.origin + '/' + src;
+    }
+    links.push(src);
+  }
+
+  return links;
+}
+
+/**
+ * Fetch external JS file
+ */
+async function fetchJs(url: string): Promise<string> {
+  try {
+    const response = await fetch(url);
+    if (response.ok) {
+      return await response.text();
+    }
+  } catch (error) {
+    console.log(`[Vector] Failed to fetch JS: ${url}`);
   }
   return '';
 }
@@ -197,18 +289,27 @@ function extractHtmlStructure(html: string): string {
     }
   }
 
-  // Get common class patterns
+  // Get class patterns from HTML
   const classMatches = html.match(/class=["']([^"']+)["']/gi) || [];
-  const classes = classMatches
+  const allClasses = classMatches
     .map(m => m.match(/class=["']([^"']+)["']/)?.[1])
     .filter(Boolean)
-    .slice(0, 50); // Limit to avoid token bloat
+    .flatMap(c => c!.split(/\s+/)) // Split multi-class attributes
+    .filter(c => c.length > 0);
+  
+  const uniqueClasses = [...new Set(allClasses)];
+  
+  // CRITICAL: Separate framework classes from custom classes
+  // Webflow framework classes (w-*, wf-*, w--*) are identical across all templates
+  const frameworkClasses = uniqueClasses.filter(c => c.match(/^(w-|wf-|w--)/i));
+  const customClasses = uniqueClasses.filter(c => !c.match(/^(w-|wf-|w--)/i));
 
   // Get layout patterns
   const gridCount = (html.match(/grid|Grid/g) || []).length;
   const flexCount = (html.match(/flex|Flex/g) || []).length;
 
-  return `Structure: ${elements.join(', ')}. Layout: grid(${gridCount}) flex(${flexCount}). Classes: ${classes.slice(0, 20).join(' ')}`;
+  // Prioritize custom classes in the output (they differentiate templates)
+  return `Structure: ${elements.join(', ')}. Layout: grid(${gridCount}) flex(${flexCount}). CustomClasses(${customClasses.length}): ${customClasses.slice(0, 40).join(' ')}. FrameworkClasses(${frameworkClasses.length}): ${frameworkClasses.slice(0, 15).join(' ')}`;
 }
 
 function extractCssPatterns(css: string): string {
@@ -216,10 +317,26 @@ function extractCssPatterns(css: string): string {
 
   const patterns: string[] = [];
 
-  // Extract selector patterns
-  const selectors = css.match(/[.#][\w-]+/g) || [];
-  const uniqueSelectors = [...new Set(selectors)].slice(0, 50);
-  patterns.push(`Selectors: ${uniqueSelectors.slice(0, 30).join(' ')}`);
+  // Extract all class selectors
+  const allSelectors = css.match(/\.[a-zA-Z][\w-]*/g) || [];
+  const uniqueSelectors = [...new Set(allSelectors)];
+  
+  // CRITICAL: Separate framework classes from custom classes
+  // Webflow framework classes start with w- or wf- and are identical across all templates
+  const frameworkClasses = uniqueSelectors.filter(s => 
+    s.match(/^\.(w-|wf-|w--)/i)
+  );
+  const customClasses = uniqueSelectors.filter(s => 
+    !s.match(/^\.(w-|wf-|w--)/i)
+  );
+  
+  // Prioritize custom classes (these are what differentiate templates)
+  // Take up to 80 custom classes and only 20 framework classes
+  const selectedCustom = customClasses.slice(0, 80);
+  const selectedFramework = frameworkClasses.slice(0, 20);
+  
+  patterns.push(`CustomSelectors(${customClasses.length}): ${selectedCustom.slice(0, 50).join(' ')}`);
+  patterns.push(`FrameworkSelectors(${frameworkClasses.length}): ${selectedFramework.slice(0, 15).join(' ')}`);
 
   // Extract common property patterns
   const propertyPatterns = [
@@ -240,7 +357,7 @@ function extractCssPatterns(css: string): string {
     `Properties: ${propertyCounts.filter(p => p.count > 0).map(p => `${p.name}(${p.count})`).join(' ')}`
   );
 
-  // Extract @keyframes
+  // Extract @keyframes (animation names are highly template-specific)
   const keyframes = css.match(/@keyframes\s+[\w-]+/gi) || [];
   if (keyframes.length > 0) {
     patterns.push(`Animations: ${keyframes.slice(0, 10).join(' ')}`);
