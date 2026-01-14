@@ -1,0 +1,66 @@
+# Social Agent Worker Configuration
+#
+# Autonomous social media management for WORKWAY and CREATE SOMETHING.
+
+name = "social-agent"
+main = "dist/worker.js"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# =============================================================================
+# Cron Triggers
+# =============================================================================
+
+[triggers]
+# Every 15 min: Check for scheduled posts
+# Hourly: Poll content sources
+# Every 4 hours: Process idea queue (generate content)
+# Every 6 hours: Check engagements
+crons = [
+    "*/15 * * * *",
+    "0 * * * *",
+    "0 */4 * * *",
+    "0 */6 * * *"
+]
+
+# =============================================================================
+# Bindings
+# =============================================================================
+
+[[d1_databases]]
+binding = "DB"
+database_name = "social-agent"
+database_id = "" # Set in production
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "" # Set in production
+
+[[queues.producers]]
+binding = "POSTING_QUEUE"
+queue = "social-posting"
+
+[[queues.consumers]]
+queue = "social-posting"
+max_batch_size = 5
+max_retries = 3
+dead_letter_queue = "social-posting-dlq"
+
+# =============================================================================
+# Secrets (set via wrangler secret put)
+# =============================================================================
+# ANTHROPIC_API_KEY - Claude API key for content generation
+# LINKEDIN_CLIENT_ID - LinkedIn OAuth client ID
+# LINKEDIN_CLIENT_SECRET - LinkedIn OAuth client secret
+# TWITTER_CLIENT_ID - Twitter OAuth client ID
+# TWITTER_CLIENT_SECRET - Twitter OAuth client secret
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+
+[vars]
+VOICE_THRESHOLD = "85"
+MAX_REVISIONS = "3"
+RATE_LIMIT_LINKEDIN = "1"
+RATE_LIMIT_TWITTER = "5"

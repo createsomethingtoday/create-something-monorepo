@@ -1,0 +1,45 @@
+{
+  "name": "@create-something/social-agent",
+  "version": "0.1.0",
+  "description": "Fully autonomous multi-platform social agent for WORKWAY and CREATE SOMETHING",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": "^0.30.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./generator": {
+      "import": "./dist/generator.js",
+      "types": "./dist/generator.d.ts"
+    },
+    "./reviewer": {
+      "import": "./dist/reviewer.js",
+      "types": "./dist/reviewer.d.ts"
+    },
+    "./sources": {
+      "import": "./dist/sources/index.js",
+      "types": "./dist/sources/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "license": "MIT"
+}
