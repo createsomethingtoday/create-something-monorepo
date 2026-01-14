@@ -247,7 +247,7 @@
 	.watch-page {
 		min-height: 100vh;
 		background: var(--color-bg-pure);
-		padding-top: 1rem;
+		padding-top: 5rem; /* Account for fixed navigation */
 	}
 
 	.watch-layout {
