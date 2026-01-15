@@ -43,12 +43,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		// Get WORKWAY credentials from environment (if available)
 		const workwayApiKey = platform?.env?.WORKWAY_API_KEY;
 		const workwayOrgId = platform?.env?.WORKWAY_ORG_ID;
+		const workwayApiUrl = platform?.env?.WORKWAY_API_URL;
 
 		// Process the spec
 		const result = await processSpecIntake(spec, {
 			useAI: !!workwayApiKey,
 			workwayApiKey,
 			workwayOrgId,
+			workwayApiUrl,
 		});
 
 		// Return appropriate response based on action

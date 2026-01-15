@@ -190,6 +190,7 @@ export async function processSpecIntake(
 		useAI?: boolean;
 		workwayApiKey?: string;
 		workwayOrgId?: string;
+		workwayApiUrl?: string;
 	} = {}
 ): Promise<IntakeResult> {
 	// If AI is enabled and WORKWAY credentials provided, use the workflow
@@ -211,9 +212,10 @@ export async function processSpecIntake(
  */
 async function callWorkwayIntake(
 	userSpec: string,
-	options: { workwayApiKey?: string; workwayOrgId?: string }
+	options: { workwayApiKey?: string; workwayOrgId?: string; workwayApiUrl?: string }
 ): Promise<IntakeResult | null> {
-	const apiUrl = 'https://api.workway.co';
+	// Use custom URL or default to production gateway
+	const apiUrl = options.workwayApiUrl || 'https://workway-api-gateway.half-dozen.workers.dev';
 
 	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',

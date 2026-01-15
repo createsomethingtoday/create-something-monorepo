@@ -57,6 +57,9 @@ declare global {
 				// Get API key from: https://workway.co/settings/api-keys
 				WORKWAY_API_KEY?: string;
 				WORKWAY_ORG_ID?: string;
+				// Optional: Override API URL (defaults to workway-api-gateway.half-dozen.workers.dev)
+				// Set to api.workway.co once DNS route is configured
+				WORKWAY_API_URL?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;
