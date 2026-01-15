@@ -1,7 +1,74 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { SEO } from '@create-something/components';
 	import SavvyCalButton from '$lib/components/SavvyCalButton.svelte';
 	import { verticals, getExampleOutcomes, countAgents } from '$lib/agents';
+
+	// Spec intake state
+	let specInput = $state('');
+	let isLoading = $state(false);
+	let errorMessage = $state('');
+	let clarifyingQuestions = $state<string[]>([]);
+	let matchedTemplate = $state<{ template: string; reason: string } | null>(null);
+
+	// Handle spec submission
+	async function handleSubmit() {
+		if (!specInput.trim() || isLoading) return;
+
+		isLoading = true;
+		errorMessage = '';
+		clarifyingQuestions = [];
+		matchedTemplate = null;
+
+		try {
+			const response = await fetch('/api/spec-intake', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ spec: specInput }),
+			});
+
+			if (!response.ok) {
+				const data = await response.json() as { message?: string };
+				throw new Error(data.message || 'Failed to process request');
+			}
+
+			const result = await response.json() as {
+				action: 'show_template' | 'clarify' | 'consultation';
+				template?: string;
+				reason?: string;
+				redirect?: string;
+				questions?: string[];
+			};
+
+			switch (result.action) {
+				case 'show_template':
+					matchedTemplate = { template: result.template || '', reason: result.reason || '' };
+					// Auto-redirect after brief delay to show match
+					setTimeout(() => {
+						if (result.redirect) goto(result.redirect);
+					}, 1500);
+					break;
+
+				case 'clarify':
+					clarifyingQuestions = result.questions || [];
+					break;
+
+				case 'consultation':
+					// Redirect to booking with context
+					goto(`/book?context=${encodeURIComponent(specInput.slice(0, 200))}`);
+					break;
+			}
+		} catch (err) {
+			errorMessage = err instanceof Error ? err.message : 'Something went wrong';
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	// Handle example click - populate the input
+	function useExample(prompt: string) {
+		specInput = prompt;
+	}
 
 	// Scrolling examples - mix of verticals showing both app AND agents
 	const examples = [
@@ -59,14 +126,46 @@
 			We don't just build your app. We deploy agents that keep delivering value.
 		</p>
 
-		<div class="spec-input-container">
+		<form class="spec-input-container" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
 			<textarea
 				class="spec-input"
 				placeholder="I need a dental practice website with appointment booking and patient reminders..."
 				rows="3"
+				bind:value={specInput}
+				disabled={isLoading}
 			></textarea>
-			<button class="build-button">Build it</button>
-		</div>
+			<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
+				{#if isLoading}
+					Processing...
+				{:else}
+					Build it
+				{/if}
+			</button>
+		</form>
+
+		{#if errorMessage}
+			<p class="error-message">{errorMessage}</p>
+		{/if}
+
+		{#if matchedTemplate}
+			<div class="match-result">
+				<p class="match-text">✓ Found a match: <strong>{matchedTemplate.template}</strong></p>
+				<p class="match-reason">{matchedTemplate.reason}</p>
+				<p class="match-redirect">Redirecting...</p>
+			</div>
+		{/if}
+
+		{#if clarifyingQuestions.length > 0}
+			<div class="clarify-container">
+				<p class="clarify-heading">Help us understand better:</p>
+				<ul class="clarify-questions">
+					{#each clarifyingQuestions as question}
+						<li>{question}</li>
+					{/each}
+				</ul>
+				<p class="clarify-hint">Update your description above, or <a href="/book">book a consultation</a>.</p>
+			</div>
+		{/if}
 
 		<p class="hero-note">
 			Every build includes agents powered by <a href="https://workway.co" target="_blank" rel="noopener">WORKWAY</a>
@@ -78,14 +177,14 @@
 <section class="examples-section">
 	<div class="examples-track">
 		{#each [...examples, ...examples] as example, i}
-			<div class="example-card">
+			<button class="example-card" onclick={() => useExample(example.prompt)} type="button">
 				<p class="example-prompt">"{example.prompt}"</p>
 				<div class="example-result">
 					<span class="result-vertical">{example.vertical}</span>
 					<span class="result-plus">+</span>
 					<span class="result-agents">{example.agents.length} agents</span>
 				</div>
-			</div>
+			</button>
 		{/each}
 	</div>
 </section>
@@ -262,8 +361,83 @@
 		transition: opacity var(--duration-micro) var(--ease-standard);
 	}
 
-	.build-button:hover {
+	.build-button:hover:not(:disabled) {
 		opacity: 0.9;
+	}
+
+	.build-button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.error-message {
+		color: var(--color-error, #ef4444);
+		font-size: var(--text-body-sm);
+		margin-bottom: var(--space-md);
+	}
+
+	.match-result {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-success, #22c55e);
+		border-radius: var(--radius-md);
+		padding: var(--space-md);
+		margin-bottom: var(--space-md);
+		text-align: left;
+	}
+
+	.match-text {
+		font-size: var(--text-body);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.match-reason {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.match-redirect {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.clarify-container {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-md);
+		margin-bottom: var(--space-md);
+		text-align: left;
+	}
+
+	.clarify-heading {
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.clarify-questions {
+		list-style: disc;
+		padding-left: var(--space-lg);
+		margin-bottom: var(--space-sm);
+	}
+
+	.clarify-questions li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.clarify-hint {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.clarify-hint a {
+		color: var(--color-fg-secondary);
+		text-decoration: underline;
 	}
 
 	.hero-note {
@@ -306,6 +480,15 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+		text-align: left;
+		font-family: inherit;
+	}
+
+	.example-card:hover {
+		border-color: var(--color-border-emphasis);
+		transform: scale(1.02);
 	}
 
 	.example-prompt {
