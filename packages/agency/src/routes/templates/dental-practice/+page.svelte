@@ -265,9 +265,8 @@
 				<h3 class="workflow-name">{workflow.name}</h3>
 				<p class="workflow-description">{workflow.description}</p>
 				<div class="workflow-outcome">
-					<Zap size={14} strokeWidth={2} class="outcome-icon" />
-					<strong>Outcome:</strong>
-					{workflow.outcome}
+					<strong><Zap size={14} strokeWidth={2} class="outcome-icon" /> Outcome:</strong>
+					<span>{workflow.outcome}</span>
 				</div>
 			</article>
 		{/each}
@@ -766,7 +765,7 @@
 
 	.workflow-outcome {
 		display: flex;
-		align-items: start;
+		flex-direction: column;
 		gap: var(--space-xs);
 		padding: var(--space-sm);
 		background: var(--color-bg-elevated);
@@ -778,11 +777,13 @@
 
 	.workflow-outcome :global(.outcome-icon) {
 		flex-shrink: 0;
-		margin-top: 2px;
 		color: var(--color-success);
 	}
 
 	.workflow-outcome strong {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
 		color: var(--color-fg-secondary);
 	}
 
