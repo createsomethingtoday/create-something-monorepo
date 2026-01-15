@@ -3006,10 +3006,11 @@ function extractElementBySelector(html: string, selector: string): string {
   
   // Handle different selector types
   if (selector.startsWith('.')) {
-    // Class selector: .container
-    const className = selector.slice(1).replace(/[:\[\]]/g, '');
-    searchPattern = `class="[^"]*\\b${className}\\b[^"]*"`;
-    placeholderElement = `<div class="${className}">Sample content</div>`;
+    // Class selector: .container or compound .class1.class2
+    const classes = selector.slice(1).split('.').filter(c => c.length > 0);
+    const firstClass = classes[0].replace(/[:\[\]]/g, '');
+    searchPattern = `class="[^"]*\\b${firstClass}\\b[^"]*"`;
+    placeholderElement = `<div class="${classes.join(' ')}">Sample content</div>`;
   } else if (selector.startsWith('[')) {
     // Attribute selector: [data-nav-menu-open]
     const attrMatch = selector.match(/\[([^\]=]+)(?:=["']?([^"'\]]+))?/);
@@ -4315,14 +4316,20 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
                           border: 2px dashed #999;
                           border-radius: 4px;
                         }
-                        /* Highlight the target element */
+                        /* Highlight the target element and make it visible */
                         \${escapeHtml(evidence.selector)} {
                           outline: 3px solid #8b5cf6 !important;
                           outline-offset: 2px;
                           position: relative !important;
                           display: block !important;
+                          visibility: visible !important;
+                          opacity: 1 !important;
+                          min-height: 40px !important;
+                          min-width: 100px !important;
+                          padding: 8px !important;
                         }
-                        \${escapeHtml(evidence.css)}
+                        /* Apply styles but ensure visibility */
+                        \${escapeHtml(evidence.css).replace(/display:\\s*none/gi, 'display: block').replace(/visibility:\\s*hidden/gi, 'visibility: visible')}
                       </style></head><body>\${escapeHtml(evidence.html1)}<div style='margin-top: 8px; font-size: 10px; color: #666; font-family: monospace;'>\${escapeHtml(evidence.selector)}</div></body></html>"
                       sandbox="allow-same-origin"
                       loading="lazy"
@@ -4345,14 +4352,20 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
                           border: 2px dashed #999;
                           border-radius: 4px;
                         }
-                        /* Highlight the target element */
+                        /* Highlight the target element and make it visible */
                         \${escapeHtml(evidence.selector)} {
                           outline: 3px solid #8b5cf6 !important;
                           outline-offset: 2px;
                           position: relative !important;
                           display: block !important;
+                          visibility: visible !important;
+                          opacity: 1 !important;
+                          min-height: 40px !important;
+                          min-width: 100px !important;
+                          padding: 8px !important;
                         }
-                        \${escapeHtml(evidence.css)}
+                        /* Apply styles but ensure visibility */
+                        \${escapeHtml(evidence.css).replace(/display:\\s*none/gi, 'display: block').replace(/visibility:\\s*hidden/gi, 'visibility: visible')}
                       </style></head><body>\${escapeHtml(evidence.html2)}<div style='margin-top: 8px; font-size: 10px; color: #666; font-family: monospace;'>\${escapeHtml(evidence.selector)}</div></body></html>"
                       sandbox="allow-same-origin"
                       loading="lazy"
