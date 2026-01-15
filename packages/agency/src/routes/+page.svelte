@@ -92,6 +92,7 @@
 <!-- Hero -->
 <section class="hero">
 	<div class="hero-content">
+		<p class="hero-eyebrow">Apps + Agents</p>
 		<h1 class="hero-title">Software that works while you sleep</h1>
 		<p class="hero-subtitle">
 			Tell us what you need. We'll match you with an app and the agents to run it.
@@ -232,34 +233,49 @@
 	}
 
 	.hero-content {
-		text-align: left;
+		text-align: center;
+	}
+
+	.hero-eyebrow {
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-sm);
 	}
 
 	.hero-title {
 		font-size: var(--text-display);
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
-		line-height: 1.1;
+		margin-bottom: var(--space-md);
+		line-height: var(--leading-tight);
 		letter-spacing: -0.02em;
 	}
 
 	.hero-subtitle {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-tertiary);
 		margin-bottom: var(--space-lg);
-		line-height: 1.4;
+		line-height: var(--leading-relaxed);
+		max-width: 42rem;
+		margin-left: auto;
+		margin-right: auto;
 	}
 
 	/* Input - functional, not decorative */
 	.spec-input-container {
 		margin-bottom: var(--space-lg);
+		text-align: left;
 	}
 
 	.input-label {
 		display: block;
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 		margin-bottom: var(--space-xs);
 	}
 
@@ -446,7 +462,7 @@
 
 	.value-heading {
 		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-xs);
 	}
@@ -464,24 +480,25 @@
 
 	.section-header {
 		max-width: 900px;
-		margin: 0 auto var(--space-lg);
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
+		margin: 0 auto var(--space-xl);
+		text-align: center;
 	}
 
 	.section-heading {
 		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
 	}
 
 	.section-meta {
 		font-size: var(--text-body);
-		color: var(--color-fg-muted);
+		color: var(--color-fg-secondary);
 	}
 
 	.section-link {
+		display: inline-block;
+		margin-top: var(--space-sm);
 		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 	}
