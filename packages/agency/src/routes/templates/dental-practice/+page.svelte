@@ -178,8 +178,8 @@
 			updates automatically.
 		</p>
 		<div class="hero-actions">
-			<a href="#workflows" class="btn btn-primary">
-				See How It Works
+			<a href="#preview" class="btn btn-primary">
+				See Live Preview
 				<ArrowRight size={16} strokeWidth={2} />
 			</a>
 			<a
@@ -204,6 +204,43 @@
 				<Users size={16} strokeWidth={2} />
 				<span>Used by dental practices nationwide</span>
 			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Live Preview Section -->
+<section id="preview" class="preview-section">
+	<div class="preview-header">
+		<h2 class="section-title">Live Preview</h2>
+		<p class="section-subtitle">
+			This is what your patients see. Modern design that builds trust.
+		</p>
+		<a
+			href="https://dental-practice-template.pages.dev"
+			target="_blank"
+			rel="noopener"
+			class="preview-link"
+		>
+			Open in new tab
+			<ArrowRight size={14} strokeWidth={2} />
+		</a>
+	</div>
+	<div class="preview-container">
+		<div class="preview-browser">
+			<div class="browser-bar">
+				<div class="browser-dots">
+					<span class="dot"></span>
+					<span class="dot"></span>
+					<span class="dot"></span>
+				</div>
+				<div class="browser-url">dental-practice-template.pages.dev</div>
+			</div>
+			<iframe
+				src="https://dental-practice-template.pages.dev"
+				title="Dental Practice Template Preview"
+				class="preview-iframe"
+				loading="lazy"
+			></iframe>
 		</div>
 	</div>
 </section>
@@ -570,10 +607,100 @@
 		color: var(--color-rank-gold, #ffd700);
 	}
 
+	/* Live Preview Section */
+	.preview-section {
+		padding: var(--space-2xl) var(--space-lg);
+		background: var(--color-bg-subtle);
+	}
+
+	.preview-header {
+		max-width: 800px;
+		margin: 0 auto var(--space-xl);
+		text-align: center;
+	}
+
+	.preview-link {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		text-decoration: underline;
+		margin-top: var(--space-sm);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.preview-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.preview-container {
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+
+	.preview-browser {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+	}
+
+	.browser-bar {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-elevated);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.browser-dots {
+		display: flex;
+		gap: 6px;
+	}
+
+	.dot {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: var(--color-border-emphasis);
+	}
+
+	.dot:first-child {
+		background: #ff5f57;
+	}
+
+	.dot:nth-child(2) {
+		background: #febc2e;
+	}
+
+	.dot:nth-child(3) {
+		background: #28c840;
+	}
+
+	.browser-url {
+		flex: 1;
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		font-family: var(--font-mono);
+	}
+
+	.preview-iframe {
+		width: 100%;
+		height: 700px;
+		border: none;
+		background: #f5f8f8;
+	}
+
 	/* Workflows Section */
 	.workflows-section {
 		padding: var(--space-2xl) var(--space-lg);
-		background: var(--color-bg-subtle);
+		background: var(--color-bg-pure);
 	}
 
 	.section-header {
@@ -1209,6 +1336,14 @@
 		.social-proof {
 			flex-direction: column;
 			gap: var(--space-md);
+		}
+
+		.preview-iframe {
+			height: 500px;
+		}
+
+		.browser-url {
+			display: none;
 		}
 
 		.workflows-grid {
