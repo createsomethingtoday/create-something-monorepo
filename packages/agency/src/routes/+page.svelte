@@ -37,6 +37,8 @@
 				body: JSON.stringify({ spec: specInput }),
 			});
 
+			console.log('[frontend] Response status:', response.status);
+
 			if (!response.ok) {
 				const data = (await response.json()) as { message?: string };
 				throw new Error(data.message || 'Failed to process request');
@@ -51,14 +53,18 @@
 				questions?: string[];
 			};
 
+			console.log('[frontend] Result:', result);
+
 			switch (result.action) {
 				case 'show_offering':
+					console.log('[frontend] Setting matchedOffering');
 					matchedOffering = {
 						type: result.offering_type || 'template',
 						name: result.offering_name || '',
 						reason: result.reason || '',
 						redirect: result.redirect || '',
 					};
+					console.log('[frontend] matchedOffering:', matchedOffering);
 					// No auto-redirect - let user click to proceed
 					break;
 
@@ -69,8 +75,12 @@
 				case 'consultation':
 					goto(`/book?context=${encodeURIComponent(specInput.slice(0, 200))}`);
 					break;
+
+				default:
+					console.log('[frontend] Unknown action:', result.action);
 			}
 		} catch (err) {
+			console.error('[frontend] Error:', err);
 			errorMessage = err instanceof Error ? err.message : 'Something went wrong';
 		} finally {
 			isLoading = false;
