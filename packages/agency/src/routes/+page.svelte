@@ -28,11 +28,11 @@
 			});
 
 			if (!response.ok) {
-				const data = await response.json() as { message?: string };
+				const data = (await response.json()) as { message?: string };
 				throw new Error(data.message || 'Failed to process request');
 			}
 
-			const result = await response.json() as {
+			const result = (await response.json()) as {
 				action: 'show_template' | 'clarify' | 'consultation';
 				template?: string;
 				reason?: string;
@@ -43,7 +43,6 @@
 			switch (result.action) {
 				case 'show_template':
 					matchedTemplate = { template: result.template || '', reason: result.reason || '' };
-					// Auto-redirect after brief delay to show match
 					setTimeout(() => {
 						if (result.redirect) goto(result.redirect);
 					}, 1500);
@@ -54,7 +53,6 @@
 					break;
 
 				case 'consultation':
-					// Redirect to booking with context
 					goto(`/book?context=${encodeURIComponent(specInput.slice(0, 200))}`);
 					break;
 			}
@@ -65,87 +63,58 @@
 		}
 	}
 
-	// Handle example click - populate the input
 	function useExample(prompt: string) {
 		specInput = prompt;
 	}
 
-	// Scrolling examples - mix of verticals showing both app AND agents
+	// Examples as data - Tufte: let the content speak
 	const examples = [
-		{
-			prompt: 'I need a website for my dental practice with appointment booking',
-			vertical: 'Dental Practice',
-			agents: ['No-show recovery', 'Insurance verification', 'Recall automation'],
-		},
-		{
-			prompt: 'My law firm needs a site with client intake and consultation scheduling',
-			vertical: 'Law Firm',
-			agents: ['Lead qualification', 'Deadline tracking', 'Client follow-up'],
-		},
-		{
-			prompt: 'I need a CRM to manage leads and follow-ups for my sales team',
-			vertical: 'CRM',
-			agents: ['Lead scoring', 'Follow-up automation', 'Pipeline alerts'],
-		},
-		{
-			prompt: 'My restaurant needs a website with online reservations',
-			vertical: 'Restaurant',
-			agents: ['Reservation reminders', 'Review requests'],
-		},
-		{
-			prompt: 'I need inventory management for my warehouse',
-			vertical: 'Inventory',
-			agents: ['Auto-reorder', 'Demand forecasting'],
-		},
+		{ prompt: 'Dental practice with online booking', result: 'dental-practice', agents: 4 },
+		{ prompt: 'Law firm with client intake', result: 'law-firm', agents: 4 },
+		{ prompt: 'Restaurant with reservations', result: 'restaurant', agents: 2 },
+		{ prompt: 'Sales CRM with lead tracking', result: 'crm', agents: 3 },
 	];
 
 	const outcomes = getExampleOutcomes();
 	const totalAgents = countAgents();
-
-	// Subtractive Triad
-	const triad = [
-		{ question: 'Have I built this before?', answer: 'DRY', action: 'Unify' },
-		{ question: 'Does this earn its existence?', answer: 'Rams', action: 'Remove' },
-		{ question: 'Does this serve the whole?', answer: 'Heidegger', action: 'Reconnect' },
-	];
 </script>
 
 <SEO
-	title="Apps + Agents That Keep Working"
-	description="We don't just build your app. We deploy agents that keep delivering value—recovering revenue, qualifying leads, and automating follow-ups. Powered by WORKWAY."
-	keywords="AI agents, workflow automation, WORKWAY, dental practice website, law firm website, CRM automation, agentic systems"
+	title="Software that works while you sleep"
+	description="We build apps with agents that recover revenue, qualify leads, and automate follow-ups. Not just a website—ongoing value."
+	keywords="AI agents, workflow automation, dental practice website, law firm website, business automation"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
 
-<!-- Hero: Apps + Agents -->
+<!-- Hero -->
 <section class="hero">
 	<div class="hero-content">
-		<h1 class="hero-title">Apps that keep working</h1>
+		<h1 class="hero-title">Software that works while you sleep</h1>
 		<p class="hero-subtitle">
-			We don't just build your app. We deploy agents that keep delivering value.
+			Tell us what you need. We'll match you with an app and the agents to run it.
 		</p>
 
 		<form class="spec-input-container" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+			<label class="input-label" for="spec-input">What do you need built?</label>
 			<textarea
+				id="spec-input"
 				class="spec-input"
-				placeholder="I need a dental practice website with appointment booking and patient reminders..."
-				rows="3"
+				placeholder="A dental practice website with online booking..."
+				rows="2"
 				bind:value={specInput}
 				disabled={isLoading}
 			></textarea>
-			<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
-				{#if isLoading}
-					<span class="button-spinner"></span>
-					Processing...
-				{:else}
-					Build it
-					<svg class="button-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<line x1="5" y1="12" x2="19" y2="12"></line>
-						<polyline points="12 5 19 12 12 19"></polyline>
-					</svg>
-				{/if}
-			</button>
+			<div class="input-footer">
+				<span class="examples-hint">Try: {examples.map(e => e.prompt).slice(0, 2).join(' · ')}</span>
+				<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
+					{#if isLoading}
+						<span class="button-spinner"></span>
+					{:else}
+						Find a match
+					{/if}
+				</button>
+			</div>
 		</form>
 
 		{#if errorMessage}
@@ -154,89 +123,58 @@
 
 		{#if matchedTemplate}
 			<div class="match-result">
-				<p class="match-text">✓ Found a match: <strong>{matchedTemplate.template}</strong></p>
+				<p class="match-text">Found: <strong>{matchedTemplate.template}</strong></p>
 				<p class="match-reason">{matchedTemplate.reason}</p>
-				<p class="match-redirect">Redirecting...</p>
 			</div>
 		{/if}
 
 		{#if clarifyingQuestions.length > 0}
 			<div class="clarify-container">
-				<p class="clarify-heading">Help us understand better:</p>
+				<p class="clarify-heading">A few questions:</p>
 				<ul class="clarify-questions">
 					{#each clarifyingQuestions as question}
 						<li>{question}</li>
 					{/each}
 				</ul>
-				<p class="clarify-hint">Update your description above, or <a href="/book">book a consultation</a>.</p>
+				<p class="clarify-hint">Or <a href="/book">talk to us directly</a>.</p>
 			</div>
 		{/if}
-
-		<p class="hero-note">
-			Every build includes agents powered by <a href="https://workway.co" target="_blank" rel="noopener">WORKWAY</a>
-		</p>
 	</div>
 </section>
 
-<!-- Scrolling Examples (Aboard-style) -->
-<section class="examples-section">
-	<div class="examples-track">
-		{#each [...examples, ...examples] as example, i}
-			<button class="example-card" onclick={() => useExample(example.prompt)} type="button">
-				<p class="example-prompt">"{example.prompt}"</p>
-				<div class="example-result">
-					<span class="result-vertical">{example.vertical}</span>
-					<span class="result-plus">+</span>
-					<span class="result-agents">{example.agents.length} agents</span>
-				</div>
-			</button>
-		{/each}
-	</div>
-</section>
-
-<!-- What You Get -->
-<section class="what-you-get">
-	<h2 class="section-heading">What you get</h2>
-	<p class="section-subtext">App + Agents that keep working after launch</p>
-
-	<div class="benefits-grid">
-		<div class="benefit-card app-benefit">
-			<span class="benefit-icon">🌐</span>
-			<h3 class="benefit-title">Beautiful App</h3>
-			<p class="benefit-description">
-				Production-ready website or ops tool. Launches in days, not months. Canon design system.
-			</p>
+<!-- Value proposition - Tufte: small multiples, data density -->
+<section class="value-section">
+	<div class="value-content">
+		<div class="value-column">
+			<h2 class="value-heading">The app</h2>
+			<p class="value-text">Production-ready in days. Your brand, your domain, your data.</p>
 		</div>
-
-		<div class="benefit-card agents-benefit">
-			<span class="benefit-icon">🤖</span>
-			<h3 class="benefit-title">Agents That Keep Working</h3>
-			<p class="benefit-description">
-				Workflows that run 24/7. Recover no-shows. Qualify leads. Send reminders. Verify insurance.
-			</p>
+		<div class="value-divider">+</div>
+		<div class="value-column">
+			<h2 class="value-heading">The agents</h2>
+			<p class="value-text">Automated workflows that recover revenue, follow up, and never forget.</p>
 		</div>
-
-		<div class="benefit-card analytics-benefit">
-			<span class="benefit-icon">📊</span>
-			<h3 class="benefit-title">Measurable Value</h3>
-			<p class="benefit-description">
-				"Your agents recovered $3,200 this month." Not vanity metrics—actual revenue impact.
-			</p>
+		<div class="value-divider">=</div>
+		<div class="value-column">
+			<h2 class="value-heading">Ongoing value</h2>
+			<p class="value-text">"Your agents recovered $3,200 this month." Real numbers, not vanity metrics.</p>
 		</div>
 	</div>
 </section>
 
-<!-- Outcomes Showcase -->
+<!-- Outcomes - Tufte: let the data speak -->
 <section class="outcomes-section">
-	<h2 class="section-heading">Real outcomes</h2>
-	<p class="section-subtext">{totalAgents} agents across {verticals.length} verticals</p>
+	<header class="section-header">
+		<h2 class="section-heading">What the agents do</h2>
+		<p class="section-meta">{totalAgents} agents · {verticals.length} industries</p>
+	</header>
 
-	<div class="outcomes-grid">
+	<div class="outcomes-table">
 		{#each outcomes as outcome}
-			<div class="outcome-card">
+			<div class="outcome-row">
 				<span class="outcome-vertical">{outcome.vertical}</span>
-				<p class="outcome-agent">{outcome.agent}</p>
-				<p class="outcome-result">{outcome.outcome}</p>
+				<span class="outcome-agent">{outcome.agent}</span>
+				<span class="outcome-result">{outcome.outcome}</span>
 				{#if outcome.metric}
 					<span class="outcome-metric">{outcome.metric}</span>
 				{/if}
@@ -245,222 +183,216 @@
 	</div>
 </section>
 
-<!-- Methodology Differentiator -->
-<section class="methodology-section">
-	<div class="methodology-container">
-		<h2 class="section-heading">Not just code, not just vibes</h2>
-		<p class="section-subtext">
-			Every decision evaluated against the Subtractive Triad
-		</p>
+<!-- Templates - Tufte: information-rich, minimal decoration -->
+<section class="templates-section">
+	<header class="section-header">
+		<h2 class="section-heading">Starting points</h2>
+		<a href="/templates" class="section-link">View all →</a>
+	</header>
 
-		<div class="triad-grid">
-			{#each triad as level, i}
-				<div class="triad-card">
-					<span class="triad-number">{i + 1}</span>
-					<p class="triad-question">{level.question}</p>
-					<p class="triad-answer">{level.answer}</p>
-					<p class="triad-action">→ {level.action}</p>
-				</div>
-			{/each}
-		</div>
-
-		<p class="methodology-note">
-			Methodology you can see. Outcomes you can measure.
-		</p>
-	</div>
-</section>
-
-<!-- Verticals Grid -->
-<section class="verticals-section">
-	<h2 class="section-heading">Choose your starting point</h2>
-	<p class="section-subtext">Pre-built apps with agents included</p>
-
-	<div class="verticals-grid">
+	<div class="templates-grid">
 		{#each verticals.slice(0, 6) as vertical}
-			<a href="/templates/{vertical.slug}" class="vertical-card">
-				<span class="vertical-icon">{vertical.icon}</span>
-				<h3 class="vertical-name">{vertical.name}</h3>
-				<p class="vertical-tagline">{vertical.tagline}</p>
-				<span class="vertical-agents">{vertical.agents.length} agents included</span>
+			<a href="/templates/{vertical.slug}" class="template-card">
+				<div class="template-header">
+					<span class="template-name">{vertical.name}</span>
+					<span class="template-agents">{vertical.agents.length} agents</span>
+				</div>
+				<p class="template-tagline">{vertical.tagline}</p>
 			</a>
 		{/each}
 	</div>
-
-	<a href="/templates" class="view-all-link">View all templates →</a>
 </section>
 
-<!-- CTA -->
+<!-- CTA - Tufte: clear, direct -->
 <section class="cta-section">
-	<h2 class="cta-heading">Ready for apps that keep working?</h2>
-	<div class="cta-buttons">
-		<SavvyCalButton variant="primary" size="lg" />
-		<a href="/templates" class="cta-secondary">
-			or browse templates
-			<span class="cta-arrow">→</span>
-		</a>
+	<p class="cta-text">Ready to see what agents can do for your business?</p>
+	<div class="cta-actions">
+		<SavvyCalButton variant="primary" size="md" />
+		<span class="cta-divider">or</span>
+		<a href="/templates" class="cta-link">browse templates</a>
 	</div>
 </section>
 
+<!-- Attribution - subtle -->
+<footer class="attribution">
+	<p>Agents powered by <a href="https://workway.co" target="_blank" rel="noopener">WORKWAY</a></p>
+</footer>
+
 <style>
-	/* Hero */
+	/* Tufte: Let typography and whitespace do the work */
+	
+	/* Hero - clean, focused */
 	.hero {
-		padding: var(--space-3xl) var(--space-xl);
-		text-align: center;
-		min-height: 60vh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		padding: var(--space-2xl) var(--space-xl);
+		max-width: 640px;
+		margin: 0 auto;
 	}
 
 	.hero-content {
-		max-width: 700px;
+		text-align: left;
 	}
 
 	.hero-title {
-		font-size: clamp(2.5rem, 6vw, 4rem);
-		font-weight: var(--font-bold);
+		font-size: clamp(1.75rem, 4vw, 2.5rem);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-		line-height: 1.1;
+		margin-bottom: var(--space-sm);
+		line-height: 1.2;
+		letter-spacing: -0.02em;
 	}
 
 	.hero-subtitle {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-lg);
+		line-height: 1.5;
 	}
 
+	/* Input - functional, not decorative */
 	.spec-input-container {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-lg);
+	}
+
+	.input-label {
+		display: block;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-xs);
 	}
 
 	.spec-input {
 		width: 100%;
-		background: transparent;
-		border: none;
+		padding: var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
+		font-family: inherit;
 		resize: none;
 		outline: none;
-		font-family: inherit;
+		transition: border-color 0.15s;
+	}
+
+	.spec-input:focus {
+		border-color: var(--color-fg-secondary);
 	}
 
 	.spec-input::placeholder {
 		color: var(--color-fg-muted);
 	}
 
+	.input-footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: var(--space-sm);
+		gap: var(--space-md);
+	}
+
+	.examples-hint {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
 	.build-button {
-		width: 100%;
-		padding: var(--space-md) var(--space-lg);
-		background: #ffffff;
-		color: #000000;
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-fg-primary);
+		color: var(--color-bg-primary);
 		border: none;
-		border-radius: var(--radius-md);
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: opacity 0.15s;
 		display: inline-flex;
 		align-items: center;
-		justify-content: center;
-		gap: 0.5rem;
+		gap: 0.375rem;
+		white-space: nowrap;
 	}
 
 	.build-button:hover:not(:disabled) {
-		background: #f0f0f0;
-	}
-
-	.build-button:hover:not(:disabled) .button-arrow {
-		transform: translateX(4px);
+		opacity: 0.85;
 	}
 
 	.build-button:disabled {
-		background: #4a4a4a;
-		color: #9a9a9a;
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
-	.button-arrow {
-		transition: transform var(--duration-micro) var(--ease-standard);
-	}
-
 	.button-spinner {
-		width: 16px;
-		height: 16px;
-		border: 2px solid #9a9a9a;
-		border-top-color: #000000;
+		width: 14px;
+		height: 14px;
+		border: 2px solid currentColor;
+		border-top-color: transparent;
 		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
+		animation: spin 0.6s linear infinite;
 	}
 
 	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
+		to { transform: rotate(360deg); }
 	}
 
+	/* Feedback states */
 	.error-message {
-		color: var(--color-error, #ef4444);
+		color: #dc2626;
 		font-size: var(--text-body-sm);
-		margin-bottom: var(--space-md);
+		margin-top: var(--space-sm);
 	}
 
 	.match-result {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-success, #22c55e);
-		border-radius: var(--radius-md);
-		padding: var(--space-md);
-		margin-bottom: var(--space-md);
-		text-align: left;
+		margin-top: var(--space-md);
+		padding: var(--space-sm);
+		background: rgba(34, 197, 94, 0.1);
+		border-left: 2px solid #22c55e;
 	}
 
 	.match-text {
-		font-size: var(--text-body);
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
 	}
 
 	.match-reason {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.match-redirect {
 		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		color: var(--color-fg-secondary);
+		margin-top: var(--space-xs);
 	}
 
 	.clarify-container {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		padding: var(--space-md);
-		margin-bottom: var(--space-md);
-		text-align: left;
+		margin-top: var(--space-md);
+		padding: var(--space-sm);
+		border-left: 2px solid var(--color-border-emphasis);
 	}
 
 	.clarify-heading {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-xs);
 	}
 
 	.clarify-questions {
-		list-style: disc;
-		padding-left: var(--space-lg);
-		margin-bottom: var(--space-sm);
+		list-style: none;
+		padding: 0;
+		margin: 0 0 var(--space-xs);
 	}
 
 	.clarify-questions li {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xs);
+		padding-left: 1em;
+		position: relative;
+	}
+
+	.clarify-questions li::before {
+		content: '·';
+		position: absolute;
+		left: 0;
 	}
 
 	.clarify-hint {
@@ -470,384 +402,250 @@
 
 	.clarify-hint a {
 		color: var(--color-fg-secondary);
-		text-decoration: underline;
 	}
 
-	.hero-note {
-		font-size: var(--text-body-sm);
+	/* Value section - Tufte small multiples */
+	.value-section {
+		padding: var(--space-xl) var(--space-xl);
+		border-top: 1px solid var(--color-border-subtle);
+	}
+
+	.value-content {
+		max-width: 900px;
+		margin: 0 auto;
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-md);
+	}
+
+	.value-column {
+		flex: 1;
+	}
+
+	.value-divider {
 		color: var(--color-fg-muted);
+		font-size: var(--text-body-lg);
+		padding-top: var(--space-xs);
 	}
 
-	.hero-note a {
-		color: var(--color-fg-secondary);
-		text-decoration: underline;
-	}
-
-	/* Scrolling Examples */
-	.examples-section {
-		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
-		border-bottom: 1px solid var(--color-border-default);
-		overflow: hidden;
-	}
-
-	.examples-track {
-		display: flex;
-		gap: var(--space-lg);
-		animation: scroll 30s linear infinite;
-	}
-
-	@keyframes scroll {
-		0% {
-			transform: translateX(0);
-		}
-		100% {
-			transform: translateX(-50%);
-		}
-	}
-
-	.example-card {
-		flex-shrink: 0;
-		width: 350px;
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-		text-align: left;
-		font-family: inherit;
-	}
-
-	.example-card:hover {
-		border-color: var(--color-border-emphasis);
-		transform: scale(1.02);
-	}
-
-	.example-prompt {
+	.value-heading {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		font-style: italic;
-		margin-bottom: var(--space-md);
-	}
-
-	.example-result {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-	}
-
-	.result-vertical {
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.result-plus {
-		color: var(--color-fg-muted);
-	}
-
-	.result-agents {
+	.value-text {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		color: var(--color-fg-secondary);
+		line-height: 1.5;
 	}
 
-	/* What You Get */
-	.what-you-get {
-		padding: var(--space-2xl) var(--space-xl);
-		text-align: center;
+	/* Outcomes - Tufte table thinking */
+	.outcomes-section {
+		padding: var(--space-xl) var(--space-xl);
+	}
+
+	.section-header {
+		max-width: 900px;
+		margin: 0 auto var(--space-md);
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
 	}
 
 	.section-heading {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.section-subtext {
-		font-size: var(--text-body);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-xl);
-	}
-
-	.benefits-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-lg);
-		max-width: 1000px;
-		margin: 0 auto;
-	}
-
-	.benefit-card {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		text-align: left;
-	}
-
-	.benefit-icon {
-		font-size: 2rem;
-		display: block;
-		margin-bottom: var(--space-md);
-	}
-
-	.benefit-title {
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
 	}
 
-	.benefit-description {
+	.section-meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.section-link {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		line-height: var(--leading-relaxed);
+		color: var(--color-fg-secondary);
 	}
 
-	/* Outcomes */
-	.outcomes-section {
-		padding: var(--space-2xl) var(--space-xl);
-		text-align: center;
-		border-top: 1px solid var(--color-border-default);
+	.section-link:hover {
+		color: var(--color-fg-primary);
 	}
 
-	.outcomes-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-md);
-		max-width: 1200px;
+	.outcomes-table {
+		max-width: 900px;
 		margin: 0 auto;
 	}
 
-	.outcome-card {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		text-align: left;
+	.outcome-row {
+		display: grid;
+		grid-template-columns: 120px 1fr 1fr auto;
+		gap: var(--space-md);
+		padding: var(--space-sm) 0;
+		border-bottom: 1px solid var(--color-border-subtle);
+		align-items: baseline;
+	}
+
+	.outcome-row:last-child {
+		border-bottom: none;
 	}
 
 	.outcome-vertical {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.03em;
 	}
 
 	.outcome-agent {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
-		margin: var(--space-xs) 0;
 	}
 
 	.outcome-result {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-secondary);
 	}
 
 	.outcome-metric {
-		display: inline-block;
-		margin-top: var(--space-sm);
 		font-size: var(--text-caption);
-		font-family: monospace;
+		font-family: var(--font-mono, monospace);
 		color: var(--color-fg-secondary);
-		background: var(--color-bg-elevated);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
+		background: var(--color-bg-surface);
+		padding: 2px 6px;
+		border-radius: 2px;
 	}
 
-	/* Methodology */
-	.methodology-section {
-		padding: var(--space-2xl) var(--space-xl);
-		border-top: 1px solid var(--color-border-default);
+	/* Templates - compact grid */
+	.templates-section {
+		padding: var(--space-xl) var(--space-xl);
+		border-top: 1px solid var(--color-border-subtle);
 	}
 
-	.methodology-container {
+	.templates-grid {
 		max-width: 900px;
 		margin: 0 auto;
-		text-align: center;
-	}
-
-	.triad-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-lg);
-		margin: var(--space-xl) 0;
+		gap: 1px;
+		background: var(--color-border-subtle);
 	}
 
-	.triad-card {
-		padding: var(--space-lg);
-		text-align: left;
+	.template-card {
+		padding: var(--space-md);
+		background: var(--color-bg-primary);
+		transition: background 0.15s;
 	}
 
-	.triad-number {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-muted);
-		opacity: 0.3;
-	}
-
-	.triad-question {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		font-style: italic;
-		margin: var(--space-sm) 0;
-	}
-
-	.triad-answer {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-	}
-
-	.triad-action {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin-top: var(--space-xs);
-	}
-
-	.methodology-note {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-	}
-
-	/* Verticals */
-	.verticals-section {
-		padding: var(--space-2xl) var(--space-xl);
-		text-align: center;
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.verticals-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-lg);
-		max-width: 1000px;
-		margin: 0 auto var(--space-xl);
-	}
-
-	.vertical-card {
-		padding: var(--space-lg);
+	.template-card:hover {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		text-align: left;
-		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.vertical-card:hover {
-		transform: scale(1.02);
-		border-color: var(--color-border-emphasis);
+	.template-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: var(--space-xs);
 	}
 
-	.vertical-icon {
-		font-size: 2rem;
-		display: block;
-		margin-bottom: var(--space-sm);
-	}
-
-	.vertical-name {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
+	.template-name {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
 	}
 
-	.vertical-tagline {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin: var(--space-xs) 0;
-	}
-
-	.vertical-agents {
+	.template-agents {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 	}
 
-	.view-all-link {
+	.template-tagline {
+		font-size: var(--text-caption);
+		color: var(--color-fg-secondary);
+		line-height: 1.4;
+	}
+
+	/* CTA - quiet confidence */
+	.cta-section {
+		padding: var(--space-xl) var(--space-xl);
+		text-align: center;
+		border-top: 1px solid var(--color-border-subtle);
+	}
+
+	.cta-text {
 		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-md);
+	}
+
+	.cta-actions {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-sm);
+	}
+
+	.cta-divider {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.cta-link {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 	}
 
-	.view-all-link:hover {
+	.cta-link:hover {
 		color: var(--color-fg-primary);
 	}
 
-	/* CTA */
-	.cta-section {
-		padding: var(--space-3xl) var(--space-xl);
+	/* Attribution */
+	.attribution {
+		padding: var(--space-lg) var(--space-xl);
 		text-align: center;
-		border-top: 1px solid var(--color-border-default);
 	}
 
-	.cta-heading {
-		font-size: var(--text-h2);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-lg);
-	}
-
-	.cta-buttons {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--space-md);
-	}
-
-	.cta-secondary {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5em;
-		font-size: var(--text-body-sm);
+	.attribution p {
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
-	.cta-secondary:hover {
-		color: var(--color-fg-primary);
-	}
-
-	.cta-arrow {
-		transition: transform var(--duration-micro) var(--ease-standard);
-	}
-
-	.cta-secondary:hover .cta-arrow {
-		transform: translateX(4px);
+	.attribution a {
+		color: var(--color-fg-secondary);
 	}
 
 	/* Responsive */
 	@media (max-width: 768px) {
-		.benefits-grid,
-		.triad-grid,
-		.verticals-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.outcomes-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.hero,
-		.what-you-get,
-		.outcomes-section,
-		.methodology-section,
-		.verticals-section,
-		.cta-section {
+		.hero {
 			padding: var(--space-xl) var(--space-lg);
 		}
-	}
 
-	@media (max-width: 480px) {
-		.outcomes-grid {
+		.value-content {
+			flex-direction: column;
+			gap: var(--space-lg);
+		}
+
+		.value-divider {
+			display: none;
+		}
+
+		.outcome-row {
+			grid-template-columns: 1fr;
+			gap: var(--space-xs);
+		}
+
+		.templates-grid {
 			grid-template-columns: 1fr;
 		}
-	}
 
-	/* Reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.examples-track {
-			animation: none;
+		.section-header {
+			flex-direction: column;
+			gap: var(--space-xs);
 		}
 	}
 </style>
