@@ -1,26 +1,17 @@
 <script lang="ts">
+	/**
+	 * Fashion Boutique Layout - The Collection
+	 * Minimal layout wrapper for the standalone template
+	 */
 	import '../app.css';
-	import { onNavigate } from '$app/navigation';
 
-	// Enable View Transitions API for smooth page transitions
-	onNavigate((navigation) => {
-		if (!document.startViewTransition) return;
+	interface Props {
+		children: import('svelte').Snippet;
+	}
 
-		return new Promise((resolve) => {
-			document.startViewTransition(async () => {
-				resolve();
-				await navigation.complete;
-			});
-		});
-	});
+	let { children }: Props = $props();
 </script>
 
-<div class="page-transition">
-	<slot />
+<div class="bg-background-light text-[#141514] min-h-screen font-display">
+	{@render children()}
 </div>
-
-<style>
-	.page-transition {
-		animation: pageEnter var(--duration-standard) var(--ease-standard);
-	}
-</style>

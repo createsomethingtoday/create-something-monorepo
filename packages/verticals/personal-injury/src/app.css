@@ -2,6 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Canon Design Tokens - Required for component CSS variables */
+:root {
+	/* Colors */
+	--color-bg-pure: #1a1a1a;
+	--color-bg-elevated: #222222;
+	--color-bg-surface: #2a2a2a;
+	--color-bg-subtle: #333333;
+	--color-fg-primary: #ffffff;
+	--color-fg-secondary: rgba(255, 255, 255, 0.8);
+	--color-fg-tertiary: rgba(255, 255, 255, 0.6);
+	--color-fg-muted: rgba(255, 255, 255, 0.46);
+	--color-fg-subtle: rgba(255, 255, 255, 0.2);
+	--color-border-default: rgba(255, 255, 255, 0.1);
+	--color-border-emphasis: rgba(255, 255, 255, 0.2);
+	--color-border-strong: rgba(255, 255, 255, 0.3);
+	--color-hover: rgba(255, 255, 255, 0.05);
+	--color-active: rgba(255, 255, 255, 0.1);
+	--color-focus: rgba(255, 255, 255, 0.5);
+	--color-overlay: rgba(0, 0, 0, 0.5);
+	--color-overlay-heavy: rgba(0, 0, 0, 0.7);
+	--color-success: #44aa44;
+	--color-error: #d44d4d;
+	--color-warning: #aa8844;
+	--color-info: #5082b9;
+
+	/* Typography */
+	--font-sans: 'Manrope', system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', monospace;
+	--font-light: 300;
+	--font-regular: 400;
+	--font-medium: 500;
+	--font-semibold: 600;
+	--font-bold: 700;
+	--leading-tight: 1.25;
+	--leading-snug: 1.375;
+	--leading-normal: 1.5;
+	--leading-relaxed: 1.618;
+	--tracking-tighter: -0.025em;
+	--tracking-tight: -0.015em;
+	--tracking-normal: 0;
+	--tracking-wide: 0.025em;
+	--tracking-wider: 0.05em;
+
+	/* Type Scale */
+	--text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);
+	--text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);
+	--text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);
+	--text-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem);
+	--text-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem);
+	--text-h4: clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem);
+	--text-h5: 1rem;
+	--text-body-lg: 1.095rem;
+	--text-body: 1rem;
+	--text-body-sm: 0.913rem;
+	--text-caption: 0.833rem;
+
+	/* Spacing */
+	--space-xs: 0.618rem;
+	--space-sm: 1rem;
+	--space-md: 1.618rem;
+	--space-lg: 2.618rem;
+	--space-xl: 4.236rem;
+	--space-2xl: 6.854rem;
+
+	/* Border Radius */
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 12px;
+	--radius-xl: 16px;
+	--radius-full: 9999px;
+
+	/* Shadows */
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+	--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+
+	/* Animation */
+	--ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+	--ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+	--duration-instant: 100ms;
+	--duration-micro: 200ms;
+	--duration-standard: 300ms;
+
+	/* Z-Index */
+	--z-base: 0;
+	--z-dropdown: 10;
+	--z-sticky: 20;
+	--z-fixed: 50;
+	--z-modal: 100;
+
+	/* Layout */
+	--width-tight: 16.07rem;
+	--width-narrow: 32.36rem;
+	--width-prose: 42rem;
+	--width-content: 52.36rem;
+	--width-wide: 68rem;
+}
+
 @layer base {
 	body {
 		font-family: 'Manrope', sans-serif;
