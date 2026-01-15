@@ -1,44 +1,86 @@
 # Plagiarism Detection Agent
 
-**Three-tier AI system for reviewing template plagiarism reports with visual analysis.**
+**Multi-layer plagiarism detection for Webflow templates using MinHash fingerprinting and AI analysis.**
 
-Reduces manual review time from 12.5 hours/month to automated decisions in 1-2 minutes per case.
+## Architecture
 
-## How It Works
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     PLAGIARISM DETECTION                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │   MinHash    │    │   AI Tiers   │    │   Rescan     │      │
+│  │  Detection   │    │   1 → 2 → 3  │    │  Compliance  │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│         │                   │                   │                │
+│         └───────────────────┴───────────────────┘                │
+│                             │                                    │
+│                    ┌────────▼────────┐                          │
+│                    │    Dashboard    │                          │
+│                    │   /dashboard    │                          │
+│                    └─────────────────┘                          │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-1. **Airtable webhook** triggers when new plagiarism report is created
-2. **Screenshot Capture** (Cloudflare Browser Rendering - FREE): Captures both templates
-3. **Vision Analysis** (Cloudflare Workers AI - FREE): Compares layouts visually using Llama 3.2 Vision
-4. **Tier 1** (Workers AI - FREE): Screens obvious cases with vision input (filters ~30%)
-5. **Tier 2** (Claude Haiku - $0.02): Detailed analysis with editorial scores + vision (~70% of cases)
-6. **Tier 3** (Claude Sonnet - $0.15): Final judgment on edge cases (~20% of original cases)
-7. **Airtable updated** with Decision, Outcome, and editorial scores
+## Two Detection Systems
+
+### 1. MinHash Fingerprinting ($0 cost)
+- **9,500+ templates indexed** with LSH banding
+- **Property-value focused** - catches plagiarism even when class names change
+- **Evidence hierarchy**: Identical rules → Property combos → Colors → Structure
+- **O(1) candidate lookup** via Locality-Sensitive Hashing
+
+### 2. AI Tier System (for reported cases)
+1. **Tier 1** (Workers AI - FREE): Vision-based screening
+2. **Tier 2** (Claude Haiku - $0.02): Detailed analysis
+3. **Tier 3** (Claude Sonnet - $0.15): Edge case judgment
 
 ## Endpoints
 
-### POST /webhook
-Receives Airtable webhook payloads for new plagiarism reports.
+### Dashboard & UI
+| Endpoint | Description |
+|----------|-------------|
+| `GET /dashboard` | Visual dashboard for stats, clusters, scanning |
+| `GET /compare/:id1/:id2` | Tufte-style comparison page |
+| `GET /case/:id/rescan` | Compliance rescan UI |
+| `GET /health` | Health check for monitoring |
 
-**Response:**
-```json
-{
-  "caseId": "case_abc123",
-  "status": "queued",
-  "estimatedTime": "1-2 minutes"
-}
+### MinHash API
+| Endpoint | Description |
+|----------|-------------|
+| `POST /scan/template` | Scan URL against index |
+| `GET /scan/suspicious` | Find suspicious template pairs |
+| `POST /minhash/index` | Index a template |
+| `GET /minhash/similar/:id` | Find similar templates |
+| `GET /minhash/stats` | Index statistics |
+| `POST /compare` | Detailed comparison (JSON) |
+
+### Case Management
+| Endpoint | Description |
+|----------|-------------|
+| `POST /webhook` | Airtable webhook receiver |
+| `GET /status/:caseId` | Case processing status |
+| `GET /case/:id` | Case details + rescan history |
+| `POST /case/:id/rescan` | Run compliance rescan |
+
+### Example: Scan a Template
+```bash
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/scan/template \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.webflow.io"}'
 ```
 
-### GET /status/:caseId
-Check processing status of a case.
-
 **Response:**
 ```json
 {
-  "id": "case_abc123",
-  "status": "completed",
-  "final_decision": "minor",
-  "cost_usd": 0.02,
-  "completed_at": 1704923456789
+  "url": "https://example.webflow.io",
+  "isIndexed": false,
+  "matchCount": 5,
+  "topMatches": [
+    { "id": "similar-template", "similarity": 0.72, "verdict": "High similarity" }
+  ]
 }
 ```
 
@@ -103,8 +145,10 @@ Browser Rendering API integration can be added to automatically capture screensh
 
 ## Cost
 
-**Estimated monthly cost** (50 reports):
-- Screenshot Capture: FREE (Browser Rendering included with Workers)
+**MinHash Detection**: $0 (runs on Cloudflare Workers compute)
+
+**AI Tier System** (50 reports/month):
+- Screenshot Capture: FREE (Browser Rendering)
 - Vision Analysis: FREE (Workers AI)
 - Tier 1: FREE (Workers AI)
 - Tier 2: ~$0.70 (Claude Haiku)
@@ -112,6 +156,40 @@ Browser Rendering API integration can be added to automatically capture screensh
 - **Total: ~$2.20/month**
 
 vs. **$625/month** for 12.5 hours of manual review.
+
+## Compliance Rescan
+
+When a case is flagged as "minor", the offending creator can make changes:
+
+```
+POST /case/:id/rescan
+```
+
+**Verdicts:**
+- `resolved` - Similarity < 35% AND drift ≥ 20%
+- `insufficient_changes` - Drift < 10%  
+- `still_similar` - Changes made but still too similar
+- `no_baseline` - Case pre-dates signature capture
+
+## Monitoring
+
+**Health check endpoint:**
+```bash
+curl https://plagiarism-agent.createsomething.workers.dev/health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "stats": {
+    "templatesIndexed": 9592,
+    "casesProcessed": 14,
+    "lshBands": 153472
+  },
+  "version": "2.0.0"
+}
+```
 
 ## Safety Mechanisms
 

@@ -294,6 +294,39 @@ export default {
       });
     }
 
+    // Health check endpoint for monitoring
+    if (url.pathname === '/health' && request.method === 'GET') {
+      try {
+        const [templateCount, caseCount, lshBandCount] = await Promise.all([
+          env.DB.prepare('SELECT COUNT(*) as count FROM template_minhash').first(),
+          env.DB.prepare('SELECT COUNT(*) as count FROM plagiarism_cases').first(),
+          env.DB.prepare('SELECT COUNT(*) as count FROM minhash_lsh_bands').first()
+        ]);
+        
+        return new Response(JSON.stringify({
+          status: 'healthy',
+          timestamp: Date.now(),
+          stats: {
+            templatesIndexed: templateCount?.count || 0,
+            casesProcessed: caseCount?.count || 0,
+            lshBands: lshBandCount?.count || 0
+          },
+          version: '2.0.0'
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({
+          status: 'unhealthy',
+          error: error.message,
+          timestamp: Date.now()
+        }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     // Airtable webhook endpoint
     if (url.pathname === '/webhook' && request.method === 'POST') {
       return handleAirtableWebhook(request, env);
