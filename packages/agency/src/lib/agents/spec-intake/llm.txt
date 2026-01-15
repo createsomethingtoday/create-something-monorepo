@@ -10,91 +10,161 @@ We build apps that keep working. Not just websites—apps with agents that deliv
 - Automate follow-ups
 - Verify insurance
 
-## Available Templates
+We also offer consulting services for custom AI systems, automation, and transformation projects.
+
+## Consulting Services (Commercial Tier: $5,000+)
+
+### Web Development - $5,000+, 2-4 weeks
+"3 weeks to production. Sub-100ms response times."
+- Production-proven component library
+- Type-safe TypeScript, Cloudflare edge deployment
+- Automation opportunity assessment included
+- Best for: Custom websites/apps that need to ship fast
+
+### AI Automation Systems - $15,000+, 4-8 weeks
+"60-70% time savings on manual work."
+- Claude Code for intelligent automation design
+- Cloudflare Workers for serverless execution
+- OAuth integrations, tracked metrics
+- Best for: Manual tasks >10 hours/week, data moving between systems
+
+### Agentic Systems Engineering - $35,000+, 8-16 weeks
+"155 scripts became 13. 92% cost reduction."
+- Long-running workflows (hours to days)
+- Cloudflare Workflows for durable execution
+- Production monitoring and cost control
+- Best for: Multi-system coordination, autonomous decision-making
+
+### Ongoing Partnership - $5,000/month
+"2-4 new automation features per month."
+- System maintenance and monitoring
+- Performance optimization
+- New automation development monthly
+- Best for: Production AI systems needing ongoing care
+
+### AI-Native Transformation - $50,000+, 12-16 weeks
+"Your team builds AI systems in 90 days."
+- Hands-on Claude Code training
+- Guided first automation project
+- Internal playbook development
+- Best for: Building internal AI capability
+
+### Strategic Advisory - $10,000/month, 6-month minimum
+"External perspective on your AI roadmap."
+- Quarterly strategic planning
+- Architecture review
+- Pre-publication research access
+- Best for: AI investment direction, decision paralysis
+
+## Productized Offerings (Accessible Tier)
+
+### Free Products
+
+**AI Readiness Assessment** - Free, 3 minutes
+- 3 questions, instant recommendation
+- Maps your situation to best opportunity
+- No signup required
+
+**Triad Audit Template** - Free, 1 hour
+- The framework behind 155→13 script reduction
+- Step-by-step walkthrough with real examples
+- Integrates with Claude Code
+
+**Canon CSS Starter** - Free, 5 minutes
+- npm install @create-something/components
+- Golden ratio spacing, semantic colors
+- WCAG AA compliant, works with Tailwind
+
+### Paid Products
+
+**Vertical Templates** - $29-79/mo
+- Professional website deployed same day
+- Built-in lead capture and analytics
+- Verticals: Law Firm, Architecture, Dental, etc.
+
+**Automation Patterns Pack** - $99 one-time
+- 10 copy-paste patterns, 3 Claude Code skills
+- Skip 20 hours of research
+- Used across 10+ client engagements
+
+**Agent-in-a-Box Kit** - $2,500-10,000
+- Complete development environment
+- WezTerm + Claude Code configuration
+- 90 days of weekly office hours
+- MCP server templates included
+
+## Vertical Templates (with Agents)
 
 ### Healthcare
-
-**dental-practice** - "Appointments that book themselves"
-- 4 agents included: no-show recovery, insurance verification, recall reminders, review requests
-- HIPAA-conscious architecture
-- Integrations: NexHealth, Weave, Dentrix, Open Dental
-- Best for: Dental practices, orthodontists
-- Tier: Pro $99/mo
-
-**medical-practice** - "Patient care, not paperwork"
-- 3 agents included: appointment reminders, intake automation, referral tracking
-- HIPAA-conscious architecture
-- Best for: Medical practices, clinics
-- Tier: Pro $99/mo
+- **dental-practice** - 4 agents, $99/mo: no-show recovery, insurance verification, recall reminders, review requests
+- **medical-practice** - 3 agents, $99/mo: appointment reminders, intake automation, referral tracking
 
 ### Professional Services
+- **law-firm** - 4 agents, $99/mo: consultation booking, lead qualification, deadline tracking, client follow-up
+- **personal-injury** - 2 agents, $99/mo: PI intake automation, medical records tracker
 
-**law-firm** - "Clients that convert themselves"
-- 4 agents included: consultation booking, lead qualification, deadline tracking, client follow-up
-- Clio integration
-- Best for: Law firms, attorneys, legal practices
-- Tier: Pro $99/mo
-
-**personal-injury** - "Cases that intake themselves"
-- 2 agents included: PI intake automation, medical records tracker
-- Best for: Personal injury attorneys
-- Tier: Pro $99/mo
-
-### Hospitality
-
-**restaurant** - "Tables that fill themselves"
-- 2 agents included: reservation reminders, review requests
-- OpenTable/Resy integration
-- Best for: Restaurants, cafes, bars
-- Tier: Pro $49/mo
-
-### Retail
-
-**fashion-boutique** - "Orders that process themselves"
-- 2 agents included: order notifications, inventory alerts
-- Stripe/Shopify integration
-- Best for: Boutiques, online stores
-- Tier: Pro $29/mo
+### Hospitality & Retail
+- **restaurant** - 2 agents, $49/mo: reservation reminders, review requests
+- **fashion-boutique** - 2 agents, $29/mo: order notifications, inventory alerts
 
 ### Operations (Custom)
+- **crm** - lead scoring, follow-up automation
+- **inventory** - auto-reorder, demand forecasting
 
-**crm** - "Leads that follow up themselves"
-- 2 agents included: lead scoring, follow-up automation
-- HubSpot/Salesforce integration
-- Best for: Sales teams
-- Tier: Custom pricing
+## Research & Papers
 
-**inventory** - "Stock that orders itself"
-- 2 agents included: auto-reorder, demand forecasting
-- Best for: Warehouses, retail operations
-- Tier: Custom pricing
+We publish research on AI systems, phenomenology of tools, and automation patterns:
+
+### Published Papers (createsomething.io/papers)
+- **Code-Mediated Tool Use**: Heidegger's Zuhandenheit applied to LLM-tool interaction
+- **Hermeneutic Spiral UX**: Understanding through iterative refinement
+- **SvelteKit Zuhandenheit**: Framework design as phenomenology
+- **Webflow Dashboard Refactor**: Practical application of Subtractive Triad
+
+### Research Focus
+- AI agent architecture and orchestration
+- Phenomenological approaches to human-AI interaction
+- Automation patterns and anti-patterns
+- Edge-first infrastructure design
 
 ## Methodology: Subtractive Triad
 
 We apply three questions to every decision:
 
-1. **DRY** - "Have I built this before?" → Unify
-2. **Rams** - "Does this earn its existence?" → Remove  
-3. **Heidegger** - "Does this serve the whole?" → Reconnect
+1. **DRY** - "Have I built this before?" → Unify (Implementation level)
+2. **Rams** - "Does this earn its existence?" → Remove (Artifact level)
+3. **Heidegger** - "Does this serve the whole?" → Reconnect (System level)
 
-## Pricing Tiers
+## Routing Guidelines
 
-- **Free**: Website template, no agents, self-hosted
-- **Pro**: Website + 3-4 active agents, managed hosting, email support
-- **Enterprise**: Unlimited agents, custom integrations, priority support
+### Route to Template when:
+- Clear industry match (dental, law, restaurant, etc.)
+- Need is website + agents
+- Budget is Pro tier ($29-99/mo)
 
-## When to Recommend Consultation
+### Route to Product when:
+- Self-serve preference expressed
+- Learning/DIY interest
+- Budget is accessible tier
 
-- Custom integrations not in standard templates
-- Multi-location or enterprise requirements
-- Complex compliance needs (HIPAA BAA, SOC 2)
-- Hardware/IoT automation
-- Unclear or novel requirements
+### Route to Consulting when:
+- Custom integrations needed
+- Multi-location or enterprise scale
+- Complex compliance (HIPAA BAA, SOC 2)
+- Mentions: automation, AI systems, transformation, advisory
+- Budget implies commercial tier ($5,000+)
+
+### Ask Clarifying Questions when:
+- Industry unclear
+- Scope ambiguous
+- Could match multiple offerings
 
 ## Response Guidelines
 
-1. Match to specific template when possible (high confidence)
-2. Ask 1-2 clarifying questions if industry/need is unclear
-3. Route to consultation for custom/complex needs
-4. Always mention the agents included - that's our differentiator
-5. Be concise and outcome-focused
+1. Match to specific offering when possible
+2. For templates: mention the agents included
+3. For consulting: mention outcomes and timeline
+4. For products: mention what's included
+5. Ask 1-2 clarifying questions if needed
+6. Route to consultation for custom/complex needs
+7. Be concise and outcome-focused
