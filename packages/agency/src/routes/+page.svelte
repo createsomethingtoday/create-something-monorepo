@@ -4,12 +4,22 @@
 	import SavvyCalButton from '$lib/components/SavvyCalButton.svelte';
 	import { verticals, getExampleOutcomes, countAgents } from '$lib/agents';
 
+	// Offering types
+	type OfferingType = 'template' | 'service' | 'product';
+
+	interface MatchedOffering {
+		type: OfferingType;
+		name: string;
+		reason: string;
+		redirect: string;
+	}
+
 	// Spec intake state
 	let specInput = $state('');
 	let isLoading = $state(false);
 	let errorMessage = $state('');
 	let clarifyingQuestions = $state<string[]>([]);
-	let matchedTemplate = $state<{ template: string; reason: string; redirect: string } | null>(null);
+	let matchedOffering = $state<MatchedOffering | null>(null);
 
 	// Handle spec submission
 	async function handleSubmit() {
@@ -18,7 +28,7 @@
 		isLoading = true;
 		errorMessage = '';
 		clarifyingQuestions = [];
-		matchedTemplate = null;
+		matchedOffering = null;
 
 		try {
 			const response = await fetch('/api/spec-intake', {
@@ -33,17 +43,19 @@
 			}
 
 			const result = (await response.json()) as {
-				action: 'show_template' | 'clarify' | 'consultation';
-				template?: string;
+				action: 'show_offering' | 'clarify' | 'consultation';
+				offering_type?: OfferingType;
+				offering_name?: string;
 				reason?: string;
 				redirect?: string;
 				questions?: string[];
 			};
 
 			switch (result.action) {
-				case 'show_template':
-					matchedTemplate = {
-						template: result.template || '',
+				case 'show_offering':
+					matchedOffering = {
+						type: result.offering_type || 'template',
+						name: result.offering_name || '',
 						reason: result.reason || '',
 						redirect: result.redirect || '',
 					};
@@ -67,6 +79,19 @@
 
 	function useExample(prompt: string) {
 		specInput = prompt;
+	}
+
+	// Get CTA text based on offering type
+	function getCtaText(type: OfferingType): string {
+		switch (type) {
+			case 'service':
+				return 'Learn more →';
+			case 'product':
+				return 'See details →';
+			case 'template':
+			default:
+				return 'View template →';
+		}
 	}
 
 	// Examples as data - Tufte: let the content speak
@@ -134,11 +159,19 @@
 			<p class="error-message">{errorMessage}</p>
 		{/if}
 
-		{#if matchedTemplate}
-			<div class="match-result">
-				<p class="match-text">Found: <strong>{matchedTemplate.template.replace(/-/g, ' ')}</strong></p>
-				<p class="match-reason">{matchedTemplate.reason}</p>
-				<a href={matchedTemplate.redirect} class="match-link">View template →</a>
+		{#if matchedOffering}
+			<div class="match-result" data-type={matchedOffering.type}>
+				<p class="match-text">
+					{#if matchedOffering.type === 'service'}
+						Recommended: <strong>{matchedOffering.name}</strong>
+					{:else if matchedOffering.type === 'product'}
+						Try: <strong>{matchedOffering.name}</strong>
+					{:else}
+						Found: <strong>{matchedOffering.name}</strong>
+					{/if}
+				</p>
+				<p class="match-reason">{matchedOffering.reason}</p>
+				<a href={matchedOffering.redirect} class="match-link">{getCtaText(matchedOffering.type)}</a>
 			</div>
 		{/if}
 

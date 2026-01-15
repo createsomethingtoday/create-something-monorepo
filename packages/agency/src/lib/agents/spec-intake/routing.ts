@@ -145,20 +145,144 @@ export const TEMPLATE_KEYWORDS: Record<string, string[]> = {
 };
 
 /**
- * Quick keyword-based template match (fallback if AI fails)
+ * Keywords that map to consulting services
  */
-export function quickMatchTemplate(userSpec: string): string | null {
+export const SERVICE_KEYWORDS: Record<string, { keywords: string[]; reason: string }> = {
+	'web-development': {
+		keywords: ['website', 'web app', 'landing page', 'rebrand', 'redesign'],
+		reason: '3 weeks to production with sub-100ms response times.',
+	},
+	automation: {
+		keywords: [
+			'automate',
+			'automation',
+			'manual work',
+			'hours per week',
+			'data entry',
+			'copy paste',
+			'repetitive',
+			'workflow',
+		],
+		reason: '60-70% time savings on manual work with Claude Code + Cloudflare Workers.',
+	},
+	'agentic-systems': {
+		keywords: [
+			'agentic',
+			'long-running',
+			'autonomous',
+			'multi-system',
+			'coordinate',
+			'orchestrat',
+			'decision making',
+		],
+		reason: 'Long-running AI workflows that make decisions while you sleep.',
+	},
+	partnership: {
+		keywords: ['ongoing', 'maintain', 'support', 'monthly', 'retainer', 'partner'],
+		reason: '2-4 new automation features per month with 4-hour response time.',
+	},
+	transformation: {
+		keywords: [
+			'train',
+			'team',
+			'learn',
+			'capability',
+			'upskill',
+			'teach',
+			'ai native',
+			'build internally',
+		],
+		reason: 'Your team builds AI systems in 90 days with hands-on training.',
+	},
+	advisory: {
+		keywords: ['strategy', 'roadmap', 'direction', 'advisor', 'consulting', 'guidance'],
+		reason: 'External perspective on your AI roadmap with quarterly reviews.',
+	},
+};
+
+/**
+ * Keywords that map to products
+ */
+export const PRODUCT_KEYWORDS: Record<string, { keywords: string[]; reason: string }> = {
+	'automation-patterns': {
+		keywords: ['patterns', 'templates', 'copy paste', 'skip research', 'solo dev'],
+		reason: '10 copy-paste patterns, 3 Claude Code skills. Skip 20 hours of research.',
+	},
+	'agent-in-a-box': {
+		keywords: [
+			'development environment',
+			'setup',
+			'dotfiles',
+			'dev setup',
+			'claude code setup',
+			'mcp server',
+		],
+		reason: 'Complete development environment with 90 days of weekly office hours.',
+	},
+	'vertical-templates': {
+		keywords: ['template', 'quick website', 'same day', 'deploy fast'],
+		reason: 'Professional website deployed same day with built-in lead capture.',
+	},
+};
+
+/**
+ * Match type for routing
+ */
+export type MatchType = 'template' | 'service' | 'product';
+
+export interface OfferingMatch {
+	type: MatchType;
+	slug: string;
+	reason: string;
+}
+
+/**
+ * Quick keyword-based match for any offering type
+ */
+export function quickMatchOffering(userSpec: string): OfferingMatch | null {
 	const lowerSpec = userSpec.toLowerCase();
 
-	for (const [template, keywords] of Object.entries(TEMPLATE_KEYWORDS)) {
+	// Check services first (higher value)
+	for (const [slug, { keywords, reason }] of Object.entries(SERVICE_KEYWORDS)) {
 		for (const keyword of keywords) {
 			if (lowerSpec.includes(keyword)) {
-				return template;
+				return { type: 'service', slug, reason };
+			}
+		}
+	}
+
+	// Check products
+	for (const [slug, { keywords, reason }] of Object.entries(PRODUCT_KEYWORDS)) {
+		for (const keyword of keywords) {
+			if (lowerSpec.includes(keyword)) {
+				return { type: 'product', slug, reason };
+			}
+		}
+	}
+
+	// Check templates last
+	for (const [slug, keywords] of Object.entries(TEMPLATE_KEYWORDS)) {
+		for (const keyword of keywords) {
+			if (lowerSpec.includes(keyword)) {
+				return {
+					type: 'template',
+					slug,
+					reason: `Our ${slug.replace(/-/g, ' ')} template includes automated agents.`,
+				};
 			}
 		}
 	}
 
 	return null;
+}
+
+/**
+ * Quick keyword-based template match (fallback if AI fails)
+ * @deprecated Use quickMatchOffering instead for full offering support
+ */
+export function quickMatchTemplate(userSpec: string): string | null {
+	const match = quickMatchOffering(userSpec);
+	return match?.type === 'template' ? match.slug : null;
 }
 
 /**
@@ -177,13 +301,16 @@ export function shouldSuggestConsultation(userSpec: string): boolean {
 }
 
 export interface IntakeResult {
-	action: 'show_template' | 'clarify' | 'consultation';
-	matched_template?: string;
+	action: 'show_offering' | 'clarify' | 'consultation';
+	offering_type?: MatchType;
+	matched_offering?: string;
 	matched_reason?: string;
 	clarifying_questions?: string[];
 	consultation_reason?: string;
 	confidence: number;
 	understanding: string;
+	// Legacy support
+	matched_template?: string;
 }
 
 /**
@@ -194,16 +321,17 @@ export function applyRoutingRules(
 	rules: RoutingRules = DEFAULT_ROUTING_RULES
 ): IntakeResult {
 	const confidence = aiResponse.confidence || 0;
-	const suggestedAction = aiResponse.action || 'consultation';
 
-	// High confidence + matched template → show template
+	// High confidence + matched offering → show offering
 	if (
 		confidence >= rules.show_template.confidence_threshold &&
-		aiResponse.matched_template
+		(aiResponse.matched_offering || aiResponse.matched_template)
 	) {
 		return {
-			action: 'show_template',
-			matched_template: aiResponse.matched_template,
+			action: 'show_offering',
+			offering_type: aiResponse.offering_type || 'template',
+			matched_offering: aiResponse.matched_offering || aiResponse.matched_template,
+			matched_template: aiResponse.matched_template, // Legacy
 			matched_reason: aiResponse.matched_reason,
 			confidence,
 			understanding: aiResponse.understanding || '',

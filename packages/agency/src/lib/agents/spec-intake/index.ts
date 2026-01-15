@@ -19,13 +19,15 @@ import {
 	DEFAULT_ROUTING_RULES,
 	applyRoutingRules,
 	quickMatchTemplate,
+	quickMatchOffering,
 	shouldSuggestConsultation,
 	type IntakeResult,
 	type RoutingRules,
+	type MatchType,
 } from './routing.js';
 
 // Re-export types from routing
-export type { IntakeResult, RoutingRules };
+export type { IntakeResult, RoutingRules, MatchType };
 
 // Re-export all types from types.ts
 export type {
@@ -57,6 +59,7 @@ export {
 	DEFAULT_ROUTING_RULES,
 	applyRoutingRules,
 	quickMatchTemplate,
+	quickMatchOffering,
 	shouldSuggestConsultation,
 };
 
@@ -358,7 +361,7 @@ async function callWorkwayIntake(
  * Fallback keyword-based matching when AI is unavailable
  */
 function fallbackKeywordMatch(userSpec: string): IntakeResult {
-	// Check for consultation triggers first
+	// Check for consultation triggers first (enterprise/custom needs)
 	if (shouldSuggestConsultation(userSpec)) {
 		return {
 			action: 'consultation',
@@ -369,16 +372,19 @@ function fallbackKeywordMatch(userSpec: string): IntakeResult {
 		};
 	}
 
-	// Try to match a template
-	const matchedTemplate = quickMatchTemplate(userSpec);
+	// Try to match any offering (service, product, or template)
+	const match = quickMatchOffering(userSpec);
 
-	if (matchedTemplate) {
+	if (match) {
+		const displayName = match.slug.replace(/-/g, ' ');
 		return {
-			action: 'show_template',
-			matched_template: matchedTemplate,
-			matched_reason: `Based on your description, our ${matchedTemplate.replace('-', ' ')} template looks like a great fit.`,
-			confidence: 0.7,
-			understanding: `Looking for a ${matchedTemplate.replace('-', ' ')} solution`,
+			action: 'show_offering',
+			offering_type: match.type,
+			matched_offering: match.slug,
+			matched_template: match.type === 'template' ? match.slug : undefined, // Legacy
+			matched_reason: match.reason,
+			confidence: 0.75,
+			understanding: `Looking for ${match.type === 'service' ? 'our ' : 'a '}${displayName} ${match.type}`,
 		};
 	}
 
