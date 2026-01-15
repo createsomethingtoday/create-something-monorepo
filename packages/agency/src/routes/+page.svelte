@@ -93,9 +93,9 @@
 <section class="hero">
 	<div class="hero-content">
 		<p class="hero-eyebrow">Apps + Agents</p>
-		<h1 class="hero-title">Software that works while you sleep</h1>
+		<h1 class="hero-title">We build software that keeps working after launch</h1>
 		<p class="hero-subtitle">
-			Tell us what you need. We'll match you with an app and the agents to run it.
+			Not just a website. An app with automated workflows that recover missed appointments, follow up with leads, and handle the tasks you forget.
 		</p>
 
 		<form class="spec-input-container" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
@@ -146,52 +146,35 @@
 	</div>
 </section>
 
-<!-- Value proposition - Tufte: small multiples, data density -->
+<!-- Value - Rams: state the outcome -->
 <section class="value-section">
-	<div class="value-content">
-		<div class="value-column">
-			<h2 class="value-heading">The app</h2>
-			<p class="value-text">Production-ready in days. Your brand, your domain, your data.</p>
-		</div>
-		<div class="value-divider">+</div>
-		<div class="value-column">
-			<h2 class="value-heading">The agents</h2>
-			<p class="value-text">Automated workflows that recover revenue, follow up, and never forget.</p>
-		</div>
-		<div class="value-divider">=</div>
-		<div class="value-column">
-			<h2 class="value-heading">Ongoing value</h2>
-			<p class="value-text">"Your agents recovered $3,200 this month." Real numbers, not vanity metrics.</p>
-		</div>
-	</div>
+	<p class="value-statement">
+		You get a production-ready app in days, not months.<br />
+		Behind it, agents work around the clock—<br />
+		<strong>so you hear "Your agents recovered $3,200 this month" instead of silence.</strong>
+	</p>
 </section>
 
-<!-- Outcomes - Tufte: let the data speak -->
+<!-- Outcomes - Rams: the data is the design -->
 <section class="outcomes-section">
-	<header class="section-header">
-		<h2 class="section-heading">What the agents do</h2>
-		<p class="section-meta">{totalAgents} agents · {verticals.length} industries</p>
-	</header>
-
-	<div class="outcomes-table">
+	<h2 class="outcomes-heading">What agents actually do</h2>
+	<div class="outcomes-list">
 		{#each outcomes as outcome}
-			<div class="outcome-row">
-				<span class="outcome-vertical">{outcome.vertical}</span>
-				<span class="outcome-agent">{outcome.agent}</span>
-				<span class="outcome-result">{outcome.outcome}</span>
+			<div class="outcome-item">
+				<span class="outcome-what">{outcome.agent}</span>
 				{#if outcome.metric}
-					<span class="outcome-metric">{outcome.metric}</span>
+					<span class="outcome-value">{outcome.metric}</span>
 				{/if}
 			</div>
 		{/each}
 	</div>
 </section>
 
-<!-- Templates - Tufte: information-rich, minimal decoration -->
+<!-- Templates - Rams: just show them -->
 <section class="templates-section">
 	<header class="section-header">
-		<h2 class="section-heading">Starting points</h2>
-		<a href="/templates" class="section-link">View all →</a>
+		<h2 class="section-heading">Pick your industry, we'll handle the rest</h2>
+		<a href="/templates" class="section-link">See all templates →</a>
 	</header>
 
 	<div class="templates-grid">
@@ -207,20 +190,11 @@
 	</div>
 </section>
 
-<!-- CTA - Tufte: clear, direct -->
+<!-- CTA - Rams: one ask, Nicely Said: warm -->
 <section class="cta-section">
-	<p class="cta-text">Ready to see what agents can do for your business?</p>
-	<div class="cta-actions">
-		<SavvyCalButton variant="primary" size="md" />
-		<span class="cta-divider">or</span>
-		<a href="/templates" class="cta-link">browse templates</a>
-	</div>
+	<h2 class="cta-heading">Ready when you are.</h2>
+	<SavvyCalButton variant="primary" size="lg" />
 </section>
-
-<!-- Attribution - subtle -->
-<footer class="attribution">
-	<p>Agents powered by <a href="https://workway.co" target="_blank" rel="noopener">WORKWAY</a></p>
-</footer>
 
 <style>
 	/* Tufte: Let typography and whitespace do the work */
@@ -436,48 +410,70 @@
 		color: var(--color-fg-secondary);
 	}
 
-	/* Value section - Tufte small multiples */
+	/* Value - Rams: statement only */
 	.value-section {
-		padding: var(--space-xl) var(--space-xl);
+		padding: var(--space-2xl) var(--space-xl);
+		text-align: center;
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.value-content {
-		max-width: 900px;
+	.value-statement {
+		font-size: var(--text-h2);
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		max-width: 600px;
 		margin: 0 auto;
-		display: flex;
-		align-items: flex-start;
-		gap: var(--space-md);
 	}
 
-	.value-column {
-		flex: 1;
+	.value-statement strong {
+		color: var(--color-fg-primary);
+		display: block;
+		margin-top: var(--space-sm);
 	}
 
-	.value-divider {
-		color: var(--color-fg-muted);
-		font-size: var(--text-h2);
-		padding-top: var(--space-sm);
+	/* Outcomes - Rams: data is design */
+	.outcomes-section {
+		padding: var(--space-2xl) var(--space-xl);
+		border-top: 1px solid var(--color-border-default);
 	}
 
-	.value-heading {
-		font-size: var(--text-h2);
+	.outcomes-heading {
+		font-size: var(--text-h1);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		text-align: center;
+		margin-bottom: var(--space-xl);
 	}
 
-	.value-text {
+	.outcomes-list {
+		max-width: 600px;
+		margin: 0 auto;
+	}
+
+	.outcome-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		padding: var(--space-sm) 0;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.outcome-item:last-child {
+		border-bottom: none;
+	}
+
+	.outcome-what {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-primary);
+	}
+
+	.outcome-value {
 		font-size: var(--text-body);
+		font-family: var(--font-mono, monospace);
 		color: var(--color-fg-secondary);
-		line-height: 1.5;
 	}
 
-	/* Outcomes - Tufte table thinking */
-	.outcomes-section {
-		padding: var(--space-xl) var(--space-xl);
-	}
-
+	/* Section header (for templates) */
 	.section-header {
 		max-width: 900px;
 		margin: 0 auto var(--space-xl);
@@ -491,11 +487,6 @@
 		margin-bottom: var(--space-xs);
 	}
 
-	.section-meta {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-	}
-
 	.section-link {
 		display: inline-block;
 		margin-top: var(--space-sm);
@@ -505,51 +496,6 @@
 
 	.section-link:hover {
 		color: var(--color-fg-primary);
-	}
-
-	.outcomes-table {
-		max-width: 900px;
-		margin: 0 auto;
-	}
-
-	.outcome-row {
-		display: grid;
-		grid-template-columns: 120px 1fr 1fr auto;
-		gap: var(--space-md);
-		padding: var(--space-sm) 0;
-		border-bottom: 1px solid var(--color-border-default);
-		align-items: baseline;
-	}
-
-	.outcome-row:last-child {
-		border-bottom: none;
-	}
-
-	.outcome-vertical {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.outcome-agent {
-		font-size: var(--text-h3);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-	}
-
-	.outcome-result {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-	}
-
-	.outcome-metric {
-		font-size: var(--text-body-sm);
-		font-family: var(--font-mono, monospace);
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-surface);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
 	}
 
 	/* Templates - compact grid */
@@ -601,53 +547,18 @@
 		line-height: 1.5;
 	}
 
-	/* CTA - quiet confidence */
+	/* CTA - Rams: one ask */
 	.cta-section {
-		padding: var(--space-xl) var(--space-xl);
+		padding: var(--space-2xl) var(--space-xl);
 		text-align: center;
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.cta-text {
-		font-size: var(--text-h2);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-lg);
-	}
-
-	.cta-actions {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: var(--space-md);
-	}
-
-	.cta-divider {
-		font-size: var(--text-body);
-		color: var(--color-fg-muted);
-	}
-
-	.cta-link {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-	}
-
-	.cta-link:hover {
+	.cta-heading {
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-	}
-
-	/* Attribution */
-	.attribution {
-		padding: var(--space-lg) var(--space-xl);
-		text-align: center;
-	}
-
-	.attribution p {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	.attribution a {
-		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-lg);
 	}
 
 	/* Responsive */
@@ -656,27 +567,18 @@
 			padding: var(--space-xl) var(--space-lg);
 		}
 
-		.value-content {
+		.value-statement {
+			font-size: var(--text-h3);
+		}
+
+		.outcome-item {
 			flex-direction: column;
-			gap: var(--space-lg);
-		}
-
-		.value-divider {
-			display: none;
-		}
-
-		.outcome-row {
-			grid-template-columns: 1fr;
 			gap: var(--space-xs);
+			align-items: flex-start;
 		}
 
 		.templates-grid {
 			grid-template-columns: 1fr;
-		}
-
-		.section-header {
-			flex-direction: column;
-			gap: var(--space-xs);
 		}
 	}
 </style>
