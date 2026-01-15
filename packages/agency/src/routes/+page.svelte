@@ -70,11 +70,12 @@
 	}
 
 	// Examples as data - Tufte: let the content speak
+	// Covers templates, consulting, and products
 	const examples = [
-		{ prompt: 'Dental practice with online booking', result: 'dental-practice', agents: 4 },
-		{ prompt: 'Law firm with client intake', result: 'law-firm', agents: 4 },
-		{ prompt: 'Restaurant with reservations', result: 'restaurant', agents: 2 },
-		{ prompt: 'Sales CRM with lead tracking', result: 'crm', agents: 3 },
+		{ prompt: 'Dental practice with online booking', result: 'dental-practice', type: 'template' },
+		{ prompt: 'Automate our 10+ hours/week of manual data entry', result: 'automation', type: 'consulting' },
+		{ prompt: 'Law firm with client intake', result: 'law-firm', type: 'template' },
+		{ prompt: 'Train my team to build AI systems', result: 'transformation', type: 'consulting' },
 	];
 
 	const outcomes = getExampleOutcomes();
@@ -83,8 +84,8 @@
 
 <SEO
 	title="Software that works while you sleep"
-	description="We build apps with agents that recover revenue, qualify leads, and automate follow-ups. Not just a website—ongoing value."
-	keywords="AI agents, workflow automation, dental practice website, law firm website, business automation"
+	description="We build apps with agents, automate workflows, and train teams on AI. From ready-to-deploy templates to custom automation systems."
+	keywords="AI agents, workflow automation, AI consulting, team AI training, dental practice website, law firm website, business automation"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -103,13 +104,13 @@
 			<textarea
 				id="spec-input"
 				class="spec-input"
-				placeholder="A dental practice website with online booking..."
+				placeholder="A dental practice website... Automate our manual workflows... Train my team on AI..."
 				rows="2"
 				bind:value={specInput}
 				disabled={isLoading}
 			></textarea>
 			<div class="input-footer">
-				<span class="examples-hint">Try: {examples.map(e => e.prompt).slice(0, 2).join(' · ')}</span>
+				<span class="examples-hint">Try: Dental practice · Automate manual work · Train my team</span>
 				<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
 					{#if isLoading}
 						<span class="button-spinner"></span>
