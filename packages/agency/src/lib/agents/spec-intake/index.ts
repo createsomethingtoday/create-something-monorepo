@@ -266,14 +266,20 @@ export async function processSpecIntake(
 		workwayApiUrl?: string;
 	} = {}
 ): Promise<IntakeResult> {
+	console.log('[spec-intake] Processing:', userSpec.slice(0, 50));
+	
 	// First, check if we have a clear keyword match (service, product, or template)
 	const offeringMatch = quickMatchOffering(userSpec);
 	const consultationNeeded = shouldSuggestConsultation(userSpec);
+	
+	console.log('[spec-intake] Keyword match:', offeringMatch);
+	console.log('[spec-intake] Consultation needed:', consultationNeeded);
 
 	// If we have a service or product match, use it directly (more specific than AI template)
 	// Services and products are explicit offerings that keywords identify precisely
 	if (offeringMatch && (offeringMatch.type === 'service' || offeringMatch.type === 'product')) {
 		const displayName = offeringMatch.slug.replace(/-/g, ' ');
+		console.log('[spec-intake] Returning service/product match:', offeringMatch.slug);
 		return {
 			action: 'show_offering',
 			offering_type: offeringMatch.type,

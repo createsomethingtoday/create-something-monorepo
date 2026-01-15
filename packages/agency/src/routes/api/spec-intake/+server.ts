@@ -85,6 +85,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			workwayApiUrl,
 		});
 
+		console.log('[api/spec-intake] Result:', JSON.stringify(result, null, 2));
+
 		// Normalize slug: snake_case → kebab-case
 		const normalizeSlug = (slug: string | undefined) =>
 			slug?.replace(/_/g, '-').toLowerCase();
