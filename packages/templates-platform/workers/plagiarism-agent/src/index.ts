@@ -3001,36 +3001,65 @@ async function generateDetailedComparison(
  * Extract HTML elements that match a CSS selector for visual preview
  */
 function extractElementBySelector(html: string, selector: string): string {
-  // Convert CSS selector to a class name we can search for
-  const className = selector.replace(/^\./, '').replace(/[:\[\]]/g, '');
+  let searchPattern = '';
+  let placeholderElement = '';
   
-  // Try to find elements with this class
-  const classRegex = new RegExp(
-    `<([a-z][a-z0-9]*)\\s+[^>]*class="[^"]*\\b${className}\\b[^"]*"[^>]*>([\\s\\S]*?)<\\/\\1>`,
-    'gi'
-  );
-  
-  const match = html.match(classRegex);
-  if (match && match[0]) {
-    // Return first match, truncated if too long
-    let element = match[0];
-    if (element.length > 2000) {
-      element = element.substring(0, 2000) + '<!-- truncated -->';
+  // Handle different selector types
+  if (selector.startsWith('.')) {
+    // Class selector: .container
+    const className = selector.slice(1).replace(/[:\[\]]/g, '');
+    searchPattern = `class="[^"]*\\b${className}\\b[^"]*"`;
+    placeholderElement = `<div class="${className}">Sample content</div>`;
+  } else if (selector.startsWith('[')) {
+    // Attribute selector: [data-nav-menu-open]
+    const attrMatch = selector.match(/\[([^\]=]+)(?:=["']?([^"'\]]+))?/);
+    if (attrMatch) {
+      const attrName = attrMatch[1];
+      const attrValue = attrMatch[2];
+      if (attrValue) {
+        searchPattern = `${attrName}="${attrValue}"`;
+      } else {
+        searchPattern = `${attrName}(?:="[^"]*")?`;
+      }
+      placeholderElement = `<div ${attrName}${attrValue ? `="${attrValue}"` : ''}>Sample content</div>`;
     }
-    return element;
+  } else if (selector.startsWith('#')) {
+    // ID selector
+    const id = selector.slice(1);
+    searchPattern = `id="${id}"`;
+    placeholderElement = `<div id="${id}">Sample content</div>`;
+  } else {
+    // Element selector or complex selector - create placeholder
+    placeholderElement = `<${selector}>Sample content</${selector}>`;
   }
   
-  // Try self-closing or simpler match
-  const simpleRegex = new RegExp(
-    `<[^>]+class="[^"]*\\b${className}\\b[^"]*"[^>]*\\/?>`,
-    'gi'
-  );
-  const simpleMatch = html.match(simpleRegex);
-  if (simpleMatch && simpleMatch[0]) {
-    return simpleMatch[0];
+  if (searchPattern) {
+    // Try to find full element with content
+    const fullRegex = new RegExp(
+      `<([a-z][a-z0-9]*)\\s+[^>]*${searchPattern}[^>]*>([\\s\\S]*?)<\\/\\1>`,
+      'gi'
+    );
+    const fullMatch = html.match(fullRegex);
+    if (fullMatch && fullMatch[0]) {
+      let element = fullMatch[0];
+      if (element.length > 2000) {
+        element = element.substring(0, 2000) + '<!-- truncated -->';
+      }
+      return element;
+    }
+    
+    // Try self-closing element
+    const selfClosingRegex = new RegExp(
+      `<[a-z][a-z0-9]*\\s+[^>]*${searchPattern}[^>]*\\/?>`,
+      'gi'
+    );
+    const selfClosingMatch = html.match(selfClosingRegex);
+    if (selfClosingMatch && selfClosingMatch[0]) {
+      return selfClosingMatch[0];
+    }
   }
   
-  return `<div class="${className}"><!-- Element not found in HTML --></div>`;
+  return placeholderElement;
 }
 
 /**
@@ -4274,7 +4303,27 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
                   <div class="visual-preview-label">\${data.template1.name}</div>
                   <div class="visual-preview-frame">
                     <iframe 
-                      srcdoc="<!DOCTYPE html><html><head><style>* { margin: 0; padding: 0; box-sizing: border-box; } body { padding: 1rem; font-family: system-ui; } \${escapeHtml(evidence.css)}</style></head><body>\${escapeHtml(evidence.html1)}</body></html>"
+                      srcdoc="<!DOCTYPE html><html><head><style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { padding: 1rem; font-family: system-ui, sans-serif; background: #f5f5f5; min-height: 100vh; }
+                        /* Make empty elements visible */
+                        [class]:empty, div:empty { 
+                          min-height: 40px; 
+                          background: linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%), linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%);
+                          background-size: 10px 10px;
+                          background-position: 0 0, 5px 5px;
+                          border: 2px dashed #999;
+                          border-radius: 4px;
+                        }
+                        /* Highlight the target element */
+                        \${escapeHtml(evidence.selector)} {
+                          outline: 3px solid #8b5cf6 !important;
+                          outline-offset: 2px;
+                          position: relative !important;
+                          display: block !important;
+                        }
+                        \${escapeHtml(evidence.css)}
+                      </style></head><body>\${escapeHtml(evidence.html1)}<div style='margin-top: 8px; font-size: 10px; color: #666; font-family: monospace;'>\${escapeHtml(evidence.selector)}</div></body></html>"
                       sandbox="allow-same-origin"
                       loading="lazy"
                     ></iframe>
@@ -4284,7 +4333,27 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
                   <div class="visual-preview-label">\${data.template2.name}</div>
                   <div class="visual-preview-frame">
                     <iframe 
-                      srcdoc="<!DOCTYPE html><html><head><style>* { margin: 0; padding: 0; box-sizing: border-box; } body { padding: 1rem; font-family: system-ui; } \${escapeHtml(evidence.css)}</style></head><body>\${escapeHtml(evidence.html2)}</body></html>"
+                      srcdoc="<!DOCTYPE html><html><head><style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { padding: 1rem; font-family: system-ui, sans-serif; background: #f5f5f5; min-height: 100vh; }
+                        /* Make empty elements visible */
+                        [class]:empty, div:empty { 
+                          min-height: 40px; 
+                          background: linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%), linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%);
+                          background-size: 10px 10px;
+                          background-position: 0 0, 5px 5px;
+                          border: 2px dashed #999;
+                          border-radius: 4px;
+                        }
+                        /* Highlight the target element */
+                        \${escapeHtml(evidence.selector)} {
+                          outline: 3px solid #8b5cf6 !important;
+                          outline-offset: 2px;
+                          position: relative !important;
+                          display: block !important;
+                        }
+                        \${escapeHtml(evidence.css)}
+                      </style></head><body>\${escapeHtml(evidence.html2)}<div style='margin-top: 8px; font-size: 10px; color: #666; font-family: monospace;'>\${escapeHtml(evidence.selector)}</div></body></html>"
                       sandbox="allow-same-origin"
                       loading="lazy"
                     ></iframe>
