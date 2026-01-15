@@ -1,9 +1,9 @@
 {
   "$schema": "https://createsomething.io/schemas/template-manifest.json",
-  "name": "Dental Practice Template",
+  "name": "Modern Dental Practice",
   "slug": "dental-practice",
-  "version": "1.0.0",
-  "description": "Appointments that book themselves. HIPAA-ready dental practice website with automated scheduling, patient intake, treatment reminders, and insurance verification workflows.",
+  "version": "2.0.0",
+  "description": "Modern dental practice website with teal accent, patient testimonials, service cards, and appointment booking. Clean design that builds patient trust.",
   "category": "healthcare",
   "subcategories": [
     "dental-practice",
