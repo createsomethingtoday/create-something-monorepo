@@ -9,10 +9,11 @@
  * Architecture:
  * - WORKWAY: Hosts the generic workflow (AI execution, storage)
  * - This module: Provides context (llm.txt), prompts, routing rules
+ *
+ * Status: Ready for WORKWAY API gateway integration.
+ * Currently uses keyword fallback until API is available.
  */
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { SYSTEM_PROMPT, buildPrompt, parseAIResponse } from './prompts.js';
 import {
 	DEFAULT_ROUTING_RULES,
@@ -23,8 +24,30 @@ import {
 	type RoutingRules,
 } from './routing.js';
 
-// Re-export types
+// Re-export types from routing
 export type { IntakeResult, RoutingRules };
+
+// Re-export all types from types.ts
+export type {
+	SpecIntakeRequest,
+	SpecIntakeResponse,
+	SpecIntakeAPIRequest,
+	SpecIntakeAPIResponse,
+	SpecIntakeAPIResponseTemplate,
+	SpecIntakeAPIResponseClarify,
+	SpecIntakeAPIResponseConsultation,
+	WorkwayTriggerPayload,
+	WorkwayClientConfig,
+	WorkwayExecutionResponse,
+	RoutingRulesConfig,
+	IntakeAction,
+} from './types.js';
+
+export {
+	isShowTemplateResponse,
+	isClarifyResponse,
+	isConsultationResponse,
+} from './types.js';
 
 // Re-export utilities
 export {

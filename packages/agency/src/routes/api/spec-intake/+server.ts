@@ -10,11 +10,18 @@
  *
  * This endpoint calls the WORKWAY conversational-intake-agent workflow
  * when configured, or falls back to keyword matching.
+ *
+ * Status: Using keyword fallback until WORKWAY API gateway is available.
+ * Types are ready for integration.
  */
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { processSpecIntake } from '$lib/agents/spec-intake';
+import {
+	processSpecIntake,
+	type SpecIntakeAPIRequest,
+	type SpecIntakeAPIResponse,
+} from '$lib/agents/spec-intake';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
