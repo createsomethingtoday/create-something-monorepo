@@ -1,179 +1,197 @@
 /**
- * Site Configuration - Medical Practice
+ * Modern Med Site Configuration - Tufte Edition
  *
- * Voice: Professional, trustworthy, compassionate
- * Structure: Services first, team credibility, easy contact
- * Images: Generated via Cloudflare Workers AI (Flux)
+ * Voice: Clinical precision meets human warmth. Data-forward, trust-building.
+ * Design: Tufte-inspired with serif headings, data visualizations, muted palette.
  */
 
-export const siteConfig = {
-	// Practice Identity
-	name: 'Practice Name',
-	tagline: 'Compassionate Care, Advanced Medicine',
-	description:
-		'Family medicine and primary care serving the community since 2015. Accepting new patients.',
+export interface Physician {
+	name: string;
+	credentials: string;
+	specialty: string;
+	affiliation: string;
+	focus: string;
+	experience: number;
+	fee: number;
+	availability: 'Today' | 'Tomorrow' | string;
+	image: string;
+}
 
-	// Hero
-	hero: {
-		image: '/images/hero-clinic.jpg',
-		alt: 'Modern medical clinic waiting room'
-	},
+export interface Capability {
+	name: string;
+	description: string;
+	icon: string;
+	metric?: string;
+	metricLabel?: string;
+}
+
+export interface MedicalPracticeConfig {
+	name: string;
+	tagline: string;
+	description: string;
 
 	// Contact
-	email: 'contact@practicename.com',
-	phone: '+1 (555) 123-4567',
-	fax: '+1 (555) 123-4568',
+	phone: string;
 	address: {
-		street: '1234 Medical Plaza Drive, Suite 200',
-		city: 'Seattle',
-		state: 'WA',
-		zip: '98101',
-		country: 'US'
-	},
+		street: string;
+		suite: string;
+		city: string;
+		state: string;
+		zip: string;
+	};
 
 	// Hours
 	hours: {
-		monday: '8:00 AM - 5:00 PM',
-		tuesday: '8:00 AM - 5:00 PM',
-		wednesday: '8:00 AM - 5:00 PM',
-		thursday: '8:00 AM - 5:00 PM',
-		friday: '8:00 AM - 4:00 PM',
-		saturday: 'Closed',
-		sunday: 'Closed'
+		weekday: string;
+		saturday: string;
+		urgent: string;
+	};
+
+	// Hero
+	hero: {
+		headline: string;
+		subheadline: string;
+		ctaText: string;
+		ctaSubtext: string;
+		waitTime: string;
+		satisfactionScore: string;
+		satisfactionNote: string;
+	};
+
+	// Physicians
+	physicians: Physician[];
+
+	// Capabilities
+	capabilities: Capability[];
+
+	// Footer
+	footer: {
+		contactHeadline: string;
+		contactDescription: string;
+		links: { label: string; href: string }[];
+	};
+}
+
+export const siteConfig: MedicalPracticeConfig = {
+	name: 'Modern Med',
+	tagline: 'Tufte Edition',
+	description: 'Care that starts with a conversation.',
+
+	phone: '(415) 555-0198',
+	address: {
+		street: '1200 Modern Med Plaza',
+		suite: 'Suite 450',
+		city: 'San Francisco',
+		state: 'CA',
+		zip: '94102'
 	},
 
-	// After hours
-	afterHours: {
-		enabled: true,
-		phone: '+1 (555) 999-8888',
-		note: 'For urgent medical needs after hours, call our answering service.'
+	hours: {
+		weekday: 'Monday – Friday: 08:00 – 20:00',
+		saturday: 'Saturday: 10:00 – 16:00',
+		urgent: 'Urgent care portal open 24/7.'
 	},
 
-	// Social
-	social: {
-		facebook: 'https://facebook.com/practicename',
-		linkedin: 'https://linkedin.com/company/practicename'
+	hero: {
+		headline: 'Care that starts with a conversation.',
+		subheadline:
+			"Medicine is complex, but being seen shouldn't be. We combine clinical rigor with time to listen, ensuring every treatment plan is as unique as your biology.",
+		ctaText: 'VIEW CLINIC OUTCOMES',
+		ctaSubtext: 'Last updated: Today at 8:00 AM based on 4,200 patient interactions.',
+		waitTime: '8m',
+		satisfactionScore: '4.9/5.0',
+		satisfactionNote:
+			'Rolling 12-month average showing consistent improvement in communication scores.'
 	},
 
-	// SEO
-	url: 'https://example.com',
-	locale: 'en_US',
-
-	// Services - Core medical offerings
-	services: [
-		{
-			slug: 'primary-care',
-			title: 'Primary Care',
-			description: 'Comprehensive adult and pediatric primary care. Annual physicals, chronic disease management, preventive medicine.',
-			icon: 'medical'
-		},
-		{
-			slug: 'urgent-care',
-			title: 'Urgent Care',
-			description: 'Same-day appointments for acute illness and minor injuries. No appointment necessary.',
-			icon: 'urgent'
-		},
-		{
-			slug: 'womens-health',
-			title: "Women's Health",
-			description: 'Well-woman exams, contraception counseling, prenatal care coordination.',
-			icon: 'health'
-		},
-		{
-			slug: 'pediatrics',
-			title: 'Pediatrics',
-			description: 'Newborn through adolescent care. Well-child visits, immunizations, sports physicals.',
-			icon: 'pediatric'
-		},
-		{
-			slug: 'chronic-care',
-			title: 'Chronic Disease Management',
-			description: 'Diabetes, hypertension, asthma, COPD. Care coordination and monitoring.',
-			icon: 'chronic'
-		},
-		{
-			slug: 'preventive',
-			title: 'Preventive Medicine',
-			description: 'Screenings, immunizations, health risk assessments, lifestyle counseling.',
-			icon: 'preventive'
-		}
-	],
-
-	// Medical Team
-	providers: [
+	physicians: [
 		{
 			name: 'Dr. Sarah Chen',
-			role: 'Family Medicine Physician',
-			credentials: 'MD, FAAFP',
-			image: '/images/provider-chen.jpg',
-			bio: 'Board certified in Family Medicine. University of Washington School of Medicine 2012. Residency at Swedish Medical Center.',
-			specialties: ['Primary Care', 'Preventive Medicine', 'Chronic Disease Management'],
-			languages: ['English', 'Mandarin']
+			credentials: 'MD',
+			specialty: 'Cardiology',
+			affiliation: 'Stanford Medicine',
+			focus: 'Vascular Imaging',
+			experience: 14,
+			fee: 210,
+			availability: 'Today',
+			image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBealknldlb61u4UmiTE7-4FrMD8C_TSej_LpMe7BrIKJGmvulWuskc_8AH8rMmKP9_S4kc0gumVzy77a8GveuIZ95oIuZy4W9t1V8vIEg6xxTssRxdL64RXsnvQGWttjBkOqIjbqtGKnXTmuNsEHItXi_s4DjlKIOhs_AigTUbLee1AYplvQsB1kb-9ua1CYCgL3JW4lTfIjF5UINc2moZG-8wulpK74NVWTTL2Pz54o3nDW6J7DkHzCbt4nEnfDGoQka6NXLLI14'
 		},
 		{
-			name: 'Dr. Michael Rodriguez',
-			role: 'Internal Medicine Physician',
-			credentials: 'MD, FACP',
-			image: '/images/provider-rodriguez.jpg',
-			bio: 'Board certified in Internal Medicine. UCSF School of Medicine 2010. Fellowship in Hospital Medicine.',
-			specialties: ['Internal Medicine', 'Hospital Medicine', 'Geriatrics'],
-			languages: ['English', 'Spanish']
+			name: 'Dr. Marcus Thorne',
+			credentials: 'MD',
+			specialty: 'Neurology',
+			affiliation: 'Johns Hopkins',
+			focus: 'Sleep Disorders',
+			experience: 18,
+			fee: 245,
+			availability: 'Wed',
+			image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDT6CWPdA3Bo7Unr1_XKGNypkpnv_XdHO8T47wYS5X1ZwrHnsKOvkeQ9J25sjkDOaoTiBueLDrRJowTa6ARnRn7qQ0B11lCD21Hn4BXtYOBtH4HvN6lntjj4ePuLkDh08uySz3Xp4Oo3NH4aFGorKpo1p8TyaSKYuZS7_Z0m0ATDj6rHPAVY24er3ATdwWFaXICh2e2hBF1Lr_WkuPaAaLVnuLCfW2xuHkGl2OE8B_MFYkPX4HtGRN6xouJ78Aj2beElFQAQs-H_Xw'
 		},
 		{
-			name: 'Jessica Thompson',
-			role: 'Nurse Practitioner',
-			credentials: 'ARNP, FNP-C',
-			image: '/images/provider-thompson.jpg',
-			bio: 'Family Nurse Practitioner. Seattle University 2015. Focus on pediatric and adolescent care.',
-			specialties: ['Pediatrics', 'Adolescent Health', 'Immunizations'],
-			languages: ['English']
+			name: 'Dr. Elena Rodriguez',
+			credentials: 'MD',
+			specialty: 'Pediatrics',
+			affiliation: 'Harvard Medical',
+			focus: 'Early Development',
+			experience: 9,
+			fee: 180,
+			availability: 'Tomorrow',
+			image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCt_Pn68Wl1PUqFX2AmVaSVaqrrTgSW9Wvr_YYGJ114bxCNS2s_o70aX4LpKKlwzwnLLmWl0t2CFhWc0QV5kAb567e871NejY889Pnxnwu4EM9_QOxpDTbOcd0cYejrpu-ZnMtliD-MceqgKlmJTtLAcFAD4bv5jA6kDGWq9ocNWpdpIVGB5eljonlcRXfkQ6CyFtkkCE5dWYFuEmdOErJJ36NFlFNYpPGt5hx5i0hRhOU-6DbRf5wKiHzz3UMXcn_33LJVXORdWvw'
+		},
+		{
+			name: 'Dr. James Wilson',
+			credentials: 'DO',
+			specialty: 'Internal Medicine',
+			affiliation: 'UCSF',
+			focus: 'Metabolic Health',
+			experience: 21,
+			fee: 195,
+			availability: 'Today',
+			image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBVJ-lpdyhk_tRFXfaiFPYkbd0SJ7S05M1jgvAS7wYogk6CbaITP_ULz27pQnn3m8hj827W0xbq0ogfGNgpet8U4WxGnuBaL8jPO7MzdZJdsHXG62D6ix2FRuiseDRjU1qsgXPrupi4jHCHiMKg-9V6CUhNxc1AoBqXv1FCctXqKkgLGIn0-sATTb76ayD2tRduMv3pO1JXilRmlwdYbuylbz3LG-ga0KuQnmh9gC62pV74Ksl4PboY7MfWNT-amMZlCh_VIIvbhCc'
 		}
 	],
 
-	// Insurance
-	insurance: {
-		accepted: [
-			'Aetna',
-			'Blue Cross Blue Shield',
-			'Cigna',
-			'Humana',
-			'Kaiser Permanente',
-			'Medicare',
-			'Medicaid',
-			'Premera',
-			'Regence',
-			'UnitedHealthcare'
-		],
-		note: 'We participate with most major insurance plans. Please contact our office to verify coverage.'
-	},
+	capabilities: [
+		{
+			name: 'Precise Diagnostics',
+			description: 'In-house pathology and imaging. 94% of results are delivered within 24 hours.',
+			icon: 'biotech',
+			metric: '94%',
+			metricLabel: 'Speed-to-Result Target'
+		},
+		{
+			name: 'Remote Care',
+			description: 'Secure video consultations for follow-ups and chronic management.',
+			icon: 'schedule'
+		},
+		{
+			name: 'Modern Surgery',
+			description:
+				'Minimally invasive techniques with 40% faster recovery times than standard protocol.',
+			icon: 'precision_manufacturing',
+			metric: '0.40',
+			metricLabel: 'REL_EFFICIENCY'
+		},
+		{
+			name: 'Longevity Plans',
+			description: 'Proactive health tracking focused on healthspan and preventative screenings.',
+			icon: 'monitoring',
+			metric: '82.4',
+			metricLabel: 'Avg. Patient Bio-Age'
+		}
+	],
 
-	// Booking
-	booking: {
-		enabled: true,
-		url: 'https://calendly.com/practicename/appointment',
-		phone: '+1 (555) 123-4567',
-		note: 'Book online or call our scheduling team'
-	},
-
-	// Patient Portal
-	patientPortal: {
-		enabled: true,
-		url: 'https://portal.example.com',
-		features: [
-			'View test results',
-			'Request prescription refills',
-			'Message your care team',
-			'Schedule appointments',
-			'Pay bills online'
+	footer: {
+		contactHeadline: 'Direct Inquiries',
+		contactDescription:
+			'We avoid automated phone trees. When you message us, a clinical coordinator reviews your note within two hours during business hours.',
+		links: [
+			{ label: 'Privacy & Ethics', href: '#' },
+			{ label: 'Data Transparency', href: '#' },
+			{ label: 'Institutional Billing', href: '#' },
+			{ label: 'Clinical Trials', href: '#' },
+			{ label: 'Faculty Login', href: '#' },
+			{ label: 'Press Kit', href: '#' }
 		]
-	},
-
-	// New Patients
-	newPatients: {
-		accepting: true,
-		note: 'We are currently accepting new patients with most insurance plans.',
-		forms: []
 	}
-} as const;
-
-export type SiteConfig = typeof siteConfig;
+};

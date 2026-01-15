@@ -294,6 +294,28 @@ export default {
       });
     }
 
+    // ==========================================================================
+    // TF-IDF KEYWORD EXTRACTION - What makes this template unique?
+    // ==========================================================================
+    if (url.pathname === '/keywords' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { url: templateUrl } = body;
+        
+        if (!templateUrl) {
+          return new Response(JSON.stringify({ error: 'Missing url' }), { status: 400 });
+        }
+        
+        const keywords = await extractKeywords(templateUrl, env);
+        
+        return new Response(JSON.stringify(keywords), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
     // Health check endpoint for monitoring
     if (url.pathname === '/health' && request.method === 'GET') {
       try {
@@ -4275,6 +4297,357 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
 // =============================================================================
 // RESCAN: Drift Tracking for Compliance
 // =============================================================================
+
+// =============================================================================
+// TF-IDF KEYWORD EXTRACTION
+// =============================================================================
+
+// Common words to filter out (stopwords + common web terms)
+const STOPWORDS = new Set([
+  // English stopwords
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with',
+  'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had',
+  'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must',
+  'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them', 'their', 'we', 'our',
+  'you', 'your', 'he', 'she', 'him', 'her', 'his', 'i', 'me', 'my', 'not', 'no', 'yes',
+  'all', 'any', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such',
+  'than', 'too', 'very', 'just', 'also', 'now', 'here', 'there', 'when', 'where', 'why',
+  'how', 'what', 'which', 'who', 'whom', 'whose', 'if', 'then', 'else', 'so', 'because',
+  // Common web/Webflow terms (too generic to be distinctive)
+  'div', 'span', 'section', 'container', 'wrapper', 'block', 'item', 'list', 'link',
+  'button', 'text', 'image', 'icon', 'logo', 'nav', 'menu', 'header', 'footer', 'main',
+  'content', 'page', 'home', 'about', 'contact', 'services', 'blog', 'news', 'faq',
+  'class', 'style', 'width', 'height', 'color', 'background', 'padding', 'margin',
+  'flex', 'grid', 'display', 'position', 'top', 'left', 'right', 'bottom', 'center',
+  'auto', 'none', 'hidden', 'visible', 'scroll', 'fixed', 'absolute', 'relative',
+  'px', 'em', 'rem', 'vh', 'vw', 'rgb', 'rgba', 'hex', 'url', 'http', 'https', 'www',
+  'webflow', 'wf', 'work', 'our', 'single', 'details', 'description', 'title',
+  'new', 'get', 'see', 'view', 'read', 'more', 'click', 'learn', 'start', 'join',
+  'row', 'col', 'column', 'box', 'area', 'zone', 'inner', 'outer', 'small', 'large',
+  'medium', 'big', 'full', 'half', 'third', 'quarter', 'first', 'last', 'next', 'prev'
+]);
+
+// IDF values for common template terms (pre-computed from corpus)
+// Higher = more distinctive, Lower = more common
+const IDF_BASELINE: Record<string, number> = {
+  // Very common (low IDF)
+  'hero': 0.5, 'cta': 0.6, 'card': 0.5, 'feature': 0.6, 'pricing': 0.7,
+  'testimonial': 0.8, 'team': 0.7, 'portfolio': 0.8, 'gallery': 0.7,
+  // Moderately common
+  'dashboard': 1.2, 'saas': 1.3, 'startup': 1.1, 'agency': 1.0, 'creative': 1.0,
+  'minimal': 1.1, 'modern': 0.9, 'dark': 1.2, 'light': 0.8, 'gradient': 1.3,
+  // Distinctive (high IDF)
+  'fintech': 2.0, 'crypto': 2.1, 'nft': 2.2, 'ai': 1.8, 'machine': 1.9,
+  'healthcare': 2.0, 'medical': 1.9, 'legal': 2.1, 'law': 2.0, 'fitness': 1.8,
+  'restaurant': 1.9, 'food': 1.7, 'recipe': 2.0, 'travel': 1.8, 'hotel': 2.0,
+  'real-estate': 2.1, 'property': 1.9, 'architecture': 2.0, 'interior': 1.9,
+  'fashion': 1.8, 'clothing': 1.9, 'ecommerce': 1.5, 'shop': 1.3, 'store': 1.2,
+  'podcast': 2.0, 'music': 1.8, 'video': 1.5, 'streaming': 2.0, 'gaming': 2.1,
+  'education': 1.7, 'course': 1.8, 'learning': 1.7, 'school': 1.9, 'university': 2.0,
+  // Style keywords
+  'glassmorphism': 2.5, 'neumorphism': 2.5, 'brutalist': 2.4, 'retro': 2.0,
+  'neon': 2.2, 'cyberpunk': 2.5, 'vintage': 2.0, 'futuristic': 2.1,
+  'parallax': 1.8, 'animated': 1.5, 'interactive': 1.6, '3d': 1.9, 'isometric': 2.3,
+  // Color keywords
+  'monochrome': 2.0, 'pastel': 1.9, 'vibrant': 1.8, 'muted': 1.7, 'earth': 1.9,
+  'warm': 1.5, 'cool': 1.5, 'bold': 1.4, 'soft': 1.4, 'contrast': 1.6,
+  // Additional industry keywords
+  'payments': 2.0, 'payment': 1.9, 'banking': 2.1, 'finance': 1.8, 'insurance': 2.0,
+  'consulting': 1.7, 'marketing': 1.5, 'photography': 1.8, 'film': 1.9,
+  'freelance': 1.8, 'nonprofit': 2.0, 'charity': 2.0, 'church': 2.1, 
+  'event': 1.6, 'wedding': 2.0, 'beauty': 1.8, 'salon': 2.0, 'spa': 2.0, 
+  'wellness': 1.9, 'yoga': 2.1
+};
+
+interface KeywordResult {
+  url: string;
+  keywords: Array<{
+    term: string;
+    score: number;
+    category: 'industry' | 'style' | 'feature' | 'color' | 'technical';
+  }>;
+  categories: {
+    industry: string[];
+    style: string[];
+    features: string[];
+    colors: string[];
+  };
+  summary: string;
+}
+
+async function extractKeywords(templateUrl: string, env: Env): Promise<KeywordResult> {
+  // Fetch template content
+  const content = await fetchTemplateContent(templateUrl);
+  
+  if (!content.html && !content.css) {
+    throw new Error(`Failed to fetch content from ${templateUrl}`);
+  }
+  
+  // Extract terms from different sources
+  const terms: Map<string, { count: number; sources: Set<string> }> = new Map();
+  
+  // 1. Extract from HTML text content
+  const textContent = extractTextContent(content.html);
+  tokenize(textContent).forEach(term => {
+    const existing = terms.get(term) || { count: 0, sources: new Set() };
+    existing.count++;
+    existing.sources.add('text');
+    terms.set(term, existing);
+  });
+  
+  // 2. Extract from CSS class names (custom only)
+  const customClasses = extractCustomClasses(content.css);
+  customClasses.forEach(cls => {
+    // Remove leading dot and split class names like "hero-gradient-dark" into parts
+    const cleanCls = cls.replace(/^\./, '').toLowerCase();
+    const parts = cleanCls.split(/[-_]/);
+    parts.forEach(part => {
+      // Skip short parts, stopwords, and purely numeric
+      if (part.length > 2 && !STOPWORDS.has(part) && !/^\d+$/.test(part)) {
+        const existing = terms.get(part) || { count: 0, sources: new Set() };
+        existing.count++;
+        existing.sources.add('class');
+        terms.set(part, existing);
+      }
+    });
+  });
+  
+  // 3. Extract from CSS patterns
+  const cssPatterns = extractCSSPatterns(content.css);
+  
+  // Color analysis
+  cssPatterns.colors.forEach(color => {
+    const colorName = identifyColorName(color);
+    if (colorName) {
+      const existing = terms.get(colorName) || { count: 0, sources: new Set() };
+      existing.count++;
+      existing.sources.add('color');
+      terms.set(colorName, existing);
+    }
+  });
+  
+  // Animation/style indicators
+  if (cssPatterns.gradients.length > 2) {
+    const existing = terms.get('gradient') || { count: 0, sources: new Set() };
+    existing.count += 3;
+    existing.sources.add('style');
+    terms.set('gradient', existing);
+  }
+  
+  if (cssPatterns.animations.length > 0) {
+    const existing = terms.get('animated') || { count: 0, sources: new Set() };
+    existing.count += cssPatterns.animations.length;
+    existing.sources.add('style');
+    terms.set('animated', existing);
+  }
+  
+  // 4. Extract from meta tags
+  const metaKeywords = extractMetaTags(content.html);
+  metaKeywords.forEach(term => {
+    const existing = terms.get(term) || { count: 0, sources: new Set() };
+    existing.count += 2; // Boost meta tags
+    existing.sources.add('meta');
+    terms.set(term, existing);
+  });
+  
+  // Calculate TF-IDF scores
+  const totalTerms = Array.from(terms.values()).reduce((sum, t) => sum + t.count, 0);
+  const scoredTerms: Array<{ term: string; score: number; sources: string[] }> = [];
+  
+  terms.forEach((data, term) => {
+    if (STOPWORDS.has(term) || term.length < 3) return;
+    
+    // TF = term frequency in this document
+    const tf = data.count / totalTerms;
+    
+    // IDF = use baseline or default
+    const idf = IDF_BASELINE[term] || 1.5; // Default IDF for unknown terms
+    
+    // Boost terms that appear in multiple sources
+    const sourceBoost = Math.min(data.sources.size * 0.3, 1.0);
+    
+    const score = tf * idf * (1 + sourceBoost);
+    
+    if (score > 0.001) { // Minimum threshold
+      scoredTerms.push({ 
+        term, 
+        score, 
+        sources: Array.from(data.sources) 
+      });
+    }
+  });
+  
+  // Sort by score and take top keywords
+  scoredTerms.sort((a, b) => b.score - a.score);
+  const topKeywords = scoredTerms.slice(0, 20);
+  
+  // Categorize keywords
+  const categories = categorizeKeywords(topKeywords);
+  
+  // Generate summary
+  const summary = generateKeywordSummary(categories);
+  
+  return {
+    url: templateUrl,
+    keywords: topKeywords.map(k => ({
+      term: k.term,
+      score: Math.round(k.score * 1000) / 1000,
+      category: getKeywordCategory(k.term)
+    })),
+    categories,
+    summary
+  };
+}
+
+function extractTextContent(html: string): string {
+  // Remove script and style tags
+  let text = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  
+  // Extract text from headings and paragraphs (higher weight)
+  const headings = (text.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi) || [])
+    .map(h => h.replace(/<[^>]+>/g, ''))
+    .join(' ');
+  
+  // Remove all HTML tags
+  text = text.replace(/<[^>]+>/g, ' ');
+  
+  // Clean up whitespace
+  text = text.replace(/\s+/g, ' ').trim();
+  
+  // Headings are more important
+  return headings + ' ' + headings + ' ' + text;
+}
+
+function extractMetaTags(html: string): string[] {
+  const keywords: string[] = [];
+  
+  // Meta description
+  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
+  if (descMatch) {
+    keywords.push(...tokenize(descMatch[1]));
+  }
+  
+  // Meta keywords
+  const kwMatch = html.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["']/i);
+  if (kwMatch) {
+    keywords.push(...kwMatch[1].split(',').map(k => k.trim().toLowerCase()));
+  }
+  
+  // Title
+  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  if (titleMatch) {
+    keywords.push(...tokenize(titleMatch[1]));
+  }
+  
+  // OG tags
+  const ogMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+  if (ogMatch) {
+    keywords.push(...tokenize(ogMatch[1]));
+  }
+  
+  return keywords.filter(k => k.length > 2 && !STOPWORDS.has(k));
+}
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 2 && !STOPWORDS.has(t));
+}
+
+function identifyColorName(colorValue: string): string | null {
+  const color = colorValue.toLowerCase();
+  
+  // Check for named colors in the value
+  const colorPatterns: Record<string, RegExp> = {
+    'dark': /^#[0-3]/i,
+    'purple': /purple|#[89a][0-5][8-f]|rgb\(1[2-6]\d,\s*[0-8]\d,\s*[12]\d{2}\)/i,
+    'blue': /blue|#[0-4][0-8][a-f]|rgb\([0-8]\d,\s*[0-9]\d,\s*[12]\d{2}\)/i,
+    'green': /green|#[0-4][a-f][0-4]|rgb\([0-8]\d,\s*[12]\d{2},\s*[0-8]\d\)/i,
+    'red': /red|#[c-f][0-4][0-4]|rgb\([12]\d{2},\s*[0-8]\d,\s*[0-8]\d\)/i,
+    'orange': /orange|#[ef][89a][0-4]/i,
+    'yellow': /yellow|#[ef][ef][0-4]/i,
+    'pink': /pink|#[ef][0-8][89a-f]/i,
+    'teal': /teal|#[0-4][a-f][a-f]/i,
+  };
+  
+  for (const [name, pattern] of Object.entries(colorPatterns)) {
+    if (pattern.test(color)) {
+      return name;
+    }
+  }
+  
+  return null;
+}
+
+function getKeywordCategory(term: string): 'industry' | 'style' | 'feature' | 'color' | 'technical' {
+  const industries = ['fintech', 'crypto', 'nft', 'healthcare', 'medical', 'legal', 'law', 
+    'fitness', 'restaurant', 'food', 'travel', 'hotel', 'real-estate', 'property', 
+    'architecture', 'interior', 'fashion', 'clothing', 'ecommerce', 'education', 
+    'course', 'learning', 'podcast', 'music', 'gaming', 'saas', 'startup', 'agency',
+    'payments', 'payment', 'banking', 'finance', 'insurance', 'consulting', 'marketing',
+    'photography', 'video', 'film', 'design', 'creative', 'portfolio', 'freelance',
+    'nonprofit', 'charity', 'church', 'event', 'wedding', 'beauty', 'salon', 'spa'];
+  
+  const styles = ['minimal', 'modern', 'dark', 'light', 'gradient', 'glassmorphism', 
+    'neumorphism', 'brutalist', 'retro', 'neon', 'cyberpunk', 'vintage', 'futuristic',
+    'parallax', 'animated', 'interactive', '3d', 'isometric', 'bold', 'soft'];
+  
+  const colors = ['monochrome', 'pastel', 'vibrant', 'muted', 'warm', 'cool', 'earth',
+    'purple', 'blue', 'green', 'red', 'orange', 'yellow', 'pink', 'teal', 'dark'];
+  
+  const features = ['hero', 'cta', 'card', 'pricing', 'testimonial', 'team', 'portfolio',
+    'gallery', 'dashboard', 'form', 'slider', 'carousel', 'accordion', 'tabs', 'modal'];
+  
+  if (industries.includes(term)) return 'industry';
+  if (styles.includes(term)) return 'style';
+  if (colors.includes(term)) return 'color';
+  if (features.includes(term)) return 'feature';
+  return 'technical';
+}
+
+function categorizeKeywords(keywords: Array<{ term: string; score: number; sources: string[] }>): {
+  industry: string[];
+  style: string[];
+  features: string[];
+  colors: string[];
+} {
+  const result = { industry: [] as string[], style: [] as string[], features: [] as string[], colors: [] as string[] };
+  
+  keywords.forEach(k => {
+    const cat = getKeywordCategory(k.term);
+    if (cat === 'industry') result.industry.push(k.term);
+    else if (cat === 'style') result.style.push(k.term);
+    else if (cat === 'feature') result.features.push(k.term);
+    else if (cat === 'color') result.colors.push(k.term);
+  });
+  
+  return result;
+}
+
+function generateKeywordSummary(categories: { industry: string[]; style: string[]; features: string[]; colors: string[] }): string {
+  const parts: string[] = [];
+  
+  if (categories.industry.length > 0) {
+    parts.push(`${categories.industry[0]} template`);
+  }
+  
+  if (categories.style.length > 0) {
+    parts.push(`${categories.style.slice(0, 2).join(', ')} design`);
+  }
+  
+  if (categories.colors.length > 0) {
+    parts.push(`${categories.colors[0]} color scheme`);
+  }
+  
+  if (categories.features.length > 0) {
+    parts.push(`featuring ${categories.features.slice(0, 3).join(', ')}`);
+  }
+  
+  return parts.length > 0 ? parts.join(' with ') : 'General purpose template';
+}
 
 interface RescanResult {
   caseId: string;
