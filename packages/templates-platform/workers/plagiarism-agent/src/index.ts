@@ -2834,14 +2834,30 @@ async function generateDetailedComparison(
   ref2: string,
   env: Env
 ): Promise<ComparisonResult> {
-  // Get template data - ref can be id or url
-  const t1 = await env.DB.prepare(
+  // Get template data - ref can be id, url, or partial match
+  // Try exact match first, then fuzzy match for cases like "avignon-template" → "avignon"
+  let t1 = await env.DB.prepare(
     'SELECT * FROM template_minhash WHERE id = ? OR url = ? OR url = ?'
   ).bind(ref1, ref1, ref1.replace(/\/$/, '') + '/').first();
   
-  const t2 = await env.DB.prepare(
+  // Fuzzy fallback: strip common suffixes like "-template", "-webflow", etc.
+  if (!t1) {
+    const cleanRef1 = ref1.replace(/[-_](template|webflow|wbs|business)$/i, '');
+    t1 = await env.DB.prepare(
+      'SELECT * FROM template_minhash WHERE id = ? OR id LIKE ? OR url LIKE ?'
+    ).bind(cleanRef1, `${cleanRef1}%`, `%${cleanRef1}%`).first();
+  }
+  
+  let t2 = await env.DB.prepare(
     'SELECT * FROM template_minhash WHERE id = ? OR url = ? OR url = ?'
   ).bind(ref2, ref2, ref2.replace(/\/$/, '') + '/').first();
+  
+  if (!t2) {
+    const cleanRef2 = ref2.replace(/[-_](template|webflow|wbs|business)$/i, '');
+    t2 = await env.DB.prepare(
+      'SELECT * FROM template_minhash WHERE id = ? OR id LIKE ? OR url LIKE ?'
+    ).bind(cleanRef2, `${cleanRef2}%`, `%${cleanRef2}%`).first();
+  }
   
   if (!t1 || !t2) {
     throw new Error(`Template not found: ${!t1 ? ref1 : ref2}`);
