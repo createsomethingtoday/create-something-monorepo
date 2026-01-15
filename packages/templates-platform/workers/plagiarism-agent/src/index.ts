@@ -38,6 +38,7 @@ import {
   extractCustomClasses,
   computeLSHBandHashes,
   serializeLSHBands,
+  extractCSSPatterns,
   type MinHashSignature,
   type SimilarityResult
 } from './minhash';
@@ -882,6 +883,40 @@ export default {
     }
 
     // ==========================================================================
+    // RESCAN: Drift tracking for compliance monitoring
+    // ==========================================================================
+    if (url.pathname.match(/^\/case\/[^/]+\/rescan$/) && request.method === 'POST') {
+      const caseId = url.pathname.split('/')[2];
+      try {
+        const result = await performRescan(caseId, env);
+        return new Response(JSON.stringify(result), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Rescan UI page
+    if (url.pathname.match(/^\/case\/[^/]+\/rescan$/) && request.method === 'GET') {
+      const caseId = url.pathname.split('/')[2];
+      return serveRescanPage(caseId, env);
+    }
+    
+    // Get case details with rescan history
+    if (url.pathname.match(/^\/case\/[^/]+$/) && request.method === 'GET') {
+      const caseId = url.pathname.split('/')[2];
+      try {
+        const caseData = await getCaseWithRescans(caseId, env);
+        return new Response(JSON.stringify(caseData), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
     // DASHBOARD: Visual cluster analysis
     // ==========================================================================
     if (url.pathname === '/dashboard' && request.method === 'GET') {
@@ -1099,12 +1134,36 @@ async function handleAirtableWebhook(request: Request, env: Env): Promise<Respon
 
   console.log(`[Webhook] Normalized URLs: ${originalUrl} vs ${allegedCopyUrl}`);
 
+  // Compute MinHash signature of alleged copy for drift tracking
+  let originalCopySignature: string | null = null;
+  let originalSimilarity: number | null = null;
+  
+  try {
+    const copyContent = await fetchTemplateContent(allegedCopyUrl);
+    if (copyContent.css || copyContent.html) {
+      const copySig = computeCombinedMinHash(copyContent.html, copyContent.css, copyContent.js);
+      originalCopySignature = serializeSignatureCompact(copySig.signature);
+      
+      // Also compute initial similarity to the original template
+      const originalContent = await fetchTemplateContent(originalUrl);
+      if (originalContent.css || originalContent.html) {
+        const origSig = computeCombinedMinHash(originalContent.html, originalContent.css, originalContent.js);
+        const simResult = estimateSimilarity(copySig, origSig);
+        originalSimilarity = simResult.jaccardEstimate;
+      }
+      console.log(`[Webhook] Captured MinHash signature for drift tracking (initial similarity: ${(originalSimilarity || 0) * 100}%)`);
+    }
+  } catch (e) {
+    console.log(`[Webhook] Failed to capture MinHash signature: ${e}`);
+  }
+
   await env.DB.prepare(`
     INSERT INTO plagiarism_cases (
       id, airtable_record_id, reporter_email,
       original_url, alleged_copy_url, complaint_text,
-      alleged_creator, status, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+      alleged_creator, status, created_at,
+      original_copy_signature, original_similarity
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
   `).bind(
     caseId,
     payload.recordId,
@@ -1113,7 +1172,9 @@ async function handleAirtableWebhook(request: Request, env: Env): Promise<Respon
     allegedCopyUrl,
     complaintText,
     allegedCreator,
-    now
+    now,
+    originalCopySignature,
+    originalSimilarity
   ).run();
 
   // Check if submitter provided screenshots
@@ -4173,6 +4234,568 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
 </body>
 </html>`;
   
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html' }
+  });
+}
+
+// =============================================================================
+// RESCAN: Drift Tracking for Compliance
+// =============================================================================
+
+interface RescanResult {
+  caseId: string;
+  originalUrl: string;
+  allegedCopyUrl: string;
+  
+  // How much has the alleged copy changed since the report?
+  driftFromOriginal: number;
+  driftVerdict: string;
+  
+  // How similar is it to the victim template now?
+  currentSimilarity: number;
+  previousSimilarity: number;
+  similarityChange: number;
+  
+  // Overall verdict
+  verdict: 'resolved' | 'insufficient_changes' | 'still_similar' | 'no_baseline';
+  verdictExplanation: string;
+  
+  // Detailed metrics
+  metrics: {
+    cssPropertyChanges: number;
+    htmlStructureChanges: number;
+    colorPaletteChanges: number;
+  };
+  
+  // Timestamps
+  scannedAt: number;
+  originalReportedAt: number;
+  rescanCount: number;
+}
+
+async function performRescan(caseId: string, env: Env): Promise<RescanResult> {
+  // Get case details
+  const caseData = await env.DB.prepare(`
+    SELECT * FROM plagiarism_cases WHERE id = ?
+  `).bind(caseId).first();
+  
+  if (!caseData) {
+    throw new Error(`Case ${caseId} not found`);
+  }
+  
+  // Get previous rescans to determine baseline
+  const previousRescans = await env.DB.prepare(`
+    SELECT * FROM plagiarism_rescans 
+    WHERE case_id = ? 
+    ORDER BY scanned_at DESC 
+    LIMIT 1
+  `).bind(caseId).all();
+  
+  const lastRescan = previousRescans.results?.[0];
+  const previousSimilarity = lastRescan 
+    ? (lastRescan.current_similarity as number)
+    : (caseData.original_similarity as number | null) || 0;
+  
+  // Fetch current content from the alleged copy
+  const allegedCopyUrl = caseData.alleged_copy_url as string;
+  const originalUrl = caseData.original_url as string;
+  
+  console.log(`[Rescan] Fetching current content from ${allegedCopyUrl}`);
+  const currentContent = await fetchTemplateContent(allegedCopyUrl);
+  
+  if (!currentContent.css && !currentContent.html) {
+    throw new Error(`Failed to fetch content from ${allegedCopyUrl}`);
+  }
+  
+  // Compute current MinHash signature
+  const currentSig = computeCombinedMinHash(currentContent.html, currentContent.css, currentContent.js);
+  
+  // Calculate drift from original (if we have the baseline)
+  let driftFromOriginal = 0;
+  let driftVerdict = 'unknown';
+  
+  if (caseData.original_copy_signature) {
+    const originalSig = deserializeSignatureCompact(
+      caseData.original_copy_signature as string,
+      256 // Default shingle count for signature comparison
+    );
+    const driftResult = estimateSimilarity(
+      { signature: originalSig, numShingles: 256 },
+      currentSig
+    );
+    // Drift = 1 - similarity (higher = more changes)
+    driftFromOriginal = 1 - driftResult.jaccardEstimate;
+    
+    if (driftFromOriginal >= 0.4) {
+      driftVerdict = 'significant_changes';
+    } else if (driftFromOriginal >= 0.2) {
+      driftVerdict = 'moderate_changes';
+    } else if (driftFromOriginal >= 0.1) {
+      driftVerdict = 'minor_changes';
+    } else {
+      driftVerdict = 'no_changes';
+    }
+  } else {
+    driftVerdict = 'no_baseline';
+  }
+  
+  // Calculate current similarity to the victim template
+  console.log(`[Rescan] Fetching original template from ${originalUrl}`);
+  const originalContent = await fetchTemplateContent(originalUrl);
+  let currentSimilarity = 0;
+  
+  if (originalContent.css || originalContent.html) {
+    const origSig = computeCombinedMinHash(originalContent.html, originalContent.css, originalContent.js);
+    const simResult = estimateSimilarity(currentSig, origSig);
+    currentSimilarity = simResult.jaccardEstimate;
+  }
+  
+  const similarityChange = previousSimilarity - currentSimilarity;
+  
+  // Extract detailed metrics
+  const cssProps1 = extractCSSPatterns(currentContent.css);
+  const cssProps2 = extractCSSPatterns(originalContent.css);
+  const cssPropertyChanges = Math.abs(cssProps1.colors.length - cssProps2.colors.length) +
+                              Math.abs(cssProps1.gradients.length - cssProps2.gradients.length) +
+                              Math.abs(cssProps1.customProperties.length - cssProps2.customProperties.length);
+  
+  // Determine overall verdict
+  let verdict: RescanResult['verdict'] = 'still_similar';
+  let verdictExplanation = '';
+  
+  if (!caseData.original_copy_signature) {
+    verdict = 'no_baseline';
+    verdictExplanation = 'No baseline signature was captured when this case was opened. Cannot measure drift.';
+  } else if (currentSimilarity < 0.35 && driftFromOriginal >= 0.2) {
+    verdict = 'resolved';
+    verdictExplanation = `Template has been sufficiently modified. Similarity dropped to ${(currentSimilarity * 100).toFixed(0)}% and ${(driftFromOriginal * 100).toFixed(0)}% of the original content has changed.`;
+  } else if (driftFromOriginal < 0.1) {
+    verdict = 'insufficient_changes';
+    verdictExplanation = `Only ${(driftFromOriginal * 100).toFixed(0)}% of the template has changed. More substantial modifications are needed.`;
+  } else {
+    verdict = 'still_similar';
+    verdictExplanation = `Despite ${(driftFromOriginal * 100).toFixed(0)}% changes, similarity to the original is still ${(currentSimilarity * 100).toFixed(0)}%. Key distinguishing elements may need to be redesigned.`;
+  }
+  
+  const now = Date.now();
+  
+  // Get rescan count
+  const rescanCountResult = await env.DB.prepare(`
+    SELECT COUNT(*) as count FROM plagiarism_rescans WHERE case_id = ?
+  `).bind(caseId).first();
+  const rescanCount = ((rescanCountResult?.count as number) || 0) + 1;
+  
+  // Store rescan result
+  // Calculate shared vs unique colors
+  const colors1 = new Set(cssProps1.colors);
+  const colors2 = new Set(cssProps2.colors);
+  const sharedColors = [...colors1].filter(c => colors2.has(c)).length;
+  const colorPaletteChanges = colors1.size + colors2.size - 2 * sharedColors;
+  
+  const metrics = {
+    cssPropertyChanges,
+    htmlStructureChanges: 0, // TODO: implement
+    colorPaletteChanges
+  };
+  
+  await env.DB.prepare(`
+    INSERT INTO plagiarism_rescans (
+      case_id, drift_from_original, current_similarity, previous_similarity,
+      verdict, metrics_json, scanned_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    caseId,
+    driftFromOriginal,
+    currentSimilarity,
+    previousSimilarity,
+    verdict,
+    JSON.stringify(metrics),
+    now
+  ).run();
+  
+  console.log(`[Rescan] Complete - Verdict: ${verdict}, Drift: ${(driftFromOriginal * 100).toFixed(1)}%, Similarity: ${(currentSimilarity * 100).toFixed(1)}%`);
+  
+  return {
+    caseId,
+    originalUrl,
+    allegedCopyUrl,
+    driftFromOriginal,
+    driftVerdict,
+    currentSimilarity,
+    previousSimilarity,
+    similarityChange,
+    verdict,
+    verdictExplanation,
+    metrics,
+    scannedAt: now,
+    originalReportedAt: caseData.created_at as number,
+    rescanCount
+  };
+}
+
+async function getCaseWithRescans(caseId: string, env: Env): Promise<any> {
+  const caseData = await env.DB.prepare(`
+    SELECT * FROM plagiarism_cases WHERE id = ?
+  `).bind(caseId).first();
+  
+  if (!caseData) {
+    throw new Error(`Case ${caseId} not found`);
+  }
+  
+  const rescans = await env.DB.prepare(`
+    SELECT * FROM plagiarism_rescans 
+    WHERE case_id = ? 
+    ORDER BY scanned_at DESC
+  `).bind(caseId).all();
+  
+  return {
+    case: caseData,
+    rescans: rescans.results || [],
+    rescanCount: rescans.results?.length || 0,
+    latestVerdict: rescans.results?.[0]?.verdict || null
+  };
+}
+
+async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
+  const caseData = await getCaseWithRescans(caseId, env);
+  
+  if (!caseData.case) {
+    return new Response('Case not found', { status: 404 });
+  }
+  
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rescan: ${caseId}</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,10 90,30 90,70 50,90 10,70 10,30' fill='%23fff' stroke='%23333' stroke-width='4'/%3E%3Cpolygon points='50,10 90,30 50,50 10,30' fill='%23e0e0e0' stroke='%23333' stroke-width='2'/%3E%3Cpolygon points='90,30 90,70 50,90 50,50' fill='%23aaa' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #262626;
+      --text: #fafafa;
+      --muted: #737373;
+      --accent: #3b82f6;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .case-info {
+      display: grid;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .case-info a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .case-info a:hover {
+      text-decoration: underline;
+    }
+    .actions {
+      margin: 2rem 0;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .result {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .result.show {
+      display: block;
+    }
+    .verdict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .verdict-resolved {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+    .verdict-insufficient_changes {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+    .verdict-still_similar {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+    .verdict-no_baseline {
+      background: rgba(115, 115, 115, 0.2);
+      color: var(--muted);
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .metric {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+    .metric-change {
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    .metric-change.positive { color: var(--success); }
+    .metric-change.negative { color: var(--danger); }
+    .explanation {
+      background: var(--bg);
+      border-left: 3px solid var(--accent);
+      padding: 1rem;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+    .history {
+      margin-top: 2rem;
+    }
+    .history h2 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-date {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .history-metrics {
+      display: flex;
+      gap: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted);
+    }
+    .loading.show {
+      display: flex;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        <i data-lucide="scan-search"></i>
+        Compliance Rescan
+      </h1>
+      <div class="case-info">
+        <div><strong>Case ID:</strong> ${caseId}</div>
+        <div><strong>Original:</strong> <a href="${caseData.case.original_url}">${caseData.case.original_url}</a></div>
+        <div><strong>Alleged Copy:</strong> <a href="${caseData.case.alleged_copy_url}">${caseData.case.alleged_copy_url}</a></div>
+        <div><strong>Reported:</strong> ${new Date(caseData.case.created_at).toLocaleDateString()}</div>
+        <div><strong>Initial Similarity:</strong> ${caseData.case.original_similarity ? (caseData.case.original_similarity * 100).toFixed(0) + '%' : 'Not captured'}</div>
+      </div>
+    </header>
+    
+    <div class="actions">
+      <button class="btn" id="rescan-btn" onclick="performRescan()">
+        <i data-lucide="refresh-cw"></i>
+        Run Compliance Rescan
+      </button>
+      <div class="loading" id="loading">
+        <i data-lucide="loader-2" class="spinner"></i>
+        Analyzing current template...
+      </div>
+    </div>
+    
+    <div class="result" id="result">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span class="verdict-badge" id="verdict-badge"></span>
+        <span style="color: var(--muted); font-size: 0.85rem;" id="scan-time"></span>
+      </div>
+      
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-value" id="drift-value">-</div>
+          <div class="metric-label">Content Changed</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="similarity-value">-</div>
+          <div class="metric-label">Current Similarity</div>
+          <div class="metric-change" id="similarity-change"></div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="rescan-count">-</div>
+          <div class="metric-label">Rescans</div>
+        </div>
+      </div>
+      
+      <div class="explanation" id="explanation"></div>
+    </div>
+    
+    ${caseData.rescans.length > 0 ? `
+    <div class="history">
+      <h2>
+        <i data-lucide="history"></i>
+        Rescan History
+      </h2>
+      ${caseData.rescans.map((r: any) => `
+        <div class="history-item">
+          <div>
+            <span class="verdict-badge verdict-${r.verdict}">${r.verdict.replace(/_/g, ' ')}</span>
+            <span class="history-date">${new Date(r.scanned_at).toLocaleString()}</span>
+          </div>
+          <div class="history-metrics">
+            <span>Drift: ${(r.drift_from_original * 100).toFixed(0)}%</span>
+            <span>Similarity: ${(r.current_similarity * 100).toFixed(0)}%</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    ` : ''}
+  </div>
+  
+  <script>
+    lucide.createIcons();
+    
+    async function performRescan() {
+      const btn = document.getElementById('rescan-btn');
+      const loading = document.getElementById('loading');
+      const result = document.getElementById('result');
+      
+      btn.disabled = true;
+      loading.classList.add('show');
+      result.classList.remove('show');
+      
+      try {
+        const res = await fetch('/case/${caseId}/rescan', { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.error) throw new Error(data.error);
+        
+        // Update UI
+        document.getElementById('verdict-badge').textContent = data.verdict.replace(/_/g, ' ');
+        document.getElementById('verdict-badge').className = 'verdict-badge verdict-' + data.verdict;
+        document.getElementById('drift-value').textContent = (data.driftFromOriginal * 100).toFixed(0) + '%';
+        document.getElementById('similarity-value').textContent = (data.currentSimilarity * 100).toFixed(0) + '%';
+        document.getElementById('rescan-count').textContent = data.rescanCount;
+        document.getElementById('explanation').textContent = data.verdictExplanation;
+        document.getElementById('scan-time').textContent = 'Scanned ' + new Date(data.scannedAt).toLocaleString();
+        
+        const change = data.similarityChange;
+        const changeEl = document.getElementById('similarity-change');
+        if (change > 0) {
+          changeEl.textContent = '↓ ' + (change * 100).toFixed(0) + '% from last';
+          changeEl.className = 'metric-change positive';
+        } else if (change < 0) {
+          changeEl.textContent = '↑ ' + (Math.abs(change) * 100).toFixed(0) + '% from last';
+          changeEl.className = 'metric-change negative';
+        } else {
+          changeEl.textContent = 'No change';
+          changeEl.className = 'metric-change';
+        }
+        
+        result.classList.add('show');
+      } catch (e) {
+        alert('Error: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        loading.classList.remove('show');
+        lucide.createIcons();
+      }
+    }
+  </script>
+</body>
+</html>`;
+
   return new Response(html, {
     headers: { 'Content-Type': 'text/html' }
   });
