@@ -227,7 +227,7 @@
 	/* Hero - clean, focused */
 	.hero {
 		padding: var(--space-2xl) var(--space-xl);
-		max-width: 640px;
+		max-width: 800px;
 		margin: 0 auto;
 	}
 
@@ -245,10 +245,10 @@
 	}
 
 	.hero-subtitle {
-		font-size: var(--text-body);
+		font-size: var(--text-h3);
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-lg);
-		line-height: 1.5;
+		line-height: 1.4;
 	}
 
 	/* Input - functional, not decorative */
@@ -440,21 +440,19 @@
 
 	.value-divider {
 		color: var(--color-fg-muted);
-		font-size: var(--text-body-lg);
-		padding-top: var(--space-xs);
+		font-size: var(--text-h2);
+		padding-top: var(--space-sm);
 	}
 
 	.value-heading {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-xs);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
 	}
 
 	.value-text {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 		line-height: 1.5;
 	}
@@ -466,25 +464,25 @@
 
 	.section-header {
 		max-width: 900px;
-		margin: 0 auto var(--space-md);
+		margin: 0 auto var(--space-lg);
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
 	}
 
 	.section-heading {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 	}
 
 	.section-meta {
-		font-size: var(--text-caption);
+		font-size: var(--text-body);
 		color: var(--color-fg-muted);
 	}
 
 	.section-link {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 	}
 
@@ -511,25 +509,25 @@
 	}
 
 	.outcome-vertical {
-		font-size: var(--text-caption);
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.03em;
+		letter-spacing: 0.05em;
 	}
 
 	.outcome-agent {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-h3);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
 	}
 
 	.outcome-result {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 	}
 
 	.outcome-metric {
-		font-size: var(--text-caption);
+		font-size: var(--text-body-sm);
 		font-family: var(--font-mono, monospace);
 		color: var(--color-fg-secondary);
 		background: var(--color-bg-surface);
@@ -570,20 +568,20 @@
 	}
 
 	.template-name {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-h3);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
 	}
 
 	.template-agents {
-		font-size: var(--text-caption);
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 	}
 
 	.template-tagline {
-		font-size: var(--text-caption);
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		line-height: 1.4;
+		line-height: 1.5;
 	}
 
 	/* CTA - quiet confidence */
@@ -594,25 +592,25 @@
 	}
 
 	.cta-text {
-		font-size: var(--text-body);
+		font-size: var(--text-h2);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-lg);
 	}
 
 	.cta-actions {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-sm);
+		gap: var(--space-md);
 	}
 
 	.cta-divider {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-body);
 		color: var(--color-fg-muted);
 	}
 
 	.cta-link {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 	}
 
