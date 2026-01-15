@@ -1,58 +1,32 @@
-/*
-  CREATE SOMETHING Design System - Canon Tokens
-  Vertical Template: Law Firm
-
-  Philosophy: "Weniger, aber besser" - Dieter Rams
-  Tailwind for structure, Canon for aesthetics.
-
-  TYPOGRAPHY: System fonts by default.
-  Templates are neutral vessels—your brand should emerge, not ours.
-*/
-
-/* ==========================================================================
-   Canon Design Tokens - Single Source of Truth
-   Import from @create-something/components (MUST come before @tailwind)
-   ========================================================================== */
-@import '@create-something/components/styles/tokens.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-   Vertical Template Base - Shared across all verticals
-   Import AFTER Tailwind to apply Canon base styles
-   ========================================================================== */
-@import '@create-something/components/styles/vertical-base.css';
+@layer base {
+	body {
+		font-family: 'Epilogue', sans-serif;
+	}
 
-/* ==========================================================================
-   Template-Specific Token Overrides
-   Law Firm: System fonts for template neutrality
-   ========================================================================== */
+	.hero-text {
+		font-size: clamp(3rem, 8vw, 6rem);
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+	}
 
-:root {
-  /* Override fonts - use system fonts for template neutrality */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
+	.text-outline {
+		-webkit-text-stroke: 1px #1c4a3e;
+		color: transparent;
+	}
 
-  /* Extended spacing for professional services */
-  --space-4xl: 17.942rem;
-  --section-padding: var(--space-3xl);
-  --section-padding-sm: var(--space-2xl);
+	.dark .text-outline {
+		-webkit-text-stroke: 1px #ffffff;
+	}
 
-  /* Extended width tokens */
-  --width-avatar: 6.18rem;
-  --width-avatar-sm: 3.82rem;
-  --width-icon: 1.5rem;
-  --width-icon-lg: 2.427rem;
-  --width-icon-xl: 3.927rem;
+	.grid-line {
+		border-right: 1px solid rgba(28, 74, 62, 0.1);
+	}
 
-  /* View Transition Duration */
-  --view-transition-duration: 200ms;
+	.dark .grid-line {
+		border-right: 1px solid rgba(255, 255, 255, 0.1);
+	}
 }
-
-/* ==========================================================================
-   Template-Specific Styles
-   Add any law-firm-specific overrides or extensions here.
-   ========================================================================== */

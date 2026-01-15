@@ -1,8 +1,8 @@
 /**
  * Law Firm Site Configuration
  *
- * Voice: Authoritative but approachable. Competence over cleverness.
- * Structure: Trust signals prominent, results anonymized, ethics visible.
+ * Voice: Bold, confident, modern. Precision over platitudes.
+ * Structure: Editorial design, trust through outcomes, ethics visible.
  *
  * WORKWAY Integration:
  * - Client Intake to Matter: /contact form → Clio
@@ -19,40 +19,42 @@ export interface Education {
 export interface Attorney {
 	slug: string;
 	name: string;
-	title: string; // "Partner", "Associate", "Of Counsel"
-	barNumber: string; // "CA Bar #123456"
+	title: string;
+	barNumber: string;
 	admittedStates: string[];
 	education: Education[];
-	practiceAreas: string[]; // slugs
+	practiceAreas: string[];
 	image: string;
 	bio: string;
+	quote?: string;
 }
 
 export interface PracticeArea {
 	slug: string;
 	name: string;
 	description: string;
-	icon?: string;
+	number: string; // "01", "02", etc.
 }
 
 export interface CaseResult {
-	title: string; // "Complex Custody Resolution"
-	practiceArea: string; // slug
-	outcome: string; // "Full custody awarded to client"
-	year: number;
-	description: string;
-	// NO client names - ethics compliance
+	title: string;
+	practiceArea: string;
+	outcome: string;
+	date: string;
+	client: string;
+	tag: string;
 }
 
 export interface WorkflowConfig {
-	// WORKWAY workflow IDs
 	consultationBooking?: string;
 	followUp?: string;
 	appointmentReminder?: string;
+	clioIntakeWebhook?: string;
+	calendlyUrl?: string;
+}
 
-	// Legacy: External service URLs (deprecated)
-	clioIntakeWebhook?: string; // Deprecated: Use WORKWAY consultation-booking workflow
-	calendlyUrl?: string; // Deprecated: Use WORKWAY appointment-reminder workflow
+export interface Partner {
+	name: string;
 }
 
 export interface LawFirmConfig {
@@ -60,6 +62,7 @@ export interface LawFirmConfig {
 	name: string;
 	tagline: string;
 	description: string;
+	location: string;
 
 	// Contact
 	email: string;
@@ -86,16 +89,21 @@ export interface LawFirmConfig {
 	hero: {
 		image: string;
 		alt: string;
+		headline: string[];
+		subtext: string;
 	};
 
-	// Practice Areas (replaces services)
+	// Partners / Credibility
+	partners: Partner[];
+
+	// Practice Areas
 	practiceAreas: PracticeArea[];
 
-	// Attorneys (replaces founders)
+	// Attorneys (Managing Partner featured)
 	attorneys: Attorney[];
+	managingPartner: Attorney;
 
-	// Case Results (replaces projects)
-	// Anonymized - no client names without consent
+	// Case Results (Recent Wins)
 	results: CaseResult[];
 
 	// About the Firm
@@ -112,12 +120,6 @@ export interface LawFirmConfig {
 	// Ethics & Compliance
 	disclaimer: string;
 	barAssociations: string[];
-
-	// Recognition (optional)
-	recognition?: {
-		award: string;
-		year: number;
-	}[];
 
 	// Statistics (for animated counters)
 	statistics: {
@@ -141,225 +143,244 @@ export interface LawFirmConfig {
 		question: string;
 		answer: string;
 	}[];
+
+	// Footer links
+	footerLinks: {
+		label: string;
+		href: string;
+	}[];
 }
 
 /**
- * Demo Configuration: Morrison & Associates
- * A fictional mid-size California law firm
- * Images: Generated via Cloudflare Workers AI (Flux)
+ * Demo Configuration: Vanguard Law Practice
+ * A boutique NYC law firm with bold, modern positioning
  */
 export const siteConfig: LawFirmConfig = {
 	// Identity
-	name: 'Morrison & Associates',
-	tagline: 'Experienced Legal Counsel',
+	name: 'Vanguard',
+	tagline: 'Redefining Legal Excellence',
 	description:
-		'A trusted San Francisco law firm providing skilled representation in family law, personal injury, and business litigation since 2010.',
+		'A modern practice built on the foundations of precision, integrity, and uncompromising strategy. We don\'t just practice law; we architect solutions.',
+	location: 'Boutique Legal Firm / NYC',
 
 	// Contact
-	email: 'contact@morrisonlaw.example',
-	phone: '(415) 555-0123',
+	email: 'contact@vanguardlaw.example',
+	phone: '+1 (212) 555-0198',
 	address: {
-		street: '101 California Street, Suite 2800',
-		city: 'San Francisco',
-		state: 'CA',
-		zip: '94111',
+		street: '5th Avenue',
+		city: 'New York City',
+		state: 'NY',
+		zip: '10001',
 		country: 'US'
 	},
 
 	// Social
 	social: {
-		linkedin: 'https://linkedin.com/company/morrison-associates',
-		twitter: 'https://twitter.com/morrisonlaw'
+		linkedin: 'https://linkedin.com/company/vanguard-law'
 	},
 
 	// SEO
-	url: 'https://morrisonlaw.example',
+	url: 'https://vanguardlaw.example',
 	locale: 'en_US',
 
 	// Hero
 	hero: {
 		image: '/images/hero-office.jpg',
-		alt: 'Modern law office with San Francisco skyline view'
+		alt: 'Monochrome architectural shot of modern pillars and glass',
+		headline: ['REDEFINING', 'LEGAL', 'EXCELLENCE.'],
+		subtext:
+			'A modern practice built on the foundations of precision, integrity, and uncompromising strategy. We don\'t just practice law; we architect solutions.'
 	},
+
+	// Partners / Credibility Badges
+	partners: [
+		{ name: 'Forbes Legal' },
+		{ name: 'Chambers & Partners' },
+		{ name: 'Martindale-Hubbell' },
+		{ name: 'Super Lawyers' }
+	],
 
 	// Practice Areas
 	practiceAreas: [
 		{
-			slug: 'family-law',
-			name: 'Family Law',
-			description:
-				'Divorce, child custody, spousal support, and property division. We guide families through difficult transitions with clarity and compassion.',
-			icon: 'users'
+			slug: 'corporate-governance',
+			name: 'Corporate Governance',
+			description: 'Navigating complex regulatory landscapes for Fortune 500 entities.',
+			number: '01'
 		},
 		{
-			slug: 'personal-injury',
-			name: 'Personal Injury',
-			description:
-				'Auto accidents, medical malpractice, premises liability. We pursue maximum compensation for injured clients.',
-			icon: 'shield'
+			slug: 'intellectual-property',
+			name: 'Intellectual Property',
+			description: 'Protecting the intangible assets that define your competitive edge.',
+			number: '02'
 		},
 		{
-			slug: 'business-law',
-			name: 'Business Law',
-			description:
-				'Business formation, contracts, disputes, and litigation. We protect your business interests at every stage.',
-			icon: 'briefcase'
+			slug: 'digital-commerce',
+			name: 'Digital Commerce',
+			description: 'Modern legal structures for the evolving global fintech economy.',
+			number: '03'
+		},
+		{
+			slug: 'dispute-resolution',
+			name: 'Dispute Resolution',
+			description: 'Elite litigation strategies to protect your commercial interests.',
+			number: '04'
 		}
 	],
+
+	// Managing Partner (Featured)
+	managingPartner: {
+		slug: 'julian-thorne',
+		name: 'Julian Thorne',
+		title: 'Managing Partner',
+		barNumber: 'NY Bar #4567890',
+		admittedStates: ['New York', 'Delaware', 'District of Columbia'],
+		education: [
+			{ school: 'Columbia Law School', degree: 'J.D.', year: 1998 },
+			{ school: 'Yale University', degree: 'B.A. Economics', year: 1995 }
+		],
+		practiceAreas: ['corporate-governance', 'dispute-resolution'],
+		image: '/images/attorney-morrison.jpg',
+		bio: 'With over two decades of high-stakes litigation and boardroom advisory experience, Julian founded Vanguard to offer a more agile, intellectually rigorous approach to legal challenges.',
+		quote: 'Precision is the highest form of law.'
+	},
 
 	// Attorneys
 	attorneys: [
 		{
-			slug: 'sarah-morrison',
-			name: 'Sarah Morrison',
+			slug: 'julian-thorne',
+			name: 'Julian Thorne',
 			title: 'Managing Partner',
-			barNumber: 'CA Bar #187654',
-			admittedStates: ['California', 'Nevada'],
+			barNumber: 'NY Bar #4567890',
+			admittedStates: ['New York', 'Delaware', 'District of Columbia'],
+			education: [
+				{ school: 'Columbia Law School', degree: 'J.D.', year: 1998 },
+				{ school: 'Yale University', degree: 'B.A. Economics', year: 1995 }
+			],
+			practiceAreas: ['corporate-governance', 'dispute-resolution'],
+			image: '/images/attorney-morrison.jpg',
+			bio: 'With over two decades of high-stakes litigation and boardroom advisory experience, Julian founded Vanguard to offer a more agile, intellectually rigorous approach to legal challenges.',
+			quote: 'Precision is the highest form of law.'
+		},
+		{
+			slug: 'victoria-chen',
+			name: 'Victoria Chen',
+			title: 'Partner',
+			barNumber: 'NY Bar #5678901',
+			admittedStates: ['New York', 'California'],
 			education: [
 				{ school: 'Stanford Law School', degree: 'J.D.', year: 2005 },
-				{ school: 'UC Berkeley', degree: 'B.A. Political Science', year: 2002 }
+				{ school: 'MIT', degree: 'B.S. Computer Science', year: 2002 }
 			],
-			practiceAreas: ['family-law', 'business-law'],
-			image: '/images/attorney-morrison.jpg',
-			bio: 'Sarah founded Morrison & Associates in 2010 after five years at a leading Bay Area litigation firm. She has successfully handled over 500 family law cases and is a certified family law specialist by the California State Bar.'
-		},
-		{
-			slug: 'james-chen',
-			name: 'James Chen',
-			title: 'Partner',
-			barNumber: 'CA Bar #223456',
-			admittedStates: ['California'],
-			education: [
-				{ school: 'UC Hastings College of Law', degree: 'J.D.', year: 2010 },
-				{ school: 'UCLA', degree: 'B.S. Economics', year: 2007 }
-			],
-			practiceAreas: ['personal-injury', 'business-law'],
+			practiceAreas: ['intellectual-property', 'digital-commerce'],
 			image: '/images/attorney-chen.jpg',
-			bio: 'James joined the firm in 2015 and became partner in 2020. He has recovered over $25 million for personal injury clients and brings meticulous attention to every case.'
+			bio: 'Victoria brings a unique blend of technical expertise and legal acumen to complex IP and fintech matters.'
 		},
 		{
-			slug: 'maria-gonzalez',
-			name: 'Maria Gonzalez',
-			title: 'Associate',
-			barNumber: 'CA Bar #298765',
-			admittedStates: ['California'],
+			slug: 'marcus-rivera',
+			name: 'Marcus Rivera',
+			title: 'Partner',
+			barNumber: 'NY Bar #6789012',
+			admittedStates: ['New York', 'New Jersey'],
 			education: [
-				{ school: 'Santa Clara University School of Law', degree: 'J.D.', year: 2018 },
-				{ school: 'San Jose State University', degree: 'B.A. Sociology', year: 2015 }
+				{ school: 'NYU School of Law', degree: 'J.D.', year: 2008 },
+				{ school: 'Georgetown University', degree: 'B.A. Government', year: 2005 }
 			],
-			practiceAreas: ['family-law'],
+			practiceAreas: ['corporate-governance', 'dispute-resolution'],
 			image: '/images/attorney-gonzalez.jpg',
-			bio: 'Maria focuses exclusively on family law, helping clients navigate custody disputes, divorce proceedings, and domestic violence restraining orders. Fluent in Spanish.'
+			bio: 'Marcus specializes in corporate governance and has represented clients in over $2 billion in M&A transactions.'
 		}
 	],
 
-	// Case Results (anonymized)
+	// Recent Wins
 	results: [
 		{
-			title: 'Complex Custody Resolution',
-			practiceArea: 'family-law',
-			outcome: 'Full custody awarded to client',
-			year: 2024,
-			description:
-				'Successfully resolved an interstate custody dispute involving parental relocation. Secured primary custody for our client through careful documentation and expert testimony.'
+			title: '$240M Merger Resolution',
+			practiceArea: 'corporate-governance',
+			outcome: 'Antitrust Clearance',
+			date: 'October 2023',
+			client: 'Lead Counsel for Tech Unicorn',
+			tag: 'Antitrust Clearance'
 		},
 		{
-			title: 'Medical Malpractice Settlement',
-			practiceArea: 'personal-injury',
-			outcome: '$2.3 million settlement',
-			year: 2024,
-			description:
-				'Represented a client who suffered permanent injury due to surgical error. Negotiated settlement without trial, covering lifetime medical expenses and lost earning capacity.'
+			title: 'IP Defense Landmark Case',
+			practiceArea: 'intellectual-property',
+			outcome: 'Patent Retained',
+			date: 'August 2023',
+			client: 'Global Pharmaceutical Client',
+			tag: 'Patent Retained'
 		},
 		{
-			title: 'Business Partnership Dissolution',
-			practiceArea: 'business-law',
-			outcome: 'Favorable buyout terms achieved',
-			year: 2023,
-			description:
-				'Represented minority partner in contentious dissolution. Achieved buyout at independently appraised fair market value plus compensation for breach of fiduciary duty.'
-		},
-		{
-			title: 'Catastrophic Auto Accident',
-			practiceArea: 'personal-injury',
-			outcome: '$1.8 million verdict',
-			year: 2023,
-			description:
-				'Jury verdict for client who suffered traumatic brain injury in multi-vehicle collision. Established liability against commercial trucking company through accident reconstruction.'
-		},
-		{
-			title: 'High-Asset Divorce',
-			practiceArea: 'family-law',
-			outcome: 'Equitable division including business interests',
-			year: 2023,
-			description:
-				"Protected client's separate property claims in divorce involving multiple business entities. Achieved division reflecting true contributions while minimizing litigation costs."
+			title: 'Real Estate Acquisition',
+			practiceArea: 'corporate-governance',
+			outcome: 'Closed $85M',
+			date: 'June 2023',
+			client: 'Downtown Manhattan Portfolio',
+			tag: 'Closed $85M'
 		}
 	],
 
 	// About the Firm
 	firm: {
-		headline: 'Our Firm',
+		headline: 'Our Approach',
 		philosophy:
-			'We believe everyone deserves access to skilled legal representation. Our attorneys combine big-firm experience with personalized attention. We take time to understand your situation, explain your options clearly, and fight relentlessly for your interests.',
+			'We believe the best legal counsel is invisible—anticipating problems before they arise, structuring deals that endure, and resolving disputes with surgical precision. Our clients don\'t just hire attorneys; they gain strategic partners.',
 		values: [
-			'Client-centered approach',
-			'Clear communication',
-			'Aggressive advocacy',
-			'Ethical practice'
+			'Precision over volume',
+			'Strategy over tactics',
+			'Results over rhetoric',
+			'Integrity always'
 		],
-		founded: 2010
+		founded: 2001
 	},
 
 	// Workflow Integration
 	workflows: {
-		// WORKWAY workflow IDs for this organization
 		consultationBooking: 'consultation-booking',
 		followUp: 'post-meeting-follow-up',
 		appointmentReminder: 'appointment-reminder',
-
-		// Legacy: External service URLs (being replaced by WORKWAY)
-		clioIntakeWebhook: '', // Deprecated: Use WORKWAY consultation-booking workflow
-		calendlyUrl: '' // Deprecated: Use WORKWAY appointment-reminder workflow
+		clioIntakeWebhook: '',
+		calendlyUrl: ''
 	},
 
 	// Ethics & Compliance
 	disclaimer:
 		'The information on this website is for general informational purposes only and does not constitute legal advice. No attorney-client relationship is formed by using this website or submitting a contact form. Prior results do not guarantee a similar outcome.',
-	barAssociations: ['California State Bar', 'San Francisco Bar Association', 'American Bar Association'],
+	barAssociations: [
+		'New York State Bar',
+		'American Bar Association',
+		'New York City Bar Association'
+	],
 
-	// Statistics (animated counters)
+	// Statistics
 	statistics: [
-		{ label: 'Years Experience', value: 15, suffix: '+' },
-		{ label: 'Cases Won', value: 2500, suffix: '+' },
-		{ label: 'Client Satisfaction', value: 98, suffix: '%' },
-		{ label: 'Recovered', value: 50, prefix: '$', suffix: 'M+' }
+		{ label: 'Years Experience', value: 24, suffix: '+' },
+		{ label: 'Matters Closed', value: 800, suffix: '+' },
+		{ label: 'Client Retention', value: 96, suffix: '%' },
+		{ label: 'Total Recovered', value: 2.1, prefix: '$', suffix: 'B+' }
 	],
 
 	// Testimonials
 	testimonials: [
 		{
-			quote: 'Sarah Morrison and her team guided us through one of the most difficult times in our lives. Her expertise in family law and compassionate approach made all the difference.',
-			author: 'Former Client',
-			title: 'Family Law Matter',
+			quote:
+				'Vanguard\'s approach to our merger was exceptional. They anticipated every regulatory hurdle and navigated us through seamlessly.',
+			author: 'CEO',
+			title: 'Fortune 500 Technology Company',
 			rating: 5
 		},
 		{
-			quote: 'After my accident, I was overwhelmed. James Chen handled everything professionally and secured a settlement that covered all my medical expenses and more.',
-			author: 'Former Client',
-			title: 'Personal Injury Case',
+			quote:
+				'Julian and his team protected our intellectual property with the same rigor they would their own. Unmatched expertise.',
+			author: 'General Counsel',
+			title: 'Global Pharmaceutical',
 			rating: 5
 		},
 		{
-			quote: 'The business litigation team at Morrison & Associates protected our company interests while keeping costs reasonable. Highly recommend.',
-			author: 'Former Client',
-			title: 'Business Litigation',
-			rating: 5
-		},
-		{
-			quote: 'Clear communication throughout the entire process. They explained every step and were always available to answer my questions.',
-			author: 'Former Client',
-			title: 'Divorce Proceedings',
+			quote:
+				'Strategic, precise, and relentless. Vanguard doesn\'t just practice law—they architect outcomes.',
+			author: 'Managing Director',
+			title: 'Private Equity Firm',
 			rating: 5
 		}
 	],
@@ -367,24 +388,31 @@ export const siteConfig: LawFirmConfig = {
 	// FAQ
 	faq: [
 		{
-			question: 'How much does a consultation cost?',
-			answer: 'We offer a free initial consultation for all new clients. During this meeting, we will discuss your situation, explain your options, and outline potential strategies. There is no obligation to retain our services after the consultation.'
+			question: 'What distinguishes Vanguard from larger firms?',
+			answer:
+				'We combine big-firm capability with boutique attention. Every matter is handled by senior partners, not delegated to junior associates. Our clients get direct access to the expertise they\'re paying for.'
 		},
 		{
-			question: 'How long will my case take?',
-			answer: 'Every case is unique, and timelines vary based on complexity, court schedules, and whether matters can be resolved through negotiation or require trial. During your consultation, we can provide a realistic estimate based on your specific circumstances.'
+			question: 'How does the initial consultation work?',
+			answer:
+				'We begin with a strategic conversation to understand your objectives and assess how we can add value. This initial evaluation is complimentary and confidential.'
 		},
 		{
-			question: 'What are your fees?',
-			answer: 'We offer flexible fee arrangements depending on the type of case. Personal injury cases are typically handled on contingency (no fee unless we win). Family law and business matters may be billed hourly or on a flat-fee basis. We discuss all fees transparently during your initial consultation.'
+			question: 'What are your fee structures?',
+			answer:
+				'We offer flexible arrangements including hourly, fixed-fee, and success-based structures depending on the nature of the engagement. Transparency in billing is fundamental to our practice.'
 		},
 		{
-			question: 'Do I have a case?',
-			answer: 'The best way to determine if you have a viable case is to schedule a free consultation. Our attorneys will review your situation, assess the relevant facts, and provide an honest evaluation of your options.'
-		},
-		{
-			question: 'Can I handle my legal matter without an attorney?',
-			answer: 'While you have the right to represent yourself, legal matters often involve complex procedures and deadlines. An experienced attorney can protect your rights, avoid costly mistakes, and often achieve better outcomes. We are happy to discuss whether professional representation makes sense for your situation.'
+			question: 'Do you handle matters outside New York?',
+			answer:
+				'Yes. Our partners are admitted in multiple jurisdictions, and we maintain relationships with local counsel nationwide and internationally for complex cross-border matters.'
 		}
+	],
+
+	// Footer Links
+	footerLinks: [
+		{ label: 'Privacy Policy', href: '/privacy' },
+		{ label: 'Disclosures', href: '/terms' },
+		{ label: 'LinkedIn', href: 'https://linkedin.com/company/vanguard-law' }
 	]
 };

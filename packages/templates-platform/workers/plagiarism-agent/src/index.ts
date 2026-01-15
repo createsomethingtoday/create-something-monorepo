@@ -2803,6 +2803,14 @@ interface StructuralMatch {
   weight: number; // Higher = more significant
 }
 
+interface VisualEvidence {
+  selector: string;
+  css: string;
+  html1: string;
+  html2: string;
+  properties: string[];
+}
+
 interface ComparisonResult {
   template1: { id: string; name: string; url: string };
   template2: { id: string; name: string; url: string };
@@ -2811,6 +2819,8 @@ interface ComparisonResult {
   identicalRules: IdenticalRule[];
   // Property combinations (3+ props together = fingerprint)
   propertyCombinations: Array<{ selector: string; props: string[]; weight: number }>;
+  // Visual evidence: HTML + CSS for rendering side-by-side previews
+  visualEvidence: VisualEvidence[];
   // Structural matches weighted by depth (shallower = more significant)
   structuralMatches: {
     score: number;
@@ -2939,12 +2949,22 @@ async function generateDetailedComparison(
     : sharedClasses.filter(c => !c.includes('[') && !c.includes('(')).slice(0, 5);
   const codeExcerpts = extractMatchingCodeExcerpts(content1, content2, excerptSelectors);
   
+  // Generate visual evidence for the top identical rules
+  const visualEvidence = generateVisualEvidence(
+    identicalRules,
+    content1.css,
+    content2.css,
+    content1.html,
+    content2.html
+  );
+
   return {
     template1: { id: t1.id as string, name: t1.name as string, url: t1.url as string },
     template2: { id: t2.id as string, name: t2.name as string, url: t2.url as string },
     overallSimilarity: simResult.jaccardEstimate,
     identicalRules,
     propertyCombinations: propCombinations.sort((a, b) => b.weight - a.weight).slice(0, 10),
+    visualEvidence,
     structuralMatches,
     breakdown: {
       cssClasses: {
@@ -2975,6 +2995,75 @@ async function generateDetailedComparison(
       codeExcerpts
     }
   };
+}
+
+/**
+ * Extract HTML elements that match a CSS selector for visual preview
+ */
+function extractElementBySelector(html: string, selector: string): string {
+  // Convert CSS selector to a class name we can search for
+  const className = selector.replace(/^\./, '').replace(/[:\[\]]/g, '');
+  
+  // Try to find elements with this class
+  const classRegex = new RegExp(
+    `<([a-z][a-z0-9]*)\\s+[^>]*class="[^"]*\\b${className}\\b[^"]*"[^>]*>([\\s\\S]*?)<\\/\\1>`,
+    'gi'
+  );
+  
+  const match = html.match(classRegex);
+  if (match && match[0]) {
+    // Return first match, truncated if too long
+    let element = match[0];
+    if (element.length > 2000) {
+      element = element.substring(0, 2000) + '<!-- truncated -->';
+    }
+    return element;
+  }
+  
+  // Try self-closing or simpler match
+  const simpleRegex = new RegExp(
+    `<[^>]+class="[^"]*\\b${className}\\b[^"]*"[^>]*\\/?>`,
+    'gi'
+  );
+  const simpleMatch = html.match(simpleRegex);
+  if (simpleMatch && simpleMatch[0]) {
+    return simpleMatch[0];
+  }
+  
+  return `<div class="${className}"><!-- Element not found in HTML --></div>`;
+}
+
+/**
+ * Generate visual evidence for the top identical rules
+ */
+function generateVisualEvidence(
+  identicalRules: IdenticalRule[],
+  css1: string,
+  css2: string,
+  html1: string,
+  html2: string
+): VisualEvidence[] {
+  const evidence: VisualEvidence[] = [];
+  
+  // Take top 5 most significant identical rules (by property count)
+  const topRules = identicalRules
+    .filter(r => r.properties.length >= 3) // Only rules with 3+ properties
+    .sort((a, b) => b.properties.length - a.properties.length)
+    .slice(0, 5);
+  
+  for (const rule of topRules) {
+    const cssBlock = `${rule.selector} {\n  ${rule.properties.join(';\n  ')};\n}`;
+    
+    evidence.push({
+      selector: rule.selector,
+      css: cssBlock,
+      html1: extractElementBySelector(html1, rule.selector),
+      html2: extractElementBySelector(html2, rule.selector),
+      properties: rule.properties
+    });
+  }
+  
+  return evidence;
 }
 
 /**
@@ -3759,6 +3848,88 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       border-radius: 8px;
       padding: 0.75rem 1rem;
     }
+    /* Visual Evidence - Side-by-side renders */
+    .visual-evidence {
+      margin: 2rem 0;
+    }
+    .visual-evidence h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent);
+    }
+    .visual-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg, 12px);
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .visual-card-header {
+      background: var(--code-bg);
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .visual-card-header code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    .visual-card-header .prop-count {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--border);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .visual-previews {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+    .visual-preview {
+      background: var(--bg);
+      padding: 1rem;
+    }
+    .visual-preview-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .visual-preview-frame {
+      background: white;
+      border-radius: var(--radius-sm, 6px);
+      min-height: 100px;
+      max-height: 250px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .visual-preview-frame iframe {
+      width: 100%;
+      height: 150px;
+      border: none;
+      pointer-events: none;
+    }
+    .visual-css {
+      padding: 1rem;
+      background: var(--code-bg);
+      border-top: 1px solid var(--border);
+    }
+    .visual-css code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text);
+      display: block;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+    
     .rule-header {
       display: flex;
       justify-content: space-between;
@@ -4080,6 +4251,51 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
               </div>
             \`).join('')}
           </div>
+        </div>
+        \` : ''}
+        
+        \${data.visualEvidence && data.visualEvidence.length > 0 ? \`
+        <div class="visual-evidence">
+          <h2>
+            <i data-lucide="eye"></i>
+            Visual Evidence
+          </h2>
+          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            Live preview of the identical CSS rules. These elements use the <strong>exact same styles</strong>.
+          </p>
+          \${data.visualEvidence.map(evidence => \`
+            <div class="visual-card">
+              <div class="visual-card-header">
+                <code>\${evidence.selector}</code>
+                <span class="prop-count">\${evidence.properties.length} identical properties</span>
+              </div>
+              <div class="visual-previews">
+                <div class="visual-preview">
+                  <div class="visual-preview-label">\${data.template1.name}</div>
+                  <div class="visual-preview-frame">
+                    <iframe 
+                      srcdoc="<!DOCTYPE html><html><head><style>* { margin: 0; padding: 0; box-sizing: border-box; } body { padding: 1rem; font-family: system-ui; } \${escapeHtml(evidence.css)}</style></head><body>\${escapeHtml(evidence.html1)}</body></html>"
+                      sandbox="allow-same-origin"
+                      loading="lazy"
+                    ></iframe>
+                  </div>
+                </div>
+                <div class="visual-preview">
+                  <div class="visual-preview-label">\${data.template2.name}</div>
+                  <div class="visual-preview-frame">
+                    <iframe 
+                      srcdoc="<!DOCTYPE html><html><head><style>* { margin: 0; padding: 0; box-sizing: border-box; } body { padding: 1rem; font-family: system-ui; } \${escapeHtml(evidence.css)}</style></head><body>\${escapeHtml(evidence.html2)}</body></html>"
+                      sandbox="allow-same-origin"
+                      loading="lazy"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
+              <div class="visual-css">
+                <code>\${escapeHtml(evidence.css)}</code>
+              </div>
+            </div>
+          \`).join('')}
         </div>
         \` : ''}
         
