@@ -3333,69 +3333,75 @@ function extractMatchingCodeExcerpts(
 
 // Tufte-style comparison page
 function serveComparisonPage(id1: string, id2: string, env: Env): Response {
+  // Inline SVG favicon as data URI
+  const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#000000"/><path d="M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z" fill="#FFFFFF" fill-opacity="1"/><path d="M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z" fill="#FFFFFF" fill-opacity="0.6"/><path d="M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z" fill="#FFFFFF" fill-opacity="0.3"/></svg>`;
+  const faviconDataUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
+  
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Template Comparison</title>
+  <title>Template Comparison | Plagiarism Detection</title>
+  <link rel="icon" type="image/svg+xml" href="${faviconDataUri}">
+  <link rel="apple-touch-icon" href="${faviconDataUri}">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=ET+Book:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #fffff8;
-      --text: #111;
-      --muted: #666;
-      --accent: #a00;
-      --border: #ddd;
-      --code-bg: #f7f7f5;
-      --highlight: rgba(255, 230, 0, 0.3);
-      --match-high: #c41d1d;
-      --match-med: #d68600;
-      --match-low: #2d8a2d;
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --text: #e4e4e7;
+      --muted: #71717a;
+      --accent: #8b5cf6;
+      --code-bg: #1a1a24;
+      --match-high: #ef4444;
+      --match-med: #f59e0b;
+      --match-low: #22c55e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'ET Book', Palatino, 'Palatino Linotype', Georgia, serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
       font-size: 15px;
       max-width: 1400px;
       margin: 0 auto;
-      padding: 2rem 4rem;
+      padding: 2rem;
     }
     
-    /* Tufte-style headings */
-    h1 { font-size: 2.5rem; font-weight: 400; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
-    h2 { font-size: 1.4rem; font-weight: 400; font-style: italic; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-    h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; }
+    h1 { font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.25rem; font-weight: 500; margin: 2rem 0 1rem; color: var(--text); }
+    h3 { font-size: 1rem; font-weight: 500; margin: 1.5rem 0 0.75rem; color: var(--muted); }
     
-    .subtitle { color: var(--muted); font-style: italic; margin-bottom: 2rem; }
+    .subtitle { color: var(--muted); margin-bottom: 2rem; }
     
     /* Header with similarity score */
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
     .similarity-score {
       font-size: 3rem;
-      font-weight: 400;
+      font-weight: 700;
       line-height: 1;
     }
     .similarity-score.high { color: var(--match-high); }
     .similarity-score.medium { color: var(--match-med); }
     .similarity-score.low { color: var(--match-low); }
-    .similarity-label { font-size: 0.875rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .similarity-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
     
     /* Template info cards */
     .templates-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 2rem;
+      gap: 1.5rem;
       margin-bottom: 2rem;
     }
     .template-info {
-      background: var(--code-bg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 1rem 1.25rem;
-      border-left: 3px solid var(--accent);
     }
     .template-name { font-weight: 600; margin-bottom: 0.25rem; }
     .template-url { font-size: 0.875rem; color: var(--muted); word-break: break-all; }
@@ -3406,10 +3412,16 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .breakdown-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
+      gap: 1rem;
       margin: 1.5rem 0;
     }
-    .breakdown-item { text-align: center; }
+    .breakdown-item { 
+      text-align: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+    }
     .breakdown-bar {
       height: 6px;
       background: var(--border);
@@ -3530,9 +3542,9 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     
     /* Smoking Gun - Identical Rules */
     .smoking-gun {
-      background: rgba(196, 29, 29, 0.05);
-      border: 2px solid var(--match-high);
-      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--match-high);
+      border-radius: 12px;
       padding: 1.5rem;
       margin: 2rem 0;
     }
@@ -3563,9 +3575,9 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       gap: 0.75rem;
     }
     .identical-rule {
-      background: white;
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 0.75rem 1rem;
     }
     .rule-header {
@@ -3614,9 +3626,9 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       margin: 1rem 0;
     }
     .property-group {
-      background: var(--code-bg);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 12px;
       padding: 1rem;
     }
     .property-group-header {
@@ -3642,14 +3654,15 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .property-value {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.7rem;
-      background: white;
+      background: var(--bg);
       border: 1px solid var(--border);
       padding: 0.2rem 0.4rem;
-      border-radius: 3px;
+      border-radius: 4px;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: var(--text);
     }
     .property-more {
       font-size: 0.7rem;
@@ -3664,21 +3677,23 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       margin: 1rem 0;
     }
     .struct-match {
-      background: var(--code-bg);
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-left: 3px solid var(--border);
       padding: 0.6rem 1rem;
-      border-radius: 0 6px 6px 0;
+      border-radius: 8px;
     }
     .struct-match.struct-page {
       border-left-color: var(--match-high);
-      background: rgba(196, 29, 29, 0.05);
+      background: rgba(239, 68, 68, 0.1);
     }
     .struct-match.struct-section {
       border-left-color: var(--match-med);
-      background: rgba(214, 134, 0, 0.05);
+      background: rgba(245, 158, 11, 0.1);
     }
     .struct-match.struct-component {
       border-left-color: var(--accent);
+      background: rgba(139, 92, 246, 0.1);
     }
     .struct-match.struct-element {
       border-left-color: var(--muted);
@@ -3697,9 +3712,9 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       border-radius: 3px;
       font-weight: 600;
     }
-    .struct-page .struct-level { background: rgba(196, 29, 29, 0.15); color: var(--match-high); }
-    .struct-section .struct-level { background: rgba(214, 134, 0, 0.15); color: var(--match-med); }
-    .struct-component .struct-level { background: rgba(139, 92, 246, 0.15); color: var(--accent); }
+    .struct-page .struct-level { background: rgba(239, 68, 68, 0.2); color: var(--match-high); }
+    .struct-section .struct-level { background: rgba(245, 158, 11, 0.2); color: var(--match-med); }
+    .struct-component .struct-level { background: rgba(139, 92, 246, 0.2); color: var(--accent); }
     .struct-element .struct-level { background: var(--border); color: var(--muted); }
     .struct-pattern {
       font-family: 'JetBrains Mono', monospace;
@@ -4069,12 +4084,17 @@ async function getDashboardStats(env: Env): Promise<any> {
 }
 
 function serveDashboard(env: Env): Response {
+  const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#000000"/><path d="M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z" fill="#FFFFFF" fill-opacity="1"/><path d="M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z" fill="#FFFFFF" fill-opacity="0.6"/><path d="M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z" fill="#FFFFFF" fill-opacity="0.3"/></svg>`;
+  const faviconDataUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
+  
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Plagiarism Detection Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="${faviconDataUri}">
+  <link rel="apple-touch-icon" href="${faviconDataUri}">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     :root {
@@ -4399,7 +4419,7 @@ function serveDashboard(env: Env): Response {
                     <tr>
                       <td><a href="\${m.url}" target="_blank">\${m.name}</a></td>
                       <td>\${(m.similarity * 100).toFixed(0)}%</td>
-                      <td><a href="/compare/\${scannedId}/\${m.id}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="git-compare" style="width: 14px; height: 14px;"></i> Compare</a></td>
+                      <td><a href="/compare/\${scannedId}/\${m.id}" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="git-compare" style="width: 14px; height: 14px;"></i> Compare</a></td>
                     </tr>
                   \`).join('')}
                 </tbody>
