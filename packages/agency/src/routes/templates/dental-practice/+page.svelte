@@ -723,8 +723,8 @@
 
 	.workflows-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: var(--space-lg);
+		grid-template-columns: repeat(4, 1fr);
+		gap: var(--space-md);
 		max-width: 1200px;
 		margin: 0 auto var(--space-xl);
 	}
@@ -1318,7 +1318,14 @@
 		color: var(--color-fg-primary);
 	}
 
-	/* Responsive */
+	/* Responsive - Tablet */
+	@media (max-width: 1024px) {
+		.workflows-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	/* Responsive - Mobile */
 	@media (max-width: 768px) {
 		.hero-title {
 			font-size: var(--text-h1);
@@ -1346,10 +1353,6 @@
 			display: none;
 		}
 
-		.workflows-grid {
-			grid-template-columns: 1fr;
-		}
-
 		.features-grid {
 			grid-template-columns: 1fr;
 		}
@@ -1369,6 +1372,13 @@
 		.cta-actions {
 			flex-direction: column;
 			width: 100%;
+		}
+	}
+
+	/* Responsive - Small Mobile */
+	@media (max-width: 480px) {
+		.workflows-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>
