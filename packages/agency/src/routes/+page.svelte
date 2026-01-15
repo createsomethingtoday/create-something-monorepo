@@ -136,9 +136,14 @@
 			></textarea>
 			<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
 				{#if isLoading}
+					<span class="button-spinner"></span>
 					Processing...
 				{:else}
 					Build it
+					<svg class="button-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="5" y1="12" x2="19" y2="12"></line>
+						<polyline points="12 5 19 12 12 19"></polyline>
+					</svg>
 				{/if}
 			</button>
 		</form>
@@ -351,23 +356,51 @@
 	.build-button {
 		width: 100%;
 		padding: var(--space-md) var(--space-lg);
-		background: var(--color-fg-primary);
-		color: var(--color-bg-primary);
+		background: #ffffff;
+		color: #000000;
 		border: none;
 		border-radius: var(--radius-md);
 		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
 	}
 
 	.build-button:hover:not(:disabled) {
-		opacity: 0.9;
+		background: #f0f0f0;
+	}
+
+	.build-button:hover:not(:disabled) .button-arrow {
+		transform: translateX(4px);
 	}
 
 	.build-button:disabled {
-		opacity: 0.6;
+		background: #4a4a4a;
+		color: #9a9a9a;
 		cursor: not-allowed;
+	}
+
+	.button-arrow {
+		transition: transform var(--duration-micro) var(--ease-standard);
+	}
+
+	.button-spinner {
+		width: 16px;
+		height: 16px;
+		border: 2px solid #9a9a9a;
+		border-top-color: #000000;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.error-message {

@@ -193,11 +193,34 @@ export async function processSpecIntake(
 		workwayApiUrl?: string;
 	} = {}
 ): Promise<IntakeResult> {
+	// First, check if we have a clear keyword match
+	const keywordMatch = quickMatchTemplate(userSpec);
+	const consultationNeeded = shouldSuggestConsultation(userSpec);
+
 	// If AI is enabled and WORKWAY credentials provided, use the workflow
 	if (options.useAI && options.workwayApiKey) {
 		try {
 			const result = await callWorkwayIntake(userSpec, options);
-			if (result) return result;
+			if (result) {
+				// If AI returns consultation but we have a clear keyword match
+				// and no consultation triggers, prefer the keyword match
+				if (
+					result.action === 'consultation' &&
+					keywordMatch &&
+					!consultationNeeded &&
+					result.confidence < 0.7
+				) {
+					console.log('AI uncertain, using keyword match:', keywordMatch);
+					return {
+						action: 'show_template',
+						matched_template: keywordMatch,
+						matched_reason: `Based on your description, our ${keywordMatch.replace(/-/g, ' ')} template looks like a great fit.`,
+						confidence: 0.75,
+						understanding: `Looking for a ${keywordMatch.replace(/-/g, ' ')} solution`,
+					};
+				}
+				return result;
+			}
 		} catch (error) {
 			console.warn('WORKWAY intake failed, falling back to keyword matching:', error);
 		}
