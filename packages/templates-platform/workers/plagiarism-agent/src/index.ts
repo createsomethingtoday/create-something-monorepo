@@ -4290,8 +4290,12 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
             <i data-lucide="eye"></i>
             Visual Evidence
           </h2>
-          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
             Live preview of the identical CSS rules. These elements use the <strong>exact same styles</strong>.
+          </p>
+          <p style="color: var(--muted); font-size: 0.75rem; margin-bottom: 1rem; opacity: 0.7;">
+            <i data-lucide="info" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i>
+            Note: Hidden elements (display: none, visibility: hidden) are forced visible for preview purposes.
           </p>
           \${data.visualEvidence.map(evidence => \`
             <div class="visual-card">

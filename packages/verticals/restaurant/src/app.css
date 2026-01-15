@@ -1,167 +1,22 @@
-/*
-  CREATE SOMETHING - Restaurant Template
-
-  Philosophy: "Weniger, aber besser" - Dieter Rams
-  Tailwind for structure, Canon for aesthetics.
-
-  ALL @import statements must precede @tailwind directives.
-*/
-
-/* Import Canon design system (includes tokens and base styles) */
-@import '@create-something/components/styles/canon.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-   Restaurant Template Customizations
-   ========================================================================== */
-
-/* Template-specific base styles */
 @layer base {
-  * {
-    border-color: var(--color-border-default);
-  }
-}
+	body {
+		font-family: 'Epilogue', sans-serif;
+	}
 
-/* ==========================================================================
-   Template-Specific Styles
-   Typography comes from canon.css; these are vertical customizations
-   ========================================================================== */
+	.text-outline {
+		-webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+		color: transparent;
+	}
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-  background-color: var(--color-bg-pure);
-}
-
-::-webkit-scrollbar-track {
-  background-color: var(--color-bg-pure);
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--color-border-strong);
-  border-radius: 5px;
-  border: 2px solid var(--color-bg-pure);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-fg-muted);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border-strong) var(--color-bg-pure);
-}
-
-/* Skip Link - Accessibility */
-.skip-link {
-  position: absolute;
-  top: -100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--color-fg-primary);
-  color: var(--color-bg-pure);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  font-weight: var(--font-semibold);
-  z-index: var(--z-tooltip);
-  transition: top var(--duration-micro) var(--ease-standard);
-  text-decoration: none;
-}
-
-.skip-link:focus {
-  top: var(--space-sm);
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-/* ==========================================================================
-   Shared Components
-   ========================================================================== */
-
-@layer components {
-  .container {
-    max-width: var(--container-xl);
-    margin: 0 auto;
-    padding: 0 var(--space-md);
-  }
-
-  .section {
-    padding: var(--space-3xl) 0;
-  }
-
-  .cta-primary {
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--radius-md);
-    font-weight: var(--font-semibold);
-    transition: all var(--duration-micro) var(--ease-standard);
-    display: inline-block;
-    text-decoration: none;
-  }
-
-  .cta-primary:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-glow-md);
-  }
-
-  .cta-secondary {
-    background: transparent;
-    color: var(--color-fg-primary);
-    border: 1px solid var(--color-border-emphasis);
-    padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--radius-md);
-    font-weight: var(--font-medium);
-    transition: all var(--duration-micro) var(--ease-standard);
-    display: inline-block;
-    text-decoration: none;
-  }
-
-  .cta-secondary:hover {
-    background: var(--color-hover);
-    border-color: var(--color-border-strong);
-  }
-
-  .cta-text {
-    color: var(--color-fg-secondary);
-    font-weight: var(--font-medium);
-    transition: color var(--duration-micro) var(--ease-standard);
-    text-decoration: none;
-  }
-
-  .cta-text:hover {
-    color: var(--color-fg-primary);
-  }
-}
-
-/* ==========================================================================
-   Animations
-   ========================================================================== */
-
-.fade-in {
-  animation: fadeIn var(--duration-complex) ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ==========================================================================
-   View Transitions
-   ========================================================================== */
-
-@layer utilities {
-  @view-transition {
-    navigation: auto;
-  }
+	.material-symbols-outlined {
+		font-variation-settings:
+			'FILL' 0,
+			'wght' 400,
+			'GRAD' 0,
+			'opsz' 24;
+	}
 }
