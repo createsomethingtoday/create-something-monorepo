@@ -9,7 +9,7 @@
 	let isLoading = $state(false);
 	let errorMessage = $state('');
 	let clarifyingQuestions = $state<string[]>([]);
-	let matchedTemplate = $state<{ template: string; reason: string } | null>(null);
+	let matchedTemplate = $state<{ template: string; reason: string; redirect: string } | null>(null);
 
 	// Handle spec submission
 	async function handleSubmit() {
@@ -42,10 +42,12 @@
 
 			switch (result.action) {
 				case 'show_template':
-					matchedTemplate = { template: result.template || '', reason: result.reason || '' };
-					setTimeout(() => {
-						if (result.redirect) goto(result.redirect);
-					}, 1500);
+					matchedTemplate = {
+						template: result.template || '',
+						reason: result.reason || '',
+						redirect: result.redirect || '',
+					};
+					// No auto-redirect - let user click to proceed
 					break;
 
 				case 'clarify':
@@ -123,8 +125,9 @@
 
 		{#if matchedTemplate}
 			<div class="match-result">
-				<p class="match-text">Found: <strong>{matchedTemplate.template}</strong></p>
+				<p class="match-text">Found: <strong>{matchedTemplate.template.replace(/-/g, ' ')}</strong></p>
 				<p class="match-reason">{matchedTemplate.reason}</p>
+				<a href={matchedTemplate.redirect} class="match-link">View template →</a>
 			</div>
 		{/if}
 
@@ -355,12 +358,25 @@
 	.match-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);
+		text-transform: capitalize;
 	}
 
 	.match-reason {
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);
 		margin-top: var(--space-xs);
+	}
+
+	.match-link {
+		display: inline-block;
+		margin-top: var(--space-sm);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: #22c55e;
+	}
+
+	.match-link:hover {
+		text-decoration: underline;
 	}
 
 	.clarify-container {

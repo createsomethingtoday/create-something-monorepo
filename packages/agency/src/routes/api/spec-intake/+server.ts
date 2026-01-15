@@ -53,16 +53,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			workwayApiUrl,
 		});
 
+		// Normalize template slug: snake_case → kebab-case
+		const normalizeSlug = (slug: string | undefined) =>
+			slug?.replace(/_/g, '-').toLowerCase();
+
 		// Return appropriate response based on action
 		switch (result.action) {
-			case 'show_template':
+			case 'show_template': {
+				const templateSlug = normalizeSlug(result.matched_template);
 				return json({
 					action: 'show_template',
-					template: result.matched_template,
+					template: templateSlug,
 					reason: result.matched_reason,
 					confidence: result.confidence,
-					redirect: `/templates/${result.matched_template}`,
+					redirect: `/templates/${templateSlug}`,
 				});
+			}
 
 			case 'clarify':
 				return json({
