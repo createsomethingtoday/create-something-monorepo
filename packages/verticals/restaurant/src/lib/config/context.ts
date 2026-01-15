@@ -7,10 +7,10 @@
 
 import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { SiteConfig } from './site';
+import type { RestaurantConfig } from './site';
 import { siteConfig as defaultConfig } from './site';
 
-interface InjectedConfig extends Partial<SiteConfig> {
+interface InjectedConfig extends Partial<RestaurantConfig> {
 	_tenant?: {
 		id: string;
 		subdomain: string;
@@ -24,37 +24,33 @@ declare global {
 	}
 }
 
-export function mergeWithDefaults(injected: InjectedConfig): SiteConfig {
+export function mergeWithDefaults(injected: InjectedConfig): RestaurantConfig {
 	const { _tenant, ...config } = injected;
 
 	return {
 		name: config.name ?? defaultConfig.name,
 		tagline: config.tagline ?? defaultConfig.tagline,
 		description: config.description ?? defaultConfig.description,
+		location: config.location ?? defaultConfig.location,
 		hero: { ...defaultConfig.hero, ...(config.hero ?? {}) },
 		email: config.email ?? defaultConfig.email,
 		phone: config.phone ?? defaultConfig.phone,
 		address: { ...defaultConfig.address, ...(config.address ?? {}) },
-		hours: { ...defaultConfig.hours, ...(config.hours ?? {}) },
-		serviceHours: { ...defaultConfig.serviceHours, ...(config.serviceHours ?? {}) },
-		social: { ...defaultConfig.social, ...(config.social ?? {}) },
+		hours: config.hours ?? defaultConfig.hours,
+		social: config.social ?? defaultConfig.social,
 		url: config.url ?? defaultConfig.url,
 		locale: config.locale ?? defaultConfig.locale,
+		chefChoice: config.chefChoice ?? defaultConfig.chefChoice,
 		menuCategories: config.menuCategories ?? defaultConfig.menuCategories,
-		featuredDishes: config.featuredDishes ?? defaultConfig.featuredDishes,
-		menuItems: config.menuItems ?? defaultConfig.menuItems,
-		dietaryOptions: config.dietaryOptions ?? defaultConfig.dietaryOptions,
+		ambiance: { ...defaultConfig.ambiance, ...(config.ambiance ?? {}) },
 		reservations: { ...defaultConfig.reservations, ...(config.reservations ?? {}) },
 		privateEvents: { ...defaultConfig.privateEvents, ...(config.privateEvents ?? {}) },
-		team: config.team ?? defaultConfig.team,
-		location: { ...defaultConfig.location, ...(config.location ?? {}) },
-		accolades: config.accolades ?? defaultConfig.accolades,
-		giftCards: { ...defaultConfig.giftCards, ...(config.giftCards ?? {}) }
-	} as SiteConfig;
+		footer: { ...defaultConfig.footer, ...(config.footer ?? {}) }
+	} as RestaurantConfig;
 }
 
 function createSiteConfigStore() {
-	const store = writable<SiteConfig>(defaultConfig);
+	const store = writable<RestaurantConfig>(defaultConfig);
 
 	if (browser && window.__SITE_CONFIG__) {
 		store.set(mergeWithDefaults(window.__SITE_CONFIG__));
@@ -82,8 +78,8 @@ export function getTenantInfo(): InjectedConfig['_tenant'] | null {
 	return null;
 }
 
-export function getSiteConfigFromContext(): SiteConfig {
+export function getSiteConfigFromContext(): RestaurantConfig {
 	return get(siteConfig);
 }
 
-export type { SiteConfig } from './site';
+export type { RestaurantConfig } from './site';
