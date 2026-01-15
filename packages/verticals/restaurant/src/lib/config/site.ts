@@ -1,483 +1,261 @@
 /**
- * Site Configuration - Restaurant
+ * Site Configuration - Restaurant (Bold Flavors)
  *
- * Voice: Warm, inviting, sensory-rich
- * Structure: Menu first, ambiance, easy reservations
- * Images: Generated via Cloudflare Workers AI (Flux)
+ * Voice: Bold, avant-garde, sensory-rich
+ * Structure: Immersive experience, menu highlights, easy reservations
+ * Design: Dark theme with teal primary and gold accent
  */
 
-export const siteConfig = {
-	// Restaurant Identity
-	name: 'Restaurant Name',
-	tagline: 'Modern Cuisine, Timeless Hospitality',
+export interface MenuItem {
+	name: string;
+	description: string;
+	price: number;
+	image?: string;
+	badge?: string;
+}
+
+export interface AmbientFeature {
+	icon: string;
+	text: string;
+}
+
+export interface SocialLink {
+	name: string;
+	url: string;
+}
+
+export interface HoursEntry {
+	days: string;
+	hours: string;
+}
+
+export interface PrivateSpace {
+	name: string;
+	capacity: number;
+	description: string;
+	features: string[];
+}
+
+export interface RestaurantConfig {
+	// Identity
+	name: string;
+	tagline: string;
+	description: string;
+	location: string;
+
+	// Hero
+	hero: {
+		image: string;
+		alt: string;
+		badge: string;
+		headline: string[];
+		subtext: string;
+	};
+
+	// Contact
+	email: string;
+	phone: string;
+	address: {
+		street: string;
+		district: string;
+		city: string;
+	};
+
+	// Hours
+	hours: HoursEntry[];
+
+	// Social
+	social: SocialLink[];
+
+	// SEO
+	url: string;
+	locale: string;
+
+	// Menu
+	chefChoice: MenuItem[];
+	menuCategories: {
+		slug: string;
+		title: string;
+	}[];
+
+	// Ambiance
+	ambiance: {
+		headline: string;
+		description: string;
+		features: AmbientFeature[];
+		images: {
+			src: string;
+			alt: string;
+		}[];
+	};
+
+	// Reservations
+	reservations: {
+		headline: string;
+		subtext: string;
+		phone: string;
+		url?: string;
+	};
+
+	// Private Events
+	privateEvents: {
+		enabled: boolean;
+		email: string;
+		spaces: PrivateSpace[];
+	};
+
+	// Footer
+	footer: {
+		copyright: string;
+		links: { label: string; href: string }[];
+	};
+}
+
+/**
+ * Demo Configuration: Bold Flavors
+ * An avant-garde gastronomy experience in London
+ */
+export const siteConfig: RestaurantConfig = {
+	// Identity
+	name: 'Bold Flavors',
+	tagline: 'Bold Flavors, Bold Moments',
 	description:
-		'Contemporary American dining featuring seasonal ingredients and artisanal techniques. Serving Seattle since 2018.',
+		'An immersive culinary journey crafted for the discerning palate in the vibrant heart of the city center.',
+	location: 'The Avant-Garde Kitchen',
 
 	// Hero
 	hero: {
 		image: '/hero-interior.jpg',
-		alt: 'Elegant restaurant interior with warm ambient lighting'
+		alt: 'Modern minimalist restaurant interior with dark lighting',
+		badge: 'The Avant-Garde Kitchen',
+		headline: ['BOLD FLAVORS,', 'BOLD MOMENTS.'],
+		subtext:
+			'An immersive culinary journey crafted for the discerning palate in the vibrant heart of the city center.'
 	},
 
 	// Contact
-	email: 'reservations@restaurantname.com',
-	phone: '+1 (555) 123-4567',
+	email: 'reservations@boldflavors.example',
+	phone: '+44 20 7123 4567',
 	address: {
-		street: '123 Market Street',
-		city: 'Seattle',
-		state: 'WA',
-		zip: '98101',
-		country: 'US'
+		street: '42 Avant',
+		district: 'District',
+		city: 'London'
 	},
 
 	// Hours
-	hours: {
-		monday: 'Closed',
-		tuesday: 'Lunch: 11:30 AM - 2:30 PM, Dinner: 5:00 PM - 10:00 PM',
-		wednesday: 'Lunch: 11:30 AM - 2:30 PM, Dinner: 5:00 PM - 10:00 PM',
-		thursday: 'Lunch: 11:30 AM - 2:30 PM, Dinner: 5:00 PM - 10:00 PM',
-		friday: 'Lunch: 11:30 AM - 2:30 PM, Dinner: 5:00 PM - 11:00 PM',
-		saturday: 'Brunch: 10:00 AM - 3:00 PM, Dinner: 5:00 PM - 11:00 PM',
-		sunday: 'Brunch: 10:00 AM - 3:00 PM, Dinner: 5:00 PM - 9:00 PM'
-	},
-
-	// Service Hours (structured for logic)
-	serviceHours: {
-		lunch: {
-			days: ['tuesday', 'wednesday', 'thursday', 'friday'],
-			start: '11:30',
-			end: '14:30'
-		},
-		brunch: {
-			days: ['saturday', 'sunday'],
-			start: '10:00',
-			end: '15:00'
-		},
-		dinner: {
-			days: ['tuesday', 'wednesday', 'thursday'],
-			start: '17:00',
-			end: '22:00'
-		},
-		dinnerWeekend: {
-			days: ['friday', 'saturday'],
-			start: '17:00',
-			end: '23:00'
-		},
-		dinnerSunday: {
-			days: ['sunday'],
-			start: '17:00',
-			end: '21:00'
-		}
-	},
+	hours: [
+		{ days: 'Mon - Thu', hours: '17:00 - 23:00' },
+		{ days: 'Fri - Sat', hours: '12:00 - 01:00' },
+		{ days: 'Sunday', hours: '12:00 - 22:00' }
+	],
 
 	// Social
-	social: {
-		instagram: 'https://instagram.com/restaurantname',
-		facebook: 'https://facebook.com/restaurantname',
-		yelp: 'https://yelp.com/biz/restaurantname'
-	},
+	social: [
+		{ name: 'Instagram', url: 'https://instagram.com/boldflavors' },
+		{ name: 'Twitter (X)', url: 'https://twitter.com/boldflavors' },
+		{ name: 'Facebook', url: 'https://facebook.com/boldflavors' },
+		{ name: 'Vimeo', url: 'https://vimeo.com/boldflavors' }
+	],
 
 	// SEO
-	url: 'https://example.com',
-	locale: 'en_US',
+	url: 'https://boldflavors.example',
+	locale: 'en_GB',
+
+	// Chef's Choice Menu
+	chefChoice: [
+		{
+			name: 'Aged Ribeye',
+			description:
+				'45-day dry-aged beef, smoked sea salt, infused rosemary butter, bone marrow reduction.',
+			price: 58,
+			image: '/menu/ribeye.jpg',
+			badge: 'Signature'
+		},
+		{
+			name: 'Truffle Risotto',
+			description:
+				'Carnaroli rice, wild forest mushrooms, 24-month aged parmesan, fresh winter truffle shavings.',
+			price: 34,
+			image: '/menu/tasting-menu.jpg'
+		},
+		{
+			name: 'Seared Scallops',
+			description:
+				'U10 Hokkaido scallops, caramelized cauliflower silk, lemon-infused olive oil, crispy pancetta.',
+			price: 42,
+			image: '/menu/halibut.jpg'
+		}
+	],
 
 	// Menu Categories
 	menuCategories: [
-		{
-			slug: 'appetizers',
-			title: 'Starters',
-			description: 'Begin your meal with seasonal small plates',
-			icon: 'appetizer'
-		},
-		{
-			slug: 'salads',
-			title: 'Salads & Soups',
-			description: 'Fresh greens and house-made stocks',
-			icon: 'salad'
-		},
-		{
-			slug: 'entrees',
-			title: 'Main Courses',
-			description: 'Chef-driven plates featuring local purveyors',
-			icon: 'entree'
-		},
-		{
-			slug: 'sides',
-			title: 'Sides',
-			description: 'Seasonal accompaniments',
-			icon: 'side'
-		},
-		{
-			slug: 'desserts',
-			title: 'Desserts',
-			description: 'House-made pastries and confections',
-			icon: 'dessert'
-		},
-		{
-			slug: 'drinks',
-			title: 'Beverages',
-			description: 'Craft cocktails, curated wines, local beers',
-			icon: 'drink'
-		}
+		{ slug: 'starters', title: 'Starters' },
+		{ slug: 'mains', title: 'Main Courses' },
+		{ slug: 'desserts', title: 'Desserts' },
+		{ slug: 'drinks', title: 'Beverages' }
 	],
 
-	// Featured Dishes
-	featuredDishes: [
-		{
-			name: 'Pan-Roasted Halibut',
-			description:
-				'Wild-caught Pacific halibut, heirloom tomato confit, summer squash, basil oil',
-			category: 'entrees',
-			price: 38,
-			image: '/menu/halibut.jpg',
-			dietary: ['gluten-free'],
-			featured: true
-		},
-		{
-			name: 'Wood-Fired Ribeye',
-			description: '14oz dry-aged beef, roasted bone marrow, fingerling potatoes, red wine jus',
-			category: 'entrees',
-			price: 52,
-			image: '/menu/ribeye.jpg',
-			dietary: ['gluten-free'],
-			featured: true
-		},
-		{
-			name: 'Seasonal Tasting Menu',
-			description:
-				"Chef's selection of five courses showcasing the season's finest ingredients",
-			category: 'tasting',
-			price: 85,
-			image: '/menu/tasting-menu.jpg',
-			dietary: ['vegetarian-option', 'vegan-option'],
-			featured: true
-		}
-	],
-
-	// Full Menu Items
-	menuItems: [
-		// Appetizers
-		{
-			name: 'Oysters on the Half Shell',
-			description: 'Daily selection, mignonette, cocktail sauce, lemon',
-			category: 'appetizers',
-			price: 18,
-			dietary: ['gluten-free']
-		},
-		{
-			name: 'Charcuterie Board',
-			description: 'House-cured meats, artisan cheese, pickled vegetables, grilled bread',
-			category: 'appetizers',
-			price: 22,
-			dietary: []
-		},
-		{
-			name: 'Crispy Brussels Sprouts',
-			description: 'Caramelized onions, hazelnuts, pomegranate, balsamic reduction',
-			category: 'appetizers',
-			price: 14,
-			dietary: ['vegetarian', 'vegan', 'gluten-free']
-		},
-		{
-			name: 'Tuna Tartare',
-			description: 'Sushi-grade ahi, avocado, cucumber, sesame, wonton crisps',
-			category: 'appetizers',
-			price: 19,
-			dietary: ['dairy-free']
-		},
-		// Salads & Soups
-		{
-			name: 'Caesar Salad',
-			description: 'Romaine hearts, house-made dressing, parmesan, sourdough croutons',
-			category: 'salads',
-			price: 12,
-			dietary: []
-		},
-		{
-			name: 'Seasonal Greens',
-			description: "Chef's selection of local greens, seasonal vegetables, citrus vinaigrette",
-			category: 'salads',
-			price: 14,
-			dietary: ['vegetarian', 'vegan', 'gluten-free']
-		},
-		{
-			name: 'French Onion Soup',
-			description: 'Slow-cooked onions, beef stock, gruyere, toasted baguette',
-			category: 'salads',
-			price: 11,
-			dietary: []
-		},
-		{
-			name: 'Roasted Beet Salad',
-			description: 'Golden and red beets, goat cheese, candied walnuts, arugula',
-			category: 'salads',
-			price: 15,
-			dietary: ['vegetarian', 'gluten-free']
-		},
-		// Entrees
-		{
-			name: 'Pan-Roasted Halibut',
-			description:
-				'Wild-caught Pacific halibut, heirloom tomato confit, summer squash, basil oil',
-			category: 'entrees',
-			price: 38,
-			dietary: ['gluten-free']
-		},
-		{
-			name: 'Wood-Fired Ribeye',
-			description: '14oz dry-aged beef, roasted bone marrow, fingerling potatoes, red wine jus',
-			category: 'entrees',
-			price: 52,
-			dietary: ['gluten-free']
-		},
-		{
-			name: 'Duck Confit',
-			description: 'Crispy duck leg, white bean cassoulet, cherry gastrique, frisée',
-			category: 'entrees',
-			price: 34,
-			dietary: ['dairy-free', 'gluten-free']
-		},
-		{
-			name: 'Wild Mushroom Risotto',
-			description: 'Arborio rice, seasonal mushrooms, parmesan, truffle oil, pea shoots',
-			category: 'entrees',
-			price: 28,
-			dietary: ['vegetarian', 'gluten-free']
-		},
-		{
-			name: 'Lamb Loin',
-			description: 'Herb-crusted lamb, eggplant caponata, mint yogurt, crispy chickpeas',
-			category: 'entrees',
-			price: 42,
-			dietary: ['gluten-free']
-		},
-		{
-			name: 'Pan-Seared Scallops',
-			description: 'Diver scallops, sweet corn puree, pancetta, microgreens',
-			category: 'entrees',
-			price: 36,
-			dietary: ['gluten-free']
-		},
-		// Sides
-		{
-			name: 'Roasted Seasonal Vegetables',
-			description: "Chef's selection of market vegetables",
-			category: 'sides',
-			price: 10,
-			dietary: ['vegetarian', 'vegan', 'gluten-free']
-		},
-		{
-			name: 'Truffle Fries',
-			description: 'Hand-cut fries, truffle oil, parmesan, herbs',
-			category: 'sides',
-			price: 12,
-			dietary: ['vegetarian']
-		},
-		{
-			name: 'Creamed Spinach',
-			description: 'Sautéed spinach, garlic cream, nutmeg',
-			category: 'sides',
-			price: 9,
-			dietary: ['vegetarian', 'gluten-free']
-		},
-		{
-			name: 'Mac and Cheese',
-			description: 'Three-cheese blend, panko crust',
-			category: 'sides',
-			price: 11,
-			dietary: ['vegetarian']
-		},
-		// Desserts
-		{
-			name: 'Chocolate Torte',
-			description: 'Flourless dark chocolate, raspberry coulis, whipped cream',
-			category: 'desserts',
-			price: 12,
-			dietary: ['gluten-free']
-		},
-		{
-			name: 'Seasonal Fruit Tart',
-			description: 'Vanilla pastry cream, fresh seasonal fruit, almond crust',
-			category: 'desserts',
-			price: 11,
-			dietary: ['vegetarian']
-		},
-		{
-			name: 'Crème Brûlée',
-			description: 'Classic vanilla custard, caramelized sugar, fresh berries',
-			category: 'desserts',
-			price: 10,
-			dietary: ['vegetarian', 'gluten-free']
-		},
-		{
-			name: 'Affogato',
-			description: 'Vanilla gelato, espresso, amaretti cookie',
-			category: 'desserts',
-			price: 9,
-			dietary: ['vegetarian']
-		},
-		// Drinks
-		{
-			name: 'House Cocktail',
-			description: 'Seasonal rotating selection - ask your server',
-			category: 'drinks',
-			price: 14,
-			dietary: []
-		},
-		{
-			name: 'Wine by the Glass',
-			description: 'Curated selection of red, white, and sparkling wines',
-			category: 'drinks',
-			price: 12,
-			dietary: []
-		},
-		{
-			name: 'Craft Beer',
-			description: 'Local and regional selections on tap',
-			category: 'drinks',
-			price: 8,
-			dietary: []
-		},
-		{
-			name: 'Non-Alcoholic Spritz',
-			description: 'House-made botanical soda, fresh herbs, citrus',
-			category: 'drinks',
-			price: 6,
-			dietary: ['vegan']
-		}
-	],
-
-	// Dietary Options
-	dietaryOptions: [
-		{
-			slug: 'vegetarian',
-			title: 'Vegetarian',
-			description: 'Plant-based dishes featuring seasonal vegetables',
-			icon: 'vegetarian'
-		},
-		{
-			slug: 'vegan',
-			title: 'Vegan',
-			description: 'Entirely plant-based, no animal products',
-			icon: 'vegan'
-		},
-		{
-			slug: 'gluten-free',
-			title: 'Gluten-Free',
-			description: 'Dishes prepared without gluten-containing ingredients',
-			icon: 'gluten-free'
-		},
-		{
-			slug: 'dairy-free',
-			title: 'Dairy-Free',
-			description: 'Options without milk, cheese, or butter',
-			icon: 'dairy-free'
-		}
-	],
+	// Ambiance Section
+	ambiance: {
+		headline: 'THE ART OF AMBIANCE',
+		description:
+			'Beyond the plate, we believe in the alchemy of atmosphere. From the curated acoustics to the bespoke leather booths, every element is designed to heighten your senses and create a sanctuary of modern luxury.',
+		features: [
+			{ icon: 'meeting_room', text: 'Three Exclusive Private Dining Suites' },
+			{ icon: 'wine_bar', text: 'Sommelier-Led Rare Vintage Cellar' },
+			{ icon: 'equalizer', text: 'Acoustically Perfected Sound Design' }
+		],
+		images: [
+			{ src: '/menu/duck-confit.jpg', alt: 'Private dining booth at night' },
+			{ src: '/menu/oysters.jpg', alt: 'Close up of a wine glass and decanter' },
+			{ src: '/menu/chocolate-torte.jpg', alt: 'Ambient restaurant lighting with warm tones' }
+		]
+	},
 
 	// Reservations
 	reservations: {
-		enabled: true,
-		provider: 'OpenTable',
-		url: 'https://opentable.com/restaurantname',
-		phone: '+1 (555) 123-4567',
-		note: 'Reservations recommended. Walk-ins welcome based on availability.',
-		policies: [
-			'Reservations held for 15 minutes past scheduled time',
-			'Parties of 8 or more require advance planning',
-			'Cancellations appreciated 24 hours in advance'
-		]
+		headline: 'Your table awaits.',
+		subtext:
+			'Secure your place at the forefront of modern gastronomy. Reservations are highly recommended.',
+		phone: '+44 20 7123 4567',
+		url: 'https://opentable.com/boldflavors'
 	},
 
 	// Private Events
 	privateEvents: {
 		enabled: true,
-		email: 'events@restaurantname.com',
-		phone: '+1 (555) 123-4567',
+		email: 'events@boldflavors.example',
 		spaces: [
 			{
-				name: 'Chef\'s Table',
+				name: "Chef's Table",
 				capacity: 8,
 				description: 'Intimate dining experience in the kitchen',
 				features: ['Custom menu', 'Wine pairing', 'Chef interaction']
 			},
 			{
-				name: 'Private Dining Room',
+				name: 'The Vault',
 				capacity: 24,
-				description: 'Dedicated space for gatherings and celebrations',
-				features: ['AV equipment', 'Flexible menu options', 'Private entrance']
+				description: 'Underground wine cellar transformed into private dining',
+				features: ['Sommelier service', 'Tasting menus', 'Climate controlled']
 			},
 			{
 				name: 'Full Buyout',
-				capacity: 80,
+				capacity: 120,
 				description: 'Exclusive use of entire restaurant',
-				features: ['Customized menu', 'Bar service', 'Event coordination']
+				features: ['Customized menu', 'Full bar service', 'Event coordination']
 			}
 		]
 	},
 
-	// Team
-	team: [
-		{
-			name: 'Chef Marcus Williams',
-			role: 'Executive Chef',
-			image: '/team/chef-williams.jpg',
-			bio: 'Trained at Le Cordon Bleu Paris. Formerly sous chef at Canlis. James Beard Award nominee 2022.',
-			specialties: ['Pacific Northwest Cuisine', 'Seasonal Menus', 'Butchery']
-		},
-		{
-			name: 'Emma Chen',
-			role: 'Pastry Chef',
-			image: '/team/chef-chen.jpg',
-			bio: 'Graduate of the Culinary Institute of America. Specializes in French pastry with Asian influences.',
-			specialties: ['French Pastry', 'Artisan Bread', 'Plated Desserts']
-		},
-		{
-			name: 'David Torres',
-			role: 'Sommelier',
-			image: '/team/sommelier-torres.jpg',
-			bio: 'Advanced Sommelier (Court of Master Sommeliers). 15 years experience curating wine programs.',
-			specialties: ['Pacific Northwest Wines', 'Natural Wine', 'Wine Pairing']
-		}
-	],
-
-	// Location & Parking
-	location: {
-		neighborhood: 'Pike Place Market',
-		landmarks: ['2 blocks from Pike Place Market', '5 minute walk from Seattle Waterfront'],
-		parking: [
-			'Street parking available (metered)',
-			'Pacific Place Garage (validation available)',
-			'Valet service Friday-Saturday evenings'
-		],
-		transit: ['Light Rail: Westlake Station (0.3 miles)', 'Multiple bus lines on 1st Avenue']
-	},
-
-	// Accolades
-	accolades: [
-		{
-			title: 'Michelin Bib Gourmand',
-			year: 2023,
-			organization: 'Michelin Guide'
-		},
-		{
-			title: 'Best New Restaurant',
-			year: 2019,
-			organization: 'Seattle Magazine'
-		},
-		{
-			title: 'James Beard Semifinalist',
-			year: 2022,
-			organization: 'James Beard Foundation'
-		}
-	],
-
-	// Gift Cards
-	giftCards: {
-		enabled: true,
-		url: 'https://example.com/gift-cards',
-		note: 'Available in any denomination. Perfect for any occasion.'
+	// Footer
+	footer: {
+		copyright: 'Bold Flavors Gastronomy Group',
+		links: [
+			{ label: 'Privacy', href: '/privacy' },
+			{ label: 'Terms', href: '/terms' },
+			{ label: 'Accessibility', href: '/accessibility' }
+		]
 	}
-} as const;
+};
 
 export type SiteConfig = typeof siteConfig;

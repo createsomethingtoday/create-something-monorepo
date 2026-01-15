@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -7,14 +7,16 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			pages: 'build',
-			assets: 'build',
-			fallback: '200.html',
-			precompress: false,
-			strict: false
+			routes: {
+				include: ['/*'],
+				exclude: ['<all>']
+			}
 		}),
 		prerender: {
-			entries: ['*']
+			handleHttpError: ({ path, referrer, message }) => {
+				// Warn but don't fail on 404s
+				console.warn(`${path} (from ${referrer}): ${message}`);
+			}
 		}
 	}
 };

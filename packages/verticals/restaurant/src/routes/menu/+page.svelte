@@ -1,365 +1,146 @@
 <script lang="ts">
 	/**
-	 * Menu Page - Restaurant
+	 * Menu Page - Bold Flavors Restaurant
 	 *
-	 * Complete menu organized by category.
-	 * Dietary filters and clear pricing.
+	 * Showcases chef's choice and full menu in bold editorial style.
 	 */
 
-	import { siteConfig } from '$lib/config/context';
-
-	// Group menu items by category
-	$: categorizedMenu = $siteConfig.menuCategories.map((category) => ({
-		...category,
-		items: $siteConfig.menuItems.filter((item) => item.category === category.slug)
-	}));
+	import { siteConfig } from '$lib/config/site';
 </script>
 
 <svelte:head>
-	<title>Menu - {$siteConfig.name}</title>
+	<title>Menu - {siteConfig.name}</title>
 	<meta
 		name="description"
-		content="Explore our seasonal menu featuring fresh, locally-sourced ingredients."
+		content="Explore our seasonal menu featuring artisan dishes and bold flavors."
 	/>
 </svelte:head>
 
-<main class="menu-page">
+<!-- Nav -->
+<nav class="fixed top-0 w-full z-50 border-b border-white/10 bg-background-dark/80 backdrop-blur-md">
+	<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+		<a href="/" class="flex items-center gap-3">
+			<span class="material-symbols-outlined text-accent text-3xl">flare</span>
+			<span class="text-xl font-black tracking-tighter uppercase">
+				{siteConfig.name.split(' ')[0]}
+				<span class="text-accent">{siteConfig.name.split(' ').slice(1).join(' ')}</span>
+			</span>
+		</a>
+		<a
+			href="/reservations"
+			class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg text-xs font-bold uppercase tracking-[0.2em] transition-all"
+		>
+			Book a Table
+		</a>
+	</div>
+</nav>
+
+<main class="bg-background-dark text-white min-h-screen pt-20">
 	<!-- Page Header -->
-	<section class="page-header">
-		<div class="container">
-			<h1>Menu</h1>
-			<p class="lead">
-				Seasonal ingredients, expertly prepared. Our menu changes with the harvest to bring you the
-				freshest flavors.
+	<section class="py-24 px-6 text-center border-b border-white/10">
+		<div class="max-w-3xl mx-auto">
+			<span class="text-accent text-sm font-bold tracking-[0.4em] uppercase mb-6 block">
+				Culinary Excellence
+			</span>
+			<h1 class="text-5xl md:text-7xl font-black tracking-tight mb-6">THE MENU</h1>
+			<p class="text-white/50 text-lg max-w-xl mx-auto">
+				Seasonal ingredients, smoke-infused techniques, and artistic plating. Our menu evolves with
+				the finest offerings each season brings.
 			</p>
 		</div>
 	</section>
 
-	<!-- Menu Sections -->
-	<div class="container">
-		{#each categorizedMenu as category}
-			{#if category.items.length > 0}
-				<section class="menu-category">
-					<div class="category-header">
-						<h2 class="category-title">{category.title}</h2>
-						{#if category.description}
-							<p class="category-description">{category.description}</p>
+	<!-- Chef's Choice -->
+	<section class="py-24 px-6 max-w-7xl mx-auto">
+		<h2 class="text-3xl md:text-4xl font-black tracking-tight mb-16 text-center">Chef's Choice</h2>
+
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+			{#each siteConfig.chefChoice as item}
+				<div class="group">
+					<div
+						class="aspect-[4/5] w-full overflow-hidden rounded-xl mb-6 bg-surface-dark relative"
+					>
+						{#if item.badge}
+							<div class="absolute top-4 right-4 z-20">
+								<span
+									class="bg-accent text-background-dark px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none"
+								>
+									{item.badge}
+								</span>
+							</div>
 						{/if}
+						<div
+							class="w-full h-full bg-center bg-no-repeat bg-cover group-hover:scale-110 transition-transform duration-500"
+							style="background-image: url('{item.image}');"
+						></div>
 					</div>
+					<div class="flex justify-between items-start mb-2">
+						<h3 class="text-2xl font-bold">{item.name}</h3>
+						<span class="text-accent font-bold">${item.price}</span>
+					</div>
+					<p class="text-white/40 font-light leading-relaxed">{item.description}</p>
+				</div>
+			{/each}
+		</div>
+	</section>
 
-					<div class="menu-items">
-						{#each category.items as item}
-							<article class="menu-item">
-								<div class="item-header">
-									<h3 class="item-name">{item.name}</h3>
-									<span class="item-price">${item.price}</span>
-								</div>
-								<p class="item-description">{item.description}</p>
-								{#if item.dietary && item.dietary.length > 0}
-									<div class="item-dietary">
-										{#each item.dietary as diet}
-											<span class="dietary-badge">{diet}</span>
-										{/each}
-									</div>
-								{/if}
-							</article>
-						{/each}
-					</div>
-				</section>
-			{/if}
-		{/each}
-	</div>
+	<!-- Menu Categories -->
+	<section class="py-24 px-6 bg-surface-dark/30">
+		<div class="max-w-4xl mx-auto">
+			<h2 class="text-3xl md:text-4xl font-black tracking-tight mb-16 text-center">Full Menu</h2>
 
-	<!-- Dietary Info -->
-	<section class="dietary-info">
-		<div class="container">
-			<h2>Dietary Accommodations</h2>
-			<p class="dietary-lead">
-				We're happy to accommodate dietary restrictions and preferences. Please inform your server
-				of any allergies or special requirements.
-			</p>
-			<div class="dietary-options">
-				{#each $siteConfig.dietaryOptions as option}
-					<div class="dietary-option">
-						<h3 class="dietary-title">{option.title}</h3>
-						<p class="dietary-description">{option.description}</p>
-					</div>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+				{#each siteConfig.menuCategories as category}
+					<a
+						href="/menu/{category.slug}"
+						class="p-8 bg-surface-dark border border-white/10 rounded-xl text-center hover:border-accent transition-colors group"
+					>
+						<h3 class="text-xl font-bold group-hover:text-accent transition-colors">
+							{category.title}
+						</h3>
+					</a>
 				{/each}
 			</div>
+
+			<p class="text-white/30 text-center mt-12 text-sm">
+				Please inform your server of any dietary restrictions or allergies.
+			</p>
 		</div>
 	</section>
 
 	<!-- Reservation CTA -->
-	<section class="menu-cta">
-		<div class="container">
-			<div class="cta-content">
-				<h2>Ready to dine?</h2>
-				<p>Reserve your table and experience these dishes yourself.</p>
-				<div class="cta-actions">
-					{#if $siteConfig.reservations.enabled && $siteConfig.reservations.url}
-						<a
-							href={$siteConfig.reservations.url}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="cta-primary"
-						>
-							Book on {$siteConfig.reservations.provider}
-						</a>
-					{/if}
-					<a href="tel:{$siteConfig.reservations.phone}" class="cta-secondary">
-						Call {$siteConfig.reservations.phone}
-					</a>
-				</div>
-			</div>
+	<section class="py-24 text-center px-6 bg-primary/10">
+		<div class="max-w-3xl mx-auto">
+			<h2 class="text-4xl md:text-5xl font-black tracking-tighter mb-6 uppercase italic">
+				Ready to taste?
+			</h2>
+			<p class="text-white/60 text-xl mb-10 max-w-lg mx-auto">
+				Reserve your table and experience these bold flavors yourself.
+			</p>
+			<a
+				href="/reservations"
+				class="bg-primary text-white px-12 py-6 rounded-lg text-sm font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl shadow-primary/40 inline-block"
+			>
+				Make a Reservation
+			</a>
 		</div>
 	</section>
 </main>
 
-<style>
-	.menu-page {
-		background: var(--color-bg-pure);
-	}
-
-	.container {
-		max-width: 900px;
-		margin: 0 auto;
-		padding: 0 var(--space-md);
-	}
-
-	/* Page Header */
-	.page-header {
-		padding: var(--space-2xl) 0 var(--space-xl);
-		text-align: center;
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.page-header h1 {
-		font-size: var(--text-display);
-		font-weight: var(--font-light);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-		letter-spacing: -0.02em;
-	}
-
-	.lead {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		max-width: 600px;
-		margin: 0 auto;
-		line-height: 1.6;
-	}
-
-	/* Menu Category */
-	.menu-category {
-		padding: var(--space-2xl) 0;
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.menu-category:last-of-type {
-		border-bottom: none;
-	}
-
-	.category-header {
-		margin-bottom: var(--space-xl);
-		text-align: center;
-	}
-
-	.category-title {
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
-	}
-
-	.category-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		font-style: italic;
-	}
-
-	/* Menu Items */
-	.menu-items {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-lg);
-	}
-
-	.menu-item {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		transition: border-color var(--duration-micro) var(--ease-standard);
-	}
-
-	.menu-item:hover {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.item-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		margin-bottom: var(--space-xs);
-		gap: var(--space-sm);
-	}
-
-	.item-name {
-		font-size: var(--text-h4);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-	}
-
-	.item-price {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
-		white-space: nowrap;
-	}
-
-	.item-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		margin-bottom: var(--space-sm);
-	}
-
-	.item-dietary {
-		display: flex;
-		gap: var(--space-xs);
-		flex-wrap: wrap;
-	}
-
-	.dietary-badge {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		border: 1px solid var(--color-border-default);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		text-transform: lowercase;
-	}
-
-	/* Dietary Info */
-	.dietary-info {
-		padding: var(--space-2xl) 0;
-		background: var(--color-bg-elevated);
-	}
-
-	.dietary-info h2 {
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		text-align: center;
-		margin-bottom: var(--space-sm);
-	}
-
-	.dietary-lead {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		text-align: center;
-		margin: 0 auto var(--space-xl);
-		max-width: 600px;
-		line-height: 1.6;
-	}
-
-	.dietary-options {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-md);
-	}
-
-	.dietary-option {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-	}
-
-	.dietary-title {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.dietary-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		line-height: 1.5;
-	}
-
-	/* CTA Section */
-	.menu-cta {
-		padding: var(--space-2xl) 0;
-	}
-
-	.cta-content {
-		text-align: center;
-		max-width: 600px;
-		margin: 0 auto;
-	}
-
-	.cta-content h2 {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
-	}
-
-	.cta-content p {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xl);
-	}
-
-	.cta-actions {
-		display: flex;
-		gap: var(--space-md);
-		justify-content: center;
-		flex-wrap: wrap;
-	}
-
-	.cta-primary,
-	.cta-secondary {
-		padding: var(--space-sm) var(--space-lg);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
-		transition: all var(--duration-micro) var(--ease-standard);
-		text-decoration: none;
-		display: inline-block;
-	}
-
-	.cta-primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border: 1px solid var(--color-fg-primary);
-	}
-
-	.cta-primary:hover {
-		background: var(--color-fg-secondary);
-		border-color: var(--color-fg-secondary);
-	}
-
-	.cta-secondary {
-		background: transparent;
-		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-emphasis);
-	}
-
-	.cta-secondary:hover {
-		background: var(--color-hover);
-		border-color: var(--color-border-strong);
-	}
-
-	@media (max-width: 480px) {
-		.cta-actions {
-			flex-direction: column;
-		}
-
-		.cta-primary,
-		.cta-secondary {
-			width: 100%;
-		}
-	}
-</style>
+<!-- Footer -->
+<footer class="bg-background-dark border-t border-white/5 py-12 px-6">
+	<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+		<a href="/" class="flex items-center gap-3">
+			<span class="material-symbols-outlined text-accent text-2xl">flare</span>
+			<span class="text-lg font-black tracking-tighter uppercase">
+				{siteConfig.name.split(' ')[0]}
+				<span class="text-accent">{siteConfig.name.split(' ').slice(1).join(' ')}</span>
+			</span>
+		</a>
+		<div class="flex gap-10 text-xs font-bold uppercase tracking-widest text-white/20">
+			{#each siteConfig.footer.links as link}
+				<a href={link.href} class="hover:text-white transition-colors">{link.label}</a>
+			{/each}
+		</div>
+	</div>
+</footer>

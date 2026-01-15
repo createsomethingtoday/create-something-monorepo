@@ -3064,7 +3064,54 @@ function extractElementBySelector(html: string, selector: string): string {
 }
 
 /**
+ * Check if a rule has meaningful visual properties (not just layout)
+ * We want to show UI components, not generic containers
+ */
+function hasVisualProperties(properties: string[]): boolean {
+  const visualPatterns = [
+    /background(-color|-image|-gradient)?:/i,
+    /border(-radius|-color|-width)?:/i,
+    /box-shadow:/i,
+    /color:/i,
+    /font-(family|weight|size):/i,
+    /text-(shadow|decoration|transform):/i,
+    /transform:/i,
+    /opacity:/i,
+    /filter:/i,
+    /animation:/i,
+    /transition:/i,
+    /gradient/i,
+  ];
+  
+  // Must have at least 2 visual properties
+  let visualCount = 0;
+  for (const prop of properties) {
+    if (visualPatterns.some(pattern => pattern.test(prop))) {
+      visualCount++;
+    }
+  }
+  return visualCount >= 2;
+}
+
+/**
+ * Check if selector is a generic layout/utility class
+ */
+function isGenericSelector(selector: string): boolean {
+  const genericPatterns = [
+    /^\.(container|wrapper|row|col|column|grid|flex)/i,
+    /^\.(section|main|header|footer|nav|aside)/i,
+    /^\.(loader|loading|spinner)/i,
+    /^\.(hidden|visible|show|hide)/i,
+    /^\.(w-|wf-)/i, // Webflow framework
+    /^\[data-/i, // Data attributes (often state-based)
+    /^\.is-/i, // State classes
+  ];
+  return genericPatterns.some(pattern => pattern.test(selector));
+}
+
+/**
  * Generate visual evidence for the top identical rules
+ * Only includes meaningful UI components, not generic layout
  */
 function generateVisualEvidence(
   identicalRules: IdenticalRule[],
@@ -3075,13 +3122,15 @@ function generateVisualEvidence(
 ): VisualEvidence[] {
   const evidence: VisualEvidence[] = [];
   
-  // Take top 5 most significant identical rules (by property count)
-  const topRules = identicalRules
-    .filter(r => r.properties.length >= 3) // Only rules with 3+ properties
+  // Filter for meaningful UI components
+  const meaningfulRules = identicalRules
+    .filter(r => r.properties.length >= 3) // 3+ properties
+    .filter(r => !isGenericSelector(r.selector)) // Not generic layout
+    .filter(r => hasVisualProperties(r.properties)) // Has visual styling
     .sort((a, b) => b.properties.length - a.properties.length)
     .slice(0, 5);
   
-  for (const rule of topRules) {
+  for (const rule of meaningfulRules) {
     const cssBlock = `${rule.selector} {\n  ${rule.properties.join(';\n  ')};\n}`;
     
     evidence.push({
@@ -4291,11 +4340,11 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
             Visual Evidence
           </h2>
           <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
-            Live preview of the identical CSS rules. These elements use the <strong>exact same styles</strong>.
+            Live preview of identical CSS rules with <strong>meaningful visual styling</strong> (colors, borders, shadows, fonts).
           </p>
           <p style="color: var(--muted); font-size: 0.75rem; margin-bottom: 1rem; opacity: 0.7;">
             <i data-lucide="info" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i>
-            Note: Hidden elements (display: none, visibility: hidden) are forced visible for preview purposes.
+            Generic layout classes (containers, grids, loaders) are excluded. Only UI components shown.
           </p>
           \${data.visualEvidence.map(evidence => \`
             <div class="visual-card">
