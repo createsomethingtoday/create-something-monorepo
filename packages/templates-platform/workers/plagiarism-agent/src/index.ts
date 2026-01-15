@@ -3049,7 +3049,8 @@ function extractChildSignature(html: string, startIndex: number): string {
 
 /**
  * Compare HTML structures and find matching patterns
- * Returns matches weighted by significance (depth)
+ * IMPORTANT: Generic patterns like div[div] are filtered out as noise
+ * Only specific/unique patterns are considered meaningful
  */
 function findStructuralMatches(html1: string, html2: string): {
   matches: Array<{ pattern: string; level: string; weight: number; count: number }>;
@@ -3058,13 +3059,33 @@ function findStructuralMatches(html1: string, html2: string): {
   const struct1 = analyzeHtmlStructure(html1);
   const struct2 = analyzeHtmlStructure(html2);
   
-  // Create signatures from structure
+  // Generic patterns that are too common to be meaningful
+  const genericPatterns = new Set([
+    'div[div]', 'div[a]', 'div[p]', 'div[span]', 'div[img]',
+    'div[div,div]', 'div[div,div,div]', 'div[a,a]', 'div[a,a,a]',
+    'section[div]', 'article[div]', 'main[div]', 'footer[div]', 'header[div]',
+    'nav[div]', 'nav[a]', 'nav[a,a]', 'nav[a,a,a]', 'nav[a,a,a,a]',
+    'ul[li]', 'ul[li,li]', 'ul[li,li,li]', 'ol[li]',
+    'html[head,body]', 'head[meta]', 'body[div]', 'body[header,main,footer]'
+  ]);
+  
+  // Create signatures from structure (filtering generic patterns)
   const sigs1 = new Map<string, { level: string; weight: number; count: number }>();
   const sigs2 = new Map<string, { level: string; weight: number; count: number }>();
   
   for (const s of struct1) {
     if (s.childSignature) {
       const key = `${s.tag}[${s.childSignature}]`;
+      
+      // Skip generic patterns
+      if (genericPatterns.has(key)) continue;
+      
+      // Require at least 3 children or specific semantic elements to be meaningful
+      const childCount = s.childSignature.split(',').length;
+      const hasSemanticChildren = /h[1-6]|nav|header|footer|section|article|form/.test(s.childSignature);
+      
+      if (childCount < 3 && !hasSemanticChildren) continue;
+      
       const existing = sigs1.get(key);
       if (existing) {
         existing.count++;
@@ -3078,6 +3099,14 @@ function findStructuralMatches(html1: string, html2: string): {
   for (const s of struct2) {
     if (s.childSignature) {
       const key = `${s.tag}[${s.childSignature}]`;
+      
+      if (genericPatterns.has(key)) continue;
+      
+      const childCount = s.childSignature.split(',').length;
+      const hasSemanticChildren = /h[1-6]|nav|header|footer|section|article|form/.test(s.childSignature);
+      
+      if (childCount < 3 && !hasSemanticChildren) continue;
+      
       const existing = sigs2.get(key);
       if (existing) {
         existing.count++;
@@ -3861,16 +3890,17 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         <h2>Similarity Breakdown</h2>
         <div class="breakdown-grid">
           \${renderBreakdownItem('Identical Rules', data.identicalRules ? Math.min(data.identicalRules.length / 10, 1) : 0)}
-          \${renderBreakdownItem('HTML Structure', data.structuralMatches ? data.structuralMatches.score : 0)}
           \${renderBreakdownItem('CSS Properties', data.breakdown.cssProperties.similarity)}
           \${renderBreakdownItem('Color Palette', data.breakdown.colors.similarity)}
+          \${renderBreakdownItem('Unique Patterns', data.structuralMatches ? data.structuralMatches.score : 0)}
         </div>
         
         \${data.structuralMatches && data.structuralMatches.matches.length > 0 ? \`
-        <h2>Structural Matches</h2>
+        <h2>Unique Structural Patterns</h2>
         <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
-          Matching HTML patterns weighted by depth. <strong>Sections/pages</strong> copied are more significant 
-          than small nested elements.
+          Non-generic HTML patterns that appear in both templates. Common patterns like 
+          <code style="background: var(--surface); padding: 0.1rem 0.3rem; border-radius: 3px;">div[div]</code> are filtered out.
+          These become significant when <strong>combined with matching CSS properties</strong>.
         </p>
         <div class="structural-matches">
           \${data.structuralMatches.matches.map(m => \`
