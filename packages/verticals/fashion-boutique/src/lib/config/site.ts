@@ -1,130 +1,201 @@
+/**
+ * Site Configuration - Fashion Boutique (The Collection)
+ *
+ * Voice: Editorial, minimalist, high-fashion
+ * Structure: Asymmetric product grid, sidebar filters, quick-add
+ * Design: Light theme with sage green primary (#495a4c)
+ */
+
 export interface Product {
 	id: string;
 	name: string;
+	subtitle: string;
 	price: number;
-	category: string;
 	image: string;
-	description?: string;
+	category: string;
+	isNew?: boolean;
 }
 
 export interface Category {
-	id: string;
-	name: string;
 	slug: string;
+	name: string;
+	count: number;
 }
 
-export interface SiteConfig {
-	// Branding
+export interface SocialLink {
+	name: string;
+	url: string;
+}
+
+export interface FooterLink {
+	label: string;
+	href: string;
+}
+
+export interface FashionConfig {
+	// Identity
 	name: string;
 	tagline: string;
+	description: string;
+	icon: string;
 
-	// Content
+	// Hero
+	hero: {
+		title: string[];
+		accent: string;
+	};
+
+	// Navigation
+	navLinks: { label: string; href: string }[];
+
+	// Categories
 	categories: Category[];
-	products: {
-		new: Product[];
-		iconic: Product[];
-	};
-	gallery: string[];
 
-	// Contact
-	contact: {
-		email: string;
-		phone?: string;
-		address?: string;
+	// Products
+	products: Product[];
+
+	// Newsletter
+	newsletter: {
+		headline: string;
+		description: string;
 	};
 
-	// Social
-	social: {
-		instagram?: string;
-		pinterest?: string;
-		twitter?: string;
+	// Footer
+	footer: {
+		description: string;
+		navigation: FooterLink[];
+		assistance: FooterLink[];
+		social: SocialLink[];
+		copyright: string;
 	};
 
-	// WORKWAY Integration
-	workflows?: {
-		orderNotification?: string;
-		inventorySync?: string;
-		emailCapture?: string;
-	};
+	// SEO
+	url: string;
+	locale: string;
 }
 
-export const siteDefaults: SiteConfig = {
-	name: 'Fashion Boutique',
-	tagline: 'Timeless design, curated with care',
-	categories: [
-		{ id: '1', name: 'JEWELRY', slug: 'jewelry' },
-		{ id: '2', name: 'SHOES', slug: 'shoes' },
-		{ id: '3', name: 'READY TO WEAR', slug: 'ready-to-wear' },
-		{ id: '4', name: 'BAGS', slug: 'bags' },
-		{ id: '5', name: 'ACCESSORIES', slug: 'accessories' },
-		{ id: '6', name: 'GARDEROB', slug: 'garderob' },
-		{ id: '7', name: 'SIGNATURE PIECES', slug: 'signature-pieces' }
+/**
+ * Demo Configuration: The Collection Boutique
+ * Editorial fashion with sage green accents
+ */
+export const siteConfig: FashionConfig = {
+	// Identity
+	name: 'Boutique',
+	tagline: 'The New Collection',
+	description:
+		'Curating high-fashion essentials with a focus on longevity and artistic expression.',
+	icon: 'filter_vintage',
+
+	// Hero
+	hero: {
+		title: ['The', 'Collection'],
+		accent: 'New'
+	},
+
+	// Navigation
+	navLinks: [
+		{ label: 'Shop', href: '/shop' },
+		{ label: 'Editorial', href: '/editorial' },
+		{ label: 'Sustainability', href: '/sustainability' },
+		{ label: 'Archive', href: '/archive' }
 	],
-	products: {
-		new: [
-			{
-				id: '1',
-				name: 'RELAXED WOOL COAT',
-				price: 895,
-				category: 'OUTERWEAR',
-				image: '/images/product-wool-coat.png'
-			},
-			{
-				id: '2',
-				name: 'HIGH-WAIST TROUSERS',
-				price: 425,
-				category: 'PANTS',
-				image: '/images/product-trousers.png'
-			},
-			{
-				id: '3',
-				name: 'SILK WRAP DRESS',
-				price: 695,
-				category: 'DRESSES',
-				image: '/images/product-wrap-dress.png'
-			},
-			{
-				id: '4',
-				name: 'OVERSIZED SHIRT DRESS',
-				price: 545,
-				category: 'DRESSES',
-				image: '/images/product-shirt-dress.png'
-			}
+
+	// Categories
+	categories: [
+		{ slug: 'all', name: 'All Pieces', count: 48 },
+		{ slug: 'new', name: 'New Arrivals', count: 0 },
+		{ slug: 'outerwear', name: 'Outerwear', count: 12 },
+		{ slug: 'knitwear', name: 'Knitwear', count: 8 },
+		{ slug: 'essentials', name: 'Essentials', count: 15 },
+		{ slug: 'archive', name: 'Archive', count: 22 }
+	],
+
+	// Products
+	products: [
+		{
+			id: 'mantle-wool-coat',
+			name: 'Mantle Wool Coat',
+			subtitle: 'Slate Grey',
+			price: 1250,
+			image: '/images/product-wool-coat.png',
+			category: 'outerwear',
+			isNew: true
+		},
+		{
+			id: 'essential-blazer',
+			name: 'Essential Blazer',
+			subtitle: 'Structured Wool',
+			price: 850,
+			image: '/images/iconic-blazer.png',
+			category: 'essentials'
+		},
+		{
+			id: 'archive-trousers',
+			name: 'Archive Trousers',
+			subtitle: 'Loose Fit Silk',
+			price: 420,
+			image: '/images/product-trousers.png',
+			category: 'archive'
+		},
+		{
+			id: 'silk-slip-dress',
+			name: 'Silk Slip Dress',
+			subtitle: 'Champagne Noir',
+			price: 590,
+			image: '/images/product-wrap-dress.png',
+			category: 'essentials'
+		},
+		{
+			id: 'structured-tote',
+			name: 'Structured Tote',
+			subtitle: 'Handcrafted Calfskin',
+			price: 1100,
+			image: '/images/iconic-leather-jacket.png',
+			category: 'archive'
+		},
+		{
+			id: 'ribbed-knitwear',
+			name: 'Ribbed Knitwear',
+			subtitle: 'Merino & Cashmere',
+			price: 310,
+			image: '/images/iconic-sweater.png',
+			category: 'knitwear'
+		}
+	],
+
+	// Newsletter
+	newsletter: {
+		headline: 'Newsletter',
+		description: 'Join our mailing list for early access to the Archive.'
+	},
+
+	// Footer
+	footer: {
+		description:
+			'Curating high-fashion essentials with a focus on longevity and artistic expression.',
+		navigation: [
+			{ label: 'Shop All', href: '/shop' },
+			{ label: 'New Arrivals', href: '/shop?filter=new' },
+			{ label: 'Sustainability', href: '/sustainability' },
+			{ label: 'Our Archive', href: '/archive' }
 		],
-		iconic: [
-			{
-				id: '5',
-				name: 'TAILORED BLAZER',
-				price: 995,
-				category: 'SIGNATURE',
-				image: '/images/iconic-blazer.png'
-			},
-			{
-				id: '6',
-				name: 'CASHMERE SWEATER',
-				price: 625,
-				category: 'SIGNATURE',
-				image: '/images/iconic-sweater.png'
-			},
-			{
-				id: '7',
-				name: 'LEATHER JACKET',
-				price: 1895,
-				category: 'SIGNATURE',
-				image: '/images/iconic-leather-jacket.png'
-			},
-			{
-				id: '8',
-				name: 'MIDI SKIRT',
-				price: 495,
-				category: 'SIGNATURE',
-				image: '/images/iconic-midi-skirt.png'
-			}
-		]
+		assistance: [
+			{ label: 'Shipping & Returns', href: '/shipping' },
+			{ label: 'Size Guide', href: '/size-guide' },
+			{ label: 'Contact Us', href: '/contact' },
+			{ label: 'Privacy Policy', href: '/privacy' }
+		],
+		social: [
+			{ name: 'Instagram', url: 'https://instagram.com/boutique' },
+			{ name: 'Vimeo', url: 'https://vimeo.com/boutique' },
+			{ name: 'Pinterest', url: 'https://pinterest.com/boutique' }
+		],
+		copyright: 'Boutique Editorial'
 	},
-	gallery: ['/images/gallery-1.png', '/images/gallery-2.png', '/images/gallery-3.png'],
-	contact: {
-		email: 'hello@fashionboutique.com'
-	},
-	social: {}
+
+	// SEO
+	url: 'https://boutique.example',
+	locale: 'en_US'
 };
+
+export type SiteConfig = typeof siteConfig;

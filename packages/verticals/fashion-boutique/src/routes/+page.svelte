@@ -1,1143 +1,270 @@
 <script lang="ts">
-	import { Menu, X, Instagram, Mail } from 'lucide-svelte';
-	import { onMount } from 'svelte';
-	import { siteConfig } from '$lib/config/runtime';
+	/**
+	 * Fashion Boutique - The Collection
+	 *
+	 * Editorial design with asymmetric product grid
+	 * Light theme with sage green (#495a4c) primary
+	 * Epilogue typography for high-fashion feel
+	 */
 
-	let mobileMenuOpen = false;
-	let currentSlide = 0;
-	let galleryImages: HTMLElement;
+	import { siteConfig } from '$lib/config/site';
 
-	// Gallery slider functions
-	function slideGallery(direction: number) {
-		const totalSlides = $siteConfig.gallery.length;
-		currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
-		updateSlider();
-	}
+	// Get current year for footer
+	const currentYear = new Date().getFullYear();
 
-	function goToSlide(index: number) {
-		currentSlide = index;
-		updateSlider();
-	}
+	// Active category filter
+	let activeCategory = $state('new');
 
-	function updateSlider() {
-		if (galleryImages) {
-			const slideWidth = galleryImages.clientWidth;
-			galleryImages.scrollTo({
-				left: currentSlide * (slideWidth + 24), // 24px = gap
-				behavior: 'smooth'
-			});
-		}
-	}
-
-	// Scroll-reveal animation & slider initialization
-	onMount(() => {
-		// Intersection Observer for scroll animations
-		const observer = new IntersectionObserver(
-			(entries) => {
-				entries.forEach((entry) => {
-					if (entry.isIntersecting) {
-						entry.target.classList.add('visible');
-					}
-				});
-			},
-			{
-				threshold: 0.1,
-				rootMargin: '0px 0px -100px 0px'
-			}
-		);
-
-		document.querySelectorAll('.animate-on-scroll').forEach((el) => {
-			observer.observe(el);
-		});
-
-		// Touch swipe support for gallery slider
-		let touchStartX = 0;
-		let touchEndX = 0;
-
-		if (galleryImages) {
-			galleryImages.addEventListener('touchstart', (e) => {
-				touchStartX = e.changedTouches[0].screenX;
-			});
-
-			galleryImages.addEventListener('touchend', (e) => {
-				touchEndX = e.changedTouches[0].screenX;
-				handleSwipe();
-			});
-		}
-
-		function handleSwipe() {
-			const swipeThreshold = 50;
-			if (touchStartX - touchEndX > swipeThreshold) {
-				slideGallery(1); // Swipe left, go next
-			} else if (touchEndX - touchStartX > swipeThreshold) {
-				slideGallery(-1); // Swipe right, go prev
-			}
-		}
-
-		return () => observer.disconnect();
-	});
+	// Cart count (demo)
+	let cartCount = $state(2);
 </script>
 
 <svelte:head>
-	<title>{$siteConfig.name} — {$siteConfig.tagline}</title>
-	<meta name="description" content={$siteConfig.tagline} />
-
-	<!-- Performance optimizations -->
-	{#if $siteConfig.products.new[0]}
-		<link rel="preload" href={$siteConfig.products.new[0].image} as="image" />
-	{/if}
-	{#if $siteConfig.products.new[1]}
-		<link rel="preload" href={$siteConfig.products.new[1].image} as="image" />
-	{/if}
-	{#if $siteConfig.gallery[0]}
-		<link rel="preload" href={$siteConfig.gallery[0]} as="image" />
-	{/if}
-
-	<!-- Open Graph / Social -->
-	<meta property="og:type" content="website" />
-	<meta property="og:title" content="{$siteConfig.name} — {$siteConfig.tagline}" />
-	<meta property="og:description" content={$siteConfig.tagline} />
-	{#if $siteConfig.gallery[0]}
-		<meta property="og:image" content={$siteConfig.gallery[0]} />
-	{/if}
-	<meta name="twitter:card" content="summary_large_image" />
+	<title>{siteConfig.name} | {siteConfig.tagline}</title>
+	<meta name="description" content={siteConfig.description} />
 </svelte:head>
 
-<!-- Navigation with mix-blend-mode -->
-<nav class="nav mix-blend-invert">
-	<div class="nav-container">
-		<div class="nav-links-left">
-			<a href="/about">ABOUT</a>
-			<a href="/campaign">CAMPAIGN</a>
-		</div>
-
-		<div class="nav-logo">
-			<div class="logo-symbol"></div>
-		</div>
-
-		<button class="mobile-menu-button" on:click={() => mobileMenuOpen = !mobileMenuOpen}>
-			{#if mobileMenuOpen}
-				<X size={24} />
-			{:else}
-				<Menu size={24} />
-			{/if}
-		</button>
-
-		<div class="nav-links-right" class:open={mobileMenuOpen}>
-			<a href="/shop">SHOP</a>
-			<a href="/contact">CONTACT</a>
-		</div>
-	</div>
-</nav>
-
-<!-- Hero Section with layered background -->
-<section class="hero">
-	<div class="hero-bg-image"></div>
-	<div class="hero-content animate-fade-in">
-		<div class="hero-meta">
-			<div class="hero-meta-left">
-				<p class="hero-description">
-					{$siteConfig.tagline}
-				</p>
-			</div>
-		</div>
-		<h1 class="hero-title">{$siteConfig.name}</h1>
-	</div>
-</section>
-
-<!-- Design Statement with Layered Images -->
-<section class="design-statement section animate-on-scroll">
-	<div class="container">
-		<div class="statement-grid">
-			<div class="statement-text">
-				<h2>DESIGNED WITH<br/>RESTRAINT AND<br/>INTENTION</h2>
-			</div>
-			<div class="statement-images">
-				<div class="statement-img-back">
-					<img src="/images/statement-back.png" alt="Design Statement" loading="lazy" />
-				</div>
-				<div class="statement-img-front">
-					<img src="/images/statement-front.png" alt="Design Statement Detail" loading="lazy" />
-				</div>
-			</div>
-			<div class="statement-description">
-				<h3>OUR PHILOSOPHY</h3>
-				<p>
-					{$siteConfig.tagline}. Each piece is selected for enduring design,
-					refined materials, and effortless versatility.
-				</p>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- Categories with Background Watermark -->
-<section class="categories section animate-on-scroll">
-	<span class="text-watermark" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">COLLECTION</span>
-	<div class="container">
-		<div class="categories-grid stagger-children stagger-quick">
-			{#each $siteConfig.categories as category, i}
-				<div class="category-item" style="--index: {i}">
-					<span class="category-number">{String(i + 1).padStart(2, '0')}</span>
-					<a href="/category/{category.slug}" class="category-link underline-reveal">
-						{category.name}
-					</a>
-				</div>
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- New In with Border Detail -->
-<section class="new-in section animate-on-scroll">
-	<div class="container">
-		<div class="section-header">
-			<h3 class="section-title">NEW IN</h3>
-			<p class="section-subtitle">
-				DISCOVER READY TO WEAR, SHOES, BAGS, ACCESSORIES AND JEWELRY FROM THE PRE SPRING 26 COLLECTION.
-			</p>
-		</div>
-		<div class="products-grid stagger-children stagger-standard">
-			{#each $siteConfig.products.new as product, i}
-				<a href="/product/{product.id}" class="product-card hover-lift" style="--index: {i}">
-					<div class="product-image grayscale-scale-hover">
-						<img src={product.image} alt={product.name} loading="lazy" />
-					</div>
-					<div class="product-info">
-						<div class="product-details">
-							<span class="product-name">{product.name}</span>
-							<span class="product-price">${product.price}</span>
-						</div>
-					</div>
-				</a>
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- Gallery Section - Dark -->
-<section class="gallery section animate-on-scroll">
-	<div class="gallery-label">01 {$siteConfig.name}</div>
-	<div class="gallery-content">
-		<div class="gallery-text">
-			<div class="gallery-icon"></div>
-			<p class="gallery-title">{$siteConfig.name}</p>
-			<p class="gallery-description">
-				{$siteConfig.tagline}
-			</p>
-		</div>
-		<div class="gallery-slider">
-			<button class="slider-arrow slider-prev" aria-label="Previous image" on:click={() => slideGallery(-1)}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M15 18l-6-6 6-6"/>
-				</svg>
-			</button>
-			<div class="gallery-images" bind:this={galleryImages}>
-				{#each $siteConfig.gallery as image, i}
-					<div class="gallery-item hover-card">
-						<img src={image} alt="{$siteConfig.name} Gallery {i + 1}" loading="lazy" />
-					</div>
+<!-- Top Navigation Bar -->
+<header
+	class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800"
+>
+	<div class="max-w-[1440px] mx-auto px-6 lg:px-12 flex h-20 items-center justify-between">
+		<div class="flex items-center gap-12">
+			<a href="/" class="flex items-center gap-2">
+				<span class="material-symbols-outlined text-primary text-3xl">{siteConfig.icon}</span>
+				<h2 class="text-xl font-extrabold tracking-tighter uppercase">{siteConfig.name}</h2>
+			</a>
+			<nav class="hidden md:flex items-center gap-8 uppercase text-[11px] font-bold tracking-[0.2em]">
+				{#each siteConfig.navLinks as link}
+					<a href={link.href} class="hover:text-primary transition-colors">{link.label}</a>
 				{/each}
-			</div>
-			<button class="slider-arrow slider-next" aria-label="Next image" on:click={() => slideGallery(1)}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M9 18l6-6-6-6"/>
-				</svg>
-			</button>
-			<div class="slider-dots">
-				{#each $siteConfig.gallery as _, i}
-					<button class="slider-dot {currentSlide === i ? 'active' : ''}" aria-label="Go to image {i + 1}" on:click={() => goToSlide(i)}></button>
-				{/each}
-			</div>
+			</nav>
 		</div>
-	</div>
-</section>
-
-<!-- Icons of the Wardrobe with Border Frame -->
-<section class="icons section animate-on-scroll">
-	<div class="container">
-		<div class="icons-wrapper">
-			<div class="icons-text">
-				<h2>SIGNATURE<br/>PIECES</h2>
-				<p>
-					TIMELESS PIECES SELECTED FOR ENDURING DESIGN, REFINED MATERIALS, AND EFFORTLESS
-					VERSATILITY. WORN SEASON AFTER SEASON AS MODERN ESSENTIALS.
-				</p>
-			</div>
-			<div class="icons-image">
-				<div class="icons-frame editorial-frame">
-					<img src="/images/icons-feature.png" alt="Icons of the Wardrobe" loading="lazy" />
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- Timeless Style with Background Text -->
-<section class="timeless section animate-on-scroll">
-	<div class="container">
-		<h2 class="timeless-title">
-			TIMELESS STYLE<br/>
-			CRAFTED FOR<br/>
-			MODERN EXPRESSION
-		</h2>
-		<div class="timeless-grid-wrapper">
-			<span class="text-watermark" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">SIGNATURE</span>
-			<div class="products-grid timeless-grid stagger-children stagger-standard">
-				{#each $siteConfig.products.iconic as product, i}
-					<div class="product-card timeless-card hover-lift" style="--offset: {i * 20}px; --index: {i}">
-						<div class="product-image grayscale-scale-hover">
-							<img src={product.image} alt={product.name} loading="lazy" />
-						</div>
-						<div class="product-info">
-							<div class="product-details">
-								<span class="product-name">{product.name}</span>
-								<span class="product-price">${product.price}</span>
-							</div>
-						</div>
-					</div>
-				{/each}
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- Newsletter -->
-<section class="newsletter section animate-on-scroll">
-	<div class="container">
-		<div class="newsletter-content">
-			<div class="newsletter-text">
-				<h2>JOIN OUR NEWSLETTER</h2>
-				<p>For quiet updates on new arrivals, editorial stories, and seasonal highlights.</p>
-			</div>
-			<form class="newsletter-form">
+		<div class="flex items-center gap-6">
+			<div class="relative hidden sm:block">
+				<span
+					class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-xl"
+					>search</span
+				>
 				<input
-					type="email"
-					placeholder="SIGN UP WITH YOUR EMAIL"
-					class="newsletter-input"
-					required
+					type="text"
+					class="bg-neutral-100 dark:bg-neutral-800 border-none rounded-full py-2 pl-10 pr-4 text-sm w-48 focus:ring-1 focus:ring-primary focus:w-64 transition-all duration-300"
+					placeholder="Search..."
 				/>
-				<button type="submit" class="newsletter-button press-effect">
-					SUBSCRIBE
+			</div>
+			<div class="flex gap-4">
+				<button
+					class="relative p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+				>
+					<span class="material-symbols-outlined">shopping_bag</span>
+					{#if cartCount > 0}
+						<span
+							class="absolute top-1 right-1 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center"
+						>
+							{cartCount}
+						</span>
+					{/if}
 				</button>
-			</form>
+				<button
+					class="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+				>
+					<span class="material-symbols-outlined">person</span>
+				</button>
+			</div>
 		</div>
 	</div>
-</section>
+</header>
+
+<main class="max-w-[1440px] mx-auto px-6 lg:px-12 py-12">
+	<!-- Hero Title -->
+	<div class="mb-16">
+		<h1
+			class="text-[clamp(3rem,10vw,8rem)] font-extrabold leading-[0.85] tracking-tighter text-center uppercase break-words"
+		>
+			{siteConfig.hero.title[0]}<br />
+			<span class="text-primary italic font-light lowercase px-4">{siteConfig.hero.accent}</span>
+			{siteConfig.hero.title[1]}
+		</h1>
+		<div class="flex justify-center mt-6">
+			<div class="h-[1px] w-24 bg-primary/30"></div>
+		</div>
+	</div>
+
+	<div class="flex flex-col lg:flex-row gap-16">
+		<!-- Sidebar Navigation -->
+		<aside class="w-full lg:w-64 flex-shrink-0">
+			<div class="sticky top-32">
+				<div class="mb-12">
+					<h3 class="text-xs font-bold tracking-[0.3em] uppercase mb-6 text-neutral-400">
+						Filter By
+					</h3>
+					<nav class="flex flex-col gap-4">
+						{#each siteConfig.categories as category}
+							<button
+								class="group flex items-center justify-between text-sm font-medium transition-colors text-left"
+								class:text-primary={activeCategory === category.slug}
+								onclick={() => (activeCategory = category.slug)}
+							>
+								<span class="hover:text-primary">{category.name}</span>
+								{#if activeCategory === category.slug}
+									<span class="material-symbols-outlined text-sm">check</span>
+								{:else if category.count > 0}
+									<span class="text-[10px] text-neutral-400 group-hover:text-primary">
+										{String(category.count).padStart(2, '0')}
+									</span>
+								{/if}
+							</button>
+						{/each}
+					</nav>
+				</div>
+				<div class="mb-12">
+					<h3 class="text-xs font-bold tracking-[0.3em] uppercase mb-6 text-neutral-400">Sort</h3>
+					<div class="flex flex-wrap gap-3">
+						<button
+							class="text-[11px] uppercase tracking-widest px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-full hover:border-primary transition-all"
+						>
+							Latest
+						</button>
+						<button
+							class="text-[11px] uppercase tracking-widest px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-full hover:border-primary transition-all"
+						>
+							Price: Low
+						</button>
+						<button
+							class="text-[11px] uppercase tracking-widest px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-full hover:border-primary transition-all"
+						>
+							Price: High
+						</button>
+					</div>
+				</div>
+			</div>
+		</aside>
+
+		<!-- Asymmetric Product Grid -->
+		<div class="flex-1">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-24 asymmetric-grid">
+				{#each siteConfig.products as product}
+					<div class="group cursor-pointer">
+						<div
+							class="relative overflow-hidden aspect-[3/4] rounded-lg bg-neutral-100 dark:bg-neutral-900 mb-6"
+						>
+							<div
+								class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+								style="background-image: url('{product.image}');"
+							></div>
+							<div
+								class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+							></div>
+							<button
+								class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white text-black px-8 py-3 text-xs font-bold uppercase tracking-widest opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+							>
+								Quick Add
+							</button>
+						</div>
+						<div class="flex justify-between items-start">
+							<div>
+								<h3 class="text-xl font-bold uppercase tracking-tight mb-1">{product.name}</h3>
+								<p class="text-sm text-neutral-500 uppercase tracking-widest">{product.subtitle}</p>
+							</div>
+							<p class="text-xl font-light">${product.price.toLocaleString()}</p>
+						</div>
+					</div>
+				{/each}
+			</div>
+
+			<!-- Pagination -->
+			<div class="flex items-center justify-center gap-1 mt-32">
+				<button
+					class="w-12 h-12 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+				>
+					<span class="material-symbols-outlined">chevron_left</span>
+				</button>
+				<button
+					class="w-12 h-12 flex items-center justify-center bg-primary text-white rounded-full font-bold"
+				>
+					1
+				</button>
+				<button
+					class="w-12 h-12 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+				>
+					2
+				</button>
+				<button
+					class="w-12 h-12 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+				>
+					3
+				</button>
+				<button
+					class="w-12 h-12 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+				>
+					<span class="material-symbols-outlined">chevron_right</span>
+				</button>
+			</div>
+		</div>
+	</div>
+</main>
 
 <!-- Footer -->
-<footer class="footer animate-on-scroll">
-	<div class="container">
-		<div class="footer-content stagger-children stagger-quick">
-			<div class="footer-info" style="--index: 0">
-				<h4>CUSTOMER CARE</h4>
-				<a href="/shipping" class="underline-reveal">SHIPPING & RETURNS</a>
-				<a href="/tracking" class="underline-reveal">ORDER TRACKING</a>
-				<a href="/size-guide" class="underline-reveal">SIZE GUIDE</a>
-				<a href="/about" class="underline-reveal">ABOUT US</a>
-			</div>
-
-			<div class="footer-info" style="--index: 1">
-				<h4>SHOP</h4>
-				<a href="/new" class="underline-reveal">NEW ARRIVALS</a>
-				<a href="/bestsellers" class="underline-reveal">BEST SELLERS</a>
-				<a href="/collections" class="underline-reveal">ALL COLLECTIONS</a>
-			</div>
-
-			<div class="footer-info" style="--index: 2">
-				<h4>CONTACT</h4>
-				{#if $siteConfig.contact.email}
-					<a href="mailto:{$siteConfig.contact.email}" class="underline-reveal">EMAIL US</a>
-				{/if}
-				{#if $siteConfig.contact.phone}
-					<a href="tel:{$siteConfig.contact.phone}" class="underline-reveal">CALL US</a>
-				{/if}
-				{#if $siteConfig.social.instagram}
-					<a href={$siteConfig.social.instagram} target="_blank" rel="noopener noreferrer" class="underline-reveal">INSTAGRAM</a>
-				{/if}
-				{#if $siteConfig.social.pinterest}
-					<a href={$siteConfig.social.pinterest} target="_blank" rel="noopener noreferrer" class="underline-reveal">PINTEREST</a>
-				{/if}
+<footer
+	class="border-t border-neutral-200 dark:border-neutral-800 mt-24 py-16 bg-neutral-50 dark:bg-neutral-900/50"
+>
+	<div class="max-w-[1440px] mx-auto px-6 lg:px-12 grid grid-cols-1 md:grid-cols-4 gap-12">
+		<div class="md:col-span-1">
+			<a href="/" class="flex items-center gap-2 mb-6">
+				<span class="material-symbols-outlined text-primary text-2xl">{siteConfig.icon}</span>
+				<h2 class="text-lg font-extrabold tracking-tighter uppercase">{siteConfig.name}</h2>
+			</a>
+			<p class="text-sm text-neutral-500 leading-relaxed max-w-[200px]">
+				{siteConfig.footer.description}
+			</p>
+		</div>
+		<div>
+			<h4 class="text-xs font-bold tracking-[0.2em] uppercase mb-6">Navigation</h4>
+			<ul class="flex flex-col gap-3 text-sm font-medium">
+				{#each siteConfig.footer.navigation as link}
+					<li>
+						<a href={link.href} class="hover:text-primary transition-colors">{link.label}</a>
+					</li>
+				{/each}
+			</ul>
+		</div>
+		<div>
+			<h4 class="text-xs font-bold tracking-[0.2em] uppercase mb-6">Assistance</h4>
+			<ul class="flex flex-col gap-3 text-sm font-medium">
+				{#each siteConfig.footer.assistance as link}
+					<li>
+						<a href={link.href} class="hover:text-primary transition-colors">{link.label}</a>
+					</li>
+				{/each}
+			</ul>
+		</div>
+		<div>
+			<h4 class="text-xs font-bold tracking-[0.2em] uppercase mb-6">
+				{siteConfig.newsletter.headline}
+			</h4>
+			<p class="text-sm text-neutral-500 mb-6">{siteConfig.newsletter.description}</p>
+			<div class="flex gap-2">
+				<input
+					type="email"
+					class="bg-transparent border-b border-neutral-300 dark:border-neutral-700 focus:border-primary focus:ring-0 text-sm py-2 px-0 w-full transition-all"
+					placeholder="Email Address"
+				/>
+				<button
+					class="text-xs font-bold uppercase tracking-widest text-primary hover:opacity-80 transition-opacity"
+				>
+					Submit
+				</button>
 			</div>
 		</div>
-
-		<div class="footer-brand">
-			<h1 class="footer-logo-text">{$siteConfig.name}</h1>
-			<div class="footer-logo-symbol">
-				<div class="logo-symbol large"></div>
-			</div>
-		</div>
-
-		<div class="footer-bottom">
-			<p>© {new Date().getFullYear()} {$siteConfig.name}. All rights reserved.</p>
+	</div>
+	<div
+		class="max-w-[1440px] mx-auto px-6 lg:px-12 mt-16 pt-8 border-t border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-neutral-400 uppercase tracking-widest"
+	>
+		<p>© {currentYear} {siteConfig.footer.copyright}. All Rights Reserved.</p>
+		<div class="flex gap-6">
+			{#each siteConfig.footer.social as social}
+				<a href={social.url} class="hover:text-primary transition-colors">{social.name}</a>
+			{/each}
 		</div>
 	</div>
 </footer>
-
-<style>
-	/* Navigation */
-	.nav {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		z-index: 100;
-		padding: var(--space-lg) var(--space-xl);
-	}
-
-	.nav-container {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		max-width: 1600px;
-		margin: 0 auto;
-	}
-
-	.nav-links-left,
-	.nav-links-right {
-		display: flex;
-		gap: var(--space-xl);
-		font-size: var(--text-caption);
-		font-weight: 500;
-		letter-spacing: 0.15em;
-		text-transform: uppercase;
-	}
-
-	.nav-logo {
-		position: absolute;
-		left: 50%;
-		transform: translateX(-50%);
-	}
-
-	.logo-symbol {
-		width: 48px;
-		height: 48px;
-		border: 1px solid currentColor;
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.logo-symbol::before {
-		content: '';
-		width: 32px;
-		height: 32px;
-		border: 1px solid currentColor;
-		border-radius: 50%;
-		position: absolute;
-	}
-
-	.logo-symbol::after {
-		content: '';
-		position: absolute;
-		width: 100%;
-		height: 1px;
-		background: currentColor;
-		top: 50%;
-		left: 0;
-	}
-
-	.logo-symbol.large {
-		width: 96px;
-		height: 96px;
-	}
-
-	.logo-symbol.large::before {
-		width: 64px;
-		height: 64px;
-	}
-
-	.mobile-menu-button {
-		display: none;
-		color: currentColor;
-	}
-
-	/* Hero */
-	.hero {
-		position: relative;
-		height: 100vh;
-		min-height: 600px;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		overflow: hidden;
-		padding: calc(60px + var(--space-xl)) var(--space-xl) var(--space-xl);
-	}
-
-	.hero-bg-image {
-		position: absolute;
-		inset: 0;
-		background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
-		opacity: 0.3;
-		z-index: 0;
-	}
-
-	.hero-content {
-		position: relative;
-		z-index: 1;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		height: 100%;
-		color: white;
-	}
-
-	.hero-meta {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		font-size: var(--text-caption);
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: rgba(255, 255, 255, 0.7);
-	}
-
-	.hero-meta-left {
-		max-width: 320px;
-	}
-
-	.hero-artist {
-		font-weight: 700;
-		margin-bottom: var(--space-xs);
-		color: white;
-	}
-
-	.hero-description {
-		line-height: 1.6;
-	}
-
-	.hero-meta-right {
-		display: flex;
-		align-items: center;
-		gap: var(--space-xs);
-	}
-
-	.hero-title {
-		text-align: center;
-		mix-blend-mode: overlay;
-		opacity: 0.9;
-		margin-bottom: 0;
-	}
-
-	/* Design Statement */
-	.statement-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-2xl);
-		align-items: center;
-	}
-
-	.statement-text {
-		grid-column: 1 / 2;
-		grid-row: 1;
-	}
-
-	.statement-images {
-		grid-column: 2 / 3;
-		grid-row: 1 / 3;
-		position: relative;
-		height: 800px;
-	}
-
-	.statement-img-back,
-	.statement-img-front {
-		position: absolute;
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		overflow: hidden;
-	}
-
-	.statement-img-back img,
-	.statement-img-front img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-		background: var(--color-bg-subtle);
-	}
-
-	.statement-img-back {
-		top: 0;
-		right: 0;
-		width: 75%;
-		height: 75%;
-		z-index: 0;
-	}
-
-	.statement-img-front {
-		bottom: 0;
-		left: 0;
-		width: 60%;
-		height: 60%;
-		z-index: 1;
-		box-shadow: var(--shadow-lg);
-	}
-
-	.statement-description {
-		grid-column: 1 / 2;
-		grid-row: 2;
-		max-width: 400px;
-	}
-
-	.statement-description h3 {
-		margin-bottom: var(--space-md);
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		letter-spacing: 0.15em;
-	}
-
-	.statement-description p {
-		color: var(--color-fg-tertiary);
-		line-height: 1.8;
-		font-size: var(--text-body-sm);
-	}
-
-	/* Categories */
-	.categories {
-		position: relative;
-		background: var(--color-bg-elevated);
-		overflow: hidden;
-	}
-
-	.categories-grid {
-		position: relative;
-		z-index: 1;
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-md) var(--space-xl);
-		justify-content: center;
-		align-items: baseline;
-	}
-
-	.category-item {
-		display: flex;
-		align-items: baseline;
-		gap: var(--space-xs);
-	}
-
-	.category-number {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		font-weight: 400;
-		letter-spacing: 0.1em;
-	}
-
-	.category-link {
-		font-size: clamp(1.5rem, 3vw, 3.5rem);
-		font-weight: 700;
-		letter-spacing: 0.02em;
-		color: var(--color-fg-muted);
-		transition: color var(--duration-micro) var(--ease-standard);
-		text-transform: uppercase;
-	}
-
-	.category-link:hover {
-		color: var(--color-fg-primary);
-		opacity: 1;
-	}
-
-	/* Products Grid */
-	.section-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-end;
-		margin-bottom: var(--space-xl);
-		padding-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.section-title {
-		font-size: clamp(2rem, 4vw, 4rem);
-		font-weight: 700;
-		letter-spacing: -0.01em;
-		text-transform: uppercase;
-	}
-
-	.section-subtitle {
-		max-width: 400px;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		line-height: 1.6;
-		letter-spacing: 0.05em;
-	}
-
-	.products-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: var(--space-lg);
-	}
-
-	.product-card {
-		display: block;
-	}
-
-	.product-image {
-		width: 100%;
-		aspect-ratio: 3/4;
-		margin-bottom: var(--space-md);
-		overflow: hidden;
-		border: 1px solid var(--color-border-default);
-	}
-
-	.product-image img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-		background: var(--color-bg-subtle);
-	}
-
-	.product-info {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
-
-	.product-details {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		gap: var(--space-sm);
-	}
-
-	.product-name {
-		font-size: var(--text-caption);
-		font-weight: 500;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-	}
-
-	.product-price {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		white-space: nowrap;
-	}
-
-	/* Gallery */
-	.gallery {
-		position: relative;
-		background: var(--color-bg-pure);
-		min-height: 100vh;
-		display: flex;
-		align-items: center;
-	}
-
-	.gallery-label {
-		position: absolute;
-		top: var(--space-lg);
-		left: var(--space-lg);
-		font-size: var(--text-caption);
-		letter-spacing: 0.2em;
-		color: rgba(255, 255, 255, 0.5);
-	}
-
-	.gallery-content {
-		max-width: 1600px;
-		margin: 0 auto;
-		padding: 0 var(--space-xl);
-		display: grid;
-		grid-template-columns: 1fr 2fr;
-		gap: var(--space-2xl);
-		width: 100%;
-	}
-
-	.gallery-text {
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-end;
-		padding-bottom: var(--space-2xl);
-		color: rgba(255, 255, 255, 0.7);
-	}
-
-	.gallery-icon {
-		width: 16px;
-		height: 16px;
-		background: rgba(255, 255, 255, 0.2);
-		margin-bottom: var(--space-md);
-	}
-
-	.gallery-title {
-		font-weight: 700;
-		font-size: var(--text-caption);
-		letter-spacing: 0.15em;
-		text-transform: uppercase;
-		color: white;
-		margin-bottom: var(--space-sm);
-	}
-
-	.gallery-description {
-		font-size: var(--text-caption);
-		line-height: 1.6;
-	}
-
-	.gallery-slider {
-		position: relative;
-		max-width: 600px;
-		margin: 0 auto;
-	}
-
-	.gallery-images {
-		display: flex;
-		gap: var(--space-md);
-		overflow-x: hidden;
-		scroll-behavior: smooth;
-		scroll-snap-type: x mandatory;
-		-webkit-overflow-scrolling: touch;
-	}
-
-	.gallery-item {
-		width: 100%;
-		aspect-ratio: 3/4;
-		flex-shrink: 0;
-		background: var(--color-bg-subtle);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		padding: var(--space-xs);
-		overflow: hidden;
-		scroll-snap-align: center;
-		transition: transform var(--duration-standard) var(--ease-standard);
-	}
-
-	.gallery-item img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-		background: var(--color-bg-subtle);
-	}
-
-	.slider-arrow {
-		position: absolute;
-		top: 50%;
-		transform: translateY(-50%);
-		z-index: 10;
-		background: rgba(0, 0, 0, 0.5);
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		color: white;
-		width: 48px;
-		height: 48px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-		backdrop-filter: blur(8px);
-	}
-
-	.slider-arrow:hover {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: rgba(255, 255, 255, 0.4);
-		transform: translateY(-50%) scale(1.05);
-	}
-
-	.slider-prev {
-		left: -24px;
-	}
-
-	.slider-next {
-		right: -24px;
-	}
-
-	.slider-dots {
-		display: flex;
-		justify-content: center;
-		gap: var(--space-sm);
-		margin-top: var(--space-lg);
-	}
-
-	.slider-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.3);
-		border: none;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.slider-dot.active,
-	.slider-dot:hover {
-		background: rgba(255, 255, 255, 1);
-		transform: scale(1.2);
-	}
-
-	/* Icons of the Wardrobe */
-	.icons-wrapper {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0;
-		background: var(--color-bg-pure);
-		color: white;
-	}
-
-	.icons-text {
-		padding: var(--space-2xl);
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-	}
-
-	.icons-text h2 {
-		margin-bottom: var(--space-xl);
-	}
-
-	.icons-text p {
-		font-size: var(--text-caption);
-		line-height: 1.6;
-		color: rgba(255, 255, 255, 0.6);
-		letter-spacing: 0.05em;
-	}
-
-	.icons-image {
-		position: relative;
-		padding: var(--space-2xl);
-	}
-
-	.icons-frame {
-		width: 100%;
-		height: 100%;
-		border: 16px solid white;
-		background: var(--color-bg-subtle);
-		overflow: hidden;
-	}
-
-	.icons-frame img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-		background: var(--color-bg-subtle);
-	}
-
-	/* Timeless Style */
-	.timeless {
-		text-align: center;
-	}
-
-	.timeless-title {
-		margin-bottom: var(--space-2xl);
-	}
-
-	.timeless-grid-wrapper {
-		position: relative;
-		margin-top: var(--space-2xl);
-	}
-
-	.timeless-grid {
-		position: relative;
-		z-index: 1;
-	}
-
-	.timeless-card:nth-child(1) {
-		transform: translateY(var(--space-xl));
-	}
-
-	.timeless-card:nth-child(3) {
-		transform: translateY(calc(-1 * var(--space-md)));
-	}
-
-	.timeless-card:nth-child(4) {
-		transform: translateY(var(--space-sm));
-	}
-
-	/* Newsletter */
-	.newsletter {
-		background: var(--color-bg-pure);
-		color: white;
-	}
-
-	.newsletter-content {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-2xl);
-		align-items: center;
-	}
-
-	.newsletter-text h2 {
-		margin-bottom: var(--space-md);
-		font-size: clamp(1.5rem, 3vw, 3rem);
-	}
-
-	.newsletter-text p {
-		color: rgba(255, 255, 255, 0.6);
-		line-height: 1.8;
-		font-size: var(--text-body-sm);
-	}
-
-	.newsletter-form {
-		display: flex;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-		padding-bottom: var(--space-sm);
-	}
-
-	.newsletter-input {
-		flex: 1;
-		background: transparent;
-		border: none;
-		color: white;
-		font-family: inherit;
-		font-size: var(--text-caption);
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-	}
-
-	.newsletter-input::placeholder {
-		color: rgba(255, 255, 255, 0.4);
-	}
-
-	.newsletter-input:focus {
-		outline: none;
-	}
-
-	.newsletter-button {
-		font-weight: 700;
-		font-size: var(--text-caption);
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: white;
-		transition: opacity var(--duration-micro) var(--ease-standard);
-	}
-
-	.newsletter-button:hover {
-		opacity: 0.7;
-	}
-
-	/* Footer */
-	.footer {
-		background: var(--color-bg-pure);
-		color: white;
-		padding: var(--space-2xl) 0;
-	}
-
-	.footer-content {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-2xl);
-		margin-bottom: var(--space-2xl);
-		padding-bottom: var(--space-2xl);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-	}
-
-	.footer-info {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.footer-info h4 {
-		font-size: var(--text-caption);
-		letter-spacing: 0.15em;
-		color: white;
-		margin-bottom: var(--space-xs);
-		font-weight: 700;
-		text-transform: uppercase;
-	}
-
-	.footer-info a {
-		font-size: var(--text-caption);
-		color: rgba(255, 255, 255, 0.6);
-		letter-spacing: 0.05em;
-		transition: color var(--duration-micro) var(--ease-standard);
-		text-transform: uppercase;
-	}
-
-	.footer-info a:hover {
-		color: white;
-		opacity: 1;
-	}
-
-	.footer-brand {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-end;
-		position: relative;
-	}
-
-	.footer-logo-text {
-		font-size: clamp(6rem, 18vw, 18rem);
-		line-height: 0.75;
-	}
-
-	.footer-logo-symbol {
-		position: absolute;
-		right: 0;
-		bottom: 0;
-	}
-
-	.footer-bottom {
-		margin-top: var(--space-xl);
-		padding-top: var(--space-lg);
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
-		text-align: center;
-	}
-
-	.footer-bottom p {
-		font-size: var(--text-caption);
-		color: rgba(255, 255, 255, 0.46);
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-	}
-
-	/* Responsive */
-	@media (max-width: 1024px) {
-		.statement-grid,
-		.icons-wrapper,
-		.newsletter-content {
-			grid-template-columns: 1fr;
-		}
-
-		.statement-images {
-			grid-row: 2;
-			grid-column: 1;
-			height: 600px;
-		}
-
-		.statement-description {
-			grid-row: 3;
-		}
-
-		.gallery-content {
-			grid-template-columns: 1fr;
-		}
-	}
-
-	@media (max-width: 768px) {
-		.mobile-menu-button {
-			display: block;
-		}
-
-		.nav-links-left,
-		.nav-links-right {
-			position: absolute;
-			top: 100%;
-			left: 0;
-			right: 0;
-			background: var(--color-bg-pure);
-			flex-direction: column;
-			padding: var(--space-md);
-			gap: var(--space-md);
-			display: none;
-		}
-
-		.nav-links-right.open {
-			display: flex;
-		}
-
-		.categories-grid {
-			flex-direction: column;
-			align-items: flex-start;
-		}
-
-		.products-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.gallery-images {
-			flex-direction: column;
-		}
-
-		.gallery-item {
-			width: 100%;
-		}
-	}
-</style>
