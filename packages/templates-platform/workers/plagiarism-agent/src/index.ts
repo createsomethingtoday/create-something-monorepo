@@ -2693,6 +2693,8 @@ interface ComparisonResult {
   overallSimilarity: number;
   // SMOKING GUN: Same class name + same properties = copy/paste
   identicalRules: IdenticalRule[];
+  // Property combinations (3+ props together = fingerprint)
+  propertyCombinations: Array<{ selector: string; props: string[]; weight: number }>;
   // Structural matches weighted by depth (shallower = more significant)
   structuralMatches: {
     score: number;
@@ -2765,13 +2767,28 @@ async function generateDetailedComparison(
   const structuralMatches = findStructuralMatches(content1.html, content2.html);
   
   // Find matching property patterns
+  // Single properties are noise - we need COMBINATIONS to be meaningful
   const sharedProps: PatternMatch[] = [];
+  const propSet1 = new Set(props1.map(p => `${p.type}:${p.value}`));
+  const propSet2 = new Set(props2.map(p => `${p.type}:${p.value}`));
+  
   for (const p1 of props1) {
-    for (const p2 of props2) {
-      if (p1.value === p2.value && p1.type === p2.type) {
-        sharedProps.push(p1);
-        break;
-      }
+    const key = `${p1.type}:${p1.value}`;
+    if (propSet2.has(key)) {
+      sharedProps.push(p1);
+    }
+  }
+  
+  // Also find property COMBINATIONS from identical rules
+  // These are much more significant than individual property matches
+  const propCombinations: Array<{ selector: string; props: string[]; weight: number }> = [];
+  for (const rule of identicalRules) {
+    if (rule.properties.length >= 3) {
+      propCombinations.push({
+        selector: rule.selector,
+        props: rule.properties,
+        weight: rule.properties.length * rule.similarity
+      });
     }
   }
   
@@ -2795,6 +2812,7 @@ async function generateDetailedComparison(
     template2: { id: t2.id as string, name: t2.name as string, url: t2.url as string },
     overallSimilarity: simResult.jaccardEstimate,
     identicalRules,
+    propertyCombinations: propCombinations.sort((a, b) => b.weight - a.weight).slice(0, 10),
     structuralMatches,
     breakdown: {
       cssClasses: {
@@ -3760,6 +3778,52 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       margin-left: 2rem;
     }
     
+    /* Property Combinations */
+    .prop-combos {
+      display: grid;
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .prop-combo {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .combo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .combo-selector {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+    .combo-count {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--border);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .combo-props {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .combo-prop {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text);
+      background: var(--bg);
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      border-left: 2px solid var(--accent);
+    }
+    
     /* Sidenotes - Tufte style */
     .sidenote {
       float: right;
@@ -3890,10 +3954,31 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         <h2>Similarity Breakdown</h2>
         <div class="breakdown-grid">
           \${renderBreakdownItem('Identical Rules', data.identicalRules ? Math.min(data.identicalRules.length / 10, 1) : 0)}
-          \${renderBreakdownItem('CSS Properties', data.breakdown.cssProperties.similarity)}
+          \${renderBreakdownItem('Prop Combos', data.propertyCombinations ? Math.min(data.propertyCombinations.length / 5, 1) : 0)}
           \${renderBreakdownItem('Color Palette', data.breakdown.colors.similarity)}
           \${renderBreakdownItem('Unique Patterns', data.structuralMatches ? data.structuralMatches.score : 0)}
         </div>
+        
+        \${data.propertyCombinations && data.propertyCombinations.length > 0 ? \`
+        <h2>Property Combinations</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Rules with <strong>3+ matching properties</strong> are fingerprints. Single properties are common, 
+          but specific combinations are unique design decisions.
+        </p>
+        <div class="prop-combos">
+          \${data.propertyCombinations.map(combo => \`
+            <div class="prop-combo">
+              <div class="combo-header">
+                <code class="combo-selector">\${combo.selector}</code>
+                <span class="combo-count">\${combo.props.length} properties</span>
+              </div>
+              <div class="combo-props">
+                \${combo.props.map(p => \`<code class="combo-prop">\${escapeHtml(p)}</code>\`).join('')}
+              </div>
+            </div>
+          \`).join('')}
+        </div>
+        \` : ''}
         
         \${data.structuralMatches && data.structuralMatches.matches.length > 0 ? \`
         <h2>Unique Structural Patterns</h2>
