@@ -266,30 +266,46 @@ export async function processSpecIntake(
 		workwayApiUrl?: string;
 	} = {}
 ): Promise<IntakeResult> {
-	// First, check if we have a clear keyword match
-	const keywordMatch = quickMatchTemplate(userSpec);
+	// First, check if we have a clear keyword match (service, product, or template)
+	const offeringMatch = quickMatchOffering(userSpec);
 	const consultationNeeded = shouldSuggestConsultation(userSpec);
 
-	// If AI is enabled and WORKWAY credentials provided, use the workflow
+	// If we have a service or product match, use it directly (more specific than AI template)
+	// Services and products are explicit offerings that keywords identify precisely
+	if (offeringMatch && (offeringMatch.type === 'service' || offeringMatch.type === 'product')) {
+		const displayName = offeringMatch.slug.replace(/-/g, ' ');
+		return {
+			action: 'show_offering',
+			offering_type: offeringMatch.type,
+			matched_offering: offeringMatch.slug,
+			matched_reason: offeringMatch.reason,
+			confidence: 0.85,
+			understanding: `Looking for ${offeringMatch.type === 'service' ? 'our ' : ''}${displayName} ${offeringMatch.type}`,
+		};
+	}
+
+	// If AI is enabled and WORKWAY credentials provided, use the workflow for templates
 	if (options.useAI && options.workwayApiKey) {
 		try {
 			const result = await callWorkwayIntake(userSpec, options);
 			if (result) {
-				// If AI returns consultation but we have a clear keyword match
+				// If AI returns consultation but we have a template keyword match
 				// and no consultation triggers, prefer the keyword match
 				if (
 					result.action === 'consultation' &&
-					keywordMatch &&
+					offeringMatch?.type === 'template' &&
 					!consultationNeeded &&
 					result.confidence < 0.7
 				) {
-					console.log('AI uncertain, using keyword match:', keywordMatch);
+					console.log('AI uncertain, using keyword match:', offeringMatch.slug);
 					return {
-						action: 'show_template',
-						matched_template: keywordMatch,
-						matched_reason: `Based on your description, our ${keywordMatch.replace(/-/g, ' ')} template looks like a great fit.`,
+						action: 'show_offering',
+						offering_type: 'template',
+						matched_offering: offeringMatch.slug,
+						matched_template: offeringMatch.slug,
+						matched_reason: offeringMatch.reason,
 						confidence: 0.75,
-						understanding: `Looking for a ${keywordMatch.replace(/-/g, ' ')} solution`,
+						understanding: `Looking for a ${offeringMatch.slug.replace(/-/g, ' ')} solution`,
 					};
 				}
 				return result;
