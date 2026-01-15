@@ -1,3 +1,19 @@
+---
+name: voice-validator
+description: Validate content against CREATE SOMETHING's Five Principles of Communication
+category: quality-assurance
+triggers:
+  - "*.md publish"
+  - "content review"
+  - "before deployment"
+related:
+  - canon-maintenance
+  - experiment-scaffold
+  - voice-audit-worker
+composable: true
+priority: P0
+---
+
 # Voice Validator
 
 Validate content against CREATE SOMETHING's Five Principles of Communication.

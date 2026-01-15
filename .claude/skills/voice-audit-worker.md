@@ -1,9 +1,18 @@
 ---
 name: voice-audit-worker
 description: Execute voice canon compliance audit for CREATE SOMETHING content
+category: orchestration
 context: fork
 agent: voice-auditor
 tools: Read, WebFetch, Write
+triggers:
+  - "voice audit convoy"
+  - "content compliance check"
+related:
+  - voice-validator
+  - orchestration-worker
+composable: false
+priority: P1
 ---
 
 You are a voice audit worker for CREATE SOMETHING's voice canon compliance.

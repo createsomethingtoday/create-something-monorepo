@@ -1,3 +1,18 @@
+---
+name: architectural-visualization
+description: CREATE SOMETHING methodology for floor plan visualization with Heidegger threshold zones
+category: specialized
+triggers:
+  - "floor plan"
+  - "architectural rendering"
+  - "threshold zones"
+  - "dwelling visualization"
+related:
+  - canon-maintenance
+composable: false
+priority: P3
+---
+
 # Architectural Visualization
 
 CREATE SOMETHING methodology for floor plan visualization.

@@ -1,9 +1,17 @@
 ---
 name: orchestration-worker
 description: Execute orchestration convoy work in isolated context
+category: orchestration
 context: fork
 agent: worker
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
+triggers:
+  - "convoy assignment"
+  - "worker task"
+related:
+  - voice-audit-worker
+composable: false
+priority: P1
 ---
 
 You are an orchestration convoy worker running in an isolated context.

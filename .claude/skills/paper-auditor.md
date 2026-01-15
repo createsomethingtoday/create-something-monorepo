@@ -1,3 +1,19 @@
+---
+name: paper-auditor
+description: Validate paper styling against CREATE SOMETHING's standard paper template patterns
+category: quality-assurance
+triggers:
+  - "packages/io/src/routes/papers/**/*.svelte modify"
+  - "/audit-paper"
+  - "before publish paper"
+related:
+  - canon-maintenance
+  - voice-validator
+  - experiment-auditor
+composable: true
+priority: P1
+---
+
 # Paper Auditor
 
 Validate paper styling against CREATE SOMETHING's standard paper template patterns.

@@ -1,3 +1,20 @@
+---
+name: canon-maintenance
+description: Maintain and enforce CREATE SOMETHING's design canon based on the Subtractive Triad
+category: quality-assurance
+triggers:
+  - "*.svelte modify"
+  - "*.css modify"
+  - "design review"
+  - "before deployment"
+related:
+  - voice-validator
+  - subtractive-review
+  - experiment-auditor
+composable: true
+priority: P0
+---
+
 # Canon Maintenance
 
 Maintain and enforce CREATE SOMETHING's design canon based on the Subtractive Triad.

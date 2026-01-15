@@ -1,3 +1,19 @@
+---
+name: experiment-scaffold
+description: Generate experiment structure with all required elements from the CREATE SOMETHING methodology
+category: content-generation
+triggers:
+  - "new experiment"
+  - "create experiment"
+  - "packages/space/src/routes/experiments/** create"
+related:
+  - voice-validator
+  - canon-maintenance
+  - experiment-auditor
+composable: true
+priority: P1
+---
+
 # Experiment Scaffold
 
 Generate experiment structure with all required elements from the CREATE SOMETHING methodology.

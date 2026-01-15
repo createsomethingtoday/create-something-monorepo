@@ -1,3 +1,17 @@
+---
+name: doc-generator
+description: Generate documentation from screenshots by embedding live UI components
+category: content-generation
+triggers:
+  - "/doc-generator"
+  - "screenshot documentation"
+  - "admin guide"
+related:
+  - voice-validator
+composable: false
+priority: P2
+---
+
 # Doc Generator Skill
 
 Generate documentation from screenshots by embedding live UI components. Screenshots capture intent; components deliver truth.

@@ -1,3 +1,17 @@
+---
+name: prd-to-ralph
+description: Convert a feature description into a Ralph-compatible PRD JSON file for autonomous development
+category: content-generation
+triggers:
+  - "/prd-to-ralph"
+  - "create prd"
+  - "ralph feature"
+related:
+  - orchestration-worker
+composable: false
+priority: P2
+---
+
 # PRD to Ralph Converter
 
 Convert a feature description into a Ralph-compatible PRD JSON file.

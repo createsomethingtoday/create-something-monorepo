@@ -1,3 +1,19 @@
+---
+name: graph-relationship-audit
+description: Periodic review and refinement of knowledge graph relationships for the CREATE SOMETHING knowledge base
+category: knowledge-management
+triggers:
+  - "graph audit"
+  - "quarterly maintenance"
+  - "knowledge graph review"
+  - "after major documentation changes"
+related:
+  - understanding-graphs
+  - canon-maintenance
+composable: false
+priority: P2
+---
+
 # Graph Relationship Audit
 
 Periodic review and refinement of knowledge graph relationships. The graph reveals; the agent refines.

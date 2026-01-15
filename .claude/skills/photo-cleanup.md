@@ -1,3 +1,18 @@
+---
+name: photo-cleanup
+description: AI-powered photo editing via natural language - describe what to remove, Claude locates it, Flux removes it
+category: specialized
+triggers:
+  - "/photo-cleanup"
+  - "remove from photo"
+  - "clean up image"
+  - "*.jpg cleanup"
+  - "*.png cleanup"
+related: []
+composable: false
+priority: P2
+---
+
 # Photo Cleanup Skill
 
 AI-powered photo editing via natural language. Describe what you want done, Claude locates it, Flux removes it.

@@ -1,6 +1,16 @@
 ---
 name: understanding-graphs
-description: Create and maintain UNDERSTANDING.md files—minimal, human-readable dependency graphs that capture understanding-critical relationships. Use when onboarding to a codebase, documenting package relationships, or navigating large projects. Embodies "Less, but better" for codebase comprehension.
+description: Create and maintain UNDERSTANDING.md files—minimal, human-readable dependency graphs that capture understanding-critical relationships
+category: knowledge-management
+triggers:
+  - "onboarding"
+  - "create UNDERSTANDING.md"
+  - "document package"
+  - "knowledge transfer"
+related:
+  - graph-relationship-audit
+composable: false
+priority: P2
 ---
 
 # Understanding Graphs

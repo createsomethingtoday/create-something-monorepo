@@ -1,3 +1,19 @@
+---
+name: experiment-auditor
+description: Validate experiment styling and structure for CREATE SOMETHING's .space property
+category: quality-assurance
+triggers:
+  - "packages/space/src/routes/experiments/**/*.svelte modify"
+  - "/audit-experiment"
+  - "before publish experiment"
+related:
+  - canon-maintenance
+  - paper-auditor
+  - experiment-scaffold
+composable: true
+priority: P1
+---
+
 # Experiment Auditor
 
 Validate experiment styling and structure for CREATE SOMETHING's .space property.

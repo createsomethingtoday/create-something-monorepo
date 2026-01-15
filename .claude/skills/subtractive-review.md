@@ -1,3 +1,19 @@
+---
+name: subtractive-review
+description: Apply the Subtractive Triad as code review methodology (DRY → Rams → Heidegger)
+category: quality-assurance
+triggers:
+  - "code review"
+  - "pull request"
+  - "refactor"
+  - "architecture discussion"
+related:
+  - canon-maintenance
+  - triad-audit
+composable: true
+priority: P0
+---
+
 # Subtractive Review
 
 Apply the Subtractive Triad as code review methodology.
