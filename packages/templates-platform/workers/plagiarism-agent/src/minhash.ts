@@ -139,54 +139,324 @@ function createTokenShingles(tokens: string[], size: number = 3): Set<string> {
 export function extractCssTokens(css: string): string[] {
   const tokens: string[] = [];
   
-  // Extract all class selectors
-  const classSelectors = css.match(/\.[a-zA-Z][\w-]*/g) || [];
-  tokens.push(...classSelectors);
+  // ==========================================================================
+  // HIGHEST WEIGHT: Property-value declarations (the design fingerprint)
+  // ==========================================================================
   
-  // Extract ID selectors
-  const idSelectors = css.match(/#[a-zA-Z][\w-]*/g) || [];
-  tokens.push(...idSelectors);
+  // Normalize CSS for consistent extraction
+  const normalizedCss = css
+    .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
   
-  // Extract @keyframes names
-  const keyframes = css.match(/@keyframes\s+([\w-]+)/g) || [];
-  tokens.push(...keyframes);
+  // Extract full property-value pairs (HIGHEST SIGNAL)
+  // These define the actual visual output - class names can change but values persist
+  const declarationRegex = /([\w-]+)\s*:\s*([^;{}]+)/g;
+  let match;
+  while ((match = declarationRegex.exec(normalizedCss)) !== null) {
+    const prop = match[1].toLowerCase().trim();
+    const value = match[2].trim();
+    
+    // Skip Webflow internals and common resets
+    if (prop.startsWith('-webkit-') || prop.startsWith('-moz-') || prop.startsWith('-ms-')) continue;
+    if (value === 'inherit' || value === 'initial' || value === 'unset') continue;
+    
+    // HIGH PRIORITY: Design-defining properties (add multiple times for weight)
+    const highPriorityProps = [
+      'transform', 'box-shadow', 'text-shadow', 'background', 'background-image',
+      'border-radius', 'filter', 'backdrop-filter', 'clip-path', 'animation',
+      'transition', 'gradient', 'linear-gradient', 'radial-gradient'
+    ];
+    
+    const isHighPriority = highPriorityProps.some(hp => prop.includes(hp) || value.includes(hp));
+    
+    // Create property-value token
+    const declToken = `DECL:${prop}:${value}`;
+    tokens.push(declToken);
+    
+    // Add extra weight for design-defining properties
+    if (isHighPriority) {
+      tokens.push(declToken);
+      tokens.push(declToken);
+    }
+  }
   
-  // Extract custom property names (CSS variables)
-  const customProps = css.match(/--[\w-]+/g) || [];
-  tokens.push(...customProps);
+  // ==========================================================================
+  // HIGH WEIGHT: Specific value patterns (numeric fingerprints)
+  // ==========================================================================
   
-  // Extract media query breakpoints
-  const mediaQueries = css.match(/@media[^{]+/g) || [];
-  tokens.push(...mediaQueries.map(m => m.replace(/\s+/g, ' ').trim()));
+  // Extract transform values (unique design choices)
+  const transformMatches = normalizedCss.match(/transform\s*:\s*([^;]+)/gi) || [];
+  for (const t of transformMatches) {
+    // Extract individual transform functions
+    const funcs = t.match(/(translate|rotate|scale|skew|matrix)[XYZ23d]*\([^)]+\)/gi) || [];
+    funcs.forEach(f => tokens.push(`TRANSFORM:${f.toLowerCase()}`));
+  }
+  
+  // Extract timing functions (animation personality)
+  const timingMatches = normalizedCss.match(/(\d+\.?\d*m?s|cubic-bezier\([^)]+\)|ease-in-out|ease-in|ease-out|ease|linear)/gi) || [];
+  timingMatches.forEach(t => tokens.push(`TIMING:${t.toLowerCase()}`));
+  
+  // Extract specific numeric patterns (design dimensions)
+  const numericPatterns = normalizedCss.match(/:\s*(-?\d+\.?\d*)(px|rem|em|%|vh|vw|deg)/gi) || [];
+  numericPatterns.forEach(n => {
+    const normalized = n.replace(/^:\s*/, '').toLowerCase();
+    // Only include distinctive values (not common ones like 0, 100%, etc)
+    if (!['0px', '0', '100%', '50%', '1', '1px'].includes(normalized)) {
+      tokens.push(`NUM:${normalized}`);
+    }
+  });
+  
+  // Extract color values (palette fingerprint)
+  const hexColors = normalizedCss.match(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g) || [];
+  hexColors.forEach(c => {
+    const color = c.toLowerCase();
+    // Skip very common colors
+    if (!['#fff', '#ffffff', '#000', '#000000', '#333', '#333333', '#666', '#999', '#ccc', '#eee'].includes(color)) {
+      tokens.push(`COLOR:${color}`);
+      tokens.push(`COLOR:${color}`); // Double weight for colors
+    }
+  });
+  
+  const rgbColors = normalizedCss.match(/rgba?\([^)]+\)/gi) || [];
+  rgbColors.forEach(c => tokens.push(`COLOR:${c.toLowerCase().replace(/\s/g, '')}`));
+  
+  // Extract gradient definitions (complex design element)
+  const gradients = normalizedCss.match(/(linear|radial|conic)-gradient\([^)]+\)/gi) || [];
+  gradients.forEach(g => {
+    tokens.push(`GRADIENT:${g.slice(0, 100)}`); // Truncate but keep signature
+    tokens.push(`GRADIENT:${g.slice(0, 100)}`);
+    tokens.push(`GRADIENT:${g.slice(0, 100)}`); // Triple weight for gradients
+  });
+  
+  // ==========================================================================
+  // MEDIUM WEIGHT: Layout configurations
+  // ==========================================================================
+  
+  // Flexbox configurations
+  const flexPatterns = normalizedCss.match(/display\s*:\s*flex|flex-direction\s*:\s*\w+|justify-content\s*:\s*[\w-]+|align-items\s*:\s*[\w-]+|flex-wrap\s*:\s*\w+|gap\s*:\s*[^;]+/gi) || [];
+  flexPatterns.forEach(f => tokens.push(`LAYOUT:${f.toLowerCase().replace(/\s+/g, '')}`));
+  
+  // Grid configurations
+  const gridPatterns = normalizedCss.match(/display\s*:\s*grid|grid-template-columns\s*:\s*[^;]+|grid-template-rows\s*:\s*[^;]+|grid-gap\s*:\s*[^;]+/gi) || [];
+  gridPatterns.forEach(g => tokens.push(`LAYOUT:${g.slice(0, 80).toLowerCase().replace(/\s+/g, '')}`));
+  
+  // Position patterns
+  const positionPatterns = normalizedCss.match(/position\s*:\s*(absolute|fixed|sticky)|top\s*:\s*[^;]+|left\s*:\s*[^;]+|right\s*:\s*[^;]+|bottom\s*:\s*[^;]+/gi) || [];
+  positionPatterns.forEach(p => tokens.push(`POSITION:${p.toLowerCase().replace(/\s+/g, '')}`));
+  
+  // ==========================================================================
+  // LOW WEIGHT: Structural elements (can inform but not definitive)
+  // ==========================================================================
+  
+  // @keyframes animation definitions (unique fingerprint)
+  const keyframeBlocks = normalizedCss.match(/@keyframes\s+[\w-]+\s*\{[^}]+\}/gi) || [];
+  keyframeBlocks.forEach(k => {
+    // Extract keyframe percentages and properties
+    const keyframeName = k.match(/@keyframes\s+([\w-]+)/i)?.[1] || '';
+    tokens.push(`KEYFRAME:${keyframeName}`);
+    
+    // Extract the animation steps
+    const steps = k.match(/(\d+%|from|to)\s*\{[^}]+\}/gi) || [];
+    steps.forEach(s => tokens.push(`ANIM_STEP:${s.slice(0, 60).replace(/\s+/g, ' ')}`));
+  });
+  
+  // CSS custom properties (variable definitions - design system fingerprint)
+  const cssVars = normalizedCss.match(/--[\w-]+\s*:\s*[^;]+/g) || [];
+  cssVars.forEach(v => tokens.push(`VAR:${v.replace(/\s+/g, '')}`));
+  
+  // Media query breakpoints (responsive design fingerprint)
+  const mediaQueries = normalizedCss.match(/@media[^{]+/g) || [];
+  mediaQueries.forEach(m => tokens.push(`MEDIA:${m.replace(/\s+/g, ' ').trim()}`));
+  
+  // ==========================================================================
+  // VERY LOW WEIGHT: Class names (easily changed, minimal signal)
+  // Only include very specific/unique looking class names
+  // ==========================================================================
+  
+  // Don't extract generic class names - they're noise
+  // Only extract class names that look like they have semantic meaning
+  // and aren't obviously framework-generated
+  const meaningfulClassPattern = /\.(hero|banner|cta|testimonial|pricing|feature|portfolio|gallery|modal|sidebar|navbar|footer-\w+|header-\w+|section-\w+|card-\w+|btn-\w+)/gi;
+  const meaningfulClasses = normalizedCss.match(meaningfulClassPattern) || [];
+  meaningfulClasses.forEach(c => tokens.push(`CLASS:${c.toLowerCase()}`));
   
   return tokens;
 }
 
 /**
  * Extract meaningful tokens from HTML for shingling
+ * Focus on STRUCTURE over class names (class names can be renamed)
  */
 export function extractHtmlTokens(html: string): string[] {
   const tokens: string[] = [];
   
-  // Extract class names from class attributes
-  const classMatches = html.match(/class=["']([^"']+)["']/gi) || [];
-  for (const match of classMatches) {
-    const classes = match.match(/class=["']([^"']+)["']/i)?.[1]?.split(/\s+/) || [];
-    tokens.push(...classes);
+  // Normalize HTML
+  const normalizedHtml = html
+    .replace(/<!--[\s\S]*?-->/g, '') // Remove comments
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // ==========================================================================
+  // HIGH WEIGHT: Page structure patterns
+  // ==========================================================================
+  
+  // Extract nested structure patterns (the skeleton)
+  // e.g., "section>div>div>h2+p" style patterns
+  const structurePattern = extractDomStructure(normalizedHtml);
+  if (structurePattern.length > 0) {
+    structurePattern.forEach(s => tokens.push(`STRUCT:${s}`));
   }
   
-  // Extract data attributes
-  const dataAttrs = html.match(/data-[\w-]+/g) || [];
-  tokens.push(...dataAttrs);
+  // Section count and layout inference
+  const sectionCount = (normalizedHtml.match(/<section/gi) || []).length;
+  const articleCount = (normalizedHtml.match(/<article/gi) || []).length;
+  const divDepth = estimateNestingDepth(normalizedHtml);
+  tokens.push(`LAYOUT:sections=${sectionCount}`);
+  tokens.push(`LAYOUT:articles=${articleCount}`);
+  tokens.push(`LAYOUT:depth=${divDepth}`);
   
-  // Extract structural elements with their nesting
-  const structuralTags = ['nav', 'header', 'main', 'section', 'article', 'aside', 'footer', 'div'];
-  for (const tag of structuralTags) {
-    const matches = html.match(new RegExp(`<${tag}[^>]*>`, 'gi')) || [];
-    tokens.push(...matches.map(m => m.slice(0, 50))); // Truncate long matches
+  // ==========================================================================
+  // MEDIUM WEIGHT: Semantic elements and patterns
+  // ==========================================================================
+  
+  // Extract semantic landmarks
+  const landmarks = ['nav', 'header', 'main', 'footer', 'aside', 'article', 'section'];
+  for (const landmark of landmarks) {
+    const count = (normalizedHtml.match(new RegExp(`<${landmark}`, 'gi')) || []).length;
+    if (count > 0) {
+      tokens.push(`LANDMARK:${landmark}=${count}`);
+    }
   }
+  
+  // Form structure (indicates functionality)
+  const formPatterns = normalizedHtml.match(/<form[^>]*>[\s\S]*?<\/form>/gi) || [];
+  formPatterns.forEach((f, i) => {
+    const inputCount = (f.match(/<input/gi) || []).length;
+    const selectCount = (f.match(/<select/gi) || []).length;
+    const textareaCount = (f.match(/<textarea/gi) || []).length;
+    tokens.push(`FORM:${i}:inputs=${inputCount},selects=${selectCount},textareas=${textareaCount}`);
+  });
+  
+  // Link patterns (navigation structure)
+  const navLinks = normalizedHtml.match(/<nav[^>]*>[\s\S]*?<\/nav>/gi) || [];
+  navLinks.forEach((nav, i) => {
+    const linkCount = (nav.match(/<a /gi) || []).length;
+    tokens.push(`NAV:${i}:links=${linkCount}`);
+  });
+  
+  // ==========================================================================
+  // MEDIUM WEIGHT: Content structure patterns
+  // ==========================================================================
+  
+  // Heading hierarchy (content structure fingerprint)
+  const headingPattern = extractHeadingPattern(normalizedHtml);
+  if (headingPattern) {
+    tokens.push(`HEADINGS:${headingPattern}`);
+  }
+  
+  // Image patterns (visual content structure)
+  const imgTags = normalizedHtml.match(/<img[^>]+>/gi) || [];
+  tokens.push(`IMAGES:count=${imgTags.length}`);
+  
+  // Extract image dimensions/aspect ratios if specified
+  imgTags.forEach(img => {
+    const width = img.match(/width=["']?(\d+)/i)?.[1];
+    const height = img.match(/height=["']?(\d+)/i)?.[1];
+    if (width && height) {
+      const aspect = Math.round((parseInt(width) / parseInt(height)) * 10) / 10;
+      tokens.push(`IMG_ASPECT:${aspect}`);
+    }
+  });
+  
+  // Video/iframe patterns (media embeds)
+  const videoCount = (normalizedHtml.match(/<video/gi) || []).length;
+  const iframeCount = (normalizedHtml.match(/<iframe/gi) || []).length;
+  if (videoCount > 0) tokens.push(`MEDIA:video=${videoCount}`);
+  if (iframeCount > 0) tokens.push(`MEDIA:iframe=${iframeCount}`);
+  
+  // ==========================================================================
+  // LOW WEIGHT: Data attributes (often framework-specific)
+  // ==========================================================================
+  
+  // Webflow-specific patterns (indicates same platform, not plagiarism)
+  // Extract non-Webflow data attributes only
+  const dataAttrs = normalizedHtml.match(/data-(?!w-|wf-|animation)[\w-]+/g) || [];
+  const uniqueDataAttrs = [...new Set(dataAttrs)].slice(0, 20);
+  uniqueDataAttrs.forEach(d => tokens.push(`DATA:${d}`));
+  
+  // ==========================================================================
+  // VERY LOW WEIGHT: Class names (easily changed)
+  // Only extract semantic/meaningful class patterns, not generic
+  // ==========================================================================
+  
+  // Skip class extraction entirely - it's noise for plagiarism detection
+  // The CSS property values already capture what matters
   
   return tokens;
+}
+
+/**
+ * Extract simplified DOM structure patterns
+ */
+function extractDomStructure(html: string): string[] {
+  const patterns: string[] = [];
+  
+  // Find major sections and their immediate child structure
+  const sectionRegex = /<(section|article|div)[^>]*>([\s\S]*?)<\/\1>/gi;
+  let match;
+  let count = 0;
+  
+  while ((match = sectionRegex.exec(html)) !== null && count < 10) {
+    const content = match[2];
+    // Count immediate children types
+    const h1Count = (content.match(/<h1/gi) || []).length;
+    const h2Count = (content.match(/<h2/gi) || []).length;
+    const pCount = (content.match(/<p[^>]*>/gi) || []).length;
+    const imgCount = (content.match(/<img/gi) || []).length;
+    const linkCount = (content.match(/<a /gi) || []).length;
+    
+    patterns.push(`BLOCK:h1=${h1Count},h2=${h2Count},p=${pCount},img=${imgCount},a=${linkCount}`);
+    count++;
+  }
+  
+  return patterns;
+}
+
+/**
+ * Estimate DOM nesting depth
+ */
+function estimateNestingDepth(html: string): number {
+  let maxDepth = 0;
+  let currentDepth = 0;
+  const tagRegex = /<\/?div[^>]*>/gi;
+  let match;
+  
+  while ((match = tagRegex.exec(html)) !== null) {
+    if (match[0].startsWith('</')) {
+      currentDepth--;
+    } else {
+      currentDepth++;
+      maxDepth = Math.max(maxDepth, currentDepth);
+    }
+  }
+  
+  return Math.min(maxDepth, 20); // Cap at 20 for sanity
+}
+
+/**
+ * Extract heading hierarchy pattern
+ */
+function extractHeadingPattern(html: string): string {
+  const headings: string[] = [];
+  const headingRegex = /<h([1-6])[^>]*>/gi;
+  let match;
+  
+  while ((match = headingRegex.exec(html)) !== null && headings.length < 20) {
+    headings.push(`h${match[1]}`);
+  }
+  
+  return headings.join(',');
 }
 
 // =============================================================================

@@ -2671,10 +2671,33 @@ interface PatternMatch {
   context?: string;
 }
 
+interface IdenticalRule {
+  selector: string;
+  properties: string[];
+  similarity: number; // 1.0 = exact match
+  depth?: number; // Nesting depth (lower = more significant)
+  scope?: 'page' | 'section' | 'component' | 'element';
+}
+
+interface StructuralMatch {
+  level: 'page' | 'section' | 'component' | 'element';
+  tag: string;
+  depth: number;
+  childSignature: string; // Simplified child structure
+  weight: number; // Higher = more significant
+}
+
 interface ComparisonResult {
   template1: { id: string; name: string; url: string };
   template2: { id: string; name: string; url: string };
   overallSimilarity: number;
+  // SMOKING GUN: Same class name + same properties = copy/paste
+  identicalRules: IdenticalRule[];
+  // Structural matches weighted by depth (shallower = more significant)
+  structuralMatches: {
+    score: number;
+    matches: Array<{ pattern: string; level: string; weight: number; count: number }>;
+  };
   breakdown: {
     cssClasses: { similarity: number; shared: string[]; unique1: string[]; unique2: string[] };
     cssProperties: { similarity: number; shared: PatternMatch[]; };
@@ -2734,6 +2757,13 @@ async function generateDetailedComparison(
   const sharedAnimations = animations1.filter(a => animations2.includes(a));
   const sharedColors = colors1.filter(c => colors2.includes(c));
   
+  // SMOKING GUN: Find identical CSS rules (same selector + same properties)
+  const identicalRules = findIdenticalRules(content1.css, content2.css);
+  
+  // Structural analysis: Find matching HTML patterns weighted by depth
+  // Shallower matches (sections, pages) are more significant than deep matches (buttons, spans)
+  const structuralMatches = findStructuralMatches(content1.html, content2.html);
+  
   // Find matching property patterns
   const sharedProps: PatternMatch[] = [];
   for (const p1 of props1) {
@@ -2750,13 +2780,22 @@ async function generateDetailedComparison(
   const sig2 = deserializeSignatureCompact(t2.combined_signature as string, t2.combined_shingles as number, 'combined');
   const simResult = estimateSimilarity(sig1, sig2);
   
-  // Extract code excerpts for visual comparison
-  const codeExcerpts = extractMatchingCodeExcerpts(content1, content2, sharedClasses.slice(0, 5));
+  // Extract code excerpts for visual comparison - prioritize identical rules
+  // Filter out selectors with brackets/special chars that would break regex
+  const excerptSelectors = identicalRules.length > 0 
+    ? identicalRules
+        .filter(r => !r.selector.includes('[') && !r.selector.includes('('))
+        .slice(0, 5)
+        .map(r => r.selector.replace(/^\./, ''))
+    : sharedClasses.filter(c => !c.includes('[') && !c.includes('(')).slice(0, 5);
+  const codeExcerpts = extractMatchingCodeExcerpts(content1, content2, excerptSelectors);
   
   return {
     template1: { id: t1.id as string, name: t1.name as string, url: t1.url as string },
     template2: { id: t2.id as string, name: t2.name as string, url: t2.url as string },
     overallSimilarity: simResult.jaccardEstimate,
+    identicalRules,
+    structuralMatches,
     breakdown: {
       cssClasses: {
         similarity: sharedClasses.length / Math.max(classes1.length, classes2.length, 1),
@@ -2785,6 +2824,298 @@ async function generateDetailedComparison(
       matchingPatterns: [...sharedProps.slice(0, 10), ...sharedAnimations.map(a => ({ type: 'animation' as const, value: a }))],
       codeExcerpts
     }
+  };
+}
+
+/**
+ * SMOKING GUN: Find CSS rules with same selector AND same properties
+ * This is the strongest evidence of copy/paste plagiarism
+ */
+function findIdenticalRules(css1: string, css2: string): IdenticalRule[] {
+  const rules1 = extractCssRules(css1);
+  const rules2 = extractCssRules(css2);
+  
+  const identicalRules: IdenticalRule[] = [];
+  
+  // Common reset/normalize selectors to ignore (these are standard styling, not plagiarism)
+  const resetSelectors = new Set([
+    '*', 'html', 'body', 'a', 'img', 'button', 'input', 'textarea', 'select',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li',
+    'audio', 'video', 'canvas', 'svg', 'iframe',
+    'audio:not([controls])', 'img[src]', '[hidden]', 'template',
+    '::before', '::after', '*::before', '*::after',
+    ':root', ':focus', '::-webkit-input-placeholder', '::-moz-placeholder',
+    'abbr[title]', 'b', 'strong', 'code', 'kbd', 'pre', 'samp', 'mark',
+    'small', 'sub', 'sup', 'table', 'td', 'th', 'figure', 'figcaption',
+    'fieldset', 'legend', 'progress', 'details', 'summary', 'main',
+    'hr', 'address', 'dl', 'dt', 'dd', 'cite', 'dfn', 'em', 'i', 'q', 'var'
+  ]);
+  
+  for (const [selector, props1] of Object.entries(rules1)) {
+    // Skip Webflow framework classes
+    if (selector.startsWith('.w-') || selector.startsWith('.wf-')) continue;
+    
+    // Skip common reset/normalize rules
+    if (resetSelectors.has(selector)) continue;
+    if (selector.includes('[type=') || selector.includes('::-webkit-') || selector.includes('::-moz-')) continue;
+    
+    if (rules2[selector]) {
+      const props2 = rules2[selector];
+      
+      // Compare property sets
+      const set1 = new Set(props1.map(p => normalizeProperty(p)));
+      const set2 = new Set(props2.map(p => normalizeProperty(p)));
+      
+      // Find matching properties
+      const matching = [...set1].filter(p => set2.has(p));
+      
+      if (matching.length >= 2) { // At least 2 matching properties
+        const similarity = matching.length / Math.max(set1.size, set2.size);
+        
+        if (similarity >= 0.5) { // At least 50% property overlap
+          identicalRules.push({
+            selector,
+            properties: matching.slice(0, 10), // Top 10 matching properties
+            similarity
+          });
+        }
+      }
+    }
+  }
+  
+  // Sort by similarity (highest first)
+  identicalRules.sort((a, b) => b.similarity - a.similarity);
+  
+  return identicalRules.slice(0, 30); // Top 30 matches
+}
+
+/**
+ * Extract CSS rules as a map of selector -> properties
+ */
+function extractCssRules(css: string): Record<string, string[]> {
+  const rules: Record<string, string[]> = {};
+  
+  // Normalize CSS
+  const normalized = css
+    .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Match CSS rules: selector { properties }
+  const ruleRegex = /([^{}]+)\{([^{}]+)\}/g;
+  let match;
+  
+  while ((match = ruleRegex.exec(normalized)) !== null) {
+    const selector = match[1].trim();
+    const propsBlock = match[2].trim();
+    
+    // Skip @rules and complex selectors for now
+    if (selector.startsWith('@') || selector.includes(',')) continue;
+    
+    // Extract individual properties
+    const props = propsBlock
+      .split(';')
+      .map(p => p.trim())
+      .filter(p => p.length > 0 && p.includes(':'));
+    
+    if (props.length > 0) {
+      rules[selector] = props;
+    }
+  }
+  
+  return rules;
+}
+
+/**
+ * Normalize a CSS property for comparison
+ * Removes vendor prefixes, normalizes whitespace
+ */
+function normalizeProperty(prop: string): string {
+  return prop
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/-webkit-|-moz-|-ms-|-o-/g, '')
+    .trim();
+}
+
+/**
+ * Analyze HTML structure and extract depth-weighted patterns
+ * Shallower (higher in DOM) = more significant
+ */
+function analyzeHtmlStructure(html: string): StructuralMatch[] {
+  const matches: StructuralMatch[] = [];
+  
+  // Define structural levels by tag
+  const levelMap: Record<string, 'page' | 'section' | 'component' | 'element'> = {
+    'body': 'page', 'main': 'page',
+    'header': 'section', 'footer': 'section', 'nav': 'section', 
+    'section': 'section', 'article': 'section', 'aside': 'section',
+    'div': 'component', 'form': 'component', 'ul': 'component', 'ol': 'component',
+    'table': 'component', 'figure': 'component',
+    'p': 'element', 'span': 'element', 'a': 'element', 'button': 'element',
+    'input': 'element', 'img': 'element', 'h1': 'element', 'h2': 'element',
+    'h3': 'element', 'h4': 'element', 'h5': 'element', 'h6': 'element'
+  };
+  
+  // Weight by level (higher = more significant copy)
+  const weightMap: Record<string, number> = {
+    'page': 10,
+    'section': 7,
+    'component': 4,
+    'element': 1
+  };
+  
+  // Parse and analyze structure
+  let depth = 0;
+  const tagStack: string[] = [];
+  const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
+  let match;
+  
+  while ((match = tagRegex.exec(html)) !== null) {
+    const fullTag = match[0];
+    const tagName = match[1].toLowerCase();
+    const isClosing = fullTag.startsWith('</');
+    const isSelfClosing = fullTag.endsWith('/>') || ['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName);
+    
+    if (isClosing) {
+      depth = Math.max(0, depth - 1);
+      tagStack.pop();
+    } else {
+      const level = levelMap[tagName] || 'element';
+      const weight = weightMap[level] * (1 / Math.max(depth, 1)); // Depth penalty
+      
+      // Extract child structure signature for this element
+      const childSignature = extractChildSignature(html, match.index);
+      
+      matches.push({
+        level,
+        tag: tagName,
+        depth,
+        childSignature,
+        weight
+      });
+      
+      if (!isSelfClosing) {
+        depth++;
+        tagStack.push(tagName);
+      }
+    }
+  }
+  
+  return matches;
+}
+
+/**
+ * Extract a simplified signature of immediate children
+ */
+function extractChildSignature(html: string, startIndex: number): string {
+  // Find the closing tag and extract content between
+  const openTagEnd = html.indexOf('>', startIndex) + 1;
+  const tagMatch = html.slice(startIndex).match(/<([a-zA-Z][a-zA-Z0-9]*)/);
+  if (!tagMatch) return '';
+  
+  const tagName = tagMatch[1].toLowerCase();
+  const closeTagRegex = new RegExp(`</${tagName}>`, 'i');
+  const closeMatch = html.slice(openTagEnd).match(closeTagRegex);
+  
+  if (!closeMatch) return '';
+  
+  const content = html.slice(openTagEnd, openTagEnd + closeMatch.index!);
+  
+  // Extract immediate child tags only (not grandchildren)
+  const childTags: string[] = [];
+  let depth = 0;
+  const childRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
+  let match;
+  
+  while ((match = childRegex.exec(content)) !== null) {
+    const isClosing = match[0].startsWith('</');
+    const isSelfClosing = match[0].endsWith('/>');
+    
+    if (isClosing) {
+      depth--;
+    } else {
+      if (depth === 0) {
+        childTags.push(match[1].toLowerCase());
+      }
+      if (!isSelfClosing) {
+        depth++;
+      }
+    }
+  }
+  
+  return childTags.slice(0, 10).join(',');
+}
+
+/**
+ * Compare HTML structures and find matching patterns
+ * Returns matches weighted by significance (depth)
+ */
+function findStructuralMatches(html1: string, html2: string): {
+  matches: Array<{ pattern: string; level: string; weight: number; count: number }>;
+  score: number;
+} {
+  const struct1 = analyzeHtmlStructure(html1);
+  const struct2 = analyzeHtmlStructure(html2);
+  
+  // Create signatures from structure
+  const sigs1 = new Map<string, { level: string; weight: number; count: number }>();
+  const sigs2 = new Map<string, { level: string; weight: number; count: number }>();
+  
+  for (const s of struct1) {
+    if (s.childSignature) {
+      const key = `${s.tag}[${s.childSignature}]`;
+      const existing = sigs1.get(key);
+      if (existing) {
+        existing.count++;
+        existing.weight = Math.max(existing.weight, s.weight);
+      } else {
+        sigs1.set(key, { level: s.level, weight: s.weight, count: 1 });
+      }
+    }
+  }
+  
+  for (const s of struct2) {
+    if (s.childSignature) {
+      const key = `${s.tag}[${s.childSignature}]`;
+      const existing = sigs2.get(key);
+      if (existing) {
+        existing.count++;
+        existing.weight = Math.max(existing.weight, s.weight);
+      } else {
+        sigs2.set(key, { level: s.level, weight: s.weight, count: 1 });
+      }
+    }
+  }
+  
+  // Find matching structural patterns
+  const matches: Array<{ pattern: string; level: string; weight: number; count: number }> = [];
+  let totalWeight = 0;
+  let matchedWeight = 0;
+  
+  for (const [pattern, data] of sigs1.entries()) {
+    totalWeight += data.weight;
+    
+    if (sigs2.has(pattern)) {
+      const data2 = sigs2.get(pattern)!;
+      const matchWeight = Math.min(data.weight, data2.weight);
+      matchedWeight += matchWeight;
+      
+      matches.push({
+        pattern,
+        level: data.level,
+        weight: matchWeight,
+        count: Math.min(data.count, data2.count)
+      });
+    }
+  }
+  
+  // Sort by weight (most significant first)
+  matches.sort((a, b) => b.weight - a.weight);
+  
+  return {
+    matches: matches.slice(0, 20),
+    score: totalWeight > 0 ? matchedWeight / totalWeight : 0
   };
 }
 
@@ -2818,40 +3149,93 @@ function extractAllClasses(css: string, html: string): string[] {
 
 function extractDetailedCssProperties(css: string): PatternMatch[] {
   const props: PatternMatch[] = [];
+  const seen = new Set<string>();
   
-  // Extract CSS variable definitions
-  const varRegex = /--[\w-]+:\s*([^;]+)/g;
-  let match;
-  while ((match = varRegex.exec(css)) !== null) {
-    props.push({ type: 'variable', value: match[0].trim() });
-  }
+  // Normalize CSS
+  const normalizedCss = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
   
-  // Extract transform values
-  const transformRegex = /transform:\s*([^;]+)/g;
-  while ((match = transformRegex.exec(css)) !== null) {
-    props.push({ type: 'property', value: `transform: ${match[1].trim()}` });
-  }
+  // HIGH PRIORITY: Design-defining properties
+  const propertyPatterns: Array<{ regex: RegExp; type: PatternMatch['type']; label: string }> = [
+    { regex: /transform:\s*([^;]+)/gi, type: 'property', label: 'transform' },
+    { regex: /box-shadow:\s*([^;]+)/gi, type: 'property', label: 'box-shadow' },
+    { regex: /text-shadow:\s*([^;]+)/gi, type: 'property', label: 'text-shadow' },
+    { regex: /filter:\s*([^;]+)/gi, type: 'property', label: 'filter' },
+    { regex: /backdrop-filter:\s*([^;]+)/gi, type: 'property', label: 'backdrop-filter' },
+    { regex: /clip-path:\s*([^;]+)/gi, type: 'property', label: 'clip-path' },
+    { regex: /border-radius:\s*([^;]+)/gi, type: 'property', label: 'border-radius' },
+    { regex: /transition:\s*([^;]+)/gi, type: 'property', label: 'transition' },
+    { regex: /animation:\s*([^;]+)/gi, type: 'animation', label: 'animation' },
+    { regex: /background:\s*([^;]+gradient[^;]+)/gi, type: 'gradient', label: 'gradient' },
+    { regex: /linear-gradient\([^)]+\)/gi, type: 'gradient', label: 'linear-gradient' },
+    { regex: /radial-gradient\([^)]+\)/gi, type: 'gradient', label: 'radial-gradient' },
+  ];
   
-  // Extract transition values
-  const transitionRegex = /transition:\s*([^;]+)/g;
-  while ((match = transitionRegex.exec(css)) !== null) {
-    props.push({ type: 'property', value: `transition: ${match[1].trim()}` });
-  }
-  
-  // Extract box-shadow values
-  const shadowRegex = /box-shadow:\s*([^;]+)/g;
-  while ((match = shadowRegex.exec(css)) !== null) {
-    props.push({ type: 'property', value: `box-shadow: ${match[1].trim().slice(0, 60)}...` });
-  }
-  
-  // Extract border-radius values (unique design choices)
-  const radiusRegex = /border-radius:\s*([^;]+)/g;
-  while ((match = radiusRegex.exec(css)) !== null) {
-    const value = match[1].trim();
-    if (value !== '0' && value !== '0px' && value !== '50%') {
-      props.push({ type: 'property', value: `border-radius: ${value}` });
+  for (const { regex, type, label } of propertyPatterns) {
+    let match;
+    while ((match = regex.exec(normalizedCss)) !== null) {
+      const value = match[0].trim().slice(0, 100);
+      const key = `${label}:${value}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        props.push({ type, value, context: label });
+      }
     }
   }
+  
+  // CSS variable definitions (design system fingerprint)
+  const varRegex = /--[\w-]+:\s*([^;]+)/g;
+  let match;
+  while ((match = varRegex.exec(normalizedCss)) !== null) {
+    const value = match[0].trim();
+    if (!seen.has(value)) {
+      seen.add(value);
+      props.push({ type: 'variable', value });
+    }
+  }
+  
+  // Extract specific numeric values (design fingerprint)
+  const numericProps: Array<{ regex: RegExp; name: string }> = [
+    { regex: /padding:\s*([^;]+)/gi, name: 'padding' },
+    { regex: /margin:\s*([^;]+)/gi, name: 'margin' },
+    { regex: /gap:\s*([^;]+)/gi, name: 'gap' },
+    { regex: /font-size:\s*([^;]+)/gi, name: 'font-size' },
+    { regex: /line-height:\s*([^;]+)/gi, name: 'line-height' },
+    { regex: /letter-spacing:\s*([^;]+)/gi, name: 'letter-spacing' },
+    { regex: /max-width:\s*([^;]+)/gi, name: 'max-width' },
+  ];
+  
+  for (const { regex, name } of numericProps) {
+    let match;
+    while ((match = regex.exec(normalizedCss)) !== null) {
+      const value = match[1].trim();
+      // Skip common/default values
+      if (value !== '0' && value !== 'auto' && value !== 'inherit' && value !== 'normal') {
+        const key = `${name}:${value}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          props.push({ type: 'property', value: `${name}: ${value}`, context: 'numeric' });
+        }
+      }
+    }
+  }
+  
+  // Layout configurations (structural fingerprint)
+  const layoutPatterns = normalizedCss.match(/display:\s*(flex|grid)[^;]*/gi) || [];
+  layoutPatterns.forEach(l => {
+    if (!seen.has(l)) {
+      seen.add(l);
+      props.push({ type: 'structure', value: l.trim(), context: 'layout' });
+    }
+  });
+  
+  // Flex/grid specific properties
+  const flexGridProps = normalizedCss.match(/(flex-direction|justify-content|align-items|grid-template-columns|grid-template-rows|flex-wrap|align-content):\s*[^;]+/gi) || [];
+  flexGridProps.forEach(p => {
+    if (!seen.has(p)) {
+      seen.add(p);
+      props.push({ type: 'structure', value: p.trim(), context: 'layout' });
+    }
+  });
   
   return props;
 }
@@ -2901,13 +3285,26 @@ function extractColors(css: string): string[] {
 function extractMatchingCodeExcerpts(
   content1: { html: string; css: string },
   content2: { html: string; css: string },
-  sharedClasses: string[]
+  sharedSelectors: string[]
 ): Array<{ label: string; code1: string; code2: string; similarity: number }> {
   const excerpts: Array<{ label: string; code1: string; code2: string; similarity: number }> = [];
   
-  for (const cls of sharedClasses.slice(0, 5)) {
-    // Find CSS rule for this class in both files
-    const cssRegex1 = new RegExp(`\\.${cls}\\s*\\{[^}]*\\}`, 'g');
+  // Helper to escape regex special characters
+  const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  for (const selector of sharedSelectors.slice(0, 5)) {
+    // Skip selectors that would cause regex issues
+    if (!selector || selector.includes('[') || selector.includes('(')) continue;
+    
+    // Find CSS rule for this selector in both files
+    const escapedSelector = escapeRegex(selector);
+    let cssRegex1;
+    try {
+      cssRegex1 = new RegExp(`\\.${escapedSelector}\\s*\\{[^}]*\\}`, 'g');
+    } catch (e) {
+      continue; // Skip if regex is invalid
+    }
+    
     const match1 = content1.css.match(cssRegex1);
     const match2 = content2.css.match(cssRegex1);
     
@@ -2923,7 +3320,7 @@ function extractMatchingCodeExcerpts(
       }
       
       excerpts.push({
-        label: `.${cls}`,
+        label: `.${selector}`,
         code1,
         code2,
         similarity: matches / Math.max(code1.length, code2.length)
@@ -3131,6 +3528,194 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .classes-list .shared { color: var(--match-high); }
     .classes-list .unique { color: var(--muted); }
     
+    /* Smoking Gun - Identical Rules */
+    .smoking-gun {
+      background: rgba(196, 29, 29, 0.05);
+      border: 2px solid var(--match-high);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .smoking-gun-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .smoking-gun-header .icon { color: var(--match-high); }
+    .smoking-gun-header h2 { color: var(--match-high); font-size: 1.3rem; }
+    .smoking-gun-badge {
+      background: var(--match-high);
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: auto;
+    }
+    .smoking-gun-desc {
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .identical-rules {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .identical-rule {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+    }
+    .rule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .rule-selector {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--match-high);
+      background: rgba(196, 29, 29, 0.1);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+    }
+    .rule-similarity {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .rule-properties {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .rule-prop {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      background: var(--code-bg);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      color: var(--text);
+    }
+    .rule-more {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    /* Property Groups */
+    .properties-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .property-group {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .property-group-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .property-group-header .icon { color: var(--accent); }
+    .property-count {
+      background: var(--border);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      margin-left: auto;
+    }
+    .property-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .property-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      background: white;
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .property-more {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    /* Structural Matches - depth weighted */
+    .structural-matches {
+      display: grid;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .struct-match {
+      background: var(--code-bg);
+      border-left: 3px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+    .struct-match.struct-page {
+      border-left-color: var(--match-high);
+      background: rgba(196, 29, 29, 0.05);
+    }
+    .struct-match.struct-section {
+      border-left-color: var(--match-med);
+      background: rgba(214, 134, 0, 0.05);
+    }
+    .struct-match.struct-component {
+      border-left-color: var(--accent);
+    }
+    .struct-match.struct-element {
+      border-left-color: var(--muted);
+    }
+    .struct-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .struct-level {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .struct-page .struct-level { background: rgba(196, 29, 29, 0.15); color: var(--match-high); }
+    .struct-section .struct-level { background: rgba(214, 134, 0, 0.15); color: var(--match-med); }
+    .struct-component .struct-level { background: rgba(139, 92, 246, 0.15); color: var(--accent); }
+    .struct-element .struct-level { background: var(--border); color: var(--muted); }
+    .struct-pattern {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      flex: 1;
+    }
+    .struct-weight {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+    .struct-count {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-left: 2rem;
+    }
+    
     /* Sidenotes - Tufte style */
     .sidenote {
       float: right;
@@ -3230,45 +3815,110 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
           </div>
         </div>
         
+        \${data.identicalRules && data.identicalRules.length > 0 ? \`
+        <div class="smoking-gun">
+          <div class="smoking-gun-header">
+            <span class="icon"><i data-lucide="alert-octagon"></i></span>
+            <h2 style="margin: 0; display: inline;">Identical CSS Rules Found</h2>
+            <span class="smoking-gun-badge">\${data.identicalRules.length} matches</span>
+          </div>
+          <p class="smoking-gun-desc">
+            <strong>Strongest evidence of copy/paste</strong> — Same class names with same property values. 
+            This is not coincidence.
+          </p>
+          <div class="identical-rules">
+            \${data.identicalRules.slice(0, 10).map(rule => \`
+              <div class="identical-rule">
+                <div class="rule-header">
+                  <code class="rule-selector">\${rule.selector}</code>
+                  <span class="rule-similarity">\${(rule.similarity * 100).toFixed(0)}% match</span>
+                </div>
+                <div class="rule-properties">
+                  \${rule.properties.slice(0, 5).map(p => \`<code class="rule-prop">\${escapeHtml(p)}</code>\`).join('')}
+                  \${rule.properties.length > 5 ? \`<span class="rule-more">+\${rule.properties.length - 5} more</span>\` : ''}
+                </div>
+              </div>
+            \`).join('')}
+          </div>
+        </div>
+        \` : ''}
+        
         <h2>Similarity Breakdown</h2>
         <div class="breakdown-grid">
-          \${renderBreakdownItem('CSS Classes', data.breakdown.cssClasses.similarity)}
+          \${renderBreakdownItem('Identical Rules', data.identicalRules ? Math.min(data.identicalRules.length / 10, 1) : 0)}
+          \${renderBreakdownItem('HTML Structure', data.structuralMatches ? data.structuralMatches.score : 0)}
           \${renderBreakdownItem('CSS Properties', data.breakdown.cssProperties.similarity)}
-          \${renderBreakdownItem('Animations', data.breakdown.animations.similarity)}
           \${renderBreakdownItem('Color Palette', data.breakdown.colors.similarity)}
         </div>
         
-        <h2>Shared CSS Classes</h2>
+        \${data.structuralMatches && data.structuralMatches.matches.length > 0 ? \`
+        <h2>Structural Matches</h2>
         <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
-          Classes present in both templates (excluding Webflow framework classes)
+          Matching HTML patterns weighted by depth. <strong>Sections/pages</strong> copied are more significant 
+          than small nested elements.
         </p>
-        <div class="classes-grid">
-          <div class="classes-column">
-            <h4>Shared (\${data.breakdown.cssClasses.shared.length})</h4>
-            <div class="classes-list">
-              \${data.breakdown.cssClasses.shared.map(c => '<span class="shared">.' + c + '</span>').join('<br>')}
+        <div class="structural-matches">
+          \${data.structuralMatches.matches.map(m => \`
+            <div class="struct-match struct-\${m.level}">
+              <div class="struct-header">
+                <span class="struct-level">\${m.level}</span>
+                <code class="struct-pattern">\${escapeHtml(m.pattern)}</code>
+                <span class="struct-weight" title="Higher = more significant">\${m.weight.toFixed(1)} weight</span>
+              </div>
+              \${m.count > 1 ? \`<span class="struct-count">×\${m.count} occurrences</span>\` : ''}
             </div>
-          </div>
-          <div class="classes-column">
-            <h4>Only in \${data.template1.name}</h4>
-            <div class="classes-list">
-              \${data.breakdown.cssClasses.unique1.map(c => '<span class="unique">.' + c + '</span>').join('<br>')}
-            </div>
-          </div>
-          <div class="classes-column">
-            <h4>Only in \${data.template2.name}</h4>
-            <div class="classes-list">
-              \${data.breakdown.cssClasses.unique2.map(c => '<span class="unique">.' + c + '</span>').join('<br>')}
-            </div>
-          </div>
+          \`).join('')}
         </div>
+        \` : ''}
+        
+        \${data.breakdown.cssProperties.shared.length > 0 ? \`
+        <h2>Matching Property Values</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Similar property values across different selectors — indicates shared design patterns.
+        </p>
+        <div class="properties-grid">
+          \${groupPropertiesByType(data.breakdown.cssProperties.shared)}
+        </div>
+        \` : ''}
         
         \${data.breakdown.colors.shared.length > 0 ? \`
         <h2>Shared Color Palette</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Matching color values suggest shared design decisions or copied styles.
+        </p>
         <div class="color-swatches">
           \${data.breakdown.colors.shared.map(c => '<div class="color-swatch" style="background: ' + c + ';" data-color="' + c + '"></div>').join('')}
         </div>
         \` : ''}
+        
+        <h3 style="margin-top: 2rem; font-size: 0.9rem; color: var(--muted); font-weight: 400;">
+          Class Names <span style="font-style: italic;">(low signal — easily renamed)</span>
+        </h3>
+        <details style="margin-top: 0.5rem;">
+          <summary style="cursor: pointer; color: var(--muted); font-size: 0.85rem;">
+            \${data.breakdown.cssClasses.shared.length} shared classes (click to expand)
+          </summary>
+          <div class="classes-grid" style="margin-top: 1rem;">
+            <div class="classes-column">
+              <h4>Shared</h4>
+              <div class="classes-list">
+                \${data.breakdown.cssClasses.shared.slice(0, 15).map(c => '<span class="shared">.' + c + '</span>').join('<br>')}
+              </div>
+            </div>
+            <div class="classes-column">
+              <h4>Only in \${data.template1.name}</h4>
+              <div class="classes-list">
+                \${data.breakdown.cssClasses.unique1.slice(0, 10).map(c => '<span class="unique">.' + c + '</span>').join('<br>')}
+              </div>
+            </div>
+            <div class="classes-column">
+              <h4>Only in \${data.template2.name}</h4>
+              <div class="classes-list">
+                \${data.breakdown.cssClasses.unique2.slice(0, 10).map(c => '<span class="unique">.' + c + '</span>').join('<br>')}
+              </div>
+            </div>
+          </div>
+        </details>
         
         \${data.breakdown.animations.shared.length > 0 ? \`
         <h2>Shared Animations</h2>
@@ -3322,6 +3972,66 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
           <div class="breakdown-label">\${label}</div>
         </div>
       \`;
+    }
+    
+    function groupPropertiesByType(properties) {
+      const groups = {
+        'Design Effects': [],
+        'Layout': [],
+        'Variables': [],
+        'Gradients': [],
+        'Animations': [],
+        'Other': []
+      };
+      
+      for (const prop of properties) {
+        const value = prop.value || '';
+        const context = prop.context || '';
+        
+        if (value.includes('gradient') || prop.type === 'gradient') {
+          groups['Gradients'].push(prop);
+        } else if (value.includes('transform') || value.includes('shadow') || value.includes('filter') || value.includes('clip-path')) {
+          groups['Design Effects'].push(prop);
+        } else if (context === 'layout' || prop.type === 'structure' || value.includes('flex') || value.includes('grid')) {
+          groups['Layout'].push(prop);
+        } else if (prop.type === 'variable' || value.startsWith('--')) {
+          groups['Variables'].push(prop);
+        } else if (prop.type === 'animation' || value.includes('animation') || value.includes('transition')) {
+          groups['Animations'].push(prop);
+        } else {
+          groups['Other'].push(prop);
+        }
+      }
+      
+      let html = '';
+      for (const [groupName, items] of Object.entries(groups)) {
+        if (items.length === 0) continue;
+        
+        const icon = {
+          'Design Effects': 'sparkles',
+          'Layout': 'layout-grid',
+          'Variables': 'variable',
+          'Gradients': 'palette',
+          'Animations': 'play',
+          'Other': 'code'
+        }[groupName] || 'code';
+        
+        html += \`
+          <div class="property-group">
+            <div class="property-group-header">
+              <span class="icon"><i data-lucide="\${icon}"></i></span>
+              <strong>\${groupName}</strong>
+              <span class="property-count">\${items.length}</span>
+            </div>
+            <div class="property-items">
+              \${items.slice(0, 8).map(p => \`<code class="property-value">\${escapeHtml(p.value)}</code>\`).join('')}
+              \${items.length > 8 ? \`<span class="property-more">+\${items.length - 8} more</span>\` : ''}
+            </div>
+          </div>
+        \`;
+      }
+      
+      return html || '<p style="color: var(--muted);">No significant property matches found.</p>';
     }
     
     function escapeHtml(str) {
