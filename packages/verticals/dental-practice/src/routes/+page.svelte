@@ -287,7 +287,7 @@
 	<div
 		class="mx-auto max-w-[1200px] mt-16 pt-8 border-t border-primary/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400"
 	>
-		<p>© 2024 {siteConfig.name}. All rights reserved.</p>
+		<p>© {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
 		<div class="flex gap-8">
 			<a class="hover:text-primary" href="/privacy">Privacy Policy</a>
 			<a class="hover:text-primary" href="/terms">Terms of Service</a>
