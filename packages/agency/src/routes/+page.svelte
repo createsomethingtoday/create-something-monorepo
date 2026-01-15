@@ -108,16 +108,25 @@
 				rows="2"
 				bind:value={specInput}
 				disabled={isLoading}
+				onkeydown={(e) => {
+					if (e.key === 'Enter' && !e.shiftKey) {
+						e.preventDefault();
+						if (specInput.trim() && !isLoading) handleSubmit();
+					}
+				}}
 			></textarea>
 			<div class="input-footer">
 				<span class="examples-hint">Try: Dental practice · Automate manual work · Train my team</span>
-				<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
-					{#if isLoading}
-						<span class="button-spinner"></span>
-					{:else}
-						Find a match
-					{/if}
-				</button>
+				<div class="submit-group">
+					<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
+						{#if isLoading}
+							<span class="button-spinner"></span>
+						{:else}
+							Find a match
+						{/if}
+					</button>
+					<span class="keyboard-hint">↵ Enter</span>
+				</div>
 			</div>
 		</form>
 
@@ -317,6 +326,24 @@
 	.build-button:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
+	}
+
+	.submit-group {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.keyboard-hint {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		opacity: 0.6;
+	}
+
+	@media (max-width: 768px) {
+		.keyboard-hint {
+			display: none;
+		}
 	}
 
 	.button-spinner {
