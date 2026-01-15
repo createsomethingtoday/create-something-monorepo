@@ -53,6 +53,10 @@ declare global {
 				// Identity Worker (LMS provisioning)
 				IDENTITY_WORKER_URL?: string;
 				IDENTITY_WORKER_SECRET?: string;
+				// WORKWAY Integration (AI-powered spec intake)
+				// Get API key from: https://workway.co/settings/api-keys
+				WORKWAY_API_KEY?: string;
+				WORKWAY_ORG_ID?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;
