@@ -1,0 +1,62 @@
+{
+  "name": "@create-something/motion-studio",
+  "version": "0.1.0",
+  "description": "Vox-style motion graphics generation using Canon components and Remotion",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "tsc && remotion bundle",
+    "render": "remotion render",
+    "render:still": "remotion still",
+    "preview": "remotion preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/player": "^4.0.0",
+    "remotion": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "@create-something/components": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./primitives": {
+      "types": "./dist/primitives/index.d.ts",
+      "import": "./dist/primitives/index.js"
+    },
+    "./compositions": {
+      "types": "./dist/compositions/index.d.ts",
+      "import": "./dist/compositions/index.js"
+    },
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "import": "./dist/styles/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "remotion",
+    "motion-graphics",
+    "vox-style",
+    "explainer",
+    "canon"
+  ],
+  "license": "MIT"
+}

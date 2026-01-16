@@ -26,6 +26,7 @@ from agents.review_agent import (
     create_review_agent,
 )
 from agents.template_deployer import create_template_deployer, verify_deployment
+from agents.motion_agent import MotionGraphicsAgent, MotionAgentConfig, VideoPlan, Theme as MotionTheme
 
 __all__ = [
     # Orchestration
@@ -55,4 +56,9 @@ __all__ = [
     # Client (configurable)
     "create_client_agent",
     "ClientConfig",
+    # Motion Graphics
+    "MotionGraphicsAgent",
+    "MotionAgentConfig",
+    "VideoPlan",
+    "MotionTheme",
 ]
