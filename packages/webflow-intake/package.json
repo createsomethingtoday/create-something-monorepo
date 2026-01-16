@@ -1,0 +1,9 @@
+{
+  "name": "@create-something/webflow-intake",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Intake pipeline for Webflow IC MVPs → Code Components translation",
+  "scripts": {
+    "intake:new": "echo 'Usage: Copy MVP to packages/webflow-intake/[name] and create INTAKE.md from template'"
+  }
+}
