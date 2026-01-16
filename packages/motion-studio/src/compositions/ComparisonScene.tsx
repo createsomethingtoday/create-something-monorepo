@@ -76,7 +76,8 @@ export const ComparisonScene: React.FC<ComparisonSceneProps> = ({
   const pointsStart = splitStart + 30;
   
   const renderSide = (side: ComparisonSide, isLeft: boolean) => {
-    const sideColor = side.color || (isLeft ? colors.semantic.error : colors.semantic.success);
+    // Monochrome: use different gray tones for distinction
+    const sideColor = side.color || (isLeft ? colors.neutral[400] : colors.neutral[200]);
     
     return (
       <div

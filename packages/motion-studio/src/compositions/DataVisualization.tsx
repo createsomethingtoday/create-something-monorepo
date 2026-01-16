@@ -106,7 +106,7 @@ export const DataVisualization: React.FC<DataVisualizationProps> = ({
           durationPerItem={animation.frames.standard}
           width={Math.min(width * 0.8, 1000)}
           height={Math.min(height * 0.5, 500)}
-          accentColor={palette.accent}
+          accentColor={palette.muted}
           showLabels
           showValues
         />
@@ -119,8 +119,8 @@ export const DataVisualization: React.FC<DataVisualizationProps> = ({
             style={{
               marginTop: spacing[10],
               padding: `${spacing[4]}px ${spacing[8]}px`,
-              backgroundColor: `${palette.accent}20`,
-              borderLeft: `4px solid ${palette.accent}`,
+              backgroundColor: `${palette.subtle}`,
+              borderLeft: `4px solid ${palette.muted}`,
               borderRadius: 4,
             }}
           >

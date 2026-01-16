@@ -97,7 +97,7 @@ export const KineticText: React.FC<KineticTextProps> = ({
   style = 'headline',
   fontSize,
   color = colors.neutral[50],
-  accentColor = colors.vox.accent,
+  accentColor = colors.neutral[400],
   highlightWords = [],
   align = 'center',
   useSpring: useSpringPhysics = true,

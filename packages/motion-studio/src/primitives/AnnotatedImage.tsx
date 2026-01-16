@@ -59,9 +59,9 @@ export const AnnotatedImage: React.FC<AnnotatedImageProps> = ({
   annotations,
   width = 800,
   height = 600,
-  lineColor = colors.vox.accent,
+  lineColor = colors.neutral[0],
   labelColor = colors.neutral[950],
-  labelBackgroundColor = colors.vox.accent,
+  labelBackgroundColor = colors.neutral[0],
   showPulse = true,
   className = '',
 }) => {

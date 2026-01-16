@@ -126,9 +126,9 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
             width: 16,
             height: 16,
             borderRadius: '50%',
-            backgroundColor: palette.accent,
+            backgroundColor: palette.foreground,
             border: `3px solid ${palette.background}`,
-            boxShadow: `0 0 0 2px ${palette.accent}`,
+            boxShadow: `0 0 0 2px ${palette.muted}`,
             flexShrink: 0,
           }}
         />
@@ -147,8 +147,8 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
               fontFamily: typography.fontFamily.mono,
               fontSize: typography.fontSize.xs,
               fontWeight: typography.fontWeight.bold,
-              color: palette.accent,
-              backgroundColor: `${palette.accent}20`,
+              color: palette.foreground,
+              backgroundColor: palette.subtle,
               padding: `${spacing[1]}px ${spacing[2]}px`,
               borderRadius: 4,
               alignSelf: isHorizontal ? 'center' : 'flex-start',
@@ -232,7 +232,7 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
             [isHorizontal ? 'left' : 'top']: 0,
             [isHorizontal ? 'width' : 'height']: `${lineProgress * 100}%`,
             [isHorizontal ? 'height' : 'width']: 2,
-            backgroundColor: `${palette.accent}40`,
+            backgroundColor: palette.border,
             transform: isHorizontal ? 'translateY(-50%)' : 'translateX(-50%)',
             zIndex: 0,
           }}

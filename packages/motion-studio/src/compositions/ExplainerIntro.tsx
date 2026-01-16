@@ -80,7 +80,7 @@ export const ExplainerIntro: React.FC<ExplainerIntroProps> = ({
           duration={30}
           style="display"
           color={palette.foreground}
-          accentColor={palette.accent}
+          accentColor={palette.muted}
           highlightWords={highlightWords}
           align="center"
         />
