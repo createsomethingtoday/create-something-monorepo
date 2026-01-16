@@ -259,6 +259,114 @@
 	let activeZones = $state<string[]>([]);
 	let highlightedEntry = $state<string | null>(null);
 
+	// Crowd particles - representing people moving through the arena
+	type Particle = {
+		id: number;
+		x: number;
+		y: number;
+		targetX: number;
+		targetY: number;
+		speed: number;
+		size: number;
+	};
+	
+	let crowdParticles = $state<Particle[]>([]);
+	let particleIdCounter = 0;
+
+	// Generate particles based on scenario
+	function generateParticles() {
+		const newParticles: Particle[] = [];
+		const count = activeScenario === 2 ? 40 : activeScenario === 0 ? 35 : 25; // More particles during crowding/emergency
+		
+		for (let i = 0; i < count; i++) {
+			const particle = createParticleForScenario();
+			if (particle) newParticles.push(particle);
+		}
+		
+		crowdParticles = newParticles;
+	}
+
+	function createParticleForScenario(): Particle | null {
+		particleIdCounter++;
+		const id = particleIdCounter;
+		
+		if (activeScenario === 0) {
+			// Gate crowding - people flowing from parking/roads toward north entrance
+			const fromParking = Math.random() > 0.5;
+			let startX, startY;
+			if (fromParking) {
+				// Coming from north parking lots
+				startX = Math.random() > 0.5 ? (-50 + Math.random() * 100) : (780 + Math.random() * 100);
+				startY = -50 + Math.random() * 80;
+			} else {
+				// Coming from access road
+				startX = 380 + Math.random() * 40;
+				startY = -100 + Math.random() * 50;
+			}
+			return {
+				id,
+				x: startX,
+				y: startY,
+				targetX: 400 + (Math.random() - 0.5) * 100,
+				targetY: 60 + Math.random() * 100,
+				speed: 0.6 + Math.random() * 0.4,
+				size: 3 + Math.random() * 2
+			};
+		} else if (activeScenario === 1) {
+			// Halftime - people flowing from seats to concourse (concessions)
+			const angle = Math.random() * Math.PI * 2;
+			const innerRadius = 120 + Math.random() * 80;
+			const outerRadius = 280 + Math.random() * 60;
+			return {
+				id,
+				x: 400 + Math.cos(angle) * innerRadius,
+				y: 300 + Math.sin(angle) * (innerRadius * 0.7),
+				targetX: 400 + Math.cos(angle) * outerRadius,
+				targetY: 300 + Math.sin(angle) * (outerRadius * 0.7),
+				speed: 0.3 + Math.random() * 0.4,
+				size: 3 + Math.random() * 2
+			};
+		} else {
+			// Emergency - people evacuating toward south exit and parking
+			const startX = 500 + (Math.random() - 0.5) * 200;
+			const startY = 300 + (Math.random() - 0.5) * 150;
+			const toParking = Math.random() > 0.3;
+			return {
+				id,
+				x: startX,
+				y: startY,
+				targetX: toParking ? (350 + Math.random() * 100) : (400 + (Math.random() - 0.5) * 40),
+				targetY: toParking ? (700 + Math.random() * 80) : 580,
+				speed: 1.2 + Math.random() * 0.8,
+				size: 3 + Math.random() * 2
+			};
+		}
+	}
+
+	function updateParticles() {
+		crowdParticles = crowdParticles.map(p => {
+			const dx = p.targetX - p.x;
+			const dy = p.targetY - p.y;
+			const dist = Math.sqrt(dx * dx + dy * dy);
+			
+			if (dist < 5) {
+				// Particle reached destination, create new one
+				const newParticle = createParticleForScenario();
+				return newParticle || p;
+			}
+			
+			// Move toward target
+			const moveX = (dx / dist) * p.speed * 2;
+			const moveY = (dy / dist) * p.speed * 2;
+			
+			return {
+				...p,
+				x: p.x + moveX,
+				y: p.y + moveY
+			};
+		});
+	}
+
 	// Event phases that cycle
 	const eventPhases = [
 		{ phase: 'Pre-Game', attendance: 8_420 },
@@ -295,10 +403,14 @@
 
 	onMount(() => {
 		mounted = true;
+		generateParticles(); // Initialize crowd
 
 		// Simulation tick - creates the "living" effect
 		const interval = setInterval(() => {
 			tick = (tick + 1) % 360;
+			
+			// Always update particle positions for smooth movement
+			updateParticles();
 			
 			if (liveMode) {
 				scenarioCycleTimer++;
@@ -313,6 +425,9 @@
 					highlightedEntry = effects.entry;
 					securityStatus = effects.securityStatus;
 					lightingMode = effects.lightingMode;
+					
+					// Regenerate particles for new scenario
+					generateParticles();
 				}
 				
 				// Cycle event phases every 20 seconds
@@ -442,7 +557,7 @@
 	<!-- Main Visualization -->
 	<div class="visualization-container">
 		<!-- Arena SVG -->
-		<svg class="arena-svg" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+		<svg class="arena-svg" viewBox="-200 -150 1200 900" xmlns="http://www.w3.org/2000/svg">
 			<defs>
 				<!-- Gradients -->
 				<radialGradient id="court-glow" cx="50%" cy="50%" r="50%">
@@ -461,6 +576,11 @@
 					<stop offset="100%" stop-color="var(--color-data-1)" stop-opacity="0" />
 				</linearGradient>
 
+				<linearGradient id="road-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+					<stop offset="0%" stop-color="var(--color-fg-tertiary)" stop-opacity="0.3" />
+					<stop offset="100%" stop-color="var(--color-fg-tertiary)" stop-opacity="0.15" />
+				</linearGradient>
+
 				<!-- Filters -->
 				<filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
 					<feGaussianBlur stdDeviation="3" result="blur" />
@@ -474,11 +594,123 @@
 				<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
 					<path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--color-border-default)" stroke-width="0.5" opacity="0.3" />
 				</pattern>
+
+				<pattern id="parking-lines" width="24" height="40" patternUnits="userSpaceOnUse">
+					<path d="M 0 0 L 0 40 M 24 0 L 24 40" fill="none" stroke="var(--color-fg-tertiary)" stroke-width="1" opacity="0.3" />
+				</pattern>
 			</defs>
 
-			<!-- Background -->
-			<rect width="800" height="600" fill="var(--color-bg-pure)" />
-			<rect width="800" height="600" fill="url(#grid)" />
+			<!-- Background (expanded) -->
+			<rect x="-200" y="-150" width="1200" height="900" fill="var(--color-bg-pure)" />
+			<rect x="-200" y="-150" width="1200" height="900" fill="url(#grid)" />
+
+			<!-- === SURROUNDING SPACE === -->
+			
+			<!-- Access Roads -->
+			<g class="access-roads">
+				<!-- Main entrance road (north) -->
+				<rect x="350" y="-150" width="100" height="150" fill="url(#road-gradient)" />
+				<line x1="370" y1="-150" x2="370" y2="0" stroke="var(--color-data-4)" stroke-width="2" stroke-dasharray="10 15" opacity="0.5" class="road-marking" />
+				<line x1="430" y1="-150" x2="430" y2="0" stroke="var(--color-data-4)" stroke-width="2" stroke-dasharray="10 15" opacity="0.5" class="road-marking" />
+				
+				<!-- South exit road -->
+				<rect x="350" y="600" width="100" height="150" fill="url(#road-gradient)" />
+				<line x1="400" y1="600" x2="400" y2="750" stroke="var(--color-fg-tertiary)" stroke-width="2" stroke-dasharray="10 15" opacity="0.4" />
+				
+				<!-- Perimeter road (ring around arena) -->
+				<ellipse cx="400" cy="300" rx="440" ry="330" fill="none" stroke="var(--color-fg-tertiary)" stroke-width="25" opacity="0.15" />
+			</g>
+
+			<!-- Parking Lots -->
+			<g class="parking-lots">
+				<!-- North parking lot -->
+				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" stroke-width="1" opacity="0.8" />
+				<rect x="-140" y="-110" width="200" height="130" fill="url(#parking-lines)" opacity="0.5" />
+				<text x="-50" y="-50" text-anchor="middle" font-size="10" fill="var(--color-fg-tertiary)">LOT A</text>
+				
+				<!-- Northeast parking lot -->
+				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" stroke-width="1" opacity="0.8" />
+				<rect x="740" y="-110" width="200" height="130" fill="url(#parking-lines)" opacity="0.5" />
+				<text x="840" y="-50" text-anchor="middle" font-size="10" fill="var(--color-fg-tertiary)">LOT B</text>
+				
+				<!-- South parking lot -->
+				<rect x="290" y="680" width="220" height="140" rx="8" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" stroke-width="1" opacity="0.8" />
+				<rect x="300" y="690" width="200" height="120" fill="url(#parking-lines)" opacity="0.5" />
+				<text x="400" y="730" text-anchor="middle" font-size="10" fill="var(--color-fg-tertiary)">LOT C - VIP</text>
+			</g>
+
+			<!-- Vehicles in parking lots (animated based on event phase) -->
+			<g class="parked-vehicles">
+				{#each Array(8) as _, i}
+					<rect x={-130 + (i % 4) * 50} y={-100 + Math.floor(i / 4) * 50} width="18" height="8" rx="2" fill="var(--color-fg-muted)" opacity={0.4 + (tick % 60) * 0.01 * ((i % 3) + 1) * 0.1} />
+				{/each}
+				{#each Array(8) as _, i}
+					<rect x={750 + (i % 4) * 50} y={-100 + Math.floor(i / 4) * 50} width="18" height="8" rx="2" fill="var(--color-fg-muted)" opacity={0.4 + (tick % 60) * 0.01 * ((i % 3) + 1) * 0.1} />
+				{/each}
+			</g>
+
+			<!-- Perimeter Security Points -->
+			<g class="perimeter-security">
+				{#each [[-100, 100], [900, 100], [-100, 500], [900, 500], [400, -100], [400, 700]] as [x, y], i}
+					<g transform="translate({x}, {y})">
+						<circle r="12" fill="var(--color-bg-elevated)" stroke="var(--color-data-1)" stroke-width="2" />
+						<circle r="8" fill="var(--color-data-1)" opacity="0.3" class="security-pulse" style:animation-delay="{i * 0.3}s" />
+						<circle r="3" fill="var(--color-data-1)" />
+					</g>
+				{/each}
+			</g>
+
+			<!-- Vehicles approaching/leaving (animated) -->
+			<g class="moving-vehicles">
+				{#if activeScenario === 0}
+					<!-- Pre-game: vehicles arriving from north -->
+					{#each Array(4) as _, i}
+						<rect 
+							x={360 + (i % 2) * 40} 
+							y={-80 + ((tick * 2 + i * 50) % 150)} 
+							width="14" 
+							height="8" 
+							rx="2" 
+							fill="var(--color-data-4)" 
+							opacity="0.6"
+						/>
+					{/each}
+				{:else if activeScenario === 2}
+					<!-- Emergency: vehicles leaving to south -->
+					{#each Array(6) as _, i}
+						<rect 
+							x={370 + (i % 3) * 20} 
+							y={620 + ((tick * 3 + i * 25) % 130)} 
+							width="14" 
+							height="8" 
+							rx="2" 
+							fill="var(--color-error)" 
+							opacity="0.5"
+						/>
+					{/each}
+				{/if}
+			</g>
+
+			<!-- Pedestrian Crossings -->
+			<g class="crossings">
+				<g transform="translate(400, -50)">
+					<rect x="-30" y="-10" width="60" height="20" rx="2" fill="var(--color-fg-tertiary)" opacity="0.1" />
+					{#each Array(6) as _, i}
+						<rect x={-25 + i * 10} y="-5" width="4" height="10" fill="var(--color-fg-tertiary)" opacity="0.4" />
+					{/each}
+				</g>
+			</g>
+
+			<!-- Shuttle/Bus Lanes -->
+			<g class="transit-lanes">
+				<rect x="-180" y="200" width="60" height="200" rx="4" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" opacity="0.7" />
+				<text x="-150" y="295" text-anchor="middle" font-size="8" fill="var(--color-fg-tertiary)" transform="rotate(-90, -150, 295)">SHUTTLE</text>
+				
+				<!-- Shuttle bus icon -->
+				<rect x="-165" y={250 + Math.sin(tick * 0.05) * 30} width="30" height="15" rx="3" fill="var(--color-accent)" opacity="0.6" />
+			</g>
+
+			<!-- === ARENA INNER AREA === -->
 
 			<!-- Arena Structure - Outer Ring (Concourse) -->
 			<ellipse
@@ -680,6 +912,45 @@
 				<text x="60" y="305" text-anchor="middle">WEST</text>
 				<text x="740" y="305" text-anchor="middle">EAST</text>
 			</g>
+
+			<!-- Crowd Particles - People moving through arena -->
+			<g class="crowd-particles">
+				{#each crowdParticles as particle (particle.id)}
+					<circle
+						cx={particle.x}
+						cy={particle.y}
+						r={particle.size}
+						fill={activeScenario === 2 ? 'var(--color-error)' : 'var(--color-data-3)'}
+						opacity={activeScenario === 2 ? 0.8 : 0.6}
+						class="crowd-person"
+					/>
+				{/each}
+				
+				<!-- Movement trail for emergency evacuation -->
+				{#if activeScenario === 2}
+					{#each crowdParticles.slice(0, 5) as particle (particle.id)}
+						<circle
+							cx={particle.x - 8}
+							cy={particle.y - 8}
+							r={particle.size * 0.5}
+							fill="var(--color-error)"
+							opacity="0.2"
+						/>
+					{/each}
+				{/if}
+			</g>
+
+			<!-- Crowd density heat zones -->
+			{#if activeScenario === 0}
+				<ellipse cx="400" cy="60" rx="80" ry="30" fill="var(--color-data-4)" opacity="0.3" class="density-high" />
+			{:else if activeScenario === 1}
+				<g class="concession-crowds">
+					<ellipse cx="200" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
+					<ellipse cx="600" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
+					<ellipse cx="200" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
+					<ellipse cx="600" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
+				</g>
+			{/if}
 
 			<!-- Live Mode Indicator -->
 			{#if liveMode}
@@ -1358,6 +1629,51 @@
 	/* Live Badge in SVG */
 	.live-badge .live-dot {
 		animation: livePulse 1s ease-in-out infinite;
+	}
+
+	/* Surrounding Space Animations */
+	.road-marking {
+		animation: roadFlow 2s linear infinite;
+	}
+
+	@keyframes roadFlow {
+		to { stroke-dashoffset: -25; }
+	}
+
+	.security-pulse {
+		animation: securityPulse 2s ease-out infinite;
+	}
+
+	@keyframes securityPulse {
+		0% { 
+			r: 8;
+			opacity: 0.5;
+		}
+		100% { 
+			r: 25;
+			opacity: 0;
+		}
+	}
+
+	.crowd-person {
+		transition: all 0.1s linear;
+	}
+
+	.moving-vehicles rect {
+		filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+	}
+
+	.density-high {
+		animation: densityPulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes densityPulse {
+		0%, 100% { opacity: 0.2; }
+		50% { opacity: 0.4; }
+	}
+
+	.parked-vehicles rect {
+		transition: opacity 0.3s ease;
 	}
 
 	@keyframes pulse {
