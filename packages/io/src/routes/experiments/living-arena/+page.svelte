@@ -128,9 +128,9 @@
 
 	// Simulate new incidents occasionally
 	const incidentTypes = [
-		{ type: 'success', system: 'HVAC', event: 'Predictive cooling prevented hotspot', resolution: 'Automatic adjustment 8 minutes before crowd arrival', learned: 'Pattern reinforced for similar events' },
-		{ type: 'override', system: 'Scheduling', event: 'AI suggested early concession close', resolution: 'Manager overrode: VIP event extension', learned: 'VIP events now flagged for manual scheduling' },
-		{ type: 'failure', system: 'Lighting', event: 'Section 205 fixture offline', resolution: 'Adjacent zones compensated • Work order submitted', learned: 'Expanded failure cascade prevention zone' }
+		{ type: 'success', system: 'HVAC', event: 'Cooled the section before the crowd arrived', resolution: 'Nobody noticed. That\'s the goal.', learned: 'This timing works. Keep doing it.' },
+		{ type: 'override', system: 'Scheduling', event: 'AI wanted to close concessions early', resolution: 'Manager said no—VIP event running late. Concessions stayed open.', learned: 'VIP events need a human to decide timing.' },
+		{ type: 'failure', system: 'Lighting', event: 'A light in Section 205 went out', resolution: 'Nearby lights got brighter. Repair scheduled.', learned: 'Always have a backup plan for important areas.' }
 	];
 
 	// Animation state
@@ -547,32 +547,31 @@
 				{/each}
 			</div>
 
-			<div class="scenario-detail">
-				{@const scenario = intelligenceScenarios[activeScenario]}
-				<div class="scenario-trigger">
-					<span class="trigger-label">Trigger Event</span>
-					<span class="trigger-text">{scenario.trigger}</span>
+		<div class="scenario-detail">
+			<div class="scenario-trigger">
+				<span class="trigger-label">Trigger Event</span>
+				<span class="trigger-text">{currentScenario.trigger}</span>
+			</div>
+
+			<div class="responses-flow">
+				{#each currentScenario.responses as response, i}
+					<div class="response-card" style:animation-delay="{i * 150}ms">
+						<span class="response-system">{response.system}</span>
+						<span class="response-arrow">→</span>
+						<span class="response-action">{response.action}</span>
+					</div>
+				{/each}
 				</div>
 
-				<div class="responses-flow">
-					{#each scenario.responses as response, i}
-						<div class="response-card" style:animation-delay="{i * 150}ms">
-							<span class="response-system">{response.system}</span>
-							<span class="response-arrow">→</span>
-							<span class="response-action">{response.action}</span>
-						</div>
-					{/each}
-				</div>
+			<div class="human-loop-callout" class:critical={currentScenario.humanLoop.includes('HUMAN REQUIRED')}>
+				<span class="human-icon">👤</span>
+				<span class="human-text">{currentScenario.humanLoop}</span>
+			</div>
 
-				<div class="human-loop-callout" class:critical={scenario.humanLoop.includes('HUMAN REQUIRED')}>
-					<span class="human-icon">👤</span>
-					<span class="human-text">{scenario.humanLoop}</span>
-				</div>
-
-				<div class="scenario-insight">
-					<span class="insight-icon">💡</span>
-					<span class="insight-text">{scenario.insight}</span>
-				</div>
+			<div class="scenario-insight">
+				<span class="insight-icon">💡</span>
+				<span class="insight-text">{currentScenario.insight}</span>
+			</div>
 			</div>
 		</div>
 
@@ -690,13 +689,12 @@
 	<!-- Footer -->
 	<footer class="experiment-footer">
 		<div class="hypothesis">
-			<h3>The Full Story</h3>
+			<h3>What We're Trying to Show</h3>
 			<p>
-				AI-native doesn't mean AI-only. It means AI that's <strong>transparent</strong> about its limitations, 
-				<strong>fast</strong> to escalate to humans, and <strong>always learning</strong> from every 
-				interaction. The building helps humans engage intuitively—but humans remain in control. 
-				Security is the foundation. Failures are logged. Overrides teach the system. 
-				This is what real AI-native automation looks like: not perfect, but honest and improving.
+				Buildings can be helpful without being creepy. They can learn without pretending to be smarter than they are. 
+				They can make things easier while keeping people safe—and keeping people in charge. 
+				When something goes wrong, you'll know. When the system isn't sure, it asks. When you override it, it listens. 
+				That's the kind of automation we believe in: <strong>honest</strong>, <strong>humble</strong>, and <strong>always getting better</strong>.
 			</p>
 		</div>
 		<div class="patterns-note">
