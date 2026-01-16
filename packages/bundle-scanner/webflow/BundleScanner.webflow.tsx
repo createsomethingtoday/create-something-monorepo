@@ -273,8 +273,11 @@ Respond with ONLY a JSON object:
   "questionsForReviewer": ["..."]
 }`;
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) });
-    if (!response.ok) return null;
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error ${response.status}: ${errorText.substring(0, 200)}`);
+    }
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -474,7 +477,7 @@ const AiSuggestionsPanel: React.FC<{ report: ScanReport; apiKey: string }> = ({ 
         </div>
       {isExpanded && (
         <div className="p-4 space-y-4">
-          {analyzing && <div className="flex flex-col items-center justify-center py-8 text-purple-600 gap-2"><Loader2 className="w-6 h-6 animate-spin" /><span className="text-xs font-medium">Analyzing with Gemini...</span></div>}
+          {analyzing && <div className="flex flex-col items-center justify-center py-8 text-purple-600 gap-2"><Loader2 className="w-6 h-6 animate-spin" /><span className="text-xs font-medium">Analyzing with Gemini 2.0 Flash...</span></div>}
           {error && <div className="p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200"><strong>Error:</strong> {error}<button onClick={handleAnalyze} className="block mt-2 text-blue-600 underline">Retry</button></div>}
           {result && (
             <>
