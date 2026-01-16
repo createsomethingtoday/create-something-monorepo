@@ -6,7 +6,7 @@ export const meta: PaperMeta = {
 	subtitle: 'Comparing Spritz, Motion Graphics, and Interactive Learning',
 	description:
 		'An experiment exploring three modalities for teaching the CREATE SOMETHING philosophy: RSVP speed reading (Spritz), Vox-style motion graphics (Remotion), and interactive structured learning paths.',
-	category: 'experiment',
+	category: 'research',
 	readingTime: 12,
 	difficulty: 'intermediate',
 	date: '2026-01-16',

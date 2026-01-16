@@ -18,17 +18,17 @@
 	<div class="max-w-4xl mx-auto space-y-12">
 		<!-- Header -->
 		<div class="pb-8 paper-header">
-			<div class="font-mono mb-4 paper-id">EXPERIMENT-2026-001</div>
+			<div class="font-mono mb-4 paper-id">PAPER-2026-002</div>
 			<h1 class="mb-3 paper-title">Teaching Modalities</h1>
 			<p class="max-w-3xl paper-subtitle">
-				Finding the right medium for communicating CREATE SOMETHING philosophy
+				Finding the Right Medium for CREATE SOMETHING: Comparing Spritz, Motion Graphics, and Interactive Learning
 			</p>
 			<div class="flex gap-4 mt-4 paper-meta">
-				<span>Experiment</span>
+				<span>Research</span>
 				<span>•</span>
 				<span>12 min read</span>
 				<span>•</span>
-				<span>In Progress</span>
+				<span>Intermediate</span>
 			</div>
 		</div>
 
@@ -44,9 +44,29 @@
 			</p>
 		</section>
 
+		<!-- Metrics -->
+		<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+			<div class="p-4 metric-card">
+				<div class="metric-value">3</div>
+				<div class="metric-label">Modalities</div>
+			</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">✓</div>
+				<div class="metric-label">All Operational</div>
+			</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">8</div>
+				<div class="metric-label">Learning Paths</div>
+			</div>
+			<div class="p-4 metric-card">
+				<div class="metric-value">400+</div>
+				<div class="metric-label">Spritz WPM</div>
+			</div>
+		</section>
+
 		<!-- The Three Modalities -->
 		<section class="space-y-8">
-			<h2 class="section-heading">The Three Modalities</h2>
+			<h2 class="section-heading">1. The Three Modalities</h2>
 			
 			<!-- Spritz -->
 			<div class="p-6 bg-neutral-900 rounded-lg border border-neutral-800">
@@ -144,7 +164,7 @@
 
 		<!-- Hypothesis -->
 		<section class="space-y-4">
-			<h2 class="section-heading">Hypothesis</h2>
+			<h2 class="section-heading">2. Hypothesis</h2>
 			<p class="body-text">
 				Different modalities serve different cognitive needs along the awareness → understanding → mastery journey:
 			</p>
@@ -181,7 +201,7 @@
 
 		<!-- Research Questions -->
 		<section class="space-y-4">
-			<h2 class="section-heading">Research Questions</h2>
+			<h2 class="section-heading">3. Research Questions</h2>
 			<ol class="list-decimal list-inside space-y-3 body-text">
 				<li>Which modality produces highest retention for <em>principles</em> vs <em>practices</em>?</li>
 				<li>Can modalities be combined? (e.g., Spritz for video intros within Motion Studio)</li>
@@ -192,7 +212,7 @@
 
 		<!-- Methodology -->
 		<section class="space-y-4">
-			<h2 class="section-heading">Methodology</h2>
+			<h2 class="section-heading">4. Methodology</h2>
 			<p class="body-text">
 				This is an ongoing experiment. We're tracking:
 			</p>
@@ -206,7 +226,7 @@
 
 		<!-- Subtractive Alignment -->
 		<section class="space-y-4">
-			<h2 class="section-heading">Alignment with Subtractive Triad</h2>
+			<h2 class="section-heading">5. Alignment with Subtractive Triad</h2>
 			<div class="grid md:grid-cols-3 gap-4">
 				<div class="p-4 bg-neutral-900 rounded-lg">
 					<h4 class="font-semibold mb-2">DRY (Don't Repeat Yourself)</h4>
@@ -234,7 +254,7 @@
 
 		<!-- Status -->
 		<section class="space-y-4">
-			<h2 class="section-heading">Current Status</h2>
+			<h2 class="section-heading">6. Current Status</h2>
 			<div class="grid md:grid-cols-3 gap-4 text-center">
 				<div class="p-4 bg-green-900/20 border border-green-800 rounded-lg">
 					<div class="text-2xl mb-1">✓</div>
@@ -259,7 +279,7 @@
 
 		<!-- Links -->
 		<section class="space-y-4 pb-12">
-			<h2 class="section-heading">Links</h2>
+			<h2 class="section-heading">7. Links</h2>
 			<ul class="space-y-2">
 				<li>
 					<a href="https://createsomething.io/experiments/spritz" class="text-blue-400 hover:underline">
