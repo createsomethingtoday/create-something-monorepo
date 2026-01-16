@@ -65,14 +65,17 @@ interface AnimatedChartProps {
   className?: string;
 }
 
-// Monochrome shades for data visualization
-const getBarShade = (index: number): string => {
+// Monochrome: Single consistent shade - let HEIGHT convey value
+const BAR_COLOR = colors.neutral[0]; // Pure white on dark backgrounds
+
+// Pie charts need different shades to distinguish segments
+const getPieShade = (index: number): string => {
   const shades = [
     colors.neutral[0],    // White
-    colors.neutral[200],  // Light gray
-    colors.neutral[400],  // Medium gray
-    colors.neutral[300],  // Mid-light gray
-    colors.neutral[100],  // Near white
+    colors.neutral[300],  // Light gray
+    colors.neutral[500],  // Medium gray
+    colors.neutral[200],  // Near white
+    colors.neutral[400],  // Mid gray
   ];
   return shades[index % shades.length];
 };
@@ -164,7 +167,7 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
                 style={{
                   width: '100%',
                   height: Math.max(0, barHeight),
-                  backgroundColor: getBarShade(index),
+                  backgroundColor: BAR_COLOR,
                   borderRadius: '4px 4px 0 0',
                   opacity: Math.max(0, opacity),
                 }}
@@ -254,7 +257,7 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
                 style={{
                   height: barHeight,
                   width: Math.max(0, barWidth),
-                  backgroundColor: getBarShade(index),
+                  backgroundColor: BAR_COLOR,
                   borderRadius: '0 4px 4px 0',
                   opacity: Math.max(0, opacity),
                 }}
@@ -339,7 +342,7 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
             <path
               key={index}
               d={pathD}
-              fill={getBarShade(index)}
+              fill={getPieShade(index)}
               opacity={Math.max(0, opacity)}
               stroke={backgroundColor === 'transparent' ? colors.neutral[950] : backgroundColor}
               strokeWidth={2}
