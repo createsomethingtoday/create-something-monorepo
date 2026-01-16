@@ -4,13 +4,15 @@
  * The heart of an explainer: breaking down complex ideas
  * into digestible parts that reveal sequentially.
  * 
+ * Uses Lucide icons for iconography (monochrome, no emojis)
+ * 
  * @example
  * <ConceptBreakdown
  *   title="The Subtractive Triad"
  *   concepts={[
- *     { name: "DRY", description: "Eliminate duplication", icon: "🔄" },
- *     { name: "Rams", description: "Eliminate excess", icon: "✂️" },
- *     { name: "Heidegger", description: "Eliminate disconnection", icon: "🔗" },
+ *     { name: "DRY", description: "Eliminate duplication", iconName: "RefreshCw" },
+ *     { name: "Rams", description: "Eliminate excess", iconName: "Scissors" },
+ *     { name: "Heidegger", description: "Eliminate disconnection", iconName: "Link" },
  *   ]}
  * />
  */
@@ -22,6 +24,7 @@ import {
   interpolate,
   spring,
 } from 'remotion';
+import * as LucideIcons from 'lucide-react';
 import { KineticText } from '../primitives/KineticText';
 import { FadeIn } from '../primitives/FadeIn';
 import { ScaleIn } from '../primitives/ScaleIn';
@@ -35,11 +38,8 @@ interface Concept {
   /** Brief description */
   description: string;
   
-  /** Icon or emoji */
-  icon?: string;
-  
-  /** Optional accent color override */
-  color?: string;
+  /** Lucide icon name (e.g., "RefreshCw", "Scissors", "Link") */
+  iconName?: string;
 }
 
 interface ConceptBreakdownProps {
@@ -126,25 +126,32 @@ export const ConceptBreakdown: React.FC<ConceptBreakdownProps> = ({
           gap: spacing[3],
         }}
       >
-        {/* Icon */}
-        {concept.icon && (
-          <div
-            style={{
-              fontSize: typography.fontSize['4xl'],
-              marginBottom: spacing[2],
-            }}
-          >
-            {concept.icon}
-          </div>
-        )}
+        {/* Icon - Lucide */}
+        {concept.iconName && (() => {
+          const IconComponent = (LucideIcons as any)[concept.iconName];
+          return IconComponent ? (
+            <div
+              style={{
+                marginBottom: spacing[2],
+              }}
+            >
+              <IconComponent 
+                size={48} 
+                strokeWidth={1.5}
+                color={palette.foreground}
+              />
+            </div>
+          ) : null;
+        })()}
         
         {/* Name */}
         <div
           style={{
             fontFamily: typography.fontFamily.sans,
-            fontSize: typography.fontSize['2xl'],
-            fontWeight: typography.fontWeight.bold,
-            color: concept.color || palette.accent,
+            fontSize: typography.fontSize.h3,
+            fontWeight: typography.fontWeight.semibold,
+            color: palette.foreground,
+            letterSpacing: typography.letterSpacing.tight,
           }}
         >
           {concept.name}
@@ -206,10 +213,10 @@ export const ConceptBreakdown: React.FC<ConceptBreakdownProps> = ({
           y1="2"
           x2={`${10 + 80 * progress}%`}
           y2="2"
-          stroke={palette.accent}
-          strokeWidth={2}
+          stroke={palette.muted}
+          strokeWidth={1}
           strokeDasharray="8 4"
-          opacity={0.5}
+          opacity={0.4}
         />
       </svg>
     );

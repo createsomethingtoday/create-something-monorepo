@@ -3,15 +3,18 @@
  * 
  * Bridge between Canon's Svelte-based design system and React components.
  * "Weniger, aber besser" - the same tokens, different runtime.
+ * 
+ * MONOCHROME ONLY - No accent colors, pure grayscale for typographic focus.
  */
 
 /**
- * Canon color palette
- * Matches packages/components/src/lib/tokens/colors.ts
+ * Canon monochrome palette
+ * Pure grayscale - letting typography and motion do the work
  */
 export const colors = {
-  // Neutral scale
+  // Neutral scale (the ONLY colors)
   neutral: {
+    0: '#ffffff',
     50: '#fafafa',
     100: '#f5f5f5',
     200: '#e5e5e5',
@@ -23,72 +26,64 @@ export const colors = {
     800: '#262626',
     900: '#171717',
     950: '#0a0a0a',
-  },
-  
-  // Property accent colors
-  accent: {
-    space: '#3b82f6',    // Blue - Practice
-    io: '#22c55e',       // Green - Research
-    agency: '#f59e0b',   // Amber - Services
-    ltd: '#8b5cf6',      // Purple - Philosophy
-  },
-  
-  // Semantic colors
-  semantic: {
-    success: '#22c55e',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
-  },
-  
-  // Vox-style accent (yellow/gold)
-  vox: {
-    accent: '#fbbf24',
-    accentMuted: '#fcd34d',
+    1000: '#000000',
   },
 } as const;
 
 /**
  * Canon typography
- * Matches packages/components/src/lib/tokens/typography.ts
+ * Stack Sans Notch + JetBrains Mono
+ * Matches packages/components/src/lib/styles/tokens.css
  */
 export const typography = {
-  // Font families
+  // Font families - Canon standard
   fontFamily: {
-    sans: 'Inter, system-ui, -apple-system, sans-serif',
-    mono: 'JetBrains Mono, Menlo, Monaco, monospace',
-    display: 'Inter, system-ui, sans-serif',
+    sans: "'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    mono: '"JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
+    serif: 'Georgia, "Times New Roman", serif',
   },
   
-  // Font sizes (using fluid scale)
+  // Font sizes (using rem for consistency)
   fontSize: {
-    xs: '0.75rem',     // 12px
-    sm: '0.875rem',    // 14px
-    base: '1rem',      // 16px
-    lg: '1.125rem',    // 18px
-    xl: '1.25rem',     // 20px
-    '2xl': '1.5rem',   // 24px
-    '3xl': '1.875rem', // 30px
-    '4xl': '2.25rem',  // 36px
-    '5xl': '3rem',     // 48px
-    '6xl': '3.75rem',  // 60px
-    '7xl': '4.5rem',   // 72px
+    caption: '0.75rem',    // 12px
+    sm: '0.875rem',        // 14px
+    body: '1rem',          // 16px
+    bodyLg: '1.125rem',    // 18px
+    h6: '1rem',            // 16px
+    h5: '1.25rem',         // 20px
+    h4: '1.5rem',          // 24px
+    h3: '1.75rem',         // 28px
+    h2: '2.25rem',         // 36px
+    h1: '3.5rem',          // 56px
+    display: '5rem',       // 80px
+    displayXl: '7rem',     // 112px
   },
   
-  // Font weights
+  // Font weights - Canon standard
   fontWeight: {
-    normal: 400,
+    light: 300,
+    regular: 400,
     medium: 500,
     semibold: 600,
     bold: 700,
   },
   
-  // Line heights
+  // Line heights - Golden ratio based
   lineHeight: {
-    tight: 1.1,
-    snug: 1.25,
+    tight: 1.25,
+    snug: 1.375,
     normal: 1.5,
-    relaxed: 1.625,
+    relaxed: 1.618,  // φ - Golden ratio
+    loose: 1.75,
+  },
+  
+  // Letter spacing - Canon standard
+  letterSpacing: {
+    tighter: '-0.025em',
+    tight: '-0.015em',
+    normal: '0',
+    wide: '0.025em',
+    wider: '0.05em',
   },
 } as const;
 
@@ -140,53 +135,62 @@ export const spacing = {
 } as const;
 
 /**
- * Vox-style presets
- * Common configurations for Vox-style motion graphics
+ * Monochrome theme presets
+ * "Weniger, aber besser" - Let typography and motion speak
  */
 export const voxPresets = {
-  // Standard Vox dark theme
+  // Dark theme (default) - white on black
   dark: {
-    background: colors.neutral[950],
-    foreground: colors.neutral[50],
-    accent: colors.vox.accent,
+    background: colors.neutral[1000],
+    foreground: colors.neutral[0],
     muted: colors.neutral[400],
+    subtle: colors.neutral[800],
+    border: colors.neutral[700],
   },
   
-  // Light theme variant
+  // Light theme - black on white
   light: {
-    background: colors.neutral[50],
-    foreground: colors.neutral[950],
-    accent: colors.vox.accent,
-    muted: colors.neutral[600],
+    background: colors.neutral[0],
+    foreground: colors.neutral[1000],
+    muted: colors.neutral[500],
+    subtle: colors.neutral[100],
+    border: colors.neutral[200],
   },
   
-  // Canon property themes
+  // High contrast dark
   space: {
     background: colors.neutral[950],
     foreground: colors.neutral[50],
-    accent: colors.accent.space,
-    muted: colors.neutral[400],
+    muted: colors.neutral[500],
+    subtle: colors.neutral[900],
+    border: colors.neutral[800],
   },
   
+  // Warm gray
   io: {
-    background: colors.neutral[950],
-    foreground: colors.neutral[50],
-    accent: colors.accent.io,
+    background: colors.neutral[900],
+    foreground: colors.neutral[100],
     muted: colors.neutral[400],
+    subtle: colors.neutral[800],
+    border: colors.neutral[700],
   },
   
+  // Mid-tone
   agency: {
-    background: colors.neutral[950],
+    background: colors.neutral[800],
     foreground: colors.neutral[50],
-    accent: colors.accent.agency,
     muted: colors.neutral[400],
+    subtle: colors.neutral[700],
+    border: colors.neutral[600],
   },
   
+  // Pure black and white
   ltd: {
-    background: colors.neutral[950],
-    foreground: colors.neutral[50],
-    accent: colors.accent.ltd,
-    muted: colors.neutral[400],
+    background: colors.neutral[1000],
+    foreground: colors.neutral[0],
+    muted: colors.neutral[500],
+    subtle: colors.neutral[900],
+    border: colors.neutral[800],
   },
 } as const;
 

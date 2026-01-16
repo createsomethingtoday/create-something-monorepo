@@ -3,9 +3,13 @@
  * 
  * Entry point for Remotion Studio and rendering.
  * Defines all available compositions.
+ * 
+ * Uses Lucide icons for iconography (no emojis)
+ * Monochrome palette - typography and motion only
  */
 import React from 'react';
 import { Composition, registerRoot } from 'remotion';
+import { RefreshCw, Scissors, Link } from 'lucide-react';
 
 // Compositions
 import { ExplainerIntro } from './compositions/ExplainerIntro';
@@ -23,9 +27,9 @@ const sampleChartData = [
 ];
 
 const sampleConcepts = [
-  { name: 'DRY', description: 'Eliminate duplication', icon: '🔄' },
-  { name: 'Rams', description: 'Eliminate excess', icon: '✂️' },
-  { name: 'Heidegger', description: 'Eliminate disconnection', icon: '🔗' },
+  { name: 'DRY', description: 'Eliminate duplication', iconName: 'RefreshCw' },
+  { name: 'Rams', description: 'Eliminate excess', iconName: 'Scissors' },
+  { name: 'Heidegger', description: 'Eliminate disconnection', iconName: 'Link' },
 ];
 
 const sampleTimeline = [

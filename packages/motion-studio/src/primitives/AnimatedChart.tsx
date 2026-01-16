@@ -1,8 +1,10 @@
 /**
- * AnimatedChart - Data visualization with Vox-style animation
+ * AnimatedChart - Data visualization with monochrome animation
  * 
  * Charts that build incrementally, supporting the narration.
  * "Every data point earns its moment on screen."
+ * 
+ * MONOCHROME - Uses grayscale shades for visual hierarchy
  * 
  * @example
  * <AnimatedChart
@@ -25,7 +27,6 @@ import type { ChartBuildStyle } from '../types';
 interface DataPoint {
   label: string;
   value: number;
-  color?: string;
 }
 
 interface AnimatedChartProps {
@@ -54,9 +55,6 @@ interface AnimatedChartProps {
   /** Show values */
   showValues?: boolean;
   
-  /** Accent color (used if data doesn't specify colors) */
-  accentColor?: string;
-  
   /** Background color */
   backgroundColor?: string;
   
@@ -66,6 +64,18 @@ interface AnimatedChartProps {
   /** Custom className */
   className?: string;
 }
+
+// Monochrome shades for data visualization
+const getBarShade = (index: number): string => {
+  const shades = [
+    colors.neutral[0],    // White
+    colors.neutral[200],  // Light gray
+    colors.neutral[400],  // Medium gray
+    colors.neutral[300],  // Mid-light gray
+    colors.neutral[100],  // Near white
+  ];
+  return shades[index % shades.length];
+};
 
 export const AnimatedChart: React.FC<AnimatedChartProps> = ({
   type,
@@ -77,7 +87,6 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
   height = 400,
   showLabels = true,
   showValues = true,
-  accentColor = colors.vox.accent,
   backgroundColor = 'transparent',
   title,
   className = '',
@@ -155,7 +164,7 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
                 style={{
                   width: '100%',
                   height: Math.max(0, barHeight),
-                  backgroundColor: item.color || accentColor,
+                  backgroundColor: getBarShade(index),
                   borderRadius: '4px 4px 0 0',
                   opacity: Math.max(0, opacity),
                 }}
@@ -245,7 +254,7 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
                 style={{
                   height: barHeight,
                   width: Math.max(0, barWidth),
-                  backgroundColor: item.color || accentColor,
+                  backgroundColor: getBarShade(index),
                   borderRadius: '0 4px 4px 0',
                   opacity: Math.max(0, opacity),
                 }}
@@ -330,7 +339,7 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
             <path
               key={index}
               d={pathD}
-              fill={item.color || accentColor}
+              fill={getBarShade(index)}
               opacity={Math.max(0, opacity)}
               stroke={backgroundColor === 'transparent' ? colors.neutral[950] : backgroundColor}
               strokeWidth={2}
