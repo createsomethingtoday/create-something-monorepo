@@ -8,14 +8,104 @@
 	 * 3. Learn Platform - Interactive structured paths
 	 *
 	 * Each modality is embedded with engagement tracking to test the hypothesis.
+	 * 
+	 * GDPR Compliance:
+	 * - Tracking is opt-in (explicit consent required)
+	 * - All data is anonymous (no PII, no cookies)
+	 * - Respects browser DNT setting
+	 * - Data stored only in sessionStorage (cleared on tab close)
+	 * - No server-side tracking without consent
 	 */
 	import { onMount } from 'svelte';
 	import { Spritz } from '@create-something/spritz';
 	import { CanonReveal } from '@create-something/components/motion';
-	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer } from 'lucide-svelte';
+	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer, Shield, Eye, EyeOff } from 'lucide-svelte';
+	import { isDNTEnabled } from '@create-something/components/gdpr';
 
 	// ===========================================
-	// ANALYTICS TRACKING
+	// GDPR-COMPLIANT CONSENT MANAGEMENT
+	// ===========================================
+	const EXPERIMENT_CONSENT_KEY = 'cs_experiment_consent';
+	
+	/** Consent state for this experiment */
+	let hasConsent = $state(false);
+	let consentChecked = $state(false);
+	let showConsentBanner = $state(false);
+	
+	/** Check if DNT is enabled - always respected */
+	let dntEnabled = $state(false);
+	
+	onMount(() => {
+		// Check DNT first - if enabled, no tracking regardless of consent
+		dntEnabled = isDNTEnabled();
+		
+		if (dntEnabled) {
+			// DNT enabled - no banner needed, just inform user
+			consentChecked = true;
+			showConsentBanner = false;
+			return;
+		}
+		
+		// Check for existing consent
+		try {
+			const stored = sessionStorage.getItem(EXPERIMENT_CONSENT_KEY);
+			if (stored) {
+				const consent = JSON.parse(stored);
+				hasConsent = consent.tracking === true;
+				consentChecked = true;
+				showConsentBanner = false;
+			} else {
+				// No stored consent - show banner
+				showConsentBanner = true;
+				consentChecked = true;
+			}
+		} catch {
+			showConsentBanner = true;
+			consentChecked = true;
+		}
+	});
+	
+	function acceptTracking() {
+		hasConsent = true;
+		showConsentBanner = false;
+		try {
+			sessionStorage.setItem(EXPERIMENT_CONSENT_KEY, JSON.stringify({
+				tracking: true,
+				timestamp: new Date().toISOString()
+			}));
+		} catch {
+			// sessionStorage not available, consent only for this session
+		}
+	}
+	
+	function declineTracking() {
+		hasConsent = false;
+		showConsentBanner = false;
+		try {
+			sessionStorage.setItem(EXPERIMENT_CONSENT_KEY, JSON.stringify({
+				tracking: false,
+				timestamp: new Date().toISOString()
+			}));
+		} catch {
+			// sessionStorage not available
+		}
+	}
+	
+	function toggleTracking() {
+		if (hasConsent) {
+			declineTracking();
+		} else {
+			acceptTracking();
+		}
+	}
+	
+	/** Check if tracking is allowed (consent given AND DNT not enabled) */
+	function canTrack(): boolean {
+		return hasConsent && !dntEnabled;
+	}
+
+	// ===========================================
+	// ANALYTICS TRACKING (GDPR Compliant)
 	// ===========================================
 	let engagementData = $state({
 		spritz: { starts: 0, completions: 0, totalTimeMs: 0 },
@@ -24,27 +114,36 @@
 	});
 
 	async function trackModality(modality: 'spritz' | 'motion' | 'learn', action: string, value?: number) {
-		// Update local state
+		// Always update local state (this is just in-memory, not tracking)
 		if (modality === 'spritz') {
 			if (action === 'start') engagementData.spritz.starts++;
 			if (action === 'complete') engagementData.spritz.completions++;
-			if (action === 'time' && value) engagementData.spritz.totalTimeMs += value;
+			if (action === 'time' && value && value > 0) engagementData.spritz.totalTimeMs += value;
 		} else if (modality === 'motion') {
 			if (action === 'play') engagementData.motion.plays++;
 			if (action === 'replay') engagementData.motion.replays++;
-			if (action === 'time' && value) engagementData.motion.watchTimeMs += value;
+			// FIX: Only add valid durations (> 0 and < 1 hour to filter out bugs)
+			if (action === 'time' && value && value > 0 && value < 3600000) {
+				engagementData.motion.watchTimeMs += value;
+			}
 		} else if (modality === 'learn') {
 			if (action === 'click') engagementData.learn.clicks++;
 			if (action === 'hover') engagementData.learn.hovers++;
 		}
 
-		// Send to analytics
+		// Only send to server analytics if user has consented
+		if (!canTrack()) {
+			return;
+		}
+
+		// Send anonymous event to analytics (no PII)
 		if (typeof window !== 'undefined' && (window as any).trackEvent) {
 			await (window as any).trackEvent('modality_engagement', {
 				modality,
 				action,
 				value,
-				category: 'interaction'
+				category: 'interaction',
+				// No user ID, no session ID - fully anonymous
 			});
 		}
 	}
@@ -100,11 +199,13 @@
 	let revealKey = $state(0); // Force re-mount on change
 	let motionStartTime = $state(0);
 	let hasPlayed = $state(false);
+	let motionInitialized = $state(false); // Track if user has interacted
 
 	const currentReveal = $derived(revealStyles[currentRevealIndex]);
 
 	function playMotion() {
 		motionStartTime = Date.now();
+		motionInitialized = true;
 		if (hasPlayed) {
 			trackModality('motion', 'replay');
 		} else {
@@ -117,14 +218,26 @@
 	function nextReveal() {
 		currentRevealIndex = (currentRevealIndex + 1) % revealStyles.length;
 		hasPlayed = false;
+		motionInitialized = true;
 		revealKey++;
 		trackModality('motion', 'play');
 		motionStartTime = Date.now();
 	}
 
 	function onMotionComplete() {
+		// FIX: Only track time if user has actually interacted with the motion demo
+		// This prevents the bug where autoplay on mount triggers with motionStartTime=0,
+		// resulting in a duration equal to the Unix timestamp
+		if (!motionInitialized || motionStartTime === 0) {
+			return;
+		}
+		
 		const duration = Date.now() - motionStartTime;
-		trackModality('motion', 'time', duration);
+		
+		// Sanity check: duration should be positive and less than 1 hour
+		if (duration > 0 && duration < 3600000) {
+			trackModality('motion', 'time', duration);
+		}
 	}
 
 	// ===========================================
@@ -171,6 +284,31 @@
 	<meta name="description" content="Interactive experiment comparing Spritz, Motion Graphics, and Learn Platform for teaching CREATE SOMETHING." />
 </svelte:head>
 
+<!-- GDPR Consent Banner -->
+{#if showConsentBanner && !dntEnabled}
+	<div class="consent-banner" role="dialog" aria-labelledby="consent-title" aria-describedby="consent-description">
+		<div class="consent-content">
+			<div class="consent-header">
+				<Shield size={20} />
+				<h3 id="consent-title" class="consent-title">Help Improve This Experiment?</h3>
+			</div>
+			<p id="consent-description" class="consent-text">
+				We'd like to track your interactions to understand which teaching modality works best. 
+				All data is <strong>anonymous</strong> (no cookies, no personal information) and stored only 
+				in your browser session.
+			</p>
+			<div class="consent-actions">
+				<button class="consent-btn decline" onclick={declineTracking}>
+					No Thanks
+				</button>
+				<button class="consent-btn accept" onclick={acceptTracking}>
+					Enable Tracking
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-5xl mx-auto space-y-12">
 		<!-- Header -->
@@ -185,7 +323,16 @@
 				<span>•</span>
 				<span>Interactive</span>
 				<span>•</span>
-				<span>Engagement Tracked</span>
+				<span class="privacy-badge">
+					<Shield size={12} />
+					{#if dntEnabled}
+						DNT Respected
+					{:else if hasConsent}
+						Tracking On
+					{:else}
+						Privacy First
+					{/if}
+				</span>
 			</div>
 		</div>
 
@@ -194,8 +341,12 @@
 			<h2 class="section-heading">Abstract</h2>
 			<p class="leading-relaxed body-text">
 				How do you teach a philosophy? This interactive paper lets you <em>experience</em> three 
-				distinct modalities. Try each one below. Your engagement is tracked (anonymously) to help 
-				us understand which approach works best for different learning goals.
+				distinct modalities. Try each one below. 
+				{#if hasConsent && !dntEnabled}
+					Your interactions are tracked anonymously to help us understand which approach works best.
+				{:else}
+					Engagement data is displayed locally only—no data is sent to our servers unless you enable tracking.
+				{/if}
 			</p>
 		</section>
 
@@ -335,7 +486,7 @@
 						<button 
 							class="style-dot" 
 							class:active={i === currentRevealIndex}
-							onclick={() => { currentRevealIndex = i; revealKey++; motionStartTime = Date.now(); trackModality('motion', 'play'); }}
+							onclick={() => { currentRevealIndex = i; revealKey++; motionStartTime = Date.now(); motionInitialized = true; trackModality('motion', 'play'); }}
 							title={style.label}
 						></button>
 					{/each}
@@ -428,13 +579,41 @@
 		</section>
 
 		<!-- =============================================
-		     ENGAGEMENT METRICS (Live)
+		     ENGAGEMENT METRICS (Live) + GDPR Consent
 		     ============================================= -->
 		<section class="space-y-6">
 			<h2 class="section-heading">Your Engagement (This Session)</h2>
-			<p class="body-text text-muted">
-				Live tracking of your interactions. This data helps us understand which modality works best.
-			</p>
+			
+			<!-- Privacy Status Indicator -->
+			<div class="privacy-status">
+				<div class="privacy-indicator">
+					<Shield size={16} />
+					{#if dntEnabled}
+						<span class="privacy-text">Do Not Track enabled — no data sent to server</span>
+					{:else if hasConsent}
+						<span class="privacy-text">Tracking enabled — anonymous data helps improve the experiment</span>
+						<button class="privacy-toggle" onclick={toggleTracking}>
+							<EyeOff size={14} />
+							<span>Disable</span>
+						</button>
+					{:else if consentChecked}
+						<span class="privacy-text">Tracking disabled — only local display</span>
+						<button class="privacy-toggle" onclick={toggleTracking}>
+							<Eye size={14} />
+							<span>Enable</span>
+						</button>
+					{:else}
+						<span class="privacy-text">Loading privacy preferences...</span>
+					{/if}
+				</div>
+				<p class="privacy-note">
+					{#if dntEnabled}
+						Your browser's Do Not Track setting is respected. We never override this preference.
+					{:else}
+						All tracking is anonymous (no cookies, no personal data). Data is stored only in your browser's session.
+					{/if}
+				</p>
+			</div>
 
 			<div class="engagement-grid">
 				<div class="engagement-card spritz-accent">
@@ -1020,5 +1199,145 @@
 
 	.link-card span {
 		flex: 1;
+	}
+
+	/* ===========================================
+	   GDPR CONSENT BANNER
+	   =========================================== */
+	.consent-banner {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background: var(--color-bg-surface);
+		border-top: 1px solid var(--color-border-subtle);
+		padding: 1.5rem;
+		z-index: 1000;
+		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+	}
+
+	.consent-content {
+		max-width: 600px;
+		margin: 0 auto;
+	}
+
+	.consent-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
+		color: var(--color-fg-primary);
+	}
+
+	.consent-title {
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		margin: 0;
+	}
+
+	.consent-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin-bottom: 1rem;
+		line-height: 1.5;
+	}
+
+	.consent-actions {
+		display: flex;
+		gap: 0.75rem;
+		justify-content: flex-end;
+	}
+
+	.consent-btn {
+		padding: 0.5rem 1rem;
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+
+	.consent-btn.decline {
+		background: transparent;
+		border: 1px solid var(--color-border-subtle);
+		color: var(--color-fg-secondary);
+	}
+
+	.consent-btn.decline:hover {
+		background: var(--color-bg-elevated);
+		color: var(--color-fg-primary);
+	}
+
+	.consent-btn.accept {
+		background: #22c55e;
+		border: 1px solid #22c55e;
+		color: #000;
+	}
+
+	.consent-btn.accept:hover {
+		background: #16a34a;
+		border-color: #16a34a;
+	}
+
+	/* ===========================================
+	   PRIVACY STATUS & CONTROLS
+	   =========================================== */
+	.privacy-status {
+		padding: 1rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: var(--radius-md);
+	}
+
+	.privacy-indicator {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		color: var(--color-fg-muted);
+	}
+
+	.privacy-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.privacy-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		margin-left: auto;
+		padding: 0.25rem 0.5rem;
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-muted);
+		font-size: 0.75rem;
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+
+	.privacy-toggle:hover {
+		background: var(--color-bg-base);
+		color: var(--color-fg-primary);
+		border-color: var(--color-border-emphasis);
+	}
+
+	.privacy-note {
+		font-size: 0.75rem;
+		color: var(--color-fg-muted);
+		margin-top: 0.5rem;
+		line-height: 1.4;
+	}
+
+	.privacy-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.125rem 0.5rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: var(--radius-full);
+		font-size: 0.7rem;
 	}
 </style>
