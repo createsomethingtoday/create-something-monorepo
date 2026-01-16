@@ -682,6 +682,137 @@
 		</div>
 	</section>
 
+	<!-- AI Reasoning Section -->
+	<section class="reasoning-section">
+		<div class="section-header">
+			<h2>The System Shows Its Thinking</h2>
+			<p>This isn't a black box. When the AI makes a decision, you can see why. Every time.</p>
+		</div>
+
+		<div class="reasoning-container">
+			<div class="reasoning-tabs">
+				{#each reasoningExamples as example, i}
+					<button
+						class="reasoning-tab"
+						class:active={activeReasoning === i}
+						onclick={() => activeReasoning = i}
+					>
+						{example.situation}
+					</button>
+				{/each}
+			</div>
+
+			{@const reasoning = reasoningExamples[activeReasoning]}
+			<div class="reasoning-detail">
+				<div class="reasoning-header">
+					<span class="situation-label">Situation</span>
+					<span class="situation-text">{reasoning.situation}</span>
+				</div>
+
+				<div class="thinking-process">
+					<span class="thinking-label">What the system noticed:</span>
+					<ul class="thinking-list">
+						{#each reasoning.thinking as thought, i}
+							<li style:animation-delay="{i * 100}ms">{thought}</li>
+						{/each}
+					</ul>
+				</div>
+
+				<div class="decision-box">
+					<div class="decision-main">
+						<span class="decision-label">Decision</span>
+						<span class="decision-text">{reasoning.decision}</span>
+					</div>
+					<div class="confidence-meter">
+						<span class="confidence-label">Confidence</span>
+						<div class="confidence-bar">
+							<div class="confidence-fill" style:width="{reasoning.confidence}%"></div>
+						</div>
+						<span class="confidence-value">{reasoning.confidence}%</span>
+					</div>
+				</div>
+
+				<div class="alternative-note">
+					<span class="alt-icon">💭</span>
+					<span class="alt-text">{reasoning.alternative}</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="reasoning-benefit">
+			<p>
+				<strong>Why this matters:</strong> You can question it. You can override it. You can understand 
+				why it did what it did. That's the difference between automation you trust and automation you tolerate.
+			</p>
+		</div>
+	</section>
+
+	<!-- Holistic Update Section -->
+	<section class="holistic-section">
+		<div class="section-header">
+			<h2>One Change, Everything Adapts</h2>
+			<p>When something changes, the whole building thinks it through—not just the part that noticed.</p>
+		</div>
+
+		<div class="holistic-container">
+			<div class="holistic-trigger">
+				<div class="trigger-icon">⛈️</div>
+				<div class="trigger-content">
+					<span class="trigger-time">{holisticUpdate.timestamp}</span>
+					<span class="trigger-event">{holisticUpdate.trigger}</span>
+				</div>
+			</div>
+
+			<div class="holistic-arrow">
+				<span>The system thinks through everything at once:</span>
+			</div>
+
+			<div class="systems-cascade">
+				{#each holisticUpdate.systemUpdates as update, i}
+					<div class="cascade-item" style:animation-delay="{i * 150}ms">
+						<div class="cascade-header">
+							<span class="cascade-system">{update.system}</span>
+						</div>
+						<div class="cascade-change">
+							<div class="change-before">
+								<span class="change-label">Was:</span>
+								<span class="change-value">{update.before}</span>
+							</div>
+							<div class="change-arrow">→</div>
+							<div class="change-after">
+								<span class="change-label">Now:</span>
+								<span class="change-value">{update.after}</span>
+							</div>
+						</div>
+						<div class="cascade-reason">
+							<span class="reason-label">Because:</span>
+							{update.reason}
+						</div>
+					</div>
+				{/each}
+			</div>
+
+			<div class="holistic-approval">
+				<div class="approval-icon">✓</div>
+				<div class="approval-content">
+					<p class="approval-text">{holisticUpdate.humanApproval}</p>
+					<p class="approval-time">{holisticUpdate.totalTime}</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="holistic-benefit">
+			<p>
+				<strong>The old way:</strong> Six different people get six different alerts. They each make changes. 
+				Things get missed. Things conflict. It takes an hour of coordination.
+			</p>
+			<p>
+				<strong>AI-native:</strong> One coherent plan, generated in seconds, reviewed by one person, 
+				executed across everything. The systems already know how to work together.
+			</p>
+		</div>
+	</section>
+
 	<!-- Incident Log - The Honest Story -->
 	<section class="incident-section">
 		<div class="section-header">
