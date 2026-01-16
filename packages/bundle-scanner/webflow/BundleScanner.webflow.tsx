@@ -339,9 +339,34 @@ const DEFAULT_CONFIG: ScanConfig = {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 const formatBytes = (bytes: number) => { if (bytes === 0) return '0 B'; const k = 1024; const sizes = ['B', 'KB', 'MB', 'GB']; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]; };
 
+// Expand brace patterns like {js,ts,tsx} into multiple patterns
+const expandBraces = (pattern: string): string[] => {
+  const braceMatch = pattern.match(/\{([^}]+)\}/);
+  if (!braceMatch) return [pattern];
+  const [fullMatch, inner] = braceMatch;
+  const options = inner.split(',');
+  const results: string[] = [];
+  for (const opt of options) {
+    const expanded = pattern.replace(fullMatch, opt.trim());
+    results.push(...expandBraces(expanded)); // Recursively expand nested braces
+  }
+  return results;
+};
+
 const matchGlob = (path: string, pattern: string): boolean => {
-  const regexPattern = pattern.replace(/\*\*/g, '{{GLOBSTAR}}').replace(/\*/g, '[^/]*').replace(/{{GLOBSTAR}}/g, '.*').replace(/\?/g, '.').replace(/\./g, '\\.');
-  return new RegExp(`^${regexPattern}$`).test(path);
+  // First expand any brace patterns
+  const expandedPatterns = expandBraces(pattern);
+  for (const p of expandedPatterns) {
+    // Escape dots first, then handle glob patterns
+    let regexPattern = p
+      .replace(/\./g, '\\.')
+      .replace(/\*\*/g, '{{GLOBSTAR}}')
+      .replace(/\*/g, '[^/]*')
+      .replace(/{{GLOBSTAR}}/g, '.*')
+      .replace(/\?/g, '.');
+    if (new RegExp(`^${regexPattern}$`).test(path)) return true;
+  }
+  return false;
 };
 
 const matchesAnyGlob = (path: string, globs?: string[]): boolean => !globs || globs.length === 0 || globs.some(g => matchGlob(path, g));
@@ -411,7 +436,7 @@ function scanFiles(files: UnzippedFile[], ruleset: ScanRule[], config: ScanConfi
       for (const matcher of rule.matchers) {
         if (!matchesAnyGlob(file.path, matcher.fileGlobs)) continue;
         const regex = new RegExp(matcher.pattern, (matcher.flags || 'g'));
-        regex.lastIndex = 0;
+          regex.lastIndex = 0;
         let match;
         while ((match = regex.exec(file.content)) !== null) {
           if (fileMatchCount >= config.maxMatchesPerFile) break;
@@ -438,7 +463,7 @@ function scanFiles(files: UnzippedFile[], ruleset: ScanRule[], config: ScanConfi
           const lineEnd = file.content.indexOf('\n', index);
           const lineContent = file.content.substring(lineStart, lineEnd !== -1 ? lineEnd : file.content.length).trim();
           if (lineContent.startsWith('//') || lineContent.startsWith('*') || lineContent.startsWith('/*')) locationType = 'COMMENT';
-          
+
           // Confidence adjustment
           let confidence = matcher.confidence || 'MEDIUM';
           let confidenceReason;
@@ -463,7 +488,7 @@ function generateReport(findings: Finding[], ruleset: ScanRule[], files: Unzippe
     if (!groups[finding.ruleId]) groups[finding.ruleId] = { rule, count: 0, items: [] };
     groups[finding.ruleId].count++;
     groups[finding.ruleId].items.push(finding);
-  }
+    }
   const hasBlocker = Object.values(groups).some(g => g.rule.reviewBucket === 'AUTO_REJECT');
   const hasActionRequired = Object.values(groups).some(g => g.rule.reviewBucket === 'ACTION_REQUIRED');
   let verdict: Verdict = 'PASS';
@@ -501,7 +526,7 @@ ${Object.values(report.findings).slice(0, 5).flatMap(g => g.items.slice(0, 2).ma
 
 Respond with ONLY a JSON object:
 {"reviewStatusRecommendation": "MANUAL_REVIEW_REQUIRED" | "LOOKS_GOOD", "missedRisks": [{"title": "", "confidence": "HIGH"|"MEDIUM"|"LOW", "whyItMatters": "", "evidence": []}], "suggestedRuleAdditions": [{"proposedRuleName": "", "rationale": "", "suggestedRegexOrAstIdea": ""}], "suggestedNoiseReductions": [{"currentIssue": "", "proposal": ""}], "questionsForReviewer": []}`;
-  
+
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) });
     if (!response.ok) { const errorText = await response.text(); throw new Error(`API error ${response.status}: ${errorText.substring(0, 200)}`); }
@@ -540,7 +565,7 @@ function generateRejectionEmail(report: ScanReport): string {
   if (actionItems.length > 0) {
     email += `## Items Requiring Review\n\n`;
     for (const g of actionItems) email += `### ${g.rule.name}\n${g.rule.description}\nFound ${g.count} occurrence(s). Please provide documentation.\n\n`;
-  }
+    }
   email += `---\nPlease address these issues and resubmit.\n\nWebflow Marketplace Review Team`;
   return email;
 }
@@ -587,7 +612,7 @@ const FindingCard: React.FC<{ group: FindingGroup }> = ({ group }) => {
   const remediation = REMEDIATION_REGISTRY[rule.ruleId];
   const getSeverityColor = (sev: string) => sev === 'BLOCKER' ? 'bg-red-50 text-red-900 border-red-200' : sev === 'HIGH' ? 'bg-orange-50 text-orange-900 border-orange-200' : 'bg-blue-50 text-blue-900 border-blue-200';
   const Icon = rule.severity === 'BLOCKER' ? ShieldAlert : rule.severity === 'HIGH' ? AlertOctagon : Info;
-  
+
   return (
     <article className="border rounded-xl mb-4 overflow-hidden shadow-sm bg-white">
       <button onClick={() => setIsOpen(!isOpen)} className={`w-full flex items-center justify-between p-4 hover:bg-opacity-80 transition-colors text-left ${getSeverityColor(rule.severity)}`}>
@@ -598,7 +623,7 @@ const FindingCard: React.FC<{ group: FindingGroup }> = ({ group }) => {
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="font-mono text-[10px] uppercase font-bold tracking-wider opacity-80 bg-white/50 px-2 py-0.5 rounded border border-black/5">{rule.ruleId}</span>
               <span className="text-xs font-medium opacity-90">{count} occurrence{count !== 1 ? 's' : ''} • {rule.severity} • {rule.disposition}</span>
-            </div>
+          </div>
           </div>
         </div>
         {isOpen ? <ChevronUp className="w-5 h-5 opacity-60 shrink-0" /> : <ChevronDown className="w-5 h-5 opacity-60 shrink-0" />}
@@ -622,9 +647,9 @@ const FindingCard: React.FC<{ group: FindingGroup }> = ({ group }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {remediation.badExample && <div className="border border-red-200 rounded overflow-hidden"><div className="bg-red-100 px-3 py-1.5 text-xs font-bold text-red-800 flex items-center gap-2 border-b border-red-200"><XCircle className="w-3 h-3" /> Before (Incorrect)</div><div className="bg-red-50 p-3 font-mono text-xs text-red-900 whitespace-pre-wrap">{remediation.badExample}</div></div>}
                     {remediation.goodExample && <div className="border border-green-200 rounded overflow-hidden"><div className="bg-green-100 px-3 py-1.5 text-xs font-bold text-green-800 flex items-center gap-2 border-b border-green-200"><CheckCircle className="w-3 h-3" /> After (Correct)</div><div className="bg-green-50 p-3 font-mono text-xs text-green-900 whitespace-pre-wrap">{remediation.goodExample}</div></div>}
-                  </div>
-                )}
-              </div>
+            </div>
+          )}
+                </div>
               {remediation.commonMistake && (
                 <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 flex gap-3">
                   <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0" />
@@ -642,8 +667,8 @@ const FindingCard: React.FC<{ group: FindingGroup }> = ({ group }) => {
                           <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 hover:underline flex items-center gap-1 font-medium">Read Docs <ExternalLink className="w-3 h-3" /></a>
                         </div>
                         {doc.quote && <blockquote className="text-xs italic text-gray-600 border-l-2 border-gray-300 pl-2 mt-1">"{doc.quote}"</blockquote>}
-                      </div>
-                    ))}
+              </div>
+            ))}
                   </div>
                 </div>
               )}
@@ -691,7 +716,7 @@ const AiSuggestionsPanel: React.FC<{ report: ScanReport; apiKey: string }> = ({ 
           <button onClick={handleAnalyze} disabled={!apiKey} className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-2"><Bot className="w-3 h-3" /> {apiKey ? 'Analyze with AI' : 'Add API Key'}</button>
         </div>
         <p className="mt-2 text-xs text-purple-800 opacity-80">Cross-references findings against official checklist.</p>
-      </div>
+    </div>
     );
   }
 
@@ -796,49 +821,49 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                   <input ref={fileInputRef} type="file" accept=".zip" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
                   <p className="text-xs text-gray-500">Select a .zip file (Max {maxFileSizeMB}MB unzipped).</p>
                   <button onClick={handleScan} disabled={!file || isScanning} className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">{isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Run Scan</button>
-                </div>
+            </div>
               ) : (
                 <div className="space-y-4">
                   <button onClick={handleReset} className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-all flex items-center justify-center gap-2"><RefreshCw className="w-4 h-4" /> Scan New File</button>
                   <button onClick={() => { const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `scanReport_${report.runId.substring(0, 8)}.json`; a.click(); }} className="w-full py-2 px-4 border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-all flex items-center justify-center gap-2"><Download className="w-4 h-4" /> Download Report</button>
-                </div>
-              )}
+              </div>
+            )}
               {isScanning && <div className="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded animate-pulse">{progress}</div>}
               {error && <div className="mt-4 p-3 bg-red-50 text-red-800 text-xs rounded border border-red-200"><strong>Error:</strong> {error}</div>}
-            </div>
+          </div>
             <div className="bg-white p-4 rounded-xl border shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Scanner Info</h3>
               <p className="text-xs text-gray-600"><strong>Version:</strong> 2.0.0</p>
               <p className="text-xs text-gray-600"><strong>Rules:</strong> {DEFAULT_RULESET.length} active</p>
               <p className="text-xs text-gray-600"><strong>Ruleset:</strong> 1.3.0-checklist-complete</p>
-            </div>
-          </div>
-        ) : (
+                      </div>
+                      </div>
+                    ) : (
           <div className="space-y-6 order-2 md:order-1">
             <div className="bg-white p-6 rounded-xl border shadow-sm text-sm text-gray-600">
               <h3 className="font-bold text-gray-900 mb-2">About Scan History</h3>
               <p>History is stored in your browser's IndexedDB.</p>
               {history.length > 0 && <button onClick={handleClearHistory} className="mt-3 text-red-600 hover:text-red-700 flex items-center gap-1 text-xs"><Trash2 className="w-3 h-3" /> Clear History</button>}
-            </div>
-          </div>
-        )}
+                      </div>
+              </div>
+            )}
 
         <div className="space-y-6 order-1 md:order-2">
           {activeTab === 'history' && (
             <div className="bg-white rounded-xl border shadow-sm p-6">
               <h2 className="text-lg font-bold mb-4">Scan History</h2>
               {history.length === 0 ? <p className="text-gray-500 text-center py-8">No scans yet</p> : (
-                <div className="space-y-2">
+                          <div className="space-y-2">
                   {history.map((entry) => (
                     <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div><p className="font-medium text-gray-900">{entry.fileName}</p><p className="text-xs text-gray-500">{new Date(entry.scanDate).toLocaleString()} • {entry.fileCount} files • {entry.findingCount} findings</p></div>
                       <VerdictBadge verdict={entry.verdict} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                          </div>
+                        )}
 
           {activeTab === 'scan' && (
             <>
@@ -846,7 +871,7 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                 <div className="h-96 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                   <FileUp className="w-12 h-12 mb-4 opacity-50" />
                   <p>Upload a bundle to start scanning</p>
-                </div>
+                      </div>
               )}
               {report && (
                 <>
@@ -857,27 +882,27 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-red-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Auto-Reject Issues ({groupedFindings.blockers.length})</h3>
                         {groupedFindings.blockers.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                      </div>
-                    )}
+                  </div>
+                )}
                     {groupedFindings.review.length > 0 && (
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-yellow-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Needs Review ({groupedFindings.review.length})</h3>
                         {groupedFindings.review.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                      </div>
-                    )}
+                  </div>
+                )}
                     {groupedFindings.info.length > 0 && (
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-green-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Informational ({groupedFindings.info.length})</h3>
                         {groupedFindings.info.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                      </div>
-                    )}
+                  </div>
+                )}
                     {Object.keys(report.findings).length === 0 && <div className="p-12 text-center text-gray-500 bg-white rounded-xl border"><p>No issues found matching the current ruleset.</p></div>}
                   </div>
                 </>
-              )}
-            </>
-          )}
-        </div>
+            )}
+          </>
+        )}
+      </div>
       </main>
     </div>
   );
