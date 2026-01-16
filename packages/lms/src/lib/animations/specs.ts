@@ -33,7 +33,7 @@ export interface AnimationSpec {
  * Tool Receding - Heidegger's ready-to-hand concept
  * The hammer disappears when hammering.
  */
-export const toolRrecedingSpec: AnimationSpec = {
+export const toolRecedingSpec: AnimationSpec = {
   id: 'tool-receding',
   name: 'Tool Receding',
   description: "The hammer disappears when hammering. Heidegger's Zuhandenheit.",
@@ -133,8 +133,8 @@ export const canonRevealStyles: CanonRevealStyle[] = [
  * Animation Specs Registry
  */
 export const animationSpecs: Record<string, AnimationSpec> = {
-  'ToolReceding': toolRrecedingSpec,
-  'tool-receding': toolRrecedingSpec,
+  'ToolReceding': toolRecedingSpec,
+  'tool-receding': toolRecedingSpec,
   'IDEvsTerminal': ideVsTerminalSpec,
   'ide-vs-terminal': ideVsTerminalSpec,
 };

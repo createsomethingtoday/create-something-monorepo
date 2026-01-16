@@ -296,12 +296,12 @@ const App = () => {
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 		position: relative;
+		min-height: 300px;
 	}
 
 	.animation-canvas {
-		width: 100%;
-		height: 100%;
-		position: relative;
+		position: absolute;
+		inset: 0;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -403,15 +403,18 @@ const App = () => {
 	/* IDE vs Terminal */
 	.ide-canvas {
 		padding: 20px;
+		box-sizing: border-box;
 	}
 
 	.ide-window {
 		width: 100%;
-		height: calc(100% - 40px);
+		height: 100%;
 		border-radius: 8px;
 		overflow: hidden;
 		box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 		position: relative;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.ide-titlebar {
@@ -446,7 +449,8 @@ const App = () => {
 
 	.ide-content {
 		display: flex;
-		height: calc(100% - 52px);
+		flex: 1;
+		min-height: 0;
 	}
 
 	.ide-sidebar {

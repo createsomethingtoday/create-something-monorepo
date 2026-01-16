@@ -119,6 +119,9 @@
 
 	let activeReasoning = $state(0);
 
+	// Derived for template use
+	const currentReasoning = $derived(reasoningExamples[activeReasoning]);
+
 	// Holistic update example - showing how one change ripples through everything
 	const holisticUpdate = {
 		trigger: 'Weather forecast changed: thunderstorm in 2 hours',
@@ -702,17 +705,16 @@
 				{/each}
 			</div>
 
-			{@const reasoning = reasoningExamples[activeReasoning]}
 			<div class="reasoning-detail">
 				<div class="reasoning-header">
 					<span class="situation-label">Situation</span>
-					<span class="situation-text">{reasoning.situation}</span>
+					<span class="situation-text">{currentReasoning.situation}</span>
 				</div>
 
 				<div class="thinking-process">
 					<span class="thinking-label">What the system noticed:</span>
 					<ul class="thinking-list">
-						{#each reasoning.thinking as thought, i}
+						{#each currentReasoning.thinking as thought, i}
 							<li style:animation-delay="{i * 100}ms">{thought}</li>
 						{/each}
 					</ul>
@@ -721,20 +723,20 @@
 				<div class="decision-box">
 					<div class="decision-main">
 						<span class="decision-label">Decision</span>
-						<span class="decision-text">{reasoning.decision}</span>
+						<span class="decision-text">{currentReasoning.decision}</span>
 					</div>
 					<div class="confidence-meter">
 						<span class="confidence-label">Confidence</span>
 						<div class="confidence-bar">
-							<div class="confidence-fill" style:width="{reasoning.confidence}%"></div>
+							<div class="confidence-fill" style:width="{currentReasoning.confidence}%"></div>
 						</div>
-						<span class="confidence-value">{reasoning.confidence}%</span>
+						<span class="confidence-value">{currentReasoning.confidence}%</span>
 					</div>
 				</div>
 
 				<div class="alternative-note">
 					<span class="alt-icon">💭</span>
-					<span class="alt-text">{reasoning.alternative}</span>
+					<span class="alt-text">{currentReasoning.alternative}</span>
 				</div>
 			</div>
 		</div>
