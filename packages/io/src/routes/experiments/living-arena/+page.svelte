@@ -200,9 +200,9 @@
 			<span class="experiment-label">Experiment</span>
 			<h1 class="experiment-title">Living Arena</h1>
 			<p class="experiment-description">
-				When you have access to all systems, you can do very interesting and intuitive things 
-				that help humans engage with the building—while keeping <strong>security at the forefront</strong>.
-				This is the power of AI-native automation at arena scale.
+				What if your building could help people without them having to ask? 
+				The lights guide you to your seat. The air feels right before you notice. 
+				And through it all, <strong>safety comes first</strong>—always.
 			</p>
 		</div>
 		<div class="event-badge">
@@ -529,8 +529,8 @@
 	<!-- Cross-System Intelligence Section -->
 	<section class="intelligence-section">
 		<div class="section-header">
-			<h2>Cross-System Intelligence</h2>
-			<p>When all systems communicate, the building becomes intuitive. Security remains the foundation—every action is security-aware.</p>
+			<h2>When Systems Talk to Each Other</h2>
+			<p>Something interesting happens when lighting, security, and climate work together. The building starts to feel like it's paying attention.</p>
 		</div>
 
 		<div class="scenarios-container">
