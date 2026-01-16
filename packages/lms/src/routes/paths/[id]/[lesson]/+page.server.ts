@@ -16,6 +16,12 @@ const lessonFiles = import.meta.glob('/src/lib/content/lessons/**/*.md', {
   eager: true
 }) as Record<string, string>;
 
+// Import all interactive lesson JSON files
+const interactiveFiles = import.meta.glob('/src/lib/content/lessons/**/*.json', {
+  import: 'default',
+  eager: true
+}) as Record<string, unknown>;
+
 /**
  * Strip YAML frontmatter from markdown content.
  * Frontmatter is delimited by --- at the start of the file.
@@ -41,6 +47,10 @@ export const load: PageServerLoad = async ({ params }) => {
   const nextLesson =
     currentIndex < pathData.lessons.length - 1 ? pathData.lessons[currentIndex + 1] : null;
 
+  // Check for interactive lesson JSON first
+  const interactiveKey = `/src/lib/content/lessons/${params.id}/${params.lesson}.json`;
+  const interactiveData = interactiveFiles[interactiveKey] as { interactive?: boolean; sections?: unknown[] } | undefined;
+
   // Load markdown content from pre-imported files
   let content = '';
   const contentKey = `/src/lib/content/lessons/${params.id}/${params.lesson}.md`;
@@ -59,6 +69,9 @@ export const load: PageServerLoad = async ({ params }) => {
     totalLessons: pathData.lessons.length,
     previousLesson,
     nextLesson,
-    content
+    content,
+    // Include interactive data if available
+    interactive: interactiveData?.interactive ?? false,
+    interactiveData: interactiveData ?? null
   };
 };

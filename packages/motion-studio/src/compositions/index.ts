@@ -13,3 +13,6 @@ export { TimelineScene } from './TimelineScene';
 
 // Full video composition
 export { ExplainerVideo, calculateTotalDuration, createScene } from './ExplainerVideo';
+
+// Lesson compositions
+export { ToolReceding, IDEvsTerminal } from './lessons';

@@ -1,0 +1,116 @@
+{
+  "id": "terminal-as-creative-space",
+  "title": "Your Terminal as Creative Space",
+  "description": "Why terminal-first development creates conditions for focused creation.",
+  "duration": "15 min",
+  "praxis": "terminal-canon-setup",
+  "interactive": true,
+  "sections": [
+    {
+      "type": "hero",
+      "text": "What if your tools could disappear?",
+      "subtitle": "Not gone. Just invisible. So focused on the work that you forget the tool exists.",
+      "reveal": "decode",
+      "duration": 2500
+    },
+    {
+      "type": "philosophy",
+      "concept": "ready-to-hand",
+      "text": "The hammer disappears when hammering.",
+      "explanation": "When a tool works, you don't see it. You see what you're making. Heidegger called this 'Zuhandenheit'—the tool recedes into transparent use. Your terminal can become this.",
+      "reveal": "unconcealment",
+      "duration": 2000
+    },
+    {
+      "type": "remotion",
+      "compositionId": "ToolReceding",
+      "caption": "Watch the focus shift from tool to work. The hammer fades. Only the nail remains.",
+      "durationInFrames": 150
+    },
+    {
+      "type": "philosophy",
+      "concept": "present-at-hand",
+      "text": "Most IDEs demand attention.",
+      "explanation": "Panels, buttons, notifications—they're 'present-at-hand.' You notice the tool instead of your work. Terminal-first development inverts this.",
+      "reveal": "threshold",
+      "duration": 1000
+    },
+    {
+      "type": "remotion",
+      "compositionId": "IDEvsTerminal",
+      "caption": "From chrome to canvas. Watch the interface dissolve until only your work remains.",
+      "durationInFrames": 180
+    },
+    {
+      "type": "spritz",
+      "messages": [
+        "The terminal is a blank canvas.",
+        "It shows exactly what you need.",
+        "Nothing more.",
+        "With practice, it becomes an extension of thought.",
+        "Not a mediator. An extension."
+      ],
+      "wpm": 250
+    },
+    {
+      "type": "steps",
+      "title": "Install WezTerm",
+      "steps": [
+        {
+          "platform": "macOS",
+          "command": "brew install --cask wezterm",
+          "note": "Or download from wezfurlong.org/wezterm"
+        },
+        {
+          "platform": "Linux (Ubuntu/Debian)",
+          "command": "sudo apt update && sudo apt install wezterm",
+          "note": "See docs for GPG key setup"
+        },
+        {
+          "platform": "Windows",
+          "command": "winget install wez.wezterm",
+          "note": "Or download installer from wezfurlong.org/wezterm"
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "title": "Canon Configuration",
+      "filename": "~/.wezterm.lua",
+      "language": "lua",
+      "code": "local wezterm = require 'wezterm'\nlocal config = wezterm.config_builder()\n\n-- Canon colors: pure black, white foreground\nconfig.colors = {\n  background = '#000000',\n  foreground = '#ffffff',\n  cursor_bg = '#ffffff',\n  cursor_fg = '#000000',\n}\n\n-- Minimal chrome\nconfig.enable_tab_bar = false\nconfig.window_decorations = 'RESIZE'\nconfig.window_padding = {\n  left = 12, right = 12,\n  top = 12, bottom = 12,\n}\n\n-- Font\nconfig.font = wezterm.font('JetBrains Mono')\nconfig.font_size = 14.0\n\nreturn config"
+    },
+    {
+      "type": "spritz",
+      "messages": [
+        "Pure black background.",
+        "White text.",
+        "No tab bar.",
+        "No distractions.",
+        "Every pixel of chrome is a pixel of distraction.",
+        "The blank canvas creates space for thought."
+      ],
+      "wpm": 220
+    },
+    {
+      "type": "reflection",
+      "prompt": "Look at your new terminal. What's missing?",
+      "answer": "Nothing is missing. The absence is the design.",
+      "reveal": "threshold"
+    },
+    {
+      "type": "reflection",
+      "prompt": "How does this feel compared to your previous environment?",
+      "answer": "Quieter. More focused. The tool has receded.",
+      "reveal": "unconcealment"
+    },
+    {
+      "type": "philosophy",
+      "concept": "weniger, aber besser",
+      "text": "Less, but better.",
+      "explanation": "This is Dieter Rams' principle. Every element must earn its place. Your terminal has nothing to prove—it simply serves your work.",
+      "reveal": "mask",
+      "duration": 1500
+    }
+  ]
+}

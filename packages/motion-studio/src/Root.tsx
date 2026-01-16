@@ -18,6 +18,8 @@ import { ConceptBreakdown } from './compositions/ConceptBreakdown';
 import { ComparisonScene } from './compositions/ComparisonScene';
 import { TimelineScene } from './compositions/TimelineScene';
 import { ExplainerVideo, calculateTotalDuration } from './compositions/ExplainerVideo';
+import { ToolReceding } from './compositions/lessons/ToolReceding';
+import { IDEvsTerminal } from './compositions/lessons/IDEvsTerminal';
 
 // Primitives
 import { KineticText } from './primitives/KineticText';
@@ -431,6 +433,34 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{
           scenes: sampleScenes,
           theme: 'space',
+        }}
+      />
+      
+      {/* ========================================
+          LESSON COMPOSITIONS
+          Teaching animations for interactive lessons
+          ======================================== */}
+      <Composition
+        id="ToolReceding"
+        component={ToolReceding}
+        durationInFrames={150}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          theme: 'ltd',
+        }}
+      />
+      
+      <Composition
+        id="IDEvsTerminal"
+        component={IDEvsTerminal}
+        durationInFrames={180}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          theme: 'ltd',
         }}
       />
     </>
