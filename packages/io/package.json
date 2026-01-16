@@ -17,6 +17,7 @@
 	"dependencies": {
 		"@create-something/components": "workspace:*",
 		"@create-something/render-pipeline": "workspace:*",
+		"@create-something/spritz": "workspace:*",
 		"@create-something/tufte": "workspace:*",
 		"@types/canvas-confetti": "^1.9.0",
 		"canvas-confetti": "^1.9.4",

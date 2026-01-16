@@ -1,0 +1,339 @@
+/**
+ * Spritz Component Styles - Canon Design System
+ *
+ * "Weniger, aber besser" - Dieter Rams
+ *
+ * These styles follow the Canon principle:
+ * - Tailwind for structure (layout, spacing)
+ * - Canon tokens for aesthetics (colors, typography, radii)
+ *
+ * Requires Canon tokens to be imported by consuming app:
+ * @import '@create-something/components/styles/tokens.css';
+ */
+
+/* ==========================================================================
+   Spritz Container
+   ========================================================================== */
+
+.spritz {
+	--spritz-orp-color: var(--color-error);
+	--spritz-word-spacing: 0.05em;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-md);
+	padding: var(--space-lg);
+	background: var(--color-bg-surface);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--radius-lg);
+	transition: border-color var(--duration-micro) var(--ease-standard);
+}
+
+.spritz:focus-within {
+	border-color: var(--color-border-emphasis);
+}
+
+/* ==========================================================================
+   Redicle (Word Display Window)
+   ========================================================================== */
+
+.spritz-redicle {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 4rem;
+	padding: var(--space-lg) var(--space-xl);
+	background: var(--color-bg-elevated);
+	border-radius: var(--radius-md);
+	overflow: hidden;
+}
+
+/* ORP alignment guide (subtle vertical line) */
+.spritz-redicle::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	width: 1px;
+	background: var(--color-border-default);
+	opacity: 0.5;
+}
+
+/* Focus marker (small triangle pointing to ORP) */
+.spritz-redicle::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 0;
+	height: 0;
+	border-left: 6px solid transparent;
+	border-right: 6px solid transparent;
+	border-top: 6px solid var(--spritz-orp-color);
+}
+
+/* ==========================================================================
+   Word Display
+   ========================================================================== */
+
+.spritz-word {
+	font-family: var(--font-mono);
+	font-size: var(--text-h1);
+	font-weight: var(--font-medium);
+	letter-spacing: var(--spritz-word-spacing);
+	line-height: 1;
+	white-space: nowrap;
+	color: var(--color-fg-primary);
+}
+
+/* Letters before ORP - right-aligned to ORP position */
+.spritz-before {
+	display: inline-block;
+	text-align: right;
+	min-width: 8ch;
+	color: var(--color-fg-secondary);
+}
+
+/* ORP letter - highlighted */
+.spritz-orp {
+	display: inline-block;
+	color: var(--spritz-orp-color);
+	font-weight: var(--font-bold);
+	text-align: center;
+	width: 1ch;
+}
+
+/* Letters after ORP - left-aligned from ORP position */
+.spritz-after {
+	display: inline-block;
+	text-align: left;
+	min-width: 8ch;
+	color: var(--color-fg-secondary);
+}
+
+/* ==========================================================================
+   Controls
+   ========================================================================== */
+
+.spritz-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-sm);
+}
+
+.spritz-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5rem;
+	height: 2.5rem;
+	padding: var(--space-xs);
+	background: var(--color-bg-subtle);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--radius-md);
+	color: var(--color-fg-secondary);
+	cursor: pointer;
+	transition: all var(--duration-micro) var(--ease-standard);
+}
+
+.spritz-btn:hover {
+	background: var(--color-hover);
+	border-color: var(--color-border-emphasis);
+	color: var(--color-fg-primary);
+}
+
+.spritz-btn:active {
+	transform: scale(var(--scale-subtle));
+}
+
+.spritz-btn:focus-visible {
+	outline: 2px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+.spritz-btn--primary {
+	min-width: 3rem;
+	height: 3rem;
+	background: var(--color-fg-primary);
+	border-color: var(--color-fg-primary);
+	color: var(--color-bg-pure);
+}
+
+.spritz-btn--primary:hover {
+	background: var(--color-fg-secondary);
+	border-color: var(--color-fg-secondary);
+}
+
+/* ==========================================================================
+   Progress Bar
+   ========================================================================== */
+
+.spritz-progress {
+	width: 100%;
+	height: 4px;
+	background: var(--color-bg-subtle);
+	border-radius: var(--radius-full);
+	overflow: hidden;
+}
+
+.spritz-progress-bar {
+	height: 100%;
+	background: var(--color-fg-tertiary);
+	border-radius: var(--radius-full);
+	transition: width var(--duration-micro) var(--ease-standard);
+}
+
+/* ==========================================================================
+   WPM Control
+   ========================================================================== */
+
+.spritz-wpm {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-sm);
+}
+
+.spritz-wpm-label {
+	font-size: var(--text-body-sm);
+	color: var(--color-fg-muted);
+	font-variant-numeric: tabular-nums;
+	min-width: 5ch;
+	text-align: center;
+}
+
+.spritz-wpm-slider {
+	width: 100%;
+	max-width: 12rem;
+	height: 4px;
+	appearance: none;
+	background: var(--color-bg-subtle);
+	border-radius: var(--radius-full);
+	cursor: pointer;
+}
+
+.spritz-wpm-slider::-webkit-slider-thumb {
+	appearance: none;
+	width: 16px;
+	height: 16px;
+	background: var(--color-fg-primary);
+	border-radius: var(--radius-full);
+	cursor: pointer;
+	transition: transform var(--duration-micro) var(--ease-standard);
+}
+
+.spritz-wpm-slider::-webkit-slider-thumb:hover {
+	transform: scale(1.2);
+}
+
+.spritz-wpm-slider::-moz-range-thumb {
+	width: 16px;
+	height: 16px;
+	background: var(--color-fg-primary);
+	border: none;
+	border-radius: var(--radius-full);
+	cursor: pointer;
+}
+
+.spritz-wpm-slider:focus-visible {
+	outline: 2px solid var(--color-focus);
+	outline-offset: 4px;
+}
+
+/* ==========================================================================
+   Message Label
+   ========================================================================== */
+
+.spritz-label {
+	font-size: var(--text-caption);
+	color: var(--color-fg-muted);
+	text-transform: uppercase;
+	letter-spacing: var(--tracking-widest);
+	text-align: center;
+}
+
+/* ==========================================================================
+   States
+   ========================================================================== */
+
+.spritz--playing .spritz-redicle {
+	border-color: var(--color-border-emphasis);
+}
+
+.spritz--complete .spritz-progress-bar {
+	background: var(--color-success);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+	.spritz,
+	.spritz-btn,
+	.spritz-progress-bar {
+		transition-duration: 0.01ms;
+	}
+
+	.spritz-btn:active {
+		transform: none;
+	}
+
+	.spritz-wpm-slider::-webkit-slider-thumb:hover {
+		transform: none;
+	}
+}
+
+/* ==========================================================================
+   Size Variants
+   ========================================================================== */
+
+.spritz--sm .spritz-word {
+	font-size: var(--text-h3);
+}
+
+.spritz--sm .spritz-redicle {
+	min-height: 2.5rem;
+	padding: var(--space-sm) var(--space-md);
+}
+
+.spritz--lg .spritz-word {
+	font-size: var(--text-display);
+}
+
+.spritz--lg .spritz-redicle {
+	min-height: 6rem;
+	padding: var(--space-xl) var(--space-2xl);
+}
+
+/* ==========================================================================
+   Video Recording Mode
+   Clean display for screen capture
+   ========================================================================== */
+
+.spritz--video {
+	background: var(--color-bg-pure);
+	border: none;
+	border-radius: 0;
+	padding: 0;
+}
+
+.spritz--video .spritz-redicle {
+	background: transparent;
+	border-radius: 0;
+}
+
+.spritz--video .spritz-redicle::before,
+.spritz--video .spritz-redicle::after {
+	display: none;
+}
+
+.spritz--video .spritz-controls,
+.spritz--video .spritz-progress,
+.spritz--video .spritz-wpm {
+	display: none;
+}

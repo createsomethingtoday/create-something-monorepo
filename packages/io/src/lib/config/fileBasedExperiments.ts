@@ -461,6 +461,51 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 `
 	},
 	{
+		id: 'file-spritz',
+		slug: 'spritz',
+		title: 'Spritz: Speed Reading for Video Walkthroughs',
+		description: 'RSVP speed reading component with Optimal Recognition Point highlighting—words displayed one at a time, aligned to where your eye naturally focuses. Built for video intro/transition screens and interactive documentation.',
+		excerpt_short: 'Speed reading component for video walkthroughs and interactive docs',
+		excerpt_long: 'Spritz uses Rapid Serial Visual Presentation (RSVP) to display text one word at a time, with the Optimal Recognition Point (ORP) highlighted. This eliminates eye movement and enables 2-3x faster reading. Perfect for video intro screens, transitions, and interactive documentation where users control playback.',
+		category: 'research',
+		tags: ['RSVP', 'Speed Reading', 'Video', 'Documentation', 'Accessibility', 'Canon', 'Component'],
+		created_at: '2026-01-15T00:00:00Z',
+		updated_at: '2026-01-15T00:00:00Z',
+		reading_time_minutes: 5,
+		difficulty: 'beginner',
+		is_file_based: true,
+		tests_principles: [
+			'rams-principle-10', // As little design as possible—word and ORP only
+			'heidegger-zuhandenheit', // Controls recede into transparent use
+			'rams-principle-4', // Understandable—no learning curve required
+			'subtractive-triad' // Removes eye movement, reveals meaning
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════╗
+    ║   SPRITZ: RSVP SPEED READING                                          ║
+    ║                                                                       ║
+    ║   Traditional Reading:                                                ║
+    ║   ┌─────────────────────────────────────────────────────────────────┐ ║
+    ║   │ Your eyes move ←→ across each line, jumping between words.      │ ║
+    ║   │ This saccade movement takes time and cognitive load.            │ ║
+    ║   └─────────────────────────────────────────────────────────────────┘ ║
+    ║                                                                       ║
+    ║   RSVP with ORP:                                                      ║
+    ║   ┌─────────────────────────────────────────────────────────────────┐ ║
+    ║   │                           ▼                                     │ ║
+    ║   │                      unders̲t̲and                                  │ ║
+    ║   │                           ▲                                     │ ║
+    ║   │              Eyes stay fixed. Words stream past.                │ ║
+    ║   └─────────────────────────────────────────────────────────────────┘ ║
+    ║                                                                       ║
+    ║   ORP (Optimal Recognition Point): The letter where your eye         ║
+    ║   naturally wants to focus for fastest word recognition.             ║
+    ║                                                                       ║
+    ║   200 WPM → 400+ WPM with 90% comprehension                          ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+`
+	},
+	{
 		id: 'file-kinetic-typography',
 		slug: 'kinetic-typography',
 		title: 'Kinetic Typography: Data-Ink Ratio for Motion',
