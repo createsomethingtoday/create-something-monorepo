@@ -11,7 +11,7 @@ import {
   interpolate,
   spring,
 } from 'remotion';
-import { animation } from '../styles/index.js';
+import { animation } from '../styles';
 
 interface FadeInProps {
   /** Content to fade in */

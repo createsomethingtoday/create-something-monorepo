@@ -20,8 +20,8 @@ import {
   spring,
   Img,
 } from 'remotion';
-import { colors, typography, animation, spacing } from '../styles/index.js';
-import type { AnnotationConfig } from '../types.js';
+import { colors, typography, animation, spacing } from '../styles';
+import type { AnnotationConfig } from '../types';
 
 interface AnnotatedImageProps {
   /** Image source URL */

@@ -24,16 +24,16 @@
  */
 
 // Primitives - Vox-style animated components
-export * from './primitives/index.js';
+export * from './primitives';
 
 // Compositions - Full scene templates
-export * from './compositions/index.js';
+export * from './compositions';
 
 // Canon bridge - Design tokens for React
-export * from './styles/index.js';
+export * from './styles';
 
 // Orchestration - Timeline and sequencing utilities
-export * from './orchestration/index.js';
+export * from './orchestration';
 
 // Types
 export type {
@@ -42,4 +42,7 @@ export type {
   AnimationTiming,
   TextRevealStyle,
   ChartBuildStyle,
-} from './types.js';
+} from './types';
+
+// Remotion Root export
+export { RemotionRoot } from './Root';

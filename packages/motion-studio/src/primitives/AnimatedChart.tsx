@@ -19,8 +19,8 @@ import {
   interpolate,
   spring,
 } from 'remotion';
-import { colors, typography, animation, spacing } from '../styles/index.js';
-import type { ChartBuildStyle } from '../types.js';
+import { colors, typography, animation, spacing } from '../styles';
+import type { ChartBuildStyle } from '../types';
 
 interface DataPoint {
   label: string;

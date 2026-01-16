@@ -20,8 +20,8 @@ import {
   spring,
   Easing,
 } from 'remotion';
-import { colors, typography, animation, getEasing } from '../styles/index.js';
-import type { TextRevealStyle } from '../types.js';
+import { colors, typography, animation } from '../styles';
+import type { TextRevealStyle } from '../types';
 
 interface KineticTextProps {
   /** The text to animate */

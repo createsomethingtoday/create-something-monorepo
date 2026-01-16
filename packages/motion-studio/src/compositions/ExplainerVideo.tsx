@@ -19,12 +19,12 @@ import {
   useVideoConfig,
   Sequence,
 } from 'remotion';
-import { ExplainerIntro } from './ExplainerIntro.js';
-import { DataVisualization } from './DataVisualization.js';
-import { ConceptBreakdown } from './ConceptBreakdown.js';
-import { ComparisonScene } from './ComparisonScene.js';
-import { TimelineScene } from './TimelineScene.js';
-import { voxPresets } from '../styles/index.js';
+import { ExplainerIntro } from './ExplainerIntro';
+import { DataVisualization } from './DataVisualization';
+import { ConceptBreakdown } from './ConceptBreakdown';
+import { ComparisonScene } from './ComparisonScene';
+import { TimelineScene } from './TimelineScene';
+import { voxPresets } from '../styles';
 
 // Scene type definitions
 type IntroScene = {

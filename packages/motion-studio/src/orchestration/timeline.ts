@@ -3,7 +3,7 @@
  * 
  * Manage timing, gaps, and transitions between scenes.
  */
-import { animation } from '../styles/index.js';
+import { animation } from '../styles';
 
 export interface TimelineEntry {
   /** Unique identifier */

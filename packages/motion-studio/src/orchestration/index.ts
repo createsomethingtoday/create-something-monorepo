@@ -5,12 +5,12 @@
  * The invisible conductor that makes motion graphics feel coherent.
  */
 
-export { Timeline, createTimeline, type TimelineEntry } from './timeline.js';
-export { ScenePlanner, type PlannerConfig } from './planner.js';
+export { Timeline, createTimeline, quickTimeline, type TimelineEntry } from './timeline';
+export { ScenePlanner, type PlannerConfig } from './planner';
 export { 
   easeIn, 
   easeOut, 
   easeInOut, 
   springConfig,
   type SpringConfig,
-} from './easing.js';
+} from './easing';

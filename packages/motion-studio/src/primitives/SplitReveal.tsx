@@ -20,7 +20,7 @@ import {
   interpolate,
   spring,
 } from 'remotion';
-import { colors, animation } from '../styles/index.js';
+import { colors, animation } from '../styles';
 
 interface SplitRevealProps {
   /** Children (exactly 2 for split) */

@@ -18,12 +18,12 @@ import {
   useVideoConfig,
   AbsoluteFill,
 } from 'remotion';
-import { KineticText } from '../primitives/KineticText.js';
-import { AnimatedChart } from '../primitives/AnimatedChart.js';
-import { FadeIn } from '../primitives/FadeIn.js';
-import { SlideIn } from '../primitives/SlideIn.js';
-import { FilmGrain, Vignette } from '../primitives/FilmGrain.js';
-import { colors, typography, animation, voxPresets, spacing } from '../styles/index.js';
+import { KineticText } from '../primitives/KineticText';
+import { AnimatedChart } from '../primitives/AnimatedChart';
+import { FadeIn } from '../primitives/FadeIn';
+import { SlideIn } from '../primitives/SlideIn';
+import { FilmGrain, Vignette } from '../primitives/FilmGrain';
+import { colors, typography, animation, voxPresets, spacing } from '../styles';
 
 interface DataPoint {
   label: string;

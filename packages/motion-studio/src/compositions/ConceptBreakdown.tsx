@@ -22,11 +22,11 @@ import {
   interpolate,
   spring,
 } from 'remotion';
-import { KineticText } from '../primitives/KineticText.js';
-import { FadeIn } from '../primitives/FadeIn.js';
-import { ScaleIn } from '../primitives/ScaleIn.js';
-import { FilmGrain, Vignette } from '../primitives/FilmGrain.js';
-import { colors, typography, animation, voxPresets, spacing } from '../styles/index.js';
+import { KineticText } from '../primitives/KineticText';
+import { FadeIn } from '../primitives/FadeIn';
+import { ScaleIn } from '../primitives/ScaleIn';
+import { FilmGrain, Vignette } from '../primitives/FilmGrain';
+import { colors, typography, animation, voxPresets, spacing } from '../styles';
 
 interface Concept {
   /** Concept name/title */

@@ -8,12 +8,12 @@ import React from 'react';
 import { Composition } from 'remotion';
 
 // Compositions
-import { ExplainerIntro } from './compositions/ExplainerIntro.js';
-import { DataVisualization } from './compositions/DataVisualization.js';
-import { ConceptBreakdown } from './compositions/ConceptBreakdown.js';
-import { ComparisonScene } from './compositions/ComparisonScene.js';
-import { TimelineScene } from './compositions/TimelineScene.js';
-import { ExplainerVideo, calculateTotalDuration } from './compositions/ExplainerVideo.js';
+import { ExplainerIntro } from './compositions/ExplainerIntro';
+import { DataVisualization } from './compositions/DataVisualization';
+import { ConceptBreakdown } from './compositions/ConceptBreakdown';
+import { ComparisonScene } from './compositions/ComparisonScene';
+import { TimelineScene } from './compositions/TimelineScene';
+import { ExplainerVideo, calculateTotalDuration } from './compositions/ExplainerVideo';
 
 // Example data
 const sampleChartData = [

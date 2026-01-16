@@ -4,8 +4,8 @@
  * Analyzes content and suggests appropriate scene types,
  * durations, and compositions for Vox-style explainers.
  */
-import { Timeline, createTimeline, type TimelineEntry } from './timeline.js';
-import { animation } from '../styles/index.js';
+import { Timeline, createTimeline, type TimelineEntry } from './timeline';
+import { animation } from '../styles';
 
 export interface PlannerConfig {
   /** Target video duration in seconds */

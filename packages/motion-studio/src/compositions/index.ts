@@ -5,11 +5,11 @@
  * Each composition is a complete, ready-to-use Remotion component.
  */
 
-export { ExplainerIntro } from './ExplainerIntro.js';
-export { DataVisualization } from './DataVisualization.js';
-export { ConceptBreakdown } from './ConceptBreakdown.js';
-export { ComparisonScene } from './ComparisonScene.js';
-export { TimelineScene } from './TimelineScene.js';
+export { ExplainerIntro } from './ExplainerIntro';
+export { DataVisualization } from './DataVisualization';
+export { ConceptBreakdown } from './ConceptBreakdown';
+export { ComparisonScene } from './ComparisonScene';
+export { TimelineScene } from './TimelineScene';
 
 // Full video composition
-export { ExplainerVideo } from './ExplainerVideo.js';
+export { ExplainerVideo, calculateTotalDuration, createScene } from './ExplainerVideo';

@@ -5,17 +5,17 @@
  * Each primitive embodies "purposeful motion" - animation that serves the explanation.
  */
 
-export { KineticText } from './KineticText.js';
-export { AnimatedChart } from './AnimatedChart.js';
-export { AnnotatedImage } from './AnnotatedImage.js';
-export { LayeredReveal } from './LayeredReveal.js';
-export { FilmGrain } from './FilmGrain.js';
-export { SplitReveal } from './SplitReveal.js';
+export { KineticText } from './KineticText';
+export { AnimatedChart } from './AnimatedChart';
+export { AnnotatedImage } from './AnnotatedImage';
+export { LayeredReveal } from './LayeredReveal';
+export { FilmGrain, Scanlines, Vignette } from './FilmGrain';
+export { SplitReveal } from './SplitReveal';
 
 // Utility components
-export { FadeIn } from './FadeIn.js';
-export { ScaleIn } from './ScaleIn.js';
-export { SlideIn } from './SlideIn.js';
+export { FadeIn } from './FadeIn';
+export { ScaleIn } from './ScaleIn';
+export { SlideIn } from './SlideIn';
 
 // Re-export types
 export type {
@@ -23,4 +23,4 @@ export type {
   ChartBuildStyle,
   AnnotationConfig,
   ParallaxLayer,
-} from '../types.js';
+} from '../types';

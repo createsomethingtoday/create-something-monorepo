@@ -21,8 +21,8 @@ import {
   interpolate,
   spring,
 } from 'remotion';
-import { colors, animation } from '../styles/index.js';
-import type { ParallaxLayer } from '../types.js';
+import { colors, animation } from '../styles';
+import type { ParallaxLayer } from '../types';
 
 interface LayeredRevealProps {
   /** Layers to compose (back to front) */
