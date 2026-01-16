@@ -1,0 +1,107 @@
+/**
+ * Animation Specs for LMS
+ * 
+ * Shared animation specifications matching motion-studio/src/specs.
+ * Single source of truth for timing, phases, and reveal text.
+ * 
+ * When updating animations, update both here AND in motion-studio/src/specs.
+ */
+
+export interface AnimationSpec {
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+  canvas: {
+    width: number;
+    height: number;
+    background: string;
+  };
+  phases: {
+    id: string;
+    label: string;
+    start: number;
+    end: number;
+  }[];
+  reveal?: {
+    text: string;
+    startPhase: number;
+  };
+}
+
+/**
+ * Tool Receding - Heidegger's ready-to-hand concept
+ * The hammer disappears when hammering.
+ */
+export const toolRrecedingSpec: AnimationSpec = {
+  id: 'tool-receding',
+  name: 'Tool Receding',
+  description: "The hammer disappears when hammering. Heidegger's Zuhandenheit.",
+  duration: 5000,
+  canvas: {
+    width: 800,
+    height: 450,
+    background: '#000000',
+  },
+  phases: [
+    { id: 'vorhandenheit', label: 'VORHANDENHEIT — Present-at-hand', start: 0, end: 0.2 },
+    { id: 'transition', label: 'TRANSITION — Focus shifts', start: 0.2, end: 0.7 },
+    { id: 'zuhandenheit', label: 'ZUHANDENHEIT — Ready-to-hand', start: 0.7, end: 1 },
+  ],
+  reveal: {
+    text: 'The hammer disappears when hammering.',
+    startPhase: 0.7,
+  },
+};
+
+/**
+ * IDE vs Terminal - From chrome to canvas
+ * Watch the interface dissolve.
+ */
+export const ideVsTerminalSpec: AnimationSpec = {
+  id: 'ide-vs-terminal',
+  name: 'IDE vs Terminal',
+  description: 'From chrome to canvas. Watch the interface dissolve.',
+  duration: 5000,
+  canvas: {
+    width: 800,
+    height: 450,
+    background: '#000000',
+  },
+  phases: [
+    { id: 'ide', label: 'IDE — Chrome everywhere', start: 0, end: 0.2 },
+    { id: 'dissolving', label: 'DISSOLVING — Removing what obscures', start: 0.2, end: 0.6 },
+    { id: 'terminal', label: 'TERMINAL — Only the canvas remains', start: 0.6, end: 1 },
+  ],
+  reveal: {
+    text: 'The blank canvas.',
+    startPhase: 0.8,
+  },
+};
+
+/**
+ * Animation Specs Registry
+ */
+export const animationSpecs: Record<string, AnimationSpec> = {
+  'ToolReceding': toolRrecedingSpec,
+  'tool-receding': toolRrecedingSpec,
+  'IDEvsTerminal': ideVsTerminalSpec,
+  'ide-vs-terminal': ideVsTerminalSpec,
+};
+
+/**
+ * Get the current phase for a given progress value
+ */
+export function getCurrentPhase(spec: AnimationSpec, progress: number) {
+  return spec.phases.find(p => progress >= p.start && progress < p.end) 
+    ?? spec.phases[spec.phases.length - 1];
+}
+
+/**
+ * Get reveal text opacity based on progress
+ */
+export function getRevealOpacity(spec: AnimationSpec, progress: number): number {
+  if (!spec.reveal) return 0;
+  if (progress < spec.reveal.startPhase) return 0;
+  return (progress - spec.reveal.startPhase) / (1 - spec.reveal.startPhase);
+}

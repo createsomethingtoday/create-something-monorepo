@@ -2,39 +2,36 @@
 	/**
 	 * LessonRemotion - Animated teaching visualizations
 	 * 
-	 * Pure Svelte animations for lesson concepts.
+	 * Renders animations from shared specs for consistency with Remotion.
 	 * Supports: ToolReceding, IDEvsTerminal
 	 */
 	import { Play, Pause, RotateCcw } from 'lucide-svelte';
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
+	import { animationSpecs, getCurrentPhase, getRevealOpacity, type AnimationSpec } from '$lib/animations/specs';
 
 	let {
 		compositionId,
 		caption = '',
-		width = 800,
-		height = 450,
-		fps = 30,
-		durationInFrames = 150,
 		class: className = ''
 	}: {
 		compositionId: string;
 		caption?: string;
-		width?: number;
-		height?: number;
-		fps?: number;
-		durationInFrames?: number;
 		class?: string;
 	} = $props();
 
+	// Get spec for this composition
+	const spec: AnimationSpec | undefined = animationSpecs[compositionId];
+	const duration = spec?.duration ?? 5000;
+
 	let isPlaying = $state(false);
-	let animationProgress = tweened(0, { duration: 5000, easing: cubicOut });
+	let progress = tweened(0, { duration, easing: cubicOut });
 
 	function play() {
 		if (isPlaying) return;
 		isPlaying = true;
-		animationProgress.set(0, { duration: 0 });
-		animationProgress.set(1, { duration: 5000 });
+		progress.set(0, { duration: 0 });
+		progress.set(1, { duration });
 	}
 
 	function pause() {
@@ -51,89 +48,82 @@
 
 	function reset() {
 		isPlaying = false;
-		animationProgress.set(0, { duration: 0 });
+		progress.set(0, { duration: 0 });
 	}
 
 	// Auto-stop when complete
 	$effect(() => {
-		if ($animationProgress >= 1) {
+		if ($progress >= 1) {
 			isPlaying = false;
 		}
 	});
 
-	// Derived animation values for ToolReceding
+	// Phase and reveal from spec
+	const currentPhase = $derived(spec ? getCurrentPhase(spec, $progress) : null);
+	const revealOpacity = $derived(spec ? getRevealOpacity(spec, $progress) : 0);
+
+	// ============================================
+	// TOOL RECEDING ANIMATION
+	// Keyframes from spec: motion-studio/src/specs/tool-receding.ts
+	// ============================================
 	const hammerOpacity = $derived(
-		$animationProgress < 0.2 ? 1 :
-		$animationProgress < 0.6 ? 1 - (($animationProgress - 0.2) / 0.4) * 0.7 :
-		Math.max(0, 0.3 - (($animationProgress - 0.6) / 0.4) * 0.3)
+		$progress < 0.2 ? 1 :
+		$progress < 0.6 ? 1 - (($progress - 0.2) / 0.4) * 0.7 :
+		Math.max(0, 0.3 - (($progress - 0.6) / 0.4) * 0.3)
 	);
 	const hammerScale = $derived(
-		$animationProgress < 0.2 ? 1 :
-		$animationProgress < 0.6 ? 1 - (($animationProgress - 0.2) / 0.4) * 0.2 :
+		$progress < 0.2 ? 1 :
+		$progress < 0.6 ? 1 - (($progress - 0.2) / 0.4) * 0.2 :
 		0.8
 	);
 	const hammerBlur = $derived(
-		$animationProgress < 0.2 ? 0 :
-		$animationProgress < 0.6 ? (($animationProgress - 0.2) / 0.4) * 8 :
+		$progress < 0.2 ? 0 :
+		$progress < 0.6 ? (($progress - 0.2) / 0.4) * 8 :
 		8
 	);
 	const nailProgress = $derived(
-		$animationProgress < 0.2 ? 0 :
-		$animationProgress < 0.8 ? (($animationProgress - 0.2) / 0.6) :
+		$progress < 0.2 ? 0 :
+		$progress < 0.8 ? (($progress - 0.2) / 0.6) :
 		1
 	);
 	const focusRingOpacity = $derived(
-		$animationProgress < 0.2 ? 0 :
-		$animationProgress < 0.4 ? (($animationProgress - 0.2) / 0.2) * 0.6 :
-		$animationProgress < 0.6 ? 0.6 :
-		$animationProgress < 0.8 ? 0.6 - (($animationProgress - 0.6) / 0.2) * 0.6 :
+		$progress < 0.2 ? 0 :
+		$progress < 0.4 ? (($progress - 0.2) / 0.2) * 0.6 :
+		$progress < 0.6 ? 0.6 :
+		$progress < 0.8 ? 0.6 - (($progress - 0.6) / 0.2) * 0.6 :
 		0
 	);
-	const textOpacity = $derived(
-		$animationProgress < 0.7 ? 0 :
-		($animationProgress - 0.7) / 0.3
-	);
-	const phaseLabel = $derived(
-		$animationProgress < 0.2 ? 'VORHANDENHEIT — Present-at-hand' :
-		$animationProgress < 0.7 ? 'TRANSITION — Focus shifts' :
-		'ZUHANDENHEIT — Ready-to-hand'
-	);
 
-	// Derived animation values for IDEvsTerminal
-	const sidebarOpacity = $derived(Math.max(0, 1 - ($animationProgress * 4)));
-	const tabsOpacity = $derived(Math.max(0, 1 - (($animationProgress - 0.1) * 4)));
-	const statusBarOpacity = $derived(Math.max(0, 1 - (($animationProgress - 0.2) * 4)));
-	const lineNumbersOpacity = $derived(Math.max(0, 1 - (($animationProgress - 0.25) * 4)));
-	const minimapOpacity = $derived(Math.max(0, 1 - (($animationProgress - 0.3) * 4)));
-	const editorBgOpacity = $derived(Math.max(0, 1 - (($animationProgress - 0.4) * 2.5)));
-	const terminalOpacity = $derived(Math.min(1, Math.max(0, ($animationProgress - 0.5) * 3)));
-	const idePhaseLabel = $derived(
-		$animationProgress < 0.2 ? 'IDE — Chrome everywhere' :
-		$animationProgress < 0.6 ? 'DISSOLVING — Removing what obscures' :
-		'TERMINAL — Only the canvas remains'
-	);
+	// ============================================
+	// IDE VS TERMINAL ANIMATION
+	// Keyframes from spec: motion-studio/src/specs/ide-vs-terminal.ts
+	// ============================================
+	const sidebarOpacity = $derived(Math.max(0, 1 - ($progress * 4)));
+	const tabsOpacity = $derived(Math.max(0, 1 - (($progress - 0.1) * 4)));
+	const statusBarOpacity = $derived(Math.max(0, 1 - (($progress - 0.2) * 4)));
+	const lineNumbersOpacity = $derived(Math.max(0, 1 - (($progress - 0.25) * 4)));
+	const minimapOpacity = $derived(Math.max(0, 1 - (($progress - 0.3) * 4)));
+	const editorBgOpacity = $derived(Math.max(0, 1 - (($progress - 0.4) * 2.5)));
+	const terminalOpacity = $derived(Math.min(1, Math.max(0, ($progress - 0.5) * 3)));
 </script>
 
 <section class="lesson-remotion {className}">
 	<div class="remotion-label">
 		<span class="label-icon">▶</span>
-		<span>Animation: {compositionId}</span>
+		<span>{spec?.name ?? compositionId}</span>
 	</div>
 	
 	<div 
 		class="remotion-container"
-		style="aspect-ratio: {width} / {height};"
+		style="aspect-ratio: {spec?.canvas.width ?? 800} / {spec?.canvas.height ?? 450};"
 	>
-		{#if compositionId === 'ToolReceding'}
+		{#if compositionId === 'ToolReceding' && spec}
 			<!-- TOOL RECEDING ANIMATION -->
 			<div class="animation-canvas">
-				<!-- Phase label -->
-				<div class="phase-label">{phaseLabel}</div>
+				<div class="phase-label">{currentPhase?.label ?? ''}</div>
 				
-				<!-- Work surface -->
 				<div class="work-surface"></div>
 				
-				<!-- Nail -->
 				<div 
 					class="nail"
 					style="bottom: {140 + (nailProgress * 50)}px; height: {70 - (nailProgress * 50)}px;"
@@ -143,7 +133,6 @@
 					style="bottom: {140 + 70 - (nailProgress * 50)}px;"
 				></div>
 				
-				<!-- Hammer -->
 				<div 
 					class="hammer"
 					style="
@@ -156,28 +145,20 @@
 					<div class="hammer-head"></div>
 				</div>
 				
-				<!-- Focus ring -->
-				<div 
-					class="focus-ring"
-					style="opacity: {focusRingOpacity};"
-				></div>
+				<div class="focus-ring" style="opacity: {focusRingOpacity};"></div>
 				
-				<!-- Philosophy quote -->
-				<div 
-					class="quote-overlay"
-					style="opacity: {textOpacity};"
-				>
-					The hammer disappears when hammering.
-				</div>
+				{#if spec.reveal && revealOpacity > 0}
+					<div class="quote-overlay" style="opacity: {revealOpacity};">
+						{spec.reveal.text}
+					</div>
+				{/if}
 			</div>
-		{:else if compositionId === 'IDEvsTerminal'}
+		{:else if compositionId === 'IDEvsTerminal' && spec}
 			<!-- IDE VS TERMINAL ANIMATION -->
 			<div class="animation-canvas ide-canvas">
-				<!-- Phase label -->
-				<div class="phase-label">{idePhaseLabel}</div>
+				<div class="phase-label">{currentPhase?.label ?? ''}</div>
 				
 				<div class="ide-window">
-					<!-- Title bar -->
 					<div class="ide-titlebar" style="opacity: {tabsOpacity};">
 						<div class="window-buttons">
 							<span class="btn-close"></span>
@@ -187,16 +168,13 @@
 						<span class="ide-title">Visual Studio Code</span>
 					</div>
 					
-					<!-- Main content -->
 					<div class="ide-content">
-						<!-- Sidebar -->
 						<div class="ide-sidebar" style="opacity: {sidebarOpacity};">
-							{#each Array(5) as _, i}
+							{#each Array(5) as _}
 								<div class="sidebar-icon"></div>
 							{/each}
 						</div>
 						
-						<!-- File explorer -->
 						<div class="ide-explorer" style="opacity: {sidebarOpacity};">
 							<div class="explorer-title">EXPLORER</div>
 							{#each ['src', '  components', '    App.tsx', '  styles'] as item}
@@ -206,24 +184,19 @@
 							{/each}
 						</div>
 						
-						<!-- Editor area -->
 						<div class="ide-editor">
-							<!-- Tabs -->
 							<div class="ide-tabs" style="opacity: {tabsOpacity};">
 								<div class="tab active">App.tsx</div>
 								<div class="tab">index.ts</div>
 							</div>
 							
-							<!-- Code area -->
 							<div class="code-area">
-								<!-- Line numbers -->
 								<div class="line-numbers" style="opacity: {lineNumbersOpacity};">
 									{#each Array(10) as _, i}
 										<div class="line-num">{i + 1}</div>
 									{/each}
 								</div>
 								
-								<!-- Code -->
 								<div class="code-content" style="opacity: {editorBgOpacity};">
 									<pre>{`import React from 'react';
 
@@ -236,7 +209,6 @@ const App = () => {
 };`}</pre>
 								</div>
 								
-								<!-- Minimap -->
 								<div class="minimap" style="opacity: {minimapOpacity};">
 									{#each Array(15) as _}
 										<div class="minimap-line" style="width: {30 + Math.random() * 40}%;"></div>
@@ -246,57 +218,53 @@ const App = () => {
 						</div>
 					</div>
 					
-					<!-- Status bar -->
 					<div class="ide-statusbar" style="opacity: {statusBarOpacity};">
 						<span>main</span>
 						<span>TypeScript React</span>
 					</div>
 					
-					<!-- Terminal overlay -->
 					<div class="terminal-overlay" style="opacity: {terminalOpacity};">
 						<span class="terminal-prompt">$</span>
-						<span class="terminal-cursor" class:blink={$animationProgress > 0.7}></span>
+						<span class="terminal-cursor" class:blink={$progress > 0.7}></span>
 					</div>
 				</div>
 				
-				<!-- Final text -->
-				{#if $animationProgress > 0.8}
-					<div class="quote-overlay ide-quote" style="opacity: {($animationProgress - 0.8) / 0.2};">
-						The blank canvas.
+				{#if spec.reveal && revealOpacity > 0}
+					<div class="quote-overlay ide-quote" style="opacity: {revealOpacity};">
+						{spec.reveal.text}
 					</div>
 				{/if}
 			</div>
 		{:else}
-			<!-- Generic placeholder -->
+			<!-- Unknown composition -->
 			<div class="animation-canvas">
 				<p class="placeholder-text">Animation: {compositionId}</p>
 			</div>
 		{/if}
 		
-		<!-- Progress bar -->
 		<div class="animation-progress">
-			<div class="progress-fill" style="width: {$animationProgress * 100}%"></div>
+			<div class="progress-fill" style="width: {$progress * 100}%"></div>
 		</div>
 	</div>
 
 	<div class="remotion-controls">
-		<button class="control-btn" onclick={togglePlay}>
+		<button class="control-btn" onclick={togglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
 			{#if isPlaying}
 				<Pause size={18} />
 			{:else}
 				<Play size={18} />
 			{/if}
 		</button>
-		<button class="control-btn" onclick={reset}>
+		<button class="control-btn" onclick={reset} aria-label="Reset">
 			<RotateCcw size={18} />
 		</button>
 		<span class="frame-count">
-			{Math.round($animationProgress * 100)}%
+			{Math.round($progress * 100)}%
 		</span>
 	</div>
 
-	{#if caption}
-		<p class="remotion-caption">{caption}</p>
+	{#if caption || spec?.description}
+		<p class="remotion-caption">{caption || spec?.description}</p>
 	{/if}
 </section>
 
@@ -330,7 +298,6 @@ const App = () => {
 		position: relative;
 	}
 
-	/* Animation Canvas */
 	.animation-canvas {
 		width: 100%;
 		height: 100%;
@@ -354,7 +321,7 @@ const App = () => {
 		text-transform: uppercase;
 	}
 
-	/* ToolReceding Animation */
+	/* Tool Receding */
 	.work-surface {
 		position: absolute;
 		bottom: 100px;
@@ -373,7 +340,6 @@ const App = () => {
 		width: 6px;
 		background: linear-gradient(to right, #888, #aaa, #888);
 		border-radius: 2px 2px 0 0;
-		transition: height 0.1s linear, bottom 0.1s linear;
 	}
 
 	.nail-head {
@@ -384,7 +350,6 @@ const App = () => {
 		height: 5px;
 		background: #999;
 		border-radius: 2px;
-		transition: bottom 0.1s linear;
 	}
 
 	.hammer {
@@ -392,7 +357,6 @@ const App = () => {
 		top: 120px;
 		left: 50%;
 		transform-origin: bottom center;
-		transition: opacity 0.1s, filter 0.1s;
 	}
 
 	.hammer-handle {
@@ -423,7 +387,6 @@ const App = () => {
 		height: 50px;
 		border: 2px solid #fff;
 		border-radius: 50%;
-		transition: opacity 0.2s;
 	}
 
 	.quote-overlay {
@@ -435,10 +398,9 @@ const App = () => {
 		font-size: 18px;
 		font-weight: 300;
 		color: #fff;
-		transition: opacity 0.3s;
 	}
 
-	/* IDE vs Terminal Animation */
+	/* IDE vs Terminal */
 	.ide-canvas {
 		padding: 20px;
 	}
@@ -459,7 +421,6 @@ const App = () => {
 		align-items: center;
 		padding: 0 12px;
 		gap: 8px;
-		transition: opacity 0.3s;
 	}
 
 	.window-buttons {
@@ -497,7 +458,6 @@ const App = () => {
 		flex-direction: column;
 		align-items: center;
 		gap: 12px;
-		transition: opacity 0.3s;
 	}
 
 	.sidebar-icon {
@@ -512,7 +472,6 @@ const App = () => {
 		background: #1e1e1e;
 		border-right: 1px solid #333;
 		padding: 8px;
-		transition: opacity 0.3s;
 	}
 
 	.explorer-title {
@@ -541,7 +500,6 @@ const App = () => {
 		background: #1e1e1e;
 		border-bottom: 1px solid #333;
 		display: flex;
-		transition: opacity 0.3s;
 	}
 
 	.tab {
@@ -568,7 +526,6 @@ const App = () => {
 		background: #1e1e1e;
 		padding: 8px 4px;
 		text-align: right;
-		transition: opacity 0.3s;
 	}
 
 	.line-num {
@@ -582,7 +539,6 @@ const App = () => {
 		flex: 1;
 		background: #1e1e1e;
 		padding: 8px;
-		transition: opacity 0.3s;
 	}
 
 	.code-content pre {
@@ -597,7 +553,6 @@ const App = () => {
 		width: 60px;
 		background: #1e1e1e;
 		padding: 8px;
-		transition: opacity 0.3s;
 	}
 
 	.minimap-line {
@@ -616,7 +571,6 @@ const App = () => {
 		padding: 0 12px;
 		font-size: 11px;
 		color: #fff;
-		transition: opacity 0.3s;
 	}
 
 	.terminal-overlay {
@@ -629,7 +583,6 @@ const App = () => {
 		display: flex;
 		align-items: flex-start;
 		padding: 20px;
-		transition: opacity 0.3s;
 	}
 
 	.terminal-prompt {
@@ -656,14 +609,11 @@ const App = () => {
 	}
 
 	.ide-quote {
-		position: absolute;
 		bottom: 60px;
-		left: 0;
-		right: 0;
 		font-size: 24px;
 	}
 
-	/* Progress bar */
+	/* Progress & Controls */
 	.animation-progress {
 		position: absolute;
 		bottom: 0;
@@ -676,10 +626,8 @@ const App = () => {
 	.progress-fill {
 		height: 100%;
 		background: #fff;
-		transition: width 50ms linear;
 	}
 
-	/* Controls */
 	.remotion-controls {
 		display: flex;
 		align-items: center;
