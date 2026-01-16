@@ -2,6 +2,9 @@ import { declareComponent } from '@webflow/react';
 import { props } from '@webflow/data-types';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import JSZip from 'jszip';
+
+// Import styles directly for Shadow DOM injection
+import './globals.css';
 import {
   FileUp,
   RefreshCw,
@@ -233,7 +236,7 @@ function generateReport(findings: Finding[], ruleset: ScanRule[], files: Unzippe
     if (!groups[finding.ruleId]) groups[finding.ruleId] = { rule, count: 0, items: [] };
     const group = groups[finding.ruleId];
     if (group) { group.count++; group.items.push(finding); }
-  }
+    }
   const hasBlocker = Object.values(groups).some(g => g.rule.reviewBucket === 'AUTO_REJECT');
   const hasActionRequired = Object.values(groups).some(g => g.rule.reviewBucket === 'ACTION_REQUIRED');
   let verdict: Verdict = 'PASS';
@@ -447,16 +450,16 @@ const AiSuggestionsPanel: React.FC<{ report: ScanReport; apiKey: string }> = ({ 
   };
 
   if (!result && !analyzing && !error) {
-    return (
+  return (
       <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-xl border border-purple-100 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2"><Bot className="w-5 h-5 text-purple-600" /><h3 className="font-bold text-purple-900 text-sm">AI Suggestions</h3></div>
           <button onClick={handleAnalyze} disabled={!apiKey} className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-2">
             <Bot className="w-3 h-3" /> {apiKey ? 'Analyze with AI' : 'Add API Key'}
           </button>
-        </div>
+          </div>
         <p className="mt-2 text-xs text-purple-800 opacity-80">Analyzes findings and suggests improvements.</p>
-      </div>
+          </div>
     );
   }
 
@@ -468,7 +471,7 @@ const AiSuggestionsPanel: React.FC<{ report: ScanReport; apiKey: string }> = ({ 
           <span className="ml-2 text-[10px] uppercase font-bold tracking-wider bg-purple-200 text-purple-800 px-1.5 py-0.5 rounded">Advisory Only</span>
         </div>
         <button onClick={() => setIsExpanded(!isExpanded)} className="text-purple-400 hover:text-purple-600">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</button>
-      </div>
+        </div>
       {isExpanded && (
         <div className="p-4 space-y-4">
           {analyzing && <div className="flex flex-col items-center justify-center py-8 text-purple-600 gap-2"><Loader2 className="w-6 h-6 animate-spin" /><span className="text-xs font-medium">Analyzing with Gemini...</span></div>}
@@ -478,7 +481,7 @@ const AiSuggestionsPanel: React.FC<{ report: ScanReport; apiKey: string }> = ({ 
               <div className={`p-3 rounded-lg flex items-center gap-3 border ${result.reviewStatusRecommendation === 'MANUAL_REVIEW_REQUIRED' ? 'bg-orange-50 border-orange-200 text-orange-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
                 {result.reviewStatusRecommendation === 'MANUAL_REVIEW_REQUIRED' ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
                 <div><div className="text-xs font-bold uppercase">AI Recommendation</div><div className="text-sm font-semibold">{result.reviewStatusRecommendation === 'MANUAL_REVIEW_REQUIRED' ? 'Manual Review Required' : 'Looks Good'}</div></div>
-              </div>
+            </div>
               {result.missedRisks.length > 0 && (
                 <div><h4 className="flex items-center gap-2 text-xs font-bold text-gray-700 uppercase tracking-wide mb-2"><ShieldAlert className="w-4 h-4 text-orange-500" /> Potential Missed Risks</h4>
                   {result.missedRisks.map((risk, idx) => <div key={idx} className="ml-2 pl-4 border-l-2 border-orange-200 py-2"><h5 className="text-sm font-semibold text-gray-800">{risk.title}</h5><p className="text-xs text-gray-600 mt-1">{risk.whyItMatters}</p></div>)}
@@ -488,8 +491,8 @@ const AiSuggestionsPanel: React.FC<{ report: ScanReport; apiKey: string }> = ({ 
                 <div><h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Reviewer Questions</h4><ul className="ml-6 list-disc text-xs text-gray-600 space-y-1">{result.questionsForReviewer.map((q, idx) => <li key={idx}>{q}</li>)}</ul></div>
               )}
             </>
-          )}
-        </div>
+      )}
+    </div>
       )}
     </section>
   );
@@ -552,7 +555,7 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col">
-      {/* Header */}
+        {/* Header */}
       <header className="bg-white border-b sticky top-0 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -582,27 +585,27 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                   <p className="text-xs text-gray-500">Select a .zip file (Max {maxFileSizeMB}MB unzipped).</p>
                   <button onClick={handleScan} disabled={!file || isScanning} className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">
                     {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Run Scan
-                  </button>
-                </div>
+                </button>
+            </div>
               ) : (
                 <div className="space-y-4">
                   <button onClick={handleReset} className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-all flex items-center justify-center gap-2"><RefreshCw className="w-4 h-4" /> Scan New File</button>
                   <button onClick={() => { const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `scanReport_${report.runId.substring(0, 8)}.json`; a.click(); }} className="w-full py-2 px-4 border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-all flex items-center justify-center gap-2"><Download className="w-4 h-4" /> Download Report</button>
-                </div>
-              )}
+              </div>
+            )}
               {isScanning && <div className="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded animate-pulse">{progress}</div>}
               {error && <div className="mt-4 p-3 bg-red-50 text-red-800 text-xs rounded border border-red-200"><strong>Error:</strong> {error}</div>}
-            </div>
           </div>
-        ) : (
+                      </div>
+                    ) : (
           <div className="space-y-6 order-2 md:order-1">
             <div className="bg-white p-6 rounded-xl border shadow-sm text-sm text-gray-600">
               <h3 className="font-bold text-gray-900 mb-2">About Scan History</h3>
               <p>History is stored in your browser's IndexedDB.</p>
               {history.length > 0 && <button onClick={handleClearHistory} className="mt-3 text-red-600 hover:text-red-700 flex items-center gap-1 text-xs"><Trash2 className="w-3 h-3" /> Clear History</button>}
-            </div>
-          </div>
-        )}
+                      </div>
+              </div>
+            )}
 
         {/* Right Content */}
         <div className="space-y-6 order-1 md:order-2">
@@ -610,17 +613,17 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
             <div className="bg-white rounded-xl border shadow-sm p-6">
               <h2 className="text-lg font-bold mb-4">Scan History</h2>
               {history.length === 0 ? <p className="text-gray-500 text-center py-8">No scans yet</p> : (
-                <div className="space-y-2">
+                          <div className="space-y-2">
                   {history.map((entry) => (
                     <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onClick={() => {}}>
                       <div><p className="font-medium text-gray-900">{entry.fileName}</p><p className="text-xs text-gray-500">{new Date(entry.scanDate).toLocaleString()} • {entry.fileCount} files • {entry.findingCount} findings</p></div>
                       <VerdictBadge verdict={entry.verdict} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                          </div>
+                        )}
 
           {activeTab === 'scan' && (
             <>
@@ -628,7 +631,7 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                 <div className="h-96 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                   <FileUp className="w-12 h-12 mb-4 opacity-50" />
                   <p>Upload a bundle to start scanning</p>
-                </div>
+                      </div>
               )}
               {report && (
                 <>
@@ -639,27 +642,27 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-red-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Auto-Reject Issues ({groupedFindings.blockers.length})</h3>
                         {groupedFindings.blockers.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                      </div>
-                    )}
+                  </div>
+                )}
                     {groupedFindings.review.length > 0 && (
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-yellow-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Needs Review ({groupedFindings.review.length})</h3>
                         {groupedFindings.review.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                      </div>
-                    )}
+                  </div>
+                )}
                     {groupedFindings.info.length > 0 && (
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-green-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Informational ({groupedFindings.info.length})</h3>
                         {groupedFindings.info.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                      </div>
-                    )}
+                  </div>
+                )}
                     {Object.keys(report.findings).length === 0 && <div className="p-12 text-center text-gray-500 bg-white rounded-xl border"><p>No issues found matching the current ruleset.</p></div>}
                   </div>
                 </>
-              )}
-            </>
-          )}
-        </div>
+            )}
+          </>
+        )}
+      </div>
       </main>
     </div>
   );
