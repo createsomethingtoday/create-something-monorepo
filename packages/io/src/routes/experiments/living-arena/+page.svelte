@@ -42,6 +42,7 @@
 				{ system: 'HVAC', action: 'Pre-cooling adjacent sections' },
 				{ system: 'Wayfinding', action: 'Digital signage redirecting to Gate B' }
 			],
+			humanLoop: 'Security supervisor notified • Can override redirection',
 			insight: 'Security-first: crowd flow optimized while maintaining screening integrity'
 		},
 		{
@@ -52,6 +53,7 @@
 				{ system: 'Security', action: 'Perimeter focus shifts to concessions' },
 				{ system: 'Scheduling', action: 'Restroom cleaning crews dispatched' }
 			],
+			humanLoop: 'Operations manager receives summary • Crews confirm via mobile',
 			insight: 'Anticipatory response: building adapts before humans need to ask'
 		},
 		{
@@ -62,11 +64,74 @@
 				{ system: 'HVAC', action: 'Positive pressure in evacuation routes' },
 				{ system: 'PA System', action: 'Localized calm instructions' }
 			],
-			insight: 'Security paramount: all systems coordinate for human safety'
+			humanLoop: '⚠️ HUMAN REQUIRED: Security lead must confirm emergency type before full evacuation',
+			insight: 'Security paramount: AI assists, humans decide on critical actions'
 		}
 	];
 
 	let activeScenario = $state(0);
+
+	// Incident log - showing failures, resolutions, and learning
+	// This is the honest story of an AI-native system
+	let incidentLog = $state([
+		{
+			id: 1,
+			timestamp: '19:42:15',
+			type: 'failure',
+			system: 'HVAC',
+			event: 'Zone 3 sensor reported -40°F (impossible reading)',
+			resolution: 'Auto-flagged as sensor malfunction • Maintenance dispatched',
+			learned: 'Added plausibility bounds to sensor readings',
+			humanInvolved: true
+		},
+		{
+			id: 2,
+			timestamp: '19:38:22',
+			type: 'override',
+			system: 'Lighting',
+			event: 'System suggested dimming for "intimate moment" during timeout',
+			resolution: 'Security supervisor overrode: visibility required for crowd monitoring',
+			learned: 'Security constraints now override ambiance suggestions',
+			humanInvolved: true
+		},
+		{
+			id: 3,
+			timestamp: '19:31:07',
+			type: 'success',
+			system: 'Security',
+			event: 'Unusual movement pattern detected near VIP entrance',
+			resolution: 'Alert sent to nearest officer • Verified as lost child reunited with parent',
+			learned: 'Pattern logged for future training (not a threat)',
+			humanInvolved: true
+		},
+		{
+			id: 4,
+			timestamp: '19:24:51',
+			type: 'failure',
+			system: 'Wayfinding',
+			event: 'Digital sign #47 unresponsive to redirect command',
+			resolution: 'Fallback: Adjacent signs compensated • Hardware ticket created',
+			learned: 'Added redundancy check before committing to single-sign strategies',
+			humanInvolved: false
+		},
+		{
+			id: 5,
+			timestamp: '19:15:33',
+			type: 'escalation',
+			system: 'Security',
+			event: 'AI confidence below threshold for crowd behavior classification',
+			resolution: 'Escalated to human operator who identified flash mob (harmless)',
+			learned: 'New pattern category added: coordinated harmless gatherings',
+			humanInvolved: true
+		}
+	]);
+
+	// Simulate new incidents occasionally
+	const incidentTypes = [
+		{ type: 'success', system: 'HVAC', event: 'Predictive cooling prevented hotspot', resolution: 'Automatic adjustment 8 minutes before crowd arrival', learned: 'Pattern reinforced for similar events' },
+		{ type: 'override', system: 'Scheduling', event: 'AI suggested early concession close', resolution: 'Manager overrode: VIP event extension', learned: 'VIP events now flagged for manual scheduling' },
+		{ type: 'failure', system: 'Lighting', event: 'Section 205 fixture offline', resolution: 'Adjacent zones compensated • Work order submitted', learned: 'Expanded failure cascade prevention zone' }
+	];
 
 	// Animation state
 	let mounted = $state(false);
@@ -499,6 +564,11 @@
 					{/each}
 				</div>
 
+				<div class="human-loop-callout" class:critical={scenario.humanLoop.includes('HUMAN REQUIRED')}>
+					<span class="human-icon">👤</span>
+					<span class="human-text">{scenario.humanLoop}</span>
+				</div>
+
 				<div class="scenario-insight">
 					<span class="insight-icon">💡</span>
 					<span class="insight-text">{scenario.insight}</span>
@@ -519,28 +589,127 @@
 		</div>
 	</section>
 
+	<!-- Incident Log - The Honest Story -->
+	<section class="incident-section">
+		<div class="section-header">
+			<h2>The Honest Story</h2>
+			<p>AI-native doesn't mean perfect. It means transparent, fast to escalate, and always learning. Here's what's really happening.</p>
+		</div>
+
+		<div class="incident-log">
+			<div class="log-header">
+				<span class="log-title">Live Incident Log</span>
+				<div class="log-legend">
+					<span class="legend-item success">✓ Success</span>
+					<span class="legend-item failure">✗ Failure</span>
+					<span class="legend-item override">↺ Override</span>
+					<span class="legend-item escalation">↑ Escalation</span>
+				</div>
+			</div>
+
+			<div class="incidents-list">
+				{#each incidentLog as incident (incident.id)}
+					<div class="incident-item {incident.type}">
+						<div class="incident-header">
+							<span class="incident-time">{incident.timestamp}</span>
+							<span class="incident-type-badge {incident.type}">
+								{#if incident.type === 'success'}✓{:else if incident.type === 'failure'}✗{:else if incident.type === 'override'}↺{:else}↑{/if}
+							</span>
+							<span class="incident-system">{incident.system}</span>
+							{#if incident.humanInvolved}
+								<span class="human-badge">👤 Human involved</span>
+							{/if}
+						</div>
+						<div class="incident-event">{incident.event}</div>
+						<div class="incident-resolution">
+							<span class="resolution-label">Resolution:</span>
+							{incident.resolution}
+						</div>
+						<div class="incident-learned">
+							<span class="learned-label">System learned:</span>
+							{incident.learned}
+						</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+
+		<div class="human-loop-emphasis">
+			<div class="loop-visual">
+				<div class="loop-node ai">AI</div>
+				<div class="loop-arrow">→</div>
+				<div class="loop-node action">Action</div>
+				<div class="loop-arrow">→</div>
+				<div class="loop-node human">Human</div>
+				<div class="loop-arrow">→</div>
+				<div class="loop-node feedback">Feedback</div>
+				<div class="loop-arrow loop-back">↩</div>
+			</div>
+			<div class="loop-content">
+				<h3>Human in the Loop — Always</h3>
+				<p>
+					The AI proposes. Humans dispose. Every critical decision requires human confirmation. 
+					Every failure is logged. Every override teaches the system. Every escalation is an 
+					admission: "I don't know enough—help me."
+				</p>
+				<div class="loop-principles">
+					<div class="principle">
+						<span class="principle-icon">🚨</span>
+						<span class="principle-text"><strong>Critical actions</strong> require explicit human approval</span>
+					</div>
+					<div class="principle">
+						<span class="principle-icon">📊</span>
+						<span class="principle-text"><strong>Confidence scores</strong> shown on all AI decisions</span>
+					</div>
+					<div class="principle">
+						<span class="principle-icon">⏱️</span>
+						<span class="principle-text"><strong>Escalation timers</strong> prevent AI from waiting too long</span>
+					</div>
+					<div class="principle">
+						<span class="principle-icon">📝</span>
+						<span class="principle-text"><strong>Every failure logged</strong> and reviewed by humans</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="not-perfect-note">
+			<div class="note-icon">⚠️</div>
+			<div class="note-content">
+				<h4>This System Is Not Perfect</h4>
+				<p>
+					Sensors fail. Predictions are wrong. Edge cases exist. The value of AI-native automation 
+					isn't perfection—it's <strong>speed of detection</strong>, <strong>transparency of failure</strong>, 
+					<strong>rapid human escalation</strong>, and <strong>continuous learning</strong>. 
+					The building gets smarter every day, but humans remain in control.
+				</p>
+			</div>
+		</div>
+	</section>
+
 	<!-- Footer -->
 	<footer class="experiment-footer">
 		<div class="hypothesis">
-			<h3>Hypothesis</h3>
+			<h3>The Full Story</h3>
 			<p>
-				Having access to all systems through WORKWAY pattern collection enables us to do very 
-				interesting and intuitive things that help humans engage with buildings—while keeping 
-				security at the forefront. This isn't about replacing human judgment; it's about 
-				giving buildings the awareness to anticipate needs, respond to situations, and 
-				create experiences that feel effortless. The building becomes a partner, not just a structure.
+				AI-native doesn't mean AI-only. It means AI that's <strong>transparent</strong> about its limitations, 
+				<strong>fast</strong> to escalate to humans, and <strong>always learning</strong> from every 
+				interaction. The building helps humans engage intuitively—but humans remain in control. 
+				Security is the foundation. Failures are logged. Overrides teach the system. 
+				This is what real AI-native automation looks like: not perfect, but honest and improving.
 			</p>
 		</div>
 		<div class="patterns-note">
 			<span class="label">Patterns Demonstrated</span>
 			<div class="pattern-tags">
+				<span class="tag">human-in-the-loop</span>
+				<span class="tag">transparent-failures</span>
+				<span class="tag">escalation-protocols</span>
 				<span class="tag">security-first-orchestration</span>
-				<span class="tag">anticipatory-environment</span>
-				<span class="tag">crowd-flow-intelligence</span>
-				<span class="tag">adaptive-lighting-zones</span>
-				<span class="tag">hvac-occupancy-optimization</span>
+				<span class="tag">continuous-learning</span>
 				<span class="tag">cross-system-awareness</span>
-				<span class="tag">human-building-partnership</span>
+				<span class="tag">confidence-thresholds</span>
+				<span class="tag">graceful-degradation</span>
 			</div>
 		</div>
 	</footer>
@@ -1166,6 +1335,39 @@
 		font-style: italic;
 	}
 
+	/* Human Loop Callout in Scenarios */
+	.human-loop-callout {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-subtle);
+		border: 1px dashed var(--color-border-emphasis);
+		border-radius: var(--radius-md);
+		margin-bottom: var(--space-md);
+	}
+
+	.human-loop-callout.critical {
+		background: rgba(255, 200, 50, 0.1);
+		border-color: var(--color-data-4);
+		border-style: solid;
+		border-width: 2px;
+	}
+
+	.human-icon {
+		font-size: 1.2em;
+	}
+
+	.human-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.human-loop-callout.critical .human-text {
+		color: var(--color-data-4);
+		font-weight: 600;
+	}
+
 	/* Security Emphasis */
 	.security-emphasis {
 		display: flex;
@@ -1195,5 +1397,319 @@
 		font-size: var(--text-body);
 		color: var(--color-fg-tertiary);
 		line-height: 1.6;
+	}
+
+	/* Incident Log Section */
+	.incident-section {
+		padding: var(--space-xl) var(--space-lg);
+		background: var(--color-bg-pure);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.incident-log {
+		max-width: 900px;
+		margin: 0 auto var(--space-xl);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+	}
+
+	.log-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--space-md) var(--space-lg);
+		background: var(--color-bg-subtle);
+		border-bottom: 1px solid var(--color-border-default);
+		flex-wrap: wrap;
+		gap: var(--space-sm);
+	}
+
+	.log-title {
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	.log-legend {
+		display: flex;
+		gap: var(--space-md);
+		font-size: var(--text-caption);
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		color: var(--color-fg-muted);
+	}
+
+	.legend-item.success {
+		color: var(--color-data-2);
+	}
+
+	.legend-item.failure {
+		color: var(--color-error);
+	}
+
+	.legend-item.override {
+		color: var(--color-data-4);
+	}
+
+	.legend-item.escalation {
+		color: var(--color-data-1);
+	}
+
+	.incidents-list {
+		max-height: 400px;
+		overflow-y: auto;
+	}
+
+	.incident-item {
+		padding: var(--space-md) var(--space-lg);
+		border-bottom: 1px solid var(--color-border-default);
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.incident-item:last-child {
+		border-bottom: none;
+	}
+
+	.incident-item:hover {
+		background: var(--color-bg-subtle);
+	}
+
+	.incident-item.failure {
+		border-left: 3px solid var(--color-error);
+	}
+
+	.incident-item.success {
+		border-left: 3px solid var(--color-data-2);
+	}
+
+	.incident-item.override {
+		border-left: 3px solid var(--color-data-4);
+	}
+
+	.incident-item.escalation {
+		border-left: 3px solid var(--color-data-1);
+	}
+
+	.incident-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-xs);
+		flex-wrap: wrap;
+	}
+
+	.incident-time {
+		font-family: monospace;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.incident-type-badge {
+		width: 20px;
+		height: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-full);
+		font-size: 10px;
+		font-weight: bold;
+	}
+
+	.incident-type-badge.success {
+		background: var(--color-data-2);
+		color: var(--color-bg-pure);
+	}
+
+	.incident-type-badge.failure {
+		background: var(--color-error);
+		color: white;
+	}
+
+	.incident-type-badge.override {
+		background: var(--color-data-4);
+		color: var(--color-bg-pure);
+	}
+
+	.incident-type-badge.escalation {
+		background: var(--color-data-1);
+		color: var(--color-bg-pure);
+	}
+
+	.incident-system {
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+	}
+
+	.human-badge {
+		font-size: var(--text-caption);
+		padding: 2px 6px;
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-muted);
+	}
+
+	.incident-event {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.incident-resolution,
+	.incident-learned {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		line-height: 1.5;
+	}
+
+	.resolution-label,
+	.learned-label {
+		color: var(--color-fg-muted);
+		font-weight: 500;
+	}
+
+	.incident-learned {
+		color: var(--color-data-2);
+		font-style: italic;
+	}
+
+	/* Human in the Loop Emphasis */
+	.human-loop-emphasis {
+		max-width: 900px;
+		margin: 0 auto var(--space-xl);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
+	}
+
+	.loop-visual {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-lg);
+		flex-wrap: wrap;
+	}
+
+	.loop-node {
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+	}
+
+	.loop-node.ai {
+		background: var(--color-accent);
+		color: var(--color-bg-pure);
+	}
+
+	.loop-node.action {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		color: var(--color-fg-secondary);
+	}
+
+	.loop-node.human {
+		background: var(--color-data-2);
+		color: var(--color-bg-pure);
+	}
+
+	.loop-node.feedback {
+		background: var(--color-data-4);
+		color: var(--color-bg-pure);
+	}
+
+	.loop-arrow {
+		color: var(--color-fg-muted);
+		font-size: 1.2em;
+	}
+
+	.loop-arrow.loop-back {
+		color: var(--color-accent);
+	}
+
+	.loop-content h3 {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-sm);
+		text-align: center;
+	}
+
+	.loop-content > p {
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
+		line-height: 1.6;
+		text-align: center;
+		max-width: 700px;
+		margin: 0 auto var(--space-lg);
+	}
+
+	.loop-principles {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: var(--space-md);
+	}
+
+	.principle {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-sm);
+		padding: var(--space-sm);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+	}
+
+	.principle-icon {
+		font-size: 1.2em;
+		line-height: 1.4;
+	}
+
+	.principle-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.4;
+	}
+
+	/* Not Perfect Note */
+	.not-perfect-note {
+		display: flex;
+		gap: var(--space-md);
+		align-items: flex-start;
+		max-width: 700px;
+		margin: 0 auto;
+		padding: var(--space-lg);
+		background: linear-gradient(135deg, rgba(255, 200, 50, 0.1), transparent);
+		border: 1px solid var(--color-data-4);
+		border-radius: var(--radius-lg);
+	}
+
+	.note-icon {
+		font-size: 1.5rem;
+		line-height: 1;
+	}
+
+	.note-content h4 {
+		font-size: var(--text-body-lg);
+		font-weight: 600;
+		color: var(--color-data-4);
+		margin-bottom: var(--space-xs);
+	}
+
+	.note-content p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		line-height: 1.6;
+	}
+
+	.note-content strong {
+		color: var(--color-fg-secondary);
 	}
 </style>
