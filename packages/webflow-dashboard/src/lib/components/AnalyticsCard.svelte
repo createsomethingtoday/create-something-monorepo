@@ -1,12 +1,15 @@
 <script lang="ts">
 	/**
-	 * AnalyticsCard - Detailed performance metrics and conversion funnel
+	 * AnalyticsCard - Detailed performance metrics with real historical trends
 	 * 
 	 * Shows expanded analytics for published templates:
-	 * - Key metrics with trends
-	 * - Conversion funnel visualization
+	 * - Key metrics with real sparkline trends (from D1 history)
 	 * - Derived insights
+	 * 
+	 * Sparklines show real data from /api/assets/:id/history when available,
+	 * gracefully falls back to no sparklines if history not yet collected.
 	 */
+	import { onMount } from 'svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import Sparkline from './Sparkline.svelte';
@@ -28,6 +31,33 @@
 	}
 
 	let { asset }: Props = $props();
+
+	// Historical trend data (fetched from API)
+	let viewersTrend = $state<number[]>([]);
+	let purchasesTrend = $state<number[]>([]);
+	let revenueTrend = $state<number[]>([]);
+	let historyLoaded = $state(false);
+	let daysOfHistory = $state(0);
+
+	// Fetch historical data on mount
+	onMount(async () => {
+		try {
+			const response = await fetch(`/api/assets/${asset.id}/history?days=14`);
+			if (response.ok) {
+				const data = await response.json();
+				if (data.snapshots && data.snapshots.length > 0) {
+					// Extract trend arrays from snapshots (already in chronological order)
+					viewersTrend = data.snapshots.map((s: { unique_viewers: number }) => s.unique_viewers);
+					purchasesTrend = data.snapshots.map((s: { cumulative_purchases: number }) => s.cumulative_purchases);
+					revenueTrend = data.snapshots.map((s: { cumulative_revenue: number }) => s.cumulative_revenue);
+					daysOfHistory = data.days_available;
+				}
+			}
+		} catch (err) {
+			console.warn('Failed to fetch analytics history:', err);
+		}
+		historyLoaded = true;
+	});
 
 	// Format numbers
 	function formatNumber(num?: number): string {
@@ -61,25 +91,6 @@
 		return (asset.cumulativeRevenue || 0) / asset.uniqueViewers;
 	});
 
-	// Simulated trend data (would come from historical API in production)
-	const viewersTrend = $derived(() => {
-		if (!asset.uniqueViewers) return [];
-		const base = asset.uniqueViewers / 4;
-		return [base * 0.7, base * 0.85, base * 0.95, base];
-	});
-
-	const revenueTrend = $derived(() => {
-		if (!asset.cumulativeRevenue) return [];
-		const base = asset.cumulativeRevenue / 4;
-		return [base * 0.6, base * 0.8, base * 0.9, base];
-	});
-
-	const purchasesTrend = $derived(() => {
-		if (!asset.cumulativePurchases) return [];
-		const base = asset.cumulativePurchases / 4;
-		return [base * 0.65, base * 0.75, base * 0.9, base];
-	});
-
 	// Check if we have data to show
 	const hasData = $derived(
 		(asset.uniqueViewers && asset.uniqueViewers > 0) ||
@@ -106,9 +117,10 @@
 						<div class="metric-value">
 							<KineticNumber value={asset.uniqueViewers || 0} />
 						</div>
-						{#if viewersTrend().length > 0}
+						{#if historyLoaded && viewersTrend.length >= 2}
 							<div class="metric-trend">
-								<Sparkline data={viewersTrend()} color="var(--color-info)" height={24} />
+								<Sparkline data={viewersTrend} color="var(--color-info)" height={24} />
+								<span class="trend-days">{daysOfHistory}d trend</span>
 							</div>
 						{/if}
 					</div>
@@ -122,9 +134,10 @@
 						<div class="metric-value">
 							<KineticNumber value={asset.cumulativePurchases || 0} />
 						</div>
-						{#if purchasesTrend().length > 0}
+						{#if historyLoaded && purchasesTrend.length >= 2}
 							<div class="metric-trend">
-								<Sparkline data={purchasesTrend()} color="var(--color-warning)" height={24} />
+								<Sparkline data={purchasesTrend} color="var(--color-warning)" height={24} />
+								<span class="trend-days">{daysOfHistory}d trend</span>
 							</div>
 						{/if}
 					</div>
@@ -138,9 +151,10 @@
 						<div class="metric-value">
 							{formatCurrency(asset.cumulativeRevenue)}
 						</div>
-						{#if revenueTrend().length > 0}
+						{#if historyLoaded && revenueTrend.length >= 2}
 							<div class="metric-trend">
-								<Sparkline data={revenueTrend()} color="var(--color-success)" filled height={24} />
+								<Sparkline data={revenueTrend} color="var(--color-success)" filled height={24} />
+								<span class="trend-days">{daysOfHistory}d trend</span>
 							</div>
 						{/if}
 					</div>
@@ -296,6 +310,15 @@
 
 	.metric-trend {
 		margin-top: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.trend-days {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		text-align: right;
 	}
 
 	/* Insights Grid */

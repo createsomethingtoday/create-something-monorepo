@@ -28,3 +28,6 @@ export { SMOOTH_SCROLL_KEY, createScrollState, type ScrollState } from './smooth
 
 // Canon-style text reveals (Subtractive Triad aligned)
 export { default as CanonReveal } from './CanonReveal.svelte';
+
+// Animation renderer for spec-driven animations
+export { default as AnimationRenderer } from './AnimationRenderer.svelte';

@@ -4,6 +4,7 @@ declare global {
 	namespace App {
 		interface Platform {
 			env: {
+				DB: D1Database;
 				SESSIONS: KVNamespace;
 				UPLOADS: R2Bucket;
 				AIRTABLE_API_KEY: string;

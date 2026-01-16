@@ -317,6 +317,31 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
+		 * Get all assets for analytics snapshots (any asset that has been published).
+		 * Used by the cron job to capture daily metrics.
+		 */
+		async getAllAssetsForSnapshot(): Promise<Pick<Asset, 'id' | 'name' | 'uniqueViewers' | 'cumulativePurchases' | 'cumulativeRevenue'>[]> {
+			// Get all templates that have analytics data (published or have metrics)
+			const formula = `AND({🆎Type} = 'Template🏗️', OR({📋 Unique Viewers} > 0, {📋 Cumulative Purchases} > 0, {📋 Cumulative Revenue} > 0))`;
+
+			const records = await base(TABLES.ASSETS)
+				.select({
+					view: VIEWS.ASSETS,
+					filterByFormula: formula,
+					fields: ['Name', '📋 Unique Viewers', '📋 Cumulative Purchases', '📋 Cumulative Revenue']
+				})
+				.all();
+
+			return records.map(record => ({
+				id: record.id,
+				name: record.fields['Name'] as string || '',
+				uniqueViewers: record.fields['📋 Unique Viewers'] as number || 0,
+				cumulativePurchases: record.fields['📋 Cumulative Purchases'] as number || 0,
+				cumulativeRevenue: record.fields['📋 Cumulative Revenue'] as number || 0
+			}));
+		},
+
+		/**
 		 * Get single asset by ID.
 		 */
 		async getAsset(id: string): Promise<Asset | null> {

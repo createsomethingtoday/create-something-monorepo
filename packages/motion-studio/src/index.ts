@@ -35,6 +35,9 @@ export * from './styles';
 // Orchestration - Timeline and sequencing utilities
 export * from './orchestration';
 
+// Animation Specs - Shared definitions for Svelte and Remotion
+export * from './specs';
+
 // Types
 export type {
   VoxStyle,

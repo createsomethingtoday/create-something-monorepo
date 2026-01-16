@@ -1,18 +1,14 @@
 /**
- * IDEvsTerminal - Animated transformation from IDE to Terminal
+ * IDEvsTerminal - Remotion composition for IDE to Terminal transformation
  * 
+ * Renders from shared animation spec for consistency with Svelte version.
  * From chrome to canvas. Watch the interface dissolve.
- * 
- * Animation sequence:
- * - Frame 0-30: VS Code-like interface with panels, tabs, sidebar
- * - Frame 30-90: Elements dissolve one by one (sidebar, tabs, status bar)
- * - Frame 90-120: Pure black terminal with blinking cursor
- * - Frame 120-150: Text appears: "The blank canvas"
  */
 import React from 'react';
-import { AbsoluteFill, useCurrentFrame, interpolate, Sequence } from 'remotion';
+import { AbsoluteFill, useCurrentFrame, interpolate } from 'remotion';
 import { KineticText } from '../../primitives/KineticText';
 import { voxPresets, typography, colors } from '../../styles';
+import { ideVsTerminalSpec } from '../../specs/ide-vs-terminal';
 
 interface IDEvsTerminalProps {
   theme?: keyof typeof voxPresets;
@@ -21,35 +17,49 @@ interface IDEvsTerminalProps {
 export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) => {
   const frame = useCurrentFrame();
   const palette = voxPresets[theme];
+  
+  // Use spec values
+  const spec = ideVsTerminalSpec;
+  const totalFrames = (spec.duration / 1000) * (spec.fps ?? 30);
+  const progress = frame / totalFrames;
 
-  // Dissolve timings
-  const sidebarOpacity = interpolate(frame, [30, 45], [1, 0], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
-  const tabsOpacity = interpolate(frame, [40, 55], [1, 0], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
-  const statusBarOpacity = interpolate(frame, [50, 65], [1, 0], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
-  const lineNumbersOpacity = interpolate(frame, [55, 70], [1, 0], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
-  const minimapOpacity = interpolate(frame, [60, 75], [1, 0], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
-  const editorBgOpacity = interpolate(frame, [70, 90], [1, 0], { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' });
+  // Animation phases from spec
+  const currentPhase = spec.phases.find(p => progress >= p.start && progress < p.end) 
+    ?? spec.phases[spec.phases.length - 1];
+
+  // Dissolve timings - sequential element removal
+  const sidebarOpacity = interpolate(progress, [0, 0.1, 0.25], [1, 1, 0], { extrapolateRight: 'clamp' });
+  const tabsOpacity = interpolate(progress, [0, 0.2, 0.35], [1, 1, 0], { extrapolateRight: 'clamp' });
+  const statusBarOpacity = interpolate(progress, [0, 0.25, 0.4], [1, 1, 0], { extrapolateRight: 'clamp' });
+  const lineNumbersOpacity = interpolate(progress, [0, 0.3, 0.45], [1, 1, 0], { extrapolateRight: 'clamp' });
+  const minimapOpacity = interpolate(progress, [0, 0.35, 0.5], [1, 1, 0], { extrapolateRight: 'clamp' });
+  const editorBgOpacity = interpolate(progress, [0, 0.4, 0.6], [1, 1, 0], { extrapolateRight: 'clamp' });
 
   // Terminal fade in
-  const terminalOpacity = interpolate(frame, [85, 100], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const terminalOpacity = interpolate(progress, [0.5, 0.65], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
   
   // Cursor blink
-  const cursorVisible = frame > 95 && Math.floor(frame / 15) % 2 === 0;
+  const cursorVisible = progress > 0.65 && Math.floor(frame / 15) % 2 === 0;
 
-  // Final text
-  const textOpacity = interpolate(frame, [120, 135], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  // Reveal text
+  const textOpacity = spec.reveal 
+    ? interpolate(progress, [spec.reveal.startPhase, 1], [0, 1], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      })
+    : 0;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: palette.background }}>
+    <AbsoluteFill style={{ backgroundColor: spec.canvas.background }}>
       {/* IDE Container */}
       <div
         style={{
           position: 'absolute',
-          top: 60,
-          left: 60,
-          right: 60,
-          bottom: 60,
-          borderRadius: 12,
+          top: 40,
+          left: 40,
+          right: 40,
+          bottom: 40,
+          borderRadius: 8,
           overflow: 'hidden',
           boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
         }}
@@ -57,52 +67,52 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
         {/* Title bar */}
         <div
           style={{
-            height: 36,
+            height: 28,
             background: colors.neutral[900],
             display: 'flex',
             alignItems: 'center',
             padding: '0 12px',
-            gap: 8,
+            gap: 6,
             opacity: tabsOpacity,
           }}
         >
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ff5f56' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ffbd2e' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#27ca40' }} />
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f56' }} />
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e' }} />
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#27ca40' }} />
           <span style={{ 
-            marginLeft: 20, 
+            marginLeft: 12, 
             fontFamily: typography.fontFamily.sans, 
-            fontSize: 12, 
-            color: colors.neutral[400] 
+            fontSize: 11, 
+            color: colors.neutral[500] 
           }}>
             Visual Studio Code
           </span>
         </div>
 
         {/* Main content area */}
-        <div style={{ display: 'flex', height: 'calc(100% - 36px - 24px)' }}>
+        <div style={{ display: 'flex', height: 'calc(100% - 52px)' }}>
           {/* Sidebar */}
           <div
             style={{
-              width: 48,
+              width: 40,
               background: colors.neutral[900],
               borderRight: `1px solid ${colors.neutral[800]}`,
               opacity: sidebarOpacity,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              padding: '12px 0',
-              gap: 16,
+              padding: '8px 0',
+              gap: 12,
             }}
           >
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
                 style={{
-                  width: 24,
-                  height: 24,
+                  width: 20,
+                  height: 20,
                   background: colors.neutral[700],
-                  borderRadius: 4,
+                  borderRadius: 3,
                 }}
               />
             ))}
@@ -111,25 +121,25 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
           {/* File explorer */}
           <div
             style={{
-              width: 200,
+              width: 140,
               background: colors.neutral[900],
               borderRight: `1px solid ${colors.neutral[800]}`,
               opacity: sidebarOpacity,
-              padding: 12,
+              padding: 8,
             }}
           >
-            <div style={{ fontFamily: typography.fontFamily.sans, fontSize: 11, color: colors.neutral[500], marginBottom: 8 }}>
+            <div style={{ fontFamily: typography.fontFamily.sans, fontSize: 10, color: colors.neutral[600], marginBottom: 8, letterSpacing: '0.05em' }}>
               EXPLORER
             </div>
-            {['src', '  components', '    App.tsx', '    index.ts', '  styles', 'package.json'].map((item, i) => (
+            {['src', '  components', '    App.tsx', '    index.ts', '  styles'].map((item, i) => (
               <div
                 key={i}
                 style={{
                   fontFamily: typography.fontFamily.mono,
-                  fontSize: 12,
+                  fontSize: 11,
                   color: colors.neutral[400],
-                  padding: '4px 0',
-                  paddingLeft: item.startsWith('  ') ? (item.startsWith('    ') ? 24 : 12) : 0,
+                  padding: '3px 0',
+                  paddingLeft: item.startsWith('    ') ? 24 : item.startsWith('  ') ? 12 : 0,
                 }}
               >
                 {item.trim()}
@@ -142,7 +152,7 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
             {/* Tabs */}
             <div
               style={{
-                height: 36,
+                height: 28,
                 background: colors.neutral[900],
                 borderBottom: `1px solid ${colors.neutral[800]}`,
                 display: 'flex',
@@ -156,7 +166,7 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
                   display: 'flex',
                   alignItems: 'center',
                   fontFamily: typography.fontFamily.mono,
-                  fontSize: 12,
+                  fontSize: 11,
                   color: colors.neutral[300],
                 }}
               >
@@ -168,7 +178,7 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
                   display: 'flex',
                   alignItems: 'center',
                   fontFamily: typography.fontFamily.mono,
-                  fontSize: 12,
+                  fontSize: 11,
                   color: colors.neutral[500],
                 }}
               >
@@ -181,20 +191,20 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
               {/* Line numbers */}
               <div
                 style={{
-                  width: 50,
+                  width: 40,
                   background: colors.neutral[900],
-                  padding: '12px 8px',
+                  padding: '8px 4px',
                   textAlign: 'right',
                   opacity: lineNumbersOpacity,
                 }}
               >
-                {[...Array(15)].map((_, i) => (
+                {[...Array(10)].map((_, i) => (
                   <div
                     key={i}
                     style={{
                       fontFamily: typography.fontFamily.mono,
-                      fontSize: 12,
-                      lineHeight: '20px',
+                      fontSize: 11,
+                      lineHeight: '18px',
                       color: colors.neutral[600],
                     }}
                   >
@@ -207,15 +217,15 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
               <div
                 style={{
                   flex: 1,
-                  background: colors.neutral[850] || colors.neutral[900],
-                  padding: 12,
+                  background: colors.neutral[900],
+                  padding: 8,
                   opacity: editorBgOpacity,
                 }}
               >
                 <pre style={{ 
                   fontFamily: typography.fontFamily.mono, 
-                  fontSize: 12, 
-                  lineHeight: '20px',
+                  fontSize: 11, 
+                  lineHeight: '18px',
                   color: colors.neutral[300],
                   margin: 0,
                 }}>
@@ -224,32 +234,30 @@ export const IDEvsTerminal: React.FC<IDEvsTerminalProps> = ({ theme = 'ltd' }) =
 const App = () => {
   return (
     <div>
-      <h1>Hello World</h1>
+      <h1>Hello</h1>
     </div>
   );
-};
-
-export default App;`}
+};`}
                 </pre>
               </div>
 
               {/* Minimap */}
               <div
                 style={{
-                  width: 80,
+                  width: 60,
                   background: colors.neutral[900],
                   opacity: minimapOpacity,
                   padding: 8,
                 }}
               >
-                {[...Array(20)].map((_, i) => (
+                {[...Array(15)].map((_, i) => (
                   <div
                     key={i}
                     style={{
-                      height: 3,
+                      height: 2,
                       marginBottom: 2,
                       background: colors.neutral[700],
-                      width: `${30 + Math.random() * 50}%`,
+                      width: `${30 + Math.random() * 40}%`,
                     }}
                   />
                 ))}
@@ -262,14 +270,14 @@ export default App;`}
         <div
           style={{
             height: 24,
-            background: colors.neutral[800],
+            background: '#007acc',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0 12px',
             fontFamily: typography.fontFamily.mono,
             fontSize: 11,
-            color: colors.neutral[400],
+            color: '#fff',
             opacity: statusBarOpacity,
           }}
         >
@@ -289,8 +297,7 @@ export default App;`}
             opacity: terminalOpacity,
             display: 'flex',
             alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            padding: 24,
+            padding: 20,
           }}
         >
           <span
@@ -305,7 +312,7 @@ export default App;`}
               style={{
                 display: 'inline-block',
                 width: 8,
-                height: 18,
+                height: 16,
                 background: cursorVisible ? '#fff' : 'transparent',
                 marginLeft: 8,
                 verticalAlign: 'text-bottom',
@@ -315,33 +322,35 @@ export default App;`}
         </div>
       </div>
 
-      {/* Final text */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 100,
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          opacity: textOpacity,
-        }}
-      >
-        <KineticText
-          text="The blank canvas."
-          reveal="mask"
-          startFrame={120}
-          duration={20}
-          style="headline"
-          color={palette.foreground}
-          align="center"
-        />
-      </div>
+      {/* Reveal text */}
+      {spec.reveal && textOpacity > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 60,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: textOpacity,
+          }}
+        >
+          <KineticText
+            text={spec.reveal.text}
+            reveal="mask"
+            startFrame={Math.floor(spec.reveal.startPhase * totalFrames)}
+            duration={20}
+            style="headline"
+            color={palette.foreground}
+            align="center"
+          />
+        </div>
+      )}
 
       {/* Phase label */}
       <div
         style={{
           position: 'absolute',
-          top: 20,
+          top: 12,
           left: 0,
           right: 0,
           textAlign: 'center',
@@ -352,9 +361,7 @@ export default App;`}
           textTransform: 'uppercase',
         }}
       >
-        {frame < 30 && 'IDE — Chrome everywhere'}
-        {frame >= 30 && frame < 90 && 'DISSOLVING — Removing what obscures'}
-        {frame >= 90 && 'TERMINAL — Only the canvas remains'}
+        {currentPhase?.label}
       </div>
     </AbsoluteFill>
   );

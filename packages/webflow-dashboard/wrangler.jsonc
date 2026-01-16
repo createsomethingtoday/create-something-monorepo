@@ -5,6 +5,15 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
 
+	// D1 Database for analytics history
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "webflow-dashboard-db",
+			"database_id": "placeholder-will-be-set-after-creation"
+		}
+	],
+
 	// KV Namespaces
 	"kv_namespaces": [
 		{
@@ -27,7 +36,8 @@
 	}
 
 	// Cron triggers: Configure in Cloudflare Dashboard > Workers & Pages > webflow-dashboard > Triggers
-	// Schedule: 0 0 * * * (midnight UTC daily) for /api/cron/cleanup
+	// Schedule: 0 0 * * * (midnight UTC daily) for /api/cron/snapshot
+	// Schedule: 0 1 * * * (1am UTC daily) for /api/cron/cleanup
 
 	// Secrets (set via: wrangler secret put AIRTABLE_API_KEY)
 	// - AIRTABLE_API_KEY
