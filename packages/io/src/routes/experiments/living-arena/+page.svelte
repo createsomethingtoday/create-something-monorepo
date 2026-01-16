@@ -32,6 +32,42 @@
 		{ id: 3, system: 'Lighting', message: 'Court lights at 100%', time: '30s ago', priority: 'low' }
 	]);
 
+	// Cross-system intelligence scenarios - demonstrating emergent behaviors
+	const intelligenceScenarios = [
+		{
+			trigger: 'Crowd density increasing at Gate A',
+			responses: [
+				{ system: 'Security', action: 'Additional screening lane activated' },
+				{ system: 'Lighting', action: 'Concourse pathway illuminated' },
+				{ system: 'HVAC', action: 'Pre-cooling adjacent sections' },
+				{ system: 'Wayfinding', action: 'Digital signage redirecting to Gate B' }
+			],
+			insight: 'Security-first: crowd flow optimized while maintaining screening integrity'
+		},
+		{
+			trigger: 'Halftime begins',
+			responses: [
+				{ system: 'Lighting', action: 'Concourse lights to 100%, court to ambient' },
+				{ system: 'HVAC', action: 'Boost circulation in concourse areas' },
+				{ system: 'Security', action: 'Perimeter focus shifts to concessions' },
+				{ system: 'Scheduling', action: 'Restroom cleaning crews dispatched' }
+			],
+			insight: 'Anticipatory response: building adapts before humans need to ask'
+		},
+		{
+			trigger: 'Emergency detected in Section 112',
+			responses: [
+				{ system: 'Security', action: 'Isolate zone, dispatch response team' },
+				{ system: 'Lighting', action: 'Emergency pathway illumination' },
+				{ system: 'HVAC', action: 'Positive pressure in evacuation routes' },
+				{ system: 'PA System', action: 'Localized calm instructions' }
+			],
+			insight: 'Security paramount: all systems coordinate for human safety'
+		}
+	];
+
+	let activeScenario = $state(0);
+
 	// Animation state
 	let mounted = $state(false);
 	let tick = $state(0);
@@ -99,8 +135,9 @@
 			<span class="experiment-label">Experiment</span>
 			<h1 class="experiment-title">Living Arena</h1>
 			<p class="experiment-description">
-				AI-native automations orchestrating all systems of an arena through WORKWAY pattern
-				collection. Security, lighting, HVAC, scheduling, and notifications—all breathing as one.
+				When you have access to all systems, you can do very interesting and intuitive things 
+				that help humans engage with the building—while keeping <strong>security at the forefront</strong>.
+				This is the power of AI-native automation at arena scale.
 			</p>
 		</div>
 		<div class="event-badge">
@@ -424,25 +461,86 @@
 		</div>
 	</div>
 
+	<!-- Cross-System Intelligence Section -->
+	<section class="intelligence-section">
+		<div class="section-header">
+			<h2>Cross-System Intelligence</h2>
+			<p>When all systems communicate, the building becomes intuitive. Security remains the foundation—every action is security-aware.</p>
+		</div>
+
+		<div class="scenarios-container">
+			<div class="scenario-tabs">
+				{#each intelligenceScenarios as scenario, i}
+					<button
+						class="scenario-tab"
+						class:active={activeScenario === i}
+						onclick={() => activeScenario = i}
+					>
+						<span class="tab-number">{i + 1}</span>
+						<span class="tab-trigger">{scenario.trigger}</span>
+					</button>
+				{/each}
+			</div>
+
+			<div class="scenario-detail">
+				{@const scenario = intelligenceScenarios[activeScenario]}
+				<div class="scenario-trigger">
+					<span class="trigger-label">Trigger Event</span>
+					<span class="trigger-text">{scenario.trigger}</span>
+				</div>
+
+				<div class="responses-flow">
+					{#each scenario.responses as response, i}
+						<div class="response-card" style:animation-delay="{i * 150}ms">
+							<span class="response-system">{response.system}</span>
+							<span class="response-arrow">→</span>
+							<span class="response-action">{response.action}</span>
+						</div>
+					{/each}
+				</div>
+
+				<div class="scenario-insight">
+					<span class="insight-icon">💡</span>
+					<span class="insight-text">{scenario.insight}</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="security-emphasis">
+			<div class="emphasis-icon">🛡️</div>
+			<div class="emphasis-content">
+				<h3>Security as Foundation</h3>
+				<p>
+					Every cross-system action is evaluated through a security lens. The building helps humans 
+					navigate, stay comfortable, and enjoy events—but never at the expense of safety. 
+					When security needs change, all other systems adapt instantly.
+				</p>
+			</div>
+		</div>
+	</section>
+
 	<!-- Footer -->
 	<footer class="experiment-footer">
 		<div class="hypothesis">
 			<h3>Hypothesis</h3>
 			<p>
-				WORKWAY pattern collection enables AI-native automations that can orchestrate complex venue
-				operations at arena scale. By capturing business logic as reusable patterns, we create
-				automations that are intelligent across multiple dimensions—security awareness informs lighting,
-				scheduling drives HVAC, and all systems breathe as one coherent organism.
+				Having access to all systems through WORKWAY pattern collection enables us to do very 
+				interesting and intuitive things that help humans engage with buildings—while keeping 
+				security at the forefront. This isn't about replacing human judgment; it's about 
+				giving buildings the awareness to anticipate needs, respond to situations, and 
+				create experiences that feel effortless. The building becomes a partner, not just a structure.
 			</p>
 		</div>
 		<div class="patterns-note">
 			<span class="label">Patterns Demonstrated</span>
 			<div class="pattern-tags">
-				<span class="tag">venue-security-perimeter</span>
+				<span class="tag">security-first-orchestration</span>
+				<span class="tag">anticipatory-environment</span>
+				<span class="tag">crowd-flow-intelligence</span>
 				<span class="tag">adaptive-lighting-zones</span>
 				<span class="tag">hvac-occupancy-optimization</span>
-				<span class="tag">event-phase-scheduling</span>
-				<span class="tag">cross-system-orchestration</span>
+				<span class="tag">cross-system-awareness</span>
+				<span class="tag">human-building-partnership</span>
 			</div>
 		</div>
 	</footer>
@@ -888,5 +986,214 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);
 		font-family: monospace;
+	}
+
+	/* Cross-System Intelligence Section */
+	.intelligence-section {
+		padding: var(--space-xl) var(--space-lg);
+		background: var(--color-bg-subtle);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.section-header {
+		text-align: center;
+		margin-bottom: var(--space-xl);
+	}
+
+	.section-header h2 {
+		font-size: var(--text-h2);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.section-header p {
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
+		max-width: 600px;
+		margin: 0 auto;
+	}
+
+	.scenarios-container {
+		max-width: 900px;
+		margin: 0 auto var(--space-xl);
+	}
+
+	.scenario-tabs {
+		display: flex;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-lg);
+		flex-wrap: wrap;
+	}
+
+	.scenario-tab {
+		flex: 1;
+		min-width: 200px;
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		cursor: pointer;
+		transition: all var(--duration-standard) var(--ease-standard);
+		text-align: left;
+	}
+
+	.scenario-tab:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.scenario-tab.active {
+		background: var(--color-bg-pure);
+		border-color: var(--color-accent);
+		box-shadow: 0 0 0 1px var(--color-accent);
+	}
+
+	.tab-number {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-full);
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-muted);
+	}
+
+	.scenario-tab.active .tab-number {
+		background: var(--color-accent);
+		color: var(--color-bg-pure);
+	}
+
+	.tab-trigger {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.4;
+	}
+
+	.scenario-detail {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
+	}
+
+	.scenario-trigger {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+		padding-bottom: var(--space-md);
+		border-bottom: 1px solid var(--color-border-default);
+		margin-bottom: var(--space-lg);
+	}
+
+	.trigger-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+	}
+
+	.trigger-text {
+		font-size: var(--text-body-lg);
+		font-weight: 600;
+		color: var(--color-data-4);
+	}
+
+	.responses-flow {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-lg);
+	}
+
+	.response-card {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+		animation: slideIn 0.3s ease-out forwards;
+		opacity: 0;
+		transform: translateX(-10px);
+	}
+
+	@keyframes slideIn {
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	.response-system {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-accent);
+		min-width: 80px;
+	}
+
+	.response-arrow {
+		color: var(--color-fg-muted);
+	}
+
+	.response-action {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.scenario-insight {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-sm);
+		padding: var(--space-md);
+		background: linear-gradient(135deg, var(--color-bg-subtle), transparent);
+		border-left: 3px solid var(--color-data-2);
+		border-radius: 0 var(--radius-md) var(--radius-md) 0;
+	}
+
+	.insight-icon {
+		font-size: 1.2em;
+	}
+
+	.insight-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		font-style: italic;
+	}
+
+	/* Security Emphasis */
+	.security-emphasis {
+		display: flex;
+		gap: var(--space-lg);
+		align-items: flex-start;
+		max-width: 700px;
+		margin: 0 auto;
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 2px solid var(--color-data-1);
+		border-radius: var(--radius-lg);
+	}
+
+	.emphasis-icon {
+		font-size: 2rem;
+		line-height: 1;
+	}
+
+	.emphasis-content h3 {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-xs);
+	}
+
+	.emphasis-content p {
+		font-size: var(--text-body);
+		color: var(--color-fg-tertiary);
+		line-height: 1.6;
 	}
 </style>
