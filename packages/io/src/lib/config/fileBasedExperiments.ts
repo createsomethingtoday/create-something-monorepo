@@ -506,6 +506,49 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 `
 	},
 	{
+		id: 'file-living-arena',
+		slug: 'living-arena',
+		title: 'Living Arena: AI-Native Automation at Scale',
+		description: 'What if your building could help people without them having to ask? A visualization of arena systems—security, lighting, HVAC, scheduling—all breathing as one, with humans always in control.',
+		excerpt_short: 'AI-native arena automation with transparent reasoning and human oversight',
+		excerpt_long: 'When you have access to all systems, interesting things happen. The building anticipates needs, coordinates responses, and keeps people safe—while staying honest about what it doesn\'t know and keeping humans in charge of the big decisions. This experiment shows what that looks like.',
+		category: 'research',
+		tags: ['AI-Native', 'Automation', 'Arena', 'Human-in-the-Loop', 'SVG', 'Reasoning', 'WORKWAY'],
+		created_at: '2026-01-16T00:00:00Z',
+		updated_at: '2026-01-16T00:00:00Z',
+		reading_time_minutes: 12,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'human-in-the-loop', // Humans always decide on critical actions
+			'explainable-reasoning', // AI shows its thinking, not just its decisions
+			'holistic-updates', // One change, everything adapts together
+			'honest-failures', // Transparent about limitations and mistakes
+			'rams-principle-4', // Understandable—clear copy, no jargon
+			'rams-principle-2' // Useful—serves human needs, not technology
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════╗
+    ║   LIVING ARENA: AI-NATIVE AUTOMATION AT SCALE                         ║
+    ║                                                                       ║
+    ║                        ╭────────────────────╮                         ║
+    ║                   ╭────┤    🛡️ SECURITY     ├────╮                    ║
+    ║              ╭────┤    ╰────────────────────╯    ├────╮               ║
+    ║         ╭────┤    │                              │    ├────╮          ║
+    ║    ╭────┤    │    │     ┌──────────────┐        │    │    ├────╮     ║
+    ║    │💡  │    │ 🌡️ │     │   ╭──────╮   │        │ 📅 │    │  📡│     ║
+    ║    │LITE│    │HVAC│     │   │  AI  │   │        │SCHED    │ NOTIF    ║
+    ║    ╰────┤    │    │     │   ╰──────╯   │        │    │    ├────╯     ║
+    ║         ╰────┤    │     └──────────────┘        │    ├────╯          ║
+    ║              ╰────┤           👤                 ├────╯               ║
+    ║                   ╰────┤  HUMAN IN CONTROL  ├────╯                    ║
+    ║                        ╰────────────────────╯                         ║
+    ║                                                                       ║
+    ║   "The system helps. A human chooses."                                ║
+    ╚═══════════════════════════════════════════════════════════════════════╝
+`
+	},
+	{
 		id: 'file-kinetic-typography',
 		slug: 'kinetic-typography',
 		title: 'Kinetic Typography: Data-Ink Ratio for Motion',
