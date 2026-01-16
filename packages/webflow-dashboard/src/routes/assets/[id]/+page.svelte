@@ -119,11 +119,14 @@
 
 	// Clean type display (show "Template" not record ID)
 	const displayType = $derived(() => {
-		if (!asset.type) return 'Unknown';
+		if (!asset.type) return 'Template';
+		// Convert to string if it's not already
+		const typeStr = String(asset.type);
 		// If type looks like a record ID, show "Template" instead
-		if (asset.type.startsWith('rec') && asset.type.length > 10) return 'Template';
+		if (typeStr.startsWith('rec') && typeStr.length > 10) return 'Template';
 		// Clean up type string
-		return asset.type.replace(/🏗️/g, '').replace(/Template/g, 'Template').trim() || 'Template';
+		const cleaned = typeStr.replace(/🏗️/g, '').trim();
+		return cleaned || 'Template';
 	});
 
 	// Get quality score context

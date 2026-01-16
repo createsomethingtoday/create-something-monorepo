@@ -11,6 +11,7 @@ export * from './types';
 // Specs
 export { toolRrecedingSpec } from './tool-receding';
 export { ideVsTerminalSpec } from './ide-vs-terminal';
+export { canonRevealStyles, getCanonRevealStyle, type CanonRevealStyle } from './canon-reveals';
 
 // Registry for looking up specs by ID
 import { toolRrecedingSpec } from './tool-receding';

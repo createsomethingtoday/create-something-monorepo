@@ -21,6 +21,7 @@
 	import { CanonReveal } from '@create-something/components/motion';
 	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer, Shield, Eye, EyeOff } from 'lucide-svelte';
 	import { isDNTEnabled } from '@create-something/components/gdpr';
+	import { canonRevealStyles, type CanonRevealStyle } from '$lib/animations/canon-reveals';
 
 	// ===========================================
 	// GDPR-COMPLIANT CONSENT MANAGEMENT
@@ -183,25 +184,16 @@
 	}
 
 	// ===========================================
-	// MOTION DEMO (Using CanonReveal component)
+	// MOTION DEMO (Using CanonReveal component + shared spec)
+	// Spec source: packages/motion-studio/src/specs/canon-reveals.ts
 	// ===========================================
-	type RevealStyle = 'unconcealment' | 'typewriter' | 'threshold' | 'decode' | 'mask';
-	
-	const revealStyles: { id: RevealStyle; label: string; text: string; philosophy: string }[] = [
-		{ id: 'decode', label: 'DECODE', text: 'CREATION IS SUBTRACTION', philosophy: 'Cipher resolves — The signal emerges from noise' },
-		{ id: 'unconcealment', label: 'UNCONCEALMENT', text: 'Truth emerges from what conceals it.', philosophy: 'Heidegger — The meaning was always there' },
-		{ id: 'typewriter', label: 'TYPEWRITER', text: '$ echo "less, but better"', philosophy: 'Terminal-first — Meditative, deliberate' },
-		{ id: 'threshold', label: 'THRESHOLD', text: 'Present or absent.', philosophy: 'Rams — Binary. No animation. Just presence.' },
-		{ id: 'mask', label: 'MASK', text: 'Weniger, aber besser.', philosophy: 'The text was always there — We just unveiled it' },
-	];
-
 	let currentRevealIndex = $state(0);
 	let revealKey = $state(0); // Force re-mount on change
 	let motionStartTime = $state(0);
 	let hasPlayed = $state(false);
 	let motionInitialized = $state(false); // Track if user has interacted
 
-	const currentReveal = $derived(revealStyles[currentRevealIndex]);
+	const currentReveal = $derived(canonRevealStyles[currentRevealIndex]);
 
 	function playMotion() {
 		motionStartTime = Date.now();
@@ -216,7 +208,7 @@
 	}
 
 	function nextReveal() {
-		currentRevealIndex = (currentRevealIndex + 1) % revealStyles.length;
+		currentRevealIndex = (currentRevealIndex + 1) % canonRevealStyles.length;
 		hasPlayed = false;
 		motionInitialized = true;
 		revealKey++;
@@ -476,13 +468,13 @@
 					</button>
 					<button class="motion-btn play" onclick={nextReveal}>
 						<Play size={18} />
-						<span>Next Style ({revealStyles[(currentRevealIndex + 1) % revealStyles.length].label})</span>
+						<span>Next Style ({canonRevealStyles[(currentRevealIndex + 1) % canonRevealStyles.length].label})</span>
 					</button>
 				</div>
 
 				<!-- Style indicator dots -->
 				<div class="style-dots">
-					{#each revealStyles as style, i}
+					{#each canonRevealStyles as style, i}
 						<button 
 							class="style-dot" 
 							class:active={i === currentRevealIndex}
