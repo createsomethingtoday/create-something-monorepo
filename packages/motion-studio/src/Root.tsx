@@ -5,7 +5,7 @@
  * Defines all available compositions.
  */
 import React from 'react';
-import { Composition } from 'remotion';
+import { Composition, registerRoot } from 'remotion';
 
 // Compositions
 import { ExplainerIntro } from './compositions/ExplainerIntro';
@@ -216,3 +216,6 @@ export const RemotionRoot: React.FC = () => {
     </>
   );
 };
+
+// Register the root component with Remotion
+registerRoot(RemotionRoot);

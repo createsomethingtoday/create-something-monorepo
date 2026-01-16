@@ -6,6 +6,9 @@
  */
 import { Config } from '@remotion/cli/config';
 
+// Point to the entry file that calls registerRoot()
+Config.setEntryPoint('./src/Root.tsx');
+
 // Standard HD output (16:9 aspect ratio)
 Config.setVideoImageFormat('jpeg');
 Config.setOverwriteOutput(true);
