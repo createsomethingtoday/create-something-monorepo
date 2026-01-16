@@ -21,7 +21,9 @@
 		TableHead,
 		TableCell,
 		StatusBadge,
-		Sparkline
+		Sparkline,
+		TimelineCard,
+		AnalyticsCard
 	} from '$lib/components';
 	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
 	import { toast } from '$lib/stores/toast';
@@ -38,19 +40,31 @@
 		ShoppingCart,
 		DollarSign,
 		TrendingUp,
-		Percent
+		Percent,
+		Clock,
+		LineChart
 	} from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	let activeTab = $state('overview');
+	// Use reactive state so updates refresh the view
+	let asset = $state<Asset>(data.asset);
+
+	// Smart default tab based on asset status
+	// - Pending/Review assets: Show Timeline (most actionable)
+	// - Published assets: Show Overview (quick summary)
+	// - Rejected assets: Show Timeline (shows feedback)
+	function getDefaultTab(status: string): string {
+		if (['Draft', 'Upcoming', 'Scheduled'].includes(status)) return 'timeline';
+		if (status === 'Rejected') return 'timeline';
+		return 'overview';
+	}
+
+	let activeTab = $state(getDefaultTab(data.asset.status));
 	let showPerformance = $state(false);
 	let imageError = $state(false);
 	let showEditModal = $state(false);
 	let isArchiving = $state(false);
-
-	// Use reactive state so updates refresh the view
-	let asset = $state<Asset>(data.asset);
 
 	// Format dates
 	function formatDate(dateStr?: string): string {
@@ -262,21 +276,31 @@
 					<button
 						type="button"
 						class="tab-trigger"
+						class:active={activeTab === 'timeline'}
+						onclick={() => (activeTab = 'timeline')}
+					>
+						<Clock size={14} />
+						Timeline
+					</button>
+					<button
+						type="button"
+						class="tab-trigger"
+						class:active={activeTab === 'analytics'}
+						onclick={() => (activeTab = 'analytics')}
+						disabled={!canShowMetrics}
+						title={!canShowMetrics ? 'Analytics available after publishing' : ''}
+					>
+						<LineChart size={14} />
+						Analytics
+					</button>
+					<button
+						type="button"
+						class="tab-trigger"
 						class:active={activeTab === 'details'}
 						onclick={() => (activeTab = 'details')}
 					>
 						Details
 					</button>
-					{#if asset.carouselImages && asset.carouselImages.length > 0}
-						<button
-							type="button"
-							class="tab-trigger"
-							class:active={activeTab === 'gallery'}
-							onclick={() => (activeTab = 'gallery')}
-						>
-							Gallery
-						</button>
-					{/if}
 				</div>
 			</div>
 
@@ -575,21 +599,10 @@
 							</div>
 						</CardContent>
 					</Card>
-				{:else if activeTab === 'gallery' && asset.carouselImages}
-					<Card>
-						<CardHeader>
-							<CardTitle>Gallery Images</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div class="gallery-grid">
-								{#each asset.carouselImages as image, index}
-									<div class="gallery-item">
-										<img src={image} alt="Gallery image {index + 1}" class="gallery-image" />
-									</div>
-								{/each}
-							</div>
-						</CardContent>
-					</Card>
+				{:else if activeTab === 'timeline'}
+					<TimelineCard {asset} />
+				{:else if activeTab === 'analytics'}
+					<AnalyticsCard {asset} />
 				{/if}
 			</div>
 		</div>
@@ -685,6 +698,9 @@
 	}
 
 	.tab-trigger {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
 		padding: var(--space-sm) var(--space-md);
 		background: transparent;
 		border: none;
@@ -696,13 +712,18 @@
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.tab-trigger:hover {
+	.tab-trigger:hover:not(:disabled) {
 		color: var(--color-fg-primary);
 	}
 
 	.tab-trigger.active {
 		color: var(--color-fg-primary);
 		border-bottom-color: var(--color-fg-primary);
+	}
+
+	.tab-trigger:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	.tab-content {
@@ -936,22 +957,5 @@
 
 	.link:hover {
 		text-decoration: underline;
-	}
-
-	.gallery-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: var(--space-md);
-	}
-
-	.gallery-item {
-		border-radius: var(--radius-md);
-		overflow: hidden;
-	}
-
-	.gallery-image {
-		width: 100%;
-		aspect-ratio: 16/10;
-		object-fit: cover;
 	}
 </style>

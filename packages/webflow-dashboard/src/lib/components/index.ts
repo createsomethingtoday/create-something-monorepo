@@ -25,10 +25,13 @@ export { default as ImageUploader } from './ImageUploader.svelte';
 
 // Analytics components
 export { default as MarketplaceInsights } from './MarketplaceInsights.svelte';
+export { default as AnalyticsCard } from './AnalyticsCard.svelte';
+export { default as TimelineCard } from './TimelineCard.svelte';
 
 // Tufte-inspired data visualization
 export { default as Sparkline } from './Sparkline.svelte';
 export { default as StatsBar } from './StatsBar.svelte';
+export { default as KineticNumber } from './KineticNumber.svelte';
 
 // Validation components
 export { default as GsapValidationModal } from './GsapValidationModal.svelte';
