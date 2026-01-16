@@ -1,0 +1,169 @@
+# Webflow IC MVP → Code Components Translation
+
+You are helping translate IC-created MVPs into Webflow Code Components.
+
+## Your Task
+
+When given a path to an IC MVP:
+
+1. **Analyze the codebase** - Understand components, state, dependencies
+2. **Create packages** - Core logic package (if needed) + app package
+3. **Add Webflow wrappers** - `*.webflow.tsx` files with `declareComponent`
+4. **Configure DevLink** - `webflow.json` for library sharing
+
+## Package Pattern
+
+```
+packages/
+├── [name]-core/              # Optional: Extract reusable logic
+│   ├── src/
+│   │   ├── index.ts          # Public API exports
+│   │   └── [modules]/        # Core functionality
+│   ├── package.json
+│   └── tsconfig.json
+│
+└── [name]/                   # Main package with React components
+    ├── src/
+    │   ├── components/
+    │   │   ├── [Component].tsx           # React component
+    │   │   └── [Component].webflow.tsx   # Webflow wrapper
+    │   ├── App.tsx
+    │   └── main.tsx
+    ├── webflow.json          # DevLink configuration
+    ├── package.json
+    └── tsconfig.json
+```
+
+## Webflow Wrapper Pattern
+
+```tsx
+// [Component].webflow.tsx
+import { declareComponent } from '@webflow/react';
+import { props } from '@webflow/data-types';
+import { MyComponent } from './MyComponent';
+
+export default declareComponent(MyComponent, {
+  name: 'My Component',
+  description: 'What this component does',
+  group: '[Category Name]',
+  props: {
+    // Expose props for Webflow Designer
+    myProp: props.String({
+      name: 'Display Name',
+      defaultValue: 'default',
+      tooltip: 'Help text for designers',
+    }),
+    variant: props.Variant({
+      name: 'Variant',
+      options: ['option1', 'option2'],
+      defaultValue: 'option1',
+    }),
+    enabled: props.Boolean({
+      name: 'Enabled',
+      defaultValue: true,
+    }),
+    count: props.Number({
+      name: 'Count',
+      defaultValue: 0,
+    }),
+  },
+});
+```
+
+## Prop Types Reference
+
+| Type | Usage | Notes |
+|------|-------|-------|
+| `props.String()` | Text inputs | Most common |
+| `props.Number()` | Numeric values | Integers or floats |
+| `props.Boolean()` | Toggles | On/off states |
+| `props.Variant()` | Select dropdowns | Define `options` array |
+| `props.Slot()` | Child content | For nested elements |
+
+## webflow.json Configuration
+
+```json
+{
+  "name": "[Project Display Name]",
+  "components": "./src/**/*.webflow.@(js|jsx|mjs|ts|tsx)",
+  "library": {
+    "name": "[Library Name]",
+    "description": "[What this library provides]",
+    "id": "[kebab-case-id]"
+  }
+}
+```
+
+## Designer Preview Mode
+
+Components need to work in Webflow Designer without real data.
+Create wrapper components with mock/preview props:
+
+```tsx
+// Real component expects complex object
+interface RealProps {
+  report: ComplexReport;
+}
+
+// Designer wrapper uses simple props
+interface DesignerProps {
+  itemCount: number;
+  status: 'success' | 'error';
+}
+
+const DesignerComponent: React.FC<DesignerProps> = ({ itemCount, status }) => {
+  // Build mock data from simple props
+  const mockReport = createMockReport(itemCount, status);
+  return <RealComponent report={mockReport} />;
+};
+
+// Export the designer-friendly version
+export default declareComponent(DesignerComponent, { ... });
+```
+
+## Dependencies
+
+Required for Code Components:
+```json
+{
+  "dependencies": {
+    "@webflow/react": "^1.0.0",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@webflow/webflow-cli": "^1.0.0",
+    "@webflow/data-types": "^1.0.0"
+  }
+}
+```
+
+## Scripts
+
+Add to package.json:
+```json
+{
+  "scripts": {
+    "webflow:share": "npx webflow library share",
+    "webflow:dev": "npx webflow devlink"
+  }
+}
+```
+
+## Checklist
+
+Before considering translation complete:
+
+- [ ] Core logic extracted (if reusable across packages)
+- [ ] React components work standalone
+- [ ] `*.webflow.tsx` wrappers created for key components
+- [ ] Props exposed for Designer customization
+- [ ] Designer preview mode works (mock data)
+- [ ] `webflow.json` configured
+- [ ] README documents the component library
+- [ ] Committed and pushed to repo
+
+## Reference
+
+- [Webflow Code Components Docs](https://developers.webflow.com/code-components/introduction)
+- [declareComponent API](https://developers.webflow.com/code-components/define-code-component)
+- [Prop Types Reference](https://developers.webflow.com/code-components/reference/prop-types)

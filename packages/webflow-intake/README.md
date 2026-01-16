@@ -1,8 +1,8 @@
 # Webflow Intake Pipeline
 
-> **IC MVP → Taste Maker Review → Webflow Code Components**
+> **IC MVP → Agentic Engineering → Webflow Code Components**
 
-This directory houses projects from Webflow ICs that are candidates for translation into Webflow Code Components via DevLink.
+This directory supports the translation of Webflow IC MVPs into Code Components via DevLink.
 
 ## Pipeline Overview
 
@@ -11,57 +11,43 @@ This directory houses projects from Webflow ICs that are candidates for translat
 │                           WEBFLOW IC MVP PIPELINE                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  1. IC CREATION          2. INTAKE                3. TRANSLATION            │
-│  ─────────────           ──────────               ──────────────            │
+│  IC CREATION              AGENTIC ENGINEERING           PRODUCTION          │
+│  ────────────             ───────────────────           ──────────          │
 │                                                                             │
-│  AI Studio               webflow-intake/          webflow-components/       │
-│  Cursor                  └── [project]/           OR                        │
-│  Claude Code                 ├── src/             standalone package        │
-│  Lovable                     ├── package.json     └── *.webflow.tsx         │
-│  (code exports)              └── INTAKE.md                                  │
-│                                                                             │
-│       ↓                        ↓                        ↓                   │
-│  Raw MVP Code            Taste Maker Review       Production Components     │
-│                          (Can this translate?)    (DevLink shared library)  │
+│  AI Studio                                              packages/[name]/    │
+│  Cursor           ───→    Cursor / Claude Code   ───→   └── *.webflow.tsx   │
+│  Claude Code              (direct translation)                              │
+│  Lovable                                                DevLink Library     │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Intake Process
+## Fast Path (Default)
 
-### Step 1: Receive MVP
+Most MVPs go directly to agentic engineering:
 
-When an IC submits a project:
-
-```bash
-# Copy MVP into intake
-cp -r /path/to/ic-mvp packages/webflow-intake/[project-name]
-
-# Create intake document
-touch packages/webflow-intake/[project-name]/INTAKE.md
+```
+"Review this codebase and create the Webflow Component version"
+   └── Agent analyzes MVP
+   └── Creates packages/[name]-core/ (if needed)
+   └── Creates packages/[name]/
+   └── Adds *.webflow.tsx wrappers
+   └── Configures webflow.json
 ```
 
-### Step 2: Taste Maker Review
+**No intake review needed** for straightforward projects.
 
-Review the MVP against these criteria:
+## Slow Path (Complex Cases)
 
-| Criterion | Question | Weight |
-|-----------|----------|--------|
-| **React Compatibility** | Is it React-based or easily portable? | High |
-| **Component Boundaries** | Can this be split into reusable components? | High |
-| **Props Surface** | Are inputs clearly defined for Designer exposure? | Medium |
-| **State Complexity** | Can state be managed within component scope? | Medium |
-| **External Dependencies** | Are deps compatible with Webflow bundling? | Medium |
-| **Design System Fit** | Does it align with Canon/Webflow variables? | Low |
+For complex MVPs that need evaluation, use `INTAKE_TEMPLATE.md`:
 
-### Step 3: Translation Decision
-
-| Verdict | Action |
-|---------|--------|
-| **APPROVE** | Move to dedicated package, create `.webflow.tsx` wrappers |
-| **REFACTOR** | Work with IC to simplify before translation |
-| **DEFER** | Park for future consideration |
-| **REJECT** | Not suitable for Code Components (document why) |
+| Criterion | Question |
+|-----------|----------|
+| **React Compatibility** | Is it React-based or easily portable? |
+| **Component Boundaries** | Can this be split into reusable components? |
+| **Props Surface** | Are inputs clearly defined for Designer exposure? |
+| **State Complexity** | Can state be managed within component scope? |
+| **External Dependencies** | Are deps compatible with Webflow bundling? |
 
 ## Project Structure
 
