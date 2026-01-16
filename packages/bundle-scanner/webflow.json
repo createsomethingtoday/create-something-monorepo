@@ -9,6 +9,7 @@
   "library": {
     "name": "Bundle Scanner",
     "description": "Complete Webflow Marketplace bundle security scanner. Upload ZIP files to scan for security issues, policy violations, and get AI-powered analysis.",
-    "id": "bundle-scanner"
+    "id": "bundle-scanner",
+    "globals": "./webflow/globals.ts"
   }
 }
