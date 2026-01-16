@@ -67,15 +67,33 @@ export interface AnimationTiming {
 
 /**
  * Text reveal animation styles
+ * 
+ * VOX STYLE (motion-forward):
+ * - word-by-word, letter-by-letter, line-by-line
+ * - fade, scale, slide-up, slide-left
+ * 
+ * CANON STYLE (subtractive):
+ * - unconcealment: Text emerges from noise (Heidegger)
+ * - typewriter: Char-by-char with cursor (terminal-first)
+ * - threshold: Binary snap, no animation (Rams)
+ * - decode: Random chars resolve to meaning
+ * - mask: Horizontal wipe reveal
  */
 export type TextRevealStyle = 
+  // Vox style
   | 'word-by-word'      // Each word fades/scales in
   | 'letter-by-letter'  // Typewriter effect
   | 'line-by-line'      // Full lines reveal
   | 'fade'              // Simple opacity fade
   | 'scale'             // Scale up from center
   | 'slide-up'          // Slide from below
-  | 'slide-left';       // Slide from right
+  | 'slide-left'        // Slide from right
+  // Canon style (subtractive)
+  | 'unconcealment'     // Emerges from noise/static (Heidegger)
+  | 'typewriter'        // Char-by-char with blinking cursor
+  | 'threshold'         // Binary snap - present or not (Rams)
+  | 'decode'            // Random chars resolve to meaning
+  | 'mask';             // Horizontal wipe reveal
 
 /**
  * Chart build animation styles

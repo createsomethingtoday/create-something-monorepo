@@ -8,7 +8,7 @@
  * Monochrome palette - typography and motion only
  */
 import React from 'react';
-import { Composition, registerRoot } from 'remotion';
+import { Composition, registerRoot, AbsoluteFill, Sequence } from 'remotion';
 import { RefreshCw, Scissors, Link } from 'lucide-react';
 
 // Compositions
@@ -18,6 +18,10 @@ import { ConceptBreakdown } from './compositions/ConceptBreakdown';
 import { ComparisonScene } from './compositions/ComparisonScene';
 import { TimelineScene } from './compositions/TimelineScene';
 import { ExplainerVideo, calculateTotalDuration } from './compositions/ExplainerVideo';
+
+// Primitives
+import { KineticText } from './primitives/KineticText';
+import { voxPresets, typography, colors } from './styles';
 
 // Example data
 const sampleChartData = [
@@ -37,6 +41,217 @@ const sampleTimeline = [
   { year: '1999', title: 'DRY Principle', description: 'The Pragmatic Programmer' },
   { year: '2024', title: 'Subtractive Triad', description: 'Unified framework' },
 ];
+
+/**
+ * Canon-Style Text Reveal Demo
+ * Showcases the subtractive philosophy text reveals
+ */
+const CanonTextReveals: React.FC = () => {
+  const palette = voxPresets.ltd;
+  const revealDuration = 90; // 3 seconds each at 30fps
+  
+  return (
+    <AbsoluteFill style={{ backgroundColor: palette.background }}>
+      {/* Title */}
+      <Sequence from={0} durationInFrames={30}>
+        <div style={{
+          position: 'absolute',
+          top: 60,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          fontFamily: typography.fontFamily.mono,
+          fontSize: typography.fontSize.caption,
+          color: palette.muted,
+          letterSpacing: typography.letterSpacing.wider,
+          textTransform: 'uppercase',
+        }}>
+          Canon-Style Text Reveals
+        </div>
+      </Sequence>
+      
+      {/* 1. UNCONCEALMENT - Heidegger */}
+      <Sequence from={30} durationInFrames={revealDuration}>
+        <div style={{
+          position: 'absolute',
+          top: 150,
+          left: 100,
+          width: 800,
+        }}>
+          <div style={{
+            fontFamily: typography.fontFamily.mono,
+            fontSize: typography.fontSize.caption,
+            color: palette.muted,
+            marginBottom: 16,
+            letterSpacing: typography.letterSpacing.wide,
+          }}>
+            UNCONCEALMENT (Heidegger)
+          </div>
+          <KineticText
+            text="Truth emerges from what conceals it."
+            reveal="unconcealment"
+            startFrame={0}
+            duration={revealDuration - 20}
+            style="subhead"
+            color={palette.foreground}
+          />
+        </div>
+      </Sequence>
+      
+      {/* 2. TYPEWRITER - Terminal-first */}
+      <Sequence from={30} durationInFrames={revealDuration}>
+        <div style={{
+          position: 'absolute',
+          top: 150,
+          right: 100,
+          width: 800,
+          textAlign: 'right',
+        }}>
+          <div style={{
+            fontFamily: typography.fontFamily.mono,
+            fontSize: typography.fontSize.caption,
+            color: palette.muted,
+            marginBottom: 16,
+            letterSpacing: typography.letterSpacing.wide,
+          }}>
+            TYPEWRITER (Terminal-first)
+          </div>
+          <KineticText
+            text="$ echo 'less, but better'"
+            reveal="typewriter"
+            startFrame={0}
+            duration={revealDuration - 20}
+            style="subhead"
+            color={palette.foreground}
+            align="right"
+          />
+        </div>
+      </Sequence>
+      
+      {/* 3. THRESHOLD - Rams */}
+      <Sequence from={120} durationInFrames={revealDuration}>
+        <div style={{
+          position: 'absolute',
+          top: 400,
+          left: 100,
+          width: 800,
+        }}>
+          <div style={{
+            fontFamily: typography.fontFamily.mono,
+            fontSize: typography.fontSize.caption,
+            color: palette.muted,
+            marginBottom: 16,
+            letterSpacing: typography.letterSpacing.wide,
+          }}>
+            THRESHOLD (Rams - Binary)
+          </div>
+          <KineticText
+            text="Present or absent. Nothing between."
+            reveal="threshold"
+            startFrame={0}
+            duration={60}
+            style="subhead"
+            color={palette.foreground}
+          />
+        </div>
+      </Sequence>
+      
+      {/* 4. DECODE - Cipher */}
+      <Sequence from={120} durationInFrames={revealDuration}>
+        <div style={{
+          position: 'absolute',
+          top: 400,
+          right: 100,
+          width: 800,
+          textAlign: 'right',
+        }}>
+          <div style={{
+            fontFamily: typography.fontFamily.mono,
+            fontSize: typography.fontSize.caption,
+            color: palette.muted,
+            marginBottom: 16,
+            letterSpacing: typography.letterSpacing.wide,
+          }}>
+            DECODE (Meaning was always there)
+          </div>
+          <KineticText
+            text="CREATION IS SUBTRACTION"
+            reveal="decode"
+            startFrame={0}
+            duration={revealDuration - 10}
+            style="subhead"
+            color={palette.foreground}
+            align="right"
+          />
+        </div>
+      </Sequence>
+      
+      {/* 5. MASK - Wipe reveal */}
+      <Sequence from={210} durationInFrames={revealDuration}>
+        <div style={{
+          position: 'absolute',
+          top: 650,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          justifyContent: 'center',
+        }}>
+          <div style={{ width: 1200 }}>
+            <div style={{
+              fontFamily: typography.fontFamily.mono,
+              fontSize: typography.fontSize.caption,
+              color: palette.muted,
+              marginBottom: 16,
+              letterSpacing: typography.letterSpacing.wide,
+              textAlign: 'center',
+            }}>
+              MASK (The text was always there)
+            </div>
+            <KineticText
+              text="Weniger, aber besser."
+              reveal="mask"
+              startFrame={0}
+              duration={revealDuration - 20}
+              style="headline"
+              color={palette.foreground}
+              align="center"
+            />
+          </div>
+        </div>
+      </Sequence>
+      
+      {/* Vs Vox comparison label */}
+      <Sequence from={300} durationInFrames={90}>
+        <div style={{
+          position: 'absolute',
+          bottom: 80,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+        }}>
+          <div style={{
+            fontFamily: typography.fontFamily.mono,
+            fontSize: typography.fontSize.caption,
+            color: palette.muted,
+            marginBottom: 16,
+            letterSpacing: typography.letterSpacing.wide,
+          }}>
+            VOX STYLE (For comparison)
+          </div>
+          <KineticText
+            text="Words pop in with spring physics."
+            reveal="word-by-word"
+            startFrame={0}
+            duration={60}
+            style="body"
+            color={palette.muted}
+            align="center"
+          />
+        </div>
+      </Sequence>
+    </AbsoluteFill>
+  );
+};
 
 const sampleScenes = [
   {
@@ -91,6 +306,19 @@ const sampleScenes = [
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* ========================================
+          CANON-STYLE TEXT REVEALS
+          Subtractive philosophy animations
+          ======================================== */}
+      <Composition
+        id="CanonTextReveals"
+        component={CanonTextReveals}
+        durationInFrames={420}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      
       {/* Individual scene compositions for testing */}
       <Composition
         id="ExplainerIntro"
