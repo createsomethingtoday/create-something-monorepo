@@ -1,0 +1,184 @@
+{
+  "id": "nba-live-analytics-meta-experiment",
+  "title": "NBA Live Analytics Meta-Experiment",
+  "description": "A Vox-style explainer video about the NBA Live Analytics experiment - a meta-experiment testing spec-driven development through real-time basketball analytics.",
+  "scenes": [
+    {
+      "type": "intro",
+      "durationInFrames": 150,
+      "props": {
+        "hook": "What if you could validate a development methodology through live sports data?",
+        "subtitle": "NBA Live Analytics Meta-Experiment",
+        "highlightWords": ["methodology", "live", "sports"],
+        "theme": "space"
+      },
+      "narration": "What if you could validate a development methodology through live sports data?"
+    },
+    {
+      "type": "intro",
+      "durationInFrames": 180,
+      "props": {
+        "hook": "Hypothesis: Spec-driven development produces both working software AND methodology documentation.",
+        "subtitle": "The Dual Artifact",
+        "highlightWords": ["Spec-driven", "working software", "methodology"],
+        "theme": "space"
+      },
+      "narration": "The hypothesis: spec-driven development can produce both working software and actionable methodology insights simultaneously."
+    },
+    {
+      "type": "breakdown",
+      "durationInFrames": 300,
+      "props": {
+        "title": "Three Analytical Lenses",
+        "concepts": [
+          {
+            "name": "Duo Synergy",
+            "description": "Two-player combinations and points per possession",
+            "icon": "⚡"
+          },
+          {
+            "name": "Defensive Impact",
+            "description": "Actual vs expected performance matchups",
+            "icon": "🛡️"
+          },
+          {
+            "name": "Shot Network",
+            "description": "D3 force-directed shot creation graph",
+            "icon": "🌐"
+          }
+        ],
+        "layout": "horizontal",
+        "showConnections": true,
+        "theme": "space"
+      },
+      "narration": "The dashboard offers three analytical lenses: Duo Synergy for two-player efficiency, Defensive Impact for matchup analysis, and Shot Network for visualizing shot creation flows."
+    },
+    {
+      "type": "breakdown",
+      "durationInFrames": 240,
+      "props": {
+        "title": "Infrastructure Stack",
+        "concepts": [
+          {
+            "name": "NBA Proxy Worker",
+            "description": "Rate limiting + 30s KV cache",
+            "icon": "🔌"
+          },
+          {
+            "name": "D1 Database",
+            "description": "Player baselines, game archives",
+            "icon": "💾"
+          },
+          {
+            "name": "Real-time Polling",
+            "description": "30-second live updates",
+            "icon": "📡"
+          }
+        ],
+        "layout": "horizontal",
+        "theme": "space"
+      },
+      "narration": "The infrastructure includes a Cloudflare Worker proxy with rate limiting, D1 database for player baselines and game archives, and real-time polling for live updates."
+    },
+    {
+      "type": "data",
+      "durationInFrames": 300,
+      "props": {
+        "title": "Data Captured in the Database",
+        "chartType": "horizontal-bar",
+        "data": [
+          {"label": "Player Baselines (DARKO metrics)", "value": 100},
+          {"label": "Season Averages", "value": 85},
+          {"label": "Play-by-Play Archives", "value": 70},
+          {"label": "Box Score Archives", "value": 70},
+          {"label": "Daily Game Snapshots", "value": 60}
+        ],
+        "buildStyle": "bar-by-bar",
+        "insight": "Comprehensive basketball analytics stored in Cloudflare D1",
+        "theme": "space"
+      },
+      "narration": "The database captures DARKO-compatible player baselines, season averages, play-by-play archives, box scores, and daily game snapshots."
+    },
+    {
+      "type": "data",
+      "durationInFrames": 240,
+      "props": {
+        "title": "Player Baseline Metrics",
+        "chartType": "bar",
+        "data": [
+          {"label": "Offensive Rating", "value": 115},
+          {"label": "Defensive Rating", "value": 108},
+          {"label": "Usage Rate", "value": 28},
+          {"label": "True Shooting %", "value": 62}
+        ],
+        "buildStyle": "bar-by-bar",
+        "insight": "Per-100 possession metrics enable \"vs expected\" analysis",
+        "theme": "space"
+      },
+      "narration": "Player baselines include offensive and defensive ratings, usage rates, and true shooting percentages enabling versus-expected performance analysis."
+    },
+    {
+      "type": "timeline",
+      "durationInFrames": 300,
+      "props": {
+        "title": "Development Journey",
+        "events": [
+          {"year": "Jan 4", "title": "Spec Created", "description": "YAML-driven feature specs"},
+          {"year": "Jan 5", "title": "Infrastructure", "description": "Worker + D1 + Types"},
+          {"year": "Jan 8", "title": "Database Enhanced", "description": "Archives + Baselines"},
+          {"year": "Now", "title": "Live Dashboard", "description": "Real-time analytics"}
+        ],
+        "orientation": "horizontal",
+        "theme": "space"
+      },
+      "narration": "The development journey: spec creation on January 4th, infrastructure built January 5th, database enhancements on the 8th, and now a live real-time analytics dashboard."
+    },
+    {
+      "type": "intro",
+      "durationInFrames": 240,
+      "props": {
+        "hook": "Ball movement correlates with scoring: +15.8 points per game when assist rate increases.",
+        "subtitle": "Data-Driven Insight",
+        "highlightWords": ["+15.8", "points", "assist"],
+        "theme": "space"
+      },
+      "narration": "A key insight from the data: ball movement strongly correlates with scoring efficiency, with teams seeing plus 15.8 points per game when assist rates increase."
+    },
+    {
+      "type": "comparison",
+      "durationInFrames": 300,
+      "props": {
+        "title": "Traditional vs Spec-Driven Development",
+        "left": {
+          "label": "Ad-Hoc",
+          "content": "Requirements change mid-sprint",
+          "points": ["Unclear acceptance criteria", "Manual coordination", "Rework cycles"]
+        },
+        "right": {
+          "label": "Spec-Driven",
+          "content": "YAML specs guide agents",
+          "points": ["Clear acceptance tests", "Parallelizable work", "Documented methodology"]
+        },
+        "theme": "space"
+      },
+      "narration": "The comparison: traditional ad-hoc development with unclear criteria versus spec-driven development with YAML specs guiding agent-based work."
+    },
+    {
+      "type": "intro",
+      "durationInFrames": 150,
+      "props": {
+        "hook": "The dashboard works. The methodology is documented. Hypothesis validated.",
+        "subtitle": "createsomething.space/experiments/nba-live",
+        "highlightWords": ["validated"],
+        "theme": "space"
+      },
+      "narration": "The dashboard works. The methodology is documented. Hypothesis validated."
+    }
+  ],
+  "fps": 30,
+  "durationInFrames": 2400,
+  "totalDurationSeconds": 80,
+  "width": 1920,
+  "height": 1080,
+  "theme": "space"
+}
