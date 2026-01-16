@@ -178,7 +178,7 @@
 						</div>
 
 						<!-- Connector line -->
-						{#if index < milestones().length - 1}
+						{#if index < milestones.length - 1}
 							<div class="connector" class:active={milestone.status === 'completed' || milestone.status === 'rejected'}></div>
 						{/if}
 					</div>
