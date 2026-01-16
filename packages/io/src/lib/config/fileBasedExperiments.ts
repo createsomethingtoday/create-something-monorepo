@@ -588,6 +588,47 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ╚═══════════════════════════════════════════════════════════════════════╝
 `
 	},
+	{
+		id: 'file-ic-mvp-pipeline',
+		slug: 'ic-mvp-pipeline',
+		title: 'IC MVP → Webflow Components: Agentic Translation Pipeline',
+		description: 'Systematic translation of IC-built MVPs into production Webflow Code Components via agentic engineering. First validated case: Bundle Scanner translated in 3.5 hours with 95%+ design fidelity.',
+		excerpt_short: 'Translating IC MVPs to Webflow Code Components via agentic engineering',
+		excerpt_long: 'ICs build MVPs in Cursor, Claude Code, Lovable—then what? This experiment validates a pipeline for translating those MVPs into production Webflow Code Components. The Bundle Scanner (security tool for App Reviewers) translated in 3.5 hours: analysis, package creation, Shadow DOM styling, props exposure, bundle & share.',
+		category: 'research',
+		tags: ['Webflow', 'Code Components', 'DevLink', 'Agentic Engineering', 'Pipeline', 'MVP', 'Validated'],
+		created_at: '2026-01-16T00:00:00Z',
+		updated_at: '2026-01-16T00:00:00Z',
+		reading_time_minutes: 15,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'tool-complementarity', // Agent analyzes, translates; human approves, tests
+			'rams-principle-2', // Useful—MVPs become production components
+			'heidegger-zuhandenheit', // Components recede into Designer use
+			'subtractive-triad' // Remove friction from MVP → production path
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║   IC MVP → WEBFLOW CODE COMPONENTS PIPELINE                               ║
+    ║                                                               ✓ VALIDATED ║
+    ║                                                                           ║
+    ║   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌───────────┐  ║
+    ║   │   IC MVP    │    │   AGENTIC   │    │  WEBFLOW    │    │  DESIGNER │  ║
+    ║   │             │ ──▶│   ANALYSIS  │ ──▶│  COMPONENT  │ ──▶│   CANVAS  │  ║
+    ║   │ Cursor/     │    │             │    │             │    │           │  ║
+    ║   │ Claude Code │    │ Structure   │    │ .webflow.tsx│    │ Props UI  │  ║
+    ║   │ Lovable     │    │ Deps        │    │ Shadow DOM  │    │ Preview   │  ║
+    ║   └─────────────┘    │ Styling     │    │ DevLink     │    │ Publish   │  ║
+    ║                      └─────────────┘    └─────────────┘    └───────────┘  ║
+    ║                                                                           ║
+    ║   First Translation: Bundle Scanner                                       ║
+    ║   Time: 3.5 hours │ Fidelity: 95%+ │ Features: 100%                      ║
+    ║                                                                           ║
+    ║   "MVPs stop dying in Downloads folders."                                 ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+`
+	},
 ];
 
 /**
