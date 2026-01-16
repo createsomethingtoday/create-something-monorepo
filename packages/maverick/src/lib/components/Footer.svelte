@@ -32,8 +32,7 @@
 		{ href: '/oil-gas', label: 'OIL & GAS' },
 		{ href: '/mining', label: 'MINING & METALS' },
 		{ href: '/water-treatment', label: 'WATER TREATMENT' },
-		{ href: 'https://mavericklabs.pinpointhq.com/', label: 'CAREERS', external: true },
-		{ href: '/news', label: 'NEWS' }
+		{ href: 'https://jobs.lever.co/maverickx', label: 'CAREERS', external: true }
 	];
 </script>
 

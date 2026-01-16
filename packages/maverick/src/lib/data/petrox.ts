@@ -1,5 +1,5 @@
 // PetroX Solutions Data
-// Synced from React mocks - matches D1 content structure
+// Restored from Dec 29 monorepo state + Calvin's updates (Jan 2026)
 
 export const petroxSolutionsHeader = {
 	headline: 'PetroX is a portfolio of chemical solutions matched to operational needs'
@@ -12,20 +12,22 @@ export interface PetroxSolution {
 	description: string;
 	details: string;
 	image: string;
+	youtubeId?: string;
 	features: string[];
 	stats: Array<{ label: string; value: string }>;
 }
 
 export const petroxSolutions: PetroxSolution[] = [
 	{
-		id: 'eor',
-		name: 'EOR',
-		headline: 'Boost production rates by over 20% with next-generation EOR chemistry',
+		id: 'boost',
+		name: 'Boost',
+		headline: 'Boost production rates by over 20% with next-generation chemistry',
 		description:
-			'PetroX EOR is an advanced permeability enhancer for tight formations. It works by breaking down illite, smectite, and other silicate clays responsible for swelling and flow restriction in shale reservoirs.',
+			'PetroX Boost is an advanced permeability enhancer for tight formations. It works by breaking down illite, smectite, and other silicate clays responsible for swelling and flow restriction in shale reservoirs.',
 		details:
 			'The proprietary industrial chemistry disrupts the crystal lattice of clays, reducing gel formation and increasing pore space connectivity. This enables higher hydrocarbon liberation during hydraulic fracturing and post-acidizing operations.',
 		image: '/images/Production-&-EOR-LR-p-1080.png',
+		youtubeId: '2OmLauEtNkg',
 		features: [
 			'Boost production rates by over 20%',
 			'Non-hazmat chemistry',
@@ -46,7 +48,7 @@ export const petroxSolutions: PetroxSolution[] = [
 			'Advanced iron sulfide dissolution chemistry for production equipment and flowlines.',
 		details:
 			'PetroX Iron removes iron sulfide scale and deposits that form in production tubing, separators, and tanks. The chelation-based formula works at ambient temperature, avoiding the hazards and costs of traditional acid treatments while protecting infrastructure integrity.',
-		image: '/images/petrox-processing.jpg',
+		image: '/images/petrox-iron-pipes.jpg',
 		features: [
 			'Prevents iron precipitation',
 			'Protects equipment from corrosion',
@@ -67,6 +69,7 @@ export const petroxSolutions: PetroxSolution[] = [
 		details:
 			'Our scale inhibitor chemistry prevents and removes hard mineral deposits that restrict flow and reduce equipment efficiency. Effective on barite, calcite, and gypsum scale without the corrosive effects of conventional scale treatments.',
 		image: '/images/petrox-scale.jpg',
+		youtubeId: 'r5Q3GKRJF_s',
 		features: [
 			'Prevents scale formation',
 			'Removes existing deposits',
@@ -74,8 +77,8 @@ export const petroxSolutions: PetroxSolution[] = [
 			'Extends well life'
 		],
 		stats: [
-			{ label: 'Scale Prevention', value: '99%+' },
-			{ label: 'Equipment Life', value: '+50%' }
+			{ label: 'per lb scale removed', value: '90% Cheaper' },
+			{ label: 'Scale Prevention', value: '99%+' }
 		]
 	},
 	{
@@ -85,7 +88,7 @@ export const petroxSolutions: PetroxSolution[] = [
 		description: 'Paraffin wax dispersant and prevention system for cold weather operations.',
 		details:
 			'PetroX Wax prevents paraffin deposition in flowlines, wellbores, and surface equipment during low-temperature operations. The dispersant chemistry keeps wax crystals suspended, preventing buildup and maintaining flow assurance.',
-		image: '/images/petrox-offshore.jpg',
+		image: '/images/petrox-wax.jpg',
 		features: [
 			'Prevents wax crystallization',
 			'Removes existing deposits',
@@ -95,26 +98,6 @@ export const petroxSolutions: PetroxSolution[] = [
 		stats: [
 			{ label: 'Wax Prevention', value: 'Excellent' },
 			{ label: 'Flow Improvement', value: '30%+' }
-		]
-	},
-	{
-		id: 'sludge',
-		name: 'Sludge',
-		headline: 'Dissolve heavy sludge deposits at room temperature',
-		description:
-			'Dissolves iron sulfide and barium sulfate sludge deposits in tanks, separators, and produced water treatment systems.',
-		details:
-			'PetroX Sludge combines chelation chemistry with surfactant technology to break down heavy sludge accumulations. Room temperature operation eliminates the need for heating, while non-hazardous formulation ensures safe handling and reduced disposal costs.',
-		image: '/images/petrox-separation.jpg',
-		features: [
-			'Dissolves heavy sludge deposits',
-			'Non-hazardous formulation',
-			'Works at room temperature',
-			'Extends tank life'
-		],
-		stats: [
-			{ label: 'Sludge Removal', value: '90%+' },
-			{ label: 'Safety', value: 'Non-Hazmat' }
 		]
 	},
 	{
@@ -138,32 +121,13 @@ export const petroxSolutions: PetroxSolution[] = [
 		]
 	},
 	{
-		id: 'flow',
-		name: 'Flow',
-		headline: 'Maintain production rates throughout the well lifecycle',
-		description: 'Flow assurance chemistry for wellbore and production optimization.',
-		details:
-			'Comprehensive flow enhancement solution that addresses multiple production constraints including scale, wax, and emulsion issues. PetroX Flow maintains production rates and extends well life by preventing flow restriction throughout the production system.',
-		image: '/images/petrox-production.jpg',
-		features: [
-			'Prevents hydrate formation',
-			'Scale inhibition',
-			'Maintains flow rates',
-			'Pipeline protection'
-		],
-		stats: [
-			{ label: 'Flow Improvement', value: '25%+' },
-			{ label: 'Downtime Reduction', value: 'Significant' }
-		]
-	},
-	{
-		id: 'biocide',
-		name: 'Biocide',
+		id: 'microbe',
+		name: 'Microbe',
 		headline: 'Control microbial souring and corrosion in production systems',
 		description:
 			'Microbiological control for sulfate-reducing bacteria and biofilm prevention.',
 		details:
-			'PetroX Biocide controls microbial activity that leads to souring, corrosion, and hydrogen sulfide generation. The broad-spectrum formulation targets sulfate-reducing bacteria while remaining compatible with production chemistry.',
+			'PetroX Microbe controls microbial activity that leads to souring, corrosion, and hydrogen sulfide generation. The broad-spectrum formulation targets sulfate-reducing bacteria while remaining compatible with production chemistry.',
 		image: '/images/petrox-fracturing.jpg',
 		features: [
 			'Broad-spectrum efficacy',
@@ -193,25 +157,6 @@ export const petroxSolutions: PetroxSolution[] = [
 		stats: [
 			{ label: 'H₂S Removal', value: '99%+' },
 			{ label: 'Safety', value: 'Non-Toxic' }
-		]
-	},
-	{
-		id: 'sweet',
-		name: 'Sweet',
-		headline: 'Remove mercaptans and meet sweet crude specifications',
-		description: 'Sweetening chemistry for mercaptan and sulfur compound removal.',
-		details:
-			'PetroX Sweet removes mercaptans and other odorous sulfur compounds from production streams. The oxidative chemistry converts sulfur compounds to benign products, improving product quality and meeting sweet crude specifications.',
-		image: '/images/petrox-offshore.jpg',
-		features: [
-			'Removes mercaptans effectively',
-			'Eliminates odorous compounds',
-			'Oxidative chemistry',
-			'Improves crude quality'
-		],
-		stats: [
-			{ label: 'Mercaptan Removal', value: '95%+' },
-			{ label: 'Quality Improvement', value: 'Excellent' }
 		]
 	},
 	{
@@ -258,16 +203,16 @@ export const petroxOperations: PetroxOperation[] = [
 		position: { top: '46%', left: '17%' }
 	},
 	{
-		id: 'chemical-eor',
-		title: 'Chemical EOR',
+		id: 'production-enhancement',
+		title: 'Production Enhancement',
 		description:
 			'Destroys clay structures to unlock trapped oil and improve mobility in tight formations.',
 		icon: 'https://cdn.prod.website-files.com/6866bf5387f9167032e8ae4b/6895074bb0419d8f6e939f16_eor_hero.jpg',
 		position: { top: '73%', left: '19%' }
 	},
 	{
-		id: 'fracturing',
-		title: 'Fracturing & Acidizing',
+		id: 'fracking',
+		title: 'Fracking',
 		description:
 			'Improves flowback and formation permeability without affecting proppant integrity.',
 		icon: 'https://cdn.prod.website-files.com/6866bf5387f9167032e8ae4b/6895086da0ada6fb579082ad_fracturing_hero.jpg',

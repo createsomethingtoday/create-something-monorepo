@@ -283,7 +283,6 @@
 		gap: 0.75rem;
 		padding: 0.75rem 1rem;
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
-		border-radius: 0.5rem;
 		transition: all 0.2s ease;
 	}
 

@@ -638,14 +638,12 @@
 		flex: 1;
 		height: 4px;  /* h-1 */
 		background: rgba(255, 255, 255, 0.2);  /* bg-white/20 */
-		border-radius: 9999px;  /* rounded-full */
 		overflow: hidden;
 	}
 
 	.waste-progress-fill {
 		height: 100%;
 		background: #06B6D4;  /* bg-dme */
-		border-radius: 9999px;  /* rounded-full */
 		transition: width 0.5s ease-out;
 	}
 
@@ -696,7 +694,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: 9999px;  /* rounded-full */
 		border: 1px solid rgba(255, 255, 255, 0.3);  /* border-white/30 */
 		color: #ffffff;
 		transition: all 0.2s ease;

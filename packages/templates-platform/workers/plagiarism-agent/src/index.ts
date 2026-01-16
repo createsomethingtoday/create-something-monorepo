@@ -3693,147 +3693,249 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
   <link rel="icon" type="image/svg+xml" href="${faviconDataUri}">
   <link rel="apple-touch-icon" href="${faviconDataUri}">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* ==========================================================================
+       Canon Design System - CREATE SOMETHING
+       "Weniger, aber besser" - Dieter Rams
+       ========================================================================== */
+    
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --border: #1e1e2e;
-      --text: #e4e4e7;
-      --muted: #71717a;
-      --accent: #8b5cf6;
-      --code-bg: #1a1a24;
-      --match-high: #ef4444;
-      --match-med: #f59e0b;
-      --match-low: #22c55e;
+      /* Background hierarchy */
+      --color-bg-pure: #000000;
+      --color-bg-elevated: #0a0a0a;
+      --color-bg-surface: #111111;
+      --color-bg-subtle: #1a1a1a;
+      
+      /* Foreground hierarchy */
+      --color-fg-primary: #ffffff;
+      --color-fg-secondary: rgba(255, 255, 255, 0.8);
+      --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+      --color-fg-muted: rgba(255, 255, 255, 0.46);
+      --color-fg-subtle: rgba(255, 255, 255, 0.2);
+      
+      /* Borders */
+      --color-border-default: rgba(255, 255, 255, 0.1);
+      --color-border-emphasis: rgba(255, 255, 255, 0.2);
+      --color-border-strong: rgba(255, 255, 255, 0.3);
+      
+      /* Semantic colors */
+      --color-success: #44aa44;
+      --color-success-muted: rgba(68, 170, 68, 0.2);
+      --color-error: #d44d4d;
+      --color-error-muted: rgba(212, 77, 77, 0.2);
+      --color-warning: #aa8844;
+      --color-warning-muted: rgba(170, 136, 68, 0.2);
+      --color-info: #5082b9;
+      --color-info-muted: rgba(80, 130, 185, 0.2);
+      
+      /* Interactive */
+      --color-hover: rgba(255, 255, 255, 0.05);
+      --color-focus: rgba(255, 255, 255, 0.5);
+      
+      /* Typography */
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+      --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);
+      --text-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem);
+      --text-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem);
+      --text-body: 1rem;
+      --text-body-sm: 0.913rem;
+      --text-caption: 0.833rem;
+      
+      /* Spacing (Golden Ratio φ = 1.618) */
+      --space-xs: 0.618rem;
+      --space-sm: 1rem;
+      --space-md: 1.618rem;
+      --space-lg: 2.618rem;
+      
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      
+      /* Animation */
+      --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+      --duration-micro: 200ms;
+      
+      /* Line heights */
+      --leading-tight: 1.25;
+      --leading-relaxed: 1.618;
+      
+      /* Letter spacing */
+      --tracking-tight: -0.015em;
+      --tracking-widest: 0.1em;
     }
+    
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      font-size: 15px;
+      font-family: var(--font-sans);
+      font-optical-sizing: auto;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      background: var(--color-bg-pure);
+      color: var(--color-fg-primary);
+      line-height: var(--leading-relaxed);
+      font-size: var(--text-body);
       max-width: 1400px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: var(--space-lg);
+      letter-spacing: var(--tracking-tight);
     }
     
-    h1 { font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; }
-    h2 { font-size: 1.25rem; font-weight: 500; margin: 2rem 0 1rem; color: var(--text); }
-    h3 { font-size: 1rem; font-weight: 500; margin: 1.5rem 0 0.75rem; color: var(--muted); }
+    h1 { 
+      font-size: var(--text-h1); 
+      font-weight: 600; 
+      margin-bottom: var(--space-xs);
+      line-height: var(--leading-tight);
+      letter-spacing: -0.025em;
+    }
+    h2 { 
+      font-size: var(--text-h2); 
+      font-weight: 500; 
+      margin: var(--space-lg) 0 var(--space-sm); 
+      color: var(--color-fg-primary);
+    }
+    h3 { 
+      font-size: var(--text-h3); 
+      font-weight: 500; 
+      margin: var(--space-md) 0 var(--space-xs); 
+      color: var(--color-fg-muted);
+    }
     
-    .subtitle { color: var(--muted); margin-bottom: 2rem; }
+    .subtitle { color: var(--color-fg-tertiary); margin-bottom: var(--space-lg); }
     
     /* Header with similarity score */
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      margin-bottom: var(--space-lg); 
+    }
     .similarity-score {
-      font-size: 3rem;
-      font-weight: 700;
+      font-size: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);
+      font-weight: 300;
       line-height: 1;
     }
-    .similarity-score.high { color: var(--match-high); }
-    .similarity-score.medium { color: var(--match-med); }
-    .similarity-score.low { color: var(--match-low); }
-    .similarity-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .similarity-score.high { color: var(--color-error); }
+    .similarity-score.medium { color: var(--color-warning); }
+    .similarity-score.low { color: var(--color-success); }
+    .similarity-label { 
+      font-size: var(--text-caption); 
+      color: var(--color-fg-muted); 
+      text-transform: uppercase; 
+      letter-spacing: var(--tracking-widest);
+    }
     
     /* Template info cards */
     .templates-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
     }
     .template-info {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-sm) var(--space-md);
+      transition: border-color var(--duration-micro) var(--ease-standard);
+    }
+    .template-info:hover {
+      border-color: var(--color-border-emphasis);
     }
     .template-name { font-weight: 600; margin-bottom: 0.25rem; }
-    .template-url { font-size: 0.875rem; color: var(--muted); word-break: break-all; }
-    .template-url a { color: var(--accent); text-decoration: none; }
-    .template-url a:hover { text-decoration: underline; }
+    .template-url { font-size: var(--text-body-sm); color: var(--color-fg-muted); word-break: break-all; }
+    .template-url a { color: var(--color-fg-secondary); text-decoration: none; transition: opacity var(--duration-micro) var(--ease-standard); }
+    .template-url a:hover { opacity: 0.7; }
     
     /* Breakdown sparklines */
     .breakdown-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin: 1.5rem 0;
+      gap: var(--space-sm);
+      margin: var(--space-md) 0;
     }
     .breakdown-item { 
       text-align: center;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-sm);
     }
     .breakdown-bar {
       height: 6px;
-      background: var(--border);
-      border-radius: 3px;
+      background: var(--color-bg-subtle);
+      border-radius: var(--radius-sm);
       overflow: hidden;
-      margin: 0.5rem auto;
+      margin: var(--space-xs) auto;
       max-width: 100px;
     }
     .breakdown-fill {
       height: 100%;
-      border-radius: 3px;
+      border-radius: var(--radius-sm);
     }
-    .breakdown-value { font-size: 1.5rem; font-weight: 400; }
-    .breakdown-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .breakdown-value { font-size: var(--text-h2); font-weight: 300; }
+    .breakdown-label { 
+      font-size: var(--text-caption); 
+      color: var(--color-fg-muted); 
+      text-transform: uppercase; 
+      letter-spacing: 0.05em;
+    }
     
     /* Evidence section - small multiples */
     .evidence-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0;
-      border: 1px solid var(--border);
-      margin: 1rem 0;
+      border: 1px solid var(--color-border-default);
+      margin: var(--space-sm) 0;
     }
     .evidence-cell {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
-      background: var(--code-bg);
+      padding: var(--space-xs) var(--space-sm);
+      border-bottom: 1px solid var(--color-border-default);
+      font-family: var(--font-mono);
+      font-size: var(--text-caption);
+      background: var(--color-bg-subtle);
       overflow-x: auto;
       white-space: pre;
     }
-    .evidence-cell:nth-child(odd) { border-right: 1px solid var(--border); }
+    .evidence-cell:nth-child(odd) { border-right: 1px solid var(--color-border-default); }
     .evidence-header {
-      background: var(--bg);
-      font-family: 'ET Book', serif;
+      background: var(--color-bg-pure);
       font-weight: 600;
-      font-size: 0.875rem;
+      font-size: var(--text-body-sm);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .evidence-sim {
-      font-size: 0.75rem;
-      padding: 0.15rem 0.5rem;
-      border-radius: 3px;
+      font-size: var(--text-caption);
+      padding: 0.15rem var(--space-xs);
+      border-radius: var(--radius-sm);
       font-weight: 400;
     }
     
     /* Shared patterns list */
     .patterns-list {
       columns: 3;
-      column-gap: 2rem;
-      margin: 1rem 0;
+      column-gap: var(--space-lg);
+      margin: var(--space-sm) 0;
     }
     .pattern-item {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      font-size: var(--text-caption);
       padding: 0.25rem 0;
       break-inside: avoid;
     }
     .pattern-type {
       display: inline-block;
       width: 60px;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       font-size: 0.7rem;
       text-transform: uppercase;
     }
@@ -3842,14 +3944,14 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .color-swatches {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      margin: 1rem 0;
+      gap: var(--space-xs);
+      margin: var(--space-sm) 0;
     }
     .color-swatch {
       width: 2rem;
       height: 2rem;
       border-radius: 2px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--color-border-default);
       position: relative;
     }
     .color-swatch::after {
@@ -3859,135 +3961,135 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       left: 50%;
       transform: translateX(-50%);
       font-size: 0.6rem;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
       white-space: nowrap;
-      color: var(--muted);
+      color: var(--color-fg-muted);
     }
     
     /* Classes comparison */
     .classes-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 1.5rem;
-      margin: 1rem 0;
+      gap: var(--space-md);
+      margin: var(--space-sm) 0;
     }
     .classes-column h4 {
-      font-size: 0.8rem;
+      font-size: var(--text-caption);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: var(--muted);
-      margin-bottom: 0.5rem;
+      color: var(--color-fg-muted);
+      margin-bottom: var(--space-xs);
     }
     .classes-list {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: var(--text-caption);
       line-height: 1.8;
     }
-    .classes-list .shared { color: var(--match-high); }
-    .classes-list .unique { color: var(--muted); }
+    .classes-list .shared { color: var(--color-error); }
+    .classes-list .unique { color: var(--color-fg-muted); }
     
     /* Smoking Gun - Identical Rules */
     .smoking-gun {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid var(--match-high);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin: 2rem 0;
+      background: var(--color-error-muted);
+      border: 1px solid var(--color-error);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      margin: var(--space-lg) 0;
     }
     .smoking-gun-header {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-xs);
     }
-    .smoking-gun-header .icon { color: var(--match-high); }
-    .smoking-gun-header h2 { color: var(--match-high); font-size: 1.3rem; }
+    .smoking-gun-header .icon { color: var(--color-error); }
+    .smoking-gun-header h2 { color: var(--color-error); font-size: var(--text-h3); margin: 0; }
     .smoking-gun-badge {
-      background: var(--match-high);
+      background: var(--color-error);
       color: white;
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
+      padding: 0.2rem var(--space-xs);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-caption);
       font-weight: 600;
       margin-left: auto;
     }
     .smoking-gun-desc {
-      color: var(--text);
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
+      color: var(--color-fg-primary);
+      font-size: var(--text-body-sm);
+      margin-bottom: var(--space-sm);
     }
     .identical-rules {
       display: grid;
-      gap: 0.75rem;
+      gap: var(--space-xs);
     }
     .identical-rule {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      padding: var(--space-xs) var(--space-sm);
     }
     /* Visual Evidence - Side-by-side renders */
     .visual-evidence {
-      margin: 2rem 0;
+      margin: var(--space-lg) 0;
     }
     .visual-evidence h2 {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: var(--accent);
+      gap: var(--space-xs);
+      color: var(--color-fg-secondary);
     }
     .visual-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg, 12px);
-      margin: 1rem 0;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      margin: var(--space-sm) 0;
       overflow: hidden;
     }
     .visual-card-header {
-      background: var(--code-bg);
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
+      background: var(--color-bg-subtle);
+      padding: var(--space-xs) var(--space-sm);
+      border-bottom: 1px solid var(--color-border-default);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .visual-card-header code {
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent);
-      font-size: 0.9rem;
+      font-family: var(--font-mono);
+      color: var(--color-fg-secondary);
+      font-size: var(--text-body-sm);
     }
     .visual-card-header .prop-count {
-      font-size: 0.75rem;
-      color: var(--muted);
-      background: var(--border);
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+      font-size: var(--text-caption);
+      color: var(--color-fg-muted);
+      background: var(--color-bg-elevated);
+      padding: 0.2rem var(--space-xs);
+      border-radius: var(--radius-sm);
     }
     .visual-previews {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1px;
-      background: var(--border);
+      background: var(--color-border-default);
     }
     .visual-preview {
-      background: var(--bg);
-      padding: 1rem;
+      background: var(--color-bg-pure);
+      padding: var(--space-sm);
     }
     .visual-preview-label {
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: var(--muted);
-      margin-bottom: 0.5rem;
+      color: var(--color-fg-muted);
+      margin-bottom: var(--space-xs);
     }
     .visual-preview-frame {
       background: white;
-      border-radius: var(--radius-sm, 6px);
+      border-radius: var(--radius-sm);
       min-height: 100px;
       max-height: 250px;
       overflow: hidden;
-      border: 1px solid var(--border);
+      border: 1px solid var(--color-border-default);
     }
     .visual-preview-frame iframe {
       width: 100%;
@@ -3996,37 +4098,37 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       pointer-events: none;
     }
     .visual-css {
-      padding: 1rem;
-      background: var(--code-bg);
-      border-top: 1px solid var(--border);
+      padding: var(--space-sm);
+      background: var(--color-bg-subtle);
+      border-top: 1px solid var(--color-border-default);
     }
     .visual-css code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: var(--text-caption);
+      color: var(--color-fg-primary);
       display: block;
       white-space: pre-wrap;
-      line-height: 1.6;
+      line-height: var(--leading-relaxed);
     }
     
     .rule-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--space-xs);
     }
     .rule-selector {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.9rem;
+      font-family: var(--font-mono);
+      font-size: var(--text-body-sm);
       font-weight: 600;
-      color: var(--match-high);
-      background: rgba(196, 29, 29, 0.1);
+      color: var(--color-error);
+      background: var(--color-error-muted);
       padding: 0.15rem 0.4rem;
-      border-radius: 3px;
+      border-radius: var(--radius-sm);
     }
     .rule-similarity {
-      font-size: 0.75rem;
-      color: var(--muted);
+      font-size: var(--text-caption);
+      color: var(--color-fg-muted);
     }
     .rule-properties {
       display: flex;
@@ -4034,16 +4136,16 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       gap: 0.4rem;
     }
     .rule-prop {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
       font-size: 0.7rem;
-      background: var(--code-bg);
+      background: var(--color-bg-subtle);
       padding: 0.2rem 0.4rem;
-      border-radius: 3px;
-      color: var(--text);
+      border-radius: var(--radius-sm);
+      color: var(--color-fg-primary);
     }
     .rule-more {
       font-size: 0.7rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       font-style: italic;
     }
     
@@ -4051,27 +4153,27 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .properties-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1rem;
-      margin: 1rem 0;
+      gap: var(--space-sm);
+      margin: var(--space-sm) 0;
     }
     .property-group {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-sm);
     }
     .property-group-header {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      font-size: 0.9rem;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-xs);
+      font-size: var(--text-body-sm);
     }
-    .property-group-header .icon { color: var(--accent); }
+    .property-group-header .icon { color: var(--color-fg-tertiary); }
     .property-count {
-      background: var(--border);
+      background: var(--color-bg-subtle);
       padding: 0.1rem 0.4rem;
-      border-radius: 3px;
+      border-radius: var(--radius-sm);
       font-size: 0.7rem;
       margin-left: auto;
     }
@@ -4081,56 +4183,56 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       gap: 0.4rem;
     }
     .property-value {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
       font-size: 0.7rem;
-      background: var(--bg);
-      border: 1px solid var(--border);
+      background: var(--color-bg-pure);
+      border: 1px solid var(--color-border-default);
       padding: 0.2rem 0.4rem;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      color: var(--text);
+      color: var(--color-fg-primary);
     }
     .property-more {
       font-size: 0.7rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       font-style: italic;
     }
     
     /* Structural Matches - depth weighted */
     .structural-matches {
       display: grid;
-      gap: 0.5rem;
-      margin: 1rem 0;
+      gap: var(--space-xs);
+      margin: var(--space-sm) 0;
     }
     .struct-match {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--border);
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-left: 3px solid var(--color-border-default);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-md);
     }
     .struct-match.struct-page {
-      border-left-color: var(--match-high);
-      background: rgba(239, 68, 68, 0.1);
+      border-left-color: var(--color-error);
+      background: var(--color-error-muted);
     }
     .struct-match.struct-section {
-      border-left-color: var(--match-med);
-      background: rgba(245, 158, 11, 0.1);
+      border-left-color: var(--color-warning);
+      background: var(--color-warning-muted);
     }
     .struct-match.struct-component {
-      border-left-color: var(--accent);
-      background: rgba(139, 92, 246, 0.1);
+      border-left-color: var(--color-info);
+      background: var(--color-info-muted);
     }
     .struct-match.struct-element {
-      border-left-color: var(--muted);
+      border-left-color: var(--color-fg-muted);
     }
     .struct-header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-xs);
       flex-wrap: wrap;
     }
     .struct-level {
@@ -4138,25 +4240,25 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       text-transform: uppercase;
       letter-spacing: 0.05em;
       padding: 0.15rem 0.4rem;
-      border-radius: 3px;
+      border-radius: var(--radius-sm);
       font-weight: 600;
     }
-    .struct-page .struct-level { background: rgba(239, 68, 68, 0.2); color: var(--match-high); }
-    .struct-section .struct-level { background: rgba(245, 158, 11, 0.2); color: var(--match-med); }
-    .struct-component .struct-level { background: rgba(139, 92, 246, 0.2); color: var(--accent); }
-    .struct-element .struct-level { background: var(--border); color: var(--muted); }
+    .struct-page .struct-level { background: var(--color-error-muted); color: var(--color-error); }
+    .struct-section .struct-level { background: var(--color-warning-muted); color: var(--color-warning); }
+    .struct-component .struct-level { background: var(--color-info-muted); color: var(--color-info); }
+    .struct-element .struct-level { background: var(--color-bg-subtle); color: var(--color-fg-muted); }
     .struct-pattern {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      font-size: var(--text-caption);
       flex: 1;
     }
     .struct-weight {
       font-size: 0.7rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
     }
     .struct-count {
       font-size: 0.7rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       margin-left: 2rem;
     }
     
@@ -4167,8 +4269,8 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       margin: 1rem 0;
     }
     .prop-combo {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
       border-radius: 8px;
       padding: 1rem;
     }
@@ -4182,12 +4284,12 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.9rem;
       font-weight: 500;
-      color: var(--accent);
+      color: var(--color-fg-secondary);
     }
     .combo-count {
       font-size: 0.75rem;
-      color: var(--muted);
-      background: var(--border);
+      color: var(--color-fg-muted);
+      background: var(--color-bg-subtle);
       padding: 0.2rem 0.5rem;
       border-radius: 4px;
     }
@@ -4199,11 +4301,11 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .combo-prop {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.75rem;
-      color: var(--text);
-      background: var(--bg);
+      color: var(--color-fg-primary);
+      background: var(--color-bg-pure);
       padding: 0.3rem 0.5rem;
       border-radius: 4px;
-      border-left: 2px solid var(--accent);
+      border-left: 2px solid var(--color-border-emphasis);
     }
     
     /* Sidenotes - Tufte style */
@@ -4213,7 +4315,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       margin-right: -35%;
       width: 30%;
       font-size: 0.8rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       line-height: 1.4;
     }
     
@@ -4221,7 +4323,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .loading {
       text-align: center;
       padding: 4rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       font-style: italic;
     }
     
@@ -4233,12 +4335,12 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       text-decoration: none;
       font-size: 0.875rem;
       margin-bottom: 1rem;
     }
-    .back-link:hover { color: var(--accent); }
+    .back-link:hover { color: var(--color-fg-secondary); }
     
     @media (max-width: 1200px) {
       body { padding: 1.5rem; }
@@ -4339,10 +4441,10 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
             <i data-lucide="eye"></i>
             Visual Evidence
           </h2>
-          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
+          <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
             Live preview of identical CSS rules with <strong>meaningful visual styling</strong> (colors, borders, shadows, fonts).
           </p>
-          <p style="color: var(--muted); font-size: 0.75rem; margin-bottom: 1rem; opacity: 0.7;">
+          <p style="color: var(--color-fg-muted); font-size: 0.75rem; margin-bottom: 1rem; opacity: 0.7;">
             <i data-lucide="info" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i>
             Generic layout classes (containers, grids, loaders) are excluded. Only UI components shown.
           </p>
@@ -4444,7 +4546,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         
         \${data.propertyCombinations && data.propertyCombinations.length > 0 ? \`
         <h2>Property Combinations</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 1rem;">
           Rules with <strong>3+ matching properties</strong> are fingerprints. Single properties are common, 
           but specific combinations are unique design decisions.
         </p>
@@ -4465,9 +4567,9 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         
         \${data.structuralMatches && data.structuralMatches.matches.length > 0 ? \`
         <h2>Unique Structural Patterns</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 1rem;">
           Non-generic HTML patterns that appear in both templates. Common patterns like 
-          <code style="background: var(--surface); padding: 0.1rem 0.3rem; border-radius: 3px;">div[div]</code> are filtered out.
+          <code style="background: var(--color-bg-surface); padding: 0.1rem 0.3rem; border-radius: 3px;">div[div]</code> are filtered out.
           These become significant when <strong>combined with matching CSS properties</strong>.
         </p>
         <div class="structural-matches">
@@ -4486,7 +4588,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         
         \${data.breakdown.cssProperties.shared.length > 0 ? \`
         <h2>Matching Property Values</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 1rem;">
           Similar property values across different selectors — indicates shared design patterns.
         </p>
         <div class="properties-grid">
@@ -4496,7 +4598,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         
         \${data.breakdown.colors.shared.length > 0 ? \`
         <h2>Shared Color Palette</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 1rem;">
           Matching color values suggest shared design decisions or copied styles.
         </p>
         <div class="color-swatches">
@@ -4504,11 +4606,11 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         </div>
         \` : ''}
         
-        <h3 style="margin-top: 2rem; font-size: 0.9rem; color: var(--muted); font-weight: 400;">
+        <h3 style="margin-top: 2rem; font-size: 0.9rem; color: var(--color-fg-muted); font-weight: 400;">
           Class Names <span style="font-style: italic;">(low signal — easily renamed)</span>
         </h3>
         <details style="margin-top: 0.5rem;">
-          <summary style="cursor: pointer; color: var(--muted); font-size: 0.85rem;">
+          <summary style="cursor: pointer; color: var(--color-fg-muted); font-size: 0.85rem;">
             \${data.breakdown.cssClasses.shared.length} shared classes (click to expand)
           </summary>
           <div class="classes-grid" style="margin-top: 1rem;">
@@ -4542,7 +4644,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         
         \${data.evidence.codeExcerpts.length > 0 ? \`
         <h2>Code Comparison</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 1rem;">
           Side-by-side CSS rules for shared classes
         </p>
         <div class="evidence-grid">
@@ -4561,7 +4663,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         
         \${data.breakdown.cssProperties.shared.length > 0 ? \`
         <h2>Matching CSS Properties</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 1rem;">
           Custom properties, transforms, transitions, and shadows that appear in both templates
         </p>
         <div class="patterns-list">
@@ -4575,7 +4677,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     
     function renderBreakdownItem(label, similarity) {
       const percent = (similarity * 100).toFixed(0);
-      const color = similarity > 0.5 ? 'var(--match-high)' : similarity > 0.3 ? 'var(--match-med)' : 'var(--match-low)';
+      const color = similarity > 0.5 ? 'var(--color-error)' : similarity > 0.3 ? 'var(--color-warning)' : 'var(--color-success)';
       return \`
         <div class="breakdown-item">
           <div class="breakdown-value">\${percent}%</div>
@@ -4644,7 +4746,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         \`;
       }
       
-      return html || '<p style="color: var(--muted);">No significant property matches found.</p>';
+      return html || '<p style="color: var(--color-fg-muted);">No significant property matches found.</p>';
     }
     
     function escapeHtml(str) {
@@ -5263,8 +5365,8 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Space Grotesk', sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: var(--color-bg-pure);
+      color: var(--color-fg-primary);
       line-height: 1.6;
       min-height: 100vh;
     }
@@ -5276,7 +5378,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     header {
       margin-bottom: 2rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--color-border-default);
     }
     h1 {
       font-size: 1.5rem;
@@ -5290,10 +5392,10 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
       display: grid;
       gap: 0.5rem;
       font-size: 0.9rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
     }
     .case-info a {
-      color: var(--accent);
+      color: var(--color-fg-secondary);
       text-decoration: none;
     }
     .case-info a:hover {
@@ -5307,7 +5409,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
       align-items: center;
       gap: 0.5rem;
       padding: 0.75rem 1.5rem;
-      background: var(--accent);
+      background: var(--color-fg-primary);
       color: white;
       border: none;
       border-radius: 8px;
@@ -5325,8 +5427,8 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     }
     .result {
       display: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
       border-radius: 12px;
       padding: 1.5rem;
       margin: 2rem 0;
@@ -5357,7 +5459,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     }
     .verdict-no_baseline {
       background: rgba(115, 115, 115, 0.2);
-      color: var(--muted);
+      color: var(--color-fg-muted);
     }
     .metrics {
       display: grid;
@@ -5366,7 +5468,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
       margin: 1.5rem 0;
     }
     .metric {
-      background: var(--bg);
+      background: var(--color-bg-pure);
       border-radius: 8px;
       padding: 1rem;
       text-align: center;
@@ -5378,7 +5480,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     }
     .metric-label {
       font-size: 0.8rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
       margin-top: 0.25rem;
     }
     .metric-change {
@@ -5388,8 +5490,8 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     .metric-change.positive { color: var(--success); }
     .metric-change.negative { color: var(--danger); }
     .explanation {
-      background: var(--bg);
-      border-left: 3px solid var(--accent);
+      background: var(--color-bg-pure);
+      border-left: 3px solid var(--color-border-emphasis);
       padding: 1rem;
       margin: 1rem 0;
       font-size: 0.95rem;
@@ -5406,8 +5508,8 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
       gap: 0.5rem;
     }
     .history-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
       border-radius: 8px;
       padding: 1rem;
       margin-bottom: 0.75rem;
@@ -5417,7 +5519,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     }
     .history-date {
       font-size: 0.85rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
     }
     .history-metrics {
       display: flex;
@@ -5429,7 +5531,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
       display: none;
       align-items: center;
       gap: 0.5rem;
-      color: var(--muted);
+      color: var(--color-fg-muted);
     }
     .loading.show {
       display: flex;
@@ -5472,7 +5574,7 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
     <div class="result" id="result">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <span class="verdict-badge" id="verdict-badge"></span>
-        <span style="color: var(--muted); font-size: 0.85rem;" id="scan-time"></span>
+        <span style="color: var(--color-fg-muted); font-size: 0.85rem;" id="scan-time"></span>
       </div>
       
       <div class="metrics">
@@ -5607,136 +5709,407 @@ function serveDashboard(env: Env): Response {
   <link rel="icon" type="image/svg+xml" href="${faviconDataUri}">
   <link rel="apple-touch-icon" href="${faviconDataUri}">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* ==========================================================================
+       Canon Design System - CREATE SOMETHING
+       "Weniger, aber besser" - Dieter Rams
+       ========================================================================== */
+    
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --border: #1e1e2e;
-      --text: #e4e4e7;
-      --muted: #71717a;
-      --accent: #8b5cf6;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      /* Background hierarchy */
+      --color-bg-pure: #000000;
+      --color-bg-elevated: #0a0a0a;
+      --color-bg-surface: #111111;
+      --color-bg-subtle: #1a1a1a;
+      
+      /* Foreground hierarchy */
+      --color-fg-primary: #ffffff;
+      --color-fg-secondary: rgba(255, 255, 255, 0.8);
+      --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+      --color-fg-muted: rgba(255, 255, 255, 0.46);
+      --color-fg-subtle: rgba(255, 255, 255, 0.2);
+      
+      /* Borders */
+      --color-border-default: rgba(255, 255, 255, 0.1);
+      --color-border-emphasis: rgba(255, 255, 255, 0.2);
+      --color-border-strong: rgba(255, 255, 255, 0.3);
+      
+      /* Semantic colors */
+      --color-success: #44aa44;
+      --color-success-muted: rgba(68, 170, 68, 0.2);
+      --color-error: #d44d4d;
+      --color-error-muted: rgba(212, 77, 77, 0.2);
+      --color-warning: #aa8844;
+      --color-warning-muted: rgba(170, 136, 68, 0.2);
+      --color-info: #5082b9;
+      --color-info-muted: rgba(80, 130, 185, 0.2);
+      
+      /* Interactive */
+      --color-hover: rgba(255, 255, 255, 0.05);
+      --color-active: rgba(255, 255, 255, 0.1);
+      --color-focus: rgba(255, 255, 255, 0.5);
+      
+      /* Typography - Golden Ratio */
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+      --text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);
+      --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);
+      --text-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem);
+      --text-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem);
+      --text-body: 1rem;
+      --text-body-sm: 0.913rem;
+      --text-caption: 0.833rem;
+      
+      /* Spacing - Golden Ratio (φ = 1.618) */
+      --space-xs: 0.618rem;
+      --space-sm: 1rem;
+      --space-md: 1.618rem;
+      --space-lg: 2.618rem;
+      --space-xl: 4.236rem;
+      
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --radius-full: 9999px;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      
+      /* Animation */
+      --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+      --duration-micro: 200ms;
+      --duration-standard: 300ms;
+      
+      /* Line heights */
+      --leading-tight: 1.25;
+      --leading-relaxed: 1.618;
+      
+      /* Letter spacing */
+      --tracking-tight: -0.015em;
+      --tracking-widest: 0.1em;
     }
+    
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      padding: 2rem;
+      font-family: var(--font-sans);
+      font-optical-sizing: auto;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: var(--color-bg-pure);
+      color: var(--color-fg-primary);
+      line-height: var(--leading-relaxed);
+      padding: var(--space-lg);
+      letter-spacing: var(--tracking-tight);
     }
+    
     .container { max-width: 1400px; margin: 0 auto; }
-    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-    .subtitle { color: var(--muted); margin-bottom: 2rem; }
+    
+    h1 { 
+      font-size: var(--text-h1); 
+      font-weight: 600;
+      line-height: var(--leading-tight);
+      letter-spacing: -0.025em;
+    }
+    
+    h2 {
+      font-size: var(--text-h2);
+      font-weight: 600;
+      line-height: var(--leading-tight);
+    }
+    
+    .subtitle { 
+      color: var(--color-fg-tertiary); 
+      font-size: var(--text-body);
+      margin-bottom: var(--space-lg); 
+    }
+    
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
     }
+    
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      transition: border-color var(--duration-micro) var(--ease-standard);
     }
-    .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--accent); }
-    .stat-label { color: var(--muted); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .section { margin-bottom: 2rem; }
-    .section-title { font-size: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    
+    .stat-card:hover {
+      border-color: var(--color-border-emphasis);
+    }
+    
+    .stat-value { 
+      font-size: var(--text-display); 
+      font-weight: 300;
+      color: var(--color-fg-primary);
+      line-height: 1;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .stat-label { 
+      color: var(--color-fg-muted); 
+      font-size: var(--text-caption); 
+      text-transform: uppercase; 
+      letter-spacing: var(--tracking-widest);
+    }
+    
+    .section { margin-bottom: var(--space-lg); }
+    
+    .section-title { 
+      font-size: var(--text-h3); 
+      margin-bottom: var(--space-sm); 
+      display: flex; 
+      align-items: center; 
+      gap: var(--space-xs);
+      color: var(--color-fg-secondary);
+    }
+    
     .badge {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 9999px;
+      font-size: var(--text-caption);
+      padding: 0.25rem var(--space-xs);
+      border-radius: var(--radius-full);
       font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .badge-high { background: rgba(239,68,68,0.2); color: var(--danger); }
-    .badge-medium { background: rgba(245,158,11,0.2); color: var(--warning); }
-    .badge-low { background: rgba(34,197,94,0.2); color: var(--success); }
+    
+    .badge-high { 
+      background: var(--color-error-muted); 
+      color: var(--color-error); 
+    }
+    .badge-medium { 
+      background: var(--color-warning-muted); 
+      color: var(--color-warning); 
+    }
+    .badge-low { 
+      background: var(--color-success-muted); 
+      color: var(--color-success); 
+    }
+    
     .table-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
       overflow: hidden;
     }
+    
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-    th { background: rgba(255,255,255,0.02); color: var(--muted); font-weight: 500; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    
+    th, td { 
+      padding: var(--space-sm); 
+      text-align: left; 
+      border-bottom: 1px solid var(--color-border-default); 
+    }
+    
+    th { 
+      background: var(--color-bg-elevated); 
+      color: var(--color-fg-muted); 
+      font-weight: 500; 
+      font-size: var(--text-caption); 
+      text-transform: uppercase; 
+      letter-spacing: var(--tracking-widest);
+    }
+    
     tr:last-child td { border-bottom: none; }
-    tr:hover { background: rgba(255,255,255,0.02); }
+    
+    tr:hover { background: var(--color-hover); }
+    
     .similarity-bar {
       width: 100px;
-      height: 8px;
-      background: var(--border);
-      border-radius: 4px;
+      height: 6px;
+      background: var(--color-bg-subtle);
+      border-radius: var(--radius-sm);
       overflow: hidden;
     }
+    
     .similarity-fill {
       height: 100%;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
+      transition: width var(--duration-standard) var(--ease-standard);
     }
+    
     .cluster-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      margin-bottom: var(--space-sm);
+      transition: all var(--duration-micro) var(--ease-standard);
     }
+    
+    .cluster-card:hover {
+      border-color: var(--color-border-emphasis);
+      transform: translateX(2px);
+    }
+    
     .cluster-templates {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
+      gap: var(--space-xs);
+      margin-top: var(--space-xs);
     }
+    
     .template-pill {
-      background: var(--border);
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.875rem;
+      background: var(--color-bg-subtle);
+      padding: 0.25rem var(--space-xs);
+      border-radius: var(--radius-full);
+      font-size: var(--text-body-sm);
+      color: var(--color-fg-secondary);
+      transition: all var(--duration-micro) var(--ease-standard);
     }
+    
+    .template-pill:hover {
+      background: var(--color-border-emphasis);
+      color: var(--color-fg-primary);
+    }
+    
     .scan-form {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      margin-bottom: var(--space-lg);
     }
-    .form-row { display: flex; gap: 1rem; }
+    
+    .form-row { display: flex; gap: var(--space-sm); }
+    
     input[type="text"] {
       flex: 1;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      color: var(--text);
-      font-size: 1rem;
+      background: var(--color-bg-pure);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      padding: var(--space-xs) var(--space-sm);
+      color: var(--color-fg-primary);
+      font-size: var(--text-body);
+      font-family: var(--font-sans);
+      transition: border-color var(--duration-micro) var(--ease-standard);
     }
-    input[type="text"]:focus { outline: none; border-color: var(--accent); }
+    
+    input[type="text"]::placeholder {
+      color: var(--color-fg-muted);
+    }
+    
+    input[type="text"]:focus { 
+      outline: none; 
+      border-color: var(--color-focus);
+    }
+    
     button {
-      background: var(--accent);
-      color: white;
+      background: var(--color-fg-primary);
+      color: var(--color-bg-pure);
       border: none;
-      border-radius: 8px;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
+      border-radius: var(--radius-md);
+      padding: var(--space-xs) var(--space-md);
+      font-size: var(--text-body);
       font-weight: 500;
+      font-family: var(--font-sans);
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all var(--duration-micro) var(--ease-standard);
     }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .loading { animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    #scan-results { margin-top: 1rem; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .icon { display: inline-flex; align-items: center; justify-content: center; }
-    .icon svg { width: 1.25em; height: 1.25em; stroke-width: 2; }
+    
+    button:hover { 
+      opacity: 0.8;
+    }
+    
+    button:active {
+      transform: scale(0.98);
+    }
+    
+    button:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed; 
+    }
+    
+    .loading { 
+      animation: pulse 1.5s var(--ease-standard) infinite; 
+    }
+    
+    @keyframes pulse { 
+      0%, 100% { opacity: 1; } 
+      50% { opacity: 0.5; } 
+    }
+    
+    #scan-results { margin-top: var(--space-sm); }
+    
+    a { 
+      color: var(--color-fg-secondary); 
+      text-decoration: none;
+      transition: opacity var(--duration-micro) var(--ease-standard);
+    }
+    
+    a:hover { 
+      opacity: 0.7;
+    }
+    
+    .icon { 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center;
+      color: var(--color-fg-tertiary);
+    }
+    
+    .icon svg { 
+      width: 1.25em; 
+      height: 1.25em; 
+      stroke-width: 1.5; 
+    }
+    
     h1 .icon svg { width: 1.5em; height: 1.5em; }
-    .section-title .icon { color: var(--accent); }
-    .header-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+    
+    .section-title .icon { color: var(--color-fg-muted); }
+    
+    .header-row { 
+      display: flex; 
+      align-items: center; 
+      gap: var(--space-xs); 
+      margin-bottom: var(--space-xs); 
+    }
+    
+    /* Code elements */
+    code, .mono {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+    }
+    
+    /* Focus states */
+    *:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+    
+    /* Selection */
+    ::selection {
+      background-color: var(--color-focus);
+      color: var(--color-fg-primary);
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      background-color: var(--color-bg-pure);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--color-bg-surface);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--color-fg-muted);
+    }
   </style>
 </head>
 <body>
@@ -5774,7 +6147,7 @@ function serveDashboard(env: Env): Response {
     </div>
     
     <div class="section">
-      <h2 class="section-title"><span class="icon" style="color: var(--warning);"><i data-lucide="alert-triangle"></i></span> Suspicious Pairs</h2>
+      <h2 class="section-title"><span class="icon" style="color: var(--color-warning);"><i data-lucide="alert-triangle"></i></span> Suspicious Pairs</h2>
       <div class="table-container">
         <table>
           <thead>
@@ -5856,7 +6229,7 @@ function serveDashboard(env: Env): Response {
             <td><a href="\${p.template2.url}" target="_blank">\${p.template2.name}</a></td>
             <td>
               <div class="similarity-bar">
-                <div class="similarity-fill" style="width: \${p.similarity * 100}%; background: \${p.similarity > 0.7 ? 'var(--danger)' : p.similarity > 0.5 ? 'var(--warning)' : 'var(--success)'}"></div>
+                <div class="similarity-fill" style="width: \${p.similarity * 100}%; background: \${p.similarity > 0.7 ? 'var(--color-error)' : p.similarity > 0.5 ? 'var(--color-warning)' : 'var(--color-success)'}"></div>
               </div>
               \${(p.similarity * 100).toFixed(0)}%
             </td>
@@ -5912,7 +6285,7 @@ function serveDashboard(env: Env): Response {
         }).then(r => r.json());
         
         if (data.error) {
-          resultsEl.innerHTML = \`<div style="color: var(--danger)">Error: \${data.error}</div>\`;
+          resultsEl.innerHTML = \`<div style="color: var(--color-error)">Error: \${data.error}</div>\`;
           return;
         }
         
@@ -5920,10 +6293,10 @@ function serveDashboard(env: Env): Response {
         const scannedId = url.replace(/https?:\\/\\//, '').replace(/\\.webflow\\.io\\/?.*/, '').replace(/[^a-z0-9-]/gi, '-');
         
         resultsEl.innerHTML = \`
-          <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 8px;">
+          <div style="margin-top: var(--space-sm); padding: var(--space-sm); background: var(--color-bg-elevated); border-radius: var(--radius-md); border: 1px solid var(--color-border-default);">
             <strong>\${data.recommendation}</strong>
             \${data.matches.length > 0 ? \`
-              <table style="margin-top: 1rem; width: 100%;">
+              <table style="margin-top: var(--space-sm); width: 100%;">
                 <thead><tr><th>Template</th><th>Similarity</th><th>Details</th></tr></thead>
                 <tbody>
                   \${data.matches.slice(0, 10).map(m => \`
@@ -5940,7 +6313,7 @@ function serveDashboard(env: Env): Response {
         \`;
         lucide.createIcons();
       } catch (e) {
-        resultsEl.innerHTML = \`<div style="color: var(--danger)">Failed to scan: \${e.message}</div>\`;
+        resultsEl.innerHTML = \`<div style="color: var(--color-error)">Failed to scan: \${e.message}</div>\`;
       }
     }
     

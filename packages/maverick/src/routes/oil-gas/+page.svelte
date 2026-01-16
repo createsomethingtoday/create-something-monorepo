@@ -28,18 +28,18 @@
 
 	// Hero content with CMS overrides
 	const heroTitle = content?.hero?.title ?? 'Targeted Non-Hazmat Chemistry';
-	const heroSubtitle = content?.hero?.subtitle ?? 'Boost production and slash costs with PetroX—advanced chelation chemistry for enhanced oil recovery, sludge remediation, and water treatment';
+	const heroSubtitle = content?.hero?.subtitle ?? 'Boost production and slash costs with PetroX™ — Advanced non-hazmat chemistry for superior oilfield operations';
 	const heroVideo = content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/082466515-oil-rig-pumpjack-working-natur.mp4';
 	const heroCta = content?.hero?.cta ?? 'Learn More';
 
 	// Why PetroX section with CMS overrides
-	const whyTitle = content?.why?.title ?? 'Why PetroX?';
+	const whyTitle = content?.why?.title ?? 'Why PetroX™?';
 	const whySubtitle = content?.why?.subtitle ?? 'Industry-leading oilfield chemistry that delivers results without the downsides of traditional treatments.';
 	const whyFeatures = content?.whyFeatures ?? [
-		{ icon: 'thermometer', title: 'Room Temperature Operation' },
-		{ icon: 'shield-check', title: 'Non-Hazardous' },
+		{ icon: 'zap', title: 'Superior Performance' },
+		{ icon: 'shield-check', title: 'Non-Hazmat' },
 		{ icon: 'wrench', title: 'Infrastructure-Safe' },
-		{ icon: 'clock', title: 'Non-Disruptive' }
+		{ icon: 'clock', title: 'Minimal Downtime' }
 	];
 
 	// Section headers with CMS overrides
@@ -54,6 +54,7 @@
 		description: solution.description,
 		details: solution.details,
 		image: solution.image,
+		youtubeId: solution.youtubeId,
 		features: solution.features,
 		stats: solution.stats
 	}));
@@ -63,7 +64,7 @@
 
 <svelte:head>
 	<title>PetroX | Oil & Gas Chemistry Solutions | Maverick X</title>
-	<meta name="description" content="Advanced oilfield chemistry solutions for enhanced recovery, sludge remediation, production optimization, and well stimulation. PetroX delivers proven results for the oil & gas industry." />
+	<meta name="description" content="Advanced oilfield chemistry solutions for enhanced recovery, production optimization, and well stimulation. PetroX delivers proven results for the oil & gas industry." />
 </svelte:head>
 
 <!-- Hero Section (Main) -->
@@ -120,11 +121,11 @@
 				>
 					<div class="why-icon-wrapper">
 						<div class="why-icon-bg">
-							{#if feature.icon === 'thermometer'}
-								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-									<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>
-								</svg>
-							{:else if feature.icon === 'shield-check'}
+						{#if feature.icon === 'zap'}
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
+								<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path>
+							</svg>
+						{:else if feature.icon === 'shield-check'}
 								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
 									<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
 									<path d="m9 12 2 2 4-4"></path>

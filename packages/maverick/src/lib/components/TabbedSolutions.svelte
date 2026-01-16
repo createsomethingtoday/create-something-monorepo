@@ -16,6 +16,7 @@
 		description: string;
 		details: string;
 		image: string;
+		youtubeId?: string;
 		features?: string[];
 		stats?: Array<{ label: string; value: string }>;
 	}
@@ -40,8 +41,17 @@
 	let mobileOpen = $state(false);
 	let visible = $state(false);
 	let contentVisible = $state(false);
+	let videoModalOpen = $state(false);
 
 	const activeSolution = $derived(solutions.find((s) => s.id === activeTab));
+
+	function openVideoModal() {
+		videoModalOpen = true;
+	}
+
+	function closeVideoModal() {
+		videoModalOpen = false;
+	}
 
 	function handleTabChange(id: string) {
 		contentVisible = false;
@@ -280,13 +290,38 @@
 							/>
 						</div>
 
-						<!-- Right Column: Image Card -->
+						<!-- Right Column: Image/Video Card -->
 						<div class="image-card">
-							<img
-								src={activeSolution.image}
-								alt="{productPrefix} {activeSolution.name} product visualization"
-								class="image-content"
-							/>
+							{#if activeSolution.youtubeId}
+								<!-- YouTube Video Thumbnail with Play Button -->
+								<button
+									type="button"
+									class="video-thumbnail-btn"
+									onclick={openVideoModal}
+									aria-label="Play video"
+								>
+									<img
+										src="https://img.youtube.com/vi/{activeSolution.youtubeId}/sddefault.jpg"
+										alt="{productPrefix} {activeSolution.name} product video"
+										class="image-content"
+									/>
+									<div class="video-overlay"></div>
+									<div class="video-play-btn">
+										<svg class="play-icon" fill="currentColor" viewBox="0 0 24 24">
+											<path d="M8 5v14l11-7z"></path>
+										</svg>
+									</div>
+									<div class="video-label">
+										<span>Watch Video</span>
+									</div>
+								</button>
+							{:else}
+								<img
+									src={activeSolution.image}
+									alt="{productPrefix} {activeSolution.name} product visualization"
+									class="image-content"
+								/>
+							{/if}
 						</div>
 					</div>
 				{/key}
@@ -294,6 +329,41 @@
 		</div>
 	</div>
 </section>
+
+<!-- Video Modal -->
+{#if videoModalOpen && activeSolution?.youtubeId}
+	<div
+		class="video-modal-backdrop"
+		onclick={closeVideoModal}
+		onkeydown={(e) => e.key === 'Escape' && closeVideoModal()}
+		role="button"
+		tabindex="0"
+		aria-label="Close video"
+	>
+		<div class="video-modal-content" onclick={(e) => e.stopPropagation()}>
+			<button
+				type="button"
+				class="video-modal-close"
+				onclick={closeVideoModal}
+				aria-label="Close video"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M18 6 6 18"></path>
+					<path d="m6 6 12 12"></path>
+				</svg>
+			</button>
+			<div class="video-wrapper">
+				<iframe
+					src="https://www.youtube.com/embed/{activeSolution.youtubeId}?autoplay=1"
+					title="{productPrefix} {activeSolution.name} video"
+					frameborder="0"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+					allowfullscreen
+				></iframe>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.solutions-section {
@@ -737,5 +807,127 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+	}
+
+	/* Video Thumbnail */
+	.video-thumbnail-btn {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		cursor: pointer;
+		border: none;
+		padding: 0;
+		background: none;
+	}
+
+	.video-thumbnail-btn:hover .image-content {
+		transform: scale(1.05);
+	}
+
+	.video-thumbnail-btn .image-content {
+		transition: transform 0.5s ease;
+	}
+
+	.video-overlay {
+		position: absolute;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.2);
+		transition: background 0.3s ease;
+	}
+
+	.video-thumbnail-btn:hover .video-overlay {
+		background: rgba(0, 0, 0, 0.3);
+	}
+
+	.video-play-btn {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 5rem;
+		height: 5rem;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.9);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+		transition: all 0.3s ease;
+	}
+
+	.video-thumbnail-btn:hover .video-play-btn {
+		background: #ffffff;
+		transform: translate(-50%, -50%) scale(1.1);
+	}
+
+	.play-icon {
+		width: 2rem;
+		height: 2rem;
+		color: #ff7a00;
+		margin-left: 0.25rem;
+	}
+
+	.video-label {
+		position: absolute;
+		bottom: 1rem;
+		left: 1rem;
+		padding: 0.375rem 0.75rem;
+		background: rgba(0, 0, 0, 0.7);
+	}
+
+	.video-label span {
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: #ffffff;
+		letter-spacing: 0.025em;
+	}
+
+	/* Video Modal */
+	.video-modal-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		background: rgba(0, 0, 0, 0.95);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+	}
+
+	.video-modal-content {
+		position: relative;
+		width: 100%;
+		max-width: 64rem;
+	}
+
+	.video-modal-close {
+		position: absolute;
+		top: -3rem;
+		right: 0;
+		color: #ffffff;
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 0.5rem;
+		transition: opacity 0.2s ease;
+	}
+
+	.video-modal-close:hover {
+		opacity: 0.7;
+	}
+
+	.video-wrapper {
+		position: relative;
+		padding-bottom: 56.25%; /* 16:9 aspect ratio */
+		height: 0;
+		overflow: hidden;
+	}
+
+	.video-wrapper iframe {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
 	}
 </style>

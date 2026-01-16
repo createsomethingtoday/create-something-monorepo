@@ -76,31 +76,25 @@
 
 	// PetroX products
 	const petroxProducts = [
-		{ id: 'eor', title: 'EOR' },
+		{ id: 'boost', title: 'Boost' },
 		{ id: 'iron', title: 'Iron' },
 		{ id: 'scale', title: 'Scale' },
 		{ id: 'wax', title: 'Wax' },
-		{ id: 'sludge', title: 'Sludge' },
 		{ id: 'clear', title: 'Clear' },
-		{ id: 'flow', title: 'Flow' },
-		{ id: 'biocide', title: 'Biocide' },
+		{ id: 'microbe', title: 'Microbe' },
 		{ id: 'h2s', title: 'H₂S' },
-		{ id: 'sweet', title: 'Sweet' },
 		{ id: 'custom', title: 'Custom' }
 	];
 
 	// PetroX applications
 	const petroxApplications = [
-		{ id: 'eor', title: 'EOR' },
+		{ id: 'boost', title: 'Boost' },
 		{ id: 'iron', title: 'Iron' },
 		{ id: 'scale', title: 'Scale' },
 		{ id: 'wax', title: 'Wax' },
-		{ id: 'sludge', title: 'Sludge' },
 		{ id: 'clear', title: 'Clear' },
-		{ id: 'flow', title: 'Flow' },
-		{ id: 'biocide', title: 'Biocide' },
+		{ id: 'microbe', title: 'Microbe' },
 		{ id: 'h2s', title: 'H₂S' },
-		{ id: 'sweet', title: 'Sweet' },
 		{ id: 'custom', title: 'Custom' }
 	];
 

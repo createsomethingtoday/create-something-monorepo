@@ -1,0 +1,7 @@
+{
+  "last_failure": "2026-01-15T09:23:13.786242-06:00",
+  "failure_count": 1,
+  "backoff_until": "2026-01-15T09:23:43.786243-06:00",
+  "needs_manual_sync": false,
+  "failure_reason": "git pull failed in worktree: exit status 128\nFrom https://github.com/createsomethingtoday/create-something-monorepo\n * branch              beads-sync -\u003e FETCH_HEAD\nwarning: fetch updated the current branch head.\nfast-forwarding your working tree from\ncommit 29989c742533157e0b90f9b708e4fcdf0abf3afa.\nerror: Your local changes to the following files would be overwritten by merge:\n\t.beads/issues.jsonl\nPlease commit your changes or stash them before you merge.\nAborting\nfatal: Cannot fast-forward your working tree.\nAfter making sure that you saved anything precious from\n$ git diff 29989c742533157e0b90f9b708e4fcdf0abf3afa\noutput, run\n$ git reset --hard\nto recover.\n"
+}

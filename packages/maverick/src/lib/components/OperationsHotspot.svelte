@@ -251,7 +251,6 @@
 		gap: 8px;
 		background: rgba(255, 255, 255, 0.95);
 		border: 1px solid rgba(255, 255, 255, 0.2);
-		border-radius: 20px;
 		padding: 10px 19px 10px 14px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		transition: all 0.05s ease;
@@ -399,7 +398,6 @@
 		.pill-button {
 			padding: 12px 22px 12px 17px;
 			min-height: 48px;
-			border-radius: 22px;
 			max-width: 288px;
 			justify-content: center;
 		}
@@ -549,7 +547,6 @@
 			width: 100%;
 			max-width: 340px;
 			background: white;
-			border-radius: 16px;
 			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 			margin: 16px auto;
 			overflow: hidden;

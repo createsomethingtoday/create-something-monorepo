@@ -91,8 +91,7 @@
 		{ href: '/oil-gas', label: 'Oil & Gas', external: false },
 		{ href: '/mining', label: 'Mining & Metals', external: false },
 		{ href: '/water-treatment', label: 'Water Treatment', external: false },
-		{ href: 'https://jobs.lever.co/maverickx', label: 'Careers', external: true },
-		{ href: '/news', label: 'News', external: false }
+		{ href: 'https://jobs.lever.co/maverickx', label: 'Careers', external: true }
 	];
 
 	function toggleMobileMenu() {
