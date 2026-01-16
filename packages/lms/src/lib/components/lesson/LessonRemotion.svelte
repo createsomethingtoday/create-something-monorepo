@@ -25,7 +25,16 @@
 	const duration = spec?.duration ?? 5000;
 
 	let isPlaying = $state(false);
+	let hasInitialized = $state(false);
 	let progress = tweened(0, { duration, easing: cubicOut });
+	
+	// Ensure proper initialization after mount
+	$effect(() => {
+		if (!hasInitialized) {
+			progress.set(0, { duration: 0 });
+			hasInitialized = true;
+		}
+	});
 
 	function play() {
 		if (isPlaying) return;
@@ -59,38 +68,41 @@
 	});
 
 	// Phase and reveal from spec
-	const currentPhase = $derived(spec ? getCurrentPhase(spec, $progress) : null);
-	const revealOpacity = $derived(spec ? getRevealOpacity(spec, $progress) : 0);
+	const currentPhase = $derived(spec ? getCurrentPhase(spec, p) : null);
+	const revealOpacity = $derived(spec ? getRevealOpacity(spec, p) : 0);
+
+	// Use explicit progress value, defaulting to 0 for start state
+	const p = $derived(hasInitialized ? $progress : 0);
 
 	// ============================================
 	// TOOL RECEDING ANIMATION
 	// Keyframes from spec: motion-studio/src/specs/tool-receding.ts
 	// ============================================
 	const hammerOpacity = $derived(
-		$progress < 0.2 ? 1 :
-		$progress < 0.6 ? 1 - (($progress - 0.2) / 0.4) * 0.7 :
-		Math.max(0, 0.3 - (($progress - 0.6) / 0.4) * 0.3)
+		p < 0.2 ? 1 :
+		p < 0.6 ? 1 - ((p - 0.2) / 0.4) * 0.7 :
+		Math.max(0, 0.3 - ((p - 0.6) / 0.4) * 0.3)
 	);
 	const hammerScale = $derived(
-		$progress < 0.2 ? 1 :
-		$progress < 0.6 ? 1 - (($progress - 0.2) / 0.4) * 0.2 :
+		p < 0.2 ? 1 :
+		p < 0.6 ? 1 - ((p - 0.2) / 0.4) * 0.2 :
 		0.8
 	);
 	const hammerBlur = $derived(
-		$progress < 0.2 ? 0 :
-		$progress < 0.6 ? (($progress - 0.2) / 0.4) * 8 :
+		p < 0.2 ? 0 :
+		p < 0.6 ? ((p - 0.2) / 0.4) * 8 :
 		8
 	);
 	const nailProgress = $derived(
-		$progress < 0.2 ? 0 :
-		$progress < 0.8 ? (($progress - 0.2) / 0.6) :
+		p < 0.2 ? 0 :
+		p < 0.8 ? ((p - 0.2) / 0.6) :
 		1
 	);
 	const focusRingOpacity = $derived(
-		$progress < 0.2 ? 0 :
-		$progress < 0.4 ? (($progress - 0.2) / 0.2) * 0.6 :
-		$progress < 0.6 ? 0.6 :
-		$progress < 0.8 ? 0.6 - (($progress - 0.6) / 0.2) * 0.6 :
+		p < 0.2 ? 0 :
+		p < 0.4 ? ((p - 0.2) / 0.2) * 0.6 :
+		p < 0.6 ? 0.6 :
+		p < 0.8 ? 0.6 - ((p - 0.6) / 0.2) * 0.6 :
 		0
 	);
 
@@ -98,13 +110,13 @@
 	// IDE VS TERMINAL ANIMATION
 	// Keyframes from spec: motion-studio/src/specs/ide-vs-terminal.ts
 	// ============================================
-	const sidebarOpacity = $derived(Math.max(0, 1 - ($progress * 4)));
-	const tabsOpacity = $derived(Math.max(0, 1 - (($progress - 0.1) * 4)));
-	const statusBarOpacity = $derived(Math.max(0, 1 - (($progress - 0.2) * 4)));
-	const lineNumbersOpacity = $derived(Math.max(0, 1 - (($progress - 0.25) * 4)));
-	const minimapOpacity = $derived(Math.max(0, 1 - (($progress - 0.3) * 4)));
-	const editorBgOpacity = $derived(Math.max(0, 1 - (($progress - 0.4) * 2.5)));
-	const terminalOpacity = $derived(Math.min(1, Math.max(0, ($progress - 0.5) * 3)));
+	const sidebarOpacity = $derived(Math.max(0, 1 - (p * 4)));
+	const tabsOpacity = $derived(Math.max(0, 1 - ((p - 0.1) * 4)));
+	const statusBarOpacity = $derived(Math.max(0, 1 - ((p - 0.2) * 4)));
+	const lineNumbersOpacity = $derived(Math.max(0, 1 - ((p - 0.25) * 4)));
+	const minimapOpacity = $derived(Math.max(0, 1 - ((p - 0.3) * 4)));
+	const editorBgOpacity = $derived(Math.max(0, 1 - ((p - 0.4) * 2.5)));
+	const terminalOpacity = $derived(Math.min(1, Math.max(0, (p - 0.5) * 3)));
 </script>
 
 <section class="lesson-remotion {className}">
@@ -225,7 +237,7 @@ const App = () => {
 					
 					<div class="terminal-overlay" style="opacity: {terminalOpacity};">
 						<span class="terminal-prompt">$</span>
-						<span class="terminal-cursor" class:blink={$progress > 0.7}></span>
+						<span class="terminal-cursor" class:blink={p > 0.7}></span>
 					</div>
 				</div>
 				
