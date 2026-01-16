@@ -1,0 +1,61 @@
+{
+  "name": "@create-something/bundle-scanner-core",
+  "version": "0.1.0",
+  "description": "Core scanning engine for Webflow Marketplace bundle analysis",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./policy": {
+      "types": "./dist/policy/index.d.ts",
+      "import": "./dist/policy/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "minimatch": "^9.0.0"
+  },
+  "peerDependencies": {
+    "@google/genai": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@google/genai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "keywords": [
+    "webflow",
+    "marketplace",
+    "scanner",
+    "security",
+    "bundle",
+    "analysis"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "MIT"
+}
