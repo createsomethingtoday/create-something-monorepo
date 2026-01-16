@@ -156,6 +156,17 @@
 	let activeScenario = $state(0);
 	let scenarioTransitioning = $state(false);
 
+	// Particle colors by scenario
+	const particleColors = [
+		'var(--color-data-4)',  // 0: entering - yellow/gold
+		'var(--color-accent)',  // 1: VIP - accent
+		'var(--color-data-2)',  // 2: halftime - green
+		'var(--color-data-3)',  // 3: weather - blue
+		'var(--color-error)',   // 4: emergency - red
+		'var(--color-data-1)',  // 5: exiting - cyan
+		'var(--color-fg-muted)' // 6: overnight - gray
+	];
+
 	// Derived for template use
 	const currentScenario = $derived(intelligenceScenarios[activeScenario]);
 
@@ -1172,15 +1183,6 @@
 			</g>
 
 			<!-- Crowd Particles - People moving through arena -->
-			{@const particleColors = [
-				'var(--color-data-4)',  // 0: entering - yellow/gold
-				'var(--color-accent)',  // 1: VIP - accent
-				'var(--color-data-2)',  // 2: halftime - green
-				'var(--color-data-3)',  // 3: weather - blue
-				'var(--color-error)',   // 4: emergency - red
-				'var(--color-data-1)',  // 5: exiting - cyan
-				'var(--color-fg-muted)' // 6: overnight - gray
-			]}
 			<g class="crowd-particles">
 				{#each crowdParticles as particle (particle.id)}
 					<circle
