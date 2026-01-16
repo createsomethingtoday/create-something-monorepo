@@ -132,11 +132,11 @@
 	// Get quality score context
 	const qualityContext = $derived(() => {
 		if (!asset.qualityScore) return null;
-		const score = asset.qualityScore.toLowerCase();
-		if (score.includes('good') || score.includes('✅')) {
+		const scoreStr = String(asset.qualityScore).toLowerCase();
+		if (scoreStr.includes('good') || scoreStr.includes('✅')) {
 			return { level: 'good', message: 'Meets Webflow marketplace standards' };
 		}
-		if (score.includes('excellent') || score.includes('⭐')) {
+		if (scoreStr.includes('excellent') || scoreStr.includes('⭐')) {
 			return { level: 'excellent', message: 'Exceeds marketplace standards' };
 		}
 		return { level: 'review', message: 'May need improvements' };

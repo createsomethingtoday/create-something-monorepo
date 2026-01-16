@@ -229,7 +229,7 @@
 								<span class="insight-label">Quality Score</span>
 								<span class="insight-value">{asset.qualityScore}</span>
 								<span class="insight-description">
-									{#if asset.qualityScore.includes('Good') || asset.qualityScore.includes('✅')}
+									{#if String(asset.qualityScore).includes('Good') || String(asset.qualityScore).includes('✅')}
 										<span class="insight-good">Meets standards</span>
 									{:else}
 										<span class="insight-ok">Review feedback</span>

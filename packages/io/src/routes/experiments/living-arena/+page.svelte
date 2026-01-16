@@ -71,6 +71,100 @@
 
 	let activeScenario = $state(0);
 
+	// Derived for template use
+	const currentScenario = $derived(intelligenceScenarios[activeScenario]);
+
+	// AI Reasoning examples - showing how the system thinks, not just acts
+	const reasoningExamples = [
+		{
+			situation: 'Upper Bowl getting warm',
+			thinking: [
+				'Temperature rising in Zone 2 (currently 76°F, target 72°F)',
+				'Crowd density: 94% occupied',
+				'Game phase: 3rd quarter (high energy)',
+				'Weather outside: 85°F, sunny',
+				'Similar past events: cooling takes ~8 minutes to feel'
+			],
+			decision: 'Start cooling now—by the time people feel it, it\'ll be right',
+			confidence: 87,
+			alternative: 'Could wait, but past patterns show complaints start at 77°F'
+		},
+		{
+			situation: 'Unusual crowd movement near Exit 7',
+			thinking: [
+				'Movement speed: faster than normal',
+				'Direction: toward exit (not concessions)',
+				'Time: not halftime or end of game',
+				'Nearby events: nothing scheduled',
+				'Camera check: no visible emergency'
+			],
+			decision: 'Alert security to observe, but don\'t escalate yet',
+			confidence: 62,
+			alternative: 'Confidence below 70%—flagging for human review in 30 seconds if unchanged'
+		},
+		{
+			situation: 'VIP suite requests "cooler"',
+			thinking: [
+				'Current temp: 70°F (at target)',
+				'Guest preference history: likes it cold',
+				'Adjacent suites: occupied, set to 70°F',
+				'HVAC capacity: can isolate this zone',
+				'Impact on neighbors: minimal with zone isolation'
+			],
+			decision: 'Lower to 68°F for this suite only',
+			confidence: 94,
+			alternative: 'Guest history makes this low-risk. No need to confirm.'
+		}
+	];
+
+	let activeReasoning = $state(0);
+
+	// Holistic update example - showing how one change ripples through everything
+	const holisticUpdate = {
+		trigger: 'Weather forecast changed: thunderstorm in 2 hours',
+		timestamp: '18:45:00',
+		systemUpdates: [
+			{
+				system: 'Scheduling',
+				before: 'Roof open for sunset view',
+				after: 'Roof closing at 19:30 (30 min before storm)',
+				reason: 'Guest comfort + equipment protection'
+			},
+			{
+				system: 'HVAC',
+				before: 'Natural ventilation mode',
+				after: 'Switch to AC at 19:15',
+				reason: 'Humidity will spike when roof closes'
+			},
+			{
+				system: 'Lighting',
+				before: 'Sunset ambiance scheduled',
+				after: 'Indoor event lighting ready',
+				reason: 'Natural light will decrease faster than planned'
+			},
+			{
+				system: 'Parking',
+				before: 'Standard exit flow',
+				after: 'Alert: covered parking fills first post-game',
+				reason: 'People will want shelter'
+			},
+			{
+				system: 'Concessions',
+				before: 'Normal staffing',
+				after: 'Extra staff for indoor rush',
+				reason: 'Fewer people will want to leave during storm'
+			},
+			{
+				system: 'Communications',
+				before: 'No alerts needed',
+				after: 'Gentle announcement at 19:00 about roof closing',
+				reason: 'No surprises—people appreciate knowing'
+			}
+		],
+		humanApproval: 'Ops manager reviewed full plan in 45 seconds, approved with one change: earlier announcement',
+		totalTime: '12 seconds to generate plan, 45 seconds for human review'
+	};
+
 	// Incident log - showing failures, resolutions, and learning
 	// This is the honest story of an AI-native system
 	let incidentLog = $state([
