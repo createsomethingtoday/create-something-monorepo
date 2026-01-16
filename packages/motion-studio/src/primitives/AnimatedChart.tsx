@@ -105,90 +105,124 @@ export const AnimatedChart: React.FC<AnimatedChartProps> = ({
   const renderBarChart = () => {
     const barWidth = (chartWidth / data.length) * 0.7;
     const gap = (chartWidth / data.length) * 0.3;
+    const valueHeight = showValues ? 30 : 0;
+    const labelHeight = showLabels ? 30 : 0;
+    const barAreaHeight = chartHeight - valueHeight - labelHeight;
     
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap, height: chartHeight, padding }}>
-        {data.map((item, index) => {
-          const itemStartFrame = buildStyle === 'all-at-once' 
-            ? startFrame 
-            : startFrame + (index * durationPerItem);
-          
-          const localFrame = frame - itemStartFrame;
-          
-          // Spring animation for bar growth
-          const progress = spring({
-            fps,
-            frame: localFrame,
-            config: {
-              damping: 20,
-              mass: 0.8,
-              stiffness: 80,
-            },
-          });
-          
-          const barHeight = interpolate(
-            progress,
-            [0, 1],
-            [0, (item.value / maxValue) * chartHeight],
-            { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-          );
-          
-          const opacity = interpolate(
-            localFrame,
-            [0, animation.frames.micro],
-            [0, 1],
-            { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-          );
-          
-          return (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: barWidth,
-              }}
-            >
-              {showValues && (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: chartHeight, 
+        padding,
+        width: chartWidth + padding * 2,
+      }}>
+        {/* Values row */}
+        {showValues && (
+          <div style={{ display: 'flex', gap, height: valueHeight, alignItems: 'flex-end', justifyContent: 'center' }}>
+            {data.map((item, index) => {
+              const itemStartFrame = buildStyle === 'all-at-once' 
+                ? startFrame 
+                : startFrame + (index * durationPerItem);
+              const localFrame = frame - itemStartFrame;
+              const progress = spring({
+                fps,
+                frame: localFrame,
+                config: { damping: 20, mass: 0.8, stiffness: 80 },
+              });
+              const opacity = interpolate(localFrame, [0, animation.frames.micro], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+              
+              return (
                 <span
+                  key={index}
                   style={{
+                    width: barWidth,
                     fontFamily: typography.fontFamily.mono,
                     fontSize: typography.fontSize.sm,
                     color: colors.neutral[400],
-                    marginBottom: spacing[2],
+                    textAlign: 'center',
                     opacity,
                   }}
                 >
                   {Math.round(item.value * progress)}
                 </span>
-              )}
+              );
+            })}
+          </div>
+        )}
+        
+        {/* Bars row */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap, height: barAreaHeight, justifyContent: 'center' }}>
+          {data.map((item, index) => {
+            const itemStartFrame = buildStyle === 'all-at-once' 
+              ? startFrame 
+              : startFrame + (index * durationPerItem);
+            
+            const localFrame = frame - itemStartFrame;
+            
+            const progress = spring({
+              fps,
+              frame: localFrame,
+              config: { damping: 20, mass: 0.8, stiffness: 80 },
+            });
+            
+            const barHeight = interpolate(
+              progress,
+              [0, 1],
+              [0, (item.value / maxValue) * barAreaHeight],
+              { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+            );
+            
+            const opacity = interpolate(
+              localFrame,
+              [0, animation.frames.micro],
+              [0, 1],
+              { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+            );
+            
+            return (
               <div
+                key={index}
                 style={{
-                  width: '100%',
+                  width: barWidth,
                   height: Math.max(0, barHeight),
                   backgroundColor: BAR_COLOR,
                   borderRadius: '4px 4px 0 0',
                   opacity: Math.max(0, opacity),
                 }}
               />
-              {showLabels && (
+            );
+          })}
+        </div>
+        
+        {/* Labels row */}
+        {showLabels && (
+          <div style={{ display: 'flex', gap, height: labelHeight, alignItems: 'flex-start', justifyContent: 'center', marginTop: spacing[2] }}>
+            {data.map((item, index) => {
+              const itemStartFrame = buildStyle === 'all-at-once' 
+                ? startFrame 
+                : startFrame + (index * durationPerItem);
+              const localFrame = frame - itemStartFrame;
+              const opacity = interpolate(localFrame, [0, animation.frames.micro], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+              
+              return (
                 <span
+                  key={index}
                   style={{
+                    width: barWidth,
                     fontFamily: typography.fontFamily.sans,
-                    fontSize: typography.fontSize.xs,
+                    fontSize: typography.fontSize.caption,
                     color: colors.neutral[300],
-                    marginTop: spacing[2],
                     textAlign: 'center',
                     opacity,
                   }}
                 >
                   {item.label}
                 </span>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
