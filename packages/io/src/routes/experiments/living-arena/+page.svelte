@@ -10,6 +10,24 @@
 	 */
 
 	import { onMount } from 'svelte';
+	import {
+		Shield,
+		Lightbulb,
+		Thermometer,
+		Radio,
+		User,
+		AlertTriangle,
+		CloudLightning,
+		Check,
+		X,
+		RotateCcw,
+		ArrowUp,
+		Siren,
+		BarChart3,
+		Clock,
+		FileText,
+		CheckCircle
+	} from 'lucide-svelte';
 
 	// System states - simulating real-time automation data
 	let securityStatus = $state<'armed' | 'monitoring' | 'alert'>('monitoring');
@@ -64,7 +82,8 @@
 				{ system: 'HVAC', action: 'Keeps air flowing toward exits' },
 				{ system: 'Speakers', action: 'Calm voice, clear directions, just that section' }
 			],
-			humanLoop: '⚠️ A person decides what happens next. Always.',
+			humanLoop: 'A person decides what happens next. Always.',
+			humanLoopCritical: true,
 			insight: 'The system helps. A human chooses.'
 		}
 	];
@@ -540,7 +559,7 @@
 			<!-- Security Panel -->
 			<div class="status-panel security-panel">
 				<div class="panel-header">
-					<span class="panel-icon">🛡️</span>
+					<span class="panel-icon"><Shield size={18} /></span>
 					<span class="panel-title">Security</span>
 					<span class="status-indicator {securityStatus}">{securityStatus}</span>
 				</div>
@@ -564,7 +583,7 @@
 			<!-- Lighting Panel -->
 			<div class="status-panel lighting-panel">
 				<div class="panel-header">
-					<span class="panel-icon">💡</span>
+					<span class="panel-icon"><Lightbulb size={18} /></span>
 					<span class="panel-title">Lighting</span>
 					<span class="status-indicator active">{lightingMode}</span>
 				</div>
@@ -588,7 +607,7 @@
 			<!-- HVAC Panel -->
 			<div class="status-panel hvac-panel">
 				<div class="panel-header">
-					<span class="panel-icon">🌡️</span>
+					<span class="panel-icon"><Thermometer size={18} /></span>
 					<span class="panel-title">HVAC</span>
 					<span class="status-indicator active">nominal</span>
 				</div>
@@ -607,7 +626,7 @@
 			<!-- Notifications Panel -->
 			<div class="status-panel notifications-panel">
 				<div class="panel-header">
-					<span class="panel-icon">📡</span>
+					<span class="panel-icon"><Radio size={18} /></span>
 					<span class="panel-title">Activity Stream</span>
 				</div>
 				<div class="notifications-list">
@@ -660,20 +679,21 @@
 				{/each}
 				</div>
 
-			<div class="human-loop-callout" class:critical={currentScenario.humanLoop.includes('HUMAN REQUIRED')}>
-				<span class="human-icon">👤</span>
+			<div class="human-loop-callout" class:critical={currentScenario.humanLoopCritical}>
+				<span class="human-icon"><User size={16} /></span>
+				{#if currentScenario.humanLoopCritical}<span class="critical-icon"><AlertTriangle size={14} /></span>{/if}
 				<span class="human-text">{currentScenario.humanLoop}</span>
 			</div>
 
 			<div class="scenario-insight">
-				<span class="insight-icon">💡</span>
+				<span class="insight-icon"><Lightbulb size={14} /></span>
 				<span class="insight-text">{currentScenario.insight}</span>
 			</div>
 			</div>
 		</div>
 
 		<div class="security-emphasis">
-			<div class="emphasis-icon">🛡️</div>
+			<div class="emphasis-icon"><Shield size={32} /></div>
 			<div class="emphasis-content">
 				<h3>Safety First. Everything Else Second.</h3>
 				<p>
@@ -735,7 +755,7 @@
 				</div>
 
 				<div class="alternative-note">
-					<span class="alt-icon">💭</span>
+					<span class="alt-icon"><Lightbulb size={14} /></span>
 					<span class="alt-text">{currentReasoning.alternative}</span>
 				</div>
 			</div>
@@ -758,7 +778,7 @@
 
 		<div class="holistic-container">
 			<div class="holistic-trigger">
-				<div class="trigger-icon">⛈️</div>
+				<div class="trigger-icon"><CloudLightning size={32} /></div>
 				<div class="trigger-content">
 					<span class="trigger-time">{holisticUpdate.timestamp}</span>
 					<span class="trigger-event">{holisticUpdate.trigger}</span>
@@ -795,7 +815,7 @@
 			</div>
 
 			<div class="holistic-approval">
-				<div class="approval-icon">✓</div>
+				<div class="approval-icon"><Check size={18} /></div>
 				<div class="approval-content">
 					<p class="approval-text">{holisticUpdate.humanApproval}</p>
 					<p class="approval-time">{holisticUpdate.totalTime}</p>
@@ -826,10 +846,10 @@
 			<div class="log-header">
 				<span class="log-title">Live Incident Log</span>
 				<div class="log-legend">
-					<span class="legend-item success">✓ Success</span>
-					<span class="legend-item failure">✗ Failure</span>
-					<span class="legend-item override">↺ Override</span>
-					<span class="legend-item escalation">↑ Escalation</span>
+					<span class="legend-item success"><Check size={12} /> Success</span>
+					<span class="legend-item failure"><X size={12} /> Failure</span>
+					<span class="legend-item override"><RotateCcw size={12} /> Override</span>
+					<span class="legend-item escalation"><ArrowUp size={12} /> Escalation</span>
 				</div>
 			</div>
 
@@ -839,11 +859,11 @@
 						<div class="incident-header">
 							<span class="incident-time">{incident.timestamp}</span>
 							<span class="incident-type-badge {incident.type}">
-								{#if incident.type === 'success'}✓{:else if incident.type === 'failure'}✗{:else if incident.type === 'override'}↺{:else}↑{/if}
+								{#if incident.type === 'success'}<Check size={10} />{:else if incident.type === 'failure'}<X size={10} />{:else if incident.type === 'override'}<RotateCcw size={10} />{:else}<ArrowUp size={10} />{/if}
 							</span>
 							<span class="incident-system">{incident.system}</span>
 							{#if incident.humanInvolved}
-								<span class="human-badge">👤 Human involved</span>
+								<span class="human-badge"><User size={12} /> Human involved</span>
 							{/if}
 						</div>
 						<div class="incident-event">{incident.event}</div>
@@ -880,19 +900,19 @@
 				</p>
 				<div class="loop-principles">
 					<div class="principle">
-						<span class="principle-icon">🚨</span>
+						<span class="principle-icon"><Siren size={18} /></span>
 						<span class="principle-text"><strong>Critical actions</strong> require explicit human approval</span>
 					</div>
 					<div class="principle">
-						<span class="principle-icon">📊</span>
+						<span class="principle-icon"><BarChart3 size={18} /></span>
 						<span class="principle-text"><strong>Confidence scores</strong> shown on all AI decisions</span>
 					</div>
 					<div class="principle">
-						<span class="principle-icon">⏱️</span>
+						<span class="principle-icon"><Clock size={18} /></span>
 						<span class="principle-text"><strong>Escalation timers</strong> prevent AI from waiting too long</span>
 					</div>
 					<div class="principle">
-						<span class="principle-icon">📝</span>
+						<span class="principle-icon"><FileText size={18} /></span>
 						<span class="principle-text"><strong>Every failure logged</strong> and reviewed by humans</span>
 					</div>
 				</div>
@@ -900,7 +920,7 @@
 		</div>
 
 		<div class="not-perfect-note">
-			<div class="note-icon">⚠️</div>
+			<div class="note-icon"><AlertTriangle size={24} /></div>
 			<div class="note-content">
 				<h4>This System Is Not Perfect</h4>
 				<p>
