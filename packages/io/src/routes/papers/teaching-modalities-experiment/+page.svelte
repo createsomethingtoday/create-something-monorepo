@@ -11,7 +11,8 @@
 	 */
 	import { onMount } from 'svelte';
 	import { Spritz } from '@create-something/spritz';
-	import { BookOpen, Play, Pause, RotateCcw, ChevronRight, Layers, Sparkles, Timer } from 'lucide-svelte';
+	import { CanonReveal } from '@create-something/components/motion';
+	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer } from 'lucide-svelte';
 
 	// ===========================================
 	// ANALYTICS TRACKING
@@ -21,8 +22,6 @@
 		motion: { plays: 0, replays: 0, watchTimeMs: 0 },
 		learn: { clicks: 0, hovers: 0 }
 	});
-
-	let sessionStartTime = Date.now();
 
 	async function trackModality(modality: 'spritz' | 'motion' | 'learn', action: string, value?: number) {
 		// Update local state
@@ -85,75 +84,47 @@
 	}
 
 	// ===========================================
-	// MOTION DEMO (Svelte-based Canon text reveal)
+	// MOTION DEMO (Using CanonReveal component)
 	// ===========================================
-	let motionPlaying = $state(false);
-	let motionProgress = $state(0);
-	let motionText = $state('');
-	let motionStartTime = 0;
-	let motionInterval: ReturnType<typeof setInterval> | null = null;
-
-	const MOTION_PHRASES = [
-		'Creation is the discipline',
-		'of removing',
-		'what obscures.'
+	type RevealStyle = 'unconcealment' | 'typewriter' | 'threshold' | 'decode' | 'mask';
+	
+	const revealStyles: { id: RevealStyle; label: string; text: string; philosophy: string }[] = [
+		{ id: 'decode', label: 'DECODE', text: 'CREATION IS SUBTRACTION', philosophy: 'Cipher resolves — The signal emerges from noise' },
+		{ id: 'unconcealment', label: 'UNCONCEALMENT', text: 'Truth emerges from what conceals it.', philosophy: 'Heidegger — The meaning was always there' },
+		{ id: 'typewriter', label: 'TYPEWRITER', text: '$ echo "less, but better"', philosophy: 'Terminal-first — Meditative, deliberate' },
+		{ id: 'threshold', label: 'THRESHOLD', text: 'Present or absent.', philosophy: 'Rams — Binary. No animation. Just presence.' },
+		{ id: 'mask', label: 'MASK', text: 'Weniger, aber besser.', philosophy: 'The text was always there — We just unveiled it' },
 	];
 
-	const DECODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	let currentRevealIndex = $state(0);
+	let revealKey = $state(0); // Force re-mount on change
+	let motionStartTime = $state(0);
+	let hasPlayed = $state(false);
 
-	function getDecodedText(target: string, progress: number): string {
-		return target.split('').map((char, i) => {
-			if (char === ' ') return ' ';
-			const charProgress = progress * target.length;
-			if (i < charProgress) return char;
-			return DECODE_CHARS[Math.floor(Math.random() * DECODE_CHARS.length)];
-		}).join('');
-	}
+	const currentReveal = $derived(revealStyles[currentRevealIndex]);
 
 	function playMotion() {
-		if (motionPlaying) return;
-		
-		motionPlaying = true;
-		motionProgress = 0;
 		motionStartTime = Date.now();
-		
-		if (motionText) {
+		if (hasPlayed) {
 			trackModality('motion', 'replay');
 		} else {
 			trackModality('motion', 'play');
+			hasPlayed = true;
 		}
-
-		let phraseIndex = 0;
-		let charIndex = 0;
-		const fullText = MOTION_PHRASES.join(' ');
-		
-		motionInterval = setInterval(() => {
-			charIndex++;
-			motionProgress = charIndex / fullText.length;
-			motionText = getDecodedText(fullText.slice(0, charIndex + 10), motionProgress);
-			
-			if (charIndex >= fullText.length) {
-				motionText = fullText;
-				stopMotion();
-			}
-		}, 60);
+		revealKey++; // Force re-mount to restart animation
 	}
 
-	function stopMotion() {
-		motionPlaying = false;
-		if (motionInterval) {
-			clearInterval(motionInterval);
-			motionInterval = null;
-		}
-		
+	function nextReveal() {
+		currentRevealIndex = (currentRevealIndex + 1) % revealStyles.length;
+		hasPlayed = false;
+		revealKey++;
+		trackModality('motion', 'play');
+		motionStartTime = Date.now();
+	}
+
+	function onMotionComplete() {
 		const duration = Date.now() - motionStartTime;
 		trackModality('motion', 'time', duration);
-	}
-
-	function resetMotion() {
-		stopMotion();
-		motionProgress = 0;
-		motionText = '';
 	}
 
 	// ===========================================
@@ -193,13 +164,6 @@
 	function onPathHover() {
 		trackModality('learn', 'hover');
 	}
-
-	// Cleanup
-	onMount(() => {
-		return () => {
-			if (motionInterval) clearInterval(motionInterval);
-		};
-	});
 </script>
 
 <svelte:head>
@@ -334,35 +298,47 @@
 			<div class="demo-container motion-demo">
 				<div class="demo-label">
 					<Layers size={14} />
-					<span>LIVE DEMO — "decode" reveal style (Canon-aligned)</span>
+					<span>LIVE DEMO — "{currentReveal.label}" reveal style</span>
 				</div>
 				
 				<div class="motion-canvas">
-					<div class="motion-text" class:complete={motionProgress >= 1}>
-						{motionText || 'Press play to see decode reveal →'}
-					</div>
+					<div class="reveal-label">{currentReveal.label}</div>
 					
-					<div class="motion-progress-bar">
-						<div class="motion-progress-fill" style="width: {motionProgress * 100}%"></div>
-					</div>
+					{#key revealKey}
+						<CanonReveal
+							text={currentReveal.text}
+							reveal={currentReveal.id}
+							duration={currentReveal.id === 'threshold' ? 1000 : currentReveal.id === 'mask' ? 1200 : 2500}
+							autoplay={true}
+							onComplete={onMotionComplete}
+							class="reveal-display"
+						/>
+					{/key}
+					
+					<div class="reveal-philosophy">{currentReveal.philosophy}</div>
 				</div>
 
 				<div class="motion-controls">
-					{#if !motionPlaying}
-						<button class="motion-btn play" onclick={playMotion}>
-							<Play size={18} />
-							<span>{motionText ? 'Replay' : 'Play'}</span>
-						</button>
-					{:else}
-						<button class="motion-btn" onclick={stopMotion}>
-							<Pause size={18} />
-							<span>Pause</span>
-						</button>
-					{/if}
-					<button class="motion-btn" onclick={resetMotion}>
+					<button class="motion-btn" onclick={playMotion}>
 						<RotateCcw size={18} />
-						<span>Reset</span>
+						<span>Replay</span>
 					</button>
+					<button class="motion-btn play" onclick={nextReveal}>
+						<Play size={18} />
+						<span>Next Style ({revealStyles[(currentRevealIndex + 1) % revealStyles.length].label})</span>
+					</button>
+				</div>
+
+				<!-- Style indicator dots -->
+				<div class="style-dots">
+					{#each revealStyles as style, i}
+						<button 
+							class="style-dot" 
+							class:active={i === currentRevealIndex}
+							onclick={() => { currentRevealIndex = i; revealKey++; motionStartTime = Date.now(); trackModality('motion', 'play'); }}
+							title={style.label}
+						></button>
+					{/each}
 				</div>
 			</div>
 
@@ -370,10 +346,10 @@
 				<div class="detail-card">
 					<h4 class="detail-title">Canon Reveal Styles</h4>
 					<ul class="detail-list mono">
+						<li><code>decode</code> — random chars resolve to meaning</li>
 						<li><code>unconcealment</code> — emerges from noise (Heidegger)</li>
 						<li><code>typewriter</code> — char-by-char with cursor</li>
 						<li><code>threshold</code> — binary snap (Rams)</li>
-						<li><code>decode</code> — random chars resolve to meaning</li>
 						<li><code>mask</code> — horizontal wipe reveal</li>
 					</ul>
 				</div>
@@ -686,42 +662,39 @@
 		background: #000;
 		border-radius: var(--radius-md);
 		padding: 3rem 2rem;
-		min-height: 150px;
+		min-height: 200px;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
 		margin-bottom: 1rem;
+		gap: 1.5rem;
 	}
 
-	.motion-text {
+	.reveal-label {
 		font-family: var(--font-mono);
-		font-size: 1.5rem;
-		color: #fff;
-		letter-spacing: 0.05em;
+		font-size: 0.7rem;
+		color: #737373;
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+	}
+
+	:global(.reveal-display) {
+		font-size: 1.75rem !important;
+		color: #fff !important;
 		text-align: center;
-		min-height: 2em;
-		transition: opacity 0.3s;
+		min-height: 2.5em;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
-	.motion-text.complete {
-		color: #fafafa;
-	}
-
-	.motion-progress-bar {
-		width: 100%;
+	.reveal-philosophy {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: #525252;
+		text-align: center;
 		max-width: 400px;
-		height: 2px;
-		background: #333;
-		border-radius: 1px;
-		margin-top: 1.5rem;
-		overflow: hidden;
-	}
-
-	.motion-progress-fill {
-		height: 100%;
-		background: #fff;
-		transition: width 0.1s linear;
 	}
 
 	.motion-controls {
@@ -757,6 +730,32 @@
 
 	.motion-btn.play:hover {
 		background: #e5e5e5;
+	}
+
+	.style-dots {
+		display: flex;
+		gap: 0.5rem;
+		justify-content: center;
+		margin-top: 1rem;
+	}
+
+	.style-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--color-border-subtle);
+		border: none;
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+
+	.style-dot:hover {
+		background: var(--color-fg-muted);
+	}
+
+	.style-dot.active {
+		background: #a855f7;
+		transform: scale(1.25);
 	}
 
 	/* ===========================================

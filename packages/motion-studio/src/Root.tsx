@@ -185,7 +185,7 @@ const CanonTextReveals: React.FC = () => {
         </div>
       </Sequence>
       
-      {/* 5. MASK - Wipe reveal */}
+      {/* 5. MASK - Wipe reveal (faster - 45 frames / 1.5s) */}
       <Sequence from={totalPerScene * 4} durationInFrames={totalPerScene}>
         <div style={centeredContainer}>
           <div style={labelStyle}>
@@ -195,7 +195,7 @@ const CanonTextReveals: React.FC = () => {
             text="Weniger, aber besser."
             reveal="mask"
             startFrame={0}
-            duration={sceneDuration}
+            duration={45}
             style="display"
             color={palette.foreground}
             align="center"
