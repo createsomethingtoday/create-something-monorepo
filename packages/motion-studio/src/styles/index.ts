@@ -32,15 +32,20 @@ export const colors = {
 
 /**
  * Canon typography
- * Stack Sans Notch + JetBrains Mono
- * Matches packages/components/src/lib/styles/tokens.css
+ * System fonts with strong fallbacks for Remotion rendering
+ * 
+ * Note: Remotion renders in a headless browser, so we use system fonts
+ * that are guaranteed to be available. The font stack prioritizes:
+ * 1. SF Pro (macOS) - Apple's system font, very clean
+ * 2. Segoe UI (Windows) - Microsoft's system font
+ * 3. system-ui - Browser's default system font
  */
 export const typography = {
-  // Font families - Canon standard
+  // Font families - System fonts for reliable rendering
   fontFamily: {
-    sans: "'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    mono: '"JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
-    serif: 'Georgia, "Times New Roman", serif',
+    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    serif: 'ui-serif, Georgia, "Times New Roman", serif',
   },
   
   // Font sizes (using rem for consistency)
