@@ -35,37 +35,37 @@
 	// Cross-system intelligence scenarios - demonstrating emergent behaviors
 	const intelligenceScenarios = [
 		{
-			trigger: 'Crowd density increasing at Gate A',
+			trigger: 'Getting crowded at Gate A',
 			responses: [
-				{ system: 'Security', action: 'Additional screening lane activated' },
-				{ system: 'Lighting', action: 'Concourse pathway illuminated' },
-				{ system: 'HVAC', action: 'Pre-cooling adjacent sections' },
-				{ system: 'Wayfinding', action: 'Digital signage redirecting to Gate B' }
+				{ system: 'Security', action: 'Opens another screening lane' },
+				{ system: 'Lighting', action: 'Brightens the path to Gate B' },
+				{ system: 'HVAC', action: 'Cools down the area people are heading to' },
+				{ system: 'Signs', action: 'Gently suggests the shorter line at Gate B' }
 			],
-			humanLoop: 'Security supervisor notified • Can override redirection',
-			insight: 'Security-first: crowd flow optimized while maintaining screening integrity'
+			humanLoop: 'Security supervisor gets a heads up—can change the plan anytime',
+			insight: 'People move faster. Lines stay safe. Nobody had to radio anyone.'
 		},
 		{
-			trigger: 'Halftime begins',
+			trigger: 'Halftime starts',
 			responses: [
-				{ system: 'Lighting', action: 'Concourse lights to 100%, court to ambient' },
-				{ system: 'HVAC', action: 'Boost circulation in concourse areas' },
-				{ system: 'Security', action: 'Perimeter focus shifts to concessions' },
-				{ system: 'Scheduling', action: 'Restroom cleaning crews dispatched' }
+				{ system: 'Lighting', action: 'Brightens walkways, dims the court' },
+				{ system: 'HVAC', action: 'Pushes fresh air where people are heading' },
+				{ system: 'Security', action: 'Shifts attention to concession areas' },
+				{ system: 'Scheduling', action: 'Lets cleaning crews know it\'s time' }
 			],
-			humanLoop: 'Operations manager receives summary • Crews confirm via mobile',
-			insight: 'Anticipatory response: building adapts before humans need to ask'
+			humanLoop: 'Ops manager sees the summary—crews tap "on my way" on their phones',
+			insight: 'The building was ready before the buzzer. That\'s the point.'
 		},
 		{
-			trigger: 'Emergency detected in Section 112',
+			trigger: 'Something\'s wrong in Section 112',
 			responses: [
-				{ system: 'Security', action: 'Isolate zone, dispatch response team' },
-				{ system: 'Lighting', action: 'Emergency pathway illumination' },
-				{ system: 'HVAC', action: 'Positive pressure in evacuation routes' },
-				{ system: 'PA System', action: 'Localized calm instructions' }
+				{ system: 'Security', action: 'Team heading there now' },
+				{ system: 'Lighting', action: 'Exit paths light up' },
+				{ system: 'HVAC', action: 'Keeps air flowing toward exits' },
+				{ system: 'Speakers', action: 'Calm voice, clear directions, just that section' }
 			],
-			humanLoop: '⚠️ HUMAN REQUIRED: Security lead must confirm emergency type before full evacuation',
-			insight: 'Security paramount: AI assists, humans decide on critical actions'
+			humanLoop: '⚠️ A person decides what happens next. Always.',
+			insight: 'The system helps. A human chooses.'
 		}
 	];
 
@@ -579,11 +579,11 @@
 		<div class="security-emphasis">
 			<div class="emphasis-icon">🛡️</div>
 			<div class="emphasis-content">
-				<h3>Security as Foundation</h3>
+				<h3>Safety First. Everything Else Second.</h3>
 				<p>
-					Every cross-system action is evaluated through a security lens. The building helps humans 
-					navigate, stay comfortable, and enjoy events—but never at the expense of safety. 
-					When security needs change, all other systems adapt instantly.
+					The building can make your experience better—but not if it means making you less safe. 
+					Every suggestion the system makes gets checked against one question: does this keep people secure? 
+					If there's ever a conflict, safety wins. No exceptions.
 				</p>
 			</div>
 		</div>
@@ -592,8 +592,8 @@
 	<!-- Incident Log - The Honest Story -->
 	<section class="incident-section">
 		<div class="section-header">
-			<h2>The Honest Story</h2>
-			<p>AI-native doesn't mean perfect. It means transparent, fast to escalate, and always learning. Here's what's really happening.</p>
+			<h2>Here's What Actually Happens</h2>
+			<p>Things go wrong. Sensors break. The AI gets confused. That's okay—what matters is what happens next.</p>
 		</div>
 
 		<div class="incident-log">
