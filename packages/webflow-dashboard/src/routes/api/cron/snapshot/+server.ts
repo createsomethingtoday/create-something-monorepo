@@ -43,9 +43,9 @@ export const GET: RequestHandler = async ({ request, platform }) => {
 		
 		// Filter to assets with meaningful data
 		const assetsToSnapshot = allAssets.filter(asset => 
-			asset.uniqueViewers > 0 || 
-			asset.cumulativePurchases > 0 || 
-			asset.cumulativeRevenue > 0
+			(asset.uniqueViewers ?? 0) > 0 || 
+			(asset.cumulativePurchases ?? 0) > 0 || 
+			(asset.cumulativeRevenue ?? 0) > 0
 		);
 
 		if (assetsToSnapshot.length === 0) {

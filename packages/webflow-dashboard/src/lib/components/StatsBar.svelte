@@ -2,9 +2,13 @@
 	/**
 	 * StatsBar - Tufte-inspired high-density metrics display
 	 *
-	 * Shows key metrics in a compact horizontal bar with inline sparklines.
+	 * Shows key metrics in a compact horizontal bar with real sparkline trends.
 	 * Maximizes data-ink ratio by eliminating decorative elements.
+	 * 
+	 * Sparklines show real data from /api/analytics/history when available,
+	 * gracefully showing no sparklines if history not yet collected.
 	 */
+	import { onMount } from 'svelte';
 	import Sparkline from './Sparkline.svelte';
 	import { LayoutGrid, Eye, ShoppingCart, DollarSign, TrendingUp } from 'lucide-svelte';
 	import type { Asset } from '$lib/server/airtable';
@@ -14,6 +18,38 @@
 	}
 
 	let { assets }: Props = $props();
+
+	// Real historical trend data (fetched from API)
+	let viewersTrend = $state<number[]>([]);
+	let revenueTrend = $state<number[]>([]);
+	let historyLoaded = $state(false);
+
+	// Type for aggregate history API response
+	interface AggregateHistoryResponse {
+		snapshots: Array<{
+			total_viewers: number;
+			total_revenue: number;
+		}>;
+		days_available: number;
+	}
+
+	// Fetch aggregate historical data on mount
+	onMount(async () => {
+		try {
+			const response = await fetch('/api/analytics/history?days=14');
+			if (response.ok) {
+				const data: AggregateHistoryResponse = await response.json();
+				if (data.snapshots && data.snapshots.length > 0) {
+					// Extract trend arrays from snapshots (already in chronological order)
+					viewersTrend = data.snapshots.map((s) => s.total_viewers);
+					revenueTrend = data.snapshots.map((s) => s.total_revenue);
+				}
+			}
+		} catch (err) {
+			console.warn('Failed to fetch aggregate analytics history:', err);
+		}
+		historyLoaded = true;
+	});
 
 	// Calculate core metrics
 	const metrics = $derived(() => {
@@ -36,11 +72,6 @@
 		// Average revenue per template
 		const avgRevenue = published.length > 0 ? totalRevenue / published.length : 0;
 
-		// Calculate 30-day trend data from assets
-		// Group by week for sparkline (last 4 weeks)
-		const revenueByWeek = calculateWeeklyTrend(assets, 'cumulativeRevenue');
-		const viewersByWeek = calculateWeeklyTrend(assets, 'uniqueViewers');
-
 		return {
 			publishedCount: published.length,
 			pendingCount: pending.length,
@@ -49,27 +80,9 @@
 			totalPurchases,
 			totalRevenue,
 			conversionRate,
-			avgRevenue,
-			revenueByWeek,
-			viewersByWeek
+			avgRevenue
 		};
 	});
-
-	// Calculate weekly trend from asset metrics
-	// Note: This is a simplified calculation based on available data
-	function calculateWeeklyTrend(assets: Asset[], field: keyof Asset): number[] {
-		// For now, generate representative trend from current values
-		// In production, this would come from historical data API
-		const published = assets.filter((a) => a.status === 'Published');
-		if (published.length === 0) return [0, 0, 0, 0];
-
-		const total = published.reduce((sum, a) => sum + ((a[field] as number) || 0), 0);
-		const avg = total / published.length;
-
-		// Simulate weekly distribution (would be replaced with real data)
-		// This creates a believable trend shape
-		return [avg * 0.8, avg * 0.9, avg * 0.95, avg];
-	}
 
 	function formatNumber(n: number): string {
 		if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -100,8 +113,8 @@
 		<Eye size={14} class="stat-icon" />
 		<span class="stat-main">{formatNumber(metrics().totalViewers)}</span>
 		<span class="stat-label">viewers</span>
-		{#if metrics().viewersByWeek.some((v) => v > 0)}
-			<Sparkline data={metrics().viewersByWeek} color="var(--color-info)" showTrend />
+		{#if historyLoaded && viewersTrend.length >= 2}
+			<Sparkline data={viewersTrend} color="var(--color-info)" showTrend />
 		{/if}
 	</div>
 
@@ -122,8 +135,8 @@
 		<DollarSign size={14} class="stat-icon" />
 		<span class="stat-main">{formatCurrency(metrics().totalRevenue)}</span>
 		<span class="stat-label">revenue</span>
-		{#if metrics().revenueByWeek.some((v) => v > 0)}
-			<Sparkline data={metrics().revenueByWeek} color="var(--color-success)" showTrend filled />
+		{#if historyLoaded && revenueTrend.length >= 2}
+			<Sparkline data={revenueTrend} color="var(--color-success)" showTrend filled />
 		{/if}
 	</div>
 

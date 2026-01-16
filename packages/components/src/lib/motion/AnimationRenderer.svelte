@@ -7,7 +7,6 @@
 	 * 
 	 * This ensures visual consistency between web and video output.
 	 */
-	import { Play, Pause, RotateCcw } from 'lucide-svelte';
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
 
@@ -50,18 +49,22 @@
 		};
 	}
 
+	import type { Snippet } from 'svelte';
+
 	let {
 		spec,
 		autoplay = false,
 		showControls = true,
 		caption = '',
-		class: className = ''
+		class: className = '',
+		children
 	}: {
 		spec: AnimationSpec;
 		autoplay?: boolean;
 		showControls?: boolean;
 		caption?: string;
 		class?: string;
+		children?: Snippet<[{ progress: number; interpolate: typeof interpolate }]>;
 	} = $props();
 
 	let isPlaying = $state(false);
@@ -163,7 +166,7 @@
 		
 		<!-- Render elements based on spec.id for now -->
 		<!-- In a full implementation, this would dynamically render based on spec.elements -->
-		<slot {progress} {interpolate} />
+		{@render children?.({ progress: $progress, interpolate })}
 		
 		<!-- Reveal text -->
 		{#if spec.reveal && revealOpacity > 0}
@@ -180,15 +183,15 @@
 
 	{#if showControls}
 		<div class="controls">
-			<button class="control-btn" onclick={togglePlay}>
+			<button class="control-btn" onclick={togglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
 				{#if isPlaying}
-					<Pause size={18} />
+					<span class="icon-pause">❚❚</span>
 				{:else}
-					<Play size={18} />
+					<span class="icon-play">▶</span>
 				{/if}
 			</button>
-			<button class="control-btn" onclick={reset}>
-				<RotateCcw size={18} />
+			<button class="control-btn" onclick={reset} aria-label="Reset">
+				<span class="icon-reset">↺</span>
 			</button>
 			<span class="progress-label">
 				{Math.round($progress * 100)}%
@@ -295,6 +298,11 @@
 	.control-btn:hover {
 		background: var(--color-bg-elevated, #222);
 		color: var(--color-fg-primary, #fff);
+	}
+
+	.icon-play, .icon-pause, .icon-reset {
+		font-size: 14px;
+		line-height: 1;
 	}
 
 	.progress-label {

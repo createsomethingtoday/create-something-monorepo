@@ -133,7 +133,7 @@ export interface Asset {
 	latestReviewFeedback?: string;
 	rejectionFeedback?: string;
 	rejectionFeedbackHtml?: string;
-	qualityScore?: number;
+	qualityScore?: string;
 	priceString?: string;
 }
 
@@ -376,7 +376,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					latestReviewFeedback: (record.fields['🖌️📝Latest Review Feedback'] as string[] | undefined)?.[0],
 					rejectionFeedback: record.fields['🚩Rejection Feedback'] as string || record.fields['🖌Rejection Feedback'] as string,
 					rejectionFeedbackHtml: record.fields['🚩Rejection Feedback.html'] as string || record.fields['🖌Rejection Feedback.html'] as string,
-					qualityScore: record.fields['🖌️Initial Quality Score'] as number,
+					qualityScore: record.fields['🖌️Initial Quality Score'] as string,
 					priceString: record.fields['🥞💲Template Price String (🏗️ only)'] as string
 				};
 			} catch {

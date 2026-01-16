@@ -39,17 +39,27 @@
 	let historyLoaded = $state(false);
 	let daysOfHistory = $state(0);
 
+	// Type for history API response
+	interface HistoryResponse {
+		snapshots: Array<{
+			unique_viewers: number;
+			cumulative_purchases: number;
+			cumulative_revenue: number;
+		}>;
+		days_available: number;
+	}
+
 	// Fetch historical data on mount
 	onMount(async () => {
 		try {
 			const response = await fetch(`/api/assets/${asset.id}/history?days=14`);
 			if (response.ok) {
-				const data = await response.json();
+				const data: HistoryResponse = await response.json();
 				if (data.snapshots && data.snapshots.length > 0) {
 					// Extract trend arrays from snapshots (already in chronological order)
-					viewersTrend = data.snapshots.map((s: { unique_viewers: number }) => s.unique_viewers);
-					purchasesTrend = data.snapshots.map((s: { cumulative_purchases: number }) => s.cumulative_purchases);
-					revenueTrend = data.snapshots.map((s: { cumulative_revenue: number }) => s.cumulative_revenue);
+					viewersTrend = data.snapshots.map((s) => s.unique_viewers);
+					purchasesTrend = data.snapshots.map((s) => s.cumulative_purchases);
+					revenueTrend = data.snapshots.map((s) => s.cumulative_revenue);
 					daysOfHistory = data.days_available;
 				}
 			}

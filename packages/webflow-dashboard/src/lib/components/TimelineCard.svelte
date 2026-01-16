@@ -79,7 +79,7 @@
 	}
 
 	// Build milestones based on asset status
-	const milestones = $derived<Milestone[]>(() => {
+	const milestones = $derived.by(() => {
 		const items: Milestone[] = [];
 
 		// 1. Submitted
@@ -151,7 +151,7 @@
 		</CardHeader>
 		<CardContent>
 			<div class="timeline">
-				{#each milestones() as milestone, index}
+				{#each milestones as milestone, index}
 					<div class="milestone" class:completed={milestone.status === 'completed'} class:current={milestone.status === 'current'} class:rejected={milestone.status === 'rejected'}>
 						<!-- Icon -->
 						<div class="milestone-icon">
