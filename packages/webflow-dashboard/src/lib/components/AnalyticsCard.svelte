@@ -80,22 +80,6 @@
 		return [base * 0.65, base * 0.75, base * 0.9, base];
 	});
 
-	// Funnel stages (simulated - in production would come from real data)
-	const funnelStages = $derived(() => {
-		const views = asset.uniqueViewers || 0;
-		// Simulated funnel drop-offs based on industry averages
-		const detailViews = Math.round(views * 0.5); // 50% view details
-		const addToCart = Math.round(views * 0.15); // 15% add to cart
-		const purchases = asset.cumulativePurchases || 0;
-
-		return [
-			{ label: 'Views', value: views, percent: 100, color: 'var(--color-info)' },
-			{ label: 'Detail Views', value: detailViews, percent: views > 0 ? (detailViews / views) * 100 : 0, color: 'var(--color-warning)' },
-			{ label: 'Add to Cart', value: addToCart, percent: views > 0 ? (addToCart / views) * 100 : 0, color: 'var(--color-accent)' },
-			{ label: 'Purchases', value: purchases, percent: views > 0 ? (purchases / views) * 100 : 0, color: 'var(--color-success)' }
-		];
-	});
-
 	// Check if we have data to show
 	const hasData = $derived(
 		(asset.uniqueViewers && asset.uniqueViewers > 0) ||
@@ -160,32 +144,6 @@
 							</div>
 						{/if}
 					</div>
-				</div>
-			</CardContent>
-		</Card>
-
-		<!-- Conversion Funnel -->
-		<Card>
-			<CardHeader>
-				<CardTitle>Conversion Funnel</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div class="funnel">
-					{#each funnelStages() as stage, index}
-						<div class="funnel-stage">
-							<div class="funnel-bar-container">
-								<div 
-									class="funnel-bar" 
-									style="width: {stage.percent}%; background: {stage.color}"
-								></div>
-							</div>
-							<div class="funnel-info">
-								<span class="funnel-label">{stage.label}</span>
-								<span class="funnel-value">{formatNumber(stage.value)}</span>
-								<span class="funnel-percent">({formatPercent(stage.percent)})</span>
-							</div>
-						</div>
-					{/each}
 				</div>
 			</CardContent>
 		</Card>
@@ -338,56 +296,6 @@
 
 	.metric-trend {
 		margin-top: auto;
-	}
-
-	/* Funnel */
-	.funnel {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-	}
-
-	.funnel-stage {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
-
-	.funnel-bar-container {
-		height: 24px;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		overflow: hidden;
-	}
-
-	.funnel-bar {
-		height: 100%;
-		border-radius: var(--radius-sm);
-		transition: width var(--duration-smooth) var(--ease-standard);
-	}
-
-	.funnel-info {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-	}
-
-	.funnel-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		min-width: 100px;
-	}
-
-	.funnel-value {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.funnel-percent {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
 	}
 
 	/* Insights Grid */
