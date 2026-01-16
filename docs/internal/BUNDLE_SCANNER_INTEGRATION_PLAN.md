@@ -288,9 +288,9 @@ interface ScanRule {
 
 ## 5. Deployment Options
 
-### Option A: Standalone Deployment (Recommended for Phase 1)
+### Option A: Standalone Deployment (Development/Testing)
 
-Deploy the React app to Cloudflare Pages:
+Deploy the React app to Cloudflare Pages for internal testing:
 
 ```yaml
 # wrangler.toml
@@ -306,13 +306,74 @@ format = "static"
 directory = "dist"
 ```
 
-### Option B: Embedded in Webflow Dashboard (Phase 2)
+### Option B: Webflow Code Components (Production Target)
 
-Add as a route in the existing SvelteKit dashboard, sharing authentication and infrastructure.
+The primary production path is **Webflow Code Components via DevLink**. This enables:
+- Internal Marketplace team access via shared library
+- Visual composition in the Webflow Designer
+- Integration with Webflow's design system variables
 
-### Option C: Webflow Designer Extension (Future)
+See [Webflow Code Components Documentation](https://developers.webflow.com/code-components/introduction) for details.
 
-If the tool proves valuable, could be packaged as a Webflow Designer Extension using `@webflow/react`.
+### Option C: Embedded in Webflow Dashboard (Future)
+
+Add as a route in the existing SvelteKit dashboard for non-Designer workflows.
+
+---
+
+## 5.1 Webflow Code Components Integration
+
+### How It Works
+
+Per the [Webflow DevLink documentation](https://developers.webflow.com/code-components/introduction):
+
+1. **Build components in codebase** → React components with hooks, state, effects
+2. **Declare Webflow components** → Use `declareComponent` to wrap and expose props
+3. **Import to Webflow** → Bundle via DevLink CLI and publish to workspace
+4. **Install on sites** → Install as shared library on any Webflow site
+5. **Design visually** → Drag/drop on canvas, configure props in Designer
+
+### Components Available for Webflow
+
+| Component | File | Props Exposed |
+|-----------|------|---------------|
+| `VerdictBadge` | `VerdictBadge.webflow.tsx` | verdict, size |
+| `TriageDashboard` | `TriageDashboard.webflow.tsx` | blockerCount, reviewCount, infoCount, showEmailButton |
+| `FindingCard` | `FindingCard.webflow.tsx` | ruleName, description, category, severity, count, sample data |
+
+### DevLink Commands
+
+```bash
+# From packages/bundle-scanner/
+
+# Share library to workspace
+pnpm webflow:share
+
+# Live development mode
+pnpm webflow:dev
+```
+
+### webflow.json Configuration
+
+```json
+{
+  "name": "Webflow Marketplace Bundle Scanner",
+  "components": "./src/**/*.webflow.@(js|jsx|mjs|ts|tsx)",
+  "library": {
+    "name": "Bundle Scanner Components",
+    "description": "Internal tool for scanning app bundles for security, privacy, and policy compliance",
+    "id": "bundle-scanner-components"
+  }
+}
+```
+
+### Designer Preview vs Production
+
+The `.webflow.tsx` wrappers provide Designer-friendly props:
+- **In Designer**: Use numeric props (blockerCount, reviewCount) for preview
+- **In Production**: Full `ScanReport` objects from actual scans
+
+This allows designers to preview component states without needing real scan data.
 
 ---
 

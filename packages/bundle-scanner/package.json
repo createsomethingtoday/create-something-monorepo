@@ -1,7 +1,7 @@
 {
   "name": "@create-something/bundle-scanner",
   "version": "0.1.0",
-  "description": "Webflow Marketplace Bundle Scanner - React Application",
+  "description": "Webflow Marketplace Bundle Scanner - React Application with Webflow Code Components",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,11 +10,14 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
-    "test": "vitest"
+    "test": "vitest",
+    "webflow:share": "npx webflow library share",
+    "webflow:dev": "npx webflow devlink"
   },
   "dependencies": {
     "@create-something/bundle-scanner-core": "workspace:^",
     "@google/genai": "^0.1.0",
+    "@webflow/react": "^1.0.0",
     "idb": "^8.0.0",
     "lucide-react": "^0.300.0",
     "react": "^18.2.0",
@@ -24,6 +27,8 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.0.0",
+    "@webflow/webflow-cli": "^1.0.0",
+    "@webflow/data-types": "^1.0.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
