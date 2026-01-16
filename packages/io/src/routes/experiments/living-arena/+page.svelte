@@ -53,7 +53,9 @@
 	// Cross-system intelligence scenarios - demonstrating emergent behaviors
 	const intelligenceScenarios = [
 		{
+			id: 'gate-crowding',
 			trigger: 'Getting crowded at Gate A',
+			phase: 'Pre-Game',
 			responses: [
 				{ system: 'Security', action: 'Opens another screening lane' },
 				{ system: 'Lighting', action: 'Brightens the path to Gate B' },
@@ -61,10 +63,27 @@
 				{ system: 'Signs', action: 'Gently suggests the shorter line at Gate B' }
 			],
 			humanLoop: 'Security supervisor gets a heads up—can change the plan anytime',
-			insight: 'People move faster. Lines stay safe. Nobody had to radio anyone.'
+			insight: 'People move faster. Lines stay safe. Nobody had to radio anyone.',
+			visualCue: 'Watch: Crowds flowing from parking toward north entrance'
 		},
 		{
+			id: 'vip-arrival',
+			trigger: 'VIP motorcade approaching south entrance',
+			phase: 'Pre-Game',
+			responses: [
+				{ system: 'Security', action: 'Clears path, activates VIP lane cameras' },
+				{ system: 'Lighting', action: 'Illuminates private entrance corridor' },
+				{ system: 'Parking', action: 'Reserves spots in Lot C, guides regular traffic around' },
+				{ system: 'Elevator', action: 'Holds suite-level car, bypasses other calls' }
+			],
+			humanLoop: 'VIP liaison confirms guest preferences from app check-in',
+			insight: 'The guest just... walks in. Everything was ready.',
+			visualCue: 'Watch: Vehicles arriving at south VIP lot'
+		},
+		{
+			id: 'halftime',
 			trigger: 'Halftime starts',
+			phase: 'Halftime',
 			responses: [
 				{ system: 'Lighting', action: 'Brightens walkways, dims the court' },
 				{ system: 'HVAC', action: 'Pushes fresh air where people are heading' },
@@ -72,10 +91,27 @@
 				{ system: 'Scheduling', action: 'Lets cleaning crews know it\'s time' }
 			],
 			humanLoop: 'Ops manager sees the summary—crews tap "on my way" on their phones',
-			insight: 'The building was ready before the buzzer. That\'s the point.'
+			insight: 'The building was ready before the buzzer. That\'s the point.',
+			visualCue: 'Watch: Crowd spreading from seats to concourse'
 		},
 		{
+			id: 'weather-incoming',
+			trigger: 'Storm approaching in 45 minutes',
+			phase: 'Third Quarter',
+			responses: [
+				{ system: 'HVAC', action: 'Closes exterior vents, increases interior circulation' },
+				{ system: 'Lighting', action: 'Checks backup generators, pre-stages emergency lights' },
+				{ system: 'Parking', action: 'Alerts: covered lot filling fast' },
+				{ system: 'Comms', action: 'Queues weather advisory for end-of-game announcement' }
+			],
+			humanLoop: 'Facilities manager reviews plan, approves early roof closure',
+			insight: 'When the rain hits, nobody scrambles. It was handled an hour ago.',
+			visualCue: 'Watch: Parking activity shifts to covered areas'
+		},
+		{
+			id: 'emergency',
 			trigger: 'Something\'s wrong in Section 112',
+			phase: 'Fourth Quarter',
 			responses: [
 				{ system: 'Security', action: 'Team heading there now' },
 				{ system: 'Lighting', action: 'Exit paths light up' },
@@ -84,11 +120,41 @@
 			],
 			humanLoop: 'A person decides what happens next. Always.',
 			humanLoopCritical: true,
-			insight: 'The system helps. A human chooses.'
+			insight: 'The system helps. A human chooses.',
+			visualCue: 'Watch: Evacuation flow toward south exit'
+		},
+		{
+			id: 'game-end',
+			trigger: 'Final buzzer—game over',
+			phase: 'Post-Game',
+			responses: [
+				{ system: 'Lighting', action: 'Full brightness on all exit paths' },
+				{ system: 'HVAC', action: 'Max airflow in exit corridors' },
+				{ system: 'Parking', action: 'Staggered lot release to prevent gridlock' },
+				{ system: 'Transit', action: 'Shuttles staged, departures every 3 minutes' }
+			],
+			humanLoop: 'Traffic control officers coordinate with city signals',
+			insight: '19,000 people exit in 25 minutes. Nobody honks.',
+			visualCue: 'Watch: Mass movement toward all exits and parking'
+		},
+		{
+			id: 'overnight',
+			trigger: 'Venue empty—maintenance window',
+			phase: 'Overnight',
+			responses: [
+				{ system: 'Lighting', action: 'Work lights only where crews are active' },
+				{ system: 'HVAC', action: 'Energy-saving mode, deeper clean in empty zones' },
+				{ system: 'Security', action: 'Perimeter patrol mode, interior sensors heightened' },
+				{ system: 'Scheduling', action: 'Maintenance bots deployed for floor cleaning' }
+			],
+			humanLoop: 'Night supervisor monitors from home, alerts for anomalies only',
+			insight: 'The building takes care of itself. Tomorrow, it\'s ready again.',
+			visualCue: 'Watch: Minimal activity, perimeter security active'
 		}
 	];
 
 	let activeScenario = $state(0);
+	let scenarioTransitioning = $state(false);
 
 	// Derived for template use
 	const currentScenario = $derived(intelligenceScenarios[activeScenario]);
@@ -276,7 +342,18 @@
 	// Generate particles based on scenario
 	function generateParticles() {
 		const newParticles: Particle[] = [];
-		const count = activeScenario === 2 ? 40 : activeScenario === 0 ? 35 : 25; // More particles during crowding/emergency
+		const effects = scenarioEffects[activeScenario];
+		// Particle count varies by crowd flow type
+		const countByFlow: Record<string, number> = {
+			'entering': 35,
+			'vip': 12,
+			'dispersing': 30,
+			'sheltering': 20,
+			'evacuating': 45,
+			'exiting': 50,
+			'empty': 5
+		};
+		const count = countByFlow[effects.crowdFlow] || 25;
 		
 		for (let i = 0; i < count; i++) {
 			const particle = createParticleForScenario();
@@ -289,31 +366,46 @@
 	function createParticleForScenario(): Particle | null {
 		particleIdCounter++;
 		const id = particleIdCounter;
+		const effects = scenarioEffects[activeScenario];
 		
-		if (activeScenario === 0) {
+		if (effects.crowdFlow === 'entering') {
 			// Gate crowding - people flowing from parking/roads toward north entrance
 			const fromParking = Math.random() > 0.5;
 			let startX, startY;
 			if (fromParking) {
-				// Coming from north parking lots
 				startX = Math.random() > 0.5 ? (-50 + Math.random() * 100) : (780 + Math.random() * 100);
 				startY = -50 + Math.random() * 80;
 			} else {
-				// Coming from access road
 				startX = 380 + Math.random() * 40;
 				startY = -100 + Math.random() * 50;
 			}
 			return {
-				id,
-				x: startX,
-				y: startY,
+				id, x: startX, y: startY,
 				targetX: 400 + (Math.random() - 0.5) * 100,
 				targetY: 60 + Math.random() * 100,
 				speed: 0.6 + Math.random() * 0.4,
 				size: 3 + Math.random() * 2
 			};
-		} else if (activeScenario === 1) {
-			// Halftime - people flowing from seats to concourse (concessions)
+		} else if (effects.crowdFlow === 'vip') {
+			// VIP arrival - vehicles and people at south entrance
+			const isVehicle = Math.random() > 0.7;
+			if (isVehicle) {
+				return {
+					id, x: 400 + (Math.random() - 0.5) * 60, y: 720,
+					targetX: 400 + (Math.random() - 0.5) * 40,
+					targetY: 680,
+					speed: 0.8, size: 6
+				};
+			}
+			return {
+				id, x: 400 + (Math.random() - 0.5) * 80, y: 650,
+				targetX: 400 + (Math.random() - 0.5) * 30,
+				targetY: 560,
+				speed: 0.4 + Math.random() * 0.3,
+				size: 3 + Math.random() * 2
+			};
+		} else if (effects.crowdFlow === 'dispersing') {
+			// Halftime - people flowing from seats to concourse
 			const angle = Math.random() * Math.PI * 2;
 			const innerRadius = 120 + Math.random() * 80;
 			const outerRadius = 280 + Math.random() * 60;
@@ -326,19 +418,56 @@
 				speed: 0.3 + Math.random() * 0.4,
 				size: 3 + Math.random() * 2
 			};
-		} else {
-			// Emergency - people evacuating toward south exit and parking
-			const startX = 500 + (Math.random() - 0.5) * 200;
-			const startY = 300 + (Math.random() - 0.5) * 150;
-			const toParking = Math.random() > 0.3;
+		} else if (effects.crowdFlow === 'sheltering') {
+			// Weather - people moving to covered areas
 			return {
 				id,
-				x: startX,
-				y: startY,
-				targetX: toParking ? (350 + Math.random() * 100) : (400 + (Math.random() - 0.5) * 40),
-				targetY: toParking ? (700 + Math.random() * 80) : 580,
+				x: 100 + Math.random() * 600,
+				y: -80 + Math.random() * 60,
+				targetX: Math.random() > 0.5 ? (-50 + Math.random() * 150) : (700 + Math.random() * 150),
+				targetY: -80 + Math.random() * 100,
+				speed: 0.7 + Math.random() * 0.5,
+				size: 3 + Math.random() * 2
+			};
+		} else if (effects.crowdFlow === 'evacuating') {
+			// Emergency - rapid evacuation to south
+			const startX = 500 + (Math.random() - 0.5) * 200;
+			const startY = 300 + (Math.random() - 0.5) * 150;
+			return {
+				id, x: startX, y: startY,
+				targetX: 350 + Math.random() * 100,
+				targetY: 680 + Math.random() * 80,
 				speed: 1.2 + Math.random() * 0.8,
 				size: 3 + Math.random() * 2
+			};
+		} else if (effects.crowdFlow === 'exiting') {
+			// Game end - mass exit to all parking
+			const exit = Math.floor(Math.random() * 4);
+			const targets = [
+				{ x: 400, y: -100 }, // north
+				{ x: 400, y: 720 },  // south
+				{ x: -100, y: 300 }, // west
+				{ x: 900, y: 300 }   // east
+			];
+			return {
+				id,
+				x: 400 + (Math.random() - 0.5) * 300,
+				y: 300 + (Math.random() - 0.5) * 200,
+				targetX: targets[exit].x + (Math.random() - 0.5) * 100,
+				targetY: targets[exit].y + (Math.random() - 0.5) * 50,
+				speed: 0.5 + Math.random() * 0.4,
+				size: 3 + Math.random() * 2
+			};
+		} else {
+			// Overnight/empty - just a few maintenance workers
+			return {
+				id,
+				x: 200 + Math.random() * 400,
+				y: 200 + Math.random() * 200,
+				targetX: 200 + Math.random() * 400,
+				targetY: 200 + Math.random() * 200,
+				speed: 0.2,
+				size: 4
 			};
 		}
 	}
@@ -381,29 +510,75 @@
 
 	// Scenario-specific arena states
 	const scenarioEffects = [
-		{ // Gate crowding
+		{ // 0: Gate crowding
 			zones: ['gate-a', 'concourse-north'],
 			entry: 'north',
 			securityStatus: 'monitoring' as const,
-			lightingMode: 'event' as const
+			lightingMode: 'event' as const,
+			crowdFlow: 'entering',
+			attendance: 8_420
 		},
-		{ // Halftime
+		{ // 1: VIP arrival
+			zones: ['vip-entrance', 'lot-c'],
+			entry: 'south',
+			securityStatus: 'monitoring' as const,
+			lightingMode: 'event' as const,
+			crowdFlow: 'vip',
+			attendance: 12_500
+		},
+		{ // 2: Halftime
 			zones: ['concourse', 'concessions'],
 			entry: null,
 			securityStatus: 'monitoring' as const,
-			lightingMode: 'ambient' as const
+			lightingMode: 'ambient' as const,
+			crowdFlow: 'dispersing',
+			attendance: 18_902
 		},
-		{ // Emergency
+		{ // 3: Weather incoming
+			zones: ['covered-areas', 'parking-north'],
+			entry: 'west',
+			securityStatus: 'monitoring' as const,
+			lightingMode: 'event' as const,
+			crowdFlow: 'sheltering',
+			attendance: 18_756
+		},
+		{ // 4: Emergency
 			zones: ['section-112', 'exit-paths'],
 			entry: 'south',
 			securityStatus: 'alert' as const,
-			lightingMode: 'emergency' as const
+			lightingMode: 'emergency' as const,
+			crowdFlow: 'evacuating',
+			attendance: 18_123
+		},
+		{ // 5: Game end
+			zones: ['all-exits', 'parking-all'],
+			entry: null,
+			securityStatus: 'monitoring' as const,
+			lightingMode: 'event' as const,
+			crowdFlow: 'exiting',
+			attendance: 19_200
+		},
+		{ // 6: Overnight
+			zones: ['perimeter'],
+			entry: null,
+			securityStatus: 'patrol' as const,
+			lightingMode: 'minimal' as const,
+			crowdFlow: 'empty',
+			attendance: 45
 		}
 	];
 
 	onMount(() => {
 		mounted = true;
-		generateParticles(); // Initialize crowd
+		
+		// Apply initial scenario effects
+		const initialEffects = scenarioEffects[activeScenario];
+		activeZones = initialEffects.zones;
+		highlightedEntry = initialEffects.entry;
+		securityStatus = initialEffects.securityStatus;
+		lightingMode = initialEffects.lightingMode;
+		currentEvent = { ...currentEvent, attendance: initialEffects.attendance };
+		generateParticles();
 
 		// Simulation tick - creates the "living" effect
 		const interval = setInterval(() => {
@@ -415,8 +590,12 @@
 			if (liveMode) {
 				scenarioCycleTimer++;
 				
-				// Auto-cycle scenarios every 8 seconds
-				if (scenarioCycleTimer % 80 === 0) {
+				// Auto-cycle scenarios every 6 seconds for better pacing
+				if (scenarioCycleTimer % 60 === 0) {
+					// Brief transition effect
+					scenarioTransitioning = true;
+					setTimeout(() => { scenarioTransitioning = false; }, 500);
+					
 					activeScenario = (activeScenario + 1) % intelligenceScenarios.length;
 					
 					// Apply scenario effects to arena
@@ -426,19 +605,15 @@
 					securityStatus = effects.securityStatus;
 					lightingMode = effects.lightingMode;
 					
-					// Regenerate particles for new scenario
-					generateParticles();
-				}
-				
-				// Cycle event phases every 20 seconds
-				if (scenarioCycleTimer % 200 === 0) {
-					currentPhaseIndex = (currentPhaseIndex + 1) % eventPhases.length;
-					const phase = eventPhases[currentPhaseIndex];
+					// Update event with scenario-specific attendance and phase
 					currentEvent = {
 						...currentEvent,
-						phase: phase.phase,
-						attendance: phase.attendance
+						phase: intelligenceScenarios[activeScenario].phase,
+						attendance: effects.attendance
 					};
+					
+					// Regenerate particles for new scenario
+					generateParticles();
 				}
 				
 				// Auto-cycle reasoning examples every 6 seconds
@@ -675,8 +850,21 @@
 							opacity="0.6"
 						/>
 					{/each}
-				{:else if activeScenario === 2}
-					<!-- Emergency: vehicles leaving to south -->
+				{:else if activeScenario === 1}
+					<!-- VIP: luxury vehicles arriving at south -->
+					{#each Array(2) as _, i}
+						<rect 
+							x={385 + i * 30} 
+							y={720 - ((tick * 1.5 + i * 40) % 80)} 
+							width="20" 
+							height="10" 
+							rx="3" 
+							fill="var(--color-accent)" 
+							opacity="0.7"
+						/>
+					{/each}
+				{:else if activeScenario === 4}
+					<!-- Emergency: vehicles leaving rapidly to south -->
 					{#each Array(6) as _, i}
 						<rect 
 							x={370 + (i % 3) * 20} 
@@ -685,6 +873,30 @@
 							height="8" 
 							rx="2" 
 							fill="var(--color-error)" 
+							opacity="0.5"
+						/>
+					{/each}
+				{:else if activeScenario === 5}
+					<!-- Game end: vehicles leaving from all lots -->
+					{#each Array(4) as _, i}
+						<rect 
+							x={360 + (i % 2) * 40} 
+							y={-80 - ((tick * 1.5 + i * 50) % 100)} 
+							width="14" 
+							height="8" 
+							rx="2" 
+							fill="var(--color-data-1)" 
+							opacity="0.5"
+						/>
+					{/each}
+					{#each Array(4) as _, i}
+						<rect 
+							x={370 + (i % 2) * 40} 
+							y={620 + ((tick * 1.5 + i * 40) % 130)} 
+							width="14" 
+							height="8" 
+							rx="2" 
+							fill="var(--color-data-1)" 
 							opacity="0.5"
 						/>
 					{/each}
@@ -893,16 +1105,62 @@
 				<!-- Gate crowding - highlight north area -->
 				<ellipse cx="400" cy="80" rx="120" ry="60" fill="var(--color-data-4)" opacity="0.15" class="scenario-zone pulse" />
 				<text x="400" y="85" text-anchor="middle" font-size="11" fill="var(--color-data-4)" font-weight="600">CROWD BUILDING</text>
+				<!-- Flow arrows from parking to entrance -->
+				<path d="M -50 -30 Q 150 30 380 40" fill="none" stroke="var(--color-data-4)" stroke-width="2" opacity="0.4" stroke-dasharray="8 4" class="flow-arrow" />
+				<path d="M 850 -30 Q 650 30 420 40" fill="none" stroke="var(--color-data-4)" stroke-width="2" opacity="0.4" stroke-dasharray="8 4" class="flow-arrow" />
 			{:else if activeScenario === 1}
+				<!-- VIP arrival - highlight south entrance and Lot C -->
+				<ellipse cx="400" cy="680" rx="100" ry="40" fill="var(--color-accent)" opacity="0.2" class="scenario-zone pulse" />
+				<rect x="290" y="680" width="220" height="140" rx="8" fill="var(--color-accent)" opacity="0.1" class="scenario-zone pulse" />
+				<text x="400" y="640" text-anchor="middle" font-size="11" fill="var(--color-accent)" font-weight="600">VIP ARRIVAL</text>
+			{:else if activeScenario === 2}
 				<!-- Halftime - highlight concourse -->
 				<ellipse cx="400" cy="300" rx="340" ry="250" fill="none" stroke="var(--color-data-2)" stroke-width="30" opacity="0.1" class="scenario-zone pulse" />
-				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-data-2)" font-weight="600">HALFTIME ACTIVE</text>
-			{:else if activeScenario === 2}
+				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-data-2)" font-weight="600">HALFTIME RUSH</text>
+				<!-- Concession hotspots -->
+				<circle cx="200" cy="180" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
+				<circle cx="600" cy="180" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
+				<circle cx="200" cy="420" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
+				<circle cx="600" cy="420" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
+			{:else if activeScenario === 3}
+				<!-- Weather incoming - highlight covered areas -->
+				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-data-3)" opacity="0.15" class="scenario-zone pulse" />
+				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-data-3)" opacity="0.15" class="scenario-zone pulse" />
+				<text x="400" y="-80" text-anchor="middle" font-size="11" fill="var(--color-data-3)" font-weight="600">STORM APPROACHING</text>
+				<!-- Rain effect -->
+				{#each Array(20) as _, i}
+					<line 
+						x1={-100 + i * 55} y1={-140 + (tick * 2 + i * 10) % 80} 
+						x2={-95 + i * 55} y2={-130 + (tick * 2 + i * 10) % 80} 
+						stroke="var(--color-data-3)" stroke-width="1" opacity="0.3" 
+					/>
+				{/each}
+			{:else if activeScenario === 4}
 				<!-- Emergency - highlight section 112 area -->
 				<ellipse cx="550" cy="400" rx="80" ry="60" fill="var(--color-error)" opacity="0.2" class="scenario-zone alert-pulse" />
 				<text x="550" y="405" text-anchor="middle" font-size="11" fill="var(--color-error)" font-weight="600">SECTION 112</text>
 				<!-- Exit path indicators -->
 				<line x1="550" y1="400" x2="400" y2="560" stroke="var(--color-error)" stroke-width="3" stroke-dasharray="10 5" opacity="0.6" class="exit-path" />
+				<line x1="400" y1="560" x2="400" y2="700" stroke="var(--color-error)" stroke-width="3" stroke-dasharray="10 5" opacity="0.6" class="exit-path" />
+			{:else if activeScenario === 5}
+				<!-- Game end - all exits active -->
+				<text x="400" y="180" text-anchor="middle" font-size="12" fill="var(--color-data-1)" font-weight="600">FINAL BUZZER</text>
+				<!-- Exit flow arrows -->
+				<line x1="400" y1="250" x2="400" y2="40" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<line x1="400" y1="350" x2="400" y2="580" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<line x1="300" y1="300" x2="50" y2="300" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<line x1="500" y1="300" x2="750" y2="300" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<!-- Parking lot activity -->
+				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-data-1)" opacity="0.1" class="scenario-zone pulse" />
+				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-data-1)" opacity="0.1" class="scenario-zone pulse" />
+				<rect x="290" y="680" width="220" height="140" rx="8" fill="var(--color-data-1)" opacity="0.1" class="scenario-zone pulse" />
+			{:else if activeScenario === 6}
+				<!-- Overnight - minimal activity, perimeter security -->
+				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-fg-tertiary)" font-weight="600">OVERNIGHT MODE</text>
+				<!-- Dimmed arena -->
+				<ellipse cx="400" cy="300" rx="380" ry="280" fill="var(--color-bg-pure)" opacity="0.6" />
+				<!-- Security patrol path -->
+				<ellipse cx="400" cy="300" rx="440" ry="330" fill="none" stroke="var(--color-data-1)" stroke-width="2" stroke-dasharray="20 10" opacity="0.3" class="patrol-path" />
 			{/if}
 
 			<!-- Labels -->
@@ -914,21 +1172,30 @@
 			</g>
 
 			<!-- Crowd Particles - People moving through arena -->
+			{@const particleColors = [
+				'var(--color-data-4)',  // 0: entering - yellow/gold
+				'var(--color-accent)',  // 1: VIP - accent
+				'var(--color-data-2)',  // 2: halftime - green
+				'var(--color-data-3)',  // 3: weather - blue
+				'var(--color-error)',   // 4: emergency - red
+				'var(--color-data-1)',  // 5: exiting - cyan
+				'var(--color-fg-muted)' // 6: overnight - gray
+			]}
 			<g class="crowd-particles">
 				{#each crowdParticles as particle (particle.id)}
 					<circle
 						cx={particle.x}
 						cy={particle.y}
 						r={particle.size}
-						fill={activeScenario === 2 ? 'var(--color-error)' : 'var(--color-data-3)'}
-						opacity={activeScenario === 2 ? 0.8 : 0.6}
+						fill={particleColors[activeScenario]}
+						opacity={activeScenario === 4 ? 0.8 : 0.6}
 						class="crowd-person"
 					/>
 				{/each}
 				
 				<!-- Movement trail for emergency evacuation -->
-				{#if activeScenario === 2}
-					{#each crowdParticles.slice(0, 5) as particle (particle.id)}
+				{#if activeScenario === 4}
+					{#each crowdParticles.slice(0, 8) as particle (particle.id)}
 						<circle
 							cx={particle.x - 8}
 							cy={particle.y - 8}
@@ -942,24 +1209,74 @@
 
 			<!-- Crowd density heat zones -->
 			{#if activeScenario === 0}
+				<!-- Entering: density at north gate -->
 				<ellipse cx="400" cy="60" rx="80" ry="30" fill="var(--color-data-4)" opacity="0.3" class="density-high" />
 			{:else if activeScenario === 1}
+				<!-- VIP: density at south entrance -->
+				<ellipse cx="400" cy="620" rx="60" ry="25" fill="var(--color-accent)" opacity="0.3" class="density-high" />
+			{:else if activeScenario === 2}
+				<!-- Halftime: concession crowds -->
 				<g class="concession-crowds">
-					<ellipse cx="200" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
-					<ellipse cx="600" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
-					<ellipse cx="200" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
-					<ellipse cx="600" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" />
+					<ellipse cx="200" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
+					<ellipse cx="600" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
+					<ellipse cx="200" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
+					<ellipse cx="600" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
 				</g>
+			{:else if activeScenario === 4}
+				<!-- Emergency: density near exit -->
+				<ellipse cx="400" cy="540" rx="100" ry="40" fill="var(--color-error)" opacity="0.2" class="density-high" />
+			{:else if activeScenario === 5}
+				<!-- Game end: density at all exits -->
+				<ellipse cx="400" cy="60" rx="60" ry="25" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
+				<ellipse cx="400" cy="540" rx="60" ry="25" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
+				<ellipse cx="60" cy="300" rx="25" ry="40" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
+				<ellipse cx="740" cy="300" rx="25" ry="40" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
 			{/if}
 
 			<!-- Live Mode Indicator -->
 			{#if liveMode}
 				<g class="live-badge">
-					<rect x="20" y="20" width="60" height="24" rx="4" fill="var(--color-error)" opacity="0.9" />
-					<circle cx="35" cy="32" r="4" fill="white" class="live-dot" />
-					<text x="55" y="37" font-size="11" fill="white" font-weight="600">LIVE</text>
+					<rect x="-180" y="-130" width="60" height="24" rx="4" fill="var(--color-error)" opacity="0.9" />
+					<circle cx="-165" cy="-118" r="4" fill="white" class="live-dot" />
+					<text x="-145" y="-113" font-size="11" fill="white" font-weight="600">LIVE</text>
 				</g>
 			{/if}
+
+			<!-- Scenario Info Panel (bottom right) -->
+			<g class="scenario-info" transform="translate(700, 620)" class:transitioning={scenarioTransitioning}>
+				<rect x="0" y="0" width="280" height="120" rx="8" fill="var(--color-bg-elevated)" opacity="0.95" stroke="var(--color-border-emphasis)" stroke-width="1" />
+				
+				<!-- Scenario title -->
+				<text x="15" y="25" font-size="10" fill="var(--color-fg-tertiary)" font-weight="500">SCENARIO {activeScenario + 1} OF {intelligenceScenarios.length}</text>
+				<text x="15" y="48" font-size="14" fill="var(--color-fg-default)" font-weight="600">{currentScenario.trigger}</text>
+				
+				<!-- Phase indicator -->
+				<rect x="15" y="60" width="auto" height="18" rx="3" fill="var(--color-accent)" opacity="0.2" />
+				<text x="22" y="73" font-size="10" fill="var(--color-accent)" font-weight="500">{currentScenario.phase}</text>
+				
+				<!-- Visual cue -->
+				<text x="15" y="100" font-size="9" fill="var(--color-fg-muted)" font-style="italic">{currentScenario.visualCue}</text>
+				
+				<!-- Progress dots -->
+				<g transform="translate(200, 18)">
+					{#each intelligenceScenarios as _, i}
+						<circle 
+							cx={i * 10} 
+							cy="0" 
+							r="3" 
+							fill={i === activeScenario ? 'var(--color-accent)' : 'var(--color-fg-tertiary)'} 
+							opacity={i === activeScenario ? 1 : 0.3}
+						/>
+					{/each}
+				</g>
+			</g>
+
+			<!-- Attendance counter -->
+			<g class="attendance-counter" transform="translate(-180, 700)">
+				<rect x="0" y="0" width="140" height="40" rx="6" fill="var(--color-bg-surface)" opacity="0.9" stroke="var(--color-border-default)" />
+				<text x="15" y="18" font-size="9" fill="var(--color-fg-tertiary)">CURRENT ATTENDANCE</text>
+				<text x="15" y="33" font-size="14" fill="var(--color-fg-default)" font-weight="600">{currentEvent.attendance.toLocaleString()}</text>
+			</g>
 		</svg>
 
 		<!-- System Status Panels -->
@@ -1674,6 +1991,41 @@
 
 	.parked-vehicles rect {
 		transition: opacity 0.3s ease;
+	}
+
+	.flow-arrow {
+		animation: flowPulse 2s ease-in-out infinite;
+	}
+
+	@keyframes flowPulse {
+		0%, 100% { opacity: 0.2; stroke-dashoffset: 0; }
+		50% { opacity: 0.5; stroke-dashoffset: -24; }
+	}
+
+	.patrol-path {
+		animation: patrolDash 4s linear infinite;
+	}
+
+	@keyframes patrolDash {
+		to { stroke-dashoffset: -60; }
+	}
+
+	.scenario-info {
+		transition: opacity 0.3s ease, transform 0.3s ease;
+	}
+
+	.scenario-info.transitioning {
+		opacity: 0.5;
+		transform: translate(700px, 620px) scale(0.98);
+	}
+
+	.hotspot {
+		animation: hotspotPulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes hotspotPulse {
+		0%, 100% { r: 25; opacity: 0.15; }
+		50% { r: 35; opacity: 0.3; }
 	}
 
 	@keyframes pulse {
