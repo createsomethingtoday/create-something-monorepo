@@ -84,6 +84,27 @@ export function validateToken(token: string): string {
 	return trimmedToken;
 }
 
+/**
+ * Clean Airtable status field by removing emoji prefixes and keycap numbers.
+ * Airtable statuses often include prefixes like "3️⃣🚀Published" or "1️⃣🆕Upcoming"
+ * This extracts just the status name (e.g., "Published", "Upcoming")
+ */
+export function cleanMarketplaceStatus(rawStatus: string): string {
+	return rawStatus
+		// Remove keycap number prefix (e.g., "3️⃣" = digit + variation selector + combining enclosing keycap)
+		.replace(/^\d[\uFE0F]?[\u20E3]?/u, '')
+		// Remove any remaining leading digits
+		.replace(/^[0-9]+/u, '')
+		// Remove common emoji prefixes
+		.replace(/🆕/gu, '')
+		.replace(/📅/gu, '')
+		.replace(/🚀/gu, '')
+		.replace(/☠️/gu, '')
+		.replace(/❌/gu, '')
+		.replace(/✅/gu, '')
+		.trim();
+}
+
 // ==================== TYPES ====================
 
 export interface Asset {
@@ -275,14 +296,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 			return records.map(record => {
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
-				const cleanedStatus = rawStatus
-					.replace(/^\d*️⃣/u, '')
-					.replace(/🆕/u, '')
-					.replace(/📅/u, '')
-					.replace(/🚀/u, '')
-					.replace(/☠️/u, '')
-					.replace(/❌/u, '')
-					.trim() as Asset['status'];
+				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 
 				return {
 					id: record.id,
@@ -310,7 +324,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const record = await base(TABLES.ASSETS).find(id);
 				const carouselImages = (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(img => img.url) || [];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
-				const cleanedStatus = rawStatus.replace(/[^\w\s]/g, '').trim() as Asset['status'];
+				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 
 				return {
 					id: record.id,
@@ -369,7 +383,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const records = await base(TABLES.ASSETS).update([{ id, fields }]);
 				const record = records[0];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
-				const cleanedStatus = rawStatus.replace(/[^\w\s]/g, '').trim() as Asset['status'];
+				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 
 				return {
 					id: record.id,
@@ -441,7 +455,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const records = await base(TABLES.ASSETS).update([{ id, fields }]);
 				const record = records[0];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
-				const cleanedStatus = rawStatus.replace(/[^\w\s]/g, '').trim() as Asset['status'];
+				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 				const carouselImages = (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(img => img.url) || [];
 
 				return {

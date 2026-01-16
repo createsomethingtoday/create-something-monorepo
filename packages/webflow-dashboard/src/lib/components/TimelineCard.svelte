@@ -115,12 +115,15 @@
 
 		// 4. Published (only if not rejected)
 		if (!isRejected) {
+			const isPublished = asset.status === 'Published' || asset.status === 'Delisted';
+			// Use publishedDate if available, otherwise fall back to decisionDate for published assets
+			const publishDate = asset.publishedDate || (isPublished ? asset.decisionDate : undefined);
 			items.push({
 				id: 'published',
 				label: 'Published',
-				date: asset.publishedDate,
-				status: asset.status === 'Published' ? 'completed' : asset.status === 'Delisted' ? 'completed' : 'pending',
-				description: asset.publishedDate ? formatRelativeTime(asset.publishedDate) : undefined
+				date: publishDate,
+				status: isPublished ? 'completed' : 'pending',
+				description: publishDate ? formatRelativeTime(publishDate) : undefined
 			});
 		}
 
@@ -129,8 +132,15 @@
 
 	// Calculate time metrics
 	const timeToReview = $derived(daysBetween(asset.submittedDate, asset.latestReviewDate || asset.decisionDate));
-	const timeToPublish = $derived(daysBetween(asset.submittedDate, asset.publishedDate));
-	const daysLive = $derived(asset.publishedDate ? daysBetween(asset.publishedDate, undefined) : null);
+	// For time to publish, use publishedDate if available, otherwise use decisionDate for approved assets
+	const effectivePublishDate = $derived(asset.publishedDate || (asset.status === 'Published' ? asset.decisionDate : undefined));
+	const timeToPublish = $derived(daysBetween(asset.submittedDate, effectivePublishDate));
+	// Days live: if published, calculate from publish date (or decision date as fallback)
+	const daysLive = $derived(
+		asset.status === 'Published' || asset.status === 'Delisted'
+			? daysBetween(effectivePublishDate, undefined)
+			: null
+	);
 </script>
 
 <div class="timeline-container">
