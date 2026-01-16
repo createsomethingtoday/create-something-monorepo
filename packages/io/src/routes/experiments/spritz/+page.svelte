@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Footer, QuoteBlock } from '@create-something/components';
+	import { QuoteBlock } from '@create-something/components';
 	import { Spritz } from '@create-something/spritz';
 	import type { PageData } from './$types';
 
@@ -340,8 +340,6 @@ engine.play();`}</pre>
 		</p>
 	</footer>
 </article>
-
-<Footer />
 
 <style>
 	.experiment-page {
