@@ -84,8 +84,11 @@ function groupFindings(
       };
     }
     
-    groups[finding.ruleId].count++;
-    groups[finding.ruleId].items.push(finding);
+    const group = groups[finding.ruleId];
+    if (group) {
+      group.count++;
+      group.items.push(finding);
+    }
   }
   
   return groups;

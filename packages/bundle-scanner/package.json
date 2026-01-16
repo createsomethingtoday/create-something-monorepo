@@ -15,10 +15,8 @@
     "webflow:dev": "npx webflow devlink"
   },
   "dependencies": {
-    "@create-something/bundle-scanner-core": "workspace:^",
-    "@google/genai": "^0.1.0",
     "@webflow/react": "^1.0.0",
-    "idb": "^8.0.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.300.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

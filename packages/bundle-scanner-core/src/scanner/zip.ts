@@ -87,7 +87,7 @@ export async function processZipFile(
  * Process a ZIP file from a buffer (for Node.js usage)
  */
 export async function processZipBuffer(
-  buffer: ArrayBuffer | Uint8Array,
+  buffer: ArrayBuffer,
   config: ScanConfig,
   onProgress: ProgressCallback
 ): Promise<UnzippedFile[]> {

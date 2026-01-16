@@ -1,12 +1,14 @@
 {
   "name": "Webflow Marketplace Bundle Scanner",
-  "components": "./src/**/*.webflow.@(js|jsx|mjs|ts|tsx)",
+  "components": "./webflow/BundleScanner.webflow.tsx",
+  "telemetry": {
+    "global": {
+      "allowTelemetry": true
+    }
+  },
   "library": {
-    "components": [
-      "**/*.webflow.@(js|jsx|mjs|ts|tsx)"
-    ],
-    "name": "Bundle Scanner Components",
-    "description": "Internal Webflow Marketplace team tool for scanning app bundles for security, privacy, and policy compliance. Includes triage dashboard, finding cards, verdict badges, and AI-powered analysis.",
-    "id": "bundle-scanner-components"
+    "name": "Bundle Scanner",
+    "description": "Complete Webflow Marketplace bundle security scanner. Upload ZIP files to scan for security issues, policy violations, and get AI-powered analysis.",
+    "id": "bundle-scanner"
   }
 }
