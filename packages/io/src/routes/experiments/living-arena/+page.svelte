@@ -252,6 +252,46 @@
 	// Animation state
 	let mounted = $state(false);
 	let tick = $state(0);
+	let liveMode = $state(true);
+	let scenarioCycleTimer = $state(0);
+	
+	// Active zones for visual highlighting based on scenario
+	let activeZones = $state<string[]>([]);
+	let highlightedEntry = $state<string | null>(null);
+
+	// Event phases that cycle
+	const eventPhases = [
+		{ phase: 'Pre-Game', attendance: 8_420 },
+		{ phase: 'First Quarter', attendance: 16_234 },
+		{ phase: 'Second Quarter', attendance: 18_847 },
+		{ phase: 'Halftime', attendance: 18_902 },
+		{ phase: 'Third Quarter', attendance: 18_756 },
+		{ phase: 'Fourth Quarter', attendance: 18_123 },
+		{ phase: 'Post-Game', attendance: 12_456 }
+	];
+	let currentPhaseIndex = $state(2); // Start at Second Quarter
+
+	// Scenario-specific arena states
+	const scenarioEffects = [
+		{ // Gate crowding
+			zones: ['gate-a', 'concourse-north'],
+			entry: 'north',
+			securityStatus: 'monitoring' as const,
+			lightingMode: 'event' as const
+		},
+		{ // Halftime
+			zones: ['concourse', 'concessions'],
+			entry: null,
+			securityStatus: 'monitoring' as const,
+			lightingMode: 'ambient' as const
+		},
+		{ // Emergency
+			zones: ['section-112', 'exit-paths'],
+			entry: 'south',
+			securityStatus: 'alert' as const,
+			lightingMode: 'emergency' as const
+		}
+	];
 
 	onMount(() => {
 		mounted = true;
@@ -259,23 +299,69 @@
 		// Simulation tick - creates the "living" effect
 		const interval = setInterval(() => {
 			tick = (tick + 1) % 360;
+			
+			if (liveMode) {
+				scenarioCycleTimer++;
+				
+				// Auto-cycle scenarios every 8 seconds
+				if (scenarioCycleTimer % 80 === 0) {
+					activeScenario = (activeScenario + 1) % intelligenceScenarios.length;
+					
+					// Apply scenario effects to arena
+					const effects = scenarioEffects[activeScenario];
+					activeZones = effects.zones;
+					highlightedEntry = effects.entry;
+					securityStatus = effects.securityStatus;
+					lightingMode = effects.lightingMode;
+				}
+				
+				// Cycle event phases every 20 seconds
+				if (scenarioCycleTimer % 200 === 0) {
+					currentPhaseIndex = (currentPhaseIndex + 1) % eventPhases.length;
+					const phase = eventPhases[currentPhaseIndex];
+					currentEvent = {
+						...currentEvent,
+						phase: phase.phase,
+						attendance: phase.attendance
+					};
+				}
+				
+				// Auto-cycle reasoning examples every 6 seconds
+				if (scenarioCycleTimer % 60 === 0) {
+					activeReasoning = (activeReasoning + 1) % reasoningExamples.length;
+				}
+			}
 
-			// Occasionally update notifications
-			if (tick % 60 === 0) {
-				const systems = ['Security', 'Lighting', 'HVAC', 'Scheduling'];
-				const messages = [
-					'Routine scan completed',
-					'Pattern recognized',
-					'Automation triggered',
-					'Status nominal'
+			// Notifications - more contextual based on active scenario
+			if (tick % 40 === 0) {
+				const scenarioMessages = [
+					[
+						{ system: 'Security', message: 'Gate A density: 87% capacity' },
+						{ system: 'Wayfinding', message: 'Redirecting 23 guests to Gate B' },
+						{ system: 'HVAC', message: 'Pre-cooling Section 104-108' }
+					],
+					[
+						{ system: 'Lighting', message: 'Concourse at full brightness' },
+						{ system: 'Scheduling', message: 'Cleaning crews deployed' },
+						{ system: 'Concessions', message: 'Rush hour staffing active' }
+					],
+					[
+						{ system: 'Security', message: 'Response team en route' },
+						{ system: 'Lighting', message: 'Emergency paths illuminated' },
+						{ system: 'HVAC', message: 'Positive pressure in corridors' }
+					]
 				];
+				
+				const msgs = scenarioMessages[activeScenario];
+				const msg = msgs[Math.floor(Math.random() * msgs.length)];
+				
 				notifications = [
 					{
 						id: Date.now(),
-						system: systems[Math.floor(Math.random() * systems.length)],
-						message: messages[Math.floor(Math.random() * messages.length)],
+						system: msg.system,
+						message: msg.message,
 						time: 'now',
-						priority: 'low' as const
+						priority: activeScenario === 2 ? 'high' as const : 'low' as const
 					},
 					...notifications.slice(0, 2)
 				];
@@ -287,6 +373,25 @@
 					...zone,
 					temp: zone.target + Math.round((Math.random() - 0.5) * 4)
 				}));
+			}
+			
+			// Occasionally add new incidents
+			if (tick % 120 === 0 && liveMode) {
+				const newIncident = incidentTypes[Math.floor(Math.random() * incidentTypes.length)];
+				const now = new Date();
+				incidentLog = [
+					{
+						id: Date.now(),
+						timestamp: `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`,
+						type: newIncident.type as 'success' | 'failure' | 'override' | 'escalation',
+						system: newIncident.system,
+						event: newIncident.event,
+						resolution: newIncident.resolution,
+						learned: newIncident.learned,
+						humanInvolved: Math.random() > 0.3
+					},
+					...incidentLog.slice(0, 4)
+				];
 			}
 		}, 100);
 
@@ -321,10 +426,16 @@
 				And through it all, <strong>safety comes first</strong>—always.
 			</p>
 		</div>
-		<div class="event-badge">
-			<span class="event-phase">{currentEvent.phase}</span>
-			<span class="event-name">{currentEvent.name}</span>
-			<span class="attendance">{currentEvent.attendance.toLocaleString()} / {currentEvent.capacity.toLocaleString()}</span>
+		<div class="header-right">
+			<button class="live-toggle" class:active={liveMode} onclick={() => liveMode = !liveMode}>
+				<span class="live-indicator" class:pulsing={liveMode}></span>
+				{liveMode ? 'LIVE' : 'PAUSED'}
+			</button>
+			<div class="event-badge">
+				<span class="event-phase">{currentEvent.phase}</span>
+				<span class="event-name">{currentEvent.name}</span>
+				<span class="attendance">{currentEvent.attendance.toLocaleString()} / {currentEvent.capacity.toLocaleString()}</span>
+			</div>
 		</div>
 	</header>
 
@@ -538,12 +649,29 @@
 			</g>
 
 			<!-- Entry/Exit Points -->
-			<g class="entry-points" fill="var(--color-data-4)">
-				<rect x="395" y="15" width="10" height="20" rx="2" class="entry north" />
-				<rect x="395" y="565" width="10" height="20" rx="2" class="entry south" />
-				<rect x="15" y="295" width="20" height="10" rx="2" class="entry west" />
-				<rect x="765" y="295" width="20" height="10" rx="2" class="entry east" />
+			<g class="entry-points">
+				<rect x="395" y="15" width="10" height="20" rx="2" class="entry north" class:highlighted={highlightedEntry === 'north'} fill={highlightedEntry === 'north' ? 'var(--color-data-4)' : 'var(--color-fg-muted)'} />
+				<rect x="395" y="565" width="10" height="20" rx="2" class="entry south" class:highlighted={highlightedEntry === 'south'} fill={highlightedEntry === 'south' ? 'var(--color-error)' : 'var(--color-fg-muted)'} />
+				<rect x="15" y="295" width="20" height="10" rx="2" class="entry west" class:highlighted={highlightedEntry === 'west'} fill={highlightedEntry === 'west' ? 'var(--color-data-4)' : 'var(--color-fg-muted)'} />
+				<rect x="765" y="295" width="20" height="10" rx="2" class="entry east" class:highlighted={highlightedEntry === 'east'} fill={highlightedEntry === 'east' ? 'var(--color-data-4)' : 'var(--color-fg-muted)'} />
 			</g>
+
+			<!-- Active Scenario Indicator -->
+			{#if activeScenario === 0}
+				<!-- Gate crowding - highlight north area -->
+				<ellipse cx="400" cy="80" rx="120" ry="60" fill="var(--color-data-4)" opacity="0.15" class="scenario-zone pulse" />
+				<text x="400" y="85" text-anchor="middle" font-size="11" fill="var(--color-data-4)" font-weight="600">CROWD BUILDING</text>
+			{:else if activeScenario === 1}
+				<!-- Halftime - highlight concourse -->
+				<ellipse cx="400" cy="300" rx="340" ry="250" fill="none" stroke="var(--color-data-2)" stroke-width="30" opacity="0.1" class="scenario-zone pulse" />
+				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-data-2)" font-weight="600">HALFTIME ACTIVE</text>
+			{:else if activeScenario === 2}
+				<!-- Emergency - highlight section 112 area -->
+				<ellipse cx="550" cy="400" rx="80" ry="60" fill="var(--color-error)" opacity="0.2" class="scenario-zone alert-pulse" />
+				<text x="550" y="405" text-anchor="middle" font-size="11" fill="var(--color-error)" font-weight="600">SECTION 112</text>
+				<!-- Exit path indicators -->
+				<line x1="550" y1="400" x2="400" y2="560" stroke="var(--color-error)" stroke-width="3" stroke-dasharray="10 5" opacity="0.6" class="exit-path" />
+			{/if}
 
 			<!-- Labels -->
 			<g class="labels" font-size="10" fill="var(--color-fg-tertiary)">
@@ -552,6 +680,15 @@
 				<text x="60" y="305" text-anchor="middle">WEST</text>
 				<text x="740" y="305" text-anchor="middle">EAST</text>
 			</g>
+
+			<!-- Live Mode Indicator -->
+			{#if liveMode}
+				<g class="live-badge">
+					<rect x="20" y="20" width="60" height="24" rx="4" fill="var(--color-error)" opacity="0.9" />
+					<circle cx="35" cy="32" r="4" fill="white" class="live-dot" />
+					<text x="55" y="37" font-size="11" fill="white" font-weight="600">LIVE</text>
+				</g>
+			{/if}
 		</svg>
 
 		<!-- System Status Panels -->
@@ -1038,6 +1175,60 @@
 		font-variant-numeric: tabular-nums;
 	}
 
+	/* Header Right Section */
+	.header-right {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: var(--space-sm);
+	}
+
+	/* Live Toggle */
+	.live-toggle {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		font-size: var(--text-caption);
+		font-weight: 600;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.live-toggle:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.live-toggle.active {
+		background: var(--color-error);
+		border-color: var(--color-error);
+		color: white;
+	}
+
+	.live-indicator {
+		width: 8px;
+		height: 8px;
+		border-radius: var(--radius-full);
+		background: var(--color-fg-muted);
+	}
+
+	.live-toggle.active .live-indicator {
+		background: white;
+	}
+
+	.live-indicator.pulsing {
+		animation: livePulse 1s ease-in-out infinite;
+	}
+
+	@keyframes livePulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.4; }
+	}
+
 	/* Main Visualization */
 	.visualization-container {
 		display: grid;
@@ -1116,6 +1307,57 @@
 
 	.security-beam {
 		transition: transform 0.1s linear;
+	}
+
+	/* Scenario Zone Highlights */
+	.scenario-zone {
+		transition: opacity 0.5s ease;
+	}
+
+	.scenario-zone.pulse {
+		animation: zonePulse 2s ease-in-out infinite;
+	}
+
+	.scenario-zone.alert-pulse {
+		animation: alertPulse 0.5s ease-in-out infinite;
+	}
+
+	@keyframes zonePulse {
+		0%, 100% { opacity: 0.1; }
+		50% { opacity: 0.25; }
+	}
+
+	@keyframes alertPulse {
+		0%, 100% { opacity: 0.15; }
+		50% { opacity: 0.35; }
+	}
+
+	.exit-path {
+		animation: dashFlow 1s linear infinite;
+	}
+
+	@keyframes dashFlow {
+		to { stroke-dashoffset: -15; }
+	}
+
+	/* Entry Point Highlights */
+	.entry {
+		transition: all 0.3s ease;
+	}
+
+	.entry.highlighted {
+		filter: drop-shadow(0 0 8px currentColor);
+		animation: entryPulse 1s ease-in-out infinite;
+	}
+
+	@keyframes entryPulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.6; }
+	}
+
+	/* Live Badge in SVG */
+	.live-badge .live-dot {
+		animation: livePulse 1s ease-in-out infinite;
 	}
 
 	@keyframes pulse {
