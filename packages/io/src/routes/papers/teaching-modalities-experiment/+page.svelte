@@ -69,94 +69,94 @@
 			<h2 class="section-heading">1. The Three Modalities</h2>
 			
 			<!-- Spritz -->
-			<div class="p-6 bg-neutral-900 rounded-lg border border-neutral-800">
-				<h3 class="text-xl font-semibold mb-4">1. Spritz: RSVP Speed Reading</h3>
+			<div class="p-6 modality-card">
+				<h3 class="modality-title">1. Spritz: RSVP Speed Reading</h3>
 				<p class="body-text mb-4">
-					<a href="https://createsomething.io/experiments/spritz" class="text-blue-400 hover:underline">Spritz</a> 
+					<a href="https://createsomething.io/experiments/spritz" class="body-link">Spritz</a> 
 					uses Rapid Serial Visual Presentation to display one word at a time. The Optimal Recognition 
 					Point (ORP) is highlighted—the letter where your eye naturally focuses for fastest recognition.
 				</p>
-				<div class="grid grid-cols-2 gap-4 text-sm">
+				<div class="grid grid-cols-2 gap-4 modality-details">
 					<div>
-						<strong class="text-neutral-400">Best For:</strong>
-						<ul class="list-disc list-inside text-neutral-300 mt-1">
+						<strong class="modality-label">Best For:</strong>
+						<ul class="modality-list">
 							<li>Video intro/transition screens</li>
 							<li>Quick principle statements</li>
 							<li>Single concepts, mantras</li>
 						</ul>
 					</div>
 					<div>
-						<strong class="text-neutral-400">Characteristics:</strong>
-						<ul class="list-disc list-inside text-neutral-300 mt-1">
+						<strong class="modality-label">Characteristics:</strong>
+						<ul class="modality-list">
 							<li>Eliminates eye movement</li>
 							<li>200-400+ WPM with 90% comprehension</li>
 							<li>Minimal interface, maximal focus</li>
 						</ul>
 					</div>
 				</div>
-				<blockquote class="mt-4 pl-4 border-l-2 border-neutral-600 text-neutral-400 italic">
+				<blockquote class="quote-block">
 					"Reading is not about eye speed. It's about recognition speed. Fix the eye, stream the words."
 				</blockquote>
 			</div>
 
 			<!-- Motion Studio -->
-			<div class="p-6 bg-neutral-900 rounded-lg border border-neutral-800">
-				<h3 class="text-xl font-semibold mb-4">2. Motion Studio: Vox-Style Video</h3>
+			<div class="p-6 modality-card">
+				<h3 class="modality-title">2. Motion Studio: Vox-Style Video</h3>
 				<p class="body-text mb-4">
-					Built on <a href="https://remotion.dev" class="text-blue-400 hover:underline">Remotion</a>, 
+					Built on <a href="https://remotion.dev" class="body-link">Remotion</a>, 
 					Motion Studio creates programmatic video in the Vox explainer style. Kinetic typography, 
 					animated data visualizations, and spring physics bring concepts to life.
 				</p>
-				<div class="grid grid-cols-2 gap-4 text-sm">
+				<div class="grid grid-cols-2 gap-4 modality-details">
 					<div>
-						<strong class="text-neutral-400">Best For:</strong>
-						<ul class="list-disc list-inside text-neutral-300 mt-1">
+						<strong class="modality-label">Best For:</strong>
+						<ul class="modality-list">
 							<li>Complex concept explanations</li>
 							<li>Data-driven narratives</li>
 							<li>Walkthrough tutorials</li>
 						</ul>
 					</div>
 					<div>
-						<strong class="text-neutral-400">Characteristics:</strong>
-						<ul class="list-disc list-inside text-neutral-300 mt-1">
+						<strong class="modality-label">Characteristics:</strong>
+						<ul class="modality-list">
 							<li>Monochrome aesthetic (Canon-aligned)</li>
 							<li>Stack Sans Notch typography</li>
 							<li>Scene-based composition</li>
 						</ul>
 					</div>
 				</div>
-				<blockquote class="mt-4 pl-4 border-l-2 border-neutral-600 text-neutral-400 italic">
+				<blockquote class="quote-block">
 					"Every animation should feel like unveiling—like removing a cover to reveal what was always there."
 				</blockquote>
 			</div>
 
 			<!-- Learn Platform -->
-			<div class="p-6 bg-neutral-900 rounded-lg border border-neutral-800">
-				<h3 class="text-xl font-semibold mb-4">3. Learn Platform: Interactive Paths</h3>
+			<div class="p-6 modality-card">
+				<h3 class="modality-title">3. Learn Platform: Interactive Paths</h3>
 				<p class="body-text mb-4">
-					<a href="https://learn.createsomething.space" class="text-blue-400 hover:underline">learn.createsomething.space</a> 
+					<a href="https://learn.createsomething.space" class="body-link">learn.createsomething.space</a> 
 					offers structured learning paths with the Hermeneutic Spiral: read, practice, reflect, return.
 					Eight paths from environment setup to advanced orchestration.
 				</p>
-				<div class="grid grid-cols-2 gap-4 text-sm">
+				<div class="grid grid-cols-2 gap-4 modality-details">
 					<div>
-						<strong class="text-neutral-400">Best For:</strong>
-						<ul class="list-disc list-inside text-neutral-300 mt-1">
+						<strong class="modality-label">Best For:</strong>
+						<ul class="modality-list">
 							<li>Deep skill building</li>
 							<li>Hands-on practice (Praxis)</li>
 							<li>Long-term retention</li>
 						</ul>
 					</div>
 					<div>
-						<strong class="text-neutral-400">Characteristics:</strong>
-						<ul class="list-disc list-inside text-neutral-300 mt-1">
+						<strong class="modality-label">Characteristics:</strong>
+						<ul class="modality-list">
 							<li>Progress tracking</li>
 							<li>Prerequisite dependencies</li>
 							<li>Interactive exercises</li>
 						</ul>
 					</div>
 				</div>
-				<blockquote class="mt-4 pl-4 border-l-2 border-neutral-600 text-neutral-400 italic">
+				<blockquote class="quote-block">
 					"Learning is not linear. Each return to a concept deepens understanding."
 				</blockquote>
 			</div>
@@ -170,29 +170,29 @@
 			</p>
 			
 			<div class="overflow-x-auto">
-				<table class="w-full text-sm">
+				<table class="hypothesis-table">
 					<thead>
-						<tr class="border-b border-neutral-700">
-							<th class="text-left py-3 px-4">Stage</th>
-							<th class="text-left py-3 px-4">Modality</th>
-							<th class="text-left py-3 px-4">Why</th>
+						<tr>
+							<th>Stage</th>
+							<th>Modality</th>
+							<th>Why</th>
 						</tr>
 					</thead>
-					<tbody class="text-neutral-300">
-						<tr class="border-b border-neutral-800">
-							<td class="py-3 px-4 font-medium">Awareness</td>
-							<td class="py-3 px-4">Spritz</td>
-							<td class="py-3 px-4">Fast absorption of core principles, memorable phrases</td>
+					<tbody>
+						<tr>
+							<td><strong>Awareness</strong></td>
+							<td>Spritz</td>
+							<td>Fast absorption of core principles, memorable phrases</td>
 						</tr>
-						<tr class="border-b border-neutral-800">
-							<td class="py-3 px-4 font-medium">Understanding</td>
-							<td class="py-3 px-4">Motion Studio</td>
-							<td class="py-3 px-4">Visual context, relationships, narrative structure</td>
+						<tr>
+							<td><strong>Understanding</strong></td>
+							<td>Motion Studio</td>
+							<td>Visual context, relationships, narrative structure</td>
 						</tr>
-						<tr class="border-b border-neutral-800">
-							<td class="py-3 px-4 font-medium">Mastery</td>
-							<td class="py-3 px-4">Learn Platform</td>
-							<td class="py-3 px-4">Deep practice, hands-on application, retention</td>
+						<tr>
+							<td><strong>Mastery</strong></td>
+							<td>Learn Platform</td>
+							<td>Deep practice, hands-on application, retention</td>
 						</tr>
 					</tbody>
 				</table>
@@ -228,23 +228,23 @@
 		<section class="space-y-4">
 			<h2 class="section-heading">5. Alignment with Subtractive Triad</h2>
 			<div class="grid md:grid-cols-3 gap-4">
-				<div class="p-4 bg-neutral-900 rounded-lg">
-					<h4 class="font-semibold mb-2">DRY (Don't Repeat Yourself)</h4>
-					<p class="text-sm text-neutral-400">
+				<div class="p-4 triad-card">
+					<h4 class="triad-title">DRY (Don't Repeat Yourself)</h4>
+					<p class="triad-text">
 						Same content, three presentations. The philosophy is written once, 
 						the modality adapts to context.
 					</p>
 				</div>
-				<div class="p-4 bg-neutral-900 rounded-lg">
-					<h4 class="font-semibold mb-2">Dieter Rams</h4>
-					<p class="text-sm text-neutral-400">
+				<div class="p-4 triad-card">
+					<h4 class="triad-title">Dieter Rams</h4>
+					<p class="triad-text">
 						Each modality removes what isn't needed. Spritz removes eye movement. 
 						Motion removes static walls of text. Learn removes repetitive explanation.
 					</p>
 				</div>
-				<div class="p-4 bg-neutral-900 rounded-lg">
-					<h4 class="font-semibold mb-2">Heidegger</h4>
-					<p class="text-sm text-neutral-400">
+				<div class="p-4 triad-card">
+					<h4 class="triad-title">Heidegger</h4>
+					<p class="triad-text">
 						The tool recedes into transparent use. When learning flows, you don't 
 						see the modality—you see understanding.
 					</p>
@@ -256,23 +256,23 @@
 		<section class="space-y-4">
 			<h2 class="section-heading">6. Current Status</h2>
 			<div class="grid md:grid-cols-3 gap-4 text-center">
-				<div class="p-4 bg-green-900/20 border border-green-800 rounded-lg">
-					<div class="text-2xl mb-1">✓</div>
-					<div class="font-semibold">Spritz</div>
-					<div class="text-sm text-neutral-400">Live at /experiments/spritz</div>
+				<div class="p-4 status-card status-complete">
+					<div class="status-icon">✓</div>
+					<div class="status-title">Spritz</div>
+					<div class="status-subtitle">Live at /experiments/spritz</div>
 				</div>
-				<div class="p-4 bg-green-900/20 border border-green-800 rounded-lg">
-					<div class="text-2xl mb-1">✓</div>
-					<div class="font-semibold">Motion Studio</div>
-					<div class="text-sm text-neutral-400">packages/motion-studio</div>
+				<div class="p-4 status-card status-complete">
+					<div class="status-icon">✓</div>
+					<div class="status-title">Motion Studio</div>
+					<div class="status-subtitle">packages/motion-studio</div>
 				</div>
-				<div class="p-4 bg-green-900/20 border border-green-800 rounded-lg">
-					<div class="text-2xl mb-1">✓</div>
-					<div class="font-semibold">Learn Platform</div>
-					<div class="text-sm text-neutral-400">learn.createsomething.space</div>
+				<div class="p-4 status-card status-complete">
+					<div class="status-icon">✓</div>
+					<div class="status-title">Learn Platform</div>
+					<div class="status-subtitle">learn.createsomething.space</div>
 				</div>
 			</div>
-			<p class="text-center text-neutral-400 text-sm mt-4">
+			<p class="status-note">
 				All three modalities are operational. Measurement and optimization ongoing.
 			</p>
 		</section>
@@ -282,19 +282,133 @@
 			<h2 class="section-heading">7. Links</h2>
 			<ul class="space-y-2">
 				<li>
-					<a href="https://createsomething.io/experiments/spritz" class="text-blue-400 hover:underline">
+					<a href="https://createsomething.io/experiments/spritz" class="body-link">
 						Spritz Experiment →
 					</a>
 				</li>
 				<li>
-					<a href="https://learn.createsomething.space" class="text-blue-400 hover:underline">
+					<a href="https://learn.createsomething.space" class="body-link">
 						Learn Platform →
 					</a>
 				</li>
 				<li>
-					<span class="text-neutral-500">Motion Studio: packages/motion-studio (internal)</span>
+					<span class="link-muted">Motion Studio: packages/motion-studio (internal)</span>
 				</li>
 			</ul>
 		</section>
 	</div>
 </div>
+
+<style>
+	/* Modality Cards */
+	.modality-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: var(--radius-lg);
+	}
+	
+	.modality-title {
+		font-size: var(--text-h4);
+		font-weight: var(--font-semibold);
+		margin-bottom: 1rem;
+	}
+	
+	.modality-details {
+		font-size: var(--text-body-sm);
+	}
+	
+	.modality-label {
+		color: var(--color-fg-muted);
+	}
+	
+	.modality-list {
+		list-style: disc;
+		list-style-position: inside;
+		color: var(--color-fg-secondary);
+		margin-top: 0.25rem;
+	}
+	
+	.quote-block {
+		margin-top: 1rem;
+		padding-left: 1rem;
+		border-left: 2px solid var(--color-border-subtle);
+		color: var(--color-fg-muted);
+		font-style: italic;
+	}
+	
+	/* Triad Cards */
+	.triad-card {
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+	}
+	
+	.triad-title {
+		font-weight: var(--font-semibold);
+		margin-bottom: 0.5rem;
+	}
+	
+	.triad-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+	
+	/* Status Cards */
+	.status-card {
+		border-radius: var(--radius-lg);
+	}
+	
+	.status-complete {
+		background: rgba(34, 197, 94, 0.1);
+		border: 1px solid rgba(34, 197, 94, 0.3);
+	}
+	
+	.status-icon {
+		font-size: var(--text-h3);
+		margin-bottom: 0.25rem;
+	}
+	
+	.status-title {
+		font-weight: var(--font-semibold);
+	}
+	
+	.status-subtitle {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+	}
+	
+	.status-note {
+		text-align: center;
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+		margin-top: 1rem;
+	}
+	
+	/* Links */
+	.link-muted {
+		color: var(--color-fg-muted);
+	}
+	
+	/* Hypothesis Table */
+	.hypothesis-table {
+		width: 100%;
+		font-size: var(--text-body-sm);
+	}
+	
+	.hypothesis-table th,
+	.hypothesis-table td {
+		text-align: left;
+		padding: 0.75rem 1rem;
+	}
+	
+	.hypothesis-table thead tr {
+		border-bottom: 1px solid var(--color-border-subtle);
+	}
+	
+	.hypothesis-table tbody tr {
+		border-bottom: 1px solid var(--color-border-muted);
+	}
+	
+	.hypothesis-table tbody {
+		color: var(--color-fg-secondary);
+	}
+</style>
