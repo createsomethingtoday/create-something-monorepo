@@ -9,6 +9,7 @@ import {
   FileUp, RefreshCw, Download, Play, Loader2, History, ListChecks, Filter,
   CheckCircle, AlertTriangle, XCircle, ChevronDown, ChevronUp, Mail, Bot,
   ShieldAlert, Info, AlertOctagon, Trash2, BookOpen, Clock, ExternalLink, Wrench,
+  Package, Upload, RotateCcw,
 } from 'lucide-react';
 
 // ============================================================================
@@ -748,6 +749,124 @@ const AiSuggestionsPanel: React.FC<{ report: ScanReport; apiKey: string }> = ({ 
 };
 
 // ============================================================================
+// POLICY PACK PANEL
+// ============================================================================
+
+interface PolicyPackPanelProps {
+  ruleset: ScanRule[];
+  config: ScanConfig;
+  onRulesetChange: (ruleset: ScanRule[]) => void;
+  onConfigChange: (config: ScanConfig) => void;
+  onReset: () => void;
+}
+
+const PolicyPackPanel: React.FC<PolicyPackPanelProps> = ({ ruleset, config, onRulesetChange, onConfigChange, onReset }) => {
+  const rulesetInputRef = useRef<HTMLInputElement>(null);
+  const configInputRef = useRef<HTMLInputElement>(null);
+  const [rulesetName, setRulesetName] = useState<string | null>(null);
+  const [configName, setConfigName] = useState<string | null>(null);
+
+  const handleRulesetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed.rules)) {
+        onRulesetChange(parsed.rules);
+        setRulesetName(file.name);
+      } else if (Array.isArray(parsed)) {
+        onRulesetChange(parsed);
+        setRulesetName(file.name);
+      } else {
+        alert('Invalid ruleset format. Expected array of rules or { rules: [...] }');
+      }
+    } catch (err) {
+      alert('Failed to parse ruleset JSON');
+    }
+  };
+
+  const handleConfigUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      onConfigChange({ ...config, ...parsed });
+      setConfigName(file.name);
+    } catch (err) {
+      alert('Failed to parse config JSON');
+    }
+  };
+
+  const handleReset = () => {
+    onReset();
+    setRulesetName(null);
+    setConfigName(null);
+    if (rulesetInputRef.current) rulesetInputRef.current.value = '';
+    if (configInputRef.current) configInputRef.current.value = '';
+  };
+
+  return (
+    <div className="bg-white p-4 rounded-xl border shadow-sm">
+      <h3 className="font-bold mb-3 flex items-center gap-2 text-gray-800 text-sm"><Package className="w-4 h-4 text-purple-600" /> Policy Pack</h3>
+      
+      <div className="space-y-3 text-xs">
+        <div className="flex justify-between items-center py-1 border-b border-gray-100">
+          <span className="text-gray-500">Ruleset:</span>
+          <span className="font-medium text-gray-800">{rulesetName || '1.3.0-checklist-complete'}</span>
+        </div>
+        <div className="flex justify-between items-center py-1 border-b border-gray-100">
+          <span className="text-gray-500">Active Rules:</span>
+          <span className="font-medium text-gray-800">{ruleset.length}</span>
+        </div>
+        <div className="flex justify-between items-center py-1 border-b border-gray-100">
+          <span className="text-gray-500">Config:</span>
+          <span className="font-medium text-gray-800">{configName || '1.0.0-default'}</span>
+        </div>
+
+        <div className="pt-2 space-y-2">
+          <div>
+            <label className="text-gray-500 block mb-1">Upload Ruleset JSON</label>
+            <div className="flex items-center gap-2">
+              <Upload className="w-3 h-3 text-gray-400" />
+              <input
+                ref={rulesetInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleRulesetUpload}
+                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="text-gray-500 block mb-1">Upload Config JSON</label>
+            <div className="flex items-center gap-2">
+              <Upload className="w-3 h-3 text-gray-400" />
+              <input
+                ref={configInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleConfigUpload}
+                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleReset}
+            className="w-full mt-2 py-1.5 px-3 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded flex items-center justify-center gap-1 transition-colors"
+          >
+            <RotateCcw className="w-3 h-3" /> Reset to Defaults
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -762,9 +881,14 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ScanHistoryEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const config: ScanConfig = { ...DEFAULT_CONFIG, maxTotalSizeBytes: maxFileSizeMB * 1024 * 1024 };
+  
+  // Policy state
+  const [ruleset, setRuleset] = useState<ScanRule[]>(DEFAULT_RULESET);
+  const [config, setConfig] = useState<ScanConfig>({ ...DEFAULT_CONFIG, maxTotalSizeBytes: maxFileSizeMB * 1024 * 1024 });
 
   useEffect(() => { if (showHistory) getHistory().then(setHistory).catch(console.error); }, [showHistory]);
+  useEffect(() => { setConfig(c => ({ ...c, maxTotalSizeBytes: maxFileSizeMB * 1024 * 1024 })); }, [maxFileSizeMB]);
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) { setFile(e.target.files[0]); setError(null); setReport(null); } };
 
   const handleScan = async () => {
@@ -773,9 +897,9 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
     try {
       const files = await processZipFile(file, config, setProgress);
       setProgress('Building file inventory...');
-      const findings = scanFiles(files, DEFAULT_RULESET, config, setProgress);
+      const findings = scanFiles(files, ruleset, config, setProgress);
       setProgress('Generating report...');
-      const scanReport = generateReport(findings, DEFAULT_RULESET, files);
+      const scanReport = generateReport(findings, ruleset, files);
       setReport(scanReport);
       if (showHistory) { await saveToHistory({ id: scanReport.runId, fileName: file.name, scanDate: scanReport.createdAt, verdict: scanReport.verdict, findingCount: Object.values(scanReport.findings).reduce((sum, g) => sum + g.count, 0), fileCount: scanReport.bundleSummary.fileCount }); setHistory(await getHistory()); }
     } catch (err: any) { setError(err.message || 'An unknown error occurred.'); }
@@ -785,6 +909,7 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
   const handleReset = () => { setFile(null); setReport(null); setError(null); if (fileInputRef.current) fileInputRef.current.value = ''; };
   const handleDraftEmail = () => { if (report) { navigator.clipboard.writeText(generateRejectionEmail(report)); alert('Rejection email copied to clipboard!'); } };
   const handleClearHistory = async () => { await clearHistory(); setHistory([]); };
+  const handlePolicyReset = () => { setRuleset(DEFAULT_RULESET); setConfig({ ...DEFAULT_CONFIG, maxTotalSizeBytes: maxFileSizeMB * 1024 * 1024 }); };
 
   const groupedFindings = report ? {
     blockers: Object.values(report.findings).filter(g => g.count > 0 && (g.rule.severity === 'BLOCKER' || g.rule.reviewBucket === 'AUTO_REJECT')),
@@ -798,7 +923,7 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">WF</div>
-            <h1 className="font-semibold text-lg hidden md:block">Marketplace Bundle Scanner <span className="text-gray-400 font-normal text-sm">V2.0</span></h1>
+            <h1 className="font-semibold text-lg hidden md:block">Marketplace Bundle Scanner <span className="text-gray-400 font-normal text-sm">V1.2</span></h1>
             <h1 className="font-semibold text-sm md:hidden">Bundle Scanner</h1>
           </div>
           {showHistory && (
@@ -819,51 +944,53 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
               {!report ? (
                 <div className="space-y-4">
                   <input ref={fileInputRef} type="file" accept=".zip" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
-                  <p className="text-xs text-gray-500">Select a .zip file (Max {maxFileSizeMB}MB unzipped).</p>
+                  <p className="text-xs text-gray-500">Select a .zip file (Max {Math.round(config.maxTotalSizeBytes / 1024 / 1024)}MB unzipped).</p>
                   <button onClick={handleScan} disabled={!file || isScanning} className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">{isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Run Scan</button>
-            </div>
+                </div>
               ) : (
                 <div className="space-y-4">
                   <button onClick={handleReset} className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-all flex items-center justify-center gap-2"><RefreshCw className="w-4 h-4" /> Scan New File</button>
                   <button onClick={() => { const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `scanReport_${report.runId.substring(0, 8)}.json`; a.click(); }} className="w-full py-2 px-4 border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition-all flex items-center justify-center gap-2"><Download className="w-4 h-4" /> Download Report</button>
-              </div>
-            )}
+                </div>
+              )}
               {isScanning && <div className="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded animate-pulse">{progress}</div>}
               {error && <div className="mt-4 p-3 bg-red-50 text-red-800 text-xs rounded border border-red-200"><strong>Error:</strong> {error}</div>}
+            </div>
+            
+            <PolicyPackPanel
+              ruleset={ruleset}
+              config={config}
+              onRulesetChange={setRuleset}
+              onConfigChange={setConfig}
+              onReset={handlePolicyReset}
+            />
           </div>
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Scanner Info</h3>
-              <p className="text-xs text-gray-600"><strong>Version:</strong> 2.0.0</p>
-              <p className="text-xs text-gray-600"><strong>Rules:</strong> {DEFAULT_RULESET.length} active</p>
-              <p className="text-xs text-gray-600"><strong>Ruleset:</strong> 1.3.0-checklist-complete</p>
-                      </div>
-                      </div>
-                    ) : (
+        ) : (
           <div className="space-y-6 order-2 md:order-1">
             <div className="bg-white p-6 rounded-xl border shadow-sm text-sm text-gray-600">
               <h3 className="font-bold text-gray-900 mb-2">About Scan History</h3>
               <p>History is stored in your browser's IndexedDB.</p>
               {history.length > 0 && <button onClick={handleClearHistory} className="mt-3 text-red-600 hover:text-red-700 flex items-center gap-1 text-xs"><Trash2 className="w-3 h-3" /> Clear History</button>}
-                      </div>
-              </div>
-            )}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-6 order-1 md:order-2">
           {activeTab === 'history' && (
             <div className="bg-white rounded-xl border shadow-sm p-6">
               <h2 className="text-lg font-bold mb-4">Scan History</h2>
               {history.length === 0 ? <p className="text-gray-500 text-center py-8">No scans yet</p> : (
-                          <div className="space-y-2">
+                <div className="space-y-2">
                   {history.map((entry) => (
                     <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div><p className="font-medium text-gray-900">{entry.fileName}</p><p className="text-xs text-gray-500">{new Date(entry.scanDate).toLocaleString()} • {entry.fileCount} files • {entry.findingCount} findings</p></div>
                       <VerdictBadge verdict={entry.verdict} />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                          </div>
-                        )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {activeTab === 'scan' && (
             <>
@@ -871,7 +998,7 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                 <div className="h-96 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                   <FileUp className="w-12 h-12 mb-4 opacity-50" />
                   <p>Upload a bundle to start scanning</p>
-                      </div>
+                </div>
               )}
               {report && (
                 <>
@@ -882,27 +1009,27 @@ const BundleScannerApp: React.FC<BundleScannerProps> = ({ geminiApiKey, showHist
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-red-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Auto-Reject Issues ({groupedFindings.blockers.length})</h3>
                         {groupedFindings.blockers.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                  </div>
-                )}
+                      </div>
+                    )}
                     {groupedFindings.review.length > 0 && (
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-yellow-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Needs Review ({groupedFindings.review.length})</h3>
                         {groupedFindings.review.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                  </div>
-                )}
+                      </div>
+                    )}
                     {groupedFindings.info.length > 0 && (
                       <div>
                         <h3 className="flex items-center gap-2 font-bold text-lg text-green-700 mb-3 uppercase tracking-wide"><Filter className="w-5 h-5" /> Informational ({groupedFindings.info.length})</h3>
                         {groupedFindings.info.map(group => <FindingCard key={group.rule.ruleId} group={group} />)}
-                  </div>
-                )}
+                      </div>
+                    )}
                     {Object.keys(report.findings).length === 0 && <div className="p-12 text-center text-gray-500 bg-white rounded-xl border"><p>No issues found matching the current ruleset.</p></div>}
                   </div>
                 </>
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
