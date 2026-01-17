@@ -4470,7 +4470,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     .smoking-gun-header h2 { color: var(--color-error); font-size: var(--text-h3); margin: 0; }
     .smoking-gun-badge {
       background: var(--color-error);
-      color: white;
+      color: var(--color-fg-primary);
       padding: 0.2rem var(--space-xs);
       border-radius: var(--radius-sm);
       font-size: var(--text-caption);
@@ -5306,7 +5306,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         <div class="evidence-grid">
           \${data.evidence.codeExcerpts.map(e => \`
             <div class="evidence-cell evidence-header">
-              \${e.label} <span class="evidence-sim" style="background: \${e.similarity > 0.8 ? 'rgba(196,29,29,0.15)' : e.similarity > 0.5 ? 'rgba(214,134,0,0.15)' : 'rgba(45,138,45,0.15)'}">\${(e.similarity * 100).toFixed(0)}% match</span>
+              \${e.label} <span class="evidence-sim" style="background: \${e.similarity > 0.8 ? 'var(--color-error-muted)' : e.similarity > 0.5 ? 'var(--color-warning-muted)' : 'var(--color-success-muted)'}">\${(e.similarity * 100).toFixed(0)}% match</span>
             </div>
             <div class="evidence-cell evidence-header">
               \${e.label}
@@ -6008,15 +6008,21 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --border: #262626;
-      --text: #fafafa;
-      --muted: #737373;
-      --accent: #3b82f6;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      /* Canon Design System */
+      --color-bg-pure: #000000;
+      --color-bg-elevated: #0a0a0a;
+      --color-bg-surface: #111111;
+      --color-bg-subtle: #1a1a1a;
+      --color-fg-primary: #ffffff;
+      --color-fg-secondary: rgba(255, 255, 255, 0.8);
+      --color-fg-muted: rgba(255, 255, 255, 0.46);
+      --color-border-default: rgba(255, 255, 255, 0.1);
+      --color-success: #44aa44;
+      --color-error: #d44d4d;
+      --color-warning: #aa8844;
+      --color-info: #5082b9;
+      --radius-sm: 4px;
+      --radius-md: 8px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -6066,9 +6072,9 @@ async function serveRescanPage(caseId: string, env: Env): Promise<Response> {
       gap: 0.5rem;
       padding: 0.75rem 1.5rem;
       background: var(--color-fg-primary);
-      color: white;
+      color: var(--color-bg-pure);
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       font-size: 1rem;
       font-weight: 500;
       cursor: pointer;
