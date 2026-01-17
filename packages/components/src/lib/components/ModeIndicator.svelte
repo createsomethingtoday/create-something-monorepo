@@ -195,16 +195,16 @@
 		height: 10px;
 	}
 
-	/* Hide on mobile for cleaner experience */
-	@media (max-width: 640px) {
+	/* Hide on mobile - unified search FAB replaces this functionality */
+	@media (max-width: 768px) {
 		.mode-indicator {
-			bottom: auto;
-			top: var(--space-md);
-			left: 50%;
-			transform: translateX(-50%);
+			display: none;
 		}
+	}
 
-		.mode-label {
+	/* Also hide on touch devices */
+	@media (pointer: coarse) {
+		.mode-indicator {
 			display: none;
 		}
 	}

@@ -805,34 +805,63 @@
 		}
 	}
 
-	/* Mobile Search Button */
+	/* ==========================================================================
+	   Mobile Search FAB - Canon Design System Compliant
+	   
+	   Philosophy: "Weniger, aber besser" - Dieter Rams
+	   The FAB replaces ModeIndicator on mobile, providing cross-property
+	   navigation through unified search.
+	   ========================================================================== */
+
 	.mobile-search-button {
 		display: none;
 		position: fixed;
-		bottom: var(--space-lg, 2.618rem);
-		right: var(--space-md, 1.618rem);
-		z-index: 40;
+		/* Canon spacing: φ² from edges */
+		bottom: var(--space-lg);
+		right: var(--space-md);
+		z-index: var(--z-fixed, 40);
+		
+		/* Touch target: 56px meets accessibility guidelines */
 		width: 56px;
 		height: 56px;
-		border-radius: var(--radius-full, 50%);
-		background: var(--color-accent, #3b82f6);
-		color: var(--color-fg-on-accent, #fff);
-		border: none;
-		box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+		
+		/* Canon: full radius for FAB */
+		border-radius: var(--radius-full);
+		
+		/* Canon: elevated surface with strong border for visibility */
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+		
+		/* Canon shadow for elevation */
+		box-shadow: var(--shadow-lg);
+		
 		cursor: pointer;
 		align-items: center;
 		justify-content: center;
-		transition: transform var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			box-shadow var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		
+		/* Canon transitions */
+		transition: 
+			transform var(--duration-micro) var(--ease-standard),
+			box-shadow var(--duration-micro) var(--ease-standard),
+			background var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.mobile-search-button:hover {
-		transform: scale(1.05);
-		box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
+		background: var(--color-bg-surface);
+		border-color: var(--color-border-strong);
+		box-shadow: var(--shadow-xl);
 	}
 
 	.mobile-search-button:active {
 		transform: scale(0.95);
+		background: var(--color-active);
+	}
+
+	.mobile-search-button:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.mobile-search-button svg {
@@ -840,35 +869,62 @@
 		height: 24px;
 	}
 
-	/* Mobile close button in footer */
+	/* Mobile close button in footer - Canon styling */
 	.palette-close-btn {
-		background: var(--color-bg-elevated, #0a0a0a);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-md, 8px);
-		padding: var(--space-xs, 0.5rem) var(--space-sm, 1rem);
-		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.7));
-		font-size: var(--text-body-sm, 0.875rem);
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-xs) var(--space-sm);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		font-family: var(--font-sans);
 		cursor: pointer;
+		transition: 
+			background var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.palette-close-btn:hover {
-		background: var(--color-bg-surface, #111);
+		background: var(--color-bg-surface);
+		border-color: var(--color-border-emphasis);
 	}
 
-	/* Show mobile button only on touch devices / small screens */
+	.palette-close-btn:active {
+		background: var(--color-active);
+	}
+
+	.palette-close-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
+	/* ==========================================================================
+	   Mobile Responsive - Show FAB on small screens / touch devices
+	   ========================================================================== */
+
 	@media (max-width: 768px) {
 		.mobile-search-button {
 			display: flex;
 		}
 
 		.palette {
-			top: 5%;
-			width: 95vw;
-			max-height: 85vh;
+			/* More accessible position on mobile */
+			top: var(--space-md);
+			width: calc(100vw - var(--space-md) * 2);
+			max-height: calc(100vh - var(--space-lg) * 2);
+			border-radius: var(--radius-lg);
 		}
 
 		.palette-footer {
-			gap: var(--space-sm, 1rem);
+			gap: var(--space-sm);
+		}
+
+		.palette-input-wrapper {
+			padding: var(--space-sm);
+		}
+
+		.palette-input {
+			font-size: var(--text-body); /* Prevent iOS zoom */
 		}
 
 		.desktop-only {
@@ -876,7 +932,7 @@
 		}
 	}
 
-	/* Also hide on larger touch devices */
+	/* Touch devices regardless of screen size */
 	@media (pointer: coarse) {
 		.mobile-search-button {
 			display: flex;
