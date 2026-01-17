@@ -4,8 +4,20 @@
  * Returns metadata for all papers and experiments with actual routes.
  * Used by the unified search indexer to know which content to index.
  *
- * IO papers are static Svelte routes with interactive components.
- * This manifest is the source of truth for what routes exist.
+ * ┌─────────────────────────────────────────────────────────────────────┐
+ * │ IMPORTANT: IO papers are STATIC SVELTE ROUTES with interactive     │
+ * │ components (IsometricSpiral, custom visualizations, etc.)          │
+ * │                                                                     │
+ * │ They CANNOT be served from D1 - the content includes Svelte        │
+ * │ components that must be compiled at build time.                    │
+ * │                                                                     │
+ * │ This manifest provides metadata for the search indexer.            │
+ * └─────────────────────────────────────────────────────────────────────┘
+ *
+ * WHEN ADDING A NEW PAPER:
+ * 1. Create the static route: src/routes/papers/{slug}/+page.svelte
+ * 2. Add an entry to the PAPERS array below
+ * 3. The search indexer will pick it up on the next re-index (every 6 hours)
  *
  * GET /api/manifest
  */
@@ -20,8 +32,14 @@ interface ContentItem {
 	category?: string;
 }
 
-// Papers with static routes in src/routes/papers/
-// Update this when adding/removing paper routes
+/**
+ * Papers with static routes in src/routes/papers/
+ *
+ * Each entry here MUST have a corresponding:
+ *   src/routes/papers/{slug}/+page.svelte
+ *
+ * Update this array when adding/removing paper routes.
+ */
 const PAPERS: ContentItem[] = [
 	{ slug: 'agent-sdk-gemini-tools-integration', title: 'Agent SDK Gemini Tools Integration', description: 'Integrating Gemini tools with the Agent SDK for enhanced model capabilities', category: 'technical' },
 	{ slug: 'agent-sdk-model-routing-optimization', title: 'Agent SDK Model Routing Optimization', description: 'Optimizing model routing in the Agent SDK for better performance', category: 'technical' },

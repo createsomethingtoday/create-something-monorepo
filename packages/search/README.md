@@ -155,6 +155,53 @@ pnpm index:incremental  # Only changed content
 | service | .agency | Services offered |
 | case-study | .agency | Client case studies |
 
+## Content Sources
+
+Different properties use different content sources:
+
+| Property | Source | Reason |
+|----------|--------|--------|
+| **.space** | D1 Database | Dynamic experiments with metadata |
+| **.io** | Manifest API | Static Svelte routes with interactive components |
+| **.ltd** | D1 Database | Principles and patterns |
+| **.agency** | D1 Database | Services and case studies |
+
+### Why io Uses Manifest, Not D1
+
+IO papers are **static Svelte routes** containing interactive components that cannot be stored in D1:
+
+```svelte
+// hermeneutic-spiral-ux/+page.svelte
+import { IsometricSpiral, IsometricArchitecture } from '@create-something/components';
+
+const archNodes = [
+  { id: 'whatsapp', label: 'WhatsApp', position: { x: -100, y: 0, z: 0 } },
+  // 3D interactive visualizations, metric cards, etc.
+];
+```
+
+The manifest at `/api/manifest` provides metadata for indexing:
+
+```json
+{
+  "papers": [
+    {
+      "slug": "hermeneutic-spiral-ux",
+      "title": "The Hermeneutic Spiral in UX Design",
+      "description": "Applying Heidegger's hermeneutic circle to UX design"
+    }
+  ]
+}
+```
+
+### Adding New IO Content
+
+When adding a new paper to io:
+
+1. **Create static route**: `packages/io/src/routes/papers/new-paper/+page.svelte`
+2. **Update manifest**: `packages/io/src/routes/api/manifest/+server.ts`
+3. **Re-index**: Happens automatically every 6 hours, or manually via `/admin/index`
+
 ## Canon Alignment
 
 This search system embodies the CREATE SOMETHING philosophy:

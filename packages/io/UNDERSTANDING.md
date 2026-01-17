@@ -339,6 +339,57 @@ Edit `src/lib/config/plugins.ts`:
 ### Step 3: Link from Elsewhere (Optional)
 Add link from paper/methodology if the plugin relates.
 
+## Paper Architecture
+
+### Why Papers Are Static Routes (Not D1)
+
+IO papers contain **interactive Svelte components** that cannot be stored in or rendered from D1:
+
+```svelte
+// hermeneutic-spiral-ux/+page.svelte
+import { IsometricSpiral, IsometricArchitecture } from '@create-something/components';
+
+const archNodes = [
+  { id: 'whatsapp', label: 'WhatsApp', position: { x: -100, y: 0, z: 0 } },
+  // 3D diagrams, metric cards, custom visualizations
+];
+```
+
+This is different from `.space`, which uses D1 for experiment content.
+
+### Content Sources
+
+| Route | Source | Content Type |
+|-------|--------|--------------|
+| `/papers/{slug}` | Static `.svelte` routes | Rich interactive papers |
+| `/experiments/{slug}` | D1 + Static routes | Both D1 and file-based |
+| `/api/manifest` | Manifest endpoint | Metadata for search indexing |
+
+### Adding a New Paper
+
+1. **Create static route**: `src/routes/papers/new-paper/+page.svelte`
+2. **Update manifest**: `src/routes/api/manifest/+server.ts` - add entry to `PAPERS` array
+3. **Search indexing**: Happens automatically via manifest every 6 hours
+
+### The Manifest API
+
+The manifest at `/api/manifest` provides metadata for the unified search indexer:
+
+```typescript
+// src/routes/api/manifest/+server.ts
+const PAPERS: ContentItem[] = [
+  {
+    slug: 'hermeneutic-spiral-ux',
+    title: 'The Hermeneutic Spiral in UX Design',
+    description: 'Applying Heidegger\'s hermeneutic circle to UX design',
+    category: 'methodology'
+  },
+  // ... add new papers here
+];
+```
+
+The search indexer fetches this manifest instead of querying D1, ensuring only papers with actual routes are indexed.
+
 ## Paper Structure
 
 Each paper follows this canonical structure:
