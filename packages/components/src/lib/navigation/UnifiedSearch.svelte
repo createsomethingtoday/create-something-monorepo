@@ -112,6 +112,8 @@
 		onclose?: () => void;
 		/** Enable analytics tracking */
 		enableAnalytics?: boolean;
+		/** Show floating search button for mobile */
+		showMobileButton?: boolean;
 	}
 
 	let {
@@ -122,8 +124,16 @@
 		currentProperty,
 		onselect,
 		onclose,
-		enableAnalytics = true
+		enableAnalytics = true,
+		showMobileButton = true
 	}: Props = $props();
+
+	// Detect if device is touch-primary (mobile)
+	let isTouchDevice = $state(false);
+	
+	onMount(() => {
+		isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+	});
 
 	// =============================================================================
 	// ANALYTICS
@@ -401,6 +411,23 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
+<!-- Mobile Search Button -->
+{#if showMobileButton && !open}
+	<button
+		class="mobile-search-button"
+		onclick={() => {
+			trackEvent('search_opened', { trigger: 'mobile_button' });
+			open = true;
+		}}
+		aria-label="Open search"
+	>
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<circle cx="11" cy="11" r="8"/>
+			<path d="m21 21-4.35-4.35"/>
+		</svg>
+	</button>
+{/if}
+
 {#if open}
 	<!-- Overlay -->
 	<div
@@ -513,15 +540,21 @@
 		</div>
 
 		<div class="palette-footer">
-			<span class="palette-hint">
-				<kbd>↑</kbd><kbd>↓</kbd> navigate
-			</span>
-			<span class="palette-hint">
-				<kbd>↵</kbd> select
-			</span>
-			<span class="palette-hint">
-				<kbd>esc</kbd> close
-			</span>
+			{#if !isTouchDevice}
+				<span class="palette-hint desktop-only">
+					<kbd>↑</kbd><kbd>↓</kbd> navigate
+				</span>
+				<span class="palette-hint desktop-only">
+					<kbd>↵</kbd> select
+				</span>
+				<span class="palette-hint desktop-only">
+					<kbd>esc</kbd> close
+				</span>
+			{:else}
+				<button class="palette-close-btn" onclick={close}>
+					Close
+				</button>
+			{/if}
 			{#if currentProperty}
 				<span class="palette-current">
 					<svelte:component this={PROPERTY_INFO[currentProperty].icon} size={12} strokeWidth={2} />
@@ -769,6 +802,88 @@
 		.palette-item {
 			animation: none;
 			transition: none;
+		}
+	}
+
+	/* Mobile Search Button */
+	.mobile-search-button {
+		display: none;
+		position: fixed;
+		bottom: var(--space-lg, 2.618rem);
+		right: var(--space-md, 1.618rem);
+		z-index: 40;
+		width: 56px;
+		height: 56px;
+		border-radius: var(--radius-full, 50%);
+		background: var(--color-accent, #3b82f6);
+		color: var(--color-fg-on-accent, #fff);
+		border: none;
+		box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+		cursor: pointer;
+		align-items: center;
+		justify-content: center;
+		transition: transform var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			box-shadow var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+	}
+
+	.mobile-search-button:hover {
+		transform: scale(1.05);
+		box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
+	}
+
+	.mobile-search-button:active {
+		transform: scale(0.95);
+	}
+
+	.mobile-search-button svg {
+		width: 24px;
+		height: 24px;
+	}
+
+	/* Mobile close button in footer */
+	.palette-close-btn {
+		background: var(--color-bg-elevated, #0a0a0a);
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-md, 8px);
+		padding: var(--space-xs, 0.5rem) var(--space-sm, 1rem);
+		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.7));
+		font-size: var(--text-body-sm, 0.875rem);
+		cursor: pointer;
+	}
+
+	.palette-close-btn:hover {
+		background: var(--color-bg-surface, #111);
+	}
+
+	/* Show mobile button only on touch devices / small screens */
+	@media (max-width: 768px) {
+		.mobile-search-button {
+			display: flex;
+		}
+
+		.palette {
+			top: 5%;
+			width: 95vw;
+			max-height: 85vh;
+		}
+
+		.palette-footer {
+			gap: var(--space-sm, 1rem);
+		}
+
+		.desktop-only {
+			display: none;
+		}
+	}
+
+	/* Also hide on larger touch devices */
+	@media (pointer: coarse) {
+		.mobile-search-button {
+			display: flex;
+		}
+
+		.desktop-only {
+			display: none;
 		}
 	}
 </style>
