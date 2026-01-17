@@ -68,57 +68,53 @@ export async function fetchSpaceContent(db: D1Database): Promise<IndexableConten
 // IO CONTENT (.io)
 // =============================================================================
 
-// Papers with actual static routes in the io app
-// These are the ONLY papers that have /papers/{slug} routes
-const VALID_IO_PAPER_SLUGS = new Set([
-  'agent-sdk-gemini-tools-integration',
-  'agent-sdk-model-routing-optimization',
-  'animation-spec-architecture',
-  'autonomous-harness-architecture',
-  'beads-cross-session-memory',
-  'beads-integration-patterns',
-  'code-mode-hermeneutic-analysis',
-  'codex-orchestration',
-  'cumulative-state-antipattern',
-  'dual-agent-routing-experiment',
-  'ethos-transfer-agentic-engineering',
-  'haiku-optimization',
-  'haiku-ultrathink-validation',
-  'harness-agent-sdk-migration',
-  'hermeneutic-debugging',
-  'hermeneutic-spiral-ux',
-  'hermeneutic-triad-review',
-  'intellectual-genealogy',
-  'kickstand-triad-audit',
-  'norvig-partnership',
-  'ralph-implementation',
-  'ralph-vs-gastown',
-  'spec-driven-development',
-  'subtractive-form-design',
-  'subtractive-studio',
-  'teaching-modalities-experiment',
-  'understanding-graphs',
-  'webflow-dashboard-refactor',
-  'workers-vs-python-sdk-plagiarism-detection',
-]);
+// IO Manifest response type
+interface IOManifest {
+  property: string;
+  papers: string[];
+  experiments: string[];
+  generated: string;
+}
 
-// Experiments with actual static routes in the io app
-const VALID_IO_EXPERIMENT_SLUGS = new Set([
-  'agent-operations',
-  'agentic-visualization',
-  'awwwards-patterns',
-  'canvas-interactivity',
-  'data-patterns',
-  'diagrams',
-  'hybrid-scheduling',
-  'ic-mvp-pipeline',
-  'kinetic-typography',
-  'living-arena',
-  'render-preview',
-  'render-studio',
-  'spritz',
-  'text-revelation',
-]);
+// Cache for the IO manifest (refreshed each indexing run)
+let cachedIOManifest: { papers: Set<string>; experiments: Set<string> } | null = null;
+
+/**
+ * Fetch the content manifest from io to know which routes are valid
+ * This prevents indexing content that doesn't have actual routes
+ */
+async function fetchIOManifest(): Promise<{ papers: Set<string>; experiments: Set<string> }> {
+  if (cachedIOManifest) {
+    return cachedIOManifest;
+  }
+
+  try {
+    const response = await fetch('https://createsomething.io/api/manifest');
+    if (!response.ok) {
+      console.warn(`Failed to fetch IO manifest: ${response.status}`);
+      return { papers: new Set(), experiments: new Set() };
+    }
+
+    const manifest: IOManifest = await response.json();
+    cachedIOManifest = {
+      papers: new Set(manifest.papers),
+      experiments: new Set(manifest.experiments),
+    };
+
+    console.log(`IO manifest loaded: ${manifest.papers.length} papers, ${manifest.experiments.length} experiments`);
+    return cachedIOManifest;
+  } catch (error) {
+    console.error('Error fetching IO manifest:', error);
+    return { papers: new Set(), experiments: new Set() };
+  }
+}
+
+/**
+ * Clear the IO manifest cache (call at start of indexing)
+ */
+export function clearIOManifestCache(): void {
+  cachedIOManifest = null;
+}
 
 interface IOPaper {
   id: string;
@@ -134,7 +130,10 @@ interface IOPaper {
 export async function fetchIOContent(db: D1Database): Promise<IndexableContent[]> {
   const results: IndexableContent[] = [];
 
-  // Fetch papers
+  // Fetch the manifest to know which routes are valid
+  const manifest = await fetchIOManifest();
+
+  // Fetch papers from database
   const papers = await db
     .prepare(`
       SELECT id, title, slug, category, content, excerpt_long, description, updated_at
@@ -149,7 +148,7 @@ export async function fetchIOContent(db: D1Database): Promise<IndexableContent[]
     const type: ContentType = paper.category === 'experiment' ? 'experiment' : 'paper';
 
     // Only index if the paper has an actual route in the io app
-    const validSlugs = type === 'experiment' ? VALID_IO_EXPERIMENT_SLUGS : VALID_IO_PAPER_SLUGS;
+    const validSlugs = type === 'experiment' ? manifest.experiments : manifest.papers;
     if (!validSlugs.has(paper.slug)) {
       continue; // Skip papers without valid routes
     }

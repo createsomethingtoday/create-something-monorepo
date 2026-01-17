@@ -6,7 +6,7 @@
  */
 
 import type { Env, IndexableContent, VectorMetadata } from '../types';
-import { fetchAllContent } from './content-fetchers';
+import { fetchAllContent, clearIOManifestCache } from './content-fetchers';
 import { enrichWithConcepts } from './concept-enrichment';
 
 // =============================================================================
@@ -209,7 +209,10 @@ export async function indexAllContent(env: Env): Promise<IndexResult> {
 
   console.log('Starting unified search index...');
 
-  // 1. Fetch content from all properties
+  // Clear manifest caches to ensure fresh data
+  clearIOManifestCache();
+
+  // 1. Fetch content from all properties (includes manifest fetch for io)
   console.log('Fetching content from all properties...');
   const { content, errors: fetchErrors } = await fetchAllContent(
     env.DB_SPACE,
