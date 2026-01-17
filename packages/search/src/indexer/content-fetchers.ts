@@ -68,6 +68,58 @@ export async function fetchSpaceContent(db: D1Database): Promise<IndexableConten
 // IO CONTENT (.io)
 // =============================================================================
 
+// Papers with actual static routes in the io app
+// These are the ONLY papers that have /papers/{slug} routes
+const VALID_IO_PAPER_SLUGS = new Set([
+  'agent-sdk-gemini-tools-integration',
+  'agent-sdk-model-routing-optimization',
+  'animation-spec-architecture',
+  'autonomous-harness-architecture',
+  'beads-cross-session-memory',
+  'beads-integration-patterns',
+  'code-mode-hermeneutic-analysis',
+  'codex-orchestration',
+  'cumulative-state-antipattern',
+  'dual-agent-routing-experiment',
+  'ethos-transfer-agentic-engineering',
+  'haiku-optimization',
+  'haiku-ultrathink-validation',
+  'harness-agent-sdk-migration',
+  'hermeneutic-debugging',
+  'hermeneutic-spiral-ux',
+  'hermeneutic-triad-review',
+  'intellectual-genealogy',
+  'kickstand-triad-audit',
+  'norvig-partnership',
+  'ralph-implementation',
+  'ralph-vs-gastown',
+  'spec-driven-development',
+  'subtractive-form-design',
+  'subtractive-studio',
+  'teaching-modalities-experiment',
+  'understanding-graphs',
+  'webflow-dashboard-refactor',
+  'workers-vs-python-sdk-plagiarism-detection',
+]);
+
+// Experiments with actual static routes in the io app
+const VALID_IO_EXPERIMENT_SLUGS = new Set([
+  'agent-operations',
+  'agentic-visualization',
+  'awwwards-patterns',
+  'canvas-interactivity',
+  'data-patterns',
+  'diagrams',
+  'hybrid-scheduling',
+  'ic-mvp-pipeline',
+  'kinetic-typography',
+  'living-arena',
+  'render-preview',
+  'render-studio',
+  'spritz',
+  'text-revelation',
+]);
+
 interface IOPaper {
   id: string;
   title: string;
@@ -95,6 +147,12 @@ export async function fetchIOContent(db: D1Database): Promise<IndexableContent[]
     const description = paper.excerpt_long || paper.description || '';
     const content = paper.content || description;
     const type: ContentType = paper.category === 'experiment' ? 'experiment' : 'paper';
+
+    // Only index if the paper has an actual route in the io app
+    const validSlugs = type === 'experiment' ? VALID_IO_EXPERIMENT_SLUGS : VALID_IO_PAPER_SLUGS;
+    if (!validSlugs.has(paper.slug)) {
+      continue; // Skip papers without valid routes
+    }
 
     results.push({
       id: `io:${type}:${paper.slug}`,

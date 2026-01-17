@@ -137,6 +137,12 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
         const meta = match.metadata as unknown as VectorMetadata;
         if (!meta) return null;
 
+        // TEMP: Filter out io:paper entries - io site uses static routes, not D1
+        // These stale entries will be removed once Vectorize deletion completes
+        if (meta.property === 'io' && meta.type === 'paper') {
+          return null;
+        }
+
         // Apply filters
         if (properties && properties.length > 0) {
           if (!properties.includes(meta.property as Property)) return null;
@@ -259,6 +265,11 @@ async function handleRelated(id: string, env: Env): Promise<Response> {
     for (const match of vectorResults.matches) {
       const meta = match.metadata as unknown as VectorMetadata;
       if (!meta) continue;
+      
+      // TEMP: Filter out io:paper entries - io site uses static routes, not D1
+      if (meta.property === 'io' && meta.type === 'paper') {
+        continue;
+      }
       
       if (match.id === id) {
         // This is the original item

@@ -145,6 +145,58 @@ export interface IndexResult {
 }
 
 // =============================================================================
+// STALE VECTOR CLEANUP
+// =============================================================================
+
+/**
+ * Delete stale vectors that are no longer in the content set
+ * This handles the case where content is removed or filtered out
+ */
+async function cleanupStaleVectors(
+  validIds: Set<string>,
+  vectorize: VectorizeIndex
+): Promise<number> {
+  let deletedCount = 0;
+  
+  // Query existing vectors to find stale ones
+  // We use a dummy embedding to get all vectors (Vectorize requires a query vector)
+  // Note: This is a workaround since Vectorize doesn't have a "list all" API
+  const dummyEmbedding = new Array(EMBEDDING_DIMENSIONS).fill(0);
+  
+  try {
+    // Get a sample of existing vectors
+    const existing = await vectorize.query(dummyEmbedding, {
+      topK: 1000, // Max allowed
+      returnMetadata: 'none',
+    });
+    
+    // Find IDs to delete (exist in Vectorize but not in valid content)
+    const idsToDelete = existing.matches
+      .map(m => m.id)
+      .filter(id => !validIds.has(id));
+    
+    if (idsToDelete.length > 0) {
+      console.log(`Deleting ${idsToDelete.length} stale vectors...`);
+      
+      // Delete in batches of 100
+      for (let i = 0; i < idsToDelete.length; i += 100) {
+        const batch = idsToDelete.slice(i, i + 100);
+        try {
+          await vectorize.deleteByIds(batch);
+          deletedCount += batch.length;
+        } catch (error) {
+          console.error(`Failed to delete batch ${i / 100 + 1}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to query for stale vectors:', error);
+  }
+  
+  return deletedCount;
+}
+
+// =============================================================================
 // MAIN INDEX FUNCTION
 // =============================================================================
 
@@ -181,16 +233,22 @@ export async function indexAllContent(env: Env): Promise<IndexResult> {
     };
   }
 
-  // 2. Enrich with concepts
+  // 2. Clean up stale vectors (items that were previously indexed but no longer valid)
+  const validIds = new Set(content.map(c => c.id));
+  console.log('Cleaning up stale vectors...');
+  const deletedCount = await cleanupStaleVectors(validIds, env.VECTORIZE);
+  console.log(`Deleted ${deletedCount} stale vectors`);
+
+  // 3. Enrich with concepts
   console.log('Enriching content with concepts...');
   enrichWithConcepts(content);
 
-  // 3. Generate embeddings
+  // 4. Generate embeddings
   console.log('Generating embeddings...');
   const embeddings = await generateEmbeddings(content, env.AI);
   console.log(`Generated ${embeddings.size} embeddings`);
 
-  // 4. Upsert to Vectorize
+  // 5. Upsert to Vectorize
   console.log('Upserting to Vectorize...');
   const { success: indexed, failed } = await upsertToVectorize(
     content,
@@ -198,14 +256,14 @@ export async function indexAllContent(env: Env): Promise<IndexResult> {
     env.VECTORIZE
   );
 
-  // 5. Calculate stats
+  // 6. Calculate stats
   const byProperty: Record<string, number> = {};
   for (const item of content) {
     byProperty[item.property] = (byProperty[item.property] || 0) + 1;
   }
 
   const duration = Date.now() - startTime;
-  console.log(`Indexing complete: ${indexed} indexed, ${failed} failed in ${duration}ms`);
+  console.log(`Indexing complete: ${indexed} indexed, ${failed} failed, ${deletedCount} deleted in ${duration}ms`);
 
   return {
     success: failed === 0 && errors.length === 0,
