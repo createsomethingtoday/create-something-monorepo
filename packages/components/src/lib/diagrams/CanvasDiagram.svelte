@@ -5,6 +5,7 @@
 	 * Base component for building exportable diagrams with canvas.
 	 * Supports PNG/SVG export, annotations, and interactive elements.
 	 */
+	import { onMount } from 'svelte';
 
 	type ShapeType = 'rect' | 'circle' | 'line' | 'arrow' | 'text' | 'path' | 'image';
 
@@ -139,17 +140,15 @@
 		return color;
 	}
 
-	// Initialize computed styles on mount
-	$effect(() => {
-		if (typeof window !== 'undefined') {
-			computedStyles = getComputedStyle(document.documentElement);
-			const get = (prop: string, fallback: string) =>
-				computedStyles?.getPropertyValue(prop).trim() || fallback;
-			
-			resolvedBg = get('--color-bg-pure', '#0a0a0a');
-			resolvedBorder = get('--color-border-default', '#333333');
-			resolvedFocus = get('--color-focus', '#6366f1');
-		}
+	// Initialize computed styles on mount (use onMount to avoid effect loops)
+	onMount(() => {
+		computedStyles = getComputedStyle(document.documentElement);
+		const get = (prop: string, fallback: string) =>
+			computedStyles?.getPropertyValue(prop).trim() || fallback;
+		
+		resolvedBg = get('--color-bg-pure', '#0a0a0a');
+		resolvedBorder = get('--color-border-default', '#333333');
+		resolvedFocus = get('--color-focus', '#6366f1');
 	});
 
 	// Load images

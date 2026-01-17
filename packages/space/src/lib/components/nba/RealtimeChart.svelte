@@ -5,6 +5,7 @@
 	 * High-performance canvas renderer for live updating charts.
 	 * Supports streaming data, smooth animations, and multiple chart types.
 	 */
+	import { onMount } from 'svelte';
 
 	type ChartType = 'line' | 'area' | 'bar' | 'scatter';
 
@@ -193,8 +194,8 @@
 		}
 	});
 
-	// Resolve colors on mount
-	$effect(() => {
+	// Resolve colors on mount (use onMount to avoid effect loops)
+	onMount(() => {
 		resolveColors();
 	});
 

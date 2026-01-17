@@ -5,6 +5,7 @@
 	 * High-performance canvas renderer for large knowledge graphs (1000+ nodes).
 	 * Uses quadtree spatial partitioning and Barnes-Hut approximation for O(n log n) force calculations.
 	 */
+	import { onMount } from 'svelte';
 
 	interface GraphNode {
 		id: string;
@@ -364,8 +365,8 @@
 		return () => cancelAnimationFrame(animationId);
 	});
 
-	// Resolve colors on mount
-	$effect(() => {
+	// Resolve colors on mount (use onMount to avoid effect loops)
+	onMount(() => {
 		resolveColors();
 	});
 

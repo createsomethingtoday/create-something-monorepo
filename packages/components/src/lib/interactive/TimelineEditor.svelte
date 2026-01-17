@@ -5,6 +5,7 @@
 	 * Canvas-based timeline editor for motion-studio integration.
 	 * Supports keyframe editing, scrubbing, and track management.
 	 */
+	import { onMount } from 'svelte';
 
 	interface Keyframe {
 		id: string;
@@ -122,8 +123,8 @@
 		return Math.round((x - layout.trackLabelWidth + scrollX) / pixelsPerFrame);
 	}
 
-	// Resolve colors on mount
-	$effect(() => {
+	// Resolve colors on mount (use onMount to avoid effect loops)
+	onMount(() => {
 		resolveColors();
 	});
 
