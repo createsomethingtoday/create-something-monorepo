@@ -1,20 +1,18 @@
 /**
- * Research Paper Detail - Dynamic Markdown Route
+ * Research Paper Detail - Dynamic Route Fallback
  *
- * Loads papers from markdown content files using MDsveX.
- * This route serves ALL papers that don't have their own dedicated folder.
+ * All io papers are static Svelte routes with interactive components.
+ * This dynamic [slug] route exists to catch any non-static slug and return 404.
  *
- * Static .svelte paper routes will be migrated to markdown content incrementally.
+ * Static paper routes are in: /routes/papers/{slug}/+page.svelte
+ * The manifest at /api/manifest lists all valid paper slugs.
  */
 
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { loadPaperBySlug } from '$lib/content-loader';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const { slug } = params;
-	const paper = await loadPaperBySlug(slug);
-
-	return {
-		paper
-	};
+	// All io papers are static routes with their own +page.svelte
+	// If we reach this dynamic route, the paper doesn't exist
+	throw error(404, `Paper not found: ${params.slug}`);
 };

@@ -68,22 +68,30 @@ export async function fetchSpaceContent(db: D1Database): Promise<IndexableConten
 // IO CONTENT (.io)
 // =============================================================================
 
-// IO Manifest response type
+// IO Manifest types
+interface IOContentItem {
+  slug: string;
+  title: string;
+  description: string;
+  category?: string;
+}
+
 interface IOManifest {
   property: string;
-  papers: string[];
-  experiments: string[];
+  papers: IOContentItem[];
+  experiments: IOContentItem[];
   generated: string;
 }
 
 // Cache for the IO manifest (refreshed each indexing run)
-let cachedIOManifest: { papers: Set<string>; experiments: Set<string> } | null = null;
+let cachedIOManifest: IOManifest | null = null;
 
 /**
- * Fetch the content manifest from io to know which routes are valid
- * This prevents indexing content that doesn't have actual routes
+ * Fetch the content manifest from io
+ * IO papers are static Svelte routes with interactive components - NOT D1 content
+ * The manifest defines what routes exist with rich metadata
  */
-async function fetchIOManifest(): Promise<{ papers: Set<string>; experiments: Set<string> }> {
+async function fetchIOManifest(): Promise<IOManifest | null> {
   if (cachedIOManifest) {
     return cachedIOManifest;
   }
@@ -92,20 +100,15 @@ async function fetchIOManifest(): Promise<{ papers: Set<string>; experiments: Se
     const response = await fetch('https://createsomething.io/api/manifest');
     if (!response.ok) {
       console.warn(`Failed to fetch IO manifest: ${response.status}`);
-      return { papers: new Set(), experiments: new Set() };
+      return null;
     }
 
-    const manifest: IOManifest = await response.json();
-    cachedIOManifest = {
-      papers: new Set(manifest.papers),
-      experiments: new Set(manifest.experiments),
-    };
-
-    console.log(`IO manifest loaded: ${manifest.papers.length} papers, ${manifest.experiments.length} experiments`);
+    cachedIOManifest = await response.json();
+    console.log(`IO manifest loaded: ${cachedIOManifest!.papers.length} papers, ${cachedIOManifest!.experiments.length} experiments`);
     return cachedIOManifest;
   } catch (error) {
     console.error('Error fetching IO manifest:', error);
-    return { papers: new Set(), experiments: new Set() };
+    return null;
   }
 }
 
@@ -116,58 +119,88 @@ export function clearIOManifestCache(): void {
   cachedIOManifest = null;
 }
 
-interface IOPaper {
-  id: string;
-  title: string;
-  slug: string;
-  category: string;
-  content: string | null;
-  excerpt_long: string | null;
-  description: string | null;
-  updated_at: string;
-}
-
-export async function fetchIOContent(db: D1Database): Promise<IndexableContent[]> {
+/**
+ * Fetch IO content from the manifest (NOT from D1)
+ * 
+ * IO papers are static Svelte routes with interactive components.
+ * The manifest provides rich metadata (title, description, category).
+ */
+export async function fetchIOContent(_db: D1Database): Promise<IndexableContent[]> {
   const results: IndexableContent[] = [];
-
-  // Fetch the manifest to know which routes are valid
   const manifest = await fetchIOManifest();
 
-  // Fetch papers from database
-  const papers = await db
-    .prepare(`
-      SELECT id, title, slug, category, content, excerpt_long, description, updated_at
-      FROM papers
-      WHERE published = 1 AND is_hidden = 0 AND archived = 0
-    `)
-    .all<IOPaper>();
+  if (!manifest) {
+    console.warn('Could not fetch IO manifest - skipping IO content');
+    return results;
+  }
 
-  for (const paper of papers.results || []) {
-    const description = paper.excerpt_long || paper.description || '';
-    const content = paper.content || description;
-    const type: ContentType = paper.category === 'experiment' ? 'experiment' : 'paper';
-
-    // Only index if the paper has an actual route in the io app
-    const validSlugs = type === 'experiment' ? manifest.experiments : manifest.papers;
-    if (!validSlugs.has(paper.slug)) {
-      continue; // Skip papers without valid routes
-    }
-
+  // Index papers from manifest
+  for (const paper of manifest.papers) {
+    const content = `${paper.title}. ${paper.description}`;
+    
     results.push({
-      id: `io:${type}:${paper.slug}`,
+      id: `io:paper:${paper.slug}`,
       title: paper.title,
-      description: description.slice(0, 300),
-      content: content.slice(0, 5000),
+      description: paper.description,
+      content,
       property: 'io',
-      type,
-      path: type === 'experiment' ? `/experiments/${paper.slug}` : `/papers/${paper.slug}`,
-      concepts: [],
-      hash: hashContent(content),
-      lastModified: paper.updated_at,
+      type: 'paper',
+      path: `/papers/${paper.slug}`,
+      concepts: extractConceptsFromText(content),
+      hash: hashContent(paper.slug + paper.title),
+      lastModified: manifest.generated,
+    });
+  }
+
+  // Index experiments from manifest
+  for (const experiment of manifest.experiments) {
+    const content = `${experiment.title}. ${experiment.description}`;
+    
+    results.push({
+      id: `io:experiment:${experiment.slug}`,
+      title: experiment.title,
+      description: experiment.description,
+      content,
+      property: 'io',
+      type: 'experiment',
+      path: `/experiments/${experiment.slug}`,
+      concepts: extractConceptsFromText(content),
+      hash: hashContent(experiment.slug + experiment.title),
+      lastModified: manifest.generated,
     });
   }
 
   return results;
+}
+
+/**
+ * Extract concepts from text content
+ */
+function extractConceptsFromText(text: string): string[] {
+  const conceptKeywords: Record<string, string> = {
+    'hermeneutic': 'Hermeneutic Circle',
+    'heidegger': 'Martin Heidegger',
+    'zuhandenheit': 'Zuhandenheit',
+    'vorhandenheit': 'Vorhandenheit',
+    'subtractive': 'Weniger, aber besser',
+    'dieter rams': 'Dieter Rams',
+    'cloudflare': 'Cloudflare Workers',
+    'sveltekit': 'SvelteKit',
+    'agent': 'AI Native',
+    'beads': 'Beads',
+    'code mode': 'Code Mode',
+  };
+
+  const concepts: string[] = [];
+  const textLower = text.toLowerCase();
+
+  for (const [keyword, concept] of Object.entries(conceptKeywords)) {
+    if (textLower.includes(keyword)) {
+      concepts.push(concept);
+    }
+  }
+
+  return concepts;
 }
 
 // =============================================================================
