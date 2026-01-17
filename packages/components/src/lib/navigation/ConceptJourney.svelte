@@ -16,6 +16,7 @@
 	 */
 
 	import { onMount } from 'svelte';
+	import { FlaskConical, BookOpen, Hammer, Scroll, GraduationCap } from 'lucide-svelte';
 
 	// =============================================================================
 	// TYPES
@@ -58,7 +59,7 @@
 		property: Property;
 		name: string;
 		verb: string;
-		icon: string;
+		icon: typeof FlaskConical;
 		description: string;
 	}
 
@@ -68,7 +69,7 @@
 			property: 'ltd',
 			name: '.ltd',
 			verb: 'Understand',
-			icon: '📜',
+			icon: Scroll,
 			description: 'The canonical definition and principles',
 		},
 		{
@@ -76,7 +77,7 @@
 			property: 'io',
 			name: '.io',
 			verb: 'Learn',
-			icon: '📖',
+			icon: BookOpen,
 			description: 'Research papers and documentation',
 		},
 		{
@@ -84,7 +85,7 @@
 			property: 'space',
 			name: '.space',
 			verb: 'Explore',
-			icon: '🧪',
+			icon: FlaskConical,
 			description: 'Interactive experiments and demos',
 		},
 		{
@@ -92,7 +93,7 @@
 			property: 'lms',
 			name: 'LMS',
 			verb: 'Study',
-			icon: '📚',
+			icon: GraduationCap,
 			description: 'Structured lessons and exercises',
 		},
 		{
@@ -100,7 +101,7 @@
 			property: 'agency',
 			name: '.agency',
 			verb: 'Apply',
-			icon: '🔨',
+			icon: Hammer,
 			description: 'Real-world applications and case studies',
 		},
 	];
@@ -247,7 +248,9 @@
 					<div class="stage-header">
 						<div class="stage-marker">
 							<span class="stage-number">{index + 1}</span>
-							<span class="stage-icon">{stage.icon}</span>
+							<span class="stage-icon">
+								<svelte:component this={stage.icon} size={18} strokeWidth={2} />
+							</span>
 						</div>
 						<div class="stage-info">
 							<h2 class="stage-name">

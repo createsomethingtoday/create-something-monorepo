@@ -14,7 +14,8 @@
 	 * />
 	 */
 
-	import { onMount } from 'svelte';
+	import { onMount, type Component } from 'svelte';
+	import { FlaskConical, BookOpen, Hammer, Scroll, GraduationCap, FileText, Lightbulb, Grid3x3, User, Briefcase, FolderOpen } from 'lucide-svelte';
 
 	// =============================================================================
 	// TYPES
@@ -59,12 +60,12 @@
 	// PROPERTY DISPLAY INFO
 	// =============================================================================
 
-	const PROPERTY_INFO: Record<Property, { name: string; verb: string; icon: string }> = {
-		space: { name: '.space', verb: 'Explore', icon: '🧪' },
-		io: { name: '.io', verb: 'Learn', icon: '📖' },
-		agency: { name: '.agency', verb: 'Build', icon: '🔨' },
-		ltd: { name: '.ltd', verb: 'Canon', icon: '📜' },
-		lms: { name: 'LMS', verb: 'Study', icon: '📚' },
+	const PROPERTY_INFO: Record<Property, { name: string; verb: string; icon: typeof FlaskConical }> = {
+		space: { name: '.space', verb: 'Explore', icon: FlaskConical },
+		io: { name: '.io', verb: 'Learn', icon: BookOpen },
+		agency: { name: '.agency', verb: 'Build', icon: Hammer },
+		ltd: { name: '.ltd', verb: 'Canon', icon: Scroll },
+		lms: { name: 'LMS', verb: 'Study', icon: GraduationCap },
 	};
 
 	const TYPE_LABELS: Record<ContentType, string> = {
@@ -76,6 +77,18 @@
 		master: 'Master',
 		service: 'Service',
 		'case-study': 'Case Study',
+	};
+
+	// Type icons for content type badges
+	const TYPE_ICONS: Record<ContentType, typeof FileText> = {
+		paper: FileText,
+		experiment: FlaskConical,
+		lesson: BookOpen,
+		principle: Lightbulb,
+		pattern: Grid3x3,
+		master: User,
+		service: Briefcase,
+		'case-study': FolderOpen,
 	};
 
 	// =============================================================================
@@ -467,7 +480,9 @@
 						{@const startIndex = Object.entries(itemsBefore).filter(([p]) => propertyOrder.indexOf(p as Property) < propertyOrder.indexOf(property)).reduce((sum, [p]) => sum + (groups[p as Property]?.length || 0), 0)}
 						<div class="palette-group">
 							<div class="palette-group-header">
-								<span class="palette-group-icon">{propertyInfo.icon}</span>
+								<span class="palette-group-icon">
+									<svelte:component this={propertyInfo.icon} size={14} strokeWidth={2} />
+								</span>
 								<span class="palette-group-name">{propertyInfo.name}</span>
 								<span class="palette-group-verb">{propertyInfo.verb}</span>
 							</div>
@@ -509,7 +524,8 @@
 			</span>
 			{#if currentProperty}
 				<span class="palette-current">
-					{PROPERTY_INFO[currentProperty].icon} {PROPERTY_INFO[currentProperty].name}
+					<svelte:component this={PROPERTY_INFO[currentProperty].icon} size={12} strokeWidth={2} />
+					{PROPERTY_INFO[currentProperty].name}
 				</span>
 			{/if}
 		</div>

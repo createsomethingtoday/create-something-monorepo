@@ -15,6 +15,7 @@
 	 */
 
 	import { onMount } from 'svelte';
+	import { FlaskConical, BookOpen, Hammer, Scroll, GraduationCap } from 'lucide-svelte';
 
 	// =============================================================================
 	// TYPES
@@ -44,12 +45,12 @@
 	// PROPERTY DISPLAY INFO
 	// =============================================================================
 
-	const PROPERTY_INFO: Record<Property, { name: string; verb: string; icon: string }> = {
-		space: { name: '.space', verb: 'Explore', icon: '🧪' },
-		io: { name: '.io', verb: 'Learn', icon: '📖' },
-		agency: { name: '.agency', verb: 'Build', icon: '🔨' },
-		ltd: { name: '.ltd', verb: 'Canon', icon: '📜' },
-		lms: { name: 'LMS', verb: 'Study', icon: '📚' },
+	const PROPERTY_INFO: Record<Property, { name: string; verb: string; icon: typeof FlaskConical }> = {
+		space: { name: '.space', verb: 'Explore', icon: FlaskConical },
+		io: { name: '.io', verb: 'Learn', icon: BookOpen },
+		agency: { name: '.agency', verb: 'Build', icon: Hammer },
+		ltd: { name: '.ltd', verb: 'Canon', icon: Scroll },
+		lms: { name: 'LMS', verb: 'Study', icon: GraduationCap },
 	};
 
 	const TYPE_LABELS: Record<ContentType, string> = {
@@ -213,7 +214,9 @@
 						{@const propertyInfo = PROPERTY_INFO[property]}
 						<div class="related-group">
 							<div class="group-header">
-								<span class="group-icon">{propertyInfo.icon}</span>
+								<span class="group-icon">
+									<svelte:component this={propertyInfo.icon} size={14} strokeWidth={2} />
+								</span>
 								<span class="group-name">{propertyInfo.name}</span>
 							</div>
 							<ul class="group-items">
