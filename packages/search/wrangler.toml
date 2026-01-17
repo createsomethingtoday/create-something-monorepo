@@ -61,6 +61,13 @@ id = "1b10d4721e3a46cf999fc78a483af772"
 [vars]
 ENVIRONMENT = "development"
 
+# =============================================================================
+# Scheduled Triggers - automated re-indexing
+# =============================================================================
+[triggers]
+# Re-index content every 6 hours
+crons = ["0 */6 * * *"]
+
 # Production environment
 [env.production]
 vars = { ENVIRONMENT = "production" }

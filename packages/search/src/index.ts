@@ -460,4 +460,40 @@ export default {
       return errorResponse('Internal server error', 500);
     }
   },
+
+  /**
+   * Scheduled handler for automated re-indexing
+   * Runs every 6 hours via cron trigger
+   */
+  async scheduled(
+    _event: ScheduledEvent,
+    env: Env,
+    ctx: ExecutionContext
+  ): Promise<void> {
+    console.log('[Scheduled] Starting automated content re-indexing...');
+    
+    ctx.waitUntil(
+      (async () => {
+        try {
+          const result = await indexAllContent(
+            env.AI,
+            env.VECTORIZE,
+            env.DB_SPACE,
+            env.DB_IO,
+            env.DB_LTD,
+            env.DB_AGENCY
+          );
+          
+          console.log(`[Scheduled] Indexing complete: ${result.indexed} items, ${result.failed} failed`);
+          console.log(`[Scheduled] By property:`, JSON.stringify(result.byProperty));
+          
+          if (result.errors.length > 0) {
+            console.warn('[Scheduled] Errors during indexing:', result.errors);
+          }
+        } catch (error) {
+          console.error('[Scheduled] Re-indexing failed:', error);
+        }
+      })()
+    );
+  },
 };
