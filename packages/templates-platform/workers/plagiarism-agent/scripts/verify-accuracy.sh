@@ -1,119 +1,180 @@
 #!/bin/bash
-# Verification Script for Plagiarism Detection Accuracy
-# Run after re-indexing completes to validate the system
 
-WORKER_URL="https://plagiarism-agent.createsomething.workers.dev"
+# Verify Plagiarism Detection Accuracy
+# Tests known plagiarism cases against our comparison system
 
-echo "═══════════════════════════════════════════════════════════════"
-echo "  PLAGIARISM DETECTION ACCURACY VERIFICATION"
-echo "═══════════════════════════════════════════════════════════════"
+API_BASE="https://plagiarism-agent.createsomething.workers.dev"
+
+echo "============================================"
+echo "Plagiarism Detection Accuracy Verification"
+echo "============================================"
 echo ""
 
-# 1. Health Check
-echo "1. Health Check"
-echo "───────────────"
-HEALTH=$(curl -s "$WORKER_URL/health")
-echo "$HEALTH" | jq '.'
-STATUS=$(echo "$HEALTH" | jq -r '.status')
-if [ "$STATUS" != "healthy" ]; then
-  echo "❌ System unhealthy - aborting"
-  exit 1
+# Color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+# Track results
+TOTAL=0
+CORRECT=0
+INCORRECT=0
+
+# Function to test a case
+test_case() {
+  local case_name="$1"
+  local original_url="$2"
+  local copy_url="$3"
+  local expected_verdict="$4"  # major, minor, no_violation
+  
+  TOTAL=$((TOTAL + 1))
+  
+  echo "Testing: $case_name"
+  echo "  Original: $original_url"
+  echo "  Copy: $copy_url"
+  echo "  Expected: $expected_verdict"
+  
+  # Scan the alleged copy against the database
+  RESULT=$(curl -s -X POST "$API_BASE/scan/url" \
+    -H "Content-Type: application/json" \
+    -d "{\"url\": \"$copy_url\"}" \
+    --max-time 60 2>&1)
+  
+  # Check if we got a valid response
+  if echo "$RESULT" | jq -e '.similarity' > /dev/null 2>&1; then
+    SIMILARITY=$(echo "$RESULT" | jq -r '.similarity')
+    VERDICT=$(echo "$RESULT" | jq -r '.verdict // "unknown"')
+    
+    # Determine if our verdict matches expected
+    # major = high similarity (>0.5)
+    # minor = medium similarity (0.3-0.5)
+    # no_violation = low similarity (<0.3)
+    
+    local our_verdict="no_violation"
+    if (( $(echo "$SIMILARITY > 0.5" | bc -l) )); then
+      our_verdict="major"
+    elif (( $(echo "$SIMILARITY > 0.3" | bc -l) )); then
+      our_verdict="minor"
+    fi
+    
+    if [ "$our_verdict" = "$expected_verdict" ]; then
+      echo -e "  ${GREEN}✓ MATCH${NC}: Similarity=$SIMILARITY, Verdict=$our_verdict"
+      CORRECT=$((CORRECT + 1))
+    else
+      echo -e "  ${YELLOW}✗ MISMATCH${NC}: Similarity=$SIMILARITY, Our=$our_verdict, Expected=$expected_verdict"
+      INCORRECT=$((INCORRECT + 1))
+    fi
+  else
+    echo -e "  ${RED}✗ ERROR${NC}: $RESULT"
+    INCORRECT=$((INCORRECT + 1))
+  fi
+  
+  echo ""
+}
+
+# Also test using the comparison endpoint for more detailed analysis
+test_comparison() {
+  local case_name="$1"
+  local id1="$2"
+  local id2="$3"
+  local expected_verdict="$4"
+  
+  TOTAL=$((TOTAL + 1))
+  
+  echo "Testing Comparison: $case_name"
+  echo "  Template 1: $id1"
+  echo "  Template 2: $id2"
+  echo "  Expected: $expected_verdict"
+  
+  # Use the comparison endpoint
+  RESULT=$(curl -s -X POST "$API_BASE/compare" \
+    -H "Content-Type: application/json" \
+    -d "{\"id1\": \"$id1\", \"id2\": \"$id2\"}" \
+    --max-time 60 2>&1)
+  
+  if echo "$RESULT" | jq -e '.overallSimilarity' > /dev/null 2>&1; then
+    SIMILARITY=$(echo "$RESULT" | jq -r '.overallSimilarity')
+    IDENTICAL_RULES=$(echo "$RESULT" | jq -r '.identicalRules | length // 0')
+    
+    local our_verdict="no_violation"
+    if (( $(echo "$SIMILARITY > 0.5" | bc -l) )); then
+      our_verdict="major"
+    elif (( $(echo "$SIMILARITY > 0.3" | bc -l) )); then
+      our_verdict="minor"
+    fi
+    
+    if [ "$our_verdict" = "$expected_verdict" ]; then
+      echo -e "  ${GREEN}✓ MATCH${NC}: Similarity=$SIMILARITY, Identical Rules=$IDENTICAL_RULES"
+      CORRECT=$((CORRECT + 1))
+    else
+      echo -e "  ${YELLOW}✗ MISMATCH${NC}: Similarity=$SIMILARITY, Our=$our_verdict, Expected=$expected_verdict"
+      INCORRECT=$((INCORRECT + 1))
+    fi
+  else
+    echo -e "  ${RED}✗ ERROR${NC}: Could not parse response"
+    INCORRECT=$((INCORRECT + 1))
+  fi
+  
+  echo ""
+}
+
+echo "=== Testing Known Plagiarism Cases ==="
+echo ""
+
+# Test cases with known verdicts
+# These are actual URLs that have been judged
+
+# Case 1: Acelia vs Mindware-X (Major violation)
+test_case "Acelia vs Mindware-X" \
+  "https://acelia.webflow.io/" \
+  "https://mindware-x.webflow.io/" \
+  "major"
+
+# Case 2: Studio-Brave vs Kralv (Minor violation)
+test_case "Studio-Brave vs Kralv" \
+  "https://studio-brave.webflow.io/" \
+  "https://kralv.webflow.io/" \
+  "minor"
+
+# Case 3: Scalerfy vs Fluora (Minor violation)  
+test_case "Scalerfy vs Fluora" \
+  "https://scalerfy.webflow.io/" \
+  "https://fluora.webflow.io/" \
+  "minor"
+
+# Case 4: Studio-Brave vs Tofael (Major violation)
+test_case "Studio-Brave vs Tofael" \
+  "https://studio-brave.webflow.io/" \
+  "https://tofael.webflow.io/" \
+  "major"
+
+# Case 5: Control test - completely different templates (No violation)
+test_case "Control: Different Templates" \
+  "https://nimatra.webflow.io/" \
+  "https://startub-template.webflow.io/" \
+  "no_violation"
+
+# Case 6: Same template test (should be major/identical)
+test_case "Control: Same Template" \
+  "https://nimatra.webflow.io/" \
+  "https://nimatra.webflow.io/" \
+  "major"
+
+echo "============================================"
+echo "Accuracy Summary"
+echo "============================================"
+echo "Total Tests: $TOTAL"
+echo -e "Correct: ${GREEN}$CORRECT${NC}"
+echo -e "Incorrect: ${YELLOW}$INCORRECT${NC}"
+
+if [ $TOTAL -gt 0 ]; then
+  ACCURACY=$(echo "scale=1; $CORRECT * 100 / $TOTAL" | bc)
+  echo "Accuracy: $ACCURACY%"
 fi
-echo "✅ System healthy"
+
 echo ""
-
-# 2. Index Stats
-echo "2. Index Statistics"
-echo "───────────────────"
-STATS=$(curl -s "$WORKER_URL/minhash/stats")
-INDEXED=$(echo "$STATS" | jq -r '.totalIndexed')
-echo "Templates indexed: $INDEXED"
-if [ "$INDEXED" -lt 9000 ]; then
-  echo "⚠️  Warning: Only $INDEXED templates indexed (expected ~9,500)"
-fi
+echo "Note: This tests against the /scan/url endpoint which"
+echo "scans a URL against all indexed templates."
 echo ""
-
-# 3. Known Similarity Test (Nimatra vs Revio Pay - should be ~75%)
-echo "3. Known Similarity Test"
-echo "────────────────────────"
-echo "Testing: Nimatra vs Revio Pay (expected: ~75% similar)"
-COMPARE=$(curl -s -X POST "$WORKER_URL/compare" \
-  -H "Content-Type: application/json" \
-  -d '{"id1": "nimatra", "id2": "revio-pay"}')
-SIMILARITY=$(echo "$COMPARE" | jq -r '.overallSimilarity')
-IDENTICAL_RULES=$(echo "$COMPARE" | jq -r '.identicalRules | length')
-PROP_COMBOS=$(echo "$COMPARE" | jq -r '.propertyCombinations | length')
-
-echo "  Overall similarity: $(echo "$SIMILARITY * 100" | bc)%"
-echo "  Identical CSS rules: $IDENTICAL_RULES"
-echo "  Property combinations: $PROP_COMBOS"
-
-if (( $(echo "$SIMILARITY > 0.6" | bc -l) )); then
-  echo "✅ Similarity detection working (>60%)"
-else
-  echo "❌ Similarity too low - check tokenization"
-fi
-echo ""
-
-# 4. Scan Test (should find matches for indexed template)
-echo "4. Scan Endpoint Test"
-echo "─────────────────────"
-echo "Scanning: https://nimatra.webflow.io/"
-SCAN=$(curl -s -X POST "$WORKER_URL/scan/template" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://nimatra.webflow.io/"}')
-MATCH_COUNT=$(echo "$SCAN" | jq -r '.matchCount')
-TOP_MATCH=$(echo "$SCAN" | jq -r '.topMatches[0].id // "none"')
-TOP_SIM=$(echo "$SCAN" | jq -r '.topMatches[0].similarity // 0')
-
-echo "  Matches found: $MATCH_COUNT"
-echo "  Top match: $TOP_MATCH ($(echo "$TOP_SIM * 100" | bc)%)"
-
-if [ "$MATCH_COUNT" -gt 0 ]; then
-  echo "✅ Scan finding matches"
-else
-  echo "❌ Scan not finding matches - check LSH bands"
-fi
-echo ""
-
-# 5. Suspicious Pairs
-echo "5. Suspicious Pairs Detection"
-echo "─────────────────────────────"
-SUSPICIOUS=$(curl -s "$WORKER_URL/scan/suspicious?threshold=0.5&limit=5")
-PAIR_COUNT=$(echo "$SUSPICIOUS" | jq -r '.count')
-echo "  Pairs above 50% threshold: $PAIR_COUNT"
-
-if [ "$PAIR_COUNT" -gt 0 ]; then
-  echo "  Top pairs:"
-  echo "$SUSPICIOUS" | jq -r '.pairs[:3][] | "    - \(.template1.name) vs \(.template2.name): \(.similarity * 100 | floor)%"'
-  echo "✅ Suspicious pair detection working"
-else
-  echo "⚠️  No suspicious pairs found (may need lower threshold)"
-fi
-echo ""
-
-# 6. Dashboard Stats
-echo "6. Dashboard API"
-echo "────────────────"
-DASHBOARD=$(curl -s "$WORKER_URL/dashboard/stats")
-TEMPLATES=$(echo "$DASHBOARD" | jq -r '.totalTemplatesIndexed')
-CASES=$(echo "$DASHBOARD" | jq -r '.totalCasesProcessed')
-echo "  Templates: $TEMPLATES"
-echo "  Cases: $CASES"
-echo "✅ Dashboard API responding"
-echo ""
-
-# Summary
-echo "═══════════════════════════════════════════════════════════════"
-echo "  VERIFICATION SUMMARY"
-echo "═══════════════════════════════════════════════════════════════"
-echo ""
-echo "  Health:        ✅"
-echo "  Index:         $INDEXED templates"
-echo "  Similarity:    $(echo "$SIMILARITY * 100" | bc)% (Nimatra/Revio)"
-echo "  Scan:          $MATCH_COUNT matches found"
-echo "  Suspicious:    $PAIR_COUNT pairs >50%"
-echo ""
-echo "  Dashboard:     $WORKER_URL/dashboard"
-echo "  Comparison:    $WORKER_URL/compare/nimatra/revio-pay"
-echo ""
+echo "For page-level analysis, use the /pages/compare endpoint."

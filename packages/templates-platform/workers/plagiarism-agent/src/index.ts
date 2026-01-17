@@ -3511,9 +3511,42 @@ function findIdenticalRules(css1: string, css2: string): IdenticalRule[] {
     'hr', 'address', 'dl', 'dt', 'dd', 'cite', 'dfn', 'em', 'i', 'q', 'var'
   ]);
   
+  // Framework class patterns to ignore (design systems like Client-First, Relume, etc.)
+  const frameworkPatterns = [
+    /^\.w-/,           // Webflow built-in
+    /^\.wf-/,          // Webflow built-in
+    /^\.badge-/,       // Client-First / common pattern
+    /^\.button-/,      // Client-First / common pattern
+    /^\.icon-/,        // Client-First / common pattern
+    /^\.form-/,        // Client-First / common pattern
+    /^\.container-/,   // Client-First / common pattern
+    /^\.section-/,     // Client-First / common pattern
+    /^\.text-/,        // Utility class pattern
+    /^\.heading-/,     // Utility class pattern
+    /^\.padding-/,     // Utility class pattern
+    /^\.margin-/,      // Utility class pattern
+    /^\.hide-/,        // Utility class pattern
+    /^\.show-/,        // Utility class pattern
+    /^\.is-/,          // State class pattern
+    /^\.has-/,         // State class pattern
+    /^\[data-wf-/,     // Webflow data attributes
+    /^\[data-nav-/,    // Webflow navigation
+    /^\[data-collapse-/, // Webflow collapse
+    /^\[data-w-/,      // Webflow interactions
+    /^\.remove-/,      // Utility pattern
+    /^\.grid-/,        // Layout utility
+    /^\.flex-/,        // Layout utility
+    /^\.spacer-/,      // Layout utility
+    /^\.divider-/,     // Layout utility
+  ];
+  
+  const isFrameworkClass = (selector: string): boolean => {
+    return frameworkPatterns.some(pattern => pattern.test(selector));
+  };
+  
   for (const [selector, props1] of Object.entries(rules1)) {
-    // Skip Webflow framework classes
-    if (selector.startsWith('.w-') || selector.startsWith('.wf-')) continue;
+    // Skip Webflow framework classes and common design system patterns
+    if (isFrameworkClass(selector)) continue;
     
     // Skip common reset/normalize rules
     if (resetSelectors.has(selector)) continue;
