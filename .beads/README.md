@@ -70,6 +70,90 @@ bd init
 bd create "Try out Beads"
 ```
 
+## Formulas (bd cook)
+
+Formulas are TOML-defined workflows for repeatable processes. They live in `.beads/formulas/` and can be executed with `bd cook`.
+
+### Using Formulas
+
+```bash
+# List available formulas
+bd formula list
+
+# View formula details
+bd formula show mol-polecat-basic
+
+# Execute a formula (cook it)
+bd cook mol-polecat-basic --var issue_id=csm-abc123
+
+# Create a trackable instance (molecule)
+bd mol pour mol-polecat-chrome --var issue_id=csm-xyz789
+
+# Track molecule progress
+bd mol list
+bd mol current
+bd mol status <mol-id>
+```
+
+### Available Formulas
+
+| Formula | Description | Model |
+|---------|-------------|-------|
+| `mol-polecat-basic` | Basic workflow for simple tasks | Haiku (~$0.001) |
+| `mol-polecat-shiny` | Standard workflow for typical work | Sonnet (~$0.01) |
+| `mol-polecat-chrome` | Premium workflow for complex tasks | Opus (~$0.10) |
+
+### Creating Formulas
+
+Create a `.toml` file in `.beads/formulas/`:
+
+```toml
+name = "my-workflow"
+description = "Description of the workflow"
+quality = "shiny"  # basic, shiny, or chrome
+model = "sonnet"
+
+[[variables]]
+name = "issue_id"
+description = "The issue ID to work on"
+required = true
+
+[[steps]]
+id = "step-1"
+title = "First step"
+description = "What to do in this step"
+
+[[steps]]
+id = "step-2"
+title = "Second step"
+description = "What to do next"
+needs = ["step-1"]  # Depends on step-1
+
+[success_criteria]
+criteria = [
+  "Criterion 1",
+  "Criterion 2"
+]
+```
+
+### Molecule Workflow
+
+Molecules track formula execution progress:
+
+```bash
+# Pour a molecule (start tracking)
+bd mol pour release --var version=1.2.0
+
+# Check current molecule
+bd mol current
+
+# Complete a step and continue
+bd close <step-issue-id> --continue
+
+# Squash completed molecule to digest
+bd mol squash
+```
+
 ## Learn More
 
 - **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)

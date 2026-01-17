@@ -12,6 +12,9 @@ Gastown coordinates multiple Claude Code instances. Here's how to use it.
 | Assign work manually | `gt sling cs-xxx csm --agent claude --model sonnet` |
 | Check your current task | `gt hook` |
 | Mark work complete | `gt done` |
+| **Recover context** | `gt-prime` (NEW) |
+| **Watch status** | `gt-status --watch` (NEW) |
+| **Pause a rig** | `gt-rig park csm` (NEW) |
 | Stop everything | `gt shutdown` |
 
 ## The Core Principle: GUPP
@@ -282,6 +285,76 @@ gt mail inbox        # Check messages
 gt handoff           # Graceful session restart
 ```
 
+### Context Recovery (gt-prime) - NEW
+
+**NEW**: Recover context mid-session after crashes, context overflow, or confusion.
+
+```bash
+gt-prime                    # Recover context for current directory
+gt-prime --issue cs-abc123  # Recover context for specific issue
+gt-prime --inject           # Also inject pending mail
+gt-prime --verbose          # Show detailed recovery info
+```
+
+**What gt-prime does**:
+1. Reads current hook state (assigned work)
+2. Gathers recent commits and modified files
+3. Checks for pending mail
+4. Reads latest checkpoint brief
+5. Generates a recovery context for the agent
+
+**When to use**:
+- After a crash or context overflow
+- When switching to a new session
+- When confused about current state
+- After returning from a break
+
+### Status Dashboard (gt-status) - NEW
+
+**NEW**: CLI status dashboard for operational visibility.
+
+```bash
+gt-status              # Show current status
+gt-status --watch      # Live updates (refresh every 2s)
+gt-status --json       # JSON output for scripting
+gt-status --convoy <id> # Focus on specific convoy
+```
+
+**Dashboard shows**:
+- Worker status (idle, working, blocked, error, completed)
+- Convoy progress with visual progress bars
+- Rig state (active, parked, docked)
+- Recent activity from git and mail
+
+### Rig Lifecycle (gt-rig) - NEW
+
+**NEW**: Control rig lifecycle without losing work.
+
+```bash
+gt-rig park csm       # Pause daemon auto-start (keeps sessions)
+gt-rig unpark csm     # Resume daemon auto-start
+gt-rig dock csm       # Stop all sessions, prevent auto-start
+gt-rig undock csm     # Resume normal operation
+gt-rig status csm     # Show rig state
+```
+
+**States**:
+- 🟢 **ACTIVE**: Normal operation, daemon auto-starts
+- 🟡 **PARKED**: Sessions preserved, daemon won't auto-start
+- 🔴 **DOCKED**: All stopped, daemon won't auto-start
+
+**Use cases**:
+- `park`: Temporarily pause work while keeping sessions alive
+- `dock`: Full stop for maintenance or debugging
+
+```bash
+# Example: Pause for lunch
+gt-rig park csm --reason "Lunch break"
+
+# Example: Full stop for debugging
+gt-rig dock csm --reason "Debugging convoy issue"
+```
+
 ### Unified Backgrounding (Claude Code 2.1.0+)
 
 **NEW**: `Ctrl+B` now backgrounds both bash commands AND agents simultaneously.
@@ -408,6 +481,105 @@ bd sync --status     # Check Beads sync
 **Rule of thumb**: Harness for focused work. Gastown for parallel work.
 
 ---
+
+### Runtime Configuration - NEW
+
+**NEW**: Multi-provider support for AI coding agents.
+
+Gastown now supports multiple AI runtimes. Configure via `settings/config.json`:
+
+```json
+{
+  "runtime": {
+    "provider": "claude",
+    "command": "claude",
+    "args": [],
+    "promptMode": "hook"
+  },
+  "defaultAgent": "claude"
+}
+```
+
+**Built-in agent presets**:
+
+| Preset | Description | Cost |
+|--------|-------------|------|
+| `claude` | Claude Code CLI (default) | varies |
+| `claude-haiku` | Claude with Haiku model | ~$0.001 |
+| `claude-sonnet` | Claude with Sonnet model | ~$0.01 |
+| `claude-opus` | Claude with Opus model | ~$0.10 |
+| `codex` | OpenAI Codex CLI | varies |
+| `gemini` | Google Gemini CLI | varies |
+| `cursor` | Cursor IDE agent | varies |
+| `auggie` | Augmented AI agent | varies |
+
+**Usage**:
+
+```bash
+# Use preset
+gt sling cs-abc123 csm --agent claude-haiku
+
+# Custom agent command
+gt config agent set my-agent "claude --model haiku --thinking minimal"
+gt config default-agent my-agent
+```
+
+**Prompt modes**:
+- `hook`: Use native hooks (Claude) - automatic context injection
+- `prime`: Send startup prime command (Codex, Gemini)
+- `inject`: Inject mail at startup
+- `none`: No prompt injection
+
+### Shell Completions - NEW
+
+**NEW**: Tab completions for faster command entry.
+
+```bash
+# Bash (add to ~/.bashrc)
+gt-completion bash >> ~/.bashrc
+source ~/.bashrc
+
+# Zsh (add to ~/.zshrc)
+gt-completion zsh >> ~/.zshrc
+source ~/.zshrc
+
+# Fish (create completions file)
+gt-completion fish > ~/.config/fish/completions/gt.fish
+```
+
+Completions available for:
+- `gt` - Main Gas Town CLI
+- `gt-smart-sling` - Smart model routing
+- `gt-prime` - Context recovery
+- `gt-status` - Status dashboard
+- `gt-rig` - Rig lifecycle
+
+### Formula Execution (bd cook) - NEW
+
+**NEW**: Execute TOML-defined workflows.
+
+```bash
+# List available formulas
+bd formula list
+
+# Execute a formula
+bd cook mol-polecat-basic --var issue_id=csm-abc123
+
+# Create trackable molecule
+bd mol pour mol-polecat-chrome --var issue_id=csm-xyz789
+
+# Track progress
+bd mol current
+bd mol status
+```
+
+**Available formulas** (in `.beads/formulas/`):
+
+| Formula | Model | Use case |
+|---------|-------|----------|
+| `mol-polecat-basic` | Haiku | Simple, mechanical tasks |
+| `mol-polecat-shiny` | Sonnet | Standard work |
+| `mol-polecat-chrome` | Opus | Complex architectural work |
 
 ## Reference: Architecture
 

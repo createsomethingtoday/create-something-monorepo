@@ -1,0 +1,66 @@
+# Unified Search Worker
+# "The full story, at your fingertips"
+#
+# Canon: Search reveals connection. Connection reveals meaning.
+#
+# SETUP INSTRUCTIONS:
+# 1. Create Vectorize index: wrangler vectorize create unified-search --dimensions 768 --metric cosine
+# 2. Create KV namespace: wrangler kv:namespace create SEARCH_CACHE
+# 3. Get D1 database IDs: wrangler d1 list
+# 4. Update database_id values below with actual IDs from Cloudflare dashboard
+# 5. Deploy: wrangler deploy
+
+name = "unified-search"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Vectorize Index - semantic search across all properties
+# Create with: wrangler vectorize create unified-search --dimensions 768 --metric cosine
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "unified-search"
+
+# Workers AI - for embedding queries at runtime
+[ai]
+binding = "AI"
+
+# =============================================================================
+# D1 Databases - read access to property databases
+# Main shared database contains papers from all properties
+# =============================================================================
+
+[[d1_databases]]
+binding = "DB_SPACE"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+[[d1_databases]]
+binding = "DB_IO"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+[[d1_databases]]
+binding = "DB_LTD"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+[[d1_databases]]
+binding = "DB_AGENCY"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+# =============================================================================
+# KV Namespace - caching search results
+# =============================================================================
+[[kv_namespaces]]
+binding = "SEARCH_CACHE"
+id = "1b10d4721e3a46cf999fc78a483af772"
+
+[vars]
+ENVIRONMENT = "development"
+
+# Production environment
+[env.production]
+vars = { ENVIRONMENT = "production" }

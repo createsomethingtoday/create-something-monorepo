@@ -82,8 +82,404 @@ export interface FetchedContent {
   url: string;
 }
 
+// =============================================================================
+// PAGE TYPE CLASSIFICATION
+// =============================================================================
+
+export type PageType = 
+  | 'home'
+  | 'about'
+  | 'services'
+  | 'portfolio'
+  | 'work'
+  | 'blog'
+  | 'blog-post'
+  | 'contact'
+  | 'pricing'
+  | 'team'
+  | 'faq'
+  | 'product'
+  | 'product-detail'
+  | 'legal'
+  | 'utility'
+  | 'other';
+
+export interface PageInfo {
+  url: string;
+  path: string;
+  pageType: PageType;
+  confidence: number;
+}
+
+export interface FetchedPageContent extends FetchedContent {
+  pageInfo: PageInfo;
+}
+
 /**
- * Fetch published content from URL with error handling
+ * Classify a page URL into a semantic page type
+ * 
+ * Uses URL patterns and common naming conventions to determine page type.
+ * Returns confidence score based on how clear the match is.
+ */
+export function classifyPageType(url: string): PageInfo {
+  const urlObj = new URL(url);
+  const path = urlObj.pathname.toLowerCase().replace(/\/$/, '') || '/';
+  
+  // Page type patterns with confidence scores
+  const patterns: Array<{ regex: RegExp; type: PageType; confidence: number }> = [
+    // Homepage
+    { regex: /^\/?$/, type: 'home', confidence: 1.0 },
+    { regex: /^\/home\/?$/, type: 'home', confidence: 1.0 },
+    { regex: /^\/index\/?$/, type: 'home', confidence: 1.0 },
+    
+    // About pages
+    { regex: /^\/about(-us)?\/?$/, type: 'about', confidence: 1.0 },
+    { regex: /^\/our-story\/?$/, type: 'about', confidence: 0.9 },
+    { regex: /^\/who-we-are\/?$/, type: 'about', confidence: 0.9 },
+    { regex: /^\/company\/?$/, type: 'about', confidence: 0.8 },
+    
+    // Services pages
+    { regex: /^\/services?\/?$/, type: 'services', confidence: 1.0 },
+    { regex: /^\/what-we-do\/?$/, type: 'services', confidence: 0.9 },
+    { regex: /^\/solutions?\/?$/, type: 'services', confidence: 0.8 },
+    { regex: /^\/offerings?\/?$/, type: 'services', confidence: 0.8 },
+    
+    // Portfolio/Work pages
+    { regex: /^\/portfolio\/?$/, type: 'portfolio', confidence: 1.0 },
+    { regex: /^\/work\/?$/, type: 'work', confidence: 1.0 },
+    { regex: /^\/projects?\/?$/, type: 'portfolio', confidence: 0.9 },
+    { regex: /^\/case-studies?\/?$/, type: 'portfolio', confidence: 0.9 },
+    { regex: /^\/gallery\/?$/, type: 'portfolio', confidence: 0.8 },
+    
+    // Portfolio/Work detail pages
+    { regex: /^\/portfolio\/[^/]+\/?$/, type: 'portfolio', confidence: 0.9 },
+    { regex: /^\/work\/[^/]+\/?$/, type: 'work', confidence: 0.9 },
+    { regex: /^\/projects?\/[^/]+\/?$/, type: 'portfolio', confidence: 0.9 },
+    { regex: /^\/case-study\/[^/]+\/?$/, type: 'portfolio', confidence: 0.9 },
+    
+    // Blog pages
+    { regex: /^\/blog\/?$/, type: 'blog', confidence: 1.0 },
+    { regex: /^\/news\/?$/, type: 'blog', confidence: 0.9 },
+    { regex: /^\/articles?\/?$/, type: 'blog', confidence: 0.9 },
+    { regex: /^\/insights?\/?$/, type: 'blog', confidence: 0.8 },
+    { regex: /^\/resources?\/?$/, type: 'blog', confidence: 0.7 },
+    
+    // Blog post pages
+    { regex: /^\/blog\/[^/]+\/?$/, type: 'blog-post', confidence: 1.0 },
+    { regex: /^\/news\/[^/]+\/?$/, type: 'blog-post', confidence: 0.9 },
+    { regex: /^\/articles?\/[^/]+\/?$/, type: 'blog-post', confidence: 0.9 },
+    { regex: /^\/posts?\/[^/]+\/?$/, type: 'blog-post', confidence: 0.9 },
+    
+    // Contact pages
+    { regex: /^\/contact(-us)?\/?$/, type: 'contact', confidence: 1.0 },
+    { regex: /^\/get-in-touch\/?$/, type: 'contact', confidence: 0.9 },
+    { regex: /^\/reach-us\/?$/, type: 'contact', confidence: 0.9 },
+    { regex: /^\/lets-talk\/?$/, type: 'contact', confidence: 0.8 },
+    
+    // Pricing pages
+    { regex: /^\/pricing\/?$/, type: 'pricing', confidence: 1.0 },
+    { regex: /^\/plans?\/?$/, type: 'pricing', confidence: 0.9 },
+    { regex: /^\/packages?\/?$/, type: 'pricing', confidence: 0.8 },
+    { regex: /^\/rates?\/?$/, type: 'pricing', confidence: 0.8 },
+    
+    // Team pages
+    { regex: /^\/team\/?$/, type: 'team', confidence: 1.0 },
+    { regex: /^\/our-team\/?$/, type: 'team', confidence: 1.0 },
+    { regex: /^\/people\/?$/, type: 'team', confidence: 0.8 },
+    { regex: /^\/staff\/?$/, type: 'team', confidence: 0.8 },
+    
+    // FAQ pages
+    { regex: /^\/faq\/?$/, type: 'faq', confidence: 1.0 },
+    { regex: /^\/faqs?\/?$/, type: 'faq', confidence: 1.0 },
+    { regex: /^\/frequently-asked-questions?\/?$/, type: 'faq', confidence: 1.0 },
+    { regex: /^\/help\/?$/, type: 'faq', confidence: 0.7 },
+    { regex: /^\/support\/?$/, type: 'faq', confidence: 0.6 },
+    
+    // Product pages
+    { regex: /^\/products?\/?$/, type: 'product', confidence: 1.0 },
+    { regex: /^\/shop\/?$/, type: 'product', confidence: 0.9 },
+    { regex: /^\/store\/?$/, type: 'product', confidence: 0.9 },
+    
+    // Product detail pages
+    { regex: /^\/products?\/[^/]+\/?$/, type: 'product-detail', confidence: 1.0 },
+    { regex: /^\/shop\/[^/]+\/?$/, type: 'product-detail', confidence: 0.9 },
+    
+    // Legal pages
+    { regex: /^\/privacy(-policy)?\/?$/, type: 'legal', confidence: 1.0 },
+    { regex: /^\/terms(-of-service|-and-conditions)?\/?$/, type: 'legal', confidence: 1.0 },
+    { regex: /^\/legal\/?$/, type: 'legal', confidence: 1.0 },
+    { regex: /^\/cookie(-policy)?\/?$/, type: 'legal', confidence: 0.9 },
+    { regex: /^\/disclaimer\/?$/, type: 'legal', confidence: 0.9 },
+    
+    // Utility pages
+    { regex: /^\/404\/?$/, type: 'utility', confidence: 1.0 },
+    { regex: /^\/401\/?$/, type: 'utility', confidence: 1.0 },
+    { regex: /^\/style-?guide\/?$/, type: 'utility', confidence: 1.0 },
+    { regex: /^\/utility-pages?\//, type: 'utility', confidence: 1.0 },
+    { regex: /^\/changelog\/?$/, type: 'utility', confidence: 0.9 },
+    { regex: /^\/license\/?$/, type: 'utility', confidence: 0.9 },
+  ];
+  
+  // Find best matching pattern
+  for (const pattern of patterns) {
+    if (pattern.regex.test(path)) {
+      return {
+        url,
+        path: path || '/',
+        pageType: pattern.type,
+        confidence: pattern.confidence
+      };
+    }
+  }
+  
+  // Default to 'other' with low confidence
+  return {
+    url,
+    path: path || '/',
+    pageType: 'other',
+    confidence: 0.3
+  };
+}
+
+/**
+ * Fetch content from a single page with page type classification
+ */
+export async function fetchPageWithClassification(url: string): Promise<FetchedPageContent | null> {
+  const content = await fetchPublishedContent(url);
+  if (!content) return null;
+  
+  return {
+    ...content,
+    pageInfo: classifyPageType(url)
+  };
+}
+
+/**
+ * Fetch all pages from a template with individual classifications
+ * 
+ * Returns an array of individually-fetched pages (not combined),
+ * each with its own page type classification.
+ */
+export async function fetchAllPagesIndividually(
+  baseUrl: string, 
+  maxPages = 15
+): Promise<FetchedPageContent[]> {
+  console.log(`[PageIndex] Discovering pages for ${baseUrl}...`);
+  
+  const pageUrls = await discoverTemplatePages(baseUrl);
+  const pagesToFetch = pageUrls.slice(0, maxPages);
+  
+  console.log(`[PageIndex] Fetching ${pagesToFetch.length} pages individually...`);
+  
+  const pages: FetchedPageContent[] = [];
+  
+  // Fetch pages with rate limiting (200ms between requests)
+  for (let i = 0; i < pagesToFetch.length; i++) {
+    const pageUrl = pagesToFetch[i];
+    
+    try {
+      const pageContent = await fetchPageWithClassification(pageUrl);
+      if (pageContent) {
+        pages.push(pageContent);
+        console.log(`[PageIndex] Fetched ${pageContent.pageInfo.path} → ${pageContent.pageInfo.pageType} (${(pageContent.pageInfo.confidence * 100).toFixed(0)}%)`);
+      }
+      
+      // Rate limit
+      if (i < pagesToFetch.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    } catch (e) {
+      console.log(`[PageIndex] Error fetching ${pageUrl}:`, e);
+    }
+  }
+  
+  console.log(`[PageIndex] Fetched ${pages.length} pages with classifications`);
+  return pages;
+}
+
+// =============================================================================
+// MULTI-PAGE DISCOVERY
+// =============================================================================
+
+/**
+ * Discover all pages on a Webflow template
+ * 
+ * Strategy:
+ * 1. Try sitemap.xml (most reliable)
+ * 2. Parse navigation links from homepage
+ * 3. Look for common page patterns (about, services, contact, etc.)
+ */
+export async function discoverTemplatePages(baseUrl: string): Promise<string[]> {
+  const pages = new Set<string>();
+  const base = new URL(baseUrl);
+  const origin = base.origin;
+  
+  // Always include homepage
+  pages.add(origin + '/');
+  
+  // Strategy 1: Try sitemap.xml
+  try {
+    const sitemapUrl = origin + '/sitemap.xml';
+    const response = await fetch(sitemapUrl, {
+      headers: { 'User-Agent': 'PlagiarismDetectionBot/1.0 (Webflow Template Review)' }
+    });
+    
+    if (response.ok) {
+      const sitemap = await response.text();
+      // Extract URLs from sitemap
+      const urlMatches = sitemap.match(/<loc>([^<]+)<\/loc>/gi) || [];
+      for (const match of urlMatches) {
+        const url = match.replace(/<\/?loc>/gi, '').trim();
+        if (url.startsWith(origin) && !url.includes('#')) {
+          pages.add(url.replace(/\/$/, '') + '/');
+        }
+      }
+      console.log(`[PageDiscovery] Found ${pages.size} pages from sitemap`);
+    }
+  } catch (e) {
+    console.log('[PageDiscovery] No sitemap found, falling back to link parsing');
+  }
+  
+  // Strategy 2: Parse navigation links from homepage
+  if (pages.size < 3) {
+    try {
+      const response = await fetch(origin + '/', {
+        headers: { 'User-Agent': 'PlagiarismDetectionBot/1.0 (Webflow Template Review)' }
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        
+        // Find internal links in nav, header, footer
+        const linkRegex = /href=["']([^"'#]+)["']/gi;
+        let match;
+        while ((match = linkRegex.exec(html)) !== null) {
+          let href = match[1];
+          
+          // Skip external links, scripts, stylesheets
+          if (href.startsWith('http') && !href.startsWith(origin)) continue;
+          if (href.includes('.css') || href.includes('.js') || href.includes('.jpg') || href.includes('.png')) continue;
+          if (href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+          
+          // Convert relative to absolute
+          if (href.startsWith('/')) {
+            href = origin + href;
+          } else if (!href.startsWith('http')) {
+            href = origin + '/' + href;
+          }
+          
+          // Only include pages on same domain
+          if (href.startsWith(origin) && !href.includes('#')) {
+            pages.add(href.replace(/\/$/, '') + '/');
+          }
+        }
+        console.log(`[PageDiscovery] Found ${pages.size} pages from homepage links`);
+      }
+    } catch (e) {
+      console.log('[PageDiscovery] Error parsing homepage:', e);
+    }
+  }
+  
+  // Strategy 3: Try common page patterns
+  const commonPages = ['about', 'services', 'contact', 'blog', 'portfolio', 'team', 'pricing', 'faq', 'work', 'projects'];
+  for (const page of commonPages) {
+    if (pages.size >= 15) break; // Limit total pages
+    
+    try {
+      const pageUrl = `${origin}/${page}`;
+      const response = await fetch(pageUrl, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'PlagiarismDetectionBot/1.0' }
+      });
+      
+      if (response.ok) {
+        pages.add(pageUrl + '/');
+      }
+    } catch (e) {
+      // Page doesn't exist, skip
+    }
+  }
+  
+  console.log(`[PageDiscovery] Total pages discovered: ${pages.size}`);
+  return Array.from(pages).slice(0, 15); // Limit to 15 pages max
+}
+
+/**
+ * Fetch content from all pages of a template
+ * 
+ * Returns combined content from all pages for comprehensive signature generation.
+ * CSS is typically shared across pages, so we dedupe it.
+ */
+export async function fetchAllTemplateContent(baseUrl: string, maxPages = 10): Promise<FetchedContent | null> {
+  console.log(`[MultiPage] Discovering pages for ${baseUrl}...`);
+  
+  const pageUrls = await discoverTemplatePages(baseUrl);
+  const pagesToFetch = pageUrls.slice(0, maxPages);
+  
+  console.log(`[MultiPage] Fetching ${pagesToFetch.length} pages...`);
+  
+  const allHtml: string[] = [];
+  const allCss = new Set<string>();
+  const allJs = new Set<string>();
+  
+  // Fetch pages with rate limiting (200ms between requests)
+  for (let i = 0; i < pagesToFetch.length; i++) {
+    const pageUrl = pagesToFetch[i];
+    
+    try {
+      const content = await fetchPublishedContent(pageUrl);
+      if (content) {
+        // Add page marker to HTML for context
+        allHtml.push(`<!-- PAGE: ${pageUrl} -->\n${content.html}`);
+        
+        // Dedupe CSS (usually identical across pages)
+        if (content.css) {
+          // Use hash of first 500 chars as dedup key
+          const cssKey = content.css.slice(0, 500);
+          if (!allCss.has(cssKey)) {
+            allCss.add(content.css);
+          }
+        }
+        
+        // Dedupe JS
+        if (content.javascript) {
+          const jsKey = content.javascript.slice(0, 500);
+          if (!allJs.has(jsKey)) {
+            allJs.add(content.javascript);
+          }
+        }
+      }
+      
+      // Rate limit
+      if (i < pagesToFetch.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    } catch (e) {
+      console.log(`[MultiPage] Error fetching ${pageUrl}:`, e);
+    }
+  }
+  
+  if (allHtml.length === 0) {
+    console.log('[MultiPage] No pages fetched successfully');
+    return null;
+  }
+  
+  const combinedHtml = allHtml.join('\n\n');
+  const combinedCss = Array.from(allCss).join('\n\n');
+  const combinedJs = Array.from(allJs).join('\n\n');
+  
+  console.log(`[MultiPage] Combined content from ${allHtml.length} pages: HTML=${combinedHtml.length}, CSS=${combinedCss.length}, JS=${combinedJs.length} bytes`);
+  
+  return {
+    html: combinedHtml,
+    css: combinedCss,
+    javascript: combinedJs,
+    url: baseUrl
+  };
+}
+
+/**
+ * Fetch published content from a single URL with error handling
  * 
  * Captures:
  * - Full HTML page

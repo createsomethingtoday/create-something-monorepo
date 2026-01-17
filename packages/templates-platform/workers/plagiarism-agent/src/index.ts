@@ -17,7 +17,14 @@ import {
   extractUrls, 
   analyzeVectorSimilarity,
   fetchPublishedContent,
-  type VectorSimilarity 
+  fetchAllTemplateContent,
+  discoverTemplatePages,
+  fetchAllPagesIndividually,
+  classifyPageType,
+  type VectorSimilarity,
+  type PageType,
+  type PageInfo,
+  type FetchedPageContent
 } from './vector-similarity';
 import {
   indexTemplate,
@@ -934,6 +941,336 @@ export default {
         const id1 = parts[2];
         const id2 = parts[3];
         return serveComparisonPage(id1, id2, env);
+      }
+    }
+
+    // ==========================================================================
+    // PAGE DISCOVERY: Show what pages are being scanned
+    // ==========================================================================
+    if (url.pathname === '/pages/discover' && request.method === 'POST') {
+      try {
+        const body = await request.json() as { url: string };
+        const pages = await discoverTemplatePages(body.url);
+        
+        // Classify each page
+        const classifiedPages = pages.map(pageUrl => classifyPageType(pageUrl));
+        
+        return new Response(JSON.stringify({
+          url: body.url,
+          pagesDiscovered: pages.length,
+          pages: classifiedPages,
+          pageTypeSummary: summarizePageTypes(classifiedPages),
+          note: 'These pages will be scanned when indexing this template'
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // ==========================================================================
+    // PAGE-LEVEL INDEXING: Index individual pages for granular comparison
+    // ==========================================================================
+    if (url.pathname === '/pages/index' && request.method === 'POST') {
+      try {
+        const body = await request.json() as { templateId: string; url: string; name?: string };
+        const { templateId, url: templateUrl, name } = body;
+        
+        console.log(`[PageIndex] Starting page-level indexing for ${templateId}...`);
+        
+        // Fetch pages individually with classifications (limit to 6 for CPU constraints)
+        const pages = await fetchAllPagesIndividually(templateUrl, 6);
+        
+        if (pages.length === 0) {
+          return new Response(JSON.stringify({ error: 'No pages could be fetched' }), { status: 400 });
+        }
+        
+        // Index each page
+        const indexedPages: Array<{
+          pageId: string;
+          path: string;
+          pageType: string;
+          shingles: number;
+        }> = [];
+        
+        for (const page of pages) {
+          const pageId = `${templateId}::${page.pageInfo.path.replace(/\//g, '-').replace(/^-|-$/g, '') || 'home'}`;
+          
+          // Compute MinHash for this specific page
+          const pageSig = computeCombinedMinHash(page.html, page.css, page.javascript);
+          
+          // Store in template_pages table
+          await env.DB.prepare(`
+            INSERT OR REPLACE INTO template_pages (
+              id, template_id, page_url, page_path, page_type, page_type_confidence,
+              page_signature, page_shingles, html_size_bytes, unique_classes,
+              structural_depth, indexed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            pageId,
+            templateId,
+            page.url,
+            page.pageInfo.path,
+            page.pageInfo.pageType,
+            page.pageInfo.confidence,
+            serializeSignatureCompact(pageSig),
+            pageSig.numShingles,
+            page.html.length,
+            countUniqueClasses(page.html, page.css),
+            estimateStructuralDepth(page.html),
+            Date.now()
+          ).run();
+          
+          // Store LSH bands for page-level similarity search (batch insert for efficiency)
+          const lshBands = computeLSHBandHashes(pageSig.signature);
+          
+          // Delete old bands first
+          await env.DB.prepare('DELETE FROM page_lsh_bands WHERE page_id = ?').bind(pageId).run();
+          
+          // Batch insert LSH bands (4 bands at a time to stay under limits)
+          for (let i = 0; i < lshBands.length; i += 4) {
+            const batch = lshBands.slice(i, i + 4);
+            const values = batch.map((_, idx) => `(?, ?, ?)`).join(', ');
+            const binds: any[] = [];
+            batch.forEach((hash, idx) => {
+              binds.push(`band_${i + idx}`, hash, pageId);
+            });
+            await env.DB.prepare(
+              `INSERT INTO page_lsh_bands (band_id, hash_value, page_id) VALUES ${values}`
+            ).bind(...binds).run();
+          }
+          
+          indexedPages.push({
+            pageId,
+            path: page.pageInfo.path,
+            pageType: page.pageInfo.pageType,
+            shingles: pageSig.numShingles
+          });
+          
+          console.log(`[PageIndex] Indexed ${pageId} (${page.pageInfo.pageType})`);
+        }
+        
+        return new Response(JSON.stringify({
+          templateId,
+          pagesIndexed: indexedPages.length,
+          pages: indexedPages,
+          pageTypeSummary: summarizePageTypes(pages.map(p => p.pageInfo))
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+      } catch (error: any) {
+        console.error('[PageIndex] Error:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // ==========================================================================
+    // PAGE-LEVEL COMPARISON: Compare specific pages across templates
+    // ==========================================================================
+    if (url.pathname === '/pages/compare' && request.method === 'POST') {
+      try {
+        const body = await request.json() as { 
+          template1: string; 
+          template2: string; 
+          pageType?: string;  // Optional: filter by page type
+        };
+        
+        const { template1, template2, pageType } = body;
+        
+        // Get pages for both templates
+        let query1 = 'SELECT * FROM template_pages WHERE template_id = ?';
+        let query2 = 'SELECT * FROM template_pages WHERE template_id = ?';
+        
+        if (pageType) {
+          query1 += ' AND page_type = ?';
+          query2 += ' AND page_type = ?';
+        }
+        
+        const [pages1Result, pages2Result] = await Promise.all([
+          pageType 
+            ? env.DB.prepare(query1).bind(template1, pageType).all()
+            : env.DB.prepare(query1).bind(template1).all(),
+          pageType
+            ? env.DB.prepare(query2).bind(template2, pageType).all()
+            : env.DB.prepare(query2).bind(template2).all()
+        ]);
+        
+        const pages1 = pages1Result.results || [];
+        const pages2 = pages2Result.results || [];
+        
+        if (pages1.length === 0 || pages2.length === 0) {
+          return new Response(JSON.stringify({ 
+            error: 'One or both templates have no indexed pages',
+            template1Pages: pages1.length,
+            template2Pages: pages2.length
+          }), { status: 400 });
+        }
+        
+        // Compare all page combinations
+        const comparisons: Array<{
+          page1: { id: string; path: string; type: string };
+          page2: { id: string; path: string; type: string };
+          similarity: number;
+          isMatch: boolean;
+        }> = [];
+        
+        for (const p1 of pages1 as any[]) {
+          const sig1 = deserializeSignatureCompact(p1.page_signature, p1.page_shingles, 'combined');
+          
+          for (const p2 of pages2 as any[]) {
+            const sig2 = deserializeSignatureCompact(p2.page_signature, p2.page_shingles, 'combined');
+            const simResult = estimateSimilarity(sig1, sig2);
+            
+            comparisons.push({
+              page1: { id: p1.id, path: p1.page_path, type: p1.page_type },
+              page2: { id: p2.id, path: p2.page_path, type: p2.page_type },
+              similarity: simResult.jaccardEstimate,
+              isMatch: simResult.jaccardEstimate >= 0.4
+            });
+          }
+        }
+        
+        // Sort by similarity (highest first)
+        comparisons.sort((a, b) => b.similarity - a.similarity);
+        
+        // Find best matches per page type
+        const bestMatchesByType: Record<string, {
+          page1Path: string;
+          page2Path: string;
+          similarity: number;
+        }> = {};
+        
+        for (const comp of comparisons) {
+          if (comp.page1.type === comp.page2.type) {
+            const type = comp.page1.type;
+            if (!bestMatchesByType[type] || comp.similarity > bestMatchesByType[type].similarity) {
+              bestMatchesByType[type] = {
+                page1Path: comp.page1.path,
+                page2Path: comp.page2.path,
+                similarity: comp.similarity
+              };
+            }
+          }
+        }
+        
+        // Calculate overall similarity as weighted average of same-type comparisons
+        const sameTypeComparisons = comparisons.filter(c => c.page1.type === c.page2.type);
+        const overallSimilarity = sameTypeComparisons.length > 0
+          ? sameTypeComparisons.reduce((sum, c) => sum + c.similarity, 0) / sameTypeComparisons.length
+          : 0;
+        
+        return new Response(JSON.stringify({
+          template1,
+          template2,
+          pageType: pageType || 'all',
+          overallSimilarity,
+          bestMatchesByType,
+          topMatches: comparisons.slice(0, 20),
+          suspiciousPages: comparisons.filter(c => c.similarity >= 0.5).slice(0, 10),
+          verdict: overallSimilarity >= 0.6 ? 'high_similarity' 
+                 : overallSimilarity >= 0.4 ? 'moderate_similarity' 
+                 : 'low_similarity'
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+      } catch (error: any) {
+        console.error('[PageCompare] Error:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Get pages for a specific template
+    if (url.pathname.match(/^\/pages\/template\/[^/]+$/) && request.method === 'GET') {
+      const templateId = url.pathname.split('/')[3];
+      try {
+        const pages = await env.DB.prepare(
+          'SELECT * FROM template_pages WHERE template_id = ? ORDER BY page_type, page_path'
+        ).bind(templateId).all();
+        
+        return new Response(JSON.stringify({
+          templateId,
+          pageCount: pages.results?.length || 0,
+          pages: pages.results || [],
+          pageTypeSummary: summarizePageTypesFromDb(pages.results as any[] || [])
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Find similar pages across all templates for a given page type
+    if (url.pathname === '/pages/similar-by-type' && request.method === 'POST') {
+      try {
+        const body = await request.json() as { pageType: string; limit?: number };
+        const { pageType, limit = 20 } = body;
+        
+        // Get all pages of this type
+        const pages = await env.DB.prepare(
+          'SELECT * FROM template_pages WHERE page_type = ? ORDER BY indexed_at DESC LIMIT 100'
+        ).bind(pageType).all();
+        
+        const pagesList = pages.results as any[] || [];
+        
+        if (pagesList.length < 2) {
+          return new Response(JSON.stringify({ 
+            pageType,
+            message: 'Not enough pages of this type for comparison',
+            pageCount: pagesList.length
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        
+        // Find similar pairs
+        const similarities: Array<{
+          page1: string;
+          template1: string;
+          page2: string;
+          template2: string;
+          similarity: number;
+        }> = [];
+        
+        for (let i = 0; i < Math.min(pagesList.length, 50); i++) {
+          const p1 = pagesList[i];
+          const sig1 = deserializeSignatureCompact(p1.page_signature, p1.page_shingles, 'combined');
+          
+          for (let j = i + 1; j < pagesList.length; j++) {
+            const p2 = pagesList[j];
+            
+            // Skip same template
+            if (p1.template_id === p2.template_id) continue;
+            
+            const sig2 = deserializeSignatureCompact(p2.page_signature, p2.page_shingles, 'combined');
+            const simResult = estimateSimilarity(sig1, sig2);
+            
+            if (simResult.jaccardEstimate >= 0.3) {
+              similarities.push({
+                page1: p1.id,
+                template1: p1.template_id,
+                page2: p2.id,
+                template2: p2.template_id,
+                similarity: simResult.jaccardEstimate
+              });
+            }
+          }
+        }
+        
+        // Sort by similarity
+        similarities.sort((a, b) => b.similarity - a.similarity);
+        
+        return new Response(JSON.stringify({
+          pageType,
+          totalPagesOfType: pagesList.length,
+          suspiciousPairs: similarities.slice(0, limit)
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
       }
     }
 
@@ -2590,8 +2927,9 @@ async function scanTemplateForPlagiarism(
       'combined'
     );
   } else {
-    // Fetch and compute fresh
-    const content = await fetchPublishedContent(templateUrl);
+    // Fetch and compute fresh - use multi-page scanning for comprehensive analysis
+    console.log(`[Scan] Template not indexed, fetching all pages for ${templateUrl}...`);
+    const content = await fetchAllTemplateContent(templateUrl, 8); // Scan up to 8 pages
     
     if (!content) {
       return {
@@ -2602,6 +2940,7 @@ async function scanTemplateForPlagiarism(
       };
     }
     
+    console.log(`[Scan] Multi-page content fetched: HTML=${content.html.length}, CSS=${content.css.length} bytes`);
     querySig = computeCombinedMinHash(content.html, content.css, content.javascript);
   }
   
@@ -2873,15 +3212,18 @@ async function generateDetailedComparison(
     throw new Error(`Template not found: ${!t1 ? ref1 : ref2}`);
   }
   
-  // Fetch fresh content for detailed analysis
+  // Fetch fresh content for detailed analysis - use multi-page for comprehensive comparison
+  console.log(`[Comparison] Fetching multi-page content for ${t1.url} and ${t2.url}...`);
   const [content1, content2] = await Promise.all([
-    fetchPublishedContent(t1.url as string),
-    fetchPublishedContent(t2.url as string)
+    fetchAllTemplateContent(t1.url as string, 5), // Limit to 5 pages for faster comparison
+    fetchAllTemplateContent(t2.url as string, 5)
   ]);
-  
+
   if (!content1 || !content2) {
     throw new Error('Could not fetch template content');
   }
+  
+  console.log(`[Comparison] Multi-page content fetched: T1=${content1.html.length}b, T2=${content2.html.length}b`);
   
   // Extract detailed patterns
   const classes1 = extractAllClasses(content1.css, content1.html);
@@ -3678,6 +4020,94 @@ function extractMatchingCodeExcerpts(
   return excerpts;
 }
 
+// =============================================================================
+// PAGE TYPE HELPERS
+// =============================================================================
+
+/**
+ * Summarize page types from an array of PageInfo objects
+ */
+function summarizePageTypes(pages: PageInfo[]): Record<string, number> {
+  const summary: Record<string, number> = {};
+  for (const page of pages) {
+    summary[page.pageType] = (summary[page.pageType] || 0) + 1;
+  }
+  return summary;
+}
+
+/**
+ * Summarize page types from database results
+ */
+function summarizePageTypesFromDb(pages: Array<{ page_type: string }>): Record<string, number> {
+  const summary: Record<string, number> = {};
+  for (const page of pages) {
+    summary[page.page_type] = (summary[page.page_type] || 0) + 1;
+  }
+  return summary;
+}
+
+/**
+ * Count unique CSS classes in HTML and CSS content
+ */
+function countUniqueClasses(html: string, css: string): number {
+  const classes = new Set<string>();
+  
+  // From CSS selectors
+  const cssMatches = css.match(/\.([a-zA-Z_][\w-]*)/g) || [];
+  for (const match of cssMatches) {
+    const cls = match.slice(1); // Remove the dot
+    if (!cls.startsWith('w-') && !cls.startsWith('wf-')) {
+      classes.add(cls);
+    }
+  }
+  
+  // From HTML class attributes
+  const htmlMatches = html.match(/class="([^"]+)"/g) || [];
+  for (const match of htmlMatches) {
+    const classList = match.replace(/class="|"/g, '').split(/\s+/);
+    for (const cls of classList) {
+      if (cls && !cls.startsWith('w-') && !cls.startsWith('wf-')) {
+        classes.add(cls);
+      }
+    }
+  }
+  
+  return classes.size;
+}
+
+/**
+ * Estimate the maximum structural depth of HTML
+ * Depth indicates complexity - shallower pages are simpler (landing pages)
+ * while deeper pages have more nested content (dashboards, complex layouts)
+ */
+function estimateStructuralDepth(html: string): number {
+  let maxDepth = 0;
+  let currentDepth = 0;
+  
+  // Simple tag matching - count opening and closing tags
+  const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
+  let match;
+  
+  while ((match = tagRegex.exec(html)) !== null) {
+    const isClosing = match[0].startsWith('</');
+    const tagName = match[1].toLowerCase();
+    
+    // Skip self-closing tags and non-structural tags
+    if (['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'].includes(tagName)) {
+      continue;
+    }
+    
+    if (isClosing) {
+      currentDepth = Math.max(0, currentDepth - 1);
+    } else {
+      currentDepth++;
+      maxDepth = Math.max(maxDepth, currentDepth);
+    }
+  }
+  
+  return maxDepth;
+}
+
 // Tufte-style comparison page
 function serveComparisonPage(id1: string, id2: string, env: Env): Response {
   // Inline SVG favicon as data URI
@@ -4111,6 +4541,116 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
       line-height: var(--leading-relaxed);
     }
     
+    /* Page-Level Comparison */
+    .page-level-comparison {
+      margin: var(--space-lg) 0;
+      padding: var(--space-md);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+    }
+    .page-level-comparison h2 {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      color: var(--color-fg-secondary);
+      margin-top: 0;
+    }
+    .page-type-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: var(--space-sm);
+      margin-top: var(--space-sm);
+    }
+    .page-type-match {
+      background: var(--color-bg-subtle);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm);
+    }
+    .page-type-match.suspicious {
+      border-color: var(--color-error);
+      background: var(--color-error-muted);
+    }
+    .page-type-match.moderate {
+      border-color: var(--color-warning);
+      background: var(--color-warning-muted);
+    }
+    .page-type-match.low {
+      border-color: var(--color-border-default);
+    }
+    .page-type-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-xs);
+    }
+    .page-type-name {
+      font-weight: 600;
+      color: var(--color-fg-primary);
+      font-size: var(--text-body-sm);
+    }
+    .page-type-sim {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: var(--text-body-sm);
+    }
+    .page-type-match.suspicious .page-type-sim { color: var(--color-error); }
+    .page-type-match.moderate .page-type-sim { color: var(--color-warning); }
+    .page-type-match.low .page-type-sim { color: var(--color-fg-muted); }
+    .page-type-paths {
+      font-size: var(--text-caption);
+      color: var(--color-fg-muted);
+    }
+    .page-type-paths code {
+      font-family: var(--font-mono);
+      background: var(--color-bg-surface);
+      padding: 0.1rem 0.3rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+    }
+    .suspicious-pages {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      margin-top: var(--space-sm);
+    }
+    .suspicious-page {
+      background: var(--color-error-muted);
+      border: 1px solid var(--color-error);
+      border-radius: var(--radius-md);
+      padding: var(--space-xs) var(--space-sm);
+    }
+    .sus-page-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xs);
+    }
+    .sus-sim {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--color-error);
+      font-size: var(--text-body-sm);
+    }
+    .sus-types {
+      font-size: var(--text-caption);
+      color: var(--color-fg-muted);
+    }
+    .sus-page-paths {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--text-caption);
+    }
+    .sus-page-paths code {
+      font-family: var(--font-mono);
+      background: var(--color-bg-surface);
+      padding: 0.1rem 0.3rem;
+      border-radius: var(--radius-sm);
+      color: var(--color-fg-primary);
+    }
+    
     .rule-header {
       display: flex;
       justify-content: space-between;
@@ -4366,6 +4906,7 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
     
     async function loadComparison() {
       try {
+        // Load main comparison data
         const res = await fetch('/compare', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4374,13 +4915,29 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
         
         if (!res.ok) throw new Error('Failed to load comparison');
         const data = await res.json();
-        renderComparison(data);
+        
+        // Also try to load page-level comparison data
+        let pageData = null;
+        try {
+          const pageRes = await fetch('/pages/compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ template1: '${id1}', template2: '${id2}' })
+          });
+          if (pageRes.ok) {
+            pageData = await pageRes.json();
+          }
+        } catch (pageErr) {
+          console.log('Page-level comparison not available:', pageErr);
+        }
+        
+        renderComparison(data, pageData);
       } catch (e) {
         document.getElementById('content').innerHTML = '<div class="loading">Error loading comparison: ' + e.message + '</div>';
       }
     }
     
-    function renderComparison(data) {
+    function renderComparison(data, pageData) {
       const simClass = data.overallSimilarity > 0.7 ? 'high' : data.overallSimilarity > 0.5 ? 'medium' : 'low';
       const simPercent = (data.overallSimilarity * 100).toFixed(0);
       
@@ -4533,6 +5090,72 @@ function serveComparisonPage(id1: string, id2: string, env: Env): Response {
               </div>
             </div>
           \`).join('')}
+        </div>
+        \` : ''}
+        
+        \${pageData && pageData.suspiciousPages && pageData.suspiciousPages.length > 0 ? \`
+        <div class="page-level-comparison">
+          <h2>
+            <i data-lucide="file-text"></i>
+            Page-Level Analysis
+          </h2>
+          <p style="color: var(--color-fg-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            Comparison of individual pages across templates. High similarity between same-type pages 
+            (e.g., About vs About) is strong evidence of copying.
+          </p>
+          
+          \${Object.keys(pageData.bestMatchesByType || {}).length > 0 ? \`
+          <div class="page-type-grid">
+            \${Object.entries(pageData.bestMatchesByType).map(([type, match]) => \`
+              <div class="page-type-match \${match.similarity >= 0.5 ? 'suspicious' : match.similarity >= 0.3 ? 'moderate' : 'low'}">
+                <div class="page-type-header">
+                  <span class="page-type-name">\${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                  <span class="page-type-sim">\${(match.similarity * 100).toFixed(0)}%</span>
+                </div>
+                <div class="page-type-paths">
+                  <code>\${match.page1Path}</code> ↔ <code>\${match.page2Path}</code>
+                </div>
+              </div>
+            \`).join('')}
+          </div>
+          \` : ''}
+          
+          \${pageData.suspiciousPages.length > 0 ? \`
+          <h3 style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--color-error);">
+            <i data-lucide="alert-triangle"></i>
+            Suspicious Page Matches
+          </h3>
+          <div class="suspicious-pages">
+            \${pageData.suspiciousPages.map(p => \`
+              <div class="suspicious-page">
+                <div class="sus-page-header">
+                  <span class="sus-sim">\${(p.similarity * 100).toFixed(0)}%</span>
+                  <span class="sus-types">\${p.page1.type} → \${p.page2.type}</span>
+                </div>
+                <div class="sus-page-paths">
+                  <code>\${p.page1.path}</code>
+                  <span style="color: var(--color-fg-muted);">vs</span>
+                  <code>\${p.page2.path}</code>
+                </div>
+              </div>
+            \`).join('')}
+          </div>
+          \` : ''}
+          
+          <p style="color: var(--color-fg-muted); font-size: 0.75rem; margin-top: 1rem;">
+            Overall page similarity: <strong>\${(pageData.overallSimilarity * 100).toFixed(0)}%</strong> 
+            • Verdict: <span style="color: \${pageData.verdict === 'high_similarity' ? 'var(--color-error)' : pageData.verdict === 'moderate_similarity' ? 'var(--color-warning)' : 'var(--color-success)'}">\${pageData.verdict.replace('_', ' ')}</span>
+          </p>
+        </div>
+        \` : pageData ? \`
+        <div class="page-level-comparison" style="opacity: 0.6;">
+          <h2>
+            <i data-lucide="file-text"></i>
+            Page-Level Analysis
+          </h2>
+          <p style="color: var(--color-fg-muted);">
+            No suspicious page matches found. Pages appear structurally different.
+          </p>
         </div>
         \` : ''}
         

@@ -1,0 +1,21 @@
+{
+  "name": "@create-something/search",
+  "version": "0.1.0",
+  "description": "Unified search across CREATE SOMETHING properties - the full story, at your fingertips",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "types": "wrangler types",
+    "index": "tsx src/cli/index-content.ts",
+    "index:incremental": "tsx src/cli/index-content.ts --incremental"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251128.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.51.0",
+    "tsx": "^4.19.2"
+  }
+}

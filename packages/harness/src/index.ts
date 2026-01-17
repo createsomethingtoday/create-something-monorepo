@@ -332,3 +332,23 @@ export {
   runCustomGate,
   attemptCustomAutoFix,
 } from './self-heal.js';
+
+// Runtime Configuration (Gas Town v0.2.2+ multi-provider support)
+export type {
+  RuntimeProvider,
+  PromptMode,
+  RuntimeConfig,
+  AgentPreset,
+  SettingsConfig,
+} from './runtime-config.js';
+
+export {
+  BUILT_IN_PRESETS,
+  DEFAULT_RUNTIME_CONFIG,
+  DEFAULT_SETTINGS_CONFIG,
+  loadRuntimeConfig,
+  saveRuntimeConfig,
+  resolveAgent,
+  buildRuntimeCommand,
+  formatRuntime,
+} from './runtime-config.js';

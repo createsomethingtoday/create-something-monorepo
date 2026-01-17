@@ -9,6 +9,7 @@
 import OpenAI from 'openai';
 import {
   fetchPublishedContent,
+  fetchAllTemplateContent,
   extractCodeFeatures,
   type FetchedContent,
   type CodeFeatures
@@ -86,19 +87,23 @@ export async function indexTemplate(
   templateId: string,
   templateUrl: string,
   metadata: TemplateMetadata,
-  env: Env
+  env: Env,
+  multiPage = true // Default to multi-page scanning
 ): Promise<boolean> {
   console.log(`[Indexer] Indexing ${templateId}: ${metadata.name}...`);
 
   try {
-    // 1. Fetch content
-    const content = await fetchPublishedContent(templateUrl);
+    // 1. Fetch content (multi-page or single-page)
+    const content = multiPage 
+      ? await fetchAllTemplateContent(templateUrl, 10) // Scan up to 10 pages
+      : await fetchPublishedContent(templateUrl);
+      
     if (!content) {
       console.log(`[Indexer] Failed to fetch content for ${templateId}`);
       return false;
     }
 
-    console.log(`[Indexer] Content fetched for ${templateId}`);
+    console.log(`[Indexer] Content fetched for ${templateId} (multiPage=${multiPage})`);
 
     // 2. Extract features
     const features = extractCodeFeatures(content);
