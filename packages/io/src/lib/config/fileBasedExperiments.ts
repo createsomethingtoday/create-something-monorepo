@@ -629,6 +629,50 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ╚═══════════════════════════════════════════════════════════════════════════╝
 `
 	},
+	{
+		id: 'file-canvas-interactivity',
+		slug: 'canvas-interactivity',
+		title: 'Canvas Interactivity: High-Performance Interactive Components',
+		description: 'Four canvas-based interactive components demonstrating SvelteKit\'s advantages for rich UI: force-directed graphs, timeline editors, real-time charts, and exportable diagrams.',
+		excerpt_short: 'Canvas-based components for graphs, timelines, charts, and diagrams',
+		excerpt_long: 'This experiment showcases four high-performance canvas-based components built for SvelteKit: (1) KnowledgeGraphCanvas using Barnes-Hut approximation for O(n log n) force simulation, (2) TimelineEditor for keyframe animation editing, (3) RealtimeChart for live data visualization, and (4) CanvasDiagram with PNG/SVG export capabilities.',
+		category: 'research',
+		tags: ['Canvas', 'Data Viz', 'Interactive', 'Performance', 'SvelteKit'],
+		created_at: '2026-01-16T00:00:00Z',
+		updated_at: '2026-01-16T00:00:00Z',
+		reading_time_minutes: 8,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'rams-principle-2', // Useful—direct manipulation for complex data
+			'rams-principle-4', // Understandable—visual metaphors for abstract concepts
+			'heidegger-zuhandenheit', // Tools recede, data emerges
+			'tufte-data-ink-ratio' // Maximum data, minimum chrome
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║   CANVAS INTERACTIVITY                                                    ║
+    ║                                                                           ║
+    ║   ┌─────────────────────┐  ┌─────────────────────┐                        ║
+    ║   │  KNOWLEDGE GRAPH    │  │  TIMELINE EDITOR    │                        ║
+    ║   │      ○───○          │  │  ├──●──────●────●── │                        ║
+    ║   │     /│\\  │          │  │  ├──●────●──────── │                        ║
+    ║   │    ○─○─○ ○          │  │  └──●──●────────●── │                        ║
+    ║   │   O(n log n)        │  │  ▼ scrub, edit      │                        ║
+    ║   └─────────────────────┘  └─────────────────────┘                        ║
+    ║                                                                           ║
+    ║   ┌─────────────────────┐  ┌─────────────────────┐                        ║
+    ║   │  REALTIME CHART     │  │  CANVAS DIAGRAM     │                        ║
+    ║   │      ╱╲             │  │   ┌───┐    ◯       │                        ║
+    ║   │  ╱╲╱  ╲╱╲           │  │   │   │───▶        │                        ║
+    ║   │ ─────────────       │  │   └───┘    ◇       │                        ║
+    ║   │  live streaming     │  │  export PNG/SVG    │                        ║
+    ║   └─────────────────────┘  └─────────────────────┘                        ║
+    ║                                                                           ║
+    ║   "Canvas renders directly to pixels, bypassing DOM overhead."            ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+`
+	},
 ];
 
 /**

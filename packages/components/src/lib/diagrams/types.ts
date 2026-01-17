@@ -129,3 +129,124 @@ export interface ExportOptions {
   scale?: number;
   filename?: string;
 }
+
+// ============================================
+// Knowledge Graph (Canvas-based)
+// ============================================
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  type?: 'concept' | 'entity' | 'relation' | 'document';
+  weight?: number;
+  x?: number;
+  y?: number;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  weight?: number;
+  type?: 'dependency' | 'reference' | 'contains' | 'related';
+}
+
+export interface KnowledgeGraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+// ============================================
+// Canvas Diagram (Interactive)
+// ============================================
+
+export type ShapeType = 'rect' | 'circle' | 'line' | 'arrow' | 'text' | 'path' | 'image';
+
+export interface BaseShape {
+  id: string;
+  type: ShapeType;
+  x: number;
+  y: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  rotation?: number;
+  selectable?: boolean;
+  draggable?: boolean;
+}
+
+export interface RectShape extends BaseShape {
+  type: 'rect';
+  width: number;
+  height: number;
+  cornerRadius?: number;
+}
+
+export interface CircleShape extends BaseShape {
+  type: 'circle';
+  radius: number;
+}
+
+export interface LineShape extends BaseShape {
+  type: 'line';
+  x2: number;
+  y2: number;
+  dash?: number[];
+}
+
+export interface ArrowShape extends BaseShape {
+  type: 'arrow';
+  x2: number;
+  y2: number;
+  headSize?: number;
+}
+
+export interface TextShape extends BaseShape {
+  type: 'text';
+  text: string;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string;
+  textAlign?: CanvasTextAlign;
+}
+
+export interface PathShape extends BaseShape {
+  type: 'path';
+  path: string;
+}
+
+export interface ImageShape extends BaseShape {
+  type: 'image';
+  src: string;
+  width: number;
+  height: number;
+}
+
+export type DiagramShape =
+  | RectShape
+  | CircleShape
+  | LineShape
+  | ArrowShape
+  | TextShape
+  | PathShape
+  | ImageShape;
+
+// ============================================
+// Timeline Editor (Animation)
+// ============================================
+
+export interface Keyframe {
+  id: string;
+  frame: number;
+  value: number;
+  easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'spring';
+}
+
+export interface AnimationTrack {
+  id: string;
+  name: string;
+  type: 'position' | 'opacity' | 'scale' | 'rotation' | 'custom';
+  keyframes: Keyframe[];
+  color?: string;
+  collapsed?: boolean;
+}
