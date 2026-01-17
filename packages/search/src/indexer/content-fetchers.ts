@@ -207,111 +207,45 @@ function extractConceptsFromText(text: string): string[] {
 // LTD CONTENT (.ltd)
 // =============================================================================
 
+// LTD uses D1 with masters, principles tables
+// Schema: packages/ltd/migrations/0001_create_ltd_tables.sql
+
 interface LTDPrinciple {
   id: string;
-  name: string;
-  slug: string;
+  title: string;  // Note: column is 'title' not 'name'
   description: string | null;
-  content: string | null;
-  master_id: string | null;
-  updated_at: string;
-}
-
-interface LTDPattern {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  content: string | null;
-  updated_at: string;
+  master_id: string;
+  category: string | null;
+  order_index: number | null;
+  created_at: number;
 }
 
 interface LTDMaster {
   id: string;
-  name: string;
   slug: string;
-  bio: string | null;
-  philosophy: string | null;
-  updated_at: string;
+  name: string;
+  tagline: string | null;
+  discipline: string | null;
+  biography: string | null;
+  legacy: string | null;
+  updated_at: number;
 }
 
 export async function fetchLTDContent(db: D1Database): Promise<IndexableContent[]> {
   const results: IndexableContent[] = [];
 
-  // Fetch principles
-  try {
-    const principles = await db
-      .prepare(`
-        SELECT id, name, slug, description, content, master_id, updated_at
-        FROM principles
-        WHERE published = 1 OR published IS NULL
-      `)
-      .all<LTDPrinciple>();
-
-    for (const principle of principles.results || []) {
-      const description = principle.description || '';
-      const content = principle.content || description;
-
-      results.push({
-        id: `ltd:principle:${principle.slug}`,
-        title: principle.name,
-        description: description.slice(0, 300),
-        content: content.slice(0, 5000),
-        property: 'ltd',
-        type: 'principle',
-        path: `/principles/${principle.slug}`,
-        concepts: [],
-        hash: hashContent(content),
-        lastModified: principle.updated_at,
-      });
-    }
-  } catch (e) {
-    console.log('Could not fetch LTD principles (table may not exist)');
-  }
-
-  // Fetch patterns
-  try {
-    const patterns = await db
-      .prepare(`
-        SELECT id, name, slug, description, content, updated_at
-        FROM patterns
-        WHERE published = 1 OR published IS NULL
-      `)
-      .all<LTDPattern>();
-
-    for (const pattern of patterns.results || []) {
-      const description = pattern.description || '';
-      const content = pattern.content || description;
-
-      results.push({
-        id: `ltd:pattern:${pattern.slug}`,
-        title: pattern.name,
-        description: description.slice(0, 300),
-        content: content.slice(0, 5000),
-        property: 'ltd',
-        type: 'pattern',
-        path: `/patterns/${pattern.slug}`,
-        concepts: [],
-        hash: hashContent(content),
-        lastModified: pattern.updated_at,
-      });
-    }
-  } catch (e) {
-    console.log('Could not fetch LTD patterns (table may not exist)');
-  }
-
-  // Fetch masters
+  // Fetch masters with their principles
   try {
     const masters = await db
       .prepare(`
-        SELECT id, name, slug, bio, philosophy, updated_at
+        SELECT id, slug, name, tagline, discipline, biography, legacy, updated_at
         FROM masters
       `)
       .all<LTDMaster>();
 
     for (const master of masters.results || []) {
-      const description = master.bio || '';
-      const content = `${master.bio || ''}\n\n${master.philosophy || ''}`;
+      const description = master.tagline || master.biography?.slice(0, 200) || '';
+      const content = `${master.name}. ${master.tagline || ''}. ${master.discipline || ''}. ${master.biography || ''} ${master.legacy || ''}`;
 
       results.push({
         id: `ltd:master:${master.slug}`,
@@ -321,13 +255,53 @@ export async function fetchLTDContent(db: D1Database): Promise<IndexableContent[
         property: 'ltd',
         type: 'master',
         path: `/masters/${master.slug}`,
-        concepts: [],
+        concepts: [master.name], // Master name is a concept
         hash: hashContent(content),
-        lastModified: master.updated_at,
+        lastModified: master.updated_at?.toString() || new Date().toISOString(),
       });
     }
+    
+    console.log(`Fetched ${masters.results?.length || 0} LTD masters`);
   } catch (e) {
-    console.log('Could not fetch LTD masters (table may not exist)');
+    console.log('Could not fetch LTD masters:', e);
+  }
+
+  // Fetch principles with master info
+  try {
+    const principles = await db
+      .prepare(`
+        SELECT p.id, p.title, p.description, p.category, p.master_id, p.created_at,
+               m.name as master_name, m.slug as master_slug
+        FROM principles p
+        JOIN masters m ON p.master_id = m.id
+        ORDER BY m.name, p.order_index
+      `)
+      .all<LTDPrinciple & { master_name: string; master_slug: string }>();
+
+    for (const principle of principles.results || []) {
+      const description = principle.description || '';
+      const content = `${principle.title}. ${description}. By ${principle.master_name}.`;
+
+      // Generate slug from title if not available
+      const slug = principle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      results.push({
+        id: `ltd:principle:${slug}`,
+        title: principle.title,
+        description: description.slice(0, 300),
+        content: content.slice(0, 5000),
+        property: 'ltd',
+        type: 'principle',
+        path: `/masters/${principle.master_slug}#${slug}`, // Principles are on master pages
+        concepts: [principle.master_name, principle.title],
+        hash: hashContent(content),
+        lastModified: principle.created_at?.toString() || new Date().toISOString(),
+      });
+    }
+    
+    console.log(`Fetched ${principles.results?.length || 0} LTD principles`);
+  } catch (e) {
+    console.log('Could not fetch LTD principles:', e);
   }
 
   return results;
