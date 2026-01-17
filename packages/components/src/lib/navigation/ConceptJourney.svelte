@@ -377,7 +377,7 @@
 		height: 40px;
 		border: 3px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
 		border-top-color: var(--color-accent, #3b82f6);
-		border-radius: 50%;
+		border-radius: var(--radius-full, 50%);
 		margin: 0 auto var(--space-md, 1.618rem);
 		animation: spin 1s linear infinite;
 	}
@@ -397,7 +397,7 @@
 		margin-top: var(--space-md, 1.618rem);
 		padding: var(--space-sm, 1rem) var(--space-md, 1.618rem);
 		background: var(--color-accent, #3b82f6);
-		color: #fff;
+		color: var(--color-fg-on-accent, #fff);
 		border: none;
 		border-radius: var(--radius-md, 8px);
 		cursor: pointer;
@@ -442,8 +442,8 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--color-accent, #3b82f6);
-		color: #fff;
-		border-radius: 50%;
+		color: var(--color-fg-on-accent, #fff);
+		border-radius: var(--radius-full, 50%);
 		font-size: var(--text-body-sm, 0.875rem);
 		font-weight: 600;
 	}
@@ -582,12 +582,12 @@
 		justify-content: center;
 		margin: 0 auto var(--space-md, 1.618rem);
 		background: linear-gradient(135deg, var(--color-accent, #3b82f6), var(--color-accent-secondary, #8b5cf6));
-		border-radius: 50%;
+		border-radius: var(--radius-full, 50%);
 	}
 
 	.circle-icon {
 		font-size: var(--text-heading-md, 1.618rem);
-		color: #fff;
+		color: var(--color-fg-on-accent, #fff);
 	}
 
 	.footer-text {

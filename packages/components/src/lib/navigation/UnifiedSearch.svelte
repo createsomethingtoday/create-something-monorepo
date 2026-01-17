@@ -729,7 +729,7 @@
 	}
 
 	.palette-hint kbd {
-		font-size: 10px;
+		font-size: var(--text-caption-xs, 0.625rem);
 		padding: 2px 6px;
 		background: var(--color-bg-elevated, #0a0a0a);
 		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));

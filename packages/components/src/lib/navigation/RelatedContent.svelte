@@ -275,7 +275,7 @@
 	.loading-dot {
 		width: 8px;
 		height: 8px;
-		border-radius: 50%;
+		border-radius: var(--radius-full, 50%);
 		background: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
 		animation: pulse 1.4s infinite ease-in-out;
 	}
