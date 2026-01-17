@@ -7,6 +7,9 @@ import { declareComponent } from '@webflow/react';
 import { props } from '@webflow/data-types';
 import { BundleScannerApp } from './BundleScannerApp';
 
+// Import styles directly for Shadow DOM
+import './globals.css';
+
 export default declareComponent(BundleScannerApp, {
   name: 'Bundle Scanner',
   description: 'Webflow Marketplace bundle security scanner. Upload ZIP files to scan for security issues, policy violations, and get AI-powered analysis.',
