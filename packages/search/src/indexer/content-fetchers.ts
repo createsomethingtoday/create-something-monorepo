@@ -337,87 +337,106 @@ export async function fetchLTDContent(db: D1Database): Promise<IndexableContent[
 // AGENCY CONTENT (.agency)
 // =============================================================================
 
-interface AgencyService {
-  id: string;
-  name: string;
+// Agency Manifest types
+interface AgencyContentItem {
   slug: string;
-  description: string | null;
-  content: string | null;
-  updated_at: string;
-}
-
-interface AgencyCaseStudy {
-  id: string;
   title: string;
-  slug: string;
-  excerpt: string | null;
-  content: string | null;
-  updated_at: string;
+  description: string;
+  category?: string;
 }
 
-export async function fetchAgencyContent(db: D1Database): Promise<IndexableContent[]> {
-  const results: IndexableContent[] = [];
+interface AgencyManifest {
+  property: string;
+  services: AgencyContentItem[];
+  work: AgencyContentItem[];
+  generated: string;
+}
 
-  // Fetch services
-  try {
-    const services = await db
-      .prepare(`
-        SELECT id, name, slug, description, content, updated_at
-        FROM services
-        WHERE published = 1 OR published IS NULL
-      `)
-      .all<AgencyService>();
+// Cache for the Agency manifest (refreshed each indexing run)
+let cachedAgencyManifest: AgencyManifest | null = null;
 
-    for (const service of services.results || []) {
-      const description = service.description || '';
-      const content = service.content || description;
-
-      results.push({
-        id: `agency:service:${service.slug}`,
-        title: service.name,
-        description: description.slice(0, 300),
-        content: content.slice(0, 5000),
-        property: 'agency',
-        type: 'service',
-        path: `/services/${service.slug}`,
-        concepts: [],
-        hash: hashContent(content),
-        lastModified: service.updated_at,
-      });
-    }
-  } catch (e) {
-    console.log('Could not fetch Agency services (table may not exist)');
+/**
+ * Fetch the content manifest from agency
+ * Agency services are static data, work/case studies are markdown files
+ */
+async function fetchAgencyManifest(): Promise<AgencyManifest | null> {
+  if (cachedAgencyManifest) {
+    return cachedAgencyManifest;
   }
 
-  // Fetch case studies
   try {
-    const caseStudies = await db
-      .prepare(`
-        SELECT id, title, slug, excerpt, content, updated_at
-        FROM case_studies
-        WHERE published = 1 OR published IS NULL
-      `)
-      .all<AgencyCaseStudy>();
-
-    for (const cs of caseStudies.results || []) {
-      const description = cs.excerpt || '';
-      const content = cs.content || description;
-
-      results.push({
-        id: `agency:case-study:${cs.slug}`,
-        title: cs.title,
-        description: description.slice(0, 300),
-        content: content.slice(0, 5000),
-        property: 'agency',
-        type: 'case-study',
-        path: `/work/${cs.slug}`,
-        concepts: [],
-        hash: hashContent(content),
-        lastModified: cs.updated_at,
-      });
+    const response = await fetch('https://createsomething.agency/api/manifest');
+    if (!response.ok) {
+      console.warn(`Failed to fetch Agency manifest: ${response.status}`);
+      return null;
     }
-  } catch (e) {
-    console.log('Could not fetch Agency case studies (table may not exist)');
+
+    cachedAgencyManifest = await response.json();
+    console.log(`Agency manifest loaded: ${cachedAgencyManifest!.services.length} services, ${cachedAgencyManifest!.work.length} case studies`);
+    return cachedAgencyManifest;
+  } catch (error) {
+    console.error('Error fetching Agency manifest:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear the Agency manifest cache (call at start of indexing)
+ */
+export function clearAgencyManifestCache(): void {
+  cachedAgencyManifest = null;
+}
+
+/**
+ * Fetch Agency content from the manifest (NOT from D1)
+ * 
+ * Agency services are static TypeScript data.
+ * Work/case studies are markdown files.
+ * The manifest provides rich metadata for indexing.
+ */
+export async function fetchAgencyContent(_db: D1Database): Promise<IndexableContent[]> {
+  const results: IndexableContent[] = [];
+  const manifest = await fetchAgencyManifest();
+
+  if (!manifest) {
+    console.warn('Could not fetch Agency manifest - skipping Agency content');
+    return results;
+  }
+
+  // Index services from manifest
+  for (const service of manifest.services) {
+    const content = `${service.title}. ${service.description}`;
+    
+    results.push({
+      id: `agency:service:${service.slug}`,
+      title: service.title,
+      description: service.description,
+      content,
+      property: 'agency',
+      type: 'service',
+      path: `/services#${service.slug}`, // Services are on one page with anchors
+      concepts: extractConceptsFromText(content),
+      hash: hashContent(service.slug + service.title),
+      lastModified: manifest.generated,
+    });
+  }
+
+  // Index case studies from manifest
+  for (const work of manifest.work) {
+    const content = `${work.title}. ${work.description}`;
+    
+    results.push({
+      id: `agency:case-study:${work.slug}`,
+      title: work.title,
+      description: work.description,
+      content,
+      property: 'agency',
+      type: 'case-study',
+      path: `/work/${work.slug}`,
+      concepts: extractConceptsFromText(content),
+      hash: hashContent(work.slug + work.title),
+      lastModified: manifest.generated,
+    });
   }
 
   return results;

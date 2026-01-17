@@ -6,7 +6,7 @@
  */
 
 import type { Env, IndexableContent, VectorMetadata } from '../types';
-import { fetchAllContent, clearIOManifestCache } from './content-fetchers';
+import { fetchAllContent, clearIOManifestCache, clearAgencyManifestCache } from './content-fetchers';
 import { enrichWithConcepts } from './concept-enrichment';
 
 // =============================================================================
@@ -211,6 +211,7 @@ export async function indexAllContent(env: Env): Promise<IndexResult> {
 
   // Clear manifest caches to ensure fresh data
   clearIOManifestCache();
+  clearAgencyManifestCache();
 
   // 1. Fetch content from all properties (includes manifest fetch for io)
   console.log('Fetching content from all properties...');
