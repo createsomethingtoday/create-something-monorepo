@@ -148,11 +148,60 @@ Based on this analysis, provide your assessment in the following JSON format:
       throw new Error('No response text from Gemini');
     }
 
-    // Parse the JSON response
-    const result = JSON.parse(text) as AiAnalysisResult;
+    // Parse the JSON response with cleanup
+    const result = parseAiResponse(text);
     return result;
   } catch (error) {
     console.error('AI analysis error:', error);
     throw error;
+  }
+}
+
+/**
+ * Safely parse AI response JSON with cleanup
+ */
+function parseAiResponse(text: string): AiAnalysisResult {
+  let jsonText = text.trim();
+  
+  // Remove markdown code blocks if present
+  if (jsonText.startsWith('```json')) {
+    jsonText = jsonText.slice(7);
+  } else if (jsonText.startsWith('```')) {
+    jsonText = jsonText.slice(3);
+  }
+  if (jsonText.endsWith('```')) {
+    jsonText = jsonText.slice(0, -3);
+  }
+  jsonText = jsonText.trim();
+  
+  // Try parsing directly first
+  try {
+    return JSON.parse(jsonText) as AiAnalysisResult;
+  } catch (firstError) {
+    // Try to fix common JSON issues
+    let fixedJson = jsonText
+      // Remove trailing commas before } or ]
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      // Fix unquoted property names (common LLM mistake)
+      .replace(/(\{|\,)\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
+      // Remove control characters
+      .replace(/[\x00-\x1F\x7F]/g, ' ');
+    
+    try {
+      return JSON.parse(fixedJson) as AiAnalysisResult;
+    } catch (secondError) {
+      // Return a fallback response with the error info
+      console.error('Failed to parse AI response:', text.substring(0, 500));
+      return {
+        missedRisks: [],
+        suggestedRuleAdditions: [],
+        suggestedNoiseReductions: [],
+        questionsForReviewer: [
+          `AI response parsing failed. Raw response started with: "${text.substring(0, 200)}..."`
+        ],
+        reviewStatusRecommendation: 'MANUAL_REVIEW_REQUIRED'
+      };
+    }
   }
 }
