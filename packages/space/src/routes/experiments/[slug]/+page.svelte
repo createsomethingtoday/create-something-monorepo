@@ -5,6 +5,7 @@
 	import ExperimentCodeEditor from '$lib/components/ExperimentCodeEditor.svelte';
 	import RelatedPapersCard from '$lib/components/RelatedPapersCard.svelte';
 	import { RelatedArticles, PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { RelatedContent } from '@create-something/components/navigation';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
 	import { isExecutable, isCodeExperiment } from '$lib/types/paper';
@@ -182,8 +183,18 @@ ${paper.content || ''}
 		<RelatedPapersCard experimentSlug={paper.slug} />
 	</div>
 
-	<!-- Related Articles -->
+	<!-- Related Articles (same property) -->
 	<RelatedArticles papers={relatedPapers} currentPaperId={paper.id} />
+
+	<!-- Cross-Property Related Content -->
+	<div class="w-full max-w-5xl mx-auto px-6 py-8">
+		<RelatedContent 
+			contentId={`space:experiment:${paper.slug}`}
+			excludeCurrentProperty={true}
+			currentProperty="space"
+			maxItems={6}
+		/>
+	</div>
 
 	<!-- Next Experiment Card (after completion) -->
 	{#if isCompleted && nextPaper}

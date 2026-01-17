@@ -37,6 +37,17 @@
 		{ label: 'About', href: '/about' }
 	];
 
+	// Quick access items for unified search
+	const quickAccessItems = [
+		{ id: 'nav-services', label: 'Services', description: 'Professional AI-native development', href: '/services', icon: '🔨', keywords: ['hire', 'consulting', 'build'] },
+		{ id: 'nav-products', label: 'Products', description: 'Ready-to-use solutions', href: '/products', icon: '📦', keywords: ['buy', 'solutions', 'tools'] },
+		{ id: 'nav-work', label: 'Our Work', description: 'Case studies and portfolio', href: '/work', icon: '💼', keywords: ['portfolio', 'examples', 'clients'] },
+		{ id: 'nav-contact', label: 'Get Started', description: 'Start your project', href: '/contact', icon: '✉️', keywords: ['contact', 'hire', 'start'] },
+		{ id: 'nav-space', label: 'Go to .space', description: 'Interactive experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
+		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and analysis', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
+		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Canon principles and patterns', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
+	];
+
 	// Handle hash scrolling
 	function scrollToHash(hash: string) {
 		if (!hash) return;
@@ -84,7 +95,7 @@
 <SkipToContent />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="agency" />
+<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} />
 
 <div class="layout-root min-h-screen">
 	<Navigation

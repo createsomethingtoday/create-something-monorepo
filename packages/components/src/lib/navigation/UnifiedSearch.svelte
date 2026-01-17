@@ -97,6 +97,8 @@
 		onselect?: (item: CommandItem) => void;
 		/** Called when palette should close */
 		onclose?: () => void;
+		/** Enable analytics tracking */
+		enableAnalytics?: boolean;
 	}
 
 	let {
@@ -106,8 +108,27 @@
 		placeholder = 'Search across all properties...',
 		currentProperty,
 		onselect,
-		onclose
+		onclose,
+		enableAnalytics = true
 	}: Props = $props();
+
+	// =============================================================================
+	// ANALYTICS
+	// =============================================================================
+
+	function trackEvent(eventName: string, data: Record<string, unknown>) {
+		if (!enableAnalytics || typeof window === 'undefined') return;
+		
+		// Dispatch custom event for analytics listeners
+		window.dispatchEvent(new CustomEvent('cs:search', {
+			detail: {
+				event: eventName,
+				property: currentProperty,
+				timestamp: Date.now(),
+				...data
+			}
+		}));
+	}
 
 	// =============================================================================
 	// STATE
@@ -222,6 +243,13 @@
 
 			const data: SearchResponse = await response.json();
 			apiResults = data.results;
+			
+			// Track search performed
+			trackEvent('search_performed', {
+				query: searchQuery,
+				resultCount: data.results.length,
+				took: data.took
+			});
 		} catch (e) {
 			console.error('Search error:', e);
 			error = 'Search unavailable';
@@ -260,6 +288,17 @@
 	}
 
 	function selectItem(item: CommandItem) {
+		// Track selection
+		trackEvent('search_result_selected', {
+			itemId: item.id,
+			itemLabel: item.label,
+			itemProperty: item.property,
+			itemType: item.type,
+			itemHref: item.href,
+			query: query,
+			resultIndex: allItems().findIndex(i => i.id === item.id)
+		});
+
 		onselect?.(item);
 
 		if (item.href && typeof window !== 'undefined') {
@@ -275,6 +314,9 @@
 		// Open with Cmd/Ctrl + K
 		if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
 			event.preventDefault();
+			if (!open) {
+				trackEvent('search_opened', { trigger: 'keyboard' });
+			}
 			open = !open;
 			return;
 		}

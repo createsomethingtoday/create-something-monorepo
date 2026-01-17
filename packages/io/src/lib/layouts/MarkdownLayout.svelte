@@ -7,6 +7,7 @@
 	 */
 	import { page } from '$app/stores';
 	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { RelatedContent } from '@create-something/components/navigation';
 	import type { PaperFrontmatter } from '@create-something/components/utils';
 
 	// Frontmatter comes from MDsveX as props
@@ -42,6 +43,9 @@
 
 	// Full URL for this page
 	const fullUrl = $derived(`https://createsomething.io${$page.url.pathname}`);
+	
+	// Extract slug from URL for RelatedContent
+	const slug = $derived($page.url.pathname.split('/').filter(Boolean).pop() || '');
 
 	// Extract full content for PageActions
 	// Note: This will include the rendered markdown content
@@ -110,6 +114,18 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 	<article class="paper-content prose">
 		{@render children?.()}
 	</article>
+
+	<!-- Cross-Property Related Content -->
+	{#if slug}
+		<div class="related-content-section">
+			<RelatedContent 
+				contentId={`io:paper:${slug}`}
+				excludeCurrentProperty={true}
+				currentProperty="io"
+				maxItems={6}
+			/>
+		</div>
+	{/if}
 </div>
 
 <MarkdownPreviewModal bind:open={showMarkdownPreview} content={markdownContent} {title} />
@@ -257,5 +273,11 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 	:global(.prose th) {
 		background: var(--color-bg-subtle);
 		font-weight: 600;
+	}
+
+	.related-content-section {
+		margin-top: var(--space-2xl);
+		padding-top: var(--space-xl);
+		border-top: 1px solid var(--color-border-default);
 	}
 </style>

@@ -39,6 +39,16 @@
 		{ label: 'About', href: '/about' }
 	];
 
+	// Quick access items for unified search
+	const quickAccessItems = [
+		{ id: 'nav-experiments', label: 'Experiments', description: 'Browse interactive experiments', href: '/experiments', icon: '🧪', keywords: ['explore', 'try', 'learn'] },
+		{ id: 'nav-praxis', label: 'Praxis', description: 'Applied methodology', href: '/praxis', icon: '⚡', keywords: ['practice', 'apply'] },
+		{ id: 'nav-methodology', label: 'Methodology', description: 'How we build and learn', href: '/methodology', icon: '📐', keywords: ['process', 'approach'] },
+		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and analysis', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
+		{ id: 'nav-agency', label: 'Go to .agency', description: 'Professional services', href: 'https://createsomething.agency', icon: '🔨', keywords: ['services', 'hire', 'work'] },
+		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Canon principles and patterns', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
+	];
+
 	// Handle hash scrolling
 	function scrollToHash(hash: string) {
 		if (!hash) return;
@@ -81,7 +91,7 @@
 <SkipToContent />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="space" />
+<UnifiedSearch currentProperty="space" localItems={quickAccessItems} />
 
 <div class="layout">
 	<Navigation

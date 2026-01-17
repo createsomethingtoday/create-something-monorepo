@@ -60,6 +60,18 @@
 		{ label: 'Ethos', href: '/ethos' }
 	];
 
+	// Quick access items for unified search
+	const quickAccessItems = [
+		{ id: 'nav-canon', label: 'Canon', description: 'The philosophical foundation', href: '/canon', icon: '📜', keywords: ['philosophy', 'foundation', 'truth'] },
+		{ id: 'nav-masters', label: 'Masters', description: 'Learn from the masters', href: '/masters', icon: '🎓', keywords: ['teachers', 'wisdom', 'dieter'] },
+		{ id: 'nav-principles', label: 'Principles', description: 'Core design principles', href: '/principles', icon: '⚖️', keywords: ['rules', 'guidelines', 'values'] },
+		{ id: 'nav-patterns', label: 'Patterns', description: 'Reusable patterns', href: '/patterns', icon: '🔷', keywords: ['components', 'templates', 'recipes'] },
+		{ id: 'nav-standards', label: 'Standards', description: 'Technical standards', href: '/standards', icon: '📏', keywords: ['specs', 'requirements'] },
+		{ id: 'nav-space', label: 'Go to .space', description: 'Interactive experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
+		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and analysis', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
+		{ id: 'nav-agency', label: 'Go to .agency', description: 'Professional services', href: 'https://createsomething.agency', icon: '🔨', keywords: ['services', 'hire', 'work'] },
+	];
+
 	// Canon documentation pages have their own layout with DocSidebar.
 	// The footer does not earn its existence there: the sidebar already
 	// provides navigation, and documentation is a dwelling for study,
@@ -74,7 +86,7 @@
 <SkipToContent />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="ltd" />
+<UnifiedSearch currentProperty="ltd" localItems={quickAccessItems} />
 
 <div class="min-h-screen flex flex-col">
 	{#if !isCanonRoute}

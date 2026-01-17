@@ -62,6 +62,17 @@
 		{ label: 'About', href: '/about' }
 	];
 
+	// Quick access items for unified search
+	const quickAccessItems = [
+		{ id: 'nav-papers', label: 'Papers', description: 'Research papers and analysis', href: '/papers', icon: '📖', keywords: ['read', 'research', 'learn'] },
+		{ id: 'nav-experiments', label: 'Experiments', description: 'Tracked experiment results', href: '/experiments', icon: '🧪', keywords: ['try', 'data', 'results'] },
+		{ id: 'nav-methodology', label: 'Methodology', description: 'Research methodology', href: '/methodology', icon: '📐', keywords: ['process', 'approach'] },
+		{ id: 'nav-categories', label: 'Categories', description: 'Browse by topic', href: '/categories', icon: '🏷️', keywords: ['topics', 'browse'] },
+		{ id: 'nav-space', label: 'Go to .space', description: 'Interactive experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
+		{ id: 'nav-agency', label: 'Go to .agency', description: 'Professional services', href: 'https://createsomething.agency', icon: '🔨', keywords: ['services', 'hire', 'work'] },
+		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Canon principles and patterns', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
+	];
+
 	// Handle hash scrolling
 	function scrollToHash(hash: string) {
 		if (!hash) return;
@@ -109,7 +120,7 @@
 <SkipToContent />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="io" />
+<UnifiedSearch currentProperty="io" localItems={quickAccessItems} />
 
 <div class="layout-root">
 	<Navigation
