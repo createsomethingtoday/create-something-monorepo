@@ -401,6 +401,9 @@ importers:
       '@types/better-sqlite3':
         specifier: ^7.6.12
         version: 7.6.13
+      lucide-svelte:
+        specifier: ^0.469.0
+        version: 0.469.0(svelte@5.43.12)
       publint:
         specifier: ^0.3.14
         version: 0.3.15
@@ -7568,6 +7571,11 @@ packages:
 
   lucide-svelte@0.454.0:
     resolution: {integrity: sha512-TgW17HI7M8LeFZ3NpaDp1LwPGBGMVjx/x81TtK+AacEQvmJcqetqeJNeBT18NMEJP9+zi/Wt+Zc8mo44K5Uszw==}
+    peerDependencies:
+      svelte: ^3 || ^4 || ^5.0.0-next.42
+
+  lucide-svelte@0.469.0:
+    resolution: {integrity: sha512-PMIJ8jrFqVUsXJz4d1yfAQplaGhNOahwwkzbunha8DhpiD73xqX24n8dE1dPpUk3vcrdWVsHc1y/liHHotOnGQ==}
     peerDependencies:
       svelte: ^3 || ^4 || ^5.0.0-next.42
 
@@ -16131,6 +16139,10 @@ snapshots:
       svelte: 5.43.12
 
   lucide-svelte@0.454.0(svelte@5.43.12):
+    dependencies:
+      svelte: 5.43.12
+
+  lucide-svelte@0.469.0(svelte@5.43.12):
     dependencies:
       svelte: 5.43.12
 

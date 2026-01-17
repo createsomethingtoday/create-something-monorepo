@@ -166,6 +166,7 @@
 		"@sveltejs/kit": "^2.0.0",
 		"better-sqlite3": "^11.0.0",
 		"html2canvas": "^1.4.0",
+		"lucide-svelte": "^0.400.0",
 		"svelte": "^5.0.0"
 	},
 	"peerDependenciesMeta": {
@@ -177,6 +178,9 @@
 		},
 		"html2canvas": {
 			"optional": true
+		},
+		"lucide-svelte": {
+			"optional": true
 		}
 	},
 	"devDependencies": {
@@ -186,6 +190,7 @@
 		"@sveltejs/package": "^2.5.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@types/better-sqlite3": "^7.6.12",
+		"lucide-svelte": "^0.469.0",
 		"publint": "^0.3.14",
 		"svelte": "^5.41.0",
 		"svelte-check": "^4.3.3",
