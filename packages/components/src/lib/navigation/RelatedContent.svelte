@@ -205,10 +205,9 @@
 		{:else if error}
 			<p class="related-error">{error}</p>
 		{:else}
+			{@const groups = groupedItems()}
+			{@const propertyOrder = ['ltd', 'io', 'space', 'lms', 'agency'] as Property[]}
 			<div class="related-groups">
-				{@const groups = groupedItems()}
-				{@const propertyOrder = ['ltd', 'io', 'space', 'lms', 'agency'] as Property[]}
-				
 				{#each propertyOrder as property}
 					{#if groups[property] && groups[property]!.length > 0}
 						{@const propertyInfo = PROPERTY_INFO[property]}
