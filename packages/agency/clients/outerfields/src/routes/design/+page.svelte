@@ -748,7 +748,7 @@
 	}
 
 	.docs-button:hover {
-		background: #8b3dff;
+		filter: brightness(1.15);
 		transform: scale(1.05);
 	}
 
@@ -1037,8 +1037,8 @@
 
 	.metric-fill {
 		height: 100%;
-		background: linear-gradient(90deg, var(--color-primary) 0%, #8b3dff 100%);
-		border-radius: 4px;
+		background: linear-gradient(90deg, var(--color-brand, #7c2bee) 0%, var(--color-data-3, #c084fc) 100%);
+		border-radius: var(--radius-sm);
 		animation: fill-animate 2s ease-out;
 	}
 

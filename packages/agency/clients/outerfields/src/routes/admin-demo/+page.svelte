@@ -1117,28 +1117,28 @@
 					<div class="traffic-sources">
 						<div class="traffic-item">
 							<div class="traffic-label">
-								<span class="traffic-dot" style="background: #4a9eff"></span>
+								<span class="traffic-dot" style="background: var(--color-data-1)"></span>
 								Browse Features
 							</div>
 							<span class="traffic-value">42%</span>
 						</div>
 						<div class="traffic-item">
 							<div class="traffic-label">
-								<span class="traffic-dot" style="background: #7c3aed"></span>
+								<span class="traffic-dot" style="background: var(--color-brand)"></span>
 								Suggested Videos
 							</div>
 							<span class="traffic-value">28%</span>
 						</div>
 						<div class="traffic-item">
 							<div class="traffic-label">
-								<span class="traffic-dot" style="background: #22c55e"></span>
+								<span class="traffic-dot" style="background: var(--color-success)"></span>
 								External Links
 							</div>
 							<span class="traffic-value">18%</span>
 						</div>
 						<div class="traffic-item">
 							<div class="traffic-label">
-								<span class="traffic-dot" style="background: #f59e0b"></span>
+								<span class="traffic-dot" style="background: var(--color-warning)"></span>
 								Search
 							</div>
 							<span class="traffic-value">12%</span>
@@ -1379,23 +1379,23 @@
 	}
 
 	.stat-icon.views {
-		background: rgba(96, 165, 250, 0.2);
-		color: #60a5fa;
+		background: var(--color-data-1-muted);
+		color: var(--color-data-1);
 	}
 
 	.stat-icon.subscribers {
-		background: rgba(34, 197, 94, 0.2);
-		color: #22c55e;
+		background: var(--color-data-2-muted);
+		color: var(--color-data-2);
 	}
 
 	.stat-icon.revenue {
-		background: rgba(192, 132, 252, 0.2);
-		color: #c084fc;
+		background: var(--color-data-3-muted);
+		color: var(--color-data-3);
 	}
 
 	.stat-icon.engagement {
-		background: rgba(251, 191, 36, 0.2);
-		color: #fbbf24;
+		background: var(--color-data-4-muted);
+		color: var(--color-data-4);
 	}
 
 	.stat-content {
@@ -1558,7 +1558,7 @@
 	}
 
 	.chart-bar.engagement {
-		background: linear-gradient(to top, #22c55e, rgba(34, 197, 94, 0.5));
+		background: linear-gradient(to top, var(--color-success), var(--color-success-muted));
 	}
 
 	.chart-bar:hover {
@@ -1599,7 +1599,7 @@
 	}
 
 	.legend-dot.engagement {
-		background: #22c55e;
+		background: var(--color-success);
 	}
 
 	/* Activity Section */
@@ -1672,8 +1672,8 @@
 	}
 
 	.activity-icon.subscription {
-		background: rgba(34, 197, 94, 0.2);
-		color: #22c55e;
+		background: var(--color-success-muted);
+		color: var(--color-success);
 	}
 
 	.activity-icon :global(svg) {
@@ -1839,13 +1839,13 @@
 	}
 
 	.status-published {
-		background: rgba(34, 197, 94, 0.2);
-		color: #22c55e;
+		background: var(--color-success-muted);
+		color: var(--color-success);
 	}
 
 	.status-processing {
-		background: rgba(251, 191, 36, 0.2);
-		color: #fbbf24;
+		background: var(--color-warning-muted);
+		color: var(--color-warning);
 	}
 
 	.status-draft {
@@ -1935,7 +1935,7 @@
 	}
 
 	.menu-item.danger {
-		color: #ef4444;
+		color: var(--color-error);
 	}
 
 	.action-menu hr {
@@ -2001,9 +2001,9 @@
 	}
 
 	.modal {
-		background: #0a0a0a;
+		background: var(--color-bg-elevated);
 		border: 1px solid var(--color-border-default);
-		border-radius: 1rem;
+		border-radius: var(--radius-xl);
 		width: 100%;
 		max-width: 480px;
 		max-height: 90vh;
@@ -2236,7 +2236,7 @@
 	}
 
 	.action-card.danger {
-		color: #ef4444;
+		color: var(--color-error);
 	}
 
 	/* Stat Detail Modal */

@@ -30,9 +30,11 @@ import {
 	ListToolsRequestSchema,
 	type Tool
 } from '@modelcontextprotocol/sdk/types.js';
+import { PATTERN_TOOLS, handlePatternTool } from './tools/patterns.js';
+import { CODIFICATION_TOOLS, handleCodificationTool } from './tools/codification.js';
 
 const SERVER_NAME = 'outerfields-pcn';
-const SERVER_VERSION = '1.0.0';
+const SERVER_VERSION = '2.0.0'; // Updated for AI-native features
 
 const TOOLS: Tool[] = [
 	{
@@ -192,14 +194,18 @@ class OuterfieldsServer {
 	}
 
 	private setupHandlers() {
+		// Combine all tools: original + pattern analysis + codification
+		const allTools = [...TOOLS, ...PATTERN_TOOLS, ...CODIFICATION_TOOLS];
+		
 		this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-			tools: TOOLS
+			tools: allTools
 		}));
 
 		this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			const { name, arguments: args } = request.params;
 
 			try {
+				// Handle original tools
 				switch (name) {
 					case 'pcn_explore_component':
 						return await this.handleExploreComponent(args);
@@ -211,9 +217,21 @@ class OuterfieldsServer {
 						return await this.handleDeployment(args);
 					case 'pcn_architecture':
 						return await this.handleArchitecture();
-					default:
-						throw new Error(`Unknown tool: ${name}`);
 				}
+				
+				// Handle AI-native pattern tools
+				if (name.startsWith('pcn_analyze') || name.startsWith('pcn_detect') || name === 'pcn_get_pattern_details') {
+					const result = await handlePatternTool(name, args || {});
+					return { content: [{ type: 'text' as const, text: result }] };
+				}
+				
+				// Handle AI-native codification tools
+				if (name.startsWith('pcn_suggest') || name.startsWith('pcn_update') || name.startsWith('pcn_escalate') || name === 'pcn_list_proposals') {
+					const result = await handleCodificationTool(name, args || {});
+					return { content: [{ type: 'text' as const, text: result }] };
+				}
+				
+				throw new Error(`Unknown tool: ${name}`);
 			} catch (error) {
 				return {
 					content: [
