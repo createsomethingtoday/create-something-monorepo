@@ -270,34 +270,282 @@ def create_research_corpus_from_files(file_paths: list[str]) -> str:
     return "\n\n".join(documents)
 
 
-# Convenience function for CLI/script usage
-if __name__ == "__main__":
+def extract_follow_up_tasks(answer: str) -> list[dict[str, str]]:
+    """
+    Extract follow-up tasks from research answer.
+
+    Looks for patterns like:
+    - [ ] Task description
+    - Follow-up: Task description
+    - TODO: Task description
+
+    Args:
+        answer: The research answer text
+
+    Returns:
+        List of task dicts with 'title' and 'priority' keys
+    """
+    import re
+
+    tasks = []
+
+    # Pattern 1: Markdown checkboxes
+    checkbox_pattern = r"- \[ \] (.+?)(?:\n|$)"
+    for match in re.finditer(checkbox_pattern, answer):
+        task = match.group(1).strip()
+        if task and len(task) > 5:
+            tasks.append({"title": task, "priority": 2})
+
+    # Pattern 2: Follow-up: lines
+    followup_pattern = r"(?:Follow-up|TODO|Action):\s*(.+?)(?:\n|$)"
+    for match in re.finditer(followup_pattern, answer, re.IGNORECASE):
+        task = match.group(1).strip()
+        if task and len(task) > 5 and task not in [t["title"] for t in tasks]:
+            tasks.append({"title": task, "priority": 2})
+
+    return tasks
+
+
+def create_beads_issues_from_research(
+    tasks: list[dict[str, str]],
+    research_topic: str,
+    labels: list[str] | None = None,
+) -> list[str]:
+    """
+    Create Beads issues from extracted research tasks.
+
+    Args:
+        tasks: List of task dicts from extract_follow_up_tasks()
+        research_topic: The research topic (for context in issue title)
+        labels: Additional labels to add
+
+    Returns:
+        List of created issue IDs
+    """
+    from create_something_agents.tools.beads import execute_beads
+
+    created_ids = []
+    base_labels = ["research", "rlm-discovered"]
+    if labels:
+        base_labels.extend(labels)
+
+    for task in tasks:
+        # Prefix with research context if not already present
+        title = task["title"]
+        if not title.lower().startswith(("research", "investigate", "explore")):
+            title = f"[Research: {research_topic[:30]}] {title}"
+
+        result = execute_beads(
+            action="create",
+            title=title,
+            priority=task.get("priority", 2),
+            labels=base_labels,
+        )
+
+        # Try to extract issue ID from result
+        if "csm-" in result.lower() or "cs-" in result.lower():
+            # Extract the issue ID
+            import re
+
+            match = re.search(r"(csm?-[a-zA-Z0-9]+)", result, re.IGNORECASE)
+            if match:
+                created_ids.append(match.group(1))
+
+    return created_ids
+
+
+def save_research_output(
+    result: dict[str, Any],
+    output_path: str,
+    research_question: str,
+) -> None:
+    """
+    Save research results to a file.
+
+    Args:
+        result: Research result dict
+        output_path: Path to save output
+        research_question: The original question
+    """
+    import json
+    from datetime import datetime
+
+    output = {
+        "research_question": research_question,
+        "timestamp": datetime.now().isoformat(),
+        "success": result.get("success"),
+        "answer": result.get("answer"),
+        "metadata": {
+            "iterations": result.get("iterations"),
+            "sub_calls": result.get("sub_calls"),
+            "cost_usd": result.get("cost_usd"),
+        },
+    }
+
+    # Determine format from extension
+    if output_path.endswith(".json"):
+        with open(output_path, "w") as f:
+            json.dump(output, f, indent=2)
+    else:
+        # Markdown format
+        with open(output_path, "w") as f:
+            f.write(f"# Research: {research_question}\n\n")
+            f.write(f"*Generated: {output['timestamp']}*\n\n")
+            f.write(f"**Cost**: ${output['metadata']['cost_usd']:.4f} | ")
+            f.write(f"**Iterations**: {output['metadata']['iterations']} | ")
+            f.write(f"**Sub-calls**: {output['metadata']['sub_calls']}\n\n")
+            f.write("---\n\n")
+            f.write(result.get("answer") or "(No answer)")
+
+
+# CLI interface
+def cli():
+    """Command-line interface for RLM research."""
+    import argparse
     import asyncio
-    import sys
 
-    async def main():
-        if len(sys.argv) < 3:
-            print("Usage: python rlm_research_agent.py <corpus_file> <question>")
-            print("Example: python rlm_research_agent.py docs.txt 'What patterns exist?'")
-            sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="RLM Research Agent - Long-context document synthesis",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Basic research
+  python rlm_research_agent.py corpus.txt "What patterns exist?"
 
-        corpus_file = sys.argv[1]
-        question = sys.argv[2]
+  # From multiple files
+  python rlm_research_agent.py --files doc1.md doc2.md doc3.md -q "Compare approaches"
 
-        with open(corpus_file, "r") as f:
+  # Save output and create Beads issues
+  python rlm_research_agent.py corpus.txt "Security review" -o research.md --beads
+
+  # Use specific models
+  python rlm_research_agent.py corpus.txt "Analysis" --root opus --sub sonnet
+""",
+    )
+
+    parser.add_argument(
+        "corpus",
+        nargs="?",
+        help="Path to corpus file (or use --files)",
+    )
+    parser.add_argument(
+        "question",
+        nargs="?",
+        help="Research question (or use -q)",
+    )
+    parser.add_argument(
+        "-q", "--question",
+        dest="question_flag",
+        help="Research question",
+    )
+    parser.add_argument(
+        "--files",
+        nargs="+",
+        help="Multiple files to combine into corpus",
+    )
+    parser.add_argument(
+        "-o", "--output",
+        help="Output file path (.md or .json)",
+    )
+    parser.add_argument(
+        "--beads",
+        action="store_true",
+        help="Create Beads issues from follow-up tasks",
+    )
+    parser.add_argument(
+        "--root",
+        default="sonnet",
+        choices=["haiku", "sonnet", "opus"],
+        help="Root model (default: sonnet)",
+    )
+    parser.add_argument(
+        "--sub",
+        default="haiku",
+        choices=["haiku", "sonnet", "opus"],
+        help="Sub-call model (default: haiku)",
+    )
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=25,
+        help="Maximum iterations (default: 25)",
+    )
+    parser.add_argument(
+        "--max-sub-calls",
+        type=int,
+        default=150,
+        help="Maximum sub-LM calls (default: 150)",
+    )
+
+    args = parser.parse_args()
+
+    # Resolve question
+    question = args.question_flag or args.question
+    if not question:
+        parser.error("Research question required (positional or -q)")
+
+    # Build corpus
+    if args.files:
+        corpus = create_research_corpus_from_files(args.files)
+        print(f"Combined {len(args.files)} files into corpus")
+    elif args.corpus:
+        with open(args.corpus, "r") as f:
             corpus = f.read()
+    else:
+        parser.error("Corpus required (file path or --files)")
 
-        print(f"Corpus: {len(corpus):,} characters")
-        print(f"Question: {question}")
-        print("-" * 50)
+    print(f"Corpus: {len(corpus):,} characters")
+    print(f"Question: {question}")
+    print(f"Models: root={args.root}, sub={args.sub}")
+    print("-" * 50)
 
-        result = await run_rlm_research(corpus, question)
+    # Run research
+    async def run():
+        config = RLMResearchConfig(
+            root_model=args.root,
+            sub_model=args.sub,
+            max_iterations=args.max_iterations,
+            max_sub_calls=args.max_sub_calls,
+            output_path=args.output,
+            create_beads_issues=args.beads,
+        )
 
-        print(f"Success: {result.get('success')}")
+        result = await run_rlm_research(corpus, question, config)
+
+        print(f"\nSuccess: {result.get('success')}")
         print(f"Iterations: {result.get('iterations')}")
         print(f"Sub-calls: {result.get('sub_calls')}")
         print(f"Cost: ${result.get('cost_usd', 0):.4f}")
         print("-" * 50)
-        print(result.get("answer"))
 
-    asyncio.run(main())
+        answer = result.get("answer", "")
+        print(answer)
+
+        # Save output if requested
+        if args.output:
+            save_research_output(result, args.output, question)
+            print(f"\nSaved to: {args.output}")
+
+        # Create Beads issues if requested
+        if args.beads and answer:
+            tasks = extract_follow_up_tasks(answer)
+            if tasks:
+                print(f"\nCreating {len(tasks)} Beads issues...")
+                created = create_beads_issues_from_research(
+                    tasks,
+                    question[:50],
+                    labels=["research"],
+                )
+                if created:
+                    print(f"Created issues: {', '.join(created)}")
+            else:
+                print("\nNo follow-up tasks found in answer")
+
+        return result
+
+    asyncio.run(run())
+
+
+# Entry points
+if __name__ == "__main__":
+    cli()
