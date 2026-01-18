@@ -415,11 +415,13 @@ def run_rlm_remote(
     )
 
 
-@app.function()
-@modal.fastapi_endpoint(method="GET")
-def health() -> dict:
-    """Health check endpoint."""
-    return {"status": "ok", "service": "rlm-session"}
+# Health endpoint removed to stay within Modal free tier limits
+# Uncomment if you have a paid plan:
+# @app.function()
+# @modal.fastapi_endpoint(method="GET")
+# def health() -> dict:
+#     """Health check endpoint."""
+#     return {"status": "ok", "service": "rlm-session"}
 
 
 # Local testing entrypoint
