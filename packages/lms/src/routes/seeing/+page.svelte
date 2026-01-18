@@ -37,6 +37,41 @@
       title: 'Applying the Triad',
       description: 'Putting the three questions together. The framework becomes perception.',
       duration: '25 min'
+    },
+    {
+      id: 'capstone-intro',
+      title: 'Capstone: Ship Your Site',
+      description: 'Your graduation project: design, build, and deploy a personal site you own.',
+      duration: '10 min',
+      isCapstone: true
+    },
+    {
+      id: 'capstone-design',
+      title: 'Design with AI Studio',
+      description: 'Use Google AI Studio to generate your site layout and content.',
+      duration: '30 min',
+      isCapstone: true
+    },
+    {
+      id: 'capstone-build',
+      title: 'Build with Gemini CLI',
+      description: 'Turn your design into code with AI assistance.',
+      duration: '45 min',
+      isCapstone: true
+    },
+    {
+      id: 'capstone-deploy',
+      title: 'Deploy to Cloudflare',
+      description: 'Put your site live on Cloudflare Pages with your own domain.',
+      duration: '30 min',
+      isCapstone: true
+    },
+    {
+      id: 'capstone-graduate',
+      title: 'Graduate',
+      description: 'Submit your site URL and move to the next level.',
+      duration: '5 min',
+      isCapstone: true
     }
   ];
 
