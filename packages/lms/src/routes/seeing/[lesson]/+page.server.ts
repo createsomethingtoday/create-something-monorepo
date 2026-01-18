@@ -2,22 +2,13 @@ import { error } from '@sveltejs/kit';
 import { marked } from 'marked';
 import type { PageServerLoad } from './$types';
 
-// Import interactive lesson data
-import whatIsCreationJson from '$lib/content/lessons/seeing/what-is-creation.json';
-
-// Interactive lessons registry
-const INTERACTIVE_LESSONS: Record<string, unknown> = {
-	'what-is-creation': whatIsCreationJson
-};
-
 // Lesson metadata - matches the seeing package
 const SEEING_LESSONS = [
 	{
 		id: 'what-is-creation',
 		title: 'What Is Creation?',
 		description: 'The meta-principle: creation as the discipline of removing what obscures.',
-		duration: '10 min',
-		interactive: true
+		duration: '10 min'
 	},
 	{
 		id: 'dry-implementation',
@@ -361,20 +352,14 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 
 	const lesson = SEEING_LESSONS[lessonIndex];
-	
-	// Check for interactive lesson data
-	const interactiveData = INTERACTIVE_LESSONS[lessonId];
-	const isInteractive = !!interactiveData;
-	
-	let content = '';
-	if (!isInteractive) {
-		// Fall back to markdown content
-		const markdownContent = LESSON_CONTENT[lessonId];
-		if (!markdownContent) {
-			throw error(404, 'Lesson content not found');
-		}
-		content = await marked(markdownContent);
+	const markdownContent = LESSON_CONTENT[lessonId];
+
+	if (!markdownContent) {
+		throw error(404, 'Lesson content not found');
 	}
+
+	// Parse markdown to HTML
+	const content = await marked(markdownContent);
 
 	// Get prev/next lessons
 	const prev = lessonIndex > 0 ? SEEING_LESSONS[lessonIndex - 1] : null;
@@ -386,8 +371,6 @@ export const load: PageServerLoad = async ({ params }) => {
 		prev,
 		next,
 		lessonIndex,
-		totalLessons: SEEING_LESSONS.length,
-		interactive: isInteractive,
-		interactiveData: interactiveData ?? null
+		totalLessons: SEEING_LESSONS.length
 	};
 };

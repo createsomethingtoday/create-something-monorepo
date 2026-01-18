@@ -67,12 +67,12 @@
 		}
 	});
 
-	// Use explicit progress value, defaulting to 0 for start state
-	const p = $derived(hasInitialized ? $progress : 0);
-
 	// Phase and reveal from spec
 	const currentPhase = $derived(spec ? getCurrentPhase(spec, p) : null);
 	const revealOpacity = $derived(spec ? getRevealOpacity(spec, p) : 0);
+
+	// Use explicit progress value, defaulting to 0 for start state
+	const p = $derived(hasInitialized ? $progress : 0);
 
 	// ============================================
 	// TOOL RECEDING ANIMATION
@@ -117,36 +117,6 @@
 	const minimapOpacity = $derived(Math.max(0, 1 - ((p - 0.3) * 4)));
 	const editorBgOpacity = $derived(Math.max(0, 1 - ((p - 0.4) * 2.5)));
 	const terminalOpacity = $derived(Math.min(1, Math.max(0, (p - 0.5) * 3)));
-
-	// ============================================
-	// SUBTRACTIVE TRIAD ANIMATION
-	// Three layers of noise that dissolve to reveal the essential
-	// ============================================
-	const noiseLayer1 = $derived(Math.max(0, 1 - (p * 5))); // Duplication dissolves first
-	const noiseLayer2 = $derived(Math.max(0, 1 - ((p - 0.2) * 5))); // Excess dissolves second
-	const noiseLayer3 = $derived(Math.max(0, 1 - ((p - 0.4) * 5))); // Disconnection dissolves third
-	const essenceOpacity = $derived(Math.min(1, Math.max(0, (p - 0.6) * 2.5)));
-	const glowIntensity = $derived(Math.min(1, Math.max(0, (p - 0.8) * 5)));
-
-	// ============================================
-	// MARBLE TO DAVID ANIMATION
-	// Block chips away to reveal form
-	// ============================================
-	const marbleChips = $derived(
-		p < 0.25 ? 0 :
-		p < 0.75 ? ((p - 0.25) / 0.5) :
-		1
-	);
-	const figureOpacity = $derived(
-		p < 0.25 ? 0 :
-		p < 0.75 ? ((p - 0.25) / 0.5) * 0.8 :
-		p < 0.9 ? 0.8 + ((p - 0.75) / 0.15) * 0.2 :
-		1
-	);
-	const marbleScale = $derived(
-		p < 0.75 ? 1 :
-		1 - ((p - 0.75) / 0.25) * 0.15
-	);
 </script>
 
 <section class="lesson-remotion {className}">
@@ -273,109 +243,6 @@ const App = () => {
 				
 				{#if spec.reveal && revealOpacity > 0}
 					<div class="quote-overlay ide-quote" style="opacity: {revealOpacity};">
-						{spec.reveal.text}
-					</div>
-				{/if}
-			</div>
-		{:else if compositionId === 'SubtractiveTriad' && spec}
-			<!-- SUBTRACTIVE TRIAD ANIMATION -->
-			<div class="animation-canvas triad-canvas">
-				<div class="phase-label">{currentPhase?.label ?? ''}</div>
-				
-				<!-- Noise layers representing what obscures -->
-				<div class="triad-container">
-					<!-- Layer 1: Duplication (scattered copies) -->
-					<div class="noise-layer duplication" style="opacity: {noiseLayer1};">
-						{#each Array(12) as _, i}
-							<div 
-								class="duplicate-block"
-								style="
-									left: {10 + (i % 4) * 25}%;
-									top: {15 + Math.floor(i / 4) * 30}%;
-									transform: rotate({i * 15 - 30}deg);
-								"
-							></div>
-						{/each}
-					</div>
-					
-					<!-- Layer 2: Excess (visual noise) -->
-					<div class="noise-layer excess" style="opacity: {noiseLayer2};">
-						{#each Array(20) as _, i}
-							<div 
-								class="excess-dot"
-								style="
-									left: {5 + (i * 4.5)}%;
-									top: {10 + (i % 5) * 20}%;
-									width: {4 + (i % 3) * 4}px;
-									height: {4 + (i % 3) * 4}px;
-								"
-							></div>
-						{/each}
-					</div>
-					
-					<!-- Layer 3: Disconnection (broken lines) -->
-					<div class="noise-layer disconnection" style="opacity: {noiseLayer3};">
-						{#each Array(8) as _, i}
-							<div 
-								class="broken-line"
-								style="
-									left: {20 + (i % 4) * 20}%;
-									top: {20 + Math.floor(i / 4) * 40}%;
-									width: {30 + i * 5}px;
-									transform: rotate({i * 25}deg);
-								"
-							></div>
-						{/each}
-					</div>
-					
-					<!-- The Essential: Clean geometric form -->
-					<div class="essence" style="opacity: {essenceOpacity};">
-						<div class="essence-shape" style="box-shadow: 0 0 {glowIntensity * 30}px rgba(255,255,255,{glowIntensity * 0.3});"></div>
-					</div>
-				</div>
-				
-				{#if spec.reveal && revealOpacity > 0}
-					<div class="quote-overlay" style="opacity: {revealOpacity};">
-						{spec.reveal.text}
-					</div>
-				{/if}
-			</div>
-		{:else if compositionId === 'MarbleToDavid' && spec}
-			<!-- MARBLE TO DAVID ANIMATION -->
-			<div class="animation-canvas marble-canvas">
-				<div class="phase-label">{currentPhase?.label ?? ''}</div>
-				
-				<div class="marble-container">
-					<!-- The marble block -->
-					<div 
-						class="marble-block"
-						style="transform: scale({marbleScale});"
-					>
-						<!-- Marble texture layers -->
-						<div class="marble-surface" style="opacity: {1 - marbleChips * 0.7};"></div>
-						
-						<!-- Chips falling away -->
-						{#each Array(8) as _, i}
-							<div 
-								class="marble-chip"
-								style="
-									opacity: {marbleChips > i * 0.12 ? 1 : 0};
-									transform: translate({(marbleChips - i * 0.12) * (i % 2 ? 100 : -100)}px, {(marbleChips - i * 0.12) * 150}px) rotate({marbleChips * 180 + i * 45}deg);
-									left: {20 + (i % 4) * 20}%;
-									top: {15 + Math.floor(i / 4) * 50}%;
-								"
-							></div>
-						{/each}
-						
-						<!-- The figure emerging -->
-						<div class="david-figure" style="opacity: {figureOpacity};">
-							<div class="figure-silhouette"></div>
-						</div>
-					</div>
-				</div>
-				
-				{#if spec.reveal && revealOpacity > 0}
-					<div class="quote-overlay marble-quote" style="opacity: {revealOpacity};">
 						{spec.reveal.text}
 					</div>
 				{/if}
@@ -821,132 +688,5 @@ const App = () => {
 	.placeholder-text {
 		font-size: var(--text-h3);
 		color: #666;
-	}
-
-	/* Subtractive Triad Animation */
-	.triad-canvas {
-		background: linear-gradient(135deg, #0a0a0a 0%, #111 100%);
-	}
-
-	.triad-container {
-		position: relative;
-		width: 100%;
-		height: 100%;
-	}
-
-	.noise-layer {
-		position: absolute;
-		inset: 0;
-		transition: opacity 0.3s ease;
-	}
-
-	.duplicate-block {
-		position: absolute;
-		width: 60px;
-		height: 40px;
-		background: linear-gradient(135deg, #333 0%, #222 100%);
-		border: 1px solid #444;
-		border-radius: 4px;
-	}
-
-	.excess-dot {
-		position: absolute;
-		background: #444;
-		border-radius: 50%;
-	}
-
-	.broken-line {
-		position: absolute;
-		height: 2px;
-		background: linear-gradient(90deg, #444 0%, #444 40%, transparent 40%, transparent 60%, #444 60%);
-	}
-
-	.essence {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.essence-shape {
-		width: 100px;
-		height: 100px;
-		background: linear-gradient(135deg, #fff 0%, #ccc 100%);
-		border-radius: 50%;
-		transition: box-shadow 0.3s ease;
-	}
-
-	/* Marble to David Animation */
-	.marble-canvas {
-		background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
-	}
-
-	.marble-container {
-		position: relative;
-		width: 100%;
-		height: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.marble-block {
-		position: relative;
-		width: 200px;
-		height: 320px;
-		background: linear-gradient(135deg, #d4d4d4 0%, #a8a8a8 50%, #c0c0c0 100%);
-		border-radius: 8px 8px 4px 4px;
-		overflow: visible;
-		transition: transform 0.3s ease;
-	}
-
-	.marble-surface {
-		position: absolute;
-		inset: 0;
-		background: 
-			radial-gradient(ellipse at 30% 20%, rgba(180,180,190,0.8) 0%, transparent 50%),
-			radial-gradient(ellipse at 70% 80%, rgba(160,160,170,0.6) 0%, transparent 40%),
-			linear-gradient(135deg, #c8c8c8 0%, #9a9a9a 100%);
-		border-radius: inherit;
-	}
-
-	.marble-chip {
-		position: absolute;
-		width: 30px;
-		height: 20px;
-		background: linear-gradient(135deg, #b0b0b0 0%, #888 100%);
-		border-radius: 4px;
-		transition: transform 0.5s ease, opacity 0.3s ease;
-	}
-
-	.david-figure {
-		position: absolute;
-		inset: 20px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.figure-silhouette {
-		width: 60%;
-		height: 90%;
-		background: linear-gradient(180deg, 
-			#f0e6d8 0%, 
-			#e8dcc8 20%, 
-			#f5ebe0 40%, 
-			#e8dcc8 60%,
-			#f0e6d8 80%,
-			#e0d4c4 100%
-		);
-		border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
-		box-shadow: 
-			inset 0 0 30px rgba(0,0,0,0.1),
-			0 4px 20px rgba(0,0,0,0.3);
-	}
-
-	.marble-quote {
-		bottom: 40px;
-		font-size: 18px;
 	}
 </style>
