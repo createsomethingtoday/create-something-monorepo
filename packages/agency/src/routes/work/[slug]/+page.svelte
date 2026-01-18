@@ -8,13 +8,13 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const { work } = data;
+	const { component: Component, frontmatter } = data;
 </script>
 
 <svelte:head>
-	<title>{work.frontmatter.title} — Case Study | CREATE SOMETHING Agency</title>
-	<meta name="description" content={work.frontmatter.description || work.frontmatter.title} />
+	<title>{frontmatter.title} — Case Study | CREATE SOMETHING Agency</title>
+	<meta name="description" content={frontmatter.description || frontmatter.title} />
 </svelte:head>
 
 <!-- Render the MDsveX component (uses MarkdownLayout automatically) -->
-<svelte:component this={work.component} {...work.frontmatter} />
+<Component {...frontmatter} />
