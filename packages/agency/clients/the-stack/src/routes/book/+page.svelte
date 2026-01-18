@@ -14,22 +14,18 @@
 <!-- Hero Section -->
 <section class="section is-book-hero" use:inview>
 	<div class="container-large">
-		<div class="margin-bottom-48">
-			<div class="max-width-720">
-				<div class="margin-bottom-16">
-					<h1 class="heading-style-h1">
-						<span class="is-word is-1">Book</span>
-						<span class="is-word is-2">A</span>
-						<span class="is-word is-3">Court</span>
-					</h1>
-				</div>
-				<div class="margin-bottom-24">
-					<p class="text-size-medium">
-						<strong>Reserve Your Court</strong> – Choose your preferred location, date, and time.
-						Book instantly and get ready to play at The Stack.
-					</p>
-				</div>
+		<div class="section-header text-center margin-bottom-48">
+			<div class="margin-bottom-16">
+				<h1 class="heading-style-h1">
+					<span class="is-word is-1">Book</span>
+					<span class="is-word is-2">A</span>
+					<span class="is-word is-3">Court</span>
+				</h1>
 			</div>
+			<p class="text-size-medium reveal-element">
+				<strong>Reserve Your Court</strong> – Choose your preferred location, date, and time.
+				Book instantly and get ready to play at The Stack.
+			</p>
 		</div>
 
 		<!-- Booking Widget -->
@@ -63,20 +59,28 @@
 		padding-right: 2rem;
 	}
 
-	.margin-bottom-48 {
-		margin-bottom: 3rem;
+	.section-header {
+		max-width: 48rem;
+		margin-left: auto;
+		margin-right: auto;
 	}
 
-	.max-width-720 {
-		max-width: 45rem;
+	.text-center {
+		text-align: center;
+	}
+
+	.margin-bottom-48 {
+		margin-bottom: 3rem;
 	}
 
 	.margin-bottom-16 {
 		margin-bottom: 1rem;
 	}
 
-	.margin-bottom-24 {
-		margin-bottom: 1.5rem;
+	.reveal-element {
+		opacity: 0;
+		transform: translateY(1rem);
+		animation: fadeUp 0.6s var(--ease-stack) 0.4s forwards;
 	}
 
 	.heading-style-h1 {
