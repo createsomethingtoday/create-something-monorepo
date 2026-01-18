@@ -10,7 +10,8 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name=maverick-x",
+		"deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=maverick-x",
+		"deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=maverick-x --branch=preview",
 		"cf-typegen": "wrangler types"
 	},
 	"dependencies": {

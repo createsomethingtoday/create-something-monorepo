@@ -7,7 +7,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard",
+    "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --branch=preview"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251219.0",

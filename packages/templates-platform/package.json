@@ -14,6 +14,8 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "prepare": "svelte-kit sync || echo ''",
+    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=templates-platform",
+    "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=templates-platform --branch=preview",
     "db:migrate": "wrangler d1 migrations apply templates-platform-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply templates-platform-db",
     "verify": "tsx scripts/verify-deployment.ts",
