@@ -216,10 +216,6 @@
 						</div>
 						<div class="service-title-block">
 							<h2 class="service-title">{service.title}</h2>
-							<p class="service-triad">
-								<span class="triad-action">{service.triadAction}</span>
-								<span class="triad-question">{service.triadQuestion}</span>
-							</p>
 						</div>
 					</div>
 
@@ -499,27 +495,6 @@
 		font-size: var(--text-h3);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		margin-bottom: 0.25rem;
-	}
-
-	.service-triad {
-		display: flex;
-		align-items: center;
-		gap: var(--space-xs);
-		flex-wrap: wrap;
-	}
-
-	.triad-action {
-		font-family: monospace;
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-secondary);
-	}
-
-	.triad-question {
-		font-size: var(--text-body-sm);
-		font-style: italic;
-		color: var(--color-fg-muted);
 	}
 
 	/* Service Sections */
