@@ -57,15 +57,6 @@
 </script>
 
 <section id="intro" class="section background-color-white">
-	<a href="#" target="_blank" class="button floating-cta">
-		<span class="z-index-2">
-			<p>Become an exclusive member</p>
-		</span>
-		<span class="z-index-2">
-			<img src="/icons/icon-arrow-light.svg" loading="lazy" alt="" class="icon-16" />
-		</span>
-	</a>
-
 	<div class="container-large">
 		<div class="margin-bottom-48">
 			<div class="wrap_flex is-align-bottom" use:inview>
@@ -91,14 +82,6 @@
 </section>
 
 <style>
-	.floating-cta {
-		position: absolute;
-		top: 2rem;
-		left: 50%;
-		transform: translateX(-50%);
-		z-index: 10;
-	}
-
 	.player_list {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
@@ -109,10 +92,6 @@
 		.player_list {
 			grid-template-columns: 1fr;
 			gap: 4rem;
-		}
-
-		.floating-cta {
-			display: none;
 		}
 	}
 </style>
