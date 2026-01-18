@@ -619,102 +619,214 @@ If you want a starting point, here's the minimal structure:
 	'capstone-build': `
 ## Build with Gemini CLI
 
-You have a design. Now let's make it real with Gemini CLI assistance.
+You have a design. Now let's build it—using your AI agent as a coding partner.
 
-## Step 1: Create Your Project Folder
+**The skill we're building**: Having a conversation with your agent to write code. You'll describe what you want, evaluate the output, and iterate until it's right.
 
-Open your terminal:
+---
+
+## Part 1: Set Up Your Project
+
+### Ask Your Agent
+
+Open Gemini CLI and prompt:
+
+\`\`\`
+I need to create a project folder for a static HTML website.
+What's the minimal folder structure I need?
+Show me the terminal commands to set it up.
+\`\`\`
+
+**Read the response.** Your agent will give you commands like:
 
 \`\`\`bash
 mkdir my-site
 cd my-site
-\`\`\`
-
-## Step 2: Create Your Files
-
-Create the HTML file:
-
-\`\`\`bash
 touch index.html
 \`\`\`
 
-Paste your design from the previous lesson into \`index.html\`.
+**Execute them.** You now have an empty project folder.
 
-## Step 3: Use Gemini CLI to Refine
+---
 
-Start Gemini CLI and ask it to review your code:
+## Part 2: Generate Your Code
 
-\`\`\`
-Review this HTML for:
-1. Duplication (DRY)
-2. Excess elements (Rams)
-3. Proper structure (Heidegger)
+### Ask Your Agent
 
-Suggest specific improvements.
-\`\`\`
-
-Paste your HTML and let Gemini analyze it.
-
-## Step 4: Add What Earns Its Place
-
-Maybe you want:
-- A favicon
-- Meta description for SEO
-- Open Graph tags for social sharing
-
-Ask Gemini CLI to add only what's necessary:
+Take the design concept from AI Studio and turn it into a prompt:
 
 \`\`\`
-Add the minimum meta tags needed for:
+Create a minimal personal website with:
+- Name: [Your Name]
+- Role: [What you do]
+- Contact: [Your email or link]
+
+Requirements:
+- Single HTML file with embedded CSS
+- Dark background (#000), white text (#fff)
+- Centered content
+- Mobile responsive
+- No JavaScript
+- Apply "less, but better" - nothing decorative
+
+Show me the complete HTML file.
+\`\`\`
+
+**Read the response carefully.** Look for:
+- Is the structure clean?
+- Is there anything you didn't ask for?
+- Does it match your vision?
+
+### Evaluate the Output
+
+Before copying the code, ask yourself:
+
+| Triad Question | Check |
+|----------------|-------|
+| **DRY** | Is there repeated CSS that could be consolidated? |
+| **Rams** | Is there anything decorative that doesn't earn its place? |
+| **Heidegger** | Does this serve the goal of professional presence? |
+
+If something doesn't pass, tell your agent:
+
+\`\`\`
+The code looks good, but:
+- Remove [specific element that doesn't earn its place]
+- Consolidate [repeated CSS]
+- Simplify [overly complex section]
+
+Show me the updated version.
+\`\`\`
+
+**This is the pattern**: Generate → Evaluate → Iterate
+
+---
+
+## Part 3: Refine Through Conversation
+
+### Add Only What Earns Its Place
+
+Ask your agent:
+
+\`\`\`
+What meta tags should I add for:
 - Search engine visibility
-- Social media sharing
+- Social media sharing (Open Graph)
 
-Nothing decorative. Only functional.
+Only include what's truly necessary. Explain why each tag earns its place.
 \`\`\`
 
-## Step 5: Test Locally
+**Read the explanation.** Understand *why* each tag is needed before adding it.
 
-You can preview your site without any build tools:
+### Ask for a Triad Audit
+
+\`\`\`
+Apply the Subtractive Triad to this HTML:
+
+1. DRY: Is anything repeated that could be unified?
+2. RAMS: Does every element earn its existence?
+3. HEIDEGGER: Does the structure serve the whole purpose?
+
+Be specific about what to remove or change.
+\`\`\`
+
+Your agent becomes your code reviewer.
+
+---
+
+## Part 4: Create Your File
+
+Ask your agent how to save the code:
+
+\`\`\`
+How do I create and edit a file called index.html from the terminal?
+What are my options on [macOS/Windows/Linux]?
+\`\`\`
+
+Common methods your agent might suggest:
+- \`nano index.html\` (simple terminal editor)
+- \`code index.html\` (VS Code)
+- Copy/paste into your preferred editor
+
+Paste the final HTML into your \`index.html\` file.
+
+---
+
+## Part 5: Test Locally
+
+### Ask Your Agent
+
+\`\`\`
+How do I preview a static HTML file locally in my browser?
+I want to see it before deploying.
+Show me the simplest method for [macOS/Windows/Linux].
+\`\`\`
+
+**Read the options.** Common methods:
 
 \`\`\`bash
-# If you have Python
+# Python (usually pre-installed on Mac/Linux)
 python -m http.server 8000
 
-# Or use npx
+# Or use npx (no install needed)
 npx serve .
 \`\`\`
 
 Open \`http://localhost:8000\` in your browser.
 
-## Step 6: Final Triad Audit
+### Verify
 
-Before deploying, one final check:
+- Does it look right?
+- Resize your browser—does it work on mobile widths?
+- Is the text readable?
 
-| Question | Check |
-|----------|-------|
-| **DRY** | Is anything repeated that could be unified? |
-| **Rams** | Does every line of code earn its place? |
-| **Heidegger** | Does this serve your goal of professional presence? |
+If something's wrong, describe the issue to your agent:
 
-If something doesn't pass, remove it.
+\`\`\`
+The site looks good on desktop but [describe problem] on mobile.
+How do I fix this?
+\`\`\`
 
 ---
 
-## Your File Structure
+## Part 6: Final Review
+
+### Your File Structure
 
 \`\`\`
 my-site/
 └── index.html
 \`\`\`
 
-That's it. One file. If you need images, add an \`images/\` folder. But only if you need images.
+That's it. One file. If you added images:
+
+\`\`\`
+my-site/
+├── index.html
+└── images/
+    └── photo.jpg
+\`\`\`
+
+But only if the images earn their place.
+
+### The Pattern You Learned
+
+Throughout this lesson, you:
+1. **Asked** your agent for guidance
+2. **Read** and understood its output
+3. **Evaluated** against the Triad
+4. **Iterated** until satisfied
+5. **Created** the final file
+
+**This is agentic development.** You're not copying code blindly. You're having a conversation, understanding the outputs, and making decisions.
 
 ---
 
 ## What You Have Now
 
 - A working site on your local machine
-- Code reviewed through the Triad
+- Code you understand (because you evaluated every piece)
+- A pattern for working with AI agents
 - Ready for deployment
 
 **Next**: Deploy to Cloudflare Pages.
@@ -722,32 +834,106 @@ That's it. One file. If you need images, add an \`images/\` folder. But only if 
 	'capstone-deploy': `
 ## Deploy to Cloudflare Pages
 
-Your site is ready. Let's put it on the internet.
+Your site is ready. Now let's put it on the internet—using your AI agent to guide you through each step.
 
-## Step 1: Create a Cloudflare Account
+**The skill we're building**: Learning to work *with* an AI agent. You'll prompt Gemini CLI, read its outputs, and understand what it's doing. This is how modern development works.
 
-If you don't have one:
-1. Go to [cloudflare.com](https://cloudflare.com)
-2. Sign up (free)
-3. Verify your email
+---
 
-## Step 2: Install Wrangler
+## Part 1: Create Your Cloudflare Account
 
-Wrangler is Cloudflare's CLI tool:
+### Ask Your Agent
+
+Open Gemini CLI and prompt:
+
+\`\`\`
+I need to create a Cloudflare account to host a static website. 
+Walk me through the account creation process step by step.
+What information will I need? What should I watch out for?
+\`\`\`
+
+**Read the response carefully.** Your agent will explain:
+- What Cloudflare is
+- What the free tier includes
+- What information you'll need (email, password)
+- Any gotchas to avoid
+
+### Do It
+
+1. Go to [cloudflare.com/sign-up](https://dash.cloudflare.com/sign-up)
+2. Enter your email and create a password
+3. Verify your email (check spam folder)
+4. You'll land on the dashboard
+
+**Reference**: [Cloudflare Account Setup Docs](https://developers.cloudflare.com/fundamentals/setup/account/)
+
+> **Why Cloudflare?** Free tier, global CDN, no credit card required, owns the infrastructure you'll use professionally. This isn't a toy—it's production infrastructure.
+
+---
+
+## Part 2: Install and Authenticate Wrangler
+
+### Ask Your Agent
+
+\`\`\`
+How do I install Cloudflare's Wrangler CLI tool?
+I'm on [macOS/Windows/Linux]. Show me the commands.
+\`\`\`
+
+**Read the response.** Note:
+- The installation command
+- Any prerequisites (Node.js version, etc.)
+- What the tool does
+
+### Do It
 
 \`\`\`bash
 npm install -g wrangler
 \`\`\`
 
-Authenticate:
+Verify it installed:
+
+\`\`\`bash
+wrangler --version
+\`\`\`
+
+### Authenticate
+
+Ask your agent:
+
+\`\`\`
+How do I authenticate Wrangler with my Cloudflare account?
+What happens when I run wrangler login?
+\`\`\`
+
+Then do it:
 
 \`\`\`bash
 wrangler login
 \`\`\`
 
-This opens a browser to connect your Cloudflare account.
+This opens your browser. Authorize the connection. Return to your terminal.
 
-## Step 3: Deploy
+**Reference**: [Wrangler CLI Docs](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
+
+---
+
+## Part 3: Deploy Your Site
+
+### Ask Your Agent
+
+\`\`\`
+I have a folder with an index.html file. 
+How do I deploy it to Cloudflare Pages using Wrangler?
+Show me the exact command.
+\`\`\`
+
+**Read the response.** Understand:
+- What \`wrangler pages deploy\` does
+- What the \`--project-name\` flag means
+- What URL you'll get
+
+### Do It
 
 From your project folder:
 
@@ -755,64 +941,125 @@ From your project folder:
 wrangler pages deploy . --project-name=my-site
 \`\`\`
 
-**First time?** Wrangler will create the project for you.
+**First time?** Wrangler creates the project automatically. Answer "yes" when prompted.
 
-You'll see output like:
+You'll see:
 
 \`\`\`
 ✨ Deployment complete!
 https://my-site.pages.dev
 \`\`\`
 
-**Your site is live.**
-
-## Step 4: Verify
-
-Open the URL in your browser. You should see your site.
-
-Test on mobile too—resize your browser or use your phone.
-
-## Step 5: Connect a Domain (Optional)
-
-If you have a domain (or want to buy one):
-
-1. In Cloudflare dashboard, go to **Pages** → **your project** → **Custom domains**
-2. Add your domain
-3. Cloudflare guides you through DNS setup
-
-If buying a domain:
-- Cloudflare Registrar has competitive prices
-- No markup, wholesale cost
-- Easy DNS integration
-
-## What You Just Learned
-
-| Skill | What You Did |
-|-------|--------------|
-| **CLI deployment** | \`wrangler pages deploy\` |
-| **Cloud hosting** | Cloudflare Pages (free tier) |
-| **Domain management** | Custom domain setup |
-| **Ownership** | You control the infrastructure |
-
-This is the foundation. Everything else—forms, databases, automations—builds on this.
+**Open that URL.** Your site is live.
 
 ---
 
-## Troubleshooting
+## Part 4: Connect a Custom Domain (Optional)
 
-**"Not logged in"** — Run \`wrangler login\` again.
+### Ask Your Agent
 
-**"Project not found"** — Let wrangler create it, or create manually in Cloudflare dashboard.
+\`\`\`
+I want to connect a custom domain to my Cloudflare Pages site.
+I [have a domain / need to buy one].
+What are my options and what are the steps?
+\`\`\`
 
-**"Build failed"** — For static HTML, no build is needed. Make sure you're deploying from the right folder.
+**Read the response.** Your agent will explain:
+- How to buy a domain through Cloudflare Registrar
+- How to transfer an existing domain
+- How to configure DNS
+
+### If Buying a Domain
+
+Ask:
+
+\`\`\`
+How do I buy a domain through Cloudflare Registrar?
+What's the process and typical cost?
+\`\`\`
+
+Then:
+1. In Cloudflare dashboard → **Domain Registration** → **Register Domain**
+2. Search for your desired domain
+3. Cloudflare charges at-cost (no markup), typically $10-15/year for .com
+4. Complete purchase
+
+### Connect to Your Site
+
+Ask:
+
+\`\`\`
+My Cloudflare Pages project is called "my-site".
+My domain is "example.com".
+How do I connect them using the Cloudflare dashboard or CLI?
+\`\`\`
+
+**Reference**: [Custom Domains for Pages](https://developers.cloudflare.com/pages/configuration/custom-domains/)
+
+---
+
+## Part 5: Verify Everything Works
+
+### Ask Your Agent
+
+\`\`\`
+How do I verify my Cloudflare Pages deployment is working correctly?
+What should I check?
+\`\`\`
+
+**Your checklist:**
+
+| Check | How |
+|-------|-----|
+| Site loads | Visit your \`.pages.dev\` URL |
+| Mobile works | Resize browser or use phone |
+| HTTPS active | Look for lock icon in browser |
+| Custom domain (if set) | Visit your domain |
+
+---
+
+## What You Just Learned
+
+This wasn't just about deploying a website. You learned:
+
+| Skill | Why It Matters |
+|-------|----------------|
+| **Prompting an agent** | You asked Gemini CLI for help at each step |
+| **Reading agent output** | You understood what it told you before acting |
+| **CLI-first workflow** | \`wrangler\` instead of clicking through dashboards |
+| **Infrastructure ownership** | Your Cloudflare account, your domain, your control |
+
+**This is the agentic development pattern:**
+1. Describe what you want to do
+2. Ask the agent for guidance
+3. Read and understand the response
+4. Execute the commands
+5. Verify the results
+
+---
+
+## Troubleshooting via Agent
+
+When something breaks, ask your agent:
+
+\`\`\`
+I ran [command] and got this error:
+[paste error]
+
+What does this mean and how do I fix it?
+\`\`\`
+
+The agent can often diagnose and solve issues faster than searching documentation.
 
 ---
 
 ## What You Have Now
 
+- A Cloudflare account (infrastructure ownership)
+- Wrangler CLI installed and authenticated
 - A live site at \`your-project.pages.dev\`
 - (Optional) A custom domain
-- Infrastructure you own and control
+- **The pattern**: Ask agent → Read output → Execute → Verify
 
 **Next**: Submit your URL and graduate.
 `,
