@@ -548,6 +548,10 @@
 		margin-bottom: 0.75rem;
 	}
 
+	.benefit-item.text-color-white {
+		color: var(--white);
+	}
+
 	.benefits-list.centered .benefit-item {
 		margin-bottom: 0;
 	}
