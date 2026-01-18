@@ -76,7 +76,7 @@
 
 		<ul class="benefits-list centered reveal-element">
 			{#each founding.perks as perk}
-				<li class="benefit-item">
+				<li class="benefit-item text-color-white">
 					<svg class="benefit-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<polyline points="20 6 9 17 4 12"></polyline>
 					</svg>
@@ -96,7 +96,7 @@
 <!-- Monthly Memberships Section -->
 <section class="section background-color-white" use:inview>
 	<div class="container-large">
-		<div class="section-header">
+		<div class="section-header text-center">
 			<h2 class="heading-style-h2">
 				<span class="is-word is-1">Monthly</span>
 				<span class="is-word is-2">Memberships</span>
