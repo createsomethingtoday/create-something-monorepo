@@ -1182,6 +1182,143 @@ export default {
       }
     }
     
+    // ==========================================================================
+    // SUPERMINHASH MIGRATION: Batch re-index templates
+    // ==========================================================================
+    if (url.pathname === '/migrate/superminhash' && request.method === 'POST') {
+      try {
+        const body = await request.json() as { batchSize?: number; offset?: number };
+        const batchSize = Math.min(body.batchSize || 10, 50); // Max 50 per batch
+        const offset = body.offset || 0;
+        
+        console.log(`[SuperMinHash Migration] Starting batch: offset=${offset}, size=${batchSize}`);
+        
+        // Get batch of templates to re-index
+        const templates = await env.DB.prepare(`
+          SELECT id, url, name, creator FROM template_minhash 
+          WHERE url IS NOT NULL AND url != ''
+          ORDER BY id
+          LIMIT ? OFFSET ?
+        `).bind(batchSize, offset).all();
+        
+        const templateList = templates.results as any[] || [];
+        
+        if (templateList.length === 0) {
+          return new Response(JSON.stringify({
+            status: 'complete',
+            message: 'No more templates to re-index',
+            offset,
+            processed: 0
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        
+        const results: Array<{ id: string; status: string; shingles?: number; error?: string }> = [];
+        
+        // Process each template
+        for (const template of templateList) {
+          try {
+            // Fetch fresh content (single page for speed)
+            const content = await fetchPublishedContent(template.url);
+            
+            if (!content) {
+              results.push({ id: template.id, status: 'skipped', error: 'Could not fetch content' });
+              continue;
+            }
+            
+            // Use fetched content
+            const combinedHtml = content.html;
+            const combinedCss = content.css;
+            const combinedJs = content.javascript;
+            
+            // Compute new SuperMinHash signatures
+            const cssSig = computeCssMinHash(combinedCss);
+            const htmlSig = computeHtmlMinHash(combinedHtml);
+            const combinedSig = computeCombinedMinHash(combinedHtml, combinedCss, combinedJs);
+            const lshBands = computeLSHBandHashes(combinedSig.signature);
+            
+            // Update database with new signatures
+            await env.DB.prepare(`
+              UPDATE template_minhash SET 
+                css_signature = ?,
+                html_signature = ?,
+                combined_signature = ?,
+                lsh_bands = ?,
+                css_shingles = ?,
+                html_shingles = ?,
+                combined_shingles = ?
+              WHERE id = ?
+            `).bind(
+              serializeSignatureCompact(cssSig),
+              serializeSignatureCompact(htmlSig),
+              serializeSignatureCompact(combinedSig),
+              serializeLSHBands(lshBands),
+              cssSig.numShingles,
+              htmlSig.numShingles,
+              combinedSig.numShingles,
+              template.id
+            ).run();
+            
+            // Update LSH bands table (minhash_lsh_bands)
+            await env.DB.prepare('DELETE FROM minhash_lsh_bands WHERE template_id = ?').bind(template.id).run();
+            
+            for (let bandIndex = 0; bandIndex < lshBands.length; bandIndex++) {
+              await env.DB.prepare(
+                'INSERT INTO minhash_lsh_bands (band_id, hash_value, template_id) VALUES (?, ?, ?)'
+              ).bind(`band_${bandIndex}`, lshBands[bandIndex], template.id).run();
+            }
+            
+            results.push({ 
+              id: template.id, 
+              status: 'success', 
+              shingles: combinedSig.numShingles 
+            });
+            
+            console.log(`[SuperMinHash Migration] Re-indexed ${template.id}`);
+            
+          } catch (err: any) {
+            results.push({ id: template.id, status: 'error', error: err.message });
+            console.error(`[SuperMinHash Migration] Error for ${template.id}:`, err.message);
+          }
+        }
+        
+        const successful = results.filter(r => r.status === 'success').length;
+        const failed = results.filter(r => r.status === 'error').length;
+        const skipped = results.filter(r => r.status === 'skipped').length;
+        
+        return new Response(JSON.stringify({
+          status: 'batch_complete',
+          offset,
+          batchSize,
+          processed: templateList.length,
+          successful,
+          failed,
+          skipped,
+          nextOffset: offset + templateList.length,
+          results
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        console.error('[SuperMinHash Migration] Error:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Get migration status
+    if (url.pathname === '/migrate/status' && request.method === 'GET') {
+      try {
+        const total = await env.DB.prepare('SELECT COUNT(*) as count FROM template_minhash WHERE url IS NOT NULL').first();
+        const withLsh = await env.DB.prepare('SELECT COUNT(DISTINCT template_id) as count FROM minhash_lsh_bands').first();
+        
+        return new Response(JSON.stringify({
+          totalTemplates: (total as any)?.count || 0,
+          templatesWithLSH: (withLsh as any)?.count || 0,
+          migrationProgress: `${((withLsh as any)?.count || 0) / ((total as any)?.count || 1) * 100}%`
+        }), { headers: { 'Content-Type': 'application/json' } });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
     // Get pages for a specific template
     if (url.pathname.match(/^\/pages\/template\/[^/]+$/) && request.method === 'GET') {
       const templateId = url.pathname.split('/')[3];

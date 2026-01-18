@@ -603,7 +603,7 @@ function extractHeadingPattern(html: string): string {
  * To enable SuperMinHash globally, set USE_SUPERMINHASH = true after
  * re-indexing all templates.
  */
-const USE_SUPERMINHASH = false; // Set to true after full migration
+const USE_SUPERMINHASH = true; // SuperMinHash migration enabled
 
 export function computeMinHash(shingles: Set<string>): MinHashSignature {
   if (USE_SUPERMINHASH) {
