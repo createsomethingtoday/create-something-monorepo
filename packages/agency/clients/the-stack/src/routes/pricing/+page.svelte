@@ -552,6 +552,10 @@
 		color: var(--white);
 	}
 
+	.benefit-item.text-color-lightgrey {
+		color: var(--light-grey);
+	}
+
 	.benefits-list.centered .benefit-item {
 		margin-bottom: 0;
 	}
