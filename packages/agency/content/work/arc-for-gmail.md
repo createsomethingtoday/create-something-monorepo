@@ -61,12 +61,12 @@ published: true
 <pre class="body-sm body-tertiary font-mono leading-loose overflow-x-auto">
 Gmail (OAuth)  ──────arc──────&gt;  Notion (OAuth)
 
-1. User labels email "Log to Notion"
-2. Worker syncs every 5 minutes (cron)
-3. HTML → Notion blocks (minimal transformation)
-4. AI summary generation (Workers AI)
-5. Contact auto-creation + categorization
-					</pre>
+→ User labels email "Log to Notion"
+→ Worker syncs every 5 minutes (cron)
+→ HTML → Notion blocks (minimal transformation)
+→ AI summary generation (Workers AI)
+→ Contact auto-creation + categorization
+</pre>
 </div>
 <p><strong>Arc principles applied:</strong></p>
 <ul class="space-y-3 body body-tertiary pl-6">
@@ -76,8 +76,7 @@ Gmail (OAuth)  ──────arc──────&gt;  Notion (OAuth)
 </li>
 <li class="flex items-start gap-3">
 <span class="body-subtle mt-1">✓</span>
-<span><strong>Minimal transformation:</strong> Preserve email structure, sanitize only when
-							necessary</span>
+<span><strong>Minimal transformation:</strong> Preserve email structure, sanitize only when necessary</span>
 </li>
 <li class="flex items-start gap-3">
 <span class="body-subtle mt-1">✓</span>
