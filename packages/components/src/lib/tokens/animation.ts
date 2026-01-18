@@ -4,7 +4,13 @@
  * Rams: "Good design is unobtrusive"
  * Animations must be perceptible but not distracting (≤500ms)
  *
+ * @remarks
+ * All exports in this module are part of the public design system API.
+ * They are intentionally exposed for external consumption even if not
+ * used internally within this monorepo.
+ *
  * @see /STANDARDS.md - Section 2.1 Animation & Transitions
+ * @packageDocumentation
  */
 
 export const animation = {

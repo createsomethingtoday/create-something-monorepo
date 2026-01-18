@@ -28,6 +28,8 @@ declare global {
 				TURNSTILE_SITE_KEY?: string;
 				LINKEDIN_CLIENT_ID?: string;
 				LINKEDIN_CLIENT_SECRET?: string;
+				TWITTER_CLIENT_ID?: string;
+				TWITTER_CLIENT_SECRET?: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;

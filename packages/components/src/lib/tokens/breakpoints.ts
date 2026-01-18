@@ -6,7 +6,13 @@
  *
  * "The details are not the details. They make the design." - Charles Eames
  *
+ * @remarks
+ * All exports in this module are part of the public design system API.
+ * They are intentionally exposed for external consumption even if not
+ * used internally within this monorepo.
+ *
  * @see /STANDARDS.md - Section 1.6 Responsive Design
+ * @packageDocumentation
  */
 
 export const breakpoints = {

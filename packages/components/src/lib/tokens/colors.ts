@@ -6,7 +6,13 @@
  *
  * "Good design is as little design as possible" - Dieter Rams
  *
+ * @remarks
+ * All exports in this module are part of the public design system API.
+ * They are intentionally exposed for external consumption even if not
+ * used internally within this monorepo.
+ *
  * @see /STANDARDS.md - Section 1.2 Color Palette
+ * @packageDocumentation
  */
 
 export const colors = {

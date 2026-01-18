@@ -57,7 +57,7 @@ function formatOfferingName(type: MatchType | undefined, slug: string): string {
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
-		const body = await request.json();
+		const body = (await request.json()) as { spec?: string };
 		const { spec } = body;
 
 		if (!spec || typeof spec !== 'string') {

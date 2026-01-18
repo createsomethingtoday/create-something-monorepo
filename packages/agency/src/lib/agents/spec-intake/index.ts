@@ -362,17 +362,26 @@ async function callWorkwayIntake(
 		throw new Error(`WORKWAY API error: ${response.statusText}`);
 	}
 
-	const result = await response.json();
+	const result = (await response.json()) as {
+		success: boolean;
+		action?: 'show_offering' | 'clarify' | 'consultation';
+		matched_template?: string;
+		matched_reason?: string;
+		clarifying_questions?: string[];
+		consultation_reason?: string;
+		confidence?: number;
+		understanding?: string;
+	};
 
-	if (result.success) {
+	if (result.success && result.action) {
 		return {
 			action: result.action,
 			matched_template: result.matched_template,
 			matched_reason: result.matched_reason,
 			clarifying_questions: result.clarifying_questions,
 			consultation_reason: result.consultation_reason,
-			confidence: result.confidence,
-			understanding: result.understanding,
+			confidence: result.confidence ?? 0,
+			understanding: result.understanding ?? '',
 		};
 	}
 
