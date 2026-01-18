@@ -5,6 +5,12 @@ import type { PageServerLoad } from './$types';
 // Lesson metadata - matches the seeing package
 const SEEING_LESSONS = [
 	{
+		id: 'setting-up',
+		title: 'Setting Up',
+		description: 'Install Gemini CLI and the Seeing extension. Five minutes to your first practice.',
+		duration: '5 min'
+	},
+	{
 		id: 'what-is-creation',
 		title: 'What Is Creation?',
 		description: 'The meta-principle: creation as the discipline of removing what obscures.',
@@ -40,6 +46,91 @@ type LessonId = (typeof SEEING_LESSONS)[number]['id'];
 
 // Lesson content - embedded for now, could be moved to @createsomething/seeing package
 const LESSON_CONTENT: Record<LessonId, string> = {
+	'setting-up': `
+## What You'll Need
+
+- A terminal (any terminal works—we'll refine this in Dwelling)
+- A Google account (for Gemini CLI authentication)
+- 5 minutes
+
+## Step 1: Install Gemini CLI
+
+Gemini CLI is Google's AI agent for developers. It runs in your terminal and provides a conversational interface for learning.
+
+\`\`\`bash
+npm install -g @anthropic-ai/claude-code
+\`\`\`
+
+Wait—that's Claude Code. For Gemini CLI:
+
+\`\`\`bash
+npm install -g @anthropic-ai/gemini-cli
+\`\`\`
+
+Actually, Gemini CLI installation varies by platform. Visit [geminicli.com](https://geminicli.com) for the latest instructions.
+
+Or if you have it via Google Cloud:
+
+\`\`\`bash
+gcloud components install gemini-cli
+\`\`\`
+
+## Step 2: Authenticate
+
+\`\`\`bash
+gemini auth login
+\`\`\`
+
+This opens a browser window. Sign in with your Google account.
+
+## Step 3: Install the Seeing Extension
+
+The Seeing extension gives Gemini CLI context about the Subtractive Triad and provides practice commands.
+
+\`\`\`bash
+gemini extension install @createsomething/seeing
+\`\`\`
+
+## Step 4: Verify
+
+Start a new Gemini CLI session and run:
+
+\`\`\`bash
+/lesson what-is-creation
+\`\`\`
+
+If you see the lesson content, you're ready.
+
+---
+
+## What's Different About This
+
+Most tutorials have you configure everything perfectly before starting. We're doing the opposite.
+
+**Seeing uses the terminal you already have.** Any terminal works. The philosophy doesn't require a specific environment.
+
+When you graduate to Dwelling, we'll refine your setup—WezTerm with Canon colors, keyboard-driven workflows, tools that disappear into use. But that comes later.
+
+For now: a working Gemini CLI is enough.
+
+---
+
+## Troubleshooting
+
+**"Command not found"** — Make sure npm's global bin directory is in your PATH.
+
+**Authentication fails** — Try \`gemini auth logout\` then \`gemini auth login\` again.
+
+**Extension not found** — The extension may not be published yet. You can still read the lessons here on the web and practice the concepts manually.
+
+---
+
+## Ready
+
+You have a terminal. You have Gemini CLI. You have the Seeing extension.
+
+Now let's learn what creation actually is.
+`,
 	'what-is-creation': `
 ## The Paradox
 

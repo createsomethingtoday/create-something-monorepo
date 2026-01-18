@@ -3,6 +3,12 @@
 
   const SEEING_LESSONS = [
     {
+      id: 'setting-up',
+      title: 'Setting Up',
+      description: 'Install Gemini CLI and the Seeing extension. Five minutes to your first practice.',
+      duration: '5 min'
+    },
+    {
       id: 'what-is-creation',
       title: 'What Is Creation?',
       description: 'The meta-principle: creation as the discipline of removing what obscures.',
