@@ -219,6 +219,56 @@
     </div>
   </section>
 
+  <!-- Cost Clarity -->
+  <section class="cost-section">
+    <h2 class="section-title center">Cost Transparency</h2>
+    <p class="section-intro">
+      Seeing is free. Dwelling requires a Claude subscription.
+    </p>
+
+    <div class="cost-comparison">
+      <div class="cost-card cost-free">
+        <div class="cost-header">
+          <Eye size={24} />
+          <h3>Seeing</h3>
+        </div>
+        <div class="cost-price">
+          <span class="price-amount">$0</span>
+          <span class="price-period">/month</span>
+        </div>
+        <ul class="cost-features">
+          <li>Gemini CLI free tier</li>
+          <li>1,000 requests/day</li>
+          <li>Google account only</li>
+          <li>No credit card required</li>
+        </ul>
+        <p class="cost-note">Sufficient for all philosophy lessons and practice</p>
+      </div>
+
+      <div class="cost-card cost-pro">
+        <div class="cost-header">
+          <Home size={24} />
+          <h3>Dwelling</h3>
+        </div>
+        <div class="cost-price">
+          <span class="price-amount">~$100</span>
+          <span class="price-period">/month</span>
+        </div>
+        <ul class="cost-features">
+          <li>Claude Max subscription</li>
+          <li>Higher usage limits for Claude Code</li>
+          <li>Full MCP tool access</li>
+          <li>Automated praxis & audits</li>
+        </ul>
+        <p class="cost-note">Recommended for production-grade execution</p>
+      </div>
+    </div>
+
+    <p class="cost-philosophy">
+      <em>Start free. Graduate when you're ready. The philosophy costs nothing to learn.</em>
+    </p>
+  </section>
+
   <!-- Installation -->
   <section id="install" class="install-section">
     <h2 class="section-title center">Start Seeing</h2>
@@ -565,6 +615,93 @@
     gap: var(--space-xs);
     font-size: var(--text-body-sm);
     color: var(--color-fg-muted);
+  }
+
+  /* Cost */
+  .cost-section {
+    padding: var(--space-2xl) 0;
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  .cost-comparison {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-lg);
+  }
+
+  .cost-card {
+    flex: 1;
+    min-width: 240px;
+    max-width: 300px;
+    padding: var(--space-lg);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    text-align: center;
+  }
+
+  .cost-free {
+    border-color: var(--color-accent-emphasis);
+  }
+
+  .cost-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    color: var(--color-fg-secondary);
+  }
+
+  .cost-header h3 {
+    font-size: var(--text-h3);
+    margin: 0;
+  }
+
+  .cost-price {
+    margin-bottom: var(--space-md);
+  }
+
+  .price-amount {
+    font-size: var(--text-display);
+    font-weight: var(--font-semibold);
+  }
+
+  .price-period {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .cost-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-md) 0;
+    text-align: left;
+  }
+
+  .cost-features li {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+    padding: var(--space-xs) 0;
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .cost-features li:last-child {
+    border-bottom: none;
+  }
+
+  .cost-note {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    font-style: italic;
+  }
+
+  .cost-philosophy {
+    text-align: center;
+    color: var(--color-fg-tertiary);
+    font-size: var(--text-body-sm);
   }
 
   /* Install */
