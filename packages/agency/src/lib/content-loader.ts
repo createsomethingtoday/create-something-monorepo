@@ -82,7 +82,7 @@ export async function loadWorkBySlug(slug: string): Promise<ContentItem<WorkFron
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: WorkFrontmatter;
-	}>('../content/work/*.md');
+	}>('../../content/work/*.md');
 
 	const items = await loadMarkdownContent(modules, false);
 	const item = items.find((i) => i.slug === slug);
@@ -105,7 +105,7 @@ export async function getWorkSlugs(): Promise<string[]> {
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: WorkFrontmatter;
-	}>('../content/work/*.md');
+	}>('../../content/work/*.md');
 	const items = await loadMarkdownContent(modules, true);
 	return items.map((item) => item.slug);
 }
@@ -117,6 +117,6 @@ export async function getAllWork(): Promise<ContentItem<WorkFrontmatter>[]> {
 	const modules = import.meta.glob<{
 		default: Component;
 		metadata: WorkFrontmatter;
-	}>('../content/work/*.md');
+	}>('../../content/work/*.md');
 	return loadMarkdownContent(modules, true);
 }
