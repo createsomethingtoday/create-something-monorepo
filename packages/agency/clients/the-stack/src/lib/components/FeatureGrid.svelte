@@ -6,7 +6,6 @@
 	 */
 
 	import FeatureCard from './FeatureCard.svelte';
-	import Button from './Button.svelte';
 	import { inview } from '$lib/actions/inview';
 
 	interface Feature {
@@ -18,11 +17,13 @@
 
 	interface Props {
 		title?: string;
+		subtitle?: string;
 		features?: Feature[];
 	}
 
 	let {
 		title = 'Family owned and operated',
+		subtitle = 'The Stack is built on a foundation of passion for pickleball and commitment to our community. We take pride in creating a welcoming space for players of all skill levels.',
 		features = [
 			{
 				image: '/images/Paddle.jpeg',
@@ -58,14 +59,11 @@
 
 <section id="intro" class="section background-color-white">
 	<div class="container-large">
-		<div class="margin-bottom-48">
-			<div class="wrap_flex is-align-bottom" use:inview>
-				<div class="max-width-440"></div>
-				<h2 class="heading-style-h2">
-					<span class="is-word is-1">{title}</span>
-				</h2>
-				<Button href="#" variant="primary" showArrow>Meet our team</Button>
-			</div>
+		<div class="section-header" use:inview>
+			<h2 class="heading-style-h2">
+				<span class="is-word is-1">{title}</span>
+			</h2>
+			<p class="section-subtitle reveal-element">{subtitle}</p>
 		</div>
 
 		<ul class="player_list">
@@ -82,6 +80,20 @@
 </section>
 
 <style>
+	.section-header {
+		text-align: center;
+		max-width: 40rem;
+		margin: 0 auto 4rem;
+	}
+
+	.section-subtitle {
+		font-family: var(--font-satoshi);
+		font-size: var(--text-body-lg);
+		color: var(--dark-grey);
+		margin-top: 1.5rem;
+		line-height: 1.6;
+	}
+
 	.player_list {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
@@ -92,6 +104,10 @@
 		.player_list {
 			grid-template-columns: 1fr;
 			gap: 4rem;
+		}
+
+		.section-header {
+			margin-bottom: 3rem;
 		}
 	}
 </style>
