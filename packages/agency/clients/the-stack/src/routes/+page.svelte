@@ -4,14 +4,16 @@
 	 *
 	 * Sections:
 	 * 1. VideoHero - Full-width video with scale animation
-	 * 2. NewsletterSection - Black background with signup form
-	 * 3. FeatureGrid - 2x2 grid of feature cards
-	 * 4. LocationsSection - Parallax background with location cards
-	 * 5. FAQAccordion - Expandable FAQ items
-	 * 6. BottomCTA - "Ready to become a member?"
+	 * 2. FoundingMembers - First 100 founding member offer (prominent placement)
+	 * 3. NewsletterSection - Black background with signup form
+	 * 4. FeatureGrid - 2x2 grid of feature cards
+	 * 5. LocationsSection - Parallax background with location cards
+	 * 6. FAQAccordion - Expandable FAQ items
+	 * 7. BottomCTA - "Ready to become a member?"
 	 */
 
 	import VideoHero from '$lib/components/VideoHero.svelte';
+	import FoundingMembers from '$lib/components/FoundingMembers.svelte';
 	import NewsletterSection from '$lib/components/NewsletterSection.svelte';
 	import FeatureGrid from '$lib/components/FeatureGrid.svelte';
 	import LocationsSection from '$lib/components/LocationsSection.svelte';
@@ -28,6 +30,7 @@
 </svelte:head>
 
 <VideoHero />
+<FoundingMembers />
 <NewsletterSection />
 <FeatureGrid />
 <LocationsSection />

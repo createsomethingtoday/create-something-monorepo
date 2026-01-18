@@ -16,6 +16,7 @@
 
 	const leftLinks = [
 		{ href: '/book', label: 'book a court' },
+		{ href: '/pricing', label: 'pricing' },
 		{ href: '/locations', label: 'locations' }
 	];
 

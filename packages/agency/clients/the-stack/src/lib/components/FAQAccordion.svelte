@@ -3,10 +3,12 @@
 	 * FAQAccordion Component
 	 *
 	 * FAQ section with expandable items.
+	 * FAQs imported from centralized pricing data for DRY maintenance.
 	 */
 
 	import FAQItem from './FAQItem.svelte';
 	import { inview } from '$lib/actions/inview';
+	import { FAQS as PRICING_FAQS } from '$lib/data/pricing';
 
 	interface FAQ {
 		question: string;
@@ -17,39 +19,8 @@
 		faqs?: FAQ[];
 	}
 
-	let {
-		faqs = [
-			{
-				question: 'Do you have OpenPlay?',
-				answer:
-					'We offer programs for all ages and skill levels, including beginner classes, competitive training, and private lessons.'
-			},
-			{
-				question: 'Do you provide equipment rentals?',
-				answer: 'Yes, we offer racket and ball rentals, as well as a pro shop for purchasing gear.'
-			},
-			{
-				question: 'Can I book a court in advance?',
-				answer:
-					'Absolutely! Courts can be reserved online or via phone up to two weeks in advance.'
-			},
-			{
-				question: 'Are your facilities open year-round?',
-				answer:
-					'Yes, our indoor and outdoor courts are open year-round, weather permitting for outdoor courts.'
-			},
-			{
-				question: 'Do you offer group lessons or clinics?',
-				answer:
-					'Yes, we have group lessons and clinics for all levels, ranging from beginner to advanced players.'
-			},
-			{
-				question: 'How do I sign up for membership?',
-				answer:
-					'You can sign up for membership on our website or visit our front desk for more details.'
-			}
-		]
-	}: Props = $props();
+	// Use pricing FAQs as default, but allow override via props
+	let { faqs = [...PRICING_FAQS] }: Props = $props();
 </script>
 
 <section class="section background-color-black">
