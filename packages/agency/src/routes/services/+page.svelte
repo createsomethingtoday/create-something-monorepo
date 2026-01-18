@@ -467,7 +467,7 @@
 	.service-header {
 		display: flex;
 		gap: var(--space-md);
-		align-items: flex-start;
+		align-items: center;
 	}
 
 	.service-icon {
