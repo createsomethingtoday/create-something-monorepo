@@ -6,7 +6,7 @@ description: When and how to use RLM (Recursive Language Model) for long-context
 # RLM (Recursive Language Model) Patterns
 
 RLM enables processing of contexts far beyond the model's context window (10M+ tokens).
-Based on MIT CSAIL paper (arxiv:2512.24601).
+Based on MIT CSAIL paper (arxiv:2512.24601).Based on MIT CSAIL paper (arxiv:2512.24601) and patterns from ysz/recursive-llm.
 
 ## When to Use RLM
 

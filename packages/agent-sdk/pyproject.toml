@@ -31,6 +31,7 @@ gemini = [
 ]
 modal = [
     "modal>=0.66.0",  # Modal for sandboxed RLM execution
+    "RestrictedPython>=7.0",  # Secure sandbox for RLM code execution
 ]
 server = [
     "fastapi>=0.115.0",       # HTTP server
