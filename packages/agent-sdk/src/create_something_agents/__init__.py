@@ -4,6 +4,9 @@ CREATE SOMETHING Agent SDK
 Reliable Claude agents built on Anthropic's official SDK.
 Multi-provider routing: Claude for reasoning, Gemini for cost-effective execution.
 The tool recedes; the work remains.
+
+RLM (Recursive Language Model) support for long-context processing.
+Based on MIT CSAIL's paper (arxiv:2512.24601).
 """
 
 from create_something_agents.agent import (
@@ -33,6 +36,12 @@ from create_something_agents.extractors import (
     Interaction,
     ExtractionResult,
     extract_patterns,
+)
+from create_something_agents.rlm import (
+    RLMEnvironment,
+    RLMSession,
+    RLMResult,
+    RLMConfig,
 )
 
 __version__ = "0.1.0"
@@ -69,4 +78,9 @@ __all__ = [
     "Interaction",
     "ExtractionResult",
     "extract_patterns",
+    # RLM (Recursive Language Models)
+    "RLMEnvironment",
+    "RLMSession",
+    "RLMResult",
+    "RLMConfig",
 ]

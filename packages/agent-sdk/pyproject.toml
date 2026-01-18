@@ -29,6 +29,9 @@ dependencies = [
 gemini = [
     "google-genai>=1.0.0",  # New unified Gemini SDK (replaces deprecated google-generativeai)
 ]
+modal = [
+    "modal>=0.66.0",  # Modal for sandboxed RLM execution
+]
 server = [
     "fastapi>=0.115.0",       # HTTP server
     "uvicorn[standard]>=0.32.0",  # ASGI server
@@ -40,7 +43,7 @@ dev = [
     "mypy>=1.13.0",           # Type checking
 ]
 all = [
-    "create-something-agents[server,dev,gemini]",
+    "create-something-agents[server,dev,gemini,modal]",
 ]
 
 [project.scripts]
