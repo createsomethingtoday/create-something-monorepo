@@ -7,7 +7,14 @@
   }
 
   let { data }: Props = $props();
-  const { lesson, content, prev, next, lessonIndex, totalLessons } = data;
+  
+  // Use $derived so values update when navigating between lessons
+  const lesson = $derived(data.lesson);
+  const content = $derived(data.content);
+  const prev = $derived(data.prev);
+  const next = $derived(data.next);
+  const lessonIndex = $derived(data.lessonIndex);
+  const totalLessons = $derived(data.totalLessons);
 </script>
 
 <svelte:head>
