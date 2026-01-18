@@ -9,6 +9,7 @@
 	import { inview } from '$lib/actions/inview';
 	import Button from '$lib/components/Button.svelte';
 	import BottomCTA from '$lib/components/BottomCTA.svelte';
+	import FoundingMembers from '$lib/components/FoundingMembers.svelte';
 	import {
 		PRICING,
 		MEMBERSHIP_BENEFITS,
@@ -17,7 +18,7 @@
 		formatPrice
 	} from '$lib/data/pricing';
 
-	const { founding, memberships, walkIn, happyHours, passes, addOns, sponsorship } = PRICING;
+	const { memberships, walkIn, happyHours, passes, addOns, sponsorship } = PRICING;
 </script>
 
 <svelte:head>
@@ -44,54 +45,8 @@
 	</div>
 </section>
 
-<!-- Founding Members Section -->
-<section class="section is-founding background-color-black" use:inview>
-	<div class="container-large">
-		<div class="gold-rule"></div>
-
-		<div class="section-header text-center">
-			<h2 class="heading-style-h2 text-color-white">
-				<span class="is-word is-1">Founding Members</span>
-			</h2>
-			<p class="founding-badge reveal-element">— First {founding.limit} Only —</p>
-			<p class="text-size-medium text-color-lightgrey reveal-element">
-				Available in any combination · Pricing locked in as long as you remain a member
-			</p>
-		</div>
-
-		<div class="pricing-grid founding-grid">
-			<div class="pricing-card is-featured reveal-element">
-				<p class="card-label">Single</p>
-				<p class="card-price">{formatPrice(founding.single)}<span class="price-period">/month</span></p>
-			</div>
-			<div class="pricing-card is-featured reveal-element">
-				<p class="card-label">Couple</p>
-				<p class="card-price">{formatPrice(founding.couples)}<span class="price-period">/month</span></p>
-			</div>
-			<div class="pricing-card is-featured reveal-element">
-				<p class="card-label">Family</p>
-				<p class="card-price">{formatPrice(founding.family)}<span class="price-period">/month</span></p>
-			</div>
-		</div>
-
-		<ul class="benefits-list centered reveal-element">
-			{#each founding.perks as perk}
-				<li class="benefit-item text-color-white">
-					<svg class="benefit-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<polyline points="20 6 9 17 4 12"></polyline>
-					</svg>
-					{perk}
-				</li>
-			{/each}
-		</ul>
-
-		<div class="section-cta reveal-element">
-			<Button href="/contact" variant="primary" showArrow>Become a Founding Member</Button>
-		</div>
-
-		<div class="gold-rule"></div>
-	</div>
-</section>
+<!-- Founding Members Section (shared component) -->
+<FoundingMembers />
 
 <!-- Monthly Memberships Section -->
 <section class="section background-color-white" use:inview>
@@ -381,14 +336,6 @@
 		text-align: center;
 	}
 
-	/* Founding Badge */
-	.founding-badge {
-		font-family: var(--font-coolvetica);
-		font-size: clamp(1.25rem, 3vw, 1.75rem);
-		color: var(--green);
-		text-transform: uppercase;
-		margin: 0.5rem 0 1rem;
-	}
 
 	/* Gold Rules */
 	.gold-rule {
