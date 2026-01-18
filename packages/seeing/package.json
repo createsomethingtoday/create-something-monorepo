@@ -1,0 +1,51 @@
+{
+  "name": "@createsomething/seeing",
+  "version": "0.1.0",
+  "description": "Learn to see through the Subtractive Triad — Gemini CLI extension for CREATE SOMETHING foundations",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "seeing": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "GEMINI.md",
+    "extension.json",
+    "lessons",
+    "commands"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "gemini-cli",
+    "gemini-cli-extension",
+    "create-something",
+    "subtractive-triad",
+    "methodology",
+    "learning"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/seeing"
+  },
+  "homepage": "https://learn.createsomething.space/seeing",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}

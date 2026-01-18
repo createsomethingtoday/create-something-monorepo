@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Local progress (user-specific)
+.seeing/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

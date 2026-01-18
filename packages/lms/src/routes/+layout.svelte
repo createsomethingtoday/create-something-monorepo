@@ -28,6 +28,7 @@
   });
 
   const navLinks = [
+    { label: 'Seeing', href: '/seeing' },
     { label: 'Paths', href: '/paths' },
     { label: 'Praxis', href: '/praxis' },
     { label: 'Progress', href: '/progress' }

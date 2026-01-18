@@ -1,0 +1,68 @@
+{
+  "$schema": "https://geminicli.com/schemas/extension.json",
+  "name": "@createsomething/seeing",
+  "displayName": "CREATE SOMETHING — Seeing",
+  "description": "Learn to see duplication, excess, and disconnection through the Subtractive Triad",
+  "version": "0.1.0",
+  "publisher": "createsomething",
+  "icon": "https://createsomething.space/icons/seeing.svg",
+  "categories": ["Education", "Methodology", "Code Quality"],
+  "keywords": ["subtractive-triad", "dry", "rams", "heidegger", "learning"],
+  
+  "contextFiles": ["GEMINI.md"],
+  
+  "commands": [
+    {
+      "name": "triad",
+      "description": "Run a Subtractive Triad audit on a file or decision",
+      "template": "commands/triad.md"
+    },
+    {
+      "name": "dry",
+      "description": "Ask: Have I built this before?",
+      "template": "commands/dry.md"
+    },
+    {
+      "name": "rams",
+      "description": "Ask: Does this earn its existence?",
+      "template": "commands/rams.md"
+    },
+    {
+      "name": "heidegger",
+      "description": "Ask: Does this serve the whole?",
+      "template": "commands/heidegger.md"
+    },
+    {
+      "name": "lesson",
+      "description": "Read a Seeing lesson",
+      "template": "commands/lesson.md"
+    },
+    {
+      "name": "reflect",
+      "description": "Record a learning reflection",
+      "template": "commands/reflect.md"
+    },
+    {
+      "name": "progress",
+      "description": "View your Seeing journey progress",
+      "template": "commands/progress.md"
+    },
+    {
+      "name": "graduate",
+      "description": "Check if you're ready to graduate to Dwelling",
+      "template": "commands/graduate.md"
+    }
+  ],
+
+  "mcp": {
+    "command": "npx",
+    "args": ["@createsomething/seeing"],
+    "env": {}
+  },
+
+  "links": {
+    "homepage": "https://learn.createsomething.space/seeing",
+    "documentation": "https://createsomething.io/docs/seeing",
+    "graduation": "https://learn.createsomething.space/dwelling"
+  }
+}
