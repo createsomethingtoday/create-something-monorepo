@@ -56,28 +56,28 @@ export const services: Service[] = [
 		id: 'web-development',
 		title: 'Web Development',
 		description:
-			'3 weeks to production. Sub-100ms response times. Edge-deployed, zero maintenance. Sites that ship fast because we use patterns that already work.',
+			'3 weeks to production. Sub-100ms response. We build the infrastructure agents need to work reliably—clean APIs, typed data, observable state.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
 
 		whenToUse: [
-			'You need a website or web app shipped in weeks, not months',
-			'Your current site is slow, fragmented, or hard to maintain',
-			'You want automation opportunities identified during development'
+			'You need a site shipped in weeks, not months',
+			'Your current infrastructure makes automation difficult',
+			'You want a foundation that supports agents later'
 		],
 
 		whatThisRemoves: [
-			'Scattered website code across multiple platforms',
-			'Manual deployment overhead and version conflicts',
-			'Reinventing patterns that already exist'
+			'Fragmented code across multiple platforms',
+			'Manual deployment and version conflicts',
+			'Technical debt that blocks future automation'
 		],
 
 		howItWorks: [
 			'Production-proven component library',
 			'Type-safe TypeScript throughout',
-			'Cloudflare Pages deployment (global edge)',
-			'Automation opportunity assessment included'
+			'Cloudflare Pages (global edge, sub-100ms)',
+			'Automation audit included—we map what agents could handle next'
 		],
 
 		proof: {
@@ -95,30 +95,30 @@ export const services: Service[] = [
 	},
 	{
 		id: 'automation',
-		title: 'AI Automation Systems',
+		title: 'Workflow Automation',
 		description:
-			'60-70% time savings on manual work. 120 hours/week of research became automated. Not chatbots—systems that process data, make decisions, and talk to your tools.',
+			'120 hours/week of research became automated. We build systems that process data, make decisions, and talk to your tools—the foundation before agents make sense.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
 
 		whenToUse: [
-			'Manual tasks consume more than 10 hours/week of skilled labor',
-			'Data moves between systems via copy-paste or manual entry',
-			'Repeatable decisions follow patterns a human could teach'
+			'Manual tasks consume 10+ hours/week of skilled labor',
+			'Data moves between systems via copy-paste',
+			'Repeatable decisions follow patterns you could teach'
 		],
 
 		whatThisRemoves: [
-			'Manual tasks consuming creative bandwidth',
-			'Human bottlenecks in data transfer between systems',
-			'Decision fatigue from context-switching between tools'
+			'Manual tasks eating your best hours',
+			'Copy-paste between disconnected tools',
+			'Decision fatigue from constant context-switching'
 		],
 
 		howItWorks: [
-			'Claude Code for intelligent automation design',
-			'Cloudflare Workers for serverless execution',
-			'OAuth integrations for multi-user access',
-			'Tracked metrics (time saved, cost, errors)'
+			'Claude Code for automation design',
+			'Cloudflare Workers for execution',
+			'OAuth integrations for your existing tools',
+			'Metrics you can verify: time saved, errors caught, cost per run'
 		],
 
 		proof: {
@@ -136,30 +136,30 @@ export const services: Service[] = [
 	},
 	{
 		id: 'agentic-systems',
-		title: 'Agentic Systems Engineering',
+		title: 'Accountable Agents',
 		description:
-			'155 scripts became 13. 92% cost reduction. Long-running AI that makes decisions while you sleep—the system handles complexity, you handle strategy.',
+			'155 scripts became 13. 92% cost reduction. Agents that run for hours, make decisions, recover from failures, and prove what they did. The guardrails your compliance team will approve.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
 
 		whenToUse: [
 			'Workflows span hours or days, not seconds',
-			'Multiple systems need to coordinate decisions autonomously',
-			'Human bottlenecks slow down repeatable processes'
+			'Multiple systems need to coordinate autonomously',
+			'You need agents you can audit and trust'
 		],
 
 		whatThisRemoves: [
-			"Disconnected systems that don't talk to each other",
-			'Decision paralysis from incomplete information',
-			'Human coordination overhead across workflows'
+			'Systems that fail silently',
+			'Decisions you cannot trace or explain',
+			'Human coordination overhead across long-running processes'
 		],
 
 		howItWorks: [
-			'Long-running workflows (hours to days)',
-			'Cloudflare Workflows for durable execution',
-			'Claude Code for intelligent decision-making',
-			'Production monitoring and cost control'
+			'Durable execution (hours to days)',
+			'Checkpointing—agents resume after failures',
+			'Observable decision trails for every action',
+			'Cost control and production monitoring'
 		],
 
 		proof: {
@@ -177,30 +177,30 @@ export const services: Service[] = [
 	},
 	{
 		id: 'partnership',
-		title: 'Ongoing Systems Partnership',
+		title: 'Systems Partnership',
 		description:
-			'2-4 new automation features per month. 4-hour response time. We maintain what we build, optimize what runs, and ship new capabilities monthly.',
+			'2-4 new features per month. 4-hour response. We maintain what runs, optimize what costs too much, and ship new capabilities you did not have to spec.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
 
 		whenToUse: [
-			'You have production AI systems that need monitoring',
-			'Technical debt accumulates faster than you can address it',
-			'You want new automation features developed regularly'
+			'You have production systems that need watching',
+			'Technical debt grows faster than you can pay it down',
+			'You want new automation without new hiring'
 		],
 
 		whatThisRemoves: [
-			'Accumulating technical debt in production systems',
-			'Reactive firefighting instead of proactive optimization',
-			'Missed opportunities for automation in daily operations'
+			'Technical debt piling up in production',
+			'Firefighting instead of building',
+			'Automation opportunities you never get to'
 		],
 
 		howItWorks: [
 			'System maintenance and monitoring',
-			'Performance optimization (speed + cost)',
-			'New automation development (2-4 features/month)',
-			'Research collaboration (your systems become case studies)'
+			'Cost and speed optimization',
+			'2-4 new features per month',
+			'Quarterly research collaboration—your systems become case studies'
 		],
 
 		proof: {
@@ -218,30 +218,30 @@ export const services: Service[] = [
 	},
 	{
 		id: 'transformation',
-		title: 'AI-Native Transformation',
+		title: 'Team Enablement',
 		description:
-			'Your team builds AI systems in 90 days. Hands-on training, a guided project shipped to production, and an internal playbook you keep.',
+			'Your team ships an AI system in 90 days. Hands-on training, a real project in production, and a playbook you own. No vendor lock-in.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
 
 		whenToUse: [
 			'Your team wants AI capability but lacks the starting point',
-			"You're hiring AI talent but need to bridge the gap",
-			'Vendor dependency feels risky for core operations'
+			'You are hiring AI talent and need to bridge the gap now',
+			'Vendor dependency feels risky for core workflows'
 		],
 
 		whatThisRemoves: [
-			'Organizational resistance to AI adoption',
-			'Knowledge silos between teams',
-			'Dependency on external vendors for AI capability'
+			'Organizational resistance slowing adoption',
+			'Knowledge trapped in individual heads',
+			'Dependency on us (or anyone) for your AI capability'
 		],
 
 		howItWorks: [
 			'Current state assessment and workflow audit',
-			'Hands-on Claude Code training for your team',
-			'Guided first automation project',
-			'Internal playbook development'
+			'Hands-on Claude Code training',
+			'Guided project: your team ships something real',
+			'Internal playbook you keep forever'
 		],
 
 		proof: {
@@ -259,30 +259,30 @@ export const services: Service[] = [
 	},
 	{
 		id: 'advisory',
-		title: 'Strategic Advisory',
+		title: 'Advisory',
 		description:
-			'Monthly office hours. Quarterly architecture reviews. Priority support with 4-hour response. External perspective on your AI roadmap.',
+			'Monthly office hours. Quarterly architecture reviews. 4-hour response. An outside perspective when you are too close to the problem.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
 
 		whenToUse: [
-			'AI investments feel disconnected or uncertain',
-			'You need external perspective on technical direction',
-			'Decision paralysis slows your AI roadmap'
+			'AI investments feel scattered',
+			'You need outside perspective on technical direction',
+			'Decision paralysis is slowing your roadmap'
 		],
 
 		whatThisRemoves: [
-			'Uncertainty about AI infrastructure direction',
-			'Misaligned investments in disconnected tools',
-			'Strategic blind spots in AI maturity'
+			'Uncertainty about where to invest',
+			'Tools that do not talk to each other',
+			'Blind spots you cannot see from the inside'
 		],
 
 		howItWorks: [
-			'Quarterly strategic planning sessions',
+			'Quarterly planning sessions',
 			'Architecture review of your systems',
-			'Performance optimization guidance',
-			'Pre-publication access to research'
+			'Performance and cost guidance',
+			'Early access to our research'
 		],
 
 		proof: {
@@ -312,25 +312,25 @@ export const products: Service[] = [
 		id: 'ai-readiness-assessment',
 		title: 'AI Readiness Assessment',
 		description:
-			'3 minutes to know where to start. Three questions, instant recommendation, no signup required.',
+			'3 minutes to know where to start. Three questions. Instant recommendation. No signup.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
 		whenToUse: [
-			"You're curious about AI but unsure where to start",
-			'You want to understand your automation opportunities',
-			'You need a framework for evaluating AI investments'
+			'You are curious but unsure where to begin',
+			'You want to map your automation opportunities',
+			'You need a framework before talking to vendors'
 		],
 		whatThisRemoves: [
-			'Uncertainty about AI starting points',
-			'Analysis paralysis when considering AI tools',
-			'Wasted time exploring irrelevant AI solutions'
+			'Uncertainty about what to automate first',
+			'Analysis paralysis when evaluating AI tools',
+			'Time wasted exploring things that do not fit'
 		],
 		howItWorks: [
 			'3-minute interactive assessment',
-			'Maps your situation to your biggest opportunity',
-			'Personalized recommendation based on responses',
-			'Optional consultation pathway if complexity warrants'
+			'Maps your situation to the highest-impact starting point',
+			'Recommendation based on your actual responses',
+			'Consultation path if complexity warrants it'
 		],
 		proof: {
 			caseStudy: '/discover',
@@ -348,25 +348,25 @@ export const products: Service[] = [
 		id: 'triad-audit-template',
 		title: 'Triad Audit Template',
 		description:
-			'The exact framework behind the 155→13 script reduction. 1 hour to evaluate your systems for automation potential.',
+			'The framework behind the 155→13 script reduction. Run it yourself in an hour.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
 		whenToUse: [
-			'You want to evaluate your own systems for automation potential',
-			'Your team needs a shared vocabulary for AI decisions',
+			'You want to evaluate your own systems',
+			'Your team needs shared vocabulary for automation decisions',
 			'You prefer DIY with a proven framework'
 		],
 		whatThisRemoves: [
-			'Ad-hoc automation decisions without framework',
-			'Miscommunication about what to automate',
-			'Wasted effort on automations that complicate rather than simplify'
+			'Ad-hoc decisions about what to automate',
+			'Arguments about priorities',
+			'Automations that make things more complicated'
 		],
 		howItWorks: [
-			'Downloadable audit template (Markdown)',
+			'Markdown template you can edit',
 			'Step-by-step walkthrough with real examples',
-			'Case study from Kickstand (155→13 scripts)',
-			'Integration with Claude Code via skill file'
+			'Case study: Kickstand (155→13 scripts)',
+			'Claude Code skill for automated audits'
 		],
 		proof: {
 			caseStudy: 'https://createsomething.io/papers/kickstand-triad-audit',
@@ -384,25 +384,25 @@ export const products: Service[] = [
 		id: 'canon-css-starter',
 		title: 'Canon CSS Starter',
 		description:
-			'5 minutes to consistent design. WCAG AA compliant, golden ratio spacing, the same tokens powering 4 production sites.',
+			'5 minutes to consistent design. WCAG AA. Golden ratio spacing. The same tokens running on 4 production sites.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
 		whenToUse: [
-			'You want a minimal, principled CSS foundation',
+			'You want a minimal CSS foundation',
 			'You need consistent tokens across projects',
-			'You prefer established patterns over starting from scratch'
+			'You prefer patterns over starting from zero'
 		],
 		whatThisRemoves: [
-			'Decision fatigue over color/spacing/typography',
-			'Inconsistent visual language across projects',
-			'Arbitrary design choices that drift over time'
+			'Decision fatigue over colors and spacing',
+			'Inconsistent visuals across projects',
+			'Design choices that drift over time'
 		],
 		howItWorks: [
 			'npm install @create-something/components',
 			'Import tokens.css or canon.css',
-			'Golden ratio spacing, semantic colors, motion tokens',
-			'Works with Tailwind or pure CSS'
+			'Golden ratio spacing, semantic colors, motion',
+			'Works with Tailwind or plain CSS'
 		],
 		proof: {
 			caseStudy: 'https://github.com/createsomethingtoday/create-something-monorepo',
@@ -421,25 +421,25 @@ export const products: Service[] = [
 		id: 'vertical-templates',
 		title: 'Vertical Templates',
 		description:
-			'Professional website deployed same day. Built-in lead capture, analytics, and edge hosting. No dev time, no maintenance.',
+			'Professional website deployed same day. Lead capture, analytics, edge hosting. No dev time.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
 		whenToUse: [
-			'You need a professional website quickly',
-			'Your industry has specific requirements (law, architecture, etc.)',
+			'You need a professional site quickly',
+			'Your industry has specific requirements',
 			'You want automation-ready infrastructure from day one'
 		],
 		whatThisRemoves: [
 			'Months of custom development for standard needs',
-			'Generic templates that miss industry requirements',
-			'Manual lead capture and follow-up processes'
+			'Generic templates that miss your industry',
+			'Manual lead capture and follow-up'
 		],
 		howItWorks: [
 			'Choose your vertical (Law Firm, Architecture, etc.)',
 			'Deploy to your subdomain instantly',
-			'Customize content via admin panel',
-			'Built-in analytics and lead tracking'
+			'Edit content via admin panel',
+			'Analytics and lead tracking included'
 		],
 		proof: {
 			caseStudy: '/work/templates',
@@ -485,31 +485,31 @@ export const products: Service[] = [
 		id: 'automation-patterns',
 		title: 'Automation Patterns Pack',
 		description:
-			'Skip 20 hours of research. 10 copy-paste patterns, 3 Claude Code skills, shell scripts that work immediately. Used across 10+ client engagements.',
+			'Skip 20 hours of research. 10 patterns, 3 Claude Code skills, shell scripts. Used on 10+ client engagements.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
 		whenToUse: [
-			"You're a solo dev doing everything yourself",
-			'You want proven patterns, not trial-and-error',
+			'You are a solo dev doing everything yourself',
+			'You want patterns that already work',
 			'You bill by the hour and hate wasting time on setup'
 		],
 		whatThisRemoves: [
-			'Hours spent figuring out "how should I automate this?"',
-			'Context switching between coding and researching patterns',
+			'Hours deciding "how should I automate this?"',
+			'Switching between coding and researching',
 			'The guilt of "I should build this myself"'
 		],
 		howItWorks: [
-			'10 copy-paste patterns with complexity ratings',
-			'3 Claude Code skills you drop into .claude/',
-			'Shell scripts that work immediately',
+			'10 patterns with complexity ratings',
+			'3 Claude Code skills (drop into .claude/)',
+			'Shell scripts that run immediately',
 			'No platform, no login—just markdown and code'
 		],
 		proof: {
 			caseStudy: '/work/viralytics',
 			name: 'Fractional CTO Playbook',
-			headline: 'The patterns I repeat across every client engagement',
-			stats: ['20 hours saved', 'Used across 10+ clients', 'Download and apply today']
+			headline: 'The patterns I repeat across every engagement',
+			stats: ['20 hours saved', '10+ clients', 'Download and apply']
 		},
 		pricing: '$99',
 		timeline: 'Instant download',
@@ -521,24 +521,24 @@ export const products: Service[] = [
 		id: 'agent-in-a-box',
 		title: 'Agent-in-a-Box Kit',
 		description:
-			'The exact setup behind the 155→13 script reduction. One command to install. 90 days of weekly office hours. Start shipping in an hour.',
+			'The exact setup behind 155→13 scripts. One command to install. 90 days of office hours. Ship in an hour.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
 		whenToUse: [
-			'You want the full CREATE SOMETHING development setup',
-			'Your team needs a standardized AI development environment',
-			'You want onboarding support, not just documentation'
+			'You want our full development environment',
+			'Your team needs a standardized AI setup',
+			'You want support, not just docs'
 		],
 		whatThisRemoves: [
-			'Hours of tool configuration and debugging',
-			'Inconsistent environments across team members',
-			'Learning curve for Claude Code best practices'
+			'Hours of tool configuration',
+			'Inconsistent environments across your team',
+			'The learning curve for Claude Code'
 		],
 		howItWorks: [
 			'npx @create-something/agent-kit --key=xxx',
 			'MCP server templates for common integrations',
-			'90-day weekly office hours for questions',
+			'90 days of weekly office hours',
 			'LMS access for self-paced learning'
 		],
 		proof: {

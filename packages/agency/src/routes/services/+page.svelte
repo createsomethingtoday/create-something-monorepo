@@ -72,8 +72,8 @@
 
 <SEO
 	title="Services"
-	description="155 scripts became 13. 120 hours/week of research became automated. AI automation, agentic systems, and web platforms—we build what you'll actually use."
-	keywords="agentic systems, AI automation, autonomous systems, web development, transformation consulting, strategic advisory"
+	description="155 scripts became 13. 120 hours/week became automated. We meet you where you are and build toward agents that actually work."
+	keywords="accountable agents, workflow automation, web development, AI systems, Claude Code"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	services={serviceSchemaData}
@@ -96,10 +96,10 @@
 			</p>
 		{:else}
 			<p class="eyebrow">What we do</p>
-			<h1 class="hero-title">Ship faster. Eliminate manual work.</h1>
+			<h1 class="hero-title">We meet you where you are.</h1>
 			<p class="hero-subtitle">
-				155 scripts became 13. 120 hours/week of research became automated. 26 hours built what 120 hours was estimated for.
-				Here's how we do it.
+				155 scripts became 13. 120 hours/week of research became automated. 
+				Every business is somewhere on the path to agents. We build the infrastructure that makes them trustworthy—starting wherever you are today.
 			</p>
 		{/if}
 	</div>
@@ -109,8 +109,8 @@
 <section class="products-section">
 	<div class="max-w-5xl mx-auto px-6">
 		<div class="section-header">
-			<h2 class="section-title">Products</h2>
-			<p class="section-subtitle">Start today. No calls, no proposals—just tools that work.</p>
+			<h2 class="section-title">Start here</h2>
+			<p class="section-subtitle">No calls, no proposals. Tools you can use today.</p>
 		</div>
 		<div class="products-grid">
 			{#each displayProducts as product, index}
@@ -145,8 +145,8 @@
 <section class="services-section">
 	<div class="max-w-5xl mx-auto px-6">
 		<div class="section-header">
-			<h2 class="section-title">Consulting Services</h2>
-			<p class="section-subtitle">When you need hands-on work, not just tools. We've shipped 40+ production systems.</p>
+			<h2 class="section-title">When you need more</h2>
+			<p class="section-subtitle">Hands-on work, not just tools. 40+ production systems shipped.</p>
 		</div>
 		<div class="services-grid">
 			{#each displayServices as service, index}
@@ -258,11 +258,11 @@
 		<div class="pricing-qualifier">
 			<h3 class="qualifier-title">What it costs</h3>
 			<p class="qualifier-text">
-				Products start at $49/month. Consulting ranges from $5,000 to $50,000+ depending on scope.
+				Products start free. Consulting ranges from $5,000 to $50,000+ depending on scope.
 				Most projects land between $15K-$25K and ship in 4-8 weeks.
 			</p>
 			<p class="qualifier-note">
-				30-minute intro call is free. We'll tell you honestly if we're the right fit—and if not, where else to look.
+				30-minute call is free. We'll tell you if we're the right fit—and if not, where else to look.
 			</p>
 		</div>
 	</div>
