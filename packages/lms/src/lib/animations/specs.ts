@@ -130,6 +130,58 @@ export const canonRevealStyles: CanonRevealStyle[] = [
 ];
 
 /**
+ * Subtractive Triad - Creation is removing what obscures
+ * The marble dissolves to reveal the sculpture within.
+ */
+export const subtractiveTriadSpec: AnimationSpec = {
+  id: 'subtractive-triad',
+  name: 'Subtractive Triad',
+  description: 'Creation is the discipline of removing what obscures.',
+  duration: 6000,
+  canvas: {
+    width: 800,
+    height: 450,
+    background: '#000000',
+  },
+  phases: [
+    { id: 'obscured', label: 'OBSCURED — Hidden in noise', start: 0, end: 0.2 },
+    { id: 'dry', label: 'DRY — Remove duplication', start: 0.2, end: 0.4 },
+    { id: 'rams', label: 'RAMS — Remove excess', start: 0.4, end: 0.6 },
+    { id: 'heidegger', label: 'HEIDEGGER — Remove disconnection', start: 0.6, end: 0.8 },
+    { id: 'revealed', label: 'REVEALED — The essential remains', start: 0.8, end: 1 },
+  ],
+  reveal: {
+    text: 'Creation is subtraction.',
+    startPhase: 0.85,
+  },
+};
+
+/**
+ * Marble to David - Michelangelo's insight visualized
+ * Chipping away to reveal what was always there.
+ */
+export const marbleToDavidSpec: AnimationSpec = {
+  id: 'marble-to-david',
+  name: 'Marble to David',
+  description: "I saw the angel in the marble and carved until I set him free.",
+  duration: 5000,
+  canvas: {
+    width: 800,
+    height: 450,
+    background: '#000000',
+  },
+  phases: [
+    { id: 'marble', label: 'THE MARBLE — Potential hidden', start: 0, end: 0.25 },
+    { id: 'carving', label: 'CARVING — Removing what is not David', start: 0.25, end: 0.75 },
+    { id: 'revealed', label: 'DAVID — Was always there', start: 0.75, end: 1 },
+  ],
+  reveal: {
+    text: 'The angel was always in the marble.',
+    startPhase: 0.8,
+  },
+};
+
+/**
  * Animation Specs Registry
  */
 export const animationSpecs: Record<string, AnimationSpec> = {
@@ -137,6 +189,10 @@ export const animationSpecs: Record<string, AnimationSpec> = {
   'tool-receding': toolRecedingSpec,
   'IDEvsTerminal': ideVsTerminalSpec,
   'ide-vs-terminal': ideVsTerminalSpec,
+  'SubtractiveTriad': subtractiveTriadSpec,
+  'subtractive-triad': subtractiveTriadSpec,
+  'MarbleToDavid': marbleToDavidSpec,
+  'marble-to-david': marbleToDavidSpec,
 };
 
 /**

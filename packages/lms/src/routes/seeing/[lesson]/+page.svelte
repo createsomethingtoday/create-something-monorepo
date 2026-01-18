@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ArrowLeft, ArrowRight, Terminal, Eye } from 'lucide-svelte';
+  import { InteractiveLesson } from '$lib/components/lesson';
   import type { PageData } from './$types';
 
   interface Props {
@@ -7,7 +8,7 @@
   }
 
   let { data }: Props = $props();
-  const { lesson, content, prev, next, lessonIndex, totalLessons } = data;
+  const { lesson, content, prev, next, lessonIndex, totalLessons, interactive, interactiveData } = data;
 </script>
 
 <svelte:head>
@@ -15,79 +16,221 @@
   <meta name="description" content={lesson.description} />
 </svelte:head>
 
-<article class="max-w-3xl mx-auto px-6 py-12">
-  <!-- Breadcrumb -->
-  <nav class="breadcrumb">
-    <a href="/seeing" class="breadcrumb-link">
-      <Eye size={16} />
-      Seeing
-    </a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">Lesson {lessonIndex + 1}</span>
-  </nav>
+{#if interactive && interactiveData}
+  <!-- Interactive Lesson Mode -->
+  <div class="interactive-wrapper">
+    <!-- Minimal Header -->
+    <header class="interactive-header">
+      <a href="/seeing" class="back-link">
+        <Eye size={16} />
+        <span>Seeing</span>
+      </a>
+      <span class="lesson-indicator">Lesson {lessonIndex + 1} of {totalLessons}</span>
+    </header>
 
-  <!-- Header -->
-  <header class="lesson-header">
-    <div class="lesson-meta">
-      <span class="lesson-number">Lesson {lessonIndex + 1} of {totalLessons}</span>
-      <span class="lesson-duration">{lesson.duration}</span>
-    </div>
-    <h1 class="lesson-title">{lesson.title}</h1>
-    <p class="lesson-description">{lesson.description}</p>
-  </header>
+    <!-- Interactive Content -->
+    <InteractiveLesson data={interactiveData as { sections: unknown[] }} />
 
-  <!-- Content -->
-  <div class="prose lesson-content">
-    {@html content}
+    <!-- Navigation Footer -->
+    <nav class="interactive-nav">
+      {#if prev}
+        <a href="/seeing/{prev.id}" class="nav-link nav-prev">
+          <ArrowLeft size={16} />
+          <span>{prev.title}</span>
+        </a>
+      {:else}
+        <div></div>
+      {/if}
+
+      <!-- Practice CTA -->
+      <div class="practice-inline">
+        <Terminal size={16} />
+        <code>/lesson {lesson.id}</code>
+      </div>
+
+      {#if next}
+        <a href="/seeing/{next.id}" class="nav-link nav-next">
+          <span>{next.title}</span>
+          <ArrowRight size={16} />
+        </a>
+      {:else}
+        <a href="/seeing#install" class="nav-link nav-next graduation">
+          <span>Install Seeing</span>
+          <ArrowRight size={16} />
+        </a>
+      {/if}
+    </nav>
   </div>
+{:else}
+  <!-- Markdown Lesson Mode -->
+  <article class="max-w-3xl mx-auto px-6 py-12">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a href="/seeing" class="breadcrumb-link">
+        <Eye size={16} />
+        Seeing
+      </a>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current">Lesson {lessonIndex + 1}</span>
+    </nav>
 
-  <!-- Practice CTA -->
-  <aside class="practice-cta">
-    <div class="practice-icon">
-      <Terminal size={24} />
+    <!-- Header -->
+    <header class="lesson-header">
+      <div class="lesson-meta">
+        <span class="lesson-number">Lesson {lessonIndex + 1} of {totalLessons}</span>
+        <span class="lesson-duration">{lesson.duration}</span>
+      </div>
+      <h1 class="lesson-title">{lesson.title}</h1>
+      <p class="lesson-description">{lesson.description}</p>
+    </header>
+
+    <!-- Content -->
+    <div class="prose lesson-content">
+      {@html content}
     </div>
-    <div class="practice-content">
-      <h3>Practice in Gemini CLI</h3>
-      <p>Reading is the beginning. Practice develops perception.</p>
-      <code>/lesson {lesson.id}</code>
-    </div>
-  </aside>
 
-  <!-- Navigation -->
-  <nav class="lesson-nav">
-    {#if prev}
-      <a href="/seeing/{prev.id}" class="nav-link nav-prev">
-        <ArrowLeft size={16} />
-        <div>
-          <span class="nav-label">Previous</span>
-          <span class="nav-title">{prev.title}</span>
-        </div>
-      </a>
-    {:else}
-      <div></div>
-    {/if}
+    <!-- Practice CTA -->
+    <aside class="practice-cta">
+      <div class="practice-icon">
+        <Terminal size={24} />
+      </div>
+      <div class="practice-content">
+        <h3>Practice in Gemini CLI</h3>
+        <p>Reading is the beginning. Practice develops perception.</p>
+        <code>/lesson {lesson.id}</code>
+      </div>
+    </aside>
 
-    {#if next}
-      <a href="/seeing/{next.id}" class="nav-link nav-next">
-        <div>
-          <span class="nav-label">Next</span>
-          <span class="nav-title">{next.title}</span>
-        </div>
-        <ArrowRight size={16} />
-      </a>
-    {:else}
-      <a href="/seeing#install" class="nav-link nav-next graduation">
-        <div>
-          <span class="nav-label">Ready to practice?</span>
-          <span class="nav-title">Install Seeing</span>
-        </div>
-        <ArrowRight size={16} />
-      </a>
-    {/if}
-  </nav>
-</article>
+    <!-- Navigation -->
+    <nav class="lesson-nav">
+      {#if prev}
+        <a href="/seeing/{prev.id}" class="nav-link nav-prev">
+          <ArrowLeft size={16} />
+          <div>
+            <span class="nav-label">Previous</span>
+            <span class="nav-title">{prev.title}</span>
+          </div>
+        </a>
+      {:else}
+        <div></div>
+      {/if}
+
+      {#if next}
+        <a href="/seeing/{next.id}" class="nav-link nav-next">
+          <div>
+            <span class="nav-label">Next</span>
+            <span class="nav-title">{next.title}</span>
+          </div>
+          <ArrowRight size={16} />
+        </a>
+      {:else}
+        <a href="/seeing#install" class="nav-link nav-next graduation">
+          <div>
+            <span class="nav-label">Ready to practice?</span>
+            <span class="nav-title">Install Seeing</span>
+          </div>
+          <ArrowRight size={16} />
+        </a>
+      {/if}
+    </nav>
+  </article>
+{/if}
 
 <style>
+  /* Interactive Mode Styles */
+  .interactive-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .interactive-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+  }
+
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .back-link:hover {
+    color: var(--color-fg-primary);
+  }
+
+  .lesson-indicator {
+    font-family: var(--font-mono);
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  .interactive-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .interactive-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .interactive-nav .nav-link:hover {
+    border-color: var(--color-border-emphasis);
+    color: var(--color-fg-primary);
+  }
+
+  .interactive-nav .graduation {
+    background: var(--color-accent-subtle);
+    border-color: var(--color-accent-emphasis);
+  }
+
+  .practice-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  .practice-inline code {
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+  }
+
+  /* Markdown Mode Styles */
   .breadcrumb {
     display: flex;
     align-items: center;

@@ -1,0 +1,112 @@
+{
+  "id": "what-is-creation",
+  "title": "What Is Creation?",
+  "description": "The meta-principle: creation as the discipline of removing what obscures.",
+  "duration": "10 min",
+  "interactive": true,
+  "sections": [
+    {
+      "type": "hero",
+      "text": "What if creation isn't about adding?",
+      "subtitle": "Most people think to create is to produce. But some of the most creative acts are acts of removal.",
+      "reveal": "decode",
+      "duration": 2500
+    },
+    {
+      "type": "philosophy",
+      "concept": "the paradox",
+      "text": "When you simplify, are you creating or destroying?",
+      "explanation": "A 500-line file becomes a 50-line abstraction. You removed 450 lines. You subtracted. Yet everyone agrees: you created something.",
+      "reveal": "unconcealment",
+      "duration": 2000
+    },
+    {
+      "type": "remotion",
+      "compositionId": "MarbleToDavid",
+      "caption": "Michelangelo: \"I saw the angel in the marble and carved until I set him free.\"",
+      "durationInFrames": 150
+    },
+    {
+      "type": "spritz",
+      "messages": [
+        "He didn't add marble to create David.",
+        "He removed what wasn't David.",
+        "The sculpture was always there.",
+        "Hidden in the stone.",
+        "Creation was revealing it."
+      ],
+      "wpm": 220
+    },
+    {
+      "type": "philosophy",
+      "concept": "meta-principle",
+      "text": "Creation is the discipline of removing what obscures.",
+      "explanation": "This is the foundation. Every principle, every practice, every pattern in CREATE SOMETHING builds on this insight. You're not building from nothing—you're revealing a solution that was always possible.",
+      "reveal": "threshold",
+      "duration": 1500
+    },
+    {
+      "type": "remotion",
+      "compositionId": "SubtractiveTriad",
+      "caption": "Three things obscure truth in code: duplication, excess, and disconnection.",
+      "durationInFrames": 180
+    },
+    {
+      "type": "spritz",
+      "messages": [
+        { "label": "DRY", "text": "Remove duplication until the concept is clear." },
+        { "label": "RAMS", "text": "Remove excess until only the essential remains." },
+        { "label": "HEIDEGGER", "text": "Remove disconnection until the system coheres." }
+      ],
+      "wpm": 180
+    },
+    {
+      "type": "philosophy",
+      "concept": "duplication",
+      "text": "The same concept expressed multiple times.",
+      "explanation": "Which version is canonical? Which is correct? The duplication creates noise that hides the signal. The concept itself becomes obscured.",
+      "reveal": "unconcealment",
+      "duration": 1500
+    },
+    {
+      "type": "philosophy",
+      "concept": "excess",
+      "text": "More than what's needed.",
+      "explanation": "What does this actually do? What's the core value? The excess creates confusion that hides clarity. The essential purpose becomes obscured.",
+      "reveal": "unconcealment",
+      "duration": 1500
+    },
+    {
+      "type": "philosophy",
+      "concept": "disconnection",
+      "text": "Parts that don't relate to the whole.",
+      "explanation": "How does this fit? What does it serve? The disconnection creates fragmentation that hides coherence. The system's purpose becomes obscured.",
+      "reveal": "unconcealment",
+      "duration": 1500
+    },
+    {
+      "type": "spritz",
+      "messages": [
+        "Before you add code, ask:",
+        "Am I adding, or am I revealing?",
+        "What would I need to remove for this to be clearer?",
+        "Is this creation, or is this obscuring?"
+      ],
+      "wpm": 200
+    },
+    {
+      "type": "reflection",
+      "prompt": "What's one thing in your current codebase that's obscured?",
+      "answer": "Don't fix it yet. Just see it. Seeing comes before doing.",
+      "reveal": "threshold"
+    },
+    {
+      "type": "philosophy",
+      "concept": "the practice begins",
+      "text": "You're learning to see.",
+      "explanation": "Not to see code as additions and features. But to see code as revelation and removal. This shift in perception is the foundation. Everything else builds on it.",
+      "reveal": "mask",
+      "duration": 2000
+    }
+  ]
+}
