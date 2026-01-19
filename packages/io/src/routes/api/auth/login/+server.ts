@@ -1,82 +1,70 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { IDENTITY_API, setSessionCookies, type TokenResponse, type User } from '@create-something/components/auth';
+import { setSessionCookies } from '@create-something/components/auth';
+import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
+import { catchApiError, apiError, createLogger } from '@create-something/components/utils';
 
-interface LoginResponse extends TokenResponse {
-	user: User;
-}
+const logger = createLogger('AdminLoginAPI');
 
-interface ErrorResponse {
-	error: string;
-}
+export const POST: RequestHandler = catchApiError('AdminLogin', async ({ request, platform, cookies }) => {
+	const { email, password } = (await request.json()) as { email?: string; password?: string };
 
-interface LoginRequest {
-	email?: string;
-	password?: string;
-}
-
-export const POST: RequestHandler = async ({ request, platform, cookies }) => {
-	try {
-		const { email, password } = (await request.json()) as LoginRequest;
-
-		if (!email || !password) {
-			return json({ error: 'Email and password are required' }, { status: 400 });
-		}
-
-		const db = platform?.env?.DB;
-		if (!db) {
-			return json({ error: 'Database not available' }, { status: 500 });
-		}
-
-		// Authenticate via Identity Worker
-		const response = await fetch(`${IDENTITY_API}/v1/auth/login`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password })
-		});
-
-		if (!response.ok) {
-			const errorResult = (await response.json()) as ErrorResponse;
-			return json({ error: errorResult.error || 'Invalid credentials' }, { status: response.status });
-		}
-
-		const result = (await response.json()) as LoginResponse;
-
-		// Check if user has admin role in local DB
-		const adminUser = await db
-			.prepare('SELECT id, role FROM users WHERE email = ? AND role = ?')
-			.bind(email, 'admin')
-			.first();
-
-		if (!adminUser) {
-			return json({ error: 'Access denied. Admin privileges required.' }, { status: 403 });
-		}
-
-		// Set session cookies (JWT-based)
-		const isProduction = platform?.env?.ENVIRONMENT === 'production';
-		const domain = isProduction ? '.createsomething.io' : undefined;
-
-		setSessionCookies(
-			cookies,
-			{
-				accessToken: result.access_token,
-				refreshToken: result.refresh_token,
-				domain
-			},
-			isProduction ?? true
-		);
-
-		return json({
-			success: true,
-			user: {
-				id: result.user.id,
-				email: result.user.email,
-				tier: result.user.tier,
-				role: 'admin' // Local admin status
-			}
-		});
-	} catch (error) {
-		console.error('Login error:', error);
-		return json({ error: 'Login failed' }, { status: 500 });
+	if (!email || !password) {
+		return apiError('Email and password are required', 400);
 	}
-};
+
+	const db = platform?.env?.DB;
+	if (!db) {
+		return apiError('Database not available', 500);
+	}
+
+	logger.info('Admin login attempt', { email });
+
+	// Authenticate via Identity Worker
+	const result = await identityClient.login({ email, password });
+
+	if (!result.success) {
+		logger.warn('Login failed', { email, error: result.error });
+		return json(
+			{ error: getIdentityErrorMessage(result, 'Invalid credentials') },
+			{ status: result.status }
+		);
+	}
+
+	// Check if user has admin role in local DB
+	const adminUser = await db
+		.prepare('SELECT id, role FROM users WHERE email = ? AND role = ?')
+		.bind(email, 'admin')
+		.first();
+
+	if (!adminUser) {
+		logger.warn('Admin access denied', { email });
+		return json({ error: 'Access denied. Admin privileges required.' }, { status: 403 });
+	}
+
+	// Set session cookies (JWT-based)
+	const isProduction = platform?.env?.ENVIRONMENT === 'production';
+	const domain = isProduction ? '.createsomething.io' : undefined;
+
+	setSessionCookies(
+		cookies,
+		{
+			accessToken: result.data.access_token,
+			refreshToken: result.data.refresh_token,
+			domain
+		},
+		isProduction ?? true
+	);
+
+	logger.info('Admin login successful', { email, userId: result.data.user.id });
+
+	return json({
+		success: true,
+		user: {
+			id: result.data.user.id,
+			email: result.data.user.email,
+			tier: result.data.user.tier,
+			role: 'admin'
+		}
+	});
+});

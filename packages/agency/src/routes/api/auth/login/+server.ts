@@ -1,54 +1,33 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
-	IDENTITY_API,
-	getDomainConfig,
-	handleIdentityResponse,
-	createAuthErrorResponse,
-	handleIdentityError,
-	type TokenResponse,
-	type User
-} from '@create-something/components/auth';
-import type { ApiResponse } from '@create-something/components/types';
+import { getDomainConfig, handleIdentityResponse } from '@create-something/components/auth';
+import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
+import { catchApiError, createLogger } from '@create-something/components/utils';
 import { loginSchema, parseBody } from '@create-something/components/validation';
 
-interface LoginResponse extends TokenResponse {
-	user: User;
-}
+const logger = createLogger('LoginAPI');
 
-interface IdentityErrorResponse {
-	error: string;
-}
-
-export const POST: RequestHandler = async ({ request, cookies, platform }) => {
-	try {
-		// Validate request body with Zod schema
-		const parseResult = await parseBody(request, loginSchema);
-		if (!parseResult.success) {
-			return json(
-				{ success: false, error: parseResult.error } as ApiResponse<never>,
-				{ status: 400 }
-			);
-		}
-
-		const { email, password } = parseResult.data;
-
-		const response = await fetch(`${IDENTITY_API}/v1/auth/login`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password })
-		});
-
-		if (!response.ok) {
-			const errorResult = (await response.json()) as IdentityErrorResponse;
-			return handleIdentityError(errorResult, 'Invalid credentials', response.status);
-		}
-
-		const result = (await response.json()) as LoginResponse;
-		const domainConfig = getDomainConfig(platform?.env?.ENVIRONMENT);
-
-		return handleIdentityResponse(cookies, result, domainConfig);
-	} catch (err) {
-		return createAuthErrorResponse('Login', err);
+export const POST: RequestHandler = catchApiError('Login', async ({ request, cookies, platform }) => {
+	const parseResult = await parseBody(request, loginSchema);
+	if (!parseResult.success) {
+		return json({ success: false, error: parseResult.error }, { status: 400 });
 	}
-};
+
+	const { email, password } = parseResult.data;
+
+	logger.info('Login attempt', { email });
+
+	const result = await identityClient.login({ email, password });
+
+	if (!result.success) {
+		logger.warn('Login failed', { email, error: result.error });
+		return json(
+			{ error: getIdentityErrorMessage(result, 'Invalid credentials') },
+			{ status: result.status }
+		);
+	}
+
+	logger.info('Login successful', { email, userId: result.data.user.id });
+	const domainConfig = getDomainConfig(platform?.env?.ENVIRONMENT);
+	return handleIdentityResponse(cookies, result.data, domainConfig);
+});

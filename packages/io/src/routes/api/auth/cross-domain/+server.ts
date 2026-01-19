@@ -1,87 +1,57 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { IDENTITY_API, getSessionCookies } from '@create-something/components/auth';
+import { getSessionCookies } from '@create-something/components/auth';
+import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('CrossDomainAPI');
 
 const TARGET_DOMAINS: Record<string, string> = {
 	ltd: 'https://createsomething.ltd',
 	io: 'https://createsomething.io',
 	space: 'https://createsomething.space',
 	agency: 'https://createsomething.agency',
-	lms: 'https://learn.createsomething.space',
+	lms: 'https://learn.createsomething.space'
 };
 
-interface GenerateResponse {
-	token: string;
-	expires_in: number;
-}
-
-interface ErrorResponse {
-	error: string;
-}
-
 export const GET: RequestHandler = async ({ url, cookies }) => {
-	try {
-		// Get target and redirect params
-		const target = url.searchParams.get('target');
-		const redirect = url.searchParams.get('redirect') || '/account';
+	const target = url.searchParams.get('target');
+	const redirect = url.searchParams.get('redirect') || '/account';
 
-		console.log('[Cross-Domain Generate .io] Starting', { target, redirect });
+	logger.info('Cross-domain request', { target, redirect });
 
-		if (!target || !TARGET_DOMAINS[target]) {
-			console.log('[Cross-Domain Generate .io] Invalid target:', target);
-			return json({ error: 'Invalid target property' }, { status: 400 });
-		}
-
-		// Check if user is logged in
-		const session = getSessionCookies(cookies);
-		console.log('[Cross-Domain Generate .io] Session check', {
-			hasAccessToken: !!session.accessToken,
-			hasRefreshToken: !!session.refreshToken
-		});
-
-		if (!session.accessToken) {
-			console.log('[Cross-Domain Generate .io] No access token');
-			return json({ error: 'Not authenticated' }, { status: 401 });
-		}
-
-		// Call identity-worker to generate cross-domain token
-		console.log('[Cross-Domain Generate .io] Calling identity-worker...');
-		const response = await fetch(`${IDENTITY_API}/v1/auth/cross-domain/generate`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${session.accessToken}`,
-			},
-			body: JSON.stringify({ target }),
-		});
-
-		console.log('[Cross-Domain Generate .io] Identity response status:', response.status);
-
-		if (!response.ok) {
-			const errorResult = (await response.json()) as ErrorResponse;
-			console.log('[Cross-Domain Generate .io] Identity error:', errorResult);
-			return json({ error: errorResult.error || 'Token generation failed' }, { status: response.status });
-		}
-
-		const result = (await response.json()) as GenerateResponse;
-		console.log('[Cross-Domain Generate .io] Token generated, expires_in:', result.expires_in);
-
-		// Build redirect URL with token and final destination
-		const targetUrl = new URL('/auth/cross-domain', TARGET_DOMAINS[target]);
-		targetUrl.searchParams.set('token', result.token);
-		targetUrl.searchParams.set('redirect', redirect);
-
-		console.log('[Cross-Domain Generate .io] Redirecting to:', targetUrl.toString());
-
-		// Redirect to target property
-		return new Response(null, {
-			status: 302,
-			headers: {
-				Location: targetUrl.toString(),
-			},
-		});
-	} catch (err) {
-		console.error('[Cross-Domain Generate .io] Error:', err);
-		return json({ error: 'An unexpected error occurred' }, { status: 500 });
+	if (!target || !TARGET_DOMAINS[target]) {
+		logger.warn('Invalid target', { target });
+		return json({ error: 'Invalid target property' }, { status: 400 });
 	}
+
+	const session = getSessionCookies(cookies);
+	if (!session.accessToken) {
+		logger.warn('No access token');
+		return json({ error: 'Not authenticated' }, { status: 401 });
+	}
+
+	const result = await identityClient.generateCrossDomainToken({
+		target,
+		accessToken: session.accessToken
+	});
+
+	if (!result.success) {
+		logger.warn('Token generation failed', { error: result.error });
+		return json(
+			{ error: getIdentityErrorMessage(result, 'Token generation failed') },
+			{ status: result.status }
+		);
+	}
+
+	const targetUrl = new URL('/auth/cross-domain', TARGET_DOMAINS[target]);
+	targetUrl.searchParams.set('token', result.data.token);
+	targetUrl.searchParams.set('redirect', redirect);
+
+	logger.info('Redirecting to target', { target });
+
+	return new Response(null, {
+		status: 302,
+		headers: { Location: targetUrl.toString() }
+	});
 };

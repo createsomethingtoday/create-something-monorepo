@@ -11,9 +11,11 @@
 
 import type { Cookies } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
-import { IDENTITY_API } from './index.js';
 import { setSessionCookies } from './cookies.js';
-import type { ExchangeResponse, ErrorResponse } from './types.js';
+import { identityClient } from '../api/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('CrossDomainExchange');
 
 export interface CrossDomainExchangeParams {
 	token: string;
@@ -35,69 +37,40 @@ export async function exchangeCrossDomainToken(
 ): Promise<never> {
 	const { token, cookies, domain, isProduction, propertyLabel, redirectTo = '/account' } = params;
 
-	console.log(`[Cross-Domain Exchange ${propertyLabel}] Starting`, {
+	logger.info('Cross-domain exchange starting', {
+		propertyLabel,
 		hasToken: !!token,
-		tokenLength: token?.length,
-		redirectTo,
+		redirectTo
 	});
 
 	if (!token) {
-		console.log(`[Cross-Domain Exchange ${propertyLabel}] No token provided`);
+		logger.warn('No token provided', { propertyLabel });
 		throw redirect(302, '/login?error=invalid_token');
 	}
 
-	try {
-		// Exchange cross-domain token for session tokens
-		console.log(`[Cross-Domain Exchange ${propertyLabel}] Calling identity-worker...`);
-		const response = await fetch(`${IDENTITY_API}/v1/auth/cross-domain/exchange`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ token }),
-		});
+	const result = await identityClient.exchangeCrossDomainToken({ token });
 
-		console.log(`[Cross-Domain Exchange ${propertyLabel}] Identity response status:`, response.status);
-
-		if (!response.ok) {
-			const errorResult = (await response.json()) as ErrorResponse;
-			console.log(`[Cross-Domain Exchange ${propertyLabel}] Identity error:`, errorResult);
-			const errorMsg = encodeURIComponent(errorResult.error || 'exchange_failed');
-			throw redirect(302, `/login?error=${errorMsg}`);
-		}
-
-		const result = (await response.json()) as ExchangeResponse;
-		console.log(`[Cross-Domain Exchange ${propertyLabel}] Token exchanged successfully`, {
-			hasAccessToken: !!result.access_token,
-			hasRefreshToken: !!result.refresh_token,
-			userId: result.user?.id,
-		});
-
-		// Set session cookies
-		console.log(`[Cross-Domain Exchange ${propertyLabel}] Setting cookies`, {
-			isProduction,
-			domain,
-		});
-
-		setSessionCookies(
-			cookies,
-			{
-				accessToken: result.access_token,
-				refreshToken: result.refresh_token,
-				domain,
-			},
-			isProduction
-		);
-
-		console.log(`[Cross-Domain Exchange ${propertyLabel}] Redirecting to:`, redirectTo);
-
-		// Redirect to final destination
-		throw redirect(302, redirectTo);
-	} catch (err) {
-		// If it's already a redirect, re-throw it
-		if (err instanceof Response || (err as { status?: number }).status === 302) {
-			throw err;
-		}
-
-		console.error(`[Cross-Domain Exchange ${propertyLabel}] Error:`, err);
-		throw redirect(302, '/login?error=exchange_failed');
+	if (!result.success) {
+		logger.warn('Token exchange failed', { propertyLabel, error: result.error });
+		const errorMsg = encodeURIComponent(result.error || 'exchange_failed');
+		throw redirect(302, `/login?error=${errorMsg}`);
 	}
+
+	logger.info('Token exchanged successfully', {
+		propertyLabel,
+		userId: result.data.user?.id
+	});
+
+	setSessionCookies(
+		cookies,
+		{
+			accessToken: result.data.access_token,
+			refreshToken: result.data.refresh_token,
+			domain
+		},
+		isProduction
+	);
+
+	logger.info('Redirecting to destination', { propertyLabel, redirectTo });
+	throw redirect(302, redirectTo);
 }

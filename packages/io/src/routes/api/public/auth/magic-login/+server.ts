@@ -1,43 +1,30 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { IDENTITY_API } from '@create-something/components/auth';
+import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
+import { catchApiError, apiError, createLogger } from '@create-something/components/utils';
 
-interface ErrorResponse {
-	error: string;
-}
+const logger = createLogger('MagicLoginAPI');
 
-interface MagicLoginRequest {
-	email?: string;
-	source?: string;
-}
+export const POST: RequestHandler = catchApiError('MagicLogin', async ({ request }) => {
+	const body = (await request.json()) as { email?: string; source?: string };
+	const { email, source } = body;
 
-export const POST: RequestHandler = async ({ request }) => {
-	try {
-		const body = (await request.json()) as MagicLoginRequest;
-		const { email, source } = body;
-
-		if (!email) {
-			return json({ error: 'Email is required' }, { status: 400 });
-		}
-
-		// Request magic link from Identity Worker
-		const response = await fetch(`${IDENTITY_API}/v1/auth/magic-login`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, source: source || 'io' })
-		});
-
-		if (!response.ok) {
-			const errorResult = (await response.json()) as ErrorResponse;
-			return json(
-				{ error: errorResult.error || 'Failed to send magic link' },
-				{ status: response.status }
-			);
-		}
-
-		return json({ success: true });
-	} catch (error) {
-		console.error('Magic login error:', error);
-		return json({ error: 'An unexpected error occurred' }, { status: 500 });
+	if (!email) {
+		return apiError('Email is required', 400);
 	}
-};
+
+	logger.info('Magic login request', { email });
+
+	const result = await identityClient.magicLogin({ email, source: source || 'io' });
+
+	if (!result.success) {
+		logger.warn('Magic login failed', { email, error: result.error });
+		return json(
+			{ error: getIdentityErrorMessage(result, 'Failed to send magic link') },
+			{ status: result.status }
+		);
+	}
+
+	logger.info('Magic login link sent', { email });
+	return json({ success: true });
+});
