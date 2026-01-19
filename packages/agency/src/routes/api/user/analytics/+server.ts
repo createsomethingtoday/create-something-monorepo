@@ -1,7 +1,9 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { PropertyAnalytics, DailyActivityPoint, CategoryBreakdown } from '@create-something/components/analytics';
+import { createLogger } from '@create-something/components/utils';
 
+const logger = createLogger('UserAnalyticsAPI');
 const PROPERTY = 'agency' as const;
 
 /**
@@ -119,7 +121,7 @@ export const GET: RequestHandler = async ({ locals, platform, url }) => {
 
 		return json(response);
 	} catch (err) {
-		console.error('Failed to fetch user analytics:', err);
+		logger.error('Failed to fetch user analytics', { userId: targetUserId, days, error: err });
 		throw error(500, 'Failed to fetch analytics');
 	}
 };
