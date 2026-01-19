@@ -3,9 +3,7 @@ import { json, error } from '@sveltejs/kit';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { generateWelcomeEmail } from '$lib/email/welcome-template';
-import { createLogger } from '@create-something/components/utils';
-
-const logger = createLogger('OuterfieldsStripeWebhook');
+import { createPersistentLogger, createLogger, type Logger } from '@create-something/components/utils';
 
 /**
  * POST /api/stripe/webhook
@@ -13,6 +11,16 @@ const logger = createLogger('OuterfieldsStripeWebhook');
  * to grant lifetime membership access
  */
 export const POST: RequestHandler = async ({ request, platform }) => {
+	// Create persistent logger for agent-queryable error tracking
+	const logger: Logger = platform?.env?.DB
+		? createPersistentLogger('OuterfieldsStripeWebhook', {
+				db: platform.env.DB,
+				minPersistLevel: 'warn'
+			}, {
+				path: '/api/stripe/webhook',
+				method: 'POST'
+			})
+		: createLogger('OuterfieldsStripeWebhook');
 	const stripeKey = platform?.env?.STRIPE_SECRET_KEY;
 	const webhookSecret = platform?.env?.STRIPE_WEBHOOK_SECRET;
 

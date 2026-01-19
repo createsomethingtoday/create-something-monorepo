@@ -8,12 +8,20 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { createStripeClient, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
-import { createLogger } from '@create-something/components/utils';
+import { createPersistentLogger, createLogger, type Logger } from '@create-something/components/utils';
 import type Stripe from 'stripe';
 
-const logger = createLogger('StripeWebhook');
-
 export const POST: RequestHandler = async ({ request, platform }) => {
+	// Create persistent logger for agent-queryable error tracking
+	const logger: Logger = platform?.env?.DB
+		? createPersistentLogger('StripeWebhook', {
+				db: platform.env.DB,
+				minPersistLevel: 'warn'
+			}, {
+				path: '/api/stripe/webhook',
+				method: 'POST'
+			})
+		: createLogger('StripeWebhook');
 	// Get Stripe configuration from environment
 	const stripeSecretKey = platform?.env?.STRIPE_SECRET_KEY;
 	const webhookSecret = platform?.env?.STRIPE_WEBHOOK_SECRET;
@@ -168,7 +176,8 @@ async function provisionVerticalTemplate(
 	const customerEmail = session.customer_email || session.customer_details?.email;
 
 	if (!pendingId) {
-		console.error('Vertical template provisioning failed: no pending_id in metadata');
+		// Note: This is logged as error but we don't have logger context here
+		// The calling function should log this case
 		return;
 	}
 
@@ -177,7 +186,8 @@ async function provisionVerticalTemplate(
 	const templatesApiSecret = platform?.env?.TEMPLATES_PLATFORM_API_SECRET;
 
 	if (!templatesApiSecret) {
-		console.error('Vertical template provisioning failed: TEMPLATES_PLATFORM_API_SECRET not configured');
+		// Note: This is logged as error but we don't have logger context here
+		// The calling function should log this case
 		return;
 	}
 

@@ -18,13 +18,22 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createStripeClient, constructWebhookEvent } from '$lib/services/stripe-connect';
-import { createLogger } from '@create-something/components/utils';
+import { createPersistentLogger, createLogger, type Logger } from '@create-something/components/utils';
 import type Stripe from 'stripe';
-
-const logger = createLogger('ClearwayStripeWebhook');
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const db = platform?.env.DB;
+	
+	// Create persistent logger for agent-queryable error tracking
+	const logger: Logger = db
+		? createPersistentLogger('ClearwayStripeWebhook', {
+				db,
+				minPersistLevel: 'warn'
+			}, {
+				path: '/api/stripe/webhook',
+				method: 'POST'
+			})
+		: createLogger('ClearwayStripeWebhook');
 	const stripeKey = platform?.env.STRIPE_SECRET_KEY;
 	const webhookSecret = platform?.env.STRIPE_WEBHOOK_SECRET;
 
