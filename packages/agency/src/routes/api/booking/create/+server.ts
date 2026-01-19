@@ -1,6 +1,8 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { createLogger } from '@create-something/components/utils';
 
+const logger = createLogger('BookingCreateAPI');
 const SAVVYCAL_API_BASE = 'https://api.savvycal.com/v1';
 const TARGET_LINK_SLUG = 'together';
 
@@ -43,7 +45,7 @@ async function getLinkId(apiKey: string): Promise<string | null> {
 	});
 
 	if (!response.ok) {
-		console.error('Failed to fetch links:', response.status);
+		logger.error('Failed to fetch SavvyCal links', { status: response.status });
 		return null;
 	}
 
@@ -56,7 +58,7 @@ async function getLinkId(apiKey: string): Promise<string | null> {
 		return cachedLinkId;
 	}
 
-	console.error('Link not found for slug:', TARGET_LINK_SLUG);
+	logger.error('SavvyCal link not found', { slug: TARGET_LINK_SLUG });
 	return null;
 }
 
@@ -123,9 +125,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		if (!response.ok) {
 			const errorText = await response.text();
-			console.error('SavvyCal API error:', response.status, errorText);
-			console.error('Request was:', JSON.stringify(eventData));
-			console.error('Link ID:', linkId);
+			logger.error('SavvyCal API error', { 
+				status: response.status, 
+				error: errorText,
+				linkId,
+				email 
+			});
 
 			if (response.status === 409) {
 				throw error(409, 'This time slot is no longer available');
@@ -138,7 +143,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		const rawResponse = (await response.json()) as Record<string, unknown>;
-		console.log('SavvyCal response:', JSON.stringify(rawResponse).slice(0, 500));
+		logger.debug('SavvyCal response received', { eventId: rawResponse.id || rawResponse.uuid });
 
 		// Handle different response formats
 		const responseEvent = (rawResponse.data || rawResponse.event || rawResponse) as Record<string, unknown>;
@@ -170,9 +175,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					.run();
 			} catch (analyticsError) {
 				// Don't fail booking if analytics fails
-				console.error('Analytics tracking error:', analyticsError);
+				logger.warn('Analytics tracking failed', { error: analyticsError });
 			}
 		}
+
+		logger.info('Booking created successfully', { eventId: event.id, email });
 
 		return json({
 			success: true,
@@ -185,14 +192,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			}
 		});
 	} catch (err: unknown) {
-		console.error('Error creating booking:', err);
-		console.error('Error type:', typeof err);
-		console.error('Error constructor:', err?.constructor?.name);
 		// Re-throw SvelteKit HttpErrors
 		if (err && typeof err === 'object' && 'status' in err) {
-			console.error('Re-throwing HttpError with status:', (err as { status: number }).status);
 			throw err;
 		}
+		logger.error('Error creating booking', { error: err });
 		const errMsg = err instanceof Error ? err.message : String(err);
 		throw error(500, `Failed to create booking: ${errMsg}`);
 	}

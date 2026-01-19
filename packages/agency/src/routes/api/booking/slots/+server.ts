@@ -1,6 +1,8 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { createLogger } from '@create-something/components/utils';
 
+const logger = createLogger('BookingSlotsAPI');
 const SAVVYCAL_API_BASE = 'https://api.savvycal.com/v1';
 const TARGET_LINK_SLUG = 'together'; // The slug part of the link URL
 
@@ -29,23 +31,21 @@ async function getLinkId(apiKey: string): Promise<string | null> {
 	});
 
 	if (!response.ok) {
-		console.error('Failed to fetch links:', response.status);
+		logger.error('Failed to fetch SavvyCal links', { status: response.status });
 		return null;
 	}
 
 	const data = (await response.json()) as { entries?: SavvyCalLink[] };
-	console.log('SavvyCal links:', JSON.stringify(data).slice(0, 500));
-
 	const links = data.entries || [];
 	const targetLink = links.find((link) => link.slug === TARGET_LINK_SLUG);
 
 	if (targetLink) {
 		cachedLinkId = targetLink.id;
-		console.log('Found link ID:', cachedLinkId, 'for slug:', TARGET_LINK_SLUG);
+		logger.debug('Found SavvyCal link', { linkId: cachedLinkId, slug: TARGET_LINK_SLUG });
 		return cachedLinkId;
 	}
 
-	console.error('Link not found for slug:', TARGET_LINK_SLUG);
+	logger.error('SavvyCal link not found', { slug: TARGET_LINK_SLUG });
 	return null;
 }
 
@@ -53,7 +53,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	const apiKey = platform?.env?.SAVVYCAL_API_KEY;
 
 	if (!apiKey) {
-		console.error('SAVVYCAL_API_KEY not found in environment');
+		logger.error('SAVVYCAL_API_KEY not configured');
 		throw error(500, 'Booking service temporarily unavailable');
 	}
 
@@ -70,7 +70,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		// Get the link ID first
 		const linkId = await getLinkId(apiKey);
 		if (!linkId) {
-			console.error('Could not find SavvyCal link');
+			logger.warn('Could not find SavvyCal link, returning empty slots');
 			return json({ slots: [], timezone });
 		}
 
@@ -81,7 +81,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		});
 
 		const apiUrl = `${SAVVYCAL_API_BASE}/links/${linkId}/slots?${params}`;
-		console.log('Fetching SavvyCal slots:', apiUrl);
+		logger.debug('Fetching SavvyCal slots', { startDate, endDate, timezone });
 
 		const response = await fetch(apiUrl, {
 			headers: {
@@ -92,7 +92,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 		if (!response.ok) {
 			const errorText = await response.text();
-			console.error('SavvyCal API error:', response.status, errorText);
+			logger.error('SavvyCal API error', { status: response.status, error: errorText });
 
 			// Return empty slots instead of error for better UX
 			if (response.status === 404) {
@@ -105,7 +105,6 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		const rawData = (await response.json()) as
 			| SavvyCalSlot[]
 			| { data?: SavvyCalSlot[]; slots?: SavvyCalSlot[] };
-		console.log('SavvyCal response:', JSON.stringify(rawData).slice(0, 200));
 
 		// Handle different response formats
 		let slotsArray: SavvyCalSlot[] = [];
@@ -127,15 +126,16 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			)
 		}));
 
+		logger.info('Slots fetched', { count: slots.length, startDate, endDate });
 		return json({
 			slots,
 			timezone
 		});
 	} catch (err) {
-		console.error('Error fetching slots:', err);
 		if (err && typeof err === 'object' && 'status' in err) {
 			throw err;
 		}
+		logger.error('Error fetching slots', { error: err });
 		throw error(500, 'Failed to fetch available slots');
 	}
 };
