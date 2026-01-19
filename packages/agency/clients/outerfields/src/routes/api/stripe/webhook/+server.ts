@@ -3,6 +3,9 @@ import { json, error } from '@sveltejs/kit';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { generateWelcomeEmail } from '$lib/email/welcome-template';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('OuterfieldsStripeWebhook');
 
 /**
  * POST /api/stripe/webhook
@@ -14,7 +17,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const webhookSecret = platform?.env?.STRIPE_WEBHOOK_SECRET;
 
 	if (!stripeKey || !webhookSecret) {
-		console.error('Stripe not configured');
+		logger.error('Stripe not configured');
 		return json({ success: false, error: 'Stripe not configured' }, { status: 500 });
 	}
 
@@ -27,7 +30,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const signature = request.headers.get('stripe-signature');
 
 	if (!signature) {
-		console.error('No Stripe signature found in webhook request');
+		logger.error('No Stripe signature found in webhook request');
 		return json({ success: false, error: 'No signature' }, { status: 400 });
 	}
 
@@ -37,7 +40,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		// Verify webhook signature
 		event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
 	} catch (err) {
-		console.error('Webhook signature verification failed:', err);
+		logger.error('Webhook signature verification failed', { error: err });
 		return json(
 			{
 				success: false,
@@ -52,14 +55,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		switch (event.type) {
 			case 'checkout.session.completed': {
 				const session = event.data.object as Stripe.Checkout.Session;
-				console.log('Checkout completed:', session.id);
+				logger.info('Checkout completed', { sessionId: session.id });
 
 				// Get user ID from metadata
 				const userId = session.metadata?.userId;
 
 				if (!userId || userId === 'guest') {
 					// Guest checkout - need to create account or handle differently
-					console.warn('Guest checkout completed - email:', session.customer_email);
+					logger.warn('Guest checkout completed', { email: session.customer_email });
 					// TODO: Create user account from email or send email with account creation link
 					break;
 				}
@@ -67,7 +70,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				// Update user membership in D1
 				const db = platform?.env.DB;
 				if (!db) {
-					console.error('Database not available');
+					logger.error('Database not available');
 					break;
 				}
 
@@ -76,13 +79,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					.bind(userId)
 					.run();
 
-				console.log(`Granted membership to user ${userId}`);
+				logger.info('Granted membership', { userId });
 
 				// Send welcome email with Calendly link for discovery call
 				try {
 					const resendApiKey = platform?.env?.RESEND_API_KEY;
 					if (!resendApiKey) {
-						console.warn('RESEND_API_KEY not configured - skipping welcome email');
+						logger.warn('RESEND_API_KEY not configured - skipping welcome email');
 						break;
 					}
 
@@ -113,11 +116,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 							text: emailContent.text
 						});
 
-						console.log(`Welcome email sent to ${user.email}`);
+						logger.info('Welcome email sent', { email: user.email });
 					}
 				} catch (emailErr) {
 					// Log error but don't fail the webhook
-					console.error('Failed to send welcome email:', emailErr);
+					logger.error('Failed to send welcome email', { error: emailErr });
 				}
 
 				break;
@@ -125,18 +128,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 			case 'checkout.session.expired': {
 				const session = event.data.object as Stripe.Checkout.Session;
-				console.log('Checkout session expired:', session.id);
+				logger.info('Checkout session expired', { sessionId: session.id });
 				// Could track abandoned checkouts here
 				break;
 			}
 
 			default:
-				console.log(`Unhandled event type: ${event.type}`);
+				logger.debug('Unhandled event type', { eventType: event.type });
 		}
 
 		return json({ success: true, received: true });
 	} catch (err) {
-		console.error('Error processing webhook:', err);
+		logger.error('Error processing webhook', { error: err });
 		return json(
 			{
 				success: false,
