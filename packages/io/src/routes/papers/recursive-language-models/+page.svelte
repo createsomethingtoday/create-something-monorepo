@@ -394,7 +394,7 @@ final_match = re.search(r"(?:^|\\n)FINAL\\((.+)\\)\\s*$", response)`}</pre>
 					<div class="p-4 info-card">
 						<h4 class="mb-3 card-heading">1. Identity Client</h4>
 						<p class="card-list mb-2">Typed, centralized API wrapper</p>
-						<div class="p-2 font-mono text-xs code-block">
+						<div class="p-2 font-mono code-block code-block-sm">
 							<pre class="code-primary">{`// Before: 20+ files with duplicate fetch
 const response = await fetch(
   \`\${IDENTITY_API}/v1/auth/login\`
@@ -409,7 +409,7 @@ const result = await identityClient
 					<div class="p-4 info-card">
 						<h4 class="mb-3 card-heading">2. API Error Handling</h4>
 						<p class="card-list mb-2">Unified error handling wrapper</p>
-						<div class="p-2 font-mono text-xs code-block">
+						<div class="p-2 font-mono code-block code-block-sm">
 							<pre class="code-primary">{`// Before: Duplicate try/catch
 try { ... }
 catch (err) { console.error(...); }
@@ -425,7 +425,7 @@ export const POST = catchApiError(
 					<div class="p-4 info-card">
 						<h4 class="mb-3 card-heading">3. Validation Helpers</h4>
 						<p class="card-list mb-2">Type-safe validation utilities</p>
-						<div class="p-2 font-mono text-xs code-block">
+						<div class="p-2 font-mono code-block code-block-sm">
 							<pre class="code-primary">{`// Before: Repeated patterns
 if (records.length === 0) { ... }
 
@@ -440,7 +440,7 @@ const result = validateStringField(
 					<div class="p-4 info-card">
 						<h4 class="mb-3 card-heading">4. Context Logger</h4>
 						<p class="card-list mb-2">Structured logging with correlation</p>
-						<div class="p-2 font-mono text-xs code-block">
+						<div class="p-2 font-mono code-block code-block-sm">
 							<pre class="code-primary">{`// Before: Console calls
 console.log('[ProfileAPI]', email);
 
@@ -781,6 +781,10 @@ logger.info('Processing', { id, correlationId });`}</pre>
 
 	.code-success {
 		color: var(--color-success);
+	}
+
+	.code-block-sm {
+		font-size: var(--text-caption);
 	}
 
 	.inline-code {
