@@ -1,0 +1,128 @@
+title: Autonomous DRY Analysis Harness
+
+overview: |
+  AI-native specification for autonomous DRY (Don't Repeat Yourself) violation 
+  detection and refactoring. Agents can execute this spec without human intervention
+  to continuously improve codebase quality.
+  
+  This harness uses the RLM (Recursive Language Model) pattern to analyze arbitrarily
+  large codebases by treating context as an environment variable.
+
+agent_context:
+  # Tools the agent has access to
+  tools:
+    - bd: Agent-native issue tracking
+    - grep: Pattern search (prefer rg)
+    - createLogger: Structured logging utility
+    - identityClient: Typed API client
+    - catchApiError: Unified error handling
+    - validateStringField: Type-safe validation
+  
+  # Existing utilities agents should use
+  shared_utilities:
+    - path: "@create-something/components/utils"
+      exports: [createLogger, catchApiError, apiError, apiSuccess, validateStringField, isEmpty, hasItems]
+    - path: "@create-something/components/api"
+      exports: [identityClient, getIdentityErrorMessage]
+
+features:
+  - title: Pattern Detection Phase
+    description: Scan codebase for DRY violation patterns
+    complexity: autonomous
+    priority: 1
+    patterns:
+      - name: console_calls
+        regex: "console\\.(log|error|warn)\\("
+        replacement: createLogger
+        target_dirs: ["packages/*/src/routes/**/*.ts"]
+        
+      - name: identity_api_fetches
+        regex: "fetch\\(.*IDENTITY_API"
+        replacement: identityClient
+        target_dirs: ["packages/*/src/routes/**/*.ts", "packages/*/src/lib/**/*.ts"]
+        
+      - name: try_catch_blocks
+        regex: "try\\s*\\{[^}]*\\}\\s*catch"
+        replacement: catchApiError
+        target_dirs: ["packages/*/src/routes/api/**/*.ts"]
+        
+      - name: string_validation
+        regex: "!\\w+\\s*\\|\\|.*\\.trim\\(\\)"
+        replacement: validateStringField
+        target_dirs: ["packages/*/src/routes/api/**/*.ts"]
+        
+      - name: array_length_checks
+        regex: "\\.length\\s*===\\s*0"
+        replacement: isEmpty
+        target_dirs: ["packages/*/src/routes/**/*.ts"]
+    acceptance:
+      - Generate count of each pattern type by file
+      - Prioritize files with multiple violation types
+      - Skip files already using shared utilities
+
+  - title: Issue Filing Phase
+    description: Create bd issues for detected violations
+    complexity: autonomous
+    priority: 2
+    depends_on:
+      - Pattern Detection Phase
+    acceptance:
+      - File one bd issue per file with violations
+      - Include violation counts and line numbers
+      - Tag issues with "dry-refactor"
+      - Set priority based on violation density
+
+  - title: Autonomous Refactoring Phase
+    description: Apply refactoring patterns automatically
+    complexity: autonomous
+    priority: 3
+    depends_on:
+      - Issue Filing Phase
+    constraints:
+      - Maximum 5 files per session
+      - Must run quality gates after each file
+      - Must commit and push after each successful refactor
+    acceptance:
+      - Import required utilities
+      - Replace violations with utility calls
+      - Maintain identical behavior
+      - Pass TypeScript compilation
+      - Close bd issue on success
+
+  - title: Quality Gates
+    description: Automated checks before committing
+    complexity: autonomous
+    priority: 1
+    gates:
+      - name: typescript
+        command: "pnpm tsc --noEmit"
+        required: true
+      - name: lint
+        command: "pnpm lint"
+        required: false  # Warn only
+      - name: build
+        command: "pnpm build"
+        required: true
+
+requirements:
+  - Agent must use bd for all task tracking
+  - Agent must push changes after each successful refactor
+  - Agent must not break existing functionality
+  - Agent must use structured logging for all operations
+  - Agent must follow Canon design principles
+
+success:
+  - Zero remaining IDENTITY_API direct fetches (currently 1)
+  - 50%+ reduction in console.* calls in routes
+  - All new refactored code uses shared utilities
+  - All work tracked in bd system
+  - Agent can run this spec autonomously on schedule
+
+metrics:
+  # Track progress over time
+  - name: console_calls_remaining
+    query: "rg -c 'console\\.(log|error|warn)' packages/*/src/routes --glob '*.ts' | wc -l"
+  - name: identity_fetches_remaining  
+    query: "rg -c 'IDENTITY_API' packages/*/src/routes --glob '*.ts' | wc -l"
+  - name: files_using_createLogger
+    query: "rg -l 'createLogger' packages/*/src/routes --glob '*.ts' | wc -l"
