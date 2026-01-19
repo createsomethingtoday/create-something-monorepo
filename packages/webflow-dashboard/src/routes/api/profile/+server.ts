@@ -2,6 +2,9 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import Airtable from 'airtable';
 import { getAirtableClient } from '$lib/server/airtable';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('ProfileAPI');
 
 // Helper to add no-cache headers to API responses
 const noCacheHeaders = {
@@ -14,7 +17,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 	try {
 		// Check authentication
 		if (!locals.user?.email) {
-			console.error('[Profile API] No user email in locals');
+			logger.warn('No user email in locals');
 			return json(
 				{ error: 'Unauthorized', details: 'No user email' },
 				{ status: 401, headers: noCacheHeaders }
@@ -22,7 +25,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		}
 
 		const email = locals.user.email;
-		console.log('[Profile API] Fetching profile for:', email);
+		logger.debug('Fetching profile', { email });
 
 		// Verify environment variables
 		if (!platform?.env?.AIRTABLE_API_KEY || !platform?.env?.AIRTABLE_BASE_ID) {
@@ -41,7 +44,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			.firstPage();
 
 		if (records.length === 0) {
-			console.error('[Profile API] Creator not found for:', email);
+			logger.warn('Creator not found', { email });
 			return json(
 				{ error: 'Profile not found', details: `No creator found for email: ${email}` },
 				{ status: 404, headers: noCacheHeaders }
@@ -49,7 +52,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		}
 
 		const record = records[0];
-		console.log('[Profile API] Successfully fetched profile for:', email);
+		logger.info('Profile fetched successfully', { email });
 
 		return json(
 			{
@@ -63,7 +66,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			{ headers: noCacheHeaders }
 		);
 	} catch (err) {
-		console.error('[Profile API] Unexpected error:', err);
+		logger.error('Unexpected error fetching profile', { error: err });
 		const errorMessage = err instanceof Error ? err.message : 'Unknown error';
 
 		return json(
@@ -83,15 +86,15 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 	try {
 		// Check authentication
 		if (!locals.user?.email) {
-			console.error('[Profile API PATCH] No user email in locals');
+			logger.warn('PATCH: No user email in locals');
 			throw error(401, 'Unauthorized');
 		}
 
-		console.log('[Profile API PATCH] Updating profile for:', locals.user.email);
+		logger.debug('Updating profile', { email: locals.user.email });
 
 		// Verify environment variables
 		if (!platform?.env?.AIRTABLE_API_KEY || !platform?.env?.AIRTABLE_BASE_ID) {
-			console.error('[Profile API PATCH] Missing Airtable env vars');
+			logger.error('PATCH: Missing Airtable env vars');
 			throw error(500, 'Server configuration error');
 		}
 
@@ -101,7 +104,7 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		// Get creator first to verify they exist and get their ID
 		const creator = await airtable.getCreatorByEmail(locals.user.email);
 		if (!creator) {
-			console.error('[Profile API PATCH] Creator not found for:', locals.user.email);
+			logger.warn('PATCH: Creator not found', { email: locals.user.email });
 			throw error(404, 'Profile not found');
 		}
 
@@ -113,11 +116,11 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		});
 
 		if (!updated) {
-			console.error('[Profile API PATCH] Failed to update creator:', creator.id);
+			logger.error('PATCH: Failed to update creator', { creatorId: creator.id });
 			throw error(500, 'Failed to update profile');
 		}
 
-		console.log('[Profile API PATCH] Successfully updated profile for:', locals.user.email);
+		logger.info('Profile updated successfully', { email: locals.user.email });
 
 		return json(
 			{
@@ -131,10 +134,10 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 			{ headers: noCacheHeaders }
 		);
 	} catch (err) {
-		console.error('[Profile API PATCH] Error:', err);
 		if (err instanceof Error && 'status' in err) {
 			throw err; // Re-throw SvelteKit errors
 		}
+		logger.error('PATCH: Unexpected error', { error: err });
 		throw error(500, 'Internal server error');
 	}
 };
