@@ -364,13 +364,25 @@ img {
   background-color: #b3e940;
 }
 
+/* Secondary button - light background (default) */
 .button.is-secondary {
   background-color: transparent;
-  border: 1px solid var(--light-grey);
-  color: var(--white);
+  border: 1px solid var(--dark-grey);
+  color: var(--black);
 }
 
 .button.is-secondary:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: var(--black);
+}
+
+/* Secondary button - dark background (contextual) */
+.background-color-black .button.is-secondary {
+  border-color: var(--light-grey);
+  color: var(--white);
+}
+
+.background-color-black .button.is-secondary:hover {
   background-color: rgba(255, 255, 255, 0.1);
   border-color: var(--white);
 }
