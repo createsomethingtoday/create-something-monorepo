@@ -70,6 +70,7 @@ export interface MinHashPreScreenResult {
 	propertySimilarity: number;
 	similarCount: number;
 	verdict: string;
+	topMatches?: Array<{ id: string; name: string; similarity: number }>;
 }
 
 // =============================================================================
