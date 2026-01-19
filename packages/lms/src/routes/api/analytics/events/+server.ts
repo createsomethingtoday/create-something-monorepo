@@ -5,6 +5,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { processEventBatch, type EventBatch } from '@create-something/components/analytics';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('AnalyticsEventsAPI');
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const db = platform?.env?.DB;
@@ -22,13 +25,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const context = {
 			userAgent: request.headers.get('user-agent') || undefined,
-			ipCountry: request.headers.get('cf-ipcountry') || undefined,
+			ipCountry: request.headers.get('cf-ipcountry') || undefined
 		};
 
 		const result = await processEventBatch(db, batch, context);
 		return json(result, { status: result.success ? 200 : 207 });
 	} catch (error) {
-		console.error('Analytics events error:', error);
+		logger.error('Failed to process analytics events', { error });
 		return json({ success: false, received: 0 }, { status: 200 });
 	}
 };

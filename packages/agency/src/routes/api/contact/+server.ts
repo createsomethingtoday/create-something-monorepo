@@ -1,6 +1,9 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { contactSchema, parseBody, type ContactInput } from '@create-something/components/validation';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('ContactAPI');
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -45,7 +48,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					.run();
 			}
 		} catch (dbError) {
-			console.warn('Contact submissions table not found - skipping DB insert');
+			logger.warn('Contact submissions table not found - skipping DB insert', { error: dbError });
 		}
 
 		// Send auto-response to the person who contacted us
@@ -135,7 +138,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		if (!autoResponse.ok) {
 			const errorData = await autoResponse.json();
-			console.error('Resend auto-response error:', errorData);
+			logger.error('Failed to send auto-response email', { email, error: errorData });
 			return json(
 				{
 					success: false,
@@ -147,15 +150,17 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		if (!notification.ok) {
 			const errorData = await notification.json();
-			console.error('Resend notification error:', errorData);
+			logger.error('Failed to send notification email', { email, error: errorData });
 		}
+
+		logger.info('Contact form submitted successfully', { email, name, service });
 
 		return json({
 			success: true,
 			message: 'Message sent successfully! You should receive a confirmation email shortly.'
 		});
 	} catch (err) {
-		console.error('Contact form error:', err);
+		logger.error('Contact form error', { error: err });
 		return json(
 			{
 				success: false,
