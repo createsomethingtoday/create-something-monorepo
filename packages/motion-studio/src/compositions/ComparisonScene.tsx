@@ -39,13 +39,13 @@ interface ComparisonSide {
 
 interface ComparisonSceneProps {
   /** Scene title */
-  title: string;
-  
+  title?: string;
+
   /** Left side content */
-  left: ComparisonSide;
-  
+  left?: ComparisonSide;
+
   /** Right side content */
-  right: ComparisonSide;
+  right?: ComparisonSide;
   
   /** Property theme */
   theme?: keyof typeof voxPresets;
@@ -58,9 +58,9 @@ interface ComparisonSceneProps {
 }
 
 export const ComparisonScene: React.FC<ComparisonSceneProps> = ({
-  title,
-  left,
-  right,
+  title = 'Untitled',
+  left = { label: 'Before', content: null },
+  right = { label: 'After', content: null },
   theme = 'dark',
   direction = 'horizontal',
   showEffects = true,

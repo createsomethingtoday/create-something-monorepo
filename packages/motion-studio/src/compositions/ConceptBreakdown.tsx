@@ -44,10 +44,10 @@ interface Concept {
 
 interface ConceptBreakdownProps {
   /** Section title */
-  title: string;
-  
+  title?: string;
+
   /** Concepts to explain */
-  concepts: Concept[];
+  concepts?: Concept[];
   
   /** Layout style */
   layout?: 'horizontal' | 'vertical' | 'grid';
@@ -63,8 +63,8 @@ interface ConceptBreakdownProps {
 }
 
 export const ConceptBreakdown: React.FC<ConceptBreakdownProps> = ({
-  title,
-  concepts,
+  title = 'Untitled',
+  concepts = [],
   layout = 'horizontal',
   theme = 'dark',
   showConnections = false,

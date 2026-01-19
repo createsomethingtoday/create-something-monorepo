@@ -16,3 +16,6 @@ export { ExplainerVideo, calculateTotalDuration, createScene } from './Explainer
 
 // Lesson compositions
 export { ToolReceding, IDEvsTerminal } from './lessons';
+
+// Commercial compositions
+export { SeeingCommercial, SEEING_COMMERCIAL_DURATION } from './commercials';

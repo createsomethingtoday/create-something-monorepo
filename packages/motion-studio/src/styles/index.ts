@@ -46,15 +46,23 @@ export const typography = {
   // Font sizes (using rem for consistency)
   fontSize: {
     caption: '0.75rem',    // 12px
+    xs: '0.75rem',         // 12px (alias)
     sm: '0.875rem',        // 14px
+    base: '1rem',          // 16px (alias for body)
     body: '1rem',          // 16px
     bodyLg: '1.125rem',    // 18px
+    lg: '1.125rem',        // 18px (alias)
+    xl: '1.25rem',         // 20px
+    '2xl': '1.5rem',       // 24px
+    '3xl': '1.875rem',     // 30px
     h6: '1rem',            // 16px
     h5: '1.25rem',         // 20px
     h4: '1.5rem',          // 24px
     h3: '1.75rem',         // 28px
     h2: '2.25rem',         // 36px
     h1: '3.5rem',          // 56px
+    '5xl': '3rem',         // 48px
+    '7xl': '4.5rem',       // 72px
     display: '5rem',       // 80px
     displayXl: '7rem',     // 112px
   },
@@ -62,6 +70,7 @@ export const typography = {
   // Font weights - Canon standard
   fontWeight: {
     light: 300,
+    normal: 400,
     regular: 400,
     medium: 500,
     semibold: 600,
@@ -143,9 +152,9 @@ export const voxPresets = {
   dark: {
     background: colors.neutral[1000],
     foreground: colors.neutral[0],
-    muted: colors.neutral[400],
-    subtle: colors.neutral[800],
-    border: colors.neutral[700],
+    muted: colors.neutral[500],
+    subtle: colors.neutral[900],
+    border: colors.neutral[800],
   },
   
   // Light theme - black on white

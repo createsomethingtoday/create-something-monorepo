@@ -21,6 +21,12 @@ import { ExplainerVideo, calculateTotalDuration } from './compositions/Explainer
 import { ToolReceding } from './compositions/lessons/ToolReceding';
 import { IDEvsTerminal } from './compositions/lessons/IDEvsTerminal';
 
+// Commercials (v1 - slide deck style)
+import { SeeingCommercial as SeeingCommercialV1, SEEING_COMMERCIAL_DURATION } from './compositions/commercials/SeeingCommercial';
+
+// Commercials (v2 - Vox kinetic typography)
+import { SeeingCommercial, SEEING_COMMERCIAL_CONFIG } from './commercials';
+
 // Primitives
 import { KineticText } from './primitives/KineticText';
 import { voxPresets, typography, colors } from './styles';
@@ -295,6 +301,35 @@ const sampleScenes = [
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* ========================================
+          COMMERCIALS (V2 - Vox Kinetic Typography)
+          Motion transitions, cutting on twos, analog texture
+          ======================================== */}
+      <Composition
+        id="SeeingCommercial"
+        component={SeeingCommercial}
+        durationInFrames={SEEING_COMMERCIAL_CONFIG.durationInFrames}
+        fps={SEEING_COMMERCIAL_CONFIG.fps}
+        width={SEEING_COMMERCIAL_CONFIG.width}
+        height={SEEING_COMMERCIAL_CONFIG.height}
+      />
+      
+      {/* ========================================
+          COMMERCIALS (V1 - Legacy slide deck style)
+          Kept for comparison
+          ======================================== */}
+      <Composition
+        id="SeeingCommercial-V1"
+        component={SeeingCommercialV1}
+        durationInFrames={SEEING_COMMERCIAL_DURATION}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          theme: 'ltd',
+        }}
+      />
+      
       {/* ========================================
           CANON-STYLE TEXT REVEALS
           Subtractive philosophy animations

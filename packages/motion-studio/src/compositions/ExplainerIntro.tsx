@@ -25,7 +25,7 @@ import { colors, typography, animation, voxPresets, spacing } from '../styles';
 
 interface ExplainerIntroProps {
   /** The hook - opening question or statement */
-  hook: string;
+  hook?: string;
   
   /** Subtitle or topic name */
   subtitle?: string;
@@ -44,7 +44,7 @@ interface ExplainerIntroProps {
 }
 
 export const ExplainerIntro: React.FC<ExplainerIntroProps> = ({
-  hook,
+  hook = 'Untitled',
   subtitle,
   theme = 'dark',
   showGrain = true,

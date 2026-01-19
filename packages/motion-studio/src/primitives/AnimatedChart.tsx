@@ -54,13 +54,16 @@ interface AnimatedChartProps {
   
   /** Show values */
   showValues?: boolean;
-  
+
   /** Background color */
   backgroundColor?: string;
-  
+
+  /** Accent color */
+  accentColor?: string;
+
   /** Title */
   title?: string;
-  
+
   /** Custom className */
   className?: string;
 }

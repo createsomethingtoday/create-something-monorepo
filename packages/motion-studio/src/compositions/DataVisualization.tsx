@@ -33,13 +33,13 @@ interface DataPoint {
 
 interface DataVisualizationProps {
   /** Scene title */
-  title: string;
-  
+  title?: string;
+
   /** Chart type */
-  chartType: 'bar' | 'horizontal-bar' | 'pie' | 'line';
-  
+  chartType?: 'bar' | 'horizontal-bar' | 'pie' | 'line';
+
   /** Chart data */
-  data: DataPoint[];
+  data?: DataPoint[];
   
   /** Key insight text (appears after chart) */
   insight?: string;
@@ -55,9 +55,9 @@ interface DataVisualizationProps {
 }
 
 export const DataVisualization: React.FC<DataVisualizationProps> = ({
-  title,
-  chartType,
-  data,
+  title = 'Untitled',
+  chartType = 'bar',
+  data = [],
   insight,
   theme = 'dark',
   buildStyle = 'bar-by-bar',

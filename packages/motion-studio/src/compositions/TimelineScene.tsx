@@ -43,10 +43,10 @@ interface TimelineEvent {
 
 interface TimelineSceneProps {
   /** Scene title */
-  title: string;
-  
+  title?: string;
+
   /** Timeline events */
-  events: TimelineEvent[];
+  events?: TimelineEvent[];
   
   /** Property theme */
   theme?: keyof typeof voxPresets;
@@ -59,8 +59,8 @@ interface TimelineSceneProps {
 }
 
 export const TimelineScene: React.FC<TimelineSceneProps> = ({
-  title,
-  events,
+  title = 'Untitled',
+  events = [],
   theme = 'dark',
   orientation = 'horizontal',
   showEffects = true,

@@ -11,7 +11,8 @@
     "render": "remotion render",
     "render:still": "remotion still",
     "preview": "remotion preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",

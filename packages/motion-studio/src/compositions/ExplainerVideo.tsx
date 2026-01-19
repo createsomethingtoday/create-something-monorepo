@@ -61,14 +61,14 @@ type Scene = IntroScene | DataScene | BreakdownScene | ComparisonSceneType | Tim
 
 interface ExplainerVideoProps {
   /** Sequence of scenes */
-  scenes: Scene[];
+  scenes?: Scene[];
   
   /** Global theme override */
   theme?: keyof typeof voxPresets;
 }
 
 export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
-  scenes,
+  scenes = [],
   theme,
 }) => {
   let currentFrame = 0;
