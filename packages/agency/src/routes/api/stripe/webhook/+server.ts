@@ -8,7 +8,10 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { createStripeClient, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
+import { createLogger } from '@create-something/components/utils';
 import type Stripe from 'stripe';
+
+const logger = createLogger('StripeWebhook');
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	// Get Stripe configuration from environment
@@ -16,7 +19,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const webhookSecret = platform?.env?.STRIPE_WEBHOOK_SECRET;
 
 	if (!stripeSecretKey || !webhookSecret) {
-		console.error('Stripe webhook: Missing configuration');
+		logger.error('Missing Stripe configuration');
 		throw error(500, 'Webhook not configured');
 	}
 
@@ -35,12 +38,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
 	} catch (err) {
-		console.error('Webhook signature verification failed:', err);
+		logger.error('Webhook signature verification failed', { error: err });
 		throw error(400, 'Invalid webhook signature');
 	}
 
 	// Log event for debugging
-	console.log(`Stripe webhook received: ${event.type}`);
+	logger.info('Webhook received', { eventType: event.type });
 
 	// Handle specific events
 	try {
@@ -67,12 +70,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				break;
 
 			default:
-				console.log(`Unhandled event type: ${event.type}`);
+				logger.debug('Unhandled event type', { eventType: event.type });
 		}
 
 		return json({ received: true });
 	} catch (err) {
-		console.error(`Error handling webhook ${event.type}:`, err);
+		logger.error('Error handling webhook', { eventType: event.type, error: err });
 		throw error(500, 'Webhook handler failed');
 	}
 };
@@ -91,7 +94,7 @@ async function handleCheckoutComplete(
 	const pendingId = session.metadata?.pending_id;
 	const subdomain = session.metadata?.subdomain;
 
-	console.log('Checkout completed:', {
+	logger.info('Checkout completed', {
 		sessionId: session.id,
 		productId,
 		tier,
@@ -196,11 +199,11 @@ async function provisionVerticalTemplate(
 		const data = await response.json() as { success: boolean; tenant?: { id: string; subdomain: string; url: string } };
 
 		if (!response.ok || !data.success) {
-			console.error('Provision API failed:', data);
+			logger.error('Provision API failed', { data });
 			return;
 		}
 
-		console.log('Vertical template provisioned:', {
+		logger.info('Vertical template provisioned', {
 			tenantId: data.tenant?.id,
 			subdomain: data.tenant?.subdomain,
 			url: data.tenant?.url
@@ -216,7 +219,7 @@ async function provisionVerticalTemplate(
 			);
 		}
 	} catch (err) {
-		console.error('Error provisioning vertical template:', err);
+		logger.error('Error provisioning vertical template', { error: err });
 	}
 }
 
@@ -263,16 +266,16 @@ async function sendVerticalTemplateWelcomeEmail(
 			});
 
 			if (response.ok) {
-				console.log(`Welcome email sent to ${email} for site ${subdomain}`);
+				logger.info('Welcome email sent', { email, subdomain });
 			} else {
-				const error = await response.text();
-				console.error('Failed to send welcome email via Resend:', error);
+				const errorText = await response.text();
+				logger.error('Failed to send welcome email via Resend', { error: errorText });
 			}
 		} catch (err) {
-			console.error('Error sending welcome email:', err);
+			logger.error('Error sending welcome email', { error: err });
 		}
 	} else {
-		console.log('WELCOME EMAIL NEEDED:', {
+		logger.warn('Welcome email needed (no Resend configured)', {
 			to: email,
 			subdomain,
 			siteUrl
@@ -328,17 +331,17 @@ async function sendFulfillmentEmail(
 			});
 
 			if (response.ok) {
-				console.log(`Fulfillment email sent to ${email} for ${productId}`);
+				logger.info('Fulfillment email sent', { email, productId });
 			} else {
-				const error = await response.text();
-				console.error('Failed to send email via Resend:', error);
+				const errorText = await response.text();
+				logger.error('Failed to send fulfillment email via Resend', { error: errorText });
 			}
 		} catch (err) {
-			console.error('Error sending fulfillment email:', err);
+			logger.error('Error sending fulfillment email', { error: err });
 		}
 	} else {
 		// Log for manual fulfillment if no email service configured
-		console.log('FULFILLMENT EMAIL NEEDED:', {
+		logger.warn('Fulfillment email needed (no Resend configured)', {
 			to: email,
 			product: productName,
 			downloadUrl
@@ -353,7 +356,7 @@ async function handleSubscriptionUpdate(
 	subscription: Stripe.Subscription,
 	platform: App.Platform | undefined
 ) {
-	console.log('Subscription updated:', {
+	logger.info('Subscription updated', {
 		subscriptionId: subscription.id,
 		status: subscription.status,
 		customerId: subscription.customer
@@ -388,7 +391,7 @@ async function handleSubscriptionCanceled(
 	subscription: Stripe.Subscription,
 	platform: App.Platform | undefined
 ) {
-	console.log('Subscription canceled:', {
+	logger.info('Subscription canceled', {
 		subscriptionId: subscription.id,
 		customerId: subscription.customer
 	});
@@ -442,10 +445,10 @@ async function suspendVerticalTemplateSite(
 		});
 
 		if (response.ok) {
-			console.log(`Vertical template site suspended for subscription ${subscription.id}`);
+			logger.info('Vertical template site suspended', { subscriptionId: subscription.id });
 		}
 	} catch (err) {
-		console.error('Error suspending vertical template site:', err);
+		logger.error('Error suspending vertical template site', { error: err });
 	}
 }
 
@@ -461,7 +464,7 @@ async function provisionAgentInABox(
 	const validTier = tier === 'solo' || tier === 'team' || tier === 'org' ? tier : 'solo';
 
 	if (!customerEmail) {
-		console.error('Agent-in-a-Box provisioning failed: no customer email');
+		logger.error('Agent-in-a-Box provisioning failed: no customer email');
 		return;
 	}
 
@@ -510,7 +513,7 @@ async function provisionAgentInABox(
 				)
 				.run();
 
-			console.log('Agent-in-a-Box purchase recorded:', {
+			logger.info('Agent-in-a-Box purchase recorded', {
 				email: customerEmail,
 				tier: validTier,
 				licenseKey: licenseKey.substring(0, 10) + '...',
@@ -518,7 +521,7 @@ async function provisionAgentInABox(
 				teamSeatsTotal
 			});
 		} catch (err) {
-			console.error('Failed to store Agent-in-a-Box purchase in D1:', err);
+			logger.error('Failed to store Agent-in-a-Box purchase in D1', { error: err });
 			// Continue to send email even if D1 fails - support can manually fix
 		}
 	}
@@ -542,7 +545,7 @@ async function provisionLmsAccount(
 	const identitySecret = platform?.env?.IDENTITY_WORKER_SECRET;
 
 	if (!identitySecret) {
-		console.log('LMS PROVISIONING NEEDED (no identity secret configured):', { email, tier });
+		logger.warn('LMS provisioning needed (no identity secret configured)', { email, tier });
 		return;
 	}
 
@@ -561,13 +564,13 @@ async function provisionLmsAccount(
 		});
 
 		if (response.ok) {
-			console.log(`LMS account provisioned for ${email} (tier: ${tier})`);
+			logger.info('LMS account provisioned', { email, tier });
 		} else {
-			const error = await response.text();
-			console.error('LMS provisioning failed:', error);
+			const errorText = await response.text();
+			logger.error('LMS provisioning failed', { error: errorText });
 		}
 	} catch (err) {
-		console.error('Error provisioning LMS account:', err);
+		logger.error('Error provisioning LMS account', { error: err });
 	}
 }
 
@@ -640,17 +643,17 @@ async function sendAgentKitEmail(
 			});
 
 			if (response.ok) {
-				console.log(`Agent-in-a-Box fulfillment email sent to ${email}`);
+				logger.info('Agent-in-a-Box fulfillment email sent', { email });
 			} else {
-				const error = await response.text();
-				console.error('Failed to send Agent-in-a-Box email via Resend:', error);
+				const errorText = await response.text();
+				logger.error('Failed to send Agent-in-a-Box email via Resend', { error: errorText });
 			}
 		} catch (err) {
-			console.error('Error sending Agent-in-a-Box email:', err);
+			logger.error('Error sending Agent-in-a-Box email', { error: err });
 		}
 	} else {
 		// Log for manual fulfillment if no email service configured
-		console.log('AGENT-IN-A-BOX FULFILLMENT EMAIL NEEDED:', {
+		logger.warn('Agent-in-a-Box fulfillment email needed (no Resend configured)', {
 			to: email,
 			tier: tierName,
 			licenseKey,
@@ -665,7 +668,7 @@ async function sendAgentKitEmail(
  * Handle successful invoice payment
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice, platform: App.Platform | undefined) {
-	console.log('Invoice paid:', {
+	logger.info('Invoice paid', {
 		invoiceId: invoice.id,
 		amountPaid: invoice.amount_paid,
 		customerId: invoice.customer
@@ -678,7 +681,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, platform: App.Platform
  * Handle failed invoice payment
  */
 async function handleInvoiceFailed(invoice: Stripe.Invoice, platform: App.Platform | undefined) {
-	console.log('Invoice payment failed:', {
+	logger.warn('Invoice payment failed', {
 		invoiceId: invoice.id,
 		amountDue: invoice.amount_due,
 		customerId: invoice.customer
@@ -687,7 +690,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice, platform: App.Platfo
 	// Get customer email from invoice
 	const customerEmail = invoice.customer_email;
 	if (!customerEmail) {
-		console.log('No customer email on invoice, skipping dunning email');
+		logger.debug('No customer email on invoice, skipping dunning email');
 		return;
 	}
 
@@ -744,17 +747,17 @@ async function sendDunningEmail(
 			});
 
 			if (response.ok) {
-				console.log(`Dunning email sent to ${email}`);
+				logger.info('Dunning email sent', { email });
 			} else {
-				const error = await response.text();
-				console.error('Failed to send dunning email via Resend:', error);
+				const errorText = await response.text();
+				logger.error('Failed to send dunning email via Resend', { error: errorText });
 			}
 		} catch (err) {
-			console.error('Error sending dunning email:', err);
+			logger.error('Error sending dunning email', { error: err });
 		}
 	} else {
 		// Log for manual follow-up if no email service configured
-		console.log('DUNNING EMAIL NEEDED:', {
+		logger.warn('Dunning email needed (no Resend configured)', {
 			to: email,
 			amountDue: `$${amountDue} ${currency}`,
 			paymentUrl
