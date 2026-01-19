@@ -10,6 +10,57 @@
 import type { AnalyticsEvent, EventBatch, BatchResponse, Property } from './types.js';
 
 // =============================================================================
+// SHARED REQUEST HANDLERS
+// =============================================================================
+
+/**
+ * Create unified analytics event handlers for SvelteKit routes.
+ * 
+ * Usage in +server.ts:
+ * ```ts
+ * import { createAnalyticsEventsHandler } from '@create-something/components/analytics';
+ * export const { POST, GET } = createAnalyticsEventsHandler();
+ * ```
+ */
+export function createAnalyticsEventsHandler() {
+	return {
+		POST: async ({ request, platform }: { 
+			request: Request; 
+			platform?: { env?: { DB?: D1Database } } 
+		}) => {
+			const db = platform?.env?.DB;
+
+			if (!db) {
+				return Response.json({ success: false, error: 'Database not available' }, { status: 500 });
+			}
+
+			try {
+				const batch = (await request.json()) as EventBatch;
+
+				if (!batch || !Array.isArray(batch.events)) {
+					return Response.json({ success: false, error: 'Invalid batch format' }, { status: 400 });
+				}
+
+				const context = {
+					userAgent: request.headers.get('user-agent') || undefined,
+					ipCountry: request.headers.get('cf-ipcountry') || undefined
+				};
+
+				const result = await processEventBatch(db, batch, context);
+				return Response.json(result, { status: result.success ? 200 : 207 });
+			} catch (error) {
+				console.error('[AnalyticsEventsAPI] Failed to process analytics events', error);
+				return Response.json({ success: false, received: 0 }, { status: 200 });
+			}
+		},
+
+		GET: async () => {
+			return Response.json({ status: 'ok', endpoint: 'unified-analytics' });
+		}
+	};
+}
+
+// =============================================================================
 // TYPES
 // =============================================================================
 

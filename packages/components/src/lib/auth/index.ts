@@ -105,6 +105,9 @@ export {
 	handleIdentityResponse,
 	createAuthErrorResponse,
 	handleIdentityError,
+	createAuthHandler,
+	createLoginHandler,
+	createSignupHandler,
 	type DomainConfig,
 } from './handlers.js';
 

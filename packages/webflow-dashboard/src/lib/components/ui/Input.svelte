@@ -15,50 +15,15 @@
 </script>
 
 <input
-	class="input {className}"
-	class:input-error={error}
+	class="form-control input {className}"
+	class:form-control-error={error}
 	bind:value
 	{...restProps}
 />
 
 <style>
+	/* Input-specific overrides (uses shared .form-control from app.css) */
 	.input {
-		display: flex;
-		width: 100%;
 		height: 2.25rem;
-		padding: 0.5rem 0.75rem;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		outline: none;
-		transition: border-color var(--duration-micro) var(--ease-standard);
-	}
-
-	.input::placeholder {
-		color: var(--color-fg-muted);
-	}
-
-	.input:focus {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.input:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
-	}
-
-	.input:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.input-error {
-		border-color: var(--color-error);
-	}
-
-	.input-error:focus {
-		border-color: var(--color-error);
 	}
 </style>

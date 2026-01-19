@@ -15,52 +15,20 @@
 </script>
 
 <textarea
-	class="textarea {className}"
-	class:textarea-error={error}
+	class="form-control textarea {className}"
+	class:form-control-error={error}
 	bind:value
 	{...restProps}
 ></textarea>
 
 <style>
+	/* Textarea-specific overrides (uses shared .form-control from app.css) */
 	.textarea {
-		display: flex;
-		width: 100%;
 		min-height: 5rem;
-		padding: 0.5rem 0.75rem;
-		font-size: var(--text-body-sm);
-		font-family: inherit;
-		color: var(--color-fg-primary);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		outline: none;
 		resize: vertical;
-		transition:
-			border-color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard);
-	}
-
-	.textarea::placeholder {
-		color: var(--color-fg-muted);
-	}
-
-	.textarea:focus {
-		border-color: var(--color-border-emphasis);
-		box-shadow: 0 0 0 1px var(--color-focus);
 	}
 
 	.textarea:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 		resize: none;
-	}
-
-	.textarea-error {
-		border-color: var(--color-error);
-	}
-
-	.textarea-error:focus {
-		border-color: var(--color-error);
-		box-shadow: 0 0 0 1px var(--color-error);
 	}
 </style>
