@@ -3,7 +3,7 @@
 	import { marked } from "marked";
 	import hljs from "highlight.js";
 	import type { Paper } from "$lib/types/paper";
-	import InteractiveExperimentCTA from "./InteractiveExperimentCTA.svelte";
+	import { InteractiveExperimentCTA } from "@create-something/components/interactive";
 
 	interface Props {
 		paper: Paper;

@@ -1,0 +1,7 @@
+# Build artifacts
+dist/
+node_modules/
+
+# HuggingFace deploy copies (generated from src/)
+# Use `cp -r src/* hf-deploy/src/` to regenerate before deploy
+**/hf-deploy/

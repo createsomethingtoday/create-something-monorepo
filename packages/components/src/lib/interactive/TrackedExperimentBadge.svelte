@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Paper } from '$lib/types/paper';
+	import type { Paper } from '../types/paper.js';
 
 	interface Props {
 		paper: Paper;

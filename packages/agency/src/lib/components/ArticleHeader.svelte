@@ -1,5 +1,5 @@
 <script lang="ts">
-	import TrackedExperimentBadge from './TrackedExperimentBadge.svelte';
+	import { TrackedExperimentBadge } from '@create-something/components/interactive';
 	import type { Paper } from '$lib/types/paper';
 
 	interface Props {

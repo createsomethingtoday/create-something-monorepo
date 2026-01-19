@@ -108,6 +108,12 @@ export {
 	createAuthHandler,
 	createLoginHandler,
 	createSignupHandler,
+	// Cross-domain handlers
+	TARGET_DOMAINS,
+	PROPERTY_DOMAINS,
+	createCrossDomainHandler,
+	createCrossDomainPageLoader,
+	createMagicLinkCallbackLoader,
 	type DomainConfig,
 } from './handlers.js';
 

@@ -15,7 +15,7 @@
 </script>
 
 <!-- Simple, clean CTA matching site aesthetic -->
-<div class="interactive-cta p-6 mb-8">
+<div class="interactive-experiment-cta p-6 mb-8">
 	<div class="flex items-center justify-between gap-6 flex-wrap">
 		<!-- Left: Simple text -->
 		<div class="flex-1 min-w-0">
@@ -32,7 +32,7 @@
 			{#if isCompleted && onReset}
 				<button
 					onclick={onReset}
-					class="reset-button p-2"
+					class="reset-btn p-2"
 					aria-label="Reset progress"
 					title="Reset progress"
 				>
@@ -56,7 +56,7 @@
 				href={spaceUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="launch-button {isCompleted ? 'completed' : 'default'} flex items-center gap-2 px-4 py-2"
+				class="launch-btn flex items-center gap-2 px-4 py-2 {isCompleted ? 'completed' : 'default'}"
 			>
 				{#if isCompleted}
 					<span>Verification Complete</span>
@@ -95,7 +95,7 @@
 </div>
 
 <style>
-	.interactive-cta {
+	.interactive-experiment-cta {
 		background: var(--color-bg-pure);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
@@ -111,39 +111,39 @@
 		font-size: var(--text-caption);
 	}
 
-	.reset-button {
+	.reset-btn {
 		color: var(--color-fg-tertiary);
 		border-radius: var(--radius-sm);
-		transition: all var(--duration-standard);
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
-	.reset-button:hover {
+	.reset-btn:hover {
 		color: var(--color-fg-primary);
-		background: var(--color-hover);
+		background: var(--color-active);
 	}
 
-	.launch-button {
+	.launch-btn {
 		font-size: var(--text-body-sm);
 		font-weight: 600;
 		border-radius: var(--radius-sm);
-		transition: all var(--duration-standard);
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
-	.launch-button.default {
+	.launch-btn.default {
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 	}
 
-	.launch-button.default:hover {
+	.launch-btn.default:hover {
 		background: var(--color-fg-secondary);
 	}
 
-	.launch-button.completed {
+	.launch-btn.completed {
 		background: var(--color-success);
 		color: var(--color-bg-pure);
 	}
 
-	.launch-button.completed:hover {
+	.launch-btn.completed:hover {
 		filter: brightness(1.15);
 	}
 </style>
