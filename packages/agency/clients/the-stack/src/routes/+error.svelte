@@ -1,5 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
+
+  const currentYear = new Date().getFullYear();
 </script>
 
 <svelte:head>
@@ -37,7 +39,7 @@
 
   <div class="utility_footer">
     <div class="opacity-60">
-      <p class="text-size-small">© 2025 The Stack Indoor Pickleball. All rights reserved.</p>
+      <p class="text-size-small">© {currentYear} The Stack Indoor Pickleball. All rights reserved.</p>
     </div>
   </div>
 </div>

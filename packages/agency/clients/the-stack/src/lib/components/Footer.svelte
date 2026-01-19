@@ -13,6 +13,8 @@
 	import NewsletterForm from './NewsletterForm.svelte';
 	import SocialLinks from './SocialLinks.svelte';
 
+	const currentYear = new Date().getFullYear();
+
 	const footerLinks = [
 		{ href: '/locations', label: 'book a court' },
 		{ href: '/team', label: 'meet our team' },
@@ -78,7 +80,7 @@
 		<div class="footer_copyright">
 			<div class="opacity-60">
 				<div class="footer_copyright-inner">
-					<p class="text-size-regular">© 2025 The Stack Indoor Pickleball. All rights reserved.</p>
+					<p class="text-size-regular">© {currentYear} The Stack Indoor Pickleball. All rights reserved.</p>
 				</div>
 			</div>
 			<SocialLinks />
