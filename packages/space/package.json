@@ -38,7 +38,7 @@
 		"vite": "^7.1.10",
 		"vite-plugin-top-level-await": "^1.6.0",
 		"vite-plugin-wasm": "^3.5.0",
-		"wrangler": "^4.51.0"
+		"wrangler": "^4.59.0"
 	},
 	"dependencies": {
 		"@cloudflare/sandbox": "^0.4.18",

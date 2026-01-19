@@ -51,7 +51,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "undici": ">=7.18.2"
+    }
   },
   "dependencies": {
     "@cloudflare/puppeteer": "^1.0.4",

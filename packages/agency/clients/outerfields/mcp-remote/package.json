@@ -24,6 +24,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250106.0",
     "esbuild": "^0.24.2",
-    "wrangler": "^3.94.0"
+    "wrangler": "^4.59.0"
   }
 }
