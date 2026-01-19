@@ -10,6 +10,9 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('NewsletterWebhook');
 
 /**
  * Resend webhook event types we handle
@@ -68,12 +71,12 @@ async function verifyWebhookSignature(
 ): Promise<boolean> {
 	// If no secret configured, skip verification (development mode)
 	if (!webhookSecret) {
-		console.warn('RESEND_WEBHOOK_SECRET not configured - skipping signature verification');
+		logger.warn('RESEND_WEBHOOK_SECRET not configured - skipping signature verification');
 		return true;
 	}
 
 	if (!svixId || !svixTimestamp || !svixSignature) {
-		console.error('Missing required Svix headers for verification');
+		logger.error('Missing required Svix headers for verification');
 		return false;
 	}
 
@@ -83,7 +86,7 @@ async function verifyWebhookSignature(
 	const tolerance = 5 * 60; // 5 minutes
 
 	if (Math.abs(now - timestamp) > tolerance) {
-		console.error('Webhook timestamp outside tolerance window');
+		logger.error('Webhook timestamp outside tolerance window', { timestamp, now, tolerance });
 		return false;
 	}
 
@@ -126,10 +129,10 @@ async function verifyWebhookSignature(
 			}
 		}
 
-		console.error('No matching signature found');
+		logger.error('No matching signature found');
 		return false;
 	} catch (err) {
-		console.error('Error verifying webhook signature:', err);
+		logger.error('Error verifying webhook signature', { error: err });
 		return false;
 	}
 }
@@ -168,7 +171,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		}
 
 		if (!platform?.env?.DB) {
-			console.error('Database not available');
+			logger.error('Database not available');
 			return json({ success: false, message: 'Database not available' }, { status: 500 });
 		}
 
@@ -220,9 +223,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						.bind(newStatus, autoUnsubscribeReason, newBounceCount, email)
 						.run();
 
-					console.log(
-						`Marked ${email} as ${newStatus} (bounce ${newBounceCount}/3): ${autoUnsubscribeReason}`
-					);
+					logger.info('Hard bounce processed', { 
+						email, 
+						status: newStatus, 
+						bounceCount: newBounceCount, 
+						autoUnsubscribed: newBounceCount >= 3 
+					});
 					return { email, success: true, bounceCount: newBounceCount, autoUnsubscribed: newBounceCount >= 3 };
 				} else {
 					// Soft bounce or complaint - don't increment bounce count
@@ -238,11 +244,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						.bind(status, bounceReason, email)
 						.run();
 
-					console.log(`Marked ${email} as ${status}: ${bounceReason}`);
+					logger.info('Soft bounce/complaint processed', { email, status });
 					return { email, success: true };
 				}
 			} catch (err) {
-				console.error(`Failed to update ${email}:`, err);
+				logger.error('Failed to update subscriber', { email, error: err });
 				return { email, success: false, error: err };
 			}
 		});
@@ -257,7 +263,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			total: recipients.length
 		});
 	} catch (err) {
-		console.error('Webhook processing error:', err);
+		logger.error('Webhook processing error', { error: err });
 		return json(
 			{
 				success: false,
