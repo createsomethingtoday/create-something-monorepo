@@ -33,4 +33,29 @@
 	.main-wrapper {
 		min-height: 100vh;
 	}
+
+	/* Skip Link - Hidden by default, visible on focus for keyboard users */
+	:global(.skip-link) {
+		position: fixed;
+		top: -100%;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 9999;
+		padding: 1rem 2rem;
+		background: var(--green);
+		color: var(--black);
+		font-family: var(--font-coolvetica);
+		font-size: 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		text-decoration: none;
+		border-radius: 0 0 0.5rem 0.5rem;
+		transition: top 0.2s ease;
+	}
+
+	:global(.skip-link:focus) {
+		top: 0;
+		outline: 2px solid var(--white);
+		outline-offset: 2px;
+	}
 </style>
