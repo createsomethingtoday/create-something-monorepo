@@ -1,0 +1,75 @@
+[package]
+name = "verified-triad"
+version = "0.1.0"
+edition = "2021"
+description = "Computation-constrained synthesis for AI code analysis - claims require computed evidence"
+license = "MIT"
+repository = "https://github.com/create-something/verified-triad"
+keywords = ["ai", "code-analysis", "verification", "llm", "grounding"]
+categories = ["development-tools", "command-line-utilities"]
+
+[lib]
+name = "verified_triad"
+path = "src/lib.rs"
+
+[[bin]]
+name = "vt"
+path = "src/bin/vt.rs"
+
+[[bin]]
+name = "vt-mcp"
+path = "src/bin/vt-mcp.rs"
+
+[[bin]]
+name = "vt-audit"
+path = "src/bin/vt-audit.rs"
+
+[dependencies]
+# AST parsing
+tree-sitter = "0.24"
+tree-sitter-typescript = "0.23"
+tree-sitter-javascript = "0.23"
+tree-sitter-rust = "0.23"
+tree-sitter-python = "0.23"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Utilities
+uuid = { version = "1", features = ["v4", "serde"] }
+thiserror = "2"
+anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
+
+# Similarity computation
+similar = "2"  # Text diff algorithm
+sha2 = "0.10"  # Hashing (more compatible than blake3)
+
+# Config and patterns
+toml = "0.8"   # Config file parsing
+glob = "0.3"   # Path pattern matching
+
+# MCP server (optional)
+# mcp-sdk = { version = "0.1", optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+default = []
+mcp = []  # Enable MCP server support
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
