@@ -29,559 +29,74 @@
 		CheckCircle
 	} from 'lucide-svelte';
 
+	// Import extracted modules
+	import type { SecurityStatus, LightingMode, Particle, Incident } from './arenaTypes';
+	import {
+		intelligenceScenarios,
+		particleColors,
+		reasoningExamples,
+		holisticUpdate,
+		incidentTypes,
+		scenarioEffects,
+		scenarioMessages,
+		createInitialHvacZones,
+		createInitialNotifications,
+		createInitialIncidentLog
+	} from './arenaData';
+	import { generateParticles, updateParticles as updateParticlePositions } from './arenaParticles';
+
 	// System states - simulating real-time automation data
-	let securityStatus = $state<'armed' | 'monitoring' | 'alert'>('monitoring');
-	let lightingMode = $state<'event' | 'ambient' | 'emergency'>('event');
-	let hvacZones = $state([
-		{ id: 1, name: 'Main Floor', temp: 72, target: 72, active: true },
-		{ id: 2, name: 'Upper Bowl', temp: 74, target: 72, active: true },
-		{ id: 3, name: 'Concourse', temp: 71, target: 70, active: true },
-		{ id: 4, name: 'VIP Suites', temp: 70, target: 70, active: true }
-	]);
+	let securityStatus = $state<SecurityStatus>('monitoring');
+	let lightingMode = $state<LightingMode>('event');
+	let hvacZones = $state(createInitialHvacZones());
 	let currentEvent = $state({
 		name: 'NBA Western Conference Finals',
 		phase: 'Second Quarter',
 		attendance: 18_847,
 		capacity: 19_500
 	});
-	let notifications = $state([
-		{ id: 1, system: 'Security', message: 'Perimeter scan complete', time: '2s ago', priority: 'low' },
-		{ id: 2, system: 'HVAC', message: 'Zone 2 adjusting +2°', time: '15s ago', priority: 'medium' },
-		{ id: 3, system: 'Lighting', message: 'Court lights at 100%', time: '30s ago', priority: 'low' }
-	]);
-
-	// Cross-system intelligence scenarios - demonstrating emergent behaviors
-	const intelligenceScenarios = [
-		{
-			id: 'gate-crowding',
-			trigger: 'Getting crowded at Gate A',
-			phase: 'Pre-Game',
-			responses: [
-				{ system: 'Security', action: 'Opens another screening lane' },
-				{ system: 'Lighting', action: 'Brightens the path to Gate B' },
-				{ system: 'HVAC', action: 'Cools down the area people are heading to' },
-				{ system: 'Signs', action: 'Gently suggests the shorter line at Gate B' }
-			],
-			humanLoop: 'Security supervisor gets a heads up—can change the plan anytime',
-			insight: 'People move faster. Lines stay safe. Nobody had to radio anyone.',
-			visualCue: 'Watch: Crowds flowing from parking toward north entrance'
-		},
-		{
-			id: 'vip-arrival',
-			trigger: 'VIP motorcade approaching south entrance',
-			phase: 'Pre-Game',
-			responses: [
-				{ system: 'Security', action: 'Clears path, activates VIP lane cameras' },
-				{ system: 'Lighting', action: 'Illuminates private entrance corridor' },
-				{ system: 'Parking', action: 'Reserves spots in Lot C, guides regular traffic around' },
-				{ system: 'Elevator', action: 'Holds suite-level car, bypasses other calls' }
-			],
-			humanLoop: 'VIP liaison confirms guest preferences from app check-in',
-			insight: 'The guest just... walks in. Everything was ready.',
-			visualCue: 'Watch: Vehicles arriving at south VIP lot'
-		},
-		{
-			id: 'halftime',
-			trigger: 'Halftime starts',
-			phase: 'Halftime',
-			responses: [
-				{ system: 'Lighting', action: 'Brightens walkways, dims the court' },
-				{ system: 'HVAC', action: 'Pushes fresh air where people are heading' },
-				{ system: 'Security', action: 'Shifts attention to concession areas' },
-				{ system: 'Scheduling', action: 'Lets cleaning crews know it\'s time' }
-			],
-			humanLoop: 'Ops manager sees the summary—crews tap "on my way" on their phones',
-			insight: 'The building was ready before the buzzer. That\'s the point.',
-			visualCue: 'Watch: Crowd spreading from seats to concourse'
-		},
-		{
-			id: 'weather-incoming',
-			trigger: 'Storm approaching in 45 minutes',
-			phase: 'Third Quarter',
-			responses: [
-				{ system: 'HVAC', action: 'Closes exterior vents, increases interior circulation' },
-				{ system: 'Lighting', action: 'Checks backup generators, pre-stages emergency lights' },
-				{ system: 'Parking', action: 'Alerts: covered lot filling fast' },
-				{ system: 'Comms', action: 'Queues weather advisory for end-of-game announcement' }
-			],
-			humanLoop: 'Facilities manager reviews plan, approves early roof closure',
-			insight: 'When the rain hits, nobody scrambles. It was handled an hour ago.',
-			visualCue: 'Watch: Parking activity shifts to covered areas'
-		},
-		{
-			id: 'emergency',
-			trigger: 'Something\'s wrong in Section 112',
-			phase: 'Fourth Quarter',
-			responses: [
-				{ system: 'Security', action: 'Team heading there now' },
-				{ system: 'Lighting', action: 'Exit paths light up' },
-				{ system: 'HVAC', action: 'Keeps air flowing toward exits' },
-				{ system: 'Speakers', action: 'Calm voice, clear directions, just that section' }
-			],
-			humanLoop: 'A person decides what happens next. Always.',
-			humanLoopCritical: true,
-			insight: 'The system helps. A human chooses.',
-			visualCue: 'Watch: Evacuation flow toward south exit'
-		},
-		{
-			id: 'game-end',
-			trigger: 'Final buzzer—game over',
-			phase: 'Post-Game',
-			responses: [
-				{ system: 'Lighting', action: 'Full brightness on all exit paths' },
-				{ system: 'HVAC', action: 'Max airflow in exit corridors' },
-				{ system: 'Parking', action: 'Staggered lot release to prevent gridlock' },
-				{ system: 'Transit', action: 'Shuttles staged, departures every 3 minutes' }
-			],
-			humanLoop: 'Traffic control officers coordinate with city signals',
-			insight: '19,000 people exit in 25 minutes. Nobody honks.',
-			visualCue: 'Watch: Mass movement toward all exits and parking'
-		},
-		{
-			id: 'overnight',
-			trigger: 'Venue empty—maintenance window',
-			phase: 'Overnight',
-			responses: [
-				{ system: 'Lighting', action: 'Work lights only where crews are active' },
-				{ system: 'HVAC', action: 'Energy-saving mode, deeper clean in empty zones' },
-				{ system: 'Security', action: 'Perimeter patrol mode, interior sensors heightened' },
-				{ system: 'Scheduling', action: 'Maintenance bots deployed for floor cleaning' }
-			],
-			humanLoop: 'Night supervisor monitors from home, alerts for anomalies only',
-			insight: 'The building takes care of itself. Tomorrow, it\'s ready again.',
-			visualCue: 'Watch: Minimal activity, perimeter security active'
-		}
-	];
+	let notifications = $state(createInitialNotifications());
 
 	let activeScenario = $state(0);
 	let scenarioTransitioning = $state(false);
 
-	// Particle colors by scenario
-	const particleColors = [
-		'var(--color-data-4)',  // 0: entering - yellow/gold
-		'var(--color-accent)',  // 1: VIP - accent
-		'var(--color-data-2)',  // 2: halftime - green
-		'var(--color-data-3)',  // 3: weather - blue
-		'var(--color-error)',   // 4: emergency - red
-		'var(--color-data-1)',  // 5: exiting - cyan
-		'var(--color-fg-muted)' // 6: overnight - gray
-	];
-
 	// Derived for template use
 	const currentScenario = $derived(intelligenceScenarios[activeScenario]);
-
-	// AI Reasoning examples - showing how the system thinks, not just acts
-	const reasoningExamples = [
-		{
-			situation: 'Upper Bowl getting warm',
-			thinking: [
-				'Temperature rising in Zone 2 (currently 76°F, target 72°F)',
-				'Crowd density: 94% occupied',
-				'Game phase: 3rd quarter (high energy)',
-				'Weather outside: 85°F, sunny',
-				'Similar past events: cooling takes ~8 minutes to feel'
-			],
-			decision: 'Start cooling now—by the time people feel it, it\'ll be right',
-			confidence: 87,
-			alternative: 'Could wait, but past patterns show complaints start at 77°F'
-		},
-		{
-			situation: 'Unusual crowd movement near Exit 7',
-			thinking: [
-				'Movement speed: faster than normal',
-				'Direction: toward exit (not concessions)',
-				'Time: not halftime or end of game',
-				'Nearby events: nothing scheduled',
-				'Camera check: no visible emergency'
-			],
-			decision: 'Alert security to observe, but don\'t escalate yet',
-			confidence: 62,
-			alternative: 'Confidence below 70%—flagging for human review in 30 seconds if unchanged'
-		},
-		{
-			situation: 'VIP suite requests "cooler"',
-			thinking: [
-				'Current temp: 70°F (at target)',
-				'Guest preference history: likes it cold',
-				'Adjacent suites: occupied, set to 70°F',
-				'HVAC capacity: can isolate this zone',
-				'Impact on neighbors: minimal with zone isolation'
-			],
-			decision: 'Lower to 68°F for this suite only',
-			confidence: 94,
-			alternative: 'Guest history makes this low-risk. No need to confirm.'
-		}
-	];
 
 	let activeReasoning = $state(0);
 
 	// Derived for template use
 	const currentReasoning = $derived(reasoningExamples[activeReasoning]);
 
-	// Holistic update example - showing how one change ripples through everything
-	const holisticUpdate = {
-		trigger: 'Weather forecast changed: thunderstorm in 2 hours',
-		timestamp: '18:45:00',
-		systemUpdates: [
-			{
-				system: 'Scheduling',
-				before: 'Roof open for sunset view',
-				after: 'Roof closing at 19:30 (30 min before storm)',
-				reason: 'Guest comfort + equipment protection'
-			},
-			{
-				system: 'HVAC',
-				before: 'Natural ventilation mode',
-				after: 'Switch to AC at 19:15',
-				reason: 'Humidity will spike when roof closes'
-			},
-			{
-				system: 'Lighting',
-				before: 'Sunset ambiance scheduled',
-				after: 'Indoor event lighting ready',
-				reason: 'Natural light will decrease faster than planned'
-			},
-			{
-				system: 'Parking',
-				before: 'Standard exit flow',
-				after: 'Alert: covered parking fills first post-game',
-				reason: 'People will want shelter'
-			},
-			{
-				system: 'Concessions',
-				before: 'Normal staffing',
-				after: 'Extra staff for indoor rush',
-				reason: 'Fewer people will want to leave during storm'
-			},
-			{
-				system: 'Communications',
-				before: 'No alerts needed',
-				after: 'Gentle announcement at 19:00 about roof closing',
-				reason: 'No surprises—people appreciate knowing'
-			}
-		],
-		humanApproval: 'Ops manager reviewed full plan in 45 seconds, approved with one change: earlier announcement',
-		totalTime: '12 seconds to generate plan, 45 seconds for human review'
-	};
-
 	// Incident log - showing failures, resolutions, and learning
-	// This is the honest story of an AI-native system
-	let incidentLog = $state([
-		{
-			id: 1,
-			timestamp: '19:42:15',
-			type: 'failure',
-			system: 'HVAC',
-			event: 'Zone 3 sensor reported -40°F (impossible reading)',
-			resolution: 'Auto-flagged as sensor malfunction • Maintenance dispatched',
-			learned: 'Added plausibility bounds to sensor readings',
-			humanInvolved: true
-		},
-		{
-			id: 2,
-			timestamp: '19:38:22',
-			type: 'override',
-			system: 'Lighting',
-			event: 'System suggested dimming for "intimate moment" during timeout',
-			resolution: 'Security supervisor overrode: visibility required for crowd monitoring',
-			learned: 'Security constraints now override ambiance suggestions',
-			humanInvolved: true
-		},
-		{
-			id: 3,
-			timestamp: '19:31:07',
-			type: 'success',
-			system: 'Security',
-			event: 'Unusual movement pattern detected near VIP entrance',
-			resolution: 'Alert sent to nearest officer • Verified as lost child reunited with parent',
-			learned: 'Pattern logged for future training (not a threat)',
-			humanInvolved: true
-		},
-		{
-			id: 4,
-			timestamp: '19:24:51',
-			type: 'failure',
-			system: 'Wayfinding',
-			event: 'Digital sign #47 unresponsive to redirect command',
-			resolution: 'Fallback: Adjacent signs compensated • Hardware ticket created',
-			learned: 'Added redundancy check before committing to single-sign strategies',
-			humanInvolved: false
-		},
-		{
-			id: 5,
-			timestamp: '19:15:33',
-			type: 'escalation',
-			system: 'Security',
-			event: 'AI confidence below threshold for crowd behavior classification',
-			resolution: 'Escalated to human operator who identified flash mob (harmless)',
-			learned: 'New pattern category added: coordinated harmless gatherings',
-			humanInvolved: true
-		}
-	]);
-
-	// Simulate new incidents occasionally
-	const incidentTypes = [
-		{ type: 'success', system: 'HVAC', event: 'Cooled the section before the crowd arrived', resolution: 'Nobody noticed. That\'s the goal.', learned: 'This timing works. Keep doing it.' },
-		{ type: 'override', system: 'Scheduling', event: 'AI wanted to close concessions early', resolution: 'Manager said no—VIP event running late. Concessions stayed open.', learned: 'VIP events need a human to decide timing.' },
-		{ type: 'failure', system: 'Lighting', event: 'A light in Section 205 went out', resolution: 'Nearby lights got brighter. Repair scheduled.', learned: 'Always have a backup plan for important areas.' }
-	];
+	let incidentLog = $state<Incident[]>(createInitialIncidentLog());
 
 	// Animation state
 	let mounted = $state(false);
 	let tick = $state(0);
 	let liveMode = $state(true);
 	let scenarioCycleTimer = $state(0);
-	
+
 	// Active zones for visual highlighting based on scenario
 	let activeZones = $state<string[]>([]);
 	let highlightedEntry = $state<string | null>(null);
 
 	// Crowd particles - representing people moving through the arena
-	type Particle = {
-		id: number;
-		x: number;
-		y: number;
-		targetX: number;
-		targetY: number;
-		speed: number;
-		size: number;
-	};
-	
 	let crowdParticles = $state<Particle[]>([]);
-	let particleIdCounter = 0;
 
-	// Generate particles based on scenario
-	function generateParticles() {
-		const newParticles: Particle[] = [];
-		const effects = scenarioEffects[activeScenario];
-		// Particle count varies by crowd flow type
-		const countByFlow: Record<string, number> = {
-			'entering': 35,
-			'vip': 12,
-			'dispersing': 30,
-			'sheltering': 20,
-			'evacuating': 45,
-			'exiting': 50,
-			'empty': 5
-		};
-		const count = countByFlow[effects.crowdFlow] || 25;
-		
-		for (let i = 0; i < count; i++) {
-			const particle = createParticleForScenario();
-			if (particle) newParticles.push(particle);
-		}
-		
-		crowdParticles = newParticles;
+	// Helper to regenerate particles for current scenario
+	function regenerateParticles() {
+		crowdParticles = generateParticles(scenarioEffects[activeScenario]);
 	}
 
-	function createParticleForScenario(): Particle | null {
-		particleIdCounter++;
-		const id = particleIdCounter;
-		const effects = scenarioEffects[activeScenario];
-		
-		if (effects.crowdFlow === 'entering') {
-			// Gate crowding - people flowing from parking/roads toward north entrance
-			const fromParking = Math.random() > 0.5;
-			let startX, startY;
-			if (fromParking) {
-				startX = Math.random() > 0.5 ? (-50 + Math.random() * 100) : (780 + Math.random() * 100);
-				startY = -50 + Math.random() * 80;
-			} else {
-				startX = 380 + Math.random() * 40;
-				startY = -100 + Math.random() * 50;
-			}
-			return {
-				id, x: startX, y: startY,
-				targetX: 400 + (Math.random() - 0.5) * 100,
-				targetY: 60 + Math.random() * 100,
-				speed: 0.6 + Math.random() * 0.4,
-				size: 3 + Math.random() * 2
-			};
-		} else if (effects.crowdFlow === 'vip') {
-			// VIP arrival - vehicles and people at south entrance
-			const isVehicle = Math.random() > 0.7;
-			if (isVehicle) {
-				return {
-					id, x: 400 + (Math.random() - 0.5) * 60, y: 720,
-					targetX: 400 + (Math.random() - 0.5) * 40,
-					targetY: 680,
-					speed: 0.8, size: 6
-				};
-			}
-			return {
-				id, x: 400 + (Math.random() - 0.5) * 80, y: 650,
-				targetX: 400 + (Math.random() - 0.5) * 30,
-				targetY: 560,
-				speed: 0.4 + Math.random() * 0.3,
-				size: 3 + Math.random() * 2
-			};
-		} else if (effects.crowdFlow === 'dispersing') {
-			// Halftime - people flowing from seats to concourse
-			const angle = Math.random() * Math.PI * 2;
-			const innerRadius = 120 + Math.random() * 80;
-			const outerRadius = 280 + Math.random() * 60;
-			return {
-				id,
-				x: 400 + Math.cos(angle) * innerRadius,
-				y: 300 + Math.sin(angle) * (innerRadius * 0.7),
-				targetX: 400 + Math.cos(angle) * outerRadius,
-				targetY: 300 + Math.sin(angle) * (outerRadius * 0.7),
-				speed: 0.3 + Math.random() * 0.4,
-				size: 3 + Math.random() * 2
-			};
-		} else if (effects.crowdFlow === 'sheltering') {
-			// Weather - people moving to covered areas
-			return {
-				id,
-				x: 100 + Math.random() * 600,
-				y: -80 + Math.random() * 60,
-				targetX: Math.random() > 0.5 ? (-50 + Math.random() * 150) : (700 + Math.random() * 150),
-				targetY: -80 + Math.random() * 100,
-				speed: 0.7 + Math.random() * 0.5,
-				size: 3 + Math.random() * 2
-			};
-		} else if (effects.crowdFlow === 'evacuating') {
-			// Emergency - rapid evacuation to south
-			const startX = 500 + (Math.random() - 0.5) * 200;
-			const startY = 300 + (Math.random() - 0.5) * 150;
-			return {
-				id, x: startX, y: startY,
-				targetX: 350 + Math.random() * 100,
-				targetY: 680 + Math.random() * 80,
-				speed: 1.2 + Math.random() * 0.8,
-				size: 3 + Math.random() * 2
-			};
-		} else if (effects.crowdFlow === 'exiting') {
-			// Game end - mass exit to all parking
-			const exit = Math.floor(Math.random() * 4);
-			const targets = [
-				{ x: 400, y: -100 }, // north
-				{ x: 400, y: 720 },  // south
-				{ x: -100, y: 300 }, // west
-				{ x: 900, y: 300 }   // east
-			];
-			return {
-				id,
-				x: 400 + (Math.random() - 0.5) * 300,
-				y: 300 + (Math.random() - 0.5) * 200,
-				targetX: targets[exit].x + (Math.random() - 0.5) * 100,
-				targetY: targets[exit].y + (Math.random() - 0.5) * 50,
-				speed: 0.5 + Math.random() * 0.4,
-				size: 3 + Math.random() * 2
-			};
-		} else {
-			// Overnight/empty - just a few maintenance workers
-			return {
-				id,
-				x: 200 + Math.random() * 400,
-				y: 200 + Math.random() * 200,
-				targetX: 200 + Math.random() * 400,
-				targetY: 200 + Math.random() * 200,
-				speed: 0.2,
-				size: 4
-			};
-		}
+	// Helper to update particle positions
+	function tickParticles() {
+		crowdParticles = updateParticlePositions(crowdParticles, scenarioEffects[activeScenario]);
 	}
-
-	function updateParticles() {
-		crowdParticles = crowdParticles.map(p => {
-			const dx = p.targetX - p.x;
-			const dy = p.targetY - p.y;
-			const dist = Math.sqrt(dx * dx + dy * dy);
-			
-			if (dist < 5) {
-				// Particle reached destination, create new one
-				const newParticle = createParticleForScenario();
-				return newParticle || p;
-			}
-			
-			// Move toward target
-			const moveX = (dx / dist) * p.speed * 2;
-			const moveY = (dy / dist) * p.speed * 2;
-			
-			return {
-				...p,
-				x: p.x + moveX,
-				y: p.y + moveY
-			};
-		});
-	}
-
-	// Event phases that cycle
-	const eventPhases = [
-		{ phase: 'Pre-Game', attendance: 8_420 },
-		{ phase: 'First Quarter', attendance: 16_234 },
-		{ phase: 'Second Quarter', attendance: 18_847 },
-		{ phase: 'Halftime', attendance: 18_902 },
-		{ phase: 'Third Quarter', attendance: 18_756 },
-		{ phase: 'Fourth Quarter', attendance: 18_123 },
-		{ phase: 'Post-Game', attendance: 12_456 }
-	];
-	let currentPhaseIndex = $state(2); // Start at Second Quarter
-
-	// Scenario-specific arena states
-	const scenarioEffects = [
-		{ // 0: Gate crowding
-			zones: ['gate-a', 'concourse-north'],
-			entry: 'north',
-			securityStatus: 'monitoring' as const,
-			lightingMode: 'event' as const,
-			crowdFlow: 'entering',
-			attendance: 8_420
-		},
-		{ // 1: VIP arrival
-			zones: ['vip-entrance', 'lot-c'],
-			entry: 'south',
-			securityStatus: 'monitoring' as const,
-			lightingMode: 'event' as const,
-			crowdFlow: 'vip',
-			attendance: 12_500
-		},
-		{ // 2: Halftime
-			zones: ['concourse', 'concessions'],
-			entry: null,
-			securityStatus: 'monitoring' as const,
-			lightingMode: 'ambient' as const,
-			crowdFlow: 'dispersing',
-			attendance: 18_902
-		},
-		{ // 3: Weather incoming
-			zones: ['covered-areas', 'parking-north'],
-			entry: 'west',
-			securityStatus: 'monitoring' as const,
-			lightingMode: 'event' as const,
-			crowdFlow: 'sheltering',
-			attendance: 18_756
-		},
-		{ // 4: Emergency
-			zones: ['section-112', 'exit-paths'],
-			entry: 'south',
-			securityStatus: 'alert' as const,
-			lightingMode: 'emergency' as const,
-			crowdFlow: 'evacuating',
-			attendance: 18_123
-		},
-		{ // 5: Game end
-			zones: ['all-exits', 'parking-all'],
-			entry: null,
-			securityStatus: 'monitoring' as const,
-			lightingMode: 'event' as const,
-			crowdFlow: 'exiting',
-			attendance: 19_200
-		},
-		{ // 6: Overnight
-			zones: ['perimeter'],
-			entry: null,
-			securityStatus: 'patrol' as const,
-			lightingMode: 'minimal' as const,
-			crowdFlow: 'empty',
-			attendance: 45
-		}
-	];
 
 	onMount(() => {
 		mounted = true;
-		
+
 		// Apply initial scenario effects
 		const initialEffects = scenarioEffects[activeScenario];
 		activeZones = initialEffects.zones;
@@ -589,44 +104,46 @@
 		securityStatus = initialEffects.securityStatus;
 		lightingMode = initialEffects.lightingMode;
 		currentEvent = { ...currentEvent, attendance: initialEffects.attendance };
-		generateParticles();
+		regenerateParticles();
 
 		// Simulation tick - creates the "living" effect
 		const interval = setInterval(() => {
 			tick = (tick + 1) % 360;
-			
+
 			// Always update particle positions for smooth movement
-			updateParticles();
-			
+			tickParticles();
+
 			if (liveMode) {
 				scenarioCycleTimer++;
-				
+
 				// Auto-cycle scenarios every 6 seconds for better pacing
 				if (scenarioCycleTimer % 60 === 0) {
 					// Brief transition effect
 					scenarioTransitioning = true;
-					setTimeout(() => { scenarioTransitioning = false; }, 500);
-					
+					setTimeout(() => {
+						scenarioTransitioning = false;
+					}, 500);
+
 					activeScenario = (activeScenario + 1) % intelligenceScenarios.length;
-					
+
 					// Apply scenario effects to arena
 					const effects = scenarioEffects[activeScenario];
 					activeZones = effects.zones;
 					highlightedEntry = effects.entry;
 					securityStatus = effects.securityStatus;
 					lightingMode = effects.lightingMode;
-					
+
 					// Update event with scenario-specific attendance and phase
 					currentEvent = {
 						...currentEvent,
 						phase: intelligenceScenarios[activeScenario].phase,
 						attendance: effects.attendance
 					};
-					
+
 					// Regenerate particles for new scenario
-					generateParticles();
+					regenerateParticles();
 				}
-				
+
 				// Auto-cycle reasoning examples every 6 seconds
 				if (scenarioCycleTimer % 60 === 0) {
 					activeReasoning = (activeReasoning + 1) % reasoningExamples.length;
@@ -635,37 +152,20 @@
 
 			// Notifications - more contextual based on active scenario
 			if (tick % 40 === 0) {
-				const scenarioMessages = [
-					[
-						{ system: 'Security', message: 'Gate A density: 87% capacity' },
-						{ system: 'Wayfinding', message: 'Redirecting 23 guests to Gate B' },
-						{ system: 'HVAC', message: 'Pre-cooling Section 104-108' }
-					],
-					[
-						{ system: 'Lighting', message: 'Concourse at full brightness' },
-						{ system: 'Scheduling', message: 'Cleaning crews deployed' },
-						{ system: 'Concessions', message: 'Rush hour staffing active' }
-					],
-					[
-						{ system: 'Security', message: 'Response team en route' },
-						{ system: 'Lighting', message: 'Emergency paths illuminated' },
-						{ system: 'HVAC', message: 'Positive pressure in corridors' }
-					]
-				];
-				
-				const msgs = scenarioMessages[activeScenario];
-				const msg = msgs[Math.floor(Math.random() * msgs.length)];
-				
-				notifications = [
-					{
-						id: Date.now(),
-						system: msg.system,
-						message: msg.message,
-						time: 'now',
-						priority: activeScenario === 2 ? 'high' as const : 'low' as const
-					},
-					...notifications.slice(0, 2)
-				];
+				const msgs = scenarioMessages[activeScenario % scenarioMessages.length];
+				if (msgs) {
+					const msg = msgs[Math.floor(Math.random() * msgs.length)];
+					notifications = [
+						{
+							id: Date.now(),
+							system: msg.system,
+							message: msg.message,
+							time: 'now',
+							priority: activeScenario === 4 ? 'high' : 'low'
+						},
+						...notifications.slice(0, 2)
+					];
+				}
 			}
 
 			// HVAC temperature drift simulation
@@ -675,7 +175,7 @@
 					temp: zone.target + Math.round((Math.random() - 0.5) * 4)
 				}));
 			}
-			
+
 			// Occasionally add new incidents
 			if (tick % 120 === 0 && liveMode) {
 				const newIncident = incidentTypes[Math.floor(Math.random() * incidentTypes.length)];
