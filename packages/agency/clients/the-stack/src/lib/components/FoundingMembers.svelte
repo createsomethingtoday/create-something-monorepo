@@ -61,7 +61,7 @@
 
 		<!-- CTA Button -->
 		<div class="founding-cta reveal-element">
-			<Button href="/contact" variant="primary" showArrow>Become a Founding Member</Button>
+			<Button href="/founding-members" variant="primary" showArrow>Become a Founding Member</Button>
 		</div>
 
 		<!-- Gold Rule Bottom -->
