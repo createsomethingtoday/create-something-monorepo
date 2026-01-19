@@ -21,6 +21,9 @@ import type { Env } from './types';
 import { handleCors, createPreflightResponse, jsonResponse, errorResponse } from './lib/cors';
 import { ValidationError } from './lib/validation';
 import { AirtableError } from './lib/airtable';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('WebflowValidation');
 
 // Route handlers
 import { handleTemplateUser, handleTemplateName, handleTemplateEmail } from './routes/template';
@@ -60,7 +63,7 @@ export default {
         headers,
       });
     } catch (error) {
-      console.error('Request error:', error);
+      logger.error('Request error', { error, path: url.pathname });
 
       // Handle known error types
       if (error instanceof ValidationError) {

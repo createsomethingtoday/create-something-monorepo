@@ -29,6 +29,9 @@ import {
   isNameException,
   ValidationError,
 } from '../lib/validation';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('TemplateValidation');
 
 /**
  * POST /template/user
@@ -179,7 +182,7 @@ async function checkActiveBan(
         return bannedInstance;
       }
     } catch (error) {
-      console.error(`Error fetching banned instance ${bannedInstanceId}:`, error);
+      logger.error('Error fetching banned instance', { bannedInstanceId, error });
       // Continue checking other instances
     }
   }
@@ -236,14 +239,11 @@ export async function handleTemplateName(
     view: 'viwHnsM1aqC0UvxUG',
   });
 
-  console.log(`Template search for "${templatename}": ${records.length} records found`);
-
-  if (records.length > 0) {
-    console.log('Found records:', records.map((r) => ({
-      name: r.fields['Name'],
-      status: r.fields['🚀Marketplace Status'],
-    })));
-  }
+  logger.debug('Template name search', { 
+    templatename, 
+    recordsFound: records.length,
+    taken: records.length > 0 
+  });
 
   const response: TemplateNameResponse = { taken: records.length > 0 };
   return jsonResponse(response, 200, {});

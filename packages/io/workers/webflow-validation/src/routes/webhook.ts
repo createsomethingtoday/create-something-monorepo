@@ -11,6 +11,9 @@
 import type { Env, WebhookProxyResponse } from '../types';
 import { WEBHOOK_ROUTES } from '../types';
 import { jsonResponse } from '../lib/cors';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('WebhookProxy');
 
 /**
  * POST /webhook/airtable
@@ -33,11 +36,10 @@ export async function handleAirtableWebhook(
 
   const timestamp = request.headers.get('x-webflow-timestamp');
 
-  console.log('Webhook received:', {
+  logger.debug('Webhook received', {
     hasSignature: !!signature,
     hasTimestamp: !!timestamp,
     bodyLength: rawBody.length,
-    userAgent: request.headers.get('user-agent'),
   });
 
   // Verify Webflow webhook signature
@@ -49,11 +51,9 @@ export async function handleAirtableWebhook(
   );
 
   if (!signatureValid) {
-    console.error('Webhook signature verification failed', {
+    logger.error('Webhook signature verification failed', {
       hasSignature: !!signature,
       hasTimestamp: !!timestamp,
-      signatureValue: signature ? signature.substring(0, 20) + '...' : 'none',
-      timestampValue: timestamp,
     });
 
     const response: WebhookProxyResponse = {
@@ -63,14 +63,14 @@ export async function handleAirtableWebhook(
     return jsonResponse(response, 401, {});
   }
 
-  console.log('Webhook signature verified successfully');
+  logger.debug('Webhook signature verified');
 
   // Parse JSON body
   let body: Record<string, unknown>;
   try {
     body = JSON.parse(rawBody);
   } catch (parseError) {
-    console.error('Failed to parse JSON body:', parseError);
+    logger.error('Failed to parse JSON body', { error: parseError });
     const response: WebhookProxyResponse = {
       message: 'Invalid JSON payload',
       error: String(parseError),
@@ -111,7 +111,7 @@ export async function handleAirtableWebhook(
   // Clean up undefined data in payload
   delete normalizedPayload.payload.data;
 
-  console.log('Normalized new format payload: moved data from payload.data to top level');
+  logger.debug('Normalized payload format');
 
   // Forward to Airtable webhook
   try {
@@ -123,9 +123,9 @@ export async function handleAirtableWebhook(
       body: JSON.stringify(normalizedPayload),
     });
 
-    console.log(`Successfully forwarded to webhook: ${webhookKey}`, {
+    logger.info('Webhook forwarded successfully', {
+      webhookKey,
       status: airtableResponse.status,
-      hasTopLevelData: !!normalizedPayload.data,
     });
 
     const response: WebhookProxyResponse = {
@@ -135,7 +135,7 @@ export async function handleAirtableWebhook(
     };
     return jsonResponse(response, 200, {});
   } catch (error) {
-    console.error('Webhook proxy error:', error);
+    logger.error('Webhook proxy error', { error, webhookKey });
 
     const response: WebhookProxyResponse = {
       message: 'Upstream webhook error',
@@ -187,12 +187,9 @@ async function verifyWebflowSignature(
 
     // Timing-safe comparison
     if (signature.length !== expectedHash.length) {
-      console.error('Signature length mismatch:', {
+      logger.error('Signature length mismatch', {
         receivedLength: signature.length,
         expectedLength: expectedHash.length,
-        receivedSignature: signature.substring(0, 20) + '...',
-        expectedHash: expectedHash.substring(0, 20) + '...',
-        dataUsed: data.substring(0, 50) + '...',
       });
       return false;
     }
@@ -212,9 +209,7 @@ async function verifyWebflowSignature(
     const requestTimestamp = parseInt(timestamp, 10);
     if (currentTime - requestTimestamp > 300000) {
       // 5 minutes
-      console.error('Request timestamp too old:', {
-        currentTime,
-        requestTimestamp,
+      logger.error('Request timestamp too old', {
         ageMilliseconds: currentTime - requestTimestamp,
       });
       return false;
@@ -222,7 +217,7 @@ async function verifyWebflowSignature(
 
     return true;
   } catch (error) {
-    console.error('Error verifying signature:', error);
+    logger.error('Error verifying signature', { error });
     return false;
   }
 }

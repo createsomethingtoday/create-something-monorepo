@@ -22,6 +22,9 @@ import { TABLES, FIELDS } from '../types';
 import { findUserByEmail, queryRecords } from '../lib/airtable';
 import { jsonResponse } from '../lib/cors';
 import { parseJsonBody, isValidEmail, ValidationError } from '../lib/validation';
+import { createLogger } from '@create-something/components/utils';
+
+const logger = createLogger('LibraryValidation');
 
 /**
  * POST /library/user
@@ -60,8 +63,7 @@ export async function handleLibraryUser(
     canSubmitLibraries = canSubmitField === 1;
   }
 
-  console.log('User found:', userExists);
-  console.log('Can submit libraries:', canSubmitLibraries);
+  logger.debug('Library user check', { email, userExists, canSubmitLibraries });
 
   const response: LibraryUserResponse = {
     userExists,
@@ -98,7 +100,7 @@ export async function handleLibraryName(
     view: 'viwHnsM1aqC0UvxUG',
   });
 
-  console.log(`Library search for "${libraryname}": ${records.length} records found`);
+  logger.debug('Library name search', { libraryname, recordsFound: records.length, taken: records.length > 0 });
 
   return jsonResponse({ taken: records.length > 0 }, 200, {});
 }
