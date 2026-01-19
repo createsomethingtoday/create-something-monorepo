@@ -7,7 +7,52 @@ and with API keys (integration tests).
 
 import pytest
 
+import re
+
 from create_something_agents.rlm.environment import RLMEnvironment, ExecutionResult
+
+
+class TestFinalRegex:
+    """Tests for the FINAL() answer extraction regex."""
+
+    # The regex pattern used in session.py and modal_rlm.py
+    FINAL_PATTERN = r"FINAL\((.+)\)\s*$"
+
+    def test_simple_answer(self):
+        """Test simple answer without parentheses."""
+        text = "After analysis, the answer is:\nFINAL(The main theme is authentication)"
+        match = re.search(self.FINAL_PATTERN, text, re.MULTILINE)
+        assert match is not None
+        assert match.group(1) == "The main theme is authentication"
+
+    def test_nested_parentheses(self):
+        """Test answer with nested parentheses (the key fix)."""
+        text = "Based on findings:\nFINAL(The answer is (a) and (b) together)"
+        match = re.search(self.FINAL_PATTERN, text, re.MULTILINE)
+        assert match is not None
+        assert match.group(1) == "The answer is (a) and (b) together"
+
+    def test_multiple_nested_parens(self):
+        """Test answer with multiple levels of parentheses."""
+        text = "FINAL(Options include: (1) first, (2) second, and (3) third)"
+        match = re.search(self.FINAL_PATTERN, text, re.MULTILINE)
+        assert match is not None
+        assert match.group(1) == "Options include: (1) first, (2) second, and (3) third"
+
+    def test_final_with_trailing_whitespace(self):
+        """Test FINAL() with trailing whitespace."""
+        text = "FINAL(The answer)   \n"
+        match = re.search(self.FINAL_PATTERN, text, re.MULTILINE)
+        assert match is not None
+        assert match.group(1) == "The answer"
+
+    def test_final_var_pattern(self):
+        """Test FINAL_VAR() pattern."""
+        pattern = r"FINAL_VAR\((\w+)\)\s*$"
+        text = "FINAL_VAR(results)"
+        match = re.search(pattern, text, re.MULTILINE)
+        assert match is not None
+        assert match.group(1) == "results"
 
 
 class TestRLMEnvironment:

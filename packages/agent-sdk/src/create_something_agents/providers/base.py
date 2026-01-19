@@ -34,13 +34,14 @@ class ProviderResult:
 class ProviderConfig:
     """Configuration for provider execution."""
 
-    task: str
+    task: str  # Single-turn task (used if messages not provided)
     model: str | None = None  # Provider-specific model name
     system_prompt: str | None = None
     max_tokens: int = 4096
     temperature: float = 0.0
     tools: list[dict[str, Any]] | None = None
     max_iterations: int = 1  # For agentic loops
+    messages: list[dict[str, str]] | None = None  # Multi-turn conversation (overrides task)
 
 
 class AgentProvider(ABC):

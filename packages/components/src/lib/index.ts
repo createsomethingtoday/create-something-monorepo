@@ -30,16 +30,44 @@ export {
     space,
     ltd,
     agency,
+    // Validation utilities
     isValidEmail,
     normalizeEmail,
     isValidPhone,
     normalizePhone,
     sanitizeHtml,
     isValidUrl,
+    isEmpty,
+    hasItems,
+    hasOne,
+    first,
+    validateStringField,
+    validateStringFields,
+    // Error handling
     generateCorrelationId,
     createErrorResponse,
     logError,
     log,
+    // API error handling
+    handleApiError,
+    catchApiError,
+    ApiError,
+    ValidationError,
+    NotFoundError,
+    UnauthorizedError,
+    ForbiddenError,
+    assertApi,
+    assertAuth,
+    assertFound,
+    apiSuccess,
+    apiError,
+    // Logging utilities
+    createLogger,
+    createRequestLogger,
+    createTimer,
+    logDuration,
+    loggers,
+    // Tracing
     generateTraceId,
     generateSpanId,
     parseTraceparent,
@@ -59,6 +87,7 @@ export {
     generateClaudeUrl,
     truncateForUrl,
     copyToClipboard,
+    // Types
     type CategoryStat,
     type CategoryRow,
     type ExperimentStats,
@@ -73,8 +102,18 @@ export {
     type TraceContext,
     type Span,
     type SpanEvent,
-    type PageMetadata
+    type PageMetadata,
+    type StringFieldOptions,
+    type StringFieldResult,
+    type ApiErrorResponse,
+    type ApiHandler,
+    type HandleErrorOptions,
+    type Logger,
+    type LoggerContext
 } from './utils/index.js';
+
+// API Clients
+export * from './api/index.js';
 
 // Types
 export * from './types/index.js';

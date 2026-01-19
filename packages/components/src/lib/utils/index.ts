@@ -52,7 +52,17 @@ export {
     isValidPhone,
     normalizePhone,
     sanitizeHtml,
-    isValidUrl
+    isValidUrl,
+    // Array helpers
+    isEmpty,
+    hasItems,
+    hasOne,
+    first,
+    // String field validation
+    validateStringField,
+    validateStringFields,
+    type StringFieldOptions,
+    type StringFieldResult
 } from './validation.js';
 
 // Error handling and structured logging
@@ -65,6 +75,36 @@ export {
     type LogLevel,
     type LogEntry
 } from './errors.js';
+
+// API error handling utilities
+export {
+    handleApiError,
+    catchApiError,
+    ApiError,
+    ValidationError,
+    NotFoundError,
+    UnauthorizedError,
+    ForbiddenError,
+    assertApi,
+    assertAuth,
+    assertFound,
+    apiSuccess,
+    apiError,
+    type ApiErrorResponse,
+    type ApiHandler,
+    type HandleErrorOptions
+} from './api-error.js';
+
+// Context-aware logging
+export {
+    createLogger,
+    createRequestLogger,
+    createTimer,
+    logDuration,
+    loggers,
+    type Logger,
+    type LoggerContext
+} from './logger.js';
 
 // Distributed tracing (W3C Trace Context compatible)
 export {

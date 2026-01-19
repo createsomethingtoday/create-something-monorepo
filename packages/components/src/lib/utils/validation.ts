@@ -3,6 +3,17 @@
  *
  * Shared validation patterns to ensure consistency across packages.
  * Follows DRY principle - define once, use everywhere.
+ *
+ * @example
+ * import { isEmpty, hasItems, validateStringField } from '@create-something/components/utils';
+ *
+ * // Array checks
+ * if (isEmpty(records)) return json({ error: 'No records found' });
+ * if (hasItems(errors)) return json({ errors });
+ *
+ * // String field validation
+ * const nameResult = validateStringField(body.name, 'name', { required: true, minLength: 1 });
+ * if (!nameResult.valid) return json({ error: nameResult.error });
  */
 
 /**
@@ -160,4 +171,196 @@ export function isValidUrl(url: string, allowedProtocols = ['http:', 'https:']):
 	} catch {
 		return false;
 	}
+}
+
+// ============================================
+// Array Validation Helpers
+// ============================================
+
+/**
+ * Check if an array is empty or nullish
+ *
+ * Replaces common pattern: `if (records.length === 0)`
+ *
+ * @param arr - Array to check
+ * @returns true if array is null, undefined, or empty
+ *
+ * @example
+ * if (isEmpty(records)) {
+ *   return json({ error: 'No records found' }, { status: 404 });
+ * }
+ */
+export function isEmpty<T>(arr: T[] | null | undefined): arr is null | undefined | [] {
+	return !arr || arr.length === 0;
+}
+
+/**
+ * Check if an array has items
+ *
+ * Replaces common pattern: `if (errors.length > 0)`
+ *
+ * @param arr - Array to check
+ * @returns true if array has at least one item
+ *
+ * @example
+ * if (hasItems(validationErrors)) {
+ *   return json({ errors: validationErrors }, { status: 400 });
+ * }
+ */
+export function hasItems<T>(arr: T[] | null | undefined): arr is [T, ...T[]] {
+	return arr !== null && arr !== undefined && arr.length > 0;
+}
+
+/**
+ * Check if array has exactly one item
+ */
+export function hasOne<T>(arr: T[] | null | undefined): arr is [T] {
+	return arr !== null && arr !== undefined && arr.length === 1;
+}
+
+/**
+ * Get first item or undefined (type-safe)
+ */
+export function first<T>(arr: T[] | null | undefined): T | undefined {
+	return arr?.[0];
+}
+
+// ============================================
+// String Field Validation
+// ============================================
+
+export interface StringFieldOptions {
+	/** Field is required (default: true) */
+	required?: boolean;
+	/** Minimum length after trim */
+	minLength?: number;
+	/** Maximum length */
+	maxLength?: number;
+	/** Trim whitespace (default: true) */
+	trim?: boolean;
+	/** Custom validation pattern */
+	pattern?: RegExp;
+	/** Custom pattern error message */
+	patternMessage?: string;
+}
+
+export interface StringFieldResult {
+	valid: boolean;
+	value: string;
+	error?: string;
+}
+
+/**
+ * Validate a string field with common rules
+ *
+ * Replaces duplicate patterns like:
+ * `if (!name || typeof name !== 'string' || name.trim().length === 0)`
+ *
+ * @param value - Value to validate
+ * @param fieldName - Name for error messages
+ * @param options - Validation options
+ *
+ * @example
+ * const nameResult = validateStringField(body.name, 'name', {
+ *   required: true,
+ *   minLength: 1,
+ *   maxLength: 100
+ * });
+ *
+ * if (!nameResult.valid) {
+ *   return json({ error: nameResult.error }, { status: 400 });
+ * }
+ *
+ * const name = nameResult.value; // Trimmed, validated string
+ */
+export function validateStringField(
+	value: unknown,
+	fieldName: string,
+	options: StringFieldOptions = {}
+): StringFieldResult {
+	const { required = true, minLength, maxLength, trim = true, pattern, patternMessage } = options;
+
+	// Type check
+	if (value === null || value === undefined) {
+		if (required) {
+			return { valid: false, value: '', error: `${fieldName} is required` };
+		}
+		return { valid: true, value: '' };
+	}
+
+	if (typeof value !== 'string') {
+		return { valid: false, value: '', error: `${fieldName} must be a string` };
+	}
+
+	// Process value
+	const processed = trim ? value.trim() : value;
+
+	// Empty check for required fields
+	if (required && processed.length === 0) {
+		return { valid: false, value: '', error: `${fieldName} is required` };
+	}
+
+	// Length checks
+	if (minLength !== undefined && processed.length < minLength) {
+		return {
+			valid: false,
+			value: processed,
+			error: `${fieldName} must be at least ${minLength} characters`
+		};
+	}
+
+	if (maxLength !== undefined && processed.length > maxLength) {
+		return {
+			valid: false,
+			value: processed,
+			error: `${fieldName} must be at most ${maxLength} characters`
+		};
+	}
+
+	// Pattern check
+	if (pattern && !pattern.test(processed)) {
+		return {
+			valid: false,
+			value: processed,
+			error: patternMessage || `${fieldName} format is invalid`
+		};
+	}
+
+	return { valid: true, value: processed };
+}
+
+/**
+ * Validate multiple string fields at once
+ *
+ * @example
+ * const result = validateStringFields(body, {
+ *   name: { required: true, maxLength: 100 },
+ *   email: { required: true, pattern: EMAIL_PATTERN },
+ *   bio: { required: false, maxLength: 500 }
+ * });
+ *
+ * if (!result.valid) {
+ *   return json({ errors: result.errors }, { status: 400 });
+ * }
+ */
+export function validateStringFields(
+	obj: Record<string, unknown>,
+	fields: Record<string, StringFieldOptions>
+): { valid: boolean; values: Record<string, string>; errors: string[] } {
+	const values: Record<string, string> = {};
+	const errors: string[] = [];
+
+	for (const [fieldName, options] of Object.entries(fields)) {
+		const result = validateStringField(obj[fieldName], fieldName, options);
+		if (!result.valid && result.error) {
+			errors.push(result.error);
+		}
+		values[fieldName] = result.value;
+	}
+
+	return {
+		valid: errors.length === 0,
+		values,
+		errors
+	};
 }

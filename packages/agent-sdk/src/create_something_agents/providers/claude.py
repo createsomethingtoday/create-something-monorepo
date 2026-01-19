@@ -53,7 +53,11 @@ class ClaudeProvider(AgentProvider):
         model = self._resolve_model(config.model)
 
         try:
-            messages = [{"role": "user", "content": config.task}]
+            # Use structured messages if provided, otherwise wrap task as single user message
+            if config.messages:
+                messages = config.messages
+            else:
+                messages = [{"role": "user", "content": config.task}]
 
             kwargs: dict[str, Any] = {
                 "model": model,

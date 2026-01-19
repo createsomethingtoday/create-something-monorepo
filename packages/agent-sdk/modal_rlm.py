@@ -398,7 +398,7 @@ FINAL_VAR(results)
             messages_for_api.append(msg)
 
         try:
-            response = client.messages.create(
+            response = anthropic_client.messages.create(
                 model=root_model_full,
                 max_tokens=8192,
                 system=system_prompt,
@@ -420,9 +420,34 @@ FINAL_VAR(results)
                 "error": str(e),
             }
 
-        # Check for final answer
-        final_match = re.search(r"FINAL\(([^)]+)\)", assistant_response)
-        final_var_match = re.search(r"FINAL_VAR\((\w+)\)", assistant_response)
+        # IMPORTANT: Execute code blocks FIRST, before checking for FINAL
+        # The model may output code blocks + FINAL_VAR together, expecting
+        # us to run the code which populates results, then return results.
+        code_blocks = re.findall(r"```repl\n(.*?)```", assistant_response, re.DOTALL)
+
+        execution_outputs = []
+        for code in code_blocks:
+            success, output, error = execute_code(code.strip())
+            exec_result = (
+                f"[Execution {'succeeded' if success else 'failed'}]\n{output}"
+            )
+            if error:
+                exec_result += f"\n[Error]: {error}"
+            execution_outputs.append(exec_result)
+
+            trajectory.append(
+                {
+                    "iteration": iteration + 1,
+                    "code": code.strip()[:500],
+                    "success": success,
+                    "output": output[:500],
+                }
+            )
+
+        # NOW check for final answer (after code execution has populated results)
+        # Match FINAL() only when it appears as a standalone statement at end of response
+        final_match = re.search(r"(?:^|\n)FINAL\((.+)\)\s*$", assistant_response)
+        final_var_match = re.search(r"(?:^|\n)FINAL_VAR\((\w+)\)\s*$", assistant_response)
 
         if final_match:
             answer = final_match.group(1).strip()
@@ -454,28 +479,6 @@ FINAL_VAR(results)
                 "trajectory": trajectory,
                 "parallel_calls_made": parallel_batches,
             }
-
-        # Extract and execute code blocks
-        code_blocks = re.findall(r"```repl\n(.*?)```", assistant_response, re.DOTALL)
-
-        execution_outputs = []
-        for code in code_blocks:
-            success, output, error = execute_code(code.strip())
-            exec_result = (
-                f"[Execution {'succeeded' if success else 'failed'}]\n{output}"
-            )
-            if error:
-                exec_result += f"\n[Error]: {error}"
-            execution_outputs.append(exec_result)
-
-            trajectory.append(
-                {
-                    "iteration": iteration + 1,
-                    "code": code.strip()[:500],
-                    "success": success,
-                    "output": output[:500],
-                }
-            )
 
         # Update conversation
         conversation.append({"role": "assistant", "content": assistant_response})

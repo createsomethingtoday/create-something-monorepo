@@ -1,62 +1,40 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { IDENTITY_API, setSessionCookies, type TokenResponse, type User } from '@create-something/components/auth';
+import { setSessionCookies } from '@create-something/components/auth';
+import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
+import { catchApiError, apiError, createLogger } from '@create-something/components/utils';
 
-interface LoginResponse extends TokenResponse {
-	user: User;
-}
+const logger = createLogger('LoginAPI');
 
-interface ErrorResponse {
-	error: string;
-}
+export const POST: RequestHandler = catchApiError('Login', async ({ request, cookies, platform }) => {
+	const { email, password } = (await request.json()) as { email?: string; password?: string };
 
-interface LoginRequest {
-	email?: string;
-	password?: string;
-}
-
-export const POST: RequestHandler = async ({ request, cookies, platform }) => {
-	try {
-		const { email, password } = (await request.json()) as LoginRequest;
-
-		if (!email || !password) {
-			return json({ error: 'Email and password are required' }, { status: 400 });
-		}
-
-		// Authenticate via Identity Worker
-		const response = await fetch(`${IDENTITY_API}/v1/auth/login`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password })
-		});
-
-		if (!response.ok) {
-			const errorResult = (await response.json()) as ErrorResponse;
-			return json({ error: errorResult.error || 'Invalid credentials' }, { status: response.status });
-		}
-
-		const result = (await response.json()) as LoginResponse;
-
-		// Set session cookies
-		const isProduction = platform?.env?.ENVIRONMENT === 'production';
-		const domain = isProduction ? '.createsomething.io' : undefined;
-
-		setSessionCookies(
-			cookies,
-			{
-				accessToken: result.access_token,
-				refreshToken: result.refresh_token,
-				domain
-			},
-			isProduction ?? true
-		);
-
-		return json({
-			success: true,
-			user: result.user
-		});
-	} catch (error) {
-		console.error('Login error:', error);
-		return json({ error: 'Login failed' }, { status: 500 });
+	if (!email || !password) {
+		return apiError('Email and password are required', 400);
 	}
-};
+
+	logger.info('Login attempt', { email });
+
+	const result = await identityClient.login({ email, password });
+
+	if (!result.success) {
+		logger.warn('Login failed', { email, error: result.error });
+		return json(
+			{ error: getIdentityErrorMessage(result, 'Invalid credentials') },
+			{ status: result.status }
+		);
+	}
+
+	const { access_token, refresh_token, user } = result.data;
+	const isProduction = platform?.env?.ENVIRONMENT === 'production';
+	const domain = isProduction ? '.createsomething.io' : undefined;
+
+	setSessionCookies(
+		cookies,
+		{ accessToken: access_token, refreshToken: refresh_token, domain },
+		isProduction ?? true
+	);
+
+	logger.info('Login successful', { email, userId: user.id });
+	return json({ success: true, user });
+});

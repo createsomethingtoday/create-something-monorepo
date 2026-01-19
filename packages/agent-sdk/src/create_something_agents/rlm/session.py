@@ -249,18 +249,14 @@ class RLMSession:
         conversation.append({"role": "user", "content": query})
 
         for iteration in range(self.config.max_iterations):
-            # Build messages for this turn
-            messages_text = "\n\n".join(
-                f"{'User' if m['role'] == 'user' else 'Assistant'}: {m['content']}"
-                for m in conversation
-            )
-
+            # Use structured messages for proper multi-turn conversation
             config = ProviderConfig(
-                task=messages_text,
+                task="",  # Not used when messages is provided
                 model=self.config.root_model,
                 system_prompt=self.system_prompt,
                 max_tokens=8192,
                 temperature=0.1,
+                messages=conversation,  # Pass structured messages directly
             )
 
             result = await self.provider.execute(config)
@@ -284,9 +280,36 @@ class RLMSession:
 
             assistant_response = result.output
 
-            # Check for final answer
-            final_match = re.search(r"FINAL\(([^)]+)\)", assistant_response)
-            final_var_match = re.search(r"FINAL_VAR\((\w+)\)", assistant_response)
+            # IMPORTANT: Execute code blocks FIRST, before checking for FINAL
+            # The model may output code blocks + FINAL_VAR together, expecting
+            # us to run the code which populates results, then return results.
+            code_blocks = re.findall(r"```repl\n(.*?)```", assistant_response, re.DOTALL)
+
+            execution_outputs: list[str] = []
+
+            for code in code_blocks:
+                exec_result = self.env.execute(code.strip())
+                execution_outputs.append(
+                    f"[Execution {'succeeded' if exec_result.success else 'failed'}]\n"
+                    f"{exec_result.output}"
+                    + (f"\n[Error]: {exec_result.error}" if exec_result.error else "")
+                )
+
+                trajectory.append(
+                    {
+                        "iteration": iteration + 1,
+                        "type": "execution",
+                        "code": code.strip(),
+                        "success": exec_result.success,
+                        "output": exec_result.output[:1000],  # Truncate for trajectory
+                        "error": exec_result.error,
+                    }
+                )
+
+            # NOW check for final answer (after code execution has populated results)
+            # Match FINAL() only when it appears as a standalone statement at end of response
+            final_match = re.search(r"(?:^|\n)FINAL\((.+)\)\s*$", assistant_response)
+            final_var_match = re.search(r"(?:^|\n)FINAL_VAR\((\w+)\)\s*$", assistant_response)
 
             if final_match:
                 answer = final_match.group(1).strip()
@@ -328,30 +351,6 @@ class RLMSession:
                     total_output_tokens=self._total_output_tokens,
                     cost_usd=self._estimate_total_cost(),
                     trajectory=trajectory,
-                )
-
-            # Extract and execute code blocks
-            code_blocks = re.findall(r"```repl\n(.*?)```", assistant_response, re.DOTALL)
-
-            execution_outputs: list[str] = []
-
-            for code in code_blocks:
-                exec_result = self.env.execute(code.strip())
-                execution_outputs.append(
-                    f"[Execution {'succeeded' if exec_result.success else 'failed'}]\n"
-                    f"{exec_result.output}"
-                    + (f"\n[Error]: {exec_result.error}" if exec_result.error else "")
-                )
-
-                trajectory.append(
-                    {
-                        "iteration": iteration + 1,
-                        "type": "execution",
-                        "code": code.strip(),
-                        "success": exec_result.success,
-                        "output": exec_result.output[:1000],  # Truncate for trajectory
-                        "error": exec_result.error,
-                    }
                 )
 
             # Add assistant response and execution results to conversation
