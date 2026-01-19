@@ -18,7 +18,10 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createStripeClient, constructWebhookEvent } from '$lib/services/stripe-connect';
+import { createLogger } from '@create-something/components/utils';
 import type Stripe from 'stripe';
+
+const logger = createLogger('ClearwayStripeWebhook');
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const db = platform?.env.DB;
@@ -45,7 +48,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		event = constructWebhookEvent(stripe, payload, signature, webhookSecret);
 	} catch (err) {
-		console.error('Webhook signature verification failed:', err);
+		logger.error('Webhook signature verification failed', { error: err });
 		throw error(400, 'Webhook signature verification failed');
 	}
 
@@ -120,10 +123,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			}
 
 			default:
-				console.log(`Unhandled event type: ${event.type}`);
+				logger.debug('Unhandled event type', { eventType: event.type });
 		}
 	} catch (err) {
-		console.error(`Error handling webhook ${event.type}:`, err);
+		logger.error('Error handling webhook', { eventType: event.type, error: err });
 		// Return 200 to acknowledge receipt (Stripe will retry otherwise)
 		// Log the error for investigation
 	}
@@ -165,7 +168,7 @@ async function handleAccountUpdated(
 		.bind(status, chargesEnabled, payoutsEnabled, now, account.id)
 		.run();
 
-	console.log(`Account ${account.id} updated: status=${status}`);
+	logger.info('Account updated', { accountId: account.id, status });
 }
 
 async function handleCheckoutCompleted(
@@ -175,7 +178,7 @@ async function handleCheckoutCompleted(
 ): Promise<void> {
 	const reservationId = session.metadata?.reservation_id;
 	if (!reservationId) {
-		console.log('Checkout completed without reservation_id');
+		logger.debug('Checkout completed without reservation_id');
 		return;
 	}
 
@@ -200,7 +203,7 @@ async function handleCheckoutCompleted(
 		.first<{ facility_id: string; member_id: string; rate_cents: number }>();
 
 	if (!reservation) {
-		console.error(`Reservation ${reservationId} not found`);
+		logger.error('Reservation not found', { reservationId });
 		return;
 	}
 
@@ -253,7 +256,7 @@ async function handleCheckoutCompleted(
 		.bind(now, reservation.member_id)
 		.run();
 
-	console.log(`Checkout completed for reservation ${reservationId}`);
+	logger.info('Checkout completed', { reservationId });
 }
 
 async function handlePaymentSucceeded(
@@ -344,7 +347,7 @@ async function handlePaymentSucceeded(
 					.bind(now, fullReservation.member_id)
 					.run();
 
-				console.log(`Payment succeeded for reservation ${reservationId}`);
+				logger.info('Payment succeeded', { reservationId });
 			}
 		}
 	}
@@ -393,7 +396,7 @@ async function handlePaymentFailed(
 		.bind(now, paymentIntent.id)
 		.run();
 
-	console.log(`Payment failed for intent ${paymentIntent.id}`);
+	logger.warn('Payment failed', { paymentIntentId: paymentIntent.id });
 }
 
 async function handleInvoicePaid(
@@ -419,7 +422,7 @@ async function handleInvoicePaid(
 		.bind(now, subscriptionId)
 		.run();
 
-	console.log(`Invoice paid for subscription ${subscriptionId}`);
+	logger.info('Invoice paid', { subscriptionId });
 }
 
 async function handleInvoicePaymentFailed(
@@ -445,7 +448,7 @@ async function handleInvoicePaymentFailed(
 		.bind(now, subscriptionId)
 		.run();
 
-	console.log(`Invoice payment failed for subscription ${subscriptionId}`);
+	logger.warn('Invoice payment failed', { subscriptionId });
 }
 
 async function handleSubscriptionUpdated(
@@ -476,7 +479,7 @@ async function handleSubscriptionUpdated(
 		)
 		.run();
 
-	console.log(`Subscription ${subscription.id} updated: status=${status}`);
+	logger.info('Subscription updated', { subscriptionId: subscription.id, status });
 }
 
 async function handleSubscriptionDeleted(
@@ -494,7 +497,7 @@ async function handleSubscriptionDeleted(
 		.bind(now, subscription.id)
 		.run();
 
-	console.log(`Subscription ${subscription.id} deleted`);
+	logger.info('Subscription deleted', { subscriptionId: subscription.id });
 }
 
 async function handleDisputeCreated(
@@ -531,5 +534,5 @@ async function handleDisputeCreated(
 		.bind(now, paymentIntentId)
 		.run();
 
-	console.log(`Dispute created for payment intent ${paymentIntentId}`);
+	logger.warn('Dispute created', { paymentIntentId });
 }
