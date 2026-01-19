@@ -16,13 +16,16 @@ import {
 	listUserCollections,
 	listPublicCollections,
 	type CreateCollectionInput,
-	type CollectionVisibility,
+	type CollectionVisibility
 } from '$lib/taste/collections';
 import {
 	getTokenFromRequest,
 	validateToken,
-	type AuthEnv,
+	type AuthEnv
 } from '@create-something/components/auth/server';
+import { createLogger, validateStringField } from '@create-something/components/utils';
+
+const logger = createLogger('CollectionsAPI');
 
 export const GET: RequestHandler = async ({ request, platform, url }) => {
 	const db = platform?.env?.DB;
@@ -58,12 +61,12 @@ export const GET: RequestHandler = async ({ request, platform, url }) => {
 		const collections = await listUserCollections(db, user.id, {
 			includePrivate: true,
 			limit,
-			offset,
+			offset
 		});
 
 		return json({ collections });
 	} catch (err) {
-		console.error('List collections error:', err);
+		logger.error('Failed to list collections', { userId: user.id, error: err });
 		return json({ error: 'Failed to list collections' }, { status: 500 });
 	}
 };
@@ -100,8 +103,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// Validate required fields
-	if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
-		throw error(400, 'Name is required');
+	const nameValidation = validateStringField(body.name, 'name', { required: true });
+	if (!nameValidation.valid) {
+		throw error(400, nameValidation.error);
 	}
 
 	// Validate visibility
@@ -118,17 +122,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		const input: CreateCollectionInput = {
 			userId: user.id,
-			name: body.name.trim(),
+			name: nameValidation.value,
 			description: body.description ?? null,
 			visibility: body.visibility ?? 'private',
-			tags: body.tags ?? [],
+			tags: body.tags ?? []
 		};
 
 		const collection = await createCollection(db, input);
 
+		logger.info('Collection created', { userId: user.id, collectionId: collection.id });
 		return json({ collection }, { status: 201 });
 	} catch (err) {
-		console.error('Create collection error:', err);
+		logger.error('Failed to create collection', { userId: user.id, error: err });
 		return json({ error: 'Failed to create collection' }, { status: 500 });
 	}
 };
