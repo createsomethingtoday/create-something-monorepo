@@ -366,12 +366,13 @@ img {
 
 .button.is-secondary {
   background-color: transparent;
-  border: 1px solid var(--dark-grey);
-  color: var(--black);
+  border: 1px solid var(--light-grey);
+  color: var(--white);
 }
 
 .button.is-secondary:hover {
-  background-color: #f3f3f3;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--white);
 }
 
 /* ==========================================================================
