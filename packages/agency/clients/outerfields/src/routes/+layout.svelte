@@ -75,9 +75,13 @@
 		flex-direction: column;
 		background: var(--color-bg-pure);
 		color: var(--color-fg-primary);
+		overflow-x: hidden;
+		max-width: 100vw;
 	}
 
 	.main-wrapper {
 		flex: 1;
+		overflow-x: hidden;
+		max-width: 100%;
 	}
 </style>

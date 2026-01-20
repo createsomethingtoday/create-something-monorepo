@@ -248,6 +248,8 @@
 		min-height: 100vh;
 		background: var(--color-bg-pure);
 		padding-top: 5rem; /* Account for fixed navigation */
+		overflow-x: hidden;
+		max-width: 100vw;
 	}
 
 	.watch-layout {
@@ -257,11 +259,13 @@
 		max-width: 1800px;
 		margin: 0 auto;
 		padding: 0 1.5rem;
+		box-sizing: border-box;
 	}
 
 	/* Main Content */
 	.main-content {
 		min-width: 0;
+		max-width: 100%;
 	}
 
 	/* Gate Container */
@@ -429,10 +433,11 @@
 		padding-top: 0.5rem;
 	}
 
-	/* Responsive */
-	@media (max-width: 1024px) {
+	/* Responsive - iPad and tablets */
+	@media (max-width: 1100px) {
 		.watch-layout {
 			grid-template-columns: 1fr;
+			padding: 0 1rem;
 		}
 
 		.sidebar {
@@ -440,6 +445,18 @@
 		}
 	}
 
+	/* Tablet portrait */
+	@media (max-width: 768px) {
+		.watch-page {
+			padding-top: 4rem;
+		}
+
+		.video-info {
+			padding: 1.25rem 0;
+		}
+	}
+
+	/* Mobile */
 	@media (max-width: 640px) {
 		.watch-page {
 			padding-top: 0;

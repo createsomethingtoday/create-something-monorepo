@@ -351,8 +351,13 @@
 		font-size: 0.875rem;
 	}
 
-	/* Responsive */
-	@media (max-width: 1024px) {
+	/* Responsive - iPad and tablets */
+	@media (max-width: 1100px) {
+		.related-videos {
+			max-width: 100%;
+			overflow: hidden;
+		}
+
 		.related-videos:not(.horizontal) .videos-list {
 			flex-direction: row;
 			overflow-x: auto;
@@ -361,6 +366,7 @@
 			-webkit-overflow-scrolling: touch;
 			padding-bottom: var(--space-sm);
 			gap: var(--space-md);
+			max-width: 100%;
 		}
 
 		.related-videos:not(.horizontal) .video-item {
