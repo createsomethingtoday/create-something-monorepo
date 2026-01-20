@@ -409,10 +409,12 @@ fn extract_export_list(line: &str) -> Vec<String> {
 }
 
 /// Check if a symbol is imported anywhere in the search scope (excluding source file)
-/// Also traces re-exports through barrel files (index.ts)
+/// Uses tree-sitter for robust AST-based import parsing
 fn check_import_usage(symbol: &str, source_file: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
-    // First check for direct imports of the symbol
-    if check_import_in_dir(symbol, source_file, search_scope)? {
+    use super::imports::{extract_imports, file_reexports_from, file_imports_symbol_from};
+    
+    // First check for direct imports of the symbol using tree-sitter
+    if check_import_in_dir_ast(symbol, source_file, search_scope)? {
         return Ok(true);
     }
     
@@ -424,21 +426,68 @@ fn check_import_usage(symbol: &str, source_file: &Path, search_scope: &Path) -> 
         for index_name in &index_files {
             let index_path = parent.join(index_name);
             if index_path.exists() && index_path != source_file {
-                if let Ok(index_content) = fs::read_to_string(&index_path) {
-                    // Check if this index file re-exports from our source file
-                    let source_stem = source_file.file_stem()
-                        .and_then(|s| s.to_str())
+                // Use tree-sitter to check if index re-exports from our source
+                let source_stem = source_file.file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("");
+                
+                if file_reexports_from(&index_path, source_stem) {
+                    // The index file re-exports from our source.
+                    // Now check if anyone imports the symbol from the index file's directory
+                    let dir_name = parent.file_name()
+                        .and_then(|n| n.to_str())
                         .unwrap_or("");
                     
-                    if reexports_from(&index_content, source_stem) {
-                        // The index file re-exports from our source.
-                        // Now check if anyone imports the symbol from the index file's directory
-                        let dir_name = parent.file_name()
-                            .and_then(|n| n.to_str())
-                            .unwrap_or("");
-                        
-                        // Search for imports like: import { symbol } from './core' or '../core'
-                        if check_reexport_usage(symbol, dir_name, &index_path, search_scope)? {
+                    // Search for imports like: import { symbol } from './core' or '../core'
+                    if check_reexport_usage_ast(symbol, dir_name, &index_path, search_scope)? {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+    }
+    
+    Ok(false)
+}
+
+/// Check directory for imports of a symbol using tree-sitter AST parsing
+fn check_import_in_dir_ast(symbol: &str, source_file: &Path, dir: &Path) -> Result<bool, ComputationError> {
+    use super::imports::extract_imports;
+    
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return Ok(false),
+    };
+    
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let path = entry.path();
+        
+        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if name.starts_with('.') || 
+               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
+                continue;
+            }
+        }
+        
+        if !path.exists() {
+            continue;
+        }
+        
+        if path.is_dir() {
+            if check_import_in_dir_ast(symbol, source_file, &path)? {
+                return Ok(true);
+            }
+        } else if path.is_file() && path != source_file {
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+                // Use tree-sitter to extract imports
+                if let Ok(imports) = extract_imports(&path) {
+                    for import in imports {
+                        if import.symbols.contains(&symbol.to_string()) {
                             return Ok(true);
                         }
                     }
@@ -450,51 +499,16 @@ fn check_import_usage(symbol: &str, source_file: &Path, search_scope: &Path) -> 
     Ok(false)
 }
 
-/// Check if an index file re-exports from a specific module
-fn reexports_from(index_content: &str, module_stem: &str) -> bool {
-    for line in index_content.lines() {
-        let trimmed = line.trim();
-        
-        // export * from './module'
-        // export { foo } from './module'
-        // export type { Foo } from './module'
-        if (trimmed.starts_with("export") || trimmed.starts_with("}")) && trimmed.contains("from") {
-            // Extract the path
-            if let Some(path) = extract_from_path(trimmed) {
-                let path_stem = path.trim_start_matches("./")
-                    .trim_end_matches(".js")
-                    .trim_end_matches(".ts")
-                    .trim_end_matches(".tsx")
-                    .trim_end_matches(".jsx");
-                
-                if path_stem == module_stem {
-                    return true;
-                }
-            }
-        }
-    }
-    false
-}
-
-/// Extract the path from a "from './path'" statement
-fn extract_from_path(line: &str) -> Option<String> {
-    let from_pos = line.find("from")?;
-    let after_from = &line[from_pos + 4..];
+/// Check for re-export usage using tree-sitter AST parsing
+fn check_reexport_usage_ast(symbol: &str, dir_name: &str, index_path: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
+    use super::imports::file_imports_symbol_from;
     
-    let quote_char = if after_from.contains('\'') { '\'' } else { '"' };
-    let start = after_from.find(quote_char)? + 1;
-    let rest = &after_from[start..];
-    let end = rest.find(quote_char)?;
+    check_reexport_in_dir_ast(symbol, dir_name, index_path, search_scope)
+}
+
+fn check_reexport_in_dir_ast(symbol: &str, dir_name: &str, index_path: &Path, dir: &Path) -> Result<bool, ComputationError> {
+    use super::imports::file_imports_symbol_from;
     
-    Some(rest[..end].to_string())
-}
-
-/// Check if a symbol is imported through a barrel file (index.ts)
-fn check_reexport_usage(symbol: &str, dir_name: &str, index_path: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
-    check_reexport_in_dir(symbol, dir_name, index_path, search_scope)
-}
-
-fn check_reexport_in_dir(symbol: &str, dir_name: &str, index_path: &Path, dir: &Path) -> Result<bool, ComputationError> {
     let entries = match fs::read_dir(dir) {
         Ok(e) => e,
         Err(_) => return Ok(false),
@@ -519,263 +533,21 @@ fn check_reexport_in_dir(symbol: &str, dir_name: &str, index_path: &Path, dir: &
         }
         
         if path.is_dir() {
-            if check_reexport_in_dir(symbol, dir_name, index_path, &path)? {
+            if check_reexport_in_dir_ast(symbol, dir_name, index_path, &path)? {
                 return Ok(true);
             }
         } else if path.is_file() && path != *index_path {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
-                if let Ok(content) = fs::read_to_string(&path) {
-                    // Check for import of symbol from the directory (barrel import)
-                    // e.g., import { verifyHmacSignature } from './core'
-                    // e.g., import { verifyHmacSignature } from '../core'
-                    if imports_symbol_from_dir(&content, symbol, dir_name) {
-                        return Ok(true);
-                    }
+                // Use tree-sitter to check if this file imports the symbol from the directory
+                if file_imports_symbol_from(&path, symbol, dir_name) {
+                    return Ok(true);
                 }
             }
         }
     }
     
     Ok(false)
-}
-
-/// Check if content imports a symbol from a directory (barrel import)
-/// Handles multi-line imports where symbol and 'from' are on different lines
-fn imports_symbol_from_dir(content: &str, symbol: &str, dir_name: &str) -> bool {
-    // First try: single-line imports
-    for line in content.lines() {
-        let trimmed = line.trim();
-        
-        // Single-line import with both symbol and from
-        if trimmed.contains(symbol) && trimmed.contains("from") {
-            if let Some(import_path) = extract_from_path(trimmed) {
-                if path_ends_with_dir(&import_path, dir_name) {
-                    if import_contains_symbol(trimmed, symbol) {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    
-    // Second try: multi-line imports
-    // Collect import blocks and check them
-    let mut in_import = false;
-    let mut import_symbols = String::new();
-    let mut import_path: Option<String> = None;
-    
-    for line in content.lines() {
-        let trimmed = line.trim();
-        
-        // Start of import block
-        if trimmed.starts_with("import") && trimmed.contains('{') && !trimmed.contains('}') {
-            in_import = true;
-            import_symbols.clear();
-            // Capture any symbols on the first line after {
-            if let Some(brace_pos) = trimmed.find('{') {
-                import_symbols.push_str(&trimmed[brace_pos + 1..]);
-            }
-            continue;
-        }
-        
-        // Inside import block
-        if in_import {
-            if trimmed.contains('}') {
-                // End of import block - extract path
-                if trimmed.contains("from") {
-                    import_path = extract_from_path(trimmed);
-                    // Add any symbols before the }
-                    if let Some(brace_pos) = trimmed.find('}') {
-                        import_symbols.push_str(&trimmed[..brace_pos]);
-                    }
-                } else if let Some(brace_pos) = trimmed.find('}') {
-                    import_symbols.push_str(&trimmed[..brace_pos]);
-                }
-                
-                // Check if this import matches our criteria
-                if let Some(ref path) = import_path {
-                    if path_ends_with_dir(path, dir_name) {
-                        // Check if symbol is in the collected symbols
-                        for part in import_symbols.split(',') {
-                            let part = part.trim();
-                            let name = if part.contains(" as ") {
-                                part.split(" as ").next().unwrap_or(part).trim()
-                            } else {
-                                part
-                            };
-                            if name == symbol {
-                                return true;
-                            }
-                        }
-                    }
-                }
-                
-                in_import = false;
-                import_symbols.clear();
-                import_path = None;
-            } else {
-                // Middle of import block - collect symbols
-                import_symbols.push_str(trimmed);
-                import_symbols.push(',');
-            }
-        }
-        
-        // Check for "} from" on its own line (closing of multi-line import)
-        if trimmed.starts_with('}') && trimmed.contains("from") {
-            import_path = extract_from_path(trimmed);
-        }
-    }
-    
-    false
-}
-
-/// Check if an import path ends with the given directory name
-fn path_ends_with_dir(import_path: &str, dir_name: &str) -> bool {
-    let path_end = import_path.rsplit('/').next().unwrap_or(import_path);
-    let path_end = path_end
-        .trim_end_matches(".js")
-        .trim_end_matches(".ts")
-        .trim_end_matches("/index.js")
-        .trim_end_matches("/index.ts")
-        .trim_end_matches("/index");
-    
-    path_end == dir_name
-}
-
-/// Check if a single line import contains the symbol
-fn import_contains_symbol(line: &str, symbol: &str) -> bool {
-    if let Some(brace_start) = line.find('{') {
-        if let Some(brace_end) = line.find('}') {
-            if brace_end > brace_start + 1 {
-                let import_list = &line[brace_start + 1..brace_end];
-                for part in import_list.split(',') {
-                    let part = part.trim();
-                    let name = if part.contains(" as ") {
-                        part.split(" as ").next().unwrap_or(part).trim()
-                    } else {
-                        part
-                    };
-                    if name == symbol {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn check_import_in_dir(symbol: &str, source_file: &Path, dir: &Path) -> Result<bool, ComputationError> {
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return Ok(false),
-    };
-    
-    for entry in entries {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = entry.path();
-        
-        // Skip hidden, node_modules, dist, etc.
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || 
-               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
-                continue;
-            }
-        }
-        
-        if !path.exists() {
-            continue;
-        }
-        
-        if path.is_dir() {
-            if check_import_in_dir(symbol, source_file, &path)? {
-                return Ok(true);
-            }
-        } else if path.is_file() && path != source_file {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
-                if let Ok(content) = fs::read_to_string(&path) {
-                    // Check for import of this symbol
-                    if imports_symbol(&content, symbol) {
-                        return Ok(true);
-                    }
-                }
-            }
-        }
-    }
-    
-    Ok(false)
-}
-
-/// Check if content imports a specific symbol
-fn imports_symbol(content: &str, symbol: &str) -> bool {
-    for line in content.lines() {
-        let trimmed = line.trim();
-        
-        // import { symbol } from '...'
-        // import { foo, symbol, bar } from '...'
-        // import { original as symbol } from '...'
-        if trimmed.starts_with("import") && trimmed.contains(symbol) {
-            // Check it's in the import list, not just the path
-            if let Some(brace_start) = trimmed.find('{') {
-                if let Some(brace_end) = trimmed.find('}') {
-                    // Safety: ensure valid slice bounds (brace_end must be after brace_start + 1)
-                    if brace_end > brace_start + 1 {
-                        let import_list = &trimmed[brace_start + 1..brace_end];
-                        // Check for exact symbol (with word boundaries)
-                        for part in import_list.split(',') {
-                            let part = part.trim();
-                            // Handle "original as alias"
-                            let imported_name = if part.contains(" as ") {
-                                // "symbol as alias" or "original as symbol"
-                                let parts: Vec<&str> = part.split(" as ").collect();
-                                if parts.len() == 2 {
-                                    // Both the original and alias could match
-                                    if parts[0].trim() == symbol || parts[1].trim() == symbol {
-                                        return true;
-                                    }
-                                }
-                                continue;
-                            } else {
-                                part
-                            };
-                            
-                            if imported_name == symbol {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // import symbol from '...' (default import)
-            // This is trickier - would need to match the default export
-        }
-        
-        // Dynamic imports: const { symbol } = await import('...')
-        if trimmed.contains("import(") && trimmed.contains(symbol) {
-            // Simplified check - ensure brace_end > brace_start to avoid slicing panic
-            if let Some(brace_start) = trimmed.find('{') {
-                if let Some(brace_end) = trimmed.find('}') {
-                    // Safety: ensure valid slice bounds
-                    if brace_end > brace_start + 1 {
-                        let destructure = &trimmed[brace_start + 1..brace_end];
-                        for part in destructure.split(',') {
-                            if part.trim() == symbol {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    false
 }
 
 #[cfg(test)]

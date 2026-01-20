@@ -9,6 +9,7 @@ mod connectivity;
 pub mod ast_similarity;
 pub mod function_dry;
 pub mod environment;
+pub mod imports;
 
 pub use similarity::{compute_similarity, SimilarityEvidence};
 pub use usage::{count_usages, find_dead_exports, UsageEvidence, UsageLocation, UsageType, DeadExport, DeadExportsReport};
