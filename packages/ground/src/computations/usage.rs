@@ -281,20 +281,77 @@ pub struct DeadExportsReport {
 
 /// Find exports in a module that are never imported elsewhere
 pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<DeadExportsReport, ComputationError> {
-    // First, extract all exports from the module
-    let exports = extract_exports(module_path)?;
-    let total_exports = exports.len() as u32;
+    use super::imports::{extract_exports as extract_exports_ast, get_reexported_symbols};
+    
+    // Use tree-sitter to extract all exports (more accurate than string parsing)
+    let ast_exports = extract_exports_ast(module_path)
+        .map_err(|e| ComputationError::ParseError { 
+            file: module_path.to_path_buf(), 
+            message: e 
+        })?;
+    
+    let total_exports = ast_exports.len() as u32;
+    
+    // Convert to DeadExport format for checking
+    let exports: Vec<DeadExport> = ast_exports.iter()
+        .filter(|e| !e.is_reexport) // Only check original exports, not re-exports
+        .map(|e| DeadExport {
+            name: e.name.clone(),
+            file: module_path.to_path_buf(),
+            line: e.line as u32,
+            context: format!("export {}", e.name),
+        })
+        .collect();
     
     // Then check each export for usage in the search scope
     let mut dead_exports = Vec::new();
     
+    // Get the module stem for re-export checking
+    let module_stem = module_path.file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+    
+    // Find barrel file in same directory that might re-export from this module
+    let barrel_path = if let Some(parent) = module_path.parent() {
+        let index_files = ["index.ts", "index.js", "index.tsx", "index.jsx"];
+        index_files.iter()
+            .map(|f| parent.join(f))
+            .find(|p| p.exists() && p != module_path)
+    } else {
+        None
+    };
+    
+    // Get symbols that are re-exported through the barrel file
+    let reexported_symbols: Vec<String> = barrel_path.as_ref()
+        .map(|p| get_reexported_symbols(p, module_stem))
+        .unwrap_or_default();
+    
     for export in exports {
-        // Count usages of this symbol (excluding the definition file)
-        let is_used = check_import_usage(&export.name, module_path, search_scope)?;
+        // First: check for direct imports of this symbol
+        let is_directly_imported = check_import_in_dir_ast(&export.name, module_path, search_scope)?;
         
-        if !is_used {
-            dead_exports.push(export);
+        if is_directly_imported {
+            continue; // Symbol is used directly
         }
+        
+        // Second: check if this symbol is re-exported through a barrel file
+        if reexported_symbols.contains(&export.name) {
+            // Symbol is re-exported - check if the barrel file's consumers import this symbol
+            if let Some(ref barrel) = barrel_path {
+                let barrel_dir = barrel.parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
+                
+                // Check if anyone imports this symbol from the barrel's directory
+                if check_symbol_imported_from_barrel(&export.name, barrel_dir, barrel, search_scope)? {
+                    continue; // Symbol is used via re-export
+                }
+            }
+        }
+        
+        // Symbol is not used anywhere
+        dead_exports.push(export);
     }
     
     Ok(DeadExportsReport {
@@ -306,141 +363,68 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
     })
 }
 
-/// Extract all exports from a TypeScript/JavaScript module
-fn extract_exports(module_path: &Path) -> Result<Vec<DeadExport>, ComputationError> {
-    let content = fs::read_to_string(module_path)?;
-    let mut exports = Vec::new();
+/// Check if a symbol is imported from a barrel file (e.g., import { X } from './core')
+fn check_symbol_imported_from_barrel(symbol: &str, barrel_dir: &str, barrel_path: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
+    use super::imports::extract_imports;
     
-    for (line_num, line) in content.lines().enumerate() {
-        let trimmed = line.trim();
-        
-        // Named exports: export function foo, export const foo, etc.
-        if let Some(name) = extract_named_export(trimmed) {
-            exports.push(DeadExport {
-                name,
-                file: module_path.to_path_buf(),
-                line: (line_num + 1) as u32,
-                context: trimmed.to_string(),
-            });
-        }
-        
-        // Export statements: export { foo, bar }
-        if trimmed.starts_with("export {") || trimmed.starts_with("export{") {
-            let names = extract_export_list(trimmed);
-            for name in names {
-                exports.push(DeadExport {
-                    name,
-                    file: module_path.to_path_buf(),
-                    line: (line_num + 1) as u32,
-                    context: trimmed.to_string(),
-                });
-            }
-        }
-    }
-    
-    Ok(exports)
+    check_barrel_imports_in_dir(symbol, barrel_dir, barrel_path, search_scope)
 }
 
-/// Extract the exported name from a named export line
-fn extract_named_export(line: &str) -> Option<String> {
-    // Patterns: export function NAME, export const NAME, export class NAME, etc.
-    let prefixes = [
-        "export function ",
-        "export async function ",
-        "export const ",
-        "export let ",
-        "export var ",
-        "export class ",
-        "export interface ",
-        "export type ",
-        "export enum ",
-        "export abstract class ",
-    ];
+fn check_barrel_imports_in_dir(symbol: &str, barrel_dir: &str, barrel_path: &Path, dir: &Path) -> Result<bool, ComputationError> {
+    use super::imports::extract_imports;
     
-    for prefix in prefixes {
-        if line.starts_with(prefix) {
-            let rest = &line[prefix.len()..];
-            // Extract identifier (stops at space, <, (, =, {, :)
-            let name: String = rest.chars()
-                .take_while(|c| c.is_alphanumeric() || *c == '_')
-                .collect();
-            if !name.is_empty() {
-                return Some(name);
-            }
-        }
-    }
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return Ok(false),
+    };
     
-    // export default is usually unnamed, skip
-    // export * from is re-export, skip
-    
-    None
-}
-
-/// Extract names from export { foo, bar, baz as qux }
-fn extract_export_list(line: &str) -> Vec<String> {
-    let mut names = Vec::new();
-    
-    // Find content between { and }
-    if let Some(start) = line.find('{') {
-        if let Some(end) = line.find('}') {
-            // Safety: ensure valid slice bounds
-            if end > start + 1 {
-                let content = &line[start + 1..end];
-                
-                for part in content.split(',') {
-                    let part = part.trim();
-                    
-                    // Handle "foo as bar" - use the original name (foo)
-                    let name = if part.contains(" as ") {
-                        part.split(" as ").next().unwrap_or(part).trim()
-                    } else {
-                        part
-                    };
-                    
-                    if !name.is_empty() && name != "type" {
-                        names.push(name.to_string());
-                    }
-                }
-            }
-        }
-    }
-    
-    names
-}
-
-/// Check if a symbol is imported anywhere in the search scope (excluding source file)
-/// Uses tree-sitter for robust AST-based import parsing
-fn check_import_usage(symbol: &str, source_file: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
-    use super::imports::{extract_imports, file_reexports_from, file_imports_symbol_from};
-    
-    // First check for direct imports of the symbol using tree-sitter
-    if check_import_in_dir_ast(symbol, source_file, search_scope)? {
-        return Ok(true);
-    }
-    
-    // If not found directly, check if this module is re-exported by a barrel file
-    // and if so, check for imports through that barrel file
-    if let Some(parent) = source_file.parent() {
-        let index_files = ["index.ts", "index.js", "index.tsx", "index.jsx"];
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let path = entry.path();
         
-        for index_name in &index_files {
-            let index_path = parent.join(index_name);
-            if index_path.exists() && index_path != source_file {
-                // Use tree-sitter to check if index re-exports from our source
-                let source_stem = source_file.file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("");
-                
-                if file_reexports_from(&index_path, source_stem) {
-                    // The index file re-exports from our source.
-                    // Now check if anyone imports the symbol from the index file's directory
-                    let dir_name = parent.file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("");
-                    
-                    // Search for imports like: import { symbol } from './core' or '../core'
-                    if check_reexport_usage_ast(symbol, dir_name, &index_path, search_scope)? {
-                        return Ok(true);
+        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if name.starts_with('.') || 
+               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
+                continue;
+            }
+        }
+        
+        if !path.exists() {
+            continue;
+        }
+        
+        if path.is_dir() {
+            if check_barrel_imports_in_dir(symbol, barrel_dir, barrel_path, &path)? {
+                return Ok(true);
+            }
+        } else if path.is_file() && path != *barrel_path {
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+                // Use tree-sitter to extract imports
+                if let Ok(imports) = extract_imports(&path) {
+                    for import in imports {
+                        // Check if this import is from the barrel directory
+                        // e.g., '../core', './core', '../core/index', '../core/index.js'
+                        let source_end = import.source.rsplit('/').next().unwrap_or(&import.source);
+                        let source_end = source_end
+                            .trim_end_matches(".js")
+                            .trim_end_matches(".ts")
+                            .trim_end_matches("/index");
+                        
+                        // Check if import source ends with barrel directory or is 'index'
+                        let is_barrel_import = source_end == barrel_dir || 
+                            source_end == "index" && import.source.contains(barrel_dir) ||
+                            import.source.ends_with(&format!("/{}", barrel_dir)) ||
+                            import.source.ends_with(&format!("/{}/index", barrel_dir)) ||
+                            import.source.ends_with(&format!("/{}/index.js", barrel_dir)) ||
+                            import.source.ends_with(&format!("/{}/index.ts", barrel_dir));
+                        
+                        if is_barrel_import && import.symbols.contains(&symbol.to_string()) {
+                            return Ok(true);
+                        }
                     }
                 }
             }
@@ -450,7 +434,7 @@ fn check_import_usage(symbol: &str, source_file: &Path, search_scope: &Path) -> 
     Ok(false)
 }
 
-/// Check directory for imports of a symbol using tree-sitter AST parsing
+/// Check directory for direct imports of a symbol using tree-sitter AST parsing
 fn check_import_in_dir_ast(symbol: &str, source_file: &Path, dir: &Path) -> Result<bool, ComputationError> {
     use super::imports::extract_imports;
     
@@ -491,57 +475,6 @@ fn check_import_in_dir_ast(symbol: &str, source_file: &Path, dir: &Path) -> Resu
                             return Ok(true);
                         }
                     }
-                }
-            }
-        }
-    }
-    
-    Ok(false)
-}
-
-/// Check for re-export usage using tree-sitter AST parsing
-fn check_reexport_usage_ast(symbol: &str, dir_name: &str, index_path: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
-    use super::imports::file_imports_symbol_from;
-    
-    check_reexport_in_dir_ast(symbol, dir_name, index_path, search_scope)
-}
-
-fn check_reexport_in_dir_ast(symbol: &str, dir_name: &str, index_path: &Path, dir: &Path) -> Result<bool, ComputationError> {
-    use super::imports::file_imports_symbol_from;
-    
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return Ok(false),
-    };
-    
-    for entry in entries {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = entry.path();
-        
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || 
-               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
-                continue;
-            }
-        }
-        
-        if !path.exists() {
-            continue;
-        }
-        
-        if path.is_dir() {
-            if check_reexport_in_dir_ast(symbol, dir_name, index_path, &path)? {
-                return Ok(true);
-            }
-        } else if path.is_file() && path != *index_path {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
-                // Use tree-sitter to check if this file imports the symbol from the directory
-                if file_imports_symbol_from(&path, symbol, dir_name) {
-                    return Ok(true);
                 }
             }
         }
@@ -665,5 +598,65 @@ export interface BeadsNotionConfig {
         // NOT definitions (usages)
         assert!(!is_definition_line("const result = validateEmail(input);", "validateEmail"));
         assert!(!is_definition_line("import { validateEmail } from './utils';", "validateEmail"));
+    }
+    
+    #[test]
+    fn test_reexport_chain_detection() {
+        // Test the exact WORKWAY scenario:
+        // security.ts exports verifyHmacSignature
+        // core/index.ts re-exports from ./security.js
+        // docusign/index.ts imports from ../core/index.js
+        // Result: security.ts::verifyHmacSignature should NOT be dead
+        
+        let dir = tempdir().unwrap();
+        
+        // Create core directory structure
+        let core_dir = dir.path().join("core");
+        fs::create_dir(&core_dir).unwrap();
+        
+        // security.ts - the source file
+        let security = core_dir.join("security.ts");
+        File::create(&security).unwrap().write_all(br#"
+export function verifyHmacSignature(data: string): boolean {
+    return true;
+}
+
+export function secureCompare(a: string, b: string): boolean {
+    return a === b;
+}
+"#).unwrap();
+        
+        // core/index.ts - the barrel file that re-exports
+        let core_index = core_dir.join("index.ts");
+        File::create(&core_index).unwrap().write_all(br#"
+export { verifyHmacSignature, secureCompare } from './security.js';
+"#).unwrap();
+        
+        // Create docusign directory
+        let docusign_dir = dir.path().join("docusign");
+        fs::create_dir(&docusign_dir).unwrap();
+        
+        // docusign/index.ts - consumes via barrel import
+        let docusign_index = docusign_dir.join("index.ts");
+        File::create(&docusign_index).unwrap().write_all(br#"
+import { verifyHmacSignature } from '../core/index.js';
+
+export function handleWebhook(data: string): boolean {
+    return verifyHmacSignature(data);
+}
+"#).unwrap();
+        
+        // Now test: security.ts exports should NOT be dead
+        let report = find_dead_exports(&security, dir.path()).unwrap();
+        
+        // verifyHmacSignature is used via barrel - should NOT be dead
+        let dead_names: Vec<&str> = report.dead_exports.iter().map(|e| e.name.as_str()).collect();
+        
+        assert!(!dead_names.contains(&"verifyHmacSignature"), 
+            "verifyHmacSignature should NOT be dead - it's used via re-export chain. Dead: {:?}", dead_names);
+        
+        // secureCompare is NOT imported anywhere - should be dead
+        assert!(dead_names.contains(&"secureCompare"),
+            "secureCompare SHOULD be dead - nothing imports it. Dead: {:?}", dead_names);
     }
 }
