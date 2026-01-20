@@ -1,29 +1,31 @@
 //! Ground MCP Server
 //!
 //! Exposes Ground tools via the Model Context Protocol.
+//! 
+//! ## AI-Native Workflow
+//! 
+//! The natural agent workflow is: `analyze → fix → verify_fix`
+//! 
+//! ## Tools (13 total)
 //!
-//! ## Tools
+//! ### Primary Entry Points
+//! - `ground_analyze` - Batch analysis (duplicates, dead exports, orphans, environment)
+//! - `ground_diff` - Incremental analysis (only new issues since git baseline)
+//! - `ground_verify_fix` - Confirm a fix worked without full re-analysis
 //!
-//! ### Check Tools (do these first)
+//! ### Targeted Analysis
+//! - `ground_find_duplicate_functions` - Find function-level duplicates
+//! - `ground_find_dead_exports` - Find unused exports (traces re-exports)
+//! - `ground_find_orphans` - Batch scan for orphaned modules
+//! - `ground_check_environment` - Detect Workers/Node.js API safety issues
+//! - `ground_check_connections` - Check module connectivity
+//! - `ground_count_uses` - Count symbol uses (distinguishes type-only)
 //! - `ground_compare` - Compare two files for similarity
-//! - `ground_count_uses` - Count how many times something is used
-//! - `ground_check_connections` - Check if a module is connected
-//! - `ground_find_duplicate_functions` - Find duplicate functions across files
+//! - `ground_suggest_fix` - Get refactoring suggestions
 //!
-//! ### Claim Tools (need to check first)
-//! - `ground_claim_duplicate` - Claim files are duplicates
-//! - `ground_claim_dead_code` - Claim code is dead
-//! - `ground_claim_orphan` - Claim module is orphaned
-//!
-//! ### Sketch Tools (probabilistic data structures)
-//! - `ground_sketch_create` - Create HLL or Bloom filter sketch
-//! - `ground_sketch_add` - Add items to a sketch
-//! - `ground_sketch_query` - Query a sketch (count or membership)
-//! - `ground_sketch_merge` - Merge two sketches
-//!
-//! ### Other Tools
-//! - `ground_status` - Show what's been checked
-//! - `ground_suggest_fix` - Get suggestions for fixing duplicates
+//! ### Claims (Audit Trail)
+//! - `ground_claim_dead_code` - Claim code is dead (blocked until verified)
+//! - `ground_claim_orphan` - Claim module is orphaned (blocked until verified)
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -160,29 +162,7 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                 "required": []
             }),
         },
-        // Claim tools (need to check first)
-        ToolDefinition {
-            name: "ground_claim_duplicate".to_string(),
-            description: "Claim that two files are duplicates. Blocked if you haven't compared them first, or if they're not similar enough.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "file_a": {
-                        "type": "string",
-                        "description": "Path to first file"
-                    },
-                    "file_b": {
-                        "type": "string",
-                        "description": "Path to second file"
-                    },
-                    "reason": {
-                        "type": "string",
-                        "description": "Why you're claiming this"
-                    }
-                },
-                "required": ["file_a", "file_b", "reason"]
-            }),
-        },
+        // Claim tools (audit trail - blocked until verified)
         ToolDefinition {
             name: "ground_claim_dead_code".to_string(),
             description: "Claim that code is dead (unused). Blocked if you haven't counted uses first, or if it's actually used.".to_string(),
@@ -220,14 +200,6 @@ pub fn list_tools() -> Vec<ToolDefinition> {
             }),
         },
         // Other tools
-        ToolDefinition {
-            name: "ground_status".to_string(),
-            description: "Show Ground status and thresholds.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {}
-            }),
-        },
         ToolDefinition {
             name: "ground_suggest_fix".to_string(),
             description: "Get suggestions for fixing a duplication. Works best in the CREATE SOMETHING monorepo - suggests where to move shared code and gives you a beads command.".to_string(),
@@ -298,102 +270,6 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     }
                 },
                 "required": ["module_path"]
-            }),
-        },
-        // Sketch tools (probabilistic data structures)
-        ToolDefinition {
-            name: "ground_sketch_create".to_string(),
-            description: "Create a probabilistic sketch for cardinality estimation (HyperLogLog) or set membership (Bloom filter). Sketches persist for the MCP session.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Name for the sketch (e.g., 'unique-files', 'processed-ids')"
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["hll", "bloom"],
-                        "description": "Sketch type: 'hll' for HyperLogLog (counting unique items), 'bloom' for Bloom filter (set membership)"
-                    },
-                    "capacity": {
-                        "type": "number",
-                        "description": "Expected number of items. For HLL: precision bits 4-18 (default 14). For Bloom: expected item count (default 10000)."
-                    },
-                    "fp_rate": {
-                        "type": "number",
-                        "description": "Bloom filter only: false positive rate 0.0-1.0 (default 0.01 = 1%)"
-                    }
-                },
-                "required": ["name", "type"]
-            }),
-        },
-        ToolDefinition {
-            name: "ground_sketch_add".to_string(),
-            description: "Add one or more items to a sketch. For HLL, this updates cardinality estimate. For Bloom, this marks items as 'seen'.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the sketch"
-                    },
-                    "items": {
-                        "type": "array",
-                        "items": { "type": "string" },
-                        "description": "Items to add to the sketch"
-                    }
-                },
-                "required": ["name", "items"]
-            }),
-        },
-        ToolDefinition {
-            name: "ground_sketch_query".to_string(),
-            description: "Query a sketch. For HLL: returns estimated cardinality. For Bloom: checks if items are possibly in the set.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the sketch"
-                    },
-                    "items": {
-                        "type": "array",
-                        "items": { "type": "string" },
-                        "description": "For Bloom filter: items to check membership. Ignored for HLL."
-                    }
-                },
-                "required": ["name"]
-            }),
-        },
-        ToolDefinition {
-            name: "ground_sketch_merge".to_string(),
-            description: "Merge two sketches of the same type. Creates a new sketch representing the union.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "sketch_a": {
-                        "type": "string",
-                        "description": "Name of first sketch"
-                    },
-                    "sketch_b": {
-                        "type": "string",
-                        "description": "Name of second sketch"
-                    },
-                    "output_name": {
-                        "type": "string",
-                        "description": "Name for the merged sketch"
-                    }
-                },
-                "required": ["sketch_a", "sketch_b", "output_name"]
-            }),
-        },
-        ToolDefinition {
-            name: "ground_sketch_list".to_string(),
-            description: "List all sketches in the current session with their types and statistics.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {}
             }),
         },
         // AI-Native Tools
@@ -534,20 +410,14 @@ pub fn handle_tool_call(
         "ground_count_uses" => handle_count_uses(g, args),
         "ground_check_connections" => handle_check_connections(g, args),
         "ground_find_duplicate_functions" => handle_find_duplicate_functions(args),
-        "ground_claim_duplicate" => handle_claim_duplicate(g, args),
+        // Claims (audit trail)
         "ground_claim_dead_code" => handle_claim_dead_code(g, args),
         "ground_claim_orphan" => handle_claim_orphan(g, args),
-        "ground_status" => handle_status(g),
+        // Other tools
         "ground_suggest_fix" => handle_suggest_fix(args),
         "ground_check_environment" => handle_check_environment(args),
         "ground_find_orphans" => handle_find_orphans(args),
         "ground_find_dead_exports" => handle_find_dead_exports(args),
-        // Sketch tools
-        "ground_sketch_create" => handle_sketch_create(args),
-        "ground_sketch_add" => handle_sketch_add(args),
-        "ground_sketch_query" => handle_sketch_query(args),
-        "ground_sketch_merge" => handle_sketch_merge(args),
-        "ground_sketch_list" => handle_sketch_list(),
         // AI-Native tools
         "ground_analyze" => handle_batch_analyze(args),
         "ground_verify_fix" => handle_verify_fix(args),
@@ -1091,6 +961,8 @@ fn extract_package_name(path: &Path) -> String {
         .to_string()
 }
 
+/// Kept for potential future use or separate MCP server
+#[allow(dead_code)]
 fn handle_claim_duplicate(g: &VerifiedTriad, args: &Value) -> ToolResult {
     let file_a = match args.get("file_a").and_then(|v| v.as_str()) {
         Some(s) => PathBuf::from(s),
@@ -1203,6 +1075,8 @@ fn handle_claim_orphan(g: &VerifiedTriad, args: &Value) -> ToolResult {
     }
 }
 
+/// Kept for potential future use - status can be included in analyze response
+#[allow(dead_code)]
 fn handle_status(g: &VerifiedTriad) -> ToolResult {
     let thresholds = g.thresholds();
     ToolResult::success(json!({
@@ -1539,9 +1413,10 @@ fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sketch Tool Handlers
+// Sketch Tool Handlers (kept for potential separate ground-sketch MCP server)
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[allow(dead_code)]
 fn handle_sketch_create(args: &Value) -> ToolResult {
     let name = match args.get("name").and_then(|v| v.as_str()) {
         Some(s) => s.to_string(),
@@ -1603,6 +1478,7 @@ fn handle_sketch_create(args: &Value) -> ToolResult {
     }))
 }
 
+#[allow(dead_code)]
 fn handle_sketch_add(args: &Value) -> ToolResult {
     let name = match args.get("name").and_then(|v| v.as_str()) {
         Some(s) => s,
@@ -1650,6 +1526,7 @@ fn handle_sketch_add(args: &Value) -> ToolResult {
     }
 }
 
+#[allow(dead_code)]
 fn handle_sketch_query(args: &Value) -> ToolResult {
     let name = match args.get("name").and_then(|v| v.as_str()) {
         Some(s) => s,
@@ -1710,6 +1587,7 @@ fn handle_sketch_query(args: &Value) -> ToolResult {
     }
 }
 
+#[allow(dead_code)]
 fn handle_sketch_merge(args: &Value) -> ToolResult {
     let sketch_a = match args.get("sketch_a").and_then(|v| v.as_str()) {
         Some(s) => s,
@@ -2539,10 +2417,7 @@ fn is_file_new_since(repo_dir: &Path, file: &Path, base_ref: &str) -> bool {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sketch Tool Handlers
-// ─────────────────────────────────────────────────────────────────────────────
-
+#[allow(dead_code)]
 fn handle_sketch_list() -> ToolResult {
     let sketches = SKETCHES.lock().unwrap();
     
@@ -2600,7 +2475,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 20); // 17 original + 3 AI-native tools (analyze, verify_fix, diff)
+        assert_eq!(tools.len(), 13); // Focused AI-native tool set
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         // Check tools
@@ -2608,22 +2483,18 @@ mod tests {
         assert!(names.contains(&"ground_count_uses"));
         assert!(names.contains(&"ground_check_connections"));
         assert!(names.contains(&"ground_find_duplicate_functions"));
-        // Claim tools
-        assert!(names.contains(&"ground_claim_duplicate"));
+        // Claim tools (audit trail)
         assert!(names.contains(&"ground_claim_dead_code"));
         assert!(names.contains(&"ground_claim_orphan"));
         // Other tools
-        assert!(names.contains(&"ground_status"));
         assert!(names.contains(&"ground_suggest_fix"));
         assert!(names.contains(&"ground_check_environment"));
         assert!(names.contains(&"ground_find_orphans"));
         assert!(names.contains(&"ground_find_dead_exports"));
-        // Sketch tools
-        assert!(names.contains(&"ground_sketch_create"));
-        assert!(names.contains(&"ground_sketch_add"));
-        assert!(names.contains(&"ground_sketch_query"));
-        assert!(names.contains(&"ground_sketch_merge"));
-        assert!(names.contains(&"ground_sketch_list"));
+        // AI-Native tools
+        assert!(names.contains(&"ground_analyze"));
+        assert!(names.contains(&"ground_diff"));
+        assert!(names.contains(&"ground_verify_fix"));
     }
     
     #[test]
@@ -2632,10 +2503,10 @@ mod tests {
         let db_path = dir.path().join("test.db");
         let mut g = VerifiedTriad::new(&db_path).unwrap();
         
-        let result = handle_tool_call(&mut g, "ground_claim_duplicate", &json!({
-            "file_a": "a.ts",
-            "file_b": "b.ts",
-            "reason": "looks similar"
+        // Test claim_dead_code is blocked without prior count_uses
+        let result = handle_tool_call(&mut g, "ground_claim_dead_code", &json!({
+            "symbol": "unusedFunction",
+            "reason": "looks unused"
         }));
         
         assert!(result.success);
