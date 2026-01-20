@@ -5,35 +5,17 @@
  * Canon: The ethos recedes into use; your principles guide without commanding.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { homedir } from 'os';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { randomBytes } from 'crypto';
 import type {
 	UserEthos,
 	EthosPrinciple,
 	EthosConstraint,
 	EthosHealthCheck
 } from '../types.js';
+import { CONFIG_DIR, ensureConfigDir, generateId } from '../lib/storage.js';
 
-const CONFIG_DIR = join(homedir(), '.create-something');
 const ETHOS_FILE = join(CONFIG_DIR, 'ethos.json');
-
-/**
- * Generate a short unique ID for ethos items
- */
-function generateId(): string {
-	return randomBytes(4).toString('hex');
-}
-
-/**
- * Ensure the config directory exists
- */
-function ensureConfigDir(): void {
-	if (!existsSync(CONFIG_DIR)) {
-		mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-	}
-}
 
 /**
  * Create an empty ethos with defaults

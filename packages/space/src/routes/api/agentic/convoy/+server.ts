@@ -4,6 +4,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { InputSanitizationHook } from '$lib/agentic/hooks';
+import { generateId } from '$lib/utils/id';
 
 interface ConvoyRequest {
   name: string;
@@ -135,7 +136,3 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     throw error(500, `Failed to submit convoy: ${err.message}`);
   }
 };
-
-function generateId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(36).substring(2, 15)}`;
-}

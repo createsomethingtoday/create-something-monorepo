@@ -5,6 +5,7 @@
  * All calculations are designed to work with live play-by-play data.
  */
 
+import { formatPPP } from './utils';
 import type {
 	PlayByPlayAction,
 	Shot,
@@ -440,12 +441,8 @@ export function buildShotNetwork(
 // Utility Functions
 // ============================================
 
-/**
- * Format PPP for display
- */
-export function formatPPP(ppp: number): string {
-	return ppp.toFixed(2);
-}
+// Re-export from utils for backward compatibility
+export { formatPPP } from './utils';
 
 /**
  * Format delta with + prefix for positive

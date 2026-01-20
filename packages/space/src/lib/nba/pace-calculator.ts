@@ -6,6 +6,7 @@
  */
 
 import type { PlayByPlayAction, NBAPlayerBoxScore } from './types';
+import { formatPPP } from './utils';
 
 // League average constants (2024-25 season estimates)
 const LEAGUE_AVG_PACE = 99.5; // Possessions per 48 minutes
@@ -216,12 +217,8 @@ export function formatPace(pace: number): string {
 	return pace.toFixed(1);
 }
 
-/**
- * Format points per possession for display
- */
-export function formatPPP(ppp: number): string {
-	return ppp.toFixed(2);
-}
+// Re-export from utils for backward compatibility
+export { formatPPP } from './utils';
 
 /**
  * Get pace comparison text

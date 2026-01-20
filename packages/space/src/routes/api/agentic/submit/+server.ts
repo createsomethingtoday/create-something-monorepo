@@ -4,6 +4,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { InputSanitizationHook } from '$lib/agentic/hooks';
+import { generateId } from '$lib/utils/id';
 
 interface SubmitRequest {
   type: 'template-generation' | 'feature-implementation' | 'research';
@@ -111,6 +112,3 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   }
 };
 
-function generateId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(36).substring(2, 15)}`;
-}

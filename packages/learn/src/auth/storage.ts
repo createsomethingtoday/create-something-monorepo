@@ -5,22 +5,12 @@
  * Canon: Storage recedes; authentication persists.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from 'fs';
-import { homedir } from 'os';
+import { existsSync, readFileSync, writeFileSync, chmodSync } from 'fs';
 import { join } from 'path';
 import type { AuthState, AuthTokens, User } from '../types.js';
+import { CONFIG_DIR, ensureConfigDir } from '../lib/storage.js';
 
-const CONFIG_DIR = join(homedir(), '.create-something');
 const AUTH_FILE = join(CONFIG_DIR, 'auth.json');
-
-/**
- * Ensure the config directory exists with proper permissions
- */
-function ensureConfigDir(): void {
-	if (!existsSync(CONFIG_DIR)) {
-		mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-	}
-}
 
 /**
  * Load stored authentication state

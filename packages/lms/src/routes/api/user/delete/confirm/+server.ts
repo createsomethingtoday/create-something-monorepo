@@ -11,6 +11,7 @@
 
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
+import { anonymizeUserAnalytics } from '$lib/gdpr';
 
 const IDENTITY_WORKER = 'https://id.createsomething.space';
 
@@ -90,23 +91,6 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		deleted_at: new Date().toISOString(),
 	});
 };
-
-/**
- * Anonymize user's analytics events by setting user_id to null
- */
-async function anonymizeUserAnalytics(db: D1Database, userId: string): Promise<void> {
-	// Anonymize unified_events
-	await db
-		.prepare('UPDATE unified_events SET user_id = NULL WHERE user_id = ?')
-		.bind(userId)
-		.run();
-
-	// Anonymize unified_sessions
-	await db
-		.prepare('UPDATE unified_sessions SET user_id = NULL WHERE user_id = ?')
-		.bind(userId)
-		.run();
-}
 
 /**
  * Clear all magic link sessions for this user

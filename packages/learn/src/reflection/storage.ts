@@ -5,12 +5,10 @@
  * Canon: Reflections are traces of dwelling; analysis reveals depth.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { homedir } from 'os';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { randomBytes } from 'crypto';
+import { CONFIG_DIR, ensureConfigDir, generateId } from '../lib/storage.js';
 
-const CONFIG_DIR = join(homedir(), '.create-something');
 const REFLECTIONS_FILE = join(CONFIG_DIR, 'reflections.json');
 
 export interface ReflectionAnalysis {
@@ -38,22 +36,6 @@ export interface StoredReflection {
 export interface ReflectionStore {
 	version: 1;
 	reflections: StoredReflection[];
-}
-
-/**
- * Generate a short unique ID
- */
-function generateId(): string {
-	return randomBytes(4).toString('hex');
-}
-
-/**
- * Ensure the config directory exists
- */
-function ensureConfigDir(): void {
-	if (!existsSync(CONFIG_DIR)) {
-		mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-	}
 }
 
 /**

@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { stripComments } from '$lib/utils/code';
 
 interface ExecuteRequest {
   code: string;
@@ -178,10 +179,3 @@ async function simulateNotionAPIExecution(
   }
 }
 
-function stripComments(code: string): string {
-  // Remove single-line comments (// ...)
-  let cleaned = code.replace(/\/\/.*$/gm, '');
-  // Remove multi-line comments (/* ... */)
-  cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
-  return cleaned;
-}
