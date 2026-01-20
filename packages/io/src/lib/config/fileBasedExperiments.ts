@@ -673,6 +673,53 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
     ╚═══════════════════════════════════════════════════════════════════════════╝
 `
 	},
+	{
+		id: 'file-living-arena-gpu',
+		slug: 'living-arena-gpu',
+		title: 'Living Arena GPU: WebGPU Crowd Simulation',
+		description: 'WebGPU-accelerated crowd simulation with 8,000+ agents showing emergent behaviors—bottleneck formation, wave propagation, and panic spreading through social force models.',
+		excerpt_short: 'GPU-accelerated crowd simulation with emergent behavior',
+		excerpt_long: 'This experiment evolves the Living Arena concept from conceptual visualization to realistic simulation. Using WebGPU compute shaders, 8,000+ agents navigate the arena with physics-based crowd dynamics: goal attraction, collision avoidance, wall repulsion, and panic propagation. Watch emergent behaviors like bottleneck formation and crowd waves.',
+		category: 'research',
+		tags: ['WebGPU', 'Compute Shaders', 'Crowd Simulation', 'Social Force Model', 'Emergent Behavior', 'WGSL'],
+		created_at: '2026-01-20T00:00:00Z',
+		updated_at: '2026-01-20T00:00:00Z',
+		reading_time_minutes: 8,
+		difficulty: 'advanced',
+		is_file_based: true,
+		tests_principles: [
+			'rams-principle-2', // Useful—realistic simulation reveals crowd dynamics
+			'rams-principle-4', // Understandable—color-coded states, clear scenarios
+			'heidegger-aletheia', // Truth revealed through emergent patterns
+			'human-in-the-loop' // Scenarios demonstrate human oversight
+		],
+		ascii_art: `
+    ╔═══════════════════════════════════════════════════════════════════════════════════╗
+    ║   LIVING ARENA GPU: WEBGPU CROWD SIMULATION                                       ║
+    ║                                                                                   ║
+    ║   ┌───────────────────────────────────────────────────────────────────────────┐   ║
+    ║   │                              N                                            │   ║
+    ║   │                           ▲▲▲▲▲▲▲                                         │   ║
+    ║   │                         ▲▲▲▲▲▲▲▲▲▲▲                                       │   ║
+    ║   │                        ╱─────────────╲                                    │   ║
+    ║   │                       ╱  ○ ○ ○ ○ ○ ○  ╲                                   │   ║
+    ║   │                      │  ○ ○ ● ● ○ ○ ○  │                                  │   ║
+    ║   │                   W ◀│ ○ ○ ● ● ● ○ ○ ○ │▶ E                               │   ║
+    ║   │                      │  ○ ○ ● ○ ○ ○ ○  │                                  │   ║
+    ║   │                       ╲  ○ ○ ○ ○ ○ ○  ╱                                   │   ║
+    ║   │                        ╲─────────────╱                                    │   ║
+    ║   │                         ▼▼▼▼▼▼▼▼▼▼▼                                       │   ║
+    ║   │                           ▼▼▼▼▼▼▼                                         │   ║
+    ║   │                              S                                            │   ║
+    ║   └───────────────────────────────────────────────────────────────────────────┘   ║
+    ║                                                                                   ║
+    ║   ○ = calm (green)    ● = crowded (yellow)    ● = panicked (red)                 ║
+    ║   8,000+ agents  │  60 FPS  │  Social Force Model  │  Emergent Behavior          ║
+    ║                                                                                   ║
+    ║   "Watch crowds form, bottlenecks emerge, panic spread."                          ║
+    ╚═══════════════════════════════════════════════════════════════════════════════════╝
+`
+	},
 ];
 
 /**
