@@ -15,6 +15,7 @@ import {
 	type EventPhaseType,
 	Directive,
 	EventPhase,
+	AgentRole,
 	initializeAgentDirectives,
 	updateDirective,
 	getDirectiveTarget,
@@ -367,6 +368,7 @@ export class CrowdSimulation {
 
 	/**
 	 * Initialize agents with directive-based positions and goals
+	 * Encodes role and team info for rendering colors
 	 */
 	private initializeAgents(): void {
 		const { agentCount } = this.config;
@@ -385,27 +387,37 @@ export class CrowdSimulation {
 			agentData[idx + 0] = pos.x;
 			agentData[idx + 1] = pos.y;
 
-			// Initial velocity (small random)
-			agentData[idx + 2] = (Math.random() - 0.5) * 0.3;
-			agentData[idx + 3] = (Math.random() - 0.5) * 0.3;
+			// Initial velocity (small random, less for seated)
+			const isStationary =
+				directive.directive === Directive.SEATED ||
+				directive.directive === Directive.ON_COURT ||
+				directive.directive === Directive.ON_BENCH;
+			agentData[idx + 2] = isStationary ? 0 : (Math.random() - 0.5) * 0.3;
+			agentData[idx + 3] = isStationary ? 0 : (Math.random() - 0.5) * 0.3;
 
 			// Target based on directive
 			const target = getDirectiveTarget(directive);
 			agentData[idx + 4] = target.x;
 			agentData[idx + 5] = target.y;
 
-			// State based on directive
+			// State based on directive (affects color)
 			let state = AgentState.CALM;
 			if (
 				directive.directive === Directive.GOING_TO_RESTROOM ||
-				directive.directive === Directive.GOING_TO_FOOD
+				directive.directive === Directive.GOING_TO_FOOD ||
+				directive.directive === Directive.EXITING
 			) {
-				state = AgentState.CROWDED; // Slightly hurried
+				state = AgentState.CROWDED; // Yellow - moving
 			}
 			agentData[idx + 6] = state;
 
-			// Store directive type in group_id slot for visualization
-			agentData[idx + 7] = directive.directive;
+			// Encode role and team in group_id slot:
+			// Bits 0-1: role (0=fan, 1=player, 2=staff)
+			// Bits 2-3: teamId (0=home, 1=away, 2=neutral)
+			// Bits 4-7: directive type
+			const encodedGroup =
+				(directive.role & 0x3) | ((directive.teamId & 0x3) << 2) | ((directive.directive & 0xf) << 4);
+			agentData[idx + 7] = encodedGroup;
 		}
 
 		this.device.queue.writeBuffer(this.agentBuffer, 0, agentData);

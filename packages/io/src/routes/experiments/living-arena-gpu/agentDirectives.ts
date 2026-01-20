@@ -13,7 +13,21 @@
  * - RETURNING: Going back to their seat
  * - EXITING: Leaving the arena at end of event
  * - GONE: Agent has left the arena (inactive)
+ * 
+ * Special roles:
+ * - PLAYER: On court or bench (can access court)
+ * - STAFF: Officials, coaches (can access court)
+ * - FAN: Regular attendee (cannot access court except post-game celebration)
  */
+
+/** Agent role enum */
+export const AgentRole = {
+	FAN: 0,
+	PLAYER: 1,
+	STAFF: 2
+} as const;
+
+export type AgentRoleType = (typeof AgentRole)[keyof typeof AgentRole];
 
 /** Agent directive enum */
 export const Directive = {
@@ -27,7 +41,11 @@ export const Directive = {
 	AT_FOOD: 7,
 	RETURNING: 8,
 	EXITING: 9,
-	GONE: 10
+	GONE: 10,
+	// Player/staff specific
+	ON_COURT: 11,
+	ON_BENCH: 12,
+	CELEBRATING: 13
 } as const;
 
 export type DirectiveType = (typeof Directive)[keyof typeof Directive];
@@ -35,10 +53,14 @@ export type DirectiveType = (typeof Directive)[keyof typeof Directive];
 /** Agent's complete state on CPU side */
 export interface AgentDirectiveState {
 	directive: DirectiveType;
+	role: AgentRoleType;
 	seatSection: number; // 0-11 (matching 12 sections)
-	seatPosition: { x: number; y: number };
+	seatRow: number; // Row within section (0 = front, higher = back)
+	seatNumber: number; // Seat number within row
+	seatPosition: { x: number; y: number }; // Exact seat coordinates
 	timer: number; // Time spent in current directive
 	activityCooldown: number; // Time until next activity check
+	teamId: number; // 0 or 1 for players (which team)
 }
 
 /** Event phase affects agent behavior probabilities */
@@ -95,21 +117,92 @@ const LOCATIONS = {
 		{ x: 500, y: 520, radius: 25 } // South
 	],
 
-	// Court/center area (agents avoid during event)
-	court: { x: 400, y: 300, width: 200, height: 160 }
+	// Court/center area (only players/staff allowed)
+	court: { x: 300, y: 220, width: 200, height: 160, centerX: 400, centerY: 300 },
+
+	// Team benches (alongside court)
+	benches: {
+		home: { x: 280, y: 300, width: 15, height: 80 }, // Left side
+		away: { x: 505, y: 300, width: 15, height: 80 } // Right side
+	},
+
+	// Scorer's table
+	scorersTable: { x: 360, y: 385, width: 80, height: 10 }
 };
 
-/**
- * Get seating position for a section (0-11)
- * Sections are arranged radially around the arena
+/** 
+ * Get player position on court
+ * 5 players per team during gameplay
  */
-function getSeatPosition(section: number): { x: number; y: number } {
-	const angle = ((section * 30 - 90) * Math.PI) / 180; // Start from top
-	const radiusFactor = 0.5 + Math.random() * 0.35; // 50-85% from center
+function getCourtPosition(teamId: number, playerIndex: number): { x: number; y: number } {
+	const court = LOCATIONS.court;
+	const centerX = court.centerX;
+	const centerY = court.centerY;
+	
+	// Typical basketball positions spread across court
+	const positions = [
+		// Team 0 (home) - left side of court
+		[
+			{ x: centerX - 70, y: centerY }, // Point guard
+			{ x: centerX - 50, y: centerY - 40 }, // Shooting guard
+			{ x: centerX - 50, y: centerY + 40 }, // Small forward
+			{ x: centerX - 30, y: centerY - 25 }, // Power forward
+			{ x: centerX - 30, y: centerY + 25 } // Center
+		],
+		// Team 1 (away) - right side of court
+		[
+			{ x: centerX + 70, y: centerY }, // Point guard
+			{ x: centerX + 50, y: centerY - 40 }, // Shooting guard
+			{ x: centerX + 50, y: centerY + 40 }, // Small forward
+			{ x: centerX + 30, y: centerY - 25 }, // Power forward
+			{ x: centerX + 30, y: centerY + 25 } // Center
+		]
+	];
+	
+	return positions[teamId][playerIndex % 5];
+}
 
+/**
+ * Get bench position for player
+ */
+function getBenchPosition(teamId: number, benchIndex: number): { x: number; y: number } {
+	const bench = teamId === 0 ? LOCATIONS.benches.home : LOCATIONS.benches.away;
+	const spacing = bench.height / 8; // Space for ~8 bench players
 	return {
-		x: ARENA.centerX + Math.cos(angle) * ARENA.rx * radiusFactor,
-		y: ARENA.centerY + Math.sin(angle) * ARENA.ry * radiusFactor
+		x: bench.x + bench.width / 2,
+		y: bench.y - bench.height / 2 + spacing * (benchIndex + 0.5)
+	};
+}
+
+/**
+ * Get specific seat position within a section
+ * Sections are arranged radially around the arena
+ * Each section has rows (distance from court) and seat numbers (along the arc)
+ */
+function getSeatPosition(
+	section: number,
+	row: number,
+	seatNumber: number
+): { x: number; y: number } {
+	// Section angle (30 degrees each, starting from top)
+	const sectionAngle = ((section * 30 - 90) * Math.PI) / 180;
+	
+	// Row determines distance from center (0 = closest to court, ~15 = furthest)
+	const minRadius = 0.35; // Inner edge of seating
+	const maxRadius = 0.92; // Outer edge (near arena boundary)
+	const rowCount = 15;
+	const radiusFactor = minRadius + (row / rowCount) * (maxRadius - minRadius);
+	
+	// Seat number determines position along the section arc
+	const seatsPerRow = 20;
+	const sectionSpread = (25 * Math.PI) / 180; // ~25 degrees per section (with gaps)
+	const seatAngleOffset = ((seatNumber - seatsPerRow / 2) / seatsPerRow) * sectionSpread;
+	
+	const finalAngle = sectionAngle + seatAngleOffset;
+	
+	return {
+		x: ARENA.centerX + Math.cos(finalAngle) * ARENA.rx * radiusFactor,
+		y: ARENA.centerY + Math.sin(finalAngle) * ARENA.ry * radiusFactor
 	};
 }
 
@@ -162,16 +255,19 @@ export function getDirectiveTarget(
 			return state.seatPosition;
 
 		case Directive.SEATED:
-			// Small random movement around seat
+			// Stay at exact seat position (small jitter for realism)
 			return {
-				x: state.seatPosition.x + (Math.random() - 0.5) * 10,
-				y: state.seatPosition.y + (Math.random() - 0.5) * 10
+				x: state.seatPosition.x + (Math.random() - 0.5) * 3,
+				y: state.seatPosition.y + (Math.random() - 0.5) * 3
 			};
 
 		case Directive.GOING_TO_RESTROOM:
 		case Directive.AT_RESTROOM: {
-			// Pick nearest restroom
-			const restroom = LOCATIONS.restrooms[Math.floor(Math.random() * LOCATIONS.restrooms.length)];
+			// Pick nearest restroom based on section
+			const restroomIndex = state.seatSection < 6 ? 
+				(state.seatSection < 3 ? 0 : 1) : // Top restrooms
+				(state.seatSection < 9 ? 2 : 3);  // Bottom restrooms
+			const restroom = LOCATIONS.restrooms[restroomIndex];
 			return {
 				x: restroom.x + (Math.random() - 0.5) * restroom.radius,
 				y: restroom.y + (Math.random() - 0.5) * restroom.radius
@@ -180,8 +276,11 @@ export function getDirectiveTarget(
 
 		case Directive.GOING_TO_FOOD:
 		case Directive.AT_FOOD: {
-			// Pick nearest food stand
-			const food = LOCATIONS.food[Math.floor(Math.random() * LOCATIONS.food.length)];
+			// Pick nearest food stand based on section
+			const foodIndex = state.seatSection < 3 ? 0 : // NW
+				state.seatSection < 6 ? 1 : // NE
+				state.seatSection < 9 ? 3 : 2; // SE or SW
+			const food = LOCATIONS.food[foodIndex];
 			return {
 				x: food.x + (Math.random() - 0.5) * food.radius,
 				y: food.y + (Math.random() - 0.5) * food.radius
@@ -189,20 +288,34 @@ export function getDirectiveTarget(
 		}
 
 		case Directive.EXITING: {
-			// Move toward exit (prefer south for main exit)
-			const exitGates = ['south', 'north', 'east', 'west'];
-			const exitWeights = [0.5, 0.25, 0.125, 0.125];
-			let r = Math.random();
-			let exitGate = 'south';
-			for (let i = 0; i < exitGates.length; i++) {
-				r -= exitWeights[i];
-				if (r <= 0) {
-					exitGate = exitGates[i];
-					break;
-				}
-			}
+			// Move toward exit (prefer nearest based on section)
+			const exitGate = state.seatSection < 3 ? 'north' :
+				state.seatSection < 6 ? 'east' :
+				state.seatSection < 9 ? 'south' : 'west';
 			const gate = LOCATIONS.gates[exitGate as keyof typeof LOCATIONS.gates];
 			return { x: gate.x, y: gate.y };
+		}
+
+		// Player/staff specific directives
+		case Directive.ON_COURT: {
+			// Get court position based on team and player index
+			const playerIndex = state.seatNumber % 5; // Use seatNumber as player index
+			return getCourtPosition(state.teamId, playerIndex);
+		}
+
+		case Directive.ON_BENCH: {
+			// Get bench position
+			const benchIndex = state.seatNumber % 8;
+			return getBenchPosition(state.teamId, benchIndex);
+		}
+
+		case Directive.CELEBRATING: {
+			// Rush onto court for celebration
+			const court = LOCATIONS.court;
+			return {
+				x: court.centerX + (Math.random() - 0.5) * court.width * 0.8,
+				y: court.centerY + (Math.random() - 0.5) * court.height * 0.8
+			};
 		}
 
 		case Directive.GONE:
@@ -349,41 +462,135 @@ export function updateDirective(
 
 /**
  * Initialize directive states for all agents
+ * Creates players (26 total: 10 on court, 16 on benches), staff (4), and fans
  */
 export function initializeAgentDirectives(
 	agentCount: number,
 	eventPhase: EventPhaseType
 ): AgentDirectiveState[] {
 	const states: AgentDirectiveState[] = [];
-
-	for (let i = 0; i < agentCount; i++) {
-		const section = Math.floor(Math.random() * 12);
-		const seatPosition = getSeatPosition(section);
+	
+	// First, create players (26 = 13 per team)
+	const playersPerTeam = 13;
+	const activePlayersPerTeam = 5; // On court during play
+	
+	for (let teamId = 0; teamId < 2; teamId++) {
+		for (let playerIdx = 0; playerIdx < playersPerTeam; playerIdx++) {
+			const isActive = playerIdx < activePlayersPerTeam;
+			
+			let directive: DirectiveType;
+			if (eventPhase === EventPhase.EVENT_END) {
+				directive = Directive.CELEBRATING; // Finals celebration!
+			} else if (eventPhase === EventPhase.HALFTIME) {
+				directive = Directive.ON_BENCH; // All on bench during halftime
+			} else if (isActive && eventPhase !== EventPhase.PRE_EVENT && eventPhase !== EventPhase.POST_EVENT) {
+				directive = Directive.ON_COURT;
+			} else {
+				directive = Directive.ON_BENCH;
+			}
+			
+			const benchPos = getBenchPosition(teamId, playerIdx);
+			const courtPos = isActive ? getCourtPosition(teamId, playerIdx) : benchPos;
+			
+			states.push({
+				directive,
+				role: AgentRole.PLAYER,
+				seatSection: teamId === 0 ? 9 : 3, // Near their bench
+				seatRow: 0,
+				seatNumber: playerIdx,
+				seatPosition: directive === Directive.ON_COURT ? courtPos : benchPos,
+				timer: Math.random() * 2,
+				activityCooldown: 100, // Players don't do fan activities
+				teamId
+			});
+		}
+	}
+	
+	// Create staff (4 - refs, scorer's table)
+	for (let staffIdx = 0; staffIdx < 4; staffIdx++) {
+		const isRef = staffIdx < 3;
+		let pos: { x: number; y: number };
+		
+		if (isRef) {
+			// Referees on court
+			const refPositions = [
+				{ x: 400, y: 250 }, // Lead ref
+				{ x: 350, y: 320 }, // Trail ref
+				{ x: 450, y: 320 } // Slot ref
+			];
+			pos = refPositions[staffIdx];
+		} else {
+			// Scorer's table
+			pos = { x: LOCATIONS.scorersTable.x + 40, y: LOCATIONS.scorersTable.y };
+		}
+		
+		const directive = eventPhase === EventPhase.EVENT_END ? 
+			Directive.CELEBRATING : 
+			(eventPhase === EventPhase.HALFTIME ? Directive.ON_BENCH : Directive.ON_COURT);
+		
+		states.push({
+			directive,
+			role: AgentRole.STAFF,
+			seatSection: 6, // South area
+			seatRow: 0,
+			seatNumber: staffIdx,
+			seatPosition: pos,
+			timer: 0,
+			activityCooldown: 100,
+			teamId: 2 // Neutral
+		});
+	}
+	
+	// Track which seats are taken
+	const takenSeats = new Set<string>();
+	
+	// Create fans (remaining agents)
+	const fanCount = agentCount - states.length;
+	
+	for (let i = 0; i < fanCount; i++) {
+		// Assign a unique seat
+		let section: number, row: number, seatNum: number;
+		let seatKey: string;
+		let attempts = 0;
+		
+		do {
+			section = Math.floor(Math.random() * 12);
+			row = Math.floor(Math.random() * 15);
+			seatNum = Math.floor(Math.random() * 20);
+			seatKey = `${section}-${row}-${seatNum}`;
+			attempts++;
+		} while (takenSeats.has(seatKey) && attempts < 50);
+		
+		takenSeats.add(seatKey);
+		
+		const seatPosition = getSeatPosition(section, row, seatNum);
 
 		let directive: DirectiveType;
-		let timer = Math.random() * 5; // Stagger initial timers
+		let timer = Math.random() * 5;
 
 		// Initial directive based on event phase
 		switch (eventPhase) {
 			case EventPhase.PRE_EVENT:
 				// Mix of arriving and already seated
-				directive = Math.random() < 0.7 ? Directive.ARRIVING : Directive.SEATED;
+				directive = Math.random() < 0.6 ? Directive.ARRIVING : Directive.SEATED;
 				break;
 			case EventPhase.EVENT_START:
 			case EventPhase.SECOND_HALF:
 				// Most already seated
-				directive = Math.random() < 0.9 ? Directive.SEATED : Directive.ARRIVING;
+				directive = Math.random() < 0.95 ? Directive.SEATED : Directive.ARRIVING;
 				break;
 			case EventPhase.HALFTIME:
-				// Mix of seated, food, restroom
+				// High activity - many going to food/restroom
 				const roll = Math.random();
-				if (roll < 0.5) directive = Directive.SEATED;
-				else if (roll < 0.7) directive = Directive.GOING_TO_FOOD;
-				else if (roll < 0.85) directive = Directive.GOING_TO_RESTROOM;
-				else directive = Directive.AT_FOOD;
+				if (roll < 0.4) directive = Directive.SEATED;
+				else if (roll < 0.6) directive = Directive.GOING_TO_FOOD;
+				else if (roll < 0.75) directive = Directive.GOING_TO_RESTROOM;
+				else if (roll < 0.85) directive = Directive.AT_FOOD;
+				else directive = Directive.AT_RESTROOM;
 				break;
 			case EventPhase.EVENT_END:
-				directive = Directive.EXITING;
+				// Finals celebration - some fans rush court!
+				directive = Math.random() < 0.15 ? Directive.CELEBRATING : Directive.EXITING;
 				break;
 			default:
 				directive = Directive.SEATED;
@@ -391,10 +598,14 @@ export function initializeAgentDirectives(
 
 		states.push({
 			directive,
+			role: AgentRole.FAN,
 			seatSection: section,
+			seatRow: row,
+			seatNumber: seatNum,
 			seatPosition,
 			timer,
-			activityCooldown: 10 + Math.random() * 30
+			activityCooldown: 10 + Math.random() * 30,
+			teamId: Math.random() < 0.5 ? 0 : 1 // Which team they support
 		});
 	}
 
@@ -433,7 +644,9 @@ export function getInitialPosition(state: AgentDirectiveState): { x: number; y: 
 
 		case Directive.GOING_TO_RESTROOM:
 		case Directive.AT_RESTROOM: {
-			const restroom = LOCATIONS.restrooms[Math.floor(Math.random() * LOCATIONS.restrooms.length)];
+			const restroomIndex = state.seatSection < 6 ? 
+				(state.seatSection < 3 ? 0 : 1) : (state.seatSection < 9 ? 2 : 3);
+			const restroom = LOCATIONS.restrooms[restroomIndex];
 			return {
 				x: restroom.x + (Math.random() - 0.5) * restroom.radius * 2,
 				y: restroom.y + (Math.random() - 0.5) * restroom.radius * 2
@@ -442,7 +655,9 @@ export function getInitialPosition(state: AgentDirectiveState): { x: number; y: 
 
 		case Directive.GOING_TO_FOOD:
 		case Directive.AT_FOOD: {
-			const food = LOCATIONS.food[Math.floor(Math.random() * LOCATIONS.food.length)];
+			const foodIndex = state.seatSection < 3 ? 0 : state.seatSection < 6 ? 1 : 
+				state.seatSection < 9 ? 3 : 2;
+			const food = LOCATIONS.food[foodIndex];
 			return {
 				x: food.x + (Math.random() - 0.5) * food.radius * 2,
 				y: food.y + (Math.random() - 0.5) * food.radius * 2
@@ -450,11 +665,27 @@ export function getInitialPosition(state: AgentDirectiveState): { x: number; y: 
 		}
 
 		case Directive.EXITING:
-			// Near an exit
-			return {
-				x: 400 + (Math.random() - 0.5) * 200,
-				y: 500 + Math.random() * 50
-			};
+			// Start from seat, heading to exit
+			return state.seatPosition;
+
+		// Player/staff positions
+		case Directive.ON_COURT: {
+			const playerIndex = state.seatNumber % 5;
+			return getCourtPosition(state.teamId, playerIndex);
+		}
+
+		case Directive.ON_BENCH: {
+			const benchIndex = state.seatNumber % 8;
+			return getBenchPosition(state.teamId, benchIndex);
+		}
+
+		case Directive.CELEBRATING: {
+			// Start from current position, will move to court
+			if (state.role === AgentRole.PLAYER) {
+				return getBenchPosition(state.teamId, state.seatNumber % 8);
+			}
+			return state.seatPosition;
+		}
 
 		case Directive.GONE:
 		default:

@@ -398,8 +398,8 @@
 						x="300" y="220"
 						width="200" height="160"
 						rx="4"
-						fill="rgba(0,0,0,0.4)"
-						stroke="rgba(255,255,255,0.2)"
+						fill="rgba(20,60,20,0.5)"
+						stroke="rgba(255,255,255,0.3)"
 						stroke-width="2"
 					/>
 
@@ -410,12 +410,45 @@
 						fill="url(#court-glow-gpu)"
 					/>
 
-					<!-- Court markings -->
-					<g stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="none">
-						<rect x="310" y="230" width="180" height="140" rx="2" />
-						<circle cx="400" cy="300" r="20" />
-						<line x1="400" y1="230" x2="400" y2="370" />
+					<!-- Court markings (basketball court) -->
+					<g stroke="rgba(255,255,255,0.25)" stroke-width="1" fill="none">
+						<!-- Outer boundary -->
+						<rect x="305" y="225" width="190" height="150" rx="2" />
+						<!-- Center circle -->
+						<circle cx="400" cy="300" r="25" />
+						<!-- Center line -->
+						<line x1="400" y1="225" x2="400" y2="375" />
+						<!-- Three-point arcs (simplified) -->
+						<path d="M 325 225 Q 325 300 325 375" />
+						<path d="M 475 225 Q 475 300 475 375" />
+						<!-- Free throw circles -->
+						<circle cx="345" cy="300" r="20" />
+						<circle cx="455" cy="300" r="20" />
+						<!-- Key/paint areas -->
+						<rect x="305" y="270" width="40" height="60" />
+						<rect x="455" y="270" width="40" height="60" />
 					</g>
+
+					<!-- Team benches -->
+					<g class="benches">
+						<!-- Home bench (left) -->
+						<rect x="270" y="260" width="20" height="80" rx="2" 
+							fill="rgba(200,50,50,0.2)" stroke="rgba(200,50,50,0.4)" stroke-width="1" />
+						<text x="280" y="305" text-anchor="middle" fill="rgba(200,50,50,0.5)" 
+							font-size="8" font-family="system-ui" writing-mode="vertical-rl">HOME</text>
+						
+						<!-- Away bench (right) -->
+						<rect x="510" y="260" width="20" height="80" rx="2" 
+							fill="rgba(50,100,200,0.2)" stroke="rgba(50,100,200,0.4)" stroke-width="1" />
+						<text x="520" y="305" text-anchor="middle" fill="rgba(50,100,200,0.5)" 
+							font-size="8" font-family="system-ui" writing-mode="vertical-rl">AWAY</text>
+					</g>
+
+					<!-- Scorer's table -->
+					<rect x="360" y="380" width="80" height="12" rx="2"
+						fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+					<text x="400" y="389" text-anchor="middle" fill="rgba(255,255,255,0.3)" 
+						font-size="6" font-family="system-ui">SCORERS</text>
 
 					<!-- Entry corridors/hallways -->
 					<g class="corridors">

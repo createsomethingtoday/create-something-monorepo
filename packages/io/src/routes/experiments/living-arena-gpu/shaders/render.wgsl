@@ -39,13 +39,28 @@ const STATE_CALM: u32 = 0u;
 const STATE_CROWDED: u32 = 1u;
 const STATE_PANICKED: u32 = 2u;
 
-// Colors for each state (using Canon-inspired palette)
+// Role constants (encoded in group_id bits 0-1)
+const ROLE_FAN: u32 = 0u;
+const ROLE_PLAYER: u32 = 1u;
+const ROLE_STAFF: u32 = 2u;
+
+// Team constants (encoded in group_id bits 2-3)
+const TEAM_HOME: u32 = 0u;
+const TEAM_AWAY: u32 = 1u;
+
+// Colors for fans by state
 const COLOR_CALM = vec4<f32>(0.2, 0.8, 0.4, 0.85);      // Green
 const COLOR_CROWDED = vec4<f32>(0.9, 0.7, 0.2, 0.85);   // Yellow/gold
 const COLOR_PANICKED = vec4<f32>(0.9, 0.2, 0.2, 0.9);   // Red
 
+// Colors for players/staff
+const COLOR_HOME_PLAYER = vec4<f32>(0.85, 0.2, 0.2, 0.95);    // Red (home team)
+const COLOR_AWAY_PLAYER = vec4<f32>(0.2, 0.4, 0.9, 0.95);     // Blue (away team)
+const COLOR_STAFF = vec4<f32>(0.1, 0.1, 0.1, 0.95);           // Black (refs/officials)
+
 // Base agent size
 const AGENT_SIZE: f32 = 4.0;
+const PLAYER_SIZE: f32 = 6.0;  // Players are larger
 
 // Hash function for size variation
 fn hash(n: u32) -> f32 {
@@ -68,6 +83,11 @@ fn vertexMain(
     let agentPos = vec2<f32>(agents[base], agents[base + 1u]);
     let velocity = vec2<f32>(agents[base + 2u], agents[base + 3u]);
     let state = u32(agents[base + 6u]);
+    let groupData = u32(agents[base + 7u]);
+    
+    // Decode role and team from groupData
+    let role = groupData & 0x3u;
+    let teamId = (groupData >> 2u) & 0x3u;
     
     // Skip off-screen agents
     if (agentPos.x < -500.0) {
@@ -77,9 +97,20 @@ fn vertexMain(
         return output;
     }
     
-    // Size variation based on instance index
-    let sizeVariation = 0.7 + hash(instanceIdx) * 0.6; // 0.7 to 1.3
-    var size = AGENT_SIZE * sizeVariation;
+    // Size based on role
+    var baseSize = AGENT_SIZE;
+    if (role == ROLE_PLAYER) {
+        baseSize = PLAYER_SIZE;
+    } else if (role == ROLE_STAFF) {
+        baseSize = PLAYER_SIZE * 0.9;
+    }
+    
+    // Size variation for fans only
+    var sizeVariation = 1.0;
+    if (role == ROLE_FAN) {
+        sizeVariation = 0.7 + hash(instanceIdx) * 0.6; // 0.7 to 1.3
+    }
+    var size = baseSize * sizeVariation;
     
     // Slightly larger when panicked
     if (state == STATE_PANICKED) {
@@ -95,25 +126,38 @@ fn vertexMain(
     
     output.position = vec4<f32>(clipX, clipY, 0.0, 1.0);
     
-    // Color based on state
-    if (state == STATE_PANICKED) {
-        output.color = COLOR_PANICKED;
-    } else if (state == STATE_CROWDED) {
-        output.color = COLOR_CROWDED;
+    // Color based on role and team
+    if (role == ROLE_PLAYER) {
+        if (teamId == TEAM_HOME) {
+            output.color = COLOR_HOME_PLAYER;
+        } else {
+            output.color = COLOR_AWAY_PLAYER;
+        }
+    } else if (role == ROLE_STAFF) {
+        output.color = COLOR_STAFF;
     } else {
-        output.color = COLOR_CALM;
+        // Fans - color based on state
+        if (state == STATE_PANICKED) {
+            output.color = COLOR_PANICKED;
+        } else if (state == STATE_CROWDED) {
+            output.color = COLOR_CROWDED;
+        } else {
+            output.color = COLOR_CALM;
+        }
     }
     
-    // Subtle color variation for visual interest
-    let colorVariation = hash(instanceIdx + 1000u) * 0.1;
-    output.color.r += colorVariation - 0.05;
-    output.color.g += colorVariation - 0.05;
-    output.color.b += colorVariation - 0.05;
+    // Subtle color variation for visual interest (fans only)
+    if (role == ROLE_FAN) {
+        let colorVariation = hash(instanceIdx + 1000u) * 0.1;
+        output.color.r += colorVariation - 0.05;
+        output.color.g += colorVariation - 0.05;
+        output.color.b += colorVariation - 0.05;
+    }
     
     // Motion blur effect for fast agents
     let speed = length(velocity);
     if (speed > 2.0) {
-        output.color.a *= 0.9; // Slightly transparent when moving fast
+        output.color.a *= 0.9;
     }
     
     output.localPos = vertexPos;

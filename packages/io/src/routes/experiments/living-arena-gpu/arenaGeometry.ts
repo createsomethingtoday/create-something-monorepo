@@ -69,15 +69,33 @@ function generateArenaPerimeter(): WallSegment[] {
 }
 
 /**
- * Generate court/center area walls
+ * Generate court/center area walls (with gaps for player access)
+ * Court bounds (300, 220) to (500, 380)
  */
 function generateCourtWalls(): WallSegment[] {
-	// Court bounds (300, 220) to (500, 380)
 	return [
-		{ x1: 300, y1: 220, x2: 500, y2: 220 }, // Top
-		{ x1: 500, y1: 220, x2: 500, y2: 380 }, // Right
-		{ x1: 500, y1: 380, x2: 300, y2: 380 }, // Bottom
-		{ x1: 300, y1: 380, x2: 300, y2: 220 } // Left
+		// Top wall (full)
+		{ x1: 300, y1: 220, x2: 500, y2: 220 },
+		// Right wall with gap for away bench
+		{ x1: 500, y1: 220, x2: 500, y2: 260 },
+		{ x1: 500, y1: 340, x2: 500, y2: 380 },
+		// Bottom wall (full - scorer's table side)
+		{ x1: 500, y1: 380, x2: 300, y2: 380 },
+		// Left wall with gap for home bench
+		{ x1: 300, y1: 380, x2: 300, y2: 340 },
+		{ x1: 300, y1: 260, x2: 300, y2: 220 }
+	];
+}
+
+/**
+ * Generate bench walls (keep fans away from player areas)
+ */
+function generateBenchWalls(): WallSegment[] {
+	return [
+		// Home bench barrier (left side)
+		{ x1: 275, y1: 260, x2: 275, y2: 340 },
+		// Away bench barrier (right side)
+		{ x1: 525, y1: 260, x2: 525, y2: 340 }
 	];
 }
 
@@ -106,10 +124,11 @@ function generateSectionDividers(): WallSegment[] {
  * Note: Arena perimeter is handled by ellipse math in shader, not wall segments
  */
 export function getWallSegments(): WallSegment[] {
-	// Only internal obstacles - court walls
+	// Internal obstacles - court and bench walls
 	// Perimeter is handled by shader's ellipse boundary
 	return [
-		...generateCourtWalls()
+		...generateCourtWalls(),
+		...generateBenchWalls()
 	];
 }
 
