@@ -52,6 +52,10 @@ pub struct GroundConfig {
     #[serde(default = "default_version")]
     pub version: String,
     
+    /// Extended config files to merge (relative to this config file)
+    #[serde(default)]
+    pub extends: Vec<String>,
+    
     /// Ignore patterns
     #[serde(default)]
     pub ignore: IgnoreConfig,
@@ -170,8 +174,22 @@ pub enum GroupBy {
 }
 
 impl GroundConfig {
-    /// Load config from a file path
+    /// Load config from a file path, processing extends directives
     pub fn load(path: &Path) -> Result<Self, ConfigError> {
+        Self::load_with_depth(path, 0)
+    }
+    
+    /// Internal load with depth tracking to prevent infinite recursion
+    fn load_with_depth(path: &Path, depth: usize) -> Result<Self, ConfigError> {
+        const MAX_DEPTH: usize = 10;
+        
+        if depth > MAX_DEPTH {
+            return Err(ConfigError::Parse(format!(
+                "Config extends depth exceeded {} (circular reference?)", 
+                MAX_DEPTH
+            )));
+        }
+        
         if !path.exists() {
             return Ok(Self::default());
         }
@@ -179,10 +197,47 @@ impl GroundConfig {
         let contents = std::fs::read_to_string(path)
             .map_err(|e| ConfigError::Io(e.to_string()))?;
         
-        let config: GroundConfig = serde_yaml::from_str(&contents)
+        let mut config: GroundConfig = serde_yaml::from_str(&contents)
             .map_err(|e| ConfigError::Parse(e.to_string()))?;
         
+        // Process extends directives
+        if !config.extends.is_empty() {
+            let base_dir = path.parent().unwrap_or(Path::new("."));
+            let extends = std::mem::take(&mut config.extends);
+            
+            for extend_path in extends {
+                let extended_path = base_dir.join(&extend_path);
+                if extended_path.exists() {
+                    let extended_config = Self::load_with_depth(&extended_path, depth + 1)?;
+                    config.merge(extended_config);
+                }
+                // Silently skip missing extended files (they might be optional)
+            }
+        }
+        
         Ok(config)
+    }
+    
+    /// Merge another config into this one (other takes precedence for scalars,
+    /// arrays are concatenated)
+    pub fn merge(&mut self, other: GroundConfig) {
+        // Merge ignore patterns (concatenate arrays)
+        self.ignore.functions.extend(other.ignore.functions);
+        self.ignore.exports.extend(other.ignore.exports);
+        self.ignore.paths.extend(other.ignore.paths);
+        self.ignore.duplicate_pairs.extend(other.ignore.duplicate_pairs);
+        
+        // Deduplicate
+        self.ignore.functions.sort();
+        self.ignore.functions.dedup();
+        self.ignore.exports.sort();
+        self.ignore.exports.dedup();
+        self.ignore.paths.sort();
+        self.ignore.paths.dedup();
+        // duplicate_pairs are harder to dedupe, leave as-is
+        
+        // For thresholds, keep current values (base config wins)
+        // For report, keep current values (base config wins)
     }
     
     /// Load config from default locations

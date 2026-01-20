@@ -407,6 +407,7 @@ pub fn duplicate_confidence(
     same_package: bool,
     similar_names: bool,
     identical_structure: bool,
+    is_test_file: bool,
 ) -> ConfidenceScore {
     let mut builder = ConfidenceBuilder::new()
         .with_base_rate(0.5); // Prior: 50% of flagged duplicates are actionable
@@ -458,6 +459,15 @@ pub fn duplicate_confidence(
             "cross_package",
             "Different packages (may be intentional)",
             -0.3,
+        );
+    }
+    
+    // Test file duplicates are often intentional (test isolation)
+    if is_test_file {
+        builder = builder.add_factor(
+            "is_test_file",
+            "Test file duplication (may be intentional for test isolation)",
+            -0.8,
         );
     }
     
@@ -646,6 +656,7 @@ mod tests {
             true,  // same package
             true,  // similar names
             true,  // identical structure
+            false, // not a test file
         );
         
         assert!(score.score > 0.9);
@@ -661,10 +672,41 @@ mod tests {
             false, // different packages
             false, // different names
             false, // different structure
+            false, // not a test file
         );
         
         assert!(score.score < 0.5);
         assert_eq!(score.recommended_action, RecommendedAction::Skip);
+    }
+    
+    #[test]
+    fn test_duplicate_low_confidence_test_file() {
+        let score_normal = duplicate_confidence(
+            0.95,  // very high similarity
+            20,    // substantial function
+            true,  // same package
+            true,  // similar names
+            true,  // identical structure
+            false, // NOT a test file
+        );
+        
+        let score_test = duplicate_confidence(
+            0.95,  // very high similarity
+            20,    // substantial function
+            true,  // same package
+            true,  // similar names
+            true,  // identical structure
+            true,  // IS a test file
+        );
+        
+        // Test file duplication should have lower confidence than normal
+        assert!(score_test.score < score_normal.score, 
+            "Test file score {} should be less than normal score {}", 
+            score_test.score, score_normal.score);
+        
+        // Test file should have the is_test_file factor
+        assert!(score_test.factors.iter().any(|f| f.name == "is_test_file"),
+            "Should include is_test_file factor");
     }
     
     #[test]
