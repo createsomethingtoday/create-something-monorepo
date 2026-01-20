@@ -165,6 +165,14 @@ enum FindCommands {
         #[arg(default_value = ".")]
         path: PathBuf,
     },
+    /// Find exports that are never imported elsewhere
+    DeadExports {
+        /// Module to scan for dead exports
+        module: PathBuf,
+        /// Search scope for import detection
+        #[arg(long, default_value = ".")]
+        scope: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -516,6 +524,50 @@ fn run_find(cmd: FindCommands, db: &Path) -> Result<(), Box<dyn std::error::Erro
         FindCommands::Orphans { path } => {
             find_orphans(&path)
         }
+        FindCommands::DeadExports { module, scope } => {
+            find_dead_exports_cmd(&module, &scope)
+        }
+    }
+}
+
+fn find_dead_exports_cmd(module: &Path, scope: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::find_dead_exports;
+    
+    println!("Finding dead exports in {}", module.display());
+    println!("  Search scope: {}", scope.display());
+    println!();
+    
+    let report = find_dead_exports(module, scope)?;
+    
+    println!("Found {} exports in module", report.total_exports);
+    println!();
+    
+    if report.dead_exports.is_empty() {
+        println!("✓ All exports are used somewhere in the codebase.");
+    } else {
+        println!("⚠ Found {} unused exports:", report.dead_exports.len());
+        println!();
+        
+        for (i, dead) in report.dead_exports.iter().enumerate() {
+            println!("  {}. '{}' (line {})", i + 1, dead.name, dead.line);
+            println!("     {}", truncate(&dead.context, 60));
+        }
+        
+        println!();
+        println!("These exports are not imported anywhere in {}.", scope.display());
+        println!("Consider removing them or marking them as internal.");
+        
+        std::process::exit(1);
+    }
+    
+    Ok(())
+}
+
+fn truncate(s: &str, max_len: usize) -> String {
+    if s.len() <= max_len {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max_len - 3])
     }
 }
 

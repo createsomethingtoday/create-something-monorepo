@@ -251,6 +251,271 @@ fn contains_symbol(line: &str, symbol: &str) -> bool {
     false
 }
 
+/// A dead export - exported but never imported elsewhere
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeadExport {
+    /// The exported symbol name
+    pub name: String,
+    /// The file it's exported from
+    pub file: PathBuf,
+    /// Line number of the export
+    pub line: u32,
+    /// The export statement
+    pub context: String,
+}
+
+/// Result of scanning for dead exports
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeadExportsReport {
+    /// Module that was scanned
+    pub module_path: PathBuf,
+    /// Exports that are never imported elsewhere
+    pub dead_exports: Vec<DeadExport>,
+    /// Total exports found
+    pub total_exports: u32,
+    /// Search scope used
+    pub search_scope: PathBuf,
+    /// Computation timestamp
+    pub computed_at: DateTime<Utc>,
+}
+
+/// Find exports in a module that are never imported elsewhere
+pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<DeadExportsReport, ComputationError> {
+    // First, extract all exports from the module
+    let exports = extract_exports(module_path)?;
+    let total_exports = exports.len() as u32;
+    
+    // Then check each export for usage in the search scope
+    let mut dead_exports = Vec::new();
+    
+    for export in exports {
+        // Count usages of this symbol (excluding the definition file)
+        let is_used = check_import_usage(&export.name, module_path, search_scope)?;
+        
+        if !is_used {
+            dead_exports.push(export);
+        }
+    }
+    
+    Ok(DeadExportsReport {
+        module_path: module_path.to_path_buf(),
+        dead_exports,
+        total_exports,
+        search_scope: search_scope.to_path_buf(),
+        computed_at: Utc::now(),
+    })
+}
+
+/// Extract all exports from a TypeScript/JavaScript module
+fn extract_exports(module_path: &Path) -> Result<Vec<DeadExport>, ComputationError> {
+    let content = fs::read_to_string(module_path)?;
+    let mut exports = Vec::new();
+    
+    for (line_num, line) in content.lines().enumerate() {
+        let trimmed = line.trim();
+        
+        // Named exports: export function foo, export const foo, etc.
+        if let Some(name) = extract_named_export(trimmed) {
+            exports.push(DeadExport {
+                name,
+                file: module_path.to_path_buf(),
+                line: (line_num + 1) as u32,
+                context: trimmed.to_string(),
+            });
+        }
+        
+        // Export statements: export { foo, bar }
+        if trimmed.starts_with("export {") || trimmed.starts_with("export{") {
+            let names = extract_export_list(trimmed);
+            for name in names {
+                exports.push(DeadExport {
+                    name,
+                    file: module_path.to_path_buf(),
+                    line: (line_num + 1) as u32,
+                    context: trimmed.to_string(),
+                });
+            }
+        }
+    }
+    
+    Ok(exports)
+}
+
+/// Extract the exported name from a named export line
+fn extract_named_export(line: &str) -> Option<String> {
+    // Patterns: export function NAME, export const NAME, export class NAME, etc.
+    let prefixes = [
+        "export function ",
+        "export async function ",
+        "export const ",
+        "export let ",
+        "export var ",
+        "export class ",
+        "export interface ",
+        "export type ",
+        "export enum ",
+        "export abstract class ",
+    ];
+    
+    for prefix in prefixes {
+        if line.starts_with(prefix) {
+            let rest = &line[prefix.len()..];
+            // Extract identifier (stops at space, <, (, =, {, :)
+            let name: String = rest.chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .collect();
+            if !name.is_empty() {
+                return Some(name);
+            }
+        }
+    }
+    
+    // export default is usually unnamed, skip
+    // export * from is re-export, skip
+    
+    None
+}
+
+/// Extract names from export { foo, bar, baz as qux }
+fn extract_export_list(line: &str) -> Vec<String> {
+    let mut names = Vec::new();
+    
+    // Find content between { and }
+    if let Some(start) = line.find('{') {
+        if let Some(end) = line.find('}') {
+            let content = &line[start + 1..end];
+            
+            for part in content.split(',') {
+                let part = part.trim();
+                
+                // Handle "foo as bar" - use the original name (foo)
+                let name = if part.contains(" as ") {
+                    part.split(" as ").next().unwrap_or(part).trim()
+                } else {
+                    part
+                };
+                
+                if !name.is_empty() && name != "type" {
+                    names.push(name.to_string());
+                }
+            }
+        }
+    }
+    
+    names
+}
+
+/// Check if a symbol is imported anywhere in the search scope (excluding source file)
+fn check_import_usage(symbol: &str, source_file: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
+    check_import_in_dir(symbol, source_file, search_scope)
+}
+
+fn check_import_in_dir(symbol: &str, source_file: &Path, dir: &Path) -> Result<bool, ComputationError> {
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return Ok(false),
+    };
+    
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let path = entry.path();
+        
+        // Skip hidden, node_modules, dist, etc.
+        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if name.starts_with('.') || 
+               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
+                continue;
+            }
+        }
+        
+        if !path.exists() {
+            continue;
+        }
+        
+        if path.is_dir() {
+            if check_import_in_dir(symbol, source_file, &path)? {
+                return Ok(true);
+            }
+        } else if path.is_file() && path != source_file {
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+                if let Ok(content) = fs::read_to_string(&path) {
+                    // Check for import of this symbol
+                    if imports_symbol(&content, symbol) {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+    }
+    
+    Ok(false)
+}
+
+/// Check if content imports a specific symbol
+fn imports_symbol(content: &str, symbol: &str) -> bool {
+    for line in content.lines() {
+        let trimmed = line.trim();
+        
+        // import { symbol } from '...'
+        // import { foo, symbol, bar } from '...'
+        // import { original as symbol } from '...'
+        if trimmed.starts_with("import") && trimmed.contains(symbol) {
+            // Check it's in the import list, not just the path
+            if let Some(brace_start) = trimmed.find('{') {
+                if let Some(brace_end) = trimmed.find('}') {
+                    let import_list = &trimmed[brace_start + 1..brace_end];
+                    // Check for exact symbol (with word boundaries)
+                    for part in import_list.split(',') {
+                        let part = part.trim();
+                        // Handle "original as alias"
+                        let imported_name = if part.contains(" as ") {
+                            // "symbol as alias" or "original as symbol"
+                            let parts: Vec<&str> = part.split(" as ").collect();
+                            if parts.len() == 2 {
+                                // Both the original and alias could match
+                                if parts[0].trim() == symbol || parts[1].trim() == symbol {
+                                    return true;
+                                }
+                            }
+                            continue;
+                        } else {
+                            part
+                        };
+                        
+                        if imported_name == symbol {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            // import symbol from '...' (default import)
+            // This is trickier - would need to match the default export
+        }
+        
+        // Dynamic imports: const { symbol } = await import('...')
+        if trimmed.contains("import(") && trimmed.contains(symbol) {
+            // Simplified check
+            if let Some(brace_start) = trimmed.find('{') {
+                if let Some(brace_end) = trimmed.find('}') {
+                    let destructure = &trimmed[brace_start + 1..brace_end];
+                    for part in destructure.split(',') {
+                        if part.trim() == symbol {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

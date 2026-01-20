@@ -214,7 +214,7 @@ pub fn list_tools() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "ground_find_orphans".to_string(),
-            description: "Find orphaned modules in a directory. Scans all TypeScript/JavaScript files and identifies those with no incoming connections (nothing imports them) and no architectural connections (not a Worker entry point).".to_string(),
+            description: "Find orphaned modules in a directory. Scans all TypeScript/JavaScript files and identifies those with no incoming connections (nothing imports them) and no architectural connections (not a Worker entry point, not a package.json bin entry).".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -228,6 +228,24 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     }
                 },
                 "required": ["directory"]
+            }),
+        },
+        ToolDefinition {
+            name: "ground_find_dead_exports".to_string(),
+            description: "Find exports in a module that are never imported elsewhere in the codebase. Helps identify unused API surface.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "module_path": {
+                        "type": "string",
+                        "description": "Path to the module to scan for dead exports"
+                    },
+                    "search_scope": {
+                        "type": "string",
+                        "description": "Directory to search for imports (default: current directory)"
+                    }
+                },
+                "required": ["module_path"]
             }),
         },
     ]
@@ -286,6 +304,7 @@ pub fn handle_tool_call(
         "ground_suggest_fix" => handle_suggest_fix(args),
         "ground_check_environment" => handle_check_environment(args),
         "ground_find_orphans" => handle_find_orphans(args),
+        "ground_find_dead_exports" => handle_find_dead_exports(args),
         _ => ToolResult::error(format!("Unknown tool: {}", tool_name)),
     }
 }
@@ -855,6 +874,60 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
     }))
 }
 
+fn handle_find_dead_exports(args: &Value) -> ToolResult {
+    use crate::computations::find_dead_exports;
+    
+    let module_path = match args.get("module_path").and_then(|v| v.as_str()) {
+        Some(p) => PathBuf::from(p),
+        None => return ToolResult::error("Missing required parameter: module_path"),
+    };
+    
+    let search_scope = args.get("search_scope")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    
+    match find_dead_exports(&module_path, &search_scope) {
+        Ok(report) => {
+            let dead_exports: Vec<_> = report.dead_exports.iter().map(|d| {
+                json!({
+                    "name": d.name,
+                    "file": d.file.display().to_string(),
+                    "line": d.line,
+                    "context": d.context
+                })
+            }).collect();
+            
+            let message = if report.dead_exports.is_empty() {
+                format!(
+                    "All {} export(s) from {} are used somewhere in {}.",
+                    report.total_exports,
+                    module_path.display(),
+                    search_scope.display()
+                )
+            } else {
+                format!(
+                    "Found {} unused export(s) out of {} total in {}.",
+                    report.dead_exports.len(),
+                    report.total_exports,
+                    module_path.display()
+                )
+            };
+            
+            ToolResult::success(json!({
+                "module_path": report.module_path.display().to_string(),
+                "search_scope": report.search_scope.display().to_string(),
+                "total_exports": report.total_exports,
+                "dead_export_count": report.dead_exports.len(),
+                "dead_exports": dead_exports,
+                "all_used": report.dead_exports.is_empty(),
+                "message": message
+            }))
+        }
+        Err(e) => ToolResult::error(format!("Failed to find dead exports: {}", e)),
+    }
+}
+
 fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
     let entries = match std::fs::read_dir(dir) {
         Ok(e) => e,
@@ -890,7 +963,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 11);
+        assert_eq!(tools.len(), 12);
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         assert!(names.contains(&"ground_compare"));
@@ -904,6 +977,7 @@ mod tests {
         assert!(names.contains(&"ground_suggest_fix"));
         assert!(names.contains(&"ground_check_environment"));
         assert!(names.contains(&"ground_find_orphans"));
+        assert!(names.contains(&"ground_find_dead_exports"));
     }
     
     #[test]

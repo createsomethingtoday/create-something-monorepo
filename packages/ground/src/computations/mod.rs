@@ -11,7 +11,7 @@ pub mod function_dry;
 pub mod environment;
 
 pub use similarity::{compute_similarity, SimilarityEvidence};
-pub use usage::{count_usages, UsageEvidence, UsageLocation, UsageType};
+pub use usage::{count_usages, find_dead_exports, UsageEvidence, UsageLocation, UsageType, DeadExport, DeadExportsReport};
 pub use connectivity::{analyze_connectivity, ConnectivityEvidence, ArchitecturalConnections, ServiceBinding};
 pub use ast_similarity::{extract_fingerprint, compare_fingerprints, AstFingerprint, AstSimilarity};
 pub use function_dry::{

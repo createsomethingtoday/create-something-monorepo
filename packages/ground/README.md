@@ -75,6 +75,9 @@ ground find duplicate-functions ./packages --min-lines 5 --exclude-tests
 # Find orphaned modules (nothing imports them)
 ground find orphans ./packages/sdk/src
 
+# Find unused exports in a module
+ground find dead-exports ./utils.ts --scope ./src
+
 # With CREATE SOMETHING monorepo suggestions
 ground find duplicates ./packages --monorepo --beads
 ```
@@ -136,6 +139,7 @@ Ground exposes tools via the Model Context Protocol:
 | `ground_check_connections` | Check module connections (understands Workers) |
 | `ground_find_duplicate_functions` | Find copied functions (`min_lines`, `exclude_tests`) |
 | `ground_find_orphans` | Find modules nothing imports |
+| `ground_find_dead_exports` | Find exports never imported elsewhere |
 | `ground_check_environment` | Detect Workers/Node.js API leakage |
 | `ground_claim_duplicate` | Claim files are duplicates |
 | `ground_claim_dead_code` | Claim code is dead |

@@ -15,6 +15,7 @@
 use std::path::{Path, PathBuf};
 use std::fs;
 use serde::{Serialize, Deserialize};
+use serde_json;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
@@ -159,9 +160,173 @@ pub fn analyze_connectivity(module_path: &Path) -> Result<ConnectivityEvidence, 
 
 /// Detect architectural connections from deployment configuration
 fn detect_architectural_connections(module_path: &Path) -> Option<ArchitecturalConnections> {
-    // Look for wrangler.toml in the module's directory or parent directories
-    let wrangler_path = find_wrangler_toml(module_path)?;
-    parse_wrangler_toml(&wrangler_path)
+    // First check for Cloudflare Worker (wrangler.toml)
+    if let Some(wrangler_path) = find_wrangler_toml(module_path) {
+        if let Some(arch) = parse_wrangler_toml(&wrangler_path) {
+            return Some(arch);
+        }
+    }
+    
+    // Then check for package.json bin/main entry points
+    if let Some(pkg_arch) = detect_package_json_entry(module_path) {
+        return Some(pkg_arch);
+    }
+    
+    None
+}
+
+/// Detect if module is an entry point defined in package.json (bin, main, exports)
+fn detect_package_json_entry(module_path: &Path) -> Option<ArchitecturalConnections> {
+    let package_json_path = find_package_json(module_path)?;
+    let content = fs::read_to_string(&package_json_path).ok()?;
+    let json: serde_json::Value = serde_json::from_str(&content).ok()?;
+    
+    // Get module filename without extension for matching
+    let module_stem = module_path.file_stem()?.to_str()?;
+    let module_name = module_path.file_name()?.to_str()?;
+    
+    // Get path relative to package.json directory
+    let pkg_dir = package_json_path.parent()?;
+    let relative_path = module_path.strip_prefix(pkg_dir).ok()?;
+    let relative_str = relative_path.to_str()?;
+    
+    let mut entry_points = Vec::new();
+    
+    // Check "main" field
+    if let Some(main) = json.get("main").and_then(|v| v.as_str()) {
+        if path_matches_module(main, relative_str, module_stem) {
+            entry_points.push(format!("main: {}", main));
+        }
+    }
+    
+    // Check "bin" field (can be string or object)
+    if let Some(bin) = json.get("bin") {
+        if let Some(bin_str) = bin.as_str() {
+            if path_matches_module(bin_str, relative_str, module_stem) {
+                entry_points.push(format!("bin: {}", bin_str));
+            }
+        } else if let Some(bin_obj) = bin.as_object() {
+            for (name, path_val) in bin_obj {
+                if let Some(path_str) = path_val.as_str() {
+                    if path_matches_module(path_str, relative_str, module_stem) {
+                        entry_points.push(format!("bin.{}: {}", name, path_str));
+                    }
+                }
+            }
+        }
+    }
+    
+    // Check "exports" field (simplified - handles common patterns)
+    if let Some(exports) = json.get("exports") {
+        check_exports_recursive(exports, relative_str, module_stem, &mut entry_points, "exports");
+    }
+    
+    if entry_points.is_empty() {
+        return None;
+    }
+    
+    Some(ArchitecturalConnections {
+        architecture_type: "package-entry".to_string(),
+        routes: entry_points,  // Reuse routes field for entry point descriptions
+        crons: Vec::new(),
+        bindings: Vec::new(),
+        service_bindings: Vec::new(),
+        custom_domains: Vec::new(),
+        total_connections: 1,  // Entry points count as 1 architectural connection
+    })
+}
+
+/// Check if a package.json path matches our module
+fn path_matches_module(pkg_path: &str, relative_path: &str, module_stem: &str) -> bool {
+    // Normalize paths for comparison
+    let pkg_normalized = pkg_path.trim_start_matches("./");
+    let rel_normalized = relative_path.replace('\\', "/");
+    
+    // Direct match (with or without dist/)
+    if pkg_normalized == rel_normalized {
+        return true;
+    }
+    
+    // Match dist/foo.js to src/foo.ts
+    if pkg_normalized.starts_with("dist/") || pkg_normalized.starts_with("./dist/") {
+        let dist_stem = pkg_normalized
+            .trim_start_matches("./")
+            .trim_start_matches("dist/")
+            .trim_end_matches(".js")
+            .trim_end_matches(".cjs")
+            .trim_end_matches(".mjs");
+        
+        // Check if our module stem matches
+        if dist_stem == module_stem || 
+           rel_normalized.ends_with(&format!("{}.ts", dist_stem)) ||
+           rel_normalized.ends_with(&format!("{}.tsx", dist_stem)) ||
+           rel_normalized == format!("src/{}.ts", dist_stem) {
+            return true;
+        }
+    }
+    
+    // Match based on filename
+    let pkg_stem = std::path::Path::new(pkg_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+    
+    pkg_stem == module_stem
+}
+
+/// Recursively check exports field for matching paths
+fn check_exports_recursive(
+    exports: &serde_json::Value,
+    relative_path: &str,
+    module_stem: &str,
+    entry_points: &mut Vec<String>,
+    path_prefix: &str,
+) {
+    match exports {
+        serde_json::Value::String(s) => {
+            if path_matches_module(s, relative_path, module_stem) {
+                entry_points.push(format!("{}: {}", path_prefix, s));
+            }
+        }
+        serde_json::Value::Object(obj) => {
+            for (key, val) in obj {
+                let new_prefix = if key.starts_with('.') {
+                    format!("exports[{}]", key)
+                } else {
+                    format!("{}.{}", path_prefix, key)
+                };
+                check_exports_recursive(val, relative_path, module_stem, entry_points, &new_prefix);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Find package.json starting from module path and going up
+fn find_package_json(start: &Path) -> Option<PathBuf> {
+    let mut current = if start.is_file() {
+        start.parent()?
+    } else {
+        start
+    };
+    
+    // Check up to 5 levels up (within same package)
+    for _ in 0..5 {
+        let pkg_path = current.join("package.json");
+        if pkg_path.exists() {
+            return Some(pkg_path);
+        }
+        
+        // Stop at monorepo markers (don't go to parent package)
+        if current.join("pnpm-workspace.yaml").exists() ||
+           current.join("lerna.json").exists() {
+            break;
+        }
+        
+        current = current.parent()?;
+    }
+    
+    None
 }
 
 /// Find wrangler.toml starting from module path and going up
