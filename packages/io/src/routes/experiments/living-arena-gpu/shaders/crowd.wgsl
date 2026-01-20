@@ -72,11 +72,12 @@ const ROLE_PLAYER: u32 = 1u;
 const ROLE_STAFF: u32 = 2u;
 
 // Court boundaries (only players/staff allowed)
-const COURT_MIN_X: f32 = 290.0;
-const COURT_MAX_X: f32 = 510.0;
-const COURT_MIN_Y: f32 = 210.0;
-const COURT_MAX_Y: f32 = 390.0;
-const COURT_MARGIN: f32 = 20.0; // Buffer zone around court
+// Visual court is 300-500 x 220-380, exclusion zone is larger
+const COURT_MIN_X: f32 = 280.0;
+const COURT_MAX_X: f32 = 520.0;
+const COURT_MIN_Y: f32 = 200.0;
+const COURT_MAX_Y: f32 = 400.0;
+const COURT_MARGIN: f32 = 40.0; // Larger buffer zone around court
 
 // Get agent position
 fn getPosition(idx: u32) -> vec2<f32> {
@@ -305,10 +306,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
                 }
             }
             
-            // Strong push force - court is off-limits
+            // Very strong push force - court is absolutely off-limits for fans
             let penetration = 1.0 - min(minDistX, minDistY) / COURT_MARGIN;
-            let courtForce = uniforms.wallStrength * 4.0 * max(penetration, 0.5);
+            let courtForce = uniforms.wallStrength * 8.0 * max(penetration, 0.8);
             totalForce += pushDir * courtForce;
+            
+            // Also directly modify velocity to push away
+            vel = pushDir * 2.0;
         }
     }
     
@@ -437,31 +441,45 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     newPos.x = clamp(newPos.x, 5.0, uniforms.arenaWidth - 5.0);
     newPos.y = clamp(newPos.y, 5.0, uniforms.arenaHeight - 5.0);
     
-    // Hard clamp: Fans cannot be on the court
+    // Hard clamp: Fans absolutely cannot be on or near the court
     if (role == ROLE_FAN) {
-        let onCourtX = newPos.x > COURT_MIN_X && newPos.x < COURT_MAX_X;
-        let onCourtY = newPos.y > COURT_MIN_Y && newPos.y < COURT_MAX_Y;
+        // Use tighter bounds for the hard clamp (the actual court area)
+        let courtCenterX = 400.0;
+        let courtCenterY = 300.0;
+        let courtHalfW = 115.0; // Slightly larger than visual court
+        let courtHalfH = 95.0;
+        
+        let onCourtX = newPos.x > (courtCenterX - courtHalfW) && newPos.x < (courtCenterX + courtHalfW);
+        let onCourtY = newPos.y > (courtCenterY - courtHalfH) && newPos.y < (courtCenterY + courtHalfH);
         
         if (onCourtX && onCourtY) {
-            // Project to nearest edge
-            let distLeft = newPos.x - COURT_MIN_X;
-            let distRight = COURT_MAX_X - newPos.x;
-            let distTop = newPos.y - COURT_MIN_Y;
-            let distBottom = COURT_MAX_Y - newPos.y;
+            // Project to nearest edge with buffer
+            let distLeft = newPos.x - (courtCenterX - courtHalfW);
+            let distRight = (courtCenterX + courtHalfW) - newPos.x;
+            let distTop = newPos.y - (courtCenterY - courtHalfH);
+            let distBottom = (courtCenterY + courtHalfH) - newPos.y;
             
-            let minDist = min(min(distLeft, distRight), min(distTop, distBottom));
+            let minDistH = min(distLeft, distRight);
+            let minDistV = min(distTop, distBottom);
             
-            if (minDist == distLeft) {
-                newPos.x = COURT_MIN_X - 5.0;
-            } else if (minDist == distRight) {
-                newPos.x = COURT_MAX_X + 5.0;
-            } else if (minDist == distTop) {
-                newPos.y = COURT_MIN_Y - 5.0;
+            if (minDistH < minDistV) {
+                // Push horizontally
+                if (distLeft < distRight) {
+                    newPos.x = courtCenterX - courtHalfW - 15.0;
+                } else {
+                    newPos.x = courtCenterX + courtHalfW + 15.0;
+                }
             } else {
-                newPos.y = COURT_MAX_Y + 5.0;
+                // Push vertically
+                if (distTop < distBottom) {
+                    newPos.y = courtCenterY - courtHalfH - 15.0;
+                } else {
+                    newPos.y = courtCenterY + courtHalfH + 15.0;
+                }
             }
             
-            vel = vel * 0.3; // Strong damping
+            // Zero out velocity toward court
+            vel = vec2<f32>(0.0, 0.0);
         }
     }
     
