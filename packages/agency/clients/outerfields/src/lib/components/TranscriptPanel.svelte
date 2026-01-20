@@ -112,7 +112,8 @@
 </script>
 
 <section class="transcript-panel" class:collapsed={!isExpanded}>
-	<button class="panel-header" onclick={() => isExpanded = !isExpanded}>
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+	<div class="panel-header" onclick={() => isExpanded = !isExpanded} role="button" tabindex="0">
 		<div class="header-left">
 			<FileText size={18} />
 			<span class="header-title">Transcript</span>
@@ -122,13 +123,16 @@
 		</div>
 		<div class="header-right">
 			{#if isExpanded && segments.length > 0}
-				<button
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<span
 					class="search-toggle"
 					onclick={(e) => { e.stopPropagation(); showSearch = !showSearch; }}
+					role="button"
+					tabindex="0"
 					aria-label="Toggle search"
 				>
 					<Search size={16} />
-				</button>
+				</span>
 			{/if}
 			{#if isExpanded}
 				<ChevronUp size={18} />
@@ -136,7 +140,7 @@
 				<ChevronDown size={18} />
 			{/if}
 		</div>
-	</button>
+	</div>
 
 	{#if isExpanded}
 		<div class="panel-content">
@@ -497,5 +501,90 @@
 
 	.segments-list::-webkit-scrollbar-thumb:hover {
 		background: var(--color-border-strong);
+	}
+
+	/* Mobile Responsive Styles */
+	@media (max-width: 768px) {
+		.panel-header {
+			padding: 0.875rem 1rem;
+		}
+
+		.header-title {
+			font-size: 0.875rem;
+		}
+
+		.segment-count {
+			font-size: 0.6875rem;
+		}
+
+		.segments-list {
+			max-height: 300px;
+			padding: 0.375rem;
+		}
+
+		.segment {
+			padding: 0.75rem;
+			gap: 0.5rem;
+			/* Larger touch target */
+			min-height: 48px;
+		}
+
+		.segment-time {
+			font-size: 0.6875rem;
+			width: 36px;
+		}
+
+		.segment-text {
+			font-size: 0.8125rem;
+			line-height: 1.4;
+		}
+
+		.search-bar {
+			padding: 0.625rem 0.875rem;
+		}
+
+		.search-input {
+			font-size: 1rem; /* Prevent zoom on iOS */
+		}
+
+		.preview-gate {
+			padding: 1.25rem;
+			margin: 0.375rem;
+		}
+
+		.preview-gate p {
+			font-size: 0.75rem;
+		}
+
+		.unlock-link {
+			font-size: 0.75rem;
+		}
+
+		.transcript-footer {
+			padding: 0.625rem;
+			font-size: 0.6875rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.segments-list {
+			max-height: 250px;
+		}
+
+		.segment {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.25rem;
+		}
+
+		.segment-time {
+			width: auto;
+			font-size: 0.625rem;
+			color: var(--color-primary);
+		}
+
+		.segment-text {
+			font-size: 0.8125rem;
+		}
 	}
 </style>

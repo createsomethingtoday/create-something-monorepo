@@ -589,8 +589,111 @@
 
 	@media (max-width: 768px) {
 		.video-player-overlay {
+			padding: 0.5rem;
+		}
+
+		.video-player {
+			border-radius: 0.75rem;
+		}
+
+		.player-controls {
+			padding: 0.75rem;
+		}
+
+		.controls-bar {
+			gap: 0.5rem;
+			flex-wrap: wrap;
+		}
+
+		/* Larger touch targets for mobile */
+		.control-button {
+			width: 44px;
+			height: 44px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0.5rem;
+		}
+
+		.progress-bar {
+			height: 32px;
+			flex: 1 1 100%;
+			order: -1;
+			margin-bottom: 0.5rem;
+		}
+
+		.progress-bar:hover {
+			height: 32px;
+		}
+
+		.time-display {
+			font-size: 0.6875rem;
+			order: 0;
+			flex: 1;
+		}
+
+		.player-info {
 			padding: 1rem;
 		}
+
+		.player-title {
+			font-size: 1.125rem;
+		}
+
+		.player-description {
+			font-size: 0.875rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.video-player-overlay {
+			padding: 0;
+		}
+
+		.video-player {
+			border-radius: 0;
+			max-width: none;
+			height: 100%;
+		}
+
+		.player-content {
+			height: 100%;
+		}
+
+		.player-video {
+			flex: 1;
+		}
+
+		.header-button {
+			width: 2.75rem;
+			height: 2.75rem;
+		}
+
+		.player-info {
+			padding: 0.875rem;
+			max-height: 35vh;
+			overflow-y: auto;
+		}
+
+		.player-category {
+			font-size: 0.625rem;
+			margin-bottom: 0.5rem;
+		}
+
+		.player-title {
+			font-size: 1rem;
+			margin-bottom: 0.375rem;
+		}
+
+		.player-description {
+			font-size: 0.8125rem;
+			display: -webkit-box;
+			-webkit-line-clamp: 3;
+			line-clamp: 3;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+		}
+
 	}
 
 	/* Native fullscreen mode */
