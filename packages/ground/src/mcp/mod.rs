@@ -98,6 +98,10 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     "exclude_tests": {
                         "type": "boolean",
                         "description": "Exclude test files (*.test.ts, *.spec.ts, __tests__/*). Default: false"
+                    },
+                    "min_lines": {
+                        "type": "number",
+                        "description": "Minimum function lines to analyze. Filters out trivial 1-3 line functions. Default: no minimum"
                     }
                 },
                 "required": ["directory"]
@@ -400,9 +404,14 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
     
+    let min_lines = args.get("min_lines")
+        .and_then(|v| v.as_u64())
+        .map(|n| n as usize);
+    
     // Build options
     let options = FunctionDryOptions {
         exclude_tests,
+        min_function_lines: min_lines,
         ..Default::default()
     };
     

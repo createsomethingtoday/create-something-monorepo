@@ -139,6 +139,12 @@ enum FindCommands {
         /// Max files to analyze
         #[arg(long, default_value = "200")]
         max_files: usize,
+        /// Exclude test files (*.test.ts, *.spec.ts, __tests__/*)
+        #[arg(long)]
+        exclude_tests: bool,
+        /// Minimum function lines to analyze (filters trivial functions)
+        #[arg(long)]
+        min_lines: Option<usize>,
     },
     /// Find unused code
     DeadCode {
@@ -432,8 +438,8 @@ fn run_find(cmd: FindCommands, db: &Path) -> Result<(), Box<dyn std::error::Erro
         FindCommands::Duplicates { path, threshold, extensions, max_files, monorepo, beads, smart } => {
             find_duplicates(&path, threshold, &extensions, max_files, monorepo, beads, smart, db)
         }
-        FindCommands::DuplicateFunctions { path, threshold, max_files } => {
-            find_duplicate_functions(&path, threshold, max_files)
+        FindCommands::DuplicateFunctions { path, threshold, max_files, exclude_tests, min_lines } => {
+            find_duplicate_functions(&path, threshold, max_files, exclude_tests, min_lines)
         }
         FindCommands::DeadCode { symbol, path } => {
             let mut vt = VerifiedTriad::new(db)?;
@@ -624,9 +630,19 @@ fn find_duplicate_functions(
     path: &Path,
     threshold: f64,
     max_files: usize,
+    exclude_tests: bool,
+    min_lines: Option<usize>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::{analyze_function_dry_with_options, FunctionDryOptions};
+    
     println!("Finding duplicate functions in {}", path.display());
     println!("  Threshold: {:.0}%", threshold * 100.0);
+    if exclude_tests {
+        println!("  Excluding test files");
+    }
+    if let Some(min) = min_lines {
+        println!("  Min function lines: {}", min);
+    }
     println!();
     
     let mut files: Vec<PathBuf> = Vec::new();
@@ -639,7 +655,13 @@ fn find_duplicate_functions(
     println!("Checking {} files...", files.len());
     println!();
     
-    let report = analyze_function_dry(&files, threshold)?;
+    let options = FunctionDryOptions {
+        exclude_tests,
+        min_function_lines: min_lines,
+        ..Default::default()
+    };
+    
+    let report = analyze_function_dry_with_options(&files, threshold, &options)?;
     
     if report.duplicates.is_empty() {
         println!("No duplicate functions found.");
