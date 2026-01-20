@@ -25,6 +25,7 @@ import {
 // Import shaders as raw text
 import crowdShaderSource from './shaders/crowd.wgsl?raw';
 import renderShaderSource from './shaders/render.wgsl?raw';
+import arenaShaderSource from './shaders/arena.wgsl?raw';
 
 /** Agent state constants matching shader values */
 export const AgentState = {
@@ -150,6 +151,12 @@ export class CrowdSimulation {
 	private circleIndexBuffer!: GPUBuffer;
 	private circleIndexCount = 0;
 
+	// Arena line rendering
+	private arenaPipeline!: GPURenderPipeline;
+	private arenaBindGroup!: GPUBindGroup;
+	private arenaVertexBuffer!: GPUBuffer;
+	private arenaVertexCount = 0;
+
 	// Current state
 	private currentScenario: number = 0;
 	private deltaTime: number = 1 / 60;
@@ -176,8 +183,10 @@ export class CrowdSimulation {
 	async initialize(): Promise<void> {
 		this.createBuffers();
 		this.createCircleGeometry();
+		this.createArenaGeometry();
 		await this.createComputePipeline();
 		await this.createRenderPipeline();
+		await this.createArenaPipeline();
 		this.initializeAgents();
 	}
 
@@ -257,6 +266,137 @@ export class CrowdSimulation {
 			label: 'Circle Index Buffer'
 		});
 		this.device.queue.writeBuffer(this.circleIndexBuffer, 0, new Uint32Array(indices));
+	}
+
+	/**
+	 * Create arena line geometry for direct rendering on canvas
+	 */
+	private createArenaGeometry(): void {
+		const vertices: number[] = [];
+
+		// Helper to add a line segment with color
+		const addLine = (
+			x1: number,
+			y1: number,
+			x2: number,
+			y2: number,
+			r: number,
+			g: number,
+			b: number,
+			a: number
+		) => {
+			// Each vertex: x, y, r, g, b, a
+			vertices.push(x1, y1, r, g, b, a);
+			vertices.push(x2, y2, r, g, b, a);
+		};
+
+		// Arena ellipse (approximated with line segments)
+		const ellipseSegments = 64;
+		const centerX = 400;
+		const centerY = 300;
+		const rx = 380;
+		const ry = 280;
+		const ellipseColor = { r: 1.0, g: 1.0, b: 1.0, a: 0.15 };
+
+		for (let i = 0; i < ellipseSegments; i++) {
+			const angle1 = (i / ellipseSegments) * Math.PI * 2;
+			const angle2 = ((i + 1) / ellipseSegments) * Math.PI * 2;
+			const x1 = centerX + Math.cos(angle1) * rx;
+			const y1 = centerY + Math.sin(angle1) * ry;
+			const x2 = centerX + Math.cos(angle2) * rx;
+			const y2 = centerY + Math.sin(angle2) * ry;
+			addLine(x1, y1, x2, y2, ellipseColor.r, ellipseColor.g, ellipseColor.b, ellipseColor.a);
+		}
+
+		// Inner bowl ring
+		const innerRx = 180;
+		const innerRy = 130;
+		for (let i = 0; i < ellipseSegments; i++) {
+			const angle1 = (i / ellipseSegments) * Math.PI * 2;
+			const angle2 = ((i + 1) / ellipseSegments) * Math.PI * 2;
+			const x1 = centerX + Math.cos(angle1) * innerRx;
+			const y1 = centerY + Math.sin(angle1) * innerRy;
+			const x2 = centerX + Math.cos(angle2) * innerRx;
+			const y2 = centerY + Math.sin(angle2) * innerRy;
+			addLine(x1, y1, x2, y2, 1.0, 1.0, 1.0, 0.1);
+		}
+
+		// Section dividers (12 sections)
+		for (let i = 0; i < 12; i++) {
+			const angle = (i * 30 * Math.PI) / 180;
+			const x1 = centerX + Math.cos(angle) * innerRx;
+			const y1 = centerY + Math.sin(angle) * innerRy;
+			const x2 = centerX + Math.cos(angle) * (rx * 0.97);
+			const y2 = centerY + Math.sin(angle) * (ry * 0.97);
+			addLine(x1, y1, x2, y2, 1.0, 1.0, 1.0, 0.08);
+		}
+
+		// Court rectangle
+		const courtColor = { r: 1.0, g: 1.0, b: 1.0, a: 0.25 };
+		addLine(300, 220, 500, 220, courtColor.r, courtColor.g, courtColor.b, courtColor.a); // Top
+		addLine(500, 220, 500, 380, courtColor.r, courtColor.g, courtColor.b, courtColor.a); // Right
+		addLine(500, 380, 300, 380, courtColor.r, courtColor.g, courtColor.b, courtColor.a); // Bottom
+		addLine(300, 380, 300, 220, courtColor.r, courtColor.g, courtColor.b, courtColor.a); // Left
+
+		// Court markings
+		const markingColor = { r: 1.0, g: 1.0, b: 1.0, a: 0.2 };
+		// Center line
+		addLine(400, 225, 400, 375, markingColor.r, markingColor.g, markingColor.b, markingColor.a);
+		// Center circle (approximated)
+		const ccSegments = 24;
+		const ccRadius = 25;
+		for (let i = 0; i < ccSegments; i++) {
+			const angle1 = (i / ccSegments) * Math.PI * 2;
+			const angle2 = ((i + 1) / ccSegments) * Math.PI * 2;
+			addLine(
+				centerX + Math.cos(angle1) * ccRadius,
+				centerY + Math.sin(angle1) * ccRadius,
+				centerX + Math.cos(angle2) * ccRadius,
+				centerY + Math.sin(angle2) * ccRadius,
+				markingColor.r,
+				markingColor.g,
+				markingColor.b,
+				markingColor.a
+			);
+		}
+
+		// Team benches
+		const homeColor = { r: 0.8, g: 0.2, b: 0.2, a: 0.3 };
+		const awayColor = { r: 0.2, g: 0.4, b: 0.8, a: 0.3 };
+		// Home bench (left)
+		addLine(275, 260, 275, 340, homeColor.r, homeColor.g, homeColor.b, homeColor.a);
+		addLine(290, 260, 290, 340, homeColor.r, homeColor.g, homeColor.b, homeColor.a);
+		// Away bench (right)
+		addLine(510, 260, 510, 340, awayColor.r, awayColor.g, awayColor.b, awayColor.a);
+		addLine(525, 260, 525, 340, awayColor.r, awayColor.g, awayColor.b, awayColor.a);
+
+		// Gates
+		const gateColor = { r: 0.4, g: 0.8, b: 0.4, a: 0.4 };
+		// North gate
+		addLine(365, 20, 435, 20, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(365, 20, 365, 35, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(435, 20, 435, 35, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		// South gate
+		addLine(365, 580, 435, 580, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(365, 565, 365, 580, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(435, 565, 435, 580, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		// West gate
+		addLine(20, 275, 20, 325, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(20, 275, 35, 275, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(20, 325, 35, 325, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		// East gate
+		addLine(780, 275, 780, 325, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(765, 275, 780, 275, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+		addLine(765, 325, 780, 325, gateColor.r, gateColor.g, gateColor.b, gateColor.a);
+
+		this.arenaVertexCount = vertices.length / 6; // 6 floats per vertex
+
+		this.arenaVertexBuffer = this.device.createBuffer({
+			size: vertices.length * 4,
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+			label: 'Arena Vertex Buffer'
+		});
+		this.device.queue.writeBuffer(this.arenaVertexBuffer, 0, new Float32Array(vertices));
 	}
 
 	/**
@@ -364,6 +504,75 @@ export class CrowdSimulation {
 				{ binding: 1, resource: { buffer: this.uniformBuffer } }
 			],
 			label: 'Render Bind Group'
+		});
+	}
+
+	/**
+	 * Create arena line rendering pipeline
+	 */
+	private async createArenaPipeline(): Promise<void> {
+		const arenaModule = this.device.createShaderModule({
+			code: arenaShaderSource,
+			label: 'Arena Shader'
+		});
+
+		const compilationInfo = await arenaModule.getCompilationInfo();
+		for (const message of compilationInfo.messages) {
+			console.log(`[Arena Shader ${message.type}] Line ${message.lineNum}: ${message.message}`);
+			if (message.type === 'error') {
+				throw new Error(`Arena shader compilation error: ${message.message}`);
+			}
+		}
+
+		this.arenaPipeline = this.device.createRenderPipeline({
+			layout: 'auto',
+			vertex: {
+				module: arenaModule,
+				entryPoint: 'vertexMain',
+				buffers: [
+					{
+						// Line vertex: position(2) + color(4) = 6 floats
+						arrayStride: 6 * 4,
+						stepMode: 'vertex',
+						attributes: [
+							{ shaderLocation: 0, offset: 0, format: 'float32x2' }, // position
+							{ shaderLocation: 1, offset: 2 * 4, format: 'float32x4' } // color
+						]
+					}
+				]
+			},
+			fragment: {
+				module: arenaModule,
+				entryPoint: 'fragmentMain',
+				targets: [
+					{
+						format: this.format,
+						blend: {
+							color: {
+								srcFactor: 'src-alpha',
+								dstFactor: 'one-minus-src-alpha',
+								operation: 'add'
+							},
+							alpha: {
+								srcFactor: 'one',
+								dstFactor: 'one-minus-src-alpha',
+								operation: 'add'
+							}
+						}
+					}
+				]
+			},
+			primitive: {
+				topology: 'line-list',
+				cullMode: 'none'
+			},
+			label: 'Arena Pipeline'
+		});
+
+		this.arenaBindGroup = this.device.createBindGroup({
+			layout: this.arenaPipeline.getBindGroupLayout(0),
+			entries: [{ binding: 0, resource: { buffer: this.uniformBuffer } }],
+			label: 'Arena Bind Group'
 		});
 	}
 
@@ -498,7 +707,7 @@ export class CrowdSimulation {
 	}
 
 	/**
-	 * Render agents to canvas
+	 * Render arena and agents to canvas
 	 */
 	private render(): void {
 		const commandEncoder = this.device.createCommandEncoder();
@@ -516,13 +725,19 @@ export class CrowdSimulation {
 			]
 		});
 
+		// First, draw arena lines (behind agents)
+		renderPass.setPipeline(this.arenaPipeline);
+		renderPass.setBindGroup(0, this.arenaBindGroup);
+		renderPass.setVertexBuffer(0, this.arenaVertexBuffer);
+		renderPass.draw(this.arenaVertexCount);
+
+		// Then, draw agents on top
 		renderPass.setPipeline(this.renderPipeline);
 		renderPass.setBindGroup(0, this.renderBindGroup);
 		renderPass.setVertexBuffer(0, this.circleVertexBuffer);
 		renderPass.setIndexBuffer(this.circleIndexBuffer, 'uint32');
-
-		// Draw all agents as instances
 		renderPass.drawIndexed(this.circleIndexCount, this.config.agentCount);
+
 		renderPass.end();
 
 		this.device.queue.submit([commandEncoder.finish()]);
@@ -850,5 +1065,6 @@ export class CrowdSimulation {
 		this.wallBuffer?.destroy();
 		this.circleVertexBuffer?.destroy();
 		this.circleIndexBuffer?.destroy();
+		this.arenaVertexBuffer?.destroy();
 	}
 }

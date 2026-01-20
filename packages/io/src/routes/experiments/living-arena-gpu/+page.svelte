@@ -313,193 +313,30 @@
 			<div class="canvas-container">
 				<canvas bind:this={canvasElement} class="simulation-canvas"></canvas>
 				
-				<!-- Arena overlay - matches simulation coordinate space -->
+				<!-- Labels overlay - arena lines are now rendered directly on WebGPU canvas -->
 				<svg class="arena-overlay" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
-					<defs>
-						<radialGradient id="court-glow-gpu" cx="50%" cy="50%" r="50%">
-							<stop offset="0%" stop-color="var(--color-accent, #3b82f6)" stop-opacity="0.2" />
-							<stop offset="100%" stop-color="var(--color-accent, #3b82f6)" stop-opacity="0" />
-						</radialGradient>
-					</defs>
-
-					<!-- Arena outer ring -->
-					<ellipse
-						cx="400" cy="300"
-						rx="380" ry="280"
-						fill="none"
-						stroke="rgba(255,255,255,0.15)"
-						stroke-width="2"
-					/>
-
-					<!-- Seating section dividers -->
-					<g stroke="rgba(255,255,255,0.08)" stroke-width="1">
-						{#each Array(12) as _, i}
-							{@const angle = (i * 30 * Math.PI) / 180}
-							<line
-								x1={400 + Math.cos(angle) * 180}
-								y1={300 + Math.sin(angle) * 130}
-								x2={400 + Math.cos(angle) * 370}
-								y2={300 + Math.sin(angle) * 270}
-							/>
-						{/each}
-					</g>
-
-					<!-- Inner bowl ring -->
-					<ellipse
-						cx="400" cy="300"
-						rx="180" ry="130"
-						fill="none"
-						stroke="rgba(255,255,255,0.1)"
-						stroke-width="1"
-					/>
-
-					<!-- Amenities: Food stands (4 corners) -->
-					<g class="food-stands">
-						<g transform="translate(150, 150)">
-							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
-						</g>
-						<g transform="translate(650, 150)">
-							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
-						</g>
-						<g transform="translate(150, 450)">
-							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
-						</g>
-						<g transform="translate(650, 450)">
-							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
-						</g>
-					</g>
-
-					<!-- Amenities: Restrooms (near N/S gates) -->
-					<g class="restrooms">
-						<g transform="translate(300, 80)">
-							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
-						</g>
-						<g transform="translate(500, 80)">
-							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
-						</g>
-						<g transform="translate(300, 520)">
-							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
-						</g>
-						<g transform="translate(500, 520)">
-							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
-							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
-						</g>
-					</g>
-
-					<!-- Court / Main Floor -->
-					<rect
-						x="300" y="220"
-						width="200" height="160"
-						rx="4"
-						fill="rgba(20,60,20,0.5)"
-						stroke="rgba(255,255,255,0.3)"
-						stroke-width="2"
-					/>
-
-					<!-- Court glow -->
-					<rect
-						x="280" y="200"
-						width="240" height="200"
-						fill="url(#court-glow-gpu)"
-					/>
-
-					<!-- Court markings (basketball court) -->
-					<g stroke="rgba(255,255,255,0.25)" stroke-width="1" fill="none">
-						<!-- Outer boundary -->
-						<rect x="305" y="225" width="190" height="150" rx="2" />
-						<!-- Center circle -->
-						<circle cx="400" cy="300" r="25" />
-						<!-- Center line -->
-						<line x1="400" y1="225" x2="400" y2="375" />
-						<!-- Three-point arcs (simplified) -->
-						<path d="M 325 225 Q 325 300 325 375" />
-						<path d="M 475 225 Q 475 300 475 375" />
-						<!-- Free throw circles -->
-						<circle cx="345" cy="300" r="20" />
-						<circle cx="455" cy="300" r="20" />
-						<!-- Key/paint areas -->
-						<rect x="305" y="270" width="40" height="60" />
-						<rect x="455" y="270" width="40" height="60" />
-					</g>
-
-					<!-- Team benches -->
-					<g class="benches">
-						<!-- Home bench (left) -->
-						<rect x="270" y="260" width="20" height="80" rx="2" 
-							fill="rgba(200,50,50,0.2)" stroke="rgba(200,50,50,0.4)" stroke-width="1" />
-						<text x="280" y="305" text-anchor="middle" fill="rgba(200,50,50,0.5)" 
-							font-size="8" font-family="system-ui" writing-mode="vertical-rl">HOME</text>
-						
-						<!-- Away bench (right) -->
-						<rect x="510" y="260" width="20" height="80" rx="2" 
-							fill="rgba(50,100,200,0.2)" stroke="rgba(50,100,200,0.4)" stroke-width="1" />
-						<text x="520" y="305" text-anchor="middle" fill="rgba(50,100,200,0.5)" 
-							font-size="8" font-family="system-ui" writing-mode="vertical-rl">AWAY</text>
-					</g>
-
-					<!-- Scorer's table -->
-					<rect x="360" y="380" width="80" height="12" rx="2"
-						fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-					<text x="400" y="389" text-anchor="middle" fill="rgba(255,255,255,0.3)" 
-						font-size="6" font-family="system-ui">SCORERS</text>
-
-					<!-- Entry corridors/hallways -->
-					<g class="corridors">
-						<!-- North corridor -->
-						<rect x="360" y="0" width="80" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
-						<line x1="360" y1="0" x2="360" y2="50" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-						<line x1="440" y1="0" x2="440" y2="50" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-						
-						<!-- South corridor -->
-						<rect x="360" y="550" width="80" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
-						<line x1="360" y1="550" x2="360" y2="600" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-						<line x1="440" y1="550" x2="440" y2="600" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-						
-						<!-- West corridor -->
-						<rect x="0" y="275" width="50" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
-						<line x1="0" y1="275" x2="50" y2="275" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-						<line x1="0" y1="325" x2="50" y2="325" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-						
-						<!-- East corridor -->
-						<rect x="750" y="275" width="50" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
-						<line x1="750" y1="275" x2="800" y2="275" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-						<line x1="750" y1="325" x2="800" y2="325" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
-					</g>
-
-					<!-- Gate markers -->
-					<g>
-						<!-- North gate -->
-						<rect x="365" y="15" width="70" height="20" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
-						<text x="400" y="6" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="12" font-family="system-ui">NORTH ENTRANCE</text>
-						
-						<!-- South gate -->
-						<rect x="365" y="565" width="70" height="20" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
-						<text x="400" y="598" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="12" font-family="system-ui">SOUTH ENTRANCE</text>
-						
-						<!-- West gate -->
-						<rect x="15" y="280" width="20" height="40" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
-						<text x="6" y="304" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10" font-family="system-ui" writing-mode="vertical-rl">WEST</text>
-						
-						<!-- East gate -->
-						<rect x="765" y="280" width="20" height="40" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
-						<text x="795" y="304" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10" font-family="system-ui" writing-mode="vertical-rl">EAST</text>
-					</g>
-
-					<!-- Section labels -->
-					<g fill="rgba(255,255,255,0.15)" font-size="10" font-family="system-ui">
+					<!-- Section labels only - lines are drawn by WebGPU for perfect alignment -->
+					<g fill="rgba(255,255,255,0.2)" font-size="10" font-family="system-ui">
 						{#each Array(12) as _, i}
 							{@const angle = ((i * 30 - 90) * Math.PI) / 180}
-							{@const x = 400 + Math.cos(angle) * 280}
-							{@const y = 300 + Math.sin(angle) * 200}
+							{@const x = 400 + Math.cos(angle) * 340}
+							{@const y = 300 + Math.sin(angle) * 250}
 							<text x={x} y={y} text-anchor="middle" dominant-baseline="middle">{100 + i}</text>
 						{/each}
+					</g>
+
+					<!-- Gate labels -->
+					<g fill="rgba(255,255,255,0.35)" font-size="11" font-family="system-ui">
+						<text x="400" y="12" text-anchor="middle">NORTH ENTRANCE</text>
+						<text x="400" y="594" text-anchor="middle">SOUTH ENTRANCE</text>
+						<text x="12" y="300" text-anchor="middle" writing-mode="vertical-rl">WEST</text>
+						<text x="788" y="300" text-anchor="middle" writing-mode="vertical-rl">EAST</text>
+					</g>
+
+					<!-- Bench labels -->
+					<g font-size="8" font-family="system-ui">
+						<text x="260" y="300" text-anchor="middle" fill="rgba(200,100,100,0.5)" writing-mode="vertical-rl">HOME</text>
+						<text x="540" y="300" text-anchor="middle" fill="rgba(100,150,200,0.5)" writing-mode="vertical-rl">AWAY</text>
 					</g>
 				</svg>
 
