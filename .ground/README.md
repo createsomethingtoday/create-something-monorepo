@@ -128,17 +128,51 @@ When Ground MCP flags a file as orphaned/dead:
 | Side-effect import | `project-specific.yml` | `webflow/globals.ts` |
 | Intentional duplicate | `project-specific.yml` | Duplicate route handlers |
 
-## Sharing Patterns
+## Sharing Patterns Across Projects
 
-These pattern files can be shared across projects:
+### Philosophy: Direct Copies > Symlinks
+
+Pattern files should be **copied, not symlinked** between projects:
 
 ```bash
-# Copy framework patterns to another SvelteKit project
-cp .ground/sveltekit-patterns.yml ../other-project/.ground/
-cp .ground/monorepo-patterns.yml ../other-project/.ground/
+# ✅ GOOD: Copy patterns to another project
+cp .ground/cloudflare-patterns.yml ~/path/to/other-project/.ground/
+cp .ground/monorepo-patterns.yml ~/path/to/other-project/.ground/
 
-# Or symlink for shared patterns
-ln -s ../../shared-configs/.ground/sveltekit-patterns.yml .ground/
+# ❌ AVOID: Symlinks cause problems
+# - Break across git submodules
+# - CI/CD resolution issues
+# - Windows compatibility problems
+# - Portability concerns
+```
+
+### Why Duplication is OK
+
+The "cost" of duplicating these patterns is minimal:
+- **Cloudflare patterns:** ~40 lines
+- **Monorepo patterns:** ~30 lines
+- **Framework patterns:** ~50-80 lines each
+
+**Total duplication:** ~140 lines across entire codebase.
+
+**Benefits of copying:**
+- ✅ Works immediately after `git clone`
+- ✅ CI/CD friendly
+- ✅ Windows compatible
+- ✅ Self-contained repos
+- ✅ No dependency management
+
+### Sharing Workflow
+
+1. **Develop pattern** in one project (e.g., CREATE SOMETHING)
+2. **Test thoroughly** with Ground MCP
+3. **Copy to other projects** that use the same tech
+4. **Document** the improvement in both repos
+
+```bash
+# Example: Share cloudflare-patterns with WORKWAY
+cp .ground/cloudflare-patterns.yml ~/WORKWAY/.ground/
+cd ~/WORKWAY && .ground/merge-config.sh && ground analyze
 ```
 
 ## Best Practices
