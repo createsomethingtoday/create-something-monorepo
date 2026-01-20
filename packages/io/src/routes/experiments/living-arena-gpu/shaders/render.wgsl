@@ -23,6 +23,14 @@ struct Uniforms {
     wallCount: f32,
     targetCount: f32,
     scenario: f32,
+    // Ellipse parameters
+    arenaCenterX: f32,
+    arenaCenterY: f32,
+    arenaRx: f32,
+    arenaRy: f32,
+    // Canvas dimensions for aspect ratio correction
+    canvasWidth: f32,
+    canvasHeight: f32,
 }
 
 struct VertexOutput {
@@ -120,9 +128,29 @@ fn vertexMain(
     // Calculate world position
     let worldPos = agentPos + vertexPos * size;
     
-    // Convert to clip space (-1 to 1)
-    let clipX = (worldPos.x / uniforms.arenaWidth) * 2.0 - 1.0;
-    let clipY = 1.0 - (worldPos.y / uniforms.arenaHeight) * 2.0; // Flip Y
+    // Convert to clip space with aspect ratio preservation (matching SVG "xMidYMid meet")
+    // Calculate scale factors for "meet" behavior
+    let arenaAspect = uniforms.arenaWidth / uniforms.arenaHeight;
+    let canvasAspect = uniforms.canvasWidth / uniforms.canvasHeight;
+    
+    var scaleX = 1.0;
+    var scaleY = 1.0;
+    
+    if (canvasAspect > arenaAspect) {
+        // Canvas is wider than arena - scale by height, add horizontal padding
+        scaleX = arenaAspect / canvasAspect;
+    } else {
+        // Canvas is taller than arena - scale by width, add vertical padding
+        scaleY = canvasAspect / arenaAspect;
+    }
+    
+    // Normalize to 0-1 range first
+    let normX = worldPos.x / uniforms.arenaWidth;
+    let normY = worldPos.y / uniforms.arenaHeight;
+    
+    // Convert to clip space (-1 to 1) with aspect correction and centering
+    let clipX = (normX * 2.0 - 1.0) * scaleX;
+    let clipY = (1.0 - normY * 2.0) * scaleY; // Flip Y
     
     output.position = vec4<f32>(clipX, clipY, 0.0, 1.0);
     

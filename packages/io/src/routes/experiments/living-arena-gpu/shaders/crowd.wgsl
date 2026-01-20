@@ -36,6 +36,11 @@ struct Uniforms {
     arenaCenterY: f32,
     arenaRx: f32,
     arenaRy: f32,
+    // Canvas dimensions (for render shader)
+    canvasWidth: f32,
+    canvasHeight: f32,
+    _padding1: f32,
+    _padding2: f32,
 }
 
 struct Wall {

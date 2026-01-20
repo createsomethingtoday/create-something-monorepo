@@ -204,9 +204,10 @@ export class CrowdSimulation {
 		// Uniform buffer for simulation parameters
 		// deltaTime(1) + agentCount(1) + arenaSize(2) + goalStrength(1) + separationStrength(1) +
 		// wallStrength(1) + maxSpeed(1) + panicRadius(1) + wallCount(1) + targetCount(1) + scenario(1) +
-		// ellipse params: centerX(1) + centerY(1) + rx(1) + ry(1) = 16 floats
+		// ellipse params: centerX(1) + centerY(1) + rx(1) + ry(1) +
+		// canvas dimensions: canvasWidth(1) + canvasHeight(1) = 18 floats (padded to 20 for alignment)
 		this.uniformBuffer = this.device.createBuffer({
-			size: 16 * 4,
+			size: 20 * 4,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 			label: 'Uniform Buffer'
 		});
@@ -452,7 +453,12 @@ export class CrowdSimulation {
 			arenaCenterX,
 			arenaCenterY,
 			arenaRx,
-			arenaRy
+			arenaRy,
+			// Canvas dimensions for aspect ratio correction
+			this.config.canvasWidth,
+			this.config.canvasHeight,
+			0, // padding
+			0 // padding
 		]);
 
 		this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);

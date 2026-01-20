@@ -313,8 +313,8 @@
 			<div class="canvas-container">
 				<canvas bind:this={canvasElement} class="simulation-canvas"></canvas>
 				
-				<!-- Arena overlay - matches simulation coordinate space, stretches to fill canvas -->
-				<svg class="arena-overlay" viewBox="0 0 800 600" preserveAspectRatio="none">
+				<!-- Arena overlay - matches simulation coordinate space -->
+				<svg class="arena-overlay" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
 					<defs>
 						<radialGradient id="court-glow-gpu" cx="50%" cy="50%" r="50%">
 							<stop offset="0%" stop-color="var(--color-accent, #3b82f6)" stop-opacity="0.2" />
