@@ -42,7 +42,7 @@ If you try to claim without checking first, Ground blocks you:
 ### npm (recommended)
 
 ```bash
-npm install -g ground-mcp
+npm install -g @createsomething/ground-mcp
 ```
 
 This downloads pre-built binaries for your platform.
@@ -182,7 +182,7 @@ If installed via npm globally, just use `"command": "ground-mcp"`. For local pro
   "mcpServers": {
     "ground": {
       "command": "npx",
-      "args": ["ground-mcp"]
+      "args": ["@createsomething/ground-mcp"]
     }
   }
 }

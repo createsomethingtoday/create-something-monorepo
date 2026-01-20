@@ -1,4 +1,4 @@
-# ground-mcp
+# @createsomething/ground-mcp
 
 Grounded claims for code. An MCP server that prevents AI hallucination in code analysis.
 
@@ -22,7 +22,7 @@ Ground is an MCP server that:
 ## Installation
 
 ```bash
-npm install -g ground-mcp
+npm install -g @createsomething/ground-mcp
 ```
 
 ## MCP Configuration
