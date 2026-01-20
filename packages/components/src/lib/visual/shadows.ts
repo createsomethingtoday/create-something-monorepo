@@ -14,6 +14,8 @@
  * "Shadows are the holes in the light." — Terri Guillemets
  */
 
+import { round } from './utils.js';
+
 // =============================================================================
 // CONSTANTS
 // =============================================================================
@@ -128,14 +130,6 @@ export interface Shadow {
 // =============================================================================
 // SHADOW GENERATION
 // =============================================================================
-
-/**
- * Round to specified decimal places
- */
-function round(value: number, decimals: number = 1): number {
-	const factor = Math.pow(10, decimals);
-	return Math.round(value * factor) / factor;
-}
 
 /**
  * Calculate shadow parameters from elevation

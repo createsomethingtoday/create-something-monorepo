@@ -11,17 +11,11 @@
  * — Charles Eames
  */
 
+import { round } from './utils.js';
+
 // PHI is also exported from typography.ts - use local constant to avoid conflict
 // PHI = (1 + √5) / 2 ≈ 1.6180339887
 const PHI = (1 + Math.sqrt(5)) / 2;
-
-/**
- * Round to specified decimal places
- */
-function round(value: number, decimals: number = 3): number {
-	const factor = Math.pow(10, decimals);
-	return Math.round(value * factor) / factor;
-}
 
 
 // =============================================================================

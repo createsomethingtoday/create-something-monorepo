@@ -21,6 +21,9 @@
  * — Robert Bringhurst
  */
 
+// Re-export shared utilities
+export { round } from './utils.js';
+
 // =============================================================================
 // CONSTANTS - Mathematical Foundations
 // =============================================================================
@@ -93,13 +96,6 @@ export function scaleStep(step: number, ratio: number = PHI, base: number = BASE
 	return base * Math.pow(ratio, step);
 }
 
-/**
- * Round to specified decimal places
- */
-export function round(value: number, decimals: number = 3): number {
-	const factor = Math.pow(10, decimals);
-	return Math.round(value * factor) / factor;
-}
 
 // =============================================================================
 // TYPE SCALE DEFINITIONS
