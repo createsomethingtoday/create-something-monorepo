@@ -10,7 +10,7 @@ import type { RequestHandler } from './$types';
 import { getOfferingBySlug } from '$lib/data/services';
 
 const RESEND_API = 'https://api.resend.com/emails';
-const FROM_ADDRESS = 'CREATE SOMETHING <products@createsomething.io>';
+const FROM_ADDRESS = 'CREATE SOMETHING <noreply@workway.co>';
 
 // Product delivery configuration
 const PRODUCT_DELIVERY: Record<
