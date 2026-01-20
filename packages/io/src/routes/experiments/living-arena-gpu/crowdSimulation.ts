@@ -255,6 +255,15 @@ export class CrowdSimulation {
 			label: 'Crowd Compute Shader'
 		});
 
+		// Check for shader compilation errors
+		const compilationInfo = await computeModule.getCompilationInfo();
+		for (const message of compilationInfo.messages) {
+			console.log(`[Shader ${message.type}] Line ${message.lineNum}: ${message.message}`);
+			if (message.type === 'error') {
+				throw new Error(`Compute shader compilation error: ${message.message}`);
+			}
+		}
+
 		this.computePipeline = this.device.createComputePipeline({
 			layout: 'auto',
 			compute: {
@@ -284,6 +293,15 @@ export class CrowdSimulation {
 			code: renderShaderSource,
 			label: 'Render Shader'
 		});
+
+		// Check for shader compilation errors
+		const compilationInfo = await renderModule.getCompilationInfo();
+		for (const message of compilationInfo.messages) {
+			console.log(`[Shader ${message.type}] Line ${message.lineNum}: ${message.message}`);
+			if (message.type === 'error') {
+				throw new Error(`Render shader compilation error: ${message.message}`);
+			}
+		}
 
 		this.renderPipeline = this.device.createRenderPipeline({
 			layout: 'auto',

@@ -210,12 +210,12 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         let dist = length(toOther);
         
         if (dist < PERCEPTION_RADIUS && dist > 0.001) {
-            neighborCount++;
+            neighborCount = neighborCount + 1u;
             
             // Count panicked neighbors
             let otherState = getState(i);
             if (otherState == STATE_PANICKED) {
-                panicNeighbors++;
+                panicNeighbors = panicNeighbors + 1u;
             }
             
             // Separation force (stronger when closer)
