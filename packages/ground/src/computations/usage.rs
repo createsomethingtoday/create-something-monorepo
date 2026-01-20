@@ -541,48 +541,123 @@ fn check_reexport_in_dir(symbol: &str, dir_name: &str, index_path: &Path, dir: &
 }
 
 /// Check if content imports a symbol from a directory (barrel import)
+/// Handles multi-line imports where symbol and 'from' are on different lines
 fn imports_symbol_from_dir(content: &str, symbol: &str, dir_name: &str) -> bool {
+    // First try: single-line imports
     for line in content.lines() {
         let trimmed = line.trim();
         
-        // Must be an import that contains the symbol
-        if !trimmed.contains(symbol) {
+        // Single-line import with both symbol and from
+        if trimmed.contains(symbol) && trimmed.contains("from") {
+            if let Some(import_path) = extract_from_path(trimmed) {
+                if path_ends_with_dir(&import_path, dir_name) {
+                    if import_contains_symbol(trimmed, symbol) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Second try: multi-line imports
+    // Collect import blocks and check them
+    let mut in_import = false;
+    let mut import_symbols = String::new();
+    let mut import_path: Option<String> = None;
+    
+    for line in content.lines() {
+        let trimmed = line.trim();
+        
+        // Start of import block
+        if trimmed.starts_with("import") && trimmed.contains('{') && !trimmed.contains('}') {
+            in_import = true;
+            import_symbols.clear();
+            // Capture any symbols on the first line after {
+            if let Some(brace_pos) = trimmed.find('{') {
+                import_symbols.push_str(&trimmed[brace_pos + 1..]);
+            }
             continue;
         }
         
-        // Check for import statements or multi-line closing
-        if trimmed.starts_with("import") || (trimmed.starts_with('}') && trimmed.contains("from")) {
-            // Extract the import path
-            if let Some(import_path) = extract_from_path(trimmed) {
-                // Check if the path ends with our directory name
-                // e.g., './core', '../core', '../../lib/core'
-                let path_end = import_path.rsplit('/').next().unwrap_or(&import_path);
-                let path_end = path_end
-                    .trim_end_matches(".js")
-                    .trim_end_matches(".ts")
-                    .trim_end_matches("/index.js")
-                    .trim_end_matches("/index.ts")
-                    .trim_end_matches("/index");
+        // Inside import block
+        if in_import {
+            if trimmed.contains('}') {
+                // End of import block - extract path
+                if trimmed.contains("from") {
+                    import_path = extract_from_path(trimmed);
+                    // Add any symbols before the }
+                    if let Some(brace_pos) = trimmed.find('}') {
+                        import_symbols.push_str(&trimmed[..brace_pos]);
+                    }
+                } else if let Some(brace_pos) = trimmed.find('}') {
+                    import_symbols.push_str(&trimmed[..brace_pos]);
+                }
                 
-                if path_end == dir_name {
-                    // Path matches, now check if the symbol is in the import list
-                    if let Some(brace_start) = trimmed.find('{') {
-                        if let Some(brace_end) = trimmed.find('}') {
-                            if brace_end > brace_start + 1 {
-                                let import_list = &trimmed[brace_start + 1..brace_end];
-                                for part in import_list.split(',') {
-                                    let part = part.trim();
-                                    let name = if part.contains(" as ") {
-                                        part.split(" as ").next().unwrap_or(part).trim()
-                                    } else {
-                                        part
-                                    };
-                                    if name == symbol {
-                                        return true;
-                                    }
-                                }
+                // Check if this import matches our criteria
+                if let Some(ref path) = import_path {
+                    if path_ends_with_dir(path, dir_name) {
+                        // Check if symbol is in the collected symbols
+                        for part in import_symbols.split(',') {
+                            let part = part.trim();
+                            let name = if part.contains(" as ") {
+                                part.split(" as ").next().unwrap_or(part).trim()
+                            } else {
+                                part
+                            };
+                            if name == symbol {
+                                return true;
                             }
                         }
+                    }
+                }
+                
+                in_import = false;
+                import_symbols.clear();
+                import_path = None;
+            } else {
+                // Middle of import block - collect symbols
+                import_symbols.push_str(trimmed);
+                import_symbols.push(',');
+            }
+        }
+        
+        // Check for "} from" on its own line (closing of multi-line import)
+        if trimmed.starts_with('}') && trimmed.contains("from") {
+            import_path = extract_from_path(trimmed);
+        }
+    }
+    
+    false
+}
+
+/// Check if an import path ends with the given directory name
+fn path_ends_with_dir(import_path: &str, dir_name: &str) -> bool {
+    let path_end = import_path.rsplit('/').next().unwrap_or(import_path);
+    let path_end = path_end
+        .trim_end_matches(".js")
+        .trim_end_matches(".ts")
+        .trim_end_matches("/index.js")
+        .trim_end_matches("/index.ts")
+        .trim_end_matches("/index");
+    
+    path_end == dir_name
+}
+
+/// Check if a single line import contains the symbol
+fn import_contains_symbol(line: &str, symbol: &str) -> bool {
+    if let Some(brace_start) = line.find('{') {
+        if let Some(brace_end) = line.find('}') {
+            if brace_end > brace_start + 1 {
+                let import_list = &line[brace_start + 1..brace_end];
+                for part in import_list.split(',') {
+                    let part = part.trim();
+                    let name = if part.contains(" as ") {
+                        part.split(" as ").next().unwrap_or(part).trim()
+                    } else {
+                        part
+                    };
+                    if name == symbol {
+                        return true;
                     }
                 }
             }
