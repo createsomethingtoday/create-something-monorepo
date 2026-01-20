@@ -1,0 +1,52 @@
+{
+  "name": "@createsomething/ground-mcp",
+  "version": "0.1.0",
+  "description": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
+  "author": "CREATE SOMETHING <hello@createsomething.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+    "directory": "packages/ground"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground",
+  "bugs": {
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "code-analysis",
+    "duplicate-detection",
+    "dead-code",
+    "grounding",
+    "llm",
+    "claude",
+    "cursor"
+  ],
+  "bin": {
+    "ground-mcp": "bin/ground-mcp",
+    "ground": "bin/ground"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "bin",
+    "install.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

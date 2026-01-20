@@ -1,0 +1,142 @@
+# Build and release Ground MCP binaries for npm distribution
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v0.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS Apple Silicon
+          - target: aarch64-apple-darwin
+            os: macos-14
+            name: darwin-arm64
+          # macOS Intel
+          - target: x86_64-apple-darwin
+            os: macos-13
+            name: darwin-x64
+          # Linux x64
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-x64
+          # Linux ARM64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-arm64
+          # Windows x64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            name: win32-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build
+        working-directory: packages/ground
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        working-directory: packages/ground
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/ground-mcp dist/
+          cp target/${{ matrix.target }}/release/ground dist/
+          tar -czvf ground-${{ matrix.name }}.tar.gz -C dist .
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        working-directory: packages/ground
+        run: |
+          mkdir dist
+          copy target\${{ matrix.target }}\release\ground-mcp.exe dist\
+          copy target\${{ matrix.target }}\release\ground.exe dist\
+          Compress-Archive -Path dist\* -DestinationPath ground-${{ matrix.name }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ground-${{ matrix.name }}
+          path: packages/ground/ground-${{ matrix.name }}.*
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: Ground ${{ github.event.inputs.tag || github.ref_name }}
+          draft: false
+          prerelease: false
+          files: artifacts/**/*
+          body: |
+            ## Installation
+
+            ### npm (recommended)
+            ```bash
+            npm install -g @createsomething/ground-mcp
+            ```
+
+            ### Manual download
+            Download the appropriate binary for your platform from the assets below.
+
+            | Platform | File |
+            |----------|------|
+            | macOS Apple Silicon | `ground-darwin-arm64.tar.gz` |
+            | macOS Intel | `ground-darwin-x64.tar.gz` |
+            | Linux x64 | `ground-linux-x64.tar.gz` |
+            | Linux ARM64 | `ground-linux-arm64.tar.gz` |
+            | Windows x64 | `ground-win32-x64.zip` |
+
+            ### MCP Configuration
+
+            Add to `.cursor/mcp.json`:
+            ```json
+            {
+              "mcpServers": {
+                "ground": {
+                  "command": "ground-mcp"
+                }
+              }
+            }
+            ```

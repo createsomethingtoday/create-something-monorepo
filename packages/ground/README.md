@@ -39,6 +39,22 @@ If you try to claim without checking first, Ground blocks you:
 
 ## Installation
 
+### npm (recommended)
+
+```bash
+npm install -g @createsomething/ground-mcp
+```
+
+This downloads pre-built binaries for your platform.
+
+### Cargo (from source)
+
+```bash
+cargo install --git https://github.com/createsomethingtoday/create-something-monorepo --path packages/ground
+```
+
+### Manual build
+
 ```bash
 cd packages/ground
 cargo build --release
@@ -147,14 +163,26 @@ Ground exposes tools via the Model Context Protocol:
 | `ground_suggest_fix` | Get fix suggestions (works with any pnpm monorepo) |
 | `ground_status` | Show status |
 
-Add to your `.mcp.json`:
+Add to your `.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "ground": {
-      "command": "./packages/ground/target/release/ground-mcp",
-      "args": ["--db", ".ground/registry.db"]
+      "command": "ground-mcp"
+    }
+  }
+}
+```
+
+If installed via npm globally, just use `"command": "ground-mcp"`. For local project installs, use:
+
+```json
+{
+  "mcpServers": {
+    "ground": {
+      "command": "npx",
+      "args": ["@createsomething/ground-mcp"]
     }
   }
 }

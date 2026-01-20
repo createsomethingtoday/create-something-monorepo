@@ -1,0 +1,4 @@
+# Binary files are downloaded during npm install
+# This directory will contain:
+# - ground-mcp (or ground-mcp.exe on Windows)
+# - ground (or ground.exe on Windows)
