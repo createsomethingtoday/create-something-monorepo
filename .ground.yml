@@ -57,6 +57,17 @@ ignore:
     
     # Airtable scripts (embedded in Airtable, not imported)
     - "**/airtable-scripts/**"
+    
+    # SvelteKit architectural entry points
+    # These are loaded by SvelteKit runtime, not via imports
+    # NOTE: Ground MCP doesn't understand SvelteKit's module resolution
+    - "**/hooks.server.ts"        # Server hooks (entry point)
+    - "**/hooks.client.ts"        # Client hooks (entry point)
+    - "**/hooks.ts"               # Universal hooks (entry point)
+    
+    # Side-effect-only imports (CSS, global styles)
+    # These files have no exports but are imported for side effects
+    - "**/webflow/globals.ts"     # CSS injection for Shadow DOM
 
   # Specific file pairs to skip in duplicate detection
   # Use when files are intentionally similar (e.g., templates, interface implementations)
@@ -66,6 +77,11 @@ ignore:
        "packages/io/src/routes/api/analytics/track/+server.ts"]
     - ["packages/agency/src/routes/api/analytics/events/+server.ts",
        "packages/io/src/routes/api/analytics/events/+server.ts"]
+    
+    # Known duplicates pending extraction to shared package
+    # See beads issue csm-1vupj: "DRY: Extract duplicate recommendations.ts to shared package"
+    - ["packages/io/src/lib/utils/recommendations.ts",
+       "packages/space/src/lib/utils/recommendations.ts"]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Analysis Thresholds
@@ -84,6 +100,25 @@ thresholds:
 # Report Settings
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Monorepo Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+monorepo:
+  # Package detection for cross-package duplicate analysis
+  # Ground auto-detects packages/ and apps/ directories
+  enabled: true
+  
+  # Additional entry point patterns (beyond hooks.server.ts)
+  # These help Ground understand architectural entry points
+  entry_points:
+    - "**/src/routes/+layout.server.ts"   # SvelteKit layout loaders
+    - "**/src/routes/+page.server.ts"     # SvelteKit page loaders
+    - "**/src/app.html"                   # SvelteKit HTML template
+    - "**/wrangler.toml"                  # Cloudflare Workers config
+    - "**/package.json"                   # Package entry points (exports, bin)
+
+
 report:
   # Output format: text, markdown, json
   format: markdown
@@ -93,3 +128,24 @@ report:
 
   # Group findings by: file, type, severity
   group_by: type
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Known Limitations & False Positives
+# ─────────────────────────────────────────────────────────────────────────────
+# 
+# Ground MCP v1.x has limitations with SvelteKit projects:
+# 
+# 1. **$lib alias imports** - Ground doesn't resolve SvelteKit's $lib alias
+#    Files imported via `$lib/...` may appear orphaned
+#    Workaround: Added hooks files to ignore paths above
+# 
+# 2. **SvelteKit entry points** - hooks.server.ts, +page.server.ts are loaded
+#    by SvelteKit runtime, not via direct imports
+#    Workaround: Added to ignore paths above
+# 
+# 3. **Side-effect imports** - CSS imports, global style injection
+#    Ground looks for export usage, not import side-effects
+#    Workaround: Added specific patterns to ignore paths
+# 
+# Last updated: 2026-01-20
+# Analysis: See GROUND_MCP_ANALYSIS_2026_01_20.md
