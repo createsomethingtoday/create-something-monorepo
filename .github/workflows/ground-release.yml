@@ -114,7 +114,7 @@ jobs:
 
             ### npm (recommended)
             ```bash
-            npm install -g @createsomething/ground-mcp
+            npm install -g ground-mcp
             ```
 
             ### Manual download

@@ -1,5 +1,5 @@
 {
-  "name": "@createsomething/ground-mcp",
+  "name": "ground-mcp",
   "version": "0.1.0",
   "description": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
   "author": "CREATE SOMETHING <hello@createsomething.io>",
