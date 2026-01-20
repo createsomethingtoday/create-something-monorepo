@@ -174,7 +174,7 @@ cp -r triad-audit .claude/skills/
 Or clone from GitHub:
 
 ```bash
-git clone https://github.com/create-something/triad-audit-skill .claude/skills/triad-audit
+git clone https://github.com/createsomethingtoday/triad-audit-skill .claude/skills/triad-audit
 ```
 
 ---

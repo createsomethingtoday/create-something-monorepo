@@ -24,7 +24,7 @@ const PRODUCT_DELIVERY: Record<
 	}
 > = {
 	'triad-audit-template': {
-		githubUrl: 'https://github.com/create-something/triad-audit-skill',
+		githubUrl: 'https://github.com/createsomethingtoday/triad-audit-skill',
 		caseStudyUrl: 'https://createsomething.io/papers/kickstand-triad-audit',
 		quickStart: [
 			'Clone or download the skill files',
