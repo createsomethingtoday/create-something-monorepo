@@ -6,6 +6,7 @@ This index catalogs all available agent skills for the CREATE SOMETHING system. 
 
 | Skill | Category | Priority | Composable |
 |-------|----------|----------|------------|
+| [ground-claims](#ground-claims) | quality-assurance | P0 | Yes |
 | [voice-validator](#voice-validator) | quality-assurance | P0 | Yes |
 | [canon-maintenance](#canon-maintenance) | quality-assurance | P0 | Yes |
 | [subtractive-review](#subtractive-review) | quality-assurance | P0 | Yes |
@@ -26,6 +27,15 @@ This index catalogs all available agent skills for the CREATE SOMETHING system. 
 ### Quality Assurance
 
 Skills for validating code, content, and design against CREATE SOMETHING standards.
+
+#### ground-claims
+- **File**: `skills/ground-claims.md`
+- **Priority**: P0
+- **Description**: Use Ground MCP to verify claims about code (duplicates, dead code, orphans) before making them
+- **Triggers**: duplicate, dead code, orphan, unused, refactor, cleanup
+- **Related**: subtractive-review, canon-maintenance
+- **Composable**: Yes — use before any code cleanup or refactoring
+- **Tools**: ground_compare, ground_count_uses, ground_check_connections, ground_find_duplicate_functions, ground_find_orphans, ground_find_dead_exports
 
 #### voice-validator
 - **File**: `skills/voice-validator.md`
@@ -212,7 +222,12 @@ experiment-scaffold → experiment-auditor → voice-validator → canon-mainten
 
 ### Code Review Stack
 ```
-subtractive-review + canon-maintenance + voice-validator (for docs in PR)
+ground-claims → subtractive-review → canon-maintenance + voice-validator (for docs in PR)
+```
+
+### Refactoring Stack
+```
+ground-claims (discover issues) → subtractive-review (apply methodology) → canon-maintenance (verify changes)
 ```
 
 ### Paper Publication Stack

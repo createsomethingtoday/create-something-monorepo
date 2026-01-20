@@ -65,11 +65,14 @@ Review in this order. Each pass enables the next.
 □ Would a shared abstraction serve multiple consumers?
 ```
 
-### Triad Audit Integration
+### Ground MCP Integration
 
-```bash
-# Automated duplication detection
-pnpm --filter=triad-audit exec npm run audit -- --collectors=dry --path=src/
+```
+# Use Ground to find duplicate functions
+ground_find_duplicate_functions(directory, threshold=0.8, exclude_tests=true, min_lines=5)
+
+# Compare specific files
+ground_compare(file_a, file_b) → similarity percentage
 ```
 
 ### Review Comment Template
@@ -119,11 +122,14 @@ Canonical principle: "Have I built this before?" → Unify
 □ Is this error handling for scenarios that can't happen?
 ```
 
-### Triad Audit Integration
+### Ground MCP Integration
 
-```bash
-# Dead code and unused dependency detection
-pnpm --filter=triad-audit exec npm run audit -- --collectors=rams --path=src/
+```
+# Count symbol usages (distinguishes definitions vs actual uses)
+ground_count_uses(symbol, search_path) → actual_uses, definitions
+
+# Find exports that are never imported
+ground_find_dead_exports(module_path, search_scope)
 ```
 
 ### Review Comment Template
@@ -172,11 +178,17 @@ Action: Remove entirely.
 □ Is this file imported by anything?
 ```
 
-### Triad Audit Integration
+### Ground MCP Integration
 
-```bash
-# Circular dependencies and orphan detection
-pnpm --filter=triad-audit exec npm run audit -- --collectors=heidegger --path=src/
+```
+# Check module connections (imports + architectural)
+ground_check_connections(module_path) → incoming, outgoing, architectural
+
+# Batch scan for orphaned modules
+ground_find_orphans(directory) → list of disconnected modules
+
+# Check for environment boundary issues
+ground_check_environment(entry_point) → Workers/Node.js API leakage
 ```
 
 ### Review Comment Template
@@ -268,11 +280,17 @@ console.log('Completed: process');
 
 ## Review Workflow
 
-### 1. Automated Pre-Check
+### 1. Automated Pre-Check with Ground
 
-```bash
-# Run full triad audit before manual review
-pnpm --filter=triad-audit exec npm run audit
+```
+# Scan for DRY violations
+ground_find_duplicate_functions(path, threshold=0.8, exclude_tests=true, min_lines=5)
+
+# Scan for orphaned modules  
+ground_find_orphans(path)
+
+# Check environment boundaries (if hybrid Node/Workers)
+ground_check_environment(entry_point)
 ```
 
 ### 2. Manual Three-Pass Review
@@ -312,12 +330,12 @@ Approve when:
 ## Integration
 
 This skill connects to:
+- `ground-claims` — MCP-based verification
 - `canon-maintenance` — Philosophical criteria
-- `triad-audit` package — Automated detection
 - `voice-validator` — For documentation in PRs
 
 ## Reference
 
-- `.ltd/patterns` — What to embrace and avoid
-- `packages/triad-audit` — Automated tooling
+- `packages/ground/README.md` — Ground MCP documentation
+- `.claude/skills/ground-claims.md` — Ground skill guide
 - `CLAUDE.md` — The Subtractive Triad definition
