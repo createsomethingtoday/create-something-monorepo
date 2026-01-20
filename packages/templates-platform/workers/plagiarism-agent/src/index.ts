@@ -653,6 +653,172 @@ export default {
     }
 
     // ==========================================================================
+    // BACKFILL SKETCHES - Populate Bloom/HLL from existing templates
+    // ==========================================================================
+    if (url.pathname === '/backfill/sketches' && request.method === 'POST') {
+      try {
+        const { getSketchManager } = await import('./indexer');
+        const sketches = await getSketchManager(env.DB);
+        
+        // Get all existing templates from database
+        const templates = await env.DB.prepare(`
+          SELECT id, url FROM template_minhash
+        `).all();
+        
+        if (!templates.results || templates.results.length === 0) {
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'No templates to backfill',
+            count: 0
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        
+        // Populate Bloom filter and HyperLogLog
+        let count = 0;
+        for (const row of templates.results as any[]) {
+          sketches.markIndexed(row.url);
+          sketches.trackTemplate(row.id);
+          count++;
+        }
+        
+        // Save to D1
+        await sketches.save();
+        
+        const stats = sketches.getStats();
+        
+        return new Response(JSON.stringify({
+          success: true,
+          message: `Backfilled ${count} templates into sketches`,
+          count,
+          stats,
+          timestamp: Date.now()
+        }), {
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // BACKFILL JS FUNCTIONS - Extract JS from existing templates (slow)
+    // ==========================================================================
+    if (url.pathname === '/backfill/js' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const limit = body.limit || 10;  // Default to 10 templates per call
+        const offset = body.offset || 0;
+        
+        // Get templates that don't have JS functions indexed yet
+        const templates = await env.DB.prepare(`
+          SELECT m.id, m.url, m.name
+          FROM template_minhash m
+          LEFT JOIN template_js_functions j ON m.id = j.template_id
+          WHERE j.id IS NULL
+          ORDER BY m.indexed_at DESC
+          LIMIT ? OFFSET ?
+        `).bind(limit, offset).all();
+        
+        if (!templates.results || templates.results.length === 0) {
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'No templates need JS extraction',
+            processed: 0,
+            remaining: 0
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        
+        // Count remaining
+        const remaining = await env.DB.prepare(`
+          SELECT COUNT(*) as count
+          FROM template_minhash m
+          LEFT JOIN template_js_functions j ON m.id = j.template_id
+          WHERE j.id IS NULL
+        `).first() as any;
+        
+        // Process templates
+        const { extractFunctions, extractAnimationFingerprints } = await import('./js-analysis');
+        const results: Array<{ id: string; success: boolean; functions?: number; error?: string }> = [];
+        
+        for (const row of templates.results as any[]) {
+          try {
+            // Fetch content
+            const content = await fetchPublishedContent(row.url);
+            if (!content?.javascript || content.javascript.length < 100) {
+              results.push({ id: row.id, success: true, functions: 0 });
+              continue;
+            }
+            
+            // Extract functions
+            const functions = extractFunctions(content.javascript);
+            const fingerprints = extractAnimationFingerprints(content.javascript);
+            
+            // Store functions
+            const encoder = new TextEncoder();
+            for (const func of functions) {
+              const data = encoder.encode(func.normalizedBody);
+              const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+              
+              await env.DB.prepare(`
+                INSERT OR REPLACE INTO template_js_functions 
+                (template_id, template_url, function_name, function_type, is_async, line_count, normalized_hash, start_pos, end_pos, indexed_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `).bind(
+                row.id, row.url, func.name, func.type, func.isAsync ? 1 : 0,
+                func.lineCount, hashHex, func.startPos, func.endPos, Date.now()
+              ).run();
+            }
+            
+            // Store fingerprints
+            for (const fp of fingerprints) {
+              let category = 'other';
+              if (fp.startsWith('tween:') || fp.startsWith('timeline:')) category = 'gsap';
+              else if (fp.startsWith('st:')) category = 'scrolltrigger';
+              else if (fp.includes('webflow')) category = 'webflow';
+              else if (fp.includes('intersection')) category = 'intersection';
+              
+              await env.DB.prepare(`
+                INSERT OR REPLACE INTO template_animation_fingerprints
+                (template_id, fingerprint, category, indexed_at)
+                VALUES (?, ?, ?, ?)
+              `).bind(row.id, fp, category, Date.now()).run();
+            }
+            
+            results.push({ id: row.id, success: true, functions: functions.length });
+          } catch (error: any) {
+            results.push({ id: row.id, success: false, error: error.message });
+          }
+        }
+        
+        const successCount = results.filter(r => r.success).length;
+        const totalFunctions = results.reduce((sum, r) => sum + (r.functions || 0), 0);
+        
+        return new Response(JSON.stringify({
+          success: true,
+          processed: results.length,
+          succeeded: successCount,
+          failed: results.length - successCount,
+          functionsExtracted: totalFunctions,
+          remaining: (remaining?.count || 0) - results.length,
+          results,
+          timestamp: Date.now()
+        }), {
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
     // MINHASH ENDPOINTS - Full file comparison without token limits
     // ==========================================================================
 
