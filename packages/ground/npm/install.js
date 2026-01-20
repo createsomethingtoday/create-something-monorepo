@@ -45,6 +45,7 @@ function getBinaryName() {
 
 function getDownloadUrl(binaryName) {
   const ext = process.platform === 'win32' ? 'zip' : 'tar.gz';
+  // Tag format: ground-v0.1.0
   return `https://github.com/${REPO}/releases/download/ground-v${VERSION}/ground-${binaryName}.${ext}`;
 }
 
