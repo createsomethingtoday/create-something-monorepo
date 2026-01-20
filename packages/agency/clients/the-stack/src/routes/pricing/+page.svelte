@@ -32,7 +32,7 @@
 <!-- Hero Section -->
 <section class="section is-pricing-hero background-color-black" use:inview>
 	<div class="container-large">
-		<div class="pricing-hero-content">
+		<div class="pricing-hero-content text-center">
 			<div class="margin-bottom-16">
 				<h1 class="heading-style-h1">
 					<span class="is-word is-1">Pricing</span>
@@ -321,6 +321,7 @@
 
 	.pricing-hero-content {
 		max-width: 45rem;
+		margin: 0 auto;
 	}
 
 	/* Section Headers */
