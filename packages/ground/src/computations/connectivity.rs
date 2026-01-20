@@ -746,8 +746,17 @@ fn imports_module(content: &str, module_name: &str) -> bool {
     for line in content.lines() {
         let line = line.trim();
         
-        // Skip non-import lines
-        if !line.contains("import") && !line.contains("require") {
+        // Check for import/export patterns:
+        // 1. import { foo } from './bar'
+        // 2. export { foo } from './bar'
+        // 3. } from './bar'  (multi-line imports)
+        // 4. require('./bar')
+        let is_import_line = line.contains("import") || 
+                             line.contains("export") || 
+                             line.contains("require") ||
+                             (line.starts_with('}') && line.contains("from"));
+        
+        if !is_import_line {
             continue;
         }
         
