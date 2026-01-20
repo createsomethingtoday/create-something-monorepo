@@ -63,8 +63,8 @@ const PRESETS: Record<string, UpdateData> = {
 	'stack-founding-members': {
 		title: 'The Stack — Founding Members Section Live',
 		summary: 'The founding member offer is now on The Stack website, positioned right after the hero banner as requested.',
-		imageUrl: 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev/email/stack-founding-members.png',
-		imageAlt: 'The Stack website showing the Founding Members section with pricing cards',
+		imageUrl: '',
+		imageAlt: '',
 		features: `<ul style="margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.8);">
 <li style="margin-bottom: 10px;"><strong style="color:#fff;">Homepage placement.</strong> Founding member offer appears immediately after the video hero—the second thing visitors see.</li>
 <li style="margin-bottom: 10px;"><strong style="color:#fff;">Dedicated landing page.</strong> All "Become a Founding Member" buttons link to <a href="https://thestack.createsomething.agency/founding-members" style="color:#966E44;">thestack.createsomething.agency/founding-members</a></li>
