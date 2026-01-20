@@ -124,4 +124,31 @@ export const IDF_BASELINE: Record<string, number> = {
 // Version
 // =============================================================================
 
-export const AGENT_VERSION = '2.0.0';
+export const AGENT_VERSION = '2.1.0';
+
+// =============================================================================
+// Sketch Configuration (Bloom Filter & HyperLogLog)
+// =============================================================================
+
+/**
+ * Expected number of templates for Bloom filter sizing.
+ * Bloom filter is optimized for this capacity with 1% false positive rate.
+ */
+export const BLOOM_EXPECTED_TEMPLATES = 50000;
+
+/**
+ * HyperLogLog precision for template counting.
+ * 14 bits = ~0.8% error, 16KB memory
+ */
+export const HLL_PRECISION = 14;
+
+/**
+ * Minimum JS function lines for component-level detection.
+ * Smaller functions (getters/setters) are skipped.
+ */
+export const MIN_JS_FUNCTION_LINES = 5;
+
+/**
+ * Similarity threshold for JS function duplicate detection.
+ */
+export const JS_FUNCTION_SIMILARITY_THRESHOLD = 0.7;

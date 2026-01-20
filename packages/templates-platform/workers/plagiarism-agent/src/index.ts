@@ -329,18 +329,29 @@ export default {
         const [templateCount, caseCount, lshBandCount] = await Promise.all([
           env.DB.prepare('SELECT COUNT(*) as count FROM template_minhash').first(),
           env.DB.prepare('SELECT COUNT(*) as count FROM plagiarism_cases').first(),
-          env.DB.prepare('SELECT COUNT(*) as count FROM minhash_lsh_bands').first()
+          env.DB.prepare('SELECT COUNT(*) as count FROM minhash_lsh_buckets').first()
         ]);
+
+        // Try to get sketch stats (non-fatal if tables don't exist yet)
+        let sketchStats = null;
+        try {
+          const { getSketchManager } = await import('./indexer');
+          const sketches = await getSketchManager(env.DB);
+          sketchStats = sketches.getStats();
+        } catch {
+          // Sketches not initialized yet, continue
+        }
         
         return new Response(JSON.stringify({
           status: 'healthy',
           timestamp: Date.now(),
           stats: {
-            templatesIndexed: templateCount?.count || 0,
-            casesProcessed: caseCount?.count || 0,
-            lshBands: lshBandCount?.count || 0
+            templatesIndexed: (templateCount as any)?.count || 0,
+            casesProcessed: (caseCount as any)?.count || 0,
+            lshBands: (lshBandCount as any)?.count || 0
           },
-          version: '2.0.0'
+          sketches: sketchStats,
+          version: '2.1.0'  // Bumped for sketches + JS analysis
         }), {
           headers: { 'Content-Type': 'application/json' }
         });
@@ -492,6 +503,149 @@ export default {
 
         return new Response(JSON.stringify(stats), {
           headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // SKETCH STATS - Bloom filter and HyperLogLog statistics
+    // ==========================================================================
+    if (url.pathname === '/sketches/stats' && request.method === 'GET') {
+      try {
+        const { getSketchManager } = await import('./indexer');
+        const sketches = await getSketchManager(env.DB);
+        const stats = sketches.getStats();
+
+        // Also get DB counts for comparison
+        const [templateCount, functionCount, animationCount] = await Promise.all([
+          env.DB.prepare('SELECT COUNT(*) as count FROM template_minhash').first(),
+          env.DB.prepare('SELECT COUNT(*) as count FROM template_js_functions').first().catch(() => ({ count: 0 })),
+          env.DB.prepare('SELECT COUNT(*) as count FROM template_animation_fingerprints').first().catch(() => ({ count: 0 }))
+        ]);
+
+        return new Response(JSON.stringify({
+          sketches: stats,
+          database: {
+            templatesExact: (templateCount as any)?.count || 0,
+            jsFunctionsIndexed: (functionCount as any)?.count || 0,
+            animationFingerprintsIndexed: (animationCount as any)?.count || 0
+          },
+          comparison: {
+            templateCountDiff: Math.abs(stats.estimatedTemplates - ((templateCount as any)?.count || 0)),
+            hllErrorRate: '~0.8%'
+          },
+          timestamp: Date.now()
+        }), {
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // JS ANALYSIS - Function-level plagiarism detection
+    // ==========================================================================
+    if (url.pathname === '/js-analysis' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { url1, url2, threshold = 0.7, minLines = 5 } = body;
+
+        if (!url1 || !url2) {
+          return new Response(JSON.stringify({
+            error: 'Missing required fields: url1, url2'
+          }), { status: 400 });
+        }
+
+        // Fetch JS content from both templates
+        const [content1, content2] = await Promise.all([
+          fetchPublishedContent(url1),
+          fetchPublishedContent(url2)
+        ]);
+
+        if (!content1?.javascript && !content2?.javascript) {
+          return new Response(JSON.stringify({
+            url1,
+            url2,
+            result: {
+              template1FunctionCount: 0,
+              template2FunctionCount: 0,
+              duplicates: [],
+              overallSimilarity: 0,
+              webflowPatterns: { template1: [], template2: [], shared: [] }
+            },
+            message: 'No JavaScript content found in either template'
+          }), {
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            }
+          });
+        }
+
+        // Run JS analysis
+        const { analyzeJsPlagiarism, quickJsSimilarity } = await import('./js-analysis');
+        const result = analyzeJsPlagiarism(
+          content1?.javascript || '',
+          content2?.javascript || '',
+          threshold,
+          minLines
+        );
+
+        // Also get quick similarity score
+        const quickScore = quickJsSimilarity(
+          content1?.javascript || '',
+          content2?.javascript || ''
+        );
+
+        return new Response(JSON.stringify({
+          url1,
+          url2,
+          result,
+          quickSimilarity: quickScore,
+          verdict: result.overallSimilarity >= 0.5 ? 'high_js_similarity' :
+                   result.overallSimilarity >= 0.25 ? 'moderate_js_similarity' :
+                   'low_js_similarity',
+          timestamp: Date.now()
+        }), {
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // JS DUPLICATES - Find templates with duplicate functions
+    // ==========================================================================
+    if (url.pathname.startsWith('/js-duplicates/') && request.method === 'GET') {
+      try {
+        const templateId = url.pathname.split('/').pop();
+        if (!templateId) {
+          return new Response(JSON.stringify({ error: 'Missing template ID' }), { status: 400 });
+        }
+
+        const { findDuplicateFunctions } = await import('./indexer');
+        const duplicates = await findDuplicateFunctions(env.DB, templateId);
+
+        return new Response(JSON.stringify({
+          templateId,
+          duplicates,
+          count: duplicates.length,
+          timestamp: Date.now()
+        }), {
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
         });
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -6989,6 +7143,17 @@ function serveDashboard(env: Env): Response {
           console.log('Clusters not available yet');
         }
         
+        // Fetch sketch stats (v2.1.0)
+        let sketchStats = null;
+        try {
+          const sketchRes = await fetch('/sketches/stats');
+          if (sketchRes.ok) {
+            sketchStats = await sketchRes.json();
+          }
+        } catch (e) {
+          console.log('Sketch stats not available');
+        }
+        
         const statsEl = document.getElementById('stats');
         statsEl.innerHTML = \`
           <div class="stat-card">
@@ -7003,6 +7168,20 @@ function serveDashboard(env: Env): Response {
             <div class="stat-value">\${clusterCount}</div>
             <div class="stat-label">Similarity Clusters</div>
           </div>
+          \${sketchStats ? \`
+          <div class="stat-card">
+            <div class="stat-value">\${(sketchStats.database?.jsFunctionsIndexed || 0).toLocaleString()}</div>
+            <div class="stat-label">JS Functions Tracked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">\${(sketchStats.sketches?.estimatedUniqueColors || 0).toLocaleString()}</div>
+            <div class="stat-label">Unique Colors (HLL)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">\${((sketchStats.sketches?.bloomFillRatio || 0) * 100).toFixed(1)}%</div>
+            <div class="stat-label">Bloom Fill Rate</div>
+          </div>
+          \` : ''}
         \`;
       } catch (e) {
         console.error('Failed to load stats:', e);

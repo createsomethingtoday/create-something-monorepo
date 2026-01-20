@@ -245,3 +245,72 @@ export interface TemplateData {
 	combined_signature: string;
 	created_at: number;
 }
+
+// =============================================================================
+// Sketch Types (Bloom Filter & HyperLogLog)
+// =============================================================================
+
+export interface SketchMetadata {
+	/** Bloom: number of bits, HLL: 2^precision */
+	capacity: number;
+	/** Number of items added */
+	count: number;
+	/** Last update timestamp */
+	updatedAt: number;
+}
+
+export interface SketchStats {
+	/** Estimated unique templates */
+	estimatedTemplates: number;
+	/** Estimated unique colors across all templates */
+	estimatedUniqueColors: number;
+	/** Estimated unique CSS patterns */
+	estimatedUniquePatterns: number;
+	/** Bloom filter fill ratio (0-1) */
+	bloomFillRatio: number;
+	/** Estimated false positive rate */
+	bloomEstimatedFpRate: number;
+}
+
+// =============================================================================
+// JS Analysis Types
+// =============================================================================
+
+export interface JsFunctionMatch {
+	/** Function name */
+	name: string;
+	/** Function type */
+	type: 'function' | 'arrow' | 'method' | 'class';
+	/** Similarity score (0-1) */
+	similarity: number;
+	/** Line count */
+	lineCount: number;
+	/** Evidence strings */
+	evidence: string[];
+}
+
+export interface JsAnalysisResult {
+	/** Functions found in template 1 */
+	template1FunctionCount: number;
+	/** Functions found in template 2 */
+	template2FunctionCount: number;
+	/** Duplicate functions found */
+	duplicates: JsFunctionMatch[];
+	/** Overall JS similarity (0-1) */
+	overallSimilarity: number;
+	/** Webflow interaction patterns */
+	webflowPatterns: {
+		template1: string[];
+		template2: string[];
+		shared: string[];
+	};
+}
+
+export interface AnimationFingerprint {
+	/** Template ID */
+	templateId: string;
+	/** Fingerprint string (e.g., 'tween:to:opacity,x,y') */
+	fingerprint: string;
+	/** Category */
+	category: 'gsap' | 'scrolltrigger' | 'webflow' | 'intersection' | 'other';
+}

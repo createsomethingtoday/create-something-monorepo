@@ -16,6 +16,13 @@
 │         │                   │                   │                │
 │         └───────────────────┴───────────────────┘                │
 │                             │                                    │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │ Bloom Filter │    │ HyperLogLog  │    │ JS Function  │      │
+│  │   (dedup)    │    │  (counting)  │    │  Detection   │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│         │                   │                   │                │
+│         └───────────────────┴───────────────────┘                │
+│                             │                                    │
 │                    ┌────────▼────────┐                          │
 │                    │    Dashboard    │                          │
 │                    │   /dashboard    │                          │
@@ -24,7 +31,7 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Two Detection Systems
+## Detection Systems
 
 ### 1. MinHash Fingerprinting ($0 cost)
 - **9,500+ templates indexed** with LSH banding
@@ -37,6 +44,43 @@
 2. **Tier 2** (Claude Haiku - $0.02): Detailed analysis
 3. **Tier 3** (Claude Sonnet - $0.15): Edge case judgment
 
+### 3. Probabilistic Sketches (v2.1.0)
+
+Inspired by [packages/ground](../../ground/README.md):
+
+| Sketch | Purpose | Cost |
+|--------|---------|------|
+| **Bloom Filter** | Fast "have we seen this URL?" checks | $0 |
+| **HyperLogLog** | Count unique templates/colors/patterns | $0 |
+
+- **Bloom filter**: 50,000 capacity, 1% false positive rate
+- **HyperLogLog**: 14-bit precision (~0.8% error)
+- **D1 persistence**: Sketches survive Worker restarts
+
+```bash
+# Get sketch statistics
+curl https://plagiarism-agent.createsomething.workers.dev/sketches/stats
+```
+
+### 4. JS Function-Level Detection (v2.1.0)
+
+Catches **component-level plagiarism** that file-level analysis misses:
+
+- Extracts functions/classes from JavaScript
+- Normalizes and hashes for comparison
+- Detects copied GSAP animations and ScrollTrigger configs
+- Tracks Webflow interaction patterns
+
+```bash
+# Compare JS between two templates
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/js-analysis \
+  -H "Content-Type: application/json" \
+  -d '{"url1": "https://template1.webflow.io", "url2": "https://template2.webflow.io"}'
+
+# Find templates with duplicate functions
+curl https://plagiarism-agent.createsomething.workers.dev/js-duplicates/template-id
+```
+
 ## Endpoints
 
 ### Dashboard & UI
@@ -45,7 +89,7 @@
 | `GET /dashboard` | Visual dashboard for stats, clusters, scanning |
 | `GET /compare/:id1/:id2` | Tufte-style comparison page |
 | `GET /case/:id/rescan` | Compliance rescan UI |
-| `GET /health` | Health check for monitoring |
+| `GET /health` | Health check + sketch stats |
 
 ### MinHash API
 | Endpoint | Description |
@@ -56,6 +100,13 @@
 | `GET /minhash/similar/:id` | Find similar templates |
 | `GET /minhash/stats` | Index statistics |
 | `POST /compare` | Detailed comparison (JSON) |
+
+### Sketches & JS Analysis (v2.1.0)
+| Endpoint | Description |
+|----------|-------------|
+| `GET /sketches/stats` | Bloom filter + HyperLogLog statistics |
+| `POST /js-analysis` | Compare JS between two templates |
+| `GET /js-duplicates/:id` | Find templates with duplicate functions |
 
 ### Case Management
 | Endpoint | Description |
@@ -211,6 +262,15 @@ if (decision === 'major' && confidence < 0.9) {
 This ensures high-stakes decisions receive human oversight when the AI is uncertain.
 
 ## Recent Improvements
+
+**Ground MCP Integration (Jan 2026)**:
+- ✅ **Bloom Filter** - Fast "have we indexed this URL?" pre-check (skip DB queries)
+- ✅ **HyperLogLog** - Count unique templates/colors/patterns without COUNT(*)
+- ✅ **JS Function Detection** - Catch component-level plagiarism via AST analysis
+- ✅ **Animation Fingerprints** - Detect copied GSAP/ScrollTrigger configurations
+- ✅ **D1 Persistence** - Sketches survive Worker restarts
+
+See migration `0017_plagiarism_sketches.sql` for new tables.
 
 **Heideggerian Code Review (Jan 2026)**:
 - ✅ **Unified case closure** - 4 functions → 1 with decision mapping

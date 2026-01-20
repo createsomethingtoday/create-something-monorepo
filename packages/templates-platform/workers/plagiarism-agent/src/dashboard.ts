@@ -19,7 +19,9 @@ export interface Cluster {
 
 export interface DashboardStats {
 	totalTemplates: number;
+	totalTemplatesIndexed: number; // Alias for frontend compatibility
 	totalCases: number;
+	totalCasesProcessed: number; // Alias for frontend compatibility
 	pendingCases: number;
 	completedCases: number;
 	clusters: Cluster[];
@@ -113,9 +115,14 @@ export async function getDashboardStats(env: Env): Promise<DashboardStats> {
 	// Get similarity clusters
 	const clusters = await findSimilarityClusters(env);
 
+	const totalTemplates = templateCount?.count || 0;
+	const totalCases = caseCounts?.total || 0;
+	
 	return {
-		totalTemplates: templateCount?.count || 0,
-		totalCases: caseCounts?.total || 0,
+		totalTemplates,
+		totalTemplatesIndexed: totalTemplates, // Alias for frontend
+		totalCases,
+		totalCasesProcessed: totalCases, // Alias for frontend
 		pendingCases: caseCounts?.pending || 0,
 		completedCases: caseCounts?.completed || 0,
 		clusters
