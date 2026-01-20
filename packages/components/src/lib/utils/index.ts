@@ -98,6 +98,7 @@ export {
 // Context-aware logging
 export {
     createLogger,
+    createPersistentLogger,
     createRequestLogger,
     createTimer,
     logDuration,
