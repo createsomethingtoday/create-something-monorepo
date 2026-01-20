@@ -748,6 +748,12 @@ export default {
             // Fetch content
             const content = await fetchPublishedContent(row.url);
             if (!content?.javascript || content.javascript.length < 100) {
+              // Insert a marker row so this template isn't re-processed
+              await env.DB.prepare(`
+                INSERT OR IGNORE INTO template_js_functions 
+                (template_id, template_url, function_name, function_type, is_async, line_count, normalized_hash, indexed_at)
+                VALUES (?, ?, '__no_js__', 'function', 0, 0, 'no-javascript', ?)
+              `).bind(row.id, row.url, Date.now()).run();
               results.push({ id: row.id, success: true, functions: 0 });
               continue;
             }
@@ -755,6 +761,15 @@ export default {
             // Extract functions
             const functions = extractFunctions(content.javascript);
             const fingerprints = extractAnimationFingerprints(content.javascript);
+            
+            // If no functions found, insert marker row
+            if (functions.length === 0) {
+              await env.DB.prepare(`
+                INSERT OR IGNORE INTO template_js_functions 
+                (template_id, template_url, function_name, function_type, is_async, line_count, normalized_hash, indexed_at)
+                VALUES (?, ?, '__no_functions__', 'function', 0, 0, 'no-functions-found', ?)
+              `).bind(row.id, row.url, Date.now()).run();
+            }
             
             // Store functions
             const encoder = new TextEncoder();
