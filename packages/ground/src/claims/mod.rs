@@ -131,17 +131,20 @@ pub struct ExistenceClaim {
 impl ExistenceClaim {
     /// Create an existence claim from computed evidence
     ///
-    /// Claims "doesn't earn existence" - rejected if usage >= min_usage
+    /// Claims "doesn't earn existence" - rejected if actual_usage >= min_usage
+    /// Note: Uses actual_usage_count (not definitions) for validation
     pub fn from_evidence(
         evidence: UsageEvidence,
         reason: String,
         min_usage: u32,
     ) -> Result<Self, ClaimRejected> {
-        if evidence.usage_count >= min_usage {
+        // Use actual_usage_count, not total usage_count
+        // This allows claiming exported-but-unused symbols as dead code
+        if evidence.actual_usage_count >= min_usage {
             return Err(ClaimRejected::EvidenceContradicts {
                 reason: format!(
-                    "'{}' has {} usages, which meets the minimum of {}",
-                    evidence.symbol, evidence.usage_count, min_usage
+                    "'{}' has {} actual usages (plus {} definitions), which meets the minimum of {}",
+                    evidence.symbol, evidence.actual_usage_count, evidence.definition_count, min_usage
                 ),
             });
         }
@@ -149,7 +152,7 @@ impl ExistenceClaim {
         Ok(Self {
             id: Uuid::new_v4(),
             symbol: evidence.symbol,
-            usage_count: evidence.usage_count,
+            usage_count: evidence.actual_usage_count, // Store actual uses, not total
             reason,
             evidence_id: evidence.id,
             claimed_at: Utc::now(),
@@ -324,6 +327,8 @@ mod tests {
             symbol: "unused".to_string(),
             search_path: PathBuf::from("."),
             usage_count: 0,
+            definition_count: 0,
+            actual_usage_count: 0,
             locations: vec![],
             computed_at: Utc::now(),
         };
@@ -339,11 +344,33 @@ mod tests {
             symbol: "used".to_string(),
             search_path: PathBuf::from("."),
             usage_count: 5,
+            definition_count: 1,
+            actual_usage_count: 4, // 4 actual uses = rejected
             locations: vec![],
             computed_at: Utc::now(),
         };
         
         let claim = ExistenceClaim::from_evidence(evidence, "not used".to_string(), 1);
         assert!(claim.is_err());
+    }
+    
+    #[test]
+    fn test_existence_claim_allowed_for_exported_but_unused() {
+        // Symbol that's exported (1 definition) but never actually used
+        let evidence = UsageEvidence {
+            id: Uuid::new_v4(),
+            symbol: "ExportedButUnused".to_string(),
+            search_path: PathBuf::from("."),
+            usage_count: 1,           // 1 total occurrence
+            definition_count: 1,       // It's the export definition
+            actual_usage_count: 0,     // 0 actual uses!
+            locations: vec![],
+            computed_at: Utc::now(),
+        };
+        
+        // Should be claimable as dead code since actual_usage_count is 0
+        let claim = ExistenceClaim::from_evidence(evidence, "exported but never imported".to_string(), 1);
+        assert!(claim.is_ok());
+        assert_eq!(claim.unwrap().usage_count, 0); // Records actual uses, not total
     }
 }

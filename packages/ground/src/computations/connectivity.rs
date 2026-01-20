@@ -533,11 +533,8 @@ fn find_importers_recursive(
             if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
                 if let Ok(content) = fs::read_to_string(&path) {
                     // Check if this file imports our target module
-                    if content.contains(module_name) && 
-                       (content.contains(&format!("from './{}'", module_name)) ||
-                        content.contains(&format!("from \"./{}\"", module_name)) ||
-                        content.contains(&format!("from '../{}'", module_name)) ||
-                        content.contains(&format!("require('./{}')", module_name))) {
+                    // Handle ESM-style .js imports pointing to .ts files
+                    if imports_module(&content, module_name) {
                         importers.push(path);
                     }
                 }
@@ -546,6 +543,65 @@ fn find_importers_recursive(
     }
     
     Ok(())
+}
+
+/// Check if content imports a module, handling ESM-style .js → .ts resolution
+fn imports_module(content: &str, module_name: &str) -> bool {
+    // Generate all possible import patterns
+    let patterns = vec![
+        // Without extension
+        format!("from './{}'", module_name),
+        format!("from \"./{}\"", module_name),
+        format!("from '../{}'", module_name),
+        format!("from \"../{}\"", module_name),
+        format!("from '../../{}'", module_name),
+        format!("from \"../../{}\"", module_name),
+        // With .js extension (ESM style - TypeScript compiles to .js)
+        format!("from './{}.js'", module_name),
+        format!("from \"./{}.js\"", module_name),
+        format!("from '../{}.js'", module_name),
+        format!("from \"../{}.js\"", module_name),
+        format!("from '../../{}.js'", module_name),
+        format!("from \"../../{}.js\"", module_name),
+        // With .ts extension (direct TypeScript imports)
+        format!("from './{}.ts'", module_name),
+        format!("from \"./{}.ts\"", module_name),
+        format!("from '../{}.ts'", module_name),
+        format!("from \"../{}.ts\"", module_name),
+        // CommonJS require
+        format!("require('./{}')", module_name),
+        format!("require(\"./{})\"", module_name),
+        format!("require('./{}.js')", module_name),
+        // Index imports (folder/index.ts)
+        format!("from './{}/index'", module_name),
+        format!("from './{}/index.js'", module_name),
+        format!("from '../{}/index'", module_name),
+        format!("from '../{}/index.js'", module_name),
+    ];
+    
+    // Check if content contains the module name AND matches any pattern
+    if !content.contains(module_name) {
+        return false;
+    }
+    
+    for pattern in patterns {
+        if content.contains(&pattern) {
+            return true;
+        }
+    }
+    
+    // Also check for deeper relative paths with any number of ../
+    // This catches imports like from '../../../../lib/format.js'
+    if content.contains(&format!("/{}'", module_name)) ||
+       content.contains(&format!("/{}\"", module_name)) ||
+       content.contains(&format!("/{}.js'", module_name)) ||
+       content.contains(&format!("/{}.js\"", module_name)) ||
+       content.contains(&format!("/{}.ts'", module_name)) ||
+       content.contains(&format!("/{}.ts\"", module_name)) {
+        return true;
+    }
+    
+    false
 }
 
 #[cfg(test)]

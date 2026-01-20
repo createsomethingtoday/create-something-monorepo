@@ -113,8 +113,85 @@ pub struct FunctionDryReport {
     /// Total functions analyzed
     pub total_functions: usize,
     
+    /// Files that were skipped (e.g., test files)
+    pub skipped_files: Vec<PathBuf>,
+    
     /// When this computation was performed
     pub computed_at: DateTime<Utc>,
+}
+
+/// Options for function-level DRY analysis
+#[derive(Debug, Clone, Default)]
+pub struct FunctionDryOptions {
+    /// Exclude test files from analysis (*.test.ts, *.spec.ts, __tests__/*)
+    pub exclude_tests: bool,
+    
+    /// Exclude files matching these patterns
+    pub exclude_patterns: Vec<String>,
+    
+    /// Only analyze functions with at least this many lines
+    pub min_function_lines: Option<usize>,
+}
+
+impl FunctionDryOptions {
+    /// Create options with test file exclusion enabled
+    pub fn exclude_tests() -> Self {
+        Self {
+            exclude_tests: true,
+            ..Default::default()
+        }
+    }
+    
+    /// Check if a path should be excluded
+    pub fn should_exclude(&self, path: &Path) -> bool {
+        if self.exclude_tests {
+            if is_test_file(path) {
+                return true;
+            }
+        }
+        
+        // Check custom patterns
+        let path_str = path.to_string_lossy();
+        for pattern in &self.exclude_patterns {
+            if path_str.contains(pattern) {
+                return true;
+            }
+        }
+        
+        false
+    }
+}
+
+/// Check if a file is a test file
+pub fn is_test_file(path: &Path) -> bool {
+    let path_str = path.to_string_lossy();
+    
+    // Common test file patterns
+    let test_patterns = [
+        ".test.", ".spec.", "_test.", "_spec.",
+        "/__tests__/", "/__mocks__/", "/test/", "/tests/",
+        "/fixtures/", "/mocks/",
+    ];
+    
+    for pattern in test_patterns {
+        if path_str.contains(pattern) {
+            return true;
+        }
+    }
+    
+    // Check filename patterns
+    if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+        if name.starts_with("test_") || name.starts_with("spec_") ||
+           name.ends_with(".test.ts") || name.ends_with(".test.tsx") ||
+           name.ends_with(".test.js") || name.ends_with(".test.jsx") ||
+           name.ends_with(".spec.ts") || name.ends_with(".spec.tsx") ||
+           name.ends_with(".spec.js") || name.ends_with(".spec.jsx") ||
+           name.ends_with("_test.rs") || name.ends_with("_test.py") {
+            return true;
+        }
+    }
+    
+    false
 }
 
 /// Extract all functions from a TypeScript/JavaScript file
@@ -383,14 +460,41 @@ pub fn analyze_function_dry(
     files: &[PathBuf],
     threshold: f64,
 ) -> Result<FunctionDryReport, ComputationError> {
+    analyze_function_dry_with_options(files, threshold, &FunctionDryOptions::default())
+}
+
+/// Analyze functions with custom options (e.g., test exclusion)
+pub fn analyze_function_dry_with_options(
+    files: &[PathBuf],
+    threshold: f64,
+    options: &FunctionDryOptions,
+) -> Result<FunctionDryReport, ComputationError> {
     let mut all_functions: Vec<(PathBuf, ExtractedFunction)> = Vec::new();
+    let mut skipped_files = Vec::new();
+    let mut analyzed_files = Vec::new();
     
     // Extract functions from all files
     for path in files {
+        // Check if we should skip this file
+        if options.should_exclude(path) {
+            skipped_files.push(path.clone());
+            continue;
+        }
+        
         if let Ok(functions) = extract_functions(path) {
-            for func in functions {
+            // Filter by minimum lines if specified
+            let filtered: Vec<_> = if let Some(min_lines) = options.min_function_lines {
+                functions.into_iter()
+                    .filter(|f| f.end_line - f.start_line + 1 >= min_lines)
+                    .collect()
+            } else {
+                functions
+            };
+            
+            for func in filtered {
                 all_functions.push((path.clone(), func));
             }
+            analyzed_files.push(path.clone());
         }
     }
     
@@ -425,9 +529,10 @@ pub fn analyze_function_dry(
     
     Ok(FunctionDryReport {
         id: Uuid::new_v4(),
-        files: files.to_vec(),
+        files: analyzed_files,
         duplicates,
         total_functions,
+        skipped_files,
         computed_at: Utc::now(),
     })
 }

@@ -10,12 +10,12 @@ pub mod ast_similarity;
 pub mod function_dry;
 
 pub use similarity::{compute_similarity, SimilarityEvidence};
-pub use usage::{count_usages, UsageEvidence};
+pub use usage::{count_usages, UsageEvidence, UsageLocation, UsageType};
 pub use connectivity::{analyze_connectivity, ConnectivityEvidence, ArchitecturalConnections, ServiceBinding};
 pub use ast_similarity::{extract_fingerprint, compare_fingerprints, AstFingerprint, AstSimilarity};
 pub use function_dry::{
-    extract_functions, analyze_function_dry, compare_functions,
-    ExtractedFunction, FunctionDryEvidence, FunctionDryReport,
+    extract_functions, analyze_function_dry, analyze_function_dry_with_options, compare_functions,
+    ExtractedFunction, FunctionDryEvidence, FunctionDryReport, FunctionDryOptions, is_test_file,
 };
 
 use thiserror::Error;

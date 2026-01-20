@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{VerifiedTriad, VerifiedTriadError};
-use crate::computations::analyze_function_dry;
+use crate::computations::{analyze_function_dry, analyze_function_dry_with_options, FunctionDryOptions};
 use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command};
 
 /// MCP Tool definitions for Ground
@@ -94,6 +94,10 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     "threshold": {
                         "type": "number",
                         "description": "How similar functions need to be (0.0-1.0, default: 0.8)"
+                    },
+                    "exclude_tests": {
+                        "type": "boolean",
+                        "description": "Exclude test files (*.test.ts, *.spec.ts, __tests__/*). Default: false"
                     }
                 },
                 "required": ["directory"]
@@ -292,25 +296,43 @@ fn handle_count_uses(g: &mut VerifiedTriad, args: &Value) -> ToolResult {
     
     match g.count_usages(symbol, &search_path) {
         Ok(evidence) => {
-            let is_dead = evidence.usage_count == 0;
+            // A symbol is truly dead if it has no actual usages (definitions don't count)
+            let is_exported_unused = evidence.is_exported_but_unused();
+            let is_dead = evidence.actual_usage_count == 0 && evidence.definition_count == 0;
+            
+            // Generate appropriate message
+            let message = if is_dead {
+                format!("'{}' isn't used anywhere. You can now claim this with ground_claim_dead_code.", symbol)
+            } else if is_exported_unused {
+                format!(
+                    "'{}' is defined {} time(s) but never actually used. It may be exported but never imported elsewhere.",
+                    symbol, evidence.definition_count
+                )
+            } else {
+                format!(
+                    "'{}' has {} actual use(s) (plus {} definition site(s)).",
+                    symbol, evidence.actual_usage_count, evidence.definition_count
+                )
+            };
             
             ToolResult::success(json!({
                 "counted": true,
                 "symbol": symbol,
-                "uses": evidence.usage_count,
+                "total_occurrences": evidence.usage_count,
+                "definitions": evidence.definition_count,
+                "actual_uses": evidence.actual_usage_count,
                 "is_dead_code": is_dead,
+                "is_exported_but_unused": is_exported_unused,
                 "evidence_id": evidence.id.to_string(),
-                "locations": evidence.locations.iter().take(5).map(|loc| {
+                "locations": evidence.locations.iter().take(10).map(|loc| {
                     json!({
                         "file": loc.file.to_string_lossy(),
-                        "line": loc.line
+                        "line": loc.line,
+                        "is_definition": loc.is_definition,
+                        "context": loc.context
                     })
                 }).collect::<Vec<_>>(),
-                "message": if is_dead {
-                    format!("'{}' isn't used anywhere. You can now claim this with ground_claim_dead_code.", symbol)
-                } else {
-                    format!("'{}' is used {} times.", symbol, evidence.usage_count)
-                }
+                "message": message
             }))
         }
         Err(e) => ToolResult::error(format!("Count failed: {}", e)),
@@ -374,6 +396,16 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         .and_then(|v| v.as_f64())
         .unwrap_or(0.8);
     
+    let exclude_tests = args.get("exclude_tests")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    
+    // Build options
+    let options = FunctionDryOptions {
+        exclude_tests,
+        ..Default::default()
+    };
+    
     // Collect files
     let mut files: Vec<PathBuf> = Vec::new();
     collect_ts_files(&directory, &mut files);
@@ -393,7 +425,7 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         files.truncate(200);
     }
     
-    match analyze_function_dry(&files, threshold) {
+    match analyze_function_dry_with_options(&files, threshold, &options) {
         Ok(report) => {
             let duplicates: Vec<Value> = report.duplicates.iter().map(|d| {
                 json!({
@@ -406,10 +438,10 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 })
             }).collect();
             
-            ToolResult::success(json!({
+            let mut response = json!({
                 "found": true,
                 "directory": directory.to_string_lossy(),
-                "files_checked": files.len(),
+                "files_checked": report.files.len(),
                 "functions_found": report.total_functions,
                 "duplicate_count": report.duplicates.len(),
                 "duplicates": duplicates,
@@ -418,7 +450,14 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 } else {
                     format!("Found {} duplicate functions. Consider extracting to a shared module.", report.duplicates.len())
                 }
-            }))
+            });
+            
+            // Add skipped files info if any were excluded
+            if !report.skipped_files.is_empty() {
+                response["skipped_test_files"] = json!(report.skipped_files.len());
+            }
+            
+            ToolResult::success(response)
         }
         Err(e) => ToolResult::error(format!("Analysis failed: {}", e)),
     }
