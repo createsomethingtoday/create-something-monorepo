@@ -1,93 +1,99 @@
+---
+name: triad-audit
+description: Run systematic code audits using the Subtractive Triad framework (DRY → Rams → Heidegger). Use when auditing codebases for bloat, reviewing PRs for quality, finding dead code, or evaluating if code "earns its existence."
+allowed-tools: Read, Grep, Glob, ground_compare, ground_count_uses, ground_check_connections, ground_find_duplicate_functions, ground_find_orphans, ground_find_dead_exports, ground_analyze
+---
+
 # Subtractive Triad Audit
 
-A Claude Code skill for systematic code reduction using the Subtractive Triad framework.
-
-## When to Use This Skill
-
-Use this skill when you want to:
-- Audit a codebase for bloat, duplication, and disconnection
-- Review a PR through a philosophical lens
-- Evaluate whether code "earns its existence"
-- Systematically reduce complexity
+Systematic code reduction using the DRY → Rams → Heidegger framework.
 
 ## The Framework
 
-The Subtractive Triad applies three levels of scrutiny, in order:
+Apply three levels of scrutiny, in order:
 
 ### Level 1: DRY (Implementation)
 **Question**: "Have I built this before?"
+
+Use `ground_find_duplicate_functions` to find copied code:
+```
+ground_find_duplicate_functions with directory="src/" min_lines=5 exclude_tests=true
+```
 
 Look for:
 - Duplicate code across files
 - Repeated patterns that should be abstracted
 - Copy-paste with minor variations
-- Utility functions reimplemented multiple times
 
 **Action**: Unify
 
 ### Level 2: Rams (Artifact)
 **Question**: "Does this earn its existence?"
 
-Named after Dieter Rams' principle: *Weniger, aber besser* (Less, but better).
+Use `ground_find_dead_exports` to find unused code:
+```
+ground_find_dead_exports with module_path="src/utils.ts"
+```
+
+Use `ground_count_uses` to verify before claiming dead:
+```
+ground_count_uses with symbol="unusedFunction"
+```
 
 Look for:
 - Unused imports and exports
 - Dead code paths
 - Over-engineered abstractions
 - Features nobody uses
-- Props/parameters that could be defaults
-- Comments that explain "what" instead of "why"
 
 **Action**: Remove
 
 ### Level 3: Heidegger (System)
 **Question**: "Does this serve the whole?"
 
-Based on the hermeneutic circle: parts must serve the whole, and the whole gives meaning to parts.
+Use `ground_find_orphans` to find disconnected modules:
+```
+ground_find_orphans with directory="src/"
+```
+
+Use `ground_check_connections` to verify:
+```
+ground_check_connections with module_path="src/old-utils.ts"
+```
 
 Look for:
 - Orphaned modules (nothing imports them)
 - Inconsistent naming conventions
-- Poor cohesion (things that should be together, aren't)
-- Tight coupling (things that should be separate, aren't)
-- Missing documentation for public APIs
-- Files in wrong directories
+- Poor cohesion
+- Missing documentation
 
 **Action**: Reconnect
 
-## How to Run an Audit
+## Running an Audit
 
 ### Full Codebase Audit
 
-Ask Claude:
+Use `ground_analyze` for batch analysis:
 ```
-Run a Subtractive Triad audit on [scope].
-
-Scope: [directory or file pattern]
-Focus: [optional - specific concern like "UI components" or "API routes"]
+ground_analyze with directory="src/" checks=["duplicates", "dead_exports", "orphans"]
 ```
 
 ### PR Review
 
-Ask Claude:
-```
-Review this PR through the Subtractive Triad.
-
-PR: [number or URL]
-```
+1. Get the changed files from the PR
+2. Run targeted analysis on affected areas
+3. Apply the three levels to each change
 
 ### Single File Deep Dive
 
-Ask Claude:
 ```
-Apply the Subtractive Triad to [file path].
-
-I want to know if every line earns its existence.
+ground_find_dead_exports with module_path="path/to/file.ts"
+ground_count_uses with symbol="exportedFunction" search_path="src/"
 ```
 
 ## Output Format
 
-The audit produces a structured report:
+Generate a structured report:
 
 ```markdown
 # Subtractive Triad Audit: [Scope]
@@ -99,47 +105,24 @@ The audit produces a structured report:
 - **Overall Health**: X/10
 
 ## Level 1: DRY Findings
-
-### Duplications Found
-| Location A | Location B | Pattern | Recommendation |
-|------------|------------|---------|----------------|
-| `file:line` | `file:line` | [description] | [unify how] |
+| Location A | Location B | Similarity | Action |
+|------------|------------|------------|--------|
 
 ## Level 2: Rams Findings
-
-### Code That Doesn't Earn Existence
-| File | Line | Issue | Confidence |
-|------|------|-------|------------|
-| `path` | N | [what & why] | High/Medium/Low |
+| Export | File | Uses | Action |
+|--------|------|------|--------|
 
 ## Level 3: Heidegger Findings
-
-### Disconnection Issues
-| File/Module | Issue | Recommendation |
-|-------------|-------|----------------|
-| `path` | [disconnection type] | [how to reconnect] |
+| Module | Connections | Action |
+|--------|-------------|--------|
 
 ## Recommendations
-
-### Must Fix (P0)
-1. [Critical issue]
-
-### Should Fix (P1)
-1. [Important issue]
-
-### Could Fix (P2)
-1. [Nice-to-have]
-
-## Metrics
-- Files analyzed: N
-- Lines analyzed: N
-- Issues found: N
-- Estimated reduction: X%
+### P0 - Must Fix
+### P1 - Should Fix
+### P2 - Backlog
 ```
 
 ## Scoring Guidelines
-
-Each level is scored 0-10:
 
 | Score | Meaning |
 |-------|---------|
@@ -149,34 +132,34 @@ Each level is scored 0-10:
 | 3-4 | Poor - significant issues |
 | 0-2 | Critical - major refactoring needed |
 
-**Overall Health** = (DRY + Rams + Heidegger) / 3
-
 ## Philosophy
 
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
-> — Antoine de Saint-Exupéry
 
-The Subtractive Triad operationalizes this principle into actionable code review criteria. It shifts the question from "does this work?" to "does this *need* to exist?"
+The Subtractive Triad operationalizes this into actionable code review. It shifts the question from "does this work?" to "does this *need* to exist?"
+
+## Requirements
+
+Install Ground MCP for automated analysis:
+```bash
+npm install -g @createsomething/ground-mcp
+```
+
+Add to `.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "ground": {
+      "command": "ground-mcp"
+    }
+  }
+}
+```
 
 ## Case Study
 
-The framework was developed during the Kickstand audit, which reduced 155 scripts to 13 (92% reduction) while improving functionality. See: https://createsomething.io/papers/kickstand-triad-audit
-
-## Installation
-
-Copy this skill directory to your project:
-
-```bash
-mkdir -p .claude/skills
-cp -r triad-audit .claude/skills/
-```
-
-Or clone from GitHub:
-
-```bash
-git clone https://github.com/createsomethingtoday/triad-audit-skill .claude/skills/triad-audit
-```
+See the framework in action: [Kickstand Triad Audit](https://createsomething.io/papers/kickstand-triad-audit) — 155 scripts reduced to 13 (92% reduction).
 
 ---
 
-*From CREATE SOMETHING — The canon for "less, but better."*
+*From [CREATE SOMETHING](https://createsomething.agency) — The canon for "less, but better."*
