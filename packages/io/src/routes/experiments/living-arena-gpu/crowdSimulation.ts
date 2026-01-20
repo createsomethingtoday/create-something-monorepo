@@ -957,7 +957,11 @@ export class CrowdSimulation {
 					state = AgentState.PANICKED;
 				}
 				agentData[idx + 6] = state;
-				agentData[idx + 7] = directive.directive;
+
+				// Properly encode role, team, and directive (same as initializeAgents)
+				const encodedGroup =
+					(directive.role & 0x3) | ((directive.teamId & 0x3) << 2) | ((directive.directive & 0xf) << 4);
+				agentData[idx + 7] = encodedGroup;
 			}
 
 			this.device.queue.writeBuffer(this.agentBuffer, 0, agentData);
