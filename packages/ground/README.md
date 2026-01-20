@@ -181,3 +181,35 @@ This prevents AI hallucination by requiring computation before synthesis.
 ## License
 
 MIT
+
+## Future: Environment Safety Check
+
+Suggested by WORKWAY agent (2026-01-18). Detects Workers APIs used in Node.js code paths.
+
+```bash
+ground check environment-safety src/cli/index.ts
+
+→ Warning: Workers-only API reachable from Node.js entry point
+  
+  src/cli/index.ts
+    → imports @workwayco/sdk
+    → imports edge-cache.ts
+    → uses caches.default (Workers-only)
+
+  Suggestions:
+  - Use conditional exports in package.json
+  - Lazy-load with dynamic import + try/catch
+  - Split into @workwayco/sdk/node vs @workwayco/sdk/workers
+```
+
+**APIs to detect:**
+- `caches.default`, `caches.open`
+- `env.KV`, `env.R2`, `env.D1`, `env.AI`
+- `ctx.waitUntil`, `waitUntil`
+- `crypto.subtle` (different behavior in Workers vs Node)
+
+**Implementation approach:**
+1. Build import graph from entry point
+2. Tag each module with detected APIs
+3. Propagate "workers-only" tag up the chain
+4. Warn if Workers-only modules are reachable from Node entry points
