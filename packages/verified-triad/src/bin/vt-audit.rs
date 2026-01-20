@@ -5,6 +5,7 @@
 //! Usage:
 //!   vt-audit [path] [--threshold 0.75] [--extensions ts,svelte]
 //!   vt-audit [path] --function-level  # Detect duplicate functions
+//!   vt-audit [path] --monorepo        # Opinionated CREATE SOMETHING mode
 
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -13,6 +14,7 @@ use clap::Parser;
 use verified_triad::{VerifiedTriad, TriadThresholds};
 use verified_triad::exceptions::{ExceptionMatch, check_exception, load_config, smart_threshold};
 use verified_triad::computations::{analyze_function_dry, FunctionDryReport};
+use verified_triad::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command, MonorepoInfo};
 
 #[derive(Parser)]
 #[command(name = "vt-audit")]
@@ -61,6 +63,14 @@ struct Cli {
     /// Analyze at function level (detects duplicate functions across files)
     #[arg(long, short = 'f')]
     function_level: bool,
+    
+    /// Opinionated CREATE SOMETHING monorepo mode with actionable output
+    #[arg(long, short = 'm')]
+    monorepo: bool,
+    
+    /// Output beads commands for filing issues
+    #[arg(long)]
+    beads: bool,
 }
 
 #[derive(Debug)]
@@ -100,8 +110,37 @@ fn main() {
         return;
     }
     
-    println!("Verified Triad DRY Audit");
-    println!("========================");
+    // Detect monorepo if --monorepo flag is set
+    let monorepo_info = if cli.monorepo {
+        detect_monorepo(&cli.path)
+    } else {
+        None
+    };
+    
+    if cli.monorepo {
+        println!("╔══════════════════════════════════════════════════════════════╗");
+        println!("║     CREATE SOMETHING Monorepo DRY Audit                      ║");
+        println!("║     Opinionated • Actionable • Beads-Integrated              ║");
+        println!("╚══════════════════════════════════════════════════════════════╝");
+        println!();
+        
+        if let Some(ref info) = monorepo_info {
+            println!("📦 Monorepo detected: {} packages", info.packages.len());
+            let properties: Vec<_> = info.packages.iter()
+                .filter(|p| p.package_type == verified_triad::monorepo::PackageType::Property)
+                .map(|p| p.name.split('/').last().unwrap_or(&p.name))
+                .collect();
+            println!("   Properties: {}", properties.join(", "));
+            println!("   Shared library: @create-something/components");
+        } else {
+            println!("⚠️  Not in CREATE SOMETHING monorepo, using generic mode");
+        }
+        println!();
+    } else {
+        println!("Verified Triad DRY Audit");
+        println!("========================");
+    }
+    
     println!("Path: {}", cli.path.display());
     if cli.smart {
         println!("Threshold: SMART (auto-detected per file pair)");
@@ -244,12 +283,47 @@ fn main() {
     } else {
         println!("VIOLATIONS ({}):\n", results.violations.len());
         
+        let mut beads_commands: Vec<String> = Vec::new();
+        
         for (i, finding) in results.violations.iter().enumerate() {
             println!("  {}. {:.1}% similar", i + 1, finding.similarity * 100.0);
             println!("     {} <-> {}", 
                 finding.file_a.display(), 
                 finding.file_b.display());
             println!("     Evidence: {}", finding.evidence_id);
+            
+            // If in monorepo mode, show actionable suggestions
+            if let Some(ref info) = monorepo_info {
+                if let Some(suggestion) = suggest_refactoring(
+                    &finding.file_a, 
+                    &finding.file_b, 
+                    finding.similarity,
+                    info
+                ) {
+                    println!("     ┌─────────────────────────────────────────────────");
+                    println!("     │ 📋 ACTION: {}", suggestion.description);
+                    println!("     │ 📁 Target: {}", suggestion.target_path);
+                    println!("     │ 📦 Import: {}", suggestion.import_statement);
+                    println!("     │ 🎯 Priority: {}", suggestion.priority);
+                    println!("     └─────────────────────────────────────────────────");
+                    beads_commands.push(suggestion.beads_command);
+                } else {
+                    let cmd = generate_beads_command(&finding.file_a, &finding.file_b, finding.similarity, None);
+                    beads_commands.push(cmd);
+                }
+            }
+            
+            println!();
+        }
+        
+        // Output beads commands if requested
+        if cli.beads && !beads_commands.is_empty() {
+            println!("\n────────────────────────────────────────");
+            println!("BEADS COMMANDS (copy/paste to create issues):");
+            println!("────────────────────────────────────────\n");
+            for cmd in &beads_commands {
+                println!("{}", cmd);
+            }
             println!();
         }
     }

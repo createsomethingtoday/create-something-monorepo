@@ -24,6 +24,7 @@ use serde_json::{json, Value};
 
 use crate::{VerifiedTriad, VerifiedTriadError};
 use crate::computations::analyze_function_dry;
+use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command};
 
 /// MCP Tool definitions for Verified Triad
 pub fn list_tools() -> Vec<ToolDefinition> {
@@ -165,6 +166,29 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                 "properties": {}
             }),
         },
+        // CREATE SOMETHING specific tool
+        ToolDefinition {
+            name: "vt_suggest_refactoring".to_string(),
+            description: "Get actionable refactoring suggestions for a DRY violation in the CREATE SOMETHING monorepo. Returns target path, import statement, and beads command.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "file_a": {
+                        "type": "string",
+                        "description": "Path to first file"
+                    },
+                    "file_b": {
+                        "type": "string",
+                        "description": "Path to second file"
+                    },
+                    "similarity": {
+                        "type": "number",
+                        "description": "Similarity between files (0.0-1.0)"
+                    }
+                },
+                "required": ["file_a", "file_b", "similarity"]
+            }),
+        },
     ]
 }
 
@@ -218,6 +242,7 @@ pub fn handle_tool_call(
         "vt_claim_existence" => handle_claim_existence(vt, args),
         "vt_claim_connectivity" => handle_claim_connectivity(vt, args),
         "vt_status" => handle_status(vt),
+        "vt_suggest_refactoring" => handle_suggest_refactoring(args),
         _ => ToolResult::error(format!("Unknown tool: {}", tool_name)),
     }
 }
@@ -424,6 +449,56 @@ fn handle_analyze_functions(args: &Value) -> ToolResult {
     }
 }
 
+fn handle_suggest_refactoring(args: &Value) -> ToolResult {
+    let file_a = match args.get("file_a").and_then(|v| v.as_str()) {
+        Some(s) => PathBuf::from(s),
+        None => return ToolResult::error("Missing required parameter: file_a"),
+    };
+    let file_b = match args.get("file_b").and_then(|v| v.as_str()) {
+        Some(s) => PathBuf::from(s),
+        None => return ToolResult::error("Missing required parameter: file_b"),
+    };
+    let similarity = args.get("similarity")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.8);
+    
+    // Try to detect monorepo from file paths
+    let monorepo = detect_monorepo(&file_a)
+        .or_else(|| detect_monorepo(&file_b));
+    
+    match monorepo {
+        Some(info) => {
+            if let Some(suggestion) = suggest_refactoring(&file_a, &file_b, similarity, &info) {
+                ToolResult::success(json!({
+                    "has_suggestion": true,
+                    "action": format!("{:?}", suggestion.action),
+                    "description": suggestion.description,
+                    "target_path": suggestion.target_path,
+                    "import_statement": suggestion.import_statement,
+                    "beads_command": suggestion.beads_command,
+                    "priority": suggestion.priority,
+                    "monorepo_detected": true
+                }))
+            } else {
+                let beads_cmd = generate_beads_command(&file_a, &file_b, similarity, None);
+                ToolResult::success(json!({
+                    "has_suggestion": false,
+                    "beads_command": beads_cmd,
+                    "message": "No specific refactoring pattern detected. Generic beads command provided.",
+                    "monorepo_detected": true
+                }))
+            }
+        }
+        None => {
+            ToolResult::success(json!({
+                "has_suggestion": false,
+                "monorepo_detected": false,
+                "message": "Not in CREATE SOMETHING monorepo. Run from monorepo root for actionable suggestions."
+            }))
+        }
+    }
+}
+
 fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
     let entries = match std::fs::read_dir(dir) {
         Ok(e) => e,
@@ -594,7 +669,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 8); // Added vt_analyze_functions
+        assert_eq!(tools.len(), 9); // Added vt_suggest_refactoring
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         assert!(names.contains(&"vt_compute_similarity"));
@@ -602,6 +677,7 @@ mod tests {
         assert!(names.contains(&"vt_analyze_functions"));
         assert!(names.contains(&"vt_claim_dry"));
         assert!(names.contains(&"vt_status"));
+        assert!(names.contains(&"vt_suggest_refactoring"));
     }
     
     #[test]
