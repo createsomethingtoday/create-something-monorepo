@@ -523,7 +523,13 @@ export class CrowdSimulation {
 		const { agentCount, arenaWidth, arenaHeight } = this.config;
 		const agentData = new Float32Array(agentCount * 8);
 
+		// Get targets from scenario (these use 1200x900 coordinate system)
 		const targets = getScenarioTargets(this.currentScenario);
+		// Scale factors from original coordinate system to current arena
+		const ORIG_WIDTH = 1200;
+		const ORIG_HEIGHT = 900;
+		const scaleX = arenaWidth / ORIG_WIDTH;
+		const scaleY = arenaHeight / ORIG_HEIGHT;
 
 		for (let i = 0; i < agentCount; i++) {
 			const idx = i * 8;
@@ -539,11 +545,14 @@ export class CrowdSimulation {
 				agentData[idx + 2] = (Math.random() - 0.5) * 0.5;
 				agentData[idx + 3] = (Math.random() - 0.5) * 0.5;
 
-				// Target from scenario
+				// Target from scenario (scaled to current arena dimensions)
 				if (targets.length > 0) {
 					const target = targets[Math.floor(Math.random() * targets.length)];
-					agentData[idx + 4] = target.x + (Math.random() - 0.5) * target.radius;
-					agentData[idx + 5] = target.y + (Math.random() - 0.5) * target.radius;
+					const scaledX = target.x * scaleX;
+					const scaledY = target.y * scaleY;
+					const scaledRadius = target.radius * Math.min(scaleX, scaleY);
+					agentData[idx + 4] = scaledX + (Math.random() - 0.5) * scaledRadius;
+					agentData[idx + 5] = scaledY + (Math.random() - 0.5) * scaledRadius;
 				} else {
 					agentData[idx + 4] = arenaWidth / 2;
 					agentData[idx + 5] = arenaHeight / 2;
@@ -571,6 +580,7 @@ export class CrowdSimulation {
 
 	/**
 	 * Get spawn position based on crowd flow type
+	 * All positions are proportional to arena dimensions
 	 */
 	private getSpawnPosition(
 		crowdFlow: string,
@@ -579,60 +589,67 @@ export class CrowdSimulation {
 	): { x: number; y: number } {
 		const centerX = arenaWidth / 2;
 		const centerY = arenaHeight / 2;
+		// Arena ellipse radii (matching SVG overlay: rx=42%, ry=38%)
+		const arenaRx = arenaWidth * 0.42;
+		const arenaRy = arenaHeight * 0.38;
 
 		switch (crowdFlow) {
 			case 'entering':
-				// Spawn from parking lots (north)
+				// Spawn from north gate area
 				return {
-					x: centerX + (Math.random() - 0.5) * 400,
-					y: -50 + Math.random() * 100
+					x: centerX + (Math.random() - 0.5) * arenaWidth * 0.3,
+					y: centerY - arenaRy + Math.random() * arenaRy * 0.3
 				};
 
 			case 'vip':
 				// Spawn from south VIP entrance
 				return {
-					x: centerX + (Math.random() - 0.5) * 100,
-					y: arenaHeight + 50
+					x: centerX + (Math.random() - 0.5) * arenaWidth * 0.1,
+					y: centerY + arenaRy * 0.8 + Math.random() * arenaRy * 0.2
 				};
 
 			case 'dispersing':
-				// Start from seating area
+				// Start from seating area (within arena ellipse)
 				const angle = Math.random() * Math.PI * 2;
-				const radius = 80 + Math.random() * 120;
+				const radiusFactor = 0.3 + Math.random() * 0.5; // 30-80% of arena radius
 				return {
-					x: centerX + Math.cos(angle) * radius,
-					y: centerY + Math.sin(angle) * radius * 0.7
+					x: centerX + Math.cos(angle) * arenaRx * radiusFactor,
+					y: centerY + Math.sin(angle) * arenaRy * radiusFactor
 				};
 
 			case 'sheltering':
-				// Spread across arena
+				// Spread across arena interior
+				const shAngle = Math.random() * Math.PI * 2;
+				const shRadius = Math.random() * 0.7; // Up to 70% of arena radius
 				return {
-					x: 100 + Math.random() * (arenaWidth - 200),
-					y: 100 + Math.random() * (arenaHeight - 200)
+					x: centerX + Math.cos(shAngle) * arenaRx * shRadius,
+					y: centerY + Math.sin(shAngle) * arenaRy * shRadius
 				};
 
 			case 'evacuating':
-				// Start from section 112 area (right side)
+				// Start from section 112 area (right-bottom quadrant)
 				return {
-					x: centerX + 100 + Math.random() * 150,
-					y: centerY + 50 + Math.random() * 150
+					x: centerX + arenaRx * (0.2 + Math.random() * 0.4),
+					y: centerY + arenaRy * (0.1 + Math.random() * 0.4)
 				};
 
 			case 'exiting':
-				// Start from seats
+				// Start from seats (full arena)
 				const exitAngle = Math.random() * Math.PI * 2;
-				const exitRadius = 100 + Math.random() * 150;
+				const exitRadius = 0.3 + Math.random() * 0.5;
 				return {
-					x: centerX + Math.cos(exitAngle) * exitRadius,
-					y: centerY + Math.sin(exitAngle) * exitRadius * 0.7
+					x: centerX + Math.cos(exitAngle) * arenaRx * exitRadius,
+					y: centerY + Math.sin(exitAngle) * arenaRy * exitRadius
 				};
 
 			case 'empty':
 			default:
-				// Few maintenance workers
+				// Few maintenance workers scattered
+				const emptyAngle = Math.random() * Math.PI * 2;
+				const emptyRadius = Math.random() * 0.6;
 				return {
-					x: 200 + Math.random() * (arenaWidth - 400),
-					y: 200 + Math.random() * (arenaHeight - 400)
+					x: centerX + Math.cos(emptyAngle) * arenaRx * emptyRadius,
+					y: centerY + Math.sin(emptyAngle) * arenaRy * emptyRadius
 				};
 		}
 	}
