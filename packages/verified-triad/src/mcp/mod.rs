@@ -7,7 +7,8 @@
 //! ### Computation Tools (required before claims)
 //! - `vt_compute_similarity` - Compute similarity between two files
 //! - `vt_compute_usages` - Count usages of a symbol
-//! - `vt_compute_connectivity` - Analyze module connectivity
+//! - `vt_compute_connectivity` - Analyze module connectivity (architecture-aware)
+//! - `vt_analyze_functions` - Function-level DRY analysis
 //!
 //! ### Claim Tools (validated against registry)
 //! - `vt_claim_dry` - Claim DRY violation (requires prior similarity computation)
@@ -22,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{VerifiedTriad, VerifiedTriadError};
+use crate::computations::analyze_function_dry;
 
 /// MCP Tool definitions for Verified Triad
 pub fn list_tools() -> Vec<ToolDefinition> {
@@ -65,7 +67,7 @@ pub fn list_tools() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "vt_compute_connectivity".to_string(),
-            description: "Analyze module connectivity (Heidegger level). MUST be called before claiming disconnection.".to_string(),
+            description: "Analyze module connectivity (Heidegger level). Architecture-aware: detects Cloudflare Workers routes, crons, and bindings. MUST be called before claiming disconnection.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -75,6 +77,24 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     }
                 },
                 "required": ["module_path"]
+            }),
+        },
+        ToolDefinition {
+            name: "vt_analyze_functions".to_string(),
+            description: "Analyze functions across files for duplicates. Catches function-level DRY violations that file-level analysis misses.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Directory to analyze"
+                    },
+                    "threshold": {
+                        "type": "number",
+                        "description": "Similarity threshold (0.0-1.0, default: 0.8)"
+                    }
+                },
+                "required": ["directory"]
             }),
         },
         // Claim tools
@@ -193,6 +213,7 @@ pub fn handle_tool_call(
         "vt_compute_similarity" => handle_compute_similarity(vt, args),
         "vt_compute_usages" => handle_compute_usages(vt, args),
         "vt_compute_connectivity" => handle_compute_connectivity(vt, args),
+        "vt_analyze_functions" => handle_analyze_functions(args),
         "vt_claim_dry" => handle_claim_dry(vt, args),
         "vt_claim_existence" => handle_claim_existence(vt, args),
         "vt_claim_connectivity" => handle_claim_connectivity(vt, args),
@@ -285,17 +306,45 @@ fn handle_compute_connectivity(vt: &mut VerifiedTriad, args: &Value) -> ToolResu
             let min_connections = vt.thresholds().heidegger_min_connections;
             let total = evidence.total_connections();
             let can_claim = total < min_connections;
+            
+            // Build architectural connections info if present
+            let arch_info = evidence.architectural.as_ref().map(|arch| {
+                json!({
+                    "type": arch.architecture_type,
+                    "routes": arch.routes,
+                    "crons": arch.crons,
+                    "bindings": arch.bindings.iter().map(|b| json!({
+                        "type": b.binding_type,
+                        "name": b.name,
+                        "resource": b.resource_id
+                    })).collect::<Vec<_>>(),
+                    "service_bindings": arch.service_bindings,
+                    "custom_domains": arch.custom_domains,
+                    "total_architectural_connections": arch.total_connections
+                })
+            });
+            
             ToolResult::success(json!({
                 "computed": true,
                 "module": module_path.to_string_lossy(),
                 "is_connected": evidence.is_connected,
-                "incoming_connections": evidence.incoming_connections,
-                "outgoing_connections": evidence.outgoing_connections,
+                "code_connections": {
+                    "incoming": evidence.incoming_connections,
+                    "outgoing": evidence.outgoing_connections,
+                    "imported_by": evidence.imported_by.iter().take(5).map(|p| p.to_string_lossy().to_string()).collect::<Vec<_>>(),
+                    "imports": evidence.imports.iter().take(5).map(|p| p.to_string_lossy().to_string()).collect::<Vec<_>>()
+                },
+                "architectural_connections": arch_info,
                 "total_connections": total,
                 "evidence_id": evidence.id.to_string(),
                 "can_claim_disconnected": can_claim,
                 "min_connections_threshold": min_connections,
-                "message": if can_claim {
+                "message": if evidence.has_architectural_connections() {
+                    format!("Module is a Cloudflare Worker with {} architectural connections. Code connections: {} in, {} out.",
+                        evidence.architectural.as_ref().map(|a| a.total_connections).unwrap_or(0),
+                        evidence.incoming_connections,
+                        evidence.outgoing_connections)
+                } else if can_claim {
                     format!("✓ Module has {} connections (below minimum {}). You can now call vt_claim_connectivity.", total, min_connections)
                 } else {
                     format!("Module has {} connections (meets minimum {}). \"Disconnected\" claim would be blocked.", total, min_connections)
@@ -303,6 +352,102 @@ fn handle_compute_connectivity(vt: &mut VerifiedTriad, args: &Value) -> ToolResu
             }))
         }
         Err(e) => ToolResult::error(format!("Computation failed: {}", e)),
+    }
+}
+
+fn handle_analyze_functions(args: &Value) -> ToolResult {
+    let directory = match args.get("directory").and_then(|v| v.as_str()) {
+        Some(s) => PathBuf::from(s),
+        None => return ToolResult::error("Missing required parameter: directory"),
+    };
+    
+    let threshold = args.get("threshold")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.8);
+    
+    // Collect files from directory
+    let mut files: Vec<PathBuf> = Vec::new();
+    collect_ts_files(&directory, &mut files);
+    
+    if files.is_empty() {
+        return ToolResult::success(json!({
+            "analyzed": true,
+            "directory": directory.to_string_lossy(),
+            "files_analyzed": 0,
+            "functions_extracted": 0,
+            "duplicates": [],
+            "message": "No TypeScript/JavaScript files found"
+        }));
+    }
+    
+    // Limit for performance
+    if files.len() > 200 {
+        files.truncate(200);
+    }
+    
+    match analyze_function_dry(&files, threshold) {
+        Ok(report) => {
+            let duplicates: Vec<Value> = report.duplicates.iter().map(|d| {
+                json!({
+                    "function_name": d.function_name,
+                    "similarity": d.similarity,
+                    "similarity_percent": format!("{:.1}%", d.similarity * 100.0),
+                    "file_a": d.file_a.to_string_lossy(),
+                    "file_b": d.file_b.to_string_lossy(),
+                    "location_a": {
+                        "start_line": d.function_a.start_line,
+                        "end_line": d.function_a.end_line
+                    },
+                    "location_b": {
+                        "start_line": d.function_b.start_line,
+                        "end_line": d.function_b.end_line
+                    }
+                })
+            }).collect();
+            
+            ToolResult::success(json!({
+                "analyzed": true,
+                "directory": directory.to_string_lossy(),
+                "threshold": threshold,
+                "files_analyzed": files.len(),
+                "functions_extracted": report.total_functions,
+                "duplicate_count": report.duplicates.len(),
+                "duplicates": duplicates,
+                "message": if report.duplicates.is_empty() {
+                    "No duplicate functions found".to_string()
+                } else {
+                    format!("Found {} duplicate functions. Consider extracting to shared module.", report.duplicates.len())
+                }
+            }))
+        }
+        Err(e) => ToolResult::error(format!("Analysis failed: {}", e)),
+    }
+}
+
+fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+    
+    for entry in entries.filter_map(|e| e.ok()) {
+        let path = entry.path();
+        
+        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if name.starts_with('.') || 
+               matches!(name, "node_modules" | "target" | "dist" | "build" | ".svelte-kit") {
+                continue;
+            }
+        }
+        
+        if path.is_dir() {
+            collect_ts_files(&path, files);
+        } else if path.is_file() {
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+                files.push(path);
+            }
+        }
     }
 }
 
@@ -449,10 +594,12 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 7);
+        assert_eq!(tools.len(), 8); // Added vt_analyze_functions
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         assert!(names.contains(&"vt_compute_similarity"));
+        assert!(names.contains(&"vt_compute_connectivity"));
+        assert!(names.contains(&"vt_analyze_functions"));
         assert!(names.contains(&"vt_claim_dry"));
         assert!(names.contains(&"vt_status"));
     }

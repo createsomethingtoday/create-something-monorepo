@@ -2,6 +2,15 @@
 //!
 //! Analyzes how modules connect to the rest of the system.
 //! A module "serves the whole" if it's connected.
+//!
+//! ## Architecture-Aware Connectivity
+//!
+//! Beyond import-level connections, we recognize architectural connections:
+//! - Cloudflare Workers: routes, crons, bindings (KV, D1, R2, services)
+//! - Serverless functions: HTTP triggers, event bindings
+//!
+//! A Worker with no import connections but valid deployment configuration
+//! IS connected to the whole - through deployment topology, not code imports.
 
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -35,19 +44,76 @@ pub struct ConnectivityEvidence {
     /// Files that this module imports
     pub imports: Vec<PathBuf>,
     
+    /// Architectural connections (non-import based)
+    pub architectural: Option<ArchitecturalConnections>,
+    
     /// When this computation was performed
     pub computed_at: DateTime<Utc>,
+}
+
+/// Architectural connections detected from deployment configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ArchitecturalConnections {
+    /// Type of architecture (e.g., "cloudflare-worker", "serverless")
+    pub architecture_type: String,
+    
+    /// HTTP routes this service responds to
+    pub routes: Vec<String>,
+    
+    /// Cron schedules that trigger this service
+    pub crons: Vec<String>,
+    
+    /// Resource bindings (KV, D1, R2, etc.)
+    pub bindings: Vec<ServiceBinding>,
+    
+    /// Service-to-service bindings
+    pub service_bindings: Vec<String>,
+    
+    /// Custom domains configured
+    pub custom_domains: Vec<String>,
+    
+    /// Total architectural connections
+    pub total_connections: u32,
+}
+
+/// A binding to an external service/resource
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceBinding {
+    /// Type of binding (kv, d1, r2, service, etc.)
+    pub binding_type: String,
+    
+    /// Name of the binding in code
+    pub name: String,
+    
+    /// External resource identifier (if any)
+    pub resource_id: Option<String>,
 }
 
 impl ConnectivityEvidence {
     /// Check if this module "serves the whole" (has minimum connections)
     pub fn serves_whole(&self, min_connections: u32) -> bool {
-        self.incoming_connections >= min_connections || self.outgoing_connections >= min_connections
+        let code_connections = self.incoming_connections + self.outgoing_connections;
+        let arch_connections = self.architectural.as_ref()
+            .map(|a| a.total_connections)
+            .unwrap_or(0);
+        
+        code_connections >= min_connections || arch_connections >= min_connections
     }
     
-    /// Total connections (in + out)
+    /// Total connections (code + architectural)
     pub fn total_connections(&self) -> u32 {
-        self.incoming_connections + self.outgoing_connections
+        let code = self.incoming_connections + self.outgoing_connections;
+        let arch = self.architectural.as_ref()
+            .map(|a| a.total_connections)
+            .unwrap_or(0);
+        code + arch
+    }
+    
+    /// Whether this has architectural connections (Worker/serverless)
+    pub fn has_architectural_connections(&self) -> bool {
+        self.architectural.as_ref()
+            .map(|a| a.total_connections > 0)
+            .unwrap_or(false)
     }
 }
 
@@ -66,9 +132,17 @@ pub fn analyze_connectivity(module_path: &Path) -> Result<ConnectivityEvidence, 
     // Analyze who imports this module
     let imported_by = find_importers(module_path, &project_root)?;
     
+    // Check for architectural connections (Workers, serverless)
+    let architectural = detect_architectural_connections(module_path);
+    
     let incoming_connections = imported_by.len() as u32;
     let outgoing_connections = imports.len() as u32;
-    let is_connected = incoming_connections > 0 || outgoing_connections > 0;
+    
+    // Connected if has code connections OR architectural connections
+    let arch_connections = architectural.as_ref()
+        .map(|a| a.total_connections)
+        .unwrap_or(0);
+    let is_connected = incoming_connections > 0 || outgoing_connections > 0 || arch_connections > 0;
     
     Ok(ConnectivityEvidence {
         id: Uuid::new_v4(),
@@ -78,7 +152,269 @@ pub fn analyze_connectivity(module_path: &Path) -> Result<ConnectivityEvidence, 
         outgoing_connections,
         imported_by,
         imports,
+        architectural,
         computed_at: Utc::now(),
+    })
+}
+
+/// Detect architectural connections from deployment configuration
+fn detect_architectural_connections(module_path: &Path) -> Option<ArchitecturalConnections> {
+    // Look for wrangler.toml in the module's directory or parent directories
+    let wrangler_path = find_wrangler_toml(module_path)?;
+    parse_wrangler_toml(&wrangler_path)
+}
+
+/// Find wrangler.toml starting from module path and going up
+fn find_wrangler_toml(start: &Path) -> Option<PathBuf> {
+    let mut current = if start.is_file() {
+        start.parent()?
+    } else {
+        start
+    };
+    
+    // Check up to 5 levels up
+    for _ in 0..5 {
+        let wrangler_path = current.join("wrangler.toml");
+        if wrangler_path.exists() {
+            return Some(wrangler_path);
+        }
+        
+        // Also check wrangler.jsonc
+        let wrangler_jsonc = current.join("wrangler.jsonc");
+        if wrangler_jsonc.exists() {
+            // We only parse TOML for now, but note it exists
+            return None;
+        }
+        
+        current = current.parent()?;
+    }
+    
+    None
+}
+
+/// Parse wrangler.toml and extract architectural connections
+fn parse_wrangler_toml(path: &Path) -> Option<ArchitecturalConnections> {
+    let content = fs::read_to_string(path).ok()?;
+    let value: toml::Value = content.parse().ok()?;
+    
+    let mut routes = Vec::new();
+    let mut crons = Vec::new();
+    let mut bindings = Vec::new();
+    let mut service_bindings = Vec::new();
+    let mut custom_domains = Vec::new();
+    
+    // Parse routes
+    if let Some(route) = value.get("route").and_then(|v| v.as_str()) {
+        routes.push(route.to_string());
+    }
+    if let Some(routes_arr) = value.get("routes").and_then(|v| v.as_array()) {
+        for r in routes_arr {
+            if let Some(s) = r.as_str() {
+                routes.push(s.to_string());
+            } else if let Some(obj) = r.as_table() {
+                if let Some(pattern) = obj.get("pattern").and_then(|v| v.as_str()) {
+                    routes.push(pattern.to_string());
+                }
+            }
+        }
+    }
+    
+    // Parse custom domains
+    if let Some(domains) = value.get("custom_domains").and_then(|v| v.as_array()) {
+        for d in domains {
+            if let Some(s) = d.as_str() {
+                custom_domains.push(s.to_string());
+            }
+        }
+    }
+    
+    // Parse triggers (crons)
+    if let Some(triggers) = value.get("triggers").and_then(|v| v.as_table()) {
+        if let Some(crons_arr) = triggers.get("crons").and_then(|v| v.as_array()) {
+            for c in crons_arr {
+                if let Some(s) = c.as_str() {
+                    crons.push(s.to_string());
+                }
+            }
+        }
+    }
+    
+    // Parse KV namespaces
+    if let Some(kv) = value.get("kv_namespaces").and_then(|v| v.as_array()) {
+        for ns in kv {
+            if let Some(obj) = ns.as_table() {
+                let name = obj.get("binding")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+                let id = obj.get("id")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                bindings.push(ServiceBinding {
+                    binding_type: "kv".to_string(),
+                    name,
+                    resource_id: id,
+                });
+            }
+        }
+    }
+    
+    // Parse D1 databases
+    if let Some(d1) = value.get("d1_databases").and_then(|v| v.as_array()) {
+        for db in d1 {
+            if let Some(obj) = db.as_table() {
+                let name = obj.get("binding")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+                let id = obj.get("database_id")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                bindings.push(ServiceBinding {
+                    binding_type: "d1".to_string(),
+                    name,
+                    resource_id: id,
+                });
+            }
+        }
+    }
+    
+    // Parse R2 buckets
+    if let Some(r2) = value.get("r2_buckets").and_then(|v| v.as_array()) {
+        for bucket in r2 {
+            if let Some(obj) = bucket.as_table() {
+                let name = obj.get("binding")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+                let id = obj.get("bucket_name")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                bindings.push(ServiceBinding {
+                    binding_type: "r2".to_string(),
+                    name,
+                    resource_id: id,
+                });
+            }
+        }
+    }
+    
+    // Parse service bindings
+    if let Some(services) = value.get("services").and_then(|v| v.as_array()) {
+        for svc in services {
+            if let Some(obj) = svc.as_table() {
+                let name = obj.get("binding")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown");
+                let service = obj.get("service")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(name);
+                service_bindings.push(service.to_string());
+                bindings.push(ServiceBinding {
+                    binding_type: "service".to_string(),
+                    name: name.to_string(),
+                    resource_id: Some(service.to_string()),
+                });
+            }
+        }
+    }
+    
+    // Parse Durable Objects
+    if let Some(durable) = value.get("durable_objects").and_then(|v| v.as_table()) {
+        if let Some(durable_bindings) = durable.get("bindings").and_then(|v| v.as_array()) {
+            for obj in durable_bindings {
+                if let Some(tbl) = obj.as_table() {
+                    let name = tbl.get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+                    let class = tbl.get("class_name")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    bindings.push(ServiceBinding {
+                        binding_type: "durable_object".to_string(),
+                        name,
+                        resource_id: class,
+                    });
+                }
+            }
+        }
+    }
+    
+    // Parse Queues
+    if let Some(queues) = value.get("queues").and_then(|v| v.as_table()) {
+        // Producer queues
+        if let Some(producers) = queues.get("producers").and_then(|v| v.as_array()) {
+            for q in producers {
+                if let Some(obj) = q.as_table() {
+                    let name = obj.get("binding")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+                    let queue = obj.get("queue")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    bindings.push(ServiceBinding {
+                        binding_type: "queue_producer".to_string(),
+                        name,
+                        resource_id: queue,
+                    });
+                }
+            }
+        }
+        // Consumer queues
+        if let Some(consumers) = queues.get("consumers").and_then(|v| v.as_array()) {
+            for q in consumers {
+                if let Some(obj) = q.as_table() {
+                    let queue = obj.get("queue")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+                    bindings.push(ServiceBinding {
+                        binding_type: "queue_consumer".to_string(),
+                        name: queue.clone(),
+                        resource_id: Some(queue),
+                    });
+                }
+            }
+        }
+    }
+    
+    // Parse tail consumers
+    if let Some(tail) = value.get("tail_consumers").and_then(|v| v.as_array()) {
+        for t in tail {
+            if let Some(obj) = t.as_table() {
+                let service = obj.get("service")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+                bindings.push(ServiceBinding {
+                    binding_type: "tail".to_string(),
+                    name: "tail".to_string(),
+                    resource_id: Some(service),
+                });
+            }
+        }
+    }
+    
+    // Calculate total connections
+    let total_connections = routes.len() as u32
+        + crons.len() as u32
+        + bindings.len() as u32
+        + custom_domains.len() as u32;
+    
+    if total_connections == 0 {
+        return None;
+    }
+    
+    Some(ArchitecturalConnections {
+        architecture_type: "cloudflare-worker".to_string(),
+        routes,
+        crons,
+        bindings,
+        service_bindings,
+        custom_domains,
+        total_connections,
     })
 }
 
@@ -216,7 +552,7 @@ fn find_importers_recursive(
 mod tests {
     use super::*;
     use tempfile::tempdir;
-    use std::fs::{File, create_dir};
+    use std::fs::File;
     use std::io::Write;
     
     #[test]
@@ -260,5 +596,85 @@ mod tests {
         
         // No incoming connections (nothing imports this)
         assert_eq!(evidence.incoming_connections, 0);
+        // No architectural connections either
+        assert!(evidence.architectural.is_none());
+    }
+    
+    #[test]
+    fn test_worker_with_architectural_connections() {
+        let dir = tempdir().unwrap();
+        
+        // Create package.json
+        File::create(dir.path().join("package.json")).unwrap()
+            .write_all(b"{}").unwrap();
+        
+        // Create wrangler.toml with routes and bindings
+        File::create(dir.path().join("wrangler.toml")).unwrap()
+            .write_all(br#"
+name = "my-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+routes = [
+    { pattern = "api.example.com/*", zone_name = "example.com" }
+]
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "abc123"
+
+[[d1_databases]]
+binding = "DB"
+database_id = "def456"
+
+[triggers]
+crons = ["0 * * * *"]
+"#).unwrap();
+        
+        // Create an isolated module (nothing imports it)
+        let worker = dir.path().join("src/index.ts");
+        std::fs::create_dir(dir.path().join("src")).unwrap();
+        File::create(&worker).unwrap()
+            .write_all(b"export default { fetch() {} }").unwrap();
+        
+        let evidence = analyze_connectivity(&worker).unwrap();
+        
+        // Should be connected despite no import connections
+        assert!(evidence.is_connected);
+        assert_eq!(evidence.incoming_connections, 0);
+        assert_eq!(evidence.outgoing_connections, 0);
+        
+        // Has architectural connections
+        let arch = evidence.architectural.expect("Should have architectural connections");
+        assert_eq!(arch.architecture_type, "cloudflare-worker");
+        assert_eq!(arch.routes.len(), 1);
+        assert_eq!(arch.crons.len(), 1);
+        assert_eq!(arch.bindings.len(), 2); // KV + D1
+        assert!(arch.total_connections >= 4);
+    }
+    
+    #[test]
+    fn test_worker_serves_whole() {
+        let dir = tempdir().unwrap();
+        
+        File::create(dir.path().join("package.json")).unwrap()
+            .write_all(b"{}").unwrap();
+        
+        // Minimal worker with just a route
+        File::create(dir.path().join("wrangler.toml")).unwrap()
+            .write_all(br#"
+name = "api-worker"
+route = "api.example.com/*"
+"#).unwrap();
+        
+        let worker = dir.path().join("index.ts");
+        File::create(&worker).unwrap()
+            .write_all(b"export default { fetch() {} }").unwrap();
+        
+        let evidence = analyze_connectivity(&worker).unwrap();
+        
+        // Should "serve the whole" with min 1 connection
+        assert!(evidence.serves_whole(1));
+        assert!(evidence.has_architectural_connections());
     }
 }

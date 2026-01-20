@@ -4,13 +4,15 @@
 //!
 //! Usage:
 //!   vt-audit [path] [--threshold 0.75] [--extensions ts,svelte]
+//!   vt-audit [path] --function-level  # Detect duplicate functions
 
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::collections::HashMap;
 use clap::Parser;
 use verified_triad::{VerifiedTriad, TriadThresholds};
-use verified_triad::exceptions::{ExceptionConfig, ExceptionMatch, check_exception, load_config, smart_threshold, detect_package_type};
+use verified_triad::exceptions::{ExceptionMatch, check_exception, load_config, smart_threshold};
+use verified_triad::computations::{analyze_function_dry, FunctionDryReport};
 
 #[derive(Parser)]
 #[command(name = "vt-audit")]
@@ -55,6 +57,10 @@ struct Cli {
     /// Use smart thresholds based on detected package type
     #[arg(long, short)]
     smart: bool,
+    
+    /// Analyze at function level (detects duplicate functions across files)
+    #[arg(long, short = 'f')]
+    function_level: bool,
 }
 
 #[derive(Debug)]
@@ -87,6 +93,12 @@ fn main() {
     
     // Parse extensions
     let extensions: Vec<&str> = cli.extensions.split(',').map(|s| s.trim()).collect();
+    
+    // If function-level analysis requested, run that instead
+    if cli.function_level {
+        run_function_level_analysis(&cli, &extensions);
+        return;
+    }
     
     println!("Verified Triad DRY Audit");
     println!("========================");
@@ -337,4 +349,115 @@ fn group_by_size(files: &[PathBuf]) -> HashMap<u64, Vec<PathBuf>> {
     groups.retain(|_, v| v.len() > 1);
     
     groups
+}
+
+/// Run function-level DRY analysis
+fn run_function_level_analysis(cli: &Cli, extensions: &[&str]) {
+    println!("Verified Triad FUNCTION-LEVEL DRY Audit");
+    println!("=======================================");
+    println!("Path: {}", cli.path.display());
+    println!("Threshold: {:.0}%", cli.threshold * 100.0);
+    println!("Extensions: {}", extensions.join(", "));
+    println!();
+    
+    // Collect files
+    let mut files: Vec<PathBuf> = Vec::new();
+    collect_files(&cli.path, extensions, cli.min_size, &mut files);
+    
+    if files.len() > cli.max_files {
+        println!("Found {} files, limiting to {} for performance", files.len(), cli.max_files);
+        files.truncate(cli.max_files);
+    } else {
+        println!("Found {} files to analyze", files.len());
+    }
+    
+    if files.is_empty() {
+        println!("No files found matching criteria.");
+        return;
+    }
+    
+    println!("\nExtracting and comparing functions...\n");
+    
+    // Run function-level analysis
+    let report = match analyze_function_dry(&files, cli.threshold) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Analysis failed: {}", e);
+            std::process::exit(1);
+        }
+    };
+    
+    // Report results
+    println!("========================================");
+    println!("FUNCTION-LEVEL DRY RESULTS");
+    println!("========================================\n");
+    
+    if report.duplicates.is_empty() {
+        println!("DUPLICATE FUNCTIONS: None found\n");
+    } else {
+        println!("DUPLICATE FUNCTIONS ({}):\n", report.duplicates.len());
+        
+        // Group by function name
+        let mut by_name: HashMap<String, Vec<_>> = HashMap::new();
+        for dup in &report.duplicates {
+            by_name.entry(dup.function_name.clone())
+                .or_default()
+                .push(dup);
+        }
+        
+        let mut idx = 1;
+        for (func_name, dups) in by_name.iter() {
+            println!("  {}. Function '{}' duplicated in {} places:", idx, func_name, dups.len() + 1);
+            
+            // Collect all unique files
+            let mut files_set = std::collections::HashSet::new();
+            for dup in dups {
+                files_set.insert(&dup.file_a);
+                files_set.insert(&dup.file_b);
+            }
+            
+            for file in files_set {
+                // Find line info
+                let line_info = dups.iter()
+                    .find_map(|d| {
+                        if &d.file_a == file {
+                            Some((d.function_a.start_line, d.function_a.end_line))
+                        } else if &d.file_b == file {
+                            Some((d.function_b.start_line, d.function_b.end_line))
+                        } else {
+                            None
+                        }
+                    });
+                
+                if let Some((start, end)) = line_info {
+                    println!("     - {} (lines {}-{})", file.display(), start, end);
+                } else {
+                    println!("     - {}", file.display());
+                }
+            }
+            
+            // Show similarity
+            if let Some(dup) = dups.first() {
+                println!("     Similarity: {:.1}%", dup.similarity * 100.0);
+            }
+            println!();
+            idx += 1;
+        }
+    }
+    
+    // Summary
+    println!("========================================");
+    println!("SUMMARY");
+    println!("========================================");
+    println!("  Files analyzed:       {}", files.len());
+    println!("  Functions extracted:  {}", report.total_functions);
+    println!("  Duplicate functions:  {}", report.duplicates.len());
+    
+    if !report.duplicates.is_empty() {
+        println!("\nRECOMMENDATION:");
+        println!("  Extract duplicate functions to a shared module.");
+        println!("  Example: packages/shared/src/lib/bd-client.ts");
+        
+        std::process::exit(1);
+    }
 }
