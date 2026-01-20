@@ -353,6 +353,46 @@
 						stroke-width="1"
 					/>
 
+					<!-- Amenities: Food stands (4 corners) -->
+					<g class="food-stands">
+						<g transform="translate(150, 150)">
+							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
+						</g>
+						<g transform="translate(650, 150)">
+							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
+						</g>
+						<g transform="translate(150, 450)">
+							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
+						</g>
+						<g transform="translate(650, 450)">
+							<rect x="-20" y="-15" width="40" height="30" rx="4" fill="rgba(255,180,50,0.15)" stroke="rgba(255,180,50,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(255,180,50,0.5)" font-size="8" font-family="system-ui">FOOD</text>
+						</g>
+					</g>
+
+					<!-- Amenities: Restrooms (near N/S gates) -->
+					<g class="restrooms">
+						<g transform="translate(300, 80)">
+							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
+						</g>
+						<g transform="translate(500, 80)">
+							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
+						</g>
+						<g transform="translate(300, 520)">
+							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
+						</g>
+						<g transform="translate(500, 520)">
+							<rect x="-18" y="-12" width="36" height="24" rx="3" fill="rgba(100,150,255,0.15)" stroke="rgba(100,150,255,0.4)" stroke-width="1" />
+							<text x="0" y="4" text-anchor="middle" fill="rgba(100,150,255,0.5)" font-size="7" font-family="system-ui">WC</text>
+						</g>
+					</g>
+
 					<!-- Court / Main Floor -->
 					<rect
 						x="300" y="220"

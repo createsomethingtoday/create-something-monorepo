@@ -10,6 +10,16 @@
 
 import type { ScenarioEffect } from '../living-arena/arenaTypes';
 import { getScenarioTargets, getWallSegments, type WallSegment } from './arenaGeometry';
+import {
+	type AgentDirectiveState,
+	type EventPhaseType,
+	Directive,
+	EventPhase,
+	initializeAgentDirectives,
+	updateDirective,
+	getDirectiveTarget,
+	getInitialPosition
+} from './agentDirectives';
 
 // Import shaders as raw text
 import crowdShaderSource from './shaders/crowd.wgsl?raw';
@@ -144,6 +154,13 @@ export class CrowdSimulation {
 	private deltaTime: number = 1 / 60;
 	private isRunning = false;
 	private animationFrameId: number | null = null;
+
+	// Directive system
+	private agentDirectives: AgentDirectiveState[] = [];
+	private currentEventPhase: EventPhaseType = EventPhase.PRE_EVENT;
+	private directiveUpdateTimer = 0;
+	private directiveUpdateInterval = 0.1; // Update directives every 100ms
+	private useDirectiveSystem = true; // Enable new directive system
 
 	constructor(webgpu: WebGPUContext, config: Partial<SimulationConfig> = {}) {
 		this.device = webgpu.device;
@@ -349,33 +366,46 @@ export class CrowdSimulation {
 	}
 
 	/**
-	 * Initialize agents with random positions based on scenario
+	 * Initialize agents with directive-based positions and goals
 	 */
 	private initializeAgents(): void {
-		const { agentCount, arenaWidth, arenaHeight } = this.config;
+		const { agentCount } = this.config;
 		const agentData = new Float32Array(agentCount * 8);
 
-		// Initial positions spread around the arena
+		// Initialize directive states for all agents
+		this.agentDirectives = initializeAgentDirectives(agentCount, this.currentEventPhase);
+
+		// Set up agents based on their directives
 		for (let i = 0; i < agentCount; i++) {
 			const idx = i * 8;
+			const directive = this.agentDirectives[i];
 
-			// Random position within arena bounds (with padding)
-			const angle = Math.random() * Math.PI * 2;
-			const radius = 100 + Math.random() * 200;
-			agentData[idx + 0] = arenaWidth / 2 + Math.cos(angle) * radius; // x
-			agentData[idx + 1] = arenaHeight / 2 + Math.sin(angle) * radius; // y
+			// Position based on directive
+			const pos = getInitialPosition(directive);
+			agentData[idx + 0] = pos.x;
+			agentData[idx + 1] = pos.y;
 
-			// Initial velocity (stationary)
-			agentData[idx + 2] = 0; // vx
-			agentData[idx + 3] = 0; // vy
+			// Initial velocity (small random)
+			agentData[idx + 2] = (Math.random() - 0.5) * 0.3;
+			agentData[idx + 3] = (Math.random() - 0.5) * 0.3;
 
-			// Target (will be set by scenario)
-			agentData[idx + 4] = arenaWidth / 2; // targetX
-			agentData[idx + 5] = arenaHeight / 2; // targetY
+			// Target based on directive
+			const target = getDirectiveTarget(directive);
+			agentData[idx + 4] = target.x;
+			agentData[idx + 5] = target.y;
 
-			// State and group
-			agentData[idx + 6] = AgentState.CALM; // state (as float, will be cast in shader)
-			agentData[idx + 7] = Math.floor(Math.random() * 8); // group_id
+			// State based on directive
+			let state = AgentState.CALM;
+			if (
+				directive.directive === Directive.GOING_TO_RESTROOM ||
+				directive.directive === Directive.GOING_TO_FOOD
+			) {
+				state = AgentState.CROWDED; // Slightly hurried
+			}
+			agentData[idx + 6] = state;
+
+			// Store directive type in group_id slot for visualization
+			agentData[idx + 7] = directive.directive;
 		}
 
 		this.device.queue.writeBuffer(this.agentBuffer, 0, agentData);
@@ -481,10 +511,88 @@ export class CrowdSimulation {
 	}
 
 	/**
+	 * Update agent directives and sync targets to GPU
+	 */
+	private updateAgentDirectives(): void {
+		if (!this.useDirectiveSystem || this.agentDirectives.length === 0) return;
+
+		const { agentCount } = this.config;
+
+		// Create buffer for target updates only (positions 4,5 in each agent's data)
+		// We'll batch update targets for agents whose directives changed
+		const targetsToUpdate: Array<{ index: number; x: number; y: number; state: number }> = [];
+
+		for (let i = 0; i < agentCount; i++) {
+			const oldDirective = this.agentDirectives[i].directive;
+
+			// Update directive state
+			this.agentDirectives[i] = updateDirective(
+				this.agentDirectives[i],
+				this.currentEventPhase,
+				this.directiveUpdateInterval
+			);
+
+			const newDirective = this.agentDirectives[i].directive;
+
+			// If directive changed, update target
+			if (oldDirective !== newDirective) {
+				const target = getDirectiveTarget(this.agentDirectives[i]);
+				let state = AgentState.CALM;
+
+				// Set state based on directive
+				if (
+					newDirective === Directive.GOING_TO_RESTROOM ||
+					newDirective === Directive.GOING_TO_FOOD ||
+					newDirective === Directive.EXITING
+				) {
+					state = AgentState.CROWDED;
+				} else if (newDirective === Directive.ARRIVING || newDirective === Directive.ENTERING) {
+					state = AgentState.CALM;
+				}
+
+				targetsToUpdate.push({ index: i, x: target.x, y: target.y, state });
+			}
+		}
+
+		// Batch update targets in GPU buffer
+		if (targetsToUpdate.length > 0) {
+			// For efficiency, update targets in small batches
+			const updateData = new Float32Array(targetsToUpdate.length * 4); // x, y, state, directive
+			targetsToUpdate.forEach((update, i) => {
+				const offset = i * 4;
+				updateData[offset + 0] = update.x;
+				updateData[offset + 1] = update.y;
+				updateData[offset + 2] = update.state;
+				updateData[offset + 3] = this.agentDirectives[update.index].directive;
+			});
+
+			// Update each agent's target individually (GPU writes are small anyway)
+			targetsToUpdate.forEach((update) => {
+				const agentOffset = update.index * 8 * 4; // 8 floats per agent, 4 bytes per float
+				const targetData = new Float32Array([
+					update.x,
+					update.y,
+					update.state,
+					this.agentDirectives[update.index].directive
+				]);
+				// Write target (offset 4,5), state (offset 6), directive (offset 7)
+				this.device.queue.writeBuffer(this.agentBuffer, agentOffset + 4 * 4, targetData);
+			});
+		}
+	}
+
+	/**
 	 * Main animation loop
 	 */
 	private loop = (): void => {
 		if (!this.isRunning) return;
+
+		// Update directives periodically (not every frame)
+		this.directiveUpdateTimer += this.deltaTime;
+		if (this.directiveUpdateTimer >= this.directiveUpdateInterval) {
+			this.updateAgentDirectives();
+			this.directiveUpdateTimer = 0;
+		}
 
 		this.simulate();
 		this.render();
@@ -518,14 +626,60 @@ export class CrowdSimulation {
 	setScenario(scenarioIndex: number, effect: ScenarioEffect): void {
 		this.currentScenario = scenarioIndex;
 
-		// Scale agent count based on attendance
-		const scaledCount = Math.min(
-			this.config.agentCount,
-			Math.floor(effect.attendance / 2) // Show half as many agents as attendance
-		);
+		// Map scenario to event phase for directive system
+		const phaseMap: Record<number, EventPhaseType> = {
+			0: EventPhase.PRE_EVENT, // Gate crowding - entering
+			1: EventPhase.EVENT_START, // VIP arrival
+			2: EventPhase.HALFTIME, // Halftime - dispersing
+			3: EventPhase.SECOND_HALF, // Weather - sheltering (treat as second half)
+			4: EventPhase.EVENT_END, // Emergency - evacuating (triggers exit)
+			5: EventPhase.EVENT_END, // Game end - exiting
+			6: EventPhase.POST_EVENT // Overnight - maintenance
+		};
 
-		// Redistribute agents based on scenario
-		this.redistributeAgents(effect, scaledCount);
+		const newPhase = phaseMap[scenarioIndex] ?? EventPhase.EVENT_START;
+
+		// If phase changed significantly, reinitialize directives
+		if (this.currentEventPhase !== newPhase) {
+			this.currentEventPhase = newPhase;
+
+			// Reinitialize agent directives for new phase
+			const { agentCount } = this.config;
+			this.agentDirectives = initializeAgentDirectives(agentCount, newPhase);
+
+			// Update all agents with new directive-based positions and targets
+			const agentData = new Float32Array(agentCount * 8);
+			for (let i = 0; i < agentCount; i++) {
+				const idx = i * 8;
+				const directive = this.agentDirectives[i];
+
+				const pos = getInitialPosition(directive);
+				agentData[idx + 0] = pos.x;
+				agentData[idx + 1] = pos.y;
+
+				agentData[idx + 2] = (Math.random() - 0.5) * 0.3;
+				agentData[idx + 3] = (Math.random() - 0.5) * 0.3;
+
+				const target = getDirectiveTarget(directive);
+				agentData[idx + 4] = target.x;
+				agentData[idx + 5] = target.y;
+
+				let state = AgentState.CALM;
+				if (
+					directive.directive === Directive.EXITING ||
+					directive.directive === Directive.GOING_TO_RESTROOM
+				) {
+					state = AgentState.CROWDED;
+				}
+				if (effect.crowdFlow === 'evacuating') {
+					state = AgentState.PANICKED;
+				}
+				agentData[idx + 6] = state;
+				agentData[idx + 7] = directive.directive;
+			}
+
+			this.device.queue.writeBuffer(this.agentBuffer, 0, agentData);
+		}
 	}
 
 	/**
