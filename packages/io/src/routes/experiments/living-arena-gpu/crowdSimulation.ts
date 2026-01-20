@@ -523,9 +523,9 @@ export class CrowdSimulation {
 		const { agentCount, arenaWidth, arenaHeight } = this.config;
 		const agentData = new Float32Array(agentCount * 8);
 
-		// Get targets from scenario (these use 1200x900 coordinate system)
+		// Get targets from scenario (these use 1200x900 coordinate system from arenaGeometry.ts)
 		const targets = getScenarioTargets(this.currentScenario);
-		// Scale factors from original coordinate system to current arena
+		// Scale factors from arenaGeometry coordinate system (1200x900) to our arena (800x600)
 		const ORIG_WIDTH = 1200;
 		const ORIG_HEIGHT = 900;
 		const scaleX = arenaWidth / ORIG_WIDTH;
@@ -580,38 +580,39 @@ export class CrowdSimulation {
 
 	/**
 	 * Get spawn position based on crowd flow type
-	 * All positions are proportional to arena dimensions
+	 * Uses 800x600 arena coordinates matching original Living Arena
+	 * Arena ellipse: cx=400, cy=300, rx=380, ry=280
 	 */
 	private getSpawnPosition(
 		crowdFlow: string,
 		arenaWidth: number,
 		arenaHeight: number
 	): { x: number; y: number } {
-		const centerX = arenaWidth / 2;
-		const centerY = arenaHeight / 2;
-		// Arena ellipse radii (matching SVG overlay: rx=42%, ry=38%)
-		const arenaRx = arenaWidth * 0.42;
-		const arenaRy = arenaHeight * 0.38;
+		// Arena center and ellipse radii (matching original SVG)
+		const centerX = 400;
+		const centerY = 300;
+		const arenaRx = 380;
+		const arenaRy = 280;
 
 		switch (crowdFlow) {
 			case 'entering':
-				// Spawn from north gate area
+				// Spawn from north gate area (top of arena)
 				return {
-					x: centerX + (Math.random() - 0.5) * arenaWidth * 0.3,
-					y: centerY - arenaRy + Math.random() * arenaRy * 0.3
+					x: centerX + (Math.random() - 0.5) * 200,
+					y: 30 + Math.random() * 50
 				};
 
 			case 'vip':
 				// Spawn from south VIP entrance
 				return {
-					x: centerX + (Math.random() - 0.5) * arenaWidth * 0.1,
-					y: centerY + arenaRy * 0.8 + Math.random() * arenaRy * 0.2
+					x: centerX + (Math.random() - 0.5) * 80,
+					y: 550 + Math.random() * 40
 				};
 
 			case 'dispersing':
 				// Start from seating area (within arena ellipse)
 				const angle = Math.random() * Math.PI * 2;
-				const radiusFactor = 0.3 + Math.random() * 0.5; // 30-80% of arena radius
+				const radiusFactor = 0.4 + Math.random() * 0.5; // 40-90% of arena radius
 				return {
 					x: centerX + Math.cos(angle) * arenaRx * radiusFactor,
 					y: centerY + Math.sin(angle) * arenaRy * radiusFactor
@@ -620,21 +621,23 @@ export class CrowdSimulation {
 			case 'sheltering':
 				// Spread across arena interior
 				const shAngle = Math.random() * Math.PI * 2;
-				const shRadius = Math.random() * 0.7; // Up to 70% of arena radius
+				const shRadius = 0.2 + Math.random() * 0.6; // 20-80% of arena radius
 				return {
 					x: centerX + Math.cos(shAngle) * arenaRx * shRadius,
 					y: centerY + Math.sin(shAngle) * arenaRy * shRadius
 				};
 
 			case 'evacuating':
-				// Start from section 112 area (right-bottom quadrant)
+				// Start from section 112 area (right side of arena)
+				const evAngle = (Math.random() - 0.5) * Math.PI * 0.5 + Math.PI * 0.25; // Right quadrant
+				const evRadius = 0.4 + Math.random() * 0.4;
 				return {
-					x: centerX + arenaRx * (0.2 + Math.random() * 0.4),
-					y: centerY + arenaRy * (0.1 + Math.random() * 0.4)
+					x: centerX + Math.cos(evAngle) * arenaRx * evRadius,
+					y: centerY + Math.sin(evAngle) * arenaRy * evRadius
 				};
 
 			case 'exiting':
-				// Start from seats (full arena)
+				// Start from seats (throughout arena)
 				const exitAngle = Math.random() * Math.PI * 2;
 				const exitRadius = 0.3 + Math.random() * 0.5;
 				return {
@@ -644,12 +647,10 @@ export class CrowdSimulation {
 
 			case 'empty':
 			default:
-				// Few maintenance workers scattered
-				const emptyAngle = Math.random() * Math.PI * 2;
-				const emptyRadius = Math.random() * 0.6;
+				// Few maintenance workers in court area
 				return {
-					x: centerX + Math.cos(emptyAngle) * arenaRx * emptyRadius,
-					y: centerY + Math.sin(emptyAngle) * arenaRy * emptyRadius
+					x: 300 + Math.random() * 200,
+					y: 220 + Math.random() * 160
 				};
 		}
 	}

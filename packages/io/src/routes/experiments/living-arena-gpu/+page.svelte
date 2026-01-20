@@ -109,13 +109,13 @@
 			console.log('[WebGPU] Context initialized');
 
 			// Create and start simulation
-			// Use canvas dimensions for arena to ensure proper mapping
+			// Use 800x600 arena space to match original Living Arena
 			simulation = new CrowdSimulation(webgpuContext, {
 				agentCount,
 				canvasWidth: canvas.width,
 				canvasHeight: canvas.height,
-				arenaWidth: canvas.width,
-				arenaHeight: canvas.height
+				arenaWidth: 800,
+				arenaHeight: 600
 			});
 
 			await simulation.initialize();
@@ -313,39 +313,97 @@
 			<div class="canvas-container">
 				<canvas bind:this={canvasElement} class="simulation-canvas"></canvas>
 				
-				<!-- Arena overlay - shows the arena boundaries -->
-				<svg class="arena-overlay" viewBox="0 0 100 75" preserveAspectRatio="xMidYMid slice">
-					<!-- Arena ellipse (rx=42%, ry=38% matches spawn positions) -->
-					<ellipse 
-						cx="50" cy="37.5" 
-						rx="42" ry="28.5" 
-						fill="none" 
-						stroke="rgba(255,255,255,0.2)" 
-						stroke-width="0.3"
-						stroke-dasharray="2 1"
+				<!-- Arena overlay - matches original Living Arena SVG structure -->
+				<svg class="arena-overlay" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
+					<defs>
+						<radialGradient id="court-glow-gpu" cx="50%" cy="50%" r="50%">
+							<stop offset="0%" stop-color="var(--color-accent, #3b82f6)" stop-opacity="0.2" />
+							<stop offset="100%" stop-color="var(--color-accent, #3b82f6)" stop-opacity="0" />
+						</radialGradient>
+					</defs>
+
+					<!-- Arena outer ring -->
+					<ellipse
+						cx="400" cy="300"
+						rx="380" ry="280"
+						fill="none"
+						stroke="rgba(255,255,255,0.15)"
+						stroke-width="2"
 					/>
-					<!-- Inner court area (center rectangle) -->
-					<rect 
-						x="38" y="28" 
-						width="24" height="19" 
-						fill="rgba(0,0,0,0.3)" 
-						stroke="rgba(255,255,255,0.15)" 
-						stroke-width="0.2"
-						rx="1"
-					/>
-					<!-- Gate markers (at edge of ellipse) -->
-					<g stroke="rgba(100,200,100,0.4)" stroke-width="0.8">
-						<line x1="50" y1="9" x2="50" y2="12" />
-						<line x1="50" y1="63" x2="50" y2="66" />
-						<line x1="8" y1="37.5" x2="11" y2="37.5" />
-						<line x1="89" y1="37.5" x2="92" y2="37.5" />
+
+					<!-- Seating section dividers -->
+					<g stroke="rgba(255,255,255,0.08)" stroke-width="1">
+						{#each Array(12) as _, i}
+							{@const angle = (i * 30 * Math.PI) / 180}
+							<line
+								x1={400 + Math.cos(angle) * 180}
+								y1={300 + Math.sin(angle) * 130}
+								x2={400 + Math.cos(angle) * 370}
+								y2={300 + Math.sin(angle) * 270}
+							/>
+						{/each}
 					</g>
-					<!-- Gate labels -->
-					<g fill="rgba(255,255,255,0.25)" font-size="4" font-family="system-ui, sans-serif">
-						<text x="50" y="6" text-anchor="middle">N</text>
-						<text x="50" y="72" text-anchor="middle">S</text>
-						<text x="4" y="38.5" text-anchor="middle">W</text>
-						<text x="96" y="38.5" text-anchor="middle">E</text>
+
+					<!-- Inner bowl ring -->
+					<ellipse
+						cx="400" cy="300"
+						rx="180" ry="130"
+						fill="none"
+						stroke="rgba(255,255,255,0.1)"
+						stroke-width="1"
+					/>
+
+					<!-- Court / Main Floor -->
+					<rect
+						x="300" y="220"
+						width="200" height="160"
+						rx="4"
+						fill="rgba(0,0,0,0.4)"
+						stroke="rgba(255,255,255,0.2)"
+						stroke-width="2"
+					/>
+
+					<!-- Court glow -->
+					<rect
+						x="280" y="200"
+						width="240" height="200"
+						fill="url(#court-glow-gpu)"
+					/>
+
+					<!-- Court markings -->
+					<g stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="none">
+						<rect x="310" y="230" width="180" height="140" rx="2" />
+						<circle cx="400" cy="300" r="20" />
+						<line x1="400" y1="230" x2="400" y2="370" />
+					</g>
+
+					<!-- Gate markers -->
+					<g>
+						<!-- North gate -->
+						<rect x="370" y="15" width="60" height="15" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
+						<text x="400" y="8" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="14" font-family="system-ui">NORTH ENTRANCE</text>
+						
+						<!-- South gate -->
+						<rect x="370" y="570" width="60" height="15" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
+						<text x="400" y="598" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="14" font-family="system-ui">SOUTH ENTRANCE</text>
+						
+						<!-- West gate -->
+						<rect x="15" y="285" width="15" height="30" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
+						<text x="8" y="300" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="12" font-family="system-ui" writing-mode="vertical-rl">WEST</text>
+						
+						<!-- East gate -->
+						<rect x="770" y="285" width="15" height="30" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
+						<text x="792" y="300" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="12" font-family="system-ui" writing-mode="vertical-rl">EAST</text>
+					</g>
+
+					<!-- Section labels -->
+					<g fill="rgba(255,255,255,0.15)" font-size="10" font-family="system-ui">
+						{#each Array(12) as _, i}
+							{@const angle = ((i * 30 - 90) * Math.PI) / 180}
+							{@const x = 400 + Math.cos(angle) * 280}
+							{@const y = 300 + Math.sin(angle) * 200}
+							<text x={x} y={y} text-anchor="middle" dominant-baseline="middle">{100 + i}</text>
+						{/each}
 					</g>
 				</svg>
 
