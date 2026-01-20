@@ -377,23 +377,46 @@
 						<line x1="400" y1="230" x2="400" y2="370" />
 					</g>
 
+					<!-- Entry corridors/hallways -->
+					<g class="corridors">
+						<!-- North corridor -->
+						<rect x="360" y="0" width="80" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
+						<line x1="360" y1="0" x2="360" y2="50" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+						<line x1="440" y1="0" x2="440" y2="50" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+						
+						<!-- South corridor -->
+						<rect x="360" y="550" width="80" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
+						<line x1="360" y1="550" x2="360" y2="600" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+						<line x1="440" y1="550" x2="440" y2="600" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+						
+						<!-- West corridor -->
+						<rect x="0" y="275" width="50" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
+						<line x1="0" y1="275" x2="50" y2="275" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+						<line x1="0" y1="325" x2="50" y2="325" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+						
+						<!-- East corridor -->
+						<rect x="750" y="275" width="50" height="50" fill="rgba(40,60,40,0.4)" stroke="rgba(100,200,100,0.2)" stroke-width="1" />
+						<line x1="750" y1="275" x2="800" y2="275" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+						<line x1="750" y1="325" x2="800" y2="325" stroke="rgba(100,200,100,0.3)" stroke-width="1" stroke-dasharray="4 2" />
+					</g>
+
 					<!-- Gate markers -->
 					<g>
 						<!-- North gate -->
-						<rect x="370" y="15" width="60" height="15" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
-						<text x="400" y="8" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="14" font-family="system-ui">NORTH ENTRANCE</text>
+						<rect x="365" y="15" width="70" height="20" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
+						<text x="400" y="6" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="12" font-family="system-ui">NORTH ENTRANCE</text>
 						
 						<!-- South gate -->
-						<rect x="370" y="570" width="60" height="15" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
-						<text x="400" y="598" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="14" font-family="system-ui">SOUTH ENTRANCE</text>
+						<rect x="365" y="565" width="70" height="20" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
+						<text x="400" y="598" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="12" font-family="system-ui">SOUTH ENTRANCE</text>
 						
 						<!-- West gate -->
-						<rect x="15" y="285" width="15" height="30" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
-						<text x="8" y="300" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="12" font-family="system-ui" writing-mode="vertical-rl">WEST</text>
+						<rect x="15" y="280" width="20" height="40" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
+						<text x="6" y="304" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10" font-family="system-ui" writing-mode="vertical-rl">WEST</text>
 						
 						<!-- East gate -->
-						<rect x="770" y="285" width="15" height="30" rx="2" fill="rgba(100,200,100,0.2)" stroke="rgba(100,200,100,0.4)" stroke-width="1" />
-						<text x="792" y="300" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="12" font-family="system-ui" writing-mode="vertical-rl">EAST</text>
+						<rect x="765" y="280" width="20" height="40" rx="3" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.5)" stroke-width="1.5" />
+						<text x="795" y="304" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10" font-family="system-ui" writing-mode="vertical-rl">EAST</text>
 					</g>
 
 					<!-- Section labels -->

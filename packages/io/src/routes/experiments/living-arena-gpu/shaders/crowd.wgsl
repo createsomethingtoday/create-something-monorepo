@@ -31,6 +31,11 @@ struct Uniforms {
     wallCount: f32,
     targetCount: f32,
     scenario: f32,
+    // Ellipse parameters for arena boundary
+    arenaCenterX: f32,
+    arenaCenterY: f32,
+    arenaRx: f32,
+    arenaRy: f32,
 }
 
 struct Wall {
@@ -235,19 +240,92 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
     }
     
-    // 4. Arena boundary force
-    let margin = 20.0;
-    if (pos.x < margin) {
-        totalForce.x += uniforms.wallStrength * (margin - pos.x) / margin;
+    // 4. Elliptical arena boundary force with gate openings
+    let centerX = uniforms.arenaCenterX;
+    let centerY = uniforms.arenaCenterY;
+    let rx = uniforms.arenaRx;
+    let ry = uniforms.arenaRy;
+    
+    // Gate definitions (angular positions and widths in radians)
+    // North gate: top center (angle ~= -PI/2)
+    // South gate: bottom center (angle ~= PI/2)
+    // East gate: right center (angle ~= 0)
+    // West gate: left center (angle ~= PI)
+    let gateWidth = 0.15; // Angular width of gates in radians
+    
+    // Calculate angle from center to agent
+    let agentAngle = atan2(pos.y - centerY, pos.x - centerX);
+    
+    // Check if agent is near a gate (allow passage)
+    let nearNorthGate = abs(agentAngle - (-1.5708)) < gateWidth; // -PI/2
+    let nearSouthGate = abs(agentAngle - 1.5708) < gateWidth;     // PI/2
+    let nearEastGate = abs(agentAngle) < gateWidth;               // 0
+    let nearWestGate = abs(abs(agentAngle) - 3.1416) < gateWidth; // PI or -PI
+    let nearGate = nearNorthGate || nearSouthGate || nearEastGate || nearWestGate;
+    
+    // Normalized distance from center (1.0 = on ellipse edge)
+    let dx = (pos.x - centerX) / rx;
+    let dy = (pos.y - centerY) / ry;
+    let ellipseDist = sqrt(dx * dx + dy * dy);
+    
+    // Apply boundary force when approaching edge (but not near gates)
+    let boundaryThreshold = 0.85;
+    if (ellipseDist > boundaryThreshold && !nearGate) {
+        // Direction from center (normalized)
+        let toCenter = vec2<f32>(centerX - pos.x, centerY - pos.y);
+        let toCenterLen = length(toCenter);
+        if (toCenterLen > 0.001) {
+            let pushDir = toCenter / toCenterLen;
+            // Force increases exponentially as we approach edge
+            let penetration = (ellipseDist - boundaryThreshold) / (1.0 - boundaryThreshold);
+            let boundaryForce = uniforms.wallStrength * 3.0 * penetration * penetration;
+            totalForce += pushDir * boundaryForce;
+        }
     }
-    if (pos.x > uniforms.arenaWidth - margin) {
-        totalForce.x -= uniforms.wallStrength * (pos.x - (uniforms.arenaWidth - margin)) / margin;
+    
+    // Create "hallway" walls for gates - guide agents through corridors
+    // North hallway (vertical corridor at top)
+    if (pos.y < centerY - ry * 0.7 && !nearNorthGate) {
+        let hallwayCenter = centerX;
+        let hallwayHalfWidth = 40.0;
+        if (pos.x < hallwayCenter - hallwayHalfWidth) {
+            totalForce.x += uniforms.wallStrength * 2.0;
+        } else if (pos.x > hallwayCenter + hallwayHalfWidth) {
+            totalForce.x -= uniforms.wallStrength * 2.0;
+        }
     }
-    if (pos.y < margin) {
-        totalForce.y += uniforms.wallStrength * (margin - pos.y) / margin;
+    
+    // South hallway (vertical corridor at bottom)
+    if (pos.y > centerY + ry * 0.7 && !nearSouthGate) {
+        let hallwayCenter = centerX;
+        let hallwayHalfWidth = 40.0;
+        if (pos.x < hallwayCenter - hallwayHalfWidth) {
+            totalForce.x += uniforms.wallStrength * 2.0;
+        } else if (pos.x > hallwayCenter + hallwayHalfWidth) {
+            totalForce.x -= uniforms.wallStrength * 2.0;
+        }
     }
-    if (pos.y > uniforms.arenaHeight - margin) {
-        totalForce.y -= uniforms.wallStrength * (pos.y - (uniforms.arenaHeight - margin)) / margin;
+    
+    // West hallway (horizontal corridor at left)
+    if (pos.x < centerX - rx * 0.85 && !nearWestGate) {
+        let hallwayCenter = centerY;
+        let hallwayHalfWidth = 25.0;
+        if (pos.y < hallwayCenter - hallwayHalfWidth) {
+            totalForce.y += uniforms.wallStrength * 2.0;
+        } else if (pos.y > hallwayCenter + hallwayHalfWidth) {
+            totalForce.y -= uniforms.wallStrength * 2.0;
+        }
+    }
+    
+    // East hallway (horizontal corridor at right)
+    if (pos.x > centerX + rx * 0.85 && !nearEastGate) {
+        let hallwayCenter = centerY;
+        let hallwayHalfWidth = 25.0;
+        if (pos.y < hallwayCenter - hallwayHalfWidth) {
+            totalForce.y += uniforms.wallStrength * 2.0;
+        } else if (pos.y > hallwayCenter + hallwayHalfWidth) {
+            totalForce.y -= uniforms.wallStrength * 2.0;
+        }
     }
     
     // ============================================
@@ -309,9 +387,36 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     // Update position
     var newPos = pos + vel * uniforms.deltaTime * 60.0; // Scale for visible movement
     
-    // Clamp to arena bounds
-    newPos.x = clamp(newPos.x, 0.0, uniforms.arenaWidth);
-    newPos.y = clamp(newPos.y, 0.0, uniforms.arenaHeight);
+    // Check if new position is near a gate
+    let newAngle = atan2(newPos.y - centerY, newPos.x - centerX);
+    let newNearNorthGate = abs(newAngle - (-1.5708)) < gateWidth * 1.5;
+    let newNearSouthGate = abs(newAngle - 1.5708) < gateWidth * 1.5;
+    let newNearEastGate = abs(newAngle) < gateWidth * 1.5;
+    let newNearWestGate = abs(abs(newAngle) - 3.1416) < gateWidth * 1.5;
+    let newNearGate = newNearNorthGate || newNearSouthGate || newNearEastGate || newNearWestGate;
+    
+    // Clamp to elliptical arena bounds (with extended area near gates)
+    let newDx = (newPos.x - centerX) / rx;
+    let newDy = (newPos.y - centerY) / ry;
+    let newEllipseDist = sqrt(newDx * newDx + newDy * newDy);
+    
+    // Allow agents to go slightly beyond ellipse at gates (for entry/exit corridors)
+    let maxDist = select(0.98, 1.3, newNearGate);
+    
+    // If outside allowed area, project back
+    if (newEllipseDist > maxDist) {
+        let angle = atan2(newPos.y - centerY, newPos.x - centerX);
+        let clampDist = select(0.97, 1.25, newNearGate);
+        newPos.x = centerX + cos(angle) * rx * clampDist;
+        newPos.y = centerY + sin(angle) * ry * clampDist;
+        
+        // Dampen velocity when hitting boundary
+        vel = vel * 0.5;
+    }
+    
+    // Final bounds check for entire arena area
+    newPos.x = clamp(newPos.x, 10.0, uniforms.arenaWidth - 10.0);
+    newPos.y = clamp(newPos.y, 10.0, uniforms.arenaHeight - 10.0);
     
     // Write back
     setPosition(idx, newPos);

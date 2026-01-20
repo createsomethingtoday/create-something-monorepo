@@ -185,9 +185,10 @@ export class CrowdSimulation {
 
 		// Uniform buffer for simulation parameters
 		// deltaTime(1) + agentCount(1) + arenaSize(2) + goalStrength(1) + separationStrength(1) +
-		// wallStrength(1) + maxSpeed(1) + panicRadius(1) + wallCount(1) + targetCount(1) + scenario(1) = 12 floats
+		// wallStrength(1) + maxSpeed(1) + panicRadius(1) + wallCount(1) + targetCount(1) + scenario(1) +
+		// ellipse params: centerX(1) + centerY(1) + rx(1) + ry(1) = 16 floats
 		this.uniformBuffer = this.device.createBuffer({
-			size: 12 * 4,
+			size: 16 * 4,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 			label: 'Uniform Buffer'
 		});
@@ -386,6 +387,12 @@ export class CrowdSimulation {
 	private updateUniforms(): void {
 		const walls = getWallSegments();
 
+		// Arena ellipse parameters (matching overlay: center 400,300, rx=380, ry=280)
+		const arenaCenterX = 400;
+		const arenaCenterY = 300;
+		const arenaRx = 380;
+		const arenaRy = 280;
+
 		const uniformData = new Float32Array([
 			this.deltaTime,
 			this.config.agentCount,
@@ -398,7 +405,12 @@ export class CrowdSimulation {
 			this.config.panicSpreadRadius,
 			walls.length,
 			0, // targetCount (unused, targets are per-agent)
-			this.currentScenario
+			this.currentScenario,
+			// Ellipse parameters
+			arenaCenterX,
+			arenaCenterY,
+			arenaRx,
+			arenaRy
 		]);
 
 		this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
