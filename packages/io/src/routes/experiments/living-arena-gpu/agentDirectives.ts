@@ -139,6 +139,18 @@ function getCourtPosition(teamId: number, playerIndex: number): { x: number; y: 
 	const centerX = court.centerX;
 	const centerY = court.centerY;
 	
+	// Handle staff (teamId = 2) - they have fixed positions
+	if (teamId === 2 || teamId > 1) {
+		// Staff positions (refs, officials)
+		const staffPositions = [
+			{ x: centerX, y: centerY - 50 }, // Lead ref
+			{ x: centerX - 40, y: centerY + 20 }, // Trail ref
+			{ x: centerX + 40, y: centerY + 20 }, // Slot ref
+			{ x: centerX, y: centerY + 85 } // Scorer's table
+		];
+		return staffPositions[playerIndex % staffPositions.length];
+	}
+	
 	// Typical basketball positions spread across court
 	const positions = [
 		// Team 0 (home) - left side of court
@@ -159,13 +171,23 @@ function getCourtPosition(teamId: number, playerIndex: number): { x: number; y: 
 		]
 	];
 	
-	return positions[teamId][playerIndex % 5];
+	// Ensure teamId is valid
+	const safeTeamId = Math.min(Math.max(teamId, 0), 1);
+	return positions[safeTeamId][playerIndex % 5];
 }
 
 /**
  * Get bench position for player
  */
 function getBenchPosition(teamId: number, benchIndex: number): { x: number; y: number } {
+	// Staff (teamId = 2) go to scorer's table area
+	if (teamId === 2 || teamId > 1) {
+		return {
+			x: LOCATIONS.scorersTable.x + 20 + benchIndex * 20,
+			y: LOCATIONS.scorersTable.y + 5
+		};
+	}
+	
 	const bench = teamId === 0 ? LOCATIONS.benches.home : LOCATIONS.benches.away;
 	const spacing = bench.height / 8; // Space for ~8 bench players
 	return {
