@@ -16,9 +16,10 @@ const REPO = 'createsomethingtoday/create-something-monorepo';
 const VERSION = require('./package.json').version;
 
 // Platform mapping
+// Note: macOS Intel uses arm64 binary via Rosetta 2
 const PLATFORMS = {
   'darwin-arm64': 'darwin-arm64',
-  'darwin-x64': 'darwin-x64',
+  'darwin-x64': 'darwin-arm64',  // Rosetta 2 compatibility
   'linux-arm64': 'linux-arm64',
   'linux-x64': 'linux-x64',
   'win32-x64': 'win32-x64',
