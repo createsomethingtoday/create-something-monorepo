@@ -513,10 +513,8 @@ fn run_find(cmd: FindCommands, db: &Path) -> Result<(), Box<dyn std::error::Erro
             }
             Ok(())
         }
-        FindCommands::Orphans { path: _ } => {
-            println!("Finding orphans is not yet implemented.");
-            println!("Use: ground check connections <module> to check individual modules.");
-            Ok(())
+        FindCommands::Orphans { path } => {
+            find_orphans(&path)
         }
     }
 }
@@ -802,4 +800,82 @@ fn group_by_size(files: &[PathBuf]) -> HashMap<u64, Vec<PathBuf>> {
     
     groups.retain(|_, v| v.len() > 1);
     groups
+}
+
+fn find_orphans(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::analyze_connectivity;
+    
+    println!("Finding orphaned modules in {}", path.display());
+    println!();
+    
+    let mut files: Vec<PathBuf> = Vec::new();
+    collect_files(path, &["ts", "tsx", "js", "jsx"], 0, &mut files);
+    
+    // Filter out test files, index files, and type declaration files
+    let files: Vec<_> = files.into_iter()
+        .filter(|f| {
+            let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            !name.contains(".test.") && 
+            !name.contains(".spec.") &&
+            !name.ends_with(".d.ts") &&
+            name != "index.ts" &&
+            name != "index.js" &&
+            !name.starts_with("+")  // SvelteKit route files
+        })
+        .collect();
+    
+    println!("Checking {} files...", files.len());
+    println!();
+    
+    let mut orphans = Vec::new();
+    let mut connected = 0;
+    let mut errors = 0;
+    
+    for file in &files {
+        match analyze_connectivity(file) {
+            Ok(evidence) => {
+                if evidence.total_connections() == 0 && evidence.architectural.is_none() {
+                    orphans.push((file.clone(), evidence));
+                } else {
+                    connected += 1;
+                }
+            }
+            Err(_) => {
+                errors += 1;
+            }
+        }
+    }
+    
+    if orphans.is_empty() {
+        println!("No orphaned modules found.");
+        println!("  {} modules are connected", connected);
+        if errors > 0 {
+            println!("  {} modules had errors during analysis", errors);
+        }
+    } else {
+        println!("Found {} orphaned modules:", orphans.len());
+        println!();
+        
+        for (i, (file, _evidence)) in orphans.iter().enumerate() {
+            // Try to show relative path
+            let display_path = file.strip_prefix(path).unwrap_or(file);
+            println!("  {}. {}", i + 1, display_path.display());
+        }
+        
+        println!();
+        println!("Summary:");
+        println!("  {} orphaned (nothing imports them)", orphans.len());
+        println!("  {} connected", connected);
+        if errors > 0 {
+            println!("  {} errors", errors);
+        }
+        
+        println!();
+        println!("To verify an individual module:");
+        println!("  ground check connections <path>");
+        
+        std::process::exit(1);
+    }
+    
+    Ok(())
 }

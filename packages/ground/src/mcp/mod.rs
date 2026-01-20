@@ -212,6 +212,24 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                 "required": ["entry_point"]
             }),
         },
+        ToolDefinition {
+            name: "ground_find_orphans".to_string(),
+            description: "Find orphaned modules in a directory. Scans all TypeScript/JavaScript files and identifies those with no incoming connections (nothing imports them) and no architectural connections (not a Worker entry point).".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Directory to scan for orphaned modules"
+                    },
+                    "include_tests": {
+                        "type": "boolean",
+                        "description": "Include test files in scan (default: false)"
+                    }
+                },
+                "required": ["directory"]
+            }),
+        },
     ]
 }
 
@@ -267,6 +285,7 @@ pub fn handle_tool_call(
         "ground_status" => handle_status(g),
         "ground_suggest_fix" => handle_suggest_fix(args),
         "ground_check_environment" => handle_check_environment(args),
+        "ground_find_orphans" => handle_find_orphans(args),
         _ => ToolResult::error(format!("Unknown tool: {}", tool_name)),
     }
 }
@@ -754,6 +773,88 @@ fn handle_check_environment(args: &Value) -> ToolResult {
     }
 }
 
+fn handle_find_orphans(args: &Value) -> ToolResult {
+    use crate::computations::analyze_connectivity;
+    
+    let directory = match args.get("directory").and_then(|v| v.as_str()) {
+        Some(d) => PathBuf::from(d),
+        None => return ToolResult::error("Missing required parameter: directory"),
+    };
+    
+    let include_tests = args.get("include_tests")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    
+    // Collect files
+    let mut files = Vec::new();
+    collect_ts_files(&directory, &mut files);
+    
+    // Filter out test files if needed
+    let files: Vec<_> = if include_tests {
+        files
+    } else {
+        files.into_iter()
+            .filter(|f| {
+                let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                !name.contains(".test.") && 
+                !name.contains(".spec.") &&
+                !f.to_string_lossy().contains("__tests__")
+            })
+            .collect()
+    };
+    
+    // Filter out index files, type declarations, and SvelteKit route files
+    let files: Vec<_> = files.into_iter()
+        .filter(|f| {
+            let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            !name.ends_with(".d.ts") &&
+            name != "index.ts" &&
+            name != "index.js" &&
+            !name.starts_with("+")  // SvelteKit route files
+        })
+        .collect();
+    
+    let mut orphans = Vec::new();
+    let mut connected = 0;
+    let mut errors = 0;
+    
+    for file in &files {
+        match analyze_connectivity(file) {
+            Ok(evidence) => {
+                if evidence.total_connections() == 0 && evidence.architectural.is_none() {
+                    orphans.push(json!({
+                        "path": file.display().to_string(),
+                        "relative_path": file.strip_prefix(&directory)
+                            .map(|p| p.display().to_string())
+                            .unwrap_or_else(|_| file.display().to_string())
+                    }));
+                } else {
+                    connected += 1;
+                }
+            }
+            Err(_) => {
+                errors += 1;
+            }
+        }
+    }
+    
+    let message = if orphans.is_empty() {
+        format!("No orphaned modules found. {} modules are connected.", connected)
+    } else {
+        format!("Found {} orphaned modules (nothing imports them).", orphans.len())
+    };
+    
+    ToolResult::success(json!({
+        "directory": directory.display().to_string(),
+        "files_scanned": files.len(),
+        "orphan_count": orphans.len(),
+        "orphans": orphans,
+        "connected_count": connected,
+        "error_count": errors,
+        "message": message
+    }))
+}
+
 fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
     let entries = match std::fs::read_dir(dir) {
         Ok(e) => e,
@@ -789,7 +890,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 10);
+        assert_eq!(tools.len(), 11);
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         assert!(names.contains(&"ground_compare"));
@@ -802,6 +903,7 @@ mod tests {
         assert!(names.contains(&"ground_status"));
         assert!(names.contains(&"ground_suggest_fix"));
         assert!(names.contains(&"ground_check_environment"));
+        assert!(names.contains(&"ground_find_orphans"));
     }
     
     #[test]
