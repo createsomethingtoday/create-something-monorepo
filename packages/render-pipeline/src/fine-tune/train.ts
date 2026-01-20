@@ -3,7 +3,6 @@
  * Handles Flux LoRA training via Replicate API
  */
 
-import Replicate from 'replicate';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type {
@@ -12,38 +11,13 @@ import type {
   TrainingManifest,
   TrainingImage
 } from './types.js';
+import { getClient, bufferToDataUri } from '../utils/replicate.js';
 
 // Flux LoRA trainer model on Replicate (Dec 2025)
 const FLUX_TRAINER_MODEL = 'replicate/fast-flux-trainer';
 
 // H100 cost per second (as of Dec 2025)
 const H100_COST_PER_SECOND = 0.0122;
-
-let replicateClient: Replicate | null = null;
-
-/**
- * Get or create Replicate client
- */
-function getClient(): Replicate {
-  if (!replicateClient) {
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) {
-      throw new Error(
-        'REPLICATE_API_TOKEN environment variable not set. ' +
-          'Get your token at https://replicate.com/account/api-tokens'
-      );
-    }
-    replicateClient = new Replicate({ auth: token });
-  }
-  return replicateClient;
-}
-
-/**
- * Convert buffer to data URI for Replicate API
- */
-function bufferToDataUri(buffer: Buffer, mimeType = 'application/zip'): string {
-  return `data:${mimeType};base64,${buffer.toString('base64')}`;
-}
 
 /**
  * Start a fine-tuning training job
@@ -56,16 +30,16 @@ export async function startTraining(config: TrainingConfig): Promise<TrainingRes
 
   const client = getClient();
 
-  // Prepare input images
+  // Prepare input images (training expects zip files)
   let imagesInput: string;
   if (Buffer.isBuffer(inputImages)) {
-    imagesInput = bufferToDataUri(inputImages);
+    imagesInput = bufferToDataUri(inputImages, 'application/zip');
   } else if (inputImages.startsWith('data:')) {
     imagesInput = inputImages;
   } else {
     // Assume it's a file path - read and convert
     const buffer = await fs.readFile(inputImages);
-    imagesInput = bufferToDataUri(buffer);
+    imagesInput = bufferToDataUri(buffer, 'application/zip');
   }
 
   console.log(`Starting Flux LoRA training...`);

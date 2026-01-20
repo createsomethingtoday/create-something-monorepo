@@ -18,6 +18,7 @@ import {
   listMetrics,
   generateMetricsReport,
 } from '../metrics/index.js';
+import { formatDate } from '../utils/format.js';
 
 /**
  * Create the metrics command.
@@ -367,16 +368,4 @@ function compareMetric(
   console.log(
     `| ${name} | ${prefix}${valueA.toFixed(1)}${suffix} | ${prefix}${valueB.toFixed(1)}${suffix} | ${changeStr}${indicator} |`
   );
-}
-
-/**
- * Format date for display.
- */
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 }

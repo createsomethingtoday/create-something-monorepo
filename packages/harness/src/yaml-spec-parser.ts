@@ -33,6 +33,7 @@
 import { parse as parseYaml } from 'yaml';
 import Ajv from 'ajv';
 import type { Feature, ParsedSpec, DependencyGraph } from './types.js';
+import { slugify } from './utils.js';
 
 // JSON Schema for harness specs (runtime version without $schema to avoid Ajv meta-schema lookup)
 // Full schema with $schema available at: https://createsomething.ltd/schemas/harness-spec.json
@@ -328,13 +329,6 @@ function calculateMaxDepth(
   }
 
   return maxDepth;
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 }
 
 /**

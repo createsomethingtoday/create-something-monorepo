@@ -3,7 +3,6 @@
  * Generates images using fine-tuned Flux LoRA models
  */
 
-import Replicate from 'replicate';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type {
@@ -11,6 +10,7 @@ import type {
   FineTuneGenerateOptions,
   FineTuneGenerateResult
 } from './types.js';
+import { getClient } from '../utils/replicate.js';
 
 // Registered fine-tuned models
 // Add new models here after training
@@ -31,25 +31,6 @@ const CANON_DEFAULTS: Partial<FineTuneGenerateOptions> = {
   width: 1024,
   height: 1024
 };
-
-let replicateClient: Replicate | null = null;
-
-/**
- * Get or create Replicate client
- */
-function getClient(): Replicate {
-  if (!replicateClient) {
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) {
-      throw new Error(
-        'REPLICATE_API_TOKEN environment variable not set. ' +
-          'Get your token at https://replicate.com/account/api-tokens'
-      );
-    }
-    replicateClient = new Replicate({ auth: token });
-  }
-  return replicateClient;
-}
 
 /**
  * Register a new fine-tuned model

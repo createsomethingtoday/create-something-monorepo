@@ -5,10 +5,10 @@
  * Pipeline: Claude (editorial judgment) → Isaac (precise grounding) → Flux (inpainting)
  */
 
-import Replicate from 'replicate';
 import sharp from 'sharp';
 import * as fs from 'fs/promises';
 import type { Distraction, DetectionResult } from './detect.js';
+import { getClient, bufferToDataUri } from '../utils/replicate.js';
 
 // Isaac model on Replicate
 const ISAAC_MODEL = 'perceptron-ai-inc/isaac-0.1';
@@ -35,32 +35,6 @@ interface IsaacBox {
 interface IsaacResponse {
   text: string;
   boxes?: IsaacBox[];
-}
-
-let replicateClient: Replicate | null = null;
-
-/**
- * Get or create Replicate client
- */
-function getClient(): Replicate {
-  if (!replicateClient) {
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) {
-      throw new Error(
-        'REPLICATE_API_TOKEN environment variable not set. ' +
-        'Get your token at https://replicate.com/account/api-tokens'
-      );
-    }
-    replicateClient = new Replicate({ auth: token });
-  }
-  return replicateClient;
-}
-
-/**
- * Convert buffer to data URI
- */
-function bufferToDataUri(buffer: Buffer, mimeType = 'image/png'): string {
-  return `data:${mimeType};base64,${buffer.toString('base64')}`;
 }
 
 /**

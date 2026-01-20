@@ -9,6 +9,7 @@
  */
 
 import { Command } from 'commander';
+import { formatDate } from '../utils/format.js';
 import {
   createPostmortem,
   analyzeRootCause,
@@ -408,16 +409,4 @@ function getStatusIcon(status: PostmortemStatus): string {
     closed: '✓',
   };
   return icons[status] || '?';
-}
-
-/**
- * Format date for display.
- */
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 }

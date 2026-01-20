@@ -18,6 +18,7 @@ import type {
   PreventionRule,
   PostmortemConfig,
 } from './types.js';
+import { formatDate } from '../utils/format.js';
 
 const execAsync = promisify(exec);
 
@@ -415,18 +416,6 @@ export function formatPostmortemReport(postmortem: Postmortem): string {
   }
 
   return lines.join('\n');
-}
-
-/**
- * Format date for display.
- */
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 }
 
 /**

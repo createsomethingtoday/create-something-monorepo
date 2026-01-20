@@ -3,10 +3,13 @@
  * Handles ControlNet model inference for architectural rendering
  */
 
-import Replicate from 'replicate';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { ControlNetModel, RenderOptions, RenderResult } from './types.js';
+import { getClient, bufferToDataUri, isConfigured } from './utils/replicate.js';
+
+// Re-export isConfigured for external consumers
+export { isConfigured };
 
 // Model version IDs on Replicate
 const MODEL_VERSIONS: Record<ControlNetModel, string> = {
@@ -41,32 +44,6 @@ const MODEL_DEFAULTS: Record<ControlNetModel, Partial<RenderOptions>> = {
     conditioningScale: 0.8
   }
 };
-
-let replicateClient: Replicate | null = null;
-
-/**
- * Get or create Replicate client
- */
-function getClient(): Replicate {
-  if (!replicateClient) {
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) {
-      throw new Error(
-        'REPLICATE_API_TOKEN environment variable not set. ' +
-        'Get your token at https://replicate.com/account/api-tokens'
-      );
-    }
-    replicateClient = new Replicate({ auth: token });
-  }
-  return replicateClient;
-}
-
-/**
- * Convert image buffer to data URI for Replicate API
- */
-function bufferToDataUri(buffer: Buffer, mimeType = 'image/png'): string {
-  return `data:${mimeType};base64,${buffer.toString('base64')}`;
-}
 
 /**
  * Render image using ControlNet model on Replicate
@@ -225,11 +202,4 @@ export async function renderArchitectural(
     model: 'flux-canny-pro',
     ...options
   });
-}
-
-/**
- * Check if Replicate API is configured
- */
-export function isConfigured(): boolean {
-  return !!process.env.REPLICATE_API_TOKEN;
 }

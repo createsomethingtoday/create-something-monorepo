@@ -18,6 +18,7 @@ import type {
   Learning,
   ReflectionConfig,
 } from './types.js';
+import { formatDate } from '../utils/format.js';
 
 const execAsync = promisify(exec);
 
@@ -281,18 +282,6 @@ Review periodically and promote stable learnings to the main documentation.
       learningEntry
     );
   }
-}
-
-/**
- * Format date for display.
- */
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 }
 
 /**

@@ -41,6 +41,7 @@
 
 import type { Feature, ParsedSpec, DependencyGraph } from './types.js';
 import { parseYamlSpec, isYamlSpec, SpecValidationError, generateYamlFromMarkdown } from './yaml-spec-parser.js';
+import { slugify } from './utils.js';
 
 // Re-export YAML parser utilities
 export { parseYamlSpec, isYamlSpec, SpecValidationError, generateYamlFromMarkdown };
@@ -236,16 +237,6 @@ function inferDependencies(features: Feature[]): void {
       categoryFirstFeature[category] = feature.id;
     }
   }
-}
-
-/**
- * Convert a string to a URL-safe slug.
- */
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 }
 
 /**

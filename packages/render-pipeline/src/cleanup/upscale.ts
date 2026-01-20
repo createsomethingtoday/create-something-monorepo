@@ -5,41 +5,15 @@
  * The tool recedes: upscaling happens automatically, quality returns.
  */
 
-import Replicate from 'replicate';
 import sharp from 'sharp';
 import * as fs from 'fs/promises';
+import { getClient, bufferToDataUri } from '../utils/replicate.js';
 
 // Real-ESRGAN with face enhancement
 const UPSCALE_MODEL = 'nightmareai/real-esrgan';
 
 // Max input size for ESRGAN (~2M pixels = ~1400x1400)
 const MAX_UPSCALE_INPUT = 1400;
-
-let replicateClient: Replicate | null = null;
-
-/**
- * Get or create Replicate client
- */
-function getClient(): Replicate {
-  if (!replicateClient) {
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) {
-      throw new Error(
-        'REPLICATE_API_TOKEN environment variable not set. ' +
-        'Get your token at https://replicate.com/account/api-tokens'
-      );
-    }
-    replicateClient = new Replicate({ auth: token });
-  }
-  return replicateClient;
-}
-
-/**
- * Convert buffer to data URI
- */
-function bufferToDataUri(buffer: Buffer, mimeType = 'image/png'): string {
-  return `data:${mimeType};base64,${buffer.toString('base64')}`;
-}
 
 /**
  * Upscaling options

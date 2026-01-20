@@ -6,6 +6,10 @@
  */
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { normalizePhone, formatPhone } from './phone.js';
+
+// Re-export phone utilities for backwards compatibility
+export { normalizePhone, formatPhone };
 
 export interface TwilioConfig {
 	accountSid: string;
@@ -146,25 +150,3 @@ export function twimlEmpty(): string {
 	return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
 }
 
-/**
- * Extract phone number from Twilio format
- * +1234567890 -> 1234567890
- */
-export function normalizePhone(phone: string): string {
-	return phone.replace(/\D/g, '');
-}
-
-/**
- * Format phone number for display
- * 1234567890 -> (123) 456-7890
- */
-export function formatPhone(phone: string): string {
-	const cleaned = normalizePhone(phone);
-	if (cleaned.length === 10) {
-		return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-	}
-	if (cleaned.length === 11 && cleaned.startsWith('1')) {
-		return `(${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
-	}
-	return phone;
-}

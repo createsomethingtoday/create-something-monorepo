@@ -3,10 +3,13 @@
  * Removes masked regions and fills them with contextually appropriate content
  */
 
-import Replicate from 'replicate';
 import sharp from 'sharp';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { getClient, bufferToDataUri, isConfigured } from '../utils/replicate.js';
+
+// Re-export isConfigured for external consumers
+export { isConfigured };
 
 /**
  * Supported inpainting models
@@ -58,32 +61,6 @@ export interface InpaintResult {
   outputPath?: string;
   /** Time taken in milliseconds */
   duration: number;
-}
-
-let replicateClient: Replicate | null = null;
-
-/**
- * Get or create Replicate client
- */
-function getClient(): Replicate {
-  if (!replicateClient) {
-    const token = process.env.REPLICATE_API_TOKEN;
-    if (!token) {
-      throw new Error(
-        'REPLICATE_API_TOKEN environment variable not set. ' +
-        'Get your token at https://replicate.com/account/api-tokens'
-      );
-    }
-    replicateClient = new Replicate({ auth: token });
-  }
-  return replicateClient;
-}
-
-/**
- * Convert buffer to data URI
- */
-function bufferToDataUri(buffer: Buffer, mimeType = 'image/png'): string {
-  return `data:${mimeType};base64,${buffer.toString('base64')}`;
 }
 
 /**
@@ -248,11 +225,4 @@ export async function inpaint(
     outputPath,
     duration
   };
-}
-
-/**
- * Check if Replicate is configured
- */
-export function isConfigured(): boolean {
-  return !!process.env.REPLICATE_API_TOKEN;
 }
