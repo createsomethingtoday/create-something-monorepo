@@ -182,34 +182,45 @@ This prevents AI hallucination by requiring computation before synthesis.
 
 MIT
 
-## Future: Environment Safety Check
+## Environment Safety Check
 
-Suggested by WORKWAY agent (2026-01-18). Detects Workers APIs used in Node.js code paths.
+Detects Workers APIs used in Node.js code paths (or vice versa). Implemented 2026-01-18.
 
 ```bash
-ground check environment-safety src/cli/index.ts
+ground check environment-safety packages/cli/src/index.ts
 
-→ Warning: Workers-only API reachable from Node.js entry point
-  
-  src/cli/index.ts
-    → imports @workwayco/sdk
-    → imports edge-cache.ts
-    → uses caches.default (Workers-only)
+→ Environment Safety Check for packages/cli/src/index.ts
 
-  Suggestions:
-  - Use conditional exports in package.json
-  - Lazy-load with dynamic import + try/catch
-  - Split into @workwayco/sdk/node vs @workwayco/sdk/workers
+  Detected environment: Node.js
+  Reachable modules: 61
+  Environment-specific APIs found: 18
+
+  ✓ No environment safety issues detected.
 ```
 
-**APIs to detect:**
-- `caches.default`, `caches.open`
-- `env.KV`, `env.R2`, `env.D1`, `env.AI`
-- `ctx.waitUntil`, `waitUntil`
-- `crypto.subtle` (different behavior in Workers vs Node)
+When issues are found:
+```
+  ⚠ 1 warning(s) found:
 
-**Implementation approach:**
-1. Build import graph from entry point
-2. Tag each module with detected APIs
-3. Propagate "workers-only" tag up the chain
-4. Warn if Workers-only modules are reachable from Node entry points
+  1. ✗ Workers-only API 'caches.default' reachable from Node.js entry point
+
+     Import chain:
+     index.ts
+       → sdk.ts
+       → edge-cache.ts
+
+     Options:
+       - Use conditional exports in package.json
+       - Lazy-load with: const { caches } = await import('./workers-only.js')
+       - Split into separate /node and /workers entry points
+```
+
+**APIs detected:**
+
+| Workers-only | Node.js-only |
+|--------------|--------------|
+| `caches.default`, `caches.open` | `require('fs')`, `require('child_process')` |
+| `env.KV`, `env.R2`, `env.D1`, `env.AI` | `process.env`, `__dirname`, `__filename` |
+| `ctx.waitUntil`, `HTMLRewriter`, `WebSocketPair` | `Buffer.from` |
+
+**MCP:** `ground_check_environment`
