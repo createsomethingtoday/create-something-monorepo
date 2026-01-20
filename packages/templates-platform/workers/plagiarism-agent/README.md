@@ -23,6 +23,18 @@
 │         │                   │                   │                │
 │         └───────────────────┴───────────────────┘                │
 │                             │                                    │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │  LSH for JS  │    │  PageRank    │    │  Framework   │      │
+│  │  Functions   │    │  Authority   │    │  Detection   │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│         │                   │                   │                │
+│         └───────────────────┼───────────────────┘                │
+│                             │                                    │
+│                    ┌────────▼────────┐                          │
+│                    │    Bayesian     │                          │
+│                    │   Confidence    │                          │
+│                    └─────────────────┘                          │
+│                             │                                    │
 │                    ┌────────▼────────┐                          │
 │                    │    Dashboard    │                          │
 │                    │   /dashboard    │                          │
@@ -81,6 +93,119 @@ curl -X POST https://plagiarism-agent.createsomething.workers.dev/js-analysis \
 curl https://plagiarism-agent.createsomething.workers.dev/js-duplicates/template-id
 ```
 
+### 5. Agent-Native Algorithms (v2.2.0)
+
+Classic CS algorithms exposed as **MCP tools for team AI agents**.
+
+> **"Agent-native"** = Designed for team distribution. Any team member's AI agent
+> can invoke these tools via MCP to analyze templates for plagiarism.
+> 
+> **MCP Server**: `packages/webflow-mcp/`
+> 
+> Available MCP tools:
+> - `plagiarism_health` - Check system status
+> - `plagiarism_stats` - Algorithm statistics
+> - `plagiarism_scan` - Scan URL for similar templates
+> - `plagiarism_lsh_index` - Index functions for O(1) lookup
+> - `plagiarism_similar_functions` - Find duplicate code
+> - `plagiarism_pagerank` - Identify originals vs copies  
+> - `plagiarism_pagerank_leaderboard` - Top authoritative templates
+> - `plagiarism_detect_frameworks` - Identify JS libraries used
+> - `plagiarism_confidence` - Calculate plagiarism probability
+> 
+> The algorithms are proven CS techniques (LSH 1998, PageRank 1996, Bayesian),
+> wrapped as tools for AI agent consumption.
+> 
+> **Configuration** (add to `.cursor/mcp.json` or Claude Desktop config):
+> ```json
+> {
+>   "mcpServers": {
+>     "webflow": {
+>       "command": "node",
+>       "args": ["packages/webflow-mcp/dist/index.js"]
+>     }
+>   }
+> }
+> ```
+
+#### LSH for JS Functions
+**O(1) similar function lookup** using MinHash signatures with LSH banding:
+
+- 128-permutation MinHash signatures per function
+- 16 LSH bands for O(1) candidate lookup
+- Jaccard similarity estimation from signatures
+
+```bash
+# Index function LSH signatures
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/compute/lsh-index \
+  -H "Content-Type: application/json" \
+  -d '{"limit": 100}'
+
+# Find similar functions for a template
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/compute/similar-functions \
+  -H "Content-Type: application/json" \
+  -d '{"templateId": "template-id"}'
+```
+
+#### PageRank for Template Authority
+Identifies **originals vs copies** using graph analysis:
+
+- Builds similarity graph from MinHash comparisons
+- Computes PageRank scores (higher = more authoritative)
+- Classifies templates as `original`, `derivative`, or `isolated`
+
+```bash
+# Compute PageRank (builds graph if needed)
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/compute/pagerank \
+  -H "Content-Type: application/json" \
+  -d '{"threshold": 0.5}'
+
+# Get PageRank leaderboard
+curl https://plagiarism-agent.createsomething.workers.dev/compute/pagerank/leaderboard
+```
+
+#### Framework Detection
+Detects **15+ JavaScript frameworks** with features and version hints:
+
+| Framework | Features Detected |
+|-----------|-------------------|
+| GSAP | scrolltrigger, splittext, flip, drawsvg, morphsvg |
+| Lenis | smooth-scroll, scroll-events |
+| Locomotive | smooth-scroll, parallax |
+| Barba.js | page-transitions, hooks |
+| Swiper | carousel, pagination, navigation, autoplay |
+| Splide | carousel, autoscroll |
+| Webflow | ix2, ready, ecommerce, forms |
+| Finsweet | cms-filter, cms-nest, attributes |
+| Three.js | 3d-graphics, webgl |
+| Spline | 3d-embed |
+| AOS | scroll-animations |
+| + more | intersection/resize/mutation observers |
+
+```bash
+# Detect frameworks in a template
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/compute/frameworks \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://template.webflow.io"}'
+```
+
+#### Bayesian Confidence Scoring
+Multi-signal plagiarism probability using **Bayes' theorem**:
+
+- Combines CSS, JS, structural, and framework evidence
+- Weighted factors with configurable priors
+- Verdicts: `no_plagiarism`, `possible`, `likely`, `definite`
+
+```bash
+# Calculate confidence for a template pair
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/compute/confidence \
+  -H "Content-Type: application/json" \
+  -d '{"templateA": "id1", "templateB": "id2"}'
+
+# Get computational stats
+curl https://plagiarism-agent.createsomething.workers.dev/compute/stats
+```
+
 ## Endpoints
 
 ### Dashboard & UI
@@ -107,6 +232,17 @@ curl https://plagiarism-agent.createsomething.workers.dev/js-duplicates/template
 | `GET /sketches/stats` | Bloom filter + HyperLogLog statistics |
 | `POST /js-analysis` | Compare JS between two templates |
 | `GET /js-duplicates/:id` | Find templates with duplicate functions |
+
+### Agent-Native Tools (v2.2.0)
+| Endpoint | Algorithm | Agent Use Case |
+|----------|-----------|----------------|
+| `POST /compute/lsh-index` | MinHash + LSH | Index functions for similarity search |
+| `POST /compute/similar-functions` | LSH lookup | Find duplicate code across templates |
+| `POST /compute/pagerank` | PageRank | Identify original vs derivative templates |
+| `GET /compute/pagerank/leaderboard` | PageRank | Rank templates by authority |
+| `POST /compute/frameworks` | Regex patterns | Detect JS libraries in templates |
+| `POST /compute/confidence` | Bayes' theorem | Score plagiarism probability |
+| `GET /compute/stats` | - | Monitor algorithm usage |
 
 ### Case Management
 | Endpoint | Description |
@@ -263,7 +399,19 @@ This ensures high-stakes decisions receive human oversight when the AI is uncert
 
 ## Recent Improvements
 
-**Ground MCP Integration (Jan 2026)**:
+**Agent-Native Algorithms (Jan 2026 - v2.2.0)**:
+Classic CS algorithms exposed as MCP tools for AI agent invocation:
+- ✅ **LSH for JS Functions** - O(1) similar function lookup via MinHash (1998)
+- ✅ **PageRank for Authority** - Graph centrality for original vs copy detection (1996)
+- ✅ **Framework Detection** - 15+ JS library fingerprints via regex patterns
+- ✅ **Bayesian Confidence** - Multi-signal plagiarism probability scoring
+- ✅ **MCP Integration** - Tools available via `webflow-mcp` server
+- ✅ **7 HTTP Endpoints** - `/compute/*` for direct API access
+
+See migration `0018_computational_algorithms.sql` for new tables.
+See `packages/webflow-mcp/` for the dedicated MCP server.
+
+**Ground MCP Integration (Jan 2026 - v2.1.0)**:
 - ✅ **Bloom Filter** - Fast "have we indexed this URL?" pre-check (skip DB queries)
 - ✅ **HyperLogLog** - Count unique templates/colors/patterns without COUNT(*)
 - ✅ **JS Function Detection** - Catch component-level plagiarism via AST analysis

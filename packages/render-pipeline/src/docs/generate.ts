@@ -5,17 +5,8 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { slugify } from '@create-something/components';
 import type { ProcessedScreenshot, DocGenOptions, DocGenResult } from './types.js';
-
-/**
- * Generate a slug from a title
- */
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-}
 
 /**
  * Get relative path from docs folder to image

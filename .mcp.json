@@ -18,6 +18,10 @@
     "ground": {
       "command": "./packages/ground/target/release/ground-mcp",
       "args": ["--db", ".ground/registry.db"]
+    },
+    "webflow": {
+      "command": "node",
+      "args": ["./packages/webflow-mcp/dist/index.js"]
     }
   }
 }

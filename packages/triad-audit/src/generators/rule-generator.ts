@@ -8,6 +8,7 @@
  */
 
 import type { FeedbackPattern, AutomationSuggestion, FeedbackCategory } from '../types/feedback.js';
+import { slugify, camelCase, truncate } from '@create-something/components';
 
 // =============================================================================
 // TYPES
@@ -419,26 +420,8 @@ export function generateEslintConfig(rules: GeneratedRule[]): string {
 }
 
 // =============================================================================
-// UTILITIES
+// UTILITIES (imported from @create-something/components)
 // =============================================================================
-
-function slugify(str: string): string {
-	return str
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-|-$/g, '');
-}
-
-function camelCase(str: string): string {
-	return str
-		.toLowerCase()
-		.replace(/[^a-z0-9]+(.)/g, (_, char) => char.toUpperCase());
-}
-
-function truncate(str: string, length: number): string {
-	if (str.length <= length) return str;
-	return str.slice(0, length - 3) + '...';
-}
 
 function createMessage(pattern: FeedbackPattern): string {
 	const example = pattern.examples[0] || pattern.description;

@@ -351,7 +351,7 @@ export default {
             lshBands: (lshBandCount as any)?.count || 0
           },
           sketches: sketchStats,
-          version: '2.1.0'  // Bumped for sketches + JS analysis
+          version: '2.2.0'  // Bumped for AI-native algorithms
         }), {
           headers: { 'Content-Type': 'application/json' }
         });
@@ -1775,6 +1775,567 @@ export default {
         return new Response(JSON.stringify(caseData), {
           headers: { 'Content-Type': 'application/json' }
         });
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================================================
+    // AGENT-NATIVE TOOLS: LSH, PageRank, Framework Detection, Bayesian
+    // Classic CS algorithms exposed for AI agent orchestration
+    // ==========================================================================
+    
+    // Index function signatures with LSH for O(1) similar function lookup
+    if (url.pathname === '/compute/lsh-index' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const limit = body.limit || 100;
+        
+        const { 
+          createFunctionSignature, 
+          generateLSHBandHashes 
+        } = await import('./algorithms');
+        
+        // Get functions that don't have LSH signatures yet
+        const functions = await env.DB.prepare(`
+          SELECT jf.id, jf.template_id, jf.function_name, jf.normalized_hash, jf.line_count
+          FROM template_js_functions jf
+          LEFT JOIN function_minhash fm ON jf.template_id = fm.template_id AND jf.function_name = fm.function_name
+          WHERE fm.id IS NULL
+          AND jf.function_name NOT LIKE '__%'
+          LIMIT ?
+        `).bind(limit).all();
+        
+        if (!functions.results || functions.results.length === 0) {
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'All functions already have LSH signatures',
+            indexed: 0
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        
+        let indexed = 0;
+        for (const func of functions.results as any[]) {
+          // Create MinHash signature from normalized hash (as a proxy for body)
+          const signature = createFunctionSignature(
+            `${func.template_id}:${func.function_name}`,
+            func.normalized_hash
+          );
+          
+          // Store MinHash signature
+          const result = await env.DB.prepare(`
+            INSERT INTO function_minhash (template_id, function_id, function_name, signature_json, line_count, normalized_length, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            func.template_id,
+            `${func.template_id}:${func.function_name}`,
+            func.function_name,
+            JSON.stringify(signature.signature),
+            func.line_count,
+            func.normalized_hash.length,
+            Date.now()
+          ).run();
+          
+          const minhashId = result.meta?.last_row_id;
+          
+          // Store LSH band hashes
+          for (let i = 0; i < signature.bandHashes.length; i++) {
+            await env.DB.prepare(`
+              INSERT INTO function_lsh_bands (function_minhash_id, band_index, band_hash)
+              VALUES (?, ?, ?)
+            `).bind(minhashId, i, signature.bandHashes[i]).run();
+          }
+          
+          indexed++;
+        }
+        
+        // Get remaining count
+        const remaining = await env.DB.prepare(`
+          SELECT COUNT(*) as count
+          FROM template_js_functions jf
+          LEFT JOIN function_minhash fm ON jf.template_id = fm.template_id AND jf.function_name = fm.function_name
+          WHERE fm.id IS NULL
+          AND jf.function_name NOT LIKE '__%'
+        `).first() as any;
+        
+        return new Response(JSON.stringify({
+          success: true,
+          indexed,
+          remaining: remaining?.count || 0
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Find similar functions using LSH (O(1) candidate lookup)
+    if (url.pathname === '/compute/similar-functions' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { templateId, minBands = 1 } = body;
+        
+        if (!templateId) {
+          return new Response(JSON.stringify({ error: 'Missing templateId' }), { status: 400 });
+        }
+        
+        const { estimateJaccardFromMinHash } = await import('./algorithms');
+        
+        // Get all LSH band hashes for this template's functions
+        const templateBands = await env.DB.prepare(`
+          SELECT fm.id, fm.function_id, fm.function_name, fm.signature_json, lb.band_hash
+          FROM function_minhash fm
+          JOIN function_lsh_bands lb ON fm.id = lb.function_minhash_id
+          WHERE fm.template_id = ?
+        `).bind(templateId).all();
+        
+        if (!templateBands.results || templateBands.results.length === 0) {
+          return new Response(JSON.stringify({
+            templateId,
+            candidates: [],
+            message: 'No LSH signatures found for this template'
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        
+        // Find candidates with matching band hashes (O(1) lookup)
+        const bandHashes = [...new Set((templateBands.results as any[]).map(r => r.band_hash))];
+        const placeholders = bandHashes.map(() => '?').join(',');
+        
+        const candidates = await env.DB.prepare(`
+          SELECT 
+            fm2.template_id,
+            fm2.function_name,
+            fm2.signature_json,
+            COUNT(DISTINCT lb2.band_hash) as matching_bands
+          FROM function_lsh_bands lb2
+          JOIN function_minhash fm2 ON lb2.function_minhash_id = fm2.id
+          WHERE lb2.band_hash IN (${placeholders})
+          AND fm2.template_id != ?
+          GROUP BY fm2.template_id, fm2.function_name
+          HAVING matching_bands >= ?
+          ORDER BY matching_bands DESC
+          LIMIT 50
+        `).bind(...bandHashes, templateId, minBands).all();
+        
+        // Calculate actual Jaccard similarity for candidates
+        const results: any[] = [];
+        const templateSigs = new Map<string, number[]>();
+        for (const row of templateBands.results as any[]) {
+          templateSigs.set(row.function_name, JSON.parse(row.signature_json));
+        }
+        
+        for (const candidate of (candidates.results || []) as any[]) {
+          const candidateSig = JSON.parse(candidate.signature_json);
+          
+          // Find best matching function from template
+          let bestSimilarity = 0;
+          let bestMatch = '';
+          
+          for (const [funcName, templateSig] of templateSigs) {
+            const similarity = estimateJaccardFromMinHash(templateSig, candidateSig);
+            if (similarity > bestSimilarity) {
+              bestSimilarity = similarity;
+              bestMatch = funcName;
+            }
+          }
+          
+          if (bestSimilarity >= 0.5) {
+            results.push({
+              templateId: candidate.template_id,
+              functionName: candidate.function_name,
+              matchingBands: candidate.matching_bands,
+              estimatedSimilarity: bestSimilarity,
+              matchedWith: bestMatch
+            });
+          }
+        }
+        
+        results.sort((a, b) => b.estimatedSimilarity - a.estimatedSimilarity);
+        
+        return new Response(JSON.stringify({
+          templateId,
+          candidates: results.slice(0, 20)
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Compute PageRank for template authority
+    if (url.pathname === '/compute/pagerank' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { threshold = 0.5, rebuildGraph = false } = body;
+        
+        const { 
+          buildSimilarityGraph, 
+          computePageRank, 
+          classifyTemplates 
+        } = await import('./algorithms');
+        
+        // Check if we need to rebuild the graph
+        const existingEdges = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM template_similarity_graph
+        `).first() as any;
+        
+        if (rebuildGraph || (existingEdges?.count || 0) === 0) {
+          // Build graph from MinHash similarities
+          console.log('[PageRank] Building similarity graph...');
+          
+          // Get all templates with signatures
+          const templates = await env.DB.prepare(`
+            SELECT id, css_signature FROM template_minhash WHERE css_signature IS NOT NULL
+          `).all();
+          
+          const similarities: Array<{template1: string; template2: string; similarity: number}> = [];
+          const templateList = (templates.results || []) as any[];
+          
+          // Compare templates (sampling for large datasets)
+          const maxComparisons = 50000;
+          let comparisons = 0;
+          
+          for (let i = 0; i < templateList.length && comparisons < maxComparisons; i++) {
+            for (let j = i + 1; j < templateList.length && comparisons < maxComparisons; j++) {
+              const sig1 = deserializeSignatureCompact(templateList[i].css_signature);
+              const sig2 = deserializeSignatureCompact(templateList[j].css_signature);
+              
+              if (sig1 && sig2) {
+                const simResult = estimateSimilarity(sig1, sig2);
+                const similarity = typeof simResult === 'number' ? simResult : simResult.jaccardEstimate || 0;
+                if (similarity >= threshold) {
+                  similarities.push({
+                    template1: templateList[i].id,
+                    template2: templateList[j].id,
+                    similarity
+                  });
+                  
+                  // Store in graph table
+                  await env.DB.prepare(`
+                    INSERT OR REPLACE INTO template_similarity_graph (template_a, template_b, similarity, similarity_type, computed_at)
+                    VALUES (?, ?, ?, 'css', ?)
+                  `).bind(
+                    templateList[i].id,
+                    templateList[j].id,
+                    similarity,
+                    Date.now()
+                  ).run();
+                }
+              }
+              comparisons++;
+            }
+          }
+          
+          console.log(`[PageRank] Built graph with ${similarities.length} edges from ${comparisons} comparisons`);
+        }
+        
+        // Load graph from database
+        const edges = await env.DB.prepare(`
+          SELECT template_a, template_b, similarity FROM template_similarity_graph
+          WHERE similarity >= ?
+        `).bind(threshold).all();
+        
+        const similarities = (edges.results || []).map((r: any) => ({
+          template1: r.template_a,
+          template2: r.template_b,
+          similarity: r.similarity
+        }));
+        
+        // Build graph and compute PageRank
+        const graph = buildSimilarityGraph(similarities, threshold);
+        const ranks = computePageRank(graph);
+        const results = classifyTemplates(graph, ranks);
+        
+        // Store PageRank scores
+        for (const result of results) {
+          await env.DB.prepare(`
+            INSERT OR REPLACE INTO template_pagerank (template_id, score, in_degree, out_degree, classification, computed_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).bind(
+            result.templateId,
+            result.score,
+            result.inDegree,
+            result.outDegree,
+            result.classification,
+            Date.now()
+          ).run();
+        }
+        
+        // Log analysis run
+        await env.DB.prepare(`
+          INSERT INTO ai_analysis_runs (analysis_type, template_count, success_count, started_at, completed_at, duration_ms)
+          VALUES ('pagerank', ?, ?, ?, ?, ?)
+        `).bind(results.length, results.length, Date.now() - 1000, Date.now(), 1000).run();
+        
+        return new Response(JSON.stringify({
+          success: true,
+          graphEdges: similarities.length,
+          templatesRanked: results.length,
+          topOriginals: results.filter(r => r.classification === 'original').slice(0, 10),
+          topDerivatives: results.filter(r => r.classification === 'derivative').slice(0, 10)
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Get PageRank leaderboard
+    if (url.pathname === '/compute/pagerank/leaderboard' && request.method === 'GET') {
+      try {
+        const limit = parseInt(url.searchParams.get('limit') || '50');
+        
+        const results = await env.DB.prepare(`
+          SELECT 
+            pr.template_id,
+            pr.score,
+            pr.in_degree,
+            pr.out_degree,
+            pr.classification,
+            tm.name,
+            tm.url
+          FROM template_pagerank pr
+          LEFT JOIN template_minhash tm ON pr.template_id = tm.id
+          ORDER BY pr.score DESC
+          LIMIT ?
+        `).bind(limit).all();
+        
+        return new Response(JSON.stringify({
+          leaderboard: results.results || []
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Detect frameworks in a template
+    if (url.pathname === '/compute/frameworks' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { url: templateUrl, templateId } = body;
+        
+        if (!templateUrl && !templateId) {
+          return new Response(JSON.stringify({ error: 'Missing url or templateId' }), { status: 400 });
+        }
+        
+        const { 
+          detectFrameworks, 
+          generateFrameworkFingerprint 
+        } = await import('./algorithms');
+        
+        let js = '';
+        let css = '';
+        
+        if (templateUrl) {
+          const content = await fetchPublishedContent(templateUrl);
+          js = content?.javascript || '';
+          css = content?.css || '';
+        }
+        
+        const frameworks = detectFrameworks(js, css);
+        const fingerprint = generateFrameworkFingerprint(frameworks);
+        
+        // Store if we have a templateId
+        if (templateId) {
+          // Store individual frameworks
+          for (const fw of frameworks) {
+            await env.DB.prepare(`
+              INSERT OR REPLACE INTO template_frameworks (template_id, framework_name, framework_version, features_json, confidence, detected_at)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `).bind(
+              templateId,
+              fw.name,
+              fw.version || null,
+              JSON.stringify(fw.features),
+              fw.confidence,
+              Date.now()
+            ).run();
+          }
+          
+          // Store aggregated fingerprint
+          await env.DB.prepare(`
+            INSERT OR REPLACE INTO template_framework_fingerprint (template_id, fingerprint, framework_count, computed_at)
+            VALUES (?, ?, ?, ?)
+          `).bind(templateId, fingerprint, frameworks.length, Date.now()).run();
+        }
+        
+        return new Response(JSON.stringify({
+          frameworks,
+          fingerprint,
+          frameworkCount: frameworks.length
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Calculate Bayesian confidence for a template pair
+    if (url.pathname === '/compute/confidence' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { templateA, templateB, urlA, urlB } = body;
+        
+        if ((!templateA || !templateB) && (!urlA || !urlB)) {
+          return new Response(JSON.stringify({ error: 'Missing templateA/templateB or urlA/urlB' }), { status: 400 });
+        }
+        
+        const { 
+          calculateBayesianConfidence,
+          detectFrameworks,
+          compareFrameworkFingerprints
+        } = await import('./algorithms');
+        
+        // Gather evidence
+        let cssSimilarity = 0;
+        let jsSimilarity = 0;
+        let frameworkMatch = 0;
+        
+        if (templateA && templateB) {
+          // Get CSS similarity from MinHash
+          const sigA = await env.DB.prepare(
+            'SELECT css_signature FROM template_minhash WHERE id = ?'
+          ).bind(templateA).first() as any;
+          
+          const sigB = await env.DB.prepare(
+            'SELECT css_signature FROM template_minhash WHERE id = ?'
+          ).bind(templateB).first() as any;
+          
+          if (sigA?.css_signature && sigB?.css_signature) {
+            const sig1 = deserializeSignatureCompact(sigA.css_signature);
+            const sig2 = deserializeSignatureCompact(sigB.css_signature);
+            if (sig1 && sig2) {
+              const simResult = estimateSimilarity(sig1, sig2);
+              cssSimilarity = typeof simResult === 'number' ? simResult : simResult.jaccardEstimate || 0;
+            }
+          }
+          
+          // Get JS similarity from function hash matches
+          const jsMatches = await env.DB.prepare(`
+            SELECT COUNT(*) as count
+            FROM template_js_functions a
+            JOIN template_js_functions b ON a.normalized_hash = b.normalized_hash
+            WHERE a.template_id = ? AND b.template_id = ?
+          `).bind(templateA, templateB).first() as any;
+          
+          const jsCountA = await env.DB.prepare(
+            'SELECT COUNT(*) as count FROM template_js_functions WHERE template_id = ?'
+          ).bind(templateA).first() as any;
+          
+          const jsCountB = await env.DB.prepare(
+            'SELECT COUNT(*) as count FROM template_js_functions WHERE template_id = ?'
+          ).bind(templateB).first() as any;
+          
+          const maxJsCount = Math.max(jsCountA?.count || 1, jsCountB?.count || 1);
+          jsSimilarity = (jsMatches?.count || 0) / maxJsCount;
+          
+          // Get framework similarity
+          const fwA = await env.DB.prepare(
+            'SELECT fingerprint FROM template_framework_fingerprint WHERE template_id = ?'
+          ).bind(templateA).first() as any;
+          
+          const fwB = await env.DB.prepare(
+            'SELECT fingerprint FROM template_framework_fingerprint WHERE template_id = ?'
+          ).bind(templateB).first() as any;
+          
+          if (fwA?.fingerprint && fwB?.fingerprint) {
+            frameworkMatch = fwA.fingerprint === fwB.fingerprint ? 1 : 0.5;
+          }
+        }
+        
+        // Calculate Bayesian confidence
+        const evidence = {
+          cssSimilarity,
+          jsSimilarity,
+          frameworkMatch,
+          structuralSimilarity: (cssSimilarity + jsSimilarity) / 2,
+          animationMatch: 0,
+          colorMatch: 0,
+          pageRankDiff: 0
+        };
+        
+        const confidence = calculateBayesianConfidence(evidence);
+        
+        // Ensure probability is a valid number
+        if (isNaN(confidence.probability) || !isFinite(confidence.probability)) {
+          confidence.probability = 0;
+        }
+        
+        // Store result (only if we have valid data)
+        if (templateA && templateB && !isNaN(confidence.probability)) {
+          try {
+            await env.DB.prepare(`
+              INSERT OR REPLACE INTO plagiarism_confidence (template_a, template_b, probability, verdict, factors_json, evidence_json, computed_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              templateA,
+              templateB,
+              confidence.probability,
+              confidence.verdict,
+              JSON.stringify(confidence.factors),
+              JSON.stringify(evidence),
+              Date.now()
+            ).run();
+          } catch (dbError: any) {
+            console.error('[Confidence] DB error (non-fatal):', dbError.message);
+          }
+        }
+        
+        return new Response(JSON.stringify({
+          confidence,
+          evidence
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // AI-native stats endpoint
+    if (url.pathname === '/compute/stats' && request.method === 'GET') {
+      try {
+        const [lshCount, pageRankCount, frameworkCount, confidenceCount] = await Promise.all([
+          env.DB.prepare('SELECT COUNT(*) as count FROM function_minhash').first(),
+          env.DB.prepare('SELECT COUNT(*) as count FROM template_pagerank').first(),
+          env.DB.prepare('SELECT COUNT(*) as count FROM template_frameworks').first(),
+          env.DB.prepare('SELECT COUNT(*) as count FROM plagiarism_confidence WHERE probability >= 0.5').first()
+        ]);
+        
+        // Framework distribution
+        const frameworkDist = await env.DB.prepare(`
+          SELECT framework_name, COUNT(*) as count
+          FROM template_frameworks
+          WHERE confidence >= 0.7
+          GROUP BY framework_name
+          ORDER BY count DESC
+          LIMIT 10
+        `).all();
+        
+        // PageRank classification distribution
+        const classificationDist = await env.DB.prepare(`
+          SELECT classification, COUNT(*) as count
+          FROM template_pagerank
+          GROUP BY classification
+        `).all();
+        
+        return new Response(JSON.stringify({
+          lsh: {
+            functionsIndexed: (lshCount as any)?.count || 0
+          },
+          pagerank: {
+            templatesRanked: (pageRankCount as any)?.count || 0,
+            distribution: classificationDist.results || []
+          },
+          frameworks: {
+            detected: (frameworkCount as any)?.count || 0,
+            distribution: frameworkDist.results || []
+          },
+          confidence: {
+            highConfidenceCases: (confidenceCount as any)?.count || 0
+          }
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
       }

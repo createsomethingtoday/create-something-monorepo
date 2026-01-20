@@ -12,6 +12,7 @@
 import { isometricBoxPath } from '../visual/isometric.js';
 import { colors } from '../tokens/colors.js';
 import { typography } from '../tokens/typography.js';
+import { escapeXml } from '../utils/strings.js';
 import type { Property } from '../analytics/types.js';
 import type { OGImageProps } from './types.js';
 import { CUBE_FACE_OPACITY } from './types.js';
@@ -87,17 +88,7 @@ function generateBackground(variant: OGImageProps['variant']): string {
 	}
 }
 
-/**
- * Escape HTML entities in text for safe SVG embedding
- */
-function escapeXml(text: string): string {
-	return text
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&apos;');
-}
+// escapeXml imported from utils/strings.js
 
 /**
  * Truncate text to fit within a maximum character limit

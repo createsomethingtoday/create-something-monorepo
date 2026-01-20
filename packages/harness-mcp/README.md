@@ -8,6 +8,9 @@ MCP server that exposes CREATE SOMETHING harness protocol to any agentic tool.
 - **Quality gates**: run_quality_gate (tests/typecheck/lint), run_all_gates
 - **Git operations**: get_git_status, get_diff, commit_with_issue
 - **Checkpoints**: save_checkpoint, load_checkpoint, list_checkpoints
+- **Canon rules**: get_canon_rules, get_quick_reference
+
+> **Note**: Plagiarism detection tools have moved to `packages/webflow-mcp`
 
 ## Installation
 

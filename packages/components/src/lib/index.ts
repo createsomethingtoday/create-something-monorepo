@@ -87,6 +87,12 @@ export {
     generateClaudeUrl,
     truncateForUrl,
     copyToClipboard,
+    // String utilities
+    slugify,
+    camelCase,
+    kebabCase,
+    truncate,
+    escapeXml,
     // Types
     type CategoryStat,
     type CategoryRow,

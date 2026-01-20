@@ -41,6 +41,15 @@ ignore:
        "packages/io/src/routes/api/analytics/track/+server.ts"]
     - ["packages/agency/src/routes/api/analytics/events/+server.ts",
        "packages/io/src/routes/api/analytics/events/+server.ts"]
+       
+    # Model routing has different BeadsIssue types in each package
+    # Adapts harness model-routing for orchestration layer
+    - ["packages/harness/src/model-routing.ts",
+       "packages/orchestration/src/integration/model-routing.ts"]
+       
+    # Stripe client uses different API versions per app
+    - ["packages/agency/src/lib/services/stripe.ts",
+       "packages/clearway/src/lib/services/stripe-connect.ts"]
 
 report:
   format: markdown

@@ -6,6 +6,7 @@
 import sharp from 'sharp';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { escapeXml } from '@create-something/components';
 import type { UIElement, GeneratedImage, HighlightStyle } from './types.js';
 import { DEFAULT_HIGHLIGHT_STYLES } from './types.js';
 import { getImageDimensions } from './crop.js';
@@ -69,17 +70,7 @@ function createLabel(
   `;
 }
 
-/**
- * Escape special XML characters
- */
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
+// escapeXml imported from @create-something/components
 
 /**
  * Create highlight overlay SVG for a screenshot

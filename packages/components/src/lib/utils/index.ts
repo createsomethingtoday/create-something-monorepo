@@ -153,3 +153,12 @@ export type {
 
 // Paper recommendations (navigation utilities)
 export { getNextPaper } from './recommendations.js';
+
+// String utilities
+export {
+    slugify,
+    camelCase,
+    kebabCase,
+    truncate,
+    escapeXml
+} from './strings.js';

@@ -314,3 +314,75 @@ export interface AnimationFingerprint {
 	/** Category */
 	category: 'gsap' | 'scrolltrigger' | 'webflow' | 'intersection' | 'other';
 }
+
+// =============================================================================
+// Agent-Native Algorithm Types (tools for AI agent invocation)
+// =============================================================================
+
+export interface MinHashSignature {
+	/** Template or function ID */
+	id: string;
+	/** MinHash signature values */
+	signature: number[];
+	/** LSH band hashes for O(1) lookup */
+	bandHashes: string[];
+}
+
+export interface PageRankResult {
+	/** Template ID */
+	templateId: string;
+	/** PageRank score (higher = more authoritative/original) */
+	score: number;
+	/** Number of templates linking TO this one (copied from) */
+	inDegree: number;
+	/** Number of templates this links TO (copied to) */
+	outDegree: number;
+	/** Authority classification */
+	classification: 'original' | 'derivative' | 'isolated';
+}
+
+export interface FrameworkFingerprint {
+	/** Framework name */
+	name: string;
+	/** Version hint if detectable */
+	version?: string;
+	/** Specific features detected */
+	features: string[];
+	/** Confidence score 0-1 */
+	confidence: number;
+}
+
+export interface BayesianConfidence {
+	/** Overall plagiarism probability */
+	probability: number;
+	/** Prior probability (base rate) */
+	prior: number;
+	/** Likelihood given evidence */
+	likelihood: number;
+	/** Contributing factors */
+	factors: Array<{
+		name: string;
+		weight: number;
+		value: number;
+		contribution: number;
+	}>;
+	/** Classification */
+	verdict: 'no_plagiarism' | 'possible' | 'likely' | 'definite';
+}
+
+export interface ComputeStats {
+	lsh: {
+		functionsIndexed: number;
+	};
+	pagerank: {
+		templatesRanked: number;
+		distribution: Array<{ classification: string; count: number }>;
+	};
+	frameworks: {
+		detected: number;
+		distribution: Array<{ framework_name: string; count: number }>;
+	};
+	confidence: {
+		highConfidenceCases: number;
+	};
+}
