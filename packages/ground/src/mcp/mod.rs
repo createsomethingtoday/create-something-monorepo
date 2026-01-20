@@ -25,6 +25,7 @@ use serde_json::{json, Value};
 
 use crate::{VerifiedTriad, VerifiedTriadError};
 use crate::computations::{analyze_function_dry, analyze_function_dry_with_options, FunctionDryOptions};
+use crate::computations::environment::{analyze_environment_safety, WarningSeverity, RuntimeEnvironment};
 use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command};
 
 /// MCP Tool definitions for Ground
@@ -197,6 +198,20 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                 "required": ["file_a", "file_b", "similarity"]
             }),
         },
+        ToolDefinition {
+            name: "ground_check_environment".to_string(),
+            description: "Check for environment safety issues. Detects Workers-only APIs (caches, env.KV) reachable from Node.js entry points, or Node.js APIs in Workers code. Traces the import chain to show exactly how problematic APIs are reached.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "entry_point": {
+                        "type": "string",
+                        "description": "Path to the entry point (CLI script, Worker index.ts, etc.)"
+                    }
+                },
+                "required": ["entry_point"]
+            }),
+        },
     ]
 }
 
@@ -251,6 +266,7 @@ pub fn handle_tool_call(
         "ground_claim_orphan" => handle_claim_orphan(g, args),
         "ground_status" => handle_status(g),
         "ground_suggest_fix" => handle_suggest_fix(args),
+        "ground_check_environment" => handle_check_environment(args),
         _ => ToolResult::error(format!("Unknown tool: {}", tool_name)),
     }
 }
@@ -649,6 +665,95 @@ fn handle_suggest_fix(args: &Value) -> ToolResult {
     }
 }
 
+fn handle_check_environment(args: &Value) -> ToolResult {
+    let entry_point = match args.get("entry_point").and_then(|v| v.as_str()) {
+        Some(p) => PathBuf::from(p),
+        None => return ToolResult::error("Missing required parameter: entry_point"),
+    };
+    
+    match analyze_environment_safety(&entry_point) {
+        Ok(evidence) => {
+            let env_str = match &evidence.entry_environment {
+                RuntimeEnvironment::Node => "node",
+                RuntimeEnvironment::Workers => "workers",
+                RuntimeEnvironment::Universal => "universal",
+                RuntimeEnvironment::Unknown => "unknown",
+            };
+            
+            // Build warnings list
+            let warnings: Vec<_> = evidence.warnings.iter().map(|w| {
+                let severity = match w.severity {
+                    WarningSeverity::Error => "error",
+                    WarningSeverity::Warning => "warning",
+                    WarningSeverity::Info => "info",
+                };
+                
+                // Format import chain as readable string
+                let chain_str: Vec<_> = w.import_chain.iter()
+                    .map(|p| p.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("?")
+                        .to_string())
+                    .collect();
+                
+                json!({
+                    "severity": severity,
+                    "message": w.message,
+                    "api": w.api,
+                    "import_chain": chain_str,
+                    "suggestion": w.suggestion
+                })
+            }).collect();
+            
+            // Build API usages list
+            let api_usages: Vec<_> = evidence.api_usages.iter().map(|u| {
+                let env = match u.api_usage.environment {
+                    RuntimeEnvironment::Workers => "workers",
+                    RuntimeEnvironment::Node => "node",
+                    _ => "unknown",
+                };
+                
+                json!({
+                    "api": u.api_usage.api,
+                    "description": u.api_usage.description,
+                    "file": u.api_usage.file.display().to_string(),
+                    "line": u.api_usage.line,
+                    "environment": env
+                })
+            }).collect();
+            
+            let message = if evidence.is_safe {
+                format!(
+                    "Environment check passed. Entry point is {} with {} reachable modules.",
+                    env_str,
+                    evidence.reachable_modules.len()
+                )
+            } else {
+                format!(
+                    "Environment issues detected! {} warning(s) found. {} entry point reaches {} APIs.",
+                    evidence.warnings.len(),
+                    env_str,
+                    evidence.api_usages.len()
+                )
+            };
+            
+            ToolResult::success(json!({
+                "entry_point": evidence.entry_point.display().to_string(),
+                "detected_environment": env_str,
+                "reachable_modules": evidence.reachable_modules.len(),
+                "api_usages_count": evidence.api_usages.len(),
+                "api_usages": api_usages,
+                "is_safe": evidence.is_safe,
+                "warnings_count": evidence.warnings.len(),
+                "warnings": warnings,
+                "message": message,
+                "evidence_id": evidence.id
+            }))
+        }
+        Err(e) => ToolResult::error(format!("Environment check failed: {}", e)),
+    }
+}
+
 fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
     let entries = match std::fs::read_dir(dir) {
         Ok(e) => e,
@@ -684,7 +789,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 9);
+        assert_eq!(tools.len(), 10);
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         assert!(names.contains(&"ground_compare"));
@@ -696,6 +801,7 @@ mod tests {
         assert!(names.contains(&"ground_claim_orphan"));
         assert!(names.contains(&"ground_status"));
         assert!(names.contains(&"ground_suggest_fix"));
+        assert!(names.contains(&"ground_check_environment"));
     }
     
     #[test]

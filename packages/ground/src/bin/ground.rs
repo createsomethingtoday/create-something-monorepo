@@ -100,6 +100,11 @@ enum CheckCommands {
         /// Module path
         module: PathBuf,
     },
+    /// Check for environment safety issues (Workers APIs in Node.js or vice versa)
+    EnvironmentSafety {
+        /// Entry point to analyze (CLI script, Worker index.ts, etc.)
+        entry_point: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -295,6 +300,59 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 println!();
                 println!("  This looks orphaned (nothing connects to it).");
                 println!("  You can now run: ground claim orphan {} \"reason\"", module.display());
+            }
+            
+            Ok(())
+        }
+        
+        Commands::Check(CheckCommands::EnvironmentSafety { entry_point }) => {
+            use ground::computations::environment::{analyze_environment_safety, WarningSeverity, RuntimeEnvironment};
+            
+            let evidence = analyze_environment_safety(&entry_point)?;
+            
+            let env_str = match evidence.entry_environment {
+                RuntimeEnvironment::Node => "Node.js",
+                RuntimeEnvironment::Workers => "Cloudflare Workers",
+                RuntimeEnvironment::Universal => "Universal",
+                RuntimeEnvironment::Unknown => "Unknown",
+            };
+            
+            println!("Environment Safety Check for {}", entry_point.display());
+            println!();
+            println!("  Detected environment: {}", env_str);
+            println!("  Reachable modules: {}", evidence.reachable_modules.len());
+            println!("  Environment-specific APIs found: {}", evidence.api_usages.len());
+            
+            if evidence.warnings.is_empty() {
+                println!();
+                println!("  ✓ No environment safety issues detected.");
+            } else {
+                println!();
+                println!("  ⚠ {} warning(s) found:", evidence.warnings.len());
+                println!();
+                
+                for (i, warning) in evidence.warnings.iter().enumerate() {
+                    let severity_icon = match warning.severity {
+                        WarningSeverity::Error => "✗",
+                        WarningSeverity::Warning => "⚠",
+                        WarningSeverity::Info => "ℹ",
+                    };
+                    
+                    println!("  {}. {} {}", i + 1, severity_icon, warning.message);
+                    println!();
+                    println!("     Import chain:");
+                    for (j, path) in warning.import_chain.iter().enumerate() {
+                        let prefix = if j == 0 { "     " } else { "       → " };
+                        println!("{}{}", prefix, path.file_name().and_then(|n| n.to_str()).unwrap_or("?"));
+                    }
+                    println!();
+                    println!("     {}", warning.suggestion.replace("\n", "\n     "));
+                    println!();
+                }
+            }
+            
+            if !evidence.is_safe {
+                std::process::exit(1);
             }
             
             Ok(())

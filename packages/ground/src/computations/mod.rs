@@ -8,6 +8,7 @@ mod usage;
 mod connectivity;
 pub mod ast_similarity;
 pub mod function_dry;
+pub mod environment;
 
 pub use similarity::{compute_similarity, SimilarityEvidence};
 pub use usage::{count_usages, UsageEvidence, UsageLocation, UsageType};
@@ -16,6 +17,10 @@ pub use ast_similarity::{extract_fingerprint, compare_fingerprints, AstFingerpri
 pub use function_dry::{
     extract_functions, analyze_function_dry, analyze_function_dry_with_options, compare_functions,
     ExtractedFunction, FunctionDryEvidence, FunctionDryReport, FunctionDryOptions, is_test_file,
+};
+pub use environment::{
+    analyze_environment_safety, EnvironmentEvidence, EnvironmentWarning, 
+    RuntimeEnvironment, ApiUsage, ImportChain, WarningSeverity,
 };
 
 use thiserror::Error;
