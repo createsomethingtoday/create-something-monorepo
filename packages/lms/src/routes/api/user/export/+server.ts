@@ -269,16 +269,5 @@ export const GET = async ({ cookies, platform }: RequestEvent) => {
 	});
 };
 
-/**
- * Parse JWT payload without verification (we trust the Identity Worker already validated it)
- */
-function parseJWT(token: string): { sub?: string; email?: string } | null {
-	try {
-		const parts = token.split('.');
-		if (parts.length !== 3) return null;
-		const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-		return payload;
-	} catch {
-		return null;
-	}
-}
+// JWT parsing moved to shared utility
+import { parseJWT } from '$lib/auth/jwt';

@@ -19,6 +19,7 @@ import type {
   UpdateIssueOptions,
   QueryOptions,
 } from './types.js';
+import { rowToIssue } from './utils.js';
 
 /**
  * Generate a short unique ID.
@@ -157,7 +158,7 @@ export class Tracker {
       .first<Record<string, unknown>>();
 
     if (!row) return null;
-    return this.rowToIssue(row);
+    return rowToIssue(row);
   }
 
   async updateIssue(id: string, options: UpdateIssueOptions): Promise<void> {
@@ -242,7 +243,7 @@ export class Tracker {
       .bind(...values)
       .all<Record<string, unknown>>();
 
-    return results.map((row) => this.rowToIssue(row));
+    return results.map((row) => rowToIssue(row));
   }
 
   /**
@@ -269,7 +270,7 @@ export class Tracker {
       .bind(limit)
       .all<Record<string, unknown>>();
 
-    return results.map((row) => this.rowToIssue(row));
+    return results.map((row) => rowToIssue(row));
   }
 
   /**
@@ -299,7 +300,7 @@ export class Tracker {
       }
 
       blockedIssues.push({
-        issue: this.rowToIssue(row),
+        issue: rowToIssue(row),
         blockedBy: blockers,
       });
     }
@@ -482,21 +483,7 @@ export class Tracker {
     };
   }
 
-  private rowToIssue(row: Record<string, unknown>): Issue {
-    return {
-      id: row.id as string,
-      description: row.description as string,
-      status: row.status as IssueStatus,
-      projectId: row.project_id as string | null,
-      parentId: row.parent_id as string | null,
-      priority: row.priority as number,
-      labels: JSON.parse((row.labels as string) || '[]'),
-      metadata: JSON.parse((row.metadata as string) || '{}'),
-      createdAt: row.created_at as number,
-      updatedAt: row.updated_at as number,
-      resolvedAt: row.resolved_at as number | null,
-    };
-  }
+  // rowToIssue moved to shared utils.ts
 
   private rowToDependency(row: Record<string, unknown>): Dependency {
     return {

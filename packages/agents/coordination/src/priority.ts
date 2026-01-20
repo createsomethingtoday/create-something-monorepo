@@ -7,6 +7,7 @@
 
 import type { CoordinationDB, Issue, PriorityResult } from './types.js';
 import { Tracker } from './tracker.js';
+import { rowToIssue } from './utils.js';
 
 /**
  * Priority calculator for issue ordering.
@@ -254,25 +255,11 @@ export class Priority {
       .all<Record<string, unknown> & { blocked_count: number }>();
 
     return results.map((row) => ({
-      issue: this.rowToIssue(row),
+      issue: rowToIssue(row),
       score: row.blocked_count,
       reason: `Blocking ${row.blocked_count} issue(s)`,
     }));
   }
 
-  private rowToIssue(row: Record<string, unknown>): Issue {
-    return {
-      id: row.id as string,
-      description: row.description as string,
-      status: row.status as Issue['status'],
-      projectId: row.project_id as string | null,
-      parentId: row.parent_id as string | null,
-      priority: row.priority as number,
-      labels: JSON.parse((row.labels as string) || '[]'),
-      metadata: JSON.parse((row.metadata as string) || '{}'),
-      createdAt: row.created_at as number,
-      updatedAt: row.updated_at as number,
-      resolvedAt: row.resolved_at as number | null,
-    };
-  }
+  // rowToIssue moved to shared utils.ts
 }
