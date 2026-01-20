@@ -383,20 +383,23 @@ fn extract_export_list(line: &str) -> Vec<String> {
     // Find content between { and }
     if let Some(start) = line.find('{') {
         if let Some(end) = line.find('}') {
-            let content = &line[start + 1..end];
-            
-            for part in content.split(',') {
-                let part = part.trim();
+            // Safety: ensure valid slice bounds
+            if end > start + 1 {
+                let content = &line[start + 1..end];
                 
-                // Handle "foo as bar" - use the original name (foo)
-                let name = if part.contains(" as ") {
-                    part.split(" as ").next().unwrap_or(part).trim()
-                } else {
-                    part
-                };
-                
-                if !name.is_empty() && name != "type" {
-                    names.push(name.to_string());
+                for part in content.split(',') {
+                    let part = part.trim();
+                    
+                    // Handle "foo as bar" - use the original name (foo)
+                    let name = if part.contains(" as ") {
+                        part.split(" as ").next().unwrap_or(part).trim()
+                    } else {
+                        part
+                    };
+                    
+                    if !name.is_empty() && name != "type" {
+                        names.push(name.to_string());
+                    }
                 }
             }
         }
@@ -467,27 +470,30 @@ fn imports_symbol(content: &str, symbol: &str) -> bool {
             // Check it's in the import list, not just the path
             if let Some(brace_start) = trimmed.find('{') {
                 if let Some(brace_end) = trimmed.find('}') {
-                    let import_list = &trimmed[brace_start + 1..brace_end];
-                    // Check for exact symbol (with word boundaries)
-                    for part in import_list.split(',') {
-                        let part = part.trim();
-                        // Handle "original as alias"
-                        let imported_name = if part.contains(" as ") {
-                            // "symbol as alias" or "original as symbol"
-                            let parts: Vec<&str> = part.split(" as ").collect();
-                            if parts.len() == 2 {
-                                // Both the original and alias could match
-                                if parts[0].trim() == symbol || parts[1].trim() == symbol {
-                                    return true;
+                    // Safety: ensure valid slice bounds (brace_end must be after brace_start + 1)
+                    if brace_end > brace_start + 1 {
+                        let import_list = &trimmed[brace_start + 1..brace_end];
+                        // Check for exact symbol (with word boundaries)
+                        for part in import_list.split(',') {
+                            let part = part.trim();
+                            // Handle "original as alias"
+                            let imported_name = if part.contains(" as ") {
+                                // "symbol as alias" or "original as symbol"
+                                let parts: Vec<&str> = part.split(" as ").collect();
+                                if parts.len() == 2 {
+                                    // Both the original and alias could match
+                                    if parts[0].trim() == symbol || parts[1].trim() == symbol {
+                                        return true;
+                                    }
                                 }
+                                continue;
+                            } else {
+                                part
+                            };
+                            
+                            if imported_name == symbol {
+                                return true;
                             }
-                            continue;
-                        } else {
-                            part
-                        };
-                        
-                        if imported_name == symbol {
-                            return true;
                         }
                     }
                 }
@@ -499,13 +505,16 @@ fn imports_symbol(content: &str, symbol: &str) -> bool {
         
         // Dynamic imports: const { symbol } = await import('...')
         if trimmed.contains("import(") && trimmed.contains(symbol) {
-            // Simplified check
+            // Simplified check - ensure brace_end > brace_start to avoid slicing panic
             if let Some(brace_start) = trimmed.find('{') {
                 if let Some(brace_end) = trimmed.find('}') {
-                    let destructure = &trimmed[brace_start + 1..brace_end];
-                    for part in destructure.split(',') {
-                        if part.trim() == symbol {
-                            return true;
+                    // Safety: ensure valid slice bounds
+                    if brace_end > brace_start + 1 {
+                        let destructure = &trimmed[brace_start + 1..brace_end];
+                        for part in destructure.split(',') {
+                            if part.trim() == symbol {
+                                return true;
+                            }
                         }
                     }
                 }
