@@ -109,12 +109,13 @@
 			console.log('[WebGPU] Context initialized');
 
 			// Create and start simulation
+			// Use canvas dimensions for arena to ensure proper mapping
 			simulation = new CrowdSimulation(webgpuContext, {
 				agentCount,
 				canvasWidth: canvas.width,
 				canvasHeight: canvas.height,
-				arenaWidth: 800,
-				arenaHeight: 600
+				arenaWidth: canvas.width,
+				arenaHeight: canvas.height
 			});
 
 			await simulation.initialize();
@@ -312,6 +313,37 @@
 			<div class="canvas-container">
 				<canvas bind:this={canvasElement} class="simulation-canvas"></canvas>
 				
+				<!-- Arena overlay - shows the arena boundaries -->
+				<svg class="arena-overlay" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+					<!-- Arena ellipse -->
+					<ellipse 
+						cx="50" cy="50" 
+						rx="42" ry="38" 
+						fill="none" 
+						stroke="rgba(255,255,255,0.15)" 
+						stroke-width="0.5"
+					/>
+					<!-- Inner court area -->
+					<rect 
+						x="35" y="38" 
+						width="30" height="24" 
+						fill="none" 
+						stroke="rgba(255,255,255,0.1)" 
+						stroke-width="0.3"
+						rx="1"
+					/>
+					<!-- Gate markers -->
+					<line x1="50" y1="8" x2="50" y2="12" stroke="rgba(100,200,100,0.3)" stroke-width="0.5" />
+					<line x1="50" y1="88" x2="50" y2="92" stroke="rgba(100,200,100,0.3)" stroke-width="0.5" />
+					<line x1="8" y1="50" x2="12" y2="50" stroke="rgba(100,200,100,0.3)" stroke-width="0.5" />
+					<line x1="88" y1="50" x2="92" y2="50" stroke="rgba(100,200,100,0.3)" stroke-width="0.5" />
+					<!-- Gate labels -->
+					<text x="50" y="6" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="3">N</text>
+					<text x="50" y="97" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="3">S</text>
+					<text x="5" y="51" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="3">W</text>
+					<text x="95" y="51" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="3">E</text>
+				</svg>
+
 				<!-- Performance overlay -->
 				<div class="performance-overlay">
 					<div class="perf-stat">
@@ -667,6 +699,16 @@
 		width: 100%;
 		height: auto;
 		display: block;
+	}
+
+	/* Arena Overlay */
+	.arena-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
 	}
 
 	/* Performance Overlay */
