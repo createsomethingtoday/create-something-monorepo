@@ -37,7 +37,7 @@ export async function collectIssueMetrics(
   // Filter checkpoints related to this issue
   const issueCheckpoints = checkpoints.filter(
     (cp) =>
-      cp.context.issuesUpdated.includes(issueId) ||
+      cp.context.issuesUpdated.some((u) => u.issueId === issueId) ||
       cp.context.currentTask?.issueId === issueId
   );
 
@@ -83,7 +83,7 @@ export async function collectIssueMetrics(
   const costPerIteration = iterations > 0 ? costUsd / iterations : 0;
 
   // Determine success
-  const successful = issue.status === 'closed' || issue.status === 'completed';
+  const successful = issue.status === 'closed';
   const failureReasons = extractFailureReasons(issueCheckpoints);
 
   return {
@@ -133,7 +133,7 @@ export async function collectConvoyMetrics(
   // Collect metrics for each issue
   const metrics: WorkMetrics[] = [];
 
-  for (const worker of convoy.workers) {
+  for (const worker of convoy.stored.workers) {
     const issueMetrics = await collectIssueMetrics(worker.issueId, checkpoints, cwd);
     if (issueMetrics) {
       // Override with worker-specific data
@@ -162,8 +162,8 @@ export async function collectEpicMetrics(
   // Get all unique issue IDs from checkpoints
   const issueIds = new Set<string>();
   for (const cp of checkpoints) {
-    for (const issueId of cp.context.issuesUpdated) {
-      issueIds.add(issueId);
+    for (const issueUpdate of cp.context.issuesUpdated) {
+      issueIds.add(issueUpdate.issueId);
     }
     if (cp.context.currentTask?.issueId) {
       issueIds.add(cp.context.currentTask.issueId);
@@ -197,12 +197,10 @@ function countRetries(checkpoints: StoredCheckpoint[]): number {
 
   for (const cp of sorted) {
     const hasBlockers = cp.context.blockers.length > 0;
-    const hasFailureNotes = cp.context.agentNotes.some(
-      (note) =>
-        note.toLowerCase().includes('fail') ||
-        note.toLowerCase().includes('retry') ||
-        note.toLowerCase().includes('error')
-    );
+    const hasFailureNotes =
+      cp.context.agentNotes.toLowerCase().includes('fail') ||
+      cp.context.agentNotes.toLowerCase().includes('retry') ||
+      cp.context.agentNotes.toLowerCase().includes('error');
 
     if (hasBlockers || hasFailureNotes) {
       lastWasFailure = true;
@@ -259,7 +257,7 @@ function extractReviewerFindings(checkpoints: StoredCheckpoint[]): ReviewerFindi
 
     // Check blockers for review findings
     for (const blocker of cp.context.blockers) {
-      const lower = blocker.description.toLowerCase();
+      const lower = blocker.toLowerCase();
 
       let reviewer: keyof ReviewerFindings | null = null;
       if (lower.includes('security')) {
@@ -289,7 +287,7 @@ function extractFailureReasons(checkpoints: StoredCheckpoint[]): string[] {
   for (const cp of checkpoints) {
     // Check blockers
     for (const blocker of cp.context.blockers) {
-      reasons.push(blocker.description);
+      reasons.push(blocker);
     }
 
     // Check agent notes for failure indicators

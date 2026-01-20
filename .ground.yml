@@ -1,0 +1,95 @@
+# Ground Configuration for CREATE SOMETHING Monorepo
+# https://github.com/create-something/ground
+
+version: "1"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Ignore Patterns
+# ─────────────────────────────────────────────────────────────────────────────
+
+ignore:
+  # Function names to skip in duplicate detection
+  # These are intentionally similar across files (interface implementations, SvelteKit conventions)
+  functions:
+    - load                 # SvelteKit page loaders are similar by design
+    - getCapabilities      # Required interface method
+    - constructor          # Boilerplate is OK
+    - toString             # Standard method
+    - toJSON               # Standard method
+    - DELETE               # Admin CRUD handlers (minimal wrapper around shared functions)
+    - POST                 # SvelteKit route handlers often have similar structure
+    - GET                  # Admin CRUD handlers (minimal wrapper around shared adminList)
+
+  # Export names/patterns to skip in dead export detection
+  exports:
+    - __test__*            # Test helpers
+    - internal_*           # Internal APIs (documented)
+    - _*                   # Private by convention
+
+  # File path patterns to skip entirely
+  # Build configs, scripts (run via CLI), and generated files
+  paths:
+    # Build/dev configs (loaded by tooling, not imported)
+    # Principle: These files exist in the "ready-to-hand" (Zuhandenheit) - 
+    # tools load them directly, they don't participate in the import graph.
+    # A comprehensive pattern catches current and future configs.
+    - "**/*.config.js"
+    - "**/*.config.ts"
+    - "**/*.config.mjs"
+    
+    # Scripts (run via CLI)
+    - "**/scripts/**"
+    
+    # Test files
+    - "**/*.test.ts"
+    - "**/*.spec.ts"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+    - "**/fixtures/**"
+    
+    # Generated/vendor
+    - "**/venv/**"
+    - "**/.venv/**"
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.svelte-kit/**"
+    
+    # Airtable scripts (embedded in Airtable, not imported)
+    - "**/airtable-scripts/**"
+
+  # Specific file pairs to skip in duplicate detection
+  # Use when files are intentionally similar (e.g., templates, interface implementations)
+  duplicate_pairs:
+    # SvelteKit route handlers - each app needs its own routes, even when calling shared functions
+    - ["packages/agency/src/routes/api/analytics/track/+server.ts", 
+       "packages/io/src/routes/api/analytics/track/+server.ts"]
+    - ["packages/agency/src/routes/api/analytics/events/+server.ts",
+       "packages/io/src/routes/api/analytics/events/+server.ts"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Analysis Thresholds
+# ─────────────────────────────────────────────────────────────────────────────
+
+thresholds:
+  # Similarity threshold for duplicate detection (0-100)
+  # 85% catches clear violations while ignoring structural similarities
+  duplicate_similarity: 85
+
+  # Minimum function lines to analyze
+  # Ignores trivial getters/setters
+  min_function_lines: 5
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Report Settings
+# ─────────────────────────────────────────────────────────────────────────────
+
+report:
+  # Output format: text, markdown, json
+  format: markdown
+
+  # Include fix suggestions in output
+  include_suggestions: true
+
+  # Group findings by: file, type, severity
+  group_by: type

@@ -333,6 +333,42 @@ export {
   attemptCustomAutoFix,
 } from './self-heal.js';
 
+// Circuit Breaker Pattern
+export type {
+  CircuitState,
+  CircuitBreakerConfig,
+  CircuitMetrics,
+  CircuitResult,
+} from './circuit-breaker.js';
+
+export {
+  CircuitBreaker,
+  circuitBreakers,
+  withCircuitBreaker,
+  formatCircuitBreakerReport,
+  DEFAULT_CIRCUIT_BREAKER_CONFIG,
+} from './circuit-breaker.js';
+
+// Saga Pattern
+export type {
+  SagaStepStatus,
+  SagaStatus,
+  SagaStepResult,
+  SagaResult,
+  SagaStep,
+  SagaConfig,
+} from './saga.js';
+
+export {
+  SagaOrchestrator,
+  SagaBuilder,
+  saga,
+  formatSagaResult,
+  needsManualIntervention,
+  getFailedCompensations,
+  DEFAULT_SAGA_CONFIG,
+} from './saga.js';
+
 // Runtime Configuration (Gas Town v0.2.2+ multi-provider support)
 export type {
   RuntimeProvider,

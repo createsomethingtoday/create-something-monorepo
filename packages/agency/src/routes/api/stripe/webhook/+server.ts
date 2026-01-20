@@ -57,24 +57,24 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		switch (event.type) {
 			case 'checkout.session.completed':
-				await handleCheckoutComplete(event.data.object as Stripe.Checkout.Session, platform);
+				await handleCheckoutComplete(event.data.object as Stripe.Checkout.Session, platform, logger);
 				break;
 
 			case 'customer.subscription.created':
 			case 'customer.subscription.updated':
-				await handleSubscriptionUpdate(event.data.object as Stripe.Subscription, platform);
+				await handleSubscriptionUpdate(event.data.object as Stripe.Subscription, platform, logger);
 				break;
 
 			case 'customer.subscription.deleted':
-				await handleSubscriptionCanceled(event.data.object as Stripe.Subscription, platform);
+				await handleSubscriptionCanceled(event.data.object as Stripe.Subscription, platform, logger);
 				break;
 
 			case 'invoice.paid':
-				await handleInvoicePaid(event.data.object as Stripe.Invoice, platform);
+				await handleInvoicePaid(event.data.object as Stripe.Invoice, platform, logger);
 				break;
 
 			case 'invoice.payment_failed':
-				await handleInvoiceFailed(event.data.object as Stripe.Invoice, platform);
+				await handleInvoiceFailed(event.data.object as Stripe.Invoice, platform, logger);
 				break;
 
 			default:
@@ -93,7 +93,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
  */
 async function handleCheckoutComplete(
 	session: Stripe.Checkout.Session,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const productId = session.metadata?.product_id;
 	const tier = session.metadata?.tier;
@@ -364,7 +365,8 @@ async function sendFulfillmentEmail(
  */
 async function handleSubscriptionUpdate(
 	subscription: Stripe.Subscription,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	logger.info('Subscription updated', {
 		subscriptionId: subscription.id,
@@ -399,7 +401,8 @@ async function handleSubscriptionUpdate(
  */
 async function handleSubscriptionCanceled(
 	subscription: Stripe.Subscription,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	logger.info('Subscription canceled', {
 		subscriptionId: subscription.id,
@@ -677,7 +680,7 @@ async function sendAgentKitEmail(
 /**
  * Handle successful invoice payment
  */
-async function handleInvoicePaid(invoice: Stripe.Invoice, platform: App.Platform | undefined) {
+async function handleInvoicePaid(invoice: Stripe.Invoice, platform: App.Platform | undefined, logger: Logger) {
 	logger.info('Invoice paid', {
 		invoiceId: invoice.id,
 		amountPaid: invoice.amount_paid,
@@ -690,7 +693,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, platform: App.Platform
 /**
  * Handle failed invoice payment
  */
-async function handleInvoiceFailed(invoice: Stripe.Invoice, platform: App.Platform | undefined) {
+async function handleInvoiceFailed(invoice: Stripe.Invoice, platform: App.Platform | undefined, logger: Logger) {
 	logger.warn('Invoice payment failed', {
 		invoiceId: invoice.id,
 		amountDue: invoice.amount_due,

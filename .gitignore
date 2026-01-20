@@ -55,3 +55,9 @@ csm/csm/.repo.git
 # Keep config.json tracked, ignore cache/index/memories
 __pycache__/
 .dev.vars
+
+# Python virtual environments
+venv/
+.venv/
+**/venv/
+**/.venv/

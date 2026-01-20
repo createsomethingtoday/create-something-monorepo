@@ -1,0 +1,5 @@
+Platform,Pros,Cons,Best For
+Modal,"Sub-second cold starts, Python-native, scale-to-zero, no YAML",Newer platform,"AI workloads, agents"
+Cloudflare Workers,"Fast, global, existing expertise",Python support limited,"Lightweight, edge"
+Render,"Simple, Git-deploy",Cold starts,Background jobs
+Vercel,Existing (App Form),Timeout limits,Web-facing

@@ -18,6 +18,7 @@ export * from './easing.js';
 export * from './typography.js';
 export * from './layout.js';
 export * from './shadows.js';
+export * from './inview.js';
 
 // Svelte components - Primitives
 export { default as IsometricBox } from './IsometricBox.svelte';

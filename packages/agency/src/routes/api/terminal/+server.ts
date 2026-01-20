@@ -2,6 +2,11 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { Paper } from '@create-something/components/types';
 import { generateCorrelationId, logError } from '@create-something/components/utils';
+import {
+	createTerminalHeader,
+	createTerminalCardGrid,
+	type TerminalPaperItem
+} from '@create-something/components/ascii';
 
 interface TerminalRequest {
 	command: string;
@@ -10,19 +15,9 @@ interface TerminalRequest {
 }
 
 /**
- * Subset of Paper for list view (papers command)
- */
-type PaperListItem = Pick<Paper, 'id' | 'title' | 'category' | 'reading_time' | 'difficulty_level'>;
-
-/**
  * Subset of Paper for detail view (read command)
  */
 type PaperDetail = Pick<Paper, 'id' | 'title' | 'category' | 'reading_time' | 'difficulty_level' | 'excerpt_short' | 'excerpt_long'>;
-
-/**
- * Subset of Paper for search results
- */
-type PaperSearchResult = Pick<Paper, 'id' | 'title' | 'category' | 'excerpt_short'>;
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -56,76 +51,19 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					});
 				}
 
-				// Helper function to create a card for a paper
-				const createCard = (p: PaperListItem, index: number, offset: string = '') => {
-					const num = index + 1;
-					const title = p.title.substring(0, 19).padEnd(19, ' ');
-					const category = (p.category || 'Unknown').substring(0, 14);
-					const time = (p.reading_time || '?') + 'min';
-					const categoryTime = `${category} • ${time}`.substring(0, 19).padEnd(19, ' ');
-					const difficulty = `Difficulty: ${(p.difficulty_level || 'N/A').toString().substring(0, 8)}`.substring(0, 19).padEnd(19, ' ');
+				const paperList = papers.results as unknown as TerminalPaperItem[];
+				const header = createTerminalHeader('TECHNICAL PAPERS LIBRARY');
+				const cards = createTerminalCardGrid(paperList, true);
 
-					// Placeholder ASCII art patterns (different for each card)
-					const patterns = [
-						['░░░░░░░░░░░░░░░░░░░', '░░░ PLACEHOLDER ░░░', '░░░░░░░░░░░░░░░░░░░'],
-						['▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓', '▓▓▓ PLACEHOLDER ▓▓▓', '▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓'],
-						['███████████████████', '███ PLACEHOLDER ███', '███████████████████'],
-						['▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒', '▒▒▒ PLACEHOLDER ▒▒▒', '▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒']
-					];
-					const pattern = patterns[index % patterns.length];
-
-					return [
-						`${offset}┌───────────────────────┐`,
-						`${offset}│  ${pattern[0]}  │`,
-						`${offset}│  ${pattern[1]}  │`,
-						`${offset}│  ${pattern[2]}  │`,
-						`${offset}├───────────────────────┤`,
-						`${offset}│ ${num}. ${title} │`,
-						`${offset}│ ${categoryTime} │`,
-						`${offset}│ ${difficulty} │`,
-						`${offset}└───────────────────────┘`
-					];
-				};
-
-				// Create cards in 2-column layout with rotation effect
-				const outputLines: string[] = [
+				const outputLines = [
 					'',
-					'╔═══════════════════════════════════════════════════════════════╗',
-					'║                    TECHNICAL PAPERS LIBRARY                   ║',
-					'╚═══════════════════════════════════════════════════════════════╝',
+					...header,
+					'',
+					...cards,
+					'',
+					'Type "read <number>" to read a paper',
 					''
 				];
-
-				// Process papers in pairs (2 columns)
-				const paperList = papers.results as PaperListItem[];
-				for (let i = 0; i < paperList.length; i += 2) {
-					const leftPaper = paperList[i];
-					const rightPaper = paperList[i + 1];
-
-					// Determine offset for rotation effect
-					// Cards in row 2, 4, 6, etc. get indented
-					const isOffsetRow = Math.floor(i / 2) % 2 === 1;
-					const rowOffset = isOffsetRow ? '    ' : '';
-
-					const leftCard = createCard(leftPaper, i, rowOffset);
-
-					if (rightPaper) {
-						// Two cards side by side
-						const rightCard = createCard(rightPaper, i + 1, rowOffset);
-						for (let j = 0; j < leftCard.length; j++) {
-							outputLines.push(leftCard[j] + '  ' + rightCard[j].trim());
-						}
-					} else {
-						// Single card (odd number of papers)
-						outputLines.push(...leftCard);
-					}
-
-					outputLines.push(''); // Spacing between rows
-				}
-
-				outputLines.push('');
-				outputLines.push('Type "read <number>" to read a paper');
-				outputLines.push('');
 
 				return json({
 					output: outputLines.join('\n'),
@@ -211,7 +149,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					});
 				}
 
-				const searchResults = results.results as PaperSearchResult[];
+				const searchResults = results.results as unknown as TerminalPaperItem[];
 				const output = [
 					'',
 					`Search results for "${args}":`,

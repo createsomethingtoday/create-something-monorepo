@@ -10,6 +10,7 @@
 	} from '$lib/stores/submission';
 	import { onMount, onDestroy } from 'svelte';
 	import { toast } from '$lib/stores/toast';
+	import { CheckCircle2, Clock, Shield, AlertCircle, AlertTriangle, RefreshCw } from 'lucide-svelte';
 
 	interface Props {
 		assets: Asset[];
@@ -155,10 +156,7 @@
 			{:else}
 				<Badge variant={getBadgeVariant()}>
 					{#if submissionData().isWhitelisted}
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="whitelist-icon">
-							<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-							<polyline points="22 4 12 14.01 9 11.01" />
-						</svg>
+						<CheckCircle2 size={12} class="whitelist-icon" />
 						Unlimited
 					{:else}
 						{submissionData().assetsSubmitted30}/{SUBMISSION_LIMIT} this month
@@ -167,10 +165,7 @@
 			{/if}
 			{#if submissionData().isAtLimit && submissionData().nextExpiryDate && !submissionData().isWhitelisted}
 				<span class="next-date">
-					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10" />
-						<polyline points="12 6 12 12 16 14" />
-					</svg>
+					<Clock size={12} />
 					{displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)}
 				</span>
 			{/if}
@@ -191,36 +186,27 @@
 					</Badge>
 				</div>
 
-				{#if submissionData().isDevMode}
-					<div class="dev-mode-banner">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-						</svg>
-						Development mode - external API skipped due to CORS
-					</div>
-				{/if}
+			{#if submissionData().isDevMode}
+				<div class="dev-mode-banner">
+					<Shield size={14} />
+					Development mode - external API skipped due to CORS
+				</div>
+			{/if}
 
-				{#if submissionData().hasError}
-					<div class="error-banner">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="10" />
-							<line x1="12" y1="8" x2="12" y2="12" />
-							<line x1="12" y1="16" x2="12.01" y2="16" />
-						</svg>
-						{submissionData().message || 'Server unavailable'}
-						<button type="button" class="retry-button" onclick={handleRefresh}>Retry</button>
-					</div>
-				{/if}
+			{#if submissionData().hasError}
+				<div class="error-banner">
+					<AlertCircle size={14} />
+					{submissionData().message || 'Server unavailable'}
+					<button type="button" class="retry-button" onclick={handleRefresh}>Retry</button>
+				</div>
+			{/if}
 
-				{#if submissionData().isWhitelisted}
-					<div class="whitelist-banner">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-							<polyline points="22 4 12 14.01 9 11.01" />
-						</svg>
-						Whitelisted account - no submission limits
-					</div>
-				{/if}
+			{#if submissionData().isWhitelisted}
+				<div class="whitelist-banner">
+					<CheckCircle2 size={14} />
+					Whitelisted account - no submission limits
+				</div>
+			{/if}
 
 				<div class="tooltip-stats">
 					<div class="stat-row">
@@ -264,28 +250,21 @@
 					</div>
 				{/if}
 
-				{#if submissionData().nextExpiryDate && submissionData().isAtLimit && !submissionData().isWhitelisted}
-					<div class="next-slot">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="10" />
-							<polyline points="12 6 12 12 16 14" />
-						</svg>
-						Next slot: {formatDate(submissionData().nextExpiryDate)} ({displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)})
-					</div>
-				{/if}
+			{#if submissionData().nextExpiryDate && submissionData().isAtLimit && !submissionData().isWhitelisted}
+				<div class="next-slot">
+					<Clock size={14} />
+					Next slot: {formatDate(submissionData().nextExpiryDate)} ({displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)})
+				</div>
+			{/if}
 
 				<div class="tooltip-footer">
 					<span class="data-source">
 						Data: {submissionData().dataSource === 'external' ? 'Server' : 'Local'}
 					</span>
-					<button type="button" class="refresh-link" onclick={handleRefresh}>
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<polyline points="23 4 23 10 17 10" />
-							<polyline points="1 20 1 14 7 14" />
-							<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-						</svg>
-						Refresh
-					</button>
+				<button type="button" class="refresh-link" onclick={handleRefresh}>
+					<RefreshCw size={12} />
+					Refresh
+				</button>
 				</div>
 			</div>
 		{/if}
@@ -317,40 +296,29 @@
 					</div>
 				</div>
 			{:else}
-				{#if submissionData().hasError}
-					<div class="error-banner-full">
-						<div class="error-content">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<circle cx="12" cy="12" r="10" />
-								<line x1="12" y1="8" x2="12" y2="12" />
-								<line x1="12" y1="16" x2="12.01" y2="16" />
-							</svg>
-							<span>{submissionData().message || 'Server unavailable - using local data'}</span>
-						</div>
-						<Button variant="outline" size="sm" onclick={handleRefresh}>Retry</Button>
+			{#if submissionData().hasError}
+				<div class="error-banner-full">
+					<div class="error-content">
+						<AlertCircle size={16} />
+						<span>{submissionData().message || 'Server unavailable - using local data'}</span>
 					</div>
-				{/if}
+					<Button variant="outline" size="sm" onclick={handleRefresh}>Retry</Button>
+				</div>
+			{/if}
 
-				{#if submissionData().isWhitelisted}
-					<div class="whitelist-banner-full">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-							<polyline points="22 4 12 14.01 9 11.01" />
-						</svg>
-						<span>Your account is whitelisted - no submission limits apply</span>
-					</div>
-				{/if}
+			{#if submissionData().isWhitelisted}
+				<div class="whitelist-banner-full">
+					<CheckCircle2 size={16} />
+					<span>Your account is whitelisted - no submission limits apply</span>
+				</div>
+			{/if}
 
-				{#if submissionData().warningLevel === 'caution' && !submissionData().isWhitelisted}
-					<div class="warning-banner">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-							<line x1="12" y1="9" x2="12" y2="13" />
-							<line x1="12" y1="17" x2="12.01" y2="17" />
-						</svg>
-						<span>Approaching submission limit - {submissionData().remainingSubmissions} slots remaining</span>
-					</div>
-				{/if}
+			{#if submissionData().warningLevel === 'caution' && !submissionData().isWhitelisted}
+				<div class="warning-banner">
+					<AlertTriangle size={16} />
+					<span>Approaching submission limit - {submissionData().remainingSubmissions} slots remaining</span>
+				</div>
+			{/if}
 
 				<div class="status-grid">
 					<div class="status-item">
@@ -399,19 +367,16 @@
 					</div>
 				{/if}
 
-				{#if submissionData().nextExpiryDate && submissionData().isAtLimit && !submissionData().isWhitelisted}
-					<div class="next-slot-full">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="10" />
-							<polyline points="12 6 12 12 16 14" />
-						</svg>
-						<div class="next-slot-info">
-							<span class="next-slot-label">Next slot available</span>
-							<span class="next-slot-date">{formatDate(submissionData().nextExpiryDate)}</span>
-							<span class="next-slot-countdown">({displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)})</span>
-						</div>
+			{#if submissionData().nextExpiryDate && submissionData().isAtLimit && !submissionData().isWhitelisted}
+				<div class="next-slot-full">
+					<Clock size={16} />
+					<div class="next-slot-info">
+						<span class="next-slot-label">Next slot available</span>
+						<span class="next-slot-date">{formatDate(submissionData().nextExpiryDate)}</span>
+						<span class="next-slot-countdown">({displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)})</span>
 					</div>
-				{/if}
+				</div>
+			{/if}
 
 				<div class="card-footer">
 					<span class="data-source-full">
@@ -420,14 +385,10 @@
 							(Dev mode)
 						{/if}
 					</span>
-					<button type="button" class="refresh-button" onclick={handleRefresh}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<polyline points="23 4 23 10 17 10" />
-							<polyline points="1 20 1 14 7 14" />
-							<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-						</svg>
-						Refresh
-					</button>
+				<button type="button" class="refresh-button" onclick={handleRefresh}>
+					<RefreshCw size={14} />
+					Refresh
+				</button>
 				</div>
 			{/if}
 		</CardContent>

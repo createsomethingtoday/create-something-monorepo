@@ -2,26 +2,22 @@
  * Content Loader - .ltd Implementation
  *
  * Loads markdown content using Vite's import.meta.glob.
- * This implementation is package-specific since glob context matters.
+ * Uses shared utilities from @create-something/components.
  */
 
 import { error } from '@sveltejs/kit';
 import type { Component } from 'svelte';
+import {
+	loadMarkdownContent,
+	type BaseFrontmatter,
+	type ContentItem
+} from '@create-something/components/content';
+
+// Re-export shared types and functions for convenience
+export { loadMarkdownContent, type BaseFrontmatter, type ContentItem };
 
 /**
- * Base frontmatter - all content types extend this
- */
-export interface BaseFrontmatter {
-	title: string;
-	slug?: string;
-	published?: boolean;
-	publishedAt?: string;
-	updatedAt?: string;
-	hidden?: boolean;
-}
-
-/**
- * Pattern frontmatter
+ * Pattern frontmatter - .ltd specific
  */
 export interface PatternFrontmatter extends BaseFrontmatter {
 	subtitle?: string;
@@ -32,7 +28,7 @@ export interface PatternFrontmatter extends BaseFrontmatter {
 }
 
 /**
- * Canon page frontmatter
+ * Canon page frontmatter - .ltd specific
  */
 export interface CanonFrontmatter extends BaseFrontmatter {
 	subtitle?: string;
@@ -43,48 +39,6 @@ export interface CanonFrontmatter extends BaseFrontmatter {
 	description?: string;
 	lead?: string;
 	order?: number;
-}
-
-/**
- * Content item with MDsveX component
- */
-export interface ContentItem<T extends BaseFrontmatter = BaseFrontmatter> {
-	frontmatter: T;
-	component: Component;
-	slug: string;
-}
-
-/**
- * Load all markdown content from a glob pattern
- */
-export async function loadMarkdownContent<T extends BaseFrontmatter>(
-	globPattern: Record<string, () => Promise<{ default: Component; metadata: T }>>,
-	filterPublished = true
-): Promise<ContentItem<T>[]> {
-	const items = await Promise.all(
-		Object.entries(globPattern).map(async ([path, resolver]) => {
-			const mod = await resolver();
-			const slug = path.split('/').pop()?.replace('.md', '') || '';
-
-			return {
-				frontmatter: mod.metadata,
-				component: mod.default,
-				slug
-			};
-		})
-	);
-
-	// Filter published content if requested
-	const filtered = filterPublished
-		? items.filter((item) => item.frontmatter.published !== false)
-		: items;
-
-	// Sort by publishedAt date (newest first)
-	return filtered.sort((a, b) => {
-		const dateA = a.frontmatter?.publishedAt ? new Date(a.frontmatter.publishedAt).getTime() : 0;
-		const dateB = b.frontmatter?.publishedAt ? new Date(b.frontmatter.publishedAt).getTime() : 0;
-		return dateB - dateA;
-	});
 }
 
 /**

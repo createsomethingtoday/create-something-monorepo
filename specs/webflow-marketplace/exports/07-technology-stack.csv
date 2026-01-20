@@ -1,0 +1,7 @@
+Layer,Technology,Why,Owner
+Database,Airtable,Internal teams access without SQL/Snowflake,Joey
+Infrastructure,Cloudflare,"Workers, D1, R2, Queues - global edge",Micah
+Agent Runtime,Modal + CF Workers,Python agents (Modal) + edge logic (CF),Both
+Frontend,SvelteKit / Next.js,Dashboard (Svelte) + Forms (Next),Micah
+Code,Git repos (CREATE SOMETHING),"Versioned, reviewable, CI/CD",Both
+Agent Configs,Airtable tables,Internal team can view/edit prompts,Joey

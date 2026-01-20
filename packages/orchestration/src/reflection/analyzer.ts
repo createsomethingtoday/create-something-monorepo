@@ -14,9 +14,9 @@ import type {
   ReflectionTarget,
   ReflectionStats,
   IssueMetrics,
-  ReflectionConfig,
-  DEFAULT_REFLECTION_CONFIG,
+  ReflectionConfig
 } from './types.js';
+import { DEFAULT_REFLECTION_CONFIG } from './types.js';
 import { listCheckpoints } from '../checkpoint/store.js';
 import { loadConvoy, listConvoys } from '../coordinator/convoy.js';
 import { nanoid } from 'nanoid';
@@ -34,11 +34,14 @@ export async function analyzeConvoy(
   cwd: string = process.cwd()
 ): Promise<ReflectionResult> {
   // Load convoy data
-  const convoy = await loadConvoy(convoyId, epicId, cwd);
+  const loadedConvoy = await loadConvoy(convoyId, epicId, cwd);
 
-  if (!convoy) {
+  if (!loadedConvoy) {
     throw new Error(`Convoy ${convoyId} not found in epic ${epicId}`);
   }
+
+  // Extract stored convoy from wrapper
+  const { stored } = loadedConvoy;
 
   // Load all checkpoints for the epic
   const checkpoints = await listCheckpoints(epicId, cwd);
@@ -47,18 +50,18 @@ export async function analyzeConvoy(
   const convoyCheckpoints = checkpoints.filter((cp) => cp.context.convoyId === convoyId);
 
   // Calculate metrics for each issue
-  const issueMetrics = calculateIssueMetrics(convoy, convoyCheckpoints);
+  const issueMetrics = calculateIssueMetrics(stored, convoyCheckpoints);
 
   // Calculate aggregate statistics
-  const stats = calculateStats(issueMetrics, convoy);
+  const stats = calculateStats(issueMetrics, stored);
 
   // Create reflection target
   const target: ReflectionTarget = {
     type: 'convoy',
     id: convoyId,
-    name: convoy.convoy.name,
-    startedAt: convoy.createdAt,
-    completedAt: convoy.convoy.completedAt,
+    name: stored.convoy.name,
+    startedAt: stored.createdAt,
+    completedAt: stored.convoy.completedAt,
   };
 
   // Extract learnings from the analysis

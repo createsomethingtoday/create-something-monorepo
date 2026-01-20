@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CREATE SOMETHING Automation Patterns Index",
+  "description": "Machine-readable registry of automation patterns for LLM discovery and code generation",
+  "version": "1.0.0",
+  "generated_at": "2026-01-19T00:00:00Z",
+  "categories": {
+    "ResilientWorkflow": {
+      "description": "Fault tolerance patterns for distributed agents and external API calls",
+      "priority": "highest"
+    },
+    "SimilaritySketching": {
+      "description": "Probabilistic data structures for deduplication and cardinality estimation",
+      "priority": "high"
+    },
+    "AgenticOrchestration": {
+      "description": "LLM integration patterns for multi-step reasoning and validation",
+      "priority": "high"
+    }
+  },
+  "patterns": [
+    {
+      "id": "circuit-breaker-v1",
+      "name": "Circuit Breaker",
+      "category": "ResilientWorkflow",
+      "description": "Prevents cascade failures by tracking service health and failing fast when a service is unhealthy. Use for external API calls, agent chains, and any operation that can fail repeatedly.",
+      "priority_score": 38,
+      "file": "packages/harness/src/circuit-breaker.ts",
+      "package": "@create-something/harness",
+      "language": "typescript",
+      "dependencies": [],
+      "exports": [
+        "CircuitBreaker",
+        "circuitBreakers",
+        "withCircuitBreaker",
+        "formatCircuitBreakerReport"
+      ],
+      "example_usage": "const breaker = new CircuitBreaker('api-service', { failureThreshold: 5 });\nconst result = await breaker.call(() => fetch(url));\nif (result.rejected) console.log('Service unavailable');",
+      "llm_prompt": "Wrap external API calls with circuit-breaker-v1 to prevent cascade failures. Configure failureThreshold based on acceptable error rate.",
+      "inspired_by": [
+        "Microsoft Azure Architecture Patterns",
+        "Netflix Hystrix"
+      ],
+      "status": "stable"
+    },
+    {
+      "id": "saga-v1",
+      "name": "Saga Orchestrator",
+      "category": "ResilientWorkflow",
+      "description": "Manages distributed workflows with compensating transactions. When a multi-step operation fails, automatically rolls back completed steps in reverse order. Use for PR workflows, deployments, multi-service ops.",
+      "priority_score": 39,
+      "file": "packages/harness/src/saga.ts",
+      "package": "@create-something/harness",
+      "language": "typescript",
+      "dependencies": [],
+      "exports": [
+        "SagaOrchestrator",
+        "SagaBuilder",
+        "saga",
+        "formatSagaResult"
+      ],
+      "example_usage": "const saga = new SagaOrchestrator('deploy-workflow');\nsaga.addStep({ name: 'build', execute: build, compensate: cleanup });\nsaga.addStep({ name: 'deploy', execute: deploy, compensate: rollback });\nconst result = await saga.execute(context);",
+      "llm_prompt": "Implement a multi-step workflow using saga-v1. Define execute and compensate functions for each step. Steps run forward; on failure, compensation runs backward.",
+      "inspired_by": [
+        "Hector Garcia-Molina SAGAS paper",
+        "Eventuate Tram"
+      ],
+      "status": "stable"
+    },
+    {
+      "id": "outbox-v1",
+      "name": "Outbox Pattern",
+      "category": "ResilientWorkflow",
+      "description": "Ensures at-least-once event delivery by storing events in the same transaction as business operations, then publishing asynchronously. Use for convoy events, workflow notifications, audit trails.",
+      "priority_score": 37,
+      "file": "packages/orchestration/src/outbox/index.ts",
+      "package": "@create-something/orchestration",
+      "language": "typescript",
+      "dependencies": [],
+      "exports": [
+        "Outbox",
+        "createOutbox",
+        "OutboxPublisher",
+        "createPublisher"
+      ],
+      "example_usage": "const outbox = createOutbox();\nawait outbox.emitConvoyEvent('convoy.created', payload, { epicId });\nconst publisher = createPublisher();\npublisher.on('convoy.created', handler);\npublisher.start();",
+      "llm_prompt": "Use outbox-v1 to publish events reliably. Create events with typed helpers (emitConvoyEvent, emitWorkerEvent). Start publisher to process.",
+      "variants": [
+        "outbox-sqlite (planned)",
+        "outbox-redis (planned)"
+      ],
+      "inspired_by": [
+        "Transactional Outbox Pattern",
+        "Debezium"
+      ],
+      "status": "stable"
+    },
+    {
+      "id": "hyperloglog-v1",
+      "name": "HyperLogLog Sketch",
+      "category": "SimilaritySketching",
+      "description": "Probabilistic cardinality estimation using sub-linear space. Counts unique elements with ~0.8% error at 14-bit precision. Use for counting unique workflow runs, file changes, API calls without storing all IDs.",
+      "priority_score": 36,
+      "file": "packages/ground/src/computations/hll.rs",
+      "package": "ground",
+      "language": "rust",
+      "dependencies": [
+        "sha2"
+      ],
+      "exports": [
+        "HyperLogLog",
+        "count_unique",
+        "estimate_intersection",
+        "estimate_jaccard"
+      ],
+      "example_usage": "let mut hll = HyperLogLog::new(14);\nhll.add_str(\"user-123\");\nhll.add_str(\"user-456\");\nprintln!(\"Unique users: {}\", hll.count());",
+      "llm_prompt": "Use hyperloglog-v1 for cardinality estimation. Choose precision 12-16 based on accuracy needs. Merge HLLs for distributed counting.",
+      "inspired_by": [
+        "Flajolet et al. HyperLogLog paper",
+        "Redis HyperLogLog"
+      ],
+      "status": "stable"
+    },
+    {
+      "id": "bloom-filter-v1",
+      "name": "Bloom Filter",
+      "category": "SimilaritySketching",
+      "description": "Space-efficient probabilistic set membership. Returns 'possibly in set' or 'definitely not in set'. Use for cache checks, dedup pipelines, quick rejection of non-matching items.",
+      "priority_score": 35,
+      "file": "packages/ground/src/computations/bloom.rs",
+      "package": "ground",
+      "language": "rust",
+      "dependencies": [
+        "sha2"
+      ],
+      "exports": [
+        "BloomFilter",
+        "optimal_params",
+        "bloom_from_iter"
+      ],
+      "example_usage": "let mut bloom = BloomFilter::with_capacity(1000, 0.01);\nbloom.insert_str(\"processed-123\");\nif !bloom.contains_str(\"item-456\") {\n  // Definitely not processed\n}",
+      "llm_prompt": "Use bloom-filter-v1 for fast 'have we seen this?' checks. Choose FP rate 0.01 (1%) for most cases. False negatives are impossible.",
+      "inspired_by": [
+        "Burton Bloom 1970 paper",
+        "Google Guava BloomFilter"
+      ],
+      "status": "stable"
+    },
+    {
+      "id": "chain-of-verification-v1",
+      "name": "Chain-of-Verification",
+      "category": "AgenticOrchestration",
+      "description": "Multi-step LLM validation to reduce hallucinations. Runs content through verification steps, auto-refining on failure. Use for code generation, JSON validation, SQL safety checks.",
+      "priority_score": 38,
+      "file": "packages/agent-sdk/src/create_something_agents/cov.py",
+      "package": "create_something_agents",
+      "language": "python",
+      "dependencies": [
+        "anthropic"
+      ],
+      "exports": [
+        "ChainOfVerification",
+        "cov_verify",
+        "verify_code",
+        "verify_json"
+      ],
+      "example_usage": "result = await cov_verify(\n  content=\"def add(a, b): return a + b\",\n  verification_type=\"code\",\n  model=\"sonnet\"\n)\nif result.passed: print(\"Code is valid\")",
+      "llm_prompt": "Validate LLM-generated content using chain-of-verification-v1. Choose verification_type: code, json, sql, markdown. Enable auto_refine=True to automatically fix issues.",
+      "inspired_by": [
+        "Dhuliawala et al. CoVe paper",
+        "Constitutional AI"
+      ],
+      "status": "stable"
+    },
+    {
+      "id": "super-minhash-v1",
+      "name": "SuperMinHash Sketch",
+      "category": "SimilaritySketching",
+      "description": "Streams sets for Jaccard similarity estimation with O(n) complexity. Use for code/log dedup, plagiarism detection, near-duplicate clustering.",
+      "priority_score": 37,
+      "file": "packages/templates-platform/workers/plagiarism-agent/src/minhash.ts",
+      "package": "@create-something/templates-platform",
+      "language": "typescript",
+      "dependencies": [],
+      "exports": [
+        "SuperMinHash",
+        "computeMinHashSignature",
+        "estimateJaccard"
+      ],
+      "example_usage": "const sig1 = computeMinHashSignature(tokens1, 128);\nconst sig2 = computeMinHashSignature(tokens2, 128);\nconst similarity = estimateJaccard(sig1, sig2);",
+      "llm_prompt": "Use super-minhash-v1 for near-duplicate detection. Generate signatures with 128 hashes, compare with estimateJaccard. Use LSH banding for large-scale search.",
+      "inspired_by": [
+        "Ertl SuperMinHash paper (arxiv:1706.05698)"
+      ],
+      "status": "stable",
+      "pre_existing": true
+    },
+    {
+      "id": "ast-similarity-v1",
+      "name": "AST Similarity",
+      "category": "SimilaritySketching",
+      "description": "Tree-sitter based AST fingerprinting for structural code comparison. Compares node types, depth histograms, signatures, and control flow.",
+      "priority_score": 36,
+      "file": "packages/ground/src/computations/ast_similarity.rs",
+      "package": "ground",
+      "language": "rust",
+      "dependencies": [
+        "tree-sitter",
+        "tree-sitter-typescript",
+        "tree-sitter-javascript",
+        "tree-sitter-rust",
+        "tree-sitter-python"
+      ],
+      "exports": [
+        "extract_fingerprint",
+        "compare_fingerprints",
+        "AstFingerprint",
+        "AstSimilarity"
+      ],
+      "example_usage": "let fp1 = extract_fingerprint(path1)?;\nlet fp2 = extract_fingerprint(path2)?;\nlet sim = compare_fingerprints(&fp1, &fp2);",
+      "llm_prompt": "Use ast-similarity-v1 for structural code comparison. Extract fingerprints from files, compare with compare_fingerprints. Supports TS, JS, Rust, Python.",
+      "inspired_by": [
+        "Tree Edit Distance algorithms",
+        "MOSS plagiarism detection"
+      ],
+      "status": "stable",
+      "pre_existing": true
+    }
+  ],
+  "queries": {
+    "by_category": {
+      "ResilientWorkflow": ["circuit-breaker-v1", "saga-v1", "outbox-v1"],
+      "SimilaritySketching": ["hyperloglog-v1", "bloom-filter-v1", "super-minhash-v1", "ast-similarity-v1"],
+      "AgenticOrchestration": ["chain-of-verification-v1"]
+    },
+    "by_language": {
+      "typescript": ["circuit-breaker-v1", "saga-v1", "outbox-v1", "super-minhash-v1"],
+      "rust": ["hyperloglog-v1", "bloom-filter-v1", "ast-similarity-v1"],
+      "python": ["chain-of-verification-v1"]
+    },
+    "by_priority_score": [
+      {"id": "saga-v1", "score": 39},
+      {"id": "circuit-breaker-v1", "score": 38},
+      {"id": "chain-of-verification-v1", "score": 38},
+      {"id": "outbox-v1", "score": 37},
+      {"id": "super-minhash-v1", "score": 37},
+      {"id": "hyperloglog-v1", "score": 36},
+      {"id": "ast-similarity-v1", "score": 36},
+      {"id": "bloom-filter-v1", "score": 35}
+    ]
+  }
+}

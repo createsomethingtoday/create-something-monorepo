@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { adminDelete } from '$lib/admin/index.js';
 
 interface ExperimentRequest {
 	id?: string;
@@ -160,18 +161,6 @@ export const DELETE: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
-	try {
-		const { id } = (await request.json()) as ExperimentRequest;
-
-		if (!id) {
-			return json({ error: 'Experiment ID required' }, { status: 400 });
-		}
-
-		await db.prepare('DELETE FROM papers WHERE id = ?').bind(id).run();
-
-		return json({ success: true });
-	} catch (error) {
-		console.error('Failed to delete experiment:', error);
-		return json({ error: 'Failed to delete experiment' }, { status: 500 });
-	}
+	const body = (await request.json()) as ExperimentRequest;
+	return adminDelete({ db, body, table: 'papers', entityName: 'experiment' });
 };

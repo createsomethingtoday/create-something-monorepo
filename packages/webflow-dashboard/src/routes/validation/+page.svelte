@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Header, Button, Card } from '$lib/components';
 	import type { PageData } from './$types';
+	import { ChevronLeft, CheckCircle2, Check, Clock, Info } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -39,13 +40,11 @@
 
 	<main class="main-content">
 		<div class="content-wrapper">
-			<!-- Back Navigation -->
-			<Button variant="link" onclick={handleBackToDashboard} class="back-link">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M15 19l-7-7 7-7" />
-				</svg>
-				Back to Dashboard
-			</Button>
+		<!-- Back Navigation -->
+		<Button variant="link" onclick={handleBackToDashboard} class="back-link">
+			<ChevronLeft size={16} />
+			Back to Dashboard
+		</Button>
 
 			<!-- Header -->
 			<div class="page-header">
@@ -61,68 +60,55 @@
 			<div class="tools-section">
 				<h2 class="section-title">Available Validation Tools</h2>
 				<div class="tools-grid">
-					<!-- GSAP Validator Card -->
-					<Card class="tool-card">
-						<div class="tool-header">
-							<div class="tool-icon gsap">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</div>
-							<h3 class="tool-title">GSAP Validator</h3>
+				<!-- GSAP Validator Card -->
+				<Card class="tool-card">
+					<div class="tool-header">
+						<div class="tool-icon gsap">
+							<CheckCircle2 size={24} />
 						</div>
-						<p class="tool-description">
-							Test your templates for GSAP compliance before submission. Crawls up to 50 pages and checks for custom code patterns.
-						</p>
-						<ul class="tool-features">
-							<li>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M5 13l4 4L19 7" />
-								</svg>
-								Crawls up to 50 pages automatically
-							</li>
-							<li>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M5 13l4 4L19 7" />
-								</svg>
-								Detects flagged code and security risks
-							</li>
-							<li>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M5 13l4 4L19 7" />
-								</svg>
-								Provides smart recommendations
-							</li>
-						</ul>
-						<div class="tool-actions">
-							<Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-								Quick Validate
-							</Button>
-							<a href="/validation/playground" class="playground-link">
-								Open Full Playground →
-							</a>
-						</div>
-					</Card>
+						<h3 class="tool-title">GSAP Validator</h3>
+					</div>
+					<p class="tool-description">
+						Test your templates for GSAP compliance before submission. Crawls up to 50 pages and checks for custom code patterns.
+					</p>
+					<ul class="tool-features">
+						<li>
+							<Check size={16} />
+							Crawls up to 50 pages automatically
+						</li>
+						<li>
+							<Check size={16} />
+							Detects flagged code and security risks
+						</li>
+						<li>
+							<Check size={16} />
+							Provides smart recommendations
+						</li>
+					</ul>
+					<div class="tool-actions">
+						<Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button">
+							<CheckCircle2 size={16} />
+							Quick Validate
+						</Button>
+						<a href="/validation/playground" class="playground-link">
+							Open Full Playground →
+						</a>
+					</div>
+				</Card>
 
-					<!-- Coming Soon Card -->
-					<Card class="tool-card coming-soon">
-						<div class="tool-header">
-							<div class="tool-icon placeholder">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<circle cx="12" cy="12" r="10" />
-									<path d="M12 6v6l4 2" />
-								</svg>
-							</div>
-							<h3 class="tool-title">More Tools Coming</h3>
+				<!-- Coming Soon Card -->
+				<Card class="tool-card coming-soon">
+					<div class="tool-header">
+						<div class="tool-icon placeholder">
+							<Clock size={24} />
 						</div>
-						<p class="tool-description">
-							Additional validation tools are in development to help ensure your templates meet all marketplace requirements.
-						</p>
-						<div class="coming-soon-badge">Coming Soon</div>
-					</Card>
+						<h3 class="tool-title">More Tools Coming</h3>
+					</div>
+					<p class="tool-description">
+						Additional validation tools are in development to help ensure your templates meet all marketplace requirements.
+					</p>
+					<div class="coming-soon-badge">Coming Soon</div>
+				</Card>
 				</div>
 			</div>
 
@@ -140,18 +126,16 @@
 						<li>Ensure compliance with marketplace guidelines</li>
 						<li>Improve template quality and user experience</li>
 					</ul>
-					<div class="tip-box">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-						</svg>
-						<div>
-							<p class="tip-title">Best Practice</p>
-							<p class="tip-text">
-								We recommend running all available validation tools before submitting your template
-								to the marketplace. This helps ensure a smooth review process.
-							</p>
-						</div>
+				<div class="tip-box">
+					<Info size={20} />
+					<div>
+						<p class="tip-title">Best Practice</p>
+						<p class="tip-text">
+							We recommend running all available validation tools before submitting your template
+							to the marketplace. This helps ensure a smooth review process.
+						</p>
 					</div>
+				</div>
 				</div>
 			</Card>
 		</div>

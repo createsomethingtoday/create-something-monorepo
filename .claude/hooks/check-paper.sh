@@ -10,6 +10,15 @@ INPUT=$(cat)
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
+# Logging for observability
+LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/hooks/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/check-paper-$(date +%Y%m%d).log"
+
+log_msg() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
 # Only check Write and Edit tools
 if [[ "$TOOL_NAME" != "Write" && "$TOOL_NAME" != "Edit" ]]; then
   exit 0
@@ -32,6 +41,8 @@ fi
 if [[ ! -f "$FILE_PATH" ]]; then
   exit 0
 fi
+
+log_msg "Validating: $FILE_PATH"
 
 VIOLATIONS=""
 
@@ -80,8 +91,10 @@ if ! grep -q 'paper-title' "$FILE_PATH" 2>/dev/null; then
 fi
 
 if [[ -n "$VIOLATIONS" ]]; then
+  log_msg "Result: FAIL - Paper structure violations found"
   echo -e "Paper structure violation in $FILE_PATH:\n$VIOLATIONS\n\nStandard paper structure:\n  <div class=\"min-h-screen p-6 paper-container\">\n    <div class=\"max-w-4xl mx-auto space-y-12\">...</div>\n  </div>\n\nWith .paper-container { background: var(--color-bg-pure); }\n\nReference: packages/io/src/routes/papers/haiku-optimization/+page.svelte" >&2
   exit 2
 fi
 
+log_msg "Result: PASS"
 exit 0

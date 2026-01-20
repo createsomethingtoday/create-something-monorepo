@@ -9,3 +9,4 @@
  */
 
 export * from './subtractive-animation.js';
+export * from './terminal-cards.js';

@@ -19,6 +19,10 @@
 		{ label: 'Add Article', href: '/dashboard/news/new', brand: 'petrox' },
 		{ label: 'View Contacts', href: '/dashboard/contacts', brand: 'dme' },
 	];
+
+	function formatDate(date: unknown): string {
+		return new Date(String(date)).toLocaleDateString();
+	}
 </script>
 
 <svelte:head>
@@ -76,7 +80,7 @@
 							<span class="badge badge-{contact.category || 'primary'}">{contact.category || 'general'}</span>
 						</div>
 						<div class="contact-card-footer">
-							<span class="contact-date">{new Date(contact.created_at).toLocaleDateString()}</span>
+							<span class="contact-date">{formatDate(contact.created_at)}</span>
 						</div>
 					</a>
 				{/each}
@@ -104,7 +108,7 @@
 								<td>
 									<span class="badge badge-{contact.category || 'primary'}">{contact.category || 'general'}</span>
 								</td>
-								<td class="cell-muted">{new Date(contact.created_at).toLocaleDateString()}</td>
+								<td class="cell-muted">{formatDate(contact.created_at)}</td>
 								<td>
 									<span class="badge badge-{contact.status === 'new' ? 'warning' : 'success'}">{contact.status}</span>
 								</td>

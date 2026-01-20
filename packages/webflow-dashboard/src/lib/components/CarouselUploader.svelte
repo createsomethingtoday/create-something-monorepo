@@ -7,6 +7,7 @@
 		validateMimeType,
 		getImageDimensions
 	} from '$lib/utils/upload-validation';
+	import { X, Upload } from 'lucide-svelte';
 
 	interface Props {
 		value?: string[];
@@ -266,24 +267,15 @@
 			{#each value as url, index}
 				<div class="image-card">
 					<img src={url} alt="Carousel {index + 1}" class="image-preview" />
-					<button
-						type="button"
-						class="image-remove"
-						aria-label="Remove image {index + 1}"
-						onclick={() => handleRemove(index)}
-						disabled={disabled}
-					>
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<path d="M18 6L6 18M6 6l12 12" />
-						</svg>
-					</button>
+				<button
+					type="button"
+					class="image-remove"
+					aria-label="Remove image {index + 1}"
+					onclick={() => handleRemove(index)}
+					disabled={disabled}
+				>
+					<X size={16} />
+				</button>
 				</div>
 			{/each}
 		</div>
@@ -311,25 +303,13 @@
 				class="file-input"
 			/>
 
-			<svg
-				class="upload-icon"
-				width="32"
-				height="32"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-				<polyline points="17 8 12 3 7 8" />
-				<line x1="12" y1="3" x2="12" y2="15" />
-			</svg>
-			<p class="dropzone-text">
-				{isDragOver ? 'Drop images here' : 'Drag & drop or click to upload'}
-			</p>
-			<p class="dropzone-hint">
-				WebP images only • Max {maxImages} images • 10MB per image
-			</p>
+		<Upload class="upload-icon" size={32} />
+		<p class="dropzone-text">
+			{isDragOver ? 'Drop images here' : 'Drag & drop or click to upload'}
+		</p>
+		<p class="dropzone-hint">
+			WebP images only • Max {maxImages} images • 10MB per image
+		</p>
 		</div>
 	{/if}
 
@@ -507,7 +487,7 @@
 		display: none;
 	}
 
-	.upload-icon {
+	:global(.upload-icon) {
 		color: var(--color-fg-muted);
 		margin-bottom: var(--space-sm);
 	}

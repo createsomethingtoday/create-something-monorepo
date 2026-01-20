@@ -1,0 +1,10 @@
+Priority,Opportunity,Current State,Proposed,Value,Stage
+P1,Response Classification optimization,Working (accuracy unknown),Add confidence scoring + escalation,Medium,Feedback
+P1,Security pre-scan,Manual Bundle Scanner,Auto-run on all submissions,High,Review
+P1,Validation → Review correlation,No tracking,Learn what validation issues predict rejections,High,Submission
+P2,Duplicate detection,None,Agent compares to existing assets,High,Submission
+P2,Smart routing,Manual/round-robin,Route by asset type + reviewer expertise,High,Queue
+P2,Consistency check,None,Surface similar past reviews,High,Review
+P3,Rejection email generation,Templates,Contextual draft generation,Medium,Feedback
+P3,Auto-fix suggestions,None,Validation app suggests fixes,Medium,Submission
+P3,Review timeline prediction,None,Dashboard shows estimated time,Low,Queue

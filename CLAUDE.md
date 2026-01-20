@@ -55,6 +55,20 @@ packages/
 
 All packages use **SvelteKit** with **Cloudflare Pages** deployment. Shared D1 databases, KV namespaces, and Workers per package.
 
+## Languages
+
+The Language Triad maps to the Subtractive Triad:
+
+| Language | Domain | When to Use |
+|----------|--------|-------------|
+| **TypeScript** | Frontend, APIs, Workers | UI components, server routes, edge functions |
+| **Python** | LLM orchestration | Agent workflows, provider integration, rapid iteration |
+| **Rust** | Infrastructure tooling | Code analysis, verification, performance-critical computation |
+
+**Quick Decision**: If the bottleneck is *network latency* (LLM calls), use Python. If the bottleneck is *correctness* or *computation*, use Rust. Everything else is TypeScript.
+
+See `STANDARDS.md` §3.4 for full language philosophy, including WebAssembly bridging for edge computation.
+
 ## Your Domain: Creation
 
 Claude Code excels at:

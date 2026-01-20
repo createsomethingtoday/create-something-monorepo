@@ -63,7 +63,7 @@ export const POST: RequestHandler = catchApiError('AdminLogin', async ({ request
 		user: {
 			id: result.data.user.id,
 			email: result.data.user.email,
-			tier: result.data.user.tier,
+			tier: result.data.user.tier || 'free',
 			role: 'admin'
 		}
 	});

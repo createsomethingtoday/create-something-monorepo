@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { adminDelete, adminList } from '$lib/admin/index.js';
 
 interface SubscriberRequest {
 	id?: string;
@@ -13,19 +14,12 @@ export const GET: RequestHandler = async ({ platform }) => {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
-	try {
-		const subscribers = await db
-			.prepare(
-				`SELECT * FROM newsletter_subscribers
-				ORDER BY created_at DESC`
-			)
-			.all();
-
-		return json(subscribers.results || []);
-	} catch (error) {
-		console.error('Failed to fetch subscribers:', error);
-		return json({ error: 'Failed to fetch subscribers' }, { status: 500 });
-	}
+	return adminList({
+		db,
+		table: 'newsletter_subscribers',
+		orderBy: 'created_at DESC',
+		entityName: 'subscriber'
+	});
 };
 
 export const PATCH: RequestHandler = async ({ request, platform }) => {
@@ -65,18 +59,6 @@ export const DELETE: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
-	try {
-		const { id } = (await request.json()) as SubscriberRequest;
-
-		if (!id) {
-			return json({ error: 'Subscriber ID required' }, { status: 400 });
-		}
-
-		await db.prepare('DELETE FROM newsletter_subscribers WHERE id = ?').bind(id).run();
-
-		return json({ success: true });
-	} catch (error) {
-		console.error('Failed to delete subscriber:', error);
-		return json({ error: 'Failed to delete subscriber' }, { status: 500 });
-	}
+	const body = (await request.json()) as SubscriberRequest;
+	return adminDelete({ db, body, table: 'newsletter_subscribers', entityName: 'subscriber' });
 };

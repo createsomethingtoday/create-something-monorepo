@@ -1,0 +1,8 @@
+Finding,Source,Application
+60% automation rate achievable,Shopify,Target for our system
+Multi-layer architecture (automated→human→appeals),Etsy,Model for escalation design
+Graduated enforcement (warnings before suspension),Etsy,Rejection workflow pattern
+Raw model confidence is poorly calibrated,Research,Must measure ECE and calibrate
+Multi-tier thresholds (>85% auto / 70-85% quick / <70% deep),Best practice,Response Classification improvement
+Prompt versioning like code,Industry standard,Model on Joey's Algorithms table
+pyAirtable for Airtable + LLM integration,Python library,Joey can integrate directly

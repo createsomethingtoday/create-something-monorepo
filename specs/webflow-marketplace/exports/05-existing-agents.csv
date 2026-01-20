@@ -1,0 +1,3 @@
+Agent,Owner,Platform,Model,Status,Purpose
+Response Classification,Micah,Zapier,GPT-5.1,Paused (nodes 2-5),"Classifies creator responses, updates status"
+Categorization Agents,Joey,Airtable Automations,Unknown,Production,Running via automations

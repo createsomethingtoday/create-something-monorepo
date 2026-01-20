@@ -204,6 +204,38 @@ export type {
   StoredMetrics,
 } from './metrics/index.js';
 
+// Outbox pattern
+export type {
+  OutboxEventType,
+  OutboxEventStatus,
+  OutboxEvent,
+  OutboxEventMetadata,
+  PublishResult,
+  EventHandler,
+  OutboxConfig,
+  ConvoyEventPayload,
+  WorkerEventPayload,
+  CheckpointEventPayload,
+  BudgetEventPayload,
+  IssueEventPayload,
+  OutboxQueryOptions,
+  OutboxStats,
+} from './outbox/index.js';
+
+export {
+  DEFAULT_OUTBOX_CONFIG,
+  OutboxStore,
+  getOutboxStore,
+  resetOutboxStore,
+  OutboxPublisher,
+  createPublisher,
+  createLoggingHandler,
+  createWebhookHandler,
+  createFileHandler,
+  Outbox,
+  createOutbox,
+} from './outbox/index.js';
+
 // Types
 export type {
   OrchestrationContext,

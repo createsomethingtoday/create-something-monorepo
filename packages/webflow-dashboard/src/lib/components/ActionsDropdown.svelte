@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button } from './ui';
+	import { MoreVertical, Eye, Pencil, Archive } from 'lucide-svelte';
 
 	interface Props {
 		assetId: string;
@@ -71,28 +72,19 @@
 
 <div class="actions-container" bind:this={dropdownRef}>
 	<Button variant="ghost" size="icon" onclick={toggle} class="trigger-btn">
-		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-			<circle cx="12" cy="12" r="1" />
-			<circle cx="12" cy="5" r="1" />
-			<circle cx="12" cy="19" r="1" />
-		</svg>
+		<MoreVertical size={20} />
 	</Button>
 
 	{#if isOpen}
 		<div class="dropdown">
 			<button type="button" class="dropdown-item" onclick={handleView}>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-					<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-				</svg>
+				<Eye size={16} />
 				View Details
 			</button>
 
 			{#if canEdit}
 				<button type="button" class="dropdown-item" onclick={handleEdit}>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-					</svg>
+					<Pencil size={16} />
 					Edit
 				</button>
 			{/if}
@@ -104,9 +96,7 @@
 					onclick={handleArchive}
 					disabled={isArchiving}
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-					</svg>
+					<Archive size={16} />
 					{isArchiving ? 'Archiving...' : 'Archive'}
 				</button>
 			{/if}
@@ -164,7 +154,7 @@
 		cursor: not-allowed;
 	}
 
-	.dropdown-item svg {
+	.dropdown-item :global(svg) {
 		flex-shrink: 0;
 	}
 </style>

@@ -28,6 +28,7 @@
     "graph:build:dry-run": "tsx scripts/build-knowledge-graph/index.ts --dry-run",
     "graph:analyze": "tsx scripts/build-knowledge-graph/analyze.ts",
     "graph:analyze:create": "tsx scripts/build-knowledge-graph/analyze.ts --create",
+    "exports": "tsx scripts/list-exports.ts",
     "harness": "pnpm --filter @create-something/harness harness",
     "harness:start": "pnpm --filter @create-something/harness harness start",
     "harness:status": "pnpm --filter @create-something/harness harness status",

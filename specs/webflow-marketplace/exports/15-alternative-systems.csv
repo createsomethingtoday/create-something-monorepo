@@ -1,0 +1,9 @@
+System Type,Current Approach,When Agents Add Value
+Static models / scoring,"Heuristics, ranking formulas, eligibility scores",Learning-based scoring that adapts
+Search & retrieval,"Keyword search, semantic search, vector retrieval, RAG","Intent understanding, query reformulation"
+Recommendation systems,"Ranking, matching, ""suggested for you""",Personalized reasoning with context
+Workflow / orchestration,Step-based or state-machine-driven flows,Adaptive routing based on content
+Feature flags / experimentation,"A/B testing, rollout controls",Autonomous optimization
+Policies / compliance engines,"Trust & safety, enforcement, eligibility constraints",Contextual judgment on edge cases
+Monitoring & alerting,"Dashboards, observability, anomaly detection",Predictive intervention
+Manual playbooks / SOPs,Documented processes executed by humans,"Augmentation, not replacement"

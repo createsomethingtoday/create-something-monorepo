@@ -4,6 +4,7 @@
 	import StatusBadge from './StatusBadge.svelte';
 	import KineticNumber from './KineticNumber.svelte';
 	import type { Asset } from '$lib/server/airtable';
+	import { Eye, ShoppingBag, DollarSign } from 'lucide-svelte';
 
 	interface Props {
 		assets: Asset[];
@@ -83,10 +84,7 @@
 				<div class="performance-grid">
 					<div class="performance-item" in:fly={{ y: 20, duration: 400, delay: 100 }}>
 						<div class="performance-icon viewers">
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-								<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-							</svg>
+							<Eye size={24} />
 						</div>
 						<div class="performance-content">
 							<span class="performance-value"><KineticNumber value={totals().viewers} /></span>
@@ -96,9 +94,7 @@
 
 					<div class="performance-item" in:fly={{ y: 20, duration: 400, delay: 200 }}>
 						<div class="performance-icon purchases">
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-							</svg>
+							<ShoppingBag size={24} />
 						</div>
 						<div class="performance-content">
 							<span class="performance-value"><KineticNumber value={totals().purchases} /></span>
@@ -108,9 +104,7 @@
 
 					<div class="performance-item" in:fly={{ y: 20, duration: 400, delay: 300 }}>
 						<div class="performance-icon revenue">
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-							</svg>
+							<DollarSign size={24} />
 						</div>
 						<div class="performance-content">
 							<span class="performance-value"><KineticNumber value={totals().revenue} prefix="$" /></span>

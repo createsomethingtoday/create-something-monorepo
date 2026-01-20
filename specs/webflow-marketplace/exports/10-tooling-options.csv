@@ -1,0 +1,5 @@
+Option,Description,Pros,Cons,Recommendation
+A,Keep Zapier,No migration work,"Expensive, not versioned",No
+B,Move to Airtable Scripts,All in one platform,"Automation count limits, less flexible",No
+C,Move to repo,"Versioned, cheap, testable",Requires deployment setup,Consider
+D,Hybrid (Airtable automation + Repo logic),Best of both,Initial setup complexity,Recommended

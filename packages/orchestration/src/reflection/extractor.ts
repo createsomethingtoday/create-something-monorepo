@@ -77,46 +77,44 @@ function extractCorrectionLearnings(
     for (const blocker of ctx.blockers) {
       const learning = createLearning({
         type: 'correction',
-        title: `Correction: ${truncate(blocker.description, 50)}`,
-        description: blocker.description,
-        pattern: `Agent encountered blocker: ${blocker.description}`,
-        suggestion: `Add guidance to prevent: ${blocker.description}`,
+        title: `Correction: ${truncate(blocker, 50)}`,
+        description: blocker,
+        pattern: `Agent encountered blocker: ${blocker}`,
+        suggestion: `Add guidance to prevent: ${blocker}`,
         sources: [
           {
             type: 'checkpoint',
             id: cp.id,
-            evidence: blocker.description,
+            evidence: blocker,
             timestamp: cp.timestamp,
           },
         ],
         confidence: 0.8,
-        targetRuleFile: inferRuleFile(blocker.description),
+        targetRuleFile: inferRuleFile(blocker),
       });
       learnings.push(learning);
     }
 
     // Check agent notes for correction patterns
-    for (const note of ctx.agentNotes) {
-      if (isCorrection(note)) {
-        const learning = createLearning({
-          type: 'correction',
-          title: `Correction: ${truncate(note, 50)}`,
-          description: note,
-          pattern: `Agent note indicates correction: ${note}`,
-          suggestion: extractSuggestion(note),
-          sources: [
-            {
-              type: 'checkpoint',
-              id: cp.id,
-              evidence: note,
-              timestamp: cp.timestamp,
-            },
-          ],
-          confidence: 0.7,
-          targetRuleFile: inferRuleFile(note),
-        });
-        learnings.push(learning);
-      }
+    if (ctx.agentNotes && isCorrection(ctx.agentNotes)) {
+      const learning = createLearning({
+        type: 'correction',
+        title: `Correction: ${truncate(ctx.agentNotes, 50)}`,
+        description: ctx.agentNotes,
+        pattern: `Agent note indicates correction: ${ctx.agentNotes}`,
+        suggestion: extractSuggestion(ctx.agentNotes),
+        sources: [
+          {
+            type: 'checkpoint',
+            id: cp.id,
+            evidence: ctx.agentNotes,
+            timestamp: cp.timestamp,
+          },
+        ],
+        confidence: 0.7,
+        targetRuleFile: inferRuleFile(ctx.agentNotes),
+      });
+      learnings.push(learning);
     }
   }
 
@@ -228,7 +226,7 @@ function extractBlockerLearnings(
 
   for (const cp of checkpoints) {
     for (const blocker of cp.context.blockers) {
-      const category = categorizeBlocker(blocker.description);
+      const category = categorizeBlocker(blocker);
 
       if (!blockerCategories.has(category)) {
         blockerCategories.set(category, { count: 0, descriptions: [] });
@@ -236,7 +234,7 @@ function extractBlockerLearnings(
 
       const entry = blockerCategories.get(category)!;
       entry.count++;
-      entry.descriptions.push(blocker.description);
+      entry.descriptions.push(blocker);
     }
   }
 

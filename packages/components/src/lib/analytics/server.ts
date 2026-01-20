@@ -156,10 +156,10 @@ export function createUserAnalyticsHandler(options: { property: Property }) {
 
 			const sessions = sessionsResult || { total: 0, page_views: 0, duration_seconds: 0 };
 			const dailyActivity: DailyActivityPoint[] = dailyResult.results || [];
-			const categoryBreakdown: CategoryBreakdown[] = (categoryResult.results || []).map((r) => ({
-				category: r.category as CategoryBreakdown['category'],
-				count: r.count
-			}));
+		const categoryBreakdown: CategoryBreakdown[] = (categoryResult.results || []).map((r: { category: string; count: number }) => ({
+			category: r.category as CategoryBreakdown['category'],
+			count: r.count
+		}));
 			const topPages = topPagesResult.results || [];
 
 			const response: PropertyAnalytics = {
@@ -194,6 +194,9 @@ export interface D1Database {
 interface D1PreparedStatement {
 	bind(...values: unknown[]): D1PreparedStatement;
 	run(): Promise<D1Result>;
+	first<T = unknown>(): Promise<T | null>;
+	first<T = unknown>(column: string): Promise<T | null>;
+	all<T = unknown>(): Promise<D1Result<T>>;
 }
 
 interface D1Result<T = unknown> {

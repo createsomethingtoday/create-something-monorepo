@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { X } from 'lucide-svelte';
 
 	interface Props {
 		isOpen: boolean;
@@ -31,22 +32,18 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="backdrop" onclick={handleBackdropClick}>
 		<div class="dialog {size}" role="dialog" aria-modal="true" aria-labelledby={title ? 'dialog-title' : undefined}>
-			{#if title}
-				<div class="dialog-header">
-					<h2 id="dialog-title" class="dialog-title">{title}</h2>
-					<button class="close-button" onclick={onClose} aria-label="Close dialog">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M18 6L6 18M6 6l12 12" />
-						</svg>
-					</button>
-				</div>
-			{:else}
-				<button class="close-button standalone" onclick={onClose} aria-label="Close dialog">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M18 6L6 18M6 6l12 12" />
-					</svg>
+		{#if title}
+			<div class="dialog-header">
+				<h2 id="dialog-title" class="dialog-title">{title}</h2>
+				<button class="close-button" onclick={onClose} aria-label="Close dialog">
+					<X size={20} />
 				</button>
-			{/if}
+			</div>
+		{:else}
+			<button class="close-button standalone" onclick={onClose} aria-label="Close dialog">
+				<X size={20} />
+			</button>
+		{/if}
 
 			<div class="dialog-content">
 				{@render children()}

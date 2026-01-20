@@ -43,6 +43,18 @@ from create_something_agents.rlm import (
     RLMResult,
     RLMConfig,
 )
+from create_something_agents.cov import (
+    ChainOfVerification,
+    VerificationStatus,
+    VerificationType,
+    VerificationFinding,
+    VerificationResult,
+    CoVResult,
+    cov_verify,
+    verify_code,
+    verify_json,
+    format_cov_result,
+)
 
 __version__ = "0.1.0"
 
@@ -83,4 +95,15 @@ __all__ = [
     "RLMSession",
     "RLMResult",
     "RLMConfig",
+    # Chain-of-Verification
+    "ChainOfVerification",
+    "VerificationStatus",
+    "VerificationType",
+    "VerificationFinding",
+    "VerificationResult",
+    "CoVResult",
+    "cov_verify",
+    "verify_code",
+    "verify_json",
+    "format_cov_result",
 ]

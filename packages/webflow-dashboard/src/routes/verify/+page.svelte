@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { CheckCircle2, Lock, XCircle } from 'lucide-svelte';
 
 	interface PageData {
 		status: 'no-token' | 'rate-limited' | 'invalid' | 'not-found' | 'expired' | 'error';
@@ -91,56 +92,46 @@
 			</svg>
 		</div>
 
-		{#if status === 'verifying'}
-			<div class="status-message">
-				<div class="spinner"></div>
-				<h1>Verifying your email</h1>
-				<p class="subtitle">Please wait while we verify your login...</p>
-			</div>
-		{:else if status === 'success'}
-			<div class="status-message success">
-				<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-					<polyline points="22 4 12 14.01 9 11.01" />
-				</svg>
-				<h1>Verification successful</h1>
-				<p class="subtitle">Redirecting to dashboard...</p>
-			</div>
-		{:else if status === 'no-token'}
-			<div class="status-message">
-				<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-					<path d="M7 11V7a5 5 0 0 1 10 0v4" />
-				</svg>
-				<h1>Enter verification token</h1>
-				<p class="subtitle">Paste your verification token from the email</p>
-				<form class="token-form" onsubmit={handleSubmit}>
-					<input
-						type="text"
-						class="token-input"
-						bind:value={tokenInput}
-						placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-						autocomplete="off"
-						spellcheck="false"
-					/>
-					<button type="submit" class="verify-button" disabled={!tokenInput.trim()}>
-						Verify
-					</button>
-				</form>
-				<a href="/login" class="retry-link">Request a new verification email</a>
-			</div>
-		{:else}
-			<div class="status-message error">
-				<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="12" cy="12" r="10" />
-					<line x1="15" y1="9" x2="9" y2="15" />
-					<line x1="9" y1="9" x2="15" y2="15" />
-				</svg>
-				<h1>Verification failed</h1>
-				<p class="subtitle">{errorMessage}</p>
-				<a href="/login" class="retry-link">Try logging in again</a>
-			</div>
-		{/if}
+	{#if status === 'verifying'}
+		<div class="status-message">
+			<div class="spinner"></div>
+			<h1>Verifying your email</h1>
+			<p class="subtitle">Please wait while we verify your login...</p>
+		</div>
+	{:else if status === 'success'}
+		<div class="status-message success">
+			<CheckCircle2 size={48} />
+			<h1>Verification successful</h1>
+			<p class="subtitle">Redirecting to dashboard...</p>
+		</div>
+	{:else if status === 'no-token'}
+		<div class="status-message">
+			<Lock size={48} />
+			<h1>Enter verification token</h1>
+			<p class="subtitle">Paste your verification token from the email</p>
+			<form class="token-form" onsubmit={handleSubmit}>
+				<input
+					type="text"
+					class="token-input"
+					bind:value={tokenInput}
+					placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+					autocomplete="off"
+					spellcheck="false"
+				/>
+				<button type="submit" class="verify-button" disabled={!tokenInput.trim()}>
+					Verify
+				</button>
+			</form>
+			<a href="/login" class="retry-link">Request a new verification email</a>
+		</div>
+	{:else}
+		<div class="status-message error">
+			<XCircle size={48} />
+			<h1>Verification failed</h1>
+			<p class="subtitle">{errorMessage}</p>
+			<a href="/login" class="retry-link">Try logging in again</a>
+		</div>
+	{/if}
 	</div>
 </main>
 

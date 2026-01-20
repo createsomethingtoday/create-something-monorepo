@@ -4,36 +4,12 @@ description: Autonomous work orchestrator. Use when invoking `bd work`, running 
 tools: Bash, Read, Edit, Grep, Glob, Write
 model: sonnet
 hooks:
-  - type: PreToolUse
-    tool: Bash
-    action: |
-      // Auto-sync Beads before closing issues
-      if (toolUse.input?.command?.includes('bd close')) {
-        return {
-          decision: 'allow',
-          prependTools: [
-            {
-              name: 'Bash',
-              input: { command: 'bd sync' }
-            }
-          ]
-        };
-      }
-      return { decision: 'allow' };
-  - type: PreToolUse
-    tool: Bash
-    action: |
-      // Validate commit messages include issue references
-      if (toolUse.input?.command?.startsWith('git commit')) {
-        const hasIssueRef = /\[cs-[a-z0-9]+\]/.test(toolUse.input.command);
-        if (!hasIssueRef) {
-          return {
-            decision: 'ask',
-            message: 'Commit message should include issue reference [cs-xxx]'
-          };
-        }
-      }
-      return { decision: 'allow' };
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "$CLAUDE_PROJECT_DIR/.claude/hooks/harness-bash-validator.sh"
+          timeout: 10
 ---
 
 You are the Harness Orchestrator for CREATE SOMETHING. You manage autonomous agent work through Beads-based workflows.

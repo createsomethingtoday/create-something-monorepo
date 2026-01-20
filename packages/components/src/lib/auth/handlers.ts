@@ -11,6 +11,7 @@ import { setSessionCookies } from './cookies.js';
 import type { TokenResponse, User } from './types.js';
 import { generateCorrelationId, logError } from '../utils/index.js';
 import type { ApiResponse } from '../types/index.js';
+import type { IdentityUser } from '../api/identity-client.js';
 
 /**
  * Domain configuration based on environment
@@ -35,7 +36,7 @@ export function getDomainConfig(environment?: string): DomainConfig {
  */
 export function handleIdentityResponse(
 	cookies: Cookies,
-	response: TokenResponse & { user: User },
+	response: TokenResponse & { user: IdentityUser },
 	domainConfig: DomainConfig
 ) {
 	setSessionCookies(
@@ -242,7 +243,7 @@ interface CrossDomainHandlerOptions {
 		}>;
 	};
 	/** Function to get error message from result */
-	getIdentityErrorMessage?: (result: { error?: string }, defaultMsg: string) => string;
+	getIdentityErrorMessage?: (result: { error?: string; success?: boolean; status?: number }, defaultMsg: string) => string;
 }
 
 /**
@@ -502,6 +503,56 @@ export function createAccountPageLoader() {
 		}
 
 		return { user, analytics };
+	};
+}
+
+// =============================================================================
+// SIMPLE AUTHENTICATED PAGE LOADER
+// =============================================================================
+
+interface AuthenticatedPageLoaderOptions {
+	/** URL to redirect to if not authenticated (default: '/login') */
+	loginUrl?: string;
+}
+
+/**
+ * Create a simple authenticated page loader.
+ * Redirects to login if user is not authenticated.
+ * 
+ * This eliminates the common pattern:
+ * ```ts
+ * export const load = async ({ locals }) => {
+ *   if (!locals.user) throw redirect(302, '/login');
+ *   return { user: { email: locals.user.email } };
+ * };
+ * ```
+ * 
+ * Usage:
+ * ```ts
+ * import { createAuthenticatedPageLoader } from '@create-something/components/auth';
+ * export const load = createAuthenticatedPageLoader();
+ * 
+ * // Or with options:
+ * export const load = createAuthenticatedPageLoader({
+ *   loginUrl: '/auth/signin'
+ * });
+ * ```
+ */
+export function createAuthenticatedPageLoader<T extends { email: string } = { email: string }>(
+	options: AuthenticatedPageLoaderOptions = {}
+) {
+	const { loginUrl = '/login' } = options;
+
+	return async ({ locals }: { locals: { user?: T } }) => {
+		if (!locals.user) {
+			redirect(302, loginUrl);
+		}
+
+		return { 
+			user: {
+				email: locals.user.email
+			}
+		};
 	};
 }
 

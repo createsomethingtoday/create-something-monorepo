@@ -1,3 +1,13 @@
+---
+hooks:
+  PostToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "$CLAUDE_PROJECT_DIR/.claude/hooks/check-experiment.sh"
+          timeout: 10
+---
+
 # Experiment Scaffold
 
 Generate a new experiment following CREATE SOMETHING methodology.

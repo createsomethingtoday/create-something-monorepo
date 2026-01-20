@@ -1,0 +1,121 @@
+{
+  "title": "Marketplace Agentic Architecture Framework",
+  "description": "Establish framework for understanding when to use agents vs other automation approaches in the Webflow Marketplace, with path from internal tooling to production systems",
+  "created": "2026-01-19T00:00:00Z",
+  "author": "Micah Johnson",
+  "collaborator": "Joey Best-James",
+  "team": "Marketplace",
+  "status": "discovery",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Framework: Agents vs Alternatives Comparison Table",
+      "description": "Create a detailed comparison table expressing when to use agents vs scripts, APIs, webhooks, IaaS, automations, etc. Include dimensions like cost, risk, human-loop requirements, and latency.",
+      "acceptance": [
+        "Table covers all identified automation approaches",
+        "Each approach has cost estimate (low/medium/high)",
+        "Each approach has risk profile",
+        "Human-in-the-loop requirements documented",
+        "Decision criteria are actionable"
+      ],
+      "files": ["specs/webflow-marketplace/agentic-architecture.md"],
+      "passes": true
+    },
+    {
+      "id": "story-2",
+      "title": "Use Case Evaluation: Catalog Existing Patterns",
+      "description": "Document all existing use cases that could benefit from agentic approaches. Include app security reviewer, design analysis, pre-validator app, and error record fixing patterns.",
+      "acceptance": [
+        "All current manual processes cataloged",
+        "Each use case has current state documented",
+        "Agent opportunity identified for each",
+        "Priority ranking established"
+      ],
+      "files": ["specs/webflow-marketplace/use-cases.md"],
+      "passes": false
+    },
+    {
+      "id": "story-3",
+      "title": "Path to Production: Internal to External",
+      "description": "Define the graduation path from internal tools to production systems. Document the stages: internal development, human-in-the-loop, iteration, and external deployment.",
+      "acceptance": [
+        "Stage gates clearly defined",
+        "Quality criteria for each stage",
+        "Rollback procedures documented",
+        "Security review checkpoints included"
+      ],
+      "files": ["specs/webflow-marketplace/production-path.md"],
+      "passes": false
+    },
+    {
+      "id": "story-4",
+      "title": "Guardrails: Cost & Risk Management",
+      "description": "Establish guardrails for agentic systems including token budgets, circuit breakers, audit logging, and human review requirements.",
+      "acceptance": [
+        "Token budget framework defined",
+        "Cost thresholds documented",
+        "Security sandboxing approach",
+        "Audit logging requirements",
+        "Fallback mechanisms specified"
+      ],
+      "files": ["specs/webflow-marketplace/guardrails.md"],
+      "passes": false
+    },
+    {
+      "id": "story-5",
+      "title": "Experiment: Pre-Validator App Agent Migration",
+      "description": "Migrate the pre-validator app to use agentic approach. Start with human-in-the-loop and iterate based on feedback.",
+      "acceptance": [
+        "Current pre-validator logic documented",
+        "Agent-based approach designed",
+        "Human review workflow integrated",
+        "Comparison metrics defined",
+        "Rollout plan established"
+      ],
+      "files": ["packages/*/src/"],
+      "passes": false
+    },
+    {
+      "id": "story-6",
+      "title": "Experiment: App Security Review Agent",
+      "description": "Build agent-assisted security review for marketplace apps. Focus on understanding how the agent thinks and making decisions transparent.",
+      "acceptance": [
+        "Security review criteria codified",
+        "Agent reasoning visible/auditable",
+        "Human override capability",
+        "False positive/negative tracking",
+        "Internal deployment successful"
+      ],
+      "files": ["packages/*/src/"],
+      "passes": false
+    },
+    {
+      "id": "story-7",
+      "title": "Observability: Agent Decision Transparency",
+      "description": "Build observability tooling to understand how agents think. Enable debugging of agent decisions and learning from outcomes.",
+      "acceptance": [
+        "Decision logging implemented",
+        "Reasoning chain visible",
+        "Outcome tracking for feedback loops",
+        "Dashboard for agent performance",
+        "Anomaly detection for agent behavior"
+      ],
+      "files": ["packages/*/src/"],
+      "passes": false
+    },
+    {
+      "id": "story-8",
+      "title": "Documentation: Deeper Methodology",
+      "description": "Document the deeper methodology and approaches for agentic engineering. Include learnings about algorithms, context engineering, and self-healing systems.",
+      "acceptance": [
+        "Algorithm discovery patterns documented",
+        "Context engineering best practices",
+        "Self-healing system patterns",
+        "Token optimization strategies",
+        "Integration with existing tooling"
+      ],
+      "files": ["specs/webflow-marketplace/methodology.md"],
+      "passes": false
+    }
+  ]
+}

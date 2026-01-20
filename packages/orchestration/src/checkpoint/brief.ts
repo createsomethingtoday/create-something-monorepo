@@ -162,7 +162,7 @@ function extractWhatDidntWork(context: OrchestrationContext): string[] {
 
   // Blockers are explicit failures
   for (const blocker of context.blockers) {
-    items.push(blocker.description);
+    items.push(blocker);
   }
 
   // Agent notes with failure indicators

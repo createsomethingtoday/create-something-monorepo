@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { adminDelete, adminList } from '$lib/admin/index.js';
 
 interface SubmissionRequest {
 	id?: string;
@@ -13,19 +14,12 @@ export const GET: RequestHandler = async ({ platform }) => {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
-	try {
-		const submissions = await db
-			.prepare(
-				`SELECT * FROM contact_submissions
-				ORDER BY submitted_at DESC`
-			)
-			.all();
-
-		return json(submissions.results || []);
-	} catch (error) {
-		console.error('Failed to fetch submissions:', error);
-		return json({ error: 'Failed to fetch submissions' }, { status: 500 });
-	}
+	return adminList({
+		db,
+		table: 'contact_submissions',
+		orderBy: 'submitted_at DESC',
+		entityName: 'submission'
+	});
 };
 
 export const PATCH: RequestHandler = async ({ request, platform }) => {
@@ -65,18 +59,6 @@ export const DELETE: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
-	try {
-		const { id } = (await request.json()) as SubmissionRequest;
-
-		if (!id) {
-			return json({ error: 'Submission ID required' }, { status: 400 });
-		}
-
-		await db.prepare('DELETE FROM contact_submissions WHERE id = ?').bind(id).run();
-
-		return json({ success: true });
-	} catch (error) {
-		console.error('Failed to delete submission:', error);
-		return json({ error: 'Failed to delete submission' }, { status: 500 });
-	}
+	const body = (await request.json()) as SubmissionRequest;
+	return adminDelete({ db, body, table: 'contact_submissions', entityName: 'submission' });
 };

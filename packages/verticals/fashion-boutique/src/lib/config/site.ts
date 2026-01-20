@@ -199,3 +199,6 @@ export const siteConfig: FashionConfig = {
 };
 
 export type SiteConfig = typeof siteConfig;
+
+// Alias for compatibility with runtime.ts
+export const siteDefaults = siteConfig;

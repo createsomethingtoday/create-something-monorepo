@@ -21,8 +21,12 @@
  * — Robert Bringhurst
  */
 
-// Re-export shared utilities
-export { round } from './utils.js';
+// Import and re-export shared utilities
+import { round as roundUtil } from './utils.js';
+export { roundUtil as round };
+
+// Local alias for use in this file
+const round = roundUtil;
 
 // =============================================================================
 // CONSTANTS - Mathematical Foundations

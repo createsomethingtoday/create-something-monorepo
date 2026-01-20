@@ -3,6 +3,8 @@
 	import AssetTableRow from './AssetTableRow.svelte';
 	import StatusBadge from './StatusBadge.svelte';
 	import type { Asset } from '$lib/server/airtable';
+	import { BarChart3, Package, TrendingUp, CalendarClock, CheckCircle2, Rocket, AlertTriangle, XCircle } from 'lucide-svelte';
+	import type { Component } from 'svelte';
 
 	interface Props {
 		assets: Asset[];
@@ -26,12 +28,13 @@
 	const statusOrder = ['Scheduled', 'Published', 'Upcoming', 'Delisted', 'Rejected'];
 
 	// Status icons and colors
-	const statusConfig: Record<string, { icon: string; bgClass: string }> = {
-		Scheduled: { icon: '📋', bgClass: 'status-scheduled' },
-		Published: { icon: '✓', bgClass: 'status-published' },
-		Upcoming: { icon: '🚀', bgClass: 'status-upcoming' },
-		Delisted: { icon: '⚠', bgClass: 'status-delisted' },
-		Rejected: { icon: '✕', bgClass: 'status-rejected' }
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const statusConfig: Record<string, { icon: Component<any>; bgClass: string }> = {
+		Scheduled: { icon: CalendarClock, bgClass: 'status-scheduled' },
+		Published: { icon: CheckCircle2, bgClass: 'status-published' },
+		Upcoming: { icon: Rocket, bgClass: 'status-upcoming' },
+		Delisted: { icon: AlertTriangle, bgClass: 'status-delisted' },
+		Rejected: { icon: XCircle, bgClass: 'status-rejected' }
 	};
 
 	// Filter assets by search term
@@ -134,25 +137,21 @@
 <div class="assets-display">
 	<div class="section-header">
 		<h2 class="section-title">Your Assets</h2>
-		<Button
-			variant={showPerformance ? 'default' : 'outline'}
-			size="sm"
-			onclick={() => (showPerformance = !showPerformance)}
-		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-9m12 3a9 9 0 11-18 0 9 9 0 0118 0z" />
-			</svg>
-			{showPerformance ? 'Hide' : 'Show'} Performance
-		</Button>
+	<Button
+		variant={showPerformance ? 'default' : 'outline'}
+		size="sm"
+		onclick={() => (showPerformance = !showPerformance)}
+	>
+		<BarChart3 size={16} />
+		{showPerformance ? 'Hide' : 'Show'} Performance
+	</Button>
 	</div>
 
 	{#if sortedStatuses.length === 0}
 		<Card>
 			<CardContent>
 				<div class="empty-state">
-					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-					</svg>
+					<Package size={64} strokeWidth={1.5} />
 					<h3>No assets found</h3>
 					<p>
 						{#if searchTerm}
@@ -168,15 +167,19 @@
 		{#each sortedStatuses as status}
 			{@const statusAssets = groupedAssets[status] || []}
 			{@const visibleAssets = getVisibleAssets(status)}
-			{@const config = statusConfig[status] || { icon: '•', bgClass: '' }}
+			{@const config = statusConfig[status]}
 			{@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(status)}
 			{@const totals = showTotals ? calculateTotals(visibleAssets) : null}
 
 			<section class="status-section">
 				<div class="status-header">
 					<div class="status-info">
-						<div class="status-icon {config.bgClass}">
-							<span>{config.icon}</span>
+						<div class="status-icon {config?.bgClass || ''}">
+							{#if config?.icon}
+								<svelte:component this={config.icon} size={18} />
+							{:else}
+								<span>•</span>
+							{/if}
 						</div>
 						<div class="status-meta">
 							<h3 class="status-title">{status}</h3>
@@ -236,22 +239,20 @@
 									/>
 								{/each}
 								{#if totals}
-									<TableRow class="totals-row">
-										<TableCell>
-											<div class="totals-icon">
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-													<path d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-9" />
-												</svg>
-											</div>
-										</TableCell>
-										<TableCell><strong>Total</strong></TableCell>
-										<TableCell></TableCell>
-										<TableCell></TableCell>
-										<TableCell class="text-center"><strong>{totals.viewers.toLocaleString()}</strong></TableCell>
-										<TableCell class="text-center"><strong>{totals.purchases.toLocaleString()}</strong></TableCell>
-										<TableCell class="text-center"><strong>${totals.revenue.toLocaleString()}</strong></TableCell>
-										<TableCell></TableCell>
-									</TableRow>
+								<TableRow class="totals-row">
+									<TableCell>
+										<div class="totals-icon">
+											<TrendingUp size={16} />
+										</div>
+									</TableCell>
+									<TableCell><strong>Total</strong></TableCell>
+									<TableCell></TableCell>
+									<TableCell></TableCell>
+									<TableCell class="text-center"><strong>{totals.viewers.toLocaleString()}</strong></TableCell>
+									<TableCell class="text-center"><strong>{totals.purchases.toLocaleString()}</strong></TableCell>
+									<TableCell class="text-center"><strong>${totals.revenue.toLocaleString()}</strong></TableCell>
+									<TableCell></TableCell>
+								</TableRow>
 								{/if}
 							</TableBody>
 						</Table>
@@ -416,7 +417,7 @@
 		text-align: center;
 	}
 
-	.empty-state svg {
+	.empty-state :global(svg) {
 		color: var(--color-fg-muted);
 		margin-bottom: var(--space-md);
 	}

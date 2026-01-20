@@ -1,14 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { createAuthenticatedPageLoader } from '@create-something/components/auth';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) {
-		throw redirect(302, '/login');
-	}
-
-	return {
-		user: {
-			email: locals.user.email
-		}
-	};
-};
+export const load: PageServerLoad = createAuthenticatedPageLoader();

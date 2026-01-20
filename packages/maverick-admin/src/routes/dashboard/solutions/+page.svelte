@@ -12,6 +12,11 @@
 		lithx: 'LithX',
 		dme: 'DME'
 	};
+
+	function getBrandLabel(brand: unknown): string {
+		const key = String(brand);
+		return brandLabels[key] || key;
+	}
 </script>
 
 <svelte:head>
@@ -52,7 +57,7 @@
 						</span>
 					</div>
 					<div class="solution-card-brand">
-						<span class="badge badge-{solution.brand}">{brandLabels[solution.brand] || solution.brand}</span>
+						<span class="badge badge-{solution.brand}">{getBrandLabel(solution.brand)}</span>
 					</div>
 					<p class="solution-card-headline">{solution.headline}</p>
 					<div class="solution-card-actions">
@@ -94,7 +99,7 @@
 								</a>
 							</td>
 							<td>
-								<span class="badge badge-{solution.brand}">{brandLabels[solution.brand] || solution.brand}</span>
+								<span class="badge badge-{solution.brand}">{getBrandLabel(solution.brand)}</span>
 							</td>
 							<td class="cell-truncate">{solution.headline}</td>
 							<td>

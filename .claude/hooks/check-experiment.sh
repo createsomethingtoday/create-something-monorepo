@@ -10,6 +10,15 @@ INPUT=$(cat)
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
+# Logging for observability
+LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/hooks/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/check-experiment-$(date +%Y%m%d).log"
+
+log_msg() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
 # Only check Write and Edit tools
 if [[ "$TOOL_NAME" != "Write" && "$TOOL_NAME" != "Edit" ]]; then
   exit 0
@@ -28,6 +37,8 @@ fi
 if [[ ! -f "$FILE_PATH" ]]; then
   exit 0
 fi
+
+log_msg "Validating: $FILE_PATH"
 
 VIOLATIONS=""
 WARNINGS=""
@@ -123,6 +134,7 @@ fi
 # ============================================================================
 
 if [[ -n "$VIOLATIONS" ]]; then
+  log_msg "Result: FAIL - Experiment structure violations found"
   echo -e "Experiment structure violation in $FILE_PATH:\n$VIOLATIONS" >&2
   if [[ -n "$WARNINGS" ]]; then
     echo -e "\nWarnings (non-blocking):$WARNINGS" >&2
@@ -133,7 +145,10 @@ fi
 
 # Warnings only - log but don't fail
 if [[ -n "$WARNINGS" ]]; then
+  log_msg "Result: PASS (with warnings)"
   echo -e "Experiment warnings in $FILE_PATH (non-blocking):$WARNINGS" >&2
+else
+  log_msg "Result: PASS"
 fi
 
 exit 0

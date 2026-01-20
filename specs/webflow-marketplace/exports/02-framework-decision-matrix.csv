@@ -1,0 +1,7 @@
+Approach,Use When,Cost,Risk,Examples
+Deterministic Rules,"Logic is known, bounded, stable",Low,Low,"File size limits, naming conventions"
+Weighted Algorithms,"Multiple factors, tunable weights",Low,Low,"Partner matching, priority scoring"
+Scripts/API Calls,"Predictable I/O, no reasoning",Low,Low,"Webhook delivery, data transforms"
+Automations,"Event-driven, multi-step workflows",Low,Low,Status change → notification
+AI Agents,"Ambiguity, reasoning, judgment",Medium-High,Variable,"Response classification, content analysis"
+Human Review,"High stakes, edge cases, taste",High,Low,"Final approval, rejection decisions"

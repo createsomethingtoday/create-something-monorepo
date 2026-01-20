@@ -13,19 +13,13 @@ function getConfig(): SiteConfig {
 		return {
 			...siteDefaults,
 			...window.__SITE_CONFIG__,
-			// Deep merge products and categories
-			products: {
-				new: window.__SITE_CONFIG__.products?.new || siteDefaults.products.new,
-				iconic: window.__SITE_CONFIG__.products?.iconic || siteDefaults.products.iconic
-			},
+			// Merge arrays if provided, otherwise use defaults
+			products: window.__SITE_CONFIG__.products || siteDefaults.products,
 			categories: window.__SITE_CONFIG__.categories || siteDefaults.categories,
-			contact: {
-				...siteDefaults.contact,
-				...window.__SITE_CONFIG__.contact
-			},
-			social: {
-				...siteDefaults.social,
-				...window.__SITE_CONFIG__.social
+			// Deep merge footer
+			footer: {
+				...siteDefaults.footer,
+				...window.__SITE_CONFIG__.footer
 			}
 		};
 	}

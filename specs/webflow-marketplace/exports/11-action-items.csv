@@ -1,0 +1,16 @@
+Category,Item,Owner,Status
+FigJam Original,Migrate to agent-first mechanism,Both,Done
+FigJam Original,Figure out cadence for project,Both,Pending
+FigJam Original,Catalog call recordings,Both,Partial (Jan 15 accessed)
+FigJam Original,Express framework as table with cost,Both,Done
+Immediate,Share Response Classification accuracy metrics,Joey,Pending
+Immediate,Document current agent prompt/logic,Micah,Done (exported Zap)
+Immediate,Set up correlation tracking,Micah,Pending
+Immediate,Define cadence (weekly sync? async?),Both,Pending
+Short-term,Design Agent Configs table schema,Joey,Pending
+Short-term,Design Agent Logs table schema,Joey,Pending
+Short-term,Implement confidence scoring,Micah,Pending
+Short-term,Establish shadow mode infrastructure,Both,Pending
+Question,Tooling decision: hybrid approach?,Joey,Pending
+Question,Where to host Python service?,Both,Pending
+Question,Migrate Response Classification from Zapier?,Both,Pending

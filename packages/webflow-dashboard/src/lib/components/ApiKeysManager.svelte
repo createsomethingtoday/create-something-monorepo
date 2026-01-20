@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label, Badge } from './ui';
+	import { Plus, CheckCircle, Key, Trash2, BookOpen, Upload } from 'lucide-svelte';
 
 	interface ApiKey {
 		keyId: string;
@@ -143,12 +144,10 @@
 			</div>
 			<p class="header-description">Manage your API keys to access your templates programmatically</p>
 		</div>
-		<Button variant="default" onclick={() => (showGenerateForm = !showGenerateForm)}>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M12 5v14m-7-7h14" />
-			</svg>
-			Generate New Key
-		</Button>
+	<Button variant="default" onclick={() => (showGenerateForm = !showGenerateForm)}>
+		<Plus size={16} />
+		Generate New Key
+	</Button>
 	</div>
 
 	{#if error}
@@ -159,13 +158,10 @@
 	{#if generatedKey}
 		<Card class="success-card">
 			<CardHeader>
-				<CardTitle class="success-title">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M15 7h.01M12 12l-3-3m0 0l-3 3m3-3v12" />
-						<path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-					</svg>
-					API Key Generated Successfully
-				</CardTitle>
+			<CardTitle class="success-title">
+				<CheckCircle size={20} />
+				API Key Generated Successfully
+			</CardTitle>
 				<p class="success-warning">Copy this key now - you won't be able to see it again!</p>
 			</CardHeader>
 			<CardContent>
@@ -270,16 +266,14 @@
 		{:else if activeKeys.length === 0}
 			<Card class="empty-card">
 				<CardContent>
-					<div class="empty-state">
-						<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-							<path d="M15 7h.01M12 12l-3-3m0 0l-3 3m3-3v12" />
-						</svg>
-						<h3>No API Keys Yet</h3>
-						<p>Generate your first API key to start accessing your templates programmatically</p>
-						<Button variant="secondary" onclick={() => (showGenerateForm = true)}>
-							Create Your First Key
-						</Button>
-					</div>
+				<div class="empty-state">
+					<Key size={48} strokeWidth={1.5} />
+					<h3>No API Keys Yet</h3>
+					<p>Generate your first API key to start accessing your templates programmatically</p>
+					<Button variant="secondary" onclick={() => (showGenerateForm = true)}>
+						Create Your First Key
+					</Button>
+				</div>
 				</CardContent>
 			</Card>
 		{:else}
@@ -290,11 +284,9 @@
 							<div class="key-item">
 								<div class="key-info">
 									<div class="key-header">
-										<div class="key-icon">
-											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-												<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-											</svg>
-										</div>
+									<div class="key-icon">
+										<Key size={20} />
+									</div>
 										<div class="key-name">
 											<h4>{key.keyName}</h4>
 											<code class="key-prefix">{key.keyPrefix}••••••••</code>
@@ -323,11 +315,9 @@
 									</div>
 								</div>
 
-								<Button variant="ghost" onclick={() => handleRevoke(key.keyId)} class="revoke-btn">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M3 6h18m-2 0V4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2m3 0v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
-									</svg>
-								</Button>
+							<Button variant="ghost" onclick={() => handleRevoke(key.keyId)} class="revoke-btn">
+								<Trash2 size={16} />
+							</Button>
 							</div>
 						</CardContent>
 					</Card>
@@ -339,12 +329,10 @@
 	<!-- Quick Start Documentation -->
 	<Card class="docs-card">
 		<CardHeader>
-			<CardTitle class="docs-title">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-				</svg>
-				Quick Start Guide
-			</CardTitle>
+		<CardTitle class="docs-title">
+			<BookOpen size={20} />
+			Quick Start Guide
+		</CardTitle>
 		</CardHeader>
 		<CardContent>
 			<div class="docs-content">

@@ -10,6 +10,15 @@ INPUT=$(cat)
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
+# Logging for observability
+LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/hooks/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/check-canon-$(date +%Y%m%d).log"
+
+log_msg() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
 # Only check Write and Edit tools on Svelte/CSS/HTML files
 if [[ "$TOOL_NAME" != "Write" && "$TOOL_NAME" != "Edit" ]]; then
   exit 0
@@ -33,6 +42,8 @@ fi
 if [[ ! -f "$FILE_PATH" ]]; then
   exit 0
 fi
+
+log_msg "Validating: $FILE_PATH"
 
 # Tailwind design utilities that should use Canon tokens
 # These patterns detect Tailwind classes that violate "Tailwind for structure, Canon for aesthetics"
@@ -69,8 +80,10 @@ if grep -qE 'class="[^"]*border-(white|black|gray-|slate-|zinc-)[^"]*"' "$FILE_P
 fi
 
 if [[ -n "$VIOLATIONS" ]]; then
+  log_msg "Result: FAIL - Canon violations found"
   echo -e "Canon violation in $FILE_PATH:\n$VIOLATIONS\n\nUse Tailwind for LAYOUT (flex, grid, p-*, m-*, w-*, h-*, gap-*) but Canon tokens for DESIGN (colors, radius, shadows, typography).\n\nFix: Move design utilities to <style> block using CSS variables from app.css." >&2
   exit 2
 fi
 
+log_msg "Result: PASS"
 exit 0

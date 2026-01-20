@@ -1,0 +1,5 @@
+Metric,Baseline,Target,Timeframe
+Response Classification accuracy,TBD,95%+,4 weeks
+Review turnaround (median),~2-3 days,< 1 day,8 weeks
+5+ day backlog,26 assets,< 5 assets,8 weeks
+Automation rate,TBD,60%,12 weeks

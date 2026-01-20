@@ -1,0 +1,9 @@
+System,Owner,Tech Stack,Status,Description
+Asset Dashboard,Micah,SvelteKit + Cloudflare,Production,Template creators view assets and review progress
+App Form,Micah,Next.js + Vercel,Production,Marketplace app submissions with auto-retry
+Template Validation,Micah,Designer Extension + CF Worker,Production,Validates templates against Webflow Way
+Bundle Scanner,Micah,Security rules,Experimental,Being improved by DE
+Airtable Backend,Joey,Airtable + Automations,Production,"Asset tracking, review workflow"
+Partner/Experts Matching,Joey,Airtable + Python,Production,Algorithmic matching with 17 variables (v7)
+Expert Matching Algorithm,Joey,Airtable,Production,Matches partners with users
+Algorithms Table,Joey,Airtable,Production,v1-v7 tracked for versioned configs

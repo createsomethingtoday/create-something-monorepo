@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { Button, Card } from '$lib/components';
+	import { AlertCircle, Home, ChevronLeft } from 'lucide-svelte';
 
 	function handleGoHome() {
 		goto('/dashboard');
@@ -21,11 +22,7 @@
 		<Card class="error-card">
 			<div class="error-content">
 				<div class="error-icon">
-					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<circle cx="12" cy="12" r="10" />
-						<path d="M12 8v4" />
-						<path d="M12 16h.01" />
-					</svg>
+					<AlertCircle size={64} strokeWidth={1.5} />
 				</div>
 
 				<h1 class="error-code">{$page.status}</h1>
@@ -60,21 +57,16 @@
 					{/if}
 				</p>
 
-				<div class="error-actions">
-					<Button variant="default" onclick={handleGoHome}>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-							<polyline points="9 22 9 12 15 12 15 22" />
-						</svg>
-						Go to Dashboard
-					</Button>
-					<Button variant="secondary" onclick={handleGoBack}>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M15 19l-7-7 7-7" />
-						</svg>
-						Go Back
-					</Button>
-				</div>
+			<div class="error-actions">
+				<Button variant="default" onclick={handleGoHome}>
+					<Home size={16} />
+					Go to Dashboard
+				</Button>
+				<Button variant="secondary" onclick={handleGoBack}>
+					<ChevronLeft size={16} />
+					Go Back
+				</Button>
+			</div>
 			</div>
 		</Card>
 	</div>

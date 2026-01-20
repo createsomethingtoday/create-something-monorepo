@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Search as SearchIcon, X } from 'lucide-svelte';
+
 	interface Props {
 		onSearch?: (term: string) => void;
 		placeholder?: string;
@@ -32,10 +34,7 @@
 </script>
 
 <div class="search-wrapper">
-	<svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-		<circle cx="11" cy="11" r="8" />
-		<path d="m21 21-4.35-4.35" />
-	</svg>
+	<SearchIcon class="search-icon" size={16} />
 	<input
 		type="text"
 		class="search-input"
@@ -45,9 +44,7 @@
 	/>
 	{#if searchTerm}
 		<button type="button" class="clear-btn" onclick={handleClear} aria-label="Clear search">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M18 6 6 18M6 6l12 12" />
-			</svg>
+			<X size={14} />
 		</button>
 	{/if}
 </div>
@@ -60,7 +57,7 @@
 		width: 100%;
 	}
 
-	.search-icon {
+	:global(.search-icon) {
 		position: absolute;
 		left: 0.75rem;
 		color: var(--color-fg-muted);

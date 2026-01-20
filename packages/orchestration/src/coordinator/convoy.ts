@@ -185,7 +185,7 @@ export async function loadConvoy(
 /**
  * List all convoys for an epic.
  */
-export async function listConvoys(epicId: string, cwd: string = process.cwd()): Promise<Convoy[]> {
+export async function listConvoys(epicId: string, cwd: string = process.cwd()): Promise<StoredConvoy[]> {
   const epicDir = path.join(cwd, CONVOY_DIR, epicId);
 
   try {
@@ -197,9 +197,7 @@ export async function listConvoys(epicId: string, cwd: string = process.cwd()): 
         const filePath = path.join(epicDir, file);
         const content = await fs.readFile(filePath, 'utf-8');
         const stored: StoredConvoy = JSON.parse(content);
-
-        // Reconstruct convoy with Map
-        return { ...stored.convoy, workers: new Map(Object.entries(stored.convoy.workers)) };
+        return stored;
       })
     );
 

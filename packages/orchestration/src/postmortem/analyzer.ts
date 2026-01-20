@@ -20,9 +20,9 @@ import type {
   Impact,
   TimelineEvent,
   PreventionRule,
-  PostmortemConfig,
-  DEFAULT_POSTMORTEM_CONFIG,
+  PostmortemConfig
 } from './types.js';
+import { DEFAULT_POSTMORTEM_CONFIG } from './types.js';
 import { getIssue } from '../integration/beads.js';
 import { listCheckpoints } from '../checkpoint/store.js';
 

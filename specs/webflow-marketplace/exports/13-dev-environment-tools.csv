@@ -1,0 +1,8 @@
+Tool,Type,Role in Workflow,User
+Claude Code,Terminal,Code/git/system tasks,Both
+Cursor,IDE,MCP integrations (Perplexity/browser),Both
+Gemini CLI,Terminal,"Research, alternative perspectives",Both
+LangChain,Framework,Agent orchestration,Joey (interested)
+beads (bd),CLI,Agent-native issue tracking,Both
+Modal,Platform,Local → cloud deployment,Micah
+pyAirtable,Library,Python ↔ Airtable integration,Joey

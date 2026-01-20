@@ -364,6 +364,76 @@ button, a, input {
 **Constraint:** Use Notion API as canonical database
 **Rationale:** Non-technical editing, version history, flexible schemas
 
+### 3.4 Languages
+
+**The Language Triad:**
+
+Languages map to the Subtractive Triad. Each serves a distinct layer where its characteristics align with the work's demands:
+
+| Layer | Language | Domain | Triad Alignment |
+|-------|----------|--------|-----------------|
+| **Frontend/Edge** | TypeScript | UI, API routes, Workers | Heidegger: Serves the whole system |
+| **Orchestration** | Python | LLM coordination, agents | Rams: Minimal code for maximum effect |
+| **Infrastructure** | Rust | Verification, analysis, tooling | DRY: Correctness without repetition |
+
+**TypeScript (Primary):**
+
+**Given:** Rams "Good design is as little design as possible"
+**Context:** Full-stack web development, edge computing
+**Constraint:** TypeScript for all frontend, API, and Cloudflare Workers code
+**Rationale:** Single language across client/server, SvelteKit integration, Workers runtime (V8)
+
+**Python (Orchestration):**
+
+**Given:** Heidegger's Zeug—equipment appropriate to its domain
+**Context:** LLM provider integration, agent workflows, rapid iteration
+**Constraint:** Python for AI orchestration where the bottleneck is network latency, not compute
+**Rationale:** Mature AI ecosystem, async patterns, provider SDK availability. The work is *coordination*, not *computation*.
+
+**Rust (Infrastructure):**
+
+**Given:** Grounded claims require grounded tooling
+**Context:** Code analysis, verification systems, performance-critical computation
+**Constraint:** Rust for tooling where correctness and performance are non-negotiable
+**Rationale:** Ownership model forces explicit confrontation with what other languages let you ignore. This is Heideggerian: the tool demands engagement before it recedes into transparent use.
+
+**Why Rust over Go/Zig:**
+
+| Language | Consideration | Assessment |
+|----------|---------------|------------|
+| **Go** | Simplicity, fast compilation | Garbage collection introduces non-determinism; less expressive type system |
+| **Zig** | Manual memory, C interop | Immature ecosystem; appropriate for systems programming, not analysis tooling |
+| **Rust** | Ownership, zero-cost abstractions | Tree-sitter (AST parsing) is native Rust; algebraic types model code structure naturally; compiler-enforced correctness aligns with "grounded claims" philosophy |
+
+**WebAssembly Bridge:**
+
+When computation must reach the edge, Rust compiles to WebAssembly for Cloudflare Workers:
+
+```rust
+// Rust library compiled to WASM
+#[wasm_bindgen]
+pub fn compute_similarity(a: &str, b: &str) -> f64 {
+    // Performance-critical computation at the edge
+}
+```
+
+**Given:** Cloudflare Workers runs V8, not native code
+**Context:** Need for edge-deployed computation (similarity, hashing, validation)
+**Constraint:** Compile Rust to WASM when performance-critical logic must run in Workers
+**Rationale:** Best of both worlds—Rust's correctness, Workers' global distribution
+
+**Anti-Pattern: Language as Identity**
+
+Do not choose languages for tribal affiliation. The question is always: "Does this language serve *this* work?" Framework imprisonment applies to languages too.
+
+```
+BAD:  "We're a Rust shop"
+GOOD: "Rust serves our verification tooling because ownership models correctness"
+
+BAD:  "Python is slow, rewrite everything"
+GOOD: "Python orchestrates LLM calls where network latency dominates"
+```
+
 ---
 
 ## 4. Code Quality

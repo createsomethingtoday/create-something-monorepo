@@ -3,6 +3,7 @@
 	import { Button } from './ui';
 	import Search from './Search.svelte';
 	import DarkModeToggle from './DarkModeToggle.svelte';
+	import { UserCircle } from 'lucide-svelte';
 
 	interface Props {
 		userEmail?: string;
@@ -59,16 +60,12 @@
 
 		<div class="header-right">
 			<DarkModeToggle />
-			{#if onProfileClick}
-				<Button variant="secondary" onclick={onProfileClick}>
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10" />
-						<circle cx="12" cy="10" r="3" />
-						<path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-					</svg>
-					<span class="profile-text">Profile</span>
-				</Button>
-			{/if}
+		{#if onProfileClick}
+			<Button variant="secondary" onclick={onProfileClick}>
+				<UserCircle size={20} />
+				<span class="profile-text">Profile</span>
+			</Button>
+		{/if}
 			{#if onLogout}
 				<Button variant="secondary" onclick={onLogout}>Logout</Button>
 			{/if}

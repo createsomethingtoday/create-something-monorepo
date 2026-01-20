@@ -9,6 +9,15 @@ set -e
 INPUT=$(cat)
 STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false')
 
+# Logging for observability
+LOG_DIR="$CLAUDE_PROJECT_DIR/.claude/hooks/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/typecheck-stop-$(date +%Y%m%d).log"
+
+log_msg() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
 # Prevent infinite loops - if we're already in a stop hook, don't check again
 if [[ "$STOP_HOOK_ACTIVE" == "true" ]]; then
   exit 0
@@ -40,8 +49,11 @@ fi
 
 # If no packages detected, skip type checking
 if [[ -z "$PACKAGES_TO_CHECK" ]]; then
+  log_msg "No packages to check - skipping"
   exit 0
 fi
+
+log_msg "Checking packages:$PACKAGES_TO_CHECK"
 
 # Run type check on modified packages
 ERRORS=""
@@ -57,8 +69,10 @@ for pkg in $PACKAGES_TO_CHECK; do
 done
 
 if [[ -n "$ERRORS" ]]; then
+  log_msg "Result: FAIL - Type errors detected"
   echo -e "Type errors detected. Please fix before completing:\n$ERRORS" >&2
   exit 2
 fi
 
+log_msg "Result: PASS"
 exit 0

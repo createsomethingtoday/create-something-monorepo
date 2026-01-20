@@ -115,6 +115,7 @@ export {
 	createCrossDomainPageLoader,
 	createMagicLinkCallbackLoader,
 	// Page loaders
+	createAuthenticatedPageLoader,
 	createCategoryPageLoader,
 	createAccountPageLoader,
 	createLoginPageLoader,

@@ -31,6 +31,12 @@ Ending a work session is a critical process of reconnection. The goal is to leav
 2.  **Run quality gates**
     *   **Principle:** Serve the whole.
     *   **Rationale:** Tests, linters, and builds ensure that your changes integrate correctly with the entire system. A change that breaks another part of the system is a form of disconnection.
+    *   **Commands:**
+        ```bash
+        pnpm check              # TypeScript - catches invalid imports
+        pnpm lint               # ESLint - catches canon violations
+        pnpm test               # Vitest - catches regressions
+        ```
 
 3.  **Update issue status**
     *   **Principle:** Remove obscurity.
@@ -65,3 +71,42 @@ Ending a work session is a critical process of reconnection. The goal is to leav
 
 -   **If a push fails, you must resolve it.**
     *   **Rationale:** A failed push is a clear signal of disconnection. You must diagnose the conflict (e.g., merge conflicts, failed checks) and resolve it to successfully reconnect your work to the whole.
+
+## Grounding Discipline: Verify Before Use
+
+The enemy of good work is hallucination. When you reference code that doesn't exist, you create disconnection—broken imports, undefined functions, phantom APIs.
+
+### The Verify-Then-Use Protocol
+
+Before using any symbol (function, component, type, constant) from this codebase:
+
+1.  **Verify it exists** — Use `pnpm exports <package> <symbol>` or `Grep`/`Read` to confirm
+2.  **Verify the import path** — Check `package.json` exports or the actual file path
+3.  **If uncertain, say "unknown"** — Never guess. "I need to verify this exists" is always acceptable.
+
+```bash
+# Quick verification commands
+pnpm exports                    # List all packages
+pnpm exports components         # List exports from @create-something/components  
+pnpm exports components Button  # Check if Button exists
+```
+
+### When Retrieval Returns Fragments
+
+Semantic search may return conceptually related documents that don't contain the actual API you need. When this happens:
+
+-   **Do not extrapolate** from examples to guess the real API
+-   **Read the actual source file** — `src/lib/index.ts` or equivalent
+-   **Check the package.json exports** — This is the authoritative source of what's public
+
+### Failure Mode
+
+```typescript
+// BAD: Guessed from partial context
+import { NonExistentThing } from '@create-something/components';
+
+// GOOD: Verified by reading src/lib/index.ts
+import { Button, Card } from '@create-something/components';
+```
+
+**Principle:** It is better to admit uncertainty than to create disconnection through hallucination.

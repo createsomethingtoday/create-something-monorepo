@@ -49,6 +49,8 @@ export interface IdentityUser {
 	id: string;
 	email: string;
 	name?: string;
+	tier?: 'free' | 'pro' | 'agency';
+	source?: 'workway' | 'templates' | 'io' | 'space' | 'lms';
 	created_at: string;
 }
 
@@ -303,7 +305,7 @@ export const identityClient = {
  * Extract user-friendly error message from Identity API result
  */
 export function getIdentityErrorMessage(
-	result: { success: false; error: string; status: number },
+	result: { error?: string },
 	defaultMessage: string
 ): string {
 	// Map common errors to user-friendly messages
@@ -315,7 +317,7 @@ export function getIdentityErrorMessage(
 		'Token expired': 'This link has expired. Please request a new one.'
 	};
 
-	return errorMap[result.error] || result.error || defaultMessage;
+	return (result.error && errorMap[result.error]) || result.error || defaultMessage;
 }
 
 /**

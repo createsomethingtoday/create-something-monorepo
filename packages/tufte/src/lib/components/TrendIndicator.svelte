@@ -102,12 +102,13 @@
 	$: absoluteChange = current - previous;
 	$: percentageChange =
 		previous > 0 ? Math.round(((current - previous) / previous) * 100) : 0;
-	$: direction =
+	$: direction = (
 		Math.abs(percentageChange) < flatThreshold
 			? 'flat'
 			: percentageChange > 0
 				? 'up'
-				: 'down';
+				: 'down'
+	) as 'up' | 'down' | 'flat';
 
 	// Agentic: format based on context
 	$: displayValue =
