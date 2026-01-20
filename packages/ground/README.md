@@ -70,7 +70,10 @@ ground check connections ./module
 ground find duplicates ./packages
 
 # Find duplicate functions (catches fine-grained copies)
-ground find duplicate-functions ./packages
+ground find duplicate-functions ./packages --min-lines 5 --exclude-tests
+
+# Find orphaned modules (nothing imports them)
+ground find orphans ./packages/sdk/src
 
 # With CREATE SOMETHING monorepo suggestions
 ground find duplicates ./packages --monorepo --beads
@@ -129,13 +132,15 @@ Ground exposes tools via the Model Context Protocol:
 | Tool | What it does |
 |------|--------------|
 | `ground_compare` | Compare two files |
-| `ground_count_uses` | Count symbol uses |
-| `ground_check_connections` | Check module connections |
-| `ground_find_duplicate_functions` | Find copied functions |
+| `ground_count_uses` | Count symbol uses (distinguishes definitions vs actual uses) |
+| `ground_check_connections` | Check module connections (understands Workers) |
+| `ground_find_duplicate_functions` | Find copied functions (`min_lines`, `exclude_tests`) |
+| `ground_find_orphans` | Find modules nothing imports |
+| `ground_check_environment` | Detect Workers/Node.js API leakage |
 | `ground_claim_duplicate` | Claim files are duplicates |
 | `ground_claim_dead_code` | Claim code is dead |
 | `ground_claim_orphan` | Claim module is orphaned |
-| `ground_suggest_fix` | Get fix suggestions |
+| `ground_suggest_fix` | Get fix suggestions (works with any pnpm monorepo) |
 | `ground_status` | Show status |
 
 Add to your `.mcp.json`:
