@@ -150,3 +150,6 @@ export type {
 	WorkFrontmatter,
 	ContentItem
 } from './content-loader.js';
+
+// Paper recommendations (navigation utilities)
+export { getNextPaper } from './recommendations.js';

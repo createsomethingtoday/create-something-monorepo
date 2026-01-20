@@ -102,13 +102,13 @@ export function createConvoyCommand(): Command {
         console.log(`\n=== Convoys in ${options.epic} ===\n`);
 
         for (const convoy of convoys) {
-          console.log(`${convoy.id} - ${convoy.name}`);
-          console.log(`  Status: ${convoy.status}`);
-          console.log(`  Issues: ${convoy.issueIds.length}`);
-          console.log(`  Created: ${new Date(convoy.createdAt).toLocaleString()}`);
+          console.log(`${convoy.convoy.id} - ${convoy.convoy.name}`);
+          console.log(`  Status: ${convoy.convoy.status}`);
+          console.log(`  Issues: ${convoy.convoy.issueIds.length}`);
+          console.log(`  Created: ${new Date(convoy.convoy.createdAt).toLocaleString()}`);
 
-          if (convoy.completedAt) {
-            console.log(`  Completed: ${new Date(convoy.completedAt).toLocaleString()}`);
+          if (convoy.convoy.completedAt) {
+            console.log(`  Completed: ${new Date(convoy.convoy.completedAt).toLocaleString()}`);
           }
 
           console.log();

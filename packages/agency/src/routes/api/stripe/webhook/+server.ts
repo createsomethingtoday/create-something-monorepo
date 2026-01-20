@@ -116,13 +116,13 @@ async function handleCheckoutComplete(
 
 	// Handle Vertical Templates provisioning
 	if (productId === 'vertical-templates' && pendingId) {
-		await provisionVerticalTemplate(session, platform);
+		await provisionVerticalTemplate(session, platform, logger);
 		return;
 	}
 
 	// Handle Agent-in-a-Box provisioning
 	if (productId === 'agent-in-a-box') {
-		await provisionAgentInABox(session, tier, platform);
+		await provisionAgentInABox(session, tier, platform, logger);
 		return;
 	}
 
@@ -160,7 +160,7 @@ async function handleCheckoutComplete(
 
 		// Send fulfillment email
 		if (session.mode === 'payment') {
-			await sendFulfillmentEmail(customerEmail, productId, downloadToken, platform);
+			await sendFulfillmentEmail(customerEmail, productId, downloadToken, platform, logger);
 		}
 	}
 }
@@ -170,7 +170,8 @@ async function handleCheckoutComplete(
  */
 async function provisionVerticalTemplate(
 	session: Stripe.Checkout.Session,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const pendingId = session.metadata?.pending_id;
 	const subdomain = session.metadata?.subdomain;
@@ -226,7 +227,8 @@ async function provisionVerticalTemplate(
 				customerEmail,
 				subdomain,
 				`https://${subdomain}.createsomething.space`,
-				platform
+				platform,
+				logger
 			);
 		}
 	} catch (err) {
@@ -241,7 +243,8 @@ async function sendVerticalTemplateWelcomeEmail(
 	email: string,
 	subdomain: string,
 	siteUrl: string,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const resendApiKey = platform?.env?.RESEND_API_KEY;
 	const emailFromSites = platform?.env?.EMAIL_FROM_SITES ?? 'CREATE SOMETHING <sites@createsomething.agency>';
@@ -301,7 +304,8 @@ async function sendFulfillmentEmail(
 	email: string,
 	productId: string,
 	downloadToken: string,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const downloadUrl = `https://createsomething.agency/api/products/${productId}/download?token=${downloadToken}`;
 
@@ -426,7 +430,7 @@ async function handleSubscriptionCanceled(
 	}
 
 	// Suspend vertical template site if applicable
-	await suspendVerticalTemplateSite(subscription, platform);
+	await suspendVerticalTemplateSite(subscription, platform, logger);
 }
 
 /**
@@ -434,7 +438,8 @@ async function handleSubscriptionCanceled(
  */
 async function suspendVerticalTemplateSite(
 	subscription: Stripe.Subscription,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const templatesApiUrl =
 		platform?.env?.TEMPLATES_PLATFORM_API_URL || 'https://templates.createsomething.space';
@@ -471,7 +476,8 @@ async function suspendVerticalTemplateSite(
 async function provisionAgentInABox(
 	session: Stripe.Checkout.Session,
 	tier: string | undefined,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const customerEmail = session.customer_email || session.customer_details?.email;
 	const validTier = tier === 'solo' || tier === 'team' || tier === 'org' ? tier : 'solo';
@@ -540,10 +546,10 @@ async function provisionAgentInABox(
 	}
 
 	// Provision LMS account via identity worker
-	await provisionLmsAccount(customerEmail, validTier, platform);
+	await provisionLmsAccount(customerEmail, validTier, platform, logger);
 
 	// Send fulfillment email with license key
-	await sendAgentKitEmail(customerEmail, validTier, licenseKey, platform);
+	await sendAgentKitEmail(customerEmail, validTier, licenseKey, platform, logger);
 }
 
 /**
@@ -552,7 +558,8 @@ async function provisionAgentInABox(
 async function provisionLmsAccount(
 	email: string,
 	tier: string,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const identityUrl = platform?.env?.IDENTITY_WORKER_URL || 'https://id.createsomething.space';
 	const identitySecret = platform?.env?.IDENTITY_WORKER_SECRET;
@@ -594,7 +601,8 @@ async function sendAgentKitEmail(
 	email: string,
 	tier: string,
 	licenseKey: string,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const tierNames: Record<string, string> = {
 		solo: 'Solo',
@@ -714,7 +722,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice, platform: App.Platfo
 	// Stripe's hosted invoice URL allows customer to retry payment
 	const paymentUrl = invoice.hosted_invoice_url ?? null;
 
-	await sendDunningEmail(customerEmail, amountDue, currency, paymentUrl, platform);
+	await sendDunningEmail(customerEmail, amountDue, currency, paymentUrl, platform, logger);
 }
 
 /**
@@ -725,7 +733,8 @@ async function sendDunningEmail(
 	amountDue: string,
 	currency: string,
 	paymentUrl: string | null,
-	platform: App.Platform | undefined
+	platform: App.Platform | undefined,
+	logger: Logger
 ) {
 	const resendApiKey = platform?.env?.RESEND_API_KEY;
 	const emailFromBilling = platform?.env?.EMAIL_FROM_BILLING ?? 'CREATE SOMETHING <billing@createsomething.agency>';

@@ -197,7 +197,7 @@ function extractInefficiencyLearnings(
       suggestion: 'Review common correction patterns and add preventive guidance to rule files',
       sources: [
         {
-          type: target.type,
+          type: target.type === 'epic' ? 'convoy' : target.type,
           id: target.id,
           evidence: `${stats.corrections} corrections, ${correctionRate.toFixed(2)} rate`,
           timestamp: new Date().toISOString(),
@@ -249,7 +249,7 @@ function extractBlockerLearnings(
         suggestion: `Add ${category} guidance to prevent these blockers`,
         sources: [
           {
-            type: target.type,
+            type: target.type === 'epic' ? 'convoy' : target.type,
             id: target.id,
             evidence: data.descriptions.join('; '),
             timestamp: new Date().toISOString(),

@@ -155,7 +155,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					`Search results for "${args}":`,
 					'',
 					...searchResults.map((p, i) =>
-						`[${i + 1}] ${p.title} (${p.category})\n    ${p.excerpt_short || 'No description'}`
+						`[${i + 1}] ${p.title} (${p.category})`
 					),
 					''
 				].join('\n');

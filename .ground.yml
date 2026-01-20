@@ -97,10 +97,6 @@ thresholds:
   min_function_lines: 5
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Report Settings
-# ─────────────────────────────────────────────────────────────────────────────
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Monorepo Configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -118,6 +114,9 @@ monorepo:
     - "**/wrangler.toml"                  # Cloudflare Workers config
     - "**/package.json"                   # Package entry points (exports, bin)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Report Settings
+# ─────────────────────────────────────────────────────────────────────────────
 
 report:
   # Output format: text, markdown, json
@@ -128,24 +127,6 @@ report:
 
   # Group findings by: file, type, severity
   group_by: type
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Known Limitations & False Positives
-# ─────────────────────────────────────────────────────────────────────────────
-# 
-# Ground MCP v1.x has limitations with SvelteKit projects:
-# 
-# 1. **$lib alias imports** - Ground doesn't resolve SvelteKit's $lib alias
-#    Files imported via `$lib/...` may appear orphaned
-#    Workaround: Added hooks files to ignore paths above
-# 
-# 2. **SvelteKit entry points** - hooks.server.ts, +page.server.ts are loaded
-#    by SvelteKit runtime, not via direct imports
-#    Workaround: Added to ignore paths above
-# 
-# 3. **Side-effect imports** - CSS imports, global style injection
-#    Ground looks for export usage, not import side-effects
-#    Workaround: Added specific patterns to ignore paths
-# 
-# Last updated: 2026-01-20
-# Analysis: See GROUND_MCP_ANALYSIS_2026_01_20.md
+  
+  # Verbose mode (show false positive explanations)
+  verbose: true

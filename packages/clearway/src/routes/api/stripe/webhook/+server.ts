@@ -70,7 +70,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			// ==========================================================================
 			case 'account.updated': {
 				const account = event.data.object as Stripe.Account;
-				await handleAccountUpdated(db, account, now);
+				await handleAccountUpdated(db, account, now, logger);
 				break;
 			}
 
@@ -79,19 +79,19 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			// ==========================================================================
 			case 'checkout.session.completed': {
 				const session = event.data.object as Stripe.Checkout.Session;
-				await handleCheckoutCompleted(db, session, now);
+				await handleCheckoutCompleted(db, session, now, logger);
 				break;
 			}
 
 			case 'payment_intent.succeeded': {
 				const paymentIntent = event.data.object as Stripe.PaymentIntent;
-				await handlePaymentSucceeded(db, paymentIntent, now);
+				await handlePaymentSucceeded(db, paymentIntent, now, logger);
 				break;
 			}
 
 			case 'payment_intent.payment_failed': {
 				const paymentIntent = event.data.object as Stripe.PaymentIntent;
-				await handlePaymentFailed(db, paymentIntent, now);
+				await handlePaymentFailed(db, paymentIntent, now, logger);
 				break;
 			}
 
@@ -150,7 +150,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 async function handleAccountUpdated(
 	db: D1Database,
 	account: Stripe.Account,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const chargesEnabled = account.charges_enabled ? 1 : 0;
 	const payoutsEnabled = account.payouts_enabled ? 1 : 0;
@@ -183,7 +184,8 @@ async function handleAccountUpdated(
 async function handleCheckoutCompleted(
 	db: D1Database,
 	session: Stripe.Checkout.Session,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const reservationId = session.metadata?.reservation_id;
 	if (!reservationId) {
@@ -271,7 +273,8 @@ async function handleCheckoutCompleted(
 async function handlePaymentSucceeded(
 	db: D1Database,
 	paymentIntent: Stripe.PaymentIntent,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const reservationId = paymentIntent.metadata?.reservation_id;
 
@@ -377,7 +380,8 @@ async function handlePaymentSucceeded(
 async function handlePaymentFailed(
 	db: D1Database,
 	paymentIntent: Stripe.PaymentIntent,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const reservationId = paymentIntent.metadata?.reservation_id;
 

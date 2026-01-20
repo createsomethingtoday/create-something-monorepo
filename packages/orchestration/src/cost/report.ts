@@ -78,7 +78,7 @@ export async function generateEpicReport(epicId: string, cwd: string = process.c
   const convoys = await listConvoys(epicId, cwd);
 
   const convoyReports = await Promise.all(
-    convoys.map((convoy) => generateConvoyReport(convoy.id, epicId, cwd))
+    convoys.map((convoy) => generateConvoyReport(convoy.convoy.id, epicId, cwd))
   );
 
   const validReports = convoyReports.filter((r): r is ConvoyCostReport => r !== null);

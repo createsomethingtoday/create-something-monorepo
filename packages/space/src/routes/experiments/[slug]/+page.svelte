@@ -9,7 +9,7 @@
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
 	import { isExecutable, isCodeExperiment } from '$lib/types/paper';
-	import { getNextPaper } from '$lib/utils/recommendations';
+	import { getNextPaper } from '@create-something/components/utils';
 	import { page } from '$app/stores';
 	import {
 		markExperimentCompleted,

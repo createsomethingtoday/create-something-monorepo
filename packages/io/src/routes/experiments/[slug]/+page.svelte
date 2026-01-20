@@ -14,7 +14,7 @@
 		validateCompletionToken,
 		clearExperimentCompletion,
 	} from "@create-something/components/utils";
-	import { getNextPaper } from "$lib/utils/recommendations";
+	import { getNextPaper } from '@create-something/components/utils';
 
 	let { data }: { data: PageData } = $props();
 

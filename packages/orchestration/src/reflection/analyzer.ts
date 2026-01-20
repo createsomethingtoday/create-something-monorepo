@@ -196,7 +196,8 @@ function calculateStandaloneMetrics(checkpoints: StoredCheckpoint[]): IssueMetri
     const ctx = cp.context;
 
     // Track issues worked on
-    for (const issueId of ctx.issuesUpdated) {
+    for (const update of ctx.issuesUpdated) {
+      const issueId = update.issueId;
       if (!issueMap.has(issueId)) {
         issueMap.set(issueId, {
           issueId,
@@ -309,7 +310,7 @@ export function identifyCorrections(checkpoints: StoredCheckpoint[]): StoredChec
     }
 
     // Check agent notes for correction keywords
-    const notesText = cp.context.agentNotes.join(' ').toLowerCase();
+    const notesText = cp.context.agentNotes.toLowerCase();
     return correctionKeywords.some((keyword) => notesText.includes(keyword));
   });
 }
