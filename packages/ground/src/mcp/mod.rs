@@ -37,6 +37,11 @@ use crate::{VerifiedTriad, VerifiedTriadError};
 use crate::computations::{analyze_function_dry_with_options, FunctionDryOptions};
 use crate::computations::environment::{analyze_environment_safety, WarningSeverity, RuntimeEnvironment};
 use crate::computations::{BloomFilter, HyperLogLog};
+use crate::computations::confidence::{
+    orphan_confidence, duplicate_confidence, dead_export_confidence,
+    environment_safety_confidence, ConfidenceScore, RecommendedAction,
+};
+use crate::computations::framework::{detect_framework, is_implicit_entry, Framework};
 use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command};
 use crate::config::GroundConfig;
 
@@ -1788,9 +1793,18 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
     // Load config
     let config = find_config_in_ancestors(&directory).unwrap_or_default();
     
+    // Detect framework for smarter analysis
+    let framework_detection = detect_framework(&directory);
+    let framework_patterns = &framework_detection.patterns;
+    
     let mut results = json!({
         "directory": directory.to_string_lossy(),
         "checks_run": checks,
+        "framework": {
+            "detected": framework_detection.primary.as_str(),
+            "confidence": framework_detection.confidence,
+            "evidence": framework_detection.evidence
+        },
         "findings": {
             "duplicates": [],
             "dead_exports": [],
@@ -1910,21 +1924,59 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         
         if let ToolResult { success: true, content, .. } = handle_find_orphans(&orphan_args) {
             if let Some(orphans) = content.get("orphans").and_then(|v| v.as_array()) {
-                let structured_orphans: Vec<Value> = orphans.iter().map(|o| {
-                    let path = o.get("path").and_then(|v| v.as_str()).unwrap_or("");
-                    total_issues += 1;
+                let structured_orphans: Vec<Value> = orphans.iter().filter_map(|o| {
+                    let path_str = o.get("path").and_then(|v| v.as_str()).unwrap_or("");
+                    let path = Path::new(path_str);
                     
-                    json!({
+                    // Check if this is a framework implicit entry (e.g., +page.svelte)
+                    let is_framework_entry = is_implicit_entry(path, framework_patterns);
+                    
+                    // Check if it looks like a test or config file
+                    let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                    let is_test = filename.contains(".test.") || filename.contains(".spec.") || 
+                                  path_str.contains("__tests__");
+                    let is_config = filename.ends_with(".config.ts") || filename.ends_with(".config.js") ||
+                                   matches!(filename, "tsconfig.json" | "vite.config.ts" | "vitest.config.ts");
+                    
+                    // Calculate confidence using Bayesian scoring
+                    let confidence = orphan_confidence(
+                        0,  // incoming_imports (we know it's 0 since it's flagged as orphan)
+                        0,  // outgoing_imports (unknown, assume 0)
+                        false,  // is_entry_point (would need package.json check)
+                        is_test,
+                        is_config,
+                        false,  // has_architectural_connections (would need deeper check)
+                        None,   // pagerank_percentile (not computed here)
+                        is_framework_entry,
+                    );
+                    
+                    // Skip low-confidence findings (likely false positives)
+                    if confidence.score < 0.3 {
+                        return None;
+                    }
+                    
+                    total_issues += 1;
+                    if confidence.safe_to_auto_fix {
+                        auto_fixable += 1;
+                    }
+                    
+                    Some(json!({
                         "type": "orphan_module",
-                        "path": path,
-                        "confidence": 0.85,
-                        "safe_to_auto_fix": false,
+                        "path": path_str,
+                        "confidence": confidence.score,
+                        "safe_to_auto_fix": confidence.safe_to_auto_fix,
+                        "recommended_action": confidence.recommended_action.as_str(),
+                        "factors": confidence.factors.iter().map(|f| json!({
+                            "name": f.name,
+                            "description": f.description,
+                            "weight": f.weight
+                        })).collect::<Vec<_>>(),
                         "fix": {
                             "action": "review_or_delete",
-                            "module_path": path,
-                            "rationale": "Module has no incoming connections. Review if needed or delete."
+                            "module_path": path_str,
+                            "rationale": confidence.explanation
                         }
-                    })
+                    }))
                 }).collect();
                 
                 results["findings"]["orphans"] = json!(structured_orphans);
