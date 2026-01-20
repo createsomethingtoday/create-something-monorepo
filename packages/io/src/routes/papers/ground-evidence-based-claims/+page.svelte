@@ -138,8 +138,8 @@
 					Ground enforces a simple rule: <strong>you cannot claim something until you've checked it</strong>.
 				</p>
 
-				<div class="p-4 my-6 code-block">
-					<pre class="text-sm"><code>{`# This fails - no evidence yet
+				<div class="p-4 my-6 font-mono code-block">
+					<pre class="code-secondary"><code>{`# This fails - no evidence yet
 ground claim duplicate file_a.ts file_b.ts
 → ❌ Blocked: Run 'ground compare file_a.ts file_b.ts' first
 
@@ -190,8 +190,8 @@ ground claim duplicate file_a.ts file_b.ts
 					<li><strong>Service bindings:</strong> Worker-to-worker connections</li>
 				</ul>
 
-				<div class="p-4 my-6 code-block">
-					<pre class="text-sm"><code>{`# Worker with no code imports, but connected via deployment
+				<div class="p-4 my-6 font-mono code-block">
+					<pre class="code-secondary"><code>{`# Worker with no code imports, but connected via deployment
 ground check connections src/index.ts
 
 → {
@@ -211,8 +211,8 @@ ground check connections src/index.ts
 					Ground separates symbol occurrences into <code>definitions</code> and <code>actual_uses</code>:
 				</p>
 
-				<div class="p-4 my-6 code-block">
-					<pre class="text-sm"><code>{`ground count uses BeadsNotionConfig
+				<div class="p-4 my-6 font-mono code-block">
+					<pre class="code-secondary"><code>{`ground count uses BeadsNotionConfig
 
 → {
     "total_occurrences": 1,
@@ -323,7 +323,7 @@ ground claim dead-code BeadsNotionConfig
 					</table>
 				</div>
 
-				<blockquote class="pl-4 my-6 border-l-2 border-current opacity-80 italic">
+				<blockquote class="pl-4 my-6 italic blockquote">
 					"The tool provides a 10-20x speedup for codebase hygiene tasks. Without it, I'd be
 					manually grepping and guessing. With it, I have verified claims backed by evidence."
 					<br /><span class="not-italic">— WORKWAY Agent Feedback</span>
@@ -414,8 +414,8 @@ ground claim dead-code BeadsNotionConfig
 					AI agents to use it during coding sessions:
 				</p>
 
-				<div class="p-4 my-6 code-block">
-					<pre class="text-sm"><code>{`// .mcp.json
+				<div class="p-4 my-6 font-mono code-block">
+					<pre class="code-secondary"><code>{`// .mcp.json
 {
   "mcpServers": {
     "ground": {
@@ -460,7 +460,7 @@ ground claim dead-code BeadsNotionConfig
 					solid.
 				</p>
 
-				<blockquote class="pl-4 my-6 border-l-2 border-current opacity-80 italic">
+				<blockquote class="pl-4 my-6 italic blockquote">
 					"You can't claim something until you've checked it."
 				</blockquote>
 
@@ -630,6 +630,16 @@ ground claim dead-code BeadsNotionConfig
 	.code-block code {
 		font-family: 'JetBrains Mono', monospace;
 		white-space: pre;
+	}
+
+	.code-secondary {
+		color: var(--color-fg-secondary, #a3a3a3);
+		font-size: 0.875rem;
+	}
+
+	.blockquote {
+		border-left: 4px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.3));
+		color: var(--color-fg-tertiary, #a3a3a3);
 	}
 
 	.responsive-table-scroll {
