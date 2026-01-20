@@ -9,7 +9,7 @@
  *
  * Removes:
  * - Single-line comments (// ...)
- * - Multi-line comments (/* ... */)
+ * - Multi-line comments
  */
 export function stripComments(code: string): string {
 	// Remove single-line comments

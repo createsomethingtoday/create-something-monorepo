@@ -1,0 +1,7 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pure black canvas -->
+  <rect width="128" height="128" fill="#000000"/>
+
+  <!-- "C" letterform in white - Zuhandenheit: minimal, precise -->
+  <path d="M 82 32 C 65 32 52 45 52 64 C 52 83 65 96 82 96 C 92 96 100 91 105 84 L 97 76 C 93 81 88 84 82 84 C 71 84 64 76 64 64 C 64 52 71 44 82 44 C 88 44 93 47 97 52 L 105 44 C 100 37 92 32 82 32 Z" fill="#ffffff"/>
+</svg>
