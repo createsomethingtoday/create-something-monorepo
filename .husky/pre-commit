@@ -1,0 +1,45 @@
+#!/bin/sh
+# Verified Triad DRY Check - Pre-commit Hook
+# Catches high-similarity duplicates before they're committed
+
+# Get staged TypeScript/Svelte files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|svelte)$' || true)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+# Check if vt-audit exists
+VT_AUDIT="./packages/verified-triad/target/release/vt-audit"
+if [ ! -f "$VT_AUDIT" ]; then
+  echo "⚠️  vt-audit not found, skipping DRY check"
+  exit 0
+fi
+
+echo "🔍 Running DRY check on staged files..."
+
+# Run audit with strict threshold (90%) on packages directory
+# Only fail on very high similarity (likely copy-paste)
+RESULT=$($VT_AUDIT ./packages --threshold 0.90 --extensions ts,svelte 2>&1)
+
+# Check for violations
+if echo "$RESULT" | grep -q "VIOLATIONS: None"; then
+  echo "✅ DRY check passed"
+  exit 0
+fi
+
+# Count violations
+VIOLATIONS=$(echo "$RESULT" | grep -c "% similar" || echo "0")
+
+if [ "$VIOLATIONS" -gt 0 ]; then
+  echo ""
+  echo "⚠️  Found $VIOLATIONS potential duplicates (>90% similar):"
+  echo "$RESULT" | grep -A2 "% similar" | head -20
+  echo ""
+  echo "Consider consolidating these files or use --no-verify to skip."
+  echo "Run 'vt-audit ./packages --smart' for full analysis."
+  # Warning only - don't block commit
+  exit 0
+fi
+
+exit 0

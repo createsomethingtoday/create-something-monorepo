@@ -400,3 +400,184 @@ export function createMagicLinkCallbackLoader(options: MagicLinkCallbackOptions)
 		redirect(302, redirectTo);
 	};
 }
+
+// =============================================================================
+// PAGE LOADERS
+// =============================================================================
+
+/**
+ * Create category page loader for fetching papers by category.
+ * 
+ * Usage:
+ * ```ts
+ * import { createCategoryPageLoader } from '@create-something/components/auth';
+ * export const load = createCategoryPageLoader();
+ * ```
+ */
+export function createCategoryPageLoader() {
+	return async ({ params, platform }: {
+		params: { slug: string };
+		platform?: { env?: { DB?: D1Database } };
+	}) => {
+		const { slug } = params;
+
+		if (!platform?.env?.DB) {
+			return {
+				papers: [],
+				category: { name: slug.charAt(0).toUpperCase() + slug.slice(1), slug, count: 0 }
+			};
+		}
+
+		try {
+			const result = await platform.env.DB.prepare(`
+				SELECT * FROM papers
+				WHERE category = ? AND published = 1 AND is_hidden = 0 AND archived = 0
+				ORDER BY created_at DESC
+			`).bind(slug).all();
+
+			const papers = result.results || [];
+
+			return {
+				papers,
+				category: {
+					name: slug.charAt(0).toUpperCase() + slug.slice(1),
+					slug,
+					count: papers.length
+				}
+			};
+		} catch (error) {
+			console.error('Error fetching category from D1:', error);
+			return {
+				papers: [],
+				category: { name: slug.charAt(0).toUpperCase() + slug.slice(1), slug, count: 0 }
+			};
+		}
+	};
+}
+
+interface D1Database {
+	prepare(query: string): D1PreparedStatement;
+}
+
+interface D1PreparedStatement {
+	bind(...values: unknown[]): D1PreparedStatement;
+	all<T = unknown>(): Promise<{ results: T[] }>;
+}
+
+/**
+ * Create account page loader with analytics fetching.
+ * 
+ * Usage:
+ * ```ts
+ * import { createAccountPageLoader } from '@create-something/components/auth';
+ * export const load = createAccountPageLoader();
+ * ```
+ */
+export function createAccountPageLoader() {
+	return async ({ parent, cookies }: {
+		parent: () => Promise<{ user?: { id: string; analytics_opt_out?: boolean } }>;
+		cookies: Cookies;
+	}) => {
+		const { user } = await parent();
+
+		if (!user) {
+			redirect(302, '/login?redirect=/account');
+		}
+
+		// Fetch analytics from .io aggregator if user hasn't opted out
+		let analytics = null;
+
+		if (!user.analytics_opt_out) {
+			try {
+				const accessToken = cookies.get('cs_access_token');
+				const response = await fetch('https://createsomething.io/api/user/analytics/aggregate?days=30', {
+					headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+				});
+				if (response.ok) {
+					analytics = await response.json();
+				}
+			} catch (err) {
+				console.warn('Failed to fetch user analytics:', err);
+			}
+		}
+
+		return { user, analytics };
+	};
+}
+
+interface LoginPageLoaderOptions {
+	property: 'ltd' | 'io' | 'agency' | 'space' | 'lms';
+}
+
+/**
+ * Create login page loader that redirects if already authenticated.
+ * 
+ * Usage:
+ * ```ts
+ * import { createLoginPageLoader } from '@create-something/components/auth';
+ * export const load = createLoginPageLoader({ property: 'ltd' });
+ * ```
+ */
+export function createLoginPageLoader(options: LoginPageLoaderOptions) {
+	const productionDomain = PROPERTY_DOMAINS[options.property];
+
+	return async ({ url, cookies, platform }: {
+		url: URL;
+		cookies: Cookies;
+		platform?: { env?: { ENVIRONMENT?: string } };
+	}) => {
+		const { createSessionManager } = await import('./session.js');
+		
+		const session = createSessionManager(cookies, {
+			isProduction: platform?.env?.ENVIRONMENT === 'production',
+			domain: productionDomain
+		});
+
+		const user = await session.getUser();
+		if (user) {
+			const redirectTo = url.searchParams.get('redirect') || '/';
+			redirect(302, redirectTo);
+		}
+
+		return {
+			redirectTo: url.searchParams.get('redirect') || '/'
+		};
+	};
+}
+
+interface LayoutServerLoaderOptions {
+	property: 'ltd' | 'io' | 'agency' | 'space' | 'lms';
+}
+
+/**
+ * Create layout server loader for getting user session.
+ * 
+ * Usage:
+ * ```ts
+ * import { createLayoutServerLoader } from '@create-something/components/auth';
+ * export const load = createLayoutServerLoader({ property: 'ltd' });
+ * ```
+ */
+export function createLayoutServerLoader(options: LayoutServerLoaderOptions) {
+	const productionDomain = PROPERTY_DOMAINS[options.property];
+
+	return async ({ url, cookies, platform }: {
+		url: URL;
+		cookies: Cookies;
+		platform?: { env?: { ENVIRONMENT?: string } };
+	}) => {
+		const { createSessionManager } = await import('./session.js');
+		
+		const session = createSessionManager(cookies, {
+			isProduction: platform?.env?.ENVIRONMENT === 'production',
+			domain: productionDomain
+		});
+
+		const user = await session.getUser();
+
+		return {
+			pathname: url.pathname,
+			user
+		};
+	};
+}

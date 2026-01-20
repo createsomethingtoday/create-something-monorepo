@@ -114,6 +114,11 @@ export {
 	createCrossDomainHandler,
 	createCrossDomainPageLoader,
 	createMagicLinkCallbackLoader,
+	// Page loaders
+	createCategoryPageLoader,
+	createAccountPageLoader,
+	createLoginPageLoader,
+	createLayoutServerLoader,
 	type DomainConfig,
 } from './handlers.js';
 

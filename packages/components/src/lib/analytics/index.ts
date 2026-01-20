@@ -85,6 +85,7 @@ export {
 // Server utilities (import in +server.ts routes)
 export {
 	createAnalyticsEventsHandler,
+	createUserAnalyticsHandler,
 	processEventBatch,
 	updateSessionSummary,
 	queryEvents,

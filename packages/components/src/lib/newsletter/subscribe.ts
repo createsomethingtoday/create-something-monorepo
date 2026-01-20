@@ -48,6 +48,52 @@ interface KVNamespace {
 const RATE_LIMIT_WINDOW = 60 * 60; // 1 hour in seconds
 const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
 
+// =============================================================================
+// SHARED REQUEST HANDLER
+// =============================================================================
+
+/**
+ * Create newsletter subscription handler for SvelteKit routes.
+ * 
+ * Usage in +server.ts:
+ * ```ts
+ * import { createNewsletterHandler } from '@create-something/components/newsletter';
+ * export const POST = createNewsletterHandler({ property: 'ltd' });
+ * ```
+ */
+export function createNewsletterHandler(options: { property: PropertyDomain }) {
+	return async ({ request, platform, getClientAddress }: {
+		request: Request;
+		platform?: { env?: NewsletterEnv };
+		getClientAddress: () => string;
+	}) => {
+		const { json } = await import('@sveltejs/kit');
+		
+		const body = (await request.json()) as NewsletterRequest;
+		
+		console.log(`[NewsletterAPI:${options.property}] Signup`, { email: body.email });
+		
+		const { result, status } = await processSubscription(
+			body,
+			platform?.env,
+			getClientAddress(),
+			options.property
+		);
+		
+		if (result.success) {
+			console.log(`[NewsletterAPI:${options.property}] Signup successful`, { email: body.email });
+		} else {
+			console.warn(`[NewsletterAPI:${options.property}] Signup failed`, { email: body.email, message: result.message });
+		}
+		
+		return json(result, { status });
+	};
+}
+
+// =============================================================================
+// EMAIL TEMPLATES
+// =============================================================================
+
 /**
  * Generate the confirmation email HTML template (double opt-in)
  */

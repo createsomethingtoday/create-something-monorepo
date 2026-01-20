@@ -18,7 +18,12 @@ export type {
 
 // Server-side logic
 export { processUnsubscribe } from './unsubscribe.js';
-export { processSubscription, generateWelcomeEmailHtml, generateConfirmationEmailHtml } from './subscribe.js';
+export { 
+	createNewsletterHandler,
+	processSubscription, 
+	generateWelcomeEmailHtml, 
+	generateConfirmationEmailHtml 
+} from './subscribe.js';
 
 // Components
 export { default as UnsubscribePage } from './UnsubscribePage.svelte';

@@ -7,6 +7,17 @@
     "lsmcp": {
       "command": "npx",
       "args": ["-y", "@mizchi/lsmcp", "mcp"]
+    },
+    "perplexity": {
+      "command": "npx",
+      "args": ["-y", "@perplexity-ai/mcp-server"],
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      }
+    },
+    "verified-triad": {
+      "command": "./packages/verified-triad/target/release/vt-mcp",
+      "args": ["--db", ".vt/registry.db"]
     }
   }
 }

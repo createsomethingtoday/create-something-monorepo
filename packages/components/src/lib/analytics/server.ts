@@ -7,7 +7,8 @@
  * @packageDocumentation
  */
 
-import type { AnalyticsEvent, EventBatch, BatchResponse, Property } from './types.js';
+import type { AnalyticsEvent, EventBatch, BatchResponse, Property, PropertyAnalytics, DailyActivityPoint, CategoryBreakdown } from './types.js';
+import { json, error } from '@sveltejs/kit';
 
 // =============================================================================
 // SHARED REQUEST HANDLERS
@@ -56,6 +57,127 @@ export function createAnalyticsEventsHandler() {
 
 		GET: async () => {
 			return Response.json({ status: 'ok', endpoint: 'unified-analytics' });
+		}
+	};
+}
+
+/**
+ * Create user analytics handler for property-specific endpoints.
+ * 
+ * Usage in +server.ts:
+ * ```ts
+ * import { createUserAnalyticsHandler } from '@create-something/components/analytics';
+ * export const GET = createUserAnalyticsHandler({ property: 'ltd' });
+ * ```
+ */
+export function createUserAnalyticsHandler(options: { property: Property }) {
+	const PROPERTY = options.property;
+
+	return async ({ locals, platform, url }: {
+		locals: { user?: { id: string } };
+		platform?: { env?: { DB?: D1Database } };
+		url: URL;
+	}) => {
+		const db = platform?.env?.DB;
+
+		if (!db) {
+			throw error(500, 'Database not available');
+		}
+
+		const userId = locals.user?.id;
+		const serviceToken = url.searchParams.get('token');
+		const requestUserId = url.searchParams.get('userId');
+
+		if (!userId && !serviceToken) {
+			throw error(401, 'Authentication required');
+		}
+
+		const targetUserId = userId || requestUserId;
+
+		if (!targetUserId) {
+			throw error(400, 'User ID required');
+		}
+
+		const days = parseInt(url.searchParams.get('days') || '30');
+
+		try {
+			const [sessionsResult, dailyResult, categoryResult, topPagesResult] = await Promise.all([
+				db
+					.prepare(
+						`SELECT
+							COUNT(*) as total,
+							COALESCE(SUM(page_views), 0) as page_views,
+							COALESCE(SUM(duration_seconds), 0) as duration_seconds
+						FROM unified_sessions
+						WHERE user_id = ?
+						AND started_at >= datetime('now', '-' || ? || ' days')`
+					)
+					.bind(targetUserId, days)
+					.first<{ total: number; page_views: number; duration_seconds: number }>(),
+
+				db
+					.prepare(
+						`SELECT date, SUM(count) as count
+						FROM unified_events_daily
+						WHERE property = ?
+						AND date >= date('now', '-' || ? || ' days')
+						GROUP BY date
+						ORDER BY date`
+					)
+					.bind(PROPERTY, days)
+					.all<{ date: string; count: number }>(),
+
+				db
+					.prepare(
+						`SELECT category, COUNT(*) as count
+						FROM unified_events
+						WHERE user_id = ?
+						AND created_at >= datetime('now', '-' || ? || ' days')
+						GROUP BY category
+						ORDER BY count DESC`
+					)
+					.bind(targetUserId, days)
+					.all<{ category: string; count: number }>(),
+
+				db
+					.prepare(
+						`SELECT url, COUNT(*) as views
+						FROM unified_events
+						WHERE user_id = ?
+						AND action = 'page_view'
+						AND created_at >= datetime('now', '-' || ? || ' days')
+						GROUP BY url
+						ORDER BY views DESC
+						LIMIT 10`
+					)
+					.bind(targetUserId, days)
+					.all<{ url: string; views: number }>()
+			]);
+
+			const sessions = sessionsResult || { total: 0, page_views: 0, duration_seconds: 0 };
+			const dailyActivity: DailyActivityPoint[] = dailyResult.results || [];
+			const categoryBreakdown: CategoryBreakdown[] = (categoryResult.results || []).map((r) => ({
+				category: r.category as CategoryBreakdown['category'],
+				count: r.count
+			}));
+			const topPages = topPagesResult.results || [];
+
+			const response: PropertyAnalytics = {
+				property: PROPERTY,
+				sessions: {
+					total: sessions.total,
+					pageViews: sessions.page_views,
+					durationSeconds: sessions.duration_seconds
+				},
+				dailyActivity,
+				categoryBreakdown,
+				topPages
+			};
+
+			return json(response);
+		} catch (err) {
+			console.error(`[UserAnalyticsAPI:${PROPERTY}] Failed to fetch`, { userId: targetUserId, days, error: err });
+			throw error(500, 'Failed to fetch analytics');
 		}
 	};
 }
