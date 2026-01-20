@@ -131,8 +131,34 @@ const LOCATIONS = {
 };
 
 /** 
- * Get player position on court
+ * Basketball possession state - alternates to simulate gameplay
+ * 0 = home team has ball (offense), 1 = away team has ball
+ */
+let currentPossession = 0;
+let possessionTimer = 0;
+const POSSESSION_DURATION = 8; // Seconds per possession
+
+/**
+ * Update possession (called from simulation loop)
+ */
+export function updatePossession(deltaTime: number): void {
+	possessionTimer += deltaTime;
+	if (possessionTimer > POSSESSION_DURATION) {
+		possessionTimer = 0;
+		currentPossession = currentPossession === 0 ? 1 : 0;
+	}
+}
+
+export function getCurrentPossession(): number {
+	return currentPossession;
+}
+
+/** 
+ * Get player position on court based on offense/defense
  * 5 players per team during gameplay
+ * 
+ * Zone offense: 1-3-1 or 2-3 formation
+ * Zone defense: 2-3 zone
  */
 function getCourtPosition(teamId: number, playerIndex: number): { x: number; y: number } {
 	const court = LOCATIONS.court;
@@ -151,29 +177,62 @@ function getCourtPosition(teamId: number, playerIndex: number): { x: number; y: 
 		return staffPositions[playerIndex % staffPositions.length];
 	}
 	
-	// Typical basketball positions spread across court
-	const positions = [
-		// Team 0 (home) - left side of court
-		[
-			{ x: centerX - 70, y: centerY }, // Point guard
-			{ x: centerX - 50, y: centerY - 40 }, // Shooting guard
-			{ x: centerX - 50, y: centerY + 40 }, // Small forward
-			{ x: centerX - 30, y: centerY - 25 }, // Power forward
-			{ x: centerX - 30, y: centerY + 25 } // Center
-		],
-		// Team 1 (away) - right side of court
-		[
-			{ x: centerX + 70, y: centerY }, // Point guard
-			{ x: centerX + 50, y: centerY - 40 }, // Shooting guard
-			{ x: centerX + 50, y: centerY + 40 }, // Small forward
-			{ x: centerX + 30, y: centerY - 25 }, // Power forward
-			{ x: centerX + 30, y: centerY + 25 } // Center
-		]
-	];
+	// Determine if this team is on offense or defense
+	const isOnOffense = teamId === currentPossession;
 	
-	// Ensure teamId is valid
-	const safeTeamId = Math.min(Math.max(teamId, 0), 1);
-	return positions[safeTeamId][playerIndex % 5];
+	// Court sides: Team 0 defends left basket, Team 1 defends right basket
+	// When on offense, you attack the OPPOSITE basket
+	
+	// Add slight randomness for natural movement
+	const jitter = () => (Math.random() - 0.5) * 8;
+	
+	if (isOnOffense) {
+		// OFFENSIVE positions (2-3 formation attacking opponent's basket)
+		if (teamId === 0) {
+			// Home team attacking RIGHT side
+			const offensePositions = [
+				{ x: centerX + 30 + jitter(), y: centerY + jitter() },      // Point guard (top of key)
+				{ x: centerX + 60 + jitter(), y: centerY - 45 + jitter() }, // Shooting guard (wing)
+				{ x: centerX + 60 + jitter(), y: centerY + 45 + jitter() }, // Small forward (wing)
+				{ x: centerX + 75 + jitter(), y: centerY - 20 + jitter() }, // Power forward (elbow)
+				{ x: centerX + 75 + jitter(), y: centerY + 20 + jitter() }  // Center (post)
+			];
+			return offensePositions[playerIndex % 5];
+		} else {
+			// Away team attacking LEFT side
+			const offensePositions = [
+				{ x: centerX - 30 + jitter(), y: centerY + jitter() },      // Point guard
+				{ x: centerX - 60 + jitter(), y: centerY - 45 + jitter() }, // Shooting guard
+				{ x: centerX - 60 + jitter(), y: centerY + 45 + jitter() }, // Small forward
+				{ x: centerX - 75 + jitter(), y: centerY - 20 + jitter() }, // Power forward
+				{ x: centerX - 75 + jitter(), y: centerY + 20 + jitter() }  // Center
+			];
+			return offensePositions[playerIndex % 5];
+		}
+	} else {
+		// DEFENSIVE positions (2-3 zone protecting own basket)
+		if (teamId === 0) {
+			// Home team defending LEFT side (their basket)
+			const defensePositions = [
+				{ x: centerX - 45 + jitter(), y: centerY - 30 + jitter() }, // Guard (top left)
+				{ x: centerX - 45 + jitter(), y: centerY + 30 + jitter() }, // Guard (top right)
+				{ x: centerX - 70 + jitter(), y: centerY - 35 + jitter() }, // Forward (wing)
+				{ x: centerX - 70 + jitter(), y: centerY + 35 + jitter() }, // Forward (wing)
+				{ x: centerX - 80 + jitter(), y: centerY + jitter() }       // Center (paint)
+			];
+			return defensePositions[playerIndex % 5];
+		} else {
+			// Away team defending RIGHT side (their basket)
+			const defensePositions = [
+				{ x: centerX + 45 + jitter(), y: centerY - 30 + jitter() }, // Guard
+				{ x: centerX + 45 + jitter(), y: centerY + 30 + jitter() }, // Guard
+				{ x: centerX + 70 + jitter(), y: centerY - 35 + jitter() }, // Forward
+				{ x: centerX + 70 + jitter(), y: centerY + 35 + jitter() }, // Forward
+				{ x: centerX + 80 + jitter(), y: centerY + jitter() }       // Center
+			];
+			return defensePositions[playerIndex % 5];
+		}
+	}
 }
 
 /**
@@ -528,27 +587,34 @@ export function initializeAgentDirectives(
 		}
 	}
 	
-	// Create staff (4 - refs, scorer's table)
+	// Create staff (3 refs on court, 1 scorer at table - scorer doesn't count as "on court")
 	for (let staffIdx = 0; staffIdx < 4; staffIdx++) {
 		const isRef = staffIdx < 3;
 		let pos: { x: number; y: number };
 		
 		if (isRef) {
-			// Referees on court
+			// Referees on court - they move around
 			const refPositions = [
-				{ x: 400, y: 250 }, // Lead ref
+				{ x: 400, y: 250 }, // Lead ref (near basket)
 				{ x: 350, y: 320 }, // Trail ref
 				{ x: 450, y: 320 } // Slot ref
 			];
 			pos = refPositions[staffIdx];
 		} else {
-			// Scorer's table
+			// Scorer's table - stationary
 			pos = { x: LOCATIONS.scorersTable.x + 40, y: LOCATIONS.scorersTable.y };
 		}
 		
-		const directive = eventPhase === EventPhase.EVENT_END ? 
-			Directive.CELEBRATING : 
-			(eventPhase === EventPhase.HALFTIME ? Directive.ON_BENCH : Directive.ON_COURT);
+		let directive: DirectiveType;
+		if (eventPhase === EventPhase.EVENT_END) {
+			directive = isRef ? Directive.CELEBRATING : Directive.ON_BENCH; // Scorer stays at table
+		} else if (eventPhase === EventPhase.HALFTIME) {
+			directive = Directive.ON_BENCH; // Refs take a break, scorer stays
+		} else if (isRef) {
+			directive = Directive.ON_COURT; // Refs on court during play
+		} else {
+			directive = Directive.ON_BENCH; // Scorer at table (not technically "on court")
+		}
 		
 		states.push({
 			directive,

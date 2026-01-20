@@ -19,7 +19,9 @@ import {
 	initializeAgentDirectives,
 	updateDirective,
 	getDirectiveTarget,
-	getInitialPosition
+	getInitialPosition,
+	updatePossession,
+	getCurrentPossession
 } from './agentDirectives';
 
 // Import shaders as raw text
@@ -744,6 +746,43 @@ export class CrowdSimulation {
 	}
 
 	/**
+	 * Update player positions when possession changes (offense/defense switch)
+	 */
+	private updatePlayerPositions(): void {
+		if (!this.useDirectiveSystem || this.agentDirectives.length === 0) return;
+
+		const targetsToUpdate: Array<{ index: number; x: number; y: number }> = [];
+
+		for (let i = 0; i < this.agentDirectives.length; i++) {
+			const directive = this.agentDirectives[i];
+			
+			// Only update players who are ON_COURT
+			if (directive.role === AgentRole.PLAYER && directive.directive === Directive.ON_COURT) {
+				const target = getDirectiveTarget(directive);
+				targetsToUpdate.push({ index: i, x: target.x, y: target.y });
+			}
+		}
+
+		// Batch update targets to GPU
+		if (targetsToUpdate.length > 0) {
+			const updateData = new Float32Array(targetsToUpdate.length * 3);
+			for (let j = 0; j < targetsToUpdate.length; j++) {
+				const update = targetsToUpdate[j];
+				updateData[j * 3] = update.index;
+				updateData[j * 3 + 1] = update.x;
+				updateData[j * 3 + 2] = update.y;
+			}
+
+			// Write individual target updates
+			for (const update of targetsToUpdate) {
+				const targetOffset = update.index * 8 * 4 + 4 * 4; // offset to target.x
+				const targetData = new Float32Array([update.x, update.y]);
+				this.device.queue.writeBuffer(this.agentBuffer, targetOffset, targetData);
+			}
+		}
+	}
+
+	/**
 	 * Update agent directives and sync targets to GPU
 	 */
 	private updateAgentDirectives(): void {
@@ -825,6 +864,16 @@ export class CrowdSimulation {
 		if (this.directiveUpdateTimer >= this.directiveUpdateInterval) {
 			this.updateAgentDirectives();
 			this.directiveUpdateTimer = 0;
+		}
+
+		// Update basketball possession and player positions
+		const prevPossession = getCurrentPossession();
+		updatePossession(this.deltaTime);
+		const newPossession = getCurrentPossession();
+		
+		// When possession changes, update all player targets
+		if (prevPossession !== newPossession) {
+			this.updatePlayerPositions();
 		}
 
 		this.simulate();
