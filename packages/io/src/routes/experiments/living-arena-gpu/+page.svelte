@@ -78,54 +78,77 @@
 	// Intervals for cleanup
 	let fpsInterval: ReturnType<typeof setInterval> | null = null;
 	let uiInterval: ReturnType<typeof setInterval> | null = null;
+	let initializationStarted = false;
 
 	// Initialize WebGPU asynchronously
-	async function initializeSimulation() {
-		if (!canvasElement) return;
+	async function initializeSimulation(canvas: HTMLCanvasElement) {
+		if (initializationStarted) return;
+		initializationStarted = true;
+
+		console.log('[WebGPU] Starting initialization...');
 
 		// Set canvas size
-		const container = canvasElement.parentElement;
+		const container = canvas.parentElement;
 		if (container) {
-			canvasElement.width = container.clientWidth;
-			canvasElement.height = Math.min(container.clientWidth * 0.75, 700);
+			canvas.width = container.clientWidth;
+			canvas.height = Math.min(container.clientWidth * 0.75, 700);
 		}
+
+		console.log('[WebGPU] Canvas size:', canvas.width, 'x', canvas.height);
 
 		// Initialize WebGPU
-		webgpuContext = await initWebGPU(canvasElement);
+		try {
+			webgpuContext = await initWebGPU(canvas);
 
-		if (!webgpuContext) {
+			if (!webgpuContext) {
+				console.error('[WebGPU] Failed to get context');
+				webgpuSupported = false;
+				return;
+			}
+
+			console.log('[WebGPU] Context initialized');
+
+			// Create and start simulation
+			simulation = new CrowdSimulation(webgpuContext, {
+				agentCount,
+				canvasWidth: canvas.width,
+				canvasHeight: canvas.height,
+				arenaWidth: 800,
+				arenaHeight: 600
+			});
+
+			await simulation.initialize();
+			console.log('[WebGPU] Simulation initialized');
+
+			// Apply initial scenario
+			const initialEffect = scenarioEffects[activeScenario];
+			simulation.setScenario(activeScenario, initialEffect);
+
+			simulation.start();
+			console.log('[WebGPU] Simulation started');
+		} catch (error) {
+			console.error('[WebGPU] Initialization failed:', error);
 			webgpuSupported = false;
-			return;
 		}
-
-		// Create and start simulation
-		simulation = new CrowdSimulation(webgpuContext, {
-			agentCount,
-			canvasWidth: canvasElement.width,
-			canvasHeight: canvasElement.height,
-			arenaWidth: 800,
-			arenaHeight: 600
-		});
-
-		await simulation.initialize();
-
-		// Apply initial scenario
-		const initialEffect = scenarioEffects[activeScenario];
-		simulation.setScenario(activeScenario, initialEffect);
-
-		simulation.start();
 	}
+
+	// Effect to initialize when canvas is available
+	$effect(() => {
+		if (canvasElement && webgpuSupported && !initializationStarted) {
+			initializeSimulation(canvasElement);
+		}
+	});
 
 	// Initialize on mount
 	onMount(() => {
 		webgpuSupported = isWebGPUSupported();
+		console.log('[WebGPU] Supported:', webgpuSupported);
 
 		if (!webgpuSupported) {
 			return;
 		}
 
-		// Start async initialization
-		initializeSimulation();
+		// The $effect above will handle initialization when canvas is ready
 
 		// FPS counter
 		fpsInterval = setInterval(() => {
