@@ -158,7 +158,7 @@ impl VerifiedTriad {
             .ok_or_else(|| ClaimRejected::NoEvidence {
                 claim_type: "DRY violation".to_string(),
                 suggestion: format!(
-                    "Run: vt compute similarity {:?} {:?}",
+                    "Run: ground compare {:?} {:?}",
                     file_a.as_ref(),
                     file_b.as_ref()
                 ),
@@ -177,7 +177,7 @@ impl VerifiedTriad {
         let evidence = self.registry.get_usage(symbol)?
             .ok_or_else(|| ClaimRejected::NoEvidence {
                 claim_type: "existence".to_string(),
-                suggestion: format!("Run: vt compute usages {}", symbol),
+                suggestion: format!("Run: ground count uses {}", symbol),
             })?;
         
         ExistenceClaim::from_evidence(evidence, reason.into(), self.thresholds.rams_min_usage)
@@ -193,7 +193,7 @@ impl VerifiedTriad {
         let evidence = self.registry.get_connectivity(module_path.as_ref())?
             .ok_or_else(|| ClaimRejected::NoEvidence {
                 claim_type: "disconnection".to_string(),
-                suggestion: format!("Run: vt compute connectivity {:?}", module_path.as_ref()),
+                suggestion: format!("Run: ground check connections {:?}", module_path.as_ref()),
             })?;
         
         ConnectivityClaim::from_evidence(
