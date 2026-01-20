@@ -1,0 +1,68 @@
+[package]
+name = "ground"
+version = "0.1.0"
+edition = "2021"
+description = "Grounded claims for code. You can't claim something until you've checked it."
+license = "MIT"
+repository = "https://github.com/create-something/ground"
+keywords = ["ai", "code-analysis", "verification", "llm", "grounding", "dry"]
+categories = ["development-tools", "command-line-utilities"]
+
+[lib]
+name = "ground"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ground"
+path = "src/bin/ground.rs"
+
+[[bin]]
+name = "ground-mcp"
+path = "src/bin/ground-mcp.rs"
+
+[dependencies]
+# AST parsing
+tree-sitter = "0.24"
+tree-sitter-typescript = "0.23"
+tree-sitter-javascript = "0.23"
+tree-sitter-rust = "0.23"
+tree-sitter-python = "0.23"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Utilities
+uuid = { version = "1", features = ["v4", "serde"] }
+thiserror = "2"
+anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
+
+# Similarity computation
+similar = "2"  # Text diff algorithm
+sha2 = "0.10"  # Hashing (more compatible than blake3)
+
+# Config and patterns
+toml = "0.8"   # Config file parsing
+glob = "0.3"   # Path pattern matching
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+default = []
+mcp = []  # Enable MCP server support
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

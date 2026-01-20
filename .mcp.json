@@ -15,9 +15,9 @@
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
       }
     },
-    "verified-triad": {
-      "command": "./packages/verified-triad/target/release/vt-mcp",
-      "args": ["--db", ".vt/registry.db"]
+    "ground": {
+      "command": "./packages/ground/target/release/ground-mcp",
+      "args": ["--db", ".ground/registry.db"]
     }
   }
 }
