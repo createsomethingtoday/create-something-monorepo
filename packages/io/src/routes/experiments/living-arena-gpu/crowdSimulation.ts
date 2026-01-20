@@ -683,19 +683,14 @@ export class CrowdSimulation {
 	}
 
 	/**
-	 * Redistribute agents based on scenario effect
+	 * Redistribute agents based on scenario effect (legacy, now handled by directive system)
 	 */
 	private redistributeAgents(effect: ScenarioEffect, activeCount: number): void {
-		const { agentCount, arenaWidth, arenaHeight } = this.config;
+		const { agentCount } = this.config;
 		const agentData = new Float32Array(agentCount * 8);
 
-		// Get targets from scenario (these use 1200x900 coordinate system from arenaGeometry.ts)
+		// Get targets from scenario (now in 800x600 coordinates)
 		const targets = getScenarioTargets(this.currentScenario);
-		// Scale factors from arenaGeometry coordinate system (1200x900) to our arena (800x600)
-		const ORIG_WIDTH = 1200;
-		const ORIG_HEIGHT = 900;
-		const scaleX = arenaWidth / ORIG_WIDTH;
-		const scaleY = arenaHeight / ORIG_HEIGHT;
 
 		for (let i = 0; i < agentCount; i++) {
 			const idx = i * 8;
@@ -703,7 +698,7 @@ export class CrowdSimulation {
 
 			if (isActive) {
 				// Position based on crowd flow
-				const spawnPos = this.getSpawnPosition(effect.crowdFlow, arenaWidth, arenaHeight);
+				const spawnPos = this.getSpawnPosition(effect.crowdFlow, 800, 600);
 				agentData[idx + 0] = spawnPos.x;
 				agentData[idx + 1] = spawnPos.y;
 
@@ -711,17 +706,14 @@ export class CrowdSimulation {
 				agentData[idx + 2] = (Math.random() - 0.5) * 0.5;
 				agentData[idx + 3] = (Math.random() - 0.5) * 0.5;
 
-				// Target from scenario (scaled to current arena dimensions)
+				// Target from scenario (directly, no scaling needed)
 				if (targets.length > 0) {
 					const target = targets[Math.floor(Math.random() * targets.length)];
-					const scaledX = target.x * scaleX;
-					const scaledY = target.y * scaleY;
-					const scaledRadius = target.radius * Math.min(scaleX, scaleY);
-					agentData[idx + 4] = scaledX + (Math.random() - 0.5) * scaledRadius;
-					agentData[idx + 5] = scaledY + (Math.random() - 0.5) * scaledRadius;
+					agentData[idx + 4] = target.x + (Math.random() - 0.5) * target.radius;
+					agentData[idx + 5] = target.y + (Math.random() - 0.5) * target.radius;
 				} else {
-					agentData[idx + 4] = arenaWidth / 2;
-					agentData[idx + 5] = arenaHeight / 2;
+					agentData[idx + 4] = 400;
+					agentData[idx + 5] = 300;
 				}
 
 				// State based on scenario

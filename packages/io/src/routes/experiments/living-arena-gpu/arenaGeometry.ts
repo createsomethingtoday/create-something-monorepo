@@ -35,11 +35,11 @@ export interface Gate {
 	direction: 'north' | 'south' | 'east' | 'west';
 }
 
-// Arena dimensions (matching expanded SVG viewBox)
-const ARENA_WIDTH = 1200;
-const ARENA_HEIGHT = 900;
-const CENTER_X = ARENA_WIDTH / 2;
-const CENTER_Y = ARENA_HEIGHT / 2;
+// Arena dimensions (800x600 matching our simulation space)
+const ARENA_WIDTH = 800;
+const ARENA_HEIGHT = 600;
+const CENTER_X = 400;
+const CENTER_Y = 300;
 
 // Arena ellipse parameters
 const ARENA_RX = 380; // Horizontal radius
@@ -103,82 +103,85 @@ function generateSectionDividers(): WallSegment[] {
 
 /**
  * Get all wall segments
+ * Note: Arena perimeter is handled by ellipse math in shader, not wall segments
  */
 export function getWallSegments(): WallSegment[] {
+	// Only internal obstacles - court walls
+	// Perimeter is handled by shader's ellipse boundary
 	return [
-		...generateArenaPerimeter(),
 		...generateCourtWalls()
-		// Note: Section dividers omitted to allow agent flow
 	];
 }
 
 /**
- * Gate definitions
+ * Gate definitions (800x600 coordinates)
  */
 export const gates: Gate[] = [
-	{ id: 'north', x: CENTER_X, y: 35, width: 60, direction: 'north' },
-	{ id: 'south', x: CENTER_X, y: 575, width: 60, direction: 'south' },
-	{ id: 'west', x: 35, y: CENTER_Y, width: 40, direction: 'west' },
-	{ id: 'east', x: 785, y: CENTER_Y, width: 40, direction: 'east' }
+	{ id: 'north', x: CENTER_X, y: 25, width: 70, direction: 'north' },
+	{ id: 'south', x: CENTER_X, y: 575, width: 70, direction: 'south' },
+	{ id: 'west', x: 25, y: CENTER_Y, width: 50, direction: 'west' },
+	{ id: 'east', x: 775, y: CENTER_Y, width: 50, direction: 'east' }
 ];
 
 /**
- * Target zone definitions by scenario
+ * Target zone definitions by scenario (800x600 coordinates)
  */
 const scenarioTargets: Record<number, TargetZone[]> = {
-	// 0: Gate crowding - entering
+	// 0: Gate crowding - entering through north
 	0: [
-		{ x: CENTER_X, y: 80, radius: 80, weight: 1.0 }, // North gate
-		{ x: CENTER_X - 100, y: 120, radius: 60, weight: 0.5 }, // Spread left
-		{ x: CENTER_X + 100, y: 120, radius: 60, weight: 0.5 } // Spread right
+		{ x: CENTER_X, y: 100, radius: 60, weight: 1.0 }, // Moving into arena
+		{ x: CENTER_X - 80, y: 150, radius: 50, weight: 0.5 }, // Spread left
+		{ x: CENTER_X + 80, y: 150, radius: 50, weight: 0.5 } // Spread right
 	],
 
-	// 1: VIP arrival
+	// 1: VIP arrival - south entrance
 	1: [
-		{ x: CENTER_X, y: 560, radius: 50, weight: 1.0 }, // South VIP entrance
-		{ x: CENTER_X, y: CENTER_Y, radius: 100, weight: 0.3 } // VIP suites area
+		{ x: CENTER_X, y: 500, radius: 40, weight: 1.0 }, // South VIP entrance
+		{ x: CENTER_X, y: CENTER_Y, radius: 80, weight: 0.3 } // VIP area
 	],
 
-	// 2: Halftime - dispersing to concessions
+	// 2: Halftime - dispersing to concessions/restrooms
 	2: [
-		{ x: 200, y: 180, radius: 60, weight: 1.0 }, // Concession NW
-		{ x: 600, y: 180, radius: 60, weight: 1.0 }, // Concession NE
-		{ x: 200, y: 420, radius: 60, weight: 1.0 }, // Concession SW
-		{ x: 600, y: 420, radius: 60, weight: 1.0 }, // Concession SE
-		{ x: CENTER_X, y: 100, radius: 40, weight: 0.5 }, // Restrooms N
-		{ x: CENTER_X, y: 500, radius: 40, weight: 0.5 } // Restrooms S
+		{ x: 150, y: 150, radius: 40, weight: 1.0 }, // Food NW
+		{ x: 650, y: 150, radius: 40, weight: 1.0 }, // Food NE
+		{ x: 150, y: 450, radius: 40, weight: 1.0 }, // Food SW
+		{ x: 650, y: 450, radius: 40, weight: 1.0 }, // Food SE
+		{ x: 300, y: 80, radius: 30, weight: 0.6 }, // Restroom N-left
+		{ x: 500, y: 80, radius: 30, weight: 0.6 }, // Restroom N-right
+		{ x: 300, y: 520, radius: 30, weight: 0.6 }, // Restroom S-left
+		{ x: 500, y: 520, radius: 30, weight: 0.6 } // Restroom S-right
 	],
 
-	// 3: Weather incoming - sheltering
+	// 3: Weather incoming - sheltering inside
 	3: [
-		{ x: 100, y: 200, radius: 100, weight: 1.0 }, // Covered area NW
-		{ x: 700, y: 200, radius: 100, weight: 1.0 }, // Covered area NE
-		{ x: CENTER_X, y: CENTER_Y, radius: 150, weight: 0.5 } // Stay inside
+		{ x: 150, y: 200, radius: 80, weight: 1.0 }, // Covered area NW
+		{ x: 650, y: 200, radius: 80, weight: 1.0 }, // Covered area NE
+		{ x: CENTER_X, y: CENTER_Y, radius: 120, weight: 0.5 } // Center
 	],
 
-	// 4: Emergency - evacuating
+	// 4: Emergency - evacuating to all exits
 	4: [
-		{ x: CENTER_X, y: 600, radius: 100, weight: 1.5 }, // South exit (primary)
-		{ x: CENTER_X, y: 50, radius: 80, weight: 1.0 }, // North exit
-		{ x: 50, y: CENTER_Y, radius: 60, weight: 0.8 }, // West exit
-		{ x: 750, y: CENTER_Y, radius: 60, weight: 0.8 } // East exit
+		{ x: CENTER_X, y: 580, radius: 60, weight: 1.5 }, // South exit (primary)
+		{ x: CENTER_X, y: 20, radius: 60, weight: 1.0 }, // North exit
+		{ x: 20, y: CENTER_Y, radius: 40, weight: 0.8 }, // West exit
+		{ x: 780, y: CENTER_Y, radius: 40, weight: 0.8 } // East exit
 	],
 
-	// 5: Game end - exiting
+	// 5: Game end - everyone exiting
 	5: [
-		{ x: CENTER_X, y: 50, radius: 100, weight: 1.0 }, // North exit
-		{ x: CENTER_X, y: 600, radius: 100, weight: 1.0 }, // South exit
-		{ x: 50, y: CENTER_Y, radius: 80, weight: 0.7 }, // West exit
-		{ x: 750, y: CENTER_Y, radius: 80, weight: 0.7 } // East exit
+		{ x: CENTER_X, y: 20, radius: 80, weight: 1.0 }, // North exit
+		{ x: CENTER_X, y: 580, radius: 80, weight: 1.0 }, // South exit
+		{ x: 20, y: CENTER_Y, radius: 50, weight: 0.7 }, // West exit
+		{ x: 780, y: CENTER_Y, radius: 50, weight: 0.7 } // East exit
 	],
 
-	// 6: Overnight - maintenance
+	// 6: Overnight - maintenance patrol
 	6: [
-		{ x: CENTER_X, y: CENTER_Y, radius: 200, weight: 0.3 }, // Central area
-		{ x: 200, y: 200, radius: 80, weight: 0.2 }, // Patrol point 1
-		{ x: 600, y: 200, radius: 80, weight: 0.2 }, // Patrol point 2
-		{ x: 200, y: 400, radius: 80, weight: 0.2 }, // Patrol point 3
-		{ x: 600, y: 400, radius: 80, weight: 0.2 } // Patrol point 4
+		{ x: CENTER_X, y: CENTER_Y, radius: 150, weight: 0.3 }, // Court area
+		{ x: 150, y: 150, radius: 60, weight: 0.2 }, // Patrol NW
+		{ x: 650, y: 150, radius: 60, weight: 0.2 }, // Patrol NE
+		{ x: 150, y: 450, radius: 60, weight: 0.2 }, // Patrol SW
+		{ x: 650, y: 450, radius: 60, weight: 0.2 } // Patrol SE
 	]
 };
 
@@ -201,31 +204,31 @@ export interface SpawnZone {
 
 const spawnZones: Record<string, SpawnZone[]> = {
 	entering: [
-		{ x: CENTER_X - 200, y: -100, width: 400, height: 100 }, // North parking approach
-		{ x: -100, y: 100, width: 100, height: 200 }, // West parking
-		{ x: ARENA_WIDTH, y: 100, width: 100, height: 200 } // East parking
+		{ x: CENTER_X - 100, y: -50, width: 200, height: 50 }, // North parking approach
+		{ x: -50, y: CENTER_Y - 50, width: 50, height: 100 }, // West parking
+		{ x: ARENA_WIDTH, y: CENTER_Y - 50, width: 50, height: 100 } // East parking
 	],
 
-	vip: [{ x: CENTER_X - 50, y: ARENA_HEIGHT, width: 100, height: 50 }],
+	vip: [{ x: CENTER_X - 40, y: ARENA_HEIGHT, width: 80, height: 30 }],
 
 	dispersing: [
-		{ x: CENTER_X - 150, y: CENTER_Y - 100, width: 300, height: 200 } // Seating area
+		{ x: CENTER_X - 120, y: CENTER_Y - 80, width: 240, height: 160 } // Seating area
 	],
 
 	sheltering: [
-		{ x: 100, y: 100, width: ARENA_WIDTH - 200, height: ARENA_HEIGHT - 200 } // Whole arena
+		{ x: 80, y: 80, width: ARENA_WIDTH - 160, height: ARENA_HEIGHT - 160 } // Inside arena
 	],
 
 	evacuating: [
-		{ x: CENTER_X + 50, y: CENTER_Y + 50, width: 200, height: 150 } // Section 112 area
+		{ x: CENTER_X + 40, y: CENTER_Y + 40, width: 150, height: 100 } // Section area
 	],
 
 	exiting: [
-		{ x: CENTER_X - 200, y: CENTER_Y - 150, width: 400, height: 300 } // Seating area
+		{ x: CENTER_X - 150, y: CENTER_Y - 100, width: 300, height: 200 } // Seating area
 	],
 
 	empty: [
-		{ x: 200, y: 200, width: 400, height: 200 } // Minimal maintenance area
+		{ x: 300, y: 220, width: 200, height: 160 } // Court area for maintenance
 	]
 };
 
