@@ -365,9 +365,9 @@ export const products: Service[] = [
 			'Automations that make things more complicated'
 		],
 		howItWorks: [
-			'Claude Code skill for automated audits',
-			'Markdown template you can edit',
-			'Step-by-step walkthrough with real examples',
+			'Ground MCP — finds duplicates, dead code, orphans automatically',
+			'Claude Code skill for systematic DRY → Rams → Heidegger audits',
+			'Markdown template for audit reports',
 			'Case study: Kickstand (155→13 scripts)'
 		],
 		proof: {

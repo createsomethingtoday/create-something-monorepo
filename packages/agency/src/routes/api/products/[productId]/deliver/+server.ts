@@ -27,11 +27,17 @@ const PRODUCT_DELIVERY: Record<
 		githubUrl: 'https://github.com/createsomethingtoday/triad-audit-skill',
 		caseStudyUrl: 'https://createsomething.io/papers/kickstand-triad-audit',
 		quickStart: [
-			'Clone or download the skill files',
-			'Copy to <code>.claude/skills/triad-audit/</code> in your project',
+			'Install Ground MCP: <code>npm install -g @createsomething/ground-mcp</code>',
+			'Clone the skill: <code>git clone https://github.com/createsomethingtoday/triad-audit-skill .claude/skills/triad-audit</code>',
+			'Add Ground to <code>.cursor/mcp.json</code> (see below)',
 			'Ask Claude: "Run a Subtractive Triad audit on src/"'
 		],
 		includes: [
+			{
+				name: 'Ground MCP',
+				description:
+					'The analysis engine — finds duplicates, dead code, orphans. Prevents AI hallucination by requiring evidence before claims.'
+			},
 			{
 				name: 'SKILL.md',
 				description:
@@ -125,6 +131,10 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
     .instructions ol { margin: 0; padding-left: 20px; }
     .instructions li { margin-bottom: 8px; color: rgba(255, 255, 255, 0.8); }
     code { background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 14px; }
+    pre { background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+    pre code { background: none; padding: 0; }
+    .config-section { margin: 24px 0; }
+    .config-section h3 { font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 0.05em; }
     .case-study { margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
     .case-study a { color: rgba(255, 255, 255, 0.6); text-decoration: underline; }
     .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
@@ -149,6 +159,18 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
     
     <h2>What's Included</h2>
     ${includesHtml}
+    
+    <div class="config-section">
+      <h3>MCP Configuration</h3>
+      <p>Add to <code>.cursor/mcp.json</code>:</p>
+      <pre><code>{
+  "mcpServers": {
+    "ground": {
+      "command": "ground-mcp"
+    }
+  }
+}</code></pre>
+    </div>
     
     ${
 			delivery.caseStudyUrl
