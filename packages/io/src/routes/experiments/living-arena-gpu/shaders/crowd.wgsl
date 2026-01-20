@@ -160,7 +160,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     
     let pos = getPosition(idx);
     var vel = getVelocity(idx);
-    let target = getTarget(idx);
+    let goalPos = getTarget(idx);
     var state = getState(idx);
     
     // Skip inactive agents (off-screen)
@@ -177,7 +177,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var panicNeighbors = 0u;
     
     // 1. Goal force - move toward target
-    let toTarget = target - pos;
+    let toTarget = goalPos - pos;
     let targetDist = length(toTarget);
     if (targetDist > 1.0) {
         let goalDirection = toTarget / targetDist;
