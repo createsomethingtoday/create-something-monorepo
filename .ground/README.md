@@ -157,6 +157,43 @@ ln -s ../../shared-configs/.ground/sveltekit-patterns.yml .ground/
 - Add overly broad ignore rules (e.g., `**/*.ts`)
 - Forget to document your reasoning
 
+## Important Note: Config Composition
+
+**⚠️ The `extends` directive is aspirational.** If Ground MCP doesn't support config composition yet:
+
+### Option 1: Manual Merge (Temporary)
+Create a merged config for Ground MCP:
+
+```bash
+# Merge all pattern files into .ground.yml
+cat .ground/sveltekit-patterns.yml \
+    .ground/cloudflare-patterns.yml \
+    .ground/monorepo-patterns.yml \
+    .ground/project-specific.yml > .ground.merged.yml
+
+# Use merged config
+ground analyze --config=.ground.merged.yml
+```
+
+### Option 2: Preprocessing Script
+Create `.ground/merge.sh`:
+
+```bash
+#!/bin/bash
+# Merge pattern files into main config
+yq eval-all '. as $item ireduce ({}; . * $item)' \
+  .ground/*.yml > .ground.merged.yml
+```
+
+### Option 3: Feature Request
+If Ground MCP doesn't support `extends`, this structure still provides:
+- ✅ **Documentation** - Each pattern file explains framework conventions
+- ✅ **Organization** - Patterns grouped by concern
+- ✅ **Reusability** - Easy to copy patterns to other projects
+- ✅ **Maintainability** - Update one file, not a monolith
+
+The pattern files serve as **living documentation** even if not directly composed.
+
 ## Troubleshooting
 
 ### Ground MCP still flags false positives
