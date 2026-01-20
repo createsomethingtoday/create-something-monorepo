@@ -6,7 +6,7 @@
  * First create the template: pnpm tsx scripts/manage-resend-templates.ts create client-update
  *
  * Usage:
- *   RESEND_API_KEY=... pnpm tsx scripts/send-client-update-email.ts \
+ *   pnpm tsx scripts/send-client-update-email.ts \
  *     --to aaron@outerfields.co \
  *     --name Aaron \
  *     --title "Video Landing Pages — Live" \
@@ -16,11 +16,30 @@
  *     --cta-label "View the landing page"
  *
  * Or use presets:
- *   RESEND_API_KEY=... pnpm tsx scripts/send-client-update-email.ts \
+ *   pnpm tsx scripts/send-client-update-email.ts \
  *     --preset video-landing-page \
  *     --to aaron@outerfields.co \
  *     --name Aaron
+ *
+ * API key is loaded from .env (RESEND_API_KEY) or can be passed via environment.
  */
+
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env file if it exists
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = join(__dirname, '..', '.env');
+if (existsSync(envPath)) {
+	const envContent = readFileSync(envPath, 'utf-8');
+	for (const line of envContent.split('\n')) {
+		const [key, ...valueParts] = line.split('=');
+		if (key && valueParts.length > 0 && !process.env[key.trim()]) {
+			process.env[key.trim()] = valueParts.join('=').trim();
+		}
+	}
+}
 
 const RESEND_API = 'https://api.resend.com';
 const FROM_ADDRESS = 'Micah Johnson <micah@createsomething.io>';
@@ -40,6 +59,20 @@ const PRESETS: Record<string, UpdateData> = {
 </ul>`,
 		ctaUrl: 'https://outerfields.createsomething.agency/watch/vid_trailer_5',
 		ctaLabel: 'View the landing page'
+	},
+	'stack-founding-members': {
+		title: 'The Stack — Founding Members Section Live',
+		summary: 'The founding member offer is now on The Stack website, positioned right after the hero banner as requested.',
+		imageUrl: 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev/email/stack-founding-members.png',
+		imageAlt: 'The Stack website showing the Founding Members section with pricing cards',
+		features: `<ul style="margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.8);">
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Homepage placement.</strong> Founding member offer appears immediately after the video hero—the second thing visitors see.</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Dedicated landing page.</strong> All "Become a Founding Member" buttons link to <a href="https://thestack.createsomething.agency/founding-members" style="color:#966E44;">thestack.createsomething.agency/founding-members</a></li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Full pricing page ready.</strong> When you're ready to promote all membership tiers, the <a href="https://thestack.createsomething.agency/pricing" style="color:#966E44;">/pricing</a> page is complete with walk-ins, passes, and sponsorships.</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Single source of truth.</strong> All pricing data is centralized—update one file and it propagates everywhere.</li>
+</ul>`,
+		ctaUrl: 'https://thestack.createsomething.agency',
+		ctaLabel: 'View The Stack Website'
 	}
 };
 
