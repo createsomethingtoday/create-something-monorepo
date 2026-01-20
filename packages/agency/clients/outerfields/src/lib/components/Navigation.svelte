@@ -147,6 +147,8 @@
 		padding: 1rem 1.5rem;
 		background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
 		transition: background var(--duration-standard) var(--ease-standard);
+		overflow-x: hidden;
+		max-width: 100vw;
 	}
 
 	.nav-container {
@@ -155,6 +157,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		width: 100%;
 	}
 
 	.nav-left {
@@ -427,7 +430,12 @@
 		opacity: 0.9;
 	}
 
-	@media (max-width: 768px) {
+	/* Tablet - show mobile menu earlier to prevent overflow */
+	@media (max-width: 1024px) {
+		.nav-header {
+			padding: 0.75rem 1rem;
+		}
+
 		.desktop-only {
 			display: none !important;
 		}
