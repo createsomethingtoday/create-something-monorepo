@@ -1,0 +1,95 @@
+# Ground MCP - Monorepo Patterns
+# Common patterns in pnpm/npm workspace monorepos
+
+version: "1"
+
+ignore:
+  paths:
+    # ─────────────────────────────────────────────────────────────────────
+    # Build & Dev Tooling
+    # ─────────────────────────────────────────────────────────────────────
+    # Config files are loaded by tooling, not imported in code
+    
+    - "**/*.config.js"
+    - "**/*.config.ts"
+    - "**/*.config.mjs"
+    - "**/*.config.cjs"
+    - "**/tsconfig.json"
+    - "**/tsconfig.*.json"
+    - "**/package.json"
+    - "**/turbo.json"
+    - "**/.eslintrc.*"
+    - "**/.prettierrc.*"
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Scripts & Tooling
+    # ─────────────────────────────────────────────────────────────────────
+    # Scripts run via CLI, not imported
+    
+    - "**/scripts/**"
+    - "**/tools/**"
+    - "**/bin/**"
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Test Files
+    # ─────────────────────────────────────────────────────────────────────
+    # Test files are discovered by test runners, not imported
+    
+    - "**/*.test.ts"
+    - "**/*.test.tsx"
+    - "**/*.spec.ts"
+    - "**/*.spec.tsx"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+    - "**/fixtures/**"
+    - "**/test/**"
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Generated & Vendor
+    # ─────────────────────────────────────────────────────────────────────
+    
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.svelte-kit/**"
+    - "**/.next/**"
+    - "**/.nuxt/**"
+    - "**/venv/**"
+    - "**/.venv/**"
+    
+  functions:
+    # ─────────────────────────────────────────────────────────────────────
+    # Common Boilerplate Functions
+    # ─────────────────────────────────────────────────────────────────────
+    # These are often similar across packages by design
+    
+    - constructor
+    - toString
+    - toJSON
+    - GET                         # HTTP handler naming convention
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    
+  exports:
+    # ─────────────────────────────────────────────────────────────────────
+    # Testing & Internal APIs
+    # ─────────────────────────────────────────────────────────────────────
+    
+    - __test__*                   # Test helpers
+    - internal_*                  # Internal APIs (documented as private)
+    - _*                          # Private by convention
+
+thresholds:
+  # ─────────────────────────────────────────────────────────────────────
+  # Reasonable Defaults
+  # ─────────────────────────────────────────────────────────────────────
+  
+  duplicate_similarity: 85        # 85% catches clear violations
+  min_function_lines: 5           # Ignore trivial getters/setters
+
+monorepo:
+  enabled: true
+  entry_points:
+    - "**/package.json"           # Package exports define public API

@@ -1,132 +1,59 @@
 # Ground Configuration for CREATE SOMETHING Monorepo
 # https://github.com/create-something/ground
+#
+# This configuration uses a layered approach:
+# 1. Framework patterns (SvelteKit, Cloudflare)
+# 2. Monorepo conventions (build tools, tests)
+# 3. Project-specific exceptions
+#
+# See .ground/*.yml for detailed pattern documentation.
 
 version: "1"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Ignore Patterns
+# Pattern Composition
 # ─────────────────────────────────────────────────────────────────────────────
+# Extends shared pattern files for maintainability and reusability
+
+extends:
+  - .ground/sveltekit-patterns.yml    # SvelteKit framework conventions
+  - .ground/cloudflare-patterns.yml   # Cloudflare Workers/Pages patterns
+  - .ground/monorepo-patterns.yml     # General monorepo patterns
+  - .ground/project-specific.yml      # Project-specific exceptions
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Additional Project-Specific Patterns
+# ─────────────────────────────────────────────────────────────────────────────
+# Patterns unique to this specific project that don't belong in shared configs
 
 ignore:
-  # Function names to skip in duplicate detection
-  # These are intentionally similar across files (interface implementations, SvelteKit conventions)
   functions:
-    - load                 # SvelteKit page loaders are similar by design
-    - getCapabilities      # Required interface method
-    - constructor          # Boilerplate is OK
-    - toString             # Standard method
-    - toJSON               # Standard method
-    - DELETE               # Admin CRUD handlers (minimal wrapper around shared functions)
-    - POST                 # SvelteKit route handlers often have similar structure
-    - GET                  # Admin CRUD handlers (minimal wrapper around shared adminList)
-
-  # Export names/patterns to skip in dead export detection
-  exports:
-    - __test__*            # Test helpers
-    - internal_*           # Internal APIs (documented)
-    - _*                   # Private by convention
-
-  # File path patterns to skip entirely
-  # Build configs, scripts (run via CLI), and generated files
-  paths:
-    # Build/dev configs (loaded by tooling, not imported)
-    # Principle: These files exist in the "ready-to-hand" (Zuhandenheit) - 
-    # tools load them directly, they don't participate in the import graph.
-    # A comprehensive pattern catches current and future configs.
-    - "**/*.config.js"
-    - "**/*.config.ts"
-    - "**/*.config.mjs"
-    
-    # Scripts (run via CLI)
-    - "**/scripts/**"
-    
-    # Test files
-    - "**/*.test.ts"
-    - "**/*.spec.ts"
-    - "**/__tests__/**"
-    - "**/__mocks__/**"
-    - "**/fixtures/**"
-    
-    # Generated/vendor
-    - "**/venv/**"
-    - "**/.venv/**"
-    - "**/node_modules/**"
-    - "**/dist/**"
-    - "**/build/**"
-    - "**/.svelte-kit/**"
-    
-    # Airtable scripts (embedded in Airtable, not imported)
-    - "**/airtable-scripts/**"
-    
-    # SvelteKit architectural entry points
-    # These are loaded by SvelteKit runtime, not via imports
-    # NOTE: Ground MCP doesn't understand SvelteKit's module resolution
-    - "**/hooks.server.ts"        # Server hooks (entry point)
-    - "**/hooks.client.ts"        # Client hooks (entry point)
-    - "**/hooks.ts"               # Universal hooks (entry point)
-    
-    # Side-effect-only imports (CSS, global styles)
-    # These files have no exports but are imported for side effects
-    - "**/webflow/globals.ts"     # CSS injection for Shadow DOM
-    
-    # Co-located experiment data (imported via relative paths, not package imports)
-    # Ground's import resolution misses these relative imports
-    - "**/experiments/*/arenaData.ts"      # Living Arena game data
-    - "**/experiments/*/svg-operations.ts" # Render Studio SVG utilities
-
-  # Specific file pairs to skip in duplicate detection
-  # Use when files are intentionally similar (e.g., templates, interface implementations)
-  duplicate_pairs:
-    # SvelteKit route handlers - each app needs its own routes, even when calling shared functions
-    - ["packages/agency/src/routes/api/analytics/track/+server.ts", 
-       "packages/io/src/routes/api/analytics/track/+server.ts"]
-    - ["packages/agency/src/routes/api/analytics/events/+server.ts",
-       "packages/io/src/routes/api/analytics/events/+server.ts"]
+    - getCapabilities      # Required interface method (agent-kit)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Analysis Thresholds
+# Analysis Configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
 thresholds:
-  # Similarity threshold for duplicate detection (0-100)
-  # 85% catches clear violations while ignoring structural similarities
-  duplicate_similarity: 85
-
-  # Minimum function lines to analyze
-  # Ignores trivial getters/setters
-  min_function_lines: 5
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Monorepo Configuration
-# ─────────────────────────────────────────────────────────────────────────────
+  duplicate_similarity: 85        # 85% catches violations without false positives
+  min_function_lines: 5           # Ignore trivial functions
 
 monorepo:
-  # Package detection for cross-package duplicate analysis
-  # Ground auto-detects packages/ and apps/ directories
   enabled: true
-  
-  # Additional entry point patterns (beyond hooks.server.ts)
-  # These help Ground understand architectural entry points
-  entry_points:
-    - "**/src/routes/+layout.server.ts"   # SvelteKit layout loaders
-    - "**/src/routes/+page.server.ts"     # SvelteKit page loaders
-    - "**/src/app.html"                   # SvelteKit HTML template
-    - "**/wrangler.toml"                  # Cloudflare Workers config
-    - "**/package.json"                   # Package entry points (exports, bin)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Report Settings
-# ─────────────────────────────────────────────────────────────────────────────
 
 report:
-  # Output format: text, markdown, json
   format: markdown
-
-  # Include fix suggestions in output
   include_suggestions: true
-
-  # Group findings by: file, type, severity
   group_by: type
-  
-  # Verbose mode (show false positive explanations)
   verbose: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Usage Notes
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# When Ground MCP flags a false positive:
+# 1. Determine if it's a framework pattern or project-specific
+# 2. Add to appropriate .ground/*.yml file with documentation
+# 3. Re-run Ground MCP to verify
+#
+# Pattern files can be shared across projects using the same stack.

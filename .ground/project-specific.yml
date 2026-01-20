@@ -1,0 +1,49 @@
+# Ground MCP - Create Something Project-Specific Patterns
+# Patterns unique to this monorepo's architecture
+
+version: "1"
+
+ignore:
+  paths:
+    # ─────────────────────────────────────────────────────────────────────
+    # Side-Effect Imports
+    # ─────────────────────────────────────────────────────────────────────
+    # These files have no exports but are imported for side effects
+    
+    - "**/webflow/globals.ts"     # CSS injection for Shadow DOM components
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Co-Located Experiment Data
+    # ─────────────────────────────────────────────────────────────────────
+    # Experiments often have co-located data files with relative imports
+    # Ground's import resolution misses these patterns
+    
+    - "**/experiments/*/arenaData.ts"      # Living Arena game data
+    - "**/experiments/*/svg-operations.ts" # Render Studio SVG utilities
+    - "**/experiments/*/gameData.ts"       # Game configuration
+    - "**/experiments/*/mockData.ts"       # Mock/seed data
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Airtable Scripts
+    # ─────────────────────────────────────────────────────────────────────
+    # These are embedded directly in Airtable, not imported
+    
+    - "**/airtable-scripts/**"
+    
+  duplicate_pairs:
+    # ─────────────────────────────────────────────────────────────────────
+    # Intentional Duplicates
+    # ─────────────────────────────────────────────────────────────────────
+    # Each SvelteKit app needs its own analytics route handler
+    # Even though they call the same shared functions
+    
+    - ["packages/agency/src/routes/api/analytics/track/+server.ts",
+       "packages/io/src/routes/api/analytics/track/+server.ts"]
+    - ["packages/agency/src/routes/api/analytics/events/+server.ts",
+       "packages/io/src/routes/api/analytics/events/+server.ts"]
+
+report:
+  format: markdown
+  include_suggestions: true
+  group_by: type
+  verbose: true

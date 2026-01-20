@@ -1,0 +1,81 @@
+# Ground MCP - SvelteKit Framework Patterns
+# https://kit.svelte.dev/docs
+#
+# These patterns represent SvelteKit's architectural conventions.
+# Files matching these patterns are often "orphaned" from Ground's perspective
+# because they're loaded by the SvelteKit runtime, not via explicit imports.
+
+version: "1"
+
+ignore:
+  paths:
+    # ─────────────────────────────────────────────────────────────────────
+    # SvelteKit Entry Points
+    # ─────────────────────────────────────────────────────────────────────
+    # These files are loaded by the SvelteKit runtime, not imported by your code
+    
+    - "**/hooks.server.ts"        # Server-side request handling
+    - "**/hooks.client.ts"        # Client-side initialization
+    - "**/hooks.ts"               # Universal hooks (both server & client)
+    - "**/src/app.html"           # HTML template (loaded by adapter)
+    - "**/src/service-worker.ts"  # Service worker (registered by SvelteKit)
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # SvelteKit Route Conventions
+    # ─────────────────────────────────────────────────────────────────────
+    # These files are discovered via filesystem routing, not imports
+    
+    - "**/**/+page.svelte"        # Page components
+    - "**/**/+page.server.ts"     # Server-side page loaders
+    - "**/**/+page.ts"            # Universal page loaders
+    - "**/**/+layout.svelte"      # Layout components
+    - "**/**/+layout.server.ts"   # Server-side layout loaders
+    - "**/**/+layout.ts"          # Universal layout loaders
+    - "**/**/+server.ts"          # API route handlers
+    - "**/**/+error.svelte"       # Error page components
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Static Assets
+    # ─────────────────────────────────────────────────────────────────────
+    # Files in static/ are served directly, referenced by URL, not imports
+    # Ground MCP cannot detect HTML <link> or <meta> tag references
+    
+    - "**/static/**"              # All static assets
+    
+    # ─────────────────────────────────────────────────────────────────────
+    # Co-Located Route Files
+    # ─────────────────────────────────────────────────────────────────────
+    # Files in route directories often use relative imports (./file)
+    # Ground's import resolution may miss these
+    
+    - "**/routes/**/data.ts"      # Co-located data files
+    - "**/routes/**/types.ts"     # Co-located type definitions
+    - "**/routes/**/utils.ts"     # Co-located utility functions
+    - "**/routes/**/constants.ts" # Co-located constants
+    - "**/routes/**/config.ts"    # Co-located configuration
+    
+  functions:
+    # ─────────────────────────────────────────────────────────────────────
+    # SvelteKit Conventions
+    # ─────────────────────────────────────────────────────────────────────
+    # These function names are SvelteKit conventions and will be similar
+    
+    - load                        # Page/layout data loader
+    - actions                     # Form actions
+    - handle                      # Hooks handler
+    - handleError                 # Error handler
+    - handleFetch                 # Fetch interceptor
+
+monorepo:
+  entry_points:
+    # ─────────────────────────────────────────────────────────────────────
+    # SvelteKit Entry Points for Monorepo Analysis
+    # ─────────────────────────────────────────────────────────────────────
+    # Help Ground understand architectural entry points in each package
+    
+    - "**/src/app.html"
+    - "**/hooks.server.ts"
+    - "**/hooks.client.ts"
+    - "**/src/routes/+layout.server.ts"
+    - "**/src/routes/+page.server.ts"
+    - "**/package.json"           # exports field defines public API
