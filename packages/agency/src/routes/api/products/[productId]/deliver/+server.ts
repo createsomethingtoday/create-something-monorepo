@@ -28,24 +28,24 @@ const PRODUCT_DELIVERY: Record<
 		caseStudyUrl: 'https://createsomething.io/papers/kickstand-triad-audit',
 		quickStart: [
 			'Install Ground MCP: <code>npm install -g @createsomething/ground-mcp</code>',
-			'Clone the skill: <code>git clone https://github.com/createsomethingtoday/triad-audit-skill .claude/skills/triad-audit</code>',
-			'Add Ground to <code>.cursor/mcp.json</code> (see below)',
-			'Ask Claude: "Run a Subtractive Triad audit on src/"'
+			'Clone the skill to your project: <code>git clone https://github.com/createsomethingtoday/triad-audit-skill .claude/skills/triad-audit</code>',
+			'Add Ground MCP to <code>.cursor/mcp.json</code> (config below)',
+			'Ask Claude: "Run a Subtractive Triad audit on src/" — the skill activates automatically'
 		],
 		includes: [
 			{
 				name: 'Ground MCP',
 				description:
-					'The analysis engine — finds duplicates, dead code, orphans. Prevents AI hallucination by requiring evidence before claims.'
+					'The analysis engine — finds duplicates, dead code, orphans. Requires evidence before claims.'
 			},
 			{
 				name: 'SKILL.md',
 				description:
-					'Instructions for Claude Code to run systematic audits using the DRY → Rams → Heidegger framework.'
+					'Claude Code skill with YAML frontmatter. Auto-activates when you ask about code audits, dead code, or bloat reduction.'
 			},
 			{
 				name: 'TEMPLATE.md',
-				description: 'A blank audit report template you can fill in manually or let Claude generate.'
+				description: 'Blank audit report template. Let Claude fill it or use it manually.'
 			}
 		]
 	}
@@ -170,6 +170,12 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
     }
   }
 }</code></pre>
+    </div>
+    
+    <div class="config-section">
+      <h3>Alternative: Personal Skill</h3>
+      <p>Install to <code>~/.claude/skills/</code> to use across all projects:</p>
+      <pre><code>git clone https://github.com/createsomethingtoday/triad-audit-skill ~/.claude/skills/triad-audit</code></pre>
     </div>
     
     ${
