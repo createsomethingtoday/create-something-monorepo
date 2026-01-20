@@ -66,6 +66,18 @@ const STATE_CALM: u32 = 0u;
 const STATE_CROWDED: u32 = 1u;
 const STATE_PANICKED: u32 = 2u;
 
+// Role constants (encoded in group_id bits 0-1)
+const ROLE_FAN: u32 = 0u;
+const ROLE_PLAYER: u32 = 1u;
+const ROLE_STAFF: u32 = 2u;
+
+// Court boundaries (only players/staff allowed)
+const COURT_MIN_X: f32 = 290.0;
+const COURT_MAX_X: f32 = 510.0;
+const COURT_MIN_Y: f32 = 210.0;
+const COURT_MAX_Y: f32 = 390.0;
+const COURT_MARGIN: f32 = 20.0; // Buffer zone around court
+
 // Get agent position
 fn getPosition(idx: u32) -> vec2<f32> {
     let base = idx * 8u;
@@ -88,6 +100,12 @@ fn getTarget(idx: u32) -> vec2<f32> {
 fn getState(idx: u32) -> u32 {
     let base = idx * 8u;
     return u32(agents[base + 6u]);
+}
+
+// Get agent role from encoded group_id (bits 0-1)
+fn getRole(idx: u32) -> u32 {
+    let base = idx * 8u;
+    return u32(agents[base + 7u]) & 0x3u;
 }
 
 // Set agent position
@@ -245,7 +263,56 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
     }
     
-    // 4. Elliptical arena boundary force with gate openings
+    // 4. Court exclusion zone (only players/staff allowed on court)
+    let role = getRole(idx);
+    if (role == ROLE_FAN) {
+        // Expanded court zone with margin
+        let courtCenterX = (COURT_MIN_X + COURT_MAX_X) * 0.5;
+        let courtCenterY = (COURT_MIN_Y + COURT_MAX_Y) * 0.5;
+        let courtHalfW = (COURT_MAX_X - COURT_MIN_X) * 0.5 + COURT_MARGIN;
+        let courtHalfH = (COURT_MAX_Y - COURT_MIN_Y) * 0.5 + COURT_MARGIN;
+        
+        // Check if fan is in or near court area
+        let inCourtX = pos.x > COURT_MIN_X - COURT_MARGIN && pos.x < COURT_MAX_X + COURT_MARGIN;
+        let inCourtY = pos.y > COURT_MIN_Y - COURT_MARGIN && pos.y < COURT_MAX_Y + COURT_MARGIN;
+        
+        if (inCourtX && inCourtY) {
+            // Calculate push direction - push toward nearest edge
+            var pushDir = vec2<f32>(0.0, 0.0);
+            
+            // Find which edge is closest
+            let distLeft = pos.x - (COURT_MIN_X - COURT_MARGIN);
+            let distRight = (COURT_MAX_X + COURT_MARGIN) - pos.x;
+            let distTop = pos.y - (COURT_MIN_Y - COURT_MARGIN);
+            let distBottom = (COURT_MAX_Y + COURT_MARGIN) - pos.y;
+            
+            let minDistX = min(distLeft, distRight);
+            let minDistY = min(distTop, distBottom);
+            
+            if (minDistX < minDistY) {
+                // Push horizontally
+                if (distLeft < distRight) {
+                    pushDir.x = -1.0;
+                } else {
+                    pushDir.x = 1.0;
+                }
+            } else {
+                // Push vertically
+                if (distTop < distBottom) {
+                    pushDir.y = -1.0;
+                } else {
+                    pushDir.y = 1.0;
+                }
+            }
+            
+            // Strong push force - court is off-limits
+            let penetration = 1.0 - min(minDistX, minDistY) / COURT_MARGIN;
+            let courtForce = uniforms.wallStrength * 4.0 * max(penetration, 0.5);
+            totalForce += pushDir * courtForce;
+        }
+    }
+    
+    // 5. Elliptical arena boundary force with gate openings
     let centerX = uniforms.arenaCenterX;
     let centerY = uniforms.arenaCenterY;
     let rx = uniforms.arenaRx;
@@ -369,6 +436,34 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     // Keep within overall canvas bounds
     newPos.x = clamp(newPos.x, 5.0, uniforms.arenaWidth - 5.0);
     newPos.y = clamp(newPos.y, 5.0, uniforms.arenaHeight - 5.0);
+    
+    // Hard clamp: Fans cannot be on the court
+    if (role == ROLE_FAN) {
+        let onCourtX = newPos.x > COURT_MIN_X && newPos.x < COURT_MAX_X;
+        let onCourtY = newPos.y > COURT_MIN_Y && newPos.y < COURT_MAX_Y;
+        
+        if (onCourtX && onCourtY) {
+            // Project to nearest edge
+            let distLeft = newPos.x - COURT_MIN_X;
+            let distRight = COURT_MAX_X - newPos.x;
+            let distTop = newPos.y - COURT_MIN_Y;
+            let distBottom = COURT_MAX_Y - newPos.y;
+            
+            let minDist = min(min(distLeft, distRight), min(distTop, distBottom));
+            
+            if (minDist == distLeft) {
+                newPos.x = COURT_MIN_X - 5.0;
+            } else if (minDist == distRight) {
+                newPos.x = COURT_MAX_X + 5.0;
+            } else if (minDist == distTop) {
+                newPos.y = COURT_MIN_Y - 5.0;
+            } else {
+                newPos.y = COURT_MAX_Y + 5.0;
+            }
+            
+            vel = vel * 0.3; // Strong damping
+        }
+    }
     
     // Write back
     setPosition(idx, newPos);
