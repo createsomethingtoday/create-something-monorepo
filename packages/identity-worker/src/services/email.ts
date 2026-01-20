@@ -250,3 +250,92 @@ export async function sendWelcomeEmail(
 
 	return send(apiKey, to, `Welcome to ${sourceName}`, html);
 }
+
+/**
+ * Free product delivery email
+ */
+export async function sendProductDeliveryEmail(
+	apiKey: string,
+	to: string,
+	product: {
+		name: string;
+		description: string;
+		githubUrl?: string;
+		downloadUrl?: string;
+		caseStudyUrl?: string;
+	}
+): Promise<EmailResult> {
+	const hasGithub = !!product.githubUrl;
+	const hasDownload = !!product.downloadUrl;
+	const hasCaseStudy = !!product.caseStudyUrl;
+
+	const buttonsHtml = `
+    ${hasGithub ? `<a href="${product.githubUrl}" class="button primary">View on GitHub</a>` : ''}
+    ${hasDownload ? `<a href="${product.downloadUrl}" class="button ${hasGithub ? 'secondary' : 'primary'}">Download Files</a>` : ''}
+  `;
+
+	const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
+    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
+    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
+    h1 { font-size: 24px; font-weight: 600; margin: 0 0 16px 0; }
+    h2 { font-size: 18px; font-weight: 600; margin: 32px 0 16px 0; color: rgba(255, 255, 255, 0.9); }
+    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
+    .buttons { margin: 32px 0; display: flex; gap: 12px; flex-wrap: wrap; }
+    .button { display: inline-block; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; font-size: 14px; }
+    .button.primary { background: #ffffff; color: #000000; }
+    .button.secondary { background: transparent; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); }
+    .instructions { background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 20px; margin: 24px 0; }
+    .instructions h3 { font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 0.05em; }
+    .instructions ol { margin: 0; padding-left: 20px; }
+    .instructions li { margin-bottom: 8px; color: rgba(255, 255, 255, 0.8); }
+    code { background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 14px; }
+    .case-study { margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+    .case-study a { color: rgba(255, 255, 255, 0.6); text-decoration: underline; }
+    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">CREATE SOMETHING</div>
+    <h1>Your ${product.name}</h1>
+    <p>${product.description}</p>
+    
+    <div class="buttons">
+      ${buttonsHtml}
+    </div>
+    
+    <div class="instructions">
+      <h3>Quick Start</h3>
+      <ol>
+        <li>Clone or download the skill files</li>
+        <li>Copy to <code>.claude/skills/triad-audit/</code> in your project</li>
+        <li>Ask Claude: "Run a Subtractive Triad audit on src/"</li>
+      </ol>
+    </div>
+    
+    <h2>What's Included</h2>
+    <p><strong>SKILL.md</strong> — Instructions for Claude Code to run systematic audits using the DRY → Rams → Heidegger framework.</p>
+    <p><strong>TEMPLATE.md</strong> — A blank audit report template you can fill in manually or let Claude generate.</p>
+    
+    ${hasCaseStudy ? `
+    <div class="case-study">
+      <p>See the framework in action: <a href="${product.caseStudyUrl}">Kickstand Triad Audit</a> — how we reduced 155 scripts to 13.</p>
+    </div>
+    ` : ''}
+    
+    <div class="footer">
+      <p>Questions? Just reply to this email.</p>
+      <p>— The CREATE SOMETHING Team</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+	return send(apiKey, to, `Your ${product.name} is ready`, html);
+}

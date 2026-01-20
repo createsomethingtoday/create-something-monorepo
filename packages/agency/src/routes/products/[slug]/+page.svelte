@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { SEO } from '@create-something/components';
 	import { page } from '$app/stores';
+	import EmailCaptureModal from '$lib/components/EmailCaptureModal.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const { product } = data;
@@ -9,6 +10,7 @@
 	const isFree = product.pricing === 'Free';
 	const isPurchasable = !isFree && product.isProductized;
 	const hasTiers = product.pricingTiers && product.pricingTiers.length > 0;
+	const hasEmailDelivery = product.ctaType === 'email';
 
 	// Default to recommended tier or first tier
 	const defaultTier = hasTiers
@@ -18,6 +20,7 @@
 	let selectedTier = $state<string>(defaultTier);
 	let isCheckingOut = $state(false);
 	let checkoutError = $state<string | null>(null);
+	let showEmailModal = $state(false);
 
 	// Get selected tier details
 	const selectedTierDetails = $derived(
@@ -42,7 +45,7 @@
 				})
 			});
 
-			const result = await response.json();
+			const result = (await response.json()) as { url?: string; message?: string };
 
 			if (!response.ok) {
 				throw new Error(result.message || 'Checkout failed');
@@ -189,11 +192,15 @@
 				</div>
 			{/if}
 
-			{#if isFree}
-				<a href={product.proof.caseStudy || '/discover'} class="cta-button primary">
-					Get started free
-				</a>
-			{:else if isPurchasable}
+		{#if isFree && hasEmailDelivery}
+			<button class="cta-button primary" onclick={() => showEmailModal = true}>
+				Get started free
+			</button>
+		{:else if isFree}
+			<a href={product.proof.caseStudy || '/discover'} class="cta-button primary">
+				Get started free
+			</a>
+		{:else if isPurchasable}
 				<button
 					class="cta-button primary"
 					onclick={handleCheckout}
@@ -231,6 +238,15 @@
 		</p>
 	</section>
 </main>
+
+<!-- Email Capture Modal for Free Products -->
+{#if hasEmailDelivery}
+	<EmailCaptureModal
+		bind:open={showEmailModal}
+		productId={product.id}
+		productTitle={product.title}
+	/>
+{/if}
 
 <style>
 	.product-page {

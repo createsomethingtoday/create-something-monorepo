@@ -49,6 +49,8 @@ export interface Service {
 	pricingTiers?: PricingTier[];
 	// Optional deliverables list for products
 	deliverables?: string[];
+	// CTA type: 'email' triggers email capture modal, 'link' uses direct URL
+	ctaType?: 'email' | 'link';
 }
 
 export const services: Service[] = [
@@ -363,10 +365,10 @@ export const products: Service[] = [
 			'Automations that make things more complicated'
 		],
 		howItWorks: [
+			'Claude Code skill for automated audits',
 			'Markdown template you can edit',
 			'Step-by-step walkthrough with real examples',
-			'Case study: Kickstand (155→13 scripts)',
-			'Claude Code skill for automated audits'
+			'Case study: Kickstand (155→13 scripts)'
 		],
 		proof: {
 			caseStudy: 'https://createsomething.io/papers/kickstand-triad-audit',
@@ -378,7 +380,8 @@ export const products: Service[] = [
 		timeline: '1 hour',
 		icon: 'checklist',
 		tier: 'accessible',
-		isProductized: true
+		isProductized: true,
+		ctaType: 'email'
 	},
 	{
 		id: 'canon-css-starter',
