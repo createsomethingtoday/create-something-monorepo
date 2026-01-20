@@ -132,31 +132,28 @@ pub enum RefactoringAction {
     ConsolidateRoutes,
 }
 
-/// Detect if we're in a CREATE SOMETHING monorepo
+/// Detect if we're in a pnpm monorepo (works for any pnpm workspace)
 pub fn detect_monorepo(start_path: &Path) -> Option<MonorepoInfo> {
     let root = find_monorepo_root(start_path)?;
     
-    // Check for pnpm-workspace.yaml
+    // Check for pnpm-workspace.yaml (required for any pnpm monorepo)
     let workspace_file = root.join("pnpm-workspace.yaml");
     if !workspace_file.exists() {
         return None;
     }
     
-    // Check for packages/components (our shared library)
+    // Check if this is specifically the CREATE SOMETHING monorepo
+    // (has packages/components with package.json)
     let components_path = root.join("packages/components");
     let is_create_something = components_path.exists() && 
         root.join("packages/components/package.json").exists();
-    
-    if !is_create_something {
-        return None;
-    }
     
     // Detect packages
     let packages = detect_packages(&root);
     
     Some(MonorepoInfo {
         root,
-        is_create_something: true,
+        is_create_something,
         packages,
         dependencies: Vec::new(), // TODO: Parse package.json dependencies
     })
@@ -346,8 +343,66 @@ pub fn suggest_refactoring(
                 priority: "P2".to_string(),
             })
         }
-        ViolationPattern::Unknown => None,
+        ViolationPattern::Unknown => {
+            // For non-CREATE SOMETHING monorepos or unrecognized patterns,
+            // provide a generic suggestion
+            if !monorepo.is_create_something {
+                // Find common parent package or suggest shared package
+                let pkg_a = find_package_name(file_a, monorepo);
+                let pkg_b = find_package_name(file_b, monorepo);
+                
+                let (target_path, import_suggestion) = if pkg_a == pkg_b && pkg_a.is_some() {
+                    // Same package - create local utils
+                    (
+                        format!("packages/{}/src/utils/shared.ts", pkg_a.as_ref().unwrap()),
+                        "import { ... } from './utils/shared'".to_string()
+                    )
+                } else {
+                    // Different packages - suggest shared package
+                    (
+                        "packages/shared/src/index.ts".to_string(),
+                        "import { ... } from '@your-org/shared'".to_string()
+                    )
+                };
+                
+                Some(RefactoringSuggestion {
+                    action: RefactoringAction::ExtractToShared,
+                    description: format!(
+                        "Extract duplicate code to shared location"
+                    ),
+                    target_path,
+                    import_statement: import_suggestion,
+                    beads_command: format!(
+                        "bd create \"DRY violation: {:.0}% similar files\" --priority {} --label refactor",
+                        similarity * 100.0,
+                        if similarity > 0.95 { "P0" } else { "P1" }
+                    ),
+                    priority: if similarity > 0.95 { "P0" } else { "P1" }.to_string(),
+                })
+            } else {
+                None
+            }
+        }
     }
+}
+
+/// Find the package name from a file path
+fn find_package_name(file: &Path, monorepo: &MonorepoInfo) -> Option<String> {
+    let file_str = file.to_string_lossy();
+    let root_str = monorepo.root.to_string_lossy();
+    
+    // Remove root prefix
+    let relative = file_str.strip_prefix(root_str.as_ref())?;
+    let relative = relative.trim_start_matches('/');
+    
+    // Look for packages/<name>/
+    if relative.starts_with("packages/") {
+        let after_packages = relative.strip_prefix("packages/")?;
+        let pkg_name = after_packages.split('/').next()?;
+        return Some(pkg_name.to_string());
+    }
+    
+    None
 }
 
 /// Generate beads command for a DRY violation
