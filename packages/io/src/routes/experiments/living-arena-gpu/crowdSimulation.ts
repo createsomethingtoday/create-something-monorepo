@@ -133,7 +133,6 @@ export class CrowdSimulation {
 	private agentReadBuffer!: GPUBuffer; // For reading back data
 	private uniformBuffer!: GPUBuffer;
 	private wallBuffer!: GPUBuffer;
-	private targetBuffer!: GPUBuffer;
 
 	// Vertex buffer for circle geometry
 	private circleVertexBuffer!: GPUBuffer;
@@ -199,13 +198,7 @@ export class CrowdSimulation {
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 			label: 'Wall Buffer'
 		});
-
-		// Target zones buffer (max 16 targets, each is 4 floats: x, y, radius, weight)
-		this.targetBuffer = this.device.createBuffer({
-			size: 16 * 4 * 4,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-			label: 'Target Buffer'
-		});
+		// Note: targets are stored per-agent, not in a separate buffer
 	}
 
 	/**
@@ -278,8 +271,7 @@ export class CrowdSimulation {
 			entries: [
 				{ binding: 0, resource: { buffer: this.agentBuffer } },
 				{ binding: 1, resource: { buffer: this.uniformBuffer } },
-				{ binding: 2, resource: { buffer: this.wallBuffer } },
-				{ binding: 3, resource: { buffer: this.targetBuffer } }
+				{ binding: 2, resource: { buffer: this.wallBuffer } }
 			],
 			label: 'Compute Bind Group'
 		});
@@ -393,7 +385,6 @@ export class CrowdSimulation {
 	 */
 	private updateUniforms(): void {
 		const walls = getWallSegments();
-		const targets = getScenarioTargets(this.currentScenario);
 
 		const uniformData = new Float32Array([
 			this.deltaTime,
@@ -406,7 +397,7 @@ export class CrowdSimulation {
 			this.config.maxSpeed,
 			this.config.panicSpreadRadius,
 			walls.length,
-			targets.length,
+			0, // targetCount (unused, targets are per-agent)
 			this.currentScenario
 		]);
 
@@ -423,18 +414,6 @@ export class CrowdSimulation {
 			}
 		});
 		this.device.queue.writeBuffer(this.wallBuffer, 0, wallData);
-
-		// Update target buffer
-		const targetData = new Float32Array(16 * 4);
-		targets.forEach((target, i) => {
-			if (i < 16) {
-				targetData[i * 4 + 0] = target.x;
-				targetData[i * 4 + 1] = target.y;
-				targetData[i * 4 + 2] = target.radius;
-				targetData[i * 4 + 3] = target.weight;
-			}
-		});
-		this.device.queue.writeBuffer(this.targetBuffer, 0, targetData);
 	}
 
 	/**
@@ -675,7 +654,6 @@ export class CrowdSimulation {
 		this.agentReadBuffer?.destroy();
 		this.uniformBuffer?.destroy();
 		this.wallBuffer?.destroy();
-		this.targetBuffer?.destroy();
 		this.circleVertexBuffer?.destroy();
 		this.circleIndexBuffer?.destroy();
 	}

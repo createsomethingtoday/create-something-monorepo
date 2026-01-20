@@ -40,17 +40,12 @@ struct Wall {
     y2: f32,
 }
 
-struct Target {
-    x: f32,
-    y: f32,
-    radius: f32,
-    weight: f32,
-}
+// Target struct removed - targets are stored per-agent in the agents buffer
 
 @group(0) @binding(0) var<storage, read_write> agents: array<f32>;
 @group(0) @binding(1) var<uniform> uniforms: Uniforms;
 @group(0) @binding(2) var<storage, read> walls: array<Wall>;
-@group(0) @binding(3) var<storage, read> targets: array<Target>;
+// Note: targets are embedded in agent data via redistributeAgents(), not a separate buffer
 
 // Constants
 const AGENT_RADIUS: f32 = 4.0;
