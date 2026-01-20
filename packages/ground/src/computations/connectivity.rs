@@ -183,7 +183,7 @@ fn detect_package_json_entry(module_path: &Path) -> Option<ArchitecturalConnecti
     
     // Get module filename without extension for matching
     let module_stem = module_path.file_stem()?.to_str()?;
-    let module_name = module_path.file_name()?.to_str()?;
+    let _module_name = module_path.file_name()?.to_str()?;
     
     // Get path relative to package.json directory
     let pkg_dir = package_json_path.parent()?;

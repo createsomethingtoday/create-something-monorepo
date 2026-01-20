@@ -46,6 +46,8 @@ pub mod claims;
 pub mod mcp;
 pub mod exceptions;
 pub mod monorepo;
+pub mod config;
+pub mod report;
 
 use std::path::Path;
 use thiserror::Error;

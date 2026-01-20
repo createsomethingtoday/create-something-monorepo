@@ -258,8 +258,8 @@ class EventTracker {
   }
 }
 
-// Export singleton instance
-export const tracker = browser ? new EventTracker() : {
+// Export singleton instance (server-side stub provides no-op implementations)
+export const tracker: EventTracker = browser ? new EventTracker() : {
   setUserId: () => {},
   setEnabled: () => {},
   track: () => {},
@@ -270,7 +270,7 @@ export const tracker = browser ? new EventTracker() : {
   trackSearch: () => {},
   trackWebVital: () => {},
   flush: async () => {}
-} as EventTracker;
+} as unknown as EventTracker;
 
 // Export type for external use
 export type { EventTracker };

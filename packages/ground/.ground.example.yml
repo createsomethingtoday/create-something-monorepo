@@ -1,0 +1,79 @@
+# Ground Configuration
+# Copy this to .ground.yml in your project root
+#
+# Documentation: https://github.com/create-something/ground
+
+version: "1"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Ignore Patterns
+# ─────────────────────────────────────────────────────────────────────────────
+
+ignore:
+  # Function names to skip in duplicate detection
+  # These are often intentionally similar across files
+  functions:
+    - getCapabilities      # Required interface method
+    - constructor          # Boilerplate is OK
+    - toString             # Standard method
+    - toJSON               # Standard method
+    - validate             # Often similar by design
+
+  # Export names/patterns to skip in dead export detection
+  # Supports glob patterns with *
+  exports:
+    - __test__*            # Test helpers
+    - internal_*           # Internal APIs (documented)
+    - _*                   # Private by convention
+    - EMPTY_*              # Constants often defined but conditionally used
+
+  # File path patterns to skip entirely
+  # Supports glob patterns
+  paths:
+    - "**/*.test.ts"
+    - "**/*.spec.ts"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+    - "**/fixtures/**"
+    - "**/testdata/**"
+    - "**/*.d.ts"          # Type declarations
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+
+  # Specific file pairs to skip in duplicate detection
+  # Use when files are intentionally similar (e.g., templates)
+  duplicate_pairs:
+    # - ["src/templates/a.ts", "src/templates/b.ts"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Analysis Thresholds
+# ─────────────────────────────────────────────────────────────────────────────
+
+thresholds:
+  # Similarity threshold for duplicate detection (0-100)
+  # Higher = stricter (only very similar code flagged)
+  # Lower = catches more potential duplicates
+  duplicate_similarity: 80
+
+  # Minimum function lines to analyze
+  # Filters out trivial 1-2 line functions
+  min_function_lines: 5
+
+  # Days before flagging dead exports (optional)
+  # Useful for phased rollouts - new exports get grace period
+  # max_dead_export_age_days: 30
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Report Settings
+# ─────────────────────────────────────────────────────────────────────────────
+
+report:
+  # Output format: text, markdown, json
+  format: markdown
+
+  # Include fix suggestions in output
+  include_suggestions: true
+
+  # Group findings by: file, type, severity
+  group_by: type

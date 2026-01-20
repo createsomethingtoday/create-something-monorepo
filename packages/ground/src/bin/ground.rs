@@ -22,10 +22,9 @@ use std::path::{Path, PathBuf};
 use std::fs;
 use std::collections::HashMap;
 use clap::{Parser, Subcommand};
-use ground::{VerifiedTriad, TriadThresholds};
-use ground::exceptions::{ExceptionConfig, ExceptionMatch, check_exception, load_config, smart_threshold};
-use ground::computations::{analyze_function_dry, FunctionDryReport};
-use ground::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command, MonorepoInfo, PackageType};
+use ground::VerifiedTriad;
+use ground::exceptions::{check_exception, load_config, smart_threshold};
+use ground::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command};
 
 #[derive(Parser)]
 #[command(name = "ground")]
@@ -694,7 +693,7 @@ fn find_duplicates(
         
         let mut beads_commands: Vec<String> = Vec::new();
         
-        for (i, (file_a, file_b, similarity, evidence_id)) in violations.iter().enumerate() {
+        for (i, (file_a, file_b, similarity, _evidence_id)) in violations.iter().enumerate() {
             println!("{}. {:.1}% similar", i + 1, similarity * 100.0);
             println!("   {} ↔ {}", file_a.display(), file_b.display());
             

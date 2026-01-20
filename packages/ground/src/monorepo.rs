@@ -433,6 +433,7 @@ pub fn generate_beads_command(
 }
 
 #[derive(Debug)]
+#[allow(dead_code)] // UtilityFunction detection planned but not yet implemented
 enum ViolationPattern {
     ApiHandler(String),
     PageLoader(String),

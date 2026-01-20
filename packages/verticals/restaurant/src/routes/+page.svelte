@@ -269,8 +269,8 @@
 			<div>
 				<h4 class="text-accent text-xs font-bold uppercase tracking-[0.4em] mb-10">Follow</h4>
 				<div class="flex flex-col gap-4 text-lg font-medium">
-					{#each siteConfig.social as link}
-						<a href={link.url} class="hover:text-accent transition-colors">{link.name}</a>
+					{#each Object.entries(siteConfig.social).filter(([_, url]) => url) as [name, url]}
+						<a href={url} class="hover:text-accent transition-colors">{name.charAt(0).toUpperCase() + name.slice(1)}</a>
 					{/each}
 				</div>
 			</div>

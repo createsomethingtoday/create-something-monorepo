@@ -78,10 +78,10 @@
 			<div class="info-section">
 				<h2 class="info-label">Hours</h2>
 				<div class="hours-list">
-					{#each Object.entries($siteConfig.hours) as [day, hours]}
+					{#each $siteConfig.hours as entry}
 						<div class="hours-row">
-							<span class="day">{day.charAt(0).toUpperCase() + day.slice(1)}</span>
-							<span class="hours">{hours}</span>
+							<span class="day">{entry.days}</span>
+							<span class="hours">{entry.hours}</span>
 						</div>
 					{/each}
 				</div>

@@ -10,6 +10,7 @@ declare global {
 				name: string;
 				membership: boolean;
 				createdAt: string;
+				role?: string;
 			};
 		}
 		// interface PageData {}
@@ -21,6 +22,10 @@ declare global {
 				VIDEO_STATS?: KVNamespace;
 				AI?: Ai;
 				ANTHROPIC_API_KEY?: string;
+				STRIPE_SECRET_KEY?: string;
+				STRIPE_WEBHOOK_SECRET?: string;
+				RESEND_API_KEY?: string;
+				TRANSCRIPT_API_KEY?: string;
 			};
 		}
 	}

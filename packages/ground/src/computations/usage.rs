@@ -32,6 +32,10 @@ pub struct UsageEvidence {
     /// Number of actual usages (calls, references, imports)
     pub actual_usage_count: u32,
     
+    /// Number of type-only usages (generic params, type annotations, etc.)
+    #[serde(default)]
+    pub type_only_count: u32,
+    
     /// Locations where the symbol was found
     pub locations: Vec<UsageLocation>,
     
@@ -48,33 +52,57 @@ pub struct UsageLocation {
     pub context: String,
     /// Whether this is a definition site (vs an actual usage)
     pub is_definition: bool,
+    /// The type of usage (definition, usage, or type-only)
+    #[serde(default)]
+    pub usage_type: UsageType,
+}
+
+impl Default for UsageType {
+    fn default() -> Self {
+        UsageType::Usage
+    }
 }
 
 /// Type of usage location
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UsageType {
     /// Definition site (export, function, class, interface, type)
     Definition,
     /// Actual usage (call, reference, import from another file)
     Usage,
+    /// Type-only usage (generic param, type annotation, type assertion)
+    TypeOnly,
 }
 
 impl UsageEvidence {
     /// Check if this symbol "earns existence" (has minimum actual usages, not counting definitions)
+    /// Type-only usages count as actual usages for types/interfaces
     pub fn earns_existence(&self, min_usage: u32) -> bool {
-        self.actual_usage_count >= min_usage
+        (self.actual_usage_count + self.type_only_count) >= min_usage
     }
     
     /// Check if symbol is only defined but never actually used
+    /// Type-only usages count as usage for types
     pub fn is_defined_but_unused(&self) -> bool {
-        self.definition_count > 0 && self.actual_usage_count == 0
+        self.definition_count > 0 && self.actual_usage_count == 0 && self.type_only_count == 0
     }
     
     /// Check if symbol appears to be exported but never imported elsewhere
+    /// Type-only usages count as imports for types
     pub fn is_exported_but_unused(&self) -> bool {
-        // If we have definitions (including exports) but no actual usages,
+        // If we have definitions (including exports) but no actual usages or type-only usages,
         // this is an exported-but-unused symbol
-        self.definition_count > 0 && self.actual_usage_count == 0
+        self.definition_count > 0 && self.actual_usage_count == 0 && self.type_only_count == 0
+    }
+    
+    /// Check if symbol is used only as a type (not at runtime)
+    pub fn is_type_only(&self) -> bool {
+        self.type_only_count > 0 && self.actual_usage_count == 0
+    }
+    
+    /// Total usages including type-only
+    pub fn total_usages(&self) -> u32 {
+        self.actual_usage_count + self.type_only_count
     }
 }
 
@@ -91,9 +119,16 @@ pub fn count_usages(symbol: &str, search_path: &Path) -> Result<UsageEvidence, C
         return Err(ComputationError::FileNotFound(search_path.to_path_buf()));
     }
     
-    // Count definitions vs actual usages
-    let definition_count = locations.iter().filter(|l| l.is_definition).count() as u32;
-    let actual_usage_count = locations.iter().filter(|l| !l.is_definition).count() as u32;
+    // Count definitions vs actual usages vs type-only usages
+    let definition_count = locations.iter()
+        .filter(|l| l.usage_type == UsageType::Definition)
+        .count() as u32;
+    let type_only_count = locations.iter()
+        .filter(|l| l.usage_type == UsageType::TypeOnly)
+        .count() as u32;
+    let actual_usage_count = locations.iter()
+        .filter(|l| l.usage_type == UsageType::Usage)
+        .count() as u32;
     
     Ok(UsageEvidence {
         id: Uuid::new_v4(),
@@ -102,6 +137,7 @@ pub fn count_usages(symbol: &str, search_path: &Path) -> Result<UsageEvidence, C
         usage_count: locations.len() as u32,
         definition_count,
         actual_usage_count,
+        type_only_count,
         locations,
         computed_at: Utc::now(),
     })
@@ -121,7 +157,8 @@ fn search_file(symbol: &str, path: &Path, locations: &mut Vec<UsageLocation>) ->
         // In production, use tree-sitter for semantic search
         if contains_symbol(line, symbol) {
             let column = line.find(symbol).unwrap_or(0) as u32;
-            let is_definition = is_definition_line(line, symbol);
+            let usage_type = classify_usage(line, symbol);
+            let is_definition = usage_type == UsageType::Definition;
             
             locations.push(UsageLocation {
                 file: path.to_path_buf(),
@@ -129,11 +166,111 @@ fn search_file(symbol: &str, path: &Path, locations: &mut Vec<UsageLocation>) ->
                 column,
                 context: line.trim().to_string(),
                 is_definition,
+                usage_type,
             });
         }
     }
     
     Ok(())
+}
+
+/// Classify the type of usage for a symbol on a line
+fn classify_usage(line: &str, symbol: &str) -> UsageType {
+    // First check if it's a definition
+    if is_definition_line(line, symbol) {
+        return UsageType::Definition;
+    }
+    
+    // Then check for type-only usages (TypeScript/JavaScript patterns)
+    if is_type_only_usage(line, symbol) {
+        return UsageType::TypeOnly;
+    }
+    
+    // Default to actual runtime usage
+    UsageType::Usage
+}
+
+/// Detect if a line uses the symbol only as a type (not at runtime)
+fn is_type_only_usage(line: &str, symbol: &str) -> bool {
+    let trimmed = line.trim();
+    
+    // Type import: import type { Symbol } or import { type Symbol }
+    if trimmed.starts_with("import type") && trimmed.contains(symbol) {
+        return true;
+    }
+    if trimmed.starts_with("import") && trimmed.contains(&format!("type {}", symbol)) {
+        return true;
+    }
+    
+    // Generic type parameter: <Symbol> or <Symbol, Other> or <T extends Symbol>
+    let generic_patterns = [
+        format!("<{}>", symbol),
+        format!("<{},", symbol),
+        format!("<{} ", symbol),
+        format!(", {}>", symbol),
+        format!(", {},", symbol),
+        format!("extends {}>", symbol),
+        format!("extends {},", symbol),
+        format!("extends {} ", symbol),
+    ];
+    for pattern in &generic_patterns {
+        if trimmed.contains(pattern) {
+            return true;
+        }
+    }
+    
+    // Type annotation: : Symbol or : Symbol[] or : Symbol | Other
+    let annotation_patterns = [
+        format!(": {}", symbol),
+        format!(": {}[", symbol),
+        format!(": {} |", symbol),
+        format!(": {} &", symbol),
+        format!(": {} =", symbol),  // default type
+        format!("| {}", symbol),
+        format!("& {}", symbol),
+    ];
+    for pattern in &annotation_patterns {
+        if trimmed.contains(pattern) {
+            // Make sure it's not a ternary or object property
+            // Skip if there's a ? before the colon (ternary) 
+            let symbol_pos = trimmed.find(pattern);
+            if let Some(pos) = symbol_pos {
+                let before = &trimmed[..pos];
+                // Ternary check: look for ? without : between them
+                if !before.contains('?') || before.rfind(':').map_or(false, |c| c > before.rfind('?').unwrap_or(0)) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // Type assertion: as Symbol
+    if trimmed.contains(&format!("as {}", symbol)) {
+        return true;
+    }
+    
+    // implements/extends in class/interface declaration
+    if (trimmed.contains("implements") || trimmed.contains("extends")) && trimmed.contains(symbol) {
+        // Check it's not a function call
+        if !trimmed.contains(&format!("{}(", symbol)) {
+            return true;
+        }
+    }
+    
+    // satisfies operator: satisfies Symbol
+    if trimmed.contains(&format!("satisfies {}", symbol)) {
+        return true;
+    }
+    
+    // Rust type patterns
+    if trimmed.contains(&format!("-> {}", symbol)) || // return type
+       trimmed.contains(&format!(": {}", symbol)) ||  // type annotation
+       trimmed.contains(&format!("impl {}", symbol)) || // impl block
+       trimmed.contains(&format!("where {}", symbol)) { // where clause
+        return true;
+    }
+    
+    false
 }
 
 /// Detect if a line is a definition site for the symbol
@@ -365,8 +502,6 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
 
 /// Check if a symbol is imported from a barrel file (e.g., import { X } from './core')
 fn check_symbol_imported_from_barrel(symbol: &str, barrel_dir: &str, barrel_path: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
-    use super::imports::extract_imports;
-    
     check_barrel_imports_in_dir(symbol, barrel_dir, barrel_path, search_scope)
 }
 

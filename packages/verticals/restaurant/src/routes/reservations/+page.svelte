@@ -127,10 +127,10 @@
 		<div class="container">
 			<h2>Dining Hours</h2>
 			<div class="hours-grid">
-				{#each Object.entries($siteConfig.hours) as [day, hours]}
+				{#each $siteConfig.hours as entry}
 					<div class="hours-row">
-						<span class="day-label">{day.charAt(0).toUpperCase() + day.slice(1)}</span>
-						<span class="hours-value">{hours}</span>
+						<span class="day-label">{entry.days}</span>
+						<span class="hours-value">{entry.hours}</span>
 					</div>
 				{/each}
 			</div>

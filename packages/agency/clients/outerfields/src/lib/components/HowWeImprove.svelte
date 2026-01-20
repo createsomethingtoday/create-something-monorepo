@@ -13,7 +13,7 @@
 <section class="how-we-improve">
   <button class="toggle" onclick={() => expanded = !expanded}>
     <span class="label">How we improve</span>
-    <ChevronDown size={16} class="icon" class:rotated={expanded} />
+    <ChevronDown size={16} class="icon {expanded ? 'rotated' : ''}" />
   </button>
   
   {#if expanded}

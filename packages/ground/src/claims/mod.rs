@@ -329,6 +329,7 @@ mod tests {
             usage_count: 0,
             definition_count: 0,
             actual_usage_count: 0,
+            type_only_count: 0,
             locations: vec![],
             computed_at: Utc::now(),
         };
@@ -346,6 +347,7 @@ mod tests {
             usage_count: 5,
             definition_count: 1,
             actual_usage_count: 4, // 4 actual uses = rejected
+            type_only_count: 0,
             locations: vec![],
             computed_at: Utc::now(),
         };
@@ -364,6 +366,7 @@ mod tests {
             usage_count: 1,           // 1 total occurrence
             definition_count: 1,       // It's the export definition
             actual_usage_count: 0,     // 0 actual uses!
+            type_only_count: 0,
             locations: vec![],
             computed_at: Utc::now(),
         };

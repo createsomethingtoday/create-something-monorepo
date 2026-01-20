@@ -24,6 +24,27 @@ export interface SocialLink {
 	url: string;
 }
 
+export interface TeamMember {
+	name: string;
+	role: string;
+	bio: string;
+	image: string;
+	specialties?: string[];
+}
+
+export interface Accolade {
+	title: string;
+	organization: string;
+	year: number;
+}
+
+export interface LocationDetails {
+	neighborhood?: string;
+	parking?: string[];
+	transit?: string[];
+	landmarks?: string[];
+}
+
 export interface HoursEntry {
 	days: string;
 	hours: string;
@@ -41,7 +62,7 @@ export interface RestaurantConfig {
 	name: string;
 	tagline: string;
 	description: string;
-	location: string;
+	location: LocationDetails;
 
 	// Hero
 	hero: {
@@ -59,17 +80,31 @@ export interface RestaurantConfig {
 		street: string;
 		district: string;
 		city: string;
+		state?: string;
+		zip?: string;
 	};
 
 	// Hours
 	hours: HoursEntry[];
 
-	// Social
-	social: SocialLink[];
+	// Social (accessible by platform name)
+	social: {
+		instagram?: string;
+		facebook?: string;
+		twitter?: string;
+		yelp?: string;
+		vimeo?: string;
+	};
 
 	// SEO
 	url: string;
 	locale: string;
+
+	// Team (optional)
+	team?: TeamMember[];
+
+	// Accolades (optional)
+	accolades?: Accolade[];
 
 	// Menu
 	chefChoice: MenuItem[];
@@ -95,12 +130,17 @@ export interface RestaurantConfig {
 		subtext: string;
 		phone: string;
 		url?: string;
+		provider?: string;
+		note?: string;
+		enabled?: boolean;
+		policies?: string[];
 	};
 
 	// Private Events
 	privateEvents: {
 		enabled: boolean;
 		email: string;
+		phone?: string;
 		spaces: PrivateSpace[];
 	};
 
@@ -121,7 +161,12 @@ export const siteConfig: RestaurantConfig = {
 	tagline: 'Bold Flavors, Bold Moments',
 	description:
 		'An immersive culinary journey crafted for the discerning palate in the vibrant heart of the city center.',
-	location: 'The Avant-Garde Kitchen',
+	location: {
+		neighborhood: 'Shoreditch',
+		parking: ['Street parking available on Avant Street', 'NCP Car Park 2 blocks north'],
+		transit: ['Liverpool Street Station (10 min walk)', 'Bus routes 8, 26, 35'],
+		landmarks: ['Near Spitalfields Market', 'Adjacent to Boxpark']
+	},
 
 	// Hero
 	hero: {
@@ -137,9 +182,11 @@ export const siteConfig: RestaurantConfig = {
 	email: 'reservations@boldflavors.example',
 	phone: '+44 20 7123 4567',
 	address: {
-		street: '42 Avant',
-		district: 'District',
-		city: 'London'
+		street: '42 Avant Street',
+		district: 'Shoreditch',
+		city: 'London',
+		state: 'Greater London',
+		zip: 'E1 6JE'
 	},
 
 	// Hours
@@ -150,12 +197,12 @@ export const siteConfig: RestaurantConfig = {
 	],
 
 	// Social
-	social: [
-		{ name: 'Instagram', url: 'https://instagram.com/boldflavors' },
-		{ name: 'Twitter (X)', url: 'https://twitter.com/boldflavors' },
-		{ name: 'Facebook', url: 'https://facebook.com/boldflavors' },
-		{ name: 'Vimeo', url: 'https://vimeo.com/boldflavors' }
-	],
+	social: {
+		instagram: 'https://instagram.com/boldflavors',
+		twitter: 'https://twitter.com/boldflavors',
+		facebook: 'https://facebook.com/boldflavors',
+		vimeo: 'https://vimeo.com/boldflavors'
+	},
 
 	// SEO
 	url: 'https://boldflavors.example',
@@ -218,13 +265,22 @@ export const siteConfig: RestaurantConfig = {
 		subtext:
 			'Secure your place at the forefront of modern gastronomy. Reservations are highly recommended.',
 		phone: '+44 20 7123 4567',
-		url: 'https://opentable.com/boldflavors'
+		url: 'https://opentable.com/boldflavors',
+		provider: 'OpenTable',
+		note: 'For parties of 8 or more, please call us directly.',
+		enabled: true,
+		policies: [
+			'Please arrive within 15 minutes of your reservation time',
+			'Cancellations must be made 24 hours in advance',
+			'Smart casual dress code'
+		]
 	},
 
 	// Private Events
 	privateEvents: {
 		enabled: true,
 		email: 'events@boldflavors.example',
+		phone: '+44 20 7123 4568',
 		spaces: [
 			{
 				name: "Chef's Table",

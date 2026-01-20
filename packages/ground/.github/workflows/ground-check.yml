@@ -1,0 +1,46 @@
+# Example Ground CI workflow
+# Copy this to .github/workflows/ground.yml in your repo
+
+name: Ground Code Analysis
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  ground-check:
+    name: Check Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Ground Analysis
+        uses: create-something/ground@v1
+        with:
+          check: all
+          path: ./src
+          fail-on-findings: true
+          min-lines: 5
+          threshold: 80
+          exclude-tests: true
+          config: .ground.yml
+          report-format: markdown
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('/tmp/ground-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });

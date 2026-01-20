@@ -1,0 +1,204 @@
+name: 'Ground Code Analysis'
+description: 'Verify code quality with grounded claims - catch dead code, duplicates, and orphans'
+author: 'CREATE SOMETHING'
+
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  check:
+    description: 'Check type: dead-exports, duplicates, orphans, all'
+    required: false
+    default: 'all'
+  path:
+    description: 'Path to analyze'
+    required: false
+    default: './src'
+  fail-on-findings:
+    description: 'Fail the action if findings are detected'
+    required: false
+    default: 'true'
+  min-lines:
+    description: 'Minimum function lines for duplicate detection'
+    required: false
+    default: '5'
+  threshold:
+    description: 'Similarity threshold for duplicates (0-100)'
+    required: false
+    default: '80'
+  exclude-tests:
+    description: 'Exclude test files from analysis'
+    required: false
+    default: 'true'
+  config:
+    description: 'Path to .ground.yml config file'
+    required: false
+    default: '.ground.yml'
+  report-format:
+    description: 'Output format: text, markdown, json'
+    required: false
+    default: 'markdown'
+
+outputs:
+  findings-count:
+    description: 'Total number of findings'
+  dead-exports-count:
+    description: 'Number of dead exports found'
+  duplicates-count:
+    description: 'Number of duplicate functions found'
+  orphans-count:
+    description: 'Number of orphaned modules found'
+  report:
+    description: 'Full report in requested format'
+  report-file:
+    description: 'Path to generated report file'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Ground
+      shell: bash
+      run: |
+        # Check if ground is already installed
+        if command -v ground &> /dev/null; then
+          echo "Ground already installed: $(ground --version)"
+        else
+          # Download latest release
+          echo "Installing Ground..."
+          curl -sSL https://github.com/create-something/ground/releases/latest/download/ground-$(uname -s)-$(uname -m) -o /tmp/ground
+          chmod +x /tmp/ground
+          sudo mv /tmp/ground /usr/local/bin/ground
+          echo "Ground installed: $(ground --version)"
+        fi
+
+    - name: Load Config
+      id: config
+      shell: bash
+      run: |
+        CONFIG_FILE="${{ inputs.config }}"
+        if [ -f "$CONFIG_FILE" ]; then
+          echo "Loading config from $CONFIG_FILE"
+          echo "config-exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "No config file found at $CONFIG_FILE"
+          echo "config-exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run Dead Exports Check
+      id: dead-exports
+      if: inputs.check == 'dead-exports' || inputs.check == 'all'
+      shell: bash
+      run: |
+        echo "## Dead Exports Analysis" >> $GITHUB_STEP_SUMMARY
+        
+        ARGS="--format ${{ inputs.report-format }}"
+        if [ "${{ steps.config.outputs.config-exists }}" == "true" ]; then
+          ARGS="$ARGS --config ${{ inputs.config }}"
+        fi
+        
+        OUTPUT=$(ground find-dead-exports ${{ inputs.path }} $ARGS 2>&1) || true
+        COUNT=$(echo "$OUTPUT" | grep -c "dead export" || echo "0")
+        
+        echo "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+        echo "count=$COUNT" >> $GITHUB_OUTPUT
+        echo "$OUTPUT" > /tmp/dead-exports-report.md
+
+    - name: Run Duplicates Check
+      id: duplicates
+      if: inputs.check == 'duplicates' || inputs.check == 'all'
+      shell: bash
+      run: |
+        echo "## Duplicate Functions Analysis" >> $GITHUB_STEP_SUMMARY
+        
+        ARGS="--min-lines ${{ inputs.min-lines }} --threshold ${{ inputs.threshold }} --format ${{ inputs.report-format }}"
+        if [ "${{ inputs.exclude-tests }}" == "true" ]; then
+          ARGS="$ARGS --exclude-tests"
+        fi
+        if [ "${{ steps.config.outputs.config-exists }}" == "true" ]; then
+          ARGS="$ARGS --config ${{ inputs.config }}"
+        fi
+        
+        OUTPUT=$(ground find-duplicate-functions ${{ inputs.path }} $ARGS 2>&1) || true
+        COUNT=$(echo "$OUTPUT" | grep -c "duplicate" || echo "0")
+        
+        echo "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+        echo "count=$COUNT" >> $GITHUB_OUTPUT
+        echo "$OUTPUT" > /tmp/duplicates-report.md
+
+    - name: Run Orphans Check
+      id: orphans
+      if: inputs.check == 'orphans' || inputs.check == 'all'
+      shell: bash
+      run: |
+        echo "## Orphaned Modules Analysis" >> $GITHUB_STEP_SUMMARY
+        
+        ARGS="--format ${{ inputs.report-format }}"
+        if [ "${{ inputs.exclude-tests }}" == "true" ]; then
+          ARGS="$ARGS --exclude-tests"
+        fi
+        if [ "${{ steps.config.outputs.config-exists }}" == "true" ]; then
+          ARGS="$ARGS --config ${{ inputs.config }}"
+        fi
+        
+        OUTPUT=$(ground find-orphans ${{ inputs.path }} $ARGS 2>&1) || true
+        COUNT=$(echo "$OUTPUT" | grep -c "orphan" || echo "0")
+        
+        echo "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+        echo "count=$COUNT" >> $GITHUB_OUTPUT
+        echo "$OUTPUT" > /tmp/orphans-report.md
+
+    - name: Generate Summary Report
+      id: summary
+      shell: bash
+      run: |
+        DEAD_EXPORTS="${{ steps.dead-exports.outputs.count || 0 }}"
+        DUPLICATES="${{ steps.duplicates.outputs.count || 0 }}"
+        ORPHANS="${{ steps.orphans.outputs.count || 0 }}"
+        TOTAL=$((DEAD_EXPORTS + DUPLICATES + ORPHANS))
+        
+        echo "findings-count=$TOTAL" >> $GITHUB_OUTPUT
+        echo "dead-exports-count=$DEAD_EXPORTS" >> $GITHUB_OUTPUT
+        echo "duplicates-count=$DUPLICATES" >> $GITHUB_OUTPUT
+        echo "orphans-count=$ORPHANS" >> $GITHUB_OUTPUT
+        
+        # Generate combined report
+        REPORT_FILE="/tmp/ground-report.md"
+        echo "# Ground Analysis Report" > $REPORT_FILE
+        echo "" >> $REPORT_FILE
+        echo "| Check | Findings |" >> $REPORT_FILE
+        echo "|-------|----------|" >> $REPORT_FILE
+        echo "| Dead Exports | $DEAD_EXPORTS |" >> $REPORT_FILE
+        echo "| Duplicate Functions | $DUPLICATES |" >> $REPORT_FILE
+        echo "| Orphaned Modules | $ORPHANS |" >> $REPORT_FILE
+        echo "| **Total** | **$TOTAL** |" >> $REPORT_FILE
+        echo "" >> $REPORT_FILE
+        
+        if [ -f /tmp/dead-exports-report.md ]; then
+          cat /tmp/dead-exports-report.md >> $REPORT_FILE
+        fi
+        if [ -f /tmp/duplicates-report.md ]; then
+          cat /tmp/duplicates-report.md >> $REPORT_FILE
+        fi
+        if [ -f /tmp/orphans-report.md ]; then
+          cat /tmp/orphans-report.md >> $REPORT_FILE
+        fi
+        
+        echo "report-file=$REPORT_FILE" >> $GITHUB_OUTPUT
+        
+        # Summary
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "### Summary: $TOTAL findings" >> $GITHUB_STEP_SUMMARY
+        if [ "$TOTAL" -gt 0 ] && [ "${{ inputs.fail-on-findings }}" == "true" ]; then
+          echo "⚠️ Findings detected. Review required." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ No blocking findings." >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Fail on Findings
+      if: inputs.fail-on-findings == 'true' && steps.summary.outputs.findings-count > 0
+      shell: bash
+      run: |
+        echo "::error::Ground found ${{ steps.summary.outputs.findings-count }} issue(s). See job summary for details."
+        exit 1

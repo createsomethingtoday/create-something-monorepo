@@ -10,6 +10,8 @@ pub mod ast_similarity;
 pub mod function_dry;
 pub mod environment;
 pub mod imports;
+pub mod hll;
+pub mod bloom;
 
 pub use similarity::{compute_similarity, SimilarityEvidence};
 pub use usage::{count_usages, find_dead_exports, UsageEvidence, UsageLocation, UsageType, DeadExport, DeadExportsReport};
@@ -22,6 +24,14 @@ pub use function_dry::{
 pub use environment::{
     analyze_environment_safety, EnvironmentEvidence, EnvironmentWarning, 
     RuntimeEnvironment, ApiUsage, ImportChain, WarningSeverity,
+};
+pub use hll::{
+    HyperLogLog, HllError, count_unique, estimate_intersection, estimate_jaccard,
+    hash_string_sha256, DEFAULT_PRECISION, MIN_PRECISION, MAX_PRECISION,
+};
+pub use bloom::{
+    BloomFilter, BloomError, optimal_params, bloom_from_iter,
+    DEFAULT_FP_RATE, MIN_BITS, MAX_BITS,
 };
 
 use thiserror::Error;
