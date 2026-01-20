@@ -119,21 +119,21 @@ impl ConnectivityEvidence {
 
 /// Analyze connectivity of a module
 pub fn analyze_connectivity(module_path: &Path) -> Result<ConnectivityEvidence, ComputationError> {
-    if !module_path.exists() {
-        return Err(ComputationError::FileNotFound(module_path.to_path_buf()));
-    }
+    // Canonicalize path to handle relative paths correctly
+    let module_path = module_path.canonicalize()
+        .map_err(|_| ComputationError::FileNotFound(module_path.to_path_buf()))?;
     
     // Find the project root (look for package.json, Cargo.toml, etc.)
-    let project_root = find_project_root(module_path)?;
+    let project_root = find_project_root(&module_path)?;
     
     // Analyze what this module imports
-    let imports = analyze_imports(module_path)?;
+    let imports = analyze_imports(&module_path)?;
     
     // Analyze who imports this module
-    let imported_by = find_importers(module_path, &project_root)?;
+    let imported_by = find_importers(&module_path, &project_root)?;
     
     // Check for architectural connections (Workers, serverless)
-    let architectural = detect_architectural_connections(module_path);
+    let architectural = detect_architectural_connections(&module_path);
     
     let incoming_connections = imported_by.len() as u32;
     let outgoing_connections = imports.len() as u32;
@@ -422,8 +422,18 @@ fn find_project_root(start: &Path) -> Result<PathBuf, ComputationError> {
     let mut current = start.parent().unwrap_or(start);
     
     loop {
-        // Check for common project markers
-        for marker in &["package.json", "Cargo.toml", "pyproject.toml", "go.mod"] {
+        // Check for common project markers (including monorepo markers)
+        for marker in &[
+            "package.json",
+            "pnpm-workspace.yaml",  // pnpm monorepo
+            "pnpm-lock.yaml",       // pnpm project
+            "yarn.lock",            // yarn project
+            "package-lock.json",    // npm project
+            "Cargo.toml",
+            "pyproject.toml",
+            "go.mod",
+            ".git",                 // Git root as fallback
+        ] {
             if current.join(marker).exists() {
                 return Ok(current.to_path_buf());
             }
@@ -515,8 +525,17 @@ fn find_importers_recursive(
     dir: &Path,
     importers: &mut Vec<PathBuf>,
 ) -> Result<(), ComputationError> {
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
+    // Gracefully handle directories that can't be read
+    let entries = match fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(_) => return Ok(()), // Skip unreadable directories
+    };
+    
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue, // Skip unreadable entries
+        };
         let path = entry.path();
         
         // Skip hidden and generated directories
@@ -526,8 +545,14 @@ fn find_importers_recursive(
             }
         }
         
+        // Check if path exists and is accessible (handles broken symlinks)
+        if !path.exists() {
+            continue;
+        }
+        
         if path.is_dir() {
-            find_importers_recursive(target, module_name, &path, importers)?;
+            // Ignore errors in subdirectories
+            let _ = find_importers_recursive(target, module_name, &path, importers);
         } else if path.is_file() && path != target {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
@@ -547,61 +572,98 @@ fn find_importers_recursive(
 
 /// Check if content imports a module, handling ESM-style .js → .ts resolution
 fn imports_module(content: &str, module_name: &str) -> bool {
-    // Generate all possible import patterns
-    let patterns = vec![
-        // Without extension
-        format!("from './{}'", module_name),
-        format!("from \"./{}\"", module_name),
-        format!("from '../{}'", module_name),
-        format!("from \"../{}\"", module_name),
-        format!("from '../../{}'", module_name),
-        format!("from \"../../{}\"", module_name),
-        // With .js extension (ESM style - TypeScript compiles to .js)
-        format!("from './{}.js'", module_name),
-        format!("from \"./{}.js\"", module_name),
-        format!("from '../{}.js'", module_name),
-        format!("from \"../{}.js\"", module_name),
-        format!("from '../../{}.js'", module_name),
-        format!("from \"../../{}.js\"", module_name),
-        // With .ts extension (direct TypeScript imports)
-        format!("from './{}.ts'", module_name),
-        format!("from \"./{}.ts\"", module_name),
-        format!("from '../{}.ts'", module_name),
-        format!("from \"../{}.ts\"", module_name),
-        // CommonJS require
-        format!("require('./{}')", module_name),
-        format!("require(\"./{})\"", module_name),
-        format!("require('./{}.js')", module_name),
-        // Index imports (folder/index.ts)
-        format!("from './{}/index'", module_name),
-        format!("from './{}/index.js'", module_name),
-        format!("from '../{}/index'", module_name),
-        format!("from '../{}/index.js'", module_name),
-    ];
-    
-    // Check if content contains the module name AND matches any pattern
+    // Quick early exit
     if !content.contains(module_name) {
         return false;
     }
     
-    for pattern in patterns {
-        if content.contains(&pattern) {
-            return true;
+    // Check each line for imports
+    for line in content.lines() {
+        let line = line.trim();
+        
+        // Skip non-import lines
+        if !line.contains("import") && !line.contains("require") {
+            continue;
+        }
+        
+        // Extract the path from the import/require
+        let path = if line.contains("from") {
+            extract_import_path_from_line(line)
+        } else if line.contains("require(") {
+            extract_require_path_from_line(line)
+        } else {
+            None
+        };
+        
+        if let Some(import_path) = path {
+            // Check if this import refers to our module
+            // The import could be:
+            // - ./format, ../format, ../../lib/format (no extension)
+            // - ./format.js, ../format.js, ../../lib/format.js (ESM style)
+            // - ./format.ts, ../format.ts (direct TS import)
+            // - ./format/index, ./format/index.js (index imports)
+            
+            // Get the final segment (after last /)
+            let final_segment = import_path.rsplit('/').next().unwrap_or(&import_path);
+            
+            // Check various endings
+            if final_segment == module_name ||
+               final_segment == format!("{}.js", module_name) ||
+               final_segment == format!("{}.ts", module_name) ||
+               final_segment == format!("{}.tsx", module_name) ||
+               final_segment == format!("{}.jsx", module_name) ||
+               final_segment == "index" && import_path.contains(&format!("/{}", module_name)) ||
+               final_segment == "index.js" && import_path.contains(&format!("/{}", module_name)) ||
+               final_segment == "index.ts" && import_path.contains(&format!("/{}", module_name)) {
+                return true;
+            }
         }
     }
     
-    // Also check for deeper relative paths with any number of ../
-    // This catches imports like from '../../../../lib/format.js'
-    if content.contains(&format!("/{}'", module_name)) ||
-       content.contains(&format!("/{}\"", module_name)) ||
-       content.contains(&format!("/{}.js'", module_name)) ||
-       content.contains(&format!("/{}.js\"", module_name)) ||
-       content.contains(&format!("/{}.ts'", module_name)) ||
-       content.contains(&format!("/{}.ts\"", module_name)) {
-        return true;
-    }
-    
     false
+}
+
+/// Extract import path from a line like: import { foo } from './bar'
+fn extract_import_path_from_line(line: &str) -> Option<String> {
+    let after_from = line.split("from").nth(1)?;
+    let trimmed = after_from.trim();
+    
+    // Find the quoted string
+    let (start_char, end_char) = if trimmed.starts_with('\'') {
+        ('\'', '\'')
+    } else if trimmed.starts_with('"') {
+        ('"', '"')
+    } else if trimmed.starts_with('`') {
+        ('`', '`')
+    } else {
+        return None;
+    };
+    
+    let start = trimmed.find(start_char)? + 1;
+    let rest = &trimmed[start..];
+    let end = rest.find(end_char)?;
+    
+    Some(rest[..end].to_string())
+}
+
+/// Extract require path from a line like: const foo = require('./bar')
+fn extract_require_path_from_line(line: &str) -> Option<String> {
+    let start = line.find("require(")? + 8;
+    let rest = &line[start..];
+    
+    let quote_char = if rest.starts_with('\'') {
+        '\''
+    } else if rest.starts_with('"') {
+        '"'
+    } else {
+        return None;
+    };
+    
+    let content_start = rest.find(quote_char)? + 1;
+    let content = &rest[content_start..];
+    let end = content.find(quote_char)?;
+    
+    Some(content[..end].to_string())
 }
 
 #[cfg(test)]
