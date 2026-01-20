@@ -68,6 +68,11 @@ ignore:
     # Side-effect-only imports (CSS, global styles)
     # These files have no exports but are imported for side effects
     - "**/webflow/globals.ts"     # CSS injection for Shadow DOM
+    
+    # Co-located experiment data (imported via relative paths, not package imports)
+    # Ground's import resolution misses these relative imports
+    - "**/experiments/*/arenaData.ts"      # Living Arena game data
+    - "**/experiments/*/svg-operations.ts" # Render Studio SVG utilities
 
   # Specific file pairs to skip in duplicate detection
   # Use when files are intentionally similar (e.g., templates, interface implementations)
@@ -77,11 +82,6 @@ ignore:
        "packages/io/src/routes/api/analytics/track/+server.ts"]
     - ["packages/agency/src/routes/api/analytics/events/+server.ts",
        "packages/io/src/routes/api/analytics/events/+server.ts"]
-    
-    # Known duplicates pending extraction to shared package
-    # See beads issue csm-1vupj: "DRY: Extract duplicate recommendations.ts to shared package"
-    - ["packages/io/src/lib/utils/recommendations.ts",
-       "packages/space/src/lib/utils/recommendations.ts"]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Analysis Thresholds
