@@ -74,7 +74,7 @@ ${divider()}
 		title: 'Welcome, Founding Member',
 		bodyHtml,
 		options: {
-			preheader: 'Your access is live. Here's how to get started.',
+			preheader: 'Your access is live. Here is how to get started.',
 			headerSubtitle: 'Building Outerfields: The Odyssey',
 			footerHtml: `<p>Founding Member | Pre-Sale Phase</p>
 <p style="margin-top: 16px; font-size: 12px; color: rgba(255, 255, 255, 0.6);">You're receiving this because you purchased Outerfields Founding Membership.</p>`
