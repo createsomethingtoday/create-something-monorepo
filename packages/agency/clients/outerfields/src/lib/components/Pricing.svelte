@@ -196,15 +196,11 @@
 	}
 
 	.urgency-strip {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1rem;
-		background: var(--color-warning-muted-soft);
-		border-left: 3px solid var(--color-warning);
-		border-radius: 0 0.5rem 0.5rem 0;
-		font-size: 0.875rem;
-		color: var(--color-fg-secondary);
+		gap: 0.375rem;
+		font-size: 0.8125rem;
+		color: var(--color-fg-muted);
 		margin-bottom: 1.5rem;
 	}
 
@@ -215,6 +211,7 @@
 
 	.urgency-strip strong {
 		color: var(--color-warning);
+		font-weight: 600;
 	}
 
 	.cta-button {
