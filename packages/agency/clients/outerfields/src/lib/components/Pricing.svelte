@@ -6,7 +6,7 @@
 	 * 
 	 * Balance updates (2026-01):
 	 * - CTA moved to right column for better visual weight distribution
-	 * - Price enlarged (110px) to anchor left side
+	 * - Price enlarged (140px) to anchor left side
 	 * - "$" positioned at top of price (superscript style)
 	 * - Golden ratio column split (~0.39:0.61)
 	 */
@@ -170,7 +170,7 @@
 	}
 
 	.price-amount {
-		font-size: 6.875rem; /* 110px - larger for visual weight balance */
+		font-size: 8.75rem; /* 140px - larger for visual weight balance */
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		line-height: 1;
@@ -336,7 +336,7 @@
 		}
 
 		.price-amount {
-			font-size: 5rem; /* Scale down from 6.875rem but still prominent */
+			font-size: 6rem; /* Scale down from 8.75rem but still prominent */
 		}
 
 		.benefits-grid {
