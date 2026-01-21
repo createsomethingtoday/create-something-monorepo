@@ -195,21 +195,33 @@
 </svelte:head>
 
 <main>
+	<!-- 1. Hero Section - Cinematic opening -->
 	<HeroSection />
+
+	<!-- 2. Journey Section - Where we've been, where we're going -->
+	<JourneySection />
+
+	<!-- 3. Analytics Dashboard - Preview with gated overlay (BEFORE content per client spec) -->
+	<AnalyticsDashboard />
+
+	<!-- 4. Content Categories - Netflix-style browsing -->
 	<ContentCategories />
 	<FeaturedVideos />
-	<JourneySection />
-	<AnalyticsDashboard />
+
+	<!-- 5. Component Lab / Digital Tools - Preview for all, full access for members -->
+	<ComponentLab />
 	<PlatformComponents />
-	<!-- Client request: allow chat demo on landing page (no membership gate) -->
+
+	<!-- 6. AI Analytics Chatbot - Demo on landing page -->
 	<AIAnalytics forceUnlocked />
 
+	<!-- 7. Member-only deep content -->
 	{#if isMember}
 		<BuildProgress />
-		<ComponentLab />
 		<ResourceLinks />
 	{/if}
 
+	<!-- 8. Comparison & Pricing -->
 	<FeatureComparison />
 	<Pricing />
 	<DemoCTA />

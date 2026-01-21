@@ -48,11 +48,11 @@
 			</span>
 		</div>
 
-		<h1 class="hero-title">OUTERFIELDS</h1>
+		<h1 class="hero-title">Building Outerfields: The Odyssey</h1>
 
 		<p class="hero-subtitle">
-			A premium content network experience. Browse the preview like Netflix—most content and tools are
-			members-only. Founding members get lifetime access for <strong>$99</strong>.
+			A premium content network built in public. Browse like Netflix—trailers and first episodes are free.
+			Founding members get full behind-the-scenes access for <strong>$99 lifetime</strong>.
 		</p>
 
 		<button class="play-button" onclick={handlePlayClick} aria-label="Play trailer">
