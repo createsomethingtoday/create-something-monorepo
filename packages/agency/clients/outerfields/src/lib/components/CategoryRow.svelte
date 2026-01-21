@@ -69,7 +69,8 @@
 </script>
 
 <section class="category-row">
-	<div class="category-header">
+	<div class="category-header-wrapper">
+		<div class="category-header">
 		<h2 class="category-title">{title}</h2>
 		<div class="scroll-controls">
 			<button
@@ -90,6 +91,7 @@
 			>
 				<ChevronRight size={24} />
 			</button>
+		</div>
 		</div>
 	</div>
 
@@ -116,12 +118,17 @@
 		margin-bottom: var(--space-2xl);
 	}
 
+	.category-header-wrapper {
+		max-width: 72rem;
+		margin: 0 auto;
+		padding: 0 1.5rem;
+	}
+
 	.category-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		margin-bottom: var(--space-md);
-		padding: 0 var(--space-lg);
 	}
 
 	.category-title {
@@ -175,13 +182,14 @@
 	.cards-inner {
 		display: flex;
 		gap: var(--space-md);
-		padding: 0 var(--space-lg);
+		/* Align card start with 72rem container edge */
+		padding: 0 max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem));
 	}
 
 	/* Responsive */
 	@media (max-width: 768px) {
-		.category-header {
-			padding: 0 var(--space-md);
+		.category-header-wrapper {
+			padding: 0 1rem;
 		}
 
 		.category-title {
@@ -189,7 +197,7 @@
 		}
 
 		.cards-inner {
-			padding: 0 var(--space-md);
+			padding: 0 1rem;
 			gap: var(--space-sm);
 		}
 
@@ -199,12 +207,12 @@
 	}
 
 	@media (max-width: 480px) {
-		.category-header {
-			padding: 0 var(--space-sm);
+		.category-header-wrapper {
+			padding: 0 1rem;
 		}
 
 		.cards-inner {
-			padding: 0 var(--space-sm);
+			padding: 0 1rem;
 		}
 	}
 </style>
