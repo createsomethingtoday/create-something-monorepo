@@ -36,6 +36,8 @@ export const AgentState = {
 	PANICKED: 2
 } as const;
 
+type AgentStateValue = typeof AgentState[keyof typeof AgentState];
+
 /** Simulation configuration */
 export interface SimulationConfig {
 	agentCount: number;
@@ -613,7 +615,7 @@ export class CrowdSimulation {
 			agentData[idx + 5] = target.y;
 
 			// State based on directive (affects color)
-			let state = AgentState.CALM;
+			let state: AgentStateValue = AgentState.CALM;
 			if (
 				directive.directive === Directive.GOING_TO_RESTROOM ||
 				directive.directive === Directive.GOING_TO_FOOD ||
@@ -809,7 +811,7 @@ export class CrowdSimulation {
 			// If directive changed, update target
 			if (oldDirective !== newDirective) {
 				const target = getDirectiveTarget(this.agentDirectives[i]);
-				let state = AgentState.CALM;
+				let state: AgentStateValue = AgentState.CALM;
 
 				// Set state based on directive
 				if (
@@ -946,7 +948,7 @@ export class CrowdSimulation {
 				agentData[idx + 4] = target.x;
 				agentData[idx + 5] = target.y;
 
-				let state = AgentState.CALM;
+				let state: AgentStateValue = AgentState.CALM;
 				if (
 					directive.directive === Directive.EXITING ||
 					directive.directive === Directive.GOING_TO_RESTROOM
