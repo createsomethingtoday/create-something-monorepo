@@ -2,28 +2,12 @@
 	/**
 	 * OUTERFIELDS Hero Section
 	 *
-	 * Reuses the Sketchfab 3D embed from the demo page.
-	 * Shows title with centered play button that opens Texas State Fair video.
+	 * Cinematic hero with single CTA to explore the platform
 	 */
-	import { Target, Play } from 'lucide-svelte';
-	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
+	import { Target, ArrowDown } from 'lucide-svelte';
 
-	// Cloudflare R2 CDN base URL
-	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
-
-	// Hero video: STACCATO Prairie Fire Gun Range Promo
-	const heroVideo: Video = {
-		id: 'hero-staccato',
-		title: 'STACCATO Prairie Fire Gun Range Promo',
-		description: 'Prairie Fire Gun Range promotional trailer',
-		duration: '1:16',
-		thumbnail: `${CDN_BASE}/thumbnails/staccato-promo.jpg`,
-		category: 'Promo',
-		src: `${CDN_BASE}/videos/staccato-promo.mp4`
-	};
-
-	function handlePlayClick() {
-		videoPlayer.play(heroVideo);
+	function scrollToJourney() {
+		document.getElementById('journey')?.scrollIntoView({ behavior: 'smooth' });
 	}
 </script>
 
@@ -55,8 +39,9 @@
 			Founding members get full behind-the-scenes access for <strong>$99 lifetime</strong>.
 		</p>
 
-		<button class="play-button" onclick={handlePlayClick} aria-label="Play trailer">
-			<Play class="play-icon" />
+		<button class="cta-button" onclick={scrollToJourney}>
+			<span>See How It Works</span>
+			<ArrowDown size={20} />
 		</button>
 	</div>
 </section>
@@ -157,36 +142,30 @@
 		font-weight: 700;
 	}
 
-	.play-button {
-		width: 120px;
-		height: 120px;
-		border-radius: var(--radius-full);
-		background: rgba(255, 255, 255, 0.1);
-		border: 3px solid var(--color-fg-primary);
+	.cta-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 1rem 2rem;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: 1rem;
+		font-weight: 700;
 		cursor: pointer;
 		transition: all var(--duration-standard) var(--ease-standard);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin: 0 auto;
-		backdrop-filter: blur(10px);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.play-button:hover {
-		transform: scale(1.1);
-		background: rgba(255, 255, 255, 0.2);
-		border-color: var(--color-fg-secondary);
-		box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+	.cta-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 32px rgba(255, 255, 255, 0.2);
 	}
 
-	.play-button:active {
-		transform: scale(1.05);
-	}
-
-	:global(.play-icon) {
-		width: 48px;
-		height: 48px;
-		color: var(--color-fg-primary);
+	.cta-button:active {
+		transform: translateY(0);
 	}
 
 	@media (max-width: 768px) {
@@ -208,14 +187,9 @@
 			font-size: 1.125rem;
 		}
 
-		.play-button {
-			width: 90px;
-			height: 90px;
-		}
-
-		:global(.play-icon) {
-			width: 36px;
-			height: 36px;
+		.cta-button {
+			padding: 0.875rem 1.5rem;
+			font-size: 0.875rem;
 		}
 	}
 
@@ -237,14 +211,9 @@
 			font-size: 1rem;
 		}
 
-		.play-button {
-			width: 75px;
-			height: 75px;
-		}
-
-		:global(.play-icon) {
-			width: 30px;
-			height: 30px;
+		.cta-button {
+			padding: 0.75rem 1.25rem;
+			font-size: 0.8125rem;
 		}
 	}
 </style>

@@ -9,7 +9,7 @@
 	import { Code2, Clapperboard, HardHat, TrendingUp } from 'lucide-svelte';
 </script>
 
-<section class="journey-section">
+<section class="journey-section" id="journey">
 	<div class="journey-container">
 		<h2 class="journey-title">How OUTERFIELDS Works</h2>
 
