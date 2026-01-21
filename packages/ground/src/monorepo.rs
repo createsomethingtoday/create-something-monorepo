@@ -2,7 +2,7 @@
 //!
 //! Opinionated configuration for the CREATE SOMETHING monorepo.
 //! Understands package structure, suggests specific refactoring targets,
-//! and integrates with beads for issue tracking.
+//! and integrates with Loom for task tracking.
 //!
 //! ## Package Structure
 //!
@@ -112,8 +112,8 @@ pub struct RefactoringSuggestion {
     /// Import statement to use after refactoring
     pub import_statement: String,
     
-    /// Beads command to create issue
-    pub beads_command: String,
+    /// Loom command to create task
+    pub loom_command: String,
     
     /// Priority (P0 = critical, P1 = high, P2 = medium)
     pub priority: String,
@@ -279,8 +279,8 @@ pub fn suggest_refactoring(
                     "import {{ create{}Handler }} from '@create-something/components/{}'",
                     to_pascal_case(&handler_type), target_module
                 ),
-                beads_command: format!(
-                    "bd create \"Extract shared {} handler ({:.0}% duplicate)\" --priority P1 --label refactor",
+                loom_command: format!(
+                    "lm create \"Extract shared {} handler ({:.0}% duplicate)\" --labels refactor,dry --priority high",
                     handler_type, similarity * 100.0
                 ),
                 priority: if similarity > 0.95 { "P0" } else { "P1" }.to_string(),
@@ -298,8 +298,8 @@ pub fn suggest_refactoring(
                     "import {{ create{}PageLoader }} from '@create-something/components/auth'",
                     to_pascal_case(&loader_type)
                 ),
-                beads_command: format!(
-                    "bd create \"Extract shared {} loader ({:.0}% duplicate)\" --priority P1 --label refactor",
+                loom_command: format!(
+                    "lm create \"Extract shared {} loader ({:.0}% duplicate)\" --labels refactor,dry --priority high",
                     loader_type, similarity * 100.0
                 ),
                 priority: "P1".to_string(),
@@ -317,8 +317,8 @@ pub fn suggest_refactoring(
                     "import {{ {} }} from '@create-something/components/components'",
                     component_name
                 ),
-                beads_command: format!(
-                    "bd create \"Move {} to shared components ({:.0}% duplicate)\" --priority P2 --label refactor",
+                loom_command: format!(
+                    "lm create \"Move {} to shared components ({:.0}% duplicate)\" --labels refactor,dry --priority normal",
                     component_name, similarity * 100.0
                 ),
                 priority: "P2".to_string(),
@@ -336,8 +336,8 @@ pub fn suggest_refactoring(
                     "import {{ {} }} from '@create-something/components/utils'",
                     func_name
                 ),
-                beads_command: format!(
-                    "bd create \"Extract {} to shared utils ({:.0}% duplicate)\" --priority P2 --label refactor",
+                loom_command: format!(
+                    "lm create \"Extract {} to shared utils ({:.0}% duplicate)\" --labels refactor,dry --priority normal",
                     func_name, similarity * 100.0
                 ),
                 priority: "P2".to_string(),
@@ -372,10 +372,10 @@ pub fn suggest_refactoring(
                     ),
                     target_path,
                     import_statement: import_suggestion,
-                    beads_command: format!(
-                        "bd create \"DRY violation: {:.0}% similar files\" --priority {} --label refactor",
+                    loom_command: format!(
+                        "lm create \"DRY violation: {:.0}% similar files\" --labels refactor,dry --priority {}",
                         similarity * 100.0,
-                        if similarity > 0.95 { "P0" } else { "P1" }
+                        if similarity > 0.95 { "critical" } else { "high" }
                     ),
                     priority: if similarity > 0.95 { "P0" } else { "P1" }.to_string(),
                 })
@@ -405,15 +405,15 @@ fn find_package_name(file: &Path, monorepo: &MonorepoInfo) -> Option<String> {
     None
 }
 
-/// Generate beads command for a DRY violation
-pub fn generate_beads_command(
+/// Generate Loom command for a DRY violation
+pub fn generate_loom_command(
     file_a: &Path,
     file_b: &Path,
     similarity: f64,
     suggestion: Option<&RefactoringSuggestion>,
 ) -> String {
     if let Some(s) = suggestion {
-        return s.beads_command.clone();
+        return s.loom_command.clone();
     }
     
     // Generic command
@@ -424,10 +424,10 @@ pub fn generate_beads_command(
         .and_then(|n| n.to_str())
         .unwrap_or("unknown");
     
-    let priority = if similarity > 0.95 { "P0" } else if similarity > 0.85 { "P1" } else { "P2" };
+    let priority = if similarity > 0.95 { "critical" } else if similarity > 0.85 { "high" } else { "normal" };
     
     format!(
-        "bd create \"DRY violation: {} vs {} ({:.0}% similar)\" --priority {} --label refactor",
+        "lm create \"DRY violation: {} vs {} ({:.0}% similar)\" --labels refactor,dry,ground-detected --priority {}",
         file_a_name, file_b_name, similarity * 100.0, priority
     )
 }
