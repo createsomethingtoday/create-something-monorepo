@@ -172,6 +172,48 @@ enum FindCommands {
         #[arg(long, default_value = ".")]
         scope: PathBuf,
     },
+    /// Find design system drift (violations of Canon tokens)
+    Drift {
+        /// Path to search
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Category to check (colors, spacing, typography, svelte, all)
+        #[arg(long, default_value = "all")]
+        category: String,
+        /// Only show files below this adoption threshold (0-100)
+        #[arg(long)]
+        below_threshold: Option<f64>,
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Calculate token adoption ratio
+    AdoptionRatio {
+        /// Path to analyze
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Show per-file breakdown
+        #[arg(long, short)]
+        verbose: bool,
+        /// Show worst offending files
+        #[arg(long, default_value = "10")]
+        worst: usize,
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Mine patterns to discover implicit design tokens
+    Patterns {
+        /// Path to analyze
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Minimum occurrences to consider a pattern
+        #[arg(long, default_value = "3")]
+        min_occurrences: usize,
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -525,6 +567,15 @@ fn run_find(cmd: FindCommands, db: &Path) -> Result<(), Box<dyn std::error::Erro
         }
         FindCommands::DeadExports { module, scope } => {
             find_dead_exports_cmd(&module, &scope)
+        }
+        FindCommands::Drift { path, category, below_threshold, format } => {
+            find_drift(&path, &category, below_threshold, &format)
+        }
+        FindCommands::AdoptionRatio { path, verbose, worst, format } => {
+            show_adoption_ratio(&path, verbose, worst, &format)
+        }
+        FindCommands::Patterns { path, min_occurrences, format } => {
+            mine_patterns_cmd(&path, min_occurrences, &format)
         }
     }
 }
@@ -926,6 +977,240 @@ fn find_orphans(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         println!("  ground check connections <path>");
         
         std::process::exit(1);
+    }
+    
+    Ok(())
+}
+
+fn find_drift(path: &Path, category: &str, below_threshold: Option<f64>, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::patterns::{analyze_patterns, PatternConfig};
+    
+    println!("Finding design system drift in {}", path.display());
+    println!();
+    
+    let config = PatternConfig::default();
+    let report = analyze_patterns(path, &config)?;
+    
+    // Filter by category if specified
+    let violations: Vec<_> = if category == "all" {
+        report.violations.clone()
+    } else {
+        report.violations.iter()
+            .filter(|v| v.category == category)
+            .cloned()
+            .collect()
+    };
+    
+    // Filter by threshold if specified
+    let _files_to_show: Vec<_> = if let Some(threshold) = below_threshold {
+        report.file_evidence.iter()
+            .filter(|e| e.metrics.adoption_ratio < threshold)
+            .collect()
+    } else {
+        report.file_evidence.iter().collect()
+    };
+    
+    if format == "json" {
+        let output = serde_json::json!({
+            "files_analyzed": report.files_analyzed,
+            "overall_adoption_ratio": report.overall_adoption_ratio,
+            "violations_count": violations.len(),
+            "violations": violations,
+            "worst_files": report.worst_files,
+        });
+        println!("{}", serde_json::to_string_pretty(&output)?);
+        return Ok(());
+    }
+    
+    // Text output
+    if violations.is_empty() {
+        println!("✓ No {} drift detected!", if category == "all" { "design system" } else { category });
+        println!("  Overall adoption: {:.1}%", report.overall_adoption_ratio);
+    } else {
+        println!("⚠ Found {} {} violations:", violations.len(), if category == "all" { "design system" } else { category });
+        println!();
+        
+        // Group by file
+        let mut by_file: std::collections::HashMap<String, Vec<_>> = std::collections::HashMap::new();
+        for v in &violations {
+            by_file.entry(v.category.clone()).or_default().push(v);
+        }
+        
+        for (cat, cat_violations) in &by_file {
+            println!("  {} ({} violations):", cat, cat_violations.len());
+            for v in cat_violations.iter().take(5) {
+                println!("    • {}:{} - {} = {}", 
+                    "file", v.line, v.property, v.value);
+                if let Some(ref suggestion) = v.suggestion {
+                    println!("      → {}", suggestion);
+                }
+            }
+            if cat_violations.len() > 5 {
+                println!("    ... and {} more", cat_violations.len() - 5);
+            }
+            println!();
+        }
+        
+        println!("Summary:");
+        println!("  Files analyzed: {}", report.files_analyzed);
+        println!("  Overall adoption: {:.1}%", report.overall_adoption_ratio);
+        println!("  Total violations: {}", violations.len());
+        
+        if !report.worst_files.is_empty() {
+            println!();
+            println!("Worst offending files:");
+            for (file, ratio) in report.worst_files.iter().take(5) {
+                println!("  • {} ({:.1}%)", file.display(), ratio);
+            }
+        }
+    }
+    
+    Ok(())
+}
+
+fn show_adoption_ratio(path: &Path, verbose: bool, worst_count: usize, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::patterns::{analyze_patterns, PatternConfig, HealthStatus};
+    
+    println!("Calculating token adoption ratio for {}", path.display());
+    println!();
+    
+    let config = PatternConfig::default();
+    let report = analyze_patterns(path, &config)?;
+    
+    if format == "json" {
+        let output = serde_json::json!({
+            "files_analyzed": report.files_analyzed,
+            "overall_adoption_ratio": report.overall_adoption_ratio,
+            "overall_health": format!("{:?}", report.overall_health),
+            "category_summary": report.category_summary,
+            "worst_files": report.worst_files.iter().take(worst_count).collect::<Vec<_>>(),
+        });
+        println!("{}", serde_json::to_string_pretty(&output)?);
+        return Ok(());
+    }
+    
+    // Text output
+    let health_icon = match report.overall_health {
+        HealthStatus::Healthy => "✅",
+        HealthStatus::Warning => "⚠️",
+        HealthStatus::Critical => "❌",
+    };
+    
+    println!("{} Overall Adoption: {:.1}%", health_icon, report.overall_adoption_ratio);
+    println!();
+    
+    println!("Category Breakdown:");
+    for (category, metrics) in &report.category_summary {
+        let cat_icon = if metrics.ratio >= 90.0 { "✅" } 
+            else if metrics.ratio >= 70.0 { "⚠️" } 
+            else { "❌" };
+        println!("  {} {}: {:.1}% ({}/{} compliant)", 
+            cat_icon, category, metrics.ratio, metrics.compliant, metrics.total);
+    }
+    
+    if verbose {
+        println!();
+        println!("Per-file breakdown:");
+        for evidence in &report.file_evidence {
+            if evidence.metrics.total_declarations > 0 {
+                let icon = match evidence.metrics.health {
+                    HealthStatus::Healthy => "✅",
+                    HealthStatus::Warning => "⚠️",
+                    HealthStatus::Critical => "❌",
+                };
+                println!("  {} {} - {:.1}%", icon, evidence.file.display(), evidence.metrics.adoption_ratio);
+            }
+        }
+    }
+    
+    if !report.worst_files.is_empty() {
+        println!();
+        println!("Worst Offending Files (bottom {}):", worst_count);
+        for (file, ratio) in report.worst_files.iter().take(worst_count) {
+            let icon = if *ratio >= 90.0 { "✅" } 
+                else if *ratio >= 70.0 { "⚠️" } 
+                else { "❌" };
+            println!("  {} {} - {:.1}%", icon, file.display(), ratio);
+        }
+    }
+    
+    println!();
+    println!("Thresholds: 90%+ Healthy, 70-89% Warning, <70% Critical");
+    println!("Files analyzed: {}", report.files_analyzed);
+    
+    Ok(())
+}
+
+fn mine_patterns_cmd(path: &Path, min_occurrences: usize, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::patterns::mine_patterns;
+    
+    println!("Mining patterns in {} (min occurrences: {})...", path.display(), min_occurrences);
+    println!();
+    
+    let report = mine_patterns(path, min_occurrences)?;
+    
+    if format == "json" {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    }
+    
+    // Text output
+    println!("Files analyzed: {}", report.files_analyzed);
+    println!();
+    
+    if !report.discovered_patterns.is_empty() {
+        println!("📊 Discovered Patterns (values used {}+ times):", min_occurrences);
+        println!();
+        
+        for pattern in report.discovered_patterns.iter().take(15) {
+            let tokenize = if pattern.should_tokenize { "🎯" } else { "  " };
+            println!("  {} {} = {} ({} occurrences)", 
+                tokenize, pattern.property, pattern.value, pattern.occurrences);
+        }
+        
+        if report.discovered_patterns.len() > 15 {
+            println!("  ... and {} more patterns", report.discovered_patterns.len() - 15);
+        }
+    }
+    
+    if !report.value_clusters.is_empty() {
+        println!();
+        println!("🔗 Value Clusters (similar values grouped):");
+        println!();
+        
+        for cluster in report.value_clusters.iter().take(10) {
+            println!("  {}: {} ({} occurrences, {} variants)",
+                cluster.category, cluster.representative, 
+                cluster.total_occurrences, cluster.values.len());
+        }
+    }
+    
+    if !report.suggested_tokens.is_empty() {
+        println!();
+        println!("💡 Suggested New Tokens:");
+        println!();
+        
+        for suggestion in report.suggested_tokens.iter().take(10) {
+            let confidence_bar = match suggestion.confidence {
+                c if c >= 0.9 => "█████",
+                c if c >= 0.7 => "████░",
+                c if c >= 0.5 => "███░░",
+                _ => "██░░░",
+            };
+            println!("  {} {}: {} ({} occurrences, confidence: {})",
+                suggestion.category, suggestion.name, suggestion.value,
+                suggestion.occurrences, confidence_bar);
+        }
+        
+        println!();
+        println!("To add a suggested token to Canon:");
+        println!("  1. Add to packages/components/src/lib/styles/tokens.css");
+        println!("  2. Update .ground/design-patterns.yml");
+    }
+    
+    if report.discovered_patterns.is_empty() {
+        println!("No patterns found with {} or more occurrences.", min_occurrences);
+        println!("Try lowering --min-occurrences or scanning a larger directory.");
     }
     
     Ok(())

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Ground DRY Check - Pre-commit Hook
-# Catches duplicates before they're committed
+# Ground Pre-commit Hook
+# Catches duplicates and design system drift before they're committed
 
 # Get staged TypeScript/Svelte files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|svelte)$' || true)
@@ -12,33 +12,95 @@ fi
 # Check if ground exists
 GROUND="./packages/ground/target/release/ground"
 if [ ! -f "$GROUND" ]; then
-  echo "⚠️  ground not found, skipping duplicate check"
+  echo "⚠️  ground not found, skipping checks"
   exit 0
 fi
 
+# =============================================================================
+# CHECK 1: Duplicates
+# =============================================================================
 echo "🔍 Checking for duplicates in staged files..."
 
-# Run with strict threshold (90%) on packages directory
 RESULT=$($GROUND find duplicates ./packages --threshold 0.90 --extensions ts,svelte 2>&1)
 
-# Check for violations
 if echo "$RESULT" | grep -q "No duplicates found"; then
   echo "✅ No duplicates found"
-  exit 0
+else
+  VIOLATIONS=$(echo "$RESULT" | grep -c "% similar" || echo "0")
+  if [ "$VIOLATIONS" -gt 0 ]; then
+    echo ""
+    echo "⚠️  Found $VIOLATIONS potential duplicates (>90% similar):"
+    echo "$RESULT" | grep -A2 "% similar" | head -20
+    echo ""
+    echo "Consider consolidating these files or use --no-verify to skip."
+  fi
 fi
 
-# Count violations
-VIOLATIONS=$(echo "$RESULT" | grep -c "% similar" || echo "0")
+# =============================================================================
+# CHECK 2: Design System Drift (Svelte files only)
+# =============================================================================
+STAGED_SVELTE=$(echo "$STAGED_FILES" | grep -E '\.svelte$' || true)
 
-if [ "$VIOLATIONS" -gt 0 ]; then
+if [ -n "$STAGED_SVELTE" ]; then
   echo ""
-  echo "⚠️  Found $VIOLATIONS potential duplicates (>90% similar):"
-  echo "$RESULT" | grep -A2 "% similar" | head -20
-  echo ""
-  echo "Consider consolidating these files or use --no-verify to skip."
-  echo "Run 'ground find duplicates ./packages --monorepo' for full analysis."
-  # Warning only - don't block commit
-  exit 0
+  echo "🎨 Checking for design system drift in staged Svelte files..."
+  
+  # Check each staged Svelte file for drift
+  DRIFT_WARNINGS=0
+  for FILE in $STAGED_SVELTE; do
+    if [ -f "$FILE" ]; then
+      # Skip files in ignored paths
+      if echo "$FILE" | grep -qE 'maverick|verticals|clearway/src/embed|node_modules'; then
+        continue
+      fi
+      
+      # Quick check for hardcoded values (simplified check)
+      if grep -qE 'color:\s*#[0-9a-fA-F]|font-size:\s*[0-9]+px' "$FILE" 2>/dev/null; then
+        # Verify it's not using var()
+        if ! grep -q 'var(--' "$FILE" 2>/dev/null; then
+          echo "  ⚠️  $FILE may have hardcoded values"
+          DRIFT_WARNINGS=$((DRIFT_WARNINGS + 1))
+        fi
+      fi
+    fi
+  done
+  
+  if [ "$DRIFT_WARNINGS" -eq 0 ]; then
+    echo "✅ No obvious drift detected"
+  else
+    echo ""
+    echo "⚠️  Found potential drift in $DRIFT_WARNINGS file(s)"
+    echo "Run 'ground find drift' for detailed analysis."
+    echo "Canon tokens: --color-*, --space-*, --text-*"
+  fi
 fi
 
+# =============================================================================
+# CHECK 3: Svelte 4 Props (export let)
+# =============================================================================
+if [ -n "$STAGED_SVELTE" ]; then
+  LEGACY_PROPS=0
+  for FILE in $STAGED_SVELTE; do
+    if [ -f "$FILE" ]; then
+      # Skip known exceptions
+      if echo "$FILE" | grep -qE 'SEO\.svelte|tufte'; then
+        continue
+      fi
+      
+      if grep -q 'export let.*:' "$FILE" 2>/dev/null; then
+        echo "  ⚠️  $FILE uses Svelte 4 'export let' pattern"
+        LEGACY_PROPS=$((LEGACY_PROPS + 1))
+      fi
+    fi
+  done
+  
+  if [ "$LEGACY_PROPS" -gt 0 ]; then
+    echo ""
+    echo "⚠️  Found $LEGACY_PROPS file(s) with Svelte 4 props"
+    echo "Consider migrating to Svelte 5 \$props() pattern."
+  fi
+fi
+
+echo ""
+echo "✅ Pre-commit checks complete"
 exit 0

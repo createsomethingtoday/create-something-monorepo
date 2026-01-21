@@ -48,6 +48,7 @@ pub mod exceptions;
 pub mod monorepo;
 pub mod config;
 pub mod report;
+pub mod loom;
 
 use std::path::Path;
 use thiserror::Error;

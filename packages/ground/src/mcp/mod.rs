@@ -37,11 +37,8 @@ use crate::{VerifiedTriad, VerifiedTriadError};
 use crate::computations::{analyze_function_dry_with_options, FunctionDryOptions};
 use crate::computations::environment::{analyze_environment_safety, WarningSeverity, RuntimeEnvironment};
 use crate::computations::{BloomFilter, HyperLogLog};
-use crate::computations::confidence::{
-    orphan_confidence, duplicate_confidence, dead_export_confidence,
-    environment_safety_confidence, ConfidenceScore, RecommendedAction,
-};
-use crate::computations::framework::{detect_framework, is_implicit_entry, Framework};
+use crate::computations::confidence::orphan_confidence;
+use crate::computations::framework::{detect_framework, is_implicit_entry};
 use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_beads_command};
 use crate::config::GroundConfig;
 
@@ -366,6 +363,80 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                 "required": ["fix_type", "details"]
             }),
         },
+        // Pattern Analysis Tools (v2.1)
+        ToolDefinition {
+            name: "ground_find_drift".to_string(),
+            description: "Find design system drift (violations of Canon design tokens). Detects hardcoded colors, spacing, typography, and Svelte 4 patterns that should use design tokens.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Directory to analyze (default: current directory)"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["all", "colors", "spacing", "typography", "svelte"],
+                        "description": "Category to check (default: all)"
+                    },
+                    "below_threshold": {
+                        "type": "number",
+                        "description": "Only show files with adoption ratio below this percentage (0-100)"
+                    }
+                },
+                "required": []
+            }),
+        },
+        ToolDefinition {
+            name: "ground_adoption_ratio".to_string(),
+            description: "Calculate Canon design token adoption ratio. Shows overall health and per-category breakdown. Thresholds: 90%+ healthy, 70-89% warning, <70% critical.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Directory to analyze (default: current directory)"
+                    },
+                    "worst_count": {
+                        "type": "number",
+                        "description": "Number of worst-offending files to show (default: 10)"
+                    }
+                },
+                "required": []
+            }),
+        },
+        ToolDefinition {
+            name: "ground_suggest_pattern".to_string(),
+            description: "Suggest Canon design tokens to replace hardcoded values. Given a file with violations, suggests which tokens to use.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "Path to the file with violations"
+                    }
+                },
+                "required": ["file"]
+            }),
+        },
+        ToolDefinition {
+            name: "ground_mine_patterns".to_string(),
+            description: "Mine patterns to discover implicit design tokens. Analyzes CSS values across Svelte files to find repeated patterns that should become Canon tokens.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Directory to analyze (default: current directory)"
+                    },
+                    "min_occurrences": {
+                        "type": "number",
+                        "description": "Minimum occurrences to consider a pattern (default: 3)"
+                    }
+                },
+                "required": []
+            }),
+        },
     ]
 }
 
@@ -427,6 +498,11 @@ pub fn handle_tool_call(
         "ground_analyze" => handle_batch_analyze(args),
         "ground_verify_fix" => handle_verify_fix(args),
         "ground_diff" => handle_diff(args),
+        // Pattern Analysis tools (v2.1)
+        "ground_find_drift" => handle_find_drift(args),
+        "ground_adoption_ratio" => handle_adoption_ratio(args),
+        "ground_suggest_pattern" => handle_suggest_pattern(args),
+        "ground_mine_patterns" => handle_mine_patterns(args),
         _ => ToolResult::error(format!("Unknown tool: {}", tool_name)),
     }
 }
@@ -2519,6 +2595,271 @@ fn handle_sketch_list() -> ToolResult {
     }))
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Pattern Analysis Handlers (v2.1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn handle_find_drift(args: &Value) -> ToolResult {
+    use crate::computations::patterns::{analyze_patterns, PatternConfig, HealthStatus};
+    
+    let directory = args.get("directory")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    
+    let category = args.get("category")
+        .and_then(|v| v.as_str())
+        .unwrap_or("all");
+    
+    let below_threshold = args.get("below_threshold")
+        .and_then(|v| v.as_f64());
+    
+    let config = PatternConfig::default();
+    
+    match analyze_patterns(&directory, &config) {
+        Ok(report) => {
+            // Filter violations by category
+            let violations: Vec<_> = if category == "all" {
+                report.violations.clone()
+            } else {
+                report.violations.iter()
+                    .filter(|v| v.category == category)
+                    .cloned()
+                    .collect()
+            };
+            
+            // Get files below threshold if specified
+            let files_below: Vec<_> = if let Some(threshold) = below_threshold {
+                report.file_evidence.iter()
+                    .filter(|e| e.metrics.adoption_ratio < threshold && e.metrics.total_declarations > 0)
+                    .map(|e| json!({
+                        "file": e.file.display().to_string(),
+                        "adoption_ratio": format!("{:.1}%", e.metrics.adoption_ratio),
+                        "violations": e.violations.len()
+                    }))
+                    .collect()
+            } else {
+                vec![]
+            };
+            
+            let health_status = match report.overall_health {
+                HealthStatus::Healthy => "healthy",
+                HealthStatus::Warning => "warning", 
+                HealthStatus::Critical => "critical",
+            };
+            
+            ToolResult::success(json!({
+                "drift_detected": !violations.is_empty(),
+                "violations_count": violations.len(),
+                "overall_adoption_ratio": format!("{:.1}%", report.overall_adoption_ratio),
+                "health_status": health_status,
+                "files_analyzed": report.files_analyzed,
+                "category_filter": category,
+                "violations": violations.iter().take(20).map(|v| json!({
+                    "category": v.category,
+                    "line": v.line,
+                    "property": v.property,
+                    "value": v.value,
+                    "message": v.message,
+                    "suggestion": v.suggestion
+                })).collect::<Vec<_>>(),
+                "files_below_threshold": files_below,
+                "worst_files": report.worst_files.iter().take(5).map(|(f, r)| json!({
+                    "file": f.display().to_string(),
+                    "adoption_ratio": format!("{:.1}%", r)
+                })).collect::<Vec<_>>(),
+                "message": if violations.is_empty() {
+                    format!("No {} drift detected. Overall adoption: {:.1}%", 
+                        if category == "all" { "design system" } else { category },
+                        report.overall_adoption_ratio)
+                } else {
+                    format!("Found {} {} violations. Overall adoption: {:.1}%",
+                        violations.len(),
+                        if category == "all" { "design system" } else { category },
+                        report.overall_adoption_ratio)
+                }
+            }))
+        }
+        Err(e) => ToolResult::error(format!("Pattern analysis failed: {}", e)),
+    }
+}
+
+fn handle_adoption_ratio(args: &Value) -> ToolResult {
+    use crate::computations::patterns::{analyze_patterns, PatternConfig, HealthStatus};
+    
+    let directory = args.get("directory")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    
+    let worst_count = args.get("worst_count")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(10) as usize;
+    
+    let config = PatternConfig::default();
+    
+    match analyze_patterns(&directory, &config) {
+        Ok(report) => {
+            let health_status = match report.overall_health {
+                HealthStatus::Healthy => "healthy",
+                HealthStatus::Warning => "warning",
+                HealthStatus::Critical => "critical",
+            };
+            
+            let health_icon = match report.overall_health {
+                HealthStatus::Healthy => "✅",
+                HealthStatus::Warning => "⚠️",
+                HealthStatus::Critical => "❌",
+            };
+            
+            let category_breakdown: Vec<_> = report.category_summary.iter()
+                .map(|(cat, metrics)| {
+                    let status = if metrics.ratio >= 90.0 { "healthy" }
+                        else if metrics.ratio >= 70.0 { "warning" }
+                        else { "critical" };
+                    json!({
+                        "category": cat,
+                        "adoption_ratio": format!("{:.1}%", metrics.ratio),
+                        "compliant": metrics.compliant,
+                        "total": metrics.total,
+                        "status": status
+                    })
+                })
+                .collect();
+            
+            ToolResult::success(json!({
+                "overall_adoption_ratio": format!("{:.1}%", report.overall_adoption_ratio),
+                "health_status": health_status,
+                "files_analyzed": report.files_analyzed,
+                "category_breakdown": category_breakdown,
+                "worst_files": report.worst_files.iter().take(worst_count).map(|(f, r)| json!({
+                    "file": f.display().to_string(),
+                    "adoption_ratio": format!("{:.1}%", r),
+                    "status": if *r >= 90.0 { "healthy" } else if *r >= 70.0 { "warning" } else { "critical" }
+                })).collect::<Vec<_>>(),
+                "thresholds": {
+                    "healthy": "90%+",
+                    "warning": "70-89%",
+                    "critical": "<70%"
+                },
+                "message": format!("{} Overall adoption: {:.1}% ({})", 
+                    health_icon, report.overall_adoption_ratio, health_status)
+            }))
+        }
+        Err(e) => ToolResult::error(format!("Adoption ratio calculation failed: {}", e)),
+    }
+}
+
+fn handle_suggest_pattern(args: &Value) -> ToolResult {
+    use crate::computations::patterns::suggest_for_file;
+    
+    let file = match args.get("file").and_then(|v| v.as_str()) {
+        Some(s) => PathBuf::from(s),
+        None => return ToolResult::error("Missing: file"),
+    };
+    
+    // Optionally provide codebase root for similar file analysis
+    let codebase_root = args.get("codebase_root")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from);
+    
+    match suggest_for_file(&file, codebase_root.as_deref()) {
+        Ok(suggestions) => {
+            let token_mappings: Vec<_> = suggestions.token_mappings.iter()
+                .map(|m| {
+                    json!({
+                        "from_value": m.from_value,
+                        "to_token": m.to_token,
+                        "confidence": format!("{:.0}%", m.confidence * 100.0),
+                        "lines": m.lines,
+                        "reason": m.reason
+                    })
+                })
+                .collect();
+            
+            let similar_files: Vec<_> = suggestions.similar_files.iter()
+                .map(|s| {
+                    json!({
+                        "file": s.file,
+                        "similarity": format!("{:.0}%", s.similarity * 100.0),
+                        "tokens_you_could_use": s.tokens_used
+                    })
+                })
+                .collect();
+            
+            ToolResult::success(json!({
+                "file": suggestions.file.display().to_string(),
+                "violations_count": suggestions.violations.len(),
+                "token_mappings": token_mappings,
+                "similar_files": similar_files,
+                "recommendation": suggestions.recommendation,
+                "message": if suggestions.violations.is_empty() {
+                    "No violations found - file is Canon compliant".to_string()
+                } else {
+                    format!("Found {} violations with {} token mappings", 
+                        suggestions.violations.len(), token_mappings.len())
+                }
+            }))
+        }
+        Err(e) => ToolResult::error(format!("Pattern analysis failed: {}", e)),
+    }
+}
+
+// NOTE: Legacy suggest_*_token functions replaced by suggest_for_file in patterns.rs
+// which provides more detailed context-aware suggestions with reasoning
+
+fn handle_mine_patterns(args: &Value) -> ToolResult {
+    use crate::computations::patterns::mine_patterns;
+    
+    let directory = args.get("directory")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    
+    let min_occurrences = args.get("min_occurrences")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(3) as usize;
+    
+    match mine_patterns(&directory, min_occurrences) {
+        Ok(report) => {
+            ToolResult::success(json!({
+                "files_analyzed": report.files_analyzed,
+                "discovered_patterns_count": report.discovered_patterns.len(),
+                "discovered_patterns": report.discovered_patterns.iter().take(20).map(|p| json!({
+                    "category": p.category,
+                    "property": p.property,
+                    "value": p.value,
+                    "occurrences": p.occurrences,
+                    "should_tokenize": p.should_tokenize,
+                    "files_sample": p.files.iter().take(3).collect::<Vec<_>>()
+                })).collect::<Vec<_>>(),
+                "value_clusters": report.value_clusters.iter().take(10).map(|c| json!({
+                    "category": c.category,
+                    "representative": c.representative,
+                    "total_occurrences": c.total_occurrences,
+                    "variant_count": c.values.len()
+                })).collect::<Vec<_>>(),
+                "suggested_tokens": report.suggested_tokens.iter().take(10).map(|s| json!({
+                    "name": s.name,
+                    "value": s.value,
+                    "category": s.category,
+                    "occurrences": s.occurrences,
+                    "impact_files": s.impact_files,
+                    "confidence": format!("{:.0}%", s.confidence * 100.0)
+                })).collect::<Vec<_>>(),
+                "message": if report.discovered_patterns.is_empty() {
+                    format!("No patterns found with {} or more occurrences", min_occurrences)
+                } else {
+                    format!("Found {} patterns, {} suggested tokens", 
+                        report.discovered_patterns.len(),
+                        report.suggested_tokens.len())
+                }
+            }))
+        }
+        Err(e) => ToolResult::error(format!("Pattern mining failed: {}", e)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2527,7 +2868,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 13); // Focused AI-native tool set
+        assert_eq!(tools.len(), 17); // Focused AI-native tool set + pattern analysis
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         // Check tools
@@ -2541,6 +2882,11 @@ mod tests {
         // Other tools
         assert!(names.contains(&"ground_suggest_fix"));
         assert!(names.contains(&"ground_check_environment"));
+        // Pattern analysis tools
+        assert!(names.contains(&"ground_find_drift"));
+        assert!(names.contains(&"ground_adoption_ratio"));
+        assert!(names.contains(&"ground_suggest_pattern"));
+        assert!(names.contains(&"ground_mine_patterns"));
         assert!(names.contains(&"ground_find_orphans"));
         assert!(names.contains(&"ground_find_dead_exports"));
         // AI-Native tools

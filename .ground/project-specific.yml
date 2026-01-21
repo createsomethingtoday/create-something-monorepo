@@ -51,6 +51,75 @@ ignore:
     - ["packages/agency/src/lib/services/stripe.ts",
        "packages/clearway/src/lib/services/stripe-connect.ts"]
 
+# ─────────────────────────────────────────────────────────────────────
+# Design Pattern Exceptions
+# ─────────────────────────────────────────────────────────────────────
+# Known drift and intentional exclusions from Canon design system
+
+design_patterns:
+  mode: "warn"
+  
+  ignore_paths:
+    - "packages/maverick/**"           # Client project (uses Tailwind)
+    - "packages/verticals/**"          # Client verticals (external styles)
+    - "packages/clearway/src/embed/**" # Isolated widget (standalone CSS)
+    - "packages/agency/clients/**"     # Client-specific sites (custom styling)
+    - "**/dist/**"                     # Build artifacts (generated from src)
+    - "**/visualizations/**"           # Experimental visualizations (custom SVG styling)
+    - "**/papers/**"                   # Academic papers (custom prose styling)
+    - "packages/space/**"              # Experimental space package
+    - "packages/lms/**"                # Learning system (custom course styling)
+    - "**/*.test.ts"
+    - "**/node_modules/**"
+    
+  # Values that are intentionally NOT tokens (below design system granularity)
+  allowed_values:
+    spacing:
+      - "1px"     # Border width, fine adjustments
+      - "2px"     # Small gaps, borders (below --space-xs)
+      - "-1px"    # Negative offset adjustments
+      - "0.25rem" # Fine-grained spacing (xs/2)
+      - "0.375rem" # Fine-grained spacing (xs * 0.6)
+      - "0.5rem"  # Half of sm spacing
+      - "0.75rem" # 3/4 of sm spacing
+    typography:
+      - "inherit"  # Inherit from parent
+      - "100%"     # Percentage-based sizing
+    colors:
+      - "transparent"
+      - "currentColor"
+      - "inherit"
+    
+  known_drift:
+    critical:
+      - file: "packages/components/src/lib/components/SEO.svelte"
+        issue: "21 export let props - needs Svelte 5 migration"
+        status: "tracked"
+        priority: "high"
+        reason: "Used by 25+ pages across all properties"
+        
+    unmigrated:
+      - package: "packages/tufte"
+        issue: "Visualization library still Svelte 4"
+        status: "tracked"
+        priority: "low"
+        reason: "Rarely used - migrate when touched"
+        
+    # Files with known low adoption that need attention
+    low_adoption:
+      - file: "packages/io/src/routes/visualizations/arena-scale/+page.svelte"
+        adoption: "16.4%"
+        priority: "medium"
+        reason: "Experimental visualization - uses custom SVG styling"
+      - file: "packages/io/src/routes/papers/ground-evidence-based-claims/+page.svelte"
+        adoption: "32.0%"
+        priority: "medium"
+        reason: "Technical paper - uses code/markdown styling"
+      - file: "packages/components/src/lib/brand/marks/PropertyMark.svelte"
+        adoption: "17.6%"
+        priority: "low"
+        reason: "Brand mark - uses exact design spec colors"
+
 report:
   format: markdown
   include_suggestions: true

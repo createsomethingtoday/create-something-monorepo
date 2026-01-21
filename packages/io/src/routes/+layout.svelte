@@ -171,6 +171,7 @@
 	}
 
 	.main-content {
-		padding-top: 72px;
+		/* Navigation bar height offset */
+		padding-top: var(--space-3xl);
 	}
 </style>

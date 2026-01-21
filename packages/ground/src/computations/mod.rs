@@ -14,6 +14,9 @@
 //! - Reachability: Entry point analysis
 //! - Framework: Auto-detect SvelteKit/Next.js/Cloudflare
 //! - Confidence: Bayesian scoring for AI-native decisions
+//!
+//! ## Pattern Analysis (v2.1)
+//! - Patterns: Design system drift detection and token adoption
 
 mod similarity;
 mod usage;
@@ -31,6 +34,9 @@ pub mod lsh;
 pub mod reachability;
 pub mod framework;
 pub mod confidence;
+
+// Pattern analysis (v2.1)
+pub mod patterns;
 
 pub use similarity::{compute_similarity, SimilarityEvidence};
 pub use usage::{count_usages, find_dead_exports, UsageEvidence, UsageLocation, UsageType, DeadExport, DeadExportsReport};

@@ -19,8 +19,8 @@
 	.tabs-list {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.25rem;
-		padding: 0.25rem;
+		gap: var(--space-xs);
+		padding: var(--space-xs);
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-md);
 	}

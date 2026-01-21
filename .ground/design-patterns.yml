@@ -1,0 +1,674 @@
+# Ground Design Patterns - CREATE SOMETHING Canon
+# Source of truth: packages/components/src/lib/styles/tokens.css
+# Generated: 2026-01-21
+#
+# "Weniger, aber besser" - Dieter Rams
+#
+# These are the holistic Canon design system patterns that Ground enforces.
+# All values are mathematically derived from foundational constants.
+
+version: "1.0"
+source: "packages/components/src/lib/styles/tokens.css"
+
+# =============================================================================
+# MATHEMATICAL FOUNDATIONS
+# =============================================================================
+foundations:
+  golden_ratio:
+    symbol: "φ"
+    value: 1.618033988749895
+    description: "The golden ratio - foundation for spacing and typography"
+    
+  minor_third:
+    value: 1.2
+    description: "Musical interval for body text scale - more readable than φ"
+    
+  base_unit:
+    value: "4px"
+    description: "Base unit for border radius - aligns with 4px/8px design grids"
+
+# =============================================================================
+# COLOR TOKENS
+# =============================================================================
+colors:
+  philosophy: "Functional minimalism. Opacity creates hierarchy, not new colors."
+  
+  backgrounds:
+    description: "Four levels from pure black to subtle grey. Stack for depth."
+    tokens:
+      - name: "--color-bg-pure"
+        value: "#000000"
+        use: "The canvas"
+      - name: "--color-bg-elevated"
+        value: "#0a0a0a"
+        use: "Main surfaces"
+      - name: "--color-bg-surface"
+        value: "#111111"
+        use: "Cards, elevated elements"
+      - name: "--color-bg-subtle"
+        value: "#1a1a1a"
+        use: "Modals, popovers"
+        
+  foregrounds:
+    description: "White at different opacities. Brighter = more emphasis."
+    tokens:
+      - name: "--color-fg-primary"
+        value: "#ffffff"
+        contrast: "21:1"
+        use: "Headlines, emphasis"
+      - name: "--color-fg-secondary"
+        value: "rgba(255, 255, 255, 0.8)"
+        contrast: "13.7:1"
+        use: "Body text"
+      - name: "--color-fg-tertiary"
+        value: "rgba(255, 255, 255, 0.6)"
+        contrast: "9.7:1"
+        use: "Secondary info"
+      - name: "--color-fg-muted"
+        value: "rgba(255, 255, 255, 0.46)"
+        contrast: "4.56:1"
+        wcag: "AA compliant"
+        use: "Captions, hints"
+      - name: "--color-fg-subtle"
+        value: "rgba(255, 255, 255, 0.2)"
+        contrast: "2.1:1"
+        use: "Decorative only"
+        
+  borders:
+    tokens:
+      - name: "--color-border-default"
+        value: "rgba(255, 255, 255, 0.1)"
+      - name: "--color-border-emphasis"
+        value: "rgba(255, 255, 255, 0.2)"
+      - name: "--color-border-strong"
+        value: "rgba(255, 255, 255, 0.3)"
+        
+  semantic:
+    description: "Colors that mean something. All WCAG AA compliant on black."
+    tokens:
+      - name: "--color-success"
+        value: "#44aa44"
+        contrast: "7.08:1"
+      - name: "--color-error"
+        value: "#d44d4d"
+        contrast: "4.97:1"
+      - name: "--color-warning"
+        value: "#aa8844"
+        contrast: "6.31:1"
+      - name: "--color-info"
+        value: "#5082b9"
+        contrast: "5.23:1"
+        
+  data_visualization:
+    description: "Six distinct colors for charts and graphs"
+    tokens:
+      - { name: "--color-data-1", value: "#60a5fa", label: "Blue" }
+      - { name: "--color-data-2", value: "#22c55e", label: "Green" }
+      - { name: "--color-data-3", value: "#c084fc", label: "Purple" }
+      - { name: "--color-data-4", value: "#fbbf24", label: "Amber" }
+      - { name: "--color-data-5", value: "#f472b6", label: "Pink" }
+      - { name: "--color-data-6", value: "#facc15", label: "Yellow" }
+
+# =============================================================================
+# TYPOGRAPHY - Golden Ratio Scale
+# =============================================================================
+typography:
+  philosophy: "φ for dramatic headlines, minor third for readable body text"
+  
+  fonts:
+    sans: "'Stack Sans Notch', system-ui, -apple-system, sans-serif"
+    mono: "'JetBrains Mono', 'Fira Code', monospace"
+    serif: "Georgia, 'Times New Roman', serif"
+    
+  weights:
+    light: 300
+    regular: 400
+    medium: 500
+    semibold: 600
+    bold: 700
+    
+  line_heights:
+    tight: 1.25
+    snug: 1.375
+    normal: 1.5
+    relaxed: 1.618  # φ - Golden ratio
+    loose: 1.75
+    
+  scale:
+    description: "Display/headings use φ, body text uses minor third (1.2)"
+    derivation: |
+      Display: φⁿ where n = 1-4
+      Body: 1.2ⁿ where n = -1 to 1
+    tokens:
+      # Golden ratio scale (φ)
+      - name: "--text-display-xl"
+        power: "φ⁴"
+        value: "clamp(4.236rem, 6vw + 2rem, 6.854rem)"
+      - name: "--text-display"
+        power: "φ³"
+        value: "clamp(2.618rem, 4vw + 1.5rem, 4.236rem)"
+      - name: "--text-h1"
+        power: "φ²"
+        value: "clamp(1.618rem, 3vw + 1rem, 2.618rem)"
+      - name: "--text-h2"
+        power: "φ¹"
+        value: "clamp(1.2rem, 2vw + 0.5rem, 1.618rem)"
+      # Minor third scale (1.2)
+      - name: "--text-h3"
+        power: "1.2¹"
+        value: "clamp(1.02rem, 1vw + 0.5rem, 1.2rem)"
+      - name: "--text-body-lg"
+        power: "√1.2"
+        value: "1.095rem"
+      - name: "--text-body"
+        power: "base"
+        value: "1rem"
+      - name: "--text-body-sm"
+        power: "1/√1.2"
+        value: "0.913rem"
+      - name: "--text-caption"
+        power: "1/1.2"
+        value: "0.833rem"
+      - name: "--text-overline"
+        power: "1/φ"
+        value: "0.618rem"
+
+# =============================================================================
+# SPACING - Golden Ratio Scale
+# =============================================================================
+spacing:
+  philosophy: "φⁿ where base = 1rem creates natural visual rhythm"
+  
+  derivation: |
+    φ = 1.618033988749895
+    --space-xs  = 1/φ   = 0.618rem
+    --space-sm  = φ⁰    = 1rem (base)
+    --space-md  = φ¹    = 1.618rem
+    --space-lg  = φ²    = 2.618rem
+    --space-xl  = φ³    = 4.236rem
+    --space-2xl = φ⁴    = 6.854rem
+    --space-3xl = φ⁵    = 11.09rem
+    
+  tokens:
+    - { name: "--space-xs", power: "φ⁻¹", value: "0.618rem" }
+    - { name: "--space-sm", power: "φ⁰", value: "1rem" }
+    - { name: "--space-md", power: "φ¹", value: "1.618rem" }
+    - { name: "--space-lg", power: "φ²", value: "2.618rem" }
+    - { name: "--space-xl", power: "φ³", value: "4.236rem" }
+    - { name: "--space-2xl", power: "φ⁴", value: "6.854rem" }
+    - { name: "--space-3xl", power: "φ⁵", value: "11.09rem" }
+
+# =============================================================================
+# BORDER RADIUS - 4px Base Unit
+# =============================================================================
+border_radius:
+  philosophy: "4px base × integer multipliers. Aligns with 4px/8px design grids."
+  
+  tokens:
+    - { name: "--radius-sm", multiplier: "1.5", value: "6px" }
+    - { name: "--radius-md", multiplier: "2", value: "8px" }
+    - { name: "--radius-lg", multiplier: "3", value: "12px" }
+    - { name: "--radius-xl", multiplier: "4", value: "16px" }
+    - { name: "--radius-2xl", multiplier: "6", value: "24px" }
+    - { name: "--radius-full", value: "9999px", use: "Pills, avatars" }
+
+# =============================================================================
+# MOTION & ANIMATION
+# =============================================================================
+motion:
+  philosophy: "Based on human perception research and Material Design curves"
+  
+  easing:
+    standard: "cubic-bezier(0.4, 0.0, 0.2, 1)"    # Most transitions
+    decelerate: "cubic-bezier(0.0, 0.0, 0.2, 1)"  # Entering elements
+    accelerate: "cubic-bezier(0.4, 0.0, 1, 1)"    # Exiting elements
+    
+  duration:
+    description: "Based on human perception thresholds"
+    tokens:
+      - name: "--duration-instant"
+        value: "100ms"
+        perception: "Instantaneous"
+        use: "System feedback, tooltips"
+      - name: "--duration-micro"
+        value: "200ms"
+        perception: "Fast"
+        use: "Hover states, toggles"
+      - name: "--duration-standard"
+        value: "300ms"
+        perception: "Normal"
+        use: "Page transitions, modals"
+      - name: "--duration-complex"
+        value: "500ms"
+        perception: "Deliberate"
+        use: "Multi-step animations"
+      - name: "--duration-slow"
+        value: "700ms"
+        perception: "Slow"
+        use: "Dramatic emphasis"
+        
+  cascade:
+    description: "Staggered animation timing based on Gestalt proximity"
+    tokens:
+      - { name: "--cascade-step", value: "50ms", use: "Between siblings" }
+      - { name: "--cascade-group", value: "100ms", use: "Between groups" }
+      
+  scale:
+    description: "Subtle transforms for interaction feedback"
+    tokens:
+      - { name: "--scale-subtle", value: "0.98", use: "Pressed state" }
+      - { name: "--scale-micro", value: "1.02", use: "Card hover" }
+      - { name: "--scale-small", value: "1.05", use: "Emphasized hover" }
+      - { name: "--scale-medium", value: "1.1", use: "Modal entrance" }
+
+# =============================================================================
+# ELEVATION & SHADOWS
+# =============================================================================
+elevation:
+  shadows:
+    - { name: "--shadow-sm", value: "0 1px 2px 0 rgba(0, 0, 0, 0.5)" }
+    - { name: "--shadow-md", value: "0 4px 6px -1px rgba(0, 0, 0, 0.5)" }
+    - { name: "--shadow-lg", value: "0 10px 15px -3px rgba(0, 0, 0, 0.5)" }
+    - { name: "--shadow-xl", value: "0 20px 25px -5px rgba(0, 0, 0, 0.5)" }
+    - { name: "--shadow-2xl", value: "0 25px 50px -12px rgba(0, 0, 0, 0.75)" }
+    
+  glows:
+    description: "Blur doubles per step (10, 20, 40px)"
+    tokens:
+      - { name: "--shadow-glow-sm", blur: "10px", opacity: "0.05" }
+      - { name: "--shadow-glow-md", blur: "20px", opacity: "0.10" }
+      - { name: "--shadow-glow-lg", blur: "40px", opacity: "0.15" }
+
+# =============================================================================
+# Z-INDEX LAYERS
+# =============================================================================
+z_index:
+  philosophy: "10× gaps for flexibility. Clear semantic hierarchy."
+  
+  tokens:
+    - { name: "--z-base", value: 0, use: "Default stacking" }
+    - { name: "--z-dropdown", value: 10, use: "Menus, selects" }
+    - { name: "--z-sticky", value: 20, use: "Sticky headers" }
+    - { name: "--z-fixed", value: 50, use: "Fixed navbars, FABs" }
+    - { name: "--z-modal", value: 100, use: "Dialogs, drawers" }
+    - { name: "--z-popover", value: 200, use: "Popovers over modals" }
+    - { name: "--z-tooltip", value: 300, use: "Always on top" }
+
+# =============================================================================
+# LAYOUT
+# =============================================================================
+layout:
+  breakpoints:
+    - { name: "--breakpoint-sm", value: "640px" }
+    - { name: "--breakpoint-md", value: "768px" }
+    - { name: "--breakpoint-lg", value: "1024px" }
+    - { name: "--breakpoint-xl", value: "1280px" }
+    - { name: "--breakpoint-2xl", value: "1536px" }
+    
+  content_widths:
+    philosophy: "Two φ chains - reading (26rem base) and content (20rem base)"
+    tokens:
+      - { name: "--width-tight", derivation: "26/φ", value: "16.07rem", use: "Narrow sidebars" }
+      - { name: "--width-narrow", derivation: "20×φ", value: "32.36rem", use: "Narrow content" }
+      - { name: "--width-prose", derivation: "26×φ", value: "42rem", use: "Optimal reading (66-75 chars)" }
+      - { name: "--width-content", derivation: "20×φ²", value: "52.36rem", use: "Standard content" }
+      - { name: "--width-wide", derivation: "26×φ²", value: "68rem", use: "Full-width content" }
+      
+  constants:
+    header_height: "72px"
+    container_prose: "65ch"
+
+# =============================================================================
+# BACKEND PATTERNS
+# =============================================================================
+backend:
+  api_endpoints:
+    philosophy: "Shared handlers, Zod validation, structured logging, graceful failures"
+    
+    shared_handlers:
+      description: "Common operations use shared handler factories"
+      example: |
+        import { createNewsletterHandler } from '@create-something/components/newsletter';
+        export const POST = createNewsletterHandler({ property: 'io' });
+      instances: 4  # newsletter across io, agency, space, ltd
+      
+    validation:
+      description: "Request validation with Zod schemas"
+      example: |
+        import { parseBody, contactSchema } from '@create-something/components/validation';
+        const parseResult = await parseBody(request, contactSchema);
+        if (!parseResult.success) {
+          return json({ success: false, message: parseResult.error }, { status: 400 });
+        }
+        
+    structured_logging:
+      description: "Contextual logging with createLogger"
+      example: |
+        import { createLogger } from '@create-something/components/utils';
+        const logger = createLogger('ContactAPI');
+        logger.info('Contact form submitted', { email, name });
+        logger.error('Contact form error', { error: err });
+        
+    response_shape:
+      description: "Standard JSON response shape"
+      schema: |
+        type APIResponse<T = unknown> = {
+          success: boolean;
+          message?: string;
+          error?: string;
+          data?: T;
+        }
+      examples:
+        success: "json({ success: true, message: 'Created' })"
+        error: "json({ success: false, message: 'Validation failed' }, { status: 400 })"
+        
+    platform_access:
+      description: "Cloudflare bindings via platform?.env"
+      example: |
+        export const POST: RequestHandler = async ({ request, platform }) => {
+          if (!platform?.env) {
+            throw error(500, 'Platform environment not available');
+          }
+          const db = platform.env.DB;
+          // ...
+        }
+        
+    graceful_analytics:
+      description: "Analytics failures never break user experience"
+      example: |
+        try {
+          await processEventBatch(db, batch, context);
+          return json(result);
+        } catch (error) {
+          logger.error('Failed to process analytics', { error });
+          // Return success anyway - analytics shouldn't break UX
+          return json({ success: false, received: 0 }, { status: 200 });
+        }
+        
+  load_functions:
+    philosophy: "getPlatform abstraction, proper error handling, typed returns"
+    
+    platform_abstraction:
+      description: "getPlatform() abstracts D1 vs SQLite"
+      example: |
+        import { getPlatform } from '@create-something/components/platform';
+        
+        export const load: PageServerLoad = async ({ params, platform }) => {
+          const { DB } = await getPlatform(platform);
+          // Same code works on Cloudflare and Mac Mini
+        }
+        
+    error_handling:
+      description: "Throw SvelteKit errors, re-throw known errors"
+      example: |
+        try {
+          const result = await DB.prepare('...').bind(slug).first();
+          if (!result) throw error(404, 'Not found');
+          return { data: result };
+        } catch (err) {
+          if (err && typeof err === 'object' && 'status' in err) throw err;
+          throw error(500, 'Failed to load');
+        }
+        
+    redirects:
+      description: "Cross-property redirects with throw redirect"
+      example: |
+        const REDIRECTS: Record<string, string> = {
+          'old-slug': 'https://example.com/new-location'
+        };
+        if (REDIRECTS[slug]) throw redirect(301, REDIRECTS[slug]);
+        
+  workers:
+    philosophy: "Typed Env, correlation IDs, response helpers, KV caching, D1 storage"
+    
+    env_interface:
+      description: "Type all Cloudflare bindings"
+      example: |
+        export interface Env {
+          CACHE: KVNamespace;
+          DB: D1Database;
+          ENVIRONMENT: string;
+          RATE_LIMIT_REQUESTS: string;
+        }
+        
+    correlation_ids:
+      description: "Track requests across logs"
+      example: |
+        function generateCorrelationId(): string {
+          return `svc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        }
+        
+    response_helpers:
+      description: "Consistent response formatting"
+      example: |
+        function successResponse<T>(data: T, correlationId: string, cached = false): Response {
+          return new Response(JSON.stringify({
+            success: true,
+            data,
+            cached,
+            timestamp: new Date().toISOString(),
+          }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Correlation-ID': correlationId,
+            },
+          });
+        }
+        
+    kv_caching:
+      description: "Cache API responses with TTL"
+      example: |
+        const cached = await env.CACHE.get(cacheKey, 'json');
+        if (cached) return { data: cached, cached: true };
+        // ... fetch fresh data ...
+        await env.CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 30 });
+        
+    rate_limiting:
+      description: "KV-based rate limiting per time window"
+      example: |
+        const windowStart = Math.floor(Date.now() / windowMs) * windowMs;
+        const key = `rate-limit:${service}:${windowStart}`;
+        const current = parseInt(await kv.get(key) || '0');
+        if (current >= limit) return { allowed: false };
+        await kv.put(key, (current + 1).toString(), { expirationTtl: windowMs / 1000 });
+        
+    cron_scheduled:
+      description: "Scheduled tasks via export scheduled"
+      example: |
+        export default {
+          async fetch(request: Request, env: Env): Promise<Response> { /* routes */ },
+          async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+            ctx.waitUntil(captureSnapshot(env));
+          },
+        };
+
+# =============================================================================
+# COMPONENT PATTERNS (Svelte 5)
+# =============================================================================
+components:
+  props_pattern:
+    name: "Svelte 5 Props"
+    description: "Use $props() with explicit typing"
+    example: 'let { data }: { data: PageData } = $props();'
+    anti_pattern: "export let data: PageData;  // Svelte 4"
+    
+  derived_pattern:
+    name: "Svelte 5 Derived"
+    description: "Use $derived for computed values"
+    example: "const fullUrl = $derived(`https://.../${paper.slug}`);"
+    
+  state_pattern:
+    name: "Svelte 5 State"
+    description: "Use $state() for reactive state"
+    example: "let isOpen = $state(false);"
+
+# =============================================================================
+# ENFORCEMENT ALGORITHM
+# =============================================================================
+# Layered detection strategy based on research:
+# 1. AST-based CSS parsing (primary) - highest accuracy
+# 2. Token adoption ratio (complementary) - file-level health
+# 3. Svelte-specific patterns (tertiary) - computed styles
+# 4. Incremental analysis (performance) - only changed files
+#
+# Exceptions/ignores live in project-specific.yml
+
+enforcement:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Layer 1: AST-Based CSS Parsing (Primary)
+  # ─────────────────────────────────────────────────────────────────────────
+  # Uses rust-cssparser to parse <style> blocks, not regex
+  # Advantages: context-aware, eliminates false positives, understands var()
+  ast_parsing:
+    enabled: true
+    parser: "rust-cssparser"  # W3C CSS Syntax Module Level 3 compliant
+    
+    # Properties that MUST use tokens
+    token_required_properties:
+      colors:
+        properties: ["color", "background-color", "border-color", "fill", "stroke"]
+        valid_patterns:
+          - "var(--color-*)"
+          - "transparent"
+          - "inherit"
+          - "currentColor"
+        violations:
+          - "#[0-9a-fA-F]{3,8}"   # hex colors
+          - "rgb(*, *, *)"        # rgb()
+          - "rgba(*, *, *, *)"    # rgba()
+          - "hsl(*, *, *)"        # hsl()
+          - "hsla(*, *, *, *)"    # hsla()
+          
+      spacing:
+        properties: ["margin", "padding", "gap", "margin-*", "padding-*"]
+        valid_patterns:
+          - "var(--space-*)"
+          - "0"
+          - "auto"
+        violations:
+          - "\\d+px"              # hardcoded pixels
+          - "\\d+em"              # hardcoded em (unless in calc with var)
+          
+      typography:
+        properties: ["font-size", "line-height", "letter-spacing"]
+        valid_patterns:
+          - "var(--text-*)"
+          - "var(--leading-*)"
+          - "var(--tracking-*)"
+          - "inherit"
+        violations:
+          - "\\d+px"              # hardcoded pixels
+          - "\\d+\\.?\\d*rem"     # hardcoded rem (should use token)
+          
+      radii:
+        properties: ["border-radius"]
+        valid_patterns:
+          - "var(--radius-*)"
+          - "0"
+        violations:
+          - "\\d+px"
+          
+      shadows:
+        properties: ["box-shadow"]
+        valid_patterns:
+          - "var(--shadow-*)"
+          - "none"
+        violations:
+          - "\\d+px\\s+\\d+px"    # hardcoded shadow values
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Layer 2: Token Adoption Ratio (Complementary)
+  # ─────────────────────────────────────────────────────────────────────────
+  # Measures file-level health: token_usage / (token_usage + hardcoded_usage)
+  # Files below threshold are flagged for review
+  adoption_ratio:
+    enabled: true
+    
+    # Formula: compliant_declarations / total_declarations * 100
+    calculation:
+      compliant: "declarations using var(--*) or valid patterns"
+      total: "all declarations for token-required properties"
+      
+    thresholds:
+      healthy: 90        # 90%+ = file is healthy
+      warning: 70        # 70-89% = needs attention
+      critical: 50       # <70% = critical drift
+      
+    # Output metrics per file
+    metrics:
+      - ratio_percentage
+      - compliant_count
+      - violation_count
+      - category_breakdown  # { colors, spacing, typography, etc. }
+      
+    # Aggregate metrics for reporting
+    aggregate:
+      - overall_adoption_percentage
+      - worst_offending_files
+      - most_common_violation_type
+      - trend_over_time
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Layer 3: Svelte-Specific Pattern Detection (Tertiary)
+  # ─────────────────────────────────────────────────────────────────────────
+  # Catches violations AST parsing misses: computed styles, props, runes
+  svelte_patterns:
+    enabled: true
+    
+    # Detect hardcoded values in reactive/computed styles
+    computed_styles:
+      patterns:
+        - 'style="\{.*#[0-9a-fA-F].*\}"'     # inline style with hex
+        - 'style:color="\{.*#.*\}"'          # style directive with hex
+        - '\$derived\(.*#[0-9a-fA-F].*\)'    # $derived with hardcoded color
+        - '\$state\(.*#[0-9a-fA-F].*\)'      # $state with hardcoded color
+        
+    # Component prop patterns
+    props:
+      svelte4_legacy:
+        detect: 'export let \w+:'
+        message: "Migrate to Svelte 5 $props() pattern"
+        severity: "warn"
+        
+      prop_defaults:
+        detect: '= \$props\(\).*=\s*[''"]#[0-9a-fA-F]'
+        message: "Prop default uses hardcoded color"
+        severity: "warn"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Layer 4: Performance Optimizations
+  # ─────────────────────────────────────────────────────────────────────────
+  performance:
+    # Incremental analysis: only scan changed files
+    incremental:
+      enabled: true
+      cache_location: ".ground/cache"
+      invalidate_on: ["file_modified", "config_changed"]
+      
+    # Parallel processing with Rayon
+    parallelization:
+      enabled: true
+      max_threads: "auto"  # Uses all available cores
+      
+    # Target: <30 seconds for 800 files on standard hardware
+    targets:
+      full_scan_seconds: 30
+      incremental_scan_seconds: 5
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Reporting
+  # ─────────────────────────────────────────────────────────────────────────
+  reporting:
+    formats: ["console", "json", "markdown"]
+    
+    # Actionable messages with fix suggestions
+    violation_format:
+      include_location: true      # file:line:column
+      include_context: true       # surrounding code
+      include_suggestion: true    # "Use var(--color-primary) instead"
+      
+    # Integration points
+    integrations:
+      ci_cd: true                 # Fail builds on regression
+      pull_request: true          # Comment violations on PRs
+      editor: true                # Real-time feedback via LSP

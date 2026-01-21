@@ -98,6 +98,19 @@ ground find dead-exports ./utils.ts --scope ./src
 ground find duplicates ./packages --monorepo --beads
 ```
 
+### Pattern Analysis Commands (design system enforcement)
+
+```bash
+# Find design system drift (hardcoded values that should use tokens)
+ground find drift ./packages
+
+# Calculate Canon token adoption ratio
+ground find adoption-ratio ./packages --worst 10
+
+# Mine patterns to discover implicit design tokens
+ground find patterns ./packages --min-occurrences 5
+```
+
 ### Claim Commands (need to check first)
 
 ```bash
@@ -162,6 +175,10 @@ Ground exposes tools via the Model Context Protocol:
 | `ground_claim_orphan` | Claim module is orphaned |
 | `ground_suggest_fix` | Get fix suggestions (works with any pnpm monorepo) |
 | `ground_status` | Show status |
+| `ground_find_drift` | Find design system violations (hardcoded colors, spacing, etc.) |
+| `ground_adoption_ratio` | Calculate Canon token adoption metrics |
+| `ground_suggest_pattern` | Context-aware token suggestions with reasoning |
+| `ground_mine_patterns` | Discover implicit patterns that could become tokens |
 
 Add to your `.cursor/mcp.json`:
 
@@ -198,6 +215,37 @@ Ground includes a pre-commit hook that catches >90% duplicates:
 # Already set up in .husky/pre-commit
 git commit -m "my changes"  # Ground checks automatically
 ```
+
+---
+
+## Architecture-Aware Analysis
+
+Ground understands that not all code connects through imports. It detects **architectural connections** for:
+
+### Cloudflare Workers
+Files referenced in `wrangler.toml`:
+- Routes, custom domains, crons
+- KV, D1, R2, Durable Objects, Queues bindings
+- Service-to-service bindings
+
+### Browser Extensions
+Files referenced in `manifest.json` (V2 and V3):
+- `background.service_worker` and `background.scripts`
+- `action.default_popup` → HTML → `<script src="...">` chains
+- `content_scripts[].js`
+- `options_page`, `options_ui.page`, `devtools_page`
+- `web_accessible_resources`
+
+Example: Ground will NOT report `popup.js` as orphaned when:
+```
+manifest.json
+└── action.default_popup: "popup.html"
+    └── <script src="popup.js">  ←── Ground follows this chain
+```
+
+### Package Entry Points
+Files declared in `package.json`:
+- `main`, `bin`, `exports`
 
 ---
 
