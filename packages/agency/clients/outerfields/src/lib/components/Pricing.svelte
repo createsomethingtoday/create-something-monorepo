@@ -118,8 +118,9 @@
 
 	.pricing-card {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: 2fr 3fr;
 		gap: 3rem;
+		align-items: center;
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: 1rem;
@@ -279,9 +280,9 @@
 		list-style: none;
 		padding: 0;
 		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem 2rem;
 	}
 
 	.benefit-item {
@@ -300,6 +301,12 @@
 	}
 
 	/* Responsive */
+	@media (max-width: 900px) {
+		.benefits-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
 	@media (max-width: 768px) {
 		.pricing-section {
 			padding: 3rem 1rem;
@@ -324,6 +331,10 @@
 
 		.cta-button {
 			width: 100%;
+		}
+
+		.benefits-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>
