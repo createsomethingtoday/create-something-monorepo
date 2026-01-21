@@ -152,7 +152,7 @@
 	}
 
 	.nav-container {
-		max-width: 80rem;
+		max-width: 72rem;
 		margin: 0 auto;
 		display: flex;
 		align-items: center;
