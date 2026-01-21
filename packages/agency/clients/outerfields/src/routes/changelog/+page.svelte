@@ -21,6 +21,45 @@
 	// Nicely Said: Lead with what changed for users, not what we built
 	const changelog: ChangelogEntry[] = [
 		{
+			date: '2026-01-17',
+			version: '1.6.0',
+			title: 'Clean, monochromatic design',
+			description: 'Pure black and white palette. Glass buttons throughout. No distracting colors. Content speaks for itself.',
+			category: 'improvement',
+			highlights: [
+				'Monochrome color palette',
+				'Glass/frosted buttons',
+				'Cleaner visual hierarchy',
+				'Better dark mode contrast'
+			]
+		},
+		{
+			date: '2026-01-17',
+			version: '1.5.1',
+			title: 'Editor\'s Choice highlights featured films',
+			description: 'Films now get a dedicated spotlight section with cinematic banner layout. Full-bleed imagery, prominent CTAs.',
+			category: 'feature',
+			highlights: [
+				'StreamVerse-style featured banner',
+				'Left-aligned content overlay',
+				'Watch trailer + Details buttons',
+				'Auto-loads from your film catalog'
+			]
+		},
+		{
+			date: '2026-01-17',
+			version: '1.5.0',
+			title: 'Hero redesign: Building Outerfields',
+			description: 'New two-line hero title. "Building Outerfields: The Odyssey" sets the narrative tone. Category pills at the bottom for quick navigation.',
+			category: 'improvement',
+			highlights: [
+				'Two-line dramatic title',
+				'Italic accent for "The Odyssey"',
+				'Category filter pills',
+				'Stronger bottom gradient'
+			]
+		},
+		{
 			date: '2026-01-20',
 			version: '1.4.0',
 			title: 'Members set up faster now',
@@ -149,9 +188,9 @@
 	];
 
 	const stats = {
-		totalCommits: 75,
-		features: 42,
-		daysActive: 13,
+		totalCommits: 85,
+		features: 48,
+		daysActive: 17,
 		price: 99
 	};
 
@@ -177,7 +216,7 @@
 			<span class="hero-badge">Building in Public</span>
 			<h1 class="hero-title">What we shipped</h1>
 			<p class="hero-description">
-				13 days. 75+ commits. Everything documented here.
+				17 days. 85+ commits. Everything documented here.
 			</p>
 		</div>
 	</section>
@@ -523,32 +562,39 @@
 	.cta-primary {
 		display: inline-block;
 		padding: 0.875rem 1.5rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: rgba(255, 255, 255, 0.12);
+		color: var(--color-fg-primary);
+		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: var(--radius-md);
 		font-weight: 600;
 		text-decoration: none;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.cta-primary:hover {
-		opacity: 0.9;
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.35);
 	}
 
 	.cta-secondary {
 		display: inline-block;
 		padding: 0.875rem 1.5rem;
-		background: transparent;
+		background: rgba(255, 255, 255, 0.05);
 		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid rgba(255, 255, 255, 0.15);
 		border-radius: var(--radius-md);
 		font-weight: 600;
 		text-decoration: none;
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.cta-secondary:hover {
-		border-color: var(--color-border-strong);
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.25);
 	}
 
 	/* Responsive */
