@@ -17,6 +17,7 @@
 	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
 	import { authStore } from '$lib/stores/auth';
+	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS } from '$lib/stores/categoryFilter';
 
 	// Cloudflare R2 CDN base URL (public bucket) - used for video assets only
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
@@ -50,13 +51,37 @@
 		episodeNumber?: number;
 	}
 
-	let categories = $state<Array<{ title: string; videos: RowVideo[] }>>([]);
+	let allCategories = $state<Array<{ title: string; categoryId: string; videos: RowVideo[] }>>([]);
 	let isLoading = $state(true);
 	let loadError = $state<string | null>(null);
 	let playerVideosById = $state<Record<string, PlayerVideo>>({});
 	let rowVideosById = $state<Record<string, RowVideo>>({});
 
 	const isMember = $derived($authStore.user?.membership ?? false);
+	const activeFilter = $derived(categoryFilter.active);
+
+	// Filter categories based on the active filter
+	const filteredCategories = $derived.by(() => {
+		if (activeFilter === 'all') {
+			return allCategories;
+		}
+
+		if (activeFilter === 'free') {
+			// Filter videos by tier, show all categories that have free content
+			return allCategories
+				.map(cat => ({
+					...cat,
+					videos: cat.videos.filter(v => v.tier === 'free')
+				}))
+				.filter(cat => cat.videos.length > 0);
+		}
+
+		// Filter by category
+		const allowedCategories = FILTER_TO_CATEGORIES[activeFilter];
+		if (!allowedCategories) return allCategories;
+
+		return allCategories.filter(cat => allowedCategories.includes(cat.categoryId));
+	});
 
 	function formatClock(totalSeconds: number): string {
 		const s = Math.max(0, Math.floor(totalSeconds));
@@ -137,8 +162,7 @@
 			const grouped = result.data as Record<string, DbVideo[]>;
 
 			const byId: Record<string, PlayerVideo> = {};
-			const rows: Array<{ title: string; videos: RowVideo[] }> = Object.entries(grouped)
-				.filter(([categoryId]) => categoryId !== 'films') // Films shown in EditorChoice
+			const rows: Array<{ title: string; categoryId: string; videos: RowVideo[] }> = Object.entries(grouped)
 				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([categoryId, vids]) => {
 					for (const v of vids) {
@@ -146,16 +170,17 @@
 					}
 					return {
 						title: titleFromCategoryId(categoryId),
+						categoryId,
 						videos: vids.map(buildRowVideo)
 					};
 				});
 
 			playerVideosById = byId;
-			categories = rows;
+			allCategories = rows;
 			rowVideosById = Object.fromEntries(rows.flatMap(r => r.videos.map(v => [v.id, v])));
 		} catch (err) {
 			loadError = err instanceof Error ? err.message : 'Failed to load videos';
-			categories = [];
+			allCategories = [];
 			playerVideosById = {};
 			rowVideosById = {};
 		} finally {
@@ -164,12 +189,29 @@
 	});
 </script>
 
-<section class="content-categories">
+<section class="content-categories" id="content-categories">
 	<div class="section-header">
-		<h2 class="section-title">Watch Now</h2>
+		<h2 class="section-title">
+			{#if activeFilter === 'all'}
+				Watch Now
+			{:else}
+				{FILTER_LABELS[activeFilter]}
+			{/if}
+		</h2>
 		<p class="section-description">
-			Explore our content library. First episodes and all trailers are FREE.
-			Become a member for full access.
+			{#if activeFilter === 'free'}
+				Free content — no membership required.
+			{:else if activeFilter === 'trailers'}
+				Preview what's coming next.
+			{:else if activeFilter === 'films'}
+				Feature-length films from our network.
+			{:else if activeFilter === 'bts'}
+				Behind the scenes of our productions.
+			{:else if activeFilter === 'series'}
+				Ongoing series from our content network.
+			{:else}
+				Explore our content library. First episodes and all trailers are FREE.
+			{/if}
 		</p>
 	</div>
 
@@ -178,10 +220,10 @@
 			<p class="empty-state">Loading videos…</p>
 		{:else if loadError}
 			<p class="empty-state">{loadError}</p>
-		{:else if categories.length === 0}
-			<p class="empty-state">No videos available yet.</p>
+		{:else if filteredCategories.length === 0}
+			<p class="empty-state">No videos in this category yet.</p>
 		{:else}
-			{#each categories as category}
+			{#each filteredCategories as category (category.categoryId)}
 				<CategoryRow title={category.title} videos={category.videos} useLinks={true} />
 			{/each}
 		{/if}

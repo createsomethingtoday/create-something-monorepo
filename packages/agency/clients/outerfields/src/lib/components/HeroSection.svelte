@@ -5,24 +5,33 @@
 	 * StreamVerse-inspired full-bleed hero with category pills at bottom
 	 */
 	import { Play, Plus, Star, Clock } from 'lucide-svelte';
+	import { categoryFilter, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter';
 
-	function scrollToJourney() {
-		document.getElementById('journey')?.scrollIntoView({ behavior: 'smooth' });
+	function scrollToContent() {
+		document.getElementById('content-categories')?.scrollIntoView({ behavior: 'smooth' });
 	}
 
 	function scrollToPricing() {
 		document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
 	}
 
-	// Category filters
-	const categories = [
-		{ id: 'trending', label: 'Trending', active: true },
-		{ id: 'series', label: 'Series', active: false },
-		{ id: 'films', label: 'Films', active: false },
-		{ id: 'bts', label: 'Behind the Scenes', active: false },
-		{ id: 'trailers', label: 'Trailers', active: false },
-		{ id: 'free', label: 'Free to Watch', active: false }
+	function handleCategoryClick(id: CategoryFilter) {
+		categoryFilter.set(id);
+		// Scroll to content section when filter changes
+		scrollToContent();
+	}
+
+	// Category filters - synced with store
+	const categories: Array<{ id: CategoryFilter; label: string }> = [
+		{ id: 'all', label: 'All Content' },
+		{ id: 'series', label: 'Series' },
+		{ id: 'films', label: 'Films' },
+		{ id: 'bts', label: 'Behind the Scenes' },
+		{ id: 'trailers', label: 'Trailers' },
+		{ id: 'free', label: 'Free to Watch' }
 	];
+
+	const activeFilter = $derived(categoryFilter.active);
 </script>
 
 <section class="hero">
@@ -67,7 +76,7 @@
 
 		<!-- CTA Buttons -->
 		<div class="hero-actions">
-			<button class="btn-primary" onclick={scrollToJourney}>
+			<button class="btn-primary" onclick={scrollToContent}>
 				<Play size={20} />
 				<span>Watch Now</span>
 			</button>
@@ -81,7 +90,11 @@
 	<!-- Category pills at bottom of hero -->
 	<div class="category-pills">
 		{#each categories as category}
-			<button class="pill" class:active={category.active}>
+			<button
+				class="pill"
+				class:active={activeFilter === category.id}
+				onclick={() => handleCategoryClick(category.id)}
+			>
 				{category.label}
 			</button>
 		{/each}
