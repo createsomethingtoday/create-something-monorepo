@@ -285,7 +285,7 @@
 	}
 
 	.ai-analytics-container {
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto;
 		position: relative;
 		z-index: 1;

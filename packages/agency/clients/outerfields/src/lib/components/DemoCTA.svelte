@@ -80,7 +80,7 @@
 
 	.demo-container {
 		position: relative;
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto;
 		z-index: 1;
 	}

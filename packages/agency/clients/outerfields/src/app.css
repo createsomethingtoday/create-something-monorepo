@@ -77,6 +77,9 @@
 	--glass-border: rgba(255, 255, 255, 0.1);
 	--glass-blur: 10px;
 
+	/* Layout */
+	--container-max-width: var(--container-max-width); /* 1152px - change to 80rem (1280px) for wider layout */
+
 	/* Spacing Scale (used across components) */
 	--space-xs: 0.5rem;
 	--space-sm: 0.75rem;

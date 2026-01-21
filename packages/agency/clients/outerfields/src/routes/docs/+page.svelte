@@ -694,7 +694,7 @@ const heights = buckets.map(v => (v / maxValue) * 100);</code></pre>
 	}
 
 	.docs-container {
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto;
 	}
 

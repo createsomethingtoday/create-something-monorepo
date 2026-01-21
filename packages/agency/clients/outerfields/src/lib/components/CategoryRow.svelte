@@ -119,7 +119,7 @@
 	}
 
 	.category-header-wrapper {
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto;
 	}
 
@@ -181,8 +181,8 @@
 	.cards-inner {
 		display: flex;
 		gap: var(--space-md);
-		/* Align card start with 72rem container edge */
-		padding: 0 max(1rem, calc((100vw - 72rem) / 2));
+		/* Align card start with container edge */
+		padding: 0 max(1rem, calc((100vw - var(--container-max-width)) / 2));
 	}
 
 	/* Responsive */

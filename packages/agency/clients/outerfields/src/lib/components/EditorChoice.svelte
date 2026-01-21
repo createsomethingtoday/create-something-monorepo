@@ -161,7 +161,7 @@
 		z-index: 10;
 		height: 100%;
 		width: 100%;
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto;
 	}
 

@@ -96,7 +96,7 @@
 	}
 
 	.ecosystem-container {
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto;
 	}
 

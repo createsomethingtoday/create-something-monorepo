@@ -272,7 +272,7 @@
 	.section-header {
 		text-align: center;
 		margin-bottom: var(--space-2xl);
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin-left: auto;
 		margin-right: auto;
 	}
@@ -298,7 +298,7 @@
 		justify-content: center;
 		flex-wrap: wrap;
 		gap: var(--space-sm);
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto var(--space-xl);
 	}
 

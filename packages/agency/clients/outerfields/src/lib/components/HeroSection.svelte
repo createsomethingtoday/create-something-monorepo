@@ -87,7 +87,7 @@
 
 	.hero-container {
 		width: 100%;
-		max-width: 72rem;
+		max-width: var(--container-max-width);
 		margin: 0 auto;
 	}
 
