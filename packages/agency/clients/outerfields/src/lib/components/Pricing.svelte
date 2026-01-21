@@ -245,8 +245,10 @@
 		top: -0.75rem;
 		left: 50%;
 		transform: translateX(-50%);
+		z-index: 1;
 		padding: 0.375rem 1rem;
-		background: rgba(255, 255, 255, 0.15);
+		/* Solid background to hide card border behind badge */
+		background: var(--color-bg-pure, #000);
 		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: 9999px;
 		font-size: 0.75rem;
