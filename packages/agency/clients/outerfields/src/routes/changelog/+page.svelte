@@ -2,9 +2,12 @@
 	/**
 	 * OUTERFIELDS Changelog
 	 * 
-	 * Public development progress page for investors and stakeholders
+	 * Development progress in Nicely Said voice:
+	 * - Lead with outcomes, not announcements
+	 * - Specific numbers, not vague claims
+	 * - Plain language, user-focused
 	 */
-	import { Calendar, Check, Zap, Shield, Video, CreditCard, BarChart3, Users, Smartphone, Mail, Bot } from 'lucide-svelte';
+	import { Calendar, Check, Zap, Shield } from 'lucide-svelte';
 
 	interface ChangelogEntry {
 		date: string;
@@ -15,139 +18,132 @@
 		highlights?: string[];
 	}
 
+	// Nicely Said: Lead with what changed for users, not what we built
 	const changelog: ChangelogEntry[] = [
 		{
 			date: '2026-01-20',
 			version: '1.4.0',
-			title: 'AI-Native Workflow Enhancements',
-			description: 'Advanced AI tooling for platform self-improvement and founding member presets.',
+			title: 'Members set up faster now',
+			description: 'New founding member preset gets you from signup to watching in under 2 minutes. Environment loads automatically.',
 			category: 'feature',
 			highlights: [
-				'Stack-founding-members preset for quick member setup',
-				'Incremental diff mode for AI-native workflows',
-				'Auto-load environment configuration'
+				'One-click member setup',
+				'Auto-detect your environment',
+				'Skip the configuration screens'
 			]
 		},
 		{
 			date: '2026-01-19',
 			version: '1.3.0',
-			title: 'Mobile & Tablet Optimization',
-			description: 'Responsive design improvements ensuring flawless experience across all devices.',
+			title: 'iPad and tablet: no more overflow',
+			description: 'Fixed horizontal scrolling issues on tablets. Navigation stays put. Videos fill the screen properly.',
 			category: 'improvement',
 			highlights: [
-				'iPad/tablet viewport overflow fixes',
-				'Mobile navigation improvements',
-				'Video landing page mobile optimization'
+				'iPad viewport: fixed',
+				'Mobile nav: no more overflow',
+				'Video pages: edge-to-edge'
 			]
 		},
 		{
 			date: '2026-01-18',
 			version: '1.2.1',
-			title: 'Security & Logging Updates',
-			description: 'Critical security patches and improved payment webhook logging.',
+			title: 'Payments: better logging, security patch',
+			description: 'Stripe webhooks now log persistently. Updated Wrangler to fix a security vulnerability.',
 			category: 'security',
 			highlights: [
-				'Stripe webhook persistent logging',
-				'Wrangler security update (undici fix)',
-				'Improved error tracking'
+				'Webhook logs persist (easier debugging)',
+				'Security patch: undici vulnerability',
+				'Error tracking improved'
 			]
 		},
 		{
 			date: '2026-01-17',
 			version: '1.2.0',
-			title: 'AI-Native Platform System',
-			description: 'Revolutionary self-improving platform with human-in-the-loop guardrails.',
+			title: 'The platform improves itself',
+			description: 'AI proposes small UX fixes. You approve or reject. Changes deploy automatically. No code required.',
 			category: 'feature',
 			highlights: [
-				'AI agent proposal system',
-				'Human approval workflow',
-				'Automated UX improvements',
-				'Guardrails for safe changes'
+				'AI spots UX issues',
+				'You review every change',
+				'Safe guardrails built in',
+				'Rollback with one click'
 			]
 		},
 		{
 			date: '2026-01-14',
 			version: '1.1.0',
-			title: 'Email & Communication System',
-			description: 'Professional email templates with Resend integration for member communications.',
+			title: 'Emails that actually arrive',
+			description: 'Resend integration. Branded emails from createsomething.io. New video? You get notified.',
 			category: 'feature',
 			highlights: [
-				'Resend template management',
-				'Video landing page update emails',
-				'Client update notifications',
-				'Branded email from createsomething.io'
+				'Video update notifications',
+				'Branded sender address',
+				'Template management'
 			]
 		},
 		{
 			date: '2026-01-13',
 			version: '1.0.0',
-			title: 'Video Experience & Presentations',
-			description: 'Complete video landing page experience with comments, transcripts, and investor presentations.',
+			title: 'Watch pages shipped',
+			description: 'Full video experience: comments, transcripts, related videos. Investor presentations live. AI chat demo available.',
 			category: 'feature',
 			highlights: [
-				'Video watch pages with analytics',
-				'Comments and transcript system',
-				'Related videos recommendations',
-				'Investor & user presentations',
-				'AI analytics chat preview',
-				'Remote MCP publishing'
+				'Comments on every video',
+				'Full transcripts',
+				'Related videos sidebar',
+				'Investor deck: /presentations/investor',
+				'AI analytics chat: try it free'
 			]
 		},
 		{
 			date: '2026-01-12',
 			version: '0.9.0',
-			title: 'Production Launch',
-			description: 'Full platform deployment with Cloudflare infrastructure and membership system.',
+			title: 'Production launch',
+			description: '$99 lifetime membership. Stripe checkout. Calendly scheduling. Netflix-style browsing.',
 			category: 'feature',
 			highlights: [
-				'Netflix-style content browsing',
-				'$99 lifetime membership checkout',
-				'Stripe payment integration',
-				'Calendly discovery calls',
+				'Browse like Netflix',
+				'Pay once, access forever',
+				'Book discovery calls',
 				'Analytics dashboard preview',
-				'Component Lab with tool demos',
-				'Journey section (Code+Media+Build+Sell)',
-				'Competitive comparison vs Patreon/Substack'
+				'Compare vs Patreon, Substack'
 			]
 		},
 		{
 			date: '2026-01-11',
 			version: '0.8.0',
-			title: 'AI Analytics Chat',
-			description: 'Interactive Claude-powered analytics assistant for content strategy insights.',
+			title: 'Ask questions about your content',
+			description: 'Type what you want to know. AI analyzes your video performance and suggests what to create next.',
 			category: 'feature',
 			highlights: [
-				'Natural language analytics queries',
-				'Content strategy recommendations',
-				'Real-time platform insights'
+				'Natural language queries',
+				'Content strategy suggestions',
+				'Real-time insights'
 			]
 		},
 		{
 			date: '2026-01-09',
 			version: '0.7.0',
-			title: 'MCP Server & AI Integration',
-			description: 'Remote MCP server for AI-native platform exploration and analytics.',
+			title: 'AI tools connected',
+			description: 'MCP server deployed. Claude can browse your analytics. Component previews work.',
 			category: 'feature',
 			highlights: [
-				'Remote MCP server deployment',
-				'AI-powered content strategy chat',
-				'Component Lab with live previews',
-				'OUTERFIELDS brand integration'
+				'Remote MCP server',
+				'AI content strategy',
+				'Live component previews'
 			]
 		},
 		{
 			date: '2026-01-08',
 			version: '0.6.0',
-			title: 'Platform Foundation',
-			description: 'Core platform features including video player, pricing, and 3D hero experience.',
+			title: 'Foundation: videos play',
+			description: '3D hero from Sketchfab. AI-generated thumbnails. Engagement heatmaps. R2 CDN delivery.',
 			category: 'feature',
 			highlights: [
-				'Sketchfab 3D embed hero',
+				'3D galaxy background',
 				'Flux AI thumbnails',
-				'Veo 3.1 video generation',
-				'Engagement heatmap',
-				'R2 CDN video delivery',
-				'Demo authentication system'
+				'See where viewers drop off',
+				'Global CDN: fast everywhere'
 			]
 		}
 	];
@@ -155,20 +151,9 @@
 	const stats = {
 		totalCommits: 75,
 		features: 42,
-		improvements: 18,
-		fixes: 15,
-		daysInDevelopment: 13
+		daysActive: 13,
+		price: 99
 	};
-
-	function getCategoryIcon(category: string) {
-		switch (category) {
-			case 'feature': return Zap;
-			case 'improvement': return Check;
-			case 'fix': return Shield;
-			case 'security': return Shield;
-			default: return Check;
-		}
-	}
 
 	function getCategoryColor(category: string) {
 		switch (category) {
@@ -182,18 +167,17 @@
 </script>
 
 <svelte:head>
-	<title>Changelog | OUTERFIELDS</title>
-	<meta name="description" content="Development progress and feature releases for the OUTERFIELDS premium content network." />
+	<title>What's New | OUTERFIELDS</title>
+	<meta name="description" content="See what we shipped this week. Every update, every fix, documented." />
 </svelte:head>
 
 <main class="changelog-page">
 	<section class="hero-section">
 		<div class="hero-content">
-			<span class="hero-badge">Development Progress</span>
-			<h1 class="hero-title">Building in Public</h1>
+			<span class="hero-badge">Building in Public</span>
+			<h1 class="hero-title">What we shipped</h1>
 			<p class="hero-description">
-				Track our journey as we build OUTERFIELDS—a premium content network that blends 
-				code, media, and distribution into one subscriber experience.
+				13 days. 75+ commits. Everything documented here.
 			</p>
 		</div>
 	</section>
@@ -201,34 +185,39 @@
 	<section class="stats-section">
 		<div class="stats-grid">
 			<div class="stat-card">
-				<span class="stat-value">{stats.daysInDevelopment}</span>
-				<span class="stat-label">Days of Development</span>
+				<span class="stat-value">{stats.daysActive}</span>
+				<span class="stat-label">days building</span>
 			</div>
 			<div class="stat-card">
 				<span class="stat-value">{stats.totalCommits}+</span>
-				<span class="stat-label">Commits</span>
+				<span class="stat-label">commits</span>
 			</div>
 			<div class="stat-card">
 				<span class="stat-value">{stats.features}</span>
-				<span class="stat-label">Features Shipped</span>
+				<span class="stat-label">features shipped</span>
 			</div>
 			<div class="stat-card">
-				<span class="stat-value">$99</span>
-				<span class="stat-label">Lifetime Access</span>
+				<span class="stat-value">${stats.price}</span>
+				<span class="stat-label">lifetime access</span>
 			</div>
 		</div>
 	</section>
 
 	<section class="timeline-section">
 		<div class="timeline-container">
-			<h2 class="section-title">Release Timeline</h2>
+			<h2 class="section-title">The timeline</h2>
 			
 			<div class="timeline">
-				{#each changelog as entry, i}
-					{@const Icon = getCategoryIcon(entry.category)}
+				{#each changelog as entry}
 					<div class="timeline-entry">
 						<div class="timeline-marker" style="--marker-color: {getCategoryColor(entry.category)}">
-							<Icon size={16} />
+							{#if entry.category === 'feature'}
+								<Zap size={14} />
+							{:else if entry.category === 'security'}
+								<Shield size={14} />
+							{:else}
+								<Check size={14} />
+							{/if}
 						</div>
 						
 						<div class="timeline-content">
@@ -241,9 +230,6 @@
 									{#if entry.version}
 										<span class="entry-version">v{entry.version}</span>
 									{/if}
-									<span class="entry-category" style="--cat-color: {getCategoryColor(entry.category)}">
-										{entry.category}
-									</span>
 								</div>
 								<h3 class="entry-title">{entry.title}</h3>
 							</div>
@@ -269,13 +255,13 @@
 
 	<section class="cta-section">
 		<div class="cta-content">
-			<h2 class="cta-title">Join the Journey</h2>
+			<h2 class="cta-title">Watch it happen</h2>
 			<p class="cta-description">
-				Become a founding member and get lifetime access to the platform as we continue to build.
+				$99 gets you lifetime access. See every video, every behind-the-scenes update, forever.
 			</p>
 			<div class="cta-buttons">
-				<a href="/#pricing" class="cta-primary">Become a Founding Member - $99</a>
-				<a href="/presentations/investor" class="cta-secondary">View Investor Deck</a>
+				<a href="/#pricing" class="cta-primary">Get lifetime access — $99</a>
+				<a href="/presentations/investor" class="cta-secondary">Investor deck</a>
 			</div>
 		</div>
 	</section>
@@ -432,7 +418,7 @@
 	}
 
 	.entry-header {
-		margin-bottom: 1rem;
+		margin-bottom: 0.75rem;
 	}
 
 	.entry-meta {
@@ -460,16 +446,6 @@
 		font-weight: 600;
 		color: var(--color-fg-secondary);
 		font-family: monospace;
-	}
-
-	.entry-category {
-		padding: 0.125rem 0.5rem;
-		background: color-mix(in srgb, var(--cat-color) 15%, transparent);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
-		font-weight: 600;
-		color: var(--cat-color);
-		text-transform: capitalize;
 	}
 
 	.entry-title {

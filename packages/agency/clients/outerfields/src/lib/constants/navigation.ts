@@ -26,6 +26,7 @@ export const NAV_LINKS: NavLink[] = [
 
 // Footer links
 export const FOOTER_LINKS: FooterLink[] = [
+	{ label: 'Changelog', href: '/changelog' },
 	{ label: 'Privacy', href: '/privacy' },
 	{ label: 'Terms', href: '/terms' },
 	{ label: 'Contact', href: '/contact' },

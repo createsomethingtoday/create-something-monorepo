@@ -48,7 +48,7 @@
 			</span>
 		</div>
 
-		<h1 class="hero-title">Building Outerfields: The Odyssey</h1>
+		<h1 class="hero-title">Building Outerfields:<br /><span class="title-accent">The Odyssey</span></h1>
 
 		<p class="hero-subtitle">
 			A premium content network built in public. Browse like Netflix—trailers and first episodes are free.
@@ -136,6 +136,12 @@
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-md);
 		text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+		line-height: 1.1;
+	}
+
+	.hero-title :global(.title-accent) {
+		font-style: italic;
+		font-weight: 400;
 	}
 
 	.hero-subtitle {
