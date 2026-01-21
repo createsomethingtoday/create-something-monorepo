@@ -28,8 +28,10 @@
 		<div class="hero-gradient"></div>
 	</div>
 
-	<!-- Left-aligned content -->
-	<div class="hero-content">
+	<!-- Container for alignment with other sections -->
+	<div class="hero-container">
+		<!-- Left-aligned content -->
+		<div class="hero-content">
 		<!-- Metadata row -->
 		<div class="hero-meta">
 			<span class="meta-badge">New Season</span>
@@ -67,6 +69,7 @@
 			</button>
 		</div>
 	</div>
+	</div>
 </section>
 
 <style>
@@ -77,8 +80,15 @@
 		width: 100%;
 		display: flex;
 		align-items: center;
-		padding: 0 3rem;
+		justify-content: center;
+		padding: 0 1.5rem;
 		overflow: hidden;
+	}
+
+	.hero-container {
+		width: 100%;
+		max-width: 72rem;
+		margin: 0 auto;
 	}
 
 	.hero-backdrop {
@@ -243,7 +253,7 @@
 		.hero {
 			height: 80vh;
 			min-height: 550px;
-			padding: 0 1.5rem;
+			padding: 0 1rem;
 		}
 
 		.hero-title {
@@ -279,7 +289,6 @@
 		.hero {
 			height: 75vh;
 			min-height: 500px;
-			padding: 0 1rem;
 		}
 
 		.hero-content {
