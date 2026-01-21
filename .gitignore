@@ -53,6 +53,9 @@ csm/csm/.repo.git
 .lsmcp/
 !.lsmcp/config.json
 # Keep config.json tracked, ignore cache/index/memories
+
+# Loom (agent coordination)
+.loom/
 __pycache__/
 .dev.vars
 

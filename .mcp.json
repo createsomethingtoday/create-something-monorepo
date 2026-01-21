@@ -22,6 +22,10 @@
     "webflow": {
       "command": "node",
       "args": ["./packages/webflow-mcp/dist/index.js"]
+    },
+    "loom": {
+      "command": "./packages/loom/target/release/loom-mcp",
+      "args": ["--path", "."]
     }
   }
 }
