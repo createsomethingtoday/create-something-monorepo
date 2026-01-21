@@ -110,8 +110,8 @@
 	.video-card {
 		display: flex;
 		flex-direction: column;
-		min-width: 160px;
-		max-width: 200px;
+		min-width: 200px;
+		max-width: 280px;
 		background: transparent;
 		border: none;
 		padding: 0;
@@ -123,9 +123,9 @@
 	.poster-container {
 		position: relative;
 		width: 100%;
-		aspect-ratio: 2 / 3;
+		aspect-ratio: 4 / 3;
 		background: var(--color-card-dark);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 		overflow: hidden;
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
@@ -235,22 +235,22 @@
 	/* Responsive sizing */
 	@media (min-width: 768px) {
 		.video-card {
-			min-width: 180px;
-			max-width: 220px;
+			min-width: 240px;
+			max-width: 300px;
 		}
 	}
 
 	@media (min-width: 1024px) {
 		.video-card {
-			min-width: 200px;
-			max-width: 240px;
+			min-width: 260px;
+			max-width: 320px;
 		}
 	}
 
 	@media (max-width: 480px) {
 		.video-card {
-			min-width: 140px;
-			max-width: 160px;
+			min-width: 180px;
+			max-width: 220px;
 		}
 
 		.play-indicator {
