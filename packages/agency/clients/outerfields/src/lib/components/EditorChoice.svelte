@@ -90,29 +90,31 @@
 		/>
 		<div class="gradient-overlay"></div>
 
-		<div class="content">
-			<span class="label">Editor's Choice</span>
-			<h3 class="title">{film.title.toUpperCase()}</h3>
-			<p class="description">{film.description}</p>
+		<div class="content-wrapper">
+			<div class="content">
+				<span class="label">Editor's Choice</span>
+				<h3 class="title">{film.title.toUpperCase()}</h3>
+				<p class="description">{film.description}</p>
 
-			<div class="meta">
-				{#if film.tier === 'free'}
-					<span class="badge free">FREE</span>
-				{:else}
-					<span class="badge members">MEMBERS</span>
-				{/if}
-				<span class="duration">{film.duration}</span>
-			</div>
+				<div class="meta">
+					{#if film.tier === 'free'}
+						<span class="badge free">FREE</span>
+					{:else}
+						<span class="badge members">MEMBERS</span>
+					{/if}
+					<span class="duration">{film.duration}</span>
+				</div>
 
-			<div class="actions">
-				<button class="btn-primary" onclick={handleWatch}>
-					<Play size={18} />
-					<span>WATCH TRAILER</span>
-				</button>
-				<button class="btn-secondary" onclick={handleDetails}>
-					<Info size={18} />
-					<span>DETAILS</span>
-				</button>
+				<div class="actions">
+					<button class="btn-primary" onclick={handleWatch}>
+						<Play size={18} />
+						<span>WATCH TRAILER</span>
+					</button>
+					<button class="btn-secondary" onclick={handleDetails}>
+						<Info size={18} />
+						<span>DETAILS</span>
+					</button>
+				</div>
 			</div>
 		</div>
 	</section>
@@ -154,14 +156,21 @@
 			);
 	}
 
-	.content {
+	.content-wrapper {
 		position: relative;
 		z-index: 10;
+		height: 100%;
+		width: 100%;
+		max-width: 72rem;
+		margin: 0 auto;
+	}
+
+	.content {
 		height: 100%;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		padding: var(--space-2xl) var(--space-xl);
+		padding: var(--space-2xl) 0;
 		max-width: 500px;
 	}
 
@@ -275,8 +284,8 @@
 			height: 350px;
 		}
 
-		.content {
-			padding: var(--space-xl) var(--space-lg);
+		.content-wrapper {
+			padding: 0 var(--space-lg);
 		}
 	}
 
@@ -287,8 +296,11 @@
 			border-radius: var(--radius-lg);
 		}
 
+		.content-wrapper {
+			padding: 0 var(--space-md);
+		}
+
 		.content {
-			padding: var(--space-lg) var(--space-md);
 			max-width: 100%;
 		}
 
@@ -328,8 +340,8 @@
 			height: 280px;
 		}
 
-		.content {
-			padding: var(--space-md) var(--space-sm);
+		.content-wrapper {
+			padding: 0 var(--space-sm);
 		}
 
 		.title {
