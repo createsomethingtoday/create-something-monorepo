@@ -148,9 +148,9 @@
 		display: flex;
 		justify-content: center;
 		/* Allow space for slide-in animation */
-		padding: 0 120px;
-		margin-left: -120px;
-		margin-right: -120px;
+		padding: 0 var(--space-4xl, 120px);
+		margin-left: calc(-1 * var(--space-4xl, 120px));
+		margin-right: calc(-1 * var(--space-4xl, 120px));
 	}
 
 	/* CLEAR slides in from left */
@@ -254,11 +254,11 @@
 	.btn-secondary {
 		background: transparent;
 		color: var(--color-fg-primary, #fff);
-		border: 1px solid rgba(255, 255, 255, 0.3);
+		border: 1px solid var(--color-border, rgba(255, 255, 255, 0.3));
 	}
 
 	.btn-secondary:hover {
-		border-color: rgba(255, 255, 255, 0.5);
+		border-color: var(--color-border-hover, rgba(255, 255, 255, 0.5));
 	}
 
 	/* Reduced motion - skip animations, show content immediately */

@@ -276,7 +276,7 @@ Follow patterns from packages/bundle-scanner/.
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		margin-bottom: 1rem;
 	}
@@ -292,14 +292,14 @@ Follow patterns from packages/bundle-scanner/.
 	}
 
 	h1 {
-		font-size: 2.25rem;
+		font-size: var(--text-display);
 		font-weight: 700;
 		line-height: 1.2;
 		margin-bottom: 1rem;
 	}
 
 	.subtitle {
-		font-size: 1.125rem;
+		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		line-height: 1.6;
 	}
@@ -309,7 +309,7 @@ Follow patterns from packages/bundle-scanner/.
 		padding: 1.5rem;
 		border-radius: 0.5rem;
 		overflow-x: auto;
-		font-size: 0.75rem;
+		font-size: var(--text-caption);
 		line-height: 1.4;
 		margin-bottom: 3rem;
 		border: 1px solid var(--color-border);
@@ -320,14 +320,14 @@ Follow patterns from packages/bundle-scanner/.
 	}
 
 	.section h2 {
-		font-size: 1.5rem;
+		font-size: var(--text-h1);
 		font-weight: 600;
 		margin-bottom: 1rem;
 		color: var(--color-fg-primary);
 	}
 
 	.section h3 {
-		font-size: 1.125rem;
+		font-size: var(--text-body-lg);
 		font-weight: 600;
 		margin-top: 1.5rem;
 		margin-bottom: 0.75rem;
@@ -399,7 +399,7 @@ Follow patterns from packages/bundle-scanner/.
 	}
 
 	.phase .time {
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		font-weight: 400;
 	}
@@ -425,14 +425,14 @@ Follow patterns from packages/bundle-scanner/.
 
 	.result .metric {
 		display: block;
-		font-size: 2rem;
+		font-size: var(--text-h1);
 		font-weight: 700;
 		color: var(--color-fg-primary);
 	}
 
 	.result .label {
 		display: block;
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		margin-top: 0.25rem;
 	}
@@ -442,7 +442,7 @@ Follow patterns from packages/bundle-scanner/.
 		padding: 1.5rem;
 		border-radius: 0.5rem;
 		overflow-x: auto;
-		font-size: 0.75rem;
+		font-size: var(--text-caption);
 		line-height: 1.4;
 		margin: 1.5rem 0;
 		border: 1px solid var(--color-border);
@@ -453,7 +453,7 @@ Follow patterns from packages/bundle-scanner/.
 		padding: 1.5rem;
 		border-radius: 0.5rem;
 		overflow-x: auto;
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		line-height: 1.6;
 		margin-top: 1rem;
 		border: 1px solid var(--color-border);
@@ -467,7 +467,7 @@ Follow patterns from packages/bundle-scanner/.
 		}
 
 		h1 {
-			font-size: 1.75rem;
+			font-size: var(--text-h1);
 		}
 	}
 </style>

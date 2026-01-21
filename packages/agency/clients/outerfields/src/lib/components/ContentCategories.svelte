@@ -17,7 +17,7 @@
 	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
 	import { authStore } from '$lib/stores/auth';
-	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS } from '$lib/stores/categoryFilter';
+	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS } from '$lib/stores/categoryFilter.svelte';
 
 	// Cloudflare R2 CDN base URL (public bucket) - used for video assets only
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';

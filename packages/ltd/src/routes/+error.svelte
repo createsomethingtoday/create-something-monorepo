@@ -55,7 +55,7 @@
 
 	.error-message {
 		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: 0.875rem;
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
 		margin: var(--space-md, 1.5rem) 0 var(--space-xl, 3rem);
 		letter-spacing: 0.02em;
@@ -63,7 +63,7 @@
 
 	.error-link {
 		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: 0.75rem;
+		font-size: var(--text-caption);
 		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
 		text-decoration: none;
 		letter-spacing: 0.05em;

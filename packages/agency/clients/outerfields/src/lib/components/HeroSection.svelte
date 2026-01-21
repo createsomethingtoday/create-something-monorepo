@@ -5,7 +5,7 @@
 	 * StreamVerse-inspired full-bleed hero with category pills at bottom
 	 */
 	import { Play, Plus, Star, Clock } from 'lucide-svelte';
-	import { categoryFilter, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter';
+	import { categoryFilter, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter.svelte';
 
 	function scrollToContent() {
 		document.getElementById('content-categories')?.scrollIntoView({ behavior: 'smooth' });
