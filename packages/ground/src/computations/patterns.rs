@@ -613,25 +613,82 @@ pub fn analyze_file(
     let mut violations = Vec::new();
     let mut category_metrics: HashMap<String, (usize, usize)> = HashMap::new();
     
-    // Extract <style> block
-    if let Some(style_content) = extract_style_block(&content) {
-        // Layer 1: AST-based CSS parsing
-        let css_violations = analyze_css(&style_content, file, config)?;
-        violations.extend(css_violations);
+    // Determine file type and use appropriate analyzer
+    let ext = file.extension().and_then(|e| e.to_str()).unwrap_or("");
+    
+    match ext {
+        "svelte" => {
+            // Extract <style> block for Svelte
+            if let Some(style_content) = extract_style_block(&content) {
+                // Layer 1: AST-based CSS parsing
+                let css_violations = analyze_css(&style_content, file, config)?;
+                violations.extend(css_violations);
+                
+                // Count declarations for metrics
+                count_declarations(&style_content, config, &mut category_metrics);
+            }
+            
+            // Layer 3: Svelte-specific patterns
+            if config.svelte_patterns.detect_legacy_props {
+                let prop_violations = detect_legacy_props(&content, file);
+                violations.extend(prop_violations);
+            }
+            
+            if config.svelte_patterns.detect_computed_styles {
+                let computed_violations = detect_computed_styles(&content, file);
+                violations.extend(computed_violations);
+            }
+        }
         
-        // Count declarations for metrics
-        count_declarations(&style_content, config, &mut category_metrics);
-    }
-    
-    // Layer 3: Svelte-specific patterns
-    if config.svelte_patterns.detect_legacy_props {
-        let prop_violations = detect_legacy_props(&content, file);
-        violations.extend(prop_violations);
-    }
-    
-    if config.svelte_patterns.detect_computed_styles {
-        let computed_violations = detect_computed_styles(&content, file);
-        violations.extend(computed_violations);
+        "tsx" | "ts" => {
+            // Use TSX AST-based analyzer for React files
+            let tsx_result = analyze_tsx_file(file, config)?;
+            
+            // Convert TSX violations to PatternViolation
+            for tsx_v in tsx_result.violations {
+                violations.push(PatternViolation {
+                    line: tsx_v.line,
+                    column: tsx_v.column,
+                    category: tsx_v.category,
+                    property: tsx_v.property,
+                    value: tsx_v.value,
+                    message: tsx_v.message,
+                    severity: ViolationSeverity::Warning,
+                    suggestion: tsx_v.suggestion,
+                });
+            }
+            
+            // Add hardcoded values as violations
+            for tsx_v in tsx_result.hardcoded_values {
+                violations.push(PatternViolation {
+                    line: tsx_v.line,
+                    column: tsx_v.column,
+                    category: tsx_v.category,
+                    property: tsx_v.property,
+                    value: tsx_v.value,
+                    message: tsx_v.message,
+                    severity: ViolationSeverity::Warning,
+                    suggestion: tsx_v.suggestion,
+                });
+            }
+            
+            // Add metrics from TSX analysis
+            category_metrics.insert(
+                "tsx_design_system".to_string(),
+                (tsx_result.total_style_declarations, tsx_result.compliant_declarations)
+            );
+        }
+        
+        "css" => {
+            // Analyze standalone CSS files
+            let css_violations = analyze_css(&content, file, config)?;
+            violations.extend(css_violations);
+            count_declarations(&content, config, &mut category_metrics);
+        }
+        
+        _ => {
+            // Unknown file type - skip
+        }
     }
     
     // Calculate metrics
@@ -648,7 +705,7 @@ pub fn analyze_file(
 // HELPER FUNCTIONS
 // =============================================================================
 
-/// Discover all .svelte files in a directory
+/// Discover all analyzable files in a directory (.svelte, .tsx, .ts, .css)
 fn discover_svelte_files(root: &Path) -> Result<Vec<PathBuf>, PatternError> {
     let mut files = Vec::new();
     discover_files_recursive(root, &mut files)?;
@@ -663,19 +720,392 @@ fn discover_files_recursive(dir: &Path, files: &mut Vec<PathBuf>) -> Result<(), 
             
             // Skip node_modules and hidden directories
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.starts_with('.') || name == "node_modules" {
+                if name.starts_with('.') || name == "node_modules" || name == "dist" {
                     continue;
                 }
             }
             
             if path.is_dir() {
                 discover_files_recursive(&path, files)?;
-            } else if path.extension().map_or(false, |e| e == "svelte") {
-                files.push(path);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                // Include Svelte, TSX, TS, and CSS files
+                if matches!(ext, "svelte" | "tsx" | "ts" | "css") {
+                    files.push(path);
+                }
             }
         }
     }
     Ok(())
+}
+
+// =============================================================================
+// TSX/REACT ANALYSIS (AST-based using tree-sitter)
+// =============================================================================
+
+/// Configuration for TSX design system analysis
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct TsxPatternConfig {
+    /// Design system import patterns (e.g., "brand-design-system")
+    pub design_system_imports: Vec<String>,
+    
+    /// Valid constant prefixes (e.g., "BRAND_COLORS", "BRAND_SPACING")
+    pub valid_constant_prefixes: Vec<String>,
+    
+    /// Properties to check in style objects
+    pub style_properties: Vec<String>,
+}
+
+/// TSX-specific violation for React codebases
+#[derive(Debug, Clone, Serialize)]
+pub struct TsxViolation {
+    pub file: PathBuf,
+    pub line: usize,
+    pub column: usize,
+    pub category: String,
+    pub property: String,
+    pub value: String,
+    pub message: String,
+    pub suggestion: Option<String>,
+}
+
+/// Analyze a TSX/TS file for design system compliance using AST
+pub fn analyze_tsx_file(
+    file: &Path,
+    _config: &PatternConfig,
+) -> Result<TsxAnalysisResult, PatternError> {
+    let content = std::fs::read_to_string(file)
+        .map_err(PatternError::Io)?;
+    
+    let mut result = TsxAnalysisResult {
+        file: file.to_path_buf(),
+        violations: Vec::new(),
+        design_system_imported: false,
+        constants_used: Vec::new(),
+        hardcoded_values: Vec::new(),
+        adoption_ratio: 100.0,
+        total_style_declarations: 0,
+        compliant_declarations: 0,
+    };
+    
+    // Determine if this is a UI file (has actual JSX/React components) vs backend file
+    // Must have explicit React imports or JSX syntax
+    let has_react_import = content.contains("from 'react'") 
+        || content.contains("from \"react\"")
+        || content.contains("import React");
+    let has_jsx_syntax = content.contains("</") && (
+        content.contains("<div") || content.contains("<span") || content.contains("<button") 
+        || content.contains("<p>") || content.contains("<h1") || content.contains("<form")
+        || content.contains("<input") || content.contains("<label")
+    );
+    let has_classname = content.contains("className=");
+    let has_style_prop = content.contains("style={{") || content.contains("style={");
+    
+    let is_ui_file = (has_react_import || has_jsx_syntax || has_classname || has_style_prop)
+        || file.extension().map_or(false, |e| e == "tsx");
+    
+    // Skip pure TypeScript files (workers, utilities, API routes, etc.)
+    if !is_ui_file && file.extension().map_or(false, |e| e == "ts") {
+        // Return 100% adoption for non-UI files (they don't need design system)
+        return Ok(result);
+    }
+    
+    // Also skip TSX files that are just type definitions or configs
+    if file.to_string_lossy().contains(".d.ts") 
+        || file.to_string_lossy().contains("config") 
+        || file.to_string_lossy().contains(".test.") {
+        return Ok(result);
+    }
+    
+    // Check for design system imports
+    result.design_system_imported = content.contains("brand-design-system") 
+        || content.contains("BRAND_COLORS")
+        || content.contains("BRAND_SPACING");
+    
+    // Parse with tree-sitter for AST analysis (only for TSX files)
+    if file.extension().map_or(false, |e| e == "tsx") {
+        let tsx_violations = analyze_tsx_ast(&content, file);
+        result.violations = tsx_violations;
+    }
+    
+    // Count design system constant usage
+    let constant_prefixes = ["BRAND_COLORS", "BRAND_SPACING", "BRAND_TYPOGRAPHY", 
+                           "BRAND_RADIUS", "BRAND_ANIMATION", "BRAND_BUTTON_STYLES",
+                           "BRAND_CARD_STYLES", "BRAND_INPUT_STYLES"];
+    for prefix in constant_prefixes {
+        let count = content.matches(prefix).count();
+        if count > 0 {
+            result.constants_used.push((prefix.to_string(), count));
+            result.compliant_declarations += count;
+        }
+    }
+    
+    // Find hardcoded style values (only in UI files)
+    if is_ui_file {
+        let hardcoded = find_hardcoded_tsx_values(&content, file);
+        result.hardcoded_values = hardcoded.clone();
+        result.total_style_declarations = result.compliant_declarations + hardcoded.len();
+    }
+    
+    // Calculate adoption ratio
+    if result.total_style_declarations > 0 {
+        result.adoption_ratio = (result.compliant_declarations as f64 
+            / result.total_style_declarations as f64) * 100.0;
+    }
+    
+    Ok(result)
+}
+
+/// Result of TSX analysis
+#[derive(Debug, Clone, Serialize)]
+pub struct TsxAnalysisResult {
+    pub file: PathBuf,
+    pub violations: Vec<TsxViolation>,
+    pub design_system_imported: bool,
+    pub constants_used: Vec<(String, usize)>,
+    pub hardcoded_values: Vec<TsxViolation>,
+    pub adoption_ratio: f64,
+    pub total_style_declarations: usize,
+    pub compliant_declarations: usize,
+}
+
+/// AST-based TSX analysis using tree-sitter
+fn analyze_tsx_ast(content: &str, file: &Path) -> Vec<TsxViolation> {
+    let mut violations = Vec::new();
+    
+    // Initialize tree-sitter parser for TSX
+    let mut parser = tree_sitter::Parser::new();
+    let language = tree_sitter_typescript::LANGUAGE_TSX;
+    parser.set_language(&language.into()).ok();
+    
+    let tree = match parser.parse(content, None) {
+        Some(t) => t,
+        None => return violations,
+    };
+    
+    let root = tree.root_node();
+    
+    // Walk the AST looking for JSX style attributes
+    find_jsx_style_violations(root, content, file, &mut violations);
+    
+    violations
+}
+
+/// Recursively find JSX style prop violations in AST
+fn find_jsx_style_violations(
+    node: tree_sitter::Node,
+    content: &str,
+    file: &Path,
+    violations: &mut Vec<TsxViolation>,
+) {
+    // Check if this is a JSX attribute named "style"
+    if node.kind() == "jsx_attribute" {
+        if let Some(name_node) = node.child_by_field_name("name") {
+            let name = &content[name_node.byte_range()];
+            if name == "style" {
+                // Found a style attribute - analyze its value
+                if let Some(value_node) = node.child_by_field_name("value") {
+                    analyze_jsx_style_value(value_node, content, file, violations);
+                }
+            }
+        }
+    }
+    
+    // Check for inline style objects in variable declarations
+    if node.kind() == "variable_declarator" {
+        let node_text = &content[node.byte_range()];
+        // Check for style-related variable names
+        if node_text.contains("Style") || node_text.contains("style") {
+            check_style_object_for_hardcoded(node, content, file, violations);
+        }
+    }
+    
+    // Recurse into children
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        find_jsx_style_violations(child, content, file, violations);
+    }
+}
+
+/// Analyze a JSX style attribute value for hardcoded values
+fn analyze_jsx_style_value(
+    node: tree_sitter::Node,
+    content: &str,
+    file: &Path,
+    violations: &mut Vec<TsxViolation>,
+) {
+    let value_text = &content[node.byte_range()];
+    let start_pos = node.start_position();
+    
+    // Check for hardcoded hex colors
+    let hex_colors = find_hex_colors(value_text);
+    
+    for hex in hex_colors {
+        // Skip if it's part of a BRAND_COLORS reference
+        if !value_text.contains("BRAND_COLORS") {
+            violations.push(TsxViolation {
+                file: file.to_path_buf(),
+                line: start_pos.row + 1,
+                column: start_pos.column + 1,
+                category: "colors".to_string(),
+                property: "style".to_string(),
+                value: hex.to_string(),
+                message: format!("Hardcoded color '{}' - use BRAND_COLORS constant", hex),
+                suggestion: Some("BRAND_COLORS.white or BRAND_COLORS.black".to_string()),
+            });
+        }
+    }
+    
+    // Check for hardcoded pixel values (excluding small adjustments)
+    let px_values: Vec<&str> = value_text
+        .split(|c: char| !c.is_ascii_digit() && c != 'p' && c != 'x')
+        .filter(|s| s.ends_with("px") && s.len() > 2)
+        .collect();
+    
+    for px in px_values {
+        let num_str = px.trim_end_matches("px");
+        if let Ok(num) = num_str.parse::<i32>() {
+            // Allow small values (1-10px) for fine adjustments
+            if num > 10 && !value_text.contains("BRAND_SPACING") {
+                violations.push(TsxViolation {
+                    file: file.to_path_buf(),
+                    line: start_pos.row + 1,
+                    column: start_pos.column + 1,
+                    category: "spacing".to_string(),
+                    property: "style".to_string(),
+                    value: px.to_string(),
+                    message: format!("Hardcoded spacing '{}' - use BRAND_SPACING constant", px),
+                    suggestion: Some(suggest_spacing_constant(num)),
+                });
+            }
+        }
+    }
+}
+
+/// Check style objects for hardcoded values
+fn check_style_object_for_hardcoded(
+    node: tree_sitter::Node,
+    content: &str,
+    file: &Path,
+    violations: &mut Vec<TsxViolation>,
+) {
+    let text = &content[node.byte_range()];
+    let start_pos = node.start_position();
+    
+    // Check for hardcoded rem values (excluding common ones)
+    let rem_pattern = ["0.25rem", "0.5rem", "0.75rem", "1rem", "1.5rem", "2rem"];
+    for line in text.lines() {
+        if line.contains("rem") && !line.contains("BRAND_") {
+            let mut is_allowed = false;
+            for allowed in &rem_pattern {
+                if line.contains(allowed) {
+                    is_allowed = true;
+                    break;
+                }
+            }
+            if !is_allowed && line.contains(':') {
+                // Extract the property and value
+                if let Some(colon_pos) = line.find(':') {
+                    let prop = line[..colon_pos].trim().trim_matches(|c| c == '\'' || c == '"');
+                    let val = line[colon_pos + 1..].trim().trim_matches(|c| c == ',' || c == '\'' || c == '"');
+                    if val.contains("rem") {
+                        violations.push(TsxViolation {
+                            file: file.to_path_buf(),
+                            line: start_pos.row + 1,
+                            column: start_pos.column + 1,
+                            category: "spacing".to_string(),
+                            property: prop.to_string(),
+                            value: val.to_string(),
+                            message: format!("Hardcoded value '{}' in style object", val),
+                            suggestion: Some("Use BRAND_SPACING.* constant".to_string()),
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Find hardcoded style values in TSX content (fallback regex-based)
+fn find_hardcoded_tsx_values(content: &str, file: &Path) -> Vec<TsxViolation> {
+    let mut violations = Vec::new();
+    
+    for (line_num, line) in content.lines().enumerate() {
+        // Skip comments and imports
+        if line.trim().starts_with("//") || line.trim().starts_with("import") {
+            continue;
+        }
+        
+        // Check for hardcoded hex colors not in BRAND_COLORS context
+        if line.contains('#') && !line.contains("BRAND_COLORS") && !line.contains("//") {
+            // Simple hex detection
+            let mut chars = line.chars().peekable();
+            while let Some(c) = chars.next() {
+                if c == '#' {
+                    let mut hex = String::from("#");
+                    while let Some(&next) = chars.peek() {
+                        if next.is_ascii_hexdigit() {
+                            hex.push(chars.next().unwrap());
+                        } else {
+                            break;
+                        }
+                    }
+                    if hex.len() >= 4 && hex.len() <= 9 {
+                        // Check if it's in a style context
+                        if line.contains("color") || line.contains("background") 
+                            || line.contains("border") || line.contains("fill")
+                            || line.contains("style") {
+                            violations.push(TsxViolation {
+                                file: file.to_path_buf(),
+                                line: line_num + 1,
+                                column: 1,
+                                category: "colors".to_string(),
+                                property: "inline".to_string(),
+                                value: hex.clone(),
+                                message: format!("Hardcoded color '{}'", hex),
+                                suggestion: Some("Use BRAND_COLORS.* constant".to_string()),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    violations
+}
+
+/// Suggest appropriate BRAND_SPACING constant for a pixel value
+fn suggest_spacing_constant(px: i32) -> String {
+    match px {
+        0..=12 => "BRAND_SPACING.xs (8px)".to_string(),
+        13..=20 => "BRAND_SPACING.sm (16px)".to_string(),
+        21..=34 => "BRAND_SPACING.md (26px)".to_string(),
+        35..=55 => "BRAND_SPACING.lg (42px)".to_string(),
+        56..=90 => "BRAND_SPACING.xl (68px)".to_string(),
+        _ => "BRAND_SPACING.2xl (110px)".to_string(),
+    }
+}
+
+/// Find hex color values in a string (returns owned strings)
+fn find_hex_colors(s: &str) -> Vec<String> {
+    let mut results = Vec::new();
+    let mut i = 0;
+    let bytes = s.as_bytes();
+    while i < bytes.len() {
+        if bytes[i] == b'#' {
+            let start = i;
+            i += 1;
+            while i < bytes.len() && bytes[i].is_ascii_hexdigit() {
+                i += 1;
+            }
+            if i - start >= 4 && i - start <= 9 {
+                results.push(s[start..i].to_string());
+            }
+        } else {
+            i += 1;
+        }
+    }
+    results
 }
 
 /// Extract <style> block from Svelte component
