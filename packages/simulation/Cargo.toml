@@ -1,0 +1,31 @@
+[package]
+name = "simulation"
+version = "0.1.0"
+edition = "2021"
+description = "Deterministic simulation engine for SaaS demos. Time-aware, scenario-based data generation."
+license = "MIT"
+repository = "https://github.com/create-something/create-something-monorepo"
+keywords = ["simulation", "demo", "wasm", "deterministic"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# WASM bindings
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde-wasm-bindgen = "0.6"
+
+# Utilities
+getrandom = { version = "0.2", features = ["js"] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[profile.release]
+opt-level = "s"  # Optimize for size (WASM)
+lto = true

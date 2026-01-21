@@ -1,0 +1,38 @@
+{
+  "name": "@create-something/loom",
+  "version": "0.1.0",
+  "description": "AI-native coordination layer. External memory for agents.",
+  "keywords": [
+    "ai",
+    "agents",
+    "coordination",
+    "tasks",
+    "orchestration",
+    "mcp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/create-something/create-something-monorepo.git",
+    "directory": "packages/loom"
+  },
+  "license": "MIT",
+  "bin": {
+    "lm": "bin/lm",
+    "loom-mcp": "bin/loom-mcp"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}

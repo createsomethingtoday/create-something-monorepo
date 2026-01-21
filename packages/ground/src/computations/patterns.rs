@@ -1101,6 +1101,60 @@ fn find_hardcoded_tsx_values(content: &str, file: &Path) -> Vec<TsxViolation> {
                 }
             }
         }
+        
+        // Check for Tailwind arbitrary values (hardcoded colors/spacing in className)
+        if line.contains("className") {
+            // Detect bg-[#xxx], text-[#xxx], border-[#xxx] patterns
+            let tailwind_color_patterns = ["bg-[#", "text-[#", "border-[#", "fill-[#", "stroke-[#"];
+            for pattern in tailwind_color_patterns {
+                if line.contains(pattern) {
+                    // Extract the hex value
+                    if let Some(start) = line.find(pattern) {
+                        let after = &line[start + pattern.len()..];
+                        if let Some(end) = after.find(']') {
+                            let hex_value = &after[..end];
+                            violations.push(TsxViolation {
+                                file: file.to_path_buf(),
+                                line: line_num + 1,
+                                column: 1,
+                                category: "tailwind_colors".to_string(),
+                                property: "className".to_string(),
+                                value: format!("{}{}]", pattern, hex_value),
+                                message: format!("Tailwind arbitrary color '{}' - use design token class", hex_value),
+                                suggestion: Some("Use bg-black, bg-zinc-900, or CSS variable".to_string()),
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Detect spacing arbitrary values: p-[xxpx], m-[xxpx], gap-[xxpx]
+            let tailwind_spacing_patterns = ["p-[", "m-[", "px-[", "py-[", "mx-[", "my-[", 
+                                             "gap-[", "space-x-[", "space-y-[", "w-[", "h-["];
+            for pattern in tailwind_spacing_patterns {
+                if line.contains(pattern) {
+                    if let Some(start) = line.find(pattern) {
+                        let after = &line[start + pattern.len()..];
+                        if let Some(end) = after.find(']') {
+                            let value = &after[..end];
+                            // Only flag px values, not percentages or calc()
+                            if value.ends_with("px") && !value.contains("calc") {
+                                violations.push(TsxViolation {
+                                    file: file.to_path_buf(),
+                                    line: line_num + 1,
+                                    column: 1,
+                                    category: "tailwind_spacing".to_string(),
+                                    property: "className".to_string(),
+                                    value: format!("{}{}]", pattern, value),
+                                    message: format!("Tailwind arbitrary spacing '{}' - use standard utility", value),
+                                    suggestion: Some("Use p-4, m-2, gap-4, etc.".to_string()),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     violations

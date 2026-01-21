@@ -175,6 +175,8 @@
 		<div class="actions">
 			<a href="/admin/funnel/record" class="action-button">Record Daily Metrics</a>
 			<a href="/admin/funnel/leads/new" class="action-button">Add Lead</a>
+			<a href="/admin/social" class="action-button">Social Calendar</a>
+			<a href="/admin/community" class="action-button">Community</a>
 		</div>
 	</section>
 </main>

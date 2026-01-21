@@ -1,14 +1,28 @@
 # Harness Patterns
 
-Harness runs autonomous work sessions. Here's how to use it.
+> **NOTE**: Harness capabilities have been unified into **Loom**, the single coordination layer.
+> The patterns below remain valid, but use Loom tools instead:
+> - `loom_work` for quick single-agent work
+> - `loom_session_start` / `loom_checkpoint` for sessions
+> - `loom_update_context` for rich session context
+> - `loom_discuss` for pre-planning preferences
+> - `loom_verify_plan` for plan validation
+> 
+> See `packages/loom/README.md` for the unified API.
+
+Loom runs autonomous work sessions. Here's how to use it.
 
 ```bash
 bd work cs-xyz                   # Work on an existing issue
 bd work --create "Fix button"    # Create issue and start work
 bd work --spec specs/feature.md  # Parse spec into issues and work
+
+# Or use Loom directly via MCP tools:
+loom_work "Fix button" agent="cursor"  # Quick start
+loom_discuss task_id="lm-xxx" category="visual" ...  # Pre-planning
 ```
 
-The harness handles the rest: picking the right model, running tests, creating checkpoints, resuming after crashes.
+Loom handles the rest: picking the right model, running tests, creating checkpoints, resuming after crashes.
 
 ---
 

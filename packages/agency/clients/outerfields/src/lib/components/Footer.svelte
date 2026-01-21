@@ -105,7 +105,7 @@
 	.brand-name {
 		font-size: 1.75rem;
 		font-weight: 800;
-		color: var(--color-brand);
+		color: var(--color-fg-primary);
 		text-transform: uppercase;
 		letter-spacing: -0.02em;
 		margin: 0;
@@ -209,18 +209,19 @@
 
 	.newsletter-button {
 		padding: 0.5rem 0.75rem;
-		background: var(--color-brand);
-		border: none;
+		background: rgba(255, 255, 255, 0.12);
+		border: 1px solid rgba(255, 255, 255, 0.2);
 		border-radius: var(--radius-sm);
 		color: white;
 		font-size: 0.75rem;
 		font-weight: 700;
 		cursor: pointer;
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.newsletter-button:hover {
-		background: var(--color-brand-hover);
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.3);
 	}
 
 	/* Bottom bar */

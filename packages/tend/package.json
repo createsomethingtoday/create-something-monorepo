@@ -1,0 +1,46 @@
+{
+	"name": "@create-something/tend",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "TEND - AI-native database service. Tend to what matters.",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=tend",
+		"deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=tend --branch=preview",
+		"cf-typegen": "wrangler types",
+		"db:migrate": "wrangler d1 migrations apply tend-db --local",
+		"db:migrate:prod": "wrangler d1 migrations apply tend-db"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20251128.0",
+		"@sveltejs/adapter-cloudflare": "^7.2.4",
+		"@sveltejs/kit": "^2.47.1",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/node": "^24.10.1",
+		"autoprefixer": "^10.4.22",
+		"postcss": "^8.5.6",
+		"postcss-import": "^16.1.1",
+		"svelte": "^5.41.0",
+		"svelte-check": "^4.3.3",
+		"tailwindcss": "^3.4.18",
+		"typescript": "^5.9.3",
+		"vite": "^7.1.10",
+		"vite-plugin-wasm": "^3.5.0",
+		"wrangler": "^4.59.0"
+	},
+	"dependencies": {
+		"@create-something/components": "workspace:*",
+		"@create-something/simulation": "workspace:*",
+		"lucide-svelte": "^0.562.0"
+	},
+	"exports": {
+		".": "./src/lib/index.ts",
+		"./sdk": "./src/lib/sdk/index.ts"
+	}
+}

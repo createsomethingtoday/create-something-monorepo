@@ -14,16 +14,32 @@
 
 	let isOpen = $state(false);
 	let isArchiving = $state(false);
+	let triggerRef: HTMLButtonElement | undefined = $state();
 	let dropdownRef: HTMLDivElement | undefined = $state();
+	let dropdownPosition = $state({ top: 0, right: 0 });
 
-	function toggle() {
+	function updateDropdownPosition() {
+		if (!triggerRef) return;
+		const rect = triggerRef.getBoundingClientRect();
+		dropdownPosition = {
+			top: rect.bottom + 4,
+			right: window.innerWidth - rect.right
+		};
+	}
+
+	function toggle(event: MouseEvent) {
+		event.stopPropagation();
+		if (!isOpen) {
+			updateDropdownPosition();
+		}
 		isOpen = !isOpen;
 	}
 
 	function handleClickOutside(event: MouseEvent) {
-		if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
-			isOpen = false;
-		}
+		const target = event.target as Node;
+		if (triggerRef?.contains(target)) return;
+		if (dropdownRef?.contains(target)) return;
+		isOpen = false;
 	}
 
 	function handleView() {
@@ -63,64 +79,98 @@
 	$effect(() => {
 		if (isOpen) {
 			document.addEventListener('click', handleClickOutside);
+			window.addEventListener('scroll', () => (isOpen = false), true);
+			window.addEventListener('resize', () => (isOpen = false));
 		}
 		return () => {
 			document.removeEventListener('click', handleClickOutside);
+			window.removeEventListener('scroll', () => (isOpen = false), true);
+			window.removeEventListener('resize', () => (isOpen = false));
 		};
 	});
 </script>
 
-<div class="actions-container" bind:this={dropdownRef}>
-	<Button variant="ghost" size="icon" onclick={toggle} class="trigger-btn">
+<div class="actions-container">
+	<button
+		type="button"
+		class="trigger-btn"
+		bind:this={triggerRef}
+		onclick={toggle}
+		aria-haspopup="true"
+		aria-expanded={isOpen}
+	>
 		<MoreVertical size={20} />
-	</Button>
-
-	{#if isOpen}
-		<div class="dropdown">
-			<button type="button" class="dropdown-item" onclick={handleView}>
-				<Eye size={16} />
-				View Details
-			</button>
-
-			{#if canEdit}
-				<button type="button" class="dropdown-item" onclick={handleEdit}>
-					<Pencil size={16} />
-					Edit
-				</button>
-			{/if}
-
-			{#if canArchive}
-				<button
-					type="button"
-					class="dropdown-item dropdown-item-danger"
-					onclick={handleArchive}
-					disabled={isArchiving}
-				>
-					<Archive size={16} />
-					{isArchiving ? 'Archiving...' : 'Archive'}
-				</button>
-			{/if}
-		</div>
-	{/if}
+	</button>
 </div>
+
+{#if isOpen}
+	<div
+		class="dropdown-portal"
+		bind:this={dropdownRef}
+		style="top: {dropdownPosition.top}px; right: {dropdownPosition.right}px;"
+		role="menu"
+	>
+		<button type="button" class="dropdown-item" onclick={handleView} role="menuitem">
+			<Eye size={16} />
+			View Details
+		</button>
+
+		{#if canEdit}
+			<button type="button" class="dropdown-item" onclick={handleEdit} role="menuitem">
+				<Pencil size={16} />
+				Edit
+			</button>
+		{/if}
+
+		{#if canArchive}
+			<button
+				type="button"
+				class="dropdown-item dropdown-item-danger"
+				onclick={handleArchive}
+				disabled={isArchiving}
+				role="menuitem"
+			>
+				<Archive size={16} />
+				{isArchiving ? 'Archiving...' : 'Archive'}
+			</button>
+		{/if}
+	</div>
+{/if}
 
 <style>
 	.actions-container {
-		position: relative;
 		display: inline-flex;
 	}
 
-	.dropdown {
-		position: absolute;
-		right: 0;
-		top: 100%;
-		margin-top: var(--space-xs);
+	.trigger-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		background: transparent;
+		border: none;
+		border-radius: var(--radius-md);
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.trigger-btn:hover {
+		background: var(--color-hover);
+		color: var(--color-fg-primary);
+	}
+
+	/* Portal dropdown - uses fixed positioning to escape overflow containers */
+	.dropdown-portal {
+		position: fixed;
 		min-width: 10rem;
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-lg);
-		z-index: 50;
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
 		overflow: hidden;
 	}
 

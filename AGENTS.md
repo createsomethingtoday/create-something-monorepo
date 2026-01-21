@@ -110,3 +110,17 @@ import { Button, Card } from '@create-something/components';
 ```
 
 **Principle:** It is better to admit uncertainty than to create disconnection through hallucination.
+
+## Tool Preferences
+
+When working in this codebase, prefer these tools over manual approaches:
+
+| Need | CLI | MCP (if available) |
+|------|-----|-----|
+| Code verification | `ground analyze`, `ground find-duplicates` | `ground_*` tools |
+| Task coordination | `lm ready`, `lm work "title"`, `lm daemon` | `loom_*` tools |
+| Issue tracking | `bd ready`, `bd create`, `bd close` | — |
+
+**Use CLI or MCP** - both work. CLI is always available; MCP is convenient in IDEs that support it.
+
+**Beads vs Loom**: Beads (`bd`) tracks issues humans create. Loom (`lm`) coordinates agent work sessions. Use Beads for "what needs doing", Loom for "how agents coordinate doing it".

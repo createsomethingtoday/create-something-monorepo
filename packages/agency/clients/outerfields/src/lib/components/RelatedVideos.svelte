@@ -297,8 +297,9 @@
 	}
 
 	.badge-locked {
-		background: var(--color-brand);
+		background: rgba(255, 255, 255, 0.15);
 		color: white;
+		border: 1px solid rgba(255, 255, 255, 0.25);
 	}
 
 	/* Video info */

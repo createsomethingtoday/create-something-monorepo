@@ -9,6 +9,20 @@
 export { LinkedInClient, createLinkedInClient, getTokenStatus } from './linkedin-client';
 export type { PostResult, LinkedInUserInfo, StoredToken } from './linkedin-client';
 
+// Formats (LinkedIn content research)
+export {
+	FORMATS,
+	HOOK_TEMPLATES,
+	WEEKLY_PILLARS,
+	getFormatForGoal,
+	getTodaysPillar,
+	getFormat,
+	getHooksForFormat,
+	getFormatsByEngagement,
+	isFormatSuitableFor
+} from './formats';
+export type { FormatType, FormatSpec, HookTemplate, ContentPillar } from './formats';
+
 // Twitter/X
 export {
 	TwitterClient,
@@ -34,7 +48,10 @@ export {
 	generateThreadId,
 	formatSchedulePreview,
 	checkScheduleConflicts,
-	suggestConflictFreeStartDate
+	suggestConflictFreeStartDate,
+	DEFAULT_PREFERRED_DAYS,
+	OPTIMAL_DAYS,
+	DEFAULT_PREFERRED_HOUR
 } from './strategy';
 export type {
 	PostingMode,

@@ -1,5 +1,20 @@
 # Gastown Patterns
 
+> **⚠️ DEPRECATED**: Gastown has been superseded by **Loom Orchestrator**.
+> 
+> Loom Orchestrator provides:
+> - Multi-backend support (Claude Code + Gemini CLI)
+> - Smart routing based on task complexity
+> - System notifications
+> 
+> Use Loom via:
+> - **CLI**: `lm daemon start`, `lm ready`, `lm work "title"`
+> - **MCP**: `loom_*` tools (for IDEs that prefer MCP)
+> 
+> See `packages/loom/README.md` for details.
+>
+> Gastown remains available for legacy workflows but is no longer actively maintained.
+
 Gastown coordinates multiple Claude Code instances. Here's how to use it.
 
 ## What to Do This Week

@@ -1,0 +1,36 @@
+{
+  "name": "@create-something/ascii-renderer",
+  "version": "0.1.0",
+  "description": "Shape-aware ASCII renderer with 6D character matching and contrast enhancement",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "generate-vectors": "tsx scripts/generate-shape-vectors.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "ascii",
+    "art",
+    "renderer",
+    "3d",
+    "visualization",
+    "terminal",
+    "canvas"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "MIT"
+}

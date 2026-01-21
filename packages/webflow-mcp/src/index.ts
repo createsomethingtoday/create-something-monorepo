@@ -153,7 +153,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'plagiarism_confidence',
-      description: 'Calculate Bayesian plagiarism probability for a template pair. Combines CSS, JS, framework, and structural evidence using Bayes theorem.',
+      description: 'Calculate Bayesian plagiarism probability for a template pair. Combines CSS, JS, framework, and structural evidence using Bayes theorem. Returns {excluded: true} if pair is in exclusion list.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -164,6 +164,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           templateB: { 
             type: 'string', 
             description: 'Second template ID' 
+          }
+        },
+        required: ['templateA', 'templateB']
+      }
+    },
+    {
+      name: 'plagiarism_exclude',
+      description: 'Add a template pair to the exclusion list (false positive handling). Use when editorial review determines two templates are legitimately similar.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          templateA: { 
+            type: 'string', 
+            description: 'First template ID' 
+          },
+          templateB: { 
+            type: 'string', 
+            description: 'Second template ID' 
+          },
+          reason: { 
+            type: 'string', 
+            description: 'Why this pair is excluded (e.g., "same_author", "licensed", "common_framework")' 
           }
         },
         required: ['templateA', 'templateB']
@@ -237,6 +259,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await plagiarism.calculateBayesianConfidence(
           safeArgs.templateA as string,
           safeArgs.templateB as string
+        );
+        break;
+
+      case 'plagiarism_exclude':
+        result = await plagiarism.addExclusion(
+          safeArgs.templateA as string,
+          safeArgs.templateB as string,
+          safeArgs.reason as string | undefined
         );
         break;
 

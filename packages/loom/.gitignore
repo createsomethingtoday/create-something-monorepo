@@ -1,0 +1,6 @@
+/target
+/npm/bin/lm
+/npm/bin/loom-mcp
+*.db
+*.sock
+*.pid

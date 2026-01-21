@@ -5,8 +5,57 @@
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		%sveltekit.head%
+		<script>
+			// Detect iframe embedding early to prevent layout flash
+			if (window.self !== window.top) {
+				document.documentElement.classList.add('embedded');
+			}
+		</script>
+		<style>
+			/* When embedded in iframe, use 100% height for proper centering */
+			html.embedded, html.embedded body {
+				height: 100%;
+			}
+			html.embedded main.container {
+				min-height: 100%;
+			}
+		</style>
+		<!-- Cloudflare Web Analytics -->
+		<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "qP810MpTi30mggC5hkJgcSgZRdEFMi_MgCBze8ic"}'></script>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
+		<script>
+			// Iframe resize support - notifies parent window of height changes
+			(function() {
+				var isEmbedded = window.self !== window.top;
+				if (!isEmbedded) return; // Only run in iframe
+
+				function notifyHeight() {
+					// Get the actual content height
+					var height = Math.max(
+						document.body.scrollHeight,
+						document.body.offsetHeight,
+						document.documentElement.scrollHeight
+					);
+					window.parent.postMessage({ type: 'webflow-dashboard-resize', height: height }, '*');
+				}
+
+				// Observe body for size changes
+				if (typeof ResizeObserver !== 'undefined') {
+					new ResizeObserver(notifyHeight).observe(document.body);
+				}
+
+				// Also notify on load and navigation
+				window.addEventListener('load', notifyHeight);
+				document.addEventListener('DOMContentLoaded', notifyHeight);
+
+				// Re-notify after SvelteKit navigation (content changes)
+				var observer = new MutationObserver(function() {
+					setTimeout(notifyHeight, 50);
+				});
+				observer.observe(document.body, { childList: true, subtree: true });
+			})();
+		</script>
 	</body>
 </html>

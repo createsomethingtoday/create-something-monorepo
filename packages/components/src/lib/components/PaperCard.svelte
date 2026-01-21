@@ -1,13 +1,38 @@
 <script lang="ts">
 	import type { Paper } from '@create-something/components/types';
+	import AnimatedAsciiThumbnail from './AnimatedAsciiThumbnail.svelte';
 
 	interface Props {
 		paper: Paper;
 		rotation?: number;
 		index?: number;
+		/** Enable animated ASCII on hover */
+		animate?: boolean;
 	}
 
-	let { paper, rotation = 0, index = 0 }: Props = $props();
+	let { paper, rotation = 0, index = 0, animate = true }: Props = $props();
+
+	// Map experiment slugs/tags to animation scenes
+	function getAnimationScene(p: Paper): 'donut' | 'sphere' | 'cube' | 'wave' | 'spiral' {
+		const slug = p.slug || '';
+		const tags = Array.isArray(p.tags) ? p.tags.map(t => typeof t === 'string' ? t : t.name).join(' ').toLowerCase() : '';
+
+		// Match based on content
+		if (slug.includes('ascii') || slug.includes('render')) return 'donut';
+		if (slug.includes('arena') || slug.includes('crowd') || slug.includes('gpu')) return 'sphere';
+		if (slug.includes('canvas') || slug.includes('diagram') || slug.includes('graph')) return 'cube';
+		if (slug.includes('kinetic') || slug.includes('typography') || slug.includes('text')) return 'wave';
+		if (slug.includes('data') || slug.includes('pattern') || slug.includes('viz')) return 'spiral';
+		if (tags.includes('3d') || tags.includes('webgpu')) return 'sphere';
+		if (tags.includes('animation') || tags.includes('motion')) return 'wave';
+		if (tags.includes('canvas') || tags.includes('interactive')) return 'cube';
+
+		// Default rotation through scenes based on index
+		const scenes: Array<'donut' | 'sphere' | 'cube' | 'wave' | 'spiral'> = ['donut', 'sphere', 'cube', 'wave', 'spiral'];
+		return scenes[index % scenes.length];
+	}
+
+	const animationScene = getAnimationScene(paper);
 
 	// Map category to display name
 	const categoryDisplayNames: Record<string, string> = {
@@ -36,7 +61,15 @@
 		<div class="paper-card relative h-full overflow-hidden">
 			<!-- Image or ASCII Art -->
 			<div class="paper-image aspect-[4/3] flex items-center justify-center p-4 relative overflow-hidden">
-				{#if paper.ascii_art}
+				{#if paper.ascii_art && animate}
+					<AnimatedAsciiThumbnail
+						staticArt={paper.ascii_art}
+						scene={animationScene}
+						cols={50}
+						rows={18}
+						speed={0.8}
+					/>
+				{:else if paper.ascii_art}
 					<pre class="ascii-art text-[0.45rem] leading-[1.1] font-mono select-none">{paper.ascii_art}</pre>
 				{:else}
 					<div class="paper-placeholder text-6xl">

@@ -320,7 +320,7 @@ IMPORTANT: Return ONLY valid JSON:
 }"""
 
     response = anthropic.messages.create(
-        model="claude-3-7-sonnet-20250219",
+        model="claude-sonnet-4-20250514",
         max_tokens=2000,
         messages=[{
             "role": "user",
@@ -528,7 +528,7 @@ Make your judgment using BOTH analyses."""
 
     while True:
         response = anthropic.messages.create(
-            model="claude-3-7-sonnet-20250219",
+            model="claude-sonnet-4-20250514",
             max_tokens=4000,
             system=system_message,
             tools=enhanced_tools,

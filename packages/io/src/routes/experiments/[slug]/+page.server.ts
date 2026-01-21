@@ -2,7 +2,8 @@ import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/components/types';
 import { getPlatform } from '@create-something/components/platform';
-import { isFileBasedExperiment } from '$lib/config/fileBasedExperiments';
+import { isFileBasedExperiment, getFileBasedExperiment } from '$lib/config/fileBasedExperiments';
+import { transformExperimentToPaper } from '@create-something/components';
 
 // Cross-property experiments: experiments that live on other properties
 // Redirect to the canonical location
@@ -10,6 +11,22 @@ const CROSS_PROPERTY_REDIRECTS: Record<string, string> = {
 	'minimal-capture': 'https://createsomething.space/experiments/minimal-capture',
 	'motion-ontology': 'https://createsomething.space/experiments/motion-ontology'
 };
+
+// File-based experiments that have dedicated route files (with custom interactive content)
+const FILE_BASED_WITH_ROUTES = new Set([
+	'agentic-visualization',
+	'data-patterns',
+	'ascii-renderer',
+	'canvas-interactivity',
+	'ic-mvp-pipeline',
+	'kinetic-typography',
+	'living-arena',
+	'living-arena-gpu',
+	'render-preview',
+	'render-studio',
+	'spritz',
+	'text-revelation'
+]);
 
 export const load: PageServerLoad = async ({ params, platform }) => {
 	const { slug } = params;
@@ -19,9 +36,24 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 		throw redirect(301, CROSS_PROPERTY_REDIRECTS[slug]);
 	}
 
-	// Skip this route for file-based experiments - they have their own routes
+	// Handle file-based experiments
 	if (isFileBasedExperiment(slug)) {
-		throw error(404, 'Not found');
+		// If this experiment has a dedicated route, let SvelteKit handle it there
+		if (FILE_BASED_WITH_ROUTES.has(slug)) {
+			throw error(404, 'Not found');
+		}
+
+		// Otherwise, serve the experiment from config
+		const experiment = getFileBasedExperiment(slug);
+		if (!experiment) {
+			throw error(404, 'Experiment not found');
+		}
+
+		const paper = transformExperimentToPaper(experiment);
+		return {
+			paper,
+			relatedPapers: [] // File-based experiments don't have DB-based related papers
+		};
 	}
 
 	try {

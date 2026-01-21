@@ -27,6 +27,37 @@ export {
 } from './utils/ai';
 export type { AiProvider } from './utils/ai';
 
+// Analytics
+export {
+  CorrelationAnalyzer,
+  scoreSubmissionPriority,
+  calculatePriorityScore,
+  sortQueueByPriority,
+  filterForReviewer,
+  ReviewRouter,
+  DEFAULT_PRIORITY_CONFIG,
+  DEFAULT_ROUTING_CONFIG,
+  DEFAULT_REVIEWERS
+} from './analytics';
+export type {
+  ReviewOutcome,
+  RecordedSubmission,
+  RuleCorrelation,
+  CorrelationReport,
+  CategoryInsight,
+  AssetType,
+  CreatorTier,
+  SubmissionContext,
+  PriorityScore,
+  PriorityFactor,
+  PriorityScoringConfig,
+  AssetCategory,
+  ReviewerProfile,
+  SubmissionForRouting,
+  RoutingDecision,
+  RoutingConfig
+} from './analytics';
+
 // All types
 export type {
   // Verdict & Severity

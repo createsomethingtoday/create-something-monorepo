@@ -1,17 +1,28 @@
 # Ralph Patterns
 
-**Ralph is the primary orchestration method for autonomous work.** The script spawns fresh Claude Code instances that work through user stories until complete.
+> **NOTE**: The Ralph pattern has been unified into **Loom Orchestrator**.
+> The core philosophy remains: fresh context per task, multi-backend support.
+> 
+> Loom Orchestrator adds:
+> - Multi-backend spawning (Claude Code + Gemini CLI)
+> - Smart routing based on task complexity
+> - System notifications for task completion
+> - Unified coordination via MCP tools
+>
+> Run via: `lm daemon start` or programmatically via `Orchestrator::run_loop()`
+
+**Ralph is the primary orchestration method for autonomous work.** The script (or Loom Orchestrator) spawns fresh agent instances that work through tasks until complete.
 
 ## What to Do This Week
 
 | When... | Do this |
 |---------|---------|
-| Building a new feature | `/prd-to-ralph` → `./ralph.sh` |
-| Want overnight autonomous work | Create prd.json, run Ralph, sleep |
+| Building a new feature | `/prd-to-ralph` → `./ralph.sh` (or `lm daemon`) |
+| Want overnight autonomous work | Create tasks in Loom, run daemon, sleep |
 | Need parallel work (3+ features) | Use [Gastown](./gastown-patterns.md) (on request) |
 | Quick test-fix loop (same session) | `/ralph-loop` (legacy single-session) |
 
-**Default**: Use Ralph for all autonomous work.
+**Default**: Use Loom Orchestrator for all autonomous work.
 **Exception**: Gastown only when you explicitly need parallelism (rare).
 
 ---

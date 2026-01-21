@@ -1,0 +1,277 @@
+# Loom Model Profiles
+#
+# Config-driven model definitions. Update this file when:
+# - Pricing changes
+# - New models release
+# - You want to tune routing
+#
+# Capabilities are 0.0-1.0 (higher = better)
+# Costs are per 1K tokens in USD
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Claude (Anthropic)
+# ─────────────────────────────────────────────────────────────────────────────
+
+[models.claude-opus]
+family = "claude"
+tier = "powerful"
+name = "Claude Opus 4"
+cli = "claude"
+input_per_1k = 0.015
+output_per_1k = 0.075
+max_context = 200000
+planning = 0.98
+coding = 0.96
+debugging = 0.95
+ui = 0.88
+docs = 0.97
+refactor = 0.96
+testing = 0.92
+mcp = true
+checkpoints = true
+git_aware = true
+sub_agents = true
+max_concurrent = 3
+
+[models.claude-sonnet]
+family = "claude"
+tier = "balanced"
+name = "Claude Sonnet 4"
+cli = "claude"
+input_per_1k = 0.003
+output_per_1k = 0.015
+max_context = 200000
+planning = 0.92
+coding = 0.93
+debugging = 0.90
+ui = 0.85
+docs = 0.93
+refactor = 0.92
+testing = 0.88
+mcp = true
+checkpoints = true
+git_aware = true
+sub_agents = true
+max_concurrent = 5
+
+[models.claude-haiku]
+family = "claude"
+tier = "fast"
+name = "Claude Haiku 3.5"
+cli = "claude"
+input_per_1k = 0.0008
+output_per_1k = 0.004
+max_context = 200000
+planning = 0.72
+coding = 0.78
+debugging = 0.75
+ui = 0.70
+docs = 0.80
+refactor = 0.75
+testing = 0.72
+mcp = true
+checkpoints = false
+git_aware = true
+sub_agents = false
+max_concurrent = 10
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GPT (OpenAI)
+# ─────────────────────────────────────────────────────────────────────────────
+
+[models.gpt-4o]
+family = "gpt"
+tier = "powerful"
+name = "GPT-4o"
+cli = "openai"
+input_per_1k = 0.0025
+output_per_1k = 0.01
+max_context = 128000
+planning = 0.90
+coding = 0.92
+debugging = 0.88
+ui = 0.85
+docs = 0.88
+refactor = 0.88
+testing = 0.85
+mcp = false
+checkpoints = false
+git_aware = false
+sub_agents = false
+max_concurrent = 5
+
+[models.gpt-4o-mini]
+family = "gpt"
+tier = "fast"
+name = "GPT-4o Mini"
+cli = "openai"
+input_per_1k = 0.00015
+output_per_1k = 0.0006
+max_context = 128000
+planning = 0.75
+coding = 0.80
+debugging = 0.75
+ui = 0.72
+docs = 0.78
+refactor = 0.75
+testing = 0.72
+mcp = false
+checkpoints = false
+git_aware = false
+sub_agents = false
+max_concurrent = 10
+
+[models.gpt-o1]
+family = "gpt"
+tier = "powerful"
+name = "GPT o1"
+cli = "openai"
+input_per_1k = 0.015
+output_per_1k = 0.06
+max_context = 200000
+planning = 0.97
+coding = 0.94
+debugging = 0.92
+ui = 0.80
+docs = 0.90
+refactor = 0.93
+testing = 0.88
+mcp = false
+checkpoints = false
+git_aware = false
+sub_agents = false
+max_concurrent = 3
+
+[models.gpt-o3-mini]
+family = "gpt"
+tier = "balanced"
+name = "GPT o3-mini"
+cli = "openai"
+input_per_1k = 0.0011
+output_per_1k = 0.0044
+max_context = 200000
+planning = 0.88
+coding = 0.87
+debugging = 0.85
+ui = 0.75
+docs = 0.82
+refactor = 0.85
+testing = 0.80
+mcp = false
+checkpoints = false
+git_aware = false
+sub_agents = false
+max_concurrent = 8
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Gemini (Google)
+# ─────────────────────────────────────────────────────────────────────────────
+
+[models.gemini-2-flash]
+family = "gemini"
+tier = "fast"
+name = "Gemini 2.0 Flash"
+cli = "gemini"
+input_per_1k = 0.0001
+output_per_1k = 0.0004
+max_context = 1000000
+planning = 0.78
+coding = 0.80
+debugging = 0.75
+ui = 0.72
+docs = 0.82
+refactor = 0.75
+testing = 0.73
+mcp = true
+checkpoints = false
+git_aware = false
+sub_agents = false
+max_concurrent = 10
+
+[models.gemini-2-flash-thinking]
+family = "gemini"
+tier = "balanced"
+name = "Gemini 2.0 Flash Thinking"
+cli = "gemini"
+input_per_1k = 0.0001
+output_per_1k = 0.0004
+max_context = 1000000
+planning = 0.88
+coding = 0.85
+debugging = 0.82
+ui = 0.75
+docs = 0.85
+refactor = 0.82
+testing = 0.78
+mcp = true
+checkpoints = false
+git_aware = false
+sub_agents = false
+max_concurrent = 8
+
+[models.gemini-1-5-pro]
+family = "gemini"
+tier = "powerful"
+name = "Gemini 1.5 Pro"
+cli = "gemini"
+input_per_1k = 0.00125
+output_per_1k = 0.005
+max_context = 2000000
+planning = 0.88
+coding = 0.85
+debugging = 0.82
+ui = 0.78
+docs = 0.90
+refactor = 0.82
+testing = 0.78
+mcp = true
+checkpoints = false
+git_aware = false
+sub_agents = false
+max_concurrent = 5
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IDE Agents (use underlying models)
+# ─────────────────────────────────────────────────────────────────────────────
+
+[models.cursor]
+family = "claude"
+tier = "balanced"
+name = "Cursor (Sonnet)"
+cli = "cursor"
+input_per_1k = 0.003
+output_per_1k = 0.015
+max_context = 128000
+planning = 0.75
+coding = 0.88
+debugging = 0.85
+ui = 0.95
+docs = 0.70
+refactor = 0.80
+testing = 0.75
+mcp = true
+checkpoints = false
+git_aware = true
+sub_agents = false
+max_concurrent = 2
+
+[models.codex]
+family = "gpt"
+tier = "balanced"
+name = "Codex CLI"
+cli = "codex"
+input_per_1k = 0.005
+output_per_1k = 0.015
+max_context = 128000
+planning = 0.70
+coding = 0.85
+debugging = 0.80
+ui = 0.65
+docs = 0.75
+refactor = 0.75
+testing = 0.90
+mcp = true
+checkpoints = false
+git_aware = true
+sub_agents = false
+max_concurrent = 3

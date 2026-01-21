@@ -150,13 +150,14 @@
 
 	.meta-badge {
 		padding: 0.25rem 0.625rem;
-		background: var(--color-brand);
+		background: rgba(255, 255, 255, 0.15);
 		color: white;
 		font-size: 0.6875rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		border-radius: var(--radius-sm);
 		letter-spacing: 0.05em;
+		border: 1px solid rgba(255, 255, 255, 0.2);
 	}
 
 	.meta-item {
@@ -226,13 +227,16 @@
 	}
 
 	.btn-primary {
-		background: var(--color-brand);
+		background: rgba(255, 255, 255, 0.12);
 		color: white;
-		border: none;
+		border: 1px solid rgba(255, 255, 255, 0.25);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
 	}
 
 	.btn-primary:hover {
-		filter: brightness(0.85);
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.35);
 	}
 
 	.btn-primary:active {
@@ -240,14 +244,16 @@
 	}
 
 	.btn-secondary {
-		background: rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.06);
 		color: white;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		backdrop-filter: blur(8px);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
 	}
 
 	.btn-secondary:hover {
-		background: rgba(255, 255, 255, 0.2);
+		background: rgba(255, 255, 255, 0.12);
+		border-color: rgba(255, 255, 255, 0.25);
 	}
 
 	/* Category pills at bottom */
@@ -290,9 +296,10 @@
 	}
 
 	.pill.active {
-		background: var(--color-brand);
+		background: rgba(255, 255, 255, 0.2);
 		color: white;
 		font-weight: 700;
+		border: 1px solid rgba(255, 255, 255, 0.3);
 	}
 
 	/* Responsive */

@@ -234,10 +234,10 @@
 	.pricing-card {
 		position: relative;
 		background: var(--color-bg-surface);
-		border: 2px solid var(--color-brand);
+		border: 1px solid rgba(255, 255, 255, 0.2);
 		border-radius: 1rem;
 		padding: 2.5rem;
-		box-shadow: 0 0 0 4px var(--color-brand-muted);
+		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
 	}
 
 	.card-badge {
@@ -246,7 +246,8 @@
 		left: 50%;
 		transform: translateX(-50%);
 		padding: 0.375rem 1rem;
-		background: var(--color-brand);
+		background: rgba(255, 255, 255, 0.15);
+		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: 9999px;
 		font-size: 0.75rem;
 		font-weight: 700;
@@ -266,10 +267,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-brand-muted);
-		border: 2px solid var(--color-brand);
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.2);
 		border-radius: 1rem;
-		color: var(--color-brand);
+		color: var(--color-fg-primary);
 		margin: 0 auto 1rem;
 	}
 
@@ -377,18 +378,21 @@
 		justify-content: center;
 		gap: 0.5rem;
 		padding: 1.125rem 1.5rem;
-		background: var(--color-brand);
-		border: none;
+		background: rgba(255, 255, 255, 0.12);
+		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: 0.75rem;
 		font-size: 1.0625rem;
 		font-weight: 700;
 		color: white;
 		cursor: pointer;
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.card-cta:hover:not(:disabled) {
-		background: var(--color-brand-hover);
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.35);
 		transform: translateY(-2px);
 		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 	}

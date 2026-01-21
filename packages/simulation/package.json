@@ -1,0 +1,35 @@
+{
+  "name": "@create-something/simulation",
+  "version": "0.1.0",
+  "description": "Deterministic simulation engine for SaaS demos",
+  "type": "module",
+  "main": "./pkg/simulation.js",
+  "types": "./pkg/simulation.d.ts",
+  "exports": {
+    ".": {
+      "types": "./pkg/simulation.d.ts",
+      "import": "./pkg/simulation.js"
+    },
+    "./wasm": "./pkg/simulation_bg.wasm"
+  },
+  "files": [
+    "pkg"
+  ],
+  "scripts": {
+    "build": "wasm-pack build --target bundler --out-dir pkg",
+    "build:web": "wasm-pack build --target web --out-dir pkg-web",
+    "test": "cargo test",
+    "clean": "rm -rf pkg pkg-web target"
+  },
+  "keywords": [
+    "simulation",
+    "demo",
+    "wasm",
+    "deterministic"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/create-something/create-something-monorepo"
+  }
+}

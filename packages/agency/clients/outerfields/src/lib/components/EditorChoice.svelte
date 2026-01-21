@@ -158,7 +158,7 @@
 	.label {
 		font-size: var(--text-sm);
 		font-weight: 700;
-		color: var(--color-brand);
+		color: var(--color-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.15em;
 		margin-bottom: var(--space-sm);
@@ -205,8 +205,9 @@
 	}
 
 	.badge.members {
-		background: var(--color-brand);
+		background: rgba(255, 255, 255, 0.15);
 		color: var(--color-fg-primary);
+		border: 1px solid rgba(255, 255, 255, 0.25);
 	}
 
 	.duration {
@@ -233,13 +234,16 @@
 	}
 
 	.btn-primary {
-		background: var(--color-brand);
+		background: rgba(255, 255, 255, 0.12);
 		color: var(--color-fg-primary);
-		border: none;
+		border: 1px solid rgba(255, 255, 255, 0.25);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
 	}
 
 	.btn-primary:hover {
-		filter: brightness(1.1);
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.35);
 		transform: translateY(-1px);
 	}
 

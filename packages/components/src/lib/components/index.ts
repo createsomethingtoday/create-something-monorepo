@@ -9,6 +9,7 @@ export { default as Card } from './Card.svelte';
 export { default as CatalogCard } from './CatalogCard.svelte';
 export { default as PaperCard } from './PaperCard.svelte';
 export { default as PapersGrid } from './PapersGrid.svelte';
+export { default as AnimatedAsciiThumbnail } from './AnimatedAsciiThumbnail.svelte';
 export { default as CategorySection } from './CategorySection.svelte';
 export { default as ShareButtons } from './ShareButtons.svelte';
 export { default as QuoteBlock } from './QuoteBlock.svelte';

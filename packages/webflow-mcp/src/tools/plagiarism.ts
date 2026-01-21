@@ -109,6 +109,23 @@ export interface HealthResult {
   };
 }
 
+export interface ExclusionResult {
+  success?: boolean;
+  excluded: boolean | { templateA: string; templateB: string; reason?: string };
+  reason?: string;
+  created_at?: string;
+}
+
+export interface ExclusionListResult {
+  count: number;
+  exclusions: Array<{
+    template_a: string;
+    template_b: string;
+    reason?: string;
+    created_at: string;
+  }>;
+}
+
 // =============================================================================
 // API Helpers
 // =============================================================================
@@ -220,4 +237,32 @@ export async function scanTemplate(
 /** Get health status of the plagiarism detection system */
 export async function getHealth(): Promise<HealthResult> {
   return fetchJson<HealthResult>(`${PLAGIARISM_API}/health`);
+}
+
+/** Add or check exclusion for a template pair (false positive handling) */
+export async function addExclusion(
+  templateA: string,
+  templateB: string,
+  reason?: string
+): Promise<ExclusionResult> {
+  return fetchJson<ExclusionResult>(`${PLAGIARISM_API}/exclusions`, {
+    method: 'POST',
+    body: JSON.stringify({ templateA, templateB, reason }),
+  });
+}
+
+/** Check if a template pair is excluded */
+export async function checkExclusion(
+  templateA: string,
+  templateB: string
+): Promise<ExclusionResult> {
+  return fetchJson<ExclusionResult>(`${PLAGIARISM_API}/exclusions/check`, {
+    method: 'POST',
+    body: JSON.stringify({ templateA, templateB }),
+  });
+}
+
+/** List all exclusions */
+export async function listExclusions(limit: number = 100): Promise<ExclusionListResult> {
+  return fetchJson<ExclusionListResult>(`${PLAGIARISM_API}/exclusions?limit=${limit}`);
 }

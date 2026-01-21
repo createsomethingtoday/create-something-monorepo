@@ -36,5 +36,8 @@ export { default as KineticNumber } from './KineticNumber.svelte';
 // Validation components
 export { default as GsapValidationModal } from './GsapValidationModal.svelte';
 
+// Feedback
+export { default as FeedbackButton } from './FeedbackButton.svelte';
+
 // Re-export UI components
 export * from './ui';

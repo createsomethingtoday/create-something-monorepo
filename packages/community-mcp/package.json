@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/community-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for agent-managed community presence. Watch, draft, respond — while you do deep work.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "community-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "community",
+    "ai-native",
+    "create-something"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "MIT"
+}

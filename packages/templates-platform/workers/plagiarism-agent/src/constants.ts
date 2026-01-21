@@ -124,7 +124,7 @@ export const IDF_BASELINE: Record<string, number> = {
 // Version
 // =============================================================================
 
-export const AGENT_VERSION = '2.2.0';
+export const AGENT_VERSION = '2.3.0';
 
 // =============================================================================
 // Sketch Configuration (Bloom Filter & HyperLogLog)

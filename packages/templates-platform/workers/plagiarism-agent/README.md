@@ -112,6 +112,7 @@ Classic CS algorithms exposed as **MCP tools for team AI agents**.
 > - `plagiarism_pagerank_leaderboard` - Top authoritative templates
 > - `plagiarism_detect_frameworks` - Identify JS libraries used
 > - `plagiarism_confidence` - Calculate plagiarism probability
+> - `plagiarism_exclude` - Mark pair as false positive
 > 
 > The algorithms are proven CS techniques (LSH 1998, PageRank 1996, Bayesian),
 > wrapped as tools for AI agent consumption.
@@ -243,6 +244,9 @@ curl https://plagiarism-agent.createsomething.workers.dev/compute/stats
 | `POST /compute/frameworks` | Regex patterns | Detect JS libraries in templates |
 | `POST /compute/confidence` | Bayes' theorem | Score plagiarism probability |
 | `GET /compute/stats` | - | Monitor algorithm usage |
+| `POST /exclusions` | - | Add false positive exclusion |
+| `POST /exclusions/check` | - | Check if pair is excluded |
+| `GET /exclusions` | - | List all exclusions |
 
 ### Case Management
 | Endpoint | Description |
@@ -398,6 +402,25 @@ if (decision === 'major' && confidence < 0.9) {
 This ensures high-stakes decisions receive human oversight when the AI is uncertain.
 
 ## Recent Improvements
+
+**False Positive Handling (Jan 2026 - v2.3.0)**:
+- ✅ **Exclusion table** - Store legitimately similar pairs
+- ✅ **Automatic check** - `/compute/confidence` returns `{excluded: true}` for known pairs
+- ✅ **MCP tool** - `plagiarism_exclude` for editorial workflow
+
+```bash
+# Add exclusion (false positive)
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/exclusions \
+  -H "Content-Type: application/json" \
+  -d '{"templateA": "id1", "templateB": "id2", "reason": "same_author"}'
+
+# Check if pair is excluded
+curl -X POST https://plagiarism-agent.createsomething.workers.dev/exclusions/check \
+  -H "Content-Type: application/json" \
+  -d '{"templateA": "id1", "templateB": "id2"}'
+```
+
+See migration `0019_similarity_exclusions.sql`.
 
 **Agent-Native Algorithms (Jan 2026 - v2.2.0)**:
 Classic CS algorithms exposed as MCP tools for AI agent invocation:

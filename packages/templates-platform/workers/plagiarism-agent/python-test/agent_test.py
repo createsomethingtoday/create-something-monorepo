@@ -364,7 +364,7 @@ Provide your final judgment as JSON."""
     # Agent loop
     while True:
         response = anthropic.messages.create(
-            model="claude-3-7-sonnet-20250219",
+            model="claude-sonnet-4-20250514",
             max_tokens=4000,
             system=system_message,
             tools=tools,

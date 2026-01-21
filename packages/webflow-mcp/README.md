@@ -17,6 +17,7 @@ Agent-native tools for the Webflow Marketplace team. Exposes plagiarism detectio
 | `plagiarism_pagerank_leaderboard` | PageRank | Top authoritative templates |
 | `plagiarism_detect_frameworks` | Regex | Detect 15+ JS frameworks |
 | `plagiarism_confidence` | Bayes' theorem | Calculate plagiarism probability |
+| `plagiarism_exclude` | - | Mark pair as false positive |
 
 ## Installation
 

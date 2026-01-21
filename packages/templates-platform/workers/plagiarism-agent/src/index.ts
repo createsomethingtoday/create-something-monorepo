@@ -351,7 +351,7 @@ export default {
             lshBands: (lshBandCount as any)?.count || 0
           },
           sketches: sketchStats,
-          version: '2.2.0'  // Bumped for AI-native algorithms
+          version: '2.3.0'  // Bumped for false positive exclusions
         }), {
           headers: { 'Content-Type': 'application/json' }
         });
@@ -2181,6 +2181,24 @@ export default {
           return new Response(JSON.stringify({ error: 'Missing templateA/templateB or urlA/urlB' }), { status: 400 });
         }
         
+        // Check for exclusion (false positive)
+        if (templateA && templateB) {
+          const excluded = await env.DB.prepare(`
+            SELECT reason FROM similarity_exclusions 
+            WHERE (template_a = ? AND template_b = ?) 
+               OR (template_a = ? AND template_b = ?)
+          `).bind(templateA, templateB, templateB, templateA).first() as any;
+          
+          if (excluded) {
+            return new Response(JSON.stringify({
+              excluded: true,
+              reason: excluded.reason,
+              templateA,
+              templateB
+            }), { headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+        
         const { 
           calculateBayesianConfidence,
           detectFrameworks,
@@ -2334,6 +2352,87 @@ export default {
           confidence: {
             highConfidenceCases: (confidenceCount as any)?.count || 0
           }
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // ==========================================================================
+    // EXCLUSIONS: False positive handling
+    // ==========================================================================
+    
+    // Add or check exclusion for a template pair
+    if (url.pathname === '/exclusions' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { templateA, templateB, reason } = body;
+        
+        if (!templateA || !templateB) {
+          return new Response(JSON.stringify({ error: 'Missing templateA or templateB' }), { status: 400 });
+        }
+        
+        // Normalize order (smaller ID first) to avoid duplicates
+        const [idA, idB] = [templateA, templateB].sort();
+        
+        await env.DB.prepare(`
+          INSERT OR REPLACE INTO similarity_exclusions (template_a, template_b, reason)
+          VALUES (?, ?, ?)
+        `).bind(idA, idB, reason || null).run();
+        
+        return new Response(JSON.stringify({
+          success: true,
+          excluded: { templateA: idA, templateB: idB, reason }
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // Check if a pair is excluded
+    if (url.pathname === '/exclusions/check' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        const { templateA, templateB } = body;
+        
+        if (!templateA || !templateB) {
+          return new Response(JSON.stringify({ error: 'Missing templateA or templateB' }), { status: 400 });
+        }
+        
+        const excluded = await env.DB.prepare(`
+          SELECT reason, created_at FROM similarity_exclusions 
+          WHERE (template_a = ? AND template_b = ?) 
+             OR (template_a = ? AND template_b = ?)
+        `).bind(templateA, templateB, templateB, templateA).first() as any;
+        
+        return new Response(JSON.stringify({
+          excluded: !!excluded,
+          reason: excluded?.reason || null,
+          created_at: excluded?.created_at || null
+        }), { headers: { 'Content-Type': 'application/json' } });
+        
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      }
+    }
+    
+    // List all exclusions
+    if (url.pathname === '/exclusions' && request.method === 'GET') {
+      try {
+        const limit = parseInt(url.searchParams.get('limit') || '100');
+        
+        const exclusions = await env.DB.prepare(`
+          SELECT template_a, template_b, reason, created_at
+          FROM similarity_exclusions
+          ORDER BY created_at DESC
+          LIMIT ?
+        `).bind(limit).all();
+        
+        return new Response(JSON.stringify({
+          count: exclusions.results?.length || 0,
+          exclusions: exclusions.results || []
         }), { headers: { 'Content-Type': 'application/json' } });
         
       } catch (error: any) {
@@ -3223,7 +3322,7 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 }`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-haiku-20241022',
+    model: 'claude-haiku-4-20250514',
     temperature: 0,
     max_tokens: 1000,
     messages: [{ role: 'user', content: prompt }]
@@ -3637,7 +3736,7 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 }`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-7-sonnet-20250219',
+    model: 'claude-sonnet-4-20250514',
     temperature: 0,
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }]

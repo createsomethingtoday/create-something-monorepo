@@ -652,7 +652,7 @@ Begin investigation.`;
       const tools = getAllowedToolsForState(state, contentCase);
 
       const response = await anthropicCreateWithRetry(anthropic, {
-        model: 'claude-3-7-sonnet-20250219',
+        model: 'claude-sonnet-4-20250514',
         temperature: 0,
         // Lower token budget reduces load and latency in high-traffic windows
         max_tokens: 2500,

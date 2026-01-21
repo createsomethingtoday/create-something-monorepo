@@ -1,0 +1,61 @@
+{
+    // CREATE SOMETHING - Zed Configuration
+    // 
+    // This configures Loom and Ground MCP servers for AI-assisted development.
+    // Note: Zed agents also have terminal access, so CLI commands work directly:
+    //   - lm ready, lm work "title", lm daemon
+    //   - ground analyze, ground find-duplicates
+    //   - bd ready, bd create, bd close
+  
+    "context_servers": {
+      "loom": {
+        "command": {
+          "path": "./packages/loom/target/release/loom-mcp",
+          "args": ["--path", "."],
+          "env": {}
+        },
+        "settings": {}
+      },
+      "ground": {
+        "command": {
+          "path": "./packages/ground/target/release/ground-mcp",
+          "args": ["--db", ".ground/registry.db"],
+          "env": {}
+        },
+        "settings": {}
+      }
+    },
+  
+    // Prefer Sonnet for general work, escalate to Opus for complex tasks
+    "assistant": {
+      "default_model": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-20250514"
+      }
+    },
+  
+    // Formatting to match project standards
+    "formatter": "prettier",
+    "format_on_save": "on",
+  
+    // TypeScript/JavaScript settings
+    "languages": {
+      "TypeScript": {
+        "formatter": "prettier"
+      },
+      "JavaScript": {
+        "formatter": "prettier"
+      },
+      "Svelte": {
+        "formatter": "prettier"
+      }
+    },
+  
+    // Terminal settings for CLI-first workflow
+    "terminal": {
+      "shell": {
+        "program": "zsh"
+      }
+    }
+  }
+  

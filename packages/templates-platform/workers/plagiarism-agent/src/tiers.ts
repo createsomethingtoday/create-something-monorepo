@@ -152,7 +152,7 @@ IMPORTANT: Return ONLY valid JSON, nothing else.
 }`;
 
 	const response = await anthropic.messages.create({
-		model: 'claude-3-5-haiku-20241022',
+		model: 'claude-haiku-4-20250514',
 		temperature: 0,
 		max_tokens: 1000,
 		messages: [{ role: 'user', content: prompt }]
@@ -281,7 +281,7 @@ export async function runTier3Judgment(
 	const prompt = buildTier3Prompt(plagiarismCase, tier2Result, codeAnalysis, vectorAnalysis);
 
 	const response = await anthropic.messages.create({
-		model: 'claude-3-7-sonnet-20250219',
+		model: 'claude-sonnet-4-20250514',
 		temperature: 0,
 		max_tokens: 2000,
 		messages: [{ role: 'user', content: prompt }]

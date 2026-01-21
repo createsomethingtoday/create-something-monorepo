@@ -173,7 +173,7 @@ CRITICAL: Provide ONLY valid JSON, nothing else.
     
     try:
         response = anthropic.messages.create(
-            model="claude-3-7-sonnet-20250219",
+            model="claude-sonnet-4-20250514",
             temperature=0,
             max_tokens=2000,
             messages=[{"role": "user", "content": prompt}]

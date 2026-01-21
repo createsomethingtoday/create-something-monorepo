@@ -173,8 +173,8 @@
 	.watch-button {
 		width: 100%;
 		padding: var(--space-sm);
-		background: var(--color-brand);
-		border: none;
+		background: rgba(255, 255, 255, 0.15);
+		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: var(--radius-sm);
 		color: white;
 		font-size: var(--text-caption);
@@ -185,11 +185,14 @@
 		gap: var(--space-xs);
 		cursor: pointer;
 		margin-bottom: var(--space-sm);
-		transition: background var(--duration-micro) var(--ease-standard);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.watch-button:hover {
-		background: var(--color-brand-hover);
+		background: rgba(255, 255, 255, 0.25);
+		border-color: rgba(255, 255, 255, 0.35);
 	}
 
 	.overlay-meta {
@@ -211,7 +214,8 @@
 	}
 
 	.quality-badge.locked {
-		background: rgba(124, 43, 238, 0.4);
+		background: rgba(255, 255, 255, 0.15);
+		border: 1px solid rgba(255, 255, 255, 0.2);
 	}
 
 	.duration-badge {

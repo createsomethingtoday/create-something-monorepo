@@ -1,0 +1,70 @@
+/**
+ * Tend App Styles
+ *
+ * Canon-compliant: calm, monochrome, Heidegger.
+ * "Tend to what matters."
+ */
+
+@import '@create-something/components/styles/canon.css';
+
+/* Layout utilities from Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App-specific overrides */
+:root {
+	/* Calm: slightly slower transitions for contemplative feel */
+	--view-transition-duration: 200ms;
+}
+
+/* Reset body to Canon defaults */
+body {
+	background: var(--color-bg-pure);
+	color: var(--color-fg-primary);
+	font-family: var(--font-sans);
+	line-height: 1.6;
+	min-height: 100vh;
+}
+
+/* Scrollbar styling (calm, subtle) */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--color-border-default);
+	border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--color-border-emphasis);
+}
+
+/* Selection styling */
+::selection {
+	background: var(--color-fg-primary);
+	color: var(--color-bg-pure);
+}
+
+/* Focus states (accessible, not distracting) */
+:focus-visible {
+	outline: 2px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+/* Link defaults */
+a {
+	color: var(--color-fg-primary);
+	text-decoration: none;
+	transition: opacity var(--duration-micro) var(--ease-standard);
+}
+
+a:hover {
+	opacity: 0.8;
+}

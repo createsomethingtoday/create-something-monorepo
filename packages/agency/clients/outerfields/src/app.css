@@ -22,11 +22,11 @@
 	--color-primary-muted: rgba(255, 255, 255, 0.1);
 	--color-primary-glow: rgba(255, 255, 255, 0.2);
 
-	/* Brand Accent - OUTERFIELDS Purple */
-	--color-brand: #7c2bee;
-	--color-brand-hover: #6a24cc;
-	--color-brand-muted: rgba(124, 43, 238, 0.2);
-	--color-brand-glow: rgba(124, 43, 238, 0.3);
+	/* Brand Accent - Monochrome White */
+	--color-brand: #ffffff;
+	--color-brand-hover: rgba(255, 255, 255, 0.85);
+	--color-brand-muted: rgba(255, 255, 255, 0.15);
+	--color-brand-glow: rgba(255, 255, 255, 0.25);
 
 	/* Background */
 	--color-bg-pure: #000000;
@@ -185,46 +185,53 @@ body {
    Button Components
    ========================================================================== */
 
+/* Glass Button - Primary */
 .btn-primary {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 0.5rem;
 	padding: 0.875rem 2rem;
-	background-color: var(--color-primary);
-	color: var(--color-bg-pure);
+	background: rgba(255, 255, 255, 0.1);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	color: var(--color-fg-primary);
 	font-weight: 600;
 	border-radius: 0.5rem;
-	border: none;
+	border: 1px solid rgba(255, 255, 255, 0.2);
 	cursor: pointer;
 	transition: all var(--duration-micro) var(--ease-standard);
 	text-decoration: none;
 }
 
 .btn-primary:hover {
-	background-color: var(--color-primary-hover);
+	background: rgba(255, 255, 255, 0.2);
+	border-color: rgba(255, 255, 255, 0.3);
 	transform: translateY(-2px);
 }
 
+/* Glass Button - Secondary (more subtle) */
 .btn-secondary {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 0.5rem;
 	padding: 0.875rem 2rem;
-	background-color: var(--color-bg-surface);
+	background: rgba(255, 255, 255, 0.05);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
 	color: var(--color-fg-primary);
 	font-weight: 600;
 	border-radius: 0.5rem;
-	border: 1px solid var(--color-border-default);
+	border: 1px solid rgba(255, 255, 255, 0.1);
 	cursor: pointer;
 	transition: all var(--duration-micro) var(--ease-standard);
 	text-decoration: none;
 }
 
 .btn-secondary:hover {
-	background-color: var(--color-bg-surface-hover);
-	border-color: var(--color-border-emphasis);
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.2);
 	transform: translateY(-2px);
 }
 
