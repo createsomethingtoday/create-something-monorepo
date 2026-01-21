@@ -8,6 +8,9 @@
 	import { onMount } from 'svelte';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
 
+	// Cinematic background from Unsplash - dark moody film production aesthetic
+	const HERO_BG = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&q=80&auto=format&fit=crop';
+
 	interface FeaturedFilm {
 		id: string;
 		title: string;
@@ -78,9 +81,10 @@
 
 {#if !isLoading && film}
 	<section class="editor-choice">
+		<!-- Cinematic background - high quality Unsplash image -->
 		<img
-			src={film.thumbnail}
-			alt={film.title}
+			src={HERO_BG}
+			alt="Cinematic background"
 			class="background-image"
 			loading="lazy"
 		/>
@@ -135,13 +139,19 @@
 	.gradient-overlay {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(
-			to right,
-			rgba(0, 0, 0, 0.95) 0%,
-			rgba(0, 0, 0, 0.7) 40%,
-			rgba(0, 0, 0, 0.3) 70%,
-			transparent 100%
-		);
+		background: 
+			linear-gradient(
+				to right,
+				rgba(0, 0, 0, 0.95) 0%,
+				rgba(0, 0, 0, 0.85) 30%,
+				rgba(0, 0, 0, 0.5) 60%,
+				rgba(0, 0, 0, 0.3) 100%
+			),
+			linear-gradient(
+				to top,
+				rgba(0, 0, 0, 0.8) 0%,
+				transparent 40%
+			);
 	}
 
 	.content {
