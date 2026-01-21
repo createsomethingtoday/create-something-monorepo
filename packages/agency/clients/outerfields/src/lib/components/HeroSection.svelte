@@ -54,7 +54,10 @@
 		</div>
 
 		<!-- Title - MASSIVE -->
-		<h1 class="hero-title">OUTERFIELDS</h1>
+		<h1 class="hero-title">
+			<span class="title-line">Building Outerfields:</span>
+			<span class="title-accent">The Odyssey</span>
+		</h1>
 
 		<!-- Subtitle -->
 		<p class="hero-subtitle">
@@ -168,14 +171,27 @@
 
 	/* Title - MASSIVE like StreamVerse */
 	.hero-title {
-		font-size: clamp(4rem, 12vw, 9rem);
+		font-size: clamp(3rem, 10vw, 7rem);
 		font-weight: 900;
 		color: var(--color-fg-primary);
-		line-height: 0.9;
+		line-height: 1;
 		text-transform: uppercase;
-		letter-spacing: -0.03em;
+		letter-spacing: -0.02em;
 		text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
 		margin: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.title-line {
+		display: block;
+	}
+
+	.title-accent {
+		display: block;
+		font-style: italic;
+		font-weight: 400;
+		color: var(--color-fg-secondary);
 	}
 
 	/* Subtitle */
@@ -288,7 +304,7 @@
 		}
 
 		.hero-title {
-			font-size: clamp(3rem, 14vw, 5rem);
+			font-size: clamp(2rem, 10vw, 4rem);
 		}
 
 		.hero-subtitle {
@@ -328,7 +344,7 @@
 		}
 
 		.hero-title {
-			font-size: clamp(2.5rem, 16vw, 3.5rem);
+			font-size: clamp(1.75rem, 10vw, 2.5rem);
 		}
 
 		.hero-subtitle {
