@@ -3,6 +3,12 @@
 	 * OUTERFIELDS Pricing
 	 * Single $99 lifetime membership - Founding Member offer
 	 * Tufte-inspired: horizontal layout, high data-ink ratio, no redundancy
+	 * 
+	 * Balance updates (2026-01):
+	 * - CTA moved to right column for better visual weight distribution
+	 * - Price enlarged (110px) to anchor left side
+	 * - "$" positioned at top of price (superscript style)
+	 * - Golden ratio column split (~0.39:0.61)
 	 */
 	import { Check, Crown, Lock, AlertTriangle } from 'lucide-svelte';
 
@@ -50,7 +56,7 @@
 <section class="pricing-section" id="pricing">
 	<div class="pricing-container">
 		<div class="pricing-card">
-			<!-- Left: Pricing info -->
+			<!-- Left: Pricing info (the "hook") -->
 			<div class="pricing-left">
 				<div class="pricing-header">
 					<span class="badge">Founding Member</span>
@@ -72,6 +78,19 @@
 					<AlertTriangle size={14} />
 					<span>Founding member pricing — <strong>70%+ savings</strong> vs. post-launch</span>
 				</div>
+			</div>
+
+			<!-- Right: Benefits + CTA (the "value + action") -->
+			<div class="pricing-right">
+				<h3 class="benefits-title">What's included</h3>
+				<ul class="benefits-grid">
+					{#each benefits as benefit}
+						<li class="benefit-item">
+							<Check size={16} />
+							<span>{benefit}</span>
+						</li>
+					{/each}
+				</ul>
 
 				<button class="cta-button" onclick={handleCheckout} disabled={loading}>
 					{#if loading}
@@ -87,19 +106,6 @@
 				{/if}
 
 				<p class="guarantee">30-day money-back guarantee · Secure payment via Stripe</p>
-			</div>
-
-			<!-- Right: Benefits -->
-			<div class="pricing-right">
-				<h3 class="benefits-title">What's included</h3>
-				<ul class="benefits-grid">
-					{#each benefits as benefit}
-						<li class="benefit-item">
-							<Check size={16} />
-							<span>{benefit}</span>
-						</li>
-					{/each}
-				</ul>
 			</div>
 		</div>
 	</div>
@@ -118,9 +124,9 @@
 
 	.pricing-card {
 		display: grid;
-		grid-template-columns: 2fr 3fr;
+		grid-template-columns: 2fr 3fr; /* ~0.4:0.6, approximates golden ratio */
 		gap: 3rem;
-		align-items: center;
+		align-items: start; /* Top-align for stronger visual anchoring */
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: 1rem;
@@ -153,7 +159,7 @@
 
 	.price-row {
 		display: flex;
-		align-items: baseline;
+		align-items: flex-start; /* "$" at top of price (superscript style) */
 		gap: 0.25rem;
 	}
 
@@ -164,7 +170,7 @@
 	}
 
 	.price-amount {
-		font-size: 4.5rem;
+		font-size: 6.875rem; /* 110px - larger for visual weight balance */
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		line-height: 1;
@@ -174,7 +180,10 @@
 	.price-meta {
 		display: flex;
 		flex-direction: column;
+		justify-content: flex-end; /* Align to bottom of price */
 		margin-left: 0.5rem;
+		height: 100%;
+		padding-bottom: 0.5rem;
 	}
 
 	.price-period {
@@ -201,7 +210,7 @@
 		gap: 0.375rem;
 		font-size: 0.8125rem;
 		color: var(--color-fg-muted);
-		margin-bottom: 1.5rem;
+		/* No bottom margin - urgency is last element in left column */
 	}
 
 	.urgency-strip :global(svg) {
@@ -215,11 +224,13 @@
 	}
 
 	.cta-button {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
+		width: 100%; /* Full width in right column for visual anchor */
 		padding: 1rem 2rem;
+		margin-top: 0.5rem;
 		background: rgba(255, 255, 255, 0.12);
 		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: 0.5rem;
@@ -243,7 +254,6 @@
 	}
 
 	.error-message {
-		margin-top: 1rem;
 		padding: 0.75rem;
 		background: var(--color-error-muted);
 		border: 1px solid var(--color-error-border);
@@ -253,13 +263,16 @@
 	}
 
 	.guarantee {
-		margin-top: 1rem;
 		font-size: 0.8125rem;
 		color: var(--color-fg-muted);
+		text-align: center;
 	}
 
-	/* Right column - Benefits */
+	/* Right column - Benefits + CTA */
 	.pricing-right {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
 		border-left: 1px solid var(--color-border-default);
 		padding-left: 3rem;
 	}
@@ -270,7 +283,7 @@
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		margin: 0 0 1.5rem;
+		margin: 0;
 	}
 
 	.benefits-grid {
@@ -279,7 +292,7 @@
 		margin: 0;
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 1rem 2rem;
+		gap: 1.25rem 3rem; /* Increased gap for better breathing room */
 	}
 
 	.benefit-item {
@@ -323,15 +336,12 @@
 		}
 
 		.price-amount {
-			font-size: 3.5rem;
-		}
-
-		.cta-button {
-			width: 100%;
+			font-size: 5rem; /* Scale down from 6.875rem but still prominent */
 		}
 
 		.benefits-grid {
 			grid-template-columns: 1fr;
+			gap: 1rem;
 		}
 	}
 </style>
