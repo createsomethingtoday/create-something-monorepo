@@ -138,6 +138,7 @@
 
 			const byId: Record<string, PlayerVideo> = {};
 			const rows: Array<{ title: string; videos: RowVideo[] }> = Object.entries(grouped)
+				.filter(([categoryId]) => categoryId !== 'films') // Films shown in EditorChoice
 				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([categoryId, vids]) => {
 					for (const v of vids) {

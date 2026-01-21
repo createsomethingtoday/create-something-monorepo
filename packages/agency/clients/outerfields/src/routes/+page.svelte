@@ -10,6 +10,7 @@
 	import BuildProgress from '$lib/components/BuildProgress.svelte';
 	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ContentCategories from '$lib/components/ContentCategories.svelte';
+	import EditorChoice from '$lib/components/EditorChoice.svelte';
 	import AnalyticsDashboard from '$lib/components/AnalyticsDashboard.svelte';
 	import ComponentLab from '$lib/components/ComponentLab.svelte';
 	import PlatformComponents from '$lib/components/PlatformComponents.svelte';
@@ -206,22 +207,26 @@
 
 	<!-- 4. Content Categories - Netflix-style browsing -->
 	<ContentCategories />
+
+	<!-- 5. Editor's Choice - Featured Film highlight (StreamVerse style) -->
+	<EditorChoice />
+
 	<FeaturedVideos />
 
-	<!-- 5. Component Lab / Digital Tools - Preview for all, full access for members -->
+	<!-- 6. Component Lab / Digital Tools - Preview for all, full access for members -->
 	<ComponentLab />
 	<PlatformComponents />
 
-	<!-- 6. AI Analytics Chatbot - Demo on landing page -->
+	<!-- 7. AI Analytics Chatbot - Demo on landing page -->
 	<AIAnalytics forceUnlocked />
 
-	<!-- 7. Member-only deep content -->
+	<!-- 8. Member-only deep content -->
 	{#if isMember}
 		<BuildProgress />
 		<ResourceLinks />
 	{/if}
 
-	<!-- 8. Comparison & Pricing -->
+	<!-- 9. Comparison & Pricing -->
 	<FeatureComparison />
 	<Pricing />
 	<DemoCTA />
