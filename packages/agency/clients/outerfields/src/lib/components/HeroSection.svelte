@@ -2,10 +2,9 @@
 	/**
 	 * OUTERFIELDS Hero Section
 	 *
-	 * StreamVerse-inspired full-bleed hero with category pills at bottom
+	 * StreamVerse-inspired full-bleed hero
 	 */
 	import { Play, Plus, Star, Clock } from 'lucide-svelte';
-	import { categoryFilter, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter.svelte';
 
 	function scrollToContent() {
 		document.getElementById('content-categories')?.scrollIntoView({ behavior: 'smooth' });
@@ -14,24 +13,6 @@
 	function scrollToPricing() {
 		document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
 	}
-
-	function handleCategoryClick(id: CategoryFilter) {
-		categoryFilter.set(id);
-		// Scroll to content section when filter changes
-		scrollToContent();
-	}
-
-	// Category filters - synced with store
-	const categories: Array<{ id: CategoryFilter; label: string }> = [
-		{ id: 'all', label: 'All Content' },
-		{ id: 'series', label: 'Series' },
-		{ id: 'films', label: 'Films' },
-		{ id: 'bts', label: 'Behind the Scenes' },
-		{ id: 'trailers', label: 'Trailers' },
-		{ id: 'free', label: 'Free to Watch' }
-	];
-
-	const activeFilter = $derived(categoryFilter.active);
 </script>
 
 <section class="hero">
@@ -85,19 +66,6 @@
 				<span>Join for $99</span>
 			</button>
 		</div>
-	</div>
-
-	<!-- Category pills at bottom of hero -->
-	<div class="category-pills">
-		{#each categories as category}
-			<button
-				class="pill"
-				class:active={activeFilter === category.id}
-				onclick={() => handleCategoryClick(category.id)}
-			>
-				{category.label}
-			</button>
-		{/each}
 	</div>
 </section>
 
@@ -270,52 +238,6 @@
 		border-color: rgba(255, 255, 255, 0.25);
 	}
 
-	/* Category pills at bottom */
-	.category-pills {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		z-index: 20;
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-		padding: 0 3rem 1.5rem;
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-	}
-
-	.category-pills::-webkit-scrollbar {
-		display: none;
-	}
-
-	.pill {
-		padding: 0.5rem 1.25rem;
-		background: rgba(255, 255, 255, 0.1);
-		border: none;
-		border-radius: var(--radius-full);
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
-		font-weight: 500;
-		white-space: nowrap;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.pill:hover {
-		background: rgba(255, 255, 255, 0.2);
-		color: var(--color-fg-primary);
-	}
-
-	.pill.active {
-		background: rgba(255, 255, 255, 0.2);
-		color: white;
-		font-weight: 700;
-		border: 1px solid rgba(255, 255, 255, 0.3);
-	}
-
 	/* Responsive */
 	@media (max-width: 768px) {
 		.hero {
@@ -351,10 +273,6 @@
 			width: 100%;
 			justify-content: center;
 		}
-
-		.category-pills {
-			padding: 0 1.5rem 1rem;
-		}
 	}
 
 	@media (max-width: 480px) {
@@ -380,16 +298,6 @@
 		.btn-secondary {
 			padding: 0.75rem 1.5rem;
 			font-size: 0.8125rem;
-		}
-
-		.category-pills {
-			padding: 0 1rem 0.75rem;
-			gap: var(--space-xs);
-		}
-
-		.pill {
-			padding: 0.375rem 1rem;
-			font-size: 0.75rem;
 		}
 	}
 </style>

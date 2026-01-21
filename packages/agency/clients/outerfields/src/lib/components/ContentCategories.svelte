@@ -18,7 +18,7 @@
 	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
 	import { authStore } from '$lib/stores/auth';
-	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS } from '$lib/stores/categoryFilter.svelte';
+	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter.svelte';
 
 	// Cloudflare R2 CDN base URL (public bucket) - used for video assets only
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
@@ -60,6 +60,20 @@
 
 	const isMember = $derived($authStore.user?.membership ?? false);
 	const activeFilter = $derived(categoryFilter.active);
+
+	// Category filters
+	const filterOptions: Array<{ id: CategoryFilter; label: string }> = [
+		{ id: 'all', label: 'All Content' },
+		{ id: 'series', label: 'Series' },
+		{ id: 'films', label: 'Films' },
+		{ id: 'bts', label: 'Behind the Scenes' },
+		{ id: 'trailers', label: 'Trailers' },
+		{ id: 'free', label: 'Free to Watch' }
+	];
+
+	function handleFilterClick(id: CategoryFilter) {
+		categoryFilter.set(id);
+	}
 
 	// Filter categories based on the active filter
 	const filteredCategories = $derived.by(() => {
@@ -216,6 +230,19 @@
 		</p>
 	</div>
 
+	<!-- Category filter pills - positioned close to content they filter -->
+	<div class="category-pills">
+		{#each filterOptions as filter}
+			<button
+				class="pill"
+				class:active={activeFilter === filter.id}
+				onclick={() => handleFilterClick(filter.id)}
+			>
+				{filter.label}
+			</button>
+		{/each}
+	</div>
+
 	<div class="categories">
 		{#if isLoading}
 			<p class="empty-state">Loading videos…</p>
@@ -262,6 +289,43 @@
 		margin: 0 auto;
 	}
 
+	/* Category filter pills */
+	.category-pills {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-wrap: wrap;
+		gap: var(--space-sm);
+		padding: 0 var(--space-lg);
+		margin-bottom: var(--space-xl);
+	}
+
+	.pill {
+		padding: 0.5rem 1.25rem;
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: var(--radius-full);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		white-space: nowrap;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.pill:hover {
+		background: rgba(255, 255, 255, 0.12);
+		border-color: rgba(255, 255, 255, 0.2);
+		color: var(--color-fg-primary);
+	}
+
+	.pill.active {
+		background: rgba(255, 255, 255, 0.15);
+		color: white;
+		font-weight: 700;
+		border-color: rgba(255, 255, 255, 0.3);
+	}
+
 	.categories {
 		display: flex;
 		flex-direction: column;
@@ -291,11 +355,26 @@
 		.section-description {
 			font-size: var(--text-body);
 		}
+
+		.category-pills {
+			padding: 0 var(--space-md);
+			margin-bottom: var(--space-lg);
+		}
 	}
 
 	@media (max-width: 480px) {
 		.section-header {
 			padding: 0 var(--space-sm);
+		}
+
+		.category-pills {
+			padding: 0 var(--space-sm);
+			gap: var(--space-xs);
+		}
+
+		.pill {
+			padding: 0.375rem 1rem;
+			font-size: 0.75rem;
 		}
 	}
 </style>
