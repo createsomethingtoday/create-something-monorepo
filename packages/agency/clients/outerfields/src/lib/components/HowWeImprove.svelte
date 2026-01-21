@@ -5,7 +5,7 @@
   Uses Nicely Said writing style: clear, honest, user-focused.
 -->
 <script lang="ts">
-  import { ChevronDown } from 'lucide-svelte';
+  import { ChevronDown, BarChart3, Lightbulb, Shield } from 'lucide-svelte';
   
   let expanded = $state(false);
 </script>
@@ -24,7 +24,7 @@
       
       <div class="details">
         <div class="detail-item">
-          <span class="detail-icon">📊</span>
+          <span class="detail-icon"><BarChart3 size={18} /></span>
           <div>
             <strong>We watch what works</strong>
             <p>When 100 users hit the same friction point, we notice. Anonymous patterns, not individual tracking.</p>
@@ -32,7 +32,7 @@
         </div>
         
         <div class="detail-item">
-          <span class="detail-icon">💡</span>
+          <span class="detail-icon"><Lightbulb size={18} /></span>
           <div>
             <strong>Small fixes, human-approved</strong>
             <p>The system suggests small adjustments—like timing tweaks or clearer buttons. A human reviews every change.</p>
@@ -40,7 +40,7 @@
         </div>
         
         <div class="detail-item">
-          <span class="detail-icon">🔒</span>
+          <span class="detail-icon"><Shield size={18} /></span>
           <div>
             <strong>Your experience, protected</strong>
             <p>Pricing, account settings, and core features never change automatically. That's a promise.</p>

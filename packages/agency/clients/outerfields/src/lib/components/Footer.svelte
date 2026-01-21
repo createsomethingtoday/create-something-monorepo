@@ -5,6 +5,7 @@
 	 * StreamVerse-inspired grid layout with brand, categories, and links
 	 */
 	import { FOOTER_LINKS } from '$lib/constants/navigation';
+	import { Crown } from 'lucide-svelte';
 </script>
 
 <footer class="footer">
@@ -17,7 +18,7 @@
 					A premium content network built in public. Behind-the-scenes access to how we create, market, and distribute content.
 				</p>
 				<div class="founding-badge">
-					<span class="badge-icon">👑</span>
+					<Crown size={14} />
 					<span class="badge-text">Founding Member Pricing</span>
 				</div>
 			</div>
@@ -132,9 +133,8 @@
 		max-width: fit-content;
 	}
 
-	.badge-icon {
-		font-size: 0.875rem;
-		line-height: 1;
+	.founding-badge :global(svg) {
+		flex-shrink: 0;
 	}
 
 	.badge-text {
