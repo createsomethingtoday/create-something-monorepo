@@ -1029,10 +1029,43 @@ fn check_style_object_for_hardcoded(
 fn find_hardcoded_tsx_values(content: &str, file: &Path) -> Vec<TsxViolation> {
     let mut violations = Vec::new();
     
+    // Track if we're inside a third-party library config block
+    let mut in_third_party_config = false;
+    let mut brace_depth = 0;
+    
     for (line_num, line) in content.lines().enumerate() {
         // Skip comments and imports
         if line.trim().starts_with("//") || line.trim().starts_with("import") {
             continue;
+        }
+        
+        // Detect entry into third-party config blocks
+        // Stripe Elements appearance config
+        if line.contains("appearance:") || line.contains("appearance =") {
+            in_third_party_config = true;
+            brace_depth = 0;
+        }
+        // Stripe theme variables
+        if line.contains("colorPrimary:") || line.contains("colorBackground:") 
+            || line.contains("colorText:") || line.contains("colorDanger:") {
+            continue; // Skip Stripe theme properties entirely
+        }
+        // TanStack/Chart libraries
+        if line.contains("theme:") && line.contains("{") {
+            in_third_party_config = true;
+            brace_depth = 0;
+        }
+        
+        // Track brace depth for config blocks
+        if in_third_party_config {
+            for c in line.chars() {
+                if c == '{' { brace_depth += 1; }
+                if c == '}' { brace_depth -= 1; }
+            }
+            if brace_depth <= 0 {
+                in_third_party_config = false;
+            }
+            continue; // Skip all lines in third-party config blocks
         }
         
         // Check for hardcoded hex colors not in BRAND_COLORS context
@@ -1050,10 +1083,9 @@ fn find_hardcoded_tsx_values(content: &str, file: &Path) -> Vec<TsxViolation> {
                         }
                     }
                     if hex.len() >= 4 && hex.len() <= 9 {
-                        // Check if it's in a style context
-                        if line.contains("color") || line.contains("background") 
-                            || line.contains("border") || line.contains("fill")
-                            || line.contains("style") {
+                        // Check if it's in a style context (JSX style prop)
+                        if line.contains("style={{") || line.contains("style={") 
+                            || (line.contains("style:") && !line.contains("fontFamily")) {
                             violations.push(TsxViolation {
                                 file: file.to_path_buf(),
                                 line: line_num + 1,
