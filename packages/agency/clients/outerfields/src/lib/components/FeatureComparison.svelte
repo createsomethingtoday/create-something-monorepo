@@ -198,7 +198,7 @@
 	}
 
 	.comparison-container {
-		max-width: 56rem;
+		max-width: 72rem;
 		margin: 0 auto;
 	}
 

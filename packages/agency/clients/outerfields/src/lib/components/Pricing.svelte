@@ -60,13 +60,15 @@
 				Get in now at founding member pricing. This price will <strong>NOT</strong> last forever.
 				Once we launch, pricing increases significantly.
 			</p>
-			<div class="urgency-callout">
-				<strong>
-					<Target size={16} />
-					Founding Member Status:
-				</strong>
+		<div class="urgency-callout">
+			<strong>
+				<Target size={16} />
+				Founding Member Status:
+			</strong>
+			<p class="urgency-callout-text">
 				You're getting this at the lowest price we'll ever offer. Lock it in before it's gone.
-			</div>
+			</p>
+		</div>
 		</div>
 
 		<div class="pricing-card-wrapper">
@@ -154,7 +156,7 @@
 	}
 
 	.pricing-container {
-		max-width: 56rem;
+		max-width: 72rem;
 		margin: 0 auto;
 	}
 
@@ -218,6 +220,10 @@
 		gap: 0.5rem;
 		color: var(--color-warning);
 		font-weight: 700;
+	}
+
+	.urgency-callout-text {
+		margin: 0.5rem 0 0;
 	}
 
 	.urgency-message strong {

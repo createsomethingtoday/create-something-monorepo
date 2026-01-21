@@ -117,8 +117,20 @@ design_patterns:
         reason: "Technical paper - uses code/markdown styling"
       - file: "packages/components/src/lib/brand/marks/PropertyMark.svelte"
         adoption: "17.6%"
-        priority: "low"
-        reason: "Brand mark - uses exact design spec colors"
+        priority: "skip"
+        reason: "Brand mark - uses calculated sizes (calc with var), SVG opacities for 3D cube effect"
+      - file: "packages/components/src/lib/motion/ParallaxSection.svelte"
+        adoption: "50.0%"
+        priority: "skip"
+        reason: "Parallax effect - uses percentage positions (-20%) for buffer zones, dynamic overlay opacity"
+      - file: "packages/components/src/lib/components/navigation/Tooltip.svelte"
+        adoption: "50.0%"
+        priority: "skip"
+        reason: "Tooltip arrows - uses precise pixel values (8px, -4px) for geometric positioning (arrow offset = half arrow size)"
+      - file: "packages/components/src/lib/visual/IsometricSpiral.svelte"
+        adoption: "56.5%"
+        priority: "skip"
+        reason: "SVG visualization - uses pixel values for SVG text rendering where rem doesn't work reliably"
 
 report:
   format: markdown

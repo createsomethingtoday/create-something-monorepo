@@ -61,7 +61,7 @@
 	}
 
 	.journey-container {
-		max-width: 75rem;
+		max-width: 72rem;
 		margin: 0 auto;
 	}
 

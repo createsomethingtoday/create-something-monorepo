@@ -1,6 +1,8 @@
 /**
  * Welcome email template for new Founding Members
  * Sent after successful Stripe checkout
+ *
+ * Writing style: "Nicely Said" — direct, outcome-first, specific
  */
 
 import { ctaButton, divider, escapeHtml, renderEmailLayout } from '../layout';
@@ -19,101 +21,110 @@ export function generateWelcomeEmail(data: WelcomeEmailData): {
 	const { userName, userEmail, calendlyLink } = data;
 	const displayName = userName || userEmail.split('@')[0] || 'there';
 
-	const subject = '🎉 Welcome to Outerfields - Your Founding Member Access';
+	const subject = 'Your founding member access is live';
 
 	const bodyHtml = `
-<p class="muted" style="font-size: 18px; margin-bottom: 24px;">Hi ${escapeHtml(displayName)},</p>
+<p style="font-size: 16px; margin-bottom: 24px; color: rgba(255,255,255,0.8);">Hi ${escapeHtml(displayName)},</p>
 
 <div class="section">
-  <p>Thank you for becoming a Founding Member of Outerfields! You're now part of an exclusive community with lifetime access to our platform for just $99.</p>
-  <p style="font-weight: 600; color: #ffffff;">This price will NOT last forever — you've locked in founding member pricing permanently.</p>
+  <p>You're in. Your founding member access is now live.</p>
+  <p>This isn't just a content library — it's a front-row seat to how we're building a premium content network from scratch. Watch us work. Learn the framework. Build your own.</p>
 </div>
 
 ${divider()}
 
 <div class="section">
-  <h2>Your Membership Includes:</h2>
+  <h2>What you now have access to</h2>
   <ul class="benefits">
-    <li><strong>Lifetime Platform Access</strong> — All current and future content</li>
-    <li><strong>Behind-the-Scenes Content</strong> — Exclusive BTS footage and insights</li>
-    <li><strong>Educational Resources</strong> — Learn from our journey</li>
-    <li><strong>Community Access</strong> — Connect with fellow creators</li>
-    <li><strong>Discovery Call (INCLUDED)</strong> — Schedule your free 1-on-1 call below</li>
-    <li><strong>Exclusive Merchandise</strong> — Founding member swag</li>
+    <li><strong>50+ videos across 7 series.</strong> Full episodes, behind-the-scenes footage, and exclusive content.</li>
+    <li><strong>The complete framework.</strong> See exactly how we build, market, and distribute content.</li>
+    <li><strong>Our systems and workflows.</strong> Templates, processes, and tools we actually use.</li>
+    <li><strong>A personal discovery call.</strong> 1-on-1 consultation to see if you're ready to build your own PCN.</li>
+    <li><strong>Founding member merch.</strong> Choose a shirt or hat — shipped free.</li>
   </ul>
 </div>
 
 ${divider()}
 
 <div class="section">
-  <h2>📅 Schedule Your Discovery Call</h2>
-  <p>As a Founding Member, you get a complimentary discovery call with our team. Let's talk about your goals, answer your questions, and explore how Outerfields can support your journey.</p>
+  <h2>Schedule your discovery call</h2>
+  <p>Every founding member gets a personal consultation. We'll talk about your goals, assess whether building a PCN makes sense for you, and map out next steps if it does.</p>
   <div class="cta">
-    ${ctaButton(calendlyLink, 'Schedule Your Call Now')}
+    ${ctaButton(calendlyLink, 'Book your call')}
   </div>
-  <p class="muted" style="text-align: center;">This discovery call is INCLUDED with your membership — no extra cost.</p>
+  <p class="muted" style="text-align: center; font-size: 14px;">Included with your membership. No extra cost.</p>
 </div>
 
 ${divider()}
 
 <div class="section">
-  <h2>🚀 Get Started</h2>
-  <p>Your Outerfields platform access is now live! Log in to start exploring:</p>
+  <h2>Start watching</h2>
+  <p>Your platform access is live. Log in and start exploring the content library:</p>
   <div class="cta">
-    ${ctaButton('https://outerfields.com/login', 'Access the Platform')}
+    ${ctaButton('https://outerfields.createsomething.agency', 'Go to OUTERFIELDS')}
   </div>
 </div>
 
 <div class="section">
-  <p class="muted" style="margin-top: 32px;">Questions? Just reply to this email — we're here to help!</p>
+  <p class="muted" style="margin-top: 32px; font-size: 14px;">Reply to this email anytime — we read every message.</p>
 </div>
 `;
 
 	const html = renderEmailLayout({
-		title: '🎉 Welcome, Founding Member!',
+		title: 'Welcome, Founding Member',
 		bodyHtml,
 		options: {
-			preheader: 'Your founding member access is live — here’s how to get started.',
+			preheader: 'Your access is live. Here's how to get started.',
 			headerSubtitle: 'Building Outerfields: The Odyssey',
 			footerHtml: `<p>Founding Member | Pre-Sale Phase</p>
 <p style="margin-top: 16px; font-size: 12px; color: rgba(255, 255, 255, 0.6);">You're receiving this because you purchased Outerfields Founding Membership.</p>`
 		}
 	});
 
-	const text = `
-Welcome to Outerfields, Founding Member!
+	const text = `Your founding member access is live
 
 Hi ${displayName},
 
-Thank you for becoming a Founding Member of Outerfields! You're now part of an exclusive community with lifetime access to our platform for just $99.
+You're in. Your founding member access is now live.
 
-This price will NOT last forever — you've locked in founding member pricing permanently.
+This isn't just a content library — it's a front-row seat to how we're building a premium content network from scratch. Watch us work. Learn the framework. Build your own.
 
-YOUR MEMBERSHIP INCLUDES:
+---
 
-✓ Lifetime Platform Access — All current and future content
-✓ Behind-the-Scenes Content — Exclusive BTS footage and insights
-✓ Educational Resources — Learn from our journey
-✓ Community Access — Connect with fellow creators
-✓ Discovery Call (INCLUDED) — Schedule your free 1-on-1 call
-✓ Exclusive Merchandise — Founding member swag
+WHAT YOU NOW HAVE ACCESS TO
+
+• 50+ videos across 7 series. Full episodes, behind-the-scenes footage, and exclusive content.
+
+• The complete framework. See exactly how we build, market, and distribute content.
+
+• Our systems and workflows. Templates, processes, and tools we actually use.
+
+• A personal discovery call. 1-on-1 consultation to see if you're ready to build your own PCN.
+
+• Founding member merch. Choose a shirt or hat — shipped free.
+
+---
 
 SCHEDULE YOUR DISCOVERY CALL
 
-Schedule here: ${calendlyLink}
+Every founding member gets a personal consultation. We'll talk about your goals, assess whether building a PCN makes sense for you, and map out next steps if it does.
 
-GET STARTED
-
-Log in: https://outerfields.com/login
-
-Questions? Just reply to this email — we're here to help!
+Book here: ${calendlyLink}
 
 ---
+
+START WATCHING
+
+Your platform access is live:
+https://outerfields.createsomething.agency
+
+---
+
+Reply to this email anytime — we read every message.
+
 OUTERFIELDS
 Founding Member | Pre-Sale Phase
-You're receiving this because you purchased Outerfields Founding Membership.
-    `;
+`;
 
 	return { subject, html, text };
 }
-

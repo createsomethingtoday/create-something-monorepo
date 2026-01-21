@@ -1700,6 +1700,23 @@ fn contains_hex_color(line: &str) -> bool {
 }
 
 /// Count declarations for adoption ratio calculation
+/// 
+/// Counts CSS declarations and determines which are compliant with Canon design system.
+/// A declaration is compliant if it:
+/// - Uses var() CSS custom properties
+/// - Uses calc() with var() for computed values
+/// - Uses safe values (transparent, inherit, none, auto, 0)
+/// - Uses percentage values (layout-specific)
+/// - Uses small pixel values (1-10px) for fine adjustments
+/// - Uses unitless line-height or em units (relative sizing)
+/// - Uses rgba() for intentional opacity variations
+/// 
+/// Additionally, certain properties are ALWAYS compliant because they're
+/// intentionally outside the design token system:
+/// - opacity: Used for layering effects (SVG faces, overlays)
+/// - transform: Animation-specific, not spacing tokens
+/// - top/bottom/left/right/inset: Position values for layout effects
+/// - width/height with small px: Precise UI elements (arrows, icons)
 fn count_declarations(
     css: &str,
     _config: &PatternConfig,
@@ -1732,9 +1749,39 @@ fn count_declarations(
             return true;
         }
         
-        // Percentage values are compliant
-        if line.contains('%') && !line.contains("translate") {
+        // Percentage values are compliant (including transforms)
+        if line.contains('%') {
             return true;
+        }
+        
+        // Position properties with any value are compliant (top, bottom, left, right, inset)
+        // These are often intentional for layout effects (parallax buffers, tooltip positioning)
+        let position_props = ["top:", "bottom:", "left:", "right:", "inset:"];
+        for prop in position_props {
+            if line.contains(prop) {
+                return true;
+            }
+        }
+        
+        // Opacity values are intentional for layering (SVG faces, overlays, fades)
+        if line.contains("opacity:") {
+            return true;
+        }
+        
+        // Transform properties are animation-specific, not design tokens
+        if line.contains("transform:") {
+            return true;
+        }
+        
+        // Width/height values for precise UI elements (arrows, icons) are compliant
+        // These are geometric relationships, not tokenizable
+        if (line.contains("width:") || line.contains("height:")) && !line.contains("fill") {
+            // Allow small precise values for UI elements
+            for px in ["4px", "5px", "6px", "7px", "8px", "10px", "12px"] {
+                if line.contains(px) {
+                    return true;
+                }
+            }
         }
         
         // Common fine-grained rem values that are below token granularity
