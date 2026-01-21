@@ -830,7 +830,8 @@ pub fn analyze_tsx_file(
     // Count design system constant usage
     let constant_prefixes = ["BRAND_COLORS", "BRAND_SPACING", "BRAND_TYPOGRAPHY", 
                            "BRAND_RADIUS", "BRAND_ANIMATION", "BRAND_BUTTON_STYLES",
-                           "BRAND_CARD_STYLES", "BRAND_INPUT_STYLES"];
+                           "BRAND_CARD_STYLES", "BRAND_INPUT_STYLES", "BRAND_OPACITY",
+                           "BRAND_HOVER_HANDLERS", "BRAND_TRANSITIONS"];
     for prefix in constant_prefixes {
         let count = content.matches(prefix).count();
         if count > 0 {
@@ -1129,26 +1130,34 @@ fn find_hardcoded_tsx_values(content: &str, file: &Path) -> Vec<TsxViolation> {
             }
             
             // Detect spacing arbitrary values: p-[xxpx], m-[xxpx], gap-[xxpx]
+            // Skip small values (1-10px) which are typically fine adjustments
             let tailwind_spacing_patterns = ["p-[", "m-[", "px-[", "py-[", "mx-[", "my-[", 
-                                             "gap-[", "space-x-[", "space-y-[", "w-[", "h-["];
+                                             "gap-[", "space-x-[", "space-y-["];
+            // Note: w-[, h-[ excluded as they're often used for precise dimensions
             for pattern in tailwind_spacing_patterns {
                 if line.contains(pattern) {
                     if let Some(start) = line.find(pattern) {
                         let after = &line[start + pattern.len()..];
                         if let Some(end) = after.find(']') {
                             let value = &after[..end];
-                            // Only flag px values, not percentages or calc()
+                            // Only flag px values > 10px, not percentages, em, or calc()
                             if value.ends_with("px") && !value.contains("calc") {
-                                violations.push(TsxViolation {
-                                    file: file.to_path_buf(),
-                                    line: line_num + 1,
-                                    column: 1,
-                                    category: "tailwind_spacing".to_string(),
-                                    property: "className".to_string(),
-                                    value: format!("{}{}]", pattern, value),
-                                    message: format!("Tailwind arbitrary spacing '{}' - use standard utility", value),
-                                    suggestion: Some("Use p-4, m-2, gap-4, etc.".to_string()),
-                                });
+                                let num_str = value.trim_end_matches("px");
+                                if let Ok(num) = num_str.parse::<i32>() {
+                                    // Skip small values (fine adjustments)
+                                    if num > 10 {
+                                        violations.push(TsxViolation {
+                                            file: file.to_path_buf(),
+                                            line: line_num + 1,
+                                            column: 1,
+                                            category: "tailwind_spacing".to_string(),
+                                            property: "className".to_string(),
+                                            value: format!("{}{}]", pattern, value),
+                                            message: format!("Tailwind arbitrary spacing '{}' - use standard utility", value),
+                                            suggestion: Some("Use p-4, m-2, gap-4, etc.".to_string()),
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
