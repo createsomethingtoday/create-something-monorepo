@@ -183,12 +183,12 @@
 		color: #facc15;
 	}
 
-	/* Title - MASSIVE like StreamVerse */
+	/* Title - sized to fit "BUILDING OUTERFIELDS:" on one line */
 	.hero-title {
-		font-size: clamp(3rem, 10vw, 7rem);
+		font-size: clamp(2rem, 5.5vw, 4.5rem);
 		font-weight: 900;
 		color: var(--color-fg-primary);
-		line-height: 1;
+		line-height: 1.05;
 		text-transform: uppercase;
 		letter-spacing: -0.02em;
 		text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
@@ -199,6 +199,7 @@
 
 	.title-line {
 		display: block;
+		white-space: nowrap;
 	}
 
 	.title-accent {
@@ -324,7 +325,11 @@
 		}
 
 		.hero-title {
-			font-size: clamp(2rem, 10vw, 4rem);
+			font-size: clamp(1.75rem, 6vw, 2.5rem);
+		}
+
+		.title-line {
+			white-space: normal;
 		}
 
 		.hero-subtitle {
@@ -364,7 +369,7 @@
 		}
 
 		.hero-title {
-			font-size: clamp(1.75rem, 10vw, 2.5rem);
+			font-size: clamp(1.5rem, 8vw, 2rem);
 		}
 
 		.hero-subtitle {
