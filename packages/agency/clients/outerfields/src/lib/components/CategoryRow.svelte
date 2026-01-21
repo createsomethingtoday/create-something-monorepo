@@ -137,22 +137,21 @@
 	}
 
 	.scroll-button {
-		width: 40px;
-		height: 40px;
+		width: 36px;
+		height: 36px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		background: rgba(255, 255, 255, 0.05);
+		border: none;
+		border-radius: var(--radius-full);
 		color: var(--color-fg-primary);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.scroll-button:hover:not(.disabled) {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
+		background: rgba(255, 255, 255, 0.1);
 	}
 
 	.scroll-button.disabled {

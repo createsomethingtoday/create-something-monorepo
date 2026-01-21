@@ -172,6 +172,16 @@
 		</p>
 	</div>
 
+	<!-- Category filter pills -->
+	<div class="category-pills">
+		<button class="pill active">All Content</button>
+		<button class="pill">Series</button>
+		<button class="pill">Films</button>
+		<button class="pill">Behind the Scenes</button>
+		<button class="pill">Trailers</button>
+		<button class="pill">Free to Watch</button>
+	</div>
+
 	<div class="categories">
 		{#if isLoading}
 			<p class="empty-state">Loading videos…</p>
@@ -212,6 +222,46 @@
 		color: var(--color-fg-secondary);
 		max-width: 600px;
 		margin: 0 auto;
+	}
+
+	/* Category filter pills */
+	.category-pills {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: 0 var(--space-lg);
+		margin-bottom: var(--space-xl);
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	.category-pills::-webkit-scrollbar {
+		display: none;
+	}
+
+	.pill {
+		padding: var(--space-sm) var(--space-lg);
+		background: var(--color-bg-surface);
+		border: none;
+		border-radius: var(--radius-full);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		white-space: nowrap;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.pill:hover {
+		background: var(--color-bg-surface-hover);
+		color: var(--color-fg-primary);
+	}
+
+	.pill.active {
+		background: var(--color-brand);
+		color: white;
 	}
 
 	.categories {

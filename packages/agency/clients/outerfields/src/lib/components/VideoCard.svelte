@@ -1,11 +1,11 @@
 <script lang="ts">
 	/**
 	 * VideoCard Component
-	 * Displays a video thumbnail with metadata for horizontal category rows.
+	 * StreamVerse-inspired poster-style card with 2/3 aspect ratio.
 	 * Shows lock icon for gated content, FREE badge for preview content.
-	 * Supports both link navigation (href) and click handlers (onClick).
+	 * Hover reveals gradient overlay with watch button.
 	 */
-	import { Lock, Play } from 'lucide-svelte';
+	import { Lock, Play, Star } from 'lucide-svelte';
 
 	interface Props {
 		id: string;
@@ -47,46 +47,56 @@
 </script>
 
 {#snippet cardContent()}
-	<div class="thumbnail-container">
+	<div class="poster-container">
 		<img
 			src={thumbnail}
 			alt={title}
-			class="thumbnail"
+			class="poster-image"
 			loading="lazy"
 		/>
 
-		<!-- Duration badge -->
-		<div class="duration-badge">
-			{duration}
+		<!-- Hover overlay with gradient and actions -->
+		<div class="hover-overlay">
+			<button class="watch-button">
+				<Play size={14} />
+				<span>WATCH</span>
+			</button>
+			<div class="overlay-meta">
+				{#if isFree}
+					<span class="quality-badge">FREE</span>
+				{:else if isLocked}
+					<span class="quality-badge locked"><Lock size={10} /> MEMBERS</span>
+				{:else}
+					<span class="quality-badge">HD</span>
+				{/if}
+				<span class="duration-badge">{duration}</span>
+			</div>
 		</div>
 
-		<!-- Lock icon for gated content -->
+		<!-- Lock icon overlay for gated content -->
 		{#if isLocked}
-			<div class="lock-badge">
-				<Lock size={20} />
+			<div class="lock-overlay">
+				<Lock size={24} />
 			</div>
 		{/if}
 
-		<!-- FREE badge -->
+		<!-- FREE badge (always visible) -->
 		{#if isFree}
-			<div class="free-badge">
-				FREE
-			</div>
+			<div class="free-badge">FREE</div>
 		{/if}
-
-		<!-- Play overlay on hover -->
-		<div class="play-overlay">
-			<div class="play-icon" aria-hidden="true">
-				<Play size={28} />
-			</div>
-		</div>
 	</div>
 
 	<div class="card-info">
 		<h3 class="card-title">{title}</h3>
-		{#if episodeNumber}
-			<p class="episode-number">Episode {episodeNumber}</p>
-		{/if}
+		<p class="card-meta">
+			{#if episodeNumber}
+				<span>Ep {episodeNumber}</span>
+				<span class="meta-dot">•</span>
+			{/if}
+			<span>{category}</span>
+			<span class="meta-dot">•</span>
+			<span>{duration}</span>
+		</p>
 	</div>
 {/snippet}
 
@@ -112,151 +122,196 @@
 	.video-card {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
-		min-width: 280px;
-		max-width: 320px;
+		min-width: 160px;
+		max-width: 200px;
 		background: transparent;
 		border: none;
 		padding: 0;
 		cursor: pointer;
-		transition: transform var(--duration-micro) var(--ease-standard);
 		text-decoration: none;
 		color: inherit;
 	}
 
-	.video-card:hover {
-		transform: scale(1.02);
-	}
-
-	.thumbnail-container {
+	.poster-container {
 		position: relative;
 		width: 100%;
-		aspect-ratio: 16 / 9;
-		background: var(--color-bg-surface);
+		aspect-ratio: 2 / 3;
+		background: var(--color-card-dark);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
-	.thumbnail {
+	.video-card:hover .poster-container {
+		transform: scale(1.05);
+		box-shadow: 0 20px 40px rgba(124, 43, 238, 0.2);
+	}
+
+	.poster-image {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
 	}
 
-	.duration-badge {
+	/* Hover overlay */
+	.hover-overlay {
 		position: absolute;
-		bottom: var(--space-xs);
-		right: var(--space-xs);
-		padding: 4px 8px;
-		background: rgba(0, 0, 0, 0.8);
-		color: var(--color-fg-primary);
-		font-size: var(--text-caption);
-		border-radius: var(--radius-sm);
-		backdrop-filter: blur(8px);
+		inset: 0;
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 50%, transparent 100%);
+		opacity: 0;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		padding: var(--space-md);
 	}
 
-	.lock-badge {
-		position: absolute;
-		top: var(--space-xs);
-		right: var(--space-xs);
-		width: 40px;
-		height: 40px;
+	.video-card:hover .hover-overlay {
+		opacity: 1;
+	}
+
+	.watch-button {
+		width: 100%;
+		padding: var(--space-sm);
+		background: var(--color-brand);
+		border: none;
+		border-radius: var(--radius-sm);
+		color: white;
+		font-size: var(--text-caption);
+		font-weight: 700;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(0, 0, 0, 0.8);
-		color: var(--color-fg-primary);
-		border-radius: 50%;
-		backdrop-filter: blur(8px);
+		gap: var(--space-xs);
+		cursor: pointer;
+		margin-bottom: var(--space-sm);
+		transition: background var(--duration-micro) var(--ease-standard);
 	}
 
+	.watch-button:hover {
+		background: var(--color-brand-hover);
+	}
+
+	.overlay-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		font-size: 10px;
+	}
+
+	.quality-badge {
+		padding: 2px 6px;
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: var(--radius-sm);
+		color: white;
+		font-weight: 600;
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+
+	.quality-badge.locked {
+		background: rgba(124, 43, 238, 0.4);
+	}
+
+	.duration-badge {
+		color: var(--color-fg-muted);
+	}
+
+	/* Lock overlay for gated content */
+	.lock-overlay {
+		position: absolute;
+		top: var(--space-sm);
+		right: var(--space-sm);
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.7);
+		color: var(--color-fg-primary);
+		border-radius: 50%;
+		backdrop-filter: blur(4px);
+		opacity: 0.8;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.video-card:hover .lock-overlay {
+		opacity: 0;
+	}
+
+	/* FREE badge */
 	.free-badge {
 		position: absolute;
-		top: var(--space-xs);
-		left: var(--space-xs);
-		padding: 4px 12px;
+		top: var(--space-sm);
+		left: var(--space-sm);
+		padding: 2px 8px;
 		background: var(--color-success);
-		color: var(--color-fg-primary);
-		font-size: var(--text-caption);
+		color: white;
+		font-size: 10px;
 		font-weight: 700;
 		border-radius: var(--radius-sm);
 		letter-spacing: 0.05em;
 	}
 
-	.play-overlay {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(0, 0, 0, 0.4);
-		opacity: 0;
-		transition: opacity var(--duration-micro) var(--ease-standard);
-	}
-
-	.video-card:hover .play-overlay {
-		opacity: 1;
-	}
-
-	.play-icon {
-		width: 60px;
-		height: 60px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(255, 255, 255, 0.2);
-		color: var(--color-fg-primary);
-		font-size: var(--text-h3);
-		border-radius: 50%;
-		backdrop-filter: blur(8px);
-		border: 2px solid var(--color-border-emphasis);
-	}
-
+	/* Card info below poster */
 	.card-info {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		padding: 0 var(--space-xs);
+		padding: var(--space-sm) 0 0 0;
 	}
 
 	.card-title {
-		font-size: var(--text-body);
-		font-weight: 600;
+		font-size: var(--text-body-sm);
+		font-weight: 700;
 		color: var(--color-fg-primary);
 		margin: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		-webkit-box-orient: vertical;
+		white-space: nowrap;
 		text-align: left;
 	}
 
-	.episode-number {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin: 0;
+	.card-meta {
+		font-size: 10px;
+		color: var(--color-fg-subtle);
+		margin: var(--space-xs) 0 0 0;
 		text-align: left;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.meta-dot {
+		color: var(--color-fg-subtle);
 	}
 
 	/* Responsive sizing */
-	@media (max-width: 768px) {
+	@media (min-width: 768px) {
 		.video-card {
-			min-width: 240px;
-			max-width: 280px;
+			min-width: 180px;
+			max-width: 220px;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.video-card {
+			min-width: 200px;
+			max-width: 240px;
 		}
 	}
 
 	@media (max-width: 480px) {
 		.video-card {
-			min-width: 200px;
-			max-width: 240px;
+			min-width: 140px;
+			max-width: 160px;
 		}
 
-		.play-icon {
-			width: 48px;
-			height: 48px;
+		.hover-overlay {
+			padding: var(--space-sm);
+		}
+
+		.watch-button {
+			padding: var(--space-xs);
+			font-size: 9px;
 		}
 	}
 </style>
