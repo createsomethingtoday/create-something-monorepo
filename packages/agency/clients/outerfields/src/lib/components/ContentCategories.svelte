@@ -13,6 +13,7 @@
 	 * 7. Coming Soon (5 trailers)
 	 */
 	import CategoryRow from './CategoryRow.svelte';
+	import EditorChoice from './EditorChoice.svelte';
 	import { onMount } from 'svelte';
 	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
@@ -225,6 +226,10 @@
 		{:else}
 			{#each filteredCategories as category (category.categoryId)}
 				<CategoryRow title={category.title} videos={category.videos} useLinks={true} />
+				<!-- Insert EditorChoice after Crew Call -->
+				{#if category.categoryId === 'crew-call' && (activeFilter === 'all' || activeFilter === 'films')}
+					<EditorChoice />
+				{/if}
 			{/each}
 		{/if}
 	</div>

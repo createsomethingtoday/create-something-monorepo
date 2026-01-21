@@ -10,7 +10,6 @@
 	import BuildProgress from '$lib/components/BuildProgress.svelte';
 	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ContentCategories from '$lib/components/ContentCategories.svelte';
-	import EditorChoice from '$lib/components/EditorChoice.svelte';
 	import AnalyticsDashboard from '$lib/components/AnalyticsDashboard.svelte';
 	import ComponentLab from '$lib/components/ComponentLab.svelte';
 	import PlatformComponents from '$lib/components/PlatformComponents.svelte';
@@ -205,11 +204,8 @@
 	<!-- 3. Analytics Dashboard - Preview with gated overlay (BEFORE content per client spec) -->
 	<AnalyticsDashboard />
 
-	<!-- 4. Content Categories - Netflix-style browsing -->
+	<!-- 4. Content Categories - Netflix-style browsing (includes Editor's Choice after Crew Call) -->
 	<ContentCategories />
-
-	<!-- 5. Editor's Choice - Featured Film highlight (StreamVerse style) -->
-	<EditorChoice />
 
 	<FeaturedVideos />
 
