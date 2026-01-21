@@ -275,7 +275,6 @@
 		max-width: 72rem;
 		margin-left: auto;
 		margin-right: auto;
-		padding: 0 1.5rem;
 	}
 
 	.section-title {
@@ -301,7 +300,6 @@
 		gap: var(--space-sm);
 		max-width: 72rem;
 		margin: 0 auto var(--space-xl);
-		padding: 0 1.5rem;
 	}
 
 	.pill {
@@ -348,7 +346,6 @@
 		}
 
 		.section-header {
-			padding: 0 1rem;
 			margin-bottom: var(--space-xl);
 		}
 
@@ -361,18 +358,12 @@
 		}
 
 		.category-pills {
-			padding: 0 1rem;
 			margin-bottom: var(--space-lg);
 		}
 	}
 
 	@media (max-width: 480px) {
-		.section-header {
-			padding: 0 1rem;
-		}
-
 		.category-pills {
-			padding: 0 1rem;
 			gap: var(--space-xs);
 		}
 
