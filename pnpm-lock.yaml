@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  undici: '>=7.18.2'
-
 importers:
 
   .:
@@ -1273,6 +1270,15 @@ importers:
       wrangler:
         specifier: ^4.59.0
         version: 4.59.2(@cloudflare/workers-types@4.20251219.0)
+
+  packages/tools/pencil-balance:
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.1
+        version: 1.6.1(@types/node@24.10.1)(jsdom@25.0.1)(terser@5.44.1)
 
   packages/triad-audit:
     dependencies:
@@ -15561,7 +15567,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.18.0
+      ws: 8.19.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
