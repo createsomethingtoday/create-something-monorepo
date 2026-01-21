@@ -55,40 +55,28 @@
 			loading="lazy"
 		/>
 
-		<!-- Hover overlay with gradient and actions -->
+		<!-- Tufte-inspired: minimal hover overlay with centered play icon -->
 		<div class="hover-overlay">
-			<button class="watch-button">
-				<Play size={14} />
-				<span>WATCH</span>
-			</button>
-			<div class="overlay-meta">
-				{#if isFree}
-					<span class="quality-badge">FREE</span>
-				{:else if isLocked}
-					<span class="quality-badge locked"><Lock size={10} /> MEMBERS</span>
-				{:else}
-					<span class="quality-badge">HD</span>
-				{/if}
-				<span class="duration-badge">{duration}</span>
+			<div class="play-indicator">
+				<Play size={24} />
 			</div>
 		</div>
 
 		<!-- Lock icon overlay for gated content -->
 		{#if isLocked}
 			<div class="lock-overlay">
-				<Lock size={24} />
+				<Lock size={18} />
 			</div>
-		{/if}
-
-		<!-- FREE badge (always visible) -->
-		{#if isFree}
-			<div class="free-badge">FREE</div>
 		{/if}
 	</div>
 
 	<div class="card-info">
 		<h3 class="card-title">{title}</h3>
 		<p class="card-meta">
+			{#if isFree}
+				<span class="free-indicator">Free</span>
+				<span class="meta-dot">•</span>
+			{/if}
 			{#if episodeNumber}
 				<span>Ep {episodeNumber}</span>
 				<span class="meta-dot">•</span>
@@ -143,8 +131,8 @@
 	}
 
 	.video-card:hover .poster-container {
-		transform: scale(1.05);
-		box-shadow: 0 20px 40px rgba(124, 43, 238, 0.2);
+		transform: scale(1.02);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 	}
 
 	.poster-image {
@@ -153,90 +141,55 @@
 		object-fit: cover;
 	}
 
-	/* Hover overlay */
+	/* Tufte-inspired: minimal hover overlay */
 	.hover-overlay {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 50%, transparent 100%);
+		background: rgba(0, 0, 0, 0.4);
 		opacity: 0;
 		transition: opacity var(--duration-micro) var(--ease-standard);
 		display: flex;
-		flex-direction: column;
-		justify-content: flex-end;
-		padding: var(--space-md);
+		align-items: center;
+		justify-content: center;
 	}
 
 	.video-card:hover .hover-overlay {
 		opacity: 1;
 	}
 
-	.watch-button {
-		width: 100%;
-		padding: var(--space-sm);
-		background: rgba(255, 255, 255, 0.15);
-		border: 1px solid rgba(255, 255, 255, 0.25);
-		border-radius: var(--radius-sm);
-		color: white;
-		font-size: var(--text-caption);
-		font-weight: 700;
+	/* Simple centered play indicator */
+	.play-indicator {
+		width: 48px;
+		height: 48px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-xs);
-		cursor: pointer;
-		margin-bottom: var(--space-sm);
-		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.watch-button:hover {
-		background: rgba(255, 255, 255, 0.25);
-		border-color: rgba(255, 255, 255, 0.35);
-	}
-
-	.overlay-meta {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		font-size: 10px;
-	}
-
-	.quality-badge {
-		padding: 2px 6px;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: var(--radius-sm);
-		color: white;
-		font-weight: 600;
-		display: flex;
-		align-items: center;
-		gap: 2px;
-	}
-
-	.quality-badge.locked {
 		background: rgba(255, 255, 255, 0.15);
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		border-radius: 50%;
+		color: white;
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
-	.duration-badge {
-		color: var(--color-fg-muted);
+	.video-card:hover .play-indicator {
+		transform: scale(1.1);
 	}
 
-	/* Lock overlay for gated content */
+	/* Lock overlay for gated content - subtle corner indicator */
 	.lock-overlay {
 		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
-		width: 36px;
-		height: 36px;
+		top: var(--space-xs);
+		right: var(--space-xs);
+		width: 28px;
+		height: 28px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(0, 0, 0, 0.7);
-		color: var(--color-fg-primary);
+		background: rgba(0, 0, 0, 0.5);
+		color: var(--color-fg-muted);
 		border-radius: 50%;
-		backdrop-filter: blur(4px);
-		opacity: 0.8;
 		transition: opacity var(--duration-micro) var(--ease-standard);
 	}
 
@@ -244,18 +197,9 @@
 		opacity: 0;
 	}
 
-	/* FREE badge */
-	.free-badge {
-		position: absolute;
-		top: var(--space-sm);
-		left: var(--space-sm);
-		padding: 2px 8px;
-		background: var(--color-success);
-		color: white;
-		font-size: 10px;
-		font-weight: 700;
-		border-radius: var(--radius-sm);
-		letter-spacing: 0.05em;
+	/* Tufte-inspired: Free as inline text, not a badge */
+	.free-indicator {
+		color: var(--color-fg-secondary);
 	}
 
 	/* Card info below poster */
@@ -309,13 +253,14 @@
 			max-width: 160px;
 		}
 
-		.hover-overlay {
-			padding: var(--space-sm);
+		.play-indicator {
+			width: 40px;
+			height: 40px;
 		}
 
-		.watch-button {
-			padding: var(--space-xs);
-			font-size: 9px;
+		.play-indicator :global(svg) {
+			width: 20px;
+			height: 20px;
 		}
 	}
 </style>
