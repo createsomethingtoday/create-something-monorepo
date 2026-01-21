@@ -2,18 +2,22 @@
 	/**
 	 * OUTERFIELDS Hero Section
 	 *
-	 * Cinematic hero with single CTA to explore the platform
+	 * StreamVerse-inspired left-aligned cinematic hero
 	 */
-	import { Target, ArrowDown } from 'lucide-svelte';
+	import { Play, Plus, Star, Clock } from 'lucide-svelte';
 
 	function scrollToJourney() {
 		document.getElementById('journey')?.scrollIntoView({ behavior: 'smooth' });
 	}
+
+	function scrollToPricing() {
+		document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+	}
 </script>
 
 <section class="hero">
+	<!-- Background with 3D embed -->
 	<div class="hero-backdrop">
-		<!-- Reuse Sketchfab 3D embed from demo page -->
 		<iframe
 			title="OUTERFIELDS 3D Experience"
 			class="sketchfab-embed"
@@ -24,46 +28,63 @@
 		<div class="hero-gradient"></div>
 	</div>
 
+	<!-- Left-aligned content -->
 	<div class="hero-content">
-		<div class="hero-badge">
-			<span class="badge-text">
-				<Target size={16} />
-				Founding Member Pre-Sale - Limited Time Only
+		<!-- Metadata row -->
+		<div class="hero-meta">
+			<span class="meta-badge">New Season</span>
+			<span class="meta-item">
+				<Clock size={14} />
+				75+ Episodes
+			</span>
+			<span class="meta-item">
+				<Star size={14} class="star-icon" />
+				Built in Public
 			</span>
 		</div>
 
-		<h1 class="hero-title">Building Outerfields:<br /><span class="title-accent">The Odyssey</span></h1>
+		<!-- Title -->
+		<h1 class="hero-title">
+			Building<br />
+			Outerfields
+		</h1>
 
+		<!-- Subtitle -->
 		<p class="hero-subtitle">
-			A premium content network built in public. Browse like Netflix—trailers and first episodes are free.
-			Founding members get full behind-the-scenes access for <strong>$99 lifetime</strong>.
+			A premium content network built in public. Watch how we create, market, 
+			and distribute content across 7 unique series. Trailers and first episodes are free.
 		</p>
 
-		<button class="cta-button" onclick={scrollToJourney}>
-			<span>See How It Works</span>
-			<ArrowDown size={20} />
-		</button>
+		<!-- CTA Buttons -->
+		<div class="hero-actions">
+			<button class="btn-primary" onclick={scrollToJourney}>
+				<Play size={20} />
+				<span>Watch Now</span>
+			</button>
+			<button class="btn-secondary" onclick={scrollToPricing}>
+				<Plus size={20} />
+				<span>Join for $99</span>
+			</button>
+		</div>
 	</div>
 </section>
 
 <style>
 	.hero {
 		position: relative;
-		height: 100vh;
+		height: 85vh;
 		min-height: 600px;
-		max-height: 900px;
-		margin-bottom: 2rem;
-		overflow: hidden;
-		background: var(--color-bg-pure);
+		width: 100%;
 		display: flex;
 		align-items: center;
-		justify-content: center;
+		padding: 0 3rem;
+		overflow: hidden;
 	}
 
 	.hero-backdrop {
 		position: absolute;
 		inset: 0;
-		overflow: hidden;
+		z-index: 0;
 	}
 
 	.hero-backdrop :global(.sketchfab-embed) {
@@ -75,143 +96,178 @@
 		transform-origin: center center;
 	}
 
+	/* StreamVerse-style gradient: dark at bottom, lighter up top */
 	.hero-gradient {
 		position: absolute;
 		inset: 0;
 		background: linear-gradient(
-			to bottom,
-			rgba(0, 0, 0, 0.55) 0%,
-			rgba(0, 0, 0, 0.65) 45%,
-			rgba(0, 0, 0, 0.75) 70%,
-			var(--color-bg-pure) 100%
+			0deg,
+			var(--color-bg-pure) 0%,
+			rgba(10, 10, 10, 0.4) 50%,
+			rgba(10, 10, 10, 0.8) 100%
 		);
 	}
 
 	.hero-content {
 		position: relative;
 		z-index: 10;
-		text-align: center;
-		max-width: 800px;
-		padding: var(--space-lg);
+		max-width: 42rem;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-lg);
 	}
 
-	.hero-badge {
-		margin-bottom: var(--space-md);
+	/* Metadata row */
+	.hero-meta {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		color: var(--color-fg-muted);
 	}
 
-	.badge-text {
-		display: inline-flex;
+	.meta-badge {
+		padding: 0.25rem 0.5rem;
+		background: var(--color-brand);
+		color: white;
+		font-size: 0.6875rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		border-radius: var(--radius-sm);
+		letter-spacing: 0.05em;
+	}
+
+	.meta-item {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.meta-item :global(.star-icon) {
+		color: #facc15;
+	}
+
+	/* Title - large uppercase */
+	.hero-title {
+		font-size: clamp(3.5rem, 10vw, 7rem);
+		font-weight: 900;
+		color: var(--color-fg-primary);
+		line-height: 0.95;
+		text-transform: uppercase;
+		letter-spacing: -0.02em;
+		text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+		margin: 0;
+	}
+
+	/* Subtitle */
+	.hero-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-muted);
+		line-height: 1.6;
+		font-weight: 300;
+		max-width: 32rem;
+		margin: 0;
+	}
+
+	/* CTA Buttons */
+	.hero-actions {
+		display: flex;
+		gap: var(--space-md);
+	}
+
+	.btn-primary,
+	.btn-secondary {
+		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		background: rgba(170, 136, 68, 0.2);
-		border: 1px solid var(--color-warning-border);
-		border-radius: 9999px;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--color-warning);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		backdrop-filter: blur(10px);
-	}
-
-	.hero-title {
-		font-size: var(--text-display);
-		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-		text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
-		line-height: 1.1;
-	}
-
-	.hero-title :global(.title-accent) {
-		font-style: italic;
-		font-weight: 400;
-	}
-
-	.hero-subtitle {
-		font-size: 1.25rem;
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xl);
-		text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-		line-height: 1.6;
-	}
-
-	.hero-subtitle strong {
-		color: var(--color-warning);
-		font-weight: 700;
-	}
-
-	.cta-button {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1rem 2rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border: none;
+		padding: 0.875rem 1.75rem;
 		border-radius: var(--radius-md);
-		font-size: 1rem;
+		font-size: var(--text-body-sm);
 		font-weight: 700;
 		cursor: pointer;
-		transition: all var(--duration-standard) var(--ease-standard);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.cta-button:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 8px 32px rgba(255, 255, 255, 0.2);
+	.btn-primary {
+		background: var(--color-brand);
+		color: white;
+		border: none;
 	}
 
-	.cta-button:active {
-		transform: translateY(0);
+	.btn-primary:hover {
+		filter: brightness(0.9);
 	}
 
+	.btn-primary:active {
+		transform: scale(0.98);
+	}
+
+	.btn-secondary {
+		background: rgba(255, 255, 255, 0.1);
+		color: white;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		backdrop-filter: blur(8px);
+	}
+
+	.btn-secondary:hover {
+		background: rgba(255, 255, 255, 0.2);
+	}
+
+	/* Responsive */
 	@media (max-width: 768px) {
 		.hero {
+			height: 75vh;
 			min-height: 500px;
-			max-height: 700px;
-		}
-
-		.badge-text {
-			font-size: 0.75rem;
-			padding: 0.375rem 0.75rem;
+			padding: 0 1.5rem;
 		}
 
 		.hero-title {
-			font-size: var(--text-h1);
+			font-size: clamp(2.5rem, 12vw, 4rem);
 		}
 
 		.hero-subtitle {
-			font-size: 1.125rem;
+			font-size: var(--text-body);
 		}
 
-		.cta-button {
-			padding: 0.875rem 1.5rem;
-			font-size: 0.875rem;
+		.hero-meta {
+			flex-wrap: wrap;
+			gap: var(--space-sm);
+		}
+
+		.hero-actions {
+			flex-direction: column;
+			gap: var(--space-sm);
+		}
+
+		.btn-primary,
+		.btn-secondary {
+			width: 100%;
+			justify-content: center;
 		}
 	}
 
 	@media (max-width: 480px) {
 		.hero {
-			min-height: 400px;
-			max-height: 600px;
+			height: 70vh;
+			min-height: 450px;
+			padding: 0 1rem;
 		}
 
-		.badge-text {
-			font-size: 0.6875rem;
+		.hero-content {
+			gap: var(--space-md);
 		}
 
 		.hero-title {
-			font-size: var(--text-h2);
+			font-size: clamp(2rem, 14vw, 3rem);
 		}
 
 		.hero-subtitle {
-			font-size: 1rem;
+			font-size: var(--text-body-sm);
 		}
 
-		.cta-button {
+		.btn-primary,
+		.btn-secondary {
 			padding: 0.75rem 1.25rem;
 			font-size: 0.8125rem;
 		}
