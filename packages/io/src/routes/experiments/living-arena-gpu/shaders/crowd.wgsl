@@ -102,7 +102,7 @@ const COURT_MIN_X: f32 = 280.0;
 const COURT_MAX_X: f32 = 520.0;
 const COURT_MIN_Y: f32 = 200.0;
 const COURT_MAX_Y: f32 = 400.0;
-const COURT_MARGIN: f32 = 40.0; // Larger buffer zone around court
+const COURT_MARGIN: f32 = 15.0; // Tight buffer zone around court
 
 // Get agent position
 fn getPosition(idx: u32) -> vec2<f32> {
