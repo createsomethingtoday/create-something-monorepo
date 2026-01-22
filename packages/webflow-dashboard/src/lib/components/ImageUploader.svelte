@@ -73,23 +73,20 @@
 			return 'Failed to read image dimensions';
 		}
 
-		// Validate aspect ratio if specified
-		if (aspectRatio) {
+		// For thumbnails, validate the standard 150:199 ratio with 1% tolerance
+		// This matches the old interface's validation exactly
+		if (uploadType === 'thumbnail') {
+			const actualRatio = dimensions.width / dimensions.height;
+			const expectedRatio = THUMBNAIL_ASPECT_RATIO.width / THUMBNAIL_ASPECT_RATIO.height;
+			// Use absolute tolerance like the old interface (not relative)
+			const deviation = Math.abs(actualRatio - expectedRatio);
+			if (deviation > THUMBNAIL_ASPECT_RATIO.tolerance) {
+				return `Invalid thumbnail aspect ratio (${dimensions.width}×${dimensions.height}). Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height} ratio. Try 750×995px.`;
+			}
+		} else if (aspectRatio) {
+			// For non-thumbnail images, validate against the provided aspect ratio
 			if (!validateAspectRatio(dimensions.width, dimensions.height, aspectRatio.width, aspectRatio.height)) {
 				return `Invalid aspect ratio. Expected ${aspectRatio.width}:${aspectRatio.height}`;
-			}
-		}
-
-		// For thumbnails, validate the standard 150:199 ratio
-		if (uploadType === 'thumbnail') {
-			if (!validateAspectRatio(
-				dimensions.width,
-				dimensions.height,
-				THUMBNAIL_ASPECT_RATIO.width,
-				THUMBNAIL_ASPECT_RATIO.height,
-				THUMBNAIL_ASPECT_RATIO.tolerance
-			)) {
-				return `Invalid thumbnail aspect ratio. Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height}`;
 			}
 		}
 

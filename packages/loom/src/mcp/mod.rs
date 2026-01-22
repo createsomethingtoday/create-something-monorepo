@@ -194,7 +194,8 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                 "type": "object",
                 "properties": {
                     "status": { "type": "string", "enum": ["ready", "claimed", "blocked", "done", "cancelled"] },
-                    "label": { "type": "string" }
+                    "label": { "type": "string" },
+                    "repo": { "type": "string", "description": "Filter by repository ID" }
                 }
             }),
         },
@@ -371,6 +372,96 @@ pub fn list_tools() -> Vec<ToolDefinition> {
         },
         
         // ─────────────────────────────────────────────────────────────────
+        // Multi-Repo Support
+        // ─────────────────────────────────────────────────────────────────
+        ToolDefinition {
+            name: "loom_repos".to_string(),
+            description: "List configured repositories (for multi-repo coordination between projects)".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {}
+            }),
+        },
+        ToolDefinition {
+            name: "loom_switch_repo".to_string(),
+            description: "Switch the active repository context. Use this when working in a different repo than the MCP server was started in.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": { 
+                        "type": "string", 
+                        "description": "Absolute path to the repository to switch to (e.g., /Users/me/Documents/Github/WORKWAY)" 
+                    }
+                },
+                "required": ["path"]
+            }),
+        },
+        ToolDefinition {
+            name: "loom_list_all".to_string(),
+            description: "List tasks from ALL configured repositories (primary + additional). Use for unified views across projects.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "status": { "type": "string", "enum": ["ready", "claimed", "blocked", "done", "cancelled"] }
+                }
+            }),
+        },
+        
+        // ─────────────────────────────────────────────────────────────────
+        // Backfill & Analytics
+        // ─────────────────────────────────────────────────────────────────
+        ToolDefinition {
+            name: "loom_backfill".to_string(),
+            description: "Import historical work from Git commits and Beads issues. Creates tasks and execution records for analytics.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "repo_path": { 
+                        "type": "string", 
+                        "description": "Absolute path to repository to backfill from (e.g., /Users/me/WORKWAY). Overrides current MCP context." 
+                    },
+                    "since": { 
+                        "type": "string", 
+                        "description": "Start date (ISO 8601 or relative like '30 days ago')" 
+                    },
+                    "until": { 
+                        "type": "string", 
+                        "description": "End date (ISO 8601 or relative)" 
+                    },
+                    "author": { 
+                        "type": "string", 
+                        "description": "Filter by git author name" 
+                    },
+                    "beads_path": { 
+                        "type": "string", 
+                        "description": "Path to Beads directory (defaults to .beads in repo_path)" 
+                    },
+                    "dry_run": { 
+                        "type": "boolean", 
+                        "description": "Preview changes without writing" 
+                    }
+                }
+            }),
+        },
+        ToolDefinition {
+            name: "loom_analytics".to_string(),
+            description: "Get analytics from historical execution data (after backfill)".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "agent": { 
+                        "type": "string", 
+                        "description": "Filter by agent ID" 
+                    },
+                    "task_type": { 
+                        "type": "string", 
+                        "description": "Filter by task type (bug, feature, task, refactor)" 
+                    }
+                }
+            }),
+        },
+        
+        // ─────────────────────────────────────────────────────────────────
         // GSD-Inspired: Discuss & Verify (Pre-Planning)
         // ─────────────────────────────────────────────────────────────────
         ToolDefinition {
@@ -541,6 +632,7 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                 labels,
                 parent: None,
                 evidence: None,
+                repo: None,
             }).map_err(|e| e.to_string())?;
             
             // Claim it immediately
@@ -578,6 +670,7 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                 labels,
                 parent,
                 evidence: None,
+                repo: None,
             }).map_err(|e| e.to_string())?;
             
             Ok(json!({
@@ -702,7 +795,9 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
         }
         
         "loom_list" => {
-            let tasks = if let Some(status_str) = args["status"].as_str() {
+            let tasks = if let Some(repo) = args["repo"].as_str() {
+                loom.list_by_repo(repo).map_err(|e| e.to_string())?
+            } else if let Some(status_str) = args["status"].as_str() {
                 let status = match status_str {
                     "ready" => Status::Ready,
                     "claimed" => Status::Claimed,
@@ -725,6 +820,7 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                 "priority": t.priority.as_str(),
                 "agent": t.agent,
                 "labels": t.labels,
+                "repo": t.repo,
                 "actual_cost_usd": t.actual_cost_usd
             })).collect::<Vec<_>>()))
         }
@@ -942,6 +1038,187 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                 "agent_id": agent_id,
                 "task_id": task_id,
                 "success": success
+            }))
+        }
+        
+        // ─────────────────────────────────────────────────────────────────
+        // Multi-Repo Support
+        // ─────────────────────────────────────────────────────────────────
+        "loom_repos" => {
+            let repos = loom.repos();
+            let db_repos = loom.list_repos().map_err(|e| e.to_string())?;
+            
+            Ok(json!({
+                "current_repo": loom.repo_id(),
+                "configured": repos.iter().map(|r| json!({
+                    "id": r.id,
+                    "name": r.name,
+                    "path": r.path.to_string_lossy(),
+                    "is_primary": r.is_primary,
+                    "available": r.available
+                })).collect::<Vec<_>>(),
+                "repos_in_database": db_repos
+            }))
+        }
+        
+        "loom_switch_repo" => {
+            use std::path::PathBuf;
+            
+            let path_str = args["path"].as_str()
+                .ok_or("path parameter is required")?;
+            let path = PathBuf::from(path_str);
+            
+            // Verify the path exists and has .loom
+            if !path.exists() {
+                return Err(format!("Path does not exist: {}", path.display()));
+            }
+            
+            let loom_dir = path.join(".loom");
+            if !loom_dir.exists() {
+                return Err(format!("No .loom directory found at {}. Run 'lm init' in that directory first.", path.display()));
+            }
+            
+            // Try to open the repo to get its info
+            let target_loom = crate::Loom::open(&path)
+                .map_err(|e| format!("Failed to open repo: {}", e))?;
+            
+            let repo_id = target_loom.repo_id();
+            let config = target_loom.config();
+            
+            Ok(json!({
+                "status": "validated",
+                "repo_id": repo_id,
+                "repo_name": config.repo_name,
+                "path": path.to_string_lossy(),
+                "note": "MCP server context cannot be switched at runtime. Use the 'repo_path' parameter in loom_backfill to specify which repository to operate on.",
+                "usage": {
+                    "backfill": format!("loom_backfill with repo_path=\"{}\"", path.display()),
+                    "example": json!({
+                        "tool": "loom_backfill",
+                        "args": {
+                            "repo_path": path.to_string_lossy(),
+                            "since": "30 days ago"
+                        }
+                    })
+                }
+            }))
+        }
+        
+        "loom_list_all" => {
+            let mut tasks = loom.list_all_repos().map_err(|e| e.to_string())?;
+            
+            // Filter by status if provided
+            if let Some(status_str) = args["status"].as_str() {
+                let target_status = match status_str {
+                    "ready" => Status::Ready,
+                    "claimed" => Status::Claimed,
+                    "blocked" => Status::Blocked,
+                    "done" => Status::Done,
+                    "cancelled" => Status::Cancelled,
+                    s => return Err(format!("Unknown status: {}", s)),
+                };
+                tasks.retain(|t| t.status == target_status);
+            }
+            
+            Ok(json!(tasks.iter().map(|t| json!({
+                "id": t.id,
+                "title": t.title,
+                "status": format!("{:?}", t.status).to_lowercase(),
+                "priority": t.priority.as_str(),
+                "agent": t.agent,
+                "labels": t.labels,
+                "repo": t.repo,
+                "actual_cost_usd": t.actual_cost_usd
+            })).collect::<Vec<_>>()))
+        }
+        
+        // ─────────────────────────────────────────────────────────────────
+        // Backfill & Analytics
+        // ─────────────────────────────────────────────────────────────────
+        "loom_backfill" => {
+            use crate::backfill::{Backfill, BackfillOptions, BackfillAnalytics};
+            use std::path::PathBuf;
+            
+            // Check if a different repo path is specified
+            let repo_path = args["repo_path"].as_str().map(PathBuf::from);
+            
+            let since = args["since"].as_str()
+                .and_then(|s| Backfill::parse_date(s).ok());
+            let until = args["until"].as_str()
+                .and_then(|s| Backfill::parse_date(s).ok());
+            let author = args["author"].as_str().map(String::from);
+            let beads_path = args["beads_path"].as_str()
+                .map(PathBuf::from);
+            let dry_run = args["dry_run"].as_bool().unwrap_or(false);
+            
+            let options = BackfillOptions {
+                since,
+                until,
+                author,
+                beads_path,
+                dry_run,
+                repo_path: repo_path.clone(),
+                agent_mapping: std::collections::HashMap::new(),
+                issue_patterns: Vec::new(), // Use defaults from repo config
+            };
+            
+            let backfill = Backfill::new(options);
+            
+            // If repo_path is specified, use a temporary Loom instance for that repo
+            let result = if let Some(ref path) = repo_path {
+                let mut target_loom = crate::Loom::open_or_init(path)
+                    .map_err(|e| format!("Failed to open repo at {}: {}", path.display(), e))?;
+                backfill.run(&mut target_loom).map_err(|e| e.to_string())?
+            } else {
+                backfill.run(loom).map_err(|e| e.to_string())?
+            };
+            
+            let formatted = BackfillAnalytics::format_result(&result);
+            
+            Ok(json!({
+                "dry_run": result.dry_run,
+                "commits_scanned": result.commits_scanned,
+                "issues_found": result.issues_found,
+                "tasks_created": result.tasks_created,
+                "executions_recorded": result.executions_recorded,
+                "by_agent": result.by_agent,
+                "by_task_type": result.by_task_type,
+                "formatted_summary": formatted
+            }))
+        }
+        
+        "loom_analytics" => {
+            let agent_filter = args["agent"].as_str();
+            let _task_type_filter = args["task_type"].as_str();
+            
+            // Get summary statistics
+            let summary = loom.summary().map_err(|e| e.to_string())?;
+            
+            // Get agent profiles with their stats
+            let agents = loom.agents().map_err(|e| e.to_string())?;
+            
+            let agent_stats: Vec<Value> = agents.iter()
+                .filter(|a| agent_filter.map_or(true, |f| a.id.contains(f)))
+                .map(|a| json!({
+                    "id": a.id,
+                    "name": a.name,
+                    "success_rate": a.quality.success_rate(),
+                    "successes": a.quality.successes,
+                    "failures": a.quality.failures,
+                    "avg_duration_secs": a.quality.avg_duration_secs,
+                    "quality_by_type": a.quality.by_type
+                }))
+                .collect();
+            
+            Ok(json!({
+                "summary": {
+                    "total_tasks": summary.total(),
+                    "completed": summary.done,
+                    "active": summary.active(),
+                    "progress_pct": summary.progress_pct(),
+                    "total_cost_usd": summary.total_cost_usd
+                },
+                "agents": agent_stats
             }))
         }
         

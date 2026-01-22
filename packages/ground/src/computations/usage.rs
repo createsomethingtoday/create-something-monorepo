@@ -146,7 +146,7 @@ pub fn count_usages(symbol: &str, search_path: &Path) -> Result<UsageEvidence, C
 fn search_file(symbol: &str, path: &Path, locations: &mut Vec<UsageLocation>) -> Result<(), ComputationError> {
     // Skip non-code files
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-    if !matches!(ext, "ts" | "tsx" | "js" | "jsx" | "rs" | "py" | "go") {
+    if !matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte" | "rs" | "py" | "go") {
         return Ok(());
     }
     
@@ -537,7 +537,7 @@ fn check_barrel_imports_in_dir(symbol: &str, barrel_dir: &str, barrel_path: &Pat
             }
         } else if path.is_file() && path != *barrel_path {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
                 // Use tree-sitter to extract imports
                 if let Ok(imports) = extract_imports(&path) {
                     for import in imports {
@@ -602,7 +602,7 @@ fn check_import_in_dir_ast(symbol: &str, source_file: &Path, dir: &Path) -> Resu
             }
         } else if path.is_file() && path != source_file {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
                 // Use tree-sitter to extract imports
                 if let Ok(imports) = extract_imports(&path) {
                     for import in imports {
@@ -793,5 +793,84 @@ export function handleWebhook(data: string): boolean {
         // secureCompare is NOT imported anywhere - should be dead
         assert!(dead_names.contains(&"secureCompare"),
             "secureCompare SHOULD be dead - nothing imports it. Dead: {:?}", dead_names);
+    }
+    
+    #[test]
+    fn test_counts_symbol_usages_in_svelte() {
+        let dir = tempdir().unwrap();
+        
+        // Create a TypeScript file with exports
+        let utils = dir.path().join("utils.ts");
+        File::create(&utils).unwrap().write_all(br#"
+export function validateEmail(email: string): boolean {
+    return email.includes('@');
+}
+"#).unwrap();
+        
+        // Create a Svelte file that imports from utils
+        let component = dir.path().join("Form.svelte");
+        File::create(&component).unwrap().write_all(br#"<script lang="ts">
+import { validateEmail } from './utils';
+
+let email = '';
+$: isValid = validateEmail(email);
+</script>
+
+<input bind:value={email} />
+<span>{isValid ? 'Valid' : 'Invalid'}</span>
+"#).unwrap();
+        
+        let evidence = count_usages("validateEmail", dir.path()).unwrap();
+        
+        // Should find: 1 definition in utils.ts, 2 usages in Form.svelte (import + call)
+        assert!(evidence.usage_count >= 3, 
+            "Expected at least 3 occurrences, got {}", evidence.usage_count);
+        assert!(evidence.definition_count >= 1,
+            "Expected at least 1 definition, got {}", evidence.definition_count);
+    }
+    
+    #[test]
+    fn test_dead_export_not_flagged_when_imported_in_svelte() {
+        let dir = tempdir().unwrap();
+        
+        // Create a lib directory structure
+        let lib_dir = dir.path().join("lib");
+        fs::create_dir(&lib_dir).unwrap();
+        
+        // Create utils.ts with exports
+        let utils = lib_dir.join("utils.ts");
+        File::create(&utils).unwrap().write_all(br#"
+export function formatDate(date: Date): string {
+    return date.toISOString();
+}
+
+export function unusedHelper(): void {
+    // This is never imported
+}
+"#).unwrap();
+        
+        // Create a Svelte component that imports formatDate
+        let component = dir.path().join("DateDisplay.svelte");
+        File::create(&component).unwrap().write_all(br#"<script lang="ts">
+import { formatDate } from './lib/utils';
+
+export let date: Date;
+$: formatted = formatDate(date);
+</script>
+
+<time>{formatted}</time>
+"#).unwrap();
+        
+        // Check dead exports
+        let report = find_dead_exports(&utils, dir.path()).unwrap();
+        let dead_names: Vec<&str> = report.dead_exports.iter().map(|e| e.name.as_str()).collect();
+        
+        // formatDate is imported in Svelte - should NOT be dead
+        assert!(!dead_names.contains(&"formatDate"),
+            "formatDate should NOT be dead - it's imported in DateDisplay.svelte. Dead: {:?}", dead_names);
+        
+        // unusedHelper is not imported anywhere - should be dead
+        assert!(dead_names.contains(&"unusedHelper"),
+            "unusedHelper SHOULD be dead - nothing imports it. Dead: {:?}", dead_names);
     }
 }

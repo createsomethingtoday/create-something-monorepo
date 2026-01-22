@@ -2,18 +2,16 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient, validateEmail } from '$lib/server/airtable';
 import { checkRateLimit } from '$lib/server/kv';
+import { sendVerificationEmail } from '$lib/server/email';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * POST /api/auth/login
  *
- * Initiates login by generating a verification token and storing it in Airtable.
- *
- * CRITICAL: Uses two-step Airtable update to trigger automation:
- * 1. Clear old token (set to null)
- * 2. Set new token (transition from null → value triggers Airtable automation)
- *
- * The Airtable automation sends the verification email - we don't send it here.
+ * Initiates login by:
+ * 1. Generating a verification token
+ * 2. Storing it in Airtable
+ * 3. Sending a branded email via Resend
  */
 export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	const clientIp = getClientAddress();
@@ -74,13 +72,25 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		const token = uuidv4();
 		const expirationTime = new Date(Date.now() + 60 * 60000); // 60 minutes
 
-		// CRITICAL: Two-step update triggers Airtable automation
-		// Step 1: Clear old token
-		// Step 2: Set new token
-		// The transition from null → value triggers the email automation
+		// Store token in Airtable
 		await airtable.setVerificationToken(user.id, token, expirationTime);
 
-		// Return success - Airtable automation sends the email
+		// Send branded verification email via Resend
+		const emailResult = await sendVerificationEmail(platform!.env.RESEND_API_KEY, {
+			to: validatedEmail,
+			token: token,
+			expiresIn: '60 minutes'
+		});
+
+		if (!emailResult.success) {
+			console.error('Failed to send verification email:', emailResult.error);
+			// Don't fail the login - token is stored, user can request resend
+			return json({ 
+				message: 'Verification token generated. Check your email or request a new code.',
+				warning: 'Email delivery may be delayed'
+			});
+		}
+
 		return json({ message: 'Verification email sent' });
 	} catch (error) {
 		console.error('Login error:', error);

@@ -71,13 +71,15 @@ pub mod verify;
 pub mod policy;
 pub mod models;
 pub mod orchestrator;
+pub mod backfill;
+pub mod config;
 
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 pub use work::{Task, Status, Priority, CreateTask, WorkStore, WorkSummary, WorkError};
 pub use dispatch::{Agent, AgentConfig, DispatchConfig, Dispatcher, DispatchError};
-pub use agents::{AgentProfile, AgentRegistry, Capabilities, CostModel, QualityMetrics, RequiredFeatures};
+pub use agents::{AgentProfile, AgentRegistry, Capabilities, CostModel, QualityMetrics, RequiredFeatures, AnalyticsSummary, ExecutionRecord};
 pub use memory::{
     Session, SessionContext, SessionStatus, Checkpoint, MemoryStore, MemoryError,
     // Enhanced context types (Harness AgentContext parity)
@@ -90,6 +92,8 @@ pub use verify::{Verifier, VerificationResult, CheckType, VerifyError, format_ev
 pub use policy::{Complexity, score_agent, route_by_label, requires_verification};
 pub use models::{ModelsConfig, ModelConfig, ModelTier, ModelFamily};
 pub use orchestrator::{Orchestrator, OrchestratorConfig, AgentBackend, ExecutionResult, send_notification};
+pub use backfill::{Backfill, BackfillOptions, BackfillResult, BackfillError, BackfillAnalytics, CommitRecord, BeadsIssue, CorrelatedRecord};
+pub use config::{LoomConfig, RepoConfig, RepoInfo, ConfigError};
 
 /// Loom error types
 #[derive(Error, Debug)]
@@ -134,6 +138,7 @@ pub struct Loom {
     router: Router,
     formulas: FormulaRegistry,
     dispatch: Option<Dispatcher>,
+    config: LoomConfig,
 }
 
 impl Loom {
@@ -144,8 +149,23 @@ impl Loom {
         std::fs::create_dir_all(root.join("log"))?;
         std::fs::create_dir_all(root.join("formulas"))?;
         
-        // Initialize all stores
-        let store = WorkStore::open(root.join("work.db"))?;
+        // Create default config if it doesn't exist
+        let config_path = root.join("config.toml");
+        if !config_path.exists() {
+            LoomConfig::write_default(path.as_ref())
+                .map_err(|e| LoomError::Config(e.to_string()))?;
+        }
+        
+        // Load config
+        let config = LoomConfig::load(path.as_ref())
+            .map_err(|e| LoomError::Config(e.to_string()))?;
+        
+        // Initialize all stores with repo info from config
+        let mut store = WorkStore::open(root.join("work.db"))?;
+        if let Some(ref repo_id) = config.repo_id {
+            store.set_default_repo(Some(repo_id.clone()));
+        }
+        
         let mut agents = AgentRegistry::open(root.join("agents.db"))?;
         let memory = MemoryStore::open(root.join("memory.db"))?;
         
@@ -206,6 +226,7 @@ default = "claude"
             router,
             formulas,
             dispatch: None,
+            config,
         })
     }
     
@@ -217,7 +238,15 @@ default = "claude"
             return Err(LoomError::NotInitialized);
         }
         
-        let store = WorkStore::open(root.join("work.db"))?;
+        // Load config
+        let config = LoomConfig::load(path.as_ref())
+            .map_err(|e| LoomError::Config(e.to_string()))?;
+        
+        let mut store = WorkStore::open(root.join("work.db"))?;
+        if let Some(ref repo_id) = config.repo_id {
+            store.set_default_repo(Some(repo_id.clone()));
+        }
+        
         let agents = AgentRegistry::open(root.join("agents.db"))?;
         let memory = MemoryStore::open(root.join("memory.db"))?;
         let router = Router::new();
@@ -235,6 +264,7 @@ default = "claude"
             router,
             formulas,
             dispatch,
+            config,
         })
     }
     
@@ -263,6 +293,95 @@ default = "claude"
     /// Get the root directory
     pub fn root(&self) -> &Path {
         &self.root
+    }
+    
+    /// Get the configuration
+    pub fn config(&self) -> &LoomConfig {
+        &self.config
+    }
+    
+    /// Get repository info for all configured repositories
+    pub fn repos(&self) -> Vec<RepoInfo> {
+        self.config.repo_info(self.root.parent().unwrap_or(&self.root))
+    }
+    
+    /// Get the current repository ID
+    pub fn repo_id(&self) -> String {
+        self.config.effective_repo_id(self.root.parent().unwrap_or(&self.root))
+    }
+    
+    /// List tasks filtered by repository
+    pub fn list_by_repo(&self, repo: &str) -> Result<Vec<Task>, LoomError> {
+        Ok(self.store.list_by_repo(repo)?)
+    }
+    
+    /// List all unique repositories in the store
+    pub fn list_repos(&self) -> Result<Vec<String>, LoomError> {
+        Ok(self.store.list_repos()?)
+    }
+    
+    /// Hydrate tasks from additional configured repositories
+    /// This loads tasks from other repos as read-only views
+    pub fn hydrate_from_additional_repos(&self) -> Result<Vec<Task>, LoomError> {
+        let repos = self.config.repo_info(self.root.parent().unwrap_or(&self.root));
+        let mut all_tasks = Vec::new();
+        
+        for repo in repos {
+            if repo.is_primary {
+                continue; // Skip primary, we already have those
+            }
+            
+            if !repo.available {
+                continue; // Skip unavailable repos
+            }
+            
+            // Try to open the other repo's work store
+            let work_db = repo.path.join(".loom").join("work.db");
+            if !work_db.exists() {
+                continue;
+            }
+            
+            match WorkStore::open(&work_db) {
+                Ok(store) => {
+                    // Get all tasks from this repo
+                    if let Ok(mut tasks) = store.list_all() {
+                        // Tag them with the repo ID so we know where they came from
+                        for task in &mut tasks {
+                            if task.repo.is_none() {
+                                task.repo = Some(repo.id.clone());
+                            }
+                        }
+                        all_tasks.extend(tasks);
+                    }
+                }
+                Err(_) => continue, // Skip repos we can't open
+            }
+        }
+        
+        Ok(all_tasks)
+    }
+    
+    /// List tasks from all configured repositories (primary + additional)
+    /// Returns tasks tagged with their source repo
+    pub fn list_all_repos(&self) -> Result<Vec<Task>, LoomError> {
+        let mut all_tasks = self.list()?;
+        
+        // Tag primary tasks with repo ID if not already tagged
+        let primary_repo_id = self.repo_id();
+        for task in &mut all_tasks {
+            if task.repo.is_none() {
+                task.repo = Some(primary_repo_id.clone());
+            }
+        }
+        
+        // Add tasks from additional repos
+        let additional_tasks = self.hydrate_from_additional_repos()?;
+        all_tasks.extend(additional_tasks);
+        
+        // Sort by updated_at descending
+        all_tasks.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+        
+        Ok(all_tasks)
     }
     
     // ─────────────────────────────────────────────────────────────────────

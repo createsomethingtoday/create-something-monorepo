@@ -493,6 +493,26 @@ impl AgentRegistry {
     ) -> Result<(), AgentError> {
         let now = Utc::now();
         
+        // Ensure agent profile exists (for foreign key constraint)
+        // Auto-create a minimal profile for unknown agents (e.g., from backfill)
+        let mut profile = self.get_profile(agent_id)?.unwrap_or_else(|| {
+            AgentProfile {
+                id: agent_id.to_string(),
+                name: agent_id.to_string(),
+                cli_path: String::new(), // Unknown CLI path for backfilled agents
+                capabilities: Capabilities::default(),
+                cost: CostModel::default(),
+                quality: QualityMetrics::default(),
+                max_concurrent: 1,
+                active: 0,
+                available: false, // Not available for dispatch (historical record only)
+                last_used: None,
+            }
+        });
+        
+        // Ensure profile is saved before recording (foreign key requirement)
+        self.upsert_profile(&profile)?;
+        
         self.conn.execute(
             r#"INSERT INTO agent_history 
                (agent_id, task_id, task_type, success, duration_secs, tokens_used, cost, timestamp)
@@ -510,16 +530,14 @@ impl AgentRegistry {
         )?;
         
         // Update the profile's quality metrics
-        if let Some(mut profile) = self.get_profile(agent_id)? {
-            let task_type = task_type.unwrap_or("unknown");
-            if success {
-                profile.quality.record_success(task_type, duration_secs);
-            } else {
-                profile.quality.record_failure(task_type);
-            }
-            profile.last_used = Some(now);
-            self.upsert_profile(&profile)?;
+        let task_type = task_type.unwrap_or("unknown");
+        if success {
+            profile.quality.record_success(task_type, duration_secs);
+        } else {
+            profile.quality.record_failure(task_type);
         }
+        profile.last_used = Some(now);
+        self.upsert_profile(&profile)?;
         
         Ok(())
     }
@@ -594,6 +612,214 @@ impl AgentRegistry {
         
         Ok(cheapest.map(|(p, _)| p))
     }
+    
+    // ─────────────────────────────────────────────────────────────────────
+    // Analytics Queries
+    // ─────────────────────────────────────────────────────────────────────
+    
+    /// Get analytics summary for all agents
+    pub fn get_analytics(&self, since: Option<DateTime<Utc>>) -> Result<AnalyticsSummary, AgentError> {
+        let since_clause = since.map(|dt| format!("AND timestamp >= '{}'", dt.to_rfc3339())).unwrap_or_default();
+        
+        // Total executions by agent
+        let executions_by_agent: HashMap<String, u32> = {
+            let mut stmt = self.conn.prepare(&format!(
+                "SELECT agent_id, COUNT(*) FROM agent_history WHERE 1=1 {} GROUP BY agent_id",
+                since_clause
+            ))?;
+            
+            let mut map = HashMap::new();
+            let rows = stmt.query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?))
+            })?;
+            
+            for row in rows.flatten() {
+                map.insert(row.0, row.1);
+            }
+            map
+        };
+        
+        // Success rate by agent
+        let success_by_agent: HashMap<String, (u32, u32)> = {
+            let mut stmt = self.conn.prepare(&format!(
+                "SELECT agent_id, SUM(success), COUNT(*) FROM agent_history WHERE 1=1 {} GROUP BY agent_id",
+                since_clause
+            ))?;
+            
+            let mut map = HashMap::new();
+            let rows = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, u32>(1)?,
+                    row.get::<_, u32>(2)?
+                ))
+            })?;
+            
+            for row in rows.flatten() {
+                map.insert(row.0, (row.1, row.2));
+            }
+            map
+        };
+        
+        // Average duration by task type
+        let duration_by_type: HashMap<String, (f64, u32)> = {
+            let mut stmt = self.conn.prepare(&format!(
+                "SELECT task_type, AVG(duration_secs), COUNT(*) FROM agent_history WHERE task_type IS NOT NULL {} GROUP BY task_type",
+                since_clause
+            ))?;
+            
+            let mut map = HashMap::new();
+            let rows = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, f64>(1)?,
+                    row.get::<_, u32>(2)?
+                ))
+            })?;
+            
+            for row in rows.flatten() {
+                map.insert(row.0, (row.1, row.2));
+            }
+            map
+        };
+        
+        // Total cost
+        let total_cost: Option<f64> = self.conn.query_row(
+            &format!("SELECT SUM(cost) FROM agent_history WHERE cost IS NOT NULL {}", since_clause),
+            [],
+            |row| row.get(0)
+        ).ok();
+        
+        Ok(AnalyticsSummary {
+            executions_by_agent,
+            success_by_agent,
+            duration_by_type,
+            total_cost: total_cost.unwrap_or(0.0),
+            since,
+        })
+    }
+    
+    /// Get execution history for a specific agent
+    pub fn get_agent_history(
+        &self,
+        agent_id: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<ExecutionRecord>, AgentError> {
+        let limit_clause = limit.map(|l| format!("LIMIT {}", l)).unwrap_or_default();
+        
+        let mut stmt = self.conn.prepare(&format!(
+            "SELECT agent_id, task_id, task_type, success, duration_secs, tokens_used, cost, timestamp 
+             FROM agent_history 
+             WHERE agent_id = ?1 
+             ORDER BY timestamp DESC 
+             {}",
+            limit_clause
+        ))?;
+        
+        let records = stmt.query_map(params![agent_id], |row| {
+            let timestamp_str: String = row.get(7)?;
+            Ok(ExecutionRecord {
+                agent_id: row.get(0)?,
+                task_id: row.get(1)?,
+                task_type: row.get(2)?,
+                success: row.get::<_, i32>(3)? == 1,
+                duration_secs: row.get(4)?,
+                tokens_used: row.get::<_, Option<i64>>(5)?.map(|t| t as u64),
+                cost: row.get(6)?,
+                timestamp: DateTime::parse_from_rfc3339(&timestamp_str)
+                    .map(|dt| dt.with_timezone(&Utc))
+                    .ok(),
+            })
+        })?.collect::<Result<Vec<_>, _>>()?;
+        
+        Ok(records)
+    }
+    
+    /// Get top performing agents for a task type
+    pub fn top_agents_for_type(
+        &self,
+        task_type: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<(String, f64)>, AgentError> {
+        let limit_clause = limit.map(|l| format!("LIMIT {}", l)).unwrap_or_else(|| "LIMIT 5".to_string());
+        
+        let mut stmt = self.conn.prepare(&format!(
+            "SELECT agent_id, 
+                    CAST(SUM(success) AS FLOAT) / COUNT(*) as success_rate
+             FROM agent_history 
+             WHERE task_type = ?1 
+             GROUP BY agent_id 
+             HAVING COUNT(*) >= 3
+             ORDER BY success_rate DESC 
+             {}",
+            limit_clause
+        ))?;
+        
+        let results = stmt.query_map(params![task_type], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, f64>(1)?))
+        })?.collect::<Result<Vec<_>, _>>()?;
+        
+        Ok(results)
+    }
+}
+
+/// Analytics summary from agent history
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnalyticsSummary {
+    /// Execution count by agent
+    pub executions_by_agent: HashMap<String, u32>,
+    /// Success/total by agent
+    pub success_by_agent: HashMap<String, (u32, u32)>,
+    /// Average duration (secs) and count by task type
+    pub duration_by_type: HashMap<String, (f64, u32)>,
+    /// Total cost in USD
+    pub total_cost: f64,
+    /// Time filter applied
+    pub since: Option<DateTime<Utc>>,
+}
+
+impl AnalyticsSummary {
+    /// Format as a human-readable report
+    pub fn format_report(&self) -> String {
+        let mut output = String::new();
+        
+        output.push_str("Analytics Summary\n");
+        output.push_str("=================\n\n");
+        
+        if let Some(since) = &self.since {
+            output.push_str(&format!("Since: {}\n\n", since.format("%Y-%m-%d")));
+        }
+        
+        output.push_str("Executions by Agent:\n");
+        for (agent, count) in &self.executions_by_agent {
+            let (successes, total) = self.success_by_agent.get(agent).unwrap_or(&(0, 0));
+            let rate = if *total > 0 { *successes as f64 / *total as f64 * 100.0 } else { 0.0 };
+            output.push_str(&format!("  {:<13} → {:>3} executions ({:.0}% success)\n", agent, count, rate));
+        }
+        
+        output.push_str("\nDuration by Task Type:\n");
+        for (task_type, (avg_secs, count)) in &self.duration_by_type {
+            let hours = avg_secs / 3600.0;
+            output.push_str(&format!("  {:<13} → {:>3} tasks (avg {:.1}h)\n", task_type, count, hours));
+        }
+        
+        output.push_str(&format!("\nTotal Cost: ${:.2}\n", self.total_cost));
+        
+        output
+    }
+}
+
+/// A single execution record from history
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionRecord {
+    pub agent_id: String,
+    pub task_id: String,
+    pub task_type: Option<String>,
+    pub success: bool,
+    pub duration_secs: Option<f64>,
+    pub tokens_used: Option<u64>,
+    pub cost: Option<f64>,
+    pub timestamp: Option<DateTime<Utc>>,
 }
 
 /// Required features for a task

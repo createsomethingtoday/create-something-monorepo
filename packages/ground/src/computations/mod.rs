@@ -38,6 +38,9 @@ pub mod confidence;
 // Pattern analysis (v2.1)
 pub mod patterns;
 
+// Symbol graph (v2.2)
+pub mod graph;
+
 pub use similarity::{compute_similarity, SimilarityEvidence};
 pub use usage::{count_usages, find_dead_exports, UsageEvidence, UsageLocation, UsageType, DeadExport, DeadExportsReport};
 pub use connectivity::{analyze_connectivity, ConnectivityEvidence, ArchitecturalConnections, ServiceBinding};
@@ -45,6 +48,7 @@ pub use ast_similarity::{extract_fingerprint, compare_fingerprints, AstFingerpri
 pub use function_dry::{
     extract_functions, analyze_function_dry, analyze_function_dry_with_options, compare_functions,
     ExtractedFunction, FunctionDryEvidence, FunctionDryReport, FunctionDryOptions, is_test_file,
+    IntraFileDryEvidence, DEFAULT_INTRA_FILE_THRESHOLD,
 };
 pub use environment::{
     analyze_environment_safety, EnvironmentEvidence, EnvironmentWarning, 
@@ -85,6 +89,10 @@ pub use confidence::{
     orphan_confidence, dead_export_confidence, duplicate_confidence,
     environment_safety_confidence, aggregate_confidence,
     AUTO_FIX_THRESHOLD, REVIEW_THRESHOLD,
+};
+pub use graph::{
+    SymbolGraph, ExportedSymbol, ImportedSymbol, 
+    GraphDeadExport, GraphDeadExportsReport, GraphStats,
 };
 
 use thiserror::Error;

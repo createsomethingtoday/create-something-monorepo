@@ -50,6 +50,12 @@ which = "7"
 # Hostname for default agent name
 hostname = "0.4"
 
+# Regex for pattern matching
+regex = "1"
+
+# Home directory expansion
+dirs = "5"
+
 [dev-dependencies]
 tempfile = "3"
 

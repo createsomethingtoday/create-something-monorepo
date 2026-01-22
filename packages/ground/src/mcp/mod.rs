@@ -42,6 +42,14 @@ use crate::computations::framework::{detect_framework, is_implicit_entry};
 use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_loom_command};
 use crate::config::GroundConfig;
 
+/// Log progress to stderr (visible in MCP server logs)
+#[allow(unused_macros)]
+macro_rules! mcp_log {
+    ($($arg:tt)*) => {
+        eprintln!("[ground {}] {}", chrono::Utc::now().format("%H:%M:%S%.3f"), format!($($arg)*));
+    };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Sketch Storage (for MCP session state)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,6 +77,9 @@ lazy_static::lazy_static! {
     
     /// Bloom filter cache for "have we checked this symbol?" optimization  
     static ref SYMBOL_CACHE: Mutex<BloomFilter> = Mutex::new(BloomFilter::with_capacity(10000, 0.01));
+    
+    /// Cached symbol graph for repo-wide analysis
+    static ref SYMBOL_GRAPH: Mutex<Option<crate::computations::SymbolGraph>> = Mutex::new(None);
 }
 
 /// MCP Tool definitions for Ground
@@ -127,7 +138,7 @@ pub fn list_tools() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "ground_find_duplicate_functions".to_string(),
-            description: "Find duplicate functions across files. Catches cases where overall file similarity is low but specific functions are copied. Supports cross-package detection in monorepos. Loads .ground.yml for ignore patterns.".to_string(),
+            description: "Find duplicate functions across files AND within files. Catches inter-file duplicates (same name, different files) and intra-file duplicates (different names, similar implementation in same file). Research shows same-file clones have ~18% higher bug propagation risk. Supports cross-package detection in monorepos. Loads .ground.yml for ignore patterns.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -159,6 +170,14 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     "config": {
                         "type": "string",
                         "description": "Path to .ground.yml config file. If not provided, looks in directory/.ground.yml"
+                    },
+                    "detect_intra_file": {
+                        "type": "boolean",
+                        "description": "Detect similar functions with different names WITHIN the same file. Catches duplicative logic that traditional same-name detection misses. Default: false"
+                    },
+                    "intra_file_threshold": {
+                        "type": "number",
+                        "description": "Similarity threshold for intra-file detection (0.0-1.0, default: 0.85). Higher than cross-file to reduce false positives since we're comparing different-named functions."
                     }
                 },
                 "required": []
@@ -268,10 +287,47 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     },
                     "search_scope": {
                         "type": "string",
-                        "description": "Directory to search for imports (default: current directory)"
+                        "description": "Directory to search for imports (default: current directory). Use narrow scope for speed."
+                    },
+                    "force": {
+                        "type": "boolean",
+                        "description": "Allow scanning large directories (500+ files). Default: false. For repo-wide analysis, use ground_build_graph instead."
                     }
                 },
                 "required": ["module_path"]
+            }),
+        },
+        // Graph-based analysis (fast for repo-wide scans)
+        ToolDefinition {
+            name: "ground_build_graph".to_string(),
+            description: "Build a symbol graph of all imports/exports in a directory. Use this first for repo-wide dead export analysis - much faster than find_dead_exports with broad scope.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Root directory to build the graph from"
+                    }
+                },
+                "required": ["directory"]
+            }),
+        },
+        ToolDefinition {
+            name: "ground_query_dead".to_string(),
+            description: "Query the symbol graph for dead exports. Run ground_build_graph first. Automatically filters out framework conventions (SvelteKit load/GET/POST, hooks, etc.) unless raw=true.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "Optional: specific file to check. If omitted, checks all files in the graph."
+                    },
+                    "raw": {
+                        "type": "boolean",
+                        "description": "If true, return ALL dead exports including framework conventions. Default: false (filtered)."
+                    }
+                },
+                "required": []
             }),
         },
         // AI-Native Tools
@@ -503,6 +559,9 @@ pub fn handle_tool_call(
         "ground_adoption_ratio" => handle_adoption_ratio(args),
         "ground_suggest_pattern" => handle_suggest_pattern(args),
         "ground_mine_patterns" => handle_mine_patterns(args),
+        // Graph-based analysis
+        "ground_build_graph" => handle_build_graph(args),
+        "ground_query_dead" => handle_query_dead(args),
         _ => ToolResult::error(format!("Unknown tool: {}", tool_name)),
     }
 }
@@ -575,6 +634,8 @@ fn handle_count_uses(g: &mut VerifiedTriad, args: &Value) -> ToolResult {
         let cache = SYMBOL_CACHE.lock().unwrap();
         cache.contains_str(symbol)
     };
+    
+    mcp_log!("Counting uses of '{}' in {}", symbol, search_path.display());
     
     match g.count_usages(symbol, &search_path) {
         Ok(evidence) => {
@@ -774,10 +835,20 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         ));
     }
     
+    // Parse intra-file detection options
+    let detect_intra_file = args.get("detect_intra_file")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    
+    let intra_file_threshold = args.get("intra_file_threshold")
+        .and_then(|v| v.as_f64());
+    
     // Build options
     let options = FunctionDryOptions {
         exclude_tests,
         min_function_lines: min_lines,
+        detect_intra_file,
+        intra_file_threshold,
         ..Default::default()
     };
     
@@ -825,6 +896,8 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         }));
     }
     
+    mcp_log!("Analyzing {} files for duplicate functions (threshold={:.0}%)", files.len(), threshold * 100.0);
+    
     match analyze_function_dry_with_options(&files, threshold, &options) {
         Ok(report) => {
             // Categorize duplicates: same-package vs cross-package
@@ -871,16 +944,61 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 }
             }
             
-            let message = if cross_package_dups.is_empty() && same_package_dups.is_empty() {
+            // Process intra-file duplicates (same file, different names)
+            let mut intra_file_dups: Vec<Value> = Vec::new();
+            for d in &report.intra_file_duplicates {
+                // Skip ignored functions from config
+                if config.should_ignore_function(&d.function_a_name) || 
+                   config.should_ignore_function(&d.function_b_name) {
+                    ignored_count += 1;
+                    continue;
+                }
+                
+                let pkg = file_to_package.get(&d.file)
+                    .map(|s| s.as_str())
+                    .unwrap_or("unknown");
+                
+                intra_file_dups.push(json!({
+                    "function_a": d.function_a_name,
+                    "function_b": d.function_b_name,
+                    "similarity": format!("{:.1}%", d.similarity * 100.0),
+                    "file": d.file.to_string_lossy(),
+                    "package": pkg,
+                    "lines_a": format!("{}-{}", d.function_a.start_line, d.function_a.end_line),
+                    "lines_b": format!("{}-{}", d.function_b.start_line, d.function_b.end_line),
+                    "suggested_extraction": d.suggested_extraction
+                }));
+            }
+            
+            // Build message
+            let inter_file_count = same_package_dups.len() + cross_package_dups.len();
+            let intra_file_count = intra_file_dups.len();
+            let total_dup_count = inter_file_count + intra_file_count;
+            
+            let message = if total_dup_count == 0 {
                 "No duplicate functions found.".to_string()
-            } else if is_cross_package_scan && !cross_package_dups.is_empty() {
-                format!(
-                    "Found {} cross-package duplicate(s) and {} same-package duplicate(s). Cross-package duplicates are prime candidates for a shared package.",
-                    cross_package_dups.len(),
-                    same_package_dups.len()
-                )
             } else {
-                format!("Found {} duplicate functions. Consider extracting to a shared module.", report.duplicates.len())
+                let mut parts = Vec::new();
+                
+                if is_cross_package_scan && !cross_package_dups.is_empty() {
+                    parts.push(format!(
+                        "{} cross-package duplicate(s) (prime candidates for shared package)",
+                        cross_package_dups.len()
+                    ));
+                }
+                
+                if !same_package_dups.is_empty() {
+                    parts.push(format!("{} same-package duplicate(s)", same_package_dups.len()));
+                }
+                
+                if !intra_file_dups.is_empty() {
+                    parts.push(format!(
+                        "{} intra-file duplicate(s) (same file, different names - higher bug risk)",
+                        intra_file_dups.len()
+                    ));
+                }
+                
+                format!("Found {}. Consider consolidating.", parts.join(", "))
             };
             
             let mut response = json!({
@@ -889,11 +1007,13 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 "packages_scanned": directories.len(),
                 "files_checked": report.files.len(),
                 "functions_found": report.total_functions,
-                "duplicate_count": same_package_dups.len() + cross_package_dups.len(),
+                "duplicate_count": inter_file_count,
                 "cross_package_count": cross_package_dups.len(),
                 "same_package_count": same_package_dups.len(),
+                "intra_file_count": intra_file_count,
                 "duplicates": same_package_dups,
                 "cross_package_duplicates": cross_package_dups,
+                "intra_file_duplicates": intra_file_dups,
                 "message": message
             });
             
@@ -1425,6 +1545,45 @@ fn handle_find_dead_exports(args: &Value) -> ToolResult {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
     
+    // Allow bypassing safety check with force=true
+    let force = args.get("force")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    
+    // Safety check: prevent scanning overly broad directories (unless forced)
+    let scope_str = search_scope.to_string_lossy();
+    if !force && (scope_str == "." || scope_str.ends_with("/") && !scope_str.contains("/src")) {
+        // Count files to warn about large scopes
+        let file_count = count_scannable_files(&search_scope, 500);
+        if file_count >= 500 {
+            mcp_log!("Rejected: search_scope '{}' has {}+ files (too broad, use force=true to override)", scope_str, file_count);
+            
+            // Try to suggest a better scope based on module_path
+            let suggested = suggest_search_scope(&module_path);
+            return ToolResult::error(format!(
+                "search_scope '{}' is too broad (500+ files). This would take too long.\n\n\
+                 Options:\n\
+                 1. Use a narrower scope: \"{}\"\n\
+                 2. Pass force=true to scan anyway (may take minutes)\n\
+                 3. Use ground_analyze for repo-wide disconnection analysis\n\n\
+                 For finding ALL dead code across a repo, use:\n\
+                 - ground_analyze with checks=[\"dead_exports\", \"orphans\"] on each package\n\
+                 - ground_diff to find NEW issues since last commit",
+                scope_str,
+                suggested.unwrap_or_else(|| "packages/your-package/src".to_string())
+            ));
+        }
+    }
+    
+    // Count files for progress estimation
+    let file_count = count_scannable_files(&search_scope, 5000);
+    if file_count > 100 {
+        mcp_log!("Scanning {} ({} files) for dead exports - this may take a while...", 
+                 search_scope.display(), file_count);
+    } else {
+        mcp_log!("Scanning {} for dead exports", search_scope.display());
+    }
+    
     match find_dead_exports(&module_path, &search_scope) {
         Ok(report) => {
             let dead_exports: Vec<_> = report.dead_exports.iter().map(|d| {
@@ -1464,6 +1623,78 @@ fn handle_find_dead_exports(args: &Value) -> ToolResult {
         }
         Err(e) => ToolResult::error(format!("Failed to find dead exports: {}", e)),
     }
+}
+
+/// Count scannable files in a directory, stopping early at max_count
+fn count_scannable_files(dir: &PathBuf, max_count: usize) -> usize {
+    let mut count = 0;
+    count_files_recursive(dir, &mut count, max_count);
+    count
+}
+
+fn count_files_recursive(dir: &PathBuf, count: &mut usize, max_count: usize) {
+    if *count >= max_count {
+        return;
+    }
+    
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+    
+    for entry in entries.filter_map(|e| e.ok()) {
+        if *count >= max_count {
+            return;
+        }
+        
+        let path = entry.path();
+        
+        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if name.starts_with('.') || 
+               matches!(name, "node_modules" | "target" | "dist" | "build" | ".svelte-kit") {
+                continue;
+            }
+        }
+        
+        if path.is_dir() {
+            count_files_recursive(&path, count, max_count);
+        } else if path.is_file() {
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
+                *count += 1;
+            }
+        }
+    }
+}
+
+/// Suggest a better search scope based on the module path
+fn suggest_search_scope(module_path: &PathBuf) -> Option<String> {
+    let path_str = module_path.to_string_lossy();
+    
+    // Look for common package patterns
+    if let Some(idx) = path_str.find("/packages/") {
+        // Extract up to packages/name/src
+        let rest = &path_str[idx + 10..]; // skip "/packages/"
+        if let Some(slash) = rest.find('/') {
+            let pkg_name = &rest[..slash];
+            return Some(format!("packages/{}/src", pkg_name));
+        }
+    }
+    
+    if let Some(idx) = path_str.find("/apps/") {
+        let rest = &path_str[idx + 6..]; // skip "/apps/"
+        if let Some(slash) = rest.find('/') {
+            let app_name = &rest[..slash];
+            return Some(format!("apps/{}/src", app_name));
+        }
+    }
+    
+    // Fall back to src directory of the module
+    if let Some(idx) = path_str.find("/src/") {
+        return Some(path_str[..idx + 4].to_string()); // include "/src"
+    }
+    
+    None
 }
 
 fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
@@ -1856,6 +2087,8 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         .and_then(|v| v.as_array())
         .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect())
         .unwrap_or_else(|| vec!["duplicates", "dead_exports", "orphans"]);
+    
+    mcp_log!("Batch analyze: {} checks={:?}", directory.display(), checks);
     
     let cross_package = args.get("cross_package")
         .and_then(|v| v.as_bool())
@@ -2860,6 +3093,278 @@ fn handle_mine_patterns(args: &Value) -> ToolResult {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Graph-based Analysis Handlers
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn handle_build_graph(args: &Value) -> ToolResult {
+    use crate::computations::SymbolGraph;
+    
+    let directory = match args.get("directory").and_then(|v| v.as_str()) {
+        Some(d) => PathBuf::from(d),
+        None => return ToolResult::error("Missing required parameter: directory"),
+    };
+    
+    if !directory.exists() {
+        return ToolResult::error(format!("Directory not found: {}", directory.display()));
+    }
+    
+    mcp_log!("Building symbol graph for {}", directory.display());
+    
+    // Build with progress logging
+    let start = std::time::Instant::now();
+    let last_logged = std::cell::Cell::new(0usize);
+    
+    let graph = match SymbolGraph::build(&directory, Some(&|current, total| {
+        // Log progress every 100 files
+        let last = last_logged.get();
+        if current - last >= 100 || current == total {
+            mcp_log!("Graph build progress: {}/{} files", current, total);
+            last_logged.set(current);
+        }
+    })) {
+        Ok(g) => g,
+        Err(e) => return ToolResult::error(format!("Failed to build graph: {}", e)),
+    };
+    
+    let elapsed = start.elapsed();
+    let stats = graph.stats();
+    
+    // Clone aliases before moving graph
+    let aliases: Vec<_> = graph.path_aliases.clone();
+    let alias_count = aliases.len();
+    
+    let alias_info = if aliases.is_empty() {
+        "none detected".to_string()
+    } else {
+        aliases.iter().map(|a| format!("{} → {}", a.pattern, a.target)).collect::<Vec<_>>().join(", ")
+    };
+    
+    mcp_log!("Graph built in {:.2}s: {} files, {} exports, {} imports, aliases: {}", 
+             elapsed.as_secs_f64(), stats.files, stats.exports, stats.imports, alias_info);
+    
+    // Build alias list for output
+    let alias_list: Vec<serde_json::Value> = aliases.iter().map(|a| json!({
+        "pattern": a.pattern,
+        "target": a.target
+    })).collect();
+    
+    // Store the graph for subsequent queries
+    {
+        let mut cached = SYMBOL_GRAPH.lock().unwrap();
+        *cached = Some(graph);
+    }
+    
+    ToolResult::success(json!({
+        "success": true,
+        "directory": directory.to_string_lossy(),
+        "stats": {
+            "files": stats.files,
+            "exports": stats.exports,
+            "imports": stats.imports,
+            "unique_symbols": stats.unique_symbols,
+            "parse_errors": stats.parse_errors
+        },
+        "path_aliases": alias_list,
+        "build_time_ms": elapsed.as_millis(),
+        "message": format!(
+            "Graph built successfully. {} files, {} exports, {} imports{}. Ready for ground_query_dead.",
+            stats.files, stats.exports, stats.imports,
+            if alias_count == 0 { "".to_string() } else { format!(", {} path alias(es)", alias_count) }
+        )
+    }))
+}
+
+/// Find the framework root by walking up from a directory
+/// Looking for svelte.config.js, next.config.js, package.json, etc.
+fn find_framework_root(dir: &Path) -> PathBuf {
+    let config_files = [
+        "svelte.config.js", "svelte.config.ts",
+        "next.config.js", "next.config.mjs", "next.config.ts",
+        "vite.config.js", "vite.config.ts",
+        "remix.config.js",
+        "wrangler.toml", "wrangler.json",
+    ];
+    
+    let mut current = dir.to_path_buf();
+    
+    // Walk up to 5 levels to find framework config
+    for _ in 0..5 {
+        for config in &config_files {
+            if current.join(config).exists() {
+                return current;
+            }
+        }
+        
+        // Also check for package.json with framework deps
+        let pkg_json = current.join("package.json");
+        if pkg_json.exists() {
+            if let Ok(content) = std::fs::read_to_string(&pkg_json) {
+                if content.contains("\"@sveltejs/kit\"") ||
+                   content.contains("\"next\"") ||
+                   content.contains("\"@remix-run/") {
+                    return current;
+                }
+            }
+        }
+        
+        match current.parent() {
+            Some(parent) => current = parent.to_path_buf(),
+            None => break,
+        }
+    }
+    
+    // Fall back to original dir
+    dir.to_path_buf()
+}
+
+fn handle_query_dead(args: &Value) -> ToolResult {
+    use crate::computations::framework::{detect_framework, is_implicit_entry};
+    
+    let file = args.get("file")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from);
+    
+    let raw = args.get("raw")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    
+    // Get the cached graph
+    let graph = {
+        let cached = SYMBOL_GRAPH.lock().unwrap();
+        match cached.as_ref() {
+            Some(g) => g.clone(),
+            None => return ToolResult::error(
+                "No graph built. Run ground_build_graph first to build the symbol graph."
+            ),
+        }
+    };
+    
+    // Detect framework for smart filtering
+    // Try the root_dir first, then walk up to find framework config files
+    let detection_dir = find_framework_root(&graph.root_dir);
+    let framework_detection = detect_framework(&detection_dir);
+    let patterns = &framework_detection.patterns;
+    
+    mcp_log!("Querying graph for dead exports (framework={}, raw={})", 
+             framework_detection.primary.as_str(), raw);
+    
+    // Framework convention exports to filter (unless raw=true)
+    let framework_exports: std::collections::HashSet<&str> = if raw {
+        std::collections::HashSet::new()
+    } else {
+        // SvelteKit conventions
+        let mut set: std::collections::HashSet<&str> = [
+            "load", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD",
+            "handle", "handleError", "handleFetch", 
+            "prerender", "trailingSlash", "csr", "ssr", "entries",
+            "actions", "fallback",
+        ].iter().cloned().collect();
+        
+        // Next.js conventions
+        set.extend(["getServerSideProps", "getStaticProps", "getStaticPaths", 
+                    "generateMetadata", "generateStaticParams"].iter().cloned());
+        
+        set
+    };
+    
+    // Check if a dead export is a framework convention
+    let is_framework_convention = |dead: &crate::computations::GraphDeadExport| -> bool {
+        // Check if export name is a framework convention
+        if framework_exports.contains(dead.name.as_str()) {
+            // And it's in an implicit entry file
+            if is_implicit_entry(&dead.file, patterns) {
+                return true;
+            }
+        }
+        false
+    };
+    
+    if let Some(ref file_path) = file {
+        // Query specific file
+        let all_dead = graph.find_dead_exports_in_file(file_path);
+        
+        let (framework_dead, true_dead): (Vec<_>, Vec<_>) = all_dead.iter()
+            .partition(|d| is_framework_convention(d));
+        
+        let dead_json: Vec<_> = true_dead.iter().map(|d| json!({
+            "name": d.name,
+            "file": d.file.to_string_lossy(),
+            "line": d.line,
+            "context": d.context
+        })).collect();
+        
+        let mut result = json!({
+            "file": file_path.to_string_lossy(),
+            "dead_export_count": true_dead.len(),
+            "dead_exports": dead_json,
+            "framework": framework_detection.primary.as_str(),
+            "message": if true_dead.is_empty() {
+                format!("All exports in {} are used.", file_path.display())
+            } else {
+                format!("Found {} dead export(s) in {}.", true_dead.len(), file_path.display())
+            }
+        });
+        
+        if !framework_dead.is_empty() && !raw {
+            result["filtered_framework_exports"] = json!(framework_dead.len());
+            result["note"] = json!("Framework convention exports (load, GET, etc.) were filtered. Use raw=true to see all.");
+        }
+        
+        ToolResult::success(result)
+    } else {
+        // Query all files
+        let report = graph.find_dead_exports();
+        
+        // Partition into true dead vs framework conventions
+        let (framework_dead, true_dead): (Vec<_>, Vec<_>) = report.dead_exports.iter()
+            .partition(|d| is_framework_convention(d));
+        
+        // Group true dead by file
+        let mut by_file: HashMap<String, Vec<&crate::computations::GraphDeadExport>> = HashMap::new();
+        for dead in &true_dead {
+            by_file.entry(dead.file.to_string_lossy().to_string())
+                .or_default()
+                .push(dead);
+        }
+        
+        let files_with_dead: Vec<_> = by_file.iter().map(|(file, exports)| json!({
+            "file": file,
+            "dead_exports": exports.iter().map(|e| json!({
+                "name": e.name,
+                "line": e.line
+            })).collect::<Vec<_>>()
+        })).collect();
+        
+        mcp_log!("Query complete: {} true dead, {} framework conventions filtered ({}ms)", 
+                 true_dead.len(), framework_dead.len(), report.query_time_ms);
+        
+        let mut result = json!({
+            "framework": framework_detection.primary.as_str(),
+            "total_exports": report.total_exports,
+            "dead_export_count": true_dead.len(),
+            "files_with_dead_exports": by_file.len(),
+            "files_analyzed": report.files_analyzed,
+            "query_time_ms": report.query_time_ms,
+            "by_file": files_with_dead,
+            "message": if true_dead.is_empty() {
+                format!("No dead exports found across {} files (excluding {} framework conventions).", 
+                    report.files_analyzed, framework_dead.len())
+            } else {
+                format!("Found {} dead export(s) across {} file(s). {} framework convention exports filtered.",
+                    true_dead.len(), by_file.len(), framework_dead.len())
+            }
+        });
+        
+        if !framework_dead.is_empty() && !raw {
+            result["filtered_framework_exports"] = json!(framework_dead.len());
+            result["note"] = json!("Framework exports (load, GET, handle, etc.) were filtered. Use raw=true to see all.");
+        }
+        
+        ToolResult::success(result)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2868,7 +3373,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 17); // Focused AI-native tool set + pattern analysis
+        assert_eq!(tools.len(), 19); // Focused AI-native tool set + pattern analysis + graph tools
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         // Check tools

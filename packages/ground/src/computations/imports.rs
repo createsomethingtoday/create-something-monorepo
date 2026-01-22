@@ -1,11 +1,57 @@
 //! AST-based Import Analysis
 //!
 //! Uses tree-sitter for robust import/export parsing instead of string manipulation.
-//! Handles all edge cases: multi-line imports, re-exports, barrel files, etc.
+//! Handles all edge cases: multi-line imports, re-exports, barrel files, Svelte files, etc.
 
 use std::path::Path;
 use std::fs;
 use tree_sitter::{Parser, Node};
+
+/// Extract script content from a Svelte file.
+/// 
+/// Svelte files contain `<script>` or `<script lang="ts">` tags with TypeScript/JavaScript.
+/// This extracts the content for parsing with tree-sitter.
+/// 
+/// Handles both regular `<script>` and `<script context="module">` tags.
+fn extract_svelte_script(source: &str) -> Option<String> {
+    // Find <script> or <script lang="ts"> tag (not context="module" which is for module-level exports)
+    let mut scripts = Vec::new();
+    let mut search_start = 0;
+    
+    while let Some(tag_start) = source[search_start..].find("<script") {
+        let abs_tag_start = search_start + tag_start;
+        
+        // Find the end of the opening tag
+        let tag_content_start = match source[abs_tag_start..].find('>') {
+            Some(pos) => abs_tag_start + pos + 1,
+            None => {
+                search_start = abs_tag_start + 7; // skip "<script"
+                continue;
+            }
+        };
+        
+        // Find the closing </script> tag
+        let tag_content_end = match source[tag_content_start..].find("</script>") {
+            Some(pos) => tag_content_start + pos,
+            None => {
+                search_start = tag_content_start;
+                continue;
+            }
+        };
+        
+        let script_content = &source[tag_content_start..tag_content_end];
+        scripts.push(script_content.to_string());
+        
+        search_start = tag_content_end + 9; // skip "</script>"
+    }
+    
+    if scripts.is_empty() {
+        return None;
+    }
+    
+    // Combine all script contents (some Svelte files have multiple script tags)
+    Some(scripts.join("\n"))
+}
 
 /// An import statement extracted from source
 #[derive(Debug, Clone)]
@@ -35,54 +81,64 @@ pub struct ExtractedExport {
     pub line: usize,
 }
 
-/// Extract all imports from a TypeScript/JavaScript file using tree-sitter
+/// Extract all imports from a TypeScript/JavaScript/Svelte file using tree-sitter
 pub fn extract_imports(path: &Path) -> Result<Vec<ExtractedImport>, String> {
     let source = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
     
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     
-    let mut parser = Parser::new();
-    let language = if ext == "ts" || ext == "tsx" {
-        tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()
+    // Handle Svelte files by extracting script content
+    let (parse_source, language) = if ext == "svelte" {
+        let script = extract_svelte_script(&source)
+            .ok_or_else(|| "No script tag found in Svelte file".to_string())?;
+        (script, tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
+    } else if ext == "ts" || ext == "tsx" {
+        (source.clone(), tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
     } else {
-        tree_sitter_javascript::LANGUAGE.into()
+        (source.clone(), tree_sitter_javascript::LANGUAGE.into())
     };
     
+    let mut parser = Parser::new();
     parser.set_language(&language)
         .map_err(|e| format!("Failed to set language: {}", e))?;
     
-    let tree = parser.parse(&source, None)
+    let tree = parser.parse(&parse_source, None)
         .ok_or_else(|| "Failed to parse file".to_string())?;
     
     let mut imports = Vec::new();
-    extract_imports_from_node(tree.root_node(), &source, &mut imports);
+    extract_imports_from_node(tree.root_node(), &parse_source, &mut imports);
     
     Ok(imports)
 }
 
-/// Extract all exports from a TypeScript/JavaScript file using tree-sitter
+/// Extract all exports from a TypeScript/JavaScript/Svelte file using tree-sitter
 pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
     let source = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
     
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     
-    let mut parser = Parser::new();
-    let language = if ext == "ts" || ext == "tsx" {
-        tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()
+    // Handle Svelte files by extracting script content
+    let (parse_source, language) = if ext == "svelte" {
+        let script = extract_svelte_script(&source)
+            .ok_or_else(|| "No script tag found in Svelte file".to_string())?;
+        (script, tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
+    } else if ext == "ts" || ext == "tsx" {
+        (source.clone(), tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
     } else {
-        tree_sitter_javascript::LANGUAGE.into()
+        (source.clone(), tree_sitter_javascript::LANGUAGE.into())
     };
     
+    let mut parser = Parser::new();
     parser.set_language(&language)
         .map_err(|e| format!("Failed to set language: {}", e))?;
     
-    let tree = parser.parse(&source, None)
+    let tree = parser.parse(&parse_source, None)
         .ok_or_else(|| "Failed to parse file".to_string())?;
     
     let mut exports = Vec::new();
-    extract_exports_from_node(tree.root_node(), &source, &mut exports);
+    extract_exports_from_node(tree.root_node(), &parse_source, &mut exports);
     
     Ok(exports)
 }
@@ -492,5 +548,74 @@ mod tests {
         assert_eq!(exports.len(), 1);
         assert_eq!(exports[0].name, "validateEmail");
         assert!(!exports[0].is_reexport);
+    }
+    
+    #[test]
+    fn test_extract_svelte_script() {
+        let source = r#"<script lang="ts">
+import { foo, bar } from '$lib/utils';
+
+let count = 0;
+</script>
+
+<div>Hello {count}</div>"#;
+        
+        let script = super::extract_svelte_script(source).unwrap();
+        assert!(script.contains("import { foo, bar }"));
+        assert!(script.contains("let count = 0"));
+        assert!(!script.contains("<div>"));
+    }
+    
+    #[test]
+    fn test_extract_svelte_multiple_scripts() {
+        // Svelte files can have both <script> and <script context="module">
+        let source = r#"<script context="module">
+export const prerender = true;
+</script>
+
+<script lang="ts">
+import { onMount } from 'svelte';
+let ready = false;
+</script>
+
+<div>Content</div>"#;
+        
+        let script = super::extract_svelte_script(source).unwrap();
+        assert!(script.contains("export const prerender"));
+        assert!(script.contains("import { onMount }"));
+    }
+    
+    #[test]
+    fn test_extract_svelte_imports() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Component.svelte");
+        
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, r#"<script lang="ts">"#).unwrap();
+        writeln!(f, "import {{ foo, bar }} from '$lib/utils';").unwrap();
+        writeln!(f, "import {{ validateEmail }} from '../validation';").unwrap();
+        writeln!(f, "let name = '';").unwrap();
+        writeln!(f, "</script>").unwrap();
+        writeln!(f, "").unwrap();
+        writeln!(f, "<div>Hello</div>").unwrap();
+        
+        let imports = extract_imports(&file).unwrap();
+        assert_eq!(imports.len(), 2);
+        assert!(imports[0].symbols.contains(&"foo".to_string()));
+        assert!(imports[0].symbols.contains(&"bar".to_string()));
+        assert!(imports[1].symbols.contains(&"validateEmail".to_string()));
+    }
+    
+    #[test]
+    fn test_extract_svelte_no_script() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Static.svelte");
+        
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, "<div>Just static content</div>").unwrap();
+        
+        // Should return an error for Svelte files without script
+        let result = extract_imports(&file);
+        assert!(result.is_err());
     }
 }

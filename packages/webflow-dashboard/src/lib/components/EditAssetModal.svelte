@@ -343,15 +343,15 @@
 					<!-- Image Fields -->
 					<div class="form-section">
 						<h3 class="section-title">Images</h3>
-						<div class="image-field">
-							<ImageUploader
-								value={thumbnailUrl}
-								onchange={handleThumbnailChange}
-								label="Primary Thumbnail"
-								description="Main thumbnail for your asset"
-								aspectRatio={{ width: 7, height: 9 }}
-							/>
-						</div>
+					<div class="image-field">
+						<ImageUploader
+							value={thumbnailUrl}
+							onchange={handleThumbnailChange}
+							label="Primary Thumbnail"
+							description="150:199 aspect ratio (e.g., 750×995px)"
+							uploadType="thumbnail"
+						/>
+					</div>
 
 						<div class="carousel-field">
 							<CarouselUploader

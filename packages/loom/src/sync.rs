@@ -132,6 +132,7 @@ impl GitSync {
                     labels: task.labels,
                     parent: task.parent,
                     evidence: task.evidence,
+                    repo: task.repo,
                 })?;
                 count += 1;
             }

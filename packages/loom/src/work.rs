@@ -132,6 +132,10 @@ pub struct Task {
     pub evidence: Option<String>,
     /// Actual cost in USD (recorded after completion)
     pub actual_cost_usd: Option<f64>,
+    /// Repository identifier (for multi-repo support)
+    /// When None, task belongs to the primary/local repository
+    #[serde(default)]
+    pub repo: Option<String>,
     /// When the task was created
     pub created_at: DateTime<Utc>,
     /// When the task was last updated
@@ -158,12 +162,16 @@ pub struct CreateTask {
     pub labels: Vec<String>,
     pub parent: Option<String>,
     pub evidence: Option<String>,
+    /// Repository identifier (for multi-repo tracking)
+    pub repo: Option<String>,
 }
 
 /// The work store - SQLite-backed task persistence
 pub struct WorkStore {
     conn: Connection,
     prefix: String,
+    /// Default repository for new tasks
+    default_repo: Option<String>,
 }
 
 impl WorkStore {
@@ -177,6 +185,7 @@ impl WorkStore {
         let store = Self { 
             conn, 
             prefix: "lm".to_string(),
+            default_repo: None,
         };
         store.init_schema()?;
         Ok(store)
@@ -188,6 +197,7 @@ impl WorkStore {
         let store = Self { 
             conn,
             prefix: "lm".to_string(),
+            default_repo: None,
         };
         store.init_schema()?;
         Ok(store)
@@ -199,18 +209,28 @@ impl WorkStore {
         self
     }
     
+    /// Set the default repository for new tasks
+    pub fn with_repo(mut self, repo: impl Into<String>) -> Self {
+        self.default_repo = Some(repo.into());
+        self
+    }
+    
     fn init_schema(&self) -> Result<(), WorkError> {
-        // Create base tables first (without new columns for compatibility)
+        // Create base tables first
+        // Column order MUST match TASK_COLUMNS: id, title, description, status, priority, agent, labels, parent, evidence, actual_cost_usd, repo, created_at, updated_at
         self.conn.execute_batch(r#"
             CREATE TABLE IF NOT EXISTS tasks (
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
                 description TEXT,
                 status TEXT NOT NULL DEFAULT 'ready',
+                priority TEXT NOT NULL DEFAULT 'normal',
                 agent TEXT,
                 labels TEXT NOT NULL DEFAULT '[]',
                 parent TEXT,
                 evidence TEXT,
+                actual_cost_usd REAL,
+                repo TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
@@ -229,6 +249,7 @@ impl WorkStore {
         // These silently fail if columns already exist
         let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'", []);
         let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN actual_cost_usd REAL", []);
+        let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN repo TEXT", []);
         
         // Create indexes (after columns exist)
         self.conn.execute_batch(r#"
@@ -260,9 +281,12 @@ impl WorkStore {
         let id = self.generate_id();
         let labels_json = serde_json::to_string(&params.labels)?;
         
+        // Apply default repo if not specified
+        let repo = params.repo.or_else(|| self.default_repo.clone());
+        
         self.conn.execute(
-            r#"INSERT INTO tasks (id, title, description, status, priority, labels, parent, evidence, created_at, updated_at)
-               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)"#,
+            r#"INSERT INTO tasks (id, title, description, status, priority, labels, parent, evidence, repo, created_at, updated_at)
+               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"#,
             params![
                 id,
                 params.title,
@@ -272,6 +296,7 @@ impl WorkStore {
                 labels_json,
                 params.parent,
                 params.evidence,
+                repo,
                 now.to_rfc3339(),
                 now.to_rfc3339(),
             ],
@@ -288,6 +313,7 @@ impl WorkStore {
             parent: params.parent,
             evidence: params.evidence,
             actual_cost_usd: None,
+            repo,
             created_at: now,
             updated_at: now,
         })
@@ -295,8 +321,12 @@ impl WorkStore {
     
     /// Get a task by ID
     pub fn get(&self, id: &str) -> Result<Option<Task>, WorkError> {
+        let sql = format!(
+            "SELECT {} FROM tasks WHERE id = ?1",
+            Self::TASK_COLUMNS
+        );
         let result = self.conn.query_row(
-            "SELECT id, title, description, status, priority, agent, labels, parent, evidence, actual_cost_usd, created_at, updated_at FROM tasks WHERE id = ?1",
+            &sql,
             params![id],
             |row| Self::row_to_task(row),
         );
@@ -311,8 +341,8 @@ impl WorkStore {
     /// Helper to convert a row to a Task (reduces duplication)
     fn row_to_task(row: &rusqlite::Row) -> rusqlite::Result<Task> {
         let labels_json: String = row.get(6)?;
-        let created_str: String = row.get(10)?;
-        let updated_str: String = row.get(11)?;
+        let created_str: String = row.get(11)?;
+        let updated_str: String = row.get(12)?;
         
         Ok(Task {
             id: row.get(0)?,
@@ -325,6 +355,7 @@ impl WorkStore {
             parent: row.get(7)?,
             evidence: row.get(8)?,
             actual_cost_usd: row.get(9)?,
+            repo: row.get(10)?,
             created_at: DateTime::parse_from_rfc3339(&created_str)
                 .map(|dt| dt.with_timezone(&Utc))
                 .unwrap_or_else(|_| Utc::now()),
@@ -335,7 +366,7 @@ impl WorkStore {
     }
     
     /// Standard SELECT columns for tasks
-    const TASK_COLUMNS: &'static str = "id, title, description, status, priority, agent, labels, parent, evidence, actual_cost_usd, created_at, updated_at";
+    const TASK_COLUMNS: &'static str = "id, title, description, status, priority, agent, labels, parent, evidence, actual_cost_usd, repo, created_at, updated_at";
     
     /// Update a task's status
     pub fn update_status(&mut self, id: &str, status: Status) -> Result<(), WorkError> {
@@ -667,6 +698,33 @@ impl WorkStore {
         let tasks = stmt.query_map(params![parent_id], |row| Self::row_to_task(row))?
             .collect::<Result<Vec<_>, _>>()?;
         Ok(tasks)
+    }
+    
+    /// List tasks by repository
+    pub fn list_by_repo(&self, repo: &str) -> Result<Vec<Task>, WorkError> {
+        let sql = format!(
+            "SELECT {} FROM tasks WHERE repo = ?1 ORDER BY created_at DESC",
+            Self::TASK_COLUMNS
+        );
+        let mut stmt = self.conn.prepare(&sql)?;
+        let tasks = stmt.query_map(params![repo], |row| Self::row_to_task(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(tasks)
+    }
+    
+    /// Set default repo for new tasks created via this store
+    pub fn set_default_repo(&mut self, repo: Option<String>) {
+        self.default_repo = repo;
+    }
+    
+    /// Get unique repos in the store
+    pub fn list_repos(&self) -> Result<Vec<String>, WorkError> {
+        let mut stmt = self.conn.prepare(
+            "SELECT DISTINCT repo FROM tasks WHERE repo IS NOT NULL ORDER BY repo"
+        )?;
+        let repos = stmt.query_map([], |row| row.get(0))?
+            .collect::<Result<Vec<String>, _>>()?;
+        Ok(repos)
     }
     
     /// Get summary statistics

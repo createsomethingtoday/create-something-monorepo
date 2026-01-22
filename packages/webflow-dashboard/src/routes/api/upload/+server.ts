@@ -5,7 +5,6 @@ import {
 	validateWebP,
 	validateFileSize,
 	validateMimeType,
-	validateThumbnailAspectRatio,
 	THUMBNAIL_ASPECT_RATIO
 } from '$lib/utils/upload-validation';
 
@@ -64,15 +63,22 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		}
 
 		// Validate thumbnail aspect ratio if type=thumbnail and dimensions provided
+		// Uses absolute tolerance (0.01) to match old interface behavior exactly
 		if (uploadType === 'thumbnail' && width && height) {
 			const w = parseInt(width.toString(), 10);
 			const h = parseInt(height.toString(), 10);
 
-			if (!isNaN(w) && !isNaN(h) && !validateThumbnailAspectRatio(w, h)) {
-				throw error(
-					400,
-					`Invalid thumbnail aspect ratio. Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height}`
-				);
+			if (!isNaN(w) && !isNaN(h)) {
+				const actualRatio = w / h;
+				const expectedRatio = THUMBNAIL_ASPECT_RATIO.width / THUMBNAIL_ASPECT_RATIO.height;
+				const deviation = Math.abs(actualRatio - expectedRatio);
+				
+				if (deviation > THUMBNAIL_ASPECT_RATIO.tolerance) {
+					throw error(
+						400,
+						`Invalid thumbnail aspect ratio (${w}×${h}). Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height} ratio. Try 750×995px.`
+					);
+				}
 			}
 		}
 

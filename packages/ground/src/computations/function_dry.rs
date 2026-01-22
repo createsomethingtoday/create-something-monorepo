@@ -4,7 +4,7 @@
 //! and compares them for duplication. This catches cases where overall file
 //! similarity is low but specific functions are duplicated across files.
 //!
-//! ## Example
+//! ## Inter-File Detection (Original)
 //!
 //! File A (beads.ts):
 //! ```typescript
@@ -29,6 +29,29 @@
 //! ```
 //!
 //! File-level similarity might be ~30%, but bd() is 100% duplicated.
+//!
+//! ## Intra-File Detection (New)
+//!
+//! Detects similar functions with DIFFERENT names within the same file.
+//! Research shows same-file clones have higher bug propagation risk.
+//!
+//! ```typescript
+//! // file.ts - Ground CAN detect this with detect_intra_file=true
+//! function validateEmail(email: string) {
+//!     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+//!     return regex.test(email);
+//! }
+//!
+//! function checkEmail(email: string) {  // <-- Same logic, different name
+//!     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+//!     return regex.test(email);
+//! }
+//! ```
+//!
+//! This supports AI-native/agentic engineering by enabling agents to:
+//! - Self-heal duplicative patterns introduced during iterative development
+//! - Reduce propagated bugs (same-file clones have ~18% higher bug rate)
+//! - Apply the Subtractive Triad: DRY at implementation level
 
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -70,7 +93,7 @@ pub struct ExtractedFunction {
     pub is_async: bool,
 }
 
-/// Evidence of function-level DRY violation
+/// Evidence of function-level DRY violation (inter-file: same name, different files)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionDryEvidence {
     /// Unique identifier
@@ -98,6 +121,41 @@ pub struct FunctionDryEvidence {
     pub computed_at: DateTime<Utc>,
 }
 
+/// Evidence of intra-file DRY violation (same file, different names, similar implementation)
+/// 
+/// Research shows same-file clones have ~18% higher bug propagation risk than
+/// cross-file clones. This type captures duplication that traditional same-name
+/// detection misses.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntraFileDryEvidence {
+    /// Unique identifier
+    pub id: Uuid,
+    
+    /// File containing both functions
+    pub file: PathBuf,
+    
+    /// Name of the first function
+    pub function_a_name: String,
+    
+    /// Name of the second function
+    pub function_b_name: String,
+    
+    /// Similarity between the functions (0.0 - 1.0)
+    pub similarity: f64,
+    
+    /// Function details for first function
+    pub function_a: ExtractedFunction,
+    
+    /// Function details for second function
+    pub function_b: ExtractedFunction,
+    
+    /// Suggested extraction name (e.g., common prefix or inferred purpose)
+    pub suggested_extraction: Option<String>,
+    
+    /// When this computation was performed
+    pub computed_at: DateTime<Utc>,
+}
+
 /// Result of function-level DRY analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionDryReport {
@@ -107,8 +165,11 @@ pub struct FunctionDryReport {
     /// Files analyzed
     pub files: Vec<PathBuf>,
     
-    /// Duplicate functions found
+    /// Duplicate functions found (inter-file: same name, different files)
     pub duplicates: Vec<FunctionDryEvidence>,
+    
+    /// Intra-file duplicates found (same file, different names, similar implementation)
+    pub intra_file_duplicates: Vec<IntraFileDryEvidence>,
     
     /// Total functions analyzed
     pub total_functions: usize,
@@ -131,7 +192,21 @@ pub struct FunctionDryOptions {
     
     /// Only analyze functions with at least this many lines
     pub min_function_lines: Option<usize>,
+    
+    /// Enable intra-file duplicate detection (same file, different names)
+    /// This catches functions with similar implementations but different names
+    /// within the same file. Research shows same-file clones have higher
+    /// bug propagation risk (~18% of clone fragments contain propagated bugs).
+    pub detect_intra_file: bool,
+    
+    /// Similarity threshold for intra-file detection (0.0-1.0)
+    /// Defaults to 0.85 if not specified (higher than inter-file to reduce false positives)
+    /// Since we're comparing different-named functions, we need higher confidence
+    pub intra_file_threshold: Option<f64>,
 }
+
+/// Default threshold for intra-file detection (higher than inter-file)
+pub const DEFAULT_INTRA_FILE_THRESHOLD: f64 = 0.85;
 
 impl FunctionDryOptions {
     /// Create options with test file exclusion enabled
@@ -140,6 +215,30 @@ impl FunctionDryOptions {
             exclude_tests: true,
             ..Default::default()
         }
+    }
+    
+    /// Create options with intra-file detection enabled
+    pub fn with_intra_file() -> Self {
+        Self {
+            detect_intra_file: true,
+            intra_file_threshold: Some(DEFAULT_INTRA_FILE_THRESHOLD),
+            ..Default::default()
+        }
+    }
+    
+    /// Create options with both test exclusion and intra-file detection
+    pub fn exclude_tests_with_intra_file() -> Self {
+        Self {
+            exclude_tests: true,
+            detect_intra_file: true,
+            intra_file_threshold: Some(DEFAULT_INTRA_FILE_THRESHOLD),
+            ..Default::default()
+        }
+    }
+    
+    /// Get the effective intra-file threshold
+    pub fn effective_intra_file_threshold(&self) -> f64 {
+        self.intra_file_threshold.unwrap_or(DEFAULT_INTRA_FILE_THRESHOLD)
     }
     
     /// Check if a path should be excluded
@@ -414,6 +513,76 @@ fn normalize_function_body(source: &str) -> String {
         .join(" ")
 }
 
+/// Suggest an extraction name for intra-file duplicates
+/// 
+/// Attempts to find a common pattern or meaningful name for the shared logic
+fn suggest_extraction_name(name_a: &str, name_b: &str) -> Option<String> {
+    // Find longest common prefix
+    let prefix: String = name_a.chars()
+        .zip(name_b.chars())
+        .take_while(|(a, b)| a == b)
+        .map(|(a, _)| a)
+        .collect();
+    
+    if prefix.len() >= 3 {
+        // Clean up the prefix (remove trailing underscores, etc.)
+        let clean_prefix = prefix.trim_end_matches(|c: char| c == '_' || c.is_numeric());
+        if clean_prefix.len() >= 3 {
+            return Some(format!("{}Core", clean_prefix));
+        }
+    }
+    
+    // Find longest common suffix
+    let suffix: String = name_a.chars().rev()
+        .zip(name_b.chars().rev())
+        .take_while(|(a, b)| a == b)
+        .map(|(a, _)| a)
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect();
+    
+    if suffix.len() >= 3 {
+        let clean_suffix = suffix.trim_start_matches(|c: char| c == '_' || c.is_numeric());
+        if clean_suffix.len() >= 3 {
+            return Some(format!("do{}", capitalize_first(clean_suffix)));
+        }
+    }
+    
+    // Fallback: suggest based on common patterns
+    let patterns = [
+        ("validate", "check", "validateOrCheck"),
+        ("get", "fetch", "retrieve"),
+        ("update", "set", "modify"),
+        ("create", "make", "build"),
+        ("process", "handle", "handleOrProcess"),
+        ("format", "transform", "convert"),
+        ("parse", "extract", "parseOrExtract"),
+    ];
+    
+    let name_a_lower = name_a.to_lowercase();
+    let name_b_lower = name_b.to_lowercase();
+    
+    for (p1, p2, suggestion) in patterns {
+        if (name_a_lower.contains(p1) && name_b_lower.contains(p2)) ||
+           (name_a_lower.contains(p2) && name_b_lower.contains(p1)) {
+            return Some(suggestion.to_string());
+        }
+    }
+    
+    // Generic fallback
+    Some("sharedLogic".to_string())
+}
+
+/// Capitalize the first character of a string
+fn capitalize_first(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(first) => first.to_uppercase().chain(chars).collect(),
+    }
+}
+
 /// Compare two functions for similarity
 pub fn compare_functions(a: &ExtractedFunction, b: &ExtractedFunction) -> f64 {
     // Use levenshtein-style similarity on normalized bodies
@@ -500,6 +669,10 @@ pub fn analyze_function_dry_with_options(
     
     let total_functions = all_functions.len();
     let mut duplicates = Vec::new();
+    let mut intra_file_duplicates = Vec::new();
+    
+    // Get the effective intra-file threshold
+    let intra_threshold = options.effective_intra_file_threshold();
     
     // Compare all pairs
     for i in 0..all_functions.len() {
@@ -507,8 +680,11 @@ pub fn analyze_function_dry_with_options(
             let (path_a, func_a) = &all_functions[i];
             let (path_b, func_b) = &all_functions[j];
             
-            // Only compare same-named functions across different files
-            if path_a != path_b && func_a.name == func_b.name {
+            let same_file = path_a == path_b;
+            let same_name = func_a.name == func_b.name;
+            
+            // Inter-file detection: same name, different files (original behavior)
+            if !same_file && same_name {
                 let similarity = compare_functions(func_a, func_b);
                 
                 if similarity >= threshold {
@@ -524,6 +700,26 @@ pub fn analyze_function_dry_with_options(
                     });
                 }
             }
+            
+            // Intra-file detection: same file, different names, similar implementation
+            // This catches duplicative logic that traditional same-name detection misses
+            if options.detect_intra_file && same_file && !same_name {
+                let similarity = compare_functions(func_a, func_b);
+                
+                if similarity >= intra_threshold {
+                    intra_file_duplicates.push(IntraFileDryEvidence {
+                        id: Uuid::new_v4(),
+                        file: path_a.clone(),
+                        function_a_name: func_a.name.clone(),
+                        function_b_name: func_b.name.clone(),
+                        similarity,
+                        function_a: func_a.clone(),
+                        function_b: func_b.clone(),
+                        suggested_extraction: suggest_extraction_name(&func_a.name, &func_b.name),
+                        computed_at: Utc::now(),
+                    });
+                }
+            }
         }
     }
     
@@ -531,6 +727,7 @@ pub fn analyze_function_dry_with_options(
         id: Uuid::new_v4(),
         files: analyzed_files,
         duplicates,
+        intra_file_duplicates,
         total_functions,
         skipped_files,
         computed_at: Utc::now(),
@@ -663,5 +860,234 @@ function validate(data: object): boolean {
         if let Some(dup) = validate_dup {
             assert!(dup.similarity < 0.9, "Different functions should not be flagged");
         }
+    }
+    
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Intra-File Duplicate Detection Tests
+    // ─────────────────────────────────────────────────────────────────────────────
+    
+    #[test]
+    fn test_intra_file_detects_similar_functions_different_names() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("duplicates.ts");
+        
+        // Two functions with different names but nearly identical implementation
+        File::create(&file_path).unwrap()
+            .write_all(br#"
+function validateEmail(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+
+function checkEmail(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+"#).unwrap();
+        
+        let options = FunctionDryOptions::with_intra_file();
+        let report = analyze_function_dry_with_options(
+            &[file_path.clone()],
+            0.8,
+            &options,
+        ).unwrap();
+        
+        // Should detect intra-file duplicate
+        assert!(!report.intra_file_duplicates.is_empty(), 
+            "Should detect intra-file duplicates with different names");
+        
+        let dup = &report.intra_file_duplicates[0];
+        assert_eq!(dup.file, file_path);
+        assert!(
+            (dup.function_a_name == "validateEmail" && dup.function_b_name == "checkEmail") ||
+            (dup.function_a_name == "checkEmail" && dup.function_b_name == "validateEmail")
+        );
+        assert!(dup.similarity >= 0.85, "Similarity should be high for near-identical functions");
+        assert!(dup.suggested_extraction.is_some(), "Should have a suggested extraction name");
+    }
+    
+    #[test]
+    fn test_intra_file_disabled_by_default() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("duplicates.ts");
+        
+        File::create(&file_path).unwrap()
+            .write_all(br#"
+function validateEmail(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+
+function checkEmail(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+"#).unwrap();
+        
+        // Use default options (intra-file detection disabled)
+        let report = analyze_function_dry(
+            &[file_path],
+            0.8,
+        ).unwrap();
+        
+        // Should NOT detect intra-file duplicates by default
+        assert!(report.intra_file_duplicates.is_empty(), 
+            "Intra-file detection should be disabled by default");
+    }
+    
+    #[test]
+    fn test_intra_file_respects_threshold() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("partial.ts");
+        
+        // Two functions that are somewhat similar but not identical
+        File::create(&file_path).unwrap()
+            .write_all(br#"
+function validateEmail(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) return false;
+    return regex.test(email);
+}
+
+function checkPhone(phone: string): boolean {
+    const regex = /^\d{10}$/;
+    if (!phone) return false;
+    return regex.test(phone);
+}
+"#).unwrap();
+        
+        // High threshold should not match these
+        let options = FunctionDryOptions {
+            detect_intra_file: true,
+            intra_file_threshold: Some(0.95),
+            ..Default::default()
+        };
+        let report = analyze_function_dry_with_options(
+            &[file_path.clone()],
+            0.8,
+            &options,
+        ).unwrap();
+        
+        assert!(report.intra_file_duplicates.is_empty(), 
+            "High threshold should not match partially similar functions");
+        
+        // Lower threshold might match them
+        let options_low = FunctionDryOptions {
+            detect_intra_file: true,
+            intra_file_threshold: Some(0.5),
+            ..Default::default()
+        };
+        let report_low = analyze_function_dry_with_options(
+            &[file_path],
+            0.8,
+            &options_low,
+        ).unwrap();
+        
+        // May or may not match depending on exact similarity calculation
+        // This test mainly verifies threshold is respected
+        assert!(report.intra_file_duplicates.len() <= report_low.intra_file_duplicates.len(),
+            "Lower threshold should match at least as many as higher threshold");
+    }
+    
+    #[test]
+    fn test_intra_file_does_not_flag_different_implementations() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("different.ts");
+        
+        // Two functions with different names AND different implementations
+        File::create(&file_path).unwrap()
+            .write_all(br#"
+function processUser(user: User): void {
+    const name = user.name.trim();
+    const email = user.email.toLowerCase();
+    saveToDatabase({ name, email });
+}
+
+function formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+}
+"#).unwrap();
+        
+        let options = FunctionDryOptions::with_intra_file();
+        let report = analyze_function_dry_with_options(
+            &[file_path],
+            0.8,
+            &options,
+        ).unwrap();
+        
+        // Should NOT flag these as duplicates
+        assert!(report.intra_file_duplicates.is_empty(), 
+            "Different implementations should not be flagged as intra-file duplicates");
+    }
+    
+    #[test]
+    fn test_suggest_extraction_name() {
+        // Test common prefix extraction
+        assert_eq!(
+            suggest_extraction_name("validateEmail", "validatePhone"),
+            Some("validateCore".to_string())
+        );
+        
+        // Test common prefix (get prefix found first)
+        assert_eq!(
+            suggest_extraction_name("getUserData", "getProductData"),
+            Some("getCore".to_string())
+        );
+        
+        // Test common suffix extraction (when no common prefix)
+        assert_eq!(
+            suggest_extraction_name("fetchUserData", "loadUserData"),
+            Some("doUserData".to_string())
+        );
+        
+        // Test pattern matching
+        assert!(suggest_extraction_name("validateInput", "checkInput").is_some());
+        
+        // Test fallback
+        assert!(suggest_extraction_name("foo", "bar").is_some());
+    }
+    
+    #[test]
+    fn test_inter_and_intra_file_together() {
+        let dir = tempdir().unwrap();
+        
+        // File A with duplicate function
+        let file_a = dir.path().join("a.ts");
+        File::create(&file_a).unwrap()
+            .write_all(br#"
+function bd(path: string) {
+    return exec(`bd ${path}`);
+}
+
+function runBd(path: string) {
+    return exec(`bd ${path}`);
+}
+"#).unwrap();
+        
+        // File B with same bd() function
+        let file_b = dir.path().join("b.ts");
+        File::create(&file_b).unwrap()
+            .write_all(br#"
+function bd(path: string) {
+    return exec(`bd ${path}`);
+}
+"#).unwrap();
+        
+        let options = FunctionDryOptions::with_intra_file();
+        let report = analyze_function_dry_with_options(
+            &[file_a.clone(), file_b.clone()],
+            0.8,
+            &options,
+        ).unwrap();
+        
+        // Should detect inter-file duplicate (bd in both files)
+        let inter_dup = report.duplicates.iter()
+            .find(|d| d.function_name == "bd");
+        assert!(inter_dup.is_some(), "Should detect inter-file duplicate for bd()");
+        
+        // Should detect intra-file duplicate (bd and runBd in file_a)
+        let intra_dup = report.intra_file_duplicates.iter()
+            .find(|d| d.file == file_a);
+        assert!(intra_dup.is_some(), "Should detect intra-file duplicate in file_a");
     }
 }

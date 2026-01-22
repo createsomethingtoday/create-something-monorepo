@@ -746,15 +746,90 @@ pub fn is_implicit_entry(path: &Path, patterns: &FrameworkPatterns) -> bool {
 }
 
 /// Simple glob matching (supports * and **)
+/// Uses string matching instead of regex for better compatibility
 fn glob_match(pattern: &str, path: &str) -> bool {
-    let pattern = pattern.replace("**", ".*").replace('*', "[^/]*");
-    if let Ok(re) = regex_lite::Regex::new(&format!("^{}$", pattern)) {
-        re.is_match(path)
-    } else {
-        // Fallback to simple contains check
-        let pattern_parts: Vec<&str> = pattern.split(".*").collect();
-        pattern_parts.iter().all(|part| path.contains(part))
+    // Handle ** (match any path)
+    if pattern.starts_with("**/") {
+        let suffix = &pattern[3..]; // skip "**/""
+        // Check if path ends with the suffix
+        if path.ends_with(suffix) {
+            return true;
+        }
+        // Also check if suffix contains more patterns
+        return glob_match(suffix, path);
     }
+    
+    if pattern.contains("**") {
+        // Split on ** and check if all parts are contained in order
+        let parts: Vec<&str> = pattern.split("**").collect();
+        let mut remaining = path;
+        
+        for (i, part) in parts.iter().enumerate() {
+            let part = part.trim_matches('/');
+            if part.is_empty() {
+                continue;
+            }
+            
+            if i == 0 {
+                // First part must be at the start
+                if !remaining.starts_with(part) {
+                    return false;
+                }
+                remaining = &remaining[part.len()..];
+            } else if i == parts.len() - 1 {
+                // Last part must be at the end
+                if !remaining.ends_with(part) {
+                    return false;
+                }
+            } else {
+                // Middle parts just need to exist somewhere
+                if let Some(pos) = remaining.find(part) {
+                    remaining = &remaining[pos + part.len()..];
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    // Handle single * (match within segment)
+    if pattern.contains('*') {
+        let parts: Vec<&str> = pattern.split('*').collect();
+        let mut remaining = path;
+        
+        for (i, part) in parts.iter().enumerate() {
+            if part.is_empty() {
+                continue;
+            }
+            
+            if i == 0 {
+                if !remaining.starts_with(part) {
+                    return false;
+                }
+                remaining = &remaining[part.len()..];
+            } else if i == parts.len() - 1 {
+                if !remaining.ends_with(part) {
+                    return false;
+                }
+            } else {
+                if let Some(pos) = remaining.find(part) {
+                    // Make sure we don't cross directory boundaries for single *
+                    let between = &remaining[..pos];
+                    if between.contains('/') {
+                        return false;
+                    }
+                    remaining = &remaining[pos + part.len()..];
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    // Exact match
+    path == pattern || path.ends_with(&format!("/{}", pattern))
 }
 
 /// Get all files that should be considered entry points for a framework
@@ -904,5 +979,27 @@ mod tests {
         assert!(is_implicit_entry(Path::new("src/routes/+page.svelte"), &patterns));
         assert!(is_implicit_entry(Path::new("src/hooks.server.ts"), &patterns));
         assert!(!is_implicit_entry(Path::new("src/lib/utils.ts"), &patterns));
+        
+        // Test with full paths (important for graph-based detection)
+        assert!(is_implicit_entry(Path::new("packages/foo/src/routes/+layout.server.ts"), &patterns));
+        assert!(is_implicit_entry(Path::new("packages/foo/src/routes/+server.ts"), &patterns));
+        assert!(is_implicit_entry(Path::new("packages/foo/src/routes/api/users/+server.ts"), &patterns));
+    }
+    
+    #[test]
+    fn test_glob_match() {
+        // Test glob_match with SvelteKit patterns (** prefix)
+        assert!(glob_match("**/+page.svelte", "src/routes/+page.svelte"), "+page.svelte direct");
+        assert!(glob_match("**/+page.svelte", "packages/foo/src/routes/+page.svelte"), "+page.svelte nested");
+        assert!(glob_match("**/+server.ts", "packages/app/src/routes/api/+server.ts"), "+server.ts");
+        assert!(glob_match("**/+layout.server.ts", "packages/webflow-dashboard/src/routes/+layout.server.ts"), "+layout.server.ts");
+        
+        // Test exact match
+        assert!(glob_match("src/hooks.server.ts", "src/hooks.server.ts"), "exact match");
+        assert!(glob_match("src/hooks.server.ts", "packages/foo/src/hooks.server.ts"), "exact with prefix");
+        
+        // Test non-matches
+        assert!(!glob_match("**/+page.svelte", "src/lib/utils.ts"), "wrong extension");
+        assert!(!glob_match("**/+server.ts", "src/lib/server.ts"), "missing plus");
     }
 }

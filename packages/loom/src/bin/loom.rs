@@ -47,6 +47,7 @@ use clap::{Parser, Subcommand};
 use loom::{
     Loom, LoomError, CreateTask, Status,
     RoutingStrategy, RoutingConstraints, SessionStatus,
+    Backfill, BackfillOptions, BackfillAnalytics,
 };
 
 /// Loom - AI-native coordination layer
@@ -133,6 +134,20 @@ enum Commands {
         /// Filter by label
         #[arg(long, short)]
         label: Option<String>,
+        
+        /// Filter by repository
+        #[arg(long, short)]
+        repo: Option<String>,
+    },
+    
+    /// List configured repositories
+    Repos,
+    
+    /// List tasks from all configured repositories
+    All {
+        /// Filter by status
+        #[arg(long, short)]
+        status: Option<String>,
     },
     
     /// Show task details
@@ -238,6 +253,40 @@ enum Commands {
     Daemon {
         #[command(subcommand)]
         command: DaemonCommands,
+    },
+    
+    /// Backfill from Git commits and Beads issues
+    Backfill {
+        /// Start date (ISO 8601 or relative like "30 days ago")
+        #[arg(long, short)]
+        since: Option<String>,
+        
+        /// End date (ISO 8601 or relative)
+        #[arg(long, short)]
+        until: Option<String>,
+        
+        /// Filter by git author
+        #[arg(long, short)]
+        author: Option<String>,
+        
+        /// Path to Beads directory (defaults to ./csm/.beads)
+        #[arg(long, short)]
+        beads: Option<String>,
+        
+        /// Preview without writing
+        #[arg(long)]
+        dry_run: bool,
+    },
+    
+    /// Show analytics from backfilled data
+    Analytics {
+        /// Start date filter
+        #[arg(long, short)]
+        since: Option<String>,
+        
+        /// Filter by agent
+        #[arg(long, short)]
+        agent: Option<String>,
     },
 }
 
@@ -363,6 +412,7 @@ fn run() -> Result<(), LoomError> {
                 labels,
                 parent,
                 evidence: None,
+                repo: None,
             })?;
             
             println!("Created: {} - {}", task.id, task.title);
@@ -396,10 +446,12 @@ fn run() -> Result<(), LoomError> {
             println!("Cancelled: {}", id);
         }
         
-        Commands::List { status, label } => {
+        Commands::List { status, label, repo } => {
             let loom = Loom::open(".")?;
             
-            let tasks = if let Some(status_str) = status {
+            let tasks = if let Some(repo_id) = repo {
+                loom.list_by_repo(&repo_id)?
+            } else if let Some(status_str) = status {
                 let status = parse_status(&status_str)?;
                 loom.list_by_status(status)?
             } else if let Some(label) = label {
@@ -411,12 +463,73 @@ fn run() -> Result<(), LoomError> {
             if tasks.is_empty() {
                 println!("No tasks found");
             } else {
-                println!("{:<10} {:<8} {:<40} {:?}", "ID", "STATUS", "TITLE", "AGENT");
+                println!("{:<10} {:<8} {:<6} {:<40} {:?}", "ID", "STATUS", "REPO", "TITLE", "AGENT");
                 for task in tasks {
                     println!(
-                        "{:<10} {:<8} {:<40} {:?}",
+                        "{:<10} {:<8} {:<6} {:<40} {:?}",
                         task.id,
                         format!("{:?}", task.status).to_lowercase(),
+                        task.repo.as_deref().unwrap_or("-"),
+                        truncate(&task.title, 40),
+                        task.agent
+                    );
+                }
+            }
+        }
+        
+        Commands::Repos => {
+            let loom = Loom::open(".")?;
+            let repos = loom.repos();
+            
+            println!("Configured Repositories");
+            println!("=======================");
+            println!();
+            println!("{:<12} {:<20} {:<10} {}", "ID", "NAME", "PRIMARY", "PATH");
+            for repo in repos {
+                println!(
+                    "{:<12} {:<20} {:<10} {}",
+                    repo.id,
+                    repo.name,
+                    if repo.is_primary { "yes" } else { "no" },
+                    repo.path.display()
+                );
+                if !repo.available {
+                    println!("             (not initialized - run 'lm init' in that directory)");
+                }
+            }
+            
+            // Also show repos with tasks in this database
+            let db_repos = loom.list_repos()?;
+            if !db_repos.is_empty() {
+                println!();
+                println!("Repositories with tasks in this database:");
+                for repo in db_repos {
+                    println!("  - {}", repo);
+                }
+            }
+        }
+        
+        Commands::All { status } => {
+            let loom = Loom::open(".")?;
+            
+            let mut tasks = loom.list_all_repos()?;
+            
+            // Filter by status if provided
+            if let Some(status_str) = status {
+                let target_status = parse_status(&status_str)?;
+                tasks.retain(|t| t.status == target_status);
+            }
+            
+            if tasks.is_empty() {
+                println!("No tasks found across all repositories");
+            } else {
+                println!("{:<10} {:<8} {:<12} {:<40} {:?}", "ID", "STATUS", "REPO", "TITLE", "AGENT");
+                for task in tasks {
+                    println!(
+                        "{:<10} {:<8} {:<12} {:<40} {:?}",
+                        task.id,
+                        format!("{:?}", task.status).to_lowercase(),
+                        task.repo.as_deref().unwrap_or("-"),
                         truncate(&task.title, 40),
                         task.agent
                     );
@@ -728,6 +841,7 @@ fn run() -> Result<(), LoomError> {
                         labels: formula.labels.clone(),
                         parent: None,
                         evidence: None,
+                        repo: None,
                     })?;
                     
                     println!("Created task: {}", task.id);
@@ -755,6 +869,62 @@ fn run() -> Result<(), LoomError> {
             // These require git to be available
             println!("Git sync not yet fully implemented");
             println!("Use 'lm list --format json' to export tasks manually");
+        }
+        
+        Commands::Backfill { since, until, author, beads, dry_run } => {
+            let mut loom = Loom::open_or_init(".")?;
+            
+            let options = BackfillOptions {
+                since: since.as_ref().and_then(|s| Backfill::parse_date(s).ok()),
+                until: until.as_ref().and_then(|s| Backfill::parse_date(s).ok()),
+                author,
+                beads_path: beads.map(std::path::PathBuf::from),
+                dry_run,
+                repo_path: None,
+                agent_mapping: std::collections::HashMap::new(),
+                issue_patterns: Vec::new(), // Use defaults (csm-, lm-, bd-, WORKWAY-)
+            };
+            
+            let backfill = Backfill::new(options);
+            let result = backfill.run(&mut loom)
+                .map_err(|e| LoomError::Config(e.to_string()))?;
+            
+            println!("{}", BackfillAnalytics::format_result(&result));
+        }
+        
+        Commands::Analytics { since: _since, agent } => {
+            let loom = Loom::open(".")?;
+            
+            // Get summary statistics
+            let summary = loom.summary()?;
+            
+            println!("Work Analytics");
+            println!("==============");
+            println!();
+            println!("Overall Summary:");
+            println!("  Total tasks:    {}", summary.total());
+            println!("  Completed:      {} ({:.0}%)", summary.done, summary.progress_pct());
+            println!("  Active:         {}", summary.active());
+            println!("  Total cost:     ${:.2}", summary.total_cost_usd);
+            println!();
+            
+            // Get agent profiles with their stats
+            let agents = loom.agents()?;
+            
+            println!("Agent Performance:");
+            for agent_profile in agents {
+                if let Some(ref filter) = agent {
+                    if !agent_profile.id.contains(filter) {
+                        continue;
+                    }
+                }
+                
+                println!("  {:<13} → success rate: {:.0}%, avg duration: {:.0}s",
+                    agent_profile.id,
+                    agent_profile.quality.success_rate() * 100.0,
+                    agent_profile.quality.avg_duration_secs
+                );
+            }
         }
         
         Commands::Daemon { command } => {

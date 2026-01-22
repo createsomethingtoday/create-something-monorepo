@@ -26,6 +26,7 @@
     "@create-something/components": "workspace:^",
     "airtable": "^0.12.2",
     "lucide-svelte": "^0.454.0",
+    "resend": "^6.7.0",
     "uuid": "^11.0.3"
   },
   "type": "module"

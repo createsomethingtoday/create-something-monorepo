@@ -730,6 +730,7 @@ mod tests {
             parent: None,
             evidence: None,
             actual_cost_usd: None,
+            repo: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

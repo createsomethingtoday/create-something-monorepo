@@ -350,6 +350,7 @@ mod tests {
             parent: None,
             evidence: None,
             actual_cost_usd: None,
+            repo: None,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         };

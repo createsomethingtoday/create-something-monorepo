@@ -1,6 +1,5 @@
 <script lang="ts">
 	import ImageUploader from './ImageUploader.svelte';
-	import { THUMBNAIL_ASPECT_RATIO } from '$lib/utils/upload-validation';
 
 	interface Props {
 		value?: string[];
@@ -31,8 +30,7 @@
 		<span class="label-hint">({value.length}/{maxImages} uploaded)</span>
 	</label>
 	<p class="description">
-		Add up to {maxImages} promotional images with {THUMBNAIL_ASPECT_RATIO.width}:{THUMBNAIL_ASPECT_RATIO
-			.height} aspect ratio
+		Add up to {maxImages} promotional images with 150:199 aspect ratio (e.g., 750×995px)
 	</p>
 
 	<div class="thumbnail-grid">
@@ -42,9 +40,8 @@
 					value={value[index] || null}
 					onchange={(url) => handleImageChange(index, url)}
 					uploadType="thumbnail"
-					aspectRatio={{ width: THUMBNAIL_ASPECT_RATIO.width, height: THUMBNAIL_ASPECT_RATIO.height }}
 					label="Thumbnail {index + 1}"
-					description="150:199 aspect ratio"
+					description="150:199 aspect ratio (e.g., 750×995px)"
 					{disabled}
 				/>
 			</div>

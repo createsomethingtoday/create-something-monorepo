@@ -39,8 +39,9 @@
 	// Schedule: 0 0 * * * (midnight UTC daily) for /api/cron/snapshot
 	// Schedule: 0 1 * * * (1am UTC daily) for /api/cron/cleanup
 
-	// Secrets (set via: wrangler secret put AIRTABLE_API_KEY)
+	// Secrets (set via: wrangler secret put <SECRET_NAME>)
 	// - AIRTABLE_API_KEY
 	// - AIRTABLE_BASE_ID
+	// - RESEND_API_KEY (for sending branded verification emails)
 	// - CRON_SECRET (optional, for manual cron trigger authentication)
 }
