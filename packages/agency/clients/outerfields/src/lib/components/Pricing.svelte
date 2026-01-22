@@ -55,6 +55,15 @@
 
 <section class="pricing-section" id="pricing">
 	<div class="pricing-container">
+		<!-- Section Header with Urgency -->
+		<div class="section-header">
+			<h2 class="section-title">Founding Member: $99 Lifetime Access</h2>
+			<p class="section-description">
+				This price will <strong>NOT</strong> last forever. Once we launch, pricing increases significantly.
+				Lock in founding member pricing now — the lowest it will ever be.
+			</p>
+		</div>
+
 		<div class="pricing-card">
 			<!-- Left: Pricing info (the "hook") -->
 			<div class="pricing-left">
@@ -120,6 +129,31 @@
 	.pricing-container {
 		max-width: var(--container-max-width);
 		margin: 0 auto;
+	}
+
+	/* Section Header */
+	.section-header {
+		text-align: center;
+		margin-bottom: 3rem;
+	}
+
+	.section-title {
+		font-size: clamp(1.75rem, 4vw, 2.5rem);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin: 0 0 1rem;
+	}
+
+	.section-description {
+		font-size: 1.125rem;
+		color: var(--color-fg-muted);
+		max-width: 36rem;
+		margin: 0 auto;
+		line-height: 1.6;
+	}
+
+	.section-description strong {
+		color: var(--color-warning);
 	}
 
 	.pricing-card {
