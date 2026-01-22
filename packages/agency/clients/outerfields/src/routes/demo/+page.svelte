@@ -1,14 +1,42 @@
 <script lang="ts">
 	/**
-	 * OUTERFIELDS User Portal Demo
+	 * OUTERFIELDS Demo Page
 	 *
-	 * Netflix-style video browsing experience demonstrating
-	 * the user-facing side of the PCN platform.
-	 * Uses shared VideoModal component for video playback (DRY).
+	 * Showcases a finished PCN subscriber experience.
+	 * Example subscription tiers: Monthly ($9), Annual ($99), Lifetime ($199)
 	 */
-	import { Star, Play, Plus, Info, ArrowRight } from 'lucide-svelte';
+	import { Star, Play, Plus, Info, ArrowRight, Check, ArrowLeft } from 'lucide-svelte';
 	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 	import VideoModal from '$lib/components/VideoModal.svelte';
+
+	// Example subscription tiers
+	const subscriptionTiers = [
+		{
+			id: 'monthly',
+			name: 'Monthly',
+			price: '$9',
+			period: '/month',
+			description: 'Flexible monthly access',
+			features: ['Full content library', 'HD streaming', 'Cancel anytime']
+		},
+		{
+			id: 'annual',
+			name: 'Annual',
+			price: '$99',
+			period: '/year',
+			description: 'Save 8% annually',
+			features: ['Full content library', '4K streaming', 'Priority support', 'Exclusive content'],
+			popular: true
+		},
+		{
+			id: 'lifetime',
+			name: 'Lifetime',
+			price: '$199',
+			period: 'one-time',
+			description: 'Pay once, access forever',
+			features: ['Full content library', '4K streaming', 'Priority support', 'Exclusive content', 'Future updates included']
+		}
+	];
 
 	// Cloudflare R2 CDN base URL (same as marketing page)
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
@@ -61,14 +89,14 @@
 
 	let featuredContent = {
 		id: 'featured',
-		title: 'Building OUTERFIELDS: The Odyssey',
+		title: 'Demo: Private Content Network',
 		description:
-			'Documentary-style behind-the-scenes of the OUTERFIELDS team building the Premium Content Network platform. See how we architect edge-first systems, design with Canon principles, and build for creators.',
+			'This is an example of what a finished PCN looks like for subscribers. Full video playback, engagement analytics, and AI-powered features—all included in every network we build.',
 		thumbnail: '/thumbnails/hero-building-outerfields.jpg',
 		duration: '16 min',
 		rating: '4.9',
 		year: '2026',
-		category: 'Featured'
+		category: 'Demo'
 	};
 
 	function playVideo(item: ContentItem | typeof featuredContent) {
@@ -86,10 +114,16 @@
 </script>
 
 <svelte:head>
-	<title>Browse | OUTERFIELDS Demo</title>
+	<title>Demo: Private Content Network Experience | OUTERFIELDS</title>
 </svelte:head>
 
 <div class="portal">
+	<!-- Back to Main Site -->
+	<a href="/" class="back-link">
+		<ArrowLeft size={16} />
+		Return to Main Site
+	</a>
+
 	<!-- Featured Hero -->
 	<section class="featured-hero">
 		<div class="hero-backdrop">
@@ -177,15 +211,62 @@
 		{/each}
 	</div>
 
-	<!-- Demo Notice -->
-	<div class="demo-notice">
-		<Info size={20} />
-		<p>
-			This is a demo of the OUTERFIELDS user portal. Signed in as <strong>{data.user.name}</strong>.
-			Content is for demonstration purposes only.
+	<!-- About This Demo -->
+	<section class="about-demo">
+		<div class="about-card">
+			<Info size={24} />
+			<div class="about-content">
+				<h3>About This Demo</h3>
+				<p>
+					You're viewing an example of a finished Private Content Network. This is what your subscribers see—premium content, seamless playback, and a professional browsing experience. Every PCN we build includes these features and more.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Example Subscription Pricing -->
+	<section class="pricing-section">
+		<div class="pricing-header">
+			<h2>Example Subscription Tiers</h2>
+			<p>Flexible pricing options for your audience</p>
+		</div>
+		<div class="pricing-grid">
+			{#each subscriptionTiers as tier}
+				<div class="pricing-card" class:popular={tier.popular}>
+					{#if tier.popular}
+						<span class="popular-badge">Most Popular</span>
+					{/if}
+					<h3 class="tier-name">{tier.name}</h3>
+					<div class="tier-price">
+						<span class="price">{tier.price}</span>
+						<span class="period">{tier.period}</span>
+					</div>
+					<p class="tier-description">{tier.description}</p>
+					<ul class="tier-features">
+						{#each tier.features as feature}
+							<li>
+								<Check size={14} />
+								{feature}
+							</li>
+						{/each}
+					</ul>
+					<button class="tier-button" disabled>
+						Example Only
+					</button>
+				</div>
+			{/each}
+		</div>
+		<p class="pricing-note">
+			These are example tiers. Your PCN pricing is fully customizable to match your business model.
 		</p>
-		<a href="/admin-demo" class="switch-link">
-			Switch to Admin View
+	</section>
+
+	<!-- Return CTA -->
+	<div class="return-cta">
+		<h3>Ready to Build Your Own PCN?</h3>
+		<p>We handle everything—platform, production, marketing, and ongoing support.</p>
+		<a href="/#pricing" class="cta-button">
+			View Pricing
 			<ArrowRight size={16} />
 		</a>
 	</div>
@@ -199,6 +280,31 @@
 		min-height: 100vh;
 		background: var(--color-bg-pure);
 		padding-bottom: 4rem;
+	}
+
+	/* Back Link */
+	.back-link {
+		position: fixed;
+		top: 5rem;
+		left: 1.5rem;
+		z-index: 100;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		background: rgba(30, 30, 30, 0.9);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		color: var(--color-fg-secondary);
+		font-size: 0.875rem;
+		text-decoration: none;
+		backdrop-filter: blur(8px);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.back-link:hover {
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
 	}
 
 	/* Featured Hero */
@@ -500,51 +606,226 @@
 		border-radius: 50%;
 	}
 
-	/* Demo Notice */
-	.demo-notice {
+	/* About Demo Section */
+	.about-demo {
+		padding: 0 4%;
+		margin-bottom: 3rem;
+	}
+
+	.about-card {
 		display: flex;
-		align-items: center;
-		gap: 0.75rem;
+		align-items: flex-start;
+		gap: 1rem;
 		max-width: 60rem;
-		margin: 4rem auto 0;
-		padding: 1rem 1.5rem;
-		background: var(--color-primary-muted);
-		border: 1px solid rgba(124, 43, 238, 0.3);
-		border-radius: 0.75rem;
+		margin: 0 auto;
+		padding: 1.5rem 2rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
 	}
 
-	.demo-notice > :global(svg) {
-		color: var(--color-primary);
+	.about-card > :global(svg) {
+		color: var(--color-sun);
 		flex-shrink: 0;
+		margin-top: 0.25rem;
 	}
 
-	.demo-notice p {
-		flex: 1;
+	.about-content h3 {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 0.5rem;
+	}
+
+	.about-content p {
+		font-size: 0.9375rem;
+		color: var(--color-fg-muted);
+		line-height: 1.6;
 		margin: 0;
-		font-size: 0.875rem;
-		color: var(--color-fg-secondary);
 	}
 
-	.switch-link {
+	/* Pricing Section */
+	.pricing-section {
+		padding: 4rem 4%;
+		background: var(--color-bg-surface);
+	}
+
+	.pricing-header {
+		text-align: center;
+		margin-bottom: 2rem;
+	}
+
+	.pricing-header h2 {
+		font-size: clamp(1.5rem, 3vw, 2rem);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin: 0 0 0.5rem;
+	}
+
+	.pricing-header p {
+		font-size: 1rem;
+		color: var(--color-slate);
+		margin: 0;
+	}
+
+	.pricing-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1.5rem;
+		max-width: 60rem;
+		margin: 0 auto;
+	}
+
+	.pricing-card {
+		position: relative;
+		padding: 2rem;
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+		text-align: center;
+	}
+
+	.pricing-card.popular {
+		border-color: var(--color-sun);
+	}
+
+	.popular-badge {
+		position: absolute;
+		top: -0.75rem;
+		left: 50%;
+		transform: translateX(-50%);
+		padding: 0.25rem 0.75rem;
+		background: var(--color-sun);
+		color: white;
+		font-size: 0.6875rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		border-radius: 9999px;
+	}
+
+	.tier-name {
+		font-size: 1.125rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 1rem;
+	}
+
+	.tier-price {
+		margin-bottom: 0.5rem;
+	}
+
+	.tier-price .price {
+		font-size: 2.5rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+	}
+
+	.tier-price .period {
+		font-size: 1rem;
+		color: var(--color-slate);
+	}
+
+	.tier-description {
+		font-size: 0.875rem;
+		color: var(--color-slate);
+		margin: 0 0 1.5rem;
+	}
+
+	.tier-features {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 1.5rem;
+		text-align: left;
+	}
+
+	.tier-features li {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: var(--color-primary);
 		font-size: 0.875rem;
-		font-weight: 500;
-		text-decoration: none;
-		white-space: nowrap;
+		color: var(--color-fg-secondary);
+		padding: 0.375rem 0;
 	}
 
-	.switch-link:hover {
-		text-decoration: underline;
-	}
-
-	.switch-link :global(svg) {
+	.tier-features li :global(svg) {
+		color: var(--color-sun);
 		flex-shrink: 0;
 	}
 
+	.tier-button {
+		width: 100%;
+		padding: 0.75rem 1.5rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-fg-muted);
+		cursor: not-allowed;
+	}
+
+	.pricing-note {
+		text-align: center;
+		font-size: 0.875rem;
+		color: var(--color-slate);
+		margin: 2rem 0 0;
+	}
+
+	/* Return CTA */
+	.return-cta {
+		text-align: center;
+		padding: 4rem 1.5rem;
+	}
+
+	.return-cta h3 {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin: 0 0 0.5rem;
+	}
+
+	.return-cta p {
+		font-size: 1rem;
+		color: var(--color-slate);
+		margin: 0 0 1.5rem;
+	}
+
+	.cta-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 1rem 2rem;
+		background: var(--color-sun);
+		color: white;
+		font-size: 1rem;
+		font-weight: 700;
+		text-decoration: none;
+		border-radius: 0.5rem;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.cta-button:hover {
+		background: var(--color-primary-hover);
+		transform: scale(1.02);
+	}
+
+	@media (max-width: 900px) {
+		.pricing-grid {
+			grid-template-columns: 1fr;
+			max-width: 24rem;
+		}
+	}
+
 	@media (max-width: 768px) {
+		.back-link {
+			top: auto;
+			bottom: 1rem;
+			left: 1rem;
+			right: 1rem;
+			justify-content: center;
+		}
+
 		.hero-content {
 			bottom: 10%;
 			left: 5%;
@@ -564,10 +845,17 @@
 			width: 200px;
 		}
 
-		.demo-notice {
+		.about-demo {
+			padding: 0 5%;
+		}
+
+		.about-card {
 			flex-direction: column;
 			text-align: center;
-			margin: 4rem 1rem 0;
+		}
+
+		.pricing-section {
+			padding: 3rem 5%;
 		}
 	}
 </style>
