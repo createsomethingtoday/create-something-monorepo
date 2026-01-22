@@ -375,52 +375,46 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     // 4. Court exclusion zone (only players/staff allowed on court)
     let role = getRole(idx);
     if (role == ROLE_FAN) {
-        // Expanded court zone with margin
+        // Court center and dimensions
         let courtCenterX = (COURT_MIN_X + COURT_MAX_X) * 0.5;
         let courtCenterY = (COURT_MIN_Y + COURT_MAX_Y) * 0.5;
-        let courtHalfW = (COURT_MAX_X - COURT_MIN_X) * 0.5 + COURT_MARGIN;
-        let courtHalfH = (COURT_MAX_Y - COURT_MIN_Y) * 0.5 + COURT_MARGIN;
+        let courtHalfW = (COURT_MAX_X - COURT_MIN_X) * 0.5;
+        let courtHalfH = (COURT_MAX_Y - COURT_MIN_Y) * 0.5;
         
-        // Check if fan is in or near court area
-        let inCourtX = pos.x > COURT_MIN_X - COURT_MARGIN && pos.x < COURT_MAX_X + COURT_MARGIN;
-        let inCourtY = pos.y > COURT_MIN_Y - COURT_MARGIN && pos.y < COURT_MAX_Y + COURT_MARGIN;
+        // Calculate signed distance to court rectangle (negative = inside)
+        let dxCourt = abs(pos.x - courtCenterX) - courtHalfW;
+        let dyCourt = abs(pos.y - courtCenterY) - courtHalfH;
         
-        if (inCourtX && inCourtY) {
-            // Calculate push direction - push toward nearest edge
+        // Distance to court edge (negative if inside, positive if outside)
+        let distToCourtEdge = max(dxCourt, dyCourt);
+        
+        // Only apply force if within the margin zone (approaching or inside court)
+        if (distToCourtEdge < COURT_MARGIN) {
+            // Push direction - away from court center
             var pushDir = vec2<f32>(0.0, 0.0);
             
-            // Find which edge is closest
-            let distLeft = pos.x - (COURT_MIN_X - COURT_MARGIN);
-            let distRight = (COURT_MAX_X + COURT_MARGIN) - pos.x;
-            let distTop = pos.y - (COURT_MIN_Y - COURT_MARGIN);
-            let distBottom = (COURT_MAX_Y + COURT_MARGIN) - pos.y;
-            
-            let minDistX = min(distLeft, distRight);
-            let minDistY = min(distTop, distBottom);
-            
-            if (minDistX < minDistY) {
-                // Push horizontally
-                if (distLeft < distRight) {
-                    pushDir.x = -1.0;
-                } else {
-                    pushDir.x = 1.0;
-                }
+            // Determine push direction based on which edge is closest
+            if (dxCourt > dyCourt) {
+                // Closer to left/right edge
+                pushDir.x = sign(pos.x - courtCenterX);
             } else {
-                // Push vertically
-                if (distTop < distBottom) {
-                    pushDir.y = -1.0;
-                } else {
-                    pushDir.y = 1.0;
-                }
+                // Closer to top/bottom edge
+                pushDir.y = sign(pos.y - courtCenterY);
             }
             
-            // Very strong push force - court is absolutely off-limits for fans
-            let penetration = 1.0 - min(minDistX, minDistY) / COURT_MARGIN;
-            let courtForce = uniforms.wallStrength * 8.0 * max(penetration, 0.8);
-            totalForce += pushDir * courtForce;
+            // Normalize if both components are set
+            let pushLen = length(pushDir);
+            if (pushLen > 0.0) {
+                pushDir = pushDir / pushLen;
+            }
             
-            // Also directly modify velocity to push away
-            vel = pushDir * 2.0;
+            // Force strength: smooth falloff from court edge to margin edge
+            // Maximum at court edge (distToCourtEdge <= 0), zero at margin edge
+            let normalizedDist = clamp(distToCourtEdge / COURT_MARGIN, -1.0, 1.0);
+            let forceMagnitude = uniforms.wallStrength * 4.0 * (1.0 - normalizedDist);
+            
+            // Apply force (stronger when deeper inside court)
+            totalForce += pushDir * forceMagnitude;
         }
     }
     
