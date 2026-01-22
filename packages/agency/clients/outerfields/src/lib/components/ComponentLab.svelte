@@ -4,7 +4,7 @@
 	 *
 	 * Platform features with membership gating
 	 */
-	import { Lock, MessageSquare, Play, BarChart3, Activity } from 'lucide-svelte';
+	import { Lock, MessageSquare, Play, BarChart3, Activity, Maximize2, Volume2, Settings, Eye } from 'lucide-svelte';
 	import { authStore } from '$lib/stores/auth';
 
 	interface Tool {
@@ -27,7 +27,7 @@
 		{
 			id: 'cinematic-player',
 			name: 'Cinematic Video Player',
-			description: 'Responsive video container with custom controls, gradient masking, and immersive viewing experience.',
+			description: 'Professional playback with engagement tracking, 4K quality streaming, and cinematic viewing experience. Full playback requires membership.',
 			icon: Play,
 			type: 'video'
 		},
@@ -96,11 +96,42 @@
 									loading="lazy"
 								/>
 								<div class="video-gradient"></div>
+								
+								<!-- Feature callouts -->
+								<div class="feature-badges">
+									<span class="feature-badge">
+										<Eye size={12} />
+										<span>Engagement Tracking</span>
+									</span>
+									<span class="feature-badge">
+										<Settings size={12} />
+										<span>4K Quality</span>
+									</span>
+								</div>
+								
+								<!-- Play button overlay -->
+								<div class="play-overlay">
+									<div class="play-button-large">
+										<Play size={32} />
+									</div>
+								</div>
+								
+								<!-- Professional controls bar -->
 								<div class="video-controls">
-									<Play size={20} />
+									<button class="control-btn">
+										<Play size={16} />
+									</button>
 									<div class="progress-bar">
 										<div class="progress-fill"></div>
+										<div class="progress-handle"></div>
 									</div>
+									<span class="time-display">0:45 / 12:34</span>
+									<button class="control-btn">
+										<Volume2 size={16} />
+									</button>
+									<button class="control-btn">
+										<Maximize2 size={16} />
+									</button>
 								</div>
 							</div>
 						{:else if tool.type === 'heatmap'}
@@ -382,18 +413,19 @@
 		border-radius: var(--radius-md);
 	}
 
-	/* Video Preview */
+	/* Video Preview - Cinematic Player */
 	.preview-video {
 		position: relative;
 		width: 100%;
 		height: 100%;
+		background: #000;
 	}
 
 	.preview-video img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		opacity: 0.6;
+		opacity: 0.7;
 	}
 
 	.video-gradient {
@@ -401,25 +433,107 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		height: 3rem;
-		background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+		height: 5rem;
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+	}
+
+	.feature-badges {
+		position: absolute;
+		top: var(--space-sm);
+		left: var(--space-sm);
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-xs);
+	}
+
+	.feature-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.25rem 0.5rem;
+		background: rgba(0, 0, 0, 0.7);
+		backdrop-filter: blur(4px);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		border-radius: var(--radius-sm);
+		font-size: 0.65rem;
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.feature-badge :global(svg) {
+		opacity: 0.8;
+	}
+
+	.play-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
+	}
+
+	.play-button-large {
+		width: 4rem;
+		height: 4rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.15);
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-radius: 50%;
+		color: white;
+		backdrop-filter: blur(8px);
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.preview-video:hover .play-button-large {
+		background: rgba(255, 255, 255, 0.25);
+		transform: scale(1.05);
 	}
 
 	.video-controls {
 		position: absolute;
-		bottom: 1rem;
-		left: 1rem;
-		right: 1rem;
+		bottom: 0;
+		left: 0;
+		right: 0;
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
+		padding: var(--space-sm) var(--space-md);
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6));
+	}
+
+	.control-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.75rem;
+		height: 1.75rem;
+		background: transparent;
+		border: none;
+		color: var(--color-fg-secondary);
+		cursor: pointer;
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.control-btn:hover {
+		color: var(--color-fg-primary);
 	}
 
 	.progress-bar {
+		position: relative;
 		flex: 1;
 		height: 4px;
 		background: rgba(255, 255, 255, 0.2);
 		border-radius: 2px;
+		cursor: pointer;
+	}
+
+	.progress-bar:hover {
+		height: 6px;
 	}
 
 	.progress-fill {
@@ -427,6 +541,31 @@
 		height: 100%;
 		background: var(--color-fg-primary);
 		border-radius: 2px;
+		transition: width 0.1s linear;
+	}
+
+	.progress-handle {
+		position: absolute;
+		top: 50%;
+		left: 33%;
+		transform: translate(-50%, -50%);
+		width: 12px;
+		height: 12px;
+		background: var(--color-fg-primary);
+		border-radius: 50%;
+		opacity: 0;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.progress-bar:hover .progress-handle {
+		opacity: 1;
+	}
+
+	.time-display {
+		font-size: 0.6875rem;
+		font-family: var(--font-mono, monospace);
+		color: var(--color-fg-muted);
+		white-space: nowrap;
 	}
 
 	/* Heatmap Preview */
