@@ -1,11 +1,10 @@
 <script lang="ts">
 	/**
-	 * OUTERFIELDS Digital Tools
+	 * OUTERFIELDS Platform Features
 	 *
-	 * Platform features with membership gating
+	 * Showcase of tools included in every PCN - no gating
 	 */
-	import { Lock, MessageSquare, Play, BarChart3, Activity, Maximize2, Volume2, Settings, Eye } from 'lucide-svelte';
-	import { authStore } from '$lib/stores/auth';
+	import { MessageSquare, Play, BarChart3, Activity, Maximize2, Volume2, Settings, Eye } from 'lucide-svelte';
 
 	interface Tool {
 		id: string;
@@ -27,7 +26,7 @@
 		{
 			id: 'cinematic-player',
 			name: 'Cinematic Video Player',
-			description: 'Professional playback with engagement tracking, 4K quality streaming, and cinematic viewing experience. Full playback requires membership.',
+			description: 'Professional playback with engagement tracking, 4K quality streaming, and cinematic viewing experience.',
 			icon: Play,
 			type: 'video'
 		},
@@ -47,15 +46,14 @@
 		}
 	];
 
-	$: isMember = $authStore.authenticated && $authStore.user?.membership;
-</script>
+	</script>
 
-<section class="tools-section">
+<section class="tools-section" id="features">
 	<div class="tools-container">
 		<div class="tools-header">
 			<div class="header-content">
-				<h2 class="tools-title">Digital Tools</h2>
-				<p class="tools-description">Platform features and interactive components. Members get full access.</p>
+				<h2 class="tools-title">What's Included</h2>
+				<p class="tools-description">Professional tools built into every Private Content Network</p>
 			</div>
 		</div>
 
@@ -175,17 +173,6 @@
 										<div class="chart-bar" style="--height: 85%"></div>
 										<div class="chart-bar" style="--height: 60%"></div>
 									</div>
-								</div>
-							</div>
-						{/if}
-
-						{#if !isMember}
-							<div class="gate-overlay">
-								<div class="gate-content">
-									<Lock size={32} class="lock-icon" />
-									<h4 class="gate-title">Unlock with Membership</h4>
-									<p class="gate-description">Get full access to all platform tools</p>
-									<a href="#pricing" class="unlock-button">Become a Member - $99</a>
 								</div>
 							</div>
 						{/if}

@@ -1,120 +1,78 @@
 <script lang="ts">
 	/**
 	 * OUTERFIELDS Pricing
-	 * Single $99 lifetime membership - Founding Member offer
-	 * Tufte-inspired: horizontal layout, high data-ink ratio, no redundancy
-	 * 
-	 * Balance updates (2026-01):
-	 * - CTA moved to right column for better visual weight distribution
-	 * - Price enlarged (140px) to anchor left side
-	 * - "$" positioned at top of price (superscript style)
-	 * - Golden ratio column split (~0.39:0.61)
+	 * PCN Creation Services - Starting at $19,999
+	 * CTA: Get Your Custom Quote → Discovery Call (Calendly)
 	 */
-	import { Check, Crown, Lock, AlertTriangle } from 'lucide-svelte';
+	import { Check, Zap } from 'lucide-svelte';
 
-	let loading = $state(false);
-	let errorMessage = $state('');
-
-	const benefits = [
-		'Lifetime access to all platform content (50+ videos)',
-		'Behind-the-scenes exclusive content',
-		'Educational resources and training materials',
-		'Member-only resource library',
-		'Included 1-on-1 discovery call',
-		'Exclusive Outerfields merchandise'
+	const deliverables = [
+		'Custom Private Content Network platform',
+		'Professional video production',
+		'Content strategy & organization',
+		'Subscription & payment integration',
+		'Comprehensive analytics dashboard',
+		'Multi-platform marketing setup',
+		'AI-powered chatbot assistant',
+		'Ongoing support & development'
 	];
 
-	async function handleCheckout() {
-		loading = true;
-		errorMessage = '';
-
-		try {
-			const response = await fetch('/api/stripe/checkout', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-
-			const result = await response.json();
-
-			if (!result.success) {
-				throw new Error(result.error || 'Failed to create checkout session');
-			}
-
-			if (result.data.url) {
-				window.location.href = result.data.url;
-			}
-		} catch (err) {
-			console.error('Checkout error:', err);
-			errorMessage = err instanceof Error ? err.message : 'Something went wrong';
-			loading = false;
-		}
+	function bookDiscoveryCall() {
+		window.open('https://calendly.com/outerfields/discovery-call', '_blank');
 	}
 </script>
 
 <section class="pricing-section" id="pricing">
 	<div class="pricing-container">
-		<!-- Section Header with Urgency -->
+		<!-- Section Header -->
 		<div class="section-header">
-			<h2 class="section-title">Founding Member: $99 Lifetime Access</h2>
+			<span class="section-badge">
+				<Zap size={14} />
+				Full-Service PCN Creation
+			</span>
+			<h2 class="section-title">Investment</h2>
 			<p class="section-description">
-				This price will <strong>NOT</strong> last forever. Once we launch, pricing increases significantly.
-				Lock in founding member pricing now — the lowest it will ever be.
+				Every Private Content Network is custom-built for your brand, audience, and goals.
 			</p>
 		</div>
 
 		<div class="pricing-card">
-			<!-- Left: Pricing info (the "hook") -->
+			<!-- Left: Pricing info -->
 			<div class="pricing-left">
 				<div class="pricing-header">
-					<span class="badge">Founding Member</span>
+					<span class="badge">Starting At</span>
 					<div class="price-row">
 						<span class="price-currency">$</span>
-						<span class="price-amount">99</span>
-						<span class="price-meta">
-							<span class="price-period">one-time</span>
-							<span class="price-note">lifetime access</span>
-						</span>
+						<span class="price-amount">19,999</span>
 					</div>
 				</div>
 
 				<p class="pricing-tagline">
-					One payment. All features. No recurring fees. Ever.
+					Full-service PCN creation. Production, platform, and ongoing support included.
 				</p>
 
-				<div class="urgency-strip">
-					<AlertTriangle size={14} />
-					<span>Founding member pricing — <strong>70%+ savings</strong> vs. post-launch</span>
-				</div>
+				<p class="pricing-note">
+					Final pricing based on content scope, features, and integration requirements.
+				</p>
 			</div>
 
-			<!-- Right: Benefits + CTA (the "value + action") -->
+			<!-- Right: Deliverables + CTA -->
 			<div class="pricing-right">
-				<h3 class="benefits-title">What's included</h3>
-				<ul class="benefits-grid">
-					{#each benefits as benefit}
-						<li class="benefit-item">
+				<h3 class="deliverables-title">What's Included</h3>
+				<ul class="deliverables-grid">
+					{#each deliverables as item}
+						<li class="deliverable-item">
 							<Check size={16} />
-							<span>{benefit}</span>
+							<span>{item}</span>
 						</li>
 					{/each}
 				</ul>
 
-				<button class="cta-button" onclick={handleCheckout} disabled={loading}>
-					{#if loading}
-						Redirecting to checkout...
-					{:else}
-						<Lock size={18} />
-						<span>Get Lifetime Access</span>
-					{/if}
+				<button class="cta-button" onclick={bookDiscoveryCall}>
+					Get Your Custom Quote
 				</button>
 
-				{#if errorMessage}
-					<div class="error-message">{errorMessage}</div>
-				{/if}
-
-				<p class="guarantee">30-day money-back guarantee · Secure payment via Stripe</p>
+				<p class="cta-note">Free discovery call · No commitment required</p>
 			</div>
 		</div>
 	</div>
@@ -122,7 +80,7 @@
 
 <style>
 	.pricing-section {
-		padding: 4rem 1.5rem;
+		padding: 6rem 1.5rem;
 		background: var(--color-bg-pure);
 	}
 
@@ -137,8 +95,24 @@
 		margin-bottom: 3rem;
 	}
 
+	.section-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.375rem 0.75rem;
+		background: var(--color-primary-muted);
+		border: 1px solid rgba(244, 81, 38, 0.3);
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-sun);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin-bottom: 1rem;
+	}
+
 	.section-title {
-		font-size: clamp(1.75rem, 4vw, 2.5rem);
+		font-size: clamp(2rem, 4vw, 3rem);
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		margin: 0 0 1rem;
@@ -146,21 +120,17 @@
 
 	.section-description {
 		font-size: 1.125rem;
-		color: var(--color-fg-muted);
+		color: var(--color-slate);
 		max-width: 36rem;
 		margin: 0 auto;
 		line-height: 1.6;
 	}
 
-	.section-description strong {
-		color: var(--color-warning);
-	}
-
 	.pricing-card {
 		display: grid;
-		grid-template-columns: 2fr 3fr; /* ~0.4:0.6, approximates golden ratio */
+		grid-template-columns: 1fr 1.5fr;
 		gap: 3rem;
-		align-items: start; /* Top-align for stronger visual anchoring */
+		align-items: start;
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: 1rem;
@@ -171,21 +141,22 @@
 	.pricing-left {
 		display: flex;
 		flex-direction: column;
+		gap: 1rem;
 	}
 
 	.pricing-header {
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.badge {
 		display: inline-block;
 		padding: 0.25rem 0.75rem;
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		background: rgba(244, 81, 38, 0.15);
+		border: 1px solid rgba(244, 81, 38, 0.3);
 		border-radius: 9999px;
 		font-size: 0.6875rem;
 		font-weight: 700;
-		color: var(--color-fg-secondary);
+		color: var(--color-sun);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin-bottom: 1rem;
@@ -193,116 +164,40 @@
 
 	.price-row {
 		display: flex;
-		align-items: flex-start; /* "$" at top of price (superscript style) */
+		align-items: flex-start;
 		gap: 0.25rem;
 	}
 
 	.price-currency {
-		font-size: 1.5rem;
+		font-size: 2rem;
 		font-weight: 600;
-		color: var(--color-fg-muted);
+		color: var(--color-sun);
+		margin-top: 0.5rem;
 	}
 
 	.price-amount {
-		font-size: 8.75rem; /* 140px - larger for visual weight balance */
+		font-size: clamp(4rem, 8vw, 6rem);
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		line-height: 1;
 		letter-spacing: -0.03em;
 	}
 
-	.price-meta {
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-end; /* Align to bottom of price */
-		margin-left: 0.5rem;
-		height: 100%;
-		padding-bottom: 0.5rem;
-	}
-
-	.price-period {
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--color-fg-secondary);
-	}
-
-	.price-note {
-		font-size: 0.8125rem;
-		color: var(--color-fg-muted);
-	}
-
 	.pricing-tagline {
 		font-size: 1.125rem;
 		color: var(--color-fg-secondary);
-		margin: 0 0 1.5rem;
+		margin: 0;
 		line-height: 1.5;
 	}
 
-	.urgency-strip {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.375rem;
-		font-size: 0.8125rem;
-		color: var(--color-fg-muted);
-		/* No bottom margin - urgency is last element in left column */
-	}
-
-	.urgency-strip :global(svg) {
-		color: var(--color-warning);
-		flex-shrink: 0;
-	}
-
-	.urgency-strip strong {
-		color: var(--color-warning);
-		font-weight: 600;
-	}
-
-	.cta-button {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.5rem;
-		width: 100%; /* Full width in right column for visual anchor */
-		padding: 1rem 2rem;
-		margin-top: 0.5rem;
-		background: rgba(255, 255, 255, 0.12);
-		border: 1px solid rgba(255, 255, 255, 0.25);
-		border-radius: 0.5rem;
-		font-size: 1rem;
-		font-weight: 700;
-		color: white;
-		cursor: pointer;
-		backdrop-filter: blur(12px);
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.cta-button:hover:not(:disabled) {
-		background: rgba(255, 255, 255, 0.2);
-		border-color: rgba(255, 255, 255, 0.35);
-		transform: translateY(-1px);
-	}
-
-	.cta-button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.error-message {
-		padding: 0.75rem;
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: 0.5rem;
+	.pricing-note {
 		font-size: 0.875rem;
-		color: var(--color-error);
+		color: var(--color-slate);
+		margin: 0;
+		line-height: 1.5;
 	}
 
-	.guarantee {
-		font-size: 0.8125rem;
-		color: var(--color-fg-muted);
-		text-align: center;
-	}
-
-	/* Right column - Benefits + CTA */
+	/* Right column - Deliverables + CTA */
 	.pricing-right {
 		display: flex;
 		flex-direction: column;
@@ -311,25 +206,25 @@
 		padding-left: 3rem;
 	}
 
-	.benefits-title {
+	.deliverables-title {
 		font-size: 0.875rem;
 		font-weight: 600;
-		color: var(--color-fg-muted);
+		color: var(--color-slate);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin: 0;
 	}
 
-	.benefits-grid {
+	.deliverables-grid {
 		list-style: none;
 		padding: 0;
 		margin: 0;
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 1.25rem 3rem; /* Increased gap for better breathing room */
+		gap: 1rem 2rem;
 	}
 
-	.benefit-item {
+	.deliverable-item {
 		display: flex;
 		align-items: flex-start;
 		gap: 0.75rem;
@@ -338,22 +233,51 @@
 		line-height: 1.4;
 	}
 
-	.benefit-item :global(svg) {
-		color: var(--color-success);
+	.deliverable-item :global(svg) {
+		color: var(--color-sun);
 		flex-shrink: 0;
 		margin-top: 0.125rem;
 	}
 
+	.cta-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		padding: 1rem 2rem;
+		margin-top: 0.5rem;
+		background: var(--color-sun);
+		border: none;
+		border-radius: 0.5rem;
+		font-size: 1.125rem;
+		font-weight: 700;
+		color: white;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.cta-button:hover {
+		background: var(--color-primary-hover);
+		transform: scale(1.02);
+	}
+
+	.cta-note {
+		font-size: 0.8125rem;
+		color: var(--color-slate);
+		text-align: center;
+		margin: 0;
+	}
+
 	/* Responsive */
 	@media (max-width: 900px) {
-		.benefits-grid {
+		.deliverables-grid {
 			grid-template-columns: 1fr;
 		}
 	}
 
 	@media (max-width: 768px) {
 		.pricing-section {
-			padding: 3rem 1rem;
+			padding: 4rem 1rem;
 		}
 
 		.pricing-card {
@@ -370,12 +294,12 @@
 		}
 
 		.price-amount {
-			font-size: 6rem; /* Scale down from 8.75rem but still prominent */
+			font-size: 4rem;
 		}
 
-		.benefits-grid {
+		.deliverables-grid {
 			grid-template-columns: 1fr;
-			gap: 1rem;
+			gap: 0.875rem;
 		}
 	}
 </style>

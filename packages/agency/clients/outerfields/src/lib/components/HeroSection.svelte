@@ -2,35 +2,35 @@
 	/**
 	 * OUTERFIELDS Hero Section
 	 *
-	 * StreamVerse-inspired full-bleed hero with centered play CTA
-	 * Per client: Play button opens video modal with PCN trailer
+	 * PCN Services sales page - "We Build Private Content Networks"
+	 * CTA: Book a Discovery Call (Calendly)
 	 */
-	import { Play, Plus, Star, Clock } from 'lucide-svelte';
+	import { Play } from 'lucide-svelte';
 	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 
-	// PCN Trailer video - this will be the main trailer about Building Outerfields
-	// TODO: Update src when actual trailer is uploaded to R2
-	const trailerVideo: Video = {
-		id: 'pcn-trailer',
-		title: 'Building Outerfields: The Odyssey',
-		description: 'A behind-the-scenes look at how we\'re building a Premium Content Network in public. Watch the journey unfold.',
+	// PCN Overview video
+	const overviewVideo: Video = {
+		id: 'pcn-overview',
+		title: 'What is a Private Content Network?',
+		description: 'See how we build custom Private Content Networks for creators and brands.',
 		duration: '2:30',
-		thumbnail: '/thumbnails/trailer-odyssey.jpg',
-		category: 'Trailer',
+		thumbnail: '/thumbnails/pcn-overview.jpg',
+		category: 'Overview',
 		src: 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev/trailers/pcn-trailer.mp4'
 	};
 
-	function playTrailer() {
-		videoPlayer.play(trailerVideo);
+	function playOverview() {
+		videoPlayer.play(overviewVideo);
 	}
 
-	function scrollToPricing() {
-		document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+	function bookDiscoveryCall() {
+		// TODO: Replace with actual Calendly URL when provided
+		window.open('https://calendly.com/outerfields/discovery-call', '_blank');
 	}
 </script>
 
 <section class="hero">
-	<!-- Background with 3D embed -->
+	<!-- Background with 3D galaxy embed -->
 	<div class="hero-backdrop">
 		<iframe
 			title="OUTERFIELDS 3D Experience"
@@ -42,54 +42,41 @@
 		<div class="hero-gradient"></div>
 	</div>
 
-	<!-- Container for alignment with other sections -->
+	<!-- Centered play button overlay -->
+	<button class="play-overlay" onclick={playOverview} aria-label="Play overview video">
+		<div class="play-button-pulse">
+			<Play size={32} />
+		</div>
+	</button>
+
+	<!-- Container for alignment -->
 	<div class="hero-container">
-		<!-- Left-aligned content -->
 		<div class="hero-content">
-		<!-- Metadata row -->
-		<div class="hero-meta">
-			<span class="meta-badge">New Season</span>
-			<span class="meta-item">
-				<Clock size={14} />
-				75+ Episodes
-			</span>
-			<span class="meta-item">
-				<Star size={14} class="star-icon" />
-				Built in Public
-			</span>
+			<!-- Main Title -->
+			<h1 class="hero-title">Outerfields</h1>
+
+			<!-- Subheadline -->
+			<p class="hero-subheadline">We Build Private Content Networks</p>
+
+			<!-- Supporting Text -->
+			<p class="hero-supporting">
+				Full-service PCN creation for creators and brands ready to own their platform
+			</p>
+
+			<!-- CTA Button -->
+			<div class="hero-actions">
+				<button class="btn-cta" onclick={bookDiscoveryCall}>
+					Book a Discovery Call
+				</button>
+			</div>
 		</div>
-
-		<!-- Title - MASSIVE -->
-		<h1 class="hero-title">
-			<span class="title-line">Building Outerfields:</span>
-			<span class="title-accent">The Odyssey</span>
-		</h1>
-
-		<!-- Subtitle -->
-		<p class="hero-subtitle">
-			A premium content network built in public. Watch how we create, market, 
-			and distribute content across 7 unique series. Trailers and first episodes are free.
-		</p>
-
-		<!-- CTA Buttons -->
-		<div class="hero-actions">
-			<button class="btn-primary" onclick={playTrailer}>
-				<Play size={20} />
-				<span>Watch Trailer</span>
-			</button>
-			<button class="btn-secondary" onclick={scrollToPricing}>
-				<Plus size={20} />
-				<span>Join for $99</span>
-			</button>
-		</div>
-	</div>
 	</div>
 </section>
 
 <style>
 	.hero {
 		position: relative;
-		height: 85vh;
+		height: 100vh;
 		min-height: 600px;
 		width: 100%;
 		display: flex;
@@ -103,6 +90,7 @@
 		width: 100%;
 		max-width: var(--container-max-width);
 		margin: 0 auto;
+		text-align: center;
 	}
 
 	.hero-backdrop {
@@ -120,7 +108,7 @@
 		transform-origin: center center;
 	}
 
-	/* StreamVerse-style gradient: strong at bottom, fading up */
+	/* Gradient overlay for readability */
 	.hero-gradient {
 		position: absolute;
 		inset: 0;
@@ -128,199 +116,180 @@
 			0deg,
 			var(--color-bg-pure) 0%,
 			var(--color-bg-pure) 5%,
-			rgba(0, 0, 0, 0.8) 30%,
-			rgba(0, 0, 0, 0.4) 60%,
-			rgba(0, 0, 0, 0.6) 100%
+			rgba(30, 30, 30, 0.85) 40%,
+			rgba(30, 30, 30, 0.6) 70%,
+			rgba(30, 30, 30, 0.7) 100%
 		);
+	}
+
+	/* Centered pulsing play button */
+	.play-overlay {
+		position: absolute;
+		top: 40%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 15;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+	}
+
+	.play-button-pulse {
+		width: 5rem;
+		height: 5rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.1);
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-radius: 50%;
+		color: white;
+		backdrop-filter: blur(8px);
+		animation: pulse-scale 2s ease-in-out infinite;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.play-button-pulse:hover {
+		background: rgba(244, 81, 38, 0.2);
+		border-color: var(--color-sun);
+		transform: scale(1.1);
+	}
+
+	@keyframes pulse-scale {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.05);
+		}
 	}
 
 	.hero-content {
 		position: relative;
 		z-index: 10;
-		max-width: 42rem;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
-	}
-
-	/* Metadata row */
-	.hero-meta {
-		display: flex;
 		align-items: center;
 		gap: var(--space-md);
-		font-size: var(--text-body-sm);
-		font-weight: 500;
-		color: var(--color-fg-muted);
+		margin-top: 15vh;
 	}
 
-	.meta-badge {
-		padding: 0.25rem 0.625rem;
-		background: rgba(255, 255, 255, 0.15);
-		color: white;
-		font-size: 0.6875rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		border-radius: var(--radius-sm);
-		letter-spacing: 0.05em;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-	}
-
-	.meta-item {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-	}
-
-	.meta-item :global(.star-icon) {
-		color: #facc15;
-	}
-
-	/* Title - sized to fit "BUILDING OUTERFIELDS:" on one line */
+	/* Main Title - Space Grotesk Bold, 72px equivalent */
 	.hero-title {
-		font-size: clamp(2rem, 5.5vw, 4.5rem);
-		font-weight: 900;
+		font-size: clamp(3rem, 8vw, 4.5rem);
+		font-weight: 700;
 		color: var(--color-fg-primary);
-		line-height: 1.05;
-		text-transform: uppercase;
+		line-height: 1;
 		letter-spacing: -0.02em;
 		text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
 		margin: 0;
-		display: flex;
-		flex-direction: column;
 	}
 
-	.title-line {
-		display: block;
-		white-space: nowrap;
-	}
-
-	.title-accent {
-		display: block;
-		font-style: italic;
+	/* Subheadline - Space Grotesk Regular, 24px */
+	.hero-subheadline {
+		font-size: clamp(1.25rem, 3vw, 1.5rem);
 		font-weight: 400;
-		color: var(--color-fg-secondary);
-	}
-
-	/* Subtitle */
-	.hero-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-muted);
-		line-height: 1.6;
-		font-weight: 300;
-		max-width: 36rem;
+		color: var(--color-fg-primary);
+		line-height: 1.3;
 		margin: 0;
 	}
 
-	/* CTA Buttons */
-	.hero-actions {
-		display: flex;
-		gap: var(--space-md);
+	/* Supporting text - 18px, Slate Metal color */
+	.hero-supporting {
+		font-size: clamp(1rem, 2vw, 1.125rem);
+		color: var(--color-slate);
+		line-height: 1.5;
+		max-width: 32rem;
+		margin: 0;
 	}
 
-	.btn-primary,
-	.btn-secondary {
-		display: flex;
+	/* CTA Button - Sun color */
+	.hero-actions {
+		margin-top: var(--space-lg);
+	}
+
+	.btn-cta {
+		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.875rem 2rem;
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
+		justify-content: center;
+		padding: 1rem 2.5rem;
+		background: var(--color-sun);
+		color: white;
+		font-size: 1.125rem;
 		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.02em;
+		border: none;
+		border-radius: var(--radius-md);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
+		min-width: 180px;
 	}
 
-	.btn-primary {
-		background: rgba(255, 255, 255, 0.12);
-		color: white;
-		border: 1px solid rgba(255, 255, 255, 0.25);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
+	.btn-cta:hover {
+		background: var(--color-primary-hover);
+		transform: scale(1.02);
 	}
 
-	.btn-primary:hover {
-		background: rgba(255, 255, 255, 0.2);
-		border-color: rgba(255, 255, 255, 0.35);
-	}
-
-	.btn-primary:active {
+	.btn-cta:active {
 		transform: scale(0.98);
-	}
-
-	.btn-secondary {
-		background: rgba(255, 255, 255, 0.06);
-		color: white;
-		border: 1px solid rgba(255, 255, 255, 0.15);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
-	}
-
-	.btn-secondary:hover {
-		background: rgba(255, 255, 255, 0.12);
-		border-color: rgba(255, 255, 255, 0.25);
 	}
 
 	/* Responsive */
 	@media (max-width: 768px) {
 		.hero {
-			height: 80vh;
+			height: 90vh;
 			min-height: 550px;
 			padding: 0 1rem;
 		}
 
+		.hero-content {
+			margin-top: 20vh;
+		}
+
+		.play-button-pulse {
+			width: 4rem;
+			height: 4rem;
+		}
+
 		.hero-title {
-			font-size: clamp(1.75rem, 6vw, 2.5rem);
+			font-size: clamp(2.5rem, 10vw, 3.5rem);
 		}
 
-		.title-line {
-			white-space: normal;
+		.hero-subheadline {
+			font-size: 1.25rem;
 		}
 
-		.hero-subtitle {
-			font-size: var(--text-body);
+		.hero-supporting {
+			font-size: 1rem;
+			padding: 0 1rem;
 		}
 
-		.hero-meta {
-			flex-wrap: wrap;
-			gap: var(--space-sm);
-		}
-
-		.hero-actions {
-			flex-direction: column;
-			gap: var(--space-sm);
-		}
-
-		.btn-primary,
-		.btn-secondary {
+		.btn-cta {
 			width: 100%;
-			justify-content: center;
+			max-width: 300px;
 		}
 	}
 
 	@media (max-width: 480px) {
 		.hero {
-			height: 75vh;
+			height: 85vh;
 			min-height: 500px;
 		}
 
 		.hero-content {
-			gap: var(--space-md);
+			gap: var(--space-sm);
 		}
 
 		.hero-title {
-			font-size: clamp(1.5rem, 8vw, 2rem);
+			font-size: clamp(2rem, 12vw, 2.5rem);
 		}
 
-		.hero-subtitle {
-			font-size: var(--text-body-sm);
+		.hero-subheadline {
+			font-size: 1.125rem;
 		}
 
-		.btn-primary,
-		.btn-secondary {
-			padding: 0.75rem 1.5rem;
-			font-size: 0.8125rem;
+		.btn-cta {
+			padding: 0.875rem 2rem;
+			font-size: 1rem;
 		}
 	}
 </style>
