@@ -2,10 +2,42 @@
 	/**
 	 * OUTERFIELDS Platform Components
 	 *
-	 * Rams-style breakdown of platform architecture - showing the essential components
+	 * PCN architecture + Vision framework (Code + Media + Build + Sell)
 	 */
-	import { Video, CreditCard, BarChart3, Users, Palette, Globe, Check, ChevronUp, ChevronDown, ArrowDown } from 'lucide-svelte';
+	import { Video, CreditCard, BarChart3, Users, Palette, Globe, Check, ChevronUp, ChevronDown, ArrowDown, Code, Film, Wrench, TrendingUp } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
+
+	// Vision pillars
+	const visionPillars = [
+		{
+			id: 'code',
+			icon: Code,
+			title: 'Code',
+			description: 'Data-driven platform development with custom integrations and automation'
+		},
+		{
+			id: 'media',
+			icon: Film,
+			title: 'Media',
+			description: 'Professional content production that captures your brand essence'
+		},
+		{
+			id: 'build',
+			icon: Wrench,
+			title: 'Build',
+			description: 'Systems, workflows, and infrastructure designed for scale'
+		},
+		{
+			id: 'sell',
+			icon: TrendingUp,
+			title: 'Sell',
+			description: 'Marketing strategies that connect you with your ideal audience'
+		}
+	];
+
+	function bookDiscoveryCall() {
+		window.open('https://calendly.com/outerfields/discovery-call', '_blank');
+	}
 
 	// Icon mapping for dynamic rendering
 	const iconMap: Record<string, ComponentType> = {
@@ -134,6 +166,26 @@
 			{/each}
 		</div>
 
+		<!-- Vision Framework -->
+		<div class="vision-section">
+			<div class="vision-header">
+				<span class="vision-badge">Our Formula</span>
+				<h3 class="vision-title">The Outerfields Approach</h3>
+			</div>
+			<div class="vision-grid">
+				{#each visionPillars as pillar}
+					<div class="vision-card">
+						<div class="vision-icon">
+							<svelte:component this={pillar.icon} size={24} />
+						</div>
+						<h4 class="vision-name">{pillar.title}</h4>
+						<p class="vision-description">{pillar.description}</p>
+					</div>
+				{/each}
+			</div>
+			<p class="vision-formula">Code + Media + Build + Sell = <strong>Unstoppable</strong></p>
+		</div>
+
 		<div class="architecture-diagram">
 			<div class="diagram-header">
 				<span class="diagram-badge">System Overview</span>
@@ -176,6 +228,12 @@
 						<span class="node">Engage</span>
 					</div>
 				</div>
+			</div>
+			<div class="diagram-footer">
+				<p class="diagram-closing">You create. We build. They subscribe.</p>
+				<button class="diagram-cta" onclick={bookDiscoveryCall}>
+					Let's Build Your Network
+				</button>
 			</div>
 		</div>
 	</div>
@@ -441,8 +499,133 @@
 		color: var(--color-fg-subtle);
 	}
 
+	.diagram-footer {
+		margin-top: 2rem;
+		text-align: center;
+	}
+
+	.diagram-closing {
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		margin: 0 0 1.5rem;
+	}
+
+	.diagram-cta {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1rem 2rem;
+		background: var(--color-sun);
+		border: none;
+		border-radius: 0.5rem;
+		font-size: 1rem;
+		font-weight: 700;
+		color: white;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.diagram-cta:hover {
+		background: var(--color-primary-hover);
+		transform: scale(1.02);
+	}
+
+	/* Vision Section */
+	.vision-section {
+		margin-bottom: 4rem;
+		text-align: center;
+	}
+
+	.vision-header {
+		margin-bottom: 2rem;
+	}
+
+	.vision-badge {
+		display: inline-block;
+		padding: 0.375rem 0.75rem;
+		background: var(--color-primary-muted);
+		border: 1px solid rgba(244, 81, 38, 0.3);
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-sun);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin-bottom: 1rem;
+	}
+
+	.vision-title {
+		font-size: clamp(1.5rem, 3vw, 2rem);
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.vision-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1.5rem;
+		margin-bottom: 2rem;
+	}
+
+	.vision-card {
+		padding: 1.5rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+		text-align: center;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.vision-card:hover {
+		border-color: var(--color-sun);
+	}
+
+	.vision-icon {
+		width: 3rem;
+		height: 3rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0 auto 1rem;
+		background: var(--color-primary-muted);
+		border-radius: 0.75rem;
+		color: var(--color-sun);
+	}
+
+	.vision-name {
+		font-size: 1.125rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin: 0 0 0.5rem;
+	}
+
+	.vision-description {
+		font-size: 0.875rem;
+		color: var(--color-fg-muted);
+		line-height: 1.5;
+		margin: 0;
+	}
+
+	.vision-formula {
+		font-size: 1.5rem;
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+		margin: 0;
+	}
+
+	.vision-formula strong {
+		color: var(--color-sun);
+		font-weight: 700;
+	}
+
 	@media (max-width: 1024px) {
 		.components-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.vision-grid {
 			grid-template-columns: repeat(2, 1fr);
 		}
 	}
@@ -450,6 +633,14 @@
 	@media (max-width: 640px) {
 		.components-grid {
 			grid-template-columns: 1fr;
+		}
+
+		.vision-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.vision-formula {
+			font-size: 1.25rem;
 		}
 
 		.layer-nodes {
