@@ -6,9 +6,10 @@
  * - Separation: agents avoid colliding with each other
  * - Wall avoidance: agents stay away from walls/obstacles
  * - Panic spreading: panicked agents influence nearby calm agents
+ * - Group cohesion: fans attending together stay near each other
  *
- * Uses spatial hashing concepts for neighbor queries, though simplified
- * for compute shader constraints.
+ * Uses spatial hash grid for O(1) neighbor queries instead of O(n²).
+ * Grid divides arena into cells, agents only check neighboring cells.
  */
 
 // Agent data structure (8 floats per agent)
@@ -16,7 +17,11 @@
 // [2-3]: velocity (vx, vy)
 // [4-5]: target (tx, ty)
 // [6]: state (0=calm, 1=crowded, 2=panicked)
-// [7]: group_id
+// [7]: encoded group_id:
+//      bits 0-1: role (0=fan, 1=player, 2=staff)
+//      bits 2-3: teamId (0=home, 1=away, 2=neutral)
+//      bits 4-7: directive type (0-15)
+//      bits 8-15: groupId for cohesion (0=solo, 1-255=group)
 
 struct Uniforms {
     deltaTime: f32,
@@ -39,8 +44,12 @@ struct Uniforms {
     // Canvas dimensions (for render shader)
     canvasWidth: f32,
     canvasHeight: f32,
-    _padding1: f32,
-    _padding2: f32,
+    // Determinism parameters
+    seed: f32,
+    frameCount: f32,
+    // Spatial hash grid parameters
+    gridSizeX: f32,
+    gridSizeY: f32,
 }
 
 struct Wall {
@@ -50,12 +59,23 @@ struct Wall {
     y2: f32,
 }
 
-// Target struct removed - targets are stored per-agent in the agents buffer
+// Cell bounds: [start, end) indices into sorted agent list
+struct CellBounds {
+    start: u32,
+    end: u32,
+}
 
 @group(0) @binding(0) var<storage, read_write> agents: array<f32>;
 @group(0) @binding(1) var<uniform> uniforms: Uniforms;
 @group(0) @binding(2) var<storage, read> walls: array<Wall>;
-// Note: targets are embedded in agent data via redistributeAgents(), not a separate buffer
+@group(0) @binding(3) var<storage, read> cellBounds: array<CellBounds>;
+@group(0) @binding(4) var<storage, read> sortedAgentIndices: array<u32>;
+
+// Spatial hash grid constants
+const GRID_COLS: u32 = 32u;  // 800 / 32 = 25 pixels per cell
+const GRID_ROWS: u32 = 24u;  // 600 / 24 = 25 pixels per cell
+const CELL_SIZE: f32 = 25.0;
+const TOTAL_CELLS: u32 = 768u;  // 32 * 24
 
 // Constants
 const AGENT_RADIUS: f32 = 4.0;
@@ -65,6 +85,11 @@ const CROWD_DENSITY_THRESHOLD: f32 = 5.0;
 const STATE_CALM: u32 = 0u;
 const STATE_CROWDED: u32 = 1u;
 const STATE_PANICKED: u32 = 2u;
+
+// Group cohesion constants
+const GROUP_COHESION_RADIUS: f32 = 80.0;   // Max distance to consider group members
+const GROUP_COHESION_STRENGTH: f32 = 1.5;  // Strength of cohesion force
+const GROUP_IDEAL_DISTANCE: f32 = 12.0;    // Ideal distance between group members
 
 // Role constants (encoded in group_id bits 0-1)
 const ROLE_FAN: u32 = 0u;
@@ -107,6 +132,13 @@ fn getState(idx: u32) -> u32 {
 fn getRole(idx: u32) -> u32 {
     let base = idx * 8u;
     return u32(agents[base + 7u]) & 0x3u;
+}
+
+// Get agent groupId from encoded group_id (bits 8-15)
+// 0 = no group (solo), 1-255 = group identifier for cohesion
+fn getGroupId(idx: u32) -> u32 {
+    let base = idx * 8u;
+    return (u32(agents[base + 7u]) >> 8u) & 0xffu;
 }
 
 // Set agent position
@@ -164,12 +196,34 @@ fn getWallNormal(point: vec2<f32>, wall: Wall) -> vec2<f32> {
 }
 
 // Hash function for pseudo-random behavior
+// When seed != 0, uses seed ^ frameCount for deterministic, reproducible randomness
 fn hash(n: u32) -> f32 {
     var x = n;
+    let seed = u32(uniforms.seed);
+    if (seed != 0u) {
+        // Deterministic mode: combine seed and frameCount for reproducible randomness
+        let frameCount = u32(uniforms.frameCount);
+        x = x ^ (seed ^ frameCount);
+    }
     x = ((x >> 16u) ^ x) * 0x45d9f3bu;
     x = ((x >> 16u) ^ x) * 0x45d9f3bu;
     x = (x >> 16u) ^ x;
     return f32(x) / f32(0xffffffffu);
+}
+
+// Spatial hash grid: compute cell index from position
+fn getCellIndex(pos: vec2<f32>) -> u32 {
+    let cellX = clamp(u32(pos.x / CELL_SIZE), 0u, GRID_COLS - 1u);
+    let cellY = clamp(u32(pos.y / CELL_SIZE), 0u, GRID_ROWS - 1u);
+    return cellY * GRID_COLS + cellX;
+}
+
+// Get cell coordinates from position
+fn getCellCoords(pos: vec2<f32>) -> vec2<u32> {
+    return vec2<u32>(
+        clamp(u32(pos.x / CELL_SIZE), 0u, GRID_COLS - 1u),
+        clamp(u32(pos.y / CELL_SIZE), 0u, GRID_ROWS - 1u)
+    );
 }
 
 @compute @workgroup_size(64)
@@ -200,6 +254,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var neighborCount = 0u;
     var panicNeighbors = 0u;
     
+    // Group cohesion tracking
+    let myGroupId = getGroupId(idx);
+    var groupCenterOfMass = vec2<f32>(0.0, 0.0);
+    var groupMemberCount = 0u;
+    
     // 1. Goal force - move toward target
     let toTarget = goalPos - pos;
     let targetDist = length(toTarget);
@@ -217,36 +276,66 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     
     // 2. Separation force - avoid other agents
-    // Check nearby agents (simplified spatial query)
-    for (var i = 0u; i < agentCount; i++) {
-        if (i == idx) {
-            continue;
-        }
-        
-        let otherPos = getPosition(i);
-        
-        // Skip inactive agents
-        if (otherPos.x < -500.0) {
-            continue;
-        }
-        
-        let toOther = otherPos - pos;
-        let dist = length(toOther);
-        
-        if (dist < PERCEPTION_RADIUS && dist > 0.001) {
-            neighborCount = neighborCount + 1u;
+    // Use spatial hash grid for O(1) neighbor queries instead of O(n²)
+    let cellCoords = getCellCoords(pos);
+    let cellX = i32(cellCoords.x);
+    let cellY = i32(cellCoords.y);
+    
+    // Check 3x3 neighborhood of cells (9 cells max)
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let nx = cellX + dx;
+            let ny = cellY + dy;
             
-            // Count panicked neighbors
-            let otherState = getState(i);
-            if (otherState == STATE_PANICKED) {
-                panicNeighbors = panicNeighbors + 1u;
-            }
-            
-            // Separation force (stronger when closer)
-            if (dist < AGENT_RADIUS * 4.0) {
-                let separationDir = -toOther / dist;
-                let separationMag = uniforms.separationStrength * (1.0 - dist / (AGENT_RADIUS * 4.0));
-                totalForce += separationDir * separationMag;
+            // Bounds check for grid
+            if (nx >= 0 && nx < i32(GRID_COLS) && ny >= 0 && ny < i32(GRID_ROWS)) {
+                let neighborCellIdx = u32(ny) * GRID_COLS + u32(nx);
+                let bounds = cellBounds[neighborCellIdx];
+                
+                // Iterate over agents in this cell
+                for (var sortedIdx = bounds.start; sortedIdx < bounds.end; sortedIdx++) {
+                    let i = sortedAgentIndices[sortedIdx];
+                    
+                    if (i == idx) {
+                        continue;
+                    }
+                    
+                    let otherPos = getPosition(i);
+                    
+                    // Skip inactive agents
+                    if (otherPos.x < -500.0) {
+                        continue;
+                    }
+                    
+                    let toOther = otherPos - pos;
+                    let dist = length(toOther);
+                    
+                    if (dist < PERCEPTION_RADIUS && dist > 0.001) {
+                        neighborCount = neighborCount + 1u;
+                        
+                        // Count panicked neighbors
+                        let otherState = getState(i);
+                        if (otherState == STATE_PANICKED) {
+                            panicNeighbors = panicNeighbors + 1u;
+                        }
+                        
+                        // Track group members for cohesion (only if we're in a group)
+                        if (myGroupId > 0u && dist < GROUP_COHESION_RADIUS) {
+                            let otherGroupId = getGroupId(i);
+                            if (otherGroupId == myGroupId) {
+                                groupCenterOfMass += otherPos;
+                                groupMemberCount = groupMemberCount + 1u;
+                            }
+                        }
+                        
+                        // Separation force (stronger when closer)
+                        if (dist < AGENT_RADIUS * 4.0) {
+                            let separationDir = -toOther / dist;
+                            let separationMag = uniforms.separationStrength * (1.0 - dist / (AGENT_RADIUS * 4.0));
+                            totalForce += separationDir * separationMag;
+                        }
+                    }
+                }
             }
         }
     }
@@ -261,6 +350,25 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             let normal = getWallNormal(pos, wall);
             let wallForce = uniforms.wallStrength * (1.0 - dist / (AGENT_RADIUS * 6.0));
             totalForce += normal * wallForce;
+        }
+    }
+    
+    // 3.5 Group cohesion force (fans attending together stay near each other)
+    if (myGroupId > 0u && groupMemberCount > 0u) {
+        // Calculate center of mass of visible group members
+        groupCenterOfMass = groupCenterOfMass / f32(groupMemberCount);
+        
+        let toGroupCenter = groupCenterOfMass - pos;
+        let distToCenter = length(toGroupCenter);
+        
+        // Only apply cohesion if we're farther than ideal distance from group
+        if (distToCenter > GROUP_IDEAL_DISTANCE) {
+            let cohesionDir = toGroupCenter / distToCenter;
+            // Cohesion strength increases with distance from group center
+            // but is softer than separation to allow natural movement
+            let cohesionMag = GROUP_COHESION_STRENGTH * 
+                min((distToCenter - GROUP_IDEAL_DISTANCE) / GROUP_COHESION_RADIUS, 1.0);
+            totalForce += cohesionDir * cohesionMag;
         }
     }
     

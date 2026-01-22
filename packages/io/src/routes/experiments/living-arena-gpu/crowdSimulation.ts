@@ -23,11 +23,26 @@ import {
 	updatePossession,
 	getCurrentPossession
 } from './agentDirectives';
+import {
+	type SimulationTelemetry,
+	type FrameMetrics,
+	type TelemetryConfig,
+	createTelemetry
+} from './telemetry';
 
 // Import shaders as raw text
 import crowdShaderSource from './shaders/crowd.wgsl?raw';
 import renderShaderSource from './shaders/render.wgsl?raw';
 import arenaShaderSource from './shaders/arena.wgsl?raw';
+import cellAssignShaderSource from './shaders/cellAssign.wgsl?raw';
+import cellBoundsShaderSource from './shaders/cellBounds.wgsl?raw';
+import bitonicSortShaderSource from './shaders/bitonicSort.wgsl?raw';
+
+/** Spatial hash grid constants - must match shader values */
+const GRID_COLS = 32;
+const GRID_ROWS = 24;
+const CELL_SIZE = 25.0;
+const TOTAL_CELLS = GRID_COLS * GRID_ROWS;
 
 /** Agent state constants matching shader values */
 export const AgentState = {
@@ -52,6 +67,8 @@ export interface SimulationConfig {
 	wallStrength: number;
 	maxSpeed: number;
 	panicSpreadRadius: number;
+	/** Seed for deterministic simulation (0 = non-deterministic) */
+	seed: number;
 }
 
 const DEFAULT_CONFIG: SimulationConfig = {
@@ -64,7 +81,8 @@ const DEFAULT_CONFIG: SimulationConfig = {
 	separationStrength: 8.0,
 	wallStrength: 15.0,
 	maxSpeed: 3.0,
-	panicSpreadRadius: 30.0
+	panicSpreadRadius: 30.0,
+	seed: 0 // 0 = non-deterministic, any other value = deterministic
 };
 
 /** Result of WebGPU initialization */
@@ -150,6 +168,22 @@ export class CrowdSimulation {
 	private uniformBuffer!: GPUBuffer;
 	private wallBuffer!: GPUBuffer;
 
+	// Spatial hash grid buffers for O(1) neighbor queries
+	private agentCellBuffer!: GPUBuffer; // Cell assignment per agent
+	private cellBoundsBuffer!: GPUBuffer; // Start/end indices per cell
+	private sortedAgentIndicesBuffer!: GPUBuffer; // Agent indices sorted by cell
+	private sortUniformBuffer!: GPUBuffer; // Uniforms for bitonic sort
+
+	// Spatial hash grid pipelines
+	private cellAssignPipeline!: GPUComputePipeline;
+	private cellAssignBindGroup!: GPUBindGroup;
+	private bitonicSortPipeline!: GPUComputePipeline;
+	private bitonicSortBindGroup!: GPUBindGroup;
+	private cellBoundsPipeline!: GPUComputePipeline;
+	private cellBoundsResetPipeline!: GPUComputePipeline;
+	private cellBoundsBindGroup!: GPUBindGroup;
+	private cellBoundsResetBindGroup!: GPUBindGroup;
+
 	// Vertex buffer for circle geometry
 	private circleVertexBuffer!: GPUBuffer;
 	private circleIndexBuffer!: GPUBuffer;
@@ -164,6 +198,7 @@ export class CrowdSimulation {
 	// Current state
 	private currentScenario: number = 0;
 	private deltaTime: number = 1 / 60;
+	private frameCount: number = 0;
 	private isRunning = false;
 	private animationFrameId: number | null = null;
 
@@ -173,6 +208,13 @@ export class CrowdSimulation {
 	private directiveUpdateTimer = 0;
 	private directiveUpdateInterval = 0.1; // Update directives every 100ms
 	private useDirectiveSystem = true; // Enable new directive system
+
+	// Telemetry for observability and harness integration
+	private telemetry: SimulationTelemetry | null = null;
+	private lastFrameTime = 0;
+	private computeStartTime = 0;
+	private renderStartTime = 0;
+	private currentExperimentId: string | null = null;
 
 	constructor(webgpu: WebGPUContext, config: Partial<SimulationConfig> = {}) {
 		this.device = webgpu.device;
@@ -188,10 +230,111 @@ export class CrowdSimulation {
 		this.createBuffers();
 		this.createCircleGeometry();
 		this.createArenaGeometry();
+		await this.createSpatialHashPipelines();
 		await this.createComputePipeline();
 		await this.createRenderPipeline();
 		await this.createArenaPipeline();
 		this.initializeAgents();
+	}
+
+	/**
+	 * Create spatial hash grid compute pipelines for O(1) neighbor queries
+	 */
+	private async createSpatialHashPipelines(): Promise<void> {
+		// Cell assignment pipeline
+		const cellAssignModule = this.device.createShaderModule({
+			code: cellAssignShaderSource,
+			label: 'Cell Assign Shader'
+		});
+
+		this.cellAssignPipeline = this.device.createComputePipeline({
+			layout: 'auto',
+			compute: {
+				module: cellAssignModule,
+				entryPoint: 'main'
+			},
+			label: 'Cell Assign Pipeline'
+		});
+
+		this.cellAssignBindGroup = this.device.createBindGroup({
+			layout: this.cellAssignPipeline.getBindGroupLayout(0),
+			entries: [
+				{ binding: 0, resource: { buffer: this.agentBuffer } },
+				{ binding: 1, resource: { buffer: this.uniformBuffer } },
+				{ binding: 2, resource: { buffer: this.agentCellBuffer } }
+			],
+			label: 'Cell Assign Bind Group'
+		});
+
+		// Bitonic sort pipeline
+		const bitonicSortModule = this.device.createShaderModule({
+			code: bitonicSortShaderSource,
+			label: 'Bitonic Sort Shader'
+		});
+
+		this.bitonicSortPipeline = this.device.createComputePipeline({
+			layout: 'auto',
+			compute: {
+				module: bitonicSortModule,
+				entryPoint: 'main'
+			},
+			label: 'Bitonic Sort Pipeline'
+		});
+
+		this.bitonicSortBindGroup = this.device.createBindGroup({
+			layout: this.bitonicSortPipeline.getBindGroupLayout(0),
+			entries: [
+				{ binding: 0, resource: { buffer: this.agentCellBuffer } },
+				{ binding: 1, resource: { buffer: this.sortUniformBuffer } }
+			],
+			label: 'Bitonic Sort Bind Group'
+		});
+
+		// Cell bounds pipeline
+		const cellBoundsModule = this.device.createShaderModule({
+			code: cellBoundsShaderSource,
+			label: 'Cell Bounds Shader'
+		});
+
+		this.cellBoundsPipeline = this.device.createComputePipeline({
+			layout: 'auto',
+			compute: {
+				module: cellBoundsModule,
+				entryPoint: 'main'
+			},
+			label: 'Cell Bounds Pipeline'
+		});
+
+		this.cellBoundsResetPipeline = this.device.createComputePipeline({
+			layout: 'auto',
+			compute: {
+				module: cellBoundsModule,
+				entryPoint: 'resetCells'
+			},
+			label: 'Cell Bounds Reset Pipeline'
+		});
+
+		this.cellBoundsBindGroup = this.device.createBindGroup({
+			layout: this.cellBoundsPipeline.getBindGroupLayout(0),
+			entries: [
+				{ binding: 0, resource: { buffer: this.agentCellBuffer } },
+				{ binding: 1, resource: { buffer: this.uniformBuffer } },
+				{ binding: 2, resource: { buffer: this.cellBoundsBuffer } },
+				{ binding: 3, resource: { buffer: this.sortedAgentIndicesBuffer } }
+			],
+			label: 'Cell Bounds Bind Group'
+		});
+
+		this.cellBoundsResetBindGroup = this.device.createBindGroup({
+			layout: this.cellBoundsResetPipeline.getBindGroupLayout(0),
+			entries: [
+				{ binding: 0, resource: { buffer: this.agentCellBuffer } },
+				{ binding: 1, resource: { buffer: this.uniformBuffer } },
+				{ binding: 2, resource: { buffer: this.cellBoundsBuffer } },
+				{ binding: 3, resource: { buffer: this.sortedAgentIndicesBuffer } }
+			],
+			label: 'Cell Bounds Reset Bind Group'
+		});
 	}
 
 	/**
@@ -218,9 +361,10 @@ export class CrowdSimulation {
 		// deltaTime(1) + agentCount(1) + arenaSize(2) + goalStrength(1) + separationStrength(1) +
 		// wallStrength(1) + maxSpeed(1) + panicRadius(1) + wallCount(1) + targetCount(1) + scenario(1) +
 		// ellipse params: centerX(1) + centerY(1) + rx(1) + ry(1) +
-		// canvas dimensions: canvasWidth(1) + canvasHeight(1) = 18 floats (padded to 20 for alignment)
+		// canvas dimensions: canvasWidth(1) + canvasHeight(1) +
+		// determinism: seed(1) + frameCount(1) = 20 floats (padded to 24 for alignment)
 		this.uniformBuffer = this.device.createBuffer({
-			size: 20 * 4,
+			size: 24 * 4,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 			label: 'Uniform Buffer'
 		});
@@ -231,7 +375,35 @@ export class CrowdSimulation {
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 			label: 'Wall Buffer'
 		});
-		// Note: targets are stored per-agent, not in a separate buffer
+
+		// Spatial hash grid buffers for O(1) neighbor queries
+		// Agent cell buffer: packed (cellIndex << 16) | agentIndex for sorting
+		this.agentCellBuffer = this.device.createBuffer({
+			size: agentCount * 4, // 1 u32 per agent
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+			label: 'Agent Cell Buffer'
+		});
+
+		// Cell bounds buffer: start/end indices for each cell (2 u32 per cell)
+		this.cellBoundsBuffer = this.device.createBuffer({
+			size: TOTAL_CELLS * 2 * 4, // 2 u32 per cell
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+			label: 'Cell Bounds Buffer'
+		});
+
+		// Sorted agent indices: agent indices sorted by cell
+		this.sortedAgentIndicesBuffer = this.device.createBuffer({
+			size: agentCount * 4, // 1 u32 per agent
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+			label: 'Sorted Agent Indices Buffer'
+		});
+
+		// Sort uniforms: agentCount, stage, step, padding
+		this.sortUniformBuffer = this.device.createBuffer({
+			size: 4 * 4, // 4 u32
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+			label: 'Sort Uniform Buffer'
+		});
 	}
 
 	/**
@@ -435,7 +607,9 @@ export class CrowdSimulation {
 			entries: [
 				{ binding: 0, resource: { buffer: this.agentBuffer } },
 				{ binding: 1, resource: { buffer: this.uniformBuffer } },
-				{ binding: 2, resource: { buffer: this.wallBuffer } }
+				{ binding: 2, resource: { buffer: this.wallBuffer } },
+				{ binding: 3, resource: { buffer: this.cellBoundsBuffer } },
+				{ binding: 4, resource: { buffer: this.sortedAgentIndicesBuffer } }
 			],
 			label: 'Compute Bind Group'
 		});
@@ -625,12 +799,16 @@ export class CrowdSimulation {
 			}
 			agentData[idx + 6] = state;
 
-			// Encode role and team in group_id slot:
+			// Encode role, team, directive, and group in group_id slot:
 			// Bits 0-1: role (0=fan, 1=player, 2=staff)
 			// Bits 2-3: teamId (0=home, 1=away, 2=neutral)
-			// Bits 4-7: directive type
+			// Bits 4-7: directive type (0-15)
+			// Bits 8-15: groupId for cohesion (0=no group, 1-255=group)
 			const encodedGroup =
-				(directive.role & 0x3) | ((directive.teamId & 0x3) << 2) | ((directive.directive & 0xf) << 4);
+				(directive.role & 0x3) |
+				((directive.teamId & 0x3) << 2) |
+				((directive.directive & 0xf) << 4) |
+				((directive.groupId & 0xff) << 8);
 			agentData[idx + 7] = encodedGroup;
 		}
 
@@ -670,6 +848,9 @@ export class CrowdSimulation {
 			// Canvas dimensions for aspect ratio correction
 			this.config.canvasWidth,
 			this.config.canvasHeight,
+			// Determinism parameters
+			this.config.seed,
+			this.frameCount,
 			0, // padding
 			0 // padding
 		]);
@@ -694,20 +875,79 @@ export class CrowdSimulation {
 	 */
 	private simulate(): void {
 		this.updateUniforms();
+		this.frameCount++;
 
-		const commandEncoder = this.device.createCommandEncoder();
+		const { agentCount } = this.config;
+		const agentWorkgroups = Math.ceil(agentCount / 64);
+		const cellWorkgroups = Math.ceil(TOTAL_CELLS / 64);
 
-		// Compute pass
-		const computePass = commandEncoder.beginComputePass();
+		// Phase 1: Spatial hash grid construction
+		const hashEncoder = this.device.createCommandEncoder();
+
+		// 1a. Reset cell bounds
+		const resetPass = hashEncoder.beginComputePass();
+		resetPass.setPipeline(this.cellBoundsResetPipeline);
+		resetPass.setBindGroup(0, this.cellBoundsResetBindGroup);
+		resetPass.dispatchWorkgroups(cellWorkgroups);
+		resetPass.end();
+
+		// 1b. Assign agents to cells
+		const assignPass = hashEncoder.beginComputePass();
+		assignPass.setPipeline(this.cellAssignPipeline);
+		assignPass.setBindGroup(0, this.cellAssignBindGroup);
+		assignPass.dispatchWorkgroups(agentWorkgroups);
+		assignPass.end();
+
+		this.device.queue.submit([hashEncoder.finish()]);
+
+		// 1c. Bitonic sort - requires multiple passes with barriers
+		this.runBitonicSort(agentCount);
+
+		// 1d. Compute cell bounds
+		const boundsEncoder = this.device.createCommandEncoder();
+		const boundsPass = boundsEncoder.beginComputePass();
+		boundsPass.setPipeline(this.cellBoundsPipeline);
+		boundsPass.setBindGroup(0, this.cellBoundsBindGroup);
+		boundsPass.dispatchWorkgroups(agentWorkgroups);
+		boundsPass.end();
+		this.device.queue.submit([boundsEncoder.finish()]);
+
+		// Phase 2: Main simulation with spatial hashing
+		const simEncoder = this.device.createCommandEncoder();
+		const computePass = simEncoder.beginComputePass();
 		computePass.setPipeline(this.computePipeline);
 		computePass.setBindGroup(0, this.computeBindGroup);
-
-		// Dispatch enough workgroups to cover all agents (64 threads per workgroup)
-		const workgroupCount = Math.ceil(this.config.agentCount / 64);
-		computePass.dispatchWorkgroups(workgroupCount);
+		computePass.dispatchWorkgroups(agentWorkgroups);
 		computePass.end();
 
-		this.device.queue.submit([commandEncoder.finish()]);
+		this.device.queue.submit([simEncoder.finish()]);
+	}
+
+	/**
+	 * Run bitonic sort on agent cells
+	 * Bitonic sort requires O(log²n) passes
+	 */
+	private runBitonicSort(count: number): void {
+		// Pad to next power of 2
+		const n = Math.pow(2, Math.ceil(Math.log2(count)));
+		const stages = Math.ceil(Math.log2(n));
+
+		for (let stage = 0; stage < stages; stage++) {
+			for (let step = stage; step >= 0; step--) {
+				// Update sort uniforms
+				const sortData = new Uint32Array([count, stage, step, 0]);
+				this.device.queue.writeBuffer(this.sortUniformBuffer, 0, sortData);
+
+				// Run one sort pass
+				const encoder = this.device.createCommandEncoder();
+				const pass = encoder.beginComputePass();
+				pass.setPipeline(this.bitonicSortPipeline);
+				pass.setBindGroup(0, this.bitonicSortBindGroup);
+				pass.dispatchWorkgroups(Math.ceil(n / 512)); // 256 threads process n/2 pairs
+				pass.end();
+				this.device.queue.submit([encoder.finish()]);
+			}
+		}
 	}
 
 	/**
@@ -861,6 +1101,8 @@ export class CrowdSimulation {
 	private loop = (): void => {
 		if (!this.isRunning) return;
 
+		const frameStartTime = performance.now();
+
 		// Update directives periodically (not every frame)
 		this.directiveUpdateTimer += this.deltaTime;
 		if (this.directiveUpdateTimer >= this.directiveUpdateInterval) {
@@ -878,8 +1120,27 @@ export class CrowdSimulation {
 			this.updatePlayerPositions();
 		}
 
+		// Track compute time
+		const computeStartTime = performance.now();
 		this.simulate();
+		const computeEndTime = performance.now();
+
+		// Track render time
+		const renderStartTime = performance.now();
 		this.render();
+		const renderEndTime = performance.now();
+
+		// Record telemetry if enabled
+		if (this.telemetry) {
+			const frameEndTime = performance.now();
+			const frameMetrics = this.collectFrameMetrics(
+				frameStartTime,
+				frameEndTime,
+				computeEndTime - computeStartTime,
+				renderEndTime - renderStartTime
+			);
+			this.telemetry.recordFrame(frameMetrics);
+		}
 
 		this.animationFrameId = requestAnimationFrame(this.loop);
 	};
@@ -908,7 +1169,16 @@ export class CrowdSimulation {
 	 * Set the current scenario (triggers agent redistribution)
 	 */
 	setScenario(scenarioIndex: number, effect: ScenarioEffect): void {
+		const previousScenario = this.currentScenario;
 		this.currentScenario = scenarioIndex;
+
+		// Record scenario change in telemetry
+		if (this.telemetry && previousScenario !== scenarioIndex) {
+			this.telemetry.recordScenarioChange(
+				`scenario_${scenarioIndex}`,
+				`scenario_${previousScenario}`
+			);
+		}
 
 		// Map scenario to event phase for directive system
 		const phaseMap: Record<number, EventPhaseType> = {
@@ -960,9 +1230,12 @@ export class CrowdSimulation {
 				}
 				agentData[idx + 6] = state;
 
-				// Properly encode role, team, and directive (same as initializeAgents)
+				// Properly encode role, team, directive, and group (same as initializeAgents)
 				const encodedGroup =
-					(directive.role & 0x3) | ((directive.teamId & 0x3) << 2) | ((directive.directive & 0xf) << 4);
+					(directive.role & 0x3) |
+					((directive.teamId & 0x3) << 2) |
+					((directive.directive & 0xf) << 4) |
+					((directive.groupId & 0xff) << 8);
 				agentData[idx + 7] = encodedGroup;
 			}
 
@@ -1109,15 +1382,175 @@ export class CrowdSimulation {
 		this.config.canvasHeight = height;
 	}
 
+	// ─────────────────────────────────────────────────────────────────────────
+	// TELEMETRY INTEGRATION
+	// ─────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * Enable telemetry collection for observability.
+	 * Integrates with @create-something/harness for CI/CD validation.
+	 */
+	enableTelemetry(config?: Partial<TelemetryConfig>): SimulationTelemetry {
+		this.telemetry = createTelemetry(config);
+		return this.telemetry;
+	}
+
+	/**
+	 * Disable telemetry collection.
+	 */
+	disableTelemetry(): void {
+		if (this.currentExperimentId && this.telemetry) {
+			this.telemetry.endExperimentSpan(this.currentExperimentId);
+			this.currentExperimentId = null;
+		}
+		this.telemetry = null;
+	}
+
+	/**
+	 * Get the current telemetry instance (if enabled).
+	 */
+	getTelemetry(): SimulationTelemetry | null {
+		return this.telemetry;
+	}
+
+	/**
+	 * Start an experiment span for tracing.
+	 * Use this to correlate simulation runs with harness sessions.
+	 */
+	startExperiment(
+		experimentId: string,
+		options: {
+			name?: string;
+			hypothesis?: string;
+			harnessSessionId?: string;
+			beadsIssueId?: string;
+			labels?: string[];
+		} = {}
+	): void {
+		if (!this.telemetry) {
+			this.enableTelemetry();
+		}
+
+		// End any existing experiment
+		if (this.currentExperimentId) {
+			this.endExperiment();
+		}
+
+		this.currentExperimentId = experimentId;
+		this.telemetry!.startExperimentSpan(experimentId, {
+			name: options.name,
+			hypothesis: options.hypothesis,
+			config: {
+				agentCount: this.config.agentCount,
+				scenario: this.currentScenario,
+				eventPhase: this.currentEventPhase,
+				seed: this.config.seed
+			},
+			harnessSessionId: options.harnessSessionId,
+			beadsIssueId: options.beadsIssueId,
+			labels: options.labels
+		});
+
+		// Record scenario as starting event
+		this.telemetry!.recordScenarioChange(`scenario_${this.currentScenario}`);
+	}
+
+	/**
+	 * End the current experiment span.
+	 */
+	endExperiment(status: 'ok' | 'error' = 'ok', message?: string): void {
+		if (!this.telemetry || !this.currentExperimentId) return;
+
+		this.telemetry.endExperimentSpan(this.currentExperimentId, status, message);
+		this.currentExperimentId = null;
+	}
+
+	/**
+	 * Get a checkpoint summary for harness integration.
+	 * Returns telemetry state suitable for AgentContext.
+	 */
+	getCheckpointSummary(): ReturnType<SimulationTelemetry['generateCheckpointSummary']> | null {
+		return this.telemetry?.generateCheckpointSummary() ?? null;
+	}
+
+	/**
+	 * Collect frame metrics for telemetry.
+	 */
+	private collectFrameMetrics(
+		frameStartTime: number,
+		frameEndTime: number,
+		computeTimeMs: number,
+		renderTimeMs: number
+	): FrameMetrics {
+		// Count agent states from directive system
+		let panickedAgents = 0;
+		let crowdedAgents = 0;
+
+		for (const directive of this.agentDirectives) {
+			// Check for panic-inducing directives
+			if (directive.directive === Directive.EXITING) {
+				panickedAgents++;
+			} else if (
+				directive.directive === Directive.GOING_TO_RESTROOM ||
+				directive.directive === Directive.GOING_TO_FOOD
+			) {
+				crowdedAgents++;
+			}
+		}
+
+		// Estimate density (simplified - actual density would require GPU readback)
+		const avgDensity = this.config.agentCount / (GRID_COLS * GRID_ROWS);
+		const maxDensity = avgDensity * 3; // Estimate - hotspots can be 3x average
+
+		// Convert EventPhase number to string name
+		const eventPhaseNames: Record<number, string> = {
+			[EventPhase.PRE_EVENT]: 'PRE_EVENT',
+			[EventPhase.EVENT_START]: 'EVENT_START',
+			[EventPhase.HALFTIME]: 'HALFTIME',
+			[EventPhase.SECOND_HALF]: 'SECOND_HALF',
+			[EventPhase.EVENT_END]: 'EVENT_END',
+			[EventPhase.POST_EVENT]: 'POST_EVENT'
+		};
+
+		return {
+			frameNumber: this.frameCount,
+			frameTimeMs: frameEndTime - frameStartTime,
+			computeTimeMs,
+			renderTimeMs,
+			activeAgents: this.config.agentCount,
+			panickedAgents,
+			crowdedAgents,
+			avgDensity,
+			maxDensity,
+			scenario: this.currentScenario,
+			eventPhase: eventPhaseNames[this.currentEventPhase] ?? 'UNKNOWN'
+		};
+	}
+
 	/**
 	 * Clean up GPU resources
 	 */
 	destroy(): void {
 		this.stop();
+
+		// Clean up telemetry
+		if (this.currentExperimentId && this.telemetry) {
+			this.telemetry.endExperimentSpan(this.currentExperimentId);
+			this.currentExperimentId = null;
+		}
+		this.telemetry = null;
+
+		// GPU buffers
 		this.agentBuffer?.destroy();
 		this.agentReadBuffer?.destroy();
 		this.uniformBuffer?.destroy();
 		this.wallBuffer?.destroy();
+		// Spatial hash grid buffers
+		this.agentCellBuffer?.destroy();
+		this.cellBoundsBuffer?.destroy();
+		this.sortedAgentIndicesBuffer?.destroy();
+		this.sortUniformBuffer?.destroy();
+		// Render buffers
 		this.circleVertexBuffer?.destroy();
 		this.circleIndexBuffer?.destroy();
 		this.arenaVertexBuffer?.destroy();

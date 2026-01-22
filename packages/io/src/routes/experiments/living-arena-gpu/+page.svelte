@@ -3,11 +3,19 @@
 	 * Living Arena GPU - WebGPU Crowd Simulation
 	 *
 	 * GPU-accelerated version of the Living Arena experiment featuring
-	 * realistic crowd simulation with 5,000-10,000 agents showing
+	 * realistic crowd simulation with 8,000-50,000 agents showing
 	 * emergent behaviors like bottleneck formation and panic spreading.
+	 *
+	 * Features:
+	 * - Scalable agent count (8K-50K via spatial hashing)
+	 * - Deterministic mode with shareable URLs
+	 * - Real-time telemetry dashboard
 	 */
 
 	import { onMount, onDestroy } from 'svelte';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import {
 		Shield,
 		Lightbulb,
@@ -17,7 +25,11 @@
 		AlertTriangle,
 		Cpu,
 		Zap,
-		ExternalLink
+		ExternalLink,
+		Share2,
+		Activity,
+		Gauge,
+		Users
 	} from 'lucide-svelte';
 
 	// Import simulation engine
@@ -27,6 +39,7 @@
 		isWebGPUSupported,
 		type WebGPUContext
 	} from './crowdSimulation';
+	import type { SimulationTelemetry, AggregatedMetrics } from './telemetry';
 
 	// Import shared data from original experiment
 	import type { SecurityStatus, LightingMode, Incident } from '../living-arena/arenaTypes';
@@ -46,8 +59,28 @@
 	let simulation = $state<CrowdSimulation | null>(null);
 	let canvasElement = $state<HTMLCanvasElement | null>(null);
 
-	// Simulation stats
+	// Scale controls
+	const MIN_AGENTS = 1000;
+	const MAX_AGENTS = 50000;
+	const HIGH_AGENT_WARNING = 20000;
 	let agentCount = $state(8000);
+	let pendingAgentCount = $state(8000);
+	let showScaleWarning = $derived(pendingAgentCount > HIGH_AGENT_WARNING);
+
+	// Deterministic mode / sharing
+	let simulationSeed = $state(0); // 0 = non-deterministic
+	let seedInput = $state('');
+	let shareUrl = $state('');
+	let showShareCopied = $state(false);
+
+	// Telemetry state
+	let telemetry = $state<SimulationTelemetry | null>(null);
+	let telemetryMetrics = $state<AggregatedMetrics | null>(null);
+	let systemHealth = $state(1.0);
+	let panicRate = $state(0);
+	let crowdingRate = $state(0);
+
+	// Simulation stats
 	let fps = $state(0);
 	let lastFrameTime = 0;
 	let frameCount = 0;
@@ -81,7 +114,7 @@
 	let initializationStarted = false;
 
 	// Initialize WebGPU asynchronously
-	async function initializeSimulation(canvas: HTMLCanvasElement) {
+	async function initializeSimulation(canvas: HTMLCanvasElement, seed?: number) {
 		if (initializationStarted) return;
 		initializationStarted = true;
 
@@ -115,11 +148,32 @@
 				canvasWidth: canvas.width,
 				canvasHeight: canvas.height,
 				arenaWidth: 800,
-				arenaHeight: 600
+				arenaHeight: 600,
+				seed: seed ?? simulationSeed
 			});
 
 			await simulation.initialize();
 			console.log('[WebGPU] Simulation initialized');
+
+			// Enable telemetry for real-time metrics
+			telemetry = simulation.enableTelemetry({
+				debugConsole: false,
+				aggregationWindowMs: 1000,
+				onMetrics: (metrics) => {
+					telemetryMetrics = metrics;
+					// Update derived telemetry state
+					const gauges = telemetry?.getGauges();
+					if (gauges) {
+						systemHealth = gauges.systemHealth;
+					}
+					if (metrics.agents.avg > 0) {
+						// Estimate panic/crowding from frame data
+						panicRate = (telemetryMetrics?.panicEvents ?? 0) > 0 ? 
+							Math.min(100, (telemetryMetrics?.panicEvents ?? 0) * 10) : 0;
+					}
+				}
+			});
+			console.log('[WebGPU] Telemetry enabled');
 
 			// Apply initial scenario
 			const initialEffect = scenarioEffects[activeScenario];
@@ -133,15 +187,110 @@
 		}
 	}
 
+	// Restart simulation with new agent count
+	async function restartWithAgentCount(newCount: number) {
+		if (!canvasElement || !webgpuContext) return;
+
+		// Stop and destroy current simulation
+		simulation?.destroy();
+		simulation = null;
+		initializationStarted = false;
+
+		// Update agent count
+		agentCount = newCount;
+		pendingAgentCount = newCount;
+
+		// Reinitialize
+		await initializeSimulation(canvasElement, simulationSeed);
+	}
+
+	// Apply agent count change (debounced via button)
+	function applyAgentCount() {
+		if (pendingAgentCount !== agentCount && pendingAgentCount >= MIN_AGENTS && pendingAgentCount <= MAX_AGENTS) {
+			restartWithAgentCount(pendingAgentCount);
+		}
+	}
+
+	// Set deterministic seed
+	function applySeed() {
+		const seed = parseInt(seedInput, 10);
+		if (!isNaN(seed) && seed > 0) {
+			simulationSeed = seed;
+			restartWithAgentCount(agentCount);
+		} else if (seedInput === '' || seedInput === '0') {
+			simulationSeed = 0;
+			restartWithAgentCount(agentCount);
+		}
+	}
+
+	// Generate shareable URL
+	function generateShareUrl(): string {
+		if (!browser) return '';
+		const url = new URL(window.location.href);
+		url.searchParams.set('agents', agentCount.toString());
+		url.searchParams.set('scenario', activeScenario.toString());
+		if (simulationSeed > 0) {
+			url.searchParams.set('seed', simulationSeed.toString());
+		}
+		return url.toString();
+	}
+
+	// Copy share URL to clipboard
+	async function copyShareUrl() {
+		shareUrl = generateShareUrl();
+		try {
+			await navigator.clipboard.writeText(shareUrl);
+			showShareCopied = true;
+			setTimeout(() => { showShareCopied = false; }, 2000);
+		} catch (err) {
+			console.error('Failed to copy URL:', err);
+		}
+	}
+
+	// Parse URL parameters on mount
+	function parseUrlParams() {
+		if (!browser) return;
+		const urlParams = new URLSearchParams(window.location.search);
+		
+		const agentsParam = urlParams.get('agents');
+		if (agentsParam) {
+			const agents = parseInt(agentsParam, 10);
+			if (!isNaN(agents) && agents >= MIN_AGENTS && agents <= MAX_AGENTS) {
+				agentCount = agents;
+				pendingAgentCount = agents;
+			}
+		}
+
+		const scenarioParam = urlParams.get('scenario');
+		if (scenarioParam) {
+			const scenario = parseInt(scenarioParam, 10);
+			if (!isNaN(scenario) && scenario >= 0 && scenario < intelligenceScenarios.length) {
+				activeScenario = scenario;
+			}
+		}
+
+		const seedParam = urlParams.get('seed');
+		if (seedParam) {
+			const seed = parseInt(seedParam, 10);
+			if (!isNaN(seed) && seed > 0) {
+				simulationSeed = seed;
+				seedInput = seed.toString();
+			}
+		}
+	}
+
 	// Effect to initialize when canvas is available
 	$effect(() => {
 		if (canvasElement && webgpuSupported && !initializationStarted) {
-			initializeSimulation(canvasElement);
+			initializeSimulation(canvasElement, simulationSeed);
 		}
 	});
 
 	// Initialize on mount
 	onMount(() => {
+		// Parse URL parameters first (before WebGPU check)
+		parseUrlParams();
+
 		webgpuSupported = isWebGPUSupported();
 		console.log('[WebGPU] Supported:', webgpuSupported);
 
@@ -274,10 +423,16 @@
 			</p>
 		</div>
 		<div class="header-right">
-			<button class="live-toggle" class:active={liveMode} onclick={() => (liveMode = !liveMode)}>
-				<span class="live-indicator" class:pulsing={liveMode}></span>
-				{liveMode ? 'LIVE' : 'PAUSED'}
-			</button>
+			<div class="header-controls">
+				<button class="live-toggle" class:active={liveMode} onclick={() => (liveMode = !liveMode)}>
+					<span class="live-indicator" class:pulsing={liveMode}></span>
+					{liveMode ? 'LIVE' : 'PAUSED'}
+				</button>
+				<button class="share-button" onclick={copyShareUrl} title="Copy shareable URL">
+					<Share2 size={16} />
+					{showShareCopied ? 'Copied!' : 'Share'}
+				</button>
+			</div>
 			<div class="event-badge">
 				<span class="event-phase">{currentEvent.phase}</span>
 				<span class="event-name">{currentEvent.name}</span>
@@ -287,6 +442,64 @@
 			</div>
 		</div>
 	</header>
+
+	<!-- Scale & Seed Controls -->
+	{#if webgpuSupported}
+		<div class="controls-bar">
+			<!-- Agent Count Slider -->
+			<div class="control-group scale-control">
+				<label class="control-label">
+					<Users size={14} />
+					Agents
+				</label>
+				<div class="slider-container">
+					<input
+						type="range"
+						min={MIN_AGENTS}
+						max={MAX_AGENTS}
+						step="1000"
+						bind:value={pendingAgentCount}
+						class="agent-slider"
+					/>
+					<span class="slider-value">{pendingAgentCount.toLocaleString()}</span>
+				</div>
+				{#if pendingAgentCount !== agentCount}
+					<button class="apply-button" onclick={applyAgentCount}>
+						Apply
+					</button>
+				{/if}
+				{#if showScaleWarning}
+					<span class="scale-warning">
+						<AlertTriangle size={12} />
+						High count may affect performance
+					</span>
+				{/if}
+			</div>
+
+			<!-- Seed Input -->
+			<div class="control-group seed-control">
+				<label class="control-label">
+					<Gauge size={14} />
+					Seed
+				</label>
+				<div class="seed-input-group">
+					<input
+						type="text"
+						placeholder="Random"
+						bind:value={seedInput}
+						class="seed-input"
+						onkeydown={(e) => e.key === 'Enter' && applySeed()}
+					/>
+					<button class="seed-apply" onclick={applySeed} title="Apply seed for deterministic simulation">
+						Set
+					</button>
+				</div>
+				{#if simulationSeed > 0}
+					<span class="seed-active">Seed: {simulationSeed}</span>
+				{/if}
+			</div>
+		</div>
+	{/if}
 
 	<!-- WebGPU Visualization -->
 	<div class="visualization-container">
@@ -372,6 +585,41 @@
 
 		<!-- Status Panels -->
 		<div class="status-panels">
+			<!-- Telemetry Panel (new) -->
+			<div class="status-panel telemetry-panel">
+				<div class="panel-header">
+					<span class="panel-icon"><Activity size={18} /></span>
+					<span class="panel-title">Performance</span>
+					<span class="status-indicator" class:healthy={systemHealth > 0.7} class:warning={systemHealth <= 0.7 && systemHealth > 0.4} class:critical={systemHealth <= 0.4}>
+						{systemHealth > 0.7 ? 'healthy' : systemHealth > 0.4 ? 'degraded' : 'critical'}
+					</span>
+				</div>
+				<div class="telemetry-metrics">
+					<div class="telemetry-row">
+						<span class="telemetry-label">FPS</span>
+						<span class="telemetry-value" class:warning={fps < 30}>{fps}</span>
+					</div>
+					<div class="telemetry-row">
+						<span class="telemetry-label">Frame Time</span>
+						<span class="telemetry-value" class:warning={(telemetryMetrics?.avgFrameTimeMs ?? 0) > 20}>
+							{(telemetryMetrics?.avgFrameTimeMs ?? 0).toFixed(1)}ms
+						</span>
+					</div>
+					<div class="telemetry-row">
+						<span class="telemetry-label">P95 Frame</span>
+						<span class="telemetry-value" class:warning={(telemetryMetrics?.p95FrameTimeMs ?? 0) > 33}>
+							{(telemetryMetrics?.p95FrameTimeMs ?? 0).toFixed(1)}ms
+						</span>
+					</div>
+					<div class="telemetry-row">
+						<span class="telemetry-label">System Health</span>
+						<div class="health-bar">
+							<div class="health-fill" style="width: {systemHealth * 100}%"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Security Panel -->
 			<div class="status-panel security-panel">
 				<div class="panel-header">
@@ -1208,5 +1456,270 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);
 		font-family: monospace;
+	}
+
+	/* Header Controls */
+	.header-controls {
+		display: flex;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-sm);
+	}
+
+	.share-button {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		font-size: var(--text-caption);
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+		cursor: pointer;
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.share-button:hover {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+
+	/* Controls Bar */
+	.controls-bar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-lg);
+		padding: var(--space-md) var(--space-lg);
+		background: var(--color-bg-subtle);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.control-group {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		flex-wrap: wrap;
+	}
+
+	.control-label {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		font-size: var(--text-caption);
+		font-weight: 600;
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	/* Scale Controls */
+	.slider-container {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.agent-slider {
+		width: 150px;
+		height: 4px;
+		-webkit-appearance: none;
+		appearance: none;
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-full);
+		outline: none;
+		cursor: pointer;
+	}
+
+	.agent-slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 16px;
+		height: 16px;
+		background: var(--color-accent);
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	.agent-slider::-webkit-slider-thumb:hover {
+		transform: scale(1.2);
+	}
+
+	.agent-slider::-moz-range-thumb {
+		width: 16px;
+		height: 16px;
+		background: var(--color-accent);
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		border: none;
+	}
+
+	.slider-value {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
+		min-width: 60px;
+	}
+
+	.apply-button {
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-accent);
+		border: none;
+		border-radius: var(--radius-sm);
+		font-size: var(--text-caption);
+		font-weight: 600;
+		color: var(--color-bg-pure);
+		cursor: pointer;
+		transition: opacity var(--duration-standard) var(--ease-standard);
+	}
+
+	.apply-button:hover {
+		opacity: 0.9;
+	}
+
+	.scale-warning {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		font-size: var(--text-caption);
+		color: var(--color-data-4);
+	}
+
+	/* Seed Controls */
+	.seed-input-group {
+		display: flex;
+		align-items: center;
+	}
+
+	.seed-input {
+		width: 80px;
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		outline: none;
+	}
+
+	.seed-input:focus {
+		border-color: var(--color-accent);
+	}
+
+	.seed-input::placeholder {
+		color: var(--color-fg-muted);
+	}
+
+	.seed-apply {
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-left: none;
+		border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+		font-size: var(--text-caption);
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+		cursor: pointer;
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	.seed-apply:hover {
+		background: var(--color-accent);
+		border-color: var(--color-accent);
+		color: var(--color-bg-pure);
+	}
+
+	.seed-active {
+		font-size: var(--text-caption);
+		color: var(--color-data-2);
+		font-weight: 500;
+	}
+
+	/* Telemetry Panel */
+	.telemetry-panel {
+		background: linear-gradient(135deg, var(--color-bg-surface), rgba(var(--color-accent-rgb), 0.05));
+	}
+
+	.telemetry-metrics {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.telemetry-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-sm);
+	}
+
+	.telemetry-label {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.telemetry-value {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-data-2);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.telemetry-value.warning {
+		color: var(--color-data-4);
+	}
+
+	.health-bar {
+		width: 80px;
+		height: 8px;
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-full);
+		overflow: hidden;
+	}
+
+	.health-fill {
+		height: 100%;
+		background: linear-gradient(90deg, var(--color-error), var(--color-data-4), var(--color-data-2));
+		transition: width var(--duration-standard) var(--ease-standard);
+	}
+
+	.status-indicator.healthy {
+		background: var(--color-data-2);
+		color: var(--color-bg-pure);
+	}
+
+	.status-indicator.warning {
+		background: var(--color-data-4);
+		color: var(--color-bg-pure);
+	}
+
+	.status-indicator.critical {
+		background: var(--color-error);
+		color: white;
+	}
+
+	/* Responsive adjustments */
+	@media (max-width: 768px) {
+		.controls-bar {
+			flex-direction: column;
+			gap: var(--space-md);
+		}
+
+		.control-group {
+			width: 100%;
+		}
+
+		.slider-container {
+			flex: 1;
+		}
+
+		.agent-slider {
+			flex: 1;
+			width: auto;
+		}
 	}
 </style>

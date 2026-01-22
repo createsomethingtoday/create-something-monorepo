@@ -61,6 +61,7 @@ export interface AgentDirectiveState {
 	timer: number; // Time spent in current directive
 	activityCooldown: number; // Time until next activity check
 	teamId: number; // 0 or 1 for players (which team)
+	groupId: number; // 0 = no group, 1-255 = group identifier for cohesion
 }
 
 /** Event phase affects agent behavior probabilities */
@@ -582,7 +583,8 @@ export function initializeAgentDirectives(
 				seatPosition: directive === Directive.ON_COURT ? courtPos : benchPos,
 				timer: Math.random() * 2,
 				activityCooldown: 100, // Players don't do fan activities
-				teamId
+				teamId,
+				groupId: 0 // Players don't use group cohesion
 			});
 		}
 	}
@@ -625,7 +627,8 @@ export function initializeAgentDirectives(
 			seatPosition: pos,
 			timer: 0,
 			activityCooldown: 100,
-			teamId: 2 // Neutral
+			teamId: 2, // Neutral
+			groupId: 0 // Staff don't use group cohesion
 		});
 	}
 	
@@ -635,21 +638,83 @@ export function initializeAgentDirectives(
 	// Create fans (remaining agents)
 	const fanCount = agentCount - states.length;
 	
+	// Group assignment tracking
+	// About 65% of fans come in groups of 2-6 people
+	let currentGroupId = 1;
+	let currentGroupSize = 0;
+	let targetGroupSize = 0;
+	let currentGroupSection = -1;
+	let currentGroupRow = -1;
+	let currentGroupTeam = 0;
+	
 	for (let i = 0; i < fanCount; i++) {
-		// Assign a unique seat
+		// Determine if this fan should start a new group or be solo
+		let groupId = 0;
+		
+		if (currentGroupSize >= targetGroupSize) {
+			// Need to assign to new group or solo
+			if (Math.random() < 0.65) {
+				// Start a new group (2-6 people)
+				targetGroupSize = 2 + Math.floor(Math.random() * 5); // 2-6
+				currentGroupSize = 0;
+				currentGroupId++;
+				currentGroupSection = Math.floor(Math.random() * 12);
+				currentGroupRow = Math.floor(Math.random() * 15);
+				currentGroupTeam = Math.random() < 0.5 ? 0 : 1;
+				groupId = currentGroupId;
+			} else {
+				// Solo attendee
+				groupId = 0;
+				targetGroupSize = 0;
+			}
+		} else {
+			// Continue current group
+			groupId = currentGroupId;
+		}
+		
+		// Assign a unique seat (group members try to sit near each other)
 		let section: number, row: number, seatNum: number;
 		let seatKey: string;
 		let attempts = 0;
 		
-		do {
-			section = Math.floor(Math.random() * 12);
-			row = Math.floor(Math.random() * 15);
-			seatNum = Math.floor(Math.random() * 20);
-			seatKey = `${section}-${row}-${seatNum}`;
-			attempts++;
-		} while (takenSeats.has(seatKey) && attempts < 50);
+		if (groupId > 0 && currentGroupSize > 0) {
+			// Group member - try to sit in same section/row as group
+			section = currentGroupSection;
+			row = currentGroupRow;
+			do {
+				seatNum = Math.floor(Math.random() * 20);
+				seatKey = `${section}-${row}-${seatNum}`;
+				attempts++;
+				// If can't find seat in same row, try adjacent rows
+				if (attempts > 10) {
+					row = currentGroupRow + Math.floor(Math.random() * 3) - 1;
+					row = Math.max(0, Math.min(14, row));
+				}
+				if (attempts > 20) {
+					// Fall back to any seat in same section
+					row = Math.floor(Math.random() * 15);
+				}
+			} while (takenSeats.has(seatKey) && attempts < 50);
+		} else {
+			// Solo or first in group - random seat
+			do {
+				section = groupId > 0 ? currentGroupSection : Math.floor(Math.random() * 12);
+				row = groupId > 0 ? currentGroupRow : Math.floor(Math.random() * 15);
+				seatNum = Math.floor(Math.random() * 20);
+				seatKey = `${section}-${row}-${seatNum}`;
+				attempts++;
+			} while (takenSeats.has(seatKey) && attempts < 50);
+			
+			if (groupId > 0) {
+				currentGroupSection = section;
+				currentGroupRow = row;
+			}
+		}
 		
 		takenSeats.add(seatKey);
+		if (groupId > 0) {
+			currentGroupSize++;
+		}
 		
 		const seatPosition = getSeatPosition(section, row, seatNum);
 
@@ -684,6 +749,9 @@ export function initializeAgentDirectives(
 				directive = Directive.SEATED;
 		}
 
+		// Group members share same team affiliation
+		const teamId = groupId > 0 ? currentGroupTeam : (Math.random() < 0.5 ? 0 : 1);
+
 		states.push({
 			directive,
 			role: AgentRole.FAN,
@@ -693,7 +761,8 @@ export function initializeAgentDirectives(
 			seatPosition,
 			timer,
 			activityCooldown: 10 + Math.random() * 30,
-			teamId: Math.random() < 0.5 ? 0 : 1 // Which team they support
+			teamId,
+			groupId
 		});
 	}
 
