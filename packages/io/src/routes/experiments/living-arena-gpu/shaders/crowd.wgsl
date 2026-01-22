@@ -328,10 +328,21 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
                             }
                         }
                         
-                        // Separation force (stronger when closer)
-                        if (dist < AGENT_RADIUS * 4.0) {
+                        // Separation force (exponentially stronger when closer to prevent overlap)
+                        let minDist = AGENT_RADIUS * 2.0; // Minimum distance (sum of radii)
+                        if (dist < AGENT_RADIUS * 5.0) {
                             let separationDir = -toOther / dist;
-                            let separationMag = uniforms.separationStrength * (1.0 - dist / (AGENT_RADIUS * 4.0));
+                            
+                            // Base separation force (linear falloff for distant agents)
+                            var separationMag = uniforms.separationStrength * (1.0 - dist / (AGENT_RADIUS * 5.0));
+                            
+                            // Strong repulsion when overlapping (exponential increase)
+                            if (dist < minDist) {
+                                // Exponential force to push apart overlapping agents
+                                let overlap = (minDist - dist) / minDist;
+                                separationMag += uniforms.separationStrength * 4.0 * overlap * overlap;
+                            }
+                            
                             totalForce += separationDir * separationMag;
                         }
                     }

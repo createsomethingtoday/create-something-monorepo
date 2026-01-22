@@ -78,7 +78,7 @@ const DEFAULT_CONFIG: SimulationConfig = {
 	arenaWidth: 1200,
 	arenaHeight: 900,
 	goalStrength: 2.0,
-	separationStrength: 8.0,
+	separationStrength: 12.0,
 	wallStrength: 15.0,
 	maxSpeed: 3.0,
 	panicSpreadRadius: 30.0,
