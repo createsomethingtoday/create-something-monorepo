@@ -2,18 +2,16 @@
 	/**
 	 * OUTERFIELDS Analytics Dashboard
 	 *
-	 * Shows preview of platform analytics with gated overlay for non-members.
-	 * Members see full interactive dashboard with real ClickUp, Instagram, and YouTube data.
+	 * Showcases comprehensive analytics capabilities for PCN clients.
+	 * No gating - full visibility into what every PCN includes.
 	 */
-	import { BarChart3, TrendingUp, Users, Clock, Lock } from 'lucide-svelte';
-	import { authStore } from '$lib/stores/auth';
+	import { BarChart3, TrendingUp, Users, Clock } from 'lucide-svelte';
 
 	interface Props {
-		forceUnlocked?: boolean;
 		interactive?: boolean;
 	}
 
-	let { forceUnlocked = false, interactive = true }: Props = $props();
+	let { interactive = true }: Props = $props();
 
 	interface DashboardData {
 		videoEngagement?: {
@@ -42,15 +40,8 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
-	// Check if user is a member
-	const isMember = $derived(forceUnlocked ? true : ($authStore.user?.membership ?? false));
-
 	// Fetch analytics data
 	async function fetchAnalytics() {
-		if (!isMember) {
-			loading = false;
-			return;
-		}
 
 		if (!interactive) {
 			// Presentation mode: avoid network calls; show representative mock data.
@@ -117,30 +108,26 @@
 		}
 	}
 
-	// Fetch on mount if member
+	// Fetch on mount
 	$effect(() => {
-		if (isMember) {
-			fetchAnalytics();
-		} else {
-			loading = false;
-		}
+		fetchAnalytics();
 	});
 </script>
 
-<section class="analytics-dashboard-section">
+<section class="analytics-dashboard-section" id="analytics">
 	<div class="analytics-container">
 		<div class="section-header">
 			<span class="section-badge">
 				<BarChart3 size={12} />
-				Member Analytics
+				Built-In Analytics
 			</span>
-			<h2 class="section-title">Track Your Platform Performance</h2>
+			<h2 class="section-title">Comprehensive Insights</h2>
 			<p class="section-description">
-				Real-time analytics across all your connected platforms. Video engagement, social metrics, and project progress—all in one place.
+				Every PCN includes real-time analytics. Video engagement, social metrics, and project progress—all in one dashboard.
 			</p>
 		</div>
 
-		<div class="dashboard-wrapper" class:blurred={!isMember}>
+		<div class="dashboard-wrapper">
 			{#if loading}
 				<div class="loading-state">
 					<div class="spinner"></div>
@@ -265,22 +252,6 @@
 					<a href="#ai-analytics" class="chatbot-cta">
 						Learn More
 					</a>
-				</div>
-			{/if}
-
-			<!-- Members Only Overlay (for non-members) -->
-			{#if !isMember}
-				<div class="members-overlay">
-					<div class="overlay-content">
-						<div class="overlay-icon" aria-hidden="true">
-							<Lock size={48} />
-						</div>
-						<h3>Members Only</h3>
-						<p>Get full access to analytics dashboards with real-time data from ClickUp, Instagram, YouTube, and more.</p>
-						<a href="#pricing" class="unlock-btn">
-							Unlock Full Access - $99
-						</a>
-					</div>
 				</div>
 			{/if}
 		</div>
