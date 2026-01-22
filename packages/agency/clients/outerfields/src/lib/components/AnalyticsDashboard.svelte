@@ -316,91 +316,90 @@
 		user-select: none;
 	}
 
+	/* Tufte: Single row of 4, high data-ink ratio, minimal decoration */
 	.metrics-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: 1.5rem;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1rem;
 		margin-bottom: 2rem;
 	}
 
 	.metric-card {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: 1.5rem;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.metric-card:hover {
-		border-color: var(--color-border-emphasis);
-		transform: translateY(-2px);
+		border-radius: 0.5rem;
+		padding: 1.25rem;
 	}
 
 	.metric-header {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin-bottom: 1.5rem;
-		padding-bottom: 1rem;
-		border-bottom: 1px solid var(--color-border-default);
+		margin-bottom: 1rem;
+	}
+
+	.metric-header :global(svg) {
+		color: var(--color-fg-muted);
+		opacity: 0.7;
 	}
 
 	.metric-header h3 {
-		font-size: 0.875rem;
+		font-size: 0.6875rem;
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.08em;
 		margin: 0;
 	}
 
 	.metric-stats {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 0.75rem;
 	}
 
 	.stat-primary {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.125rem;
 	}
 
 	.stat-primary .stat-value {
-		font-size: 2.5rem;
+		font-size: 2rem;
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		line-height: 1;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.stat-primary .stat-label {
-		font-size: 0.75rem;
+		font-size: 0.625rem;
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.stat-secondary {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 1rem;
+		display: flex;
+		gap: 1.5rem;
 	}
 
 	.stat-item {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.125rem;
 	}
 
 	.stat-item .stat-value {
-		font-size: 1.25rem;
+		font-size: 1rem;
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-fg-secondary);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.stat-item .stat-label {
-		font-size: 0.625rem;
-		color: var(--color-fg-muted);
+		font-size: 0.5625rem;
+		color: var(--color-fg-subtle);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -409,8 +408,8 @@
 		display: flex;
 		align-items: center;
 		gap: 0.375rem;
-		margin-top: 1rem;
-		padding-top: 1rem;
+		margin-top: 0.75rem;
+		padding-top: 0.75rem;
 		border-top: 1px solid var(--color-border-default);
 		font-size: 0.75rem;
 		color: var(--color-fg-muted);
@@ -558,7 +557,17 @@
 		to { transform: rotate(360deg); }
 	}
 
+	@media (max-width: 1100px) {
+		.metrics-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
 	@media (max-width: 768px) {
+		.metrics-grid {
+			grid-template-columns: 1fr;
+		}
+
 		.chatbot-tease {
 			flex-direction: column;
 			text-align: center;
