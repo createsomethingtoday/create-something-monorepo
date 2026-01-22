@@ -138,19 +138,23 @@
 			<div class="diagram-header">
 				<span class="diagram-badge">System Overview</span>
 				<h3 class="diagram-title">How It All Connects</h3>
+				<p class="diagram-description">We take the heavy lifting off creators so they can focus on what they do best.</p>
 			</div>
 			<div class="diagram-visual">
 				<div class="diagram-layer creator">
 					<span class="layer-label">On-Camera Talent</span>
+					<p class="layer-description">You focus on being you. That's it.</p>
 					<div class="layer-nodes">
-						<span class="node">Create Content</span>
+						<span class="node">Be On Camera</span>
+						<span class="node">Share Your Audience</span>
 					</div>
 				</div>
 				<div class="diagram-connector">
 					<ArrowDown size={24} />
 				</div>
 				<div class="diagram-layer platform">
-					<span class="layer-label">OUTERFIELDS Handles Everything</span>
+					<span class="layer-label">OUTERFIELDS Handles Everything Else</span>
+					<p class="layer-description">We do the work so you don't have to.</p>
 					<div class="layer-nodes">
 						<span class="node">Production</span>
 						<span class="node">Uploading</span>
@@ -164,7 +168,8 @@
 					<ArrowDown size={24} />
 				</div>
 				<div class="diagram-layer viewer">
-					<span class="layer-label">Viewers</span>
+					<span class="layer-label">Your Audience</span>
+					<p class="layer-description">A seamless experience from discovery to engagement.</p>
 					<div class="layer-nodes">
 						<span class="node">Subscribe</span>
 						<span class="node">Watch</span>
@@ -354,6 +359,12 @@
 		font-size: 1.25rem;
 		font-weight: 700;
 		color: var(--color-fg-primary);
+		margin: 0 0 0.5rem;
+	}
+
+	.diagram-description {
+		font-size: 0.9375rem;
+		color: var(--color-fg-muted);
 		margin: 0;
 	}
 
@@ -385,11 +396,22 @@
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.layer-description {
+		font-size: 0.8125rem;
+		color: var(--color-fg-subtle);
+		margin: 0 0 1rem;
+		font-style: italic;
 	}
 
 	.diagram-layer.platform .layer-label {
 		color: var(--color-fg-primary);
+	}
+
+	.diagram-layer.platform .layer-description {
+		color: var(--color-fg-secondary);
 	}
 
 	.layer-nodes {
