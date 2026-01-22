@@ -17,7 +17,6 @@
 	import { onMount } from 'svelte';
 	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
-	import { authStore } from '$lib/stores/auth';
 	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter.svelte';
 
 	// Cloudflare R2 CDN base URL (public bucket) - used for video assets only
@@ -58,7 +57,6 @@
 	let playerVideosById = $state<Record<string, PlayerVideo>>({});
 	let rowVideosById = $state<Record<string, RowVideo>>({});
 
-	const isMember = $derived($authStore.user?.membership ?? false);
 	const activeFilter = $derived(categoryFilter.active);
 
 	// Category filters
@@ -67,8 +65,7 @@
 		{ id: 'series', label: 'Series' },
 		{ id: 'films', label: 'Films' },
 		{ id: 'bts', label: 'Behind the Scenes' },
-		{ id: 'trailers', label: 'Trailers' },
-		{ id: 'free', label: 'Free to Watch' }
+		{ id: 'trailers', label: 'Trailers' }
 	];
 
 	function handleFilterClick(id: CategoryFilter) {
@@ -79,16 +76,6 @@
 	const filteredCategories = $derived.by(() => {
 		if (activeFilter === 'all') {
 			return allCategories;
-		}
-
-		if (activeFilter === 'free') {
-			// Filter videos by tier, show all categories that have free content
-			return allCategories
-				.map(cat => ({
-					...cat,
-					videos: cat.videos.filter(v => v.tier === 'free')
-				}))
-				.filter(cat => cat.videos.length > 0);
 		}
 
 		// Filter by category
@@ -208,15 +195,13 @@
 	<div class="section-header">
 		<h2 class="section-title">
 			{#if activeFilter === 'all'}
-				Watch Now
+				What We Create
 			{:else}
 				{FILTER_LABELS[activeFilter]}
 			{/if}
 		</h2>
 		<p class="section-description">
-			{#if activeFilter === 'free'}
-				Free content — no membership required.
-			{:else if activeFilter === 'trailers'}
+			{#if activeFilter === 'trailers'}
 				Preview what's coming next.
 			{:else if activeFilter === 'films'}
 				Feature-length films from our network.
@@ -225,7 +210,7 @@
 			{:else if activeFilter === 'series'}
 				Ongoing series from our content network.
 			{:else}
-				Explore our content library. First episodes and all trailers are FREE.
+				50+ episodes demonstrating the quality and scale we deliver
 			{/if}
 		</p>
 	</div>
