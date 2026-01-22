@@ -1313,6 +1313,34 @@ export class CrowdSimulation {
 		const arenaRx = 380;
 		const arenaRy = 280;
 
+		// Court bounds (fans cannot spawn here)
+		const courtMinX = 280;
+		const courtMaxX = 520;
+		const courtMinY = 200;
+		const courtMaxY = 400;
+
+		const isInsideCourt = (x: number, y: number) =>
+			x > courtMinX && x < courtMaxX && y > courtMinY && y < courtMaxY;
+
+		// Helper to get position avoiding court
+		const getArenaPositionAvoidingCourt = (minRadius: number, maxRadius: number): { x: number; y: number } => {
+			let x: number, y: number;
+			let attempts = 0;
+			do {
+				const angle = Math.random() * Math.PI * 2;
+				const radiusFactor = minRadius + Math.random() * (maxRadius - minRadius);
+				x = centerX + Math.cos(angle) * arenaRx * radiusFactor;
+				y = centerY + Math.sin(angle) * arenaRy * radiusFactor;
+				attempts++;
+			} while (isInsideCourt(x, y) && attempts < 10);
+
+			// If still inside court, push to edge
+			if (isInsideCourt(x, y)) {
+				x = x < centerX ? courtMinX - 20 : courtMaxX + 20;
+			}
+			return { x, y };
+		};
+
 		switch (crowdFlow) {
 			case 'entering':
 				// Spawn from north gate area (top of arena)
@@ -1329,44 +1357,37 @@ export class CrowdSimulation {
 				};
 
 			case 'dispersing':
-				// Start from seating area (within arena ellipse)
-				const angle = Math.random() * Math.PI * 2;
-				const radiusFactor = 0.4 + Math.random() * 0.5; // 40-90% of arena radius
-				return {
-					x: centerX + Math.cos(angle) * arenaRx * radiusFactor,
-					y: centerY + Math.sin(angle) * arenaRy * radiusFactor
-				};
+				// Start from seating area (within arena ellipse, avoiding court)
+				return getArenaPositionAvoidingCourt(0.4, 0.9);
 
 			case 'sheltering':
-				// Spread across arena interior
-				const shAngle = Math.random() * Math.PI * 2;
-				const shRadius = 0.2 + Math.random() * 0.6; // 20-80% of arena radius
-				return {
-					x: centerX + Math.cos(shAngle) * arenaRx * shRadius,
-					y: centerY + Math.sin(shAngle) * arenaRy * shRadius
-				};
+				// Spread across arena interior (avoiding court)
+				return getArenaPositionAvoidingCourt(0.2, 0.8);
 
-			case 'evacuating':
-				// Start from section 112 area (right side of arena)
-				const evAngle = (Math.random() - 0.5) * Math.PI * 0.5 + Math.PI * 0.25; // Right quadrant
-				const evRadius = 0.4 + Math.random() * 0.4;
-				return {
-					x: centerX + Math.cos(evAngle) * arenaRx * evRadius,
-					y: centerY + Math.sin(evAngle) * arenaRy * evRadius
-				};
+			case 'evacuating': {
+				// Start from section 112 area (right side of arena, avoiding court)
+				let x: number, y: number;
+				let attempts = 0;
+				do {
+					const evAngle = (Math.random() - 0.5) * Math.PI * 0.5 + Math.PI * 0.25;
+					const evRadius = 0.4 + Math.random() * 0.4;
+					x = centerX + Math.cos(evAngle) * arenaRx * evRadius;
+					y = centerY + Math.sin(evAngle) * arenaRy * evRadius;
+					attempts++;
+				} while (isInsideCourt(x, y) && attempts < 10);
+				if (isInsideCourt(x, y)) {
+					x = courtMaxX + 20;
+				}
+				return { x, y };
+			}
 
 			case 'exiting':
-				// Start from seats (throughout arena)
-				const exitAngle = Math.random() * Math.PI * 2;
-				const exitRadius = 0.3 + Math.random() * 0.5;
-				return {
-					x: centerX + Math.cos(exitAngle) * arenaRx * exitRadius,
-					y: centerY + Math.sin(exitAngle) * arenaRy * exitRadius
-				};
+				// Start from seats (throughout arena, avoiding court)
+				return getArenaPositionAvoidingCourt(0.3, 0.8);
 
 			case 'empty':
 			default:
-				// Few maintenance workers in court area
+				// Few maintenance workers in court area (intentional)
 				return {
 					x: 300 + Math.random() * 200,
 					y: 220 + Math.random() * 160

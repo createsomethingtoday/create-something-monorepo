@@ -84,6 +84,19 @@ const ARENA = {
 	ry: 280
 };
 
+/** Court bounds (fans cannot spawn here) */
+const COURT = {
+	minX: 280,
+	maxX: 520,
+	minY: 200,
+	maxY: 400
+};
+
+/** Check if position is inside the court area */
+function isInsideCourt(x: number, y: number): boolean {
+	return x > COURT.minX && x < COURT.maxX && y > COURT.minY && y < COURT.maxY;
+}
+
 /** Location definitions */
 const LOCATIONS = {
 	// Parking areas (outside arena)
@@ -787,14 +800,24 @@ export function getInitialPosition(state: AgentDirectiveState): { x: number; y: 
 			};
 
 		case Directive.FINDING_SEAT:
-		case Directive.RETURNING:
-			// Inside arena, moving toward seat
-			const angle = Math.random() * Math.PI * 2;
-			const dist = 0.3 + Math.random() * 0.3;
-			return {
-				x: ARENA.centerX + Math.cos(angle) * ARENA.rx * dist,
-				y: ARENA.centerY + Math.sin(angle) * ARENA.ry * dist
-			};
+		case Directive.RETURNING: {
+			// Inside arena, moving toward seat - but NOT in court area
+			let x: number, y: number;
+			let attempts = 0;
+			do {
+				const angle = Math.random() * Math.PI * 2;
+				const dist = 0.3 + Math.random() * 0.4; // 30-70% of radius
+				x = ARENA.centerX + Math.cos(angle) * ARENA.rx * dist;
+				y = ARENA.centerY + Math.sin(angle) * ARENA.ry * dist;
+				attempts++;
+			} while (isInsideCourt(x, y) && attempts < 10);
+			
+			// If still inside court after 10 attempts, push to edge
+			if (isInsideCourt(x, y)) {
+				x = x < ARENA.centerX ? COURT.minX - 20 : COURT.maxX + 20;
+			}
+			return { x, y };
+		}
 
 		case Directive.SEATED:
 			return state.seatPosition;
