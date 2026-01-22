@@ -1,35 +1,30 @@
 <script lang="ts">
 	/**
-	 * OUTERFIELDS - Gated Membership Platform (Netflix-style)
+	 * OUTERFIELDS - PCN Services Platform
 	 *
-	 * $99 lifetime founding member pre-sale with gated video access,
-	 * Stripe checkout, and platform ecosystem previews.
+	 * Full-service Private Content Network creation starting at $19,999.
+	 * All content accessible - showcasing portfolio and capabilities.
 	 */
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import JourneySection from '$lib/components/JourneySection.svelte';
-	import BuildProgress from '$lib/components/BuildProgress.svelte';
 	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ContentCategories from '$lib/components/ContentCategories.svelte';
 	import AnalyticsDashboard from '$lib/components/AnalyticsDashboard.svelte';
 	import ComponentLab from '$lib/components/ComponentLab.svelte';
 	import PlatformComponents from '$lib/components/PlatformComponents.svelte';
 	import AIAnalytics from '$lib/components/AIAnalytics.svelte';
-	import ResourceLinks from '$lib/components/ResourceLinks.svelte';
+	import PCNPartners from '$lib/components/PCNPartners.svelte';
 	import FeatureComparison from '$lib/components/FeatureComparison.svelte';
 	import Pricing from '$lib/components/Pricing.svelte';
 	import DemoCTA from '$lib/components/DemoCTA.svelte';
 	import VideoModal from '$lib/components/VideoModal.svelte';
-	import { authStore } from '$lib/stores/auth';
-
-	// Member-only: behind-the-scenes content (docs/design links, roadmap, internal tools)
-	const isMember = $derived($authStore.user?.membership ?? false);
 
 	// SEO Configuration
 	const seo = {
-		title: 'OUTERFIELDS | Premium Content Networks That Convert',
+		title: 'OUTERFIELDS | We Build Private Content Networks',
 		description:
-			'Outerfields is a Netflix-style gated membership platform. Join as a founding member for $99 lifetime access: premium content, tools, analytics, and an included discovery call.',
-		keywords: 'video streaming platform, content network, OTT platform, video monetization, AI analytics, Uscreen alternative, streaming service, video hosting, membership platform, creator economy',
+			'Full-service PCN creation for creators and brands. Custom platform, professional production, comprehensive analytics—starting at $19,999. Book a discovery call.',
+		keywords: 'private content network, PCN, video streaming platform, content network, OTT platform, video monetization, creator platform, white-label streaming, membership platform, creator economy',
 		url: 'https://outerfields.createsomething.agency',
 		image: 'https://outerfields.createsomething.agency/og-image.svg',
 		siteName: 'OUTERFIELDS',
@@ -63,12 +58,12 @@
 		name: 'OUTERFIELDS Platform',
 		applicationCategory: 'BusinessApplication',
 		operatingSystem: 'Web',
-		description: 'Premium content network platform with video streaming, monetization, analytics, and community features.',
+		description: 'Full-service Private Content Network creation for creators and brands.',
 		offers: {
 			'@type': 'Offer',
-			price: '99',
+			price: '19999',
 			priceCurrency: 'USD',
-			description: 'Founding member pre-sale: $99 lifetime access'
+			description: 'Custom PCN creation starting at $19,999'
 		},
 		featureList: [
 			'Adaptive video streaming',
@@ -214,14 +209,11 @@
 	<ComponentLab />
 	<PlatformComponents />
 
-	<!-- 7. AI Analytics Chatbot - Demo on landing page -->
+	<!-- 7. AI Analytics Chatbot -->
 	<AIAnalytics forceUnlocked />
 
-	<!-- 8. Member-only deep content -->
-	{#if isMember}
-		<BuildProgress />
-		<ResourceLinks />
-	{/if}
+	<!-- 8. PCN Partners - Social proof -->
+	<PCNPartners />
 
 	<!-- 9. Comparison & Pricing -->
 	<FeatureComparison />
