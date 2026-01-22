@@ -554,6 +554,55 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     newPos.x = clamp(newPos.x, 5.0, uniforms.arenaWidth - 5.0);
     newPos.y = clamp(newPos.y, 5.0, uniforms.arenaHeight - 5.0);
     
+    // ============================================
+    // Hard Collision Resolution (no overlapping)
+    // ============================================
+    // After position update, check for overlaps and directly separate
+    let minSeparation = AGENT_RADIUS * 2.2; // Minimum distance between agent centers
+    var collisionCorrection = vec2<f32>(0.0, 0.0);
+    var correctionCount = 0u;
+    
+    // Check neighbors using spatial hash
+    let newCellCoords = getCellCoords(newPos);
+    let newCellX = i32(newCellCoords.x);
+    let newCellY = i32(newCellCoords.y);
+    
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let nx = newCellX + dx;
+            let ny = newCellY + dy;
+            
+            if (nx >= 0 && nx < i32(GRID_COLS) && ny >= 0 && ny < i32(GRID_ROWS)) {
+                let neighborCellIdx = u32(ny) * GRID_COLS + u32(nx);
+                let bounds = cellBounds[neighborCellIdx];
+                
+                for (var sortedIdx = bounds.start; sortedIdx < bounds.end; sortedIdx++) {
+                    let otherIdx = sortedAgentIndices[sortedIdx];
+                    if (otherIdx == idx) { continue; }
+                    
+                    let otherPos = getPosition(otherIdx);
+                    let toOther = otherPos - newPos;
+                    let dist = length(toOther);
+                    
+                    // If overlapping, calculate correction to push apart
+                    if (dist < minSeparation && dist > 0.001) {
+                        let overlap = minSeparation - dist;
+                        let pushDir = -toOther / dist;
+                        // Push this agent by half the overlap (other agent will push itself)
+                        collisionCorrection += pushDir * overlap * 0.5;
+                        correctionCount++;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Apply collision correction
+    if (correctionCount > 0u) {
+        newPos += collisionCorrection;
+        vel *= 0.8; // Dampen velocity on collision
+    }
+    
     // Hard clamp: Fans absolutely cannot be on or near the court
     if (role == ROLE_FAN) {
         // Use tighter bounds for the hard clamp (the actual court area)
