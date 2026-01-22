@@ -2,12 +2,26 @@
 	/**
 	 * OUTERFIELDS Hero Section
 	 *
-	 * StreamVerse-inspired full-bleed hero
+	 * StreamVerse-inspired full-bleed hero with centered play CTA
+	 * Per client: Play button opens video modal with PCN trailer
 	 */
 	import { Play, Plus, Star, Clock } from 'lucide-svelte';
+	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 
-	function scrollToContent() {
-		document.getElementById('content-categories')?.scrollIntoView({ behavior: 'smooth' });
+	// PCN Trailer video - this will be the main trailer about Building Outerfields
+	// TODO: Update src when actual trailer is uploaded to R2
+	const trailerVideo: Video = {
+		id: 'pcn-trailer',
+		title: 'Building Outerfields: The Odyssey',
+		description: 'A behind-the-scenes look at how we\'re building a Premium Content Network in public. Watch the journey unfold.',
+		duration: '2:30',
+		thumbnail: '/thumbnails/trailer-odyssey.jpg',
+		category: 'Trailer',
+		src: 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev/trailers/pcn-trailer.mp4'
+	};
+
+	function playTrailer() {
+		videoPlayer.play(trailerVideo);
 	}
 
 	function scrollToPricing() {
@@ -26,11 +40,6 @@
 			src="https://sketchfab.com/models/d6521362b37b48e3a82bce4911409303/embed?autospin=0.2&autostart=1&preload=1&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_hint=0&ui_ar=1&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0&ui_theme=dark&dnt=1"
 		></iframe>
 		<div class="hero-gradient"></div>
-		
-		<!-- Centered Play Button - links to trailer (per client spec) -->
-		<button class="hero-play-btn" onclick={() => window.open('/watch/trailer-outerfields-odyssey', '_self')} aria-label="Watch Trailer">
-			<Play size={48} />
-		</button>
 	</div>
 
 	<!-- Container for alignment with other sections -->
@@ -64,9 +73,9 @@
 
 		<!-- CTA Buttons -->
 		<div class="hero-actions">
-			<button class="btn-primary" onclick={scrollToContent}>
+			<button class="btn-primary" onclick={playTrailer}>
 				<Play size={20} />
-				<span>Watch Now</span>
+				<span>Watch Trailer</span>
 			</button>
 			<button class="btn-secondary" onclick={scrollToPricing}>
 				<Plus size={20} />
@@ -123,38 +132,6 @@
 			rgba(0, 0, 0, 0.4) 60%,
 			rgba(0, 0, 0, 0.6) 100%
 		);
-	}
-
-	/* Centered Play Button on Galaxy */
-	.hero-play-btn {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		z-index: 5;
-		width: 100px;
-		height: 100px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(255, 255, 255, 0.1);
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-radius: 50%;
-		color: white;
-		cursor: pointer;
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
-		transition: all var(--duration-standard) var(--ease-standard);
-	}
-
-	.hero-play-btn:hover {
-		background: rgba(255, 255, 255, 0.2);
-		border-color: rgba(255, 255, 255, 0.5);
-		transform: translate(-50%, -50%) scale(1.1);
-	}
-
-	.hero-play-btn:active {
-		transform: translate(-50%, -50%) scale(0.95);
 	}
 
 	.hero-content {
