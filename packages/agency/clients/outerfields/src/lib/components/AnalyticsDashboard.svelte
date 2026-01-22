@@ -5,7 +5,7 @@
 	 * Showcases comprehensive analytics capabilities for PCN clients.
 	 * No gating - full visibility into what every PCN includes.
 	 */
-	import { BarChart3, TrendingUp, Users, Clock } from 'lucide-svelte';
+	import { BarChart3, TrendingUp, Users } from 'lucide-svelte';
 
 	interface Props {
 		interactive?: boolean;
@@ -160,10 +160,6 @@
 									<span class="stat-label">Completion Rate</span>
 								</div>
 							</div>
-						</div>
-						<div class="metric-footer">
-							<Clock size={14} />
-							<span>Top: {data.videoEngagement?.topVideo ?? 'Crew Call Ep 1'}</span>
 						</div>
 					</div>
 
