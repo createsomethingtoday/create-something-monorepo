@@ -219,7 +219,7 @@
 	}
 
 	.badge.free {
-		background: var(--color-success);
+		background: var(--color-sun);
 		color: var(--color-bg-pure);
 	}
 
