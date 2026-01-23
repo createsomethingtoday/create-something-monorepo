@@ -21,6 +21,18 @@
 	// Nicely Said: Lead with what changed for users, not what we built
 	const changelog: ChangelogEntry[] = [
 		{
+			date: '2026-01-22',
+			version: '1.6.1',
+			title: 'Video cards: text is readable now',
+			description: 'Fixed an overlay that was covering video card titles and metadata. Cards now display cleanly on the dark background.',
+			category: 'fix',
+			highlights: [
+				'Card info text visible',
+				'Removed conflicting gradient overlay',
+				'Cleaner component architecture'
+			]
+		},
+		{
 			date: '2026-01-17',
 			version: '1.6.0',
 			title: 'Clean, monochromatic design',
@@ -188,9 +200,9 @@
 	];
 
 	const stats = {
-		totalCommits: 85,
-		features: 48,
-		daysActive: 17,
+		totalCommits: 255,
+		features: 49,
+		daysActive: 22,
 		price: 99
 	};
 
@@ -216,7 +228,7 @@
 			<span class="hero-badge">Building in Public</span>
 			<h1 class="hero-title">What we shipped</h1>
 			<p class="hero-description">
-				17 days. 85+ commits. Everything documented here.
+				22 days. 255+ commits. Everything documented here.
 			</p>
 		</div>
 	</section>
