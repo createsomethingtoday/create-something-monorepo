@@ -24,13 +24,11 @@ export const NAV_LINKS: NavLink[] = [
 	{ label: 'Demo', href: '/demo' }
 ];
 
-// Footer links
+// Footer links (Company column - excludes items in other columns)
 export const FOOTER_LINKS: FooterLink[] = [
-	{ label: 'Changelog', href: '/changelog' },
-	{ label: 'Privacy', href: '/privacy' },
-	{ label: 'Terms', href: '/terms' },
+	{ label: 'About', href: '/about' },
 	{ label: 'Contact', href: '/contact' },
-	{ label: 'Presentations', href: '/presentations' }
+	{ label: 'Docs', href: '/docs' }
 ];
 
 // Demo accounts for login page

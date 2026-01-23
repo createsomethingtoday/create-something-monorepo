@@ -2,10 +2,14 @@
 	/**
 	 * OUTERFIELDS Footer
 	 *
-	 * StreamVerse-inspired grid layout with brand, categories, and links
+	 * PCN Services - grid layout with brand, categories, and links
 	 */
 	import { FOOTER_LINKS } from '$lib/constants/navigation';
-	import { Crown } from 'lucide-svelte';
+	import { Calendar } from 'lucide-svelte';
+
+	function bookDiscoveryCall() {
+		window.open('https://calendly.com/outerfields/discovery-call', '_blank');
+	}
 </script>
 
 <footer class="footer">
@@ -15,22 +19,22 @@
 			<div class="footer-brand">
 				<h2 class="brand-name">OUTERFIELDS</h2>
 				<p class="brand-description">
-					A premium content network built in public. Behind-the-scenes access to how we create, market, and distribute content.
+					We build Private Content Networks for creators and brands. Full-service platform creation starting at $19,999.
 				</p>
-				<div class="founding-badge">
-					<Crown size={14} />
-					<span class="badge-text">Founding Member Pricing</span>
-				</div>
+				<button class="cta-badge" onclick={bookDiscoveryCall}>
+					<Calendar size={14} />
+					<span class="badge-text">Book a Discovery Call</span>
+				</button>
 			</div>
 
 			<!-- Categories column -->
 			<div class="footer-column">
-				<h3 class="column-title">Content</h3>
+				<h3 class="column-title">Portfolio</h3>
 				<ul class="column-links">
-					<li><a href="/#content">Crew Call</a></li>
-					<li><a href="/#content">Kodiak</a></li>
-					<li><a href="/#content">Films</a></li>
-					<li><a href="/#content">Coming Soon</a></li>
+					<li><a href="/#content-categories">Crew Call</a></li>
+					<li><a href="/#content-categories">Kodiak</a></li>
+					<li><a href="/#content-categories">Films</a></li>
+					<li><a href="/#content-categories">Coming Soon</a></li>
 				</ul>
 			</div>
 
@@ -119,21 +123,28 @@
 		margin: 0;
 	}
 
-	.founding-badge {
+	.cta-badge {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.375rem 0.75rem;
-		background: var(--color-warning-muted);
-		border: 1px solid var(--color-warning-border);
-		border-radius: 9999px;
+		padding: 0.5rem 1rem;
+		background: var(--color-sun);
+		border: none;
+		border-radius: 0.5rem;
 		font-size: 0.75rem;
-		font-weight: 600;
-		color: var(--color-warning);
+		font-weight: 700;
+		color: white;
 		max-width: fit-content;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.founding-badge :global(svg) {
+	.cta-badge:hover {
+		background: var(--color-primary-hover);
+		transform: scale(1.02);
+	}
+
+	.cta-badge :global(svg) {
 		flex-shrink: 0;
 	}
 
