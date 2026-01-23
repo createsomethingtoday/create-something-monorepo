@@ -25,7 +25,14 @@ import { IDEvsTerminal } from './compositions/lessons/IDEvsTerminal';
 import { SeeingCommercial as SeeingCommercialV1, SEEING_COMMERCIAL_DURATION } from './compositions/commercials/SeeingCommercial';
 
 // Commercials (v2 - Vox kinetic typography)
-import { SeeingCommercial, SEEING_COMMERCIAL_CONFIG } from './commercials';
+import { 
+  SeeingCommercial, 
+  SEEING_COMMERCIAL_CONFIG, 
+  GroundCommercial, 
+  GROUND_COMMERCIAL_CONFIG,
+  GitHubHistoryCommercial,
+  GITHUB_HISTORY_COMMERCIAL_CONFIG,
+} from './commercials';
 
 // Primitives
 import { KineticText } from './primitives/KineticText';
@@ -312,6 +319,32 @@ export const RemotionRoot: React.FC = () => {
         fps={SEEING_COMMERCIAL_CONFIG.fps}
         width={SEEING_COMMERCIAL_CONFIG.width}
         height={SEEING_COMMERCIAL_CONFIG.height}
+      />
+      
+      {/* Ground MCP Commercial - "No hallucination. Just evidence." */}
+      <Composition
+        id="GroundCommercial"
+        component={GroundCommercial}
+        durationInFrames={GROUND_COMMERCIAL_CONFIG.durationInFrames}
+        fps={GROUND_COMMERCIAL_CONFIG.fps}
+        width={GROUND_COMMERCIAL_CONFIG.width}
+        height={GROUND_COMMERCIAL_CONFIG.height}
+        defaultProps={GROUND_COMMERCIAL_CONFIG.defaultProps}
+      />
+      
+      {/* GitHub History Commercial - Contribution heatmap visualization */}
+      <Composition
+        id="GitHubHistoryCommercial"
+        component={GitHubHistoryCommercial}
+        durationInFrames={GITHUB_HISTORY_COMMERCIAL_CONFIG.durationInFrames}
+        fps={GITHUB_HISTORY_COMMERCIAL_CONFIG.fps}
+        width={GITHUB_HISTORY_COMMERCIAL_CONFIG.width}
+        height={GITHUB_HISTORY_COMMERCIAL_CONFIG.height}
+        defaultProps={{
+          ...GITHUB_HISTORY_COMMERCIAL_CONFIG.defaultProps,
+          username: 'createsomethingtoday',
+          githubToken: process.env.GITHUB_TOKEN || '',
+        }}
       />
       
       {/* ========================================

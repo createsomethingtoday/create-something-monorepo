@@ -16,7 +16,6 @@
 	import PCNPartners from '$lib/components/PCNPartners.svelte';
 	import FeatureComparison from '$lib/components/FeatureComparison.svelte';
 	import Pricing from '$lib/components/Pricing.svelte';
-	import DemoCTA from '$lib/components/DemoCTA.svelte';
 	import VideoModal from '$lib/components/VideoModal.svelte';
 
 	// SEO Configuration
@@ -218,7 +217,6 @@
 	<!-- 9. Comparison & Pricing -->
 	<FeatureComparison />
 	<Pricing />
-	<DemoCTA />
 </main>
 
 <!-- Global Video Modal - controlled via videoPlayer store -->

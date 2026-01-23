@@ -13,6 +13,20 @@ export {
   SEEING_SPEC,
 } from './seeing';
 
+// Ground Commercial
+export {
+  GroundCommercial,
+  GROUND_COMMERCIAL_CONFIG,
+  SPEC as GROUND_SPEC,
+} from './ground';
+
+// GitHub History Commercial
+export {
+  GitHubHistoryCommercial,
+  GITHUB_HISTORY_COMMERCIAL_CONFIG,
+  GITHUB_HISTORY_SPEC,
+} from './github-history';
+
 // Shared primitives
 export {
   KineticHeadline,

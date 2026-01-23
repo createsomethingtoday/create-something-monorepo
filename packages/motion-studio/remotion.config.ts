@@ -15,6 +15,6 @@ Config.setOverwriteOutput(true);
 
 // Vox-style typically uses 24fps for cinematic feel
 // Can drop to 12fps for "choppy emphasis" segments
-Config.setFrameRange([0, 150]); // Default 5 seconds at 30fps
+// Note: Don't set frame range here - let each composition define its own duration
 
 export default Config;

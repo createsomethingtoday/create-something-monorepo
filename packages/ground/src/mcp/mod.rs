@@ -790,7 +790,7 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     let directories: Vec<PathBuf> = if cross_package {
         // Auto-detect packages in monorepo - require explicit directory for safety
         let base = match args.get("directory").and_then(|v| v.as_str()) {
-            Some(dir) => PathBuf::from(dir),
+            Some(dir) => resolve_path(dir),
             None => {
                 return ToolResult::error(
                     "cross_package=true requires 'directory' to specify the monorepo root. \
@@ -810,14 +810,14 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         }
         packages
     } else if let Some(dirs) = args.get("directories").and_then(|v| v.as_array()) {
-        // Multiple directories provided
+        // Multiple directories provided - resolve relative paths
         dirs.iter()
             .filter_map(|v| v.as_str())
-            .map(PathBuf::from)
+            .map(|p| resolve_path(p))
             .collect()
     } else if let Some(dir) = args.get("directory").and_then(|v| v.as_str()) {
-        // Single directory
-        vec![PathBuf::from(dir)]
+        // Single directory - resolve relative path
+        vec![resolve_path(dir)]
     } else {
         return ToolResult::error("Missing: directory, directories, or cross_package=true");
     };
@@ -853,10 +853,12 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     };
     
     // Collect files from all directories, tracking which package each file is from
-    // Apply config path filters to exclude test files, configs, etc.
+    // NOTE: We do NOT apply config.ignore.paths here - those are for orphan detection
+    // (to avoid flagging route files as orphaned). For duplicate detection, we want
+    // to find copies even in +server.ts files. We only apply function name ignores
+    // and pair ignores during result filtering.
     let mut files: Vec<PathBuf> = Vec::new();
     let mut file_to_package: std::collections::HashMap<PathBuf, String> = std::collections::HashMap::new();
-    let mut paths_ignored_by_config = 0;
     let max_files = 500;
     
     'outer: for dir in &directories {
@@ -865,12 +867,6 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         collect_ts_files(dir, &mut dir_files);
         
         for file in dir_files {
-            // Skip files matching config ignore paths
-            if config.should_ignore_path(&file) {
-                paths_ignored_by_config += 1;
-                continue;
-            }
-            
             file_to_package.insert(file.clone(), package_name.clone());
             files.push(file);
             
@@ -1017,21 +1013,17 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 "message": message
             });
             
-            // Add config info if patterns were applied
-            if ignored_count > 0 || paths_ignored_by_config > 0 {
+            // Add config info if function patterns were applied
+            // NOTE: We don't apply path ignores to duplicate detection - those are
+            // for orphan detection. We still filter by function name and pair ignores.
+            if ignored_count > 0 {
                 response["ignored_by_config"] = json!(ignored_count);
-                response["paths_ignored_by_config"] = json!(paths_ignored_by_config);
                 response["config_applied"] = json!(true);
             }
             
             // Add ignored function patterns from config for transparency
             if !config.ignore.functions.is_empty() {
                 response["ignored_functions"] = json!(config.ignore.functions);
-            }
-            
-            // Add ignored path patterns from config for transparency
-            if !config.ignore.paths.is_empty() {
-                response["ignored_paths"] = json!(config.ignore.paths);
             }
             
             // Add skipped files info if any were excluded
@@ -1692,6 +1684,68 @@ fn suggest_search_scope(module_path: &PathBuf) -> Option<String> {
     // Fall back to src directory of the module
     if let Some(idx) = path_str.find("/src/") {
         return Some(path_str[..idx + 4].to_string()); // include "/src"
+    }
+    
+    None
+}
+
+/// Resolve a path, handling relative paths by finding the workspace root.
+/// The workspace root is detected by looking for .ground.yml, package.json, or .git
+fn resolve_path(path: &str) -> PathBuf {
+    let p = PathBuf::from(path);
+    
+    // If it's already absolute, just return it
+    if p.is_absolute() {
+        return p;
+    }
+    
+    // For relative paths, try to find the workspace root
+    // by looking for common project markers
+    if let Some(workspace_root) = find_workspace_root() {
+        let full_path = workspace_root.join(&p);
+        // If this path exists, use it
+        if full_path.exists() {
+            return full_path.canonicalize().unwrap_or(full_path);
+        }
+    }
+    
+    // Fallback: try current directory
+    match std::env::current_dir() {
+        Ok(cwd) => {
+            let full_path = cwd.join(&p);
+            full_path.canonicalize().unwrap_or(full_path)
+        }
+        Err(_) => p,
+    }
+}
+
+/// Find the workspace root by looking for common project markers.
+/// Walks up from current directory looking for .ground.yml, package.json, or .git
+fn find_workspace_root() -> Option<PathBuf> {
+    let cwd = std::env::current_dir().ok()?;
+    let mut current = cwd;
+    
+    // Walk up to 20 levels
+    for _ in 0..20 {
+        // Check for workspace markers (in order of specificity)
+        for marker in &[".ground.yml", "package.json", ".git", "pnpm-workspace.yaml"] {
+            let marker_path = current.join(marker);
+            if marker_path.exists() {
+                // For .git, check if it's a directory (not a file in worktrees)
+                if *marker == ".git" && !marker_path.is_dir() {
+                    continue;
+                }
+                return Some(current);
+            }
+        }
+        
+        // Move to parent
+        match current.parent() {
+            Some(parent) if parent != current => {
+                current = parent.to_path_buf();
+            }
+            _ => break,
+        }
     }
     
     None
