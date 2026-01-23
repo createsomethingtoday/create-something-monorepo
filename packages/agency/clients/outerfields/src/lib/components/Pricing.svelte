@@ -6,15 +6,16 @@
 	 */
 	import { Check, Zap } from 'lucide-svelte';
 
+	// Ordered for visual balance: multi-line items paired, single-line items paired
 	const deliverables = [
 		'Custom Private Content Network platform',
-		'Professional video production',
-		'Content strategy & organization',
 		'Subscription & payment integration',
 		'Comprehensive analytics dashboard',
+		'Ongoing support & development',
+		'Professional video production',
+		'Content strategy & organization',
 		'Multi-platform marketing setup',
-		'AI-powered chatbot assistant',
-		'Ongoing support & development'
+		'AI-powered chatbot assistant'
 	];
 
 	function bookDiscoveryCall() {
