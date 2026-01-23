@@ -869,9 +869,19 @@
 	}
 
 	/* Responsive */
+	@media (max-width: 900px) {
+		.install-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
 	@media (max-width: 768px) {
 		.hero-title {
 			font-size: var(--text-h1);
+		}
+
+		.install-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 
 		.how-grid {
@@ -894,6 +904,16 @@
 		.comparison-table th,
 		.comparison-table td {
 			padding: var(--space-xs) var(--space-sm);
+		}
+	}
+
+	@media (max-width: 480px) {
+		.install-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.install-featured {
+			max-width: 100%;
 		}
 	}
 </style>
