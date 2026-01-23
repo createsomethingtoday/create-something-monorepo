@@ -22,14 +22,16 @@
 	const changelog: ChangelogEntry[] = [
 		{
 			date: '2026-01-22',
-			version: '1.6.1',
-			title: 'Video cards: text is readable now',
-			description: 'Fixed an overlay that was covering video card titles and metadata. Cards now display cleanly on the dark background.',
-			category: 'fix',
+			version: '1.7.0',
+			title: 'Video card redesign',
+			description: 'Complete visual refresh of video cards using Pencil design tool. Balanced layout, consistent brand colors, cleaner typography.',
+			category: 'improvement',
 			highlights: [
-				'Card info text visible',
-				'Removed conflicting gradient overlay',
-				'Cleaner component architecture'
+				'Redesigned with Pencil',
+				'Brand-aligned FREE badges (orange)',
+				'Frosted glass play indicator',
+				'Fixed overlay obscuring text',
+				'Design system tokens throughout'
 			]
 		},
 		{
