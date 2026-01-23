@@ -1,6 +1,6 @@
 [package]
 name = "ground"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Grounded claims for code. You can't claim something until you've checked it."
 license = "MIT"
