@@ -399,6 +399,11 @@
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-lg);
 		transition: border-color var(--duration-micro) var(--ease-standard);
+		text-align: center;
+	}
+
+	.install-card.featured .card-header {
+		justify-content: center;
 	}
 
 	.install-card.featured:hover {
@@ -410,11 +415,21 @@
 		background: var(--color-success-muted);
 	}
 
-	/* Secondary cards grid - Tufte small multiples: consistent structure */
+	/* Secondary cards grid - 6-column grid for flexible row layouts */
 	.install-grid {
 		display: grid;
-		grid-template-columns: repeat(5, 1fr);
+		grid-template-columns: repeat(6, 1fr);
 		gap: var(--space-sm);
+	}
+
+	/* Top row: 3 cards, each spans 2 columns */
+	.install-grid .install-card:nth-child(-n+3) {
+		grid-column: span 2;
+	}
+
+	/* Bottom row: 2 cards, each spans 3 columns (fills full width) */
+	.install-grid .install-card:nth-child(n+4) {
+		grid-column: span 3;
 	}
 
 	/* Secondary cards - uniform structure, reduced visual weight */
@@ -746,21 +761,24 @@
 	}
 
 	/* Responsive */
-	@media (max-width: 900px) {
-		/* 5 cards → 3+2 layout */
-		.install-grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
-
 	@media (max-width: 768px) {
 		.hero-title {
 			font-size: var(--text-h1);
 		}
 
-		/* 5 cards → 2+2+1 layout */
+		/* Reset to simple 2-column grid on mobile */
 		.install-grid {
 			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.install-grid .install-card:nth-child(-n+3),
+		.install-grid .install-card:nth-child(n+4) {
+			grid-column: span 1;
+		}
+
+		/* Last card spans full width if odd count */
+		.install-grid .install-card:last-child:nth-child(odd) {
+			grid-column: span 2;
 		}
 
 		.how-grid {

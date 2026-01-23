@@ -1,5 +1,5 @@
 {
-  "name": "@create-something/loom",
+  "name": "@createsomething/loom-mcp",
   "version": "0.1.0",
   "description": "AI-native coordination layer. External memory for agents.",
   "keywords": [

@@ -9,6 +9,7 @@
 	 */
 
 	import { goto } from '$app/navigation';
+	import { SEO } from '@create-something/components';
 	import {
 		wizardState,
 		currentStep,
@@ -57,9 +58,18 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Configure Your Site | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+	title="Configure Your Site"
+	description="Configure your vertical template website. Choose your template, subdomain, and customize content."
+	keywords="website configuration, vertical templates, website builder"
+	ogImage="/og-image.svg"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Products', url: '/products' },
+		{ name: 'Vertical Templates', url: '/products/vertical-templates' },
+		{ name: 'Configure', url: '/products/vertical-templates/configure' }
+	]}
+/>
 
 <div class="wizard-page">
 	<!-- Progress Steps -->

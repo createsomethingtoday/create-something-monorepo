@@ -5,8 +5,8 @@
 	let { data }: { data: PageData } = $props();
 	const { product } = data;
 
-	// Cursor deep link - base64 encoded config for npx @create-something/loom
-	const cursorDeepLink = 'cursor://anysphere.cursor-deeplink/mcp/install?name=loom&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlLXNvbWV0aGluZy9sb29tIl19';
+	// Cursor deep link - base64 encoded config for npx @createsomething/loom-mcp
+	const cursorDeepLink = 'cursor://anysphere.cursor-deeplink/mcp/install?name=loom&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2xvb20tbWNwIl19';
 
 	// Copy states
 	let copiedNpm = $state(false);
@@ -79,7 +79,7 @@
 				</div>
 				<button
 					class="install-button secondary"
-					onclick={() => copyToClipboard('npx --yes @create-something/loom', (v) => copiedClaude = v)}
+					onclick={() => copyToClipboard('npx --yes @createsomething/loom-mcp', (v) => copiedClaude = v)}
 				>
 					{copiedClaude ? 'Copied!' : 'Copy command'}
 				</button>
@@ -99,7 +99,7 @@
 				</div>
 				<button
 					class="install-button secondary"
-					onclick={() => copyToClipboard('{"mcpServers":{"loom":{"command":"npx","args":["@create-something/loom"]}}}', (v) => copiedWindsurf = v)}
+					onclick={() => copyToClipboard('{"mcpServers":{"loom":{"command":"npx","args":["@createsomething/loom-mcp"]}}}', (v) => copiedWindsurf = v)}
 				>
 					{copiedWindsurf ? 'Copied!' : 'Copy config'}
 				</button>
@@ -140,7 +140,7 @@
 				</div>
 				<button
 					class="install-button secondary"
-					onclick={() => copyToClipboard('codex mcp add loom --command "npx @create-something/loom"', (v) => copiedCodex = v)}
+					onclick={() => copyToClipboard('codex mcp add loom --command "npx @createsomething/loom-mcp"', (v) => copiedCodex = v)}
 				>
 					{copiedCodex ? 'Copied!' : 'Copy command'}
 				</button>
@@ -161,7 +161,7 @@
 				</div>
 				<button
 					class="install-button secondary"
-					onclick={() => copyToClipboard('npm install -g @create-something/loom', (v) => copiedNpm = v)}
+					onclick={() => copyToClipboard('npm install -g @createsomething/loom-mcp', (v) => copiedNpm = v)}
 				>
 					{copiedNpm ? 'Copied!' : 'Copy command'}
 				</button>
@@ -359,7 +359,7 @@
 				</span>
 				<span class="link-text">GitHub</span>
 			</a>
-			<a href="https://www.npmjs.com/package/@create-something/loom" class="link-card">
+			<a href="https://www.npmjs.com/package/@createsomething/loom-mcp" class="link-card">
 				<span class="link-icon">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<rect x="2" y="2" width="20" height="20" fill="currentColor"/>
@@ -475,6 +475,11 @@
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-lg);
 		transition: border-color var(--duration-micro) var(--ease-standard);
+		text-align: center;
+	}
+
+	.install-card.featured .card-header {
+		justify-content: center;
 	}
 
 	.install-card.featured:hover {
@@ -486,11 +491,21 @@
 		background: var(--color-success-muted);
 	}
 
-	/* Secondary cards grid - Tufte small multiples: consistent structure */
+	/* Secondary cards grid - 6-column grid for flexible row layouts */
 	.install-grid {
 		display: grid;
-		grid-template-columns: repeat(5, 1fr);
+		grid-template-columns: repeat(6, 1fr);
 		gap: var(--space-sm);
+	}
+
+	/* Top row: 3 cards, each spans 2 columns */
+	.install-grid .install-card:nth-child(-n+3) {
+		grid-column: span 2;
+	}
+
+	/* Bottom row: 2 cards, each spans 3 columns (fills full width) */
+	.install-grid .install-card:nth-child(n+4) {
+		grid-column: span 3;
 	}
 
 	/* Secondary cards - uniform structure, reduced visual weight */
@@ -869,19 +884,24 @@
 	}
 
 	/* Responsive */
-	@media (max-width: 900px) {
-		.install-grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
-
 	@media (max-width: 768px) {
 		.hero-title {
 			font-size: var(--text-h1);
 		}
 
+		/* Reset to simple 2-column grid on mobile */
 		.install-grid {
 			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.install-grid .install-card:nth-child(-n+3),
+		.install-grid .install-card:nth-child(n+4) {
+			grid-column: span 1;
+		}
+
+		/* Last card spans full width if odd count */
+		.install-grid .install-card:last-child:nth-child(odd) {
+			grid-column: span 2;
 		}
 
 		.how-grid {
