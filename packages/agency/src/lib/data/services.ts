@@ -357,6 +357,50 @@ export const products: Service[] = [
 		]
 	},
 	{
+		id: 'loom',
+		title: 'Loom MCP',
+		description:
+			'Multi-agent coordination for AI coding assistants. Route tasks to the right agent, checkpoint progress, recover from crashes. Free. Open source.',
+		triadQuestion: '"Who should work on this?"',
+		triadAction: 'Coordinate',
+		triadLevel: 'system',
+		whenToUse: [
+			'Multiple AI agents need to coordinate on work',
+			'Long-running tasks need crash recovery',
+			'You want to route work to the cheapest capable agent'
+		],
+		whatThisRemoves: [
+			'Agents forgetting context between sessions',
+			'Manual coordination of multi-agent workflows',
+			'Lost progress when agents crash mid-task'
+		],
+		howItWorks: [
+			'Install via npm or one-click buttons',
+			'Loom exposes MCP tools to your AI assistant',
+			'Tasks are routed to the best agent based on capabilities and cost',
+			'Checkpoints allow recovery from any point'
+		],
+		proof: {
+			caseStudy: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/loom',
+			name: 'Loom README',
+			headline: 'Multi-agent coordination with smart routing',
+			stats: ['30+ MCP tools', 'Multi-agent routing', 'Crash recovery']
+		},
+		pricing: 'Free',
+		timeline: '2 minutes to install',
+		icon: 'network',
+		tier: 'accessible',
+		isProductized: true,
+		deliverables: [
+			'loom_work — Quick start: create and claim task atomically',
+			'loom_route — Smart routing (best/cheapest/fastest)',
+			'loom_checkpoint — Save progress for crash recovery',
+			'loom_resume — Resume from any checkpoint',
+			'loom_formulas — Repeatable workflow templates',
+			'loom_agents — List and configure agents'
+		]
+	},
+	{
 		id: 'ai-readiness-assessment',
 		title: 'AI Readiness Assessment',
 		description:
