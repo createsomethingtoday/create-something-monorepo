@@ -15,6 +15,7 @@
 		OntologicalMode,
 		MotionJudgment
 	} from '$lib/motion-analysis';
+	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -151,10 +152,17 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Motion Ontology | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="Analyze UI motion through Heidegger's phenomenological framework. Does motion disclose or decorate?" />
-</svelte:head>
+<SEO
+	title="Motion Ontology"
+	description="Analyze UI motion through Heidegger's phenomenological framework. Does motion disclose or decorate?"
+	keywords="motion analysis, Heidegger, phenomenology, UI animation, Zuhandenheit, disclosure"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Motion Ontology', url: 'https://createsomething.space/experiments/motion-ontology' }
+	]}
+/>
 
 <!-- ASCII Art Hero -->
 <section class="relative pt-24 pb-8 px-6">

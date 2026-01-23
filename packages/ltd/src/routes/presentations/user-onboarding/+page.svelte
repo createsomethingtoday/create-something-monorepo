@@ -13,14 +13,21 @@
 
 	import Presentation from '$lib/components/Presentation.svelte';
 	import Slide from '$lib/components/Slide.svelte';
+	import { SEO } from '@create-something/components';
 
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>{data.meta.title}</title>
-	<meta name="description" content={data.meta.description} />
-</svelte:head>
+<SEO
+	title={data.meta.title}
+	description={data.meta.description}
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Presentations', url: 'https://createsomething.ltd/presentations' },
+		{ name: 'User Onboarding', url: 'https://createsomething.ltd/presentations/user-onboarding' }
+	]}
+/>
 
 <Presentation title="User Onboarding" subtitle="Enable a Workflow" scriptUrl="/presentations/user-onboarding/script">
 	<!-- ═══════════════════════════════════════════════════════════════════

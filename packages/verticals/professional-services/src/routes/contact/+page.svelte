@@ -8,15 +8,19 @@
 	 * "Every project begins with a conversation."
 	 */
 
+	import { SEO } from '@create-something/components';
 	import ProgressiveForm from '$lib/components/ProgressiveForm.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import { siteConfig } from '$lib/config/context';
 </script>
 
-<SEOHead
-	title="Contact | {$siteConfig.name}"
+<SEO
+	title="Contact"
 	description="Start a conversation about your project. We'd love to hear from you."
-	canonical="/contact"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Contact', url: '/contact' }
+	]}
 />
 
 <main class="contact-page">

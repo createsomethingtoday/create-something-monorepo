@@ -27,6 +27,20 @@ export {
   GITHUB_HISTORY_SPEC,
 } from './github-history';
 
+// Outerfields Commercial
+export {
+  OuterfieldsCommercial,
+  OUTERFIELDS_COMMERCIAL_CONFIG,
+  SPEC as OUTERFIELDS_SPEC,
+} from './outerfields';
+
+// TEND Commercial
+export {
+  TendCommercial,
+  TEND_COMMERCIAL_CONFIG,
+  SPEC as TEND_SPEC,
+} from './tend';
+
 // Shared primitives
 export {
   KineticHeadline,

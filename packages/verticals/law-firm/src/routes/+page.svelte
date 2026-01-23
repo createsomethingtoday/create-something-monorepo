@@ -7,16 +7,19 @@
 	 * Trust through outcomes, ethics visible
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/site';
 
 	// Get current year for footer
 	const currentYear = new Date().getFullYear();
 </script>
 
-<svelte:head>
-	<title>{siteConfig.name} | {siteConfig.tagline}</title>
-	<meta name="description" content={siteConfig.description} />
-</svelte:head>
+<SEO
+	title={siteConfig.tagline}
+	description={siteConfig.description}
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 
 <!-- Navigation -->
 <nav

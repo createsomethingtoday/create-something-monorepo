@@ -6,6 +6,7 @@
 	 * Simple contact form for inquiries.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/context';
 
 	let formState: 'idle' | 'submitting' | 'success' | 'error' = 'idle';
@@ -34,13 +35,15 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Contact - {$siteConfig.name}</title>
-	<meta
-		name="description"
-		content="Get in touch with {$siteConfig.name}. Visit us at {$siteConfig.address.street}, {$siteConfig.address.city} or call {$siteConfig.phone}."
-	/>
-</svelte:head>
+<SEO
+	title="Contact"
+	description="Get in touch with us. Visit our restaurant or call to make a reservation."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Contact', url: '/contact' }
+	]}
+/>
 
 <main class="contact-page">
 	<!-- Page Header -->

@@ -6,12 +6,23 @@
 	 * demonstrating how progress reports preserve human agency without
 	 * requiring proactive management.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>The Autonomous Harness | CREATE SOMETHING.io</title>
-	<meta name="description" content="How autonomous agent harnesses can preserve human agency through reactive oversight. Progress reports as the interface between machine autonomy and human direction." />
-</svelte:head>
+<SEO
+	title="The Autonomous Harness"
+	description="How autonomous agent harnesses can preserve human agency through reactive oversight. Progress reports as the interface between machine autonomy and human direction."
+	keywords="autonomous agents, agent orchestration, Heidegger, dwelling, human agency, AI workflows"
+	ogType="article"
+	articleSection="Architecture"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'The Autonomous Harness', url: 'https://createsomething.io/papers/autonomous-harness-architecture' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

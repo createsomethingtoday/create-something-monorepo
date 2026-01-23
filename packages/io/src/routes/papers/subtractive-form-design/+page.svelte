@@ -5,12 +5,23 @@
 	 * Case study applying Heidegger's hermeneutic question to form field design,
 	 * demonstrating that hiding inapplicable fields is clearer than documentation.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Subtractive Form Design | CREATE SOMETHING.io</title>
-	<meta name="description" content="When a field doesn't apply, hiding it is clearer than instructing users to leave it blank. A case study in hermeneutic form architecture." />
-</svelte:head>
+<SEO
+	title="Subtractive Form Design"
+	description="When a field doesn't apply, hiding it is clearer than instructing users to leave it blank. A case study in hermeneutic form architecture."
+	keywords="subtractive design, form UX, Heidegger, hermeneutic design, user interface, form architecture"
+	ogType="article"
+	articleSection="Case Study"
+	publishedTime="2025-10-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Subtractive Form Design', url: 'https://createsomething.io/papers/subtractive-form-design' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

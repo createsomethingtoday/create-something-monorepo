@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { goto } from '$app/navigation';
 
 	let title = '';
@@ -85,6 +86,13 @@
 		}
 	}
 </script>
+
+<SEO
+	title="Admin - New Experiment"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">

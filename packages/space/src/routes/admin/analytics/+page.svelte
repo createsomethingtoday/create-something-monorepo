@@ -9,6 +9,7 @@
 	 * After: Uses shared tufte components for consistency with io dashboard
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 	import { MetricCard, HighDensityTable, Sparkline, DailyGrid } from '@create-something/tufte';
 
@@ -110,6 +111,13 @@
 			.sort((a, b) => a.date.localeCompare(b.date));
 	}
 </script>
+
+<SEO
+	title="Admin - Analytics"
+	description="Administrative dashboard"
+	propertyName="space"
+	noindex={true}
+/>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">

@@ -1,12 +1,13 @@
 <script lang="ts">
+  import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-  <title>Terms of Service | CREATE SOMETHING</title>
-  <meta name="description" content="Terms of Service for CREATE SOMETHING. Read our terms governing your use of our website and services." />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://createsomething.io/terms" />
-</svelte:head>
+<SEO
+  title="Terms of Service"
+  description="Terms of Service for CREATE SOMETHING. Read our terms governing your use of our website and services."
+  propertyName="io"
+  noindex={true}
+/>
 
 
   <!-- Hero Section -->

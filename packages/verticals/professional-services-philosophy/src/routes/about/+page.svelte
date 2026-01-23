@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import ConsultationCTA from '$lib/components/ConsultationCTA.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead
+<SEO
 	title="About Us"
 	description="Learn about our firm's history, values, and commitment to delivering exceptional professional services."
-	canonical="/about"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'About', url: '/about' }
+	]}
 />
 <StructuredData page="about" />
 

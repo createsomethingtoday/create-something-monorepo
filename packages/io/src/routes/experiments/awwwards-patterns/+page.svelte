@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 
 	// Parallax tracking - relative to container
 	let parallaxContainer: HTMLElement;
@@ -56,13 +56,17 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Award-Winning Patterns in Monochrome | CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="Exploring black & white design patterns from Awwwards winners through the lens of Canon principles"
-	/>
-</svelte:head>
+<SEO
+	title="Award-Winning Patterns in Monochrome"
+	description="Exploring black & white design patterns from Awwwards winners through the lens of Canon principles"
+	keywords="awwwards, monochrome design, black white, interaction patterns, motion design, typography"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Awwwards Patterns', url: 'https://createsomething.io/experiments/awwwards-patterns' }
+	]}
+/>
 
 <article class="experiment-page">
 	<!-- Header -->

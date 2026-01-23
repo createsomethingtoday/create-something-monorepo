@@ -1,15 +1,22 @@
 <script lang="ts">
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | CREATE SOMETHING</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title="{experiment.title} | CREATE SOMETHING"
+	description={experiment.description}
+	keywords="IC MVP, Webflow, code components, DevLink, agentic engineering, translation pipeline"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'IC MVP Pipeline', url: 'https://createsomething.io/experiments/ic-mvp-pipeline' }
+	]}
+/>
 
 <article class="experiment-page">
 	<!-- Header -->

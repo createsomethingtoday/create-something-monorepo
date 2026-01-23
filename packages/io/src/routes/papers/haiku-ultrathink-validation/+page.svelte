@@ -5,12 +5,23 @@
 	 * Testing whether Haiku 4.5 with extended thinking achieves
 	 * near-Sonnet performance at 10% of the cost.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Haiku + Ultrathink Validation | CREATE SOMETHING.io</title>
-	<meta name="description" content="Empirical validation of Haiku 4.5 + ultrathink achieving near-Sonnet performance at fraction of cost." />
-</svelte:head>
+<SEO
+	title="Haiku + Ultrathink Validation"
+	description="Empirical validation of Haiku 4.5 + ultrathink achieving near-Sonnet performance at fraction of cost."
+	keywords="Haiku 4.5, ultrathink, extended thinking, cost optimization, Claude, Sonnet comparison"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Haiku + Ultrathink Validation', url: 'https://createsomething.io/papers/haiku-ultrathink-validation' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

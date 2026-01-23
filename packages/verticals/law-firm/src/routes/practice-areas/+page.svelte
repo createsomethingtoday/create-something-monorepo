@@ -4,8 +4,8 @@
 	 * Overview of all practice areas
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 	import { Users, Shield, Briefcase, Scale, Home, Car, Gavel, FileText, Building2 } from 'lucide-svelte';
 
@@ -26,10 +26,14 @@
 	};
 </script>
 
-<SEOHead
-	canonical="/practice-areas"
-	title="Practice Areas | {name}"
+<SEO
+	title="Practice Areas"
 	description="Our areas of legal expertise. We provide skilled representation in family law, personal injury, business law, and more."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Practice Areas', url: '/practice-areas' }
+	]}
 />
 
 <main class="practice-areas-page">

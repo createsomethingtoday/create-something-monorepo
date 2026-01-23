@@ -1,10 +1,16 @@
-<svelte:head>
-	<title>Standards — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="Canonical standards for evaluating work across the Create Something ecosystem. Codified criteria from 'less, but better.'"
-	/>
-</svelte:head>
+<script lang="ts">
+	import { SEO } from '@create-something/components';
+</script>
+
+<SEO
+	title="Standards"
+	description="Canonical standards for evaluating work across the Create Something ecosystem. Codified criteria from 'less, but better.'"
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Standards', url: 'https://createsomething.ltd/standards' }
+	]}
+/>
 
 <!-- Header -->
 <section class="pt-24 pb-16 px-6 border-b border-canon">

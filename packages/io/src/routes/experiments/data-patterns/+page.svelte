@@ -6,6 +6,7 @@
 	 * reveal patterns in data without manual analysis.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import {
 		ComparativeSparklines,
 		TrendIndicator,
@@ -85,9 +86,17 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Data Patterns | CREATE SOMETHING.io</title>
-</svelte:head>
+<SEO
+	title="Data Patterns"
+	description="Demonstrates how agentic visualization components automatically reveal patterns in data without manual analysis."
+	keywords="data patterns, tufte, data visualization, agentic visualization, pattern recognition"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Data Patterns', url: 'https://createsomething.io/experiments/data-patterns' }
+	]}
+/>
 
 <div class="page-container min-h-screen p-6">
 	<div class="max-w-5xl mx-auto space-y-12">

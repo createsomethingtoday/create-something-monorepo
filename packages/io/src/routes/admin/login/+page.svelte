@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
+
 	let email = '';
 	let password = '';
 	let loading = false;
@@ -36,6 +38,13 @@
 		}
 	}
 </script>
+
+<SEO
+	title="Admin - Login"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="min-h-screen flex items-start justify-center px-6 pt-24">
 	<div class="w-full max-w-md">

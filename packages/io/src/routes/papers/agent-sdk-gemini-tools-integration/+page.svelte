@@ -6,12 +6,23 @@
 	 * into the Agent SDK's Gemini provider. Covers implementation, safety controls,
 	 * agentic loop patterns, and the impact on research paper quality.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Agent SDK Gemini Tools Integration | CREATE SOMETHING.io</title>
-	<meta name="description" content="Documenting the integration of bash and file_read tools within the Agent SDK's Gemini provider, focusing on implementation, safety, and agentic loop patterns." />
-</svelte:head>
+<SEO
+	title="Agent SDK Gemini Tools Integration"
+	description="Documenting the integration of bash and file_read tools within the Agent SDK's Gemini provider, focusing on implementation, safety, and agentic loop patterns."
+	keywords="Agent SDK, Gemini, tools integration, bash, file_read, agentic loop, safety controls"
+	ogType="article"
+	articleSection="Technical"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Gemini Tools Integration', url: 'https://createsomething.io/papers/agent-sdk-gemini-tools-integration' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

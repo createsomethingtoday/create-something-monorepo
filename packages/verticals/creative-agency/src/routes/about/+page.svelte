@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
-<SEOHead title="About" description="{$config.description}" />
+<SEO
+	title="About"
+	description={$config.description}
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'About', url: '/about' }
+	]}
+/>
 
 <!-- Hero -->
 <section class="hero">

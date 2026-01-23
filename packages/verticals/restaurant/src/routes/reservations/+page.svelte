@@ -6,16 +6,19 @@
 	 * Clear, inviting, friction-free.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/context';
 </script>
 
-<svelte:head>
-	<title>Reservations - {$siteConfig.name}</title>
-	<meta
-		name="description"
-		content="Reserve your table at {$siteConfig.name}. Book online or call {$siteConfig.reservations.phone}."
-	/>
-</svelte:head>
+<SEO
+	title="Reservations"
+	description="Reserve your table. Book online or call us to secure your spot."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Reservations', url: '/reservations' }
+	]}
+/>
 
 <main class="reservations-page">
 	<!-- Page Header -->

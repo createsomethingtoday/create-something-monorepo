@@ -7,7 +7,7 @@
 	 * - SVG operations are explicit (no natural language interpretation)
 	 * - Conditioning image is transparent (see what the AI sees)
 	 */
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import PresetPicker from './PresetPicker.svelte';
 	import OperationPicker from './OperationPicker.svelte';
@@ -377,10 +377,17 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | CREATE SOMETHING</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title={experiment.title}
+	description={experiment.description}
+	keywords="render studio, architectural rendering, controlnet, svg workflow, ai visualization"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Render Studio', url: 'https://createsomething.io/experiments/render-studio' }
+	]}
+/>
 
 <article class="studio-page">
 	<!-- Header -->

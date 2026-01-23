@@ -5,12 +5,23 @@
 	 * Documents the philosophical, writing, and systems thinking foundations
 	 * of CREATE SOMETHING's methodology.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Intellectual Genealogy | CREATE SOMETHING.io</title>
-	<meta name="description" content="The three lineages—philosophy, writing, systems—that form CREATE SOMETHING's intellectual foundation. Heidegger to Rams, Orwell to Fenton/Lee, Wiener to Senge." />
-</svelte:head>
+<SEO
+	title="Intellectual Genealogy"
+	description="The three lineages—philosophy, writing, systems—that form CREATE SOMETHING's intellectual foundation. Heidegger to Rams, Orwell to Fenton/Lee, Wiener to Senge."
+	keywords="intellectual genealogy, Heidegger, Rams, Orwell, systems thinking, philosophy, design methodology"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Intellectual Genealogy', url: 'https://createsomething.io/papers/intellectual-genealogy' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
-<SEOHead title="Terms of Service" description="Terms and conditions governing the use of our services." />
+<SEO
+	title="Terms of Service"
+	description="Terms and conditions governing the use of our services."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Terms', url: '/terms' }
+	]}
+/>
 
 <div class="legal-page">
 	<div class="container">

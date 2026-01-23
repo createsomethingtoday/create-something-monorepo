@@ -9,6 +9,7 @@
 	 * - Clarity over cleverness
 	 * - Specificity over generality
 	 */
+	import { SEO } from '@create-something/components';
 
 	let { data } = $props();
 
@@ -70,10 +71,17 @@
 	let copyStatus = $state('');
 </script>
 
-<svelte:head>
-	<title>{data.meta.title}</title>
-	<meta name="description" content={data.meta.description} />
-</svelte:head>
+<SEO
+	title={data.meta.title}
+	description={data.meta.description}
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Presentations', url: 'https://createsomething.ltd/presentations' },
+		{ name: data.meta.presentationTitle, url: `https://createsomething.ltd/presentations/${data.slug}` },
+		{ name: 'Script', url: `https://createsomething.ltd/presentations/${data.slug}/script` }
+	]}
+/>
 
 <div class="script-viewer">
 	<header class="header">

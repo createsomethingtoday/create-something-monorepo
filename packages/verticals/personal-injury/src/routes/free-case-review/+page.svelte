@@ -4,8 +4,8 @@
 	 * Primary conversion page for PI leads
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import PIIntakeForm from '$lib/components/PIIntakeForm.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 	import { Shield, Clock, DollarSign, Phone } from 'lucide-svelte';
@@ -13,10 +13,14 @@
 	const siteConfig = getSiteConfigFromContext();
 </script>
 
-<SEOHead
-	canonical="/free-case-review"
-	title="Free Case Review | {siteConfig.name}"
+<SEO
+	title="Free Case Review"
 	description="Get a free, no-obligation evaluation of your personal injury case. No fees unless we win. Available 24/7."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Free Case Review', url: '/free-case-review' }
+	]}
 />
 
 <main class="case-review-page">

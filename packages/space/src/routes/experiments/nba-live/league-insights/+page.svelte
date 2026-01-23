@@ -6,6 +6,7 @@
 	 * Updates every 60 seconds to capture new game completions.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import CorrelationChart from '$lib/components/nba/CorrelationChart.svelte';
 	import { invalidate } from '$app/navigation';
@@ -36,10 +37,18 @@
 	const formatNumber = (value: number) => value.toFixed(1);
 </script>
 
-<svelte:head>
-	<title>League Insights | NBA Live Analytics</title>
-	<meta name="description" content="League-wide trends and patterns from today's NBA games. Ball movement, competitive balance, and scoring analysis." />
-</svelte:head>
+<SEO
+	title="League Insights | NBA Live Analytics"
+	description="League-wide trends and patterns from today's NBA games. Ball movement, competitive balance, and scoring analysis."
+	keywords="NBA league insights, ball movement, competitive balance, scoring trends, basketball analytics"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' },
+		{ name: 'League Insights', url: 'https://createsomething.space/experiments/nba-live/league-insights' }
+	]}
+/>
 
 <!-- Header -->
 <section class="page-header">

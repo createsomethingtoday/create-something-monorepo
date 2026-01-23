@@ -6,12 +6,23 @@
 	 * features in 83 minutes, achieving 100% feature parity while migrating
 	 * from Next.js/Vercel to SvelteKit/Cloudflare.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Webflow Dashboard Refactor: From Next.js to SvelteKit | CREATE SOMETHING.io</title>
-	<meta name="description" content="How autonomous AI workflows completed 40% missing features in 83 minutes. Complete refactoring from Next.js/Vercel to SvelteKit/Cloudflare achieving 100% feature parity." />
-</svelte:head>
+<SEO
+	title="Webflow Dashboard Refactor: From Next.js to SvelteKit"
+	description="How autonomous AI workflows completed 40% missing features in 83 minutes. Complete refactoring from Next.js/Vercel to SvelteKit/Cloudflare achieving 100% feature parity."
+	keywords="Webflow, dashboard refactor, Next.js, SvelteKit, Cloudflare, autonomous AI, migration"
+	ogType="article"
+	articleSection="Case Study"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Webflow Dashboard Refactor', url: 'https://createsomething.io/papers/webflow-dashboard-refactor' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

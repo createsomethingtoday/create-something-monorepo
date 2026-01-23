@@ -4,8 +4,8 @@
 	 * Shows practice area info, related attorneys, and case results
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 	import type { PageData } from './$types';
 
@@ -15,10 +15,15 @@
 	const siteConfig = getSiteConfigFromContext();
 </script>
 
-<SEOHead
-	canonical="/practice-areas/{practiceArea.slug}"
-	title="{practiceArea.name} Attorney | {siteConfig.name}"
-	description="{practiceArea.description}"
+<SEO
+	title="{practiceArea.name} Attorney"
+	description={practiceArea.description}
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Practice Areas', url: '/practice-areas' },
+		{ name: practiceArea.name, url: `/practice-areas/${practiceArea.slug}` }
+	]}
 />
 
 <main class="practice-area-page">

@@ -9,6 +9,8 @@
 	 * Modal handles compute (pay-per-use). Best of both worlds.
 	 */
 
+	import { SEO } from '@create-something/components';
+
 	// Cost comparison data
 	const modalLimitations = {
 		freeTierCronJobs: 5,
@@ -34,9 +36,17 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Hybrid Scheduling: Modal + Cloudflare | CREATE SOMETHING.io</title>
-</svelte:head>
+<SEO
+	title="Hybrid Scheduling: Modal + Cloudflare"
+	description="Exploring how Cloudflare Workers Cron Triggers can complement Modal's scheduled jobs to overcome free tier limitations while maintaining cost efficiency."
+	keywords="hybrid scheduling, modal, cloudflare workers, cron triggers, serverless, scheduling architecture"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Hybrid Scheduling', url: 'https://createsomething.io/experiments/hybrid-scheduling' }
+	]}
+/>
 
 <div class="page-container min-h-screen p-6">
 	<div class="max-w-5xl mx-auto space-y-12">

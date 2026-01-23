@@ -1,14 +1,22 @@
 <script lang="ts">
 	import ExperimentsChart from '$lib/components/routing/ExperimentsChart.svelte';
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head>
-	<title>Routing Dashboard | CREATE SOMETHING</title>
-	<meta name="description" content="Model routing optimization metrics and experiments" />
-</svelte:head>
+<SEO
+	title="Routing Dashboard"
+	description="Model routing optimization metrics and experiments"
+	keywords="model routing, Haiku, Sonnet, Opus, optimization, cost reduction, AI models"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Routing Dashboard', url: 'https://createsomething.space/experiments/routing-dashboard' }
+	]}
+/>
 
 <div class="container">
 	<header class="page-header">

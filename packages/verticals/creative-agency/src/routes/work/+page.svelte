@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
-<SEOHead title="Work" canonical="/work" description="Case studies and selected work" />
+<SEO
+	title="Work"
+	description="Case studies and selected work"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Work', url: '/work' }
+	]}
+/>
 
 <div class="work-page">
 	<header class="page-header">

@@ -5,6 +5,7 @@
 	 * Papers document what we tested, what we found, and what it means.
 	 * Each paper includes methodology, data, and conclusions you can verify.
 	 */
+	import { SEO } from '@create-something/components';
 
 	let { data } = $props();
 	const papers = data.papers;
@@ -99,10 +100,16 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{data.meta.title} | CREATE SOMETHING .io</title>
-	<meta name="description" content={data.meta.description} />
-</svelte:head>
+<SEO
+	title={data.meta.title}
+	description={data.meta.description}
+	keywords="research papers, AI-native development, Claude Code, experiments, methodology, systems thinking"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' }
+	]}
+/>
 
 <!-- Hero Section -->
 <section class="hero-section">

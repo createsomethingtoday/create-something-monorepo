@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 
 	let subscribers: any[] = [];
@@ -105,6 +106,13 @@
 
 	$: activeCount = subscribers.filter((s) => s.status === 'active' || !s.status).length;
 </script>
+
+<SEO
+	title="Admin - Subscribers"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="space-y-6">
 	<div class="page-header">

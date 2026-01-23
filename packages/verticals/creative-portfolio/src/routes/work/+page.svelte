@@ -1,11 +1,19 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 
 	let showInfo = $state(false);
 </script>
 
-<SEOHead title="Work" description="Selected work by {$config.name}" canonical="/work" />
+<SEO
+	title="Work"
+	description="Selected work and portfolio projects"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Work', url: '/work' }
+	]}
+/>
 
 <div class="work-list">
 	<!-- Work Items -->

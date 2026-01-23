@@ -4,15 +4,19 @@
 	 * Overview of architecture services offered
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead
-	title="Services | {$config.name}"
-	canonical="/services"
+<SEO
+	title="Services"
 	description="Architecture, interiors, and custom furniture design. Full-service residential design from concept through construction."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Services', url: '/services' }
+	]}
 />
 <StructuredData page="services" />
 

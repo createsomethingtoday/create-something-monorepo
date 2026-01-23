@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 </script>
 
-<SEOHead title="Privacy Policy" description="Our commitment to protecting your privacy and personal information." />
+<SEO
+	title="Privacy Policy"
+	description="Our commitment to protecting your privacy and personal information."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Privacy', url: '/privacy' }
+	]}
+/>
 
 <div class="legal-page">
 	<div class="container">

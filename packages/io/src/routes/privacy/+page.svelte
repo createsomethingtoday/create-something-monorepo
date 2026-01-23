@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { PrivacyPolicyContent } from '@create-something/components';
+  import { SEO, PrivacyPolicyContent } from '@create-something/components';
 </script>
 
-<svelte:head>
-  <title>Privacy Policy | CREATE SOMETHING</title>
-  <meta name="description" content="How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only—no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data." />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://createsomething.io/privacy" />
-</svelte:head>
+<SEO
+  title="Privacy Policy"
+  description="How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only—no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data."
+  propertyName="io"
+  noindex={true}
+/>
 
 <section class="relative pt-32 pb-16 px-6">
   <div class="max-w-4xl mx-auto">

@@ -6,16 +6,19 @@
 	 * Warm, inviting, sensory-rich voice.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/context';
 </script>
 
-<svelte:head>
-	<title>About - {$siteConfig.name}</title>
-	<meta
-		name="description"
-		content="Learn about our philosophy, meet our team, and discover the story behind {$siteConfig.name}."
-	/>
-</svelte:head>
+<SEO
+	title="About"
+	description="Learn about our philosophy, meet our team, and discover the story behind our restaurant."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'About', url: '/about' }
+	]}
+/>
 
 <main class="about-page">
 	<!-- Page Header -->

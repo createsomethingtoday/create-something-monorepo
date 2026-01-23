@@ -14,14 +14,21 @@
 
 	import Presentation from '$lib/components/Presentation.svelte';
 	import Slide from '$lib/components/Slide.svelte';
+	import { SEO } from '@create-something/components';
 
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>{data.meta.title}</title>
-	<meta name="description" content={data.meta.description} />
-</svelte:head>
+<SEO
+	title={data.meta.title}
+	description={data.meta.description}
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Presentations', url: 'https://createsomething.ltd/presentations' },
+		{ name: 'Claude Code Partner', url: 'https://createsomething.ltd/presentations/claude-code-partner' }
+	]}
+/>
 
 <Presentation title="CLAUDE CODE: PARTNER" subtitle="AI-Native Development Environment" scriptUrl="/presentations/claude-code-partner/script">
 	<!-- ═══════════════════════════════════════════════════════════════════

@@ -6,6 +6,7 @@
 	 * Compares duo points per possession against league average.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import DuoChart from '$lib/components/nba/DuoChart.svelte';
 	import { ArrowLeft, Clock, Radio, AlertCircle } from 'lucide-svelte';
@@ -16,10 +17,18 @@
 	const awayTeamAbbr = $derived(data.players.away[0]?.teamAbbr || 'AWAY');
 </script>
 
-<svelte:head>
-	<title>Duo Synergy | NBA Live Analytics</title>
-	<meta name="description" content="Which two-player combinations are most effective? Compare points per possession against the league average." />
-</svelte:head>
+<SEO
+	title="Duo Synergy | NBA Live Analytics"
+	description="Which two-player combinations are most effective? Compare points per possession against the league average."
+	keywords="NBA duo synergy, player combinations, points per possession, two-man game, basketball chemistry"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' },
+		{ name: 'Duo Synergy', url: 'https://createsomething.space/experiments/nba-live/duo-synergy' }
+	]}
+/>
 
 <!-- Header -->
 <section class="nba-header">

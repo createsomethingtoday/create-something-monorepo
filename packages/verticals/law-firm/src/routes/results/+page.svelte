@@ -4,8 +4,8 @@
 	 * Anonymized case outcomes as trust signals
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 
 	const siteConfig = getSiteConfigFromContext();
@@ -24,10 +24,14 @@
 	})).filter((group) => group.results.length > 0);
 </script>
 
-<SEOHead
-	canonical="/results"
-	title="Case Results | {name}"
+<SEO
+	title="Case Results"
 	description="A selection of representative case outcomes. Prior results do not guarantee a similar outcome."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Results', url: '/results' }
+	]}
 />
 
 <main class="results-page">

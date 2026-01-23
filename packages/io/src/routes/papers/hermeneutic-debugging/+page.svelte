@@ -6,12 +6,23 @@
 	 * demonstrating through the Maverick X logo animation case study
 	 * that understanding emerges through iterative interpretation.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Hermeneutic Debugging | CREATE SOMETHING.io</title>
-	<meta name="description" content="Applying Heidegger's hermeneutic circle to software debugging. Case study: React state management and the hidden assumptions that break our code." />
-</svelte:head>
+<SEO
+	title="Hermeneutic Debugging"
+	description="Applying Heidegger's hermeneutic circle to software debugging. Case study: React state management and the hidden assumptions that break our code."
+	keywords="debugging, hermeneutic circle, Heidegger, React, state management, software development methodology"
+	ogType="article"
+	articleSection="Methodology"
+	publishedTime="2025-12-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Hermeneutic Debugging', url: 'https://createsomething.io/papers/hermeneutic-debugging' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

@@ -9,8 +9,8 @@
 	 * Zuhandenheit: The portfolio recedes; the impact remains.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import { onMount } from 'svelte';
 
 	let heroVisible = $state(false);
@@ -52,7 +52,12 @@
 	});
 </script>
 
-<SEOHead />
+<SEO
+	title="Creative Agency"
+	description="Strategy, identity, and digital experiences for companies ready to lead."
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 
 <!-- Hero -->
 <section class="hero" class:visible={heroVisible}>

@@ -1,14 +1,18 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import TeamGrid from '$lib/components/TeamGrid.svelte';
 	import ConsultationCTA from '$lib/components/ConsultationCTA.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead
+<SEO
 	title="Our Team"
 	description="Meet our team of experienced professionals dedicated to delivering exceptional results for our clients."
-	canonical="/team"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Team', url: '/team' }
+	]}
 />
 <StructuredData page="team" />
 

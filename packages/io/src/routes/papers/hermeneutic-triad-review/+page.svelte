@@ -6,12 +6,23 @@
 	 * demonstrating how parallel peer review creates a self-correcting system.
 	 */
 	import { Building2, Shield, Sparkles } from 'lucide-svelte';
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>The Hermeneutic Triad | CREATE SOMETHING.io</title>
-	<meta name="description" content="How autonomous peer reviewers, the harness orchestrator, and coding agents collaborate to identify and resolve code violations through parallel analysis." />
-</svelte:head>
+<SEO
+	title="The Hermeneutic Triad"
+	description="How autonomous peer reviewers, the harness orchestrator, and coding agents collaborate to identify and resolve code violations through parallel analysis."
+	keywords="hermeneutic triad, peer review, harness, agent collaboration, DRY violations, code quality"
+	ogType="article"
+	articleSection="Case Study"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Hermeneutic Triad', url: 'https://createsomething.io/papers/hermeneutic-triad-review' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

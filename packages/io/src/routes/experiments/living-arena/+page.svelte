@@ -10,6 +10,7 @@
 	 */
 
 	import { onMount } from 'svelte';
+	import { SEO } from '@create-something/components';
 	import {
 		Shield,
 		Lightbulb,
@@ -207,13 +208,17 @@
 	const lightingIntensity = $derived(lightingMode === 'event' ? 1 : lightingMode === 'ambient' ? 0.5 : 0.8);
 </script>
 
-<svelte:head>
-	<title>Living Arena | Experiments | CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="Visualization of AI-native automations orchestrating arena systems through WORKWAY pattern collection."
-	/>
-</svelte:head>
+<SEO
+	title="Living Arena | Experiments | CREATE SOMETHING"
+	description="Visualization of AI-native automations orchestrating arena systems through WORKWAY pattern collection."
+	keywords="AI automation, arena systems, WORKWAY patterns, living arena, smart buildings"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Living Arena', url: 'https://createsomething.io/experiments/living-arena' }
+	]}
+/>
 
 <div class="arena-experiment">
 	<!-- Header -->

@@ -4,8 +4,8 @@
 	 * Recovery amounts as trust signals
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 
 	const siteConfig = getSiteConfigFromContext();
@@ -30,10 +30,14 @@
 		: `$${(totalRecovered / 1000).toFixed(0)}K+`;
 </script>
 
-<SEOHead
-	canonical="/results"
-	title="Case Results | {name}"
+<SEO
+	title="Case Results"
 	description="Over {formattedTotal} recovered for accident victims. A selection of representative case outcomes. Prior results do not guarantee a similar outcome."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Results', url: '/results' }
+	]}
 />
 
 <main class="results-page">

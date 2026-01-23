@@ -5,8 +5,8 @@
 
 	import { page } from '$app/stores';
 	import { error } from '@sveltejs/kit';
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 	import { ArrowLeft, Clock, DollarSign, AlertTriangle, Check } from 'lucide-svelte';
 
@@ -26,10 +26,15 @@
 		.slice(0, 3);
 </script>
 
-<SEOHead
-	canonical="/accident-types/{slug}"
-	title="{accidentType.name} Attorney | {siteConfig.name}"
+<SEO
+	title="{accidentType.name} Attorney"
 	description={accidentType.description}
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Case Types', url: '/accident-types' },
+		{ name: accidentType.name, url: `/accident-types/${slug}` }
+	]}
 />
 
 <main class="accident-type-page">

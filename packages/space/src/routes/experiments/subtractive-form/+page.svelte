@@ -7,6 +7,7 @@
 	 */
 
 	import type { PageData } from './$types';
+	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -103,10 +104,17 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Subtractive Form Design | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="Experience the 'absence is clearer than instruction' principle firsthand through interactive form design." />
-</svelte:head>
+<SEO
+	title="Subtractive Form Design"
+	description="Experience the 'absence is clearer than instruction' principle firsthand through interactive form design."
+	keywords="subtractive design, form UX, absence principle, conditional fields, error reduction"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Subtractive Form Design', url: 'https://createsomething.space/experiments/subtractive-form' }
+	]}
+/>
 
 <!-- ASCII Art Hero -->
 <section class="relative pt-24 pb-8 px-6">

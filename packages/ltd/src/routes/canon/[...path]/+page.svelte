@@ -5,6 +5,7 @@
 	 * Renders markdown content via MDsveX with MarkdownLayout.
 	 * Uses catch-all [...path] route to handle nested canon pages.
 	 */
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -13,10 +14,16 @@
 	let canonPage = $derived(data.canonPage);
 </script>
 
-<svelte:head>
-	<title>{canonPage.frontmatter.title} — Canon Design System</title>
-	<meta name="description" content={canonPage.frontmatter.description || canonPage.frontmatter.title} />
-</svelte:head>
+<SEO
+	title={canonPage.frontmatter.title}
+	description={canonPage.frontmatter.description || canonPage.frontmatter.title}
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Canon', url: 'https://createsomething.ltd/canon' },
+		{ name: canonPage.frontmatter.title, url: `https://createsomething.ltd/canon/${data.path}` }
+	]}
+/>
 
 <!-- Render the MDsveX component (uses MarkdownLayout automatically) -->
 <svelte:component this={canonPage.component} {...canonPage.frontmatter} />

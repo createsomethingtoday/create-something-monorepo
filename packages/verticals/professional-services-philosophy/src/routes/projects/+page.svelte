@@ -8,15 +8,19 @@
 	 * "Let the work speak."
 	 */
 
+	import { SEO } from '@create-something/components';
 	import ProjectGallery from '$lib/components/ProjectGallery.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import { siteConfig } from '$lib/config/context';
 </script>
 
-<SEOHead
-	title="Projects | {$siteConfig.name}"
+<SEO
+	title="Projects"
 	description="Explore our portfolio of architecture and design projects."
-	canonical="/projects"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Projects', url: '/projects' }
+	]}
 />
 
 <main class="projects-page">

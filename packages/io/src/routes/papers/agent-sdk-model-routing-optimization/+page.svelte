@@ -1,9 +1,5 @@
-<svelte:head>
-	<title>Agent SDK Model Routing Optimization | CREATE SOMETHING.io</title>
-	<meta name="description" content="Cost-effective model selection through complexity-aware routing. Reduces API costs by 73% while improving success rates through intelligent task-to-model matching." />
-</svelte:head>
-
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	// Types defined inline per Canon requirements
 	interface Section {
 		id: string;
@@ -70,6 +66,21 @@
 		{ path: 'packages/agent-sdk/scripts/run-paper.sh', line: 175, description: 'Model routing in paper generation' }
 	];
 </script>
+
+<SEO
+	title="Agent SDK Model Routing Optimization"
+	description="Cost-effective model selection through complexity-aware routing. Reduces API costs by 73% while improving success rates through intelligent task-to-model matching."
+	keywords="Agent SDK, model routing, cost optimization, complexity-aware routing, API costs, task matching"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Agent SDK Model Routing', url: 'https://createsomething.io/papers/agent-sdk-model-routing-optimization' }
+	]}
+/>
 
 <article class="paper-container flex flex-col gap-8 p-8 max-w-4xl mx-auto">
 	<!-- Header -->

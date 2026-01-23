@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
 	import ContributeBlock from '$lib/components/taste/ContributeBlock.svelte';
+	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -33,76 +34,16 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Taste — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="Human-curated visual references from Are.na that inform Canon design decisions. Minimalist design inspiration following Dieter Rams' principle: less, but better."
-	/>
-	<meta name="keywords" content="minimalist design, visual references, design inspiration, Dieter Rams, Swiss design, Canon, Are.na curation" />
-
-	<!-- Canonical -->
-	<link rel="canonical" href="https://createsomething.ltd/taste" />
-
-	<!-- Open Graph -->
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://createsomething.ltd/taste" />
-	<meta property="og:title" content="Taste — CREATE SOMETHING.ltd" />
-	<meta property="og:description" content="Human-curated visual references from Are.na that inform Canon design decisions. Less, but better." />
-	<meta property="og:image" content="https://createsomething.ltd/og-image.png" />
-	<meta property="og:site_name" content="CREATE SOMETHING" />
-
-	<!-- Twitter -->
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:url" content="https://createsomething.ltd/taste" />
-	<meta name="twitter:title" content="Taste — CREATE SOMETHING.ltd" />
-	<meta name="twitter:description" content="Human-curated visual references from Are.na that inform Canon design decisions. Less, but better." />
-	<meta name="twitter:image" content="https://createsomething.ltd/og-image.png" />
-
-	<!-- JSON-LD: CollectionPage for AEO -->
-	{@html `<script type="application/ld+json">${JSON.stringify({
-		'@context': 'https://schema.org',
-		'@type': 'CollectionPage',
-		name: 'Taste — Visual Design References',
-		description: 'Human-curated visual references from Are.na that inform Canon design decisions. Minimalist design inspiration following Dieter Rams.',
-		url: 'https://createsomething.ltd/taste',
-		isPartOf: {
-			'@type': 'WebSite',
-			name: 'CREATE SOMETHING',
-			url: 'https://createsomething.ltd'
-		},
-		about: [
-			{ '@type': 'Thing', name: 'Minimalist Design' },
-			{ '@type': 'Thing', name: 'Visual References' },
-			{ '@type': 'Thing', name: 'Design Inspiration' },
-			{ '@type': 'Person', name: 'Dieter Rams' }
-		],
-		mainEntity: {
-			'@type': 'ItemList',
-			numberOfItems: data.stats.examples,
-			itemListElement: data.examples.slice(0, 10).map((ex, i) => ({
-				'@type': 'ListItem',
-				position: i + 1,
-				item: {
-					'@type': 'ImageObject',
-					name: ex.title || 'Visual reference',
-					contentUrl: ex.image_url,
-					description: ex.description || 'Curated design reference'
-				}
-			}))
-		}
-	})}<\/script>`}
-
-	<!-- JSON-LD: BreadcrumbList -->
-	{@html `<script type="application/ld+json">${JSON.stringify({
-		'@context': 'https://schema.org',
-		'@type': 'BreadcrumbList',
-		itemListElement: [
-			{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://createsomething.ltd' },
-			{ '@type': 'ListItem', position: 2, name: 'Taste', item: 'https://createsomething.ltd/taste' }
-		]
-	})}<\/script>`}
-</svelte:head>
+<SEO
+	title="Taste"
+	description="Human-curated visual references from Are.na that inform Canon design decisions. Minimalist design inspiration following Dieter Rams' principle: less, but better."
+	keywords="minimalist design, visual references, design inspiration, Dieter Rams, Swiss design, Canon, Are.na curation"
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Taste', url: 'https://createsomething.ltd/taste' }
+	]}
+/>
 
 <!-- Header -->
 <section class="header-section">

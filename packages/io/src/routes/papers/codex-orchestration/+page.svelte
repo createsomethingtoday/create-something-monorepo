@@ -1,9 +1,5 @@
-<svelte:head>
-	<title>Codex Orchestration: Claude Code Planning + Autonomous Execution | CREATE SOMETHING.io</title>
-	<meta name="description" content="Research paper: Using Codex as autonomous executor triggered by Claude Code planning. Clean tool boundaries, 80% cost savings, fire-and-forget execution pattern." />
-</svelte:head>
-
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	const metadata = {
 		title: 'Codex Orchestration: Claude Code Planning + Autonomous Execution',
 		date: '2026-01-09',
@@ -70,6 +66,21 @@
 		}
 	];
 </script>
+
+<SEO
+	title="Codex Orchestration: Claude Code Planning + Autonomous Execution"
+	description="Using Codex as autonomous executor triggered by Claude Code planning. Clean tool boundaries, 80% cost savings, fire-and-forget execution pattern."
+	keywords="Codex, Claude Code, autonomous execution, agent orchestration, cost optimization, fire-and-forget"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-09T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Codex Orchestration', url: 'https://createsomething.io/papers/codex-orchestration' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

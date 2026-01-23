@@ -7,7 +7,7 @@
 	 * intelligence system.
 	 */
 
-	import { SubtractiveTriad, IsometricArchitecture } from '@create-something/components';
+	import { SubtractiveTriad, IsometricArchitecture, SEO } from '@create-something/components';
 
 	// Kickstand system hierarchy
 	const systemNodes = [
@@ -22,10 +22,20 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Subtractive Triad Audit: Kickstand | CREATE SOMETHING.io</title>
-	<meta name="description" content="Applied the Subtractive Triad framework to audit Kickstand, achieving 48% health score improvement through systematic code unification, artifact removal, and documentation reconnection." />
-</svelte:head>
+<SEO
+	title="Subtractive Triad Audit: Kickstand"
+	description="Applied the Subtractive Triad framework to audit Kickstand, achieving 48% health score improvement through systematic code unification, artifact removal, and documentation reconnection."
+	keywords="Subtractive Triad, code audit, Kickstand, DRY, Rams, Heidegger, code quality"
+	ogType="article"
+	articleSection="Case Study"
+	publishedTime="2025-10-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Kickstand Triad Audit', url: 'https://createsomething.io/papers/kickstand-triad-audit' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

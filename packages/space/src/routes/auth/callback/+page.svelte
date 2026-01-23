@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	// This page should redirect immediately via +page.server.ts
 	// This component only shows briefly during loading
 </script>
 
-<svelte:head>
-	<title>Verifying... | CREATE SOMETHING SPACE</title>
-</svelte:head>
+<SEO
+	title="Verifying"
+	description="Verifying your login"
+	propertyName="space"
+	noindex={true}
+/>
 
 <div class="callback-container">
 	<div class="callback-card">

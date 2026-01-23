@@ -5,6 +5,7 @@
 	 * A collection of presentations following CREATE SOMETHING principles.
 	 * "The presentation itself demonstrates the philosophy."
 	 */
+	import { SEO } from '@create-something/components';
 
 	const presentations = [
 		{
@@ -73,10 +74,15 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Presentations | CREATE SOMETHING .ltd</title>
-	<meta name="description" content="Philosophy-driven presentations from CREATE SOMETHING." />
-</svelte:head>
+<SEO
+	title="Presentations"
+	description="Philosophy-driven presentations from CREATE SOMETHING."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Presentations', url: 'https://createsomething.ltd/presentations' }
+	]}
+/>
 
 <article class="presentations-page">
 	<header class="header">

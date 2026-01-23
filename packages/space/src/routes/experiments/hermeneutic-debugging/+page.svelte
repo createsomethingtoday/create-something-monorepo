@@ -8,6 +8,8 @@
 	 * Based on the paper at createsomething.io/papers/hermeneutic-debugging
 	 */
 
+	import { SEO } from '@create-something/components';
+
 	// Experiment tracking
 	const PAPER_ID = 'file-hermeneutic-debugging';
 	const sessionId = crypto.randomUUID();
@@ -385,10 +387,17 @@ useEffect(() => {
 	}
 </script>
 
-<svelte:head>
-	<title>Hermeneutic Debugging | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="Experience the hermeneutic circle in debugging. Walk through 8 iterations of a React bug, predicting outcomes and discovering hidden assumptions." />
-</svelte:head>
+<SEO
+	title="Hermeneutic Debugging"
+	description="Experience the hermeneutic circle in debugging. Walk through 8 iterations of a React bug, predicting outcomes and discovering hidden assumptions."
+	keywords="hermeneutic circle, debugging, React, hidden assumptions, iterative development, bug fixing"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Hermeneutic Debugging', url: 'https://createsomething.space/experiments/hermeneutic-debugging' }
+	]}
+/>
 
 <!-- ASCII Art Hero -->
 <section class="relative pt-24 pb-8 px-6">

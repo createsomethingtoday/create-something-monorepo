@@ -7,12 +7,23 @@
 	 * examines the convergence of empiricism and phenomenology in understanding
 	 * the Zuhandenheit moment.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>The Norvig Partnership | CREATE SOMETHING.io</title>
-	<meta name="description" content="How Peter Norvig's Advent of Code 2025 experiments validate phenomenological predictions about AI-human partnership." />
-</svelte:head>
+<SEO
+	title="The Norvig Partnership"
+	description="How Peter Norvig's Advent of Code 2025 experiments validate phenomenological predictions about AI-human partnership."
+	keywords="Peter Norvig, Advent of Code, AI partnership, Zuhandenheit, phenomenology, empiricism"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2025-12-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'The Norvig Partnership', url: 'https://createsomething.io/papers/norvig-partnership' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

@@ -6,7 +6,7 @@
 	 * that punish users for legitimate actions.
 	 */
 
-	import { KeyInsight, createInsight, createBugFixComparison, parseStatement } from '@create-something/components';
+	import { KeyInsight, createInsight, createBugFixComparison, parseStatement, SEO } from '@create-something/components';
 
 	const insight = createInsight(
 		'cumulative-state-antipattern',
@@ -32,10 +32,20 @@
 	);
 </script>
 
-<svelte:head>
-	<title>The Cumulative State Anti-Pattern | CREATE SOMETHING.io</title>
-	<meta name="description" content="How ambiguous field semantics create invisible bugs. A case study from Webflow template validation where 'published' didn't mean what we thought." />
-</svelte:head>
+<SEO
+	title="The Cumulative State Anti-Pattern"
+	description="How ambiguous field semantics create invisible bugs. A case study from Webflow template validation where 'published' didn't mean what we thought."
+	keywords="database design, cumulative state, anti-pattern, field semantics, Webflow, bug prevention"
+	ogType="article"
+	articleSection="Case Study"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Cumulative State Anti-Pattern', url: 'https://createsomething.io/papers/cumulative-state-antipattern' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

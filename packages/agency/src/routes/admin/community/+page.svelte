@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import type { PageData, ActionData } from './$types';
 	import { enhance } from '$app/forms';
 	
@@ -51,9 +52,12 @@
 	let processedQueue = $state<Set<string>>(new Set());
 </script>
 
-<svelte:head>
-	<title>Community | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+	title="Admin - Community"
+	description="Administrative dashboard"
+	propertyName="agency"
+	noindex={true}
+/>
 
 <main class="dashboard">
 	<header class="dashboard-header">

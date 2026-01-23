@@ -1,16 +1,20 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 
 	const siteConfig = getSiteConfigFromContext();
 </script>
 
-<SEOHead
+<SEO
 	title="About {siteConfig.name}"
 	description={siteConfig.firm.philosophy}
-	canonical="/about"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'About', url: '/about' }
+	]}
 />
 <StructuredData page="about" />
 

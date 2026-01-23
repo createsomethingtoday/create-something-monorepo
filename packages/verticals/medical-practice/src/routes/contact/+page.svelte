@@ -1,10 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/site';
 </script>
 
-<svelte:head>
-	<title>Contact | {siteConfig.name}</title>
-</svelte:head>
+<SEO
+	title="Contact"
+	description="Get in touch with our medical practice. Schedule an appointment today."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Contact', url: '/contact' }
+	]}
+/>
 
 <div class="max-w-[1200px] mx-auto px-6 py-24">
 	<h1 class="text-5xl text-primary mb-8">{siteConfig.footer.contactHeadline}</h1>

@@ -8,14 +8,18 @@
 	 * "Architecture should recede into experience."
 	 */
 
-	import SEOHead from '$lib/components/SEOHead.svelte';
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/context';
 </script>
 
-<SEOHead
-	title="Studio | {$siteConfig.name}"
+<SEO
+	title="Studio"
 	description={$siteConfig.studio.philosophy}
-	canonical="/studio"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Studio', url: '/studio' }
+	]}
 />
 
 <main class="studio-page">

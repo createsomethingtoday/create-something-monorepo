@@ -6,6 +6,7 @@
 	 * Uses LayerCake for charts.
 	 */
 	
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import AnalyticsNav from '$lib/components/nba/AnalyticsNav.svelte';
 	import DateNavigation from '$lib/components/nba/DateNavigation.svelte';
@@ -60,10 +61,18 @@
 	};
 </script>
 
-<svelte:head>
-	<title>Pace Analysis | NBA Live Analytics</title>
-	<meta name="description" content="Team pace, tempo, and offensive efficiency analysis" />
-</svelte:head>
+<SEO
+	title="Pace Analysis | NBA Live Analytics"
+	description="Team pace, tempo, and offensive efficiency analysis. Possessions per game and points per possession metrics."
+	keywords="NBA pace, tempo analysis, offensive efficiency, possessions per game, points per possession"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' },
+		{ name: 'Pace Analysis', url: 'https://createsomething.space/experiments/nba-live/pace' }
+	]}
+/>
 
 <div class="pace-page">
 	<AnalyticsNav />

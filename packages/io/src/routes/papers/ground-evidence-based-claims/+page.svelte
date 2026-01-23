@@ -6,16 +6,23 @@
 	 * a computation-constrained verification tool for AI agents.
 	 */
 
-	import { SubtractiveTriad } from '@create-something/components';
+	import { SubtractiveTriad, SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Ground: Evidence-Based Claims for AI Code Analysis | CREATE SOMETHING.io</title>
-	<meta
-		name="description"
-		content="A tool that blocks AI agents from claiming code is dead, duplicated, or orphaned without first computing the evidence. Applied to two production codebases with 10-20x speedup for codebase hygiene tasks."
-	/>
-</svelte:head>
+<SEO
+	title="Ground: Evidence-Based Claims for AI Code Analysis"
+	description="A tool that blocks AI agents from claiming code is dead, duplicated, or orphaned without first computing the evidence. Applied to two production codebases with 10-20x speedup for codebase hygiene tasks."
+	keywords="Ground, AI code analysis, evidence-based claims, dead code detection, code hygiene, codebase analysis"
+	ogType="article"
+	articleSection="Case Study"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Ground', url: 'https://createsomething.io/papers/ground-evidence-based-claims' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

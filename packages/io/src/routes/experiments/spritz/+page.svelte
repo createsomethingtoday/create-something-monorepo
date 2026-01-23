@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 	import { Spritz } from '@create-something/spritz';
 	import type { PageData } from './$types';
 
@@ -54,10 +54,17 @@
 	];
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | CREATE SOMETHING</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title="{experiment.title} | CREATE SOMETHING"
+	description={experiment.description}
+	keywords="RSVP, speed reading, Spritz, rapid serial visual presentation, reading optimization"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Spritz', url: 'https://createsomething.io/experiments/spritz' }
+	]}
+/>
 
 <article class="experiment-page">
 	<!-- Header -->

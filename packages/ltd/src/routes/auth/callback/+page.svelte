@@ -1,6 +1,14 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	// This page handles the redirect from magic link verification.
 </script>
+
+<SEO
+	title="Verifying"
+	description="Verifying your login"
+	propertyName="ltd"
+	noindex={true}
+/>
 
 <div class="callback-container">
 	<p>Verifying your login...</p>

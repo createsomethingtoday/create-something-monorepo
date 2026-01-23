@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import PapersGrid from '$lib/components/PapersGrid.svelte';
+	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;
@@ -38,13 +39,15 @@
 	});
 </script>
 
-<svelte:head>
-	<title>All Experiments ({papers.length}) | CREATE SOMETHING AGENCY</title>
-	<meta
-		name="description"
-		content="Browse agency experiments and case studies. Real projects, real results."
-	/>
-</svelte:head>
+<SEO
+	title="All Experiments ({papers.length})"
+	description="Browse agency experiments and case studies. Real projects, real results."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Experiments', url: '/experiments' }
+	]}
+/>
 
 <div class="min-h-screen page-wrapper">
 	<!-- Navigation -->

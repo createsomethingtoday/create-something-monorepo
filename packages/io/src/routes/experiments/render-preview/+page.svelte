@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 	import { Sparkles, CheckCircle2, AlertCircle } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import PreviewCanvas from './PreviewCanvas.svelte';
@@ -303,10 +303,17 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | CREATE SOMETHING</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title={experiment.title}
+	description={experiment.description}
+	keywords="render preview, controlnet, svg, architectural visualization, ai rendering"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Render Preview', url: 'https://createsomething.io/experiments/render-preview' }
+	]}
+/>
 
 <article class="experiment-page">
 	<!-- Header -->

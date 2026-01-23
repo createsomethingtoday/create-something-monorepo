@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Footer } from '@create-something/components';
+  import { Footer, SEO } from '@create-something/components';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -12,11 +12,16 @@
   ];
 </script>
 
-<svelte:head>
-  <title>Browse by Category | CREATE SOMETHING SPACE</title>
-  <meta name="description" content="Explore community experiments organized by topic" />
-  <link rel="canonical" href="https://createsomething.space/categories" />
-</svelte:head>
+<SEO
+  title="Browse by Category"
+  description="Explore community experiments organized by topic"
+  keywords="AI experiments, categories, browse experiments, topics, community"
+  propertyName="space"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.space' },
+    { name: 'Categories', url: 'https://createsomething.space/categories' }
+  ]}
+/>
 
 <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">

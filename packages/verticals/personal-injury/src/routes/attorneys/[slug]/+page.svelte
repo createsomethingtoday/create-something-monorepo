@@ -4,8 +4,8 @@
 	 * Full profile with credentials, education, practice areas
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 	import type { PageData } from './$types';
 
@@ -20,10 +20,15 @@
 		.filter(Boolean);
 </script>
 
-<SEOHead
-	canonical="/attorneys/{attorney.slug}"
-	title="{attorney.name} - {attorney.title} | {siteConfig.name}"
+<SEO
+	title="{attorney.name} - {attorney.title}"
 	description="{attorney.bio.slice(0, 160)}..."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Attorneys', url: '/attorneys' },
+		{ name: attorney.name, url: `/attorneys/${attorney.slug}` }
+	]}
 />
 
 <main class="attorney-page">

@@ -9,6 +9,7 @@
 	 * crafted patterns showing growth, decline, and emergence trends.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import {
 		ComparativeSparklines,
 		DistributionBar,
@@ -90,9 +91,17 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Agentic Visualizations | CREATE SOMETHING.io</title>
-</svelte:head>
+<SEO
+	title="Agentic Visualizations"
+	description="Research experiment demonstrating autonomous UI components that embody Edward Tufte's principles for displaying quantitative information."
+	keywords="agentic visualization, tufte, data visualization, autonomous components, hermeneutic design"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Agentic Visualization', url: 'https://createsomething.io/experiments/agentic-visualization' }
+	]}
+/>
 
 <div class="page-container min-h-screen p-6">
 	<div class="max-w-7xl mx-auto space-y-12">

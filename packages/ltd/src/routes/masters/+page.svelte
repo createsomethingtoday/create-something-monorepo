@@ -1,17 +1,20 @@
 <script lang="ts">
 	import MasterCard from '$lib/components/MasterCard.svelte';
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head>
-	<title>Masters — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="Explore the masters who define 'less, but better' — from Dieter Rams to Mies van der Rohe."
-	/>
-</svelte:head>
+<SEO
+	title="Masters"
+	description="Explore the masters who define 'less, but better' — from Dieter Rams to Mies van der Rohe."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Masters', url: 'https://createsomething.ltd/masters' }
+	]}
+/>
 
 <!-- Header -->
 <section class="pt-24 pb-16 px-6 border-b border-canon">

@@ -5,6 +5,7 @@
 	 * Design: Data-forward, serif headings, muted palette
 	 * Voice: Clinical precision meets human warmth
 	 */
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/site';
 
 	// Location image
@@ -12,10 +13,12 @@
 		'https://lh3.googleusercontent.com/aida-public/AB6AXuAtOCguORafOYU8ryJLbK0E5AnLWg3tqMjoG2yPk411Hv5Ecad3KcIKyDLxACp1cEXquAUhFYj5bUGhmg0AFdcKhMCnSNebLYQ_dXRD3ZbJaHy5UPpkLCcgwBx3QdEECfyU2wZTpcAszqoqG5z7pXIWBj3GaZkftqYZhbfgoqP23JwBd_nkY3KH0X9Ss4Svpc3KOUxYTl3Rc-TtGj11fTU8Ov7FWI4WZix6NPlm4EEOVE8r9xsr57vIp-LGqZ-bjr14sxGS2NYCnNo';
 </script>
 
-<svelte:head>
-	<title>{siteConfig.name} | {siteConfig.tagline}</title>
-	<meta name="description" content={siteConfig.description} />
-</svelte:head>
+<SEO
+	title={siteConfig.tagline}
+	description={siteConfig.description}
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 
 <!-- Header -->
 <header

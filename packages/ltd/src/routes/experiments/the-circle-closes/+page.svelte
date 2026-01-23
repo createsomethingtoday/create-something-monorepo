@@ -10,7 +10,7 @@
 	 * "The tool reveals its own concealment."
 	 */
 
-	import { TriadHealth, HermeneuticCircle, IsometricAssembly } from '@create-something/components';
+	import { TriadHealth, HermeneuticCircle, IsometricAssembly, SEO } from '@create-something/components';
 
 	let { data } = $props();
 
@@ -34,10 +34,16 @@
 
 </script>
 
-<svelte:head>
-	<title>{data.experiment.title} | CREATE SOMETHING .ltd</title>
-	<meta name="description" content={data.experiment.description} />
-</svelte:head>
+<SEO
+	title={data.experiment.title}
+	description={data.experiment.description}
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Experiments', url: 'https://createsomething.ltd/experiments' },
+		{ name: 'The Circle Closes', url: 'https://createsomething.ltd/experiments/the-circle-closes' }
+	]}
+/>
 
 <article class="experiment">
 	<header class="header">

@@ -9,12 +9,23 @@
 	 * Validates the hypothesis that effective planning enables Haiku to execute
 	 * well-defined tasks with high success rates and significant cost savings.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Haiku Optimization: Intelligent Model Routing for AI-Native Development | CREATE SOMETHING.io</title>
-	<meta name="description" content="Research validating that Haiku achieves 90% of Sonnet's performance on well-defined tasks at 10x lower cost through intelligent model routing." />
-</svelte:head>
+<SEO
+	title="Haiku Optimization: Intelligent Model Routing"
+	description="Research validating that Haiku achieves 90% of Sonnet's performance on well-defined tasks at 10x lower cost through intelligent model routing."
+	keywords="Haiku, model routing, cost optimization, Claude, AI-native development, Sonnet, Opus"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Haiku Optimization', url: 'https://createsomething.io/papers/haiku-optimization' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

@@ -12,7 +12,8 @@
     "render:still": "remotion still",
     "preview": "remotion preview",
     "typecheck": "tsc --noEmit",
-    "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts"
+    "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
+    "generate-sounds": "npx tsx scripts/generate-sounds.ts"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",
@@ -22,6 +23,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remotion": "^4.0.0",
+    "tone": "^15.0.4",
     "zod": "^3.22.0"
   },
   "devDependencies": {

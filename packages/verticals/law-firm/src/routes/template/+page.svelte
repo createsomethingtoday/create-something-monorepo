@@ -7,7 +7,7 @@
 	 * Target audience: Law firms looking for automated website solutions
 	 */
 
-	import SEOHead from '$lib/components/SEOHead.svelte';
+	import { SEO } from '@create-something/components';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 	import { ExternalLink, CheckCircle2, Zap, Shield, Calendar, Mail } from 'lucide-svelte';
 
@@ -133,19 +133,14 @@
 	];
 </script>
 
-<SEOHead
-	canonical="/template"
+<SEO
 	title="Law Firm Website Template - Free & Open Source"
 	description="Production-ready law firm website template with automated workflows. Free tier available. Deploy to Cloudflare Pages in minutes. Consultations that book themselves."
-	keywords={[
-		'law firm website template free',
-		'attorney website builder',
-		'legal website template open source',
-		'cloudflare law firm',
-		'automated legal intake',
-		'law office website free',
-		'sveltekit law firm',
-		'workway legal automation'
+	keywords="law firm website template free, attorney website builder, legal website template open source, cloudflare law firm, automated legal intake, law office website free, sveltekit law firm, workway legal automation"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Template', url: '/template' }
 	]}
 />
 <StructuredData page="home" includeFAQ={false} includeTemplate={true} />

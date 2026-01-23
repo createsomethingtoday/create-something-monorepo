@@ -3,7 +3,7 @@
 	import ArticleHeader from '$lib/components/ArticleHeader.svelte';
 	import ArticleContent from '$lib/components/ArticleContent.svelte';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
-	import { RelatedArticles } from '@create-something/components';
+	import { RelatedArticles, SEO } from '@create-something/components';
 
 	export let data: PageData;
 
@@ -15,41 +15,17 @@
 	$: fullUrl = `https://createsomething.agency/experiments/${paper.slug}`;
 </script>
 
-<svelte:head>
-	<title>{paper.title} | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content={paper.description ||
-			paper.excerpt_long ||
-			paper.excerpt_short ||
-			'Community experiment from the playground'}
-	/>
-	<meta
-		name="keywords"
-		content={paper.focus_keywords || `${paper.category}, experiments, community, fork, learn`}
-	/>
-
-	<!-- Open Graph / Facebook -->
-	<meta property="og:type" content="article" />
-	<meta property="og:url" content={fullUrl} />
-	<meta property="og:title" content={paper.title} />
-	<meta
-		property="og:description"
-		content={paper.description ||
-			paper.excerpt_long ||
-			'Community experiment from the playground'}
-	/>
-	<meta property="og:site_name" content="CREATE SOMETHING SPACE" />
-
-	<!-- Twitter -->
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:url" content={fullUrl} />
-	<meta name="twitter:title" content={paper.title} />
-	<meta
-		name="twitter:description"
-		content={paper.description || paper.excerpt_short || 'Community experiment'}
-	/>
-</svelte:head>
+<SEO
+	title={paper.title}
+	description={paper.description || paper.excerpt_long || paper.excerpt_short || 'Community experiment from the playground'}
+	keywords={paper.focus_keywords || `${paper.category}, experiments, community, fork, learn`}
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Experiments', url: '/experiments' },
+		{ name: paper.title, url: `/experiments/${paper.slug}` }
+	]}
+/>
 
 <div class="min-h-screen page-wrapper">
 	<!-- Article Header -->

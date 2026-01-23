@@ -1,16 +1,21 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { SEO } from '@create-something/components';
   // Footer is provided by layout
 
   export let data: PageData;
   const { categories } = data;
 </script>
 
-<svelte:head>
-  <title>Browse by Category | CREATE SOMETHING SPACE</title>
-  <meta name="description" content="Explore community experiments organized by topic" />
-  <link rel="canonical" href="https://createsomething.space/categories" />
-</svelte:head>
+<SEO
+	title="Browse by Category"
+	description="Explore community experiments organized by topic"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Categories', url: '/categories' }
+	]}
+/>
 
 <!-- Hero Section -->
 <section class="relative pt-32 pb-16 px-6">

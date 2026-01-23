@@ -6,15 +6,23 @@
 	 * based on MIT CSAIL's research (arxiv:2512.24601). Demonstrates
 	 * processing of 157K characters to identify 165+ DRY violations.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Recursive Language Models: Context as Environment Variable | CREATE SOMETHING.io</title>
-	<meta
-		name="description"
-		content="Implementing MIT CSAIL's RLM pattern for processing arbitrarily large codebases through programmatic context navigation. Validated with 157K character analysis."
-	/>
-</svelte:head>
+<SEO
+	title="Recursive Language Models: Context as Environment Variable"
+	description="Implementing MIT CSAIL's RLM pattern for processing arbitrarily large codebases through programmatic context navigation. Validated with 157K character analysis."
+	keywords="RLM, recursive language models, MIT CSAIL, context navigation, DRY violations, codebase analysis"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2025-12-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Recursive Language Models', url: 'https://createsomething.io/papers/recursive-language-models' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

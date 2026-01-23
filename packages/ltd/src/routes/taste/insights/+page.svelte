@@ -3,6 +3,7 @@
 	import { formatTime } from '$lib/taste/insights';
 	import { Sparkline } from '@create-something/tufte';
 	import type { DataPoint } from '@create-something/tufte';
+	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -103,13 +104,16 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Reading Insights — Taste — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="Explore your taste cultivation journey. Track channels explored, time invested, and references studied."
-	/>
-</svelte:head>
+<SEO
+	title="Reading Insights — Taste"
+	description="Explore your taste cultivation journey. Track channels explored, time invested, and references studied."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Taste', url: 'https://createsomething.ltd/taste' },
+		{ name: 'Insights', url: 'https://createsomething.ltd/taste/insights' }
+	]}
+/>
 
 <!-- Header -->
 <section class="header-section">

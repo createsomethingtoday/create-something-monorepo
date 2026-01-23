@@ -1,14 +1,17 @@
 <script lang="ts">
 	import SubtractiveTriadAnimation from '$lib/components/SubtractiveTriadAnimation.svelte';
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Ethos — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="How Create Something applies the canon of 'less, but better' across research, practice, and services."
-	/>
-</svelte:head>
+<SEO
+	title="Ethos"
+	description="How Create Something applies the canon of 'less, but better' across research, practice, and services."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Ethos', url: 'https://createsomething.ltd/ethos' }
+	]}
+/>
 
 <!-- Header -->
 <section class="header-section px-6">

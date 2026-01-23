@@ -10,6 +10,7 @@
 	 * - Track metrics
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 
 	interface Draft {
@@ -168,6 +169,13 @@
 		return new Date(isoString).toLocaleString();
 	}
 </script>
+
+<SEO
+	title="Admin - Agent Drafts"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="container mx-auto px-4 py-8 max-w-6xl">
 	<header class="mb-8">

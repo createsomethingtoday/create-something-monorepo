@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import type { LeadInput, LeadSource, FunnelStage } from '$lib/funnel';
 
 	let submitting = $state(false);
@@ -98,9 +99,12 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Add Lead | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+	title="Admin - Add Lead"
+	description="Administrative dashboard"
+	propertyName="agency"
+	noindex={true}
+/>
 
 <main class="page">
 	<header class="header">

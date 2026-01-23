@@ -49,6 +49,7 @@
 		circulationPath,
 		zoneTransition
 	} from '$lib/types/architecture';
+	import { SEO } from '@create-something/components';
 
 	// Fullscreen state - Heidegger: tool appears only when summoned
 	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | 'light' | 'circulation' | 'materials' | 'rhythm' | null;
@@ -1018,10 +1019,17 @@
 		: 0;
 </script>
 
-<svelte:head>
-	<title>Threshold Dwelling · CREATE SOMETHING</title>
-	<meta name="description" content="Architectural visualization using Heidegger threshold zones. Tufte small multiples, Miesian clarity." />
-</svelte:head>
+<SEO
+	title="Threshold Dwelling"
+	description="Architectural visualization using Heidegger threshold zones. Tufte small multiples, Miesian clarity."
+	keywords="architectural visualization, Heidegger, threshold zones, Tufte, Mies van der Rohe, floor plan, SVG"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Threshold Dwelling', url: 'https://createsomething.space/experiments/threshold-dwelling' }
+	]}
+/>
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 

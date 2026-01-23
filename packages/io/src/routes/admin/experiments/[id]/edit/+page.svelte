@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -124,6 +125,13 @@
 		}
 	}
 </script>
+
+<SEO
+	title="Admin - Edit Experiment"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">

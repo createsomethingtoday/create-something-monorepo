@@ -7,6 +7,7 @@
 	 */
 
 	import { onMount } from 'svelte';
+	import { SEO } from '@create-something/components';
 
 	// Experiment state
 	let currentTask = $state(0);
@@ -124,10 +125,17 @@ const functions = lines.filter(line =>
 console.log(\`Found \${functions.length} functions\`);`;
 </script>
 
-<svelte:head>
-	<title>Code Mode: The Zuhandenheit Experiment | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="Experience Heidegger's tool-transparency distinction. Which mode lets tools recede into use?" />
-</svelte:head>
+<SEO
+	title="Code Mode: The Zuhandenheit Experiment"
+	description="Experience Heidegger's tool-transparency distinction. Which mode lets tools recede into use?"
+	keywords="Heidegger, Zuhandenheit, Vorhandenheit, tool transparency, code mode, tool calling, phenomenology"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Code Mode', url: 'https://createsomething.space/experiments/code-mode' }
+	]}
+/>
 
 <!-- ASCII Art Hero -->
 <section class="relative pt-24 pb-8 px-6">

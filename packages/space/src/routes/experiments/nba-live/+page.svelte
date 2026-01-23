@@ -6,6 +6,7 @@
 	 * A spec-driven development meta-experiment.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import type { Game } from '$lib/nba/types';
 	import GameSelector from '$lib/components/nba/GameSelector.svelte';
@@ -113,10 +114,17 @@
 	});
 </script>
 
-<svelte:head>
-	<title>NBA Live Analytics | CREATE SOMETHING</title>
-	<meta name="description" content="Analyze live NBA games through duo synergy, defensive impact, and shot creation networks. Real data, real-time insights." />
-</svelte:head>
+<SEO
+	title="NBA Live Analytics | CREATE SOMETHING"
+	description="Analyze live NBA games through duo synergy, defensive impact, and shot creation networks. Real data, real-time insights."
+	keywords="NBA analytics, live basketball, duo synergy, defensive impact, shot network, real-time sports data"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' }
+	]}
+/>
 
 <!-- Header -->
 <section class="page-header">

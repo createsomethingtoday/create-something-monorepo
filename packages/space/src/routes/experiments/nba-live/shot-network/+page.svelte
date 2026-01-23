@@ -6,6 +6,7 @@
 	 * Force-directed graph showing assist relationships.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import ShotNetwork from '$lib/components/nba/ShotNetwork.svelte';
 	import { ArrowLeft, Clock, Radio, AlertCircle } from 'lucide-svelte';
@@ -16,10 +17,18 @@
 	const awayTeamAbbr = $derived(data.players.away[0]?.teamAbbr || 'AWAY');
 </script>
 
-<svelte:head>
-	<title>Shot Network | NBA Live Analytics</title>
-	<meta name="description" content="Who creates shots for whom? See the passing connections that lead to scoring opportunities." />
-</svelte:head>
+<SEO
+	title="Shot Network | NBA Live Analytics"
+	description="Who creates shots for whom? See the passing connections that lead to scoring opportunities."
+	keywords="NBA shot network, assist network, passing connections, shot creation, basketball visualization"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' },
+		{ name: 'Shot Network', url: 'https://createsomething.space/experiments/nba-live/shot-network' }
+	]}
+/>
 
 <!-- Header -->
 <section class="nba-header">

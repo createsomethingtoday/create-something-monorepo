@@ -7,6 +7,7 @@
     Timeline,
     Matrix,
     downloadDiagram,
+    SEO,
     type FlowDiagramData,
     type BarChartData,
     type LineChartData,
@@ -118,9 +119,17 @@
   }
 </script>
 
-<svelte:head>
-  <title>Diagram Components | Experiments | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+  title="Diagram Components"
+  description="Canon-compliant data visualization with property-aware theming. Flow diagrams, charts, timelines, and matrices."
+  keywords="diagram components, data visualization, flow diagram, bar chart, line chart, pie chart, timeline, matrix"
+  propertyName="io"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.io' },
+    { name: 'Experiments', url: 'https://createsomething.io/experiments' },
+    { name: 'Diagrams', url: 'https://createsomething.io/experiments/diagrams' }
+  ]}
+/>
 
 <div class="container">
   <header>

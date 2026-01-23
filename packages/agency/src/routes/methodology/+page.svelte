@@ -1,23 +1,18 @@
 <script lang="ts">
+  import { SEO } from '@create-something/components';
   // Footer is provided by layout
 </script>
 
-<svelte:head>
-  <title>Research Methodology | CREATE SOMETHING</title>
-  <meta name="description" content="How CREATE SOMETHING produces credible knowledge about AI-native development through rigorous experiment tracking, real-time logging, and reproducible results." />
-  <meta name="keywords" content="research methodology, experiment tracking, AI-native development, reproducible research, scientific method, Claude Code, systems thinking" />
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="Research Methodology | CREATE SOMETHING" />
-  <meta property="og:description" content="The systematic approach that transforms blog posts into experiments—real-time tracking, precise costs, honest results." />
-  <meta property="og:url" content="https://createsomething.io/methodology" />
-
-  <!-- Twitter -->
-  <meta name="twitter:title" content="Research Methodology | CREATE SOMETHING" />
-  <meta name="twitter:description" content="How we transform AI development from 'prompting and hoping' into systematic evaluation with reproducible results." />
-
-  <link rel="canonical" href="https://createsomething.io/methodology" />
-</svelte:head>
+<SEO
+	title="Research Methodology"
+	description="How CREATE SOMETHING produces credible knowledge about AI-native development through rigorous experiment tracking, real-time logging, and reproducible results."
+	keywords="research methodology, experiment tracking, AI-native development, reproducible research, scientific method, Claude Code, systems thinking"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Methodology', url: '/methodology' }
+	]}
+/>
 
 <!-- Hero Section -->
   <section class="section-hero relative px-6">

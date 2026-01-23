@@ -20,7 +20,8 @@
 	import { Spritz } from '@create-something/spritz';
 	import { CanonReveal } from '@create-something/components/motion';
 	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer, Shield, Eye, EyeOff } from 'lucide-svelte';
-	import { isDNTEnabled } from '@create-something/components/gdpr';
+	import { isDNTEnabled, SEO } from '@create-something/components/gdpr';
+	import { SEO as SEOComponent } from '@create-something/components';
 	import { canonRevealStyles, type CanonRevealStyle } from '$lib/animations/canon-reveals';
 
 	// ===========================================
@@ -271,10 +272,20 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Teaching Modalities Experiment | CREATE SOMETHING.io</title>
-	<meta name="description" content="Interactive experiment comparing Spritz, Motion Graphics, and Learn Platform for teaching CREATE SOMETHING." />
-</svelte:head>
+<SEOComponent
+	title="Teaching Modalities Experiment"
+	description="Interactive experiment comparing Spritz, Motion Graphics, and Learn Platform for teaching CREATE SOMETHING."
+	keywords="teaching modalities, Spritz, motion graphics, learn platform, interactive learning, CREATE SOMETHING"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Teaching Modalities', url: 'https://createsomething.io/papers/teaching-modalities-experiment' }
+	]}
+/>
 
 <!-- GDPR Consent Banner -->
 {#if showConsentBanner && !dntEnabled}

@@ -7,7 +7,7 @@
 	 * understanding accumulates—it doesn't reset.
 	 */
 
-	import { IsometricSpiral, IsometricArchitecture } from '@create-something/components';
+	import { IsometricSpiral, IsometricArchitecture, SEO } from '@create-something/components';
 
 	// Architecture diagram nodes
 	const archNodes = [
@@ -24,10 +24,20 @@
 	];
 </script>
 
-<svelte:head>
-	<title>The Hermeneutic Spiral in UX Design | CREATE SOMETHING.io</title>
-	<meta name="description" content="Applying Heidegger's hermeneutic circle to UX design. Case study: Abundance Network, a WhatsApp-based creative matching platform demonstrating context-aware intake." />
-</svelte:head>
+<SEO
+	title="The Hermeneutic Spiral in UX Design"
+	description="Applying Heidegger's hermeneutic circle to UX design. Case study: Abundance Network, a WhatsApp-based creative matching platform demonstrating context-aware intake."
+	keywords="hermeneutic spiral, UX design, Heidegger, Abundance Network, WhatsApp, context-aware design"
+	ogType="article"
+	articleSection="Methodology"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Hermeneutic Spiral in UX', url: 'https://createsomething.io/papers/hermeneutic-spiral-ux' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

@@ -1,14 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	// Footer is provided by layout
 </script>
 
-<svelte:head>
-	<title>Our Work | CREATE SOMETHING Agency</title>
-	<meta
-		name="description"
-		content="155 scripts became 13. 73% time savings on manual work. 24/7 automation replacing phone calls. Real metrics from real projects."
-	/>
-</svelte:head>
+<SEO
+	title="Our Work"
+	description="155 scripts became 13. 73% time savings on manual work. 24/7 automation replacing phone calls. Real metrics from real projects."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Work', url: '/work' }
+	]}
+/>
 
 <!-- Hero Section -->
 <section class="relative pt-32 pb-16 px-6 hero-section">

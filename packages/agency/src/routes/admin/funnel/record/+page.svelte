@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import type { FunnelMetricsInput } from '$lib/funnel';
 
 	let date = $state(new Date().toISOString().split('T')[0]);
@@ -73,9 +74,12 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Record Metrics | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+	title="Admin - Record Metrics"
+	description="Administrative dashboard"
+	propertyName="agency"
+	noindex={true}
+/>
 
 <main class="page">
 	<header class="header">

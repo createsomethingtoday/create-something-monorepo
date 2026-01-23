@@ -6,12 +6,23 @@
 	 * a Git-committed file that persists AI context across sessions.
 	 * Work survives restarts, context limits, even crashes.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Beads Cross-Session Memory Patterns | CREATE SOMETHING.io</title>
-	<meta name="description" content="How Beads stores issues in Git-committed files to persist AI context across sessions. Work survives restarts, context limits, even crashes." />
-</svelte:head>
+<SEO
+	title="Beads Cross-Session Memory Patterns"
+	description="How Beads stores issues in Git-committed files to persist AI context across sessions. Work survives restarts, context limits, even crashes."
+	keywords="Beads, cross-session memory, AI persistence, Git, context survival, agent memory"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Beads Cross-Session Memory', url: 'https://createsomething.io/papers/beads-cross-session-memory' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

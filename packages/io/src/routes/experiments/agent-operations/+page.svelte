@@ -6,6 +6,7 @@
 	 * Shows agent status, recent deployments, and Beads issues being worked on.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -118,10 +119,17 @@
 	);
 </script>
 
-<svelte:head>
-	<title>Agent Operations | CREATE SOMETHING.io</title>
-	<meta name="description" content="Real-time health and progress tracking for CREATE SOMETHING Modal agents" />
-</svelte:head>
+<SEO
+	title="Agent Operations"
+	description="Real-time health and progress tracking for CREATE SOMETHING Modal agents"
+	keywords="agent operations, modal agents, health monitoring, autonomous agents, infrastructure"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Agent Operations', url: 'https://createsomething.io/experiments/agent-operations' }
+	]}
+/>
 
 <div class="page-container min-h-screen p-6">
 	<div class="max-w-6xl mx-auto space-y-12">

@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
 	import type { CaseStudy } from '$lib/config/site';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 
 	interface Props {
 		data: {
@@ -17,11 +17,16 @@
 	const nextProject = $config.work[(currentIndex + 1) % $config.work.length];
 </script>
 
-<SEOHead
+<SEO
 	title="{project.client} - {project.title}"
 	description={project.description}
-	canonical="/work/{project.slug}"
 	ogImage={project.heroImage}
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Work', url: '/work' },
+		{ name: project.client, url: `/work/${project.slug}` }
+	]}
 />
 
 <article class="case-study">

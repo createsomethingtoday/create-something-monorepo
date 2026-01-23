@@ -9,8 +9,8 @@
 	 * This creates/updates Clio contact automatically.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 
 	const siteConfig = getSiteConfigFromContext();
@@ -19,10 +19,14 @@
 	const calendlyUrl = workflows?.calendlyUrl;
 </script>
 
-<SEOHead
-	canonical="/schedule"
-	title="Schedule a Consultation | {name}"
+<SEO
+	title="Schedule a Consultation"
 	description="Book a free consultation with our experienced attorneys. We'll discuss your legal matter and explain your options."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Schedule', url: '/schedule' }
+	]}
 />
 
 <main class="schedule-page">

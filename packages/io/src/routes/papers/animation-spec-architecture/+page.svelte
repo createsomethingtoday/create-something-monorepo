@@ -9,6 +9,7 @@
 	 */
 	import { CanonReveal } from '@create-something/components/motion';
 	import { canonRevealStyles } from '$lib/animations/canon-reveals';
+	import { SEO } from '@create-something/components';
 	import { Play, RotateCcw, ChevronRight } from 'lucide-svelte';
 
 	// Interactive demo state
@@ -27,13 +28,20 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Animation Spec Architecture | CREATE SOMETHING.io</title>
-	<meta
-		name="description"
-		content="A methodology for maintaining visual consistency between web animations and video exports through shared animation specifications."
-	/>
-</svelte:head>
+<SEO
+	title="Animation Spec Architecture"
+	description="A methodology for maintaining visual consistency between web animations and video exports through shared animation specifications."
+	keywords="animation spec, visual consistency, web animations, Remotion, Svelte, video exports"
+	ogType="article"
+	articleSection="Methodology"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Animation Spec Architecture', url: 'https://createsomething.io/papers/animation-spec-architecture' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

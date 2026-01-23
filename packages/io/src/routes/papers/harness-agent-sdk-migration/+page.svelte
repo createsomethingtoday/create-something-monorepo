@@ -5,12 +5,23 @@
 	 * Case study documenting the migration from --dangerously-skip-permissions
 	 * to --allowedTools in autonomous Claude Code orchestration.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Harness Agent SDK Migration | CREATE SOMETHING.io</title>
-	<meta name="description" content="Empirical analysis of migrating from --dangerously-skip-permissions to --allowedTools in autonomous Claude Code orchestration. Security, reliability, and cost improvements through explicit tool permissions." />
-</svelte:head>
+<SEO
+	title="Harness Agent SDK Migration"
+	description="Empirical analysis of migrating from --dangerously-skip-permissions to --allowedTools in autonomous Claude Code orchestration. Security, reliability, and cost improvements through explicit tool permissions."
+	keywords="Harness, Agent SDK, migration, Claude Code, tool permissions, security, autonomous orchestration"
+	ogType="article"
+	articleSection="Case Study"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Harness Agent SDK Migration', url: 'https://createsomething.io/papers/harness-agent-sdk-migration' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

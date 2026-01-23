@@ -1,14 +1,16 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head>
-	<title>Confirm Subscription | CREATE SOMETHING</title>
-	<meta name="description" content="Confirm your newsletter subscription to CREATE SOMETHING." />
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SEO
+	title="Confirm Subscription"
+	description="Confirm your newsletter subscription to CREATE SOMETHING."
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="confirm-container">
 	<div class="confirm-card">

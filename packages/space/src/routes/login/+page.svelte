@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { LoginForm, SignupForm, MagicLinkForm } from '@create-something/components/auth';
 	import { goto, invalidateAll } from '$app/navigation';
 
@@ -104,9 +105,12 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Sign In | CREATE SOMETHING SPACE</title>
-</svelte:head>
+<SEO
+	title="Sign In"
+	description="Sign in to CREATE SOMETHING SPACE"
+	propertyName="space"
+	noindex={true}
+/>
 
 <div class="auth-container">
 	<div class="auth-card">

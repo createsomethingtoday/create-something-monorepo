@@ -4,7 +4,7 @@
 	import ExperimentRuntime from '$lib/components/ExperimentRuntime.svelte';
 	import ExperimentCodeEditor from '$lib/components/ExperimentCodeEditor.svelte';
 	import RelatedPapersCard from '$lib/components/RelatedPapersCard.svelte';
-	import { RelatedArticles, PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { RelatedArticles, PageActions, MarkdownPreviewModal, SEO } from '@create-something/components';
 	import { RelatedContent } from '@create-something/components/navigation';
 	import ShareButtons from '$lib/components/ShareButtons.svelte';
 	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
@@ -94,33 +94,18 @@ ${paper.content || ''}
 	});
 </script>
 
-<svelte:head>
-	<title>{paper.title} | CREATE SOMETHING SPACE</title>
-	<meta name="description" content={paper.description || paper.excerpt_long || paper.excerpt_short || 'Interactive experiment from CREATE SOMETHING'} />
-	<meta
-		name="keywords"
-		content={paper.focus_keywords || `${paper.category}, experiments, interactive, hands-on`}
-	/>
-
-	<!-- Open Graph -->
-	<meta property="og:type" content="article" />
-	<meta property="og:url" content={fullUrl} />
-	<meta property="og:title" content={paper.title} />
-	<meta
-		property="og:description"
-		content={paper.description || paper.excerpt_long || 'Interactive experiment'}
-	/>
-	<meta property="og:site_name" content="CREATE SOMETHING SPACE" />
-
-	<!-- Twitter -->
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:url" content={fullUrl} />
-	<meta name="twitter:title" content={paper.title} />
-	<meta
-		name="twitter:description"
-		content={paper.description || paper.excerpt_short || 'Interactive experiment'}
-	/>
-</svelte:head>
+<SEO
+	title={paper.title}
+	description={paper.description || paper.excerpt_long || paper.excerpt_short || 'Interactive experiment from CREATE SOMETHING'}
+	keywords={paper.focus_keywords || `${paper.category}, experiments, interactive, hands-on`}
+	ogType="article"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: paper.title, url: fullUrl }
+	]}
+/>
 
 <div class="experiment-page min-h-screen">
 	<!-- Article Header -->

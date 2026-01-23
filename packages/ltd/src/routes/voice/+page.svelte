@@ -1,10 +1,16 @@
-<svelte:head>
-	<title>Voice — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="The CREATE SOMETHING voice guidelines. How we write, what we avoid, and the principles that govern all content across the ecosystem."
-	/>
-</svelte:head>
+<script lang="ts">
+	import { SEO } from '@create-something/components';
+</script>
+
+<SEO
+	title="Voice"
+	description="The CREATE SOMETHING voice guidelines. How we write, what we avoid, and the principles that govern all content across the ecosystem."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Voice', url: 'https://createsomething.ltd/voice' }
+	]}
+/>
 
 <!-- Header -->
 <section class="header-section pt-24 pb-16 px-6">

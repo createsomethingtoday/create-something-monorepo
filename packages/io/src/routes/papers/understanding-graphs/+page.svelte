@@ -8,12 +8,23 @@
 	 *
 	 * Applies Heidegger's hermeneutic circle to the problem of codebase comprehension.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Understanding Graphs: Less, But Better Codebase Navigation | CREATE SOMETHING.io</title>
-	<meta name="description" content="Research paper applying Heidegger's hermeneutic circle to develop minimal dependency documentation that captures only understanding-critical relationships." />
-</svelte:head>
+<SEO
+	title="Understanding Graphs: Less, But Better Codebase Navigation"
+	description="Research paper applying Heidegger's hermeneutic circle to develop minimal dependency documentation that captures only understanding-critical relationships."
+	keywords="understanding graphs, codebase navigation, Heidegger, hermeneutic circle, dependency documentation, minimal documentation"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2025-12-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Understanding Graphs', url: 'https://createsomething.io/papers/understanding-graphs' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

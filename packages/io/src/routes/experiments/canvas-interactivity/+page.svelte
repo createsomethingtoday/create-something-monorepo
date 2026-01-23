@@ -12,6 +12,7 @@
 	 * '@create-something/components/diagrams' and '@create-something/components/interactive'
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	// Direct source imports for development
@@ -192,10 +193,17 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | Experiments</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title="{experiment.title} | Experiments | CREATE SOMETHING"
+	description={experiment.description}
+	keywords="canvas, interactive components, knowledge graph, timeline editor, diagrams, SvelteKit"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Canvas Interactivity', url: 'https://createsomething.io/experiments/canvas-interactivity' }
+	]}
+/>
 
 <div class="experiment-page">
 	<header class="page-header">

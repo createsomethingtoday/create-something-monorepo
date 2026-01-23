@@ -1,10 +1,16 @@
-<svelte:head>
-	<title>Patterns — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="Common patterns and anti-patterns in applying 'less, but better.' Repeating solutions from the masters."
-	/>
-</svelte:head>
+<script lang="ts">
+	import { SEO } from '@create-something/components';
+</script>
+
+<SEO
+	title="Patterns"
+	description="Common patterns and anti-patterns in applying 'less, but better.' Repeating solutions from the masters."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Patterns', url: 'https://createsomething.ltd/patterns' }
+	]}
+/>
 
 <!-- Header -->
 <section class="pt-24 pb-16 px-6 border-b border-canon">

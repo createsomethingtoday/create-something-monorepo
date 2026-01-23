@@ -6,6 +6,7 @@
 	 * Compares actual shooting to expected based on shot zones.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import DefensiveHeatmap from '$lib/components/nba/DefensiveHeatmap.svelte';
 	import { ArrowLeft, Clock, Radio, AlertCircle } from 'lucide-svelte';
@@ -16,10 +17,18 @@
 	const awayTeamAbbr = $derived(data.players.away[0]?.teamAbbr || 'AWAY');
 </script>
 
-<svelte:head>
-	<title>Defensive Impact | NBA Live Analytics</title>
-	<meta name="description" content="How well is each defender limiting their matchup? See actual vs expected shooting percentages." />
-</svelte:head>
+<SEO
+	title="Defensive Impact | NBA Live Analytics"
+	description="How well is each defender limiting their matchup? See actual vs expected shooting percentages."
+	keywords="NBA defensive impact, defensive rating, expected shooting, shot zone analysis, basketball defense"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' },
+		{ name: 'Defensive Impact', url: 'https://createsomething.space/experiments/nba-live/defensive-impact' }
+	]}
+/>
 
 <!-- Header -->
 <section class="nba-header">

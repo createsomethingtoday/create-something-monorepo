@@ -4,8 +4,8 @@
 	 * Team listing with credentials
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 
 	const siteConfig = getSiteConfigFromContext();
@@ -19,10 +19,14 @@
 	}
 </script>
 
-<SEOHead
-	canonical="/attorneys"
-	title="Our Attorneys | {name}"
+<SEO
+	title="Our Attorneys"
 	description="Meet our experienced legal team. Each attorney brings dedication and expertise to every case."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Attorneys', url: '/attorneys' }
+	]}
 />
 
 <main class="attorneys-page">

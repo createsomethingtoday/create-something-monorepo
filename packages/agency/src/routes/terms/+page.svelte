@@ -1,13 +1,13 @@
 <script lang="ts">
-  // Footer is provided by layout
+  import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-  <title>Terms of Service | CREATE SOMETHING</title>
-  <meta name="description" content="Terms of Service for CREATE SOMETHING. Read our terms governing your use of our website and services." />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://createsomething.io/terms" />
-</svelte:head>
+<SEO
+  title="Terms of Service"
+  description="Terms of Service for CREATE SOMETHING AGENCY. Read our terms governing your use of our website and services."
+  propertyName="agency"
+  noindex={true}
+/>
 
 <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">

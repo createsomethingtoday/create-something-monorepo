@@ -16,6 +16,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { SEO } from '@create-something/components';
 	import {
 		Shield,
 		Lightbulb,
@@ -403,13 +404,17 @@
 	const lightingIntensity = $derived(lightingMode === 'event' ? 1 : lightingMode === 'ambient' ? 0.5 : 0.8);
 </script>
 
-<svelte:head>
-	<title>Living Arena GPU | Experiments | CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="WebGPU-accelerated crowd simulation with 8,000+ agents showing emergent behaviors."
-	/>
-</svelte:head>
+<SEO
+	title="Living Arena GPU | Experiments | CREATE SOMETHING"
+	description="WebGPU-accelerated crowd simulation with 8,000+ agents showing emergent behaviors."
+	keywords="WebGPU, crowd simulation, emergent behavior, GPU computing, real-time visualization"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Living Arena GPU', url: 'https://createsomething.io/experiments/living-arena-gpu' }
+	]}
+/>
 
 <div class="arena-experiment">
 	<!-- Header -->

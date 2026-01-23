@@ -11,16 +11,21 @@
 	 * "Space between elements is content."
 	 */
 
+	import { SEO } from '@create-something/components';
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import ProjectGallery from '$lib/components/ProjectGallery.svelte';
 	import StudioSection from '$lib/components/StudioSection.svelte';
 	import ProgressiveForm from '$lib/components/ProgressiveForm.svelte';
 	import StickyCTA from '$lib/components/StickyCTA.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead canonical="/" />
+<SEO
+	title="Professional Services"
+	description="Space between elements is content. Architecture studio focused on thoughtful design."
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 <StructuredData page="home" />
 
 <main class="home">

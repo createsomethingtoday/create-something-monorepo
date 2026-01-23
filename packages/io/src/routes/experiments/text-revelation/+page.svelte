@@ -1,15 +1,22 @@
 <script lang="ts">
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | CREATE SOMETHING</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title="{experiment.title} | CREATE SOMETHING"
+	description={experiment.description}
+	keywords="progressive erasure, text animation, scroll animation, subtractive design, strikethrough"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Text Revelation', url: 'https://createsomething.io/experiments/text-revelation' }
+	]}
+/>
 
 <article class="experiment-page">
 	<!-- Header -->

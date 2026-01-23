@@ -1,20 +1,17 @@
 <script lang="ts">
-	// Footer is provided by +layout.svelte
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>About | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="CREATE SOMETHING SPACE is a community playground for testing AI-native development ideas. Fork experiments, break things, learn in public." />
-	<meta name="keywords" content="AI experiments, community playground, fork experiments, learn in public, Claude Code, experimental development" />
-	<!-- Open Graph -->
-	<meta property="og:title" content="About CREATE SOMETHING SPACE | The Experimental Layer" />
-	<meta property="og:description" content="Community playground for AI-native development experiments. Every experiment feeds back into createsomething.io research." />
-	<meta property="og:url" content="https://createsomething.space/about" />
-	<!-- Twitter -->
-	<meta name="twitter:title" content="About CREATE SOMETHING SPACE" />
-	<meta name="twitter:description" content="The experimental layer for testing AI-native development ideas with the community." />
-	<link rel="canonical" href="https://createsomething.space/about" />
-</svelte:head>
+<SEO
+	title="About"
+	description="CREATE SOMETHING SPACE is a community playground for testing AI-native development ideas. Fork experiments, break things, learn in public."
+	keywords="AI experiments, community playground, fork experiments, learn in public, Claude Code, experimental development"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'About', url: 'https://createsomething.space/about' }
+	]}
+/>
 
 <!-- Hero Section -->
 	<section class="relative pt-32 pb-16 px-6">

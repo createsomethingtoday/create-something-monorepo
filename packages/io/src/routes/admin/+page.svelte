@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 
 	let stats = {
@@ -22,6 +23,13 @@
 		}
 	});
 </script>
+
+<SEO
+	title="Admin - Dashboard"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="space-y-8">
 	<div>

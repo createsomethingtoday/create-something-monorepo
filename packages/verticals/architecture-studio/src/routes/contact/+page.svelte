@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 
 	let formState = $state<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -34,7 +34,15 @@
 	}
 </script>
 
-<SEOHead title="Contact" canonical="/contact" description="Get in touch with {$config.name}" />
+<SEO
+	title="Contact"
+	description="Get in touch with us to discuss your architecture project."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Contact', url: '/contact' }
+	]}
+/>
 <StructuredData page="contact" />
 
 <div class="contact-page">

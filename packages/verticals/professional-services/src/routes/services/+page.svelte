@@ -1,14 +1,18 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import PracticeAreas from '$lib/components/PracticeAreas.svelte';
 	import ConsultationCTA from '$lib/components/ConsultationCTA.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead
+<SEO
 	title="Our Services"
 	description="Comprehensive professional services tailored to your needs. Business consulting, legal advisory, financial planning, and strategic guidance."
-	canonical="/services"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Services', url: '/services' }
+	]}
 />
 <StructuredData page="services" />
 

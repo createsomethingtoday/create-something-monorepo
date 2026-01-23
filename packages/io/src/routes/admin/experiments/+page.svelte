@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 
 	let experiments: any[] = [];
@@ -99,6 +100,13 @@
 		return matchesCategory && matchesSearch;
 	});
 </script>
+
+<SEO
+	title="Admin - Experiments"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">

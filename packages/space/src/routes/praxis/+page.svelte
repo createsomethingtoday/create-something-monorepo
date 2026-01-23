@@ -10,6 +10,7 @@
 
 	import { exercises, type ValidationGrade } from '$lib/praxis/exercises';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
+	import { SEO } from '@create-something/components';
 
 	interface TriadFeedback {
 		level: 'dry' | 'rams' | 'heidegger';
@@ -113,13 +114,16 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Integration Praxis | CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="Learn WORKWAY patterns through practice. A compressed hermeneutic circle."
-	/>
-</svelte:head>
+<SEO
+	title="Integration Praxis"
+	description="Learn WORKWAY patterns through practice. A compressed hermeneutic circle."
+	keywords="WORKWAY, integration patterns, practice, hermeneutic circle, Subtractive Triad, code exercises"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Praxis', url: 'https://createsomething.space/praxis' }
+	]}
+/>
 
 <svelte:window onkeydown={handleKeydown} />
 

@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	// This page is a redirect target - users should never see it
 	// The +page.server.ts handles the token exchange and redirects
 </script>
+
+<SEO
+	title="Signing In"
+	description="Completing cross-domain authentication"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="loading-container">
 	<div class="loading-content">

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { SEO } from '@create-something/components';
+  
   interface ComparisonData {
     metric: string;
     workers: string;
@@ -37,10 +39,20 @@
   };
 </script>
 
-<svelte:head>
-  <title>Workers vs Python SDK for Webflow Plagiarism Detection</title>
-  <meta name="description" content="Comparative analysis of Cloudflare Workers and Python SDK implementations for detecting plagiarism in Webflow templates, with focus on vision analysis for GUI-based tools." />
-</svelte:head>
+<SEO
+  title="Workers vs Python SDK for Webflow Plagiarism Detection"
+  description="Comparative analysis of Cloudflare Workers and Python SDK implementations for detecting plagiarism in Webflow templates, with focus on vision analysis for GUI-based tools."
+  keywords="Cloudflare Workers, Python SDK, plagiarism detection, Webflow, vision analysis, cost comparison"
+  ogType="article"
+  articleSection="Case Study"
+  publishedTime="2026-01-01T00:00:00Z"
+  propertyName="io"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.io' },
+    { name: 'Papers', url: 'https://createsomething.io/papers' },
+    { name: 'Workers vs Python SDK', url: 'https://createsomething.io/papers/workers-vs-python-sdk-plagiarism-detection' }
+  ]}
+/>
 
 <article class="paper">
   <header class="paper-header">

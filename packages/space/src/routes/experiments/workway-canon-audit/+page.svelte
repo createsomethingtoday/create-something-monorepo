@@ -8,13 +8,22 @@
 	 * "The circle closes: implementation reveals what documentation cannot."
 	 */
 
+	import { SEO } from '@create-something/components';
+
 	const workwayRepo = 'https://github.com/WORKWAYCO/WORKWAY';
 </script>
 
-<svelte:head>
-	<title>WORKWAY Canon Audit | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="Applying Dieter Rams' 10 Principles to SDK development. The hermeneutic circle in practice." />
-</svelte:head>
+<SEO
+	title="WORKWAY Canon Audit"
+	description="Applying Dieter Rams' 10 Principles to SDK development. The hermeneutic circle in practice."
+	keywords="Dieter Rams, 10 principles, SDK development, WORKWAY, canon audit, hermeneutic circle"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'WORKWAY Canon Audit', url: 'https://createsomething.space/experiments/workway-canon-audit' }
+	]}
+/>
 
 <!-- ASCII Art Hero -->
 <section class="relative pt-24 pb-8 px-6">

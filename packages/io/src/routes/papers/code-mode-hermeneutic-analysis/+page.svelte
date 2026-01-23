@@ -6,12 +6,23 @@
 	 * LLM agent architecture, demonstrating why Code Mode achieves
 	 * tool-transparency while direct tool calling forces tool-attention.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Code-Mediated Tool Use: A Hermeneutic Analysis | CREATE SOMETHING.io</title>
-	<meta name="description" content="Why Code Mode achieves Zuhandenheit while tool calling forces Vorhandenheit. A phenomenological analysis of LLM-tool interaction." />
-</svelte:head>
+<SEO
+	title="Code-Mediated Tool Use: A Hermeneutic Analysis"
+	description="Why Code Mode achieves Zuhandenheit while tool calling forces Vorhandenheit. A phenomenological analysis of LLM-tool interaction."
+	keywords="Code Mode, Zuhandenheit, Vorhandenheit, Heidegger, LLM agents, tool calling, MCP"
+	ogType="article"
+	articleSection="Theoretical"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Code-Mediated Tool Use', url: 'https://createsomething.io/papers/code-mode-hermeneutic-analysis' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

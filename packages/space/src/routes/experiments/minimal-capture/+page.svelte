@@ -8,14 +8,23 @@
 	 * "Weniger, aber besser" is not a style. It's a way of seeing.
 	 */
 
+	import { SEO } from '@create-something/components';
+
 	const liveUrl = 'https://minimal-capture.pages.dev';
 	const adminUrl = 'https://minimal-capture.pages.dev/admin';
 </script>
 
-<svelte:head>
-	<title>Minimal Capture | CREATE SOMETHING SPACE</title>
-	<meta name="description" content="An experiment in propagation: when tools built for others absorb the design canon." />
-</svelte:head>
+<SEO
+	title="Minimal Capture"
+	description="An experiment in propagation: when tools built for others absorb the design canon."
+	keywords="minimal design, canon propagation, weniger aber besser, hermeneutic circle, contact capture"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Minimal Capture', url: 'https://createsomething.space/experiments/minimal-capture' }
+	]}
+/>
 
 <!-- ASCII Art Hero -->
 <section class="relative pt-24 pb-8 px-6">

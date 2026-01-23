@@ -6,12 +6,23 @@
 	 * complex reasoning to Claude Sonnet, demonstrating 97% cost
 	 * savings on voice audit work while maintaining quality.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Dual-Agent Routing Experiment | CREATE SOMETHING.io</title>
-	<meta name="description" content="How intelligent model routing achieved 97% cost savings on voice audit work without sacrificing quality." />
-</svelte:head>
+<SEO
+	title="Dual-Agent Routing Experiment"
+	description="How intelligent model routing achieved 97% cost savings on voice audit work without sacrificing quality."
+	keywords="dual-agent routing, Gemini Flash, Claude Sonnet, cost optimization, model routing, voice audit"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Dual-Agent Routing', url: 'https://createsomething.io/papers/dual-agent-routing-experiment' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

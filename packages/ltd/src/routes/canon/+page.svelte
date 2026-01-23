@@ -1,9 +1,20 @@
 <script lang="ts">
 	import { canonNavigation } from '$lib/canon/navigation.js';
+	import { SEO } from '@create-something/components';
 
 	// Filter to show only main sections for quick access
 	const quickLinks = canonNavigation.slice(1, 4); // Foundations, Components, Patterns
 </script>
+
+<SEO
+	title="Canon"
+	description="Everything you need to build interfaces that feel right. Colors, typography, components, and the thinking behind each decision."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Canon', url: 'https://createsomething.ltd/canon' }
+	]}
+/>
 
 <!-- Hero Section -->
 <header class="hero">

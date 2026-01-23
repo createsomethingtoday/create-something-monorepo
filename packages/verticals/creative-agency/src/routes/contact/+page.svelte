@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 
 	let formState = $state<'idle' | 'submitting' | 'success' | 'error'>('idle');
 	let formData = $state({
@@ -33,7 +33,15 @@
 	}
 </script>
 
-<SEOHead title="Start a Project" canonical="/contact" description="Let's build something together" />
+<SEO
+	title="Start a Project"
+	description="Let's build something together"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Contact', url: '/contact' }
+	]}
+/>
 
 <div class="contact-page">
 	<div class="contact-layout">

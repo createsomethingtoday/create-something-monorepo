@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import ConsultationCTA from '$lib/components/ConsultationCTA.svelte';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 	import { siteConfig } from '$lib/config/context';
 
@@ -134,10 +134,14 @@
 	}
 </script>
 
-<SEOHead
+<SEO
 	title="Our Services"
 	description="AI-native development, system architecture, process automation, and technical advisory. Tools recede. Partnership remains."
-	canonical="/services"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Services', url: '/services' }
+	]}
 />
 <StructuredData page="services" />
 

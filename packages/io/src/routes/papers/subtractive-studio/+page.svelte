@@ -5,12 +5,23 @@
 	 * Positioning paper establishing CREATE SOMETHING's differentiation:
 	 * Most agencies add. CREATE SOMETHING removes what obscures.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>The Subtractive Studio: Philosophy as Infrastructure | CREATE SOMETHING.io</title>
-	<meta name="description" content="Most agencies add. CREATE SOMETHING removes what obscures. A positioning paper on philosophy as infrastructure, not marketing." />
-</svelte:head>
+<SEO
+	title="The Subtractive Studio: Philosophy as Infrastructure"
+	description="Most agencies add. CREATE SOMETHING removes what obscures. A positioning paper on philosophy as infrastructure, not marketing."
+	keywords="subtractive design, philosophy infrastructure, CREATE SOMETHING, design methodology, agency positioning"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'The Subtractive Studio', url: 'https://createsomething.io/papers/subtractive-studio' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

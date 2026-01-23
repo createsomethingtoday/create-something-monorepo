@@ -5,16 +5,19 @@
 	 * Showcases chef's choice and full menu in bold editorial style.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/site';
 </script>
 
-<svelte:head>
-	<title>Menu - {siteConfig.name}</title>
-	<meta
-		name="description"
-		content="Explore our seasonal menu featuring artisan dishes and bold flavors."
-	/>
-</svelte:head>
+<SEO
+	title="Menu"
+	description="Explore our seasonal menu featuring artisan dishes and bold flavors."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Menu', url: '/menu' }
+	]}
+/>
 
 <!-- Nav -->
 <nav class="fixed top-0 w-full z-50 border-b border-white/10 bg-background-dark/80 backdrop-blur-md">

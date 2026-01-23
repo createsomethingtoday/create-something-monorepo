@@ -1,9 +1,5 @@
-<svelte:head>
-	<title>Beads Integration Patterns | CREATE SOMETHING.io</title>
-	<meta name="description" content="How issue tracking systems can be designed to support nondeterministic, context-limited AI agent workflows through Git-committed state and dependency tracking." />
-</svelte:head>
-
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	interface BeadsPattern {
 		id: string;
 		name: string;
@@ -61,6 +57,21 @@ bd update cs-123 --status in-progress`
 		}
 	];
 </script>
+
+<SEO
+	title="Beads Integration Patterns"
+	description="How issue tracking systems can be designed to support nondeterministic, context-limited AI agent workflows through Git-committed state and dependency tracking."
+	keywords="Beads, issue tracking, AI agents, context survival, dependency tracking, agent workflows"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Beads Integration Patterns', url: 'https://createsomething.io/papers/beads-integration-patterns' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

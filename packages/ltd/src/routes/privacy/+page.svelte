@@ -3,10 +3,11 @@
 </script>
 
 <SEO
-  title="Privacy Policy | CREATE SOMETHING"
+  title="Privacy Policy"
   description="How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only—no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data."
   keywords="privacy policy, data protection, GDPR, CCPA, CREATE SOMETHING"
   propertyName="ltd"
+  noindex={true}
 />
 
 <section class="pt-24 pb-16 px-6">

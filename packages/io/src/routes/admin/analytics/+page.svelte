@@ -9,6 +9,7 @@
 	 * After: ~120 lines - components handle all visualization logic
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 	import { MetricCard, HighDensityTable, Sparkline, DailyGrid, FlowGrid } from '@create-something/tufte';
 
@@ -66,6 +67,13 @@
 		});
 	}
 </script>
+
+<SEO
+	title="Admin - Analytics"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">

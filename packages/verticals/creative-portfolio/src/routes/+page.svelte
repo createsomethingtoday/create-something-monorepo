@@ -9,8 +9,8 @@
 	 * Zuhandenheit: The interface disappears; the portfolio emerges.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import { onMount } from 'svelte';
 
 	let showInfo = $state(false);
@@ -47,7 +47,12 @@
 	});
 </script>
 
-<SEOHead />
+<SEO
+	title="Creative Portfolio"
+	description="The work speaks. Everything else is secondary."
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 
 <div class="portfolio-home">
 	<!-- Work Grid -->

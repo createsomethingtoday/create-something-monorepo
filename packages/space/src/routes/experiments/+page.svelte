@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import PapersGrid from '$lib/components/PapersGrid.svelte';
+	import { SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;
@@ -92,13 +93,16 @@
 	const isFiltered = $derived(searchQuery.trim() !== '' || masterFilter !== 'all');
 </script>
 
-<svelte:head>
-	<title>All Experiments ({papers.length}) | CREATE SOMETHING SPACE</title>
-	<meta
-		name="description"
-		content="Browse community experiments from the playground. Fork them, try them, break them, learn from them."
-	/>
-</svelte:head>
+<SEO
+	title="All Experiments ({papers.length})"
+	description="Browse community experiments from the playground. Fork them, try them, break them, learn from them."
+	keywords="AI experiments, community playground, Claude Code, hands-on learning, fork experiments"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' }
+	]}
+/>
 
 <!-- Hero Section -->
 <section class="relative pt-32 pb-12 px-6">

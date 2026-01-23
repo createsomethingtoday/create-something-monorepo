@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead
+<SEO
 	title="Studio"
-	canonical="/studio"
-	description="About {$config.name} - {$config.studio.philosophy}"
+	description={$config.studio.philosophy}
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Studio', url: '/studio' }
+	]}
 />
 <StructuredData page="studio" />
 

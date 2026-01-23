@@ -32,6 +32,10 @@ import {
   GROUND_COMMERCIAL_CONFIG,
   GitHubHistoryCommercial,
   GITHUB_HISTORY_COMMERCIAL_CONFIG,
+  OuterfieldsCommercial,
+  OUTERFIELDS_COMMERCIAL_CONFIG,
+  TendCommercial,
+  TEND_COMMERCIAL_CONFIG,
 } from './commercials';
 
 // Primitives
@@ -345,6 +349,27 @@ export const RemotionRoot: React.FC = () => {
           username: 'createsomethingtoday',
           githubToken: process.env.GITHUB_TOKEN || '',
         }}
+      />
+      
+      {/* Outerfields Commercial - "Show Don't Tell" PCN platform showcase */}
+      <Composition
+        id="OuterfieldsCommercial"
+        component={OuterfieldsCommercial}
+        durationInFrames={OUTERFIELDS_COMMERCIAL_CONFIG.durationInFrames}
+        fps={OUTERFIELDS_COMMERCIAL_CONFIG.fps}
+        width={OUTERFIELDS_COMMERCIAL_CONFIG.width}
+        height={OUTERFIELDS_COMMERCIAL_CONFIG.height}
+      />
+      
+      {/* TEND Commercial - "Tend to what matters." Database for dental practices */}
+      <Composition
+        id="TendCommercial"
+        component={TendCommercial}
+        durationInFrames={TEND_COMMERCIAL_CONFIG.durationInFrames}
+        fps={TEND_COMMERCIAL_CONFIG.fps}
+        width={TEND_COMMERCIAL_CONFIG.width}
+        height={TEND_COMMERCIAL_CONFIG.height}
+        defaultProps={TEND_COMMERCIAL_CONFIG.defaultProps}
       />
       
       {/* ========================================

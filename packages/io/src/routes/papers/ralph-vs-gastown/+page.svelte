@@ -7,12 +7,23 @@
 	 * parallel execution). Both achieve nondeterministic idempotence through different
 	 * architectural choices.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Ralph vs Gastown: Comparing Agent Orchestration Patterns | CREATE SOMETHING.io</title>
-	<meta name="description" content="Comparing two approaches to autonomous agent orchestration: Ralph spawns fresh contexts per iteration for sequential work; Gastown coordinates persistent parallel sessions. Decision matrix for choosing between them." />
-</svelte:head>
+<SEO
+	title="Ralph vs Gastown: Comparing Agent Orchestration Patterns"
+	description="Comparing two approaches to autonomous agent orchestration: Ralph spawns fresh contexts per iteration for sequential work; Gastown coordinates persistent parallel sessions."
+	keywords="Ralph, Gastown, agent orchestration, autonomous agents, parallel execution, sequential execution"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Ralph vs Gastown', url: 'https://createsomething.io/papers/ralph-vs-gastown' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

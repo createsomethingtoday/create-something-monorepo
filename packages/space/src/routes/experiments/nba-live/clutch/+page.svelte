@@ -6,6 +6,7 @@
 	 * Filters by date range and displays ice-in-veins ratings.
 	 */
 	
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import type { ClutchStats } from '$lib/nba/clutch-calculator';
 	import AnalyticsNav from '$lib/components/nba/AnalyticsNav.svelte';
@@ -40,10 +41,18 @@
 	const formatPct = (value: number) => `${(value * 100).toFixed(1)}%`;
 </script>
 
-<svelte:head>
-	<title>Clutch Performance | NBA Live Analytics</title>
-	<meta name="description" content="Track player and team performance in high-pressure situations" />
-</svelte:head>
+<SEO
+	title="Clutch Performance | NBA Live Analytics"
+	description="Track player and team performance in high-pressure situations. Ice in veins leaderboard with composite clutch ratings."
+	keywords="NBA clutch performance, clutch stats, high-pressure basketball, ice in veins rating, clutch gene"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' },
+		{ name: 'Clutch Performance', url: 'https://createsomething.space/experiments/nba-live/clutch' }
+	]}
+/>
 
 <div class="clutch-page">
 	<AnalyticsNav />

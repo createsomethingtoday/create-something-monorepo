@@ -5,6 +5,7 @@
 	 * Renders markdown content using MDsveX.
 	 * The MarkdownLayout.svelte provides structure and PageActions.
 	 */
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -13,10 +14,16 @@
 	let pattern = $derived(data.pattern);
 </script>
 
-<svelte:head>
-	<title>{pattern.frontmatter.title} | CREATE SOMETHING .ltd</title>
-	<meta name="description" content={pattern.frontmatter.subtitle || pattern.frontmatter.title} />
-</svelte:head>
+<SEO
+	title={pattern.frontmatter.title}
+	description={pattern.frontmatter.subtitle || pattern.frontmatter.title}
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Patterns', url: 'https://createsomething.ltd/patterns' },
+		{ name: pattern.frontmatter.title, url: `https://createsomething.ltd/patterns/${data.slug}` }
+	]}
+/>
 
 <!-- Render the MDsveX component (uses MarkdownLayout automatically) -->
 <svelte:component this={pattern.component} {...pattern.frontmatter} />

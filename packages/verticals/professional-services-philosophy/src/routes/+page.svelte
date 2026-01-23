@@ -14,12 +14,17 @@
 	 * 9. Footer with contact overlay
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>
 
-<SEOHead canonical="/" />
+<SEO
+	title="Professional Services"
+	description="Architecture and design services with a philosophy-first approach."
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 <StructuredData page="home" />
 
 <!-- Opening Gallery: 4-image grayscale grid -->

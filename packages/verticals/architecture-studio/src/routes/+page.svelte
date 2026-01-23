@@ -9,8 +9,8 @@
 	 * Zuhandenheit: The interface recedes; the work remains.
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 	import { onMount } from 'svelte';
 
@@ -57,7 +57,12 @@
 	});
 </script>
 
-<SEOHead />
+<SEO
+	title="Architecture Studio"
+	description="Architecture speaks through presence, not proclamation."
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 <StructuredData page="home" />
 
 <!-- Hero - Full bleed image with minimal text -->

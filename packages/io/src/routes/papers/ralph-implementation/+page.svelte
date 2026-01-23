@@ -9,12 +9,23 @@
 	 * Based on Geoffrey Huntley's Ralph Wiggum technique, adapted for
 	 * CREATE SOMETHING's PRD-to-Ralph workflow.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Ralph Implementation: Overnight Autonomous Development | CREATE SOMETHING.io</title>
-	<meta name="description" content="Research documenting the Ralph pattern—spawning fresh Claude Code instances to work through user stories autonomously overnight. $6 for features that would take 8+ developer hours." />
-</svelte:head>
+<SEO
+	title="Ralph Implementation: Overnight Autonomous Development"
+	description="Research documenting the Ralph pattern—spawning fresh Claude Code instances to work through user stories autonomously overnight. $6 for features that would take 8+ developer hours."
+	keywords="Ralph pattern, autonomous development, Claude Code, overnight automation, agent workflows, cost optimization"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Ralph Implementation', url: 'https://createsomething.io/papers/ralph-implementation' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

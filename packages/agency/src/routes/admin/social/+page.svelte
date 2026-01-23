@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -25,9 +26,12 @@
 	const stats = data.stats as Record<string, number> | undefined;
 </script>
 
-<svelte:head>
-	<title>Social Calendar | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+	title="Admin - Social Calendar"
+	description="Administrative dashboard"
+	propertyName="agency"
+	noindex={true}
+/>
 
 <main class="dashboard">
 	<header class="header">

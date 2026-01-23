@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import FluidAssembly from './FluidAssembly.svelte';
 
@@ -7,10 +7,17 @@
 	const { experiment } = data;
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | CREATE SOMETHING</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title="{experiment.title} | CREATE SOMETHING"
+	description={experiment.description}
+	keywords="kinetic typography, animation, fluid assembly, text animation, semantic emphasis"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'Kinetic Typography', url: 'https://createsomething.io/experiments/kinetic-typography' }
+	]}
+/>
 
 <article class="experiment-page">
 	<!-- Header -->

@@ -6,6 +6,7 @@
 	 * Identifies fatigue patterns and performance decline in extended play.
 	 */
 	
+	import { SEO } from '@create-something/components';
 	import { Clock, TrendingDown, AlertTriangle } from 'lucide-svelte';
 	import AnalyticsNav from '$lib/components/nba/AnalyticsNav.svelte';
 	import OvertimeInsights from '$lib/components/nba/OvertimeInsights.svelte';
@@ -26,10 +27,18 @@
 	);
 </script>
 
-<svelte:head>
-	<title>Overtime Performance | NBA Live Analytics</title>
-	<meta name="description" content="REG vs OT performance comparison - fatigue patterns and performance decline in extended play" />
-</svelte:head>
+<SEO
+	title="Overtime Performance | NBA Live Analytics"
+	description="REG vs OT performance comparison - fatigue patterns and performance decline in extended play."
+	keywords="NBA overtime, fatigue index, OT performance, basketball analytics, extended play analysis"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/experiments/nba-live' },
+		{ name: 'Overtime Performance', url: 'https://createsomething.space/experiments/nba-live/overtime' }
+	]}
+/>
 
 <div class="overtime-page">
 	<AnalyticsNav />

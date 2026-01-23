@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { SEO } from '@create-something/components';
 
 	// Asset definitions
 	const icons = [
@@ -82,10 +83,15 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Brand Assets | CREATE SOMETHING</title>
-	<meta name="description" content="Official brand assets for CREATE SOMETHING. Download logos, wordmarks, and lockups." />
-</svelte:head>
+<SEO
+	title="Brand Assets"
+	description="Official brand assets for CREATE SOMETHING. Download logos, wordmarks, and lockups."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Brand Assets', url: 'https://createsomething.ltd/brand' }
+	]}
+/>
 
 <main class="brand-page">
 	<header class="brand-header">

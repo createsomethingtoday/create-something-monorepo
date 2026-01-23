@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PrincipleCard from '$lib/components/PrincipleCard.svelte';
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -23,13 +24,15 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Principles — CREATE SOMETHING.ltd</title>
-	<meta
-		name="description"
-		content="All principles from the masters who define 'less, but better.' Design standards that have stood the test of time."
-	/>
-</svelte:head>
+<SEO
+	title="Principles"
+	description="All principles from the masters who define 'less, but better.' Design standards that have stood the test of time."
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Principles', url: 'https://createsomething.ltd/principles' }
+	]}
+/>
 
 <!-- Header -->
 <section class="pt-24 pb-16 px-6 border-b border-canon">

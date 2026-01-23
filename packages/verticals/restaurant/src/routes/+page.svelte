@@ -7,16 +7,19 @@
 	 * Epilogue typography for bold editorial feel
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/site';
 
 	// Get current year for footer
 	const currentYear = new Date().getFullYear();
 </script>
 
-<svelte:head>
-	<title>{siteConfig.name} | {siteConfig.tagline}</title>
-	<meta name="description" content={siteConfig.description} />
-</svelte:head>
+<SEO
+	title={siteConfig.tagline}
+	description={siteConfig.description}
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 
 <!-- Sticky Minimalist Nav -->
 <nav class="fixed top-0 w-full z-50 border-b border-white/10 bg-background-dark/80 backdrop-blur-md">

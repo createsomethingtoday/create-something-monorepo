@@ -7,12 +7,23 @@
 	 *
 	 * "Weniger, aber besser" — Less, but better.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>Spec-Driven Development: A Meta-Experiment | CREATE SOMETHING.io</title>
-	<meta name="description" content="A meta-experiment testing whether structured specifications can effectively guide agent-based development, producing both working software and methodology documentation." />
-</svelte:head>
+<SEO
+	title="Spec-Driven Development: A Meta-Experiment"
+	description="A meta-experiment testing whether structured specifications can effectively guide agent-based development, producing both working software and methodology documentation."
+	keywords="spec-driven development, agent orchestration, NBA Live Analytics, methodology, structured specifications"
+	ogType="article"
+	articleSection="Methodology"
+	publishedTime="2026-01-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Spec-Driven Development', url: 'https://createsomething.io/papers/spec-driven-development' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

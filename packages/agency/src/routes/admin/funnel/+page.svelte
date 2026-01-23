@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import { formatNumber, formatCurrency, formatPercent, getDeltaIndicator } from '$lib/funnel';
 
@@ -16,9 +17,12 @@
 	};
 </script>
 
-<svelte:head>
-	<title>Funnel Dashboard | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+	title="Admin - Funnel Dashboard"
+	description="Administrative dashboard"
+	propertyName="agency"
+	noindex={true}
+/>
 
 <main class="dashboard">
 	<header class="header">

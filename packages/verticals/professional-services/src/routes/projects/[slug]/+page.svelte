@@ -9,8 +9,8 @@
 	 * "Let the work speak. Text supports, never competes."
 	 */
 
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import { siteConfig } from '$lib/config/context';
 
 	let { data }: { data: PageData } = $props();
@@ -18,10 +18,15 @@
 	const { project, nextProject, prevProject } = data;
 </script>
 
-<SEOHead
-	title="{project.title} | {$siteConfig.name}"
+<SEO
+	title={project.title}
 	description={project.description}
-	canonical="/projects/{project.slug}"
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Projects', url: '/projects' },
+		{ name: project.title, url: `/projects/${project.slug}` }
+	]}
 />
 
 <article class="project-detail">

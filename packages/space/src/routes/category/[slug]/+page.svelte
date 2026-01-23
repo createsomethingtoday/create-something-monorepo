@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Footer } from '@create-something/components';
+  import { Footer, SEO } from '@create-something/components';
   import PaperCard from '$lib/components/PaperCard.svelte';
   import type { PageData } from './$types';
 
@@ -20,45 +20,19 @@
   };
 
   const description = categoryDescriptions[category.slug] || `Explore our collection of ${papers.length} community experiments on ${category.name}.`;
-  const url = `https://createsomething.space/category/${category.slug}`;
 </script>
 
-<svelte:head>
-  <title>{category.name} Experiments | CREATE SOMETHING SPACE</title>
-  <meta name="description" content={description} />
-  <meta name="keywords" content="{category.slug}, experiments, community, fork, learn, {category.name}" />
-
-  <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content={url} />
-  <meta property="og:title" content="{category.name} Experiments | CREATE SOMETHING SPACE" />
-  <meta property="og:description" content={description} />
-  <meta property="og:image" content="https://createsomething.space/og-image.svg" />
-  <meta property="og:site_name" content="CREATE SOMETHING SPACE" />
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content={url} />
-  <meta name="twitter:title" content="{category.name} Experiments" />
-  <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content="https://createsomething.space/og-image.svg" />
-
-  <link rel="canonical" href={url} />
-
-  {@html `<script type="application/ld+json">${JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `${category.name} Experiments`,
-    description: description,
-    url: url,
-    publisher: {
-      '@type': 'Organization',
-      name: 'CREATE SOMETHING SPACE',
-      url: 'https://createsomething.space',
-    },
-    numberOfItems: papers.length,
-  })}<\/script>`}
-</svelte:head>
+<SEO
+  title="{category.name} Experiments"
+  description={description}
+  keywords="{category.slug}, experiments, community, fork, learn, {category.name}"
+  propertyName="space"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.space' },
+    { name: 'Categories', url: 'https://createsomething.space/categories' },
+    { name: category.name, url: `https://createsomething.space/category/${category.slug}` }
+  ]}
+/>
 
 <!-- Hero Section -->
   <section class="relative pt-32 pb-16 px-6">

@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { SEO } from '@create-something/components';
 	import { config } from '$lib/config/runtime';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 
 	let showInfo = $state(false);
 
@@ -12,10 +12,14 @@
 	].filter(Boolean);
 </script>
 
-<SEOHead
+<SEO
 	title="Contact"
-	description="Get in touch with {$config.name}"
-	canonical="/contact"
+	description="Get in touch to discuss your project."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Contact', url: '/contact' }
+	]}
 />
 
 <div class="contact-page">

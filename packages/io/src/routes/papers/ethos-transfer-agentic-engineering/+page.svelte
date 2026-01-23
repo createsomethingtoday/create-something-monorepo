@@ -6,12 +6,23 @@
 	 * demonstrating how Claude Code in the terminal enables ethos
 	 * adoption through agentic engineering.
 	 */
+	import { SEO } from '@create-something/components';
 </script>
 
-<svelte:head>
-	<title>From Learning About to Dwelling Within | CREATE SOMETHING.io</title>
-	<meta name="description" content="How Claude Code transforms from teaching tool to methodology vehicle. The terminal as site of dwelling. Ethos adoption through use, not instruction." />
-</svelte:head>
+<SEO
+	title="From Learning About to Dwelling Within"
+	description="How Claude Code transforms from teaching tool to methodology vehicle. The terminal as site of dwelling. Ethos adoption through use, not instruction."
+	keywords="Heidegger, dwelling, ethos transfer, Claude Code, agentic engineering, methodology, terminal"
+	ogType="article"
+	articleSection="Research"
+	publishedTime="2025-11-01T00:00:00Z"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Papers', url: 'https://createsomething.io/papers' },
+		{ name: 'Ethos Transfer', url: 'https://createsomething.io/papers/ethos-transfer-agentic-engineering' }
+	]}
+/>
 
 <div class="min-h-screen p-6 paper-container">
 	<div class="max-w-4xl mx-auto space-y-12">

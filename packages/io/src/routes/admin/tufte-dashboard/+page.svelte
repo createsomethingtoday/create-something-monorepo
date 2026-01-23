@@ -15,6 +15,7 @@
 	 * - TrendIndicator: Period-over-period change
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { onMount } from 'svelte';
 	import TufteDashboard from '$lib/components/TufteDashboard.svelte';
 
@@ -50,9 +51,12 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Tufte Dashboard | CREATE SOMETHING</title>
-</svelte:head>
+<SEO
+	title="Admin - Tufte Dashboard"
+	description="Administrative dashboard"
+	propertyName="io"
+	noindex={true}
+/>
 
 <div class="space-y-6">
 	<!-- Header -->

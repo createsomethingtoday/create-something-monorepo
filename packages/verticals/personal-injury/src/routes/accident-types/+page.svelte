@@ -4,8 +4,8 @@
 	 * Grid of all case types we handle
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { getSiteConfigFromContext } from '$lib/config/context';
-	import SEOHead from '$lib/components/SEOHead.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 	import { Car, Truck, Bike, PersonStanding, Skull, Stethoscope, ArrowRight } from 'lucide-svelte';
 
@@ -27,10 +27,14 @@
 	}
 </script>
 
-<SEOHead
-	canonical="/accident-types"
-	title="Case Types We Handle | {name}"
+<SEO
+	title="Case Types We Handle"
 	description="Personal injury cases we handle: car accidents, truck accidents, motorcycle accidents, slip and fall, wrongful death, and medical malpractice."
+	propertyName="agency"
+	breadcrumbs={[
+		{ name: 'Home', url: '/' },
+		{ name: 'Case Types', url: '/accident-types' }
+	]}
 />
 
 <main class="accident-types-page">

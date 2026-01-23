@@ -1,18 +1,21 @@
 <script lang="ts">
 	import PrincipleCard from '$lib/components/PrincipleCard.svelte';
-	import { QuoteBlock } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head>
-	<title>{data.master ? `${data.master.name} — CREATE SOMETHING.ltd` : 'Master Not Found — CREATE SOMETHING.ltd'}</title>
-	<meta
-		name="description"
-		content={data.master?.tagline || data.master ? `Learn about ${data.master.name} and their principles.` : 'Master not found in the canon.'}
-	/>
-</svelte:head>
+<SEO
+	title={data.master ? data.master.name : 'Master Not Found'}
+	description={data.master?.tagline || (data.master ? `Learn about ${data.master.name} and their principles.` : 'Master not found in the canon.')}
+	propertyName="ltd"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.ltd' },
+		{ name: 'Masters', url: 'https://createsomething.ltd/masters' },
+		{ name: data.master?.name || 'Not Found', url: `https://createsomething.ltd/masters/${data.slug}` }
+	]}
+/>
 
 {#if data.master}
 

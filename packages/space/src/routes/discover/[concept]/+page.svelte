@@ -9,15 +9,22 @@
 	 */
 
 	import type { PageData } from './$types';
-	import { ConceptJourney } from '@create-something/components';
+	import { ConceptJourney, SEO } from '@create-something/components';
 
 	let { data }: { data: PageData } = $props();
 </script>
 
-<svelte:head>
-	<title>Discover: {data.concept} | CREATE SOMETHING</title>
-	<meta name="description" content="Explore {data.concept} across all CREATE SOMETHING properties - from canon definition to practical application." />
-</svelte:head>
+<SEO
+	title="Discover: {data.concept}"
+	description="Explore {data.concept} across all CREATE SOMETHING properties - from canon definition to practical application."
+	keywords="{data.concept}, concept discovery, hermeneutic spiral, CREATE SOMETHING"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Discover', url: 'https://createsomething.space/discover' },
+		{ name: data.concept, url: `https://createsomething.space/discover/${data.concept}` }
+	]}
+/>
 
 <main class="discover-page">
 	<ConceptJourney

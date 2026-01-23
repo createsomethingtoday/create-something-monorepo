@@ -7,6 +7,7 @@
 	 * Epilogue typography for high-fashion feel
 	 */
 
+	import { SEO } from '@create-something/components';
 	import { siteConfig } from '$lib/config/site';
 
 	// Get current year for footer
@@ -19,10 +20,12 @@
 	let cartCount = $state(2);
 </script>
 
-<svelte:head>
-	<title>{siteConfig.name} | {siteConfig.tagline}</title>
-	<meta name="description" content={siteConfig.description} />
-</svelte:head>
+<SEO
+	title={siteConfig.tagline}
+	description={siteConfig.description}
+	propertyName="agency"
+	breadcrumbs={[{ name: 'Home', url: '/' }]}
+/>
 
 <!-- Top Navigation Bar -->
 <header

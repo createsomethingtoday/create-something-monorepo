@@ -1,13 +1,21 @@
 <script lang="ts">
 	import BeadsGraph from '$lib/components/BeadsGraph.svelte';
+	import { SEO } from '@create-something/components';
 
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>{data.metadata.title} - CREATE SOMETHING</title>
-	<meta name="description" content={data.metadata.description} />
-</svelte:head>
+<SEO
+	title={data.metadata.title}
+	description={data.metadata.description}
+	keywords="beads graph, work visualization, dependency tracking, issue graph, force simulation"
+	propertyName="space"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.space' },
+		{ name: 'Experiments', url: 'https://createsomething.space/experiments' },
+		{ name: 'Beads Graph', url: 'https://createsomething.space/experiments/beads-graph' }
+	]}
+/>
 
 <div class="container">
 	<header class="experiment-header">

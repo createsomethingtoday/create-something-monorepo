@@ -7,6 +7,7 @@
 	 *
 	 * @see https://alexharri.com/blog/ascii-rendering
 	 */
+	import { SEO } from '@create-something/components';
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
 
@@ -504,10 +505,17 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{experiment.title} | Experiments</title>
-	<meta name="description" content={experiment.description} />
-</svelte:head>
+<SEO
+	title="{experiment.title} | Experiments | CREATE SOMETHING"
+	description={experiment.description}
+	keywords="ASCII art, rendering, shape-aware, 6D character matching, contrast enhancement"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'ASCII Renderer', url: 'https://createsomething.io/experiments/ascii-renderer' }
+	]}
+/>
 
 <div class="experiment-page">
 	<header class="page-header">
