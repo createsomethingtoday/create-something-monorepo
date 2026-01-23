@@ -5,15 +5,14 @@
 	 * Interactive video section showing sample content with play functionality
 	 * Uses shared VideoModal component for player UI
 	 * Shows live view counts via Cloudflare KV
+	 * 
+	 * All content freely accessible as portfolio showcase (PCN services model)
 	 */
-	import { Play, Eye, Lock } from 'lucide-svelte';
+	import { Play, Eye } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 	import { videoStats } from '$lib/stores/videoStats';
 	import VideoModal from './VideoModal.svelte';
-	import { authStore } from '$lib/stores/auth';
-
-	const isMember = $derived($authStore.user?.membership ?? false);
 
 	// Cloudflare R2 CDN base URL
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
@@ -85,14 +84,7 @@
 	});
 
 	function playVideo(video: Video) {
-		// Netflix-style preview: non-members can watch only a couple previews.
-		const index = videos.findIndex(v => v.id === video.id);
-		const isPreviewUnlocked = index > -1 && index < 2;
-		if (!isMember && !isPreviewUnlocked) {
-			document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
-			return;
-		}
-
+		// All content freely accessible as portfolio showcase
 		videoPlayer.play(video);
 		// Increment view count
 		videoStats.incrementView(video.id);
@@ -112,35 +104,26 @@
 <section class="videos-section" id="videos">
 	<div class="videos-container">
 		<div class="section-header">
-			<span class="section-badge">Preview</span>
-			<h2 class="section-title">Watch a Few Free Previews</h2>
+			<span class="section-badge">Portfolio</span>
+			<h2 class="section-title">Sample Productions</h2>
 			<p class="section-description">
-				Browse like a real PCN. Non-members can watch a couple previews—everything else unlocks with the $99 lifetime membership.
+				Browse our work. Every PCN we build includes professional video production like this.
 			</p>
 		</div>
 
 		<div class="videos-grid highlight-grid">
 			{#each videos as video, index}
-				{@const isPreviewUnlocked = index < 2}
-				{@const isLocked = !isMember && !isPreviewUnlocked}
 				<button
 					class="video-card highlight-item"
-					class:locked={isLocked}
 					style="--index: {index}"
 					onclick={() => playVideo(video)}
 				>
 					<div class="video-thumbnail">
 						<img src={video.thumbnail} alt={video.title} loading="lazy" />
 						<div class="video-overlay">
-							{#if isLocked}
-								<span class="lock-badge" aria-hidden="true">
-									<Lock size={20} />
-								</span>
-							{:else}
-								<span class="play-button" aria-hidden="true">
-									<Play size={32} />
-								</span>
-							{/if}
+							<span class="play-button" aria-hidden="true">
+								<Play size={32} />
+							</span>
 						</div>
 						<span class="video-duration">{video.duration}</span>
 					</div>
@@ -155,12 +138,6 @@
 								{#if $videoStats.isLive}
 									<span class="live-indicator" title="Real-time data from Cloudflare"></span>
 								{/if}
-							</div>
-						{/if}
-						{#if isLocked}
-							<div class="locked-note">
-								<Lock size={14} />
-								<span>Members only</span>
 							</div>
 						{/if}
 					</div>
@@ -243,10 +220,6 @@
 		opacity: 1 !important; /* Override highlight-grid opacity dimming */
 	}
 
-	.video-card.locked {
-		border-color: var(--color-border-default);
-	}
-
 	/* Play button hover styles are global in app.css */
 
 	.video-thumbnail {
@@ -278,19 +251,6 @@
 		align-items: center;
 		justify-content: center;
 		background: rgba(0, 0, 0, 0.35);
-	}
-
-	.lock-badge {
-		width: 56px;
-		height: 56px;
-		border-radius: 9999px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(0, 0, 0, 0.55);
-		border: 1px solid var(--color-border-emphasis);
-		color: var(--color-fg-primary);
-		backdrop-filter: blur(10px);
 	}
 
 	/* Play button base styles are global in app.css */
@@ -364,15 +324,6 @@
 
 	.video-views :global(svg) {
 		opacity: 0.7;
-	}
-
-	.locked-note {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.375rem;
-		margin-top: 0.5rem;
-		font-size: 0.75rem;
-		color: var(--color-fg-subtle);
 	}
 
 	.live-indicator {

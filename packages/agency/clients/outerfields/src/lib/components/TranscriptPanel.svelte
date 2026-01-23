@@ -8,7 +8,7 @@
 	 * - Search within transcript
 	 * - Collapsible panel
 	 */
-	import { FileText, Search, ChevronDown, ChevronUp, Lock, X } from 'lucide-svelte';
+	import { FileText, Search, ChevronDown, ChevronUp, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
 	interface TranscriptSegment {
@@ -21,10 +21,9 @@
 		videoId: string;
 		currentTime?: number;
 		onSeek?: (time: number) => void;
-		isMember?: boolean;
 	}
 
-	let { videoId, currentTime = 0, onSeek, isMember = false }: Props = $props();
+	let { videoId, currentTime = 0, onSeek }: Props = $props();
 
 	let segments = $state<TranscriptSegment[]>([]);
 	let isLoading = $state(true);
@@ -201,17 +200,7 @@
 						</button>
 					{/each}
 
-					<!-- Preview Gate -->
-					{#if isPreview && !isMember}
-						<div class="preview-gate">
-							<Lock size={20} />
-							<p>Viewing preview ({segments.length} of {totalSegments} segments)</p>
-							<a href="/#pricing" class="unlock-link">
-								Unlock full transcript - $99 lifetime
-							</a>
-						</div>
-					{/if}
-				</div>
+					</div>
 
 				<!-- Word Count Footer -->
 				{#if wordCount > 0}

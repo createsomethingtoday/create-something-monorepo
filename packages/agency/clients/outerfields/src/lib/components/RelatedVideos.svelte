@@ -5,11 +5,10 @@
 	 * Displays related videos on the watch page.
 	 * - Sidebar layout on desktop
 	 * - Horizontal scroll on mobile
-	 * - Shows tier badges (FREE, MEMBERS ONLY)
+	 * - All content freely accessible (PCN services model)
 	 * - Links to /watch/[id] routes
 	 */
-	import { Lock, Play, Clock } from 'lucide-svelte';
-	import { authStore } from '$lib/stores/auth';
+	import { Play, Clock } from 'lucide-svelte';
 
 	interface RelatedVideo {
 		id: string;
@@ -35,25 +34,17 @@
 		layout = 'sidebar'
 	}: Props = $props();
 
-	const isMember = $derived($authStore.user?.membership ?? false);
-
 	// Filter out current video and limit to reasonable number
 	const displayVideos = $derived(
 		videos.filter((v) => v.id !== currentVideoId).slice(0, 20)
 	);
 
 	function getTierBadge(tier: RelatedVideo['tier']): { text: string; class: string } | null {
+		// All content freely accessible - only show FREE badge for free tier
 		if (tier === 'free') {
 			return { text: 'FREE', class: 'badge-free' };
 		}
-		if ((tier === 'preview' || tier === 'gated') && !isMember) {
-			return { text: 'MEMBERS', class: 'badge-locked' };
-		}
 		return null;
-	}
-
-	function isLocked(tier: RelatedVideo['tier']): boolean {
-		return (tier === 'preview' || tier === 'gated') && !isMember;
 	}
 
 	function getCategoryLabel(category: string): string {
@@ -76,13 +67,11 @@
 	<div class="videos-list" class:horizontal={layout === 'horizontal'}>
 		{#each displayVideos as video (video.id)}
 			{@const badge = getTierBadge(video.tier)}
-			{@const locked = isLocked(video.tier)}
 
 			<a
-				href={locked ? '#pricing' : `/watch/${video.id}`}
+				href={`/watch/${video.id}`}
 				class="video-item"
-				class:locked
-				aria-label={locked ? `${video.title} - Members only` : video.title}
+				aria-label={video.title}
 			>
 				<div class="thumbnail-wrapper">
 					<img
@@ -92,15 +81,9 @@
 						loading="lazy"
 					/>
 					<div class="thumbnail-overlay">
-						{#if locked}
-							<span class="lock-icon">
-								<Lock size={20} />
-							</span>
-						{:else}
-							<span class="play-icon">
-								<Play size={20} />
-							</span>
-						{/if}
+						<span class="play-icon">
+							<Play size={20} />
+						</span>
 					</div>
 					<span class="duration-badge">
 						<Clock size={10} />
@@ -188,14 +171,6 @@
 		background: var(--color-bg-surface);
 	}
 
-	.video-item.locked {
-		opacity: 0.85;
-	}
-
-	.video-item.locked:hover {
-		opacity: 1;
-	}
-
 	/* Horizontal layout video item */
 	.videos-list.horizontal .video-item {
 		flex-direction: column;
@@ -246,8 +221,7 @@
 		opacity: 1;
 	}
 
-	.play-icon,
-	.lock-icon {
+	.play-icon {
 		width: 40px;
 		height: 40px;
 		display: flex;
@@ -258,10 +232,6 @@
 		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: 50%;
 		color: white;
-	}
-
-	.lock-icon {
-		background: rgba(0, 0, 0, 0.6);
 	}
 
 	.duration-badge {
@@ -292,14 +262,8 @@
 	}
 
 	.badge-free {
-		background: var(--color-success);
+		background: var(--color-sun);
 		color: white;
-	}
-
-	.badge-locked {
-		background: rgba(255, 255, 255, 0.15);
-		color: white;
-		border: 1px solid rgba(255, 255, 255, 0.25);
 	}
 
 	/* Video info */
