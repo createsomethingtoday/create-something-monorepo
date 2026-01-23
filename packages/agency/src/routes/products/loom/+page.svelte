@@ -34,10 +34,10 @@
 	<section class="hero">
 		<div class="hero-badge">Free & Open Source</div>
 		<h1 class="hero-title">Loom</h1>
-		<p class="hero-tagline">External memory for AI agents</p>
+		<p class="hero-tagline">Memory and coordination for AI agents</p>
 		<p class="hero-description">
-			AI agents forget everything between sessions. They work alone when they should coordinate.
-			Loom gives agents <strong>memory, routing, and crash recovery</strong>.
+			AI agents lose their context when a session ends. When you have multiple agents, they can't see what the others are doing.
+			Loom gives them <strong>shared memory, smart task routing, and the ability to pick up where they left off</strong>.
 		</p>
 	</section>
 
@@ -46,29 +46,32 @@
 		<h2 class="section-title">Install in 2 minutes</h2>
 		<p class="section-subtitle">One-click for your AI tool of choice</p>
 
-		<div class="install-grid">
-			<!-- Cursor -->
-			<div class="install-card cursor">
+		<!-- Featured: One-click install (Tufte: primary action gets visual prominence) -->
+		<div class="install-featured">
+			<div class="install-card featured">
 				<div class="card-header">
-					<span class="card-icon cursor-icon">
+					<span class="card-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.86a.5.5 0 0 0-.85.35Z" fill="currentColor"/>
 						</svg>
 					</span>
 					<span class="card-name">Cursor</span>
-					<span class="card-badge one-click">One-click</span>
+					<span class="card-badge">One-click</span>
 				</div>
 				<a href={cursorDeepLink} class="install-button primary">
 					Install in Cursor
 				</a>
 				<p class="card-note">Opens Cursor with install prompt</p>
 			</div>
+		</div>
 
+		<!-- Secondary options: Small multiples with consistent structure -->
+		<div class="install-grid">
 			<!-- Claude Desktop -->
-			<div class="install-card claude">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon claude-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M12 3L13.5 8.5L19 7L14.5 11L19 15L13.5 13.5L12 19L10.5 13.5L5 15L9.5 11L5 7L10.5 8.5L12 3Z" fill="currentColor"/>
 						</svg>
 					</span>
@@ -78,17 +81,16 @@
 					class="install-button secondary"
 					onclick={() => copyToClipboard('npx --yes @create-something/loom', (v) => copiedClaude = v)}
 				>
-					{copiedClaude ? 'Copied!' : 'Copy install command'}
+					{copiedClaude ? 'Copied!' : 'Copy command'}
 				</button>
-				<code class="card-code">npx --yes @create-something/loom</code>
 				<p class="card-note">Add to claude_desktop_config.json</p>
 			</div>
 
 			<!-- Windsurf -->
-			<div class="install-card windsurf">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon windsurf-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M3 12C3 12 5 8 9 8C13 8 12 12 16 12C20 12 21 9 21 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
 							<path d="M3 17C3 17 5 13 9 13C13 13 12 17 16 17C20 17 21 14 21 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
 						</svg>
@@ -105,29 +107,29 @@
 			</div>
 
 			<!-- VS Code + Copilot -->
-			<div class="install-card vscode">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon vscode-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M17 2L7 11L17 20L19 18.5V3.5L17 2Z" fill="currentColor"/>
 							<path d="M7 11L2 8V14L7 11Z" fill="currentColor" opacity="0.7"/>
 							<path d="M17 2L7 11L2 8L17 2Z" fill="currentColor" opacity="0.85"/>
 							<path d="M17 20L7 11L2 14L17 20Z" fill="currentColor" opacity="0.85"/>
 						</svg>
 					</span>
-					<span class="card-name">VS Code + Copilot</span>
+					<span class="card-name">VS Code</span>
 				</div>
 				<a href="vscode:extension/GitHub.copilot" class="install-button secondary">
 					Open Extensions
 				</a>
-				<p class="card-note">Filter by MCP Server → search "loom"</p>
+				<p class="card-note">MCP Server → search "loom"</p>
 			</div>
 
 			<!-- Codex CLI -->
-			<div class="install-card codex">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon codex-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.15"/>
 							<rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
 							<path d="M6 9L10 12L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -142,20 +144,20 @@
 				>
 					{copiedCodex ? 'Copied!' : 'Copy command'}
 				</button>
-				<code class="card-code">codex mcp add loom</code>
+				<p class="card-note">codex mcp add loom</p>
 			</div>
 
 			<!-- npm (fallback) -->
-			<div class="install-card npm">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon npm-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<rect x="2" y="6" width="20" height="12" rx="1" fill="currentColor"/>
 							<path d="M5 15V9H8V14H9.5V9H11V15H5Z" fill="var(--color-bg-surface)"/>
 							<path d="M12.5 9V15H15.5V10.5H17V15H19V9H12.5Z" fill="var(--color-bg-surface)"/>
 						</svg>
 					</span>
-					<span class="card-name">npm (any tool)</span>
+					<span class="card-name">npm</span>
 				</div>
 				<button
 					class="install-button secondary"
@@ -163,7 +165,7 @@
 				>
 					{copiedNpm ? 'Copied!' : 'Copy command'}
 				</button>
-				<code class="card-code">npm install -g @create-something/loom</code>
+				<p class="card-note">Works with any MCP client</p>
 			</div>
 		</div>
 	</section>
@@ -175,18 +177,18 @@
 		<div class="how-grid">
 			<div class="how-step">
 				<span class="step-number">1</span>
-				<h3 class="step-title">Create task</h3>
-				<p class="step-description">Run loom_work to create and claim a task atomically</p>
+				<h3 class="step-title">Start a task</h3>
+				<p class="step-description">Tell Loom what you're working on. It tracks the context.</p>
 			</div>
 			<div class="how-step">
 				<span class="step-number">2</span>
-				<h3 class="step-title">Route to agent</h3>
-				<p class="step-description">Smart routing picks the best, cheapest, or fastest agent</p>
+				<h3 class="step-title">Pick the right agent</h3>
+				<p class="step-description">Loom suggests which agent fits best—by capability, cost, or speed</p>
 			</div>
 			<div class="how-step">
 				<span class="step-number">3</span>
-				<h3 class="step-title">Checkpoint & complete</h3>
-				<p class="step-description">Save progress at any point. Recover from crashes.</p>
+				<h3 class="step-title">Save your progress</h3>
+				<p class="step-description">Checkpoint anytime. If something crashes, pick up where you left off.</p>
 			</div>
 		</div>
 
@@ -208,8 +210,8 @@
 
 	<!-- Comparison Table -->
 	<section class="comparison-section">
-		<h2 class="section-title">Why Loom?</h2>
-		<p class="section-subtitle">Built for multi-agent workflows</p>
+		<h2 class="section-title">How Loom compares</h2>
+		<p class="section-subtitle">Different tools solve different problems</p>
 
 		<div class="comparison-table-wrapper">
 			<table class="comparison-table">
@@ -271,49 +273,47 @@
 
 	<!-- Tools Section -->
 	<section class="tools-section">
-		<h2 class="section-title">Available tools</h2>
-		<p class="section-subtitle">30+ MCP tools for multi-agent coordination</p>
+		<h2 class="section-title">What you can do</h2>
+		<p class="section-subtitle">30+ tools for coordinating AI work</p>
 
 		<div class="tools-grid">
 			<div class="tool-category">
-				<h3 class="category-title">Task Management</h3>
+				<h3 class="category-title">Manage tasks</h3>
 				<ul class="tool-list">
-					<li><code>loom_work</code> — Quick start: create + claim atomically</li>
-					<li><code>loom_create</code> — Create task for multi-agent coordination</li>
-					<li><code>loom_claim</code>, <code>loom_complete</code>, <code>loom_cancel</code></li>
-					<li><code>loom_spawn</code> — Create sub-tasks under a parent</li>
-					<li><code>loom_ready</code>, <code>loom_mine</code>, <code>loom_blocked</code></li>
+					<li><code>loom_work</code> — Start working on something right now</li>
+					<li><code>loom_create</code> — Create a task for later</li>
+					<li><code>loom_spawn</code> — Break a task into smaller pieces</li>
+					<li><code>loom_ready</code> — See what's available to work on</li>
+					<li><code>loom_complete</code> — Mark something done</li>
 				</ul>
 			</div>
 
 			<div class="tool-category">
-				<h3 class="category-title">Smart Routing</h3>
+				<h3 class="category-title">Route work</h3>
 				<ul class="tool-list">
-					<li><code>loom_route</code> — Get agent recommendation (best/cheapest/fastest)</li>
-					<li><code>loom_agents</code> — List all configured agents</li>
-					<li><code>loom_analytics</code> — Execution analytics and history</li>
-					<li><code>loom_record_execution</code> — Learn from past executions</li>
+					<li><code>loom_route</code> — Get a suggestion for which agent to use</li>
+					<li><code>loom_agents</code> — See all your configured agents</li>
+					<li><code>loom_analytics</code> — See what's worked well in the past</li>
+					<li><code>loom_record_execution</code> — Help Loom learn from results</li>
 				</ul>
 			</div>
 
 			<div class="tool-category">
-				<h3 class="category-title">Sessions & Memory</h3>
+				<h3 class="category-title">Remember context</h3>
 				<ul class="tool-list">
-					<li><code>loom_session_start</code>, <code>loom_session_end</code></li>
-					<li><code>loom_checkpoint</code> — Save progress for crash recovery</li>
-					<li><code>loom_recover</code>, <code>loom_resume</code> — Resume from any point</li>
-					<li><code>loom_get_resume_brief</code> — Generate context for continuity</li>
-					<li><code>loom_update_context</code> — Track files, decisions, test state</li>
+					<li><code>loom_checkpoint</code> — Save your progress</li>
+					<li><code>loom_resume</code> — Pick up where you left off</li>
+					<li><code>loom_get_resume_brief</code> — Get a summary of what happened</li>
+					<li><code>loom_update_context</code> — Note what files you changed, decisions you made</li>
 				</ul>
 			</div>
 
 			<div class="tool-category">
-				<h3 class="category-title">Formulas & Planning</h3>
+				<h3 class="category-title">Plan ahead</h3>
 				<ul class="tool-list">
-					<li><code>loom_formulas</code> — List available workflow templates</li>
-					<li><code>loom_formula</code> — Get formula details</li>
-					<li><code>loom_discuss</code> — Capture preferences before planning</li>
-					<li><code>loom_verify_plan</code> — Validate plans before execution</li>
+					<li><code>loom_formulas</code> — Use workflow templates</li>
+					<li><code>loom_discuss</code> — Talk through preferences before starting</li>
+					<li><code>loom_verify_plan</code> — Check if a plan makes sense</li>
 				</ul>
 			</div>
 		</div>
@@ -323,10 +323,10 @@
 	<section class="case-study-section">
 		<div class="case-study-card">
 			<span class="case-study-label">Key Feature</span>
-			<h3 class="case-study-title">Arlington Economics</h3>
+			<h3 class="case-study-title">Use the right agent for the job</h3>
 			<p class="case-study-description">
-				Route tasks to the cheapest capable agent. Claude for architecture, Gemini Flash for mechanical tasks.
-				Loom tracks capabilities and costs to make intelligent routing decisions automatically.
+				Not every task needs your most expensive model. Use Claude for architecture decisions, Gemini Flash for mechanical refactoring.
+				Loom tracks what each agent is good at and helps you pick the right one.
 			</p>
 			<div class="case-study-stats">
 				<div class="stat">
@@ -456,26 +456,52 @@
 		margin-bottom: var(--space-lg);
 	}
 
-	/* Install Section */
+	/* Install Section - Tufte: Clear hierarchy, Golden Ratio proportions */
 	.install-section {
 		padding: var(--space-2xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.install-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-		gap: var(--space-md);
+	/* Featured card container - Golden Ratio: ~61.8% width centered */
+	.install-featured {
+		max-width: 380px;
+		margin: 0 auto var(--space-lg);
 	}
 
+	/* Featured card - elevated prominence for one-click action */
+	.install-card.featured {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-lg);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.install-card.featured:hover {
+		border-color: var(--color-border-strong);
+	}
+
+	.install-card.featured .card-badge {
+		color: var(--color-success);
+		background: var(--color-success-muted);
+	}
+
+	/* Secondary cards grid - Tufte small multiples: consistent structure */
+	.install-grid {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: var(--space-sm);
+	}
+
+	/* Secondary cards - uniform structure, reduced visual weight */
 	.install-card {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
-		padding: var(--space-lg);
+		gap: var(--space-xs);
+		padding: var(--space-sm);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
@@ -483,21 +509,30 @@
 		border-color: var(--color-border-emphasis);
 	}
 
+	/* Card header - tighter spacing for secondary cards */
 	.card-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-xs);
+		margin-bottom: var(--space-xs);
 	}
 
 	.card-icon {
 		color: var(--color-fg-muted);
+		flex-shrink: 0;
 	}
 
 	.card-name {
-		font-size: var(--text-body);
+		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		flex-grow: 1;
+		white-space: nowrap;
+	}
+
+	/* Featured card uses larger name */
+	.install-card.featured .card-name {
+		font-size: var(--text-body);
 	}
 
 	.card-badge {
@@ -506,22 +541,24 @@
 		border-radius: var(--radius-full);
 	}
 
-	.card-badge.one-click {
-		color: var(--color-success);
-		background: var(--color-success-muted);
-	}
-
+	/* Buttons - consistent across all cards */
 	.install-button {
 		display: block;
 		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-body-sm);
+		padding: var(--space-xs) var(--space-sm);
+		font-size: var(--text-caption);
 		font-weight: var(--font-semibold);
 		text-align: center;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-sm);
 		border: none;
 		cursor: pointer;
 		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.install-card.featured .install-button {
+		padding: var(--space-sm) var(--space-md);
+		font-size: var(--text-body-sm);
+		border-radius: var(--radius-md);
 	}
 
 	.install-button:hover {
@@ -538,19 +575,15 @@
 		color: var(--color-fg-secondary);
 	}
 
-	.card-code {
-		font-family: monospace;
-		font-size: var(--text-caption);
+	/* Card note - Tufte: minimal ink, maximum information */
+	.card-note {
+		font-size: 0.6875rem;
 		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		overflow-x: auto;
+		line-height: 1.3;
 	}
 
-	.card-note {
+	.install-card.featured .card-note {
 		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
 	}
 
 	/* How Section */

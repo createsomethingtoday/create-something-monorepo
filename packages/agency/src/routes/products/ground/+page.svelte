@@ -34,10 +34,10 @@
 	<section class="hero">
 		<div class="hero-badge">Free & Open Source</div>
 		<h1 class="hero-title">Ground</h1>
-		<p class="hero-tagline">Grounded claims for code</p>
+		<p class="hero-tagline">Code analysis that checks before it claims</p>
 		<p class="hero-description">
-			AI agents are confident. Too confident. They'll tell you files are "95% similar" without comparing them.
-			Ground blocks hallucination by requiring <strong>verification before claims</strong>.
+			AI assistants will tell you files are "95% similar" without actually comparing them.
+			Ground fixes this. It requires your AI to <strong>verify before claiming</strong>—no more hallucinated duplicates or false positives.
 		</p>
 	</section>
 
@@ -178,17 +178,17 @@
 			<div class="how-step">
 				<span class="step-number">1</span>
 				<h3 class="step-title">Check first</h3>
-				<p class="step-description">Run ground_compare, ground_count_uses, or ground_find_orphans</p>
+				<p class="step-description">Your AI runs a verification command to actually compare files or count uses</p>
 			</div>
 			<div class="how-step">
 				<span class="step-number">2</span>
 				<h3 class="step-title">Then claim</h3>
-				<p class="step-description">Only after verification can you claim duplicate, dead_code, or orphan</p>
+				<p class="step-description">Only after checking can it report something as a duplicate, dead code, or orphan</p>
 			</div>
 			<div class="how-step">
 				<span class="step-number">3</span>
 				<h3 class="step-title">Blocked otherwise</h3>
-				<p class="step-description">Try to claim without checking? Ground blocks the hallucination.</p>
+				<p class="step-description">If it tries to claim without checking first, Ground stops it</p>
 			</div>
 		</div>
 
@@ -208,45 +208,45 @@
 
 	<!-- Tools Section -->
 	<section class="tools-section">
-		<h2 class="section-title">Available tools</h2>
-		<p class="section-subtitle">20+ MCP tools for grounded code analysis</p>
+		<h2 class="section-title">What you can do</h2>
+		<p class="section-subtitle">20+ tools for finding real problems in your code</p>
 
 		<div class="tools-grid">
 			<div class="tool-category">
-				<h3 class="category-title">Check Commands</h3>
+				<h3 class="category-title">Verify</h3>
 				<ul class="tool-list">
-					<li><code>ground_compare</code> — Compare two files for similarity</li>
-					<li><code>ground_count_uses</code> — Count symbol uses (definitions vs actual uses)</li>
-					<li><code>ground_check_connections</code> — Check if module is connected</li>
-					<li><code>ground_check_environment</code> — Detect Workers/Node.js API leakage</li>
+					<li><code>ground_compare</code> — See how similar two files actually are</li>
+					<li><code>ground_count_uses</code> — Find if a function is actually used anywhere</li>
+					<li><code>ground_check_connections</code> — See if a module is connected to your app</li>
+					<li><code>ground_check_environment</code> — Catch Node.js APIs leaking into Workers</li>
 				</ul>
 			</div>
 
 			<div class="tool-category">
-				<h3 class="category-title">Find Commands</h3>
+				<h3 class="category-title">Find problems</h3>
 				<ul class="tool-list">
-					<li><code>ground_find_duplicate_functions</code> — Find copied functions</li>
-					<li><code>ground_find_orphans</code> — Find modules nothing imports</li>
-					<li><code>ground_find_dead_exports</code> — Find exports never imported</li>
-					<li><code>ground_find_drift</code> — Find design system violations</li>
+					<li><code>ground_find_duplicate_functions</code> — Find copy-pasted code</li>
+					<li><code>ground_find_orphans</code> — Find files nothing imports</li>
+					<li><code>ground_find_dead_exports</code> — Find exports nobody uses</li>
+					<li><code>ground_find_drift</code> — Find where code drifted from your design system</li>
 				</ul>
 			</div>
 
 			<div class="tool-category">
-				<h3 class="category-title">Pattern Analysis</h3>
+				<h3 class="category-title">Understand patterns</h3>
 				<ul class="tool-list">
-					<li><code>ground_adoption_ratio</code> — Calculate token adoption metrics</li>
-					<li><code>ground_suggest_pattern</code> — Context-aware token suggestions</li>
-					<li><code>ground_mine_patterns</code> — Discover implicit patterns</li>
+					<li><code>ground_adoption_ratio</code> — See how consistently you use your tokens</li>
+					<li><code>ground_suggest_pattern</code> — Get suggestions based on your existing code</li>
+					<li><code>ground_mine_patterns</code> — Discover patterns you're already using</li>
 				</ul>
 			</div>
 
 			<div class="tool-category">
-				<h3 class="category-title">Claim Commands</h3>
+				<h3 class="category-title">Report findings</h3>
 				<ul class="tool-list">
-					<li><code>ground_claim_duplicate</code> — Claim files are duplicates (after compare)</li>
-					<li><code>ground_claim_dead_code</code> — Claim code is dead (after count_uses)</li>
-					<li><code>ground_claim_orphan</code> — Claim module is orphaned (after check_connections)</li>
+					<li><code>ground_claim_duplicate</code> — Report a duplicate (requires verification first)</li>
+					<li><code>ground_claim_dead_code</code> — Report dead code (requires verification first)</li>
+					<li><code>ground_claim_orphan</code> — Report an orphan (requires verification first)</li>
 				</ul>
 			</div>
 		</div>
@@ -256,10 +256,10 @@
 	<section class="case-study-section">
 		<div class="case-study-card">
 			<span class="case-study-label">Case Study</span>
-			<h3 class="case-study-title">Kickstand: 155 scripts → 13</h3>
+			<h3 class="case-study-title">Kickstand: 155 scripts became 13</h3>
 			<p class="case-study-description">
-				Ground was used to identify and consolidate duplicate code across a production codebase.
-				Result: 92% reduction in script count, zero false positives, every claim verified.
+				We used Ground to find and consolidate duplicate code in a production codebase.
+				Because every finding was verified, we had zero false positives—every deletion was safe.
 			</p>
 			<div class="case-study-stats">
 				<div class="stat">
