@@ -5,9 +5,6 @@
 	let { data }: { data: PageData } = $props();
 	const { product } = data;
 
-	// Cursor deep link - base64 encoded config for npx @createsomething/ground-mcp
-	const cursorDeepLink = 'cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D';
-
 	// Copy states
 	let copiedNpm = $state(false);
 	let copiedClaude = $state(false);
@@ -44,28 +41,9 @@
 	<!-- Install Section -->
 	<section class="install-section">
 		<h2 class="section-title">Install in 2 minutes</h2>
-		<p class="section-subtitle">One-click for your AI tool of choice</p>
+		<p class="section-subtitle">Copy the config for your AI tool</p>
 
-		<!-- Featured: One-click install (Tufte: primary action gets visual prominence) -->
-		<div class="install-featured">
-			<div class="install-card featured">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.86a.5.5 0 0 0-.85.35Z" fill="currentColor"/>
-						</svg>
-					</span>
-					<span class="card-name">Cursor</span>
-					<span class="card-badge">One-click</span>
-				</div>
-				<a href={cursorDeepLink} class="install-button primary">
-					Install in Cursor
-				</a>
-				<p class="card-note">Opens Cursor with install prompt</p>
-			</div>
-		</div>
-
-		<!-- Secondary options: Small multiples with consistent structure -->
+		<!-- 2x2 grid -->
 		<div class="install-grid">
 			<!-- Claude Desktop -->
 			<div class="install-card">
@@ -104,25 +82,6 @@
 					{copiedWindsurf ? 'Copied!' : 'Copy config'}
 				</button>
 				<p class="card-note">Settings → MCP → View raw config</p>
-			</div>
-
-			<!-- VS Code + Copilot -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M17 2L7 11L17 20L19 18.5V3.5L17 2Z" fill="currentColor"/>
-							<path d="M7 11L2 8V14L7 11Z" fill="currentColor" opacity="0.7"/>
-							<path d="M17 2L7 11L2 8L17 2Z" fill="currentColor" opacity="0.85"/>
-							<path d="M17 20L7 11L2 14L17 20Z" fill="currentColor" opacity="0.85"/>
-						</svg>
-					</span>
-					<span class="card-name">VS Code</span>
-				</div>
-				<a href="vscode:extension/GitHub.copilot" class="install-button secondary">
-					Open Extensions
-				</a>
-				<p class="card-note">MCP Server → search "ground"</p>
 			</div>
 
 			<!-- Codex CLI -->
@@ -380,67 +339,30 @@
 		margin-bottom: var(--space-lg);
 	}
 
-	/* Install Section - Tufte: Clear hierarchy, Golden Ratio proportions */
+	/* Install Section */
 	.install-section {
 		padding: var(--space-2xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	/* Featured card container - Golden Ratio: ~61.8% width centered */
-	.install-featured {
-		max-width: 380px; /* ~61.8% of 615px (typical card grid width) */
-		margin: 0 auto var(--space-lg);
-	}
-
-	/* Featured card - elevated prominence for one-click action */
-	.install-card.featured {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
-		transition: border-color var(--duration-micro) var(--ease-standard);
-		text-align: center;
-	}
-
-	.install-card.featured .card-header {
-		justify-content: center;
-	}
-
-	.install-card.featured:hover {
-		border-color: var(--color-border-strong);
-	}
-
-	.install-card.featured .card-badge {
-		color: var(--color-success);
-		background: var(--color-success-muted);
-	}
-
-	/* Secondary cards grid - 6-column grid for flexible row layouts */
+	/* 2x2 grid */
 	.install-grid {
 		display: grid;
-		grid-template-columns: repeat(6, 1fr);
-		gap: var(--space-sm);
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-md);
+		max-width: 600px;
+		margin: 0 auto;
 	}
 
-	/* Top row: 3 cards, each spans 2 columns */
-	.install-grid .install-card:nth-child(-n+3) {
-		grid-column: span 2;
-	}
-
-	/* Bottom row: 2 cards, each spans 3 columns (fills full width) */
-	.install-grid .install-card:nth-child(n+4) {
-		grid-column: span 3;
-	}
-
-	/* Secondary cards - uniform structure, reduced visual weight */
+	/* Cards */
 	.install-card {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-xs);
-		padding: var(--space-sm);
+		padding: var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-lg);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
@@ -448,7 +370,7 @@
 		border-color: var(--color-border-emphasis);
 	}
 
-	/* Card header - tighter spacing for secondary cards */
+	/* Card header */
 	.card-header {
 		display: flex;
 		align-items: center;
@@ -462,51 +384,28 @@
 	}
 
 	.card-name {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		flex-grow: 1;
-		white-space: nowrap;
 	}
 
-	/* Featured card uses larger name */
-	.install-card.featured .card-name {
-		font-size: var(--text-body);
-	}
-
-	.card-badge {
-		font-size: var(--text-caption);
-		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-full);
-	}
-
-	/* Buttons - consistent across all cards */
+	/* Buttons */
 	.install-button {
 		display: block;
 		width: 100%;
-		padding: var(--space-xs) var(--space-sm);
-		font-size: var(--text-caption);
+		padding: var(--space-sm) var(--space-md);
+		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
 		text-align: center;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-md);
 		border: none;
 		cursor: pointer;
 		transition: opacity var(--duration-micro) var(--ease-standard);
 	}
 
-	.install-card.featured .install-button {
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-body-sm);
-		border-radius: var(--radius-md);
-	}
-
 	.install-button:hover {
 		opacity: 0.9;
-	}
-
-	.install-button.primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
 	}
 
 	.install-button.secondary {
@@ -514,15 +413,11 @@
 		color: var(--color-fg-secondary);
 	}
 
-	/* Card note - Tufte: minimal ink, maximum information */
+	/* Card note */
 	.card-note {
-		font-size: 0.6875rem; /* 11px - smaller for secondary info */
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		line-height: 1.3;
-	}
-
-	.install-card.featured .card-note {
-		font-size: var(--text-caption);
 	}
 
 	/* How Section */
@@ -766,21 +661,6 @@
 			font-size: var(--text-h1);
 		}
 
-		/* Reset to simple 2-column grid on mobile */
-		.install-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.install-grid .install-card:nth-child(-n+3),
-		.install-grid .install-card:nth-child(n+4) {
-			grid-column: span 1;
-		}
-
-		/* Last card spans full width if odd count */
-		.install-grid .install-card:last-child:nth-child(odd) {
-			grid-column: span 2;
-		}
-
 		.how-grid {
 			grid-template-columns: 1fr;
 		}
@@ -796,13 +676,9 @@
 	}
 
 	@media (max-width: 480px) {
-		/* Stack all cards on small screens */
+		/* Stack cards on small screens */
 		.install-grid {
 			grid-template-columns: 1fr;
-		}
-
-		.install-featured {
-			max-width: 100%;
 		}
 	}
 </style>
