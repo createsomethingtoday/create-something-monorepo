@@ -408,28 +408,7 @@ body {
    Video Player Components
    ========================================================================== */
 
-.video-card {
-	position: relative;
-	border-radius: 0.75rem;
-	overflow: hidden;
-	background: var(--color-bg-surface);
-	border: 1px solid var(--color-border-default);
-	transition: all var(--duration-standard) var(--ease-standard);
-}
-
-.video-card:hover {
-	border-color: var(--color-border-emphasis);
-	transform: scale(1.02);
-}
-
-.video-card::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 50%);
-	z-index: 1;
-	pointer-events: none;
-}
+/* video-card styles moved to VideoCard.svelte component */
 
 .video-thumbnail {
 	width: 100%;

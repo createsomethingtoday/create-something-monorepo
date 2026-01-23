@@ -118,6 +118,7 @@
 		cursor: pointer;
 		text-decoration: none;
 		color: inherit;
+		font-family: var(--font-sans);
 	}
 
 	.poster-container {
@@ -157,7 +158,7 @@
 		opacity: 1;
 	}
 
-	/* Simple centered play indicator */
+	/* Simple centered play indicator - frosted glass */
 	.play-indicator {
 		width: 48px;
 		height: 48px;
@@ -167,7 +168,7 @@
 		background: rgba(255, 255, 255, 0.15);
 		border: 1px solid rgba(255, 255, 255, 0.3);
 		border-radius: 50%;
-		color: white;
+		color: var(--color-fg-primary);
 		backdrop-filter: blur(4px);
 		-webkit-backdrop-filter: blur(4px);
 		transition: transform var(--duration-micro) var(--ease-standard);
@@ -205,10 +206,11 @@
 
 	/* Card info below poster */
 	.card-info {
-		padding: 0.75rem 0.25rem 0;
+		padding: var(--space-sm) 0.25rem 0;
 	}
 
 	.card-title {
+		font-family: var(--font-sans);
 		font-size: 0.9375rem;
 		font-weight: 600;
 		color: var(--color-fg-primary);
@@ -221,7 +223,8 @@
 	}
 
 	.card-meta {
-		font-size: 0.75rem;
+		font-family: var(--font-sans);
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		margin: 0.375rem 0 0 0;
 		text-align: left;
