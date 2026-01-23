@@ -34,33 +34,37 @@ export const TriageScene: React.FC = () => {
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
   
-  // Track focused item index based on key presses
-  let focusedIndex = 0;
-  const itemStates: ItemState[] = inboxItems.map((item, index) => ({
+  // Initialize item states
+  const itemStates: ItemState[] = inboxItems.map((item) => ({
     ...item,
     status: 'inbox' as const,
     exitFrame: null,
   }));
   
   // Process key sequence to determine item states
-  let currentFocus = 0;
+  // Each action targets the next unactioned item in sequence
+  let actionCount = 0;
   for (const keyEvent of keySequence) {
     if (frame >= keyEvent.frame) {
-      if (keyEvent.action === 'navigate') {
-        currentFocus = Math.min(currentFocus + 1, itemStates.length - 1);
-      } else if (keyEvent.action === 'approve') {
-        itemStates[currentFocus].status = 'approved';
-        itemStates[currentFocus].exitFrame = keyEvent.frame;
-      } else if (keyEvent.action === 'dismiss') {
-        itemStates[currentFocus].status = 'dismissed';
-        itemStates[currentFocus].exitFrame = keyEvent.frame;
-      } else if (keyEvent.action === 'snooze') {
-        itemStates[currentFocus].status = 'snoozed';
-        itemStates[currentFocus].exitFrame = keyEvent.frame;
+      const targetIndex = actionCount;
+      if (targetIndex < itemStates.length) {
+        if (keyEvent.action === 'approve') {
+          itemStates[targetIndex].status = 'approved';
+          itemStates[targetIndex].exitFrame = keyEvent.frame;
+        } else if (keyEvent.action === 'dismiss') {
+          itemStates[targetIndex].status = 'dismissed';
+          itemStates[targetIndex].exitFrame = keyEvent.frame;
+        } else if (keyEvent.action === 'snooze') {
+          itemStates[targetIndex].status = 'snoozed';
+          itemStates[targetIndex].exitFrame = keyEvent.frame;
+        }
+        actionCount++;
       }
     }
   }
-  focusedIndex = currentFocus;
+  
+  // Focus is always on the first remaining inbox item
+  const focusedIndex = itemStates.findIndex(item => item.status === 'inbox');
   
   // Get active key press
   const getActiveKey = (): { key: string; color: 'default' | 'success' | 'warning'; progress: number } | null => {
@@ -88,8 +92,13 @@ export const TriageScene: React.FC = () => {
     return exitProgress < 1;
   });
   
-  // Empty state
-  const showEmptyState = visibleItems.length === 0 || frame >= scenes.triage.emptyState.start;
+  // Empty state - show when all items have exited
+  const allItemsActioned = itemStates.every(item => item.exitFrame !== null);
+  const allItemsExited = itemStates.every(item => {
+    if (item.exitFrame === null) return false;
+    return (frame - item.exitFrame) >= 20;
+  });
+  const showEmptyState = allItemsExited || (allItemsActioned && frame >= scenes.triage.emptyState.start);
   
   return (
     <AbsoluteFill style={{ backgroundColor: colors.bgBase }}>
@@ -122,7 +131,7 @@ export const TriageScene: React.FC = () => {
               padding: '0 16px',
             }}
           >
-            Priority items ({visibleItems.filter(i => i.status === 'inbox').length})
+            Priority items ({itemStates.filter(i => i.status === 'inbox').length})
           </div>
         </div>
         
@@ -151,12 +160,7 @@ export const TriageScene: React.FC = () => {
             // Skip fully exited items
             if (exitProgress >= 1) return null;
             
-            // Adjust focused index for exited items
-            const adjustedFocusIndex = itemStates
-              .slice(0, focusedIndex + 1)
-              .filter(i => i.exitFrame === null || (frame - i.exitFrame) < 20)
-              .length - 1;
-            
+            // Item is focused if it's the first remaining inbox item
             const isFocused = index === focusedIndex && frame >= focusFirst.start && exitProgress === 0;
             
             // Row embodiment with stagger

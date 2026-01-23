@@ -63,19 +63,19 @@ function generateTendSoundCues(): SoundCue[] {
     const connectFrame = scenes.connection.start + scenes.connection.connectCascade.start + 
       (i * scenes.connection.connectCascade.stagger);
     
-    // Connecting tick (gray → amber)
+    // Connecting tick (gray → amber) - subtle
     cues.push({
       frame: connectFrame,
-      sound: 'tick-medium',
-      volume: 0.18,
+      sound: 'tick-soft',
+      volume: 0.1,
       label: `connect-start-${i}`,
     });
     
-    // Connected success (amber → green)
+    // Connected success (amber → green) - gentle
     cues.push({
       frame: connectFrame + 20,
       sound: 'success-soft',
-      volume: 0.2,
+      volume: 0.12,
       label: `connect-complete-${i}`,
     });
   }
@@ -158,23 +158,23 @@ function generateTendSoundCues(): SoundCue[] {
     });
   });
   
-  // Focus ring appearance
+  // Focus ring appearance - subtle
   cues.push({
     frame: scenes.triage.start + scenes.triage.focusFirst.start,
-    sound: 'focus',
-    volume: 0.22,
+    sound: 'tick-soft',
+    volume: 0.12,
     label: 'focus-first',
   });
   
-  // Keyboard sequence
+  // Keyboard sequence - using softer, smoother sounds
   scenes.triage.keySequence.forEach((keyEvent) => {
     const absoluteFrame = scenes.triage.start + keyEvent.frame;
     
-    // All keys get a mechanical click
+    // Soft tick for key press (smoother than mechanical click)
     cues.push({
       frame: absoluteFrame,
-      sound: 'click-mechanical',
-      volume: 0.28,
+      sound: 'tick-soft',
+      volume: 0.15,
       label: `key-${keyEvent.key}`,
     });
     
@@ -182,30 +182,23 @@ function generateTendSoundCues(): SoundCue[] {
     if (keyEvent.action === 'approve') {
       cues.push({
         frame: absoluteFrame + 3,
-        sound: 'success-chime',
-        volume: 0.3,
+        sound: 'success-soft',
+        volume: 0.2,
         label: 'action-approve',
       });
     } else if (keyEvent.action === 'dismiss') {
       cues.push({
         frame: absoluteFrame + 3,
-        sound: 'dismiss-soft',
-        volume: 0.2,
+        sound: 'pop-soft',
+        volume: 0.12,
         label: 'action-dismiss',
       });
     } else if (keyEvent.action === 'snooze') {
       cues.push({
         frame: absoluteFrame + 3,
-        sound: 'warning-tone',
-        volume: 0.25,
+        sound: 'shimmer',
+        volume: 0.15,
         label: 'action-snooze',
-      });
-    } else if (keyEvent.action === 'navigate') {
-      cues.push({
-        frame: absoluteFrame + 2,
-        sound: 'select',
-        volume: 0.12,
-        label: 'navigate',
       });
     }
   });
@@ -230,13 +223,13 @@ function generateTendSoundCues(): SoundCue[] {
     label: 'metrics-wireframe',
   });
   
-  // Card embodiment cascade
+  // Card embodiment cascade - soft pops
   const metricsCues = createCascade({
-    sound: 'pop-medium',
+    sound: 'pop-soft',
     startFrame: scenes.metrics.start + scenes.metrics.embodimentCascade.start,
     count: 3,
     stagger: scenes.metrics.embodimentCascade.stagger,
-    volume: 0.18,
+    volume: 0.12,
     label: 'metric-card',
   });
   cues.push(...metricsCues);
@@ -256,11 +249,11 @@ function generateTendSoundCues(): SoundCue[] {
   // SCENE 6: CLOSE (1620-1800)
   // ============================================
   
-  // Logo embodiment - satisfying pop
+  // Logo embodiment - gentle pop
   cues.push({
     frame: scenes.close.start + scenes.close.logoEmbodiment.start,
-    sound: 'pop-medium',
-    volume: 0.25,
+    sound: 'pop-soft',
+    volume: 0.18,
     label: 'logo-embody',
   });
   

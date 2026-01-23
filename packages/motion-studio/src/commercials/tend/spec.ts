@@ -142,15 +142,14 @@ export const SPEC = {
       tableEmbodiment: { start: 0, duration: 120 },
       focusFirst: { start: 120, duration: 30 },
       keySequence: [
-        { key: 'j', frame: 150, action: 'navigate' },
-        { key: 'j', frame: 165, action: 'navigate' },
-        { key: 'a', frame: 180, action: 'approve' },
-        { key: 'j', frame: 240, action: 'navigate' },
-        { key: 'd', frame: 270, action: 'dismiss' },
-        { key: 'j', frame: 300, action: 'navigate' },
-        { key: 's', frame: 330, action: 'snooze' },
+        // Action all 5 items to clear inbox
+        { key: 'a', frame: 150, action: 'approve' },  // Item 0: approve
+        { key: 'a', frame: 180, action: 'approve' },  // Item 1: approve
+        { key: 'a', frame: 210, action: 'approve' },  // Item 2: approve
+        { key: 'd', frame: 250, action: 'dismiss' },  // Item 3: dismiss
+        { key: 's', frame: 290, action: 'snooze' },   // Item 4: snooze
       ],
-      emptyState: { start: 380, duration: 70 },
+      emptyState: { start: 340, duration: 110 },
     },
     
     // Scene 5: Metrics reveal
