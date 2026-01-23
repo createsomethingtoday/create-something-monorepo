@@ -46,29 +46,32 @@
 		<h2 class="section-title">Install in 2 minutes</h2>
 		<p class="section-subtitle">One-click for your AI tool of choice</p>
 
-		<div class="install-grid">
-			<!-- Cursor -->
-			<div class="install-card cursor">
+		<!-- Featured: One-click install (Tufte: primary action gets visual prominence) -->
+		<div class="install-featured">
+			<div class="install-card featured">
 				<div class="card-header">
-					<span class="card-icon cursor-icon">
+					<span class="card-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.86a.5.5 0 0 0-.85.35Z" fill="currentColor"/>
 						</svg>
 					</span>
 					<span class="card-name">Cursor</span>
-					<span class="card-badge one-click">One-click</span>
+					<span class="card-badge">One-click</span>
 				</div>
 				<a href={cursorDeepLink} class="install-button primary">
 					Install in Cursor
 				</a>
 				<p class="card-note">Opens Cursor with install prompt</p>
 			</div>
+		</div>
 
+		<!-- Secondary options: Small multiples with consistent structure -->
+		<div class="install-grid">
 			<!-- Claude Desktop -->
-			<div class="install-card claude">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon claude-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M12 3L13.5 8.5L19 7L14.5 11L19 15L13.5 13.5L12 19L10.5 13.5L5 15L9.5 11L5 7L10.5 8.5L12 3Z" fill="currentColor"/>
 						</svg>
 					</span>
@@ -78,17 +81,16 @@
 					class="install-button secondary"
 					onclick={() => copyToClipboard('npx --yes -p @createsomething/ground-mcp ground-mcp', (v) => copiedClaude = v)}
 				>
-					{copiedClaude ? 'Copied!' : 'Copy install command'}
+					{copiedClaude ? 'Copied!' : 'Copy command'}
 				</button>
-				<code class="card-code">npx --yes -p @createsomething/ground-mcp ground-mcp</code>
 				<p class="card-note">Add to claude_desktop_config.json</p>
 			</div>
 
 			<!-- Windsurf -->
-			<div class="install-card windsurf">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon windsurf-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M3 12C3 12 5 8 9 8C13 8 12 12 16 12C20 12 21 9 21 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
 							<path d="M3 17C3 17 5 13 9 13C13 13 12 17 16 17C20 17 21 14 21 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
 						</svg>
@@ -105,29 +107,29 @@
 			</div>
 
 			<!-- VS Code + Copilot -->
-			<div class="install-card vscode">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon vscode-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M17 2L7 11L17 20L19 18.5V3.5L17 2Z" fill="currentColor"/>
 							<path d="M7 11L2 8V14L7 11Z" fill="currentColor" opacity="0.7"/>
 							<path d="M17 2L7 11L2 8L17 2Z" fill="currentColor" opacity="0.85"/>
 							<path d="M17 20L7 11L2 14L17 20Z" fill="currentColor" opacity="0.85"/>
 						</svg>
 					</span>
-					<span class="card-name">VS Code + Copilot</span>
+					<span class="card-name">VS Code</span>
 				</div>
 				<a href="vscode:extension/GitHub.copilot" class="install-button secondary">
 					Open Extensions
 				</a>
-				<p class="card-note">Filter by MCP Server → search "ground"</p>
+				<p class="card-note">MCP Server → search "ground"</p>
 			</div>
 
 			<!-- Codex CLI -->
-			<div class="install-card codex">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon codex-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.15"/>
 							<rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
 							<path d="M6 9L10 12L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -142,20 +144,20 @@
 				>
 					{copiedCodex ? 'Copied!' : 'Copy command'}
 				</button>
-				<code class="card-code">codex mcp add ground</code>
+				<p class="card-note">codex mcp add ground</p>
 			</div>
 
 			<!-- npm (fallback) -->
-			<div class="install-card npm">
+			<div class="install-card">
 				<div class="card-header">
-					<span class="card-icon npm-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<span class="card-icon">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<rect x="2" y="6" width="20" height="12" rx="1" fill="currentColor"/>
 							<path d="M5 15V9H8V14H9.5V9H11V15H5Z" fill="var(--color-bg-surface)"/>
 							<path d="M12.5 9V15H15.5V10.5H17V15H19V9H12.5Z" fill="var(--color-bg-surface)"/>
 						</svg>
 					</span>
-					<span class="card-name">npm (any tool)</span>
+					<span class="card-name">npm</span>
 				</div>
 				<button
 					class="install-button secondary"
@@ -163,7 +165,7 @@
 				>
 					{copiedNpm ? 'Copied!' : 'Copy command'}
 				</button>
-				<code class="card-code">npm install -g @createsomething/ground-mcp</code>
+				<p class="card-note">Works with any MCP client</p>
 			</div>
 		</div>
 	</section>
@@ -378,26 +380,52 @@
 		margin-bottom: var(--space-lg);
 	}
 
-	/* Install Section */
+	/* Install Section - Tufte: Clear hierarchy, Golden Ratio proportions */
 	.install-section {
 		padding: var(--space-2xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.install-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-		gap: var(--space-md);
+	/* Featured card container - Golden Ratio: ~61.8% width centered */
+	.install-featured {
+		max-width: 380px; /* ~61.8% of 615px (typical card grid width) */
+		margin: 0 auto var(--space-lg);
 	}
 
+	/* Featured card - elevated prominence for one-click action */
+	.install-card.featured {
+		padding: var(--space-lg);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-lg);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.install-card.featured:hover {
+		border-color: var(--color-border-strong);
+	}
+
+	.install-card.featured .card-badge {
+		color: var(--color-success);
+		background: var(--color-success-muted);
+	}
+
+	/* Secondary cards grid - Tufte small multiples: consistent structure */
+	.install-grid {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: var(--space-sm);
+	}
+
+	/* Secondary cards - uniform structure, reduced visual weight */
 	.install-card {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
-		padding: var(--space-lg);
+		gap: var(--space-xs);
+		padding: var(--space-sm);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
@@ -405,21 +433,30 @@
 		border-color: var(--color-border-emphasis);
 	}
 
+	/* Card header - tighter spacing for secondary cards */
 	.card-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-xs);
+		margin-bottom: var(--space-xs);
 	}
 
 	.card-icon {
 		color: var(--color-fg-muted);
+		flex-shrink: 0;
 	}
 
 	.card-name {
-		font-size: var(--text-body);
+		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		flex-grow: 1;
+		white-space: nowrap;
+	}
+
+	/* Featured card uses larger name */
+	.install-card.featured .card-name {
+		font-size: var(--text-body);
 	}
 
 	.card-badge {
@@ -428,22 +465,24 @@
 		border-radius: var(--radius-full);
 	}
 
-	.card-badge.one-click {
-		color: var(--color-success);
-		background: var(--color-success-muted);
-	}
-
+	/* Buttons - consistent across all cards */
 	.install-button {
 		display: block;
 		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-body-sm);
+		padding: var(--space-xs) var(--space-sm);
+		font-size: var(--text-caption);
 		font-weight: var(--font-semibold);
 		text-align: center;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-sm);
 		border: none;
 		cursor: pointer;
 		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.install-card.featured .install-button {
+		padding: var(--space-sm) var(--space-md);
+		font-size: var(--text-body-sm);
+		border-radius: var(--radius-md);
 	}
 
 	.install-button:hover {
@@ -460,19 +499,15 @@
 		color: var(--color-fg-secondary);
 	}
 
-	.card-code {
-		font-family: monospace;
-		font-size: var(--text-caption);
+	/* Card note - Tufte: minimal ink, maximum information */
+	.card-note {
+		font-size: 0.6875rem; /* 11px - smaller for secondary info */
 		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		overflow-x: auto;
+		line-height: 1.3;
 	}
 
-	.card-note {
+	.install-card.featured .card-note {
 		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
 	}
 
 	/* How Section */
@@ -711,9 +746,21 @@
 	}
 
 	/* Responsive */
+	@media (max-width: 900px) {
+		/* 5 cards → 3+2 layout */
+		.install-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
 	@media (max-width: 768px) {
 		.hero-title {
 			font-size: var(--text-h1);
+		}
+
+		/* 5 cards → 2+2+1 layout */
+		.install-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 
 		.how-grid {
@@ -727,6 +774,17 @@
 		.case-study-stats {
 			flex-direction: column;
 			gap: var(--space-md);
+		}
+	}
+
+	@media (max-width: 480px) {
+		/* Stack all cards on small screens */
+		.install-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.install-featured {
+			max-width: 100%;
 		}
 	}
 </style>
