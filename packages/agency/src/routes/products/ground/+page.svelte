@@ -50,11 +50,9 @@
 			<!-- Cursor -->
 			<div class="install-card cursor">
 				<div class="card-header">
-					<span class="card-icon">
+					<span class="card-icon cursor-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.86a.5.5 0 0 0-.85.35Z" fill="currentColor"/>
 						</svg>
 					</span>
 					<span class="card-name">Cursor</span>
@@ -69,10 +67,9 @@
 			<!-- Claude Desktop -->
 			<div class="install-card claude">
 				<div class="card-header">
-					<span class="card-icon">
+					<span class="card-icon claude-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-							<path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M12 3L13.5 8.5L19 7L14.5 11L19 15L13.5 13.5L12 19L10.5 13.5L5 15L9.5 11L5 7L10.5 8.5L12 3Z" fill="currentColor"/>
 						</svg>
 					</span>
 					<span class="card-name">Claude Desktop</span>
@@ -90,11 +87,10 @@
 			<!-- Windsurf -->
 			<div class="install-card windsurf">
 				<div class="card-header">
-					<span class="card-icon">
+					<span class="card-icon windsurf-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M4 16L8 12L4 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M12 16L16 12L12 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M20 16V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+							<path d="M3 12C3 12 5 8 9 8C13 8 12 12 16 12C20 12 21 9 21 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+							<path d="M3 17C3 17 5 13 9 13C13 13 12 17 16 17C20 17 21 14 21 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
 						</svg>
 					</span>
 					<span class="card-name">Windsurf</span>
@@ -111,10 +107,12 @@
 			<!-- VS Code + Copilot -->
 			<div class="install-card vscode">
 				<div class="card-header">
-					<span class="card-icon">
+					<span class="card-icon vscode-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M16 3L8 12L16 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M8 3V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+							<path d="M17 2L7 11L17 20L19 18.5V3.5L17 2Z" fill="currentColor"/>
+							<path d="M7 11L2 8V14L7 11Z" fill="currentColor" opacity="0.7"/>
+							<path d="M17 2L7 11L2 8L17 2Z" fill="currentColor" opacity="0.85"/>
+							<path d="M17 20L7 11L2 14L17 20Z" fill="currentColor" opacity="0.85"/>
 						</svg>
 					</span>
 					<span class="card-name">VS Code + Copilot</span>
@@ -128,11 +126,12 @@
 			<!-- Codex CLI -->
 			<div class="install-card codex">
 				<div class="card-header">
-					<span class="card-icon">
+					<span class="card-icon codex-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-							<path d="M7 8L11 12L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M13 16H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+							<rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.15"/>
+							<rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+							<path d="M6 9L10 12L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M12 15H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 						</svg>
 					</span>
 					<span class="card-name">Codex CLI</span>
@@ -149,10 +148,11 @@
 			<!-- npm (fallback) -->
 			<div class="install-card npm">
 				<div class="card-header">
-					<span class="card-icon">
+					<span class="card-icon npm-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="2" y="2" width="20" height="20" fill="currentColor"/>
-							<path d="M5 19V5H11V17H14V5H19V19H5Z" fill="var(--color-bg-pure)"/>
+							<rect x="2" y="6" width="20" height="12" rx="1" fill="currentColor"/>
+							<path d="M5 15V9H8V14H9.5V9H11V15H5Z" fill="var(--color-bg-surface)"/>
+							<path d="M12.5 9V15H15.5V10.5H17V15H19V9H12.5Z" fill="var(--color-bg-surface)"/>
 						</svg>
 					</span>
 					<span class="card-name">npm (any tool)</span>
