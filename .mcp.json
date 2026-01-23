@@ -17,7 +17,7 @@
     },
     "ground": {
       "command": "./packages/ground/target/release/ground-mcp",
-      "args": ["--db", ".ground/registry.db"]
+      "args": ["--db", ".ground/registry.db", "--workspace", "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"]
     },
     "webflow": {
       "command": "node",

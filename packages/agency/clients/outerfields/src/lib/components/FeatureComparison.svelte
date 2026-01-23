@@ -2,9 +2,9 @@
 	/**
 	 * OUTERFIELDS Feature Comparison
 	 *
-	 * Comparison table showing OUTERFIELDS vs Uscreen, YouTube, Patreon, Substack
+	 * Comparison table showing OUTERFIELDS PCN vs DIY platforms
 	 */
-	import { Infinity, CheckCircle, XCircle, Rocket } from 'lucide-svelte';
+	import { Infinity, CheckCircle, XCircle, Calendar } from 'lucide-svelte';
 
 	type ComparisonValue = true | false | 'Limited' | 'Basic';
 
@@ -20,22 +20,22 @@
 
 	const features: FeatureRow[] = [
 		{
-			name: 'Lifetime Pricing',
+			name: 'Full-Service Build',
 			outerfields: true,
 			uscreen: false,
 			youtube: false,
 			patreon: false,
 			substack: false,
-			description: 'One-time $99 payment, lifetime access'
+			description: 'We build your entire platform—you focus on content'
 		},
 		{
-			name: 'No Monthly Fees',
+			name: 'Custom Branding',
 			outerfields: true,
-			uscreen: false,
+			uscreen: 'Limited',
 			youtube: false,
 			patreon: false,
-			substack: false,
-			description: 'No recurring subscription charges'
+			substack: 'Limited',
+			description: 'Your brand, your domain, your identity'
 		},
 		{
 			name: 'Full Ownership',
@@ -56,24 +56,28 @@
 			description: 'Real-time engagement metrics and AI insights'
 		},
 		{
-			name: 'Community Features',
-			outerfields: true,
-			uscreen: false,
-			youtube: 'Limited',
-			patreon: true,
-			substack: 'Limited',
-			description: 'Built-in forums, comments, and engagement'
-		},
-		{
-			name: 'Discovery Calls',
+			name: 'Professional Production',
 			outerfields: true,
 			uscreen: false,
 			youtube: false,
 			patreon: false,
 			substack: false,
-			description: 'Included 1-on-1 strategy call with membership'
+			description: 'Video production included in your PCN package'
+		},
+		{
+			name: 'Discovery Call',
+			outerfields: true,
+			uscreen: false,
+			youtube: false,
+			patreon: false,
+			substack: false,
+			description: 'Free consultation to plan your custom PCN'
 		}
 	];
+
+	function bookDiscoveryCall() {
+		window.open('https://calendly.com/outerfields/discovery-call', '_blank');
+	}
 </script>
 
 <section class="comparison-section" id="features">
@@ -182,11 +186,11 @@
 		</div>
 
 		<div class="comparison-cta">
-			<p class="cta-text">Ready to build a better content network?</p>
-			<a href="/signup" class="btn-primary">
-				<Rocket size={20} />
-				Get Started Free
-			</a>
+			<p class="cta-text">Ready to build your Private Content Network?</p>
+			<button class="btn-primary" onclick={bookDiscoveryCall}>
+				<Calendar size={20} />
+				Book a Discovery Call
+			</button>
 		</div>
 	</div>
 </section>
@@ -364,6 +368,26 @@
 		font-size: 1.125rem;
 		color: var(--color-fg-muted);
 		margin: 0 0 1.5rem;
+	}
+
+	.btn-primary {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 1rem 2rem;
+		background: var(--color-sun);
+		border: none;
+		border-radius: 0.5rem;
+		font-size: 1rem;
+		font-weight: 700;
+		color: white;
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.btn-primary:hover {
+		background: var(--color-primary-hover);
+		transform: scale(1.02);
 	}
 
 	@media (max-width: 640px) {

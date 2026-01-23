@@ -3,7 +3,7 @@
 //! Exposes Ground tools via the Model Context Protocol.
 //!
 //! Usage:
-//!   ground-mcp [--db <path>]
+//!   ground-mcp [--db <path>] [--workspace <path>]
 //!
 //! The server communicates via stdio using JSON-RPC.
 
@@ -29,6 +29,10 @@ struct Cli {
     /// Path to registry database
     #[arg(long, default_value = ".ground/registry.db")]
     db: PathBuf,
+    
+    /// Workspace root directory (for resolving relative paths)
+    #[arg(long)]
+    workspace: Option<PathBuf>,
 }
 
 /// JSON-RPC Request
@@ -145,6 +149,20 @@ fn shorten_path(path: &str) -> String {
 
 fn main() {
     let cli = Cli::parse();
+    
+    // Change to workspace directory if provided
+    // This makes all relative paths work correctly
+    if let Some(ref workspace) = cli.workspace {
+        if workspace.exists() && workspace.is_dir() {
+            if let Err(e) = std::env::set_current_dir(workspace) {
+                log!("Warning: Could not change to workspace {}: {}", workspace.display(), e);
+            } else {
+                log!("Workspace: {}", workspace.display());
+            }
+        } else {
+            log!("Warning: Workspace path does not exist: {}", workspace.display());
+        }
+    }
     
     // Ensure .ground directory exists
     if let Some(parent) = cli.db.parent() {

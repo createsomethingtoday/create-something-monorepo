@@ -1689,8 +1689,8 @@ fn suggest_search_scope(module_path: &PathBuf) -> Option<String> {
     None
 }
 
-/// Resolve a path, handling relative paths by finding the workspace root.
-/// The workspace root is detected by looking for .ground.yml, package.json, or .git
+/// Resolve a path, handling relative paths by searching common locations.
+/// For MCP servers that may run from a different directory than the workspace.
 fn resolve_path(path: &str) -> PathBuf {
     let p = PathBuf::from(path);
     
@@ -1699,56 +1699,83 @@ fn resolve_path(path: &str) -> PathBuf {
         return p;
     }
     
-    // For relative paths, try to find the workspace root
-    // by looking for common project markers
-    if let Some(workspace_root) = find_workspace_root() {
-        let full_path = workspace_root.join(&p);
-        // If this path exists, use it
+    // Try current directory first
+    if let Ok(cwd) = std::env::current_dir() {
+        let full_path = cwd.join(&p);
         if full_path.exists() {
             return full_path.canonicalize().unwrap_or(full_path);
         }
     }
     
-    // Fallback: try current directory
-    match std::env::current_dir() {
-        Ok(cwd) => {
-            let full_path = cwd.join(&p);
-            full_path.canonicalize().unwrap_or(full_path)
+    // Search common workspace locations for where this relative path exists
+    // This handles MCP servers running from home directory
+    let search_roots = collect_workspace_candidates();
+    
+    for root in search_roots {
+        let full_path = root.join(&p);
+        if full_path.exists() {
+            return full_path.canonicalize().unwrap_or(full_path);
         }
-        Err(_) => p,
     }
+    
+    // Fallback: return as-is joined with cwd
+    std::env::current_dir()
+        .map(|cwd| cwd.join(&p))
+        .unwrap_or(p)
 }
 
-/// Find the workspace root by looking for common project markers.
-/// Walks up from current directory looking for .ground.yml, package.json, or .git
-fn find_workspace_root() -> Option<PathBuf> {
-    let cwd = std::env::current_dir().ok()?;
-    let mut current = cwd;
+/// Collect candidate workspace roots by looking for projects with .ground.yml
+fn collect_workspace_candidates() -> Vec<PathBuf> {
+    let mut candidates = Vec::new();
     
-    // Walk up to 20 levels
-    for _ in 0..20 {
-        // Check for workspace markers (in order of specificity)
-        for marker in &[".ground.yml", "package.json", ".git", "pnpm-workspace.yaml"] {
-            let marker_path = current.join(marker);
-            if marker_path.exists() {
-                // For .git, check if it's a directory (not a file in worktrees)
-                if *marker == ".git" && !marker_path.is_dir() {
-                    continue;
-                }
-                return Some(current);
-            }
-        }
+    // Check common development directories
+    if let Ok(home) = std::env::var("HOME") {
+        let home_path = PathBuf::from(&home);
         
-        // Move to parent
-        match current.parent() {
-            Some(parent) if parent != current => {
-                current = parent.to_path_buf();
+        // Common project locations
+        let search_dirs = [
+            home_path.join("Documents"),
+            home_path.join("Projects"),
+            home_path.join("Code"),
+            home_path.join("dev"),
+            home_path.join("src"),
+            home_path.join("repos"),
+            home_path.join("Documents/Github"),
+            home_path.join("Documents/GitHub"),
+        ];
+        
+        for search_dir in search_dirs {
+            if !search_dir.exists() {
+                continue;
             }
-            _ => break,
+            
+            // Look for directories containing .ground.yml (depth 2)
+            if let Ok(entries) = std::fs::read_dir(&search_dir) {
+                for entry in entries.filter_map(|e| e.ok()) {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        // Check this directory
+                        if path.join(".ground.yml").exists() || path.join("pnpm-workspace.yaml").exists() {
+                            candidates.push(path.clone());
+                        }
+                        // Check one level deeper (for ~/Documents/Github/Org/Repo structure)
+                        if let Ok(sub_entries) = std::fs::read_dir(&path) {
+                            for sub_entry in sub_entries.filter_map(|e| e.ok()) {
+                                let sub_path = sub_entry.path();
+                                if sub_path.is_dir() {
+                                    if sub_path.join(".ground.yml").exists() || sub_path.join("pnpm-workspace.yaml").exists() {
+                                        candidates.push(sub_path);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     
-    None
+    candidates
 }
 
 fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {

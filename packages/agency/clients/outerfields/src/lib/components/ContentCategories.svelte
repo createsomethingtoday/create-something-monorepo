@@ -138,12 +138,7 @@
 	}
 
 	function handleVideoClick(videoId: string) {
-		const row = rowVideosById[videoId];
-		if (row?.tier === 'gated' && !isMember) {
-			document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
-			return;
-		}
-
+		// All content is now freely accessible - no gating
 		const video = playerVideosById[videoId];
 		if (!video) return;
 		videoPlayer.play(video);
