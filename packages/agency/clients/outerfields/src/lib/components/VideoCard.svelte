@@ -199,37 +199,41 @@
 
 	/* Tufte-inspired: Free as inline text, not a badge */
 	.free-indicator {
-		color: var(--color-fg-secondary);
+		color: var(--color-sun);
+		font-weight: 600;
 	}
 
 	/* Card info below poster */
 	.card-info {
-		padding: var(--space-sm) 0 0 0;
+		padding: 0.75rem 0.25rem 0;
 	}
 
 	.card-title {
-		font-size: var(--text-body-sm);
-		font-weight: 700;
+		font-size: 0.9375rem;
+		font-weight: 600;
 		color: var(--color-fg-primary);
 		margin: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		text-align: left;
+		line-height: 1.3;
 	}
 
 	.card-meta {
-		font-size: 10px;
-		color: var(--color-fg-subtle);
-		margin: var(--space-xs) 0 0 0;
+		font-size: 0.75rem;
+		color: var(--color-fg-muted);
+		margin: 0.375rem 0 0 0;
 		text-align: left;
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: 0.375rem;
+		flex-wrap: wrap;
 	}
 
 	.meta-dot {
 		color: var(--color-fg-subtle);
+		opacity: 0.5;
 	}
 
 	/* Responsive sizing */
