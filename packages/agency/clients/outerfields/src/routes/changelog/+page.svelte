@@ -35,7 +35,7 @@
 			]
 		},
 		{
-			date: '2026-01-18',
+			date: '2026-01-22',
 			version: '1.6.5',
 			title: 'PCN Services pivot complete',
 			description: 'Full business model shift from $99 membership to $19,999+ PCN creation services. All content now freely accessible as portfolio showcase.',
@@ -49,7 +49,7 @@
 			]
 		},
 		{
-			date: '2026-01-18',
+			date: '2026-01-22',
 			version: '1.6.4',
 			title: 'New brand identity',
 			description: 'Fresh color palette and typography. Space Grotesk for headings, Space Mono for technical elements. Sun orange (#F45126) as primary accent.',
@@ -63,7 +63,7 @@
 			]
 		},
 		{
-			date: '2026-01-18',
+			date: '2026-01-22',
 			version: '1.6.3',
 			title: 'Hero reimagined for services',
 			description: 'New hero messaging: "Outerfields" + "We Build Private Content Networks". Single CTA drives to discovery calls.',
@@ -76,7 +76,7 @@
 			]
 		},
 		{
-			date: '2026-01-18',
+			date: '2026-01-22',
 			version: '1.6.2',
 			title: 'Analytics dashboard: Tufte principles',
 			description: 'Four-column layout with high data-ink ratio. Removed decorative elements. Numbers speak for themselves.',
@@ -90,7 +90,7 @@
 			]
 		},
 		{
-			date: '2026-01-18',
+			date: '2026-01-22',
 			version: '1.6.1',
 			title: 'Footer and navigation updates',
 			description: 'New About page created. Footer links fixed. Discovery call CTA replaces founding member badge.',
