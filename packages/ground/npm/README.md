@@ -1,6 +1,11 @@
 # @createsomething/ground-mcp
 
+[![npm version](https://img.shields.io/npm/v/@createsomething/ground-mcp.svg)](https://www.npmjs.com/package/@createsomething/ground-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Grounded claims for code. An MCP server that prevents AI hallucination in code analysis.
+
+**[View Landing Page →](https://createsomething.agency/products/ground)**
 
 ## The Problem
 
@@ -19,15 +24,63 @@ Ground is an MCP server that:
 - Requires verification before claims
 - Blocks hallucinated analysis
 
-## Installation
+---
+
+## Quick Install
+
+### Cursor (One-Click)
+
+[**Install in Cursor →**](cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D)
+
+### Claude Desktop
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "ground": {
+      "command": "npx",
+      "args": ["@createsomething/ground-mcp"]
+    }
+  }
+}
+```
+
+### Windsurf
+
+Settings → MCP → View raw config, add:
+
+```json
+{
+  "mcpServers": {
+    "ground": {
+      "command": "npx",
+      "args": ["@createsomething/ground-mcp"]
+    }
+  }
+}
+```
+
+### VS Code + Copilot
+
+1. Open Extensions panel
+2. Filter by "MCP Server"
+3. Search "ground"
+
+### Codex CLI
+
+```bash
+codex mcp add ground --command "npx @createsomething/ground-mcp"
+```
+
+### npm (Global Install)
 
 ```bash
 npm install -g @createsomething/ground-mcp
 ```
 
-## MCP Configuration
-
-Add to `.cursor/mcp.json`:
+Then add to your tool's MCP config:
 
 ```json
 {
@@ -38,8 +91,6 @@ Add to `.cursor/mcp.json`:
   }
 }
 ```
-
-Restart Cursor. Ground tools are now available.
 
 ## Available Tools
 

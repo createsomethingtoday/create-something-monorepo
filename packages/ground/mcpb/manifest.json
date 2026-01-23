@@ -1,0 +1,90 @@
+{
+  "name": "ground",
+  "version": "0.2.0",
+  "description": "Grounded claims for code. An MCP server that prevents AI hallucination in code analysis by requiring verification before claims.",
+  "author": {
+    "name": "CREATE SOMETHING",
+    "email": "hello@createsomething.io",
+    "url": "https://createsomething.agency"
+  },
+  "homepage": "https://createsomething.agency/products/ground",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+    "directory": "packages/ground"
+  },
+  "license": "MIT",
+  "server": {
+    "transport": "stdio",
+    "command": "node",
+    "args": ["index.js"]
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "architecture": ["x64", "arm64"]
+  },
+  "tools": [
+    {
+      "name": "ground_compare",
+      "description": "Compare two files for similarity percentage"
+    },
+    {
+      "name": "ground_count_uses",
+      "description": "Count how many times a symbol is used (distinguishes definitions vs actual uses)"
+    },
+    {
+      "name": "ground_check_connections",
+      "description": "Check if a module is connected to the dependency graph"
+    },
+    {
+      "name": "ground_check_environment",
+      "description": "Detect Workers/Node.js API leakage across module boundaries"
+    },
+    {
+      "name": "ground_find_duplicate_functions",
+      "description": "Find copied functions across files with configurable minimum lines"
+    },
+    {
+      "name": "ground_find_orphans",
+      "description": "Find modules that nothing imports"
+    },
+    {
+      "name": "ground_find_dead_exports",
+      "description": "Find exports that are never imported elsewhere"
+    },
+    {
+      "name": "ground_find_drift",
+      "description": "Find design system violations (hardcoded colors, spacing, etc.)"
+    },
+    {
+      "name": "ground_adoption_ratio",
+      "description": "Calculate Canon token adoption metrics"
+    },
+    {
+      "name": "ground_suggest_pattern",
+      "description": "Get context-aware token suggestions with reasoning"
+    },
+    {
+      "name": "ground_mine_patterns",
+      "description": "Discover implicit patterns that could become design tokens"
+    },
+    {
+      "name": "ground_analyze",
+      "description": "Batch analysis: duplicates + orphans + dead exports"
+    },
+    {
+      "name": "ground_claim_duplicate",
+      "description": "Claim files are duplicates (requires ground_compare first)"
+    },
+    {
+      "name": "ground_claim_dead_code",
+      "description": "Claim code is dead (requires ground_count_uses first)"
+    },
+    {
+      "name": "ground_claim_orphan",
+      "description": "Claim module is orphaned (requires ground_check_connections first)"
+    }
+  ],
+  "categories": ["developer-tools", "code-analysis"],
+  "keywords": ["mcp", "code-analysis", "duplicate-detection", "dead-code", "grounding", "ai", "llm"]
+}

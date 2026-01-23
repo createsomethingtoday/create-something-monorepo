@@ -26,8 +26,7 @@
     "cursor"
   ],
   "bin": {
-    "ground-mcp": "bin/ground-mcp",
-    "ground": "bin/ground"
+    "ground-mcp": "bin/ground-mcp"
   },
   "scripts": {
     "postinstall": "node install.js"

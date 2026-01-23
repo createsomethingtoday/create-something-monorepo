@@ -311,6 +311,52 @@ export const services: Service[] = [
 export const products: Service[] = [
 	// Free Products
 	{
+		id: 'ground',
+		title: 'Ground MCP',
+		description:
+			'Stop AI hallucination in code analysis. An MCP server that requires verification before claims. Free. Open source.',
+		triadQuestion: '"Have I checked this?"',
+		triadAction: 'Verify',
+		triadLevel: 'implementation',
+		whenToUse: [
+			'AI keeps claiming files are "95% similar" without comparing them',
+			'You need to find dead code, duplicates, and orphans reliably',
+			'Your codebase analysis needs grounded evidence, not guesses'
+		],
+		whatThisRemoves: [
+			'Hallucinated code analysis from AI agents',
+			'False positives in duplicate detection',
+			'Unverified claims about dead code'
+		],
+		howItWorks: [
+			'Install via npm or one-click buttons below',
+			'Ground exposes MCP tools to your AI assistant',
+			'Claims require verification: compare → then claim duplicate',
+			'Works with Cursor, Claude Desktop, Windsurf, VS Code, Codex'
+		],
+		proof: {
+			caseStudy: 'https://createsomething.io/papers/kickstand-triad-audit',
+			name: 'Kickstand Triad Audit',
+			headline: '155 scripts → 13 using grounded analysis',
+			stats: ['92% reduction', 'Zero false positives', 'Verified claims only']
+		},
+		pricing: 'Free',
+		timeline: '2 minutes to install',
+		icon: 'shield',
+		tier: 'accessible',
+		isProductized: true,
+		deliverables: [
+			'ground_compare — Compare files for similarity',
+			'ground_find_duplicates — Find duplicate functions',
+			'ground_find_orphans — Find disconnected modules',
+			'ground_find_dead_exports — Find unused exports',
+			'ground_check_environment — Detect Workers/Node.js API leakage',
+			'ground_find_drift — Find design system violations',
+			'ground_adoption_ratio — Calculate token adoption metrics',
+			'ground_claim_* — Make verified claims only after checking'
+		]
+	},
+	{
 		id: 'ai-readiness-assessment',
 		title: 'AI Readiness Assessment',
 		description:
