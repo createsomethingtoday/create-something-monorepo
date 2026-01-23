@@ -35,6 +35,74 @@
 			]
 		},
 		{
+			date: '2026-01-18',
+			version: '1.6.5',
+			title: 'PCN Services pivot complete',
+			description: 'Full business model shift from $99 membership to $19,999+ PCN creation services. All content now freely accessible as portfolio showcase.',
+			category: 'feature',
+			highlights: [
+				'New pricing: $19,999 starting',
+				'All content ungated (portfolio)',
+				'Discovery call CTAs throughout',
+				'New PCN Partners section',
+				'Demo page with example tiers'
+			]
+		},
+		{
+			date: '2026-01-18',
+			version: '1.6.4',
+			title: 'New brand identity',
+			description: 'Fresh color palette and typography. Space Grotesk for headings, Space Mono for technical elements. Sun orange (#F45126) as primary accent.',
+			category: 'improvement',
+			highlights: [
+				'Space Grotesk + Space Mono fonts',
+				'Sun orange primary accent',
+				'Space Black backgrounds',
+				'Slate Metal muted text',
+				'Lavender + Sand accents'
+			]
+		},
+		{
+			date: '2026-01-18',
+			version: '1.6.3',
+			title: 'Hero reimagined for services',
+			description: 'New hero messaging: "Outerfields" + "We Build Private Content Networks". Single CTA drives to discovery calls.',
+			category: 'improvement',
+			highlights: [
+				'Simplified hero title',
+				'"Book a Discovery Call" CTA',
+				'Pulsing play button overlay',
+				'Refined gradient for readability'
+			]
+		},
+		{
+			date: '2026-01-18',
+			version: '1.6.2',
+			title: 'Analytics dashboard: Tufte principles',
+			description: 'Four-column layout with high data-ink ratio. Removed decorative elements. Numbers speak for themselves.',
+			category: 'improvement',
+			highlights: [
+				'4-column grid layout',
+				'Tabular numerics',
+				'Removed metric footers',
+				'Consistent card heights',
+				'Minimal decoration'
+			]
+		},
+		{
+			date: '2026-01-18',
+			version: '1.6.1',
+			title: 'Footer and navigation updates',
+			description: 'New About page created. Footer links fixed. Discovery call CTA replaces founding member badge.',
+			category: 'improvement',
+			highlights: [
+				'New /about page',
+				'Fixed content anchor links',
+				'CTA badge in footer',
+				'Updated navigation constants'
+			]
+		},
+		{
 			date: '2026-01-17',
 			version: '1.6.0',
 			title: 'Clean, monochromatic design',
@@ -202,10 +270,10 @@
 	];
 
 	const stats = {
-		totalCommits: 255,
-		features: 49,
+		totalCommits: 260,
+		features: 55,
 		daysActive: 22,
-		price: 99
+		price: 19999
 	};
 
 	function getCategoryColor(category: string) {
@@ -230,7 +298,7 @@
 			<span class="hero-badge">Building in Public</span>
 			<h1 class="hero-title">What we shipped</h1>
 			<p class="hero-description">
-				22 days. 255+ commits. Everything documented here.
+				22 days. 260+ commits. Everything documented here.
 			</p>
 		</div>
 	</section>
