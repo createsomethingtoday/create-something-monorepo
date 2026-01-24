@@ -1,0 +1,402 @@
+/**
+ * Ink Framework - Tufte's Data-Ink Ratio for Mobile
+ *
+ * "Above all else, show the data." - Edward Tufte
+ *
+ * Philosophy: Golden Ratio (φ) for desktop, Tufte for mobile.
+ * - Desktop: Generous spacing for visual breathing room
+ * - Mobile: Maximize data-ink ratio, minimize padding
+ *
+ * @usage
+ *   @import '@create-something/components/styles/ink.css';
+ *
+ * @see packages/components/src/lib/tokens/ink.ts for TypeScript tokens
+ */
+
+/* ==========================================================================
+   Ink CSS Custom Properties
+   ========================================================================== */
+
+:root {
+	/* Padding - mobile defaults (Tufte: minimize non-data-ink) */
+	--ink-pad-container: var(--space-sm); /* 16px */
+	--ink-pad-component: var(--space-xs); /* 10px */
+	--ink-pad-cell: 0.25rem; /* 4px */
+	--ink-touch-min: 44px;
+
+	/* Sparkline - word-sized graphics (mobile) */
+	--ink-sparkline-width: 32px;
+	--ink-sparkline-height: 10px;
+
+	/* Grid columns (mobile defaults) */
+	--ink-grid-cols: 2;
+	--ink-metric-cols: 1;
+}
+
+/* Tablet: standard density */
+@media (min-width: 768px) {
+	:root {
+		--ink-pad-container: var(--space-md); /* 26px */
+		--ink-pad-component: var(--space-sm); /* 16px */
+		--ink-pad-cell: 0.375rem; /* 6px */
+		--ink-sparkline-width: 40px;
+		--ink-sparkline-height: 12px;
+		--ink-grid-cols: 4;
+		--ink-metric-cols: 3;
+	}
+}
+
+/* Desktop: expanded density (golden ratio) */
+@media (min-width: 1024px) {
+	:root {
+		--ink-pad-container: var(--space-lg); /* 42px */
+		--ink-pad-component: var(--space-md); /* 26px */
+		--ink-pad-cell: 0.5rem; /* 8px */
+		--ink-sparkline-width: 48px;
+		--ink-sparkline-height: 14px;
+		--ink-grid-cols: 7;
+		--ink-metric-cols: 6;
+	}
+}
+
+/* ==========================================================================
+   Data Density Classes - Progressive Disclosure
+   
+   Tufte: "Maximize the data-ink ratio, within reason."
+   Mobile shows essential data only; details appear on larger screens.
+   ========================================================================== */
+
+.ink-primary {
+	/* Always visible - essential data */
+}
+
+.ink-secondary {
+	display: none; /* Hidden on mobile */
+}
+
+.ink-tertiary {
+	display: none; /* Hidden on mobile and tablet */
+}
+
+@media (min-width: 768px) {
+	.ink-secondary {
+		display: initial; /* Context visible on tablet+ */
+	}
+}
+
+@media (min-width: 1024px) {
+	.ink-tertiary {
+		display: initial; /* Detail visible on desktop */
+	}
+}
+
+/* ==========================================================================
+   Ink Padding - Tufte-Aligned Responsive Spacing
+   
+   Principle: Padding is non-data-ink. Minimize on mobile to maximize data.
+   Method: φ⁻¹ (0.618×) scaling from desktop to mobile.
+   ========================================================================== */
+
+/* Container padding (pages, sections) */
+.ink-pad-container {
+	padding: var(--ink-pad-container);
+}
+
+/* Component padding (cards, metrics) - Tufte: tight for density */
+.ink-metric {
+	padding: var(--ink-pad-component);
+}
+
+/* Cell padding (table cells, grid items) - minimal for high density */
+.ink-pad-cell {
+	padding: var(--ink-pad-cell);
+}
+
+/* Asymmetric padding - less horizontal (valuable), more vertical (cheap) */
+.ink-pad-asymmetric {
+	padding: var(--space-sm) var(--space-xs); /* 16px vert, 10px horiz on mobile */
+}
+
+@media (min-width: 768px) {
+	.ink-pad-asymmetric {
+		padding: var(--space-md) var(--space-sm); /* 26px vert, 16px horiz */
+	}
+}
+
+@media (min-width: 1024px) {
+	.ink-pad-asymmetric {
+		padding: var(--space-lg) var(--space-md); /* 42px vert, 26px horiz */
+	}
+}
+
+/* ==========================================================================
+   Small Multiples Grid - Tufte's Comparative Visualization
+   
+   "Small multiples reveal, all at once, a scope of alternatives."
+   Target: 4-9 small multiples visible on any screen size.
+   ========================================================================== */
+
+.ink-grid {
+	display: grid;
+	gap: var(--space-xs);
+	grid-template-columns: repeat(var(--ink-grid-cols), 1fr);
+}
+
+/* Override for specific column counts */
+.ink-grid-2 {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.ink-grid-3 {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+@media (min-width: 640px) {
+	.ink-grid-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+@media (min-width: 768px) {
+	.ink-grid-2 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.ink-grid-3 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+@media (min-width: 1024px) {
+	.ink-grid-2 {
+		grid-template-columns: repeat(7, 1fr);
+	}
+	.ink-grid-3 {
+		grid-template-columns: repeat(7, 1fr);
+	}
+}
+
+/* ==========================================================================
+   Metric Grid - Dashboard Layouts
+   
+   Adaptive grid for metric cards that maintains data density.
+   ========================================================================== */
+
+.ink-metric-grid {
+	display: grid;
+	gap: var(--space-sm);
+	grid-template-columns: repeat(var(--ink-metric-cols), 1fr);
+}
+
+/* Fixed column variants */
+.ink-metric-grid-2 {
+	grid-template-columns: 1fr;
+}
+
+.ink-metric-grid-3 {
+	grid-template-columns: 1fr;
+}
+
+.ink-metric-grid-4 {
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+	.ink-metric-grid-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.ink-metric-grid-3 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.ink-metric-grid-4 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (min-width: 1024px) {
+	.ink-metric-grid-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.ink-metric-grid-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+@media (min-width: 1280px) {
+	.ink-metric-grid-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+/* ==========================================================================
+   Table Scroll - Horizontal Overflow for Dense Data
+   
+   Tufte: For comparison tables, preserve column relationships.
+   ========================================================================== */
+
+.ink-table-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================================================
+   Table Card Transformation - Row-to-Card on Mobile
+   
+   Research: Use ::before with data-label pattern for mobile.
+   Converts table rows to stacked cards on small screens.
+   ========================================================================== */
+
+.ink-table-cards {
+	/* Desktop: normal table behavior */
+}
+
+@media (max-width: 639px) {
+	.ink-table-cards {
+		display: block;
+	}
+
+	.ink-table-cards thead {
+		display: none; /* Hide table header on mobile */
+	}
+
+	.ink-table-cards tbody {
+		display: block;
+	}
+
+	.ink-table-cards tr {
+		display: block;
+		border-bottom: 1px solid var(--color-border-default);
+		margin-bottom: var(--space-sm);
+		padding-bottom: var(--space-sm);
+	}
+
+	.ink-table-cards td {
+		display: block;
+		text-align: right;
+		padding: var(--ink-pad-cell) 0;
+		border: none;
+	}
+
+	.ink-table-cards td::before {
+		content: attr(data-label);
+		float: left;
+		font-weight: 500;
+		color: var(--color-fg-tertiary);
+		text-transform: uppercase;
+		font-size: var(--text-caption);
+	}
+}
+
+/* ==========================================================================
+   SVG Container - Viewport Scaling for Architectural Drawings
+   
+   Tufte: Maintain legibility of detailed graphics.
+   ========================================================================== */
+
+.ink-svg-container {
+	width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.ink-svg-container svg {
+	min-width: 600px; /* Prevents over-compression of detail */
+	height: auto;
+}
+
+@media (min-width: 768px) {
+	.ink-svg-container svg {
+		min-width: unset;
+	}
+}
+
+/* ==========================================================================
+   Container Query Support - Component-Level Responsiveness
+   
+   Research (2025): Container queries now Baseline "Widely available".
+   Use for component-level responsiveness instead of viewport queries.
+   ========================================================================== */
+
+.ink-container {
+	container-type: inline-size;
+}
+
+.ink-container-named {
+	container-type: inline-size;
+	container-name: ink;
+}
+
+/* Container query: compact mode for narrow containers */
+@container (max-width: 400px) {
+	.ink-compact-auto {
+		/* Auto-compact in narrow containers */
+	}
+
+	.ink-compact-auto .ink-secondary {
+		display: none;
+	}
+}
+
+@container (min-width: 401px) {
+	.ink-compact-auto .ink-secondary {
+		display: initial;
+	}
+}
+
+/* ==========================================================================
+   Touch Targets - Accessibility Minimum
+   
+   Tufte meets accessibility: 44px minimum for fat-finger targeting.
+   ========================================================================== */
+
+.ink-touch-target {
+	min-height: var(--ink-touch-min);
+	min-width: var(--ink-touch-min);
+}
+
+/* ==========================================================================
+   Sparkline Container - Word-Sized Graphics
+   
+   Tufte: "Sparklines are datawords: data-intense, design-simple,
+   word-sized graphics."
+   ========================================================================== */
+
+.ink-sparkline {
+	width: var(--ink-sparkline-width);
+	height: var(--ink-sparkline-height);
+	display: inline-block;
+	vertical-align: middle;
+}
+
+/* ==========================================================================
+   Utility: Hide on density levels
+   ========================================================================== */
+
+.ink-hide-compact {
+	/* Visible by default */
+}
+
+.ink-hide-standard {
+	/* Visible by default */
+}
+
+.ink-hide-expanded {
+	/* Visible by default */
+}
+
+@media (max-width: 639px) {
+	.ink-hide-compact {
+		display: none !important;
+	}
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+	.ink-hide-standard {
+		display: none !important;
+	}
+}
+
+@media (min-width: 1024px) {
+	.ink-hide-expanded {
+		display: none !important;
+	}
+}

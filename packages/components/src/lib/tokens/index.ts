@@ -18,6 +18,7 @@ export * from './colors.js';
 export * from './typography.js';
 export * from './shadows.js';
 export * from './breakpoints.js';
+export * from './ink.js';
 
 // Re-export for convenience
 export { spacing, spacingVars, generateSpacingCSS } from './spacing.js';
@@ -28,6 +29,21 @@ export { colors, colorVars, generateColorsCSS } from './colors.js';
 export { typography, typographyVars, generateTypographyCSS, getHeadingStyles } from './typography.js';
 export { shadows, shadowVars, generateShadowsCSS, getElevation } from './shadows.js';
 export { breakpoints, containers, media, breakpointVars, generateBreakpointsCSS, matchesBreakpoint } from './breakpoints.js';
+export {
+	inkDensity,
+	inkPadding,
+	inkSparkline,
+	inkMultiples,
+	inkMetricGrid,
+	inkMedia,
+	inkVars,
+	generateInkCSS,
+	getInkDensity,
+	getInkPadding,
+	getInkSparkline,
+	getInkMultiples
+} from './ink.js';
+export type { InkDensity } from './ink.js';
 
 /**
  * Complete tokens object for JSON export

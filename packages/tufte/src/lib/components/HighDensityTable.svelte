@@ -5,6 +5,11 @@
 	 * Agentic component that implements Tufte's principle:
 	 * "High data density - maximize information per unit area"
 	 *
+	 * Ink Framework Integration:
+	 * - Uses Ink padding tokens (φ⁻¹ scaling for mobile)
+	 * - Progressive disclosure via ink-secondary/ink-tertiary classes
+	 * - Container query support for component-level responsiveness
+	 *
 	 * This component is agentic because it:
 	 * - Automatically formats numbers with proper alignment
 	 * - Handles ranking, counts, and percentages intelligently
@@ -22,10 +27,10 @@
 	export let totalForPercentage: number | undefined = undefined;
 	export let emptyMessage: string = 'No data yet';
 
-	// Mobile responsiveness props
-	/** Hide rank column on mobile (<480px) to save space */
+	// Ink density props (progressive disclosure)
+	/** Hide rank column on compact density (<640px) - uses Ink pattern */
 	export let hideRankOnMobile: boolean = false;
-	/** Hide percentage column on mobile (<480px) to save space */
+	/** Hide percentage column on compact density (<640px) - uses Ink pattern */
 	export let hidePercentageOnMobile: boolean = false;
 
 	// Column configuration (agentic: sensible defaults)
@@ -89,6 +94,8 @@
 		/* Allow horizontal scroll when content overflows */
 		overflow: auto;
 		min-width: 0;
+		/* Ink: container query support */
+		container-type: inline-size;
 	}
 
 	.empty-message {
@@ -100,6 +107,8 @@
 		border-bottom: 1px solid var(--color-border-default);
 		overflow: hidden;
 		min-width: 0;
+		/* Ink: responsive cell padding */
+		padding: var(--ink-pad-cell, 0.375rem) 0;
 	}
 
 	.row:last-child {
@@ -134,20 +143,30 @@
 		flex-shrink: 0;
 	}
 
-	/* Mobile responsiveness: reduce gap and padding on small screens */
-	@media (max-width: 480px) {
+	/* Ink: Compact density (<640px) - Tufte mobile */
+	@media (max-width: 639px) {
 		.row {
-			gap: 0.25rem; /* Tighter gap on mobile (was gap-2 = 0.5rem) */
-			padding-top: 0.375rem;
-			padding-bottom: 0.375rem;
+			gap: 0.25rem; /* Tighter gap (Tufte: maximize data-ink) */
+			padding: var(--ink-pad-cell, 0.25rem) 0;
 		}
 
 		.count {
-			width: 2.5rem; /* Smaller count column on mobile */
+			width: 2.5rem; /* Smaller count column */
 		}
 
 		.percentage {
-			width: 2rem; /* Smaller percentage column on mobile */
+			width: 2rem; /* Smaller percentage column */
+		}
+
+		.hide-on-mobile {
+			display: none;
+		}
+	}
+
+	/* Ink: Container query - compact in narrow containers */
+	@container (max-width: 300px) {
+		.row {
+			gap: 0.25rem;
 		}
 
 		.hide-on-mobile {

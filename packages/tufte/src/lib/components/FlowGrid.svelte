@@ -61,16 +61,22 @@
 	.flow-grid {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm, 1rem);
+		/* Ink: responsive gap */
+		gap: var(--ink-pad-cell, var(--space-sm, 1rem));
+		/* Ink: container query support */
+		container-type: inline-size;
 	}
 
 	.flow-item {
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm, 1rem);
-		padding: var(--space-xs, 0.5rem) var(--space-sm, 1rem);
+		/* Ink: responsive padding */
+		padding: var(--ink-pad-cell, var(--space-xs, 0.5rem)) var(--ink-pad-component, var(--space-sm, 1rem));
 		background: var(--color-bg-subtle, #1a1a1a);
 		border-radius: var(--radius-md, 8px);
+		/* Ink: touch target minimum */
+		min-height: var(--ink-touch-min, 44px);
 	}
 
 	.flow-source {
@@ -103,5 +109,41 @@
 	.empty {
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
 		font-size: var(--text-body-sm, 0.875rem);
+	}
+
+	/* Ink: Compact density - tighter on mobile */
+	@media (max-width: 639px) {
+		.flow-grid {
+			gap: var(--space-xs, 0.5rem);
+		}
+
+		.flow-item {
+			gap: var(--space-xs, 0.5rem);
+			padding: var(--space-xs, 0.25rem) var(--space-sm, 0.5rem);
+		}
+
+		.flow-source,
+		.flow-target {
+			min-width: 3rem;
+			font-size: var(--text-caption, 0.75rem);
+		}
+
+		.flow-source::after {
+			margin-left: var(--space-xs, 0.5rem);
+		}
+	}
+
+	/* Ink: Container query - compact in narrow containers */
+	@container (max-width: 300px) {
+		.flow-item {
+			flex-wrap: wrap;
+		}
+
+		.flow-count {
+			width: 100%;
+			margin-left: 0;
+			margin-top: var(--space-xs);
+			text-align: right;
+		}
 	}
 </style>

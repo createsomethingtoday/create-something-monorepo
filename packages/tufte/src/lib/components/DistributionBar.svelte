@@ -96,6 +96,11 @@
 </div>
 
 <style>
+	.distribution-bar {
+		/* Ink: container query support */
+		container-type: inline-size;
+	}
+
 	.bar {
 		border-radius: var(--radius-md);
 		background: var(--color-bg-surface);
@@ -105,6 +110,8 @@
 		font-size: var(--text-caption);
 		font-weight: 500;
 		transition: opacity var(--duration-standard) var(--ease-standard);
+		/* Ink: touch target minimum */
+		min-height: var(--ink-touch-min, 44px);
 	}
 
 	.segment:hover {
@@ -113,6 +120,8 @@
 
 	.segment-label {
 		color: var(--color-fg-primary);
+		/* Ink: responsive padding */
+		padding: 0 var(--ink-pad-cell, 0.5rem);
 	}
 
 	.legend {
@@ -135,5 +144,25 @@
 
 	.legend-percentage {
 		color: var(--color-fg-muted);
+	}
+
+	/* Ink: Compact density - stack legend on mobile */
+	@media (max-width: 639px) {
+		.legend {
+			flex-direction: column;
+			gap: var(--space-xs);
+		}
+	}
+
+	/* Ink: Container query - adapt legend in narrow containers */
+	@container (max-width: 300px) {
+		.legend {
+			flex-direction: column;
+			gap: var(--space-xs);
+		}
+
+		.legend-percentage {
+			display: none; /* Hide percentages in very narrow containers */
+		}
 	}
 </style>

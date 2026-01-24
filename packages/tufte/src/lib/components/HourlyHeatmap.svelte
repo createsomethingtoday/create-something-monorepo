@@ -112,6 +112,11 @@
 </div>
 
 <style>
+	.heatmap {
+		/* Ink: container query support */
+		container-type: inline-size;
+	}
+
 	.hour-labels,
 	.day-label {
 		font-size: 10px;
@@ -123,6 +128,9 @@
 		background: var(--color-fg-primary);
 		border-radius: var(--radius-sm);
 		transition: opacity var(--duration-micro) var(--ease-standard);
+		/* Ink: minimum touch target for accessibility */
+		min-width: 8px;
+		min-height: 8px;
 	}
 
 	.cell:hover {
@@ -137,5 +145,36 @@
 	.legend-cell {
 		background: var(--color-fg-primary);
 		border-radius: var(--radius-sm);
+	}
+
+	/* Ink: Compact density - enable horizontal scroll on mobile */
+	@media (max-width: 639px) {
+		.heatmap {
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.hour-labels {
+			min-width: 500px; /* Ensure all hours visible when scrolling */
+		}
+
+		.day-label {
+			position: sticky;
+			left: 0;
+			background: var(--color-bg-pure);
+			z-index: 1;
+		}
+	}
+
+	/* Ink: Container query - adapt in narrow containers */
+	@container (max-width: 400px) {
+		.heatmap {
+			overflow-x: auto;
+		}
+
+		.legend {
+			flex-direction: column;
+			align-items: flex-start;
+		}
 	}
 </style>

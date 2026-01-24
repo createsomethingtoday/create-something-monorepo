@@ -130,6 +130,11 @@
 </div>
 
 <style>
+	.comparative-sparklines {
+		/* Ink: container query support */
+		container-type: inline-size;
+	}
+
 	.legend {
 		font-size: var(--text-body-sm);
 	}
@@ -141,5 +146,34 @@
 	.legend-label {
 		color: var(--color-fg-secondary);
 		font-weight: 500;
+	}
+
+	.chart {
+		/* Ink: responsive chart height */
+		height: var(--ink-sparkline-height, 8rem);
+	}
+
+	/* Ink: Compact density - stack legend below on mobile */
+	@media (max-width: 639px) {
+		.legend {
+			flex-direction: column;
+			gap: var(--space-xs);
+		}
+
+		.chart {
+			height: 6rem; /* Shorter on mobile */
+		}
+	}
+
+	/* Ink: Container query - adapt legend in narrow containers */
+	@container (max-width: 300px) {
+		.legend {
+			flex-direction: column;
+			gap: var(--space-xs);
+		}
+
+		.legend-item {
+			font-size: var(--text-caption);
+		}
 	}
 </style>

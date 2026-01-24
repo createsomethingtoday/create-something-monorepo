@@ -164,6 +164,8 @@
 	.trend-indicator {
 		font-size: var(--text-body-sm);
 		font-weight: 500;
+		/* Ink: container query support */
+		container-type: inline-size;
 	}
 
 	.icon {
@@ -183,5 +185,23 @@
 	.value.neutral,
 	.icon.neutral {
 		color: var(--color-fg-muted);
+	}
+
+	/* Ink: Compact density - hide direction icon on mobile to save space */
+	@media (max-width: 639px) {
+		.trend-indicator {
+			font-size: var(--text-caption);
+		}
+
+		.icon {
+			font-size: var(--text-body-sm);
+		}
+	}
+
+	/* Ink: Container query - compact in narrow containers */
+	@container (max-width: 100px) {
+		.icon {
+			display: none; /* Hide icon in very narrow containers */
+		}
 	}
 </style>
