@@ -15,62 +15,34 @@
       duration: '10 min'
     },
     {
-      id: 'dry-implementation',
-      title: 'DRY: Implementation',
-      description: 'Level 1 — "Have I built this before?" Learn to see duplication.',
+      id: 'automation-layer',
+      title: 'The Automation Layer',
+      description: 'What sits between intention and execution. The infrastructure you\'re learning to build.',
       duration: '15 min'
     },
     {
-      id: 'rams-artifact',
-      title: 'Rams: Artifact',
-      description: 'Level 2 — "Does this earn its existence?" Learn to see excess.',
-      duration: '15 min'
-    },
-    {
-      id: 'heidegger-system',
-      title: 'Heidegger: System',
-      description: 'Level 3 — "Does this serve the whole?" Learn to see disconnection.',
+      id: 'subtractive-triad',
+      title: 'The Subtractive Triad',
+      description: 'Three questions that guide every decision: DRY, Rams, Heidegger.',
       duration: '20 min'
     },
     {
-      id: 'triad-application',
-      title: 'Applying the Triad',
-      description: 'Putting the three questions together. The framework becomes perception.',
-      duration: '25 min'
+      id: 'external-memory',
+      title: 'External Memory',
+      description: 'How automation systems remember. Persistence patterns for agents.',
+      duration: '15 min'
     },
     {
-      id: 'capstone-intro',
-      title: 'Capstone: Ship Your Site',
-      description: 'Your graduation project: design, build, and deploy a personal site you own.',
-      duration: '10 min',
-      isCapstone: true
+      id: 'agent-native-tools',
+      title: 'Agent-Native Tools',
+      description: 'Designing tools for AI agents, not humans. Different inputs, different outputs.',
+      duration: '15 min'
     },
     {
-      id: 'capstone-design',
-      title: 'Design with AI Studio',
-      description: 'Use Google AI Studio to generate your site layout and content.',
-      duration: '30 min',
-      isCapstone: true
-    },
-    {
-      id: 'capstone-build',
-      title: 'Build with Gemini CLI',
-      description: 'Turn your design into code with AI assistance.',
-      duration: '45 min',
-      isCapstone: true
-    },
-    {
-      id: 'capstone-deploy',
-      title: 'Deploy to Cloudflare',
-      description: 'Put your site live on Cloudflare Pages with your own domain.',
-      duration: '30 min',
-      isCapstone: true
-    },
-    {
-      id: 'capstone-graduate',
-      title: 'Graduate',
-      description: 'Submit your site URL and move to the next level.',
-      duration: '5 min',
+      id: 'capstone',
+      title: 'Capstone: Simple Loom',
+      description: 'Build a Task Tracker MCP server. Apply everything you\'ve learned.',
+      duration: '60 min',
       isCapstone: true
     }
   ];
@@ -240,7 +212,7 @@
   <section class="lessons-section">
     <h2 class="section-title">Seeing Curriculum</h2>
     <p class="section-intro-left">
-      Five lessons that develop your perception. Read here, practice in Gemini CLI.
+      Seven lessons that build toward automation infrastructure. Philosophy first, then patterns, then practice.
     </p>
 
     <div class="lessons-list">
