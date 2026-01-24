@@ -7,7 +7,7 @@
   "publisher": "createsomething",
   "icon": "https://createsomething.space/icons/seeing.svg",
   "categories": ["Education", "Methodology", "Code Quality"],
-  "keywords": ["subtractive-triad", "dry", "rams", "heidegger", "learning"],
+  "keywords": ["subtractive-triad", "dry", "rams", "heidegger", "learning", "simple-loom", "automation-layer", "mcp"],
   
   "contextFiles": ["GEMINI.md"],
   
@@ -51,6 +51,11 @@
       "name": "graduate",
       "description": "Check if you're ready to graduate to Dwelling",
       "template": "commands/graduate.md"
+    },
+    {
+      "name": "capstone",
+      "description": "Build Simple Loom — your capstone project",
+      "template": "commands/capstone.md"
     }
   ],
 

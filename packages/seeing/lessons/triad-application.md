@@ -22,121 +22,165 @@ Start shallow, spiral deeper. If DRY eliminates the decision, you don't need Ram
 
 ## A Complete Example
 
-**Scenario**: "Add a dark mode toggle to user profiles."
+**Scenario**: "Add a `task_archive` tool to your Task Tracker MCP server."
+
+Your Task Tracker has four tools: `task_add`, `task_list`, `task_complete`, `task_remove`. Someone asks: "What about archiving completed tasks instead of removing them?"
 
 ### Level 1: DRY
 
 **Ask**: Have I built this before?
 
-**Investigation**: Search for existing theme handling.
+**Investigation**: Look at your existing tools. Does anything already handle "keeping tasks but hiding them"?
 
-**Finding**: Yes! There's a theme switcher in settings that controls a global theme state.
+**Finding**: `task_complete` marks tasks as `done`. `task_list` shows all tasks. `task_remove` deletes permanently.
 
-**DRY Decision**: Don't rebuild theme toggling. Reuse the existing `ThemeProvider` and `useTheme()` hook.
+**DRY Decision**: No existing tool does archiving. But wait—could `task_list` be extended to filter by status?
 
-**What we removed**: Duplication of theme state management.
+```typescript
+// Current: shows all tasks
+task_list()
+
+// Could become: filter by status
+task_list({ status: 'active' })  // hides done tasks
+task_list({ status: 'done' })    // shows only done tasks
+task_list({ status: 'all' })     // current behavior
+```
+
+**What DRY reveals**: Maybe we don't need a new tool. Maybe we need a parameter on an existing tool.
+
+**DRY passes with a suggestion.** Move to Rams.
 
 ### Level 2: Rams
 
-**Ask**: Does a profile-level toggle earn its existence?
+**Ask**: Does `task_archive` earn its existence?
 
-**Investigation**: 
-- Where is the existing toggle? (Settings page)
-- Do users need it on profiles specifically?
-- What problem does profile-level toggling solve?
+**Investigation**:
+- What problem does archiving solve? (Keeping completed tasks but not seeing them)
+- Could filtering solve the same problem? (Yes)
+- What's the difference between "archived" and "done"? (Maybe nothing)
 
-**Finding**: The settings toggle already serves the need. Adding a second toggle doesn't serve a distinct purpose.
+**Finding**: The request was really "I want to hide completed tasks." That's filtering, not archiving.
 
-**Rams Decision**: This feature doesn't earn its existence.
+**Rams Decision**: `task_archive` doesn't earn its existence. A filter parameter on `task_list` serves the same need with less complexity.
 
-**Recommendation**: "We already have theme toggling in settings. Adding it to profiles creates redundancy. Instead, make the settings toggle more discoverable."
+**What we removed**: A tool that would duplicate functionality.
 
-**What we removed**: An unnecessary feature.
+**Recommendation**: Add a `status` filter to `task_list` instead of a new `task_archive` tool.
 
-**The decision ends here.** Rams eliminated the feature. No need to continue to Heidegger.
+**The decision ends here.** Rams shaped the solution.
 
 ## Another Example
 
-**Scenario**: "Extract notifications into a separate microservice."
+**Scenario**: "Should task storage be a separate module or inline in the server?"
+
+Your MCP server reads and writes tasks to `~/.tasks/tasks.json`. The code is inline in your tool handlers. Should you extract it?
 
 ### Level 1: DRY
 
-**Ask**: Is there duplication that extraction would eliminate?
+**Ask**: Is there duplication?
 
-**Finding**: Yes. Email sending code is duplicated across:
-- User registration
-- Password reset
-- Order confirmation
-- Newsletter
+**Finding**: Yes. Every tool handler has similar code:
 
-**DRY Decision**: Unifying notification logic would eliminate duplication.
+```typescript
+case 'task_add': {
+  const tasks = JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+  // ... do work
+  fs.writeFileSync(TASKS_FILE, JSON.stringify(tasks));
+}
+
+case 'task_complete': {
+  const tasks = JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+  // ... do work
+  fs.writeFileSync(TASKS_FILE, JSON.stringify(tasks));
+}
+```
+
+The file reading/writing pattern repeats in every handler.
+
+**DRY Decision**: Extract storage into a module to eliminate duplication.
 
 **DRY passes.** Move to Rams.
 
 ### Level 2: Rams
 
-**Ask**: Does a separate *service* earn its existence?
+**Ask**: Does a separate storage *module* earn its existence?
 
 **Investigation**:
-- What's the benefit of a service vs. a shared module?
-- Do we need independent deployment? (No)
-- Do we need independent scaling? (No)
-- Do we need a different language? (No)
+- What's the benefit? (Cleaner handlers, single place to change storage logic)
+- What's the cost? (One more file, one more import)
+- Could it become a separate *service*? (No—that would be overkill)
 
-**Rams Decision**: A separate service doesn't earn its existence. But a shared module does.
+**Rams Decision**: A storage module earns its existence. A separate service doesn't.
 
-**What we removed**: Unnecessary service boundary and operational complexity.
+**What we kept**: A simple module with `loadTasks()` and `saveTasks()`.
 
-**Recommendation**: "Extract notification logic into a shared module. We get unification without microservice overhead."
+**What we removed**: The idea of over-engineering into a separate service.
 
-**The decision ends here.** Rams shaped the solution. Heidegger would confirm the module placement.
+**Rams passes.** Move to Heidegger.
+
+### Level 3: Heidegger
+
+**Ask**: Does this serve the whole?
+
+**Investigation**:
+- How does this connect to the MCP server's purpose?
+- Does the naming match system vocabulary?
+- Where should this file live?
+
+**Finding**: The storage module serves Claude Code's workflow—it's how the agent remembers tasks across sessions. It belongs in `src/tasks.ts`, named after the domain concept.
+
+**Heidegger Decision**: The module serves the whole. Name it `tasks.ts`, not `storage.ts` or `db.ts`—because the system is about tasks, not storage.
+
+**What we reconnected**: The module name to the system's purpose.
 
 ## The Questions in Real Time
 
-As you work, the triad becomes automatic:
+As you build automation tools, the triad becomes automatic:
 
-### Writing a Function
+### Adding a Tool
 
 ```
 ❶ DRY: Have I built this before?
-   → Search: Do we have formatCurrency elsewhere?
-   → Found: Yes, in utils/
-   → Action: Use existing function
+   → Search: Do any existing tools do something similar?
+   → Found: Yes, task_complete already changes status
+   → Question: Is this really a new capability?
 
-❷ Rams: Does my new version earn its existence?
-   → Question: Why am I writing a new one?
-   → Answer: Existing one lacks feature X
-   → Counter: Does feature X earn its existence?
+❷ Rams: Does this tool earn its existence?
+   → Question: What problem does it solve?
+   → Answer: Users want to archive tasks
+   → Counter: Could an existing tool serve this need?
    
-❸ Heidegger: Does this serve the whole?
-   → If adding feature X: Where should it live?
-   → Answer: Extend existing function, don't duplicate
+❸ Heidegger: Does this serve the workflow?
+   → Question: How would Claude Code use this?
+   → Answer: It would need to decide between complete, archive, and remove
+   → Insight: Three ways to "finish" a task is confusing
 ```
 
-### Reviewing a PR
+### Designing Tool Parameters
 
 ```
-❶ DRY: Is anything here duplicated?
-   → Look for: Similar code elsewhere, reimplemented logic
+❶ DRY: Is this parameter duplicated elsewhere?
+   → Look for: Similar parameters on other tools
 
-❷ Rams: Does everything here earn existence?
-   → Look for: Unused props, speculative features, unnecessary complexity
+❷ Rams: Does this parameter earn existence?
+   → Look for: Will it ever be used? Is the default always correct?
 
-❸ Heidegger: Does this serve the whole?
-   → Look for: Boundary violations, naming mismatches, wrong placement
+❸ Heidegger: Does this serve Claude Code's workflow?
+   → Look for: Can the agent make good decisions with this parameter?
 ```
 
-### Designing a Feature
+### Structuring Returns
 
 ```
-❶ DRY: What already exists that we can use?
-   → Before designing new, inventory existing
+❶ DRY: Are return formats consistent?
+   → Before: task_add returns { task }, task_list returns []
+   → After: Both return { tasks: [...] } for consistency
 
-❷ Rams: What's the minimum that serves the need?
-   → Before adding features, question each one
+❷ Rams: Is anything in the return unused?
+   → Remove: Fields the agent never reads
 
-❸ Heidegger: How does this fit the system?
-   → Before building, map the connections
+❸ Heidegger: Does the format serve the workflow?
+   → Question: Can Claude Code easily process this?
 ```
 
 ## The Spiral
@@ -144,23 +188,23 @@ As you work, the triad becomes automatic:
 The triad isn't linear. It spirals:
 
 ```
-Write a function (implementation)
+Design a tool (implementation)
 ↓
 DRY: Is this duplicated? → No, continue
 ↓
-Finish the feature (artifact)
+Build the tool (artifact)
 ↓
 Rams: Does this earn existence? → Yes, continue
 ↓
-Deploy the feature (system)
+Test with Claude Code (system)
 ↓
-Heidegger: Does this serve the whole?
+Heidegger: Does this serve the workflow?
 ↓
-Wait—it duplicates functionality in another service!
+Wait—the agent keeps calling the wrong tool!
 ↓
-BACK TO DRY: The duplication was at system level
+BACK TO RAMS: The tool boundaries are confusing
 ↓
-Unify the services
+Simplify the tool set
 ↓
 Continue the spiral...
 ```
@@ -172,37 +216,36 @@ You'll revisit levels as understanding deepens. That's the hermeneutic circle in
 You've mastered the triad when:
 
 1. **The questions are unconscious** — You ask them without thinking about asking
-2. **You catch issues early** — Problems surface during design, not after release
+2. **You catch issues early** — Problems surface during design, not after testing
 3. **You spiral naturally** — Moving between levels feels fluid, not forced
-
-## The Journey Ahead
-
-You've completed the Seeing curriculum.
-
-You now have:
-- The meta-principle: creation as subtraction
-- Three questions: DRY, Rams, Heidegger
-- A framework: the Subtractive Triad
-- Practice: exercises that developed your perception
-
-What comes next?
-
-**Keep seeing.** Use the triad on real work. Let the questions become instinct.
-
-**Record reflections.** Notice when you catch yourself. Document what you learn.
-
-**Consider Dwelling.** When the questions are automatic, you're ready for tools that execute what you now perceive.
 
 ---
 
-## Final Reflection
+## Where the Triad Leads
+
+You've learned to see duplication, question existence, and consider the whole.
+
+These questions become most powerful when building **The Automation Layer** — the infrastructure between human intention and system execution.
+
+In the capstone, you'll build a Task Tracker MCP server. You'll create **Simple Loom** (task coordination) verified by **Simple Ground** (evidence-first testing).
+
+Every decision will use the Triad:
+- **DRY**: What patterns can you reuse from the scaffold?
+- **Rams**: Does each tool earn its existence?
+- **Heidegger**: Does your server serve Claude Code's workflow?
+
+The capstone isn't just practice. It's your first piece of automation infrastructure.
+
+---
+
+## Reflection
 
 The Triad is a lens, not a checklist.
 
 The goal isn't to ask the questions forever. It's to internalize them until they become perception, not process.
 
-When you look at code and automatically see duplication, excess, and disconnection—when removal feels as creative as addition—when the questions ask themselves:
+When you look at a tool and automatically see duplication, excess, and disconnection—when removal feels as creative as addition—when the questions ask themselves:
 
 **You've learned to see.**
 
-And then you're ready to dwell.
+Now you're ready to build.

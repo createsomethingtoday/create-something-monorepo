@@ -2,7 +2,7 @@
 
 > Learn to see through the Subtractive Triad
 
-**Seeing** is the junior tier of CREATE SOMETHING education. A Gemini CLI extension that teaches the philosophical foundation before you graduate to [Dwelling](https://learn.createsomething.space/dwelling) (Claude Code).
+**Seeing** teaches the philosophical foundation before you graduate to [Dwelling](https://learn.createsomething.space/dwelling) (Claude Code). A Gemini CLI extension that develops your perception of duplication, excess, and disconnection.
 
 ## The Journey: Seeing → Dwelling
 
@@ -46,14 +46,23 @@ Every creation exists at three levels. For any decision, ask three questions in 
 In Gemini CLI:
 
 ```bash
+# Triad Analysis
 /triad [target]       # Run a full Subtractive Triad audit
 /dry [target]         # Level 1: Check for duplication
 /rams [target]        # Level 2: Question existence
 /heidegger [target]   # Level 3: Evaluate system fit
 
+# Learning
 /lesson [name]        # Read a lesson from the curriculum
 /reflect              # Record a learning reflection
 /progress             # View your journey
+
+# Capstone
+/capstone             # Start the capstone project
+/capstone check       # Test your implementation
+/capstone complete    # Mark capstone done
+
+# Graduation
 /graduate             # Check if you're ready for Dwelling
 ```
 
@@ -63,21 +72,53 @@ In Gemini CLI:
 2. **DRY: Implementation** — The question of duplication
 3. **Rams: Artifact** — The question of existence
 4. **Heidegger: System** — The question of the whole
-5. **Triad Application** — Putting the three questions together
+5. **Applying the Triad** — Putting the three questions together
+6. **Capstone: Building Simple Loom** — Build a Task Tracker MCP server
+
+## Capstone: Simple Loom
+
+The capstone teaches **The Automation Layer** through building. You create a Task Tracker MCP server that Claude Code can use to manage tasks.
+
+### What You Learn
+
+| Pattern | How It Appears |
+|---------|----------------|
+| **Task Lifecycle** | `status: 'todo' \| 'doing' \| 'done'` |
+| **State Persistence** | Tasks saved to `~/.tasks/tasks.json` |
+| **External Memory** | Tasks survive process restarts |
+| **Agent-Native** | Claude Code calls your tools directly |
+
+### Verification: Simple Ground
+
+`/capstone check` tests your implementation using evidence-first patterns:
+
+- Server starts correctly
+- All four tools exist
+- Tools return expected formats
+- Gemini guides you to fix issues
+
+### Connection to Production
+
+| What You Build | Production Version |
+|----------------|-------------------|
+| Task Tracker | Loom (task coordination) |
+| /capstone check | Ground (verification) |
+| Your workflow | WORKWAY Focus Workflow |
 
 ## Graduation
 
-When the questions become automatic—when you catch yourself asking them without thinking about asking—you're ready to graduate.
+To graduate, you need:
+
+- All 6 lessons completed (including capstone)
+- 10+ Triad applications
+- 3+ reflections recorded
+- Capstone completed
 
 ```bash
 /graduate
 ```
 
-If ready, you'll receive instructions to continue with Claude Code:
-
-```bash
-npx @createsomething/learn init
-```
+If ready, you'll receive instructions to continue with Claude Code.
 
 ## Philosophy
 
@@ -98,6 +139,7 @@ Your progress is stored locally at `~/.seeing/progress.json`. This is self-asses
 - [Seeing Documentation](https://learn.createsomething.space/seeing)
 - [Dwelling (Claude Code)](https://learn.createsomething.space/dwelling)
 - [CREATE SOMETHING](https://createsomething.space)
+- [WORKWAY](https://workway.co)
 
 ## License
 

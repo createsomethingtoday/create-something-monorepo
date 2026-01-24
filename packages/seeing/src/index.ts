@@ -27,19 +27,23 @@ import {
 	addReflection,
 	recordTriadUse,
 	checkGraduationReadiness,
+	startCapstone,
+	checkCapstone,
+	completeCapstone,
 	type SeeingProgress,
 } from './progress.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = join(__dirname, '..');
 
-// Available lessons
+// Available lessons (in curriculum order)
 const LESSONS = [
 	'what-is-creation',
 	'dry-implementation',
 	'rams-artifact',
 	'heidegger-system',
 	'triad-application',
+	'capstone',
 ] as const;
 
 type LessonId = (typeof LESSONS)[number];
@@ -128,6 +132,60 @@ function createServer(): Server {
 				inputSchema: {
 					type: 'object' as const,
 					properties: {},
+				},
+			},
+			{
+				name: 'seeing_capstone_start',
+				description: 'Start the capstone project — build a Task Tracker MCP server (Simple Loom).',
+				inputSchema: {
+					type: 'object' as const,
+					properties: {
+						projectPath: {
+							type: 'string',
+							description: 'Path to your task-tracker project directory',
+						},
+					},
+					required: ['projectPath'],
+				},
+			},
+			{
+				name: 'seeing_capstone_check',
+				description: 'Test your Task Tracker MCP server (Simple Ground verification).',
+				inputSchema: {
+					type: 'object' as const,
+					properties: {
+						projectPath: {
+							type: 'string',
+							description: 'Path to your task-tracker project directory',
+						},
+					},
+					required: ['projectPath'],
+				},
+			},
+			{
+				name: 'seeing_capstone_complete',
+				description: 'Complete your capstone project with Triad findings and reflection.',
+				inputSchema: {
+					type: 'object' as const,
+					properties: {
+						dryFindings: {
+							type: 'string',
+							description: 'What DRY patterns did you apply or discover?',
+						},
+						ramsFindings: {
+							type: 'string',
+							description: 'What didn\'t earn its existence? What did you keep simple?',
+						},
+						heideggerFindings: {
+							type: 'string',
+							description: 'How does your server serve Claude Code\'s workflow?',
+						},
+						reflection: {
+							type: 'string',
+							description: 'What did you learn about The Automation Layer?',
+						},
+					},
+					required: ['dryFindings', 'ramsFindings', 'heideggerFindings', 'reflection'],
 				},
 			},
 		],
@@ -238,6 +296,40 @@ function createServer(): Server {
 				};
 			}
 
+			case 'seeing_capstone_start': {
+				const { projectPath } = args as { projectPath: string };
+				const result = startCapstone(projectPath);
+				return {
+					content: [{ type: 'text' as const, text: result }],
+				};
+			}
+
+			case 'seeing_capstone_check': {
+				const { projectPath } = args as { projectPath: string };
+				const result = await checkCapstone(projectPath);
+				return {
+					content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+				};
+			}
+
+			case 'seeing_capstone_complete': {
+				const { dryFindings, ramsFindings, heideggerFindings, reflection } = args as {
+					dryFindings: string;
+					ramsFindings: string;
+					heideggerFindings: string;
+					reflection: string;
+				};
+				const result = completeCapstone({
+					dryFindings,
+					ramsFindings,
+					heideggerFindings,
+					reflection,
+				});
+				return {
+					content: [{ type: 'text' as const, text: result }],
+				};
+			}
+
 			default:
 				throw new Error(`Unknown tool: ${name}`);
 		}
@@ -264,6 +356,7 @@ function formatLessonName(lessonId: string): string {
 		'rams-artifact': 'Rams: The Question of Existence',
 		'heidegger-system': 'Heidegger: The Question of the Whole',
 		'triad-application': 'Applying the Triad',
+		capstone: 'Capstone: Building Simple Loom',
 	};
 	return names[lessonId] || lessonId;
 }
@@ -282,12 +375,25 @@ function formatProgress(progress: SeeingProgress): string {
 	const triadUses = progress.triadApplications;
 	const totalUses = triadUses.dry + triadUses.rams + triadUses.heidegger + triadUses.full;
 
+	// Capstone status
+	const capstone = progress.capstone || { status: 'not_started' };
+	let capstoneStatus = '○ Not started';
+	if (capstone.status === 'in_progress') {
+		capstoneStatus = `◐ In progress: ${capstone.projectPath || 'unknown path'}`;
+	} else if (capstone.status === 'completed') {
+		capstoneStatus = '✓ Completed';
+	}
+
 	return `# Your Seeing Journey
 
 **Started**: ${progress.startedAt ? new Date(progress.startedAt).toLocaleDateString() : 'Not yet'}
 
 ## Lessons
 ${lessonStatuses}
+
+## Capstone (Simple Loom)
+${capstoneStatus}
+${capstone.toolsVerified ? `Tools verified: ${capstone.toolsVerified.join(', ')}` : ''}
 
 ## Practice
 - /dry used ${triadUses.dry} times
