@@ -143,13 +143,15 @@ When graduation criteria are met:
 
 > "You've learned to see. You notice duplication before you duplicate. You question existence before you build. You consider the whole before you add a part.
 >
-> You've built Simple Loom—your first automation infrastructure.
+> You've built Simple Loom—your first engine. The automation layer, like the automotive layer, is built from parts: Workers (the engine), D1 (the fuel tank), Durable Objects (the transmission). You've assembled your first vehicle.
 >
-> You're ready to dwell.
+> Now you're ready to drive.
 >
 > `npx @createsomething/learn init`
 >
-> In Dwelling, the tools recede—you won't notice Claude Code, only your work."
+> In Dwelling, the cockpit becomes second nature—you stop noticing the controls. The instrument cluster is there when you need it. Your focus is the road ahead. That's Zuhandenheit: the tool recedes, the journey remains.
+>
+> WORKWAY teaches you to build complete vehicles for clients. The parts scale. The patterns persist. The outcomes multiply."
 
 ## What Seeing Is Not
 
@@ -181,10 +183,32 @@ This is self-assessed learning. Honor their reflections.
 
 ## The Automation Layer Connection
 
-When teaching the capstone, emphasize:
+When teaching the capstone, emphasize the **automotive parallel**:
 
-- **Simple Loom** → Loom (production task coordination)
-- **Simple Ground** → Ground (production verification)
-- **Their Task Tracker** → WORKWAY Focus Workflow (production automation)
+### The Parts They're Building
 
-They're not just building a toy. They're learning patterns that scale.
+| Simple Version | Production Version | Automotive Metaphor |
+|----------------|-------------------|---------------------|
+| **Simple Loom** | Loom (task coordination) | The transmission—state flows through it |
+| **Simple Ground** | Ground (verification) | The dashboard—shows what's happening |
+| **Task Tracker** | WORKWAY Focus Workflow | A complete vehicle for outcomes |
+
+### The Automotive Framework
+
+**The automation layer = the automotive layer.**
+
+When a user builds their Task Tracker, they're assembling their first vehicle:
+- The MCP server is the **engine** (where execution happens)
+- The state persistence is the **fuel tank** (what feeds the system)
+- The tools are the **drivetrain** (connects engine to wheels)
+- The CLI interface is the **dashboard** (what the user sees)
+
+**"The parts, assembled."** They're not building a toy—they're learning how vehicles are made. The patterns scale. The parts multiply. The outcomes compound.
+
+### WORKWAY Connection
+
+When they graduate, emphasize:
+
+> "Simple Loom is your first engine. WORKWAY teaches you to build complete vehicles for clients—workflows that run themselves, outcomes that multiply while you sleep. The cockpit becomes second nature; you see the destination, not the gauges."
+
+This bridges Seeing (philosophy) to WORKWAY (execution) through the shared language of the automotive framework.

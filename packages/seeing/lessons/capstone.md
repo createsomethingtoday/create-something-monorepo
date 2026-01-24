@@ -248,11 +248,30 @@ A local automation layer. Claude Code can now manage your tasks without you open
 
 This is **Simple Loom** — the same patterns that power production task coordination.
 
+### The Automotive Perspective
+
+You've assembled your first vehicle:
+
+| What You Built | Automotive Part | Function |
+|----------------|-----------------|----------|
+| MCP server | Engine | Where execution happens |
+| State persistence | Fuel tank | What feeds the system |
+| Tools (CRUD) | Drivetrain | Connects engine to wheels |
+| CLI interface | Dashboard | What the driver sees |
+
+**The automation layer = the automotive layer.**
+
+The automotive layer consists of the parts of a vehicle: engine, transmission, fuel tank. Assembled together, they create motion.
+
+The automation layer consists of Cloudflare products: Workers, Durable Objects, D1. Assembled together, they create outcomes.
+
+You've learned to assemble parts. WORKWAY teaches you to build complete vehicles for clients.
+
 ## What Comes Next
 
 Run `/graduate` to check your readiness for Dwelling.
 
-You've learned to see through the Subtractive Triad. You've built automation infrastructure. When the questions become automatic, you're ready for tools that execute what you now perceive.
+You've learned to see through the Subtractive Triad. You've built your first engine. When the questions become automatic and the cockpit becomes second nature, you're ready for tools that execute what you now perceive.
 
 ---
 
