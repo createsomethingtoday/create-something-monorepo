@@ -262,6 +262,13 @@ export const PATHS: Path[] = [
         duration: '20 min',
       },
       {
+        id: 'automotive-framework',
+        title: 'The Automotive Framework',
+        description: 'Using automotive metaphors to explain automation infrastructure to clients.',
+        duration: '25 min',
+        praxis: 'automotive-translation',
+      },
+      {
         id: 'discovery-patterns',
         title: 'Discovery Patterns',
         description: 'Understanding client needs through the hermeneutic lens.',
