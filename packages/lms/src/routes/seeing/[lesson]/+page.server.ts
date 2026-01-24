@@ -77,43 +77,105 @@ type LessonId = (typeof SEEING_LESSONS)[number]['id'];
 // Lesson content - embedded for now, could be moved to @createsomething/seeing package
 const LESSON_CONTENT: Record<LessonId, string> = {
 	'setting-up': `
-## What You'll Need
+## Prerequisites
 
-- A terminal (any terminal works—we'll refine this in Dwelling)
-- A Google account (for Gemini CLI authentication)
-- 5 minutes
+- **Node.js 20 or higher** — Check with \`node -v\`
+- **A Google account** — For free tier access
+
+If you need Node.js, download it from [nodejs.org](https://nodejs.org/).
+
+---
 
 ## Step 1: Install Gemini CLI
 
-Gemini CLI is Google's AI coding agent. It runs in your terminal and provides a conversational interface for building and learning.
+Choose one method:
 
-Visit [Google AI Studio](https://aistudio.google.com/) and follow the setup instructions to enable Gemini in your terminal. The installation typically involves:
+### Option A: npm (Recommended)
 
-1. Signing in with your Google account
-2. Installing the CLI tool (method varies by platform)
-3. Authenticating via browser
+\`\`\`bash
+npm install -g @google/gemini-cli
+\`\`\`
 
-**What you're installing**: An AI assistant that helps you write code, answer questions, and practice the Subtractive Triad on real projects.
+### Option B: Homebrew (macOS/Linux)
+
+\`\`\`bash
+brew install gemini-cli
+\`\`\`
+
+### Option C: Run without installing
+
+\`\`\`bash
+npx @google/gemini-cli
+\`\`\`
+
+Verify installation:
+
+\`\`\`bash
+gemini --version
+\`\`\`
+
+**Source**: [geminicli.com/docs/get-started/installation](https://geminicli.com/docs/get-started/installation/)
+
+---
 
 ## Step 2: Authenticate
 
+Start Gemini CLI:
+
 \`\`\`bash
-gemini auth login
+gemini
 \`\`\`
 
-This opens a browser window. Sign in with your Google account.
+On first run, you'll see an authentication menu. Choose **Login with Google** (recommended).
+
+1. A browser window opens
+2. Sign in with your Google account
+3. Authorize Gemini CLI
+4. Return to your terminal — you're authenticated
+
+### Free Tier Limits
+
+With a personal Google account:
+- **1,000 requests per day**
+- **60 requests per minute**
+- **1M token context window** (Gemini 2.5 Pro)
+
+These limits are generous for learning.
+
+**Source**: [geminicli.com/docs/get-started/authentication](https://geminicli.com/docs/get-started/authentication/)
+
+---
 
 ## Step 3: Install the Seeing Extension
 
-The Seeing extension gives Gemini CLI context about the Subtractive Triad and provides practice commands.
+Add to \`~/.gemini/settings.json\`:
+
+\`\`\`json
+{
+  "mcpServers": {
+    "seeing": {
+      "command": "npx",
+      "args": ["@createsomething/seeing"]
+    }
+  }
+}
+\`\`\`
+
+Create the directory if needed:
 
 \`\`\`bash
-gemini extension install @createsomething/seeing
+mkdir -p ~/.gemini
 \`\`\`
+
+Restart Gemini CLI after adding the configuration.
+
+**Source**: [geminicli.com/docs/tools/mcp-server](https://geminicli.com/docs/tools/mcp-server/)
+
+---
 
 ## Step 4: Verify
 
-Start a new Gemini CLI session and run:
+Test that everything works:
 
 \`\`\`bash
 /lesson what-is-creation
@@ -123,31 +185,30 @@ If you see the lesson content, you're ready.
 
 ---
 
-## What's Different About This
+## Troubleshooting
 
-Most tutorials have you configure everything perfectly before starting. We're doing the opposite.
+**"Command not found: gemini"** — npm's bin directory isn't in your PATH. Use \`npx @google/gemini-cli\` instead, or add npm's bin to your PATH.
 
-**Seeing uses the terminal you already have.** Any terminal works. The philosophy doesn't require a specific environment.
+**Authentication fails** — Try running \`gemini\` again and selecting a different auth method.
 
-When you graduate to Dwelling, we'll refine your setup—WezTerm with Canon colors, keyboard-driven workflows, tools that disappear into use. But that comes later.
+**Extension not loading** — Check \`~/.gemini/settings.json\` syntax (must be valid JSON), then restart Gemini CLI.
 
-For now: a working Gemini CLI is enough.
+**Node.js version too old** — Gemini CLI requires Node.js 20+. Upgrade via [nodejs.org](https://nodejs.org/).
 
 ---
 
-## Troubleshooting
+## Resources
 
-**"Command not found"** — Make sure npm's global bin directory is in your PATH.
-
-**Authentication fails** — Try \`gemini auth logout\` then \`gemini auth login\` again.
-
-**Extension not found** — The extension may not be published yet. You can still read the lessons here on the web and practice the concepts manually.
+- [Gemini CLI Installation](https://geminicli.com/docs/get-started/installation/) — Official guide
+- [Gemini CLI Authentication](https://geminicli.com/docs/get-started/authentication/) — All auth methods
+- [MCP Server Configuration](https://geminicli.com/docs/tools/mcp-server/) — Extension setup
+- [Model Context Protocol](https://modelcontextprotocol.io) — MCP documentation
 
 ---
 
 ## Ready
 
-You have a terminal. You have Gemini CLI. You have the Seeing extension.
+You have Gemini CLI. You have the Seeing extension.
 
 Now let's learn what creation actually is.
 `,
